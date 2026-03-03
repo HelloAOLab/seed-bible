@@ -24,7 +24,7 @@
 } */
 
 .scripture-map-2d-settings {
-  z-index: 10;
+  /* z-index: 10; */
   top: 0;
   width: 100%;
   gap: 4px;
@@ -94,17 +94,25 @@
   position: absolute;
   right: 0;
   top: calc(100% + 4px);
-  background-color: var(--iconColor);
-  color: var(--background);
+  background-color: var(--primaryColor);
+  color: var(--text1);
   padding: 12px;
-  gap: 4px;
   border-radius: 8px;
+  gap: 4px;
+  border: 1px solid #1a1a1a;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
   min-width: 208px;
   min-height: 20px;
+  z-index: 1;
+}
+.scripture-title {
+  color: var(--text1);
+}
+.option-button {
+  color: var(--text1);
 }
 
 .settings-options-container > span:nth-of-type(1) {
@@ -122,7 +130,7 @@
 .settings-options-container > button {
   min-width: 100%;
   background-color: transparent;
-  color: var(--background);
+  color: var(--text1);
   appearance: none;
   border: none;
   cursor: pointer;
@@ -142,7 +150,8 @@
 }
 
 .settings-options-container > button:hover {
-  background-color: var(--gray-color);
+  background-color: var(--text1);
+  color: var(--primaryColor);
 }
 
 .scripture-map-2d-settings > .settings-footer {
@@ -591,6 +600,7 @@
   overflow: scroll;
   gap: calc(28px * var(--scale-factor));
   padding: 8px 16px 0;
+  /* z-index: 10; */
 }
 
 .scripture-map-2d-wrapper .scripture-map-2d-container .testament-container {
@@ -849,6 +859,15 @@
   gap: 8px;
   white-space: nowrap;
   font-size: 14px;
+  transition:
+    color 0.3s ease,
+    background-color 0.3s ease;
+  box-sizing: border-box;
+  scrollbar-width: none;
+}
+
+.tooltip *:not(.material-symbols-outlined) {
+  font-family: "Satoshi";
 }
 
 .tooltip.tooltip-up {
@@ -858,26 +877,6 @@
 .tooltip.tooltip-down {
   transform: translate(-50%, 8px);
 }
-
-/* .tooltip::after {
-  content: " ";
-  position: absolute;
-  left: var(--arrowLeft);
-  transform: translateX(-50%);
-  border-width: 5px;
-  border-style: solid;
-  pointer-events: none;
-} */
-
-/* .tooltip.tooltip-up::after {
-  top: 100%;
-  border-color: black transparent transparent transparent;
-}
-
-.tooltip.tooltip-down::after {
-  bottom: 100%;
-  border-color: transparent transparent black transparent;
-} */
 
 .tooltip > span {
   width: 100%;
@@ -907,7 +906,7 @@
   width: 24px;
   border-radius: 12px;
   margin-left: -12px;
-  border: solid 3px black;
+  border: solid 3px var(--iconColor);
 }
 
 .tooltip .user-presence-tooltip-content > span {
@@ -955,6 +954,7 @@
   from {
     --angle: 0deg;
   }
+
   to {
     --angle: 360deg;
   }

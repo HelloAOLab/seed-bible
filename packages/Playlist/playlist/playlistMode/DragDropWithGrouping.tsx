@@ -1,4 +1,5 @@
 const { useState, useRef, useMemo, useLayoutEffect } = os.appHooks;
+const G = globalThis as any;
 
 const PlaylistRowItem = await thisBot.PlaylistRowItem();
 const AttachmentLinkItem = await thisBot.AttachmentLinkItem();
@@ -6,11 +7,11 @@ const AttachLink = await thisBot.AttachLink();
 const Linking = await thisBot.LinkingItems();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
 
-const { Checkbox } = Components;
+const { Checkbox } = G.Components;
 
 const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
-  MOBILE_VIEWPORT_THRESHOLD;
+  G.MOBILE_VIEWPORT_THRESHOLD;
 
 const DEV_ENV =
   configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
@@ -18,78 +19,80 @@ const DEV_ENV =
 // Replaced now with props toggleRemoved cause no need to show like this now use is to show active element
 const toggle = "null";
 
-const DragDrop = ({
-  massAdd,
-  attachLink,
-  onGenClick = () => {},
-  setItemSelected = () => {},
-  itemSelected,
-  access,
-  isSomethingEmbededChecked,
-  checkListEmbeded,
-  setChecklistEmbeded,
-  onDisembed = () => {},
-  layers = true,
-  embedding,
-  setEmbedding = () => {},
-  setRef = {},
-  allowHeadingCheck,
-  selectedTags,
-  playlistName,
-  currentDateActive,
-  clickPass,
-  currentFormat,
-  readingPlanEnabled,
-  linkingMode,
-  viewOnly,
-  checkListData = {},
-  oldItemsMap = {},
-  parentId,
-  list,
-  isPlayer,
-  playingPlaylist,
-  activeItemList = {},
-  activeItemID,
-  toggleRemoved,
-  setList,
-  editDataFromPlaylist,
-  playListSubId,
-  setPlaylistFromRow = () => {},
-  playListSubIndex = null,
-  deleteFromList = () => {},
-  onClickItem = () => {},
-  onClick = () => {},
-  creatingPlaylist = false,
-  color,
-  icon,
-  isCustomColor,
-  description,
-  isCustomIcon,
-}) => {
-  
+const DragDrop = (props: any) => {
+  const {
+    massAdd,
+    attachLink,
+    onGenClick = () => {},
+    setItemSelected = () => {},
+    itemSelected,
+    access,
+    isSomethingEmbededChecked,
+    checkListEmbeded,
+    setChecklistEmbeded,
+    onDisembed = () => {},
+    layers = true,
+    embedding,
+    setEmbedding = () => {},
+    setRef = {},
+    allowHeadingCheck,
+    selectedTags,
+    playlistName,
+    currentDateActive,
+    clickPass,
+    currentFormat,
+    readingPlanEnabled,
+    linkingMode,
+    viewOnly,
+    checkListData = {},
+    oldItemsMap = {},
+    parentId,
+    list,
+    isPlayer,
+    playingPlaylist,
+    activeItemList = {},
+    activeItemID,
+    toggleRemoved,
+    setList,
+    editDataFromPlaylist,
+    playListSubId,
+    setPlaylistFromRow = () => {},
+    playListSubIndex = null,
+    deleteFromList = () => {},
+    onClickItem = () => {},
+    onClick,
+    creatingPlaylist = false,
+    color,
+    icon,
+    isCustomColor,
+    description,
+    isCustomIcon,
+    onSelectPlaylist = null,
+  } = props;
+
   const [opendedList, setOpenedList] = useState("");
 
   const checklistEnabled = isPlayer || embedding;
 
-  const toBeSetItems = useRef([]);
+  const toBeSetItems = useRef<any[]>([]);
   const [dragOverSet, setDragoverSetMutate] = useState({
     position: "top",
     itemId: "null",
   });
 
-  const setDragoverSet = (newState) => {
+  const setDragoverSet = (newState: any) => {
     if (
       newState.itemId !== dragOverSet.itemId ||
       newState.position !== dragOverSet.position
     ) {
-      if (globalThis[`${newState.itemId}OpenToggle`]) {
-        globalThis[`${newState.itemId}OpenToggle`](true);
+      if (G[`${newState.itemId}OpenToggle`]) {
+        G[`${newState.itemId}OpenToggle`](true);
       }
       setDragoverSetMutate(newState);
     }
   };
 
-  const selectedCount = list.filter((ele) => !!ele.readAlready);
+  const selectedCount = list.filter((ele: any) => !!ele.readAlready);
   const unSelectedCount = list.length - selectedCount;
 
   const transformedHistory = useMemo(
@@ -101,13 +104,13 @@ const DragDrop = ({
 
   const [draggedItemID, setDraggedItemID] = useState(null);
 
-  const [draggedParent, setDraggedItemParent] = useState(null);
+  const [draggedParent, setDraggedItemParent] = useState<string | null>(null);
 
-  const handleDragStart = (index, pId) => {
+  const handleDragStart = (index: number, pId?: string) => {
     toBeSetItems.current = transformedHistory;
     if (pId) {
       setDraggedItemParent(pId);
-      const pIndex = transformedHistory.findIndex((ele) => ele.id === pId);
+      const pIndex = transformedHistory.findIndex((ele: any) => ele.id === pId);
       const itemId =
         transformedHistory[pIndex].additionalInfo.layers[index]?.id;
       setDraggedItemID(itemId);
@@ -118,7 +121,12 @@ const DragDrop = ({
     // console.log('Drag Start:', { index, pseudoID, id });
   };
 
-  const handleDragOver = (index, pseudoIndex = 1, pseudoID = null, event) => {
+  const handleDragOver = (
+    index: number,
+    pseudoIndex: number | null = 1,
+    pseudoID?: string | null,
+    event?: any
+  ) => {
     event.preventDefault(); // Needed to allow drop
 
     const rect = event.currentTarget.getBoundingClientRect();
@@ -137,18 +145,20 @@ const DragDrop = ({
     let originalRespectiveIndex = index;
 
     let draggedItemIndex = transformedHistory.findIndex(
-      (hist) => hist.id === draggedItemID
+      (hist: any) => hist.id === draggedItemID
     );
     let parentIdx = transformedHistory.findIndex(
-      (ele) => ele.id === draggedParent
+      (ele: any) => ele.id === draggedParent
     );
 
-    let dragItem = [transformedHistory[draggedItemIndex]];
+    let dragItem: any = [transformedHistory[draggedItemIndex]];
 
     if (draggedItemIndex === -1 && parentIdx > -1) {
       draggedItemIndex = transformedHistory[
         parentIdx
-      ].additionalInfo.layers?.findIndex((hist) => hist.id === draggedItemID);
+      ].additionalInfo.layers?.findIndex(
+        (hist: any) => hist.id === draggedItemID
+      );
       dragItem = [
         transformedHistory[parentIdx].additionalInfo.layers[draggedItemIndex],
       ];
@@ -158,7 +168,7 @@ const DragDrop = ({
 
     if (pseudoID) {
       const parentIndexDragOver = transformedHistory.findIndex(
-        (ele) => ele.id === pseudoID
+        (ele: any) => ele.id === pseudoID
       );
       draggedOverItem =
         transformedHistory[parentIndexDragOver].additionalInfo.layers[index];
@@ -168,7 +178,7 @@ const DragDrop = ({
 
     // console.log("Drag Over:", { newIndex, draggedItemIndex,originalRespectiveIndex, pseudoIndex, index });
 
-    let newItems = [];
+    let newItems: any[] = [];
 
     let filterAbleItems = {
       [draggedItemID]: true,
@@ -198,17 +208,17 @@ const DragDrop = ({
 
     // Filter out the currently dragged item
     newItems = [
-      ...transformedHistory.filter((hist) => !filterAbleItems[hist.id]),
+      ...transformedHistory.filter((hist: any) => !filterAbleItems[hist.id]),
     ];
     newItems = JSON.parse(JSON.stringify(newItems));
     if (parentIdx > -1) {
       newItems[parentIdx].additionalInfo.layers = [
         ...newItems[parentIdx].additionalInfo.layers.filter(
-          (hist) => !filterAbleItems[hist.id]
+          (hist: any) => !filterAbleItems[hist.id]
         ),
       ];
     }
-    if (pseudoID) {
+    if (pseudoID && pseudoIndex !== null) {
       newItems[pseudoIndex].additionalInfo.layers.splice(
         newIndex,
         0,
@@ -216,7 +226,7 @@ const DragDrop = ({
       );
     } else if (isNearCenter) {
       const indexForNew = newItems.findIndex(
-        (ele) => ele.id === draggedOverItem.id
+        (ele: any) => ele.id === draggedOverItem.id
       );
       // Add the dragged item after the dragged over item
       if (indexForNew > -1) {
@@ -238,7 +248,7 @@ const DragDrop = ({
 
   const handleDragEnd = () => {
     const dragOverItem = transformedHistory.find(
-      (ele) => ele.id === dragOverSet.itemId
+      (ele: any) => ele.id === dragOverSet.itemId
     );
 
     setDragoverSet({
@@ -249,19 +259,21 @@ const DragDrop = ({
     setDraggedItemParent(null);
     if (dragOverSet.position === "Embed") {
       let draggedItemIndex = transformedHistory.findIndex(
-        (hist) => hist.id === draggedItemID
+        (hist: any) => hist.id === draggedItemID
       );
 
       let dragItem = transformedHistory[draggedItemIndex];
 
       let parentIdx = transformedHistory.findIndex(
-        (ele) => ele.id === draggedParent
+        (ele: any) => ele.id === draggedParent
       );
 
       if (draggedItemIndex === -1 && parentIdx > -1) {
         draggedItemIndex = transformedHistory[
           parentIdx
-        ].additionalInfo.layers?.findIndex((hist) => hist.id === draggedItemID);
+        ].additionalInfo.layers?.findIndex(
+          (hist: any) => hist.id === draggedItemID
+        );
         dragItem =
           transformedHistory[parentIdx].additionalInfo.layers[draggedItemIndex];
       }
@@ -271,15 +283,15 @@ const DragDrop = ({
         dragOverItem?.type === "heading"
       ) {
         ShowNotification({
-          message: t('youCannotEmbedItemsIntoAttachmentItem'),
+          message: t("youCannotEmbedItemsIntoAttachmentItem"),
           severity: "error",
         });
         return;
       }
 
-      if (!!dragItem.additionalInfo.layers?.length) {
+      if (dragItem.additionalInfo.layers?.length) {
         ShowNotification({
-          message: t('cannotEmbedEmbeddedItem'),
+          message: t("cannotEmbedEmbeddedItem"),
           severity: "error",
         });
         return;
@@ -288,13 +300,13 @@ const DragDrop = ({
     toBeSetItems.current && setList(toBeSetItems.current);
   };
 
-  const autoPlayToggle = (index, pId, id) => {
-    setList((prev) => {
+  const autoPlayToggle = (index: number, pId: string, id: string) => {
+    setList((prev: any) => {
       const old = [...prev];
       const pIndex = old.findIndex((ele) => ele.id === pId);
       if (pIndex > -1) {
         const attachmentIndex = old[pIndex]?.additionalInfo?.layers?.findIndex(
-          (ele) => ele.id === id
+          (ele: any) => ele.id === id
         );
         if (attachmentIndex === 0) {
           old[pIndex].additionalInfo.layers[0].autoPlay =
@@ -306,11 +318,13 @@ const DragDrop = ({
   };
 
   const { datesRepeat, datesInWrongOrder } = useMemo(() => {
-    const datesRepeat = {}; // To track repeated dates with their IDs
-    const datesInWrongOrder = {}; // To track dates that are out of order with their IDs
+    const datesRepeat: any = {}; // To track repeated dates with their IDs
+    const datesInWrongOrder: any = {}; // To track dates that are out of order with their IDs
 
     const seenDates = new Map(); // To track seen dates and their IDs
-    const dateObjects = transformedHistory.filter((obj) => obj.type === "date"); // Filter date objects
+    const dateObjects = transformedHistory.filter(
+      (obj: any) => obj.type === "date"
+    ); // Filter date objects
 
     for (let i = 0; i < dateObjects.length; i++) {
       const current = dateObjects[i];
@@ -347,28 +361,28 @@ const DragDrop = ({
       {creatingPlaylist && Object.keys(datesRepeat).length > 0 && (
         <div className="mini-alert mini-alert-error">
           <span className="icon">🚨</span>
-          <p>{t('pleaseFixRepeatingDates')}</p>
+          <p>{t("pleaseFixRepeatingDates")}</p>
         </div>
       )}
       {creatingPlaylist && Object.keys(datesInWrongOrder).length > 0 && (
         <div className="mini-alert mini-alert-warning">
           <span className="icon">⚠️</span>
-          <p>{t('pleaseFixDatesInWrongOrder')}</p>
+          <p>{t("pleaseFixDatesInWrongOrder")}</p>
         </div>
       )}
 
       {list.length === 0 && (
         <div className="no-items-box">
-          <h4 style={{ margin: "8px 0" }}>{t('addItemsBelow')}</h4>
+          <h4 style={{ margin: "8px 0" }}>{t("addItemsBelow")}</h4>
           {DEV_ENV && (
             <>
               <p className="or" />
-              <p onClick={onGenClick}>{t('clickHereToGeneratePlaylist')}</p>
+              <p onClick={onGenClick}>{t("clickHereToGeneratePlaylist")}</p>
             </>
           )}
         </div>
       )}
-      {transformedHistory.map((data, index) =>
+      {transformedHistory.map((data: any, index: number) =>
         data.type?.includes("range") ||
         (data.additionalInfo?.layers?.length > 0 && layers) ? (
           <PlaylistContentRenderer
@@ -466,7 +480,6 @@ const DragDrop = ({
             playListSubId={playListSubId}
             creatingPlaylist={creatingPlaylist}
             playListSubIndex={playListSubIndex}
-            playListSubIndex={playListSubIndex}
             onClick={onClick}
             name={data.name}
             playlistParentName={playlistName}
@@ -517,7 +530,6 @@ const DragDrop = ({
           <>
             <div
               key={`${data.id}-${data.readAlready}`}
-              playingPlaylist={playingPlaylist}
               draggable={!playingPlaylist && !viewOnly}
               onMouseDown={(e) => e.stopPropagation()} // block parent drag
               onDragStart={() => handleDragStart(index)}
@@ -536,31 +548,31 @@ const DragDrop = ({
                     const isMultiFunctionHold = CheckMultiFuntionHold();
 
                     if (!isMultiFunctionHold && !checklistEnabled)
-                      setItemSelected((prev) =>
+                      setItemSelected((prev: any) =>
                         prev === data.id ? null : data.id
                       );
                   }
                 }
                 if (!viewOnly) {
-                  globalThis.ADDING_TOPLAYLIST_TIMEOUT = setTimeout(() => {
-                    globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
+                  G.ADDING_TOPLAYLIST_TIMEOUT = setTimeout(() => {
+                    G.ADDING_TOPLAYLIST_TIMEOUT = null;
                     if (data.type !== "heading")
                       onClickItem({ dataItem: data });
                   }, 1000);
                 }
               }}
               onPointerUp={() => {
-                if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) {
-                  clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+                if (G.ADDING_TOPLAYLIST_TIMEOUT) {
+                  clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
                 }
               }}
               onMouseLeave={() => {
-                if (globalThis.ADDING_TOPLAYLIST_TIMEOUT)
-                  clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+                if (G.ADDING_TOPLAYLIST_TIMEOUT)
+                  clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
               }}
               onTouchEnd={() => {
-                if (globalThis.ADDING_TOPLAYLIST_TIMEOUT)
-                  clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+                if (G.ADDING_TOPLAYLIST_TIMEOUT)
+                  clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
               }}
             >
               <input
@@ -594,37 +606,28 @@ const DragDrop = ({
                       embedding === data.id
                     }
                     onClick={() => {
-                      const isShiftHold = globalThis?.KEY_HOLD?.["shift"];
+                      const isShiftHold = G?.KEY_HOLD?.["shift"];
                       if (isShiftHold) {
-                        let upperLimit = Math.max(
-                          index,
-                          globalThis.LAST_CLICK_ID
-                        );
-                        let lowerLimit = Math.min(
-                          index,
-                          globalThis.LAST_CLICK_ID
-                        );
+                        let upperLimit = Math.max(index, G.LAST_CLICK_ID);
+                        let lowerLimit = Math.min(index, G.LAST_CLICK_ID);
                         const idsFilter = transformedHistory
                           .filter(
-                            ({ id }, indexInner) =>
+                            (el: any, indexInner: number) =>
                               indexInner <= upperLimit &&
                               indexInner >= lowerLimit &&
-                              indexInner !== globalThis.LAST_CLICK_ID &&
-                              id !== embedding
+                              indexInner !== G.LAST_CLICK_ID &&
+                              el.id !== embedding
                           )
-                          .map((ele) => ele.id);
+                          .map((ele: any) => ele.id);
                         editDataFromPlaylist(idsFilter, false);
-                        globalThis.LAST_CLICK_ID = index;
+                        G.LAST_CLICK_ID = index;
                         return;
                       } else {
-                        globalThis.LAST_CLICK_ID = index;
+                        G.LAST_CLICK_ID = index;
                       }
 
                       if (!embedding && layers && !playingPlaylist) {
-                        if (
-                          globalThis.KEY_HOLD?.["control"] ||
-                          globalThis.KEY_HOLD?.["meta"]
-                        ) {
+                        if (G.KEY_HOLD?.["control"] || G.KEY_HOLD?.["meta"]) {
                           setEmbedding(data.id);
                           return;
                         }
@@ -642,8 +645,8 @@ const DragDrop = ({
               </div>
               <p
                 onClick={() => {
-                  if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) {
-                    clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+                  if (G.ADDING_TOPLAYLIST_TIMEOUT) {
+                    clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
                     if (
                       !viewOnly &&
                       (data.type !== "heading" || allowHeadingCheck)
@@ -692,7 +695,7 @@ const DragDrop = ({
                     className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      globalThis.SetEditRichText?.({
+                      G.SetEditRichText?.({
                         id: data.id,
                         text: data.content,
                       });
@@ -760,67 +763,68 @@ const DragDrop = ({
   );
 };
 
-const PlaylistContentRenderer = ({
-  setItemSelected,
-  datesRepeat,
-  itemSelected,
-  attachLink,
-  massAdd,
-  datesInWrongOrder,
-  currentFormat,
-  draggedItemID,
-  readingPlanEnabled,
-  currentDateActive,
-  setList,
-  transformedHistory,
-  playListSubIndex,
-  isSomethingEmbededChecked,
-  checkListEmbeded,
-  setChecklistEmbeded,
-  onDisembed,
-  setRef,
-  layers,
-  embedding,
-  setEmbedding,
-  originalIndex,
-  clickPass,
-  activeItemID,
-  activeItemList,
-  oldItemsMap,
-  playListSubId,
-  data,
-  viewOnly,
-  linkingMode,
-  creatingPlaylist,
-  checkListData,
-  checklistEnabled,
-  playlistName,
-  editDataFromPlaylist,
-  type,
-  toggle,
-  playingPlaylist,
-  greyOut,
-  content,
-  id,
-  additionalInfo,
-  handleDragStart,
-  autoPlayToggle,
-  handleDragOver,
-  handleDragEnd,
-  index,
-  onClickItem,
-  onClick,
-  deleteFromList,
-  dragOverSet,
-  isAdditionalInfo,
-}) => {
+const PlaylistContentRenderer = (props: any) => {
+  const {
+    setItemSelected,
+    datesRepeat,
+    itemSelected,
+    attachLink,
+    massAdd,
+    datesInWrongOrder,
+    currentFormat,
+    draggedItemID,
+    readingPlanEnabled,
+    currentDateActive,
+    setList,
+    transformedHistory,
+    playListSubIndex,
+    isSomethingEmbededChecked,
+    checkListEmbeded,
+    setChecklistEmbeded,
+    onDisembed,
+    setRef,
+    layers,
+    embedding,
+    setEmbedding,
+    originalIndex,
+    clickPass,
+    activeItemID,
+    activeItemList,
+    oldItemsMap,
+    playListSubId,
+    data,
+    viewOnly,
+    linkingMode,
+    creatingPlaylist,
+    checkListData,
+    checklistEnabled,
+    playlistName,
+    editDataFromPlaylist,
+    type,
+    toggle,
+    playingPlaylist,
+    greyOut,
+    content,
+    id,
+    additionalInfo,
+    handleDragStart,
+    autoPlayToggle,
+    handleDragOver,
+    handleDragEnd,
+    index,
+    onClickItem,
+    onClick,
+    deleteFromList,
+    dragOverSet,
+    isAdditionalInfo,
+  } = props;
   const [open, setOpen] = useState(false);
   const prevAutoOpen = useRef(false);
 
   useLayoutEffect(() => {
-    globalThis[`${id}OpenToggle`] = setOpen;
+    G[`${id}OpenToggle`] = setOpen;
     return () => {
-      globalThis[`${id}OpenToggle`] = null;
+      G[`${id}OpenToggle`] = null;
     };
   }, [open]);
 
@@ -835,13 +839,13 @@ const PlaylistContentRenderer = ({
     : additionalInfo || [];
 
   const isChecked = itemToBeShared.every(
-    (ele) => ele.readAlready || checkListData[ele.id]
+    (ele: any) => ele.readAlready || checkListData[ele.id]
   );
-  const isGreyout = itemToBeShared.every((ele) => oldItemsMap[ele.id]);
+  const isGreyout = itemToBeShared.every((ele: any) => oldItemsMap[ele.id]);
   const isActive = itemToBeShared.some(
-    (ele) => ele.id === activeItemID || activeItemList[ele.id]
+    (ele: any) => ele.id === activeItemID || activeItemList[ele.id]
   );
-  const allIds = itemToBeShared.map((ele) => ele.id);
+  const allIds = itemToBeShared.map((ele: any) => ele.id);
 
   const extraClasses = `${(toggle === id || activeItemID === id || activeItemList[id] || isActive) && "current-playing-item"} ${(greyOut || oldItemsMap[id] || isGreyout) && "greyed-out"} ${embedding === data.id ? "embedding-on" : ""} ${dragOverSet.itemId === id && `dropabble-${dragOverSet.position}`}`;
 
@@ -876,25 +880,27 @@ const PlaylistContentRenderer = ({
             const isMultiFunctionHold = CheckMultiFuntionHold();
 
             if (!isMultiFunctionHold && !checklistEnabled)
-              setItemSelected((prev) => (prev === data.id ? null : data.id));
+              setItemSelected((prev: any) =>
+                prev === data.id ? null : data.id
+              );
           }
         }}
         onPointerUp={() => {
           if (dragged.current) {
             dragged.current = false;
           }
-          if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) {
-            clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
-            globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
+          if (G.ADDING_TOPLAYLIST_TIMEOUT) {
+            clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
+            G.ADDING_TOPLAYLIST_TIMEOUT = null;
           }
         }}
         onMouseLeave={() => {
-          if (globalThis.ADDING_TOPLAYLIST_TIMEOUT)
-            clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+          if (G.ADDING_TOPLAYLIST_TIMEOUT)
+            clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
         }}
         onTouchEnd={() => {
-          if (globalThis.ADDING_TOPLAYLIST_TIMEOUT)
-            clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+          if (G.ADDING_TOPLAYLIST_TIMEOUT)
+            clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
         }}
         onMouseDown={(e) => e.stopPropagation()} // block parent drag
         onDragStart={() => {
@@ -928,30 +934,27 @@ const PlaylistContentRenderer = ({
               disabled={embedding === data.id}
               small
               onClick={() => {
-                const isShiftHold = globalThis?.KEY_HOLD?.["shift"];
+                const isShiftHold = G?.KEY_HOLD?.["shift"];
                 if (isShiftHold) {
-                  let upperLimit = Math.max(index, globalThis.LAST_CLICK_ID);
-                  let lowerLimit = Math.min(index, globalThis.LAST_CLICK_ID);
+                  let upperLimit = Math.max(index, G.LAST_CLICK_ID);
+                  let lowerLimit = Math.min(index, G.LAST_CLICK_ID);
                   const idsFilter = transformedHistory
                     .filter(
-                      ({ id }, indexInner) =>
+                      (el: any, indexInner: number) =>
                         indexInner <= upperLimit &&
                         indexInner >= lowerLimit &&
-                        indexInner !== globalThis.LAST_CLICK_ID &&
-                        id !== embedding
+                        indexInner !== G.LAST_CLICK_ID &&
+                        el.id !== embedding
                     )
-                    .map((ele) => ele.id);
+                    .map((ele: any) => ele.id);
                   editDataFromPlaylist(idsFilter, false);
-                  globalThis.LAST_CLICK_ID = index;
+                  G.LAST_CLICK_ID = index;
                   return;
                 } else {
-                  globalThis.LAST_CLICK_ID = index;
+                  G.LAST_CLICK_ID = index;
                 }
                 if (!embedding && layers && !playingPlaylist) {
-                  if (
-                    globalThis.KEY_HOLD?.["control"] ||
-                    globalThis.KEY_HOLD?.["meta"]
-                  ) {
+                  if (G.KEY_HOLD?.["control"] || G.KEY_HOLD?.["meta"]) {
                     setEmbedding(data.id);
                     return;
                   }
@@ -968,7 +971,7 @@ const PlaylistContentRenderer = ({
         </div>
 
         {!isAdditionalInfo &&
-          toBeMapArray.map((data) => (
+          toBeMapArray.map((data: any) => (
             <input
               style={{
                 opacity: "0",
@@ -993,15 +996,15 @@ const PlaylistContentRenderer = ({
               dragged.current = false;
             }
             if (!viewOnly) {
-              clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
-              globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
+              clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
+              G.ADDING_TOPLAYLIST_TIMEOUT = null;
               onClick({ dataItem: itemToBeShared, bulkAdd: true, index });
               if (checklistEnabled) {
                 editDataFromPlaylist(allIds);
               }
             }
             if (clickPass) {
-              globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
+              G.ADDING_TOPLAYLIST_TIMEOUT = null;
               onClick({ dataItem: itemToBeShared, bulkAdd: true, index });
               if (checklistEnabled) {
                 editDataFromPlaylist(allIds);
@@ -1041,7 +1044,7 @@ const PlaylistContentRenderer = ({
             <p className="without-right-margin end-icon">
               <span
                 onClick={() => {
-                  deleteFromList(itemToBeShared.map((data) => data.id));
+                  deleteFromList(itemToBeShared.map((data: any) => data.id));
                 }}
                 class="material-symbols-outlined unfollow delete-icon"
               >
@@ -1076,7 +1079,7 @@ const PlaylistContentRenderer = ({
         }}
       >
         {!isAdditionalInfo &&
-          toBeMapArray.map((data, index) => {
+          toBeMapArray.map((data: any, index: number) => {
             return data.type === "attachment-link" || data.type === "date" ? (
               <AttachmentLinkItem
                 linkingMode={linkingMode}
@@ -1116,7 +1119,6 @@ const PlaylistContentRenderer = ({
                 handleDragOver={handleDragOver}
                 toggle={toggle}
                 setList={setList}
-                layers={layers}
                 pId={id}
                 handleDragEnd={handleDragEnd}
                 originalList={transformedHistory}
@@ -1126,36 +1128,27 @@ const PlaylistContentRenderer = ({
                 playingPlaylist={playingPlaylist}
                 data={data}
                 onClickCheckbox={() => {
-                  const isShiftHold = globalThis?.KEY_HOLD?.["shift"];
-                  if (
-                    isShiftHold &&
-                    id === globalThis.LAST_CLICK_EMBED_PARENT
-                  ) {
-                    let upperLimit = Math.max(
-                      index,
-                      globalThis.LAST_CLICK_EMBED_ID
-                    );
-                    let lowerLimit = Math.min(
-                      index,
-                      globalThis.LAST_CLICK_EMBED_ID
-                    );
+                  const isShiftHold = G?.KEY_HOLD?.["shift"];
+                  if (isShiftHold && id === G.LAST_CLICK_EMBED_PARENT) {
+                    let upperLimit = Math.max(index, G.LAST_CLICK_EMBED_ID);
+                    let lowerLimit = Math.min(index, G.LAST_CLICK_EMBED_ID);
                     const idsFilter = toBeMapArray
                       .filter(
-                        ({ id }, indexInner) =>
+                        (el: any, indexInner: number) =>
                           indexInner <= upperLimit &&
                           indexInner >= lowerLimit &&
-                          indexInner !== globalThis.LAST_CLICK_EMBED_ID &&
-                          id !== embedding
+                          indexInner !== G.LAST_CLICK_EMBED_ID &&
+                          el.id !== embedding
                       )
-                      .map((ele) => ele.id);
+                      .map((ele: any) => ele.id);
                     setChecklistEmbeded(idsFilter, false);
-                    globalThis.LAST_CLICK_EMBED_PARENT = id;
-                    globalThis.LAST_CLICK_EMBED_ID = index;
+                    G.LAST_CLICK_EMBED_PARENT = id;
+                    G.LAST_CLICK_EMBED_ID = index;
 
                     return;
                   } else {
-                    globalThis.LAST_CLICK_EMBED_PARENT = id;
-                    globalThis.LAST_CLICK_EMBED_ID = index;
+                    G.LAST_CLICK_EMBED_PARENT = id;
+                    G.LAST_CLICK_EMBED_ID = index;
                   }
                   if (layers) {
                     setChecklistEmbeded(data.id, id);
@@ -1191,25 +1184,25 @@ const PlaylistContentRenderer = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   if (!viewOnly) {
-                    globalThis.ADDING_TOPLAYLIST_TIMEOUT = setTimeout(() => {
-                      globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
+                    G.ADDING_TOPLAYLIST_TIMEOUT = setTimeout(() => {
+                      G.ADDING_TOPLAYLIST_TIMEOUT = null;
                       if (data.type !== "heading")
                         onClickItem({ dataItem: data });
                     }, 1000);
                   }
                 }}
                 onPointerUp={() => {
-                  if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) {
-                    clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+                  if (G.ADDING_TOPLAYLIST_TIMEOUT) {
+                    clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
                   }
                 }}
                 onMouseLeave={() => {
-                  if (globalThis.ADDING_TOPLAYLIST_TIMEOUT)
-                    clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+                  if (G.ADDING_TOPLAYLIST_TIMEOUT)
+                    clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
                 }}
                 onTouchEnd={() => {
-                  if (globalThis.ADDING_TOPLAYLIST_TIMEOUT)
-                    clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+                  if (G.ADDING_TOPLAYLIST_TIMEOUT)
+                    clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
                 }}
               >
                 <div className="start-actions">
@@ -1226,35 +1219,32 @@ const PlaylistContentRenderer = ({
                           : checkListData[data.id] || data.readAlready
                       }
                       onClick={() => {
-                        const isShiftHold = globalThis?.KEY_HOLD?.["shift"];
-                        if (
-                          isShiftHold &&
-                          id === globalThis.LAST_CLICK_EMBED_PARENT
-                        ) {
+                        const isShiftHold = G?.KEY_HOLD?.["shift"];
+                        if (isShiftHold && id === G.LAST_CLICK_EMBED_PARENT) {
                           let upperLimit = Math.max(
                             index,
-                            globalThis.LAST_CLICK_EMBED_ID
+                            G.LAST_CLICK_EMBED_ID
                           );
                           let lowerLimit = Math.min(
                             index,
-                            globalThis.LAST_CLICK_EMBED_ID
+                            G.LAST_CLICK_EMBED_ID
                           );
                           const idsFilter = toBeMapArray
                             .filter(
-                              ({ id }, indexInner) =>
+                              (el: any, indexInner: number) =>
                                 indexInner <= upperLimit &&
                                 indexInner >= lowerLimit &&
-                                indexInner !== globalThis.LAST_CLICK_EMBED_ID &&
-                                id !== embedding
+                                indexInner !== G.LAST_CLICK_EMBED_ID &&
+                                el.id !== embedding
                             )
-                            .map((ele) => ele.id);
+                            .map((ele: any) => ele.id);
                           setChecklistEmbeded(idsFilter, false);
-                          globalThis.LAST_CLICK_EMBED_PARENT = id;
-                          globalThis.LAST_CLICK_EMBED_ID = index;
+                          G.LAST_CLICK_EMBED_PARENT = id;
+                          G.LAST_CLICK_EMBED_ID = index;
                           return;
                         } else {
-                          globalThis.LAST_CLICK_EMBED_PARENT = id;
-                          globalThis.LAST_CLICK_EMBED_ID = index;
+                          G.LAST_CLICK_EMBED_PARENT = id;
+                          G.LAST_CLICK_EMBED_ID = index;
                         }
                         if (layers) {
                           setChecklistEmbeded(data.id, id);
@@ -1272,8 +1262,8 @@ const PlaylistContentRenderer = ({
                 </div>
                 <p
                   onClick={() => {
-                    if (globalThis.ADDING_TOPLAYLIST_TIMEOUT && !viewOnly) {
-                      clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+                    if (G.ADDING_TOPLAYLIST_TIMEOUT && !viewOnly) {
+                      clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
                       if (data.type !== "heading") {
                         if (checklistEnabled) {
                           editDataFromPlaylist(data.id);
@@ -1306,7 +1296,7 @@ const PlaylistContentRenderer = ({
                       className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        globalThis.SetEditRichText?.({
+                        G.SetEditRichText?.({
                           id: data.id,
                           text: data.content,
                           parentID: id,

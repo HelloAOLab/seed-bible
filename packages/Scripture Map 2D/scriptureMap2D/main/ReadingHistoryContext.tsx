@@ -5,47 +5,59 @@ import {
   calculateReadingHistorySummary,
   getSubscribedUsers,
 } from "db.annotations.library";
-import type { SubscribedUser } from "db.annotations.library";
+import type { ReadingHistorySummary } from "db.annotations.library";
 import { useTabsContext } from "app.hooks.tabs";
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
+import type {
+  ReadingHistoryContextType,
+  ReadingHistoryProviderProps,
+} from "scriptureMap2D.main.interfaces";
+import type {
+  RangedReadingEventsByBook,
+  ReadingEventsByDay,
+  DailyReadingHistorySummaries,
+  DateRange,
+  Range,
+  UserData,
+  ReadingHistoryUserFilters,
+  KeyRangesMap,
+  UsersDataMap,
+  TimelineRangesMap,
+} from "scriptureMap2D.main.types";
+import {
+  ScriptureMap2DModes,
+  TimelineRangeMethod,
+  type TimelineRangeMethodType,
+} from "scriptureMap2D.main.enums";
+import { ConvertCompletePsalmsToDivided } from "bibleVizUtils.functions.scripture";
+import { GetDayRangeSeconds } from "bibleVizUtils.functions.index";
+import { eventSystem, Events } from "scriptureMap2D.main.eventManager";
 
 const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
   os.appHooks;
 
-const ReadingHistoryContext = createContext();
-
-interface Range {
-  startDate: Date;
-  endDate: Date;
-}
-interface UserData {
-  profileName?: string;
-  photoLink?: string;
-  id: string;
-}
-
-type TimelineRangeMethod = "rolling" | "calendar";
+const ReadingHistoryContext = createContext<
+  ReadingHistoryContextType | undefined
+>(undefined);
 
 const timelineMinYear = 2023;
 
 const initialTimelineRangeKey = new Date().getFullYear();
 
-export const ReadingHistoryProvider = ({ children }) => {
-  const {
-    mode,
-    ScriptureMap2DModes,
-    isReadingHistoryEnabled,
-    setShowingBooksColors,
-  } = useScriptureMap2DContext();
+export const ReadingHistoryProvider: (
+  args: ReadingHistoryProviderProps
+) => React.JSX.Element = ({ children }) => {
+  const { mode, isReadingHistoryEnabled, setShowingBooksColors } =
+    useScriptureMap2DContext();
 
   const { activeTab } = useTabsContext();
   const { tick } = useTimeContext();
 
   const [timelineRangeMethod, setTimelineRangeMethod] =
-    useState<TimelineRangeMethod>("rolling");
+    useState<TimelineRangeMethodType>(TimelineRangeMethod.Rolling);
 
-  const timelineRangesMap = useMemo<Map<number, Range>>(() => {
-    const rangesMap = new Map<number, Range>();
+  const timelineRangesMap = useMemo<TimelineRangesMap>(() => {
+    const rangesMap = new Map<number, DateRange>();
 
     const nowDate = new Date();
     const endOfToday = new Date(nowDate);
@@ -55,7 +67,7 @@ export const ReadingHistoryProvider = ({ children }) => {
       let startDate: Date;
       let endDate: Date;
       switch (timelineRangeMethod) {
-        case "rolling":
+        case TimelineRangeMethod.Rolling:
           {
             endDate = new Date(nowDate);
             endDate.setFullYear(year);
@@ -66,7 +78,7 @@ export const ReadingHistoryProvider = ({ children }) => {
             startDate.setHours(0, 0, 0, 0);
           }
           break;
-        case "calendar":
+        case TimelineRangeMethod.Calendar:
           {
             startDate = new Date(year, 0, 1, 0, 0, 0); // Jan 1st (00:00:00)
             endDate = new Date(year, 11, 31, 23, 59, 59); // Dec 31st (23:59:59)
@@ -90,7 +102,7 @@ export const ReadingHistoryProvider = ({ children }) => {
   const [selectedTimelineKey, setSelectedTimelineKey] = useState<number>(
     initialTimelineRangeKey
   );
-  const timelineRange = useMemo<Range>(() => {
+  const timelineRange = useMemo<DateRange>(() => {
     let range = timelineRangesMap.get(selectedTimelineKey);
     if (!range) {
       const now = new Date();
@@ -110,23 +122,20 @@ export const ReadingHistoryProvider = ({ children }) => {
   }, [timelineRangesMap, selectedTimelineKey]);
 
   const [readingHistoryRangeSeconds, setReadingHistoryRangeSeconds] =
-    useState(null);
-  const [readingHistoryUserFilters, setReadingHistoryUserFilters] = useState(
-    new Map()
-  );
+    useState<Range | null>(null);
+  const [readingHistoryUserFilters, setReadingHistoryUserFilters] =
+    useState<ReadingHistoryUserFilters>(new Map());
   const [myAuthBotId, setMyAuthBotId] = useState<string | null>(null);
-  const [usersDataMap, setUsersDataMap] = useState<Map<string, UserData>>(
-    new Map()
-  );
+  const [usersDataMap, setUsersDataMap] = useState<UsersDataMap>(new Map());
   const [yearlyReadingHistorySummary, setYearlyReadingHistorySummary] =
-    useState(null);
-  const [rangedReadingEventsByBook, setRangedReadingEventsByBook] = useState(
-    new Map()
-  );
+    useState<ReadingHistorySummary | null>(null);
+  const [rangedReadingEventsByBook, setRangedReadingEventsByBook] =
+    useState<RangedReadingEventsByBook>(new Map());
   const [dailyReadingHistorySummaries, setDailyReadingHistorySummaries] =
-    useState(null);
-  const [selectedUsersCount, setSelectedUsersCount] = useState(0);
-  const [readingEventsByDay, setReadingEventsByDay] = useState(null);
+    useState<DailyReadingHistorySummaries | null>(null);
+  const [selectedUsersCount, setSelectedUsersCount] = useState<number>(0);
+  const [readingEventsByDay, setReadingEventsByDay] =
+    useState<ReadingEventsByDay | null>(null);
 
   const handleUserLoggedIn = useCallback(() => {
     if (!myAuthBotId) {
@@ -159,28 +168,24 @@ export const ReadingHistoryProvider = ({ children }) => {
         ...subscribedUsers.map((user) => user.id),
       ];
 
-      const dataPromises = allAuthBotIds.map(async (id) => {
-        const firstResult = await os.getData(id, id);
-        if (firstResult.success) return { ...firstResult.data, id };
+      const dataPromises: Promise<UserData>[] = allAuthBotIds.map(
+        async (id) => {
+          const firstResult = await os.getData(id, id);
+          if (firstResult.success) return { ...firstResult.data, id };
 
-        const secondResult = await os.getData(componentsBot.tags.key, id);
-        if (secondResult.success) return { ...secondResult.data, id };
+          const secondResult = await os.getData(componentsBot.tags.key, id);
+          if (secondResult.success) return { ...secondResult.data, id };
 
-        return undefined;
-      });
+          return undefined;
+        }
+      );
 
       let rawUsersData = await Promise.all(dataPromises);
       rawUsersData = rawUsersData.filter(Boolean);
 
       const newUsersData: Map<string, UserData> = new Map(
         rawUsersData.map((data) => {
-          return [
-            data.id,
-            {
-              profileName: data.profileName,
-              photoLink: data.photoLink,
-            },
-          ];
+          return [data.id, data];
         })
       );
 
@@ -200,14 +205,20 @@ export const ReadingHistoryProvider = ({ children }) => {
   }, [fetchUsersDataMap]);
 
   useEffect(() => {
-    globalThis.ScriptureMapHandleUserLoggedIn = handleUserLoggedIn;
-    globalThis.ScriptureMapHandleSubscriptionsChanged = refreshUsersDataMap;
+    const unsubscribeUserLoggedIn = eventSystem.subscribe(
+      Events.UserLoggedIn,
+      handleUserLoggedIn
+    );
+    const unsubscribeSubscriptionsChanged = eventSystem.subscribe(
+      Events.SubscriptionsChanged,
+      refreshUsersDataMap
+    );
 
     trySetMyAuthBotId();
 
     return () => {
-      globalThis.ScriptureMapHandleUserLoggedIn = null;
-      globalThis.ScriptureMapHandleSubscriptionsChanged = null;
+      unsubscribeUserLoggedIn();
+      unsubscribeSubscriptionsChanged();
     };
   }, [handleUserLoggedIn, trySetMyAuthBotId]);
 
@@ -271,7 +282,7 @@ export const ReadingHistoryProvider = ({ children }) => {
           MS_PER_WEEK
       ) + 1;
 
-    const dayRangesMap = new Map();
+    const dayRangesMap: KeyRangesMap = new Map();
     for (let week = 0; week < weeksCount; week++) {
       for (let day = 0; day < 7; day++) {
         if (week === weeksCount - 1 && day > timelineRange.endDate.getDay())
@@ -352,9 +363,9 @@ export const ReadingHistoryProvider = ({ children }) => {
     setSelectedUsersCount(selectedUsers.length);
 
     let summary;
-    const rangedEventsByBook = new Map();
-    const eventsByDay = new Map();
-    const dailySummaries = new Map();
+    const rangedEventsByBook: RangedReadingEventsByBook = new Map();
+    const eventsByDay: ReadingEventsByDay = new Map();
+    const dailySummaries: DailyReadingHistorySummaries = new Map();
 
     if (selectedUsers.length === 0) {
       summary = calculateReadingHistorySummary([]);
@@ -393,7 +404,7 @@ export const ReadingHistoryProvider = ({ children }) => {
           if (start >= rangeStart && start <= rangeEnd) {
             if (bookId === "PSA") {
               const { bookId: dividedPsalmId, chapter: dividedPsalmChapter } =
-                BibleVizUtils.Functions.ConvertCompletePsalmsToDivided({
+                ConvertCompletePsalmsToDivided({
                   chapter,
                 });
               event = {
@@ -406,7 +417,7 @@ export const ReadingHistoryProvider = ({ children }) => {
             if (!rangedEventsByBook.has(bookId)) {
               rangedEventsByBook.set(bookId, []);
             }
-            rangedEventsByBook.get(bookId).push(event);
+            rangedEventsByBook.get(bookId)?.push(event);
           }
 
           const dayIndex = Math.floor(
@@ -416,10 +427,12 @@ export const ReadingHistoryProvider = ({ children }) => {
           if (dayIndex >= 0 && dayIndex < dayKeys.length) {
             const key = dayKeys[dayIndex];
 
-            if (!eventsByDay.has(key)) {
-              eventsByDay.set(key, []);
+            if (key) {
+              if (!eventsByDay.has(key)) {
+                eventsByDay.set(key, []);
+              }
+              eventsByDay.get(key)?.push(event);
             }
-            eventsByDay.get(key).push(event);
           }
         }
 
@@ -450,7 +463,9 @@ export const ReadingHistoryProvider = ({ children }) => {
     startDateStartOfWeek,
   ]);
 
-  const handleReadingHistoryUserSelectorClick = useCallback(
+  const handleReadingHistoryUserSelectorClick = useCallback<
+    (key: string) => void
+  >(
     (key) => {
       const copy = new Map(readingHistoryUserFilters);
       if (key === "all") {
@@ -476,14 +491,16 @@ export const ReadingHistoryProvider = ({ children }) => {
     [readingHistoryUserFilters]
   );
 
-  const handleReadingHistoryRangeSelectorClick = useCallback(
+  const handleReadingHistoryRangeSelectorClick = useCallback<
+    (range: Range | null) => void
+  >(
     (range) => {
       setReadingHistoryRangeSeconds(range);
     },
     [setReadingHistoryRangeSeconds]
   );
 
-  const shouldShowReadingHistory = useMemo(() => {
+  const shouldShowReadingHistory = useMemo<boolean>(() => {
     return (
       mode === ScriptureMap2DModes.Viewer &&
       isReadingHistoryEnabled &&
@@ -538,21 +555,14 @@ export const ReadingHistoryProvider = ({ children }) => {
   );
 };
 
-export const useReadingHistoryContext = () => {
-  return useContext(ReadingHistoryContext);
+export const useReadingHistoryContext: () => ReadingHistoryContextType = () => {
+  const context = useContext(ReadingHistoryContext);
+
+  if (!context) {
+    throw new Error(
+      "useReadingHistoryContext must be used within a ReadingHistoryContext"
+    );
+  }
+
+  return context as ReadingHistoryContextType;
 };
-
-function GetDayRangeSeconds(timestamp) {
-  const date = new Date(timestamp);
-
-  const start = new Date(date);
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date(date);
-  end.setHours(23, 59, 59, 999);
-
-  return {
-    start: Math.floor(start.getTime() / 1000),
-    end: Math.floor(end.getTime() / 1000),
-  };
-}

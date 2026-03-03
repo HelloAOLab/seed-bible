@@ -1,7 +1,10 @@
 const text = that.text;
 const promptSystem = that.prompt || null;
+const G = globalThis as any;
 
-const prompt = `${promptSystem || globalThis.SYSTEM_PROMPT}`.replace(/\$text\$/g, text) + `
+const prompt =
+  `${promptSystem || G.SYSTEM_PROMPT}`.replace(/\$text\$/g, text) +
+  `
 ---
 
 📌 Playlist must begin with 4 metadata items:
@@ -14,65 +17,71 @@ const prompt = `${promptSystem || globalThis.SYSTEM_PROMPT}`.replace(/\$text\$/g
 
 `;
 
-function extractJsonFromString(inputString, tries = 1) {
-    // Use regex to find JSON array in the input string
-    const jsonTakenOut = inputString.match(/\[\s*\{[\s\S]*\}\s*\]/);
+function extractJsonFromString(inputString: string, tries = 1) {
+  // Use regex to find JSON array in the input string
+  const jsonTakenOut = inputString.match(/\[\s*\{[\s\S]*\}\s*\]/);
 
-    const jsonMatch = tries === 2 ? [inputString] : jsonTakenOut?.[0] ? jsonTakenOut : [inputString];
+  const jsonMatch: any =
+    tries === 2
+      ? [inputString]
+      : jsonTakenOut?.[0]
+        ? jsonTakenOut
+        : [inputString];
 
-    if (jsonMatch) {
-        try {
-            return JSON.parse(jsonMatch[0]); // Parse and return JSON object
-        } catch (error) {
-            if (tries === 1) {
-                console.log("FAILED: RETRYING", jsonMatch);
-                return extractJsonFromString(JSON.stringify(jsonMatch[0]), 2);
-            }
-            console.error("Invalid JSON format:", error);
-            return null;
-        }
-    } else {
-        console.error("No JSON found in the input string.");
-        return null;
+  if (jsonMatch) {
+    try {
+      return JSON.parse(jsonMatch[0]); // Parse and return JSON object
+    } catch (error) {
+      if (tries === 1) {
+        console.log("FAILED: RETRYING", jsonMatch);
+        return extractJsonFromString(JSON.stringify(jsonMatch[0]), 2);
+      }
+      console.error("Invalid JSON format:", error);
+      return null;
     }
-};
+  } else {
+    console.error("No JSON found in the input string.");
+    return null;
+  }
+}
 
 // console.log(prompt, "prompt")
 // console.log("CALLING GPT4", text);
-let myChat = await ai.chat(prompt, { preferredModel: that.aiModal || 'gpt-4o' });
+let myChat = await ai.chat(prompt, {
+  preferredModel: that.aiModal || "gpt-4o",
+});
 // console.log("myChat", myChat);
 const results = extractJsonFromString(myChat);
 
 // console.log("CALLING GPT4 SUCCESS", results);
 
-
-const booksObject = globalThis.BOOKID_DATA.reduce((acc, book) => {
-    acc[book.name.toLowerCase()] = { ...book };
-    return acc;
+const booksObject = G.BOOKID_DATA.reduce((acc: any, book: any) => {
+  acc[book.name.toLowerCase()] = { ...book };
+  return acc;
 }, {});
 
 if (!Array.isArray(results)) {
-    throw new Error("Result JSON was not able to convert to array!");
+  throw new Error("Result JSON was not able to convert to array!");
 }
 
 const {
-    allItems,
-    badData,
-    suggestedName,
-    suggestedIcon,
-    suggestedColor,
-    suggestedDescription,
+  allItems,
+  badData,
+  suggestedName,
+  suggestedIcon,
+  suggestedColor,
+  suggestedDescription,
 } = thisBot.ConvertDataType({ results });
 
 if (badData) {
-    console.error("Founded wrong format! Send Logs to Kushagra!");
-    os.toast("Founded wrong format! Send Logs to Kushagra!");
+  console.error("Founded wrong format! Send Logs to Kushagra!");
+  os.toast("Founded wrong format! Send Logs to Kushagra!");
 }
 
 return {
-    suggestedName,
-    allItems,
-    suggestedColor,
-    suggestedIcon,
-    suggestedDescription
+  suggestedName,
+  allItems,
+  suggestedColor,
+  suggestedIcon,
+  suggestedDescription,
 };

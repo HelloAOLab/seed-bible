@@ -11,64 +11,69 @@ const description = that?.description;
 const selectedTags = that?.selectedTags;
 const isLayers = that?.isLayers;
 const access = that?.access;
+const G = globalThis as any;
+const editId = G[`${id}isEditMode`];
+const isEditModeSubID = G[`${id}isEditModeSubID`];
 
-const editId = globalThis[`${id}isEditMode`];
-const isEditModeSubID = globalThis[`${id}isEditModeSubID`];
+if (G.makingPlaylist) {
+  const dataItem: any = {
+    name: G[`${id}creatingPlaylistName`].trim(),
+    list: G[`${id}currentPlaylist`],
+    id: editId || G.createUUID(),
+    nesting: 1,
+    toggleRender: false,
+    attachment,
+    checklistEnabled,
+    readingPlanEnabled,
+    dateFormat: currentFormat,
+    color,
+    icon,
+    isCustomColor,
+    isCustomIcon,
+    description,
+    selectedTags,
+    isLayers,
+    access,
+  };
 
-if (globalThis.makingPlaylist) {
-    const dataItem = {
-        name: globalThis[`${id}creatingPlaylistName`].trim(),
-        list: globalThis[`${id}currentPlaylist`],
-        id: editId || createUUID(),
-        nesting: 1,
-        toggleRender: false,
-        attachment,
-        checklistEnabled,
-        readingPlanEnabled,
-        dateFormat: currentFormat,
-        color,
-        icon,
-        isCustomColor,
-        isCustomIcon,
-        description,
-        selectedTags,
-        isLayers,
-        access
-    };
+  if (isEditModeSubID) {
+    dataItem.type = "playlist";
+  }
 
-    if (isEditModeSubID) {
-        dataItem.type = "playlist";
-    }
-
-    if (globalThis[`${id}AddPlaylist`]) {
-        globalThis[`${id}AddPlaylist`](dataItem, editId, isEditModeSubID);
-    } else {
-        if (globalThis[`${id}playlists`]) {
-            if (editId) {
-                if (isEditModeSubID) {
-                    const subIndex = globalThis[`${id}playlists`].findIndex(pl => pl.id === isEditModeSubID);
-                    const index = globalThis[`${id}playlists`][subIndex].list.findIndex(pl => pl.id === id);
-                    if (dataItem.list.length === 0 && !dataItem.attachment) {
-                        globalThis[`${id}playlists`][subIndex].list.splice(index, 1);
-                    } else {
-                        globalThis[`${id}playlists`][subIndex].list[index] = dataItem;
-                    }
-                } else {
-                    const index = globalThis[`${id}playlists`].findIndex(pl => pl.id === id);
-                    if (dataItem.list.length === 0 && !dataItem.attachment) {
-                        globalThis[`${id}playlists`].splice(index, 1);
-                    } else {
-                        globalThis[`${id}playlists`][index] = dataItem;
-                    }
-                }
-
-            } else {
-                if (!dataItem.list?.length) return os.toast("Play list is empty!")
-                globalThis[`${id}playlists`].push(dataItem);
-            }
+  if (G[`${id}AddPlaylist`]) {
+    G[`${id}AddPlaylist`](dataItem, editId, isEditModeSubID);
+  } else {
+    if (G[`${id}playlists`]) {
+      if (editId) {
+        if (isEditModeSubID) {
+          const subIndex = G[`${id}playlists`].findIndex(
+            (pl: any) => pl.id === isEditModeSubID
+          );
+          const index = G[`${id}playlists`][subIndex].list.findIndex(
+            (pl: any) => pl.id === id
+          );
+          if (dataItem.list.length === 0 && !dataItem.attachment) {
+            G[`${id}playlists`][subIndex].list.splice(index, 1);
+          } else {
+            G[`${id}playlists`][subIndex].list[index] = dataItem;
+          }
         } else {
-            globalThis[`${id}playlists`] = [dataItem];
+          const index = G[`${id}playlists`].findIndex(
+            (pl: any) => pl.id === id
+          );
+          if (dataItem.list.length === 0 && !dataItem.attachment) {
+            G[`${id}playlists`].splice(index, 1);
+          } else {
+            G[`${id}playlists`][index] = dataItem;
+          }
         }
-        setPlaylistLocale(globalThis[`${id}playlists`], id);
+      } else {
+        if (!dataItem.list?.length) return os.toast("Play list is empty!");
+        G[`${id}playlists`].push(dataItem);
+      }
+    } else {
+      G[`${id}playlists`] = [dataItem];
     }
+    G.setPlaylistLocale(G[`${id}playlists`], id);
+  }
 }

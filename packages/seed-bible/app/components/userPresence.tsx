@@ -98,6 +98,7 @@ function getOrSetVisualInTags(remoteId) {
 }
 
 globalThis.GetOrSetVisualInTags = getOrSetVisualInTags;
+shout("onGetOrSetVisualInTagsDefined");
 
 async function getSelfIdSafe() {
   try {
@@ -1255,7 +1256,7 @@ function SettingRow({ label, isOn, onToggle }) {
         style={{
           width: 42,
           height: 24,
-          backgroundColor: isOn ? "#FF6B35" : "#444",
+          backgroundColor: isOn ? "var(--secondaryColor)" : "#444",
           borderRadius: 12,
           position: "relative",
           cursor: "pointer",

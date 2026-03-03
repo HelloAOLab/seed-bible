@@ -336,6 +336,172 @@ export const SplitApp = ({
     setPanelWidths(Array(count).fill(defaultWidth));
   }, [activeSpace, currentContainerWidth, count]);
 
+  // Overlap panel state
+  const defaultOverlapWidth = Math.max(300, currentContainerWidth * 0.4);
+  const [overlapWidth, setOverlapWidth] = useState(defaultOverlapWidth);
+  const [overlapVisible, setOverlapVisible] = useState(false);
+  const overlapDragRef = useRef({
+    isDragging: false,
+    startX: 0,
+    startWidth: 0,
+  });
+
+  // Default overlap for 2 panels, or when explicitly enabled
+  const isOverlap = count >= 2 && screens.overlap !== false;
+
+  useEffect(() => {
+    if (isOverlap) {
+      requestAnimationFrame(() => setOverlapVisible(true));
+    } else {
+      setOverlapVisible(false);
+    }
+  }, [isOverlap]);
+
+  const handleOverlapDragDown = (e) => {
+    e.preventDefault();
+    overlapDragRef.current = {
+      isDragging: true,
+      startX: e.clientX,
+      startWidth: overlapWidth,
+    };
+    const onMove = (ev) => {
+      if (!overlapDragRef.current.isDragging) return;
+      const delta = overlapDragRef.current.startX - ev.clientX;
+      let newWidth = overlapDragRef.current.startWidth + delta;
+      newWidth = Math.max(300, Math.min(newWidth, currentContainerWidth * 0.8));
+      setOverlapWidth(newWidth);
+    };
+    const onUp = () => {
+      overlapDragRef.current.isDragging = false;
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  };
+
+  const handleOverlapTouchDown = (e) => {
+    const touch = e.touches[0];
+    overlapDragRef.current = {
+      isDragging: true,
+      startX: touch.clientX,
+      startWidth: overlapWidth,
+    };
+    const onMove = (ev) => {
+      if (!overlapDragRef.current.isDragging) return;
+      const t = ev.touches[0];
+      const delta = overlapDragRef.current.startX - t.clientX;
+      let newWidth = overlapDragRef.current.startWidth + delta;
+      newWidth = Math.max(300, Math.min(newWidth, currentContainerWidth * 0.8));
+      setOverlapWidth(newWidth);
+    };
+    const onEnd = () => {
+      overlapDragRef.current.isDragging = false;
+      document.removeEventListener("touchmove", onMove);
+      document.removeEventListener("touchend", onEnd);
+    };
+    document.addEventListener("touchmove", onMove);
+    document.addEventListener("touchend", onEnd);
+  };
+
+  if (isOverlap) {
+    const overlayApps = apps.slice(1);
+    return (
+      <div
+        style={{
+          position: "relative",
+          width: currentContainerWidth,
+          height: currentContainerHeight,
+          overflow: "hidden",
+          userSelect: "none",
+        }}
+      >
+        {/* Main panel at full width */}
+        <div
+          className="scroller"
+          key={apps[0]?.id}
+          style={{
+            width: "100%",
+            height: "100%",
+            overflow: "auto",
+            padding: "0px",
+            borderRadius: "12px",
+          }}
+        >
+          <div style={{ height: "100%", width: "100%" }}>{apps[0]?.App}</div>
+        </div>
+
+        {/* Single overlay container sliding from right */}
+        <div
+          style={{
+            position: "absolute",
+            right: 0,
+            top: 0,
+            width: overlapWidth,
+            height: "100%",
+            transform: overlapVisible ? "translateX(0)" : "translateX(100%)",
+            transition: "transform 0.3s ease",
+            zIndex: 10,
+            display: "flex",
+            maxWidth: "100dvw",
+          }}
+        >
+          {/* Drag handle on left edge */}
+          <div
+            style={{
+              width: "6px",
+              cursor: "col-resize",
+              backgroundColor: "transparent",
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onMouseDown={handleOverlapDragDown}
+            onTouchStart={handleOverlapTouchDown}
+          >
+            <div
+              style={{
+                width: "3px",
+                height: "100%",
+                borderRadius: "2px",
+                backgroundColor: "rgba(0,0,0,0.15)",
+              }}
+            />
+          </div>
+          {/* Overlay panel content — split vertically when multiple */}
+          <div
+            style={{
+              flex: 1,
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              borderRadius: "12px 0 0 12px",
+              backgroundColor: "var(--pageBackground, #fff)",
+              boxShadow: "-4px 0 12px rgba(0,0,0,0.15)",
+              overflow: "hidden",
+            }}
+          >
+            {overlayApps.map(({ App, id }, index) => (
+              <div
+                className="scroller"
+                key={id}
+                style={{
+                  flex: 1,
+                  overflow: "auto",
+                  padding: "0px",
+                  borderTop: index > 0 ? "1px solid rgba(0,0,0,0.1)" : "none",
+                }}
+              >
+                <div style={{ height: "100%", width: "100%" }}>{App}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (panelMode || screens.row) {
     return (
       <div

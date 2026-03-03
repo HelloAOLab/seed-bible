@@ -22,8 +22,9 @@ const CreateAccountSettings = () => {
   const [location, setLocation] = useState("");
   const [uid, setUid] = useState(authBot?.id);
   const [isSignedIn, setIsSignedIn] = useState(false);
+
   useEffect(() => {
-    if (!authBot.id) {
+    if (!authBot?.id) {
       setIsSignedIn(false);
       setUid("");
       setProfileName("");
@@ -32,12 +33,14 @@ const CreateAccountSettings = () => {
       setImg(undefined);
     }
   }, [authBot]);
+
   async function init() {
     const authBot = await os.requestAuthBotInBackground();
     if (!authBot?.id) {
       setIsSignedIn(false);
       return;
     }
+    shout("historySaver", { force: true });
     setIsSignedIn(true);
     setUid(authBot.id);
     const data = await os.getData(tags.key, authBot.id);
@@ -53,6 +56,11 @@ const CreateAccountSettings = () => {
   useEffect(() => {
     init();
   }, []);
+
+  globalThis.SetIsSignedIn = setIsSignedIn;
+  globalThis.SetUid = setUid;
+  globalThis.Init = init;
+
   async function uploadImage() {
     const authBot = await os.requestAuthBot();
     if (!authBot?.id) {

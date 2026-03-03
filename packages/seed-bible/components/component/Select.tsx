@@ -5,26 +5,27 @@ const Button = thisBot.Button();
 //     {placeholder}
 // </option>
 
-const Select = ({
-  name,
-  limit = 5,
-  sxSelect,
-  hidden = false,
-  value,
-  onChangeListener,
-  options,
-  secondary,
-  placeholder,
-  errorMessage = "",
-  regex = /^.*$/,
-  styleCont = {},
-}) => {
+const Select = (props: any) => {
+  const {
+    name,
+    limit = 5,
+    sxSelect,
+    hidden = false,
+    value,
+    onChangeListener,
+    options,
+    secondary,
+    placeholder,
+    errorMessage = "",
+    regex = /^.*$/,
+    styleCont = {},
+  } = props;
   const [error, setError] = useState(false);
   const [hide, setHide] = useState(hidden);
-  const selectRef = useRef();
+  const selectRef = useRef<HTMLSelectElement>(null);
 
   const handleChange = useCallback(
-    (e) => {
+    (e: any) => {
       if (e.target.value === "N/A") return setHide(false);
       const inputValue = e.target.value;
       onChangeListener(inputValue);
@@ -55,13 +56,13 @@ const Select = ({
           value={value}
           ref={selectRef}
           style={sxSelect}
-          onChange={(e) => {
+          onChange={(e: any) => {
             e.preventDefault();
             e.stopPropagation();
             if (e.target.value === "N/A") {
               setHide(false);
               setTimeout(() => {
-                const el = selectRef.current;
+                const el: any = selectRef.current;
                 el.click();
               }, 50);
               return;
@@ -70,22 +71,21 @@ const Select = ({
           }}
           className="form-control"
         >
-          {showOptions.map(
-            ({ label, value: valueOption, hex, border, disabled }) => {
-              return (
-                <option
-                  disabled={disabled}
-                  style={{ background: hex, border: `1px solid ${border}` }}
-                  selected={value == valueOption}
-                  key={valueOption}
-                  value={valueOption}
-                  label={label}
-                >
-                  {label}
-                </option>
-              );
-            }
-          )}
+          {showOptions.map((param: any) => {
+            const { label, value: valueOption, hex, border, disabled } = param;
+            return (
+              <option
+                disabled={disabled}
+                style={{ background: hex, border: `1px solid ${border}` }}
+                selected={value == valueOption}
+                key={valueOption}
+                value={valueOption}
+                label={label}
+              >
+                {label}
+              </option>
+            );
+          })}
           {isLessOptions && (
             <option
               value="N/A"
@@ -93,7 +93,7 @@ const Select = ({
               onClick={() => {
                 setHide(false);
                 setTimeout(() => {
-                  const el = selectRef.current;
+                  const el: any = selectRef.current;
                   el.click();
                 }, 50);
               }}
@@ -110,7 +110,7 @@ const Select = ({
               color: "var(--spaceSelection)",
             }}
             onClick={() => {
-              setHide((p) => !p);
+              setHide((p: any) => !p);
             }}
             small
             secondaryAlt

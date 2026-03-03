@@ -1,12 +1,13 @@
 const { playlistId } = that;
+const G = globalThis as any;
 
-if(!playlistId) return { success: false, data: null };
-const [authBotId, playlistid] = playlistId.split(globalThis.RECORD_SEPARATOR);
+if (!playlistId) return { success: false, data: null };
+const [authBotId, playlistid] = playlistId.split(G.RECORD_SEPARATOR);
 
-if(!authBotId || !playlistid) return { success: false, data: null };
+if (!authBotId || !playlistid) return { success: false, data: null };
 
-const res = await os.getData(authBotId, playlistid);
+const res: any = await os.getData(authBotId, playlistid);
 
-globalThis.LoadedPlaylistAnnotations[playlistid] = {...res.data};
+G.LoadedPlaylistAnnotations[playlistid] = { ...res.data };
 
 return res;

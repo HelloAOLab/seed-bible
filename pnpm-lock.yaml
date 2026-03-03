@@ -134,6 +134,9 @@ importers:
       conf:
         specifier: ^15.0.2
         version: 15.0.2
+      es-toolkit:
+        specifier: 1.39.10
+        version: 1.39.10
       esbuild:
         specifier: ^0.25.10
         version: 0.25.12

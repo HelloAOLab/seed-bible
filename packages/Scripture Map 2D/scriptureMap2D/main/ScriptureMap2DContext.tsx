@@ -1,44 +1,40 @@
 import { useIsMobile } from "scriptureMap2D.main.CustomHooks";
 import { useTabsContext } from "app.hooks.tabs";
 import { useSideBarContext } from "app.hooks.sideBar";
-const { createContext, useState, useContext, useCallback, useMemo } =
+import {
+  ProjectChapterState,
+  type ProjectChapterStateType,
+} from "scriptureMap2D.main.enums";
+import type {
+  ScriptureMap2DProviderProps,
+  ScriptureMap2DContextType,
+} from "scriptureMap2D.main.interfaces";
+import type {
+  ProjectStateStyle,
+  ProjectFilters,
+  ScriptureMap2DContentValue,
+  UserPresence,
+} from "scriptureMap2D.main.types";
+import {
+  BibleVizDataRepository,
+  type ArrangementInfo,
+} from "bibleVizUtils.data.BibleVizDataRepository";
+import {
+  userColorStore,
+  type UserData,
+} from "bibleVizUtils.services.UserColorStore";
+import { bibleVizUtilsEventManager } from "bibleVizUtils.services.EventManager";
+const { createContext, useState, useContext, useCallback, useMemo, useEffect } =
   os.appHooks;
 
-const ScriptureMap2DContext = createContext();
+const ScriptureMap2DContext = createContext<
+  ScriptureMap2DContextType | undefined
+>(undefined);
 
-const usersInfo = {
-  Craig: {
-    color: "#ffb0d8",
-    borderColor: "#ff62b2",
-  },
-  Sujan: {
-    color: "#d3a3ff",
-    borderColor: "#8a2be2",
-  },
-  Mazen: {
-    color: "#bcf3f5",
-    borderColor: "#34d0d5",
-  },
-  Amir: {
-    color: "#DCDCDC",
-    borderColor: "#a8a8a8",
-  },
-  Kushagra: {
-    color: "#90eae6",
-    borderColor: "#2caca6",
-  },
-  Guest_1: {
-    borderColor: "#20ca58ff",
-  },
-  Guest_2: {
-    borderColor: "#b6ca20ff",
-  },
-  Guest_3: {
-    borderColor: "#ca2020ff",
-  },
-};
-
-const content = new Map([
+const content: ScriptureMap2DContextType["content"] = new Map<
+  string,
+  ScriptureMap2DContentValue
+>([
   [
     "Gabriel",
     {
@@ -150,41 +146,6 @@ const content = new Map([
   ],
 ]);
 
-const userPresence = {
-  Sujan: {
-    bookId: "GEN",
-    chapter: 1,
-  },
-  Amir: {
-    bookId: "GEN",
-    chapter: 2,
-  },
-  Craig: {
-    bookId: "GEN",
-    chapter: 5,
-  },
-  Kushagra: {
-    bookId: "EXO",
-    chapter: 1,
-  },
-  Mazen: {
-    bookId: "EXO",
-    chapter: 1,
-  },
-  Guest_1: {
-    bookId: "EXO",
-    chapter: 4,
-  },
-  Guest_2: {
-    bookId: "EXO",
-    chapter: 4,
-  },
-  Guest_3: {
-    bookId: "EXO",
-    chapter: 4,
-  },
-};
-
 const upcomingEvents = {
   Gabriel: [{ book: "Genesis", chapter: 1, remainingDays: 2 }],
   Craig: [{ book: "Genesis", chapter: 2, remainingDays: 4 }],
@@ -200,29 +161,27 @@ const SCALE_FACTOR_STEP = 0.05;
 
 const MAX_CHAPTER_HEAT_COUNT = 5;
 
-export const ScriptureMap2DProvider = ({
-  children,
-  parentContext,
-  ScriptureMap2DModes,
-  ProjectChapterState,
-}) => {
+export const ScriptureMap2DProvider: (
+  args: ScriptureMap2DProviderProps
+) => React.JSX.Element = ({ children, config }) => {
   const {
-    arrangementIndex = BibleVizUtils.Functions.GetCurrentArrangementIndex(),
+    arrangementIndex = BibleVizDataRepository.getCurrentArrangementIndex(),
     initialScaleFactor = 1,
     initialIsReadingHistoryEnabled = false,
     initialShowingAllChapters = false,
     initialShowTestamentLabels = true,
     initialShowSectionLabels = true,
-  } = parentContext;
+  } = config;
   const { themeColors } = useSideBarContext();
 
-  const BASE_BACKGROUND_COLOR = useMemo(() => {
+  const [usersColors, setUsersColors] = useState<UserData[]>(() =>
+    userColorStore.listUsers()
+  );
+  const [onlineUsers, setOnlineUsers] = useState<UserPresence>(new Map());
+
+  const BASE_BACKGROUND_COLOR = useMemo<string>(() => {
     return themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede";
   }, [themeColors]);
-  // const myUserColor = useMemo(() => {
-  //   const {color} = globalThis?.GetOrSetVisualInTags(configBot.id);
-  //   return color;
-  // }, [])
 
   const isMobile = useIsMobile(768);
   const { tabs, activeTab: activeTabId } = useTabsContext();
@@ -232,13 +191,33 @@ export const ScriptureMap2DProvider = ({
     });
   }, [tabs, activeTabId]);
 
-  const arrangement = useMemo(() => {
-    return BibleVizUtils.Functions.GetArrangementByIndex({
+  const userPresence = useMemo<UserPresence>(() => {
+    const { bookId, book, chapter } = activeTab.data;
+    const newUserPresence: UserPresence = new Map();
+
+    newUserPresence.set(configBot.id, { bookId, book, chapter });
+    onlineUsers.forEach((data, userId) => {
+      newUserPresence.set(userId, data);
+    });
+
+    return newUserPresence;
+  }, [onlineUsers, activeTab]);
+
+  // useEffect(() => {
+  //   console.log(`[Debug] ScriptureMap2DContext`, { usersColors });
+  // }, [usersColors]);
+
+  // useEffect(() => {
+  //   console.log(`[Debug] ScriptureMap2DContext`, { userPresence });
+  // }, [userPresence]);
+
+  const arrangement = useMemo<ArrangementInfo>(() => {
+    return BibleVizDataRepository.getArrangementByIndex({
       index: arrangementIndex,
     });
   }, [arrangementIndex]);
 
-  const projectStateStyle = useMemo(() => {
+  const projectStateStyle = useMemo<ProjectStateStyle>(() => {
     return {
       [ProjectChapterState.None]: {
         backgroundColor: "var(--whitegray-color)",
@@ -268,23 +247,23 @@ export const ScriptureMap2DProvider = ({
     };
   }, [ProjectChapterState]);
 
-  const [scaleFactor, setScaleFactor] = useState(initialScaleFactor);
-  const [showingAllChapters, setShowingAllChapters] = useState(
+  const [scaleFactor, setScaleFactor] = useState<number>(initialScaleFactor);
+  const [showingAllChapters, setShowingAllChapters] = useState<boolean>(
     initialShowingAllChapters
   );
-  const [showingBooksColors, setShowingBooksColors] = useState(true);
-  const [showTestamentLabels, setShowTestamentLabels] = useState(
+  const [showingBooksColors, setShowingBooksColors] = useState<boolean>(true);
+  const [showTestamentLabels, setShowTestamentLabels] = useState<boolean>(
     initialShowTestamentLabels
   );
-  const [showSectionLabels, setShowSectionLabels] = useState(
+  const [showSectionLabels, setShowSectionLabels] = useState<boolean>(
     initialShowSectionLabels
   );
-  const [isUserPresenceEnabled, setIsUserPresenceEnabled] = useState(false);
-  const [isReadingHistoryEnabled, setIsReadingHistoryEnabled] = useState(
-    initialIsReadingHistoryEnabled
-  );
+  const [isUserPresenceEnabled, setIsUserPresenceEnabled] =
+    useState<boolean>(false);
+  const [isReadingHistoryEnabled, setIsReadingHistoryEnabled] =
+    useState<boolean>(initialIsReadingHistoryEnabled);
 
-  const [projectFilters, setProjectFilters] = useState(
+  const [projectFilters, setProjectFilters] = useState<ProjectFilters>(
     new Map([
       [ProjectChapterState.Assigned, true],
       [ProjectChapterState.InProgress, true],
@@ -293,7 +272,12 @@ export const ScriptureMap2DProvider = ({
     ])
   );
 
-  const { bookWidth, chapterGap, chapterWidth, chapterHeight } = useMemo(() => {
+  const { bookWidth, chapterGap, chapterWidth, chapterHeight } = useMemo<{
+    bookWidth: number;
+    chapterGap: number;
+    chapterWidth: number;
+    chapterHeight: number;
+  }>(() => {
     const bookWidth = scaleFactor * 150;
     const chapterGap = scaleFactor * 3;
     // const chapterPadding = scaleFactor * 5;
@@ -308,7 +292,7 @@ export const ScriptureMap2DProvider = ({
     };
   }, [scaleFactor]);
 
-  const handleZoomIn = useCallback(() => {
+  const handleZoomIn = useCallback<() => void>(() => {
     if (scaleFactor < MAX_SCALE_FACTOR) {
       const newValue = Math.min(
         MAX_SCALE_FACTOR,
@@ -318,7 +302,7 @@ export const ScriptureMap2DProvider = ({
     }
   }, [scaleFactor]);
 
-  const handleZoomOut = useCallback(() => {
+  const handleZoomOut = useCallback<() => void>(() => {
     if (scaleFactor > MIN_SCALE_FACTOR) {
       const newValue = Math.max(
         MIN_SCALE_FACTOR,
@@ -328,19 +312,21 @@ export const ScriptureMap2DProvider = ({
     }
   }, [scaleFactor]);
 
-  const handleTestamentLabelsToggle = useCallback(() => {
+  const handleTestamentLabelsToggle = useCallback<() => void>(() => {
     setShowTestamentLabels((prev) => !prev);
   }, []);
 
-  const handleSectionLabelsToggle = useCallback(() => {
+  const handleSectionLabelsToggle = useCallback<() => void>(() => {
     setShowSectionLabels((prev) => !prev);
   }, []);
 
-  const handleShowAllChaptersToggle = useCallback(() => {
+  const handleShowAllChaptersToggle = useCallback<() => void>(() => {
     setShowingAllChapters((prev) => !prev);
   }, []);
 
-  const handleProjectFilterOptionClick = useCallback(
+  const handleProjectFilterOptionClick = useCallback<
+    (key: "all" | ProjectChapterStateType) => void
+  >(
     (key) => {
       const copy = new Map(projectFilters);
       if (key === "all") {
@@ -364,56 +350,133 @@ export const ScriptureMap2DProvider = ({
     [projectFilters]
   );
 
+  const updateUserColors = useCallback<() => void>(() => {
+    setUsersColors(userColorStore.listUsers());
+  }, []);
+
+  const updateOnlineUsers = useCallback<(onlineUsers: UserPresence) => void>(
+    (data) => {
+      setOnlineUsers(data);
+    },
+    []
+  );
+
+  useEffect(() => {
+    const updateUserColorsUnsubscribe = bibleVizUtilsEventManager.subscribe(
+      "UserColorStoreChanged",
+      updateUserColors
+    );
+    const updateOnlineUsersUnsubscribe = bibleVizUtilsEventManager.subscribe(
+      "OnlineUsersChanged",
+      updateOnlineUsers
+    );
+
+    updateUserColors();
+
+    return () => {
+      updateUserColorsUnsubscribe();
+      updateOnlineUsersUnsubscribe();
+    };
+  }, []);
+
+  const value = useMemo<ScriptureMap2DContextType>(() => {
+    const value: ScriptureMap2DContextType = {
+      ...config,
+      scaleFactor,
+      MIN_SCALE_FACTOR,
+      setScaleFactor,
+      handleZoomIn,
+      handleZoomOut,
+      showTestamentLabels,
+      showSectionLabels,
+      handleTestamentLabelsToggle,
+      handleSectionLabelsToggle,
+      handleShowAllChaptersToggle,
+      arrangementIndex,
+      arrangement,
+      showingAllChapters,
+      setShowingAllChapters,
+      isUserPresenceEnabled,
+      setIsUserPresenceEnabled,
+      isReadingHistoryEnabled,
+      setIsReadingHistoryEnabled,
+      content,
+      MAX_CHAPTER_HEAT_COUNT,
+      bookWidth,
+      chapterGap,
+      chapterWidth,
+      chapterHeight,
+      handleProjectFilterOptionClick,
+      upcomingEvents,
+      projectFilters,
+      projectStateStyle,
+      BASE_BACKGROUND_COLOR,
+      isMobile,
+      showingBooksColors,
+      setShowingBooksColors,
+      tabs,
+      activeTabId,
+      activeTab,
+      usersColors,
+      userPresence,
+    };
+    return value;
+  }, [
+    config,
+    scaleFactor,
+    MIN_SCALE_FACTOR,
+    setScaleFactor,
+    handleZoomIn,
+    handleZoomOut,
+    showTestamentLabels,
+    showSectionLabels,
+    handleTestamentLabelsToggle,
+    handleSectionLabelsToggle,
+    handleShowAllChaptersToggle,
+    arrangementIndex,
+    arrangement,
+    showingAllChapters,
+    setShowingAllChapters,
+    isUserPresenceEnabled,
+    setIsUserPresenceEnabled,
+    isReadingHistoryEnabled,
+    setIsReadingHistoryEnabled,
+    content,
+    MAX_CHAPTER_HEAT_COUNT,
+    bookWidth,
+    chapterGap,
+    chapterWidth,
+    chapterHeight,
+    handleProjectFilterOptionClick,
+    upcomingEvents,
+    projectFilters,
+    projectStateStyle,
+    BASE_BACKGROUND_COLOR,
+    isMobile,
+    showingBooksColors,
+    setShowingBooksColors,
+    tabs,
+    activeTabId,
+    activeTab,
+    usersColors,
+    userPresence,
+  ]);
+
   return (
-    <ScriptureMap2DContext.Provider
-      value={{
-        ...parentContext,
-        scaleFactor,
-        MIN_SCALE_FACTOR,
-        setScaleFactor,
-        handleZoomIn,
-        handleZoomOut,
-        showTestamentLabels,
-        showSectionLabels,
-        handleTestamentLabelsToggle,
-        handleSectionLabelsToggle,
-        handleShowAllChaptersToggle,
-        arrangementIndex,
-        arrangement,
-        showingAllChapters,
-        setShowingAllChapters,
-        isUserPresenceEnabled,
-        setIsUserPresenceEnabled,
-        isReadingHistoryEnabled,
-        setIsReadingHistoryEnabled,
-        content,
-        MAX_CHAPTER_HEAT_COUNT,
-        usersInfo,
-        userPresence,
-        bookWidth,
-        chapterGap,
-        chapterWidth,
-        chapterHeight,
-        handleProjectFilterOptionClick,
-        upcomingEvents,
-        projectFilters,
-        ScriptureMap2DModes,
-        ProjectChapterState,
-        projectStateStyle,
-        BASE_BACKGROUND_COLOR,
-        isMobile,
-        showingBooksColors,
-        setShowingBooksColors,
-        tabs,
-        activeTabId,
-        activeTab,
-      }}
-    >
+    <ScriptureMap2DContext.Provider value={value}>
       {children}
     </ScriptureMap2DContext.Provider>
   );
 };
 
-export const useScriptureMap2DContext = () => {
-  return useContext(ScriptureMap2DContext);
+export const useScriptureMap2DContext: () => ScriptureMap2DContextType = () => {
+  const context = useContext(ScriptureMap2DContext);
+
+  if (!context) {
+    throw new Error(
+      "useScriptureMap2DContext must be used within a ScriptureMap2DContext"
+    );
+  }
+
+  return context as ScriptureMap2DContextType;
 };

@@ -140,5 +140,12 @@
   "pentateuch": "Pentateukh",
   "historical": "Sejarah",
   "poetic": "Puisi",
-  "prophetic": "Nubuat"
+  "prophetic": "Nubuat",
+  "bookmarkUpdatedSuccessfully": "Penanda berhasil diperbarui.",
+  "failedToUpdateBookmark": "Gagal memperbarui penanda. Silakan coba lagi.",
+  "undoActionSuccessfull": "Tindakan undo berhasil.",
+  "headingAddedToPlaylist": "{{heading}} ditambahkan ke playlist",
+  "addToPlaylist": "Tambah ke playlist",
+  "addToNew": "Tambah ke baru",
+  "itemsAddedToPlaylistSuccessfully": "Item berhasil ditambahkan ke playlist."
 }

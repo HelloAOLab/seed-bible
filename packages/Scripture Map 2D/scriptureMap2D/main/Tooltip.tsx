@@ -1,11 +1,18 @@
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
-import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 import { useSideBarContext } from "app.hooks.sideBar";
-import { readingHistoryColorStore } from "bibleVizUtils.services.ReadingHistoryColorStore";
+import { userColorStore } from "bibleVizUtils.services.UserColorStore";
+import type {
+  UserPresenceTooltipContentType,
+  ReadingHistoryTooltipContentType,
+  TooltipType,
+} from "scriptureMap2D.main.types";
 
 const { useRef, useState, useLayoutEffect, useMemo } = os.appHooks;
+const { createPortal } = os.appCompat;
 
-export const UserPresenceTooltipContent = ({ colors }) => {
+export const UserPresenceTooltipContent: UserPresenceTooltipContentType = ({
+  colors,
+}) => {
   const { t } = useSideBarContext();
   return (
     <span className="user-presence-tooltip-content">
@@ -37,14 +44,17 @@ export const UserPresenceTooltipContent = ({ colors }) => {
   );
 };
 
-export const ReadingHistoryTooltipContent = ({ userId, fixedContent }) => {
+export const ReadingHistoryTooltipContent: ReadingHistoryTooltipContentType = ({
+  userId,
+  fixedContent,
+}) => {
   const { t } = useSideBarContext();
   const { myAuthBotId } = useReadingHistoryContext();
 
   const { userName, backgroundColor } = useMemo(() => {
     const isMe = userId === myAuthBotId;
     const userName = isMe ? t("you") : t("guest");
-    const backgroundColor = readingHistoryColorStore.getUserColor(userId);
+    const backgroundColor = userColorStore.getUserColor({ authId: userId });
 
     return { userName, backgroundColor };
   }, [t]);
@@ -58,14 +68,14 @@ export const ReadingHistoryTooltipContent = ({ userId, fixedContent }) => {
   );
 };
 
-export const Tooltip = ({ content, anchor, offsetY = 0 }) => {
-  const ref = useRef(null);
-  const [style, setStyle] = useState({
+export const Tooltip: TooltipType = ({ content, anchor, offsetY = 0 }) => {
+  const ref = useRef<null | HTMLSpanElement>(null);
+  const [style, setStyle] = useState<React.CSSProperties>({
     top: anchor.y + offsetY,
     left: anchor.x,
     "--arrowLeft": "50%",
   });
-  const [direction, setDirection] = useState("up");
+  const [direction, setDirection] = useState<string>("up");
 
   useLayoutEffect(() => {
     if (!ref.current) return;
@@ -104,9 +114,10 @@ export const Tooltip = ({ content, anchor, offsetY = 0 }) => {
     setStyle({ top: newTop, left: newLeft, "--arrowLeft": newArrowLeft });
   }, [anchor]);
 
-  return (
+  return createPortal(
     <span ref={ref} className={`tooltip tooltip-${direction}`} style={style}>
       {content}
-    </span>
+    </span>,
+    document.body
   );
 };

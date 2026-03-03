@@ -1,16 +1,18 @@
-const parentId = that?.parentId || 'default';
+const parentId = that?.parentId || "default";
+const G = globalThis as any;
 DataManager.cancelCurrentPlayingSound();
-globalThis.SetSelected && SetSelected({});
-globalThis.SetHolded && SetHolded({});
+G.SetSelected && G.SetSelected({});
+G.SetHolded && G.SetHolded({});
 // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
-globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] && globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
-globalThis.IsQueuePresent = false;
+G[`${parentId}ToggleGreyCheckPLayingPlaylist`] &&
+  G[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
+G.IsQueuePresent = false;
 // os.unregisterApp("playing-playlist");
-globalThis.IS_PLAYLIST_ACTIVE = false;
-globalThis.SetSplitAppPanel2(null);
-globalThis.StopPlayingPlaylistModal(false);
-if (globalThis.RemoveNowBarApp) {
-    globalThis.RemoveNowBarApp('player-playlist-bar');
+G.IS_PLAYLIST_ACTIVE = false;
+G.SetSplitAppPanel2(null);
+G.StopPlayingPlaylistModal(false);
+if (G.RemoveNowBarApp) {
+  G.RemoveNowBarApp("player-playlist-bar");
 }
 os.unregisterApp("playing-playlist-flaot");
 thisBot.CloseFloatingApp();

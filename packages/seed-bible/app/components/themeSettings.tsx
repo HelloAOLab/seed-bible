@@ -111,7 +111,7 @@ const ADVANCED_SETTINGS_SECTIONS = {
 
 // Default Theme - Warm Orange/Amber accent
 // Based on the design mockup with orange accent colors
-const defaultTheme = {
+const builtinDefaultTheme = {
   // Main colors
   firstToolbarbutton: "#dfdede",
   primaryColor: "#FFFFFF",
@@ -267,10 +267,10 @@ const defaultTheme = {
 // ————————————————————————————————————————————————————————————
 // Ready Themes Collection
 // ————————————————————————————————————————————————————————————
-export const READY_THEMES = [
+const defaultThemes = [
   {
     name: "Default",
-    colors: defaultTheme,
+    colors: builtinDefaultTheme,
   },
   {
     name: "Dark Mode",
@@ -1045,6 +1045,24 @@ export const READY_THEMES = [
     },
   },
 ];
+
+const presetConfig =
+  tags?.settingsConfigs?.presets?.[
+    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+  ];
+const presetThemes: typeof defaultThemes =
+  presetConfig?.availableThemes?.length > 0
+    ? presetConfig.availableThemes
+    : defaultThemes;
+
+if (presetThemes.length === 0) {
+  console.error(
+    "No themes available in preset configuration. Falling back to default themes."
+  );
+}
+
+export const defaultTheme = presetThemes[0]?.colors ?? builtinDefaultTheme;
+export const READY_THEMES = presetThemes;
 
 // ----------- DEBOUNCE (no CDN needed) -----------
 function debounce(fn, delay = 250) {
@@ -5006,7 +5024,8 @@ const BibleArrangementsSectionContent = ({
   );
 };
 
-const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+const isDark = false;
+//  window.matchMedia("(prefers-color-scheme: dark)").matches;
 
 const ThemeSettings = () => {
   const { updateSpace, activeSpace, currentSpace, tabsIcons, setTabsIcons } =
@@ -5772,6 +5791,8 @@ const SettingsUI = () => {
     showVerses,
     showFootnotes,
     setShowFootnotes,
+    showNavArrows,
+    setShowNavArrows,
   } = useBibleContext();
   const handleSurpriseMe = () => {
     const randomCombo =
@@ -5828,6 +5849,9 @@ const SettingsUI = () => {
     });
   };
 
+  const settingsPreset =
+    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full";
+
   // ————————————————————————————————————————————————————————————
   // Handle Tab Icons Toggle
   // ————————————————————————————————————————————————————————————
@@ -5867,20 +5891,16 @@ const SettingsUI = () => {
   };
 
   // When switching spaces without saving, restore the last committed theme for that space
-  useEffect(() => {
-    if (!changesSaved) {
-      setThemeColors((prev) => ({
-        ...prev,
-        [activeSpace]: globalThis.CurrentColors,
-      }));
-    }
-  }, [activeSpace]);
-  useEffect(() => {
-    if (!masks.firstTimeLoad) {
-      applyReadyTheme(isDark ? READY_THEMES[1]?.colors : defaultTheme);
-      masks.firstTimeLoad = true;
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (!changesSaved) {
+  //     setThemeColors((prev) => ({
+  //       ...prev,
+  //       [activeSpace]: globalThis.CurrentColors,
+  //     }));
+  //   }
+  // }, [activeSpace]);
+
+  // Removed: this effect was overwriting the user's saved theme on every mount
 
   const [textConfig, setTextConfig] = useState(() => {
     // Try to load from saved space settings
@@ -5927,9 +5947,9 @@ const SettingsUI = () => {
 
   const handleThemeSelect = (index) => {
     setSelectedTheme(index);
-    applyReadyTheme(READY_THEMES[index].colors);
+    applyReadyTheme(presetThemes[index]?.colors);
     setChagesSaved(true);
-    globalThis.CurrentColors = READY_THEMES[index]?.colors || colors;
+    globalThis.CurrentColors = presetThemes[index]?.colors || colors;
   };
 
   const applyVerseFont = (fontFamily) => {
@@ -6439,12 +6459,25 @@ const SettingsUI = () => {
         </div>
       </div>
 
+      <div style={toggleRowStyle}>
+        <div style={toggleLabelStyle}>
+          {t(showNavArrows ? "hideNavArrows" : "showNavArrows")}
+        </div>
+
+        <div
+          style={toggleStyle(showNavArrows)}
+          onClick={() => setShowNavArrows((prev) => !prev)}
+        >
+          <div style={toggleCircleStyle(showNavArrows)}></div>
+        </div>
+      </div>
+
       <div style={separatorStyle}></div>
 
       <div style={sectionTitleStyle}>{t("themes")}</div>
 
       <div style={cardContainerStyle}>
-        {READY_THEMES.map((theme, index) =>
+        {presetThemes.map((theme, index) =>
           index !== 1 ? (
             <div
               key={index}
@@ -6598,7 +6631,7 @@ const SettingsUI = () => {
           )
         )}
       </div>
-      {configBot.tags.settingsPreset !== "minimal" && (
+      {settingsPreset === "full" && (
         <button
           style={buttonStyle}
           onClick={() => setSideBarMode("advancedThemeSettings")}

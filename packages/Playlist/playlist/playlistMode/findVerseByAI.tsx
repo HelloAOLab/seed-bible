@@ -35,27 +35,28 @@ Book Name Normalization:
 Now, provide a Bible reference string, and I will return the parsed JSON array.
 
 Give the JSON for Below ${that.query || "no books"}
-`
+`;
 
-function extractJsonFromString(inputString) {
-    // Use regex to find JSON array in the input string
-    const jsonMatch = inputString.match(/\[\s*\{[\s\S]*\}\s*\]/);
+function extractJsonFromString(inputString: string) {
+  // Use regex to find JSON array in the input string
+  const jsonMatch = inputString.match(/\[\s*\{[\s\S]*\}\s*\]/);
 
-    if (jsonMatch) {
-        try {
-            return JSON.parse(jsonMatch[0]); // Parse and return JSON object
-        } catch (error) {
-            console.error("Invalid JSON format:", error);
-            return null;
-        }
-    } else {
-        console.error("No JSON found in the input string.");
-        return null;
+  if (jsonMatch) {
+    try {
+      return JSON.parse(jsonMatch[0]); // Parse and return JSON object
+    } catch (error) {
+      console.error("Invalid JSON format:", error);
+      return null;
     }
-};
+  } else {
+    console.error("No JSON found in the input string.");
+    return null;
+  }
+}
 
-
-let myChat = await ai.chat(PROMPT, { preferredModel: "claude-3-5-sonnet-20240620" });
+let myChat = await ai.chat(PROMPT, {
+  preferredModel: "claude-3-5-sonnet-20240620",
+});
 
 const value = extractJsonFromString(myChat);
 

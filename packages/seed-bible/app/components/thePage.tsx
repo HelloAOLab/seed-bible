@@ -1,7 +1,9 @@
 import {
   BibleDataManager,
   getCachedBibleData,
+  getCachedFootnotes,
 } from "app.hooks.bibleDataManager";
+
 import { getStyleOf } from "app.styles.styler";
 const {
   useEffect,
@@ -22,6 +24,13 @@ import { MiniTextEditor } from "app.components.smallEditor";
 import { ConfigurableFunctionCommands } from "app.components.commands";
 import { VerseToolbar } from "app.components.verseToolbar";
 import { useHoldAction } from "app.hooks.useHold";
+import {
+  MobileSettingsIcon,
+  MenuIcon,
+  BookMarkIcon,
+} from "app.components.icons";
+
+import { useSideBarContext } from "app.hooks.sideBar";
 function getUserSessionInfo(userId) {
   try {
     if (typeof tags === "undefined" || !tags.sessions) {
@@ -78,8 +87,16 @@ function ThePage({
   const [commandHighlight, setCommandHighlight] = useState([]);
   const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
+  const lastScrollTopRef = useRef(0);
   const [userMovedToolbar, setUserMovedToolbar] = useState();
-
+  const {
+    openOnMobile,
+    setOpenOnMobile,
+    sidebarWidth,
+    setSidebarWidth,
+    setCollapsed,
+    setSideBarMode,
+  } = useSideBarContext();
   useEffect(() => {
     if (deleteTab) {
       if (deleteTab.tabId === tab?.id) {
@@ -130,7 +147,16 @@ function ThePage({
   const [wordHighlightsBC, setWordHighlightsBC] = useState("#ffeb3b");
 
   const [bible, setBible] = useState();
-  const [footnotes, setFootnotes] = useState(null);
+  const [footnotes, setFootnotes] = useState(() => {
+    if (tab) {
+      return getCachedFootnotes(
+        tab.data?.translation,
+        tab.data?.bookId,
+        tab.data?.chapter
+      );
+    }
+    return null;
+  });
   const [showFootnoteModal, setShowFootnoteModal] = useState(false);
   const [activeFootnote, setActiveFootnote] = useState(null);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
@@ -218,7 +244,8 @@ function ThePage({
               return {
                 ...trans,
                 name: trans.name,
-                languageEnglishName: trans.languageEnglishName,
+                languageEnglishName:
+                  trans.languageEnglishName || "Unspecified Language",
                 id: trans.id,
                 listOfBooksApiLink: `${url.origin}${trans.listOfBooksApiLink}`,
                 origin: url.origin,
@@ -543,7 +570,7 @@ function ThePage({
         config &&
         !config?.sharedTab &&
         role === "host" &&
-        masks["sharedTab"] !== tab.id
+        masks["sharedTab"] !== tab?.id
       ) {
         updateTab(tab?.id, data);
         updateTab(masks["sharedTab"], data);
@@ -565,7 +592,7 @@ function ThePage({
       } else {
         setDirection(null);
       }
-      if (masks["sharedTab"] === tab.id) EmitData("book", { ...data });
+      if (masks["sharedTab"] === tab?.id) EmitData("book", { ...data });
       // const emitter = getBot("system", "app.emitter");
       // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
       //   id: tab?.id,
@@ -588,7 +615,7 @@ function ThePage({
   }, [data]);
 
   useEffect(() => {
-    if (data && tab.id === activeTab) {
+    if (data && tab?.id === activeTab) {
       configBot.tags.book = data?.bookId;
       configBot.tags.chapter = data?.chapter;
     }
@@ -873,19 +900,22 @@ function ThePage({
       setData(bible.data);
       setFootnotes(bible.footnotes);
     } catch {
-      // const tab = globalThis.AddTab({
-      //   id: uuid(),
-      //   taken: false,
-      //   data: {
-      //     use: "thePage",
-      //     type: "book",
-      //     book: bookId,
-      //     bookId: bookId,
-      //     chapter: chapter,
-      //     translation: translation || "BSB",
-      //   },
-      // });
-      // setTab(tab);
+      if (tab) return;
+      const newTab = globalThis.AddTab({
+        id: uuid(),
+        taken: false,
+        data: {
+          use: "thePage",
+          type: "book",
+          book: bookId,
+          bookId: bookId,
+          chapter: chapter,
+          translation: translation || "BSB",
+        },
+      });
+      setTab(newTab);
+      console.log("newTab created for open error", newTab);
+      return;
     }
   }
 
@@ -1009,6 +1039,7 @@ function ThePage({
   }, [data]);
 
   function hanldNavFunctions() {
+    console.log("hanldNavFunctions", { tab, sharedTab, setActiveTab, panelId });
     if (tab && tab?.id && !sharedTab) setActiveTab(tab?.id);
     setNavFunctions({
       openNextChapter,
@@ -1516,19 +1547,263 @@ function ThePage({
     });
   }, [position, dragToolbar]);
 
+  // Preloaded adjacent chapter data for smooth carousel
+  const [prevChapterData, setPrevChapterData] = useState(null);
+  const [nextChapterData, setNextChapterData] = useState(null);
+  const prevChapterDataRef = useRef(null) as { current: any };
+  const nextChapterDataRef = useRef(null) as { current: any };
+  prevChapterDataRef.current = prevChapterData;
+  nextChapterDataRef.current = nextChapterData;
+
+  // Preload adjacent chapters whenever the current chapter changes
+  useEffect(() => {
+    if (!data) return;
+    const baseUrl = data.baseUrl || "https://bible.helloao.org";
+
+    const preload = async (
+      url: string | null | undefined,
+      setter: (d: any) => void
+    ) => {
+      if (!url) {
+        setter(null);
+        return;
+      }
+      try {
+        const mgr = new BibleDataManager({ baseUrl });
+        await mgr.fetch(url);
+        setter(mgr.data);
+      } catch {
+        setter(null);
+      }
+    };
+
+    preload(data.nextChapter, setNextChapterData);
+    preload(data.prevChapter, setPrevChapterData);
+  }, [data?.nextChapter, data?.prevChapter]);
+
+  // Carousel refs
+  const swipeViewportRef = useRef(null) as { current: HTMLDivElement | null };
+  const swipeTrackRef = useRef(null) as { current: HTMLDivElement | null };
+  const currentPanelRef = useRef(null) as { current: HTMLDivElement | null };
+  const swipeTouchStartX = useRef(null) as { current: number | null };
+  const swipeTouchStartY = useRef(null) as { current: number | null };
+  const swipeDirectionLocked = useRef(null) as { current: "h" | "v" | null };
+  const swipeCurrentDx = useRef(0) as { current: number };
+  const openNextChapterRef = useRef(null) as {
+    current: (() => Promise<void>) | null;
+  };
+  const openPrevChapterRef = useRef(null) as {
+    current: (() => Promise<void>) | null;
+  };
+
+  const clearSelectionRef = useRef(null) as { current: (() => void) | null };
+
+  // Keep function refs fresh every render
+  openNextChapterRef.current = openNextChapter;
+  openPrevChapterRef.current = openPrevChapter;
+  clearSelectionRef.current = () => {
+    setClickedVerses([]);
+    setClickedVersesContext({});
+    setShowVerseToolbar(false);
+    setSelectedText("");
+    setCommandHighlight([]);
+    setLastSelectedVerse(null);
+    setShowCommands(false);
+  };
+
+  useEffect(() => {
+    const viewport = swipeViewportRef.current;
+    if (!viewport) return;
+
+    const PANEL_PCT = 100 / 3; // 33.333…%
+
+    const getTrack = () => swipeTrackRef.current;
+    const getPanel = () => currentPanelRef.current;
+
+    const onTouchStart = (e: TouchEvent) => {
+      swipeTouchStartX.current = e.touches[0].clientX;
+      swipeTouchStartY.current = e.touches[0].clientY;
+      swipeDirectionLocked.current = null;
+      swipeCurrentDx.current = 0;
+      const track = getTrack();
+      if (track) track.style.transition = "none";
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (
+        swipeTouchStartX.current === null ||
+        swipeTouchStartY.current === null
+      )
+        return;
+      const dx = e.touches[0].clientX - swipeTouchStartX.current;
+      const dy = e.touches[0].clientY - swipeTouchStartY.current;
+
+      if (!swipeDirectionLocked.current) {
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+          swipeDirectionLocked.current = "h";
+        } else if (Math.abs(dy) > 10) {
+          swipeDirectionLocked.current = "v";
+          return;
+        } else {
+          return;
+        }
+      }
+
+      if (swipeDirectionLocked.current === "v") return;
+      e.preventDefault();
+
+      const hasNext = !!nextChapterDataRef.current;
+      const hasPrev = !!prevChapterDataRef.current;
+      let offset = dx;
+
+      // Strong rubber-band when no adjacent content loaded yet
+      if ((dx < 0 && !hasNext) || (dx > 0 && !hasPrev)) {
+        offset = Math.sign(dx) * Math.min(Math.abs(dx) * 0.15, 30);
+      } else {
+        // Soft rubber-band past 50% of viewport
+        const limit = window.innerWidth * 0.5;
+        if (Math.abs(dx) > limit) {
+          offset = Math.sign(dx) * (limit + (Math.abs(dx) - limit) * 0.2);
+        }
+      }
+
+      swipeCurrentDx.current = offset;
+      const track = getTrack();
+      if (track)
+        track.style.transform = `translateX(calc(-${PANEL_PCT}% + ${offset}px))`;
+    };
+
+    const onTouchEnd = () => {
+      if (swipeDirectionLocked.current !== "h") {
+        swipeTouchStartX.current = null;
+        swipeDirectionLocked.current = null;
+        return;
+      }
+
+      const dx = swipeCurrentDx.current;
+      const THRESHOLD = 80;
+      const hasNext = !!nextChapterDataRef.current;
+      const hasPrev = !!prevChapterDataRef.current;
+
+      swipeTouchStartX.current = null;
+      swipeDirectionLocked.current = null;
+      swipeCurrentDx.current = 0;
+
+      const track = getTrack();
+      const panel = getPanel();
+      if (!track) return;
+
+      if (dx < -THRESHOLD && hasNext && openNextChapterRef.current) {
+        clearSelectionRef.current?.();
+        const fn = openNextChapterRef.current;
+        track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transform = `translateX(-${PANEL_PCT * 2}%)`;
+        setTimeout(async () => {
+          track.style.transition = "none";
+          track.style.transform = `translateX(-${PANEL_PCT}%)`;
+          if (panel) panel.scrollTop = 0;
+          await fn();
+        }, 250);
+      } else if (dx > THRESHOLD && hasPrev && openPrevChapterRef.current) {
+        clearSelectionRef.current?.();
+        const fn = openPrevChapterRef.current;
+        track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transform = `translateX(0%)`;
+        setTimeout(async () => {
+          track.style.transition = "none";
+          track.style.transform = `translateX(-${PANEL_PCT}%)`;
+          if (panel) panel.scrollTop = 0;
+          await fn();
+        }, 250);
+      } else {
+        track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transform = `translateX(-${PANEL_PCT}%)`;
+      }
+    };
+
+    viewport.addEventListener("touchstart", onTouchStart, { passive: true });
+    viewport.addEventListener("touchmove", onTouchMove, { passive: false });
+    viewport.addEventListener("touchend", onTouchEnd, { passive: true });
+
+    return () => {
+      viewport.removeEventListener("touchstart", onTouchStart);
+      viewport.removeEventListener("touchmove", onTouchMove);
+      viewport.removeEventListener("touchend", onTouchEnd);
+    };
+  }, []);
+
+  const removeBibleStack =
+    tags?.settingsConfigs?.presets?.[
+      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+    ]?.appSettings?.removeBibleStack;
+
   return (
-    <div
-      className="pageContainer"
-      onMouseLeave={handleMouseLeave}
-      onMouseEnter={handleMouseEnter}
-      onMouseUp={handleMouseUp}
-      onClick={hanldNavFunctions}
-      style={{
-        direction,
-      }}
-    >
-      <style>
-        {`
+    <>
+      <div
+        ref={swipeViewportRef}
+        style={{
+          overflow: "hidden",
+          width: "100%",
+          height: "100%",
+          position: "relative",
+        }}
+      >
+        <div
+          ref={swipeTrackRef}
+          style={{
+            display: "flex",
+            width: "300%",
+            height: "100%",
+            transform: "translateX(-33.333%)",
+            willChange: "transform",
+          }}
+        >
+          {/* Previous chapter preview panel */}
+          <div
+            className="pageContainer"
+            style={{
+              flex: "0 0 33.333%",
+              overflowX: "hidden",
+              direction,
+              pointerEvents: "none",
+            }}
+          >
+            <SidePanelContent data={prevChapterData} />
+          </div>
+
+          {/* Current chapter panel */}
+          <div
+            className="pageContainer"
+            ref={currentPanelRef}
+            onMouseLeave={handleMouseLeave}
+            onMouseEnter={handleMouseEnter}
+            onMouseUp={handleMouseUp}
+            onClick={hanldNavFunctions}
+            onScroll={(e) => {
+              os.log("scrolling, closing popups", e);
+              globalThis.closePopupSettings();
+              const el = e.currentTarget;
+              const currentScrollTop = el.scrollTop;
+              if (currentScrollTop <= 0) {
+                document.body.classList.remove("scroll-hide-bars");
+              } else if (
+                currentScrollTop > lastScrollTopRef.current &&
+                currentScrollTop > 50
+              ) {
+                document.body.classList.add("scroll-hide-bars");
+              } else if (currentScrollTop < lastScrollTopRef.current) {
+                document.body.classList.remove("scroll-hide-bars");
+              }
+              lastScrollTopRef.current = currentScrollTop;
+            }}
+            style={{
+              flex: "0 0 33.333%",
+              direction,
+              overflowX: "hidden",
+            }}
+          >
+            <style>
+              {`
         .pageContainer{
           position: relative;
         }
@@ -1539,6 +1814,9 @@ function ThePage({
         .toolbar-item-wrapper{
             display:${showVerseToolbar && globalThis.IsMobileNow() ? "none !important" : ""}
           }
+        .mobile-bottom-navbar {
+          display:${showVerseToolbar && globalThis.IsMobileNow() ? "none !important" : ""}
+        }
         .bookTitle,
         .sectionTitle {
           display:${direction ? "ruby" : null}
@@ -1652,298 +1930,514 @@ function ThePage({
           color: var(--text1);
           font-size: 0.95em;
         }
+
+        /* Mobile Header Styles */
+        .mobile-header {
+          display: none;
+          position: sticky;
+          top: 0;
+          background: var(--pageBackground);
+          border-bottom: 1px solid #e0e0e0;
+          padding: 12px 16px;
+          z-index: 100;
+          transition: transform 0.3s ease;
+        }
+
+        body.scroll-hide-bars .mobile-header {
+          transform: translateY(-100%);
+        }
+
+        @media (max-width: 768px) {
+          .mobile-header {
+            display: flex;
+          }
+        }
+
+        .mobile-header-content {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+        }
+
+        .mobile-header-left {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex: 1;
+        }
+
+        .mobile-header-title {
+          font-size: 18px;
+          font-weight: 600;
+          color: var(--text1);
+          margin: 0;
+        }
+
+        .mobile-header-translation {
+          font-size: 12px;
+          color: #999;
+          margin: 0;
+          display: inline;
+        }
+
+        .mobile-header-nav {
+          display: flex;
+          gap: 8px;
+        }
+
+        .mobile-nav-button {
+          background: none;
+          border: none;
+          color: var(--spaceSelection);
+          font-size: 20px;
+          cursor: pointer;
+          padding: 4px 8px;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 36px;
+          min-height: 36px;
+          transition: background 0.2s;
+        }
+
+        .mobile-nav-button:active {
+          background: rgba(0, 0, 0, 0.05);
+        }
+
+        .mobile-header-right {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .mobile-icon-button {
+          background: none;
+          border: none;
+          color: var(--text1);
+          font-size: 24px;
+          cursor: pointer;
+          padding: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 40px;
+          min-height: 40px;
+          border-radius: 6px;
+          transition: all 0.2s;
+          background: #F8FAFC;
+          border-radius: 50%;
+        }
+
+        .mobile-icon-button:active {
+          background: rgba(0, 0, 0, 0.05);
+          transform: scale(0.95);
+        }
+
+        .mobile-bookmark-icon {
+          font-size: 22px;
+        }
+
+        .bookTitle {
+          @media (max-width: 768px) {
+            display: none;
+          }
+        }
          `}
-      </style>
-      {data && tab && !tabEntered ? (
-        <>
-          <div
-            onClick={(e) => {
-              if (globalThis.setOpenSidebar && globalThis.openSidebar) {
-                globalThis.setOpenSidebar(false);
-                globalThis.selectBookSelectorBook &&
-                  globalThis.selectBookSelectorBook(null);
-              } else {
-                globalThis.setOpenSidebar && globalThis.setOpenSidebar(true);
-                globalThis.selectBookSelectorBook &&
-                  globalThis.selectBookSelectorBook(data.bookId);
-              }
-            }}
-            style={{ "pointer-events": isDragging ? "none" : null }}
-            className="bookTitle"
-          >
-            {`${data?.book} ${data?.chapter}`}{" "}
-            <span
-              style={{
-                fontSize: "24px",
-                color: "color-mix(in srgb, var(--text1), transparent 40%)",
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (globalThis.setOpenSidebar && globalThis.openSidebar) {
-                  globalThis.setOpenSidebar(false);
-                  globalThis.setSelectingTranslation &&
-                    globalThis.setSelectingTranslation(false);
-                  globalThis.selectBookSelectorBook &&
-                    globalThis.selectBookSelectorBook(null);
-                } else {
-                  globalThis.setOpenSidebar(true);
-                  globalThis.setSelectingTranslation &&
-                    globalThis.setSelectingTranslation(true);
-                  globalThis.selectBookSelectorBook &&
-                    globalThis.selectBookSelectorBook(data.bookId);
-                }
-              }}
-            >{` / ${data?.shortName}`}</span>
-          </div>
-          {showHeading[activeSpace] && <div style={{ height: "1rem" }}></div>}
-          {data &&
-            data.content.map((e) => {
-              return (
-                <>
-                  <div style={{ "pointer-events": isDragging ? "none" : null }}>
-                    <Section
-                      {...e}
-                      inHold={inHold}
-                      setInHold={setInHold}
-                      book={data.book}
-                      chapter={data.chapter}
-                      blinker={blinker}
-                      setRef={refs}
-                      holded={holded}
-                      clickedVersesContext={clickedVersesContext}
-                      selected={selected}
-                      highlighted={highlighted}
-                      wordHighlights={wordHighlights}
-                      textEdit={false}
-                      showCommands={showCommands}
-                      setShowCommands={setShowCommands}
-                      selectedText={selectedText}
-                      lastSelectedVerse={lastSelectedVerse}
-                      contextData={contextData}
-                      setContextData={setContextData}
-                      commandsRef={commandsRef}
-                      setLastSelectedVerse={setLastSelectedVerse}
-                      setCommandHighlight={setCommandHighlight}
-                      commandHighlight={commandHighlight}
-                      wordHighlightsTC={wordHighlightsTC}
-                      wordHighlightsBC={wordHighlightsBC}
-                      clickedVerses={clickedVerses}
-                      handleVerseClick={handleVerseClick}
-                      setClickedVerses={setClickedVerses}
-                      setShowVerseToolbar={setShowVerseToolbar}
-                      footnotes={footnotes}
-                      setActiveFootnote={setActiveFootnote}
-                      setShowFootnoteModal={setShowFootnoteModal}
-                    />
-                  </div>
-                </>
-              );
-            })}
-          <div style={{ height: "120px" }}></div>
-          <div
-            style={{
-              margin: "auto",
-              width: "80%",
-              height: "1px",
-              background: "gray",
-            }}
-          ></div>
-          <div
-            style={{
-              width: "50%",
-              display: "flex",
-              "align-items": "center",
-              "justify-content": "center",
-              position: "relative",
-            }}
-          >
-            <PageToolbar tab={tab} panelId={panelId} />
-          </div>
-          <div style={{ height: "160px" }}></div>
-
-          {showVerseToolbar &&
-            !(role === "follower" && config.onlyHostHighlight) && (
-              <div
-                onMouseDown={() => {
-                  if (!globalThis.IsMobileNow()) {
-                    // userMovedToolbar.current = true;
-                    setUserMovedToolbar(true);
-                    setDragToolbar(true);
-                  }
-                }}
-                onMouseUp={() => setDragToolbar(false)}
-                // onMouseLeave={() => setDragToolbar(false)}
-                style={
-                  globalThis.IsMobileNow()
-                    ? {
-                        position: "fixed",
-                        left: "50%",
-                        bottom: "20px",
-                        transform: "translateX(-50%)",
-                        zIndex: 10000,
-                        width: "90%",
-                        maxWidth: "420px",
-                        cursor: "default",
-                        userSelect: "none",
-                      }
-                    : {
-                        position: "fixed",
-                        left: toolbarPos.x - 50,
-                        top: toolbarPos.y,
-                        zIndex: 10000,
-                        cursor: dragToolbar ? "grabbing" : "grab",
-                        userSelect: "none",
-                      }
-                }
-                className="verse-toolbar"
-              >
-                <VerseToolbar
-                  clickedVerses={clickedVerses}
-                  showVerseToolbar={showVerseToolbar}
-                  toggleVerseHighlight={toggleVerseHighlight}
-                  book={data?.book}
-                  setClickedVerses={setClickedVerses}
-                  chapter={data?.chapter}
-                  highlighted={highlighted}
-                  clickedVersesContext={clickedVersesContext}
-                  onColorSelect={handleColorSelect}
-                  activeSpace={activeSpace}
-                  spaces={spaces}
-                  onClose={() => {
-                    setClickedVerses([]);
-                    setTimeout(() => {
-                      setShowVerseToolbar(false);
-                    }, 5);
-                  }}
-                />
-              </div>
-            )}
-
-          {/* Footnote Modal */}
-          {showFootnoteModal && activeFootnote && (
-            <div
-              className="footnote-modal-overlay"
-              onClick={() => {
-                setShowFootnoteModal(false);
-                setActiveFootnote(null);
-              }}
-            >
-              <div
-                className="footnote-modal"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="footnote-modal-header">
-                  <h3>
-                    {`${activeFootnote.book} ${activeFootnote.chapter}:${activeFootnote.verse}`}
-                  </h3>
-                  <button
-                    className="footnote-modal-close"
-                    onClick={() => {
-                      setShowFootnoteModal(false);
-                      setActiveFootnote(null);
-                    }}
-                  >
-                    ✕
-                  </button>
-                </div>
-                <div className="footnote-modal-content">
-                  {activeFootnote.footnotes.map((footnote, idx) => {
-                    if (!footnote) return null;
-
-                    const footnoteText =
-                      footnote.text || footnote.note || footnote.content || "";
-                    if (!footnoteText) return null;
-
-                    return (
-                      <div key={idx} className="footnote-item">
-                        <span className="footnote-number">
-                          {footnote.caller || idx + 1}
-                        </span>
-                        <span className="footnote-text">{footnoteText}</span>
+            </style>
+            {data && tab && !tabEntered ? (
+              <>
+                {/* Mobile Header */}
+                {globalThis.IsMobileNow && globalThis.IsMobileNow() && (
+                  <div className="mobile-header">
+                    <div className="mobile-header-content">
+                      <div className="mobile-header-left">
+                        <div>
+                          <h1 className="mobile-header-title">
+                            {`${data?.book} ${data?.chapter}`}{" "}
+                            <p className="mobile-header-translation">
+                              • {data?.shortName || ""}
+                            </p>
+                          </h1>
+                        </div>
                       </div>
+
+                      <div className="mobile-header-right">
+                        <button
+                          className="mobile-icon-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            os.log("Opening mobile settings", setOpenOnMobile);
+                            setOpenOnMobile(true);
+                            setSidebarWidth(280);
+                            setCollapsed(false);
+                            setSideBarMode("settings");
+                          }}
+                          title="Settings"
+                        >
+                          <MobileSettingsIcon />
+                        </button>
+                      </div>
+                    </div>
+                    {tab?.id &&
+                      masks?.mobileBookmarks &&
+                      Object.values(masks.mobileBookmarks)
+                        .flat()
+                        .includes(tab.id) && (
+                        <div className={"mobile-header-bookmark"}>
+                          <BookMarkIcon
+                            stroke={"var(--selectedSpaceColor)"}
+                            fill={"var(--selectedSpaceColor)"}
+                          />
+                        </div>
+                      )}
+                  </div>
+                )}
+                <div
+                  onClick={(e) => {
+                    if (globalThis.setOpenSidebar && globalThis.openSidebar) {
+                      globalThis.setOpenSidebar(false);
+                      globalThis.selectBookSelectorBook &&
+                        globalThis.selectBookSelectorBook(null);
+                    } else {
+                      globalThis.setOpenSidebar &&
+                        globalThis.setOpenSidebar(true);
+                      globalThis.selectBookSelectorBook &&
+                        globalThis.selectBookSelectorBook(data.bookId);
+                    }
+                  }}
+                  style={{ "pointer-events": isDragging ? "none" : null }}
+                  className="bookTitle"
+                >
+                  {`${data?.book} ${data?.chapter}`}{" "}
+                  <span
+                    style={{
+                      fontSize: "24px",
+                      color:
+                        "color-mix(in srgb, var(--text1), transparent 40%)",
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (globalThis.setOpenSidebar && globalThis.openSidebar) {
+                        globalThis.setOpenSidebar(false);
+                        globalThis.setSelectingTranslation &&
+                          globalThis.setSelectingTranslation(false);
+                        globalThis.selectBookSelectorBook &&
+                          globalThis.selectBookSelectorBook(null);
+                      } else {
+                        globalThis.setOpenSidebar(true);
+                        globalThis.setSelectingTranslation &&
+                          globalThis.setSelectingTranslation(true);
+                        globalThis.selectBookSelectorBook &&
+                          globalThis.selectBookSelectorBook(data.bookId);
+                      }
+                    }}
+                  >{` / ${data?.shortName}`}</span>
+                </div>
+                {showHeading[activeSpace] && (
+                  <div style={{ height: "1rem" }}></div>
+                )}
+                {data &&
+                  data.content.map((e) => {
+                    return (
+                      <>
+                        <div
+                          style={{
+                            "pointer-events": isDragging ? "none" : null,
+                          }}
+                        >
+                          <Section
+                            {...e}
+                            data={data}
+                            inHold={inHold}
+                            setInHold={setInHold}
+                            book={data.book}
+                            chapter={data.chapter}
+                            blinker={blinker}
+                            setRef={refs}
+                            holded={holded}
+                            clickedVersesContext={clickedVersesContext}
+                            selected={selected}
+                            highlighted={highlighted}
+                            wordHighlights={wordHighlights}
+                            textEdit={false}
+                            showCommands={showCommands}
+                            setShowCommands={setShowCommands}
+                            selectedText={selectedText}
+                            lastSelectedVerse={lastSelectedVerse}
+                            contextData={contextData}
+                            setContextData={setContextData}
+                            commandsRef={commandsRef}
+                            setLastSelectedVerse={setLastSelectedVerse}
+                            setCommandHighlight={setCommandHighlight}
+                            commandHighlight={commandHighlight}
+                            wordHighlightsTC={wordHighlightsTC}
+                            wordHighlightsBC={wordHighlightsBC}
+                            clickedVerses={clickedVerses}
+                            handleVerseClick={handleVerseClick}
+                            setClickedVerses={setClickedVerses}
+                            setShowVerseToolbar={setShowVerseToolbar}
+                            footnotes={footnotes}
+                            setActiveFootnote={setActiveFootnote}
+                            setShowFootnoteModal={setShowFootnoteModal}
+                          />
+                        </div>
+                      </>
                     );
                   })}
-                </div>
-              </div>
-            </div>
-          )}
-        </>
-      ) : (
-        <>
-          <div
-            style={{
-              height: "100%",
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              // backgroundColor: "#f8f9fa",
-            }}
-            className={`pageContainer ${
-              tabEntered ? "tabEntered" : "tabDrop"
-            } ${highlightOnce ? "tabHighlightBg" : ""}`}
-          >
-            <div
-              style={{
-                pointerEvents: isDragging ? "none" : undefined,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                textAlign: "center",
-                padding: "40px",
-                borderRadius: "12px",
-                maxWidth: "400px",
-                width: "90%",
-              }}
-            >
-              <div
-                onClick={() => {
-                  setOpenSidebar((prev) => !prev);
-                  setCurrentExperience(0);
-                }}
-                style={{
-                  fontSize: "24px",
-                  marginBottom: "20px",
-                  color: "#333",
-                }}
-              >
-                <img
-                  className="coloredIcon"
-                  style={{ width: "50px" }}
-                  src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
-                />
-              </div>
+                <div style={{ height: "120px" }}></div>
+                <div
+                  style={{
+                    margin: "auto",
+                    width: "80%",
+                    height: "1px",
+                    background: "gray",
+                  }}
+                ></div>
+                {removeBibleStack ? null : (
+                  <div
+                    style={{
+                      width: "50%",
+                      display: "flex",
+                      "align-items": "center",
+                      "justify-content": "center",
+                      position: "relative",
+                    }}
+                  >
+                    <PageToolbar tab={tab} panelId={panelId} />
+                  </div>
+                )}
+                <div style={{ height: "160px" }}></div>
+              </>
+            ) : (
+              <>
+                <div
+                  style={{
+                    height: "100%",
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    // backgroundColor: "#f8f9fa",
+                  }}
+                  className={`pageContainer ${
+                    tabEntered ? "tabEntered" : "tabDrop"
+                  } ${highlightOnce ? "tabHighlightBg" : ""}`}
+                >
+                  <div
+                    style={{
+                      pointerEvents: isDragging ? "none" : undefined,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      textAlign: "center",
+                      padding: "40px",
+                      borderRadius: "12px",
+                      maxWidth: "400px",
+                      width: "90%",
+                    }}
+                  >
+                    <div
+                      onClick={() => {
+                        setOpenSidebar((prev) => !prev);
+                        setCurrentExperience(0);
+                        globalThis.MakingNewTab = true;
+                      }}
+                      style={{
+                        fontSize: "24px",
+                        marginBottom: "20px",
+                        color: "#333",
+                      }}
+                    >
+                      <img
+                        className="coloredIcon"
+                        style={{ width: "50px" }}
+                        src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
+                      />
+                    </div>
 
-              <div
-                style={{
-                  width: "80%",
-                  height: "1px",
-                  background: "#e0e0e0",
-                  marginTop: "40px",
-                  margin: "auto",
-                }}
-              ></div>
-              <div
-                style={{
-                  width: "100%",
-                  marginTop: "30px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  position: "relative",
+                    <div
+                      style={{
+                        width: "80%",
+                        height: "1px",
+                        background: "#e0e0e0",
+                        marginTop: "40px",
+                        margin: "auto",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        width: "100%",
+                        marginTop: "30px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        position: "relative",
+                      }}
+                    >
+                      <PageToolbar
+                        panelId={panelId}
+                        tab={tab}
+                        path="showInStarterToolbar"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Next chapter preview panel */}
+          <div
+            className="pageContainer"
+            style={{
+              flex: "0 0 33.333%",
+              overflowX: "hidden",
+              direction,
+              pointerEvents: "none",
+            }}
+          >
+            <SidePanelContent data={nextChapterData} />
+          </div>
+        </div>
+      </div>
+
+      {/* Verse toolbar rendered outside the carousel so position:fixed works relative to the viewport */}
+      {showVerseToolbar &&
+        !(role === "follower" && config.onlyHostHighlight) && (
+          <div
+            onMouseDown={() => {
+              if (!globalThis.IsMobileNow()) {
+                setUserMovedToolbar(true);
+                setDragToolbar(true);
+              }
+            }}
+            onMouseUp={() => setDragToolbar(false)}
+            style={
+              globalThis.IsMobileNow()
+                ? {
+                    position: "fixed",
+                    left: "50%",
+                    bottom: "20px",
+                    transform: "translateX(-50%)",
+                    zIndex: 10000,
+                    width: "90%",
+                    maxWidth: "420px",
+                    cursor: "default",
+                    userSelect: "none",
+                  }
+                : {
+                    position: "fixed",
+                    left: toolbarPos.x - 50,
+                    top: toolbarPos.y,
+                    zIndex: 10000,
+                    cursor: dragToolbar ? "grabbing" : "grab",
+                    userSelect: "none",
+                  }
+            }
+            className="verse-toolbar"
+          >
+            <VerseToolbar
+              clickedVerses={clickedVerses}
+              showVerseToolbar={showVerseToolbar}
+              toggleVerseHighlight={toggleVerseHighlight}
+              book={data?.book}
+              setClickedVerses={setClickedVerses}
+              chapter={data?.chapter}
+              highlighted={highlighted}
+              clickedVersesContext={clickedVersesContext}
+              onColorSelect={handleColorSelect}
+              activeSpace={activeSpace}
+              spaces={spaces}
+              onClose={() => {
+                setClickedVerses([]);
+                setTimeout(() => {
+                  setShowVerseToolbar(false);
+                }, 5);
+              }}
+            />
+          </div>
+        )}
+
+      {/* Footnote Modal rendered outside the carousel so position:fixed works relative to the viewport */}
+      {showFootnoteModal && activeFootnote && (
+        <div
+          className="footnote-modal-overlay"
+          onClick={() => {
+            setShowFootnoteModal(false);
+            setActiveFootnote(null);
+          }}
+        >
+          <div className="footnote-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="footnote-modal-header">
+              <h3>
+                {`${activeFootnote.book} ${activeFootnote.chapter}:${activeFootnote.verse}`}
+              </h3>
+              <button
+                className="footnote-modal-close"
+                onClick={() => {
+                  setShowFootnoteModal(false);
+                  setActiveFootnote(null);
                 }}
               >
-                <PageToolbar
-                  panelId={panelId}
-                  tab={tab}
-                  path="showInStarterToolbar"
-                />
-              </div>
+                ✕
+              </button>
+            </div>
+            <div className="footnote-modal-content">
+              {activeFootnote.footnotes.map((footnote, idx) => {
+                if (!footnote) return null;
+
+                const footnoteText =
+                  footnote.text || footnote.note || footnote.content || "";
+                if (!footnoteText) return null;
+
+                return (
+                  <div key={idx} className="footnote-item">
+                    <span className="footnote-number">
+                      {footnote.caller || idx + 1}
+                    </span>
+                    <span className="footnote-text">{footnoteText}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </>
+        </div>
       )}
-    </div>
+    </>
+  );
+}
+
+function SidePanelContent({ data }: { data: any }) {
+  if (!data?.content) return null;
+  return (
+    <>
+      <div className="bookTitle">{`${data.book} ${data.chapter}`}</div>
+      {data.content.map((section: any, i: number) => (
+        <div key={i}>
+          {section.heading && (
+            <div className="sectionTitle">{section.heading}</div>
+          )}
+          <div className="sectionCover">
+            {section.verses?.map((verse: any, j: number) => {
+              if (verse.lineBreak) return <br key={j} />;
+              return (
+                <span key={j}>
+                  {verse.verseNumber != null && (
+                    <span className="sectionTextNumber">
+                      {verse.verseNumber}
+                    </span>
+                  )}
+                  <span className="sectionText"> {verse.text}</span>{" "}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      <div style={{ height: "160px" }} />
+    </>
   );
 }
 
@@ -2116,6 +2610,7 @@ function splitByWordHighlights(
 }
 
 function Section({
+  data,
   heading,
   hebrew_subtitle,
   commandHighlight,
@@ -2563,13 +3058,16 @@ function Section({
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
+                    console.log(data, "data in verse click");
                     if (globalThis?.SetCurrentReference) {
                       shout("ToggleReference", {
-                        book,
+                        bookId: data?.bookId,
                         chapter,
                         verse: verse.verseNumber,
+                        baseUrl: data?.baseUrl,
+                        translation: data?.translation,
+                        bookName: data?.book,
                       });
-                      return;
                     }
                     handleVerseClick(verse.verseNumber);
                     SetShowCommands(false);
@@ -2662,7 +3160,7 @@ function Section({
                               HighlightStudyNoteSection(verse?.verseNumber);
                             }
                           }}
-                          onPointerEnter={() => {
+                          onPointerEnter={(e) => {
                             globalThis.showRefModal = true;
                             setTimeout(() => {
                               if (globalThis.showRefModal) {
@@ -2670,6 +3168,8 @@ function Section({
                                   book,
                                   chapter,
                                   verse: verse.verseNumber,
+                                  mouseEvent: e,
+                                  ...data,
                                 });
                               }
                             }, 500);
@@ -2830,7 +3330,7 @@ function Section({
                             HighlightStudyNoteSection(verse?.verseNumber);
                           }
                         }}
-                        onPointerEnter={() => {
+                        onPointerEnter={(e) => {
                           globalThis.showRefModal = true;
                           setTimeout(() => {
                             if (globalThis.showRefModal) {
@@ -2838,6 +3338,8 @@ function Section({
                                 book,
                                 chapter,
                                 verse: verse.verseNumber,
+                                mouseEvent: e,
+                                ...data,
                               });
                             }
                           }, 500);

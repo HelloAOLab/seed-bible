@@ -3,7 +3,18 @@
     "minimal": {
       "useTabs": false,
       "appSettings": {
-        "removeSpaces": true
+        "disablePanels": true,
+        "removeSpaces": true,
+        "removeEditMode": true,
+        "removeAccountOptions": true,
+        "removeBibleStack": true,
+        "removeJoinSession": true,
+        "removeBookMark": true,
+        "removeAddSession": true
+      },
+      "pageSettings": {
+        "disableHighlighting": true,
+        "removeAiAgent": true
       },
       "onlineUsers": {
         "enabled": true,
@@ -24,14 +35,207 @@
           "showDivider": false,
           "items": {
             "theme": { "enabled": true },
-            "notifications": { "enabled": true }
+            "notifications": { "enabled": true },
+            "keepScreenAwake": { "enabled": true }
           }
         },
         "preferences": {
           "enabled": true,
           "showDivider": false,
           "items": {
-            "language": { "enabled": true }
+            "language": { "enabled": true },
+            "reportBug": { "enabled": true },
+            "help": { "enabled": true }
+          }
+        }
+      }
+    },
+
+    "ligonier": {
+      "clientBranding": {
+        "enabled": true,
+        "clientName": "ligonier2",
+        "clientLogo": "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1771444059/6mlAajOWLeNAAAAAElFTkSuQmCC_ruqkxe.png",
+        "clientSite": "https://www.canadahelps.org/en/charities/ligonier-ministries-canada/"
+      },
+      "useTabs": false,
+      "availableThemes": [
+        {
+          "name": "Ligonier 2",
+          "colors": {
+            "firstToolbarbutton": "#D9D5CE",
+            "primaryColor": "#F0EDE8",
+            "secondaryColor": "#4A7C3F",
+            "tertiaryColor": "#C8C1B6",
+            "themeSideMenu": "#F0EDE8",
+            "panelBackground": "#F0EDE8",
+            "tabSelection": "#2B2B2B",
+            "activeTabBackground": "#2B2B2B1A",
+            "activeTabText": "#2B2B2B",
+            "activeTabBorder": "#2B2B2B",
+            "activeTabFill": "#2B2B2B1A",
+            "simpleTabText": "#2B2B2B",
+            "inactiveTabText": "#6B6558",
+            "primaryButton": "#4A7C3F",
+            "primaryButtonColor": "#FFFFFF",
+            "primaryButtonBorder": "#4A7C3F",
+            "primaryButtonFill": "#4A7C3F",
+            "secondaryButton": "#3A6130",
+            "secondaryButtonColor": "#FFFFFF",
+            "secondaryButtonBorder": "#3A6130",
+            "secondaryButtonFill": "#3A6130",
+            "tertiaryButtonColor": "#2B2B2B",
+            "buttonBorder": "#C8C1B6",
+            "bookHeadingColor": "#2B2B2B",
+            "chapterHeadingColor": "#2B2B2B",
+            "verseNumberColor": "#8B7355",
+            "verseTextColor": "#2B2B2B",
+            "pageBackground": "#F0EDE8",
+            "pageTextColor": "#2B2B2B",
+            "heading1Color": "#2B2B2B",
+            "heading2Color": "#2B2B2B",
+            "heading3Color": "#6B6558",
+            "descriptionTextColor": "#6B6558",
+            "menuTextColor": "#2B2B2B",
+            "breadcrumbsColor": "#6B6558",
+            "sectionBackground": "#4A7C3F",
+            "spaceNameColor": "#2B2B2B",
+            "sideMenuIconsColor": "#2B2B2B",
+            "selectedSpaceColor": "#4A7C3F",
+            "unselectedSpaceColor": "#C8C1B6",
+            "spaceNameText": "#2B2B2B",
+            "addButtonBackground": "#4A7C3F",
+            "addButtonIcon": "#FFFFFF",
+            "selectPanelIcon": "#2B2B2B",
+            "openCloseMenuIcon": "#2B2B2B",
+            "moreIcon": "#6B6558",
+            "settingsIcon": "#6B6558",
+            "inactiveSpaceIndicator": "#C8C1B6",
+            "activeSpaceIndicator": "#4A7C3F",
+            "profileAvatar": "#4A7C3F",
+            "toolbarBorder": "#C8C1B6",
+            "toolbarFill": "#F0EDE8",
+            "toolbarIconsColor": "#2B2B2B",
+            "selectionUIBorder": "#C8C1B6",
+            "selectionUIFill": "#F0EDE8",
+            "selectionIconsColor": "#2B2B2B",
+            "toolbarBackground": "#F0EDE8",
+            "iconColor": "#2B2B2B",
+            "inputTitleColor": "#2B2B2B",
+            "inputPlaceholderColor": "#8B7355",
+            "inputActiveBorder": "#4A7C3F",
+            "inputActiveFill": "#F0EDE8",
+            "inputInactiveBorder": "#C8C1B6",
+            "inputInactiveFill": "#F0EDE8",
+            "inputBackground": "#F0EDE8",
+            "inputBorder": "#C8C1B6",
+            "inputText": "#2B2B2B",
+            "inputPlaceholder": "#8B7355",
+            "logoColor": "#2B2B2B",
+            "accentColor": "#4A7C3F",
+            "spaceSelection": "#4A7C3F",
+            "text1": "#2B2B2B",
+            "text2": "#6B6558",
+            "showTabIcons": true,
+            "torahBorder": "#C8C1B6",
+            "torahFill": "#4A7C3F",
+            "torahFont": "DM Sans",
+            "torahSize": "12",
+            "neviimBorder": "#C8C1B6",
+            "neviimFill": "#7A9E3F",
+            "neviimFont": "DM Sans",
+            "neviimSize": "12",
+            "ketuvimBorder": "#C8C1B6",
+            "ketuvimFill": "#8B7355",
+            "ketuvimFont": "DM Sans",
+            "ketuvimSize": "12",
+            "bookTextColor": "#2B2B2B",
+            "bookTextFont": "DM Sans",
+            "bookTextSize": "12",
+            "chapterTextColor": "#2B2B2B",
+            "chapterTextFont": "DM Sans",
+            "chapterTextSize": "12",
+            "chapterColorBorder": "#C8C1B6",
+            "chapterColorFill": "#C8C1B6",
+            "pentateuchBorder": "#C8C1B6",
+            "pentateuchFill": "#4A7C3F",
+            "pentateuchFont": "DM Sans",
+            "pentateuchSize": "12",
+            "historicalBorder": "#C8C1B6",
+            "historicalFill": "#7A9E3F",
+            "historicalFont": "DM Sans",
+            "historicalSize": "12",
+            "poeticBorder": "#C8C1B6",
+            "poeticFill": "#8B7355",
+            "poeticFont": "DM Sans",
+            "poeticSize": "12",
+            "propheticBorder": "#C8C1B6",
+            "propheticFill": "#6B8E5A",
+            "propheticFont": "DM Sans",
+            "propheticSize": "12",
+            "primaryLight": "#C8C1B6",
+            "onPrimaryLight": "#2B2B2B",
+            "primaryBase": "#4A7C3F",
+            "onPrimaryBase": "#FFFFFF",
+            "primaryDark": "#3A6130",
+            "onPrimaryDark": "#FFFFFF",
+            "secondaryLight": "#E8E4DE",
+            "onSecondaryLight": "#2B2B2B",
+            "secondaryBase": "#3A6130",
+            "onSecondaryBase": "#FFFFFF",
+            "secondaryDark": "#2A4A22",
+            "onSecondaryDark": "#FFFFFF",
+            "tertiaryLight": "#F5F2EE",
+            "onTertiaryLight": "#6B6558",
+            "tertiaryBase": "#8B7355",
+            "onTertiaryBase": "#FFFFFF",
+            "tertiaryDark": "#6B5840",
+            "onTertiaryDark": "#FFFFFF",
+            "background": "#F0EDE8",
+            "onBackground": "#2B2B2B",
+            "surface": "#E8E4DE",
+            "onSurface": "#2B2B2B",
+            "filter-mode": "invert(0)",
+            "text3": "#2B2B2B",
+            "secondary-filter-mode": "invert(100%)"
+          }
+        }
+      ],
+      "appSettings": {
+        "disablePanels": true,
+        "removeSpaces": true,
+        "removeEditMode": true
+      },
+      "onlineUsers": {
+        "enabled": true,
+        "anonymous": true
+      },
+      "sections": {
+        "accountHeader": {
+          "enabled": true,
+          "showDivider": false,
+          "items": {
+            "generalHeader": { "enabled": true, "labelKey": "generalSettings" },
+            "generalDesc": { "enabled": true, "labelKey": "manageAccountDesc" },
+            "yourAccount": { "enabled": true }
+          }
+        },
+        "accountOptions": {
+          "enabled": true,
+          "showDivider": false,
+          "items": {
+            "theme": { "enabled": true },
+            "notifications": { "enabled": true },
+            "keepScreenAwake": { "enabled": true }
+          }
+        },
+        "preferences": {
+          "enabled": true,
+          "showDivider": false,
+          "items": {
+            "language": { "enabled": true },
+            "reportBug": { "enabled": true },
+            "help": { "enabled": true }
           }
         }
       }
@@ -94,10 +298,12 @@
               "enabled": true,
               "showDivider": false,
               "items": {
+                "theme": { "enabled": true },
                 "accountSettings": { "enabled": true },
                 "billing": { "enabled": true },
                 "permissions": { "enabled": true },
-                "notifications": { "enabled": true }
+                "notifications": { "enabled": true },
+                "keepScreenAwake": { "enabled": true }
               }
             },
             "subscriptionsSection": {
@@ -112,7 +318,9 @@
               "showDivider": true,
               "items": {
                 "language": { "enabled": true },
-                "reseedToggle": { "enabled": true }
+                "reseedToggle": { "enabled": true },
+                "reportBug": { "enabled": true },
+                "help": { "enabled": true }
               }
             }
           }

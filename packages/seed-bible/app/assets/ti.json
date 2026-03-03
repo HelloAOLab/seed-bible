@@ -140,5 +140,12 @@
   "pentateuch": "ሓሙሽተ መጻሕፍቲ ሙሴ",
   "historical": "ታሪኻዊ",
   "poetic": "ግጥማዊ",
-  "prophetic": "ትንቢታዊ"
+  "prophetic": "ትንቢታዊ",
+  "bookmarkUpdatedSuccessfully": "ቡክማርክ ብዓወት ተዘሚኑ።",
+  "failedToUpdateBookmark": "ቡክማርክ ምዝማን ኣይተዓወተን። እባክካ እንደገና ፈትን።",
+  "undoActionSuccessfull": "መመለሲ ብዓወት ተፈጺሙ።",
+  "headingAddedToPlaylist": "{{heading}} ናብ ዝርዝር ተወሲዱ",
+  "addToPlaylist": "ናብ ዝርዝር ወስኽ",
+  "addToNew": "ናብ ሓድሽ ወስኽ",
+  "itemsAddedToPlaylistSuccessfully": "እቃታት ናብ ዝርዝር ብዓወት ተወሲዶም።"
 }

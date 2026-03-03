@@ -1,30 +1,39 @@
-import {
-  ScriptureMap2D,
-  ScriptureMap2DModes,
-} from "scriptureMap2D.main.ScriptureMap2D";
+import { ScriptureMap2D } from "scriptureMap2D.main.ScriptureMap2D";
+import { ScriptureMap2DModes } from "scriptureMap2D.main.enums";
+import type {
+  AppProps,
+  ScriptureMap2DConfig,
+} from "scriptureMap2D.main.interfaces";
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { ConvertDividedPsalmsToComplete } from "bibleVizUtils.functions.index";
 
-const onChapterClickDependencies = [];
+const onChapterClickDependencies: unknown[] = [];
 const onChapterClickAndHold = () => {};
 const onBookNameClickAndHold = () => {};
-const onBookNameClickAndHoldDependencies = [];
+const onBookNameClickAndHoldDependencies: unknown[] = [];
 
 const { useCallback } = os.appHooks;
 
-const App = ({ id }) => {
-  const handleChapterClick = useCallback((_, key) => {
+const App: (args: AppProps) => React.JSX.Element = ({ id }) => {
+  const handleChapterClick = useCallback<
+    ScriptureMap2DConfig["onChapterClick"]
+  >((_, key) => {
     const { bookName, chapterIndex } = key;
 
-    let bookId = BibleVizUtils.Data.tags.booksStaticInfo[bookName].abbreviation;
-    let chapter = chapterIndex + 1;
+    const bookInfo = BibleVizDataRepository.getBookStaticInfo(bookName);
+    if (bookInfo) {
+      let { abbreviation: bookId } = bookInfo;
+      let chapter = chapterIndex + 1;
 
-    if (bookName.includes("Psalms")) {
-      ({ chapter } = BibleVizUtils.Functions.ConvertDividedPsalmsToComplete({
-        book: bookName,
-        chapter,
-      }));
-      bookId = "PSA";
+      if (bookName.includes("Psalms")) {
+        ({ chapter } = ConvertDividedPsalmsToComplete({
+          book: bookName,
+          chapter,
+        }));
+        bookId = "PSA";
+      }
+      globalThis.Open(bookId, chapter);
     }
-    globalThis.Open(bookId, chapter);
   }, []);
 
   return (
@@ -38,7 +47,7 @@ const App = ({ id }) => {
       }}
     >
       <ScriptureMap2D
-        parentContext={{
+        config={{
           mode: ScriptureMap2DModes.Viewer,
           onChapterClick: handleChapterClick,
           onChapterClickDependencies,

@@ -1,5 +1,6 @@
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
-const { Checkbox, LoaderSecondary, Modal, ButtonsCover, Button } = Components;
+const G = globalThis as any;
+const { Checkbox, LoaderSecondary, Modal, ButtonsCover, Button } = G.Components;
 
 const CircleProgress = await thisBot.DynamicCircle();
 const RenderIcon = await thisBot.RenderIcon();
@@ -14,41 +15,41 @@ const ButtonStyle = {
 };
 
 const startEditingPlaylist = (
-  name,
-  id,
-  list,
-  subId,
-  attachment,
-  checklistEnabled,
-  parentId,
-  readingPlanEnabled,
-  currentFormat,
-  color,
-  icon,
-  isCustomColor,
-  description,
-  isCustomIcon,
-  selectedTags,
-  isLayers,
-  access
+  name: string,
+  id: string,
+  list: any,
+  subId: any,
+  attachment: any,
+  checklistEnabled: boolean,
+  parentId: string,
+  readingPlanEnabled: boolean,
+  currentFormat: string,
+  color: string,
+  icon: string,
+  isCustomColor: boolean,
+  description: string,
+  isCustomIcon: boolean,
+  selectedTags: any,
+  isLayers: boolean,
+  access: string
 ) => {
   // if (globalThis.setTabPlaylist) {
   //     globalThis.setTabPlaylist('create');
   // }
-  globalThis[`${parentId}SetPlaylistName`](name);
-  globalThis[`${parentId}creatingPlaylistName`] = name;
-  globalThis[`${parentId}HISTORYExploreMode`] = false;
-  globalThis[`${parentId}creatingPlaylist`] = true;
-  globalThis[`${parentId}isEditMode`] = id;
-  globalThis[`${parentId}isEditModeSubID`] = subId;
+  G[`${parentId}SetPlaylistName`](name);
+  G[`${parentId}creatingPlaylistName`] = name;
+  G[`${parentId}HISTORYExploreMode`] = false;
+  G[`${parentId}creatingPlaylist`] = true;
+  G[`${parentId}isEditMode`] = id;
+  G[`${parentId}isEditModeSubID`] = subId;
   // thisBot.showInfo(`Playlist Mode`);
   // thisBot.ControlButtons();
-  globalThis[`${parentId}SetAttachments`](attachment);
-  globalThis[`${parentId}Attachments`] = attachment;
-  globalThis[`${parentId}SetReadingPlan`](readingPlanEnabled);
-  globalThis[`${parentId}SetChecklist`](checklistEnabled);
-  globalThis[`${parentId}SetCurrentFormat`](currentFormat);
-  globalThis.SetEditData({
+  G[`${parentId}SetAttachments`](attachment);
+  G[`${parentId}Attachments`] = attachment;
+  G[`${parentId}SetReadingPlan`](readingPlanEnabled);
+  G[`${parentId}SetChecklist`](checklistEnabled);
+  G[`${parentId}SetCurrentFormat`](currentFormat);
+  G.SetEditData({
     color: color,
     id: parentId,
     name: name,
@@ -56,77 +57,84 @@ const startEditingPlaylist = (
     icon: icon,
   });
 
-  if (isCustomColor) globalThis[`${parentId}setCustomColor`](color);
-  if (isCustomIcon) globalThis[`${parentId}setCustomIcon`](icon);
-  globalThis[`${parentId}setSelectedColor`](color);
-  globalThis[`${parentId}setSelectedIcon`](icon);
-  globalThis[`${parentId}setDescription`](description);
-  globalThis[`${parentId}SetCreatingPlaylist`](true, list);
-  globalThis[`${parentId}SetSelectedTags`](selectedTags || []);
-  globalThis[`${parentId}SetLayers`](isLayers);
-  globalThis[`${parentId}setPublishAccess`](access);
+  if (isCustomColor) G[`${parentId}setCustomColor`](color);
+  if (isCustomIcon) G[`${parentId}setCustomIcon`](icon);
+  G[`${parentId}setSelectedColor`](color);
+  G[`${parentId}setSelectedIcon`](icon);
+  G[`${parentId}setDescription`](description);
+  G[`${parentId}SetCreatingPlaylist`](true, list);
+  G[`${parentId}SetSelectedTags`](selectedTags || []);
+  G[`${parentId}SetLayers`](isLayers);
+  G[`${parentId}setPublishAccess`](access);
 };
 
 const defaultProfile =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5ae46570b2daba6e99c5b71de2cf41cfd9dfaf46e04c9eb9344146955ddb9a31.svg";
 
-const PlaylistRowItem = ({
-  currentDateActive,
-  shareProfileName,
-  oldItemsMap = {},
-  checkListData,
-  selectedPlaylists,
-  selectPlaylist = false,
-  setSelectPlaylist,
-  playlistParentName = "",
-  clickPass = false,
-  linkingMode,
-  onLink,
-  viewOnly,
-  parentId,
-  playingPlaylist,
-  checklistEnabled,
-  readingPlanEnabled,
-  totalItem,
-  index,
-  toggle,
-  list,
-  name,
-  id,
-  setPlaylists,
-  attachment = null,
-  playListIndex,
-  playListSubId = null,
-  playListSubIndex = null,
-  creatingPlaylist,
-  handleDragOver,
-  handleDragEnd,
-  currentFormat,
-  handleDragStart,
-  dragOverSet,
-  setOpenedList,
-  opendedList,
-  color = "#D9D9D9",
-  icon = "subscriptions",
-  isCustomColor = false,
-  description = "",
-  isCustomIcon = false,
-  selectedTags,
-  isLayers,
-  access,
-}) => {
+const PlaylistRowItem = (props: any) => {
+  const {
+    currentDateActive,
+    shareProfileName,
+    oldItemsMap = {},
+    checkListData,
+    selectedPlaylists = {},
+    selectPlaylist = false,
+    setSelectPlaylist,
+    playlistParentName = "",
+    clickPass = false,
+    linkingMode,
+    onLink,
+    viewOnly,
+    parentId,
+    playingPlaylist,
+    checklistEnabled,
+    readingPlanEnabled,
+    totalItem,
+    index,
+    toggle,
+    list,
+    name,
+    id,
+    setPlaylists,
+    attachment = null,
+    playListIndex,
+    playListSubId = null,
+    playListSubIndex = null,
+    creatingPlaylist,
+    handleDragOver,
+    handleDragEnd,
+    currentFormat,
+    handleDragStart,
+    dragOverSet,
+    setOpenedList,
+    opendedList,
+    color = "#D9D9D9",
+    icon = "subscriptions",
+    isCustomColor = false,
+    description = "",
+    isCustomIcon = false,
+    selectedTags,
+    isLayers,
+    access,
+    onSelectPlaylist = null,
+  } = props;
   const isCustomIcons = icon?.startsWith("https") || isCustomIcon;
   const [warningMessage, setWarningMsg] = useState(null);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
-  const isPlayingPLaylist = playingPlaylist || globalThis.IsPlaylistPlaying;
-  const toggleOpen = () => setOpenedList((prev) => (prev === id ? "" : id));
+  const isPlayingPLaylist = playingPlaylist || G.IsPlaylistPlaying;
+  const toggleOpen = () =>
+    setOpenedList((prev: any) => (prev === id ? "" : id));
   const [isPlay, setIsPlay] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [copyURL, setCopyURL] = useState(null);
 
-  const setPlaylist = (newList) => {
-    setPlaylists((prev) => {
+  const DragDropT = useMemo(() => {
+    return G.DragDrop;
+  }, []);
+
+  const setPlaylist = (newList: any) => {
+    setPlaylists((prev: any) => {
       const old = [...prev];
       if (playListSubIndex || playListSubIndex === 0) {
         old[playListSubIndex].list[playListIndex].list = newList;
@@ -137,11 +145,11 @@ const PlaylistRowItem = ({
     });
   };
 
-  const deleteDataFromPlaylist = (index) => {
-    const idsMap = {};
+  const deleteDataFromPlaylist = (index: number) => {
+    const idsMap: Record<string, boolean> = {};
     const isArray = Array.isArray(index);
     if (isArray) index.forEach((id) => (idsMap[id] = true));
-    setPlaylists((prev) => {
+    setPlaylists((prev: any) => {
       const old = [...prev];
       if (playListSubIndex || playListSubIndex === 0) {
         let oldList = [...old[playListSubIndex].list[playListIndex].list];
@@ -174,12 +182,16 @@ const PlaylistRowItem = ({
     });
   };
 
-  const editDataFromPlaylist = (index, isGroup, newVal = false) => {
-    setPlaylists((prev) => {
+  const editDataFromPlaylist = (
+    index: any,
+    isGroup: boolean,
+    newVal = false
+  ) => {
+    setPlaylists((prev: any) => {
       const old = [...prev];
       if (playListSubIndex || playListSubIndex === 0) {
         if (isGroup) {
-          index.forEach((i) => {
+          index.forEach((i: number) => {
             old[playListSubIndex].list[playListIndex].list[i].readAlready =
               newVal;
           });
@@ -190,7 +202,7 @@ const PlaylistRowItem = ({
         // old[playListSubIndex].toggleRender = !old[playListSubIndex].toggleRender;
       } else {
         if (isGroup) {
-          index.forEach((i) => {
+          index.forEach((i: number) => {
             old[playListIndex].list[i].readAlready = newVal;
           });
         } else {
@@ -203,12 +215,14 @@ const PlaylistRowItem = ({
     });
   };
 
-  const deletePlayList = (id) => {
-    setPlaylists((prev) => {
+  const deletePlayList = (id: string) => {
+    setPlaylists((prev: any) => {
       const old = [...prev];
       let index = old.findIndex((ele) => ele.id === id);
       if (playListSubIndex || playListSubIndex === 0) {
-        index = old[playListSubIndex].list.findIndex((ele) => ele.id === id);
+        index = old[playListSubIndex].list.findIndex(
+          (ele: any) => ele.id === id
+        );
       }
       if (index > -1) {
         if (playListSubIndex || playListSubIndex === 0) {
@@ -222,9 +236,8 @@ const PlaylistRowItem = ({
   };
 
   const onremoveAttachment = () => {
-    setPlaylists((prev) => {
+    setPlaylists((prev: any) => {
       const old = [...prev];
-
       if (playListSubIndex || playListSubIndex === 0) {
         old[playListSubIndex].list[playListIndex].attachment = null;
         old[playListSubIndex].toggleRender =
@@ -236,7 +249,8 @@ const PlaylistRowItem = ({
     });
   };
 
-  const hanldeAdd = ({ dataItem, bulkAdd }) => {
+  const hanldeAdd = (params: { dataItem: any; bulkAdd: boolean }) => {
+    const { dataItem, bulkAdd } = params;
     if (creatingPlaylist) {
       thisBot.tryAddDataToPlaylist({ dataItem, bulkAdd });
     } else {
@@ -244,20 +258,24 @@ const PlaylistRowItem = ({
     }
   };
 
-  const onClick = ({ dataItem, bulkAdd, index }) => {
-    globalThis.SetCurreIndexPlaylist &&
-      globalThis.SetCurreIndexPlaylist(index, playListSubIndex);
+  const onClick = (params: {
+    dataItem: any;
+    bulkAdd: boolean;
+    index: number;
+  }) => {
+    const { dataItem, bulkAdd, index } = params;
+    G.SetCurreIndexPlaylist && G.SetCurreIndexPlaylist(index, playListSubIndex);
     thisBot.navigationWithDataItem({ dataItem, bulkAdd });
   };
 
   const exportNestedList = () => {
-    setPlaylists((prev) => {
+    setPlaylists((prev: any) => {
       const old = [...prev];
-      const playlist = { ...old[playListSubIndex].list[playListIndex] };
+      const playlist = { ...old[playListSubIndex as any].list[playListIndex] };
       playlist.nesting = 1;
       // old[playListSubIndex].toggleRender = !old[playListSubIndex].toggleRender;
-      old.splice(playListSubIndex + 1, 0, playlist);
-      old[playListSubIndex].list.splice(playListIndex, 1);
+      old.splice((playListSubIndex as any) + 1, 0, playlist);
+      old[playListSubIndex as any].list.splice(playListIndex, 1);
       return old;
     });
   };
@@ -297,13 +315,13 @@ const PlaylistRowItem = ({
       color,
       isCustomColor,
       description,
-      icons: globalThis.PREDEFINED_ICONS,
+      icons: G.PREDEFINED_ICONS,
       shareProfileName,
       shareProfilePic,
       sharerID: authBot?.id || "N/A",
     };
 
-    const sanitizedItem = sanitizeObject(playlistObj);
+    const sanitizedItem = G.sanitizeObject(playlistObj);
     // console.log(sanitizedItem, "sanitizedItem");
     const stringItems = JSON.stringify(sanitizedItem, null, 2);
 
@@ -325,7 +343,7 @@ const PlaylistRowItem = ({
     const recordShareKey = `${authBot.id}^_^${playlistObj.id}`;
 
     if (result.success) {
-      const shareURL = `https://ao.bot/?${key}=${deployBot}&Playlist=${recordShareKey}&noGridPortal=true`;
+      const shareURL: any = `https://ao.bot/?${key}=${deployBot}&Playlist=${recordShareKey}&noGridPortal=true`;
       os.setClipboard(shareURL);
       setShowMoreOptions(false);
       setCopyURL(shareURL);
@@ -342,7 +360,8 @@ const PlaylistRowItem = ({
     setLoading(false);
   };
 
-  const openMergeModal = ({ id }) => {
+  const openMergeModal = (params: { id: string; parentId: string }) => {
+    const { id } = params;
     thisBot.MergeModal({ id });
   };
 
@@ -357,13 +376,13 @@ const PlaylistRowItem = ({
 
   const percentageCompleted = (() => {
     if (id) {
-      const playlistsProgress = globalThis[`${parentId}playlistProgress`];
-      const playlistsChecked = globalThis[`${parentId}playlistChecked`];
+      const playlistsProgress = G[`${parentId}playlistProgress`];
+      const playlistsChecked = G[`${parentId}playlistChecked`];
       const itemsProg = { ...(playlistsProgress[id] || {}) };
       const itemsCheck = { ...(playlistsChecked[id] || {}) };
       const completedItems = { ...itemsProg, ...itemsCheck };
-      const playlistList = (globalThis[`${id}playlists`] || []).find(
-        (ele) => ele.id === id
+      const playlistList = (G[`${id}playlists`] || []).find(
+        (ele: any) => ele.id === id
       );
 
       const totalItems = playlistList?.list?.length || 0;
@@ -372,7 +391,7 @@ const PlaylistRowItem = ({
         let completedCount = 0;
         const tfHist = thisBot.groupVerse(playlistList.list);
 
-        tfHist.forEach((ele) => {
+        tfHist.forEach((ele: any) => {
           const isGrouped = Array.isArray(ele.additionalInfo);
           if (completedItems[ele.id]) {
             if (isGrouped) {
@@ -390,23 +409,23 @@ const PlaylistRowItem = ({
   })();
 
   useLayoutEffect(() => {
-    globalThis[`updatePercent${id}`] = () => {};
+    G[`updatePercent${id}`] = () => {};
   }, [id]);
 
   const onCloseWarningPopup = () => {
     setWarningMsg(null);
   };
 
-  const timer = useRef(null);
+  const timer = useRef<any>(null);
 
-  const handleTouchStart = (e) => {
+  const handleTouchStart = (e: any) => {
     const rect = e.currentTarget.getBoundingClientRect();
 
     const x = rect.left; // X position where the element starts (from left of screen)
     const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
 
-    globalThis.LastClickX = Math.max(x, 10);
-    globalThis.LastClickY = y;
+    G.LastClickX = Math.max(x, 10);
+    G.LastClickY = y;
     timer.current = setTimeout(() => {
       setShowMoreOptions((p) => !p);
     }, 1000); // 600ms = long press threshold
@@ -422,12 +441,12 @@ const PlaylistRowItem = ({
     <>
       {!!warningMessage && (
         <Modal
-          title={globalThis.t("editPlaylistTitle")}
+          title={t("editPlaylistTitle")}
           showIcon={false}
           onClose={onCloseWarningPopup}
         >
-          <p>{globalThis.t("editSharedPlaylistMsg")}</p>
-          <p>{globalThis.t("makeACopy")}</p>
+          <p>{t("editSharedPlaylistMsg")}</p>
+          <p>{t("makeACopy")}</p>
           <ButtonsCover>
             <Button
               secondary
@@ -436,10 +455,10 @@ const PlaylistRowItem = ({
                 setWarningMsg(null);
               }}
             >
-              {globalThis.t("yes")}
+              {t("yes")}
             </Button>
             <Button secondaryAlt onClick={onCloseWarningPopup}>
-              {globalThis.t("no")}
+              {t("no")}
             </Button>
           </ButtonsCover>
         </Modal>
@@ -467,8 +486,11 @@ const PlaylistRowItem = ({
             const x = rect.left; // X position where the element starts (from left of screen)
             const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
 
-            globalThis.LastClickX = x;
-            globalThis.LastClickY = y;
+            G.LastClickX = x;
+            G.LastClickY = y;
+            if (onSelectPlaylist) {
+              return;
+            }
             setShowMoreOptions((p) => !p);
           }}
           onTouchStart={handleTouchStart}
@@ -479,6 +501,11 @@ const PlaylistRowItem = ({
             width: "100%",
             position: "relative",
             zIndex: "2",
+          }}
+          onClick={() => {
+            if (onSelectPlaylist) {
+              onSelectPlaylist(id);
+            }
           }}
         >
           {selectPlaylist && (
@@ -495,26 +522,26 @@ const PlaylistRowItem = ({
           <RenderIcon isCustomIcons={isCustomIcons} icon={icon} list={list} />
           <h4
             onPointerDown={() => {
-              globalThis.ADDING_TOPLAYLIST_TIMEOUT = setTimeout(() => {
-                globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
+              G.ADDING_TOPLAYLIST_TIMEOUT = setTimeout(() => {
+                G.ADDING_TOPLAYLIST_TIMEOUT = null;
                 // Can be done any function
                 // hanldeAdd({ dataItem: list, bulkAdd: true });
               }, 1000);
             }}
             onPointerUp={() => {
-              if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) {
+              if (G.ADDING_TOPLAYLIST_TIMEOUT) {
                 // UnComment if you want playlist to open
                 // toggleOpen();
-                clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+                clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
               }
             }}
             onMouseLeave={() => {
-              if (globalThis.ADDING_TOPLAYLIST_TIMEOUT)
-                clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+              if (G.ADDING_TOPLAYLIST_TIMEOUT)
+                clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
             }}
             onTouchEnd={() => {
-              if (globalThis.ADDING_TOPLAYLIST_TIMEOUT)
-                clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+              if (G.ADDING_TOPLAYLIST_TIMEOUT)
+                clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
             }}
             className="playlist-action clear"
             style={{
@@ -552,122 +579,124 @@ const PlaylistRowItem = ({
           </h4>
         </div>
 
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            right: "1rem",
-            transform: "translateY(-50%)",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.25rem",
-            color: "#D36433",
-            zIndex: "11",
-          }}
-        >
-          {loading && <LoaderSecondary />}
-          {!!copyURL && (
-            <span
-              class="material-symbols-outlined unfollow"
-              style={{
-                fontSize: "1.5rem",
-                color: "inherit",
-                cursor: "pointer",
-              }}
-              onClick={() => {
-                os.setClipboard(copyURL);
-                ShowNotification({
-                  message: t("shareURLCopied"),
-                  severity: "success",
-                });
-              }}
-            >
-              copy_all
-            </span>
-          )}
-          <div></div>
-          {false && !creatingPlaylist && !viewOnly && (
-            <span
-              style={ButtonStyle}
-              onClick={() => {
-                setShowMoreOptions((p) => !p);
-              }}
-              class="material-symbols-outlined unfollow"
-            >
-              more_vert
-            </span>
-          )}
-          <CircleProgress id={id} progress={`${percentageCompleted}`} />
-          {!creatingPlaylist && !viewOnly ? (
-            !isPlayingPLaylist || true ? (
+        {!onSelectPlaylist && (
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              right: "1rem",
+              transform: "translateY(-50%)",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.25rem",
+              color: "#D36433",
+              zIndex: "11",
+            }}
+          >
+            {loading && <LoaderSecondary />}
+            {!!copyURL && (
               <span
-                style={{
-                  ...ButtonStyle,
-                  fontSize: "1.97rem",
-                  color: "#000000",
-                  top: "51%",
-                  position: "absolute",
-                  right: "0%",
-                  transform: `translate(0%, -50%)`,
-                  backgroundColor: "var(--themeSideMenu)",
-                }}
                 class="material-symbols-outlined unfollow"
+                style={{
+                  fontSize: "1.5rem",
+                  color: "inherit",
+                  cursor: "pointer",
+                }}
                 onClick={() => {
-                  thisBot.Playlistplaying({
-                    playingPlaylist: playListSubId || id,
-                    startIndex: playListSubIndex !== null ? index : 0,
-                    startSubIndex: playListSubIndex !== null ? 0 : -1,
-                    parentId,
-                    name: name,
+                  os.setClipboard(copyURL);
+                  ShowNotification({
+                    message: t("shareURLCopied"),
+                    severity: "success",
                   });
-                  setIsPlay(true);
-                  setTimeout(() => {
-                    setIsPlay(false);
-                    setTimeout(() => {
-                      setIsPlay(true);
-                      setTimeout(() => {
-                        setIsPlay(false);
-                      }, 150);
-                    }, 150);
-                  }, 150);
-
-                  // SetPlayingPlaylist(playListSubId || id);
-                  // toggleOpen();
-                  // thisBot.showInfo(`Playing Playlist!`);
                 }}
               >
-                play_circle
+                copy_all
               </span>
-            ) : (
-              <>
+            )}
+            <div></div>
+            {false && !creatingPlaylist && !viewOnly && (
+              <span
+                style={ButtonStyle}
+                onClick={() => {
+                  setShowMoreOptions((p) => !p);
+                }}
+                class="material-symbols-outlined unfollow"
+              >
+                more_vert
+              </span>
+            )}
+            <CircleProgress id={id} progress={`${percentageCompleted}`} />
+            {!creatingPlaylist && !viewOnly && !onSelectPlaylist ? (
+              !isPlayingPLaylist || true ? (
                 <span
                   style={{
                     ...ButtonStyle,
-                    color: "#139981",
-                  }}
-                  onClick={() => {
-                    // os.unregisterApp("playing-playlist");
-                    globalThis.ToggleGreyCheckPLayingPlaylist &&
-                      globalThis.ToggleGreyCheckPLayingPlaylist(null);
-                    // thisBot.showInfo(`History Mode!`);
+                    fontSize: "1.97rem",
+                    color: "#000000",
+                    top: "51%",
+                    position: "absolute",
+                    right: "0%",
+                    transform: `translate(0%, -50%)`,
+                    backgroundColor: "var(--themeSideMenu)",
                   }}
                   class="material-symbols-outlined unfollow"
-                >
-                  pause_circle
-                </span>
-                <span
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: "400",
-                    color: "#139981",
+                  onClick={() => {
+                    thisBot.Playlistplaying({
+                      playingPlaylist: playListSubId || id,
+                      startIndex: playListSubIndex !== null ? index : 0,
+                      startSubIndex: playListSubIndex !== null ? 0 : -1,
+                      parentId,
+                      name: name,
+                    });
+                    setIsPlay(true);
+                    setTimeout(() => {
+                      setIsPlay(false);
+                      setTimeout(() => {
+                        setIsPlay(true);
+                        setTimeout(() => {
+                          setIsPlay(false);
+                        }, 150);
+                      }, 150);
+                    }, 150);
+
+                    // SetPlayingPlaylist(playListSubId || id);
+                    // toggleOpen();
+                    // thisBot.showInfo(`Playing Playlist!`);
                   }}
                 >
-                  {globalThis.t("nowPlaying")}
+                  play_circle
                 </span>
-              </>
-            )
-          ) : null}
-        </div>
+              ) : (
+                <>
+                  <span
+                    style={{
+                      ...ButtonStyle,
+                      color: "#139981",
+                    }}
+                    onClick={() => {
+                      // os.unregisterApp("playing-playlist");
+                      G.ToggleGreyCheckPLayingPlaylist &&
+                        G.ToggleGreyCheckPLayingPlaylist(null);
+                      // thisBot.showInfo(`History Mode!`);
+                    }}
+                    class="material-symbols-outlined unfollow"
+                  >
+                    pause_circle
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "400",
+                      color: "#139981",
+                    }}
+                  >
+                    {t("nowPlaying")}
+                  </span>
+                </>
+              )
+            ) : null}
+          </div>
+        )}
         <div
           style={{
             height: id === opendedList ? "auto" : "0",
@@ -691,10 +720,10 @@ const PlaylistRowItem = ({
             </p>
           )}
           {list?.length === 0 && (
-            <h4 style={{ margin: "8px 0" }}>{globalThis.t("noItemsYet")}</h4>
+            <h4 style={{ margin: "8px 0" }}>{t("noItemsYet")}</h4>
           )}
           {opendedList && (
-            <DragDrop
+            <DragDropT
               access={access}
               description={description}
               icon={icon}
@@ -707,7 +736,7 @@ const PlaylistRowItem = ({
               oldItemsMap={oldItemsMap}
               clickPass={clickPass}
               onLinking={onLink}
-              playlistName={`${playlistParentName}${!!playlistParentName ? " - " : ""}${name}`}
+              playlistName={`${playlistParentName}${playlistParentName ? " - " : ""}${name}`}
               linkingMode={linkingMode}
               viewOnly={viewOnly}
               parentId={parentId}
@@ -741,7 +770,7 @@ const PlaylistRowItem = ({
             }}
             style={{
               ...(getPosition ? getPosition() : { x: 0, y: 0 }),
-              width: "200px",
+              width: "206px",
             }}
             className="overlay linked-item-custom"
           >
@@ -757,7 +786,7 @@ const PlaylistRowItem = ({
                     }
                     setShowMoreOptions(false);
 
-                    globalThis[`SetEditModal`]({
+                    G[`SetEditModal`]({
                       id,
                       name,
                       description,
@@ -771,7 +800,7 @@ const PlaylistRowItem = ({
                     setShowMoreOptions(false);
                   }}
                 >
-                  <p>{globalThis.t("renamePlaylist")}</p>
+                  <p>{t("renamePlaylist")}</p>
                 </div>
                 <div
                   className="more-menu-items"
@@ -803,7 +832,7 @@ const PlaylistRowItem = ({
                     setShowMoreOptions(false);
                   }}
                 >
-                  <p>{globalThis.t("editPlaylist")}</p>
+                  <p>{t("editPlaylist")}</p>
                 </div>
               </>
             )}
@@ -814,7 +843,7 @@ const PlaylistRowItem = ({
                 setShowMoreOptions(false);
               }}
             >
-              <p>{globalThis.t("duplicatePlaylist")}</p>
+              <p>{t("duplicatePlaylist")}</p>
             </div>
             <div
               className="more-menu-items"
@@ -823,10 +852,10 @@ const PlaylistRowItem = ({
                 setShowMoreOptions(false);
               }}
             >
-              <p>{globalThis.t("downloadPlaylistJSON")}</p>
+              <p>{t("downloadPlaylistJSON")}</p>
             </div>
             <div className="more-menu-items" onClick={copyClipBoard}>
-              <p>{globalThis.t("sharePlaylist")}</p>
+              <p>{t("sharePlaylist")}</p>
             </div>
             {!creatingPlaylist && !viewOnly && !isPlayingPLaylist && (
               <div
@@ -837,20 +866,20 @@ const PlaylistRowItem = ({
                   setShowMoreOptions(false);
                 }}
               >
-                <p>{globalThis.t("delete")}</p>
+                <p>{t("delete")}</p>
               </div>
             )}
             {!creatingPlaylist &&
               !viewOnly &&
               !isPlayingPLaylist &&
-              (!!playListSubId ? (
+              (playListSubId ? (
                 <div
                   className="more-menu-items"
                   onClick={() => {
                     exportNestedList();
                   }}
                 >
-                  <p>{globalThis.t("exportOutside")}</p>
+                  <p>{t("exportOutside")}</p>
                   <span
                     class="material-symbols-outlined unfollow"
                     style={{ ...ButtonStyle, fontSize: "22px" }}
@@ -863,7 +892,7 @@ const PlaylistRowItem = ({
                   className="more-menu-items"
                   onClick={() => {
                     const isNested = list.some(
-                      (item) => item.type === "playlist"
+                      (item: any) => item.type === "playlist"
                     );
 
                     if (isNested)
@@ -878,7 +907,7 @@ const PlaylistRowItem = ({
                     });
                   }}
                 >
-                  <p>{globalThis.t("mergePlaylist")}</p>
+                  <p>{t("mergePlaylist")}</p>
                   <span
                     class="material-symbols-outlined unfollow"
                     style={{ ...ButtonStyle, fontSize: "22px" }}

@@ -140,5 +140,12 @@
   "pentateuch": "মোশির পঞ্চপুস্তক",
   "historical": "ঐতিহাসিক",
   "poetic": "কাব্যিক",
-  "prophetic": "ভাববাণীমূলক"
+  "prophetic": "ভাববাণীমূলক",
+  "bookmarkUpdatedSuccessfully": "বুকমার্ক সফলভাবে আপডেট হয়েছে।",
+  "failedToUpdateBookmark": "বুকমার্ক আপডেট করতে ব্যর্থ। অনুগ্রহ করে আবার চেষ্টা করুন।",
+  "undoActionSuccessfull": "পূর্বাবস্থায় ফেরানো সফল হয়েছে।",
+  "headingAddedToPlaylist": "{{heading}} প্লেলিস্টে যোগ করা হয়েছে",
+  "addToPlaylist": "প্লেলিস্টে যোগ করুন",
+  "addToNew": "নতুনে যোগ করুন",
+  "itemsAddedToPlaylistSuccessfully": "আইটেমগুলি প্লেলিস্টে সফলভাবে যোগ করা হয়েছে।"
 }

@@ -1,16 +1,15 @@
 const { useState, useRef, useLayoutEffect } = os.appHooks;
 
-const { Input } = Components;
-
-
+const G = globalThis as any;
+const { Input } = G.Components;
 
 const PlaylistCont = await thisBot.PlaylistContainer();
 const AnnotationList = await thisBot.AnnotationList();
 const Bookmarks = await thisBot.Bookmarks();
 
-const itemKeys = [
+const itemKeys: any = [
   "all",
-  "pinnedItems",
+  // "pinnedItems",
   "shared",
   "playlist",
   "annotations",
@@ -19,30 +18,30 @@ const itemKeys = [
 
 const items = [
   "All",
-  "Pinned Items",
+  // "Pinned Items",
   "Shared",
   "Playlist",
   "Annotations",
   "Bookmarks",
 ];
 
-const Discover = ({
-  currentOpenedBook,
-  setAnnotationData,
-  chapter,
-  fetchingAnnotation,
-  playingPlaylist,
-  editingPlaylist,
-  annotationData,
-  style,
-  setOpenModal,
-  annotationSources,
-  tagsSources,
-}) => {
-  
-  const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
+const Discover = (props: any) => {
+  const {
+    currentOpenedBook,
+    setAnnotationData,
+    chapter,
+    fetchingAnnotation,
+    playingPlaylist,
+    editingPlaylist,
+    annotationData,
+    style,
+    setOpenModal,
+    annotationSources,
+    tagsSources,
+  } = props;
+  const IsPlaylistPlaying = G.IsPlaylistPlaying;
 
-  const [selectedChip, setSelectedChip] = useState({
+  const [selectedChip, setSelectedChip] = useState<any>({
     All: true,
   });
   const [query, setQuery] = useState("");
@@ -50,9 +49,9 @@ const Discover = ({
   const [renamingPlaylist, setRenamingPlaylist] = useState(false);
 
   useLayoutEffect(() => {
-    globalThis.SetRenamingPlaylist = setRenamingPlaylist;
+    G.SetRenamingPlaylist = setRenamingPlaylist;
     return () => {
-      globalThis.SetRenamingPlaylist = null;
+      G.SetRenamingPlaylist = null;
     };
   }, [renamingPlaylist]);
 
@@ -61,7 +60,7 @@ const Discover = ({
   const [pos, setPos] = useState("left");
 
   const checkPosition = () => {
-    const el = scrollRef.current;
+    const el: any = scrollRef.current;
     if (!el) return;
 
     // ✅ Detect if no scroll exists
@@ -84,7 +83,7 @@ const Discover = ({
   };
 
   const scrollLeftByWidth = () => {
-    const el = scrollRef.current;
+    const el: any = scrollRef.current;
     if (!el) return;
     const scrollAmount = el.clientWidth - 50;
 
@@ -95,7 +94,7 @@ const Discover = ({
   };
 
   const scrollRightByWidth = () => {
-    const el = scrollRef.current;
+    const el: any = scrollRef.current;
     if (!el) return;
     const scrollAmount = el.clientWidth - 50;
 
@@ -116,14 +115,14 @@ const Discover = ({
     };
   }, []);
 
-  const selectSelectedChip = (val) => {
+  const selectSelectedChip = (val: string) => {
     if (val === "All") {
       setSelectedChip({
         All: true,
       });
     } else {
-      setSelectedChip((prev) => {
-        const newSelectedChip:any = { ...prev };
+      setSelectedChip((prev: any) => {
+        const newSelectedChip: any = { ...prev };
 
         if (newSelectedChip[val]) {
           delete newSelectedChip[val];
@@ -131,7 +130,11 @@ const Discover = ({
           newSelectedChip[val] = true;
         }
 
-        if (Object.keys(newSelectedChip).length === 0 || (Object.keys(newSelectedChip)[0] === "All") && Object.keys(newSelectedChip).length === 1) {
+        if (
+          Object.keys(newSelectedChip).length === 0 ||
+          (Object.keys(newSelectedChip)[0] === "All" &&
+            Object.keys(newSelectedChip).length === 1)
+        ) {
           newSelectedChip.All = true;
         } else {
           delete newSelectedChip.All;
@@ -182,7 +185,7 @@ const Discover = ({
               marginBottom: "0",
             }}
             value={query}
-            onChangeListener={(text) => setQuery(text)}
+            onChangeListener={(text: string) => setQuery(text)}
             placeholder="Search..."
           />
         </div>
@@ -191,7 +194,7 @@ const Discover = ({
         <div className="align-center chips-tag-container">
           {false && (
             <div
-              onClick={() => selectSelectedChip(ele)}
+              // onClick={() => selectSelectedChip(ele)}
               className={`chip-tag`}
               style={{ display: "flex", alignItems: "center" }}
             >
@@ -220,9 +223,7 @@ const Discover = ({
               })}
             </div>
             {pos !== "left" && pos !== "noscroll" && (
-              <div className="chip-tag arrow left" 
-                onClick={scrollLeftByWidth}
-              >
+              <div className="chip-tag arrow left" onClick={scrollLeftByWidth}>
                 <span class="material-symbols-outlined">chevron_backward</span>
               </div>
             )}
@@ -231,7 +232,9 @@ const Discover = ({
                 className="chip-tag arrow right"
                 onClick={scrollRightByWidth}
               >
-                <span class="material-symbols-outlined color-inverted">chevron_forward</span>
+                <span class="material-symbols-outlined color-inverted">
+                  chevron_forward
+                </span>
               </div>
             )}
           </div>

@@ -1,4 +1,6 @@
-globalThis.ScriptureMapHandleUserLoggedIn?.();
+import { eventSystem, Events } from "scriptureMap2D.main.eventManager";
+
+eventSystem.emit(Events.UserLoggedIn);
 
 // const myAuthID = "2225616f-cc40-4129-89a6-b8448743687b";
 // const mySecondAuthId = "1da21ef2-25dd-4bbf-9b9c-188c4f915554";

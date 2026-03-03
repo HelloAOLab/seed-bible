@@ -1,5 +1,6 @@
 const { useEffect, useState, useRef, useMemo } = os.appHooks;
-const { Button, Input } = Components;
+const G = globalThis as any;
+const { Button, Input } = G.Components;
 const RecordingUI = await thisBot.RecordVoice();
 const VideoRecordUI = await thisBot.VideoRecordUI();
 import {
@@ -29,6 +30,12 @@ import {
   Plugin,
 } from "https://esm.helloao.org/vendor-RPNXNWQB.js";
 import { useDragRef } from "playlist.playlistMode.useDragRef";
+
+declare global {
+  interface Window {
+    SimpleEditorToolbar: any;
+  }
+}
 
 const RECORDING_TYPES = {
   audio: "audio/webm",
@@ -104,7 +111,7 @@ const COMMAND_BOX_OPTIONS = [
     icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/95176265a3a33a0077c8b11b493470df3393acfc3ff5411c8fe45976d96be46d.svg",
     label: "Link",
     onClick: () => {
-      globalThis.ThruCommandBox = true;
+      G.ThruCommandBox = true;
       shout("startRecording", RECORDING_TYPES.link);
     },
   },
@@ -131,7 +138,7 @@ const COMMAND_BOX_OPTIONS = [
     icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/14c602cebbe4c6872c9fcf80015865c3b3f70391608bf58b92ad1cc8e068212c.svg",
     label: "Playlist",
     onClick: () => {
-      globalThis.ThruCommandBox = true;
+      G.ThruCommandBox = true;
       // Notify coming soon
       shout("togglePlaylistSuggestions");
     },
@@ -148,22 +155,22 @@ const LineHeight = Mark.create({
     return {
       lineHeight: {
         default: null,
-        parseHTML: (el) => el.style.lineHeight || null,
-        renderHTML: (attrs) =>
+        parseHTML: (el: any) => el.style.lineHeight || null,
+        renderHTML: (attrs: any) =>
           attrs.lineHeight ? { style: `line-height: ${attrs.lineHeight}` } : {},
       },
       id: {
         default: null,
-        parseHTML: (el) => el.getAttribute("id"),
-        renderHTML: (attrs) => (attrs.id ? { id: attrs.id } : {}),
+        parseHTML: (el: any) => el.getAttribute("id"),
+        renderHTML: (attrs: any) => (attrs.id ? { id: attrs.id } : {}),
       },
     };
   },
   parseHTML() {
     return [{ style: "line-height" }];
   },
-  renderHTML({ HTMLAttributes }) {
-    return ["span", HTMLAttributes, 0];
+  renderHTML(props: any) {
+    return ["span", props.HTMLAttributes, 0];
   },
 });
 
@@ -187,7 +194,8 @@ export const CustomSpan = Node.create({
     return [{ tag: "span" }];
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML(props: any) {
+    const { HTMLAttributes } = props;
     const { id, style, className } = HTMLAttributes;
 
     return [
@@ -202,7 +210,8 @@ export const CustomSpan = Node.create({
   },
 
   addNodeView() {
-    return ({ node }) => {
+    return (props: any) => {
+      const { node } = props;
       const el = document.createElement("span");
 
       if (node.attrs.id) el.setAttribute("id", node.attrs.id);
@@ -236,7 +245,8 @@ export const CustomDiv = Node.create({
     return [{ tag: "div" }];
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML(props: any) {
+    const { HTMLAttributes } = props;
     const { id, style, className } = HTMLAttributes;
 
     return [
@@ -251,7 +261,8 @@ export const CustomDiv = Node.create({
   },
 
   addNodeView() {
-    return ({ node }) => {
+    return (props: any) => {
+      const { node } = props;
       const el = document.createElement("div");
 
       if (node.attrs.id) el.setAttribute("id", node.attrs.id);
@@ -288,7 +299,8 @@ export const Video = Node.create({
     ];
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML(props: any) {
+    const { HTMLAttributes } = props;
     return [
       "video",
       {
@@ -299,11 +311,12 @@ export const Video = Node.create({
   },
 
   addNodeView() {
-    return ({ node, getPos, editor }) => {
+    return (props: any) => {
+      const { node, getPos, editor } = props;
       const el = document.createElement("video");
 
       // apply attributes
-      Object.entries(node.attrs).forEach(([key, value]) => {
+      Object.entries(node.attrs).forEach(([key, value]: any) => {
         if (value !== null) el.setAttribute(key, value);
       });
 
@@ -368,7 +381,8 @@ export const Iframe = Node.create({
     ];
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML(props: any) {
+    const { HTMLAttributes } = props;
     return [
       "iframe",
       {
@@ -379,7 +393,8 @@ export const Iframe = Node.create({
   },
 
   addNodeView() {
-    return ({ node }) => {
+    return (props: any) => {
+      const { node } = props;
       /** Wrapper */
       const wrapper = document.createElement("div");
       wrapper.style.position = "relative";
@@ -387,7 +402,7 @@ export const Iframe = Node.create({
 
       /** iframe */
       const iframe = document.createElement("iframe");
-      Object.entries(node.attrs).forEach(([k, v]) => {
+      Object.entries(node.attrs).forEach(([k, v]: any) => {
         if (v !== null) iframe.setAttribute(k, v);
       });
 
@@ -406,7 +421,7 @@ export const Iframe = Node.create({
 
         if (!node.attrs.src) return;
 
-        const linkDetails = validateUrl(node.attrs.src);
+        const linkDetails = G.validateUrl(node.attrs.src);
 
         if (linkDetails.isValid && linkDetails.type === "youtube") {
           thisBot.VideoPlayer({
@@ -447,8 +462,8 @@ const CustomImage = Image.extend({
 
       class: {
         default: null,
-        parseHTML: (element) => element.getAttribute("class"),
-        renderHTML: (attributes) => {
+        parseHTML: (element: any) => element.getAttribute("class"),
+        renderHTML: (attributes: any) => {
           if (!attributes.class) {
             return {};
           }
@@ -474,34 +489,35 @@ const Audio = Node.create({
     return {
       src: {
         default: null,
-        parseHTML: (el) => el.getAttribute("src"),
+        parseHTML: (el: any) => el.getAttribute("src"),
       },
       controls: {
         default: true,
-        parseHTML: (el) => el.hasAttribute("controls"),
-        renderHTML: (attrs) => (attrs.controls ? { controls: "true" } : {}),
+        parseHTML: (el: any) => el.hasAttribute("controls"),
+        renderHTML: (attrs: any) =>
+          attrs.controls ? { controls: "true" } : {},
       },
       preload: {
         default: "metadata",
-        parseHTML: (el) => el.getAttribute("preload") || "metadata",
+        parseHTML: (el: any) => el.getAttribute("preload") || "metadata",
       },
       loop: {
         default: false,
-        parseHTML: (el) => el.hasAttribute("loop"),
-        renderHTML: (attrs) => (attrs.loop ? { loop: "true" } : {}),
+        parseHTML: (el: any) => el.hasAttribute("loop"),
+        renderHTML: (attrs: any) => (attrs.loop ? { loop: "true" } : {}),
       },
       muted: {
         default: false,
-        parseHTML: (el) => el.hasAttribute("muted"),
-        renderHTML: (attrs) => (attrs.muted ? { muted: "true" } : {}),
+        parseHTML: (el: any) => el.hasAttribute("muted"),
+        renderHTML: (attrs: any) => (attrs.muted ? { muted: "true" } : {}),
       },
       class: {
         default: null,
-        parseHTML: (el) => el.getAttribute("class"),
+        parseHTML: (el: any) => el.getAttribute("class"),
       },
       style: {
         default: null,
-        parseHTML: (el) => el.getAttribute("style"),
+        parseHTML: (el: any) => el.getAttribute("style"),
       },
     };
   },
@@ -510,7 +526,8 @@ const Audio = Node.create({
     return [{ tag: "audio" }];
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML(props: any) {
+    const { HTMLAttributes } = props;
     // Normalize boolean attrs so they appear in DOM correctly
     const attrs = {
       ...HTMLAttributes,
@@ -530,7 +547,7 @@ const Audio = Node.create({
 
 const PlaylistID = (list: any) => {
   let name = "🎶";
-  const firstItem = list.find((ele) => globalThis.ValidTypes[ele?.type]);
+  const firstItem = list.find((ele: any) => G.ValidTypes[ele?.type]);
   if (firstItem) {
     const lowerCase = firstItem?.additionalInfo?.book?.toLocaleLowerCase();
     name =
@@ -544,38 +561,39 @@ const PlaylistID = (list: any) => {
   return name;
 };
 
-export function CustomAnnotationTextEditor({
-  instanceId,
-  className,
-  style,
-  minHeight = 300,
-  initialText,
-  initialHTML,
-  placeholderHTML = '<p style="text-align: left;">Hello World!</p>',
-  readOnly = false,
-  priorityKey = "simple_rich_editor_toolbar_priority",
-  defaultPriority = DEFAULT_TOOLBAR_PRIORITY,
-  onChange,
-  onAIHighlight,
-  showMoreOptions = true,
-  headingControls = false,
-  id = "editor",
-  showPreview,
-  setShowPreview,
-}) {
+function CustomAnnotationTextEditor(props: any) {
+  const {
+    instanceId,
+    className,
+    style,
+    minHeight = 300,
+    initialText,
+    initialHTML,
+    placeholderHTML = '<p style="text-align: left;">Hello World!</p>',
+    readOnly = false,
+    priorityKey = "simple_rich_editor_toolbar_priority",
+    defaultPriority = DEFAULT_TOOLBAR_PRIORITY,
+    onChange,
+    onAIHighlight,
+    showMoreOptions = true,
+    headingControls = false,
+    id = "editor",
+    showPreview,
+    setShowPreview,
+  } = props;
   // ----- ids & storage
   const _instanceId = useRef(
     instanceId || `sre_${Math.random().toString(36).slice(2)}`
   ).current;
   const storage = {
-    get(k) {
+    get(k: any) {
       try {
         return JSON.parse(window.localStorage.getItem(k) || "null");
       } catch {
         return null;
       }
     },
-    set(k, v) {
+    set(k: any, v: any) {
       try {
         window.localStorage.setItem(k, JSON.stringify(v));
       } catch {}
@@ -583,18 +601,18 @@ export function CustomAnnotationTextEditor({
   };
 
   // ----- editor dom & state
-  const editorRef = useRef(null);
-  const editorObjRef = useRef(null);
-  const canonicalHTMLRef = useRef("");
+  const editorRef = useRef<any>(null);
+  const editorObjRef = useRef<any>(null);
+  const canonicalHTMLRef = useRef<any>("");
   const [loading, setLoading] = useState(false);
-  const [recording, setRecording] = useState(globalThis.RecordingValue || null);
+  const [recording, setRecording] = useState(G.RecordingValue || null);
   const [name, setName] = useState("");
   const [link, setLink] = useState("");
   const [commandBoxFilter, setCommandBoxFilter] = useState("");
   const [isCommandBox, setIsCommandBox] = useState(false);
 
-  globalThis.SetCommandBoxFilter = setCommandBoxFilter;
-  globalThis.ISCommandBox = isCommandBox;
+  G.SetCommandBoxFilter = setCommandBoxFilter;
+  G.ISCommandBox = isCommandBox;
 
   console.log("commandBoxFilter", commandBoxFilter);
 
@@ -604,17 +622,17 @@ export function CustomAnnotationTextEditor({
 
   const TAG_OPTIONS = useMemo(
     () => [
-      ...(globalThis?.UsedTags || []).map((tag) => ({
+      ...(G?.UsedTags || []).map((tag: any) => ({
         key: tag.label,
         label: tag.label,
       })),
     ],
-    [globalThis?.UsedTags]
+    [G?.UsedTags]
   );
 
   const PLAYLIST_OPTIONS = useMemo(
     () => [
-      ...(globalThis?.[`defaultplaylists`] || []).map((playlist: any) => ({
+      ...(G?.[`defaultplaylists`] || []).map((playlist: any) => ({
         key: playlist.id,
         label: playlist.name,
         metaData: playlist,
@@ -640,7 +658,7 @@ export function CustomAnnotationTextEditor({
   const [savingPlaylist, setSavingPlaylist] = useState(false);
 
   const createPlaylistLink = async (playlist: any) => {
-    globalThis.LatestPlaylistID = null;
+    G.LatestPlaylistID = null;
 
     setSavingPlaylist(true);
     let shareProfileName = "Guest";
@@ -665,7 +683,7 @@ export function CustomAnnotationTextEditor({
       sharerID: authBot?.id || "N/A",
     };
 
-    const id = globalThis.createUUID();
+    const id = G.createUUID();
 
     const result = await os.recordData(
       authBot.id,
@@ -679,10 +697,10 @@ export function CustomAnnotationTextEditor({
     const recordShareKey = `${authBot.id}^_^${playlistObj.id}-${id}`;
 
     if (result.success) {
-      globalThis.LatestPlaylistID = recordShareKey;
+      G.LatestPlaylistID = recordShareKey;
       setSavingPlaylist(false);
     } else {
-      globalThis.LatestPlaylistID = null;
+      G.LatestPlaylistID = null;
       ShowNotification({
         message: t("unableToCopy"),
         severity: "error",
@@ -698,25 +716,24 @@ export function CustomAnnotationTextEditor({
     const playlistFind = PLAYLIST_OPTIONS.find(
       (playlistItr: any) => playlistItr.key === playlist.key
     );
-    if (!globalThis.PlaylistReferLinks) {
-      globalThis.PlaylistReferLinks = {};
+    if (!G.PlaylistReferLinks) {
+      G.PlaylistReferLinks = {};
     }
 
     let refId = "";
 
-    if (!globalThis.PlaylistReferLinks) {
-      globalThis.PlaylistReferLinks = {};
+    if (!G.PlaylistReferLinks) {
+      G.PlaylistReferLinks = {};
     }
 
-    if (!globalThis.PlaylistReferLinks[playlistFind.key]) {
+    if (!G.PlaylistReferLinks[playlistFind.key]) {
       await createPlaylistLink(playlistFind.metaData);
-      if (globalThis.LatestPlaylistID) {
-        globalThis.PlaylistReferLinks[playlistFind.key] =
-          globalThis.LatestPlaylistID;
-        refId = globalThis.LatestPlaylistID;
+      if (G.LatestPlaylistID) {
+        G.PlaylistReferLinks[playlistFind.key] = G.LatestPlaylistID;
+        refId = G.LatestPlaylistID;
       }
     } else {
-      refId = globalThis.PlaylistReferLinks[playlistFind.key];
+      refId = G.PlaylistReferLinks[playlistFind.key];
     }
 
     if (!refId) return;
@@ -727,7 +744,7 @@ export function CustomAnnotationTextEditor({
 
     const { from } = editorObjRef.current.state.selection;
 
-    if (globalThis.ThruCommandBox) {
+    if (G.ThruCommandBox) {
       editorObjRef.current
         .chain()
         .focus()
@@ -737,7 +754,7 @@ export function CustomAnnotationTextEditor({
       editorObjRef.current.chain().focus().insertContent(playlistHTML).run();
     }
 
-    globalThis.ThruCommandBox = false;
+    G.ThruCommandBox = false;
 
     setIsPlaylistSuggestionOpen(false);
   };
@@ -751,16 +768,16 @@ export function CustomAnnotationTextEditor({
     setIsPlaylistSuggestionOpen((prev) => !prev);
   };
 
-  globalThis.TogglePlaylistSuggestions = togglePlaylistSuggestions;
+  G.TogglePlaylistSuggestions = togglePlaylistSuggestions;
 
   const toggleCommandBox = () => {
     setIsCommandBox((prev) => !prev);
   };
 
-  globalThis.ToggleCommandBox = toggleCommandBox;
+  G.ToggleCommandBox = toggleCommandBox;
 
   const togglePreview = () => {
-    setShowPreview((v) => {
+    setShowPreview((v: any) => {
       if (!v && editorObjRef.current) {
         editorObjRef.current.commands.setContent(
           ColorizeParagraphs(canonicalHTMLRef.current)
@@ -776,35 +793,35 @@ export function CustomAnnotationTextEditor({
     });
   };
 
-  globalThis.TogglePreview = togglePreview;
+  G.TogglePreview = togglePreview;
 
   useEffect(() => {
-    globalThis.RecordingValue = recording;
-    globalThis.ShowCommandBox = toggleCommandBox;
-    globalThis.SetRecordingData = setData;
-    globalThis.SetRecording = setRecording;
+    G.RecordingValue = recording;
+    G.ShowCommandBox = toggleCommandBox;
+    G.SetRecordingData = setData;
+    G.SetRecording = setRecording;
     return () => {
-      globalThis.SetRecordingData = null;
-      globalThis.SetRecording = null;
+      G.SetRecordingData = null;
+      G.SetRecording = null;
     };
   }, [recording]);
 
-  const handleDropFiles = async (files) => {
+  const handleDropFiles = async (files: any) => {
     if (loading) return;
     setLoading(true);
-    const data = await uploadFilesReusable(files);
+    const data = await G.uploadFilesReusable(files);
     let html = "";
 
-    data.forEach((file) => {
-      const htmlSuffix = appendImageToEditorHTML(file);
+    data.forEach((file: any) => {
+      const htmlSuffix = G.appendImageToEditorHTML(file);
       html += fakeEscapeMediaTags(htmlSuffix, showPreview);
     });
 
     if (html) {
       setTimeout(() => {
         if (!editorObjRef.current) return;
-        if (globalThis.ThruCommandBox) {
-          globalThis.ThruCommandBox = false;
+        if (G.ThruCommandBox) {
+          G.ThruCommandBox = false;
           const { from } = editorObjRef.current.state.selection;
           editorObjRef.current
             .chain()
@@ -820,7 +837,7 @@ export function CustomAnnotationTextEditor({
     setLoading(false);
   };
 
-  globalThis.HandleUploadFiles = handleDropFiles;
+  G.HandleUploadFiles = handleDropFiles;
 
   const { dragRef, dragState } = useDragRef({ onUploadFiles: handleDropFiles });
 
@@ -838,7 +855,7 @@ export function CustomAnnotationTextEditor({
   const [scope, setScope] = useState("all");
 
   // priorities
-  const [priority, setPriority] = useState(() => {
+  const [priority, setPriority] = useState<any[]>(() => {
     const saved =
       storage.get(`${priorityKey}:${_instanceId}`) || storage.get(priorityKey);
     if (Array.isArray(saved) && saved.length) return saved;
@@ -846,11 +863,11 @@ export function CustomAnnotationTextEditor({
   });
 
   // overflow calc
-  const toolbarRef = useRef(null);
-  const measurerRef = useRef(null);
-  const itemsRef = useRef({});
-  const [visibleIds, setVisibleIds] = useState([]);
-  const [overflowIds, setOverflowIds] = useState([]);
+  const toolbarRef = useRef<any>(null);
+  const measurerRef = useRef<any>(null);
+  const itemsRef = useRef<any>({});
+  const [visibleIds, setVisibleIds] = useState<any[]>([]);
+  const [overflowIds, setOverflowIds] = useState<any[]>([]);
   const [showOverflow, setShowOverflow] = useState(false);
 
   // tuning modal
@@ -861,7 +878,7 @@ export function CustomAnnotationTextEditor({
   useEffect(() => {
     window.SimpleEditorToolbar = window.SimpleEditorToolbar || {};
     window.SimpleEditorToolbar[_instanceId] = {
-      setPriorities: (ids) => {
+      setPriorities: (ids: any) => {
         if (!Array.isArray(ids) || !ids.length) return;
         setPriority(ids);
         storage.set(`${priorityKey}:${_instanceId}`, ids);
@@ -878,7 +895,7 @@ export function CustomAnnotationTextEditor({
     };
   }, [priority]);
 
-  const onAddExternalLink = (data) => {
+  const onAddExternalLink = (data: any) => {
     console.log("data", data);
   };
 
@@ -936,17 +953,17 @@ export function CustomAnnotationTextEditor({
       ],
       editorProps: {
         handleDOMEvents: {
-          keyup: (_, event: any) => {
+          keyup: (_: any, event: any) => {
             if (event.key === "Shift") {
               return true;
             }
 
-            globalThis.LASTKEY_COMMAND_BOX = event.key;
-            if (globalThis.ISCommandBox) {
-              globalThis.SetCommandBoxFilter((prev) => {
+            G.LASTKEY_COMMAND_BOX = event.key;
+            if (G.ISCommandBox) {
+              G.SetCommandBoxFilter((prev: any) => {
                 const value = `${prev || ""}`;
                 if (event.key === "Backspace") {
-                  if (globalThis.LASTKEY_COMMAND_BOX === "Backspace") {
+                  if (G.LASTKEY_COMMAND_BOX === "Backspace") {
                     toggleCommandBox();
                     return "";
                   }
@@ -960,7 +977,7 @@ export function CustomAnnotationTextEditor({
               });
 
               if (event.key.trim() === "" || event.key.trim() === "Enter") {
-                globalThis.SetCommandBoxFilter("");
+                G.SetCommandBoxFilter("");
                 setIsCommandBox(false);
               }
               return;
@@ -988,11 +1005,11 @@ export function CustomAnnotationTextEditor({
             return true;
           },
           // (Optional) stop dragging out selections / drags
-          dragstart: (_, event) => {
+          dragstart: (_: any, event: any) => {
             event.preventDefault();
             return true;
           },
-          paste: async (_, event) => {
+          paste: async (_: any, event: any) => {
             const items = event?.clipboardData?.items;
 
             // 🔴 STOP DEFAULT PASTE IMMEDIATELY
@@ -1018,21 +1035,21 @@ export function CustomAnnotationTextEditor({
               // }
             }
             setLoading(true);
-            const data = await uploadFilesReusable({
+            const data = await G.uploadFilesReusable({
               files,
             });
             setLoading(false);
 
             let html = "";
 
-            data.forEach((file) => {
-              const htmlSuffix = appendImageToEditorHTML(file);
+            data.forEach((file: any) => {
+              const htmlSuffix = G.appendImageToEditorHTML(file);
               html += fakeEscapeMediaTags(htmlSuffix, showPreview);
             });
 
             if (plainText) {
               const embedHTML = fakeEscapeMediaTags(
-                generateEmbedFromUrl(plainText.trim()),
+                G.generateEmbedFromUrl(plainText.trim()),
                 showPreview
               );
 
@@ -1086,8 +1103,7 @@ export function CustomAnnotationTextEditor({
       } catch {}
     });
 
-    globalThis[`${id}ClearEditorContent`] = () =>
-      editor.commands.setContent("");
+    G[`${id}ClearEditorContent`] = () => editor.commands.setContent("");
 
     // apply initial paddings
     applyPadding(padY, padX);
@@ -1099,7 +1115,7 @@ export function CustomAnnotationTextEditor({
   }, []);
 
   // ---- helpers for marks on whole doc (scope kept for API parity)
-  const applyMarkWholeDoc = (markName, attrs = null) => {
+  const applyMarkWholeDoc = (markName: any, attrs = null) => {
     const editor = editorObjRef.current;
     if (!editor) return;
     const { state, view } = editor;
@@ -1142,7 +1158,7 @@ export function CustomAnnotationTextEditor({
       if (!ed) return;
       ed.chain().focus().clearNodes().unsetAllMarks().run();
     },
-    setTextColor: (color) => {
+    setTextColor: (color: any) => {
       setTextColor(color);
       const ed = editorObjRef.current;
       if (!ed) return;
@@ -1151,7 +1167,7 @@ export function CustomAnnotationTextEditor({
         ed.chain().focus().setColor(color).run();
       } catch {}
     },
-    setHighlightColor: (color) => {
+    setHighlightColor: (color: any) => {
       setBgColor(color);
       const ed = editorObjRef.current;
       if (!ed) return;
@@ -1159,7 +1175,7 @@ export function CustomAnnotationTextEditor({
         ed.chain().focus().setMark("highlight", { color }).run();
       } catch {}
     },
-    setFontFamily: (font) => {
+    setFontFamily: (font: any) => {
       const ed = editorObjRef.current;
       if (!ed) return;
       ed.chain()
@@ -1167,7 +1183,7 @@ export function CustomAnnotationTextEditor({
         .setMark("textStyle", { style: `font-family:${font};` })
         .run();
     },
-    setFontSize: (px) => {
+    setFontSize: (px: any) => {
       setFontPx(px);
       const ed = editorObjRef.current;
       if (!ed) return;
@@ -1176,7 +1192,7 @@ export function CustomAnnotationTextEditor({
         .setMark("textStyle", { style: `font-size:${px}px;` })
         .run();
     },
-    setLineHeight: (lh) => {
+    setLineHeight: (lh: any) => {
       setLineSpacing(lh);
       const ed = editorObjRef.current;
       if (!ed) return;
@@ -1188,12 +1204,12 @@ export function CustomAnnotationTextEditor({
       tr.addMark(0, doc.content.size, mt.create({ lineHeight: lh }));
       if (tr.docChanged) view.dispatch(tr);
     },
-    insertImageDataURL: (dataURL) => {
+    insertImageDataURL: (dataURL: any) => {
       const ed = editorObjRef.current;
       if (!ed) return;
       ed.chain().focus().setImage({ src: dataURL }).run();
     },
-    insertLink: (href) => {
+    insertLink: (href: any) => {
       const ed = editorObjRef.current;
       if (!ed) return;
       ed.chain().focus().extendMarkRange("link").setLink({ href }).run();
@@ -1204,7 +1220,7 @@ export function CustomAnnotationTextEditor({
       ed.chain().focus().unsetLink().run();
     },
     getHTML: () => editorObjRef.current?.getHTML() || "",
-    setHTML: (html) => editorObjRef.current?.commands.setContent(html),
+    setHTML: (html: any) => editorObjRef.current?.commands.setContent(html),
     exportJSON: () => {
       const ed = editorObjRef.current;
       if (!ed) return;
@@ -1212,7 +1228,7 @@ export function CustomAnnotationTextEditor({
       const blob = new Blob([data], { type: "application/json;charset=utf-8" });
       triggerDownload(blob, "editor-content.json");
     },
-    importJSON: (json) => {
+    importJSON: (json: any) => {
       const ed = editorObjRef.current;
       if (!ed) return;
       try {
@@ -1243,37 +1259,37 @@ export function CustomAnnotationTextEditor({
   };
 
   // chain helpers
-  function chain(method) {
+  function chain(method: any) {
     const ed = editorObjRef.current;
     if (!ed) return;
     ed.chain().focus()[method]().run();
   }
-  function chainWith(method) {
+  function chainWith(method: any) {
     const ed = editorObjRef.current;
     if (!ed) return;
     if (typeof ed.chain().focus()[method] === "function")
       ed.chain().focus()[method]().run();
   }
-  function chainArg(method, arg) {
+  function chainArg(method: any, arg: any) {
     const ed = editorObjRef.current;
     if (!ed) return;
     ed.chain().focus()[method](arg).run();
   }
 
   // ---- uploads: image & JSON via native inputs
-  const fileImgInput = useRef(null);
-  const fileJsonInput = useRef(null);
-  const fileLinkInput = useRef(null);
+  const fileImgInput = useRef<any>(null);
+  const fileJsonInput = useRef<any>(null);
+  const fileLinkInput = useRef<any>(null);
 
   const onPickImage = () => fileImgInput.current?.click();
-  const onImageSelected = (e) => {
+  const onImageSelected = (e: any) => {
     handleDropFiles({
       files: Array.from(e.target.files),
     });
   };
 
   const onPickJSON = () => fileJsonInput.current?.click();
-  const onJSONSelected = (e) => {
+  const onJSONSelected = (e: any) => {
     const f = e.target.files?.[0];
     if (!f) return;
     const reader = new FileReader();
@@ -1303,8 +1319,8 @@ export function CustomAnnotationTextEditor({
     );
 
     let used = 0;
-    const vis = [];
-    const over = [];
+    const vis: any[] = [];
+    const over: any[] = [];
     for (const id of ids) {
       const el = itemsRef.current[id];
       if (!el) continue;
@@ -1341,7 +1357,7 @@ export function CustomAnnotationTextEditor({
   }, [priority.join("|")]);
 
   // ---- ordered ids (append missing, ensure tune present)
-  const toolbarMap = buildToolbarMap({
+  const toolbarMap: any = buildToolbarMap({
     Cmds,
     textColor,
     setTextColor,
@@ -1375,8 +1391,8 @@ export function CustomAnnotationTextEditor({
   }
 
   // ---- tuning actions
-  const moveDraft = (i, dir) => {
-    setDraftOrder((prev) => {
+  const moveDraft = (i: any, dir: any) => {
+    setDraftOrder((prev: any) => {
       const arr = prev.slice();
       const j = i + dir;
       if (j < 0 || j >= arr.length) return arr;
@@ -1391,7 +1407,7 @@ export function CustomAnnotationTextEditor({
   };
 
   // ---- apply paddings to editor container
-  function applyPadding(py, px) {
+  function applyPadding(py: any, px: any) {
     const el = editorRef.current;
     if (!el) return;
     el.style.paddingTop = `${py}px`;
@@ -1421,19 +1437,19 @@ export function CustomAnnotationTextEditor({
           severity: "error",
         });
 
-      const originalHTML = generateEmbedFromUrl(link.trim(), name.trim());
+      const originalHTML = G.generateEmbedFromUrl(link.trim(), name.trim());
       const embedHTML = fakeEscapeMediaTags(originalHTML, showPreview);
 
       if (embedHTML === null) {
-        globalThis.ThruCommandBox = false;
+        G.ThruCommandBox = false;
 
         return ShowNotification({
           message: "Invalid link!",
           severity: "error",
         });
       }
-      if (globalThis.ThruCommandBox) {
-        globalThis.ThruCommandBox = false;
+      if (G.ThruCommandBox) {
+        G.ThruCommandBox = false;
         const { from } = editorObjRef.current.state.selection;
         editorObjRef.current
           .chain()
@@ -1450,12 +1466,12 @@ export function CustomAnnotationTextEditor({
     }
 
     if (recording === RECORDING_TYPES.audio && !data) {
-      globalThis.HandleStopPlayVoice();
+      G.HandleStopPlayVoice();
       return;
     }
 
     if (recording === RECORDING_TYPES.video && !data) {
-      globalThis.HandleStopPlayVideo();
+      G.HandleStopPlayVideo();
       return;
     }
 
@@ -1468,7 +1484,7 @@ export function CustomAnnotationTextEditor({
       });
 
     const finalData =
-      recording === RECORDING_TYPES.audio ? globalThis.ORIGINAL_DATA : data;
+      recording === RECORDING_TYPES.audio ? G.ORIGINAL_DATA : data;
 
     if (
       recording === RECORDING_TYPES.audio ||
@@ -1476,21 +1492,17 @@ export function CustomAnnotationTextEditor({
     ) {
       setLoading(true);
 
-      const fileSave = await os.recordFile(
-        globalThis?.RECORD_STOREKEY,
-        finalData,
-        {
-          name: `${new Date().toISOString()}.${recording === RECORDING_TYPES.audio ? "webm" : "mp4"}`,
-          mimeType: recording,
-        }
-      );
+      const fileSave: any = await os.recordFile(G?.RECORD_STOREKEY, finalData, {
+        name: `${new Date().toISOString()}.${recording === RECORDING_TYPES.audio ? "webm" : "mp4"}`,
+        mimeType: recording,
+      });
 
       const url = fileSave.url || fileSave?.existingFileUrl;
 
       setLoading(false);
 
       if (!url) {
-        globalThis.ThruCommandBox = false;
+        G.ThruCommandBox = false;
         return ShowNotification({
           message: "Failed to upload File!",
           severity: "error",
@@ -1515,8 +1527,8 @@ export function CustomAnnotationTextEditor({
 
       htmlToInsert = fakeEscapeMediaTags(htmlToInsert, showPreview);
 
-      if (globalThis.ThruCommandBox) {
-        globalThis.ThruCommandBox = false;
+      if (G.ThruCommandBox) {
+        G.ThruCommandBox = false;
         const { from } = editorObjRef.current.state.selection;
         editorObjRef.current
           .chain()
@@ -1881,7 +1893,7 @@ export function CustomAnnotationTextEditor({
   );
 
   // -------------- build toolbar map (JSX per id) ---------------
-  function buildToolbarMap(ctx) {
+  function buildToolbarMap(ctx: any) {
     const {
       Cmds,
       textColor,
@@ -1902,9 +1914,9 @@ export function CustomAnnotationTextEditor({
     } = ctx;
 
     const iconBtn = (
-      title,
-      icon,
-      onClick,
+      title: any,
+      icon: any,
+      onClick: any,
       url = "",
       isInverse = false,
       marginNegative = false
@@ -1925,16 +1937,23 @@ export function CustomAnnotationTextEditor({
       </button>
     );
 
-    const colorInput = (value, onChange) => (
+    const colorInput = (value: any, onChange: any) => (
       <input
         type="color"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e: any) => onChange(e.target?.value)}
         className="sre-color"
       />
     );
 
-    const numberChip = (value, setValue, min, max, step, onApply) => (
+    const numberChip = (
+      value: any,
+      setValue: any,
+      min: any,
+      max: any,
+      step: any,
+      onApply: any
+    ) => (
       <div className="sre-numchip">
         <button
           onClick={(e) => {
@@ -1960,14 +1979,14 @@ export function CustomAnnotationTextEditor({
       </div>
     );
 
-    const select = (options, value, onChange, title) => (
+    const select = (options: any, value: any, onChange: any, title: any) => (
       <select
         className="sre-select"
         value={value}
         title={title}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e: any) => onChange(e.target?.value)}
       >
-        {options.map((o) => (
+        {options.map((o: any) => (
           <option key={o.value} value={o.value}>
             {o.label}
           </option>
@@ -2123,7 +2142,7 @@ export function CustomAnnotationTextEditor({
             min="1"
             max="4"
             value={lineSpacing}
-            onChange={(e) => {
+            onChange={(e: any) => {
               const v = clamp(parseFloat(e.target.value || "1.6"), 1, 4);
               setLineSpacing(v);
               Cmds.setLineHeight(v);
@@ -2135,13 +2154,13 @@ export function CustomAnnotationTextEditor({
       "text-color": (
         <div className="sre-inline" title="Text color">
           <span className="material-symbols-outlined">title</span>
-          {colorInput(textColor, (c) => Cmds.setTextColor(c))}
+          {colorInput(textColor, (c: any) => Cmds.setTextColor(c))}
         </div>
       ),
       "bg-color": (
         <div className="sre-inline" title="Highlight color">
           <span className="material-symbols-outlined">border_color</span>
-          {colorInput(bgColor, (c) => Cmds.setHighlightColor(c))}
+          {colorInput(bgColor, (c: any) => Cmds.setHighlightColor(c))}
         </div>
       ),
       paragraph: paragraphDrop,
@@ -2149,7 +2168,7 @@ export function CustomAnnotationTextEditor({
         <select
           className="sre-select"
           title="Font family"
-          onChange={(e) => Cmds.setFontFamily(e.target.value)}
+          onChange={(e: any) => Cmds.setFontFamily(e.target?.value)}
         >
           {[
             "DM Sans",
@@ -2169,7 +2188,7 @@ export function CustomAnnotationTextEditor({
         <select
           className="sre-select"
           title="Font style"
-          onChange={(e) => {
+          onChange={(e: any) => {
             const v = e.target.value;
             if (v === "bold") Cmds.bold();
             else if (v === "italic") Cmds.italic();
@@ -2192,7 +2211,7 @@ export function CustomAnnotationTextEditor({
             max="72"
             step="1"
             value={fontPx}
-            onChange={(e) => {
+            onChange={(e: any) => {
               const v = clamp(parseInt(e.target.value || "16", 10), 8, 72);
               setFontPx(v);
               Cmds.setFontSize(v);
@@ -2213,7 +2232,7 @@ export function CustomAnnotationTextEditor({
             min="0"
             max="200"
             value={padY}
-            onChange={(e) => {
+            onChange={(e: any) => {
               const v = clamp(parseInt(e.target.value || "0", 10), 0, 200);
               setPadY(v);
             }}
@@ -2229,7 +2248,7 @@ export function CustomAnnotationTextEditor({
             min="0"
             max="200"
             value={padX}
-            onChange={(e) => {
+            onChange={(e: any) => {
               const v = clamp(parseInt(e.target.value || "0", 10), 0, 200);
               setPadX(v);
             }}
@@ -2258,7 +2277,7 @@ export function CustomAnnotationTextEditor({
 }
 
 // ---------------- styles ----------------
-const SRE_STYLES = (minH) => `
+const SRE_STYLES = (minH: any) => `
 .sre-root { width: 100%; position: relative; }
 .sre-video-root {
   min-height: 500px;
@@ -2503,14 +2522,15 @@ span.playlist-label-sre {
 `;
 
 // ---------------- utils ----------------
-function clamp(n, a, b) {
+function clamp(n: any, a: any, b: any) {
   return Math.max(a, Math.min(b, n));
 }
 
-function escapeHTML(s) {
+function escapeHTML(s: any) {
   return s.replace(
     /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
+    (c: string) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
   );
 }
 
@@ -2521,16 +2541,19 @@ const MEDIA_CLOSE_TAG_REGEX = /<\/(video|audio|iframe)\s*>/gi;
 const PLAYLIST_BLOCK_REGEX =
   /<div\s+(?:class|classname)="playlist-wrapper-sre"[^>]*>\s*<div[^>]*id="([^"]+)"[^>]*(?:class|classname)="playlist-container-sre"[^>]*>[\s\S]*?<span[^>]*(?:class|classname)="playlist-icon-sre"[^>]*>\s*([^<]+)\s*<\/span>[\s\S]*?<span[^>]*(?:class|classname)="playlist-label-sre"[^>]*>\s*([^<]+)\s*<\/span>[\s\S]*?<\/div>\s*<\/div>/gi;
 
-function escapePlaylistBlocks(html) {
-  return html.replace(PLAYLIST_BLOCK_REGEX, (_, id, icon, label) => {
-    return `
+function escapePlaylistBlocks(html: any) {
+  return html.replace(
+    PLAYLIST_BLOCK_REGEX,
+    (_: any, id: any, icon: any, label: any) => {
+      return `
   <p>
     <span id="${id}">
       &lt; [${icon}] -----|---- [${label}]/&gt;
     </span>
   </p>
   `.trim();
-  });
+    }
+  );
 }
 
 function fakeEscapeMediaTags(html = "", showPreview = false) {
@@ -2563,9 +2586,11 @@ const FAKE_MEDIA_BLOCK_REGEX =
 const SELECTION_MARKER_REGEX =
   /<p[^>]*>\s*<span[^>]*id="([^"]+)"[^>]*>\s*&lt;\s*\[(\w+)\][\s-]*\|\s*[\s-]*\[(\w+)\]\s*\/&gt;\s*<\/span>[\s\S]*?<\/p>/gi;
 
-function replaceSelectionMarkers(html) {
-  return html.replace(SELECTION_MARKER_REGEX, (_, id, icon, label) => {
-    return `
+function replaceSelectionMarkers(html: any) {
+  return html.replace(
+    SELECTION_MARKER_REGEX,
+    (_: any, id: any, icon: any, label: any) => {
+      return `
   <div className="playlist-wrapper-sre">
     <div
       id="${id}"
@@ -2579,13 +2604,14 @@ function replaceSelectionMarkers(html) {
     </div>
   </div>
   `.trim();
-  });
+    }
+  );
 }
 
-function fakeUnescapeMediaTags(html) {
+function fakeUnescapeMediaTags(html: any) {
   html = replaceSelectionMarkers(html);
 
-  return html.replace(P_BLOCK_REGEX, (fullP, inner) => {
+  return html.replace(P_BLOCK_REGEX, (fullP: any, inner: any) => {
     const media = [];
     let match;
 
@@ -2612,7 +2638,7 @@ function fakeUnescapeMediaTags(html) {
   });
 }
 
-function triggerDownload(blob, filename) {
+function triggerDownload(blob: any, filename: any) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

@@ -37,37 +37,38 @@ import { extractHashtagsFromHTML } from "playlist.playlistMode.AutoTag";
 const DEV_ENV =
   configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
 
-const AnnotationInnerDiv = ({
-  data,
-  onRemoveTag,
-  onDisembed,
-  index,
-  embedding,
-  pId = null,
-  isEditAddress,
-  checklistEnabled,
-  finalHistoryObject,
-  setList,
-  setChecklistEmbeded,
-  checkListData,
-  selectedAnnotation,
-  checkListEmbeded,
-  originalIndex,
-  editDataFromPlaylist,
-  isSomethingEmbededChecked,
-  onClick,
-  deleteAttachment,
-  selected,
-  setEmbedding,
-  dragOverSet,
-  onClickCheckbox,
-  deleteFromList,
-  singleMode,
-  embeded = false,
-  handleDragStart,
-  handleDragOver,
-  handleDragEnd,
-}) => {
+const AnnotationInnerDiv = (props: any) => {
+  const {
+    data,
+    onRemoveTag,
+    onDisembed,
+    index,
+    embedding,
+    pId = null,
+    isEditAddress,
+    checklistEnabled,
+    finalHistoryObject,
+    setList,
+    setChecklistEmbeded,
+    checkListData,
+    selectedAnnotation,
+    checkListEmbeded,
+    originalIndex,
+    editDataFromPlaylist,
+    isSomethingEmbededChecked,
+    onClick,
+    deleteAttachment,
+    selected,
+    setEmbedding,
+    dragOverSet,
+    onClickCheckbox,
+    deleteFromList,
+    singleMode,
+    embeded = false,
+    handleDragStart,
+    handleDragOver,
+    handleDragEnd,
+  } = props;
   const [expand, setExpand] = useState(false);
 
   useLayoutEffect(() => {
@@ -468,18 +469,19 @@ const AnnotationInnerDiv = ({
   );
 };
 
-const AddAnotationUI = ({
-  list,
-  annoation,
-  setMode,
-  showPlaylistSettings,
-  id,
-  setShowPlaylistSettings,
-  onReset,
-  setList,
-  editData = null,
-  setTab,
-}) => {
+const AddAnotationUI = (props: any) => {
+  const {
+    list,
+    annoation,
+    setMode,
+    showPlaylistSettings,
+    id,
+    setShowPlaylistSettings,
+    onReset,
+    setList,
+    editData = null,
+    setTab,
+  } = props;
   G[`FirstAnnnotationItem`] = list[0];
 
   // Audio
@@ -601,7 +603,6 @@ const AddAnotationUI = ({
       }
       setIsEditAddress(false);
       G.SetEditAnnoData?.(null);
-      G.AddAnotationUI = false;
     };
   }, []);
 
@@ -1815,9 +1816,7 @@ const AddAnotationUI = ({
             <p>
               <b>{t("publishSettings")}</b>
             </p>
-            <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              {t("publishSettingsDesc")}
-            </span>
+            <span style={{ fontSize: "10px" }}>{t("publishSettingsDesc")}</span>
             <div
               className="more-menu-items"
               onClick={() => {
@@ -1992,6 +1991,7 @@ const AddAnotationUI = ({
                   setTextHTML(null);
                   G[`${id}currentPlaylist`] = [];
                   if (setTab) setTab("discover");
+                  G.AddAnotationUI = false;
                 }}
               >
                 {t("cancel")}

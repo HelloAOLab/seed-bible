@@ -1,21 +1,21 @@
 const id = that.id;
-
-globalThis[`${id}SetPlaylistName`] && globalThis[`${id}SetPlaylistName`]("");
-globalThis[`${id}ResetPlaylist`] && globalThis[`${id}ResetPlaylist`]();
-globalThis[`${id}currentPlaylist`] = [];
-globalThis[`${id}creatingPlaylistName`] = "";
-globalThis[`${id}creatingPlaylist`] = false;
-globalThis[`${id}isEditMode`] = null;
-globalThis[`${id}isEditModeSubID`] = null;
-globalThis[`${id}SetCreatingPlaylist`] && globalThis[`${id}SetCreatingPlaylist`](false);
+const G = globalThis as any;
+G[`${id}SetPlaylistName`] && G[`${id}SetPlaylistName`]("");
+G[`${id}ResetPlaylist`] && G[`${id}ResetPlaylist`]();
+G[`${id}currentPlaylist`] = [];
+G[`${id}creatingPlaylistName`] = "";
+G[`${id}creatingPlaylist`] = false;
+G[`${id}isEditMode`] = null;
+G[`${id}isEditModeSubID`] = null;
+G[`${id}SetCreatingPlaylist`] && G[`${id}SetCreatingPlaylist`](false);
 // thisBot.showInfo(`History Mode`);
-globalThis[`${id}SetDontOpenPlaylist`] && globalThis[`${id}SetDontOpenPlaylist`](false);
+G[`${id}SetDontOpenPlaylist`] && G[`${id}SetDontOpenPlaylist`](false);
 os.unregisterApp("controlButtons");
 
-globalThis.SetEditData({
-    color: null,
-    id: null,
-    name: null,
-    description: null,
-    icon: null
+G.SetEditData({
+  color: null,
+  id: null,
+  name: null,
+  description: null,
+  icon: null,
 });

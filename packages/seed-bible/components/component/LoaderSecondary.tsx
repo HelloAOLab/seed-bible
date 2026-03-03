@@ -1,7 +1,8 @@
-const LoaderSecondary = ({ secondary }) => {
-    return <>
-        <style>{
-            `
+const LoaderSecondary = (props: any) => {
+  const { secondary } = props;
+  return (
+    <>
+      <style>{`
                 .loader {
                     width: 1.5rem;
                     padding: 4px;
@@ -17,15 +18,15 @@ const LoaderSecondary = ({ secondary }) => {
                     animation: l3 1s infinite linear;
                 }
                 @keyframes l3 {to{transform: rotate(1turn)}}
-            `
-        }</style>
-        <div
-            style={{
-                backgroundColor: secondary ? 'grey' : 'var(--primaryColor)'
-            }}
-            className="loader"
-        />
+            `}</style>
+      <div
+        style={{
+          backgroundColor: secondary ? "grey" : "var(--primaryColor)",
+        }}
+        className="loader"
+      />
     </>
-}
+  );
+};
 
 return LoaderSecondary;

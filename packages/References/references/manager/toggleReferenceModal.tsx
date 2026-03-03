@@ -1,16 +1,39 @@
 import ReferenceModal from "references.manager.NewReferenceModal";
-const { book, chapter, verse } = that;
+import {
+  GetReferences,
+  CalculatePopupPosition,
+} from "references.manager.GetReferences";
+import type { ReferencesInterface } from "references.manager.interfaces";
 
-const getReference = async () => {
-  const references = await thisBot.GetReferences({
-    bookId: tags.NameToId[book],
+const { book, chapter, verse, mouseEvent, baseUrl, translation, bookId } = that;
+
+const ToggleReferenceModal = async () => {
+  const reference: ReferencesInterface = await GetReferences({
+    bookId: bookId,
     chapter,
     verse,
+    baseUrl,
+    translation,
+    bookName: book,
   });
-  return references;
+
+  if (!reference || !reference.references || reference.references.length == 0) {
+    return;
+  }
+  if (globalThis?.closePopupSettings) {
+    globalThis.closePopupSettings();
+  }
+
+  if (globalThis?.openPopupSettings) {
+    await os.sleep(100);
+    const position = CalculatePopupPosition(mouseEvent);
+    globalThis.openPopupSettings(
+      <ReferenceModal reference={reference} />,
+      null,
+      true,
+      position
+    );
+  }
 };
 
-const reference = await getReference();
-closePopupSettings();
-await os.sleep(100);
-openPopupSettings(<ReferenceModal reference={reference} />, null, true);
+await ToggleReferenceModal();

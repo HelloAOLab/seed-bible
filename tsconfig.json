@@ -1038,11 +1038,11 @@
       "bibleVizUtils.classes.UnhighlightDelayInfo": [
         "./packages/Bible Visualization Utils/bibleVizUtils/classes/UnhighlightDelayInfo.tsx"
       ],
+      "bibleVizUtils.data.BibleVizDataRepository": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/data/BibleVizDataRepository.tsx"
+      ],
       "bibleVizUtils.data.onCreate": [
         "./packages/Bible Visualization Utils/bibleVizUtils/data/onCreate.tsx"
-      ],
-      "bibleVizUtils.functions.ApplyFunctionToElement": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/ApplyFunctionToElement.tsx"
       ],
       "bibleVizUtils.functions.CapitalizeFirstLetter": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/CapitalizeFirstLetter.tsx"
@@ -1052,6 +1052,9 @@
       ],
       "bibleVizUtils.functions.ClosestNumber": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/ClosestNumber.tsx"
+      ],
+      "bibleVizUtils.functions.colors": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/colors.tsx"
       ],
       "bibleVizUtils.functions.ConvertCompletePsalmsToDivided": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/ConvertCompletePsalmsToDivided.tsx"
@@ -1230,6 +1233,9 @@
       "bibleVizUtils.functions.HighlightBiblePiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/HighlightBiblePiece.tsx"
       ],
+      "bibleVizUtils.functions.index": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/index.tsx"
+      ],
       "bibleVizUtils.functions.IsValueBetween": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/IsValueBetween.tsx"
       ],
@@ -1239,11 +1245,17 @@
       "bibleVizUtils.functions.MakePortalRestrict": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/MakePortalRestrict.tsx"
       ],
+      "bibleVizUtils.functions.math": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/math.tsx"
+      ],
       "bibleVizUtils.functions.onBookOrientationChanged": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/onBookOrientationChanged.tsx"
       ],
       "bibleVizUtils.functions.onCreate": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/onCreate.tsx"
+      ],
+      "bibleVizUtils.functions.readingHistory": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/readingHistory.tsx"
       ],
       "bibleVizUtils.functions.ReleaseLabelTransformerFromPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/ReleaseLabelTransformerFromPiece.tsx"
@@ -1253,6 +1265,9 @@
       ],
       "bibleVizUtils.functions.RotateArray": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/RotateArray.tsx"
+      ],
+      "bibleVizUtils.functions.scripture": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/scripture.tsx"
       ],
       "bibleVizUtils.functions.SetArrangementIndexByName": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/SetArrangementIndexByName.tsx"
@@ -1266,17 +1281,20 @@
       "bibleVizUtils.functions.SetUsersColorPositionOnPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/SetUsersColorPositionOnPiece.tsx"
       ],
+      "bibleVizUtils.functions.string": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/string.tsx"
+      ],
       "bibleVizUtils.functions.SubtractArrays": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/SubtractArrays.tsx"
+      ],
+      "bibleVizUtils.functions.time": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/time.tsx"
       ],
       "bibleVizUtils.functions.TryHideActivityNotificationOnPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryHideActivityNotificationOnPiece.tsx"
       ],
       "bibleVizUtils.functions.TryHideUsersColorOnPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryHideUsersColorOnPiece.tsx"
-      ],
-      "bibleVizUtils.functions.TryInitializeReadingHistoryColorStore": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryInitializeReadingHistoryColorStore.tsx"
       ],
       "bibleVizUtils.functions.TryUpdateNotificationDirection": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryUpdateNotificationDirection.tsx"
@@ -1289,6 +1307,12 @@
       ],
       "bibleVizUtils.functions.UpdateUsersColorOnPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/UpdateUsersColorOnPiece.tsx"
+      ],
+      "bibleVizUtils.functions.userPresence": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/userPresence.tsx"
+      ],
+      "bibleVizUtils.functions.users": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/users.tsx"
       ],
       "bibleVizUtils.main.Initialize": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/Initialize.tsx"
@@ -1308,6 +1332,9 @@
       "bibleVizUtils.main.onEggHatch": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/onEggHatch.tsx"
       ],
+      "bibleVizUtils.main.onGetOrSetVisualInTagsDefined": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/onGetOrSetVisualInTagsDefined.tsx"
+      ],
       "bibleVizUtils.main.onInstJoined": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/onInstJoined.tsx"
       ],
@@ -1316,6 +1343,9 @@
       ],
       "bibleVizUtils.main.OnOnlineUsersChanged": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/OnOnlineUsersChanged.tsx"
+      ],
+      "bibleVizUtils.main.userLogin": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/userLogin.tsx"
       ],
       "bibleVizUtils.main.userSubscribed": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/userSubscribed.tsx"
@@ -1407,14 +1437,20 @@
       "bibleVizUtils.services.DebouncerService": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/DebouncerService.tsx"
       ],
+      "bibleVizUtils.services.EventManager": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/services/EventManager.tsx"
+      ],
       "bibleVizUtils.services.HandleUserLoggedInDebouncer": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/HandleUserLoggedInDebouncer.tsx"
       ],
       "bibleVizUtils.services.onCreate": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/onCreate.tsx"
       ],
-      "bibleVizUtils.services.ReadingHistoryColorStore": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/services/ReadingHistoryColorStore.tsx"
+      "bibleVizUtils.services.UpdateUserColorStoreDebouncer": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/services/UpdateUserColorStoreDebouncer.tsx"
+      ],
+      "bibleVizUtils.services.UserColorStore": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/services/UserColorStore.tsx"
       ],
       "introduction.searchBar.handleGeoJsonSearch": [
         "./packages/BookSelector/introduction/searchBar/handleGeoJsonSearch.tsx"
@@ -1879,6 +1915,9 @@
       "aiApps.painter.DraggableContainer": [
         "./packages/Draw/aiApps/painter/DraggableContainer.tsx"
       ],
+      "aiApps.painter.interfaces": [
+        "./packages/Draw/aiApps/painter/interfaces.tsx"
+      ],
       "aiApps.painter.onCreate": [
         "./packages/Draw/aiApps/painter/onCreate.tsx"
       ],
@@ -1891,6 +1930,7 @@
       "aiApps.painter.togglePainter": [
         "./packages/Draw/aiApps/painter/togglePainter.tsx"
       ],
+      "aiApps.painter.utils": ["./packages/Draw/aiApps/painter/utils.tsx"],
       "ext_canvas.eraseTool.changeSize": [
         "./packages/Eraser/ext_canvas/eraseTool/changeSize.tsx"
       ],
@@ -1993,20 +2033,14 @@
       "ext_geoImporter.importer.createCloseButton": [
         "./packages/GeoImporter/ext_geoImporter/importer/createCloseButton.tsx"
       ],
-      "ext_geoImporter.importer.fetchBookData": [
-        "./packages/GeoImporter/ext_geoImporter/importer/fetchBookData.tsx"
-      ],
-      "ext_geoImporter.importer.fetchSheetData": [
-        "./packages/GeoImporter/ext_geoImporter/importer/fetchSheetData.tsx"
-      ],
-      "ext_geoImporter.importer.fetchVerseOfTheDay": [
-        "./packages/GeoImporter/ext_geoImporter/importer/fetchVerseOfTheDay.tsx"
+      "ext_geoImporter.importer.focusOnWithCatch": [
+        "./packages/GeoImporter/ext_geoImporter/importer/focusOnWithCatch.tsx"
       ],
       "ext_geoImporter.importer.GeometryCollection": [
         "./packages/GeoImporter/ext_geoImporter/importer/GeometryCollection.tsx"
       ],
-      "ext_geoImporter.importer.getVerse": [
-        "./packages/GeoImporter/ext_geoImporter/importer/getVerse.tsx"
+      "ext_geoImporter.importer.interfaces": [
+        "./packages/GeoImporter/ext_geoImporter/importer/interfaces.tsx"
       ],
       "ext_geoImporter.importer.LineString": [
         "./packages/GeoImporter/ext_geoImporter/importer/LineString.tsx"
@@ -2023,23 +2057,8 @@
       "ext_geoImporter.importer.onFileUpload": [
         "./packages/GeoImporter/ext_geoImporter/importer/onFileUpload.tsx"
       ],
-      "ext_geoImporter.importer.onGridClick": [
-        "./packages/GeoImporter/ext_geoImporter/importer/onGridClick.tsx"
-      ],
       "ext_geoImporter.importer.onInstJoined": [
         "./packages/GeoImporter/ext_geoImporter/importer/onInstJoined.tsx"
-      ],
-      "ext_geoImporter.importer.onMaxLODEnter": [
-        "./packages/GeoImporter/ext_geoImporter/importer/onMaxLODEnter.tsx"
-      ],
-      "ext_geoImporter.importer.onMaxLODExit": [
-        "./packages/GeoImporter/ext_geoImporter/importer/onMaxLODExit.tsx"
-      ],
-      "ext_geoImporter.importer.onMInLODEnter": [
-        "./packages/GeoImporter/ext_geoImporter/importer/onMInLODEnter.tsx"
-      ],
-      "ext_geoImporter.importer.onMinLODExit": [
-        "./packages/GeoImporter/ext_geoImporter/importer/onMinLODExit.tsx"
       ],
       "ext_geoImporter.importer.Point": [
         "./packages/GeoImporter/ext_geoImporter/importer/Point.tsx"
@@ -2332,6 +2351,9 @@
       "playlist.playlistMode.AddNewPlaylist": [
         "./packages/Playlist/playlist/playlistMode/AddNewPlaylist.tsx"
       ],
+      "playlist.playlistMode.AddToPlaylist": [
+        "./packages/Playlist/playlist/playlistMode/AddToPlaylist.tsx"
+      ],
       "playlist.playlistMode.AnnotationList": [
         "./packages/Playlist/playlist/playlistMode/AnnotationList.tsx"
       ],
@@ -2382,6 +2404,9 @@
       ],
       "playlist.playlistMode.ControlButtons": [
         "./packages/Playlist/playlist/playlistMode/ControlButtons.tsx"
+      ],
+      "playlist.playlistMode.convertAnnotationsToReadableFormat": [
+        "./packages/Playlist/playlist/playlistMode/convertAnnotationsToReadableFormat.tsx"
       ],
       "playlist.playlistMode.ConvertDataType": [
         "./packages/Playlist/playlist/playlistMode/ConvertDataType.tsx"
@@ -2680,11 +2705,20 @@
       "references.manager.GetReferences": [
         "./packages/References/references/manager/GetReferences.tsx"
       ],
+      "references.manager.interfaces": [
+        "./packages/References/references/manager/interfaces.tsx"
+      ],
+      "references.manager.makeReferenceOptions": [
+        "./packages/References/references/manager/makeReferenceOptions.tsx"
+      ],
       "references.manager.NewReferenceApp": [
         "./packages/References/references/manager/NewReferenceApp.tsx"
       ],
       "references.manager.NewReferenceModal": [
         "./packages/References/references/manager/NewReferenceModal.tsx"
+      ],
+      "references.manager.onBookChanged": [
+        "./packages/References/references/manager/onBookChanged.tsx"
       ],
       "references.manager.onDestroy": [
         "./packages/References/references/manager/onDestroy.tsx"
@@ -2716,6 +2750,12 @@
       "scriptureMap2D.main.CustomHooks": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/CustomHooks.tsx"
       ],
+      "scriptureMap2D.main.enums": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/enums.tsx"
+      ],
+      "scriptureMap2D.main.eventManager": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/eventManager.tsx"
+      ],
       "scriptureMap2D.main.FiltersSelectorOption": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/FiltersSelectorOption.tsx"
       ],
@@ -2725,14 +2765,14 @@
       "scriptureMap2D.main.Initialize": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/Initialize.tsx"
       ],
+      "scriptureMap2D.main.interfaces": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/interfaces.tsx"
+      ],
       "scriptureMap2D.main.onAuthBotAdded": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/onAuthBotAdded.tsx"
       ],
       "scriptureMap2D.main.OnBibleVizUtilsInitialized": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/OnBibleVizUtilsInitialized.tsx"
-      ],
-      "scriptureMap2D.main.onDestroy": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/onDestroy.tsx"
       ],
       "scriptureMap2D.main.onEggHatch": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/onEggHatch.tsx"
@@ -2791,8 +2831,17 @@
       "scriptureMap2D.main.Tooltip": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/Tooltip.tsx"
       ],
+      "scriptureMap2D.main.types": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/types.tsx"
+      ],
       "scriptureMap2D.main.UserPresenceUpdate": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/UserPresenceUpdate.tsx"
+      ],
+      "scriptureMap2D.main.userSubscribed": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/userSubscribed.tsx"
+      ],
+      "scriptureMap2D.main.userUnsubscribed": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/userUnsubscribed.tsx"
       ],
       "scriptureMap2D.main.Wrapper": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/Wrapper.tsx"
@@ -3514,6 +3563,9 @@
       "app.components.toolbarSettings": [
         "./packages/seed-bible/app/components/toolbarSettings.tsx"
       ],
+      "app.components.tryUserLogin": [
+        "./packages/seed-bible/app/components/tryUserLogin.tsx"
+      ],
       "app.components.types": [
         "./packages/seed-bible/app/components/types.tsx"
       ],
@@ -3528,6 +3580,32 @@
       ],
       "app.components.verseToolbar": [
         "./packages/seed-bible/app/components/verseToolbar.tsx"
+      ],
+      "app.contract.environment": [
+        "./packages/seed-bible/app/contract/environment.tsx"
+      ],
+      "app.contract.factory": [
+        "./packages/seed-bible/app/contract/factory.tsx"
+      ],
+      "app.contract.globalHooks": [
+        "./packages/seed-bible/app/contract/globalHooks.tsx"
+      ],
+      "app.contract.hooks": ["./packages/seed-bible/app/contract/hooks.tsx"],
+      "app.contract.provider": [
+        "./packages/seed-bible/app/contract/provider.tsx"
+      ],
+      "app.contract.theme": ["./packages/seed-bible/app/contract/theme.tsx"],
+      "app.controller.controllerBuilder": [
+        "./packages/seed-bible/app/controller/controllerBuilder.tsx"
+      ],
+      "app.controller.EventController": [
+        "./packages/seed-bible/app/controller/EventController.tsx"
+      ],
+      "app.controller.GlobalApi": [
+        "./packages/seed-bible/app/controller/GlobalApi.tsx"
+      ],
+      "app.controller.MainController": [
+        "./packages/seed-bible/app/controller/MainController.tsx"
       ],
       "app.emitter.onEggHatch": [
         "./packages/seed-bible/app/emitter/onEggHatch.tsx"
@@ -3550,6 +3628,9 @@
       ],
       "app.error.identify": ["./packages/seed-bible/app/error/identify.tsx"],
       "app.error.init": ["./packages/seed-bible/app/error/init.tsx"],
+      "app.error.onBookChanged": [
+        "./packages/seed-bible/app/error/onBookChanged.tsx"
+      ],
       "app.error.onEggHatch": [
         "./packages/seed-bible/app/error/onEggHatch.tsx"
       ],
@@ -3580,9 +3661,11 @@
       "app.hooks.sideBar": ["./packages/seed-bible/app/hooks/sideBar.tsx"],
       "app.hooks.tabs": ["./packages/seed-bible/app/hooks/tabs.tsx"],
       "app.hooks.useHold": ["./packages/seed-bible/app/hooks/useHold.tsx"],
+      "app.main.app": ["./packages/seed-bible/app/main/app.tsx"],
       "app.main.canvasController": [
         "./packages/seed-bible/app/main/canvasController.tsx"
       ],
+      "app.main.cssUtil": ["./packages/seed-bible/app/main/cssUtil.tsx"],
       "app.main.dragOverlay": [
         "./packages/seed-bible/app/main/dragOverlay.tsx"
       ],
@@ -3595,6 +3678,12 @@
       "app.main.onInstJoined": [
         "./packages/seed-bible/app/main/onInstJoined.tsx"
       ],
+      "app.main.root": ["./packages/seed-bible/app/main/root.tsx"],
+      "app.main.rootContext": [
+        "./packages/seed-bible/app/main/rootContext.tsx"
+      ],
+      "app.main.tempFluff": ["./packages/seed-bible/app/main/tempFluff.tsx"],
+      "app.main.themeUtils": ["./packages/seed-bible/app/main/themeUtils.tsx"],
       "app.packager.addDependencies": [
         "./packages/seed-bible/app/packager/addDependencies.tsx"
       ],
@@ -3680,6 +3769,9 @@
         "./packages/seed-bible/app/sn_styles/styler.tsx"
       ],
       "app.styles.styler": ["./packages/seed-bible/app/styles/styler.tsx"],
+      "app.util.validations": [
+        "./packages/seed-bible/app/util/validations.tsx"
+      ],
       "baseElements.formMenu.bookData": [
         "./packages/seed-bible/baseElements/formMenu/bookData.tsx"
       ],
@@ -3812,6 +3904,8 @@
       "shortcuts.shortcut.onKeyUp": [
         "./packages/seed-bible/shortcuts/shortcut/onKeyUp.tsx"
       ],
+      "store.MemoryStore": ["./packages/seed-bible/store/MemoryStore.tsx"],
+      "store.StoreContract": ["./packages/seed-bible/store/StoreContract.tsx"],
       "webhook.API.decrypt": ["./packages/seed-bible/webhook/API/decrypt.tsx"],
       "webhook.API.defineGlobal": [
         "./packages/seed-bible/webhook/API/defineGlobal.tsx"

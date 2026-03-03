@@ -140,5 +140,12 @@
   "pentateuch": "Мосегийн таван ном",
   "historical": "Түүхэн",
   "poetic": "Шүлгийн",
-  "prophetic": "Эш үзүүлэгчийн"
+  "prophetic": "Эш үзүүлэгчийн",
+  "bookmarkUpdatedSuccessfully": "Хавчуурга амжилттай шинэчлэгдлээ.",
+  "failedToUpdateBookmark": "Хавчуурга шинэчлэхэд амжилтгүй боллоо. Дахин оролдоно уу.",
+  "undoActionSuccessfull": "Буцаах үйлдэл амжилттай боллоо.",
+  "headingAddedToPlaylist": "{{heading}} плейлистэнд нэмэгдлээ",
+  "addToPlaylist": "Плейлистэнд нэмэх",
+  "addToNew": "Шинэ рүү нэмэх",
+  "itemsAddedToPlaylistSuccessfully": "Элементүүд плейлистэнд амжилттай нэмэгдлээ."
 }
