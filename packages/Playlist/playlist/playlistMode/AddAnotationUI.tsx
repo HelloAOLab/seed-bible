@@ -535,7 +535,6 @@ const AddAnotationUI = (props: any) => {
         setDataFetching(true);
         setList([]);
         try {
-          // const latestData = await shout("chronicle_loadData", { record: latestRecord[0], targetVersion: 0 })[0];
           const userRecord = await getAnnotationRecord();
           const res: any = await os.getData(userRecord, editData?.address);
           let data: any = res.data.data;

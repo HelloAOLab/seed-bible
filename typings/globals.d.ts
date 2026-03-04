@@ -39,6 +39,10 @@ declare global {
   ) => Record<string, any>;
   const CheckMultiFuntionHold: () => boolean;
   const EmitData: (functionName: string, data: any) => void;
+
+  declare interface Bot {
+    [key: string]: any;
+  }
 }
 
 export const G = globalThis as unknown as Record<string, any>;

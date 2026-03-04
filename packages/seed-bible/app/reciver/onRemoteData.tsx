@@ -1,13 +1,15 @@
 /* global os, thisBot, configBot, getBot, shout, sendRemoteData */
 
-
 // shout("updatedYourData", { user: that.remoteId, tab: { ...(that.that || {}) } });
- // ========= SHARED (GLOBAL) META =========
-  if(that.name==="updateSharingData") {
-    os.log("Handling updateSharingData for", that.remoteId);
-    shout("updatedYourData", { user: that.remoteId, tab: { ...(that.that || {}) } });
-    return;
-  }
+// ========= SHARED (GLOBAL) META =========
+if (that.name === "updateSharingData") {
+  os.log("Handling updateSharingData for", that.remoteId);
+  shout("updatedYourData", {
+    user: that.remoteId,
+    tab: { ...(that.that || {}) },
+  });
+  return;
+}
 
 // ---- small in-memory guards to prevent loops / storms
 const lastSeenBySender = new Map(); // key: `${senderId}:${name}` -> timestamp(ms)
@@ -35,7 +37,7 @@ if (senderId === selfId) {
 }
 
 // helper: skip duplicate local applications for a short time
-const recentlyApplied = (eventName) => {
+const recentlyApplied = (eventName: string) => {
   const last = lastAppliedEvent.get(eventName) || 0;
   if (now - last < LOOP_GUARD_MS) return true;
   lastAppliedEvent.set(eventName, now);
@@ -96,16 +98,22 @@ const allowAllHighlight = !cfg.onlyHostHighlight;
 const allowAutoScroll = cfg.autoScroll;
 const highlightDuration = cfg.highlightDuration;
 const iAmHost = selfId === hostId;
-const iAmCoHost = Object.values(sessions).some((s) =>
+const iAmCoHost = Object.values(sessions).some((s: any) =>
   s?.coHosts?.includes(remoteId)
 );
 
 // Forward helper
-const forwardToFollowersExcept = (excludeId, eventName, data) => {
+const forwardToFollowersExcept = (
+  excludeId: string,
+  eventName: string,
+  data: any
+) => {
   const targets = followers.filter((id) => id !== excludeId && id !== selfId);
   if (targets.length)
     sendRemoteData(targets, eventName, { ...data, senderId: selfId });
 };
+
+const G = globalThis as any;
 
 // ---------- MAIN HANDLER ----------
 switch (name) {
@@ -135,27 +143,27 @@ switch (name) {
     }
 
     // Set flag BEFORE calling Open to prevent emit loop
-    globalThis.__remoteBookUpdate = true;
+    G.__remoteBookUpdate = true;
 
     // Set cooldown - prevent local user from emitting nav for a short period
     // This prevents conflicts when "Everyone can navigate" is enabled
-    globalThis.__navCooldownUntil = now + 600;
+    G.__navCooldownUntil = now + 600;
 
     // Also mark any pending data as from remote (prevents cache emit)
-    if (globalThis.isCachedDataRef) {
-      globalThis.isCachedDataRef.current = true;
+    if (G.isCachedDataRef) {
+      G.isCachedDataRef.current = true;
     }
 
     // Call Open directly instead of shouting to avoid extra event chains
-    if (globalThis.Open && payload?.bookId && payload?.chapter) {
-      globalThis.Open(payload.bookId, payload.chapter);
+    if (G.Open && payload?.bookId && payload?.chapter) {
+      G.Open(payload.bookId, payload.chapter);
     } else {
       shout("remoteBookChange", { ...(payload || {}) });
     }
 
     // Reset flag after a short delay to allow the navigation to complete
     setTimeout(() => {
-      globalThis.__remoteBookUpdate = false;
+      G.__remoteBookUpdate = false;
     }, 150);
 
     // rebroadcast only if host AND the event didn't originate from self
@@ -216,9 +224,9 @@ switch (name) {
     if (recentlyApplied("appClick")) return;
     if (payload?.name === "Playlist_package") return;
     const appName = payload?.name;
-    if (appName && globalThis[appName]?.onClick) {
+    if (appName && G[appName]?.onClick) {
       try {
-        globalThis[appName].onClick();
+        G[appName].onClick();
       } catch (e) {
         os.log("appClick error", e);
       }
@@ -232,7 +240,7 @@ switch (name) {
   // ========= PLAYLIST EVENTS =========
   case "playlistPlayed": {
     if (recentlyApplied("playlistPlayed")) return;
-    if (!globalThis.Playlist) return os.toast("Please install playlist tool.");
+    if (!G.Playlist) return os.toast("Please install playlist tool.");
     shout("remotePlaylistPlayed", { ...(payload || {}) });
     if (iAmHost && remoteId !== hostId) {
       forwardToFollowersExcept(remoteId, "playlistPlayed", payload || {});
