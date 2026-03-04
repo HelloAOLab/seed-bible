@@ -1,0 +1,410 @@
+import { writeFile } from "node:fs/promises";
+import path from "node:path";
+import {
+  BinaryExpression,
+  Node,
+  Project,
+  SyntaxKind,
+  TypeFormatFlags,
+  VariableDeclaration,
+} from "ts-morph";
+
+type FixRecord = {
+  diagnosticFilePath: string;
+  diagnosticLine: number;
+  diagnosticColumn: number;
+  declarationFilePath: string;
+  declarationLine: number;
+  declarationColumn: number;
+  variableName: string;
+  previousType: string;
+  addedType: string;
+  nextType: string;
+};
+
+type SkipRecord = {
+  diagnosticFilePath: string;
+  diagnosticLine: number;
+  diagnosticColumn: number;
+  reason: string;
+};
+
+type FixReport = {
+  generatedAt: string;
+  targetCode: number;
+  diagnosticsSeen: number;
+  fixesApplied: number;
+  skipped: number;
+  dryRun: boolean;
+  fixes: FixRecord[];
+  skippedItems: SkipRecord[];
+};
+
+const TARGET_CODE = 2322;
+const REPORT_PATH = path.resolve("typings", "typescript_2322_fix_report.json");
+
+function toRelativePath(filePath: string): string {
+  return path.relative(process.cwd(), filePath).replace(/\\/g, "/");
+}
+
+function markSourceFilesAsModulesInMemory(project: Project): void {
+  const sourceFiles = project
+    .getSourceFiles()
+    .filter((sourceFile) => !sourceFile.isDeclarationFile());
+
+  for (const sourceFile of sourceFiles) {
+    const text = sourceFile.getFullText();
+    if (/\bexport\s*\{\s*\}\s*;?\s*$/m.test(text)) {
+      continue;
+    }
+
+    const trailingWhitespace = text.match(/\s*$/)?.[0] ?? "";
+    const trimmed = text.slice(0, text.length - trailingWhitespace.length);
+    sourceFile.replaceWithText(`${trimmed}\n\nexport {};\n`);
+  }
+}
+
+function isAssignmentOperator(kind: SyntaxKind): boolean {
+  return (
+    kind === SyntaxKind.EqualsToken ||
+    kind === SyntaxKind.PlusEqualsToken ||
+    kind === SyntaxKind.MinusEqualsToken ||
+    kind === SyntaxKind.AsteriskEqualsToken ||
+    kind === SyntaxKind.AsteriskAsteriskEqualsToken ||
+    kind === SyntaxKind.SlashEqualsToken ||
+    kind === SyntaxKind.PercentEqualsToken ||
+    kind === SyntaxKind.AmpersandEqualsToken ||
+    kind === SyntaxKind.BarEqualsToken ||
+    kind === SyntaxKind.CaretEqualsToken ||
+    kind === SyntaxKind.LessThanLessThanEqualsToken ||
+    kind === SyntaxKind.GreaterThanGreaterThanEqualsToken ||
+    kind === SyntaxKind.GreaterThanGreaterThanGreaterThanEqualsToken ||
+    kind === SyntaxKind.BarBarEqualsToken ||
+    kind === SyntaxKind.AmpersandAmpersandEqualsToken ||
+    kind === SyntaxKind.QuestionQuestionEqualsToken
+  );
+}
+
+function getNearestAssignmentExpression(node: Node): BinaryExpression | null {
+  const binary = node.getFirstAncestorByKind(SyntaxKind.BinaryExpression);
+  if (!binary) {
+    return null;
+  }
+
+  if (!isAssignmentOperator(binary.getOperatorToken().getKind())) {
+    return null;
+  }
+
+  return binary;
+}
+
+function normalizeTypeText(typeText: string): string {
+  return typeText.trim().replace(/\s+/g, " ");
+}
+
+function splitUnionTopLevel(typeText: string): string[] {
+  const values: string[] = [];
+  let current = "";
+  let depthParen = 0;
+  let depthAngle = 0;
+  let depthBrace = 0;
+  let depthBracket = 0;
+
+  for (let i = 0; i < typeText.length; i += 1) {
+    const char = typeText[i];
+
+    if (char === "(") depthParen += 1;
+    if (char === ")") depthParen -= 1;
+    if (char === "<") depthAngle += 1;
+    if (char === ">") depthAngle -= 1;
+    if (char === "{") depthBrace += 1;
+    if (char === "}") depthBrace -= 1;
+    if (char === "[") depthBracket += 1;
+    if (char === "]") depthBracket -= 1;
+
+    const canSplit =
+      char === "|" &&
+      depthParen === 0 &&
+      depthAngle === 0 &&
+      depthBrace === 0 &&
+      depthBracket === 0;
+
+    if (canSplit) {
+      const piece = current.trim();
+      if (piece) {
+        values.push(piece);
+      }
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  const tail = current.trim();
+  if (tail) {
+    values.push(tail);
+  }
+
+  return values;
+}
+
+function stripOuterParens(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith("(") || !trimmed.endsWith(")")) {
+    return trimmed;
+  }
+
+  let depth = 0;
+  for (let i = 0; i < trimmed.length; i += 1) {
+    const char = trimmed[i];
+    if (char === "(") depth += 1;
+    if (char === ")") depth -= 1;
+
+    if (depth === 0 && i < trimmed.length - 1) {
+      return trimmed;
+    }
+  }
+
+  return trimmed.slice(1, -1).trim();
+}
+
+function containsType(existingType: string, candidateType: string): boolean {
+  const existing = splitUnionTopLevel(existingType).map((part) =>
+    stripOuterParens(part)
+  );
+  const candidate = stripOuterParens(candidateType);
+  return existing.includes(candidate);
+}
+
+function formatUnion(existingType: string, addedType: string): string {
+  const parts = [...splitUnionTopLevel(existingType), addedType]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      if (/^\(.*\)$/.test(part)) {
+        return part;
+      }
+      return `(${part})`;
+    });
+
+  const deduped = [...new Set(parts)];
+  return deduped.join(" | ");
+}
+
+function getNodePosition(node: Node): { line: number; column: number } {
+  return node.getSourceFile().getLineAndColumnAtPos(node.getStart());
+}
+
+function getTargetDeclarationFromNode(
+  targetNode: Node
+): VariableDeclaration | null {
+  if (Node.isIdentifier(targetNode)) {
+    const declaration = targetNode.getDefinitions()[0]?.getDeclarationNode();
+    if (declaration && Node.isVariableDeclaration(declaration)) {
+      return declaration;
+    }
+  }
+
+  if (Node.isPropertyAccessExpression(targetNode)) {
+    const propertyNameNode = targetNode.getNameNode();
+    const declaration = propertyNameNode
+      .getDefinitions()[0]
+      ?.getDeclarationNode();
+    if (declaration && Node.isVariableDeclaration(declaration)) {
+      return declaration;
+    }
+  }
+
+  return null;
+}
+
+function shouldSkipDeclaration(declaration: VariableDeclaration): boolean {
+  const sourcePath = declaration
+    .getSourceFile()
+    .getFilePath()
+    .replace(/\\/g, "/");
+  if (sourcePath.includes("/node_modules/")) {
+    return true;
+  }
+
+  const variableStatement = declaration
+    .getVariableStatement()
+    ?.getModifiers()
+    .some((modifier) => modifier.getKind() === SyntaxKind.ConstKeyword);
+
+  if (variableStatement) {
+    return true;
+  }
+
+  return false;
+}
+
+async function runFix2322() {
+  const dryRun = process.argv.includes("--dry-run");
+
+  const project = new Project({
+    tsConfigFilePath: path.resolve("tsconfig.json"),
+  });
+
+  markSourceFilesAsModulesInMemory(project);
+
+  const diagnostics = project
+    .getPreEmitDiagnostics()
+    .filter((diagnostic) => diagnostic.getCode() === TARGET_CODE);
+
+  const fixes: FixRecord[] = [];
+  const skippedItems: SkipRecord[] = [];
+  const updatedDeclarationKeys = new Set<string>();
+
+  for (const diagnostic of diagnostics) {
+    const sourceFile = diagnostic.getSourceFile();
+    if (!sourceFile) {
+      continue;
+    }
+
+    const start = diagnostic.getStart();
+    const location = sourceFile.getLineAndColumnAtPos(start ?? 0);
+    const issueBase = {
+      diagnosticFilePath: toRelativePath(sourceFile.getFilePath()),
+      diagnosticLine: location.line,
+      diagnosticColumn: location.column,
+    };
+
+    const node = start == null ? null : sourceFile.getDescendantAtPos(start);
+    if (!node) {
+      skippedItems.push({ ...issueBase, reason: "No diagnostic node found." });
+      continue;
+    }
+
+    const variableDeclaration = node.getFirstAncestorByKind(
+      SyntaxKind.VariableDeclaration
+    );
+
+    let targetDeclaration: VariableDeclaration | null = null;
+    let sourceExpression: Node | null = null;
+
+    if (variableDeclaration && variableDeclaration.getInitializer()) {
+      targetDeclaration = variableDeclaration;
+      sourceExpression = variableDeclaration.getInitializer() ?? null;
+    } else {
+      const assignment = getNearestAssignmentExpression(node);
+      if (!assignment) {
+        skippedItems.push({
+          ...issueBase,
+          reason: "Diagnostic is not in a supported assignment context.",
+        });
+        continue;
+      }
+
+      targetDeclaration = getTargetDeclarationFromNode(assignment.getLeft());
+      sourceExpression = assignment.getRight();
+    }
+
+    if (!targetDeclaration || !sourceExpression) {
+      skippedItems.push({
+        ...issueBase,
+        reason: "Could not resolve target declaration/source expression.",
+      });
+      continue;
+    }
+
+    if (shouldSkipDeclaration(targetDeclaration)) {
+      skippedItems.push({
+        ...issueBase,
+        reason: "Declaration is read-only or outside workspace scope.",
+      });
+      continue;
+    }
+
+    const targetName = targetDeclaration.getName();
+    const declarationTypeNode = targetDeclaration.getTypeNode();
+    const existingType = normalizeTypeText(
+      declarationTypeNode?.getText() ??
+        targetDeclaration
+          .getType()
+          .getText(targetDeclaration, TypeFormatFlags.NoTruncation)
+    );
+
+    const addedType = normalizeTypeText(
+      sourceExpression
+        .getType()
+        .getText(sourceExpression, TypeFormatFlags.NoTruncation)
+    );
+
+    if (!addedType) {
+      skippedItems.push({
+        ...issueBase,
+        reason: "Could not determine offending type.",
+      });
+      continue;
+    }
+
+    if (containsType(existingType, addedType) || existingType === "any") {
+      skippedItems.push({
+        ...issueBase,
+        reason: "Declaration already includes offending type.",
+      });
+      continue;
+    }
+
+    const nextType = formatUnion(existingType, addedType);
+
+    const declarationKey = `${targetDeclaration
+      .getSourceFile()
+      .getFilePath()}:${targetDeclaration.getStart()}`;
+
+    if (updatedDeclarationKeys.has(declarationKey)) {
+      skippedItems.push({
+        ...issueBase,
+        reason: "Declaration already updated in this pass.",
+      });
+      continue;
+    }
+
+    if (!dryRun) {
+      targetDeclaration.setType(nextType);
+    }
+
+    updatedDeclarationKeys.add(declarationKey);
+
+    const declarationPos = getNodePosition(targetDeclaration.getNameNode());
+
+    fixes.push({
+      ...issueBase,
+      declarationFilePath: toRelativePath(
+        targetDeclaration.getSourceFile().getFilePath()
+      ),
+      declarationLine: declarationPos.line,
+      declarationColumn: declarationPos.column,
+      variableName: targetName,
+      previousType: existingType,
+      addedType,
+      nextType,
+    });
+  }
+
+  if (!dryRun && fixes.length > 0) {
+    await project.save();
+  }
+
+  const report: FixReport = {
+    generatedAt: new Date().toISOString(),
+    targetCode: TARGET_CODE,
+    diagnosticsSeen: diagnostics.length,
+    fixesApplied: fixes.length,
+    skipped: skippedItems.length,
+    dryRun,
+    fixes,
+    skippedItems,
+  };
+
+  await writeFile(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+
+  console.log(`TS${TARGET_CODE} diagnostics seen: ${diagnostics.length}`);
+  console.log(`Fixes applied: ${fixes.length}${dryRun ? " (dry run)" : ""}`);
+  console.log(`Skipped: ${skippedItems.length}`);
+  console.log(`Wrote ${toRelativePath(REPORT_PATH)}`);
+}
+
+await runFix2322();
