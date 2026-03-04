@@ -22,7 +22,8 @@
     "prepare": "husky",
     "update-ts-paths": "tsx script/updateModulePaths.ts",
     "update-aux-library-definitions": "tsx script/updateAuxLibraryDefinitions.ts",
-    "generate-global-types": "tsx script/generateGlobalTypes.ts"
+    "generate-global-types": "tsx script/generateGlobalTypes.ts",
+    "map-any-usage": "tsx script/mapAnyUsage.ts"
   },
   "repository": {
     "type": "git",
