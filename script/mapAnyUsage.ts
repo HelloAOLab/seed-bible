@@ -26,6 +26,7 @@ type UsageMetadata = {
   kind: string;
   type?: TypeMetadata;
   argumentTypes?: TypeMetadata[];
+  argumentNames?: string[];
   propertyName?: string;
   loopRole?: string;
 };
@@ -188,6 +189,94 @@ function isAssignmentOperator(kind: SyntaxKind): boolean {
   );
 }
 
+function normalizeIdentifierName(text: string, fallbackIndex: number): string {
+  const cleaned = text
+    .trim()
+    .replace(/^[^A-Za-z_$]+/, "")
+    .replace(/[^\w$]/g, "_")
+    .replace(/_+/g, "_");
+
+  if (!cleaned || !/^[A-Za-z_$][\w$]*$/.test(cleaned)) {
+    return `arg${fallbackIndex}`;
+  }
+
+  return cleaned;
+}
+
+function inferArgumentName(argument: Node, index: number): string {
+  if (Node.isIdentifier(argument)) {
+    return normalizeIdentifierName(argument.getText(), index);
+  }
+
+  if (Node.isPropertyAccessExpression(argument)) {
+    return normalizeIdentifierName(argument.getName(), index);
+  }
+
+  if (Node.isElementAccessExpression(argument)) {
+    const argExpression = argument.getArgumentExpression();
+    if (
+      argExpression &&
+      (Node.isStringLiteral(argExpression) ||
+        Node.isNoSubstitutionTemplateLiteral(argExpression))
+    ) {
+      return normalizeIdentifierName(argExpression.getLiteralText(), index);
+    }
+
+    return normalizeIdentifierName(argument.getExpression().getText(), index);
+  }
+
+  if (Node.isObjectLiteralExpression(argument)) {
+    return "options";
+  }
+
+  if (Node.isArrayLiteralExpression(argument)) {
+    return "items";
+  }
+
+  if (
+    Node.isStringLiteral(argument) ||
+    Node.isNoSubstitutionTemplateLiteral(argument)
+  ) {
+    return "text";
+  }
+
+  if (Node.isNumericLiteral(argument)) {
+    return "value";
+  }
+
+  if (
+    argument.getKind() === SyntaxKind.TrueKeyword ||
+    argument.getKind() === SyntaxKind.FalseKeyword
+  ) {
+    return "flag";
+  }
+
+  return `arg${index}`;
+}
+
+function getCallArgumentNames(callExpression: Node): string[] {
+  if (!Node.isCallExpression(callExpression)) {
+    return [];
+  }
+
+  const raw = callExpression
+    .getArguments()
+    .map((argument, index) => inferArgumentName(argument, index));
+
+  const counts = new Map<string, number>();
+  return raw.map((name, index) => {
+    const base = normalizeIdentifierName(name, index);
+    const seen = counts.get(base) ?? 0;
+    counts.set(base, seen + 1);
+
+    if (seen === 0) {
+      return base;
+    }
+
+    return `${base}${seen + 1}`;
+  });
+}
+
 function classifyUsage(referenceNode: Node): UsageMetadata {
   const location = getLocation(referenceNode);
   const parent = referenceNode.getParent();
@@ -225,14 +314,17 @@ function classifyUsage(referenceNode: Node): UsageMetadata {
       Node.isCallExpression(grandParent) &&
       grandParent.getExpression() === parent
     ) {
+      const argumentTypes = grandParent
+        .getArguments()
+        .map((arg) => describeType(arg.getType()))
+        .filter(Boolean) as TypeMetadata[];
+
       return {
         location,
         kind: "function-call",
         propertyName: parent.getName(),
-        argumentTypes: grandParent
-          .getArguments()
-          .map((arg) => describeType(arg.getType()))
-          .filter(Boolean) as TypeMetadata[],
+        argumentTypes,
+        argumentNames: getCallArgumentNames(grandParent),
         type: describeType(parent.getType()),
       };
     }
@@ -293,13 +385,16 @@ function classifyUsage(referenceNode: Node): UsageMetadata {
 
   if (Node.isCallExpression(parent)) {
     if (parent.getExpression() === referenceNode) {
+      const argumentTypes = parent
+        .getArguments()
+        .map((arg) => describeType(arg.getType()))
+        .filter(Boolean) as TypeMetadata[];
+
       return {
         location,
         kind: "function-call",
-        argumentTypes: parent
-          .getArguments()
-          .map((arg) => describeType(arg.getType()))
-          .filter(Boolean) as TypeMetadata[],
+        argumentTypes,
+        argumentNames: getCallArgumentNames(parent),
         type: describeType(referenceNode.getType()),
       };
     }

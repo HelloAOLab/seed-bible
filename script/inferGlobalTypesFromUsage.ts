@@ -19,6 +19,7 @@ type UsageMetadata = {
   kind: string;
   type?: TypeMetadata;
   argumentTypes?: TypeMetadata[];
+  argumentNames?: string[];
   propertyName?: string;
   loopRole?: string;
 };
@@ -121,6 +122,99 @@ function containsAnyKeyword(typeText: string): boolean {
   return /\bany\b/.test(typeText);
 }
 
+function normalizeParameterName(name: string, fallbackIndex: number): string {
+  const cleaned = name
+    .trim()
+    .replace(/^[^A-Za-z_$]+/, "")
+    .replace(/[^\w$]/g, "_")
+    .replace(/_+/g, "_");
+
+  if (!cleaned || !/^[A-Za-z_$][\w$]*$/.test(cleaned)) {
+    return `arg${fallbackIndex}`;
+  }
+
+  return cleaned;
+}
+
+function getPreferredArgumentNames(usages: UsageMetadata[]): string[] {
+  const countsByIndex = new Map<number, Map<string, number>>();
+
+  for (const usage of usages) {
+    if (usage.kind !== "function-call") {
+      continue;
+    }
+
+    const names = usage.argumentNames ?? [];
+    for (let index = 0; index < names.length; index += 1) {
+      const normalized = normalizeParameterName(names[index] ?? "", index);
+      if (normalized === `arg${index}`) {
+        continue;
+      }
+
+      let bucket = countsByIndex.get(index);
+      if (!bucket) {
+        bucket = new Map<string, number>();
+        countsByIndex.set(index, bucket);
+      }
+
+      bucket.set(normalized, (bucket.get(normalized) ?? 0) + 1);
+    }
+  }
+
+  const result: string[] = [];
+  for (const [index, bucket] of [...countsByIndex.entries()].sort(
+    (a, b) => a[0] - b[0]
+  )) {
+    const ranked = [...bucket.entries()].sort((a, b) => {
+      if (a[1] !== b[1]) {
+        return b[1] - a[1];
+      }
+      return a[0].localeCompare(b[0]);
+    });
+
+    const topName = ranked[0]?.[0];
+    result[index] = topName ?? `arg${index}`;
+  }
+
+  return result;
+}
+
+function applyPreferredArgumentNames(
+  typeText: string,
+  preferredNames: string[]
+): string {
+  if (!typeText.includes("=>") || preferredNames.length === 0) {
+    return typeText;
+  }
+
+  const usedNames = new Set<string>();
+  const finalNames = preferredNames.map((name, index) => {
+    const base = normalizeParameterName(name, index);
+    if (!usedNames.has(base)) {
+      usedNames.add(base);
+      return base;
+    }
+
+    let suffix = 2;
+    while (usedNames.has(`${base}${suffix}`)) {
+      suffix += 1;
+    }
+
+    const unique = `${base}${suffix}`;
+    usedNames.add(unique);
+    return unique;
+  });
+
+  return typeText.replace(/\barg(\d+)\b/g, (full, rawIndex: string) => {
+    const index = Number(rawIndex);
+    if (Number.isNaN(index)) {
+      return full;
+    }
+
+    return finalNames[index] ?? full;
+  });
+}
+
 function specificityBonus(typeText: string): number {
   if (containsAnyKeyword(typeText)) {
     return -8;
@@ -194,15 +288,25 @@ function inferFunctionTypeFromCalls(
 
   for (const usage of callUsages) {
     const args = usage.argumentTypes ?? [];
+    const sourceNames = usage.argumentNames ?? [];
     let hasSpecificArgument = args.length === 0;
+    const usedNames = new Map<string, number>();
     const params = args.map((arg, index) => {
       const normalized = normalizeTypeText(arg.text);
+      const baseName = normalizeParameterName(
+        sourceNames[index] ?? `arg${index}`,
+        index
+      );
+      const seen = usedNames.get(baseName) ?? 0;
+      usedNames.set(baseName, seen + 1);
+      const finalName = seen === 0 ? baseName : `${baseName}${seen + 1}`;
+
       if (isUsefulType(arg.text) && !containsAnyKeyword(normalized)) {
         hasSpecificArgument = true;
-        return `arg${index}: ${normalized}`;
+        return `${finalName}: ${normalized}`;
       }
 
-      return `arg${index}: unknown`;
+      return `${finalName}: unknown`;
     });
 
     if (!hasSpecificArgument) {
@@ -320,18 +424,28 @@ function inferBestType(globalEntry: GlobalUsageMetadata): {
     };
   }
 
+  const preferredArgumentNames = getPreferredArgumentNames(globalEntry.usages);
   const [bestType, bestScore] = best;
   const second = ranked[1];
 
   if (second && second[1] === bestScore && second[0] !== bestType) {
+    const unionType = formatUnionTypeParts([bestType, second[0]]);
     return {
-      recommendedType: formatUnionTypeParts([bestType, second[0]]),
+      recommendedType: applyPreferredArgumentNames(
+        unionType,
+        preferredArgumentNames
+      ),
       reason: `${usingNonAnyCandidates ? "Preferred non-any evidence. " : ""}Top evidence tied between ${bestType} and ${second[0]}.`,
     };
   }
 
+  const namedBestType = applyPreferredArgumentNames(
+    bestType,
+    preferredArgumentNames
+  );
+
   return {
-    recommendedType: bestType,
+    recommendedType: namedBestType,
     reason: `${usingNonAnyCandidates ? "Preferred non-any evidence. " : ""}Selected by strongest usage evidence score (${bestScore}).`,
   };
 }
