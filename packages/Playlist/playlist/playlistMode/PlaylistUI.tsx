@@ -6,7 +6,7 @@ import { ProjectProvider } from "playlist.playlistMode.useProjectContext";
 const RenderIcon = await thisBot.RenderIcon();
 const { useState, useLayoutEffect, useMemo, useRef, useCallback } = os.appHooks;
 
-const G = globalThis as any;
+const G = globalThis;
 const { Modal, Button, ButtonsCover } = G.Components;
 
 const ShowPersonVideoOverlay = await thisBot.ShowPersonVideoOverlay();

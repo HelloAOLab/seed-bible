@@ -4,7 +4,7 @@
 // number -> Index of chpater / verse / book
 
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 const { Input, Modal, Button, ButtonsCover, Tooltip, Select } = G.Components;
 
 const PlaylistList = await thisBot.PlaylistList();

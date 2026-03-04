@@ -1,5 +1,5 @@
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 const { Checkbox, LoaderSecondary, Modal, ButtonsCover, Button } = G.Components;
 
 const CircleProgress = await thisBot.DynamicCircle();

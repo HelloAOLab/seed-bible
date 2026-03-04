@@ -1,5 +1,5 @@
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 
 const { Input, Modal, Button, Chips, Checkbox, ButtonsCover, Tooltip, Select } =
   G.Components;

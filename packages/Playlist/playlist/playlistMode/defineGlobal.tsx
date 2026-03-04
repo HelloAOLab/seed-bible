@@ -2,7 +2,7 @@
 // let targetRecord = scannedURL.searchParams.get("inst");
 import { MenuIcon } from "app.components.icons";
 
-const G = globalThis as any;
+const G = globalThis;
 os.hideLoadingScreen();
 
 G.MOBILE_VIEWPORT_THRESHOLD = 600;
