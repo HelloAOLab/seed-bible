@@ -1,1 +1,1 @@
-shout("OnStackCoverClicked", { stackBibleId: thisBot.tags.stackBibleId });
+shout("OnStackCoverClicked", {stackBibleId: thisBot.tags.stackBibleId});

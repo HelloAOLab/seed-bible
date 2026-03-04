@@ -1,26 +1,19 @@
-if (thisBot.masks.isBibleAnimating) return false;
-setTagMask(thisBot, "isBibleAnimating", true);
+if(thisBot.masks.isBibleAnimating) return false;
+setTagMask(thisBot, 'isBibleAnimating', true);
 
-const { testamentName } = that;
-const testamentData =
-  thisBot.vars.lastInteractedStackBibleData?.childrenData.find(
-    (currTestamentData) => {
-      return currTestamentData.pieceInfo.name === testamentName;
-    }
-  );
-if (
-  thisBot.vars.lastInteractedStackBibleData &&
-  testamentData &&
-  testamentData.isActive &&
-  !testamentData.isSplitIntoSections
-) {
-  await thisBot.PickTestament({
-    bibleData: thisBot.vars.lastInteractedStackBibleData,
-    testamentName,
-  });
-} else {
-  await thisBot.SpawnBibleAndPickTestament({ testamentName });
+const {testamentName} = that;
+const testamentData = thisBot.vars.lastInteractedStackBibleData?.childrenData.find((currTestamentData) => {return currTestamentData.pieceInfo.name === testamentName})
+if( thisBot.vars.lastInteractedStackBibleData &&
+    testamentData &&
+    testamentData.isActive && !testamentData.isSplitIntoSections
+)
+{
+    await thisBot.PickTestament({bibleData: thisBot.vars.lastInteractedStackBibleData, testamentName});
+}
+else
+{
+    await thisBot.SpawnBibleAndPickTestament({testamentName});
 }
 
-setTagMask(thisBot, "isBibleAnimating", false);
+setTagMask(thisBot, 'isBibleAnimating', false);
 return true;

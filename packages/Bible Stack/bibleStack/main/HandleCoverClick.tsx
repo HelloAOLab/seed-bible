@@ -1,11 +1,11 @@
 /**
- * Handles a click event on the Bible cover, managing the state and animation of the Bible.
- *
- * @param {Object} that - The context object containing the Bible ID.
- * @param {number} that.stackBibleId - The ID of the Bible being interacted with.
- * @example
- * thisBot.HandleCoverClick({stackBibleId: someBibleId});
- */
+    * Handles a click event on the Bible cover, managing the state and animation of the Bible.
+    *
+    * @param {Object} that - The context object containing the Bible ID.
+    * @param {number} that.stackBibleId - The ID of the Bible being interacted with.
+    * @example
+    * thisBot.HandleCoverClick({stackBibleId: someBibleId});
+*/
 
 // const {stackBibleId} = that;
 // const bibleData = thisBot.GetBibleDataById({stackBibleId});

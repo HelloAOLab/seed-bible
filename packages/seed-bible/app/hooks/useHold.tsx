@@ -1,52 +1,50 @@
 const { useRef, useCallback } = os.appHooks;
 
-export function useHoldAction(
-  callback: () => void | Promise<void>,
-  holdDuration = 1000
-) {
-  const timerRef = useRef(null);
-  const triggeredRef = useRef(false);
 
-  const startHold = useCallback(() => {
-    triggeredRef.current = false;
+export function useHoldAction(callback: () => void | Promise<void>, holdDuration = 1000) {
+    const timerRef = useRef(null);
+    const triggeredRef = useRef(false);
 
-    timerRef.current = setTimeout(() => {
-      const result = callback();
+    const startHold = useCallback(() => {
+        triggeredRef.current = false;
 
-      Promise.resolve(result)
-        .then(() => {
-          triggeredRef.current = true;
-        })
-        .catch((err) => {
-          console.error("Hold callback error:", err);
-        });
-    }, holdDuration);
-  }, [callback, holdDuration]);
+        timerRef.current = setTimeout(() => {
+            const result = callback();
 
-  const cancelHold = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
+            Promise.resolve(result)
+                .then(() => {
+                    triggeredRef.current = true;
+                })
+                .catch((err) => {
+                    console.error('Hold callback error:', err);
+                });
+        }, holdDuration);
+    }, [callback, holdDuration]);
 
-  const handleRelease = useCallback(() => {
-    cancelHold();
-  }, [cancelHold]);
+    const cancelHold = useCallback(() => {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+    }, []);
 
-  const shouldSuppressClick = useCallback(() => triggeredRef.current, []);
+    const handleRelease = useCallback(() => {
+        cancelHold();
+    }, [cancelHold]);
 
-  return {
-    eventHandlers: {
-      onMouseDown: startHold,
-      onTouchStart: startHold,
-      onMouseUp: handleRelease,
-      onMouseLeave: handleRelease,
-      onTouchEnd: handleRelease,
-      onTouchCancel: handleRelease,
-    },
-    shouldSuppressClick,
-  };
+    const shouldSuppressClick = useCallback(() => triggeredRef.current, []);
+
+    return {
+        eventHandlers: {
+            onMouseDown: startHold,
+            onTouchStart: startHold,
+            onMouseUp: handleRelease,
+            onMouseLeave: handleRelease,
+            onTouchEnd: handleRelease,
+            onTouchCancel: handleRelease,
+        },
+        shouldSuppressClick,
+    };
 }
 
-export { useHoldAction };
+export { useHoldAction }

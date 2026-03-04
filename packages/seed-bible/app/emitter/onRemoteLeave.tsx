@@ -1,5 +1,5 @@
 const remotes = await os.remotes();
 const remoteId = getID(configBot);
-const otherRemotes = remotes.filter((id) => id !== remoteId);
+const otherRemotes = remotes.filter(id => id !== remoteId);
 
-masks["otherRemotes"] = otherRemotes;
+masks['otherRemotes'] = otherRemotes

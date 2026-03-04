@@ -1,3 +1,3 @@
-const { fromOpenAllButton } = that;
+const {fromOpenAllButton} = that;
 
-if (!fromOpenAllButton) setTagMask(thisBot, "isAnimatingMap", false);
+if(!fromOpenAllButton) setTagMask(thisBot, "isAnimatingMap", false);

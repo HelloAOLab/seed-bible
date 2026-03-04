@@ -1,3 +1,5 @@
-const elementsData = [...thisBot.vars.mapChaptersData];
+const elementsData = [
+    ...thisBot.vars.mapChaptersData,
+]
 
-InstanceManager.UpdateUsersNotificationOnElements({ elementsData });
+InstanceManager.UpdateUsersNotificationOnElements({elementsData});

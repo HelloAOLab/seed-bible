@@ -1,8 +1,10 @@
 const { useState } = os.appHooks;
 
-const ResourceTitle = ({ scheduleDescription }) => {
+const ResourceTitle = ({scheduleDescription}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(scheduleDescription);
+
+  
 
   const handleClick = () => {
     setIsEditing(true);
@@ -23,12 +25,15 @@ const ResourceTitle = ({ scheduleDescription }) => {
       <div
         style={{
           fontFamily: "Satoshi",
-          textAlign: "center",
+          textAlign: "center", 
           gap: "18px",
-          position: "absolute",
-          top: "60px",
+          position:'absolute',
+          top:'60px',
+          
+
 
           fontSize: "8px",
+         
         }}
       >
         {isEditing ? (
@@ -48,7 +53,7 @@ const ResourceTitle = ({ scheduleDescription }) => {
           />
         ) : (
           <span
-            style={{ margin: 0, cursor: "pointer", fontSize: "12px" }}
+            style={{ margin: 0, cursor: "pointer",fontSize:'12px' }}
             onClick={handleClick}
             title="Click to edit"
           >

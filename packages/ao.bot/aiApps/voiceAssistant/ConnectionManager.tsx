@@ -1,148 +1,135 @@
 const { useEffect } = os.appHooks;
-import HandleEvents from "aiApps.voiceAssistant.HandleEvents";
-import {
-  HandleEventMessage,
-  CreateMessageLog,
-  ClearMessageLog,
-} from "aiApps.voiceAssistant.HandleMessageLog";
+import HandleEvents from 'aiApps.voiceAssistant.HandleEvents';
+import { HandleEventMessage, CreateMessageLog, ClearMessageLog } from 'aiApps.voiceAssistant.HandleMessageLog';
 function generateQuery(params) {
-  let queryArray = [];
-  for (let key in params) {
-    if (params.hasOwnProperty(key)) {
-      queryArray.push(
-        encodeURIComponent(key) + "=" + encodeURIComponent(params[key])
-      );
+    let queryArray = [];
+    for (let key in params) {
+        if (params.hasOwnProperty(key)) {
+            queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
+        }
     }
-  }
-  return queryArray.join("&");
+    return queryArray.join('&');
 }
 
 // response.content_part.done // ai res
 
 // Function to attach query string to URL
 function attachQueryToURL(url, params) {
-  const queryString = generateQuery(params);
-  return url + (url.includes("?") ? "&" : "?") + queryString;
+    const queryString = generateQuery(params);
+    return url + (url.includes('?') ? '&' : '?') + queryString;
 }
-const ConnectionManager = ({
-  start,
-  setConnected,
-  audioRef,
-  pcRef,
-  micRef,
-  micActive,
-  speakerActive,
-  dcRef,
-  setIsAssistantListening,
-}) => {
-  const init = async () => {
-    let params = {
-      tools: JSON.stringify([...tags.toolsArr]),
-    };
-    let queryUrl = "https://aolab-bible-api.netlify.app/api/ai/getEmpericalKey";
-    queryUrl = attachQueryToURL(queryUrl, params);
-    let response = await web.get(queryUrl);
+const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micActive, speakerActive, dcRef, setIsAssistantListening }) => {
 
-    const EPHEMERAL_KEY = response.data.data.value;
+    const init = async () => {
 
-    CreateMessageLog();
+        let params = {
+            tools: JSON.stringify([...tags.toolsArr])
+        }
+        let queryUrl = "https://aolab-bible-api.netlify.app/api/ai/getEmpericalKey";
+        queryUrl = attachQueryToURL(queryUrl, params);
+        let response = await web.get(queryUrl);
 
-    const pc = new RTCPeerConnection();
-    pcRef.current = pc;
+        const EPHEMERAL_KEY = response.data.data.value;
 
-    pc.ontrack = (event) => {
-      audioRef.current.srcObject = event.streams[0];
-      setTimeout(() => {
-        globalThis.initAssistantSpeechMonitoring();
-      }, 500);
-    };
+        CreateMessageLog();
 
-    const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mic.getTracks().forEach((t) => pc.addTrack(t, mic));
-    micRef.current = mic;
+        const pc = new RTCPeerConnection();
+        pcRef.current = pc;
 
-    const dc = pc.createDataChannel("oai-events");
-    dcRef.current = dc;
-    dc.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-      HandleEventMessage(data, setIsAssistantListening);
-      if (data.type === "response.function_call_arguments.done") {
-        HandleEvents({ dc, data });
-      }
-    };
+        pc.ontrack = (event) => {
+            audioRef.current.srcObject = event.streams[0];
+            setTimeout(() => {
+                globalThis.initAssistantSpeechMonitoring();
+            }, 500)
+        };
 
-    dc.onopen = () => {
-      console.log("oai-events open");
-      os.hideLoadingScreen();
-      globalThis.DCRef = dc;
-    };
+        const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mic.getTracks().forEach((t) => pc.addTrack(t, mic));
+        micRef.current = mic;
 
-    dc.onclose = () => {
-      globalThis.DCRef = null;
-      console.log("data channel closing");
-    };
+        const dc = pc.createDataChannel("oai-events");
+        dcRef.current = dc;
+        dc.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            HandleEventMessage(data, setIsAssistantListening);
+            if (data.type === "response.function_call_arguments.done") {
+                HandleEvents({ dc, data })
+            }
+        };
 
-    // globalThis.AIDataChannel = dc;
+        dc.onopen = () => {
+            console.log("oai-events open");
+            os.hideLoadingScreen()
+            globalThis.DCRef = dc;
+        };
 
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
+        dc.onclose = () => {
+            globalThis.DCRef = null;
+            console.log("data channel closing")
+        }
 
-    const baseUrl = "https://api.openai.com/v1/realtime/calls";
-    const model = "gpt-realtime";
+        // globalThis.AIDataChannel = dc;
 
-    const resp = await web.post(`${baseUrl}?model=${model}`, offer.sdp, {
-      headers: {
-        Authorization: `Bearer ${EPHEMERAL_KEY}`,
-        "Content-Type": "application/sdp",
-      },
-      transformRequest: [(data) => data],
-    });
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
 
-    const answerSDP = { type: "answer", sdp: resp.data };
-    await pc.setRemoteDescription(answerSDP);
 
-    setConnected(true);
-  };
-  useEffect(() => {
-    if (!start) return;
+        const baseUrl = "https://api.openai.com/v1/realtime/calls";
+        const model = "gpt-realtime";
 
-    init();
+        const resp = await web.post(
+            `${baseUrl}?model=${model}`,
+            offer.sdp,
+            {
+                headers: {
+                    Authorization: `Bearer ${EPHEMERAL_KEY}`,
+                    "Content-Type": "application/sdp",
+                },
+                transformRequest: [(data) => data]
+            }
+        );
 
-    return () => {
-      if (pcRef.current) pcRef.current.close();
-      console.log(micRef, "micref");
-      micRef.current.getTracks().forEach((track) => track.stop());
-      setConnected(false);
-      globalThis.AIDataChannel = null;
-      dcRef.current = null;
-      ClearMessageLog();
-    };
-  }, [start, setConnected, audioRef, pcRef, micRef]);
+        const answerSDP = { type: "answer", sdp: resp.data };
+        await pc.setRemoteDescription(answerSDP);
 
-  const handleMicAndSpeaker = async () => {
-    if (micActive) {
-      micRef.current.getTracks().forEach((track) => {
-        track.enabled = true;
-      });
-    } else {
-      micRef.current.getTracks().forEach((track) => {
-        track.enabled = false;
-      });
+        setConnected(true);
+    }
+    useEffect(() => {
+        if (!start) return;
+
+        init();
+
+        return () => {
+            if (pcRef.current) pcRef.current.close();
+            console.log(micRef, "micref")
+            micRef.current.getTracks().forEach(track => track.stop());
+            setConnected(false);
+            globalThis.AIDataChannel = null;
+            dcRef.current = null;
+            ClearMessageLog();
+        };
+    }, [start, setConnected, audioRef, pcRef, micRef]);
+
+    const handleMicAndSpeaker = async () => {
+        if (micActive) {
+            micRef.current.getTracks().forEach(track => { track.enabled = true });
+        } else {
+            micRef.current.getTracks().forEach(track => { track.enabled = false });
+        }
+
+        if (speakerActive) {
+            audioRef.current.muted = false;
+        } else {
+            audioRef.current.muted = true;
+        }
     }
 
-    if (speakerActive) {
-      audioRef.current.muted = false;
-    } else {
-      audioRef.current.muted = true;
-    }
-  };
+    useEffect(() => {
+        if (!start || !pcRef.current) return;
+        handleMicAndSpeaker()
+    }, [micActive, speakerActive, start, pcRef.current])
 
-  useEffect(() => {
-    if (!start || !pcRef.current) return;
-    handleMicAndSpeaker();
-  }, [micActive, speakerActive, start, pcRef.current]);
-
-  return null;
+    return null;
 };
 
 export default ConnectionManager;

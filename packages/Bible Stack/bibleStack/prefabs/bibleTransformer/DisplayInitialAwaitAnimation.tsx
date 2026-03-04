@@ -5,7 +5,7 @@
  * thisBot.DisplayInitialAwaitAnimation();
  */
 
-if (thisBot.masks.isInAwaitAnimation) return;
+if(thisBot.masks.isInAwaitAnimation) return;
 
 setTagMask(thisBot, "isInAwaitAnimation", true);
 

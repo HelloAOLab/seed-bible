@@ -15,15 +15,16 @@
     })});
 */
 
-const { poolData } = that;
+const {poolData} = that;
 const dimension = os.getCurrentDimension();
 
 const obj = create(poolData.bot, {
-  space: "tempLocal",
-  [dimension]: false,
+    space: "tempLocal",
+    [dimension]: false
 });
-for (const tag of poolData.customTags) {
-  obj.tags[tag.name] = tag.value;
+for(const tag of poolData.customTags)
+{
+    obj.tags[tag.name] = tag.value;
 }
 
 return obj;

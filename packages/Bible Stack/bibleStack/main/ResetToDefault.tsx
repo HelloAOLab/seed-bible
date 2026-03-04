@@ -1,26 +1,32 @@
 clearAnimations(thisBot);
 
-for (const bibleData of thisBot.vars.stackBiblesData.slice()) {
-  await thisBot.DeletePiece({ pieceData: bibleData });
+for(const bibleData of thisBot.vars.stackBiblesData.slice())
+{
+    await thisBot.DeletePiece({pieceData: bibleData})
 }
-for (const testamentData of thisBot.vars.stackTestamentsData.slice()) {
-  await thisBot.DeletePiece({ pieceData: testamentData });
+for(const testamentData of thisBot.vars.stackTestamentsData.slice())
+{
+    await thisBot.DeletePiece({pieceData: testamentData})
 }
-for (const sectionData of thisBot.vars.stackSectionsData.slice()) {
-  await thisBot.DeletePiece({ pieceData: sectionData });
+for(const sectionData of thisBot.vars.stackSectionsData.slice())
+{
+    await thisBot.DeletePiece({pieceData: sectionData})
 }
-for (const sectionBookData of thisBot.vars.stackSectionBooksData.slice()) {
-  await thisBot.DeletePiece({ pieceData: sectionBookData });
+for(const sectionBookData of thisBot.vars.stackSectionBooksData.slice())
+{
+    await thisBot.DeletePiece({pieceData: sectionBookData})
 }
-for (const bookData of thisBot.vars.stackBooksData.slice()) {
-  await thisBot.DeletePiece({ pieceData: bookData });
+for(const bookData of thisBot.vars.stackBooksData.slice())
+{
+    await thisBot.DeletePiece({pieceData: bookData})
 }
-for (const chapterData of thisBot.vars.stackChaptersData.slice()) {
-  await thisBot.DeletePiece({ pieceData: chapterData });
+for(const chapterData of thisBot.vars.stackChaptersData.slice())
+{
+    await thisBot.DeletePiece({pieceData: chapterData})
 }
 thisBot.vars.unhighlightDelaysInfo.forEach((unhighlightDelayInfo) => {
-  clearTimeout(unhighlightDelayInfo.timeoutId);
-});
+    clearTimeout(unhighlightDelayInfo.timeoutId);
+})
 
 clearTagMasks(thisBot);
 thisBot.Initialize();

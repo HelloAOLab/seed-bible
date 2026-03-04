@@ -10,15 +10,11 @@
  * thisBot.UpdateBookStack({ bookData: someBookData });
  */
 
-const { bookData, isInstantaneous } = that;
+const {bookData, isInstantaneous} = that;
 const dimension = os.getCurrentDimension();
 const animations = [];
 
-const { newBookAnimations } = await thisBot.HandleBookDataInStack({
-  dimension,
-  bookData,
-  isInstantaneous,
-});
+const {newBookAnimations} = await thisBot.HandleBookDataInStack({dimension, bookData, isInstantaneous});
 animations.push(...newBookAnimations);
 
 await Promise.allSettled(animations);

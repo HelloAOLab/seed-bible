@@ -1,1 +1,1 @@
-shout("OnLayoutBookDateLabelClicked", { label: thisBot });
+shout("OnLayoutBookDateLabelClicked", {label: thisBot});

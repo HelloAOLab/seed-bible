@@ -10,22 +10,15 @@
  * thisBot.UpdateSectionStack({ sectionData: someSectionData });
  */
 
-const { sectionData, isInstantaneous } = that;
-if (!sectionData.isActive) return false;
+const {sectionData, isInstantaneous} = that;
+if(!sectionData.isActive) return false;
 const dimension = os.getCurrentDimension();
 const duration = isInstantaneous ? 0 : 0.5;
-const easing = { type: "sinusoidal", mode: "inout" };
+const easing = {type: "sinusoidal", mode: "inout"};
 const sectionPosition = getBotPosition(sectionData.piece, dimension);
 const animations = [];
 
-const { newSectionAnimations } = await thisBot.HandleSectionDataInStack({
-  isInstantaneous,
-  sectionData,
-  desiredPositionZ: sectionPosition.z,
-  dimension,
-  duration,
-  easing,
-});
+const {newSectionAnimations} = await thisBot.HandleSectionDataInStack({isInstantaneous, sectionData, desiredPositionZ: sectionPosition.z, dimension, duration, easing})
 animations.push(...newSectionAnimations);
 
 await Promise.allSettled(animations);

@@ -1,1 +1,1 @@
-shout("OnLayoutPlaylistNavigationButtonClicked", { button: thisBot });
+shout("OnLayoutPlaylistNavigationButtonClicked", {button: thisBot})

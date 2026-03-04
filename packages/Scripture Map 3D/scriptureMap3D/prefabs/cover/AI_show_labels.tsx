@@ -1,1 +1,1 @@
-whisper(getBot("system", "mapBots.hideLabels"), "onClick");
+whisper(getBot("system", "mapBots.hideLabels"), "onClick")

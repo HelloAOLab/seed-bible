@@ -1,1 +1,1 @@
-destroy(getBots("dialogBox"));
+destroy(getBots('dialogBox'))

@@ -1,4 +1,4 @@
-const { mod } = that;
+const {mod} = that;
 
 clearAnimations(thisBot);
 clearTagMasks(thisBot);

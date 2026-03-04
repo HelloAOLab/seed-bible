@@ -1,1 +1,2 @@
-shout("handleNodeSelect", { botId: thisBot.tags.id });
+
+shout("handleNodeSelect", {botId: thisBot.tags.id});

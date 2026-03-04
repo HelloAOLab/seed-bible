@@ -1,12 +1,8 @@
-const { mapData } = that;
+const {mapData} = that;
 
-if (mapData.isLabelsEnabled) return;
+if(mapData.isLabelsEnabled) return;
 
 mapData.isLabelsEnabled = true;
-thisBot.ShowLabelsOnMap({ mapData });
+thisBot.ShowLabelsOnMap({mapData})
 
-mapData.staticMapElements.settingsButtons
-  .find((button) => {
-    return button.tags.buttonType === MapButtonType.ShowLabelsToggle;
-  })
-  ?.Activate?.();
+mapData.staticMapElements.settingsButtons.find((button) => {return button.tags.buttonType === MapButtonType.ShowLabelsToggle})?.Activate?.();

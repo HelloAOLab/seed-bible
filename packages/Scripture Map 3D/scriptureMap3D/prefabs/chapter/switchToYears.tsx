@@ -1,1 +1,1 @@
-this.tags.isYear = true;
+this.tags.isYear = true

@@ -251,7 +251,7 @@ G.objectComparator = (
       return firstData[key] === secondData[key];
     });
   }
-  let isSame: boolean | unknown = true;
+  let isSame = true;
   Object.keys(firstData).forEach((key) => {
     if (typeof firstData[key] !== "object") {
       isSame = isSame && firstData[key] === secondData[key];

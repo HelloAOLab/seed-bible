@@ -1,3 +1,3 @@
-const { keys } = that;
+const {keys} = that;
 
-thisBot.HandleTabernacleSectionInteraction({ keys, type: "textHover" });
+thisBot.HandleTabernacleSectionInteraction({keys, type: "textHover"})

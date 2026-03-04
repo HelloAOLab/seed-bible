@@ -1,1 +1,1 @@
-shout("OnTabernacleItemClicked", { key: thisBot.tags.key });
+shout("OnTabernacleItemClicked", {key: thisBot.tags.key})

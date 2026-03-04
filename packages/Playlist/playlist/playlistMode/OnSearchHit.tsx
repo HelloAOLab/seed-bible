@@ -1,7 +1,7 @@
 //  const results = await thisBot.findVerseByAI({ query: searchText });
 
 //  Below This is JUST LOGIC TO COVERT TO OUR FAMILR OBJECT JSON
-
+        
 //         setSearchText("");
 //         console.log('results', results);
 //         const booksObject = globalThis.BOOKID_DATA.reduce((acc, book) => {

@@ -1,2 +1,2 @@
-if (configBot.tags.systemPortal) return;
-whisper(thisBot, "onInstJoined");
+if(configBot.tags.systemPortal) return
+whisper(thisBot, "onInstJoined")

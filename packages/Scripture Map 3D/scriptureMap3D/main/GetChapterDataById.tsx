@@ -1,4 +1,2 @@
-const { id } = that;
-return thisBot.vars.layoutChaptersData.find((chapterData) => {
-  return chapterData.id == id;
-});
+const {id} = that;
+return thisBot.vars.layoutChaptersData.find((chapterData) => {return chapterData.id == id})

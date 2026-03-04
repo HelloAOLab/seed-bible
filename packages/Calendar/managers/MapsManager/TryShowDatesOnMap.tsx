@@ -1,11 +1,7 @@
-const { mapData } = that;
+const {mapData} = that;
 
-if (mapData.areDatesEnabled) return;
+if(mapData.areDatesEnabled) return;
 
 mapData.areDatesEnabled = true;
-thisBot.ShowDatesOnMap({ mapData });
-mapData.staticMapElements.settingsButtons
-  .find((button) => {
-    return button.tags.buttonType === MapButtonType.ShowDatesToggle;
-  })
-  ?.Activate?.();
+thisBot.ShowDatesOnMap({mapData})
+mapData.staticMapElements.settingsButtons.find((button) => {return button.tags.buttonType === MapButtonType.ShowDatesToggle})?.Activate?.();

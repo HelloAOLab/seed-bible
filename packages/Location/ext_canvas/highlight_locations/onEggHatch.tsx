@@ -1,1 +1,1 @@
-thisBot.onBookChanged();
+thisBot.onBookChanged()

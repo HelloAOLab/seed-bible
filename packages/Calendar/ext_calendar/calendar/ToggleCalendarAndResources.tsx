@@ -1,6 +1,6 @@
 const { useState, useEffect } = os.appHooks;
 
-const ToggleCalendarAndResources = ({ calendarApi, viewType, setViewType }) => {
+const ToggleCalendarAndResources = ({ calendarApi,viewType,setViewType }) => {
   const [active, setActive] = useState(null); // 'clock' or 'calendar'
 
   useEffect(() => {
@@ -18,16 +18,17 @@ const ToggleCalendarAndResources = ({ calendarApi, viewType, setViewType }) => {
     if (type === "clock") {
       // Switch to resource view
       calendarApi.current.changeView("resourceTimelineWeek");
-      setViewType("resources");
+      setViewType('resources');
     } else {
       // Switch to normal calendar view
       calendarApi.current.changeView("dayGridMonth");
-      setViewType("calendar");
+      setViewType('calendar')
     }
   };
 
   return (
     <div
+
       style={{
         display: "flex",
         alignItems: "center",
@@ -43,6 +44,9 @@ const ToggleCalendarAndResources = ({ calendarApi, viewType, setViewType }) => {
         top: "50px",
       }}
     >
+  
+
+    
       <div
         onClick={() => handleToggle("calendar")}
         style={{
@@ -79,7 +83,7 @@ const ToggleCalendarAndResources = ({ calendarApi, viewType, setViewType }) => {
           <circle cx="17" cy="17" r="0.9" />
         </svg>
       </div>
-      <div
+        <div
         style={{
           height: "100%",
           width: "1px",
@@ -115,8 +119,9 @@ const ToggleCalendarAndResources = ({ calendarApi, viewType, setViewType }) => {
           <line x1="12" y1="12" x2="15" y2="15" />
         </svg>
       </div>
+      
     </div>
   );
 };
 
-return ToggleCalendarAndResources;
+return  ToggleCalendarAndResources;

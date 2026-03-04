@@ -4,18 +4,18 @@
 // let typeOfPiece;
 // switch(piece.tags.typeOfPiece)
 // {
-//     case BibleVizUtils.Data.tags.BiblePieceType.StackTestament:
-//         key = piece.tags.testamentName;
+//     case BibleVizUtils.Data.tags.BiblePieceType.StackTestament: 
+//         key = piece.tags.testamentName; 
 //         typeOfPiece = BibleVizUtils.Data.tags.BiblePieceType.StackTestament;
 //     break;
-//     case BibleVizUtils.Data.tags.BiblePieceType.StackSection:
-//         key = piece.tags.sectionName;
+//     case BibleVizUtils.Data.tags.BiblePieceType.StackSection: 
+//         key = piece.tags.sectionName; 
 //         typeOfPiece = BibleVizUtils.Data.tags.BiblePieceType.StackSection;
 //     break;
 //     case BibleVizUtils.Data.tags.BiblePieceType.StackSectionBook:
 //     case BibleVizUtils.Data.tags.BiblePieceType.StackBook:
 //     case BibleVizUtils.Data.tags.BiblePieceType.LayoutBook:
-//         key = piece.tags.bookName;
+//         key = piece.tags.bookName; 
 //         typeOfPiece = BibleVizUtils.Data.tags.BiblePieceType.StackBook;
 //     break;
 //     case BibleVizUtils.Data.tags.BiblePieceType.StackChapter:
@@ -32,4 +32,4 @@
 //     })
 // })
 
-return []; // selections;
+return [] // selections;

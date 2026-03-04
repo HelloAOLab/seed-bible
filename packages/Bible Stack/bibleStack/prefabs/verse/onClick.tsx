@@ -1,4 +1,1 @@
-shout("OnStackVerseInteracted", {
-  verse: thisBot,
-  typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Click,
-});
+shout("OnStackVerseInteracted", {verse: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Click});

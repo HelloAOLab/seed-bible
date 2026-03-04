@@ -1,1 +1,1 @@
-thisBot.HandleMapButtonClick(that);
+thisBot.HandleMapButtonClick(that)

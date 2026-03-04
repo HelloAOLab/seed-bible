@@ -1,6 +1,5 @@
-const piecesData = [...thisBot.vars.layoutChaptersData];
+const piecesData = [
+    ...thisBot.vars.layoutChaptersData,
+]
 
-BibleVizUtils.Functions.UpdateActivityNotificationOnPieces({
-  piecesData,
-  manager: thisBot,
-});
+BibleVizUtils.Functions.UpdateActivityNotificationOnPieces({piecesData, manager: thisBot});

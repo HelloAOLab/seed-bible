@@ -1,1 +1,1 @@
-setTagMask(thisBot, "cursor", "auto");
+setTagMask(thisBot, 'cursor', 'auto')

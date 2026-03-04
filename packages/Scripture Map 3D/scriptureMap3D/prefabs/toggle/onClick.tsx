@@ -1,1 +1,1 @@
-shout("OnLayoutButtonClicked", { button: thisBot });
+shout("OnLayoutButtonClicked", {button: thisBot})

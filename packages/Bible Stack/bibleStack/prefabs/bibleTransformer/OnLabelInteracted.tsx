@@ -1,7 +1,7 @@
 /**
- * Triggers an OnStackCoverClicked event when the Bible's label has been interacted.
- * @example
- * bibleTransformer.OnLabelInteracted()
- */
+    * Triggers an OnStackCoverClicked event when the Bible's label has been interacted.
+    * @example
+    * bibleTransformer.OnLabelInteracted()
+*/
 
-shout("OnStackCoverClicked", { stackBibleId: thisBot.tags.stackBibleId });
+shout("OnStackCoverClicked", {stackBibleId: thisBot.tags.stackBibleId});

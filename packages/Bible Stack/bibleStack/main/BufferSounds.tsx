@@ -1,3 +1,4 @@
-for (const soundInfo of thisBot.tags.sounds) {
-  os.bufferSound(soundInfo.URL);
+for(const soundInfo of thisBot.tags.sounds)
+{
+    os.bufferSound(soundInfo.URL);
 }

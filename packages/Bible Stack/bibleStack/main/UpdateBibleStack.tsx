@@ -11,155 +11,98 @@
  * thisBot.UpdateBibleStack({ bibleData: someBibleData, speedMultiplier: 2 });
  */
 
-const { bibleData, speedMultiplier, isInstantaneous } = that;
+const {bibleData, speedMultiplier, isInstantaneous} = that;
 const dimension = os.getCurrentDimension();
-const duration = isInstantaneous ? 0 : 0.5 / speedMultiplier;
-const easing = { type: "sinusoidal", mode: "inout" };
-const lowerCoverPosition = getBotPosition(
-  bibleData.staticBiblePieces.lowerCover,
-  dimension
-);
-const lowerCoverScales = BibleVizUtils.Functions.GetBotScales(
-  bibleData.staticBiblePieces.lowerCover
-);
-const upperCoverScales = BibleVizUtils.Functions.GetBotScales(
-  bibleData.staticBiblePieces.upperCover
-);
+const duration = isInstantaneous ? 0 : (0.5/speedMultiplier);
+const easing = {type: "sinusoidal", mode: "inout"};
+const lowerCoverPosition = getBotPosition(bibleData.staticBiblePieces.lowerCover, dimension);
+const lowerCoverScales = BibleVizUtils.Functions.GetBotScales(bibleData.staticBiblePieces.lowerCover);
+const upperCoverScales = BibleVizUtils.Functions.GetBotScales(bibleData.staticBiblePieces.upperCover);
 const isBibleEmpty = IsBibleEmpty();
-const isCrossInMiddle =
-  bibleData.childrenData.every((testamentData) => {
-    return testamentData.isSplitIntoSections;
-  }) && !isBibleEmpty;
+const isCrossInMiddle = bibleData.childrenData.every((testamentData) => {return testamentData.isSplitIntoSections}) && !isBibleEmpty;
 const animations = [];
 let crossNewPositionZ = null;
 const stackStructure = GetBibleStackStructure();
-const initialPositionZ = lowerCoverPosition.z + lowerCoverScales.z;
+const initialPositionZ = lowerCoverPosition.z + lowerCoverScales.z
 let nextPositionZ = initialPositionZ;
 
-if (!isBibleEmpty) {
-  nextPositionZ += BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements;
-  for (const testamentData of stackStructure) {
-    const { testamentDeltaPositionZ, newTestamentAnimations } =
-      await thisBot.HandleTestamentDataInStack({
-        isInstantaneous,
-        testamentData,
-        desiredPositionZ: nextPositionZ,
-        dimension,
-        duration,
-        easing,
-        speedMultiplier,
-      });
-    animations.push(...newTestamentAnimations);
-    nextPositionZ += testamentDeltaPositionZ;
-    if (isCrossInMiddle && stackStructure.indexOf(testamentData) === 0) {
-      crossNewPositionZ =
-        nextPositionZ +
-        BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements / 2;
-    }
+if(!isBibleEmpty)
+{
     nextPositionZ += BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements;
-  }
-}
-
-if (!isCrossInMiddle) {
-  crossNewPositionZ = isBibleEmpty
-    ? initialPositionZ + upperCoverScales.z
-    : nextPositionZ + BibleVizUtils.Data.tags.StackSpacing.CoverToCross;
-}
-
-const targetCrossPosition = isCrossInMiddle
-  ? BibleVizUtils.Data.tags.CrossPosition.Middle
-  : BibleVizUtils.Data.tags.CrossPosition.Top;
-
-if (bibleData.currentCrossPosition !== targetCrossPosition) {
-  bibleData.currentCrossPosition = targetCrossPosition;
-
-  if (isInstantaneous) {
-    setTagMask(
-      [
-        bibleData.staticBiblePieces.crossVerticalLine,
-        bibleData.staticBiblePieces.crossHorizontalLine,
-      ],
-      "formOpacity",
-      1
-    );
-  } else {
-    animations.push(
-      animateTag(
-        [
-          bibleData.staticBiblePieces.crossVerticalLine,
-          bibleData.staticBiblePieces.crossHorizontalLine,
-        ],
-        "formOpacity",
+    for(const testamentData of stackStructure)
+    {
+        const {testamentDeltaPositionZ, newTestamentAnimations} = await thisBot.HandleTestamentDataInStack({isInstantaneous, testamentData, desiredPositionZ: nextPositionZ, dimension, duration, easing, speedMultiplier});
+        animations.push(...newTestamentAnimations)
+        nextPositionZ += testamentDeltaPositionZ;
+        if(isCrossInMiddle && stackStructure.indexOf(testamentData) === 0)
         {
-          toValue: 0,
-          duration: duration / 2,
-          easing,
+            crossNewPositionZ = nextPositionZ + (BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements/2)
         }
-      ).then(() => {
-        setTagMask(
-          [
-            bibleData.staticBiblePieces.crossVerticalLine,
-            bibleData.staticBiblePieces.crossHorizontalLine,
-          ],
-          dimension + "Z",
-          crossNewPositionZ
-        );
-        return animateTag(
-          [
-            bibleData.staticBiblePieces.crossVerticalLine,
-            bibleData.staticBiblePieces.crossHorizontalLine,
-          ],
-          "formOpacity",
-          {
-            toValue: 1,
-            duration: duration / 2,
-            easing,
-          }
-        );
-      })
-    );
-  }
-} else {
-  if (!isInstantaneous) {
-    animations.push(
-      animateTag(
-        [
-          bibleData.staticBiblePieces.crossVerticalLine,
-          bibleData.staticBiblePieces.crossHorizontalLine,
-        ],
-        dimension + "Z",
-        {
-          toValue: crossNewPositionZ,
-          duration,
-          easing,
-        }
-      )
-    );
-  }
+        nextPositionZ += BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements;
+    }
 }
 
-if (isInstantaneous) {
-  setTagMask(
-    [
-      bibleData.staticBiblePieces.crossVerticalLine,
-      bibleData.staticBiblePieces.crossHorizontalLine,
-    ],
-    dimension + "Z",
-    crossNewPositionZ
-  );
-  setTagMask(
-    bibleData.staticBiblePieces.upperCover,
-    dimension + "Z",
-    isBibleEmpty ? initialPositionZ : nextPositionZ
-  );
-} else {
-  animations.push(
-    animateTag(bibleData.staticBiblePieces.upperCover, dimension + "Z", {
-      toValue: isBibleEmpty ? initialPositionZ : nextPositionZ,
-      duration,
-      easing,
-    })
-  );
+if (!isCrossInMiddle)
+{
+    crossNewPositionZ = isBibleEmpty ? (initialPositionZ + upperCoverScales.z) : (nextPositionZ + BibleVizUtils.Data.tags.StackSpacing.CoverToCross);
+}
+
+const targetCrossPosition = isCrossInMiddle ? BibleVizUtils.Data.tags.CrossPosition.Middle : BibleVizUtils.Data.tags.CrossPosition.Top;
+
+if(bibleData.currentCrossPosition !== targetCrossPosition)
+{
+    bibleData.currentCrossPosition = targetCrossPosition;
+
+    if(isInstantaneous)
+    {
+        setTagMask([bibleData.staticBiblePieces.crossVerticalLine, bibleData.staticBiblePieces.crossHorizontalLine], "formOpacity", 1);
+    }
+    else
+    {
+        animations.push(
+            animateTag([bibleData.staticBiblePieces.crossVerticalLine, bibleData.staticBiblePieces.crossHorizontalLine], "formOpacity", {
+                toValue: 0,
+                duration: duration / 2,
+                easing
+            }).then(() => {
+                setTagMask([bibleData.staticBiblePieces.crossVerticalLine, bibleData.staticBiblePieces.crossHorizontalLine], dimension + "Z", crossNewPositionZ);
+                return animateTag([bibleData.staticBiblePieces.crossVerticalLine, bibleData.staticBiblePieces.crossHorizontalLine], "formOpacity", {
+                    toValue: 1,
+                    duration: duration / 2,
+                    easing
+                });
+            })
+        );
+    }
+} 
+else
+{
+    if(!isInstantaneous)
+    {
+        animations.push(
+            animateTag([bibleData.staticBiblePieces.crossVerticalLine, bibleData.staticBiblePieces.crossHorizontalLine], dimension + "Z", {
+                toValue: crossNewPositionZ,
+                duration,
+                easing
+            })
+        );
+    }
+}
+
+if(isInstantaneous)
+{
+    setTagMask([bibleData.staticBiblePieces.crossVerticalLine, bibleData.staticBiblePieces.crossHorizontalLine], dimension + "Z", crossNewPositionZ);
+    setTagMask(bibleData.staticBiblePieces.upperCover, dimension + "Z", isBibleEmpty ? initialPositionZ : nextPositionZ);
+}
+else
+{
+    animations.push(
+        animateTag(bibleData.staticBiblePieces.upperCover, dimension + "Z", {
+            toValue: isBibleEmpty ? initialPositionZ : nextPositionZ,
+            duration,
+            easing
+        })
+    )
 }
 
 // await Promise.allSettled(animations);
@@ -167,24 +110,22 @@ await Promise.all(animations);
 
 return true;
 
-function IsBibleEmpty() {
-  const result = !bibleData.childrenData.some((testamentData) => {
-    return testamentData.isSplitIntoSections
-      ? testamentData.childrenData.some((sectionData) => {
-          return sectionData.isSplitIntoBooks ? true : sectionData.isActive;
-        })
-      : testamentData.isActive;
-  });
-  return result;
+function IsBibleEmpty()
+{
+    const result = !bibleData.childrenData.some((testamentData) => {
+        return testamentData.isSplitIntoSections ? (testamentData.childrenData.some((sectionData) => {
+            return sectionData.isSplitIntoBooks ? true : sectionData.isActive
+        })) : testamentData.isActive
+    })
+    return result;
 }
 
-function GetBibleStackStructure() {
-  const filteredStructure = bibleData.childrenData.filter((testamentData) => {
-    return testamentData.isSplitIntoSections
-      ? testamentData.childrenData.some((sectionData) => {
-          return sectionData.isSplitIntoBooks ? true : sectionData.isActive;
-        })
-      : testamentData.isActive;
-  });
-  return filteredStructure;
+function GetBibleStackStructure()
+{
+    const filteredStructure = bibleData.childrenData.filter((testamentData) => {
+        return testamentData.isSplitIntoSections ? (testamentData.childrenData.some((sectionData) => {
+            return sectionData.isSplitIntoBooks ? true : sectionData.isActive
+        })) : testamentData.isActive
+    })
+    return filteredStructure;
 }

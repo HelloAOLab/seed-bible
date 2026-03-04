@@ -12,23 +12,18 @@
  * thisBot.UnhighlightChapter({ parentData: someData, chapterData: someChapterData });
  */
 
-const { parentData } = that;
+const {parentData} = that;
 
-const previousHighlightedChapterData =
-  parentData.piece.vars.previousHighlightedChapterData;
+const previousHighlightedChapterData = parentData.piece.vars.previousHighlightedChapterData;
 
-if (
-  previousHighlightedChapterData &&
-  previousHighlightedChapterData.isActive &&
-  !previousHighlightedChapterData.chapterTransformer.masks.isUnhighlighting &&
-  previousHighlightedChapterData.chapterTransformer.tags.isInUse &&
-  (previousHighlightedChapterData.chapterTransformer.masks.isHighlighted ||
-    previousHighlightedChapterData.chapterTransformer.masks.isHighlighting) &&
-  !previousHighlightedChapterData.chapterTransformer.masks.isSelecting &&
-  !previousHighlightedChapterData.chapterTransformer.masks.isSelected
-) {
-  previousHighlightedChapterData.chapterTransformer.Unhighlight({
-    chapterData: previousHighlightedChapterData,
-  });
-  parentData.piece.vars.previousHighlightedChapterData = null;
+if( previousHighlightedChapterData &&
+    previousHighlightedChapterData.isActive &&
+    !previousHighlightedChapterData.chapterTransformer.masks.isUnhighlighting         &&
+    previousHighlightedChapterData.chapterTransformer.tags.isInUse                    &&
+    (previousHighlightedChapterData.chapterTransformer.masks.isHighlighted || previousHighlightedChapterData.chapterTransformer.masks.isHighlighting) &&
+    !previousHighlightedChapterData.chapterTransformer.masks.isSelecting              &&
+    !previousHighlightedChapterData.chapterTransformer.masks.isSelected)
+{
+    previousHighlightedChapterData.chapterTransformer.Unhighlight({chapterData: previousHighlightedChapterData});
+    parentData.piece.vars.previousHighlightedChapterData = null;
 }

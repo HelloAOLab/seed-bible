@@ -1,5 +1,6 @@
+
 // const { force } = that
-if (tags.availablePackages) return tags.availablePackages;
+if (tags.availablePackages) return tags.availablePackages
 
 // const result = await os.listDataByMarker(tags.recordName, 'publicRead');
 // os.log(result, 'for test')
@@ -10,12 +11,12 @@ if (tags.availablePackages) return tags.availablePackages;
 //     }
 //     return output
 // }
-os.log("loading all pacakges");
-const data = await thisBot.getDependencies();
-os.log(data);
-const output = data.filter((data) => data.data.type === "package");
-tags.availablePackages = output;
-return output;
+os.log('loading all pacakges')
+const data = await thisBot.getDependencies()
+os.log(data)
+const output = data.filter(data => data.data.type === 'package')
+tags.availablePackages = output
+return output
 // let lastAddress;
 // let items = [];
 // while (true) {

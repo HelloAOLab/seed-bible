@@ -1,40 +1,33 @@
 const { useState, useCallback, useEffect } = os.appHooks;
-import { useMapPanelContext } from "managers.MapsManager.MapPanelContext";
+import { useMapPanelContext } from "managers.MapsManager.MapPanelContext"
 
-export const Chapter = ({ index, bookName }) => {
-  const { unsubscribeFromHistoryUpdate, subscribeToHistoryUpdate } =
-    useMapPanelContext();
+export const Chapter = ({index, bookName}) => {
 
-  const getChapterHistoryColor = useCallback(() => {
-    return GetHistoryColor({
-      data: {
-        typeOfElement: BibleElementType.Chapter,
-        key: `${bookName} ${index + 1}`,
-      },
-    });
-  }, []);
+    const { unsubscribeFromHistoryUpdate, subscribeToHistoryUpdate } = useMapPanelContext();
 
-  const [historyColor, setHistoryColor] = useState(getChapterHistoryColor());
+    const getChapterHistoryColor = useCallback(() => {
+        return GetHistoryColor({data: {typeOfElement: BibleElementType.Chapter, key: `${bookName} ${index + 1}`}})
+    }, [])
 
-  const updateHistoryColor = useCallback(() => {
-    setHistoryColor(getChapterHistoryColor());
-  }, []);
+    const [historyColor, setHistoryColor] = useState(getChapterHistoryColor())
 
-  useEffect(() => {
-    subscribeToHistoryUpdate(updateHistoryColor);
-    return () => {
-      unsubscribeFromHistoryUpdate(updateHistoryColor);
-    };
-  }, []);
+    const updateHistoryColor = useCallback(() => {
+        setHistoryColor(getChapterHistoryColor())
+    }, [])
 
-  return (
-    <div
-      className="chapter"
-      style={{
-        backgroundColor: historyColor,
-      }}
-    >
-      {index + 1}
-    </div>
-  );
-};
+    useEffect(() => {
+        subscribeToHistoryUpdate(updateHistoryColor)
+        return () => {unsubscribeFromHistoryUpdate(updateHistoryColor)}
+    }, [])
+    
+    return (
+        <div 
+            className="chapter"
+            style={{
+                backgroundColor: historyColor
+            }}
+        >
+            {index + 1}
+        </div>
+    )
+}

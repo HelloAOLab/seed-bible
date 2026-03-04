@@ -1,1 +1,2 @@
-if (!configBot.tags.systemPortal) thisBot.Initialize();
+if(!configBot.tags.systemPortal)
+thisBot.Initialize();

@@ -46,7 +46,7 @@ declare global {
   var CountIgnoreSave: number;
   var createUUID: () => unknown;
   var creatingPlaylist: any;
-  var CURRENNT_SOUND_ID: string | null;
+  var CURRENNT_SOUND_ID: string;
   var CurrentIndexItem: {};
   var CurrentViewerID: null;
   var DEFAULT_UPLOAD_ICON: string;
@@ -122,7 +122,7 @@ declare global {
   var LocaleStorage: Bot;
   var MOBILE_VIEWPORT_THRESHOLD: number;
   var ModifyTransformedHistory: null;
-  var NagiationTimeout: null | NodeJS.Timeout;
+  var NagiationTimeout: null;
   var objectComparator:
     | ((data: unknown, lastData: unknown, items: string[]) => unknown)
     | ((dataItem: unknown, lastData: unknown, items: string[]) => unknown)
@@ -179,9 +179,7 @@ declare global {
   var RenderPlaylist: () => unknown;
   var RenderPlaylistPlaying: () => unknown;
   var RenderPlaylistTimer: null;
-  var savePlaylistProgress:
-    | (() => unknown)
-    | ((id: string, progressID: string, parentID?: string) => void);
+  var savePlaylistProgress: () => unknown;
   var SelectedItemIDForAttachments: null;
   var SetActiveDate: (lastActiveDateID: number) => unknown;
   var SetAnnotationData: (items: never[]) => unknown;
@@ -195,7 +193,7 @@ declare global {
     playListSubIndex: unknown
   ) => unknown;
   var SetCurrentItem: StateUpdater<{}>;
-  var SetEditAnnoData: ((options: null) => unknown) | null;
+  var SetEditAnnoData: (options: null) => unknown;
   var SetEditAttachmentItem: StateUpdater<{
     id: null;
     parentID: null;
@@ -239,10 +237,8 @@ declare global {
     projectSettings: {};
     showVersionHistory: boolean;
   }>;
-  var SetRecording:
-    | null
-    | import("C:/Projects/seed-bible/typings/AuxLibraryDefinitions").StateUpdater<any>;
-  var SetRecordingData: ((arg0: null) => unknown) | null;
+  var SetRecording: null;
+  var SetRecordingData: (arg0: null) => unknown;
   var SetRenamingPlaylist: (val: boolean) => unknown;
   var SetRenderMylist: StateUpdater<any>;
   var SetSelectedAnnotations: null;
@@ -250,7 +246,7 @@ declare global {
   var SetSplitAppPanel2:
     | ((arg0: Element) => unknown)
     | ((arg0: null) => unknown);
-  var SetTab: ((text: string) => unknown) | null;
+  var SetTab: (text: string) => unknown;
   var setTabPlaylist: (text: string) => unknown;
   var SetTextInfo: StateUpdater<string>;
   var Settings_Icon: string;

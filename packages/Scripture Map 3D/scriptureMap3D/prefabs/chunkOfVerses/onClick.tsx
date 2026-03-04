@@ -1,4 +1,1 @@
-shout("OnLayoutChunkOfVersesInteracted", {
-  chunk: thisBot,
-  typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Click,
-});
+shout("OnLayoutChunkOfVersesInteracted", {chunk: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Click});

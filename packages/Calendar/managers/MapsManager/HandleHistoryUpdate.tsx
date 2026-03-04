@@ -1,3 +1,3 @@
-if (InstanceManager.masks.isInHistoryMode) thisBot.UpdateHistoryModeElements();
+if(InstanceManager.masks.isInHistoryMode) thisBot.UpdateHistoryModeElements();
 
 globalThis.mapPanelHistoryUpdate?.();

@@ -1,13 +1,13 @@
 let dim = os.getCurrentDimension();
 const typingTool = getBot(byTag("typingTool"));
 let textBot = create({
-  [dim]: true,
-  [dim + "X"]: that.x,
-  [dim + "Y"]: that.y,
-  scaleX: 6,
-  scaleY: 1,
-  scaleZ: 0.1,
-  onClick: `@
+    [dim]: true,
+    [dim + "X"]: that.x,
+    [dim + "Y"]: that.y,
+    scaleX: 6,
+    scaleY: 1,
+    scaleZ: 0.1,
+    onClick: `@
         if(globalThis?.focusOnVisibleButton){
             globalThis.focusOnVisibleButton()
         }
@@ -62,19 +62,19 @@ let textBot = create({
             }
         }
     `,
-  textBox: true,
-  onPointerEnter: `@
+    textBox: true,
+    onPointerEnter: `@
         // tags.color = '#'+(Math.random() * 0xFFFFFF << 0).toString(16).padStart(6, '0');
         // animateTag(thisBot,"scaleZ",{fromValue:tags.scaleZ,toValue:0.5,duration:0.3})
     `,
-  onPointerExit: `@
+    onPointerExit: `@
         // tags["color"] = "white" 
         // animateTag(thisBot,"scaleZ",{fromValue:tags.scaleZ,toValue:0.1,duration:0.3})
     `,
-  toErase: true,
-  onDrop: typingTool.tags.textBoxOnDrop,
-  parentTextBar: that?.id ? that.id : null,
-  onDrag: `@
+    toErase: true,
+    onDrop: typingTool.tags.textBoxOnDrop,
+    parentTextBar: that?.id ? that.id : null,
+    onDrag: `@
     const typingTool = getBot(byTag("typingTool"));
     if(tags.parentTextBar){
         let dim = os.getCurrentDimension();
@@ -85,15 +85,15 @@ let textBot = create({
     whisper(typingTool, "removeMenuButtons");
     whisper(typingTool, "removeTLTools")
     `,
-  onDestroy: `@
+    onDestroy: `@
         if(tags.parentTextBar){
             destroy(tags.parentTextBar)
         }
     `,
-  states: ["text", "timeLine"],
-  state: "text",
-  space: "tempShared",
-  onCreate: `@
+    states: ['text', 'timeLine'],
+    state: "text",
+    space: "tempShared",
+    onCreate: `@
         let typingManager = getBot(byTag("mmTypingManager"));
         typingManager.tags.currentWritingBotId = bot.id;
         typingManager.tags.writing = true;
@@ -132,20 +132,20 @@ let textBot = create({
             setTagMask(thisBot, "scaleY", thisBot.tags.prevScaleY, "shared");
         }
     `,
-  ...that?.config,
-});
+    ...that?.config
+})
 setTagMask(textBot, "mode", 0, "shared");
 setTagMask(textBot, "label", that?.label ? that.label : " ", "shared");
 if (that?.id) {
-  let parentTextBar = getBot(byTag("id", that.id));
-  let textBars = getBots(byTag("textBar"));
-  for (let textBar of textBars) {
-    textBar.tags.active = false;
-    textBar.tags.strokeColor = "white";
-  }
-  parentTextBar.tags.strokeColor = "#40C4FF";
-  parentTextBar.tags.active = true;
-  parentTextBar.tags.textBox = textBot.tags.id;
+    let parentTextBar = getBot(byTag("id", that.id));
+    let textBars = getBots(byTag("textBar"));
+    for (let textBar of textBars) {
+        textBar.tags.active = false;
+        textBar.tags.strokeColor = "white";
+    }
+    parentTextBar.tags.strokeColor = "#40C4FF";
+    parentTextBar.tags.active = true;
+    parentTextBar.tags.textBox = textBot.tags.id;
 }
 
-return { bot: textBot };
+return { bot: textBot }

@@ -1,2 +1,2 @@
-if (configBot.tags.systemPortal) return;
-whisper(thisBot, "runImportedAux");
+if(configBot.tags.systemPortal) return;
+whisper(thisBot, "runImportedAux")

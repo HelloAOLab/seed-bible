@@ -1,2 +1,2 @@
-const name = "ShowScreenRecordingStopButton";
+const name = 'ShowScreenRecordingStopButton';
 os.unregisterApp(name);

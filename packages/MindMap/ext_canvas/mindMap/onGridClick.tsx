@@ -1,1 +1,1 @@
-console.log(that.position);
+console.log(that.position)
