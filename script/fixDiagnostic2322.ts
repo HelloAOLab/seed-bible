@@ -47,10 +47,11 @@ function toRelativePath(filePath: string): string {
   return path.relative(process.cwd(), filePath).replace(/\\/g, "/");
 }
 
-function markSourceFilesAsModulesInMemory(project: Project): void {
+function markSourceFilesAsModulesInMemory(project: Project): Set<string> {
   const sourceFiles = project
     .getSourceFiles()
     .filter((sourceFile) => !sourceFile.isDeclarationFile());
+  const markedFilePaths = new Set<string>();
 
   for (const sourceFile of sourceFiles) {
     const text = sourceFile.getFullText();
@@ -61,6 +62,27 @@ function markSourceFilesAsModulesInMemory(project: Project): void {
     const trailingWhitespace = text.match(/\s*$/)?.[0] ?? "";
     const trimmed = text.slice(0, text.length - trailingWhitespace.length);
     sourceFile.replaceWithText(`${trimmed}\n\nexport {};\n`);
+    markedFilePaths.add(sourceFile.getFilePath());
+  }
+
+  return markedFilePaths;
+}
+
+function removeTemporaryModuleMarkers(
+  project: Project,
+  markedFilePaths: Set<string>
+): void {
+  for (const filePath of markedFilePaths) {
+    const sourceFile = project.getSourceFile(filePath);
+    if (!sourceFile) {
+      continue;
+    }
+
+    const text = sourceFile.getFullText();
+    const updated = text.replace(/\n\nexport\s*\{\s*\};\s*$/, "\n");
+    if (updated !== text) {
+      sourceFile.replaceWithText(updated);
+    }
   }
 }
 
@@ -247,7 +269,7 @@ async function runFix2322() {
     tsConfigFilePath: path.resolve("tsconfig.json"),
   });
 
-  markSourceFilesAsModulesInMemory(project);
+  const markedFilePaths = markSourceFilesAsModulesInMemory(project);
 
   const diagnostics = project
     .getPreEmitDiagnostics()
@@ -383,6 +405,8 @@ async function runFix2322() {
       nextType,
     });
   }
+
+  removeTemporaryModuleMarkers(project, markedFilePaths);
 
   if (!dryRun && fixes.length > 0) {
     await project.save();
