@@ -3416,18 +3416,6 @@
       "scriptureMap3D.prefabs.verse.OnReleased": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/verse/OnReleased.tsx"
       ],
-      "ab.shell.chronicler.chronicleSubscription_updateLookup": [
-        "./packages/seed-bible/ab/shell/chronicler/chronicleSubscription_updateLookup.tsx"
-      ],
-      "ab.shell.chronicler.chronicle_add": [
-        "./packages/seed-bible/ab/shell/chronicler/chronicle_add.tsx"
-      ],
-      "ab.shell.chronicler.chronicle_loadData": [
-        "./packages/seed-bible/ab/shell/chronicler/chronicle_loadData.tsx"
-      ],
-      "ab.shell.chronicler.chronicle_lookup": [
-        "./packages/seed-bible/ab/shell/chronicler/chronicle_lookup.tsx"
-      ],
       "aiApps.painterStorage.onBotChanged": [
         "./packages/seed-bible/aiApps/painterStorage/onBotChanged.tsx"
       ],
