@@ -15,7 +15,7 @@ declare global {
   var isUIOpen: boolean;
   var isValidGoogleSheetsUrl: (url: string) => boolean;
   var IsVideoUrl: (url: string) => boolean;
-  var PendingAction: (() => void) | ((isAnnotation?: boolean) => void);
+  var PendingAction: () => unknown;
   var playListDB: never[];
   var PlaylistIcon: ({
     className,
@@ -24,16 +24,12 @@ declare global {
   }) => Element;
   var sanitizeObject: (obj: any) => any;
   var SELECTIONTYPE: { TESTAMENT: string; SECTION: string; BOOK: string };
-  var SetHidePlaylist: null | StateUpdater<boolean>;
+  var SetHidePlaylist: StateUpdater<boolean>;
   var SetIsQueuePlaying: StateUpdater<boolean>;
-  var SetPlayingPlaylist: ((val: any) => void) | null;
-  var SetPlaylistForforcedHeight: (arg0: number) => any;
-  var setPredefinedIcons: boolean | StateUpdater<any[]>;
+  var SetPlayingPlaylist: null;
+  var SetPlaylistForforcedHeight: (arg0: number) => unknown;
+  var setPredefinedIcons: boolean;
   var SetSidebarOpen: StateUpdater<boolean>;
-  var ToggleGreyCheckPLayingPlaylist: (arg0: null) => any;
-  var validateImage: (
-    url: string
-  ) =>
-    | { isValid: boolean; type: string; extension: any }
-    | { isValid: boolean; type: null; extension?: undefined };
+  var ToggleGreyCheckPLayingPlaylist: (arg0: null) => unknown;
+  var validateImage: (arg0: string) => unknown;
 }

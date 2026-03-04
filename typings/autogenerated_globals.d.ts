@@ -19,7 +19,21 @@ declare global {
   var ActiveTab: null;
   var ADD_TO_QUEUE_ITEM: any;
   var ADD_VERSE_ITEM_PLAYLIST_GROUP_ID: any;
-  var AddApplication: () => void;
+  var AddApplication:
+    | ((arg0: { id: string; App: Element; minWidth: string }) => unknown)
+    | ((arg0: {
+        id: string;
+        App: Element;
+        to: string;
+        minWidth: string;
+      }) => unknown)
+    | ((arg0: {
+        id: string;
+        App: Element;
+        to: string;
+        minWidth: string;
+        panelKey: string;
+      }) => unknown);
   var AddFloatingApp: any;
   var AddNowBarApp: any;
   var AddTab:
@@ -74,11 +88,9 @@ declare global {
         };
       }) => any)
     | ((arg0: any) => any);
-  var AddTool:
-    | (() => void)
-    | ((tool: any, { to }?: { to?: string | undefined }) => void);
+  var AddTool: () => void;
   var AIDataChannel: null;
-  var AISetStart: null | StateUpdater<boolean>;
+  var AISetStart: (arg0: boolean) => unknown;
   var AnimateTagObject: any;
   var animationBotsData: any;
   var annotInitialized: any;
@@ -91,37 +103,53 @@ declare global {
     | { code: string; name: string; nativeName: string; rtl: boolean }
   )[];
   var BibleData: null;
-  var BibleStackManager: Bot | null;
+  var BibleStackManager: Bot;
   var BibleVizUtils: {
     Classes: Bot;
     Data: Bot;
     Functions: Bot;
     Services: Bot;
     Main: Bot;
-  } | null;
+  };
   var BookId: any;
-  var bookModalOpen: (arg0: boolean) => any;
+  var bookModalOpen: (arg0: boolean) => unknown;
   var botId: any;
   var C_E: never[];
-  var CanvasMode: boolean | null;
+  var CanvasMode: boolean;
   var changeLanguage: (lng: string) => Promise<void>;
   var changes: {};
-  var ChangeTranslation: (
-    id: any,
-    booksData: any,
-    forcedBaseUrl: any
-  ) => Promise<void>;
-  var CHAPTER_DATA:
-    | {
-        book: any;
-        chapter: any;
-        content: { heading: string; number: number; verses: never[] }[];
-        bookId: any;
-        translation: string;
-        nextChapter: any;
-        prevChapter: any;
-        numberOfChapters: any;
-      }
+  var ChangeTranslation:
+    | ((arg0: string, arg1: unknown, arg2: string | undefined) => unknown)
+    | ((arg0: string, arg1: unknown, arg2: string) => unknown)
+    | ((arg0: string) => unknown)
+    | ((arg0: unknown, arg1: unknown, arg2: string) => unknown);
+  var CHAPTER_DATA: {
+    use: string;
+    first: boolean;
+    type: string;
+    book: string;
+    bookId: string;
+    chapter: number;
+    translation: string;
+    shortName: string;
+  };
+  var CHATBOT_PANEL_ID: string;
+  var chatbotPresent: boolean;
+  var CheckToolbarOverflow: () => unknown;
+  var CLEARABLE_LERPING: boolean;
+  var ClearAllWordHighlights: () => void;
+  var ClearNowBarApps: () => void;
+  var ClearUserSelection: () => unknown;
+  var CloseModal: () => unknown;
+  var CloseNewList: () => unknown;
+  var closePopupSettings: () => unknown;
+  var ColorLerper: Bot;
+  var ContextMenuOptions: never[];
+  var continousRotateBot: (arg0: Bot | Bot[], arg1: string) => unknown;
+  var createEvent: null;
+  var currentActiveItem: string;
+  var CurrentActivePanel: null;
+  var CurrentActiveTabData:
     | {
         use: string;
         first: boolean;
@@ -131,78 +159,27 @@ declare global {
         chapter: number;
         translation: string;
         shortName: string;
-      };
-  var CHATBOT_PANEL_ID: string;
-  var chatbotPresent: boolean;
-  var CheckToolbarOverflow: () => void;
-  var CLEARABLE_LERPING: boolean;
-  var ClearAllWordHighlights: () => void;
-  var ClearNowBarApps: () => void;
-  var ClearUserSelection: () => void;
-  var CloseModal: () => void;
-  var CloseNewList: () => any;
-  var closePopupSettings: () => void;
-  var ColorLerper: Bot | null;
-  var ContextMenuOptions: never[];
-  var continousRotateBot: (arg0: Bot | Bot[], arg1: string) => any;
-  var createEvent:
-    | (({
-        uid,
-        textBotId,
-        page,
-      }: {
-        uid: any;
-        textBotId?: null | undefined;
-        page?: number | undefined;
-      }) => void)
-    | null;
-  var currentActiveItem: string;
-  var CurrentActivePanel: null;
-  var CurrentActiveTabData:
-    | (
-        | {
-            use: string;
-            first: boolean;
-            type: string;
-            book: string;
-            bookId: string;
-            chapter: number;
-            translation: string;
-            shortName: string;
-          }
-        | undefined
-      )
-    | null;
-  var CurrentBookData:
-    | {
-        book: any;
-        chapter: any;
-        content: { heading: string; number: number; verses: never[] }[];
-        bookId: any;
-        translation: string;
-        nextChapter: any;
-        prevChapter: any;
-        numberOfChapters: any;
       }
-    | {
-        use?: string | undefined;
-        first?: boolean | undefined;
-        type?: string | undefined;
-        book?: string | undefined;
-        bookId?: string | undefined;
-        chapter?: number | undefined;
-        translation?: string | undefined;
-        shortName?: string | undefined;
-      };
+    | undefined;
+  var CurrentBookData: {
+    use?: string | undefined;
+    first?: boolean | undefined;
+    type?: string | undefined;
+    book?: string | undefined;
+    bookId?: string | undefined;
+    chapter?: number | undefined;
+    translation?: string | undefined;
+    shortName?: string | undefined;
+  };
   var CurrentColors: any;
   var currentCursor: null;
   var currentExperience: number;
   var currentLerps: null;
   var CurrentPanelAvailable: null;
   var currentReference: null;
-  var currentReferenceKey: string | null;
+  var currentReferenceKey: string;
   var CurrentTab: any;
-  var DCRef: null | RTCDataChannel;
+  var DCRef: RTCDataChannel;
   var DEFAULT_TOOLBAR_PRIORITY: string[];
   var defaultPortalName: any;
   var EditorFns: {
@@ -245,58 +222,56 @@ declare global {
     resetPriorities(): void;
   };
   var ENCRYPT_SALT_KEY: string;
-  var EVENT_PANEL_ID: null;
+  var EVENT_PANEL_ID: string;
   var eventApis: any;
   var eventBotConfig: any;
   var eventData: any;
   var eventDataLoading: boolean;
   var eventItemActive: boolean;
-  var eventQuery: string | null;
-  var eventTLActive: boolean | null;
+  var eventQuery: string;
+  var eventTLActive: boolean;
   var eventToolApp: boolean;
   var eventUtils: {
     attachQueryToURL: (url: any, params: any) => string;
     getAllChildIds: (id: string, customMask?: string) => any;
     parentCheck: (childId: any, parentId: any) => any;
   };
-  var focusOnVisibleButton: () => any;
+  var focusOnVisibleButton: () => unknown;
   var FollowSpecificUser: (targetUserId: any) => Promise<void>;
   var GAME_MODES: any;
-  var GetBooksDataForMenu: (arg0: string, arg1: any) => any;
-  var GetOrSetVisualInTags: (remoteId: any) => any;
-  var GetUserSessionInfo: (
-    userId: any
-  ) =>
-    | { inSession: boolean; role: string; config: null; hostId?: undefined }
-    | { inSession: boolean; role: string; config: any; hostId: any };
+  var GetBooksDataForMenu: (arg0: string, arg1: unknown) => unknown;
+  var GetOrSetVisualInTags:
+    | ((arg0: string, arg1: null) => unknown)
+    | ((arg0: string) => unknown);
+  var GetUserSessionInfo: (arg0: string) => unknown;
   var GlobalChapter: number;
   var GUESSING_GAME_DIFFICULTY_LEVEL: number;
-  var HandleSharedTabClick: () => void;
-  var HandleStorageChange: ((e: StorageEvent) => void) | null;
+  var HandleSharedTabClick: () => unknown;
+  var HandleStorageChange: (e: StorageEvent) => void;
   var hideSeekPlaying: any;
   var HIGHLIGHT_BG_COLOR: any;
   var HIGHLIGHT_TIMER: Timeout;
   var HighlightedSectionKey: any;
   var HighlightedVerseNumber: any;
   var HighlightStudyNoteSection: (arg0: any) => any;
-  var HighlightVerse: (verseNumbers: any, color: any, scroll?: boolean) => void;
+  var HighlightVerse: (arg0: number, arg1: string) => unknown;
   var HighlightWords: (config: any) => void;
   var HistoryTimePeriodInfo: any;
   var html2canvas: (
     arg0: Element,
     arg1: { backgroundColor: null; useCORS: boolean }
-  ) => any;
-  var Init: () => Promise<void>;
-  var initAssistantSpeechMonitoring: (() => void) | null;
-  var initialChildrens: never[] | null;
-  var InviteUser: (targetUserId: any) => Promise<void>;
+  ) => unknown;
+  var Init: () => unknown;
+  var initAssistantSpeechMonitoring: () => void;
+  var initialChildrens: never[];
+  var InviteUser: (arg0: string) => unknown;
   var IS_PLAYLIST_ACTIVE: boolean;
   var isAbleToRightClick: boolean;
   var IsEditingAnnotation: boolean;
   var isLastItemCombine: boolean;
-  var IsMobileNow: () => boolean;
+  var IsMobileNow: () => unknown;
   var IsPlaylistPlaying: boolean;
-  var IsPrivateMode: () => any;
+  var IsPrivateMode: () => unknown;
   var IsToolActive: (
     label: any,
     { inSet }?: { inSet?: string | undefined }
@@ -329,111 +304,146 @@ declare global {
   var makingApp: null;
   var MakingNewTab: boolean;
   var makingPlaylist: boolean;
-  var mapPanelHistoryUpdate: (() => void) | null;
+  var mapPanelHistoryUpdate: () => unknown;
   var MapsManager: Bot;
-  var MeshState: { Hidden: string; Shown: string; Translucent: string } | null;
+  var MeshState: { Hidden: string; Shown: string; Translucent: string };
   var moveEventBots: any;
   var NavFunctions: any;
-  var ObjectPooler: Bot | null;
+  var ObjectPooler: Bot;
   var ON_VERSE_CLICK: any;
-  var Open: () => void;
+  var Open:
+    | ((arg0: string, arg1: number, arg2: string) => unknown)
+    | ((arg0: string, arg1: number) => unknown)
+    | ((arg0: unknown, arg1: number, arg2: string, arg3: string) => unknown)
+    | ((arg0: unknown, arg1: number, arg2: unknown) => unknown);
   var OpenNextChapter: () => void;
   var openPopupSettings:
-    | (() => void)
-    | ((props: any, wait: any, popupComponent: any, position: any) => void);
+    | ((arg0: {
+        type: string;
+        items: { icon: Element; title: string; onClick: () => void }[];
+      }) => unknown)
+    | ((
+        arg0: Element,
+        arg1: null,
+        arg2: boolean,
+        arg3: { x: number; y: number }
+      ) => unknown)
+    | ((arg0: Element, arg1: null, arg2: boolean) => unknown);
   var OpenPrevChapter: () => void;
-  var openSidebar: boolean | null;
+  var openSidebar: boolean;
   var ORIGINAL_DATA: null;
-  var page: number | null;
+  var page: number;
   var panelMode: boolean;
   var PanelsApps: never[];
   var PanelTabsMap: {};
   var ParentDataIds: any;
   var PieceInfo: any;
   var Playlist: any;
-  var PLAYLIST_PANEL_ID: null;
+  var PLAYLIST_PANEL_ID: string;
   var promtInitiated: any;
   var QueuedChapterData: any;
   var RECORD_STOREKEY: string;
-  var refreshScrollers: () => any;
+  var refreshScrollers: () => unknown;
   var RemoveApplication: () => void;
-  var RemoveApplicationByID: () => void;
+  var RemoveApplicationByID: (arg0: string) => unknown;
   var RemoveFloatingApp: any;
-  var RemoveNowBarApp: (appId: any) => void;
-  var removePresentationMode: ((initialChildrens: any) => Promise<void>) | null;
+  var RemoveNowBarApp: (arg0: string) => unknown;
+  var removePresentationMode: null;
   var RemoveTab: (tabId: any) => void;
-  var RemoveTool:
-    | (() => void)
-    | ((label: any, { from }?: { from?: string | undefined }) => void);
+  var RemoveTool: () => void;
   var RemoveWordHighlight: (config: any) => void;
-  var ReplaceApplication: () => void;
-  var ScriptureMap3DManager: Bot | null;
-  var ScrollTimerToVerse: null | Timeout;
-  var ScrollToVerse:
-    | (({ vNumber }: { vNumber?: number | undefined }) => void)
-    | null;
+  var ReplaceApplication:
+    | ((
+        arg0: unknown,
+        arg1: { id: string; App: Element; to: string; minWidth: string }
+      ) => unknown)
+    | ((
+        arg0: unknown,
+        arg1: {
+          id: string;
+          App: Element;
+          to: string;
+          minWidth: string;
+          panelKey: string;
+        }
+      ) => unknown);
+  var ScriptureMap3DManager: Bot;
+  var ScrollTimerToVerse: Timeout;
+  var ScrollToVerse: (arg0: { vNumber: number }) => unknown;
   var SearchBarHideAndSeek: any;
-  var selectBookSelectorBook: ((bookId: any) => void) | null;
+  var selectBookSelectorBook: (arg0: null) => unknown;
   var selectedAnnot: null;
   var selectingTranslation: boolean;
   var selectionUIBehavior: {};
   var sendIcon: any;
-  var SET_SHOW_CHECK: StateUpdater<any>;
-  var SetActiveSettingsTab: StateUpdater<string | null>;
-  var SetActiveTab: null | StateUpdater<null>;
+  var SET_SHOW_CHECK:
+    | ((arg0: boolean) => unknown)
+    | ((arg0: number) => unknown);
+  var SetActiveSettingsTab: (arg0: string) => unknown;
+  var SetActiveTab: (arg0: string) => unknown;
   var SetAiTextMessages: null;
   var SetApps: StateUpdater<never[]>;
-  var SetAssistantWriting: null | StateUpdater<boolean>;
-  var SetBlinker: null | StateUpdater<{}>;
+  var SetAssistantWriting: StateUpdater<boolean>;
+  var SetBlinker: (arg0: {}) => unknown;
   var SetBooksOnlineUsers: StateUpdater<null>;
   var setBotId: StateUpdater<null>;
   var SetCanvasTools: null;
-  var SetCurrentBook: null | StateUpdater<any>;
-  var setCurrentCursor: null | StateUpdater<null>;
-  var setCurrentExperience: StateUpdater<number>;
-  var SetCurrentReference: null | StateUpdater<ReferencesInterface>;
+  var SetCurrentBook: (arg0: {
+    use: string;
+    first: boolean;
+    type: string;
+    book: string;
+    bookId: string;
+    chapter: number;
+    translation: string;
+    shortName: string;
+  }) => unknown;
+  var setCurrentCursor: StateUpdater<null>;
+  var setCurrentExperience: (arg0: number) => unknown;
+  var SetCurrentReference: StateUpdater<ReferencesInterface>;
   var setCustomScreens: StateUpdater<{ value: number }>;
-  var SetDontOpenPlaylist: StateUpdater<boolean>;
-  var SetElement: (() => void) | StateUpdater<null>;
-  var setEventQuery: null | StateUpdater<string>;
-  var SetExtraHeight: null | StateUpdater<number>;
+  var SetDontOpenPlaylist: (arg0: boolean) => unknown;
+  var SetElement: (arg0: {
+    App: Element;
+    data: { id: string; App: Element; to: string; minWidth: string };
+  }) => unknown;
+  var setEventQuery: StateUpdater<string>;
+  var SetExtraHeight: StateUpdater<number>;
   var SetGlobalProfilePic: StateUpdater<undefined>;
-  var SetHighlighted: null | StateUpdater<{}>;
-  var SetHolded: null | StateUpdater<{}>;
-  var SetInHold: StateUpdater<undefined>;
-  var SetIsDragging: (() => void) | StateUpdater<boolean>;
-  var SetIsSignedIn: StateUpdater<boolean>;
+  var SetHighlighted: StateUpdater<{}>;
+  var SetHolded: (arg0: {}) => unknown;
+  var SetInHold: ((arg0: {}) => unknown) | ((arg0: null) => unknown);
+  var SetIsDragging: (arg0: boolean) => unknown;
+  var SetIsSignedIn: (arg0: boolean) => unknown;
   var SetMapTools: null;
   var SetOnlineUsers: StateUpdater<boolean>;
-  var setOpenOnMobile: (arg0: boolean) => any;
-  var setOpenSidebar: null | StateUpdater<boolean>;
+  var setOpenOnMobile: (arg0: boolean) => unknown;
+  var setOpenSidebar: (arg0: boolean) => unknown;
   var SETOPTIONS: (arg0: {
     type: string;
     items: (false | { icon: Element; title: string; onClick: () => void })[];
-  }) => any;
+  }) => unknown;
   var SetPackageAddingOptions: StateUpdater<never[]>;
-  var setPage: null | StateUpdater<number>;
+  var setPage: (arg0: number) => unknown;
   var SetPanalApp: () => void;
-  var SetPlaylistForcedHeight: number | StateUpdater<number>;
-  var SetQueue:
-    | boolean
-    | ((item: any, combineLast: boolean) => ShowToastAction | undefined);
-  var SetScreens: (() => void) | null;
-  var SetSelected: null | StateUpdater<{}>;
-  var SetSelectedVerses: (arg0: never[]) => any;
+  var SetPlaylistForcedHeight: (arg0: number) => unknown;
+  var SetQueue: boolean;
+  var SetScreens: () => void;
+  var SetSelected: (arg0: {}) => unknown;
+  var SetSelectedVerses: (arg0: never[]) => unknown;
   var setSelectingTranslation: StateUpdater<boolean>;
-  var SetShowCommands: StateUpdater<boolean>;
-  var SetShowScreenPanelOption: (arg0: boolean) => any;
-  var SetShowToolbar: StateUpdater<boolean>;
-  var setSliderValue: StateUpdater<any>;
-  var SetToolbarBackground: (() => void) | null;
+  var SetShowCommands: (arg0: boolean) => unknown;
+  var SetShowScreenPanelOption: (arg0: boolean) => unknown;
+  var SetShowToolbar: (arg0: boolean) => unknown;
+  var setSliderValue: (arg0: number) => unknown;
+  var SetToolbarBackground: () => void;
   var SetTools: null;
-  var SetUid: StateUpdater<string>;
-  var SetUserWriting: null | StateUpdater<boolean>;
+  var SetUid: (arg0: string) => unknown;
+  var SetUserWriting: StateUpdater<boolean>;
   var SetWordHighlightsBC: StateUpdater<string>;
   var SetWordHighlightsTC: StateUpdater<string>;
   var SHORTCUT_KEYS: {};
-  var ShowModal: (content: any) => void;
+  var ShowModal: (arg0: Element) => unknown;
   var showRefModal: boolean;
   var soundThrottleLimit: {};
   var SpaceLayouts: {};
@@ -446,30 +456,24 @@ declare global {
   var StackSectionData: any;
   var StackTestamentData: any;
   var StartSession: () => void;
-  var STUDYNOTES_PANEL_ID: string | null;
+  var STUDYNOTES_PANEL_ID: string;
   var studyNotesPresent: boolean;
-  var TabernacleManager: Bot | null;
+  var TabernacleManager: Bot;
   var TabernacleScrollToVerse: null;
   var TAPOZ_CHATBOX_UI_ID: string;
   var TapozChatboxPresent: boolean;
-  var ThemeCSS: string | null;
-  var TogglePrivateMode: () => Promise<void>;
-  var ToggleToolActive:
-    | (() => void)
-    | ((
-        label: any,
-        custom: any,
-        { inSet }?: { inSet?: string | undefined }
-      ) => void);
+  var ThemeCSS: string;
+  var TogglePrivateMode: () => unknown;
+  var ToggleToolActive: (arg0: unknown, arg1: string) => unknown;
   var ToggleVerseHighlight: (
-    verseNumbers: any,
-    color: any,
-    scroll: any,
-    fadeIn: any,
-    skipIt: any
-  ) => void;
+    arg0: unknown,
+    arg1: unknown,
+    arg2: unknown,
+    arg3: unknown,
+    arg4: boolean
+  ) => unknown;
   var toolbarChanges: {};
-  var ToolbarReSeedMode: () => void;
+  var ToolbarReSeedMode: (arg0: undefined) => unknown;
   var ToToggleShowInPageToolbar: (
     label: any,
     { inSet }?: { inSet?: string | undefined }
@@ -480,16 +484,40 @@ declare global {
   ) => void;
   var TourGuideData: any;
   var UnhighlightDelayInfo: any;
-  var UnHighlightVerse: (verseNumbers: any) => void;
-  var UpdateApplication: () => void;
-  var UpdateTab: (tab: any) => void;
-  var UpdateTool:
-    | (() => void)
-    | ((
-        label: any,
-        newProps: any,
-        { inSet }?: { inSet?: string | undefined }
-      ) => void);
+  var UnHighlightVerse: (arg0: number) => unknown;
+  var UpdateApplication: (
+    arg0: unknown,
+    arg1: { App: Element; to: string }
+  ) => unknown;
+  var UpdateTab:
+    | ((arg0: {
+        id: string;
+        taken: boolean;
+        data: {
+          use: string;
+          first: boolean;
+          type: string;
+          book: string;
+          bookId: string;
+          chapter: number;
+          translation: string;
+          shortName: string;
+        };
+      }) => unknown)
+    | ((arg0: {
+        id: string;
+        taken: boolean;
+        data: {
+          use: string;
+          type: string;
+          book: string;
+          bookId: string;
+          chapter: number;
+          translation: string;
+          shortName: string;
+        };
+      }) => unknown);
+  var UpdateTool: () => void;
   var VerseContextMenuOptions: {};
   var VerseSectionMap: any;
   var wordHighlights: {};

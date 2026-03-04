@@ -6,10 +6,23 @@ export {};
 declare global {
   var AddAnotationUI: any;
   var addExperienceVisited: (exp_id?: null) => void;
-  var AddFloatingApp: (appConfig: any) => any;
+  var AddFloatingApp:
+    | ((arg0: {
+        App: Element;
+        title: string;
+        position: { x: number; y: number };
+        size: { width: number; height: number };
+      }) => unknown)
+    | ((arg0: {
+        App: Element;
+        title: string;
+        position: { x: number; y: number };
+        size: { width: number; height: number };
+        type: string;
+      }) => unknown);
   var ADDING_TOPLAYLIST_TIMEOUT: null;
-  var AddNowBarApp: (appComponent: any, appId?: null) => void;
-  var AddToPlaylistData: any[] | null;
+  var AddNowBarApp: (arg0: Element, arg1: string) => unknown;
+  var AddToPlaylistData: null;
   var AlreadySet: boolean;
   var AnnotationIcon: any;
   var AnnotationsData: {};
@@ -22,7 +35,7 @@ declare global {
   var ButtonStyle: any;
   var clickWait: boolean;
   var CLONE_DATA: (value: any, seen?: Map<any, any>) => any;
-  var CloseVideoOverlay: () => void;
+  var CloseVideoOverlay: () => unknown;
   var COLLECTION_SETTER: (newCollections: any) => void;
   var COLLECTIONS: { [x: number]: { collection: any[]; name: string } };
   var Components: Bot;
@@ -31,18 +44,10 @@ declare global {
     BOT_TYPE: { TESTAMENT: string; SECTION: string; BOOK: string };
   };
   var CountIgnoreSave: number;
-  var createUUID: () => string;
+  var createUUID: () => unknown;
   var creatingPlaylist: any;
-  var CURRENNT_SOUND_ID: string | null;
-  var CurrentIndexItem:
-    | {
-        key: number;
-        index: any;
-        fromButton: number;
-        isPreviousQueue: boolean;
-        subIndex: any;
-      }
-    | {};
+  var CURRENNT_SOUND_ID: string;
+  var CurrentIndexItem: {};
   var CurrentViewerID: null;
   var DEFAULT_UPLOAD_ICON: string;
   var defaultcurrentHistory: any;
@@ -52,7 +57,7 @@ declare global {
   var DragDrop: any;
   var EDIT_COLLECTION_ID: null;
   var extractIdFromUrl: (url: string) => string | null | undefined;
-  var FireEditContent: () => Promise<any>;
+  var FireEditContent: () => unknown;
   var FirstAnnnotationItem: string;
   var FloatBarStyle: {
     position: string;
@@ -63,31 +68,30 @@ declare global {
     padding: string;
   };
   var FocusOnVerse: (arg0: any) => any;
-  var FORMAT_DATE: (
-    dateInput: string,
-    format?: string,
-    inputFormat?: string
-  ) => any;
-  var FORMAT_YYYY_MM_DD: (dateInput: any) => string;
-  var generateEmbedFromUrl: (url: string, name?: string) => string | null;
-  var GetColor: (index: number, total: number) => string;
+  var FORMAT_DATE:
+    | ((arg0: string | Date, arg1: string, arg2: string) => unknown)
+    | ((arg0: string, arg1: string, arg2: string) => unknown)
+    | ((arg0: unknown, arg1: string, arg2: string) => unknown);
+  var FORMAT_YYYY_MM_DD: (arg0: Date) => unknown;
+  var generateEmbedFromUrl:
+    | ((arg0: string, arg1: string) => unknown)
+    | ((arg0: string) => unknown);
+  var GetColor:
+    | ((arg0: number, arg1: number) => unknown)
+    | ((arg0: number, arg1: unknown) => unknown);
   var getExtensionFromMimeType: (mimeType: string) => any;
-  var getFileIconByMimeType: (
-    mimeType: string
-  ) =>
-    | "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/e5ed7d7a064b801e4954efa40ad5929ee771614fc5cd4d71c9dd8669c77bdb25.png"
-    | "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5eedb987a0d26a60527854460e67bb0762de152f45b5be580de5aa21e524d309.png"
-    | "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/77bf95a198202b6ba29fb46b377212904ae4b16d4a988bce238645e662e08d83.png"
-    | "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/6f842b8a792a1588d7b96c9c406c2bfff36aec7fdab2519eebb7b08bd3dc427a.png";
+  var getFileIconByMimeType: (arg0: string) => unknown;
   var GetLabel: any;
   var GetVerseSummaryHeading: (
     verses: number[]
   ) => (string | number | undefined)[];
   var getVisitedExperince: () => any;
-  var HandleOnButtonPress: null;
-  var HandleStop: boolean | (() => Promise<void>);
-  var HandleStopPlayVideo: () => void;
-  var HandleStopPlayVoice: () => void;
+  var HandleOnButtonPress:
+    | ((arg0: -1) => unknown)
+    | ((arg0: number) => unknown);
+  var HandleStop: () => unknown;
+  var HandleStopPlayVideo: () => unknown;
+  var HandleStopPlayVoice: () => unknown;
   var HandleUploadFiles: (files: any) => Promise<void>;
   var hasASharedPlaylist: boolean;
   var HISTORYExploreMode: boolean;
@@ -116,25 +120,25 @@ declare global {
   var LoadingOldPlaylist: boolean;
   var LocaleStorage: Bot;
   var MOBILE_VIEWPORT_THRESHOLD: number;
-  var ModifyTransformedHistory: null | StateUpdater<any>;
+  var ModifyTransformedHistory: null;
   var NagiationTimeout: null;
   var objectComparator: (
-    firstData: any,
-    secondData: any,
-    keysComparator?: string[]
-  ) => boolean;
-  var onCurrentCollectionEdit: ((props: any) => void) | null;
-  var OpenRefTimeout: null | Timeout;
-  var OpenVideoOverlay: () => void;
+    arg0: unknown,
+    arg1: unknown,
+    arg2: string[]
+  ) => unknown;
+  var onCurrentCollectionEdit: null;
+  var OpenRefTimeout: Timeout;
+  var OpenVideoOverlay: () => unknown;
   var PLAY_TIMER: Timeout;
   var PLAYING_SOUND: {};
   var PlayingPlaylist: any;
-  var PlayingPlaylistCheckedItems: {} | null;
-  var PlayingPlaylists: {} | null;
+  var PlayingPlaylistCheckedItems: {};
+  var PlayingPlaylists: {};
   var PlayingPlaylistSetHeading: StateUpdater<string>;
   var PlaylingItemVisitiedMap: StateUpdater<any>;
   var Playlist: any;
-  var PlaylistPlaytoggleHide: (() => void) | null;
+  var PlaylistPlaytoggleHide: () => void;
   var PlaylistReferLinks: {};
   var playlists: any;
   var PlaylistsGroups: any;
@@ -154,7 +158,7 @@ declare global {
   var PPsubIndex: any;
   var PPthh: any;
   var PPtypeContent: any;
-  var PREDEFINED_ICONS: any[];
+  var PREDEFINED_ICONS: string;
   var Previous_ID_Floading_App_PL: null;
   var PreviousHTML: null;
   var ProjectMenuState: {
@@ -172,31 +176,21 @@ declare global {
   var RemotePlaylistPlayed: boolean;
   var RemoveFloatingApp: (appId: any) => void;
   var RenderLinkTimer: Timeout;
-  var RenderPlaylist: (() => void) | null;
-  var RenderPlaylistPlaying: () => void;
+  var RenderPlaylist: () => unknown;
+  var RenderPlaylistPlaying: () => unknown;
   var RenderPlaylistTimer: null;
-  var savePlaylistProgress:
-    | (() => void)
-    | ((id: string, progressID: string, parentID?: string) => void);
+  var savePlaylistProgress: () => unknown;
   var SelectedItemIDForAttachments: null;
-  var SetActiveDate: null | StateUpdater<null>;
-  var SetAnnotationData: null | StateUpdater<never[]>;
-  var SetAuthSwtich: null | StateUpdater<boolean>;
-  var SetBookmarks: null | StateUpdater<any>;
-  var SetCheckedItemsPlayingPlaylist: ((ids: any) => void) | null;
-  var SetCommandBoxFilter: StateUpdater<string>;
-  var SetCurreIndexDirect: null | StateUpdater<{
-    key: number;
-    index: any;
-    fromButton: number;
-    isPreviousQueue: boolean;
-    subIndex: any;
-  }>;
-  var SetCurreIndexPlaylist:
-    | ((index: number | undefined, key: any) => void)
-    | null;
+  var SetActiveDate: (arg0: number) => unknown;
+  var SetAnnotationData: (arg0: never[]) => unknown;
+  var SetAuthSwtich: (arg0: (p: boolean) => boolean) => unknown;
+  var SetBookmarks: (arg0: {}) => unknown;
+  var SetCheckedItemsPlayingPlaylist: (arg0: {}) => unknown;
+  var SetCommandBoxFilter: (arg0: string) => unknown;
+  var SetCurreIndexDirect: null;
+  var SetCurreIndexPlaylist: (arg0: number, arg1: unknown) => unknown;
   var SetCurrentItem: StateUpdater<{}>;
-  var SetEditAnnoData: null;
+  var SetEditAnnoData: (arg0: null) => unknown;
   var SetEditAttachmentItem: StateUpdater<{
     id: null;
     parentID: null;
@@ -207,77 +201,75 @@ declare global {
     mediaType: string;
     text: null;
   }>;
-  var SetEditData: StateUpdater<{
-    color: null;
-    id: null;
-    name: null;
-    description: null;
-    icon: null;
-  }>;
+  var SetEditData:
+    | ((arg0: {
+        color: null;
+        id: null;
+        name: null;
+        description: null;
+        icon: null;
+      }) => unknown)
+    | ((arg0: {
+        color: string;
+        id: string;
+        name: string;
+        description: string;
+        icon: string;
+      }) => unknown);
   var SetEditRichText: null;
   var setHide: (arg0: (p: any) => boolean) => any;
   var setHistoryLocale: (newHistory?: never[], id?: string) => void;
-  var SetIncrementalCountPlayingPlaylist: ((data: any) => Promise<void>) | null;
-  var SetItemsPlayer: null | StateUpdater<{
-    currentPlaylistName: any;
-    currentItemID: any;
-    typeContent: any;
-    nextItemName: any;
-    prevItemName: any;
-    currentItemName: any;
-  }>;
-  var SetMediaURL: StateUpdater<string>;
-  var setOpenAttachLink: (arg0: boolean) => any;
-  var SetPlayingList: (() => void) | StateUpdater<any>;
-  var SetPlayingPlaylists: null | StateUpdater<any>;
+  var SetIncrementalCountPlayingPlaylist: null;
+  var SetItemsPlayer: null;
+  var SetMediaURL: (arg0: null) => unknown;
+  var setOpenAttachLink: (arg0: boolean) => unknown;
+  var SetPlayingList: () => void;
+  var SetPlayingPlaylists: null;
   var SetPlaylistGroups: StateUpdater<any>;
   var SetPlaylists: (arg0: (prev: any) => any[]) => any;
   var setPriorities: () => void;
-  var SetProjectMenuState: null | StateUpdater<{
+  var SetProjectMenuState: StateUpdater<{
     hideHeadings: boolean;
     areBooksClosed: boolean;
     projectSettings: {};
     showVersionHistory: boolean;
   }>;
-  var SetRecording: null | StateUpdater<any>;
-  var SetRecordingData: null | StateUpdater<null>;
-  var SetRenamingPlaylist: null | StateUpdater<boolean>;
+  var SetRecording: null;
+  var SetRecordingData: (arg0: null) => unknown;
+  var SetRenamingPlaylist: (arg0: boolean) => unknown;
   var SetRenderMylist: StateUpdater<any>;
-  var SetSelectedAnnotations: null | StateUpdater<any>;
-  var SetShowAddToPlaylist: null | StateUpdater<boolean>;
-  var SetSplitAppPanel2: null | StateUpdater<null>;
-  var SetTab: null;
-  var setTabPlaylist: null | StateUpdater<any>;
-  var SetTextInfo: null | StateUpdater<string>;
+  var SetSelectedAnnotations: null;
+  var SetShowAddToPlaylist: (arg0: boolean) => unknown;
+  var SetSplitAppPanel2:
+    | ((arg0: Element) => unknown)
+    | ((arg0: null) => unknown);
+  var SetTab: (arg0: string) => unknown;
+  var setTabPlaylist: (arg0: string) => unknown;
+  var SetTextInfo: StateUpdater<string>;
   var Settings_Icon: string;
-  var setVersesState: (arg0: number[]) => any;
+  var setVersesState: (arg0: number[]) => unknown;
   var SetVideoSrc: StateUpdater<boolean>;
   var shareProfileName: boolean;
   var shareProfilePic: any;
-  var ShowCommandBox: () => void;
-  var SmallPlaybackContent: () => void;
-  var StopPlayingPlaylistModal: StateUpdater<boolean>;
+  var ShowCommandBox: () => unknown;
+  var SmallPlaybackContent: () => unknown;
+  var StopPlayingPlaylistModal: (arg0: boolean) => unknown;
   var StopVideoRecording: boolean;
   var SYSTEM_PROMPT: string;
   var ThruCommandBox: boolean;
-  var TIMER_SHOW_NEXT: null | Timeout;
-  var TOAST_NOTIFICATION_TIMEOUT: null | Timeout;
-  var ToggleCommandBox: () => void;
-  var TogglePlaylistSuggestions: () => void;
-  var TogglePreview: () => void;
-  var ToggleVideoLayout: () => void;
+  var TIMER_SHOW_NEXT: Timeout;
+  var TOAST_NOTIFICATION_TIMEOUT: Timeout;
+  var ToggleCommandBox: () => unknown;
+  var TogglePlaylistSuggestions: () => unknown;
+  var TogglePreview: () => unknown;
+  var ToggleVideoLayout: (arg0: boolean) => unknown;
   var tt: any;
   var UPDATE_VIA_SHOUT: boolean;
-  var updateCustomHeight: (arg0: number) => any;
-  var UpdateJustAddedToQueue: ((val: boolean) => void) | null;
-  var uploadFilesReusable: (params: any) => Promise<any[]>;
+  var updateCustomHeight: (arg0: number) => unknown;
+  var UpdateJustAddedToQueue: (arg0: boolean) => unknown;
+  var uploadFilesReusable: (arg0: { files: File[] }) => unknown;
   var UsedTags: any[];
-  var validateUrl: (
-    url: string
-  ) =>
-    | { isValid: boolean; type: string; videoId: string | undefined }
-    | { isValid: boolean; type: string; videoId?: undefined }
-    | { isValid: boolean; type: null; videoId?: undefined };
+  var validateUrl: (arg0: string) => unknown;
   var ValidTypes: {
     verse: boolean;
     chapter: boolean;
