@@ -1,0 +1,143 @@
+import type { Bot } from "../../../../../typings/AuxLibraryDefinitions";
+import {
+  computeNotificationDirection,
+  type Scales,
+} from "bibleVizUtils.functions.index";
+import { PieceActivityService } from "bibleVizUtils.services.PieceActivityService";
+import { userPresenceService } from "bibleVizUtils.services.UserPresenceService";
+import { Vector2 as Vector2Type } from "../../../../../typings/AuxLibraryDefinitions";
+import type { Tab } from "bibleVizUtils.models.interfaces";
+import { userColorStore } from "bibleVizUtils.services.UserColorStore";
+import { ObjectPoolTags } from "bibleVizUtils.models.enums";
+
+export const tryHideNotification: (piece: Bot) => void = (piece) => {
+  const notification = piece.links.activityNotification;
+  if (notification) {
+    ObjectPooler.ReleaseObject({
+      obj: notification,
+      tag: ObjectPoolTags.ActivityNotification,
+    });
+    piece.tags.activityNotification = null;
+  }
+};
+
+export const tryUpdateNotificationDirection: (bot: Bot) => void = (bot) => {
+  // TODO: Respect the LoD by implementing a getter in the bot for the activityNotification
+  const notification = bot.links.activityNotification;
+  const isValid =
+    !bot.tags.isBaseStackBook &&
+    !bot.tags.isBaseStackSection &&
+    !bot.tags.isBaseStackTestament &&
+    bot.tags.isInUse &&
+    notification;
+
+  if (!isValid) return;
+
+  const notifications = Array.isArray(notification)
+    ? notification
+    : [notification];
+
+  const direction = computeNotificationDirection(
+    gridPortalBot.tags.cameraRotationZ
+  );
+
+  notifications.forEach((currNotification) => {
+    // TODO: Respect the LoD by implementing a getter in the notification for the direction
+    const currDirection = currNotification.tags.direction;
+
+    if (currDirection.x != direction.x || currDirection.y != direction.y) {
+      setTag(currNotification, "direction", direction);
+      currNotification.SetPosition({
+        setX: true,
+        setY: true,
+        setZ: true,
+      });
+    }
+  });
+};
+
+// TODO: Implement and import an actual interface for all the pieces data
+interface NotifiablePieceData {
+  piece: Bot;
+  isSelected: boolean;
+  getIsSelectedForNotification: () => boolean;
+  getNotificationDirection: () => Vector2Type;
+}
+export const updateNotification: (
+  data: NotifiablePieceData | NotifiablePieceData[],
+  offset: unknown,
+  scales: { x: number; y: number }
+) => void = (data, offset, scales) => {
+  const dimension = os.getCurrentDimension();
+  const fixedData = Array.isArray(data) ? data : [data];
+  const filteredData = fixedData.filter((currData) => {
+    return currData.piece && currData.piece.tags[dimension] == true;
+  });
+  const userPresence = userPresenceService.getUserPresence();
+
+  const activeTab = (globalThis as unknown as { ActiveTab: Tab | undefined })
+    .ActiveTab;
+
+  for (const pieceData of filteredData) {
+    const piece = pieceData.piece;
+    const pieceActivity = PieceActivityService.getPieceActivity({
+      piece,
+    });
+    const isPieceSelected = pieceData.getIsSelectedForNotification();
+    const direction = pieceData.getNotificationDirection();
+    const currNotification = piece.links.activityNotification;
+
+    const shouldHide =
+      pieceActivity.length === 0 ||
+      isPieceSelected ||
+      !piece.tags.isInUse ||
+      piece.masks.isHighlighting ||
+      (piece.masks.isHighlighted && !pieceData.isSelected);
+
+    if (shouldHide) {
+      tryHideNotification(piece);
+      continue;
+    }
+
+    const formOpacity =
+      activeTab &&
+      pieceActivity.some((activity) => {
+        return activeTab.id === activity.id;
+      })
+        ? 1
+        : 0.5;
+    const label = pieceActivity.length > 1 ? pieceActivity.length : "";
+    const matchingPresence = Array.from(userPresence).find(
+      ([, presenceData]) => {
+        return pieceActivity[0]?.id === presenceData.tabId;
+      }
+    );
+    const color = userColorStore.getUserColor({
+      configId: matchingPresence?.[0] ?? configBot.id,
+    });
+
+    if (currNotification) {
+      setTag(currNotification, "label", label);
+      setTag(currNotification, "formOpacity", formOpacity);
+      setTag(currNotification, "color", color);
+    } else if (!piece.masks.isHighlighting && !piece.masks.isHighlighted) {
+      const activityNotification = ObjectPooler.GetObjectFromPool({
+        tag: ObjectPoolTags.ActivityNotification,
+      });
+      const activityNotificationMod = {
+        [dimension]: true,
+        label,
+        ownerBotId: piece.id,
+        formOpacity,
+        direction,
+        color,
+        notificationOffset: offset,
+        scaleX: scales.x,
+        scaleY: scales.y,
+      };
+      activityNotification.OnSpawned({ mod: activityNotificationMod });
+      activityNotification.SetPosition({ setX: true, setY: true, setZ: true });
+      piece.tags.activityNotification = `🔗${activityNotification.id}`;
+    }
+  }
+};

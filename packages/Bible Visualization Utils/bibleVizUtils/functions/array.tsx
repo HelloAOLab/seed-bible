@@ -1,9 +1,9 @@
-export const GetRandomArrayElement = <K,>(array: K[]): K | undefined => {
+export const getRandomArrayElement = <K,>(array: K[]): K | undefined => {
   const randomIndex = Math.floor(Math.random() * array.length);
   return array[randomIndex];
 };
 
-export const RotateArray: <K>(arr: K[], startIndex: number) => K[] = (
+export const rotateArray: <K>(arr: K[], startIndex: number) => K[] = (
   arr,
   startIndex
 ) => {
@@ -15,4 +15,13 @@ export const RotateArray: <K>(arr: K[], startIndex: number) => K[] = (
   const secondPart = arr.slice(0, startIndex);
   const rotatedArray = firstPart.concat(secondPart);
   return rotatedArray;
+};
+
+export const subtractArrays: (arr1: unknown[], arr2: unknown[]) => unknown[] = (
+  arr1,
+  arr2
+) => {
+  return arr1.filter((item) => {
+    return !arr2.includes(item);
+  });
 };

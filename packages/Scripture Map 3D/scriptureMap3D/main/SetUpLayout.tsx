@@ -1,6 +1,7 @@
 import { GetDialogBotScaleY } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { GetTextColorBasedOnBackground } from "bibleVizUtils.functions.index";
+import { arrangementService } from "bibleVizUtils.services.index";
 
 const { layoutData, position } = that;
 
@@ -127,36 +128,41 @@ for (let row = 0; row < layoutData.amountOfRows; row++) {
         break;
     }
 
-    const sectionColor = BibleVizUtils.Data.vars.fixedArrangementsInfo[
+    const arrangement = arrangementService.getArrangementByIndex(
       layoutBookStructure.layoutBookData.creationInfo.arrangementIndex
-    ].testaments
-      .toReversed()
-      [
-        layoutBookStructure.layoutBookData.creationInfo.testamentIndex
-      ].sections.toReversed()[
-      layoutBookStructure.layoutBookData.creationInfo.sectionIndex
-    ].color;
-    const labelColor = GetTextColorBasedOnBackground({
-      backgroundColor: sectionColor,
-    });
+    );
 
-    const bookDateLabelMod = {
-      [dimension]: false,
-      [dimension + "X"]: bookPosition.x,
-      [dimension + "Y"]:
-        currRowPosition - sectionLineLabelScaleY - sectionLineScaleY / 2,
-      [dimension + "Z"]: 1 + sectionLineScaleY,
-      isHover: true,
-      hidden: false,
-      isClick: true,
-      scaleX: BibleVizDataRepository.getBibleLayoutMeasurement("Book3DScaleX"),
-      label: bookDateLabelLabel,
-      labelColor: "black",
-      initialLabelcolor: labelColor,
-    };
+    if (arrangement) {
+      const sectionColor = arrangement.testaments
+        .toReversed()
+        [
+          layoutBookStructure.layoutBookData.creationInfo.testamentIndex
+        ].sections.toReversed()[
+        layoutBookStructure.layoutBookData.creationInfo.sectionIndex
+      ].color;
+      const labelColor = GetTextColorBasedOnBackground({
+        backgroundColor: sectionColor,
+      });
 
-    applyMod(layoutBookStructure.dateLabel, bookDateLabelMod);
-    applyMod(layoutBookStructure.nameLabel, bookNameLabelMod);
+      const bookDateLabelMod = {
+        [dimension]: false,
+        [dimension + "X"]: bookPosition.x,
+        [dimension + "Y"]:
+          currRowPosition - sectionLineLabelScaleY - sectionLineScaleY / 2,
+        [dimension + "Z"]: 1 + sectionLineScaleY,
+        isHover: true,
+        hidden: false,
+        isClick: true,
+        scaleX:
+          BibleVizDataRepository.getBibleLayoutMeasurement("Book3DScaleX"),
+        label: bookDateLabelLabel,
+        labelColor: "black",
+        initialLabelcolor: labelColor,
+      };
+
+      applyMod(layoutBookStructure.dateLabel, bookDateLabelMod);
+      applyMod(layoutBookStructure.nameLabel, bookNameLabelMod);
+    }
   });
 
   rowSegment.end =

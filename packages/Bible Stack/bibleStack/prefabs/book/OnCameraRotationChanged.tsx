@@ -1,1 +1,3 @@
-BibleVizUtils.Functions.TryUpdateNotificationDirection({bot: thisBot});
+import { tryUpdateNotificationDirection } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
+
+tryUpdateNotificationDirection(thisBot);

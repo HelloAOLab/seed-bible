@@ -1,4 +1,7 @@
-import { scriptureService } from "bibleVizUtils.services.index";
+import {
+  scriptureService,
+  arrangementService,
+} from "bibleVizUtils.services.index";
 
 /**
  * Spawns a section, selects it, and then ejects a specific book from the section.
@@ -16,12 +19,23 @@ import { scriptureService } from "bibleVizUtils.services.index";
 const { sectionName, bookName } = that;
 const { arrangementIndex, testamentIndex, sectionIndex, found } =
   scriptureService.getSectionInfoPathByName(sectionName);
-if (
-  found &&
-  BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex].testaments[
-    testamentIndex
-  ].sections[sectionIndex].books.length > 1
-) {
+
+if (!found) {
+  console.error(`section info path not found at SpawnSectionAndPickBook`);
+}
+
+const section = arrangementService.getSectionByIndices({
+  arrangementIndex,
+  testamentIndex: testamentIndex as number,
+  sectionIndex: sectionIndex as number,
+});
+
+if (!section) {
+  console.error(`section not found at SpawnSectionAndPickBook`);
+  return;
+}
+
+if (section.books.length > 1) {
   const { sectionData } = await thisBot.SpawnSection({ name: sectionName });
   await thisBot.SelectSection({ section: sectionData.piece });
   await thisBot.PickBook({ sectionData: sectionData, bookName });

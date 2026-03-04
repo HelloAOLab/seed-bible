@@ -10,12 +10,12 @@ const getBotPositionZ: (bot: Bot, dimension: string) => number = (
 
 export const SetBotsSortedRenderOrder: (bots: Bot[]) => void = (bots) => {
   const dimension = os.getCurrentDimension();
-  const newOrder = bots.sort((a, b) => {
+  const newOrder = bots.toSorted((a, b) => {
     const botAPositionZ = getBotPositionZ(a, dimension);
     const botBPositionZ = getBotPositionZ(b, dimension);
     if (botAPositionZ > botBPositionZ) {
       return 1;
-    } else if (botBPositionZ < botBPositionZ) {
+    } else if (botAPositionZ < botBPositionZ) {
       return -1;
     } else {
       const botToCameraDistanceA = DistanceBetweenBotAndCamera({ bot: a });

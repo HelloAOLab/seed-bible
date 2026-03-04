@@ -1,4 +1,8 @@
-import { scriptureService } from "bibleVizUtils.services.index";
+import { IsValueBetween } from "bibleVizUtils.functions.index";
+import {
+  arrangementService,
+  scriptureService,
+} from "bibleVizUtils.services.index";
 
 /**
  * Attempts to eject a chapter from a specified book. It ensures that the Bible is not currently animating
@@ -17,9 +21,13 @@ if (thisBot.masks.isBibleAnimating) return false;
 setTagMask(thisBot, "isBibleAnimating", true);
 const { bookName, chapterNumber } = that;
 const numberOfChapters = scriptureService.getBookChapterCount(bookName);
-const { arrangementIndex, testamentIndex, sectionIndex } =
+const { arrangementIndex, testamentIndex, sectionIndex, found } =
   scriptureService.getBookInfoPathByName({ name: bookName });
-if (chapterNumber > 0 && chapterNumber <= numberOfChapters) {
+
+if (
+  found &&
+  IsValueBetween({ value: chapterNumber, min: 1, max: numberOfChapters })
+) {
   if (
     thisBot.vars.lastInteractedStackBookData &&
     thisBot.vars.lastInteractedStackBookData.pieceInfo.commonName ===
@@ -70,92 +78,98 @@ if (chapterNumber > 0 && chapterNumber <= numberOfChapters) {
         });
       await thisBot.PickChapter({ bookData, chapterNumber });
     } else {
-      if (
-        BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex]
-          .testaments[testamentIndex].sections[sectionIndex].books.length > 1
-      ) {
-        const sectionData =
-          thisBot.vars.lastInteractedStackTestamentData?.childrenData.find(
-            (currSectionData) => {
-              return currSectionData.childrenData
-                .flat()
-                .some((currBookData) => {
-                  return currBookData.pieceInfo.commonName === bookName;
-                });
-            }
-          );
-        bookData = sectionData?.childrenData.flat().find((currBookData) => {
-          return currBookData.pieceInfo.commonName === bookName;
-        });
-        if (
-          thisBot.vars.lastInteractedStackTestamentData &&
-          thisBot.vars.lastInteractedStackTestamentData.isActive &&
-          bookData &&
-          (!thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections ||
-            !sectionData.isSplitIntoBooks ||
-            bookData.isActive) &&
-          thisBot.CheckChapterAvailabilityInBook({ bookData, chapterNumber })
-        ) {
-          if (
-            !thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections
-          )
-            await thisBot.SelectTestament({
-              testament: thisBot.vars.lastInteractedStackTestamentData.piece,
-            });
-          if (!sectionData.isSplitIntoBooks)
-            await thisBot.SelectSection({ section: sectionData.piece });
-          else if (!sectionData.isInExplodedView)
-            await thisBot.TrySetSectionAsExplodedView({
-              section: sectionData.piece,
-              setBibleAnimating: false,
-            });
-          if (!bookData.isSelected)
-            await thisBot.SelectBook({
-              book: bookData.piece,
-              setBibleAnimating: false,
-            });
-          await thisBot.PickChapter({ bookData, chapterNumber });
-        } else {
-          await thisBot.SpawnBookAndPickChapter({ bookName, chapterNumber });
-        }
-      } else {
-        const sectionBookData =
-          thisBot.vars.lastInteractedStackTestamentData?.childrenData.find(
-            (currSectionData) => {
-              return (
-                currSectionData instanceof StackSectionBookData &&
-                currSectionData.pieceBookInfo.commonName === bookName
-              );
-            }
-          );
-        if (
-          thisBot.vars.lastInteractedStackTestamentData &&
-          thisBot.vars.lastInteractedStackTestamentData.isActive &&
-          sectionBookData &&
-          (!thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections ||
-            sectionBookData.isActive) &&
-          thisBot.CheckChapterAvailabilityInBook({
-            bookData: sectionBookData,
-            chapterNumber,
-          })
-        ) {
-          if (
-            !thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections
-          )
-            await thisBot.SelectTestament({
-              testament: thisBot.vars.lastInteractedStackTestamentData.piece,
-            });
-          if (!sectionBookData.isSelected)
-            await thisBot.SelectBook({
-              book: sectionBookData.piece,
-              setBibleAnimating: false,
-            });
-          await thisBot.PickChapter({
-            bookData: sectionBookData,
-            chapterNumber,
+      const section = arrangementService.getSectionByIndices({
+        arrangementIndex,
+        testamentIndex: testamentIndex as number,
+        sectionIndex: sectionIndex as number,
+      });
+      if (section) {
+        if (section.books.length > 1) {
+          const sectionData =
+            thisBot.vars.lastInteractedStackTestamentData?.childrenData.find(
+              (currSectionData) => {
+                return currSectionData.childrenData
+                  .flat()
+                  .some((currBookData) => {
+                    return currBookData.pieceInfo.commonName === bookName;
+                  });
+              }
+            );
+          bookData = sectionData?.childrenData.flat().find((currBookData) => {
+            return currBookData.pieceInfo.commonName === bookName;
           });
+          if (
+            thisBot.vars.lastInteractedStackTestamentData &&
+            thisBot.vars.lastInteractedStackTestamentData.isActive &&
+            bookData &&
+            (!thisBot.vars.lastInteractedStackTestamentData
+              .isSplitIntoSections ||
+              !sectionData.isSplitIntoBooks ||
+              bookData.isActive) &&
+            thisBot.CheckChapterAvailabilityInBook({ bookData, chapterNumber })
+          ) {
+            if (
+              !thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections
+            )
+              await thisBot.SelectTestament({
+                testament: thisBot.vars.lastInteractedStackTestamentData.piece,
+              });
+            if (!sectionData.isSplitIntoBooks)
+              await thisBot.SelectSection({ section: sectionData.piece });
+            else if (!sectionData.isInExplodedView)
+              await thisBot.TrySetSectionAsExplodedView({
+                section: sectionData.piece,
+                setBibleAnimating: false,
+              });
+            if (!bookData.isSelected)
+              await thisBot.SelectBook({
+                book: bookData.piece,
+                setBibleAnimating: false,
+              });
+            await thisBot.PickChapter({ bookData, chapterNumber });
+          } else {
+            await thisBot.SpawnBookAndPickChapter({ bookName, chapterNumber });
+          }
         } else {
-          await thisBot.SpawnBookAndPickChapter({ bookName, chapterNumber });
+          const sectionBookData =
+            thisBot.vars.lastInteractedStackTestamentData?.childrenData.find(
+              (currSectionData) => {
+                return (
+                  currSectionData instanceof StackSectionBookData &&
+                  currSectionData.pieceBookInfo.commonName === bookName
+                );
+              }
+            );
+          if (
+            thisBot.vars.lastInteractedStackTestamentData &&
+            thisBot.vars.lastInteractedStackTestamentData.isActive &&
+            sectionBookData &&
+            (!thisBot.vars.lastInteractedStackTestamentData
+              .isSplitIntoSections ||
+              sectionBookData.isActive) &&
+            thisBot.CheckChapterAvailabilityInBook({
+              bookData: sectionBookData,
+              chapterNumber,
+            })
+          ) {
+            if (
+              !thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections
+            )
+              await thisBot.SelectTestament({
+                testament: thisBot.vars.lastInteractedStackTestamentData.piece,
+              });
+            if (!sectionBookData.isSelected)
+              await thisBot.SelectBook({
+                book: sectionBookData.piece,
+                setBibleAnimating: false,
+              });
+            await thisBot.PickChapter({
+              bookData: sectionBookData,
+              chapterNumber,
+            });
+          } else {
+            await thisBot.SpawnBookAndPickChapter({ bookName, chapterNumber });
+          }
         }
       }
     }

@@ -1,14 +1,14 @@
 import { bibleVizUtilsEventManager } from "bibleVizUtils.services.EventManager";
-import type { TabData } from "bibleVizUtils.models.interfaces";
+import type { Tab } from "bibleVizUtils.models.interfaces";
 
-export type UserPresenceType = Map<
-  string,
-  {
-    book: string;
-    bookId: string;
-    chapter: number;
-  }
->;
+type PresenceData = {
+  book: string;
+  bookId: string;
+  chapter: number;
+  tabId: string;
+};
+
+export type UserPresenceType = Map<string, PresenceData>;
 
 class UserPresenceService {
   #userPresence: UserPresenceType = new Map();
@@ -19,15 +19,21 @@ class UserPresenceService {
 
   updateUserPresence() {
     const newPresence: UserPresenceType = new Map();
-    // ToDo: Get online users' state
-    const myPresence = (
-      globalThis as unknown as { CurrentActiveTabData: TabData | undefined }
-    ).CurrentActiveTabData;
+    const myPresence = (globalThis as unknown as { ActiveTab: Tab | undefined })
+      .ActiveTab;
+    const othersPresence: UserPresenceType = new Map(); // TODO: Get online users' state
     if (myPresence) {
-      const { book, bookId, chapter } = myPresence;
-      newPresence.set(configBot.id, { book, bookId, chapter });
+      const {
+        id,
+        data: { book, bookId, chapter },
+      } = myPresence;
+      newPresence.set(configBot.id, { book, bookId, chapter, tabId: id });
     }
-    // Format states and store them in this.#userPresence
+    othersPresence.forEach((presence, userId) => {
+      newPresence.set(userId, presence);
+    });
+
+    this.#userPresence = newPresence;
     // emit an UserPresenceUpdate event from bibleVizUtilsEventManager
     bibleVizUtilsEventManager.emit("OnUserPresenceUpdate");
   }
@@ -37,6 +43,7 @@ class UserPresenceService {
   }
 }
 
+// TODO: Move the implementation export to index.tsx
 const userPresenceService = new UserPresenceService();
 
 export { userPresenceService };

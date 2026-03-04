@@ -4,7 +4,6 @@ import {
   arrangementService,
 } from "bibleVizUtils.services.index";
 import type { Tab } from "bibleVizUtils.models.interfaces";
-import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import type { PieceInfo as IPieceInfo } from "bibleVizUtils.models.interfaces";
 import { PieceInfo } from "bibleVizUtils.models.PieceInfo";
 import { BiblePieceType, ObjectPoolTags } from "bibleVizUtils.models.enums";
@@ -14,6 +13,8 @@ import type {
 } from "bibleVizUtils.models.enums";
 import { PieceActivityIndicatorsRepository } from "bibleVizUtils.data.PieceActivityIndicatorsRepository";
 import { PieceDataRegistry } from "bibleVizUtils.services.PieceDataRegistry";
+
+// TODO: Implement a function registry system for the switch statements
 
 export class PieceActivityService {
   static getPieceActivity({
@@ -141,5 +142,44 @@ export class PieceActivityService {
       default:
         return [];
     }
+  }
+
+  static getActivityIndicatorByTag(
+    piece: Bot,
+    tag: string,
+    value: any
+  ): Bot | undefined {
+    const indicators = this.getActivityIndicatorsForPiece(piece);
+    return indicators.find((indicator) => indicator.tags[tag] === value);
+  }
+
+  static getExtraActivityIndicatorsForPiece(piece: Bot): {
+    extraIndicatorContent: Bot | undefined;
+    extraIndicatorBackground: Bot | undefined;
+  } {
+    const extraIndicatorContent = this.getActivityIndicatorByTag(
+      piece,
+      "isExtraContent",
+      true
+    );
+    const extraIndicatorBackground = this.getActivityIndicatorByTag(
+      piece,
+      "isExtraBackground",
+      true
+    );
+
+    return { extraIndicatorContent, extraIndicatorBackground };
+  }
+
+  static getPieceIndicatorByActivityIndex(
+    piece: Bot,
+    activityIndex: number
+  ): Bot | undefined {
+    const indicator = this.getActivityIndicatorByTag(
+      piece,
+      "activityIndex",
+      activityIndex
+    );
+    return indicator;
   }
 }

@@ -1,5 +1,6 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
+import { subtractArrays } from "bibleVizUtils.functions.index";
 
 /**
  * This function handles the deselection and animation of a section,
@@ -53,10 +54,10 @@ if (thisBot.vars.highlightedPieces.length > 0) {
         });
       })
     );
-    thisBot.vars.highlightedPieces = BibleVizUtils.Functions.SubtractArrays({
-      array1: thisBot.vars.highlightedPieces,
-      array2: piecesToUnhighlight,
-    });
+    thisBot.vars.highlightedPieces = subtractArrays(
+      thisBot.vars.highlightedPieces,
+      piecesToUnhighlight
+    );
   }
 }
 if (selectedBooksData.length > 0) {

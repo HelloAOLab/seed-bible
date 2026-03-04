@@ -4,8 +4,13 @@ const { layoutData } = that;
 
 const layoutBookStructures = [];
 const arrangementIndex = arrangementService.getCurrentArrangementIndex();
-const arrangement =
-  BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex];
+const arrangement = arrangementService.getArrangementByIndex(arrangementIndex);
+
+if (!arrangement) {
+  console.error(`arrangement not found at CreateLayoutStructure`);
+  return null;
+}
+
 let column = 0;
 let row = 0;
 let bookIndex = 0;

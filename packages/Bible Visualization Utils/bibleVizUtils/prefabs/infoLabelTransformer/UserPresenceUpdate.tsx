@@ -1,3 +1,5 @@
+import { updateIndicators } from "bibleVizUtils.controllers.userPresence.activityIndicatorsController";
+
 if (
   thisBot.tags.typeOfPiece ===
   BibleVizUtils.Data.tags.BiblePieceType.StackSectionShadow
@@ -16,9 +18,5 @@ if (
   thisBot.tags.isInUse &&
   !thisBot.masks.isHiding
 ) {
-  BibleVizUtils.Functions.UpdateUsersColorOnPiece({
-    source: "UserPresenceUpdate",
-    piece: thisBot,
-    manager: BibleStackManager,
-  });
+  updateIndicators(thisBot);
 }

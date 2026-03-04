@@ -1050,6 +1050,15 @@
       "bibleVizUtils.controllers.render.renderOrderController": [
         "./packages/Bible Visualization Utils/bibleVizUtils/controllers/render/renderOrderController.tsx"
       ],
+      "bibleVizUtils.controllers.userPresence.activityIndicatorsController": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/controllers/userPresence/activityIndicatorsController.tsx"
+      ],
+      "bibleVizUtils.controllers.userPresence.activityNotificationController": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/controllers/userPresence/activityNotificationController.tsx"
+      ],
+      "bibleVizUtils.data.ActivityIndicatorDefaults": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/data/ActivityIndicatorDefaults.tsx"
+      ],
       "bibleVizUtils.data.BibleLayoutMeasurements": [
         "./packages/Bible Visualization Utils/bibleVizUtils/data/BibleLayoutMeasurements.tsx"
       ],
@@ -1110,23 +1119,11 @@
       "bibleVizUtils.functions.scripture": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/scripture.tsx"
       ],
-      "bibleVizUtils.functions.SetRenderOrder": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/SetRenderOrder.tsx"
-      ],
-      "bibleVizUtils.functions.SetUsersColorPositionOnPiece": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/SetUsersColorPositionOnPiece.tsx"
-      ],
       "bibleVizUtils.functions.string": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/string.tsx"
       ],
-      "bibleVizUtils.functions.SubtractArrays": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/SubtractArrays.tsx"
-      ],
       "bibleVizUtils.functions.time": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/time.tsx"
-      ],
-      "bibleVizUtils.functions.TryHideActivityNotificationOnPiece": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryHideActivityNotificationOnPiece.tsx"
       ],
       "bibleVizUtils.functions.TryHideUsersColorOnPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryHideUsersColorOnPiece.tsx"

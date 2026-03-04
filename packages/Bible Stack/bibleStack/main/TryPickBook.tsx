@@ -1,4 +1,7 @@
-import { scriptureService } from "bibleVizUtils.services.index";
+import {
+  scriptureService,
+  arrangementService,
+} from "bibleVizUtils.services.index";
 
 /**
  * Attempts to eject a book from a specified section. It ensures that the Bible is not currently animating
@@ -17,6 +20,7 @@ setTagMask(thisBot, "isBibleAnimating", true);
 const { sectionName, bookName } = that;
 const { arrangementIndex, testamentIndex, sectionIndex, found } =
   scriptureService.getBookInfoPathByName({ name: bookName });
+
 if (found) {
   let bookData = thisBot.vars.lastInteractedStackSectionData?.childrenData
     .flat()
@@ -44,77 +48,94 @@ if (found) {
       bookName,
     });
   } else {
-    if (
-      BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex]
-        .testaments[testamentIndex].sections[sectionIndex].books.length > 1
-    ) {
-      const sectionData =
-        thisBot.vars.lastInteractedStackTestamentData?.childrenData.find(
-          (currSectionData) => {
-            return currSectionData.childrenData.flat().some((currBookData) => {
-              return currBookData.pieceInfo.commonName === bookName;
+    const section = arrangementService.getSectionByIndices({
+      arrangementIndex,
+      testamentIndex: testamentIndex as number,
+      sectionIndex: sectionIndex as number,
+    });
+    if (section) {
+      if (section.books.length > 1) {
+        const sectionData =
+          thisBot.vars.lastInteractedStackTestamentData?.childrenData.find(
+            (currSectionData) => {
+              return currSectionData.childrenData
+                .flat()
+                .some((currBookData) => {
+                  return currBookData.pieceInfo.commonName === bookName;
+                });
+            }
+          );
+        bookData = sectionData?.childrenData.flat().find((currBookData) => {
+          return currBookData.pieceInfo.commonName === bookName;
+        });
+        if (
+          thisBot.vars.lastInteractedStackTestamentData &&
+          thisBot.vars.lastInteractedStackTestamentData.isActive &&
+          bookData &&
+          (!thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections ||
+            (thisBot.vars.lastInteractedStackTestamentData
+              .isSplitIntoSections &&
+              (!sectionData.isSplitIntoBooks || bookData.isActive)))
+        ) {
+          if (
+            !thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections
+          )
+            await thisBot.SelectTestament({
+              testament: thisBot.vars.lastInteractedStackTestamentData.piece,
+            });
+          if (!sectionData.isSplitIntoBooks)
+            await thisBot.SelectSection({ section: sectionData.piece });
+          else if (!sectionData.isInExplodedView)
+            await thisBot.TrySetSectionAsExplodedView({
+              section: sectionData.piece,
+              setBibleAnimating: false,
+            });
+          await thisBot.PickBook({ sectionData, bookName });
+        } else {
+          await thisBot.SpawnSectionAndPickBook({ sectionName, bookName });
+        }
+      } else {
+        const sectionBookData =
+          thisBot.vars.lastInteractedStackTestamentData?.childrenData.find(
+            (currSectionData) => {
+              return (
+                currSectionData instanceof StackSectionBookData &&
+                currSectionData.pieceBookInfo.commonName === bookName
+              );
+            }
+          );
+        if (
+          thisBot.vars.lastInteractedStackTestamentData &&
+          thisBot.vars.lastInteractedStackTestamentData.isActive &&
+          sectionBookData &&
+          (!thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections ||
+            (thisBot.vars.lastInteractedStackTestamentData
+              .isSplitIntoSections &&
+              sectionBookData.isActive))
+        ) {
+          if (
+            !thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections
+          )
+            await thisBot.SelectTestament({
+              testament: thisBot.vars.lastInteractedStackTestamentData.piece,
+            });
+          await thisBot.PickSection({
+            testamentData: thisBot.vars.lastInteractedStackTestamentData,
+            sectionName,
+          });
+        } else {
+          const testament = arrangementService.getTestamentByIndices({
+            arrangementIndex,
+            testamentIndex: testamentIndex as number,
+          });
+
+          if (testament) {
+            await thisBot.SpawnTestamentAndPickSection({
+              testamentName: testament.name,
+              sectionName,
             });
           }
-        );
-      bookData = sectionData?.childrenData.flat().find((currBookData) => {
-        return currBookData.pieceInfo.commonName === bookName;
-      });
-      if (
-        thisBot.vars.lastInteractedStackTestamentData &&
-        thisBot.vars.lastInteractedStackTestamentData.isActive &&
-        bookData &&
-        (!thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections ||
-          (thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections &&
-            (!sectionData.isSplitIntoBooks || bookData.isActive)))
-      ) {
-        if (!thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections)
-          await thisBot.SelectTestament({
-            testament: thisBot.vars.lastInteractedStackTestamentData.piece,
-          });
-        if (!sectionData.isSplitIntoBooks)
-          await thisBot.SelectSection({ section: sectionData.piece });
-        else if (!sectionData.isInExplodedView)
-          await thisBot.TrySetSectionAsExplodedView({
-            section: sectionData.piece,
-            setBibleAnimating: false,
-          });
-        await thisBot.PickBook({ sectionData, bookName });
-      } else {
-        await thisBot.SpawnSectionAndPickBook({ sectionName, bookName });
-      }
-    } else {
-      const sectionBookData =
-        thisBot.vars.lastInteractedStackTestamentData?.childrenData.find(
-          (currSectionData) => {
-            return (
-              currSectionData instanceof StackSectionBookData &&
-              currSectionData.pieceBookInfo.commonName === bookName
-            );
-          }
-        );
-      if (
-        thisBot.vars.lastInteractedStackTestamentData &&
-        thisBot.vars.lastInteractedStackTestamentData.isActive &&
-        sectionBookData &&
-        (!thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections ||
-          (thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections &&
-            sectionBookData.isActive))
-      ) {
-        if (!thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections)
-          await thisBot.SelectTestament({
-            testament: thisBot.vars.lastInteractedStackTestamentData.piece,
-          });
-        await thisBot.PickSection({
-          testamentData: thisBot.vars.lastInteractedStackTestamentData,
-          sectionName,
-        });
-      } else {
-        await thisBot.SpawnTestamentAndPickSection({
-          testamentName:
-            BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex]
-              .testaments[testamentIndex].name,
-          sectionName,
-        });
+        }
       }
     }
   }

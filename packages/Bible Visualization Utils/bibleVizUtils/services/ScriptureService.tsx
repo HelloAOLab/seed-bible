@@ -73,7 +73,7 @@ interface ServiceRepository {
 }
 
 interface ArrangementService {
-  getFixedArrangements: () => ArrangementInfo[];
+  getAllArrangements: () => ArrangementInfo[];
   getCurrentArrangementIndex: () => number;
   getArrangementByIndex: (index: number) => ArrangementInfo | undefined;
 }
@@ -197,7 +197,7 @@ export class ScriptureService {
     return this.#biggerChapter;
   };
 
-  getAmountOfChaptersInSection: (section: BookInfo[]) => number = (section) => {
+  getSectionChapterCount: (section: BookInfo[]) => number = (section) => {
     const values = section.map((bookInfo) => {
       return (
         this.#repository.getBookStaticInfo(bookInfo.commonName)
@@ -208,6 +208,17 @@ export class ScriptureService {
       return accumulator + currentValue;
     }, 0);
   };
+
+  getBookChapterCount(book: string): number {
+    const bookInfo = this.#repository.getBookStaticInfo(book);
+    if (!bookInfo)
+      throw new Error(
+        `bookStaticInfo not found at ScriptureService.getBookChapterCount for ${book}`
+      );
+    return bookInfo.numberOfChapters;
+  }
+
+  // TODO: Move getBooksNamesBySectionName, getTestamentInfoPathByName, getSectionInfoPathByName and getBookInfoPathByName to ArrangementService
 
   getTestamentInfoPathByName: (
     name: string,
@@ -246,7 +257,7 @@ export class ScriptureService {
 
     let testamentIndex: number | undefined;
     let found = false;
-    const allArrangements = this.#arrangementService.getFixedArrangements();
+    const allArrangements = this.#arrangementService.getAllArrangements();
     const initialArrangement =
       this.#arrangementService.getArrangementByIndex(arrangementIndex);
     if (initialArrangement) {
@@ -322,7 +333,7 @@ export class ScriptureService {
 
     let testamentIndex: number | undefined, sectionIndex: number | undefined;
     let found = false;
-    const allArrangements = this.#arrangementService.getFixedArrangements();
+    const allArrangements = this.#arrangementService.getAllArrangements();
     const initialArrangement =
       this.#arrangementService.getArrangementByIndex(arrangementIndex);
     if (initialArrangement) {
@@ -425,7 +436,7 @@ export class ScriptureService {
       sectionIndex: number | undefined,
       bookIndex: number | undefined;
     let found = false;
-    const allArrangements = this.#arrangementService.getFixedArrangements();
+    const allArrangements = this.#arrangementService.getAllArrangements();
     const initialArrangement =
       this.#arrangementService.getArrangementByIndex(arrangementIndex);
     if (initialArrangement) {
@@ -473,6 +484,8 @@ export class ScriptureService {
     return null;
   };
 
+  // TODO: Move getFixedArrangementByTemplate and getTemplateByArrangement to another place, as they are "presentation" methods
+
   getFixedArrangementByTemplate: GetFixedArrangementByTemplate = ({
     name: templateName,
     testaments,
@@ -490,7 +503,7 @@ export class ScriptureService {
           color: testamentColor,
           sections: sections.map((section) => {
             const { books } = section;
-            const amountOfChaptersInSection = this.getAmountOfChaptersInSection(
+            const amountOfChaptersInSection = this.getSectionChapterCount(
               books.map((book) => {
                 return { commonName: book.name };
               })
@@ -591,13 +604,4 @@ export class ScriptureService {
 
     return template;
   };
-
-  getBookChapterCount(book: string): number {
-    const bookInfo = this.#repository.getBookStaticInfo(book);
-    if (!bookInfo)
-      throw new Error(
-        `bookStaticInfo not found at ScriptureService.getBookChapterCount for ${book}`
-      );
-    return bookInfo.numberOfChapters;
-  }
 }

@@ -29,23 +29,6 @@ type ComputeNotificationDirectionType = (
   cameraRotationZ: number
 ) => Vector2Type;
 
-type ComputeLabelOffsetsType = (params: {
-  positioning: LabelPositioningsType;
-  piecePosition: Vector3Type;
-  pieceScales: Scales;
-  infoLabelTransformerDesiredScales: Scales;
-  transformerPosition: Vector3Type;
-  radialVector: Vector2Type;
-  infoLabelOffsetMargin: number;
-  infoLabelScales: Scales;
-  infoLabelTailDesiredScales: Scales;
-}) => {
-  infoLabelTransformerDesiredPosition: Vector3Type;
-  infoLabelOffset: Vector3Type;
-  infoLabelTailDesiredRotationZ: number;
-  infoLabelTailOffset: Vector3Type;
-};
-
 type ComputeInfoLabelTransformerDesiredPositionType = (params: {
   positioning: LabelPositioningsType;
   piecePosition: Vector3Type;
@@ -385,7 +368,7 @@ export const GetExplodedViewBooksPositions: GetExplodedViewBooksPositionsType =
     });
   };
 
-export const ComputeNotificationDirection: ComputeNotificationDirectionType = (
+export const computeNotificationDirection: ComputeNotificationDirectionType = (
   cameraRotationZ
 ) => {
   cameraRotationZ = (cameraRotationZ - Math.PI / 2) % (Math.PI * 2);

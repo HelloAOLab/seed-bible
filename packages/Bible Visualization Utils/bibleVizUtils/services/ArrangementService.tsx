@@ -1,4 +1,9 @@
-import type { ArrangementInfo } from "bibleVizUtils.data.BibleVizDataRepository";
+import type {
+  ArrangementInfo,
+  TestamentInfo,
+  SectionInfo,
+  BookInfo,
+} from "bibleVizUtils.data.BibleVizDataRepository";
 
 interface ServiceRepository {
   getStaticArrangements: () => ArrangementInfo[];
@@ -11,6 +16,19 @@ interface ServiceEventManager {
     eventName: "OnArrangementIndexChanged" | "OnCustomArrangementsChanged",
     payload?: { newIndex: number }
   ) => void;
+}
+
+interface TestamentPathIndices {
+  arrangementIndex: number;
+  testamentIndex: number;
+}
+
+interface SectionPathIndices extends TestamentPathIndices {
+  sectionIndex: number;
+}
+
+interface BookPathIndices extends SectionPathIndices {
+  bookIndex: number;
 }
 
 export class ArrangementService {
@@ -45,6 +63,7 @@ export class ArrangementService {
     const arrangementsLength = this.getAllArrangements().length;
     if (index >= 0 && index < arrangementsLength) {
       this.#currArrangementIndex = index;
+      // TODO: Move OnArrangementIndexChanged event call over here
       return true;
     }
     return false;
@@ -66,12 +85,6 @@ export class ArrangementService {
       this.#eventManager.emit("OnArrangementIndexChanged", { newIndex });
     }
   }
-
-  getArrangementByIndex: (index: number) => ArrangementInfo | undefined = (
-    index
-  ) => {
-    return this.getAllArrangements()[index];
-  };
 
   getArrangementIndexByName: (name: string) => number = (name) => {
     return this.getAllArrangements().findIndex((arrangementInfo) => {
@@ -132,5 +145,28 @@ export class ArrangementService {
       }
     }
     this.#eventManager.emit("OnCustomArrangementsChanged");
+  }
+
+  getArrangementByIndex: (index: number) => ArrangementInfo | undefined = (
+    index
+  ) => {
+    return this.getAllArrangements()[index];
+  };
+
+  getTestamentByIndices(path: TestamentPathIndices): TestamentInfo | undefined {
+    const { arrangementIndex, testamentIndex } = path;
+    const arrangement = this.getArrangementByIndex(arrangementIndex);
+    return arrangement?.testaments[testamentIndex];
+  }
+
+  getSectionByIndices(path: SectionPathIndices): SectionInfo | undefined {
+    const testament = this.getTestamentByIndices(path);
+    return testament?.sections[path.sectionIndex];
+  }
+
+  getBookByIndices(path: BookPathIndices): BookInfo | undefined {
+    const section = this.getSectionByIndices(path);
+
+    return section?.books[path.bookIndex];
   }
 }

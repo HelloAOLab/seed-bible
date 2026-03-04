@@ -1,3 +1,4 @@
+import { Vector2 as Vector2Type } from "../../../../typings/AuxLibraryDefinitions";
 import { StackPieceData } from "bibleVizUtils.classes.StackPieceData";
 
 export class StackChapterData extends StackPieceData {
@@ -45,5 +46,13 @@ export class StackChapterData extends StackPieceData {
     return this.HighlightsInfo.find((highlightInfo) => {
       return highlightInfo.key == key;
     });
+  }
+
+  getIsSelectedForNotification(): boolean {
+    return this.piece.masks.isExpanded;
+  }
+
+  getNotificationDirection(): Vector2Type {
+    return new Vector2(1, -1);
   }
 }

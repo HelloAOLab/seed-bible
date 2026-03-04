@@ -4,6 +4,8 @@ import {
   GetCamRotationFocusPoint,
 } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { subtractArrays } from "bibleVizUtils.functions.index";
+import { tryHideNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
 
 /**
  * Handles a testament selection. It modify the data of the selected testament on the bibleStructure,
@@ -41,9 +43,7 @@ let sectionShadows;
 let piecesAboveTestament;
 // const collisionType = bibleData?.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame ? CollisionType.Collision : null
 
-BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({
-  piece: testament,
-});
+tryHideNotification(testament);
 shout("OnStackTestamentSelected", {
   isFromPlatformerGame:
     bibleData &&
@@ -79,10 +79,10 @@ if (thisBot.vars.highlightedPieces.length > 0 && bibleData) {
         });
       })
     );
-    thisBot.vars.highlightedPieces = BibleVizUtils.Functions.SubtractArrays({
-      array1: thisBot.vars.highlightedPieces,
-      array2: piecesToUnhighlight,
-    });
+    thisBot.vars.highlightedPieces = subtractArrays(
+      thisBot.vars.highlightedPieces,
+      piecesToUnhighlight
+    );
   }
 }
 thisBot.vars.lastInteractedStackTestamentData = testamentData;

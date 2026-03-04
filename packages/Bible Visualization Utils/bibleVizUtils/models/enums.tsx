@@ -29,7 +29,7 @@ export const ObjectPoolTags = {
   InfoLabelTail: "InfoLabelTail",
   InfoLabelDate: "InfoLabelDate",
   InfoLabelTransformer: "InfoLabelTransformer",
-  UserColor: "UserColor",
+  ActivityIndicator: "ActivityIndicator",
   DonationContainer: "DonationContainer",
   DonationFill: "DonationFill",
   StackBookOutline: "StackBookOutline",
@@ -82,3 +82,11 @@ export const LabelPositionings = {
 } as const;
 export type LabelPositioningsType =
   (typeof LabelPositionings)[keyof typeof LabelPositionings];
+
+export const BookShape = {
+  Regular: "Regular",
+  ExplodedView: "ExplodedView",
+  Selected: "Selected",
+  RegularSelected: "RegularSelected",
+} as const;
+export type BookShapeType = (typeof BookShape)[keyof typeof BookShape];

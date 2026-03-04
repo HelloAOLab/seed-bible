@@ -1,4 +1,7 @@
-import { scriptureService } from "bibleVizUtils.services.index";
+import {
+  scriptureService,
+  arrangementService,
+} from "bibleVizUtils.services.index";
 
 /**
  * Spawns a book, selects it, and then ejects a specific chapter from the book.
@@ -14,22 +17,31 @@ import { scriptureService } from "bibleVizUtils.services.index";
  */
 
 const { bookName, chapterNumber } = that;
-const { arrangementIndex, testamentIndex, sectionIndex } =
+const { arrangementIndex, testamentIndex, sectionIndex, found } =
   scriptureService.getBookInfoPathByName({ name: bookName });
-const sectionName =
-  BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex].testaments[
-    testamentIndex
-  ].sections[sectionIndex].name;
+
+if (!found) {
+  console.error(`Book info path not found at SpawnBookAndPickChapter`);
+  return;
+}
+
+const section = arrangementService.getSectionByIndices({
+  arrangementIndex,
+  testamentIndex: testamentIndex as number,
+  sectionIndex: sectionIndex as number,
+});
+
+if (!section) {
+  console.error(`Section not found at SpawnBookAndPickChapter`);
+  return;
+}
+
 let bookData;
-if (
-  BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex].testaments[
-    testamentIndex
-  ].sections[sectionIndex].books.length > 1
-) {
+if (section.books.length > 1) {
   ({ bookData } = await thisBot.SpawnBook({ name: bookName }));
 } else {
   ({ sectionData: bookData } = await thisBot.SpawnSection({
-    name: sectionName,
+    name: section.name,
   }));
 }
 await thisBot.SelectBook({ book: bookData.piece, setBibleAnimating: false });

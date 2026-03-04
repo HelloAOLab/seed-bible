@@ -192,20 +192,20 @@ const { HistoryTimePeriodInfo } =
 // ];
 
 const UsersColorValues = {
-  InfoLabelColorScales: { x: 0.5, y: 0.5, z: 0 },
+  LabelScales: { x: 0.5, y: 0.5, z: 0 },
   InfoLabelExtraUsersContentScales: { x: 0.4, y: 0.4, z: 0 },
   InfoLabelExtraUsersBackgroundScales: { x: 0.5, y: 0.5, z: 0 },
   InfoLabelColorForm: "circle",
-  InfoLabelColorOffset: new Vector3(0.25, 0, 0.1),
-  InfoLabelColorStep: new Vector3(0.3, 0, 0.02),
-  ChapterColorOffset: new Vector3(0.075, 0.075, 0),
-  ChapterColorStep: new Vector3(0.275, 0, 0),
-  GroundedElementColorScales: { x: 0.25, y: 0.25, z: 0.125 },
+  LabelOffset: new Vector3(0.25, 0, 0.1),
+  LabelStep: new Vector3(0.3, 0, 0.02),
+  ChapterOffset: new Vector3(0.075, 0.075, 0),
+  ChapterStep: new Vector3(0.275, 0, 0),
+  GroundedScales: { x: 0.25, y: 0.25, z: 0.125 },
   GroundedElementExtraUsersContentScales: { x: 0.2, y: 0.2, z: 0.125 },
   GroundedElementExtraUsersBackgroundScales: { x: 0.25, y: 0.25, z: 0.03 },
   GroundedElementColorForm: "sphere",
-  MapBookColorOffset: { x: 0.1, y: 0.1, z: 0 },
-  MapBookColorStep: new Vector3(0.3, 0, 0),
+  ScriptureMapBookOffset: { x: 0.1, y: 0.1, z: 0 },
+  ScriptureMapBookStep: new Vector3(0.3, 0, 0),
 };
 
 setTag(bibleVizData, "UsersColorValues", UsersColorValues);
@@ -215,10 +215,7 @@ setTagMask(bibleVizData, "highlightHistoryIndex", -1);
 
 bibleVizData.vars.history = [];
 bibleVizData.vars.highlightHistory = [];
-bibleVizData.vars.customArrangements = [];
 BibleVizDataRepository?.setCustomArrangements([]);
-bibleVizData.vars.fixedArrangementsInfo = [];
-// bibleVizFunctions.UpdateFixedArrangementsInfo();
 
 if (PoolData && CustomTag) {
   const infoLabelPool = new PoolData({
@@ -277,12 +274,12 @@ if (PoolData && CustomTag) {
     size: 8,
   });
   const userColorPool = new PoolData({
-    tag: bibleVizData.tags.ObjectPoolTags.UserColor,
+    tag: bibleVizData.tags.ObjectPoolTags.ActivityIndicator,
     bot: getBot("system", "bibleVizUtils.prefabs.userColor"),
     customTags: [
       new CustomTag({
         name: "poolTag",
-        value: bibleVizData.tags.ObjectPoolTags.UserColor,
+        value: bibleVizData.tags.ObjectPoolTags.ActivityIndicator,
       }),
       new CustomTag({ name: "isUserColor", value: true }),
       new CustomTag({ name: "system", value: null }),

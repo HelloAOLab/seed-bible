@@ -10,6 +10,8 @@ import {
   RgbToHex,
 } from "bibleVizUtils.functions.index";
 import { stackService } from "bibleVizUtils.services.index";
+import { subtractArrays } from "bibleVizUtils.functions.index";
+import { tryHideNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
 
 /**
  * Handles a section selection. It modify the data of the selected section on the bibleStructure,
@@ -86,7 +88,7 @@ const previousExplodedViewSectionData =
     ? thisBot.GetPreviousExplodedViewSectionData({ bibleData, testamentData })
     : null;
 // const collisionType = bibleData?.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame ? CollisionType.Collision : null;
-BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({ piece: section });
+tryHideNotification(section);
 setTagMask(thisBot, "isBibleAnimating", true);
 shout("OnStackSectionSelected");
 thisBot.PlaySound({ soundName: "SectionOpen" });
@@ -124,10 +126,10 @@ if (thisBot.vars.highlightedPieces.length > 0) {
         });
       })
     );
-    thisBot.vars.highlightedPieces = BibleVizUtils.Functions.SubtractArrays({
-      array1: thisBot.vars.highlightedPieces,
-      array2: piecesToUnhighlight,
-    });
+    thisBot.vars.highlightedPieces = subtractArrays(
+      thisBot.vars.highlightedPieces,
+      piecesToUnhighlight
+    );
   }
 }
 

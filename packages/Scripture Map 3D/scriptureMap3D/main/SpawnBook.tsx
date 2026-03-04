@@ -34,31 +34,34 @@ const book =
     tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBook,
   });
 
-const { arrangementIndex, testamentIndex, sectionIndex } =
+const { arrangementIndex, testamentIndex, sectionIndex, found } =
   scriptureService.getBookInfoPathByName({
     name: layoutBookStructure.layoutBookData.pieceInfo.commonName,
     arrangementIndex: arrangementService.getCurrentArrangementIndex(),
   });
 
-const sectionName =
-  BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex].testaments[
-    testamentIndex
-  ].sections[sectionIndex].name;
+if (!found) {
+  console.error(`book info path not found at SpawnBook`);
+  return book;
+}
 
-const bookIndexWithinSection = BibleVizUtils.Data.vars.fixedArrangementsInfo[
-  arrangementIndex
-].testaments[testamentIndex].sections[sectionIndex].books.findIndex(
-  (bookInfo) => {
-    return (
-      bookInfo.commonName ===
-      layoutBookStructure.layoutBookData.pieceInfo.commonName
-    );
-  }
-);
+const sectionInfo = arrangementService.getSectionByIndices({
+  arrangementIndex,
+  testamentIndex: testamentIndex as number,
+  sectionIndex: sectionIndex as number,
+});
 
-const sectionInfo =
-  BibleVizUtils.Data.vars.fixedArrangementsInfo.slice()[arrangementIndex]
-    .testaments[testamentIndex].sections[sectionIndex];
+if (!sectionInfo) {
+  console.error(`section not found at SpawnBook`);
+  return book;
+}
+
+const bookIndexWithinSection = sectionInfo.books.findIndex((bookInfo) => {
+  return (
+    bookInfo.commonName ===
+    layoutBookStructure.layoutBookData.pieceInfo.commonName
+  );
+});
 const sectionLevelsColors = GetChildrenLevelColors({
   sectionColorRGB: HexToRgb({
     hexColor: sectionInfo.color,
@@ -86,7 +89,7 @@ const layoutBookMod = {
   draggable: true,
   apiName: layoutBookStructure.layoutBookData.pieceInfo.commonName,
   bookName: layoutBookStructure.layoutBookData.pieceInfo.commonName,
-  sectionName,
+  sectionName: sectionInfo.name,
   startChapter: layoutBookStructure.layoutBookData.pieceInfo.startingIndex ?? 0,
   chapterCount: layoutBookStructure.layoutBookData.pieceInfo.numberOfChapters,
   index: layoutBookStructure.structureIndex,

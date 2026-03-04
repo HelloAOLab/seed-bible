@@ -18,6 +18,7 @@ import {
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import type { Bot } from "../../../../../typings/AuxLibraryDefinitions";
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
+import { updateIndicators } from "bibleVizUtils.controllers.userPresence.activityIndicatorsController";
 
 export type SpawnLabelForPieceType = (params: {
   piece: Bot;
@@ -225,11 +226,7 @@ export const SpawnLabelForPiece: SpawnLabelForPieceType = ({
   infoLabel.OnSpawned({ mod: infoLabelMod });
   infoLabelTail.OnSpawned({ mod: infoLabelTailMod });
 
-  const infoLabelUsersColor = BibleVizUtils.Functions.UpdateUsersColorOnPiece({
-    source: "SpawnLabelForPiece",
-    piece: infoLabelTransformer,
-    manager: BibleStackManager,
-  });
+  const infoLabelUsersColor = updateIndicators(infoLabelTransformer);
 
   setTagMask([...infoLabelUsersColor, infoLabel], "formOpacity", 0);
   setTagMask([infoLabel, infoLabelTail, infoLabelDate], "labelOpacity", 0);

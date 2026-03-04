@@ -1,3 +1,4 @@
+import { updateNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
 import { scriptureService } from "bibleVizUtils.services.index";
 
 /**
@@ -112,10 +113,14 @@ switch (typeOfInteraction) {
       ) {
         chapterData.piece.Unhighlight({ chapterData }).then(() => {
           if (!chapterData.isSelected || !chapterData.piece.masks.isOnTheGround)
-            BibleVizUtils.Functions.UpdateActivityNotificationOnPieces({
-              piecesData: [chapterData],
-              manager: thisBot,
-            });
+            updateNotification(
+              chapterData,
+              thisBot.tags.activityNotificationOffset,
+              {
+                x: thisBot.tags.activityNotificationScaleX,
+                y: thisBot.tags.activityNotificationScaleY,
+              }
+            );
         });
       }
     }

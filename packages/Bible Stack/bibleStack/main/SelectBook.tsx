@@ -1,4 +1,5 @@
 import { GetCamRotationFocusPoint } from "bibleVizUtils.functions.index";
+import { tryHideNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
 
 /**
  * This tag handles a book selection. It modify the data of the selected book on the bibleStructure
@@ -18,7 +19,7 @@ const bookData = thisBot.GetPieceData({ piece: book });
 thisBot.vars.lastInteractedStackBookData = bookData;
 const dimension = os.getCurrentDimension();
 if (setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", true);
-BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({ piece: book });
+tryHideNotification(book);
 await thisBot.TryUnhighlightPiece({
   piece: book,
   tryUpdateActivityNotification: false,

@@ -71,6 +71,7 @@ class UserColorStore {
   }
 }
 
+// TODO: Move the implementation export to index.tsx
 const userColorStore: UserColorStore = new UserColorStore();
 
 export { userColorStore };

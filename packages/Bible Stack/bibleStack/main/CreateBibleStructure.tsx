@@ -1,3 +1,5 @@
+import { arrangementService } from "bibleVizUtils.services.index";
+
 /**
  * Creates every piece of a regular Bible structure for the given bibleData based on a given arrangement index.
  * @param {Object} that - Object that contains important data for the function
@@ -55,15 +57,16 @@ const staticBiblePieces = {
   crossHorizontalLine,
   bibleShadow,
 };
-for (const testamentIndex in BibleVizUtils.Data.vars.fixedArrangementsInfo[
-  arrangementIndex
-].testaments) {
-  const testamentData = await thisBot.CreateTestament({
-    arrangementIndex,
-    testamentIndex,
-    bibleData,
-  });
-  testamentsData.push(testamentData);
+const arrangement = arrangementService.getArrangementByIndex(arrangementIndex);
+if (arrangement) {
+  for (const testamentIndex in arrangement) {
+    const testamentData = await thisBot.CreateTestament({
+      arrangementIndex,
+      testamentIndex,
+      bibleData,
+    });
+    testamentsData.push(testamentData);
+  }
 }
 
 return { testamentsData, staticBiblePieces };

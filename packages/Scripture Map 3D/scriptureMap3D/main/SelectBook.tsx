@@ -1,5 +1,6 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { tryHideIndicators } from "bibleVizUtils.controllers.userPresence.activityIndicatorsController";
 
 const {
   layoutBookData,
@@ -22,9 +23,7 @@ let column = 0;
 let row = 0;
 const chapterShowDuration = 0.03;
 
-BibleVizUtils.Functions.TryHideUsersColorOnPiece({
-  piece: layoutBookData.piece,
-});
+tryHideIndicators(layoutBookData.piece);
 shout("OnBiblePieceSelected", { piece: layoutBookData.piece });
 
 if (!fromOpenAllButton) {

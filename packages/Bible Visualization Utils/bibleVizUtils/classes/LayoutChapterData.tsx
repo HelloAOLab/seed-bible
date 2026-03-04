@@ -1,24 +1,26 @@
+import { Vector2 as Vector2Type } from "../../../../typings/AuxLibraryDefinitions";
+
 export class LayoutChapterData {
   constructor({
     id,
     piece,
-    playlistEntriesItems = [],
     pieceInfo,
     parentDataIds,
     isActive = false,
     highlightColor = null,
     originalLayoutId = null,
+    playlistEntriesItems = [],
   }) {
-    this.highlightColor = highlightColor;
-    this.id = id;
-    this.piece = piece;
-    this.pieceInfo = pieceInfo;
-    this.parentDataIds = parentDataIds;
-    this.isActive = isActive;
+    this.playlistEntriesItems = playlistEntriesItems;
     this.originalLayoutId = originalLayoutId;
+    this.highlightColor = highlightColor;
+    this.parentDataIds = parentDataIds;
+    this.pieceInfo = pieceInfo;
+    this.isActive = isActive;
     this.HighlightsInfo = [];
     this.isSelected = false;
-    this.playlistEntriesItems = playlistEntriesItems;
+    this.piece = piece;
+    this.id = id;
   }
   AddChild() {}
 
@@ -50,5 +52,13 @@ export class LayoutChapterData {
 
   AddEntryItem(entryItem) {
     this.playlistEntriesItems.push(entryItem);
+  }
+
+  getIsSelectedForNotification(): boolean {
+    return this.piece.masks.isExpanded;
+  }
+
+  getNotificationDirection(): Vector2Type {
+    return new Vector2(1, -1);
   }
 }

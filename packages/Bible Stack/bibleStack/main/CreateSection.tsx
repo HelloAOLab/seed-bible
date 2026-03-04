@@ -1,4 +1,8 @@
-import { scriptureService, stackService } from "bibleVizUtils.services.index";
+import {
+  scriptureService,
+  stackService,
+  arrangementService,
+} from "bibleVizUtils.services.index";
 
 /**
  * Creates a `StackSectionData` or `StackSectionBookData` instance based on the number of books in the section, and sets up the corresponding books or chapters.
@@ -38,11 +42,18 @@ const {
   testamentData,
   isHidden = false,
 } = that;
-const sectionInfo =
-  BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex].testaments[
-    testamentIndex
-  ].sections[sectionIndex];
-const amountOfChaptersInSection = scriptureService.getAmountOfChaptersInSection(
+const sectionInfo = arrangementService.getSectionByIndices({
+  arrangementIndex,
+  testamentIndex,
+  sectionIndex,
+});
+
+if (!sectionInfo) {
+  console.error(`sectionInfo not found at CreateSection`);
+  return;
+}
+
+const amountOfChaptersInSection = scriptureService.getSectionChapterCount(
   sectionInfo.books
 );
 let data;
