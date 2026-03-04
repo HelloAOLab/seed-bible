@@ -1193,7 +1193,10 @@ const SideBarBooks = (props: {
     }
   }, [selectedTestament, booksData, query]);
 
-  const RenderBooksByTestament = useMemo(() => {
+  const RenderBooksByTestament:
+    | JSXInternal.Element
+    | undefined
+    | (JSXInternal.Element | undefined) = useMemo(() => {
     let allowedRows = 5;
 
     if (windowSize < 768) {

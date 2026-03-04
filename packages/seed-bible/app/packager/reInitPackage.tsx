@@ -11,7 +11,7 @@ const bot = getBot("system", pkgData.mainBotTag);
 
 globalThis[`${name}_package`] = {};
 // === Pre-check helper ===
-async function waitForGlobals(required = [], delay = 250) {
+async function waitForGlobals(required: string[] = [], delay = 250) {
   while (true) {
     const missing = required.filter((n) => typeof globalThis[n] !== "function");
     if (missing.length === 0) break; // all exist → proceed
