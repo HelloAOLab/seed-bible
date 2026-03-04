@@ -167,6 +167,27 @@ function determineForStatementRole(
   return "body";
 }
 
+function isAssignmentOperator(kind: SyntaxKind): boolean {
+  return (
+    kind === SyntaxKind.EqualsToken ||
+    kind === SyntaxKind.PlusEqualsToken ||
+    kind === SyntaxKind.MinusEqualsToken ||
+    kind === SyntaxKind.AsteriskEqualsToken ||
+    kind === SyntaxKind.AsteriskAsteriskEqualsToken ||
+    kind === SyntaxKind.SlashEqualsToken ||
+    kind === SyntaxKind.PercentEqualsToken ||
+    kind === SyntaxKind.AmpersandEqualsToken ||
+    kind === SyntaxKind.BarEqualsToken ||
+    kind === SyntaxKind.CaretEqualsToken ||
+    kind === SyntaxKind.LessThanLessThanEqualsToken ||
+    kind === SyntaxKind.GreaterThanGreaterThanEqualsToken ||
+    kind === SyntaxKind.GreaterThanGreaterThanGreaterThanEqualsToken ||
+    kind === SyntaxKind.BarBarEqualsToken ||
+    kind === SyntaxKind.AmpersandAmpersandEqualsToken ||
+    kind === SyntaxKind.QuestionQuestionEqualsToken
+  );
+}
+
 function classifyUsage(referenceNode: Node): UsageMetadata {
   const location = getLocation(referenceNode);
   const parent = referenceNode.getParent();
@@ -188,7 +209,8 @@ function classifyUsage(referenceNode: Node): UsageMetadata {
     if (
       grandParent &&
       Node.isBinaryExpression(grandParent) &&
-      grandParent.getLeft() === parent
+      grandParent.getLeft() === parent &&
+      isAssignmentOperator(grandParent.getOperatorToken().getKind())
     ) {
       return {
         location,
@@ -237,7 +259,11 @@ function classifyUsage(referenceNode: Node): UsageMetadata {
   }
 
   if (Node.isBinaryExpression(parent)) {
-    if (parent.getLeft() === referenceNode) {
+    const isAssignment = isAssignmentOperator(
+      parent.getOperatorToken().getKind()
+    );
+
+    if (isAssignment && parent.getLeft() === referenceNode) {
       return {
         location,
         kind: "assignment",
@@ -245,7 +271,7 @@ function classifyUsage(referenceNode: Node): UsageMetadata {
       };
     }
 
-    if (parent.getRight() === referenceNode) {
+    if (isAssignment && parent.getRight() === referenceNode) {
       return {
         location,
         kind: "assignment-rhs",
