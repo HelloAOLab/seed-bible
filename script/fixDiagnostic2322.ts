@@ -125,7 +125,11 @@ function getNearestAssignmentExpression(node: Node): BinaryExpression | null {
 }
 
 function normalizeTypeText(typeText: string): string {
-  return typeText.trim().replace(/\s+/g, " ");
+  return stripImportTypeQualifiers(typeText).trim().replace(/\s+/g, " ");
+}
+
+function stripImportTypeQualifiers(typeText: string): string {
+  return typeText.replace(/\bimport\((?:"[^"]+"|'[^']+')\)\./g, "");
 }
 
 function splitUnionTopLevel(typeText: string): string[] {
