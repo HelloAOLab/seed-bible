@@ -49,6 +49,14 @@ const Reciver = getBot("system", "app.reciver");
 const { useState, useRef, useEffect, useMemo } = os.appHooks;
 
 const LOCAL_ENV = !configBot.tags.pattern;
+const removeBookMark =
+  tags?.settingsConfigs?.presets?.[
+    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+  ]?.appSettings?.removeBookMark;
+const removeAddSession =
+  tags?.settingsConfigs?.presets?.[
+    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+  ]?.appSettings?.removeAddSession;
 
 const CircleCounter = ({ data, book, chapter }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -669,7 +677,7 @@ function Tab({
 
           {!sharedTab && (
             <div className="tab-actions">
-              {onBookmarkClick && (
+              {!removeBookMark && onBookmarkClick && (
                 <span
                   className="tab-bookmark-btn"
                   onClick={(e: MouseEvent) => {
@@ -1637,7 +1645,8 @@ function SideBar({ panelsNumber }) {
 
           <div className="mobile-tabs-list">
             {/* Bookmark folders */}
-            {showBookmarks &&
+            {!removeBookMark &&
+              showBookmarks &&
               Object.entries(bookmarks).map(
                 ([categoryName, tabIds]: [string, any]) => (
                   <div key={categoryName} className="bookmark-category">
@@ -1812,37 +1821,47 @@ function SideBar({ panelsNumber }) {
             ))}
           </div>
 
-          <div className="mobile-bottom-nav">
-            <button
-              className="mobile-nav-btn"
-              onClick={() => {
-                // setSideBarMode("settings");
-                openPopupSettings(SessionsOptions);
-              }}
-            >
-              <MenuIcon name={"person_add"} />
-              <div className="mobile-nav-label">Sessions</div>
-            </button>
+          <div
+            className={`mobile-bottom-nav ${
+              removeBookMark && removeAddSession ? "single" : "multiple"
+            }`}
+          >
+            {!removeJoinSession && (
+              <button
+                className="mobile-nav-btn"
+                onClick={() => {
+                  // setSideBarMode("settings");
+                  openPopupSettings(SessionsOptions);
+                }}
+              >
+                <MenuIcon name={"person_add"} />
+                <div className="mobile-nav-label">Sessions</div>
+              </button>
+            )}
 
             <button className="mobile-nav-add" onClick={mobileAddTab}>
               <span>+</span>
             </button>
 
-            <button
-              className={`mobile-nav-btn${showBookmarks ? " active" : ""}`}
-              onClick={() => {
-                setShowBookmarks((prev) => !prev);
-              }}
-            >
-              <span className="material-symbols-outlined">
-                {/* {showBookmarks ? "bookmark" : "bookmark_border"} */}
-                <BookMarkIcon
-                  stroke={showBookmarks ? "var(--selectedSpaceColor)" : "black"}
-                  fill={showBookmarks ? "var(--selectedSpaceColor)" : "none"}
-                />
-              </span>
-              <div className="mobile-nav-label">Bookmarks</div>
-            </button>
+            {!removeBookMark && (
+              <button
+                className={`mobile-nav-btn${showBookmarks ? " active" : ""}`}
+                onClick={() => {
+                  setShowBookmarks((prev) => !prev);
+                }}
+              >
+                <span className="material-symbols-outlined">
+                  {/* {showBookmarks ? "bookmark" : "bookmark_border"} */}
+                  <BookMarkIcon
+                    stroke={
+                      showBookmarks ? "var(--selectedSpaceColor)" : "black"
+                    }
+                    fill={showBookmarks ? "var(--selectedSpaceColor)" : "none"}
+                  />
+                </span>
+                <div className="mobile-nav-label">Bookmarks</div>
+              </button>
+            )}
           </div>
 
           <style>{`
@@ -1885,7 +1904,9 @@ function SideBar({ panelsNumber }) {
             .mobile-tab-left{display:flex;flex-direction:column}
             .mobile-tab-actions{opacity:0.6;cursor:pointer;display:flex;align-items:center;}
             .mobile-tab-actions:hover{opacity:1;}
-            .mobile-bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:12px 30px;border-top:1px solid #eee}
+            .mobile-bottom-nav{display:flex;align-items:center;padding:12px 30px;border-top:1px solid #eee}
+            .mobile-bottom-nav.single {justify-content: center;}
+            .mobile-bottom-nav.multiple {justify-content: space-between;}
             .mobile-nav-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text1);cursor:pointer}
             .mobile-nav-label{font-size:12px}
             .mobile-nav-add{
@@ -2442,26 +2463,30 @@ function SideBar({ panelsNumber }) {
               <div
                 style={{ display: "flex", alignItems: "center", gap: "5px" }}
               >
-                <span
-                  className="sidebar-bookmark-filter-btn"
-                  onClick={() => setShowBookmarksFilter((prev) => !prev)}
-                  title={
-                    showBookmarksFilter
-                      ? "Show all tabs"
-                      : "Show bookmarked tabs"
-                  }
-                >
-                  <BookMarkIcon
-                    stroke={
+                {!removeBookMark && (
+                  <span
+                    className="sidebar-bookmark-filter-btn"
+                    onClick={() => setShowBookmarksFilter((prev) => !prev)}
+                    title={
                       showBookmarksFilter
-                        ? "var(--selectedSpaceColor)"
-                        : "var(--text1)"
+                        ? "Show all tabs"
+                        : "Show bookmarked tabs"
                     }
-                    fill={
-                      showBookmarksFilter ? "var(--selectedSpaceColor)" : "none"
-                    }
-                  />
-                </span>
+                  >
+                    <BookMarkIcon
+                      stroke={
+                        showBookmarksFilter
+                          ? "var(--selectedSpaceColor)"
+                          : "var(--text1)"
+                      }
+                      fill={
+                        showBookmarksFilter
+                          ? "var(--selectedSpaceColor)"
+                          : "none"
+                      }
+                    />
+                  </span>
+                )}
                 <span
                   style={{ "user-select": "none" }}
                   onMouseDown={() => {

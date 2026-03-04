@@ -8,11 +8,13 @@
         "removeEditMode": true,
         "removeAccountOptions": true,
         "removeBibleStack": true,
-        "removeJoinSession": true
+        "removeJoinSession": true,
+        "removeBookMark": true,
+        "removeAddSession": true
       },
       "pageSettings": {
         "disableHighlighting": true,
-        "removeAiAgent": "true"
+        "removeAiAgent": true
       },
       "onlineUsers": {
         "enabled": true,

@@ -315,6 +315,10 @@ export function VerseToolbar({
     tags?.settingsConfigs?.presets?.[
       configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
     ]?.pageSettings?.disableHighlighting;
+  const removeBookMark =
+    tags?.settingsConfigs?.presets?.[
+      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+    ]?.appSettings?.removeBookMark;
 
   return (
     <>
@@ -675,10 +679,12 @@ export function VerseToolbar({
             ) : (
               /* Action buttons — same style as bottom navbar */
               <>
-                <button className="mobile-action-btn">
-                  <BookMarkIcon />
-                  <span>Bookmark</span>
-                </button>
+                {!removeBookMark && (
+                  <button className="mobile-action-btn">
+                    <BookMarkIcon />
+                    <span>Bookmark</span>
+                  </button>
+                )}
                 {selectionSettings.showHighlightColors &&
                   !disableHighlighting && (
                     <button
