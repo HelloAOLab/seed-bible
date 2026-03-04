@@ -138,6 +138,20 @@ function scoreUsageKind(kind: string): number {
   }
 }
 
+function formatUnionTypeParts(typeParts: string[]): string {
+  const normalized = [
+    ...new Set(typeParts.map((part) => part.trim()).filter(Boolean)),
+  ];
+  return normalized
+    .map((part) => {
+      if (/^\(.*\)$/.test(part)) {
+        return part;
+      }
+      return `(${part})`;
+    })
+    .join(" | ");
+}
+
 function inferFunctionTypeFromCalls(usages: UsageMetadata[]): string | null {
   const callUsages = usages.filter((usage) => usage.kind === "function-call");
   if (callUsages.length === 0) {
@@ -163,10 +177,13 @@ function inferFunctionTypeFromCalls(usages: UsageMetadata[]): string | null {
   }
 
   if (signatures.size === 1) {
-    return [...signatures][0];
+    const [singleSignature] = [...signatures];
+    return singleSignature ?? null;
   }
 
-  return [...signatures].sort((a, b) => a.localeCompare(b)).join(" | ");
+  return formatUnionTypeParts(
+    [...signatures].sort((a, b) => a.localeCompare(b))
+  );
 }
 
 function inferBestType(globalEntry: GlobalUsageMetadata): {
@@ -217,12 +234,20 @@ function inferBestType(globalEntry: GlobalUsageMetadata): {
     return a[0].localeCompare(b[0]);
   });
 
-  const [bestType, bestScore] = ranked[0];
+  const best = ranked[0];
+  if (!best) {
+    return {
+      recommendedType: null,
+      reason: "No ranked candidates were available.",
+    };
+  }
+
+  const [bestType, bestScore] = best;
   const second = ranked[1];
 
   if (second && second[1] === bestScore && second[0] !== bestType) {
     return {
-      recommendedType: `${bestType} | ${second[0]}`,
+      recommendedType: formatUnionTypeParts([bestType, second[0]]),
       reason: `Top evidence tied between ${bestType} and ${second[0]}.`,
     };
   }
