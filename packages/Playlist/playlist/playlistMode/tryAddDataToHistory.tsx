@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 if (G.HISTORYExploreMode) return;
 if (G.makingPlaylist || G[`${"default"}creatingPlaylist`]) {
   const dataItem = that.dataItem;

@@ -1,5 +1,5 @@
 const keys = [...(that?.keys || [])];
-const G = globalThis as any;
+const G = globalThis;
 const multiSelectKeys: any = {
   control: true,
   meta: true,

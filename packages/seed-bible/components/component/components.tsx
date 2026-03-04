@@ -15,7 +15,7 @@ const LoaderSecondary = thisBot.LoaderSecondary();
 const ImageWrapper = thisBot.ImageWrapper();
 const Chips = thisBot.Chips();
 
-const G = globalThis as any;
+const G = globalThis;
 
 G.ShowNotification = thisBot.ShowNotification;
 G.Components = thisBot;

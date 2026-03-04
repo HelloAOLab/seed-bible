@@ -1,5 +1,5 @@
 shout("closeShareButton");
-const G = globalThis as any;
+const G = globalThis;
 G.LocaleStorage.historySaver();
 os.unregisterApp("quitGame");
 os.registerApp("quitGame", thisBot);

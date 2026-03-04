@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 const addExp = (exp_id = null) => {
   if (!exp_id) return;
   const oldExp = thisBot.tags.experincesArray;

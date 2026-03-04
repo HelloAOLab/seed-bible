@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 const PlaylistMedia = (props: any) => {
   const { type, content, link, videoId } = props;
   switch (type) {

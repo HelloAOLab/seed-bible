@@ -2,7 +2,7 @@
 // content
 
 const dataArray = that;
-const G = globalThis as any;
+const G = globalThis;
 
 if (!dataArray?.length) return [];
 

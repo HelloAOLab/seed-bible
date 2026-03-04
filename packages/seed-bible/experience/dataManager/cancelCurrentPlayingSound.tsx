@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 if (G.CURRENNT_SOUND_ID) {
   // console.log("FORCE STOP", globalThis.CURRENNT_SOUND_ID);
   const soundIds: any[] = Object.keys(G.PLAYING_SOUND);

@@ -1,5 +1,5 @@
 import { MenuIcon } from "app.components.icons";
-const G = globalThis as any;
+const G = globalThis;
 
 const items = [
   {

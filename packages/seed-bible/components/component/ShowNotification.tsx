@@ -24,7 +24,7 @@ const { bgColor, color, ICON } =
   notificationColors[severity] || notificationColors.error;
 
 const FloatingBanner = thisBot.FloatingBanner();
-const G = globalThis as any;
+const G = globalThis;
 if (!message) return;
 
 if (G.TOAST_NOTIFICATION_TIMEOUT) {

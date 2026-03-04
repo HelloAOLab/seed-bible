@@ -18,7 +18,7 @@ const onClose = () => {
 const playlistParentId = that.parentId;
 const id = that.id;
 const idsMap = that.idsMap;
-const G = globalThis as any;
+const G = globalThis;
 
 const { Input, Modal, Button, ButtonsCover, Tooltip, Select } = G.Components;
 const { useState, useLayoutEffect } = os.appHooks;

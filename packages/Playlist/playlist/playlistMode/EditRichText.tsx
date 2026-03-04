@@ -4,7 +4,7 @@
 // os.registerApp(appName);
 
 const { useState } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 const { Modal, Button, ButtonsCover } = G.Components;
 import { MiniTextEditor } from "app.components.smallEditor";
 

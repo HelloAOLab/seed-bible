@@ -1,5 +1,5 @@
 const { useRef, useEffect, useState, useMemo } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 const { Select, Input, Checkbox, Button } = G.Components;
 
 const SourcesIcon =

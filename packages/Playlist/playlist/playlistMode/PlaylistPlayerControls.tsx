@@ -1,5 +1,5 @@
 const { useState, useLayoutEffect, useRef, useMemo, createRef } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 const { Button } = G.Components;
 const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();

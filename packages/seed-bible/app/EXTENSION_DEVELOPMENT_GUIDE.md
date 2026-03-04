@@ -367,7 +367,7 @@ Register the toggle function:
 // In index.tsx
 import { MyExtension } from "./MyExtension";
 
-(globalThis as any).toggleMyTool = function () {
+globalThis.toggleMyTool = function () {
   const context = (window as any).getBibleContext();
   const { tools, addTool, removeTool } = context;
 

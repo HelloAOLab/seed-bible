@@ -1,5 +1,5 @@
 const { useState, useMemo, useLayoutEffect } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 
 const PlaylistRowItem = await thisBot.PlaylistRowItem();
 

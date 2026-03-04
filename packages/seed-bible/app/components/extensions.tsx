@@ -116,7 +116,7 @@ function SettingsPanel({
                 isOn={buttonEnabled}
                 onToggle={() => {
                   setbuttonEnabled(!buttonEnabled);
-                  (globalThis as any).ToggleToolActive(name, "stop");
+                  globalThis.ToggleToolActive(name, "stop");
                 }}
               />
             )}
@@ -149,12 +149,9 @@ function SettingsPanel({
                 <span>{t("showInToolbar")}</span>
               </div>
               <ToggleSwitch
-                isOn={
-                  (globalThis as any).IsToolActive &&
-                  (globalThis as any).IsToolActive(name)
-                }
+                isOn={globalThis.IsToolActive && globalThis.IsToolActive(name)}
                 onToggle={() => {
-                  (globalThis as any).ToggleToolActive(name);
+                  globalThis.ToggleToolActive(name);
                   setShowInToolbar(!showInToolbar);
                 }}
                 disabled={!buttonEnabled}
@@ -172,11 +169,11 @@ function SettingsPanel({
               </div>
               <ToggleSwitch
                 isOn={
-                  (globalThis as any).IsToolSraterToolbar &&
-                  (globalThis as any).IsToolSraterToolbar(name)
+                  globalThis.IsToolSraterToolbar &&
+                  globalThis.IsToolSraterToolbar(name)
                 }
                 onToggle={() => {
-                  (globalThis as any).ToToggleShowInStarterToolbar(name);
+                  globalThis.ToToggleShowInStarterToolbar(name);
                   setShowInPanel(!showInPanel);
                 }}
                 disabled={!buttonEnabled}
@@ -192,11 +189,11 @@ function SettingsPanel({
               </div>
               <ToggleSwitch
                 isOn={
-                  (globalThis as any).IsToolInPageToolbar &&
-                  (globalThis as any).IsToolInPageToolbar(name)
+                  globalThis.IsToolInPageToolbar &&
+                  globalThis.IsToolInPageToolbar(name)
                 }
                 onToggle={() => {
-                  (globalThis as any).ToToggleShowInPageToolbar(name);
+                  globalThis.ToToggleShowInPageToolbar(name);
                   setShowBelowPage(!showBelowPage);
                 }}
                 disabled={!buttonEnabled}

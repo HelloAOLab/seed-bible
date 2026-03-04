@@ -1,5 +1,5 @@
 const { useState, useLayoutEffect, useRef, useMemo, useCallback } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 const videoGIF =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/a06426963e6f35751bdc3e76b49527f24cf646ff1ca48aaec66db6ee483f3f1c.gif";
 const screenGIF =

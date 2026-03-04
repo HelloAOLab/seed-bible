@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 const val = that;
 G.ORIGINAL_DATA = null;
 G.ORIGINAL_DATA = null;

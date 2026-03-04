@@ -8,7 +8,7 @@ const {
   list = undefined,
 } = that.remoteClick ? that.features : that;
 
-const G = globalThis as any;
+const G = globalThis;
 
 if (skipAll) {
   os.unregisterApp("playing-playlist");

@@ -21,7 +21,7 @@ try {
 
 const { useState, useLayoutEffect, useRef, useMemo, useCallback } = os.appHooks;
 import { useProjectMenu } from "playlist.playlistMode.useProjectContext";
-const G = globalThis as any;
+const G = globalThis;
 const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
   G.MOBILE_VIEWPORT_THRESHOLD;

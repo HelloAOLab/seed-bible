@@ -41,7 +41,7 @@ const Input = (props: any) => {
               transform: `translateY(-50%)`,
             }}
             onClick={() => {
-              (globalThis as any).setHide((p: any) => !p);
+              globalThis.setHide((p: any) => !p);
             }}
           >
             {icon}

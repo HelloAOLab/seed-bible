@@ -137,15 +137,10 @@ const CreateAccountSettings = () => {
         <div
           className="profile-close-btn"
           onClick={() => {
-            if ((globalThis as any).AccountSettingsEnteredFrom === "settings") {
+            if (globalThis.AccountSettingsEnteredFrom === "settings") {
               setSideBarMode("settings");
-              setTimeout(
-                () => (globalThis as any).SetActiveSettingsTab("general"),
-                0
-              );
-            } else if (
-              (globalThis as any).AccountSettingsEnteredFrom === "default"
-            ) {
+              setTimeout(() => globalThis.SetActiveSettingsTab("general"), 0);
+            } else if (globalThis.AccountSettingsEnteredFrom === "default") {
               setSideBarMode("default");
             }
           }}

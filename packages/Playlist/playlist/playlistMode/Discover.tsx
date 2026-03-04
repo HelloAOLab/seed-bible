@@ -1,6 +1,6 @@
 const { useState, useRef, useLayoutEffect } = os.appHooks;
 
-const G = globalThis as any;
+const G = globalThis;
 const { Input } = G.Components;
 
 const PlaylistCont = await thisBot.PlaylistContainer();

@@ -1,5 +1,5 @@
 const results = thisBot.checkAndGetlinkData({ fileName: that.searchText });
-const G = globalThis as any;
+const G = globalThis;
 const booksObject = G.BOOKID_DATA.reduce((acc: any, book: any) => {
   acc[book.name.toLowerCase()] = { ...book };
   return acc;

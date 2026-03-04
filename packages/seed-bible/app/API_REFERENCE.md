@@ -1216,7 +1216,7 @@ Global functions are available on `globalThis` for use in non-React contexts.
 - **Description:** Navigate to a passage (same as `useBibleContext().Open`)
 - **Usage:**
   ```tsx
-  (globalThis as any).Open(43, 3, "ESV");
+  globalThis.Open(43, 3, "ESV");
   ```
 
 **OpenNextChapter(), OpenPrevChapter()**
@@ -1224,7 +1224,7 @@ Global functions are available on `globalThis` for use in non-React contexts.
 - **Description:** Navigate forward/backward
 - **Usage:**
   ```tsx
-  (globalThis as any).OpenNextChapter();
+  globalThis.OpenNextChapter();
   ```
 
 ### Toolbar Functions
@@ -1234,7 +1234,7 @@ Global functions are available on `globalThis` for use in non-React contexts.
 - **Description:** Register a toolbar item
 - **Usage:**
   ```tsx
-  (globalThis as any).AddTool({
+  globalThis.AddTool({
     id: "myTool",
     icon: "extension",
     label: "My Tool",
@@ -1246,7 +1246,7 @@ Global functions are available on `globalThis` for use in non-React contexts.
 - **Description:** Remove a toolbar item
 - **Usage:**
   ```tsx
-  (globalThis as any).RemoveTool("myTool");
+  globalThis.RemoveTool("myTool");
   ```
 
 ### Application Functions
@@ -1256,7 +1256,7 @@ Global functions are available on `globalThis` for use in non-React contexts.
 - **Description:** Add an application component
 - **Usage:**
   ```tsx
-  (globalThis as any).AddApplication("myApp", MyComponent, "panel", 400);
+  globalThis.AddApplication("myApp", MyComponent, "panel", 400);
   ```
 
 **RemoveApplicationByID(id)**
@@ -1264,7 +1264,7 @@ Global functions are available on `globalThis` for use in non-React contexts.
 - **Description:** Remove an application
 - **Usage:**
   ```tsx
-  (globalThis as any).RemoveApplicationByID("myApp");
+  globalThis.RemoveApplicationByID("myApp");
   ```
 
 ### Display Functions
@@ -1274,7 +1274,7 @@ Global functions are available on `globalThis` for use in non-React contexts.
 - **Description:** Set number of visible panels
 - **Usage:**
   ```tsx
-  (globalThis as any).SetScreens(2);
+  globalThis.SetScreens(2);
   ```
 
 ---

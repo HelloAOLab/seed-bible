@@ -9,7 +9,7 @@ const {
   selectedTags,
   isLayers,
 } = that;
-const G = globalThis as any;
+const G = globalThis;
 
 const playlists = G[`${parentId}playlists`];
 

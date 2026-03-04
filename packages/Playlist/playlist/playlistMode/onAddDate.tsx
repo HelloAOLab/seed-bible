@@ -1,5 +1,5 @@
 const appName = "on-date-add";
-const G = globalThis as any;
+const G = globalThis;
 const { Input, Modal, Button, ButtonsCover } = G.Components;
 
 const { onAttach } = that;

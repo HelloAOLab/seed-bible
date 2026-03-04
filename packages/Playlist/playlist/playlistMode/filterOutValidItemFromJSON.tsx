@@ -1,5 +1,5 @@
 const items = that;
-const G = globalThis as any;
+const G = globalThis;
 
 const validTypes = ["verse", "heading", "attachment-link", "chapter"];
 

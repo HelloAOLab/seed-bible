@@ -1,7 +1,7 @@
 const { useState } = os.appHooks;
 const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();
-const G = globalThis as any;
+const G = globalThis;
 const ShowPlayingContentAnnotation = () => {
   // Audio
   const [mediaURL, setMediaURL] = useState("");

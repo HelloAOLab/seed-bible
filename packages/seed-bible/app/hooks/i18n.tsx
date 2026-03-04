@@ -147,7 +147,7 @@ export async function initI18n(): Promise<any> {
   }
 
   // Access i18next from global
-  const i18next = (globalThis as any).i18next;
+  const i18next = globalThis.i18next;
 
   if (!i18next) {
     throw new Error("i18next failed to load from CDN");
@@ -176,8 +176,8 @@ export async function initI18n(): Promise<any> {
   isInitialized = true;
 
   // Expose globally
-  (globalThis as any).i18n = i18next;
-  (globalThis as any).t = i18next.t.bind(i18next);
+  globalThis.i18n = i18next;
+  globalThis.t = i18next.t.bind(i18next);
 
   return i18next;
 }

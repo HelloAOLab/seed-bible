@@ -1,2 +1,2 @@
-const G = globalThis as any;
+const G = globalThis;
 G.Components = thisBot.components();

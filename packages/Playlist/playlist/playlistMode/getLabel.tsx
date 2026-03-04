@@ -1,5 +1,5 @@
 const { useRef, useState, useLayoutEffect } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 const LowerCaseBookMapping = thisBot.tags.LowerCaseBookMapping;
 
 const splitBookAndVerse = (text: string) => {

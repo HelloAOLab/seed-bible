@@ -1,6 +1,6 @@
 const { createContext, useContext, useState, useCallback, useLayoutEffect } =
   os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 const ProjectContext = createContext<any>(null);
 
 export function ProjectProvider(props: any) {

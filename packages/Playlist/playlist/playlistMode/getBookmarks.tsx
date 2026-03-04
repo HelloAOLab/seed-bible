@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 setTag(thisBot, "bookmarks", {});
 let apiResults: any = {};
 try {

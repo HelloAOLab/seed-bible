@@ -1,5 +1,5 @@
 const { playlistId } = that;
-const G = globalThis as any;
+const G = globalThis;
 
 if (!playlistId) return { success: false, data: null };
 const [authBotId, playlistid] = playlistId.split(G.RECORD_SEPARATOR);

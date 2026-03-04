@@ -7,7 +7,7 @@
 // await os.sleep(10)
 // console.log(that,'that final')
 // console.log(GetOrSetVisualInTags(that.user))
-const G = globalThis as any;
+const G = globalThis;
 if (G.SetOnlineUsers) {
   G.SetOnlineUsers((prev: any) => ({
     ...prev,

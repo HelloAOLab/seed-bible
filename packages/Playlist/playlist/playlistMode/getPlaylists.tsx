@@ -2,7 +2,7 @@ let apiResults: any = [];
 
 let initialList: any[] = [];
 
-const G = globalThis as any;
+const G = globalThis;
 
 let id = "default";
 

@@ -1,5 +1,5 @@
 const { useState, useRef, useLayoutEffect } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 const sizes = [
   {
     size: "8px",

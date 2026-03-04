@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 if (G[`${"default"}creatingPlaylist`]) {
   let { dataItem, bulkAdd } = that;
 

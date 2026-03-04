@@ -1,5 +1,5 @@
 const { useRef } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 
 const VideoSmallScreen = (props: any) => {
   const { videoSrc, playlistItem } = props;

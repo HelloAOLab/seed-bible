@@ -3,7 +3,7 @@ import { MenuIcon, ToolbarIcon } from "app.components.icons";
 import { useTabsContext } from "app.hooks.tabs";
 import { useSideBarContext } from "app.hooks.sideBar";
 import { useBibleContext } from "app.hooks.bibleVariables";
-(globalThis as any).setPriorities = () => {};
+globalThis.setPriorities = () => {};
 const EditorToolbarSettings = () => {
   const { updateSpace, activeSpace, spaces } = useTabsContext();
   const { sidebarMode, setSideBarMode, closePopupSettings, t } =
@@ -12,9 +12,9 @@ const EditorToolbarSettings = () => {
 
   const [priorities, setPriorities] = useState<string[]>([]);
   useEffect(() => {
-    (globalThis as any).DEFAULT_TOOLBAR_PRIORITY = priorities;
+    globalThis.DEFAULT_TOOLBAR_PRIORITY = priorities;
     if (priorities.length > 0)
-      (globalThis as any).EditorToolbar.setPriorities(priorities);
+      globalThis.EditorToolbar.setPriorities(priorities);
   }, [priorities]);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -73,13 +73,8 @@ const EditorToolbarSettings = () => {
   // Load current priorities on mount
   useEffect(() => {
     try {
-      if (
-        (globalThis as any).EditorToolbar &&
-        (globalThis as any).EditorToolbar.getPriorities
-      ) {
-        const currentPriorities = (
-          globalThis as any
-        ).EditorToolbar.getPriorities();
+      if (globalThis.EditorToolbar && globalThis.EditorToolbar.getPriorities) {
+        const currentPriorities = globalThis.EditorToolbar.getPriorities();
         setPriorities(currentPriorities);
       } else {
         // Fallback to default order
@@ -147,11 +142,8 @@ const EditorToolbarSettings = () => {
   const savePriorities = async () => {
     try {
       setLoading(true);
-      if (
-        (globalThis as any).EditorToolbar &&
-        (globalThis as any).EditorToolbar.setPriorities
-      ) {
-        (globalThis as any).EditorToolbar.setPriorities(priorities);
+      if (globalThis.EditorToolbar && globalThis.EditorToolbar.setPriorities) {
+        globalThis.EditorToolbar.setPriorities(priorities);
       }
       setLoading(false);
       // Show success message or feedback here if needed
@@ -165,11 +157,8 @@ const EditorToolbarSettings = () => {
   const resetToDefault = () => {
     const defaultPriorities = defaultItems.map((item) => item.id);
     setPriorities(defaultPriorities);
-    if (
-      (globalThis as any).EditorToolbar &&
-      (globalThis as any).EditorToolbar.resetPriorities
-    ) {
-      (globalThis as any).EditorToolbar.resetPriorities();
+    if (globalThis.EditorToolbar && globalThis.EditorToolbar.resetPriorities) {
+      globalThis.EditorToolbar.resetPriorities();
     }
   };
 

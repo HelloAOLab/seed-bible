@@ -1,6 +1,6 @@
 const { useState, useLayoutEffect, useMemo, useRef } = os.appHooks;
 import { MiniTextEditor } from "app.components.smallEditor";
-const G = globalThis as any;
+const G = globalThis;
 const { Input, Modal, Button, ButtonsCover, Select, LoaderSecondary } =
   G.Components;
 

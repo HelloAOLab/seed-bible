@@ -7,7 +7,7 @@ const {
   currentItemName,
 } = that;
 
-const G = globalThis as any;
+const G = globalThis;
 if (G.SetItemsPlayer) {
   G.SetItemsPlayer({
     currentPlaylistName,

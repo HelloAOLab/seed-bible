@@ -600,7 +600,7 @@ const SearchBar = (props: { openSidebar: boolean }) => {
   const focusOnBook = useCallback(
     (props: { chapterNo?: number }) => {
       const { chapterNo } = props;
-      (globalThis as any).setOpenSidebar(false);
+      globalThis.setOpenSidebar(false);
       setQuery("");
       let chapter: number | null = null,
         queryArr: string[] = [];

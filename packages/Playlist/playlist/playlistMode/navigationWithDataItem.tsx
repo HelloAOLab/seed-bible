@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 if (G.NagiationTimeout) {
   clearTimeout(G.NagiationTimeout);
   G.NagiationTimeout = null;

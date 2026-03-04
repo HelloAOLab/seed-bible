@@ -1,6 +1,6 @@
 const { src, isYoutube, videoID, content } = that;
 const { useRef, useState, useLayoutEffect } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 thisBot.CloseFloatingApp();
 
 const VideoPlayerApp = (props: any) => {

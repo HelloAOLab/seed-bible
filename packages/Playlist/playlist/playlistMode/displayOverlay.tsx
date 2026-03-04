@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 let name = "overlay-ref";
 
 if (that?.name) {

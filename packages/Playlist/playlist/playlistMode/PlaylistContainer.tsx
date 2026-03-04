@@ -4,7 +4,7 @@
 // number -> Index of chpater / verse / book
 
 const { useState } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 const Playlist = await thisBot.Playlist();
 const History = await thisBot.History();
 

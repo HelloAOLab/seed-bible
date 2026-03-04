@@ -1,5 +1,5 @@
 const RenderIcon = await thisBot.RenderIcon();
-const G = globalThis as any;
+const G = globalThis;
 const { LoaderSecondary } = G.Components;
 
 const SelectionOptions = (props: any) => {

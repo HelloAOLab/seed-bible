@@ -1,5 +1,5 @@
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 const limitOfLines = 45;
 
 const RecordingVoiceUI = (props: any) => {

@@ -1,5 +1,5 @@
 const parentId = "default";
-const G = globalThis as any;
+const G = globalThis;
 G.IsPlaylistPlaying = false;
 DataManager.cancelCurrentPlayingSound();
 G.SetSelected && G.SetSelected({});

@@ -195,17 +195,17 @@ export function TabsProvider({ children }) {
               if (nextTab) {
                 setActiveTab(nextTab?.id);
                 // Also update the display content for the new active tab
-                if ((globalThis as any).UpdateTab) {
-                  (globalThis as any).UpdateTab(nextTab);
+                if (globalThis.UpdateTab) {
+                  globalThis.UpdateTab(nextTab);
                 }
               }
             } else {
               // Only one tab left, clear active tab before deletion
               setActiveTab(null);
               // Clear global tab data to prevent errors
-              (globalThis as any).CurrentActiveTabData = null;
-              (globalThis as any).CurrentBookData = null;
-              (globalThis as any).CHAPTER_DATA = null;
+              globalThis.CurrentActiveTabData = null;
+              globalThis.CurrentBookData = null;
+              globalThis.CHAPTER_DATA = null;
             }
           }
         }

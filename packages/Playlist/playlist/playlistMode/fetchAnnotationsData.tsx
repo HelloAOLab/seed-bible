@@ -1,5 +1,5 @@
 import { getAnnotationRecord, loadAnnotations } from "db.annotations.library";
-const G = globalThis as any;
+const G = globalThis;
 
 const isPrev = that?.prev;
 const isNext = that?.next;

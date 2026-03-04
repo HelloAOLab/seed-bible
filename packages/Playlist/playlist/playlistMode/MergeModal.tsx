@@ -2,7 +2,7 @@ os.unregisterApp("merge-modal");
 os.registerApp("merge-modal", thisBot);
 
 const { useState } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 const id = that.id;
 const parentId = that.parentId || "default";
 const { Modal, Button, ButtonsCover, Select } = G.Components;

@@ -1,7 +1,7 @@
 const allItems: any[] = [];
 let badData = 0;
 
-const G = globalThis as any;
+const G = globalThis;
 
 const booksObject = G.BOOKID_DATA.reduce((acc: any, book: any) => {
   acc[book.name.toLowerCase()] = { ...book };

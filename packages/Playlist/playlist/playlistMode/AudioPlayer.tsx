@@ -2,7 +2,7 @@ const { useState, useLayoutEffect, useRef } = os.appHooks;
 
 const limitOfLines = 45;
 
-const G = globalThis as any;
+const G = globalThis;
 
 const { LoaderSecondary } = G.Components;
 

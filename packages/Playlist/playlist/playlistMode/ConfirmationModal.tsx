@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 const { Input, Modal, Button, ButtonsCover } = G.Components;
 
 const ConfirmationModal = (props: any) => {

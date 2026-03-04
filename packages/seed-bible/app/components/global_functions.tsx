@@ -1,47 +1,47 @@
-(globalThis as any).ContextMenuOptions = [](
+globalThis.ContextMenuOptions = [](
   // switch to tab object
-  globalThis as any
+  globalThis
 ).UpdateTab = () => {};
 
 //
-(globalThis as any).CanvasMode = null(
+globalThis.CanvasMode = null(
   // for adding new tab
-  globalThis as any
+  globalThis
 ).AddTab = () => {};
 
 //takes new color to change it for the toolbar background
-(globalThis as any).SetToolbarBackground = () => {};
+globalThis.SetToolbarBackground = () => {};
 
 // set number of screens
-(globalThis as any).SetScreens = () => {};
+globalThis.SetScreens = () => {};
 
 //switch toolbar edit mode!
-(globalThis as any).ToolbarReSeedMode = () => {};
+globalThis.ToolbarReSeedMode = () => {};
 
 //setting element on mouse cursor to show it like dragging
-(globalThis as any).SetElement = () => {};
+globalThis.SetElement = () => {};
 //to show the added elements from SetElement
-(globalThis as any).SetIsDragging = () => {};
+globalThis.SetIsDragging = () => {};
 
 // removing application with specific id
-(globalThis as any).AddApplication = () => {};
-(globalThis as any).RemoveApplication = () => {};
-(globalThis as any).AddApplication = () => {};
-(globalThis as any).RemoveApplicationByID = () => {};
-(globalThis as any).ReplaceApplication = () => {};
-(globalThis as any).UpdateApplication = () => {};
+globalThis.AddApplication = () => {};
+globalThis.RemoveApplication = () => {};
+globalThis.AddApplication = () => {};
+globalThis.RemoveApplicationByID = () => {};
+globalThis.ReplaceApplication = () => {};
+globalThis.UpdateApplication = () => {};
 
 // opens / close popup
-(globalThis as any).openPopupSettings = () => {};
-(globalThis as any).closePopupSettings = () => {};
+globalThis.openPopupSettings = () => {};
+globalThis.closePopupSettings = () => {};
 
-// open specific book chapter translation (globalThis as any).Open(tab.data.id, tab.data.chapter, tab.data.translation)
-(globalThis as any).Open = () => {};
-(globalThis as any).OpenNextChapter = () => {};
-(globalThis as any).OpenPrevChapter = () => {};
+// open specific book chapter translation (globalThis).Open(tab.data.id, tab.data.chapter, tab.data.translation)
+globalThis.Open = () => {};
+globalThis.OpenNextChapter = () => {};
+globalThis.OpenPrevChapter = () => {};
 
 //toolbar controllers
-(globalThis as any).AddTool = () => {};
-(globalThis as any).RemoveTool = () => {};
-(globalThis as any).UpdateTool = () => {};
-(globalThis as any).ToggleToolActive = () => {};
+globalThis.AddTool = () => {};
+globalThis.RemoveTool = () => {};
+globalThis.UpdateTool = () => {};
+globalThis.ToggleToolActive = () => {};

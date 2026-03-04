@@ -1,6 +1,6 @@
 const playlistUpdated = that.playlistUpdated;
 const indexesUpdate = that.indexesUpdate;
-const G = globalThis as any;
+const G = globalThis;
 if (indexesUpdate) {
   G.SetCurreIndexDirect?.(that.currIndex);
   G.UPDATE_VIA_SHOUT = true;

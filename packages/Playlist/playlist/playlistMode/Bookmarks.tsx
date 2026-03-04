@@ -1,5 +1,5 @@
 const { useLayoutEffect, useState, useMemo } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
   G.MOBILE_VIEWPORT_THRESHOLD;

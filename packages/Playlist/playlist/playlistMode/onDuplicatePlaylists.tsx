@@ -1,5 +1,5 @@
 const { parentId, id, name, color, isCustomColor, icon, description } = that;
-const G = globalThis as any;
+const G = globalThis;
 const playlists = G[`${parentId}playlists`];
 
 const idx = playlists.findIndex((ele: any) => ele.id === id);

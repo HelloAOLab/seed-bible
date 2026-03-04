@@ -1,6 +1,6 @@
 const text = that.text;
 const promptSystem = that.prompt || null;
-const G = globalThis as any;
+const G = globalThis;
 
 const prompt =
   `${promptSystem || G.SYSTEM_PROMPT}`.replace(/\$text\$/g, text) +

@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 G.savePlaylistProgress = (
   id: string,
   progressID: string,

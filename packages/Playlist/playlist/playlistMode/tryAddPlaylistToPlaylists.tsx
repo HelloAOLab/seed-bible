@@ -11,7 +11,7 @@ const description = that?.description;
 const selectedTags = that?.selectedTags;
 const isLayers = that?.isLayers;
 const access = that?.access;
-const G = globalThis as any;
+const G = globalThis;
 const editId = G[`${id}isEditMode`];
 const isEditModeSubID = G[`${id}isEditModeSubID`];
 

@@ -1,5 +1,5 @@
 const { dataItem, playlistID } = that;
-const G = globalThis as any;
+const G = globalThis;
 const parentId = "default";
 
 if (dataItem.content === "undefined") return;

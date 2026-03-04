@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 
 const Linking = (props: any) => {
   const { data, linkingMode, playlistName, playListId } = props;

@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 const { LoaderSecondary } = G.Components;
 import { deleteAnnotation, getAnnotationRecord } from "db.annotations.library";
 const { useMemo, useEffect } = os.appHooks;

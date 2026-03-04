@@ -1,5 +1,5 @@
 const { useEffect, useState, useRef, useMemo } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 const { Button, Input } = G.Components;
 const RecordingUI = await thisBot.RecordVoice();
 const VideoRecordUI = await thisBot.VideoRecordUI();

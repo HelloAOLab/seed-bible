@@ -113,7 +113,7 @@ const forwardToFollowersExcept = (
     sendRemoteData(targets, eventName, { ...data, senderId: selfId });
 };
 
-const G = globalThis as any;
+const G = globalThis;
 
 // ---------- MAIN HANDLER ----------
 switch (name) {

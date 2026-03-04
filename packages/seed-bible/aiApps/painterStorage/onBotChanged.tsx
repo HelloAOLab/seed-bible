@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 
 if (that.tags.includes("drawingData") && G.HandleStorageChange) {
   G.HandleStorageChange({

@@ -1,6 +1,6 @@
 const { useState, useRef, useLayoutEffect } = os.appHooks;
 // check_circle
-const G = globalThis as any;
+const G = globalThis;
 const { Input, Modal, Button, ButtonsCover, Checkbox } = G.Components;
 const Linking = thisBot.LinkingItems();
 const isMobile =

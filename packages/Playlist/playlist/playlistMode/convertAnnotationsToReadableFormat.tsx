@@ -6,7 +6,7 @@ const verseIndexMap: any = {};
 const sourcesMap: any = {};
 const tagsMap: any = {};
 let allAnnotations: any = [];
-const G = globalThis as any;
+const G = globalThis;
 
 annotations.forEach((ele: any) => {
   if (!sourcesMap[ele.data.userId]) {

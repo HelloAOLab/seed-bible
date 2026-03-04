@@ -4,7 +4,7 @@
 // number -> Index of chpater / verse / book
 
 const { useState, useLayoutEffect, useMemo } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 const { Button } = G.Components;
 
 const History = (props: any) => {

@@ -2,7 +2,7 @@
 const { address } = that;
 shout("onUnInstallPackage", { name: address });
 
-const G = globalThis as any;
+const G = globalThis;
 
 console.log(masks[`${address}-data`], "package for uninstall");
 if (masks[`${address}-data`]) {

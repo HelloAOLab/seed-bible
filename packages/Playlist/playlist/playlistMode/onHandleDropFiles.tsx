@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 if (G.HandleUploadFiles) {
   G.ToggleCommandBox();
   G.ThruCommandBox = that.thruCommandBox;

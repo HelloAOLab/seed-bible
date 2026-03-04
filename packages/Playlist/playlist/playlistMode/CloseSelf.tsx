@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 const isMobile =
   (window?.innerWidth || G.gridPortalBot.tags.pixelWidth) <
   G.MOBILE_VIEWPORT_THRESHOLD;

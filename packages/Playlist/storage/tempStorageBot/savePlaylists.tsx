@@ -1,5 +1,5 @@
 const authBot = await os.requestAuthBotInBackground();
-const G = globalThis as any;
+const G = globalThis;
 let playlistsToSave = [...that.playlists];
 
 const isCurrAuth = !!authBot?.id;

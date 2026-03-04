@@ -1,5 +1,5 @@
 try {
-  const G = globalThis as any;
+  const G = globalThis;
   const authBot = await os.requestAuthBot();
   if (!tags.usersAuthIds) {
     tags.usersAuthIds = [];

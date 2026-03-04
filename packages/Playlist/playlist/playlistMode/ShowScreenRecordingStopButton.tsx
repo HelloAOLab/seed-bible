@@ -1,4 +1,4 @@
-const G = globalThis as any;
+const G = globalThis;
 const { Button } = G.Components;
 const { useState, useLayoutEffect, useRef } = os.appHooks;
 

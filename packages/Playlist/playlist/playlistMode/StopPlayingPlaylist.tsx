@@ -1,5 +1,5 @@
 const parentId = that?.parentId || "default";
-const G = globalThis as any;
+const G = globalThis;
 DataManager.cancelCurrentPlayingSound();
 G.SetSelected && G.SetSelected({});
 G.SetHolded && G.SetHolded({});

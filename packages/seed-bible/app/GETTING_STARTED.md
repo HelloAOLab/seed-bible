@@ -353,7 +353,7 @@ import { VerseCounter } from "./VerseCounter";
 export { VerseCounter };
 
 // Global registration function (called by Seed Bible)
-(globalThis as any).toggleVerseCounter = function () {
+globalThis.toggleVerseCounter = function () {
   const { tools, addTool, removeTool } = (window as any).getBibleContext();
 
   const existing = tools.find((t) => t.id === "verseCounter");
@@ -554,11 +554,11 @@ function MyExtension() {
 function MyExtension() {
   const handleOpenPassage = () => {
     // Navigate to John 3:16
-    (globalThis as any).Open(43, 3, "ESV");
+    globalThis.Open(43, 3, "ESV");
   };
 
   const handleNextChapter = () => {
-    (globalThis as any).OpenNextChapter();
+    globalThis.OpenNextChapter();
   };
 
   return (

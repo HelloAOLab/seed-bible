@@ -1,5 +1,5 @@
 const message = that || "Playlist Mode";
-const G = globalThis as any;
+const G = globalThis;
 const { FloatingBanner } = G.Components;
 
 os.unregisterApp("message");

@@ -1,5 +1,5 @@
 const id = that.id;
-const G = globalThis as any;
+const G = globalThis;
 G[`${id}SetPlaylistName`] && G[`${id}SetPlaylistName`]("");
 G[`${id}ResetPlaylist`] && G[`${id}ResetPlaylist`]();
 G[`${id}currentPlaylist`] = [];

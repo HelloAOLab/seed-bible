@@ -803,11 +803,8 @@ export const AccountSetting = ({
   let colorIndex = 0;
   let iconIndex = 0;
 
-  if (isAnonymous && (globalThis as any).GetOrSetVisualInTags) {
-    const visual = (globalThis as any).GetOrSetVisualInTags(
-      configBot.id,
-      userData
-    );
+  if (isAnonymous && globalThis.GetOrSetVisualInTags) {
+    const visual = globalThis.GetOrSetVisualInTags(configBot.id, userData);
     colorIndex = visual.colorIndex;
     iconIndex = visual.iconIndex;
   }

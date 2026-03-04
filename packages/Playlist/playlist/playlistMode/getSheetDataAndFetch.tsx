@@ -5,7 +5,7 @@ try {
     return;
   }
 
-  const G = globalThis as any;
+  const G = globalThis;
 
   const id = G.extractIdFromUrl(link);
 

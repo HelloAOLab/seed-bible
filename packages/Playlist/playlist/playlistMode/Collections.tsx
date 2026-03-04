@@ -1,5 +1,5 @@
 const { useState, useLayoutEffect } = os.appHooks;
-const G = globalThis as any;
+const G = globalThis;
 
 const tabItems = ["Collections"];
 
