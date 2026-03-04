@@ -10,25 +10,31 @@
  * thisBot.UpdateTestamentStack({testamentData: someTestamentData});
  */
 
-const {testamentData, isInstantaneous} = that;
-if(!testamentData.isSplitIntoSections || IsTestamentEmpty()) return false;
+const { testamentData, isInstantaneous } = that;
+if (!testamentData.isSplitIntoSections || IsTestamentEmpty()) return false;
 const dimension = os.getCurrentDimension();
 const duration = isInstantaneous ? 0 : 0.5;
-const easing = {type: "sinusoidal", mode: "inout"};
+const easing = { type: "sinusoidal", mode: "inout" };
 const testamentPosition = getBotPosition(testamentData.piece, dimension);
 const animations = [];
 
-const {newTestamentAnimations} = await thisBot.HandleTestamentDataInStack({isInstantaneous, testamentData, desiredPositionZ: testamentPosition.z, dimension, duration, easing});
-animations.push(...newTestamentAnimations)
+const { newTestamentAnimations } = await thisBot.HandleTestamentDataInStack({
+  isInstantaneous,
+  testamentData,
+  desiredPositionZ: testamentPosition.z,
+  dimension,
+  duration,
+  easing,
+});
+animations.push(...newTestamentAnimations);
 
 await Promise.allSettled(animations);
 
 return true;
 
-function IsTestamentEmpty()
-{
-    const result = !testamentData.childrenData.some((sectionData) => {
-        return sectionData.isSplitIntoBooks ? true : sectionData.isActive
-    })
-    return result;
+function IsTestamentEmpty() {
+  const result = !testamentData.childrenData.some((sectionData) => {
+    return sectionData.isSplitIntoBooks ? true : sectionData.isActive;
+  });
+  return result;
 }

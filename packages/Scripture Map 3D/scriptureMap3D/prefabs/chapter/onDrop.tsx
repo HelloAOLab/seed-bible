@@ -1,1 +1,4 @@
-shout(`OnLayoutChapterInteracted`, {chapter: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Drop});
+shout(`OnLayoutChapterInteracted`, {
+  chapter: thisBot,
+  typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Drop,
+});

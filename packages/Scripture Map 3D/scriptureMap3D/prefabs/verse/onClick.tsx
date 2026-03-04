@@ -1,1 +1,4 @@
-shout("OnLayoutVerseInteracted", {verse: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Click});
+shout("OnLayoutVerseInteracted", {
+  verse: thisBot,
+  typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Click,
+});

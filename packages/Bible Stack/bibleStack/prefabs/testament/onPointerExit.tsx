@@ -3,4 +3,7 @@
 // }
 // InstanceManager.TryClearVideoTimeout();
 setTagMask(thisBot, "isBeingHovered", false);
-shout("OnStackTestamentInteracted", {testament: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.HoverEnd});
+shout("OnStackTestamentInteracted", {
+  testament: thisBot,
+  typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.HoverEnd,
+});

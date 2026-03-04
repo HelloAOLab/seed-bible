@@ -1,4 +1,4 @@
-console.log('remoteVerseClick', that)
+console.log("remoteVerseClick", that);
 
 // thisBot.onVerseClick({that})
-shout('onVerseClick', that)
+shout("onVerseClick", that);

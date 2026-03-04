@@ -7,5 +7,5 @@ thisBot.tags.structureIndex = null;
 thisBot.tags.chapterNumber = null;
 thisBot.tags.label = null;
 thisBot.tags.dateWrote = null;
-BibleVizUtils.Functions.TryHideUsersColorOnPiece({piece: thisBot})
-BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({piece: thisBot});
+BibleVizUtils.Functions.TryHideUsersColorOnPiece({ piece: thisBot });
+BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({ piece: thisBot });

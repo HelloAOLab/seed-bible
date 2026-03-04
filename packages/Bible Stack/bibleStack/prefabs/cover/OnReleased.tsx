@@ -1,8 +1,8 @@
 /**
-    * Resets the tags of the cover when it is released.
-    * @example
-    * cover.OnReleased();
-*/
+ * Resets the tags of the cover when it is released.
+ * @example
+ * cover.OnReleased();
+ */
 
 thisBot.tags.stackBibleId = null;
 thisBot.tags.transformer = null;

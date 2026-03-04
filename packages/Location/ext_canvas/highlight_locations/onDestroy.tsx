@@ -1,1 +1,1 @@
-globalThis.ClearAllWordHighlights()
+globalThis.ClearAllWordHighlights();

@@ -1193,7 +1193,13 @@ const SideBarBooks = (props: {
     }
   }, [selectedTestament, booksData, query]);
 
-  const RenderBooksByTestament = useMemo(() => {
+  const RenderBooksByTestament:
+    | import("C:/Projects/seed-bible/node_modules/.pnpm/preact@10.19.6/node_modules/preact/src/jsx").JSXInternal.Element
+    | undefined
+    | (
+        | import("C:/Projects/seed-bible/node_modules/.pnpm/preact@10.19.6/node_modules/preact/src/jsx").JSXInternal.Element
+        | undefined
+      ) = useMemo(() => {
     let allowedRows = 5;
 
     if (windowSize < 768) {
