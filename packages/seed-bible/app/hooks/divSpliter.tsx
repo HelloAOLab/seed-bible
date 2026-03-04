@@ -347,7 +347,7 @@ export const SplitApp = ({
   });
 
   // Default overlap for 2 panels, or when explicitly enabled
-  const isOverlap = count >= 2 && (screens.overlap !== false);
+  const isOverlap = count >= 2 && screens.overlap !== false;
 
   useEffect(() => {
     if (isOverlap) {
@@ -443,6 +443,7 @@ export const SplitApp = ({
             transition: "transform 0.3s ease",
             zIndex: 10,
             display: "flex",
+            maxWidth: "100dvw",
           }}
         >
           {/* Drag handle on left edge */}
@@ -462,7 +463,7 @@ export const SplitApp = ({
             <div
               style={{
                 width: "3px",
-                height: "40px",
+                height: "100%",
                 borderRadius: "2px",
                 backgroundColor: "rgba(0,0,0,0.15)",
               }}

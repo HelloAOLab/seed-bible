@@ -16,16 +16,14 @@ const SharePopup = ({
   closePopupSettings,
 }) => {
   const [copied, setCopied] = useState(false);
-  const [includeReference, setIncludeReference] = useState(true);
+  // always include reference; no toggle needed
 
   // Build the verse reference from context if not provided
   const reference =
     shareReference || `${configBot.tags.book} ${configBot.tags.chapter}`;
 
-  // The text to share based on toggle
-  const shareText = includeReference
-    ? `"${shareTitle}" - ${reference} (${translation})`
-    : shareTitle || "";
+  // Always include the verse reference when sharing
+  const shareText = `"${shareTitle}" - ${reference} (${translation})`;
 
   const platforms = [
     // {
@@ -202,80 +200,6 @@ const SharePopup = ({
             >
               <CloseIcon />
             </button>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              gap: 16,
-              marginBottom: 20,
-              flexWrap: "nowrap",
-            }}
-          >
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                cursor: "pointer",
-                flex: "0 0 auto",
-              }}
-            >
-              <input
-                type="radio"
-                name="shareOption"
-                checked={includeReference}
-                onChange={() => setIncludeReference(true)}
-                style={{
-                  accentColor: "#4A90D9",
-                  width: 16,
-                  height: 16,
-                  flexShrink: 0,
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 14,
-                  color: "#4A90D9",
-                  fontWeight: includeReference ? 500 : 400,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Verse text with reference
-              </span>
-            </label>
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                cursor: "pointer",
-                flex: "0 0 auto",
-              }}
-            >
-              <input
-                type="radio"
-                name="shareOption"
-                checked={!includeReference}
-                onChange={() => setIncludeReference(false)}
-                style={{
-                  accentColor: "#666",
-                  width: 16,
-                  height: 16,
-                  flexShrink: 0,
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 14,
-                  color: "#666",
-                  fontWeight: includeReference ? 400 : 500,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Verse text only
-              </span>
-            </label>
           </div>
 
           <div
@@ -623,7 +547,8 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
             padding: 12,
             background: "var(--primaryButton, #d36433)",
             color: "var(--primaryButtonColor, white)",
-            border: "1px solid var(--primaryButtonBorder, var(--primaryButton, #d36433))",
+            border:
+              "1px solid var(--primaryButtonBorder, var(--primaryButton, #d36433))",
             borderRadius: 4,
             fontSize: 15,
             fontWeight: 500,

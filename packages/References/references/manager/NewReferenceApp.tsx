@@ -4,7 +4,11 @@ import type {
   ReferencesInterface,
   ReferenceInterface,
 } from "references.manager.interfaces";
-import { GetReferences } from "references.manager.GetReferences";
+import {
+  GetReferences,
+  GetChapterContent,
+  CalculatePopupPosition,
+} from "references.manager.GetReferences";
 
 const { useState, useEffect, useCallback } = os.appHooks;
 const styles = tags["Reference.css"];
@@ -15,7 +19,11 @@ const ReferenceApp = (props: { reference: ReferencesInterface }) => {
     useState<ReferencesInterface>(reference);
   const [rdLoading, setRdLoading] = useState(true);
   const [referenceData, setReferenceData] = useState<{
-    [key: string]: { content: string; references?: ReferenceInterface[] };
+    [key: string]: {
+      content: string;
+      references?: ReferenceInterface[];
+      bookName: string;
+    };
   }>({});
 
   const populateReferenceData = useCallback(async () => {
@@ -23,76 +31,59 @@ const ReferenceApp = (props: { reference: ReferencesInterface }) => {
 
     const referenceBot = getBot("system", "references.manager");
 
-    const referenceArrayKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
-
-    if (
-      referenceBot.masks?.referenceDataObject &&
-      referenceBot.masks?.referenceDataObject[referenceArrayKey]
-    ) {
-      console.log("retriveing from storage");
+    const referenceArrayKey = `referenceDataObject-${currentReference.translation}.${currentReference.book}.${currentReference.chapter}.${currentReference.verse}`;
+    if (referenceBot.masks?.[`${referenceArrayKey}`]) {
+      console.log("retrieving from storage");
       setReferenceData({
-        ...referenceBot.masks.referenceDataObject[referenceArrayKey],
+        ...JSON.parse(referenceBot.masks[`${referenceArrayKey}`]),
       });
     } else if (currentReference) {
       console.log("retriveing from web");
       const referenceDataPromises = currentReference.references.map(
         (reference) => {
-          return web.get(
-            `https://bible.helloao.org/api/BSB/${reference.book}/${reference.chapter}.json`
-          );
+          return GetChapterContent({
+            bookId: reference.book,
+            chapter: reference.chapter,
+            reference: reference,
+            baseUrl: currentReference.baseUrl,
+            translation: currentReference.translation,
+          });
         }
       );
 
       const referenceReqs = await Promise.all(referenceDataPromises);
 
       const tempReferenceData: {
-        [key: string]: { content: string; references?: ReferenceInterface[] };
+        [key: string]: {
+          content: string;
+          references?: ReferenceInterface[];
+          bookName: string;
+        };
       } = {};
 
       const subReferences: Promise<ReferencesInterface>[] = [];
 
       referenceReqs.forEach((res, index) => {
-        if (res.status !== 200) {
+        if (!res) {
           return;
         }
-        const contentArray = [...res.data.chapter.content];
-        let content = "";
         if (currentReference.references[index]) {
           const reference: ReferenceInterface =
             currentReference.references[index];
           const referenceKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
-          const start = reference.verse;
-          const end = reference?.endVerse || reference.verse;
-          if (start <= end) {
-            for (let i = start; i <= end; i++) {
-              for (let j = 0; j < contentArray.length; j++) {
-                if (contentArray[j]?.number == i) {
-                  const contentString = contentArray[j].content
-                    .map((data: any) => {
-                      if (typeof data === "string") {
-                        return data;
-                      } else if (data?.text) {
-                        return data.text;
-                      } else {
-                        return "";
-                      }
-                    })
-                    .join(" ");
-                  content += `${contentString} `;
-                  break;
-                }
-              }
-            }
-          }
           tempReferenceData[referenceKey] = {
-            content: content || "",
+            content: res.content || "",
             references: [],
+            bookName: res?.bookData?.name || "",
           };
           subReferences.push(
             GetReferences({
               bookId: reference.book,
               chapter: reference.chapter,
               verse: reference.verse,
+              baseUrl: currentReference.baseUrl,
+              translation: currentReference.translation,
+              bookName: res?.bookData?.name || "",
             })
           );
         }
@@ -112,6 +103,7 @@ const ReferenceApp = (props: { reference: ReferencesInterface }) => {
             tempReferenceData[referenceKey] = {
               content: tempReferenceData[referenceKey].content || "",
               references: [...res.references.slice(0, 5)],
+              bookName: tempReferenceData[referenceKey].bookName || "",
             };
           }
         }
@@ -122,12 +114,19 @@ const ReferenceApp = (props: { reference: ReferencesInterface }) => {
     setRdLoading(false);
   }, [currentReference]);
 
-  const updateReferences = async (props: { reference: ReferenceInterface }) => {
-    const { reference } = props;
+  const updateReferences = async (props: {
+    reference: ReferenceInterface;
+    baseUrl: string;
+    translation: string;
+  }) => {
+    const { reference, baseUrl, translation } = props;
     const newReference = await GetReferences({
       bookId: reference.book,
       chapter: reference.chapter,
       verse: reference.verse,
+      baseUrl: baseUrl,
+      translation: translation,
+      bookName: reference.bookName,
     });
     setCurrentReference(newReference);
   };
@@ -135,7 +134,11 @@ const ReferenceApp = (props: { reference: ReferencesInterface }) => {
   const handleRedirect = useCallback(
     async (props: { reference: ReferenceInterface }) => {
       const { reference } = props;
-      updateReferences({ reference });
+      updateReferences({
+        reference,
+        baseUrl: currentReference.baseUrl,
+        translation: currentReference.translation,
+      });
       openChapter({ reference });
     },
     []
@@ -152,8 +155,7 @@ const ReferenceApp = (props: { reference: ReferencesInterface }) => {
         book: tags.IdToName[reference.book],
         bookId: reference.book,
         chapter: reference.chapter,
-        translation: "BSB",
-        shortName: "BSB",
+        translation: currentReference.translation,
       },
     };
     AddTab({
@@ -181,17 +183,26 @@ const ReferenceApp = (props: { reference: ReferencesInterface }) => {
     }
   };
 
-  const showVerse = async (props: { reference: ReferenceInterface }) => {
-    const { reference } = props;
+  const showVerse = async (props: {
+    reference: ReferenceInterface;
+    mouseEvent: MouseEvent;
+    baseUrl: string;
+    translation: string;
+  }) => {
+    const { reference, mouseEvent } = props;
     closePopupSettings();
     await os.sleep(100);
+    const position = CalculatePopupPosition(mouseEvent, 250, 170);
     openPopupSettings(
       <ReferenceComponent
         reference={reference}
         handleRedirect={handleRedirect}
+        baseUrl={props.baseUrl}
+        translation={props.translation}
       />,
       null,
-      true
+      true,
+      position
     );
   };
 
@@ -213,9 +224,12 @@ const ReferenceApp = (props: { reference: ReferencesInterface }) => {
       <div
         class="reference-container"
         onContextMenu={(e) => e.stopPropagation()}
+        onScroll={() => {
+          closePopupSettings();
+        }}
       >
         <div class="heading">
-          <h2>{`${tags.IdToName[currentReference?.book]} ${currentReference?.chapter}:${currentReference?.verse}`}</h2>
+          <h2>{`${currentReference?.bookName} ${currentReference?.chapter}:${currentReference?.verse}`}</h2>
           <span
             onClick={() => {
               const panelKey = `reference_PANEL_ID`;
@@ -237,37 +251,93 @@ const ReferenceApp = (props: { reference: ReferencesInterface }) => {
         {currentReference?.references.map((childReference) => {
           if (!childReference) return null;
           return (
-            <div class="reference-components">
-              <span
-                onClick={() => handleRedirect({ reference: childReference })}
-                class="reference-title"
-              >{`${tags.IdToName[childReference.book]} ${childReference.chapter}:${childReference.verse}${childReference?.endVerse ? `-${childReference.endVerse}` : ""}`}</span>
-              {rdLoading && <div class="loading-section"></div>}
+            <div
+              class="reference-components"
+              style={
+                rdLoading
+                  ? {}
+                  : referenceData[
+                        `${childReference.book}.${childReference.chapter}.${childReference.verse}`
+                      ]
+                    ? {}
+                    : { display: "none" }
+              }
+            >
+              {rdLoading && (
+                <>
+                  <div class="loading-section" style={{ height: "1rem" }}></div>
+                  <div class="loading-section"></div>
+                </>
+              )}
               {!rdLoading &&
                 referenceData[
                   `${childReference.book}.${childReference.chapter}.${childReference.verse}`
                 ] && (
-                  <div class="reference-content">
-                    <span>
-                      {
-                        referenceData[
-                          `${childReference.book}.${childReference.chapter}.${childReference.verse}`
-                        ]?.content
+                  <>
+                    <span
+                      onClick={() =>
+                        handleRedirect({
+                          reference: childReference,
+                        })
                       }
-                    </span>
-                    {referenceData[
-                      `${childReference.book}.${childReference.chapter}.${childReference.verse}`
-                    ]?.references?.map((subRef) => {
-                      return (
-                        <span
-                          onClick={() => {
-                            showVerse({ reference: subRef });
-                          }}
-                          class="subRef"
-                        >{`(${subRef.book} ${subRef.chapter}:${subRef.verse}) `}</span>
-                      );
-                    })}
-                  </div>
+                      class="reference-title"
+                    >{`${referenceData[`${childReference.book}.${childReference.chapter}.${childReference.verse}`]?.bookName} ${childReference.chapter}:${childReference.verse}${childReference?.endVerse ? `-${childReference.endVerse}` : ""}`}</span>
+                    <div class="reference-content">
+                      <span>
+                        {
+                          referenceData[
+                            `${childReference.book}.${childReference.chapter}.${childReference.verse}`
+                          ]?.content
+                        }
+                      </span>
+                      {referenceData[
+                        `${childReference.book}.${childReference.chapter}.${childReference.verse}`
+                      ]?.references?.map((subRef) => {
+                        return (
+                          <span
+                            onClick={(e) => {
+                              if (masks?.showVerse) {
+                                clearTimeout(masks.showVerse);
+                              }
+                              showVerse({
+                                reference: subRef,
+                                mouseEvent: e,
+                                baseUrl: currentReference.baseUrl,
+                                translation: currentReference.translation,
+                              });
+                            }}
+                            onMouseEnter={(e) => {
+                              if (masks?.showVerse) {
+                                clearTimeout(masks.showVerse);
+                              } else {
+                                const showVerseTimeout = setTimeout(() => {
+                                  showVerse({
+                                    reference: subRef,
+                                    mouseEvent: e,
+                                    baseUrl: currentReference.baseUrl,
+                                    translation: currentReference.translation,
+                                  });
+                                }, 500);
+                                setTagMask(
+                                  thisBot,
+                                  `showVerse`,
+                                  showVerseTimeout,
+                                  "local"
+                                );
+                              }
+                            }}
+                            onMouseLeave={() => {
+                              if (masks?.showVerse) {
+                                clearTimeout(masks.showVerse);
+                                setTagMask(thisBot, `showVerse`, null, "local");
+                              }
+                            }}
+                            class="subRef"
+                          >{`(${subRef.book} ${subRef.chapter}:${subRef.verse}) `}</span>
+                        );
+                      })}
+                    </div>
+                  </>
                 )}
             </div>
           );

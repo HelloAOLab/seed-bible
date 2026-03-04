@@ -105,14 +105,14 @@ export function SideBarProvider({ children }) {
     };
   }, []);
 
-  function openPopupSettings(props, wait, popupComponent) {
+  function openPopupSettings(props, wait, popupComponent, position) {
     setWait(wait);
     if (popupSettings) {
       closePopupSettings();
       return;
     }
-    const pointerX = mousePosition.x;
-    const pointerY = mousePosition.y;
+    const pointerX = position ? position.x : mousePosition.x;
+    const pointerY = position ? position.y : mousePosition.y;
 
     // Get item count from props to determine if we should adjust position
     const itemCount = props?.items?.length ?? 0;

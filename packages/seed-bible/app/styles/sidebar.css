@@ -287,8 +287,8 @@
 }
 
 .addIcon {
-  background-color: var(--addButtonBackground, var(--primaryButton)) !important;
-  color: var(--addButtonIcon, var(--primaryButtonColor)) !important;
+  background-color: var(--addButtonIcon) !important;
+  color: var(--primaryColor) !important;
   border-radius: 5px;
   cursor: pointer;
 }

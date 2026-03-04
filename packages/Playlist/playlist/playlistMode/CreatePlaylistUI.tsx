@@ -266,14 +266,14 @@ const CreatePlaylistUI = (props: any) => {
 
   const [playList, setPlaylist] = useState(G[`${id}currentPlaylist`] || []);
 
-  const filteredPlaylist = useMemo(() => {
-    const q = query.toLocaleLowerCase();
-    return playLists.filter((ele: any) => {
-      const name = ele.name?.toLocaleLowerCase();
-      const des = ele.description?.toLocaleLowerCase();
-      return name.includes(q) || des.includes(q);
-    });
-  }, [query, playLists]);
+  // const filteredPlaylist = useMemo(() => {
+  //   const q = query.toLocaleLowerCase();
+  //   return playLists.filter((ele: any) => {
+  //     const name = ele.name?.toLocaleLowerCase();
+  //     const des = ele.description?.toLocaleLowerCase();
+  //     return name.includes(q) || des.includes(q);
+  //   });
+  // }, [query, playLists]);
 
   const editPlaylistData = (
     idRec: string,
@@ -1375,7 +1375,10 @@ const CreatePlaylistUI = (props: any) => {
                 {!name ? t("untitled") : name}
                 <span
                   class="material-symbols-outlined"
-                  style={{ color: "#D36433" }}
+                  style={{
+                    color: "var(--secondaryColor)",
+                    marginLeft: "0.25rem",
+                  }}
                 >
                   edit
                 </span>
@@ -1389,6 +1392,7 @@ const CreatePlaylistUI = (props: any) => {
                   marginRight: "0.5rem",
                 }}
                 onClick={(e) => {
+                  G[`${id}currentPlaylist`] = [];
                   if (setTab) setTab("discover");
                 }}
               >

@@ -9,8 +9,6 @@ const { useState, useLayoutEffect, useMemo, useRef, useCallback } = os.appHooks;
 const G = globalThis as any;
 const { Modal, Button, ButtonsCover } = G.Components;
 
-const GetLabel = G.GetLabel;
-
 const ShowPersonVideoOverlay = await thisBot.ShowPersonVideoOverlay();
 
 const Discover = await thisBot.Discover();
@@ -22,6 +20,7 @@ const ShowPlayingContentAnnotation =
   await thisBot.ShowPlayingContentAnnotation();
 const EditRichText = await thisBot.EditRichText();
 const EditAttachment = await thisBot.EditAttachment();
+const AddToPlaylist = await thisBot.AddToPlaylist();
 
 const bibleVizUtils = getBot("system", "bibleVizUtils.main");
 
@@ -32,6 +31,8 @@ if (bibleVizUtils) {
 
 const Playlist = () => {
   const IsPlaylistPlaying = G.IsPlaylistPlaying;
+
+  const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
 
   const [createOptions, setCreateOptions] = useState(false);
   const showPlaylistPosition = useRef(
@@ -46,6 +47,8 @@ const Playlist = () => {
   const [stopPlaylistModal, setStopPlaylistModal] = useState(false);
 
   G.StopPlayingPlaylistModal = setStopPlaylistModal;
+
+  const GetLabel = useMemo(() => G.GetLabel, []);
 
   const [showVideoOverlay, setShowVideoOverlay] = useState(false);
 
@@ -392,7 +395,7 @@ const Playlist = () => {
       (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
       G.MOBILE_VIEWPORT_THRESHOLD;
     if (isMobile) {
-      G.SetPlaylistForcedHeight && G.SetPlaylistForcedHeight(1);
+      G.SetPlaylistForcedHeight && G.SetPlaylistForcedHeight(2);
     }
     if (IsPlaylistPlaying) {
       thisBot.Playlistplaying({
@@ -405,6 +408,7 @@ const Playlist = () => {
     G.CloseVideoOverlay = () => setShowVideoOverlay(false);
     G.SetEditAnnoData = setEditAnnoData;
     G.SetAnnotationData = setAnnotationData;
+    G.SetShowAddToPlaylist = setShowAddToPlaylist;
     G.SetTab = setTab;
     G.SetEditRichText = setEditRichText;
     G.SetEditAttachmentItem = setEditAttachmentItem;
@@ -463,6 +467,7 @@ const Playlist = () => {
       G.SetVideoSrc && G.SetVideoSrc(null);
       G.SetAnnotationData = null;
       G.SetPlaylistForforcedHeight && G.SetPlaylistForforcedHeight(0);
+      G.SetShowAddToPlaylist = null;
     };
   }, []);
 
@@ -500,6 +505,14 @@ const Playlist = () => {
     }
     setCreateOptions(false);
   };
+
+  const closePlaylist = () => {
+    thisBot.CloseSelf({ force: true });
+  };
+
+  const isMobile =
+    (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
+    G.MOBILE_VIEWPORT_THRESHOLD;
 
   return (
     <>
@@ -639,11 +652,14 @@ const Playlist = () => {
           <div
             onClick={() => setCreateOptions(false)}
             style={{
-              width: "210px",
+              ...showPlaylistPosition.current,
+              width: isMobile ? "165px" : "210px",
               maxHeight: "105px",
               left: "none",
-              right: "-12rem",
+              right: isMobile ? "-9rem" : "-12rem",
               padding: "0.5rem",
+              top: !isMobile ? "3rem" : "none",
+              bottom: !isMobile ? "none" : "11rem",
               marginTop: 45,
             }}
             className="overlay linked-item-custom"
@@ -821,6 +837,12 @@ const Playlist = () => {
                               className={`tabs-playlist-item`}
                             >
                               <span
+                                onClick={closePlaylist}
+                                className="show-on-mobile material-symbols-outlined"
+                              >
+                                keyboard_backspace
+                              </span>
+                              <span
                                 className="material-symbols-outlined unfollow"
                                 style={{ fontSize: "20px" }}
                               >
@@ -829,7 +851,7 @@ const Playlist = () => {
                               <span>
                                 {label}{" "}
                                 <GetLabel
-                                  widthCompare={264}
+                                  widthCompare={isMobile ? 360 : 264}
                                   value={value}
                                   currentOpenedBook={currentOpenedBook}
                                 />
@@ -842,7 +864,7 @@ const Playlist = () => {
                             setCreateOptions(true);
                           }}
                           secondary
-                          exClass="create-button"
+                          exClass="create-button show-on-desktop"
                         >
                           <span
                             style={{ color: "white" }}
@@ -851,6 +873,20 @@ const Playlist = () => {
                             add
                           </span>
                           {t("create")}
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setCreateOptions(true);
+                          }}
+                          secondary
+                          exClass="create-button-mobile show-on-mobile"
+                        >
+                          <span
+                            style={{ color: "white" }}
+                            class={`material-symbols-outlined ${createOptions ? "rotate-90" : ""}`}
+                          >
+                            add
+                          </span>
                         </Button>
                       </div>
                     )}
@@ -959,6 +995,12 @@ const Playlist = () => {
                 </div>
               )}
             </div>
+            {showAddToPlaylist && (
+              <AddToPlaylist
+                id="default"
+                onClose={() => setShowAddToPlaylist(false)}
+              />
+            )}
           </div>
         </ProjectProvider>
         {!!isLayers && !playingPlaylist && !editData.id && (

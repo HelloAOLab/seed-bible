@@ -48,6 +48,7 @@
   "billingServices": "Billing & services",
   "permissions": "Permissions",
   "notifications": "Notifications",
+  "keepScreenAwake": "Keep screen awake",
   "subscriptions": "Subscriptions",
   "createProfile": "Create profile",
   "openAccountSettings": "Open account settings",
@@ -224,6 +225,7 @@
   "fontStyleDesc": "Change font style",
   "fontSizeDesc": "Change font size",
   "undoDesc": "Undo last action",
+  "undoActionSuccessfull": "Undo action successful.",
   "redoDesc": "Redo last action",
   "clearFormattingDesc": "Clear all formatting",
   "printDesc": "Print document",
@@ -292,6 +294,8 @@
   "from": "From",
   "annotate": "Annotate",
   "addToQueue": "Add to queue",
+  "addToPlaylist": "Add to playlist",
+  "addToNew": "Add to new",
   "bookmark": "Bookmark",
   "unbookmark": "Unbookmark",
   "search_tags": "Search tags",
@@ -371,6 +375,8 @@
   "errorFetchingAnnotations": "Error fetching annotations",
   "cannotChangeWhileBeingInEditMode": "Cannot change while being in edit mode!",
   "invalidLinkFormat": "Invalid Link format!",
+  "itemsAddedToPlaylistSuccessfully": "Items added to playlist successfully.",
+  "headingAddedToPlaylist": "{{heading}} added to playlist",
   "selectAPlaylistToAnnotate": "Select a playlist to annotate",
   "dragDropOrClickToBrowse": "Drag drop or Click to browse",
   "attachmentNameMissing": "Attachment Name missing!",
@@ -678,5 +684,7 @@
   "pentateuch": "Pentateuch",
   "historical": "Historical",
   "poetic": "Poetic",
-  "prophetic": "Prophetic"
+  "prophetic": "Prophetic",
+  "showNavArrows": "Show navigation arrows",
+  "hideNavArrows": "Hide navigation arrows"
 }

@@ -1,3 +1,4 @@
+const G = globalThis as any;
 const TogglePlaylistHeight = () => {
   const isMobile = (window?.innerWidth || gridPortalBot.tags.pixelWidth) < 766;
   return isMobile ? (

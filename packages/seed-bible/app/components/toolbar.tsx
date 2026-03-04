@@ -6,7 +6,7 @@ import { useMouseMove } from "app.hooks.mouseMove";
 import SurroundingDivs from "app.components.surroundingDivs";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useTabsContext } from "app.hooks.tabs";
-import { BurgerMenuIcon } from "app.components.icons";
+import { BurgerMenuIcon, MoreIcon, TabsIcon } from "app.components.icons";
 
 // Simple, single-toolbar component (no edit layer). Main logic unchanged.
 export function Toolbar() {
@@ -26,6 +26,7 @@ export function Toolbar() {
     setTools,
     setCanvasTools,
     setMapTools,
+    showNavArrows,
   } = useBibleContext();
 
   const {
@@ -34,7 +35,11 @@ export function Toolbar() {
     isMobile,
     setSidebarWidth,
     setOpenOnMobile,
+    setCollapsed,
+    setSideBarMode,
   } = useSideBarContext();
+
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const { setIsDragging, isDragging, setElement } = useMouseMove();
   const {
     activeSpace,
@@ -142,6 +147,8 @@ export function Toolbar() {
     return () => window.removeEventListener("contextmenu", handleContextMenu);
   }, []);
 
+  const moreTools = tools ? tools.filter((t) => t?.active !== false) : [];
+
   if (!showToolbar) return <></>;
 
   return (
@@ -153,6 +160,121 @@ export function Toolbar() {
 
       <div className="toolbar-container-1 boundElements">
         <SurroundingDivs action={handleMouseLeaveContainer}>
+          {/* Mobile Bottom Navbar */}
+          <div className="mobile-bottom-navbar">
+            <button
+              style={{ display: showNavArrows ? "" : "none" }}
+              className="mobile-navbar-arrow left-arrow"
+              onClick={() =>
+                isRTL
+                  ? navFunctions?.openNextChapter()
+                  : navFunctions?.openPrevChapter()
+              }
+              title="Previous"
+              aria-label="Previous chapter"
+            >
+              <span className="material-symbols-outlined">chevron_left</span>
+            </button>
+
+            <button
+              className="mobile-navbar-btn today-btn"
+              title="Today"
+              aria-label="Today"
+            >
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  os.log("Opening mobile settings", setOpenOnMobile);
+                  setOpenOnMobile(true);
+                  setSidebarWidth(280);
+                  setCollapsed(false);
+                  setSideBarMode("default");
+                }}
+                className="mobile-btn-content"
+              >
+                <TabsIcon color="var(--text1)" />
+                <span className="mobile-btn-label">Tabs</span>
+              </div>
+            </button>
+
+            <div
+              onClick={() => {
+                globalThis.setOpenSidebar((prev) => !prev);
+                // if (globalThis.setOpenSidebar) {
+                //   globalThis.setSelectingTranslation &&
+                //     globalThis.setSelectingTranslation(false);
+                // }
+              }}
+              className="mobile-center-logo"
+            >
+              <div className="logo-container">
+                <img
+                  src="https://res.cloudinary.com/dacw0qnpr/image/upload/v1759916122/Seed_Bible_-_All_Logos_2025-25_vvawwg.png"
+                  alt="Seed Bible"
+                  className="seed-bible-logo"
+                />
+              </div>
+            </div>
+
+            <div className="more-btn-wrapper">
+              {showMoreMenu && (
+                <div className="more-menu-popup">
+                  {moreTools.map((tool, i) => (
+                    <button
+                      key={i}
+                      className="more-menu-item"
+                      onClick={() => {
+                        tool?.onClick?.();
+                        setShowMoreMenu(false);
+                      }}
+                    >
+                      {tool?.isImg ? (
+                        <img
+                          src={tool.icon}
+                          style={{ width: "20px" }}
+                          alt={tool.label}
+                        />
+                      ) : (
+                        <span className="material-symbols-outlined">
+                          {tool?.icon}
+                        </span>
+                      )}
+                      <span className="more-menu-item-label">
+                        {tool?.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button
+                className="mobile-navbar-btn more-btn"
+                title="More"
+                aria-label="More"
+                onClick={() => setShowMoreMenu((prev) => !prev)}
+              >
+                <div className="mobile-btn-content">
+                  <MoreIcon color="var(--text1)" />
+                  <span className="mobile-btn-label">More</span>
+                </div>
+              </button>
+            </div>
+
+            <button
+              style={{ display: showNavArrows ? "" : "none" }}
+              className="mobile-navbar-arrow right-arrow"
+              onClick={() =>
+                isRTL
+                  ? navFunctions?.openPrevChapter()
+                  : navFunctions?.openNextChapter()
+              }
+              title="Next"
+              aria-label="Next chapter"
+            >
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+
+          {/* Desktop Toolbar */}
           <div
             onMouseUp={handleMouseUp}
             className={`toolbar-1 boundElements ${mounted ? "mounted" : ""}`}
@@ -264,6 +386,61 @@ export function Toolbar() {
         <style>{getStyleOf("toolbar.css")}</style>
       </div>
       <style>{`
+                .more-btn-wrapper {
+                    position: relative;
+                }
+
+                .more-menu-popup {
+                    position: absolute;
+                    bottom: calc(100% + 8px);
+                    right: 0;
+                    background: var(--bg1, #fff);
+                    border: 1px solid var(--border1, #e0e0e0);
+                    border-radius: 12px;
+                    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+                    min-width: 180px;
+                    overflow: hidden;
+                    z-index: 1000;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .more-menu-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 12px 16px;
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    width: 100%;
+                    text-align: left;
+                    color: var(--text1);
+                    font-size: 14px;
+                    transition: background 0.15s;
+                }
+
+                .more-menu-item:hover {
+                    background: var(--hover1, rgba(0,0,0,0.06));
+                }
+
+                .more-menu-item .material-symbols-outlined {
+                    font-size: 20px;
+                    flex-shrink: 0;
+                }
+
+                .more-menu-item-label {
+                    flex: 1;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .mobile-navbar-btn svg {
+                    width: 24px;
+                    height: 24px;
+                }
+                
                 .toolbar-edit-toggle {
                     margin-left: auto;
                 }

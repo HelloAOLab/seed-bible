@@ -6,6 +6,7 @@ import {
   AddIcon,
   MinusIcon,
 } from "introduction.searchBar.Icons";
+
 import type { TranslationInterface } from "introduction.searchBar.Interfaces";
 import { getTranslations } from "app.hooks.i18n";
 

@@ -7,7 +7,12 @@
         "removeSpaces": true,
         "removeEditMode": true,
         "removeAccountOptions": true,
-        "removeBibleStack": true
+        "removeBibleStack": true,
+        "removeJoinSession": true
+      },
+      "pageSettings": {
+        "disableHighlighting": true,
+        "removeAiAgent": "true"
       },
       "onlineUsers": {
         "enabled": true,
@@ -28,14 +33,17 @@
           "showDivider": false,
           "items": {
             "theme": { "enabled": true },
-            "notifications": { "enabled": true }
+            "notifications": { "enabled": true },
+            "keepScreenAwake": { "enabled": true }
           }
         },
         "preferences": {
           "enabled": true,
           "showDivider": false,
           "items": {
-            "language": { "enabled": true }
+            "language": { "enabled": true },
+            "reportBug": { "enabled": true },
+            "help": { "enabled": true }
           }
         }
       }
@@ -215,14 +223,17 @@
           "showDivider": false,
           "items": {
             "theme": { "enabled": true },
-            "notifications": { "enabled": true }
+            "notifications": { "enabled": true },
+            "keepScreenAwake": { "enabled": true }
           }
         },
         "preferences": {
           "enabled": true,
           "showDivider": false,
           "items": {
-            "language": { "enabled": true }
+            "language": { "enabled": true },
+            "reportBug": { "enabled": true },
+            "help": { "enabled": true }
           }
         }
       }
@@ -285,10 +296,12 @@
               "enabled": true,
               "showDivider": false,
               "items": {
+                "theme": { "enabled": true },
                 "accountSettings": { "enabled": true },
                 "billing": { "enabled": true },
                 "permissions": { "enabled": true },
-                "notifications": { "enabled": true }
+                "notifications": { "enabled": true },
+                "keepScreenAwake": { "enabled": true }
               }
             },
             "subscriptionsSection": {
@@ -303,7 +316,9 @@
               "showDivider": true,
               "items": {
                 "language": { "enabled": true },
-                "reseedToggle": { "enabled": true }
+                "reseedToggle": { "enabled": true },
+                "reportBug": { "enabled": true },
+                "help": { "enabled": true }
               }
             }
           }

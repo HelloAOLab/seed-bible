@@ -846,7 +846,7 @@
   background-color: var(--iconColor);
   color: var(--pageBackground);
   text-align: center;
-  z-index: 1;
+  z-index: 10;
   border-radius: 12px;
   position: fixed;
   padding: 12px;
@@ -858,6 +858,15 @@
   gap: 8px;
   white-space: nowrap;
   font-size: 14px;
+  transition:
+    color 0.3s ease,
+    background-color 0.3s ease;
+  box-sizing: border-box;
+  scrollbar-width: none;
+}
+
+.tooltip *:not(.material-symbols-outlined) {
+  font-family: "Satoshi";
 }
 
 .tooltip.tooltip-up {
@@ -867,26 +876,6 @@
 .tooltip.tooltip-down {
   transform: translate(-50%, 8px);
 }
-
-/* .tooltip::after {
-  content: " ";
-  position: absolute;
-  left: var(--arrowLeft);
-  transform: translateX(-50%);
-  border-width: 5px;
-  border-style: solid;
-  pointer-events: none;
-} */
-
-/* .tooltip.tooltip-up::after {
-  top: 100%;
-  border-color: black transparent transparent transparent;
-}
-
-.tooltip.tooltip-down::after {
-  bottom: 100%;
-  border-color: transparent transparent black transparent;
-} */
 
 .tooltip > span {
   width: 100%;

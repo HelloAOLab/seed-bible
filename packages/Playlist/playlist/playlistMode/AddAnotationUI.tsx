@@ -603,7 +603,6 @@ const AddAnotationUI = (props: any) => {
       }
       setIsEditAddress(false);
       G.SetEditAnnoData?.(null);
-      G.AddAnotationUI = false;
     };
   }, []);
 
@@ -1992,6 +1991,7 @@ const AddAnotationUI = (props: any) => {
                   setTextHTML(null);
                   G[`${id}currentPlaylist`] = [];
                   if (setTab) setTab("discover");
+                  G.AddAnotationUI = false;
                 }}
               >
                 {t("cancel")}

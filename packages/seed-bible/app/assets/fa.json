@@ -140,5 +140,12 @@
   "pentateuch": "پنج‌گانه موسی",
   "historical": "تاریخی",
   "poetic": "شعری",
-  "prophetic": "نبوی"
+  "prophetic": "نبوی",
+  "bookmarkUpdatedSuccessfully": "نشانک با موفقیت به‌روزرسانی شد.",
+  "failedToUpdateBookmark": "به‌روزرسانی نشانک ناموفق بود. لطفاً دوباره تلاش کنید.",
+  "undoActionSuccessfull": "عملیات بازگردانی با موفقیت انجام شد.",
+  "headingAddedToPlaylist": "{{heading}} به لیست اضافه شد",
+  "addToPlaylist": "افزودن به لیست",
+  "addToNew": "افزودن به جدید",
+  "itemsAddedToPlaylistSuccessfully": "آیتم‌ها با موفقیت به لیست اضافه شدند."
 }

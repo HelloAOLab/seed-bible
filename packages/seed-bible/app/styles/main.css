@@ -12,8 +12,9 @@ body {
 }
 
 .material-symbols-outlined {
-  color: var(--pageTextColor) !important;
+  color: var(--pageTextColor);
 }
+
 .coloredIcon,
 svg,
 .toolbar-button img {
@@ -55,6 +56,12 @@ svg path {
     z-index: 1000;
     height: 100dvh;
     background-color: var(--panelBackground);
+    width: 100% !important;
+  }
+
+  .floatsidebar > * {
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   .sidebar-1 {
@@ -69,8 +76,11 @@ svg path {
   }
 
   .profileSection {
-    left: -300px !important;
+    left: -100% !important;
     bottom: 0px !important;
+    width: 100% !important;
+    justify-content: center !important;
+    gap: 42px !important;
   }
 
   .floatsidebar .open,

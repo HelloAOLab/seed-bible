@@ -47,7 +47,7 @@ const GetLabel = (props: any) => {
     <span ref={containerRef}>
       {value === "discover"
         ? `${
-            !isMobile ? book : LowerCaseBookMapping[book?.toLocaleLowerCase()]
+            isMobile ? book : LowerCaseBookMapping[book?.toLocaleLowerCase()]
           } ${currentOpenedBook?.chapter ? `- ${currentOpenedBook?.chapter}` : ""}${verse}`
         : ""}
     </span>

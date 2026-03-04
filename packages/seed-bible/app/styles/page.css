@@ -8,7 +8,11 @@
   border-radius: 12px;
   user-select: text;
 }
-
+@media (max-width: 480px) {
+  .pageContainer {
+    padding: 0;
+  }
+}
 .no-select .ProseMirror,
 .no-select .ProseMirror *,
 .no-select,
@@ -48,7 +52,12 @@
   align-items: center;
   flex-direction: row;
 }
-
+.mobile-header-bookmark {
+  position: absolute;
+  left: calc(100% - 48px);
+  top: 64px;
+  /* display: none; */
+}
 .scroller > div:first-child {
   /* min-height: 100px; */
   /* height: 100px !important;  */

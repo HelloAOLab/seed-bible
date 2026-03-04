@@ -4,6 +4,9 @@ export interface ReferenceInterface {
   verse: number;
   votes: number;
   endVerse?: number;
+  baseUrl: string;
+  translation: string;
+  bookName?: string;
 }
 
 export interface ReferencesInterface {
@@ -11,6 +14,9 @@ export interface ReferencesInterface {
   book: string;
   chapter: number;
   verse: number;
+  baseUrl: string;
+  translation: string;
+  bookName?: string;
 }
 
 export interface BookReference {

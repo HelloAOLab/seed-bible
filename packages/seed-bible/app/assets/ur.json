@@ -140,5 +140,12 @@
   "pentateuch": "توریت کی پانچ کتابیں",
   "historical": "تاریخی",
   "poetic": "شاعرانہ",
-  "prophetic": "نبوی"
+  "prophetic": "نبوی",
+  "bookmarkUpdatedSuccessfully": "بک مارک کامیابی سے اپ ڈیٹ ہو گیا۔",
+  "failedToUpdateBookmark": "بک مارک اپ ڈیٹ کرنے میں ناکام۔ براہ کرم دوبارہ کوشش کریں۔",
+  "undoActionSuccessfull": "واپس لینے کا عمل کامیاب۔",
+  "headingAddedToPlaylist": "{{heading}} پلے لسٹ میں شامل ہو گیا",
+  "addToPlaylist": "پلے لسٹ میں شامل کریں",
+  "addToNew": "نئی میں شامل کریں",
+  "itemsAddedToPlaylistSuccessfully": "آئٹمز پلے لسٹ میں کامیابی سے شامل ہو گئے۔"
 }

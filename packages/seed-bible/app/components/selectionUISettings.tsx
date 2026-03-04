@@ -25,9 +25,6 @@ const SelectionUISettings = () => {
   const [showIconText, setShowIconText] = useState(
     savedSettings.showIconText !== undefined ? savedSettings.showIconText : true
   );
-  const [copyVerseMode, setCopyVerseMode] = useState(
-    savedSettings.copyVerseMode || "withReference"
-  );
 
   // Save settings when they change
   useEffect(() => {
@@ -35,7 +32,6 @@ const SelectionUISettings = () => {
       showSelectedItems,
       showHighlightColors,
       showIconText,
-      copyVerseMode,
     };
     updateSpace(activeSpace, { selectionUIBehavior: settings });
 
@@ -44,13 +40,7 @@ const SelectionUISettings = () => {
       globalThis.selectionUIBehavior = {};
     }
     globalThis.selectionUIBehavior[activeSpace] = settings;
-  }, [
-    showSelectedItems,
-    showHighlightColors,
-    showIconText,
-    copyVerseMode,
-    activeSpace,
-  ]);
+  }, [showSelectedItems, showHighlightColors, showIconText, activeSpace]);
 
   // Styles
   const containerStyle = {
@@ -143,45 +133,6 @@ const SelectionUISettings = () => {
     marginBottom: "12px",
   };
 
-  const radioContainerStyle = {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  };
-
-  const radioRowStyle = {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    cursor: "pointer",
-  };
-
-  const radioCircleStyle = (isSelected) => ({
-    width: "18px",
-    height: "18px",
-    borderRadius: "50%",
-    border: isSelected
-      ? "2px solid var(--spaceSelection)"
-      : "2px solid #CCCCCD",
-    backgroundColor: isSelected ? "var(--spaceSelection)" : "transparent",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "all 0.2s ease",
-  });
-
-  const radioInnerStyle = {
-    width: "8px",
-    height: "8px",
-    borderRadius: "50%",
-    backgroundColor: "white",
-  };
-
-  const radioLabelStyle = {
-    fontSize: "14px",
-    color: "var(--text1)",
-  };
-
   return (
     <div style={containerStyle}>
       <div className="routerOptions">
@@ -238,31 +189,6 @@ const SelectionUISettings = () => {
           onClick={() => setShowIconText(!showIconText)}
         >
           <div style={toggleCircleStyle(showIconText)}></div>
-        </div>
-      </div>
-
-      {/* Radio: Copy verse mode */}
-      <div style={sectionTitleStyle}>{t("copyVerse")}</div>
-      <div style={radioContainerStyle}>
-        <div
-          style={radioRowStyle}
-          onClick={() => setCopyVerseMode("withReference")}
-        >
-          <div style={radioCircleStyle(copyVerseMode === "withReference")}>
-            {copyVerseMode === "withReference" && (
-              <div style={radioInnerStyle}></div>
-            )}
-          </div>
-          <span style={radioLabelStyle}>{t("verseTextWithReference")}</span>
-        </div>
-
-        <div style={radioRowStyle} onClick={() => setCopyVerseMode("onlyText")}>
-          <div style={radioCircleStyle(copyVerseMode === "onlyText")}>
-            {copyVerseMode === "onlyText" && (
-              <div style={radioInnerStyle}></div>
-            )}
-          </div>
-          <span style={radioLabelStyle}>{t("onlyVerseText")}</span>
         </div>
       </div>
     </div>

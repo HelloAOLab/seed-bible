@@ -160,7 +160,7 @@ const builtinDefaultTheme = {
   unselectedSpaceColor: "#E1E3EA",
   spaceNameText: "#333333",
   addButtonBackground: "#E07B4C",
-  addButtonIcon: "#FFFFFF",
+  addButtonIcon: "#E07B4C",
   selectPanelIcon: "#333333",
   openCloseMenuIcon: "#333333",
   moreIcon: "#666666",
@@ -325,7 +325,7 @@ const defaultThemes = [
       unselectedSpaceColor: "#666666",
       spaceNameText: "#FFFFFF",
       addButtonBackground: "#404040",
-      addButtonIcon: "#5A67D8",
+      addButtonIcon: "#FFFFFF",
       selectPanelIcon: "#FFFFFF",
       openCloseMenuIcon: "#FFFFFF",
       moreIcon: "#AAAAAA",
@@ -481,7 +481,7 @@ const defaultThemes = [
       unselectedSpaceColor: "#DDD6FE",
       spaceNameText: "#4C1D95",
       addButtonBackground: "transparent",
-      addButtonIcon: "#7C3AED",
+      addButtonIcon: "#E07B4C",
       selectPanelIcon: "#4C1D95",
       openCloseMenuIcon: "#4C1D95",
       moreIcon: "#6B7280",
@@ -635,7 +635,7 @@ const defaultThemes = [
       unselectedSpaceColor: "#A7F3D0",
       spaceNameText: "#064E3B",
       addButtonBackground: "transparent",
-      addButtonIcon: "#059669",
+      addButtonIcon: "#E07B4C",
       selectPanelIcon: "#064E3B",
       openCloseMenuIcon: "#064E3B",
       moreIcon: "#6B7280",
@@ -789,7 +789,7 @@ const defaultThemes = [
       unselectedSpaceColor: "#BAE6FD",
       spaceNameText: "#0C4A6E",
       addButtonBackground: "transparent",
-      addButtonIcon: "#0284C7",
+      addButtonIcon: "#E07B4C",
       selectPanelIcon: "#0C4A6E",
       openCloseMenuIcon: "#0C4A6E",
       moreIcon: "#6B7280",
@@ -943,7 +943,7 @@ const defaultThemes = [
       unselectedSpaceColor: "#FDE68A",
       spaceNameText: "#78350F",
       addButtonBackground: "transparent",
-      addButtonIcon: "#D97706",
+      addButtonIcon: "#E07B4C",
       selectPanelIcon: "#78350F",
       openCloseMenuIcon: "#78350F",
       moreIcon: "#6B7280",
@@ -5791,6 +5791,8 @@ const SettingsUI = () => {
     showVerses,
     showFootnotes,
     setShowFootnotes,
+    showNavArrows,
+    setShowNavArrows,
   } = useBibleContext();
   const handleSurpriseMe = () => {
     const randomCombo =
@@ -6454,6 +6456,19 @@ const SettingsUI = () => {
           }
         >
           <div style={toggleCircleStyle(showFootnotes[activeSpace])}></div>
+        </div>
+      </div>
+
+      <div style={toggleRowStyle}>
+        <div style={toggleLabelStyle}>
+          {t(showNavArrows ? "hideNavArrows" : "showNavArrows")}
+        </div>
+
+        <div
+          style={toggleStyle(showNavArrows)}
+          onClick={() => setShowNavArrows((prev) => !prev)}
+        >
+          <div style={toggleCircleStyle(showNavArrows)}></div>
         </div>
       </div>
 
