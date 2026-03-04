@@ -3,6 +3,7 @@ import path from "node:path";
 import {
   BinaryExpression,
   Node,
+  ParameterDeclaration,
   Project,
   SyntaxKind,
   TypeFormatFlags,
@@ -199,10 +200,15 @@ function containsType(existingType: string, candidateType: string): boolean {
   return existing.includes(candidate);
 }
 
+function isNeverLikeType(part: string): boolean {
+  const stripped = stripOuterParens(part);
+  return stripped === "never" || stripped === "never[]";
+}
+
 function formatUnion(existingType: string, addedType: string): string {
   const parts = [...splitUnionTopLevel(existingType), addedType]
     .map((part) => part.trim())
-    .filter(Boolean)
+    .filter((part) => part.length > 0 && !isNeverLikeType(part))
     .map((part) => {
       if (/^\(.*\)$/.test(part)) {
         return part;
@@ -211,6 +217,15 @@ function formatUnion(existingType: string, addedType: string): string {
     });
 
   const deduped = [...new Set(parts)];
+
+  if (deduped.length === 0) {
+    return "never";
+  }
+
+  if (deduped.length === 1) {
+    return stripOuterParens(deduped[0]!);
+  }
+
   return deduped.join(" | ");
 }
 
@@ -241,6 +256,96 @@ function getTargetDeclarationFromNode(
   return null;
 }
 
+function resolveParameterFromFunctionLike(
+  declarationNode: Node,
+  parameterIndex: number
+): ParameterDeclaration | null {
+  if (
+    Node.isFunctionDeclaration(declarationNode) ||
+    Node.isFunctionExpression(declarationNode) ||
+    Node.isArrowFunction(declarationNode) ||
+    Node.isMethodDeclaration(declarationNode)
+  ) {
+    return declarationNode.getParameters()[parameterIndex] ?? null;
+  }
+
+  if (Node.isVariableDeclaration(declarationNode)) {
+    const initializer = declarationNode.getInitializer();
+    if (
+      initializer &&
+      (Node.isFunctionExpression(initializer) ||
+        Node.isArrowFunction(initializer))
+    ) {
+      return initializer.getParameters()[parameterIndex] ?? null;
+    }
+  }
+
+  return null;
+}
+
+function getTargetParameterFromCallArgument(
+  node: Node
+): { targetParameter: ParameterDeclaration; sourceExpression: Node } | null {
+  let current: Node | undefined = node;
+
+  while (current) {
+    const parent: Node | undefined = current.getParent();
+    if (!parent) {
+      return null;
+    }
+
+    const isCallLike =
+      Node.isCallExpression(parent) || Node.isNewExpression(parent);
+    if (isCallLike) {
+      const args = parent.getArguments();
+      const argIndex = args.findIndex((arg) => arg === current);
+
+      if (argIndex >= 0) {
+        const expression = parent.getExpression();
+        let declarationNode: Node | undefined;
+
+        if (Node.isIdentifier(expression)) {
+          declarationNode = expression
+            .getDefinitions()[0]
+            ?.getDeclarationNode();
+        } else if (Node.isPropertyAccessExpression(expression)) {
+          declarationNode = expression
+            .getNameNode()
+            .getDefinitions()[0]
+            ?.getDeclarationNode();
+        }
+
+        if (!declarationNode) {
+          return null;
+        }
+
+        const sourceArgument = args[argIndex];
+        if (!sourceArgument) {
+          return null;
+        }
+
+        const targetParameter = resolveParameterFromFunctionLike(
+          declarationNode,
+          argIndex
+        );
+
+        if (!targetParameter) {
+          return null;
+        }
+
+        return {
+          targetParameter,
+          sourceExpression: sourceArgument,
+        };
+      }
+    }
+
+    current = parent;
+  }
+
+  return null;
+}
+
 function shouldSkipDeclaration(declaration: VariableDeclaration): boolean {
   const sourcePath = declaration
     .getSourceFile()
@@ -260,6 +365,14 @@ function shouldSkipDeclaration(declaration: VariableDeclaration): boolean {
   }
 
   return false;
+}
+
+function shouldSkipParameter(declaration: ParameterDeclaration): boolean {
+  const sourcePath = declaration
+    .getSourceFile()
+    .getFilePath()
+    .replace(/\\/g, "/");
+  return sourcePath.includes("/node_modules/");
 }
 
 async function runFix2322() {
@@ -303,24 +416,32 @@ async function runFix2322() {
       SyntaxKind.VariableDeclaration
     );
 
-    let targetDeclaration: VariableDeclaration | null = null;
+    let targetDeclaration: VariableDeclaration | ParameterDeclaration | null =
+      null;
     let sourceExpression: Node | null = null;
 
     if (variableDeclaration && variableDeclaration.getInitializer()) {
       targetDeclaration = variableDeclaration;
       sourceExpression = variableDeclaration.getInitializer() ?? null;
     } else {
-      const assignment = getNearestAssignmentExpression(node);
-      if (!assignment) {
-        skippedItems.push({
-          ...issueBase,
-          reason: "Diagnostic is not in a supported assignment context.",
-        });
-        continue;
-      }
+      const parameterTarget = getTargetParameterFromCallArgument(node);
 
-      targetDeclaration = getTargetDeclarationFromNode(assignment.getLeft());
-      sourceExpression = assignment.getRight();
+      if (parameterTarget) {
+        targetDeclaration = parameterTarget.targetParameter;
+        sourceExpression = parameterTarget.sourceExpression;
+      } else {
+        const assignment = getNearestAssignmentExpression(node);
+        if (!assignment) {
+          skippedItems.push({
+            ...issueBase,
+            reason: "Diagnostic is not in a supported assignment context.",
+          });
+          continue;
+        }
+
+        targetDeclaration = getTargetDeclarationFromNode(assignment.getLeft());
+        sourceExpression = assignment.getRight();
+      }
     }
 
     if (!targetDeclaration || !sourceExpression) {
@@ -331,7 +452,11 @@ async function runFix2322() {
       continue;
     }
 
-    if (shouldSkipDeclaration(targetDeclaration)) {
+    const shouldSkip = Node.isVariableDeclaration(targetDeclaration)
+      ? shouldSkipDeclaration(targetDeclaration)
+      : shouldSkipParameter(targetDeclaration);
+
+    if (shouldSkip) {
       skippedItems.push({
         ...issueBase,
         reason: "Declaration is read-only or outside workspace scope.",
