@@ -28,7 +28,7 @@ import {
   Mark,
   Extension,
   Plugin,
-} from "https://esm.helloao.org/vendor-RPNXNWQB.js";
+} from "https://esm.helloao.org/vendor-3PZUL55I.js";
 import { useDragRef } from "playlist.playlistMode.useDragRef";
 
 declare global {

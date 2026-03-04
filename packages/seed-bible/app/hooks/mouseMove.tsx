@@ -1,7 +1,7 @@
 // Float system with window on top and toolbar underneath
 // Enhanced with slide-in/out functionality like iPhone
 // + Mobile tweaks: center at top & keep toolbar visible
-import { preactRenderToString } from "https://esm.helloao.org/vendor-RPNXNWQB.js";
+import { preactRenderToString } from "https://esm.helloao.org/vendor-3PZUL55I.js";
 import { globalAPI } from "app.controller.controllerBuilder";
 
 const { createContext, useContext, useState, useEffect, useRef } = os.appHooks;

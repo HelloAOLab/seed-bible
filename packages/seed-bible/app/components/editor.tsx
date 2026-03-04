@@ -18,7 +18,7 @@ import {
   BulletList,
   OrderedList,
   ListItem,
-} from "https://esm.helloao.org/vendor-RPNXNWQB.js";
+} from "https://esm.helloao.org/vendor-3PZUL55I.js";
 
 import { MarginYIcon, MarginXIcon } from "app.components.icons";
 
