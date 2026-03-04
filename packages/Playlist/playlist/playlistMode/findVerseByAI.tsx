@@ -55,7 +55,7 @@ function extractJsonFromString(inputString: string) {
 }
 
 let myChat = await ai.chat(PROMPT, {
-  preferredModel: "claude-3-5-sonnet-20240620",
+  preferredModel: "claude-3-5-sonnet-20240620" as any,
 });
 
 const value = extractJsonFromString(myChat);

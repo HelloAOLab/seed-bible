@@ -101,31 +101,6 @@ export interface CommentAnnotationData {
 }
 
 /**
- * Saves the given data to a file record and returns the file annotation data.
- * @param recordName The name of the record.
- * @param data The data that should be saved.
- */
-export async function saveFileAnnotationData(
-  recordName: string,
-  data: unknown
-): Promise<string> {
-  const result = await os.recordFile(recordName, data, {
-    marker: "publicRead",
-  });
-
-  if (result.success === false) {
-    if (result.errorCode === "file_already_exists") {
-      return result.existingFileUrl;
-    }
-
-    console.error("Error saving file annotation data: ", result);
-    throw new Error(`Error saving file annotation data: ${result.errorCode}`);
-  }
-
-  return result.url;
-}
-
-/**
  * Creates a new annotation object.
  * @param bookId The ID of the book that the annotation is for.
  * @param chapterNumber The chapter number that the annotation is for.
@@ -212,13 +187,6 @@ export async function getUserRecord(
  *
  * await saveAnnotation('my-annotations-record', annotation);
  *
- * @example Save a new file annotation
- * const fileData = await saveFileAnnotationData('my-annotations-record', dataToSave);
- * const annotation = createAnnotation('GEN', 1, {
- *    fileType: 'audio',
- *    file: fileData
- * });
- *
  * await saveAnnotation('my-annotations-record', annotation);
  */
 export async function saveAnnotation(
@@ -246,17 +214,9 @@ export async function saveAnnotation(
  */
 export async function deleteAnnotation(
   recordName: string,
-  annotation: Annotation
-): Promise<void> {
-  if (typeof annotation.data === "object" && "url" in annotation.data) {
-    const result = await os.eraseFile(recordName, annotation.data.url);
-    if (result.success === false) {
-      console.error("Error deleting annotation file: ", result);
-      throw new Error("Error deleting annotation file");
-    }
-  }
-
-  const result = await os.eraseData(recordName, annotation.id);
+  annotation: Pick<Annotation, "id">
+): Promise<any> {
+  const result = await os.eraseData(recordName, annotation.id!);
   if (result.success === false) {
     console.error("Error deleting annotation: ", result);
     throw new Error("Error deleting annotation");
@@ -311,7 +271,7 @@ export async function loadAnnotations(
     const dataRecords = await os.listDataByMarker(
       recordName,
       marker,
-      lastAddress
+      lastAddress!
     );
 
     if (dataRecords.success === false) {
@@ -324,7 +284,7 @@ export async function loadAnnotations(
       break;
     }
     annotations.push(...items.map((i) => i.data));
-    lastAddress = items[items.length - 1].address;
+    lastAddress = items[items.length - 1]!.address;
   }
 
   return annotations.sort((a, b) => {
@@ -688,7 +648,7 @@ export function getCurrentYearTimeSpan() {
 export async function getUserReadingHistorySummary(
   startTime: number,
   endTime: number
-): Promise<ReadingHistorySummary> {
+): Promise<ReadingHistorySummary | null> {
   const authBot = await os.requestAuthBotInBackground();
 
   if (!authBot) {
@@ -828,7 +788,7 @@ export function* flat<T>(iterables: Iterable<Iterable<T>>): Generator<T> {
 }
 
 function* getReadingEvents(doc: SharedDocument): Generator<ReadingEvent> {
-  const eventsArray = doc.getArray("events").type;
+  const eventsArray = (doc.getArray("events") as any).type;
 
   for (let i = 0; i < eventsArray.length; i++) {
     const e = eventsArray.get(i);
@@ -898,8 +858,14 @@ function updateSummaryTotals(summary: ReadingHistorySummary) {
   // After processing all events, calculate uniqueChaptersRead
   for (const userId in summary.users) {
     const user = summary.users[userId];
+    if (!user) {
+      continue;
+    }
     for (const bookId in user.books) {
       const book = user.books[bookId];
+      if (!book) {
+        continue;
+      }
       user.uniqueBooksRead += 1;
       user.uniqueChaptersRead += Object.keys(book.chapters).length;
       book.uniqueChaptersRead = Object.keys(book.chapters).length;
@@ -1240,9 +1206,9 @@ function findMostRecentReadingEvent(
   bookId: string,
   chapter: number,
   oldestTime: number
-): ReadingEvent | null {
+): SharedMap<any> | null {
   for (let i = events.length - 1; i >= 0; i--) {
-    const event: SharedMap<any> = events.type.get(i);
+    const event: SharedMap<any> = (events as any).type.get(i);
     if (event.get("end") < oldestTime) {
       break;
     }

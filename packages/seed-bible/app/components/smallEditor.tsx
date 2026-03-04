@@ -112,7 +112,7 @@ export function MiniTextEditor({
   showMoreOptions = true,
   headingControls = false,
   id = "editor",
-}) {
+}: any) {
   // ----- ids & storage
   const _instanceId = useRef(
     instanceId || `sre_${Math.random().toString(36).slice(2)}`

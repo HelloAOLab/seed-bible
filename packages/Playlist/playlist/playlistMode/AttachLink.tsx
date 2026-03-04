@@ -394,7 +394,7 @@ function SubComponent(props: any) {
               files.forEach((file: any) => {
                 filesPromises.push(
                   os.recordFile(G.RECORD_STOREKEY, file.data, {
-                    name: file.name,
+                    description: file.name,
                     mimeType: file.mimeType,
                   })
                 );
@@ -795,7 +795,7 @@ const AttachLink = (props: any) => {
       let finalData = data;
 
       const fileSave: any = await os.recordFile(G.RECORD_STOREKEY, finalData, {
-        name: name,
+        description: name,
         mimeType: finalData?.type || "audio/webm",
       });
 

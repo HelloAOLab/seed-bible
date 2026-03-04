@@ -26,8 +26,6 @@ import {
   OrderedList,
   ListItem,
   Mark,
-  Extension,
-  Plugin,
 } from "https://esm.helloao.org/vendor-3PZUL55I.js";
 import { useDragRef } from "playlist.playlistMode.useDragRef";
 
@@ -925,8 +923,6 @@ function CustomAnnotationTextEditor(props: any) {
       editable: !readOnly,
       extensions: [
         StarterKit.configure({
-          heading: true,
-          blockquote: true,
           paragraph: { HTMLAttributes: { style: "text-align: left;" } },
         }),
         TextStyle,
@@ -1005,26 +1001,26 @@ function CustomAnnotationTextEditor(props: any) {
             return true;
           },
           // (Optional) stop dragging out selections / drags
-          dragstart: (_: any, event: any) => {
+          dragstart: (_, event) => {
             event.preventDefault();
             return true;
           },
-          paste: async (_: any, event: any) => {
+          paste: (_, event): boolean => {
             const items = event?.clipboardData?.items;
 
             // 🔴 STOP DEFAULT PASTE IMMEDIATELY
             event.preventDefault();
             event.stopPropagation();
 
-            const plainText = event.clipboardData.getData("text/plain");
-            const htmlText = event.clipboardData.getData("text/html");
+            const plainText = event.clipboardData?.getData("text/plain");
+            const htmlText = event.clipboardData?.getData("text/html");
 
             // const pastedText = [];
             if (!items || !items.length) return false;
-            const files = [];
+            const files: File[] = [];
             for (let i = 0; i < items.length; i++) {
               const item = items[i];
-              if (item.kind === "file") {
+              if (item?.kind === "file") {
                 const file = item.getAsFile();
                 if (file) files.push(file);
               }
@@ -1034,49 +1030,58 @@ function CustomAnnotationTextEditor(props: any) {
               //   pastedText.push(text);
               // }
             }
-            setLoading(true);
-            const data = await G.uploadFilesReusable({
-              files,
-            });
-            setLoading(false);
 
-            let html = "";
+            const processFiles = async () => {
+              setLoading(true);
+              const data = await G.uploadFilesReusable({
+                files,
+              });
+              setLoading(false);
 
-            data.forEach((file: any) => {
-              const htmlSuffix = G.appendImageToEditorHTML(file);
-              html += fakeEscapeMediaTags(htmlSuffix, showPreview);
-            });
+              let html = "";
 
-            if (plainText) {
-              const embedHTML = fakeEscapeMediaTags(
-                G.generateEmbedFromUrl(plainText.trim()),
-                showPreview
-              );
+              data.forEach((file: any) => {
+                const htmlSuffix = G.appendImageToEditorHTML(file);
+                html += fakeEscapeMediaTags(htmlSuffix, showPreview);
+              });
 
-              if (embedHTML) {
-                setTimeout(() => {
-                  editor.chain().focus().insertContent(embedHTML).run();
-                }, 50);
-              } else if (htmlText) {
-                setTimeout(() => {
-                  editor.chain().focus().insertContent(htmlText).run();
-                }, 50);
-              } else {
-                setTimeout(() => {
-                  editor.chain().focus().insertContent(plainText).run();
-                }, 50);
+              if (plainText) {
+                const embedHTML = fakeEscapeMediaTags(
+                  G.generateEmbedFromUrl(plainText.trim()),
+                  showPreview
+                );
+
+                if (embedHTML) {
+                  setTimeout(() => {
+                    editor.chain().focus().insertContent(embedHTML).run();
+                  }, 50);
+                } else if (htmlText) {
+                  setTimeout(() => {
+                    editor.chain().focus().insertContent(htmlText).run();
+                  }, 50);
+                } else {
+                  setTimeout(() => {
+                    editor.chain().focus().insertContent(plainText).run();
+                  }, 50);
+                }
+                return true;
               }
-              return true;
-            }
 
-            if (html) {
-              setTimeout(() => {
-                editor.chain().focus().insertContent(html).run();
-              }, 50);
-              return true;
-            }
+              if (html) {
+                setTimeout(() => {
+                  editor.chain().focus().insertContent(html).run();
+                }, 50);
+                return true;
+              }
+
+              return false;
+            };
+
+            processFiles();
+
+            return true;
           },
-          drop: async () => {
+          drop: () => {
             return true;
           },
         },
@@ -1493,7 +1498,7 @@ function CustomAnnotationTextEditor(props: any) {
       setLoading(true);
 
       const fileSave: any = await os.recordFile(G?.RECORD_STOREKEY, finalData, {
-        name: `${new Date().toISOString()}.${recording === RECORDING_TYPES.audio ? "webm" : "mp4"}`,
+        description: `${new Date().toISOString()}.${recording === RECORDING_TYPES.audio ? "webm" : "mp4"}`,
         mimeType: recording,
       });
 

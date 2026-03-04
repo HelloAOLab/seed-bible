@@ -453,7 +453,7 @@ G.uploadFilesReusable = async function uploadFilesReusable(params: any) {
   files.forEach((file: any) => {
     filesPromises.push(
       os.recordFile(G.RECORD_STOREKEY, file, {
-        name: file.name,
+        description: file.name,
         mimeType: file.mimeType,
       })
     );

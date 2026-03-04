@@ -612,7 +612,7 @@ const AddNewPlaylist = (props: any) => {
                       G.RECORD_STOREKEY,
                       file.data,
                       {
-                        name: file.name,
+                        description: file.name,
                       }
                     );
                     const url = fileSave.url || fileSave?.existingFileUrl;
@@ -694,7 +694,7 @@ const AddNewPlaylist = (props: any) => {
                     G.RECORD_STOREKEY,
                     file.data,
                     {
-                      name: file.name,
+                      description: file.name,
                     }
                   );
 
