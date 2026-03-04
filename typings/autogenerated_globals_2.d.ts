@@ -4,36 +4,24 @@
 export {};
 
 declare global {
-  var AnnotationIcon: ({
-    className,
-  }: {
-    className?: string | undefined;
-  }) => Element;
-  var getSectionBookRage: (sectionRank: number) => number[];
-  var IMGS: { AOLABSRC: string };
-  var IsHidden: boolean;
-  var isUIOpen: boolean;
-  var isValidGoogleSheetsUrl: (url: string) => boolean;
-  var IsVideoUrl: (url: string) => boolean;
-  var PendingAction: (() => void) | ((isAnnotation?: boolean) => void);
-  var playListDB: never[];
-  var PlaylistIcon: ({
-    className,
-  }: {
-    className?: string | undefined;
-  }) => Element;
-  var sanitizeObject: (obj: any) => any;
-  var SELECTIONTYPE: { TESTAMENT: string; SECTION: string; BOOK: string };
-  var SetHidePlaylist: null | StateUpdater<boolean>;
-  var SetIsQueuePlaying: StateUpdater<boolean>;
-  var SetPlayingPlaylist: ((val: any) => void) | null;
-  var SetPlaylistForforcedHeight: (arg0: number) => any;
-  var setPredefinedIcons: boolean | StateUpdater<any[]>;
-  var SetSidebarOpen: StateUpdater<boolean>;
-  var ToggleGreyCheckPLayingPlaylist: (arg0: null) => any;
-  var validateImage: (
-    url: string
-  ) =>
-    | { isValid: boolean; type: string; extension: any }
-    | { isValid: boolean; type: null; extension?: undefined };
+  var AnnotationIcon: any;
+  var getSectionBookRage: any;
+  var IMGS: any;
+  var IsHidden: any;
+  var isUIOpen: any;
+  var isValidGoogleSheetsUrl: any;
+  var IsVideoUrl: any;
+  var PendingAction: any;
+  var playListDB: any;
+  var PlaylistIcon: any;
+  var sanitizeObject: any;
+  var SELECTIONTYPE: any;
+  var SetHidePlaylist: any;
+  var SetIsQueuePlaying: any;
+  var SetPlayingPlaylist: any;
+  var SetPlaylistForforcedHeight: any;
+  var setPredefinedIcons: any;
+  var SetSidebarOpen: any;
+  var ToggleGreyCheckPLayingPlaylist: any;
+  var validateImage: any;
 }
