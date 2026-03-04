@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`can create a bot 1`] = `
+{
+  "id": "testBot",
+  "precalculated": true,
+  "space": "shared",
+  "tags": {
+    "color": "red",
+  },
+  "values": {
+    "color": "red",
+  },
+}
+`;

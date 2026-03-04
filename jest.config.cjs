@@ -1,7 +1,10 @@
 /** @type {import('jest').Config} */
 const config = {
   verbose: true,
-  transformIgnorePatterns: ["/node_modules/.pnpm/(?!(uuid))"],
+  transformIgnorePatterns: [
+    "<rootDir>/node_modules/\\.pnpm/(?!(htm|preact|uuid|@casual-simulation\\+))",
+  ],
+
   moduleNameMapper: {
     "^@packages/(.*)$": "<rootDir>/packages/$1",
     "^https:\\/\\/esm\\.helloao\\.org\\/vendor-\\w+\\.js$":
