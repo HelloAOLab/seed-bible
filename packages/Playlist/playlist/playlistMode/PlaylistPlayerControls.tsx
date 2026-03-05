@@ -726,7 +726,7 @@ const PlayerControls = ({ parentId = "default" }) => {
     }
     G.TIMER_SHOW_NEXT = setTimeout(() => {
       setShowCurrent(false);
-    }, 3000);
+    }, 30000);
 
     G.SetActiveDate?.(lastActiveDateID);
   }, [currIndex]);
@@ -875,6 +875,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                   fontFamily: "DM Sans",
                   height: "12px",
                   color: "var(--pageTextColor)",
+                  minWidth: "max-content",
                 }}
               >
                 {showCurrent
@@ -911,7 +912,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                     }`}
                   >
                     {nextItemName?.content ? (
-                      nextItemName?.additionalInfo?.book ? (
+                      nextItemName?.additionalInfo?.book && isMobile ? (
                         <GetLabelT
                           needToShowInMobile={true}
                           value="discover"
@@ -951,24 +952,26 @@ const PlayerControls = ({ parentId = "default" }) => {
                           fontWeight: "900",
                           fontFamily: "DM Sans",
                           margin: "0",
+                          minWidth: "max-content",
                         }}
                       >
                         Playlist Ended
                       </p>
                     )}
-                    {!G.ValidTypes[nextItemName?.type] && (
-                      <p
-                        style={{
-                          fontSize: "12px",
-                          fontWeight: "400",
-                          margin: "0",
-                          textTransform: "capitalize",
-                          color: "var(--pageTextColor)",
-                        }}
-                      >
-                        {nextItemName?.type}
-                      </p>
-                    )}
+                    {!G.ValidTypes[nextItemName?.type] &&
+                      !!nextItemName?.type && (
+                        <p
+                          style={{
+                            fontSize: "12px",
+                            fontWeight: "400",
+                            margin: "0",
+                            textTransform: "capitalize",
+                            color: "var(--pageTextColor)",
+                          }}
+                        >
+                          {nextItemName?.type}
+                        </p>
+                      )}
                   </div>
                   <div
                     style={{ width: "100%", minWidth: "max-content" }}
@@ -977,7 +980,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                     }`}
                   >
                     {currentItem?.content ? (
-                      currentItem.additionalInfo?.book ? (
+                      currentItem.additionalInfo?.book && isMobile ? (
                         <GetLabelT
                           needToShowInMobile={true}
                           fontSize="0.75rem"
@@ -1017,6 +1020,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                           fontWeight: "900",
                           fontFamily: "DM Sans",
                           margin: "0",
+                          minWidth: "max-content",
                         }}
                       >
                         Playlist Ended
