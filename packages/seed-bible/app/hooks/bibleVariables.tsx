@@ -1,27 +1,12 @@
 const { createContext, useContext, useState, useEffect } = os.appHooks;
 const MyContext = createContext();
 // import { StudyNotes, StudyNotesWithPanel } from 'app.sn_components.studyNotes';
-import {
-  MenuIcon,
-  SeedBibleIcon,
-  AiIcon,
-  T,
-  MenuDown,
-  FormatLine,
-  ColorSelect,
-  ToolbarIcon,
-  Panal,
-  Playlist,
-  AiChatIcon,
-} from "app.components.icons";
 
 // import { useMouseMove, } from 'app.hooks.mouseMove';
 export function BibleVariablesProvider({ children }) {
   const [screens, setScreens] = useState({ value: 1 });
   const [navFunctions, setNavFunctions] = useState({});
-  const [appSettings, setAppSettings] = useState({});
   const [panelMode, setPanelMode] = useState(false);
-  globalThis.panelMode = panelMode;
   const [canvasMode, setCanvasMode] = useState(false);
   const [mapMode, setMapMode] = useState(false);
   const [showHeading, setShowHeading] = useState({
@@ -148,7 +133,7 @@ export function BibleVariablesProvider({ children }) {
         });
       },
       onClick: async () => {
-        if (globalThis.chatbotPresent) {
+        if (globalThis.chatbotPresent && globalThis.CHATBOT_PANEL_ID) {
           RemoveApplicationByID(globalThis.CHATBOT_PANEL_ID);
           globalThis.CHATBOT_PANEL_ID = null;
           globalThis.chatbotPresent = false;

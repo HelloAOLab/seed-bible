@@ -20,7 +20,45 @@ import {
   isRTL,
   availableLanguages,
 } from "app.hooks.i18n";
-const MyContext = createContext();
+interface SideBarContextType {
+  userURL: string;
+  packageAddingOptions: any[];
+  setPackageAddingOptions: any[];
+  customIcon: string;
+  setCustomIcon: (icon: string) => void;
+  setUserURL: (url: string) => void;
+  themeColors: any;
+  setThemeColors: (colors: any) => void;
+  vars: any;
+  setVars: (vars: any) => void;
+  wait: boolean;
+  setWait: (wait: boolean) => void;
+  sidebarMode: string;
+  setSideBarMode: (mode: string) => void;
+  collapsed: boolean;
+  setCollapsed: (collapsed: boolean) => void;
+  openPopupSettings: (
+    component: any,
+    options?: any,
+    modal?: boolean,
+    position?: { x: number; y: number }
+  ) => void;
+  sidebarWidth: number;
+  setSidebarWidth: (width: number) => void;
+  openOnMobile: boolean;
+  setOpenOnMobile: (open: boolean) => void;
+  closePopupSettings: () => void;
+  isMobile: boolean;
+  // i18n
+  t: (key: string, options?: any) => string;
+  language: string;
+  langVersion: number;
+  changeLanguage: (lng: string) => void;
+  i18nReady: boolean;
+  availableLanguages: any;
+  isRTL: boolean;
+}
+const MyContext = createContext<SideBarContextType | undefined>(undefined);
 
 export function SideBarProvider({ children }) {
   const [vars, setVars] = useState({});

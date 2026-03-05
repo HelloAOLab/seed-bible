@@ -11,7 +11,7 @@ declare global {
   const gridPortalBot: Bot;
   const mapPortalBot: Bot;
   const miniMapPortalBot: Bot;
-  const t: (key: string, options?: { [key: string]: any }) => string;
+  var t: (key: string, options?: { [key: string]: any }) => string;
   const ShowNotification: (options: {
     message: string;
     severity: "error" | "warning" | "info" | "success";

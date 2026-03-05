@@ -84,7 +84,7 @@ declare global {
     translation: string;
     shortName: string;
   } | null;
-  var CHATBOT_PANEL_ID: string;
+  var CHATBOT_PANEL_ID: string | null;
   var chatbotPresent: boolean;
   var CheckToolbarOverflow: () => unknown;
   var CLEARABLE_LERPING: boolean;
@@ -306,7 +306,6 @@ declare global {
   var openSidebar: boolean | null;
   var ORIGINAL_DATA: null | Blob;
   var page: number | null;
-  var panelMode: boolean;
   var PanelsApps: (prevApps: never[]) => never[];
   var PanelTabsMap: {};
   var ParentDataIds: any;
