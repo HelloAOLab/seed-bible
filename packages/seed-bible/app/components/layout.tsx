@@ -1,4 +1,3 @@
-import useBibleData from "app.hooks.bibleData";
 import { getStyleOf } from "app.styles.styler";
 import { SideBar } from "app.components.sideBar";
 const { useEffect, useState, useRef } = os.appHooks;
