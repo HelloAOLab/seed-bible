@@ -1,6 +1,14 @@
 import { LayoutChapterData } from "bibleVizUtils.classes.LayoutChapterData";
 
 export class LayoutBookData {
+  parentDataIds: any;
+  isSelected: boolean;
+  pieceInfo: any;
+  piece: any;
+  id: any;
+  childrenData: any[];
+  creationInfo: any;
+
   constructor({
     childrenData = [],
     id,

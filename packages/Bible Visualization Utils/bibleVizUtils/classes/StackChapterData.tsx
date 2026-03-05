@@ -1,6 +1,13 @@
 import { StackPieceData } from "bibleVizUtils.classes.StackPieceData";
 
 export class StackChapterData extends StackPieceData {
+  isInsideBible: any;
+  piece: any;
+  isSelected: any;
+  HighlightsInfo: any[];
+  isActive: boolean;
+  isInsideBook: boolean;
+
   constructor({
     isSelected,
     id,

@@ -1,6 +1,12 @@
 import { uuid } from "casualos";
 
 export class HistoryTimePeriodInfo {
+  id: any;
+  isNowTimePeriod: boolean;
+  timeUnit: any;
+  timeAmount: number;
+  value: any;
+
   constructor({
     value,
     timeAmount = 0,

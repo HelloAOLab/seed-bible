@@ -3,6 +3,7 @@
  * * Includes an internal caching mechanism.
  */
 export abstract class ProviderFactory<E extends string | number | symbol, P> {
+  _getProvider: any;
   private _providerCache: Partial<Record<E, P>> = {};
   constructor() {}
 

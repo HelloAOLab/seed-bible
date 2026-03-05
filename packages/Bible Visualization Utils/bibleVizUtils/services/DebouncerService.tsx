@@ -1,9 +1,9 @@
-import { debounce } from "es-toolkit";
+import { debounce, type DebouncedFunction } from "es-toolkit";
 
 type AnyFunction = (...args: any[]) => any;
 
 class DebouncerService {
-  #debouncedFunction;
+  #debouncedFunction: DebouncedFunction<AnyFunction>;
 
   constructor(callback: AnyFunction, debounceTime: number) {
     this.#debouncedFunction = debounce(callback, debounceTime);

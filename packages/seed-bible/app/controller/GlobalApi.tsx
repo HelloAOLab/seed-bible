@@ -58,6 +58,9 @@ export interface GlobalApi extends GlobalApiProperties, GlobalApiMethods {}
  * This is a stopgap solution until we can refactor the app to use a more robust state management system.
  */
 export class TempGlobalAPI implements GlobalApi {
+  setCanvasStylePositions: any;
+  defaultPortalName: any;
+  hooks: any;
   private _appStartedSuccessfully: boolean = false;
   private _defaultPortalName: string = "";
   private _spaceLayouts: Record<string, any> = {};

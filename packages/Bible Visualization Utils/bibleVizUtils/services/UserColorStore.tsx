@@ -11,6 +11,7 @@ export interface UserData extends UserIds {
 }
 
 class UserColorStore {
+  getUserDataByIds: any;
   #UserDataList: UserData[];
 
   constructor() {

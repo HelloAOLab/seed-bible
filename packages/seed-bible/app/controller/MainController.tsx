@@ -21,6 +21,13 @@ interface MainControllerMethods {
 }
 
 export class MainController implements MainControllerMethods {
+  _performMethod: any;
+  updateApplication: any;
+  replaceApplication: any;
+  removeApplicationByLabel: any;
+  removeApplicationById: any;
+  removeApplication: any;
+  addApplication: any;
   /**
    * TODO: Update Effect<any,any> to properly map to key method contract args / return.
    */

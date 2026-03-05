@@ -1,6 +1,20 @@
 import { uuid } from "casualos";
 
 export class LayoutBookStructure {
+  id: any;
+  elapsedYearsRange: any;
+  historicalDateRange: any;
+  row: any;
+  column: any;
+  infoCardcontent: any;
+  infoCardBackground: any;
+  infoCardTransformer: any;
+  dateLabel: any;
+  layoutId: any;
+  structureIndex: any;
+  nameLabel: any;
+  layoutBookData: any;
+
   constructor({
     layoutBookData,
     nameLabel,

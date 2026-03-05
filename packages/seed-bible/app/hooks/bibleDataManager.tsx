@@ -79,6 +79,23 @@ function parseContent(content) {
 }
 
 export class BibleDataManager {
+  getState: any;
+  fetch: any;
+  _scheduleMaskRecord: any;
+  _getKey: any;
+  _lastRecordedKey: any;
+  _viewingStart: any;
+  _viewingTimer: any;
+  error: any;
+  loading: false;
+  footnotes: any;
+  data: any;
+  baseUrl: string;
+  chapter: number;
+  bookId: string;
+  translation: string;
+  tabId: any;
+
   constructor({
     tabId = null,
     translation = "NASB95",

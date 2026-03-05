@@ -1,4 +1,12 @@
 export class ParentDataIds {
+  layoutBookId: any;
+  layoutId: any;
+  stackBookId: any;
+  stackSectionBookId: any;
+  stackSectionId: any;
+  stackTestamentId: any;
+  stackBibleId: any;
+
   constructor({
     stackBibleId,
     stackTestamentId,

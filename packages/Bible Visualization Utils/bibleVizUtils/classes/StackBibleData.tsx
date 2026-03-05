@@ -2,6 +2,14 @@ import { StackTestamentData } from "bibleVizUtils.classes.StackTestamentData";
 import { StackData } from "bibleVizUtils.classes.StackData";
 
 export class StackBibleData extends StackData {
+  bibleType: any;
+  arrangementIndex: any;
+  currentState: any;
+  hasBeenSetUp: false;
+  staticBiblePieces: any;
+  currentStackVizState: any;
+  currentCrossPosition: any;
+
   constructor({
     childrenData = [],
     id,

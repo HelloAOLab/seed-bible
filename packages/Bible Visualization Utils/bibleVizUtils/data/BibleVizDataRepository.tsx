@@ -79,6 +79,8 @@ interface ArrangementInfo {
 }
 
 class BibleVizDataRepository {
+  getBibleLayoutMeasurements: any;
+  getBooksStaticInfo: any;
   // BooksStaticInfo
 
   static getBooksStaticInfo(): BooksStaticInfo {

@@ -1,6 +1,16 @@
 import { StackData } from "bibleVizUtils.classes.StackData";
 
 export class StackPieceData extends StackData {
+  lastInteractionSource: any;
+  highlightColor: any;
+  creationInfo: boolean;
+  isActive: boolean;
+  isHidden: boolean;
+  isInsideBible: boolean;
+  parentDataIds: any;
+  pieceInfo: any;
+  piece: any;
+
   constructor({
     childrenData = [],
     id,

@@ -3,6 +3,8 @@ import { StackSectionData } from "bibleVizUtils.classes.StackSectionData";
 import { StackSectionBookData } from "bibleVizUtils.classes.StackSectionBookData";
 
 export class StackTestamentData extends StackPieceData {
+  isSplitIntoSections: boolean;
+
   constructor({
     childrenData = [],
     id,

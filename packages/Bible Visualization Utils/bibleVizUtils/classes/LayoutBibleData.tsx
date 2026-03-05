@@ -1,4 +1,26 @@
 export class LayoutBibleData {
+  playlistLastSelectedEntryItem: any;
+  playlistEntries: any[];
+  playlistSelectedEntryIndex: number;
+  currentPlaylistShownId: any;
+  testamentLinesInfo: any;
+  sectionLinesInfo: any;
+  amountOfRows: any;
+  currentSelectedChapterData: any;
+  hasSelectAllBooksBeenCalled: false;
+  chapterSelectColor: string;
+  currentDateFormat: any;
+  isChapterExpandEnabled: false;
+  isDatesEnabled: 2;
+  isPathEnabled: false;
+  isPlaylistPathEnabled: false;
+  areLabelsEnabled: false;
+  isCameraAnimationEnabled: false;
+  isShowingSettings: boolean;
+  childrenStructures: any[];
+  staticLayoutElements: any;
+  id: any;
+
   constructor({
     childrenStructures = [],
     id,

@@ -1,4 +1,10 @@
 export class QueuedChapterData {
+  chapterData: any;
+  action: any;
+  stackBibleId: any;
+  chapterNumber: any;
+  bookData: any;
+
   constructor({
     bookData = null,
     chapterNumber = null,

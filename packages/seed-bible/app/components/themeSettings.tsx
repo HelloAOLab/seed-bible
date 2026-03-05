@@ -1091,6 +1091,14 @@ function debounce(fn, delay = 250) {
 const filterCache = new Map();
 
 class Color {
+  linear: any;
+  multiply: any;
+  b: any;
+  g: any;
+  clamp: any;
+  r: any;
+  set: any;
+
   constructor(r, g, b) {
     this.set(r, g, b);
   }
@@ -1203,6 +1211,16 @@ class Color {
 //   OPTIMIZED SOLVER ENGINE
 // ======================
 class Solver {
+  fix: any;
+  loss: any;
+  spsa: any;
+  css: any;
+  solveNarrow: any;
+  solveWide: any;
+  tmp: Color;
+  targetHSL: any;
+  target: any;
+
   constructor(target) {
     this.target = target;
     this.targetHSL = target.hsl();

@@ -2,6 +2,11 @@ import { StackPieceData } from "bibleVizUtils.classes.StackPieceData";
 import { StackBookData } from "bibleVizUtils.classes.StackBookData";
 
 export class StackSectionData extends StackPieceData {
+  shadow: any;
+  isInsideTestament: boolean;
+  isInExplodedView: boolean;
+  isSplitIntoBooks: boolean;
+
   constructor({
     childrenData = [],
     id,

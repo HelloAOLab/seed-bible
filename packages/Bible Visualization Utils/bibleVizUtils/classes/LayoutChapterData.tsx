@@ -1,4 +1,15 @@
 export class LayoutChapterData {
+  playlistEntriesItems: any[];
+  isSelected: false;
+  HighlightsInfo: any[];
+  originalLayoutId: any;
+  isActive: boolean;
+  parentDataIds: any;
+  pieceInfo: any;
+  piece: any;
+  id: any;
+  highlightColor: any;
+
   constructor({
     id,
     piece,
