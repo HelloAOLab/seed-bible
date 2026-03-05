@@ -753,15 +753,16 @@ svg:hover {
   border-radius: 6px;
   padding: 2px;
   transition: all 0.2s ease;
-}
-
-.settings-title span {
-  stroke: currentColor;
-  color: var(--text1);
+  color: var(--pageTextColor) !important;
 }
 
 .settings-title svg {
-  stroke: currentColor;
+  stroke: var(--pageTextColor);
+  filter: invert(0) !important;
+}
+.settings-title span svg {
+  stroke: var(--pageTextColor);
+  filter: invert(0);
 }
 
 .hide-events {

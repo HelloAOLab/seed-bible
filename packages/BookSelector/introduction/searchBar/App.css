@@ -54,7 +54,7 @@
 
   border: none;
   border-radius: 6px;
-  background: var(--panelBackground)
+  background: var(--inputBackground)
     url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
     no-repeat right 10px center;
   background-size: 16px;
@@ -71,7 +71,7 @@
 }
 
 .dropdown-option {
-  background: var(--panelBackground);
+  background: var(--inputBackground);
   color: var(--text3);
   padding: 8px 12px;
   cursor: pointer;
@@ -81,7 +81,7 @@
   display: flex;
   align-items: center;
   border-radius: 6px;
-  background: var(--panelBackground);
+  background: var(--inputBackground);
   padding: 6px 10px;
   width: 80%;
   height: 34px;
@@ -216,7 +216,7 @@ input:checked + .slider:not(#slider):before {
   justify-content: space-between;
   margin-top: 5px;
   font-weight: normal;
-  color: var(--secondaryColor);
+  color: var(--pageTextColor);
   font-family: "Satoshi";
 }
 
@@ -372,7 +372,7 @@ input:checked + .slider:not(#slider):before {
 
 .sidebar-translation-selector {
   display: flex;
-  background: var(--panelBackground);
+  background: var(--inputBackground);
   padding: 0px 5px;
   height: 32px;
   justify-content: space-between;
@@ -674,11 +674,15 @@ input:checked + .slider:not(#slider):before {
   width: 40px;
   aspect-ratio: 1 / 1;
   display: flex;
-  background-color: color-mix(in srgb, var(--tabSelection) 50%, transparent);
+  background-color: color-mix(
+    in srgb,
+    var(--selectedSpaceColor) 50%,
+    transparent
+  );
   justify-content: center;
   align-items: center;
   border-radius: 5px;
-  color: var(--text1);
+  color: var(--pageTextColor);
   transition: all 0.3s;
   position: relative;
   font-size: 16px;
@@ -810,7 +814,7 @@ input:checked + .slider:not(#slider):before {
 
 .sidebar {
   width: 1100px;
-  background-color: var(--pageBackground);
+  background-color: var(--pageBookBackground);
   color: var(--text3);
   display: flex;
   padding: 10px;
@@ -873,7 +877,7 @@ input:checked + .slider:not(#slider):before {
   height: 40px;
   width: 200px;
   display: flex;
-  background-color: var(--pageBackground);
+  background-color: var(--pageBookBackground);
   justify-content: space-between;
   align-items: center;
   border-radius: 5px;
@@ -898,7 +902,7 @@ input:checked + .slider:not(#slider):before {
 }
 
 .sidebar-selected-itm {
-  background-color: var(--panelBackground);
+  background-color: var(--pageBackground);
   color: var(--text3);
 }
 
@@ -950,8 +954,7 @@ input:checked + .slider:not(#slider):before {
   opacity: 1;
   height: 80dvh;
   bottom: 80px;
-  box-shadow: color-mix(in srgb, var(--tabSelection) 20%, transparent) 0px 3px
-    8px;
+  box-shadow: 0px 3px 8px var(--sidebarShadow);
 }
 
 .close-sideBar {
