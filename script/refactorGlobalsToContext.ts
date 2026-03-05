@@ -269,7 +269,11 @@ function refactorSourceFile(
       continue;
     }
 
-    propertyAccess.replaceWithText(`globals.${name}`);
+    const originalText = propertyAccess.getText();
+    const usesOptionalChain = originalText.startsWith("globalThis?.");
+    propertyAccess.replaceWithText(
+      usesOptionalChain ? `globals?.${name}` : `globals.${name}`
+    );
     componentsNeedingHook.add(owningComponent);
     stats.replacedGlobalThisAccesses += 1;
     fileChanged = true;
@@ -306,7 +310,11 @@ function refactorSourceFile(
       continue;
     }
 
-    elementAccess.replaceWithText(`globals.${name}`);
+    const originalText = elementAccess.getText();
+    const usesOptionalChain = originalText.startsWith("globalThis?.[");
+    elementAccess.replaceWithText(
+      usesOptionalChain ? `globals?.${name}` : `globals.${name}`
+    );
     componentsNeedingHook.add(owningComponent);
     stats.replacedGlobalThisAccesses += 1;
     fileChanged = true;
