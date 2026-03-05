@@ -3637,6 +3637,9 @@
         "./packages/seed-bible/app/hooks/divSpliter.tsx"
       ],
       "app.hooks.folders": ["./packages/seed-bible/app/hooks/folders.tsx"],
+      "app.hooks.globalsContext": [
+        "./packages/seed-bible/app/hooks/globalsContext.tsx"
+      ],
       "app.hooks.i18n": ["./packages/seed-bible/app/hooks/i18n.tsx"],
       "app.hooks.mouseFollow": [
         "./packages/seed-bible/app/hooks/mouseFollow.tsx"

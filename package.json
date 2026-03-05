@@ -25,6 +25,7 @@
     "generate-global-types": "tsx script/generateGlobalTypes.ts",
     "map-any-usage": "tsx script/mapAnyUsage.ts",
     "infer-global-types": "tsx script/inferGlobalTypesFromUsage.ts",
+    "refactor-globals-context": "tsx script/refactorGlobalsToContext.ts",
     "report-diagnostics": "tsx script/reportDiagnostics.ts",
     "fix-2322": "tsx script/fixDiagnostic2322.ts"
   },
