@@ -1,5 +1,5 @@
 import { GetDarkerColor } from "bibleVizUtils.functions.index";
-import { scriptureService } from "bibleVizUtils.services.index";
+import { arrangementService } from "bibleVizUtils.services.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 
 /**
@@ -31,7 +31,7 @@ if (jarvis && !spawnPosition) {
   displayJarvisSpawnPieceAnimation = true;
 }
 const { arrangementIndex, testamentIndex, sectionIndex, found } =
-  scriptureService.getSectionInfoPathByName(name);
+  arrangementService.getSectionInfoPathByName(name);
 if (found) {
   sectionData = await thisBot.CreateSection({
     arrangementIndex,

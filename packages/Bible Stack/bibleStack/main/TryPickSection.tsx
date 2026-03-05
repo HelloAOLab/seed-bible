@@ -1,9 +1,9 @@
-import { scriptureService } from "bibleVizUtils.services.index";
+import { arrangementService } from "bibleVizUtils.services.index";
 
 if (thisBot.masks.isBibleAnimating) return false;
 setTagMask(thisBot, "isBibleAnimating", true);
 const { testamentName, sectionName } = that;
-const { found } = scriptureService.getSectionInfoPathByName(sectionName);
+const { found } = arrangementService.getSectionInfoPathByName(sectionName);
 if (found) {
   const sectionData =
     thisBot.vars.lastInteractedStackTestamentData?.childrenData.find(

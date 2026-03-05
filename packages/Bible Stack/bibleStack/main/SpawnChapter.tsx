@@ -38,7 +38,7 @@ if (jarvis && !spawnPosition) {
   displayJarvisSpawnPieceAnimation = true;
 }
 const { arrangementIndex, testamentIndex, sectionIndex, bookIndex, found } =
-  scriptureService.getBookInfoPathByName({ name: bookName });
+  arrangementService.getBookInfoPathByName({ name: bookName });
 let chapterSpawned = false;
 // let book;
 if (!found) {

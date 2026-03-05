@@ -20,7 +20,7 @@ import {
   userColorStore,
   type UserData,
 } from "bibleVizUtils.services.UserColorStore";
-import { bibleVizUtilsEventManager } from "bibleVizUtils.services.EventManager";
+import { bibleVizUtilsEventManager } from "bibleVizUtils.services.index";
 import {
   userPresenceService,
   type UserPresenceType,

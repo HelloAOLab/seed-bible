@@ -1056,6 +1056,9 @@
       "bibleVizUtils.controllers.userPresence.activityNotificationController": [
         "./packages/Bible Visualization Utils/bibleVizUtils/controllers/userPresence/activityNotificationController.tsx"
       ],
+      "bibleVizUtils.controllers.userPresence.colorStoreController": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/controllers/userPresence/colorStoreController.tsx"
+      ],
       "bibleVizUtils.data.ActivityIndicatorDefaults": [
         "./packages/Bible Visualization Utils/bibleVizUtils/data/ActivityIndicatorDefaults.tsx"
       ],
@@ -1124,24 +1127,6 @@
       ],
       "bibleVizUtils.functions.time": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/time.tsx"
-      ],
-      "bibleVizUtils.functions.TryHideUsersColorOnPiece": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryHideUsersColorOnPiece.tsx"
-      ],
-      "bibleVizUtils.functions.TryUpdateNotificationDirection": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryUpdateNotificationDirection.tsx"
-      ],
-      "bibleVizUtils.functions.UpdateActivityNotificationOnPieces": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/UpdateActivityNotificationOnPieces.tsx"
-      ],
-      "bibleVizUtils.functions.UpdateFixedArrangementsInfo": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/UpdateFixedArrangementsInfo.tsx"
-      ],
-      "bibleVizUtils.functions.UpdateUsersColorOnPiece": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/UpdateUsersColorOnPiece.tsx"
-      ],
-      "bibleVizUtils.functions.users": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/users.tsx"
       ],
       "bibleVizUtils.main.Initialize": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/Initialize.tsx"
@@ -1316,9 +1301,6 @@
       ],
       "bibleVizUtils.services.StackService": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/StackService.tsx"
-      ],
-      "bibleVizUtils.services.UpdateUserColorStoreDebouncer": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/services/UpdateUserColorStoreDebouncer.tsx"
       ],
       "bibleVizUtils.services.UserColorStore": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/UserColorStore.tsx"

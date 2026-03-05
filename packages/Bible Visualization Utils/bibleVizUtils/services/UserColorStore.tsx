@@ -1,5 +1,5 @@
 import type { HexString } from "bibleVizUtils.functions.index";
-import { bibleVizUtilsEventManager } from "bibleVizUtils.services.EventManager";
+import { bibleVizUtilsEventManager } from "bibleVizUtils.services.index";
 
 export interface UserIds {
   configId?: string;

@@ -13,20 +13,11 @@ export const Events = {
 
 export type EventsType = (typeof Events)[keyof typeof Events];
 
-class BibleVizUtilsEventManager {
+export class BibleVizUtilsEventManager {
   #listeners: Map<string, Set<EventManagerType>>;
-
-  static #instance: BibleVizUtilsEventManager | null = null;
 
   constructor() {
     this.#listeners = new Map();
-  }
-
-  static getInstance(): BibleVizUtilsEventManager {
-    if (!BibleVizUtilsEventManager.#instance) {
-      BibleVizUtilsEventManager.#instance = new BibleVizUtilsEventManager();
-    }
-    return BibleVizUtilsEventManager.#instance;
   }
 
   subscribe(eventName: EventsType, callback: EventManagerType): () => void {
@@ -67,6 +58,3 @@ class BibleVizUtilsEventManager {
     }
   }
 }
-
-export const bibleVizUtilsEventManager =
-  BibleVizUtilsEventManager.getInstance();

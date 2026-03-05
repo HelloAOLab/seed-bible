@@ -1,7 +1,4 @@
-import {
-  scriptureService,
-  arrangementService,
-} from "bibleVizUtils.services.index";
+import { arrangementService } from "bibleVizUtils.services.index";
 
 /**
  * Attempts to eject a book from a specified section. It ensures that the Bible is not currently animating
@@ -19,7 +16,7 @@ if (thisBot.masks.isBibleAnimating) return false;
 setTagMask(thisBot, "isBibleAnimating", true);
 const { sectionName, bookName } = that;
 const { arrangementIndex, testamentIndex, sectionIndex, found } =
-  scriptureService.getBookInfoPathByName({ name: bookName });
+  arrangementService.getBookInfoPathByName({ name: bookName });
 
 if (found) {
   let bookData = thisBot.vars.lastInteractedStackSectionData?.childrenData

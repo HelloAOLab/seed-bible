@@ -1,4 +1,4 @@
-import { bibleVizUtilsEventManager } from "bibleVizUtils.services.EventManager";
+import { bibleVizUtilsEventManager } from "bibleVizUtils.services.index";
 import type { Tab } from "bibleVizUtils.models.interfaces";
 
 type PresenceData = {

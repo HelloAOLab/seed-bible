@@ -1,7 +1,4 @@
-import {
-  scriptureService,
-  arrangementService,
-} from "bibleVizUtils.services.index";
+import { arrangementService } from "bibleVizUtils.services.index";
 
 /**
  * Spawns a book, selects it, and then ejects a specific chapter from the book.
@@ -18,7 +15,7 @@ import {
 
 const { bookName, chapterNumber } = that;
 const { arrangementIndex, testamentIndex, sectionIndex, found } =
-  scriptureService.getBookInfoPathByName({ name: bookName });
+  arrangementService.getBookInfoPathByName({ name: bookName });
 
 if (!found) {
   console.error(`Book info path not found at SpawnBookAndPickChapter`);

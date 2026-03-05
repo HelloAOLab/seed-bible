@@ -1,4 +1,6 @@
-import { bibleVizUtilsEventManager } from "bibleVizUtils.services.EventManager";
+import { bibleVizUtilsEventManager } from "bibleVizUtils.services.index";
+
+// Refactor to convert this into a class
 
 let isInHistoryMode = false;
 

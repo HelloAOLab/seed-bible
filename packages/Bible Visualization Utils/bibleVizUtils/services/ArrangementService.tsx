@@ -18,12 +18,12 @@ interface ServiceEventManager {
   ) => void;
 }
 
-interface TestamentPathIndices {
+export interface TestamentPathIndices {
   arrangementIndex: number;
   testamentIndex: number;
 }
 
-interface SectionPathIndices extends TestamentPathIndices {
+export interface SectionPathIndices extends TestamentPathIndices {
   sectionIndex: number;
 }
 
@@ -61,9 +61,10 @@ export class ArrangementService {
 
   setCurrentArrangementIndex(index: number): boolean {
     const arrangementsLength = this.getAllArrangements().length;
-    if (index >= 0 && index < arrangementsLength) {
+    const currentIndex = this.getCurrentArrangementIndex();
+    if (index >= 0 && index < arrangementsLength && index !== currentIndex) {
       this.#currArrangementIndex = index;
-      // TODO: Move OnArrangementIndexChanged event call over here
+      this.#eventManager.emit("OnArrangementIndexChanged", { newIndex: index });
       return true;
     }
     return false;
@@ -79,11 +80,7 @@ export class ArrangementService {
 
     if (this.#currArrangementIndex === newIndex) return;
 
-    const success = this.setCurrentArrangementIndex(newIndex);
-
-    if (success) {
-      this.#eventManager.emit("OnArrangementIndexChanged", { newIndex });
-    }
+    this.setCurrentArrangementIndex(newIndex);
   }
 
   getArrangementIndexByName: (name: string) => number = (name) => {
@@ -139,10 +136,7 @@ export class ArrangementService {
     if (currentArrangementName && currentArrangementName !== arrangement.name) {
       this.setArrangementIndexByName(currentArrangementName);
     } else {
-      const success = this.setCurrentArrangementIndex(0);
-      if (success) {
-        this.#eventManager.emit("OnArrangementIndexChanged", { newIndex: 0 });
-      }
+      this.setCurrentArrangementIndex(0);
     }
     this.#eventManager.emit("OnCustomArrangementsChanged");
   }
@@ -169,4 +163,255 @@ export class ArrangementService {
 
     return section?.books[path.bookIndex];
   }
+
+  getTestamentInfoPathByName: (
+    name: string,
+    arrangementIndex?: number
+  ) => {
+    found: boolean;
+    arrangementIndex: number;
+    testamentIndex: number | undefined;
+  } = (name, arrangementIndex = this.getCurrentArrangementIndex()) => {
+    const checkPathInArrangement: (arrangement: ArrangementInfo) =>
+      | {
+          found: true;
+          data: {
+            testamentIndex: number;
+          };
+        }
+      | {
+          found: false;
+        } = (arrangement) => {
+      const testamentIndex = arrangement.testaments.findIndex(
+        (testament) => testament.name === name
+      );
+      if (testamentIndex >= 0) {
+        return {
+          found: true,
+          data: {
+            testamentIndex,
+          },
+        };
+      }
+      return { found: false };
+    };
+
+    let testamentIndex: number | undefined;
+    let found = false;
+    const allArrangements = this.getAllArrangements();
+    const initialArrangement = this.getArrangementByIndex(arrangementIndex);
+    if (initialArrangement) {
+      allArrangements.splice(arrangementIndex, 1);
+      allArrangements.unshift(initialArrangement);
+
+      for (
+        let currentArrangementIndex = 0;
+        currentArrangementIndex < allArrangements.length;
+        currentArrangementIndex++
+      ) {
+        const currentArrangement = allArrangements[currentArrangementIndex];
+        if (currentArrangement) {
+          const result = checkPathInArrangement(currentArrangement);
+          if (result.found) {
+            found = true;
+            arrangementIndex = currentArrangementIndex;
+            ({ testamentIndex } = result.data);
+            break;
+          }
+        }
+      }
+    }
+    return { arrangementIndex, testamentIndex, found };
+  };
+
+  getSectionInfoPathByName: (
+    name: string,
+    arrangementIndex?: number
+  ) => {
+    found: boolean;
+    arrangementIndex: number;
+    testamentIndex: number | undefined;
+    sectionIndex: number | undefined;
+  } = (name, arrangementIndex = this.getCurrentArrangementIndex()) => {
+    const checkPathInArrangement: (arrangement: ArrangementInfo) =>
+      | {
+          found: true;
+          data: {
+            testamentIndex: number;
+            sectionIndex: number;
+          };
+        }
+      | {
+          found: false;
+        } = (arrangement) => {
+      for (
+        let currentTestamentIndex = 0;
+        currentTestamentIndex < arrangement.testaments.length;
+        currentTestamentIndex++
+      ) {
+        const testamentInfo = arrangement.testaments[currentTestamentIndex];
+        if (testamentInfo) {
+          const sectionIndex = testamentInfo.sections.findIndex(
+            (section) => section.name === name
+          );
+          if (sectionIndex >= 0) {
+            return {
+              found: true,
+              data: {
+                testamentIndex: currentTestamentIndex,
+                sectionIndex,
+              },
+            };
+          }
+        }
+      }
+      return { found: false };
+    };
+
+    let testamentIndex: number | undefined, sectionIndex: number | undefined;
+    let found = false;
+    const allArrangements = this.getAllArrangements();
+    const initialArrangement = this.getArrangementByIndex(arrangementIndex);
+    if (initialArrangement) {
+      allArrangements.splice(arrangementIndex, 1);
+      allArrangements.unshift(initialArrangement);
+
+      for (
+        let currentArrangementIndex = 0;
+        currentArrangementIndex < allArrangements.length;
+        currentArrangementIndex++
+      ) {
+        const currentArrangement = allArrangements[currentArrangementIndex];
+        if (currentArrangement) {
+          const result = checkPathInArrangement(currentArrangement);
+          if (result.found) {
+            found = true;
+            arrangementIndex = currentArrangementIndex;
+            ({ testamentIndex, sectionIndex } = result.data);
+            break;
+          }
+        }
+      }
+    }
+    return { arrangementIndex, testamentIndex, sectionIndex, found };
+  };
+
+  /**
+   * Searches for the path of a book in the Bible based on its common name, returning the arrangement, testament, and section where it is found.
+   *
+   * @param {Object} params - The context object containing the book's name.
+   * @param {string} params.name - The common name of the book to find.
+   * @returns {Object} - An object containing the indices of the arrangement, testament, and section where the book was found, and a boolean indicating whether it was found.
+   * @returns {number} returns.arrangementIndex - The index of the arrangement containing the book.
+   * @returns {number} returns.testamentIndex - The index of the testament containing the book.
+   * @returns {string} returns.sectionIndex - The index of the section containing the book.
+   * @returns {boolean} returns.found - Whether the book was found.
+   * @example
+   * const {arrangementIndex, testamentIndex, sectionIndex, found} = getBookInfoPathByName({name: "Genesis"});
+   */
+  getBookInfoPathByName: (params: {
+    name: string;
+    arrangementIndex?: number;
+  }) => {
+    found: boolean;
+    arrangementIndex: number;
+    testamentIndex: number | undefined;
+    sectionIndex: number | undefined;
+    bookIndex: number | undefined;
+  } = ({ name, arrangementIndex = this.getCurrentArrangementIndex() }) => {
+    const checkPathInArrangement: (arrangement: ArrangementInfo) =>
+      | {
+          found: true;
+          data: {
+            testamentIndex: number;
+            sectionIndex: number;
+            bookIndex: number;
+          };
+        }
+      | {
+          found: false;
+        } = (arrangement) => {
+      for (
+        let currentTestamentIndex = 0;
+        currentTestamentIndex < arrangement.testaments.length;
+        currentTestamentIndex++
+      ) {
+        const testamentInfo = arrangement.testaments[currentTestamentIndex];
+        if (testamentInfo) {
+          for (
+            let currentSectionIndex = 0;
+            currentSectionIndex < testamentInfo.sections.length;
+            currentSectionIndex++
+          ) {
+            const sectionInfo = testamentInfo.sections[currentSectionIndex];
+            if (sectionInfo) {
+              const bookIndex = sectionInfo.books.findIndex((bookInfo) => {
+                return bookInfo.commonName == name;
+              });
+              if (bookIndex >= 0) {
+                return {
+                  found: true,
+                  data: {
+                    testamentIndex: currentTestamentIndex,
+                    sectionIndex: currentSectionIndex,
+                    bookIndex,
+                  },
+                };
+              }
+            }
+          }
+        }
+      }
+      return { found: false };
+    };
+
+    let testamentIndex: number | undefined,
+      sectionIndex: number | undefined,
+      bookIndex: number | undefined;
+    let found = false;
+    const allArrangements = this.getAllArrangements();
+    const initialArrangement = this.getArrangementByIndex(arrangementIndex);
+    if (initialArrangement) {
+      allArrangements.splice(arrangementIndex, 1);
+      allArrangements.unshift(initialArrangement);
+
+      for (
+        let currentArrangementIndex = 0;
+        currentArrangementIndex < allArrangements.length;
+        currentArrangementIndex++
+      ) {
+        const currentArrangement = allArrangements[currentArrangementIndex];
+        if (currentArrangement) {
+          const result = checkPathInArrangement(currentArrangement);
+          if (result.found) {
+            found = true;
+            arrangementIndex = currentArrangementIndex;
+            ({ testamentIndex, sectionIndex, bookIndex } = result.data);
+            break;
+          }
+        }
+      }
+    }
+    return { arrangementIndex, testamentIndex, sectionIndex, bookIndex, found };
+  };
+
+  getBooksNamesBySectionName: (name: string) => string[] | null = (name) => {
+    const { arrangementIndex, testamentIndex, sectionIndex, found } =
+      this.getSectionInfoPathByName(name);
+    if (found) {
+      const arrangement = this.getArrangementByIndex(arrangementIndex);
+      if (arrangement) {
+        const testament = arrangement.testaments[testamentIndex as number];
+        if (testament) {
+          const section = testament.sections[sectionIndex as number];
+          if (section) {
+            return section.books.map((currBook) => {
+              return currBook.commonName;
+            });
+          }
+        }
+      }
+    }
+    return null;
+  };
 }

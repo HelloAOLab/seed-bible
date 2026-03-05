@@ -3,7 +3,7 @@ import {
   computeNotificationDirection,
   type Scales,
 } from "bibleVizUtils.functions.index";
-import { PieceActivityService } from "bibleVizUtils.services.PieceActivityService";
+import { pieceActivityService } from "bibleVizUtils.services.index";
 import { userPresenceService } from "bibleVizUtils.services.UserPresenceService";
 import { Vector2 as Vector2Type } from "../../../../../typings/AuxLibraryDefinitions";
 import type { Tab } from "bibleVizUtils.models.interfaces";
@@ -80,7 +80,7 @@ export const updateNotification: (
 
   for (const pieceData of filteredData) {
     const piece = pieceData.piece;
-    const pieceActivity = PieceActivityService.getPieceActivity({
+    const pieceActivity = pieceActivityService.getPieceActivity({
       piece,
     });
     const isPieceSelected = pieceData.getIsSelectedForNotification();

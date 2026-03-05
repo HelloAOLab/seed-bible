@@ -4,7 +4,6 @@ import {
   HexToRgb,
 } from "bibleVizUtils.functions.index";
 import { arrangementService } from "bibleVizUtils.services.index";
-import { scriptureService } from "bibleVizUtils.services.index";
 
 const { layoutBookStructure, position } = that;
 const dimension = os.getCurrentDimension();
@@ -35,7 +34,7 @@ const book =
   });
 
 const { arrangementIndex, testamentIndex, sectionIndex, found } =
-  scriptureService.getBookInfoPathByName({
+  arrangementService.getBookInfoPathByName({
     name: layoutBookStructure.layoutBookData.pieceInfo.commonName,
     arrangementIndex: arrangementService.getCurrentArrangementIndex(),
   });

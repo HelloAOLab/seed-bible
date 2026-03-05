@@ -1,5 +1,5 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
-import { PieceActivityService } from "bibleVizUtils.services.PieceActivityService";
+import { pieceActivityService } from "bibleVizUtils.services.index";
 import type {
   Bot,
   Point3D,
@@ -100,7 +100,7 @@ export const updateIndicatorsPosition: (piece: Bot) => void = (piece) => {
     );
 
   const currIndicators =
-    PieceActivityService.getActivityIndicatorsForPiece(piece);
+    pieceActivityService.getActivityIndicatorsForPiece(piece);
   const dimension = os.getCurrentDimension();
 
   currIndicators.forEach((indicator) => {
@@ -114,7 +114,7 @@ export const updateIndicatorsPosition: (piece: Bot) => void = (piece) => {
 
 export const tryHideIndicators: (piece: Bot) => void = (piece) => {
   const currIndicators =
-    PieceActivityService.getActivityIndicatorsForPiece(piece);
+    pieceActivityService.getActivityIndicatorsForPiece(piece);
   if (currIndicators.length > 0) {
     ObjectPooler.ReleaseObject({
       obj: currIndicators,
@@ -210,7 +210,7 @@ export const updateIndicators: (
     }
 
     const currIndicators =
-      PieceActivityService.getActivityIndicatorsForPiece(currPiece);
+      pieceActivityService.getActivityIndicatorsForPiece(currPiece);
     const strategyResult = strategy(currPiece);
     const {
       indicatorScales,
@@ -238,7 +238,7 @@ export const updateIndicators: (
       selectionsPiece = selectionsPiece[0] as Bot;
     }
 
-    const pieceActivity = PieceActivityService.getPieceActivity({
+    const pieceActivity = pieceActivityService.getPieceActivity({
       piece: selectionsPiece,
     });
 
@@ -264,7 +264,7 @@ export const updateIndicators: (
 
     if (pieceActivity.length <= maxIndicators) {
       const { extraIndicatorContent, extraIndicatorBackground } =
-        PieceActivityService.getExtraActivityIndicatorsForPiece(currPiece);
+        pieceActivityService.getExtraActivityIndicatorsForPiece(currPiece);
       if (extraIndicatorContent)
         ObjectPooler.ReleaseObject({
           obj: extraIndicatorContent,
@@ -287,7 +287,7 @@ export const updateIndicators: (
         const extraCount = pieceActivity.length - maxIndicators;
         const label = `+${extraCount}`;
         let { extraIndicatorContent, extraIndicatorBackground } =
-          PieceActivityService.getExtraActivityIndicatorsForPiece(currPiece);
+          pieceActivityService.getExtraActivityIndicatorsForPiece(currPiece);
         if (!extraIndicatorContent) {
           extraIndicatorContent = ObjectPooler.GetObjectFromPool({
             tag: ObjectPoolTags.ActivityIndicator,
@@ -373,7 +373,7 @@ export const updateIndicators: (
         const opacity = isActiveTab ? 1 : 0.5;
         const formRenderOrder = isActiveTab ? -1 : 10 - Number(activityIndex);
 
-        let indicator = PieceActivityService.getPieceIndicatorByActivityIndex(
+        let indicator = pieceActivityService.getPieceIndicatorByActivityIndex(
           currPiece,
           activityIndex
         );

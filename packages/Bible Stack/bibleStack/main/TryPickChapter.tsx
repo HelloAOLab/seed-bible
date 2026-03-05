@@ -22,7 +22,7 @@ setTagMask(thisBot, "isBibleAnimating", true);
 const { bookName, chapterNumber } = that;
 const numberOfChapters = scriptureService.getBookChapterCount(bookName);
 const { arrangementIndex, testamentIndex, sectionIndex, found } =
-  scriptureService.getBookInfoPathByName({ name: bookName });
+  arrangementService.getBookInfoPathByName({ name: bookName });
 
 if (
   found &&

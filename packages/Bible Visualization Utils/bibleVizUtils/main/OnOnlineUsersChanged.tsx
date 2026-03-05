@@ -1,5 +1,5 @@
-import { updateUserColorStoreDebouncer } from "bibleVizUtils.services.UpdateUserColorStoreDebouncer";
-import { bibleVizUtilsEventManager } from "bibleVizUtils.services.EventManager";
+import { bibleVizUtilsEventManager } from "bibleVizUtils.services.index";
+import { updateUserColorStore } from "bibleVizUtils.controllers.userPresence.colorStoreController";
 
 const { onlineUsers } = that;
 
@@ -20,5 +20,5 @@ if (onlineUsers) {
   }
 }
 
-updateUserColorStoreDebouncer.execute();
+updateUserColorStore();
 bibleVizUtilsEventManager.emit("OnlineUsersChanged", fixedOnlineUsers);

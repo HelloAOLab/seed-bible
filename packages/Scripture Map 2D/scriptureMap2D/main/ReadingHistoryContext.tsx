@@ -35,10 +35,8 @@ import {
   scriptureMapEventManager,
   Events as ScriptureMap2DEvents,
 } from "scriptureMap2D.main.eventManager";
-import {
-  bibleVizUtilsEventManager,
-  Events as BibleVizUtilsEvents,
-} from "bibleVizUtils.services.EventManager";
+import { Events as BibleVizUtilsEvents } from "bibleVizUtils.services.EventManager";
+import { bibleVizUtilsEventManager } from "bibleVizUtils.services.index";
 
 const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
   os.appHooks;
