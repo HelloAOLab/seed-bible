@@ -17,6 +17,28 @@ import { MainController } from "app.controller.MainController";
 import { calcThemeCSS } from "app.main.cssUtil";
 import { globalAPI } from "app.controller.controllerBuilder";
 
+const MainThemeCSS = ({
+  themeColorOverride,
+  currentSpace,
+}: {
+  themeColorOverride: Record<string, any>;
+  currentSpace: Record<string, any>;
+}) => {
+  const ThemeCSS = useMemo(
+    () => calcThemeCSS(themeColorOverride ?? {}, currentSpace),
+    [themeColorOverride, currentSpace]
+  );
+
+  useEffect(() => {
+    globalAPI.mainThemeCSS = ThemeCSS;
+    return () => {
+      globalAPI.mainThemeCSS = "";
+    };
+  }, [ThemeCSS]);
+
+  return <style>{ThemeCSS}</style>;
+};
+
 export const MainContent = ({ controller }: { controller: MainController }) => {
   if (configBot.tags.extensions) return <PackageManager />;
   const { screens, fullScreen, setFullScreen } = useBibleContext();
@@ -167,29 +189,21 @@ export const MainContent = ({ controller }: { controller: MainController }) => {
     CheckToolbarOverflow();
   }, [containerProps.leftWidth, containerProps.topHeight]);
 
-  const ThemeCSS = useMemo(
-    () =>
-      calcThemeCSS(
-        themeColors?.[activeSpace] ?? {},
-        getActiveSpace(spaces, activeSpace)
-      ),
-    [themeColors, activeSpace, spaces]
+  const currentSpace = useMemo(
+    () => getActiveSpace(spaces, activeSpace),
+    [spaces, activeSpace]
   );
-
-  useEffect(() => {
-    globalThis.ThemeCSS = ThemeCSS;
-    return () => {
-      globalThis.ThemeCSS = null;
-    };
-  }, [ThemeCSS]);
+  const themeColorOverride = useMemo(
+    () => themeColors?.[activeSpace] ?? {},
+    [themeColors, activeSpace]
+  );
 
   return (
     <>
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+      <MainThemeCSS
+        themeColorOverride={themeColorOverride}
+        currentSpace={currentSpace}
       />
-      <style>{ThemeCSS}</style>
       <MouseMoveProvider>
         <Layout panelsNumber={containerProps.apps.length}>
           <SplitApp {...containerProps} panalMode={false} />
@@ -270,7 +284,7 @@ function getActiveSpace(
   spaces: Array<{ id: string } & Record<string, any>>,
   activeSpaceId: string
 ) {
-  return spaces?.find((s) => s.id === activeSpaceId) ?? null;
+  return spaces?.find((s) => s.id === activeSpaceId) ?? {};
 }
 
 globalThis.AppStartedSuccessfully = false;
