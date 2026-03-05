@@ -192,7 +192,9 @@ export function AOBotInterface() {
   const [currentView, setCurrentView] = useState("home");
   const [inputValue, setInputValue] = useState("");
   const [sessionCode, setSessionCode] = useState("");
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<{ type: string; text: string }[]>(
+    []
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   // Build with Seed Bible form state
@@ -204,8 +206,15 @@ export function AOBotInterface() {
     console.log(messages);
   }, [messages]);
   // Chat history management
-  const [chatHistory, setChatHistory] = useState([]);
-  const [currentChatId, setCurrentChatId] = useState(null);
+  const [chatHistory, setChatHistory] = useState<
+    {
+      id: string;
+      title: string;
+      messages: { type: string; text: string }[];
+      timestamp: number;
+    }[]
+  >([]);
+  const [currentChatId, setCurrentChatId] = useState<null | string>(null);
 
   const messagesEndRef = useRef(null);
 
@@ -709,7 +718,7 @@ export function AOBotInterface() {
             borderRadius: "16px",
             padding: "40px",
             textAlign: "center",
-            margin: "10px auto"
+            margin: "10px auto",
           }}
         >
           <h2
@@ -1095,7 +1104,7 @@ export function AOBotInterface() {
                   e.currentTarget.style.borderColor = "#3a3a3a";
                 }}
               >
-                <div style={{ fontSize: "16px", display: 'flex' }}>
+                <div style={{ fontSize: "16px", display: "flex" }}>
                   <span
                     style={{ color: "white" }}
                     class="material-symbols-outlined"

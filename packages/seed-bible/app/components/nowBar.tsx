@@ -1,7 +1,9 @@
 const { useState, useRef, useEffect } = os.appHooks;
 
 function NowBar() {
-  const [apps, setApps] = useState([]);
+  const [apps, setApps] = useState<
+    (prevApps: never[]) => { id: number; component: any }[]
+  >([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);

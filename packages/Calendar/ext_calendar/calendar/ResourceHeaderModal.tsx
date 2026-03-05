@@ -14,7 +14,7 @@ const ResourceHeaderModal = ({
 }) => {
   const { t } = useSideBarContext();
   const [roomInput, setRoomInput] = useState("");
-  const [roomTitles, setRoomTitles] = useState([]);
+  const [roomTitles, setRoomTitles] = useState<string[]>([]);
   const [platform, setPlatform] = useState("");
 
   const modalRef = useRef(null);

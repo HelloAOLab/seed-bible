@@ -12,7 +12,7 @@ export const useDivSpliter = ({
   minSize = 100,
   onResize,
 }) => {
-  const [apps, setApps] = useState(components);
+  const [apps, setApps] = useState<(prevApps: never[]) => never[]>(components);
   const count = apps.length;
   globalThis.SetApps = setApps;
   globalThis.PanelsApps = apps;

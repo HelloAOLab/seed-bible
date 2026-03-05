@@ -230,7 +230,7 @@ declare global {
   ) => unknown;
   var Init: () => unknown;
   var initAssistantSpeechMonitoring: (() => void) | null;
-  var initialChildrens: null;
+  var initialChildrens: null | any[];
   var InviteUser: (value: string) => unknown;
   var IS_PLAYLIST_ACTIVE: boolean | 1;
   var isAbleToRightClick: boolean;
@@ -307,7 +307,7 @@ declare global {
   var ORIGINAL_DATA: null | Blob;
   var page: number | null;
   var panelMode: boolean;
-  var PanelsApps: never[];
+  var PanelsApps: (prevApps: never[]) => never[];
   var PanelTabsMap: {};
   var ParentDataIds: any;
   var PieceInfo: any;
