@@ -1,6 +1,11 @@
 const { useState, useMemo } = os.appHooks;
 import { useBibleContext } from "app.hooks.bibleVariables";
-function PanelSettingsDialog({ onClose }) {
+function PanelSettingsDialog({
+  onClose,
+}: {
+  onClose: any;
+  openPanelCount?: any;
+}) {
   const { panelMode, screens, setScreens } = useBibleContext();
   const openPanelCount = screens.value || 1;
   const isCurrentlyRow = screens.row || false;

@@ -235,9 +235,9 @@ const ResourceEventModal = ({
             </div>
           )}
           <svg
-            onclick={() => setIsCopyEvents((prev) => !prev)}
-            onmouseenter={() => setHover(true)}
-            onmouseleave={() => setHover(false)}
+            onClick={() => setIsCopyEvents((prev) => !prev)}
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
             style={{ color: hover ? "black" : "gray" }}
             xmlns="http://www.w3.org/2000/svg"
             width="24"

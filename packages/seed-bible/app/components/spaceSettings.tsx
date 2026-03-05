@@ -514,7 +514,12 @@ export function RenameSpaceModal({ updateSpace, activeSpace }) {
   );
 }
 
-export function CreateNewSpaceModal({ addSpace }) {
+export function CreateNewSpaceModal({
+  addSpace,
+}: {
+  addSpace: any;
+  activeSpace?: any;
+}) {
   const [spaceName, setSpaceName] = useState("");
   const [spaceDescription, setSpaceDescription] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);

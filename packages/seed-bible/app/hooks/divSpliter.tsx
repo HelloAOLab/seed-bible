@@ -252,6 +252,21 @@ export const SplitApp = ({
   isMobile,
   handleTouchMove,
   handleTouchEnd,
+}: {
+  apps: any;
+  count: any;
+  currentContainerWidth: any;
+  currentContainerHeight: any;
+  leftWidth: any;
+  topHeight: any;
+  handleMouseMove: any;
+  handleMouseUp: any;
+  handleVerticalMouseDown: any;
+  handleHorizontalMouseDown: any;
+  isMobile: any;
+  handleTouchMove: any;
+  handleTouchEnd: any;
+  panalMode?: false;
 }) => {
   const { panelMode, screens } = useBibleContext();
   const [forcedHeightPlaylist, setForcedHeightPlaylist] = useState(0);

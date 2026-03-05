@@ -16,7 +16,7 @@ const Menu = ({
   menuOpenForId,
 }) => {
   const { t } = useSideBarContext();
-  const menuRef = useRef();
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const [hovered, setHovered] = useState(null);
 
   useEffect(() => {

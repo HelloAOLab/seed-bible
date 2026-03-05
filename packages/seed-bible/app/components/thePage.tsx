@@ -82,6 +82,16 @@ function ThePage({
   data,
   deleteTab,
   setDeleteTab,
+}: {
+  tab: any;
+  setPanalApp: any;
+  panelId: any;
+  setEnableEditor: any;
+  setData: any;
+  data: any;
+  deleteTab: any;
+  setDeleteTab: any;
+  enableEditor?: boolean;
 }) {
   const [tab, setTab] = useState(T);
   const [commandHighlight, setCommandHighlight] = useState([]);
@@ -3418,7 +3428,16 @@ export const ThePageWithPanel = ({ tab }) => {
   );
 };
 
-export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
+export const ThePageWithEditor = ({
+  tab,
+  setPanalApp,
+  panelId,
+}: {
+  tab: any;
+  setPanalApp: any;
+  panelId: any;
+  preferTab?: true;
+}) => {
   useEffect(() => {
     os.log("tab in the page", panelId, tab);
   }, []);

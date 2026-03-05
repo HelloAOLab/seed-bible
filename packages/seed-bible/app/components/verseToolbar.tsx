@@ -23,6 +23,19 @@ export function VerseToolbar({
   activeSpace,
   showVerseToolbar,
   spaces,
+}: {
+  clickedVersesContext: any;
+  clickedVerses: any;
+  toggleVerseHighlight: any;
+  book: any;
+  chapter: any;
+  onColorSelect: any;
+  highlighted: any;
+  onClose: any;
+  activeSpace: any;
+  showVerseToolbar: any;
+  spaces: any;
+  setClickedVerses?: StateUpdater<never[]>;
 }) {
   // Get Selection UI settings - first try globalThis, then fall back to saved space data
   // we intentionally ignore any copyVerseMode stored in the settings
