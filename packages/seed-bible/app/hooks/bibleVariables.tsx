@@ -1,9 +1,62 @@
 const { createContext, useContext, useState, useEffect } = os.appHooks;
-const MyContext = createContext();
+const MyContext = createContext<BibleVariablesContextType | undefined>(
+  undefined
+);
 // import { StudyNotes, StudyNotesWithPanel } from 'app.sn_components.studyNotes';
 
+export interface BibleVariablesContextType {
+  ReSeed: any;
+  setReSeed: (value: any) => void;
+  screens: any;
+  fullScreen: any;
+  setFullScreen: (value: any) => void;
+  tools: any;
+  setTools: (value: any) => void;
+  setScreens: (value: any) => void;
+  navFunctions: any;
+  setNavFunctions: (value: any) => void;
+  panelMode: any;
+  setPanelMode: (value: any) => void;
+  canvasMode: any;
+  setCanvasMode: (value: any) => void;
+  mapMode: any;
+  setMapMode: (value: any) => void;
+  canvasTools: any;
+  mapTools: any;
+  setCanvasTools: (value: any) => void;
+  setMapTools: (value: any) => void;
+  addTool: (tool: any) => void;
+  removeTool: (tool: any) => void;
+  updateTool: (tool: any) => void;
+  toggleToolActive: (tool: any) => void;
+  scrollToVerse: (verse: any) => void;
+  showHeading: any;
+  setShowHeading: (value: any) => void;
+  showVerses: any;
+  setShowVerses: (value: any) => void;
+  showFootnotes: any;
+  setShowFootnotes: (value: any) => void;
+  showNavArrows: any;
+  setShowNavArrows: (value: any) => void;
+}
+
+export interface Tool {
+  icon: any;
+  label: string;
+  hasToggle: boolean;
+  active: boolean;
+  onClick: () => void;
+  onHold?: () => void;
+  onRightClick?: () => void;
+  isImg?: boolean;
+  showInPageToolbar?: boolean;
+  showInStarterToolbar?: boolean;
+}
+
+export type ToolSet = "tools" | "canvas" | "map";
+
 // import { useMouseMove, } from 'app.hooks.mouseMove';
-export function BibleVariablesProvider({ children }) {
+export function BibleVariablesProvider({ children }: any) {
   const [screens, setScreens] = useState({ value: 1 });
   const [navFunctions, setNavFunctions] = useState({});
   const [panelMode, setPanelMode] = useState(false);
@@ -31,7 +84,7 @@ export function BibleVariablesProvider({ children }) {
     globalThis.ToolbarReSeedMode?.(ReSeed);
   }, [ReSeed]);
   // const { isDragging, setIsDragging, Element, setElement } = useMouseMove()
-  const [tools, setTools] = useState([
+  const [tools, setTools] = useState<Tool[]>([
     // {
     //     icon: <SeedBibleIcon />,
     //     // isImg: true,
@@ -277,9 +330,9 @@ export function BibleVariablesProvider({ children }) {
       });
     }
   }
-  const [canvasTools, setCanvasTools] = useState([]);
+  const [canvasTools, setCanvasTools] = useState<Tool[]>([]);
 
-  const [mapTools, setMapTools] = useState([]);
+  const [mapTools, setMapTools] = useState<Tool[]>([]);
 
   useEffect(() => {
     globalThis.CanvasMode = canvasMode;
@@ -297,7 +350,7 @@ export function BibleVariablesProvider({ children }) {
     };
   }, [screens]);
   const [fullScreen, setFullScreen] = useState(false);
-  function addTool(tool: any, { to = "tools" } = {}) {
+  function addTool(tool: Tool, { to = "tools" }: { to?: ToolSet } = {}) {
     const setTarget =
       to === "canvas" ? setCanvasTools : to === "map" ? setMapTools : setTools;
     const target =
@@ -305,7 +358,10 @@ export function BibleVariablesProvider({ children }) {
     setTarget([...target, tool]);
   }
 
-  function removeTool(label: any, { from = "tools" } = {}) {
+  function removeTool(
+    label: string,
+    { from = "tools" }: { from?: ToolSet } = {}
+  ) {
     const setTarget =
       from === "canvas"
         ? setCanvasTools
@@ -317,7 +373,11 @@ export function BibleVariablesProvider({ children }) {
     setTarget(target.filter((tool) => tool.label !== label));
   }
 
-  function updateTool(label: any, newProps: any, { inSet = "tools" } = {}) {
+  function updateTool(
+    label: string,
+    newProps: Partial<Tool>,
+    { inSet = "tools" }: { inSet?: ToolSet } = {}
+  ) {
     const setTarget =
       inSet === "canvas"
         ? setCanvasTools
@@ -333,7 +393,11 @@ export function BibleVariablesProvider({ children }) {
     );
   }
 
-  function toggleToolActive(label: any, custom: any, { inSet = "tools" } = {}) {
+  function toggleToolActive(
+    label: string,
+    custom: "stop" | "active",
+    { inSet = "tools" }: { inSet?: ToolSet } = {}
+  ) {
     const setTarget =
       inSet === "canvas"
         ? setCanvasTools
@@ -358,13 +422,19 @@ export function BibleVariablesProvider({ children }) {
       )
     );
   }
-  function isToolActive(label, { inSet = "tools" } = {}) {
+  function isToolActive(
+    label: string,
+    { inSet = "tools" }: { inSet?: ToolSet } = {}
+  ) {
     const target =
       inSet === "canvas" ? canvasTools : inSet === "map" ? mapTools : tools;
     const tool = target.find((tool) => tool.label === label);
     return tool?.active === true;
   }
-  function toToggleShowInPageToolbar(label: any, { inSet = "tools" } = {}) {
+  function toToggleShowInPageToolbar(
+    label: string,
+    { inSet = "tools" }: { inSet?: ToolSet } = {}
+  ) {
     const setTarget =
       inSet === "canvas"
         ? setCanvasTools
@@ -388,7 +458,10 @@ export function BibleVariablesProvider({ children }) {
 
     setTarget(updated);
   }
-  function toToggleShowInStarterToolbar(label: any, { inSet = "tools" } = {}) {
+  function toToggleShowInStarterToolbar(
+    label: string,
+    { inSet = "tools" }: { inSet?: ToolSet } = {}
+  ) {
     const setTarget =
       inSet === "canvas"
         ? setCanvasTools
@@ -413,20 +486,26 @@ export function BibleVariablesProvider({ children }) {
     setTarget(updated);
   }
 
-  function isToolInPageToolbar(label: any, { inSet = "tools" } = {}) {
+  function isToolInPageToolbar(
+    label: string,
+    { inSet = "tools" }: { inSet?: ToolSet } = {}
+  ) {
     const target =
       inSet === "canvas" ? canvasTools : inSet === "map" ? mapTools : tools;
     const tool = target.find((tool) => tool.label === label);
     return tool?.showInPageToolbar === true;
   }
-  function isToolSraterToolbar(label, { inSet = "tools" }: any = {}) {
+  function isToolSraterToolbar(
+    label: string,
+    { inSet = "tools" }: { inSet?: ToolSet } = {}
+  ) {
     const target =
       inSet === "canvas" ? canvasTools : inSet === "map" ? mapTools : tools;
     const tool = target.find((tool) => tool.label === label);
     return tool?.showInStarterToolbar === true;
   }
 
-  function scrollToVerse(verseNumber) {
+  function scrollToVerse(verseNumber: number) {
     const element = document.getElementById(`v-${verseNumber}`);
     if (element) {
       element.scrollIntoView({

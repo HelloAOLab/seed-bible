@@ -421,7 +421,7 @@ export function PopupSettings({ items, type, disabled, sidebarContext }: any) {
 
 async function runPopUpSettings({ ...props }) {
   await os.unregisterApp("PopupSettings");
-  await os.registerApp("PopupSettings");
+  await os.registerApp("PopupSettings", thisBot);
   os.compileApp("PopupSettings", <PopupSettings {...props} />);
 }
 
