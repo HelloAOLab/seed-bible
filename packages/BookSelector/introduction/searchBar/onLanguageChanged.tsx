@@ -1,185 +1,39 @@
 import type { TranslationInterface } from "introduction.searchBar.Interfaces";
+import { getStyleOf } from "app.styles.styler";
 
-import { availableLanguages } from "app.hooks.i18n";
+import { availableLanguages, t } from "app.hooks.i18n";
 
-const { useState, useEffect } = os.appHooks;
+const { useState, useEffect, useCallback } = os.appHooks;
 const thePage = getBot("system", "app.components");
 
 const languageCode = that.lng;
 
 const language = availableLanguages.find(
   (l: { code: string }) => l.code === languageCode
-)?.name;
+);
 
 const position = {
-  x: window.innerWidth / 2 - 100,
-  y: window.innerHeight / 2 - 50,
+  x: window.innerWidth / 2 - 185,
+  y: window.innerHeight / 2 - 75,
 };
 
 if (language) {
   openPopupSettings(
-    <SelectLanguage3 language={language} />,
+    <SelectLanguage language={language} />,
     null,
     true,
     position
   );
 }
 
-function SelectLanguage(props: { language: string }) {
-  const openLanguageSelector = async (props: { language: string }) => {
-    globalThis.setOpenSidebar(true);
-    await os.sleep(500);
-    globalThis.setSelectingTranslation(true);
-    await os.sleep(200);
-    globalThis.setLanguageQuery(props.language);
-  };
-  return (
-    <div
-      style={{
-        display: "flex",
-        height: "100px",
-        width: "300px",
-        alignItems: "center",
-        background: "white",
-        padding: "10px",
-        flexDirection: "column",
-        boxShadow:
-          "color-mix(in srgb, var(--tabSelection) 20%, transparent) 0px 3px 8px",
-      }}
-    >
-      <h4 style={{ margin: "0 0 0 20px" }}>
-        Would you like to switch to a {props.language} translation?
-      </h4>
-      <div
-        style={{
-          display: "flex",
-          width: "50%",
-          justifyContent: "space-between",
-        }}
-      >
-        <button
-          onClick={() => {
-            openLanguageSelector({ language: props.language });
-            closePopupSettings();
-          }}
-        >
-          Yes
-        </button>
-        <button
-          onClick={() => {
-            closePopupSettings();
-          }}
-          style={{ marginLeft: "10px" }}
-        >
-          No
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function SelectLanguage2(props: { language: string }) {
+function SelectLanguage(props: {
+  language: { code: string; name: string; nativeName: string };
+}) {
   const [languageData, setLanguageData] = useState<TranslationInterface | null>(
     null
   );
 
-  const selectLanguage = async (props: { language: string }) => {
-    if (languageData?.listOfBooksApiLink?.includes("https")) {
-      web
-        .get(`${languageData.listOfBooksApiLink}`)
-        .then((e) => {
-          ChangeTranslation(languageData.id, e.data.books, languageData.origin);
-        })
-        .catch((e) => {
-          console.log(e);
-        });
-    } else {
-      web
-        .get(`https://bible.helloao.org/api/${languageData.id}/books.json`)
-        .then((e) => {
-          ChangeTranslation(
-            languageData.id,
-            e.data.books,
-            "https://bible.helloao.org"
-          );
-        })
-        .catch((e) => {
-          console.log(e);
-        });
-    }
-  };
-
-  useEffect(() => {
-    if (thePage.masks?.allTranslations) {
-      for (const translation of thePage.masks.allTranslations) {
-        if (
-          translation?.languageEnglishName.toLowerCase() ===
-          props.language.toLowerCase()
-        ) {
-          setLanguageData(translation);
-          console.log(
-            "Found translation data for language:",
-            props.language,
-            translation
-          );
-          break;
-        }
-      }
-    } else {
-      closePopupSettings();
-    }
-  }, [props.language]);
-  return (
-    <div
-      style={{
-        display: "flex",
-        height: "100px",
-        width: "300px",
-        alignItems: "center",
-        background: "white",
-        padding: "10px",
-        flexDirection: "column",
-        boxShadow:
-          "color-mix(in srgb, var(--tabSelection) 20%, transparent) 0px 3px 8px",
-      }}
-    >
-      <h4 style={{ margin: "0 0 0 20px" }}>
-        Would you like to switch to a {props.language} translation?
-      </h4>
-      <div
-        style={{
-          display: "flex",
-          width: "50%",
-          justifyContent: "space-between",
-        }}
-      >
-        <button
-          onClick={() => {
-            selectLanguage({ language: props.language });
-            closePopupSettings();
-          }}
-        >
-          Yes
-        </button>
-        <button
-          onClick={() => {
-            closePopupSettings();
-          }}
-          style={{ marginLeft: "10px" }}
-        >
-          No
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function SelectLanguage3(props: { language: string }) {
-  const [languageData, setLanguageData] = useState<TranslationInterface | null>(
-    null
-  );
-
-  const selectLanguage = async (props: { language: string }) => {
+  const selectLanguage = useCallback(async () => {
     if (languageData?.listOfBooksApiLink?.includes("https")) {
       web
         .get(`${languageData.listOfBooksApiLink}`)
@@ -213,24 +67,29 @@ function SelectLanguage3(props: { language: string }) {
           console.log(e);
         });
     }
-  };
+  }, [languageData]);
 
-  const openLanguageSelector = async (props: { language: string }) => {
-    globalThis.setOpenSidebar(true);
-    await os.sleep(500);
-    globalThis.setSelectingTranslation(true);
-    await os.sleep(200);
-    globalThis.setLanguageQuery(props.language);
-  };
+  const openLanguageSelector = useCallback(
+    async (props: { language: string }) => {
+      globalThis.setOpenSidebar(true);
+      await os.sleep(500);
+      globalThis.setSelectingTranslation(true);
+      await os.sleep(200);
+      globalThis.setLanguageQuery(props.language);
+    },
+    []
+  );
 
   useEffect(() => {
     if (thePage.masks?.allTranslations) {
+      let found = false;
       for (const translation of thePage.masks.allTranslations) {
         if (
           translation?.languageEnglishName.toLowerCase() ===
-          props.language.toLowerCase()
+          props.language.name.toLowerCase()
         ) {
           setLanguageData(translation);
+          found = true;
           console.log(
             "Found translation data for language:",
             props.language,
@@ -239,60 +98,72 @@ function SelectLanguage3(props: { language: string }) {
           break;
         }
       }
+      if (!found) {
+        closePopupSettings();
+      }
     } else {
       closePopupSettings();
     }
   }, [props.language]);
+  if (!languageData) {
+    return null;
+  }
   return (
-    <div
-      style={{
-        display: "flex",
-        height: "100px",
-        width: "300px",
-        alignItems: "center",
-        background: "white",
-        padding: "10px",
-        flexDirection: "column",
-        boxShadow:
-          "color-mix(in srgb, var(--tabSelection) 20%, transparent) 0px 3px 8px",
-      }}
-    >
-      <h4 style={{ margin: "0 0 0 20px" }}>
-        Would you like to switch to a {props.language} translation?
-      </h4>
+    <>
+      <style>{getStyleOf("sidebar.css")}</style>
       <div
         style={{
           display: "flex",
-          width: "50%",
-          justifyContent: "space-between",
+          height: "150px",
+          width: "350px",
+          alignItems: "center",
+          justifyContent: "space-around",
+          background: "white",
+          padding: "10px",
+          flexDirection: "column",
+          boxShadow:
+            "color-mix(in srgb, var(--tabSelection) 20%, transparent) 0px 3px 8px",
         }}
       >
-        <button
-          onClick={() => {
-            selectLanguage({ language: props.language });
-            closePopupSettings();
+        <h4 style={{ margin: "0 0 0 20px" }}>
+          {t("translationSwitchOption", { translationName: languageData.name })}
+        </h4>
+        <div
+          style={{
+            display: "flex",
+            width: "100%",
+            justifyContent: "center",
+            gap: "10px",
           }}
         >
-          Yes
-        </button>
-        <button
-          onClick={() => {
-            closePopupSettings();
-          }}
-          style={{ marginLeft: "10px" }}
-        >
-          No
-        </button>
-        <button
-          onClick={() => {
-            openLanguageSelector({ language: props.language });
-            closePopupSettings();
-          }}
-          style={{ marginLeft: "10px" }}
-        >
-          Choose
-        </button>
+          <button
+            onClick={() => {
+              selectLanguage();
+              closePopupSettings();
+            }}
+            className="option-btn"
+          >
+            {t("yes") || "Yes"}
+          </button>
+          <button
+            onClick={() => {
+              closePopupSettings();
+            }}
+            className="option-btn"
+          >
+            {t("no") || "No"}
+          </button>
+          <button
+            onClick={() => {
+              openLanguageSelector({ language: props.language.name });
+              closePopupSettings();
+            }}
+            className="option-btn"
+          >
+            {t("chooseAnother") || "Choose another"}
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

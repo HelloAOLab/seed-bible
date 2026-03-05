@@ -143,5 +143,7 @@
   "prophetic": "Tiên tri",
   "addToPlaylist": "Thêm vào danh sách phát",
   "addToNew": "Thêm vào mới",
-  "itemsAddedToPlaylistSuccessfully": "Đã thêm mục vào danh sách phát thành công."
+  "itemsAddedToPlaylistSuccessfully": "Đã thêm mục vào danh sách phát thành công.",
+  "translationSwitchOption": "Bạn có muốn chuyển sang bản dịch {{translationName}} không?",
+  "chooseAnother": "Chọn cái khác"
 }

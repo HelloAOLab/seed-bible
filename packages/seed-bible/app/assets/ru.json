@@ -678,5 +678,7 @@
   "pentateuch": "Пятикнижие",
   "historical": "Исторические",
   "poetic": "Поэтические",
-  "prophetic": "Пророческие"
+  "prophetic": "Пророческие",
+  "translationSwitchOption": "Хотите переключиться на перевод {{translationName}}?",
+  "chooseAnother": "Выбрать другой"
 }

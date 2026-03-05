@@ -143,5 +143,7 @@
   "prophetic": "ትንቢታዊ",
   "addToPlaylist": "ናብ ዝርዝር ወስኽ",
   "addToNew": "ናብ ሓድሽ ወስኽ",
-  "itemsAddedToPlaylistSuccessfully": "እቃታት ናብ ዝርዝር ብዓወት ተወሲዶም።"
+  "itemsAddedToPlaylistSuccessfully": "እቃታት ናብ ዝርዝር ብዓወት ተወሲዶም።",
+  "translationSwitchOption": "ናብ {{translationName}} ትርጉም ክትቀይር ትደሊ ዶ?",
+  "chooseAnother": "ካልእ ምረጽ"
 }

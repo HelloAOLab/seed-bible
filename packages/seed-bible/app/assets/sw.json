@@ -143,5 +143,7 @@
   "prophetic": "Unabii",
   "addToPlaylist": "Ongeza kwenye orodha",
   "addToNew": "Ongeza kwenye mpya",
-  "itemsAddedToPlaylistSuccessfully": "Vipengele vimeongezwa kwenye orodha kwa mafanikio."
+  "itemsAddedToPlaylistSuccessfully": "Vipengele vimeongezwa kwenye orodha kwa mafanikio.",
+  "translationSwitchOption": "Je, ungependa kubadili kwenye tafsiri ya {{translationName}}?",
+  "chooseAnother": "Chagua kingine"
 }

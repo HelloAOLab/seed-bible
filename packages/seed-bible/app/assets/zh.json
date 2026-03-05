@@ -678,5 +678,7 @@
   "pentateuch": "摩西五经",
   "historical": "历史书",
   "poetic": "诗歌智慧书",
-  "prophetic": "先知书"
+  "prophetic": "先知书",
+  "translationSwitchOption": "您想切换到{{translationName}}翻译吗？",
+  "chooseAnother": "选择其他"
 }

@@ -143,5 +143,7 @@
   "prophetic": "भविष्यवाणी",
   "addToPlaylist": "प्लेलिस्टमा थप्नुहोस्",
   "addToNew": "नयाँमा थप्नुहोस्",
-  "itemsAddedToPlaylistSuccessfully": "आइटमहरू प्लेलिस्टमा सफलतापूर्वक थपियो।"
+  "itemsAddedToPlaylistSuccessfully": "आइटमहरू प्लेलिस्टमा सफलतापूर्वक थपियो।",
+  "translationSwitchOption": "के तपाईं {{translationName}} अनुवादमा स्विच गर्न चाहनुहुन्छ?",
+  "chooseAnother": "अर्को छान्नुहोस्"
 }

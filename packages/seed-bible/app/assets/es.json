@@ -678,5 +678,7 @@
   "pentateuch": "Pentateuco",
   "historical": "Histórico",
   "poetic": "Poético",
-  "prophetic": "Profético"
+  "prophetic": "Profético",
+  "translationSwitchOption": "Le gustaría cambiar a la traducción {{translationName}}?",
+  "chooseAnother": "Elegir otro"
 }
