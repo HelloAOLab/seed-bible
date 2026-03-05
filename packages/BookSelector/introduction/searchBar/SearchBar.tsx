@@ -819,6 +819,15 @@ const SearchBar = (props: { openSidebar: boolean }) => {
   }, [selectingTranslation]);
 
   useEffect(() => {
+    globalThis.setLanguageQuery = setLanguageQuery;
+    globalThis.setSelectedTranslation = setSelectedTranslation;
+    return () => {
+      globalThis.setLanguageQuery = null;
+      globalThis.setSelectedTranslation = null;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!openSidebar && globalThis?.bookModalOpen) {
       globalThis.bookModalOpen(false);
     }
@@ -905,32 +914,53 @@ const SearchBar = (props: { openSidebar: boolean }) => {
                 </span>
               </div>
             )}
-            <div class="dropdown">
-              <select
-                value={selectedTestament}
-                onChange={(e) => setSelectedTestament(Number(e.target.value))}
-                class="dropdown-select"
-              >
-                <option value={2} class="dropdown-option">
-                  {systemTranslation["allBooks"] || "All Books"}
-                </option>
-                <option value={0} class="dropdown-option">
-                  {windowSize > 750
-                    ? systemTranslation["oldTestament"] || "Old Testament"
-                    : systemTranslation["oldTestamentShort"] || "OT"}
-                </option>
-                <option value={1} class="dropdown-option">
-                  {windowSize > 750
-                    ? systemTranslation["newTestament"] || "New Testament"
-                    : systemTranslation["newTestamentShort"] || "NT"}
-                </option>
-                {apocryphaAvailable && (
-                  <option value={3} class="dropdown-option">
-                    {systemTranslation["apocrypha"] || "Apocrypha"}
+            {windowSize > 768 && (
+              <div class="dropdown">
+                <select
+                  value={selectedTestament}
+                  onChange={(e) => setSelectedTestament(Number(e.target.value))}
+                  class="dropdown-select"
+                >
+                  <option value={2} class="dropdown-option">
+                    {systemTranslation["allBooks"] || "All Books"}
                   </option>
-                )}
-              </select>
-            </div>
+                  <option value={0} class="dropdown-option">
+                    {windowSize > 750
+                      ? systemTranslation["oldTestament"] || "Old Testament"
+                      : systemTranslation["oldTestamentShort"] || "OT"}
+                  </option>
+                  <option value={1} class="dropdown-option">
+                    {windowSize > 750
+                      ? systemTranslation["newTestament"] || "New Testament"
+                      : systemTranslation["newTestamentShort"] || "NT"}
+                  </option>
+                  {apocryphaAvailable && (
+                    <option value={3} class="dropdown-option">
+                      {systemTranslation["apocrypha"] || "Apocrypha"}
+                    </option>
+                  )}
+                </select>
+              </div>
+            )}
+            {windowSize <= 768 && (
+              <button
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "32px",
+                  width: "32px",
+                  background: "transparent",
+                  border: "transparent",
+                }}
+                onClick={() => {
+                  globalThis.setOpenSidebar(!openSidebar);
+                  setSelectingTranslation(false);
+                }}
+              >
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            )}
           </div>
         </span>
       </div>
@@ -1196,7 +1226,7 @@ const SideBarBooks = (props: {
   const RenderBooksByTestament = useMemo(() => {
     let allowedRows = 5;
 
-    if (windowSize < 768) {
+    if (windowSize <= 768) {
       allowedRows = 1;
     } else if (windowSize < 1200) {
       allowedRows = 3;
@@ -1269,7 +1299,7 @@ const SideBarBooks = (props: {
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            windowSize < 768 ||
+                            windowSize <= 768 ||
                             bookData.numberOfChapters < 4 * OTChapterSeparator
                               ? "flex-start"
                               : "space-between",
@@ -1339,7 +1369,7 @@ const SideBarBooks = (props: {
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            windowSize < 768 ||
+                            windowSize <= 768 ||
                             bookData.numberOfChapters < 4 * NTChapterSeparator
                               ? "flex-start"
                               : "space-between",
@@ -1377,9 +1407,11 @@ const SideBarBooks = (props: {
           style={showCheck ? { paddingTop: "40px" } : {}}
         >
           <div class="testament-container">
-            <span class="testament-title">
-              {systemTranslation["newTestament"] || "New Testament"}
-            </span>
+            {windowSize > 768 && (
+              <span class="testament-title">
+                {systemTranslation["newTestament"] || "New Testament"}
+              </span>
+            )}
             <div class="books-item">
               {booksWithGhost.map((book, index) => {
                 return (
@@ -1419,7 +1451,7 @@ const SideBarBooks = (props: {
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            windowSize < 768 ||
+                            windowSize <= 768 ||
                             bookData.numberOfChapters < 4 * allowedRows
                               ? "flex-start"
                               : "space-between",
@@ -1451,9 +1483,11 @@ const SideBarBooks = (props: {
           style={showCheck ? { paddingTop: "40px" } : {}}
         >
           <div class="testament-container">
-            <span class="testament-title">
-              {systemTranslation["oldTestament"] || "Old Testament"}
-            </span>
+            {windowSize > 768 && (
+              <span class="testament-title">
+                {systemTranslation["oldTestament"] || "Old Testament"}
+              </span>
+            )}
             <div class="books-item">
               {booksWithGhost.map((book, index) => {
                 return (
@@ -1493,7 +1527,7 @@ const SideBarBooks = (props: {
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            windowSize < 768 ||
+                            windowSize <= 768 ||
                             bookData.numberOfChapters < 4 * allowedRows
                               ? "flex-start"
                               : "space-between",
@@ -1570,7 +1604,7 @@ const SideBarBooks = (props: {
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            windowSize < 768 ||
+                            windowSize <= 768 ||
                             bookData.numberOfChapters < 4 * allowedRows
                               ? "flex-start"
                               : "space-between",

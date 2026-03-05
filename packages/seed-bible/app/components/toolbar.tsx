@@ -200,11 +200,8 @@ export function Toolbar() {
 
             <div
               onClick={() => {
-                globalThis.setOpenSidebar((prev) => !prev);
-                // if (globalThis.setOpenSidebar) {
-                //   globalThis.setSelectingTranslation &&
-                //     globalThis.setSelectingTranslation(false);
-                // }
+                globalThis.setOpenSidebar(!openSidebar);
+                globalThis.setSelectingTranslation(false);
               }}
               className="mobile-center-logo"
             >
