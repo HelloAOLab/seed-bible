@@ -260,6 +260,7 @@ declare type AsyncActions =
   | AsyncErrorAction
   | ShowInputAction
   | ShowConfirmAction
+  | ShowAlertAction
   | ShareAction
   | CreateCertificateAction
   | SignTagAction
@@ -364,8 +365,7 @@ export interface CreateCertificateOptions {
  * Defines a bot event that creates a new certificate from the given keypair.
  */
 export interface CreateCertificateAction
-  extends AsyncAction,
-    CreateCertificateOptions {
+  extends AsyncAction, CreateCertificateOptions {
   type: "create_certificate";
 }
 
@@ -1506,6 +1506,38 @@ declare interface ShowConfirmOptions {
    * The text that should be shown on the "Cancel" button.
    */
   cancelText?: string;
+}
+
+/**
+ * Defines an event that is used to show an alert dialog.
+ */
+declare interface ShowAlertAction extends AsyncAction {
+  type: "show_alert";
+
+  /**
+   * The options for the alert dialog.
+   */
+  options: ShowAlertOptions;
+}
+
+/**
+ * Defines an interface that represents the options that can be used for an alert dialog.
+ */
+declare interface ShowAlertOptions {
+  /**
+   * The title that should be shown for the dialog.
+   */
+  title: string;
+
+  /**
+   * The content of the dialog.
+   */
+  content: string;
+
+  /**
+   * The text that should be shown on the dismiss button.
+   */
+  dismissText?: string;
 }
 
 /**
@@ -3152,6 +3184,19 @@ export interface RecordActionOptions {
 }
 
 /**
+ * Defines an interface that represents the options for installing a package.
+ *
+ * @dochash types/records/extra
+ * @docname InstallPackageOptions
+ */
+export interface InstallPackageOptions extends RecordActionOptions {
+  /**
+   * Whether to downgrade the package if the installed version is newer than the requested version.
+   */
+  downgrade?: boolean;
+}
+
+/**
  * The possible types of subjects that can be affected by permissions.
  *
  * - "user" - The permission is for a user.
@@ -3596,6 +3641,84 @@ export interface RevokePermissionFailure {
 }
 
 /**
+ * Represents a request to list permissions for a record.
+ *
+ * @dochash types/permissions
+ * @docname ListPermissionsRequest
+ */
+export interface ListPermissionsRequest extends RecordActionOptions {
+  /**
+   * The name of the record to list permissions for.
+   */
+  recordName: string;
+
+  /**
+   * The marker  to list permissions for.
+   */
+  marker?: string;
+
+  /**
+   * The kind of resource to list permissions for.
+   */
+  resourceKind?: string;
+
+  /**
+   * The ID of the resource to list permissions for.
+   */
+  resourceId?: string;
+}
+
+/**
+ * Represents the result of a request to list permissions for a record.
+ *
+ * @dochash types/permissions
+ * @docname ListPermissionsResult
+ */
+export type ListPermissionsResult =
+  | ListPermissionsSuccess
+  | ListPermissionsFailure;
+
+/**
+ * Represents a successful response to a request to list permissions for a record.
+ *
+ * @dochash types/permissions
+ * @docname ListPermissionsSuccess
+ */
+export interface ListPermissionsSuccess {
+  success: true;
+
+  /**
+   * The name of the record.
+   */
+  recordName: string;
+
+  /**
+   * The list of permissions that apply directly to a resource.
+   */
+  resourcePermissions: ListedResourcePermission[];
+
+  /**
+   * The list of permissions that apply to markers.
+   */
+  markerPermissions: ListedMarkerPermission[];
+}
+
+/**
+ * Represents a failed response to a request to list permissions for a record.
+ *
+ * @dochash types/permissions
+ * @docname ListPermissionsFailure
+ */
+export interface ListPermissionsFailure {
+  success: false;
+  errorCode:
+    | ServerError
+    | ValidatePublicRecordKeyFailure["errorCode"]
+    | AuthorizeSubjectFailure["errorCode"];
+  errorMessage: string;
+}
+
+/**
  * Defines the possible results of revoking a role.
  *
  * @dochash types/records/roles
@@ -3648,6 +3771,96 @@ export interface GrantRoleSuccess {
 export interface GrantRoleFailure {
   success: false;
   errorCode: ServerError | AuthorizeDeniedError | "roles_too_large";
+  errorMessage: string;
+}
+
+/**
+ * Defines the possible results of erasing an inst.
+ *
+ * @dochash types/records/extra
+ * @docname EraseInstResult
+ */
+export type EraseInstResult = EraseInstSuccess | EraseInstFailure;
+
+/**
+ * Defines an interface that represents a successful request to erase an inst.
+ *
+ * @dochash types/records/extra
+ * @docname EraseInstSuccess
+ */
+export interface EraseInstSuccess {
+  success: true;
+}
+
+/**
+ * Defines an interface that represents a failed request to erase an inst.
+ *
+ * @dochash types/records/extra
+ * @docname EraseInstFailure
+ */
+export interface EraseInstFailure {
+  success: false;
+
+  /**
+   * The error code that indicates why the request failed.
+   */
+  errorCode:
+    | ServerError
+    | "inst_not_found"
+    | NotSupportedError
+    | NotLoggedInError
+    | InvalidRecordKey
+    | RecordNotFoundError
+    | "not_authorized";
+
+  /**
+   * The error message that indicates why the request failed.
+   */
+  errorMessage: string;
+}
+
+/**
+ * Defines the possible results of erasing an inst.
+ *
+ * @dochash types/records/extra
+ * @docname EraseInstResult
+ */
+export type EraseInstResult = EraseInstSuccess | EraseInstFailure;
+
+/**
+ * Defines an interface that represents a successful request to erase an inst.
+ *
+ * @dochash types/records/extra
+ * @docname EraseInstSuccess
+ */
+export interface EraseInstSuccess {
+  success: true;
+}
+
+/**
+ * Defines an interface that represents a failed request to erase an inst.
+ *
+ * @dochash types/records/extra
+ * @docname EraseInstFailure
+ */
+export interface EraseInstFailure {
+  success: false;
+
+  /**
+   * The error code that indicates why the request failed.
+   */
+  errorCode:
+    | ServerError
+    | "inst_not_found"
+    | NotSupportedError
+    | NotLoggedInError
+    | InvalidRecordKey
+    | RecordNotFoundError
+    | "not_authorized";
+
+  /**
+   * The error message that indicates why the request failed.
+   */
   errorMessage: string;
 }
 
@@ -3862,6 +4075,129 @@ export interface SearchDocument {
    * The properties of the document.
    */
   [key: string]: any;
+}
+
+/**
+ * An event that is used to generate a QR Code as a [data URL image](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs).
+ *
+ * @dochash types/os/barcodes
+ * @docname GenerateQRCodeAction
+ */
+export interface GenerateQRCodeAction extends AsyncAction {
+  type: "generate_qr_code";
+
+  /**
+   * The code to generate.
+   */
+  code: string;
+
+  /**
+   * The options for generating the QR code.
+   */
+  options?: GenerateQRCodeOptions;
+}
+
+/**
+ * The options that can be used when generating a QR code.
+ *
+ * @dochash types/os/barcodes
+ * @docname GenerateQRCodeOptions
+ */
+export interface GenerateQRCodeOptions {
+  /**
+   * The error correction level to use for the QR code.
+   *
+   * Defaults to 'medium'.
+   *
+   * 'low' - 7% of codewords can be restored.
+   * 'medium' - 15% of codewords can be restored.
+   * 'quartile' - 25% of codewords can be restored.
+   * 'high' - 30% of codewords can be restored.
+   */
+  errorCorrectionLevel?: "low" | "medium" | "quartile" | "high";
+
+  /**
+   * The image format that should be used for the generated QR code.
+   *
+   * @see https://www.the-qrcode-generator.com/blog/qr-code-quiet-zone
+   */
+  imageFormat?: "image/jpeg" | "image/webp" | "image/png";
+
+  /**
+   * The QR Code version to use.
+   * Must be between 1 and 40.
+   *
+   * Higher values store more data, lower values store less data.
+   *
+   * Defaults to automatic selection based on the length of the code.
+   *
+   * @see https://www.qrcode.com/en/about/version.html
+   */
+  version?: number;
+
+  /**
+   * The mask pattern to use for the QR Code.
+   *
+   * Must be between 0 and 7.
+   *
+   * If not specified, then the best mask pattern will be chosen automatically.
+   *
+   * @see https://stackoverflow.com/a/68280826/1832856
+   */
+  maskPattern?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+  /**
+   * The scale factor that the QR code should have.
+   * That is, how many pixels each module (black or white dot) should be.
+   * A value of `1` means `1px` per modules (black dots).
+   *
+   * Defaults to 4
+   */
+  scale?: number;
+
+  /**
+   * Defines how wide the quiet zone should be around the QR code.
+   *
+   * Defaults to `4`.
+   */
+  margin?: number;
+
+  /**
+   * The width of the generated QR code in pixels. Defaults to generating the smallest code that can fit the data.
+   *
+   * If both width and scale are specified, then width takes precedence.
+   * If the code is too small to fit the code with the given width, then the width will be increased to fit.
+   *
+   * Defaults to `256`.
+   */
+  width?: number;
+
+  /**
+   * The color options for the QR Code.
+   */
+  color?: QRCodeColorOptions;
+}
+
+/**
+ * The color options for a QR Code.
+ *
+ * @dochash types/os/barcodes
+ * @docname QRCodeColorOptions
+ */
+export interface QRCodeColorOptions {
+  /**
+   * The color of dark modules. Must be in hex RGBA format.
+   *
+   * Defaults to `#000000ff` (black).
+   */
+  dark?: string;
+
+  /**
+   * The color of light modules. Must be in hex RGBA format.
+   *
+   * Defaults to `#ffffffff` (white).
+   */
+  light?: string;
 }
 
 export type RecordSearchDocumentResult =
@@ -6013,8 +6349,10 @@ export interface ToObjectOutput extends DateTimeJSOptions {
   millisecond: number;
 }
 
-export interface ToRelativeOptions
-  extends Omit<ToRelativeCalendarOptions, "unit"> {
+export interface ToRelativeOptions extends Omit<
+  ToRelativeCalendarOptions,
+  "unit"
+> {
   /**
    * @default long
    */
@@ -7606,6 +7944,18 @@ declare class Vector2 {
    * Normalizing a vector preserves its directionality while making the length (i.e. scale) of it 1.
    */
   normalize(): Vector2;
+
+  /**
+   * Negates each component of this vector and returns a new vector that contains the result.
+   *
+   * @example Negate a vector.
+   * const myVector = new Vector2(1, 2);
+   * const negated = myVector.negate();
+   *
+   * os.toast(`Vector: ${myVector}, Negated: ${negated}`);
+   */
+  negate(): Vector2;
+
   toString(): string;
   /**
    * Determines if this vector equals the other vector.
@@ -7732,6 +8082,18 @@ declare class Vector3 {
    * A normalized vector is a vector whose length equals 1.
    */
   normalize(): Vector3;
+
+  /**
+   * Negates each component of this vector and returns a new vector that contains the result.
+   *
+   * @example Negate a vector.
+   * const myVector = new Vector3(1, 2, 3);
+   * const negated = myVector.negate();
+   *
+   * os.toast(`Vector: ${myVector}, Negated: ${negated}`);
+   */
+  negate(): Vector3;
+
   toString(): string;
   /**
    * Determines if this vector equals the other vector.
@@ -8322,6 +8684,235 @@ export interface PreactContext<T> {
 
 export type RefObject<T> = { current: T | null };
 
+interface XpUser {
+  /** The unique id of the model item  */
+  id: string;
+  /** The id of the associated account (null if not yet set up) */
+  accountId: string | null;
+  /** The rate at which the user is requesting payment (null if not yet specified) */
+  requestedRate: number | null;
+  /** The users unique id from the Auth system */
+  userId: string;
+  /** The date at which the entity was created */
+  createdAtMs: number;
+  /** The date at which the entity was last updated */
+  updatedAtMs: number;
+}
+
+interface XpContract {
+  /** The id of the account associated with the contract */
+  accountId: XpAccount["id"];
+  /** A description of the contract, may contain useful query meta */
+  description: string | null;
+  /** The id of the user holding the contract */
+  holdingUserId: XpUser["id"];
+  /** The id of the user issuing the contract */
+  issuerUserId: XpUser["id"];
+  /** The rate at which the entirety of the contract is worth */
+  rate: number;
+  /** The quantity of gigs (6 minute intervals) in the contract */
+  gigs: number;
+  /** The status of the contract */
+  status: "open" | "closed";
+  /** The date at which the entity was created */
+  createdAtMs: number;
+  /** The date at which the entity was last updated */
+  updatedAtMs: number;
+}
+
+interface XpAccount {
+  /** The unique id of the model item  */
+  id: string;
+  /** The time at which (if) the account was closed */
+  closedTimeMs: number | null;
+  /** The currency of the account */
+  currency:
+    | "AED"
+    | "AFN"
+    | "ALL"
+    | "AMD"
+    | "ANG"
+    | "AOA"
+    | "ARS"
+    | "AUD"
+    | "AWG"
+    | "AZN"
+    | "BAM"
+    | "BBD"
+    | "BDT"
+    | "BGN"
+    | "BHD"
+    | "BIF"
+    | "BMD"
+    | "BND"
+    | "BOB"
+    | "BOV"
+    | "BRL"
+    | "BSD"
+    | "BTN"
+    | "BWP"
+    | "BYN"
+    | "BZD"
+    | "CAD"
+    | "CDF"
+    | "CHE"
+    | "CHF"
+    | "CHW"
+    | "CLF"
+    | "CLP"
+    | "CNY"
+    | "COP"
+    | "COU"
+    | "CRC"
+    | "CUC"
+    | "CUP"
+    | "CVE"
+    | "CZK"
+    | "DJF"
+    | "DKK"
+    | "DOP"
+    | "DZD"
+    | "EGP"
+    | "ERN"
+    | "ETB"
+    | "EUR"
+    | "FJD"
+    | "FKP"
+    | "GBP"
+    | "GEL"
+    | "GHS"
+    | "GIP"
+    | "GMD"
+    | "GNF"
+    | "GTQ"
+    | "GYD"
+    | "HKD"
+    | "HNL"
+    | "HTG"
+    | "HUF"
+    | "IDR"
+    | "ILS"
+    | "INR"
+    | "IQD"
+    | "IRR"
+    | "ISK"
+    | "JMD"
+    | "JOD"
+    | "JPY"
+    | "KES"
+    | "KGS"
+    | "KHR"
+    | "KMF"
+    | "KPW"
+    | "KRW"
+    | "KWD"
+    | "KYD"
+    | "KZT"
+    | "LAK"
+    | "LBP"
+    | "LKR"
+    | "LRD"
+    | "LSL"
+    | "LYD"
+    | "MAD"
+    | "MDL"
+    | "MGA"
+    | "MKD"
+    | "MMK"
+    | "MNT"
+    | "MOP"
+    | "MRU"
+    | "MUR"
+    | "MVR"
+    | "MWK"
+    | "MXN"
+    | "MXV"
+    | "MYR"
+    | "MZN"
+    | "NAD"
+    | "NGN"
+    | "NIO"
+    | "NOK"
+    | "NPR"
+    | "NZD"
+    | "OMR"
+    | "PAB"
+    | "PEN"
+    | "PGK"
+    | "PHP"
+    | "PKR"
+    | "PLN"
+    | "PYG"
+    | "QAR"
+    | "RON"
+    | "RSD"
+    | "RUB"
+    | "RWF"
+    | "SAR"
+    | "SBD"
+    | "SCR"
+    | "SDG"
+    | "SEK"
+    | "SGD"
+    | "SHP"
+    | "SLE"
+    | "SOS"
+    | "SRD"
+    | "SSP"
+    | "STN"
+    | "SVC"
+    | "SYP"
+    | "SZL"
+    | "THB"
+    | "TJS"
+    | "TMT"
+    | "TND"
+    | "TOP"
+    | "TRY"
+    | "TTD"
+    | "TWD"
+    | "TZS"
+    | "UAH"
+    | "UGX"
+    | "USD"
+    | "USN"
+    | "UYI"
+    | "UYU"
+    | "UYW"
+    | "UZS"
+    | "VED"
+    | "VES"
+    | "VND"
+    | "VUV"
+    | "WST"
+    | "XAF"
+    | "XAG"
+    | "XAU"
+    | "XBA"
+    | "XBB"
+    | "XBC"
+    | "XBD"
+    | "XCD"
+    | "XDR"
+    | "XOF"
+    | "XPD"
+    | "XPF"
+    | "XPT"
+    | "XSU"
+    | "XTS"
+    | "XUA"
+    | "XXX"
+    | "YER"
+    | "ZAR"
+    | "ZMW"
+    | "ZWG"
+    | "ZWL";
+  /** The date at which the entity was created */
+  createdAtMs: number;
+  /** The date at which the entity was last updated */
+  updatedAtMs: number;
+}
+
 declare global {
   /**
    * The Bot that this script is running in.
@@ -8702,14 +9293,6 @@ declare global {
    * @param message The message to use in the error if the condition is not true.
    */
   function assert(condition: boolean, message?: string): void;
-
-  /**
-   * Asserts that the given values contain the same data.
-   * Throws an error if they are not equal.
-   * @param first The first value to test.
-   * @param second The second value to test.
-   */
-  function assertEqual(first: any, second: any): void;
 
   /**
    * Sends a web request based on the given options.
@@ -9203,6 +9786,11 @@ declare global {
   const ai: Ai;
 
   /**
+   * Defines a set of functions that relate to Xp system operations.
+   */
+  const xp: Xp;
+
+  /**
    * Defines a set of functions that relate to common server operations.
    * Typically, these operations are instance-independent.
    */
@@ -9565,14 +10153,6 @@ interface DebuggerBase {
    * @param message The message to use in the error if the condition is not true.
    */
   assert(condition: boolean, message?: string): void;
-
-  /**
-   * Asserts that the given values contain the same data.
-   * Throws an error if they are not equal.
-   * @param received The value to test.
-   * @param expected The value that the first should be equal to.
-   */
-  assertEqual(received: any, expected: any): void;
 
   /**
    * Sends a web request based on the given options.
@@ -10037,6 +10617,11 @@ interface DebuggerBase {
    * Defines a set of functions that relate to common OS operations.
    */
   os: Os;
+
+  /**
+   * Defines a set of functions that relate to the xpExchange.
+   */
+  xp: Xp;
 
   /**
    * Defines a set of functions that relate to AI operations.
@@ -11279,6 +11864,224 @@ export interface CrudListItemsFailure {
     | NotAuthorizedError
     | "data_not_found";
   errorMessage: string;
+}
+
+/**
+ * Defines a record that represents a database that can be queried using SQL.
+ */
+export interface DatabaseRecord extends CrudRecord {}
+
+/**
+ * Defines a statement that can be sent to the database.
+ *
+ * @dochash types/records/database
+ * @docname DatabaseStatement
+ */
+export interface DatabaseStatement {
+  /**
+   * The query text of the statement.
+   */
+  query: string;
+
+  /**
+   * The parameters for the query.
+   */
+  params?: unknown[];
+}
+
+export type ErrorType = {
+  errorCode: string;
+  errorMessage: string;
+  [key: string]: any;
+};
+
+export type GenericSuccess<T> =
+  T extends Array<any>
+    ? { success: true; items: T }
+    : T extends object
+      ? {
+          success: true;
+        } & T
+      : {
+          success: true;
+          value: T;
+        };
+
+export type GenericFailure<E extends ErrorType> = {
+  success: false;
+} & E;
+
+export type GenericResult<T, E extends ErrorType> =
+  | GenericSuccess<T>
+  | GenericFailure<E>;
+
+export type SimpleError = {
+  errorCode: KnownErrorCodes;
+  errorMessage: string;
+
+  reason?: any;
+  issues?: Zod.ZodIssue[];
+};
+
+/**
+ * Defines the result of an API query.
+ *
+ * @dochash types/records/database
+ * @docname QueryResult
+ */
+export interface ApiQueryResult {
+  /**
+   * The rows that were returned from the query.
+   */
+  rows: Record<string, any>[];
+
+  /**
+   * The number of rows that were modified by the query.
+   */
+  affectedRowCount: number;
+
+  /**
+   * The ID of the last row that was inserted by the query.
+   */
+  lastInsertId?: number | string;
+}
+
+/**
+ * Defines the result of a batch query.
+ *
+ * @dochash types/records/database
+ * @docname BatchResult
+ */
+export interface BatchResult {
+  /**
+   * The results of the individual statements.
+   */
+  results: ApiQueryResult[];
+}
+
+/**
+ * Represents a connection to a database record.
+ *
+ * @dochash types/records/database
+ * @docname Database
+ *
+ * @example Get a database connection.
+ * const database = os.getDatabase('myRecord', 'myDatabase');
+ */
+export interface ApiDatabase {
+  /**
+   * Constructs a database statement from the given [template string literal](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals).
+   *
+   * Once constructed, the returned statement can be used with `run()` or `batch()`.
+   *
+   * @param templates The string templates.
+   * @param params The parameters to interpolate into the templates.
+   * @returns A database statement.
+   *
+   * @example Create a database statement from a SQL query
+   * const statement = database.sql`SELECT * FROM items`;
+   *
+   * @example Use a parameter in a database statement
+   * const itemId = 'abc';
+   * const statement = database.sql`SELECT * FROM items WHERE id = ${itemId}`;
+   */
+  sql(templates: TemplateStringsArray, ...params: unknown[]): DatabaseStatement;
+
+  /**
+   * Creates a new database statement from the given SQL and parameters.
+   * @param sql The SQL query string.
+   * @param params The parameters to include in the query.
+   * @returns A new database statement.
+   */
+  statement(sql: string, ...params: unknown[]): DatabaseStatement;
+
+  /**
+   * Runs the given readonly query against the database.
+   * This method requires queries to be read-only. This means that queries can only select data, they cannot insert, update, or delete data.
+   *
+   * Supports [template string literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals) for parameterized queries.
+   *
+   * **Warning:** To avoid [SQL Injection attacks](https://en.wikipedia.org/wiki/SQL_injection), always use template literals with expressions. Never use the `+` operator to concatenate strings containing SQL code.
+   *
+   * @param templates The string templates.
+   * @param params The parameters that should be used.
+   * @returns A promise that resolves when the query has completed.
+   *
+   * @example Select all items from a table
+   * const result = await database.query`SELECT * FROM items`;
+   *
+   * @example Use a parameter in a query
+   * const itemId = 'abc';
+   * const result = await database.query`SELECT * FROM items WHERE id = ${itemId}`;
+   */
+  query(
+    templates: TemplateStringsArray,
+    ...params: unknown[]
+  ): Promise<GenericResult<ApiQueryResult, SimpleError>>;
+
+  /**
+   * Runs the given SQL on the database and returns the result.
+   * This method supports read-write queries. This means that queries can be used to select, insert, update, and delete data.
+   *
+   * Supports [template string literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals) for parameterized queries.
+   *
+   * **Warning:** To avoid [SQL Injection attacks](https://en.wikipedia.org/wiki/SQL_injection), always use template literals with expressions. Never use the `+` operator to concatenate strings containing SQL code.
+   *
+   * @param templates The string templates.
+   * @param params The parameters that should be used.
+   * @returns A promise that resolves when the SQL has completed.
+   *
+   * @example Insert a new item into a table
+   * const name = "New Item";
+   * const value = 100;
+   * const result = await database.execute`INSERT INTO items (name, value) VALUES (${name}, ${value})`;
+   *
+   */
+  execute(
+    templates: TemplateStringsArray,
+    ...params: unknown[]
+  ): Promise<GenericResult<ApiQueryResult, SimpleError>>;
+  /**
+   * Runs the given statements in a single transaction. Transactions can be used to group multiple statements together.
+   * If one statement fails, then none of the statements will have any effect.
+   *
+   * @param func The function that should be used to build the statements.
+   * @param readonly Whether the statements are read-only. If true, then the statements cannot modify data. Defaults to true.
+   *
+   * @example Run multiple select queries at once
+   * const results = await database.batch([
+   *      database.sql`SELECT * FROM items WHERE id = 'abc'`,
+   *      database.sql`SELECT * FROM items WHERE id = 'def'`,
+   *      database.sql`SELECT * FROM items WHERE id = 'ghi'`,
+   * ]);
+   *
+   * @example Insert multiple items at once
+   * const results = await database.batch([
+   *      database.sql`INSERT INTO items (name, value) VALUES ('Item 1', 100)`,
+   *      database.sql`INSERT INTO items (name, value) VALUES ('Item 2', 200)`,
+   *      database.sql`INSERT INTO items (name, value) VALUES ('Item 3', 300)`,
+   * ], false);
+   */
+  batch(
+    statements: DatabaseStatement[],
+    readonly?: boolean
+  ): Promise<GenericResult<BatchResult, SimpleError>>;
+
+  /**
+   * Runs the given database statement.
+   *
+   * @param statement The statement to run.
+   * @param readonly Whether the statement is read-only. If true, then the statement cannot modify data. Defaults to true.
+   */
+  run(
+    statement: DatabaseStatement,
+    readonly?: boolean
+  ): Promise<GenericResult<ApiQueryResult, SimpleError>>;
+
+  /**
+   * Gets an interface to the database that returns unmodified query results.
+   */
+  get raw(): Omit<ApiDatabase, "raw">;
 }
 
 export type HandleWebhookResult = HandleWebhookSuccess | HandleWebhookFailure;
@@ -12627,6 +13430,229 @@ export interface GeoJSONMapLayer extends MapLayerBase {
  */
 export type DynamicListener = (that: any, bot: Bot, tagName: string) => any;
 
+/**
+ * Defines an interface that represents a store item.
+ * That is, an item that can be purchased by a user to grant them a role.
+ *
+ * @dochash types/records/store
+ * @doctitle Store Types
+ * @docdescription Types that are used for store actions.
+ * @docsidebar Store
+ * @docname StoreItem
+ * @docid StoreItem
+ */
+export interface StoreItem {
+  /**
+   * The markers that are associated with the item.
+   */
+  markers: string[];
+
+  /**
+   * The name of the item.
+   */
+  name: string;
+
+  /**
+   * The description of the item.
+   */
+  description: string;
+
+  /**
+   * The list of image URLs that represent the item.
+   */
+  imageUrls: string[];
+
+  /**
+   * The [3-letter ISO currency code](https://www.iso.org/iso-4217-currency-codes.html) that the item is priced in.
+   *
+   * See https://www.iso.org/iso-4217-currency-codes.html
+   */
+  currency: string;
+
+  /**
+   * The cost of the item in the currency's smallest unit. (e.g. cents, pence, etc.)
+   * Must be an interger.
+   */
+  cost: number;
+
+  /**
+   * The [tax code](https://docs.stripe.com/tax/tax-codes) for the item.
+   * Currently only stripe tax codes are supported.
+   *
+   * See https://docs.stripe.com/tax/tax-codes
+   */
+  taxCode?: string | null;
+
+  /**
+   * The name of the role that the item grants.
+   */
+  roleName: string;
+
+  /**
+   * The amount of time in miliseconds that the role is granted for after purchase.
+   * If null, then the role is granted forever.
+   */
+  roleGrantTimeMs: number | null;
+}
+
+export type CrudRecordItemResult =
+  | CrudRecordItemSuccess
+  | CrudRecordItemFailure;
+
+export interface CrudRecordItemSuccess {
+  success: true;
+  recordName: string;
+  address: string;
+}
+
+export interface CrudRecordItemFailure {
+  success: false;
+  errorCode:
+    | ServerError
+    | NotLoggedInError
+    | NotAuthorizedError
+    | "invalid_request";
+  errorMessage: string;
+}
+
+export type CrudGetItemResult<T> = CrudGetItemSuccess<T> | CrudGetItemFailure;
+
+export interface CrudGetItemSuccess<T> {
+  success: true;
+  item: T;
+}
+
+export interface CrudGetItemFailure {
+  success: false;
+  errorCode:
+    | ServerError
+    | NotLoggedInError
+    | NotAuthorizedError
+    | "data_not_found";
+  errorMessage: string;
+}
+
+export type CrudEraseItemResult = CrudEraseItemSuccess | CrudEraseItemFailure;
+
+export interface CrudEraseItemSuccess {
+  success: true;
+}
+
+export interface CrudEraseItemFailure {
+  success: false;
+  errorCode:
+    | ServerError
+    | NotLoggedInError
+    | NotAuthorizedError
+    | "data_not_found";
+  errorMessage: string;
+}
+
+export type CrudListItemsResult<T> =
+  | CrudListItemsSuccess<T>
+  | CrudListItemsFailure;
+
+export interface CrudListItemsSuccess<T> {
+  success: true;
+  /**
+   * The name of the record that the items are from.
+   */
+  recordName: string;
+
+  /**
+   * The items that were listed.
+   */
+  items: T[];
+
+  /**
+   * The total number of items in the record.
+   */
+  totalCount: number;
+
+  /**
+   * The marker that was listed.
+   * If null, then all markers are listed.
+   */
+  marker?: string;
+}
+
+export interface CrudListItemsFailure {
+  success: false;
+  errorCode:
+    | ServerError
+    | NotLoggedInError
+    | NotAuthorizedError
+    | "data_not_found";
+  errorMessage: string;
+}
+
+/**
+ * Defines a base interface for a record that can be stored in a CrudStore.
+ */
+export interface CrudRecord {
+  /**
+   * The address of the record.
+   */
+  address: string;
+
+  /**
+   * The markers that are associated with the record.
+   */
+  markers: string[];
+}
+
+/**
+ * Defines a purchasable item.
+ * That is, an item that can be purchased by a user to grant them a role.
+ */
+export interface PurchasableItem extends CrudRecord {
+  /**
+   * The name of the item.
+   */
+  name: string;
+
+  /**
+   * The description of the item.
+   */
+  description: string;
+
+  /**
+   * The list of image URLs that represent the item.
+   */
+  imageUrls: string[];
+
+  /**
+   * The [3-letter ISO currency code](https://www.iso.org/iso-4217-currency-codes.html) that the item is priced in.
+   *
+   * See https://www.iso.org/iso-4217-currency-codes.html
+   */
+  currency: string;
+
+  /**
+   * The cost of the item in the currency's smallest unit. (e.g. cents, pence, etc.)
+   */
+  cost: number;
+
+  /**
+   * The [tax code](https://docs.stripe.com/tax/tax-codes) for the item.
+   * Currently only stripe tax codes are supported.
+   *
+   * See https://docs.stripe.com/tax/tax-codes
+   */
+  taxCode?: string | null;
+
+  /**
+   * The name of the role that the item grants.
+   */
+  roleName: string;
+
+  /**
+   * The amount of time in miliseconds that the role is granted for after purchase.
+   * If null, then the role is granted forever.
+   */
+  roleGrantTimeMs: number | null;
+}
+
 interface Ai {
   /**
    * Sends a chat message to the AI.
@@ -12787,6 +13813,22 @@ interface Ai {
     messages: string | AIChatMessage | AIChatMessage[],
     options?: AIChatOptions
   ): Promise<AIChatMessage | string>;
+
+  /**
+   * Lists the available chat models that the user can use.
+   * Returns a promise that resolves with an array of available chat models.
+   * Throws a {@link CasualOSError} if an error occurs.
+   *
+   * @param options The options that should be used.
+   *
+   * @example List available chat models
+   * const models = await ai.listChatModels();
+   * console.log(models);
+   *
+   * @dochash actions/ai
+   * @docname ai.listChatModels
+   */
+  listChatModels(options?: RecordActionOptions): Promise<ListedChatModel[]>;
 
   /**
    * Generates a [skybox image](https://en.wikipedia.org/wiki/Skybox_%28video_games%29) from the given prompt.
@@ -13003,137 +14045,137 @@ interface Ai {
     ): Promise<AsyncIterable<string>>;
 
     /**
-         * Sends a chat message to the AI and streams the response back.
-         * Returns a promise that resolves with an [async iterable](https://javascript.info/async-iterators-generators#async-iterables) that contains the responses from the AI.
-         * 
-         * Throws a {@link CasualOSError} if an error occurs while sending the message.
-         *
-         * This function can be useful for creating chat bots, or for using an Artificial Intelligence (AI) to process a message.
-         *
-         * @param message The message that should be sent to the AI.
-         * @param options The options that should be used.
-         *
-         * @example Send a message to the AI and log the response.
-         * const response = await ai.chat({
-         *     role: "user",
-         *     content: "Hello!"
-         * });
-         * console.log(`${response.role}: ${response.content}`);
-         *
-         * @example Ask the AI to describe an uploaded image.
-         * const files = await os.showUploadFiles();
-         * const firstFile = files[0];
-         * const base64 = bytes.toBase64String(new Uint8Array(firstFile.data));
-         * const response = await ai.stream.chat({
-         *    role: 'user',
-         *    content: [
-         *        {
-         *            base64: base64,
-         *            mimeType: firstFile.mimeType,
-         *        },
-         *        {
-         *            text: 'please describe the image'
-         *        }
-         *    ]
-         * }, {
-         *    preferredModel: 'gemini-pro-vision'
-         * });
-         * 
-         * for await (let message of response) {
-             os.toast(message.content);
-        * }
-        *
-        * @dochash actions/ai
-        * @docname ai.stream.chat
-        * @docid ai.stream.chat-message
-        */
+     * Sends a chat message to the AI and streams the response back.
+     * Returns a promise that resolves with an [async iterable](https://javascript.info/async-iterators-generators#async-iterables) that contains the responses from the AI.
+     * 
+     * Throws a {@link CasualOSError} if an error occurs while sending the message.
+     *
+     * This function can be useful for creating chat bots, or for using an Artificial Intelligence (AI) to process a message.
+     *
+     * @param message The message that should be sent to the AI.
+     * @param options The options that should be used.
+     *
+     * @example Send a message to the AI and log the response.
+     * const response = await ai.chat({
+     *     role: "user",
+     *     content: "Hello!"
+     * });
+     * console.log(`${response.role}: ${response.content}`);
+     *
+     * @example Ask the AI to describe an uploaded image.
+     * const files = await os.showUploadFiles();
+     * const firstFile = files[0];
+     * const base64 = bytes.toBase64String(new Uint8Array(firstFile.data));
+     * const response = await ai.stream.chat({
+     *    role: 'user',
+     *    content: [
+     *        {
+     *            base64: base64,
+     *            mimeType: firstFile.mimeType,
+     *        },
+     *        {
+     *            text: 'please describe the image'
+     *        }
+     *    ]
+     * }, {
+     *    preferredModel: 'gemini-pro-vision'
+     * });
+     * 
+     * for await (let message of response) {
+         os.toast(message.content);
+    * }
+    *
+    * @dochash actions/ai
+    * @docname ai.stream.chat
+    * @docid ai.stream.chat-message
+    */
     chat(
       message: AIChatMessage,
       options?: AIChatOptions
     ): Promise<AsyncIterable<AIChatMessage>>;
 
     /**
-         * Sends a chat message to the AI.
-         * Returns a promise that resolves with an [async iterable](https://javascript.info/async-iterators-generators#async-iterables) that contains the responses from the AI.
-         * 
-         * Throws a {@link CasualOSError} if an error occurs while sending the message.
-         *
-         * This function can be useful for creating chat bots, or for using an Artificial Intelligence (AI) to process a message.
-         *
-         * @param message The message that should be sent to the AI.
-         * @param options The options that should be used.
-         *
-         * @example Send a message to the AI and log the response.
-         * const response = await ai.stream.chat([
-         *      {
-         *          role: "system",
-         *          content: "You are a helpful assistant."
-         *      },
-         *     {
-         *          role: "user",
-         *          content: "Hello!"
-         *     }
-         * ]);
-         * 
-         * for await (let message of response) {
-         *    console.log(`${message.role}: ${message.content}`);
-         * }
-         *
-         * @example Build a basic chat bot.
-         * const messages = [
-         *      {
-         *          role: "system",
-         *          content: "You are a helpful assistant."
-         *      },
-         * ];
-         *
-         * while(true) {
-         *      const userInput = await os.showInput();
-         *      if (!userInput) {
-         *          break;
-         *      }
-         *      messages.push({
-         *          role: "user",
-         *          content: userInput
-         *      });
-         *
-         *      const response = await ai.stream.chat(messages);
-         * 
-         *      for await (let message of response) {
-         *          messages.push(message);
-         *          os.toast(message.content);
-         *      }
-         * }
-         *
-         * os.toast("Goodbye!");
-         *
-         * @example Ask the AI to describe an uploaded image.
-         * const files = await os.showUploadFiles();
-         * const firstFile = files[0];
-         * const base64 = bytes.toBase64String(new Uint8Array(firstFile.data));
-         * const response = await ai.stream.chat([{
-         *    role: 'user',
-         *    content: [
-         *        {
-         *            base64: base64,
-         *            mimeType: firstFile.mimeType,
-         *        },
-         *        {
-         *            text: 'please describe the image'
-         *        }
-         *    ]
-         * }], {
-         *    preferredModel: 'gemini-pro-vision'
-         * });
-         *
-         * for await (let message of response) {
-             os.toast(message.content);
-        * }
-        *
-        * @dochash actions/ai
-        * @docname ai.stream.chat
-        * @docid ai.stream.chat-messages
-        */
+     * Sends a chat message to the AI.
+     * Returns a promise that resolves with an [async iterable](https://javascript.info/async-iterators-generators#async-iterables) that contains the responses from the AI.
+     * 
+     * Throws a {@link CasualOSError} if an error occurs while sending the message.
+     *
+     * This function can be useful for creating chat bots, or for using an Artificial Intelligence (AI) to process a message.
+     *
+     * @param message The message that should be sent to the AI.
+     * @param options The options that should be used.
+     *
+     * @example Send a message to the AI and log the response.
+     * const response = await ai.stream.chat([
+     *      {
+     *          role: "system",
+     *          content: "You are a helpful assistant."
+     *      },
+     *     {
+     *          role: "user",
+     *          content: "Hello!"
+     *     }
+     * ]);
+     * 
+     * for await (let message of response) {
+     *    console.log(`${message.role}: ${message.content}`);
+     * }
+     *
+     * @example Build a basic chat bot.
+     * const messages = [
+     *      {
+     *          role: "system",
+     *          content: "You are a helpful assistant."
+     *      },
+     * ];
+     *
+     * while(true) {
+     *      const userInput = await os.showInput();
+     *      if (!userInput) {
+     *          break;
+     *      }
+     *      messages.push({
+     *          role: "user",
+     *          content: userInput
+     *      });
+     *
+     *      const response = await ai.stream.chat(messages);
+     * 
+     *      for await (let message of response) {
+     *          messages.push(message);
+     *          os.toast(message.content);
+     *      }
+     * }
+     *
+     * os.toast("Goodbye!");
+     *
+     * @example Ask the AI to describe an uploaded image.
+     * const files = await os.showUploadFiles();
+     * const firstFile = files[0];
+     * const base64 = bytes.toBase64String(new Uint8Array(firstFile.data));
+     * const response = await ai.stream.chat([{
+     *    role: 'user',
+     *    content: [
+     *        {
+     *            base64: base64,
+     *            mimeType: firstFile.mimeType,
+     *        },
+     *        {
+     *            text: 'please describe the image'
+     *        }
+     *    ]
+     * }], {
+     *    preferredModel: 'gemini-pro-vision'
+     * });
+     *
+     * for await (let message of response) {
+         os.toast(message.content);
+    * }
+    *
+    * @dochash actions/ai
+    * @docname ai.stream.chat
+    * @docid ai.stream.chat-messages
+    */
     chat(
       messages: AIChatMessage[],
       options?: AIChatOptions
@@ -13143,6 +14185,30 @@ interface Ai {
       messages: string | AIChatMessage | AIChatMessage[],
       options?: AIChatOptions
     ): Promise<AsyncIterable<AIChatMessage | string>>;
+  };
+}
+
+/**
+ * The options for configuring TypeScript type checking in the Monaco editor.
+ * @dochash types/os/system
+ * @docname ConfigureTypeCheckingOptions
+ */
+export interface ConfigureTypeCheckingOptions {
+  /**
+   * Options for the Monaco editor's TypeScript diagnostic settings.
+   */
+  editorDiagnosticOptions?: {
+    /**
+     * Whether to disable semantic validation (type checking).
+     * When true, TypeScript semantic errors will not be shown.
+     */
+    noSemanticValidation?: boolean;
+
+    /**
+     * Whether to disable syntax validation.
+     * When true, TypeScript syntax errors will not be shown.
+     */
+    noSyntaxValidation?: boolean;
   };
 }
 
@@ -13506,6 +14572,35 @@ interface Os {
   ): ShowToastAction;
 
   /**
+   * Configures TypeScript type checking in the Monaco editor.
+   *
+   * This function allows you to enable or disable TypeScript semantic and syntax validation
+   * in the code editor. By default, type checking is disabled to reduce visual noise.
+   *
+   * @param options the configuration options for type checking.
+   *
+   * @example Enable TypeScript type checking
+   * await os.configureTypeChecking({
+   *     editorDiagnosticOptions: {
+   *         noSemanticValidation: false,
+   *         noSyntaxValidation: false
+   *     }
+   * });
+   *
+   * @example Disable TypeScript type checking
+   * await os.configureTypeChecking({
+   *     editorDiagnosticOptions: {
+   *         noSemanticValidation: true,
+   *         noSyntaxValidation: false
+   *     }
+   * });
+   *
+   * @dochash actions/os/system
+   * @docname os.configureTypeChecking
+   */
+  configureTypeChecking(options: ConfigureTypeCheckingOptions): Promise<void>;
+
+  /**
    * Shows a tooltip message to the user.
    * @param message The message to show.
    * @param pixelX The X coordinate that the tooltip should be shown at. If null, then the current pointer position will be used.
@@ -13736,6 +14831,40 @@ interface Os {
    * Hides the QR Code.
    */
   hideQRCode(): ShowQRCodeAction;
+
+  /**
+   * Generates a [QR Code](https://en.wikipedia.org/wiki/QR_code) for the given data and returns a [Data URL](https://developer.mozilla.org/en-US/docs/web/http/basics_of_http/data_urls) that can be used in an img tag or as a {@tag formAddress}.
+   *
+   * Returns a promise that resolves with the data URL string.
+   *
+   * @param code the text or data that the generated QR Code should represent.
+   * @param options the options that should be used when generating the QR Code.
+   *
+   * @example Generate a QR Code that contains the data "hello".
+   * const qrCodeUrl = await os.generateQRCode("hello");
+   * masks.formAddress = qrCodeUrl;
+   *
+   * @example Generate a QR Code that links to https://example.com
+   * const qrCodeUrl = await os.generateQRCode("https://example.com");
+   * masks.formAddress = qrCodeUrl;
+   *
+   * @example Generate a QR Code with custom colors.
+   * const qrCodeUrl = await os.generateQRCode("Custom QR Code", {
+   *   color: {
+   *    dark: "#0000FFFF",
+   *    light: "#FFFF00FF"
+   *   }
+   * });
+   * masks.formAddress = qrCodeUrl;
+   *
+   * @dochash actions/os/barcodes
+   * @docname os.generateQRCode
+   * @docgroup 10-qr-code
+   */
+  generateQRCode(
+    code: string,
+    options?: GenerateQRCodeOptions
+  ): Promise<string>;
 
   /**
    * Opens the barcode scanner.
@@ -14173,6 +15302,24 @@ interface Os {
   openURL(url: string): OpenURLAction;
 
   /**
+   * Tells CasualOS to sync the given list of config bot tags in the URL query.
+   *
+   * @param tags The tags that should be synced to the URL.
+   * @param fullHistory Whether the a history entry should be created for every change to these tags. If false, then the URL will be updated but no additional history entries will be created. If true, then each change to the parameters will create a new history entry. Defaults to true.
+   *
+   * @example Sync the "page" config bot tag to the URL
+   * os.syncConfigBotTagsToURL(['page']);
+   *
+   * @example Sync the "scrollPosition" config bot tag to the URL, but don't create a history entry for every change
+   * os.syncConfigBotTagsToURL(['scrollPosition'], false);
+   *
+   * @dochash actions/os/portals
+   * @docname os.syncConfigBotTagsToURL
+   * @docgroup 10-go-to
+   */
+  syncConfigBotTagsToURL(tags: string[], fullHistory?: boolean): any;
+
+  /**
    * Shows an input box to edit the given bot and tag.
    *
    * @param bot The bot or bot ID that should be edited.
@@ -14222,6 +15369,12 @@ interface Os {
    * @param options The options that indicate how the confirmation dialog shold be customized.
    */
   showConfirm(options: ShowConfirmOptions): Promise<boolean>;
+
+  /**
+   * Shows an alert dialog. Returns a promise that resolves when the dialog is dismissed.
+   * @param options The options that indicate how the alert dialog should be customized.
+   */
+  showAlert(options: ShowAlertOptions): Promise<void>;
 
   /**
    * Gets the dimension that the player is currently viewing.
@@ -14402,6 +15555,14 @@ interface Os {
      */
     useDebugValue<T>(value: T, formatter?: (value: T) => any): void;
 
+    /**
+     * Returns the current context value, as given by the nearest context provider for the given context.
+     * When the provider updates, this Hook will trigger a rerender with the latest context value.
+     *
+     * @param context The context you want to use
+     */
+    useContext<T>(context: PreactContext<T>): T;
+
     useErrorBoundary(
       callback?: (error: any) => Promise<void> | void
     ): [any, () => void];
@@ -14549,6 +15710,11 @@ interface Os {
   requestAuthBotInBackground(): Promise<Bot>;
 
   /**
+   * Signs out the current user by revoking their session.
+   */
+  signOut(): Promise<void>;
+
+  /**
    * Gets an access key for the given public record.
    * @param name The name of the record.
    */
@@ -14599,6 +15765,39 @@ interface Os {
     permissionId: string,
     options?: RecordActionOptions
   ): Promise<RevokePermissionResult>;
+
+  /**
+   * Gets the list of permissions that have been assigned in the given record.
+   *
+   * @param request the request containing the record name and optional filters.
+   * @param options the options for the operation.
+   *
+   * @example List all permissions in a record.
+   * const result = await os.listPermissions({
+   *     recordName: 'myRecord'
+   * });
+   *
+   * @example List permissions for a specific marker.
+   * const result = await os.listPermissions({
+   *     recordName: 'myRecord',
+   *     marker: 'secret'
+   * });
+   *
+   * @example List permissions for a specific resource.
+   * const result = await os.listPermissions({
+   *     recordName: 'myRecord',
+   *     resourceKind: 'data',
+   *     resourceId: 'address'
+   * });
+   *
+   * @dochash actions/os/records
+   * @docgroup 01-records
+   * @docid os.listPermissions
+   * @docname os.listPermissions
+   */
+  listPermissions(
+    request: ListPermissionsRequest
+  ): Promise<ListPermissionsResult>;
 
   /**
    * Grants the current inst admin permissions in the given record for the rest of the day.
@@ -14669,6 +15868,18 @@ interface Os {
     inst: string,
     options?: RecordActionOptions
   ): Promise<RevokeRoleResult>;
+
+  /**
+   * Erases the inst with the given name from the given record.
+   * @param recordKeyOrName The record key or record name that should be used to access the record.
+   * @param instName The name of the inst that should be deleted.
+   * @param options The options for the request.
+   */
+  eraseInst(
+    recordKeyOrName: string,
+    instName: string,
+    options?: RecordActionOptions
+  ): Promise<EraseInstResult>;
 
   /**
    * Determines if the given value is a record key.
@@ -15581,7 +16792,8 @@ interface Os {
   installPackage(
     recordName: string,
     address: string,
-    key?: string | PackageRecordVersionKeySpecifier
+    key?: string | PackageRecordVersionKeySpecifier,
+    options?: InstallPackageOptions
   ): Promise<InstallPackageResult>;
 
   /**
@@ -15600,46 +16812,46 @@ interface Os {
   ): Promise<ListInstalledPackagesResult>;
 
   /**
-     * Creates or updates a search collection in the given record.
-     * 
-     * Returns a promise that resolves with the result of the operation.
-     * 
-     * @param request The request to create or update the search collection.
-     * @param options the options for the request.
-     * @returns A promise that resolves with the result of the operation.
-     * 
-     * @example Record a search collection with an automatic schema
-     * const result = await os.recordSearchCollection({
-     *      recordName: 'myRecord',
-     *      address: 'mySearchCollection',
-     *      schema: {
-     *          '.*': {
-     *              type: 'auto'
-     *           }
-     *      }
-     * });
-     * 
-     * @example Record a search collection with a custom schema
-     * const result = await os.recordSearchCollection({
-     *      recordName: 'myRecord',
-     *      address: 'mySearchCollection',
-     *      schema: {
-               title: {
-                  type: 'string',
-               },
-               description: {
-                  type: 'string',
-               },
-               price: {
-                  type: 'int32',
-               }
-     *      }
-     * });
-     * 
-     * @dochash actions/os/records
-     * @docgroup 02-search
-     * @docname os.recordSearchCollection
-     */
+   * Creates or updates a search collection in the given record.
+   * 
+   * Returns a promise that resolves with the result of the operation.
+   * 
+   * @param request The request to create or update the search collection.
+   * @param options the options for the request.
+   * @returns A promise that resolves with the result of the operation.
+   * 
+   * @example Record a search collection with an automatic schema
+   * const result = await os.recordSearchCollection({
+   *      recordName: 'myRecord',
+   *      address: 'mySearchCollection',
+   *      schema: {
+   *          '.*': {
+   *              type: 'auto'
+   *           }
+   *      }
+   * });
+   * 
+   * @example Record a search collection with a custom schema
+   * const result = await os.recordSearchCollection({
+   *      recordName: 'myRecord',
+   *      address: 'mySearchCollection',
+   *      schema: {
+             title: {
+                type: 'string',
+             },
+             description: {
+                type: 'string',
+             },
+             price: {
+                type: 'int32',
+             }
+   *      }
+   * });
+   * 
+   * @dochash actions/os/records
+   * @docgroup 02-search
+   * @docname os.recordSearchCollection
+   */
   recordSearchCollection(
     request: RecordSearchCollectionApiRequest,
     options?: RecordActionOptions
@@ -15786,6 +16998,158 @@ interface Os {
   ): Promise<EraseSearchDocumentResult>;
 
   /**
+   * Creates or updates a database in the given record.
+   *
+   * Databases are used to store and manage structured data within a record.
+   * They use the [SQL programming language](https://www.sqlite.org/lang.html), which is a powerful programming language designed to manage relational databases.
+   *
+   * Returns a promise that resolves with the result of the operation.
+   *
+   * @param request The request to create or update the database.
+   * @param options the options for the request.
+   * @returns A promise that resolves with the result of the operation.
+   *
+   * @example Record a database.
+   * const result = await os.recordDatabase({
+   *      recordName: 'myRecord',
+   *      address: 'myDatabase',
+   * });
+   *
+   * @example Record a private database
+   * const result = await os.recordDatabase({
+   *      recordName: 'myRecord',
+   *      address: 'myDatabase',
+   *      markers: ['private']
+   * });
+   *
+   *
+   * @doctitle Database Actions
+   * @docsidebar Database
+   * @docdescription Database actions allow you to create and manage databases in your records. Databases enable efficient storage and retrieval of structured data within your records, making it easier to manage and query information.
+   * @dochash actions/os/records/database
+   * @docgroup 02-database
+   * @docname os.recordDatabase
+   * @docid recordDatabase
+   */
+  recordDatabase(
+    request: RecordSearchCollectionApiRequest,
+    options?: RecordActionOptions
+  ): Promise<CrudRecordItemResult>;
+
+  /**
+   * Deletes a database along with all the data in it.
+   *
+   * Returns a promise that resolves with the result of the operation.
+   *
+   * @param recordName The name of the record to delete the database from.
+   * @param address The address of the database to delete.
+   * @param options the options for the request.
+   * @returns A promise that resolves with the result of the operation.
+   *
+   * @example Erase a database
+   * const result = await os.eraseDatabase('recordName', 'myDatabase');
+   *
+   * @dochash actions/os/records/database
+   * @docgroup 02-database
+   * @docname os.eraseDatabase
+   * @docid eraseDatabase
+   */
+  eraseDatabase(
+    recordName: string,
+    address: string,
+    options?: RecordActionOptions
+  ): Promise<CrudRecordItemResult>;
+
+  /**
+   * Lists the databases in a record.
+   *
+   * Returns a promise that resolves with the result of the operation.
+   *
+   * @param recordName The name of the record to delete the search collection from.
+   * @param startingAddress the address that the listing should start after.
+   * @param options the options for the request.
+   * @returns A promise that resolves with the result of the operation.
+   *
+   * @example List databases
+   * const result = await os.listDatabases('recordName', 'myDatabase');
+   *
+   * @dochash actions/os/records/database
+   * @docgroup 02-database
+   * @docname os.listDatabases
+   * @docid listDatabases
+   */
+  listDatabases(
+    recordName: string,
+    startingAddress?: string,
+    options?: ListDataOptions
+  ): Promise<CrudListItemsResult<DatabaseRecord>>;
+
+  /**
+   * Lists the databases in a record by a specific marker.
+   * @param recordName The name of the record to list the databases from.
+   * @param marker The marker to filter the list by.
+   * @param startingAddress The address that the listing should start after.
+   * @param options The options for the request.
+   * @returns A promise that resolves with the result of the operation.
+   *
+   * @example List public read databases
+   * const result = await os.listDatabasesByMarker('recordName', 'publicRead');
+   *
+   * @example List private databases
+   * const result = await os.listDatabasesByMarker('recordName', 'private');
+   *
+   * @dochash actions/os/records/database
+   * @docgroup 02-database
+   * @docname os.listDatabasesByMarker
+   */
+  listDatabasesByMarker(
+    recordName: string,
+    marker: string,
+    startingAddress?: string,
+    options?: ListDataOptions
+  ): Promise<CrudListItemsResult<DatabaseRecord>>;
+
+  /**
+   * Gets basic info about a database from the specified record.
+   *
+   * @param recordName The name of the record to retrieve the database from.
+   * @param address The address of the database to retrieve.
+   * @param options The options for the request.
+   *
+   * @returns A promise that resolves with the result of the operation.
+   *
+   * @example Get a database and query a table
+   * const db = os.getDatabase('myRecord', 'myDatabase');
+   * const result = await db.query`SELECT * FROM myTable`;
+   *
+   * @example Insert a new row
+   * const value1 = 'abc';
+   * const value2 = 123;
+   * const result = await db.execute`INSERT INTO myTable (column1, column2) VALUES (${value1}, ${value2})`;
+   *
+   * @example Run multiple queries in a transaction
+   * const values = [
+   *   ['apple', 10],
+   *   ['car', 25000],
+   *   ['strawberry', 1],
+   *   ['lego', 5]
+   * ];
+   *
+   * const result = await db.batch(
+   *   values.map(([name, value]) => db.sql`INSERT INTO data (name, value) VALUES (${name}, ${value})`)
+   * );
+   *
+   * @dochash actions/os/records/database
+   * @docgroup 02-database
+   * @docname os.getDatabase
+   */
+  getDatabase(
+    recordName: string,
+    address: string,
+    options?: RecordActionOptions
+  ): ApiDatabase;
+
+  /**
    * Gets the list of studios that the currently logged in user has access to.
    *
    * Returns a promise that resolves with an object that contains the list of studios (if successful) or information about the error that occurred.
@@ -15818,6 +17182,131 @@ interface Os {
    * @docname os.getRecordsEndpoint
    */
   getRecordsEndpoint(): Promise<string>;
+
+  /**
+   * Creates or updates a store item in a record.
+   *
+   * Returns a promise that resolves with an object that indicates whether the operation was successful or unsuccessful.
+   *
+   * @param recordName the name of the record that the store item should be created or updated in.
+   * @param address the address of the item in the record.
+   * @param item the item that should be stored in the record.
+   * @param options the options that should be used to store the item.
+   *
+   * @example Record an item that can be purchased by anyone
+   * await os.recordStoreItem('myRecord', 'myItem', {
+   *    name: 'My Item',
+   *    description: 'Description of my item!'
+   *    imageUrls: [],
+   *    currency: 'usd',
+   *    cost: 100, // $1.00
+   *    roleName: 'roleToBeGranted',
+   *    roleGrantTimeMs: null,
+   *    markers: ['publicRead']
+   * });
+   *
+   * @dochash actions/os/records
+   * @docgroup 01-store
+   * @docname os.recordStoreItem
+   */
+  recordStoreItem(
+    recordName: string,
+    address: string,
+    item: StoreItem,
+    options?: RecordActionOptions
+  ): Promise<CrudRecordItemResult>;
+
+  /**
+   * Gets the item with the given address from the specified record.
+   *
+   * Returns a promise that resolves with the item that was stored in the record.
+   *
+   * @param recordName the name of the record that the store item should be retrieved from.
+   * @param address the address of the item in the record.
+   * @param options the options that should be used to get the item.
+   *
+   * @example Get an item by address
+   * const item = await os.getStoreItem('myRecord', 'myItem');
+   *
+   * @dochash actions/os/records
+   * @docgroup 01-store
+   * @docname os.getStoreItem
+   */
+  getStoreItem(
+    recordName: string,
+    address: string,
+    options?: RecordActionOptions
+  ): Promise<CrudGetItemResult<PurchasableItem>>;
+
+  /**
+   * Deletes the item with the given address from the specified record.
+   *
+   * Returns a promise that resolves with the status of the operation.
+   *
+   * @param recordName the name of the record that the store item should be deleted from.
+   * @param address the address of the item that should be deleted.
+   * @param options the options that should be used to get the item.
+   *
+   * @example Delete an item by address
+   * const result = await os.eraseStoreItem('myRecord', 'myItem');
+   *
+   * @dochash actions/os/records
+   * @docgroup 01-store
+   * @docname os.eraseStoreItem
+   */
+  eraseStoreItem(
+    recordName: string,
+    address: string,
+    options?: RecordActionOptions
+  ): Promise<CrudEraseItemResult>;
+
+  /**
+   * Gets a partial list of store items from the given record.
+   * You must have permission to access all items in the record to list them.
+   *
+   * Returns a promise that contains the items in the list.
+   *
+   * @param recordName the name of the record that the store item should be deleted from.
+   * @param startingAddress the address that the items should be listed after.
+   * @param options the options that should be used to get the item.
+   *
+   * @example List all items in the record
+   * const result = await os.listStoreItems('myRecord');
+   *
+   * @dochash actions/os/records
+   * @docgroup 01-store
+   * @docname os.listStoreItems
+   */
+  listStoreItems(
+    recordName: string,
+    startingAddress?: string,
+    options?: RecordActionOptions
+  ): Promise<CrudListItemsResult<PurchasableItem>>;
+
+  /**
+   * Gets a partial list of store items that have the given marker from the given record.
+   * You must have permission to access the given marker in the record to list them.
+   *
+   * Returns a promise that contains the items in the list.
+   *
+   * @param recordName the name of the record that the store item should be deleted from.
+   * @param marker the marker that the items should have.
+   * @param startingAddress the address that the items should be listed after.
+   * @param options the options that should be used to get the item.
+   *
+   * @example List all items in the record with the 'publicRead' marker
+   * const result = await os.listStoreItemsByMarker('myRecord', 'publicRead');
+   *
+   * @dochash actions/os/records
+   * @docgroup 01-store
+   * @docname os.listStoreItemsByMarker
+   */
+  listStoreItemsByMarker(
+    recordName: string,
+    marker: string,
+    startingAddress?: string,
+    options?: RecordActionOptions
+  ): Promise<CrudListItemsResult<PurchasableItem>>;
 
   /**
    * Converts the given geolocation to a what3words (https://what3words.com/) address.
@@ -16181,12 +17670,76 @@ interface Os {
   getInstStateFromUpdates(updates: InstUpdate[]): Promise<BotsState>;
 
   /**
-   * Creates an inst update that, when applied, ensures that the given bots have been created on the inst.
-   * Inst updates have special properties in that they can be applied multiple times and they will only create one set of bots.
-   * This is valuable for situations where you want to ensure that all players observe the same state.
-   * @param bots The bots.
+   * Creates an inst update that, when applied, ensures the given bots are created on this inst. Returns a promise that resolves with the inst update.
+   *
+   * Note that you can apply the same update multiple times and you will end up with only one version of the bots saved in the update. Additionally, future changes to the bots will be preserved even if the update is applied again.
+   *
+   * This feature makes inst updates useful when you want to ensure that an experience starts in an initial state but also able to change over time.
+   *
+   * Unlike {@link os.getCurrentInstUpdate}, this function creates an update that is not linked to this inst. This means that applying the update to the inst it was created in will create duplicate bots.
+   *
+   * @param bots the list of bots that should be included in the update.
+   *
+   * @example Create an update with this bot and save it to a tag
+   * const update = await os.createInitializationUpdate([thisBot]);
+   * tags.savedUpdate = update;
+   *
+   * @example Create an update with all the bots in the home dimension
+   * const update = await os.createInitializationUpdate(getBots(inDimension('home')));
+   * tags.savedUpdate = update;
+   *
+   * @dochash actions/os/spaces
+   * @docname os.createInitializationUpdate
+   * @docgroup 10-updates
    */
   createInitializationUpdate(bots: Bot[]): Promise<InstUpdate>;
+
+  /**
+   * Creates an inst update that, when applied in addition to the previous update(s), ensures the given bots are created or updated on this inst. Returns a promise that resolves with the inst update.
+   *
+   * Note that you can apply the same update multiple times and you will end up with only one version of the bots saved in the update. Additionally, future changes to the bots will be preserved even if the update is applied again.
+   *
+   * This feature makes inst updates useful when you want to ensure that an experience starts in an initial state but also able to change over time.
+   *
+   * Unlike {@link os.createInitializationUpdate}, this function creates an update that is linked to the previous update(s). This means that this update will overwrite the previous update(s) when applied to the same inst.
+   *
+   * @param previousUpdate The previous update or list of updates that this update should be based on and include.
+   * @param bots The bots that reflect the final state that should be achieved when this update is applied in addition to the previous update(s).
+   *
+   * @example Create an initialization update based on a previous update
+   * const update = await os.createInitializationUpdate(previousUpdate, [thisBot]);
+   * tags.savedUpdate = update;
+   *
+   * @example Create an initialization update based on multiple previous updates with all the bots in the home dimension
+   * const update = await os.createInitializationUpdate([update1, update2], getBots(inDimension('home')));
+   * tags.savedUpdate = update;
+   *
+   * @dochash actions/os/spaces
+   * @docname os.createInitializationUpdate
+   * @docid os.createInitializationUpdate-previousUpdate-bots
+   * @docgroup 10-updates
+   */
+  createInitializationUpdate(
+    previousUpdate: InstUpdate | InstUpdate[],
+    bots: Bot[]
+  ): Promise<InstUpdate>;
+
+  /**
+   * Creates an inst update that, when applied in addition to the previous update(s), ensures the given bots are created or updated on this inst. Returns a promise that resolves with the inst update.
+   *
+   * Note that you can apply the same update multiple times and you will end up with only one version of the bots saved in the update. Additionally, future changes to the bots will be preserved even if the update is applied again.
+   *
+   * This feature makes inst updates useful when you want to ensure that an experience starts in an initial state but also able to change over time.
+   *
+   * Unlike {@link os.createInitializationUpdate}, this function creates an update that is linked to the previous update(s). This means that this update will overwrite the previous update(s) when applied to the same inst.
+   *
+   * @param previousUpdate The previous update or list of updates that this update should be based on and include.
+   * @param bots The bots that reflect the final state that should be achieved when this update is applied in addition to the previous update(s).
+   */
+  createInitializationUpdate(
+    previousUpdateOrBots: InstUpdate | InstUpdate[] | Bot[],
+    bots?: Bot[]
+  ): Promise<InstUpdate>;
 
   /**
    * Applies the given updates to the inst.
@@ -16515,6 +18068,36 @@ interface Math {
    * @param pointerRotation The rotation that the pointer has represented in radians.
    */
   getForwardDirection(pointerRotation: RawRotation | Rotation): Vector3;
+
+  /**
+   * Converts the given number of [degrees](https://en.wikipedia.org/wiki/Degree_(angle)) to [radians](https://en.wikipedia.org/wiki/Radian) and returns the result.
+   *
+   * This operation is equivalent to `radians = degrees * (Math.PI / 180)`.
+   *
+   * @param degrees the number of degrees that should be converted to radians.
+   *
+   * @example Get the number of radians for a 90 degree angle
+   * const radians = math.degreesToRadians(90);
+   *
+   * @dochash actions/math
+   * @docname math.degreesToRadians
+   */
+  degreesToRadians(degrees: number): number;
+
+  /**
+   * Converts the given number of [radians](https://en.wikipedia.org/wiki/Radian) to [degrees](https://en.wikipedia.org/wiki/Degree_(angle)) and returns the result.
+   *
+   * This operation is equivalent to `degrees = radians * (180 / Math.PI)`.
+   *
+   * @param radians the number of radians that should be converted to degrees.
+   *
+   * @example Get the number of degrees for a Math.PI / 2 angle
+   * const degrees = math.radiansToDegrees(Math.PI / 2);
+   *
+   * @dochash actions/math
+   * @docname math.radiansToDegrees
+   */
+  radiansToDegrees(radians: number): number;
 
   /**
    * Finds the point at which the the given ray and ground plane intersect.
@@ -17090,7 +18673,11 @@ interface Experiment {
    */
   speakText(
     text: string,
-    options?: { rate?: number; pitch?: number; voice?: string | SyntheticVoice }
+    options?: {
+      rate?: number;
+      pitch?: number;
+      voice?: string | SyntheticVoice;
+    }
   ): Promise<void>;
 
   /**
@@ -17098,6 +18685,38 @@ interface Experiment {
    * Returns a promise that resolves with the voices.
    */
   getVoices(): Promise<SyntheticVoice[]>;
+
+  /**
+   * Adds a map overlay to the given bot's map form.
+   * @param bot The bot that the overlay should be added to.
+   * @param overlayLayer Configuration for the overlay layer to add.
+   */
+  addBotMapLayer(
+    bot: Bot,
+    overlay: {
+      overlayType: "geojson";
+      data: any;
+      overlayId?: string;
+    }
+  ): Promise<{
+    success: boolean;
+    data?: { overlayId: string };
+    message?: string;
+  }>;
+
+  /**
+   * Removes a map overlay from the given bot's map form.
+   * @param bot The bot that the overlay should be removed from.
+   * @param overlayId Id of the overlay to remove.
+   */
+  removeBotMapLayer(
+    bot: Bot,
+    overlayId: string
+  ): Promise<{
+    success: boolean;
+    data?: { overlayId: string };
+    message?: string;
+  }>;
 }
 
 /**
@@ -17321,6 +18940,579 @@ interface Loom {
   getVideoEmbedMetadata(
     sharedUrlOrVideo: string | LoomVideo
   ): Promise<LoomVideoEmbedMetadata>;
+}
+
+/**
+ * Defines an interface for contract-related data structures.
+ */
+export interface ContractRecord {
+  /**
+   * The unique identifier of the contract.
+   */
+  id: string;
+
+  /**
+   * The ID of the user that issued the contract.
+   */
+  issuingUserId: string;
+
+  /**
+   * The ID of the user that is holding/owning the contract.
+   */
+  holdingUserId: string;
+
+  /**
+   * The status of the contract. Can be "open", "closed", or "cancelled".
+   */
+  status: "open" | "closed" | "cancelled";
+
+  /**
+   * The time in milliseconds since the Unix epoch when the contract was issued.
+   */
+  issuedAtMs: number;
+
+  /**
+   * The rate for the contract.
+   */
+  rate: number;
+
+  /**
+   * The initial value of the contract.
+   */
+  initialValue: number;
+}
+
+/**
+ * The status of an invoice.
+ * - "open" means the invoice is pending payment.
+ * - "paid" means the invoice has been paid.
+ * - "void" means the invoice has been voided and is no longer valid.
+ */
+export type InvoiceStatus = "open" | "paid" | "void";
+
+/**
+ * The reason why an invoice was voided.
+ * - "rejected" means the invoice was rejected by the contract issuer, the system, or an admin.
+ * - "cancelled" means the invoice was cancelled by the user, the system, or an admin.
+ */
+export type InvoiceVoidReason = "rejected" | "cancelled";
+
+/**
+ * Defines an interface for contract invoice data.
+ */
+export interface ContractInvoice {
+  /**
+   * The ID of the invoice.
+   */
+  id: string;
+
+  /**
+   * The ID of the contract that this invoice is for.
+   */
+  contractId: string;
+
+  /**
+   * The amount charged in the invoice.
+   */
+  amount: number;
+
+  /**
+   * The current status of the invoice.
+   */
+  status: InvoiceStatus;
+
+  /**
+   * The unix time in milliseconds when the invoice was opened.
+   */
+  openedAtMs: number;
+
+  /**
+   * The unix time in miliseconds when the invoice was paid, if applicable.
+   */
+  paidAtMs?: number | null;
+
+  /**
+   * The unix time in milliseconds when the invoice was voided, if applicable.
+   */
+  voidedAtMs?: number | null;
+
+  /**
+   * The destination for the payout of the invoice.
+   */
+  payoutDestination: InvoicePayoutDestination;
+
+  /**
+   * The ID of the external transfer that was created to payout the invoice, if applicable.
+   * Null if the invoice is not paid or the payout destination is "account".
+   */
+  destinationTransferId?: string | null;
+
+  /**
+   * The reason why the invoice was voided, if applicable.
+   */
+  voidReason?: InvoiceVoidReason | null;
+
+  /**
+   * The ID of the transaction that paid the invoice, if applicable.
+   */
+  transactionId?: string | null;
+
+  /**
+   * The ID of the external payout that was created as part of the invoice payment process, if applicatble.
+   * Null if the invoice is not paid or the payout destination is "account".
+   */
+  externalPayoutId?: string | null;
+
+  /**
+   * An additional note about the invoice.
+   */
+  note?: string | null;
+
+  /**
+   * The unix time in milliseconds when the invoice was created.
+   */
+  createdAtMs: number;
+
+  /**
+   * The unix time in milliseconds when the invoice was last updated.
+   */
+  updatedAtMs: number;
+}
+
+/**
+ * Represents the balance of a financial account in a JSON-compatible format.
+ */
+export interface JSONAccountBalance {
+  /**
+   * The ID of the account.
+   */
+  accountId: string;
+
+  /**
+   * The number of credits to the account.
+   */
+  credits: string;
+
+  /**
+   * The number of pending credits to the account.
+   */
+  pendingCredits: string;
+
+  /**
+   * The number of debits to the account.
+   */
+  debits: string;
+
+  /**
+   * The number of pending debits to the account.
+   */
+  pendingDebits: string;
+
+  /**
+   * The factor that should be used to convert between credits and USD.
+   */
+  displayFactor: string;
+
+  /**
+   * The currency that the account is in.
+   */
+  currency: string;
+}
+
+/**
+ * Defines an interface for contract record input.
+ */
+export interface ContractRecordInput {
+  /**
+   * The unique identifier of the contract.
+   */
+  id: string;
+
+  /**
+   * The ID of the user that issued the contract.
+   */
+  issuingUserId: string;
+
+  /**
+   * The ID of the user that is holding/owning the contract.
+   */
+  holdingUserId: string;
+
+  /**
+   * The status of the contract.
+   */
+  status: "open" | "closed" | "cancelled";
+
+  /**
+   * The time in milliseconds since the Unix epoch when the contract was issued.
+   */
+  issuedAtMs: number;
+
+  /**
+   * The rate for the contract.
+   */
+  rate: number;
+
+  /**
+   * The initial value of the contract.
+   */
+  initialValue: number;
+}
+
+export interface ContractPricingLineItem {
+  name: string;
+  amount: number;
+}
+
+export interface ContractPricing {
+  /**
+   * The information for the contract.
+   */
+  contract: ContractRecord;
+
+  /**
+   * The total cost to purchase the contract.
+   */
+  total: number;
+
+  /**
+   * The line items that make up the total cost.
+   */
+  lineItems: ContractPricingLineItem[];
+
+  /**
+   * The currency that the cost is in.
+   */
+  currency: string;
+}
+
+export interface APIPurchaseContractRequest {
+  recordName: string;
+  address: string;
+  expectedCost: number;
+  currency: "usd";
+
+  returnUrl: string;
+  successUrl: string;
+}
+export interface APIInvoiceContractRequest {
+  contractId: string;
+  amount: number;
+  note?: string;
+  payoutDestination: InvoicePayoutDestination;
+}
+
+/**
+ * The destination for the payout of an invoice.
+ * - "stripe" means that the invoiced amount will be transfered to the users Stripe account once paid.
+ * - "account" means that the invoiced amount will remain in thier CasualOS account.
+ */
+export type InvoicePayoutDestination = "stripe" | "account";
+
+/**
+ * The list of possible payout destinations.
+ *
+ * - `stripe` indicates that the payout should be sent to the user's Stripe account.
+ * - `cash` indicates that the payout was sent as cash (e.g. check, manual bank transfer, cash, etc.)
+ */
+export type PayoutDestination = "stripe" | "cash";
+
+export interface APIPayoutRequest {
+  amount?: number;
+  destination?: PayoutDestination;
+}
+
+/**
+ * Defines an interface for XP (Experience Points/Exchange) contract operations.
+ */
+interface Xp {
+  /**
+   * Records a new contract in the given record.
+   *
+   * @param recordName The name of the record that the contract should be stored in.
+   * @param contract The contract data to record.
+   * @param options The options for the request.
+   * @returns A promise that resolves when the contract is recorded.
+   *
+   * @example Record a new contract
+   * await xp.recordContract('myRecord', {
+   *     id: 'contract1',
+   *     issuingUserId: 'user1',
+   *     holdingUserId: 'user2',
+   *     status: 'open',
+   *     issuedAtMs: Date.now(),
+   *     rate: 100,
+   *     initialValue: 1000
+   * });
+   *
+   * @dochash actions/xp
+   * @docname xp.recordContract
+   */
+  recordContract(
+    recordName: string,
+    contract: ContractRecordInput,
+    options?: RecordActionOptions
+  ): Promise<void>;
+
+  /**
+   * Gets the contract with the given address.
+   *
+   * @param recordName The name of the record that the contract is stored in.
+   * @param address The address of the contract.
+   * @param options The options for the request.
+   * @returns A promise that resolves with the contract or null if not found.
+   *
+   * @example Get a contract
+   * const contract = await xp.getContract('myRecord', 'address1');
+   *
+   * @dochash actions/xp
+   * @docname xp.getContract
+   */
+  getContract(
+    recordName: string,
+    address: string,
+    options?: RecordActionOptions
+  ): Promise<ContractRecord | null>;
+
+  /**
+   * Gets a list of contracts from the given record.
+   *
+   * @param recordName The name of the record that the contracts are stored in.
+   * @param address The address that the contracts should be listed after. If null, then the first page of contracts will be returned.
+   * @param options The options for the request.
+   * @returns A promise that resolves with the list of contracts.
+   *
+   * @example List all contracts
+   * const contracts = await xp.listContracts('myRecord');
+   *
+   * @example List contracts after a specific address
+   * const contracts = await xp.listContracts('myRecord', 'address1');
+   *
+   * @dochash actions/xp
+   * @docname xp.listContracts
+   */
+  listContracts(
+    recordName: string,
+    address?: string,
+    options?: RecordActionOptions
+  ): Promise<ContractRecord[]>;
+
+  /**
+   * Gets the pricing for the given contract.
+   *
+   * @param request The pricing request data.
+   * @param options The options for the request.
+   * @returns A promise that resolves with the pricing details for the contract.
+   *
+   * @example Get contract pricing
+   * const pricing = await xp.getContractPricing({
+   *     contractId: 'contract1',
+   *     issuingUserId: 'user1',
+   *     holdingUserId: 'user2',
+   *     rate: 100,
+   *     initialValue: 1000
+   * });
+   *
+   * @dochash actions/xp
+   * @docname xp.getContractPricing
+   */
+  getContractPricing(
+    request: {
+      contractId: string;
+      issuingUserId: string;
+      holdingUserId: string;
+      rate: number;
+      initialValue: number;
+    },
+    options?: RecordActionOptions
+  ): Promise<GenericResult<ContractPricing, SimpleError>>;
+
+  /**
+   * Attempts to purchase a contract via the xpExchange.
+   *
+   * @param request The request for the purchase.
+   * @param options The options for the request.
+   * @returns A promise that resolves when the purchase is complete.
+   *
+   * @example Purchase a contract
+   * await xp.purchaseContract({
+   *     recordName: 'myRecord',
+   *     address: 'address1',
+   *     paymentInfo: { type: 'stripe', token: 'token1' }
+   * });
+   *
+   * @dochash actions/xp
+   * @docname xp.purchaseContract
+   */
+  purchaseContract(
+    request: {
+      recordName: string;
+      address: string;
+      paymentInfo: {
+        type: "stripe" | "paypal";
+        token: string;
+      };
+    },
+    options?: RecordActionOptions
+  ): Promise<
+    GenericResult<
+      {
+        /**
+         * The URL that the user should be directed to to complete the purchase.
+         */
+        url?: string;
+
+        /**
+         * The ID of the checkout session.
+         */
+        sessionId: string;
+      },
+      SimpleError
+    >
+  >;
+
+  /**
+   * Cancels a contract via the xpExchange and refunds any funds.
+   *
+   * @param recordName The name of the record that the contract is stored in.
+   * @param address The address of the contract to cancel.
+   * @param options The options for the request.
+   * @returns A promise that resolves when the contract is cancelled.
+   *
+   * @example Cancel a contract
+   * await xp.cancelContract('myRecord', 'address1');
+   *
+   * @dochash actions/xp
+   * @docname xp.cancelContract
+   */
+  cancelContract(
+    recordName: string,
+    address: string,
+    options?: RecordActionOptions
+  ): Promise<GenericResult<void, SimpleError>>;
+
+  /**
+   * Creates a new invoice for the given contract.
+   *
+   * @param request The request for the invoice.
+   * @param options The options for the request.
+   * @returns A promise that resolves when the invoice is created.
+   *
+   * @example Create an invoice for a contract
+   * await xp.invoiceContract({
+   *     contractId: 'contract1',
+   *     amount: 500,
+   *     note: 'Payment for services',
+   *     payoutDestination: 'stripe'
+   * });
+   *
+   * @dochash actions/xp
+   * @docname xp.invoiceContract
+   */
+  invoiceContract(
+    request: APIInvoiceContractRequest,
+    options?: RecordActionOptions
+  ): Promise<GenericResult<{ invoiceId: string }, SimpleError>>;
+
+  /**
+   * Voids (cancels) an invoice.
+   *
+   * @param invoiceId The ID of the invoice to void.
+   * @param options The options for the request.
+   * @returns A promise that resolves when the invoice is voided.
+   *
+   * @example Cancel an invoice
+   * await xp.cancelInvoice('invoice1');
+   *
+   * @dochash actions/xp
+   * @docname xp.cancelInvoice
+   */
+  cancelInvoice(
+    invoiceId: string,
+    options?: RecordActionOptions
+  ): Promise<GenericResult<void, SimpleError>>;
+
+  /**
+   * Lists the invoices for the given contract.
+   *
+   * @param contractId The ID of the contract to list invoices for.
+   * @param options The options for the request.
+   * @returns A promise that resolves with the invoices for the contract.
+   *
+   * @example List invoices for a contract
+   * const invoices = await xp.listInvoices('contract1');
+   *
+   * @dochash actions/xp
+   * @docname xp.listInvoices
+   */
+  listInvoices(
+    contractId: string,
+    options?: RecordActionOptions
+  ): Promise<GenericResult<ContractInvoice[], SimpleError>>;
+
+  /**
+   * Pays an invoice. This will attempt to transfer funds from the contract account to the user holding the contract.
+   *
+   * @param request The payment request.
+   * @param options The options for the request.
+   * @returns A promise that resolves when the invoice is paid.
+   *
+   * @example Pay an invoice
+   * await xp.payInvoice({
+   *     invoiceId: 'invoice1',
+   *     paymentInfo: { type: 'stripe', token: 'token1' }
+   * });
+   *
+   * @dochash actions/xp
+   * @docname xp.payInvoice
+   */
+  payInvoice(
+    invoiceId: string,
+    options?: RecordActionOptions
+  ): Promise<GenericResult<void, SimpleError>>;
+
+  /**
+   * Attempts to payout funds from the user's account to their linked payout destination.
+   *
+   * @param request The payout request.
+   * @param options The options for the request.
+   * @returns A promise that resolves when the payout is complete.
+   *
+   * @example Payout funds
+   * await xp.payout({
+   *     destination: 'stripe',
+   *     amount: 1000,
+   *     description: 'Monthly payout'
+   * });
+   *
+   * @dochash actions/xp
+   * @docname xp.payout
+   */
+  payout(
+    request: APIPayoutRequest,
+    options?: RecordActionOptions
+  ): Promise<GenericResult<void, SimpleError>>;
+
+  /**
+   * Attempts to retrieve the account balances for the user's account.
+   *
+   * @param options The options for the request.
+   * @returns A promise that resolves with the account balances.
+   *
+   * @example Get account balances
+   * const balances = await xp.getAccountBalances();
+   *
+   * @dochash actions/xp
+   * @docname xp.getAccountBalances
+   */
+  getAccountBalances(options?: RecordActionOptions): Promise<
+    GenericResult<
+      {
+        [key: string]: JSONAccountBalance;
+      },
+      SimpleError
+    >
+  >;
 }
 
 interface Perf {

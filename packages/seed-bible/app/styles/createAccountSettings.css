@@ -11,6 +11,12 @@
   overflow-x: hidden;
 }
 
+@media (max-width: 768px) {
+  .createAccount-settings {
+    width: 100%;
+  }
+}
+
 /* Header */
 .profile-header {
   display: flex;

@@ -48,6 +48,7 @@
   "billingServices": "Billing & services",
   "permissions": "Permissions",
   "notifications": "Notifications",
+  "keepScreenAwake": "Keep screen awake",
   "subscriptions": "Subscriptions",
   "createProfile": "Create profile",
   "openAccountSettings": "Open account settings",
@@ -683,5 +684,7 @@
   "pentateuch": "Pentateuch",
   "historical": "Historical",
   "poetic": "Poetic",
-  "prophetic": "Prophetic"
+  "prophetic": "Prophetic",
+  "showNavArrows": "Show navigation arrows",
+  "hideNavArrows": "Hide navigation arrows"
 }

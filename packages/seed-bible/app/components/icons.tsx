@@ -78,6 +78,48 @@ export const GoPrivateIcon = (props) => (
     />
   </svg>
 );
+export const TabsIcon = (props) => (
+  <svg
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M3.5 21C3.1 21 2.75 20.85 2.45 20.55C2.15 20.25 2 19.9 2 19.5V9.825C2 9.425 2.15 9.075 2.45 8.775C2.75 8.475 3.1 8.325 3.5 8.325H6.375V4.5C6.375 4.1 6.525 3.75 6.825 3.45C7.125 3.15 7.475 3 7.875 3H20.5C20.9 3 21.25 3.15 21.55 3.45C21.85 3.75 22 4.1 22 4.5V14.175C22 14.575 21.85 14.925 21.55 15.225C21.25 15.525 20.9 15.675 20.5 15.675H17.65V19.5C17.65 19.9 17.5 20.25 17.2 20.55C16.9 20.85 16.55 21 16.15 21H3.5ZM3.5 19.5H16.15V11.325H3.5V19.5ZM17.65 14.175H20.5V6H7.875V8.325H15.8C16.3334 8.325 16.775 8.5 17.125 8.85C17.475 9.2 17.65 9.64165 17.65 10.175V14.175Z"
+      fill="black"
+    />
+  </svg>
+);
+export const MobileSettingsIcon = (props) => (
+  <svg
+    width={16}
+    height={16}
+    viewBox="0 0 16 16"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <g clipPath="url(#clip0_5742_234)">
+      <path
+        d="M15 4H12.95C12.7 2.85 11.7 2 10.5 2C9.3 2 8.3 2.85 8.05 4H1V5H8.05C8.3 6.15 9.3 7 10.5 7C11.7 7 12.7 6.15 12.95 5H15V4ZM10.5 6C9.65 6 9 5.35 9 4.5C9 3.65 9.65 3 10.5 3C11.35 3 12 3.65 12 4.5C12 5.35 11.35 6 10.5 6Z"
+        fill="black"
+      />
+      <path
+        d="M1 12H3.05C3.3 13.15 4.3 14 5.5 14C6.7 14 7.7 13.15 7.95 12H15V11H7.95C7.7 9.85 6.7 9 5.5 9C4.3 9 3.3 9.85 3.05 11H1V12ZM5.5 10C6.35 10 7 10.65 7 11.5C7 12.35 6.35 13 5.5 13C4.65 13 4 12.35 4 11.5C4 10.65 4.65 10 5.5 10Z"
+        fill="black"
+      />
+    </g>
+    <defs>
+      <clipPath id="clip0_5742_234">
+        <rect width={16} height={16} fill="white" />
+      </clipPath>
+    </defs>
+  </svg>
+);
+
 export const ClientLogo = ({ handleOpenClientSite, url, alt }) => {
   return (
     <img
@@ -95,6 +137,96 @@ export const ClientLogo = ({ handleOpenClientSite, url, alt }) => {
     />
   );
 };
+export const HighlightIcon = (props) => (
+  <svg
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M9 11L3 17V20H12L15 17"
+      stroke="#404040"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M22 12L17.4 16.6C17.0261 16.9665 16.5235 17.1717 16 17.1717C15.4765 17.1717 14.9738 16.9665 14.6 16.6L9.39996 11.4C9.03351 11.0261 8.82825 10.5235 8.82825 10C8.82825 9.47649 9.03351 8.97386 9.39996 8.6L14 4"
+      stroke="#404040"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+export const AskIcon = (props) => (
+  <svg
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M20.7134 8.12811L20.4668 8.69379C20.2864 9.10792 19.7136 9.10792 19.5331 8.69379L19.2866 8.12811C18.8471 7.11947 18.0555 6.31641 17.0677 5.87708L16.308 5.53922C15.8973 5.35653 15.8973 4.75881 16.308 4.57612L17.0252 4.25714C18.0384 3.80651 18.8442 2.97373 19.2761 1.93083L19.5293 1.31953C19.7058 0.89349 20.2942 0.89349 20.4706 1.31953L20.7238 1.93083C21.1558 2.97373 21.9616 3.80651 22.9748 4.25714L23.6919 4.57612C24.1027 4.75881 24.1027 5.35653 23.6919 5.53922L22.9323 5.87708C21.9445 6.31641 21.1529 7.11947 20.7134 8.12811ZM10 3H14V5H10C6.68629 5 4 7.68629 4 11C4 14.61 6.46208 16.9656 12 19.4798V17H14C17.3137 17 20 14.3137 20 11H22C22 15.4183 18.4183 19 14 19V22.5C9 20.5 2 17.5 2 11C2 6.58172 5.58172 3 10 3Z"
+      fill="#404040"
+    />
+  </svg>
+);
+export const BookMarkIcon = (props) => (
+  <svg
+    width={14}
+    height={20}
+    viewBox="0 0 14 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M13 5V19L7 15L1 19V5C1 3.93913 1.42143 2.92172 2.17157 2.17157C2.92172 1.42143 3.93913 1 5 1H9C10.0609 1 11.0783 1.42143 11.8284 2.17157C12.5786 2.92172 13 3.93913 13 5Z"
+      stroke={props?.stroke ? props.stroke : "black"}
+      strokeWidth={1}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+export const TodayIcon = (props) => (
+  <svg
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M11.5 21H6C5.46957 21 4.96086 20.7893 4.58579 20.4142C4.21071 20.0391 4 19.5304 4 19V5C4 4.46957 4.21071 3.96086 4.58579 3.58579C4.96086 3.21071 5.46957 3 6 3H18C18.5304 3 19.0391 3.21071 19.4142 3.58579C19.7893 3.96086 20 4.46957 20 5V13"
+      stroke="black"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M9 18H11"
+      stroke="black"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M15 19L17 21L21 17"
+      stroke="black"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 export const TheNewSettingsIcon = (props) => (
   <svg
     width={24}
@@ -724,6 +856,38 @@ const MenuIcon = ({
     </span>
   );
 };
+export const MoreIcon = (props) => (
+  <svg
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M4 6H20"
+      stroke="black"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M7 12H20"
+      stroke="black"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M10 18H20"
+      stroke="black"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 export const StartSessionIcon = (props) => (
   <svg
     width={20}

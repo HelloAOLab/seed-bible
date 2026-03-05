@@ -5791,6 +5791,8 @@ const SettingsUI = () => {
     showVerses,
     showFootnotes,
     setShowFootnotes,
+    showNavArrows,
+    setShowNavArrows,
   } = useBibleContext();
   const handleSurpriseMe = () => {
     const randomCombo =
@@ -6454,6 +6456,19 @@ const SettingsUI = () => {
           }
         >
           <div style={toggleCircleStyle(showFootnotes[activeSpace])}></div>
+        </div>
+      </div>
+
+      <div style={toggleRowStyle}>
+        <div style={toggleLabelStyle}>
+          {t(showNavArrows ? "hideNavArrows" : "showNavArrows")}
+        </div>
+
+        <div
+          style={toggleStyle(showNavArrows)}
+          onClick={() => setShowNavArrows((prev) => !prev)}
+        >
+          <div style={toggleCircleStyle(showNavArrows)}></div>
         </div>
       </div>
 
