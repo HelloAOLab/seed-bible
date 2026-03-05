@@ -45,7 +45,7 @@ describe("navigate", () => {
     await delay(1500);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Genesis 2 / BSB");
+    ).toBe("Genesis 2 / NASB95");
   });
 
   test("previous chapter", async () => {
@@ -66,7 +66,7 @@ describe("navigate", () => {
     await delay(1000);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Isaiah 53 / BSB");
+    ).toBe("Isaiah 53 / NASB95");
 
     await seedBibleFrame
       .locator("div.toolbar-item-wrapper.leftClick > button")
@@ -74,7 +74,7 @@ describe("navigate", () => {
     await delay(1000);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Isaiah 52 / BSB");
+    ).toBe("Isaiah 52 / NASB95");
   });
 
   // Should work but doesn't because of the login screens
@@ -96,7 +96,7 @@ describe("navigate", () => {
     await delay(1000);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Isaiah 53 / BSB");
+    ).toBe("Isaiah 53 / NASB95");
   });
 
   test("search book", async () => {
@@ -117,7 +117,7 @@ describe("navigate", () => {
     await delay(1000);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Hosea 3 / BSB");
+    ).toBe("Hosea 3 / NASB95");
   });
 
   test("change translation", async () => {
@@ -165,7 +165,7 @@ describe("navigate", () => {
     await delay(2000);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Revelation 3 / BSB");
+    ).toBe("Revelation 3 / NASB95");
   });
 
   test("back button should go to the previous chapter", async () => {
@@ -184,7 +184,7 @@ describe("navigate", () => {
     await delay(1500);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Genesis 2 / BSB");
+    ).toBe("Genesis 2 / NASB95");
 
     await page.goBack();
 
@@ -192,7 +192,7 @@ describe("navigate", () => {
 
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Genesis 1 / BSB");
+    ).toBe("Genesis 1 / NASB95");
   });
 
   test("forward button should go to the next chapter after going back", async () => {
@@ -211,7 +211,7 @@ describe("navigate", () => {
     await delay(1500);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Genesis 2 / BSB");
+    ).toBe("Genesis 2 / NASB95");
 
     await page.goBack();
     await delay(500);
@@ -221,7 +221,7 @@ describe("navigate", () => {
 
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Genesis 2 / BSB");
+    ).toBe("Genesis 2 / NASB95");
   });
 
   test("the book selector should push a history state when opened", async () => {

@@ -524,13 +524,13 @@ const LanguageComponent = (props: {
                     } else {
                       web
                         .get(
-                          `https://bible.helloao.org/api/${value.id}/books.json`
+                          `https://vmfnri.helloao.org/api/${value.id}/books.json`
                         )
                         .then((e) => {
                           ChangeTranslation(
                             value.id,
                             e.data.books,
-                            "https://bible.helloao.org"
+                            "https://vmfnri.helloao.org"
                           );
                           setOpenSidebar(false);
                           // if (translationMap[value.language]) {

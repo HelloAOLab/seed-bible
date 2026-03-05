@@ -377,7 +377,7 @@ input:checked + .slider:not(#slider):before {
   height: 32px;
   justify-content: space-between;
   align-items: center;
-  width: 100px;
+  width: 105px;
   border-radius: 5px;
   color: var(--text3);
 }
