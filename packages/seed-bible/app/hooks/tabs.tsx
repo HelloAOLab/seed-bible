@@ -7,13 +7,48 @@ import { Space } from "app.components.icons";
 //         { id: uuid(), taken: false, data: { use: 'thePage', type: 'book', book: 'Genesis', bookId: 'GEN', chapter: 10, translation: 'NASB95' } },
 //     ]
 // }
-import { useBibleContext } from "app.hooks.bibleVariables";
+import { useBibleContext, type Tool } from "app.hooks.bibleVariables";
 
-const MyContext = createContext();
+export interface TabsContextType {
+  spaces: any[];
+}
+
+export interface Tab {
+  id: string;
+  taken: boolean;
+  data: {
+    use: "thePage";
+    first: boolean;
+    type: "book";
+    bookId: string;
+    book?: string;
+    chapter: number;
+    translation: string;
+    shortName: string;
+  };
+  sharedTab?: boolean;
+}
+
+export interface Space {
+  id: string;
+  name: string;
+  icon?: string | null;
+  settings: {
+    theme: object;
+    toolbar: {
+      tools: Tool[];
+    };
+    text?: object;
+  };
+  folders: { id: string; name: string; tabs: Tab[] }[];
+  tabs: Tab[];
+}
+
+const MyContext = createContext<TabsContextType | undefined>(undefined);
 
 export function TabsProvider({ children }: any) {
-  const { tools, setTools } = useBibleContext();
-  const [spaces, setSpaces] = useState([
+  const { tools, setTools } = useBibleContext()!;
+  const [spaces, setSpaces] = useState<Space[]>([
     {
       id: "1",
       name: "(Optional) Add space name",
@@ -101,13 +136,13 @@ export function TabsProvider({ children }: any) {
       ],
     },
   ]);
-  const [activeSpace, setActiveSpace] = useState(spaces[0].id);
-  const [activeTab, setActiveTab] = useState(null);
+  const [activeSpace, setActiveSpace] = useState<string | null>(spaces[0]!.id);
+  const [activeTab, setActiveTab] = useState<Tab | null>(null);
   const { setScreens, screens } = useBibleContext();
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedTabs, setSelectedTabs] = useState([]);
   const [tabsIcons, setTabsIcons] = useState(false);
-  const [sharedTab, setSharedTab] = useState(null);
+  const [sharedTab, setSharedTab] = useState<Tab | null>(null);
 
   // Get current space
   const activeSpaceData =
@@ -116,7 +151,7 @@ export function TabsProvider({ children }: any) {
   useEffect(() => {
     masks[`lastactive_tab_${activeSpace}`] = activeTab;
 
-    const activeTabData = tabs.find((ele) => ele.id === activeTab)?.data;
+    const activeTabData = tabs.find((ele) => ele.id === activeTab?.id)?.data;
 
     globalThis.CurrentActiveTabData = activeTabData;
 
@@ -129,7 +164,7 @@ export function TabsProvider({ children }: any) {
     globalThis.CurrentBookData = { ...activeTabData };
   }, [activeTab]);
 
-  const updateToolsForSpace = (spaceId: any, tools) => {
+  const updateToolsForSpace = (spaceId: string, tools: Tool[]) => {
     setSpaces((prev) =>
       prev.map((space) =>
         space.id === spaceId
@@ -149,7 +184,7 @@ export function TabsProvider({ children }: any) {
   };
 
   // Add standalone tab (not in a folder)
-  const addTab = (tab) => {
+  const addTab = (tab: Tab) => {
     if (tab.sharedTab) {
       // Only ONE shared tab is allowed
       setSharedTab(tab);
@@ -169,7 +204,7 @@ export function TabsProvider({ children }: any) {
   };
 
   // Remove standalone tab
-  const removeTab = (tabId: any) => {
+  const removeTab = (tabId: string) => {
     if (sharedTab?.id === tabId) {
       setSharedTab(null);
       return;
@@ -180,7 +215,7 @@ export function TabsProvider({ children }: any) {
 
     // If the deleted tab is the active tab, select the next tab (or previous if last)
     try {
-      if (activeTab === tabId) {
+      if (activeTab?.id === tabId) {
         const currentSpace = spaces.find((space) => space?.id === activeSpace);
         if (currentSpace) {
           const allTabs = currentSpace.tabs;
@@ -193,7 +228,7 @@ export function TabsProvider({ children }: any) {
                 tabIndex === allTabs.length - 1 ? tabIndex - 1 : tabIndex + 1;
               const nextTab = allTabs[nextIndex];
               if (nextTab) {
-                setActiveTab(nextTab?.id);
+                setActiveTab(nextTab);
                 // Also update the display content for the new active tab
                 if (globalThis.UpdateTab) {
                   globalThis.UpdateTab(nextTab);
@@ -237,9 +272,11 @@ export function TabsProvider({ children }: any) {
   };
   globalThis.RemoveTab = removeTab;
 
-  const getAllTabsInSpace = (spaceId: any) => {
+  const getAllTabsInSpace = (spaceId: string) => {
     // Gather standalone tabs
     const space = spaces.find((space) => space.id === spaceId);
+    if (!space) return [];
+
     let allTabs = [...space.tabs];
 
     // Gather tabs from each folder
@@ -250,7 +287,7 @@ export function TabsProvider({ children }: any) {
     return allTabs;
   };
   // Update tab
-  const updateTab = (tabId: any, newData: any) => {
+  const updateTab = (tabId: string, newData: Partial<Tab["data"]>) => {
     // 1️⃣ Update shared tab if it matches this tabId
     setSharedTab((prev) => {
       if (prev && prev.id === tabId) {
@@ -290,7 +327,7 @@ export function TabsProvider({ children }: any) {
   function updateActiveTab(newData: any) {
     updateTab(activeTab, newData);
   }
-  const updateSpace = (spaceId, newData) => {
+  const updateSpace = (spaceId: string, newData: Partial<Space>) => {
     setSpaces((prevSpaces: any) =>
       prevSpaces.map((space) =>
         space.id === spaceId ? { ...space, ...newData } : space
@@ -298,7 +335,11 @@ export function TabsProvider({ children }: any) {
     );
   };
 
-  const manageTab = (action, tab: any, folderId: any = null) => {
+  const manageTab = (
+    action: string,
+    tab: Tab,
+    folderId: string | null = null
+  ) => {
     setSpaces((prevSpaces) =>
       prevSpaces.map((space) =>
         space.id === activeSpace
@@ -308,7 +349,7 @@ export function TabsProvider({ children }: any) {
               tabs: space.tabs.filter((t) => t.id !== tab.id),
 
               // Remove the tab from any folder it may exist in
-              folders: space.folders.map((folder: any) => ({
+              folders: space.folders.map((folder) => ({
                 ...folder,
                 tabs: folder.tabs.filter((t) => t.id !== tab.id),
               })),
@@ -332,17 +373,17 @@ export function TabsProvider({ children }: any) {
   };
 
   // Folder Management
-  const addFolder = (folderName) => {
+  const addFolder = (folderName: string) => {
     const newFolder = { id: uuid(), name: folderName, tabs: [] };
     setSpaces((prevSpaces) =>
-      prevSpaces.map((space: any) =>
+      prevSpaces.map((space) =>
         space.id === activeSpace
           ? { ...space, folders: [...space.folders, newFolder] }
           : space
       )
     );
   };
-  function downloadSpaceAsJSON(spaceId: any) {
+  function downloadSpaceAsJSON(spaceId: string) {
     const space = spaces.find((s) => s.id === spaceId);
     if (!space) {
       console.warn(`Space with ID ${spaceId} not found.`);
@@ -409,9 +450,9 @@ export function TabsProvider({ children }: any) {
     // setActiveTab(firstTabId);
   }
 
-  const removeFolder = (folderId) => {
+  const removeFolder = (folderId: string) => {
     setSpaces((prevSpaces) =>
-      prevSpaces.map((space: any) =>
+      prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
               ...space,
@@ -422,9 +463,9 @@ export function TabsProvider({ children }: any) {
     );
   };
 
-  const addTabToFolder = (folderId, tab: any) => {
+  const addTabToFolder = (folderId: string, tab: Tab) => {
     setSpaces((prevSpaces) =>
-      prevSpaces.map((space: any) =>
+      prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
               ...space,
@@ -438,9 +479,9 @@ export function TabsProvider({ children }: any) {
       )
     );
   };
-  const addTabsToFolder = (folderId, tabs: any) => {
+  const addTabsToFolder = (folderId: string, tabs: Tab[]) => {
     setSpaces((prevSpaces) =>
-      prevSpaces.map((space: any) =>
+      prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
               ...space,
@@ -455,13 +496,13 @@ export function TabsProvider({ children }: any) {
     );
   };
 
-  const removeTabFromFolder = (folderId, tabId: any) => {
+  const removeTabFromFolder = (folderId: string, tabId: string) => {
     setSpaces((prevSpaces) =>
       prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
               ...space,
-              folders: space.folders.map((folder: any) =>
+              folders: space.folders.map((folder) =>
                 folder.id === folderId
                   ? {
                       ...folder,
@@ -475,14 +516,16 @@ export function TabsProvider({ children }: any) {
     );
   };
 
-  const addSpace = (spaceName: any, icon: any = null) => {
-    const newSpace = {
+  const addSpace = (spaceName: string, icon: string | null = null) => {
+    const newSpace: Space = {
       id: uuid(),
       name: spaceName,
       icon, // Adding icon property here
       settings: {
         theme: {},
-        toolbar: {},
+        toolbar: {
+          tools: [],
+        },
         text: {},
       },
       folders: [],
@@ -505,12 +548,12 @@ export function TabsProvider({ children }: any) {
     };
     setSpaces((prevSpaces) => [...prevSpaces, newSpace]);
   };
-  const moveTab = (tabId, newFolderId = null) => {
+  const moveTab = (tabId: string, newFolderId: string | null = null) => {
     setSpaces((prevSpaces) =>
-      prevSpaces.map((space: any) => {
+      prevSpaces.map((space) => {
         if (space.id !== activeSpace) return space; // Skip other spaces
 
-        let foundTab = null;
+        let foundTab: Tab | null = null;
         let isAlreadyInTarget = false;
 
         // Remove from standalone tabs if present
@@ -547,26 +590,29 @@ export function TabsProvider({ children }: any) {
             tabs: updatedTabs, // Update standalone tabs
             folders: updatedFolders.map((folder) =>
               folder.id === newFolderId
-                ? { ...folder, tabs: [...folder.tabs, foundTab] } // Move tab inside folder
+                ? { ...folder, tabs: [...folder.tabs, foundTab!] } // Move tab inside folder
                 : folder
             ),
           };
         } else {
           return {
             ...space,
-            tabs: [...updatedTabs, foundTab], // Move tab to standalone
+            tabs: [...updatedTabs, foundTab!], // Move tab to standalone
             folders: updatedFolders, // Update folders
           };
         }
       })
     );
   };
-  const moveMultipleTabs = (tabIds: any, newFolderId = null) => {
+  const moveMultipleTabs = (
+    tabIds: string[],
+    newFolderId: string | null = null
+  ) => {
     setSpaces((prevSpaces) =>
-      prevSpaces.map((space: any) => {
+      prevSpaces.map((space) => {
         if (space.id !== activeSpace) return space;
 
-        const foundTabs = [];
+        const foundTabs: Tab[] = [];
         const tabsToMoveSet = new Set(tabIds);
         const alreadyInTarget = new Set();
 
@@ -622,7 +668,7 @@ export function TabsProvider({ children }: any) {
     );
   };
 
-  const removeSpace = (spaceId: any) => {
+  const removeSpace = (spaceId: string) => {
     setSpaces((prevSpaces) =>
       prevSpaces.filter((space) => space.id !== spaceId)
     );
@@ -631,7 +677,7 @@ export function TabsProvider({ children }: any) {
     if (activeSpace === spaceId) {
       const remainingSpaces = spaces.filter((space) => space.id !== spaceId);
       if (remainingSpaces.length > 0) {
-        setActiveSpace(remainingSpaces[0].id); // Set active space to the first remaining space
+        setActiveSpace(remainingSpaces[0]?.id ?? null); // Set active space to the first remaining space
       } else {
         setActiveSpace(null); // No remaining spaces, so set to null or handle appropriately
       }
@@ -667,7 +713,7 @@ export function TabsProvider({ children }: any) {
     const activeSpaceObject = spaces.find((space) => space.id === activeSpace);
     if (activeSpaceObject) {
       const activeTabObject = activeSpaceObject.tabs.find(
-        (tab) => tab.id === activeTab
+        (tab) => tab.id === activeTab?.id
       );
       if (activeTabObject) {
         shout("onActiveTabChanged", { tab: activeTabObject });

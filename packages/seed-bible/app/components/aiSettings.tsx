@@ -17,10 +17,8 @@ import { useSideBarContext } from "app.hooks.sideBar";
 import { useBibleContext } from "app.hooks.bibleVariables";
 
 const AiSettings = () => {
-  const { updateSpace, activeSpace, spaces } = useTabsContext();
-  const { sidebarMode, setSideBarMode, closePopupSettings } =
-    useSideBarContext();
-  const { tools, setTools } = useBibleContext();
+  const { setSideBarMode } = useSideBarContext()!;
+  const { tools, setTools } = useBibleContext()!;
   const [switcher, setSwitcher] = useState<number | null>(1);
   const [chatPrompt, setChatPrompt] = useState("");
   const [chatResponse, setChatResponse] = useState("");
@@ -211,10 +209,10 @@ const AiSettings = () => {
           <textarea
             style={{ height: "150px", width: "100%" }}
             className="selectInput"
-            value={(masks as any)?.editorAIPostive || ""}
+            value={masks.editorAIPostive || ""}
             onChange={(e) =>
-              (setTagMask as any)(
-                thisBot as any,
+              setTagMask(
+                thisBot,
                 "editorAIPostive",
                 (e.target as HTMLTextAreaElement).value,
                 "local"
@@ -226,10 +224,10 @@ const AiSettings = () => {
           <textarea
             style={{ height: "150px", width: "100%" }}
             className="selectInput"
-            value={(masks as any)?.editorAINegative || ""}
+            value={masks.editorAINegative || ""}
             onChange={(e) =>
-              (setTagMask as any)(
-                thisBot as any,
+              setTagMask(
+                thisBot,
                 "editorAINegative",
                 (e.target as HTMLTextAreaElement).value,
                 "local"

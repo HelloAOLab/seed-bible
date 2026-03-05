@@ -10,8 +10,8 @@ export interface BibleVariablesContextType {
   screens: any;
   fullScreen: any;
   setFullScreen: (value: any) => void;
-  tools: any;
-  setTools: (value: any) => void;
+  tools: Tool[];
+  setTools: (value: Tool[]) => void;
   setScreens: (value: any) => void;
   navFunctions: any;
   setNavFunctions: (value: any) => void;
@@ -21,14 +21,22 @@ export interface BibleVariablesContextType {
   setCanvasMode: (value: any) => void;
   mapMode: any;
   setMapMode: (value: any) => void;
-  canvasTools: any;
-  mapTools: any;
-  setCanvasTools: (value: any) => void;
-  setMapTools: (value: any) => void;
-  addTool: (tool: any) => void;
-  removeTool: (tool: any) => void;
-  updateTool: (tool: any) => void;
-  toggleToolActive: (tool: any) => void;
+  canvasTools: Tool[];
+  mapTools: Tool[];
+  setCanvasTools: (value: Tool[]) => void;
+  setMapTools: (value: Tool[]) => void;
+  addTool: (tool: Tool, options?: { to?: ToolSet }) => void;
+  removeTool: (label: string, options?: { from?: ToolSet }) => void;
+  updateTool: (
+    label: string,
+    newProps: Partial<Tool>,
+    options?: ChangeToolOptions
+  ) => void;
+  toggleToolActive: (
+    label: string,
+    custom?: "stop" | "active",
+    options?: ChangeToolOptions
+  ) => void;
   scrollToVerse: (verse: any) => void;
   showHeading: any;
   setShowHeading: (value: any) => void;
@@ -54,6 +62,10 @@ export interface Tool {
 }
 
 export type ToolSet = "tools" | "canvas" | "map";
+
+export interface ChangeToolOptions {
+  inSet?: ToolSet;
+}
 
 // import { useMouseMove, } from 'app.hooks.mouseMove';
 export function BibleVariablesProvider({ children }: any) {
