@@ -726,7 +726,7 @@ const PlayerControls = ({ parentId = "default" }) => {
     }
     G.TIMER_SHOW_NEXT = setTimeout(() => {
       setShowCurrent(false);
-    }, 3000);
+    }, 30000);
 
     G.SetActiveDate?.(lastActiveDateID);
   }, [currIndex]);
@@ -768,6 +768,13 @@ const PlayerControls = ({ parentId = "default" }) => {
   }, [currIndex, playlists]);
 
   const isItemLink = outerWebsiteItem[currentItem?.additionalInfo?.type];
+
+  const isMobile =
+    (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
+    G.MOBILE_VIEWPORT_THRESHOLD;
+
+  console.log(currentItem, "currentItem");
+  const GetLabelT = useMemo(() => G.GetLabel, []);
 
   return (
     <>
@@ -868,12 +875,13 @@ const PlayerControls = ({ parentId = "default" }) => {
                   fontFamily: "DM Sans",
                   height: "12px",
                   color: "var(--pageTextColor)",
+                  minWidth: "max-content",
                 }}
               >
                 {showCurrent
-                  ? "Playing now:"
+                  ? `${t("playingNow")}:`
                   : nextItemName?.content
-                    ? "Playing Next:"
+                    ? `${t("playingNext")}:`
                     : null}
               </p>
               <div style={{ gap: "0.5rem" }} className="align-center">
@@ -904,28 +912,38 @@ const PlayerControls = ({ parentId = "default" }) => {
                     }`}
                   >
                     {nextItemName?.content ? (
-                      <p
-                        style={{
-                          fontSize: "0.75rem",
-                          fontWeight: "600",
-                          display: "flex",
-                          alignItems: "center",
-                          fontFamily: "DM Sans",
-                          margin: "0",
-                          color: "var(--pageTextColor)",
-                        }}
-                      >
-                        {nextItemName?.content
-                          ? `${nextItemName?.content}${nextItemName?.prefix}`.substring(
-                              0,
-                              16
-                            )
-                          : ""}
-                        {`${nextItemName?.content}${nextItemName?.prefix}`
-                          .length > 16
-                          ? "..."
-                          : ""}
-                      </p>
+                      nextItemName?.additionalInfo?.book && isMobile ? (
+                        <GetLabelT
+                          needToShowInMobile={true}
+                          value="discover"
+                          fontSize="0.75rem"
+                          currentOpenedBook={{ book: nextItemName.content }}
+                          widthCompare={isMobile ? 65 : 300}
+                        />
+                      ) : (
+                        <p
+                          style={{
+                            fontSize: "0.75rem",
+                            fontWeight: "600",
+                            display: "flex",
+                            alignItems: "center",
+                            fontFamily: "DM Sans",
+                            margin: "0",
+                            color: "var(--pageTextColor)",
+                          }}
+                        >
+                          {nextItemName?.content
+                            ? `${nextItemName?.content}${nextItemName?.prefix}`.substring(
+                                0,
+                                16
+                              )
+                            : ""}
+                          {`${nextItemName?.content}${nextItemName?.prefix}`
+                            .length > 16
+                            ? "..."
+                            : ""}
+                        </p>
+                      )
                     ) : (
                       <p
                         style={{
@@ -934,54 +952,66 @@ const PlayerControls = ({ parentId = "default" }) => {
                           fontWeight: "900",
                           fontFamily: "DM Sans",
                           margin: "0",
+                          minWidth: "max-content",
                         }}
                       >
                         Playlist Ended
                       </p>
                     )}
-                    {!G.ValidTypes[nextItemName?.type] && (
-                      <p
-                        style={{
-                          fontSize: "12px",
-                          fontWeight: "400",
-                          margin: "0",
-                          textTransform: "capitalize",
-                          color: "var(--pageTextColor)",
-                        }}
-                      >
-                        {nextItemName?.type}
-                      </p>
-                    )}
+                    {!G.ValidTypes[nextItemName?.type] &&
+                      !!nextItemName?.type && (
+                        <p
+                          style={{
+                            fontSize: "12px",
+                            fontWeight: "400",
+                            margin: "0",
+                            textTransform: "capitalize",
+                            color: "var(--pageTextColor)",
+                          }}
+                        >
+                          {nextItemName?.type}
+                        </p>
+                      )}
                   </div>
                   <div
-                    style={{ width: "100%" }}
+                    style={{ width: "100%", minWidth: "max-content" }}
                     className={`fade-in-animation overlay-top-left  ${
                       showCurrent ? "show" : ""
                     }`}
                   >
                     {currentItem?.content ? (
-                      <p
-                        style={{
-                          fontSize: "0.75rem",
-                          fontWeight: "600",
-                          display: "flex",
-                          alignItems: "center",
-                          fontFamily: "DM Sans",
-                          margin: "0",
-                          color: "var(--pageTextColor)",
-                        }}
-                      >
-                        {currentItem?.content
-                          ? `${currentItem?.content}${currentItem?.prefix}`.substring(
-                              0,
-                              16
-                            )
-                          : ""}
-                        {`${currentItem?.content}${currentItem?.prefix}`
-                          .length > 16
-                          ? "..."
-                          : ""}
-                      </p>
+                      currentItem.additionalInfo?.book && isMobile ? (
+                        <GetLabelT
+                          needToShowInMobile={true}
+                          fontSize="0.75rem"
+                          value="discover"
+                          currentOpenedBook={{ book: currentItem.content }}
+                          widthCompare={isMobile ? 65 : 300}
+                        />
+                      ) : (
+                        <p
+                          style={{
+                            fontSize: "0.65rem",
+                            fontWeight: "600",
+                            display: "flex",
+                            alignItems: "center",
+                            fontFamily: "DM Sans",
+                            margin: "0",
+                            color: "var(--pageTextColor)",
+                          }}
+                        >
+                          {currentItem?.content
+                            ? `${currentItem?.content}${currentItem?.prefix}`.substring(
+                                0,
+                                16
+                              )
+                            : ""}
+                          {`${currentItem?.content}${currentItem?.prefix}`
+                            .length > 16
+                            ? "..."
+                            : ""}
+                        </p>
+                      )
                     ) : (
                       <p
                         style={{
@@ -990,6 +1020,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                           fontWeight: "900",
                           fontFamily: "DM Sans",
                           margin: "0",
+                          minWidth: "max-content",
                         }}
                       >
                         Playlist Ended
