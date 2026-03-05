@@ -1,14 +1,11 @@
 const { useState, useMemo } = os.appHooks;
 import { useBibleContext } from "app.hooks.bibleVariables";
-import { useGlobalsContext } from "app.hooks.globalsContext";
-
 function PanelSettingsDialog({
   onClose,
 }: {
   onClose: any;
   openPanelCount?: any;
 }) {
-  const globals = useGlobalsContext();
   const { panelMode, screens, setScreens } = useBibleContext();
   const openPanelCount = screens.value || 1;
   const isCurrentlyRow = screens.row || false;
@@ -127,7 +124,7 @@ function PanelSettingsDialog({
       screenConfig.row = true;
     }
 
-    globals.setCustomScreens(screenConfig);
+    globalThis.setCustomScreens(screenConfig);
     setScreens(screenConfig);
 
     onClose();

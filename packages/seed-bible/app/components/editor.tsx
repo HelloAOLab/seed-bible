@@ -21,7 +21,6 @@ import {
 } from "https://esm.helloao.org/vendor-3PZUL55I.js";
 
 import { MarginYIcon, MarginXIcon } from "app.components.icons";
-import { useGlobalsContext } from "app.hooks.globalsContext";
 
 // >>> priorities: dev default order (first = highest priority)
 if (!globalThis.DEFAULT_TOOLBAR_PRIORITY)
@@ -297,7 +296,6 @@ const TextEditor = ({
   enableEditor,
   studyNotes,
 }) => {
-  const globals = useGlobalsContext();
   if (!tab && !studyNotes) return content;
 
   const editorRef = useRef<null | Editor>(null);
@@ -389,7 +387,7 @@ const TextEditor = ({
     editorRef.current = editor;
 
     function resolveTargetNodeName() {
-      const mode = globals.EditorTextMode || "all";
+      const mode = globalThis.EditorTextMode || "all";
       if (mode === "verses") return "sectionCover";
       if (mode === "headings") return "sectionTitle";
       return null; // for "all"
@@ -414,7 +412,7 @@ const TextEditor = ({
       if (tr.docChanged) view.dispatch(tr);
     }
 
-    globals.EditorFns = {
+    globalThis.EditorFns = {
       bold: () => {
         const node = resolveTargetNodeName();
         if (node) {
@@ -510,7 +508,7 @@ const TextEditor = ({
       },
       clear: () => {
         const node = (function () {
-          const mode = globals.EditorTextMode || "all";
+          const mode = globalThis.EditorTextMode || "all";
           if (mode === "verses") return "sectionCover";
           if (mode === "headings") return "sectionTitle";
           return null;
@@ -538,7 +536,7 @@ const TextEditor = ({
       setTextColor: (color) => {
         setTextColor(color);
         const node = (function () {
-          const mode = globals.EditorTextMode || "all";
+          const mode = globalThis.EditorTextMode || "all";
           if (mode === "verses") return "sectionCover";
           if (mode === "headings") return "sectionTitle";
           return null;
@@ -552,7 +550,7 @@ const TextEditor = ({
       setHighlightColor: (color) => {
         setBgColor(color);
         const node = (function () {
-          const mode = globals.EditorTextMode || "all";
+          const mode = globalThis.EditorTextMode || "all";
           if (mode === "verses") return "sectionCover";
           if (mode === "headings") return "sectionTitle";
           return null;
@@ -565,7 +563,7 @@ const TextEditor = ({
       },
       setFontFamily: (font) => {
         const node = (function () {
-          const mode = globals.EditorTextMode || "all";
+          const mode = globalThis.EditorTextMode || "all";
           if (mode === "verses") return "sectionCover";
           if (mode === "headings") return "sectionTitle";
           return null;
@@ -576,7 +574,7 @@ const TextEditor = ({
       },
       setFontSize: (size) => {
         const node = (function () {
-          const mode = globals.EditorTextMode || "all";
+          const mode = globalThis.EditorTextMode || "all";
           if (mode === "verses") return "sectionCover";
           if (mode === "headings") return "sectionTitle";
           return null;
@@ -676,7 +674,6 @@ const iconButtonStyle = {
 };
 
 export function ResponsiveToolbar({ editor }) {
-  const globals = useGlobalsContext();
   const [selectedText, setSelectedText] = useState("all");
   const [fontSize, setFontSize] = useState(16);
   const [textColor, setTextColor] = useState("#000000");
@@ -691,10 +688,10 @@ export function ResponsiveToolbar({ editor }) {
       return (
         (localStorage?.masks?.[PRIORITY_KEY]?.data &&
           JSON.parse(localStorage.masks[PRIORITY_KEY].data)) ||
-        globals.DEFAULT_TOOLBAR_PRIORITY
+        DEFAULT_TOOLBAR_PRIORITY
       );
     } catch {
-      return globals.DEFAULT_TOOLBAR_PRIORITY;
+      return DEFAULT_TOOLBAR_PRIORITY;
     }
   });
 
@@ -711,10 +708,10 @@ export function ResponsiveToolbar({ editor }) {
   const [draftOrder, setDraftOrder] = useState(priority);
 
   useEffect(() => {
-    globals.EditorTextMode = selectedText;
+    globalThis.EditorTextMode = selectedText;
   }, [selectedText]);
 
-  globals.EditorToolbar = {
+  globalThis.EditorToolbar = {
     setPriorities(ids) {
       if (!Array.isArray(ids) || !ids.length) return;
       setPriority(ids);
@@ -724,8 +721,8 @@ export function ResponsiveToolbar({ editor }) {
       return priority.slice();
     },
     resetPriorities() {
-      setPriority(globals.DEFAULT_TOOLBAR_PRIORITY);
-      persistPriority(globals.DEFAULT_TOOLBAR_PRIORITY);
+      setPriority(DEFAULT_TOOLBAR_PRIORITY);
+      persistPriority(DEFAULT_TOOLBAR_PRIORITY);
     },
   };
 
@@ -750,39 +747,40 @@ export function ResponsiveToolbar({ editor }) {
 
   const handleTextColorChange = (color) => {
     setTextColor(color);
-    globals.EditorFns?.setTextColor(color);
+    globalThis.EditorFns?.setTextColor(color);
   };
   const handleBgColorChange = (color) => {
     setBgColor(color);
-    globals.EditorFns?.setHighlightColor(color);
+    globalThis.EditorFns?.setHighlightColor(color);
   };
   const handleFontSizeChange = (size) => {
     setFontSize(size);
-    globals.EditorFns?.setFontSize(size.toString());
+    globalThis.EditorFns?.setFontSize(size.toString());
   };
   const handleFontFamilyChange = (font) => {
-    globals.EditorFns?.setFontFamily(font);
+    globalThis.EditorFns?.setFontFamily(font);
   };
   const handleAlignmentSelect = (option) => {
     if (!option) return;
-    if (option.value === "left") globals.EditorFns?.alignLeft();
-    else if (option.value === "center") globals.EditorFns?.alignCenter();
-    else if (option.value === "right") globals.EditorFns?.alignRight();
-    else if (option.value === "justify") globals.EditorFns?.alignJustify();
+    if (option.value === "left") globalThis.EditorFns?.alignLeft();
+    else if (option.value === "center") globalThis.EditorFns?.alignCenter();
+    else if (option.value === "right") globalThis.EditorFns?.alignRight();
+    else if (option.value === "justify") globalThis.EditorFns?.alignJustify();
   };
   const handleListSelect = (option) => {
     if (!option) return;
-    if (option.value === "bulletList") globals.EditorFns?.toggleBulletList?.();
+    if (option.value === "bulletList")
+      globalThis.EditorFns?.toggleBulletList?.();
     else if (option.value === "orderedList")
-      globals.EditorFns?.toggleOrderedList?.();
+      globalThis.EditorFns?.toggleOrderedList?.();
   };
   const [spacing, setSpacing] = useState();
   const handleSpaceSelect = (val) => {
     setSpacing(val);
-    globals.EditorFns?.setLineHeight(val);
+    globalThis.EditorFns?.setLineHeight(val);
   };
   const handleAIPrompt = async (prompt) => {
-    globals.EditorFns?.aiHighlight?.(prompt);
+    globalThis.EditorFns?.aiHighlight?.(prompt);
   };
 
   // build toolbar items
@@ -811,7 +809,7 @@ export function ResponsiveToolbar({ editor }) {
       node: (
         <button
           key="bold"
-          onClick={() => globals.EditorFns?.bold()}
+          onClick={() => globalThis.EditorFns?.bold()}
           style={iconButtonStyle}
           title="Bold"
         >
@@ -824,7 +822,7 @@ export function ResponsiveToolbar({ editor }) {
       node: (
         <button
           key="italic"
-          onClick={() => globals.EditorFns?.italic()}
+          onClick={() => globalThis.EditorFns?.italic()}
           style={iconButtonStyle}
           title="Italic"
         >
@@ -837,7 +835,7 @@ export function ResponsiveToolbar({ editor }) {
       node: (
         <button
           key="underline"
-          onClick={() => globals.EditorFns?.underline()}
+          onClick={() => globalThis.EditorFns?.underline()}
           style={iconButtonStyle}
           title="Underline"
         >
@@ -850,7 +848,7 @@ export function ResponsiveToolbar({ editor }) {
       node: (
         <button
           key="strikethrough"
-          onClick={() => globals.EditorFns?.strikethrough()}
+          onClick={() => globalThis.EditorFns?.strikethrough()}
           style={iconButtonStyle}
           title="Strikethrough"
         >
@@ -865,7 +863,7 @@ export function ResponsiveToolbar({ editor }) {
       node: (
         <button
           key="superscript"
-          onClick={() => globals.EditorFns?.superscript()}
+          onClick={() => globalThis.EditorFns?.superscript()}
           style={iconButtonStyle}
           title="Superscript"
         >
@@ -878,7 +876,7 @@ export function ResponsiveToolbar({ editor }) {
       node: (
         <button
           key="subscript"
-          onClick={() => globals.EditorFns?.subscript()}
+          onClick={() => globalThis.EditorFns?.subscript()}
           style={iconButtonStyle}
           title="Subscript"
         >
@@ -989,7 +987,7 @@ export function ResponsiveToolbar({ editor }) {
       node: (
         <ParagraphSelect
           key="paragraph"
-          onParagraphChange={globals.EditorFns?.onParagraphChange}
+          onParagraphChange={globalThis.EditorFns?.onParagraphChange}
         />
       ),
     },
@@ -1007,7 +1005,7 @@ export function ResponsiveToolbar({ editor }) {
       node: (
         <FontStyleSelect
           key="font-style"
-          onFontStyleChange={globals.EditorFns?.onFontStyleChange}
+          onFontStyleChange={globalThis.EditorFns?.onFontStyleChange}
         />
       ),
     },
@@ -1026,7 +1024,7 @@ export function ResponsiveToolbar({ editor }) {
       node: (
         <button
           key="undo"
-          onClick={() => globals.EditorFns?.undo()}
+          onClick={() => globalThis.EditorFns?.undo()}
           style={iconButtonStyle}
           title="Undo"
         >
@@ -1039,7 +1037,7 @@ export function ResponsiveToolbar({ editor }) {
       node: (
         <button
           key="redo"
-          onClick={() => globals.EditorFns?.redo()}
+          onClick={() => globalThis.EditorFns?.redo()}
           style={iconButtonStyle}
           title="Redo"
         >
@@ -1052,7 +1050,7 @@ export function ResponsiveToolbar({ editor }) {
       node: (
         <button
           key="clear"
-          onClick={() => globals.EditorFns?.clear()}
+          onClick={() => globalThis.EditorFns?.clear()}
           style={iconButtonStyle}
           title="Clear Formatting"
         >
@@ -1116,7 +1114,7 @@ export function ResponsiveToolbar({ editor }) {
       node: (
         <button
           key="download"
-          onClick={() => globals.EditorFns?.exportJson()}
+          onClick={() => globalThis.EditorFns?.exportJson()}
           style={iconButtonStyle}
           title="Download"
         >
@@ -1312,7 +1310,7 @@ export function ResponsiveToolbar({ editor }) {
               <button
                 className="btn-secondary"
                 onClick={() => {
-                  setDraftOrder(globals.DEFAULT_TOOLBAR_PRIORITY);
+                  setDraftOrder(DEFAULT_TOOLBAR_PRIORITY);
                 }}
               >
                 Reset
@@ -1505,20 +1503,19 @@ function AIPromptInput({ onAIPrompt }) {
   );
 }
 function Counter({ value, onChange, min = 8, max = 72 }) {
-  const globals = useGlobalsContext();
   const [fontSize, setFontSize] = useState(16);
   const increment = () => {
     if (fontSize < max) {
       const size = fontSize + 1;
       setFontSize(size);
-      globals.EditorFns?.setFontSize(size.toString());
+      globalThis.EditorFns?.setFontSize(size.toString());
     }
   };
   const decrement = () => {
     if (fontSize > min) {
       const size = fontSize - 1;
       setFontSize(size);
-      globals.EditorFns?.setFontSize(size.toString());
+      globalThis.EditorFns?.setFontSize(size.toString());
     }
   };
   return (

@@ -7,11 +7,9 @@ import SurroundingDivs from "app.components.surroundingDivs";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useTabsContext } from "app.hooks.tabs";
 import { BurgerMenuIcon, MoreIcon, TabsIcon } from "app.components.icons";
-import { useGlobalsContext } from "app.hooks.globalsContext";
 
 // Simple, single-toolbar component (no edit layer). Main logic unchanged.
 export function Toolbar() {
-  const globals = useGlobalsContext();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -53,7 +51,7 @@ export function Toolbar() {
 
   // === keep original default-toolbar logic ===
   const [showToolbar, setShowToolbar] = useState(false);
-  globals.SetShowToolbar = setShowToolbar;
+  globalThis.SetShowToolbar = setShowToolbar;
   // useEffect(() => {
   //   setShowToolbar(!openOnMobile);
   // }, [openOnMobile]);
@@ -68,7 +66,7 @@ export function Toolbar() {
   const hasHeldRef = useRef(false);
 
   useEffect(() => {
-    globals.SetScreens = setScreens;
+    globalThis.SetScreens = setScreens;
   }, [setScreens]);
 
   useEffect(() => () => clearTimeout(holdTimeoutRef.current), []);
@@ -125,13 +123,13 @@ export function Toolbar() {
 
   // expose setters globally (kept behavior)
   useEffect(() => {
-    globals.SetTools = setTools;
-    globals.SetCanvasTools = setCanvasTools;
-    globals.SetMapTools = setMapTools;
+    globalThis.SetTools = setTools;
+    globalThis.SetCanvasTools = setCanvasTools;
+    globalThis.SetMapTools = setMapTools;
     return () => {
-      globals.SetTools = null;
-      globals.SetCanvasTools = null;
-      globals.SetMapTools = null;
+      globalThis.SetTools = null;
+      globalThis.SetCanvasTools = null;
+      globalThis.SetMapTools = null;
     };
   }, [setTools, setCanvasTools, setMapTools]);
 
@@ -141,9 +139,9 @@ export function Toolbar() {
     window.addEventListener("contextmenu", handleContextMenu);
     os.addBotListener(configBot, "onBotChanged", (that) => {
       if (that.tags.includes("book")) {
-        globals.Open(configBot.tags.book, configBot.tags.chapter);
+        globalThis.Open(configBot.tags.book, configBot.tags.chapter);
       } else if (that.tags.includes("chapter")) {
-        globals.Open(configBot.tags.book, configBot.tags.chapter);
+        globalThis.Open(configBot.tags.book, configBot.tags.chapter);
       }
     });
     return () => window.removeEventListener("contextmenu", handleContextMenu);
@@ -201,7 +199,7 @@ export function Toolbar() {
 
             <div
               onClick={() => {
-                globals.setOpenSidebar((prev) => !prev);
+                globalThis.setOpenSidebar((prev) => !prev);
                 // if (globalThis.setOpenSidebar) {
                 //   globalThis.setSelectingTranslation &&
                 //     globalThis.setSelectingTranslation(false);
@@ -302,7 +300,7 @@ export function Toolbar() {
               onClick={() => {
                 setSidebarWidth(280);
                 setOpenOnMobile(true);
-                globals.setOpenSidebar && globals.setOpenSidebar(false);
+                globalThis[`setOpenSidebar`] && setOpenSidebar(false);
               }}
               className="toolbar-item-wrapper mobile-only"
             >

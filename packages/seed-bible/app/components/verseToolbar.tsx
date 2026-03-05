@@ -10,7 +10,6 @@ import {
   HighlightIcon,
 } from "app.components.icons";
 import { getStyleOf } from "app.styles.styler";
-import { useGlobalsContext } from "app.hooks.globalsContext";
 
 export function VerseToolbar({
   clickedVersesContext,
@@ -38,7 +37,6 @@ export function VerseToolbar({
   spaces: any;
   setClickedVerses?: StateUpdater<never[]>;
 }) {
-  const globals = useGlobalsContext();
   // Get Selection UI settings - first try globalThis, then fall back to saved space data
   // we intentionally ignore any copyVerseMode stored in the settings
   const getSelectionSettings = () => {
@@ -48,17 +46,17 @@ export function VerseToolbar({
       showIconText: s.showIconText ?? true,
     });
     // First check globalThis (set by SelectionUISettings component)
-    if (globals.selectionUIBehavior?.[activeSpace]) {
-      return pick(globals.selectionUIBehavior[activeSpace]);
+    if (globalThis.selectionUIBehavior?.[activeSpace]) {
+      return pick(globalThis.selectionUIBehavior[activeSpace]);
     }
     // Fall back to saved space data
     const currentSpace = spaces?.find((s) => s.id === activeSpace);
     if (currentSpace?.selectionUIBehavior) {
       // Also populate globalThis for future use
-      if (!globals.selectionUIBehavior) {
-        globals.selectionUIBehavior = {};
+      if (!globalThis.selectionUIBehavior) {
+        globalThis.selectionUIBehavior = {};
       }
-      globals.selectionUIBehavior[activeSpace] =
+      globalThis.selectionUIBehavior[activeSpace] =
         currentSpace.selectionUIBehavior;
       return pick(currentSpace.selectionUIBehavior);
     }
@@ -275,7 +273,7 @@ export function VerseToolbar({
     marginLeft: "8px",
   };
 
-  const { color } = globals.GetOrSetVisualInTags(configBot.id);
+  const { color } = GetOrSetVisualInTags(configBot.id);
 
   const defaultColors = [color, "#FDE047"];
 
@@ -290,8 +288,8 @@ export function VerseToolbar({
 
   const handleClearHighlights = () => {
     clickedVerses.forEach((verseNum) => {
-      if (globals.UnHighlightVerse) {
-        globals.UnHighlightVerse(verseNum);
+      if (globalThis.UnHighlightVerse) {
+        globalThis.UnHighlightVerse(verseNum);
       }
     });
     onClose();
@@ -301,8 +299,8 @@ export function VerseToolbar({
     Object.keys(highlighted).forEach((key) => {
       const parts = key.split("-");
       const verseNum = parseInt(parts[parts.length - 1] ?? "0");
-      if (globals.UnHighlightVerse) {
-        globals.UnHighlightVerse(verseNum);
+      if (globalThis.UnHighlightVerse) {
+        globalThis.UnHighlightVerse(verseNum);
       }
     });
     onClose();
@@ -339,10 +337,10 @@ export function VerseToolbar({
     <>
       <style>{`
         .toolbar-1.mounted{
-          pointer-events:${globals.IsMobileNow() && showVerseToolbar ? "none !important" : ""}
+          pointer-events:${globalThis.IsMobileNow() && showVerseToolbar ? "none !important" : ""}
         }
         `}</style>
-      {globals.IsMobileNow() && selectionSettings.showSelectedItems && (
+      {globalThis.IsMobileNow() && selectionSettings.showSelectedItems && (
         <>
           {
             null /*<div className="verse-ref">
@@ -736,7 +734,6 @@ export function VerseToolbar({
 }
 
 function getMenuActions(that, onClose, activeSpace, spaces) {
-  const globals = useGlobalsContext();
   os.log("GET MENU ACTIONS VERSE TOOLBAR", that);
   const { SharePopup } = thisBot.Chips();
   // copy mode is fixed to always include reference – ignore any stored setting
@@ -777,7 +774,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
           // always include the verse reference when copying
           const textToCopy = `${that.text}\n— ${buildReference()}`;
           os.setClipboard(textToCopy);
-          globals.SetInHold(null);
+          SetInHold(null);
           onClose();
         },
         title: "Copy",
@@ -788,9 +785,9 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
             {
               icon: <AskIcon />,
               onClick: () => {
-                globals.ClearUserSelection();
-                globals.SetShowCommands(true);
-                globals.SetInHold(null);
+                ClearUserSelection();
+                SetShowCommands(true);
+                SetInHold(null);
               },
               title: "Ask",
             },
@@ -799,10 +796,8 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
       {
         icon: <ShareIcon height="24" width="24" />,
         onClick: () => {
-          const globals = useGlobalsContext();
-          globals.closePopupSettings();
+          closePopupSettings();
           setTimeout(() => {
-            const globals = useGlobalsContext();
             // Build verse reference from the context
             const verseNumbers = that.verseNumber || [];
             const sorted = [...verseNumbers].sort((a, b) => a - b);
@@ -822,7 +817,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
               groups.push(start === end ? `${start}` : `${start}-${end}`);
             }
             const reference = `${that.book} ${that.chapter}:${groups.join(",")}`;
-            globals.openPopupSettings(
+            openPopupSettings(
               <SharePopup
                 shareTitle={`${that.text}`}
                 shareReference={reference}
@@ -830,7 +825,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
               null,
               true
             );
-            globals.SetInHold(null);
+            SetInHold(null);
           }, 50);
         },
         title: "Share",
@@ -839,8 +834,8 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
   };
 
   // Add dynamic global context items
-  if (Array.isArray(globals.ContextMenuOptions)) {
-    globals.ContextMenuOptions.forEach(({ label, items }) => {
+  if (Array.isArray(globalThis.ContextMenuOptions)) {
+    globalThis.ContextMenuOptions.forEach(({ label, items }) => {
       const panelKey = `${label.toUpperCase().replace(/\s/g, "_")}_PANEL_ID`;
       if (globalThis[panelKey]) {
         items.forEach((el) => {
@@ -848,7 +843,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
             icon: el.icon,
             onClick: () => {
               if (el.onClick) el.onClick(that);
-              globals.SetInHold(null);
+              SetInHold(null);
             },
             title: el.title,
           });
@@ -862,11 +857,11 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
   if (that.verseNumber) {
     for (const verseNumber of that.verseNumber) {
       if (
-        globals.VerseContextMenuOptions?.[
+        globalThis?.VerseContextMenuOptions?.[
           `${that.book}-${that.chapter}-${verseNumber}`
         ]
       ) {
-        globals.VerseContextMenuOptions[
+        globalThis.VerseContextMenuOptions[
           `${that.book}-${that.chapter}-${verseNumber}`
         ].forEach((item) => {
           if (verseContextMenuOptions[item.title]) {
@@ -897,7 +892,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
           ...el,
           onClick: (e: MouseEvent) => {
             if (el.onClick) el.onClick(e);
-            globals.SetInHold({});
+            SetInHold({});
           },
         });
         titleArray.push(el.title);
@@ -912,12 +907,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
         </span>
       ),
       onClick: () => {
-        const globals = useGlobalsContext();
-        globals.openPopupSettings(
-          <SubOptions items={itemsHolder} />,
-          null,
-          true
-        );
+        openPopupSettings(<SubOptions items={itemsHolder} />, null, true);
       },
     });
   }
@@ -930,7 +920,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
           icon: el.icon,
           onClick: (e: MouseEvent) => {
             if (el.onClick) el.onClick(that);
-            globals.SetInHold(null);
+            SetInHold(null);
           },
         });
       });
@@ -947,7 +937,6 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
 }
 
 const SubOptions = ({ items }) => {
-  const globals = useGlobalsContext();
   return (
     <div
       className={"popupSettings2"}
@@ -957,7 +946,7 @@ const SubOptions = ({ items }) => {
         scrollbarWidth: "none",
       }}
     >
-      <style>{globals.ThemeCSS}</style>
+      <style>{globalThis.ThemeCSS}</style>
       <style>
         {`
 .popupSettings2 {

@@ -1,6 +1,4 @@
 import { MenuIcon, ApologistIcon } from "app.components.icons";
-import { useGlobalsContext } from "app.hooks.globalsContext";
-
 // import { SharePopup } from "app.components.shareModel";
 
 const IconsURL = {
@@ -71,10 +69,8 @@ const MenuOptions = {
       icon: <MenuIcon name={IconsURL["Share Fat"]} />,
       title: "Share verse",
       onClick: (items) => {
-        const globals = useGlobalsContext();
-        globals.closePopupSettings();
+        closePopupSettings();
         setTimeout(() => {
-          const globals = useGlobalsContext();
           let text = "";
 
           const textItems = items.map((verse) => {
@@ -110,16 +106,12 @@ const MenuOptions = {
               ? `${book} ${chapter}:${groups.join(",")}`
               : `${book} ${chapter}`;
 
-          globals.openPopupSettings(
-            <SharePopup
-              shareTitle={`${text}`}
-              shareReference={reference}
-              translation={that.translation}
-            />,
+          openPopupSettings(
+            <SharePopup shareTitle={`${text}`} shareReference={reference} translation={that.translation} />,
             null,
             true
           );
-          globals.SetInHold({});
+          SetInHold({});
         }, 50);
       },
     },

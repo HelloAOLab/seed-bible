@@ -14,7 +14,6 @@ import { useTabsContext } from "app.hooks.tabs";
 import { useSideBarContext } from "app.hooks.sideBar";
 
 import { useBibleContext } from "app.hooks.bibleVariables";
-import { useGlobalsContext } from "app.hooks.globalsContext";
 
 const Packager = getBot("system", "app.packager");
 
@@ -63,7 +62,6 @@ function SettingsPanel({
   data,
   iconUrl,
 }) {
-  const globals = useGlobalsContext();
   const { t } = useSideBarContext();
   const [buttonEnabled, setbuttonEnabled] = useState(true);
   const [showInToolbar, setShowInToolbar] = useState(false);
@@ -118,12 +116,12 @@ function SettingsPanel({
                 isOn={buttonEnabled}
                 onToggle={() => {
                   setbuttonEnabled(!buttonEnabled);
-                  globals.ToggleToolActive(name, "stop");
+                  globalThis.ToggleToolActive(name, "stop");
                 }}
               />
             )}
             <span
-              onClick={() => (globals.openPopupSettings as any)(OPTIONS)}
+              onClick={() => (openPopupSettings as any)(OPTIONS)}
               className="material-symbols-outlined"
               style={iconStyle}
             >
@@ -151,9 +149,9 @@ function SettingsPanel({
                 <span>{t("showInToolbar")}</span>
               </div>
               <ToggleSwitch
-                isOn={globals.IsToolActive && globals.IsToolActive(name)}
+                isOn={globalThis.IsToolActive && globalThis.IsToolActive(name)}
                 onToggle={() => {
-                  globals.ToggleToolActive(name);
+                  globalThis.ToggleToolActive(name);
                   setShowInToolbar(!showInToolbar);
                 }}
                 disabled={!buttonEnabled}
@@ -171,11 +169,11 @@ function SettingsPanel({
               </div>
               <ToggleSwitch
                 isOn={
-                  globals.IsToolSraterToolbar &&
-                  globals.IsToolSraterToolbar(name)
+                  globalThis.IsToolSraterToolbar &&
+                  globalThis.IsToolSraterToolbar(name)
                 }
                 onToggle={() => {
-                  globals.ToToggleShowInStarterToolbar(name);
+                  globalThis.ToToggleShowInStarterToolbar(name);
                   setShowInPanel(!showInPanel);
                 }}
                 disabled={!buttonEnabled}
@@ -191,11 +189,11 @@ function SettingsPanel({
               </div>
               <ToggleSwitch
                 isOn={
-                  globals.IsToolInPageToolbar &&
-                  globals.IsToolInPageToolbar(name)
+                  globalThis.IsToolInPageToolbar &&
+                  globalThis.IsToolInPageToolbar(name)
                 }
                 onToggle={() => {
-                  globals.ToToggleShowInPageToolbar(name);
+                  globalThis.ToToggleShowInPageToolbar(name);
                   setShowBelowPage(!showBelowPage);
                 }}
                 disabled={!buttonEnabled}

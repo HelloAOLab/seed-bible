@@ -29,7 +29,6 @@ import {
   subscribeToUsers,
   unsubscribeFromUsers,
 } from "db.annotations.library";
-import { useGlobalsContext } from "app.hooks.globalsContext";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SETTINGS CONTEXT - Shared state for all setting components
@@ -755,7 +754,6 @@ export const AccountSetting = ({
   itemKey = "yourAccount",
   labelKey = "yourAccount",
 }) => {
-  const globals = useGlobalsContext();
   const {
     t,
     editMode,
@@ -790,7 +788,7 @@ export const AccountSetting = ({
       const data = await os.getData(tags.key, authBot.id);
       if (data.success) {
         setUserData(data.data);
-        globals.SetGlobalProfilePic(data.data?.photoLink);
+        globalThis.SetGlobalProfilePic(data.data?.photoLink);
       }
     };
     getUserData();
@@ -805,8 +803,8 @@ export const AccountSetting = ({
   let colorIndex = 0;
   let iconIndex = 0;
 
-  if (isAnonymous && globals.GetOrSetVisualInTags) {
-    const visual = globals.GetOrSetVisualInTags(configBot.id, userData);
+  if (isAnonymous && globalThis.GetOrSetVisualInTags) {
+    const visual = globalThis.GetOrSetVisualInTags(configBot.id, userData);
     colorIndex = visual.colorIndex;
     iconIndex = visual.iconIndex;
   }
@@ -908,7 +906,7 @@ export const AccountSetting = ({
         <div style={{ justifyContent: "center" }} className="activeAccount">
           <button
             onClick={() => {
-              globals.AccountSettingsEnteredFrom = "settings";
+              globalThis.AccountSettingsEnteredFrom = "settings";
               setSideBarMode("createAccountSettings");
             }}
             className="create-profile-btn"
@@ -926,7 +924,6 @@ export const AccountSettingsSetting = ({
   itemKey = "accountSettings",
   labelKey = "accountSettings",
 }) => {
-  const globals = useGlobalsContext();
   const { setSideBarMode } = useSideBarContext();
   return (
     <SettingRow
@@ -934,7 +931,7 @@ export const AccountSettingsSetting = ({
       labelKey={labelKey}
       icon="manage_accounts"
       onClick={() => {
-        globals.AccountSettingsEnteredFrom = "settings";
+        globalThis.AccountSettingsEnteredFrom = "settings";
         setSideBarMode("createAccountSettings");
       }}
     />
@@ -1579,7 +1576,6 @@ const renderFromConfig = (config) => {
 // MAIN SETTINGS SIDEBAR COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 const SettingsSidebar = ({ config }) => {
-  const globals = useGlobalsContext();
   const {
     t,
     changeLanguage,
@@ -1603,7 +1599,7 @@ const SettingsSidebar = ({ config }) => {
           "space"
       : null
   );
-  globals.SetActiveSettingsTab = setActiveTab;
+  globalThis.SetActiveSettingsTab = setActiveTab;
 
   const [editMode, setEditMode] = useState(false);
   const [visibility, setVisibility] = useState({});
@@ -1617,7 +1613,7 @@ const SettingsSidebar = ({ config }) => {
 
   // Initialize visibility from config
   useEffect(() => {
-    const saved = globals.changes?.settingsVisibility || {};
+    const saved = globalThis.changes?.settingsVisibility || {};
     const initial = {};
 
     if (useTabs && config.tabs) {
@@ -1654,15 +1650,15 @@ const SettingsSidebar = ({ config }) => {
   const toggleVisibility = (key) => {
     const newVis = { ...visibility, [key]: !visibility[key] };
     setVisibility(newVis);
-    if (!globals.changes) globals.changes = {};
-    globals.changes.settingsVisibility = newVis;
+    if (!globalThis.changes) globalThis.changes = {};
+    globalThis.changes.settingsVisibility = newVis;
   };
 
   const handleLabelEdit = (key, value) => {
     const newLabels = { ...labels, [key]: value };
     setLabels(newLabels);
-    if (!globals.changes) globals.changes = {};
-    globals.changes.settingsLabels = newLabels;
+    if (!globalThis.changes) globalThis.changes = {};
+    globalThis.changes.settingsLabels = newLabels;
   };
 
   const toggleSection = (key) =>
@@ -1761,7 +1757,7 @@ const SettingsSidebar = ({ config }) => {
             )}
             <button
               onClick={() => {
-                if (globals.IsMobileNow()) {
+                if (globalThis.IsMobileNow()) {
                   setOpenOnMobile(false);
                   setSidebarWidth(280);
                 }
