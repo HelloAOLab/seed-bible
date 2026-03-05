@@ -479,8 +479,8 @@ const LanguageComponent = (props: {
         onClick={() => setShow(!show)}
         style={{
           backgroundColor: show
-            ? "color-mix(in srgb, var(--tabSelection) 50%, transparent)"
-            : "var(--background)",
+            ? "color-mix(in srgb, var(--pageBookBackground) 50%, transparent)"
+            : "var(--inputBackground)",
           marginBottom: show ? "0px" : "10px",
         }}
       >
@@ -546,8 +546,8 @@ const LanguageComponent = (props: {
                   style={{
                     background:
                       selectedTranslation.id === value.id
-                        ? "color-mix(in srgb, var(--tabSelection) 50%, transparent)"
-                        : "var(--background)",
+                        ? "color-mix(in srgb, var(--pageBookBackground) 50%, transparent)"
+                        : "var(--inputBackground)",
                   }}
                   class="translation-option"
                 >

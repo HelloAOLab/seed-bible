@@ -220,7 +220,7 @@
   margin-left: 8px;
 }
 .copy-icon .material-symbols-outlined {
-  color: black !important;
+  color: black;
 }
 .sign-out-btn .material-symbols-outlined {
   color: #b90303 !important;
@@ -233,7 +233,7 @@
 .save-btn {
   width: 100%;
   background-color: var(--selectedSpaceColor);
-  color: white;
+  color: var(--primaryColor);
   border: none;
   padding: 16px;
   border-radius: 4px;

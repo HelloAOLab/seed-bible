@@ -16,7 +16,6 @@ body {
 }
 
 .coloredIcon,
-svg,
 .toolbar-button img {
   filter: var(--filter-mode);
 }
