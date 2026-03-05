@@ -13,7 +13,7 @@ if (!dimension) return;
 const animations = [];
 let delay = 0;
 
-data.forEach((info) => {
+data.forEach((info: any) => {
   const { key, value } = info;
   const bot = getBot(byTag("key", key));
   const hitbox = getBot(

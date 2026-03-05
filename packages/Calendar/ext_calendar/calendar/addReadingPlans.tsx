@@ -7,9 +7,9 @@ const addReadingPlans = ({
   setSelectedTypes,
   setReadings,
   parseDashedDateToValidDate,
-}) => {
+}: any) => {
   const playLists = selected.reduce(
-    (acc, item) => acc.concat({ list: item.list, playList: item.name }),
+    (acc: any, item) => acc.concat({ list: item.list, playList: item.name }),
     []
   );
 
@@ -22,10 +22,10 @@ const addReadingPlans = ({
 
   const newEvents = [];
 
-  playLists.forEach((item) => {
+  playLists.forEach((item: any) => {
     const playList = item.playList;
 
-    item.list.forEach((itm) => {
+    item.list.forEach((itm: any) => {
       if (itm.type === "date") {
         start = parseDashedDateToValidDate(itm.content);
       } else {
@@ -67,7 +67,7 @@ const addReadingPlans = ({
   globalThis.C_E.push(...newEvents);
 
   const uniqueEvents = newEvents.filter(
-    (item) =>
+    (item: any) =>
       !readings.some(
         (e) =>
           e.title === item.title &&
@@ -76,14 +76,14 @@ const addReadingPlans = ({
       )
   );
 
-  setEventInView((prev) => {
+  setEventInView((prev: any) => {
     const combined = [...prev, ...uniqueEvents];
     combined.sort((a, b) => new Date(a.start) - new Date(b.start));
     return combined;
   });
 
-  setAllEvents((prev) => [...prev, ...uniqueEvents]);
-  setSelectedTypes((prev) => ["reading", ...prev]);
+  setAllEvents((prev: any) => [...prev, ...uniqueEvents]);
+  setSelectedTypes((prev: any) => ["reading", ...prev]);
   setReadings((prev) => [...uniqueEvents, ...prev]);
 };
 return addReadingPlans;

@@ -27,7 +27,7 @@ export class LayoutBookData {
     this.parentDataIds = parentDataIds;
   }
 
-  AddChild(newChild) {
+  AddChild(newChild: any) {
     if (newChild instanceof LayoutChapterData) this.childrenData.push(newChild);
   }
 }

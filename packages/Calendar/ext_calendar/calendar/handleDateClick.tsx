@@ -109,7 +109,7 @@ async function handleDateClick({
       endTime,
       recurVal,
       isPlansTabActive,
-    }) => {
+    }: any) => {
       console.log(selectedDaysRef.current, "selectedDaysref");
       console.log(recurVal, "recurVal");
       if (isPlansTabActive) return;
@@ -212,7 +212,7 @@ async function handleDateClick({
 
       const startDate = stripTime(new Date(newEvent.start));
 
-      setAllEvents((prev) => [...prev, newEvent]);
+      setAllEvents((prev: any) => [...prev, newEvent]);
 
       if (startDate >= now) {
         setEventInView((prev) => {

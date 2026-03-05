@@ -4,7 +4,7 @@ if (layerIndex == 0) return 0;
 
 const slicedArray = thisBot.tags.booksList.slice(0, layerIndex);
 
-const offset = slicedArray.reduce((accumulator, layer) => {
+const offset = slicedArray.reduce((accumulator: any, layer) => {
   return accumulator + layer[0].height;
 }, 0);
 

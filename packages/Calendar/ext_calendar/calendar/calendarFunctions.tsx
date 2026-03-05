@@ -1,4 +1,4 @@
-function getDayDifference(startDateStr, endDateStr) {
+function getDayDifference(startDateStr: any, endDateStr) {
   const start = new Date(startDateStr);
   const end = new Date(endDateStr);
   start.setHours(0, 0, 0, 0);
@@ -8,15 +8,15 @@ function getDayDifference(startDateStr, endDateStr) {
   return diffDays;
 }
 
-function stripTime(date) {
+function stripTime(date: any) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-function dateOnly(d) {
+function dateOnly(d: any) {
   return `${d.getFullYear()},${d.getMonth()},${d.getDate()}`;
 }
 
-function getDayHeaderFormat(width, viewType) {
+function getDayHeaderFormat(width: any, viewType: any) {
   if (viewType.startsWith("timeGridDay")) {
     return { weekday: "long" };
   }
@@ -32,7 +32,7 @@ function getDayHeaderFormat(width, viewType) {
     return { weekday: "long" }; // Sunday, Monday
   }
 }
-function isSameDate(date1, date2) {
+function isSameDate(date1: any, date2: any) {
   const d1 = new Date(date1);
 
   let d2;
@@ -77,14 +77,14 @@ function isSameDate(date1, date2) {
   );
 }
 
-function updateCalendarHeader(calendar) {
+function updateCalendarHeader(calendar: any) {
   const width = calendar.el.offsetWidth;
   const viewType = calendar.view.type;
   const format = getDayHeaderFormat(width, viewType);
   calendar.setOption("dayHeaderFormat", format);
 }
 
-const dayNameToNumber = (dayName) => {
+const dayNameToNumber = (dayName: any) => {
   const days = {
     Monday: 1,
     Tuesday: 2,
@@ -97,7 +97,7 @@ const dayNameToNumber = (dayName) => {
   return days[dayName] || null;
 };
 
-function parseDashedDateToValidDate(dateStr) {
+function parseDashedDateToValidDate(dateStr: any) {
   const parts = dateStr.split("-").map((p) => p.trim());
   if (parts.length !== 3) return null;
 
@@ -136,13 +136,13 @@ const getMaxColumnsFromContainer = () => {
   if (width <= 1100) return 3;
   return 4;
 };
-function formatWeekdayDay(date) {
+function formatWeekdayDay(date: any) {
   return new Intl.DateTimeFormat("en-GB", {
     weekday: "long",
     day: "numeric",
   }).format(date);
 }
-function loadEventsFromLocalStorage(calendarApi) {
+function loadEventsFromLocalStorage(calendarApi: any) {
   if (!calendarApi.current) return;
 
   const events = JSON.parse(localStorage.getItem("allEvents")) || [];

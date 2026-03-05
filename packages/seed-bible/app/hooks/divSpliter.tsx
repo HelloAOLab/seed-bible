@@ -11,7 +11,7 @@ export const useDivSpliter = ({
   containerHeight = 600,
   minSize = 100,
   onResize,
-}) => {
+}: any) => {
   const [apps, setApps] = useState<(prevApps: never[]) => never[]>(components);
   const count = apps.length;
   globalThis.SetApps = setApps;
@@ -70,7 +70,7 @@ export const useDivSpliter = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleVerticalMouseDown = (e) => {
+  const handleVerticalMouseDown = (e: any) => {
     verticalDragRef.current = {
       isDragging: true,
       startX: e.clientX,
@@ -86,7 +86,7 @@ export const useDivSpliter = ({
     };
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: any) => {
     if (verticalDragRef.current.isDragging) {
       const deltaX = e.clientX - verticalDragRef.current.startX;
       let newLeftWidth = verticalDragRef.current.startLeftWidth + deltaX;
@@ -112,7 +112,7 @@ export const useDivSpliter = ({
     horizontalDragRef.current.isDragging = false;
   };
 
-  const updateContainerSize = (newWidth, newHeight) => {
+  const updateContainerSize = (newWidth: any, newHeight) => {
     if (
       newWidth === prevContainerSize.current.width &&
       newHeight === prevContainerSize.current.height
@@ -139,7 +139,7 @@ export const useDivSpliter = ({
     }
   };
 
-  const addApplication = useCallback((newApp) => {
+  const addApplication = useCallback((newApp: any) => {
     setApps((prevApps) => {
       // For panel targets with 3+ apps, replace the third panel
       if (newApp.to === "panel" && prevApps.length > 2) {
@@ -154,11 +154,11 @@ export const useDivSpliter = ({
     setApps([]);
   };
 
-  const removeApplication = (id) => {
-    setApps((prevApps) => prevApps.filter((e) => e.id !== id));
+  const removeApplication = (id: any) => {
+    setApps((prevApps: any) => prevApps.filter((e) => e.id !== id));
   };
 
-  const removeApplicationByID = (oldAppID) => {
+  const removeApplicationByID = (oldAppID: any) => {
     setApps((prevApps) => {
       const old = [...prevApps];
       const index = old.findIndex((ele) => ele.id === oldAppID);
@@ -181,7 +181,7 @@ export const useDivSpliter = ({
       }
     }
   };
-  const handleTouchMove = (e) => {
+  const handleTouchMove = (e: any) => {
     const touch = e.touches[0];
     if (verticalDragRef.current.isDragging) {
       const deltaX = touch.clientX - verticalDragRef.current.startX;
@@ -207,8 +207,8 @@ export const useDivSpliter = ({
     verticalDragRef.current.isDragging = false;
     horizontalDragRef.current.isDragging = false;
   };
-  const replaceApplication = (oldAppID, newApp) => {
-    setApps((prevApps) => {
+  const replaceApplication = (oldAppID: any, newApp: any) => {
+    setApps((prevApps: any) => {
       const updated = [...prevApps];
       const index =
         typeof oldAppID === "number" && 5 < oldAppID > 0
@@ -221,8 +221,8 @@ export const useDivSpliter = ({
     });
   };
   // Additions ------>
-  const updateApplication = (id, changes) => {
-    setApps((prev) =>
+  const updateApplication = (id: any, changes: any) => {
+    setApps((prev: any) =>
       prev.map((app) => (app.id === id ? { ...app, ...changes } : app))
     );
   };
@@ -290,7 +290,7 @@ export const SplitApp = ({
     (function installScrollerScrollIndicator() {
       const timers = new WeakMap();
 
-      const onScrollCapture = (e) => {
+      const onScrollCapture = (e: any) => {
         const el = e.target;
         if (!(el instanceof Element)) return;
         if (!el.classList?.contains("scroller")) return;
@@ -332,7 +332,7 @@ export const SplitApp = ({
       .map(() => ({ isDragging: false, startX: 0, startWidth: 0 }))
   );
 
-  const handleRowMouseDown = (index, e) => {
+  const handleRowMouseDown = (index: any, e: any) => {
     dragRefs.current[index] = {
       isDragging: true,
       startX: e.clientX,
@@ -388,14 +388,14 @@ export const SplitApp = ({
     }
   }, [isOverlap]);
 
-  const handleOverlapDragDown = (e) => {
+  const handleOverlapDragDown = (e: any) => {
     e.preventDefault();
     overlapDragRef.current = {
       isDragging: true,
       startX: e.clientX,
       startWidth: overlapWidth,
     };
-    const onMove = (ev) => {
+    const onMove = (ev: any) => {
       if (!overlapDragRef.current.isDragging) return;
       const delta = overlapDragRef.current.startX - ev.clientX;
       let newWidth = overlapDragRef.current.startWidth + delta;
@@ -411,7 +411,7 @@ export const SplitApp = ({
     document.addEventListener("mouseup", onUp);
   };
 
-  const handleOverlapTouchDown = (e) => {
+  const handleOverlapTouchDown = (e: any) => {
     const touch = e.touches[0];
     overlapDragRef.current = {
       isDragging: true,
@@ -515,7 +515,7 @@ export const SplitApp = ({
               overflow: "hidden",
             }}
           >
-            {overlayApps.map(({ App, id }, index) => (
+            {overlayApps.map(({ App, id }, index: any) => (
               <div
                 className="scroller"
                 key={id}
@@ -549,7 +549,7 @@ export const SplitApp = ({
         onMouseMove={handleRowMouseMove}
         onMouseUp={handleRowMouseUp}
       >
-        {apps.map(({ App, minWidth }, index) => (
+        {apps.map(({ App, minWidth }, index: any) => (
           <>
             <div
               className="scroller"
@@ -853,7 +853,7 @@ export const SplitApp = ({
           borderRadius: "12px",
         }}
       >
-        {apps.map(({ App, id }, index) => (
+        {apps.map(({ App, id }, index: any) => (
           <div style={{ height: "100%", width: "100%" }} key={id}>
             {App}
           </div>
@@ -867,7 +867,7 @@ export const SplitApp = ({
 export function installGlobalScrollerIndicator({
   delay = 1000,
   root = document,
-} = {}) {
+}: any = {}) {
   // one timeout per element, without preventing GC
   const timers = new WeakMap();
 
@@ -901,7 +901,7 @@ export function installGlobalScrollerIndicator({
   return () => {
     root.removeEventListener("scroll", onScrollCapture, { capture: true });
     // best-effort clear
-    timers.forEach((id, el) => clearTimeout(id));
+    timers.forEach((id: any, el: any) => clearTimeout(id));
   };
 }
 

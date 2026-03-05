@@ -14,7 +14,7 @@ export function ImportSpaceModal() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: any) => {
     e.preventDefault();
     setIsDragging(true);
   };
@@ -23,7 +23,7 @@ export function ImportSpaceModal() {
     setIsDragging(false);
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: any) => {
     e.preventDefault();
     setIsDragging(false);
     // Handle file drop logic here
@@ -249,7 +249,7 @@ export function ImportSpaceModal() {
   );
 }
 
-export function RenameSpaceModal({ updateSpace, activeSpace }) {
+export function RenameSpaceModal({ updateSpace, activeSpace }: any) {
   const [spaceName, setSpaceName] = useState("My Space");
   const [selectedIcon, setSelectedIcon] = useState({
     id: "star",
@@ -718,7 +718,7 @@ export function CreateNewSpaceModal({
     },
   };
 
-  const handleIconSelect = (icon) => {
+  const handleIconSelect = (icon: any) => {
     setSelectedIcon(icon);
     setShowIconPicker(false);
   };
@@ -848,7 +848,7 @@ export function CreateNewSpaceModal({
 
 export function SpaceSettingsForm() {
   const { updateSpace, activeSpace, spaces } = useTabsContext();
-  const CurrentSpace = spaces.find((e) => e.id === activeSpace);
+  const CurrentSpace = spaces.find((e: any) => e.id === activeSpace);
   const [spaceName, setSpaceName] = useState(CurrentSpace.name);
   const [selectedIcon, setSelectedIcon] = useState(
     CurrentSpace?.iconIndex || 0
@@ -940,7 +940,7 @@ export function SpaceSettingsForm() {
   );
 }
 
-export const SpaceSelector = ({ updateSpace, activeSpace, spaces }) => {
+export const SpaceSelector = ({ updateSpace, activeSpace, spaces }: any) => {
   // const {   } = useTabsContext();
   const CurrentSpace = spaces.find((e) => e.id === activeSpace);
   const [selectedIcon, setSelectedIcon] = useState(

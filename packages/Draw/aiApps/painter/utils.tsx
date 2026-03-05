@@ -1,8 +1,8 @@
 export const handleStorageChange = (
-  e,
-  isSyncing,
-  mergeDrawingData,
-  setDrawingData,
+  e: any,
+  isSyncing: any,
+  mergeDrawingData: any,
+  setDrawingData: any,
   redrawCanvas,
   drawingData
 ) => {

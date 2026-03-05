@@ -330,7 +330,7 @@ const App = () => {
   const [value, setValue] = useState(masks.brushSize || brushSize);
   const sliderRef = useRef<HTMLDivElement | null>(null);
 
-  const handleInput = (e) => {
+  const handleInput = (e: any) => {
     setValue(parseInt(e.target.value));
   };
 

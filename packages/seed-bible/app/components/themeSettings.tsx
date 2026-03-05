@@ -1079,7 +1079,7 @@ export const defaultTheme = presetThemes[0]?.colors ?? builtinDefaultTheme;
 export const READY_THEMES = presetThemes;
 
 // ----------- DEBOUNCE (no CDN needed) -----------
-function debounce(fn, delay = 250) {
+function debounce(fn: any, delay = 250) {
   let timeout;
   return (...args) => {
     clearTimeout(timeout);
@@ -1099,15 +1099,15 @@ class Color {
   r: any;
   set: any;
 
-  constructor(r, g, b) {
+  constructor(r: any, g: any, b: any) {
     this.set(r, g, b);
   }
-  set(r, g, b) {
+  set(r, g, b: any) {
     this.r = this.clamp(r);
     this.g = this.clamp(g);
     this.b = this.clamp(b);
   }
-  clamp(v) {
+  clamp(v: any) {
     return Math.max(0, Math.min(255, v));
   }
   multiply(m) {
@@ -1221,7 +1221,7 @@ class Solver {
   targetHSL: any;
   target: any;
 
-  constructor(target) {
+  constructor(target: any) {
     this.target = target;
     this.targetHSL = target.hsl();
     this.tmp = new Color(0, 0, 0);
@@ -1242,7 +1242,7 @@ class Solver {
     return this.spsa(A, a, c, initial, 30); // ← was 150
   }
 
-  solveNarrow(wide) {
+  solveNarrow(wide: any) {
     const A = wide.loss,
       c = 2;
     const A1 = A + 1;
@@ -1250,7 +1250,7 @@ class Solver {
     return this.spsa(A, a, c, wide.values, 15); // ← was 80
   }
 
-  spsa(A, a, c, values, iters) {
+  spsa(A: any, a: any, c: any, values: any, iters: any) {
     const alpha = 1,
       gamma = 0.166666;
     let best = values.slice(),
@@ -1288,13 +1288,13 @@ class Solver {
     return { values: best, loss: bestLoss };
   }
 
-  fix(v, idx) {
+  fix(v: any, idx: any) {
     const max = [100, 100, 7500, 100, 200, 200][idx];
     if (idx === 3) return ((v % max) + max) % max;
     return Math.max(0, Math.min(max, v));
   }
 
-  loss(filters) {
+  loss(filters: any) {
     const c = this.tmp;
     c.set(0, 0, 0);
     c.invert(filters[0] / 100);
@@ -1315,7 +1315,7 @@ class Solver {
     );
   }
 
-  css(f) {
+  css(f: any) {
     return `invert(${Math.round(f[0])}%) sepia(${Math.round(f[1])}%)
             saturate(${Math.round(f[2])}%) hue-rotate(${Math.round(f[3] * 3.6)}deg)
             brightness(${Math.round(f[4])}%) contrast(${Math.round(f[5])}%);`;
@@ -1325,19 +1325,19 @@ class Solver {
 // ======================
 //   HEX → FILTER FUNCTION
 // ======================
-function hexToColor(hex) {
+function hexToColor(hex: any) {
   hex = hex.replace(/^#/, "");
   if (hex.length === 3)
     hex = hex
       .split("")
-      .map((x) => x + x)
+      .map((x: any) => x + x)
       .join("");
 
   const num = parseInt(hex, 16);
   return new Color((num >> 16) & 255, (num >> 8) & 255, num & 255);
 }
 
-function getColorFilterCached(hex) {
+function getColorFilterCached(hex: any) {
   if (filterCache.has(hex)) return filterCache.get(hex);
 
   const color = hexToColor(hex);
@@ -1347,7 +1347,7 @@ function getColorFilterCached(hex) {
   filterCache.set(hex, css);
   return css;
 }
-const debouncedSolve = debounce((hex, callback) => {
+const debouncedSolve = debounce((hex, callback: any) => {
   callback(getColorFilterCached(hex));
 }, 250);
 
@@ -1589,7 +1589,7 @@ const TabSectionContent = ({
   showTabIcons,
   onToggleTabIcons,
   t,
-}) => {
+}: any) => {
   const [activeTabFontOpen, setActiveTabFontOpen] = useState(false);
   const [activeTabSizeOpen, setActiveTabSizeOpen] = useState(false);
   const [inactiveTabFontOpen, setInactiveTabFontOpen] = useState(false);
@@ -1679,7 +1679,9 @@ const TabSectionContent = ({
             </span>
             <SmallColorPicker
               value={colors.activeTabFill || "var(--spaceSelection)"}
-              onChange={(e) => onColorChange("activeTabFill", e.target.value)}
+              onChange={(e: any) =>
+                onColorChange("activeTabFill", e.target.value)
+              }
             />
           </div>
         </div>
@@ -1703,7 +1705,7 @@ const TabSectionContent = ({
         </span>
         <SmallColorPicker
           value={colors.activeTabText || "#333333"}
-          onChange={(e) => onColorChange("activeTabText", e.target.value)}
+          onChange={(e: any) => onColorChange("activeTabText", e.target.value)}
         />
       </div>
 
@@ -1806,7 +1808,9 @@ const TabSectionContent = ({
         </span>
         <SmallColorPicker
           value={colors.inactiveTabText || "#999999"}
-          onChange={(e) => onColorChange("inactiveTabText", e.target.value)}
+          onChange={(e: any) =>
+            onColorChange("inactiveTabText", e.target.value)
+          }
         />
       </div>
 
@@ -1985,7 +1989,7 @@ const ButtonsSectionContent = ({
   buttonSettings,
   onButtonSettingsChange,
   t,
-}) => {
+}: any) => {
   const [primaryFontOpen, setPrimaryFontOpen] = useState(false);
   const [primarySizeOpen, setPrimarySizeOpen] = useState(false);
   const [secondaryFontOpen, setSecondaryFontOpen] = useState(false);
@@ -2078,7 +2082,7 @@ const ButtonsSectionContent = ({
             </span>
             <SmallColorPicker
               value={colors.primaryButtonFill || "var(--spaceSelection)"}
-              onChange={(e) =>
+              onChange={(e: any) =>
                 onColorChange("primaryButtonFill", e.target.value)
               }
             />
@@ -2104,7 +2108,9 @@ const ButtonsSectionContent = ({
         </span>
         <SmallColorPicker
           value={colors.primaryButtonColor || "#333333"}
-          onChange={(e) => onColorChange("primaryButtonColor", e.target.value)}
+          onChange={(e: any) =>
+            onColorChange("primaryButtonColor", e.target.value)
+          }
         />
       </div>
 
@@ -2218,7 +2224,7 @@ const ButtonsSectionContent = ({
             </span>
             <SmallColorPicker
               value={colors.secondaryButtonBorder || "#C4B5FD"}
-              onChange={(e) =>
+              onChange={(e: any) =>
                 onColorChange("secondaryButtonBorder", e.target.value)
               }
             />
@@ -2233,7 +2239,7 @@ const ButtonsSectionContent = ({
             </span>
             <SmallColorPicker
               value={colors.secondaryButtonFill || "var(--spaceSelection)"}
-              onChange={(e) =>
+              onChange={(e: any) =>
                 onColorChange("secondaryButtonFill", e.target.value)
               }
             />
@@ -2259,7 +2265,7 @@ const ButtonsSectionContent = ({
         </span>
         <SmallColorPicker
           value={colors.secondaryButtonColor || "#333333"}
-          onChange={(e) =>
+          onChange={(e: any) =>
             onColorChange("secondaryButtonColor", e.target.value)
           }
         />
@@ -2406,7 +2412,9 @@ const ButtonsSectionContent = ({
         </span>
         <SmallColorPicker
           value={colors.tertiaryButtonColor || "#333333"}
-          onChange={(e) => onColorChange("tertiaryButtonColor", e.target.value)}
+          onChange={(e: any) =>
+            onColorChange("tertiaryButtonColor", e.target.value)
+          }
         />
       </div>
 
@@ -2505,7 +2513,7 @@ const ScriptureTextSectionContent = ({
   showVerseNumbers,
   onToggleVerseNumbers,
   t,
-}) => {
+}: any) => {
   const [bookHeadingFontOpen, setBookHeadingFontOpen] = useState(false);
   const [bookHeadingSizeOpen, setBookHeadingSizeOpen] = useState(false);
   const [chapterHeadingFontOpen, setChapterHeadingFontOpen] = useState(false);
@@ -2677,7 +2685,9 @@ const ScriptureTextSectionContent = ({
         </span>
         <SmallColorPicker
           value={colors.chapterHeadingColor || "#333333"}
-          onChange={(e) => onColorChange("chapterHeadingColor", e.target.value)}
+          onChange={(e: any) =>
+            onColorChange("chapterHeadingColor", e.target.value)
+          }
         />
       </div>
 
@@ -2780,7 +2790,7 @@ const ScriptureTextSectionContent = ({
         </span>
         <SmallColorPicker
           value={colors.verseTextColor || "#333333"}
-          onChange={(e) => onColorChange("verseTextColor", e.target.value)}
+          onChange={(e: any) => onColorChange("verseTextColor", e.target.value)}
         />
       </div>
 
@@ -2912,7 +2922,9 @@ const ScriptureTextSectionContent = ({
           </div>
           <SmallColorPicker
             value={colors.verseNumberColor || "#333333"}
-            onChange={(e) => onColorChange("verseNumberColor", e.target.value)}
+            onChange={(e: any) =>
+              onColorChange("verseNumberColor", e.target.value)
+            }
           />
         </div>
       </div>
@@ -3012,7 +3024,7 @@ const SideMenuSectionContent = ({
   profileAvatarMode,
   onToggleProfileAvatarMode,
   t,
-}) => {
+}: any) => {
   // Dropdown states for each row
   const [heading1FontOpen, setHeading1FontOpen] = useState(false);
   const [heading1SizeOpen, setHeading1SizeOpen] = useState(false);
@@ -3071,14 +3083,14 @@ const SideMenuSectionContent = ({
 
   // Reusable row with font dropdown, size dropdown, and color picker
   const renderRowWithDropdowns = (
-    label,
-    colorField,
-    fontField,
-    sizeField,
-    fontOpen,
-    setFontOpen,
-    sizeOpen,
-    setSizeOpen
+    label: any,
+    colorField: any,
+    fontField: any,
+    sizeField: any,
+    fontOpen: any,
+    setFontOpen: any,
+    sizeOpen: any,
+    setSizeOpen: any
   ) => (
     <>
       <div
@@ -3265,7 +3277,9 @@ const SideMenuSectionContent = ({
         </span>
         <SmallColorPicker
           value={colors.sectionBackground || "#E65100"}
-          onChange={(e) => onColorChange("sectionBackground", e.target.value)}
+          onChange={(e: any) =>
+            onColorChange("sectionBackground", e.target.value)
+          }
         />
       </div>
 
@@ -3324,7 +3338,7 @@ const SideMenuSectionContent = ({
             </div>
             {iconsSizeOpen && (
               <div style={dropdownMenuStyle}>
-                {TAB_FONT_SIZES.map((size) => (
+                {TAB_FONT_SIZES.map((size: any) => (
                   <div
                     key={size}
                     style={{
@@ -3372,7 +3386,9 @@ const SideMenuSectionContent = ({
         </span>
         <SmallColorPicker
           value={colors.selectedSpaceColor || "#E65100"}
-          onChange={(e) => onColorChange("selectedSpaceColor", e.target.value)}
+          onChange={(e: any) =>
+            onColorChange("selectedSpaceColor", e.target.value)
+          }
         />
       </div>
 
@@ -3394,7 +3410,7 @@ const SideMenuSectionContent = ({
         </span>
         <SmallColorPicker
           value={colors.unselectedSpaceColor || "#CCCCCC"}
-          onChange={(e) =>
+          onChange={(e: any) =>
             onColorChange("unselectedSpaceColor", e.target.value)
           }
         />
@@ -3418,7 +3434,9 @@ const SideMenuSectionContent = ({
         </span>
         <SmallColorPicker
           value={colors.addButtonBackground || "#3B82F6"}
-          onChange={(e) => onColorChange("addButtonBackground", e.target.value)}
+          onChange={(e: any) =>
+            onColorChange("addButtonBackground", e.target.value)
+          }
         />
       </div>
 
@@ -3440,7 +3458,7 @@ const SideMenuSectionContent = ({
         </span>
         <SmallColorPicker
           value={colors.addButtonIcon || "#FFFFFF"}
-          onChange={(e) => onColorChange("addButtonIcon", e.target.value)}
+          onChange={(e: any) => onColorChange("addButtonIcon", e.target.value)}
         />
       </div>
 
@@ -3523,7 +3541,7 @@ const SelectionUIToolbarSectionContent = ({
   selectionUISettings,
   onSelectionUISettingsChange,
   t,
-}) => {
+}: any) => {
   const [toolbarIconsSizeOpen, setToolbarIconsSizeOpen] = useState(false);
   const [selectionIconsSizeOpen, setSelectionIconsSizeOpen] = useState(false);
 
@@ -3627,7 +3645,9 @@ const SelectionUIToolbarSectionContent = ({
             </span>
             <SmallColorPicker
               value={colors.toolbarFill || "#FFFFFF"}
-              onChange={(e) => onColorChange("toolbarFill", e.target.value)}
+              onChange={(e: any) =>
+                onColorChange("toolbarFill", e.target.value)
+              }
             />
           </div>
         </div>
@@ -3701,7 +3721,9 @@ const SelectionUIToolbarSectionContent = ({
           </div>
           <SmallColorPicker
             value={colors.toolbarIconsColor || "#333333"}
-            onChange={(e) => onColorChange("toolbarIconsColor", e.target.value)}
+            onChange={(e: any) =>
+              onColorChange("toolbarIconsColor", e.target.value)
+            }
           />
         </div>
       </div>
@@ -3743,7 +3765,7 @@ const SelectionUIToolbarSectionContent = ({
             </span>
             <SmallColorPicker
               value={colors.selectionUIBorder || "#E1E3EA"}
-              onChange={(e) =>
+              onChange={(e: any) =>
                 onColorChange("selectionUIBorder", e.target.value)
               }
             />
@@ -3767,7 +3789,9 @@ const SelectionUIToolbarSectionContent = ({
             </span>
             <SmallColorPicker
               value={colors.selectionUIFill || "#FFFFFF"}
-              onChange={(e) => onColorChange("selectionUIFill", e.target.value)}
+              onChange={(e: any) =>
+                onColorChange("selectionUIFill", e.target.value)
+              }
             />
           </div>
         </div>
@@ -3841,7 +3865,7 @@ const SelectionUIToolbarSectionContent = ({
           </div>
           <SmallColorPicker
             value={colors.selectionIconsColor || "#333333"}
-            onChange={(e) =>
+            onChange={(e: any) =>
               onColorChange("selectionIconsColor", e.target.value)
             }
           />
@@ -3860,7 +3884,7 @@ const InputFieldsSectionContent = ({
   inputFieldsSettings,
   onInputFieldsSettingsChange,
   t,
-}) => {
+}: any) => {
   const [titleFontOpen, setTitleFontOpen] = useState(false);
   const [titleSizeOpen, setTitleSizeOpen] = useState(false);
   const [placeholderFontOpen, setPlaceholderFontOpen] = useState(false);
@@ -4031,7 +4055,7 @@ const InputFieldsSectionContent = ({
         </span>
         <SmallColorPicker
           value={colors.inputPlaceholderColor || "#333333"}
-          onChange={(e) =>
+          onChange={(e: any) =>
             onColorChange("inputPlaceholderColor", e.target.value)
           }
         />
@@ -4156,7 +4180,7 @@ const InputFieldsSectionContent = ({
             </span>
             <SmallColorPicker
               value={colors.inputActiveBorder || "#E1E3EA"}
-              onChange={(e) =>
+              onChange={(e: any) =>
                 onColorChange("inputActiveBorder", e.target.value)
               }
             />
@@ -4180,7 +4204,9 @@ const InputFieldsSectionContent = ({
             </span>
             <SmallColorPicker
               value={colors.inputActiveFill || "#FFFFFF"}
-              onChange={(e) => onColorChange("inputActiveFill", e.target.value)}
+              onChange={(e: any) =>
+                onColorChange("inputActiveFill", e.target.value)
+              }
             />
           </div>
         </div>
@@ -4223,7 +4249,7 @@ const InputFieldsSectionContent = ({
             </span>
             <SmallColorPicker
               value={colors.inputInactiveBorder || "#E1E3EA"}
-              onChange={(e) =>
+              onChange={(e: any) =>
                 onColorChange("inputInactiveBorder", e.target.value)
               }
             />
@@ -4247,7 +4273,7 @@ const InputFieldsSectionContent = ({
             </span>
             <SmallColorPicker
               value={colors.inputInactiveFill || "#FFFFFF"}
-              onChange={(e) =>
+              onChange={(e: any) =>
                 onColorChange("inputInactiveFill", e.target.value)
               }
             />
@@ -4605,7 +4631,7 @@ const BibleArrangementsSectionContent = ({
           </span>
           <SmallColorPicker
             value={colors[borderField] || "#E1E3EA"}
-            onChange={(e) => onColorChange(borderField, e.target.value)}
+            onChange={(e: any) => onColorChange(borderField, e.target.value)}
           />
           <span
             style={{
@@ -4618,7 +4644,7 @@ const BibleArrangementsSectionContent = ({
           </span>
           <SmallColorPicker
             value={colors[fillField] || "#E07B4C"}
-            onChange={(e) => onColorChange(fillField, e.target.value)}
+            onChange={(e: any) => onColorChange(fillField, e.target.value)}
           />
         </div>
       </div>
@@ -4729,7 +4755,7 @@ const BibleArrangementsSectionContent = ({
         </span>
         <SmallColorPicker
           value={colors[colorField] || "#4A4A4A"}
-          onChange={(e) => onColorChange(colorField, e.target.value)}
+          onChange={(e: any) => onColorChange(colorField, e.target.value)}
         />
       </div>
       <div style={{ display: "flex", gap: 8 }}>
@@ -4843,7 +4869,7 @@ const BibleArrangementsSectionContent = ({
           </span>
           <SmallColorPicker
             value={colors[borderField] || "#E1E3EA"}
-            onChange={(e) => onColorChange(borderField, e.target.value)}
+            onChange={(e: any) => onColorChange(borderField, e.target.value)}
           />
           <span
             style={{
@@ -5091,7 +5117,7 @@ const ThemeSettings = () => {
     inactiveTabSize: "12",
   });
 
-  const handleTabSettingsChange = (field, value) => {
+  const handleTabSettingsChange = (field: any, value: any) => {
     setTabSettings((prev) => ({ ...prev, [field]: value }));
     const updatedSettings = { ...tabSettings, [field]: value };
     updateSpace(activeSpace, { tabSettings: updatedSettings });
@@ -5107,7 +5133,7 @@ const ThemeSettings = () => {
     tertiarySize: "12",
   });
 
-  const handleButtonSettingsChange = (field, value) => {
+  const handleButtonSettingsChange = (field: any, value: any) => {
     setButtonSettings((prev) => ({ ...prev, [field]: value }));
     const updatedSettings = { ...buttonSettings, [field]: value };
     updateSpace(activeSpace, { buttonSettings: updatedSettings });
@@ -5152,7 +5178,7 @@ const ThemeSettings = () => {
 
   const [profileAvatarMode, setProfileAvatarMode] = useState("icon");
 
-  const handleSideMenuSettingsChange = (field, value) => {
+  const handleSideMenuSettingsChange = (field: any, value: any) => {
     setSideMenuSettings((prev) => ({ ...prev, [field]: value }));
     const updatedSettings = { ...sideMenuSettings, [field]: value };
     updateSpace(activeSpace, { sideMenuSettings: updatedSettings });
@@ -5164,7 +5190,7 @@ const ThemeSettings = () => {
     selectionIconsSize: "12",
   });
 
-  const handleSelectionUISettingsChange = (field, value) => {
+  const handleSelectionUISettingsChange = (field: any, value: any) => {
     setSelectionUISettings((prev) => ({ ...prev, [field]: value }));
     const updatedSettings = { ...selectionUISettings, [field]: value };
     updateSpace(activeSpace, { selectionUISettings: updatedSettings });
@@ -5178,7 +5204,7 @@ const ThemeSettings = () => {
     placeholderSize: "12",
   });
 
-  const handleInputFieldsSettingsChange = (field, value) => {
+  const handleInputFieldsSettingsChange = (field: any, value: any) => {
     setInputFieldsSettings((prev) => ({ ...prev, [field]: value }));
     const updatedSettings = { ...inputFieldsSettings, [field]: value };
     updateSpace(activeSpace, { inputFieldsSettings: updatedSettings });
@@ -5242,12 +5268,12 @@ const ThemeSettings = () => {
   const colors =
     colorsMap?.[activeSpace] || themeColors?.[activeSpace] || defaultTheme;
 
-  const handleColorChange = (field, newColor) => {
+  const handleColorChange = (field: any, newColor: any) => {
     if (field === "toolbarBackground") {
       globalThis.SetToolbarBackground?.(newColor);
     }
 
-    debouncedSolve(newColor, (filter) => {
+    debouncedSolve(newColor, (filter: any) => {
       const updatedColors = {
         ...colors,
         [field]: newColor,
@@ -5319,7 +5345,7 @@ const ThemeSettings = () => {
   };
 
   const toggleSection = (sectionKey: keyof typeof expandedSections) => {
-    setExpandedSections((prev) => ({
+    setExpandedSections((prev: any) => ({
       ...prev,
       [sectionKey]: !prev[sectionKey],
     }));
@@ -5419,25 +5445,25 @@ const ThemeSettings = () => {
               label={t("primary")}
               sublabel={t("primary")}
               color={colors.primaryColor || defaultTheme.primaryColor}
-              onChange={(e) => handleMainColorChange("primaryColor", e)}
+              onChange={(e: any) => handleMainColorChange("primaryColor", e)}
             />
             <MainColorPicker
               label={t("secondary")}
               sublabel={t("secondary")}
               color={colors.secondaryColor || defaultTheme.secondaryColor}
-              onChange={(e) => handleMainColorChange("secondaryColor", e)}
+              onChange={(e: any) => handleMainColorChange("secondaryColor", e)}
             />
             <MainColorPicker
               label={t("tertiary")}
               sublabel={t("tertiary")}
               color={colors.tertiaryColor || defaultTheme.tertiaryColor}
-              onChange={(e) => handleMainColorChange("tertiaryColor", e)}
+              onChange={(e: any) => handleMainColorChange("tertiaryColor", e)}
             />
           </div>
         </div>
       </CollapsibleSection>
 
-      {Object.entries(ADVANCED_SETTINGS_SECTIONS).map(([key, section]) => (
+      {Object.entries(ADVANCED_SETTINGS_SECTIONS).map(([key, section]: any) => (
         <CollapsibleSection
           key={key}
           title={t(section.labelKey)}
@@ -5531,7 +5557,9 @@ const ThemeSettings = () => {
                 key={field.field}
                 label={t(field.labelKey)}
                 value={colors[field.field]}
-                onChange={(e) => handleColorChange(field.field, e.target.value)}
+                onChange={(e: any) =>
+                  handleColorChange(field.field, e.target.value)
+                }
               />
             ))
           )}
@@ -5672,7 +5700,12 @@ const SURPRISE_COMBINATIONS = [
   },
 ];
 
-function buildTextConfigUpdate(section, fontFamily, fontSize, currentConfig) {
+function buildTextConfigUpdate(
+  section: any,
+  fontFamily: any,
+  fontSize: any,
+  currentConfig: any
+) {
   if (!currentConfig) {
     console.error("currentConfig is required for buildTextConfigUpdate");
     return;
@@ -5702,8 +5735,8 @@ function buildTextConfigUpdate(section, fontFamily, fontSize, currentConfig) {
     },
   };
 }
-export function exportTextConfigToCSS(textConfig) {
-  const toCSSVarName = (section, key) => `--text-${section}-${key}`;
+export function exportTextConfigToCSS(textConfig: any) {
+  const toCSSVarName = (section, key: any) => `--text-${section}-${key}`;
   const cssVars = [];
 
   for (const [section, config] of Object.entries(textConfig)) {
@@ -5860,7 +5893,7 @@ const SettingsUI = () => {
     colorsMap?.[activeSpace] || themeColors?.[activeSpace] || defaultTheme;
 
   const labelColor = colors?.text1 || "#606060";
-  const handleColorChange = (field, e) => {
+  const handleColorChange = (field: any, e: any) => {
     const newColor = e.target.value;
     setChagesSaved(false);
 
@@ -5868,14 +5901,14 @@ const SettingsUI = () => {
       globalThis.SetToolbarBackground?.(newColor);
     }
 
-    debouncedSolve(newColor, (filter) => {
+    debouncedSolve(newColor, (filter: any) => {
       const updatedColors = {
         ...colors,
         [field]: newColor,
         ["filter-mode"]: filter,
       };
 
-      setColorsMap((prev) => ({ ...prev, [activeSpace]: updatedColors }));
+      setColorsMap((prev: any) => ({ ...prev, [activeSpace]: updatedColors }));
       setThemeColors((prev) => ({ ...prev, [activeSpace]: updatedColors }));
       updateSpace(activeSpace, { themeColors: updatedColors });
     });
@@ -5894,7 +5927,7 @@ const SettingsUI = () => {
   // ————————————————————————————————————————————————————————————
   // Apply Ready Theme
   // ————————————————————————————————————————————————————————————
-  const applyReadyTheme = (themeColors) => {
+  const applyReadyTheme = (themeColors: any) => {
     setChagesSaved(false);
 
     // Apply toolbar background side-effect if needed
@@ -5908,7 +5941,7 @@ const SettingsUI = () => {
     }
     os.log("computed filter for icon color filterMode", filterMode);
     // Update local map
-    setColorsMap((prev) => ({
+    setColorsMap((prev: any) => ({
       ...prev,
       [activeSpace]: filterMode
         ? { ...themeColors, "filter-mode": filterMode }
@@ -5977,14 +6010,14 @@ const SettingsUI = () => {
     }
   }, [activeSpace, currentSpace]);
 
-  const handleThemeSelect = (index) => {
+  const handleThemeSelect = (index: any) => {
     setSelectedTheme(index);
     applyReadyTheme(presetThemes[index]?.colors);
     setChagesSaved(true);
     globalThis.CurrentColors = presetThemes[index]?.colors || colors;
   };
 
-  const applyVerseFont = (fontFamily) => {
+  const applyVerseFont = (fontFamily: any) => {
     const updateObj = buildTextConfigUpdate(
       "verse",
       fontFamily,
@@ -5994,7 +6027,7 @@ const SettingsUI = () => {
 
     updateSpace(activeSpace, updateObj);
   };
-  const applyVerseFontSize = (fontSize) => {
+  const applyVerseFontSize = (fontSize: any) => {
     const updateObj = buildTextConfigUpdate(
       "verse",
       FONT_OPTIONS[selectedFont].value,
@@ -6032,7 +6065,7 @@ const SettingsUI = () => {
     }
   };
 
-  const applyVerseLineHeight = (lineHeight) => {
+  const applyVerseLineHeight = (lineHeight: any) => {
     const updateObj = buildTextConfigUpdate(
       "verse",
       FONT_OPTIONS[selectedFont].value, // keep current font
@@ -6080,7 +6113,7 @@ const SettingsUI = () => {
     flexWrap: "wrap",
   };
 
-  const cardStyle = (isSelected) => ({
+  const cardStyle = (isSelected: any) => ({
     width: "98px",
     height: "89px",
     backgroundColor: "white",
@@ -6094,7 +6127,7 @@ const SettingsUI = () => {
     transition: "border 0.2s ease",
   });
 
-  const cardSidebarStyle = (color) => ({
+  const cardSidebarStyle = (color: any) => ({
     width: "27px",
     height: "100%",
     backgroundColor: color,
@@ -6104,7 +6137,7 @@ const SettingsUI = () => {
     top: 0,
   });
 
-  const cardBadgeStyle = (color) => ({
+  const cardBadgeStyle = (color: any) => ({
     width: "21.75px",
     height: "3.75px",
     backgroundColor: color,
@@ -6114,7 +6147,7 @@ const SettingsUI = () => {
     border: `0.25px solid ${color}`,
   });
 
-  const cardIconStyle = (color) => ({
+  const cardIconStyle = (color: any) => ({
     width: "3px",
     height: "3px",
     backgroundColor: color,
@@ -6179,7 +6212,7 @@ const SettingsUI = () => {
     overflowY: "auto",
   };
 
-  const menuItemStyle = (isSelected) => ({
+  const menuItemStyle = (isSelected: any) => ({
     padding: "12px 16px",
     cursor: "pointer",
     backgroundColor: isSelected ? "#F5F5F5" : "white",
@@ -6200,7 +6233,7 @@ const SettingsUI = () => {
     color: "var(--heading1Color)",
   };
 
-  const toggleStyle = (isOn) => ({
+  const toggleStyle = (isOn: any) => ({
     width: "32px",
     height: "16px",
     backgroundColor: isOn ? "var(--spaceSelection)" : "#CCCCCD",
@@ -6210,7 +6243,7 @@ const SettingsUI = () => {
     transition: "background-color 0.3s ease",
   });
 
-  const toggleCircleStyle = (isOn) => ({
+  const toggleCircleStyle = (isOn: any) => ({
     width: "12px",
     height: "12px",
     backgroundColor: "white",
@@ -6420,7 +6453,7 @@ const SettingsUI = () => {
                   onMouseEnter={(e) =>
                     (e.target.style.backgroundColor = "#F5F5F5")
                   }
-                  onMouseLeave={(e) =>
+                  onMouseLeave={(e: any) =>
                     (e.target.style.backgroundColor =
                       selectedFont === index ? "#F5F5F5" : "white")
                   }
@@ -6445,7 +6478,7 @@ const SettingsUI = () => {
         <div
           style={toggleStyle(showHeading[activeSpace])}
           onClick={() =>
-            setShowHeading((prev) => ({
+            setShowHeading((prev: any) => ({
               ...prev,
               [activeSpace]: !prev[activeSpace],
             }))
@@ -6463,7 +6496,7 @@ const SettingsUI = () => {
         <div
           style={toggleStyle(showVerses[activeSpace])}
           onClick={() =>
-            setShowVerses((prev) => ({
+            setShowVerses((prev: any) => ({
               ...prev,
               [activeSpace]: !prev[activeSpace],
             }))
@@ -6481,7 +6514,7 @@ const SettingsUI = () => {
         <div
           style={toggleStyle(showFootnotes[activeSpace])}
           onClick={() =>
-            setShowFootnotes((prev) => ({
+            setShowFootnotes((prev: any) => ({
               ...prev,
               [activeSpace]: !prev[activeSpace],
             }))

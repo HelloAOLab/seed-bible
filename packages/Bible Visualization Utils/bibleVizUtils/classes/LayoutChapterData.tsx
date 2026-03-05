@@ -49,17 +49,17 @@ export class LayoutChapterData {
     }
   }
 
-  AddHighlightInfo(newHighlightInfo) {
+  AddHighlightInfo(newHighlightInfo: any) {
     this.HighlightsInfo.push(newHighlightInfo);
   }
 
-  GetHighlightInfoByKey(key) {
+  GetHighlightInfoByKey(key: any) {
     return this.HighlightsInfo.find((highlightInfo) => {
       return highlightInfo.key == key;
     });
   }
 
-  AddEntryItem(entryItem) {
+  AddEntryItem(entryItem: any) {
     this.playlistEntriesItems.push(entryItem);
   }
 }

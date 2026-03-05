@@ -13,7 +13,7 @@ globalThis.MeshState = {
 
 // Development purposes
 thisBot.SetBotsVisibility({
-  data: thisBot.tags.piecesKeys.map((key) => {
+  data: thisBot.tags.piecesKeys.map((key: any) => {
     return { key, value: MeshState.Hidden };
   }),
   customDimension: thisBot.tags.dimension,

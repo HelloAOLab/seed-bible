@@ -5,9 +5,11 @@ const dimension = os.getCurrentDimension();
 const contentMarginBottom = 2;
 const backgroundPadding = 1;
 
-const mapBookStructure = thisBot.vars.mapBooksStructure.find((structure) => {
-  return structure.dateLabel.id === label.id;
-});
+const mapBookStructure = thisBot.vars.mapBooksStructure.find(
+  (structure: any) => {
+    return structure.dateLabel.id === label.id;
+  }
+);
 const { author, relativeDateRange, numberOfChapters } =
   StacksManager.tags.booksStaticInfo[
     mapBookStructure.mapBookData.elementInfo.commonName
@@ -27,7 +29,7 @@ const mapData =
 
 if (mapBookStructure && (!mapData || !mapData.currentPlaylistShownId)) {
   const structureCurrentlyShowingInfoCard = thisBot.vars.mapBooksStructure.find(
-    (structure) => {
+    (structure: any) => {
       return structure.infoCardTransformer;
     }
   );

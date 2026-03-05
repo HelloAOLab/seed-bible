@@ -13,7 +13,7 @@ thisBot.HideCurrentMapBookDateLabelShown();
 
 await thisBot.RespawnAllBooksOnMap({ mapData });
 
-mapData.childrenStructures.forEach((mapBookStructure) => {
+mapData.childrenStructures.forEach((mapBookStructure: any) => {
   if (mapBookStructure.mapBookData.element) {
     const bookMod = { draggable: false };
     applyMod(mapBookStructure.mapBookData.element, bookMod);
@@ -30,7 +30,7 @@ for (let playlistEntryInfoIndex in playlistItemsList) {
     case PlaylistItemType.Verse:
       {
         const mapBookStructure = mapData.childrenStructures.find(
-          (structure) => {
+          (structure: any) => {
             return (
               structure.mapBookData.elementInfo.commonName ===
               playlistEntryInfo.additionalInfo[
@@ -51,7 +51,7 @@ for (let playlistEntryInfoIndex in playlistItemsList) {
           });
         }
         const mapChapterData = mapBookStructure.mapBookData.childrenData.find(
-          (data) => {
+          (data: any) => {
             return (
               data.elementInfo.number ===
               playlistEntryInfo.additionalInfo.chapter

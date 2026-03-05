@@ -9,7 +9,7 @@ async function waitForGlobals(required: string[] = [], delay = 250) {
 }
 
 // === Begin of your code ===
-await (async function mainInstaller(that) {
+await (async function mainInstaller(that: any) {
   // --- pre-check at start ---
   await waitForGlobals([
     "AddTool",
@@ -26,10 +26,10 @@ await (async function mainInstaller(that) {
   const NameHolder = name;
   globalThis[`${name}_package`] = {};
 
-  async function FindExtensionData(name) {
+  async function FindExtensionData(name: any) {
     let data;
     if (tags.alwaysUseAvailablePackages && tags.availablePackages) {
-      data = tags.availablePackages.find((p) => p.name === name);
+      data = tags.availablePackages.find((p: any) => p.name === name);
     }
 
     if (!data) {
@@ -53,7 +53,7 @@ await (async function mainInstaller(that) {
 
   let errorInstall = false;
 
-  function GetBotsFromData(aux) {
+  function GetBotsFromData(aux: any) {
     if (typeof aux === "object" && "version" in aux) {
       // Handle aux files
       if (aux.version === 1) {
@@ -77,7 +77,7 @@ await (async function mainInstaller(that) {
     }
   }
 
-  async function SetUpConextMenu(contextOptions, bot, label) {
+  async function SetUpConextMenu(contextOptions: any, bot: any, label) {
     try {
       const items = await bot[`${contextOptions}`]();
       if (!Array.isArray(items)) return [];
@@ -88,7 +88,11 @@ await (async function mainInstaller(that) {
     }
   }
 
-  async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
+  async function SetUpApplication(
+    applicationFunction: any,
+    bot: any,
+    toolbarConfig: any
+  ) {
     os.log("Setting up application", toolbarConfig);
     function generateAppItem({
       icon,
@@ -238,9 +242,9 @@ await (async function mainInstaller(that) {
     return toolbarOption;
   }
 
-  async function SetUpApplicationWithoutApp(toolbarConfig, bot) {
+  async function SetUpApplicationWithoutApp(toolbarConfig: any, bot: any) {
     os.log("Setting up application", toolbarConfig);
-    const runFn = (e) => {
+    const runFn = (e: any) => {
       os.log("Running toolbar action", toolbarConfig.run, e);
       bot[toolbarConfig.run]({ ...e });
     };
@@ -270,7 +274,7 @@ await (async function mainInstaller(that) {
   }
 
   // FIX: make this actually wait for each dependency (no forEach + await)
-  async function InstallDependencies(dependencies) {
+  async function InstallDependencies(dependencies: any) {
     for (const { name: depName, type } of dependencies) {
       if (type === "package") {
         await thisBot.installPackage({ name: depName });
@@ -280,7 +284,7 @@ await (async function mainInstaller(that) {
         const read = await web.get(data.recordFile?.url || data.source);
 
         const bots = GetBotsFromData(read.data);
-        bots.forEach((bot) => {
+        bots.forEach((bot: any) => {
           // console.log('check dep bot', bot)
           const check = getBot("system", bot.tags.system);
           if (!check)
@@ -295,14 +299,14 @@ await (async function mainInstaller(that) {
     await os.sleep(100);
   }
 
-  async function SetUpTabApplication(tabConfig, bot) {
+  async function SetUpTabApplication(tabConfig: any, bot: any) {
     // Support async or sync app getter
     const maybeApp = bot[tabConfig.app]();
     const App =
       typeof maybeApp?.then === "function" ? await maybeApp : maybeApp;
 
     if (App) {
-      SetPackageAddingOptions((prev) => {
+      SetPackageAddingOptions((prev: any) => {
         const d = [
           ...prev,
           {

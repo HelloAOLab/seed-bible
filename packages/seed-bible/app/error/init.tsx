@@ -6,8 +6,8 @@ console.log("[app.error] Initializing PostHog for error reporting...");
   e.__SV ||
     ((window.posthog = e),
     (e._i = []),
-    (e.init = function (i, s, a) {
-      function g(t, e) {
+    (e.init = function (i: any, s, a: any) {
+      function g(t: any, e: any) {
         var o = e.split(".");
         (2 == o.length && ((t = t[o[0]]), (e = o[1])),
           (t[e] = function () {

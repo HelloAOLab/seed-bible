@@ -1,4 +1,4 @@
-function onToolbarDateClick1(e, calendarApi) {
+function onToolbarDateClick1(e: any, calendarApi) {
   const titleEl = e.target.closest(".fc-toolbar-title");
   if (!titleEl) return;
 
@@ -56,7 +56,7 @@ function onToolbarDateClick1(e, calendarApi) {
   );
 }
 
-function onToolbarDateClick(e, calendarApi) {
+function onToolbarDateClick(e: any, calendarApi: any) {
   const titleEl = e.target.closest(".fc-toolbar-title");
   if (!titleEl) return;
 
@@ -115,7 +115,7 @@ function onToolbarDateClick(e, calendarApi) {
   okBtn.addEventListener("click", finish);
 
   // escape key cancels
-  const handleKey = (ke) => {
+  const handleKey = (ke: any) => {
     if (ke.key === "Escape") {
       container.replaceWith(titleEl);
       titleEl.textContent = originalTitle;

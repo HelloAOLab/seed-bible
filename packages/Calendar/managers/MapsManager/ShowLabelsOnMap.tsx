@@ -10,7 +10,7 @@ const elements = [
 
 setTag(elements, dimension, true);
 
-mapData.childrenStructures.forEach((mapBookStructure) => {
+mapData.childrenStructures.forEach((mapBookStructure: any) => {
   setTag(
     mapBookStructure.dateLabel,
     "labelColor",

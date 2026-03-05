@@ -1,7 +1,7 @@
 const { keys, type } = that;
 
 const bots = keys
-  .map((key) => {
+  .map((key: any) => {
     return getBot("system", `tabernacle.${key}`);
   })
   .filter(Boolean);
@@ -15,7 +15,7 @@ if (bots.length > 0 && type !== "textHover") {
   setTagMask(thisBot, "focusing", true);
   thisBot.vars.focusedBots = bots;
   Promise.allSettled(
-    bots.map((bot) => {
+    bots.map((bot: any) => {
       return thisBot.HighlightBot({
         bot,
         makeColorLerp: type === "textClick" || type === "itemClick",

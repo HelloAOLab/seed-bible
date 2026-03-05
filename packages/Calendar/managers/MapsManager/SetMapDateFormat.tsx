@@ -2,7 +2,7 @@ const { mapData, newDateFormat } = that;
 
 mapData.currentDateFormat = newDateFormat;
 
-mapData.childrenStructures.forEach((mapBookStructure) => {
+mapData.childrenStructures.forEach((mapBookStructure: any) => {
   let newLabel;
   switch (newDateFormat) {
     case DateFormats.ElapsedYears:

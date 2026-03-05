@@ -41,10 +41,10 @@ const MenuOptions = {
     {
       icon: <MenuIcon name={IconsURL.Library} />,
       title: "Copy text",
-      onClick: (items) => {
+      onClick: (items: any) => {
         let text = "";
         os.log("COPY TEXT VERSES", items);
-        const textItems = items.map((verse) => {
+        const textItems = items.map((verse: any) => {
           return verse.text;
         });
 
@@ -59,7 +59,7 @@ const MenuOptions = {
       icon: <ApologistIcon invert={true} />,
 
       title: "Apologist AI",
-      onClick: (items) => {
+      onClick: (items: any) => {
         ClearUserSelection();
         SetShowCommands(true);
         // SetInHold({});
@@ -68,12 +68,12 @@ const MenuOptions = {
     {
       icon: <MenuIcon name={IconsURL["Share Fat"]} />,
       title: "Share verse",
-      onClick: (items) => {
+      onClick: (items: any) => {
         closePopupSettings();
         setTimeout(() => {
           let text = "";
 
-          const textItems = items.map((verse) => {
+          const textItems = items.map((verse: any) => {
             return verse.text;
           });
 
@@ -81,7 +81,7 @@ const MenuOptions = {
 
           // Build verse reference from items
           const verseNumbers = items
-            .map((verse) => verse.verseNumber)
+            .map((verse: any) => verse.verseNumber)
             .filter(Boolean);
           const book = items[0]?.book || configBot.tags.book;
           const chapter = items[0]?.chapter || configBot.tags.chapter;
@@ -107,7 +107,11 @@ const MenuOptions = {
               : `${book} ${chapter}`;
 
           openPopupSettings(
-            <SharePopup shareTitle={`${text}`} shareReference={reference} translation={that.translation} />,
+            <SharePopup
+              shareTitle={`${text}`}
+              shareReference={reference}
+              translation={that.translation}
+            />,
             null,
             true
           );
@@ -120,8 +124,8 @@ const MenuOptions = {
 if (!globalThis.ContextMenuOptions) globalThis.ContextMenuOptions = [];
 
 os.log(globalThis.ContextMenuOptions, "up");
-globalThis.ContextMenuOptions.forEach(({ address, label, items }) => {
-  const itemsHolder = items.map((el) => {
+globalThis.ContextMenuOptions.forEach(({ address, label, items }: any) => {
+  const itemsHolder = items.map((el: any) => {
     return {
       ...el,
       onClick: (items) => {
@@ -141,8 +145,8 @@ globalThis.ContextMenuOptions.forEach(({ address, label, items }) => {
   }
 });
 
-that?.extraContext?.forEach(({ address, label, items }) => {
-  const itemsHolder = items.map((el) => {
+that?.extraContext?.forEach(({ address, label, items }: any) => {
+  const itemsHolder = items.map((el: any) => {
     return {
       ...el,
       onClick: (items) => {

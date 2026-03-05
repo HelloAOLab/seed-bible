@@ -24,7 +24,7 @@ function PanelSettingsDialog({
 
   const nextPanelNumber = openPanelCount;
 
-  const generateLayouts = (currentPanels, nextPanel) => {
+  const generateLayouts = (currentPanels: any, nextPanel) => {
     const layouts = [];
 
     if (nextPanel === 1) {
@@ -130,7 +130,7 @@ function PanelSettingsDialog({
     onClose();
   };
 
-  const renderLayout = (layout, index) => {
+  const renderLayout = (layout: any, index: any) => {
     return (
       <div
         key={index}

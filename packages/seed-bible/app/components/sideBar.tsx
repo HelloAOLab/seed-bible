@@ -95,7 +95,7 @@ const CircleCounter = ({ data, book, chapter }) => {
   ];
 
   // Helper to get user's visual style
-  const getUserVisual = (userId, value, index) => {
+  const getUserVisual = (userId: any, value: any, index) => {
     try {
       const visual = globalThis?.GetOrSetVisualInTags(value[0]);
       // console.log(value,'the get inside')
@@ -391,7 +391,7 @@ function Tab({
     tags?.settingsConfigs?.presets?.[
       configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
     ]?.appSettings?.removeEditMode;
-  const OPTIONS = (tab) => ({
+  const OPTIONS = (tab: any) => ({
     type: "normal",
     items: [
       {
@@ -407,7 +407,7 @@ function Tab({
         icon: <MenuIcon name="edit" />,
         title: t("editMode"),
         onClick: () => {
-          globalThis[`SetEnableEditorOf${tab.id}`]((prev) => !prev);
+          globalThis[`SetEnableEditorOf${tab.id}`]((prev: any) => !prev);
           closePopupSettings();
         },
         active: TabOptions.Edit.active,
@@ -416,7 +416,7 @@ function Tab({
         icon: <MenuIcon name="check_box" />,
         title: multiSelectMode ? t("deselect") : t("select"),
         onClick: () => {
-          setMultiSelectMode((prev) => !prev);
+          setMultiSelectMode((prev: any) => !prev);
           setSelectedTabs([activeTab]);
         },
         active: TabOptions.Select.active,
@@ -498,7 +498,7 @@ function Tab({
     if (el.sharedTab) {
       globalThis.HandleSharedTabClick();
     }
-    const checkEmpty = PanelsApps.find((e) => !e.tabData);
+    const checkEmpty = PanelsApps.find((e: any) => !e.tabData);
     if (el.data.type === "book" && checkEmpty) {
       // console.log("canvas replacing");
       setActiveTab(el.id);
@@ -631,9 +631,9 @@ function Tab({
                 className="customCheckbox"
                 checked={selectedTabs.includes(el.id)}
                 onChange={() => {
-                  setSelectedTabs((prev) =>
+                  setSelectedTabs((prev: any) =>
                     prev.includes(el.id)
-                      ? prev.filter((id) => id !== el.id)
+                      ? prev.filter((id: any) => id !== el.id)
                       : [...prev, el.id]
                   );
                 }}
@@ -732,7 +732,7 @@ function Folder({
   collapsed,
   setSidebarWidth,
   setCollapsed,
-}) {
+}: any) {
   const {
     setActiveTab,
     activeTab,
@@ -828,7 +828,7 @@ function Folder({
   );
 }
 
-function SideBar({ panelsNumber }) {
+function SideBar({ panelsNumber }: any) {
   const {
     tabs,
     folders,
@@ -1006,7 +1006,7 @@ function SideBar({ panelsNumber }) {
   const isResizing = useRef(false);
   const sidebarRef = useRef();
 
-  const handleMouseDown = (e) => {
+  const handleMouseDown = (e: any) => {
     // Disable resize on mobile to prevent sticking issues
     if (isMobile) return;
     isResizing.current = true;
@@ -1114,7 +1114,7 @@ function SideBar({ panelsNumber }) {
   // Toggle edit mode function
   const toggleEditMode = () => {
     // setEditMode(!editMode);
-    setReSeed((prev) => !prev);
+    setReSeed((prev: any) => !prev);
     // Exit multi-select mode when entering/exiting edit mode
     if (multiSelectMode) {
       setMultiSelectMode(false);
@@ -1143,7 +1143,7 @@ function SideBar({ panelsNumber }) {
     }
   };
 
-  const ScreenOptions = ({ setCustomScreens }) => {
+  const ScreenOptions = ({ setCustomScreens }: any) => {
     return (
       <div
         style={{
@@ -1300,7 +1300,7 @@ function SideBar({ panelsNumber }) {
                 };
                 ShowModal(
                   <JoinSessionComponent
-                    onJoin={(code) => os.goToURL(code)}
+                    onJoin={(code: any) => os.goToURL(code)}
                     translations={translations}
                     CloseModal={() => globalThis.CloseModal()}
                   />
@@ -1417,7 +1417,7 @@ function SideBar({ panelsNumber }) {
                 };
                 ShowModal(
                   <JoinSessionComponent
-                    onJoin={(code) => os.goToURL(code)}
+                    onJoin={(code: any) => os.goToURL(code)}
                     translations={translations}
                     CloseModal={() => globalThis.CloseModal()}
                   />
@@ -1540,7 +1540,7 @@ function SideBar({ panelsNumber }) {
     });
     const [showBookmarks, setShowBookmarks] = useState(false);
 
-    const toggleCategory = (categoryName) => {
+    const toggleCategory = (categoryName: any) => {
       setExpandedCategories((prev) => ({
         ...prev,
         [categoryName]: !prev[categoryName],
@@ -1549,10 +1549,10 @@ function SideBar({ panelsNumber }) {
 
     // Compute free tabs (tabs not bookmarked in any category)
     const freeTabs = tabs.filter(
-      (tab) => !tab.sharedTab && !bookmarkedTabIds.has(tab.id)
+      (tab: any) => !tab.sharedTab && !bookmarkedTabIds.has(tab.id)
     );
 
-    const handleMobileTabClick = (el) => {
+    const handleMobileTabClick = (el: any) => {
       setActiveTab(el.id);
       globalThis.UpdateTab(el);
 
@@ -2530,7 +2530,7 @@ function SideBar({ panelsNumber }) {
             </div>
           </>
         )}
-        {folders.map((folder) => (
+        {folders.map((folder: any) => (
           <Folder
             key={folder.id}
             onlineUsers={onlineUsers}
@@ -2558,7 +2558,9 @@ function SideBar({ panelsNumber }) {
                 className="customCheckbox"
                 checked={selectedTabs.length === tabs.length}
                 onChange={(e) =>
-                  setSelectedTabs(e.target.checked ? tabs.map((t) => t.id) : [])
+                  setSelectedTabs(
+                    e.target.checked ? tabs.map((t: any) => t.id) : []
+                  )
                 }
               />
               Select All
@@ -2575,7 +2577,7 @@ function SideBar({ panelsNumber }) {
                 cursor: "pointer",
               }}
               onClick={() => {
-                selectedTabs.forEach((id) => removeTab(id));
+                selectedTabs.forEach((id: any) => removeTab(id));
                 setSelectedTabs([]);
                 setMultiSelectMode(false);
               }}
@@ -2605,7 +2607,7 @@ function SideBar({ panelsNumber }) {
                   return;
                 }
                 const OPTIONS = { type: "normal", items: [] };
-                folders.forEach((item) => {
+                folders.forEach((item: any) => {
                   OPTIONS.items.push({
                     icon: <MenuIcon name="folder" />,
                     title: `Add to ${item.name}`,
@@ -2674,11 +2676,11 @@ function SideBar({ panelsNumber }) {
           className={collapsed ? "tabs-collapsed" : "tabs"}
         >
           {tabs
-            .filter((tab) => !tab.sharedTab)
+            .filter((tab: any) => !tab.sharedTab)
             .filter(
-              (tab) => !showBookmarksFilter || bookmarkedTabIds.has(tab.id)
+              (tab: any) => !showBookmarksFilter || bookmarkedTabIds.has(tab.id)
             )
-            .filter((tab) => {
+            .filter((tab: any) => {
               if (!searchQuery) return true;
               const query = searchQuery.toLowerCase();
               const name = tab?.data?.book || tab?.data?.title || "";
@@ -2695,7 +2697,7 @@ function SideBar({ panelsNumber }) {
                 `${name} - ${chapter}`.toLowerCase().includes(query)
               );
             })
-            .map((el, index) => (
+            .map((el, index: any) => (
               <Tab
                 key={el.id}
                 el={el}
@@ -2951,7 +2953,7 @@ export const SettingsProfile = () => {
   const { sidebarMode, setSideBarMode, closePopupSettings, t } =
     useSideBarContext();
 
-  const OPTIONS = (id) => {
+  const OPTIONS = (id: any) => {
     return {
       type: "normal",
       items: [
@@ -2996,11 +2998,11 @@ export const SettingsProfile = () => {
     };
   };
 
-  const handleRightClick = (spaceId) => {
+  const handleRightClick = (spaceId: any) => {
     openPopupSettings(OPTIONS(spaceId));
   };
 
-  const handleMouseDown = (spaceId) => {
+  const handleMouseDown = (spaceId: any) => {
     setActiveSpace(spaceId);
     setTimeout(() => {
       globalThis.setOpenOnMobile(true);
@@ -3027,7 +3029,7 @@ export const SettingsProfile = () => {
   return (
     <div className="dot">
       {!removeSpaces &&
-        spaces.map((space) => {
+        spaces.map((space: any) => {
           return (
             <SurroundingDivs>
               <div

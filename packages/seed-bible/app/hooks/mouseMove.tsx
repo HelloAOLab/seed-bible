@@ -35,7 +35,7 @@ function computeMobilePlacement95() {
   return { size: { width, height }, position: { x, y } };
 }
 
-export function MouseMoveProvider({ children }) {
+export function MouseMoveProvider({ children }: any) {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [Element, setElement] = useState(null);
@@ -58,10 +58,10 @@ export function MouseMoveProvider({ children }) {
   globalThis.isAbleToRightClick = isAbleToRightClick;
 
   // create
-  globalThis.AddFloatingApp = (appConfig) => {
+  globalThis.AddFloatingApp = (appConfig: any) => {
     // Handle "panel" mode - go directly to panel without creating floating window
     if (appConfig.mode === "panel") {
-      const checkEmpty = PanelsApps.find((e) => !e.tabData);
+      const checkEmpty = PanelsApps.find((e: any) => !e.tabData);
       const id = globalThis.LastClickedPanelUpdate || checkEmpty?.id;
       os.log(
         "RemoveApplicationByID",
@@ -181,14 +181,14 @@ export function MouseMoveProvider({ children }) {
   };
 
   // update
-  const updateFloatingApp = (appId, updates) => {
+  const updateFloatingApp = (appId: any, updates: any) => {
     setFloatingApps((prev) =>
       prev.map((app) => (app.id === appId ? { ...app, ...updates } : app))
     );
   };
 
   // slide out (hide) app
-  const slideOutApp = (appId) => {
+  const slideOutApp = (appId: any) => {
     const app = floatingApps.find((a) => a.id === appId);
     if (app) {
       setHiddenApps((prev) => [...prev, app]);
@@ -197,7 +197,7 @@ export function MouseMoveProvider({ children }) {
   };
 
   // slide in (restore) app
-  const slideInApp = (appId) => {
+  const slideInApp = (appId: any) => {
     const app = hiddenApps.find((a) => a.id === appId);
     if (app) {
       setFloatingApps((prev) => [...prev, app]);
@@ -207,7 +207,7 @@ export function MouseMoveProvider({ children }) {
 
   // global mouse
   useEffect(() => {
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (e: any) => {
       setFloatingApps((prev) =>
         prev.map((app) => {
           if (app.isDragging && !app.isDocked) {
@@ -386,7 +386,7 @@ export function MouseMoveProvider({ children }) {
   // allow ESC to exit fullscreen
   useEffect(() => {
     if (!anyFullscreen) return;
-    const onKey = (e) => {
+    const onKey = (e: any) => {
       if (e.key === "Escape") exitAnyFullscreen();
     };
     if (window) {
@@ -399,7 +399,7 @@ export function MouseMoveProvider({ children }) {
     };
   }, [anyFullscreen]);
 
-  async function fullScreenButton(anyFullscreen) {
+  async function fullScreenButton(anyFullscreen: any) {
     try {
       if (!anyFullscreen) {
         await os.unregisterApp("exitButton");
@@ -601,7 +601,7 @@ const FloatingAppContainer = ({
   setFloatingApps,
   setHiddenApps,
   setCurrentCanvasApp,
-}) => {
+}: any) => {
   // Default to false - only show VR button if WebXR is actually supported
   const [userHaveVR, setUserHaveVR] = useState(false);
   const checkVR = async () => {
@@ -748,7 +748,7 @@ const FloatingAppContainer = ({
     kickVisibility();
   }, [app.isMinimized]);
 
-  const handleResizeStart = (handle, e) => {
+  const handleResizeStart = (handle: any, e: any) => {
     e.stopPropagation();
     updateFloatingApp(app.id, {
       isResizing: true,
@@ -786,7 +786,9 @@ const FloatingAppContainer = ({
       typeof RemoveApplicationByID === "function"
     ) {
       const id = app.id;
-      setFloatingApps((prev) => prev.filter((subApp) => subApp.id !== app.id));
+      setFloatingApps((prev: any) =>
+        prev.filter((subApp: any) => subApp.id !== app.id)
+      );
       setHiddenApps((prev) => prev.filter((subApp) => subApp.id !== app.id));
       AddApplication({
         id,

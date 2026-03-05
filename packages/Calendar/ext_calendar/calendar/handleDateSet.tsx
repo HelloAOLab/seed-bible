@@ -11,7 +11,7 @@ function handleDatesSet({
   toolbarClickHandler,
   setModalOpen,
   activeToolbarHandlerRef,
-}) {
+}: any) {
   const startDate = new Date(info.startStr).toLocaleDateString("en-CA");
   const newResources = resourcesRef.current[startDate] || [];
   calendarApi.current.setOption("resources", newResources);
@@ -50,7 +50,7 @@ function handleDatesSet({
     if (select) select.style.display = "none";
 
     if (prevBtn) {
-      prevBtn.onclick = (e) => e.preventDefault();
+      prevBtn.onclick = (e: any) => e.preventDefault();
       prevBtn.style.pointerEvents = "none";
     }
     if (nextBtn) {
@@ -69,7 +69,7 @@ function handleDatesSet({
 
   const events = onRangeChange(start, end);
   const sortedEvents = events.sort(
-    (a, b) => new Date(a.start) - new Date(b.start)
+    (a: any, b: any) => new Date(a.start) - new Date(b.start)
   );
   setEventInView(sortedEvents);
 

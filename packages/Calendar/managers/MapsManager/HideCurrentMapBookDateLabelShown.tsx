@@ -1,5 +1,5 @@
 const structureCurrentlyShowingInfoCard = thisBot.vars.mapBooksStructure.find(
-  (structure) => {
+  (structure: any) => {
     return structure.infoCardTransformer;
   }
 );

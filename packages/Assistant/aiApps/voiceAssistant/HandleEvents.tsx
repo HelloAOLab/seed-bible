@@ -1,6 +1,6 @@
 import { captureElement } from "aiApps.voiceAssistant.Utils";
 
-const HandleEvents = async ({ dc, data }) => {
+const HandleEvents = async ({ dc, data }: any) => {
   console.log(data);
   switch (data.name) {
     case "getTime": {
@@ -285,7 +285,7 @@ const HandleEvents = async ({ dc, data }) => {
               words: [verse],
               color: "#000", // text color
               backgroundColor: globalThis.HIGHLIGHT_BG_COLOR || "#ffeb3b", // highlight color
-              createAttributes: (book, chapter, verse) => {
+              createAttributes: (book: any, chapter: any, verse) => {
                 return {
                   style: {
                     backgroundColor: color || "lightblue",
@@ -311,7 +311,7 @@ const HandleEvents = async ({ dc, data }) => {
               words: [highlightWord],
               color: "#000", // text color
               backgroundColor: globalThis.HIGHLIGHT_BG_COLOR || "#ffeb3b", // highlight color
-              createAttributes: (book, chapter, verse) => {
+              createAttributes: (book: any, chapter, verse) => {
                 return {
                   style: {
                     backgroundColor: color || "lightblue",
@@ -458,13 +458,13 @@ const HandleEvents = async ({ dc, data }) => {
           words: locationsArr,
           color: "#000", // text color
           backgroundColor: globalThis.HIGHLIGHT_BG_COLOR || "#ffeb3b", // highlight color
-          createAttributes: (book, chapter, verse) => {
+          createAttributes: (book: any, chapter: any, verse: any) => {
             return {
               onMouseEnter: async (e) => {
                 e.target.style.color = "#0D47A1";
                 e.target.style.fontWeight = "400";
               },
-              onMouseLeave: async (e) => {
+              onMouseLeave: async (e: any) => {
                 setTimeout(() => {
                   e.target.style.color = "";
                   e.target.style.fontWeight = "";
@@ -607,7 +607,7 @@ const HandleEvents = async ({ dc, data }) => {
         "https://vmfnri.helloao.org/api/available_translations.json"
       );
       let translationOptions = [];
-      available_translations_req.data.translations.map((translation) => {
+      available_translations_req.data.translations.map((translation: any) => {
         if (
           language.toLowerCase() ===
           translation?.languageEnglishName?.toLowerCase()
@@ -659,7 +659,7 @@ const HandleEvents = async ({ dc, data }) => {
       let packageManager = getBot("system", "app.packager");
       let installedPackages = packageManager.masks.installedPackages;
       let installablePackages = packageManager.tags.availablePackages.map(
-        (availablePackage) => {
+        (availablePackage: any) => {
           if (installedPackages.includes(availablePackage.name)) {
             return null;
           } else {
@@ -667,7 +667,7 @@ const HandleEvents = async ({ dc, data }) => {
           }
         }
       );
-      installablePackages = installablePackages.filter((item) => item);
+      installablePackages = installablePackages.filter((item: any) => item);
       console.log(installablePackages, "installablePackages");
       dc.send(
         JSON.stringify({
@@ -703,7 +703,7 @@ const HandleEvents = async ({ dc, data }) => {
     case "installPackage": {
       let { packages } = JSON.parse(data.arguments || "{}");
       let packageManager = getBot("system", "app.packager");
-      packages.map((packageName) => {
+      packages.map((packageName: any) => {
         whisper(packageManager, "installPackage", { name: packageName });
       });
       dc.send(
@@ -724,7 +724,7 @@ const HandleEvents = async ({ dc, data }) => {
     case "uninstallPackage": {
       let { packages, confirmation } = JSON.parse(data.arguments || "{}");
       let packageManager = getBot("system", "app.packager");
-      packages.map((packageName) => {
+      packages.map((packageName: any) => {
         if (packageName === "Assistant" && confirmation) {
           whisper(packageManager, "uninstallPackage", { address: packageName });
         } else {

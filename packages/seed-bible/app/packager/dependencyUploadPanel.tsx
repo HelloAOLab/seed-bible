@@ -1,4 +1,3 @@
-
 /**
  * Upload panel for creating a dependency made of multiple bot tags.
  *
@@ -22,27 +21,29 @@ export const DependencyUploadPanel = ({
   loading,
   onUpload,
   validateBotTag,
-}) => {
+}: any) => {
   if (!show) return null;
 
   const addBotRow = () => {
-    setDependencyUpload((prev) => ({
+    setDependencyUpload((prev: any) => ({
       ...prev,
       bots: [...(prev.bots || []), { botTag: "", notes: "" }],
     }));
   };
 
-  const removeBotRow = (index) => {
-    setDependencyUpload((prev) => ({
+  const removeBotRow = (index: any) => {
+    setDependencyUpload((prev: any) => ({
       ...prev,
-      bots: prev.bots.filter((_, i) => i !== index),
+      bots: prev.bots.filter((_, i: any) => i !== index),
     }));
   };
 
-  const updateBotRow = (index, field, value) => {
-    setDependencyUpload((prev) => ({
+  const updateBotRow = (index: any, field: any, value: any) => {
+    setDependencyUpload((prev: any) => ({
       ...prev,
-      bots: prev.bots.map((b, i) => (i === index ? { ...b, [field]: value } : b)),
+      bots: prev.bots.map((b, i: any) =>
+        i === index ? { ...b, [field]: value } : b
+      ),
     }));
   };
 
@@ -56,7 +57,9 @@ export const DependencyUploadPanel = ({
       <div style={styles.uploadPanel}>
         <div style={styles.uploadPanelHeader}>
           <h3>📤 Upload Bot Dependencies</h3>
-          <button onClick={onClose} style={styles.closeButton}>✕</button>
+          <button onClick={onClose} style={styles.closeButton}>
+            ✕
+          </button>
         </div>
 
         <div style={styles.uploadForm}>
@@ -66,7 +69,10 @@ export const DependencyUploadPanel = ({
               type="text"
               value={dependencyUpload.name}
               onChange={(e) =>
-                setDependencyUpload((prev) => ({ ...prev, name: e.target.value }))
+                setDependencyUpload((prev: any) => ({
+                  ...prev,
+                  name: e.target.value,
+                }))
               }
               style={styles.input}
               placeholder="e.g., 'UI Components', 'Helper Bots', 'Authentication System'"
@@ -78,7 +84,7 @@ export const DependencyUploadPanel = ({
             <textarea
               value={dependencyUpload.description}
               onChange={(e) =>
-                setDependencyUpload((prev) => ({
+                setDependencyUpload((prev: any) => ({
                   ...prev,
                   description: e.target.value,
                 }))
@@ -103,7 +109,7 @@ export const DependencyUploadPanel = ({
               </div>
             )}
 
-            {(dependencyUpload.bots ?? []).map((bot, index) => {
+            {(dependencyUpload.bots ?? []).map((bot: any, index: any) => {
               const trimmed = bot.botTag?.trim();
               let validationBlock = null;
 
@@ -135,7 +141,10 @@ export const DependencyUploadPanel = ({
                 <div key={index} style={styles.botUploadItem}>
                   <div style={styles.botUploadHeader}>
                     <span style={styles.botNumber}>Bot #{index + 1}</span>
-                    <button onClick={() => removeBotRow(index)} style={styles.removeBotButton}>
+                    <button
+                      onClick={() => removeBotRow(index)}
+                      style={styles.removeBotButton}
+                    >
                       ✕
                     </button>
                   </div>
@@ -146,7 +155,9 @@ export const DependencyUploadPanel = ({
                       <input
                         type="text"
                         value={bot.botTag}
-                        onChange={(e) => updateBotRow(index, "botTag", e.target.value)}
+                        onChange={(e) =>
+                          updateBotRow(index, "botTag", e.target.value)
+                        }
                         style={styles.input}
                         placeholder="#botTag"
                       />
@@ -157,14 +168,18 @@ export const DependencyUploadPanel = ({
                       <input
                         type="text"
                         value={bot.notes}
-                        onChange={(e) => updateBotRow(index, "notes", e.target.value)}
+                        onChange={(e) =>
+                          updateBotRow(index, "notes", e.target.value)
+                        }
                         style={styles.input}
                         placeholder="Optional notes for this bot"
                       />
                     </div>
                   </div>
 
-                  {trimmed && <div style={styles.botValidation}>{validationBlock}</div>}
+                  {trimmed && (
+                    <div style={styles.botValidation}>{validationBlock}</div>
+                  )}
                 </div>
               );
             })}

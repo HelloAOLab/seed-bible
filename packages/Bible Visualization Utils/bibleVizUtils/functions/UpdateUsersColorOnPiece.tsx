@@ -76,7 +76,7 @@ for (const fixedPiece of fixedPieces) {
 
   if (pieceActivity.length > 0) {
     for (let i = 0; i < maxAmountOfColors; i++) {
-      const userColorAtIndex = currUsersColor.find((currUserColor) => {
+      const userColorAtIndex = currUsersColor.find((currUserColor: any) => {
         return currUserColor.tags.activityIndex == i;
       });
       if (userColorAtIndex && i >= pieceActivity.length) {
@@ -87,12 +87,16 @@ for (const fixedPiece of fixedPieces) {
       }
     }
     if (pieceActivity.length <= maxAmountOfColors) {
-      const currExtraUsersContent = currUsersColor.find((currUserColor) => {
-        return currUserColor.tags.isExtraUsersContent;
-      });
-      const currExtraUsersBackground = currUsersColor.find((currUserColor) => {
-        return currUserColor.tags.isExtraUsersBackground;
-      });
+      const currExtraUsersContent = currUsersColor.find(
+        (currUserColor: any) => {
+          return currUserColor.tags.isExtraUsersContent;
+        }
+      );
+      const currExtraUsersBackground = currUsersColor.find(
+        (currUserColor: any) => {
+          return currUserColor.tags.isExtraUsersBackground;
+        }
+      );
       if (currExtraUsersContent)
         ObjectPooler.ReleaseObject({
           obj: currExtraUsersContent,
@@ -260,7 +264,7 @@ for (const fixedPiece of fixedPieces) {
       }
     }
   } else
-    currUsersColor.forEach((userColor) => {
+    currUsersColor.forEach((userColor: any) => {
       ObjectPooler.ReleaseObject({
         obj: userColor,
         tag: userColor.tags.poolTag,

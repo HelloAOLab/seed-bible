@@ -3,14 +3,14 @@ function handleEventContent({
   experienceConRef,
   popoverOpenRef,
   dateOnly,
-}) {
+}: any) {
   const isSchedule = arg.event.extendedProps.isResource === true;
   const eventType = arg.event.extendedProps.type;
 
   const isNarrow =
     experienceConRef.current && experienceConRef.current.offsetWidth < 500;
 
-  const clockSvg = (color) => `
+  const clockSvg = (color: any) => `
     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
       viewBox="0 0 24 24" fill="none" stroke="${color}"
       stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

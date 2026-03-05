@@ -15,7 +15,7 @@ const ResourceEventModal = ({
   resourceETime,
   modalPosition,
   showSchedules,
-}) => {
+}: any) => {
   const { t } = useSideBarContext();
   const [resourceTitle, setResourceTitle] = useState("");
 
@@ -38,7 +38,7 @@ const ResourceEventModal = ({
   const resourceModalRef = useRef(null);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handleClickOutside = (e: any) => {
       if (
         isEventModalOpen &&
         eventModalRef.current &&
@@ -54,7 +54,7 @@ const ResourceEventModal = ({
     };
   }, [isEventModalOpen]);
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handleClickOutside = (e: any) => {
       if (
         resourceModalRef.current &&
         !resourceModalRef.current.contains(e.target)
@@ -90,7 +90,7 @@ const ResourceEventModal = ({
       resourceId: currentResourceId,
     };
     calendarApi.current.addEvent(newEvent);
-    setAllEvents((prev) => [...prev, newEvent]);
+    setAllEvents((prev: any) => [...prev, newEvent]);
 
     setResourceTitle("");
     setResourceDate(new Date().toLocaleDateString("en-CA"));
@@ -106,7 +106,7 @@ const ResourceEventModal = ({
 
     if (!selectedDate) return;
 
-    const events = allEvents.filter((event) => {
+    const events = allEvents.filter((event: any) => {
       const eventDate = event.start?.split("T")[0];
       return (
         eventDate === selectedDate && event.extendedProps.isResource !== true

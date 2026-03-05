@@ -16,11 +16,11 @@ const Setting = ({
   setShowHolidays,
 }) => {
   const { t, themeColors } = useSideBarContext();
-  const handleToggle = () => setOpenSetting((prev) => !prev);
+  const handleToggle = () => setOpenSetting((prev: any) => !prev);
   const primary = themeColors ? themeColors[1]?.pageTextColor : "#1A1A1A";
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: any) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setOpenSetting(false);
       }
@@ -42,10 +42,10 @@ const Setting = ({
     setOpenMap(true);
   };
   const handleTitle = () => {
-    setHasTitle((prev) => !prev);
+    setHasTitle((prev: any) => !prev);
   };
   const handleHolidays = () => {
-    setShowHolidays((prev) => !prev);
+    setShowHolidays((prev: any) => !prev);
   };
 
   return (
@@ -106,7 +106,7 @@ const Setting = ({
         ""
       ) : (
         <div
-          onClick={() => setShowSchedules((prev) => !prev)}
+          onClick={() => setShowSchedules((prev: any) => !prev)}
           className={`settings-title `}
           style={{ width: "100%", borderRadius: "6px", padding: "2px 2px" }}
           onMouseEnter={(e) =>

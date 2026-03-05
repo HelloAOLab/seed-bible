@@ -19,11 +19,11 @@ if (!pieceData) {
   if (piece.tags.isStackPiece) {
     pieceData = thisBot.GetPieceData({ piece });
   } else if (piece.tags.isStackBibleTransformer) {
-    pieceData = thisBot.vars.stackBiblesData.find((bibleData) => {
+    pieceData = thisBot.vars.stackBiblesData.find((bibleData: any) => {
       return bibleData.id == piece.tags.stackBibleId;
     });
   } else if (piece.tags.isSectionShadow) {
-    pieceData = thisBot.vars.stackSectionsData.find((data) => {
+    pieceData = thisBot.vars.stackSectionsData.find((data: any) => {
       return data.isActive && data.id == piece.tags.sectionDataId;
     });
   }
@@ -55,7 +55,7 @@ if (pieceData) {
     "interactiveBible.managers.thisBot.DeletePiece. No piece data found."
   );
 
-function DeleteChapter(chapterData) {
+function DeleteChapter(chapterData: any) {
   /**
    * Deletes a `StackChapterData` object and its associated verses.
    *
@@ -72,9 +72,9 @@ function DeleteChapter(chapterData) {
         chapterData.isSelected &&
         chapterData.piece.vars.chunksOfVerses?.length > 0
       ) {
-        chapterData.piece.vars.chunksOfVerses.forEach((chunk) => {
+        chapterData.piece.vars.chunksOfVerses.forEach((chunk: any) => {
           if (chunk.masks.isSelected && chunk.vars.verses?.length > 0) {
-            chunk.vars.verses.flat().forEach((verse) => {
+            chunk.vars.verses.flat().forEach((verse: any) => {
               ObjectPooler.ReleaseObject({
                 obj: verse,
                 tag: verse.tags.poolTag,
@@ -105,7 +105,7 @@ function DeleteChapter(chapterData) {
     thisBot.vars.stackChaptersData.splice(chapterDataIndex, 1);
 }
 
-function DeleteBook(bookData) {
+function DeleteBook(bookData: any) {
   /**
    * Deletes a `StackBookData` or `StackSectionBookData` object and its associated chapters.
    *
@@ -113,7 +113,7 @@ function DeleteBook(bookData) {
    */
 
   let bookDataIndex;
-  bookData.childrenData.forEach((chapterData) => {
+  bookData.childrenData.forEach((chapterData: any) => {
     DeleteChapter(chapterData);
   });
   bookData.childrenData.splice(0, bookData.childrenData.length);
@@ -159,7 +159,7 @@ function DeleteBook(bookData) {
     thisBot.vars.lastInteractedStackBookData = null;
 }
 
-function DeleteSection(sectionData) {
+function DeleteSection(sectionData: any) {
   /**
    * Deletes a `StackSectionData` object and its associated books.
    *
@@ -167,7 +167,7 @@ function DeleteSection(sectionData) {
    */
 
   const sectionDataIndex = thisBot.vars.stackSectionsData.indexOf(sectionData);
-  sectionData.childrenData.flat().forEach((bookData) => {
+  sectionData.childrenData.flat().forEach((bookData: any) => {
     DeleteBook(bookData);
   });
   sectionData.childrenData.splice(0, sectionData.childrenData.length);
@@ -216,7 +216,7 @@ function DeleteSection(sectionData) {
     thisBot.vars.lastInteractedStackSectionData = null;
 }
 
-function DeleteTestament(testamentData) {
+function DeleteTestament(testamentData: any) {
   /**
    * Deletes a `StackTestamentData` object and its associated sections and books.
    *
@@ -225,7 +225,7 @@ function DeleteTestament(testamentData) {
 
   const testamentDataIndex =
     thisBot.vars.stackTestamentsData.indexOf(testamentData);
-  testamentData.childrenData.forEach((data) => {
+  testamentData.childrenData.forEach((data: any) => {
     if (data instanceof StackSectionData) DeleteSection(data);
     else if (data instanceof StackSectionBookData) DeleteBook(data);
   });
@@ -265,7 +265,7 @@ function DeleteTestament(testamentData) {
     thisBot.vars.lastInteractedStackTestamentData = null;
 }
 
-function DeleteBible(bibleData) {
+function DeleteBible(bibleData: any) {
   /**
    * Deletes a `StackBibleData` object and its associated testaments, sections, and static pieces.
    *
@@ -289,7 +289,7 @@ function DeleteBible(bibleData) {
   // }
   const bibleDataIndex = thisBot.vars.stackBiblesData.indexOf(bibleData);
   const staticBiblePiecesKeys = Object.keys(bibleData.staticBiblePieces);
-  bibleData.childrenData.forEach((testamentData) => {
+  bibleData.childrenData.forEach((testamentData: any) => {
     DeleteTestament(testamentData);
   });
   bibleData.childrenData.splice(0, bibleData.childrenData.length);

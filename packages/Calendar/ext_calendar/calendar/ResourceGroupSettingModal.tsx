@@ -47,7 +47,7 @@ const GroupSettingsModal = ({
     onClose();
   };
 
-  const handleRemoveRoom = (roomId) => {
+  const handleRemoveRoom = (roomId: any) => {
     onRemoveRoom(roomId); // remove from calendar
     setLocalRooms((prev) => prev.filter((r) => r.id !== roomId)); // remove from UI
   };

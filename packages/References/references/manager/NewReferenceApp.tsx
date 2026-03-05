@@ -164,7 +164,7 @@ const ReferenceApp = (props: { reference: ReferencesInterface }) => {
 
     SetActiveTab(el.id);
 
-    const checkEmpty = PanelsApps.find((e) => !e.tabData);
+    const checkEmpty = PanelsApps.find((e: any) => !e.tabData);
     const id = uuid();
     ReplaceApplication(checkEmpty.id, {
       id: id,

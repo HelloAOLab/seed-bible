@@ -76,7 +76,7 @@ async function uploadImageAndInsert() {
     globalThis.EditorFns.insertImage(imageUrl);
   }
 }
-async function uploadToServerOrBase64(file) {
+async function uploadToServerOrBase64(file: any) {
   return `data:${file.mimeType};base64,${bytes.toBase64String(file.data)}`;
 }
 async function uploadFile() {
@@ -187,7 +187,7 @@ export const SectionTextNumber = Node.create({
 });
 
 // ------- render helpers -------
-function renderStudyNotesToHTML(studyNote) {
+function renderStudyNotesToHTML(studyNote: any) {
   if (!studyNote || !studyNote.length || !studyNote[0]) {
     return `
       <div class="judeTextPage">
@@ -195,10 +195,10 @@ function renderStudyNotesToHTML(studyNote) {
       </div>`;
   }
   let html = `<div class="judeTextPage">`;
-  studyNote.forEach((book) => {
+  studyNote.forEach((book: any) => {
     html += `<div class="studyTextContainer">`;
     html += `<h2 class="mainHeader">${book.header}</h2>`;
-    book.sections.forEach((verse) => {
+    book.sections.forEach((verse: any) => {
       html += `<div class="verse">`;
       const sec = verse.section.toString();
       const m = sec.match(/(\d+):(\d+)(?:\s+(.*))?/);
@@ -212,7 +212,7 @@ function renderStudyNotesToHTML(studyNote) {
       } else {
         html += `<h3 class="verseNumber">${sec}</h3>`;
       }
-      verse.content.forEach((line) => {
+      verse.content.forEach((line: any) => {
         html += `<span class="verseText">${line}</span>`;
       });
       html += `</div>`;
@@ -222,13 +222,13 @@ function renderStudyNotesToHTML(studyNote) {
   html += `</div>`;
   return html;
 }
-function generateHtmlFromContent(data) {
+function generateHtmlFromContent(data: any) {
   if (!data || !data?.content) return "";
   const bookTitle = `${data?.book} - ${data?.chapter}`;
   const sectionsHtml = data?.content
-    .map((section) => {
+    .map((section: any) => {
       const versesHtml = section.verses
-        .filter((verse) => verse.verseNumber != null && !verse.lineBreak)
+        .filter((verse: any) => verse.verseNumber != null && !verse.lineBreak)
         .map((verse) => {
           return `
         <span class="sectionText">
@@ -256,7 +256,7 @@ function generateHtmlFromContent(data) {
       </body>
     </html>`;
 }
-function segmentHtmlBySectionEnd(htmlString) {
+function segmentHtmlBySectionEnd(htmlString: any) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlString, "text/html");
   const segments = [];
@@ -295,7 +295,7 @@ const TextEditor = ({
   setEnableEditor,
   enableEditor,
   studyNotes,
-}) => {
+}: any) => {
   if (!tab && !studyNotes) return content;
 
   const editorRef = useRef<null | Editor>(null);
@@ -392,13 +392,18 @@ const TextEditor = ({
       if (mode === "headings") return "sectionTitle";
       return null; // for "all"
     }
-    function applyMarkToNamedNodes(editor, nodeName, markName, attrs = {}) {
+    function applyMarkToNamedNodes(
+      editor: any,
+      nodeName: any,
+      markName: any,
+      attrs: any = {}
+    ) {
       const { state, view } = editor;
       const { tr, schema } = state;
       const markType = schema.marks[markName];
       const targetNodeType = schema.nodes[nodeName];
       if (!markType || !targetNodeType) return;
-      state.doc.descendants((node, pos) => {
+      state.doc.descendants((node: any, pos: any) => {
         if (node.type === targetNodeType) {
           let offset = 0;
           node.forEach((child) => {
@@ -673,7 +678,7 @@ const iconButtonStyle = {
   cursor: "pointer",
 };
 
-export function ResponsiveToolbar({ editor }) {
+export function ResponsiveToolbar({ editor }: any) {
   const [selectedText, setSelectedText] = useState("all");
   const [fontSize, setFontSize] = useState(16);
   const [textColor, setTextColor] = useState("#000000");
@@ -726,7 +731,7 @@ export function ResponsiveToolbar({ editor }) {
     },
   };
 
-  const persistPriority = (ids) => {
+  const persistPriority = (ids: any) => {
     localStorage.masks[PRIORITY_KEY] = {
       key: PRIORITY_KEY,
       data: JSON.stringify(ids),
@@ -745,29 +750,29 @@ export function ResponsiveToolbar({ editor }) {
     { label: "Numbered", icon: "format_list_numbered", value: "orderedList" },
   ];
 
-  const handleTextColorChange = (color) => {
+  const handleTextColorChange = (color: any) => {
     setTextColor(color);
     globalThis.EditorFns?.setTextColor(color);
   };
-  const handleBgColorChange = (color) => {
+  const handleBgColorChange = (color: any) => {
     setBgColor(color);
     globalThis.EditorFns?.setHighlightColor(color);
   };
-  const handleFontSizeChange = (size) => {
+  const handleFontSizeChange = (size: any) => {
     setFontSize(size);
     globalThis.EditorFns?.setFontSize(size.toString());
   };
   const handleFontFamilyChange = (font) => {
     globalThis.EditorFns?.setFontFamily(font);
   };
-  const handleAlignmentSelect = (option) => {
+  const handleAlignmentSelect = (option: any) => {
     if (!option) return;
     if (option.value === "left") globalThis.EditorFns?.alignLeft();
     else if (option.value === "center") globalThis.EditorFns?.alignCenter();
     else if (option.value === "right") globalThis.EditorFns?.alignRight();
     else if (option.value === "justify") globalThis.EditorFns?.alignJustify();
   };
-  const handleListSelect = (option) => {
+  const handleListSelect = (option: any) => {
     if (!option) return;
     if (option.value === "bulletList")
       globalThis.EditorFns?.toggleBulletList?.();
@@ -775,7 +780,7 @@ export function ResponsiveToolbar({ editor }) {
       globalThis.EditorFns?.toggleOrderedList?.();
   };
   const [spacing, setSpacing] = useState();
-  const handleSpaceSelect = (val) => {
+  const handleSpaceSelect = (val: any) => {
     setSpacing(val);
     globalThis.EditorFns?.setLineHeight(val);
   };
@@ -1078,7 +1083,7 @@ export function ResponsiveToolbar({ editor }) {
           key="margin1"
           icon={<MarginYIcon />}
           value={12}
-          onChange={(val) => {
+          onChange={(val: any) => {
             const el = document.getElementById("tiptapEditor");
             if (!el) return;
             el.style.paddingTop = `${val}px`;
@@ -1095,7 +1100,7 @@ export function ResponsiveToolbar({ editor }) {
           key="margin2"
           icon={<MarginXIcon />}
           value={12}
-          onChange={(val) => {
+          onChange={(val: any) => {
             const el = document.getElementById("tiptapEditor");
             if (!el) return;
             el.style.paddingLeft = `${val}px`;
@@ -1157,7 +1162,7 @@ export function ResponsiveToolbar({ editor }) {
   // ordered item ids = priority + any missing ids appended
   const allIds = Object.keys(allItemsById).filter((x) => x !== "__tune__");
   const orderedIds = (() => {
-    const known = priority.filter((id) => allIds.includes(id));
+    const known = priority.filter((id: any) => allIds.includes(id));
     const missing = allIds.filter((id) => !known.includes(id));
     return [...known, ...missing, "__tune__"]; // tune button last
   })();
@@ -1209,8 +1214,8 @@ export function ResponsiveToolbar({ editor }) {
   }, [orderedIds.join("|")]);
 
   // UI for priority tuning
-  const moveInDraft = (index, dir) => {
-    setDraftOrder((prev) => {
+  const moveInDraft = (index: any, dir: any) => {
+    setDraftOrder((prev: any) => {
       const a = prev.slice();
       const j = index + dir;
       if (j < 0 || j >= a.length) return a;
@@ -1288,7 +1293,7 @@ export function ResponsiveToolbar({ editor }) {
               </button>
             </div>
             <div className="tuning-body">
-              {draftOrder.map((id, idx) => (
+              {draftOrder.map((id: any, idx: any) => (
                 <div key={`draft-${id}`} className="tuning-row">
                   <div className="tuning-id">{id}</div>
                   <div className="tuning-arrows">
@@ -1420,7 +1425,7 @@ function FontStyleSelect({ onFontStyleChange }) {
     </select>
   );
 }
-function AIPromptInput({ onAIPrompt }) {
+function AIPromptInput({ onAIPrompt }: any) {
   const [inputValue, setInputValue] = useState("");
   const handleSubmit = () => {
     onAIPrompt(inputValue);
@@ -1619,7 +1624,7 @@ function CustomDropdown({
   onSelect,
   label = "Select",
   defaultValue,
-}) {
+}: any) {
   const [selected, setSelected] = useState(defaultValue || options[0]);
   const [open, setOpen] = useState(false);
   const handleSelect = (option) => {

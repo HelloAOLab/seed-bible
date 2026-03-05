@@ -3,12 +3,12 @@ let data;
 
 switch (element.tags.typeOfElement) {
   case BibleElementType.MapBook:
-    data = thisBot.vars.mapBooksData.find((data) => {
+    data = thisBot.vars.mapBooksData.find((data: any) => {
       return data.isActive && data.element?.id === element.id;
     });
     break;
   case BibleElementType.MapChapter:
-    data = thisBot.vars.mapChaptersData.find((data) => {
+    data = thisBot.vars.mapChaptersData.find((data: any) => {
       return data.isActive && data.element.id === element.id;
     });
     break;

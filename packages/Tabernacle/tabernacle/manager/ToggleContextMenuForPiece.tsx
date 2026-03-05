@@ -61,7 +61,7 @@ destroy(thisBot.vars.menu)`,
   AdjustContextMenu(newMenuTransformer);
 }
 
-function AdjustContextMenu(menuTransformer) {
+function AdjustContextMenu(menuTransformer: any) {
   const lines = [];
   const title = create({
     ...baseMenuLineTags,

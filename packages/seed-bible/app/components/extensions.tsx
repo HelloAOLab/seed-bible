@@ -82,7 +82,7 @@ function SettingsPanel({
             Packager.uninstallPackage({ ...data, address });
             setExpand(false);
           }
-          setUpdate((prev) => !prev);
+          setUpdate((prev: any) => !prev);
           // setInstalled(true)
           // setExpand(true)
         },

@@ -41,6 +41,6 @@ if (index > -1) {
 G[`${parentId}playlists`] = playlists;
 if (G[`${parentId}SetPlaylists`]) {
   G[`${parentId}SetPlaylists`](playlists);
-  G[`setRenderAgain`]((p) => p + 1);
+  G[`setRenderAgain`]((p: any) => p + 1);
 }
 setPlaylistLocale(playlists, parentId);

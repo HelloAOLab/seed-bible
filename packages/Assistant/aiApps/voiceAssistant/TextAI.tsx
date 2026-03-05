@@ -144,7 +144,7 @@ const TextAi = ({
           onChange={(e) => setQuery(e.target.value)}
         />
         <button
-          onClick={() => setMicActive((prev) => !prev)}
+          onClick={() => setMicActive((prev: any) => !prev)}
           class={`mic-button ${micActive ? "mic-active" : "mic-not-active"}`}
           aria-label="Mic"
         >

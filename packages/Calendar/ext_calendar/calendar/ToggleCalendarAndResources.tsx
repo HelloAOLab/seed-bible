@@ -11,7 +11,7 @@ const ToggleCalendarAndResources = ({ calendarApi, viewType, setViewType }) => {
     }
   }, [calendarApi]);
 
-  const handleToggle = (type) => {
+  const handleToggle = (type: any) => {
     setActive(type);
     if (!calendarApi.current) return;
 

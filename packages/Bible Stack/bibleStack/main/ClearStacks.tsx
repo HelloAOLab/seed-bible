@@ -26,7 +26,7 @@ for (const bookData of thisBot.vars.stackBooksData.slice()) {
 for (const chapterData of thisBot.vars.stackChaptersData.slice()) {
   await thisBot.DeletePiece({ pieceData: chapterData });
 }
-thisBot.vars.unhighlightDelaysInfo.forEach((unhighlightDelayInfo) => {
+thisBot.vars.unhighlightDelaysInfo.forEach((unhighlightDelayInfo: any) => {
   clearTimeout(unhighlightDelayInfo.timeoutId);
 });
 

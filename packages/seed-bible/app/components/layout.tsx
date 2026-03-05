@@ -33,7 +33,7 @@ import { SelectionUISettings } from "app.components.selectionUISettings";
 shout("initialize");
 globalThis.PanelTabsMap = {}; // { panelId: tabObject }
 
-const Layout = ({ children, panelsNumber }) => {
+const Layout = ({ children, panelsNumber }: any) => {
   // using this to recored the mouse position always
   // u can use the position anywhere if needed (i will need it for tabs dragging)
   // const { spaces, activeSpace } = useTabsContext()
@@ -54,7 +54,7 @@ const Layout = ({ children, panelsNumber }) => {
     removeSpace,
   } = useTabsContext();
   useEffect(() => {
-    const handleContextMenu = (e) => {
+    const handleContextMenu = (e: any) => {
       // e.preventDefault();
       // console.log('Global right-click blocked');
     };
@@ -184,7 +184,7 @@ function SwipeOverlay({
     const el = ref.current;
     if (!el || !active) return;
 
-    const onDown = (e) => {
+    const onDown = (e: any) => {
       // On some mobile browsers, stopping default on down helps avoid click-throughs
       if (preventScroll) e.preventDefault();
 
@@ -208,7 +208,7 @@ function SwipeOverlay({
       setDy(0);
     };
 
-    const onMove = (e) => {
+    const onMove = (e: any) => {
       if (!dragging || !start.current) return;
       if (preventScroll) e.preventDefault(); // requires touch-action:none on the element
       const s = start.current;
@@ -219,7 +219,7 @@ function SwipeOverlay({
       last.current = { x: e.clientX, y: e.clientY, t: Date.now() };
     };
 
-    const onUp = (e) => {
+    const onUp = (e: any) => {
       if (!dragging || !start.current || !last.current) return;
       setDragging(false);
       try {

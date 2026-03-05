@@ -1,6 +1,6 @@
 const { useRef, useState, useEffect } = os.appHooks;
 
-function formatDateTime(date) {
+function formatDateTime(date: any) {
   if (!(date instanceof Date)) date = new Date(date);
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -16,7 +16,7 @@ function formatDateTime(date) {
   };
 }
 
-function formatEndDateTime(date) {
+function formatEndDateTime(date: any) {
   if (!(date instanceof Date)) return { date: "", time: "" };
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -32,7 +32,7 @@ function formatEndDateTime(date) {
   };
 }
 
-const isFullCalendarEvent = (event) =>
+const isFullCalendarEvent = (event: any) =>
   typeof event.setStart === "function" && typeof event.setProp === "function";
 
 const EditEvent = ({
@@ -120,8 +120,8 @@ const EditEvent = ({
     }
     const allEvents = calendarApi.current.getEvents();
 
-    setEventInView((prev) =>
-      prev.map((ev) =>
+    setEventInView((prev: any) =>
+      prev.map((ev: any) =>
         ev.id === editingEvent.id
           ? {
               ...ev,

@@ -32,7 +32,7 @@ await waitForGlobals([
   "SetPackageAddingOptions",
 ]);
 
-async function SetUpConextMenu(contextOptions, bot, label) {
+async function SetUpConextMenu(contextOptions: any, bot: any, label) {
   try {
     const items = await bot[`${contextOptions}`]();
     if (!Array.isArray(items)) return [];
@@ -43,7 +43,7 @@ async function SetUpConextMenu(contextOptions, bot, label) {
   }
 }
 
-async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
+async function SetUpApplication(applicationFunction: any, bot, toolbarConfig) {
   function generateAppItem({
     icon,
     iconUrl,
@@ -56,7 +56,7 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
     const panelKey = `${label?.toUpperCase()?.replace(/\s/g, "_")}_PANEL_ID`;
     console.log("working", pkgName, panelKey);
     const onClick = async () => {
-      const checkEmpty = PanelsApps.find((e) => e.panelKey === panelKey);
+      const checkEmpty = PanelsApps.find((e: any) => e.panelKey === panelKey);
       console.log("checkEmpty", PanelsApps, checkEmpty);
       if (globalThis.makingApp === label) {
         globalThis.CurrentPanelAvailable = null;
@@ -180,9 +180,9 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
   return toolbarOption;
 }
 
-async function SetUpApplicationWithoutApp(toolbarConfig, bot) {
+async function SetUpApplicationWithoutApp(toolbarConfig: any, bot: any) {
   os.log("Setting up application", toolbarConfig);
-  const runFn = (e) => {
+  const runFn = (e: any) => {
     os.log("Running toolbar action", toolbarConfig.run, e);
     bot[toolbarConfig.run]({ ...e });
   };
@@ -207,13 +207,13 @@ async function SetUpApplicationWithoutApp(toolbarConfig, bot) {
     });
   }
 }
-async function SetUpTabApplication(tabConfig, bot) {
+async function SetUpTabApplication(tabConfig: any, bot: any) {
   // Support async or sync app getter
   const maybeApp = bot[tabConfig.app]();
   const App = typeof maybeApp?.then === "function" ? await maybeApp : maybeApp;
 
   if (App) {
-    SetPackageAddingOptions((prev) => {
+    SetPackageAddingOptions((prev: any) => {
       const d = [
         ...prev,
         {

@@ -3,10 +3,10 @@ const { mapData } = that;
 const dimension = os.getCurrentDimension();
 
 mapData.playlistEntries
-  .filter((entryItem) => {
+  .filter((entryItem: any) => {
     return entryItem !== null;
   })
-  .forEach((entryItem, index, array) => {
+  .forEach((entryItem: any, index: any, array: any) => {
     const prevEntryItem = array[index - 1];
     if (
       index > 0 &&
@@ -29,7 +29,7 @@ mapData.playlistEntries
         ];
 
       const prevMapBookStructure = mapData.childrenStructures.find(
-        (structure) => {
+        (structure: any) => {
           return (
             structure.mapBookData.elementInfo.commonName ===
             prevEntryItem.tags.book
@@ -37,7 +37,7 @@ mapData.playlistEntries
         }
       );
       const prevChapterData =
-        prevMapBookStructure.mapBookData.childrenData.find((data) => {
+        prevMapBookStructure.mapBookData.childrenData.find((data: any) => {
           return data.elementInfo.number === prevEntryItem.tags.chapter;
         });
       const prevChapterDataLastEntryItem =
@@ -45,13 +45,15 @@ mapData.playlistEntries
           prevChapterData.playlistEntriesItems.length - 1
         ];
 
-      let node = prevChapterDataLastEntryItem.vars.nodes?.find?.((node) => {
-        return (
-          node.tags.isInUse &&
-          node.tags.linkedTo === chapterDataLastEntryItem.id &&
-          node.tags.index == prevEntryItem.tags.index
-        );
-      });
+      let node = prevChapterDataLastEntryItem.vars.nodes?.find?.(
+        (node: any) => {
+          return (
+            node.tags.isInUse &&
+            node.tags.linkedTo === chapterDataLastEntryItem.id &&
+            node.tags.index == prevEntryItem.tags.index
+          );
+        }
+      );
       if (!node) {
         const prevChapterDataLastEntryItemPosition = getBotPosition(
           prevChapterDataLastEntryItem,

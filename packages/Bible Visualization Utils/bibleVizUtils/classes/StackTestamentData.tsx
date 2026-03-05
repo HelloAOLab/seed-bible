@@ -29,7 +29,7 @@ export class StackTestamentData extends StackPieceData {
     this.isSplitIntoSections = isSplitIntoSections;
   }
 
-  AddChild(newChild) {
+  AddChild(newChild: any) {
     if (
       newChild instanceof StackSectionData ||
       newChild instanceof StackSectionBookData

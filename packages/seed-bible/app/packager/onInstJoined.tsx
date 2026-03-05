@@ -14,7 +14,7 @@
 if (!masks?.installedPackages) {
   whisper(thisBot, "onEggHatch");
 } else {
-  masks.installedPackages.forEach((pkg) => {
+  masks.installedPackages.forEach((pkg: any) => {
     console.log("reinstalling ", pkg);
     //  thisBot.uninstallinstallPackage({ name: pkg })
     thisBot.reInitPackage({ name: pkg });

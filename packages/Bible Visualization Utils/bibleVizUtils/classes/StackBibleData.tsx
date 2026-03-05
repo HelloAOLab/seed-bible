@@ -28,7 +28,7 @@ export class StackBibleData extends StackData {
     this.arrangementIndex = arrangementIndex;
     this.bibleType = bibleType;
   }
-  AddChild(newChild) {
+  AddChild(newChild: any) {
     if (newChild instanceof StackTestamentData) {
       super.AddChild(newChild);
     } else {

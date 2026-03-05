@@ -6,7 +6,7 @@ const nodeBotConfig = {
   ...globalThis.eventBotConfig,
 };
 
-const fetchData = (url) => {
+const fetchData = (url: any) => {
   return web
     .hook({
       method: "GET",
@@ -20,7 +20,7 @@ const fetchData = (url) => {
     });
 };
 
-const fetchAllData = async (endpoints) => {
+const fetchAllData = async (endpoints: any) => {
   try {
     const fetchPromises = endpoints.map(fetchData);
 
@@ -32,7 +32,7 @@ const fetchAllData = async (endpoints) => {
   }
 };
 
-const createExpanseBot = async (botRef) => {
+const createExpanseBot = async (botRef: any) => {
   const data = botRef.tags.data;
 
   const dataStructure = {
@@ -114,7 +114,7 @@ const createExpanseBot = async (botRef) => {
   let allData = [];
 
   for (let i = 0; i < dataStructure[data.type].access.length; i++) {
-    const uidUrl = dataStructure[data.type].access[i].map((item) => {
+    const uidUrl = dataStructure[data.type].access[i].map((item: any) => {
       const params = {
         uid: typeof item === "string" ? item : item.uid,
       };
@@ -219,7 +219,7 @@ const createSoureBot = async () => {
         .then((data) => {
           return data.data;
         });
-      let verseJSON = bsbtranslation.chapter.content.filter((item) => {
+      let verseJSON = bsbtranslation.chapter.content.filter((item: any) => {
         return item.number == osisRef[2];
       })[0];
       if (verseJSON) {
@@ -253,7 +253,7 @@ const createSoureBot = async () => {
   shout("makeHideTool", { botId: controlBot.tags.id, toolName: "hideTool" });
 };
 
-const convertDataToNodes = async (botRef) => {
+const convertDataToNodes = async (botRef: any) => {
   if (botRef.tags.nodeType === "source") {
     await createExpanseBot(botRef);
   } else if (botRef.tags.nodeType === "expanse") {
@@ -261,7 +261,7 @@ const convertDataToNodes = async (botRef) => {
   }
 };
 
-const getGradientColor = (value) => {
+const getGradientColor = (value: any) => {
   // Red color values
   // rgb(0,176,255)
   const greenRGB = [29, 233, 182];

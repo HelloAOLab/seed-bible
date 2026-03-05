@@ -102,8 +102,8 @@ for (let entryIndex in mapData.playlistEntries) {
 
 thisBot.TryShowPlaylistPathOnMap({ mapData });
 
-function GetTestamentLineForEntry(entryItem) {
-  return mapData.staticMapElements.testamentLines.find((testamentLine) => {
+function GetTestamentLineForEntry(entryItem: any) {
+  return mapData.staticMapElements.testamentLines.find((testamentLine: any) => {
     return (
       testamentLine.tags.lineInfo.arrangementIndex ==
         entryItem.tags.arrangementIndex &&
@@ -113,9 +113,9 @@ function GetTestamentLineForEntry(entryItem) {
   });
 }
 
-function GetSectionLineSegmentForEntry(entryItem) {
+function GetSectionLineSegmentForEntry(entryItem: any) {
   const sectionLine = mapData.staticMapElements.sectionLines.find(
-    (currSectionLine) => {
+    (currSectionLine: any) => {
       const segmentInfo =
         currSectionLine.tags.lineInfo.segments[
           currSectionLine.tags.segmentIndex
@@ -136,8 +136,8 @@ function GetSectionLineSegmentForEntry(entryItem) {
   return sectionLine;
 }
 
-function GetMapBookForEntry(entryItem) {
-  const mapBookStructure = mapData.childrenStructures.find((structure) => {
+function GetMapBookForEntry(entryItem: any) {
+  const mapBookStructure = mapData.childrenStructures.find((structure: any) => {
     return (
       structure.mapBookData.creationInfo.arrangementIndex ===
         entryItem.tags.arrangementIndex &&

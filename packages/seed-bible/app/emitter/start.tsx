@@ -8,7 +8,7 @@ if (!globalThis.__navCooldownUntil) globalThis.__navCooldownUntil = 0;
 const EMIT_DEBOUNCE_MS = 150; // Short debounce - just prevents double-clicks
 const NAV_COOLDOWN_MS = 600; // Cooldown after receiving remote nav
 
-async function emitData(functionName, data) {
+async function emitData(functionName: any, data) {
   const remoteId = getID(configBot);
   const now = Date.now();
 
@@ -35,11 +35,18 @@ async function emitData(functionName, data) {
   // For book events: skip if same destination as last emit (dedup)
   if (functionName === "book") {
     const lastData = globalThis.__lastEmitData["book"];
-    if (lastData && lastData.bookId === data?.bookId && lastData.chapter === data?.chapter) {
+    if (
+      lastData &&
+      lastData.bookId === data?.bookId &&
+      lastData.chapter === data?.chapter
+    ) {
       os.log("emitData: skipping duplicate book emit - same destination");
       return;
     }
-    globalThis.__lastEmitData["book"] = { bookId: data?.bookId, chapter: data?.chapter };
+    globalThis.__lastEmitData["book"] = {
+      bookId: data?.bookId,
+      chapter: data?.chapter,
+    };
   }
 
   // Debounce rapid emissions of same event type (short - just prevents accidental double-clicks)
@@ -51,13 +58,13 @@ async function emitData(functionName, data) {
   globalThis.__lastEmitTime[functionName] = now;
 
   const remotes = await os.remotes();
-  const otherRemotes = remotes.filter(id => id !== remoteId);
+  const otherRemotes = remotes.filter((id) => id !== remoteId);
 
   // Include senderId in payload to help receivers detect their own echoes
   const payload = {
     ...data,
     senderId: remoteId,
-    timestamp: now
+    timestamp: now,
   };
 
   os.log("emitting", functionName, "to", otherRemotes);

@@ -43,7 +43,7 @@ switch (typeOfInteraction) {
             } else {
               const createNewTab = false;
               if (createNewTab) {
-                let tab = thisBot.vars.tabsContext.tabs.find((currTab) => {
+                let tab = thisBot.vars.tabsContext.tabs.find((currTab: any) => {
                   return (
                     currTab.data.book ===
                       chapterData.piece.tags.parentBookName &&

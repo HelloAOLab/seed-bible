@@ -1,7 +1,7 @@
-const removeEventFromLocalStorage = (eventId) => {
+const removeEventFromLocalStorage = (eventId: any) => {
   const stored = JSON.parse(localStorage.getItem("allEvents")) || [];
 
-  const updated = stored.filter((e) => e.id !== eventId);
+  const updated = stored.filter((e: any) => e.id !== eventId);
 
   localStorage.setItem("allEvents", JSON.stringify(updated));
 };
@@ -13,7 +13,7 @@ function buildEventTooltipContent({
   openSelf,
   Playlistplaying,
   isSameDate,
-}) {
+}: any) {
   const { title, start, id, extendedProps } = event;
   const { type, isResource, description, link, isReapeating } =
     extendedProps || {};
@@ -143,7 +143,7 @@ function buildEventTooltipContent({
     if (readingMeta) {
       let cursorDate;
 
-      const todaysReadings = readingMeta.list.filter((item) => {
+      const todaysReadings = readingMeta.list.filter((item: any) => {
         if (item.type === "date") {
           cursorDate = item.content;
           return false;
@@ -160,7 +160,7 @@ function buildEventTooltipContent({
       const ul = document.createElement("ul");
       ul.style.cssText = "padding-left:0;margin:0;list-style:none";
 
-      todaysReadings.forEach((plan) => {
+      todaysReadings.forEach((plan: any) => {
         const li = document.createElement("li");
         const btn = document.createElement("button");
         btn.textContent = plan.content;
@@ -184,7 +184,7 @@ function buildEventTooltipContent({
 
       /* ▶ PLAY PLAYLIST BUTTON */
       const playlist = globalThis["defaultplaylists"]?.find(
-        (p) => p.name === title
+        (p: any) => p.name === title
       );
 
       if (playlist) {

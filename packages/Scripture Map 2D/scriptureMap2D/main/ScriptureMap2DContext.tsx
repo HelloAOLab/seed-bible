@@ -186,7 +186,7 @@ export const ScriptureMap2DProvider: (
   const isMobile = useIsMobile(768);
   const { tabs, activeTab: activeTabId } = useTabsContext();
   const activeTab = useMemo(() => {
-    return tabs.find((tab) => {
+    return tabs.find((tab: any) => {
       return tab.id === activeTabId;
     });
   }, [tabs, activeTabId]);

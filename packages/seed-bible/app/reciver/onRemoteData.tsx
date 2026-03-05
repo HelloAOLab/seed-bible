@@ -108,7 +108,9 @@ const forwardToFollowersExcept = (
   eventName: string,
   data: any
 ) => {
-  const targets = followers.filter((id) => id !== excludeId && id !== selfId);
+  const targets = followers.filter(
+    (id: any) => id !== excludeId && id !== selfId
+  );
   if (targets.length)
     sendRemoteData(targets, eventName, { ...data, senderId: selfId });
 };

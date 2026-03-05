@@ -42,7 +42,7 @@ const finalColorHex = thisBot.RgbToHex({ rgbColor: finalColor });
 
 return finalColorHex;
 
-function ClampRGBColor(colorToClamp) {
+function ClampRGBColor(colorToClamp: any) {
   const colorClamped = [
     Math.max(Math.min(Math.round(colorToClamp[0]), 255), 0),
     Math.max(Math.min(Math.round(colorToClamp[1]), 255), 0),
@@ -51,6 +51,6 @@ function ClampRGBColor(colorToClamp) {
   return colorClamped;
 }
 
-function RoundToStep(value, step = 0.25) {
+function RoundToStep(value: any, step = 0.25) {
   return Math.round(value / step) * step;
 }

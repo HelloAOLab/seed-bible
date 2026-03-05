@@ -118,7 +118,7 @@ for (let mapChapterData of mapBookData.childrenData) {
 }
 
 if (fromOpenAllButton) {
-  mapBookData.childrenData.forEach((mapChapterData) => {
+  mapBookData.childrenData.forEach((mapChapterData: any) => {
     setTag(mapChapterData.element, "scale", 1);
     setTag(
       mapChapterData.element,

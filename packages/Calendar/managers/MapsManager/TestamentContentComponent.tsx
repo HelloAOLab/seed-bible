@@ -3,7 +3,7 @@ import { useMapPanelContext } from "managers.MapsManager.MapPanelContext";
 import { Book } from "managers.MapsManager.BookComponent";
 const { useMemo, useCallback, useState, useEffect, useRef } = os.appHooks;
 
-export const TestamentContent = ({ hidden }) => {
+export const TestamentContent = ({ hidden }: any) => {
   let sectionLevelsColorsMapRef = useRef(new Map());
   const { testament, testamentIndex } = useTestamentContext();
   const { arrangementRef, arrangementIndexRef } = useMapPanelContext();
@@ -17,12 +17,12 @@ export const TestamentContent = ({ hidden }) => {
     return testament.sections.toReversed();
   });
   const [sectionsShownArray, setSectionsShownArray] = useState(
-    reversedSections.map((_, index) => {
+    reversedSections.map((_: any, index) => {
       return true;
     })
   );
   const toggleShowSection = useCallback(
-    (section) => {
+    (section: any) => {
       const copy = [...sectionsShownArray];
       const index = reversedSections.indexOf(section);
       copy[index] = !copy[index];
@@ -33,7 +33,7 @@ export const TestamentContent = ({ hidden }) => {
 
   return (
     <div className={`testamentContent ${hidden ? "hidden" : ""}`}>
-      {reversedSections.flatMap((section, sectionIndex) => {
+      {reversedSections.flatMap((section: any, sectionIndex: any) => {
         const levelColorsKey = `${testamentIndex} ${sectionIndex}`;
         if (!sectionLevelsColorsMapRef.current.has(levelColorsKey)) {
           const sectionLevelsColors = GetChildrenLevelColors({
@@ -50,7 +50,7 @@ export const TestamentContent = ({ hidden }) => {
           sectionIndex == reversedSections.length - 1;
         const isFirstSectionInTestament = sectionIndex == 0;
 
-        return section.books.toReversed().map((_, bookIndex) => {
+        return section.books.toReversed().map((_: any, bookIndex: any) => {
           const mapPanelBookInfo = mapBooksInfo.find((info) => {
             return (
               info.arrangementIndex == arrangementIndexRef.current &&

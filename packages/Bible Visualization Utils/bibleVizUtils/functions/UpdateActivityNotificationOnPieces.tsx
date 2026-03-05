@@ -3,7 +3,7 @@ const { piecesData, manager } = that;
 if (!manager.vars.tabsContext) return;
 
 const dimension = os.getCurrentDimension();
-const fixedElementsData = piecesData.filter((currPieceData) => {
+const fixedElementsData = piecesData.filter((currPieceData: any) => {
   // const {bibleData} = BibleStackManager.GetDataChainFromParentDataIds({parentDataIds: currPieceData.parentDataIds});
   return currPieceData.piece && currPieceData.piece.tags[dimension] == true; // && (bibleData && bibleData.bibleType === BibleType.PlatformerGame)
 });
@@ -54,7 +54,7 @@ for (const pieceData of fixedElementsData) {
       .isHighlighted ||
       pieceData.isSelected)
   ) {
-    const formOpacity = pieceActivity.some((activity) => {
+    const formOpacity = pieceActivity.some((activity: any) => {
       return manager.vars.tabsContext.activeTab === activity.id;
     })
       ? 1

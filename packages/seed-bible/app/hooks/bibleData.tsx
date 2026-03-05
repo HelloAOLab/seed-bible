@@ -3,23 +3,23 @@ import { useTabsContext } from "app.hooks.tabs";
 
 const bibleTabDataCache = new Map();
 
-export function getCachedTabData(tabId) {
+export function getCachedTabData(tabId: any) {
   return bibleTabDataCache.get(tabId);
 }
 
-export function setCachedTabData(tabId, data) {
+export function setCachedTabData(tabId: any, data) {
   bibleTabDataCache.set(tabId, data);
 }
 
-function parseContent(content) {
+function parseContent(content: any) {
   const sections = [];
   let currentSection = { heading: "", number: 1, verses: [] };
   let isNewSection = true;
 
-  const parseText = (arr) =>
+  const parseText = (arr: any) =>
     arr.map((item) => (typeof item === "object" ? item.text : item)).join(" ");
 
-  content?.forEach((item) => {
+  content?.forEach((item: any) => {
     const { type, number, content: sectionContent } = item;
     if (type === "heading") {
       if (!isNewSection) {
@@ -47,7 +47,7 @@ function useBibleData({
   initialBookId = "GEN",
   initialChapter = 1,
   tab = null,
-} = {}) {
+}: any = {}) {
   const { updateTab } = useTabsContext();
 
   const [translation, setTranslation] = useState(initialTranslation);
@@ -118,7 +118,7 @@ function useBibleData({
   );
 
   const open = useCallback(
-    async (newBookId, newChapter, newTranslation = null) => {
+    async (newBookId: any, newChapter: any, newTranslation = null) => {
       if (newTranslation) setTranslation(newTranslation);
       setBookId(newBookId);
       setChapter(newChapter);
@@ -140,7 +140,7 @@ function useBibleData({
   }, [data, fetchBookData]);
 
   const changeTranslation = useCallback(
-    async (newTranslation) => {
+    async (newTranslation: any) => {
       setTranslation(newTranslation);
       await fetchBookData(
         `/api/${newTranslation}/${bookId}/${chapter}.json`,

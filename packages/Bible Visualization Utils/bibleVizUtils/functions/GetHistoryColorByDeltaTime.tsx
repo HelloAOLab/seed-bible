@@ -7,7 +7,7 @@ return baseColor;
 
 const sortedTimePeriods =
   BibleVizUtils.Data.masks.historyTimePeriodsInfo.toSorted(
-    (periodInfoA, periodInfoB) => {
+    (periodInfoA: any, periodInfoB) => {
       return periodInfoA.GetTimePeriodInMs() - periodInfoB.GetTimePeriodInMs();
     }
   );
@@ -67,7 +67,7 @@ const finalColorHex = thisBot.RgbToHex({ rgbColor: finalColor });
 
 return finalColorHex;
 
-function ClampRGBColor(colorToClamp) {
+function ClampRGBColor(colorToClamp: any) {
   const colorClamped = [
     Math.max(Math.min(Math.round(colorToClamp[0]), 255), 0),
     Math.max(Math.min(Math.round(colorToClamp[1]), 255), 0),

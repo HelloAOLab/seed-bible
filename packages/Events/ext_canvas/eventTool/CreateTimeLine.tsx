@@ -16,7 +16,7 @@ function App() {
   const [sliderValue, setSliderValue] = useState(0);
   const [currentMode, setCurrentMode] = useState("biodata");
 
-  const changePosition = (e) => {
+  const changePosition = (e: any) => {
     setSliderValue(e.target.value);
   };
 
@@ -266,7 +266,7 @@ const EventInfo = ({
       if (eventData.locations.length > 0) {
         let tempPlaces = [];
         let uniqueArr = eventData["places (from verses)"].filter(
-          (value, index, self) => self.indexOf(value) === index
+          (value: any, index, self) => self.indexOf(value) === index
         );
         for (let i = 0; i < uniqueArr.length; i++) {
           for (let j = 0; j < eventData.locations.length; j++) {
@@ -323,7 +323,7 @@ const EventInfo = ({
       let fetchPromises = [];
 
       console.log("Raw tie", personDataReq.data.data);
-      personDataReq.data.data.timeline.forEach((item) => {
+      personDataReq.data.data.timeline.forEach((item: any) => {
         let params = {
           uid: item,
         };
@@ -466,7 +466,7 @@ const EventInfo = ({
                     style={{ height: "fit-content" }}
                   >
                     <div class="event-results">
-                      {eventData.participants.map((item, index) => {
+                      {eventData.participants.map((item: any, index: any) => {
                         return (
                           <button
                             onClick={async () => {
@@ -512,8 +512,8 @@ const EventInfo = ({
                   >
                     <div class="event-results">
                       {retrievedPersonData.father
-                        .sort((a, b) => a.personID - b.personID)
-                        .map((item, index) => {
+                        .sort((a: any, b: any) => a.personID - b.personID)
+                        .map((item: any, index: any) => {
                           return (
                             <button
                               onClick={() => {
@@ -540,8 +540,8 @@ const EventInfo = ({
                   >
                     <div class="event-results">
                       {retrievedPersonData.mother
-                        .sort((a, b) => a.personID - b.personID)
-                        .map((item, index) => {
+                        .sort((a: any, b: any) => a.personID - b.personID)
+                        .map((item: any, index: any) => {
                           return (
                             <button onClick={() => {}}>{item.name}</button>
                           );
@@ -562,7 +562,7 @@ const EventInfo = ({
                   >
                     <div class="event-results">
                       {retrievedPersonData.siblings
-                        .sort((a, b) => a.personID - b.personID)
+                        .sort((a: any, b: any) => a.personID - b.personID)
                         .map((item, index) => {
                           return (
                             <button
@@ -590,8 +590,8 @@ const EventInfo = ({
                   >
                     <div class="event-results">
                       {retrievedPersonData.children
-                        .sort((a, b) => a.personID - b.personID)
-                        .map((item, index) => {
+                        .sort((a: any, b: any) => a.personID - b.personID)
+                        .map((item: any, index) => {
                           return (
                             <button
                               onClick={() => {
@@ -618,8 +618,8 @@ const EventInfo = ({
                   >
                     <div class="event-results">
                       {retrievedPersonData.partners
-                        .sort((a, b) => a.personID - b.personID)
-                        .map((item, index) => {
+                        .sort((a: any, b: any) => a.personID - b.personID)
+                        .map((item: any, index: any) => {
                           return (
                             <button
                               onClick={() => {
@@ -645,7 +645,7 @@ const EventInfo = ({
                     style={{ height: "fit-content" }}
                   >
                     <div class="event-results">
-                      {aquiferData.map((item) => {
+                      {aquiferData.map((item: any) => {
                         return (
                           <button
                             onClick={() => {

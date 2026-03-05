@@ -6,7 +6,7 @@ mapData.isLabelsEnabled = true;
 thisBot.ShowLabelsOnMap({ mapData });
 
 mapData.staticMapElements.settingsButtons
-  .find((button) => {
+  .find((button: any) => {
     return button.tags.buttonType === MapButtonType.ShowLabelsToggle;
   })
   ?.Activate?.();

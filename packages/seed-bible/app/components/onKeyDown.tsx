@@ -5,7 +5,7 @@ const multiSelectKeys = {
   meta: true,
 };
 
-keys?.forEach((key) => {
+keys?.forEach((key: any) => {
   if (!globalThis.KEY_HOLD) {
     globalThis.KEY_HOLD = {};
   }

@@ -11,7 +11,7 @@ const {
   testamentLinesInfo,
 } = await thisBot.CreateMapStructure({ mapData });
 
-mapBookStructures.forEach((mapBookStructure) => {
+mapBookStructures.forEach((mapBookStructure: any) => {
   mapData.AddChild(mapBookStructure);
 });
 mapData.amountOfRows = amountOfRows;

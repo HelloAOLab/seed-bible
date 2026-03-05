@@ -68,7 +68,7 @@ export const MainContent = ({ controller }: { controller: MainController }) => {
     controller.linkViewMethod("updateApplication", updateApplication);
 
     setStarted(true);
-    const handleContextMenu = (e) => {
+    const handleContextMenu = (e: any) => {
       e.preventDefault(); // Disable right-click
     };
 
@@ -82,7 +82,7 @@ export const MainContent = ({ controller }: { controller: MainController }) => {
   useEffect(() => {
     if (!started) return;
 
-    setApps((prevApps) => {
+    setApps((prevApps: any) => {
       const newApps = [];
 
       for (let i = 0; i < screens.value; i++) {

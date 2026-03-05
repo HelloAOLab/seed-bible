@@ -529,7 +529,7 @@ export const LoadSpaceSetting = ({
   labelKey = "loadNewSpace",
 }) => {
   const { spaces, activeSpace, replaceActiveSpaceWithJSON } = useTabsContext();
-  const CurrentSpace = spaces.find((e) => e.id === activeSpace);
+  const CurrentSpace = spaces.find((e: any) => e.id === activeSpace);
 
   return (
     <SettingRow
@@ -558,7 +558,7 @@ export const ShareSetting = ({ itemKey = "share", labelKey = "share" }) => {
 };
 
 // ---------- Space Icon & Name ----------
-export const SpaceIconSetting = ({ itemKey = "spaceIcon" }) => {
+export const SpaceIconSetting = ({ itemKey = "spaceIcon" }: any) => {
   const {
     editMode,
     visibility,
@@ -606,7 +606,7 @@ export const SpaceIconSetting = ({ itemKey = "spaceIcon" }) => {
         title: "Add link",
         onClick: async () => {
           const link = await os.showInput(null, { title: "Add link" });
-          if (link) setCustomIcon((prev) => ({ ...prev, link }));
+          if (link) setCustomIcon((prev: any) => ({ ...prev, link }));
         },
       },
       {
@@ -1082,7 +1082,7 @@ export const HelpSetting = ({ itemKey = "help", labelKey = "help" }) => {
 export const SubscriptionsSetting = ({
   itemKey = "subscriptions",
   labelKey = "subscriptions",
-}) => {
+}: any) => {
   const {
     t,
     editMode,
@@ -1361,7 +1361,7 @@ const FlagImg = ({ cc }: { cc: string }) => (
 export const LanguageSetting = ({
   itemKey = "language",
   labelKey = "language",
-}) => {
+}: any) => {
   const {
     t,
     editMode,
@@ -1491,7 +1491,7 @@ export const LanguageSetting = ({
 };
 
 // ---------- ReSeed Toggle ----------
-export const ReSeedToggleSetting = ({ itemKey = "reseedToggle" }) => {
+export const ReSeedToggleSetting = ({ itemKey = "reseedToggle" }: any) => {
   const { t } = useSettingsContext();
   const { ReSeed, setReSeed } = useBibleContext();
   return (
@@ -1539,7 +1539,7 @@ const COMPONENT_REGISTRY = {
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONFIG-DRIVEN RENDERER
 // ═══════════════════════════════════════════════════════════════════════════════
-const renderFromConfig = (config) => {
+const renderFromConfig = (config: any) => {
   const elements = [];
 
   Object.entries(config.tabs).forEach(([tabKey, tabConfig]) => {
@@ -1575,7 +1575,7 @@ const renderFromConfig = (config) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN SETTINGS SIDEBAR COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
-const SettingsSidebar = ({ config }) => {
+const SettingsSidebar = ({ config }: any) => {
   const {
     t,
     changeLanguage,
@@ -1647,14 +1647,14 @@ const SettingsSidebar = ({ config }) => {
     setVisibility(initial);
   }, [config, useTabs]);
 
-  const toggleVisibility = (key) => {
+  const toggleVisibility = (key: any) => {
     const newVis = { ...visibility, [key]: !visibility[key] };
     setVisibility(newVis);
     if (!globalThis.changes) globalThis.changes = {};
     globalThis.changes.settingsVisibility = newVis;
   };
 
-  const handleLabelEdit = (key, value) => {
+  const handleLabelEdit = (key: any, value: any) => {
     const newLabels = { ...labels, [key]: value };
     setLabels(newLabels);
     if (!globalThis.changes) globalThis.changes = {};

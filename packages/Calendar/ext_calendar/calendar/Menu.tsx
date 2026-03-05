@@ -20,7 +20,7 @@ const Menu = ({
   const [hovered, setHovered] = useState(null);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: any) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         onClose();
       }
@@ -149,7 +149,7 @@ const Menu = ({
             onClick={() => {
               const groups = document.querySelectorAll(".fc-resource-group");
 
-              groups.forEach((group) => {
+              groups.forEach((group: any) => {
                 const label = group.innerText.trim();
 
                 if (label === groupValue) {

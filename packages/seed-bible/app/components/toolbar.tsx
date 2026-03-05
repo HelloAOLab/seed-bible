@@ -58,7 +58,7 @@ export function Toolbar() {
   // }, [openOnMobile]);
 
   const TabTools = getToolsForActiveSpace();
-  const setActiveTools = (newTools) =>
+  const setActiveTools = (newTools: any) =>
     updateToolsForSpace(activeSpace, newTools);
 
   const [oldList, setOldList] = useState(null);
@@ -72,7 +72,7 @@ export function Toolbar() {
 
   useEffect(() => () => clearTimeout(holdTimeoutRef.current), []);
 
-  function handleMouseEnter(targetIndex) {
+  function handleMouseEnter(targetIndex: any) {
     if (!isDragging || draggedIndex === null) return;
     if (targetIndex === draggedIndex) return;
 
@@ -105,7 +105,7 @@ export function Toolbar() {
   // Sync tools with active tab type (keeps main logic)
   useEffect(() => {
     if (!activeTab || !tabs) return;
-    const activeTabObj = tabs.find((t) => t.id === activeTab);
+    const activeTabObj = tabs.find((t: any) => t.id === activeTab);
 
     // Check if translation is Arabic/RTL
     const translation = activeTabObj?.data?.translation;
@@ -136,7 +136,7 @@ export function Toolbar() {
 
   // Disable context menu like before
   useEffect(() => {
-    const handleContextMenu = (e) => e.preventDefault();
+    const handleContextMenu = (e: any) => e.preventDefault();
     window.addEventListener("contextmenu", handleContextMenu);
     os.addBotListener(configBot, "onBotChanged", (that) => {
       if (that.tags.includes("book")) {
@@ -148,7 +148,7 @@ export function Toolbar() {
     return () => window.removeEventListener("contextmenu", handleContextMenu);
   }, []);
 
-  const moreTools = tools ? tools.filter((t) => t?.active !== false) : [];
+  const moreTools = tools ? tools.filter((t: any) => t?.active !== false) : [];
 
   if (!showToolbar) return <></>;
 
@@ -218,8 +218,8 @@ export function Toolbar() {
               {showMoreMenu && (
                 <div className="more-menu-popup">
                   {moreTools
-                    .filter((tool) => tool.label !== "Books")
-                    .map((tool, i) => (
+                    .filter((tool: any) => tool.label !== "Books")
+                    .map((tool, i: any) => (
                       <button
                         key={i}
                         className="more-menu-item"
@@ -327,7 +327,7 @@ export function Toolbar() {
                 <BurgerMenuIcon size={24} color="var(--text1)" />
               </button>
             </div>
-            {tools?.map((tool, index) =>
+            {tools?.map((tool: any, index: any) =>
               tool?.active === false ? null : (
                 <div
                   key={`${tool.icon || "tool"}-${index}`}

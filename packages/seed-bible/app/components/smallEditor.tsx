@@ -118,14 +118,14 @@ export function MiniTextEditor({
     instanceId || `sre_${Math.random().toString(36).slice(2)}`
   ).current;
   const storage = {
-    get(k) {
+    get(k: any) {
       try {
         return JSON.parse(window.localStorage.getItem(k) || "null");
       } catch {
         return null;
       }
     },
-    set(k, v) {
+    set(k: any, v: any) {
       try {
         window.localStorage.setItem(k, JSON.stringify(v));
       } catch {}
@@ -173,7 +173,7 @@ export function MiniTextEditor({
   useEffect(() => {
     window.SimpleEditorToolbar = window.SimpleEditorToolbar || {};
     window.SimpleEditorToolbar[_instanceId] = {
-      setPriorities: (ids) => {
+      setPriorities: (ids: any) => {
         if (!Array.isArray(ids) || !ids.length) return;
         setPriority(ids);
         storage.set(`${priorityKey}:${_instanceId}`, ids);
@@ -271,7 +271,7 @@ export function MiniTextEditor({
   }, []);
 
   // ---- helpers for marks on whole doc (scope kept for API parity)
-  const applyMarkWholeDoc = (markName, attrs = null) => {
+  const applyMarkWholeDoc = (markName: any, attrs = null) => {
     const editor = editorObjRef.current;
     if (!editor) return;
     const { state, view } = editor;
@@ -305,7 +305,7 @@ export function MiniTextEditor({
       if (!ed) return;
       ed.chain().focus().clearNodes().unsetAllMarks().run();
     },
-    setTextColor: (color) => {
+    setTextColor: (color: any) => {
       setTextColor(color);
       const ed = editorObjRef.current;
       if (!ed) return;
@@ -314,7 +314,7 @@ export function MiniTextEditor({
         ed.chain().focus().setColor(color).run();
       } catch {}
     },
-    setHighlightColor: (color) => {
+    setHighlightColor: (color: any) => {
       setBgColor(color);
       const ed = editorObjRef.current;
       if (!ed) return;
@@ -322,7 +322,7 @@ export function MiniTextEditor({
         ed.chain().focus().setMark("highlight", { color }).run();
       } catch {}
     },
-    setFontFamily: (font) => {
+    setFontFamily: (font: any) => {
       const ed = editorObjRef.current;
       if (!ed) return;
       ed.chain()
@@ -330,7 +330,7 @@ export function MiniTextEditor({
         .setMark("textStyle", { style: `font-family:${font};` })
         .run();
     },
-    setFontSize: (px) => {
+    setFontSize: (px: any) => {
       setFontPx(px);
       const ed = editorObjRef.current;
       if (!ed) return;
@@ -339,7 +339,7 @@ export function MiniTextEditor({
         .setMark("textStyle", { style: `font-size:${px}px;` })
         .run();
     },
-    setLineHeight: (lh) => {
+    setLineHeight: (lh: any) => {
       setLineSpacing(lh);
       const ed = editorObjRef.current;
       if (!ed) return;
@@ -351,7 +351,7 @@ export function MiniTextEditor({
       tr.addMark(0, doc.content.size, mt.create({ lineHeight: lh }));
       if (tr.docChanged) view.dispatch(tr);
     },
-    insertImageDataURL: (dataURL) => {
+    insertImageDataURL: (dataURL: any) => {
       const ed = editorObjRef.current;
       if (!ed) return;
       ed.chain().focus().setImage({ src: dataURL }).run();
@@ -367,7 +367,7 @@ export function MiniTextEditor({
       ed.chain().focus().unsetLink().run();
     },
     getHTML: () => editorObjRef.current?.getHTML() || "",
-    setHTML: (html) => editorObjRef.current?.commands.setContent(html),
+    setHTML: (html: any) => editorObjRef.current?.commands.setContent(html),
     exportJSON: () => {
       const ed = editorObjRef.current;
       if (!ed) return;
@@ -375,7 +375,7 @@ export function MiniTextEditor({
       const blob = new Blob([data], { type: "application/json;charset=utf-8" });
       triggerDownload(blob, "editor-content.json");
     },
-    importJSON: (json) => {
+    importJSON: (json: any) => {
       const ed = editorObjRef.current;
       if (!ed) return;
       try {
@@ -406,18 +406,18 @@ export function MiniTextEditor({
   };
 
   // chain helpers
-  function chain(method) {
+  function chain(method: any) {
     const ed = editorObjRef.current;
     if (!ed) return;
     ed.chain().focus()[method]().run();
   }
-  function chainWith(method) {
+  function chainWith(method: any) {
     const ed = editorObjRef.current;
     if (!ed) return;
     if (typeof ed.chain().focus()[method] === "function")
       ed.chain().focus()[method]().run();
   }
-  function chainArg(method, arg) {
+  function chainArg(method, arg: any) {
     const ed = editorObjRef.current;
     if (!ed) return;
     ed.chain().focus()[method](arg).run();
@@ -429,7 +429,7 @@ export function MiniTextEditor({
   const fileLinkInput = useRef(null);
 
   const onPickImage = () => fileImgInput.current?.click();
-  const onImageSelected = (e) => {
+  const onImageSelected = (e: any) => {
     const f = e.target.files?.[0];
     if (!f) return;
     const reader = new FileReader();
@@ -439,7 +439,7 @@ export function MiniTextEditor({
   };
 
   const onPickJSON = () => fileJsonInput.current?.click();
-  const onJSONSelected = (e) => {
+  const onJSONSelected = (e: any) => {
     const f = e.target.files?.[0];
     if (!f) return;
     const reader = new FileReader();
@@ -540,8 +540,8 @@ export function MiniTextEditor({
   }
 
   // ---- tuning actions
-  const moveDraft = (i, dir) => {
-    setDraftOrder((prev) => {
+  const moveDraft = (i: any, dir: any) => {
+    setDraftOrder((prev: any) => {
       const arr = prev.slice();
       const j = i + dir;
       if (j < 0 || j >= arr.length) return arr;
@@ -556,7 +556,7 @@ export function MiniTextEditor({
   };
 
   // ---- apply paddings to editor container
-  function applyPadding(py, px) {
+  function applyPadding(py: any, px: any) {
     const el = editorRef.current;
     if (!el) return;
     el.style.paddingTop = `${py}px`;
@@ -655,7 +655,7 @@ export function MiniTextEditor({
               </button>
             </div>
             <div className="sre-tune-body">
-              {draftOrder.map((id, idx) => (
+              {draftOrder.map((id, idx: any) => (
                 <div key={`dr-${id}`} className="sre-tune-row">
                   <div className="sre-tune-id">{id}</div>
                   <div className="sre-tune-arrows">
@@ -692,7 +692,7 @@ export function MiniTextEditor({
   );
 
   // -------------- build toolbar map (JSX per id) ---------------
-  function buildToolbarMap(ctx) {
+  function buildToolbarMap(ctx: any) {
     const {
       Cmds,
       textColor,
@@ -712,7 +712,7 @@ export function MiniTextEditor({
       onAddLink,
     } = ctx;
 
-    const iconBtn = (title, icon, onClick) => (
+    const iconBtn = (title: any, icon: any, onClick: any) => (
       <button
         className="sre-ib"
         onClick={(e) => {
@@ -725,7 +725,7 @@ export function MiniTextEditor({
       </button>
     );
 
-    const colorInput = (value, onChange) => (
+    const colorInput = (value: any, onChange: any) => (
       <input
         type="color"
         value={value}
@@ -734,7 +734,14 @@ export function MiniTextEditor({
       />
     );
 
-    const numberChip = (value, setValue, min, max, step, onApply) => (
+    const numberChip = (
+      value,
+      setValue: any,
+      min: any,
+      max: any,
+      step: any,
+      onApply: any
+    ) => (
       <div className="sre-numchip">
         <button
           onClick={(e) => {
@@ -748,7 +755,7 @@ export function MiniTextEditor({
         </button>
         <div>{value}</div>
         <button
-          onClick={(e) => {
+          onClick={(e: any) => {
             e.preventDefault();
             const v = clamp((+value || 0) + step, min, max);
             setValue(v);
@@ -760,7 +767,7 @@ export function MiniTextEditor({
       </div>
     );
 
-    const select = (options, value, onChange, title) => (
+    const select = (options, value: any, onChange: any, title: any) => (
       <select
         className="sre-select"
         value={value}
@@ -932,13 +939,13 @@ export function MiniTextEditor({
       "text-color": (
         <div className="sre-inline" title="Text color">
           <span className="material-symbols-outlined">title</span>
-          {colorInput(textColor, (c) => Cmds.setTextColor(c))}
+          {colorInput(textColor, (c: any) => Cmds.setTextColor(c))}
         </div>
       ),
       "bg-color": (
         <div className="sre-inline" title="Highlight color">
           <span className="material-symbols-outlined">border_color</span>
-          {colorInput(bgColor, (c) => Cmds.setHighlightColor(c))}
+          {colorInput(bgColor, (c: any) => Cmds.setHighlightColor(c))}
         </div>
       ),
       paragraph: paragraphDrop,
@@ -1055,7 +1062,7 @@ export function MiniTextEditor({
 }
 
 // ---------------- styles ----------------
-const SRE_STYLES = (minH) => `
+const SRE_STYLES = (minH: any) => `
 
 .tiptap.ProseMirror * {
   color: initial !important;
@@ -1162,13 +1169,13 @@ const SRE_STYLES = (minH) => `
 `;
 
 // ---------------- utils ----------------
-function clamp(n, a, b) {
+function clamp(n: any, a: any, b: any) {
   return Math.max(a, Math.min(b, n));
 }
-function escapeHTML(s) {
+function escapeHTML(s: any) {
   return s.replace(
     /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
+    (c: any) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
   );
 }
 function triggerDownload(blob, filename) {

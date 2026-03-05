@@ -31,7 +31,7 @@ import {
 } from "app.components.icons";
 
 import { useSideBarContext } from "app.hooks.sideBar";
-function getUserSessionInfo(userId) {
+function getUserSessionInfo(userId: any) {
   try {
     if (typeof tags === "undefined" || !tags.sessions) {
       return { inSession: false, role: "none", config: null };
@@ -199,7 +199,7 @@ function ThePage({
         "custom",
       ];
       allTranslations = available_translations_req.data.translations.map(
-        (item) => {
+        (item: any) => {
           return {
             ...item,
             languageEnglishName: item?.languageEnglishName || item.englishName,
@@ -212,7 +212,7 @@ function ThePage({
         value: null,
       };
       if (available_translations_req.status === 200) {
-        allTranslations.forEach((translationData) => {
+        allTranslations.forEach((translationData: any) => {
           if (
             translationData.id.toLowerCase() === translationId.toLowerCase()
           ) {
@@ -250,7 +250,7 @@ function ThePage({
               };
             }
             const defaultTranslation = newTranslations[0];
-            newTranslations = newTranslations.map((trans) => {
+            newTranslations = newTranslations.map((trans: any) => {
               return {
                 ...trans,
                 name: trans.name,
@@ -309,7 +309,7 @@ function ThePage({
         if (masks?.newTranslations) {
           allTranslations = [...allTranslations, ...masks.newTranslations];
         }
-        allTranslations.forEach((translation) => {
+        allTranslations.forEach((translation: any) => {
           const englishName =
             translation?.languageEnglishName?.toLowerCase() ||
             translation?.englishName?.toLowerCase();
@@ -354,7 +354,7 @@ function ThePage({
   };
 
   useEffect(() => {
-    const onKey = (e) => {
+    const onKey = (e: any) => {
       if (e.key === "Escape") {
         setClickedVerses([]);
         setShowVerseToolbar(false);
@@ -370,7 +370,7 @@ function ThePage({
     };
   }, []);
   useEffect(() => {
-    const onBookChange = (data) => {
+    const onBookChange = (data: any) => {
       // os.log("updated shared tab", "not approved");
       // if (!globalThis.CurrentTab?.sharedTab) {
       //   updateTab(masks["sharedTab"], data);
@@ -380,7 +380,7 @@ function ThePage({
       globalThis.Open?.(data.bookId, data.chapter);
     };
 
-    const onHighlightChange = (data) => {
+    const onHighlightChange = (data: any) => {
       if (!globalThis.CurrentTab?.sharedTab) return;
       console.log("remoteHighlightChange", data);
       globalThis.ToggleVerseHighlight?.(
@@ -445,7 +445,7 @@ function ThePage({
         if (books) {
           if (configBot.tags?.book && books && books?.length > 0) {
             let bookData;
-            books.forEach((book) => {
+            books.forEach((book: any) => {
               if (book.id.toLowerCase() === configBot.tags.book.toLowerCase()) {
                 bookData = book;
               }
@@ -472,7 +472,7 @@ function ThePage({
             }
           } else if (configBot.tags?.chapter && books?.length > 0) {
             let bookData;
-            books.forEach((book) => {
+            books.forEach((book: any) => {
               if (book.id.toLowerCase() === tab.data.bookId.toLowerCase()) {
                 bookData = book;
               }
@@ -550,7 +550,7 @@ function ThePage({
   const BOOK_EMIT_DEBOUNCE = 250; // ms
 
   // SAFELY EMIT BOOK WITHOUT LOOPS OR SPAM
-  function safeEmitBook(payload) {
+  function safeEmitBook(payload: any) {
     const now = Date.now();
 
     // 1) Prevent loop from remote → local → remote
@@ -650,7 +650,7 @@ function ThePage({
   // }, [data]);
 
   useEffect(() => {
-    const handleBeforeUnload = (e) => {
+    const handleBeforeUnload = (e: any) => {
       const emitter = getBot("system", "app.emitter");
       sendRemoteData(emitter.masks.otherRemotes, "personLeftTheChat", {
         id: tab?.id,
@@ -693,7 +693,10 @@ function ThePage({
   }, [navFunctions, data]);
 
   useEffect(() => {
-    function getUnifiedSelectedVerses(rawSelectedVerses, clickedVerses) {
+    function getUnifiedSelectedVerses(
+      rawSelectedVerses: any,
+      clickedVerses: any
+    ) {
       if (clickedVerses && clickedVerses.length > 0) {
         return [...new Set(clickedVerses)].sort((a, b) => a - b);
       }
@@ -765,10 +768,10 @@ function ThePage({
 
       //  selected text from verse data (excludes headings)
       const selectedTextFinal = unifiedVerses
-        .map((v) => {
+        .map((v: any) => {
           const verseObj = data?.content
             ?.flatMap((c) => c.verses)
-            .find((x) => x.verseNumber === v);
+            .find((x: any) => x.verseNumber === v);
           return verseObj?.text || "";
         })
         .join(" ");
@@ -904,7 +907,12 @@ function ThePage({
     }
   }
 
-  async function open(bookId, chapter, translation = null, chapterUrl = null) {
+  async function open(
+    bookId: any,
+    chapter: any,
+    translation: any = null,
+    chapterUrl: any = null
+  ) {
     try {
       await bible.open(bookId, chapter, (translation = null), chapterUrl);
       setData(bible.data);
@@ -929,14 +937,14 @@ function ThePage({
     }
   }
 
-  async function changeTranslation(id, booksData, forcedBaseUrl) {
+  async function changeTranslation(id, booksData: any, forcedBaseUrl: any) {
     await bible.changeTranslation(id, booksData, forcedBaseUrl);
     setData(bible.data);
     setFootnotes(bible.footnotes);
   }
 
   const highlightWords = useCallback(
-    (config) => {
+    (config: any) => {
       if (!tab?.id) return;
 
       const targetBook = config.book == null ? data?.book : config.book;
@@ -963,14 +971,14 @@ function ThePage({
       const wordsToAdd = (config.words || []).filter(Boolean);
       if (!wordsToAdd.length) return;
 
-      setWordHighlights((prev) => {
+      setWordHighlights((prev: any) => {
         const newHighlights = { ...prev };
 
         if (!globalThis.wordHighlights) globalThis.wordHighlights = {};
         if (!globalThis.wordHighlights[tab?.id])
           globalThis.wordHighlights[tab?.id] = {};
 
-        targetVerses.forEach((vn) => {
+        targetVerses.forEach((vn: any) => {
           const key = `${targetBook}-${targetChapter}-${vn}`;
           if (!newHighlights[key]) newHighlights[key] = {};
 
@@ -998,10 +1006,10 @@ function ThePage({
   );
 
   const removeWordHighlight = useCallback(
-    (config) => {
+    (config: any) => {
       if (!tab?.id) return;
 
-      setWordHighlights((prev) => {
+      setWordHighlights((prev: any) => {
         const newHighlights = { ...prev };
         const key = `${config.book}-${config.chapter}-${config.verse}`;
 
@@ -1044,7 +1052,7 @@ function ThePage({
     shout("onBookChanged", { ...data, tabId: tab?.id });
     setCommandHighlight([]);
     if (data && JSON.stringify(tab?.data) !== JSON.stringify(data)) {
-      setTab((prev) => ({ ...prev, data }));
+      setTab((prev: any) => ({ ...prev, data }));
     }
   }, [data]);
 
@@ -1089,7 +1097,7 @@ function ThePage({
     globalThis.LastClickedPanelUpdate = panelId;
   }
 
-  function Update(tab) {
+  function Update(tab: any) {
     os.log("Update-data", tab);
     setTab(tab);
     hanldNavFunctions();
@@ -1127,7 +1135,7 @@ function ThePage({
     const refs = {};
     if (data && data.content)
       data.content.forEach(({ verses }) => {
-        verses.forEach((verse) => {
+        verses.forEach((verse: any) => {
           refs[verse.verseNumber] = createRef();
         });
       });
@@ -1209,7 +1217,7 @@ function ThePage({
   }, [tab?.id, data?.book, data?.chapter]);
 
   const toggleVerseHighlight = useCallback(
-    (verseNumbers, color, scroll, fadeIn, skipIt) => {
+    (verseNumbers: any, color: any, scroll: any, fadeIn: any, skipIt: any) => {
       if (!tab?.id) return;
 
       const verseId = `v-${
@@ -1229,7 +1237,7 @@ function ThePage({
         ? verseNumbers
         : [verseNumbers];
 
-      setHighlighted((prev) => {
+      setHighlighted((prev: any) => {
         const newHighlighted = { ...prev };
         const groupId = Date.now();
 
@@ -1309,7 +1317,7 @@ function ThePage({
   );
 
   const highlightVerse = useCallback(
-    (verseNumbers, color, scroll = true) => {
+    (verseNumbers, color: any, scroll = true) => {
       if (!tab?.id) return;
 
       const verseId = `v-${
@@ -1329,7 +1337,7 @@ function ThePage({
         ? verseNumbers
         : [verseNumbers];
 
-      setHighlighted((prev) => {
+      setHighlighted((prev: any) => {
         const newHighlighted = { ...prev };
         const groupId = Date.now();
 
@@ -1426,7 +1434,7 @@ function ThePage({
   }
   globalThis.ClearUserSelection = clearUserSelection;
   useEffect(() => {
-    function handleEsc(e) {
+    function handleEsc(e: any) {
       if (e.key === "Escape") {
         // Clear verse clicks
         setClickedVerses([]);
@@ -1453,7 +1461,7 @@ function ThePage({
 
   // NEW: Handle verse clicks
   const handleVerseClick = useCallback(
-    (verseNumber, verseElement) => {
+    (verseNumber: any, verseElement: any) => {
       const ele = document.getElementById(`v-${verseNumber}`);
       const rect = ele.getBoundingClientRect();
 
@@ -1464,11 +1472,11 @@ function ThePage({
         });
       }
 
-      setClickedVerses((prev) => {
+      setClickedVerses((prev: any) => {
         const isAlreadyClicked = prev.includes(verseNumber);
 
         if (isAlreadyClicked) {
-          const newClicked = prev.filter((v) => v !== verseNumber);
+          const newClicked = prev.filter((v: any) => v !== verseNumber);
 
           if (newClicked.length === 0) {
             setTimeout(() => {
@@ -1483,7 +1491,7 @@ function ThePage({
         const newClicked = [...prev, verseNumber];
         const verseObj = data?.content
           ?.flatMap((c) => c.verses)
-          .find((v) => v.verseNumber === verseNumber);
+          .find((v: any) => v.verseNumber === verseNumber);
 
         setClickedVersesContext({
           verseNumber: newClicked,
@@ -1491,7 +1499,7 @@ function ThePage({
             .map((v) => {
               const obj = data?.content
                 ?.flatMap((c) => c.verses)
-                .find((vv) => vv.verseNumber === v);
+                .find((vv: any) => vv.verseNumber === v);
               return obj?.text || "";
             })
             .join(" "),
@@ -1509,7 +1517,7 @@ function ThePage({
   // NEW: Handle color selection from toolbar
   // NEW: Handle color selection from toolbar
   const handleColorSelect = useCallback(
-    (color) => {
+    (color: any) => {
       if (clickedVerses.length === 0) return;
       setWordHighlightsBC(color);
       // Apply the selected color to all clicked verses
@@ -1528,7 +1536,7 @@ function ThePage({
 
   // NEW: Close toolbar when clicking outside
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handleClickOutside = (e: any) => {
       if (
         showVerseToolbar &&
         !e.target.closest(".verse-toolbar") &&
@@ -2149,7 +2157,7 @@ function ThePage({
                   <div style={{ height: "1rem" }}></div>
                 )}
                 {data &&
-                  data.content.map((e) => {
+                  data.content.map((e: any) => {
                     return (
                       <>
                         <div
@@ -2250,7 +2258,7 @@ function ThePage({
                   >
                     <div
                       onClick={() => {
-                        setOpenSidebar((prev) => !prev);
+                        setOpenSidebar((prev: any) => !prev);
                         setCurrentExperience(0);
                         globalThis.MakingNewTab = true;
                       }}
@@ -2395,7 +2403,7 @@ function ThePage({
               </button>
             </div>
             <div className="footnote-modal-content">
-              {activeFootnote.footnotes.map((footnote, idx) => {
+              {activeFootnote.footnotes.map((footnote: any, idx: any) => {
                 if (!footnote) return null;
 
                 const footnoteText =
@@ -2451,10 +2459,10 @@ function SidePanelContent({ data }: { data: any }) {
   );
 }
 
-function PageToolbar({ panelId, tab, path = "showInPageToolbar" }) {
+function PageToolbar({ panelId, tab, path = "showInPageToolbar" }: any) {
   const { tools } = useBibleContext();
 
-  const visibleTools = tools.filter((tool) => tool[path]);
+  const visibleTools = tools.filter((tool: any) => tool[path]);
   if (visibleTools.length === 0) return null;
 
   return (
@@ -2464,7 +2472,7 @@ function PageToolbar({ panelId, tab, path = "showInPageToolbar" }) {
       }}
       className="thePageToolbar"
     >
-      {visibleTools.map((tool) => (
+      {visibleTools.map((tool: any) => (
         <div
           onClick={(e) => {
             globalThis.LastClickedPanelUpdate = panelId;
@@ -2490,13 +2498,13 @@ function PageToolbar({ panelId, tab, path = "showInPageToolbar" }) {
   );
 }
 
-function splitBySectionKeys(text, verseSectionMap) {
+function splitBySectionKeys(text: any, verseSectionMap: any) {
   const stripRe = /[.,'"""'']/g;
 
   const subphraseMap = {};
   let maxLen = 1;
 
-  Object.keys(verseSectionMap).forEach((fullKey) => {
+  Object.keys(verseSectionMap).forEach((fullKey: any) => {
     const normalized = fullKey.replace(stripRe, "").trim();
     const wordsKey = normalized.split(/\s+/);
     const n = wordsKey.length;
@@ -2555,12 +2563,12 @@ function splitBySectionKeys(text, verseSectionMap) {
 
 function splitByWordHighlights(
   text,
-  wordHighlights,
-  book,
-  chapter,
-  verseNumber,
-  wordHighlightsTC,
-  wordHighlightsBC
+  wordHighlights: any,
+  book: any,
+  chapter: any,
+  verseNumber: any,
+  wordHighlightsTC: any,
+  wordHighlightsBC: any
 ) {
   if (!wordHighlights || Object.keys(wordHighlights).length === 0) {
     return [{ text, isHighlighted: false }];
@@ -2655,7 +2663,7 @@ function Section({
   footnotes,
   setActiveFootnote,
   setShowFootnoteModal,
-}) {
+}: any) {
   const selectAllHeadingVerses = useCallback(() => {
     const verseNumbers = verses.map((v) => v.verseNumber);
 
@@ -2667,7 +2675,7 @@ function Section({
       // Build unified text
       const text = merged
         .map((v) => {
-          const verseObj = verses.find((vv) => vv.verseNumber === v);
+          const verseObj = verses.find((vv: any) => vv.verseNumber === v);
           return verseObj?.text || "";
         })
         .join(" ");
@@ -2703,7 +2711,7 @@ function Section({
   );
 
   const stripRe = /[.,'"""'']/g;
-  const normalize = (k) => k.replace(stripRe, "").toLowerCase().trim();
+  const normalize = (k: any) => k.replace(stripRe, "").toLowerCase().trim();
 
   const [activeKey, setActiveKey] = useState(
     globalThis.HighlightedSectionKey || ""
@@ -2775,7 +2783,7 @@ function Section({
   const chunksMap = useMemo(() => {
     const result = {};
     if (globalThis.studyNotesPresent) {
-      verses.forEach((v) => {
+      verses.forEach((v: any) => {
         result[v.verseNumber] = splitBySectionKeys(
           v.text,
           globalThis.VerseSectionMap
@@ -2787,7 +2795,7 @@ function Section({
 
   const wordChunksMap = useMemo(() => {
     const result = {};
-    verses.forEach((v) => {
+    verses.forEach((v: any) => {
       result[v.verseNumber] = splitByWordHighlights(
         v.text,
         wordHighlights,
@@ -2801,7 +2809,7 @@ function Section({
     return result;
   }, [verses, wordHighlights, book, chapter]);
 
-  const getContextData = (verseNumber) => {
+  const getContextData = (verseNumber: any) => {
     const verse = verses.find((v) => v.verseNumber === verseNumber);
     if (!verse) return null;
 
@@ -2824,7 +2832,7 @@ function Section({
     );
   };
 
-  const parseTextWithFootnotes = (text, verseNumber) => {
+  const parseTextWithFootnotes = (text: any, verseNumber) => {
     const verseFootnotes = getVerseFootnotes(verseNumber);
     if (!verseFootnotes || verseFootnotes.length === 0) {
       return text;
@@ -2843,7 +2851,7 @@ function Section({
         const markerRegex = new RegExp(`\\[${marker}\\]|${marker}`, "g");
         const matches = [...processedText.matchAll(markerRegex)];
 
-        matches.forEach((match) => {
+        matches.forEach((match: any) => {
           if (match.index > lastIndex) {
             parts.push({
               type: "text",
@@ -2870,7 +2878,7 @@ function Section({
     return parts.length > 0 ? parts : text;
   };
 
-  const renderVerseText = (verse) => {
+  const renderVerseText = (verse: any) => {
     const verseKey = `${book}-${chapter}-${verse.verseNumber}`;
     const hasWordHighlights =
       wordHighlights[verseKey] &&
@@ -2880,7 +2888,7 @@ function Section({
     const hasFootnotes = verseFootnotes && verseFootnotes.length > 0;
 
     if (globalThis.studyNotesPresent) {
-      return (chunksMap[verse.verseNumber] || []).map((part, i) => {
+      return (chunksMap[verse.verseNumber] || []).map((part, i: any) => {
         if (!part.isSection) {
           if (hasWordHighlights) {
             const wordParts = splitByWordHighlights(
@@ -2957,7 +2965,7 @@ function Section({
         const wordParts = wordChunksMap[verse.verseNumber] || [
           { text: verse.text, isHighlighted: false },
         ];
-        return wordParts.map((part, i) => {
+        return wordParts.map((part: any, i: any) => {
           if (part.isHighlighted) {
             const attributes = part.highlightConfig.createAttributes(
               book,
@@ -3018,7 +3026,7 @@ function Section({
           </div>
         )}
         <div className="sectionCover">
-          {verses.map((verse) => {
+          {verses.map((verse: any) => {
             if (verse.lineBreak) {
               return <p className="verseLineBreak"></p>;
             }
@@ -3340,7 +3348,7 @@ function Section({
                             HighlightStudyNoteSection(verse?.verseNumber);
                           }
                         }}
-                        onPointerEnter={(e) => {
+                        onPointerEnter={(e: any) => {
                           globalThis.showRefModal = true;
                           setTimeout(() => {
                             if (globalThis.showRefModal) {

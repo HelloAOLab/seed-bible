@@ -8,7 +8,7 @@ mapData.playlistEntries = [];
 
 await thisBot.RespawnAllBooksOnMap({ mapData });
 
-mapData.childrenStructures.forEach((mapBookStructure) => {
+mapData.childrenStructures.forEach((mapBookStructure: any) => {
   if (mapBookStructure.mapBookData.element) {
     const bookMod = { draggable: true };
     applyMod(mapBookStructure.mapBookData.element, bookMod);

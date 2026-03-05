@@ -1,4 +1,4 @@
-function getEasterSunday(year) {
+function getEasterSunday(year: any) {
   const f = Math.floor,
     G = year % 19,
     C = f(year / 100),
@@ -11,7 +11,7 @@ function getEasterSunday(year) {
 
   return new Date(year, month - 1, day); // Easter Sunday
 }
-function getEvangelicalHolidays(year) {
+function getEvangelicalHolidays(year: any) {
   const easter = getEasterSunday(year);
 
   const goodFriday = new Date(easter);
@@ -61,7 +61,7 @@ function getEvangelicalHolidays(year) {
     },
   ];
 }
-function getHolidaysForRange(startYear, endYear) {
+function getHolidaysForRange(startYear: any, endYear) {
   let holidays = [];
   for (let year = startYear; year <= endYear; year++) {
     holidays = holidays.concat(getEvangelicalHolidays(year));

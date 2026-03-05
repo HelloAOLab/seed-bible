@@ -44,11 +44,11 @@ export class StackChapterData extends StackPieceData {
     this.isSelected = false;
   }
 
-  AddHighlightInfo(newHighlightInfo) {
+  AddHighlightInfo(newHighlightInfo: any) {
     this.HighlightsInfo.push(newHighlightInfo);
   }
 
-  GetHighlightInfoByKey(key) {
+  GetHighlightInfoByKey(key: any) {
     return this.HighlightsInfo.find((highlightInfo) => {
       return highlightInfo.key == key;
     });

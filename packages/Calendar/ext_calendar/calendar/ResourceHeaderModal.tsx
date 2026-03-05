@@ -24,7 +24,7 @@ const ResourceHeaderModal = ({
   }, [resourcesByDate]);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handleClickOutside = (e: any) => {
       if (
         isModalOpen &&
         modalRef.current?.style.display !== "none" &&
@@ -50,9 +50,9 @@ const ResourceHeaderModal = ({
       title: room,
       group: platform,
     }));
-    setAllGroups((prev) => [...prev, platform]);
+    setAllGroups((prev: any) => [...prev, platform]);
 
-    setResourcesByDate((prev) => {
+    setResourcesByDate((prev: any) => {
       const updated = {
         ...prev,
         [currentDate]: [...(prev[currentDate] || []), ...newResources],

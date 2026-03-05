@@ -1,7 +1,7 @@
-const {layoutData} = that
+const { layoutData } = that;
 
 const dimension = os.getCurrentDimension();
 
-layoutData.childrenStructures.forEach((layoutBookStructure) => {
-    layoutBookStructure.dateLabel.tags[dimension] = false;
-})
+layoutData.childrenStructures.forEach((layoutBookStructure: any) => {
+  layoutBookStructure.dateLabel.tags[dimension] = false;
+});

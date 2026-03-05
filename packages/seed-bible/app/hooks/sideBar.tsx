@@ -95,7 +95,7 @@ export function SideBarProvider({ children }) {
     // ShowToolbar(!openOnMobile)
   }, [openOnMobile]);
   useEffect(() => {
-    const handleMouseMove = (event) => {
+    const handleMouseMove = (event: any) => {
       setMousePosition({ x: event.clientX, y: event.clientY });
     };
 
@@ -105,7 +105,7 @@ export function SideBarProvider({ children }) {
     };
   }, []);
 
-  function openPopupSettings(props, wait, popupComponent, position) {
+  function openPopupSettings(props: any, wait, popupComponent: any, position) {
     setWait(wait);
     if (popupSettings) {
       closePopupSettings();
@@ -132,7 +132,7 @@ export function SideBarProvider({ children }) {
     }, 100);
   }
 
-  function adjustPositionWithinScreen(x, y, itemCount = 0) {
+  function adjustPositionWithinScreen(x: any, y: any, itemCount = 0) {
     const offset = 10;
 
     // If only 1 item, skip adjustment and just apply offset
@@ -250,7 +250,7 @@ export function SideBarProvider({ children }) {
   );
 }
 
-export function PopupSettings({ items, type, disabled, sidebarContext }) {
+export function PopupSettings({ items, type, disabled, sidebarContext }: any) {
   const [external, setextrnal] = useState(false);
   const colors = sidebarContext.themeColors;
   return (

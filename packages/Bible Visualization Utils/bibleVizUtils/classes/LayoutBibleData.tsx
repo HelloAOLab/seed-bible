@@ -57,7 +57,7 @@ export class LayoutBibleData {
     this.playlistLastSelectedEntryItem = null;
   }
 
-  AddChild(newChild) {
+  AddChild(newChild: any) {
     this.childrenStructures.push(newChild);
   }
 }

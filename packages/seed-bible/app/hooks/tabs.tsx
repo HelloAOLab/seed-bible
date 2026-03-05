@@ -11,7 +11,7 @@ import { useBibleContext } from "app.hooks.bibleVariables";
 
 const MyContext = createContext();
 
-export function TabsProvider({ children }) {
+export function TabsProvider({ children }: any) {
   const { tools, setTools } = useBibleContext();
   const [spaces, setSpaces] = useState([
     {
@@ -129,7 +129,7 @@ export function TabsProvider({ children }) {
     globalThis.CurrentBookData = { ...activeTabData };
   }, [activeTab]);
 
-  const updateToolsForSpace = (spaceId, tools) => {
+  const updateToolsForSpace = (spaceId: any, tools) => {
     setSpaces((prev) =>
       prev.map((space) =>
         space.id === spaceId
@@ -169,7 +169,7 @@ export function TabsProvider({ children }) {
   };
 
   // Remove standalone tab
-  const removeTab = (tabId) => {
+  const removeTab = (tabId: any) => {
     if (sharedTab?.id === tabId) {
       setSharedTab(null);
       return;
@@ -222,7 +222,7 @@ export function TabsProvider({ children }) {
         const updatedTabs = space.tabs.filter((tab) => tab.id !== tabId);
 
         // Remove from folders
-        const updatedFolders = space.folders.map((folder) => ({
+        const updatedFolders = space.folders.map((folder: any) => ({
           ...folder,
           tabs: folder.tabs.filter((tab) => tab.id !== tabId),
         }));
@@ -237,7 +237,7 @@ export function TabsProvider({ children }) {
   };
   globalThis.RemoveTab = removeTab;
 
-  const getAllTabsInSpace = (spaceId) => {
+  const getAllTabsInSpace = (spaceId: any) => {
     // Gather standalone tabs
     const space = spaces.find((space) => space.id === spaceId);
     let allTabs = [...space.tabs];
@@ -250,7 +250,7 @@ export function TabsProvider({ children }) {
     return allTabs;
   };
   // Update tab
-  const updateTab = (tabId, newData) => {
+  const updateTab = (tabId: any, newData: any) => {
     // 1️⃣ Update shared tab if it matches this tabId
     setSharedTab((prev) => {
       if (prev && prev.id === tabId) {
@@ -273,7 +273,7 @@ export function TabsProvider({ children }) {
                   ? { ...tab, data: { ...tab.data, ...newData } }
                   : tab
               ),
-              folders: space.folders.map((folder) => ({
+              folders: space.folders.map((folder: any) => ({
                 ...folder,
                 tabs: folder.tabs.map((tab) =>
                   tab.id === tabId
@@ -287,18 +287,18 @@ export function TabsProvider({ children }) {
     );
   };
 
-  function updateActiveTab(newData) {
+  function updateActiveTab(newData: any) {
     updateTab(activeTab, newData);
   }
   const updateSpace = (spaceId, newData) => {
-    setSpaces((prevSpaces) =>
+    setSpaces((prevSpaces: any) =>
       prevSpaces.map((space) =>
         space.id === spaceId ? { ...space, ...newData } : space
       )
     );
   };
 
-  const manageTab = (action, tab, folderId = null) => {
+  const manageTab = (action, tab: any, folderId: any = null) => {
     setSpaces((prevSpaces) =>
       prevSpaces.map((space) =>
         space.id === activeSpace
@@ -308,7 +308,7 @@ export function TabsProvider({ children }) {
               tabs: space.tabs.filter((t) => t.id !== tab.id),
 
               // Remove the tab from any folder it may exist in
-              folders: space.folders.map((folder) => ({
+              folders: space.folders.map((folder: any) => ({
                 ...folder,
                 tabs: folder.tabs.filter((t) => t.id !== tab.id),
               })),
@@ -335,14 +335,14 @@ export function TabsProvider({ children }) {
   const addFolder = (folderName) => {
     const newFolder = { id: uuid(), name: folderName, tabs: [] };
     setSpaces((prevSpaces) =>
-      prevSpaces.map((space) =>
+      prevSpaces.map((space: any) =>
         space.id === activeSpace
           ? { ...space, folders: [...space.folders, newFolder] }
           : space
       )
     );
   };
-  function downloadSpaceAsJSON(spaceId) {
+  function downloadSpaceAsJSON(spaceId: any) {
     const space = spaces.find((s) => s.id === spaceId);
     if (!space) {
       console.warn(`Space with ID ${spaceId} not found.`);
@@ -362,7 +362,7 @@ export function TabsProvider({ children }) {
     link.click();
     document.body.removeChild(link);
   }
-  function replaceActiveSpaceWithJSON(json, spaceId) {
+  function replaceActiveSpaceWithJSON(json, spaceId: any) {
     const importedSpace = JSON.parse(json.data);
     // importedSpace = JSON.parse(importedSpace)
     os.log(importedSpace);
@@ -411,7 +411,7 @@ export function TabsProvider({ children }) {
 
   const removeFolder = (folderId) => {
     setSpaces((prevSpaces) =>
-      prevSpaces.map((space) =>
+      prevSpaces.map((space: any) =>
         space.id === activeSpace
           ? {
               ...space,
@@ -422,9 +422,9 @@ export function TabsProvider({ children }) {
     );
   };
 
-  const addTabToFolder = (folderId, tab) => {
+  const addTabToFolder = (folderId, tab: any) => {
     setSpaces((prevSpaces) =>
-      prevSpaces.map((space) =>
+      prevSpaces.map((space: any) =>
         space.id === activeSpace
           ? {
               ...space,
@@ -438,9 +438,9 @@ export function TabsProvider({ children }) {
       )
     );
   };
-  const addTabsToFolder = (folderId, tabs) => {
+  const addTabsToFolder = (folderId, tabs: any) => {
     setSpaces((prevSpaces) =>
-      prevSpaces.map((space) =>
+      prevSpaces.map((space: any) =>
         space.id === activeSpace
           ? {
               ...space,
@@ -455,13 +455,13 @@ export function TabsProvider({ children }) {
     );
   };
 
-  const removeTabFromFolder = (folderId, tabId) => {
+  const removeTabFromFolder = (folderId, tabId: any) => {
     setSpaces((prevSpaces) =>
       prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
               ...space,
-              folders: space.folders.map((folder) =>
+              folders: space.folders.map((folder: any) =>
                 folder.id === folderId
                   ? {
                       ...folder,
@@ -475,7 +475,7 @@ export function TabsProvider({ children }) {
     );
   };
 
-  const addSpace = (spaceName, icon = null) => {
+  const addSpace = (spaceName: any, icon: any = null) => {
     const newSpace = {
       id: uuid(),
       name: spaceName,
@@ -507,7 +507,7 @@ export function TabsProvider({ children }) {
   };
   const moveTab = (tabId, newFolderId = null) => {
     setSpaces((prevSpaces) =>
-      prevSpaces.map((space) => {
+      prevSpaces.map((space: any) => {
         if (space.id !== activeSpace) return space; // Skip other spaces
 
         let foundTab = null;
@@ -561,9 +561,9 @@ export function TabsProvider({ children }) {
       })
     );
   };
-  const moveMultipleTabs = (tabIds, newFolderId = null) => {
+  const moveMultipleTabs = (tabIds: any, newFolderId = null) => {
     setSpaces((prevSpaces) =>
-      prevSpaces.map((space) => {
+      prevSpaces.map((space: any) => {
         if (space.id !== activeSpace) return space;
 
         const foundTabs = [];
@@ -622,7 +622,7 @@ export function TabsProvider({ children }) {
     );
   };
 
-  const removeSpace = (spaceId) => {
+  const removeSpace = (spaceId: any) => {
     setSpaces((prevSpaces) =>
       prevSpaces.filter((space) => space.id !== spaceId)
     );

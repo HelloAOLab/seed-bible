@@ -21,7 +21,7 @@ let botColors = [
   "#E0F2F1",
   "#E8F5E9",
 ];
-const getAllChildIds = (id) => {
+const getAllChildIds = (id: any) => {
   const botById = getBot(byTag("id", id));
   let childrenIds = [];
   if (botById.masks.childIds && botById.masks.childIds.length > 0) {
@@ -45,7 +45,7 @@ const { useEffect, useState } = os.appHooks;
 
 function App() {
   const [initialChildrens, setInitialChildrens] = useState<any[]>([]);
-  const removePresentation = async (initialChildrens) => {
+  const removePresentation = async (initialChildrens: any) => {
     await os.playSound(
       "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/2e2827636cc7a30197222a7ccd65a71d3ce95a34abe2a7d218c822ebbc052798.mpga"
     );

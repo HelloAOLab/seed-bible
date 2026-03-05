@@ -12,7 +12,7 @@ const ResourceTitle = ({ scheduleDescription }) => {
     setIsEditing(false);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: any) => {
     if (e.key === "Enter") {
       setIsEditing(false);
     }

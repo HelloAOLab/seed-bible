@@ -6,7 +6,7 @@ const Menu = await thisBot.Menu();
 
 /* ---------------- helpers ---------------- */
 
-function convertTo12Hour(time24) {
+function convertTo12Hour(time24: any) {
   if (!time24) return "";
   const [hourStr, minute] = time24.split(":");
   let hour = parseInt(hourStr, 10);
@@ -15,7 +15,7 @@ function convertTo12Hour(time24) {
   return `${hour}:${minute} ${ampm}`;
 }
 
-function getHumanDuration(startTime, endTime, locale = "en") {
+function getHumanDuration(startTime: any, endTime: any, locale: any = "en") {
   if (!startTime || !endTime) return "";
 
   const [sh, sm] = startTime.split(":").map(Number);
@@ -50,13 +50,13 @@ const EventView = ({
   visibleCount,
   setVisibleCount,
   eventInView,
-}) => {
+}: any) => {
   const { t } = useSideBarContext();
   const [openEditModal, setOpenEditModal] = useState(false);
   const [menuOpenForId, setMenuOpenForId] = useState(null);
 
-  const handleDelete = (id) => {
-    setEventInView((prev) => prev.filter((e) => e.id !== id));
+  const handleDelete = (id: any) => {
+    setEventInView((prev) => prev.filter((e: any) => e.id !== id));
     const evt = calendarApi.current?.getEventById(id);
     if (evt) evt.remove();
   };
@@ -66,7 +66,7 @@ const EventView = ({
       <div className="event-list">
         {eventInView.length === 0 && <p>{t("noEventsInView")}</p>}
 
-        {visibleEvents.map((ev) => {
+        {visibleEvents.map((ev: any) => {
           const classNames = Array.isArray(ev.classNames) ? ev.classNames : [];
 
           const isReading = classNames.includes("readingPlan");
@@ -169,7 +169,7 @@ const EventView = ({
         {visibleCount < eventInView.length && (
           <button
             onClick={() =>
-              setVisibleCount((c) => Math.min(c + 3, eventInView.length))
+              setVisibleCount((c: any) => Math.min(c + 3, eventInView.length))
             }
           >
             {t("viewMore")} →

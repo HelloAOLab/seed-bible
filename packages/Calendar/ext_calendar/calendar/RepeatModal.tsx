@@ -11,9 +11,9 @@ const RepeatModal = ({
 }) => {
   const { t } = useSideBarContext();
 
-  const toggleDay = (day) => {
-    setSelectedDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+  const toggleDay = (day: any) => {
+    setSelectedDays((prev: any) =>
+      prev.includes(day) ? prev.filter((d: any) => d !== day) : [...prev, day]
     );
   };
 

@@ -63,7 +63,7 @@ export const BurgerMenuIcon = ({
   ...props
 }) => <span class="material-symbols-outlined">menu</span>;
 
-export const GoPrivateIcon = (props) => (
+export const GoPrivateIcon = (props: any) => (
   <svg
     width={24}
     height={24}
@@ -78,7 +78,7 @@ export const GoPrivateIcon = (props) => (
     />
   </svg>
 );
-export const TabsIcon = (props) => (
+export const TabsIcon = (props: any) => (
   <svg
     width={24}
     height={24}
@@ -93,7 +93,7 @@ export const TabsIcon = (props) => (
     />
   </svg>
 );
-export const MobileSettingsIcon = (props) => (
+export const MobileSettingsIcon = (props: any) => (
   <svg
     width={16}
     height={16}
@@ -137,7 +137,7 @@ export const ClientLogo = ({ handleOpenClientSite, url, alt }) => {
     />
   );
 };
-export const HighlightIcon = (props) => (
+export const HighlightIcon = (props: any) => (
   <svg
     width={24}
     height={24}
@@ -162,7 +162,7 @@ export const HighlightIcon = (props) => (
     />
   </svg>
 );
-export const AskIcon = (props) => (
+export const AskIcon = (props: any) => (
   <svg
     width={24}
     height={24}
@@ -177,7 +177,7 @@ export const AskIcon = (props) => (
     />
   </svg>
 );
-export const BookMarkIcon = (props) => (
+export const BookMarkIcon = (props: any) => (
   <svg
     width={14}
     height={20}
@@ -196,7 +196,7 @@ export const BookMarkIcon = (props) => (
     />
   </svg>
 );
-export const Eraser = (props) => (
+export const Eraser = (props: any) => (
   <svg
     width={14}
     height={20}
@@ -252,7 +252,7 @@ export const TodayIcon = (props) => (
     />
   </svg>
 );
-export const TheNewSettingsIcon = (props) => (
+export const TheNewSettingsIcon = (props: any) => (
   <svg
     width={24}
     height={24}
@@ -284,7 +284,7 @@ export const TheNewSettingsIcon = (props) => (
     </defs>
   </svg>
 );
-export const ApologistIcon = (noFilter = false) => {
+export const ApologistIcon = (noFilter: any = false) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -303,7 +303,7 @@ export const ApologistIcon = (noFilter = false) => {
   );
 };
 
-const AiIcon = (props) => (
+const AiIcon = (props: any) => (
   <svg
     width={24}
     height={24}
@@ -333,7 +333,7 @@ const AiIcon = (props) => (
     </defs>
   </svg>
 );
-const AiChatIcon = (props) => (
+const AiChatIcon = (props: any) => (
   <svg
     width={24}
     height={24}
@@ -379,7 +379,7 @@ const UserAvatar = (props) => (
   </svg>
 );
 // Dual Screen Icon Component
-const DualScreenIcon = (props) => (
+const DualScreenIcon = (props: any) => (
   <svg
     width={19}
     height={19}
@@ -394,7 +394,7 @@ const DualScreenIcon = (props) => (
     />
   </svg>
 );
-const ToolbarIcon = (props) => (
+const ToolbarIcon = (props: any) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
@@ -409,7 +409,7 @@ const ToolbarIcon = (props) => (
   </svg>
 );
 // Three Screen Icon Component
-const ThreeScreenIcon = (props) => (
+const ThreeScreenIcon = (props: any) => (
   <svg
     width={19}
     height={19}
@@ -434,7 +434,7 @@ const ThreeScreenIcon = (props) => (
 );
 
 // Quad Screen Icon Component
-const QuadScreenIcon = (props) => (
+const QuadScreenIcon = (props: any) => (
   <svg
     width={19}
     height={19}
@@ -461,7 +461,7 @@ const QuadScreenIcon = (props) => (
     />
   </svg>
 );
-const Playlist = (props) => (
+const Playlist = (props: any) => (
   <svg
     width={24}
     height={24}
@@ -476,7 +476,7 @@ const Playlist = (props) => (
     />
   </svg>
 );
-const MenuDown = (props) => (
+const MenuDown = (props: any) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width={16}
@@ -790,7 +790,7 @@ export const Panel4Row = () => {
     </div>
   );
 };
-export const ExtensionsIcon = (props) => (
+export const ExtensionsIcon = (props: any) => (
   <svg
     width={24}
     height={24}
@@ -808,7 +808,7 @@ export const ExtensionsIcon = (props) => (
     />
   </svg>
 );
-export const ThemeIcon = (props) => (
+export const ThemeIcon = (props: any) => (
   <svg
     width={24}
     height={24}
@@ -855,7 +855,7 @@ const MenuIcon = ({
   invert = false,
   className = "",
   style = {},
-}) => {
+}: any) => {
   // Check if `name` looks like an image URL
   const isImage =
     typeof name === "string" && name.match(/\.(png|jpg|jpeg|svg|gif|webp)$/i);
@@ -881,7 +881,7 @@ const MenuIcon = ({
     </span>
   );
 };
-export const MoreIcon = (props) => (
+export const MoreIcon = (props: any) => (
   <svg
     width={24}
     height={24}
@@ -913,7 +913,7 @@ export const MoreIcon = (props) => (
     />
   </svg>
 );
-export const StartSessionIcon = (props) => (
+export const StartSessionIcon = (props: any) => (
   <svg
     width={20}
     height={20}
@@ -928,7 +928,7 @@ export const StartSessionIcon = (props) => (
     />
   </svg>
 );
-export const JoinSession = (props) => (
+export const JoinSession = (props: any) => (
   <svg
     width={20}
     height={20}
@@ -958,7 +958,7 @@ export const JoinSession = (props) => (
     </defs>
   </svg>
 );
-const T = (props) => (
+const T = (props: any) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width={24}
@@ -990,7 +990,7 @@ const T = (props) => (
     />
   </svg>
 );
-const Panal = (props) => (
+const Panal = (props: any) => (
   <svg
     width={24}
     height={24}
@@ -1020,7 +1020,7 @@ const Panal = (props) => (
     </defs>
   </svg>
 );
-const Space = (props) => (
+const Space = (props: any) => (
   <svg
     width={24}
     height={24}
@@ -1086,7 +1086,7 @@ const FolderIcon = () => (
     </defs>
   </svg>
 );
-const OpenFolderIcon = (props) => (
+const OpenFolderIcon = (props: any) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width={24}
@@ -1101,7 +1101,7 @@ const OpenFolderIcon = (props) => (
     />
   </svg>
 );
-const FormatLine = (props) => (
+const FormatLine = (props: any) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width={16}
@@ -1123,7 +1123,7 @@ const FormatLine = (props) => (
     </defs>
   </svg>
 );
-const ColorSelect = (props) => (
+const ColorSelect = (props: any) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width={16}
@@ -1136,7 +1136,7 @@ const ColorSelect = (props) => (
     <circle cx={8} cy={8} r={7.5} fill="black" stroke="black" style={{}} />
   </svg>
 );
-const MarginYIcon = (props) => (
+const MarginYIcon = (props: any) => (
   <svg width={14} height={14} viewBox="0 0 14 14" fill="none">
     <path
       d="M12.25 11.6667C12.25 11.9888 11.9888 12.25 11.6667 12.25H2.33333C2.01117 12.25 1.75 11.9888 1.75 11.6667V2.33333C1.75 2.01117 2.01117 1.75 2.33333 1.75H11.6667C11.9888 1.75 12.25 2.01117 12.25 2.33333V11.6667ZM11.0833 6.41667V2.91667H7.58392V4.08333H8.75L7 5.83333L5.25 4.08333H6.41667V2.91667H2.91667V6.41667H4.08333V7.58333H2.91667V11.0833H6.41667V9.91667H5.25L7 8.16667L8.75 9.91667H7.58392V11.0833H11.0833V7.58333H9.91667V6.41667H11.0833ZM6.41667 7.58333H5.25V6.41667H6.41667V7.58333ZM8.75 7.58333H7.58333V6.41667H8.75V7.58333Z"
@@ -1144,7 +1144,7 @@ const MarginYIcon = (props) => (
     />
   </svg>
 );
-const MarginXIcon = (props) => (
+const MarginXIcon = (props: any) => (
   <svg width={14} height={14} viewBox="0 0 14 14" fill="none">
     <path
       d="M2.33333 12.25C2.01116 12.25 1.75 11.9888 1.75 11.6667L1.75 2.33333C1.75 2.01117 2.01116 1.75 2.33333 1.75L11.6667 1.75C11.9888 1.75 12.25 2.01117 12.25 2.33333L12.25 11.6667C12.25 11.9888 11.9888 12.25 11.6667 12.25L2.33333 12.25ZM7.58333 11.0833L11.0833 11.0833L11.0833 7.58392L9.91667 7.58392L9.91667 8.75L8.16667 7L9.91667 5.25L9.91667 6.41667L11.0833 6.41667L11.0833 2.91667L7.58333 2.91667L7.58333 4.08333L6.41667 4.08333L6.41667 2.91667L2.91667 2.91667L2.91667 6.41667L4.08333 6.41667L4.08333 5.25L5.83333 7L4.08333 8.75L4.08333 7.58392L2.91667 7.58392L2.91667 11.0833L6.41667 11.0833L6.41667 9.91667L7.58333 9.91667L7.58333 11.0833ZM6.41667 6.41667L6.41667 5.25L7.58333 5.25L7.58333 6.41667L6.41667 6.41667ZM6.41667 8.75L6.41667 7.58333L7.58333 7.58333L7.58333 8.75L6.41667 8.75Z"
@@ -1152,7 +1152,7 @@ const MarginXIcon = (props) => (
     />
   </svg>
 );
-const CopyIcon = (props) => (
+const CopyIcon = (props: any) => (
   <svg
     width={40}
     height={40}
@@ -1194,7 +1194,7 @@ const CopyIcon = (props) => (
   </svg>
 );
 
-const ShareIcon = (props) => (
+const ShareIcon = (props: any) => (
   <svg
     width={40}
     height={40}
@@ -1210,7 +1210,7 @@ const ShareIcon = (props) => (
   </svg>
 );
 
-const LocationIcon = (props) => (
+const LocationIcon = (props: any) => (
   <svg
     width="16"
     height="20"
@@ -1225,7 +1225,7 @@ const LocationIcon = (props) => (
     />
   </svg>
 );
-const BibleIcon = (props) => (
+const BibleIcon = (props: any) => (
   <svg
     width={24}
     height={24}

@@ -25,7 +25,7 @@ const getTranslationData = async ({ language = "english" }) => {
   return { ...translationReq.data };
 };
 
-const addTranslationId = (translationData, url, translationPass) => {
+const addTranslationId = (translationData: any, url: any, translationPass) => {
   console.log(translationData, "translationData");
   if (translationData.translation.id) {
     translationPass = translationData.translation.id;
@@ -35,10 +35,10 @@ const addTranslationId = (translationData, url, translationPass) => {
   }
 };
 const addBookIdandChapter = (
-  translationData,
-  url,
-  bookId,
-  chapter,
+  translationData: any,
+  url: any,
+  bookId: any,
+  chapter: any,
   bookPass,
   chapterPass
 ) => {
@@ -57,9 +57,9 @@ const addBookIdandChapter = (
   return url;
 };
 const verifyVerse = async (
-  url,
-  translationPass,
-  bookPass,
+  url: any,
+  translationPass: any,
+  bookPass: any,
   chapterPass,
   verse,
   versePass

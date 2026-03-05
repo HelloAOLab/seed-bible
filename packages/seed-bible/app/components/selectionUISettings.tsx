@@ -8,7 +8,7 @@ const SelectionUISettings = () => {
   const { updateSpace, activeSpace, spaces } = useTabsContext();
 
   // Get current space settings
-  const currentSpace = spaces.find((s) => s.id === activeSpace);
+  const currentSpace = spaces.find((s: any) => s.id === activeSpace);
   const savedSettings = currentSpace?.selectionUIBehavior || {};
 
   // Initialize state from saved settings
@@ -103,7 +103,7 @@ const SelectionUISettings = () => {
     color: "var(--text1)",
   };
 
-  const toggleStyle = (isOn) => ({
+  const toggleStyle = (isOn: any) => ({
     width: "44px",
     height: "24px",
     backgroundColor: isOn ? "var(--spaceSelection)" : "#CCCCCD",
@@ -113,7 +113,7 @@ const SelectionUISettings = () => {
     transition: "background-color 0.3s ease",
   });
 
-  const toggleCircleStyle = (isOn) => ({
+  const toggleCircleStyle = (isOn: any) => ({
     width: "20px",
     height: "20px",
     backgroundColor: "white",

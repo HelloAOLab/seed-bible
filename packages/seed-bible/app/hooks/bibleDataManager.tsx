@@ -3,26 +3,40 @@ const bibleDataCache = new Map();
 const footnotesCache = new Map();
 
 // Cache key based on content (translation:bookId:chapter)
-export function getCacheKey(translation, bookId, chapter) {
+export function getCacheKey(translation: any, bookId: any, chapter) {
   return `${translation}:${bookId}:${chapter}`;
 }
 
-export function getCachedBibleData(translation, bookId, chapter) {
+export function getCachedBibleData(translation: any, bookId, chapter) {
   const key = getCacheKey(translation, bookId, chapter);
   return bibleDataCache.get(key);
 }
 
-export function setCachedBibleData(translation, bookId, chapter, data) {
+export function setCachedBibleData(
+  translation: any,
+  bookId: any,
+  chapter,
+  data
+) {
   const key = getCacheKey(translation, bookId, chapter);
   bibleDataCache.set(key, data);
 }
 
-export function getCachedFootnotes(translation, bookId, chapter) {
+export function getCachedFootnotes(
+  translation: any,
+  bookId: any,
+  chapter: any
+) {
   const key = getCacheKey(translation, bookId, chapter);
   return footnotesCache.get(key) || null;
 }
 
-export function setCachedFootnotes(translation, bookId, chapter, footnotes) {
+export function setCachedFootnotes(
+  translation,
+  bookId: any,
+  chapter: any,
+  footnotes: any
+) {
   const key = getCacheKey(translation, bookId, chapter);
   if (footnotes) {
     footnotesCache.set(key, footnotes);
@@ -30,21 +44,23 @@ export function setCachedFootnotes(translation, bookId, chapter, footnotes) {
 }
 
 // Keep old functions for backwards compatibility
-export function getCachedTabData(tabId) {
+export function getCachedTabData(tabId: any) {
   return null; // Deprecated - use getCachedBibleData instead
 }
 
-export function setCachedTabData(tabId, data) {
+export function setCachedTabData(tabId: any, data: any) {
   // Deprecated - cache is now set automatically via setCachedBibleData
 }
 
-function parseContent(content) {
+function parseContent(content: any) {
   const sections = [];
   let currentSection = { heading: "", number: 1, verses: [] };
   let isNewSection = true;
 
   const parseText = (arr) =>
-    arr.map((item) => (typeof item === "object" ? item.text : item)).join(" ");
+    arr
+      .map((item: any) => (typeof item === "object" ? item.text : item))
+      .join(" ");
 
   content.forEach((item) => {
     const { type, number, content: sectionContent } = item;
@@ -203,9 +219,9 @@ export class BibleDataManager {
   }
 
   async fetch(
-    customUrl = null,
-    forcedTranslation = null,
-    forcedBaseUrl = null
+    customUrl: any = null,
+    forcedTranslation: any = null,
+    forcedBaseUrl: any = null
   ) {
     this.loading = true;
     this.error = null;
@@ -330,7 +346,11 @@ export class BibleDataManager {
     }
   }
 
-  async changeTranslation(newTranslation, booksData, forcedBaseUrl) {
+  async changeTranslation(
+    newTranslation: any,
+    booksData: any,
+    forcedBaseUrl: any
+  ) {
     console.log(
       newTranslation,
       booksData,
@@ -340,7 +360,7 @@ export class BibleDataManager {
     );
     this.translation = newTranslation;
     const bookData =
-      booksData.find((book) => book.id === this.bookId) || booksData[0];
+      booksData.find((book: any) => book.id === this.bookId) || booksData[0];
     if (this.bookId !== bookData.id) {
       this.bookId = bookData.id;
       this.chapter = 1;

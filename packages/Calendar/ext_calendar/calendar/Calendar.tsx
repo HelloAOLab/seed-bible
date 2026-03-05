@@ -78,7 +78,7 @@ const App = () => {
       const parsed = JSON.parse(saved);
 
       const unique = parsed.filter(
-        (event, index, self) =>
+        (event: any, index: any, self: any) =>
           index === self.findIndex((e) => e.id === event.id)
       );
 
@@ -160,7 +160,7 @@ const App = () => {
     const allEventsStore = allEvents;
     if (showSchedules !== true) {
       const addEventsWithoutResource = allEventsStore.filter(
-        (prev) => prev.extendedProps.isResource !== true
+        (prev: any) => prev.extendedProps.isResource !== true
       );
       calendarApi?.current?.removeAllEvents();
       calendarApi?.current?.addEventSource(addEventsWithoutResource);
@@ -198,7 +198,7 @@ const App = () => {
   });
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handleClickOutside = (e: any) => {
       const popover = document.querySelector(".fc-popover");
       if (!popover) return;
       if (!popover.contains(e.target)) {
@@ -214,7 +214,7 @@ const App = () => {
   }, []);
   //useeffects
   useEffect(() => {
-    const loadScript = (src) =>
+    const loadScript = (src: any) =>
       new Promise((resolve, reject) => {
         const script = document.createElement("script");
         script.src = src;
@@ -295,7 +295,7 @@ const App = () => {
     resourceGroupNameRef.current = resourceGroupName;
   }, [resourceGroupName]);
 
-  const toolbarClickHandler = (e) => {
+  const toolbarClickHandler = (e: any) => {
     if (calendarApi?.current.view.type.includes("resourceTimeline")) {
       onToolbarDateClick(e, calendarApi);
     } else {
@@ -304,7 +304,7 @@ const App = () => {
   };
 
   const handleToggleSetting = () => setOpenSetting((prev) => !prev);
-  const handleSelectionClicking = (type) => {
+  const handleSelectionClicking = (type: any) => {
     setSelectedTypes((prev) =>
       prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
     );
@@ -321,20 +321,20 @@ const App = () => {
     setMapViewSelected((prev) => !prev);
     setOpenMap(true);
   };
-  const handleDelete = (id) => {
+  const handleDelete = (id: any) => {
     setReadings((prev) => prev.filter((item) => item.id !== id));
     setEventInView((prev) => prev.filter((ev) => ev.id !== id));
     const evt = calendarApi.current.getEventById(id);
-    setAllEvents((prev) => prev.filter((ev) => ev.id !== id));
+    setAllEvents((prev: any) => prev.filter((ev: any) => ev.id !== id));
     if (evt) evt.remove();
   };
-  const handleEditing = (id, isResource) => {
+  const handleEditing = (id: any, isResource: any) => {
     const evt = calendarApi.current.getEventById(id);
     setEditingEvent(evt);
     setEditEventOpen(true);
   };
 
-  const handleAddReadingPlans = (selected) => {
+  const handleAddReadingPlans = (selected: any) => {
     addReadingPlans({
       selected,
       readings,
@@ -346,7 +346,7 @@ const App = () => {
       parseDashedDateToValidDate,
     });
   };
-  function onRangeChange(viewStart, viewEnd) {
+  function onRangeChange(viewStart: any, viewEnd: any) {
     if (calendarApi.current !== null) {
       const allEvents = calendarApi.current.getEvents();
 
@@ -368,7 +368,7 @@ const App = () => {
   const applyFilterByReinit = () => {
     if (!calendarApi.current) return;
 
-    const filteredEvents = allEvents.filter((ev) =>
+    const filteredEvents = allEvents.filter((ev: any) =>
       selectedTypes.includes(ev.extendedProps.type)
     );
 
@@ -436,12 +436,12 @@ const App = () => {
         slotDuration: "00:30:00",
         scrollTime: "09:00:00",
         initialView: "dayGridMonth",
-        moreLinkClick: (arg) => {
+        moreLinkClick: (arg: any) => {
           popoverOpenRef.current = true;
           return "popover";
         },
         resourceAreaHeaderContent: handleResourceHeader({ setIsModalOpen }),
-        resourceGroupLabelContent: function (arg) {
+        resourceGroupLabelContent: function (arg: any) {
           return handleResourceLabel({
             arg,
             setResourceStartDate,
@@ -455,11 +455,11 @@ const App = () => {
         allDayText: "All day",
         expandRows: true,
         contentHeight: "450px",
-        eventChange: function (info) {
+        eventChange: function (info: any) {
           const updated = info.event;
 
-          setAllEvents((prev) =>
-            prev.map((ev) =>
+          setAllEvents((prev: any) =>
+            prev.map((ev: any) =>
               ev.id === updated.id
                 ? {
                     ...ev,
@@ -476,7 +476,7 @@ const App = () => {
           );
         },
 
-        eventContent: (arg) =>
+        eventContent: (arg: any) =>
           handleEventContent({
             arg,
             experienceConRef,
@@ -506,7 +506,7 @@ const App = () => {
         displayEventTime: false,
         eventDisplay: "block", // No time text
 
-        dateClick: (info) =>
+        dateClick: (info: any) =>
           handleDateClick({
             info,
             calendarApi,
@@ -547,7 +547,7 @@ const App = () => {
             calendarRef,
           }),
 
-        datesSet: (info) =>
+        datesSet: (info: any) =>
           handleDatesSet({
             info,
             calendarApi,
@@ -564,7 +564,7 @@ const App = () => {
             setCustomDays,
           }),
 
-        eventDidMount: (info) => {
+        eventDidMount: (info: any) => {
           if (!window.tippy) return;
 
           tippy(info.el, {
@@ -801,17 +801,18 @@ const App = () => {
             groupRooms={
               calendarApi.current
                 ?.getResources()
-                .filter((r) => r.extendedProps.group === currentGroupValue) ||
-              []
+                .filter(
+                  (r: any) => r.extendedProps.group === currentGroupValue
+                ) || []
             }
-            onRemoveRoom={(roomId) => {
+            onRemoveRoom={(roomId: any) => {
               const calendar = calendarApi.current;
               if (!calendar) return;
               const resource = calendar.getResourceById(roomId);
               if (resource) {
                 resource.remove();
               }
-              setResourcesByDate((prev) => {
+              setResourcesByDate((prev: any) => {
                 const updated = {};
                 Object.keys(prev).forEach((dateKey) => {
                   updated[dateKey] = prev[dateKey].filter(
@@ -822,11 +823,11 @@ const App = () => {
               });
             }}
             onClose={() => setGroupModalOpen(false)}
-            onDeleteGroup={(groupToDelete) => {
+            onDeleteGroup={(groupToDelete: any) => {
               const calendar = calendarApi.current;
               if (!calendar) return;
 
-              calendar.getResources().forEach((resource) => {
+              calendar.getResources().forEach((resource: any) => {
                 if (resource.extendedProps.group === groupToDelete) {
                   resource.remove();
                 }
@@ -844,14 +845,14 @@ const App = () => {
               const resKey = new Date(resourceStartDate).toLocaleDateString(
                 "en-CA"
               );
-              setResourcesByDate((prev) => {
+              setResourcesByDate((prev: any) => {
                 return {
                   ...prev,
                   [resKey]: [...(prev[resKey] || []), newRoom],
                 };
               });
             }}
-            updateGroupName={(oldGroup, newGroup) => {
+            updateGroupName={(oldGroup: any, newGroup: any) => {
               const calendar = calendarApi.current;
               if (!calendar) return;
 
@@ -863,7 +864,7 @@ const App = () => {
               });
 
               // 2) Update in resourcesByDate state
-              setResourcesByDate((prev) => {
+              setResourcesByDate((prev: any) => {
                 const updated = {};
 
                 Object.keys(prev).forEach((dateKey) => {
@@ -965,15 +966,15 @@ const App = () => {
             calendarView={calendarView}
             groupValue={groupMenu.groupValue}
             onClose={() => setGroupMenu({ groupValue: null, position: null })}
-            onDelete={(groupToDelete) => {
+            onDelete={(groupToDelete: any) => {
               const calendar = calendarApi.current;
               if (!calendar) return;
-              setResourcesByDate((prev) => {
+              setResourcesByDate((prev: any) => {
                 const updated = {};
 
                 Object.keys(prev).forEach((date) => {
                   updated[date] = prev[date].filter(
-                    (resource) =>
+                    (resource: any) =>
                       resource.group !== resourceGroupNameRef.current
                   );
                 });
@@ -997,18 +998,18 @@ const App = () => {
                     : resourceStartDate // already YYYY-MM-DD
                   : ymdLocal(resourceStartDate);
 
-              calendarApi.current.getEvents().forEach((ev) => {
+              calendarApi.current.getEvents().forEach((ev: any) => {
                 if (!ev.start) return;
                 const evYmd = ymdLocal(ev.start);
                 if (evYmd === targetYmd) ev.remove();
               });
 
-              setAllEvents((prev) =>
+              setAllEvents((prev: any) =>
                 prev.filter(
-                  (e) => ymdLocal(e.start || e.startStr) !== targetYmd
+                  (e: any) => ymdLocal(e.start || e.startStr) !== targetYmd
                 )
               );
-              calendar.getResources().forEach((resource) => {
+              calendar.getResources().forEach((resource: any) => {
                 if (resource.extendedProps.group === groupToDelete) {
                   resource.remove();
                 }
@@ -1046,7 +1047,7 @@ const App = () => {
               setSelectedDays={setSelectedDays}
               initialDate={new Date().toISOString().split("T")[0]}
               onClose={() => setShowCustomRepeat(false)}
-              onSave={(days) => {
+              onSave={(days: any) => {
                 setRepeat(`Custom (${days.join(", ")})`);
               }}
             />

@@ -37,24 +37,24 @@ switch (true) {
 
 return Promise.all(shout("OnStackElementPulledOut"));
 
-function NullifyMapBookParentIds(mapBookData, idsToNullify) {
+function NullifyMapBookParentIds(mapBookData: any, idsToNullify: any) {
   NullifyParentIdsOnData(mapBookData, idsToNullify);
   mapBookData.childrenData.forEach((mapChapterData) => {
     NullifyMapChapterParentIds(mapChapterData, idsToNullify);
   });
 }
 
-function NullifyMapChapterParentIds(mapChapterData, idsToNullify) {
+function NullifyMapChapterParentIds(mapChapterData: any, idsToNullify) {
   NullifyParentIdsOnData(mapChapterData, idsToNullify);
 }
 
-function NullifyParentIdsOnData(data, idsToNullify) {
-  idsToNullify.forEach((idToNullify) => {
+function NullifyParentIdsOnData(data: any, idsToNullify: any) {
+  idsToNullify.forEach((idToNullify: any) => {
     data.parentDataIds[idToNullify] = null;
   });
 }
 
-async function CreateDataCopy(data) {
+async function CreateDataCopy(data: any) {
   let copy;
   switch (true) {
     case data instanceof MapBookData:

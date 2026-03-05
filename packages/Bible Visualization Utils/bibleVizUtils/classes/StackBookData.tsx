@@ -41,8 +41,8 @@ export class StackBookData extends StackPieceData {
     this.isInsideTestament = isInsideTestament;
     this.isInsideSection = isInsideSection;
   }
-  SetChildrenData(childrenData) {
-    const filteredChildrenData = childrenData.filter((chapterData) => {
+  SetChildrenData(childrenData: any) {
+    const filteredChildrenData = childrenData.filter((chapterData: any) => {
       return chapterData instanceof StackChapterData;
     });
     if (filteredChildrenData.length > 0)

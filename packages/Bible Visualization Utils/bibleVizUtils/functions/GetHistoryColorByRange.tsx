@@ -10,7 +10,7 @@ const {
 
 const nowInSeconds = Date.now() / 1000;
 
-const readingTimeSeconds = reading.reduce((acc, event) => {
+const readingTimeSeconds = reading.reduce((acc: any, event) => {
   const clampedReading = {
     start: Math.min(Math.max(event.start, range.start), range.end),
     end: Math.min(Math.max(event.end ?? nowInSeconds, range.start), range.end),
@@ -50,7 +50,7 @@ const finalColorHex = thisBot.RgbToHex({ rgbColor: finalColor });
 
 return finalColorHex;
 
-function ClampRGBColor(colorToClamp) {
+function ClampRGBColor(colorToClamp: any) {
   const colorClamped = [
     Math.max(Math.min(Math.round(colorToClamp[0]), 255), 0),
     Math.max(Math.min(Math.round(colorToClamp[1]), 255), 0),
@@ -59,6 +59,6 @@ function ClampRGBColor(colorToClamp) {
   return colorClamped;
 }
 
-function RoundToStep(value, step = 0.25) {
+function RoundToStep(value: any, step = 0.25) {
   return Math.round(value / step) * step;
 }

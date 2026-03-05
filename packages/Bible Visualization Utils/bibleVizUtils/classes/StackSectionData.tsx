@@ -36,8 +36,8 @@ export class StackSectionData extends StackPieceData {
     this.shadow = null;
   }
 
-  AddChild(newChild) {
-    const filteredBooksData = newChild.filter((bookData) => {
+  AddChild(newChild: any) {
+    const filteredBooksData = newChild.filter((bookData: any) => {
       return bookData instanceof StackBookData;
     });
     if (filteredBooksData.length > 0) {

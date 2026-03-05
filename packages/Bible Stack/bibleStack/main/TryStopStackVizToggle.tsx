@@ -11,21 +11,34 @@
  * thisBot.TryStopStackVizToggle({ bibleData: someBibleData });
  */
 
-const {bibleData} = that;
-if(!thisBot.masks.isTryingToToggleStackViz || thisBot.masks.isStoppingStackVizToggle) return;
+const { bibleData } = that;
+if (
+  !thisBot.masks.isTryingToToggleStackViz ||
+  thisBot.masks.isStoppingStackVizToggle
+)
+  return;
 
 setTagMask(thisBot, "isStoppingStackVizToggle", true);
 const animationDuration = 0.25;
-const crossLines = [bibleData.staticBiblePieces.crossVerticalLine, bibleData.staticBiblePieces.crossHorizontalLine];
-await Promise.all(crossLines.map((crossLine) => {
+const crossLines = [
+  bibleData.staticBiblePieces.crossVerticalLine,
+  bibleData.staticBiblePieces.crossHorizontalLine,
+];
+await Promise.all(
+  crossLines.map((crossLine: any) => {
     return ColorLerper.LerpTag({
-        startingColor: BibleVizUtils.Functions.HexToRgb({hexColor: crossLine.masks.color ?? crossLine.tags.color}), 
-        endingColor: BibleVizUtils.Functions.HexToRgb({hexColor: crossLine.tags.initialColor}), 
-        durationInSeconds: animationDuration, 
-        bot: crossLine, 
-        tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color
-    })
-}));
+      startingColor: BibleVizUtils.Functions.HexToRgb({
+        hexColor: crossLine.masks.color ?? crossLine.tags.color,
+      }),
+      endingColor: BibleVizUtils.Functions.HexToRgb({
+        hexColor: crossLine.tags.initialColor,
+      }),
+      durationInSeconds: animationDuration,
+      bot: crossLine,
+      tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color,
+    });
+  })
+);
 
 setTagMask(thisBot, "isTryingToToggleStackViz", false);
 setTagMask(thisBot, "isStoppingStackVizToggle", false);

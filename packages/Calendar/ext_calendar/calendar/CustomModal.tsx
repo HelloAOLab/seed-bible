@@ -20,7 +20,7 @@ const CustomModal = ({
   customRepeatRef,
   selectedOption,
   setSelectedOption,
-}) => {
+}: any) => {
   const { t } = useSideBarContext();
   const [mode, setMode] = useState("event"); // 'event' or 'readingPlans'
 
@@ -68,7 +68,7 @@ const CustomModal = ({
   };
 
   const onCloseModal = () => {
-    setModalOpen((prev) => !prev);
+    setModalOpen((prev: any) => !prev);
   };
 
   const modalRef = useRef(null);
@@ -76,7 +76,7 @@ const CustomModal = ({
 
   const playListsFiltered = plays.filter((item) => item.readingPlanEnabled);
 
-  const handleOverlayClick = (e) => {
+  const handleOverlayClick = (e: any) => {
     if (
       modalRef.current &&
       !modalRef.current.contains(e.target) &&
@@ -92,7 +92,7 @@ const CustomModal = ({
       document.removeEventListener("mousedown", handleOverlayClick);
     };
   }, []);
-  const toggleCheckbox = (id) => {
+  const toggleCheckbox = (id: any) => {
     setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
   };
   function createScheduleFromAddScheduleInputs() {
@@ -456,7 +456,7 @@ const CustomModal = ({
           overflowY: "auto",
         }}
       >
-        {playListsFiltered.map((play) => (
+        {playListsFiltered.map((play: any) => (
           <li key={play.id} style={{ marginBottom: "10px", color: "black" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <input
@@ -490,7 +490,7 @@ const CustomModal = ({
 
   const handleSave = () => {
     if (mode === "readingPlans") {
-      const selected = playListsFiltered.filter((p) => checked[p.id]);
+      const selected = playListsFiltered.filter((p: any) => checked[p.id]);
       handleAddReadingPlans(selected);
     } else {
       if (mode === "event") {

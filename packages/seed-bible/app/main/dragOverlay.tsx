@@ -8,13 +8,13 @@ const DragDropOverlay = () => {
   });
 
   useEffect(() => {
-    const handleDragEnter = (e) => {
+    const handleDragEnter = (e: any) => {
       e.preventDefault();
       e.stopPropagation();
       setDragState((prev) => ({ ...prev, isDragOver: true }));
     };
 
-    const handleDragLeave = (e) => {
+    const handleDragLeave = (e: any) => {
       e.preventDefault();
       e.stopPropagation();
       // Only hide overlay if leaving the entire document
@@ -28,12 +28,12 @@ const DragDropOverlay = () => {
       }
     };
 
-    const handleDragOver = (e) => {
+    const handleDragOver = (e: any) => {
       e.preventDefault();
       e.stopPropagation();
     };
 
-    const handleDrop = (e) => {
+    const handleDrop = (e: any) => {
       e.preventDefault();
       e.stopPropagation();
 
@@ -75,7 +75,7 @@ const DragDropOverlay = () => {
     };
   }, []);
 
-  const formatFileSize = (bytes) => {
+  const formatFileSize = (bytes: any) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];

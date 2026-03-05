@@ -51,7 +51,7 @@ export function Toolbar() {
   }, [openOnMobile]);
 
   const TabTools = getToolsForActiveSpace();
-  const setActiveTools = (newTools) =>
+  const setActiveTools = (newTools: any) =>
     updateToolsForSpace(activeSpace, newTools);
 
   const [oldList, setOldList] = useState(null);
@@ -65,7 +65,7 @@ export function Toolbar() {
 
   useEffect(() => () => clearTimeout(holdTimeoutRef.current), []);
 
-  function handleMouseEnter(targetIndex) {
+  function handleMouseEnter(targetIndex: any) {
     if (!isDragging || draggedIndex === null) return;
     if (targetIndex === draggedIndex) return;
 
@@ -95,7 +95,7 @@ export function Toolbar() {
   // Sync tools with active tab type (keeps main logic)
   useEffect(() => {
     if (!activeTab || !tabs) return;
-    const activeTabObj = tabs.find((t) => t.id === activeTab);
+    const activeTabObj = tabs.find((t: any) => t.id === activeTab);
     if (activeTabObj?.data?.type === "canvas") {
       setActiveTools([...canvasTools]);
     } else {
@@ -117,7 +117,7 @@ export function Toolbar() {
 
   // Disable context menu like before
   useEffect(() => {
-    const handleContextMenu = (e) => e.preventDefault();
+    const handleContextMenu = (e: any) => e.preventDefault();
     window.addEventListener("contextmenu", handleContextMenu);
     return () => window.removeEventListener("contextmenu", handleContextMenu);
   }, []);
@@ -151,7 +151,7 @@ export function Toolbar() {
               </button>
             </div>
 
-            {tools?.map((tool, index) =>
+            {tools?.map((tool: any, index: any) =>
               tool?.active === false ? null : (
                 <div
                   key={`${tool.icon || "tool"}-${index}`}

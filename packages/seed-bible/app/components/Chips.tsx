@@ -438,7 +438,7 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = (e: any) => {
     if (e.key === "Enter") {
       handleJoin();
     }

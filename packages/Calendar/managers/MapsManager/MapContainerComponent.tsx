@@ -11,7 +11,7 @@ export const MapContainer = () => {
     >
       {arrangementRef.current.testaments
         .toReversed()
-        .map((testament, testamentIndex) => {
+        .map((testament: any, testamentIndex) => {
           return (
             <TestamentContainer
               testament={testament}

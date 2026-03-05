@@ -14,7 +14,7 @@
 
 const { name } = that;
 const arrangement = BibleVizUtils.Data.vars.fixedArrangementsInfo.find(
-  (currentArrangement) => {
+  (currentArrangement: any) => {
     return currentArrangement.name == name;
   }
 );

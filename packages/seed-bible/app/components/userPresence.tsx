@@ -28,20 +28,20 @@ export const colors = [
   "#F59E0B",
 ];
 
-function hashString(str) {
+function hashString(str: any) {
   let h = 5381;
   for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
   return h >>> 0;
 }
 
-function computeVisual(remoteId) {
+function computeVisual(remoteId: any) {
   const h = hashString(String(remoteId));
   const iconIndex = h % icons.length;
   const colorIndex = Math.floor(h / icons.length) % colors.length;
   return { iconIndex, colorIndex };
 }
 
-function getOrSetVisualInTags(remoteId) {
+function getOrSetVisualInTags(remoteId: any) {
   try {
     if (typeof tags !== "undefined") {
       if (!tags.userPresenceData) tags.userPresenceData = {};
@@ -108,7 +108,7 @@ async function getSelfIdSafe() {
   }
 }
 
-function safeUpdateSession(hostId, updater) {
+function safeUpdateSession(hostId: any, updater: any) {
   try {
     const clonedTags = JSON.parse(JSON.stringify(tags || {}));
     if (!clonedTags.sessions) clonedTags.sessions = {};
@@ -122,7 +122,7 @@ function safeUpdateSession(hostId, updater) {
     os.log("safeUpdateSession failed:", err);
   }
 }
-function getUserSessionInfo(userId) {
+function getUserSessionInfo(userId: any) {
   try {
     if (typeof tags === "undefined" || !tags.sessions) {
       return { inSession: false, role: "none", config: null };
@@ -165,7 +165,7 @@ function getUserSessionInfo(userId) {
 }
 globalThis.GetUserSessionInfo = getUserSessionInfo;
 
-export function UserPresence({ collapsed = false }) {
+export function UserPresence({ collapsed = false }: any) {
   const [showSettings, setShowSettings] = useState(false);
   const [users, setUsers] = useState([]);
   const listenersAddedRef = useRef(false);
@@ -192,7 +192,7 @@ export function UserPresence({ collapsed = false }) {
   } = useTabsContext();
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: any) => {
       const settingsContainer = document.querySelector(".stngs");
       if (settingsContainer && !settingsContainer.contains(event.target)) {
         setShowSettings(false);
@@ -237,7 +237,7 @@ export function UserPresence({ collapsed = false }) {
         }
       } catch (_) {}
     }, 1000);
-    os.on?.("sessionsUpdated", (sess) => setSessions(sess));
+    os.on?.("sessionsUpdated", (sess: any) => setSessions(sess));
     return () => clearInterval(interval);
   }, [sessions]);
 
@@ -248,9 +248,9 @@ export function UserPresence({ collapsed = false }) {
     const allIds = new Set(remotes);
 
     // Include all IDs found in sessions (host, cohosts, followers)
-    Object.entries(tags.sessions || {}).forEach(([hostId, session]) => {
+    Object.entries(tags.sessions || {}).forEach(([hostId, session]: any) => {
       allIds.add(hostId);
-      (session.coHosts || []).forEach((id) => allIds.add(id));
+      (session.coHosts || []).forEach((id: any) => allIds.add(id));
       (session.followers || []).forEach((id) => allIds.add(id));
     });
 
@@ -299,7 +299,7 @@ export function UserPresence({ collapsed = false }) {
     refreshOthers();
     if (!listenersAddedRef.current) {
       listenersAddedRef.current = true;
-      const onJoin = (evt) => {
+      const onJoin = (evt: any) => {
         const rid = evt?.remoteId;
         if (!rid) return;
         const { iconIndex, colorIndex } = getOrSetVisualInTags(rid);
@@ -315,9 +315,9 @@ export function UserPresence({ collapsed = false }) {
       const onLeave = (evt) => {
         const rid = evt?.remoteId;
         if (!rid) return;
-        setUsers((prev) => prev.filter((u) => u.remoteId !== rid));
+        setUsers((prev) => prev.filter((u: any) => u.remoteId !== rid));
       };
-      const onRemoteData = (evt) => {
+      const onRemoteData = (evt: any) => {
         const that = evt;
         const name = that.name;
         if (!name) return;
@@ -363,7 +363,7 @@ export function UserPresence({ collapsed = false }) {
         } else if (name === "sessionFollow") {
           const { hostId, followerId } = that.that || {};
           if (hostId === selfId) {
-            setSessions((prev) => {
+            setSessions((prev: any) => {
               const updated = safeUpdateSession(selfId, (old) => ({
                 ...old,
                 config: old.config || defaultConfig(),
@@ -383,7 +383,7 @@ export function UserPresence({ collapsed = false }) {
           const { hostId } = that.that || {};
           if (!hostId) return;
           setNotifications([]);
-          update((prev) => !prev);
+          update((prev: any) => !prev);
           setSessions((prev) => {
             const next = { ...prev };
             delete next[hostId];
@@ -406,11 +406,11 @@ export function UserPresence({ collapsed = false }) {
         } else if (name === "sessionUnfollow") {
           const { hostId, followerId } = that.that || {};
           if (hostId === selfId) {
-            setSessions((prev) => {
-              const updated = safeUpdateSession(selfId, (old) => ({
+            setSessions((prev: any) => {
+              const updated = safeUpdateSession(selfId, (old: any) => ({
                 ...old,
                 followers: (old.followers || []).filter(
-                  (id) => id !== followerId
+                  (id: any) => id !== followerId
                 ),
               }));
               return updated;
@@ -452,7 +452,9 @@ export function UserPresence({ collapsed = false }) {
           if (!userId) return;
           // Remove from private users list
           if (tags.privateUsers) {
-            tags.privateUsers = tags.privateUsers.filter((id) => id !== userId);
+            tags.privateUsers = tags.privateUsers.filter(
+              (id: any) => id !== userId
+            );
           }
           // Refresh to show user again
           refreshOthers();
@@ -560,14 +562,14 @@ export function UserPresence({ collapsed = false }) {
   };
   globalThis.StartSession = startSession;
 
-  async function FollowSpecificUser(targetUserId) {
+  async function FollowSpecificUser(targetUserId: any) {
     const selfId = await getSelfIdSafe();
     if (!targetUserId || !selfId) return;
 
     const targetSession = tags.sessions?.[targetUserId];
     if (targetSession) {
       // target already host → follow them
-      safeUpdateSession(targetUserId, (old) => ({
+      safeUpdateSession(targetUserId, (old: any) => ({
         ...old,
         followers: Array.from(new Set([...(old.followers || []), selfId])),
       }));
@@ -607,7 +609,7 @@ export function UserPresence({ collapsed = false }) {
 
   globalThis.FollowSpecificUser = FollowSpecificUser;
 
-  async function InviteUser(targetUserId) {
+  async function InviteUser(targetUserId: any) {
     const selfId = await getSelfIdSafe();
     if (!targetUserId || !selfId) return;
     const config = defaultConfig();
@@ -658,9 +660,9 @@ export function UserPresence({ collapsed = false }) {
     if (!following || !selfId) return;
 
     // Remove self from the host's followers
-    safeUpdateSession(following, (old) => ({
+    safeUpdateSession(following, (old: any) => ({
       ...old,
-      followers: (old.followers || []).filter((id) => id !== selfId),
+      followers: (old.followers || []).filter((id: any) => id !== selfId),
     }));
 
     // Clean up if the host session has no followers or cohosts left
@@ -717,11 +719,11 @@ export function UserPresence({ collapsed = false }) {
   globalThis.TogglePrivateMode = togglePrivateMode;
   globalThis.IsPrivateMode = () => isPrivateMode;
 
-  const followHost = (hostId) => {
+  const followHost = (hostId: any) => {
     if (!sessions[hostId]) return;
     setFollowing(hostId);
     sendRemoteData([hostId], "sessionFollow", { hostId, followerId: selfId });
-    const updated = safeUpdateSession(hostId, (old) => ({
+    const updated = safeUpdateSession(hostId, (old: any) => ({
       ...old,
       followers: Array.from(new Set([...(old.followers || []), selfId])),
     }));
@@ -729,15 +731,15 @@ export function UserPresence({ collapsed = false }) {
     refreshOthers();
   };
 
-  const makeCoHost = (hostId, userId) => {
-    const updated = safeUpdateSession(hostId, (old) => ({
+  const makeCoHost = (hostId, userId: any) => {
+    const updated = safeUpdateSession(hostId, (old: any) => ({
       ...old,
       coHosts: Array.from(new Set([...(old.coHosts || []), userId])),
     }));
     setSessions(updated);
   };
 
-  const swapHost = (currentHostId, newHostId) => {
+  const swapHost = (currentHostId: any, newHostId: any) => {
     const currentSession = sessions[currentHostId];
     if (!currentSession) return;
     if (!currentSession.followers?.includes(newHostId)) return;
@@ -747,7 +749,7 @@ export function UserPresence({ collapsed = false }) {
       ...currentSession,
       followers: Array.from(
         new Set([...(currentSession.followers || []), currentHostId])
-      ).filter((f) => f !== newHostId),
+      ).filter((f: any) => f !== newHostId),
     };
     tags.sessions = next;
     setSessions(next);
@@ -756,8 +758,8 @@ export function UserPresence({ collapsed = false }) {
   };
 
   const updateConfig = (newConfig) => {
-    setSessions((prev) => {
-      const updated = safeUpdateSession(selfId, (old) => ({
+    setSessions((prev: any) => {
+      const updated = safeUpdateSession(selfId, (old: any) => ({
         ...old,
         config: newConfig,
         followers: old.followers || [],
@@ -1072,7 +1074,7 @@ export function UserPresence({ collapsed = false }) {
   );
 }
 
-function FollowerPanel({ hostId, onUnfollow }) {
+function FollowerPanel({ hostId, onUnfollow }: any) {
   const { iconIndex, colorIndex } = getOrSetVisualInTags(hostId);
   const Icon = icons[iconIndex];
   const color = colors[colorIndex];
@@ -1137,7 +1139,7 @@ function FollowerPanel({ hostId, onUnfollow }) {
   );
 }
 
-function ScriptureNavigationSettings({ config, onChange, onStop }) {
+function ScriptureNavigationSettings({ config, onChange, onStop }: any) {
   const [state, setState] = useState(config);
 
   const toggle = (key) => {

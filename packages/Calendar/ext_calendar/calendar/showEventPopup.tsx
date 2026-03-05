@@ -1,4 +1,4 @@
-function formatToYYYYMMDD(date) {
+function formatToYYYYMMDD(date: any) {
   const d = new Date(date);
   const day = String(d.getDate()).padStart(2, "0");
   const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -33,23 +33,23 @@ const openSelf = async function () {
 };
 
 function showEventPopup(
-  info,
-  setPlaylistMode,
-  setScheduleTitle,
-  setScheduleDescription,
-  handleAddReadingPlans,
-  calendarApi,
-  setCalendarView,
+  info: any,
+  setPlaylistMode: any,
+  setScheduleTitle: any,
+  setScheduleDescription: any,
+  handleAddReadingPlans: any,
+  calendarApi: any,
+  setCalendarView: any,
 
-  setCustomDays,
+  setCustomDays: any,
   setRepeat,
-  setShowCustomRepeat,
-  setSelectedDays,
-  customRepeatRef,
+  setShowCustomRepeat: any,
+  setSelectedDays: any,
+  customRepeatRef: any,
   setSelectedOption,
-  selectedOption,
-  calendarRef,
-  onSubmit
+  selectedOption: any,
+  calendarRef: any,
+  onSubmit: any
 ) {
   let playListsFiltered = [];
   const readingPlays = globalThis["defaultplaylists"];
@@ -229,7 +229,7 @@ function showEventPopup(
 
     repeatSelect.value = selectedOption || "No Repeat";
 
-    repeatSelect.onchange = (e) => {
+    repeatSelect.onchange = (e: any) => {
       const val = e.target.value;
       setSelectedOption(val);
 
@@ -412,7 +412,7 @@ function showEventPopup(
   };
   if (plansTab) {
     plansTab.onclick = () => {
-      setPlaylistMode((prev) => !prev);
+      setPlaylistMode((prev: any) => !prev);
       plansTab.classList.add("gm-modal-select-item-selected");
       eventTab.classList.remove("gm-modal-select-item-selected");
       scheduleTab.classList.remove("gm-modal-select-item-selected");
@@ -479,7 +479,7 @@ function showEventPopup(
     }
   };
 
-  function handleClickOutside(e) {
+  function handleClickOutside(e: any) {
     const isClickInsidePopup = popup.contains(e.target);
 
     if (!isClickInsidePopup && !customRepeatRef.current) {
@@ -498,7 +498,7 @@ function showEventPopup(
 
   // Save button
   const addButton = popup.querySelector("#popup-add-btn");
-  addButton?.addEventListener("click", (e) => {
+  addButton?.addEventListener("click", (e: any) => {
     e.preventDefault();
     if (addButton.textContent === "Create") {
       setCalendarView("resourceTimeline");

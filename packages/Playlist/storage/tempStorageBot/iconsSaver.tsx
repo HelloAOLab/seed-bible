@@ -13,7 +13,7 @@ const playlistsProgress = (
     "auto_read_play",
   ]
 )
-  .filter((ele) => ele.content !== "undefined")
-  .map((ele) => ele);
+  .filter((ele: any) => ele.content !== "undefined")
+  .map((ele: any) => ele);
 
 G["PREDEFINED_ICONS"] = playlistsProgress;

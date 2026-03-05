@@ -19,13 +19,13 @@ elementsData.forEach((elementData) => {
         Array.isArray(elementData.element.vars.chunksOfVerses) &&
         elementData.element.vars.chunksOfVerses.length > 0
       ) {
-        elementData.element.vars.chunksOfVerses.forEach((chunk) => {
+        elementData.element.vars.chunksOfVerses.forEach((chunk: any) => {
           if (chunk.masks.isSelected) {
             if (
               Array.isArray(chunk.vars.verses) &&
               chunk.vars.verses.length > 0
             ) {
-              chunk.vars.verses.forEach((verse) => {
+              chunk.vars.verses.forEach((verse: any) => {
                 setTagMask(verse, "color", GetHistoryColor({ element: verse }));
               });
             }

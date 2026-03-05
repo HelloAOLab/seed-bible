@@ -1186,7 +1186,7 @@ const SideBarBooks = (props: {
   }, []);
 
   const selectBookSelectorBook = useCallback(
-    (bookId) => {
+    (bookId: any) => {
       if (!bookId) {
         setBookData(null);
         setLastBookClicked(-1);
@@ -1796,7 +1796,7 @@ const SideBarChapters = (props: {
               selectedTranslation.id,
               chapterUrl
             );
-            setOpenSidebar((prev) => !prev);
+            setOpenSidebar((prev: any) => !prev);
             setCurrentExperience(0);
           }
           // MainApp2({ action: 'addStudyNotes', props: { book: bookName, bookId: data.id, chapter: chapterNo, forced: true } })
@@ -1819,7 +1819,7 @@ const SideBarChapters = (props: {
         `${chapterNo}.json`
       );
       globalThis.Open(data.id, chapterNo, selectedTranslation.id, chapterUrl);
-      setOpenSidebar((prev) => !prev);
+      setOpenSidebar((prev: any) => !prev);
       setCurrentExperience(0);
     }
   };

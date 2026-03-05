@@ -6,7 +6,7 @@ export class StackData {
     this.childrenData = childrenData;
     this.id = id;
   }
-  AddChild(newChild) {
+  AddChild(newChild: any) {
     this.childrenData.push(newChild);
   }
 }

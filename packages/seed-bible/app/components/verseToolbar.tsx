@@ -40,7 +40,7 @@ export function VerseToolbar({
   // Get Selection UI settings - first try globalThis, then fall back to saved space data
   // we intentionally ignore any copyVerseMode stored in the settings
   const getSelectionSettings = () => {
-    const pick = (s) => ({
+    const pick = (s: any) => ({
       showSelectedItems: s.showSelectedItems ?? true,
       showHighlightColors: s.showHighlightColors ?? true,
       showIconText: s.showIconText ?? true,
@@ -50,7 +50,7 @@ export function VerseToolbar({
       return pick(globalThis.selectionUIBehavior[activeSpace]);
     }
     // Fall back to saved space data
-    const currentSpace = spaces?.find((s) => s.id === activeSpace);
+    const currentSpace = spaces?.find((s: any) => s.id === activeSpace);
     if (currentSpace?.selectionUIBehavior) {
       // Also populate globalThis for future use
       if (!globalThis.selectionUIBehavior) {
@@ -85,14 +85,14 @@ export function VerseToolbar({
   const colorPickerRef = useRef(null);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: any) => {
       if (
         isPickingColor &&
         colorPickerRef.current &&
         !colorPickerRef.current.contains(event.target)
       ) {
         // Add color to customColors array, max 3
-        setCustomColors((prev) => {
+        setCustomColors((prev: any) => {
           // Check if color already exists
           if (prev.includes(tempColor)) {
             return prev;
@@ -196,7 +196,7 @@ export function VerseToolbar({
     position: "relative",
   };
 
-  const circleButtonStyle = (color) => ({
+  const circleButtonStyle = (color: any) => ({
     width: "32px",
     height: "32px",
     borderRadius: "50%",
@@ -277,17 +277,17 @@ export function VerseToolbar({
 
   const defaultColors = [color, "#FDE047"];
 
-  const allHighlighted = clickedVerses.some((num) => {
+  const allHighlighted = clickedVerses.some((num: any) => {
     const key = `${book}-${chapter}-${num}`;
     return highlighted[key];
   });
 
-  const handleColorClick = (color) => {
+  const handleColorClick = (color: any) => {
     onColorSelect(color);
   };
 
   const handleClearHighlights = () => {
-    clickedVerses.forEach((verseNum) => {
+    clickedVerses.forEach((verseNum: any) => {
       if (globalThis.UnHighlightVerse) {
         globalThis.UnHighlightVerse(verseNum);
       }
@@ -314,7 +314,7 @@ export function VerseToolbar({
     colorInputRef.current?.click();
   };
 
-  const handleColorChange = (e) => {
+  const handleColorChange = (e: any) => {
     const newColor = e.target.value;
     setTempColor(newColor);
   };
@@ -588,7 +588,7 @@ export function VerseToolbar({
                     </>
                   )}
 
-                  {customColors.map((color) => (
+                  {customColors.map((color: any) => (
                     <button
                       key={color}
                       className="color-circle"
@@ -737,7 +737,12 @@ export function VerseToolbar({
   );
 }
 
-function getMenuActions(that, onClose, activeSpace, spaces) {
+function getMenuActions(
+  that: any,
+  onClose: any,
+  activeSpace: any,
+  spaces: any
+) {
   os.log("GET MENU ACTIONS VERSE TOOLBAR", that);
   const { SharePopup } = thisBot.Chips();
   // copy mode is fixed to always include reference – ignore any stored setting
@@ -852,7 +857,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
 
   // Add dynamic global context items
   if (Array.isArray(globalThis.ContextMenuOptions)) {
-    globalThis.ContextMenuOptions.forEach(({ label, items }) => {
+    globalThis.ContextMenuOptions.forEach(({ label, items }: any) => {
       const panelKey = `${label.toUpperCase().replace(/\s/g, "_")}_PANEL_ID`;
       if (globalThis[panelKey]) {
         items.forEach((el) => {
@@ -932,7 +937,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
   // Add extra contextual items
   if (Array.isArray(that?.extraContext)) {
     that.extraContext.forEach(({ items }) => {
-      items.forEach((el) => {
+      items.forEach((el: any) => {
         MenuOptions.items.push({
           icon: el.icon,
           onClick: (e: MouseEvent) => {
@@ -953,7 +958,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
   }));
 }
 
-const SubOptions = ({ items }) => {
+const SubOptions = ({ items }: any) => {
   return (
     <div
       className={"popupSettings2"}

@@ -1,5 +1,5 @@
 const { name } = that;
-const arrangement = thisBot.tags.booksList.find((currentArrangement) => {
+const arrangement = thisBot.tags.booksList.find((currentArrangement: any) => {
   return currentArrangement.name == name;
 });
 if (arrangement) {

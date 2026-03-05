@@ -1,7 +1,7 @@
 const { mapData } = that;
 
 const settingsElements = mapData.staticMapElements.settingsButtons.flatMap(
-  (button) => {
+  (button: any) => {
     switch (button.tags.buttonType) {
       case MapButtonType.CameraAnimationToggle:
       case MapButtonType.ShowLabelsToggle:

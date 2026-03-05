@@ -79,7 +79,7 @@ return new Promise((resolve, reject) => {
   currentLerps.AddColorLerpData(botLerpData);
 });
 
-function ClampRGBColor(colorToClamp) {
+function ClampRGBColor(colorToClamp: any) {
   const colorClamped = [
     Math.max(Math.min(Math.round(colorToClamp[0]), 255), 0),
     Math.max(Math.min(Math.round(colorToClamp[1]), 255), 0),

@@ -31,7 +31,7 @@ const NT_BOOKS = [
   "Revelation",
 ];
 
-const isNewTestament = (bookName) => {
+const isNewTestament = (bookName: any) => {
   if (!bookName) return false;
   const normalizedBook = bookName.trim();
   return NT_BOOKS.some(
@@ -41,7 +41,7 @@ const isNewTestament = (bookName) => {
   );
 };
 
-const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
+const ConfigurableFunctionCommands = ({ contextData, clickedVerses }: any) => {
   const [commandInput, setCommandInput] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState(0);
@@ -88,7 +88,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
     },
 
     // Generate suggested questions about the verse
-    generateSuggestedQuestions: async (data) => {
+    generateSuggestedQuestions: async (data: any) => {
       os.log("Generating suggested questions for:", data);
       const prompt = `Based on this biblical book:${data.book} chapter:${data.chapter} verse: "${data.verseNumber.toString()}" (${data.text}),
              suggest exactly 3 common questions that people typically ask about this passage.
@@ -125,7 +125,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       }
     },
 
-    dynamicTranslate: async (data, langCode) => {
+    dynamicTranslate: async (data, langCode: any) => {
       const payload = {
         q: data.verse,
         source: "en",
@@ -149,7 +149,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
     },
 
     // AI Translation functions
-    translateToHindi: async (data) => {
+    translateToHindi: async (data: any) => {
       const prompt = `Translate this biblical verse to Hindi with proper theological terms: "${data.verse}" (${data.text})`;
       try {
         const response = await ai.chat(prompt, {
@@ -163,7 +163,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       }
     },
 
-    translateToArabic: async (data) => {
+    translateToArabic: async (data: any) => {
       const prompt = `Translate this biblical verse to Arabic with proper theological terms: "${data.verse}" (${data.text})`;
       try {
         const response = await ai.chat(prompt, {
@@ -177,7 +177,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       }
     },
 
-    translateToSpanish: async (data) => {
+    translateToSpanish: async (data: any) => {
       const prompt = `Translate this biblical verse to Spanish with proper theological terms: "${data.verse}" (${data.text})`;
       try {
         const response = await ai.chat(prompt, {
@@ -192,7 +192,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
     },
 
     // AI Analysis functions - context-aware (Greek for NT, Hebrew for OT)
-    analyzeOriginalLanguage: async (data) => {
+    analyzeOriginalLanguage: async (data: any) => {
       const isNT = isNewTestament(data.book);
       const language = isNT ? "Greek" : "Hebrew";
       const prompt = `Provide a detailed ${language} linguistic analysis of ${data.text}: "${data.verse}". Include original ${language} words, their meanings, grammatical structures, and theological significance. Format the response with clear headings using ### for main sections and ** for key terms.`;
@@ -207,7 +207,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       }
     },
 
-    explainVerse: async (data, query) => {
+    explainVerse: async (data: any, query: any) => {
       const prompt = query
         ? `Regarding ${data.text}: "${data.verse}", please explain: ${query}. Format your response clearly with ### for main headings and ** for key terms.`
         : `Provide a comprehensive explanation of ${data.text}: "${data.verse}". Include theological, historical, and practical insights. Format your response clearly with ### for main headings and ** for key terms.`;
@@ -237,7 +237,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
     },
 
     // AI Commentary functions
-    augustineCommentary: async (data) => {
+    augustineCommentary: async (data: any) => {
       const prompt = `Write a commentary on ${data.text}: "${data.verse}" in the style and theological perspective of Augustine of Hippo. Include his typical themes and approach.`;
       try {
         const response = await ai.chat(prompt, {
@@ -251,7 +251,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       }
     },
 
-    calvinCommentary: async (data) => {
+    calvinCommentary: async (data: any) => {
       const prompt = `Write a commentary on ${data.text}: "${data.verse}" in the style and theological perspective of John Calvin. Focus on sovereignty, providence, and Reformed theology.`;
       try {
         const response = await ai.chat(prompt, {
@@ -280,7 +280,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
     },
 
     // AI Parallel functions
-    findJohnParallel: async (data) => {
+    findJohnParallel: async (data: any) => {
       const prompt = `Find and explain connections between ${data.text}: "${data.verse}" and John 1:5. Provide detailed theological parallels and thematic connections.`;
       try {
         const response = await ai.chat(prompt, {
@@ -294,7 +294,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       }
     },
 
-    findPaulParallel: async (data) => {
+    findPaulParallel: async (data: any) => {
       const prompt = `Find and explain connections between ${data.text}: "${data.verse}" and 2 Corinthians 4:6. Provide detailed theological parallels and thematic connections.`;
       try {
         const response = await ai.chat(prompt, {
@@ -323,7 +323,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
     },
 
     // AI Custom analysis functions
-    theologicalImplications: async (data) => {
+    theologicalImplications: async (data: any) => {
       const prompt = `Analyze the theological implications of ${data.text}: "${data.verse}". Cover systematic theology, biblical theology, and practical theology applications.`;
       try {
         const response = await ai.chat(prompt, {
@@ -337,7 +337,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       }
     },
 
-    literaryAnalysis: async (data) => {
+    literaryAnalysis: async (data: any) => {
       const prompt = `Provide a comprehensive literary analysis of ${data.text}: "${data.verse}". Include structure, literary devices, genre, and stylistic features.`;
       try {
         const response = await ai.chat(prompt, {
@@ -352,7 +352,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
     },
 
     // New AI-powered functions
-    devotionalThoughts: async (data) => {
+    devotionalThoughts: async (data: any) => {
       const prompt = `Write devotional thoughts based on ${data.text}: "${data.verse}". Include personal application, prayer points, and spiritual reflection.`;
       try {
         const response = await ai.chat(prompt, {
@@ -366,7 +366,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       }
     },
 
-    sermonOutline: async (data) => {
+    sermonOutline: async (data: any) => {
       const prompt = `Create a sermon outline based on ${data.text}: "${data.verse}". Include main points, sub-points, illustrations, and applications.`;
       try {
         const response = await ai.chat(prompt, {
@@ -380,7 +380,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       }
     },
 
-    studyQuestions: async (data) => {
+    studyQuestions: async (data: any) => {
       const prompt = `Generate study questions for ${data.text}: "${data.verse}". Include observation, interpretation, and application questions suitable for small groups.`;
       try {
         const response = await ai.chat(prompt, {
@@ -394,7 +394,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       }
     },
 
-    customQuery: async (data, query) => {
+    customQuery: async (data: any, query: any) => {
       const prompt = `Regarding ${data.text}: "${data.verse}", please answer this question: ${query}. Format your response clearly with ### for main headings and ** for emphasis on key terms.`;
       try {
         const response = await ai.chat(prompt, {
@@ -408,7 +408,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
     },
 
     // Ask - direct question to AI about the verse
-    askQuestion: async (data, question) => {
+    askQuestion: async (data, question: any) => {
       const prompt = `Answer this question about ${data.text}: "${data.verse}"\n\nQuestion: ${question}\n\nProvide a clear, well-structured answer. Use ### for main headings and ** for key terms.`;
       try {
         const response = await ai.chat(prompt, {
@@ -549,7 +549,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
     setLoadingSuggestions(false);
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: any) => {
     const value = e.target.value;
     setCommandInput(value);
 
@@ -566,7 +566,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
 
     if (matchedCommand && commandConfig[matchedCommand].hasOptions) {
       const fullOptions = commandConfig[matchedCommand].options;
-      const filteredOptions = fullOptions.filter((opt) =>
+      const filteredOptions = fullOptions.filter((opt: any) =>
         opt.name.toLowerCase().includes(optionInput)
       );
       setCurrentOptions(filteredOptions);
@@ -587,7 +587,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
     }
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: any) => {
     if (showOptions) {
       if (e.key === "ArrowDown") {
         e.preventDefault();
@@ -629,7 +629,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
   };
 
   // in selectCommand
-  const selectCommand = (cmd) => {
+  const selectCommand = (cmd: any) => {
     const cfg = commandConfig[cmd];
     if (cfg.hasOptions) {
       setCommandInput(cmd + " ");
@@ -653,7 +653,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
   };
 
   // in selectOption
-  const selectOption = (option) => {
+  const selectOption = (option: any) => {
     const currentCommand = Object.keys(commandConfig).find((cmd) =>
       commandInput.toLowerCase().startsWith(cmd.toLowerCase())
     );
@@ -666,7 +666,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
   };
 
   // replace your executeCommand with this version
-  const executeCommand = async (rawInput) => {
+  const executeCommand = async (rawInput: any) => {
     const input = (rawInput ?? commandInput).trim();
     if (!input) return;
 
@@ -732,7 +732,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
     setLoading(false);
   };
 
-  const handleSuggestedQuestion = async (question) => {
+  const handleSuggestedQuestion = async (question: any) => {
     const next = `/explain ${question}`;
     setCommandInput(next);
     inputRef.current?.focus();
@@ -1167,7 +1167,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
 const BiblePassageDisplay = ({ content }) => {
   if (!content) return null;
 
-  const processContent = (text) => {
+  const processContent = (text: any) => {
     // Pre-process to fix common AI formatting issues
     const cleanedText = text
       // Merge numbered items split across lines: "1.\n**Title**\n: description" -> "1. **Title**: description"
@@ -1182,15 +1182,15 @@ const BiblePassageDisplay = ({ content }) => {
     // Split into paragraphs and clean up more aggressively
     const paragraphs = cleanedText
       .split("\n\n")
-      .map((p) => p.trim())
-      .filter((p) => p.length > 0);
+      .map((p: any) => p.trim())
+      .filter((p: any) => p.length > 0);
 
     return paragraphs
-      .map((paragraph, index) => {
+      .map((paragraph: any, index: any) => {
         const lines = paragraph
           .split("\n")
-          .map((line) => line.trim())
-          .filter((line) => {
+          .map((line: any) => line.trim())
+          .filter((line: any) => {
             // Filter out empty lines and separator lines
             if (!line || line.length === 0) return false;
             if (/^[-_=+*\s]*$/.test(line)) return false;
@@ -1202,16 +1202,16 @@ const BiblePassageDisplay = ({ content }) => {
 
         return (
           <div key={index} className="paragraph-block">
-            {lines.map((line, lineIndex) =>
+            {lines.map((line: any, lineIndex: any) =>
               renderLine(line, `${index}-${lineIndex}`)
             )}
           </div>
         );
       })
-      .filter((block) => block !== null);
+      .filter((block: any) => block !== null);
   };
 
-  const renderLine = (line, key) => {
+  const renderLine = (line: any, key: any) => {
     // Skip empty lines and lines with only dashes, spaces, or minimal content
     if (!line || !line.trim()) return null;
 
@@ -1316,7 +1316,7 @@ const BiblePassageDisplay = ({ content }) => {
     // Handle bold text (**text**)
     const parts = text.split(/(\*\*[^*]+\*\*)/g);
 
-    return parts.map((part, index) => {
+    return parts.map((part, index: any) => {
       if (part.startsWith("**") && part.endsWith("**")) {
         const boldText = part.slice(2, -2);
         return (

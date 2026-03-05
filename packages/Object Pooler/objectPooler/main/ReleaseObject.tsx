@@ -13,7 +13,7 @@ if (Array.isArray(obj)) {
   const releasedObjects = [];
   for (const bot of obj) {
     const inUseObject = thisBot.vars.poolDictionary[tag].inUseObjects.find(
-      (activeObject) => {
+      (activeObject: any) => {
         return activeObject.id === bot.id;
       }
     );
@@ -36,7 +36,7 @@ if (Array.isArray(obj)) {
   }
 } else {
   const inUseObject = thisBot.vars.poolDictionary[tag].inUseObjects.find(
-    (activeObject) => {
+    (activeObject: any) => {
       return activeObject.id === obj.id;
     }
   );

@@ -34,7 +34,7 @@ if (masks[`${address}-data`]) {
   if (!G.ContextMenuOptions) G.ContextMenuOptions = [];
 
   G.ContextMenuOptions = G.ContextMenuOptions.filter(
-    (e) => e.address !== address
+    (e: any) => e.address !== address
   );
 
   if (G.RemoveTool) {

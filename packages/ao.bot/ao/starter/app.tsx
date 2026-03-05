@@ -443,7 +443,7 @@ export function AOBotInterface() {
         const urlRegex = /(https?:\/\/[^\s]+)/g;
 
         // Helper to build a nice label for Seed Bible links
-        const labelForSeedBibleDevURL = (raw) => {
+        const labelForSeedBibleDevURL = (raw: any) => {
           try {
             const u = new URL(raw);
             if (!/.?ao\.bot$/i.test(u.hostname)) return null;
@@ -457,7 +457,7 @@ export function AOBotInterface() {
             const verse = u.searchParams.get("verse");
             const translation = u.searchParams.get("translation");
 
-            const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
+            const clean = (s: any) => (s || "").replace(/\s+/g, " ").trim();
 
             const bookLabel = clean(book);
             const chapLabel = clean(chapter);
@@ -484,7 +484,7 @@ export function AOBotInterface() {
         };
 
         let foundLink = false;
-        const htmlText = botText.replace(urlRegex, (url) => {
+        const htmlText = botText.replace(urlRegex, (url: any) => {
           foundLink = true;
           const label = labelForSeedBibleDevURL(url) || "Open link";
           return `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`;
@@ -562,7 +562,7 @@ export function AOBotInterface() {
     }
   };
 
-  const handleQuickQuestion = (question) => {
+  const handleQuickQuestion = (question: any) => {
     setInputValue(question);
     if (currentView !== "chat") {
       setCurrentView("chat");
@@ -580,7 +580,7 @@ export function AOBotInterface() {
     setEnableCollaboration(true);
   };
 
-  const loadChat = (chatId) => {
+  const loadChat = (chatId: any) => {
     const chat = chatHistory.find((c) => c.id === chatId);
     if (chat) {
       setCurrentChatId(chat.id);
@@ -589,7 +589,7 @@ export function AOBotInterface() {
     }
   };
 
-  const deleteChat = (chatId, e) => {
+  const deleteChat = (chatId: any, e: any) => {
     e.stopPropagation();
     const newHistory = chatHistory.filter((chat) => chat.id !== chatId);
     setChatHistory(newHistory);
@@ -598,7 +598,7 @@ export function AOBotInterface() {
     }
   };
 
-  const copyMessage = (text) => {
+  const copyMessage = (text: any) => {
     navigator.clipboard.writeText(text).catch((err) => {
       console.error("Failed to copy:", err);
     });

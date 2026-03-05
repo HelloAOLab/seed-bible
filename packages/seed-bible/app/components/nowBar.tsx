@@ -32,14 +32,14 @@ function NowBar() {
 
   // Global function to add apps to NowBar
   useEffect(() => {
-    globalThis.AddNowBarApp = (appComponent, appId = null) => {
+    globalThis.AddNowBarApp = (appComponent: any, appId: any = null) => {
       const id = appId || Date.now() + Math.random();
       const newApp = {
         id,
         component: appComponent,
       };
 
-      setApps((prevApps) => {
+      setApps((prevApps: any) => {
         // Check if app with same ID already exists
         const existingIndex = prevApps.findIndex((app) => app.id === id);
         if (existingIndex !== -1) {
@@ -55,9 +55,9 @@ function NowBar() {
     };
 
     // Global function to remove apps from NowBar
-    globalThis.RemoveNowBarApp = (appId) => {
-      setApps((prevApps) => prevApps.filter((app) => app.id !== appId));
-      setCurrentIndex((prevIndex) => {
+    globalThis.RemoveNowBarApp = (appId: any) => {
+      setApps((prevApps: any) => prevApps.filter((app) => app.id !== appId));
+      setCurrentIndex((prevIndex: any) => {
         // Adjust current index if needed after removal
         const newAppsLength = apps.filter((app) => app.id !== appId).length;
         return Math.min(prevIndex, Math.max(0, newAppsLength - 1));
@@ -110,7 +110,7 @@ function NowBar() {
 
   const dimensions = getDimensions();
 
-  const handleStart = (clientY) => {
+  const handleStart = (clientY: any) => {
     if (apps.length === 1) return;
     setIsDragging(true);
     setStartY(clientY);
@@ -183,7 +183,7 @@ function NowBar() {
   };
 
   // Mouse events
-  const handleMouseDown = (e) => {
+  const handleMouseDown = (e: any) => {
     // We need to click input box inside here
     // e.preventDefault();
     handleStart(e.clientY);
@@ -199,7 +199,7 @@ function NowBar() {
   };
 
   // Touch events
-  const handleTouchStart = (e) => {
+  const handleTouchStart = (e: any) => {
     handleStart(e.touches[0].clientY);
   };
 
@@ -245,7 +245,7 @@ function NowBar() {
         maxWidth: "95vw",
       }}
     >
-      {apps.map((app, index) => {
+      {apps.map((app: any, index: any) => {
         const isVisible = index >= currentIndex;
         const stackIndex = index - currentIndex;
 

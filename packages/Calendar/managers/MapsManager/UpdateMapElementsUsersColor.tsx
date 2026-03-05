@@ -1,5 +1,5 @@
 const availableMapChaptersData = thisBot.vars.mapChaptersData.filter(
-  (mapChapterData) => {
+  (mapChapterData: any) => {
     return (
       mapChapterData.element &&
       mapChapterData.element.tags.isInUse &&
@@ -10,7 +10,7 @@ const availableMapChaptersData = thisBot.vars.mapChaptersData.filter(
   }
 );
 const availableMapBooksData = thisBot.vars.mapBooksData.filter(
-  (mapBookData) => {
+  (mapBookData: any) => {
     return mapBookData.element && !mapBookData.isSelected;
   }
 );

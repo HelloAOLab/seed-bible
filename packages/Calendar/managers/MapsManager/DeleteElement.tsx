@@ -4,7 +4,7 @@ import { MapChapterData } from "managers.MapsManager.MapChapterData";
 let { elementData, element } = that;
 if (!elementData) {
   if (element.tags.isMapCover) {
-    elementData = thisBot.vars.mapsData.find((mapData) => {
+    elementData = thisBot.vars.mapsData.find((mapData: any) => {
       return mapData.id == element.tags.mapId;
     });
   } else if (element.tags.isMapElement) {
@@ -28,7 +28,7 @@ if (elementData) {
 } else
   console.warn("managers.StacksManager.DeleteElement. No element data found.");
 
-function DeleteMapChapter(mapChapterData) {
+function DeleteMapChapter(mapChapterData: any) {
   const mapChapterDataIndex =
     thisBot.vars.mapChaptersData.indexOf(mapChapterData);
   if (mapChapterData.element) {
@@ -40,13 +40,13 @@ function DeleteMapChapter(mapChapterData) {
       Array.isArray(mapChapterData.element.vars.chunksOfVerses) &&
       mapChapterData.element.vars.chunksOfVerses.length > 0
     ) {
-      mapChapterData.element.vars.chunksOfVerses.forEach((chunk) => {
+      mapChapterData.element.vars.chunksOfVerses.forEach((chunk: any) => {
         if (
           chunk.masks.isSelected &&
           Array.isArray(chunk.vars.verses) &&
           chunk.vars.verses.length > 0
         ) {
-          chunk.vars.verses.flat().forEach((verse) => {
+          chunk.vars.verses.flat().forEach((verse: any) => {
             ObjectPooler.ReleaseObject({ obj: verse, tag: verse.tags.poolTag });
           });
           chunk.vars.verses.splice(0, chunk.vars.verses.length);
@@ -71,9 +71,9 @@ function DeleteMapChapter(mapChapterData) {
     thisBot.vars.mapChaptersData.splice(mapChapterDataIndex, 1);
 }
 
-function DeleteMapBook(mapBookData) {
+function DeleteMapBook(mapBookData: any) {
   let mapBookDataIndex = thisBot.vars.mapBooksData.indexOf(mapBookData);
-  mapBookData.childrenData.forEach((mapChapterData) => {
+  mapBookData.childrenData.forEach((mapChapterData: any) => {
     DeleteMapChapter(mapChapterData);
   });
   mapBookData.childrenData.splice(0, mapBookData.childrenData.length);
@@ -93,10 +93,10 @@ function DeleteMapBook(mapBookData) {
     thisBot.vars.mapBooksData.splice(mapBookDataIndex, 1);
 }
 
-function DeleteMap(mapData) {
+function DeleteMap(mapData: any) {
   let mapDataIndex = thisBot.vars.mapsData.indexOf(mapData);
   const staticMapElementsKeys = Object.keys(mapData.staticMapElements);
-  mapData.childrenStructures.forEach((mapBookStructure) => {
+  mapData.childrenStructures.forEach((mapBookStructure: any) => {
     DeleteMapBook(mapBookStructure.mapBookData);
 
     ObjectPooler.ReleaseObject({

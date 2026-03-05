@@ -87,7 +87,7 @@ const EditorToolbarSettings = () => {
   }, []);
 
   // Move item up in the list
-  const moveUp = (index) => {
+  const moveUp = (index: any) => {
     if (index === 0) return;
     const newPriorities = [...priorities];
     [newPriorities[index - 1], newPriorities[index]] = [
@@ -98,7 +98,7 @@ const EditorToolbarSettings = () => {
   };
 
   // Move item down in the list
-  const moveDown = (index) => {
+  const moveDown = (index: any) => {
     if (index === priorities.length - 1) return;
     const newPriorities = [...priorities];
     [newPriorities[index], newPriorities[index + 1]] = [
@@ -109,20 +109,20 @@ const EditorToolbarSettings = () => {
   };
 
   // Handle drag start
-  const handleDragStart = (e, index) => {
+  const handleDragStart = (e: any, index: any) => {
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/html", e.target);
   };
 
   // Handle drag over
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: any) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
   };
 
   // Handle drop
-  const handleDrop = (e, dropIndex) => {
+  const handleDrop = (e: any, dropIndex: any) => {
     e.preventDefault();
     if (draggedIndex === null) return;
 
@@ -163,7 +163,7 @@ const EditorToolbarSettings = () => {
   };
 
   // Get item details by ID
-  const getItemDetails = (id) => {
+  const getItemDetails = (id: any) => {
     const item = defaultItems.find((item) => item.id === id);
     if (item) {
       return { id, label: t(item.labelKey), description: t(item.descKey) };
