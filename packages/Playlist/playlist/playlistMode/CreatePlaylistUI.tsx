@@ -1376,7 +1376,7 @@ const CreatePlaylistUI = (props: any) => {
                 <span
                   class="material-symbols-outlined"
                   style={{
-                    color: "var(--primaryColor)",
+                    color: "var(--secondaryColor)",
                     marginLeft: "0.25rem",
                   }}
                 >

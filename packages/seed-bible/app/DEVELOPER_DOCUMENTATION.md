@@ -715,7 +715,7 @@ interface ChapterData {
   chapter: number; // Chapter number
   verses: Verse[]; // Array of verse objects
   footnotes: Footnote[]; // Chapter footnotes
-  translation: string; // Translation ID (e.g., "BSB")
+  translation: string; // Translation ID (e.g., "NASB95")
 }
 
 interface Verse {
@@ -746,7 +746,7 @@ manager.subscribe((state) => {
 });
 
 // Open a chapter
-await manager.open("GEN", 1, "BSB");
+await manager.open("GEN", 1, "NASB95");
 
 // Navigate
 await manager.openNext();
@@ -1245,7 +1245,7 @@ globalThis.AddTab({
   type: "bible",
   bookId: "GEN",
   chapter: 1,
-  translation: "BSB",
+  translation: "NASB95",
 });
 
 globalThis.UpdateTab("my-tab-1", { chapter: 2 });
@@ -1271,7 +1271,7 @@ globalThis.OpenPrevChapter(): void
 **Example:**
 
 ```tsx
-globalThis.Open("GEN", 1, "BSB"); // Open Genesis 1 (BSB translation)
+globalThis.Open("GEN", 1, "NASB95"); // Open Genesis 1 (NASB95 translation)
 globalThis.OpenNextChapter(); // Navigate to Genesis 2
 globalThis.OpenPrevChapter(); // Back to Genesis 1
 ```
@@ -1806,7 +1806,7 @@ const { updateCurrentBookChapter, getUsersByBook, userActivities } =
 
 // Update when user navigates
 function handleNavigation(bookId, chapter) {
-  updateCurrentBookChapter(currentUserId, "Genesis", bookId, chapter, "BSB");
+  updateCurrentBookChapter(currentUserId, "Genesis", bookId, chapter, "NASB95");
 }
 
 // Get all users reading the same book
@@ -1881,7 +1881,7 @@ addTab({
   type: "bible",
   bookId: "GEN",
   chapter: 1,
-  translation: "BSB",
+  translation: "NASB95",
 });
 
 // Add a canvas tab
@@ -1973,7 +1973,7 @@ function MyComponent() {
     });
 
     // Load initial data
-    manager.open("GEN", 1, "BSB");
+    manager.open("GEN", 1, "NASB95");
 
     return () => {
       unsubscribe();
@@ -2143,7 +2143,7 @@ function MultiUserBibleReader() {
     setCurrentBook(book);
     setCurrentChapter(chapter);
 
-    updateCurrentBookChapter(currentUserId, book, bookId, chapter, "BSB");
+    updateCurrentBookChapter(currentUserId, book, bookId, chapter, "NASB95");
   };
 
   // Update when clicking verse
@@ -2616,9 +2616,9 @@ function VerseComparison() {
 
   return (
     <button
-      onClick={() => compareTranslations("GEN", 1, ["BSB", "KJV", "NIV"])}
+      onClick={() => compareTranslations("GEN", 1, ["NASB95", "KJV", "NIV"])}
     >
-      Compare Genesis 1 (BSB, KJV, NIV)
+      Compare Genesis 1 (NASB95, KJV, NIV)
     </button>
   );
 }
@@ -2805,7 +2805,7 @@ Seed Bible integrates with external services for specific functionality.
 
 Seed Bible uses the **Free Use Bible API** for Scripture content.
 
-- **Base URL:** [bible.helloao.org](https://bible.helloao.org)
+- **Base URL:** [bible.helloao.org](https://vmfnri.helloao.org)
 - **Purpose:** Provides Bible text in multiple translations
 - **Usage:** The `useBibleData` hook fetches Scripture from this API
 - **Caching:** Scripture data is cached per-tab for performance

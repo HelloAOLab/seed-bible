@@ -120,6 +120,9 @@ const builtinDefaultTheme = {
   // Container backgrounds
   themeSideMenu: "#FFFFFF",
   panelBackground: "#F8FAFC",
+  pageBookBackground: "#FFFFFF",
+  inputBackground: "#E8E8E8",
+  sidebarShadow: "#E8E8E8",
   // Tab
   tabSelection: "#E07B4C",
   activeTabBackground: "#FADDD1",
@@ -160,7 +163,7 @@ const builtinDefaultTheme = {
   unselectedSpaceColor: "#E1E3EA",
   spaceNameText: "#333333",
   addButtonBackground: "#E07B4C",
-  addButtonIcon: "#FFFFFF",
+  addButtonIcon: "#E07B4C",
   selectPanelIcon: "#333333",
   openCloseMenuIcon: "#333333",
   moreIcon: "#666666",
@@ -184,7 +187,6 @@ const builtinDefaultTheme = {
   inputActiveFill: "#FFFFFF",
   inputInactiveBorder: "#E1E3EA",
   inputInactiveFill: "#FFFFFF",
-  inputBackground: "#FFFFFF",
   inputBorder: "#E1E3EA",
   inputText: "#333333",
   inputPlaceholder: "#999999",
@@ -283,14 +285,14 @@ const defaultThemes = [
       tertiaryColor: "#404040",
       // Container backgrounds
       themeSideMenu: "#2D2D2D",
-      panelBackground: "#1A1A1A",
-
+      panelBackground: "#161616",
+      pageBookBackground: "#303030",
       // Tab
       tabSelection: "#5A67D8",
       activeTabBackground: "#404040",
       activeTabText: "#FFFFFF",
-      activeTabBorder: "#5A67D8",
-      activeTabFill: "#5A67D894",
+      activeTabBorder: "#333333",
+      activeTabFill: "#333333",
       simpleTabText: "#AAAAAA",
       inactiveTabText: "#AAAAAA",
       // Buttons
@@ -309,7 +311,7 @@ const defaultThemes = [
       chapterHeadingColor: "#FFFFFF",
       verseNumberColor: "#FFFFFF",
       verseTextColor: "#FFFFFF",
-      pageBackground: "#121212",
+      pageBackground: "#1A1A1A",
       pageTextColor: "#FFFFFF",
       // Side menu
       heading1Color: "#FFFFFF",
@@ -321,11 +323,11 @@ const defaultThemes = [
       sectionBackground: "#5A67D8",
       spaceNameColor: "#FFFFFF",
       sideMenuIconsColor: "#FFFFFF",
-      selectedSpaceColor: "#5A67D8",
+      selectedSpaceColor: "#FFFFFF",
       unselectedSpaceColor: "#666666",
       spaceNameText: "#FFFFFF",
       addButtonBackground: "#404040",
-      addButtonIcon: "#5A67D8",
+      addButtonIcon: "#FFFFFF",
       selectPanelIcon: "#FFFFFF",
       openCloseMenuIcon: "#FFFFFF",
       moreIcon: "#AAAAAA",
@@ -352,6 +354,7 @@ const defaultThemes = [
       inputInactiveBorder: "#666666",
       inputInactiveFill: "#2D2D2D",
       inputBackground: "#2D2D2D",
+      sidebarShadow: "#1A1A1A",
       inputBorder: "#666666",
       inputText: "#FFFFFF",
       inputPlaceholder: "#AAAAAA",
@@ -437,6 +440,7 @@ const defaultThemes = [
       // Main colors
       primaryColor: "#FFFFFF",
       secondaryColor: "#7C3AED",
+      pageBookBackground: "#FFFFFF",
       tertiaryColor: "#EDE9FE",
       // Container backgrounds
       themeSideMenu: "#F5F3FF",
@@ -481,7 +485,7 @@ const defaultThemes = [
       unselectedSpaceColor: "#DDD6FE",
       spaceNameText: "#4C1D95",
       addButtonBackground: "transparent",
-      addButtonIcon: "#7C3AED",
+      addButtonIcon: "#E07B4C",
       selectPanelIcon: "#4C1D95",
       openCloseMenuIcon: "#4C1D95",
       moreIcon: "#6B7280",
@@ -505,9 +509,10 @@ const defaultThemes = [
       inputActiveFill: "#FFFFFF",
       inputInactiveBorder: "#DDD6FE",
       inputInactiveFill: "#FFFFFF",
-      inputBackground: "#FFFFFF",
+      inputBackground: "#E8E8E8",
+      sidebarShadow: "#E8E8E8",
       inputBorder: "#DDD6FE",
-      inputText: "#1F2937",
+      inputText: "#1F2937FFFFF",
       inputPlaceholder: "#9CA3AF",
       // Branding
       logoColor: "#4C1D95",
@@ -593,6 +598,7 @@ const defaultThemes = [
       secondaryColor: "#059669",
       tertiaryColor: "#D1FAE5",
       // Container backgrounds
+
       themeSideMenu: "#ECFDF5",
       panelBackground: "#D1FAE5",
       // Tab
@@ -600,6 +606,7 @@ const defaultThemes = [
       activeTabBackground: "#FFFFFF",
       activeTabText: "#064E3B",
       activeTabBorder: "#059669",
+      pageBookBackground: "#FFFFFF",
       activeTabFill: "#05966994",
       simpleTabText: "#6B7280",
       inactiveTabText: "#6B7280",
@@ -635,7 +642,7 @@ const defaultThemes = [
       unselectedSpaceColor: "#A7F3D0",
       spaceNameText: "#064E3B",
       addButtonBackground: "transparent",
-      addButtonIcon: "#059669",
+      addButtonIcon: "#E07B4C",
       selectPanelIcon: "#064E3B",
       openCloseMenuIcon: "#064E3B",
       moreIcon: "#6B7280",
@@ -659,7 +666,8 @@ const defaultThemes = [
       inputActiveFill: "#FFFFFF",
       inputInactiveBorder: "#A7F3D0",
       inputInactiveFill: "#FFFFFF",
-      inputBackground: "#FFFFFF",
+      inputBackground: "#E8E8E8",
+      sidebarShadow: "#E8E8E8",
       inputBorder: "#A7F3D0",
       inputText: "#1F2937",
       inputPlaceholder: "#9CA3AF",
@@ -751,6 +759,7 @@ const defaultThemes = [
       panelBackground: "#E0F2FE",
       // Tab
       tabSelection: "#0284C7",
+      pageBookBackground: "#FFFFFF",
       activeTabBackground: "#FFFFFF",
       activeTabText: "#0C4A6E",
       activeTabBorder: "#0284C7",
@@ -758,6 +767,7 @@ const defaultThemes = [
       simpleTabText: "#6B7280",
       inactiveTabText: "#6B7280",
       // Buttons
+
       primaryButton: "#0284C7",
       primaryButtonColor: "#FFFFFF",
       primaryButtonBorder: "#0284C7",
@@ -789,7 +799,7 @@ const defaultThemes = [
       unselectedSpaceColor: "#BAE6FD",
       spaceNameText: "#0C4A6E",
       addButtonBackground: "transparent",
-      addButtonIcon: "#0284C7",
+      addButtonIcon: "#E07B4C",
       selectPanelIcon: "#0C4A6E",
       openCloseMenuIcon: "#0C4A6E",
       moreIcon: "#6B7280",
@@ -813,7 +823,8 @@ const defaultThemes = [
       inputActiveFill: "#FFFFFF",
       inputInactiveBorder: "#BAE6FD",
       inputInactiveFill: "#FFFFFF",
-      inputBackground: "#FFFFFF",
+      sidebarShadow: "#E8E8E8",
+      inputBackground: "#E8E8E8",
       inputBorder: "#BAE6FD",
       inputText: "#1F2937",
       inputPlaceholder: "#9CA3AF",
@@ -900,11 +911,13 @@ const defaultThemes = [
       primaryColor: "#FFFFFF",
       secondaryColor: "#D97706",
       tertiaryColor: "#FEF3C7",
+      pageBookBackground: "#FFFFFF",
       // Container backgrounds
       themeSideMenu: "#FFFBEB",
       panelBackground: "#FEF3C7",
       // Tab
       tabSelection: "#D97706",
+
       activeTabBackground: "#FFFFFF",
       activeTabText: "#78350F",
       activeTabBorder: "#D97706",
@@ -943,7 +956,7 @@ const defaultThemes = [
       unselectedSpaceColor: "#FDE68A",
       spaceNameText: "#78350F",
       addButtonBackground: "transparent",
-      addButtonIcon: "#D97706",
+      addButtonIcon: "#E07B4C",
       selectPanelIcon: "#78350F",
       openCloseMenuIcon: "#78350F",
       moreIcon: "#6B7280",
@@ -967,8 +980,9 @@ const defaultThemes = [
       inputActiveFill: "#FFFFFF",
       inputInactiveBorder: "#FDE68A",
       inputInactiveFill: "#FFFFFF",
-      inputBackground: "#FFFFFF",
+      inputBackground: "#E8E8E8",
       inputBorder: "#FDE68A",
+      sidebarShadow: "#E8E8E8",
       inputText: "#1F2937",
       inputPlaceholder: "#9CA3AF",
       // Branding
@@ -5791,6 +5805,8 @@ const SettingsUI = () => {
     showVerses,
     showFootnotes,
     setShowFootnotes,
+    showNavArrows,
+    setShowNavArrows,
   } = useBibleContext();
   const handleSurpriseMe = () => {
     const randomCombo =
@@ -6454,6 +6470,19 @@ const SettingsUI = () => {
           }
         >
           <div style={toggleCircleStyle(showFootnotes[activeSpace])}></div>
+        </div>
+      </div>
+
+      <div style={toggleRowStyle}>
+        <div style={toggleLabelStyle}>
+          {t(showNavArrows ? "hideNavArrows" : "showNavArrows")}
+        </div>
+
+        <div
+          style={toggleStyle(showNavArrows)}
+          onClick={() => setShowNavArrows((prev) => !prev)}
+        >
+          <div style={toggleCircleStyle(showNavArrows)}></div>
         </div>
       </div>
 

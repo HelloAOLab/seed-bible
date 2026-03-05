@@ -29,68 +29,68 @@ const {
 const PsalmsData: BookInterface[] = [
   {
     id: "PSA",
-    translationId: "BSB",
+    translationId: "NASB95",
     name: "Psalms",
     commonName: "1 Psalms",
     title: "Psalms",
     order: 19,
     numberOfChapters: 41,
     firstChapterNumber: 1,
-    firstChapterApiLink: "/api/BSB/PSA/1.json",
+    firstChapterApiLink: "/api/NASB95/PSA/1.json",
     lastChapterNumber: 41,
-    lastChapterApiLink: "/api/BSB/PSA/41.json",
+    lastChapterApiLink: "/api/NASB95/PSA/41.json",
   },
   {
     id: "PSA",
-    translationId: "BSB",
+    translationId: "NASB95",
     name: "Psalms",
     commonName: "2 Psalms",
     title: "Psalms",
     order: 19,
     numberOfChapters: 31,
     firstChapterNumber: 42,
-    firstChapterApiLink: "/api/BSB/PSA/42.json",
+    firstChapterApiLink: "/api/NASB95/PSA/42.json",
     lastChapterNumber: 72,
-    lastChapterApiLink: "/api/BSB/PSA/72.json",
+    lastChapterApiLink: "/api/NASB95/PSA/72.json",
   },
   {
     id: "PSA",
-    translationId: "BSB",
+    translationId: "NASB95",
     name: "Psalms",
     commonName: "3 Psalms",
     title: "Psalms",
     order: 19,
     numberOfChapters: 17,
     firstChapterNumber: 73,
-    firstChapterApiLink: "/api/BSB/PSA/73.json",
+    firstChapterApiLink: "/api/NASB95/PSA/73.json",
     lastChapterNumber: 89,
-    lastChapterApiLink: "/api/BSB/PSA/89.json",
+    lastChapterApiLink: "/api/NASB95/PSA/89.json",
   },
   {
     id: "PSA",
-    translationId: "BSB",
+    translationId: "NASB95",
     name: "Psalms",
     commonName: "4 Psalms",
     title: "Psalms",
     order: 19,
     numberOfChapters: 16,
     firstChapterNumber: 90,
-    firstChapterApiLink: "/api/BSB/PSA/90.json",
+    firstChapterApiLink: "/api/NASB95/PSA/90.json",
     lastChapterNumber: 106,
-    lastChapterApiLink: "/api/BSB/PSA/106.json",
+    lastChapterApiLink: "/api/NASB95/PSA/106.json",
   },
   {
     id: "PSA",
-    translationId: "BSB",
+    translationId: "NASB95",
     name: "Psalms",
     commonName: "5 Psalms",
     title: "Psalms",
     order: 19,
     numberOfChapters: 20,
     firstChapterNumber: 107,
-    firstChapterApiLink: "/api/BSB/PSA/107.json",
+    firstChapterApiLink: "/api/NASB95/PSA/107.json",
     lastChapterNumber: 150,
-    lastChapterApiLink: "/api/BSB/PSA/150.json",
+    lastChapterApiLink: "/api/NASB95/PSA/150.json",
   },
 ];
 
@@ -149,8 +149,8 @@ const SearchBar = (props: { openSidebar: boolean }) => {
   const [selectedTranslation, setSelectedTranslation] = useState(
     thePage.masks?.selectedTranslation || {
       languageEnglishName: "English",
-      id: "BSB",
-      shortName: "BSB",
+      id: "NASB95",
+      shortName: "NASB95",
     }
   );
   const [showCustomTranslation, setShowCustomTranslation] = useState(false);
@@ -296,7 +296,7 @@ const SearchBar = (props: { openSidebar: boolean }) => {
     setInputValue?: (s: string) => void;
   }) => {
     const available_translations_req = await web.get(
-      "https://bible.helloao.org/api/available_translations.json"
+      "https://vmfnri.helloao.org/api/available_translations.json"
     );
     const { type, value, setInputValue } = props;
     if (type === "id") {
@@ -676,16 +676,16 @@ const SearchBar = (props: { openSidebar: boolean }) => {
     } else {
       web
         .get(
-          `https://bible.helloao.org/api/${selectedTranslation.id}/books.json`
+          `https://vmfnri.helloao.org/api/${selectedTranslation.id}/books.json`
         )
         .then((e) => {
           !thePage.masks?.translationInitiated &&
             ChangeTranslation(
               selectedTranslation.id,
               e.data.books,
-              "https://bible.helloao.org"
+              "https://vmfnri.helloao.org"
             );
-          // ChangeTranslation(selectedTranslation.id, book0, "https://bible.helloao.org");
+          // ChangeTranslation(selectedTranslation.id, book0, "https://vmfnri.helloao.org");
           setBooksData([...e.data.books]);
         })
         .catch((e) => {
@@ -728,7 +728,7 @@ const SearchBar = (props: { openSidebar: boolean }) => {
     let allTranslations = [];
     if (!thePage.masks?.allTranslations) {
       web
-        .get("https://bible.helloao.org/api/available_translations.json")
+        .get("https://vmfnri.helloao.org/api/available_translations.json")
         .then((request) => {
           if (request.status === 200) {
             allTranslations = request.data.translations;
@@ -914,32 +914,53 @@ const SearchBar = (props: { openSidebar: boolean }) => {
                 </span>
               </div>
             )}
-            <div class="dropdown">
-              <select
-                value={selectedTestament}
-                onChange={(e) => setSelectedTestament(Number(e.target.value))}
-                class="dropdown-select"
-              >
-                <option value={2} class="dropdown-option">
-                  {systemTranslation["allBooks"] || "All Books"}
-                </option>
-                <option value={0} class="dropdown-option">
-                  {windowSize > 750
-                    ? systemTranslation["oldTestament"] || "Old Testament"
-                    : systemTranslation["oldTestamentShort"] || "OT"}
-                </option>
-                <option value={1} class="dropdown-option">
-                  {windowSize > 750
-                    ? systemTranslation["newTestament"] || "New Testament"
-                    : systemTranslation["newTestamentShort"] || "NT"}
-                </option>
-                {apocryphaAvailable && (
-                  <option value={3} class="dropdown-option">
-                    {systemTranslation["apocrypha"] || "Apocrypha"}
+            {windowSize > 768 && (
+              <div class="dropdown">
+                <select
+                  value={selectedTestament}
+                  onChange={(e) => setSelectedTestament(Number(e.target.value))}
+                  class="dropdown-select"
+                >
+                  <option value={2} class="dropdown-option">
+                    {systemTranslation["allBooks"] || "All Books"}
                   </option>
-                )}
-              </select>
-            </div>
+                  <option value={0} class="dropdown-option">
+                    {windowSize > 750
+                      ? systemTranslation["oldTestament"] || "Old Testament"
+                      : systemTranslation["oldTestamentShort"] || "OT"}
+                  </option>
+                  <option value={1} class="dropdown-option">
+                    {windowSize > 750
+                      ? systemTranslation["newTestament"] || "New Testament"
+                      : systemTranslation["newTestamentShort"] || "NT"}
+                  </option>
+                  {apocryphaAvailable && (
+                    <option value={3} class="dropdown-option">
+                      {systemTranslation["apocrypha"] || "Apocrypha"}
+                    </option>
+                  )}
+                </select>
+              </div>
+            )}
+            {windowSize <= 768 && (
+              <button
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "32px",
+                  width: "32px",
+                  background: "transparent",
+                  border: "transparent",
+                }}
+                onClick={() => {
+                  globalThis.setOpenSidebar(!openSidebar);
+                  setSelectingTranslation(false);
+                }}
+              >
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            )}
           </div>
         </span>
       </div>
@@ -1205,7 +1226,7 @@ const SideBarBooks = (props: {
   const RenderBooksByTestament = useMemo(() => {
     let allowedRows = 5;
 
-    if (windowSize < 768) {
+    if (windowSize <= 768) {
       allowedRows = 1;
     } else if (windowSize < 1200) {
       allowedRows = 3;
@@ -1278,7 +1299,7 @@ const SideBarBooks = (props: {
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            windowSize < 768 ||
+                            windowSize <= 768 ||
                             bookData.numberOfChapters < 4 * OTChapterSeparator
                               ? "flex-start"
                               : "space-between",
@@ -1348,7 +1369,7 @@ const SideBarBooks = (props: {
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            windowSize < 768 ||
+                            windowSize <= 768 ||
                             bookData.numberOfChapters < 4 * NTChapterSeparator
                               ? "flex-start"
                               : "space-between",
@@ -1386,9 +1407,11 @@ const SideBarBooks = (props: {
           style={showCheck ? { paddingTop: "40px" } : {}}
         >
           <div class="testament-container">
-            <span class="testament-title">
-              {systemTranslation["newTestament"] || "New Testament"}
-            </span>
+            {windowSize > 768 && (
+              <span class="testament-title">
+                {systemTranslation["newTestament"] || "New Testament"}
+              </span>
+            )}
             <div class="books-item">
               {booksWithGhost.map((book, index) => {
                 return (
@@ -1428,7 +1451,7 @@ const SideBarBooks = (props: {
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            windowSize < 768 ||
+                            windowSize <= 768 ||
                             bookData.numberOfChapters < 4 * allowedRows
                               ? "flex-start"
                               : "space-between",
@@ -1460,9 +1483,11 @@ const SideBarBooks = (props: {
           style={showCheck ? { paddingTop: "40px" } : {}}
         >
           <div class="testament-container">
-            <span class="testament-title">
-              {systemTranslation["oldTestament"] || "Old Testament"}
-            </span>
+            {windowSize > 768 && (
+              <span class="testament-title">
+                {systemTranslation["oldTestament"] || "Old Testament"}
+              </span>
+            )}
             <div class="books-item">
               {booksWithGhost.map((book, index) => {
                 return (
@@ -1502,7 +1527,7 @@ const SideBarBooks = (props: {
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            windowSize < 768 ||
+                            windowSize <= 768 ||
                             bookData.numberOfChapters < 4 * allowedRows
                               ? "flex-start"
                               : "space-between",
@@ -1579,7 +1604,7 @@ const SideBarBooks = (props: {
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            windowSize < 768 ||
+                            windowSize <= 768 ||
                             bookData.numberOfChapters < 4 * allowedRows
                               ? "flex-start"
                               : "space-between",

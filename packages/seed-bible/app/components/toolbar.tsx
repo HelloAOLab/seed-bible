@@ -6,7 +6,7 @@ import { useMouseMove } from "app.hooks.mouseMove";
 import SurroundingDivs from "app.components.surroundingDivs";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useTabsContext } from "app.hooks.tabs";
-import { BurgerMenuIcon, MoreIcon, TodayIcon } from "app.components.icons";
+import { BurgerMenuIcon, MoreIcon, TabsIcon } from "app.components.icons";
 
 // Simple, single-toolbar component (no edit layer). Main logic unchanged.
 export function Toolbar() {
@@ -26,6 +26,7 @@ export function Toolbar() {
     setTools,
     setCanvasTools,
     setMapTools,
+    showNavArrows,
   } = useBibleContext();
 
   const {
@@ -34,7 +35,12 @@ export function Toolbar() {
     isMobile,
     setSidebarWidth,
     setOpenOnMobile,
+    setCollapsed,
+    setSideBarMode,
   } = useSideBarContext();
+
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [activeMoreApp, setActiveMoreApp] = useState(null);
   const { setIsDragging, isDragging, setElement } = useMouseMove();
   const {
     activeSpace,
@@ -142,6 +148,8 @@ export function Toolbar() {
     return () => window.removeEventListener("contextmenu", handleContextMenu);
   }, []);
 
+  const moreTools = tools ? tools.filter((t) => t?.active !== false) : [];
+
   if (!showToolbar) return <></>;
 
   return (
@@ -156,6 +164,7 @@ export function Toolbar() {
           {/* Mobile Bottom Navbar */}
           <div className="mobile-bottom-navbar">
             <button
+              style={{ display: showNavArrows ? "" : "none" }}
               className="mobile-navbar-arrow left-arrow"
               onClick={() =>
                 isRTL
@@ -173,19 +182,26 @@ export function Toolbar() {
               title="Today"
               aria-label="Today"
             >
-              <div className="mobile-btn-content">
-                <TodayIcon color="var(--text1)" />
-                <span className="mobile-btn-label">Today</span>
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  os.log("Opening mobile settings", setOpenOnMobile);
+                  setOpenOnMobile(true);
+                  setSidebarWidth(280);
+                  setCollapsed(false);
+                  setSideBarMode("default");
+                }}
+                className="mobile-btn-content"
+              >
+                <TabsIcon color="var(--text1)" />
+                <span className="mobile-btn-label">Tabs</span>
               </div>
             </button>
 
             <div
               onClick={() => {
-                if (globalThis.setOpenSidebar) {
-                  globalThis.setOpenSidebar(true);
-                  globalThis.setSelectingTranslation &&
-                    globalThis.setSelectingTranslation(false);
-                }
+                globalThis.setOpenSidebar(!openSidebar);
+                globalThis.setSelectingTranslation(false);
               }}
               className="mobile-center-logo"
             >
@@ -198,25 +214,68 @@ export function Toolbar() {
               </div>
             </div>
 
-            <button
-              className="mobile-navbar-btn more-btn"
-              title="More"
-              aria-label="More"
-              onClick={() => {
-                if (globalThis.setOpenSidebar) {
-                  globalThis.setOpenSidebar(true);
-                  globalThis.setSelectingTranslation &&
-                    globalThis.setSelectingTranslation(false);
-                }
-              }}
-            >
-              <div className="mobile-btn-content">
-                <MoreIcon color="var(--text1)" />
-                <span className="mobile-btn-label">More</span>
-              </div>
-            </button>
+            <div className="more-btn-wrapper">
+              {showMoreMenu && (
+                <div className="more-menu-popup">
+                  {moreTools
+                    .filter((tool) => tool.label !== "Books")
+                    .map((tool, i) => (
+                      <button
+                        key={i}
+                        className="more-menu-item"
+                        onClick={() => {
+                          tool?.onClick?.();
+                          setShowMoreMenu(false);
+                          setActiveMoreApp(tool.label);
+                        }}
+                      >
+                        {tool?.isImg ? (
+                          <img
+                            src={tool.icon}
+                            style={{ width: "20px" }}
+                            alt={tool.label}
+                          />
+                        ) : (
+                          <span className="material-symbols-outlined">
+                            {tool?.icon}
+                          </span>
+                        )}
+                        <span className="more-menu-item-label">
+                          {tool?.label}
+                        </span>
+                      </button>
+                    ))}
+                </div>
+              )}
+              <button
+                className="mobile-navbar-btn more-btn"
+                title={activeMoreApp ? "Close" : "More"}
+                aria-label={activeMoreApp ? "Close" : "More"}
+                onClick={() => {
+                  if (activeMoreApp) {
+                    (globalThis as any).RemoveApplicationByLabel(activeMoreApp);
+                    (globalThis as any).makingApp = null;
+                    setActiveMoreApp(null);
+                  } else {
+                    setShowMoreMenu((prev) => !prev);
+                  }
+                }}
+              >
+                <div className="mobile-btn-content">
+                  {activeMoreApp ? (
+                    <span className="material-symbols-outlined">close</span>
+                  ) : (
+                    <MoreIcon color="var(--text1)" />
+                  )}
+                  <span className="mobile-btn-label">
+                    {activeMoreApp ? "Close" : "More"}
+                  </span>
+                </div>
+              </button>
+            </div>
 
             <button
+              style={{ display: showNavArrows ? "" : "none" }}
               className="mobile-navbar-arrow right-arrow"
               onClick={() =>
                 isRTL
@@ -342,6 +401,56 @@ export function Toolbar() {
         <style>{getStyleOf("toolbar.css")}</style>
       </div>
       <style>{`
+                .more-btn-wrapper {
+                    position: relative;
+                }
+
+                .more-menu-popup {
+                    position: absolute;
+                    bottom: calc(100% + 8px);
+                    right: 0;
+                    background: var(--bg1, #fff);
+                    border: 1px solid var(--border1, #e0e0e0);
+                    border-radius: 12px;
+                    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+                    min-width: 180px;
+                    overflow: hidden;
+                    z-index: 1000;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .more-menu-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 12px 16px;
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    width: 100%;
+                    text-align: left;
+                    color: var(--text1);
+                    font-size: 14px;
+                    transition: background 0.15s;
+                }
+
+                .more-menu-item:hover {
+                    background: var(--hover1, rgba(0,0,0,0.06));
+                }
+
+                .more-menu-item .material-symbols-outlined {
+                    font-size: 20px;
+                    flex-shrink: 0;
+                }
+
+                .more-menu-item-label {
+                    flex: 1;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
                 .mobile-navbar-btn svg {
                     width: 24px;
                     height: 24px;

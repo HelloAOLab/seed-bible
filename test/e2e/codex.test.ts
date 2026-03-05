@@ -48,7 +48,7 @@ describe("codex tests", () => {
     await delay(1000);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Genesis 1 / BSB");
+    ).toBe("Genesis 1 / NASB95");
   });
 
   test("check loaded translation", async () => {

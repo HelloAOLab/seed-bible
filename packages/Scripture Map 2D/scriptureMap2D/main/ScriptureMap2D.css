@@ -95,7 +95,7 @@
   right: 0;
   top: calc(100% + 4px);
   background-color: var(--primaryColor);
-  color: var(--text1);
+  color: var(--pageTextColor);
   padding: 12px;
   border-radius: 8px;
   gap: 4px;
@@ -109,10 +109,10 @@
   z-index: 1;
 }
 .scripture-title {
-  color: var(--text1);
+  color: var(--pageTextColor);
 }
 .option-button {
-  color: var(--text1);
+  color: var(--pageTextColor);
 }
 
 .settings-options-container > span:nth-of-type(1) {
@@ -130,7 +130,7 @@
 .settings-options-container > button {
   min-width: 100%;
   background-color: transparent;
-  color: var(--text1);
+  color: var(--pageTextColor);
   appearance: none;
   border: none;
   cursor: pointer;
@@ -150,8 +150,7 @@
 }
 
 .settings-options-container > button:hover {
-  background-color: var(--text1);
-  color: var(--primaryColor);
+  background-color: rgb(var(--pageTextColor) / 0.4);
 }
 
 .scripture-map-2d-settings > .settings-footer {
@@ -679,13 +678,13 @@
 .book-header .book-id {
   font-size: calc(24px * var(--scale-factor));
   font-weight: 500;
-  color: var(--bookHeadingColor);
+  color: var(--pageTextColor);
   text-box: auto;
 }
 
 .book-header .book-name {
   font-size: calc(16px * var(--scale-factor));
-  color: var(--bookHeadingColor);
+  color: var(--pageTextColor);
   font-style: italic;
 }
 
@@ -697,7 +696,7 @@
   .chapter {
   background: var(--firstToolbarbutton);
   border-color: var(--firstToolbarbutton);
-  color: var(--text1);
+  color: var(--pageTextColor);
   visibility: visible;
   font-size: calc(12px * var(--scale-factor));
   width: var(--chapter-width);
@@ -794,7 +793,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: start;
-  color: var(--bookHeadingColor);
+  color: var(--pageTextColor);
 }
 
 .toggle > span.toggle-title {
@@ -804,7 +803,7 @@
 
 .toggle > span.toggle-description {
   font-size: calc(18px * var(--scale-factor));
-  color: var(--iconColor);
+  color: var(--pageTextColor);
   grid-area: description;
 }
 
@@ -847,7 +846,7 @@
   background-color: var(--iconColor);
   color: var(--pageBackground);
   text-align: center;
-  z-index: 1;
+  z-index: 10;
   border-radius: 12px;
   position: fixed;
   padding: 12px;
@@ -859,6 +858,15 @@
   gap: 8px;
   white-space: nowrap;
   font-size: 14px;
+  transition:
+    color 0.3s ease,
+    background-color 0.3s ease;
+  box-sizing: border-box;
+  scrollbar-width: none;
+}
+
+.tooltip *:not(.material-symbols-outlined) {
+  font-family: "Satoshi";
 }
 
 .tooltip.tooltip-up {
@@ -868,26 +876,6 @@
 .tooltip.tooltip-down {
   transform: translate(-50%, 8px);
 }
-
-/* .tooltip::after {
-  content: " ";
-  position: absolute;
-  left: var(--arrowLeft);
-  transform: translateX(-50%);
-  border-width: 5px;
-  border-style: solid;
-  pointer-events: none;
-} */
-
-/* .tooltip.tooltip-up::after {
-  top: 100%;
-  border-color: black transparent transparent transparent;
-}
-
-.tooltip.tooltip-down::after {
-  bottom: 100%;
-  border-color: transparent transparent black transparent;
-} */
 
 .tooltip > span {
   width: 100%;
