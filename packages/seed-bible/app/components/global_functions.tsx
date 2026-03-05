@@ -28,6 +28,7 @@ globalThis.AddApplication = () => {};
 globalThis.RemoveApplication = () => {};
 globalThis.AddApplication = () => {};
 globalThis.RemoveApplicationByID = () => {};
+(globalThis as any).RemoveApplicationByLabel = () => {};
 globalThis.ReplaceApplication = () => {};
 globalThis.UpdateApplication = () => {};
 

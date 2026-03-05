@@ -101,7 +101,7 @@ const {
 ### Navigation
 
 ```tsx
-globalThis.Open("GEN", 1, "BSB"); // Open Genesis 1 (BSB)
+globalThis.Open("GEN", 1, "NASB95"); // Open Genesis 1 (NASB95)
 globalThis.OpenNextChapter(); // Next chapter
 globalThis.OpenPrevChapter(); // Previous chapter
 ```
@@ -204,7 +204,7 @@ function createBibleTab(bookId, chapter) {
     type: "bible",
     bookId: bookId,
     chapter: chapter,
-    translation: "BSB",
+    translation: "NASB95",
   });
 }
 ```
@@ -215,7 +215,7 @@ function createBibleTab(bookId, chapter) {
 function trackUserReading(userId, book, bookId, chapter) {
   const { updateCurrentBookChapter } = useBibleContext();
 
-  updateCurrentBookChapter(userId, book, bookId, chapter, "BSB");
+  updateCurrentBookChapter(userId, book, bookId, chapter, "NASB95");
 }
 ```
 
@@ -344,7 +344,7 @@ const tab = {
   type: "bible",
   bookId: "GEN",
   chapter: 1,
-  translation: "BSB",
+  translation: "NASB95",
 };
 ```
 
@@ -409,7 +409,7 @@ interface UserActivity {
   currentBook: string; // 'Genesis'
   currentBookId: string; // 'GEN'
   currentChapter: number; // 1
-  currentTranslation: string; // 'BSB'
+  currentTranslation: string; // 'NASB95'
 
   lastVerseClicked: number; // Last verse number clicked
   highlightedVerses: number[]; // Array of highlighted verses
@@ -496,7 +496,7 @@ function TabManager() {
         type: "bible",
         bookId: bookId,
         chapter: 1,
-        translation: "BSB",
+        translation: "NASB95",
       });
 
       addTabToFolder(folderId, { id: tabId });
@@ -542,7 +542,7 @@ function CollaborativeReader() {
     setCurrentBook(book);
     setCurrentChapter(chapter);
 
-    updateCurrentBookChapter(userId, book, bookId, chapter, "BSB");
+    updateCurrentBookChapter(userId, book, bookId, chapter, "NASB95");
   };
 
   // Handle verse click
@@ -659,7 +659,7 @@ HEB - Hebrews        JAS - James          1PE - 1 Peter
 ## Common Translations
 
 ```
-BSB  - Berean Standard Bible
+NASB95  - Berean Standard Bible
 KJV  - King James Version
 NIV  - New International Version
 ESV  - English Standard Version

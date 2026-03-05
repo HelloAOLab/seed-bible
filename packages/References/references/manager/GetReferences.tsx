@@ -19,7 +19,7 @@ export const GetReferences = async (props: {
     );
   }
 
-  const referenceUrl = `https://bible.helloao.org/api/d/open-cross-ref/${bookId}/${chapter}.json`;
+  const referenceUrl = `https://vmfnri.helloao.org/api/d/open-cross-ref/${bookId}/${chapter}.json`;
 
   const referenceReq = await web.get(referenceUrl);
 
@@ -136,8 +136,8 @@ export const GetChapterContent = async (props: {
         bookId,
         chapter,
         reference,
-        baseUrl: "https://bible.helloao.org",
-        translation: "BSB",
+        baseUrl: "https://vmfnri.helloao.org",
+        translation: "NASB95",
       });
       return fallBackContent;
     }

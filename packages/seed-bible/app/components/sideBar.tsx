@@ -1160,7 +1160,7 @@ function SideBar({ panelsNumber }) {
           style={{
             textAlign: "left",
             marginBottom: "10px",
-            color: themeColors ? themeColors[1].text1 : "#1A1A1A",
+            color: themeColors ? themeColors[1].pageTextColor : "#1A1A1A",
             "font-family": "'Satoshi', system-ui, sans-serif",
             "font-size": "16px",
             "font-style": "normal",
@@ -1467,8 +1467,8 @@ function SideBar({ panelsNumber }) {
                 book: "Genesis",
                 bookId: "GEN",
                 chapter: 1,
-                translation: "BSB",
-                shortName: "BSB",
+                translation: "NASB95",
+                shortName: "NASB95",
               },
             });
             closePopupSettings();
@@ -1606,8 +1606,8 @@ function SideBar({ panelsNumber }) {
           book: "Genesis",
           bookId: "GEN",
           chapter: 1,
-          translation: "BSB",
-          shortName: "BSB",
+          translation: "NASB95",
+          shortName: "NASB95",
         },
       };
       addTab(newTab);
@@ -2099,6 +2099,8 @@ function SideBar({ panelsNumber }) {
                   <>
                     {Object.keys(bookmarks).map((cat) => (
                       <label key={cat} className="category-item">
+                        <span>{cat}</span>
+
                         <input
                           type="radio"
                           name="bookmarkCat"
@@ -2106,7 +2108,6 @@ function SideBar({ panelsNumber }) {
                           checked={selectedCategory === cat}
                           onChange={() => setSelectedCategory(cat)}
                         />
-                        <span>{cat}</span>
                       </label>
                     ))}
                     <div
@@ -2364,7 +2365,7 @@ function SideBar({ panelsNumber }) {
                 <span
                   style={{
                     paddingTop: customScreens?.value >= 2 ? "3px" : "0px",
-                    color: "var(--selectPanelIcon, var(--text1))",
+                    color: "var(--selectPanelIcon, var(--pageTextColor))",
                     display: hidePanels ? "none" : "",
                     height: "22px",
                   }}
@@ -2404,13 +2405,13 @@ function SideBar({ panelsNumber }) {
                   onMouseLeave={() => clearTimeout(globalThis._holdTimeout)}
                 >
                   {panelsNumber <= 1 ? (
-                    <SingleScreenIcon />
+                    <SingleScreenIcon filter="var(--filter-mode)" />
                   ) : panelsNumber === 2 ? (
-                    <DualScreenIcon />
+                    <DualScreenIcon filter="var(--filter-mode)" />
                   ) : panelsNumber === 3 ? (
-                    <ThreeScreenIcon />
+                    <ThreeScreenIcon filter="var(--filter-mode)" />
                   ) : panelsNumber === 4 ? (
-                    <QuadScreenIcon />
+                    <QuadScreenIcon filter="var(--filter-mode)" />
                   ) : null}
                 </span>
                 <span
@@ -2459,13 +2460,13 @@ function SideBar({ panelsNumber }) {
               />
             )}
             <div className="tabsContainer">
-              <span>{t("tabs")}</span>
+              <span style={{ color: "var(--pageTextColor)" }}>{t("tabs")}</span>
               <div
                 style={{ display: "flex", alignItems: "center", gap: "5px" }}
               >
                 {!removeBookMark && (
                   <span
-                    className="sidebar-bookmark-filter-btn"
+                    className={`sidebar-bookmark-filter-btn ${showBookmarksFilter ? "activeBM" : "inactiveBM"}`}
                     onClick={() => setShowBookmarksFilter((prev) => !prev)}
                     title={
                       showBookmarksFilter
@@ -2474,15 +2475,16 @@ function SideBar({ panelsNumber }) {
                     }
                   >
                     <BookMarkIcon
+                      width={16}
+                      height={16}
+                      strokeWidth={2}
                       stroke={
                         showBookmarksFilter
-                          ? "var(--selectedSpaceColor)"
-                          : "var(--text1)"
+                          ? "var(--addButtonIcon)"
+                          : "var(--pageTextColor)"
                       }
                       fill={
-                        showBookmarksFilter
-                          ? "var(--selectedSpaceColor)"
-                          : "none"
+                        showBookmarksFilter ? "var(--addButtonIcon)" : "none"
                       }
                     />
                   </span>
@@ -2509,8 +2511,8 @@ function SideBar({ panelsNumber }) {
                           book: "Genesis",
                           bookId: "GEN",
                           chapter: 1,
-                          translation: "BSB",
-                          shortName: "BSB",
+                          translation: "NASB95",
+                          shortName: "NASB95",
                         },
                       });
                     }
@@ -2740,8 +2742,8 @@ function SideBar({ panelsNumber }) {
                       book: "Genesis",
                       bookId: "GEN",
                       chapter: 1,
-                      translation: "BSB",
-                      shortName: "BSB",
+                      translation: "NASB95",
+                      shortName: "NASB95",
                     },
                   });
                 }
@@ -2774,6 +2776,8 @@ function SideBar({ panelsNumber }) {
               <>
                 {Object.keys(bookmarks).map((cat) => (
                   <label key={cat} className="category-item">
+                    <span>{cat}</span>
+
                     <input
                       type="radio"
                       name="bookmarkCatDesktop"
@@ -2781,7 +2785,6 @@ function SideBar({ panelsNumber }) {
                       checked={selectedCategory === cat}
                       onChange={() => setSelectedCategory(cat)}
                     />
-                    <span>{cat}</span>
                   </label>
                 ))}
                 <div
@@ -2899,7 +2902,7 @@ export const SpaceUI = () => {
                 onClick={() => setSideBarMode("settings")}
                 className="material-symbols-outlined"
               >
-                <MobileSettingsIcon />
+                <MobileSettingsIcon filter="var(--filter-mode)" />
               </span>
               <SettingsProfile />
               <UserProfile />
@@ -3140,9 +3143,10 @@ export const UserProfile = ({ collapsed }) => {
           width: 30,
           height: 30,
           borderRadius: "50%",
-          border: `2px solid ${!configBot.tags.staticInst ? colors[colorIndex] : "var(--selectedSpaceColor)"}`,
+          // border: `2px solid ${!configBot.tags.staticInst ? colors[colorIndex] : "var(--pageTextColor)"}`,
           padding: 2,
           display: "flex",
+          backgroundColor: "var(--addButtonIcon)",
           alignItems: "center",
           justifyContent: "center",
           overflow: "hidden",
@@ -3156,7 +3160,12 @@ export const UserProfile = ({ collapsed }) => {
         ) : !configBot.tags.staticInst ? (
           <Icon width={15} height={15} />
         ) : (
-          <span className="material-symbols-outlined">person</span>
+          <span
+            className="material-symbols-outlined"
+            style={{ color: "var(--primaryColor)" }}
+          >
+            person
+          </span>
         )}
       </div>
       {
@@ -3227,15 +3236,24 @@ const sidebarStyles = `
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        padding: 2px;
+        padding: 4px 4px 4px 4px;
         border-radius: 4px;
-        opacity: 0.7;
+       
+        filter: none !important;
         transition: opacity 0.15s, background 0.15s;
     }
+    .inactiveBM {
+    backgorund-color: none;
+        border: 1.5px solid color-mix(in srgb, var(--pageTextColor) 30%, transparent) !important;
+        }
+    .activeBM {
+    background-color: color-mix(in srgb, var(--addButtonIcon) 10%, transparent);
+            border: 1.5px solid color-mix(in srgb, var(--addButtonIcon) 40%, transparent) !important;
+      }
 
     .sidebar-bookmark-filter-btn:hover {
         opacity: 1;
-        background: rgba(0, 0, 0, 0.06);
+     
     }
 
     /* Desktop tab bookmark icon */
@@ -3279,8 +3297,8 @@ const sidebarStyles = `
     }
 
     .desktop-modal {
-        background: var(--panelBackground, #fff);
-        color: var(--text1);
+        background: var(--pageBackground);
+        color: var(--pageTextColor);
         width: 360px;
         border-radius: 12px;
         padding: 24px;
@@ -3293,7 +3311,7 @@ const sidebarStyles = `
         margin: 0 0 16px;
         font-size: 16px;
         font-weight: 700;
-        color: var(--text1);
+        color: var(--pageTextColor);
     }
 
     .desktop-modal input {
@@ -3304,19 +3322,21 @@ const sidebarStyles = `
         font-size: 14px;
         margin-bottom: 16px;
         box-sizing: border-box;
-        color: var(--text1);
-        background: var(--panelBackground, #fff);
+        color: var(--pageTextColor);
+        background: var(--inputBackground, #fff);
     }
 
     .desktop-modal .category-item {
-        display: flex;
-        align-items: center;
-        padding: 10px 12px;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        cursor: pointer;
-        transition: background 0.15s;
+      display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
     }
 
     .desktop-modal .category-item:hover {
@@ -3324,14 +3344,16 @@ const sidebarStyles = `
     }
 
     .desktop-modal .category-item input[type=radio] {
-        margin-right: 10px;
-        cursor: pointer;
+           margin-left: auto;
+    cursor: pointer;
+    width: auto;
     }
 
     .desktop-modal .category-item span {
         flex: 1;
         font-size: 14px;
         color: var(--text1);
+        width: auto;
     }
 
     .desktop-modal .add-new {
@@ -3366,13 +3388,13 @@ const sidebarStyles = `
     }
 
     .desktop-modal .modal-actions .cancel {
-        background: #f0f0f0;
-        color: var(--text1);
+        background: var(--inputBackground);
+        color: var(--pageTextColor);
     }
 
     .desktop-modal .modal-actions .create {
         background: var(--selectedSpaceColor);
-        color: #fff;
+        color: var(--pageBackground);
     }
 `;
 
