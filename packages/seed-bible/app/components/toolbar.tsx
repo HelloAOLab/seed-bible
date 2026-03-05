@@ -40,6 +40,7 @@ export function Toolbar() {
   } = useSideBarContext();
 
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [activeMoreApp, setActiveMoreApp] = useState(null);
   const { setIsDragging, isDragging, setElement } = useMouseMove();
   const {
     activeSpace,
@@ -228,6 +229,7 @@ export function Toolbar() {
                         onClick={() => {
                           tool?.onClick?.();
                           setShowMoreMenu(false);
+                          setActiveMoreApp(tool.label);
                         }}
                       >
                         {tool?.isImg ? (
@@ -250,13 +252,27 @@ export function Toolbar() {
               )}
               <button
                 className="mobile-navbar-btn more-btn"
-                title="More"
-                aria-label="More"
-                onClick={() => setShowMoreMenu((prev) => !prev)}
+                title={activeMoreApp ? "Close" : "More"}
+                aria-label={activeMoreApp ? "Close" : "More"}
+                onClick={() => {
+                  if (activeMoreApp) {
+                    (globalThis as any).RemoveApplicationByLabel(activeMoreApp);
+                    (globalThis as any).makingApp = null;
+                    setActiveMoreApp(null);
+                  } else {
+                    setShowMoreMenu((prev) => !prev);
+                  }
+                }}
               >
                 <div className="mobile-btn-content">
-                  <MoreIcon color="var(--text1)" />
-                  <span className="mobile-btn-label">More</span>
+                  {activeMoreApp ? (
+                    <span className="material-symbols-outlined">close</span>
+                  ) : (
+                    <MoreIcon color="var(--text1)" />
+                  )}
+                  <span className="mobile-btn-label">
+                    {activeMoreApp ? "Close" : "More"}
+                  </span>
                 </div>
               </button>
             </div>
