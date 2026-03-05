@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`can get hooks 1`] = `
+"
+      
+                    <div>{&quot;screens&quot;:{&quot;value&quot;:1},&quot;fullScreen&quot;:false,&quot;tools&quot;:[{&quot;icon&quot;:&quot;https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/f89ebc25a02acbfb56957a90bdddb7d938f5ba54fc045fa0ef108a0ff30821bb.svg&quot;,&quot;label&quot;:&quot;Apologist&quot;,&quot;hasToggle&quot;:true,&quot;active&quot;:false,&quot;isImg&quot;:true},{&quot;icon&quot;:&quot;https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/7778fa1fe5114c8b06d09505ffd6e465752ba170c21a34ea842be4a86492c7cf.webp&quot;,&quot;label&quot;:&quot;Tapos&quot;,&quot;hasToggle&quot;:true,&quot;active&quot;:false,&quot;isImg&quot;:true}],&quot;navFunctions&quot;:{},&quot;panelMode&quot;:false,&quot;canvasMode&quot;:false,&quot;mapMode&quot;:false,&quot;canvasTools&quot;:[],&quot;mapTools&quot;:[],&quot;showHeading&quot;:{&quot;1&quot;:true,&quot;2&quot;:true,&quot;3&quot;:true},&quot;showVerses&quot;:{&quot;1&quot;:true,&quot;2&quot;:true,&quot;3&quot;:true},&quot;showFootnotes&quot;:{&quot;1&quot;:true,&quot;2&quot;:true,&quot;3&quot;:true},&quot;showNavArrows&quot;:false}</div>
+                
+    "
+`;
