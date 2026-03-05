@@ -2,6 +2,7 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
   BinaryExpression,
+  CallExpression,
   Node,
   ParameterDeclaration,
   Project,
@@ -199,14 +200,6 @@ function stripOuterParens(text: string): string {
   return trimmed.slice(1, -1).trim();
 }
 
-function containsType(existingType: string, candidateType: string): boolean {
-  const existing = splitUnionTopLevel(existingType).map((part) =>
-    stripOuterParens(part)
-  );
-  const candidate = stripOuterParens(candidateType);
-  return existing.includes(candidate);
-}
-
 function isNeverLikeType(part: string): boolean {
   const stripped = stripOuterParens(part);
   return stripped === "never" || stripped === "never[]";
@@ -236,28 +229,254 @@ function formatUnion(existingType: string, addedType: string): string {
   return deduped.join(" | ");
 }
 
+function formatPlainUnion(existingType: string, addedType: string): string {
+  const parts = [...splitUnionTopLevel(existingType), addedType]
+    .map((part) => stripOuterParens(part).trim())
+    .filter((part) => part.length > 0 && !isNeverLikeType(part));
+
+  const deduped = [...new Set(parts)];
+
+  if (deduped.length === 0) {
+    return "never";
+  }
+
+  if (deduped.length === 1) {
+    return deduped[0]!;
+  }
+
+  return deduped.join(" | ");
+}
+
 function getNodePosition(node: Node): { line: number; column: number } {
   return node.getSourceFile().getLineAndColumnAtPos(node.getStart());
 }
 
+function buildGlobalDeclarationIndex(
+  project: Project
+): Map<string, VariableDeclaration[]> {
+  const map = new Map<string, VariableDeclaration[]>();
+
+  const declarationFiles = project
+    .getSourceFiles()
+    .filter((sourceFile) => sourceFile.isDeclarationFile())
+    .filter(
+      (sourceFile) =>
+        !sourceFile.getFilePath().replace(/\\/g, "/").includes("/node_modules/")
+    );
+
+  for (const sourceFile of declarationFiles) {
+    for (const declaration of sourceFile.getVariableDeclarations()) {
+      const name = declaration.getName();
+      const list = map.get(name) ?? [];
+      list.push(declaration);
+      map.set(name, list);
+    }
+  }
+
+  return map;
+}
+
+function findGlobalDeclarationByName(
+  globalDeclarationIndex: Map<string, VariableDeclaration[]>,
+  name: string
+): VariableDeclaration | null {
+  return globalDeclarationIndex.get(name)?.[0] ?? null;
+}
+
 function getTargetDeclarationFromNode(
-  targetNode: Node
+  targetNode: Node,
+  globalDeclarationIndex: Map<string, VariableDeclaration[]>
 ): VariableDeclaration | null {
   if (Node.isIdentifier(targetNode)) {
     const declaration = targetNode.getDefinitions()[0]?.getDeclarationNode();
-    if (declaration && Node.isVariableDeclaration(declaration)) {
+    if (
+      declaration &&
+      Node.isVariableDeclaration(declaration) &&
+      declaration.getName() === targetNode.getText()
+    ) {
       return declaration;
+    }
+
+    const fallback = findGlobalDeclarationByName(
+      globalDeclarationIndex,
+      targetNode.getText()
+    );
+    if (fallback) {
+      return fallback;
     }
   }
 
   if (Node.isPropertyAccessExpression(targetNode)) {
     const propertyNameNode = targetNode.getNameNode();
+    const propertyName = propertyNameNode.getText();
     const declaration = propertyNameNode
       .getDefinitions()[0]
       ?.getDeclarationNode();
-    if (declaration && Node.isVariableDeclaration(declaration)) {
+    if (
+      declaration &&
+      Node.isVariableDeclaration(declaration) &&
+      declaration.getName() === propertyName
+    ) {
       return declaration;
     }
+
+    const fallback = findGlobalDeclarationByName(
+      globalDeclarationIndex,
+      propertyName
+    );
+    if (fallback) {
+      return fallback;
+    }
+  }
+
+  return null;
+}
+
+function isNamedCall(call: CallExpression, name: string): boolean {
+  const expression = call.getExpression();
+  if (Node.isIdentifier(expression)) {
+    return expression.getText() === name;
+  }
+  if (Node.isPropertyAccessExpression(expression)) {
+    return expression.getName() === name;
+  }
+  return false;
+}
+
+function getUseRefTargetFromAssignment(assignment: BinaryExpression): {
+  targetDeclaration: VariableDeclaration;
+  callExpression: CallExpression;
+  sourceExpression: Node;
+} | null {
+  const left = assignment.getLeft();
+  if (!Node.isPropertyAccessExpression(left)) {
+    return null;
+  }
+
+  if (left.getName() !== "current") {
+    return null;
+  }
+
+  const owner = left.getExpression();
+  if (!Node.isIdentifier(owner)) {
+    return null;
+  }
+
+  const declarationNode = owner.getDefinitions()[0]?.getDeclarationNode();
+  if (!declarationNode || !Node.isVariableDeclaration(declarationNode)) {
+    return null;
+  }
+
+  const initializer = declarationNode.getInitializer();
+  if (!initializer || !Node.isCallExpression(initializer)) {
+    return null;
+  }
+
+  if (!isNamedCall(initializer, "useRef")) {
+    return null;
+  }
+
+  const firstArg = initializer.getArguments()[0];
+  const firstArgIsNull = firstArg?.getText().trim() === "null";
+  const hasNullTypeArg = initializer
+    .getTypeArguments()
+    .some((arg) => /\bnull\b/.test(arg.getText()));
+
+  if (!firstArgIsNull && !hasNullTypeArg) {
+    return null;
+  }
+
+  return {
+    targetDeclaration: declarationNode,
+    callExpression: initializer,
+    sourceExpression: assignment.getRight(),
+  };
+}
+
+function getUseStateTargetFromSetterCall(node: Node): {
+  targetDeclaration: VariableDeclaration;
+  callExpression: CallExpression;
+  sourceExpression: Node;
+} | null {
+  let current: Node | undefined = node;
+
+  while (current) {
+    const parent = current.getParent();
+    if (!parent) {
+      return null;
+    }
+
+    if (Node.isCallExpression(parent)) {
+      const args = parent.getArguments();
+      const argIndex = args.findIndex((arg) => arg === current);
+
+      if (argIndex >= 0) {
+        const expression = parent.getExpression();
+        if (!Node.isIdentifier(expression)) {
+          return null;
+        }
+
+        const setterDeclaration = expression
+          .getDefinitions()[0]
+          ?.getDeclarationNode();
+
+        if (!setterDeclaration || !Node.isBindingElement(setterDeclaration)) {
+          return null;
+        }
+
+        const bindingPattern = setterDeclaration.getParent();
+        if (!Node.isArrayBindingPattern(bindingPattern)) {
+          return null;
+        }
+
+        const elements = bindingPattern.getElements();
+        const setterIndex = elements.findIndex(
+          (el) => el === setterDeclaration
+        );
+        if (setterIndex !== 1) {
+          return null;
+        }
+
+        const variableDeclaration = bindingPattern.getFirstAncestorByKind(
+          SyntaxKind.VariableDeclaration
+        );
+        if (!variableDeclaration) {
+          return null;
+        }
+
+        const initializer = variableDeclaration.getInitializer();
+        if (!initializer || !Node.isCallExpression(initializer)) {
+          return null;
+        }
+
+        if (!isNamedCall(initializer, "useState")) {
+          return null;
+        }
+
+        const firstArg = initializer.getArguments()[0];
+        const firstArgIsNull = firstArg?.getText().trim() === "null";
+        const hasNullTypeArg = initializer
+          .getTypeArguments()
+          .some((arg) => /\bnull\b/.test(arg.getText()));
+
+        if (!firstArgIsNull && !hasNullTypeArg) {
+          return null;
+        }
+
+        const sourceExpression = args[argIndex];
+        if (!sourceExpression) {
+          return null;
+        }
+
+        return {
+          targetDeclaration: variableDeclaration,
+          callExpression: initializer,
+          sourceExpression,
+        };
+      }
+    }
+
+    current = parent;
   }
 
   return null;
@@ -394,6 +613,7 @@ async function runFix2322() {
   const diagnostics = project
     .getPreEmitDiagnostics()
     .filter((diagnostic) => diagnostic.getCode() === TARGET_CODE);
+  const globalDeclarationIndex = buildGlobalDeclarationIndex(project);
 
   const fixes: FixRecord[] = [];
   const skippedItems: SkipRecord[] = [];
@@ -422,14 +642,37 @@ async function runFix2322() {
     const variableDeclaration = node.getFirstAncestorByKind(
       SyntaxKind.VariableDeclaration
     );
+    const variableInitializer = variableDeclaration?.getInitializer();
+    const canUseVariableDeclarationInitializer =
+      !!variableDeclaration &&
+      !!variableInitializer &&
+      (!(
+        Node.isArrowFunction(variableInitializer) ||
+        Node.isFunctionExpression(variableInitializer)
+      ) ||
+        node === variableInitializer);
+    const useStateTarget = getUseStateTargetFromSetterCall(node);
+    const nearestAssignment = getNearestAssignmentExpression(node);
+    const useRefTarget = nearestAssignment
+      ? getUseRefTargetFromAssignment(nearestAssignment)
+      : null;
 
     let targetDeclaration: VariableDeclaration | ParameterDeclaration | null =
       null;
     let sourceExpression: Node | null = null;
+    let hookCallExpression: CallExpression | null = null;
 
-    if (variableDeclaration && variableDeclaration.getInitializer()) {
+    if (useStateTarget) {
+      targetDeclaration = useStateTarget.targetDeclaration;
+      sourceExpression = useStateTarget.sourceExpression;
+      hookCallExpression = useStateTarget.callExpression;
+    } else if (useRefTarget) {
+      targetDeclaration = useRefTarget.targetDeclaration;
+      sourceExpression = useRefTarget.sourceExpression;
+      hookCallExpression = useRefTarget.callExpression;
+    } else if (canUseVariableDeclarationInitializer) {
       targetDeclaration = variableDeclaration;
-      sourceExpression = variableDeclaration.getInitializer() ?? null;
+      sourceExpression = variableInitializer;
     } else {
       const parameterTarget = getTargetParameterFromCallArgument(node);
 
@@ -437,7 +680,7 @@ async function runFix2322() {
         targetDeclaration = parameterTarget.targetParameter;
         sourceExpression = parameterTarget.sourceExpression;
       } else {
-        const assignment = getNearestAssignmentExpression(node);
+        const assignment = nearestAssignment;
         if (!assignment) {
           skippedItems.push({
             ...issueBase,
@@ -446,7 +689,10 @@ async function runFix2322() {
           continue;
         }
 
-        targetDeclaration = getTargetDeclarationFromNode(assignment.getLeft());
+        targetDeclaration = getTargetDeclarationFromNode(
+          assignment.getLeft(),
+          globalDeclarationIndex
+        );
         sourceExpression = assignment.getRight();
       }
     }
@@ -459,9 +705,15 @@ async function runFix2322() {
       continue;
     }
 
-    const shouldSkip = Node.isVariableDeclaration(targetDeclaration)
-      ? shouldSkipDeclaration(targetDeclaration)
-      : shouldSkipParameter(targetDeclaration);
+    const shouldSkip = hookCallExpression
+      ? targetDeclaration
+          .getSourceFile()
+          .getFilePath()
+          .replace(/\\/g, "/")
+          .includes("/node_modules/")
+      : Node.isVariableDeclaration(targetDeclaration)
+        ? shouldSkipDeclaration(targetDeclaration)
+        : shouldSkipParameter(targetDeclaration);
 
     if (shouldSkip) {
       skippedItems.push({
@@ -473,12 +725,16 @@ async function runFix2322() {
 
     const targetName = targetDeclaration.getName();
     const declarationTypeNode = targetDeclaration.getTypeNode();
-    const existingType = normalizeTypeText(
-      declarationTypeNode?.getText() ??
-        targetDeclaration
-          .getType()
-          .getText(targetDeclaration, TypeFormatFlags.NoTruncation)
-    );
+    const existingType = hookCallExpression
+      ? normalizeTypeText(
+          hookCallExpression.getTypeArguments()[0]?.getText() ?? "null"
+        )
+      : normalizeTypeText(
+          declarationTypeNode?.getText() ??
+            targetDeclaration
+              .getType()
+              .getText(targetDeclaration, TypeFormatFlags.NoTruncation)
+        );
 
     const addedType = normalizeTypeText(
       sourceExpression
@@ -494,7 +750,7 @@ async function runFix2322() {
       continue;
     }
 
-    if (containsType(existingType, addedType) || existingType === "any") {
+    if (normalizeTypeText(addedType) === normalizeTypeText(existingType)) {
       skippedItems.push({
         ...issueBase,
         reason: "Declaration already includes offending type.",
@@ -502,11 +758,25 @@ async function runFix2322() {
       continue;
     }
 
-    const nextType = formatUnion(existingType, addedType);
+    if (existingType === "any") {
+      skippedItems.push({
+        ...issueBase,
+        reason: "Declaration is any; skipped automatic widening.",
+      });
+      continue;
+    }
 
-    const declarationKey = `${targetDeclaration
-      .getSourceFile()
-      .getFilePath()}:${targetDeclaration.getStart()}`;
+    const nextType = hookCallExpression
+      ? formatPlainUnion(existingType, addedType)
+      : formatUnion(existingType, addedType);
+
+    const declarationKey = hookCallExpression
+      ? `${targetDeclaration
+          .getSourceFile()
+          .getFilePath()}:${hookCallExpression.getStart()}`
+      : `${targetDeclaration
+          .getSourceFile()
+          .getFilePath()}:${targetDeclaration.getStart()}`;
 
     if (updatedDeclarationKeys.has(declarationKey)) {
       skippedItems.push({
@@ -517,7 +787,16 @@ async function runFix2322() {
     }
 
     if (!dryRun) {
-      targetDeclaration.setType(nextType);
+      if (hookCallExpression) {
+        const typeArg = hookCallExpression.getTypeArguments()[0];
+        if (typeArg) {
+          typeArg.replaceWithText(nextType);
+        } else {
+          hookCallExpression.addTypeArgument(nextType);
+        }
+      } else {
+        targetDeclaration.setType(nextType);
+      }
     }
 
     updatedDeclarationKeys.add(declarationKey);
