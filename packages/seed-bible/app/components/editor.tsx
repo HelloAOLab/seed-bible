@@ -298,7 +298,7 @@ const TextEditor = ({
 }) => {
   if (!tab && !studyNotes) return content;
 
-  const editorRef = useRef(null);
+  const editorRef = useRef<null | Editor>(null);
   const [textColor, setTextColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#ffffff");
   const [paddingY, setPaddingY] = useState(0);

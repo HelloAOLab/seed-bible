@@ -126,7 +126,7 @@ const App = () => {
   const activeToolbarHandlerRef = useRef(null);
   const resourcesRef = useRef(resourcesByDate);
   const resourceIdRef = useRef(currentResourceId);
-  const resourceGroupNameRef = useRef(null);
+  const resourceGroupNameRef = useRef<null | string>(null);
   const experienceConRef = useRef(null);
   const customDaysRef = useRef([]);
   const selectedDaysRef = useRef([]);

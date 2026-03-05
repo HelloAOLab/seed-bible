@@ -134,7 +134,7 @@ export function MiniTextEditor({
 
   // ----- editor dom & state
   const editorRef = useRef(null);
-  const editorObjRef = useRef(null);
+  const editorObjRef = useRef<null | Editor>(null);
 
   // colors & font size
   const [textColor, setTextColor] = useState("#000000");

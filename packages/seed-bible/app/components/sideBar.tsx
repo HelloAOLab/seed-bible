@@ -451,7 +451,7 @@ function Tab({
     ],
   };
 
-  const dragTimeout = useRef(null);
+  const dragTimeout = useRef<null | NodeJS.Timeout>(null);
 
   function handleMouseDown() {
     if (multiSelectMode) return;

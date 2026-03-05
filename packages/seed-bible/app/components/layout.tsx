@@ -175,8 +175,8 @@ function SwipeOverlay({
 }) {
   const ref = useRef(null);
   const [dragging, setDragging] = useState(false);
-  const start = useRef(null);
-  const last = useRef(null);
+  const start = useRef<null | { x: any; y: any; t: number }>(null);
+  const last = useRef<null | { x: any; y: any; t: number }>(null);
   const [dx, setDx] = useState(0);
   const [dy, setDy] = useState(0);
 

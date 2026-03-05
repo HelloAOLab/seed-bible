@@ -56,7 +56,7 @@ export function Toolbar() {
 
   const [oldList, setOldList] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
-  const holdTimeoutRef = useRef(null);
+  const holdTimeoutRef = useRef<null | NodeJS.Timeout>(null);
   const hasHeldRef = useRef(false);
 
   useEffect(() => {

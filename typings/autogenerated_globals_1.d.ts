@@ -20,7 +20,7 @@ declare global {
         size: { width: number; height: number };
         type: string;
       }) => unknown);
-  var ADDING_TOPLAYLIST_TIMEOUT: null;
+  var ADDING_TOPLAYLIST_TIMEOUT: null | NodeJS.Timeout;
   var AddNowBarApp: (arg0: Element, id: string) => unknown;
   var AddToPlaylistData: null;
   var AlreadySet: boolean;
@@ -47,7 +47,7 @@ declare global {
   var createUUID: () => unknown;
   var creatingPlaylist: any;
   var CURRENNT_SOUND_ID: string | null;
-  var CurrentIndexItem: {};
+  var CurrentIndexItem: {} | null;
   var CurrentViewerID: null;
   var DEFAULT_UPLOAD_ICON: string;
   var defaultcurrentHistory: any;
@@ -89,8 +89,9 @@ declare global {
   var getVisitedExperince: () => any;
   var HandleOnButtonPress:
     | ((value: -1) => unknown)
-    | ((value: number) => unknown);
-  var HandleStop: () => unknown;
+    | ((value: number) => unknown)
+    | null;
+  var HandleStop: (() => unknown) | false;
   var HandleStopPlayVideo: () => unknown;
   var HandleStopPlayVoice: () => unknown;
   var HandleUploadFiles: (files: any) => Promise<void>;
@@ -112,33 +113,33 @@ declare global {
   var LAST_CLICK_ID: number;
   var LAST_INDEX_CHECKLIST_CHECKED: number;
   var LAST_QUEUE_IIEM: {};
-  var LastClickX: number;
-  var LastClickY: number;
+  var LastClickX: number | null;
+  var LastClickY: number | null;
   var LASTKEY_COMMAND_BOX: any;
   var LasttAddedToPlaylist: any;
-  var LatestPlaylistID: null;
+  var LatestPlaylistID: null | string;
   var LoadedPlaylistAnnotations: {};
   var LoadingOldPlaylist: boolean;
   var LocaleStorage: Bot;
   var MOBILE_VIEWPORT_THRESHOLD: number;
-  var ModifyTransformedHistory: null;
+  var ModifyTransformedHistory: null | StateUpdater<any>;
   var NagiationTimeout: null | NodeJS.Timeout;
   var objectComparator:
     | ((data: unknown, lastData: unknown, items: string[]) => unknown)
     | ((dataItem: unknown, lastData: unknown, items: string[]) => unknown)
     | ((item: unknown, lastData: unknown, items: string[]) => unknown);
-  var onCurrentCollectionEdit: null;
+  var onCurrentCollectionEdit: null | ((props: any) => void);
   var OpenRefTimeout: Timeout;
   var OpenVideoOverlay: () => unknown;
   var PLAY_TIMER: Timeout;
   var PLAYING_SOUND: {};
   var PlayingPlaylist: any;
-  var PlayingPlaylistCheckedItems: {};
-  var PlayingPlaylists: {};
+  var PlayingPlaylistCheckedItems: {} | null;
+  var PlayingPlaylists: {} | null;
   var PlayingPlaylistSetHeading: StateUpdater<string>;
   var PlaylingItemVisitiedMap: StateUpdater<any>;
   var Playlist: any;
-  var PlaylistPlaytoggleHide: () => void;
+  var PlaylistPlaytoggleHide: (() => void) | null;
   var PlaylistReferLinks: {};
   var playlists: any;
   var PlaylistsGroups: any;
@@ -158,9 +159,9 @@ declare global {
   var PPsubIndex: any;
   var PPthh: any;
   var PPtypeContent: any;
-  var PREDEFINED_ICONS: string;
+  var PREDEFINED_ICONS: string | string[];
   var Previous_ID_Floading_App_PL: null;
-  var PreviousHTML: null;
+  var PreviousHTML: null | string;
   var ProjectMenuState: {
     hideHeadings: boolean;
     areBooksClosed: boolean;
@@ -172,30 +173,41 @@ declare global {
   var READING_PLAN_WORK: boolean;
   var RECORD_SEPARATOR: string;
   var RecordingValue: any;
-  var REMOTE_UPDATE_TIMER: null;
+  var REMOTE_UPDATE_TIMER: null | NodeJS.Timeout;
   var RemotePlaylistPlayed: boolean;
   var RemoveFloatingApp: (appId: any) => void;
   var RenderLinkTimer: Timeout;
-  var RenderPlaylist: () => unknown;
+  var RenderPlaylist: (() => unknown) | null;
   var RenderPlaylistPlaying: () => unknown;
   var RenderPlaylistTimer: null;
   var savePlaylistProgress:
     | (() => unknown)
     | ((id: string, progressID: string, parentID?: string) => void);
   var SelectedItemIDForAttachments: null;
-  var SetActiveDate: (lastActiveDateID: number) => unknown;
-  var SetAnnotationData: (items: never[]) => unknown;
-  var SetAuthSwtich: (arg0: (p: boolean) => boolean) => unknown;
-  var SetBookmarks: (options: {}) => unknown;
-  var SetCheckedItemsPlayingPlaylist: (checkedItemsTemp: {}) => unknown;
+  var SetActiveDate:
+    | ((lastActiveDateID: number) => unknown)
+    | StateUpdater<null>;
+  var SetAnnotationData: ((items: never[]) => unknown) | null;
+  var SetAuthSwtich: ((arg0: (p: boolean) => boolean) => unknown) | null;
+  var SetBookmarks: ((options: {}) => unknown) | null;
+  var SetCheckedItemsPlayingPlaylist:
+    | ((checkedItemsTemp: {}) => unknown)
+    | null;
   var SetCommandBoxFilter: (text: string) => unknown;
-  var SetCurreIndexDirect: null;
-  var SetCurreIndexPlaylist: (
-    index: number,
-    playListSubIndex: unknown
-  ) => unknown;
+  var SetCurreIndexDirect: null | StateUpdater<{
+    key: number;
+    index: number;
+    fromButton: number;
+    isPreviousQueue: boolean;
+    subIndex: any;
+  }>;
+  var SetCurreIndexPlaylist:
+    | ((index: number, playListSubIndex: unknown) => unknown)
+    | null;
   var SetCurrentItem: StateUpdater<{}>;
-  var SetEditAnnoData: ((options: null) => unknown) | null;
+  var SetEditAnnoData:
+    | (((options: null) => unknown) | null)
+    | StateUpdater<{ address: string; title: string }>;
   var SetEditAttachmentItem: StateUpdater<{
     id: null;
     parentID: null;
@@ -221,15 +233,32 @@ declare global {
         description: string;
         icon: string;
       }) => unknown);
-  var SetEditRichText: null;
+  var SetEditRichText: null | StateUpdater<{
+    id: null;
+    text: null;
+    parentID: null;
+  }>;
   var setHide: any;
   var setHistoryLocale: (newHistory?: never[], id?: string) => void;
-  var SetIncrementalCountPlayingPlaylist: null;
-  var SetItemsPlayer: null;
-  var SetMediaURL: (link: null) => unknown;
+  var SetIncrementalCountPlayingPlaylist: null | ((data: any) => Promise<void>);
+  var SetItemsPlayer: null | StateUpdater<{
+    currentPlaylistName: any;
+    currentItemID: any;
+    typeContent: any;
+    nextItemName: any;
+    prevItemName: any;
+    currentItemName: any;
+  }>;
+  var SetMediaURL:
+    | ((link: null) => unknown)
+    | StateUpdater<string>
+    | StateUpdater<string>
+    | StateUpdater<string>
+    | StateUpdater<string>
+    | null;
   var setOpenAttachLink: (flag: boolean) => unknown;
-  var SetPlayingList: () => void;
-  var SetPlayingPlaylists: null;
+  var SetPlayingList: (() => void) | StateUpdater<any>;
+  var SetPlayingPlaylists: null | StateUpdater<any>;
   var SetPlaylistGroups: StateUpdater<any>;
   var SetPlaylists: any;
   var setPriorities: () => void;
@@ -241,15 +270,16 @@ declare global {
   }>;
   var SetRecording: null | StateUpdater<any>;
   var SetRecordingData: ((arg0: null) => unknown) | null;
-  var SetRenamingPlaylist: (val: boolean) => unknown;
+  var SetRenamingPlaylist: ((val: boolean) => unknown) | null;
   var SetRenderMylist: StateUpdater<any>;
-  var SetSelectedAnnotations: null;
-  var SetShowAddToPlaylist: (flag: boolean) => unknown;
+  var SetSelectedAnnotations: null | StateUpdater<null>;
+  var SetShowAddToPlaylist: ((flag: boolean) => unknown) | null;
   var SetSplitAppPanel2:
     | ((arg0: Element) => unknown)
-    | ((arg0: null) => unknown);
+    | ((arg0: null) => unknown)
+    | null;
   var SetTab: ((text: string) => unknown) | null;
-  var setTabPlaylist: (text: string) => unknown;
+  var setTabPlaylist: ((text: string) => unknown) | null;
   var SetTextInfo: StateUpdater<string>;
   var Settings_Icon: string;
   var setVersesState: (versesState: number[]) => unknown;
@@ -271,7 +301,7 @@ declare global {
   var tt: any;
   var UPDATE_VIA_SHOUT: boolean;
   var updateCustomHeight: (value: number) => unknown;
-  var UpdateJustAddedToQueue: (flag: boolean) => unknown;
+  var UpdateJustAddedToQueue: ((flag: boolean) => unknown) | null;
   var uploadFilesReusable: (options: { files: File[] }) => unknown;
   var UsedTags: any[];
   var validateUrl: (url: string) => unknown;

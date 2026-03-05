@@ -15,20 +15,22 @@ declare global {
   var isUIOpen: boolean;
   var isValidGoogleSheetsUrl: (url: string) => boolean;
   var IsVideoUrl: (url: string) => boolean;
-  var PendingAction: () => unknown;
+  var PendingAction: (() => unknown) | null;
   var playListDB: never[];
-  var PlaylistIcon: ({
-    className,
-  }: {
-    className?: string | undefined;
-  }) => Element;
+  var PlaylistIcon:
+    | (({ className }: { className?: string | undefined }) => Element)
+    | (({
+        className,
+      }: {
+        className?: string | undefined;
+      }) => JSXInternal.Element);
   var sanitizeObject: (obj: any) => any;
   var SELECTIONTYPE: { TESTAMENT: string; SECTION: string; BOOK: string };
   var SetHidePlaylist: StateUpdater<boolean>;
   var SetIsQueuePlaying: StateUpdater<boolean>;
-  var SetPlayingPlaylist: null;
+  var SetPlayingPlaylist: null | ((val: any) => void);
   var SetPlaylistForforcedHeight: (value: number) => unknown;
-  var setPredefinedIcons: boolean;
+  var setPredefinedIcons: boolean | StateUpdater<string[]>;
   var SetSidebarOpen: StateUpdater<boolean>;
   var ToggleGreyCheckPLayingPlaylist: (arg0: null) => unknown;
   var validateImage: (url: string) => unknown;
