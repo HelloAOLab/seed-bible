@@ -263,6 +263,143 @@ function getHookExistingType(callExpression: CallExpression): string {
   return "unknown";
 }
 
+type JsxPropTarget = {
+  componentDeclaration: VariableDeclaration | Node;
+  componentName: string;
+  parameter: ParameterDeclaration;
+  propName: string;
+  propType: string;
+};
+
+function typeHasObjectProperty(typeText: string, propName: string): boolean {
+  const escaped = propName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`(?:^|[\\s;{])${escaped}\\??\\s*:`, "m");
+  return regex.test(typeText);
+}
+
+function addObjectPropertyToType(
+  existingType: string,
+  propName: string,
+  propType: string
+): string {
+  const normalizedExisting = normalizeTypeText(existingType);
+  if (typeHasObjectProperty(normalizedExisting, propName)) {
+    return normalizedExisting;
+  }
+
+  const unwrapped = stripOuterParens(normalizedExisting);
+  if (unwrapped.startsWith("{") && unwrapped.endsWith("}")) {
+    const inner = unwrapped.slice(1, -1).trim();
+    const withSeparator =
+      inner.length === 0
+        ? ""
+        : inner.endsWith(";") || inner.endsWith(",")
+          ? `${inner} `
+          : `${inner}; `;
+    return `{ ${withSeparator}${propName}?: ${propType}; }`;
+  }
+
+  return `(${normalizedExisting}) & { ${propName}?: ${propType}; }`;
+}
+
+function getJsxAttributeValueType(attribute: Node): string {
+  if (!Node.isJsxAttribute(attribute)) {
+    return "unknown";
+  }
+
+  const initializer = attribute.getInitializer();
+  if (!initializer) {
+    return "boolean";
+  }
+
+  if (Node.isStringLiteral(initializer)) {
+    return "string";
+  }
+
+  if (Node.isJsxExpression(initializer)) {
+    const expression = initializer.getExpression();
+    if (!expression) {
+      return "unknown";
+    }
+    return normalizeTypeText(
+      expression.getType().getText(expression, TypeFormatFlags.NoTruncation)
+    );
+  }
+
+  return "unknown";
+}
+
+function getJsxPropTarget(node: Node): JsxPropTarget | null {
+  const jsxAttribute = node.getFirstAncestorByKind(SyntaxKind.JsxAttribute);
+  if (!jsxAttribute) {
+    return null;
+  }
+
+  const propName = jsxAttribute.getNameNode().getText();
+  const propType = getJsxAttributeValueType(jsxAttribute);
+
+  const attributes = jsxAttribute.getParentIfKind(SyntaxKind.JsxAttributes);
+  const opening = attributes?.getParent();
+  if (
+    !opening ||
+    (!Node.isJsxOpeningElement(opening) &&
+      !Node.isJsxSelfClosingElement(opening))
+  ) {
+    return null;
+  }
+
+  const tagNameNode = opening.getTagNameNode();
+  if (!Node.isIdentifier(tagNameNode)) {
+    return null;
+  }
+
+  const declarationNode = tagNameNode.getDefinitions()[0]?.getDeclarationNode();
+  if (!declarationNode) {
+    return null;
+  }
+
+  if (Node.isVariableDeclaration(declarationNode)) {
+    const initializer = declarationNode.getInitializer();
+    if (
+      !initializer ||
+      (!Node.isArrowFunction(initializer) &&
+        !Node.isFunctionExpression(initializer))
+    ) {
+      return null;
+    }
+
+    const parameter = initializer.getParameters()[0];
+    if (!parameter) {
+      return null;
+    }
+
+    return {
+      componentDeclaration: declarationNode,
+      componentName: declarationNode.getName(),
+      parameter,
+      propName,
+      propType,
+    };
+  }
+
+  if (Node.isFunctionDeclaration(declarationNode)) {
+    const parameter = declarationNode.getParameters()[0];
+    if (!parameter) {
+      return null;
+    }
+
+    return {
+      componentDeclaration: declarationNode,
+      componentName: declarationNode.getName() ?? "AnonymousComponent",
+      parameter,
+      propName,
+      propType,
+    };
+  }
+
+  return null;
+}
+
 function getNodePosition(node: Node): { line: number; column: number } {
   return node.getSourceFile().getLineAndColumnAtPos(node.getStart());
 }
@@ -671,6 +808,85 @@ async function runFix2322() {
     const node = start == null ? null : sourceFile.getDescendantAtPos(start);
     if (!node) {
       skippedItems.push({ ...issueBase, reason: "No diagnostic node found." });
+      continue;
+    }
+
+    const jsxPropTarget = getJsxPropTarget(node);
+    if (jsxPropTarget) {
+      const parameter = jsxPropTarget.parameter;
+      const parameterSourcePath = parameter
+        .getSourceFile()
+        .getFilePath()
+        .replace(/\\/g, "/");
+
+      if (parameterSourcePath.includes("/node_modules/")) {
+        skippedItems.push({
+          ...issueBase,
+          reason: "Declaration is read-only or outside workspace scope.",
+        });
+        continue;
+      }
+
+      const existingType = normalizeTypeText(
+        parameter.getTypeNode()?.getText() ??
+          parameter.getType().getText(parameter, TypeFormatFlags.NoTruncation)
+      );
+      const addedType = jsxPropTarget.propType;
+      const nextType = addObjectPropertyToType(
+        existingType,
+        jsxPropTarget.propName,
+        addedType
+      );
+
+      if (normalizeTypeText(nextType) === normalizeTypeText(existingType)) {
+        skippedItems.push({
+          ...issueBase,
+          reason: "Declaration already includes offending type.",
+        });
+        continue;
+      }
+
+      const declarationKey = `${parameter
+        .getSourceFile()
+        .getFilePath()}:${parameter.getStart()}:${jsxPropTarget.propName}`;
+
+      if (updatedDeclarationKeys.has(declarationKey)) {
+        skippedItems.push({
+          ...issueBase,
+          reason: "Declaration already updated in this pass.",
+        });
+        continue;
+      }
+
+      if (!dryRun) {
+        parameter.setType(nextType);
+      }
+
+      updatedDeclarationKeys.add(declarationKey);
+
+      const declarationNameNode = Node.isVariableDeclaration(
+        jsxPropTarget.componentDeclaration
+      )
+        ? jsxPropTarget.componentDeclaration.getNameNode()
+        : Node.isFunctionDeclaration(jsxPropTarget.componentDeclaration)
+          ? (jsxPropTarget.componentDeclaration.getNameNode() ??
+            parameter.getNameNode())
+          : parameter.getNameNode();
+
+      const declarationPos = getNodePosition(declarationNameNode);
+
+      fixes.push({
+        ...issueBase,
+        declarationFilePath: toRelativePath(
+          parameter.getSourceFile().getFilePath()
+        ),
+        declarationLine: declarationPos.line,
+        declarationColumn: declarationPos.column,
+        variableName: `${jsxPropTarget.componentName}.${jsxPropTarget.propName}`,
+        previousType: existingType,
+        addedType: `${jsxPropTarget.propName}: ${addedType}`,
+        nextType,
+      });
       continue;
     }
 
