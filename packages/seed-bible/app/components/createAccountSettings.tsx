@@ -12,9 +12,12 @@ import {
   AiChatIcon,
 } from "app.components.icons";
 import { useSideBarContext } from "app.hooks.sideBar";
+import { useGlobalsContext } from "app.hooks.globalsContext";
+
 const { useState, useEffect } = os.appHooks;
 // await os.eraseData(tags.key, authBot.id)
 const CreateAccountSettings = () => {
+  const globals = useGlobalsContext();
   const { sidebarMode, setSideBarMode } = useSideBarContext();
   const [img, setImg] = useState<string | undefined>();
   const [profileName, setProfileName] = useState("");
@@ -57,9 +60,9 @@ const CreateAccountSettings = () => {
     init();
   }, []);
 
-  globalThis.SetIsSignedIn = setIsSignedIn;
-  globalThis.SetUid = setUid;
-  globalThis.Init = init;
+  globals.SetIsSignedIn = setIsSignedIn;
+  globals.SetUid = setUid;
+  globals.Init = init;
 
   async function uploadImage() {
     const authBot = await os.requestAuthBot();
@@ -137,10 +140,10 @@ const CreateAccountSettings = () => {
         <div
           className="profile-close-btn"
           onClick={() => {
-            if (globalThis.AccountSettingsEnteredFrom === "settings") {
+            if (globals.AccountSettingsEnteredFrom === "settings") {
               setSideBarMode("settings");
-              setTimeout(() => globalThis.SetActiveSettingsTab("general"), 0);
-            } else if (globalThis.AccountSettingsEnteredFrom === "default") {
+              setTimeout(() => globals.SetActiveSettingsTab("general"), 0);
+            } else if (globals.AccountSettingsEnteredFrom === "default") {
               setSideBarMode("default");
             }
           }}

@@ -31,6 +31,8 @@ import {
 } from "app.components.icons";
 
 import { useSideBarContext } from "app.hooks.sideBar";
+import { useGlobalsContext } from "app.hooks.globalsContext";
+
 function getUserSessionInfo(userId) {
   try {
     if (typeof tags === "undefined" || !tags.sessions) {
@@ -93,6 +95,7 @@ function ThePage({
   setDeleteTab: any;
   enableEditor?: boolean;
 }) {
+  const globals = useGlobalsContext();
   const [tab, setTab] = useState(T);
   const [commandHighlight, setCommandHighlight] = useState([]);
   const [direction, setDirection] = useState(null);
@@ -116,8 +119,8 @@ function ThePage({
     }
   }, [deleteTab]);
   useEffect(() => {
-    if (!T) globalThis.CurrentPanelAvailable = panelId;
-    else globalThis.CurrentPanelAvailable = null;
+    if (!T) globals.CurrentPanelAvailable = panelId;
+    else globals.CurrentPanelAvailable = null;
   }, [T]);
   const { inSession, role, config } = getUserSessionInfo(configBot.id);
   const [tabEntered, setTabEntered] = useState(false);
@@ -377,13 +380,13 @@ function ThePage({
       //   return;
       // }
       console.log("remoteBookChange", data);
-      globalThis.Open?.(data.bookId, data.chapter);
+      globals.Open?.(data.bookId, data.chapter);
     };
 
     const onHighlightChange = (data) => {
-      if (!globalThis.CurrentTab?.sharedTab) return;
+      if (!globals.CurrentTab?.sharedTab) return;
       console.log("remoteHighlightChange", data);
-      globalThis.ToggleVerseHighlight?.(
+      globals.ToggleVerseHighlight?.(
         data?.verseNumbers,
         data?.color,
         data?.scroll,
@@ -421,7 +424,7 @@ function ThePage({
 
       if (cancelled) return; // Don't update state if navigation changed
 
-      globalThis.BookId = bible.bookId;
+      globals.BookId = bible.bookId;
 
       const {
         data,
@@ -432,7 +435,7 @@ function ThePage({
       console.log(data, tab, bibleFootnotes, "the data loaded");
       setFootnotes(bibleFootnotes);
 
-      globalThis.refreshScrollers && globalThis.refreshScrollers();
+      globals.refreshScrollers && globals.refreshScrollers();
 
       if (cancelled) return; // Check again after async operation
 
@@ -521,14 +524,14 @@ function ThePage({
       if (cancelled) return; // Final check before setting data
 
       setData(bible.data);
-      SetShowToolbar(true);
+      globals.SetShowToolbar(true);
       whisper(getBot("system", "introduction.searchBar"), "initialize");
     }
 
     if (!bible || (bible && bible?.tabId && bible.tabId !== tab.id)) {
       loadDataSafe();
     }
-    globalThis.CurrentTab = tab;
+    globals.CurrentTab = tab;
 
     return () => {
       cancelled = true; // Cancel on cleanup
@@ -536,8 +539,8 @@ function ThePage({
   }, [tab]);
 
   useEffect(() => {
-    globalThis.PanelTabsMap = {
-      ...globalThis.PanelTabsMap,
+    globals.PanelTabsMap = {
+      ...globals.PanelTabsMap,
       [panelId]: {
         ...tab,
       },
@@ -545,8 +548,8 @@ function ThePage({
   }, [tab, panelId]);
 
   // GLOBAL GUARDS
-  if (!globalThis.__remoteBookUpdate) globalThis.__remoteBookUpdate = false;
-  if (!globalThis.__lastBookEmit) globalThis.__lastBookEmit = 0;
+  if (!globals.__remoteBookUpdate) globals.__remoteBookUpdate = false;
+  if (!globals.__lastBookEmit) globals.__lastBookEmit = 0;
   const BOOK_EMIT_DEBOUNCE = 250; // ms
 
   // SAFELY EMIT BOOK WITHOUT LOOPS OR SPAM
@@ -554,17 +557,17 @@ function ThePage({
     const now = Date.now();
 
     // 1) Prevent loop from remote → local → remote
-    if (globalThis.__remoteBookUpdate) {
-      globalThis.__remoteBookUpdate = false;
+    if (globals.__remoteBookUpdate) {
+      globals.__remoteBookUpdate = false;
       return;
     }
 
     // 2) Prevent spam when navigating fast
-    if (now - globalThis.__lastBookEmit < BOOK_EMIT_DEBOUNCE) {
+    if (now - globals.__lastBookEmit < BOOK_EMIT_DEBOUNCE) {
       return;
     }
 
-    globalThis.__lastBookEmit = now;
+    globals.__lastBookEmit = now;
 
     // 3) Finally emit
     EmitData("book", payload);
@@ -574,7 +577,7 @@ function ThePage({
     if (data) {
       //  EmitData("book", { ...data });
       hanldNavFunctions();
-      SetShowCommands(false);
+      globals.SetShowCommands(false);
       updateTab(tab?.id, data);
       if (
         config &&
@@ -591,7 +594,7 @@ function ThePage({
           ...tab,
           data: { ...tab.data, ...data },
         });
-        globalThis.PanelTabsMap[panelId] = {
+        globals.PanelTabsMap[panelId] = {
           ...tab,
           data: { ...tab.data, ...data },
         };
@@ -612,7 +615,7 @@ function ThePage({
       // });
       const emitter = getBot("system", "app.emitter");
       os.log("emitter updateSharingData", emitter);
-      globalThis.CurrentBookData = data;
+      globals.CurrentBookData = data;
       shout("bookDataUpdated", data);
       sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
         id: tab?.id,
@@ -683,12 +686,12 @@ function ThePage({
   }
 
   useEffect(() => {
-    globalThis.NavFunctions = navFunctions;
-    globalThis.BibleData = data;
+    globals.NavFunctions = navFunctions;
+    globals.BibleData = data;
     // checkDefault();
     return () => {
-      globalThis.BibleData = null;
-      globalThis.NavFunctions = navFunctions;
+      globals.BibleData = null;
+      globals.NavFunctions = navFunctions;
     };
   }, [navFunctions, data]);
 
@@ -850,12 +853,17 @@ function ThePage({
       const handoff = Element?.data?.data;
       const App = handoff.app;
       const id = uuid();
-      ReplaceApplication(panelId, { id, App, to: "panel", minWidth: "30rem" });
+      globals.ReplaceApplication(panelId, {
+        id,
+        App,
+        to: "panel",
+        minWidth: "30rem",
+      });
       console.log("replaced");
     } else {
       Update(Element.data);
-      if (globalThis.GetBooksDataForMenu)
-        globalThis.GetBooksDataForMenu(
+      if (globals.GetBooksDataForMenu)
+        globals.GetBooksDataForMenu(
           `https://bible.helloao.org/api/${Element.data.data.translation}/books.json`,
           Element.data.data.translation
         );
@@ -865,18 +873,19 @@ function ThePage({
   }
 
   async function openNextChapter() {
+    const globals = useGlobalsContext();
     await bible.openNext();
     setData(bible.data);
     setFootnotes(bible.footnotes);
 
-    globalThis.GlobalChapter = bible.data.chapter - 1;
+    globals.GlobalChapter = bible.data.chapter - 1;
 
-    if (globalThis.studyNotesPresent) {
-      UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
+    if (globals.studyNotesPresent) {
+      globals.UpdateApplication(globals.STUDYNOTES_PANEL_ID, {
         App: (
           <StudyNotes
-            id={globalThis.STUDYNOTES_PANEL_ID}
-            chapter={globalThis.GlobalChapter}
+            id={globals.STUDYNOTES_PANEL_ID}
+            chapter={globals.GlobalChapter}
           />
         ),
         to: "panel",
@@ -885,18 +894,19 @@ function ThePage({
   }
 
   async function openPrevChapter() {
+    const globals = useGlobalsContext();
     await bible.openPrevious();
     setData(bible.data);
     setFootnotes(bible.footnotes);
 
-    globalThis.GlobalChapter = bible.data.chapter - 1;
+    globals.GlobalChapter = bible.data.chapter - 1;
 
-    if (globalThis.studyNotesPresent) {
-      UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
+    if (globals.studyNotesPresent) {
+      globals.UpdateApplication(globals.STUDYNOTES_PANEL_ID, {
         App: (
           <StudyNotes
-            id={globalThis.STUDYNOTES_PANEL_ID}
-            chapter={globalThis.GlobalChapter}
+            id={globals.STUDYNOTES_PANEL_ID}
+            chapter={globals.GlobalChapter}
           />
         ),
         to: "panel",
@@ -911,7 +921,7 @@ function ThePage({
       setFootnotes(bible.footnotes);
     } catch {
       if (tab) return;
-      const newTab = globalThis.AddTab({
+      const newTab = globals.AddTab({
         id: uuid(),
         taken: false,
         data: {
@@ -966,9 +976,9 @@ function ThePage({
       setWordHighlights((prev) => {
         const newHighlights = { ...prev };
 
-        if (!globalThis.wordHighlights) globalThis.wordHighlights = {};
-        if (!globalThis.wordHighlights[tab?.id])
-          globalThis.wordHighlights[tab?.id] = {};
+        if (!globals.wordHighlights) globals.wordHighlights = {};
+        if (!globals.wordHighlights[tab?.id])
+          globals.wordHighlights[tab?.id] = {};
 
         targetVerses.forEach((vn) => {
           const key = `${targetBook}-${targetChapter}-${vn}`;
@@ -990,7 +1000,7 @@ function ThePage({
           });
         });
 
-        globalThis.wordHighlights[tab?.id] = newHighlights;
+        globals.wordHighlights[tab?.id] = newHighlights;
         return newHighlights;
       });
     },
@@ -1020,8 +1030,8 @@ function ThePage({
           delete newHighlights[key];
         }
 
-        if (globalThis.wordHighlights) {
-          globalThis.wordHighlights[tab?.id] = newHighlights;
+        if (globals.wordHighlights) {
+          globals.wordHighlights[tab?.id] = newHighlights;
         }
 
         return newHighlights;
@@ -1032,15 +1042,15 @@ function ThePage({
 
   const clearAllWordHighlights = useCallback(() => {
     setWordHighlights({});
-    if (globalThis.wordHighlights && tab?.id) {
-      delete globalThis.wordHighlights[tab?.id];
+    if (globals.wordHighlights && tab?.id) {
+      delete globals.wordHighlights[tab?.id];
     }
   }, [data]);
 
   useEffect(() => {
-    globalThis.HighlightWords = highlightWords;
-    globalThis.RemoveWordHighlight = removeWordHighlight;
-    globalThis.ClearAllWordHighlights = clearAllWordHighlights;
+    globals.HighlightWords = highlightWords;
+    globals.RemoveWordHighlight = removeWordHighlight;
+    globals.ClearAllWordHighlights = clearAllWordHighlights;
     shout("onBookChanged", { ...data, tabId: tab?.id });
     setCommandHighlight([]);
     if (data && JSON.stringify(tab?.data) !== JSON.stringify(data)) {
@@ -1049,6 +1059,7 @@ function ThePage({
   }, [data]);
 
   function hanldNavFunctions() {
+    const globals = useGlobalsContext();
     console.log("hanldNavFunctions", { tab, sharedTab, setActiveTab, panelId });
     if (tab && tab?.id && !sharedTab) setActiveTab(tab?.id);
     setNavFunctions({
@@ -1058,35 +1069,35 @@ function ThePage({
       changeTranslation: bible?.changeTranslation || undefined,
       setPanalApp: () => {},
     });
-    globalThis.Open = open;
-    globalThis.ChangeTranslation = changeTranslation;
-    globalThis.SetPanalApp = () => {};
-    globalThis.ToggleVerseHighlight = toggleVerseHighlight;
-    globalThis.UnHighlightVerse = unHighlightVerse;
-    globalThis.HighlightVerse = highlightVerse;
-    globalThis.SetWordHighlightsTC = setWordHighlightsTC;
-    globalThis.SetWordHighlightsBC = setWordHighlightsBC;
-    globalThis.SetInHold = setInHold;
-    globalThis.SetShowCommands = setShowCommands;
+    globals.Open = open;
+    globals.ChangeTranslation = changeTranslation;
+    globals.SetPanalApp = () => {};
+    globals.ToggleVerseHighlight = toggleVerseHighlight;
+    globals.UnHighlightVerse = unHighlightVerse;
+    globals.HighlightVerse = highlightVerse;
+    globals.SetWordHighlightsTC = setWordHighlightsTC;
+    globals.SetWordHighlightsBC = setWordHighlightsBC;
+    globals.SetInHold = setInHold;
+    globals.SetShowCommands = setShowCommands;
 
-    globalThis.HighlightWords = highlightWords;
-    globalThis.RemoveWordHighlight = removeWordHighlight;
-    globalThis.ClearAllWordHighlights = clearAllWordHighlights;
+    globals.HighlightWords = highlightWords;
+    globals.RemoveWordHighlight = removeWordHighlight;
+    globals.ClearAllWordHighlights = clearAllWordHighlights;
 
-    globalThis.GlobalChapter = (data?.chapter || 1) - 1;
+    globals.GlobalChapter = (data?.chapter || 1) - 1;
 
-    if (globalThis.studyNotesPresent) {
-      UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
+    if (globals.studyNotesPresent) {
+      globals.UpdateApplication(globals.STUDYNOTES_PANEL_ID, {
         App: (
           <StudyNotes
-            id={globalThis.STUDYNOTES_PANEL_ID}
-            chapter={globalThis.GlobalChapter}
+            id={globals.STUDYNOTES_PANEL_ID}
+            chapter={globals.GlobalChapter}
           />
         ),
         to: "panel",
       });
     }
-    globalThis.LastClickedPanelUpdate = panelId;
+    globals.LastClickedPanelUpdate = panelId;
   }
 
   function Update(tab) {
@@ -1094,7 +1105,7 @@ function ThePage({
     setTab(tab);
     hanldNavFunctions();
   }
-  globalThis.UpdateTab = Update;
+  globals.UpdateTab = Update;
 
   const [blinker, setBlinker] = useState({});
   const [selected, setSelected] = useState({});
@@ -1103,23 +1114,23 @@ function ThePage({
   useEffect(() => {
     setInHold(null);
     scrollToVerse(1);
-    if (globalThis.SetCurrentBook) {
-      globalThis.SetCurrentBook(data);
-      globalThis.CHAPTER_DATA = {
+    if (globals.SetCurrentBook) {
+      globals.SetCurrentBook(data);
+      globals.CHAPTER_DATA = {
         ...data,
       };
     }
-    globalThis.CurrentBookData = { ...data };
+    globals.CurrentBookData = { ...data };
   }, [data]);
 
   useEffect(() => {
-    globalThis.SetBlinker = setBlinker;
-    globalThis.SetSelected = setSelected;
-    globalThis.SetHolded = setHolded;
+    globals.SetBlinker = setBlinker;
+    globals.SetSelected = setSelected;
+    globals.SetHolded = setHolded;
     return () => {
-      globalThis.SetBlinker = null;
-      globalThis.SetSelected = null;
-      globalThis.SetHolded = null;
+      globals.SetBlinker = null;
+      globals.SetSelected = null;
+      globals.SetHolded = null;
     };
   }, [blinker, selected, holded]);
 
@@ -1136,12 +1147,12 @@ function ThePage({
 
   const onScrollToRef = useCallback(
     ({ vNumber = -1 }) => {
-      if (globalThis.ScrollTimerToVerse) {
-        clearTimeout(globalThis.ScrollTimerToVerse);
-        globalThis.ScrollTimerToVerse = null;
+      if (globals.ScrollTimerToVerse) {
+        clearTimeout(globals.ScrollTimerToVerse);
+        globals.ScrollTimerToVerse = null;
       }
 
-      globalThis.ScrollTimerToVerse = setTimeout(() => {
+      globals.ScrollTimerToVerse = setTimeout(() => {
         if (refs?.[vNumber].current) {
           refs?.[vNumber]?.current?.focus();
         }
@@ -1151,18 +1162,18 @@ function ThePage({
   );
 
   useEffect(() => {
-    globalThis.ScrollToVerse = onScrollToRef;
+    globals.ScrollToVerse = onScrollToRef;
     return () => {
-      globalThis.ScrollToVerse = null;
+      globals.ScrollToVerse = null;
     };
   }, [onScrollToRef]);
 
   useEffect(() => {
-    if (!globalThis.wordHighlights) {
-      globalThis.wordHighlights = {};
+    if (!globals.wordHighlights) {
+      globals.wordHighlights = {};
     }
-    if (tab?.id && globalThis.wordHighlights[tab?.id]) {
-      setWordHighlights(globalThis.wordHighlights[tab?.id]);
+    if (tab?.id && globals.wordHighlights[tab?.id]) {
+      setWordHighlights(globals.wordHighlights[tab?.id]);
     }
   }, [tab?.id]);
 
@@ -1178,10 +1189,10 @@ function ThePage({
       setHighlighted(savedHighlights);
     }
 
-    globalThis.SetHighlighted = setHighlighted;
+    globals.SetHighlighted = setHighlighted;
 
     return () => {
-      globalThis.SetHighlighted = null;
+      globals.SetHighlighted = null;
     };
   }, [tab?.id]);
 
@@ -1424,7 +1435,7 @@ function ThePage({
       document.selection.empty();
     }
   }
-  globalThis.ClearUserSelection = clearUserSelection;
+  globals.ClearUserSelection = clearUserSelection;
   useEffect(() => {
     function handleEsc(e) {
       if (e.key === "Escape") {
@@ -1791,7 +1802,7 @@ function ThePage({
             onClick={hanldNavFunctions}
             onScroll={(e) => {
               os.log("scrolling, closing popups", e);
-              globalThis.closePopupSettings();
+              globals.closePopupSettings();
               const el = e.currentTarget;
               const currentScrollTop = el.scrollTop;
               if (currentScrollTop <= 0) {
@@ -1818,14 +1829,14 @@ function ThePage({
           position: relative;
         }
         .toolbar-1 {
-          background:${showVerseToolbar && globalThis.IsMobileNow() ? "transparent !important" : ""};
-          pointer-events:${showVerseToolbar && globalThis.IsMobileNow() ? "none" : ""};
+          background:${showVerseToolbar && globals.IsMobileNow() ? "transparent !important" : ""};
+          pointer-events:${showVerseToolbar && globals.IsMobileNow() ? "none" : ""};
         }
         .toolbar-item-wrapper{
-            display:${showVerseToolbar && globalThis.IsMobileNow() ? "none !important" : ""}
+            display:${showVerseToolbar && globals.IsMobileNow() ? "none !important" : ""}
           }
         .mobile-bottom-navbar {
-          display:${showVerseToolbar && globalThis.IsMobileNow() ? "none !important" : ""}
+          display:${showVerseToolbar && globals.IsMobileNow() ? "none !important" : ""}
         }
         .bookTitle,
         .sectionTitle {
@@ -2059,7 +2070,7 @@ function ThePage({
             {data && tab && !tabEntered ? (
               <>
                 {/* Mobile Header */}
-                {globalThis.IsMobileNow && globalThis.IsMobileNow() && (
+                {globals.IsMobileNow && globals.IsMobileNow() && (
                   <div className="mobile-header">
                     <div className="mobile-header-content">
                       <div className="mobile-header-left">
@@ -2106,15 +2117,14 @@ function ThePage({
                 )}
                 <div
                   onClick={(e) => {
-                    if (globalThis.setOpenSidebar && globalThis.openSidebar) {
-                      globalThis.setOpenSidebar(false);
-                      globalThis.selectBookSelectorBook &&
-                        globalThis.selectBookSelectorBook(null);
+                    if (globals.setOpenSidebar && globals.openSidebar) {
+                      globals.setOpenSidebar(false);
+                      globals.selectBookSelectorBook &&
+                        globals.selectBookSelectorBook(null);
                     } else {
-                      globalThis.setOpenSidebar &&
-                        globalThis.setOpenSidebar(true);
-                      globalThis.selectBookSelectorBook &&
-                        globalThis.selectBookSelectorBook(data.bookId);
+                      globals.setOpenSidebar && globals.setOpenSidebar(true);
+                      globals.selectBookSelectorBook &&
+                        globals.selectBookSelectorBook(data.bookId);
                     }
                   }}
                   style={{ "pointer-events": isDragging ? "none" : null }}
@@ -2129,18 +2139,18 @@ function ThePage({
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (globalThis.setOpenSidebar && globalThis.openSidebar) {
-                        globalThis.setOpenSidebar(false);
-                        globalThis.setSelectingTranslation &&
-                          globalThis.setSelectingTranslation(false);
-                        globalThis.selectBookSelectorBook &&
-                          globalThis.selectBookSelectorBook(null);
+                      if (globals.setOpenSidebar && globals.openSidebar) {
+                        globals.setOpenSidebar(false);
+                        globals.setSelectingTranslation &&
+                          globals.setSelectingTranslation(false);
+                        globals.selectBookSelectorBook &&
+                          globals.selectBookSelectorBook(null);
                       } else {
-                        globalThis.setOpenSidebar(true);
-                        globalThis.setSelectingTranslation &&
-                          globalThis.setSelectingTranslation(true);
-                        globalThis.selectBookSelectorBook &&
-                          globalThis.selectBookSelectorBook(data.bookId);
+                        globals.setOpenSidebar(true);
+                        globals.setSelectingTranslation &&
+                          globals.setSelectingTranslation(true);
+                        globals.selectBookSelectorBook &&
+                          globals.selectBookSelectorBook(data.bookId);
                       }
                     }}
                   >{` / ${data?.shortName}`}</span>
@@ -2250,9 +2260,9 @@ function ThePage({
                   >
                     <div
                       onClick={() => {
-                        setOpenSidebar((prev) => !prev);
-                        setCurrentExperience(0);
-                        globalThis.MakingNewTab = true;
+                        globals.setOpenSidebar((prev) => !prev);
+                        globals.setCurrentExperience(0);
+                        globals.MakingNewTab = true;
                       }}
                       style={{
                         fontSize: "24px",
@@ -2318,14 +2328,14 @@ function ThePage({
         !(role === "follower" && config.onlyHostHighlight) && (
           <div
             onMouseDown={() => {
-              if (!globalThis.IsMobileNow()) {
+              if (!globals.IsMobileNow()) {
                 setUserMovedToolbar(true);
                 setDragToolbar(true);
               }
             }}
             onMouseUp={() => setDragToolbar(false)}
             style={
-              globalThis.IsMobileNow()
+              globals.IsMobileNow()
                 ? {
                     position: "fixed",
                     left: "50%",
@@ -2452,6 +2462,7 @@ function SidePanelContent({ data }: { data: any }) {
 }
 
 function PageToolbar({ panelId, tab, path = "showInPageToolbar" }) {
+  const globals = useGlobalsContext();
   const { tools } = useBibleContext();
 
   const visibleTools = tools.filter((tool) => tool[path]);
@@ -2460,14 +2471,14 @@ function PageToolbar({ panelId, tab, path = "showInPageToolbar" }) {
   return (
     <div
       onClick={() => {
-        globalThis.LastClickedPanelUpdate = panelId;
+        globals.LastClickedPanelUpdate = panelId;
       }}
       className="thePageToolbar"
     >
       {visibleTools.map((tool) => (
         <div
           onClick={(e) => {
-            globalThis.LastClickedPanelUpdate = panelId;
+            globals.LastClickedPanelUpdate = panelId;
             setTimeout(() => {
               tool.onClick({ mode: !tab ? "panel" : "" });
             }, 5);
@@ -2656,6 +2667,7 @@ function Section({
   setActiveFootnote,
   setShowFootnoteModal,
 }) {
+  const globals = useGlobalsContext();
   const selectAllHeadingVerses = useCallback(() => {
     const verseNumbers = verses.map((v) => v.verseNumber);
 
@@ -2706,10 +2718,10 @@ function Section({
   const normalize = (k) => k.replace(stripRe, "").toLowerCase().trim();
 
   const [activeKey, setActiveKey] = useState(
-    globalThis.HighlightedSectionKey || ""
+    globals.HighlightedSectionKey || ""
   );
   const [activeVerse, setActiveVerse] = useState(
-    globalThis.HighlightedVerseNumber || ""
+    globals.HighlightedVerseNumber || ""
   );
 
   const verseRefs = useMemo(() => {
@@ -2722,7 +2734,7 @@ function Section({
 
   useEffect(() => {
     const handler = () => {
-      setActiveKey(globalThis.HighlightedSectionKey || "");
+      setActiveKey(globals.HighlightedSectionKey || "");
     };
     window.addEventListener("highlightedSectionKeyChanged", handler);
     return () =>
@@ -2731,10 +2743,10 @@ function Section({
 
   useEffect(() => {
     const handler = () => {
-      setActiveVerse(globalThis.HighlightedVerseNumber || "");
+      setActiveVerse(globals.HighlightedVerseNumber || "");
       console.log(
         "verse number clicked: ",
-        globalThis.HighlightedVerseNumber || ""
+        globals.HighlightedVerseNumber || ""
       );
     };
     window.addEventListener("highlightedVerseChanged", handler);
@@ -2774,16 +2786,16 @@ function Section({
 
   const chunksMap = useMemo(() => {
     const result = {};
-    if (globalThis.studyNotesPresent) {
+    if (globals.studyNotesPresent) {
       verses.forEach((v) => {
         result[v.verseNumber] = splitBySectionKeys(
           v.text,
-          globalThis.VerseSectionMap
+          globals.VerseSectionMap
         );
       });
     }
     return result;
-  }, [verses, globalThis.studyNotesPresent, globalThis.VerseSectionMap]);
+  }, [verses, globals.studyNotesPresent, globals.VerseSectionMap]);
 
   const wordChunksMap = useMemo(() => {
     const result = {};
@@ -2871,6 +2883,7 @@ function Section({
   };
 
   const renderVerseText = (verse) => {
+    const globals = useGlobalsContext();
     const verseKey = `${book}-${chapter}-${verse.verseNumber}`;
     const hasWordHighlights =
       wordHighlights[verseKey] &&
@@ -2879,8 +2892,9 @@ function Section({
     const verseFootnotes = getVerseFootnotes(verse.verseNumber);
     const hasFootnotes = verseFootnotes && verseFootnotes.length > 0;
 
-    if (globalThis.studyNotesPresent) {
+    if (globals.studyNotesPresent) {
       return (chunksMap[verse.verseNumber] || []).map((part, i) => {
+        const globals = useGlobalsContext();
         if (!part.isSection) {
           if (hasWordHighlights) {
             const wordParts = splitByWordHighlights(
@@ -2939,13 +2953,13 @@ function Section({
             style={{ animationDelay: `${i * 0.1}s` }}
             onClick={() => {
               console.log(part.key);
-              const raw = globalThis.VerseSectionMap[part.key].original;
+              const raw = globals.VerseSectionMap[part.key].original;
               console.log(raw);
               const m = /:(\d+)$/.exec(raw);
               console.log(m);
               const sec = m ? m[1] : part.key;
               console.log(sec);
-              globalThis.HighlightStudyNoteSection(raw);
+              globals.HighlightStudyNoteSection(raw);
             }}
           >
             {part.text}
@@ -3019,6 +3033,7 @@ function Section({
         )}
         <div className="sectionCover">
           {verses.map((verse) => {
+            const globals = useGlobalsContext();
             if (verse.lineBreak) {
               return <p className="verseLineBreak"></p>;
             }
@@ -3047,7 +3062,7 @@ function Section({
                   onContextMenu={(e) => {
                     e.preventDefault();
                     handleVerseClick(verse.verseNumber);
-                    SetShowCommands(false);
+                    globals.SetShowCommands(false);
                     // setInHold(verse.verseNumber);
                     // setLastSelectedVerse(verse.verseNumber);
 
@@ -3069,7 +3084,7 @@ function Section({
                   onClick={(e) => {
                     e.stopPropagation();
                     console.log(data, "data in verse click");
-                    if (globalThis?.SetCurrentReference) {
+                    if (globals.SetCurrentReference) {
                       shout("ToggleReference", {
                         bookId: data?.bookId,
                         chapter,
@@ -3080,7 +3095,7 @@ function Section({
                       });
                     }
                     handleVerseClick(verse.verseNumber);
-                    SetShowCommands(false);
+                    globals.SetShowCommands(false);
                     const highlightKey = `${book}-${chapter}-${verse.verseNumber}`;
                     os.log({
                       verseNumber: verse.verseNumber,
@@ -3157,23 +3172,24 @@ function Section({
                 >
                   {!c ? (
                     (() => {
+                      const globals = useGlobalsContext();
                       const verseContent = renderVerseText(verse);
                       const verseNumberElement = showVerses[activeSpace] ? (
                         <span
                           className={`sectionTextNumber ${
-                            globalThis.studyNotesPresent
-                              ? "clickableCursor"
-                              : ""
+                            globals.studyNotesPresent ? "clickableCursor" : ""
                           }`}
                           onClick={() => {
-                            if (globalThis.studyNotesPresent) {
-                              HighlightStudyNoteSection(verse?.verseNumber);
+                            if (globals.studyNotesPresent) {
+                              globals.HighlightStudyNoteSection(
+                                verse?.verseNumber
+                              );
                             }
                           }}
                           onPointerEnter={(e) => {
-                            globalThis.showRefModal = true;
+                            globals.showRefModal = true;
                             setTimeout(() => {
-                              if (globalThis.showRefModal) {
+                              if (globals.showRefModal) {
                                 shout("toggleReferenceModal", {
                                   book,
                                   chapter,
@@ -3185,7 +3201,7 @@ function Section({
                             }, 500);
                           }}
                           onPointerLeave={() => {
-                            globalThis.showRefModal = false;
+                            globals.showRefModal = false;
                           }}
                         >
                           {verse?.verseNumber}
@@ -3333,17 +3349,19 @@ function Section({
                           display: showVerses[activeSpace] ? "" : "none",
                         }}
                         className={`sectionTextNumber ${
-                          globalThis.studyNotesPresent ? "clickableCursor" : ""
+                          globals.studyNotesPresent ? "clickableCursor" : ""
                         }`}
                         onClick={() => {
-                          if (globalThis.studyNotesPresent) {
-                            HighlightStudyNoteSection(verse?.verseNumber);
+                          if (globals.studyNotesPresent) {
+                            globals.HighlightStudyNoteSection(
+                              verse?.verseNumber
+                            );
                           }
                         }}
                         onPointerEnter={(e) => {
-                          globalThis.showRefModal = true;
+                          globals.showRefModal = true;
                           setTimeout(() => {
-                            if (globalThis.showRefModal) {
+                            if (globals.showRefModal) {
                               shout("toggleReferenceModal", {
                                 book,
                                 chapter,
@@ -3355,7 +3373,7 @@ function Section({
                           }, 500);
                         }}
                         onPointerLeave={() => {
-                          globalThis.showRefModal = false;
+                          globals.showRefModal = false;
                         }}
                       >
                         {verse?.verseNumber}
@@ -3438,11 +3456,12 @@ export const ThePageWithEditor = ({
   panelId: any;
   preferTab?: true;
 }) => {
+  const globals = useGlobalsContext();
   useEffect(() => {
     os.log("tab in the page", panelId, tab);
   }, []);
 
-  const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
+  const activeTab = panelId ? globals.PanelTabsMap[panelId] || tab : tab;
   console.log("active tab in the page", panelId, activeTab);
   const [enableEditor, setEnableEditor] = useState(false);
   useEffect(() => {}, [enableEditor]);

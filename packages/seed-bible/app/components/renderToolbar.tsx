@@ -6,9 +6,11 @@ import { useMouseMove } from "app.hooks.mouseMove";
 import SurroundingDivs from "app.components.surroundingDivs";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useTabsContext } from "app.hooks.tabs";
+import { useGlobalsContext } from "app.hooks.globalsContext";
 
 // Simple, single-toolbar component (no edit layer). Main logic unchanged.
 export function Toolbar() {
+  const globals = useGlobalsContext();
   const {
     navFunctions,
     setScreens,
@@ -33,15 +35,15 @@ export function Toolbar() {
   const [toolbarBackground, setToolbarBackground] = useState("white");
 
   useEffect(() => {
-    globalThis.SetToolbarBackground = setToolbarBackground;
+    globals.SetToolbarBackground = setToolbarBackground;
 
     // ✅ Only initialize if undefined
-    if (globalThis.toolbarChanges === undefined) {
-      globalThis.toolbarChanges = {};
+    if (globals.toolbarChanges === undefined) {
+      globals.toolbarChanges = {};
     }
 
     return () => {
-      globalThis.SetToolbarBackground = null;
+      globals.SetToolbarBackground = null;
     };
   }, []);
   // === keep original default-toolbar logic ===
@@ -60,7 +62,7 @@ export function Toolbar() {
   const hasHeldRef = useRef(false);
 
   useEffect(() => {
-    globalThis.SetScreens = setScreens;
+    globals.SetScreens = setScreens;
   }, [setScreens]);
 
   useEffect(() => () => clearTimeout(holdTimeoutRef.current), []);
@@ -105,13 +107,13 @@ export function Toolbar() {
 
   // expose setters globally (kept behavior)
   useEffect(() => {
-    globalThis.SetTools = setTools;
-    globalThis.SetCanvasTools = setCanvasTools;
-    globalThis.SetMapTools = setMapTools;
+    globals.SetTools = setTools;
+    globals.SetCanvasTools = setCanvasTools;
+    globals.SetMapTools = setMapTools;
     return () => {
-      globalThis.SetTools = null;
-      globalThis.SetCanvasTools = null;
-      globalThis.SetMapTools = null;
+      globals.SetTools = null;
+      globals.SetCanvasTools = null;
+      globals.SetMapTools = null;
     };
   }, [setTools, setCanvasTools, setMapTools]);
 

@@ -8,8 +8,11 @@ import {
 } from "app.components.icons";
 import { useTabsContext } from "app.hooks.tabs";
 import { IconOptions } from "app.components.types";
+import { useGlobalsContext } from "app.hooks.globalsContext";
+
 const { useEffect } = os.appHooks;
 export function ImportSpaceModal() {
+  const globals = useGlobalsContext();
   const [spaceId, setSpaceId] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
@@ -237,7 +240,7 @@ export function ImportSpaceModal() {
         </button>
 
         <button
-          onClick={closePopupSettings}
+          onClick={globals.closePopupSettings}
           style={styles.cancelButton}
           onMouseOver={(e) => (e.target.style.backgroundColor = "#f3f4f6")}
           onMouseOut={(e) => (e.target.style.backgroundColor = "transparent")}
@@ -250,6 +253,7 @@ export function ImportSpaceModal() {
 }
 
 export function RenameSpaceModal({ updateSpace, activeSpace }) {
+  const globals = useGlobalsContext();
   const [spaceName, setSpaceName] = useState("My Space");
   const [selectedIcon, setSelectedIcon] = useState({
     id: "star",
@@ -424,7 +428,7 @@ export function RenameSpaceModal({ updateSpace, activeSpace }) {
 
   const handleCancel = () => {
     // Handle cancel logic here
-    closePopupSettings();
+    globals.closePopupSettings();
     console.log("Rename canceled");
   };
 
@@ -492,7 +496,7 @@ export function RenameSpaceModal({ updateSpace, activeSpace }) {
         <div style={styles.buttonContainer}>
           <button
             style={styles.cancelButton}
-            onClick={closePopupSettings}
+            onClick={globals.closePopupSettings}
             onMouseOver={(e) => (e.target.style.backgroundColor = "#e5e7eb")}
             onMouseOut={(e) => (e.target.style.backgroundColor = "#f3f4f6")}
           >
@@ -520,6 +524,7 @@ export function CreateNewSpaceModal({
   addSpace: any;
   activeSpace?: any;
 }) {
+  const globals = useGlobalsContext();
   const [spaceName, setSpaceName] = useState("");
   const [spaceDescription, setSpaceDescription] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
@@ -733,7 +738,7 @@ export function CreateNewSpaceModal({
       icon: selectedIcon,
     });
     addSpace(spaceName, selectedIcon.emoji);
-    closePopupSettings();
+    globals.closePopupSettings();
   };
 
   const handleCancel = () => {
@@ -824,7 +829,7 @@ export function CreateNewSpaceModal({
         <div style={styles.buttonContainer}>
           <button
             style={styles.cancelButton}
-            onClick={closePopupSettings}
+            onClick={globals.closePopupSettings}
             onMouseOver={(e) => (e.target.style.backgroundColor = "#e5e7eb")}
             onMouseOut={(e) => (e.target.style.backgroundColor = "#f3f4f6")}
           >

@@ -2,8 +2,10 @@ const { useState, useEffect } = os.appHooks;
 import { useSideBarContext } from "app.hooks.sideBar";
 import { useTabsContext } from "app.hooks.tabs";
 import { MenuIcon, SelectionUIIcon } from "app.components.icons";
+import { useGlobalsContext } from "app.hooks.globalsContext";
 
 const SelectionUISettings = () => {
+  const globals = useGlobalsContext();
   const { setSideBarMode, t } = useSideBarContext();
   const { updateSpace, activeSpace, spaces } = useTabsContext();
 
@@ -36,10 +38,10 @@ const SelectionUISettings = () => {
     updateSpace(activeSpace, { selectionUIBehavior: settings });
 
     // Also update globalThis for immediate access in verseToolbar
-    if (!globalThis.selectionUIBehavior) {
-      globalThis.selectionUIBehavior = {};
+    if (!globals.selectionUIBehavior) {
+      globals.selectionUIBehavior = {};
     }
-    globalThis.selectionUIBehavior[activeSpace] = settings;
+    globals.selectionUIBehavior[activeSpace] = settings;
   }, [showSelectedItems, showHighlightColors, showIconText, activeSpace]);
 
   // Styles

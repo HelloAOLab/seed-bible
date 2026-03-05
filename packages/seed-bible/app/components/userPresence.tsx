@@ -14,6 +14,7 @@ import {
   CoffeBeanIcon,
 } from "app.components.phosphoricons";
 import { useMouseMove } from "app.hooks.mouseMove";
+import { useGlobalsContext } from "app.hooks.globalsContext";
 
 const MAX_VISIBLE = 5;
 const icons = [TreeIcon, LogIcon, LeafIcon, CatIcon, DogIcon, CoffeBeanIcon];
@@ -166,6 +167,7 @@ function getUserSessionInfo(userId) {
 globalThis.GetUserSessionInfo = getUserSessionInfo;
 
 export function UserPresence({ collapsed = false }) {
+  const globals = useGlobalsContext();
   const [showSettings, setShowSettings] = useState(false);
   const [users, setUsers] = useState([]);
   const listenersAddedRef = useRef(false);
@@ -343,9 +345,9 @@ export function UserPresence({ collapsed = false }) {
             // setHasInteracted(true);
 
             setTimeout(() => {
-              HandleSharedTabClick();
+              globals.HandleSharedTabClick();
               setActiveTab(tags.onlineTab.id);
-              UpdateTab(tags.onlineTab);
+              globals.UpdateTab(tags.onlineTab);
             }, 500);
             return;
           }
@@ -503,10 +505,10 @@ export function UserPresence({ collapsed = false }) {
       os.log(configBot.id, "following", hostId);
       followHost(hostId);
       setActiveTab(tags.onlineTab.id);
-      UpdateTab(tags.onlineTab);
+      globals.UpdateTab(tags.onlineTab);
     }
   };
-  globalThis.HandleSharedTabClick = handleBarClick;
+  globals.HandleSharedTabClick = handleBarClick;
 
   const startSession = () => {
     const config = defaultConfig();
@@ -522,7 +524,7 @@ export function UserPresence({ collapsed = false }) {
     // updateActiveTab({ sharedTab: true, hostId: selfId })
     const { color } = getOrSetVisualInTags(configBot.id);
     if (!tags.onlineTab)
-      globalThis.CurrentTab = addTab({
+      globals.CurrentTab = addTab({
         id: uuid(),
         taken: false,
         sharedTab: true,
@@ -538,10 +540,10 @@ export function UserPresence({ collapsed = false }) {
           shortName: "BSB",
         },
       });
-    masks["sharedTab"] = globalThis.CurrentTab.id;
-    globalThis.UpdateTab(globalThis.CurrentTab);
-    setActiveTab(globalThis.CurrentTab.id);
-    tags.onlineTab = globalThis.CurrentTab;
+    masks["sharedTab"] = globals.CurrentTab.id;
+    globals.UpdateTab(globals.CurrentTab);
+    setActiveTab(globals.CurrentTab.id);
+    tags.onlineTab = globals.CurrentTab;
     tags.hostIdForOnlineTab = configBot.id;
     // Notify all other users
     const notifyOthers = async () => {
@@ -550,15 +552,15 @@ export function UserPresence({ collapsed = false }) {
       if (others.length > 0) {
         sendRemoteData(others, "sessionStarted", {
           hostId: selfId,
-          tab: globalThis?.CurrentTab,
+          tab: globals.CurrentTab,
         });
-        masks["sharedTab"] = globalThis?.CurrentTab.id;
+        masks["sharedTab"] = globals.CurrentTab.id;
         update((prev) => !prev);
       }
     };
     notifyOthers();
   };
-  globalThis.StartSession = startSession;
+  globals.StartSession = startSession;
 
   async function FollowSpecificUser(targetUserId) {
     const selfId = await getSelfIdSafe();
@@ -605,7 +607,7 @@ export function UserPresence({ collapsed = false }) {
     }
   }
 
-  globalThis.FollowSpecificUser = FollowSpecificUser;
+  globals.FollowSpecificUser = FollowSpecificUser;
 
   async function InviteUser(targetUserId) {
     const selfId = await getSelfIdSafe();
@@ -619,7 +621,7 @@ export function UserPresence({ collapsed = false }) {
 
     os.log?.(`[InviteUser] Invited ${targetUserId} to host session.`);
   }
-  globalThis.InviteUser = InviteUser;
+  globals.InviteUser = InviteUser;
   async function AcceptInvite(inviterId) {
     startSession();
   }
@@ -714,8 +716,8 @@ export function UserPresence({ collapsed = false }) {
     );
   };
 
-  globalThis.TogglePrivateMode = togglePrivateMode;
-  globalThis.IsPrivateMode = () => isPrivateMode;
+  globals.TogglePrivateMode = togglePrivateMode;
+  globals.IsPrivateMode = () => isPrivateMode;
 
   const followHost = (hostId) => {
     if (!sessions[hostId]) return;
@@ -864,6 +866,7 @@ export function UserPresence({ collapsed = false }) {
 
             {getStatusText() !== "Start session" &&
               visibleUsers.map(({ remoteId, iconIndex, colorIndex }, index) => {
+                const globals = useGlobalsContext();
                 const Icon = icons[iconIndex];
                 const ringColor = colors[colorIndex];
                 const canActOn =
@@ -902,7 +905,7 @@ export function UserPresence({ collapsed = false }) {
                         e.stopPropagation();
                         if (!menuItems.length) return;
                         const OPTIONS = { type: "normal", items: menuItems };
-                        openPopupSettings(OPTIONS);
+                        globals.openPopupSettings(OPTIONS);
                       }}
                       style={{
                         width: 30,
@@ -1053,7 +1056,7 @@ export function UserPresence({ collapsed = false }) {
                 setHasInteracted(true);
 
                 setActiveTab(tags.onlineTab.id);
-                UpdateTab(tags.onlineTab);
+                globals.UpdateTab(tags.onlineTab);
 
                 setNotifications((prev) =>
                   prev.filter((n) => n.id !== notif.id)

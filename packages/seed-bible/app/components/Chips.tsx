@@ -1,3 +1,5 @@
+import { useGlobalsContext } from "app.hooks.globalsContext";
+
 const { useState, useRef, useEffect } = os.appHooks;
 
 interface SharePopupProps {
@@ -15,6 +17,7 @@ const SharePopup = ({
   popupTitle = "Share",
   closePopupSettings,
 }) => {
+  const globals = useGlobalsContext();
   const [copied, setCopied] = useState(false);
   // always include reference; no toggle needed
 
@@ -87,7 +90,7 @@ const SharePopup = ({
     //     window.open("https://instagram.com", "_blank");
     //   },
     // },
-    ...(globalThis.IsMobileNow()
+    ...(globals.IsMobileNow()
       ? [
           {
             name: "Text",

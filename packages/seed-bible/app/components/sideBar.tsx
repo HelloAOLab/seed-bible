@@ -43,6 +43,8 @@ import {
   DogIcon,
   CoffeBeanIcon,
 } from "app.components.phosphoricons";
+import { useGlobalsContext } from "app.hooks.globalsContext";
+
 // import { CircleCounter } from 'app.components.circleCounter'
 // console.log(CircleCounter, 'CircleCounter')
 const Reciver = getBot("system", "app.reciver");
@@ -59,6 +61,7 @@ const removeAddSession =
   ]?.appSettings?.removeAddSession;
 
 const CircleCounter = ({ data, book, chapter }) => {
+  const globals = useGlobalsContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   if (!data) return null;
@@ -97,7 +100,7 @@ const CircleCounter = ({ data, book, chapter }) => {
   // Helper to get user's visual style
   const getUserVisual = (userId, value, index) => {
     try {
-      const visual = globalThis?.GetOrSetVisualInTags(value[0]);
+      const visual = globals.GetOrSetVisualInTags(value[0]);
       // console.log(value,'the get inside')
       if (visual) {
         const IconComponent = icons[visual.iconIndex];
@@ -243,10 +246,11 @@ const CircleCounter = ({ data, book, chapter }) => {
               style={{ display: "flex", flexDirection: "column", gap: "12px" }}
             >
               {entries.map(([id, value], index) => {
-                const { Icon, color } = globalThis?.GetOrSetVisualInTags
-                  ? globalThis.GetOrSetVisualInTags(value[0])
+                const globals = useGlobalsContext();
+                const { Icon, color } = globals.GetOrSetVisualInTags
+                  ? globals.GetOrSetVisualInTags(value[0])
                   : { Icon: TreeIcon, color: "#34D399" };
-                const { role } = globalThis.GetUserSessionInfo(value[0]);
+                const { role } = globals.GetUserSessionInfo(value[0]);
                 return (
                   <div
                     key={id}
@@ -307,7 +311,7 @@ const CircleCounter = ({ data, book, chapter }) => {
                       <button
                         // disabled={role !== 'host'}
                         onClick={() => {
-                          InviteUser(value[0]);
+                          globals.InviteUser(value[0]);
                           setIsModalOpen(false);
                         }}
                         style={{
@@ -329,7 +333,7 @@ const CircleCounter = ({ data, book, chapter }) => {
                       <button
                         // disabled={role !== 'host'}
                         onClick={() => {
-                          HandleSharedTabClick();
+                          globals.HandleSharedTabClick();
                           setIsModalOpen(false);
                         }}
                         style={{
@@ -373,6 +377,7 @@ function Tab({
   isBookmarked,
   onBookmarkClick,
 }: any) {
+  const globals = useGlobalsContext();
   const { openPopupSettings, closePopupSettings, userURL, t } =
     useSideBarContext();
   const { setCanvasMode, setMapMode } = useBibleContext();
@@ -454,8 +459,9 @@ function Tab({
   const dragTimeout = useRef<null | NodeJS.Timeout>(null);
 
   function handleMouseDown() {
+    const globals = useGlobalsContext();
     if (multiSelectMode) return;
-    if (globalThis?.activeCanvasId && el.data.type === "canvas") return;
+    if (globals.activeCanvasId && el.data.type === "canvas") return;
 
     dragTimeout.current = setTimeout(() => {
       setIsDragging(true);
@@ -487,7 +493,8 @@ function Tab({
   }, [selectedTabs]);
 
   const handleTabClick = () => {
-    if (globalThis.IsMobileNow()) {
+    const globals = useGlobalsContext();
+    if (globals.IsMobileNow()) {
       setSidebarWidth(0);
       // setCollapsed(true);
       // setMultiSelectMode(false);
@@ -496,19 +503,22 @@ function Tab({
     if (activeTab === el.id) return;
 
     if (el.sharedTab) {
-      globalThis.HandleSharedTabClick();
+      globals.HandleSharedTabClick();
     }
-    const checkEmpty = PanelsApps.find((e) => !e.tabData);
+    const checkEmpty = globals.PanelsApps.find((e) => !e.tabData);
     if (el.data.type === "book" && checkEmpty) {
       // console.log("canvas replacing");
       setActiveTab(el.id);
       const id = uuid();
-      ReplaceApplication(LastClickedPanelUpdate || checkEmpty.id, {
-        id: id,
-        App: <ThePageWithEditor tab={el} panelId={id} preferTab={true} />,
-        to: "panel",
-        minWidth: "30rem",
-      });
+      globals.ReplaceApplication(
+        globals.LastClickedPanelUpdate || checkEmpty.id,
+        {
+          id: id,
+          App: <ThePageWithEditor tab={el} panelId={id} preferTab={true} />,
+          to: "panel",
+          minWidth: "30rem",
+        }
+      );
       return;
     } else if (el.data.pkgApp) {
       setActiveTab(el.id);
@@ -522,12 +532,15 @@ function Tab({
         },
       };
       const id = uuid();
-      ReplaceApplication((checkEmpty && checkEmpty.id) || PanelsApps[0].id, {
-        id: id,
-        App: <App tab={tabData} panelId={id} activeTab={el.id} />,
-        to: "panel",
-        minWidth: "30rem",
-      });
+      globals.ReplaceApplication(
+        (checkEmpty && checkEmpty.id) || globals.PanelsApps[0].id,
+        {
+          id: id,
+          App: <App tab={tabData} panelId={id} activeTab={el.id} />,
+          to: "panel",
+          minWidth: "30rem",
+        }
+      );
       return;
     }
     // if (globalThis?.CurrentActivePanel) {
@@ -560,15 +573,15 @@ function Tab({
     // }
     console.log(
       "canvas-page updating",
-      el.data.type === "book" && globalThis?.activeCanvasId === activeTab,
+      el.data.type === "book" && globals.activeCanvasId === activeTab,
       el.data.type === "book",
-      globalThis?.activeCanvasId === activeTab
+      globals.activeCanvasId === activeTab
     );
     setActiveTab(el.id);
     // if (globalThis[`UpdateTabWidthId${el?.id}`])
     //   globalThis[`UpdateTabWidthId${el?.id}`](el);
 
-    globalThis.UpdateTab(el);
+    globals.UpdateTab(el);
   };
   const circles = onlineUsers
     ? Object.fromEntries(
@@ -583,7 +596,7 @@ function Tab({
   // console.log('circles result:', circles, 'for tab:', el?.data?.book, el?.data?.chapter);
   const notJoinedSharedTab = sharedTab && activeTab !== el.id;
   const info =
-    el.sharedTab && globalThis?.GetOrSetVisualInTags(tags.hostIdForOnlineTab);
+    el.sharedTab && globals.GetOrSetVisualInTags(tags.hostIdForOnlineTab);
 
   return (
     <div
@@ -829,6 +842,7 @@ function Folder({
 }
 
 function SideBar({ panelsNumber }) {
+  const globals = useGlobalsContext();
   const {
     tabs,
     folders,
@@ -853,14 +867,14 @@ function SideBar({ panelsNumber }) {
     tags?.settingsConfigs?.presets?.[
       configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
     ]?.appSettings?.disablePanels;
-  globalThis.AddTab = addTab;
+  globals.AddTab = addTab;
   const { screens, setScreens, fullScreen, setFullScreen, ReSeed, setReSeed } =
     useBibleContext();
   // globalThis.setScreens = setScreens
   const [customScreens, setCustomScreens] = useState({ value: 1 });
-  globalThis.setCustomScreens = setCustomScreens;
+  globals.setCustomScreens = setCustomScreens;
   const [onlineUsers, setOnlineUsers] = useState(false);
-  globalThis.SetOnlineUsers = setOnlineUsers;
+  globals.SetOnlineUsers = setOnlineUsers;
   const [showSearch, setShowSearch] = useState(false); // New state for search visibility
   const [searchQuery, setSearchQuery] = useState(""); // Search filter for tabs
   const [editMode, setEditMode] = useState(false); // New state for edit mode
@@ -939,41 +953,41 @@ function SideBar({ panelsNumber }) {
   }, [ReSeed]);
   useEffect(() => {
     setCustomScreens(
-      globalThis.SpaceScreens[activeSpace]
-        ? { value: globalThis.SpaceScreens[activeSpace] }
+      globals.SpaceScreens[activeSpace]
+        ? { value: globals.SpaceScreens[activeSpace] }
         : { value: 1 }
     );
   }, [activeSpace]);
 
   // Initialize globalThis.changes if it doesn't exist
   useEffect(() => {
-    if (!globalThis.changes) {
-      globalThis.changes = {};
+    if (!globals.changes) {
+      globals.changes = {};
     }
     // Load saved search visibility state
-    if (globalThis.changes.showSearch !== undefined) {
-      setShowSearch(globalThis.changes.showSearch);
+    if (globals.changes.showSearch !== undefined) {
+      setShowSearch(globals.changes.showSearch);
     }
     // Load saved edit mode state
-    if (globalThis.changes.editMode !== undefined) {
-      setEditMode(globalThis.changes.editMode);
+    if (globals.changes.editMode !== undefined) {
+      setEditMode(globals.changes.editMode);
     }
   }, []);
 
   // Save search visibility changes to globalThis.changes
   useEffect(() => {
-    if (!globalThis.changes) {
-      globalThis.changes = {};
+    if (!globals.changes) {
+      globals.changes = {};
     }
-    globalThis.changes.showSearch = showSearch;
+    globals.changes.showSearch = showSearch;
   }, [showSearch]);
 
   // Save edit mode changes to globalThis.changes
   useEffect(() => {
-    if (!globalThis.changes) {
-      globalThis.changes = {};
+    if (!globals.changes) {
+      globals.changes = {};
     }
-    globalThis.changes.editMode = editMode;
+    globals.changes.editMode = editMode;
   }, [editMode]);
 
   useEffect(() => {
@@ -1268,7 +1282,7 @@ function SideBar({ panelsNumber }) {
               title: t("startSession"),
               onClick: () => {
                 // os.log(globalThis?.StartSession,globalThis)
-                HandleSharedTabClick();
+                globals.HandleSharedTabClick();
               },
             },
             {
@@ -1277,9 +1291,10 @@ function SideBar({ panelsNumber }) {
               // icon: <TransparentSvg />,
               title: t("inviteToSession"),
               onClick: async () => {
+                const globals = useGlobalsContext();
                 const { QRCodeComponent } = thisBot.Chips();
                 const url = `https://ao.bot/?inst=${os.getCurrentInst()}`;
-                ShowModal(<QRCodeComponent url={url} />);
+                globals.ShowModal(<QRCodeComponent url={url} />);
               },
             },
           ]
@@ -1291,6 +1306,7 @@ function SideBar({ panelsNumber }) {
               icon: <JoinSession />,
               title: t("joinAnotherSession"),
               onClick: async () => {
+                const globals = useGlobalsContext();
                 const { JoinSessionComponent } = thisBot.Chips();
                 const translations = {
                   joinSession: t("joinSession"),
@@ -1298,11 +1314,11 @@ function SideBar({ panelsNumber }) {
                   sessionCodePlaceholder: t("sessionCodePlaceholder"),
                   join: t("join"),
                 };
-                ShowModal(
+                globals.ShowModal(
                   <JoinSessionComponent
                     onJoin={(code) => os.goToURL(code)}
                     translations={translations}
-                    CloseModal={() => globalThis.CloseModal()}
+                    CloseModal={() => globals.CloseModal()}
                   />
                 );
               },
@@ -1312,12 +1328,12 @@ function SideBar({ panelsNumber }) {
                   {
                     disabled: false,
                     icon: <GoPrivateIcon />,
-                    title: globalThis.IsPrivateMode?.()
+                    title: globals.IsPrivateMode?.()
                       ? t("goPublic")
                       : t("goPrivate"),
                     onClick: async () => {
-                      if (globalThis.TogglePrivateMode) {
-                        await globalThis.TogglePrivateMode();
+                      if (globals.TogglePrivateMode) {
+                        await globals.TogglePrivateMode();
                       }
                     },
                   },
@@ -1385,7 +1401,7 @@ function SideBar({ panelsNumber }) {
               title: t("startSession"),
               onClick: () => {
                 // os.log(globalThis?.StartSession,globalThis)
-                HandleSharedTabClick();
+                globals.HandleSharedTabClick();
               },
             },
             {
@@ -1394,9 +1410,10 @@ function SideBar({ panelsNumber }) {
               // icon: <TransparentSvg />,
               title: t("inviteToSession"),
               onClick: async () => {
+                const globals = useGlobalsContext();
                 const { QRCodeComponent } = thisBot.Chips();
                 const url = `https://ao.bot/?inst=${os.getCurrentInst()}`;
-                ShowModal(<QRCodeComponent url={url} />);
+                globals.ShowModal(<QRCodeComponent url={url} />);
               },
             },
           ]
@@ -1408,6 +1425,7 @@ function SideBar({ panelsNumber }) {
               icon: <JoinSession />,
               title: t("joinAnotherSession"),
               onClick: async () => {
+                const globals = useGlobalsContext();
                 const { JoinSessionComponent } = thisBot.Chips();
                 const translations = {
                   joinSession: t("joinSession"),
@@ -1415,14 +1433,14 @@ function SideBar({ panelsNumber }) {
                   sessionCodePlaceholder: t("sessionCodePlaceholder"),
                   join: t("join"),
                 };
-                ShowModal(
+                globals.ShowModal(
                   <JoinSessionComponent
                     onJoin={(code) => os.goToURL(code)}
                     translations={translations}
-                    CloseModal={() => globalThis.CloseModal()}
+                    CloseModal={() => globals.CloseModal()}
                   />
                 );
-                if (globalThis.IsMobileNow()) {
+                if (globals.IsMobileNow()) {
                   setOpenOnMobile(false);
                   setSidebarWidth(0);
                 }
@@ -1433,12 +1451,12 @@ function SideBar({ panelsNumber }) {
                   {
                     disabled: false,
                     icon: <GoPrivateIcon />,
-                    title: globalThis.IsPrivateMode?.()
+                    title: globals.IsPrivateMode?.()
                       ? t("goPublic")
                       : t("goPrivate"),
                     onClick: async () => {
-                      if (globalThis.TogglePrivateMode) {
-                        await globalThis.TogglePrivateMode();
+                      if (globals.TogglePrivateMode) {
+                        await globals.TogglePrivateMode();
                       }
                     },
                   },
@@ -1554,7 +1572,7 @@ function SideBar({ panelsNumber }) {
 
     const handleMobileTabClick = (el) => {
       setActiveTab(el.id);
-      globalThis.UpdateTab(el);
+      globals.UpdateTab(el);
 
       setOpenOnMobile(false);
       setSidebarWidth(0);
@@ -1612,7 +1630,7 @@ function SideBar({ panelsNumber }) {
       };
       addTab(newTab);
       setActiveTab(newTab.id);
-      globalThis.UpdateTab(newTab);
+      globals.UpdateTab(newTab);
     };
 
     return (
@@ -2370,29 +2388,30 @@ function SideBar({ panelsNumber }) {
                   }}
                   onContextMenu={(e) => {
                     e.preventDefault();
-                    globalThis._skipNextMouse = true; // block next onMouseUp
-                    SetShowScreenPanelOption(true);
+                    globals._skipNextMouse = true; // block next onMouseUp
+                    globals.SetShowScreenPanelOption(true);
                   }}
                   onMouseDown={(e) => {
                     // ignore if it's a right-click
                     if (e.button === 2) return;
 
-                    globalThis._hold = false;
-                    globalThis._holdTimeout = setTimeout(() => {
-                      SetShowScreenPanelOption(true);
-                      globalThis._hold = true;
+                    globals._hold = false;
+                    globals._holdTimeout = setTimeout(() => {
+                      globals.SetShowScreenPanelOption(true);
+                      globals._hold = true;
                     }, 1000);
                   }}
                   onMouseUp={(e) => {
                     // ignore if we just did a right-click
                     setTimeout(() => {
-                      if (globalThis._skipNextMouse) {
-                        globalThis._skipNextMouse = false;
+                      const globals = useGlobalsContext();
+                      if (globals._skipNextMouse) {
+                        globals._skipNextMouse = false;
                         return;
                       }
 
-                      clearTimeout(globalThis._holdTimeout);
-                      if (!globalThis._hold) {
+                      clearTimeout(globals._holdTimeout);
+                      if (!globals._hold) {
                         openPopupSettings(
                           <ScreenOptions setCustomScreens={setCustomScreens} />,
                           null,
@@ -2401,7 +2420,7 @@ function SideBar({ panelsNumber }) {
                       }
                     }, 10);
                   }}
-                  onMouseLeave={() => clearTimeout(globalThis._holdTimeout)}
+                  onMouseLeave={() => clearTimeout(globals._holdTimeout)}
                 >
                   {panelsNumber <= 1 ? (
                     <SingleScreenIcon />
@@ -2860,6 +2879,7 @@ function SideBar({ panelsNumber }) {
   );
 }
 export const SpaceUI = () => {
+  const globals = useGlobalsContext();
   const {
     setSideBarMode,
     collapsed,
@@ -2870,7 +2890,7 @@ export const SpaceUI = () => {
   } = useSideBarContext();
   const { screens, fullScreen, setFullScreen } = useBibleContext();
   const [globalProfilePic, setGlobalProfilePic] = useState();
-  globalThis.SetGlobalProfilePic = setGlobalProfilePic;
+  globals.SetGlobalProfilePic = setGlobalProfilePic;
   if (sidebarWidth !== 0)
     return (
       <>
@@ -2931,6 +2951,7 @@ const Icon = ({ icon, onClick }) => {
 };
 
 export const SettingsProfile = () => {
+  const globals = useGlobalsContext();
   const [iss, setIss] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
   const holdTimeout = useRef(null);
@@ -3000,7 +3021,7 @@ export const SettingsProfile = () => {
   const handleMouseDown = (spaceId) => {
     setActiveSpace(spaceId);
     setTimeout(() => {
-      globalThis.setOpenOnMobile(true);
+      globals.setOpenOnMobile(true);
     }, 10);
     // setIsHolding(false);
     // holdTimeout.current = setTimeout(() => {
@@ -3056,6 +3077,7 @@ export const SettingsProfile = () => {
 };
 
 export const UserProfile = ({ collapsed }) => {
+  const globals = useGlobalsContext();
   const { setSideBarMode } = useSideBarContext();
   const [userData, setUserData] = useState(null);
   const getUserData = async () => {
@@ -3071,7 +3093,7 @@ export const UserProfile = ({ collapsed }) => {
         payload?.photoLink,
         "shared"
       );
-      globalThis.SetGlobalProfilePic(payload?.photoLink);
+      globals.SetGlobalProfilePic(payload?.photoLink);
     }
   };
   useEffect(() => {
@@ -3088,7 +3110,7 @@ export const UserProfile = ({ collapsed }) => {
     "#10B981",
     "#F59E0B",
   ];
-  const { colorIndex, iconIndex } = GetOrSetVisualInTags(
+  const { colorIndex, iconIndex } = globals.GetOrSetVisualInTags(
     configBot.id,
     userData
   );
@@ -3103,18 +3125,19 @@ export const UserProfile = ({ collapsed }) => {
         removeAccountOptions
           ? undefined
           : () => {
+              const globals = useGlobalsContext();
               if (!authBot?.id) {
-                globalThis.AccountSettingsEnteredFrom = "default";
+                globals.AccountSettingsEnteredFrom = "default";
                 setSideBarMode("createAccountSettings");
               } else {
-                openPopupSettings({
+                globals.openPopupSettings({
                   type: "normal",
                   items: [
                     {
                       icon: <MenuIcon name="account_circle" />,
                       title: "View profile",
                       onClick: () => {
-                        globalThis.AccountSettingsEnteredFrom = "default";
+                        globals.AccountSettingsEnteredFrom = "default";
                         setSideBarMode("createAccountSettings");
                       },
                     },

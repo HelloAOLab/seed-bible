@@ -4,6 +4,7 @@ import { MenuIcon, ThemeIcon } from "app.components.icons";
 import { useTabsContext } from "app.hooks.tabs";
 import { useSideBarContext } from "app.hooks.sideBar";
 import { useBibleContext } from "app.hooks.bibleVariables";
+import { useGlobalsContext } from "app.hooks.globalsContext";
 
 // ————————————————————————————————————————————————————————————
 // Fields shown in the screenshot, rendered dynamically below
@@ -5028,6 +5029,7 @@ const isDark = false;
 //  window.matchMedia("(prefers-color-scheme: dark)").matches;
 
 const ThemeSettings = () => {
+  const globals = useGlobalsContext();
   const { updateSpace, activeSpace, currentSpace, tabsIcons, setTabsIcons } =
     useTabsContext();
   const { setSideBarMode, closePopupSettings, setThemeColors, themeColors, t } =
@@ -5212,7 +5214,7 @@ const ThemeSettings = () => {
 
   const handleColorChange = (field, newColor) => {
     if (field === "toolbarBackground") {
-      globalThis.SetToolbarBackground?.(newColor);
+      globals.SetToolbarBackground?.(newColor);
     }
 
     debouncedSolve(newColor, (filter) => {
@@ -5298,7 +5300,7 @@ const ThemeSettings = () => {
     if (!changesSaved) {
       setThemeColors((prev) => ({
         ...prev,
-        [activeSpace]: globalThis.CurrentColors,
+        [activeSpace]: globals.CurrentColors,
       }));
     }
   }, [activeSpace]);
@@ -5777,6 +5779,7 @@ export const defaultTextConfig = {
   },
 };
 const SettingsUI = () => {
+  const globals = useGlobalsContext();
   const [showCapturedText, setShowCapturedText] = useState(true);
   const [showVersusText, setShowVersusText] = useState(true);
   const [selectedTheme, setSelectedTheme] = useState(isDark ? 1 : 0);
@@ -5820,7 +5823,7 @@ const SettingsUI = () => {
 
   // Initialize CurrentColors on mount
   useEffect(() => {
-    globalThis.CurrentColors = themeColors?.[`${activeSpace}`] || defaultTheme;
+    globals.CurrentColors = themeColors?.[`${activeSpace}`] || defaultTheme;
   }, []);
 
   // Resolve the working colors: local edits -> sidebar state -> default
@@ -5833,7 +5836,7 @@ const SettingsUI = () => {
     setChagesSaved(false);
 
     if (field === "toolbarBackground") {
-      globalThis.SetToolbarBackground?.(newColor);
+      globals.SetToolbarBackground?.(newColor);
     }
 
     debouncedSolve(newColor, (filter) => {
@@ -5867,7 +5870,7 @@ const SettingsUI = () => {
 
     // Apply toolbar background side-effect if needed
     if (themeColors.toolbarBackground) {
-      globalThis.SetToolbarBackground?.(themeColors.toolbarBackground);
+      globals.SetToolbarBackground?.(themeColors.toolbarBackground);
     }
 
     let filterMode;
@@ -5949,7 +5952,7 @@ const SettingsUI = () => {
     setSelectedTheme(index);
     applyReadyTheme(presetThemes[index]?.colors);
     setChagesSaved(true);
-    globalThis.CurrentColors = presetThemes[index]?.colors || colors;
+    globals.CurrentColors = presetThemes[index]?.colors || colors;
   };
 
   const applyVerseFont = (fontFamily) => {

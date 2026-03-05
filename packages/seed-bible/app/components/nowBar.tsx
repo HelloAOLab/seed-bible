@@ -1,6 +1,9 @@
+import { useGlobalsContext } from "app.hooks.globalsContext";
+
 const { useState, useRef, useEffect } = os.appHooks;
 
 function NowBar() {
+  const globals = useGlobalsContext();
   const [apps, setApps] = useState<
     (prevApps: never[]) => { id: number; component: any }[]
   >([]);
@@ -21,18 +24,18 @@ function NowBar() {
       setWindowWidth(window.innerWidth);
     };
 
-    globalThis.SetExtraHeight = setExtraHeight;
+    globals.SetExtraHeight = setExtraHeight;
 
     window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
-      globalThis.SetExtraHeight = null;
+      globals.SetExtraHeight = null;
     };
   }, []);
 
   // Global function to add apps to NowBar
   useEffect(() => {
-    globalThis.AddNowBarApp = (appComponent, appId = null) => {
+    globals.AddNowBarApp = (appComponent, appId = null) => {
       const id = appId || Date.now() + Math.random();
       const newApp = {
         id,
@@ -55,7 +58,7 @@ function NowBar() {
     };
 
     // Global function to remove apps from NowBar
-    globalThis.RemoveNowBarApp = (appId) => {
+    globals.RemoveNowBarApp = (appId) => {
       setApps((prevApps) => prevApps.filter((app) => app.id !== appId));
       setCurrentIndex((prevIndex) => {
         // Adjust current index if needed after removal
@@ -65,16 +68,16 @@ function NowBar() {
     };
 
     // Global function to clear all apps
-    globalThis.ClearNowBarApps = () => {
+    globals.ClearNowBarApps = () => {
       setApps([]);
       setCurrentIndex(0);
     };
 
     // Cleanup function
     return () => {
-      delete globalThis.AddNowBarApp;
-      delete globalThis.RemoveNowBarApp;
-      delete globalThis.ClearNowBarApps;
+      delete globals.AddNowBarApp;
+      delete globals.RemoveNowBarApp;
+      delete globals.ClearNowBarApps;
     };
   }, [apps]);
 

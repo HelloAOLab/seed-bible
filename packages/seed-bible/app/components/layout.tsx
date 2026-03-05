@@ -29,22 +29,24 @@ import { PanelSettingsDialog } from "app.components.screenSettingsOptions";
 import { EditorToolbarSettings } from "app.components.editorSettings";
 import { NowBar } from "app.components.nowBar";
 import { SelectionUISettings } from "app.components.selectionUISettings";
+import { useGlobalsContext } from "app.hooks.globalsContext";
 
 shout("initialize");
 globalThis.PanelTabsMap = {}; // { panelId: tabObject }
 
 const Layout = ({ children, panelsNumber }) => {
+  const globals = useGlobalsContext();
   // using this to recored the mouse position always
   // u can use the position anywhere if needed (i will need it for tabs dragging)
   // const { spaces, activeSpace } = useTabsContext()
   const { setPosition, showScreenPanelOption, setShowScreenPanelOption } =
     useMouseMove();
-  globalThis.SetShowScreenPanelOption = setShowScreenPanelOption;
+  globals.SetShowScreenPanelOption = setShowScreenPanelOption;
   const { sidebarMode, setSideBarMode, closePopupSettings, themeColors } =
     useSideBarContext();
   const { canvasMode, setCanvasMode } = useBibleContext();
   const { openOnMobile, setOpenOnMobile } = useSideBarContext();
-  globalThis.setOpenOnMobile = setOpenOnMobile;
+  globals.setOpenOnMobile = setOpenOnMobile;
   const {
     spaces,
     activeSpace,
@@ -77,7 +79,7 @@ const Layout = ({ children, panelsNumber }) => {
       }}
       onMouseUp={() => {
         try {
-          globalThis?.setOpenSidebar(false);
+          globals.setOpenSidebar(false);
         } catch {}
       }}
       className="layout"
@@ -134,7 +136,7 @@ const Layout = ({ children, panelsNumber }) => {
         sidebarMode === "settings" ||
         sidebarMode === "themeSettings") && <SpaceUI />}
 
-      {globalThis.IsMobileNow() && sidebarMode === "default" && <SpaceUI />}
+      {globals.IsMobileNow() && sidebarMode === "default" && <SpaceUI />}
       {showScreenPanelOption && (
         <PanelSettingsDialog
           openPanelCount={showScreenPanelOption}
@@ -143,7 +145,7 @@ const Layout = ({ children, panelsNumber }) => {
       )}
       <main
         onClick={() => {
-          if (globalThis.IsMobileNow()) setSideBarMode("default");
+          if (globals.IsMobileNow()) setSideBarMode("default");
           setOpenOnMobile(false);
         }}
         className="content"
