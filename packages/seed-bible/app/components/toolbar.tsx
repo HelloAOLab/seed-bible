@@ -219,31 +219,33 @@ export function Toolbar() {
             <div className="more-btn-wrapper">
               {showMoreMenu && (
                 <div className="more-menu-popup">
-                  {moreTools.map((tool, i) => (
-                    <button
-                      key={i}
-                      className="more-menu-item"
-                      onClick={() => {
-                        tool?.onClick?.();
-                        setShowMoreMenu(false);
-                      }}
-                    >
-                      {tool?.isImg ? (
-                        <img
-                          src={tool.icon}
-                          style={{ width: "20px" }}
-                          alt={tool.label}
-                        />
-                      ) : (
-                        <span className="material-symbols-outlined">
-                          {tool?.icon}
+                  {moreTools
+                    .filter((tool) => tool.label !== "Books")
+                    .map((tool, i) => (
+                      <button
+                        key={i}
+                        className="more-menu-item"
+                        onClick={() => {
+                          tool?.onClick?.();
+                          setShowMoreMenu(false);
+                        }}
+                      >
+                        {tool?.isImg ? (
+                          <img
+                            src={tool.icon}
+                            style={{ width: "20px" }}
+                            alt={tool.label}
+                          />
+                        ) : (
+                          <span className="material-symbols-outlined">
+                            {tool?.icon}
+                          </span>
+                        )}
+                        <span className="more-menu-item-label">
+                          {tool?.label}
                         </span>
-                      )}
-                      <span className="more-menu-item-label">
-                        {tool?.label}
-                      </span>
-                    </button>
-                  ))}
+                      </button>
+                    ))}
                 </div>
               )}
               <button
