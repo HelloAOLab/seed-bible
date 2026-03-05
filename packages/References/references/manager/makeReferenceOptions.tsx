@@ -9,7 +9,7 @@ const MakeReferenceOptions = async (props: {
 }) => {
   const { bookId, chapter, book, translation, baseUrl } = props;
 
-  const referenceUrl = `https://bible.helloao.org/api/d/open-cross-ref/${bookId}/${chapter}.json`;
+  const referenceUrl = `https://vmfnri.helloao.org/api/d/open-cross-ref/${bookId}/${chapter}.json`;
 
   const referenceReq = await web.get(referenceUrl);
 
