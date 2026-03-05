@@ -247,6 +247,22 @@ function formatPlainUnion(existingType: string, addedType: string): string {
   return deduped.join(" | ");
 }
 
+function getHookExistingType(callExpression: CallExpression): string {
+  const explicitTypeArg = callExpression.getTypeArguments()[0];
+  if (explicitTypeArg) {
+    return normalizeTypeText(explicitTypeArg.getText());
+  }
+
+  const firstArg = callExpression.getArguments()[0];
+  if (firstArg) {
+    return normalizeTypeText(
+      firstArg.getType().getText(firstArg, TypeFormatFlags.NoTruncation)
+    );
+  }
+
+  return "unknown";
+}
+
 function getNodePosition(node: Node): { line: number; column: number } {
   return node.getSourceFile().getLineAndColumnAtPos(node.getStart());
 }
@@ -455,11 +471,30 @@ function getUseStateTargetFromSetterCall(node: Node): {
 
         const firstArg = initializer.getArguments()[0];
         const firstArgIsNull = firstArg?.getText().trim() === "null";
+        const firstArgIsEmptyArray =
+          !!firstArg &&
+          Node.isArrayLiteralExpression(firstArg) &&
+          firstArg.getElements().length === 0;
+        const inferredFirstArgType = firstArg
+          ? normalizeTypeText(
+              firstArg.getType().getText(firstArg, TypeFormatFlags.NoTruncation)
+            )
+          : "";
+        const firstArgInfersNeverArray = inferredFirstArgType === "never[]";
         const hasNullTypeArg = initializer
           .getTypeArguments()
           .some((arg) => /\bnull\b/.test(arg.getText()));
+        const hasNeverArrayTypeArg = initializer
+          .getTypeArguments()
+          .some((arg) => normalizeTypeText(arg.getText()) === "never[]");
 
-        if (!firstArgIsNull && !hasNullTypeArg) {
+        if (
+          !firstArgIsNull &&
+          !hasNullTypeArg &&
+          !firstArgIsEmptyArray &&
+          !firstArgInfersNeverArray &&
+          !hasNeverArrayTypeArg
+        ) {
           return null;
         }
 
@@ -726,9 +761,7 @@ async function runFix2322() {
     const targetName = targetDeclaration.getName();
     const declarationTypeNode = targetDeclaration.getTypeNode();
     const existingType = hookCallExpression
-      ? normalizeTypeText(
-          hookCallExpression.getTypeArguments()[0]?.getText() ?? "null"
-        )
+      ? getHookExistingType(hookCallExpression)
       : normalizeTypeText(
           declarationTypeNode?.getText() ??
             targetDeclaration
