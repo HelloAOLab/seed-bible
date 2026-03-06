@@ -104,7 +104,7 @@ export function BibleReader(props: BibleReadingState) {
     loading,
     error,
     selectTranslation,
-    selectBook,
+    selectChapter,
     loadPreviousChapter,
     loadNextChapter,
   } = props;
@@ -154,14 +154,15 @@ export function BibleReader(props: BibleReadingState) {
         onClose={() => setIsSelectorOpen(false)}
         translationId={translationId}
         bookId={bookId}
+        chapterNumber={chapterNumber}
         availableTranslations={availableTranslations}
         translationBooks={translationBooks}
         loading={loading}
         onSelectTranslation={(translation) => {
           void selectTranslation(translation);
         }}
-        onSelectBook={(book) => {
-          void selectBook(book);
+        onSelectChapter={(book, chapter) => {
+          void selectChapter(book, chapter);
           setIsSelectorOpen(false);
         }}
       />

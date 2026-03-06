@@ -3,18 +3,19 @@ import type {
   TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
 
-const { useMemo, useState } = os.appHooks;
+const { useEffect, useMemo, useState } = os.appHooks;
 
 interface BibleSelectorProps {
   isOpen: boolean;
   onClose: () => void;
   translationId: string | null;
   bookId: string | null;
+  chapterNumber: number;
   availableTranslations: AvailableTranslations | null;
   translationBooks: TranslationBooks | null;
   loading: boolean;
   onSelectTranslation: (translation: string) => void;
-  onSelectBook: (book: string) => void;
+  onSelectChapter: (book: string, chapter: number) => void;
 }
 
 function groupBooks(translationBooks: TranslationBooks | null, search: string) {
@@ -46,14 +47,22 @@ export function BibleSelector(props: BibleSelectorProps) {
     onClose,
     translationId,
     bookId,
+    chapterNumber,
     availableTranslations,
     translationBooks,
     loading,
     onSelectTranslation,
-    onSelectBook,
+    onSelectChapter,
   } = props;
 
   const [search, setSearch] = useState("");
+  const [expandedBookId, setExpandedBookId] = useState<string | null>(bookId);
+
+  useEffect(() => {
+    if (isOpen) {
+      setExpandedBookId(bookId);
+    }
+  }, [bookId, isOpen]);
 
   const { oldTestament, newTestament } = useMemo(
     () => groupBooks(translationBooks, search),
@@ -189,22 +198,66 @@ export function BibleSelector(props: BibleSelectorProps) {
               }}
             >
               {oldTestament.map((book) => (
-                <button
-                  key={book.id}
-                  onClick={() => onSelectBook(book.id)}
-                  disabled={loading}
-                  style={{
-                    textAlign: "left",
-                    border: "none",
-                    background: "transparent",
-                    padding: "4px 4px",
-                    color: book.id === bookId ? "#111" : "#555",
-                    fontWeight: book.id === bookId ? 700 : 400,
-                    cursor: "pointer",
-                  }}
-                >
-                  {book.name}
-                </button>
+                <div key={book.id}>
+                  <button
+                    onClick={() => {
+                      setExpandedBookId((current) =>
+                        current === book.id ? null : book.id
+                      );
+                    }}
+                    disabled={loading}
+                    style={{
+                      textAlign: "left",
+                      border: "none",
+                      background: "transparent",
+                      padding: "4px 4px",
+                      color: book.id === bookId ? "#111" : "#555",
+                      fontWeight: book.id === bookId ? 700 : 400,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {book.name}
+                  </button>
+
+                  {expandedBookId === book.id && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "4px",
+                        padding: "2px 4px 8px 4px",
+                      }}
+                    >
+                      {Array.from(
+                        { length: book.numberOfChapters },
+                        (_, index) => {
+                          const chapter = book.firstChapterNumber + index;
+                          const isCurrentBookChapter =
+                            book.id === bookId && chapter === chapterNumber;
+                          return (
+                            <button
+                              key={`${book.id}-${chapter}`}
+                              onClick={() => onSelectChapter(book.id, chapter)}
+                              disabled={loading}
+                              style={{
+                                border: "1px solid #d2d2d2",
+                                borderRadius: "5px",
+                                background: isCurrentBookChapter
+                                  ? "#dedede"
+                                  : "#f0f0f0",
+                                minWidth: "28px",
+                                height: "24px",
+                                cursor: "pointer",
+                              }}
+                            >
+                              {chapter}
+                            </button>
+                          );
+                        }
+                      )}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>
@@ -221,22 +274,66 @@ export function BibleSelector(props: BibleSelectorProps) {
               }}
             >
               {newTestament.map((book) => (
-                <button
-                  key={book.id}
-                  onClick={() => onSelectBook(book.id)}
-                  disabled={loading}
-                  style={{
-                    textAlign: "left",
-                    border: "none",
-                    background: "transparent",
-                    padding: "4px 4px",
-                    color: book.id === bookId ? "#111" : "#555",
-                    fontWeight: book.id === bookId ? 700 : 400,
-                    cursor: "pointer",
-                  }}
-                >
-                  {book.name}
-                </button>
+                <div key={book.id}>
+                  <button
+                    onClick={() => {
+                      setExpandedBookId((current) =>
+                        current === book.id ? null : book.id
+                      );
+                    }}
+                    disabled={loading}
+                    style={{
+                      textAlign: "left",
+                      border: "none",
+                      background: "transparent",
+                      padding: "4px 4px",
+                      color: book.id === bookId ? "#111" : "#555",
+                      fontWeight: book.id === bookId ? 700 : 400,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {book.name}
+                  </button>
+
+                  {expandedBookId === book.id && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "4px",
+                        padding: "2px 4px 8px 4px",
+                      }}
+                    >
+                      {Array.from(
+                        { length: book.numberOfChapters },
+                        (_, index) => {
+                          const chapter = book.firstChapterNumber + index;
+                          const isCurrentBookChapter =
+                            book.id === bookId && chapter === chapterNumber;
+                          return (
+                            <button
+                              key={`${book.id}-${chapter}`}
+                              onClick={() => onSelectChapter(book.id, chapter)}
+                              disabled={loading}
+                              style={{
+                                border: "1px solid #d2d2d2",
+                                borderRadius: "5px",
+                                background: isCurrentBookChapter
+                                  ? "#dedede"
+                                  : "#f0f0f0",
+                                minWidth: "28px",
+                                height: "24px",
+                                cursor: "pointer",
+                              }}
+                            >
+                              {chapter}
+                            </button>
+                          );
+                        }
+                      )}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>

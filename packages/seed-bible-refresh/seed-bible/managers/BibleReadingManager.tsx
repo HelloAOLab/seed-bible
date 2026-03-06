@@ -18,6 +18,7 @@ export interface BibleReadingState {
   error: string | null;
   selectTranslation: (translation: string) => Promise<void>;
   selectBook: (book: string) => Promise<void>;
+  selectChapter: (book: string, chapter: number) => Promise<void>;
   loadPreviousChapter: () => Promise<void>;
   loadNextChapter: () => Promise<void>;
 }
@@ -218,6 +219,33 @@ export function BibleReadingManager(): BibleReadingState {
     }
   };
 
+  const selectChapter = async (book: string, chapter: number) => {
+    if (!translationId) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const chapterData = await api.getTranslationBookChapter(
+        translationId,
+        book,
+        chapter
+      );
+
+      setBookId(book);
+      setChapterNumber(chapter);
+      setChapterData(chapterData);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to select chapter."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadNextChapter = async () => {
     if (!chapterData) {
       return;
@@ -252,6 +280,7 @@ export function BibleReadingManager(): BibleReadingState {
     error,
     selectTranslation,
     selectBook,
+    selectChapter,
     loadPreviousChapter,
     loadNextChapter,
   };
