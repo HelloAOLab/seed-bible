@@ -137,7 +137,7 @@ export const GetChapterContent = async (props: {
         chapter,
         reference,
         baseUrl: "https://vmfnri.helloao.org",
-        translation: "NASB95",
+        translation: "BSB",
       });
       return fallBackContent;
     }

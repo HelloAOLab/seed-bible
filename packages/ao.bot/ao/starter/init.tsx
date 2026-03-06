@@ -22,6 +22,6 @@ const App = () => {
 render(<App />, document.body);
 // document.body.style.overscrollBehavior = 'none';
 
-// const res = await web.get('https://vmfnri.helloao.org/api/NASB95/books.json')
+// const res = await web.get('https://vmfnri.helloao.org/api/BSB/books.json')
 // console.log(res)
 // tags.books = res.data.books

@@ -541,8 +541,8 @@ G.getPsalmsBookData = (chapter: number) => {
   }
 
   // Generate API links
-  const firstChapterApiLink = `/api/NASB95/PSA/${book.start}.json`;
-  const lastChapterApiLink = `/api/NASB95/PSA/${book.end}.json`;
+  const firstChapterApiLink = `/api/BSB/PSA/${book.start}.json`;
+  const lastChapterApiLink = `/api/BSB/PSA/${book.end}.json`;
 
   // Return the result object
   return {

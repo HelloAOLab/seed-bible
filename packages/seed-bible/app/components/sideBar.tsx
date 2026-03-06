@@ -1467,8 +1467,8 @@ function SideBar({ panelsNumber }) {
                 book: "Genesis",
                 bookId: "GEN",
                 chapter: 1,
-                translation: "NASB95",
-                shortName: "NASB95",
+                translation: "BSB",
+                shortName: "BSB",
               },
             });
             closePopupSettings();
@@ -1606,8 +1606,8 @@ function SideBar({ panelsNumber }) {
           book: "Genesis",
           bookId: "GEN",
           chapter: 1,
-          translation: "NASB95",
-          shortName: "NASB95",
+          translation: "BSB",
+          shortName: "BSB",
         },
       };
       addTab(newTab);
@@ -2511,8 +2511,8 @@ function SideBar({ panelsNumber }) {
                           book: "Genesis",
                           bookId: "GEN",
                           chapter: 1,
-                          translation: "NASB95",
-                          shortName: "NASB95",
+                          translation: "BSB",
+                          shortName: "BSB",
                         },
                       });
                     }
@@ -2742,8 +2742,8 @@ function SideBar({ panelsNumber }) {
                       book: "Genesis",
                       bookId: "GEN",
                       chapter: 1,
-                      translation: "NASB95",
-                      shortName: "NASB95",
+                      translation: "BSB",
+                      shortName: "BSB",
                     },
                   });
                 }

@@ -37,7 +37,7 @@ describe("load", () => {
       .waitHandle();
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Genesis 1 / NASB95");
+    ).toBe("Genesis 1 / BSB");
   });
 
   test("should add the book ID and chapter number to the URL", async () => {
@@ -50,7 +50,7 @@ describe("load", () => {
       .waitHandle();
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Genesis 1 / NASB95");
+    ).toBe("Genesis 1 / BSB");
 
     await delay(1000); // Wait a moment to ensure URL is updated
 

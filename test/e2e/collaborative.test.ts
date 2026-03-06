@@ -94,6 +94,6 @@ describe("collaborative", () => {
     //       .waitHandle();
     //     expect(
     //       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    //     ).toBe("Genesis 2 / NASB95");
+    //     ).toBe("Genesis 2 / BSB");
   });
 });
