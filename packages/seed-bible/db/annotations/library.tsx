@@ -443,7 +443,11 @@ export async function loadChapterHighlights(
 export class HighlightsManager {
   private _cache = new Map<string, ChapterHighlights>();
 
-  constructor(private _recordName: string) {}
+  private _recordName: string;
+
+  constructor(recordName: string) {
+    this._recordName = recordName;
+  }
 
   private _address(
     translation: string,
