@@ -686,5 +686,7 @@
   "pentateuch": "पंचग्रन्थ",
   "historical": "ऐतिहासिक",
   "poetic": "काव्यात्मक",
-  "prophetic": "भविष्यवाणी"
+  "prophetic": "भविष्यवाणी",
+  "translationSwitchOption": "क्या आप {{translationName}} अनुवाद पर स्विच करना चाहेंगे?",
+  "chooseAnother": "अन्य चुनें"
 }

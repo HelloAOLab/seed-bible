@@ -151,5 +151,7 @@
   "headingAddedToPlaylist": "{{heading}} ditambahkan ke playlist",
   "addToPlaylist": "Tambah ke playlist",
   "addToNew": "Tambah ke baru",
-  "itemsAddedToPlaylistSuccessfully": "Item berhasil ditambahkan ke playlist."
+  "itemsAddedToPlaylistSuccessfully": "Item berhasil ditambahkan ke playlist.",
+  "translationSwitchOption": "Apakah Anda ingin beralih ke terjemahan {{translationName}}?",
+  "chooseAnother": "Pilih yang lain"
 }

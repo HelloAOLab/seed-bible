@@ -500,3 +500,14 @@
   margin-left: 15px;
   margin-top: 5px;
 }
+
+.option-btn {
+  background: var(--primaryColor);
+  color: var(--text1);
+  border-radius: 5px;
+  cursor: pointer;
+  padding: 6px 12px;
+  min-width: 80px;
+  width: fit-content;
+  border: 1px solid var(--buttonBorder);
+}
