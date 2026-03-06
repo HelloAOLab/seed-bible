@@ -3938,11 +3938,17 @@
       "seed-bible.components.BibleSelector": [
         "./packages/seed-bible-refresh/seed-bible/components/BibleSelector.tsx"
       ],
+      "seed-bible.components.Tabs": [
+        "./packages/seed-bible-refresh/seed-bible/components/Tabs.tsx"
+      ],
       "seed-bible.managers.BibleReadingManager": [
         "./packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager.tsx"
       ],
       "seed-bible.managers.FreeUseBibleAPI": [
         "./packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI.tsx"
+      ],
+      "seed-bible.managers.TabsManager": [
+        "./packages/seed-bible-refresh/seed-bible/managers/TabsManager.tsx"
       ],
       "tabernacle.altar-of-sacrifice.onClick": [
         "./packages/Tabernacle/tabernacle/altar-of-sacrifice/onClick.tsx"
