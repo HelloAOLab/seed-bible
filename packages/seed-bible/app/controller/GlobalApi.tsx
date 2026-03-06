@@ -96,11 +96,11 @@ export class TempGlobalAPI implements GlobalApi {
   }
 
   get mainThemeCSS(): string {
-    return this._mainThemes;
+    return this._mainThemeCSS;
   }
 
   set mainThemeCSS(value: string) {
-    this._mainThemes = value;
+    this._mainThemeCSS = value;
   }
 
   get spaceLayouts(): Record<string, any> {
