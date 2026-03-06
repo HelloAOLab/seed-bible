@@ -1,11 +1,15 @@
 import { BibleReader } from "seed-bible.components.BibleReader";
-import { BibleReadingManager } from "seed-bible.managers.BibleReadingManager";
+import { type BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import { Tabs } from "seed-bible.components.Tabs";
 import { useTabs } from "seed-bible.managers.TabsManager";
 
-function TabReaderPane({ isVisible, tabId }: { isVisible: boolean; tabId: string }) {
-  const readingState = BibleReadingManager(tabId);
-
+function TabReaderPane({
+  isVisible,
+  readingState,
+}: {
+  isVisible: boolean;
+  readingState: BibleReadingState;
+}) {
   return (
     <div style={{ display: isVisible ? "block" : "none", width: "100%" }}>
       <BibleReader {...readingState} />
@@ -29,7 +33,7 @@ export function Main() {
         {tabs.value.map((tab) => (
           <TabReaderPane
             key={tab.id}
-            tabId={tab.id}
+            readingState={tab.readingState}
             isVisible={tab.id === selectedTabId.value}
           />
         ))}

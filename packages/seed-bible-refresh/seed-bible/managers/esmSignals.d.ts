@@ -1,4 +1,4 @@
-declare module "https://esm.sh/@preact/signals*" {
+declare module "https://esm.sh/*" {
   export interface Signal<T> {
     value: T;
   }

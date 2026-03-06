@@ -110,7 +110,8 @@ export function BibleReader(props: BibleReadingState) {
   } = props;
 
   const currentBook =
-    translationBooks?.books.find((book) => book.id === bookId) ?? null;
+    translationBooks.value?.books.find((book) => book.id === bookId.value) ??
+    null;
 
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
 
@@ -125,7 +126,7 @@ export function BibleReader(props: BibleReadingState) {
     >
       <h2 style={{ marginBottom: "6px" }}>Bible Reader</h2>
       <p style={{ marginTop: 0, opacity: 0.8 }}>
-        {translationId ?? "-"} •{" "}
+        {translationId.value ?? "-"} •{" "}
         <button
           onClick={() => setIsSelectorOpen(true)}
           style={{
@@ -138,7 +139,7 @@ export function BibleReader(props: BibleReadingState) {
             font: "inherit",
           }}
         >
-          {currentBook?.name ?? bookId ?? "-"}
+          {currentBook?.name ?? bookId.value ?? "-"}
         </button>{" "}
         <button
           onClick={() => setIsSelectorOpen(true)}
@@ -152,19 +153,19 @@ export function BibleReader(props: BibleReadingState) {
             font: "inherit",
           }}
         >
-          {chapterNumber}
+          {chapterNumber.value}
         </button>
       </p>
 
       <BibleSelector
         isOpen={isSelectorOpen}
         onClose={() => setIsSelectorOpen(false)}
-        translationId={translationId}
-        bookId={bookId}
-        chapterNumber={chapterNumber}
-        availableTranslations={availableTranslations}
-        translationBooks={translationBooks}
-        loading={loading}
+        translationId={translationId.value}
+        bookId={bookId.value}
+        chapterNumber={chapterNumber.value}
+        availableTranslations={availableTranslations.value}
+        translationBooks={translationBooks.value}
+        loading={loading.value}
         onSelectTranslation={(translation) => {
           void selectTranslation(translation);
         }}
@@ -174,13 +175,15 @@ export function BibleReader(props: BibleReadingState) {
         }}
       />
 
-      {loading && <p>Loading...</p>}
-      {error && !loading && <p style={{ color: "red" }}>{error}</p>}
+      {loading.value && <p>Loading...</p>}
+      {error.value && !loading.value && (
+        <p style={{ color: "red" }}>{error.value}</p>
+      )}
 
-      {!loading && !error && chapterData && (
+      {!loading.value && !error.value && chapterData.value && (
         <div>
-          {renderChapterContent(chapterData)}
-          {chapterData.chapter.footnotes.length > 0 && (
+          {renderChapterContent(chapterData.value)}
+          {chapterData.value.chapter.footnotes.length > 0 && (
             <div
               style={{
                 marginTop: "20px",
@@ -189,7 +192,7 @@ export function BibleReader(props: BibleReadingState) {
               }}
             >
               <h4>Footnotes</h4>
-              {chapterData.chapter.footnotes.map((note) => (
+              {chapterData.value.chapter.footnotes.map((note) => (
                 <p key={note.noteId} style={{ margin: "6px 0" }}>
                   <strong>[{note.noteId}]</strong> {note.text}
                 </p>
@@ -199,9 +202,11 @@ export function BibleReader(props: BibleReadingState) {
         </div>
       )}
 
-      {!loading && !error && !chapterData && <p>No chapter content found.</p>}
+      {!loading.value && !error.value && !chapterData.value && (
+        <p>No chapter content found.</p>
+      )}
 
-      {!availableTranslations && !loading && !error && (
+      {!availableTranslations.value && !loading.value && !error.value && (
         <p>No translations available.</p>
       )}
 
@@ -222,16 +227,19 @@ export function BibleReader(props: BibleReadingState) {
         }}
       >
         <button
-          disabled={!chapterData?.previousChapterApiLink || loading}
+          disabled={!chapterData.value?.previousChapterApiLink || loading.value}
           onClick={loadPreviousChapter}
         >
           Previous Chapter
         </button>
-        <button onClick={() => setIsSelectorOpen(true)} disabled={loading}>
+        <button
+          onClick={() => setIsSelectorOpen(true)}
+          disabled={loading.value}
+        >
           Open Book Selector
         </button>
         <button
-          disabled={!chapterData?.nextChapterApiLink || loading}
+          disabled={!chapterData.value?.nextChapterApiLink || loading.value}
           onClick={loadNextChapter}
         >
           Next Chapter

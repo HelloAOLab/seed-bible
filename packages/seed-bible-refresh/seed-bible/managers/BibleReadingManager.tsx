@@ -4,25 +4,9 @@ import {
   type TranslationBookChapter,
   type TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
-import { signal, type Signal } from "https://esm.sh/@preact/signals?external=preact";
+import { signal, type Signal } from "https://esm.sh/*@preact/signals";
 
 export interface BibleReadingState {
-  translationId: string | null;
-  bookId: string | null;
-  chapterNumber: number;
-  availableTranslations: AvailableTranslations | null;
-  translationBooks: TranslationBooks | null;
-  chapterData: TranslationBookChapter | null;
-  loading: boolean;
-  error: string | null;
-  selectTranslation: (translation: string) => Promise<void>;
-  selectBook: (book: string) => Promise<void>;
-  selectChapter: (book: string, chapter: number) => Promise<void>;
-  loadPreviousChapter: () => Promise<void>;
-  loadNextChapter: () => Promise<void>;
-}
-
-interface BibleReadingStore {
   translationId: Signal<string | null>;
   bookId: Signal<string | null>;
   chapterNumber: Signal<number>;
@@ -38,9 +22,7 @@ interface BibleReadingStore {
   loadNextChapter: () => Promise<void>;
 }
 
-const _stores = new Map<string, BibleReadingStore>();
-
-function _createStore(): BibleReadingStore {
+export function useBibleReadingState(): BibleReadingState {
   const api = new FreeUseBibleAPI();
 
   const translationId = signal<string | null>("BSB");
@@ -148,7 +130,8 @@ function _createStore(): BibleReadingStore {
       chapterNumber.value = nextChapterNumber;
       chapterData.value = chapter;
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "Failed to select book.";
+      error.value =
+        err instanceof Error ? err.message : "Failed to select book.";
     } finally {
       loading.value = false;
     }
@@ -195,7 +178,8 @@ function _createStore(): BibleReadingStore {
       }
       await syncStateFromChapter(chapter);
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "Failed to load next chapter.";
+      error.value =
+        err instanceof Error ? err.message : "Failed to load next chapter.";
     } finally {
       loading.value = false;
     }
@@ -206,9 +190,11 @@ function _createStore(): BibleReadingStore {
     error.value = null;
 
     try {
+      console.log("Loading available translations...");
       const translations = await api.getAvailableTranslations();
       availableTranslations.value = translations;
 
+      console.log("loaded", translations);
       const currentTranslation = translations.translations.find(
         (t) => t.id === translationId.value
       );
@@ -241,14 +227,16 @@ function _createStore(): BibleReadingStore {
       );
 
       chapterData.value = chapter;
+      console.log("Initial chapter loaded:", chapter);
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "Failed to load Bible data.";
+      error.value =
+        err instanceof Error ? err.message : "Failed to load Bible data.";
     } finally {
       loading.value = false;
     }
   };
 
-  void loadInitialData();
+  loadInitialData();
 
   return {
     translationId,
@@ -264,34 +252,5 @@ function _createStore(): BibleReadingStore {
     selectChapter,
     loadPreviousChapter,
     loadNextChapter,
-  };
-}
-
-function _getStore(tabId: string): BibleReadingStore {
-  let store = _stores.get(tabId);
-  if (!store) {
-    store = _createStore();
-    _stores.set(tabId, store);
-  }
-  return store;
-}
-
-export function BibleReadingManager(tabId: string): BibleReadingState {
-  const store = _getStore(tabId);
-
-  return {
-    translationId: store.translationId.value,
-    bookId: store.bookId.value,
-    chapterNumber: store.chapterNumber.value,
-    availableTranslations: store.availableTranslations.value,
-    translationBooks: store.translationBooks.value,
-    chapterData: store.chapterData.value,
-    loading: store.loading.value,
-    error: store.error.value,
-    selectTranslation: store.selectTranslation,
-    selectBook: store.selectBook,
-    selectChapter: store.selectChapter,
-    loadPreviousChapter: store.loadPreviousChapter,
-    loadNextChapter: store.loadNextChapter,
   };
 }
