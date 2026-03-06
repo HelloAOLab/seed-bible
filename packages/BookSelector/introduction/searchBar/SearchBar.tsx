@@ -855,25 +855,24 @@ const SearchBar = (props: { openSidebar: boolean }) => {
       <div class="testament-selection starterAnimation">
         <span class="sidebar-select">
           <div class="sidebar-book-selector">
-            {windowSize > 768 && (
-              <div
-                class="sidebar-translation-selector"
-                onClick={() => {
-                  setSelectingTranslation(!selectingTranslation);
-                  setQuery("");
-                }}
+            <div
+              class="sidebar-translation-selector"
+              onClick={() => {
+                setSelectingTranslation(!selectingTranslation);
+                setQuery("");
+              }}
+            >
+              <span class="sidebar-selected-title">
+                {selectedTranslation.shortName}
+              </span>
+              <span
+                style={{ transition: "transform 0.3s" }}
+                class={`material-symbols-outlined ${selectingTranslation ? "upside-down" : ""}`}
               >
-                <span class="sidebar-selected-title">
-                  {selectedTranslation.shortName}
-                </span>
-                <span
-                  style={{ transition: "transform 0.3s" }}
-                  class={`material-symbols-outlined ${selectingTranslation ? "upside-down" : ""}`}
-                >
-                  expand_more
-                </span>
-              </div>
-            )}
+                expand_more
+              </span>
+            </div>
+
             <div className="searchbar">
               <span className="search-icon material-symbols-outlined">
                 Search
@@ -895,25 +894,6 @@ const SearchBar = (props: { openSidebar: boolean }) => {
                 }}
               />
             </div>
-            {windowSize <= 768 && (
-              <div
-                class="sidebar-translation-selector"
-                onClick={() => {
-                  setSelectingTranslation(!selectingTranslation);
-                  setQuery("");
-                }}
-              >
-                <span class="sidebar-selected-title">
-                  {selectedTranslation.shortName}
-                </span>
-                <span
-                  style={{ transition: "transform 0.3s" }}
-                  class={`material-symbols-outlined ${selectingTranslation ? "upside-down" : ""}`}
-                >
-                  expand_more
-                </span>
-              </div>
-            )}
             {windowSize > 768 && (
               <div class="dropdown">
                 <select
