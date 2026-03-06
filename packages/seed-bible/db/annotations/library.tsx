@@ -392,7 +392,10 @@ export async function saveChapterHighlights(
   );
 
   const result = await os.recordData(recordName, address, data, {
-    marker: "publicRead:highlights",
+    markers: [
+      "publicRead:highlights",
+      `publicRead:highlights/${data.translation}`,
+    ],
   });
 
   if (result.success === false) {
