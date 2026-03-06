@@ -455,7 +455,7 @@ export const SplitApp = ({
             top: 0,
             width: globalThis.IsMobileNow() ? "100dvw" : overlapWidth,
             height: "100%",
-            transform: overlapVisible ? "translateX(0)" : "translateX(100%)",
+            transform: overlapVisible ? "" : "translateX(100%)",
             transition: "transform 0.3s ease",
             zIndex: 10,
             display: "flex",
