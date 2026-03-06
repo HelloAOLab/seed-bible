@@ -90,9 +90,12 @@ const playlistsPresent = G.playlists
 const sharedPlaylist = configBot.tags.Playlist;
 // console.log("GOT SHAERD PLATLIST", sharedPlaylist);
 
+console.log("PLAYLISTS PRESENT", sharedPlaylist);
+
 if (sharedPlaylist) {
   try {
     const [authBotId, playlistId] = sharedPlaylist.split(G.RECORD_SEPARATOR);
+    console.log("AUTH BOT ID", authBotId, "PLAYLIST ID", playlistId);
     if (!!authBotId && !!playlistId) {
       const res = await os.getData(authBotId, playlistId);
 
@@ -103,6 +106,8 @@ if (sharedPlaylist) {
         );
 
         const isPlaylistDuplicate = index > -1;
+
+        console.log("PLAYLIST DATA", playlistData);
 
         if (typeof playlistData === "object") {
           // const toutour = getBot('system', 'main.totourTool')
@@ -131,6 +136,7 @@ if (sharedPlaylist) {
           }
         }
       } else {
+        console.log("ERROR PARSING THE SHARED PLAYLIST", res);
         ShowNotification({
           message: t("unableToCopyPlaylist"),
           severity: "error",
