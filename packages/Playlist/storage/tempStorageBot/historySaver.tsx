@@ -91,7 +91,7 @@ const sharedPlaylist = configBot.tags.Playlist;
 // console.log("GOT SHAERD PLATLIST", sharedPlaylist);
 
 console.log("PLAYLISTS PRESENT", sharedPlaylist);
-
+G.RECORD_SEPARATOR = "^_^";
 if (sharedPlaylist) {
   try {
     const [authBotId, playlistId] = sharedPlaylist.split(G.RECORD_SEPARATOR);
