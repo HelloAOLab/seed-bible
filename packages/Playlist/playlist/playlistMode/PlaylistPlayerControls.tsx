@@ -726,7 +726,7 @@ const PlayerControls = ({ parentId = "default" }) => {
     }
     G.TIMER_SHOW_NEXT = setTimeout(() => {
       setShowCurrent(false);
-    }, 30000);
+    }, 3000);
 
     G.SetActiveDate?.(lastActiveDateID);
   }, [currIndex]);
@@ -773,7 +773,6 @@ const PlayerControls = ({ parentId = "default" }) => {
     (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
     G.MOBILE_VIEWPORT_THRESHOLD;
 
-  console.log(currentItem, "currentItem");
   const GetLabelT = useMemo(() => G.GetLabel, []);
 
   return (
@@ -935,11 +934,11 @@ const PlayerControls = ({ parentId = "default" }) => {
                           {nextItemName?.content
                             ? `${nextItemName?.content}${nextItemName?.prefix}`.substring(
                                 0,
-                                16
+                                isMobile ? 9 : 16
                               )
                             : ""}
                           {`${nextItemName?.content}${nextItemName?.prefix}`
-                            .length > 16
+                            .length > (isMobile ? 9 : 16)
                             ? "..."
                             : ""}
                         </p>
@@ -959,6 +958,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                       </p>
                     )}
                     {!G.ValidTypes[nextItemName?.type] &&
+                      !showCurrent &&
                       !!nextItemName?.type && (
                         <p
                           style={{
@@ -969,9 +969,27 @@ const PlayerControls = ({ parentId = "default" }) => {
                             color: "var(--pageTextColor)",
                           }}
                         >
-                          {nextItemName?.type}
+                          {isMobile
+                            ? nextItemName?.type.substring(0, 10)
+                            : nextItemName?.type}
                         </p>
                       )}
+
+                    {!G.ValidTypes[currentItem?.type] && showCurrent && (
+                      <p
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: "400",
+                          margin: "0",
+                          textTransform: "capitalize",
+                          color: "var(--pageTextColor)",
+                        }}
+                      >
+                        {isMobile
+                          ? currentItem?.type.substring(0, 10)
+                          : currentItem?.type}
+                      </p>
+                    )}
                   </div>
                   <div
                     style={{ width: "100%", minWidth: "max-content" }}
@@ -1003,11 +1021,11 @@ const PlayerControls = ({ parentId = "default" }) => {
                           {currentItem?.content
                             ? `${currentItem?.content}${currentItem?.prefix}`.substring(
                                 0,
-                                16
+                                isMobile ? 10 : 16
                               )
                             : ""}
                           {`${currentItem?.content}${currentItem?.prefix}`
-                            .length > 16
+                            .length > (isMobile ? 10 : 16)
                             ? "..."
                             : ""}
                         </p>
@@ -1027,7 +1045,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                       </p>
                     )}
 
-                    {!G.ValidTypes[currentItem?.type] && (
+                    {!G.ValidTypes[currentItem?.type] && showCurrent && (
                       <p
                         style={{
                           fontSize: "12px",
@@ -1037,7 +1055,9 @@ const PlayerControls = ({ parentId = "default" }) => {
                           textTransform: "capitalize",
                         }}
                       >
-                        {currentItem?.type}
+                        {isMobile
+                          ? currentItem?.type.substring(0, 10)
+                          : currentItem?.type}
                       </p>
                     )}
                   </div>
