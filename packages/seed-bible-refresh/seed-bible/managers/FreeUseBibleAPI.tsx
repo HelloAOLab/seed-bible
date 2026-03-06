@@ -1033,6 +1033,26 @@ export class FreeUseBibleAPI {
     );
   }
 
+  async getNextChapter(
+    chapter: TranslationBookChapter
+  ): Promise<TranslationBookChapter | null> {
+    if (!chapter.nextChapterApiLink) {
+      return null;
+    }
+    return this._getJson<TranslationBookChapter>(chapter.nextChapterApiLink);
+  }
+
+  async getPreviousChapter(
+    chapter: TranslationBookChapter
+  ): Promise<TranslationBookChapter | null> {
+    if (!chapter.previousChapterApiLink) {
+      return null;
+    }
+    return this._getJson<TranslationBookChapter>(
+      chapter.previousChapterApiLink
+    );
+  }
+
   private _getJson<T>(path: string): Promise<T> {
     const url = this._buildUrl(path);
     const existing = this._responseCache.get(url) as Promise<T> | undefined;
@@ -1040,21 +1060,22 @@ export class FreeUseBibleAPI {
       return existing;
     }
 
-    const request = fetch(url)
+    const request = web
+      .get(url)
       .then(async (response) => {
-        if (!response.ok) {
+        if (response.status < 200 || response.status >= 300) {
           throw new Error(
             `Failed request to ${url}. Status: ${response.status} ${response.statusText}`
           );
         }
-        return (await response.json()) as T;
+        return (await response.data) as T;
       })
       .catch((error) => {
         this._responseCache.delete(url);
         throw error;
       });
 
-    this._responseCache.set(url, request as Promise<unknown>);
+    this._responseCache.set(url, request as Promise<T>);
     return request;
   }
 

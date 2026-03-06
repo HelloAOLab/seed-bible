@@ -3932,6 +3932,12 @@
       "seed-bible.app.onInstJoined": [
         "./packages/seed-bible-refresh/seed-bible/app/onInstJoined.tsx"
       ],
+      "seed-bible.components.BibleReader": [
+        "./packages/seed-bible-refresh/seed-bible/components/BibleReader.tsx"
+      ],
+      "seed-bible.managers.FreeUseBibleAPI": [
+        "./packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI.tsx"
+      ],
       "tabernacle.altar-of-sacrifice.onClick": [
         "./packages/Tabernacle/tabernacle/altar-of-sacrifice/onClick.tsx"
       ],
