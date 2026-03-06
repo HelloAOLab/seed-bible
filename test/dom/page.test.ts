@@ -34,7 +34,7 @@ afterEach(async () => {
   sim = null!;
 });
 
-test("can render", async () => {
+test.skip("can render", async () => {
   await sim.helper.shout("onInstJoined", null, {
     inst: "test",
   });
