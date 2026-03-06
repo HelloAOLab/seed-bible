@@ -23,7 +23,7 @@ export interface BibleReadingState {
 export function BibleReadingManager(): BibleReadingState {
   const api = useMemo(() => new FreeUseBibleAPI(), []);
 
-  const [translationId, setTranslationId] = useState<string | null>(null);
+  const [translationId, setTranslationId] = useState<string>("BSB");
   const [bookId, setBookId] = useState<string | null>(null);
   const [chapterNumber, setChapterNumber] = useState<number>(1);
 
@@ -52,12 +52,16 @@ export function BibleReadingManager(): BibleReadingState {
         }
 
         setAvailableTranslations(translations);
-        const firstTranslation = translations.translations[0];
-        if (!firstTranslation) {
-          throw new Error("No translations available.");
+        const currentTranslation = translations.translations.find(
+          (t) => t.id === translationId
+        );
+        if (!currentTranslation) {
+          throw new Error(
+            `Translation with ID "${translationId}" not available.`
+          );
         }
 
-        const nextTranslationId = firstTranslation.id;
+        const nextTranslationId = currentTranslation.id;
         setTranslationId(nextTranslationId);
 
         const books = await api.getTranslationBooks(nextTranslationId);
