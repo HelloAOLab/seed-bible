@@ -115,7 +115,14 @@ export function BibleReader(props: BibleReadingState) {
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
 
   return (
-    <div style={{ padding: "16px", maxWidth: "860px", margin: "0 auto" }}>
+    <div
+      style={{
+        padding: "16px",
+        paddingBottom: "96px",
+        maxWidth: "860px",
+        margin: "0 auto",
+      }}
+    >
       <h2 style={{ marginBottom: "6px" }}>Bible Reader</h2>
       <p style={{ marginTop: 0, opacity: 0.8 }}>
         {translationId ?? "-"} •{" "}
@@ -167,21 +174,6 @@ export function BibleReader(props: BibleReadingState) {
         }}
       />
 
-      <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
-        <button
-          disabled={!chapterData?.previousChapterApiLink || loading}
-          onClick={loadPreviousChapter}
-        >
-          Previous Chapter
-        </button>
-        <button
-          disabled={!chapterData?.nextChapterApiLink || loading}
-          onClick={loadNextChapter}
-        >
-          Next Chapter
-        </button>
-      </div>
-
       {loading && <p>Loading...</p>}
       {error && !loading && <p style={{ color: "red" }}>{error}</p>}
 
@@ -212,6 +204,39 @@ export function BibleReader(props: BibleReadingState) {
       {!availableTranslations && !loading && !error && (
         <p>No translations available.</p>
       )}
+
+      <div
+        style={{
+          position: "fixed",
+          left: "50%",
+          bottom: "18px",
+          transform: "translateX(-50%)",
+          display: "flex",
+          gap: "8px",
+          padding: "8px",
+          borderRadius: "10px",
+          background: "rgba(245, 245, 245, 0.96)",
+          border: "1px solid #d8d8d8",
+          boxShadow: "0 2px 10px rgba(0,0,0,0.12)",
+          zIndex: 900,
+        }}
+      >
+        <button
+          disabled={!chapterData?.previousChapterApiLink || loading}
+          onClick={loadPreviousChapter}
+        >
+          Previous Chapter
+        </button>
+        <button onClick={() => setIsSelectorOpen(true)} disabled={loading}>
+          Open Book Selector
+        </button>
+        <button
+          disabled={!chapterData?.nextChapterApiLink || loading}
+          onClick={loadNextChapter}
+        >
+          Next Chapter
+        </button>
+      </div>
     </div>
   );
 }
