@@ -16,6 +16,8 @@ export interface BibleReadingState {
   chapterData: TranslationBookChapter | null;
   loading: boolean;
   error: string | null;
+  selectTranslation: (translation: string) => Promise<void>;
+  selectBook: (book: string) => Promise<void>;
   loadPreviousChapter: () => Promise<void>;
   loadNextChapter: () => Promise<void>;
 }
@@ -151,6 +153,71 @@ export function BibleReadingManager(): BibleReadingState {
     }
   };
 
+  const selectTranslation = async (translation: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const books = await api.getTranslationBooks(translation);
+      const firstBook = books.books[0];
+      if (!firstBook) {
+        throw new Error("No books available for selected translation.");
+      }
+
+      const firstChapterNumber = firstBook.firstChapterNumber ?? 1;
+      const chapter = await api.getTranslationBookChapter(
+        translation,
+        firstBook.id,
+        firstChapterNumber
+      );
+
+      setTranslationBooks(books);
+      setTranslationId(translation);
+      setBookId(firstBook.id);
+      setChapterNumber(firstChapterNumber);
+      setChapterData(chapter);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to select translation."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const selectBook = async (book: string) => {
+    if (!translationId || !translationBooks) {
+      return;
+    }
+
+    const selectedBook = translationBooks.books.find(
+      (entry) => entry.id === book
+    );
+    if (!selectedBook) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const nextChapterNumber = selectedBook.firstChapterNumber ?? 1;
+      const chapter = await api.getTranslationBookChapter(
+        translationId,
+        book,
+        nextChapterNumber
+      );
+
+      setBookId(book);
+      setChapterNumber(nextChapterNumber);
+      setChapterData(chapter);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to select book.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadNextChapter = async () => {
     if (!chapterData) {
       return;
@@ -183,6 +250,8 @@ export function BibleReadingManager(): BibleReadingState {
     chapterData,
     loading,
     error,
+    selectTranslation,
+    selectBook,
     loadPreviousChapter,
     loadNextChapter,
   };

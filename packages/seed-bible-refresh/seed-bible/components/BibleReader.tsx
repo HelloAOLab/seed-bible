@@ -1,5 +1,8 @@
 import { type TranslationBookChapter } from "seed-bible.managers.FreeUseBibleAPI";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
+import { BibleSelector } from "seed-bible.components.BibleSelector";
+
+const { useState } = os.appHooks;
 
 function renderInlineContent(part: unknown, index: number) {
   if (typeof part === "string") {
@@ -100,6 +103,8 @@ export function BibleReader(props: BibleReadingState) {
     chapterData,
     loading,
     error,
+    selectTranslation,
+    selectBook,
     loadPreviousChapter,
     loadNextChapter,
   } = props;
@@ -107,13 +112,59 @@ export function BibleReader(props: BibleReadingState) {
   const currentBook =
     translationBooks?.books.find((book) => book.id === bookId) ?? null;
 
+  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
+
   return (
     <div style={{ padding: "16px", maxWidth: "860px", margin: "0 auto" }}>
       <h2 style={{ marginBottom: "6px" }}>Bible Reader</h2>
       <p style={{ marginTop: 0, opacity: 0.8 }}>
-        {translationId ?? "-"} • {currentBook?.name ?? bookId ?? "-"}{" "}
-        {chapterNumber}
+        {translationId ?? "-"} •{" "}
+        <button
+          onClick={() => setIsSelectorOpen(true)}
+          style={{
+            border: "none",
+            background: "transparent",
+            padding: 0,
+            color: "inherit",
+            textDecoration: "underline",
+            cursor: "pointer",
+            font: "inherit",
+          }}
+        >
+          {currentBook?.name ?? bookId ?? "-"}
+        </button>{" "}
+        <button
+          onClick={() => setIsSelectorOpen(true)}
+          style={{
+            border: "none",
+            background: "transparent",
+            padding: 0,
+            color: "inherit",
+            textDecoration: "underline",
+            cursor: "pointer",
+            font: "inherit",
+          }}
+        >
+          {chapterNumber}
+        </button>
       </p>
+
+      <BibleSelector
+        isOpen={isSelectorOpen}
+        onClose={() => setIsSelectorOpen(false)}
+        translationId={translationId}
+        bookId={bookId}
+        availableTranslations={availableTranslations}
+        translationBooks={translationBooks}
+        loading={loading}
+        onSelectTranslation={(translation) => {
+          void selectTranslation(translation);
+        }}
+        onSelectBook={(book) => {
+          void selectBook(book);
+          setIsSelectorOpen(false);
+        }}
+      />
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
         <button
