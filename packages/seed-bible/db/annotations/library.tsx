@@ -82,6 +82,18 @@ export const ANNOTATION_SCHEMA = z.object({
 });
 
 /**
+ * Stores all verse highlights for a single chapter.
+ */
+export type ChapterHighlights = z.infer<typeof CHAPTER_HIGHLIGHTS_SCHEMA>;
+
+export const CHAPTER_HIGHLIGHTS_SCHEMA = z.object({
+  translation: z.string(),
+  bookId: z.string(),
+  chapter: z.number(),
+  verses: z.record(z.number(), z.tuple([z.number(), z.string()])),
+});
+
+/**
  * Data for a comment annotation.
  */
 export interface CommentAnnotationData {
@@ -344,6 +356,259 @@ export async function loadAnnotations(
       return a.id < b.id ? -1 : 1;
     }
   });
+}
+
+/**
+ * Gets the address for chapter highlights.
+ * @param translation The translation ID.
+ * @param bookId The book ID.
+ * @param chapter The chapter number.
+ * @returns The data address for the chapter highlights.
+ */
+export function getChapterHighlightsAddress(
+  translation: string,
+  bookId: string,
+  chapter: number
+): string {
+  return `${translation}/${bookId}/${chapter}`;
+}
+
+/**
+ * Saves chapter highlights in a single data record.
+ *
+ * Uses marker `publicRead:highlights` and address `<translation>/<bookId>/<chapter>`.
+ * @param recordName The record name to save to.
+ * @param highlights The chapter highlights to save.
+ */
+export async function saveChapterHighlights(
+  recordName: string,
+  highlights: ChapterHighlights
+): Promise<void> {
+  const data = CHAPTER_HIGHLIGHTS_SCHEMA.parse(highlights);
+  const address = getChapterHighlightsAddress(
+    data.translation,
+    data.bookId,
+    data.chapter
+  );
+
+  const result = await os.recordData(recordName, address, data, {
+    markers: [
+      "publicRead:highlights",
+      `publicRead:highlights/${data.translation}`,
+    ],
+  });
+
+  if (result.success === false) {
+    console.error("Error saving chapter highlights: ", result);
+    throw new Error("Error saving chapter highlights");
+  }
+}
+
+/**
+ * Loads chapter highlights from a single data record.
+ *
+ * Uses marker `publicRead:highlights` and address `<translation>/<bookId>/<chapter>`.
+ * @param recordName The record name to load from.
+ * @param translation The translation ID.
+ * @param bookId The book ID.
+ * @param chapter The chapter number.
+ * @returns The chapter highlights, or null if not found.
+ */
+export async function loadChapterHighlights(
+  recordName: string,
+  translation: string,
+  bookId: string,
+  chapter: number
+): Promise<ChapterHighlights | null> {
+  const address = getChapterHighlightsAddress(translation, bookId, chapter);
+  const result = await os.getData(recordName, address);
+
+  if (result.success === false) {
+    if (result.errorCode === "data_not_found") {
+      return null;
+    }
+
+    console.error("Error loading chapter highlights: ", result);
+    throw new Error("Error loading chapter highlights");
+  }
+
+  return CHAPTER_HIGHLIGHTS_SCHEMA.parse(result.data);
+}
+
+/**
+ * A stateful manager for chapter verse highlights.
+ *
+ * Caches chapter highlights in memory after they are loaded.
+ */
+export class HighlightsManager {
+  private _cache = new Map<string, ChapterHighlights>();
+
+  constructor(private _recordName: string) {}
+
+  private _address(
+    translation: string,
+    bookId: string,
+    chapter: number
+  ): string {
+    return getChapterHighlightsAddress(translation, bookId, chapter);
+  }
+
+  private _createEmptyChapterHighlights(
+    translation: string,
+    bookId: string,
+    chapter: number
+  ): ChapterHighlights {
+    return {
+      translation,
+      bookId,
+      chapter,
+      verses: {},
+    };
+  }
+
+  /**
+   * Loads chapter highlights and caches them.
+   *
+   * If no highlights exist yet, an empty chapter highlights object is returned and cached.
+   */
+  async loadChapterHighlights(
+    translation: string,
+    bookId: string,
+    chapter: number
+  ): Promise<ChapterHighlights> {
+    const address = this._address(translation, bookId, chapter);
+    const cached = this._cache.get(address);
+    if (cached) {
+      return cached;
+    }
+
+    const loaded = await loadChapterHighlights(
+      this._recordName,
+      translation,
+      bookId,
+      chapter
+    );
+    const highlights =
+      loaded ??
+      this._createEmptyChapterHighlights(translation, bookId, chapter);
+
+    this._cache.set(address, highlights);
+    return highlights;
+  }
+
+  /**
+   * Saves chapter highlights and updates the local cache.
+   */
+  async saveChapterHighlights(highlights: ChapterHighlights): Promise<void> {
+    await saveChapterHighlights(this._recordName, highlights);
+    const address = this._address(
+      highlights.translation,
+      highlights.bookId,
+      highlights.chapter
+    );
+    this._cache.set(address, highlights);
+  }
+
+  /**
+   * Adds or updates a single verse highlight and persists the chapter record.
+   */
+  async addVerseHighlight(
+    translation: string,
+    bookId: string,
+    chapter: number,
+    verse: number,
+    color: string,
+    timeMs: number = Date.now()
+  ): Promise<ChapterHighlights> {
+    return this.addVerseHighlights(
+      translation,
+      bookId,
+      chapter,
+      [verse],
+      color,
+      timeMs
+    );
+  }
+
+  /**
+   * Adds or updates multiple verse highlights and persists the chapter record.
+   *
+   * Applies the same color and time to each verse in the provided array.
+   */
+  async addVerseHighlights(
+    translation: string,
+    bookId: string,
+    chapter: number,
+    verses: number[],
+    color: string,
+    timeMs: number = Date.now()
+  ): Promise<ChapterHighlights> {
+    const chapterHighlights = await this.loadChapterHighlights(
+      translation,
+      bookId,
+      chapter
+    );
+
+    for (const verse of verses) {
+      chapterHighlights.verses[verse] = [timeMs, color];
+    }
+
+    await this.saveChapterHighlights(chapterHighlights);
+    return chapterHighlights;
+  }
+
+  /**
+   * Removes a verse highlight and persists the chapter record.
+   */
+  async removeVerseHighlight(
+    translation: string,
+    bookId: string,
+    chapter: number,
+    verse: number
+  ): Promise<ChapterHighlights> {
+    return this.removeVerseHighlights(translation, bookId, chapter, [verse]);
+  }
+
+  /**
+   * Removes multiple verse highlights and persists the chapter record.
+   */
+  async removeVerseHighlights(
+    translation: string,
+    bookId: string,
+    chapter: number,
+    verses: number[]
+  ): Promise<ChapterHighlights> {
+    const chapterHighlights = await this.loadChapterHighlights(
+      translation,
+      bookId,
+      chapter
+    );
+
+    for (const verse of verses) {
+      delete chapterHighlights.verses[verse];
+    }
+
+    await this.saveChapterHighlights(chapterHighlights);
+    return chapterHighlights;
+  }
+
+  /**
+   * Gets chapter highlights from cache if available.
+   */
+  getCachedChapterHighlights(
+    translation: string,
+    bookId: string,
+    chapter: number
+  ): ChapterHighlights | null {
+    return this._cache.get(this._address(translation, bookId, chapter)) ?? null;
+  }
+
+  /**
+   * Clears all cached chapter highlights.
+   */
+  clearCache(): void {
+    this._cache.clear();
+  }
 }
 
 // load translation document
