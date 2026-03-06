@@ -87,8 +87,8 @@ const ReferenceModal = (props: { reference: ReferencesInterface }) => {
         book: tags.IdToName[reference.book],
         bookId: reference.book,
         chapter: reference.chapter,
-        translation: "NASB95",
-        shortName: "NASB95",
+        translation: "BSB",
+        shortName: "BSB",
       },
     };
     AddTab({

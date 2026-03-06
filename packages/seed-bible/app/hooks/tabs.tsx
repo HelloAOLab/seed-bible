@@ -4,7 +4,7 @@ import { Space } from "app.components.icons";
 // const tabsData = localStorage.masks.tabsData
 // if (!tabsData) {
 //     localStorage.masks.tabsData = [
-//         { id: uuid(), taken: false, data: { use: 'thePage', type: 'book', book: 'Genesis', bookId: 'GEN', chapter: 10, translation: 'NASB95' } },
+//         { id: uuid(), taken: false, data: { use: 'thePage', type: 'book', book: 'Genesis', bookId: 'GEN', chapter: 10, translation: 'BSB' } },
 //     ]
 // }
 import { useBibleContext } from "app.hooks.bibleVariables";
@@ -25,7 +25,7 @@ export function TabsProvider({ children }) {
         text: {},
       },
       folders: [
-        // { id: uuid(), name: 'Folder 1', tabs: [{ id: uuid(), taken: false, data: { use: 'thePage', first: true, type: 'book', book: 'Genesis', bookId: 'GEN', chapter: 1, translation: 'NASB95' } }] }
+        // { id: uuid(), name: 'Folder 1', tabs: [{ id: uuid(), taken: false, data: { use: 'thePage', first: true, type: 'book', book: 'Genesis', bookId: 'GEN', chapter: 1, translation: 'BSB' } }] }
       ],
       tabs: [
         {
@@ -38,8 +38,8 @@ export function TabsProvider({ children }) {
             book: "Genesis",
             bookId: "GEN",
             chapter: 1,
-            translation: "NASB95",
-            shortName: "NASB95",
+            translation: "BSB",
+            shortName: "BSB",
           },
         },
       ], // Standalone tabs (not in a folder)
@@ -66,8 +66,8 @@ export function TabsProvider({ children }) {
             book: "Genesis",
             bookId: "GEN",
             chapter: 1,
-            translation: "NASB95",
-            shortName: "NASB95",
+            translation: "BSB",
+            shortName: "BSB",
           },
         },
       ],
@@ -94,8 +94,8 @@ export function TabsProvider({ children }) {
             book: "Genesis",
             bookId: "GEN",
             chapter: 1,
-            translation: "NASB95",
-            shortName: "NASB95",
+            translation: "BSB",
+            shortName: "BSB",
           },
         },
       ],
@@ -497,8 +497,8 @@ export function TabsProvider({ children }) {
             book: "Genesis",
             bookId: "GEN",
             chapter: 1,
-            translation: "NASB95",
-            shortName: "NASB95",
+            translation: "BSB",
+            shortName: "BSB",
           },
         },
       ],
