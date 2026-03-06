@@ -654,7 +654,6 @@ div.history-item.current-date-disorder .playlist-item-type {
 }
 
 .playlist-item-type {
-  padding: 0.5rem;
   background-color: var(--panelBackground);
 }
 
@@ -793,6 +792,10 @@ div.history-item.current-date-disorder .playlist-item-type {
   .playlist-container-data {
     /* height: calc(100% - 42px); */
     overflow: auto;
+  }
+
+  .playlist-item-type {
+    padding: 0.5rem;
   }
 }
 
@@ -1409,9 +1412,12 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 
 .fade-in-animation.show {
   animation: fadeInUp 1s ease forwards;
+  visibility: visible;
+  display: block;
 }
 .fade-in-animation {
   opacity: 0;
+  visibility: hidden;
   transform: translateY(10px);
 }
 

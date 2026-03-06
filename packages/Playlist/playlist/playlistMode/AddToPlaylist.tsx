@@ -98,6 +98,17 @@ const AddToPlaylist = ({
           </span>
         </div>
         <div className="add-to-playlist-body">
+          {filteredPlaylist.length === 0 && (
+            <p
+              style={{
+                cursor: "pointer",
+                color: "var(--secondaryColor)",
+                fontSize: "14px",
+              }}
+            >
+              No playlists found but you can create a new one.
+            </p>
+          )}
           {filteredPlaylist.map((playlist: any, index: number) => {
             const {
               shareProfileName,
@@ -154,7 +165,7 @@ const AddToPlaylist = ({
           <p
             style={{
               cursor: "pointer",
-              color: "var(--primaryColor)",
+              color: "var(--secondaryColor)",
               fontSize: "14px",
             }}
             onClick={onAddNewPlaylist}

@@ -152,7 +152,8 @@ export function VerseToolbar({
     display: "flex",
     alignItems: "center",
     gap: "12px",
-    width: "400px",
+    width: "max-content",
+    maxWidth: "90dvw",
   };
 
   const verseRefStyle = {
@@ -507,6 +508,7 @@ export function VerseToolbar({
               width: "100%",
               alignItems: "center",
               height: "100%",
+              gap: "1rem",
             }}
           >
             {showMobileColors ? (
@@ -704,7 +706,7 @@ export function VerseToolbar({
                       onClick={option?.onClick}
                     >
                       {option.icon}
-                      <span>
+                      <span style={{ width: "max-content" }}>
                         {typeof option.title === "function"
                           ? (option.title as any)(clickedVersesContext)
                           : option.title}

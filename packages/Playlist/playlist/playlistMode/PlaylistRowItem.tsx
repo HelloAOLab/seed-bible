@@ -771,6 +771,7 @@ const PlaylistRowItem = (props: any) => {
             style={{
               ...(getPosition ? getPosition() : { x: 0, y: 0 }),
               width: "206px",
+              overflow: "hidden",
             }}
             className="overlay linked-item-custom"
           >
