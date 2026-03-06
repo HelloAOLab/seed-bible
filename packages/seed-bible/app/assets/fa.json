@@ -151,5 +151,7 @@
   "headingAddedToPlaylist": "{{heading}} به لیست اضافه شد",
   "addToPlaylist": "افزودن به لیست",
   "addToNew": "افزودن به جدید",
-  "itemsAddedToPlaylistSuccessfully": "آیتم‌ها با موفقیت به لیست اضافه شدند."
+  "itemsAddedToPlaylistSuccessfully": "آیتم‌ها با موفقیت به لیست اضافه شدند.",
+  "translationSwitchOption": "آیا می‌خواهید به ترجمه {{translationName}} تغییر دهید؟",
+  "chooseAnother": "یکی دیگر را انتخاب کنید"
 }

@@ -13,7 +13,7 @@ const itemKeys: any = [
   "shared",
   "playlist",
   "annotations",
-  "bookmarks",
+  // "bookmarks",
 ];
 
 const items = [
@@ -22,7 +22,7 @@ const items = [
   "Shared",
   "Playlist",
   "Annotations",
-  "Bookmarks",
+  // "Bookmarks",
 ];
 
 const Discover = (props: any) => {
@@ -271,6 +271,7 @@ const Discover = (props: any) => {
 
       {!editingPlaylist &&
       !renamingPlaylist &&
+      false &&
       (isAll || selectedChip["Bookmarks"]) ? (
         <Bookmarks />
       ) : null}

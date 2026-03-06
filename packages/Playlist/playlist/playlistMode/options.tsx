@@ -78,80 +78,80 @@ const items = [
     },
   },
 
-  {
-    icon: <MenuIcon name="book" />,
-    title: (item: any = {}) => {
-      const title = `${item?.book} ${item?.chapter}:${item?.verseNumber?.join(", ")}`;
-      if (thisBot.tags.bookmarks[title]) {
-        return t("unbookmark");
-      }
-      return t("bookmark");
-    },
-    onClick: async (selectedItem: any) => {
-      if (!authBot?.id) {
-        ShowNotification({
-          message: t("pleaseLoginToUseFeature"),
-          severity: "error",
-        });
-        shout("tryUserLogin");
-        return;
-      }
+  // {
+  //   icon: <MenuIcon name="book" />,
+  //   title: (item: any = {}) => {
+  //     const title = `${item?.book} ${item?.chapter}:${item?.verseNumber?.join(", ")}`;
+  //     if (thisBot.tags.bookmarks[title]) {
+  //       return t("unbookmark");
+  //     }
+  //     return t("bookmark");
+  //   },
+  //   onClick: async (selectedItem: any) => {
+  //     if (!authBot?.id) {
+  //       ShowNotification({
+  //         message: t("pleaseLoginToUseFeature"),
+  //         severity: "error",
+  //       });
+  //       shout("tryUserLogin");
+  //       return;
+  //     }
 
-      let msg = "";
-      let errorMsg = "";
-      const oldBookmarks = { ...thisBot.tags.bookmarks };
+  //     let msg = "";
+  //     let errorMsg = "";
+  //     const oldBookmarks = { ...thisBot.tags.bookmarks };
 
-      selectedItem.verseNumber.forEach((vNumber: any) => {
-        const id = G.createUUID();
-        const booksDetails = G.findNameRank(selectedItem.book);
-        const title = `${selectedItem.book} ${selectedItem.chapter}:${vNumber}`;
+  //     selectedItem.verseNumber.forEach((vNumber: any) => {
+  //       const id = G.createUUID();
+  //       const booksDetails = G.findNameRank(selectedItem.book);
+  //       const title = `${selectedItem.book} ${selectedItem.chapter}:${vNumber}`;
 
-        if (oldBookmarks[title]) {
-          delete oldBookmarks[title];
+  //       if (oldBookmarks[title]) {
+  //         delete oldBookmarks[title];
 
-          msg = t("bookmarkRemovedSuccessfully");
-          errorMsg = t("failedToRemoveBookmark");
-        } else {
-          const dataItemTemp = {
-            type: "verse",
-            content: title,
-            additionalInfo: {
-              verse: vNumber,
-              chapter: selectedItem.chapter,
-              book: selectedItem.book,
-              bookRank: booksDetails.item,
-              data: { ...selectedItem },
-              chapterData: { ...G.CHAPTER_DATA },
-              groupID: G.ADD_VERSE_ITEM_PLAYLIST_GROUP_ID,
-            },
-            id,
-            time: new Date().toLocaleString(),
-          };
+  //         msg = t("bookmarkRemovedSuccessfully");
+  //         errorMsg = t("failedToRemoveBookmark");
+  //       } else {
+  //         const dataItemTemp = {
+  //           type: "verse",
+  //           content: title,
+  //           additionalInfo: {
+  //             verse: vNumber,
+  //             chapter: selectedItem.chapter,
+  //             book: selectedItem.book,
+  //             bookRank: booksDetails.item,
+  //             data: { ...selectedItem },
+  //             chapterData: { ...G.CHAPTER_DATA },
+  //             groupID: G.ADD_VERSE_ITEM_PLAYLIST_GROUP_ID,
+  //           },
+  //           id,
+  //           time: new Date().toLocaleString(),
+  //         };
 
-          oldBookmarks[title] = {
-            ...dataItemTemp,
-          };
-          msg = t("bookmarkUpdatedSuccessfully");
-          errorMsg = t("failedToUpdateBookmark");
-        }
-      });
+  //         oldBookmarks[title] = {
+  //           ...dataItemTemp,
+  //         };
+  //         msg = t("bookmarkUpdatedSuccessfully");
+  //         errorMsg = t("failedToUpdateBookmark");
+  //       }
+  //     });
 
-      try {
-        const res = await thisBot.saveBookmarks({
-          bookmarks: oldBookmarks,
-        });
+  //     try {
+  //       const res = await thisBot.saveBookmarks({
+  //         bookmarks: oldBookmarks,
+  //       });
 
-        setTag(thisBot, "bookmarks", oldBookmarks);
+  //       setTag(thisBot, "bookmarks", oldBookmarks);
 
-        if (G.SetBookmarks) {
-          G.SetBookmarks(oldBookmarks);
-        }
-        ShowNotification({ message: msg, severity: "success" });
-      } catch (err) {
-        ShowNotification({ message: errorMsg, severity: "error" });
-      }
-    },
-  },
+  //       if (G.SetBookmarks) {
+  //         G.SetBookmarks(oldBookmarks);
+  //       }
+  //       ShowNotification({ message: msg, severity: "success" });
+  //     } catch (err) {
+  //       ShowNotification({ message: errorMsg, severity: "error" });
+  //     }
+  //   },
+  // },
   {
     icon: <MenuIcon name="playlist_add" />,
     title: t("addToPlaylist"),

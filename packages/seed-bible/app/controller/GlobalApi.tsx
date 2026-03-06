@@ -20,6 +20,8 @@ export interface GlobalApiProperties {
   spaceLayouts: Record<string, any>; // To store layout per space
 
   spaceScreens: Record<string, any>; // Already used for screen count
+
+  mainThemeCSS: string;
 }
 
 export interface GlobalApiMethods {
@@ -63,6 +65,7 @@ export class TempGlobalAPI implements GlobalApi {
   hooks: any;
   private _appStartedSuccessfully: boolean = false;
   private _defaultPortalName: string = "";
+  private _mainThemeCSS: string = "";
   private _spaceLayouts: Record<string, any> = {};
   private _spaceScreens: Record<string, any> = {};
   private _hooks: EventController<GlobalHookEventSpec> =
@@ -93,6 +96,14 @@ export class TempGlobalAPI implements GlobalApi {
 
   set defaultPortalName(value: string) {
     this._defaultPortalName = value;
+  }
+
+  get mainThemeCSS(): string {
+    return this._mainThemeCSS;
+  }
+
+  set mainThemeCSS(value: string) {
+    this._mainThemeCSS = value;
   }
 
   get spaceLayouts(): Record<string, any> {

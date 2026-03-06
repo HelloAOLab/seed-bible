@@ -654,7 +654,6 @@ div.history-item.current-date-disorder .playlist-item-type {
 }
 
 .playlist-item-type {
-  padding: 0.5rem;
   background-color: var(--panelBackground);
 }
 
@@ -787,13 +786,6 @@ div.history-item.current-date-disorder .playlist-item-type {
 
 .playlist-item-heading:hover {
   transform: scale(1.01);
-}
-
-@media only screen and (max-width: 768px) {
-  .playlist-container-data {
-    /* height: calc(100% - 42px); */
-    overflow: auto;
-  }
 }
 
 .control-container {
@@ -1409,9 +1401,12 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 
 .fade-in-animation.show {
   animation: fadeInUp 1s ease forwards;
+  visibility: visible;
+  display: block;
 }
 .fade-in-animation {
   opacity: 0;
+  visibility: hidden;
   transform: translateY(10px);
 }
 
@@ -1450,6 +1445,16 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 @media only screen and (max-width: 768px) {
+  .playlist-container-data {
+    /* height: calc(100% - 42px); */
+    overflow: auto;
+  }
+
+  .playlist-item-type {
+    padding: 0.5rem;
+    padding-left: 2.5rem;
+  }
+
   .show-on-desktop {
     display: none !important;
   }

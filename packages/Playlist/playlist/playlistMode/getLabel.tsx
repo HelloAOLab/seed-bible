@@ -28,8 +28,6 @@ const GetLabel = (props: any) => {
   const containerRef = useRef<any>(null);
   const [isMobile, setIsMobile] = useState(false);
 
-  console.log(fontSize, "currentItem", widthCompare);
-
   const { book, verse } = splitBookAndVerse(currentOpenedBook?.book);
 
   useLayoutEffect(() => {

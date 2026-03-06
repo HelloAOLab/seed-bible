@@ -151,5 +151,7 @@
   "headingAddedToPlaylist": "{{heading}} پلے لسٹ میں شامل ہو گیا",
   "addToPlaylist": "پلے لسٹ میں شامل کریں",
   "addToNew": "نئی میں شامل کریں",
-  "itemsAddedToPlaylistSuccessfully": "آئٹمز پلے لسٹ میں کامیابی سے شامل ہو گئے۔"
+  "itemsAddedToPlaylistSuccessfully": "آئٹمز پلے لسٹ میں کامیابی سے شامل ہو گئے۔",
+  "translationSwitchOption": "کیا آپ {{translationName}} ترجمے پر سوئچ کرنا چاہیں گے؟",
+  "chooseAnother": "دوسرا انتخاب کریں"
 }

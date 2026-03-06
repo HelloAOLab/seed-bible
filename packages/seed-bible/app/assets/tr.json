@@ -151,5 +151,7 @@
   "headingAddedToPlaylist": "{{heading}} listeye eklendi",
   "addToPlaylist": "Listeye ekle",
   "addToNew": "Yeniye ekle",
-  "itemsAddedToPlaylistSuccessfully": "Öğeler başarıyla listeye eklendi."
+  "itemsAddedToPlaylistSuccessfully": "Öğeler başarıyla listeye eklendi.",
+  "translationSwitchOption": "{{translationName}} çevirisine geçmek ister misiniz?",
+  "chooseAnother": "Başka birini seç"
 }

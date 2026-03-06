@@ -684,5 +684,7 @@
   "pentateuch": "أسفار موسى الخمسة",
   "historical": "تاريخي",
   "poetic": "شعري",
-  "prophetic": "نبوي"
+  "prophetic": "نبوي",
+  "translationSwitchOption": "هل تريد التبديل إلى ترجمة {{translationName}}؟",
+  "chooseAnother": "اختر آخر"
 }
