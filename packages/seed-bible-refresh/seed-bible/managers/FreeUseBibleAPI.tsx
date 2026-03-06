@@ -1060,7 +1060,7 @@ export class FreeUseBibleAPI {
       return existing;
     }
 
-    const request = web
+    const request: Promise<T> = web
       .get(url)
       .then(async (response) => {
         if (response.status < 200 || response.status >= 300) {
@@ -1068,14 +1068,14 @@ export class FreeUseBibleAPI {
             `Failed request to ${url}. Status: ${response.status} ${response.statusText}`
           );
         }
-        return (await response.data) as T;
+        return await response.data;
       })
       .catch((error) => {
         this._responseCache.delete(url);
         throw error;
       });
 
-    this._responseCache.set(url, request as Promise<T>);
+    this._responseCache.set(url, request);
     return request;
   }
 

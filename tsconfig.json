@@ -3935,6 +3935,9 @@
       "seed-bible.components.BibleReader": [
         "./packages/seed-bible-refresh/seed-bible/components/BibleReader.tsx"
       ],
+      "seed-bible.managers.BibleReadingManager": [
+        "./packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager.tsx"
+      ],
       "seed-bible.managers.FreeUseBibleAPI": [
         "./packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI.tsx"
       ],

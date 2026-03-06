@@ -1,5 +1,7 @@
 import { BibleReader } from "seed-bible.components.BibleReader";
+import { BibleReadingManager } from "seed-bible.managers.BibleReadingManager";
 
 export function Main() {
-  return <BibleReader />;
+  const readingState = BibleReadingManager();
+  return <BibleReader {...readingState} />;
 }
