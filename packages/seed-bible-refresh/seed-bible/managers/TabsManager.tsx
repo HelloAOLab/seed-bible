@@ -1,4 +1,4 @@
-const { useMemo, useState } = os.appHooks;
+import { signal } from "https://esm.sh/@preact/signals?external=preact";
 
 export interface ReaderTab {
   id: string;
@@ -12,27 +12,25 @@ function createInitialTabs(): ReaderTab[] {
   ];
 }
 
+const initialTabs = createInitialTabs();
+const tabs = signal<ReaderTab[]>(initialTabs);
+const selectedTabId = signal<string>(initialTabs[0]?.id ?? "");
+
 export function useTabs() {
-  const initialTabs = useMemo(() => createInitialTabs(), []);
-  const [tabs, setTabs] = useState<ReaderTab[]>(initialTabs);
-  const [selectedTabId, setSelectedTabId] = useState<string>(
-    initialTabs[0]?.id ?? ""
-  );
 
   const addTab = () => {
-    setTabs((currentTabs) => {
-      const nextNumber = currentTabs.length + 1;
-      const nextTab: ReaderTab = {
-        id: `tab-${nextNumber}`,
-        title: `Tab ${nextNumber}`,
-      };
-      setSelectedTabId(nextTab.id);
-      return [...currentTabs, nextTab];
-    });
+    const currentTabs = tabs.value;
+    const nextNumber = currentTabs.length + 1;
+    const nextTab: ReaderTab = {
+      id: `tab-${nextNumber}`,
+      title: `Tab ${nextNumber}`,
+    };
+    tabs.value = [...currentTabs, nextTab];
+    selectedTabId.value = nextTab.id;
   };
 
   const selectTab = (tabId: string) => {
-    setSelectedTabId(tabId);
+    selectedTabId.value = tabId;
   };
 
   return {

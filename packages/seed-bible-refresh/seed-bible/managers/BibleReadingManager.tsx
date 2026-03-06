@@ -4,8 +4,7 @@ import {
   type TranslationBookChapter,
   type TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
-
-const { useEffect, useMemo, useState } = os.appHooks;
+import { signal, type Signal } from "https://esm.sh/@preact/signals?external=preact";
 
 export interface BibleReadingState {
   translationId: string | null;
@@ -23,140 +22,77 @@ export interface BibleReadingState {
   loadNextChapter: () => Promise<void>;
 }
 
-export function BibleReadingManager(): BibleReadingState {
-  const api = useMemo(() => new FreeUseBibleAPI(), []);
+interface BibleReadingStore {
+  translationId: Signal<string | null>;
+  bookId: Signal<string | null>;
+  chapterNumber: Signal<number>;
+  availableTranslations: Signal<AvailableTranslations | null>;
+  translationBooks: Signal<TranslationBooks | null>;
+  chapterData: Signal<TranslationBookChapter | null>;
+  loading: Signal<boolean>;
+  error: Signal<string | null>;
+  selectTranslation: (translation: string) => Promise<void>;
+  selectBook: (book: string) => Promise<void>;
+  selectChapter: (book: string, chapter: number) => Promise<void>;
+  loadPreviousChapter: () => Promise<void>;
+  loadNextChapter: () => Promise<void>;
+}
 
-  const [translationId, setTranslationId] = useState<string>("BSB");
-  const [bookId, setBookId] = useState<string | null>(null);
-  const [chapterNumber, setChapterNumber] = useState<number>(1);
+const _stores = new Map<string, BibleReadingStore>();
 
-  const [availableTranslations, setAvailableTranslations] =
-    useState<AvailableTranslations | null>(null);
-  const [translationBooks, setTranslationBooks] =
-    useState<TranslationBooks | null>(null);
-  const [chapterData, setChapterData] = useState<TranslationBookChapter | null>(
-    null
-  );
+function _createStore(): BibleReadingStore {
+  const api = new FreeUseBibleAPI();
 
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const loadInitialData = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const translations = await api.getAvailableTranslations();
-        if (!mounted) {
-          return;
-        }
-
-        setAvailableTranslations(translations);
-        const currentTranslation = translations.translations.find(
-          (t) => t.id === translationId
-        );
-        if (!currentTranslation) {
-          throw new Error(
-            `Translation with ID "${translationId}" not available.`
-          );
-        }
-
-        const nextTranslationId = currentTranslation.id;
-        setTranslationId(nextTranslationId);
-
-        const books = await api.getTranslationBooks(nextTranslationId);
-        if (!mounted) {
-          return;
-        }
-
-        setTranslationBooks(books);
-        const firstBook = books.books[0];
-        if (!firstBook) {
-          throw new Error("No books available for selected translation.");
-        }
-
-        const nextBookId = firstBook.id;
-        const firstChapterNumber = firstBook.firstChapterNumber ?? 1;
-
-        setBookId(nextBookId);
-        setChapterNumber(firstChapterNumber);
-
-        const chapter = await api.getTranslationBookChapter(
-          nextTranslationId,
-          nextBookId,
-          firstChapterNumber
-        );
-        if (!mounted) {
-          return;
-        }
-
-        setChapterData(chapter);
-      } catch (err) {
-        if (!mounted) {
-          return;
-        }
-        setError(
-          err instanceof Error ? err.message : "Failed to load Bible data."
-        );
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadInitialData();
-
-    return () => {
-      mounted = false;
-    };
-  }, [api]);
+  const translationId = signal<string | null>("BSB");
+  const bookId = signal<string | null>(null);
+  const chapterNumber = signal<number>(1);
+  const availableTranslations = signal<AvailableTranslations | null>(null);
+  const translationBooks = signal<TranslationBooks | null>(null);
+  const chapterData = signal<TranslationBookChapter | null>(null);
+  const loading = signal<boolean>(true);
+  const error = signal<string | null>(null);
 
   const syncStateFromChapter = async (chapter: TranslationBookChapter) => {
     const nextTranslationId = chapter.translation.id;
     const nextBookId = chapter.book.id;
     const nextChapterNumber = chapter.chapter.number;
 
-    setTranslationId(nextTranslationId);
-    setBookId(nextBookId);
-    setChapterNumber(nextChapterNumber);
-    setChapterData(chapter);
+    translationId.value = nextTranslationId;
+    bookId.value = nextBookId;
+    chapterNumber.value = nextChapterNumber;
+    chapterData.value = chapter;
 
-    if (translationBooks?.translation.id !== nextTranslationId) {
+    if (translationBooks.value?.translation.id !== nextTranslationId) {
       const books = await api.getTranslationBooks(nextTranslationId);
-      setTranslationBooks(books);
+      translationBooks.value = books;
     }
   };
 
   const loadPreviousChapter = async () => {
-    if (!chapterData) {
+    if (!chapterData.value) {
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    loading.value = true;
+    error.value = null;
 
     try {
-      const chapter = await api.getPreviousChapter(chapterData);
+      const chapter = await api.getPreviousChapter(chapterData.value);
       if (!chapter) {
         return;
       }
       await syncStateFromChapter(chapter);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load previous chapter."
-      );
+      error.value =
+        err instanceof Error ? err.message : "Failed to load previous chapter.";
     } finally {
-      setLoading(false);
+      loading.value = false;
     }
   };
 
   const selectTranslation = async (translation: string) => {
-    setLoading(true);
-    setError(null);
+    loading.value = true;
+    error.value = null;
 
     try {
       const books = await api.getTranslationBooks(translation);
@@ -172,102 +108,147 @@ export function BibleReadingManager(): BibleReadingState {
         firstChapterNumber
       );
 
-      setTranslationBooks(books);
-      setTranslationId(translation);
-      setBookId(firstBook.id);
-      setChapterNumber(firstChapterNumber);
-      setChapterData(chapter);
+      translationBooks.value = books;
+      translationId.value = translation;
+      bookId.value = firstBook.id;
+      chapterNumber.value = firstChapterNumber;
+      chapterData.value = chapter;
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to select translation."
-      );
+      error.value =
+        err instanceof Error ? err.message : "Failed to select translation.";
     } finally {
-      setLoading(false);
+      loading.value = false;
     }
   };
 
   const selectBook = async (book: string) => {
-    if (!translationId || !translationBooks) {
+    if (!translationId.value || !translationBooks.value) {
       return;
     }
 
-    const selectedBook = translationBooks.books.find(
+    const selectedBook = translationBooks.value.books.find(
       (entry) => entry.id === book
     );
     if (!selectedBook) {
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    loading.value = true;
+    error.value = null;
 
     try {
       const nextChapterNumber = selectedBook.firstChapterNumber ?? 1;
       const chapter = await api.getTranslationBookChapter(
-        translationId,
+        translationId.value,
         book,
         nextChapterNumber
       );
 
-      setBookId(book);
-      setChapterNumber(nextChapterNumber);
-      setChapterData(chapter);
+      bookId.value = book;
+      chapterNumber.value = nextChapterNumber;
+      chapterData.value = chapter;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to select book.");
+      error.value = err instanceof Error ? err.message : "Failed to select book.";
     } finally {
-      setLoading(false);
+      loading.value = false;
     }
   };
 
   const selectChapter = async (book: string, chapter: number) => {
-    if (!translationId) {
+    if (!translationId.value) {
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    loading.value = true;
+    error.value = null;
 
     try {
-      const chapterData = await api.getTranslationBookChapter(
-        translationId,
+      const nextChapterData = await api.getTranslationBookChapter(
+        translationId.value,
         book,
         chapter
       );
 
-      setBookId(book);
-      setChapterNumber(chapter);
-      setChapterData(chapterData);
+      bookId.value = book;
+      chapterNumber.value = chapter;
+      chapterData.value = nextChapterData;
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to select chapter."
-      );
+      error.value =
+        err instanceof Error ? err.message : "Failed to select chapter.";
     } finally {
-      setLoading(false);
+      loading.value = false;
     }
   };
 
   const loadNextChapter = async () => {
-    if (!chapterData) {
+    if (!chapterData.value) {
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    loading.value = true;
+    error.value = null;
 
     try {
-      const chapter = await api.getNextChapter(chapterData);
+      const chapter = await api.getNextChapter(chapterData.value);
       if (!chapter) {
         return;
       }
       await syncStateFromChapter(chapter);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load next chapter."
-      );
+      error.value = err instanceof Error ? err.message : "Failed to load next chapter.";
     } finally {
-      setLoading(false);
+      loading.value = false;
     }
   };
+
+  const loadInitialData = async () => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const translations = await api.getAvailableTranslations();
+      availableTranslations.value = translations;
+
+      const currentTranslation = translations.translations.find(
+        (t) => t.id === translationId.value
+      );
+      if (!currentTranslation) {
+        throw new Error(
+          `Translation with ID "${translationId.value}" not available.`
+        );
+      }
+
+      const nextTranslationId = currentTranslation.id;
+      translationId.value = nextTranslationId;
+
+      const books = await api.getTranslationBooks(nextTranslationId);
+      translationBooks.value = books;
+      const firstBook = books.books[0];
+      if (!firstBook) {
+        throw new Error("No books available for selected translation.");
+      }
+
+      const nextBookId = firstBook.id;
+      const firstChapterNumber = firstBook.firstChapterNumber ?? 1;
+
+      bookId.value = nextBookId;
+      chapterNumber.value = firstChapterNumber;
+
+      const chapter = await api.getTranslationBookChapter(
+        nextTranslationId,
+        nextBookId,
+        firstChapterNumber
+      );
+
+      chapterData.value = chapter;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : "Failed to load Bible data.";
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  void loadInitialData();
 
   return {
     translationId,
@@ -283,5 +264,34 @@ export function BibleReadingManager(): BibleReadingState {
     selectChapter,
     loadPreviousChapter,
     loadNextChapter,
+  };
+}
+
+function _getStore(tabId: string): BibleReadingStore {
+  let store = _stores.get(tabId);
+  if (!store) {
+    store = _createStore();
+    _stores.set(tabId, store);
+  }
+  return store;
+}
+
+export function BibleReadingManager(tabId: string): BibleReadingState {
+  const store = _getStore(tabId);
+
+  return {
+    translationId: store.translationId.value,
+    bookId: store.bookId.value,
+    chapterNumber: store.chapterNumber.value,
+    availableTranslations: store.availableTranslations.value,
+    translationBooks: store.translationBooks.value,
+    chapterData: store.chapterData.value,
+    loading: store.loading.value,
+    error: store.error.value,
+    selectTranslation: store.selectTranslation,
+    selectBook: store.selectBook,
+    selectChapter: store.selectChapter,
+    loadPreviousChapter: store.loadPreviousChapter,
+    loadNextChapter: store.loadNextChapter,
   };
 }
