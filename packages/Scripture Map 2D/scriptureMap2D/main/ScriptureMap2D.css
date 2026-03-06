@@ -95,7 +95,7 @@
   right: 0;
   top: calc(100% + 4px);
   background-color: var(--primaryColor);
-  color: var(--text1);
+  color: var(--pageTextColor);
   padding: 12px;
   border-radius: 8px;
   gap: 4px;
@@ -109,10 +109,10 @@
   z-index: 1;
 }
 .scripture-title {
-  color: var(--text1);
+  color: var(--pageTextColor);
 }
 .option-button {
-  color: var(--text1);
+  color: var(--pageTextColor);
 }
 
 .settings-options-container > span:nth-of-type(1) {
@@ -130,7 +130,7 @@
 .settings-options-container > button {
   min-width: 100%;
   background-color: transparent;
-  color: var(--text1);
+  color: var(--pageTextColor);
   appearance: none;
   border: none;
   cursor: pointer;
@@ -150,8 +150,7 @@
 }
 
 .settings-options-container > button:hover {
-  background-color: var(--text1);
-  color: var(--primaryColor);
+  background-color: rgb(var(--pageTextColor) / 0.4);
 }
 
 .scripture-map-2d-settings > .settings-footer {
@@ -679,13 +678,13 @@
 .book-header .book-id {
   font-size: calc(24px * var(--scale-factor));
   font-weight: 500;
-  color: var(--bookHeadingColor);
+  color: var(--pageTextColor);
   text-box: auto;
 }
 
 .book-header .book-name {
   font-size: calc(16px * var(--scale-factor));
-  color: var(--bookHeadingColor);
+  color: var(--pageTextColor);
   font-style: italic;
 }
 
@@ -697,7 +696,7 @@
   .chapter {
   background: var(--firstToolbarbutton);
   border-color: var(--firstToolbarbutton);
-  color: var(--text1);
+  color: var(--pageTextColor);
   visibility: visible;
   font-size: calc(12px * var(--scale-factor));
   width: var(--chapter-width);
@@ -794,7 +793,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: start;
-  color: var(--bookHeadingColor);
+  color: var(--pageTextColor);
 }
 
 .toggle > span.toggle-title {
@@ -804,7 +803,7 @@
 
 .toggle > span.toggle-description {
   font-size: calc(18px * var(--scale-factor));
-  color: var(--iconColor);
+  color: var(--pageTextColor);
   grid-area: description;
 }
 

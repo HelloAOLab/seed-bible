@@ -52,6 +52,7 @@ export const MainContent = ({ controller }: { controller: MainController }) => {
     updateContainerSize,
     updateApplication,
     removeApplicationByID,
+    removeApplicationByLabel,
     replaceApplication,
     addApplication,
     resetApps,
@@ -81,6 +82,10 @@ export const MainContent = ({ controller }: { controller: MainController }) => {
     controller.linkViewMethod("addApplication", addApplication);
     controller.linkViewMethod("removeApplication", removeApplication);
     controller.linkViewMethod("removeApplicationById", removeApplicationByID);
+    controller.linkViewMethod(
+      "removeApplicationByLabel",
+      removeApplicationByLabel
+    );
     controller.linkViewMethod("replaceApplication", replaceApplication);
     controller.linkViewMethod("updateApplication", updateApplication);
 

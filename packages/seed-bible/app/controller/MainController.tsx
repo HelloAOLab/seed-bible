@@ -2,6 +2,7 @@ type MainControllerMethod =
   | "addApplication"
   | "removeApplication"
   | "removeApplicationById"
+  | "removeApplicationByLabel"
   | "replaceApplication"
   | "updateApplication";
 
@@ -14,6 +15,7 @@ interface MainControllerMethods {
   addApplication(): unknown;
   removeApplication(): unknown;
   removeApplicationById(): unknown;
+  removeApplicationByLabel(): unknown;
   replaceApplication(): unknown;
   updateApplication(): unknown;
 }
@@ -28,6 +30,7 @@ export class MainController implements MainControllerMethods {
       this.addApplication.bind(this),
       this.removeApplication.bind(this),
       this.removeApplicationById.bind(this),
+      this.removeApplicationByLabel.bind(this),
       this.replaceApplication.bind(this),
       this.updateApplication.bind(this)
     );
@@ -58,6 +61,12 @@ export class MainController implements MainControllerMethods {
   removeApplicationById() {
     return this._performMethod("removeApplicationById", Array.from(arguments));
   }
+  removeApplicationByLabel() {
+    return this._performMethod(
+      "removeApplicationByLabel",
+      Array.from(arguments)
+    );
+  }
   replaceApplication() {
     return this._performMethod("replaceApplication", Array.from(arguments));
   }
@@ -70,12 +79,14 @@ function refactorme_setGlobals(
   addApplication: any,
   removeApplication: any,
   removeApplicationByID: any,
+  removeApplicationByLabel: any,
   replaceApplication: any,
   updateApplication: any
 ) {
   globalThis.AddApplication = addApplication;
   globalThis.RemoveApplication = removeApplication;
   globalThis.RemoveApplicationByID = removeApplicationByID;
+  globalThis.RemoveApplicationByLabel = removeApplicationByLabel;
   globalThis.ReplaceApplication = replaceApplication;
   globalThis.UpdateApplication = updateApplication;
 }

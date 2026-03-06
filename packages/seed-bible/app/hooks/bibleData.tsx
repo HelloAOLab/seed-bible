@@ -43,7 +43,7 @@ function parseContent(content) {
 }
 
 function useBibleData({
-  initialTranslation = "BSB",
+  initialTranslation = "NASB95",
   initialBookId = "GEN",
   initialChapter = 1,
   tab = null,
@@ -65,9 +65,10 @@ function useBibleData({
       setLoading(true);
       try {
         const url = customUrl
-          ? `https://bible.helloao.org${customUrl}`
-          : `https://bible.helloao.org/api/${forcedTranslation || translation
-          }/${bookId}/${chapter}.json`;
+          ? `https://vmfnri.helloao.org${customUrl}`
+          : `https://vmfnri.helloao.org/api/${
+              forcedTranslation || translation
+            }/${bookId}/${chapter}.json`;
 
         const response = await web.get(url);
         const json = response;
@@ -141,7 +142,10 @@ function useBibleData({
   const changeTranslation = useCallback(
     async (newTranslation) => {
       setTranslation(newTranslation);
-      await fetchBookData(`/api/${newTranslation}/${bookId}/${chapter}.json`, newTranslation);
+      await fetchBookData(
+        `/api/${newTranslation}/${bookId}/${chapter}.json`,
+        newTranslation
+      );
     },
     [fetchBookData]
   );

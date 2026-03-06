@@ -550,7 +550,7 @@ class BibleDataManager {
 
   private async fetchFromAPI(bookId: number, chapter: number, translation: string) {
     const response = await fetch(
-      `https://bible.helloao.org/api/verses?book=${bookId}&chapter=${chapter}&translation=${translation}`
+      `https://vmfnri.helloao.org/api/verses?book=${bookId}&chapter=${chapter}&translation=${translation}`
     );
     return response.json();
   }
