@@ -934,11 +934,11 @@ const PlayerControls = ({ parentId = "default" }) => {
                           {nextItemName?.content
                             ? `${nextItemName?.content}${nextItemName?.prefix}`.substring(
                                 0,
-                                16
+                                isMobile ? 9 : 16
                               )
                             : ""}
                           {`${nextItemName?.content}${nextItemName?.prefix}`
-                            .length > 16
+                            .length > (isMobile ? 9 : 16)
                             ? "..."
                             : ""}
                         </p>
@@ -969,7 +969,9 @@ const PlayerControls = ({ parentId = "default" }) => {
                             color: "var(--pageTextColor)",
                           }}
                         >
-                          {nextItemName?.type}
+                          {isMobile
+                            ? nextItemName?.type.substring(0, 10)
+                            : nextItemName?.type}
                         </p>
                       )}
 
@@ -983,7 +985,9 @@ const PlayerControls = ({ parentId = "default" }) => {
                           color: "var(--pageTextColor)",
                         }}
                       >
-                        {currentItem?.type}
+                        {isMobile
+                          ? currentItem?.type.substring(0, 10)
+                          : currentItem?.type}
                       </p>
                     )}
                   </div>
@@ -1017,11 +1021,11 @@ const PlayerControls = ({ parentId = "default" }) => {
                           {currentItem?.content
                             ? `${currentItem?.content}${currentItem?.prefix}`.substring(
                                 0,
-                                16
+                                isMobile ? 10 : 16
                               )
                             : ""}
                           {`${currentItem?.content}${currentItem?.prefix}`
-                            .length > 16
+                            .length > (isMobile ? 10 : 16)
                             ? "..."
                             : ""}
                         </p>
@@ -1051,7 +1055,9 @@ const PlayerControls = ({ parentId = "default" }) => {
                           textTransform: "capitalize",
                         }}
                       >
-                        {currentItem?.type}
+                        {isMobile
+                          ? currentItem?.type.substring(0, 10)
+                          : currentItem?.type}
                       </p>
                     )}
                   </div>
