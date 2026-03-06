@@ -3920,6 +3920,18 @@
       "webhook.API.textToChars": [
         "./packages/seed-bible/webhook/API/textToChars.tsx"
       ],
+      "seed-bible.app.init": [
+        "./packages/seed-bible-refresh/seed-bible/app/init.tsx"
+      ],
+      "seed-bible.app.main": [
+        "./packages/seed-bible-refresh/seed-bible/app/main.tsx"
+      ],
+      "seed-bible.app.onEggHatch": [
+        "./packages/seed-bible-refresh/seed-bible/app/onEggHatch.tsx"
+      ],
+      "seed-bible.app.onInstJoined": [
+        "./packages/seed-bible-refresh/seed-bible/app/onInstJoined.tsx"
+      ],
       "tabernacle.altar-of-sacrifice.onClick": [
         "./packages/Tabernacle/tabernacle/altar-of-sacrifice/onClick.tsx"
       ],

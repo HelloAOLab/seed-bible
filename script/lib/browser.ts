@@ -322,20 +322,69 @@ export async function loadInst(
 
 export const DEFAULT_EXTENSIONS = [
   "seed-bible",
-  "BookSelector",
-  "Object Pooler",
-  "GeoImporter",
-  "Color Lerper",
-  "Location",
-  "Bible Visualization Utils",
-  "Scripture Map 2D",
-  "Draw",
-  "Scripture Map 3D",
-  "Bible Stack",
-  "Playlist",
-  "Calendar",
-  "Tabernacle",
+  // "BookSelector",
+  // "Object Pooler",
+  // "GeoImporter",
+  // "Color Lerper",
+  // "Location",
+  // "Bible Visualization Utils",
+  // "Scripture Map 2D",
+  // "Draw",
+  // "Scripture Map 3D",
+  // "Bible Stack",
+  // "Playlist",
+  // "Calendar",
+  // "Tabernacle",
 ];
+
+export const DEFAULT_REFRESH_EXTENSIONS = ["seed-bible-refresh"];
+
+export async function loadSeedBibleRefresh(
+  page: Page,
+  extraExtensions: string[] = [],
+  inst: string = uuid(),
+  collaborative: boolean = false,
+  query: Record<string, string> = {}
+) {
+  await initPage(page);
+  await loadInst(page, inst, collaborative, query);
+
+  console.log("Uploading Seed Bible Refresh...");
+
+  const allPackages = new Set([
+    ...DEFAULT_REFRESH_EXTENSIONS,
+    ...extraExtensions,
+  ]);
+  const installedPackages = [...allPackages].filter(
+    (p) => p !== "seed-bible-refresh"
+  );
+
+  for (const pkg of allPackages) {
+    await addAux(page, await readPackage(pkg));
+  }
+  // for (const pkg of installedPackages) {
+  //   await registerPackage(page, pkg);
+  // }
+
+  const lastPackage = installedPackages[installedPackages.length - 1];
+  if (lastPackage) {
+    await waitForPackage(page, lastPackage);
+  }
+
+  // await execScript(
+  //   page,
+  //   `
+  //       const packager = getBot('system', 'app.packager');
+  //       setTagMask(packager, 'installedPackages', ${JSON.stringify(installedPackages)}, 'shared');
+  //   `
+  // );
+
+  console.log("Loaded!");
+
+  shout(page, "onInstJoined", null, { inst });
+
+  return inst;
+}
 
 export async function loadSeedBible(
   page: Page,
