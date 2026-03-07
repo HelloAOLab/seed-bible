@@ -39,7 +39,7 @@ export function BibleVariablesProvider({ children }) {
     "2": true,
     "3": true,
   });
-  const [showNavArrows, setShowNavArrows] = useState(false);
+  const [showNavArrows, setShowNavArrows] = useState(true);
 
   const [ReSeed, setReSeed] = useState();
   useEffect(() => {
