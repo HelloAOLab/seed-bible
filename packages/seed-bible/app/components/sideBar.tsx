@@ -3124,7 +3124,8 @@ export const UserProfile = ({ collapsed }) => {
                     {
                       icon: <MenuIcon name="logout" />,
                       title: "Sign out",
-                      onClick: () => {
+                      onClick: async () => {
+                        await os.signOut();
                         destroy(authBot);
                         setUserData(null);
                       },
