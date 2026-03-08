@@ -1,5 +1,6 @@
 import { GetBotScales, GetDarkerColor } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 /**
  * Opens the Bible by animating its elements and setting their properties based on the provided Bible data.
@@ -49,8 +50,8 @@ for (const testamentData of bibleData.childrenData) {
     const section = ObjectPooler.GetObjectFromPool({
       tag:
         sectionData instanceof StackSectionBookData
-          ? BibleVizUtils.Data.tags.ObjectPoolTags.StackBook
-          : BibleVizUtils.Data.tags.ObjectPoolTags.StackSection,
+          ? ObjectPoolTags.StackBook
+          : ObjectPoolTags.StackSection,
     });
     const sectionMod = {
       typeOfPiece:

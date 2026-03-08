@@ -1,4 +1,5 @@
 import { GetCamRotationFocusPoint } from "bibleVizUtils.functions.index";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 import { GetBotScales } from "bibleVizUtils.functions.index";
 // // that parameters: {duration: float, easing: {type: string, mode: string}}
 
@@ -43,7 +44,7 @@ import { GetBotScales } from "bibleVizUtils.functions.index";
 //     for(const sectionData of testamentData.sectionsData)
 //     {
 //         const desiredScaleZ = sectionData.section.tags.amountOfChaptersInSection * continerScaleZFactor;
-//         const container = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.DonationContainer});
+//         const container = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.DonationContainer});
 
 //         if(container)
 //         {

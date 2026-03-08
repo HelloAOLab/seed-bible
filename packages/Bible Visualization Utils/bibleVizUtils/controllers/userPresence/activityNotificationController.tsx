@@ -4,11 +4,11 @@ import {
   type Scales,
 } from "bibleVizUtils.functions.index";
 import { pieceActivityService } from "bibleVizUtils.services.index";
-import { userPresenceService } from "bibleVizUtils.services.UserPresenceService";
+import { userPresenceService } from "bibleVizUtils.services.index";
 import { Vector2 as Vector2Type } from "../../../../../typings/AuxLibraryDefinitions";
-import type { Tab } from "bibleVizUtils.models.interfaces";
-import { userColorStore } from "bibleVizUtils.services.UserColorStore";
-import { ObjectPoolTags } from "bibleVizUtils.models.enums";
+import type { Tab } from "bibleVizUtils.models.seedBible.models";
+import { userColorStore } from "bibleVizUtils.services.index";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 export const tryHideNotification: (piece: Bot) => void = (piece) => {
   const notification = piece.links.activityNotification;

@@ -2,6 +2,7 @@ import { GetDialogBotScaleY } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { GetTextColorBasedOnBackground } from "bibleVizUtils.functions.index";
 import { arrangementService } from "bibleVizUtils.services.index";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 const { layoutData, position } = that;
 
@@ -191,10 +192,10 @@ for (const testamentLineInfo of layoutData.testamentLinesInfo) {
     sectionLineScaleY / 2;
   const positionY = rowSegments[testamentLineInfo.startRow].start - scaleY / 2;
   const line = ObjectPooler.GetObjectFromPool({
-    tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutLine,
+    tag: ObjectPoolTags.LayoutLine,
   });
   const label = ObjectPooler.GetObjectFromPool({
-    tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutLabel,
+    tag: ObjectPoolTags.LayoutLabel,
   });
   const lineMod = {
     lineInfo: testamentLineInfo,
@@ -247,7 +248,7 @@ for (const sectionLineInfo of layoutData.sectionLinesInfo) {
       sectionLineScaleY / 2 -
       sectionLineLabelScaleY;
     const line = ObjectPooler.GetObjectFromPool({
-      tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutLine,
+      tag: ObjectPoolTags.LayoutLine,
     });
     const lineMod = {
       space: "tempLocal",
@@ -270,7 +271,7 @@ for (const sectionLineInfo of layoutData.sectionLinesInfo) {
 
     if (segmentIndex == segmentLabelIndex) {
       const label = ObjectPooler.GetObjectFromPool({
-        tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutLabel,
+        tag: ObjectPoolTags.LayoutLabel,
       });
       const labelMod = {
         space: "tempLocal",

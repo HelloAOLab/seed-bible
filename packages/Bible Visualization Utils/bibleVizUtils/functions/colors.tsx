@@ -1,5 +1,7 @@
 import { RoundToStep } from "bibleVizUtils.functions.index";
 
+// TODO: Move global types like HexString, WeightedColor, HexWithHash, etc. to models
+
 export type RGB = [number, number, number];
 
 type HexWithHash = `#${string}`;

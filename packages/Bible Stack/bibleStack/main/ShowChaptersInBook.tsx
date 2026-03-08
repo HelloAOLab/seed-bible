@@ -1,4 +1,5 @@
 import { scriptureService } from "bibleVizUtils.services.index";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 
 const { data, dimension } = that;
@@ -12,7 +13,7 @@ for (const chapterData of data.childrenData) {
       data instanceof StackSectionBookData ||
       data.constructor.name === "StackSectionBookData";
     const chapter = ObjectPooler.GetObjectFromPool({
-      tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackChapter,
+      tag: ObjectPoolTags.StackChapter,
     });
     const chapterDeltaDepth =
       (data.piece.masks.scaleY -

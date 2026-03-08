@@ -1,17 +1,20 @@
-import {
-  GetAnimateTagFromObject,
-  type RGB,
-} from "bibleVizUtils.functions.index";
+import { type RGB } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import {
   GetCamRotationFocusPoint,
-  SetTagFromObject,
+  applySetTag,
   HexToRgb,
   RgbToHex,
+  computeAnimateTag,
 } from "bibleVizUtils.functions.index";
 import { stackService } from "bibleVizUtils.services.index";
 import { subtractArrays } from "bibleVizUtils.functions.index";
 import { tryHideNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
+import { StackGeometryMapper } from "bibleVizUtils.mappers.StackGeometryMapper";
+import type { SetTagData } from "bibleVizUtils.models.casualos.models";
+import type { Easing } from "../../../../typings/AuxLibraryDefinitions";
+import { BookShape } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 /**
  * Handles a section selection. It modify the data of the selected section on the bibleStructure,
@@ -33,7 +36,7 @@ const { bibleData, testamentData } = thisBot.GetDataChainFromParentDataIds({
   parentDataIds: sectionData.parentDataIds,
 });
 const dimension = os.getCurrentDimension();
-const easeInOutSine = { type: "sinusoidal", mode: "inout" };
+const easeInOutSine: Easing = { type: "sinusoidal", mode: "inout" };
 const currentColorRGB = HexToRgb({
   hexColor: sectionData.highlightColor ?? sectionData.piece.tags.orginalColor,
 });
@@ -54,9 +57,9 @@ const sectionAvailableSpace =
   sectionData.piece.tags.desiredScaleZ -
   BibleVizDataRepository.getStackSpacing("BetweenBooks") *
     (sectionData.childrenData.length + 1);
-const firstSequenceAnimationsObjects = [];
-const secondSequenceAnimationsObjects = [];
-const thirdSequenceAnimations = [];
+const firstSequenceAnimationsObjects: SetTagData[] = [];
+const secondSequenceAnimationsObjects: SetTagData[] = [];
+const thirdSequenceAnimations: Promise<void>[] = [];
 const cameraFocusDuration = 1;
 const firstSequenceAnimationDuration = isInstantaneous
   ? 0
@@ -187,44 +190,42 @@ if (bibleData || testamentData) {
   }
 }
 
-firstSequenceAnimationsObjects.push(
-  new AnimateTagObject({
+firstSequenceAnimationsObjects.push({
+  bot: sectionData.piece,
+  tag: dimension + "RotationZ",
+  options: {
+    toValue: -0.05235988,
+    duration: firstSequenceAnimationDuration / 4,
+    easing: { type: "sinusoidal", mode: "in" },
+  },
+  then: {
     bot: sectionData.piece,
     tag: dimension + "RotationZ",
     options: {
-      toValue: -0.05235988,
+      toValue: 0.1308997,
       duration: firstSequenceAnimationDuration / 4,
-      easing: { type: "sinusoidal", mode: "in" },
+      easing: { type: "sinusoidal", mode: "out" },
     },
-    then: new AnimateTagObject({
+    then: {
       bot: sectionData.piece,
       tag: dimension + "RotationZ",
       options: {
-        toValue: 0.1308997,
+        toValue: -0.05235988,
         duration: firstSequenceAnimationDuration / 4,
         easing: { type: "sinusoidal", mode: "out" },
       },
-      then: new AnimateTagObject({
+      then: {
         bot: sectionData.piece,
         tag: dimension + "RotationZ",
         options: {
-          toValue: -0.05235988,
+          toValue: 0,
           duration: firstSequenceAnimationDuration / 4,
           easing: { type: "sinusoidal", mode: "out" },
         },
-        then: new AnimateTagObject({
-          bot: sectionData.piece,
-          tag: dimension + "RotationZ",
-          options: {
-            toValue: 0,
-            duration: firstSequenceAnimationDuration / 4,
-            easing: { type: "sinusoidal", mode: "out" },
-          },
-        }),
-      }),
-    }),
-  })
-);
+      },
+    },
+  },
+});
 
 const sectionNewPositionZ =
   sectionPosition.z +
@@ -237,17 +238,15 @@ if (sectionData.isInExplodedView) {
     sectionData.piece.tags.desiredScaleZ;
   let pieceCurrentPosition, pieceNewPositionZ;
   setTag(sectionData.piece, "desiredPositionZ", sectionNewPositionZ);
-  firstSequenceAnimationsObjects.push(
-    new AnimateTagObject({
-      bot: sectionData.piece,
-      tag: dimension + "Z",
-      options: {
-        toValue: sectionNewPositionZ,
-        duration: firstSequenceAnimationDuration,
-        easing: easeInOutSine,
-      },
-    })
-  );
+  firstSequenceAnimationsObjects.push({
+    bot: sectionData.piece,
+    tag: dimension + "Z",
+    options: {
+      toValue: sectionNewPositionZ,
+      duration: firstSequenceAnimationDuration,
+      easing: easeInOutSine,
+    },
+  });
   piecesAboveSection.forEach((piece) => {
     pieceCurrentPosition = getBotPosition(piece, dimension);
     pieceNewPositionZ =
@@ -256,17 +255,15 @@ if (sectionData.isInExplodedView) {
       BibleVizDataRepository.getStackSpacing("ExplodedViewSectionPadding") * 2;
     if (piece.tags.isStackPiece)
       setTag(piece, "desiredPositionZ", pieceNewPositionZ);
-    firstSequenceAnimationsObjects.push(
-      new AnimateTagObject({
-        bot: piece,
-        tag: dimension + "Z",
-        options: {
-          toValue: pieceNewPositionZ,
-          duration: firstSequenceAnimationDuration,
-          easing: easeInOutSine,
-        },
-      })
-    );
+    firstSequenceAnimationsObjects.push({
+      bot: piece,
+      tag: dimension + "Z",
+      options: {
+        toValue: pieceNewPositionZ,
+        duration: firstSequenceAnimationDuration,
+        easing: easeInOutSine,
+      },
+    });
   });
 } else {
   bookDesiredPositionZOnRegularView =
@@ -274,33 +271,29 @@ if (sectionData.isInExplodedView) {
     BibleVizDataRepository.getStackSpacing("BetweenBooks");
 }
 
-firstSequenceAnimationsObjects.push(
-  new AnimateTagObject({
-    bot: sectionData.piece,
-    tag: "scaleZ",
-    options: {
-      toValue: sectionData.piece.tags.desiredExplodedViewScaleZ,
-      duration: firstSequenceAnimationDuration,
-      easing: easeInOutSine,
-    },
-  })
-);
-secondSequenceAnimationsObjects.push(
-  new AnimateTagObject({
-    bot: sectionData.piece,
-    tag: "formOpacity",
-    options: {
-      toValue: 0,
-      duration: secondSequenceAnimationDuration,
-      easing: { type: "sinusoidal", mode: "out" },
-    },
-  })
-);
+firstSequenceAnimationsObjects.push({
+  bot: sectionData.piece,
+  tag: "scaleZ",
+  options: {
+    toValue: sectionData.piece.tags.desiredExplodedViewScaleZ,
+    duration: firstSequenceAnimationDuration,
+    easing: easeInOutSine,
+  },
+});
+secondSequenceAnimationsObjects.push({
+  bot: sectionData.piece,
+  tag: "formOpacity",
+  options: {
+    toValue: 0,
+    duration: secondSequenceAnimationDuration,
+    easing: { type: "sinusoidal", mode: "out" },
+  },
+});
 
 try {
   if (isInstantaneous)
     firstSequenceAnimationsObjects.forEach((setTagObject) => {
-      SetTagFromObject(setTagObject);
+      applySetTag(setTagObject);
     });
   else {
     const focusOnRotation = { x: 1.01229, y: 0.5 };
@@ -325,7 +318,7 @@ try {
 
     await Promise.allSettled([
       ...firstSequenceAnimationsObjects.map((animateTagObject) => {
-        return GetAnimateTagFromObject(animateTagObject);
+        return computeAnimateTag(animateTagObject);
       }),
       os.focusOn(
         { x: desiredFocusOnPosition.x, y: desiredFocusOnPosition.y },
@@ -341,12 +334,12 @@ try {
 
   if (isInstantaneous)
     secondSequenceAnimationsObjects.forEach((setTagObject) => {
-      SetTagFromObject(setTagObject);
+      applySetTag(setTagObject);
     });
   else
     await Promise.all(
       secondSequenceAnimationsObjects.map((animateTagObject) => {
-        return GetAnimateTagFromObject(animateTagObject);
+        return computeAnimateTag(animateTagObject);
       })
     );
 
@@ -409,10 +402,15 @@ for (const bookDataArr of sectionData.childrenData) {
         scale: groupBookScales,
         position: groupBookPosition,
         layoutPosition: groupBookLayoutPosition,
-      } = stackService.computeGroupBookProperties(bookLayout, sectionPosition));
+      } = StackGeometryMapper.computeGroupBookProperties(
+        bookLayout,
+        sectionPosition,
+        BibleVizDataRepository.getStackPieceMeasurement("BookScales"),
+        BibleVizDataRepository.getStackSpacing("BetweenBooks")
+      ));
     }
     const book = ObjectPooler.GetObjectFromPool({
-      tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackBook,
+      tag: ObjectPoolTags.StackBook,
     });
     const bookMod = {
       [dimension]: true,
@@ -512,8 +510,7 @@ for (const bookDataArr of sectionData.childrenData) {
       sectionData.isInExplodedView &&
       bookData.piece.tags.explodedViewCustomScale
     ) {
-      bookData.currentShape =
-        BibleVizUtils.Data.tags.BookShapeType.ExplodedViewCustomShape;
+      bookData.currentShape = BookShape.ExplodedViewCustomShape;
     }
   }
   if (!sectionData.isInExplodedView) {

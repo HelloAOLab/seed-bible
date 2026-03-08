@@ -1,5 +1,7 @@
 import { arrangementService } from "bibleVizUtils.services.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+
 const { layoutData } = that;
 
 const layoutBookStructures = [];
@@ -97,101 +99,101 @@ for (const testamentIndex in testaments) {
 }
 
 const cover = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutCover,
+  tag: ObjectPoolTags.LayoutCover,
 });
 const cameraAnimationToggle = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleButton,
+  tag: ObjectPoolTags.LayoutToggleButton,
 });
 const labelsToggle = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleButton,
+  tag: ObjectPoolTags.LayoutToggleButton,
 });
 const pathToggle = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleButton,
+  tag: ObjectPoolTags.LayoutToggleButton,
 });
 const chapterSelectToggle = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleButton,
+  tag: ObjectPoolTags.LayoutToggleButton,
 });
 const showDatesToggle = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleButton,
+  tag: ObjectPoolTags.LayoutToggleButton,
 });
 const cameraAnimationToggleBackground = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleBackground,
+  tag: ObjectPoolTags.LayoutToggleBackground,
 });
 const showDatesToggleBackground = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleBackground,
+  tag: ObjectPoolTags.LayoutToggleBackground,
 });
 const labelsToggleBackground = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleBackground,
+  tag: ObjectPoolTags.LayoutToggleBackground,
 });
 const pathToggleBackground = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleBackground,
+  tag: ObjectPoolTags.LayoutToggleBackground,
 });
 const chapterSelectToggleBackground = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleBackground,
+  tag: ObjectPoolTags.LayoutToggleBackground,
 });
 const cameraAnimationToggleHandle = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleHandle,
+  tag: ObjectPoolTags.LayoutToggleHandle,
 });
 const showDatesToggleHandle = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleHandle,
+  tag: ObjectPoolTags.LayoutToggleHandle,
 });
 const labelsToggleHandle = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleHandle,
+  tag: ObjectPoolTags.LayoutToggleHandle,
 });
 const pathToggleHandle = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleHandle,
+  tag: ObjectPoolTags.LayoutToggleHandle,
 });
 const chapterSelectToggleHandle = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleHandle,
+  tag: ObjectPoolTags.LayoutToggleHandle,
 });
 const colorPickerButton = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButton,
+  tag: ObjectPoolTags.LayoutButton,
 });
 const openAllBooksButton = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButton,
+  tag: ObjectPoolTags.LayoutButton,
 });
 const openAllBooksIcon = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonIcon,
+  tag: ObjectPoolTags.LayoutButtonIcon,
 });
 const openAllBooksLabel = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonLabel,
+  tag: ObjectPoolTags.LayoutButtonLabel,
 });
 const colorPickerBackground = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutColorPickerBackground,
+  tag: ObjectPoolTags.LayoutColorPickerBackground,
 });
 const colorPickerContent = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutColorPickerContent,
+  tag: ObjectPoolTags.LayoutColorPickerContent,
 });
 const settingsButton = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutSettingsButton,
+  tag: ObjectPoolTags.LayoutSettingsButton,
 });
 const playlistSelectorButton = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButton,
+  tag: ObjectPoolTags.LayoutButton,
 });
 const playlistSelectorIcon = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonIcon,
+  tag: ObjectPoolTags.LayoutButtonIcon,
 });
 const playlistSelectorLabel = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonLabel,
+  tag: ObjectPoolTags.LayoutButtonLabel,
 });
 const dateFormatSelectorButton = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButton,
+  tag: ObjectPoolTags.LayoutButton,
 });
 const dateFormatSelectorIcon = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonIcon,
+  tag: ObjectPoolTags.LayoutButtonIcon,
 });
 const dateFormatSelectorLabel = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonLabel,
+  tag: ObjectPoolTags.LayoutButtonLabel,
 });
 
 const playlistPathToggle = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleButton,
+  tag: ObjectPoolTags.LayoutToggleButton,
 });
 const playlistPathToggleBackground = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleBackground,
+  tag: ObjectPoolTags.LayoutToggleBackground,
 });
 const playlistPathToggleHandle = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleHandle,
+  tag: ObjectPoolTags.LayoutToggleHandle,
 });
 
 const settingsButtonsBaseTags = {

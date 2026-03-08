@@ -1,12 +1,11 @@
 import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
-import type { Tab } from "bibleVizUtils.models.interfaces";
-import type { PieceInfo as IPieceInfo } from "bibleVizUtils.models.interfaces";
-import { PieceInfo } from "bibleVizUtils.models.PieceInfo";
-import { BiblePieceType, ObjectPoolTags } from "bibleVizUtils.models.enums";
-import type {
-  BiblePieceTypeType,
-  ObjectPoolTagsType,
-} from "bibleVizUtils.models.enums";
+import type { Tab } from "bibleVizUtils.models.seedBible.models";
+import type { PieceInfo } from "bibleVizUtils.models.canvas.models";
+import {
+  BiblePiece,
+  type BiblePieceType,
+} from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 import type {
   ArrangementInfo,
   TestamentInfo,
@@ -33,10 +32,6 @@ interface ArrangementService {
     path: TestamentPathIndices
   ) => TestamentInfo | undefined;
   getSectionByIndices: (path: SectionPathIndices) => SectionInfo | undefined;
-}
-
-interface ScriptureService {
-  convertCompletePsalmsToDivided: (params: { chapter: number }) => DividedPsalm;
   getBookInfoPathByName: (params: {
     name: string;
     arrangementIndex?: number | undefined;
@@ -49,6 +44,10 @@ interface ScriptureService {
   };
 }
 
+interface ScriptureService {
+  convertCompletePsalmsToDivided: (params: { chapter: number }) => DividedPsalm;
+}
+
 interface ServiceParams {
   dataRegistry: DataRegistry;
   indicatorsRepository: IndicatorsRepository;
@@ -58,46 +57,46 @@ interface ServiceParams {
 
 type ActivityStrategyType = (piece: Bot) => {
   key: string;
-  typeOfPiece: BiblePieceTypeType;
+  typeOfPiece: BiblePieceType;
 };
 
 const testamentActivityStrategy: ActivityStrategyType = (piece) => {
   const key = piece.tags.testamentName;
-  const typeOfPiece = BiblePieceType.StackTestament;
+  const typeOfPiece = BiblePiece.StackTestament;
 
   return { key, typeOfPiece };
 };
 
 const sectionActivityStrategy: ActivityStrategyType = (piece) => {
   const key = piece.tags.sectionName;
-  const typeOfPiece = BiblePieceType.StackSection;
+  const typeOfPiece = BiblePiece.StackSection;
 
   return { key, typeOfPiece };
 };
 
 const bookActivityStrategy: ActivityStrategyType = (piece) => {
   const key = piece.tags.bookName;
-  const typeOfPiece = BiblePieceType.StackBook;
+  const typeOfPiece = BiblePiece.StackBook;
 
   return { key, typeOfPiece };
 };
 
 const chapterActivityStrategy: ActivityStrategyType = (piece) => {
   const key = `${piece.tags.parentBookName} ${piece.tags.chapterNumber}`;
-  const typeOfPiece = BiblePieceType.StackChapter;
+  const typeOfPiece = BiblePiece.StackChapter;
 
   return { key, typeOfPiece };
 };
 
 const activityStrategiesMap: Record<string, ActivityStrategyType> = {
-  [BiblePieceType.StackTestament]: testamentActivityStrategy,
-  [BiblePieceType.StackSection]: sectionActivityStrategy,
-  [BiblePieceType.StackSectionShadow]: sectionActivityStrategy,
-  [BiblePieceType.StackSectionBook]: bookActivityStrategy,
-  [BiblePieceType.StackBook]: bookActivityStrategy,
-  [BiblePieceType.LayoutBook]: bookActivityStrategy,
-  [BiblePieceType.StackChapter]: chapterActivityStrategy,
-  [BiblePieceType.LayoutChapter]: chapterActivityStrategy,
+  [BiblePiece.StackTestament]: testamentActivityStrategy,
+  [BiblePiece.StackSection]: sectionActivityStrategy,
+  [BiblePiece.StackSectionShadow]: sectionActivityStrategy,
+  [BiblePiece.StackSectionBook]: bookActivityStrategy,
+  [BiblePiece.StackBook]: bookActivityStrategy,
+  [BiblePiece.LayoutBook]: bookActivityStrategy,
+  [BiblePiece.StackChapter]: chapterActivityStrategy,
+  [BiblePiece.LayoutChapter]: chapterActivityStrategy,
 };
 
 interface IndicatorsStrategyParams {
@@ -163,10 +162,8 @@ export class PieceActivityService {
     const tabs: Tab[] = []; // TODO: Obtain my tabs
     const remoteTabs: Tab[] = []; // TODO: Obtain remote users tabs
     const allTabs: Tab[] = [...tabs, ...remoteTabs];
-    const tabsPathMap: Map<
-      Tab,
-      [IPieceInfo, IPieceInfo, IPieceInfo, IPieceInfo]
-    > = new Map();
+    const tabsPathMap: Map<Tab, [PieceInfo, PieceInfo, PieceInfo, PieceInfo]> =
+      new Map();
 
     for (const tab of allTabs) {
       let { book, chapter } = tab.data;
@@ -178,7 +175,7 @@ export class PieceActivityService {
           }));
 
       const { found, arrangementIndex, testamentIndex, sectionIndex } =
-        this.#scriptureService.getBookInfoPathByName({
+        this.#arrangementService.getBookInfoPathByName({
           name: book,
           arrangementIndex: desiredArrangementIndex,
         });
@@ -216,23 +213,23 @@ export class PieceActivityService {
         }
 
         const sectionName = section.name;
-        const path: [IPieceInfo, IPieceInfo, IPieceInfo, IPieceInfo] = [
-          new PieceInfo({
-            typeOfPiece: BiblePieceType.StackTestament,
+        const path: [PieceInfo, PieceInfo, PieceInfo, PieceInfo] = [
+          {
+            typeOfPiece: BiblePiece.StackTestament,
             key: testamentName,
-          }),
-          new PieceInfo({
-            typeOfPiece: BiblePieceType.StackSection,
+          },
+          {
+            typeOfPiece: BiblePiece.StackSection,
             key: sectionName,
-          }),
-          new PieceInfo({
-            typeOfPiece: BiblePieceType.StackBook,
+          },
+          {
+            typeOfPiece: BiblePiece.StackBook,
             key: book,
-          }),
-          new PieceInfo({
-            typeOfPiece: BiblePieceType.StackChapter,
+          },
+          {
+            typeOfPiece: BiblePiece.StackChapter,
             key: `${book} ${chapter}`,
-          }),
+          },
         ];
 
         tabsPathMap.set(tab, path);

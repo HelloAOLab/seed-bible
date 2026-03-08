@@ -4,11 +4,8 @@ import type { HexString } from "bibleVizUtils.functions.index";
 export class ReadingHistoryService {
   #recencyThresholdTimeSeconds: number;
 
-  constructor() {
-    const tenDaysAgo = new Date();
-    tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
-    tenDaysAgo.setHours(0, 0, 0, 0);
-    this.#recencyThresholdTimeSeconds = Math.floor(tenDaysAgo.getTime() / 1000);
+  constructor(recencyThresholdTime: number) {
+    this.#recencyThresholdTimeSeconds = recencyThresholdTime;
   }
 
   getColorByReadingTime = (params: {

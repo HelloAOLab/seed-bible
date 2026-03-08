@@ -1,6 +1,6 @@
 import { PieceDataRegistry } from "bibleVizUtils.services.PieceDataRegistry";
 import { PieceDataRepository } from "bibleStack.services.PieceDataRepository";
-import { ObjectPoolTags } from "bibleVizUtils.models.enums";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 /**
  * This tag is called when this bot is created
@@ -64,7 +64,7 @@ thisBot.vars.groundedChapterSelectionQueue = [];
 thisBot.vars.stackedChapterSelectionQueue = [];
 
 const sectionShadowPool = new PoolData({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.SectionShadow,
+  tag: ObjectPoolTags.SectionShadow,
   bot: getBot(byTag("isBaseSectionShadow", true)),
   customTags: [
     new CustomTag({ name: "isBaseSectionShadow", value: false }),
@@ -75,14 +75,14 @@ const sectionShadowPool = new PoolData({
     }),
     new CustomTag({
       name: "poolTag",
-      value: BibleVizUtils.Data.tags.ObjectPoolTags.SectionShadow,
+      value: ObjectPoolTags.SectionShadow,
     }),
     new CustomTag({ name: "system", value: null }),
   ],
   size: 8,
 });
 const chapterPool = new PoolData({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackChapter,
+  tag: ObjectPoolTags.StackChapter,
   bot: getBot(byTag("isBaseStackChapter", true)),
   customTags: [
     new CustomTag({ name: "isBaseStackChapter", value: false }),
@@ -92,7 +92,7 @@ const chapterPool = new PoolData({
     }),
     new CustomTag({
       name: "poolTag",
-      value: BibleVizUtils.Data.tags.ObjectPoolTags.StackChapter,
+      value: ObjectPoolTags.StackChapter,
     }),
     new CustomTag({ name: "isStackPiece", value: true }),
     new CustomTag({ name: "system", value: null }),
@@ -100,7 +100,7 @@ const chapterPool = new PoolData({
   size: 20,
 });
 const booksPool = new PoolData({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackBook,
+  tag: ObjectPoolTags.StackBook,
   bot: getBot(byTag("isBaseStackBook", true)),
   customTags: [
     new CustomTag({ name: "isBaseStackBook", value: false }),
@@ -110,7 +110,7 @@ const booksPool = new PoolData({
     }),
     new CustomTag({
       name: "poolTag",
-      value: BibleVizUtils.Data.tags.ObjectPoolTags.StackBook,
+      value: ObjectPoolTags.StackBook,
     }),
     new CustomTag({ name: "isStackPiece", value: true }),
     new CustomTag({ name: "system", value: null }),
@@ -118,7 +118,7 @@ const booksPool = new PoolData({
   size: 20,
 });
 const sectionsPool = new PoolData({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackSection,
+  tag: ObjectPoolTags.StackSection,
   bot: getBot(byTag("isBaseStackSection", true)),
   customTags: [
     new CustomTag({ name: "isBaseStackSection", value: false }),
@@ -128,7 +128,7 @@ const sectionsPool = new PoolData({
     }),
     new CustomTag({
       name: "poolTag",
-      value: BibleVizUtils.Data.tags.ObjectPoolTags.StackSection,
+      value: ObjectPoolTags.StackSection,
     }),
     new CustomTag({ name: "isStackPiece", value: true }),
     new CustomTag({ name: "system", value: null }),
@@ -136,7 +136,7 @@ const sectionsPool = new PoolData({
   size: 8,
 });
 const testamentsPool = new PoolData({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackTestament,
+  tag: ObjectPoolTags.StackTestament,
   bot: getBot(byTag("isBaseStackTestament", true)),
   customTags: [
     new CustomTag({ name: "isBaseStackTestament", value: false }),
@@ -146,7 +146,7 @@ const testamentsPool = new PoolData({
     }),
     new CustomTag({
       name: "poolTag",
-      value: BibleVizUtils.Data.tags.ObjectPoolTags.StackTestament,
+      value: ObjectPoolTags.StackTestament,
     }),
     new CustomTag({ name: "isStackPiece", value: true }),
     new CustomTag({ name: "system", value: null }),
@@ -154,14 +154,14 @@ const testamentsPool = new PoolData({
   size: 2,
 });
 const bibleTransformersPool = new PoolData({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackBibleTransformer,
+  tag: ObjectPoolTags.StackBibleTransformer,
   bot: getBot(byTag("isBaseStackBibleTransformer", true)),
   customTags: [
     new CustomTag({ name: "isBaseStackBibleTransformer", value: false }),
     new CustomTag({ name: "isStackBibleTransformer", value: true }),
     new CustomTag({
       name: "poolTag",
-      value: BibleVizUtils.Data.tags.ObjectPoolTags.StackBibleTransformer,
+      value: ObjectPoolTags.StackBibleTransformer,
     }),
     new CustomTag({ name: "toErase", value: true }),
     new CustomTag({ name: "system", value: null }),
@@ -169,46 +169,46 @@ const bibleTransformersPool = new PoolData({
   size: 1,
 });
 const coversPool = new PoolData({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackCover,
+  tag: ObjectPoolTags.StackCover,
   bot: getBot(byTag("isBaseStackCover", true)),
   customTags: [
     new CustomTag({ name: "isBaseStackCover", value: false }),
     new CustomTag({
       name: "poolTag",
-      value: BibleVizUtils.Data.tags.ObjectPoolTags.StackCover,
+      value: ObjectPoolTags.StackCover,
     }),
     new CustomTag({ name: "system", value: null }),
   ],
   size: 3,
 });
 const crossLinesPool = new PoolData({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackCrossLine,
+  tag: ObjectPoolTags.StackCrossLine,
   bot: getBot(byTag("isBaseStackCrossLine", true)),
   customTags: [
     new CustomTag({ name: "isBaseStackCrossLine", value: false }),
     new CustomTag({
       name: "poolTag",
-      value: BibleVizUtils.Data.tags.ObjectPoolTags.StackCrossLine,
+      value: ObjectPoolTags.StackCrossLine,
     }),
     new CustomTag({ name: "system", value: null }),
   ],
   size: 2,
 });
 const bibleShadowsPool = new PoolData({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackBibleShadow,
+  tag: ObjectPoolTags.StackBibleShadow,
   bot: getBot(byTag("isBaseStackShadow", true)),
   customTags: [
     new CustomTag({ name: "isBaseStackShadow", value: false }),
     new CustomTag({
       name: "poolTag",
-      value: BibleVizUtils.Data.tags.ObjectPoolTags.StackBibleShadow,
+      value: ObjectPoolTags.StackBibleShadow,
     }),
     new CustomTag({ name: "system", value: null }),
   ],
   size: 1,
 });
 const chunkOfVersesPool = new PoolData({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackChunkOfVerses,
+  tag: ObjectPoolTags.StackChunkOfVerses,
   bot: getBot(byTag("isBaseStackChunkOfVerses", true)),
   customTags: [
     new CustomTag({ name: "isBaseStackChunkOfVerses", value: false }),
@@ -218,14 +218,14 @@ const chunkOfVersesPool = new PoolData({
     }),
     new CustomTag({
       name: "poolTag",
-      value: BibleVizUtils.Data.tags.ObjectPoolTags.StackChunkOfVerses,
+      value: ObjectPoolTags.StackChunkOfVerses,
     }),
     new CustomTag({ name: "system", value: null }),
   ],
   size: 3,
 });
 const versesPool = new PoolData({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackVerse,
+  tag: ObjectPoolTags.StackVerse,
   bot: getBot(byTag("isBaseStackVerse", true)),
   customTags: [
     new CustomTag({ name: "isBaseStackVerse", value: false }),
@@ -235,7 +235,7 @@ const versesPool = new PoolData({
     }),
     new CustomTag({
       name: "poolTag",
-      value: BibleVizUtils.Data.tags.ObjectPoolTags.StackVerse,
+      value: ObjectPoolTags.StackVerse,
     }),
     new CustomTag({ name: "system", value: null }),
   ],

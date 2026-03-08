@@ -5,18 +5,15 @@ import type {
   Point3D,
   Vector3 as Vector3Type,
 } from "../../../../../typings/AuxLibraryDefinitions";
-import {
-  ObjectPoolTags,
-  type ObjectPoolTagsType,
-} from "bibleVizUtils.models.enums";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 import {
   ActivityIndicatorDefaults,
   type ActivityIndicatorDefaultsType,
 } from "bibleVizUtils.data.ActivityIndicatorDefaults";
 import { PieceDataRegistry } from "bibleVizUtils.services.PieceDataRegistry";
-import type { Tab } from "bibleVizUtils.models.interfaces";
-import { userPresenceService } from "bibleVizUtils.services.UserPresenceService";
-import { userColorStore } from "bibleVizUtils.services.UserColorStore";
+import type { Tab } from "bibleVizUtils.models.seedBible.models";
+import { userPresenceService } from "bibleVizUtils.services.index";
+import { userColorStore } from "bibleVizUtils.services.index";
 
 interface PositionStrategyParams {
   piece: Bot;

@@ -1,5 +1,6 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 const { layoutData, playlistInfo } = that;
 
@@ -72,8 +73,7 @@ for (const playlistEntryInfoIndex in playlistItemsList) {
               ));
 
         const entryItem = ObjectPooler.GetObjectFromPool({
-          tag: BibleVizUtils.Data.tags.ObjectPoolTags
-            .LayoutChapterPlaylistEntryItem,
+          tag: ObjectPoolTags.LayoutChapterPlaylistEntryItem,
         });
         chapterData.AddEntryItem(entryItem);
         const index = layoutData.playlistEntries.push(entryItem) - 1;
@@ -146,12 +146,12 @@ const coverScales = GetBotScales(layoutData.staticLayoutPieces.cover);
 const prevButton =
   layoutData.staticLayoutPieces.playlistPreviousButton ??
   ObjectPooler.GetObjectFromPool({
-    tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapPlaylistNavigationButton,
+    tag: ObjectPoolTags.MapPlaylistNavigationButton,
   });
 const nextButton =
   layoutData.staticLayoutPieces.playlistNextButton ??
   ObjectPooler.GetObjectFromPool({
-    tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapPlaylistNavigationButton,
+    tag: ObjectPoolTags.MapPlaylistNavigationButton,
   });
 
 const prevButtonMod = {

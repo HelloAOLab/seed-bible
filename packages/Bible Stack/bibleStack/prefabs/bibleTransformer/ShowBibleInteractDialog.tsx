@@ -1,5 +1,6 @@
 import { GetDialogBotScaleY } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 /**
  * Displays an interactive dialog for the Bible, focusing on it and animating its associated labels.
@@ -40,14 +41,14 @@ const infoLabelDesiredFormAddress =
     return formAddressesInfo.aspectRatio === closestFormAddressAspectRatio;
   }).formAddress;
 const infoLabelTransformer = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer,
+  tag: ObjectPoolTags.InfoLabelTransformer,
 });
 const infoLabel = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabel,
+  tag: ObjectPoolTags.InfoLabel,
 });
 const infoLabelDesiredOffset = new Vector3(0, 3, 5);
 const infoLabelTail = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTail,
+  tag: ObjectPoolTags.InfoLabelTail,
 });
 const infoLabelTailDesiredOffset = new Vector3(
   0,

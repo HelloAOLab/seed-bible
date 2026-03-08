@@ -4,7 +4,7 @@ import {
 } from "bibleVizUtils.services.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { IsValueBetween } from "bibleVizUtils.functions.index";
-import { ObjectPoolTags } from "bibleVizUtils.models.enums";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 /**
  * Spawns a chapter from a specified book and initializes its properties. If the chapter is valid, it will be selected after spawning.

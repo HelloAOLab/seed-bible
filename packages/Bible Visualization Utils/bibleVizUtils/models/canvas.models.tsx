@@ -1,4 +1,10 @@
-export const BiblePieceType = {
+import type { Span } from "bibleVizUtils.models.common.types";
+import type {
+  Vector2,
+  Vector3,
+} from "../../../../typings/AuxLibraryDefinitions";
+
+export const BiblePiece = {
   StackTestament: "StackTestament",
   StackSection: "StackSection",
   StackSectionShadow: "StackSectionShadow",
@@ -12,15 +18,7 @@ export const BiblePieceType = {
   LayoutChunkOfVerses: "LayoutChunkOfVerses",
   LayoutVerse: "LayoutVerse",
 } as const;
-export type BiblePieceTypeType =
-  (typeof BiblePieceType)[keyof typeof BiblePieceType];
-
-export const LabelDateFormat = {
-  Absolute: "Absolute",
-  Relative: "Relative",
-} as const;
-export type LabelDateFormatType =
-  (typeof LabelDateFormat)[keyof typeof LabelDateFormat];
+export type BiblePieceType = (typeof BiblePiece)[keyof typeof BiblePiece];
 
 export const ObjectPoolTags = {
   ConfettiParticle: "ConfettiParticle",
@@ -70,18 +68,10 @@ export const ObjectPoolTags = {
   ElementUserColor: "ElementUserColor",
   LayoutChapterPlaylistEntryItem: "LayoutChapterPlaylistEntryItem",
   LayoutChapterPlaylistEntryNode: "LayoutChapterPlaylistEntryNode",
+  SectionShadow: "SectionShadow",
 } as const;
 export type ObjectPoolTagsType =
   (typeof ObjectPoolTags)[keyof typeof ObjectPoolTags];
-
-export const LabelPositionings = {
-  RightSided: "RightSided",
-  LeftSided: "LeftSided",
-  Top: "Top",
-  RightSidedCorner: "RightSidedCorner",
-} as const;
-export type LabelPositioningsType =
-  (typeof LabelPositionings)[keyof typeof LabelPositionings];
 
 export const BookShape = {
   Regular: "Regular",
@@ -90,3 +80,29 @@ export const BookShape = {
   RegularSelected: "RegularSelected",
 } as const;
 export type BookShapeType = (typeof BookShape)[keyof typeof BookShape];
+
+export interface BookLayout {
+  x: Span;
+  y: Span;
+}
+
+export interface ComputedGroupBookProperties {
+  scale: Vector2;
+  position: Vector3;
+  layoutPosition: Vector2;
+}
+
+export interface PieceInfo {
+  typeOfPiece: BiblePieceType;
+  key: string;
+}
+
+export interface ParentDataIds {
+  stackBibleId?: string;
+  stackTestamentId?: string;
+  stackSectionId?: string;
+  stackBookId?: string;
+  stackSectionBookId?: string;
+  layoutId?: string;
+  layoutBookId?: string;
+}

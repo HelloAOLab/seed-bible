@@ -1,7 +1,8 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { labelService } from "bibleVizUtils.services.LabelService";
 import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
-import { LabelDateFormat, LabelPositionings } from "bibleVizUtils.models.enums";
+import { LabelDateFormat } from "bibleVizUtils.models.label.models";
+import { LabelPosition } from "bibleVizUtils.models.label.models";
 
 /**
  * Highlights the book by scaling and changing its opacity, and displays an info label.
@@ -41,8 +42,8 @@ const { infoLabelTransformer } = SpawnLabelForPiece({
   labelColor: thisBot.tags.labelTextColor,
   dimension,
   labelPositioning: thisBot.masks.isOnTheGround
-    ? LabelPositionings.Top
-    : LabelPositionings.LeftSided,
+    ? LabelPosition.Top
+    : LabelPosition.LeftSided,
   isAnimatable: true,
 });
 setTagMask(thisBot, "isHighlighting", true);

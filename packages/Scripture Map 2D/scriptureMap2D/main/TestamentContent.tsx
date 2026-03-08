@@ -8,7 +8,7 @@ import {
   calculateReadingHistorySummary,
   type ReadingEvent,
 } from "db.annotations.library";
-import { userColorStore } from "bibleVizUtils.services.UserColorStore";
+import { userColorStore } from "bibleVizUtils.services.index";
 import type {
   BookUserPresence,
   Range,

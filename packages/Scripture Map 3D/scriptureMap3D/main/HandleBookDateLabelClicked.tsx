@@ -1,6 +1,7 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { GetDialogBotScaleY } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 if (thisBot.masks.isAnimatingBible) return;
 
@@ -43,17 +44,15 @@ if (
     if (structureCurrentlyShowingInfoCard.id === layoutBookStructure.id) {
       ObjectPooler.ReleaseObject({
         obj: structureCurrentlyShowingInfoCard.infoCardTransformer,
-        tag: BibleVizUtils.Data.tags.ObjectPoolTags
-          .LayoutBookInfoCardTransformer,
+        tag: ObjectPoolTags.LayoutBookInfoCardTransformer,
       });
       ObjectPooler.ReleaseObject({
         obj: structureCurrentlyShowingInfoCard.infoCardContent,
-        tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookInfoCardContent,
+        tag: ObjectPoolTags.LayoutBookInfoCardContent,
       });
       ObjectPooler.ReleaseObject({
         obj: structureCurrentlyShowingInfoCard.infoCardBackground,
-        tag: BibleVizUtils.Data.tags.ObjectPoolTags
-          .LayoutBookInfoCardBackground,
+        tag: ObjectPoolTags.LayoutBookInfoCardBackground,
       });
     } else {
       const { scaleY } = GetDialogBotScaleY({
@@ -145,13 +144,13 @@ if (
       0
     );
     const infoCardTransformer = ObjectPooler.GetObjectFromPool({
-      tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookInfoCardTransformer,
+      tag: ObjectPoolTags.LayoutBookInfoCardTransformer,
     });
     const infoCardContent = ObjectPooler.GetObjectFromPool({
-      tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookInfoCardContent,
+      tag: ObjectPoolTags.LayoutBookInfoCardContent,
     });
     const infoCardBackground = ObjectPooler.GetObjectFromPool({
-      tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookInfoCardBackground,
+      tag: ObjectPoolTags.LayoutBookInfoCardBackground,
     });
     const dateLabelPosition = getBotPosition(
       layoutBookStructure.dateLabel,

@@ -1,5 +1,5 @@
 import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
-import { LabelPositionings } from "bibleVizUtils.models.enums";
+import { LabelPosition } from "bibleVizUtils.models.label.models";
 import { HexToRgb } from "bibleVizUtils.functions.index";
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 const chapterData = ScriptureMap3DManager.GetPieceData({ piece: thisBot });
@@ -37,7 +37,7 @@ if (thisBot.masks.isExpanded) {
       color: "white",
       labelColor: "black",
       dimension,
-      labelPositioning: LabelPositionings.Top,
+      labelPositioning: LabelPosition.Top,
       isAnimatable: false,
     }).infoLabelTransformer;
 

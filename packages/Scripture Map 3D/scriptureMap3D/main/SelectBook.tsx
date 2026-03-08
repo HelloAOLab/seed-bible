@@ -1,6 +1,7 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { tryHideIndicators } from "bibleVizUtils.controllers.userPresence.activityIndicatorsController";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 const {
   layoutBookData,
@@ -63,7 +64,7 @@ const elapsedYearsRange = `${currentYear - relativeDateRange.min}${relativeDateR
 
 for (const chapterData of layoutBookData.childrenData) {
   const chapter = ObjectPooler.GetObjectFromPool({
-    tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChapter,
+    tag: ObjectPoolTags.LayoutChapter,
   });
   const chapterMod = {
     [dimension]: true,

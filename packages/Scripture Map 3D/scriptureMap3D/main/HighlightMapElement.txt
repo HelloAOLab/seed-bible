@@ -1,4 +1,4 @@
-import {HighlightInfo} from "bibleVizUtils.classes.HighlightInfo"
+import {HighlightData} from "bibleVizUtils.models.highlight.models"
 
 const {piece, data} = that;
 
@@ -32,11 +32,11 @@ else
     else
     {
         if(!BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(piece, "color", BibleVizUtils.Data.tags.highlightColor);
-        const newHighlightInfo = new HighlightInfo({
+        const newHighlightInfo: HighlightData = {
             color: BibleVizUtils.Data.tags.highlightColor, 
             typeOfPiece: piece.tags.typeOfPiece, 
             key: piece.masks.chunkPath ?? piece.masks.versePath
-        })
+        }
         chapterData.AddHighlightInfo(newHighlightInfo)
         highlightSuccessful = true;
     }

@@ -8,10 +8,24 @@ import { ArrangementService } from "bibleVizUtils.services.ArrangementService";
 import { PieceActivityService } from "bibleVizUtils.services.PieceActivityService";
 import { PieceActivityIndicatorsRepository } from "bibleVizUtils.data.PieceActivityIndicatorsRepository";
 import { PieceDataRegistry } from "bibleVizUtils.services.PieceDataRegistry";
+import { UserColorStore } from "bibleVizUtils.services.UserColorStore";
+import { UserPresenceService } from "bibleVizUtils.services.UserPresenceService";
+import { SeedBiblePresenceProvider } from "bibleVizUtils.adapters.SeedBiblePresenceProvider";
 
+const tenDaysAgo = new Date();
+tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+tenDaysAgo.setHours(0, 0, 0, 0);
+const tenDaysAgoTimeSeconds = Math.floor(tenDaysAgo.getTime() / 1000);
+
+const seedBiblePresenceProvider = new SeedBiblePresenceProvider();
 export const bibleVizUtilsEventManager = new BibleVizUtilsEventManager();
-export const stackService = new StackService(BibleVizDataRepository);
-export const readingHistoryService = new ReadingHistoryService();
+export const userColorStore: UserColorStore = new UserColorStore(
+  bibleVizUtilsEventManager
+);
+export const stackService = new StackService();
+export const readingHistoryService = new ReadingHistoryService(
+  tenDaysAgoTimeSeconds
+);
 export const sessionService = new SessionService(bibleVizUtilsEventManager);
 export const arrangementService = new ArrangementService(
   BibleVizDataRepository,
@@ -26,4 +40,8 @@ export const pieceActivityService = new PieceActivityService({
   indicatorsRepository: PieceActivityIndicatorsRepository,
   arrangementService,
   scriptureService,
+});
+export const userPresenceService = new UserPresenceService({
+  eventManager: bibleVizUtilsEventManager,
+  userPresenceProvider: seedBiblePresenceProvider,
 });

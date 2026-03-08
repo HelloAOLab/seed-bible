@@ -1,5 +1,5 @@
 import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
-import { type ObjectPoolTagsType } from "bibleVizUtils.models.enums";
+import { type ObjectPoolTagsType } from "bibleVizUtils.models.canvas.models";
 
 export type GetPieceDataFunction = (params: { piece: Bot }) => any;
 

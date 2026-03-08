@@ -1,4 +1,5 @@
 import { arrangementService } from "bibleVizUtils.services.index";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 /**
  * Creates every piece of a regular Bible structure for the given bibleData based on a given arrangement index.
@@ -12,31 +13,31 @@ import { arrangementService } from "bibleVizUtils.services.index";
 const { arrangementIndex, bibleData } = that;
 const testamentsData = [];
 const bibleTransformer = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackBibleTransformer,
+  tag: ObjectPoolTags.StackBibleTransformer,
 });
 const bibleTransformerMod = { stackBibleId: bibleData.id };
 const upperCover = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackCover,
+  tag: ObjectPoolTags.StackCover,
 });
 const upperCoverMod = { stackBibleId: bibleData.id };
 const leftCover = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackCover,
+  tag: ObjectPoolTags.StackCover,
 });
 const leftCoverMod = { stackBibleId: bibleData.id };
 const lowerCover = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackCover,
+  tag: ObjectPoolTags.StackCover,
 });
 const lowerCoverMod = { stackBibleId: bibleData.id };
 const crossVerticalLine = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackCrossLine,
+  tag: ObjectPoolTags.StackCrossLine,
 });
 const crossVerticalLineMod = { stackBibleId: bibleData.id };
 const crossHorizontalLine = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackCrossLine,
+  tag: ObjectPoolTags.StackCrossLine,
 });
 const crossHorizontalLineMod = { stackBibleId: bibleData.id };
 const bibleShadow = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackBibleShadow,
+  tag: ObjectPoolTags.StackBibleShadow,
 });
 const bibleShadowMod = { stackBibleId: bibleData.id };
 

@@ -4,11 +4,13 @@ import type {
   Vector2 as Vector2Type,
 } from "../../../../typings/AuxLibraryDefinitions";
 import {
-  LabelPositionings,
-  type LabelPositioningsType,
+  LabelPosition,
+  type LabelPositionType,
+} from "bibleVizUtils.models.label.models";
+import {
   type LabelDateFormatType,
   LabelDateFormat,
-} from "bibleVizUtils.models.enums";
+} from "bibleVizUtils.models.label.models";
 import type { DialogBoxFormAddressesType } from "bibleVizUtils.data.DialogBoxFormAddresses";
 import { ClosestNumber } from "bibleVizUtils.functions.math";
 
@@ -30,7 +32,7 @@ type ComputeNotificationDirectionType = (
 ) => Vector2Type;
 
 type ComputeInfoLabelTransformerDesiredPositionType = (params: {
-  positioning: LabelPositioningsType;
+  positioning: LabelPositionType;
   piecePosition: Vector3Type;
   pieceScales: Scales;
   infoLabelTransformerDesiredScales: Scales;
@@ -38,7 +40,7 @@ type ComputeInfoLabelTransformerDesiredPositionType = (params: {
 }) => Vector3Type;
 
 type ComputeInfoLabelOffsetType = (params: {
-  positioning: LabelPositioningsType;
+  positioning: LabelPositionType;
   radialVector: Vector2Type;
   infoLabelOffsetMargin: number;
   infoLabelScales: Scales;
@@ -46,11 +48,11 @@ type ComputeInfoLabelOffsetType = (params: {
 }) => Vector3Type;
 
 type ComputeInfoLabelTailRotationZType = (
-  positioning: LabelPositioningsType
+  positioning: LabelPositionType
 ) => number;
 
 type ComputeInfoLabelTailOffsetType = (params: {
-  positioning: LabelPositioningsType;
+  positioning: LabelPositionType;
   infoLabelTransformerDesiredScales: Scales;
   infoLabelScales: Scales;
   infoLabelTailDesiredScales: Scales;
@@ -64,13 +66,13 @@ type InfoLabelTransformerPositionParams = {
   transformerPosition: Vector3Type;
 };
 type InfoLabelTransformerPositionMap = Record<
-  LabelPositioningsType,
+  LabelPositionType,
   (params: InfoLabelTransformerPositionParams) => Vector3Type
 >;
 
 const infoLabelTransformerPositionStrategies: InfoLabelTransformerPositionMap =
   {
-    [LabelPositionings.LeftSided]: ({
+    [LabelPosition.LeftSided]: ({
       piecePosition,
       pieceScales,
       infoLabelTransformerDesiredScales,
@@ -84,7 +86,7 @@ const infoLabelTransformerPositionStrategies: InfoLabelTransformerPositionMap =
           infoLabelTransformerDesiredScales.z / 2
       ).add(transformerPosition);
     },
-    [LabelPositionings.RightSided]: ({
+    [LabelPosition.RightSided]: ({
       piecePosition,
       pieceScales,
       infoLabelTransformerDesiredScales,
@@ -98,7 +100,7 @@ const infoLabelTransformerPositionStrategies: InfoLabelTransformerPositionMap =
           infoLabelTransformerDesiredScales.z / 2
       ).add(transformerPosition);
     },
-    [LabelPositionings.RightSidedCorner]: ({
+    [LabelPosition.RightSidedCorner]: ({
       piecePosition,
       pieceScales,
       infoLabelTransformerDesiredScales,
@@ -112,7 +114,7 @@ const infoLabelTransformerPositionStrategies: InfoLabelTransformerPositionMap =
           infoLabelTransformerDesiredScales.z / 2
       ).add(transformerPosition);
     },
-    [LabelPositionings.Top]: ({
+    [LabelPosition.Top]: ({
       piecePosition,
       pieceScales,
       infoLabelTransformerDesiredScales,
@@ -137,12 +139,12 @@ type InfoLabelOffsetParams = {
 };
 
 type InfoLabelOffsetMap = Record<
-  LabelPositioningsType,
+  LabelPositionType,
   (params: InfoLabelOffsetParams) => Vector3Type
 >;
 
 const infoLabelOffsetStrategies: InfoLabelOffsetMap = {
-  [LabelPositionings.LeftSided]: ({
+  [LabelPosition.LeftSided]: ({
     radialVector,
     infoLabelOffsetMargin,
     infoLabelScales,
@@ -159,7 +161,7 @@ const infoLabelOffsetStrategies: InfoLabelOffsetMap = {
       5
     );
   },
-  [LabelPositionings.RightSided]: ({
+  [LabelPosition.RightSided]: ({
     radialVector,
     infoLabelOffsetMargin,
     infoLabelScales,
@@ -174,22 +176,22 @@ const infoLabelOffsetStrategies: InfoLabelOffsetMap = {
       5
     );
   },
-  [LabelPositionings.RightSidedCorner]: ({ radialVector, infoLabelScales }) => {
+  [LabelPosition.RightSidedCorner]: ({ radialVector, infoLabelScales }) => {
     return new Vector3(radialVector.length() + infoLabelScales.x / 2, 0.5, 5);
   },
-  [LabelPositionings.Top]: ({ infoLabelScales }) => {
+  [LabelPosition.Top]: ({ infoLabelScales }) => {
     const groundedPieceLabelOffsetY = 1.5;
     return new Vector3(0, groundedPieceLabelOffsetY + infoLabelScales.y / 2, 5);
   },
 };
 
-type InfoLabelTailRotationZMap = Record<LabelPositioningsType, () => number>;
+type InfoLabelTailRotationZMap = Record<LabelPositionType, () => number>;
 
 const infoLabelTailRotationZStrategies: InfoLabelTailRotationZMap = {
-  [LabelPositionings.LeftSided]: () => math.degreesToRadians(90),
-  [LabelPositionings.RightSided]: () => math.degreesToRadians(-90),
-  [LabelPositionings.RightSidedCorner]: () => math.degreesToRadians(-26.56),
-  [LabelPositionings.Top]: () => 0,
+  [LabelPosition.LeftSided]: () => math.degreesToRadians(90),
+  [LabelPosition.RightSided]: () => math.degreesToRadians(-90),
+  [LabelPosition.RightSidedCorner]: () => math.degreesToRadians(-26.56),
+  [LabelPosition.Top]: () => 0,
 };
 
 type InfoLabelTailOffsetParams = {
@@ -200,12 +202,12 @@ type InfoLabelTailOffsetParams = {
 };
 
 type InfoLabelTailOffsetMap = Record<
-  LabelPositioningsType,
+  LabelPositionType,
   (params: InfoLabelTailOffsetParams) => Vector3Type
 >;
 
 const infoLabelTailOffsetStrategies: InfoLabelTailOffsetMap = {
-  [LabelPositionings.LeftSided]: ({
+  [LabelPosition.LeftSided]: ({
     infoLabelOffset,
     infoLabelScales,
     infoLabelTransformerDesiredScales,
@@ -219,7 +221,7 @@ const infoLabelTailOffsetStrategies: InfoLabelTailOffsetMap = {
       infoLabelOffset.z
     );
   },
-  [LabelPositionings.RightSided]: ({
+  [LabelPosition.RightSided]: ({
     infoLabelOffset,
     infoLabelScales,
     infoLabelTransformerDesiredScales,
@@ -233,7 +235,7 @@ const infoLabelTailOffsetStrategies: InfoLabelTailOffsetMap = {
       infoLabelOffset.z
     );
   },
-  [LabelPositionings.RightSidedCorner]: ({
+  [LabelPosition.RightSidedCorner]: ({
     infoLabelOffset,
     infoLabelScales,
     infoLabelTransformerDesiredScales,
@@ -248,7 +250,7 @@ const infoLabelTailOffsetStrategies: InfoLabelTailOffsetMap = {
       infoLabelOffset.z
     );
   },
-  [LabelPositionings.Top]: ({
+  [LabelPosition.Top]: ({
     infoLabelOffset,
     infoLabelScales,
     infoLabelTailDesiredScales,

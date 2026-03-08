@@ -1,5 +1,6 @@
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { arrangementService } from "bibleVizUtils.services.index";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 /**
  * Spawns a testament in the current dimension with specified properties and initializes it.
@@ -41,7 +42,7 @@ if (found) {
     testamentIndex,
   });
   const testament = ObjectPooler.GetObjectFromPool({
-    tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackTestament,
+    tag: ObjectPoolTags.StackTestament,
   });
   const testamentMod = {
     infoLabel: testamentData.pieceInfo.name,

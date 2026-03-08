@@ -1,5 +1,6 @@
 import { FindPreviousValidGroupBookData } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { BookShape } from "bibleVizUtils.models.canvas.models";
 
 const {
   bookData,
@@ -54,13 +55,12 @@ if (bookData.isSelected) {
         speedMultiplier,
         shape:
           !sectionData || sectionData.isInExplodedView
-            ? BibleVizUtils.Data.tags.BookShapeType.Selected
-            : BibleVizUtils.Data.tags.BookShapeType.RegularSelected,
+            ? BookShape.Selected
+            : BookShape.RegularSelected,
       })
       .then(() => {
         if (
-          bookData.currentShape ===
-            BibleVizUtils.Data.tags.BookShapeType.Selected &&
+          bookData.currentShape === BookShape.Selected &&
           !bookData.piece.masks.isShowingChapters
         ) {
           thisBot.ShowChaptersInBook({ data: bookData, dimension });
@@ -78,8 +78,8 @@ if (bookData.isSelected) {
       isInstantaneous,
       speedMultiplier,
       shape: sectionData?.isInExplodedView
-        ? BibleVizUtils.Data.tags.BookShapeType.ExplodedView
-        : BibleVizUtils.Data.tags.BookShapeType.Regular,
+        ? BookShape.ExplodedView
+        : BookShape.Regular,
     })
   );
 }

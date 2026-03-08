@@ -1,4 +1,6 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+
 const { layoutData } = that;
 
 const dimension = os.getCurrentDimension();
@@ -65,8 +67,7 @@ layoutData.playlistEntries
           prevChapterDataLastEntryItem
         );
         node = ObjectPooler.GetObjectFromPool({
-          tag: BibleVizUtils.Data.tags.ObjectPoolTags
-            .LayoutChapterPlaylistEntryNode,
+          tag: ObjectPoolTags.LayoutChapterPlaylistEntryNode,
         });
         const mod = {
           [dimension]: true,

@@ -10,11 +10,11 @@ import {
   ComputeInfoLabelTailOffset,
 } from "bibleVizUtils.functions.index";
 import { labelService } from "bibleVizUtils.services.LabelService";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 import {
   LabelDateFormat,
-  type LabelPositioningsType,
-  ObjectPoolTags,
-} from "bibleVizUtils.models.enums";
+  type LabelPositionType,
+} from "bibleVizUtils.models.label.models";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import type { Bot } from "../../../../../typings/AuxLibraryDefinitions";
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
@@ -27,7 +27,7 @@ export type SpawnLabelForPieceType = (params: {
   color: HexString;
   labelColor: HexString;
   dimension: string;
-  labelPositioning: LabelPositioningsType;
+  labelPositioning: LabelPositionType;
   isAnimatable: boolean;
   targetOpacity?: number;
   pointableDefault?: boolean;

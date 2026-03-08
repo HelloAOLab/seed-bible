@@ -1,6 +1,6 @@
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
-import { LabelPositionings } from "bibleVizUtils.models.enums";
+import { LabelPosition } from "bibleVizUtils.models.label.models";
 import { HexToRgb } from "bibleVizUtils.functions.index";
 
 /**
@@ -47,8 +47,8 @@ if (
       labelColor: "black",
       dimension,
       labelPositioning: thisBot.masks.isOnTheGround
-        ? LabelPositionings.Top
-        : LabelPositionings.LeftSided,
+        ? LabelPosition.Top
+        : LabelPosition.LeftSided,
       isAnimatable: false,
       pointableDefault: false,
     }).infoLabelTransformer;

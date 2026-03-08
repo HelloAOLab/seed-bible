@@ -4,39 +4,9 @@ import type {
   BookInfo,
   ArrangementInfo,
 } from "bibleVizUtils.data.BibleVizDataRepository";
-import {
-  GetExplodedViewBooksPositions,
-  type HexString,
-  GetChildrenLevelColors,
-  HexToRgb,
-} from "bibleVizUtils.functions.index";
 import type { StackPieceMeasurementsType } from "bibleVizUtils.data.StackPieceMeasurements";
 import type { StackSpacingsType } from "bibleVizUtils.data.StackSpacings";
 
-interface ArrangementTemplate {
-  name: string;
-  id: string;
-  testaments: {
-    name: string;
-    color: HexString;
-    id: string;
-    sections: {
-      name: string;
-      color: HexString;
-      id: string;
-      books: {
-        name: string;
-        color: HexString;
-        id: string;
-        explodedViewPosition?: {
-          x: number;
-          y: number;
-          z: number;
-        };
-      }[];
-    }[];
-  }[];
-}
 export type CompletePsalm = {
   chapter: number;
   book: "Psalms";
@@ -55,12 +25,6 @@ type ConvertCompletePsalmsToDividedType = (params: {
   chapter: number;
 }) => DividedPsalm;
 type GetBiggerChapterType = (arrangementIndex?: number) => number;
-type GetFixedArrangementByTemplate = (
-  template: ArrangementTemplate
-) => ArrangementInfo;
-type GetTemplateByArrangement = (
-  arrangement: ArrangementInfo
-) => ArrangementTemplate;
 
 interface ServiceRepository {
   getBookStaticInfo: (book: string) => BookStaticInfo | undefined;
@@ -230,125 +194,4 @@ export class ScriptureService {
       );
     return bookInfo.numberOfChapters;
   }
-
-  // TODO: Move getFixedArrangementByTemplate and getTemplateByArrangement to another place, as they are "presentation" methods
-
-  getFixedArrangementByTemplate: GetFixedArrangementByTemplate = ({
-    name: templateName,
-    testaments,
-  }) => {
-    const fixedArrangement: ArrangementInfo = {
-      name: templateName,
-      testaments: testaments.map((testament) => {
-        const {
-          name: testamentName,
-          color: testamentColor,
-          sections,
-        } = testament;
-        return {
-          name: testamentName,
-          color: testamentColor,
-          sections: sections.map((section) => {
-            const { books } = section;
-            const amountOfChaptersInSection = this.getSectionChapterCount(
-              books.map((book) => {
-                return { commonName: book.name };
-              })
-            );
-            const sectionDesiredScaleZ =
-              amountOfChaptersInSection *
-              this.#repository.getStackPieceMeasurement(
-                "SectionDesiredScaleZRatio"
-              );
-            const sectionAvailableSpace =
-              sectionDesiredScaleZ -
-              this.#repository.getStackSpacing("BetweenBooks") *
-                (books.length + 1);
-            const sectionExplodedViewScaleZ = sectionDesiredScaleZ * 2;
-
-            const booksScalesZ = books.map((book) => {
-              const { name: bookName } = book;
-              const chaptersCount =
-                this.#repository.getBookStaticInfo(bookName)
-                  ?.numberOfChapters ?? 0;
-              const percentageOfBookInSection =
-                chaptersCount / amountOfChaptersInSection;
-              const bookScaleZ =
-                percentageOfBookInSection * sectionAvailableSpace;
-              return bookScaleZ;
-            });
-            const positions = GetExplodedViewBooksPositions({
-              booksScalesZ,
-              sectionExplodedViewScaleZ,
-            });
-            books.forEach((book, index) => {
-              const positionZ = positions[index];
-              book.explodedViewPosition = { x: 0, y: 0, z: positionZ ?? 0 };
-            });
-
-            return {
-              name: section.name,
-              color: section.color,
-              books: books.map((book) => {
-                return {
-                  commonName: book.name,
-                  customColor: book.color,
-                  explodedViewPosition: book.explodedViewPosition,
-                };
-              }),
-            };
-          }),
-        };
-      }),
-    };
-
-    return fixedArrangement;
-  };
-
-  getTemplateByArrangement: GetTemplateByArrangement = ({
-    name,
-    testaments,
-  }) => {
-    const template: ArrangementTemplate = {
-      name,
-      id: uuid(),
-      testaments: testaments.map(({ name: testamentName, sections }) => {
-        return {
-          name: testamentName,
-          color: "#FFFFFF",
-          id: uuid(),
-          sections: sections.map(
-            ({
-              name: sectionName,
-              color: sectionColor,
-              books,
-              customColorRange,
-            }) => {
-              const bookLevelColors = GetChildrenLevelColors({
-                sectionColorRGB: HexToRgb({
-                  hexColor: sectionColor,
-                }),
-                colorRange: customColorRange ?? 70,
-                levelsLength: books.length,
-              });
-              return {
-                name: sectionName,
-                color: sectionColor,
-                id: uuid(),
-                books: books.map(({ commonName: bookName }, bookIndex) => {
-                  return {
-                    name: bookName,
-                    color: bookLevelColors[bookIndex] ?? "#FFFFFF",
-                    id: uuid(),
-                  };
-                }),
-              };
-            }
-          ),
-        };
-      }),
-    };
-
-    return template;
-  };
 }

@@ -14,7 +14,7 @@ import {
   type ReadingHistorySummary,
 } from "db.annotations.library";
 import { useSideBarContext } from "app.hooks.sideBar";
-import { userColorStore } from "bibleVizUtils.services.UserColorStore";
+import { userColorStore } from "bibleVizUtils.services.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import type { BookStaticInfo } from "bibleVizUtils.data.BibleVizDataRepository";
 import type { Range, TooltipAnchor, BookType } from "scriptureMap2D.main.types";

@@ -1,5 +1,6 @@
 import { GetDarkerColor } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 /**
  * Sets up a Bible, positioning its pieces and initializing the testament data.
@@ -172,7 +173,7 @@ const crossHorizontalLineMod = {
 };
 for (const testamentData of bibleData.childrenData) {
   const testament = ObjectPooler.GetObjectFromPool({
-    tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackTestament,
+    tag: ObjectPoolTags.StackTestament,
   });
   const testamentMod = {
     infoLabel: testamentData.pieceInfo.name,

@@ -4,6 +4,7 @@ import {
   HexToRgb,
 } from "bibleVizUtils.functions.index";
 import { arrangementService } from "bibleVizUtils.services.index";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 const { layoutBookStructure, position } = that;
 const dimension = os.getCurrentDimension();
@@ -30,7 +31,7 @@ const bookScales = new Vector3(
 const book =
   layoutBookStructure.layoutBookData.piece ??
   ObjectPooler.GetObjectFromPool({
-    tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBook,
+    tag: ObjectPoolTags.LayoutBook,
   });
 
 const { arrangementIndex, testamentIndex, sectionIndex, found } =

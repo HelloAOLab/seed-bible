@@ -16,15 +16,13 @@ import type {
   UserPresence,
 } from "scriptureMap2D.main.types";
 import { type ArrangementInfo } from "bibleVizUtils.data.BibleVizDataRepository";
+import { type UserData } from "bibleVizUtils.services.UserColorStore";
 import {
+  bibleVizUtilsEventManager,
   userColorStore,
-  type UserData,
-} from "bibleVizUtils.services.UserColorStore";
-import { bibleVizUtilsEventManager } from "bibleVizUtils.services.index";
-import {
-  userPresenceService,
-  type UserPresenceType,
-} from "bibleVizUtils.services.UserPresenceService";
+} from "bibleVizUtils.services.index";
+import { userPresenceService } from "bibleVizUtils.services.index";
+import type { UserPresence } from "bibleVizUtils.services.UserPresenceService";
 import { arrangementService } from "bibleVizUtils.services.index";
 
 const { createContext, useState, useContext, useCallback, useMemo, useEffect } =
@@ -193,7 +191,7 @@ export const ScriptureMap2DProvider: (
     });
   }, [tabs, activeTabId]);
 
-  const [userPresence, setUserPresence] = useState<UserPresenceType>(() =>
+  const [userPresence, setUserPresence] = useState<UserPresence>(() =>
     userPresenceService.getUserPresence()
   );
 

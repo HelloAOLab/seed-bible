@@ -2,26 +2,15 @@ import type {
   Bot,
   Vector3 as Vector3Type,
 } from "../../../../typings/AuxLibraryDefinitions";
-import type { AnimateTagFunctionOptions } from "../../../../typings/AuxLibraryDefinitions";
+import type {
+  AnimateTagData,
+  SetTagData,
+} from "bibleVizUtils.models.casualos.models";
 
 type DistanceBetweenBotAndCameraType = (params: { bot: Bot }) => number;
 
-interface GetAnimateTagFromObjectObject {
-  bot: Bot;
-  tag?: string;
-  options: AnimateTagFunctionOptions;
-  then?: GetAnimateTagFromObjectObject;
-}
-interface GetSetTagFromObjectObject {
-  bot: Bot;
-  tag: string;
-  options: AnimateTagFunctionOptions;
-  then?: GetSetTagFromObjectObject;
-}
-type GetAnimateTagFromObjectType = (
-  obj: GetAnimateTagFromObjectObject
-) => Promise<void>;
-type GetSetTagFromObjectType = (obj: GetSetTagFromObjectObject) => void;
+type ComputeAnimateTagType = (obj: AnimateTagData) => Promise<void>;
+type ApplySetTagType = (obj: SetTagData) => void;
 type GetBotScalesType = (bot: Bot) => { x: number; y: number; z: number };
 type GetTransformedScalesType = (bot: Bot) => {
   x: number;
@@ -45,7 +34,7 @@ export const DistanceBetweenBotAndCamera: DistanceBetweenBotAndCameraType = ({
   return distance;
 };
 
-export const GetAnimateTagFromObject: GetAnimateTagFromObjectType = ({
+export const computeAnimateTag: ComputeAnimateTagType = ({
   bot,
   tag,
   options,
@@ -56,20 +45,15 @@ export const GetAnimateTagFromObject: GetAnimateTagFromObjectType = ({
     : animateTag(bot, options);
   return animateFn.then(() => {
     if (then) {
-      return GetAnimateTagFromObject(then);
+      return computeAnimateTag(then);
     }
   });
 };
 
-export const SetTagFromObject: GetSetTagFromObjectType = ({
-  bot,
-  tag,
-  options,
-  then,
-}) => {
+export const applySetTag: ApplySetTagType = ({ bot, tag, options, then }) => {
   setTag(bot, tag, options.toValue);
   if (then) {
-    SetTagFromObject(then);
+    applySetTag(then);
   }
 };
 

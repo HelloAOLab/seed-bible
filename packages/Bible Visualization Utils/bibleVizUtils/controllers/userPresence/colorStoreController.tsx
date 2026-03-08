@@ -1,10 +1,8 @@
 import { getSubscribedUsers } from "db.annotations.library";
-import {
-  userColorStore,
-  type UserIds,
-} from "bibleVizUtils.services.UserColorStore";
+import { type UserIds } from "bibleVizUtils.services.UserColorStore";
 import { GetRandomColor } from "bibleVizUtils.functions.colors";
 import { DebouncerService } from "bibleVizUtils.services.DebouncerService";
+import { userColorStore } from "bibleVizUtils.services.index";
 
 const updateUserColorStore = async () => {
   try {

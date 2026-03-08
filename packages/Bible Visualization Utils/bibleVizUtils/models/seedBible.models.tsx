@@ -1,5 +1,3 @@
-import type { BiblePieceTypeType } from "bibleVizUtils.models.enums";
-
 export interface TabData {
   use: string;
   first: boolean;
@@ -15,9 +13,4 @@ export interface Tab {
   id: string;
   taken: boolean;
   data: TabData;
-}
-
-export interface PieceInfo {
-  typeOfPiece: BiblePieceTypeType;
-  key: string;
 }

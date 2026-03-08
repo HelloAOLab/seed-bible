@@ -5,7 +5,8 @@ import {
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
-import { LabelPositionings } from "bibleVizUtils.models.enums";
+import { LabelPosition } from "bibleVizUtils.models.label.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 const {
   sectionData,
@@ -235,8 +236,8 @@ if (sectionData.isSplitIntoBooks) {
           labelColor: "white",
           dimension,
           labelPositioning: sectionData.piece.masks.isOnTheGround
-            ? LabelPositionings.Top
-            : LabelPositionings.RightSidedCorner,
+            ? LabelPosition.Top
+            : LabelPosition.RightSidedCorner,
           isAnimatable: false,
           targetOpacity: 0.5,
         });
@@ -296,8 +297,8 @@ if (sectionData.isSplitIntoBooks) {
               labelColor: "white",
               dimension,
               labelPositioning: sectionData.piece.masks.isOnTheGround
-                ? LabelPositionings.Top
-                : LabelPositionings.RightSidedCorner,
+                ? LabelPosition.Top
+                : LabelPosition.RightSidedCorner,
               isAnimatable: false,
               targetOpacity: 0.5,
             });
@@ -315,7 +316,7 @@ if (sectionData.isSplitIntoBooks) {
     // Create section shadow
 
     const sectionShadow = ObjectPooler.GetObjectFromPool({
-      tag: BibleVizUtils.Data.tags.ObjectPoolTags.SectionShadow,
+      tag: ObjectPoolTags.SectionShadow,
     });
     if (sectionShadow) {
       const sectionShadowMod = {
@@ -362,8 +363,8 @@ if (sectionData.isSplitIntoBooks) {
           labelColor: "white",
           dimension,
           labelPositioning: sectionData.piece.masks.isOnTheGround
-            ? LabelPositionings.Top
-            : LabelPositionings.RightSidedCorner,
+            ? LabelPosition.Top
+            : LabelPosition.RightSidedCorner,
           isAnimatable: false,
           targetOpacity: 0.5,
         });
@@ -400,8 +401,8 @@ if (sectionData.isSplitIntoBooks) {
               labelColor: "white",
               dimension,
               labelPositioning: sectionData.piece.masks.isOnTheGround
-                ? LabelPositionings.Top
-                : LabelPositionings.RightSidedCorner,
+                ? LabelPosition.Top
+                : LabelPosition.RightSidedCorner,
               isAnimatable: false,
               targetOpacity: 0.5,
             });

@@ -1,6 +1,7 @@
 import { GetDarkerColor } from "bibleVizUtils.functions.index";
 import { arrangementService } from "bibleVizUtils.services.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 /**
  * Spawns a section (or section book) in the current dimension with specified properties and initializes it.
@@ -54,8 +55,8 @@ if (found) {
   const section = ObjectPooler.GetObjectFromPool({
     tag:
       sectionData instanceof StackSectionBookData
-        ? BibleVizUtils.Data.tags.ObjectPoolTags.StackBook
-        : BibleVizUtils.Data.tags.ObjectPoolTags.StackSection,
+        ? ObjectPoolTags.StackBook
+        : ObjectPoolTags.StackSection,
   });
   const sectionMod = {
     typeOfPiece:

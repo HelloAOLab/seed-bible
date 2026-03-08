@@ -1,16 +1,17 @@
-import { LabelPositionings } from "bibleVizUtils.models.enums";
+import { LabelPosition } from "bibleVizUtils.models.label.models";
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { HexToRgb } from "bibleVizUtils.functions.index";
+import { BookShape } from "bibleVizUtils.models.canvas.models";
 
 /**
  * This tag try to set the book shape into the one passed as an argument
  * @param {Object} that - Object that contains important data for the function
- * @param {String} that.shape - The type of shape the book attempts to set its shape. Allowed types of shape can be found at globalThis.BookShapeType
+ * @param {String} that.shape - The type of shape the book attempts to set its shape.
  * @param {Number} that.duration? - Is optional and is a custom duration for the animation
  * @example
- * thisBot.TrySetShape({shape: BibleVizUtils.Data.tags.BookShapeType.Regular})
+ * thisBot.TrySetShape({shape: BookShape.Regular})
  */
 
 const dimension = os.getCurrentDimension();
@@ -30,7 +31,7 @@ const infoLabelTransformer =
   LabelsRepository.getLabelTransformerByOwner(thisBot);
 bookData.currentShape = shape;
 switch (shape) {
-  case BibleVizUtils.Data.tags.BookShapeType.ExplodedView:
+  case BookShape.ExplodedView:
     {
       setTagMask(
         thisBot,
@@ -40,7 +41,7 @@ switch (shape) {
           : (bookData.highlightColor ?? thisBot.tags.initialColor)
       );
       if (isInstantaneous) {
-        if (prevShape !== BibleVizUtils.Data.tags.BookShapeType.Regular)
+        if (prevShape !== BookShape.Regular)
           setTagMask(thisBot, "formOpacity", thisBot.tags.unhoveredOpacity);
         setTagMask(
           thisBot,
@@ -64,7 +65,7 @@ switch (shape) {
           animateTag(thisBot, {
             fromValue: {
               formOpacity:
-                prevShape !== BibleVizUtils.Data.tags.BookShapeType.Regular
+                prevShape !== BookShape.Regular
                   ? thisBot.tags.formOpacity
                   : null,
               scaleX: bookScales.x,
@@ -73,7 +74,7 @@ switch (shape) {
             },
             toValue: {
               formOpacity:
-                prevShape !== BibleVizUtils.Data.tags.BookShapeType.Regular
+                prevShape !== BookShape.Regular
                   ? thisBot.tags.unhoveredOpacity
                   : null,
               scaleX: thisBot.tags.explodedViewCustomScale
@@ -89,8 +90,7 @@ switch (shape) {
             duration,
             easing,
           }),
-          prevShape === BibleVizUtils.Data.tags.BookShapeType.Selected &&
-          infoLabelTransformer
+          prevShape === BookShape.Selected && infoLabelTransformer
             ? infoLabelTransformer.Hide({ isInstantaneous }).then(() => {
                 ObjectPooler.ReleaseObject({
                   obj: infoLabelTransformer,
@@ -105,7 +105,7 @@ switch (shape) {
       }
     }
     break;
-  case BibleVizUtils.Data.tags.BookShapeType.Regular:
+  case BookShape.Regular:
     {
       setTagMask(
         thisBot,
@@ -115,7 +115,7 @@ switch (shape) {
           : (bookData.highlightColor ?? thisBot.tags.initialColor)
       );
       if (isInstantaneous) {
-        if (prevShape !== BibleVizUtils.Data.tags.BookShapeType.Regular)
+        if (prevShape !== BookShape.Regular)
           setTagMask(thisBot, "formOpacity", thisBot.tags.unhoveredOpacity);
         setTagMask(
           thisBot,
@@ -139,7 +139,7 @@ switch (shape) {
           animateTag(thisBot, {
             fromValue: {
               formOpacity:
-                prevShape !== BibleVizUtils.Data.tags.BookShapeType.ExplodedView
+                prevShape !== BookShape.ExplodedView
                   ? thisBot.tags.formOpacity
                   : null,
               scaleX: bookScales.x,
@@ -148,7 +148,7 @@ switch (shape) {
             },
             toValue: {
               formOpacity:
-                prevShape !== BibleVizUtils.Data.tags.BookShapeType.ExplodedView
+                prevShape !== BookShape.ExplodedView
                   ? thisBot.tags.unhoveredOpacity
                   : null,
               scaleX: thisBot.tags.initialScaleX,
@@ -158,8 +158,7 @@ switch (shape) {
             duration,
             easing,
           }),
-          prevShape === BibleVizUtils.Data.tags.BookShapeType.Selected &&
-          infoLabelTransformer
+          prevShape === BookShape.Selected && infoLabelTransformer
             ? infoLabelTransformer.Hide({ isInstantaneous }).then(() => {
                 ObjectPooler.ReleaseObject({
                   obj: infoLabelTransformer,
@@ -174,7 +173,7 @@ switch (shape) {
       }
     }
     break;
-  case BibleVizUtils.Data.tags.BookShapeType.RegularSelected:
+  case BookShape.RegularSelected:
     {
       setTagMask(thisBot, "strokeColor", "#FFFFFF");
       await Promise.allSettled([
@@ -194,8 +193,7 @@ switch (shape) {
           duration,
           easing,
         }),
-        prevShape === BibleVizUtils.Data.tags.BookShapeType.Selected &&
-        infoLabelTransformer
+        prevShape === BookShape.Selected && infoLabelTransformer
           ? infoLabelTransformer.Hide({ isInstantaneous }).then(() => {
               ObjectPooler.ReleaseObject({
                 obj: infoLabelTransformer,
@@ -207,10 +205,10 @@ switch (shape) {
       setTagMask(thisBot, "color", "clear");
     }
     break;
-  case BibleVizUtils.Data.tags.BookShapeType.Selected:
+  case BookShape.Selected:
     {
       await Promise.allSettled([
-        prevShape !== BibleVizUtils.Data.tags.BookShapeType.RegularSelected
+        prevShape !== BookShape.RegularSelected
           ? ColorLerper.LerpTag({
               startingColor: HexToRgb({
                 hexColor: thisBot.masks.color ?? thisBot.tags.color,
@@ -252,8 +250,8 @@ switch (shape) {
         labelColor: "white",
         dimension,
         labelPositioning: thisBot.masks.isOnTheGround
-          ? LabelPositionings.Top
-          : LabelPositionings.RightSided,
+          ? LabelPosition.Top
+          : LabelPosition.RightSided,
         isAnimatable: false,
       });
       setTagMask(thisBot, "strokeColor", "#FFFFFF");

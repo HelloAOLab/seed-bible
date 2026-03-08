@@ -1,4 +1,5 @@
 import { Vector2 as Vector2Type } from "../../../../typings/AuxLibraryDefinitions";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 export class LayoutChapterData {
   constructor({
@@ -33,8 +34,7 @@ export class LayoutChapterData {
     if (this.playlistEntriesItems?.length > 0) {
       ObjectPooler.ReleaseObject({
         obj: this.playlistEntriesItems,
-        tag: BibleVizUtils.Data.tags.ObjectPoolTags
-          .LayoutChapterPlaylistEntryItem,
+        tag: ObjectPoolTags.LayoutChapterPlaylistEntryItem,
       });
       this.playlistEntriesItems = [];
     }

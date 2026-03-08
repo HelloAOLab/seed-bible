@@ -1,6 +1,6 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
-import { LabelPositionings } from "bibleVizUtils.models.enums";
+import { LabelPosition } from "bibleVizUtils.models.label.models";
 import { PieceDataRepository } from "bibleStack.services.PieceDataRepository";
 
 /**
@@ -32,8 +32,8 @@ const { infoLabelTransformer } = SpawnLabelForPiece({
   labelColor: testamentData.highlightColor ?? thisBot.tags.labelTextColor,
   dimension,
   labelPositioning: thisBot.masks.isOnTheGround
-    ? LabelPositionings.Top
-    : LabelPositionings.LeftSided,
+    ? LabelPosition.Top
+    : LabelPosition.LeftSided,
   isAnimatable: true,
 });
 

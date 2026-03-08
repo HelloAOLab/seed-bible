@@ -5,7 +5,7 @@ import {
 import { useTimeContext } from "scriptureMap2D.main.TimeContext";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
 import { useSideBarContext } from "app.hooks.sideBar";
-import { userColorStore } from "bibleVizUtils.services.UserColorStore";
+import { userColorStore } from "bibleVizUtils.services.index";
 import type {
   ReadingHistoryTooltipHeaderType,
   ReadingHistoryLabelType,

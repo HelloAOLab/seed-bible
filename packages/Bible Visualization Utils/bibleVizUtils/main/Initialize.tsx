@@ -1,8 +1,8 @@
 let BibleVizDataRepository;
+let ObjectPoolTags;
 
 let PoolData;
 let CustomTag;
-let PieceInfo;
 let StackBibleData;
 let StackTestamentData;
 let StackSectionData;
@@ -10,13 +10,11 @@ let StackSectionBookData;
 let StackBookData;
 let StackChapterData;
 let LayoutChapterData;
-let AnimateTagObject;
 let LayoutBibleData;
 let LayoutBookData;
 let LayoutBookStructure;
 let ParentDataIds;
 let QueuedChapterData;
-let StackData;
 let TourGuideData;
 let UnhighlightDelayInfo;
 
@@ -59,7 +57,6 @@ if (authBot) {
 try {
   ({ PoolData } = await import("objectPooler.main.PoolData"));
   ({ CustomTag } = await import("objectPooler.main.CustomTag"));
-  ({ PieceInfo } = await import("bibleVizUtils.classes.PieceInfo"));
   ({ StackBibleData } = await import("bibleVizUtils.classes.StackBibleData"));
   ({ StackTestamentData } =
     await import("bibleVizUtils.classes.StackTestamentData"));
@@ -72,8 +69,6 @@ try {
     await import("bibleVizUtils.classes.StackChapterData"));
   ({ LayoutChapterData } =
     await import("bibleVizUtils.classes.LayoutChapterData"));
-  ({ AnimateTagObject } =
-    await import("bibleVizUtils.classes.AnimateTagObject"));
   ({ LayoutBibleData } = await import("bibleVizUtils.classes.LayoutBibleData"));
   ({ LayoutBookData } = await import("bibleVizUtils.classes.LayoutBookData"));
   ({ LayoutBookStructure } =
@@ -81,18 +76,17 @@ try {
   ({ ParentDataIds } = await import("bibleVizUtils.classes.ParentDataIds"));
   ({ QueuedChapterData } =
     await import("bibleVizUtils.classes.QueuedChapterData"));
-  ({ StackData } = await import("bibleVizUtils.classes.StackData"));
   ({ TourGuideData } = await import("bibleVizUtils.classes.TourGuideData"));
   ({ UnhighlightDelayInfo } =
     await import("bibleVizUtils.classes.UnhighlightDelayInfo"));
 
   ({ BibleVizDataRepository } =
     await import("bibleVizUtils.data.BibleVizDataRepository"));
+  ({ ObjectPoolTags } = await import("bibleVizUtils.models.canvas.models"));
 } catch (err) {
   console.warn("Module not found:", err);
 }
 
-globalThis.PieceInfo = PieceInfo;
 globalThis.StackBibleData = StackBibleData;
 globalThis.StackTestamentData = StackTestamentData;
 globalThis.StackSectionData = StackSectionData;
@@ -100,13 +94,11 @@ globalThis.StackSectionBookData = StackSectionBookData;
 globalThis.StackBookData = StackBookData;
 globalThis.StackChapterData = StackChapterData;
 globalThis.LayoutChapterData = LayoutChapterData;
-globalThis.AnimateTagObject = AnimateTagObject;
 globalThis.LayoutBibleData = LayoutBibleData;
 globalThis.LayoutBookData = LayoutBookData;
 globalThis.LayoutBookStructure = LayoutBookStructure;
 globalThis.ParentDataIds = ParentDataIds;
 globalThis.QueuedChapterData = QueuedChapterData;
-globalThis.StackData = StackData;
 globalThis.TourGuideData = TourGuideData;
 globalThis.UnhighlightDelayInfo = UnhighlightDelayInfo;
 
@@ -128,68 +120,6 @@ globalThis.UnhighlightDelayInfo = UnhighlightDelayInfo;
 //     setTag(gridPortalBot, "onBotChanged", null);
 //     setTag(gridPortalBot, "onBotChanged", finalBotChanged);
 // }
-
-const { HistoryTimePeriodInfo } =
-  await import("bibleVizUtils.classes.HistoryTimePeriodInfo");
-
-// const historyTimePeriodsInfo = [
-//   new HistoryTimePeriodInfo({ value: 1, isNowTimePeriod: true }),
-//   new HistoryTimePeriodInfo({
-//     value: 1,
-//     timeAmount: 1,
-//     timeUnit: bibleVizData.tags.TimeUnit.Days,
-//   }),
-//   new HistoryTimePeriodInfo({
-//     value: 0.9,
-//     timeAmount: 2,
-//     timeUnit: bibleVizData.tags.TimeUnit.Days,
-//   }),
-//   new HistoryTimePeriodInfo({
-//     value: 0.8,
-//     timeAmount: 3,
-//     timeUnit: bibleVizData.tags.TimeUnit.Days,
-//   }),
-//   new HistoryTimePeriodInfo({
-//     value: 0.7,
-//     timeAmount: 4,
-//     timeUnit: bibleVizData.tags.TimeUnit.Days,
-//   }),
-//   new HistoryTimePeriodInfo({
-//     value: 0.6,
-//     timeAmount: 5,
-//     timeUnit: bibleVizData.tags.TimeUnit.Days,
-//   }),
-//   new HistoryTimePeriodInfo({
-//     value: 0.5,
-//     timeAmount: 6,
-//     timeUnit: bibleVizData.tags.TimeUnit.Days,
-//   }),
-//   new HistoryTimePeriodInfo({
-//     value: 0.4,
-//     timeAmount: 7,
-//     timeUnit: bibleVizData.tags.TimeUnit.Days,
-//   }),
-//   new HistoryTimePeriodInfo({
-//     value: 0.3,
-//     timeAmount: 8,
-//     timeUnit: bibleVizData.tags.TimeUnit.Days,
-//   }),
-//   new HistoryTimePeriodInfo({
-//     value: 0.2,
-//     timeAmount: 9,
-//     timeUnit: bibleVizData.tags.TimeUnit.Days,
-//   }),
-//   new HistoryTimePeriodInfo({
-//     value: 0.1,
-//     timeAmount: 10,
-//     timeUnit: bibleVizData.tags.TimeUnit.Days,
-//   }),
-//   new HistoryTimePeriodInfo({
-//     value: 0,
-//     timeAmount: 11,
-//     timeUnit: bibleVizData.tags.TimeUnit.Days,
-//   }),
-// ];
 
 const UsersColorValues = {
   LabelScales: { x: 0.5, y: 0.5, z: 0 },
@@ -217,42 +147,42 @@ bibleVizData.vars.history = [];
 bibleVizData.vars.highlightHistory = [];
 BibleVizDataRepository?.setCustomArrangements([]);
 
-if (PoolData && CustomTag) {
+if (PoolData && CustomTag && ObjectPoolTags) {
   const infoLabelPool = new PoolData({
-    tag: bibleVizData.tags.ObjectPoolTags.InfoLabel,
+    tag: ObjectPoolTags.InfoLabel,
     bot: getBot(byTag("isBaseInfoLabel", true)),
     customTags: [
       new CustomTag({ name: "isBaseInfoLabel", value: false }),
       new CustomTag({ name: "isInfoLabel", value: true }),
       new CustomTag({
         name: "poolTag",
-        value: bibleVizData.tags.ObjectPoolTags.InfoLabel,
+        value: ObjectPoolTags.InfoLabel,
       }),
       new CustomTag({ name: "system", value: null }),
     ],
     size: 8,
   });
   const infoLabelTailPool = new PoolData({
-    tag: bibleVizData.tags.ObjectPoolTags.InfoLabelTail,
+    tag: ObjectPoolTags.InfoLabelTail,
     bot: getBot(byTag("isBaseInfoLabelTail", true)),
     customTags: [
       new CustomTag({ name: "isBaseInfoLabelTail", value: false }),
       new CustomTag({ name: "isInfoLabelTail", value: true }),
       new CustomTag({
         name: "poolTag",
-        value: bibleVizData.tags.ObjectPoolTags.InfoLabelTail,
+        value: ObjectPoolTags.InfoLabelTail,
       }),
       new CustomTag({ name: "system", value: null }),
     ],
     size: 8,
   });
   const infoLabelDatePool = new PoolData({
-    tag: bibleVizData.tags.ObjectPoolTags.InfoLabelDate,
+    tag: ObjectPoolTags.InfoLabelDate,
     bot: getBot("system", "bibleVizUtils.prefabs.infoLabelDate"),
     customTags: [
       new CustomTag({
         name: "poolTag",
-        value: bibleVizData.tags.ObjectPoolTags.InfoLabelDate,
+        value: ObjectPoolTags.InfoLabelDate,
       }),
       new CustomTag({ name: "isInfoLabelDate", value: true }),
       new CustomTag({ name: "system", value: null }),
@@ -260,26 +190,26 @@ if (PoolData && CustomTag) {
     size: 8,
   });
   const infoLabelTransformerPool = new PoolData({
-    tag: bibleVizData.tags.ObjectPoolTags.InfoLabelTransformer,
+    tag: ObjectPoolTags.InfoLabelTransformer,
     bot: getBot(byTag("isBaseInfoLabelTransformer", true)),
     customTags: [
       new CustomTag({ name: "isBaseInfoLabelTransformer", value: false }),
       new CustomTag({ name: "isInfoLabelTransformer", value: true }),
       new CustomTag({
         name: "poolTag",
-        value: bibleVizData.tags.ObjectPoolTags.InfoLabelTransformer,
+        value: ObjectPoolTags.InfoLabelTransformer,
       }),
       new CustomTag({ name: "system", value: null }),
     ],
     size: 8,
   });
   const userColorPool = new PoolData({
-    tag: bibleVizData.tags.ObjectPoolTags.ActivityIndicator,
+    tag: ObjectPoolTags.ActivityIndicator,
     bot: getBot("system", "bibleVizUtils.prefabs.userColor"),
     customTags: [
       new CustomTag({
         name: "poolTag",
-        value: bibleVizData.tags.ObjectPoolTags.ActivityIndicator,
+        value: ObjectPoolTags.ActivityIndicator,
       }),
       new CustomTag({ name: "isUserColor", value: true }),
       new CustomTag({ name: "system", value: null }),
@@ -287,12 +217,12 @@ if (PoolData && CustomTag) {
     size: 8,
   });
   const activityNotificationPool = new PoolData({
-    tag: bibleVizData.tags.ObjectPoolTags.ActivityNotification,
+    tag: ObjectPoolTags.ActivityNotification,
     bot: getBot("system", "bibleVizUtils.prefabs.activityNotification"),
     customTags: [
       new CustomTag({
         name: "poolTag",
-        value: bibleVizData.tags.ObjectPoolTags.ActivityNotification,
+        value: ObjectPoolTags.ActivityNotification,
       }),
       new CustomTag({ name: "system", value: null }),
     ],

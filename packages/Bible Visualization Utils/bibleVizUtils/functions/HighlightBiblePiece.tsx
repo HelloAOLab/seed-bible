@@ -3,6 +3,8 @@ console.warn(
 );
 return;
 
+// import type { HighlightData } from "bibleVizUtils.models.highlight.models";
+
 // const {piece, data} = that;
 
 // let prevColor;
@@ -44,11 +46,11 @@ return;
 //     else
 //     {
 //         if(!BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(piece, "color", BibleVizUtils.Data.tags.highlightColor);
-//         const newHighlightInfo = new HighlightInfo({
+//         const newHighlightInfo: HighlightData = {
 //             color: BibleVizUtils.Data.tags.highlightColor,
 //             typeOfPiece: piece.tags.typeOfPiece,
 //             key: piece.masks.chunkPath ?? piece.masks.versePath
-//         })
+//         }
 //         chapterData.AddHighlightInfo(newHighlightInfo)
 //         highlightSuccessful = true;
 //     }

@@ -6,6 +6,7 @@ import {
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { subtractArrays } from "bibleVizUtils.functions.index";
 import { tryHideNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 
 /**
  * Handles a testament selection. It modify the data of the selected testament on the bibleStructure,
@@ -138,8 +139,8 @@ for (const data of testamentData.childrenData) {
   const section = ObjectPooler.GetObjectFromPool({
     tag:
       data instanceof StackSectionBookData
-        ? BibleVizUtils.Data.tags.ObjectPoolTags.StackBook
-        : BibleVizUtils.Data.tags.ObjectPoolTags.StackSection,
+        ? ObjectPoolTags.StackBook
+        : ObjectPoolTags.StackSection,
   });
   const sectionMod = {
     typeOfPiece:

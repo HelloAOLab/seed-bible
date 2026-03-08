@@ -5,6 +5,8 @@ import {
   stackService,
   arrangementService,
 } from "bibleVizUtils.services.index";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { StackGeometryMapper } from "bibleVizUtils.mappers.StackGeometryMapper";
 
 /**
  * Spawns a book piece into the scene based on the provided name and position. It calculates various properties like the book's scale, color, and placement based on its section, level, and other contextual data.
@@ -97,8 +99,12 @@ if (bookData.pieceInfo.group) {
   });
   const bookLayout = layout[groupBookIndex];
   const { scale: groupBookScales } =
-    stackService.computeGroupBookProperties(bookLayout);
-
+    StackGeometryMapper.computeGroupBookProperties(
+      bookLayout,
+      undefined,
+      BibleVizDataRepository.getStackPieceMeasurement("BookScales"),
+      BibleVizDataRepository.getStackSpacing("BetweenBooks")
+    );
   if (groupBookScales) {
     groupBookScaleX = groupBookScales.x;
     groupBookScaleY = groupBookScales.y;
@@ -148,7 +154,7 @@ if (displayJarvisSpawnPieceAnimation)
     ),
   });
 book = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackBook,
+  tag: ObjectPoolTags.StackBook,
 });
 const bookMod = {
   [dimension]: true,

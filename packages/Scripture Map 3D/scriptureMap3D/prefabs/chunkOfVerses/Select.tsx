@@ -1,4 +1,5 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 /**
  * Selects the chunk of verses, animating their appearance and positioning the verses in the defined layout.
  * @example
@@ -10,7 +11,7 @@ const dimension = os.getCurrentDimension();
 const amountOfVerses =
   thisBot.masks.finalVerseNumber - thisBot.masks.initialVerseNumber + 1;
 let verses = ObjectPooler.GetObjectFromPool({
-  tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutVerse,
+  tag: ObjectPoolTags.LayoutVerse,
   amount: amountOfVerses,
 });
 verses = Array.isArray(verses) ? verses : [verses];
