@@ -1,5 +1,8 @@
 import { signal } from "https://esm.sh/@preact/signals?deps=preact@10.28.4?externals=preact";
 import {
+  DEFAULT_BOOK_ID,
+  DEFAULT_CHAPTER_NUMBER,
+  DEFAULT_TRANSLATION_ID,
   useBibleReadingState,
   type BibleReadingState,
 } from "seed-bible.managers.BibleReadingManager";
@@ -13,19 +16,21 @@ export interface ReaderTab {
 function getInitialFirstTabBookId(): string {
   return typeof configBot.tags.book === "string" && configBot.tags.book.trim()
     ? configBot.tags.book
-    : "GEN";
+    : DEFAULT_BOOK_ID;
 }
 
 function getInitialTranslationId(): string {
   return typeof configBot.tags.translation === "string" &&
     configBot.tags.translation.trim()
     ? configBot.tags.translation
-    : "BSB";
+    : DEFAULT_TRANSLATION_ID;
 }
 
 function getInitialFirstTabChapter(): number {
   const value = Number(configBot.tags.chapter);
-  return Number.isFinite(value) && value > 0 ? Math.floor(value) : 1;
+  return Number.isFinite(value) && value > 0
+    ? Math.floor(value)
+    : DEFAULT_CHAPTER_NUMBER;
 }
 
 function createInitialTabs(): ReaderTab[] {

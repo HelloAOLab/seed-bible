@@ -25,6 +25,10 @@ export interface BibleReadingState {
   loadNextChapter: () => Promise<void>;
 }
 
+export const DEFAULT_TRANSLATION_ID = "BSB";
+export const DEFAULT_BOOK_ID = "GEN";
+export const DEFAULT_CHAPTER_NUMBER = 1;
+
 interface InitialBibleReadingOptions {
   initialTranslationId?: string | null;
   initialBookId?: string | null;
