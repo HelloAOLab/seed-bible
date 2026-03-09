@@ -36,11 +36,18 @@ function loadTranslations(): Record<
   return loadedResources;
 }
 
+const resources = loadTranslations();
+if (!resources[DEFAULT_LANGUAGE]) {
+  resources[DEFAULT_LANGUAGE] = { translation: {} };
+}
+
+const availableLanguages = Object.keys(resources).sort();
+
 if (!i18n.isInitialized) {
   void i18n.use(initReactI18next).init({
     lng: DEFAULT_LANGUAGE,
     fallbackLng: DEFAULT_LANGUAGE,
-    resources: loadTranslations(),
+    resources,
     interpolation: {
       escapeValue: false,
     },
@@ -62,6 +69,7 @@ export function useI18n() {
     () => ({
       t,
       language: i18nInstance.language || DEFAULT_LANGUAGE,
+      availableLanguages,
       setLanguage,
     }),
     [t, i18nInstance.language]

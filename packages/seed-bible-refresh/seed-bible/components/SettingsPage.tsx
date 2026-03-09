@@ -1,7 +1,9 @@
 import { useTheme } from "seed-bible.managers.ThemeManager";
+import { useI18n } from "seed-bible.i18n.I18nManager";
 
 export function SettingsPage() {
   const { themes, selectedThemeId, setTheme } = useTheme();
+  const { language, availableLanguages, setLanguage } = useI18n();
 
   return (
     <div className="sb-settings-page">
@@ -22,6 +24,30 @@ export function SettingsPage() {
               </button>
             );
           })}
+        </div>
+
+        <div className="sb-settings-field-row">
+          <label
+            className="sb-settings-field-label"
+            htmlFor="sb-language-select"
+          >
+            Language
+          </label>
+          <select
+            id="sb-language-select"
+            className="sb-settings-language-select"
+            value={language}
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLSelectElement;
+              void setLanguage(target.value);
+            }}
+          >
+            {availableLanguages.map((languageCode) => (
+              <option key={languageCode} value={languageCode}>
+                {languageCode.toUpperCase()}
+              </option>
+            ))}
+          </select>
         </div>
       </section>
     </div>

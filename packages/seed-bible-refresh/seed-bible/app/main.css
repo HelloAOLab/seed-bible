@@ -321,6 +321,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  margin-bottom: 12px;
 }
 
 .sb-settings-theme-button {
@@ -335,4 +336,25 @@ body {
 .sb-settings-theme-button-selected {
   background: var(--primary-color);
   font-weight: 700;
+}
+
+.sb-settings-field-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-settings-field-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--font-color);
+}
+
+.sb-settings-language-select {
+  border: 1px solid var(--secondary-color);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--tertiary-color);
+  color: var(--font-color);
+  max-width: 180px;
 }
