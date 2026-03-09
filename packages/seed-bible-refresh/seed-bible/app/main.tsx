@@ -2,7 +2,10 @@ import { BibleReader } from "seed-bible.components.BibleReader";
 import { type BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import { Tabs } from "seed-bible.components.Tabs";
 import { useTabs } from "seed-bible.managers.TabsManager";
-import { useTheme } from "seed-bible.managers.ThemeManager";
+import {
+  generateThemeCssVariables,
+  useTheme,
+} from "seed-bible.managers.ThemeManager";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -62,6 +65,7 @@ export function Main() {
   const { tabs, selectedTabId, addTab, selectTab } = useTabs();
   const { currentTheme } = useTheme();
   const theme = currentTheme.variables;
+  const themeCssVariables = generateThemeCssVariables(theme);
 
   return (
     <div
@@ -73,6 +77,7 @@ export function Main() {
       }}
     >
       <ExternalResourceDependencies />
+      <style>{`:root {\n${themeCssVariables}\n}`}</style>
       <style>{tags["main.css"]}</style>
       <Tabs
         tabs={tabs.value}

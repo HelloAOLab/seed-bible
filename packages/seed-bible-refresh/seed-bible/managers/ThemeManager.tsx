@@ -19,6 +19,18 @@ export interface BibleTheme {
   variables: BibleThemeVariables;
 }
 
+function toKebabCase(value: string): string {
+  return value.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`);
+}
+
+export function generateThemeCssVariables(
+  variables: BibleThemeVariables
+): string {
+  return Object.entries(variables)
+    .map(([key, value]) => `--${toKebabCase(key)}: ${value};`)
+    .join("\n");
+}
+
 const DEFAULT_THEME_ID = "light";
 const LIGHT_THEME: BibleTheme = {
   id: "light",
