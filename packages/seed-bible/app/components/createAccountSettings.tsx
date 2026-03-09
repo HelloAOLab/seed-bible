@@ -303,6 +303,7 @@ const CreateAccountSettings = () => {
             className="sign-out-btn"
             onClick={async () => {
               if (authBot) {
+                await os.signOut();
                 destroy(authBot);
               }
               setIsSignedIn(false);
