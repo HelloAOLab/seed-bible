@@ -11,6 +11,8 @@ import { render } from "https://esm.sh/preact@10.28.4";
 // });
 // document.head.appendChild(importMap);
 
+os.syncConfigBotTagsToURL(["book", "chapter"]);
+
 configBot.tags.gridPortal = null;
 
 console.log("Starting APP");

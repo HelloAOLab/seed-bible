@@ -1,4 +1,5 @@
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
+import { useEffect } from "https://esm.sh/preact@10.28.4/hooks";
 
 interface TabsProps {
   tabs: ReaderTab[];
@@ -9,6 +10,14 @@ interface TabsProps {
 
 export function Tabs(props: TabsProps) {
   const { tabs, selectedTabId, onSelectTab, onAddTab } = props;
+  const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
+  const selectedBookId = selectedTab?.readingState.bookId.value ?? null;
+  const selectedChapter = selectedTab?.readingState.chapterNumber.value ?? null;
+
+  useEffect(() => {
+    configBot.tags.book = selectedBookId;
+    configBot.tags.chapter = selectedChapter;
+  }, [selectedBookId, selectedChapter]);
 
   return (
     <aside
