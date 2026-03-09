@@ -5,10 +5,6 @@ import {
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
 import {
-  useTheme,
-  type BibleThemeVariables,
-} from "seed-bible.managers.ThemeManager";
-import {
   signal,
   type Signal,
   useSignal,
@@ -37,7 +33,7 @@ function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
 
   if ("noteId" in part && typeof part.noteId === "number") {
     return (
-      <sup key={index} style={{ marginLeft: "2px" }}>
+      <sup key={index} className="sb-note-marker">
         [{part.noteId}]
       </sup>
     );
@@ -46,10 +42,7 @@ function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
   return null;
 }
 
-function renderChapterContent(
-  chapterData: TranslationBookChapter | null,
-  theme: BibleThemeVariables
-) {
+function renderChapterContent(chapterData: TranslationBookChapter | null) {
   if (!chapterData) {
     return null;
   }
@@ -67,25 +60,19 @@ function renderChapterContent(
         .filter((item) => typeof item === "string")
         .join(" ");
       return (
-        <h3
-          key={`heading-${entryIndex}`}
-          style={{ marginTop: "18px", color: theme.chapterHeadingColor }}
-        >
+        <h3 key={`heading-${entryIndex}`} className="sb-chapter-heading">
           {heading}
         </h3>
       );
     }
 
     if (value.type === "line_break") {
-      return <div key={`break-${entryIndex}`} style={{ height: "10px" }} />;
+      return <div key={`break-${entryIndex}`} className="sb-line-break" />;
     }
 
     if (value.type === "hebrew_subtitle" && Array.isArray(value.content)) {
       return (
-        <p
-          key={`subtitle-${entryIndex}`}
-          style={{ fontStyle: "italic", color: theme.verseTextColor }}
-        >
+        <p key={`subtitle-${entryIndex}`} className="sb-subtitle">
           {value.content.map(renderInlineContent)}
         </p>
       );
@@ -97,13 +84,8 @@ function renderChapterContent(
       Array.isArray(value.content)
     ) {
       return (
-        <span
-          key={`verse-${entryIndex}`}
-          style={{ margin: "8px 0", color: theme.verseTextColor }}
-        >
-          <sup style={{ marginRight: "8px", fontWeight: 700 }}>
-            {value.number}
-          </sup>
+        <span key={`verse-${entryIndex}`} className="sb-verse">
+          <sup className="sb-verse-number">{value.number}</sup>
           {value.content.map(renderInlineContent)}
         </span>
       );
@@ -132,52 +114,23 @@ export function BibleReader(props: BibleReadingState) {
   const currentBook =
     translationBooks.value?.books.find((book) => book.id === bookId.value) ??
     null;
-  const { currentTheme } = useTheme();
-  const theme = currentTheme.variables;
 
   const isSelectorOpen = useSignal(false);
 
   return (
-    <div
-      style={{
-        padding: "16px",
-        paddingBottom: "96px",
-        maxWidth: "860px",
-        margin: "0 auto",
-        background: theme.readerBackground,
-        color: theme.fontColor,
-      }}
-    >
-      <h2 style={{ marginBottom: "6px", color: theme.bookHeadingColor }}>
-        Bible Reader
-      </h2>
-      <p style={{ marginTop: 0, opacity: 0.8 }}>
+    <div className="sb-bible-reader">
+      <h2 className="sb-bible-reader-title">Bible Reader</h2>
+      <p className="sb-bible-reader-meta">
         {translationId.value ?? "-"} •{" "}
         <button
           onClick={() => (isSelectorOpen.value = true)}
-          style={{
-            border: "none",
-            background: "transparent",
-            padding: 0,
-            color: theme.bookHeadingColor,
-            textDecoration: "underline",
-            cursor: "pointer",
-            font: "inherit",
-          }}
+          className="sb-bible-reader-link sb-bible-reader-link-book"
         >
           {currentBook?.name ?? bookId.value ?? "-"}
         </button>{" "}
         <button
           onClick={() => (isSelectorOpen.value = true)}
-          style={{
-            border: "none",
-            background: "transparent",
-            padding: 0,
-            color: theme.chapterHeadingColor,
-            textDecoration: "underline",
-            cursor: "pointer",
-            font: "inherit",
-          }}
+          className="sb-bible-reader-link sb-bible-reader-link-chapter"
         >
           {chapterNumber.value}
         </button>
@@ -204,26 +157,17 @@ export function BibleReader(props: BibleReadingState) {
 
       {loading.value && <p>Loading...</p>}
       {error.value && !loading.value && (
-        <p style={{ color: "red" }}>{error.value}</p>
+        <p className="sb-reader-error">{error.value}</p>
       )}
 
       {!loading.value && !error.value && chapterData.value && (
         <div>
-          {renderChapterContent(chapterData.value, theme)}
+          {renderChapterContent(chapterData.value)}
           {chapterData.value.chapter.footnotes.length > 0 && (
-            <div
-              style={{
-                marginTop: "20px",
-                paddingTop: "10px",
-                borderTop: `1px solid ${theme.secondaryColor}`,
-              }}
-            >
-              <h4 style={{ color: theme.chapterHeadingColor }}>Footnotes</h4>
+            <div className="sb-reader-footnotes">
+              <h4 className="sb-reader-footnotes-title">Footnotes</h4>
               {chapterData.value.chapter.footnotes.map((note) => (
-                <p
-                  key={note.noteId}
-                  style={{ margin: "6px 0", color: theme.verseTextColor }}
-                >
+                <p key={note.noteId} className="sb-reader-footnote-item">
                   <strong>[{note.noteId}]</strong> {note.text}
                 </p>
               ))}
@@ -240,52 +184,25 @@ export function BibleReader(props: BibleReadingState) {
         <p>No translations available.</p>
       )}
 
-      <div
-        style={{
-          position: "fixed",
-          left: "50%",
-          bottom: "18px",
-          transform: "translateX(-50%)",
-          display: "flex",
-          gap: "8px",
-          padding: "8px",
-          borderRadius: "10px",
-          background: theme.readerBackground,
-          border: `1px solid ${theme.secondaryColor}`,
-          boxShadow: "0 2px 10px rgba(0,0,0,0.12)",
-          zIndex: 900,
-        }}
-      >
+      <div className="sb-reader-bottom-nav">
         <button
           disabled={!chapterData.value?.previousChapterApiLink || loading.value}
           onClick={loadPreviousChapter}
-          style={{
-            background: theme.tertiaryColor,
-            border: `1px solid ${theme.secondaryColor}`,
-            color: theme.fontColor,
-          }}
+          className="sb-reader-bottom-button"
         >
           Previous Chapter
         </button>
         <button
           onClick={() => (isSelectorOpen.value = true)}
           disabled={loading.value}
-          style={{
-            background: theme.tertiaryColor,
-            border: `1px solid ${theme.secondaryColor}`,
-            color: theme.fontColor,
-          }}
+          className="sb-reader-bottom-button"
         >
           Open Book Selector
         </button>
         <button
           disabled={!chapterData.value?.nextChapterApiLink || loading.value}
           onClick={loadNextChapter}
-          style={{
-            background: theme.tertiaryColor,
-            border: `1px solid ${theme.secondaryColor}`,
-            color: theme.fontColor,
-          }}
+          className="sb-reader-bottom-button"
         >
           Next Chapter
         </button>

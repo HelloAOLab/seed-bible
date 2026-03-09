@@ -1,3 +1,107 @@
 body {
   background: #fff;
 }
+
+.sb-bible-reader {
+  padding: 16px;
+  padding-bottom: 96px;
+  max-width: 860px;
+  margin: 0 auto;
+  background: var(--reader-background);
+  color: var(--font-color);
+}
+
+.sb-bible-reader-title {
+  margin-bottom: 6px;
+  color: var(--book-heading-color);
+}
+
+.sb-bible-reader-meta {
+  margin-top: 0;
+  opacity: 0.8;
+}
+
+.sb-bible-reader-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+.sb-bible-reader-link-book {
+  color: var(--book-heading-color);
+}
+
+.sb-bible-reader-link-chapter {
+  color: var(--chapter-heading-color);
+}
+
+.sb-note-marker {
+  margin-left: 2px;
+}
+
+.sb-chapter-heading {
+  margin-top: 18px;
+  color: var(--chapter-heading-color);
+}
+
+.sb-line-break {
+  height: 10px;
+}
+
+.sb-subtitle {
+  font-style: italic;
+  color: var(--verse-text-color);
+}
+
+.sb-verse {
+  margin: 8px 0;
+  color: var(--verse-text-color);
+}
+
+.sb-verse-number {
+  margin-right: 8px;
+  font-weight: 700;
+}
+
+.sb-reader-error {
+  color: red;
+}
+
+.sb-reader-footnotes {
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid var(--secondary-color);
+}
+
+.sb-reader-footnotes-title {
+  color: var(--chapter-heading-color);
+}
+
+.sb-reader-footnote-item {
+  margin: 6px 0;
+  color: var(--verse-text-color);
+}
+
+.sb-reader-bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 10px;
+  background: var(--reader-background);
+  border: 1px solid var(--secondary-color);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  z-index: 900;
+}
+
+.sb-reader-bottom-button {
+  background: var(--tertiary-color);
+  border: 1px solid var(--secondary-color);
+  color: var(--font-color);
+}
