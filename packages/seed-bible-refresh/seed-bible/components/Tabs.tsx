@@ -24,6 +24,14 @@ export function Tabs(props: TabsProps) {
     >
       {tabs.map((tab) => {
         const isSelected = tab.id === selectedTabId;
+        const currentBookId = tab.readingState.bookId.value;
+        const currentBookName =
+          tab.readingState.translationBooks.value?.books.find(
+            (book) => book.id === currentBookId
+          )?.name ??
+          currentBookId ??
+          "-";
+        const currentChapter = tab.readingState.chapterNumber.value;
         return (
           <button
             key={tab.id}
@@ -38,7 +46,8 @@ export function Tabs(props: TabsProps) {
               cursor: "pointer",
             }}
           >
-            {tab.title}
+            <div style={{ fontSize: "12px", opacity: 0.75 }}>{tab.title}</div>
+            <div>{`${currentBookName} ${currentChapter}`}</div>
           </button>
         );
       })}
