@@ -8,7 +8,6 @@ import {
   useRef,
 } from "https://esm.sh/preact@10.28.4/hooks";
 import { useSignal } from "https://esm.sh/@preact/signals?deps=preact@10.28.4";
-import { useTheme } from "seed-bible.managers.ThemeManager";
 
 // const { useEffect, useMemo, useState } = os.appHooks;
 
@@ -68,8 +67,6 @@ export function BibleSelector(props: BibleSelectorProps) {
   const expandedBookId = useSignal<string | null>(bookId);
   const wasOpenRef = useRef(isOpen);
   const isHandlingPopStateRef = useRef(false);
-  const { currentTheme } = useTheme();
-  const theme = currentTheme.variables;
 
   const getHistoryState = () => {
     return history.state && typeof history.state === "object"
@@ -138,61 +135,21 @@ export function BibleSelector(props: BibleSelectorProps) {
   }
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0, 0, 0, 0.3)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-        padding: "20px",
-      }}
-    >
+    <div onClick={onClose} className="sb-selector-overlay">
       <div
         onClick={(event: Event) => {
           event.stopPropagation();
         }}
-        style={{
-          width: "min(980px, 100%)",
-          maxHeight: "85vh",
-          overflow: "auto",
-          border: `1px solid ${theme.secondaryColor}`,
-          borderRadius: "12px",
-          padding: "12px",
-          background: theme.bookSelectorBackground,
-          color: theme.fontColor,
-        }}
+        className="sb-selector-panel"
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "10px",
-          }}
-        >
-          <strong style={{ color: theme.bookHeadingColor }}>
-            Select Bible Book
-          </strong>
-          <button
-            onClick={onClose}
-            style={{
-              border: `1px solid ${theme.secondaryColor}`,
-              borderRadius: "6px",
-              padding: "4px 8px",
-              background: theme.tertiaryColor,
-              cursor: "pointer",
-              color: theme.fontColor,
-            }}
-          >
+        <div className="sb-selector-header">
+          <strong className="sb-selector-title">Select Bible Book</strong>
+          <button onClick={onClose} className="sb-selector-close-button">
             Close
           </button>
         </div>
 
-        <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+        <div className="sb-selector-controls">
           <select
             value={translationId ?? ""}
             disabled={loading || !availableTranslations}
@@ -200,14 +157,7 @@ export function BibleSelector(props: BibleSelectorProps) {
               const target = event.currentTarget as HTMLSelectElement;
               onSelectTranslation(target.value);
             }}
-            style={{
-              minWidth: "96px",
-              border: `1px solid ${theme.secondaryColor}`,
-              borderRadius: "6px",
-              padding: "6px 8px",
-              background: theme.tertiaryColor,
-              color: theme.fontColor,
-            }}
+            className="sb-selector-translation-select"
           >
             {(availableTranslations?.translations ?? []).map((translation) => (
               <option key={translation.id} value={translation.id}>
@@ -223,59 +173,16 @@ export function BibleSelector(props: BibleSelectorProps) {
               search.value = target.value;
             }}
             placeholder="Search book..."
-            style={{
-              flex: 1,
-              border: `1px solid ${theme.secondaryColor}`,
-              borderRadius: "6px",
-              padding: "6px 10px",
-              background: theme.tertiaryColor,
-              color: theme.fontColor,
-            }}
+            className="sb-selector-search-input"
           />
 
-          <div
-            style={{
-              border: `1px solid ${theme.secondaryColor}`,
-              borderRadius: "6px",
-              padding: "6px 10px",
-              background: theme.tertiaryColor,
-              color: theme.fontColor,
-              whiteSpace: "nowrap",
-            }}
-          >
-            All books
-          </div>
+          <div className="sb-selector-all-books">All books</div>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "16px",
-          }}
-        >
-          <div
-            style={{
-              borderRight: `1px solid ${theme.secondaryColor}`,
-              paddingRight: "12px",
-            }}
-          >
-            <h4
-              style={{
-                marginTop: 0,
-                marginBottom: "10px",
-                color: theme.bookHeadingColor,
-              }}
-            >
-              Old Testament
-            </h4>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "6px 10px",
-              }}
-            >
+        <div className="sb-selector-grid">
+          <div className="sb-selector-column sb-selector-column-divider">
+            <h4 className="sb-selector-section-title">Old Testament</h4>
+            <div className="sb-selector-books-grid">
               {oldTestament.map((book) => (
                 <div key={book.id}>
                   <button
@@ -284,31 +191,17 @@ export function BibleSelector(props: BibleSelectorProps) {
                         expandedBookId.value === book.id ? null : book.id;
                     }}
                     disabled={loading}
-                    style={{
-                      textAlign: "left",
-                      border: "none",
-                      background: "transparent",
-                      padding: "4px 4px",
-                      color:
-                        book.id === bookId
-                          ? theme.bookHeadingColor
-                          : theme.fontColor,
-                      fontWeight: book.id === bookId ? 700 : 400,
-                      cursor: "pointer",
-                    }}
+                    className={`sb-selector-book-button${
+                      book.id === bookId
+                        ? " sb-selector-book-button-current"
+                        : ""
+                    }`}
                   >
                     {book.name}
                   </button>
 
                   {expandedBookId.value === book.id && (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "4px",
-                        padding: "2px 4px 8px 4px",
-                      }}
-                    >
+                    <div className="sb-selector-chapter-grid">
                       {Array.from(
                         { length: book.numberOfChapters },
                         (_, index) => {
@@ -320,17 +213,11 @@ export function BibleSelector(props: BibleSelectorProps) {
                               key={`${book.id}-${chapter}`}
                               onClick={() => onSelectChapter(book.id, chapter)}
                               disabled={loading}
-                              style={{
-                                border: `1px solid ${theme.secondaryColor}`,
-                                borderRadius: "5px",
-                                background: isCurrentBookChapter
-                                  ? theme.primaryColor
-                                  : theme.tertiaryColor,
-                                minWidth: "28px",
-                                height: "24px",
-                                cursor: "pointer",
-                                color: theme.fontColor,
-                              }}
+                              className={`sb-selector-chapter-button${
+                                isCurrentBookChapter
+                                  ? " sb-selector-chapter-button-current"
+                                  : ""
+                              }`}
                             >
                               {chapter}
                             </button>
@@ -344,23 +231,9 @@ export function BibleSelector(props: BibleSelectorProps) {
             </div>
           </div>
 
-          <div>
-            <h4
-              style={{
-                marginTop: 0,
-                marginBottom: "10px",
-                color: theme.bookHeadingColor,
-              }}
-            >
-              New Testament
-            </h4>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "6px 10px",
-              }}
-            >
+          <div className="sb-selector-column">
+            <h4 className="sb-selector-section-title">New Testament</h4>
+            <div className="sb-selector-books-grid">
               {newTestament.map((book) => (
                 <div key={book.id}>
                   <button
@@ -369,31 +242,17 @@ export function BibleSelector(props: BibleSelectorProps) {
                         expandedBookId.value === book.id ? null : book.id;
                     }}
                     disabled={loading}
-                    style={{
-                      textAlign: "left",
-                      border: "none",
-                      background: "transparent",
-                      padding: "4px 4px",
-                      color:
-                        book.id === bookId
-                          ? theme.bookHeadingColor
-                          : theme.fontColor,
-                      fontWeight: book.id === bookId ? 700 : 400,
-                      cursor: "pointer",
-                    }}
+                    className={`sb-selector-book-button${
+                      book.id === bookId
+                        ? " sb-selector-book-button-current"
+                        : ""
+                    }`}
                   >
                     {book.name}
                   </button>
 
                   {expandedBookId.value === book.id && (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "4px",
-                        padding: "2px 4px 8px 4px",
-                      }}
-                    >
+                    <div className="sb-selector-chapter-grid">
                       {Array.from(
                         { length: book.numberOfChapters },
                         (_, index) => {
@@ -405,17 +264,11 @@ export function BibleSelector(props: BibleSelectorProps) {
                               key={`${book.id}-${chapter}`}
                               onClick={() => onSelectChapter(book.id, chapter)}
                               disabled={loading}
-                              style={{
-                                border: `1px solid ${theme.secondaryColor}`,
-                                borderRadius: "5px",
-                                background: isCurrentBookChapter
-                                  ? theme.primaryColor
-                                  : theme.tertiaryColor,
-                                minWidth: "28px",
-                                height: "24px",
-                                cursor: "pointer",
-                                color: theme.fontColor,
-                              }}
+                              className={`sb-selector-chapter-button${
+                                isCurrentBookChapter
+                                  ? " sb-selector-chapter-button-current"
+                                  : ""
+                              }`}
                             >
                               {chapter}
                             </button>
