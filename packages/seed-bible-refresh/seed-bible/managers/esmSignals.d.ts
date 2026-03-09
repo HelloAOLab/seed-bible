@@ -14,6 +14,7 @@ declare module "https://esm.sh/*" {
   export function useState<T>(
     initialValue: T
   ): [T, (value: T | ((prev: T) => T)) => void];
+  export function useRef<T>(initialValue: T): { current: T };
 
   export function render(element: unknown, container: Element): void;
 }

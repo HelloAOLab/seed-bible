@@ -2,13 +2,18 @@ import type {
   AvailableTranslations,
   TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
-import { useEffect, useMemo } from "https://esm.sh/preact@10.28.4/hooks";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+} from "https://esm.sh/preact@10.28.4/hooks";
 import { useSignal } from "https://esm.sh/@preact/signals?deps=preact@10.28.4";
 
 // const { useEffect, useMemo, useState } = os.appHooks;
 
 interface BibleSelectorProps {
   isOpen: boolean;
+  onOpen: () => void;
   onClose: () => void;
   translationId: string | null;
   bookId: string | null;
@@ -46,6 +51,7 @@ function groupBooks(translationBooks: TranslationBooks | null, search: string) {
 export function BibleSelector(props: BibleSelectorProps) {
   const {
     isOpen,
+    onOpen,
     onClose,
     translationId,
     bookId,
@@ -59,12 +65,65 @@ export function BibleSelector(props: BibleSelectorProps) {
 
   const search = useSignal("");
   const expandedBookId = useSignal<string | null>(bookId);
+  const wasOpenRef = useRef(isOpen);
+  const isHandlingPopStateRef = useRef(false);
+
+  const getHistoryState = () => {
+    return history.state && typeof history.state === "object"
+      ? (history.state as Record<string, unknown>)
+      : {};
+  };
+
+  const isSelectorOpenInHistory = () => {
+    const state = getHistoryState();
+    return state.bibleSelectorOpen === true;
+  };
 
   useEffect(() => {
     if (isOpen) {
       expandedBookId.value = bookId;
     }
   }, [bookId, isOpen]);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const shouldBeOpen = isSelectorOpenInHistory();
+      isHandlingPopStateRef.current = true;
+
+      if (shouldBeOpen && !isOpen) {
+        onOpen();
+      } else if (!shouldBeOpen && isOpen) {
+        onClose();
+      }
+
+      setTimeout(() => {
+        isHandlingPopStateRef.current = false;
+      }, 0);
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+    };
+  }, [isOpen, onClose, onOpen]);
+
+  useEffect(() => {
+    const wasOpen = wasOpenRef.current;
+
+    if (!wasOpen && isOpen && !isSelectorOpenInHistory()) {
+      history.pushState({ ...getHistoryState(), bibleSelectorOpen: true }, "");
+    }
+
+    if (wasOpen && !isOpen) {
+      const shouldNavigateBack =
+        !isHandlingPopStateRef.current && isSelectorOpenInHistory();
+      if (shouldNavigateBack) {
+        history.back();
+      }
+    }
+
+    wasOpenRef.current = isOpen;
+  }, [isOpen]);
 
   const { oldTestament, newTestament } = useMemo(
     () => groupBooks(translationBooks, search.value),

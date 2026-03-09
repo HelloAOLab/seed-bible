@@ -162,6 +162,7 @@ export function BibleReader(props: BibleReadingState) {
 
       <BibleSelector
         isOpen={isSelectorOpen.value}
+        onOpen={() => (isSelectorOpen.value = true)}
         onClose={() => (isSelectorOpen.value = false)}
         translationId={translationId.value}
         bookId={bookId.value}
