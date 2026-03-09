@@ -152,5 +152,7 @@
   "headingAddedToPlaylist": "{{heading}} تىزىملىككە قوشۇلدى",
   "addToPlaylist": "تىزىملىككە قوشۇش",
   "addToNew": "يېڭىغا قوشۇش",
-  "itemsAddedToPlaylistSuccessfully": "تۈرلەر تىزىملىككە مۇۋاپىق قوشۇلدى."
+  "itemsAddedToPlaylistSuccessfully": "تۈرلەر تىزىملىككە مۇۋاپىق قوشۇلدى.",
+  "translationSwitchOption": "{{translationName}} تەرجىمىسىگە ئالماشتۇرامسىز؟",
+  "chooseAnother": "يەنە بىرنى تاللاڭ"
 }

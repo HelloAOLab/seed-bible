@@ -152,5 +152,7 @@
   "headingAddedToPlaylist": "{{heading}} додано до списку відтворення",
   "addToPlaylist": "Додати до списку відтворення",
   "addToNew": "Додати до нового",
-  "itemsAddedToPlaylistSuccessfully": "Елементи успішно додано до списку відтворення."
+  "itemsAddedToPlaylistSuccessfully": "Елементи успішно додано до списку відтворення.",
+  "translationSwitchOption": "Бажаєте перейти до перекладу {{translationName}}?",
+  "chooseAnother": "Вибрати інший"
 }

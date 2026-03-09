@@ -690,6 +690,8 @@
   "historical": "Historical",
   "poetic": "Poetic",
   "prophetic": "Prophetic",
+  "translationSwitchOption": "Would you like to switch to {{translationName}} translation?",
+  "chooseAnother": "Choose another",
   "showNavArrows": "Show navigation arrows",
   "hideNavArrows": "Hide navigation arrows"
 }

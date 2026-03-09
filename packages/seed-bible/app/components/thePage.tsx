@@ -167,7 +167,7 @@ function ThePage({
       configBot.tags.translationId ||
       configBot.tags.translation ||
       tab.data.translation;
-    let baseUrl = "https://bible.helloao.org";
+    let baseUrl = "https://vmfnri.helloao.org";
     let bookId = tab.data.bookId || "GEN";
     let bookTranslationId = tab.data.translation;
     let firstBookData;
@@ -175,7 +175,7 @@ function ThePage({
     let books = [];
     if (translationId) {
       const available_translations_req = await web.get(
-        "https://bible.helloao.org/api/available_translations.json"
+        "https://vmfnri.helloao.org/api/available_translations.json"
       );
       let allTranslations = [];
       const translations = {};
@@ -215,7 +215,7 @@ function ThePage({
 
         if (trValue.pass && !urlId) {
           const bookData = await web.get(
-            `https://bible.helloao.org/api/${trValue.value.id}/books.json`
+            `https://vmfnri.helloao.org/api/${trValue.value.id}/books.json`
           );
           books = bookData.data.books;
           const book0 = bookData.data.books[0];
@@ -401,7 +401,7 @@ function ThePage({
         translation: tab.data.translation,
         bookId: tab.data.bookId,
         chapter: tab.data.chapter,
-        baseUrl: tab.data?.baseUrl || "https://bible.helloao.org",
+        baseUrl: tab.data?.baseUrl || "https://vmfnri.helloao.org",
       });
       setBible(bible);
 
@@ -846,7 +846,7 @@ function ThePage({
       Update(Element.data);
       if (globalThis.GetBooksDataForMenu)
         globalThis.GetBooksDataForMenu(
-          `https://bible.helloao.org/api/${Element.data.data.translation}/books.json`,
+          `https://vmfnri.helloao.org/api/${Element.data.data.translation}/books.json`,
           Element.data.data.translation
         );
     }
@@ -1558,7 +1558,7 @@ function ThePage({
   // Preload adjacent chapters whenever the current chapter changes
   useEffect(() => {
     if (!data) return;
-    const baseUrl = data.baseUrl || "https://bible.helloao.org";
+    const baseUrl = data.baseUrl || "https://vmfnri.helloao.org";
 
     const preload = async (
       url: string | null | undefined,

@@ -685,5 +685,7 @@
   "pentateuch": "モーセ五書",
   "historical": "歴史書",
   "poetic": "詩歌書",
-  "prophetic": "預言書"
+  "prophetic": "預言書",
+  "translationSwitchOption": "{{translationName}}の翻訳に切り替えますか？",
+  "chooseAnother": "別のものを選ぶ"
 }

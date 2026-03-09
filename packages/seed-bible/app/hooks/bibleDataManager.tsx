@@ -84,7 +84,7 @@ export class BibleDataManager {
     translation = "BSB",
     bookId = "GEN",
     chapter = 1,
-    baseUrl = "https://bible.helloao.org",
+    baseUrl = "https://vmfnri.helloao.org",
   } = {}) {
     this.tabId = tabId;
     this.translation = translation;

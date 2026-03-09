@@ -361,7 +361,7 @@ export function VerseToolbar({
             border: none;
             cursor: pointer;
             gap: 4px;
-            color: var(--text1);
+            color: var(--pageTextColor);
             padding: 0;
             height: 100%;
             font-family: DM Sans;
@@ -372,11 +372,13 @@ export function VerseToolbar({
           .mobile-action-btn svg {
             width: 24px;
             height: 24px;
+           
           }
 
           .mobile-action-btn .material-symbols-outlined {
             font-size: 24px;
             line-height: 1;
+            color: var(--pageTextColor) !important;
           }
 
           @keyframes slideUp {
@@ -683,7 +685,7 @@ export function VerseToolbar({
               <>
                 {!removeBookMark && (
                   <button className="mobile-action-btn">
-                    <BookMarkIcon />
+                    <BookMarkIcon style={{ color: "var(--pageTextColor)" }} />
                     <span>Bookmark</span>
                   </button>
                 )}
@@ -693,7 +695,9 @@ export function VerseToolbar({
                       className="mobile-action-btn"
                       onClick={() => setShowMobileColors(true)}
                     >
-                      <HighlightIcon />
+                      <HighlightIcon
+                        style={{ color: "var(--pageTextColor)" }}
+                      />
                       <span>Highlight</span>
                     </button>
                   )}
@@ -758,7 +762,14 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
     type: "normal",
     items: [
       {
-        icon: <CopyIcon height="24" width="24" />,
+        icon: (
+          <CopyIcon
+            height="24"
+            width="24"
+            stroke="var(--pageTextColor)"
+            style={{ color: "var(--pageTextColor)" }}
+          />
+        ),
         onClick: () => {
           // always include the verse reference when copying
           const textToCopy = `${that.text}\n— ${buildReference()}`;
@@ -772,7 +783,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
       ...(!removeAiAgent
         ? [
             {
-              icon: <AskIcon />,
+              icon: <AskIcon style={{ color: "var(--pageTextColor)" }} />,
               onClick: () => {
                 ClearUserSelection();
                 SetShowCommands(true);
@@ -783,7 +794,13 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
           ]
         : []),
       {
-        icon: <ShareIcon height="24" width="24" />,
+        icon: (
+          <ShareIcon
+            height="24"
+            width="24"
+            style={{ color: "var(--pageTextColor)" }}
+          />
+        ),
         onClick: () => {
           closePopupSettings();
           setTimeout(() => {
@@ -947,6 +964,7 @@ const SubOptions = ({ items }) => {
   flex-direction: column;
   background: var(--primaryColor) !important;
   align-items: center;
+  border: 1px solid #1A1A1A;
   gap: 2px;
   border-radius: 10px;
   scrollbar-width: none;
@@ -963,7 +981,7 @@ const SubOptions = ({ items }) => {
   align-items: center;
   width: 100%;
   background: rgba(var(--text1), 0.9);
-  color: var(--text1);
+  color: var(--pageTextColor);
   font-family: "Satoshi", system-ui, sans-serif;
   font-size: 14px;
   font-style: normal;
@@ -975,7 +993,7 @@ const SubOptions = ({ items }) => {
 }
 
 .popupSettings2 .itemSettings2:hover {
-  background: rgba(var(--text1), 0.3);
+  background: rgba(var(--pageTextColor), 0.3);
 }
         `}
       </style>

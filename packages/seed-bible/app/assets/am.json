@@ -152,5 +152,7 @@
   "headingAddedToPlaylist": "{{heading}} ወደ ዝርዝር ታክሏል",
   "addToPlaylist": "ወደ ዝርዝር ጨምር",
   "addToNew": "ወደ አዲስ ጨምር",
-  "itemsAddedToPlaylistSuccessfully": "እቃዎች ወደ ዝርዝር በተሳካ ሁኔታ ታክለዋል።"
+  "itemsAddedToPlaylistSuccessfully": "እቃዎች ወደ ዝርዝር በተሳካ ሁኔታ ታክለዋል።",
+  "translationSwitchOption": "ወደ {{translationName}} ትርጉም መቀየር ይፈልጋሉ?",
+  "chooseAnother": "ሌላ ይምረጡ"
 }
