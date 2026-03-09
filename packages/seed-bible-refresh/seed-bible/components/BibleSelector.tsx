@@ -2,8 +2,13 @@ import type {
   AvailableTranslations,
   TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "https://esm.sh/preact@10.28.4/hooks";
 
-const { useEffect, useMemo, useState } = os.appHooks;
+// const { useEffect, useMemo, useState } = os.appHooks;
 
 interface BibleSelectorProps {
   isOpen: boolean;

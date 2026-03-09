@@ -4,4 +4,16 @@ declare module "https://esm.sh/*" {
   }
 
   export function signal<T>(value: T): Signal<T>;
+  export function useSignal<T>(value: T): Signal<T>;
+
+  export function useMemo<T>(fn: () => T, deps: unknown[]): T;
+  export function useEffect(
+    fn: () => void | (() => void),
+    deps: unknown[]
+  ): void;
+  export function useState<T>(
+    initialValue: T
+  ): [T, (value: T | ((prev: T) => T)) => void];
+
+  export function render(element: unknown, container: Element): void;
 }

@@ -1,8 +1,11 @@
 import { type TranslationBookChapter } from "seed-bible.managers.FreeUseBibleAPI";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
-
-const { useState } = os.appHooks;
+import {
+  signal,
+  type Signal,
+  useSignal,
+} from "https://esm.sh/@preact/signals?deps=preact@10.28.4";
 
 function renderInlineContent(part: unknown, index: number) {
   if (typeof part === "string") {
@@ -113,7 +116,7 @@ export function BibleReader(props: BibleReadingState) {
     translationBooks.value?.books.find((book) => book.id === bookId.value) ??
     null;
 
-  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
+  const isSelectorOpen = useSignal(false);
 
   return (
     <div
@@ -128,7 +131,7 @@ export function BibleReader(props: BibleReadingState) {
       <p style={{ marginTop: 0, opacity: 0.8 }}>
         {translationId.value ?? "-"} •{" "}
         <button
-          onClick={() => setIsSelectorOpen(true)}
+          onClick={() => (isSelectorOpen.value = true)}
           style={{
             border: "none",
             background: "transparent",
@@ -142,7 +145,7 @@ export function BibleReader(props: BibleReadingState) {
           {currentBook?.name ?? bookId.value ?? "-"}
         </button>{" "}
         <button
-          onClick={() => setIsSelectorOpen(true)}
+          onClick={() => (isSelectorOpen.value = true)}
           style={{
             border: "none",
             background: "transparent",
@@ -158,8 +161,8 @@ export function BibleReader(props: BibleReadingState) {
       </p>
 
       <BibleSelector
-        isOpen={isSelectorOpen}
-        onClose={() => setIsSelectorOpen(false)}
+        isOpen={isSelectorOpen.value}
+        onClose={() => (isSelectorOpen.value = false)}
         translationId={translationId.value}
         bookId={bookId.value}
         chapterNumber={chapterNumber.value}
@@ -171,7 +174,7 @@ export function BibleReader(props: BibleReadingState) {
         }}
         onSelectChapter={(book, chapter) => {
           void selectChapter(book, chapter);
-          setIsSelectorOpen(false);
+          isSelectorOpen.value = false;
         }}
       />
 
@@ -233,7 +236,7 @@ export function BibleReader(props: BibleReadingState) {
           Previous Chapter
         </button>
         <button
-          onClick={() => setIsSelectorOpen(true)}
+          onClick={() => (isSelectorOpen.value = true)}
           disabled={loading.value}
         >
           Open Book Selector

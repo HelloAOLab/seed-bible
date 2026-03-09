@@ -1,4 +1,4 @@
-import { signal } from "https://esm.sh/*@preact/signals";
+import { signal } from "https://esm.sh/@preact/signals?deps=preact@10.28.4?externals=preact";
 import {
   useBibleReadingState,
   type BibleReadingState,
