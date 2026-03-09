@@ -239,3 +239,45 @@ body {
 .sb-selector-chapter-button-current {
   background: var(--primary-color);
 }
+
+.sb-tabs-sidebar {
+  width: 180px;
+  border-right: 1px solid var(--secondary-color);
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--sidebar-background);
+  color: var(--font-color);
+}
+
+.sb-tab-button {
+  text-align: left;
+  border: 1px solid var(--secondary-color);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--tertiary-color);
+  font-weight: 400;
+  cursor: pointer;
+  color: var(--font-color);
+}
+
+.sb-tab-button-selected {
+  background: var(--primary-color);
+  font-weight: 700;
+}
+
+.sb-tab-title {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.sb-tab-add-button {
+  text-align: left;
+  border: 1px dashed var(--secondary-color);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--tertiary-color);
+  cursor: pointer;
+  color: var(--font-color);
+}

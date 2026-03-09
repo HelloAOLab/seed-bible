@@ -1,7 +1,6 @@
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
 import { useEffect } from "https://esm.sh/preact@10.28.4/hooks";
 import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager";
-import { useTheme } from "seed-bible.managers.ThemeManager";
 
 interface TabsProps {
   tabs: ReaderTab[];
@@ -12,8 +11,6 @@ interface TabsProps {
 
 export function Tabs(props: TabsProps) {
   const { tabs, selectedTabId, onSelectTab, onAddTab } = props;
-  const { currentTheme } = useTheme();
-  const theme = currentTheme.variables;
   const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
   const selectedBookId = selectedTab?.readingState.bookId.value ?? null;
   const selectedChapter = selectedTab?.readingState.chapterNumber.value ?? null;
@@ -33,18 +30,7 @@ export function Tabs(props: TabsProps) {
   }, [selectedBookId, selectedChapter, selectedTranslation]);
 
   return (
-    <aside
-      style={{
-        width: "180px",
-        borderRight: `1px solid ${theme.secondaryColor}`,
-        padding: "12px 8px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "8px",
-        background: theme.sidebarBackground,
-        color: theme.fontColor,
-      }}
-    >
+    <aside className="sb-tabs-sidebar">
       {tabs.map((tab) => {
         const isSelected = tab.id === selectedTabId;
         const currentBookId = tab.readingState.bookId.value;
@@ -59,35 +45,15 @@ export function Tabs(props: TabsProps) {
           <button
             key={tab.id}
             onClick={() => onSelectTab(tab.id)}
-            style={{
-              textAlign: "left",
-              border: `1px solid ${theme.secondaryColor}`,
-              borderRadius: "8px",
-              padding: "8px 10px",
-              background: isSelected ? theme.primaryColor : theme.tertiaryColor,
-              fontWeight: isSelected ? 700 : 400,
-              cursor: "pointer",
-              color: theme.fontColor,
-            }}
+            className={`sb-tab-button${isSelected ? " sb-tab-button-selected" : ""}`}
           >
-            <div style={{ fontSize: "12px", opacity: 0.75 }}>{tab.title}</div>
+            <div className="sb-tab-title">{tab.title}</div>
             <div>{`${currentBookName} ${currentChapter}`}</div>
           </button>
         );
       })}
 
-      <button
-        onClick={onAddTab}
-        style={{
-          textAlign: "left",
-          border: `1px dashed ${theme.secondaryColor}`,
-          borderRadius: "8px",
-          padding: "8px 10px",
-          background: theme.tertiaryColor,
-          cursor: "pointer",
-          color: theme.fontColor,
-        }}
-      >
+      <button onClick={onAddTab} className="sb-tab-add-button">
         + New Tab
       </button>
     </aside>
