@@ -752,12 +752,7 @@ const Playlist = () => {
                           secondary
                           exClass="create-button show-on-desktop"
                         >
-                          <span
-                            style={{ color: "white" }}
-                            class="material-symbols-outlined"
-                          >
-                            add
-                          </span>
+                          <span class="material-symbols-outlined">add</span>
                           {t("create")}
                         </Button>
                         <Button
@@ -768,7 +763,6 @@ const Playlist = () => {
                           exClass="create-button-mobile show-on-mobile"
                         >
                           <span
-                            style={{ color: "white" }}
                             class={`material-symbols-outlined ${createOptions ? "rotate-90" : ""}`}
                           >
                             add

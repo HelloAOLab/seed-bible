@@ -146,6 +146,22 @@ span.playlist-label-sre {
   letter-spacing: initial;
 }
 
+.render-html-content strong {
+  font-weight: 700 !important;
+}
+
+.render-html-content em {
+  font-style: italic !important;
+}
+
+.render-html-content code {
+  font-family: "Monaco", monospace;
+  font-size: 12px;
+  background-color: var(--inputBackground);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
 .material-symbols-outlined {
   font-family: "Material Symbols Outlined" !important;
 }
@@ -562,15 +578,14 @@ div.history-item.greyed-out .playlist-item-type,
 div.attachment-link.greyed-out .playlist-item-type {
   background-color: #e3e3e2;
   border: 1px solid #afafaf;
-  color: black !important;
+  color: var(--pageTextColor) !important;
 }
 
 div.history-item.embedding-on .playlist-item-type,
 div.attachment-link.embedding-on .playlist-item-type {
-  background-color: #2979ff !important;
-  color: black !important;
-  border: 1px solid #448aff !important;
-  color: black !important;
+  background-color: var(--activeTabFill) !important;
+  color: var(--pageTextColor) !important;
+  border: 1px solid var(--activeTabBorder) !important;
 }
 
 div.history-item.current-playing-item,
@@ -580,9 +595,9 @@ div.attachment-link.current-playing-item {
 
 div.history-item.current-playing-item .playlist-item-type,
 div.attachment-link.current-playing-item .playlist-item-type {
-  background-color: #dcf0ec;
-  border: 1px solid #139981;
-  color: black !important;
+  background-color: var(--activeTabFill);
+  border: 1px solid var(--activeTabBorder);
+  color: var(--pageTextColor) !important;
 }
 
 div.history-item.current-playing-item
@@ -1044,7 +1059,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .what-this span {
-  color: #fff;
+  color: var(--pageTextColor);
   background-color: transparent;
   border-radius: 50%;
   font-size: 20px !important;

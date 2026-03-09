@@ -20,7 +20,6 @@ if (skipAll) {
     os.registerApp("playing-playlist", thisBot);
     G.IS_PLAYLIST_ACTIVE = 1;
     G.PlayingPlaylists = {};
-    G.PlayingPlaylistCheckedItems = {};
     G.CurrentIndexItem = {};
   } else {
     if (G.READING_PLAN_WORK) return;
@@ -307,6 +306,7 @@ if (!skipAll) {
   G.PPpastDateEvents = pastDateEvents;
   G.PPchecklistEnabled = checklistEnabled;
   G.PPreadingPlanEnabled = readingPlanEnabled;
+  G.PlayingPlaylistID = playlist.id;
   G.PPfirstActiveIndex = firstActiveIndex;
   G.PPfirstIndex = firstIndex;
   G.PPplaylist = playlist;
@@ -392,7 +392,7 @@ const PlayingPlaylist = () => {
       }
     });
 
-    G.SetCheckedItemsPlayingPlaylist?.(checkedItemsTemp);
+    // G.SetCheckedItemsPlayingPlaylist?.(checkedItemsTemp);
 
     G.PlaylingItemVisitiedMap?.({
       ...G.PPpastDateEvents,
@@ -448,7 +448,9 @@ const PlayingPlaylist = () => {
   const editDataFromPlaylist = (ids: any, key: string, play: boolean) => {
     const isShiftHold = G?.KEY_HOLD?.["shift"];
 
-    const prevIds = { ...G.PlayingPlaylistCheckedItems };
+    const prevIds = {
+      ...(G.PlayingPlaylistCheckedItems?.[G.PlayingPlaylistID] || {}),
+    };
 
     const isArray = Array.isArray(ids);
 
@@ -572,64 +574,13 @@ const PlayingPlaylist = () => {
         >
           <div className="header">
             <h3>{currentPlaylistName}</h3>
-            {!G.PPchecklistEnabled ? (
-              <span
-                style={{ cursor: "pointer" }}
-                onClick={toggleHide}
-                class="material-symbols-outlined unfollow"
-              >
-                close
-              </span>
-            ) : (
-              <div className="align-center" style={{ gap: "0.5rem" }}>
-                {false && (
-                  <p
-                    onClick={() => {
-                      // setOpenAttachLink(true);
-                    }}
-                    style={{ margin: "0", padding: "-0.5rem" }}
-                    className="playlist-action small secondary self-start"
-                  >
-                    <span>Add Link to Queue</span>
-                  </p>
-                )}
-                <p
-                  onClick={() => {
-                    DataManager.cancelCurrentPlayingSound();
-                    G.SetSelected && G.SetSelected({});
-                    G.SetHolded && G.SetHolded({});
-                    // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
-                    G[`${parentId}ToggleGreyCheckPLayingPlaylist`] &&
-                      G[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
-                    G.IsQueuePresent = false;
-                    thisBot.CloseFloatingApp();
-                    // os.unregisterApp("playing-playlist");
-                    G.IS_PLAYLIST_ACTIVE = false;
-                    thisBot.OpenSelf();
-                    G.SetSplitAppPanel2 && G.SetSplitAppPanel2(null);
-                    // thisBot.showInfo(`History Mode`);
-                  }}
-                  style={{
-                    margin: "0",
-                    width: "2.55rem",
-                    height: "2.55rem",
-                    borderRadius: "50%",
-                  }}
-                  className="playlist-action small"
-                >
-                  <span
-                    style={{
-                      margin: "0",
-                      fontSize: "14px",
-                      backgroundColor: "#D36433",
-                    }}
-                    class="material-symbols-outlined unfollow"
-                  >
-                    stop
-                  </span>
-                </p>
-              </div>
-            )}
+            <span
+              style={{ cursor: "pointer" }}
+              onClick={toggleHide}
+              class="material-symbols-outlined unfollow"
+            >
+              close
+            </span>
           </div>
           <div className="playing-queue-content">
             {false && G.PPchecklistEnabled && (
@@ -648,7 +599,9 @@ const PlayingPlaylist = () => {
               <>
                 <h4>Next in Queue</h4>
                 <DragDropT
-                  checkListData={G.PlayingPlaylistCheckedItems}
+                  checkListData={
+                    G.PlayingPlaylistCheckedItems?.[G.PlayingPlaylistID] || {}
+                  }
                   editDataFromPlaylist={editDataFromPlaylist}
                   isPlayer={G.PPchecklistEnabled}
                   list={queue}
@@ -678,7 +631,8 @@ const PlayingPlaylist = () => {
                   ...itemVisitedMap,
                 };
                 G["defaultplaylistChecked"][playlistID] = {
-                  ...G.PlayingPlaylistCheckedItems,
+                  ...(G.PlayingPlaylistCheckedItems?.[G.PlayingPlaylistID] ||
+                    {}),
                 };
                 G?.savePlaylistProgress && G.savePlaylistProgress(playlistID);
               }
@@ -703,7 +657,9 @@ const PlayingPlaylist = () => {
                       editDataFromPlaylist(data, key, play)
                     }
                     // oldItemsMap={{ ...itemVisitedMap, ...checkedItems }}
-                    checkListData={G.PlayingPlaylistCheckedItems}
+                    checkListData={
+                      G.PlayingPlaylistCheckedItems?.[G.PlayingPlaylistID] || {}
+                    }
                     setList={(newList: any) => {
                       let listLatest = [...newList];
                       if (typeof newList === "function") {

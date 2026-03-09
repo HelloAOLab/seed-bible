@@ -114,7 +114,9 @@ const PlayerControls = ({ parentId = "default" }) => {
   const [openAttachLink, setOpenAttachLink] = useState(false);
 
   const [checkedItems, setCheckedItems] = useState(
-    G.PPreadingPlanEnabled ? { ...G.PPpastDateEvents } : {}
+    G.PPreadingPlanEnabled
+      ? { ...G.PPpastDateEvents }
+      : { ...(G.PlayingPlaylistCheckedItems?.[G.PlayingPlaylistID] || {}) }
   );
 
   const [currIndex, setCurreIndex] = useState({
@@ -491,7 +493,6 @@ const PlayerControls = ({ parentId = "default" }) => {
     G.SetMediaURL = setMediaURL;
     G.SetTextInfo = setTextInfo;
 
-    G.PlayingPlaylistCheckedItems = checkedItems;
     G.PlayingPlaylists = playlists;
     G.SetPlayingPlaylists = setPlaylists;
     G.CurrentIndexItem = currIndex;
@@ -524,7 +525,6 @@ const PlayerControls = ({ parentId = "default" }) => {
       G.SetVideoSrc = null;
       G.SetTextInfo = null;
       G.SetMediaURL = null;
-      G.PlayingPlaylistCheckedItems = null;
       G.PlayingPlaylists = null;
       G.SetPlayingPlaylists = null;
       G.CurrentIndexItem = null;
@@ -542,6 +542,10 @@ const PlayerControls = ({ parentId = "default" }) => {
       G.EmitData("playlistStopped", {});
     };
   }, []);
+
+  useLayoutEffect(() => {
+    G.UpdateCheckedItemsPlayingPlaylist(checkedItems, G.PlayingPlaylistID);
+  }, [checkedItems]);
 
   const [
     currentPlaylistName,
@@ -790,7 +794,6 @@ const PlayerControls = ({ parentId = "default" }) => {
             // zIndex: "1001",
             textTransform: "capitalize",
             // padding: "12px",
-            background: "white",
             borderRadius: "4px",
             fontWeight: "600",
             width: "calc(100%)",
