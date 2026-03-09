@@ -2,6 +2,7 @@ import { BibleReader } from "seed-bible.components.BibleReader";
 import { type BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import { Tabs } from "seed-bible.components.Tabs";
 import { useTabs } from "seed-bible.managers.TabsManager";
+import { useTheme } from "seed-bible.managers.ThemeManager";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -59,9 +60,18 @@ function TabReaderPane({
 
 export function Main() {
   const { tabs, selectedTabId, addTab, selectTab } = useTabs();
+  const { currentTheme } = useTheme();
+  const theme = currentTheme.variables;
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
+    <div
+      style={{
+        display: "flex",
+        minHeight: "100vh",
+        background: theme.readerBackground,
+        color: theme.fontColor,
+      }}
+    >
       <ExternalResourceDependencies />
       <style>{tags["main.css"]}</style>
       <Tabs

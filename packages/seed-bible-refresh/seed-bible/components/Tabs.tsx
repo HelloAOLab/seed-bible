@@ -1,6 +1,7 @@
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
 import { useEffect } from "https://esm.sh/preact@10.28.4/hooks";
 import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager";
+import { useTheme } from "seed-bible.managers.ThemeManager";
 
 interface TabsProps {
   tabs: ReaderTab[];
@@ -11,6 +12,8 @@ interface TabsProps {
 
 export function Tabs(props: TabsProps) {
   const { tabs, selectedTabId, onSelectTab, onAddTab } = props;
+  const { currentTheme } = useTheme();
+  const theme = currentTheme.variables;
   const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
   const selectedBookId = selectedTab?.readingState.bookId.value ?? null;
   const selectedChapter = selectedTab?.readingState.chapterNumber.value ?? null;
@@ -33,12 +36,13 @@ export function Tabs(props: TabsProps) {
     <aside
       style={{
         width: "180px",
-        borderRight: "1px solid #ddd",
+        borderRight: `1px solid ${theme.secondaryColor}`,
         padding: "12px 8px",
         display: "flex",
         flexDirection: "column",
         gap: "8px",
-        background: "#f8f8f8",
+        background: theme.sidebarBackground,
+        color: theme.fontColor,
       }}
     >
       {tabs.map((tab) => {
@@ -57,12 +61,13 @@ export function Tabs(props: TabsProps) {
             onClick={() => onSelectTab(tab.id)}
             style={{
               textAlign: "left",
-              border: "1px solid #d0d0d0",
+              border: `1px solid ${theme.secondaryColor}`,
               borderRadius: "8px",
               padding: "8px 10px",
-              background: isSelected ? "#e7e7e7" : "#fff",
+              background: isSelected ? theme.primaryColor : theme.tertiaryColor,
               fontWeight: isSelected ? 700 : 400,
               cursor: "pointer",
+              color: theme.fontColor,
             }}
           >
             <div style={{ fontSize: "12px", opacity: 0.75 }}>{tab.title}</div>
@@ -75,11 +80,12 @@ export function Tabs(props: TabsProps) {
         onClick={onAddTab}
         style={{
           textAlign: "left",
-          border: "1px dashed #c0c0c0",
+          border: `1px dashed ${theme.secondaryColor}`,
           borderRadius: "8px",
           padding: "8px 10px",
-          background: "#fff",
+          background: theme.tertiaryColor,
           cursor: "pointer",
+          color: theme.fontColor,
         }}
       >
         + New Tab

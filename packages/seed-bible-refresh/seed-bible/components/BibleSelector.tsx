@@ -8,6 +8,7 @@ import {
   useRef,
 } from "https://esm.sh/preact@10.28.4/hooks";
 import { useSignal } from "https://esm.sh/@preact/signals?deps=preact@10.28.4";
+import { useTheme } from "seed-bible.managers.ThemeManager";
 
 // const { useEffect, useMemo, useState } = os.appHooks;
 
@@ -67,6 +68,8 @@ export function BibleSelector(props: BibleSelectorProps) {
   const expandedBookId = useSignal<string | null>(bookId);
   const wasOpenRef = useRef(isOpen);
   const isHandlingPopStateRef = useRef(false);
+  const { currentTheme } = useTheme();
+  const theme = currentTheme.variables;
 
   const getHistoryState = () => {
     return history.state && typeof history.state === "object"
@@ -156,10 +159,11 @@ export function BibleSelector(props: BibleSelectorProps) {
           width: "min(980px, 100%)",
           maxHeight: "85vh",
           overflow: "auto",
-          border: "1px solid #d8d8d8",
+          border: `1px solid ${theme.secondaryColor}`,
           borderRadius: "12px",
           padding: "12px",
-          background: "#f7f7f7",
+          background: theme.bookSelectorBackground,
+          color: theme.fontColor,
         }}
       >
         <div
@@ -170,15 +174,18 @@ export function BibleSelector(props: BibleSelectorProps) {
             marginBottom: "10px",
           }}
         >
-          <strong>Select Bible Book</strong>
+          <strong style={{ color: theme.bookHeadingColor }}>
+            Select Bible Book
+          </strong>
           <button
             onClick={onClose}
             style={{
-              border: "1px solid #d2d2d2",
+              border: `1px solid ${theme.secondaryColor}`,
               borderRadius: "6px",
               padding: "4px 8px",
-              background: "#f0f0f0",
+              background: theme.tertiaryColor,
               cursor: "pointer",
+              color: theme.fontColor,
             }}
           >
             Close
@@ -195,10 +202,11 @@ export function BibleSelector(props: BibleSelectorProps) {
             }}
             style={{
               minWidth: "96px",
-              border: "1px solid #d2d2d2",
+              border: `1px solid ${theme.secondaryColor}`,
               borderRadius: "6px",
               padding: "6px 8px",
-              background: "#f0f0f0",
+              background: theme.tertiaryColor,
+              color: theme.fontColor,
             }}
           >
             {(availableTranslations?.translations ?? []).map((translation) => (
@@ -217,20 +225,21 @@ export function BibleSelector(props: BibleSelectorProps) {
             placeholder="Search book..."
             style={{
               flex: 1,
-              border: "1px solid #d2d2d2",
+              border: `1px solid ${theme.secondaryColor}`,
               borderRadius: "6px",
               padding: "6px 10px",
-              background: "#f0f0f0",
+              background: theme.tertiaryColor,
+              color: theme.fontColor,
             }}
           />
 
           <div
             style={{
-              border: "1px solid #d2d2d2",
+              border: `1px solid ${theme.secondaryColor}`,
               borderRadius: "6px",
               padding: "6px 10px",
-              background: "#f0f0f0",
-              color: "#666",
+              background: theme.tertiaryColor,
+              color: theme.fontColor,
               whiteSpace: "nowrap",
             }}
           >
@@ -246,9 +255,18 @@ export function BibleSelector(props: BibleSelectorProps) {
           }}
         >
           <div
-            style={{ borderRight: "1px solid #e2e2e2", paddingRight: "12px" }}
+            style={{
+              borderRight: `1px solid ${theme.secondaryColor}`,
+              paddingRight: "12px",
+            }}
           >
-            <h4 style={{ marginTop: 0, marginBottom: "10px" }}>
+            <h4
+              style={{
+                marginTop: 0,
+                marginBottom: "10px",
+                color: theme.bookHeadingColor,
+              }}
+            >
               Old Testament
             </h4>
             <div
@@ -271,7 +289,10 @@ export function BibleSelector(props: BibleSelectorProps) {
                       border: "none",
                       background: "transparent",
                       padding: "4px 4px",
-                      color: book.id === bookId ? "#111" : "#555",
+                      color:
+                        book.id === bookId
+                          ? theme.bookHeadingColor
+                          : theme.fontColor,
                       fontWeight: book.id === bookId ? 700 : 400,
                       cursor: "pointer",
                     }}
@@ -300,14 +321,15 @@ export function BibleSelector(props: BibleSelectorProps) {
                               onClick={() => onSelectChapter(book.id, chapter)}
                               disabled={loading}
                               style={{
-                                border: "1px solid #d2d2d2",
+                                border: `1px solid ${theme.secondaryColor}`,
                                 borderRadius: "5px",
                                 background: isCurrentBookChapter
-                                  ? "#dedede"
-                                  : "#f0f0f0",
+                                  ? theme.primaryColor
+                                  : theme.tertiaryColor,
                                 minWidth: "28px",
                                 height: "24px",
                                 cursor: "pointer",
+                                color: theme.fontColor,
                               }}
                             >
                               {chapter}
@@ -323,7 +345,13 @@ export function BibleSelector(props: BibleSelectorProps) {
           </div>
 
           <div>
-            <h4 style={{ marginTop: 0, marginBottom: "10px" }}>
+            <h4
+              style={{
+                marginTop: 0,
+                marginBottom: "10px",
+                color: theme.bookHeadingColor,
+              }}
+            >
               New Testament
             </h4>
             <div
@@ -346,7 +374,10 @@ export function BibleSelector(props: BibleSelectorProps) {
                       border: "none",
                       background: "transparent",
                       padding: "4px 4px",
-                      color: book.id === bookId ? "#111" : "#555",
+                      color:
+                        book.id === bookId
+                          ? theme.bookHeadingColor
+                          : theme.fontColor,
                       fontWeight: book.id === bookId ? 700 : 400,
                       cursor: "pointer",
                     }}
@@ -375,14 +406,15 @@ export function BibleSelector(props: BibleSelectorProps) {
                               onClick={() => onSelectChapter(book.id, chapter)}
                               disabled={loading}
                               style={{
-                                border: "1px solid #d2d2d2",
+                                border: `1px solid ${theme.secondaryColor}`,
                                 borderRadius: "5px",
                                 background: isCurrentBookChapter
-                                  ? "#dedede"
-                                  : "#f0f0f0",
+                                  ? theme.primaryColor
+                                  : theme.tertiaryColor,
                                 minWidth: "28px",
                                 height: "24px",
                                 cursor: "pointer",
+                                color: theme.fontColor,
                               }}
                             >
                               {chapter}

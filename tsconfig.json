@@ -2615,6 +2615,9 @@
       "playlist.playlistMode.SetItemsPlayerPlaylist": [
         "./packages/Playlist/playlist/playlistMode/SetItemsPlayerPlaylist.tsx"
       ],
+      "playlist.playlistMode.SharePlaylistModal": [
+        "./packages/Playlist/playlist/playlistMode/SharePlaylistModal.tsx"
+      ],
       "playlist.playlistMode.showCommandBox": [
         "./packages/Playlist/playlist/playlistMode/showCommandBox.tsx"
       ],
@@ -3944,11 +3947,17 @@
       "seed-bible.managers.BibleReadingManager": [
         "./packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager.tsx"
       ],
+      "seed-bible.managers.esmSignals.d": [
+        "./packages/seed-bible-refresh/seed-bible/managers/esmSignals.d.ts"
+      ],
       "seed-bible.managers.FreeUseBibleAPI": [
         "./packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI.tsx"
       ],
       "seed-bible.managers.TabsManager": [
         "./packages/seed-bible-refresh/seed-bible/managers/TabsManager.tsx"
+      ],
+      "seed-bible.managers.ThemeManager": [
+        "./packages/seed-bible-refresh/seed-bible/managers/ThemeManager.tsx"
       ],
       "tabernacle.altar-of-sacrifice.onClick": [
         "./packages/Tabernacle/tabernacle/altar-of-sacrifice/onClick.tsx"

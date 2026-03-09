@@ -5,6 +5,10 @@ import {
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
 import {
+  useTheme,
+  type BibleThemeVariables,
+} from "seed-bible.managers.ThemeManager";
+import {
   signal,
   type Signal,
   useSignal,
@@ -42,7 +46,10 @@ function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
   return null;
 }
 
-function renderChapterContent(chapterData: TranslationBookChapter | null) {
+function renderChapterContent(
+  chapterData: TranslationBookChapter | null,
+  theme: BibleThemeVariables
+) {
   if (!chapterData) {
     return null;
   }
@@ -60,7 +67,10 @@ function renderChapterContent(chapterData: TranslationBookChapter | null) {
         .filter((item) => typeof item === "string")
         .join(" ");
       return (
-        <h3 key={`heading-${entryIndex}`} style={{ marginTop: "18px" }}>
+        <h3
+          key={`heading-${entryIndex}`}
+          style={{ marginTop: "18px", color: theme.chapterHeadingColor }}
+        >
           {heading}
         </h3>
       );
@@ -72,7 +82,10 @@ function renderChapterContent(chapterData: TranslationBookChapter | null) {
 
     if (value.type === "hebrew_subtitle" && Array.isArray(value.content)) {
       return (
-        <p key={`subtitle-${entryIndex}`} style={{ fontStyle: "italic" }}>
+        <p
+          key={`subtitle-${entryIndex}`}
+          style={{ fontStyle: "italic", color: theme.verseTextColor }}
+        >
           {value.content.map(renderInlineContent)}
         </p>
       );
@@ -84,7 +97,10 @@ function renderChapterContent(chapterData: TranslationBookChapter | null) {
       Array.isArray(value.content)
     ) {
       return (
-        <p key={`verse-${entryIndex}`} style={{ margin: "8px 0" }}>
+        <p
+          key={`verse-${entryIndex}`}
+          style={{ margin: "8px 0", color: theme.verseTextColor }}
+        >
           <sup style={{ marginRight: "8px", fontWeight: 700 }}>
             {value.number}
           </sup>
@@ -116,6 +132,8 @@ export function BibleReader(props: BibleReadingState) {
   const currentBook =
     translationBooks.value?.books.find((book) => book.id === bookId.value) ??
     null;
+  const { currentTheme } = useTheme();
+  const theme = currentTheme.variables;
 
   const isSelectorOpen = useSignal(false);
 
@@ -126,9 +144,13 @@ export function BibleReader(props: BibleReadingState) {
         paddingBottom: "96px",
         maxWidth: "860px",
         margin: "0 auto",
+        background: theme.readerBackground,
+        color: theme.fontColor,
       }}
     >
-      <h2 style={{ marginBottom: "6px" }}>Bible Reader</h2>
+      <h2 style={{ marginBottom: "6px", color: theme.bookHeadingColor }}>
+        Bible Reader
+      </h2>
       <p style={{ marginTop: 0, opacity: 0.8 }}>
         {translationId.value ?? "-"} •{" "}
         <button
@@ -137,7 +159,7 @@ export function BibleReader(props: BibleReadingState) {
             border: "none",
             background: "transparent",
             padding: 0,
-            color: "inherit",
+            color: theme.bookHeadingColor,
             textDecoration: "underline",
             cursor: "pointer",
             font: "inherit",
@@ -151,7 +173,7 @@ export function BibleReader(props: BibleReadingState) {
             border: "none",
             background: "transparent",
             padding: 0,
-            color: "inherit",
+            color: theme.chapterHeadingColor,
             textDecoration: "underline",
             cursor: "pointer",
             font: "inherit",
@@ -187,18 +209,21 @@ export function BibleReader(props: BibleReadingState) {
 
       {!loading.value && !error.value && chapterData.value && (
         <div>
-          {renderChapterContent(chapterData.value)}
+          {renderChapterContent(chapterData.value, theme)}
           {chapterData.value.chapter.footnotes.length > 0 && (
             <div
               style={{
                 marginTop: "20px",
                 paddingTop: "10px",
-                borderTop: "1px solid #ccc",
+                borderTop: `1px solid ${theme.secondaryColor}`,
               }}
             >
-              <h4>Footnotes</h4>
+              <h4 style={{ color: theme.chapterHeadingColor }}>Footnotes</h4>
               {chapterData.value.chapter.footnotes.map((note) => (
-                <p key={note.noteId} style={{ margin: "6px 0" }}>
+                <p
+                  key={note.noteId}
+                  style={{ margin: "6px 0", color: theme.verseTextColor }}
+                >
                   <strong>[{note.noteId}]</strong> {note.text}
                 </p>
               ))}
@@ -225,8 +250,8 @@ export function BibleReader(props: BibleReadingState) {
           gap: "8px",
           padding: "8px",
           borderRadius: "10px",
-          background: "rgba(245, 245, 245, 0.96)",
-          border: "1px solid #d8d8d8",
+          background: theme.readerBackground,
+          border: `1px solid ${theme.secondaryColor}`,
           boxShadow: "0 2px 10px rgba(0,0,0,0.12)",
           zIndex: 900,
         }}
@@ -234,18 +259,33 @@ export function BibleReader(props: BibleReadingState) {
         <button
           disabled={!chapterData.value?.previousChapterApiLink || loading.value}
           onClick={loadPreviousChapter}
+          style={{
+            background: theme.tertiaryColor,
+            border: `1px solid ${theme.secondaryColor}`,
+            color: theme.fontColor,
+          }}
         >
           Previous Chapter
         </button>
         <button
           onClick={() => (isSelectorOpen.value = true)}
           disabled={loading.value}
+          style={{
+            background: theme.tertiaryColor,
+            border: `1px solid ${theme.secondaryColor}`,
+            color: theme.fontColor,
+          }}
         >
           Open Book Selector
         </button>
         <button
           disabled={!chapterData.value?.nextChapterApiLink || loading.value}
           onClick={loadNextChapter}
+          style={{
+            background: theme.tertiaryColor,
+            border: `1px solid ${theme.secondaryColor}`,
+            color: theme.fontColor,
+          }}
         >
           Next Chapter
         </button>
