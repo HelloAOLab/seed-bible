@@ -51,8 +51,81 @@ function createInitialTabs(): ReaderTab[] {
 const initialTabs = createInitialTabs();
 const tabs = signal<ReaderTab[]>(initialTabs);
 const selectedTabId = signal<string>(initialTabs[0]?.id ?? "");
+let hasConfigBotListener = false;
+
+async function syncSelectedTabFromConfig() {
+  const selectedTab =
+    tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null;
+  if (!selectedTab) {
+    return;
+  }
+
+  const requestedTranslation = getInitialTranslationId();
+  const requestedBookId = getInitialFirstTabBookId();
+  const requestedChapter = getInitialFirstTabChapter();
+  const readingState = selectedTab.readingState;
+
+  if (readingState.translationId.value !== requestedTranslation) {
+    await readingState.selectTranslation(requestedTranslation);
+  }
+
+  const books = readingState.translationBooks.value?.books ?? [];
+  const selectedBook =
+    books.find((book) => book.id === requestedBookId) ?? null;
+  if (!selectedBook) {
+    return;
+  }
+
+  const firstChapterNumber =
+    selectedBook.firstChapterNumber ?? DEFAULT_CHAPTER_NUMBER;
+  const maxChapterNumber =
+    firstChapterNumber + selectedBook.numberOfChapters - 1;
+  const nextChapter =
+    requestedChapter >= firstChapterNumber &&
+    requestedChapter <= maxChapterNumber
+      ? requestedChapter
+      : firstChapterNumber;
+
+  if (
+    readingState.bookId.value === requestedBookId &&
+    readingState.chapterNumber.value === nextChapter
+  ) {
+    return;
+  }
+
+  await readingState.selectChapter(requestedBookId, nextChapter);
+}
+
+function ensureConfigBotListener() {
+  if (hasConfigBotListener) {
+    return;
+  }
+
+  hasConfigBotListener = true;
+  os.addBotListener(configBot, "onBotChanged", async (that: unknown) => {
+    const changedTagsSource =
+      that && typeof that === "object" && "tags" in that
+        ? (that as { tags?: unknown }).tags
+        : null;
+    const changedTags = Array.isArray(changedTagsSource)
+      ? changedTagsSource
+      : [];
+    const hasReadingStateTagChange =
+      changedTags.includes("translation") ||
+      changedTags.includes("book") ||
+      changedTags.includes("chapter");
+
+    if (!hasReadingStateTagChange) {
+      return;
+    }
+
+    await syncSelectedTabFromConfig();
+  });
+}
 
 export function useTabs() {
+  ensureConfigBotListener();
+
   const addTab = () => {
     const currentTabs = tabs.value;
     const nextNumber = currentTabs.length + 1;
