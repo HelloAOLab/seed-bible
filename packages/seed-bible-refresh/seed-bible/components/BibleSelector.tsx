@@ -2,11 +2,8 @@ import type {
   AvailableTranslations,
   TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "https://esm.sh/preact@10.28.4/hooks";
+import { useEffect, useMemo } from "https://esm.sh/preact@10.28.4/hooks";
+import { useSignal } from "https://esm.sh/@preact/signals?deps=preact@10.28.4";
 
 // const { useEffect, useMemo, useState } = os.appHooks;
 
@@ -60,18 +57,18 @@ export function BibleSelector(props: BibleSelectorProps) {
     onSelectChapter,
   } = props;
 
-  const [search, setSearch] = useState("");
-  const [expandedBookId, setExpandedBookId] = useState<string | null>(bookId);
+  const search = useSignal("");
+  const expandedBookId = useSignal<string | null>(bookId);
 
   useEffect(() => {
     if (isOpen) {
-      setExpandedBookId(bookId);
+      expandedBookId.value = bookId;
     }
   }, [bookId, isOpen]);
 
   const { oldTestament, newTestament } = useMemo(
-    () => groupBooks(translationBooks, search),
-    [translationBooks, search]
+    () => groupBooks(translationBooks, search.value),
+    [translationBooks, search.value]
   );
 
   if (!isOpen) {
@@ -153,10 +150,10 @@ export function BibleSelector(props: BibleSelectorProps) {
           </select>
 
           <input
-            value={search}
+            value={search.value}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLInputElement;
-              setSearch(target.value);
+              search.value = target.value;
             }}
             placeholder="Search book..."
             style={{
@@ -206,9 +203,8 @@ export function BibleSelector(props: BibleSelectorProps) {
                 <div key={book.id}>
                   <button
                     onClick={() => {
-                      setExpandedBookId((current) =>
-                        current === book.id ? null : book.id
-                      );
+                      expandedBookId.value =
+                        expandedBookId.value === book.id ? null : book.id;
                     }}
                     disabled={loading}
                     style={{
@@ -224,7 +220,7 @@ export function BibleSelector(props: BibleSelectorProps) {
                     {book.name}
                   </button>
 
-                  {expandedBookId === book.id && (
+                  {expandedBookId.value === book.id && (
                     <div
                       style={{
                         display: "flex",
@@ -282,9 +278,8 @@ export function BibleSelector(props: BibleSelectorProps) {
                 <div key={book.id}>
                   <button
                     onClick={() => {
-                      setExpandedBookId((current) =>
-                        current === book.id ? null : book.id
-                      );
+                      expandedBookId.value =
+                        expandedBookId.value === book.id ? null : book.id;
                     }}
                     disabled={loading}
                     style={{
@@ -300,7 +295,7 @@ export function BibleSelector(props: BibleSelectorProps) {
                     {book.name}
                   </button>
 
-                  {expandedBookId === book.id && (
+                  {expandedBookId.value === book.id && (
                     <div
                       style={{
                         display: "flex",
