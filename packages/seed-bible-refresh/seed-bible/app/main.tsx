@@ -1,4 +1,5 @@
 import { BibleReader } from "seed-bible.components.BibleReader";
+import { SettingsPage } from "seed-bible.components.SettingsPage";
 import { type BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import { Tabs } from "seed-bible.components.Tabs";
 import { useTabs } from "seed-bible.managers.TabsManager";
@@ -6,6 +7,7 @@ import {
   generateThemeCssVariables,
   useTheme,
 } from "seed-bible.managers.ThemeManager";
+import { useSignal } from "https://esm.sh/@preact/signals?deps=preact@10.28.4";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -66,6 +68,17 @@ export function Main() {
   const { currentTheme } = useTheme();
   const theme = currentTheme.variables;
   const themeCssVariables = generateThemeCssVariables(theme);
+  const isSettingsOpen = useSignal(false);
+
+  const handleSelectTab = (tabId: string) => {
+    isSettingsOpen.value = false;
+    selectTab(tabId);
+  };
+
+  const handleAddTab = () => {
+    isSettingsOpen.value = false;
+    addTab();
+  };
 
   return (
     <div
@@ -82,18 +95,26 @@ export function Main() {
       <Tabs
         tabs={tabs.value}
         selectedTabId={selectedTabId.value}
-        onSelectTab={selectTab}
-        onAddTab={addTab}
+        isSettingsOpen={isSettingsOpen.value}
+        onSelectTab={handleSelectTab}
+        onAddTab={handleAddTab}
+        onOpenSettings={() => {
+          isSettingsOpen.value = true;
+        }}
       />
 
       <main style={{ flex: 1 }}>
-        {tabs.value.map((tab) => (
-          <TabReaderPane
-            key={tab.id}
-            readingState={tab.readingState}
-            isVisible={tab.id === selectedTabId.value}
-          />
-        ))}
+        {isSettingsOpen.value ? (
+          <SettingsPage />
+        ) : (
+          tabs.value.map((tab) => (
+            <TabReaderPane
+              key={tab.id}
+              readingState={tab.readingState}
+              isVisible={tab.id === selectedTabId.value}
+            />
+          ))
+        )}
       </main>
     </div>
   );

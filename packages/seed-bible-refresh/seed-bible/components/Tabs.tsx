@@ -5,12 +5,21 @@ import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager"
 interface TabsProps {
   tabs: ReaderTab[];
   selectedTabId: string;
+  isSettingsOpen: boolean;
   onSelectTab: (tabId: string) => void;
   onAddTab: () => void;
+  onOpenSettings: () => void;
 }
 
 export function Tabs(props: TabsProps) {
-  const { tabs, selectedTabId, onSelectTab, onAddTab } = props;
+  const {
+    tabs,
+    selectedTabId,
+    isSettingsOpen,
+    onSelectTab,
+    onAddTab,
+    onOpenSettings,
+  } = props;
   const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
   const selectedBookId = selectedTab?.readingState.bookId.value ?? null;
   const selectedChapter = selectedTab?.readingState.chapterNumber.value ?? null;
@@ -55,6 +64,17 @@ export function Tabs(props: TabsProps) {
 
       <button onClick={onAddTab} className="sb-tab-add-button">
         + New Tab
+      </button>
+
+      <button
+        onClick={onOpenSettings}
+        className={`sb-sidebar-icon-button${
+          isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
+        }`}
+        aria-label="Open settings"
+        title="Settings"
+      >
+        <span className="material-symbols-outlined">settings</span>
       </button>
     </aside>
   );

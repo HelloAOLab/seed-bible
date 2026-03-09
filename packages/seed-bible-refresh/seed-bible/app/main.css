@@ -281,3 +281,58 @@ body {
   cursor: pointer;
   color: var(--font-color);
 }
+
+.sb-sidebar-icon-button {
+  /* margin-top: auto; */
+  border: 1px solid var(--secondary-color);
+  border-radius: 8px;
+  background: var(--tertiary-color);
+  color: var(--font-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+}
+
+.sb-sidebar-icon-button-selected {
+  background: var(--primary-color);
+}
+
+.sb-settings-page {
+  padding: 20px;
+  color: var(--font-color);
+}
+
+.sb-settings-section {
+  border: 1px solid var(--secondary-color);
+  border-radius: 10px;
+  padding: 16px;
+  background: var(--reader-background);
+  max-width: 480px;
+}
+
+.sb-settings-title {
+  margin: 0 0 12px 0;
+  color: var(--book-heading-color);
+}
+
+.sb-settings-theme-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sb-settings-theme-button {
+  border: 1px solid var(--secondary-color);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--tertiary-color);
+  color: var(--font-color);
+  cursor: pointer;
+}
+
+.sb-settings-theme-button-selected {
+  background: var(--primary-color);
+  font-weight: 700;
+}
