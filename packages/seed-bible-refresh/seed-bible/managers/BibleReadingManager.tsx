@@ -25,12 +25,29 @@ export interface BibleReadingState {
   loadNextChapter: () => Promise<void>;
 }
 
-export function useBibleReadingState(): BibleReadingState {
+interface InitialBibleReadingOptions {
+  initialTranslationId?: string | null;
+  initialBookId?: string | null;
+  initialChapterNumber?: number | null;
+}
+
+export function useBibleReadingState(
+  options: InitialBibleReadingOptions = {}
+): BibleReadingState {
   const api = new FreeUseBibleAPI();
 
-  const translationId = signal<string | null>("BSB");
-  const bookId = signal<string | null>(null);
-  const chapterNumber = signal<number>(1);
+  const normalizedInitialChapterNumber =
+    typeof options.initialChapterNumber === "number" &&
+    Number.isFinite(options.initialChapterNumber) &&
+    options.initialChapterNumber > 0
+      ? Math.floor(options.initialChapterNumber)
+      : 1;
+
+  const translationId = signal<string | null>(
+    options.initialTranslationId ?? "BSB"
+  );
+  const bookId = signal<string | null>(options.initialBookId ?? null);
+  const chapterNumber = signal<number>(normalizedInitialChapterNumber);
   const availableTranslations = signal<AvailableTranslations | null>(null);
   const translationBooks = signal<TranslationBooks | null>(null);
   const chapterData = signal<TranslationBookChapter | null>(null);
@@ -217,16 +234,29 @@ export function useBibleReadingState(): BibleReadingState {
         throw new Error("No books available for selected translation.");
       }
 
-      const nextBookId = firstBook.id;
-      const firstChapterNumber = firstBook.firstChapterNumber ?? 1;
+      const requestedBookId = bookId.value;
+      const selectedBook = requestedBookId
+        ? (books.books.find((book) => book.id === requestedBookId) ?? firstBook)
+        : firstBook;
+
+      const nextBookId = selectedBook.id;
+      const firstChapterNumber = selectedBook.firstChapterNumber ?? 1;
+      const maxChapterNumber =
+        firstChapterNumber + selectedBook.numberOfChapters - 1;
+      const requestedChapterNumber = chapterNumber.value;
+      const nextChapterNumber =
+        requestedChapterNumber >= firstChapterNumber &&
+        requestedChapterNumber <= maxChapterNumber
+          ? requestedChapterNumber
+          : firstChapterNumber;
 
       bookId.value = nextBookId;
-      chapterNumber.value = firstChapterNumber;
+      chapterNumber.value = nextChapterNumber;
 
       const chapter = await api.getTranslationBookChapter(
         nextTranslationId,
         nextBookId,
-        firstChapterNumber
+        nextChapterNumber
       );
 
       chapterData.value = chapter;

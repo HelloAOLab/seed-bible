@@ -10,9 +10,35 @@ export interface ReaderTab {
   readingState: BibleReadingState;
 }
 
+function getInitialFirstTabBookId(): string {
+  return typeof configBot.tags.book === "string" && configBot.tags.book.trim()
+    ? configBot.tags.book
+    : "GEN";
+}
+
+function getInitialTranslationId(): string {
+  return typeof configBot.tags.translation === "string" &&
+    configBot.tags.translation.trim()
+    ? configBot.tags.translation
+    : "BSB";
+}
+
+function getInitialFirstTabChapter(): number {
+  const value = Number(configBot.tags.chapter);
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : 1;
+}
+
 function createInitialTabs(): ReaderTab[] {
   return [
-    { id: "tab-1", title: "Tab 1", readingState: useBibleReadingState() },
+    {
+      id: "tab-1",
+      title: "Tab 1",
+      readingState: useBibleReadingState({
+        initialTranslationId: getInitialTranslationId(),
+        initialBookId: getInitialFirstTabBookId(),
+        initialChapterNumber: getInitialFirstTabChapter(),
+      }),
+    },
     { id: "tab-2", title: "Tab 2", readingState: useBibleReadingState() },
   ];
 }
