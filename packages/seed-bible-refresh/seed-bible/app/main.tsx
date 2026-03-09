@@ -2,6 +2,7 @@ import { BibleReader } from "seed-bible.components.BibleReader";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
 import { type BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import { Tabs } from "seed-bible.components.Tabs";
+import { I18nProvider } from "seed-bible.managers.I18nManager";
 import { useTabs } from "seed-bible.managers.TabsManager";
 import {
   generateThemeCssVariables,
@@ -81,41 +82,43 @@ export function Main() {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        background: theme.readerBackground,
-        color: theme.fontColor,
-      }}
-    >
-      <ExternalResourceDependencies />
-      <style>{`:root {\n${themeCssVariables}\n}`}</style>
-      <style>{tags["main.css"]}</style>
-      <Tabs
-        tabs={tabs.value}
-        selectedTabId={selectedTabId.value}
-        isSettingsOpen={isSettingsOpen.value}
-        onSelectTab={handleSelectTab}
-        onAddTab={handleAddTab}
-        onOpenSettings={() => {
-          isSettingsOpen.value = true;
+    <I18nProvider>
+      <div
+        style={{
+          display: "flex",
+          minHeight: "100vh",
+          background: theme.readerBackground,
+          color: theme.fontColor,
         }}
-      />
+      >
+        <ExternalResourceDependencies />
+        <style>{`:root {\n${themeCssVariables}\n}`}</style>
+        <style>{tags["main.css"]}</style>
+        <Tabs
+          tabs={tabs.value}
+          selectedTabId={selectedTabId.value}
+          isSettingsOpen={isSettingsOpen.value}
+          onSelectTab={handleSelectTab}
+          onAddTab={handleAddTab}
+          onOpenSettings={() => {
+            isSettingsOpen.value = true;
+          }}
+        />
 
-      <main style={{ flex: 1 }}>
-        {isSettingsOpen.value ? (
-          <SettingsPage />
-        ) : (
-          tabs.value.map((tab) => (
-            <TabReaderPane
-              key={tab.id}
-              readingState={tab.readingState}
-              isVisible={tab.id === selectedTabId.value}
-            />
-          ))
-        )}
-      </main>
-    </div>
+        <main style={{ flex: 1 }}>
+          {isSettingsOpen.value ? (
+            <SettingsPage />
+          ) : (
+            tabs.value.map((tab) => (
+              <TabReaderPane
+                key={tab.id}
+                readingState={tab.readingState}
+                isVisible={tab.id === selectedTabId.value}
+              />
+            ))
+          )}
+        </main>
+      </div>
+    </I18nProvider>
   );
 }

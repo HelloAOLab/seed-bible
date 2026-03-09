@@ -1,4 +1,26 @@
 declare module "https://esm.sh/*" {
+  export interface I18nLike {
+    isInitialized?: boolean;
+    language: string;
+    use(plugin: unknown): I18nLike;
+    init(options: unknown): Promise<unknown>;
+    changeLanguage(language: string): Promise<unknown>;
+  }
+
+  export interface TranslationHookResult {
+    t: (key: string, options?: Record<string, unknown>) => string;
+    i18n: I18nLike;
+  }
+
+  export const initReactI18next: unknown;
+  export function useTranslation(): TranslationHookResult;
+  export function I18nextProvider(props: {
+    i18n: I18nLike;
+    children: unknown;
+  }): any;
+  const defaultExport: I18nLike;
+  export default defaultExport;
+
   export interface Signal<T> {
     value: T;
   }
