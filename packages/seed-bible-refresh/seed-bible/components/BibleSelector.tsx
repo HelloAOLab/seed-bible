@@ -8,6 +8,7 @@ import {
   useRef,
 } from "https://esm.sh/preact@10.28.4/hooks";
 import { useSignal } from "https://esm.sh/@preact/signals?deps=preact@10.28.4";
+import { useI18n } from "seed-bible.i18n.I18nManager";
 
 // const { useEffect, useMemo, useState } = os.appHooks;
 
@@ -62,6 +63,8 @@ export function BibleSelector(props: BibleSelectorProps) {
     onSelectTranslation,
     onSelectChapter,
   } = props;
+
+  const { t } = useI18n();
 
   const search = useSignal("");
   const expandedBookId = useSignal<string | null>(bookId);
@@ -142,13 +145,6 @@ export function BibleSelector(props: BibleSelectorProps) {
         }}
         className="sb-selector-panel"
       >
-        <div className="sb-selector-header">
-          <strong className="sb-selector-title">Select Bible Book</strong>
-          <button onClick={onClose} className="sb-selector-close-button">
-            Close
-          </button>
-        </div>
-
         <div className="sb-selector-controls">
           <select
             value={translationId ?? ""}
@@ -172,16 +168,22 @@ export function BibleSelector(props: BibleSelectorProps) {
               const target = event.currentTarget as HTMLInputElement;
               search.value = target.value;
             }}
-            placeholder="Search book..."
+            placeholder={t("searchBook", {
+              defaultValue: "Search book...",
+            })}
             className="sb-selector-search-input"
           />
 
-          <div className="sb-selector-all-books">All books</div>
+          <div className="sb-selector-all-books">
+            {t("allBooks", { defaultValue: "All books" })}
+          </div>
         </div>
 
         <div className="sb-selector-grid">
           <div className="sb-selector-column sb-selector-column-divider">
-            <h4 className="sb-selector-section-title">Old Testament</h4>
+            <h4 className="sb-selector-section-title">
+              {t("oldTestament", { defaultValue: "Old Testament" })}
+            </h4>
             <div className="sb-selector-books-grid">
               {oldTestament.map((book) => (
                 <div key={book.id}>
@@ -232,7 +234,9 @@ export function BibleSelector(props: BibleSelectorProps) {
           </div>
 
           <div className="sb-selector-column">
-            <h4 className="sb-selector-section-title">New Testament</h4>
+            <h4 className="sb-selector-section-title">
+              {t("newTestament", { defaultValue: "New Testament" })}
+            </h4>
             <div className="sb-selector-books-grid">
               {newTestament.map((book) => (
                 <div key={book.id}>
