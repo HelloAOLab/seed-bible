@@ -1,4 +1,7 @@
-import { type TranslationBookChapter } from "seed-bible.managers.FreeUseBibleAPI";
+import {
+  type TranslationBookChapter,
+  type ChapterVerse,
+} from "seed-bible.managers.FreeUseBibleAPI";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
 import {
@@ -7,7 +10,7 @@ import {
   useSignal,
 } from "https://esm.sh/@preact/signals?deps=preact@10.28.4";
 
-function renderInlineContent(part: unknown, index: number) {
+function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
   if (typeof part === "string") {
     return <span key={index}>{part}</span>;
   }
@@ -16,24 +19,22 @@ function renderInlineContent(part: unknown, index: number) {
     return null;
   }
 
-  const value = part as Record<string, unknown>;
-
-  if (typeof value.text === "string") {
-    return <span key={index}>{value.text}</span>;
+  if ("text" in part && typeof part.text === "string") {
+    return <span key={index}>{part.text}</span>;
   }
 
-  if (typeof value.heading === "string") {
-    return <strong key={index}>{value.heading}</strong>;
+  if ("heading" in part && typeof part.heading === "string") {
+    return <strong key={index}>{part.heading}</strong>;
   }
 
-  if (value.lineBreak === true) {
+  if ("lineBreak" in part && part.lineBreak === true) {
     return <br key={index} />;
   }
 
-  if (typeof value.noteId === "number") {
+  if ("noteId" in part && typeof part.noteId === "number") {
     return (
       <sup key={index} style={{ marginLeft: "2px" }}>
-        [{value.noteId}]
+        [{part.noteId}]
       </sup>
     );
   }
@@ -46,13 +47,13 @@ function renderChapterContent(chapterData: TranslationBookChapter | null) {
     return null;
   }
 
-  const entries = chapterData.chapter.content as unknown[];
+  const entries = chapterData.chapter.content;
   return entries.map((entry, entryIndex) => {
     if (!entry || typeof entry !== "object") {
       return null;
     }
 
-    const value = entry as Record<string, unknown>;
+    const value = entry;
 
     if (value.type === "heading" && Array.isArray(value.content)) {
       const heading = (value.content as unknown[])

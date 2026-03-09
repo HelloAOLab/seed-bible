@@ -269,7 +269,7 @@ interface ChapterData {
  * - A verse.
  * - A Hebrew Subtitle.
  */
-type ChapterContent =
+export type ChapterContent =
   | ChapterHeading
   | ChapterLineBreak
   | ChapterVerse
@@ -278,7 +278,7 @@ type ChapterContent =
 /**
  * A heading in a chapter.
  */
-interface ChapterHeading {
+export interface ChapterHeading {
   /**
    * Indicates that the content represents a heading.
    */
@@ -294,7 +294,7 @@ interface ChapterHeading {
 /**
  * A line break in a chapter.
  */
-interface ChapterLineBreak {
+export interface ChapterLineBreak {
   /**
    * Indicates that the content represents a line break.
    */
@@ -306,7 +306,7 @@ interface ChapterLineBreak {
  * These are often used included as informational content that appeared in the original manuscripts.
  * For example, Psalms 49 has the Hebrew Subtitle "To the choirmaster. A Psalm of the Sons of Korah."
  */
-interface ChapterHebrewSubtitle {
+export interface ChapterHebrewSubtitle {
   /**
    * Indicates that the content represents a Hebrew Subtitle.
    */
@@ -322,7 +322,7 @@ interface ChapterHebrewSubtitle {
 /**
  * A verse in a chapter.
  */
-interface ChapterVerse {
+export interface ChapterVerse {
   /**
    * Indicates that the content is a verse.
    */
@@ -349,7 +349,7 @@ interface ChapterVerse {
 /**
  * Formatted text. That is, text that is formated in a particular manner.
  */
-interface FormattedText {
+export interface FormattedText {
   /**
    * The text that is formatted.
    */
@@ -372,7 +372,7 @@ interface FormattedText {
 /**
  * Defines an interface that represents a heading that is embedded in a verse.
  */
-interface InlineHeading {
+export interface InlineHeading {
   /**
    * The text of the heading.
    */
@@ -382,14 +382,14 @@ interface InlineHeading {
 /**
  * Defines an interface that represents a line break that is embedded in a verse.
  */
-interface InlineLineBreak {
+export interface InlineLineBreak {
   lineBreak: true;
 }
 
 /**
  * A footnote reference in a verse or a Hebrew Subtitle.
  */
-interface VerseFootnoteReference {
+export interface VerseFootnoteReference {
   /**
    * The ID of the note.
    */
@@ -399,7 +399,7 @@ interface VerseFootnoteReference {
 /**
  * Information about a footnote.
  */
-interface ChapterFootnote {
+export interface ChapterFootnote {
   /**
    * The ID of the note that is referenced.
    */
@@ -440,7 +440,7 @@ interface ChapterFootnote {
 /**
  * The audio links for a book chapter.
  */
-interface TranslationBookChapterAudioLinks {
+export interface TranslationBookChapterAudioLinks {
   /**
    * The reader for the chapter and the URL link to the audio file.
    */
