@@ -1,5 +1,6 @@
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
 import { useEffect } from "https://esm.sh/preact@10.28.4/hooks";
+import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager";
 
 interface TabsProps {
   tabs: ReaderTab[];
@@ -13,11 +14,20 @@ export function Tabs(props: TabsProps) {
   const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
   const selectedBookId = selectedTab?.readingState.bookId.value ?? null;
   const selectedChapter = selectedTab?.readingState.chapterNumber.value ?? null;
+  const selectedTranslation =
+    selectedTab?.readingState.translationId.value ?? null;
 
   useEffect(() => {
     configBot.tags.book = selectedBookId;
     configBot.tags.chapter = selectedChapter;
-  }, [selectedBookId, selectedChapter]);
+
+    if (
+      configBot.tags.translation ||
+      selectedTranslation !== DEFAULT_TRANSLATION_ID
+    ) {
+      configBot.tags.translation = selectedTranslation;
+    }
+  }, [selectedBookId, selectedChapter, selectedTranslation]);
 
   return (
     <aside
