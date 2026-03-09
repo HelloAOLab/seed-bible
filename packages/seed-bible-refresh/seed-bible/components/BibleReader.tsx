@@ -97,7 +97,7 @@ function renderChapterContent(
       Array.isArray(value.content)
     ) {
       return (
-        <p
+        <span
           key={`verse-${entryIndex}`}
           style={{ margin: "8px 0", color: theme.verseTextColor }}
         >
@@ -105,7 +105,7 @@ function renderChapterContent(
             {value.number}
           </sup>
           {value.content.map(renderInlineContent)}
-        </p>
+        </span>
       );
     }
 
