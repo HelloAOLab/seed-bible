@@ -9,11 +9,21 @@ body {
   margin: 0 auto;
   background: var(--reader-background);
   color: var(--font-color);
+
+  margin-left: 27%;
+  margin-right: 27%;
 }
 
 .sb-bible-reader-title {
   margin-bottom: 6px;
-  color: var(--book-heading-color);
+  font-family: "Newsreader", serif;
+  font-weight: 600;
+  font-size: 32px;
+}
+
+.sb-bible-reader-translation {
+  font-size: 24px;
+  color: color-mix(in srgb, var(--font-color), transparent 40%);
 }
 
 .sb-bible-reader-meta {
@@ -42,9 +52,21 @@ body {
   margin-left: 2px;
 }
 
+.sb-chapter-content {
+  line-height: 2;
+  font-family: "Newsreader", serif;
+  font-size: 20px;
+}
+
 .sb-chapter-heading {
+  font-family: "Plus Jakarta Sans", sans-serif;
   margin-top: 18px;
-  color: var(--chapter-heading-color);
+  margin-bottom: 12px;
+  /* margin-left:  */
+  /* color: var(--chapter-heading-color); */
+  font-size: 18px;
+  font-weight: 200;
+  font-style: italic;
 }
 
 .sb-line-break {
@@ -62,8 +84,14 @@ body {
 }
 
 .sb-verse-number {
-  margin-right: 8px;
-  font-weight: 700;
+  font-size: 0.6em;
+  font-weight: 500;
+  position: relative;
+  top: -0.4em;
+  white-space: nowrap;
+  vertical-align: middle;
+  /* margin-right: 2px;
+  font-weight: 700; */
 }
 
 .sb-reader-error {

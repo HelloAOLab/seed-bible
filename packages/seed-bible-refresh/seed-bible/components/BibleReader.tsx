@@ -119,22 +119,18 @@ export function BibleReader(props: BibleReadingState) {
 
   return (
     <div className="sb-bible-reader">
-      <h2 className="sb-bible-reader-title">Bible Reader</h2>
-      <p className="sb-bible-reader-meta">
-        {translationId.value ?? "-"} •{" "}
-        <button
-          onClick={() => (isSelectorOpen.value = true)}
-          className="sb-bible-reader-link sb-bible-reader-link-book"
-        >
-          {currentBook?.name ?? bookId.value ?? "-"}
-        </button>{" "}
-        <button
-          onClick={() => (isSelectorOpen.value = true)}
-          className="sb-bible-reader-link sb-bible-reader-link-chapter"
-        >
-          {chapterNumber.value}
-        </button>
-      </p>
+      <h2
+        onClick={() => (isSelectorOpen.value = true)}
+        className="sb-bible-reader-title"
+      >
+        <span className="sb-bible-reader-book">
+          {currentBook?.name ?? bookId.value ?? "Select a book"}
+        </span>
+        <span className="sb-bible-reader-chapter">{chapterNumber.value}</span>{" "}
+        <span className="sb-bible-reader-translation">
+          / {translationId.value ?? ""}
+        </span>
+      </h2>
 
       <BibleSelector
         isOpen={isSelectorOpen.value}
@@ -161,7 +157,7 @@ export function BibleReader(props: BibleReadingState) {
       )}
 
       {!loading.value && !error.value && chapterData.value && (
-        <div>
+        <div className="sb-chapter-content">
           {renderChapterContent(chapterData.value)}
           {chapterData.value.chapter.footnotes.length > 0 && (
             <div className="sb-reader-footnotes">
