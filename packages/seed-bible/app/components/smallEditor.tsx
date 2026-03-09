@@ -484,7 +484,7 @@ export function MiniTextEditor({
     }
 
     if (headingControls) {
-      ["text-color", "bg-color", "align"].forEach((ele) => {
+      ["align"].forEach((ele) => {
         vis.push(ele);
       });
     }

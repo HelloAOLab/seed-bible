@@ -659,11 +659,13 @@ input:checked + .slider:not(#slider):before {
   color: #044d87;
   padding: 10px;
   border-radius: 5px;
-  font-size: 16px;
+  font-size: 14px;
   grid-column: 1 / -1;
   border: none;
   justify-content: start;
   align-items: start;
+  font-family: "Satoshi", system-ui, sans-serif;
+  text-align: left;
 }
 
 .chapter-btn {

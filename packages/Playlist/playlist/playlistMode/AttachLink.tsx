@@ -476,14 +476,14 @@ function SubComponent(props: any) {
 }
 
 const tags = [
-  "TEXT",
-  "RECORDING",
-  "LINK",
-  "FILE_UPLOAD",
-  "PLAYLIST",
   "SCRIPTURE",
-  "DATE",
-  "TAG",
+  "TEXT",
+  // "RECORDING",
+  "LINK",
+  // "FILE_UPLOAD",
+  // "PLAYLIST",
+  // "DATE",
+  // "TAG",
 ];
 
 const WITHOUTLOGIN_TAGS: any = {

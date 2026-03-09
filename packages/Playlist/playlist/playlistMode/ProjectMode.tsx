@@ -346,7 +346,7 @@ const ProjectMode = (props: any) => {
                 }}
               >
                 <span
-                  style={{ fontSize: "20px", color: "white" }}
+                  style={{ fontSize: "20px" }}
                   class="material-symbols-outlined"
                 >
                   team_dashboard
@@ -385,7 +385,7 @@ const ProjectMode = (props: any) => {
                 }}
               >
                 <span
-                  style={{ fontSize: "20px", color: "white" }}
+                  style={{ fontSize: "20px" }}
                   class="material-symbols-outlined"
                 >
                   playlist_play
@@ -423,7 +423,7 @@ const ProjectMode = (props: any) => {
                 }}
               >
                 <span
-                  style={{ fontSize: "20px", color: "white" }}
+                  style={{ fontSize: "20px" }}
                   class="material-symbols-outlined"
                 >
                   team_dashboard
@@ -488,14 +488,14 @@ const ProjectMode = (props: any) => {
                     <p style={{ fontWeight: "400" }}>{label}</p>
                     {menuState[value] ? (
                       <span
-                        style={{ fontSize: "20px", color: "white" }}
+                        style={{ fontSize: "20px" }}
                         class="material-symbols-outlined unfollow"
                       >
                         check_box
                       </span>
                     ) : (
                       <span
-                        style={{ fontSize: "20px", color: "white" }}
+                        style={{ fontSize: "20px" }}
                         class="material-symbols-outlined unfollow"
                       >
                         check_box_outline_blank

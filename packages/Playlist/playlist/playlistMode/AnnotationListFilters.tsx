@@ -11,16 +11,19 @@ const DateIcon =
 const VersesIcon =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/6ba4514da1d4169a54082a5554aea48f96d6b9736cd939adf49563f8e6807d00.svg";
 
-const DATE_OPTIONS = [
-  { label: t("anytime"), value: "any" },
-  { label: t("yesterday"), value: "yesterday" },
-  { label: t("last_week"), value: "last_week" },
-  { label: t("last_month"), value: "last_month" },
-  { label: t("last_year"), value: "last_year" },
-  { label: t("custom_date_range"), value: "custom" },
-];
-
 const AnnotationListFilters = (props: any) => {
+  const DATE_OPTIONS = useMemo(
+    () => [
+      { label: t("anytime"), value: "any" },
+      { label: t("yesterday"), value: "yesterday" },
+      { label: t("last_week"), value: "last_week" },
+      { label: t("last_month"), value: "last_month" },
+      { label: t("last_year"), value: "last_year" },
+      { label: t("custom_date_range"), value: "custom" },
+    ],
+    []
+  );
+
   const {
     onChangeFilters,
     onClearFilters,
