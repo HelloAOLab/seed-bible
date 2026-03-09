@@ -1206,7 +1206,9 @@ const Playlist = (props: any) => {
               selectedChip["All"] ||
               selectedChip["Playlist"]) && (
               <>
-                <h3 style={{ margin: "0.5rem 0" }}>{t("playlists")}</h3>
+                <h3
+                  style={{ margin: "0.5rem 0" }}
+                >{`${t("my")} ${t("playlists")}`}</h3>
                 <PlaylistList
                   selectedChip={selectedChip}
                   extraActions={() => {

@@ -1317,7 +1317,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 
 .welcome-box-profile {
   width: 48px;
-  height: 48px;
+  height: 48px !important;
   border-radius: 50%;
 }
 

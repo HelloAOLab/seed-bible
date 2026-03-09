@@ -21,7 +21,7 @@ const LoaderSecondary = (props: any) => {
             `}</style>
       <div
         style={{
-          backgroundColor: secondary ? "grey" : "var(--primaryColor)",
+          backgroundColor: secondary ? "grey" : "var(--secondaryColor)",
         }}
         className="loader"
       />
