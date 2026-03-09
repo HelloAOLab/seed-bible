@@ -49,6 +49,14 @@ function groupBooks(translationBooks: TranslationBooks | null, search: string) {
   };
 }
 
+function chunkBooks(books: TranslationBooks["books"], size: number) {
+  const rows: TranslationBooks["books"][] = [];
+  for (let index = 0; index < books.length; index += size) {
+    rows.push(books.slice(index, index + size));
+  }
+  return rows;
+}
+
 export function BibleSelector(props: BibleSelectorProps) {
   const {
     isOpen,
@@ -132,6 +140,14 @@ export function BibleSelector(props: BibleSelectorProps) {
     () => groupBooks(translationBooks, search.value),
     [translationBooks, search.value]
   );
+  const oldTestamentRows = useMemo(
+    () => chunkBooks(oldTestament, 3),
+    [oldTestament]
+  );
+  const newTestamentRows = useMemo(
+    () => chunkBooks(newTestament, 3),
+    [newTestament]
+  );
 
   if (!isOpen) {
     return null;
@@ -185,51 +201,70 @@ export function BibleSelector(props: BibleSelectorProps) {
               {t("oldTestament", { defaultValue: "Old Testament" })}
             </h4>
             <div className="sb-selector-books-grid">
-              {oldTestament.map((book) => (
-                <div key={book.id}>
-                  <button
-                    onClick={() => {
-                      expandedBookId.value =
-                        expandedBookId.value === book.id ? null : book.id;
-                    }}
-                    disabled={loading}
-                    className={`sb-selector-book-button${
-                      book.id === bookId
-                        ? " sb-selector-book-button-current"
-                        : ""
-                    }`}
+              {oldTestamentRows.map((row, rowIndex) => {
+                const expandedBookInRow =
+                  row.find((book) => book.id === expandedBookId.value) ?? null;
+                return (
+                  <div
+                    key={`old-row-${rowIndex}`}
+                    className="sb-selector-books-row-group"
                   >
-                    {book.name}
-                  </button>
-
-                  {expandedBookId.value === book.id && (
-                    <div className="sb-selector-chapter-grid">
-                      {Array.from(
-                        { length: book.numberOfChapters },
-                        (_, index) => {
-                          const chapter = book.firstChapterNumber + index;
-                          const isCurrentBookChapter =
-                            book.id === bookId && chapter === chapterNumber;
-                          return (
-                            <button
-                              key={`${book.id}-${chapter}`}
-                              onClick={() => onSelectChapter(book.id, chapter)}
-                              disabled={loading}
-                              className={`sb-selector-chapter-button${
-                                isCurrentBookChapter
-                                  ? " sb-selector-chapter-button-current"
-                                  : ""
-                              }`}
-                            >
-                              {chapter}
-                            </button>
-                          );
-                        }
-                      )}
+                    <div className="sb-selector-books-row">
+                      {row.map((book) => (
+                        <div key={book.id}>
+                          <button
+                            onClick={() => {
+                              expandedBookId.value =
+                                expandedBookId.value === book.id
+                                  ? null
+                                  : book.id;
+                            }}
+                            disabled={loading}
+                            className={`sb-selector-book-button${
+                              book.id === bookId
+                                ? " sb-selector-book-button-current"
+                                : ""
+                            }`}
+                          >
+                            {book.name}
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {expandedBookInRow && (
+                      <div className="sb-selector-chapter-grid sb-selector-chapter-grid-inline">
+                        {Array.from(
+                          { length: expandedBookInRow.numberOfChapters },
+                          (_, index) => {
+                            const chapter =
+                              expandedBookInRow.firstChapterNumber + index;
+                            const isCurrentBookChapter =
+                              expandedBookInRow.id === bookId &&
+                              chapter === chapterNumber;
+                            return (
+                              <button
+                                key={`${expandedBookInRow.id}-${chapter}`}
+                                onClick={() =>
+                                  onSelectChapter(expandedBookInRow.id, chapter)
+                                }
+                                disabled={loading}
+                                className={`sb-selector-chapter-button${
+                                  isCurrentBookChapter
+                                    ? " sb-selector-chapter-button-current"
+                                    : ""
+                                }`}
+                              >
+                                {chapter}
+                              </button>
+                            );
+                          }
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -238,51 +273,70 @@ export function BibleSelector(props: BibleSelectorProps) {
               {t("newTestament", { defaultValue: "New Testament" })}
             </h4>
             <div className="sb-selector-books-grid">
-              {newTestament.map((book) => (
-                <div key={book.id}>
-                  <button
-                    onClick={() => {
-                      expandedBookId.value =
-                        expandedBookId.value === book.id ? null : book.id;
-                    }}
-                    disabled={loading}
-                    className={`sb-selector-book-button${
-                      book.id === bookId
-                        ? " sb-selector-book-button-current"
-                        : ""
-                    }`}
+              {newTestamentRows.map((row, rowIndex) => {
+                const expandedBookInRow =
+                  row.find((book) => book.id === expandedBookId.value) ?? null;
+                return (
+                  <div
+                    key={`new-row-${rowIndex}`}
+                    className="sb-selector-books-row-group"
                   >
-                    {book.name}
-                  </button>
-
-                  {expandedBookId.value === book.id && (
-                    <div className="sb-selector-chapter-grid">
-                      {Array.from(
-                        { length: book.numberOfChapters },
-                        (_, index) => {
-                          const chapter = book.firstChapterNumber + index;
-                          const isCurrentBookChapter =
-                            book.id === bookId && chapter === chapterNumber;
-                          return (
-                            <button
-                              key={`${book.id}-${chapter}`}
-                              onClick={() => onSelectChapter(book.id, chapter)}
-                              disabled={loading}
-                              className={`sb-selector-chapter-button${
-                                isCurrentBookChapter
-                                  ? " sb-selector-chapter-button-current"
-                                  : ""
-                              }`}
-                            >
-                              {chapter}
-                            </button>
-                          );
-                        }
-                      )}
+                    <div className="sb-selector-books-row">
+                      {row.map((book) => (
+                        <div key={book.id}>
+                          <button
+                            onClick={() => {
+                              expandedBookId.value =
+                                expandedBookId.value === book.id
+                                  ? null
+                                  : book.id;
+                            }}
+                            disabled={loading}
+                            className={`sb-selector-book-button${
+                              book.id === bookId
+                                ? " sb-selector-book-button-current"
+                                : ""
+                            }`}
+                          >
+                            {book.name}
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {expandedBookInRow && (
+                      <div className="sb-selector-chapter-grid sb-selector-chapter-grid-inline">
+                        {Array.from(
+                          { length: expandedBookInRow.numberOfChapters },
+                          (_, index) => {
+                            const chapter =
+                              expandedBookInRow.firstChapterNumber + index;
+                            const isCurrentBookChapter =
+                              expandedBookInRow.id === bookId &&
+                              chapter === chapterNumber;
+                            return (
+                              <button
+                                key={`${expandedBookInRow.id}-${chapter}`}
+                                onClick={() =>
+                                  onSelectChapter(expandedBookInRow.id, chapter)
+                                }
+                                disabled={loading}
+                                className={`sb-selector-chapter-button${
+                                  isCurrentBookChapter
+                                    ? " sb-selector-chapter-button-current"
+                                    : ""
+                                }`}
+                              >
+                                {chapter}
+                              </button>
+                            );
+                          }
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

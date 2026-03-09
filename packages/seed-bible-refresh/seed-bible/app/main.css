@@ -227,6 +227,17 @@ body {
 }
 
 .sb-selector-books-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-selector-books-row-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-selector-books-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px 10px;
@@ -252,6 +263,11 @@ body {
   flex-wrap: wrap;
   gap: 4px;
   padding: 2px 4px 8px 4px;
+}
+
+.sb-selector-chapter-grid-inline {
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 
 .sb-selector-chapter-button {
