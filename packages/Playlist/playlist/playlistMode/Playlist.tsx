@@ -935,17 +935,9 @@ const Playlist = (props: any) => {
                 setPublishAccess("private");
               }}
             >
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
-                lock
-              </span>
+              <span class="material-symbols-outlined">lock</span>
               <p>{t("privateAccess")}</p>
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
+              <span class="material-symbols-outlined">
                 {publishAccess === "private"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -957,17 +949,9 @@ const Playlist = (props: any) => {
                 setPublishAccess("public");
               }}
             >
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
-                public
-              </span>
+              <span class="material-symbols-outlined">public</span>
               <p>{t("publicAccess")}</p>
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
+              <span class="material-symbols-outlined">
                 {publishAccess === "public"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -1030,14 +1014,14 @@ const Playlist = (props: any) => {
               >
                 {checklist ? (
                   <span
-                    style={{ fontSize: "20px", color: "white" }}
+                    style={{ fontSize: "20px" }}
                     class="material-symbols-outlined unfollow"
                   >
                     check_box
                   </span>
                 ) : (
                   <span
-                    style={{ fontSize: "20px", color: "white" }}
+                    style={{ fontSize: "20px" }}
                     class="material-symbols-outlined unfollow"
                   >
                     check_box_outline_blank
@@ -1068,64 +1052,66 @@ const Playlist = (props: any) => {
                 </p>
               </Tooltip>
             </div>
-            <div
-              className="more-menu-items"
-              onClick={() => {
-                setPublishAccess("public");
-              }}
-            >
+            {false && (
               <div
-                className="align-center"
-                style={{
-                  cursor: "pointer",
-                }}
+                className="more-menu-items"
                 onClick={() => {
-                  if (readingPlan) {
-                    deleteDateData();
-                  }
-                  setReadingPlan((p) => !p);
+                  setPublishAccess("public");
                 }}
               >
-                {readingPlan ? (
-                  <span
-                    style={{ fontSize: "20px", color: "white" }}
-                    class="material-symbols-outlined unfollow"
-                  >
-                    check_box
-                  </span>
-                ) : (
-                  <span
-                    style={{ fontSize: "20px", color: "white" }}
-                    class="material-symbols-outlined unfollow"
-                  >
-                    check_box_outline_blank
-                  </span>
-                )}
-                <label
+                <div
+                  className="align-center"
                   style={{
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    marginLeft: "4px",
+                    cursor: "pointer",
                   }}
-                  for="playlistInclude"
+                  onClick={() => {
+                    if (readingPlan) {
+                      deleteDateData();
+                    }
+                    setReadingPlan((p) => !p);
+                  }}
                 >
-                  {t("readingPlan")}
-                </label>
-              </div>
-              <Tooltip text={t("readingPlanTooltip")}>
-                <p
-                  className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}
-                >
-                  <span
-                    style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow "
+                  {readingPlan ? (
+                    <span
+                      style={{ fontSize: "20px" }}
+                      class="material-symbols-outlined unfollow"
+                    >
+                      check_box
+                    </span>
+                  ) : (
+                    <span
+                      style={{ fontSize: "20px" }}
+                      class="material-symbols-outlined unfollow"
+                    >
+                      check_box_outline_blank
+                    </span>
+                  )}
+                  <label
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      marginLeft: "4px",
+                    }}
+                    for="playlistInclude"
                   >
-                    info
-                  </span>
-                </p>
-              </Tooltip>
-            </div>
+                    {t("readingPlan")}
+                  </label>
+                </div>
+                <Tooltip text={t("readingPlanTooltip")}>
+                  <p
+                    className="what-this center"
+                    style={{ margin: "0 0 0 0.5rem" }}
+                  >
+                    <span
+                      style={{ fontSize: "24px" }}
+                      class="material-symbols-outlined unfollow "
+                    >
+                      info
+                    </span>
+                  </p>
+                </Tooltip>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -1166,6 +1152,35 @@ const Playlist = (props: any) => {
           <h3 style={{ margin: "0.5rem 0" }}>{t("editingPlaylists")}</h3>
         ) : (
           <>
+            {(playingPlaylist ||
+              selectedChip["All"] ||
+              selectedChip["Playlist"]) && (
+              <>
+                <h3
+                  style={{ margin: "0.5rem 0" }}
+                >{`${t("my")} ${t("playlists")}`}</h3>
+                <PlaylistList
+                  selectedChip={selectedChip}
+                  extraActions={() => {
+                    toggleOpenModalName(false);
+                  }}
+                  selectPlaylist={
+                    selectPlaylist ||
+                    Object.keys(selectedPlaylist).some(
+                      (ele) => !!selectedPlaylist[ele]
+                    )
+                  }
+                  playingPlaylist={playingPlaylist}
+                  mergeMode={mergeMode}
+                  parentId={id}
+                  isLayers={isLayers}
+                  selectedPlaylists={selectedPlaylist}
+                  setSelectPlaylist={toggleSelectedPlaylist}
+                  playLists={filteredPlaylist}
+                  setPlayLists={setPlayLists}
+                />
+              </>
+            )}
             {selectedChip["Shared"] && sharedFilterPlaylists.length === 0 ? (
               <>
                 <h3 style={{ margin: "0.5rem 0" }}>{t("sharedPlaylists")}</h3>
@@ -1201,33 +1216,6 @@ const Playlist = (props: any) => {
               </>
             ) : (
               ""
-            )}
-            {(playingPlaylist ||
-              selectedChip["All"] ||
-              selectedChip["Playlist"]) && (
-              <>
-                <h3 style={{ margin: "0.5rem 0" }}>{t("playlists")}</h3>
-                <PlaylistList
-                  selectedChip={selectedChip}
-                  extraActions={() => {
-                    toggleOpenModalName(false);
-                  }}
-                  selectPlaylist={
-                    selectPlaylist ||
-                    Object.keys(selectedPlaylist).some(
-                      (ele) => !!selectedPlaylist[ele]
-                    )
-                  }
-                  playingPlaylist={playingPlaylist}
-                  mergeMode={mergeMode}
-                  parentId={id}
-                  isLayers={isLayers}
-                  selectedPlaylists={selectedPlaylist}
-                  setSelectPlaylist={toggleSelectedPlaylist}
-                  playLists={filteredPlaylist}
-                  setPlayLists={setPlayLists}
-                />
-              </>
             )}
           </>
         )}
@@ -1494,7 +1482,6 @@ const Playlist = (props: any) => {
 
             {!regenrateUI && !itemSelected && (
               <AttachLink
-                isDate
                 onDateClick={(date: string = "") => {
                   setRegenrateUI(false);
                   attachDate(date);

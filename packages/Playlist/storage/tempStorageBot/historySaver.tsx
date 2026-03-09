@@ -112,7 +112,10 @@ if (sharedPlaylist) {
           G.shareProfilePic = playlistData.shareProfilePic;
 
           if (G["Playlist_package"]) {
-            G["Playlist_package"].onClick();
+            // G["Playlist_package"].onClick();
+            G.Playlist.SharePlaylistModal({
+              playlistSharerName: playlistData.shareProfileName,
+            });
           }
           // setTagMask(toutour, "showingStep", false);
           // setTagMask(toutour, "access", false);
