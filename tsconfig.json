@@ -3941,8 +3941,14 @@
       "seed-bible.components.BibleSelector": [
         "./packages/seed-bible-refresh/seed-bible/components/BibleSelector.tsx"
       ],
+      "seed-bible.components.SettingsPage": [
+        "./packages/seed-bible-refresh/seed-bible/components/SettingsPage.tsx"
+      ],
       "seed-bible.components.Tabs": [
         "./packages/seed-bible-refresh/seed-bible/components/Tabs.tsx"
+      ],
+      "seed-bible.i18n.I18nManager": [
+        "./packages/seed-bible-refresh/seed-bible/i18n/I18nManager.tsx"
       ],
       "seed-bible.managers.BibleReadingManager": [
         "./packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager.tsx"

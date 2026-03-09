@@ -2,7 +2,7 @@ import { BibleReader } from "seed-bible.components.BibleReader";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
 import { type BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import { Tabs } from "seed-bible.components.Tabs";
-import { I18nProvider } from "seed-bible.managers.I18nManager";
+import { I18nProvider } from "seed-bible.i18n.I18nManager";
 import { useTabs } from "seed-bible.managers.TabsManager";
 import {
   generateThemeCssVariables,

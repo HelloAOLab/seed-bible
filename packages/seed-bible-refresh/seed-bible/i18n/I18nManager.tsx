@@ -8,15 +8,39 @@ import {
 
 const DEFAULT_LANGUAGE = "en";
 
+function loadTranslations(): Record<
+  string,
+  { translation: Record<string, string> }
+> {
+  // os.log("Loading translations from bot tags...", localesBot);
+  const loadedResources: Record<
+    string,
+    { translation: Record<string, string> }
+  > = {};
+  for (const langCode of Object.keys(thisBot.tags ?? {})) {
+    if (langCode.length > 3) {
+      continue; // Skip non-language tags
+    }
+    const translations = thisBot.tags[langCode];
+    // os.log(`Loaded translations for ${langCode}:`, translations);
+    if (translations) {
+      loadedResources[langCode] = {
+        translation:
+          typeof translations === "string"
+            ? JSON.parse(translations)
+            : translations,
+      };
+    }
+  }
+
+  return loadedResources;
+}
+
 if (!i18n.isInitialized) {
   void i18n.use(initReactI18next).init({
     lng: DEFAULT_LANGUAGE,
     fallbackLng: DEFAULT_LANGUAGE,
-    resources: {
-      en: {
-        translation: {},
-      },
-    },
+    resources: loadTranslations(),
     interpolation: {
       escapeValue: false,
     },
