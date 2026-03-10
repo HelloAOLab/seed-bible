@@ -152,12 +152,11 @@ export function BibleReader(props: BibleReadingState) {
         }}
       />
 
-      {loading.value && <p>Loading...</p>}
       {error.value && !loading.value && (
         <p className="sb-reader-error">{error.value}</p>
       )}
 
-      {!loading.value && !error.value && chapterData.value && (
+      {!error.value && chapterData.value && (
         <div className="sb-chapter-content">
           {renderChapterContent(chapterData.value)}
           {chapterData.value.chapter.footnotes.length > 0 && (
@@ -173,11 +172,9 @@ export function BibleReader(props: BibleReadingState) {
         </div>
       )}
 
-      {!loading.value && !error.value && !chapterData.value && (
-        <p>No chapter content found.</p>
-      )}
+      {!error.value && !chapterData.value && <p>No chapter content found.</p>}
 
-      {!availableTranslations.value && !loading.value && !error.value && (
+      {!availableTranslations.value && !error.value && (
         <p>No translations available.</p>
       )}
 
