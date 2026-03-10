@@ -7,9 +7,15 @@ export interface BibleThemeVariables {
   sidebarBackground: string;
   readerBackground: string;
   bookSelectorBackground: string;
+
+  fontFamily: string;
   fontColor: string;
+
+  verseFontFamily: string;
   verseTextColor: string;
   bookHeadingColor: string;
+
+  chapterHeadingFontFamily: string;
   chapterHeadingColor: string;
 }
 
@@ -42,10 +48,15 @@ const LIGHT_THEME: BibleTheme = {
     sidebarBackground: "#f8f8f8",
     readerBackground: "#ffffff",
     bookSelectorBackground: "#ffffff",
+    fontFamily: "Satoshi, system-ui, sans-serif",
     fontColor: "#222222",
+
+    verseFontFamily: "Newsreader, serif",
     verseTextColor: "#2f2f2f",
     bookHeadingColor: "#1f2b57",
-    chapterHeadingColor: "#5f2d85",
+
+    chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
+    chapterHeadingColor: "inherit",
   },
 };
 
@@ -61,10 +72,16 @@ const themes = signal<BibleTheme[]>([
       sidebarBackground: "#1f2430",
       readerBackground: "#151922",
       bookSelectorBackground: "#1e242f",
+
+      fontFamily: "Satoshi, system-ui, sans-serif",
       fontColor: "#eceff4",
+
+      verseFontFamily: "Newsreader, serif",
       verseTextColor: "#d6dbe5",
       bookHeadingColor: "#9cbaff",
-      chapterHeadingColor: "#d1a8ff",
+
+      chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
+      chapterHeadingColor: "inherit",
     },
   },
 ]);

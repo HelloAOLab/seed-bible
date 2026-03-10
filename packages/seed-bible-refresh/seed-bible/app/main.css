@@ -1,5 +1,7 @@
 body {
   background: #fff;
+
+  font-family: var(--font-family, "Satoshi", system-ui, sans-serif);
 }
 
 .sb-bible-reader {
@@ -54,16 +56,16 @@ body {
 
 .sb-chapter-content {
   line-height: 2;
-  font-family: "Newsreader", serif;
+  font-family: var(--verse-font-family, "Newsreader"), serif;
   font-size: 20px;
 }
 
 .sb-chapter-heading {
-  font-family: "Plus Jakarta Sans", sans-serif;
+  font-family:
+    var(--chapter-heading-font-family, "Plus Jakarta Sans"), sans-serif;
   margin-top: 18px;
   margin-bottom: 12px;
-  /* margin-left:  */
-  /* color: var(--chapter-heading-color); */
+  color: var(--chapter-heading-color);
   font-size: 18px;
   font-weight: 200;
   font-style: italic;
@@ -279,7 +281,11 @@ body {
 .sb-selector-section-title {
   margin-top: 0;
   margin-bottom: 10px;
-  color: var(--book-heading-color);
+
+  font-family: var(--font-family, Satoshi), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  padding-left: 10px;
 }
 
 .sb-selector-books-grid {
