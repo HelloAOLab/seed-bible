@@ -70,6 +70,7 @@ export function Main() {
   const theme = currentTheme.variables;
   const themeCssVariables = generateThemeCssVariables(theme);
   const isSettingsOpen = useSignal(false);
+  const isSidebarCollapsed = useSignal(false);
 
   const handleSelectTab = (tabId: string) => {
     isSettingsOpen.value = false;
@@ -99,8 +100,12 @@ export function Main() {
           tabs={tabs.value}
           selectedTabId={selectedTabId.value}
           isSettingsOpen={isSettingsOpen.value}
+          isCollapsed={isSidebarCollapsed.value}
           onSelectTab={handleSelectTab}
           onAddTab={handleAddTab}
+          onToggleCollapse={() => {
+            isSidebarCollapsed.value = !isSidebarCollapsed.value;
+          }}
           onOpenSettings={() => {
             isSettingsOpen.value = true;
           }}

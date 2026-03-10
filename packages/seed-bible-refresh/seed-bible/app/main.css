@@ -427,30 +427,84 @@ button {
 }
 
 .sb-tabs-sidebar {
-  width: 180px;
+  width: 280px;
   border-right: 1px solid var(--secondary-color);
-  padding: 12px 8px;
+  padding: 10px 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   background: var(--sidebar-background);
   color: var(--font-color);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.sb-tabs-sidebar-collapsed {
+  width: 56px;
+  padding: 10px 8px 16px;
+}
+
+.sb-sidebar-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 28px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--secondary-color);
+}
+
+.sb-sidebar-collapse-button {
+  border: none;
+  background: transparent;
+  color: var(--font-color);
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.sb-sidebar-tabs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 2px;
+}
+
+.sb-sidebar-tabs-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--font-color);
+}
+
+.sb-sidebar-tab-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .sb-tab-button {
   text-align: left;
   border: 1px solid var(--secondary-color);
-  border-radius: 8px;
-  padding: 8px 10px;
+  border-radius: 6px;
+  padding: 10px 12px;
   background: var(--tertiary-color);
   font-weight: 400;
   cursor: pointer;
   color: var(--font-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .sb-tab-button-selected {
   background: var(--primary-color);
-  font-weight: 700;
+  border-color: var(--primary-color);
+  color: var(--book-heading-color);
 }
 
 .sb-tab-title {
@@ -459,30 +513,49 @@ button {
 }
 
 .sb-tab-add-button {
-  text-align: left;
-  border: 1px dashed var(--secondary-color);
-  border-radius: 8px;
-  padding: 8px 10px;
-  background: var(--tertiary-color);
+  border: none;
+  border-radius: 7px;
+  width: 30px;
+  height: 30px;
+  background: var(--primary-color);
   cursor: pointer;
-  color: var(--font-color);
+  color: var(--book-heading-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.sb-tab-more-icon {
+  font-size: 18px;
+  opacity: 0.9;
 }
 
 .sb-sidebar-icon-button {
-  /* margin-top: auto; */
-  border: 1px solid var(--secondary-color);
-  border-radius: 8px;
-  background: var(--tertiary-color);
+  position: fixed;
+  left: 10px;
+  bottom: 10px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
   color: var(--font-color);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 36px;
+  height: 28px;
+  width: 28px;
+  z-index: 20;
 }
 
 .sb-sidebar-icon-button-selected {
-  background: var(--primary-color);
+  box-shadow: inset 0 0 0 2px var(--book-heading-color);
+}
+
+@media (max-width: 768px) {
+  .sb-tabs-sidebar {
+    width: 240px;
+  }
 }
 
 .sb-settings-page {

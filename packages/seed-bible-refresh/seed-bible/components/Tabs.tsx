@@ -1,13 +1,17 @@
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
 import { useEffect } from "https://esm.sh/preact@10.28.4/hooks";
 import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager";
+// import { MobileSettingsIcon } from "./icons";
+import { MobileSettingsIcon } from "seed-bible.components.icons";
 
 interface TabsProps {
   tabs: ReaderTab[];
   selectedTabId: string;
   isSettingsOpen: boolean;
+  isCollapsed: boolean;
   onSelectTab: (tabId: string) => void;
   onAddTab: () => void;
+  onToggleCollapse: () => void;
   onOpenSettings: () => void;
 }
 
@@ -16,8 +20,10 @@ export function Tabs(props: TabsProps) {
     tabs,
     selectedTabId,
     isSettingsOpen,
+    isCollapsed,
     onSelectTab,
     onAddTab,
+    onToggleCollapse,
     onOpenSettings,
   } = props;
   const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
@@ -39,32 +45,67 @@ export function Tabs(props: TabsProps) {
   }, [selectedBookId, selectedChapter, selectedTranslation]);
 
   return (
-    <aside className="sb-tabs-sidebar">
-      {tabs.map((tab) => {
-        const isSelected = tab.id === selectedTabId;
-        const currentBookId = tab.readingState.bookId.value;
-        const currentBookName =
-          tab.readingState.translationBooks.value?.books.find(
-            (book) => book.id === currentBookId
-          )?.name ??
-          currentBookId ??
-          "-";
-        const currentChapter = tab.readingState.chapterNumber.value;
-        return (
-          <button
-            key={tab.id}
-            onClick={() => onSelectTab(tab.id)}
-            className={`sb-tab-button${isSelected ? " sb-tab-button-selected" : ""}`}
-          >
-            <div className="sb-tab-title">{tab.title}</div>
-            <div>{`${currentBookName} ${currentChapter}`}</div>
-          </button>
-        );
-      })}
+    <aside
+      className={`sb-tabs-sidebar${isCollapsed ? " sb-tabs-sidebar-collapsed" : ""}`}
+    >
+      <div className="sb-sidebar-top-row">
+        <button
+          onClick={onToggleCollapse}
+          className="sb-sidebar-collapse-button"
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <span className="material-symbols-outlined">
+            {isCollapsed ? "menu" : "menu_open"}
+          </span>
+        </button>
+      </div>
 
-      <button onClick={onAddTab} className="sb-tab-add-button">
-        + New Tab
-      </button>
+      {!isCollapsed && (
+        <>
+          <div className="sb-sidebar-tabs-header">
+            <h3 className="sb-sidebar-tabs-title">Tabs</h3>
+            <button
+              onClick={onAddTab}
+              className="sb-tab-add-button"
+              aria-label="Create new tab"
+              title="New tab"
+            >
+              <span className="material-symbols-outlined">add</span>
+            </button>
+          </div>
+
+          <div className="sb-sidebar-tab-list">
+            {tabs.map((tab) => {
+              const isSelected = tab.id === selectedTabId;
+              const currentBookId = tab.readingState.bookId.value;
+              const currentBookName =
+                tab.readingState.translationBooks.value?.books.find(
+                  (book) => book.id === currentBookId
+                )?.name ??
+                currentBookId ??
+                "-";
+              const currentChapter = tab.readingState.chapterNumber.value;
+              const currentTranslation =
+                tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => onSelectTab(tab.id)}
+                  className={`sb-tab-button${
+                    isSelected ? " sb-tab-button-selected" : ""
+                  }`}
+                >
+                  <span>{`${currentBookName} - ${currentChapter} • ${currentTranslation}`}</span>
+                  <span className="material-symbols-outlined sb-tab-more-icon">
+                    more_vert
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       <button
         onClick={onOpenSettings}
@@ -74,7 +115,7 @@ export function Tabs(props: TabsProps) {
         aria-label="Open settings"
         title="Settings"
       >
-        <span className="material-symbols-outlined">settings</span>
+        <MobileSettingsIcon />
       </button>
     </aside>
   );
