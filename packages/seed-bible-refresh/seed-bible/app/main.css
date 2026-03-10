@@ -156,25 +156,60 @@ body {
 }
 
 .sb-selector-overlay {
+  pointer-events: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+
+  transition: background 0.3s ease;
+}
+
+.sb-selector-overlay.open {
+  pointer-events: all;
+  /* background: rgba(0, 0, 0, 0.3); */
 }
 
 .sb-selector-panel {
-  width: min(980px, 100%);
-  max-height: 85vh;
+  position: absolute;
+  width: 1100px;
+  height: 80dvh;
   overflow: auto;
-  border: 1px solid var(--secondary-color);
-  border-radius: 12px;
   padding: 12px;
-  background: var(--book-selector-background);
+  background: var(--book-selector-background, #fff);
   color: var(--font-color);
+  border-radius: 10px;
+
+  bottom: 80px;
+  box-shadow: 0 3px 8px var(--sidebarShadow, #e8e8e8);
+  opacity: 0;
+  transform: translateY(50%);
+  transition: all 0.5s;
+  scrollbar-width: none;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-selector-overlay.open .sb-selector-panel {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media only screen and (max-width: 1200px) {
+  .sb-selector-panel {
+    width: 650px;
+  }
+}
+
+@media only screen and (max-width: 768px) {
+  .sb-selector-panel {
+    /* width: 650px; */
+  }
 }
 
 .sb-selector-header {

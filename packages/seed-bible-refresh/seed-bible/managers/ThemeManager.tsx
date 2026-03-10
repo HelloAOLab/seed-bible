@@ -41,7 +41,7 @@ const LIGHT_THEME: BibleTheme = {
     tertiaryColor: "#f0f0f0",
     sidebarBackground: "#f8f8f8",
     readerBackground: "#ffffff",
-    bookSelectorBackground: "#f7f7f7",
+    bookSelectorBackground: "#ffffff",
     fontColor: "#222222",
     verseTextColor: "#2f2f2f",
     bookHeadingColor: "#1f2b57",

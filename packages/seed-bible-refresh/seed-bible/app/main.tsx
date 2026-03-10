@@ -86,9 +86,10 @@ export function Main() {
       <div
         style={{
           display: "flex",
-          minHeight: "100vh",
+          height: "100vh",
           background: theme.readerBackground,
           color: theme.fontColor,
+          overflow: "hidden",
         }}
       >
         <ExternalResourceDependencies />
@@ -105,7 +106,7 @@ export function Main() {
           }}
         />
 
-        <main style={{ flex: 1 }}>
+        <main style={{ flex: 1, overflow: "auto", scrollbarWidth: "none" }}>
           {isSettingsOpen.value ? (
             <SettingsPage />
           ) : (

@@ -149,12 +149,11 @@ export function BibleSelector(props: BibleSelectorProps) {
     [newTestament]
   );
 
-  if (!isOpen) {
-    return null;
-  }
-
   return (
-    <div onClick={onClose} className="sb-selector-overlay">
+    <div
+      onClick={onClose}
+      className={`sb-selector-overlay ${isOpen ? "open" : ""}`}
+    >
       <div
         onClick={(event: Event) => {
           event.stopPropagation();
