@@ -9,6 +9,7 @@ import {
 } from "https://esm.sh/preact@10.28.4/hooks";
 import { useSignal } from "https://esm.sh/@preact/signals?deps=preact@10.28.4";
 import { useI18n } from "seed-bible.i18n.I18nManager";
+import { chunk } from "es-toolkit";
 
 // const { useEffect, useMemo, useState } = os.appHooks;
 
@@ -49,14 +50,6 @@ function groupBooks(translationBooks: TranslationBooks | null, search: string) {
   };
 }
 
-function chunkBooks(books: TranslationBooks["books"], size: number) {
-  const rows: TranslationBooks["books"][] = [];
-  for (let index = 0; index < books.length; index += size) {
-    rows.push(books.slice(index, index + size));
-  }
-  return rows;
-}
-
 export function BibleSelector(props: BibleSelectorProps) {
   const {
     isOpen,
@@ -76,6 +69,9 @@ export function BibleSelector(props: BibleSelectorProps) {
 
   const search = useSignal("");
   const expandedBookId = useSignal<string | null>(bookId);
+  const viewportWidth = useSignal(
+    typeof window === "undefined" ? 0 : window.innerWidth
+  );
   const wasOpenRef = useRef(isOpen);
   const isHandlingPopStateRef = useRef(false);
 
@@ -95,6 +91,17 @@ export function BibleSelector(props: BibleSelectorProps) {
       expandedBookId.value = bookId;
     }
   }, [bookId, isOpen]);
+
+  useEffect(() => {
+    const onResize = () => {
+      viewportWidth.value = window.innerWidth;
+    };
+
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
 
   useEffect(() => {
     const onPopState = () => {
@@ -140,13 +147,35 @@ export function BibleSelector(props: BibleSelectorProps) {
     () => groupBooks(translationBooks, search.value),
     [translationBooks, search.value]
   );
+
+  const { oldTestamentBooksPerRow, newTestamentBooksPerRow } = useMemo(() => {
+    if (viewportWidth.value > 1200) {
+      return {
+        oldTestamentBooksPerRow: 3,
+        newTestamentBooksPerRow: 2,
+      };
+    }
+
+    if (viewportWidth.value > 768) {
+      return {
+        oldTestamentBooksPerRow: 2,
+        newTestamentBooksPerRow: 1,
+      };
+    }
+
+    return {
+      oldTestamentBooksPerRow: 1,
+      newTestamentBooksPerRow: 1,
+    };
+  }, [viewportWidth.value]);
+
   const oldTestamentRows = useMemo(
-    () => chunkBooks(oldTestament, 3),
-    [oldTestament]
+    () => chunk(oldTestament, oldTestamentBooksPerRow),
+    [oldTestament, oldTestamentBooksPerRow]
   );
   const newTestamentRows = useMemo(
-    () => chunkBooks(newTestament, 3),
-    [newTestament]
+    () => chunk(newTestament, newTestamentBooksPerRow),
+    [newTestament, newTestamentBooksPerRow]
   );
 
   return (
@@ -208,7 +237,15 @@ export function BibleSelector(props: BibleSelectorProps) {
                     key={`old-row-${rowIndex}`}
                     className="sb-selector-books-row-group"
                   >
-                    <div className="sb-selector-books-row">
+                    <div
+                      className="sb-selector-books-row"
+                      style={{
+                        gridTemplateColumns: `repeat(${Math.max(
+                          row.length,
+                          1
+                        )}, minmax(0, 1fr))`,
+                      }}
+                    >
                       {row.map((book) => (
                         <div key={book.id}>
                           <button
@@ -280,7 +317,15 @@ export function BibleSelector(props: BibleSelectorProps) {
                     key={`new-row-${rowIndex}`}
                     className="sb-selector-books-row-group"
                   >
-                    <div className="sb-selector-books-row">
+                    <div
+                      className="sb-selector-books-row"
+                      style={{
+                        gridTemplateColumns: `repeat(${Math.max(
+                          row.length,
+                          1
+                        )}, minmax(0, 1fr))`,
+                      }}
+                    >
                       {row.map((book) => (
                         <div key={book.id}>
                           <button

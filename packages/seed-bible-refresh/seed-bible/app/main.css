@@ -295,7 +295,7 @@ body {
 
 .sb-selector-books-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(1, minmax(0, 1fr));
   gap: 6px 10px;
 }
 
@@ -338,6 +338,18 @@ body {
 
 .sb-selector-chapter-button-current {
   background: var(--primary-color);
+}
+
+@media (max-width: 768px) {
+  .sb-selector-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .sb-selector-column-divider {
+    border-right: none;
+    padding-right: 0;
+  }
 }
 
 .sb-tabs-sidebar {
