@@ -5,6 +5,12 @@ import { MenuIcon } from "app.components.icons";
 const G = globalThis as any;
 os.hideLoadingScreen();
 
+const DEV_ENV =
+  configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
+
+G.DEV_ENV = DEV_ENV;
+G.PROD_ENV = !DEV_ENV;
+
 G.MOBILE_VIEWPORT_THRESHOLD = 600;
 G.makingPlaylist = false;
 

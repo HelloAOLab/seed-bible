@@ -39,6 +39,8 @@ declare global {
   ) => Record<string, any>;
   const CheckMultiFuntionHold: () => boolean;
   const EmitData: (functionName: string, data: any) => void;
+  const DEV_ENV: boolean;
+  const PROD_ENV: boolean;
 }
 
 export const G = globalThis as unknown as Record<string, any>;

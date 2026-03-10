@@ -626,7 +626,7 @@ const PlaylistRowItem = (props: any) => {
                   style={{
                     ...ButtonStyle,
                     fontSize: "1.97rem",
-                    color: "#000000",
+                    color: "var(--secondaryColor)",
                     top: "51%",
                     position: "absolute",
                     right: "0%",
@@ -665,7 +665,6 @@ const PlaylistRowItem = (props: any) => {
                   <span
                     style={{
                       ...ButtonStyle,
-                      color: "#139981",
                     }}
                     onClick={() => {
                       // os.unregisterApp("playing-playlist");
