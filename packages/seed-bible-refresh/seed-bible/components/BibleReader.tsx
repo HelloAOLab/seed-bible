@@ -4,11 +4,7 @@ import {
 } from "seed-bible.managers.FreeUseBibleAPI";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
-import {
-  signal,
-  type Signal,
-  useSignal,
-} from "https://esm.sh/@preact/signals?deps=preact@10.28.4";
+import { signal, type Signal, useSignal } from "@preact/signals";
 import { SeedBibleIcon, MaterialIcon } from "seed-bible.components.icons";
 
 function renderInlineContent(part: ChapterVerse["content"][0], index: number) {

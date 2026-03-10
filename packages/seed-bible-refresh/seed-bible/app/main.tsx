@@ -8,7 +8,7 @@ import {
   generateThemeCssVariables,
   useTheme,
 } from "seed-bible.managers.ThemeManager";
-import { useSignal } from "https://esm.sh/@preact/signals?deps=preact@10.28.4";
+import { useSignal } from "@preact/signals";
 
 /**
  * A collection of link/script's providing expected resources from external sources.

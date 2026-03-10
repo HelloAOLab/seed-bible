@@ -1,5 +1,6 @@
 import { Main } from "seed-bible.app.main";
-import { render } from "https://esm.sh/preact@10.28.4";
+
+const { render } = os.appHooks;
 
 // const importMap = document.createElement('script');
 // importMap.type = 'importmap';

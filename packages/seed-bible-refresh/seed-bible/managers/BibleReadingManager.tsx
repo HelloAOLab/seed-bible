@@ -4,10 +4,7 @@ import {
   type TranslationBookChapter,
   type TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
-import {
-  signal,
-  type Signal,
-} from "https://esm.sh/@preact/signals?deps=preact@10.28.4";
+import { signal, type Signal } from "@preact/signals";
 
 export interface BibleReadingState {
   translationId: Signal<string | null>;

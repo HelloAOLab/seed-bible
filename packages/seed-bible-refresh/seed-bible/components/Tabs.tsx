@@ -1,8 +1,9 @@
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
-import { useEffect } from "https://esm.sh/preact@10.28.4/hooks";
 import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager";
 // import { MobileSettingsIcon } from "./icons";
 import { MobileSettingsIcon } from "seed-bible.components.icons";
+
+const { useEffect } = os.appHooks;
 
 interface TabsProps {
   tabs: ReaderTab[];

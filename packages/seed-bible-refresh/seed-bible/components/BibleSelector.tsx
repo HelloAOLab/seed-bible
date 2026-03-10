@@ -2,15 +2,17 @@ import type {
   AvailableTranslations,
   TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
-import {
-  useEffect,
-  useMemo,
-  useRef,
-} from "https://esm.sh/preact@10.28.4/hooks";
-import { useSignal } from "https://esm.sh/@preact/signals?deps=preact@10.28.4";
+// import {
+//   useEffect,
+//   useMemo,
+//   useRef,
+// } from "https://esm.sh/preact@10.28.4/hooks";
+import { useSignal } from "@preact/signals";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { chunk } from "es-toolkit";
 import { MaterialIcon } from "seed-bible.components.icons";
+
+const { useEffect, useMemo, useRef } = os.appHooks;
 
 // const { useEffect, useMemo, useState } = os.appHooks;
 
