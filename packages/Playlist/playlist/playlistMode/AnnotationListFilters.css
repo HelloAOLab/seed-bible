@@ -143,3 +143,10 @@
   line-height: 100%;
   letter-spacing: 0%;
 }
+
+@media (max-width: 768px) {
+  .filter-container {
+    position: fixed;
+    top: 4rem;
+  }
+}

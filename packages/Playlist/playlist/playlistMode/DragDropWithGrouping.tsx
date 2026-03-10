@@ -13,9 +13,6 @@ const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
   G.MOBILE_VIEWPORT_THRESHOLD;
 
-const DEV_ENV =
-  configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
-
 // Replaced now with props toggleRemoved cause no need to show like this now use is to show active element
 const toggle = "null";
 

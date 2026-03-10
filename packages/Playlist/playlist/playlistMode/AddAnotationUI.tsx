@@ -34,9 +34,6 @@ const PREVIEW_ICON_ACTIVE =
 import { CustomAnnotationTextEditor } from "playlist.playlistMode.CustomAnnotationTextEditor";
 import { extractHashtagsFromHTML } from "playlist.playlistMode.AutoTag";
 
-const DEV_ENV =
-  configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
-
 const AnnotationInnerDiv = (props: any) => {
   const {
     data,

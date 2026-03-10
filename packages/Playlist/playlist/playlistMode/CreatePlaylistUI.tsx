@@ -19,9 +19,6 @@ const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
 G.DEFAULT_UPLOAD_ICON =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/67bba604a31cc7e116124f92179d8fe06317fcf70a3c62f071dff529362ebc25.png";
 
-const DEV_ENV =
-  configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
-
 const startCreatingPlaylist = (name: string, playlist = [], id: string) => {
   G.HISTORYExploreMode = false;
   G[`${id}creatingPlaylistName`] = name;

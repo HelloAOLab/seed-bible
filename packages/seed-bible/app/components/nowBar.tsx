@@ -304,7 +304,7 @@ function NowBar() {
               // Prevent text selection on mobile
               WebkitUserSelect: "none",
               WebkitTouchCallout: "none",
-              backgroundColor: "white",
+              backgroundColor: "var(--pageBackground)",
             }}
           >
             {app.component}
