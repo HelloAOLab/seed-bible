@@ -10,6 +10,7 @@ import {
 import { useSignal } from "https://esm.sh/@preact/signals?deps=preact@10.28.4";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { chunk } from "es-toolkit";
+import { MaterialIcon } from "seed-bible.components.icons";
 
 // const { useEffect, useMemo, useState } = os.appHooks;
 
@@ -260,9 +261,12 @@ export function BibleSelector(props: BibleSelectorProps) {
                               book.id === bookId
                                 ? " sb-selector-book-button-current"
                                 : ""
-                            }`}
+                            }${expandedBookId.value === book.id ? " expanded" : ""}`}
                           >
-                            {book.name}
+                            <span className="sb-selector-book-button-name">
+                              {book.name}
+                            </span>
+                            <MaterialIcon>expand_more</MaterialIcon>
                           </button>
                         </div>
                       ))}
@@ -340,9 +344,12 @@ export function BibleSelector(props: BibleSelectorProps) {
                               book.id === bookId
                                 ? " sb-selector-book-button-current"
                                 : ""
-                            }`}
+                            }${expandedBookId.value === book.id ? " expanded" : ""}`}
                           >
-                            {book.name}
+                            <span className="sb-selector-book-button-name">
+                              {book.name}
+                            </span>
+                            <MaterialIcon>expand_less</MaterialIcon>
                           </button>
                         </div>
                       ))}

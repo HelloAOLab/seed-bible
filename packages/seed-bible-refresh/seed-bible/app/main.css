@@ -4,6 +4,10 @@ body {
   font-family: var(--font-family, "Satoshi", system-ui, sans-serif);
 }
 
+button {
+  font-family: inherit;
+}
+
 .sb-bible-reader {
   padding: 16px;
   padding-bottom: 96px;
@@ -274,7 +278,7 @@ body {
 
 .sb-selector-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 2fr 1fr;
   gap: 16px;
 }
 
@@ -311,26 +315,63 @@ body {
 }
 
 .sb-selector-book-button {
+  width: 100%;
+  height: 40px;
   text-align: left;
   border: none;
   background: transparent;
-  padding: 4px 4px;
-  color: var(--font-color);
+  padding: 10px;
   font-weight: 400;
   cursor: pointer;
+
+  font-size: 14px;
+  font-color: #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  transition: all 0.3s;
+}
+
+.sb-selector-book-button:hover {
+  background-color: #f8fafc;
+}
+
+.sb-selector-book-button-name {
+  width: 100%;
+  text-transform: capitalize;
+}
+
+@media (min-width: 769px) {
+  .sb-selector-book-button {
+    width: 200px;
+  }
 }
 
 .sb-selector-book-button-current {
   color: var(--book-heading-color);
   font-weight: 700;
+  background-color: #f8fafc;
+}
+
+.sb-selector-book-button > .material-symbols-outlined {
+  transition: all 0.3s;
+}
+
+.sb-selector-book-button.expanded > .material-symbols-outlined {
+  transform: rotate(180deg);
 }
 
 .sb-selector-chapter-grid {
   display: grid;
   width: 100%;
   grid-template-columns: repeat(5, minmax(0, 1fr));
+  justify-content: space-between;
+
   gap: 13px 10px;
   padding: 2px 4px 8px 4px;
+
+  background-color: #f8fafc;
 }
 
 .sb-selector-chapter-grid-inline {
@@ -352,7 +393,7 @@ body {
   background: var(--primary-color);
 }
 
-@media (max-width: 769px) {
+@media (min-width: 769px) {
   .sb-selector-chapter-grid {
     grid-template-columns: repeat(auto-fit, minmax(38px, 1fr));
   }
