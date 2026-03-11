@@ -3,9 +3,8 @@ import {
   type ChapterVerse,
 } from "seed-bible.managers.FreeUseBibleAPI";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
-import { BibleSelector } from "seed-bible.components.BibleSelector";
 import { BibleReaderToolbar } from "seed-bible.components.BibleReaderToolbar";
-import { useBibleSelector } from "seed-bible.managers.BibleSelectorManager";
+import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 
 function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
   if (typeof part === "string") {
@@ -92,7 +91,13 @@ function renderChapterContent(chapterData: TranslationBookChapter | null) {
   });
 }
 
-export function BibleReader(props: BibleReadingState) {
+interface BibleReaderProps {
+  readingState: BibleReadingState;
+  selectorState: BibleSelectorState;
+}
+
+export function BibleReader(props: BibleReaderProps) {
+  const { readingState, selectorState } = props;
   const {
     translationId,
     bookId,
@@ -102,18 +107,16 @@ export function BibleReader(props: BibleReadingState) {
     chapterData,
     loading,
     error,
-  } = props;
+  } = readingState;
 
   const currentBook =
     translationBooks.value?.books.find((book) => book.id === bookId.value) ??
     null;
 
-  const selectorState = useBibleSelector();
-
   return (
     <div className="sb-bible-reader">
       <h2
-        onClick={() => selectorState.setOpen(true, props)}
+        onClick={() => selectorState.setOpen(true, readingState)}
         className="sb-bible-reader-title"
       >
         <span className="sb-bible-reader-book">
@@ -124,12 +127,6 @@ export function BibleReader(props: BibleReadingState) {
           / {translationId.value ?? ""}
         </span>
       </h2>
-
-      <BibleSelector
-        isOpen={selectorState.isOpen.value}
-        onClose={() => selectorState.setOpen(false)}
-        selectorState={selectorState}
-      />
 
       {error.value && !loading.value && (
         <p className="sb-reader-error">{error.value}</p>
@@ -157,7 +154,10 @@ export function BibleReader(props: BibleReadingState) {
         <p>No translations available.</p>
       )}
 
-      <BibleReaderToolbar readingState={props} selectorState={selectorState} />
+      <BibleReaderToolbar
+        readingState={readingState}
+        selectorState={selectorState}
+      />
     </div>
   );
 }

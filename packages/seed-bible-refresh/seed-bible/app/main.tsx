@@ -1,6 +1,9 @@
 import { BibleReader } from "seed-bible.components.BibleReader";
+import { BibleSelector } from "seed-bible.components.BibleSelector";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
 import { type BibleReadingState } from "seed-bible.managers.BibleReadingManager";
+import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
+import { useBibleSelector } from "seed-bible.managers.BibleSelectorManager";
 import { Tabs } from "seed-bible.components.Tabs";
 import { I18nProvider } from "seed-bible.i18n.I18nManager";
 import { useTabs } from "seed-bible.managers.TabsManager";
@@ -53,13 +56,15 @@ export function ExternalResourceDependencies() {
 function TabReaderPane({
   isVisible,
   readingState,
+  selectorState,
 }: {
   isVisible: boolean;
   readingState: BibleReadingState;
+  selectorState: BibleSelectorState;
 }) {
   return (
     <div style={{ display: isVisible ? "block" : "none", width: "100%" }}>
-      <BibleReader {...readingState} />
+      <BibleReader readingState={readingState} selectorState={selectorState} />
     </div>
   );
 }
@@ -71,6 +76,7 @@ export function Main() {
   const themeCssVariables = generateThemeCssVariables(theme);
   const isSettingsOpen = useSignal(false);
   const isSidebarCollapsed = useSignal(false);
+  const selectorState = useBibleSelector();
 
   const handleSelectTab = (tabId: string) => {
     isSettingsOpen.value = false;
@@ -119,11 +125,18 @@ export function Main() {
               <TabReaderPane
                 key={tab.id}
                 readingState={tab.readingState}
+                selectorState={selectorState}
                 isVisible={tab.id === selectedTabId.value}
               />
             ))
           )}
         </main>
+
+        <BibleSelector
+          isOpen={selectorState.isOpen.value}
+          onClose={() => selectorState.setOpen(false)}
+          selectorState={selectorState}
+        />
       </div>
     </I18nProvider>
   );
