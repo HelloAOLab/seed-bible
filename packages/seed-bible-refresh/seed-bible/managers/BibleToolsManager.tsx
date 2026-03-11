@@ -3,7 +3,6 @@ import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import type { BibleSelectorState } from "./BibleSelectorManager";
-import type { SelectedVerse } from "seed-bible.components.BibleReaderToolbar";
 
 type BibleToolIcon = () => JSX.Element | VNode;
 
@@ -17,8 +16,6 @@ export interface BibleTool {
 export interface BibleToolContext {
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
-  selectedVerses: SelectedVerse[];
-  clearSelection?: () => void;
 }
 
 export interface BibleReaderToolbarTool extends BibleTool {
@@ -98,11 +95,12 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 200,
       title: "Copy Verse",
       icon: CopyVerseIcon,
-      isVisible: (context) => context.selectedVerses.length > 0,
+      isVisible: (context) =>
+        context.readingState.selectedVerses.value.length > 0,
       onSelect: async (context) => {
-        if (context.selectedVerses.length === 0) return;
+        if (context.readingState.selectedVerses.value.length === 0) return;
 
-        const verseTexts = context.selectedVerses
+        const verseTexts = context.readingState.selectedVerses.value
           .map((verse) => {
             const verseReference = `${verse.bookId} ${verse.chapterNumber}:${verse.verseNumber}`;
             return `${verse.verseText} (${verseReference})`;
@@ -123,11 +121,12 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 300,
       title: "Share Verse",
       icon: ShareVerseIcon,
-      isVisible: (context) => context.selectedVerses.length > 0,
+      isVisible: (context) =>
+        context.readingState.selectedVerses.value.length > 0,
       onSelect: (context) => {
-        if (context.selectedVerses.length === 0) return;
+        if (context.readingState.selectedVerses.value.length === 0) return;
 
-        const verseTexts = context.selectedVerses
+        const verseTexts = context.readingState.selectedVerses.value
           .map((verse) => {
             const verseReference = `${verse.bookId} ${verse.chapterNumber}:${verse.verseNumber}`;
             return `${verse.verseText} (${verseReference} - ${verse.translationId})`;
@@ -135,7 +134,9 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
           .join("\n\n");
 
         os.share({
-          title: "Bible Verse" + (context.selectedVerses.length > 1 ? "s" : ""),
+          title:
+            "Bible Verse" +
+            (context.readingState.selectedVerses.value.length > 1 ? "s" : ""),
           text: verseTexts,
         });
       },
@@ -145,9 +146,10 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 400,
       title: "Clear Selection",
       icon: ClearSelectionIcon,
-      isVisible: (context) => context.selectedVerses.length > 0,
+      isVisible: (context) =>
+        context.readingState.selectedVerses.value.length > 0,
       onSelect: (context) => {
-        context.clearSelection?.();
+        context.readingState.clearSelectedVerses();
       },
     },
   ];

@@ -6,6 +6,14 @@ import {
 } from "seed-bible.managers.FreeUseBibleAPI";
 import { signal, type Signal } from "@preact/signals";
 
+export interface BibleSelectedVerse {
+  bookId: string;
+  chapterNumber: number;
+  verseNumber: number;
+  verseText: string;
+  translationId: string | null;
+}
+
 export interface BibleReadingState {
   translationId: Signal<string | null>;
   bookId: Signal<string | null>;
@@ -13,8 +21,11 @@ export interface BibleReadingState {
   availableTranslations: Signal<AvailableTranslations | null>;
   translationBooks: Signal<TranslationBooks | null>;
   chapterData: Signal<TranslationBookChapter | null>;
+  selectedVerses: Signal<BibleSelectedVerse[]>;
   loading: Signal<boolean>;
   error: Signal<string | null>;
+  selectVerse: (verse: BibleSelectedVerse) => void;
+  clearSelectedVerses: () => void;
   selectTranslation: (translation: string) => Promise<void>;
   selectBook: (book: string) => Promise<void>;
   selectChapter: (book: string, chapter: number) => Promise<void>;
@@ -36,6 +47,17 @@ export function useBibleReadingState(
   api: FreeUseBibleAPI,
   options: InitialBibleReadingOptions = {}
 ): BibleReadingState {
+  const isSameSelectedVerse = (
+    left: BibleSelectedVerse,
+    right: BibleSelectedVerse
+  ) => {
+    return (
+      left.bookId === right.bookId &&
+      left.chapterNumber === right.chapterNumber &&
+      left.verseNumber === right.verseNumber
+    );
+  };
+
   const normalizedInitialChapterNumber =
     typeof options.initialChapterNumber === "number" &&
     Number.isFinite(options.initialChapterNumber) &&
@@ -51,8 +73,28 @@ export function useBibleReadingState(
   const availableTranslations = signal<AvailableTranslations | null>(null);
   const translationBooks = signal<TranslationBooks | null>(null);
   const chapterData = signal<TranslationBookChapter | null>(null);
+  const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const loading = signal<boolean>(true);
   const error = signal<string | null>(null);
+
+  const selectVerse = (verse: BibleSelectedVerse) => {
+    const isSelected = selectedVerses.value.some((item) =>
+      isSameSelectedVerse(item, verse)
+    );
+
+    if (isSelected) {
+      selectedVerses.value = selectedVerses.value.filter(
+        (item) => !isSameSelectedVerse(item, verse)
+      );
+      return;
+    }
+
+    selectedVerses.value = [...selectedVerses.value, verse];
+  };
+
+  const clearSelectedVerses = () => {
+    selectedVerses.value = [];
+  };
 
   const syncStateFromChapter = async (chapter: TranslationBookChapter) => {
     const nextTranslationId = chapter.translation.id;
@@ -63,6 +105,7 @@ export function useBibleReadingState(
     bookId.value = nextBookId;
     chapterNumber.value = nextChapterNumber;
     chapterData.value = chapter;
+    clearSelectedVerses();
 
     if (translationBooks.value?.translation.id !== nextTranslationId) {
       const books = await api.getTranslationBooks(nextTranslationId);
@@ -115,6 +158,7 @@ export function useBibleReadingState(
       bookId.value = firstBook.id;
       chapterNumber.value = firstChapterNumber;
       chapterData.value = chapter;
+      clearSelectedVerses();
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to select translation.";
@@ -149,6 +193,7 @@ export function useBibleReadingState(
       bookId.value = book;
       chapterNumber.value = nextChapterNumber;
       chapterData.value = chapter;
+      clearSelectedVerses();
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to select book.";
@@ -175,6 +220,7 @@ export function useBibleReadingState(
       bookId.value = book;
       chapterNumber.value = chapter;
       chapterData.value = nextChapterData;
+      clearSelectedVerses();
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to select chapter.";
@@ -278,8 +324,11 @@ export function useBibleReadingState(
     availableTranslations,
     translationBooks,
     chapterData,
+    selectedVerses,
     loading,
     error,
+    selectVerse,
+    clearSelectedVerses,
     selectTranslation,
     selectBook,
     selectChapter,
