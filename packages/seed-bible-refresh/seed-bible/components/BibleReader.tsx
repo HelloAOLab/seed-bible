@@ -3,8 +3,12 @@ import {
   type ChapterVerse,
 } from "seed-bible.managers.FreeUseBibleAPI";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
-import { BibleReaderToolbar } from "seed-bible.components.BibleReaderToolbar";
+import {
+  BibleReaderToolbar,
+  type SelectedVerse,
+} from "seed-bible.components.BibleReaderToolbar";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
+import { useSignal } from "@preact/signals";
 
 function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
   if (typeof part === "string") {
@@ -38,7 +42,11 @@ function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
   return null;
 }
 
-function renderChapterContent(chapterData: TranslationBookChapter | null) {
+function renderChapterContent(
+  chapterData: TranslationBookChapter | null,
+  onVerseClick: (selected: SelectedVerse) => void,
+  selectedVerse: SelectedVerse | null
+) {
   if (!chapterData) {
     return null;
   }
@@ -79,8 +87,39 @@ function renderChapterContent(chapterData: TranslationBookChapter | null) {
       typeof value.number === "number" &&
       Array.isArray(value.content)
     ) {
+      const verseText = value.content
+        .map((part) => {
+          if (typeof part === "string") return part;
+          if (part && typeof part === "object" && "text" in part)
+            return (part as { text: string }).text;
+          return "";
+        })
+        .join("");
+      const isSelected =
+        selectedVerse &&
+        selectedVerse.verseNumber === value.number &&
+        chapterData &&
+        selectedVerse.bookId === chapterData.book.id &&
+        selectedVerse.chapterNumber === chapterData.chapter.number;
+
       return (
-        <span key={`verse-${entryIndex}`} className="sb-verse">
+        <span
+          key={`verse-${entryIndex}`}
+          className={`sb-verse${isSelected ? " sb-verse-selected" : ""}`}
+          onClick={() => {
+            const currentChapter = chapterData as TranslationBookChapter;
+            onVerseClick({
+              bookId: currentChapter.book.id,
+              chapterNumber: currentChapter.chapter.number,
+              verseNumber: value.number,
+              verseText,
+              translationId: currentChapter.translation.id,
+            });
+          }}
+          style={{ cursor: "pointer" }}
+          role="button"
+          tabIndex={0}
+        >
           <sup className="sb-verse-number">{value.number}</sup>
           {value.content.map(renderInlineContent)}
         </span>
@@ -109,6 +148,8 @@ export function BibleReader(props: BibleReaderProps) {
     error,
   } = readingState;
 
+  const selectedVerse = useSignal<SelectedVerse | null>(null);
+
   const currentBook =
     translationBooks.value?.books.find((book) => book.id === bookId.value) ??
     null;
@@ -134,7 +175,13 @@ export function BibleReader(props: BibleReaderProps) {
 
       {!error.value && chapterData.value && (
         <div className="sb-chapter-content">
-          {renderChapterContent(chapterData.value)}
+          {renderChapterContent(
+            chapterData.value,
+            (verse) => {
+              selectedVerse.value = verse;
+            },
+            selectedVerse.value
+          )}
           {chapterData.value.chapter.footnotes.length > 0 && (
             <div className="sb-reader-footnotes">
               <h4 className="sb-reader-footnotes-title">Footnotes</h4>
@@ -157,6 +204,7 @@ export function BibleReader(props: BibleReaderProps) {
       <BibleReaderToolbar
         readingState={readingState}
         selectorState={selectorState}
+        selectedVerse={selectedVerse.value}
       />
     </div>
   );

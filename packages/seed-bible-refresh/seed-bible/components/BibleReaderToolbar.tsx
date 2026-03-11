@@ -5,19 +5,29 @@ import {
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 
+export interface SelectedVerse {
+  bookId: string;
+  chapterNumber: number;
+  verseNumber: number;
+  verseText: string;
+  translationId: string | null;
+}
+
 interface BibleReaderToolbarProps {
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
+  selectedVerse?: SelectedVerse | null;
 }
 
 export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
-  const { readingState, selectorState } = props;
+  const { readingState, selectorState, selectedVerse } = props;
 
   const toolsManager = useBibleToolsManager();
 
   const tools: BibleReaderToolbarTool[] = toolsManager.getToolbarTools({
     readingState,
     selectorState,
+    selectedVerse: selectedVerse ?? null,
   });
 
   return (

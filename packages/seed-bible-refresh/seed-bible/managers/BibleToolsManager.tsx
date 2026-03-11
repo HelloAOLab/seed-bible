@@ -3,6 +3,7 @@ import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import type { BibleSelectorState } from "./BibleSelectorManager";
+import type { SelectedVerse } from "seed-bible.components.BibleReaderToolbar";
 
 type BibleToolIcon = () => JSX.Element | VNode;
 
@@ -16,6 +17,7 @@ export interface BibleTool {
 export interface BibleToolContext {
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
+  selectedVerse: SelectedVerse | null;
 }
 
 export interface BibleReaderToolbarTool extends BibleTool {
@@ -38,6 +40,14 @@ function OpenSelectorIcon() {
 
 function NextChapterIcon() {
   return <MaterialIcon>chevron_right</MaterialIcon>;
+}
+
+function CopyVerseIcon() {
+  return <MaterialIcon>content_copy</MaterialIcon>;
+}
+
+function ShareVerseIcon() {
+  return <MaterialIcon>share</MaterialIcon>;
 }
 
 function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
@@ -74,6 +84,49 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         context.readingState.loading.value,
       onSelect: (context) => {
         context.readingState.loadNextChapter();
+      },
+    },
+    {
+      id: "copy-verse",
+      priority: 200,
+      title: "Copy Verse",
+      icon: CopyVerseIcon,
+      isDisabled: (context) => !context.selectedVerse,
+      onSelect: async (context) => {
+        if (!context.selectedVerse) return;
+
+        const { bookId, chapterNumber, verseNumber, verseText } =
+          context.selectedVerse;
+        const verseReference = `${bookId} ${chapterNumber}:${verseNumber}`;
+        const textToCopy = `${verseText} (${verseReference})`;
+
+        try {
+          os.setClipboard(textToCopy);
+          os.toast("Copied!");
+          console.log("Verse copied to clipboard");
+        } catch (err) {
+          console.error("Failed to copy verse:", err);
+        }
+      },
+    },
+    {
+      id: "share-verse",
+      priority: 300,
+      title: "Share Verse",
+      icon: ShareVerseIcon,
+      isDisabled: (context) => !context.selectedVerse,
+      onSelect: (context) => {
+        if (!context.selectedVerse) return;
+
+        const { bookId, chapterNumber, verseNumber, verseText, translationId } =
+          context.selectedVerse;
+        const verseReference = `${bookId} ${chapterNumber}:${verseNumber}`;
+        const shareText = `${verseText} (${verseReference} - ${translationId})`;
+
+        os.share({
+          title: "Bible Verse",
+          text: shareText,
+        });
       },
     },
   ];
