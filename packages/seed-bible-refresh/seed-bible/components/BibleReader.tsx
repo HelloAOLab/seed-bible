@@ -44,7 +44,7 @@ function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
 
 function renderChapterContent(
   chapterData: TranslationBookChapter | null,
-  onVerseClick: (selected: SelectedVerse) => void,
+  onVerseClick: (selected: SelectedVerse | null) => void,
   selectedVerse: SelectedVerse | null
 ) {
   if (!chapterData) {
@@ -107,14 +107,18 @@ function renderChapterContent(
           key={`verse-${entryIndex}`}
           className={`sb-verse${isSelected ? " sb-verse-selected" : ""}`}
           onClick={() => {
-            const currentChapter = chapterData as TranslationBookChapter;
-            onVerseClick({
-              bookId: currentChapter.book.id,
-              chapterNumber: currentChapter.chapter.number,
-              verseNumber: value.number,
-              verseText,
-              translationId: currentChapter.translation.id,
-            });
+            if (isSelected) {
+              onVerseClick(null);
+            } else {
+              const currentChapter = chapterData as TranslationBookChapter;
+              onVerseClick({
+                bookId: currentChapter.book.id,
+                chapterNumber: currentChapter.chapter.number,
+                verseNumber: value.number,
+                verseText,
+                translationId: currentChapter.translation.id,
+              });
+            }
           }}
           style={{ cursor: "pointer" }}
           role="button"
@@ -205,6 +209,9 @@ export function BibleReader(props: BibleReaderProps) {
         readingState={readingState}
         selectorState={selectorState}
         selectedVerse={selectedVerse.value}
+        onClearSelection={() => {
+          selectedVerse.value = null;
+        }}
       />
     </div>
   );

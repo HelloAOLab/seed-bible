@@ -18,6 +18,7 @@ export interface BibleToolContext {
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
   selectedVerse: SelectedVerse | null;
+  clearSelection?: () => void;
 }
 
 export interface BibleReaderToolbarTool extends BibleTool {
@@ -50,6 +51,10 @@ function CopyVerseIcon() {
 
 function ShareVerseIcon() {
   return <MaterialIcon>share</MaterialIcon>;
+}
+
+function ClearSelectionIcon() {
+  return <MaterialIcon>clear</MaterialIcon>;
 }
 
 function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
@@ -129,6 +134,16 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
           title: "Bible Verse",
           text: shareText,
         });
+      },
+    },
+    {
+      id: "clear-selection",
+      priority: 400,
+      title: "Clear Selection",
+      icon: ClearSelectionIcon,
+      isVisible: (context) => !!context.selectedVerse,
+      onSelect: (context) => {
+        context.clearSelection?.();
       },
     },
   ];

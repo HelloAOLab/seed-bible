@@ -17,10 +17,12 @@ interface BibleReaderToolbarProps {
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
   selectedVerse?: SelectedVerse | null;
+  onClearSelection?: () => void;
 }
 
 export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
-  const { readingState, selectorState, selectedVerse } = props;
+  const { readingState, selectorState, selectedVerse, onClearSelection } =
+    props;
 
   const toolsManager = useBibleToolsManager();
 
@@ -28,6 +30,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     readingState,
     selectorState,
     selectedVerse: selectedVerse ?? null,
+    clearSelection: onClearSelection,
   });
 
   return (
