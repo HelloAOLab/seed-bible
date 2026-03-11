@@ -42,7 +42,7 @@ function NextChapterIcon() {
   return <MaterialIcon>chevron_right</MaterialIcon>;
 }
 
-function getDefaultTools(): ManagedBibleTool[] {
+function getDefaultToolbarTools(): ManagedBibleTool[] {
   return [
     {
       id: "previous-chapter",
@@ -78,32 +78,30 @@ function getDefaultTools(): ManagedBibleTool[] {
   ];
 }
 
-const managedTools = signal<ManagedBibleTool[]>(getDefaultTools());
+const toolbarTools = signal<ManagedBibleTool[]>(getDefaultToolbarTools());
 
-const sortedTools = computed(() => {
-  return [...managedTools.value].sort(
+const sortedToolbarTools = computed(() => {
+  return [...toolbarTools.value].sort(
     (left, right) => left.priority - right.priority
   );
 });
 
 export function useBibleToolsManager() {
-  const registerTool = (tool: ManagedBibleTool) => {
-    const nextTools = managedTools.value.filter(
+  const registerToolbarTool = (tool: ManagedBibleTool) => {
+    const nextTools = toolbarTools.value.filter(
       (entry) => entry.id !== tool.id
     );
-    managedTools.value = [...nextTools, tool];
+    toolbarTools.value = [...nextTools, tool];
   };
 
-  const unregisterTool = (toolId: string) => {
-    managedTools.value = managedTools.value.filter(
+  const unregisterToolbarTool = (toolId: string) => {
+    toolbarTools.value = toolbarTools.value.filter(
       (tool) => tool.id !== toolId
     );
   };
 
-  const getTools = () => sortedTools.value;
-
   const getToolbarTools = (context: BibleToolContext) => {
-    return sortedTools.value.map((tool) => ({
+    return sortedToolbarTools.value.map((tool) => ({
       id: tool.id,
       priority: tool.priority,
       title: tool.title,
@@ -114,9 +112,8 @@ export function useBibleToolsManager() {
   };
 
   return {
-    registerTool,
-    unregisterTool,
-    getTools,
+    registerToolbarTool,
+    unregisterToolbarTool,
     getToolbarTools,
   };
 }
