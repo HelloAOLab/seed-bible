@@ -61,7 +61,7 @@ function getDefaultToolbarTools(): ManagedBibleTool[] {
       icon: OpenSelectorIcon,
       isDisabled: (context) => context.readingState.loading.value,
       onSelect: (context) => {
-        context.selectorState.setOpen(true);
+        context.selectorState.setOpen(true, context.readingState);
       },
     },
     {

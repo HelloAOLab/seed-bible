@@ -1,4 +1,3 @@
-import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import { type BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { MaterialIcon } from "seed-bible.components.icons";
@@ -8,12 +7,17 @@ import { MaterialIcon } from "seed-bible.components.icons";
 interface BibleSelectorProps {
   isOpen: boolean;
   onClose: () => void;
-  readingState: BibleReadingState;
   selectorState: BibleSelectorState;
 }
 
 export function BibleSelector(props: BibleSelectorProps) {
-  const { isOpen, onClose, readingState, selectorState } = props;
+  const { isOpen, onClose, selectorState } = props;
+  const readingState = selectorState.readingState.value;
+
+  if (!readingState) {
+    return null;
+  }
+
   const {
     translationId,
     bookId,
