@@ -3941,8 +3941,14 @@
       "seed-bible.components.BibleReader": [
         "./packages/seed-bible-refresh/seed-bible/components/BibleReader.tsx"
       ],
+      "seed-bible.components.BibleReaderToolbar": [
+        "./packages/seed-bible-refresh/seed-bible/components/BibleReaderToolbar.tsx"
+      ],
       "seed-bible.components.BibleSelector": [
         "./packages/seed-bible-refresh/seed-bible/components/BibleSelector.tsx"
+      ],
+      "seed-bible.components.icons": [
+        "./packages/seed-bible-refresh/seed-bible/components/icons.tsx"
       ],
       "seed-bible.components.SettingsPage": [
         "./packages/seed-bible-refresh/seed-bible/components/SettingsPage.tsx"
@@ -3955,6 +3961,9 @@
       ],
       "seed-bible.managers.BibleReadingManager": [
         "./packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager.tsx"
+      ],
+      "seed-bible.managers.BibleToolsManager": [
+        "./packages/seed-bible-refresh/seed-bible/managers/BibleToolsManager.tsx"
       ],
       "seed-bible.managers.esmSignals.d": [
         "./packages/seed-bible-refresh/seed-bible/managers/esmSignals.d.ts"
