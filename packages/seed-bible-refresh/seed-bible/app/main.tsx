@@ -13,7 +13,6 @@ import {
   useTheme,
 } from "seed-bible.managers.ThemeManager";
 import { useSignal } from "@preact/signals";
-import { CasualOSApp } from "seed-bible.components.CasualOSApp";
 
 const { useMemo } = os.appHooks;
 
@@ -111,9 +110,6 @@ export function Main() {
         }}
       >
         <ExternalResourceDependencies themeCssVariables={themeCssVariables} />
-        <CasualOSApp id="external-resources">
-          <ExternalResourceDependencies themeCssVariables={themeCssVariables} />
-        </CasualOSApp>
         <Tabs
           tabs={tabs.value}
           selectedTabId={selectedTabId.value}
@@ -143,13 +139,12 @@ export function Main() {
             ))
           )}
         </main>
-        <CasualOSApp id="bible-selector">
-          <BibleSelector
-            isOpen={selectorState.isOpen.value}
-            onClose={() => selectorState.setOpen(false)}
-            selectorState={selectorState}
-          />
-        </CasualOSApp>
+
+        <BibleSelector
+          isOpen={selectorState.isOpen.value}
+          onClose={() => selectorState.setOpen(false)}
+          selectorState={selectorState}
+        />
       </div>
     </I18nProvider>
   );
