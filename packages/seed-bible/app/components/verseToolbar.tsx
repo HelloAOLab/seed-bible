@@ -137,7 +137,7 @@ export function VerseToolbar({
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     borderRadius: "12px",
     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
-    padding: "6px 10px",
+    padding: "6px 20px",
     zIndex: 1000,
     animation: "slideUp 0.3s ease-out",
     maxWidth: "95vw",
