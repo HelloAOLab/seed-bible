@@ -34,7 +34,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     <div className="sb-reader-toolbar">
       {tools.map((tool) => {
         const ToolIcon = tool.icon;
-        return (
+        return tool.visible ? (
           <div key={tool.id} className="sb-reader-toolbar-item">
             <button
               disabled={tool.disabled}
@@ -45,7 +45,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               <span className="sr-only">{tool.title}</span>
             </button>
           </div>
-        );
+        ) : null;
       })}
     </div>
   );

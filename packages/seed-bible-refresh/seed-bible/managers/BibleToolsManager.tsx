@@ -22,11 +22,13 @@ export interface BibleToolContext {
 
 export interface BibleReaderToolbarTool extends BibleTool {
   disabled: boolean;
+  visible: boolean;
   onSelect: () => void;
 }
 
 export interface ManagedBibleToolbarTool extends BibleTool {
   isDisabled?: (context: BibleToolContext) => boolean;
+  isVisible?: (context: BibleToolContext) => boolean;
   onSelect?: (context: BibleToolContext) => void;
 }
 
@@ -91,7 +93,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 200,
       title: "Copy Verse",
       icon: CopyVerseIcon,
-      isDisabled: (context) => !context.selectedVerse,
+      isVisible: (context) => !!context.selectedVerse,
       onSelect: async (context) => {
         if (!context.selectedVerse) return;
 
@@ -114,7 +116,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 300,
       title: "Share Verse",
       icon: ShareVerseIcon,
-      isDisabled: (context) => !context.selectedVerse,
+      isVisible: (context) => !!context.selectedVerse,
       onSelect: (context) => {
         if (!context.selectedVerse) return;
 
@@ -157,14 +159,17 @@ export function useBibleToolsManager() {
   };
 
   const getToolbarTools = (context: BibleToolContext) => {
-    return sortedToolbarTools.value.map((tool) => ({
-      id: tool.id,
-      priority: tool.priority,
-      title: tool.title,
-      icon: tool.icon,
-      disabled: tool.isDisabled?.(context) ?? false,
-      onSelect: () => tool.onSelect?.(context),
-    }));
+    return sortedToolbarTools.value
+      .filter((tool) => tool.isVisible?.(context) ?? true)
+      .map((tool) => ({
+        id: tool.id,
+        priority: tool.priority,
+        title: tool.title,
+        icon: tool.icon,
+        disabled: tool.isDisabled?.(context) ?? false,
+        visible: true,
+        onSelect: () => tool.onSelect?.(context),
+      }));
   };
 
   return {
