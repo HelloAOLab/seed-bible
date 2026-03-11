@@ -4,8 +4,8 @@ import {
 } from "seed-bible.managers.FreeUseBibleAPI";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
-import { signal, type Signal, useSignal } from "@preact/signals";
-import { SeedBibleIcon, MaterialIcon } from "seed-bible.components.icons";
+import { BibleReaderToolbar } from "seed-bible.components.BibleReaderToolbar";
+import { useSignal } from "@preact/signals";
 
 function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
   if (typeof part === "string") {
@@ -174,40 +174,16 @@ export function BibleReader(props: BibleReadingState) {
         <p>No translations available.</p>
       )}
 
-      <div className="sb-reader-toolbar">
-        <div className="sb-reader-toolbar-item">
-          <button
-            disabled={
-              !chapterData.value?.previousChapterApiLink || loading.value
-            }
-            onClick={loadPreviousChapter}
-            className="sb-reader-toolbar-button"
-          >
-            <MaterialIcon>chevron_left</MaterialIcon>
-            <span className="sr-only">Previous Chapter</span>
-          </button>
-        </div>
-        <div className="sb-reader-toolbar-item">
-          <button
-            onClick={() => (isSelectorOpen.value = true)}
-            disabled={loading.value}
-            className="sb-reader-toolbar-button"
-          >
-            <SeedBibleIcon />
-            <span className="sr-only">Open Book Selector</span>
-          </button>
-        </div>
-        <div className="sb-reader-toolbar-item">
-          <button
-            disabled={!chapterData.value?.nextChapterApiLink || loading.value}
-            onClick={loadNextChapter}
-            className="sb-reader-toolbar-button"
-          >
-            <MaterialIcon>chevron_right</MaterialIcon>
-            <span className="sr-only">Next Chapter</span>
-          </button>
-        </div>
-      </div>
+      <BibleReaderToolbar
+        canGoToPreviousChapter={Boolean(
+          chapterData.value?.previousChapterApiLink
+        )}
+        canGoToNextChapter={Boolean(chapterData.value?.nextChapterApiLink)}
+        disabled={loading.value}
+        onGoToPreviousChapter={loadPreviousChapter}
+        onOpenSelector={() => (isSelectorOpen.value = true)}
+        onGoToNextChapter={loadNextChapter}
+      />
     </div>
   );
 }
