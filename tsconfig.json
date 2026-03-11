@@ -3947,6 +3947,9 @@
       "seed-bible.components.BibleSelector": [
         "./packages/seed-bible-refresh/seed-bible/components/BibleSelector.tsx"
       ],
+      "seed-bible.components.CasualOSApp": [
+        "./packages/seed-bible-refresh/seed-bible/components/CasualOSApp.tsx"
+      ],
       "seed-bible.components.icons": [
         "./packages/seed-bible-refresh/seed-bible/components/icons.tsx"
       ],

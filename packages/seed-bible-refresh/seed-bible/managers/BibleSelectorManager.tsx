@@ -1,18 +1,20 @@
 import type {
+  FreeUseBibleAPI,
   TranslationBook,
   TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
-import { Signal, useSignal } from "@preact/signals";
+import {
+  computed,
+  effect,
+  Signal,
+  useSignal,
+  useSignalEffect,
+  type ReadonlySignal,
+} from "@preact/signals";
 import { chunk } from "es-toolkit";
 
 const { useEffect, useMemo, useRef } = os.appHooks;
-
-export interface BibleSelectorOptions {
-  isOpen: Signal<boolean>;
-  setOpen: (open: boolean) => void;
-  readingState: BibleReadingState;
-}
 
 export interface BibleSelectorState {
   isOpen: Signal<boolean>;
@@ -20,7 +22,11 @@ export interface BibleSelectorState {
   expandedBookId: Signal<string | null>;
   oldTestamentRows: TranslationBook[][];
   newTestamentRows: TranslationBook[][];
-  setOpen: (open: boolean) => void;
+  selectedTranslationId: Signal<string | null>;
+  currentReadingState: Signal<BibleReadingState | null>;
+  open: (readingState: BibleReadingState) => void;
+  close: () => void;
+  //   setOpen: (open: boolean) => void;
   setSearch: (value: string) => void;
   setExpandedBook: (bookId: string) => void;
   selectTranslation: (translationId: string) => Promise<void>;
@@ -50,19 +56,60 @@ function groupBooks(translationBooks: TranslationBooks | null, search: string) {
   };
 }
 
-export function useBibleSelector(
-  options: BibleSelectorOptions
-): BibleSelectorState {
-  const { isOpen, setOpen, readingState } = options;
-  const { bookId, translationBooks, selectTranslation, selectChapter } =
-    readingState;
+export function useBibleSelector(api: FreeUseBibleAPI): BibleSelectorState {
+  const isOpen = useSignal(false);
+
+  const currentReadingState = useSignal<BibleReadingState | null>(null);
+  const selectedTranslationId = useSignal<string | null>(null);
+  const bookId = useSignal<string | null>(null);
+  const translationBooks = useSignal<TranslationBooks | null>(null);
+
+  useSignalEffect(() => {
+    if (!selectedTranslationId.value && currentReadingState.value) {
+      selectedTranslationId.value =
+        currentReadingState.value.translationId.value;
+    }
+    if (!bookId.value && currentReadingState.value) {
+      bookId.value = currentReadingState.value.bookId.value;
+    }
+  });
+
+  useSignalEffect(() => {
+    const translationId = selectedTranslationId.value;
+    if (!translationId) {
+      translationBooks.value = null;
+    } else {
+      api.getTranslationBooks(translationId).then((books) => {
+        translationBooks.value = books;
+      });
+    }
+  });
+
+  const selectTranslation = async (translationId: string) => {
+    selectedTranslationId.value = translationId;
+  };
+
+  const selectChapter = (bookId: string, chapterNumber: number) => {
+    if (!currentReadingState.value) return;
+    console.log("Selecting chapter", {
+      bookId,
+      chapterNumber,
+      translationId: selectedTranslationId.value,
+    });
+    currentReadingState.value.selectChapter(
+      bookId,
+      chapterNumber,
+      selectedTranslationId.value
+    );
+    isOpen.value = false;
+  };
 
   const search = useSignal("");
   const expandedBookId = useSignal<string | null>(bookId.value);
   const viewportWidth = useSignal(
     typeof window === "undefined" ? 0 : window.innerWidth
   );
-  const wasOpenRef = useRef(isOpen);
+  const wasOpenRef = useRef(false);
   const isHandlingPopStateRef = useRef(false);
 
   const getHistoryState = () => {
@@ -76,11 +123,11 @@ export function useBibleSelector(
     return state.bibleSelectorOpen === true;
   };
 
-  useEffect(() => {
-    if (isOpen) {
+  useSignalEffect(() => {
+    if (isOpen.value) {
       expandedBookId.value = bookId.value;
     }
-  }, [bookId.value, isOpen]);
+  });
 
   useEffect(() => {
     const onResize = () => {
@@ -93,15 +140,15 @@ export function useBibleSelector(
     };
   }, []);
 
-  useEffect(() => {
+  useSignalEffect(() => {
     const onPopState = () => {
       const shouldBeOpen = isSelectorOpenInHistory();
       isHandlingPopStateRef.current = true;
 
-      if (shouldBeOpen && !isOpen) {
-        setOpen(true);
-      } else if (!shouldBeOpen && isOpen) {
-        setOpen(false);
+      if (shouldBeOpen && !isOpen.value) {
+        isOpen.value = true;
+      } else if (!shouldBeOpen && isOpen.value) {
+        isOpen.value = false;
       }
 
       setTimeout(() => {
@@ -113,16 +160,16 @@ export function useBibleSelector(
     return () => {
       window.removeEventListener("popstate", onPopState);
     };
-  }, [isOpen, setOpen]);
+  });
 
-  useEffect(() => {
+  useSignalEffect(() => {
     const wasOpen = wasOpenRef.current;
 
-    if (!wasOpen && isOpen && !isSelectorOpenInHistory()) {
+    if (!wasOpen && isOpen.value && !isSelectorOpenInHistory()) {
       history.pushState({ ...getHistoryState(), bibleSelectorOpen: true }, "");
     }
 
-    if (wasOpen && !isOpen) {
+    if (wasOpen && !isOpen.value) {
       const shouldNavigateBack =
         !isHandlingPopStateRef.current && isSelectorOpenInHistory();
       if (shouldNavigateBack) {
@@ -130,8 +177,8 @@ export function useBibleSelector(
       }
     }
 
-    wasOpenRef.current = isOpen;
-  }, [isOpen]);
+    wasOpenRef.current = isOpen.value;
+  });
 
   const { oldTestament, newTestament } = useMemo(
     () => groupBooks(translationBooks.value, search.value),
@@ -177,21 +224,26 @@ export function useBibleSelector(
       expandedBookId.value === nextBookId ? null : nextBookId;
   };
 
-  const handleChapterSelect = async (
-    selectedBookId: string,
-    chapter: number
-  ) => {
-    await selectChapter(selectedBookId, chapter);
-    setOpen(false);
+  const handleChapterSelect = (selectedBookId: string, chapter: number) => {
+    selectChapter(selectedBookId, chapter);
+    isOpen.value = false;
   };
 
   return {
     isOpen,
     search,
     expandedBookId,
+    selectedTranslationId,
     oldTestamentRows,
     newTestamentRows,
-    setOpen,
+    open: (readingState: BibleReadingState) => {
+      currentReadingState.value = readingState;
+      isOpen.value = true;
+    },
+    close: () => {
+      isOpen.value = false;
+    },
+    currentReadingState,
     setSearch,
     setExpandedBook,
     selectTranslation,
