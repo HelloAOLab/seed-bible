@@ -1,4 +1,4 @@
-import { Signal, signal } from "@preact/signals";
+import { signal } from "@preact/signals";
 import {
   DEFAULT_BOOK_ID,
   DEFAULT_CHAPTER_NUMBER,
@@ -6,7 +6,6 @@ import {
   useBibleReadingState,
   type BibleReadingState,
 } from "seed-bible.managers.BibleReadingManager";
-import type { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
 
 export interface ReaderTab {
   id: string;
@@ -34,32 +33,27 @@ function getInitialFirstTabChapter(): number {
     : DEFAULT_CHAPTER_NUMBER;
 }
 
-function createInitialTabs(api: FreeUseBibleAPI): ReaderTab[] {
+function createInitialTabs(): ReaderTab[] {
   return [
     {
       id: "tab-1",
       title: "Tab 1",
       readingState: useBibleReadingState({
-        api,
         initialTranslationId: getInitialTranslationId(),
         initialBookId: getInitialFirstTabBookId(),
         initialChapterNumber: getInitialFirstTabChapter(),
       }),
     },
-    {
-      id: "tab-2",
-      title: "Tab 2",
-      readingState: useBibleReadingState({ api }),
-    },
+    { id: "tab-2", title: "Tab 2", readingState: useBibleReadingState() },
   ];
 }
 
+const initialTabs = createInitialTabs();
+const tabs = signal<ReaderTab[]>(initialTabs);
+const selectedTabId = signal<string>(initialTabs[0]?.id ?? "");
 let hasConfigBotListener = false;
 
-async function syncSelectedTabFromConfig(
-  tabs: Signal<ReaderTab[]>,
-  selectedTabId: Signal<string>
-) {
+async function syncSelectedTabFromConfig() {
   const selectedTab =
     tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null;
   if (!selectedTab) {
@@ -102,10 +96,7 @@ async function syncSelectedTabFromConfig(
   await readingState.selectChapter(requestedBookId, nextChapter);
 }
 
-function ensureConfigBotListener(
-  tabs: Signal<ReaderTab[]>,
-  selectedTabId: Signal<string>
-) {
+function ensureConfigBotListener() {
   if (hasConfigBotListener) {
     return;
   }
@@ -128,20 +119,12 @@ function ensureConfigBotListener(
       return;
     }
 
-    await syncSelectedTabFromConfig(tabs, selectedTabId);
+    await syncSelectedTabFromConfig();
   });
 }
 
-export interface TabsOptions {
-  api: FreeUseBibleAPI;
-}
-
-export function useTabs({ api }: TabsOptions) {
-  const initialTabs = createInitialTabs(api);
-  const tabs = signal<ReaderTab[]>(initialTabs);
-  const selectedTabId = signal<string>(initialTabs[0]?.id ?? "");
-
-  ensureConfigBotListener(tabs, selectedTabId);
+export function useTabs() {
+  ensureConfigBotListener();
 
   const addTab = () => {
     const currentTabs = tabs.value;
@@ -149,7 +132,7 @@ export function useTabs({ api }: TabsOptions) {
     const nextTab: ReaderTab = {
       id: `tab-${nextNumber}`,
       title: `Tab ${nextNumber}`,
-      readingState: useBibleReadingState({ api }),
+      readingState: useBibleReadingState(),
     };
     tabs.value = [...currentTabs, nextTab];
     selectedTabId.value = nextTab.id;

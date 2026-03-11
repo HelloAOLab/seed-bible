@@ -1,23 +1,29 @@
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
-import {
-  useBibleSelector,
-  type BibleSelectorState,
-} from "seed-bible.managers.BibleSelectorManager";
+import { type BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { MaterialIcon } from "seed-bible.components.icons";
-import { computed } from "@preact/signals";
+
+// const { useEffect, useMemo, useState } = os.appHooks;
+
 interface BibleSelectorProps {
+  isOpen: boolean;
+  onClose: () => void;
+  readingState: BibleReadingState;
   selectorState: BibleSelectorState;
 }
 
 export function BibleSelector(props: BibleSelectorProps) {
-  const { t } = useI18n();
-  const { selectorState } = props;
+  const { isOpen, onClose, readingState, selectorState } = props;
   const {
-    isOpen,
-    close,
-    currentReadingState,
-    selectedTranslationId,
+    translationId,
+    bookId,
+    chapterNumber,
+    availableTranslations,
+    loading,
+  } = readingState;
+
+  const { t } = useI18n();
+  const {
     search,
     expandedBookId,
     oldTestamentRows,
@@ -28,26 +34,10 @@ export function BibleSelector(props: BibleSelectorProps) {
     selectChapter,
   } = selectorState;
 
-  const computedReadingState = computed(() => currentReadingState.value);
-
-  if (!computedReadingState.value) {
-    return <div className={`sb-selector-overlay`} />;
-  }
-
-  const {
-    translationId,
-    bookId,
-    chapterNumber,
-    availableTranslations,
-    loading,
-  } = computedReadingState.value;
-
-  console.log("Translation ID", selectedTranslationId.value);
-
   return (
     <div
-      onClick={close}
-      className={`sb-selector-overlay ${isOpen.value ? "open" : ""}`}
+      onClick={onClose}
+      className={`sb-selector-overlay ${isOpen ? "open" : ""}`}
     >
       <div
         onClick={(event: Event) => {
@@ -57,7 +47,7 @@ export function BibleSelector(props: BibleSelectorProps) {
       >
         <div className="sb-selector-controls">
           <select
-            value={selectedTranslationId.value ?? ""}
+            value={translationId.value ?? ""}
             disabled={loading.value || !availableTranslations.value}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLSelectElement;

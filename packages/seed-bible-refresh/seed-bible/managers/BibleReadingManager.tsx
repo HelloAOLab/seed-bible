@@ -17,11 +17,7 @@ export interface BibleReadingState {
   error: Signal<string | null>;
   selectTranslation: (translation: string) => Promise<void>;
   selectBook: (book: string) => Promise<void>;
-  selectChapter: (
-    book: string,
-    chapter: number,
-    newTranslationId?: string | null
-  ) => Promise<void>;
+  selectChapter: (book: string, chapter: number) => Promise<void>;
   loadPreviousChapter: () => Promise<void>;
   loadNextChapter: () => Promise<void>;
 }
@@ -31,16 +27,16 @@ export const DEFAULT_BOOK_ID = "GEN";
 export const DEFAULT_CHAPTER_NUMBER = 1;
 
 interface InitialBibleReadingOptions {
-  api: FreeUseBibleAPI;
   initialTranslationId?: string | null;
   initialBookId?: string | null;
   initialChapterNumber?: number | null;
 }
 
 export function useBibleReadingState(
-  options: InitialBibleReadingOptions
+  options: InitialBibleReadingOptions = {}
 ): BibleReadingState {
-  const { api } = options;
+  const api = new FreeUseBibleAPI();
+
   const normalizedInitialChapterNumber =
     typeof options.initialChapterNumber === "number" &&
     Number.isFinite(options.initialChapterNumber) &&
@@ -98,7 +94,6 @@ export function useBibleReadingState(
   };
 
   const selectTranslation = async (translation: string) => {
-    console.log("RM Selecting translation", translation);
     loading.value = true;
     error.value = null;
 
@@ -163,15 +158,7 @@ export function useBibleReadingState(
     }
   };
 
-  const selectChapter = async (
-    book: string,
-    chapter: number,
-    newTranslationId?: string | null
-  ) => {
-    if (newTranslationId) {
-      console.log("Changing translation to", newTranslationId);
-      translationId.value = newTranslationId;
-    }
+  const selectChapter = async (book: string, chapter: number) => {
     if (!translationId.value) {
       return;
     }
@@ -189,7 +176,6 @@ export function useBibleReadingState(
       bookId.value = book;
       chapterNumber.value = chapter;
       chapterData.value = nextChapterData;
-      console.log("Loaded chapter data", nextChapterData);
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to select chapter.";

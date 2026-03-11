@@ -5,11 +5,8 @@ import {
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
 import { BibleReaderToolbar } from "seed-bible.components.BibleReaderToolbar";
-import {
-  useBibleSelector,
-  type BibleSelectorState,
-} from "seed-bible.managers.BibleSelectorManager";
-import { computed, useSignal } from "@preact/signals";
+import { useBibleSelector } from "seed-bible.managers.BibleSelectorManager";
+import { useSignal } from "@preact/signals";
 
 function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
   if (typeof part === "string") {
@@ -96,9 +93,7 @@ function renderChapterContent(chapterData: TranslationBookChapter | null) {
   });
 }
 
-export function BibleReader(
-  props: BibleReadingState & { selectorState: BibleSelectorState }
-) {
+export function BibleReader(props: BibleReadingState) {
   const {
     translationId,
     bookId,
@@ -108,39 +103,28 @@ export function BibleReader(
     chapterData,
     loading,
     error,
-    selectorState,
   } = props;
 
-  const currentBook = computed(
-    () =>
-      translationBooks.value?.books.find((book) => book.id === bookId.value) ??
-      null
-  );
+  const currentBook =
+    translationBooks.value?.books.find((book) => book.id === bookId.value) ??
+    null;
 
-  const { open } = selectorState;
+  const isSelectorOpen = useSignal(false);
 
-  // const selectorState = useBibleSelector({
-  //   isOpen: isSelectorOpen,
-  //   setOpen: (open: boolean) => (isSelectorOpen.value = open),
-  //   readingState: props,
-  // });
-
-  console.log("Rendering BibleReader with state", {
-    translationId: translationId.value,
-    bookId: bookId.value,
-    chapterNumber: chapterNumber.value,
-    availableTranslations: availableTranslations.value,
-    translationBooks: translationBooks.value,
-    chapterData: chapterData.value,
-    loading: loading.value,
-    error: error.value,
+  const selectorState = useBibleSelector({
+    isOpen: isSelectorOpen,
+    setOpen: (open: boolean) => (isSelectorOpen.value = open),
+    readingState: props,
   });
 
   return (
     <div className="sb-bible-reader">
-      <h2 onClick={() => open(props)} className="sb-bible-reader-title">
+      <h2
+        onClick={() => (isSelectorOpen.value = true)}
+        className="sb-bible-reader-title"
+      >
         <span className="sb-bible-reader-book">
-          {currentBook.value?.name ?? bookId.value ?? "Select a book"}
+          {currentBook?.name ?? bookId.value ?? "Select a book"}
         </span>
         <span className="sb-bible-reader-chapter">{chapterNumber.value}</span>{" "}
         <span className="sb-bible-reader-translation">
@@ -148,12 +132,12 @@ export function BibleReader(
         </span>
       </h2>
 
-      {/* <BibleSelector
+      <BibleSelector
         isOpen={isSelectorOpen.value}
         onClose={() => (isSelectorOpen.value = false)}
         readingState={props}
         selectorState={selectorState}
-      /> */}
+      />
 
       {error.value && !loading.value && (
         <p className="sb-reader-error">{error.value}</p>
