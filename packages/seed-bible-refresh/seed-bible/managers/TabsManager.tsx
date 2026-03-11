@@ -1,4 +1,5 @@
 import { signal } from "@preact/signals";
+import { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
 import {
   DEFAULT_BOOK_ID,
   DEFAULT_CHAPTER_NUMBER,
@@ -33,25 +34,47 @@ function getInitialFirstTabChapter(): number {
     : DEFAULT_CHAPTER_NUMBER;
 }
 
-function createInitialTabs(): ReaderTab[] {
+function createInitialTabs(api: FreeUseBibleAPI): ReaderTab[] {
   return [
     {
       id: "tab-1",
       title: "Tab 1",
-      readingState: useBibleReadingState({
+      readingState: useBibleReadingState(api, {
         initialTranslationId: getInitialTranslationId(),
         initialBookId: getInitialFirstTabBookId(),
         initialChapterNumber: getInitialFirstTabChapter(),
       }),
     },
-    { id: "tab-2", title: "Tab 2", readingState: useBibleReadingState() },
+    {
+      id: "tab-2",
+      title: "Tab 2",
+      readingState: useBibleReadingState(api),
+    },
   ];
 }
 
-const initialTabs = createInitialTabs();
-const tabs = signal<ReaderTab[]>(initialTabs);
-const selectedTabId = signal<string>(initialTabs[0]?.id ?? "");
+const tabs = signal<ReaderTab[]>([]);
+const selectedTabId = signal<string>("");
 let hasConfigBotListener = false;
+let isInitialized = false;
+let sharedApi: FreeUseBibleAPI | null = null;
+
+function ensureInitialized(api: FreeUseBibleAPI) {
+  if (isInitialized) {
+    if (sharedApi !== api) {
+      console.warn(
+        "useTabs() received a different FreeUseBibleAPI instance after initialization. Reusing the first instance."
+      );
+    }
+    return;
+  }
+
+  sharedApi = api;
+  const initialTabs = createInitialTabs(api);
+  tabs.value = initialTabs;
+  selectedTabId.value = initialTabs[0]?.id ?? "";
+  isInitialized = true;
+}
 
 async function syncSelectedTabFromConfig() {
   const selectedTab =
@@ -123,7 +146,8 @@ function ensureConfigBotListener() {
   });
 }
 
-export function useTabs() {
+export function useTabs(api: FreeUseBibleAPI) {
+  ensureInitialized(api);
   ensureConfigBotListener();
 
   const addTab = () => {
@@ -132,7 +156,7 @@ export function useTabs() {
     const nextTab: ReaderTab = {
       id: `tab-${nextNumber}`,
       title: `Tab ${nextNumber}`,
-      readingState: useBibleReadingState(),
+      readingState: useBibleReadingState(sharedApi ?? api),
     };
     tabs.value = [...currentTabs, nextTab];
     selectedTabId.value = nextTab.id;

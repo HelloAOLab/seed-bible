@@ -2,6 +2,7 @@ import { BibleReader } from "seed-bible.components.BibleReader";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
 import { type BibleReadingState } from "seed-bible.managers.BibleReadingManager";
+import { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import { useBibleSelector } from "seed-bible.managers.BibleSelectorManager";
 import { Tabs } from "seed-bible.components.Tabs";
@@ -12,6 +13,8 @@ import {
   useTheme,
 } from "seed-bible.managers.ThemeManager";
 import { useSignal } from "@preact/signals";
+
+const { useMemo } = os.appHooks;
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -70,7 +73,8 @@ function TabReaderPane({
 }
 
 export function Main() {
-  const { tabs, selectedTabId, addTab, selectTab } = useTabs();
+  const bibleApi = useMemo(() => new FreeUseBibleAPI(), []);
+  const { tabs, selectedTabId, addTab, selectTab } = useTabs(bibleApi);
   const { currentTheme } = useTheme();
   const theme = currentTheme.variables;
   const themeCssVariables = generateThemeCssVariables(theme);

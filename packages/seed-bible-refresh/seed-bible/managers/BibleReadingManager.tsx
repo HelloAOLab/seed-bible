@@ -33,10 +33,9 @@ interface InitialBibleReadingOptions {
 }
 
 export function useBibleReadingState(
+  api: FreeUseBibleAPI,
   options: InitialBibleReadingOptions = {}
 ): BibleReadingState {
-  const api = new FreeUseBibleAPI();
-
   const normalizedInitialChapterNumber =
     typeof options.initialChapterNumber === "number" &&
     Number.isFinite(options.initialChapterNumber) &&
