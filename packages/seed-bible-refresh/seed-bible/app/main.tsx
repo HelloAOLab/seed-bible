@@ -20,7 +20,11 @@ const { useMemo } = os.appHooks;
  * A collection of link/script's providing expected resources from external sources.
  * @returns
  */
-export function ExternalResourceDependencies() {
+export function ExternalResourceDependencies({
+  themeCssVariables,
+}: {
+  themeCssVariables: string;
+}) {
   return (
     <>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -52,6 +56,8 @@ export function ExternalResourceDependencies() {
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
       />
+      <style>{`:root {\n${themeCssVariables}\n}`}</style>
+      <style>{tags["main.css"]}</style>
     </>
   );
 }
@@ -103,9 +109,7 @@ export function Main() {
           overflow: "hidden",
         }}
       >
-        <ExternalResourceDependencies />
-        <style>{`:root {\n${themeCssVariables}\n}`}</style>
-        <style>{tags["main.css"]}</style>
+        <ExternalResourceDependencies themeCssVariables={themeCssVariables} />
         <Tabs
           tabs={tabs.value}
           selectedTabId={selectedTabId.value}
