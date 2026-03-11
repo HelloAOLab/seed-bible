@@ -23,7 +23,7 @@ export interface BibleReaderToolbarTool extends BibleTool {
   onSelect: () => void;
 }
 
-export interface ManagedBibleTool extends BibleTool {
+export interface ManagedBibleToolbarTool extends BibleTool {
   isDisabled?: (context: BibleToolContext) => boolean;
   onSelect?: (context: BibleToolContext) => void;
 }
@@ -40,7 +40,7 @@ function NextChapterIcon() {
   return <MaterialIcon>chevron_right</MaterialIcon>;
 }
 
-function getDefaultToolbarTools(): ManagedBibleTool[] {
+function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
   return [
     {
       id: "previous-chapter",
@@ -79,7 +79,9 @@ function getDefaultToolbarTools(): ManagedBibleTool[] {
   ];
 }
 
-const toolbarTools = signal<ManagedBibleTool[]>(getDefaultToolbarTools());
+const toolbarTools = signal<ManagedBibleToolbarTool[]>(
+  getDefaultToolbarTools()
+);
 
 const sortedToolbarTools = computed(() => {
   return [...toolbarTools.value].sort(
@@ -88,7 +90,7 @@ const sortedToolbarTools = computed(() => {
 });
 
 export function useBibleToolsManager() {
-  const registerToolbarTool = (tool: ManagedBibleTool) => {
+  const registerToolbarTool = (tool: ManagedBibleToolbarTool) => {
     const nextTools = toolbarTools.value.filter(
       (entry) => entry.id !== tool.id
     );
