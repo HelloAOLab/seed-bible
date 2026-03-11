@@ -2588,10 +2588,10 @@ function SideBar({ panelsNumber }) {
               </span>
               <span>Delete All</span>
             </div>
-            <div
+            {/* <div
               style={{ background: "#bbc2c2", height: "20px", width: "2px" }}
-            ></div>
-            <div
+            ></div> */}
+            {/* <div
               style={{
                 display: "flex",
                 "justify-content": "center",
@@ -2626,7 +2626,7 @@ function SideBar({ panelsNumber }) {
               >
                 create_new_folder
               </span>
-            </div>
+            </div> */}
           </div>
         )}
         {collapsed && (
