@@ -2,6 +2,7 @@ import { MaterialIcon, SeedBibleIcon } from "seed-bible.components.icons";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
+import type { BibleSelectorState } from "./BibleSelectorManager";
 
 type BibleToolIcon = () => JSX.Element | VNode;
 
@@ -14,7 +15,7 @@ export interface BibleTool {
 
 export interface BibleToolContext {
   readingState: BibleReadingState;
-  onOpenSelector: () => void;
+  selectorState: BibleSelectorState;
 }
 
 export interface BibleReaderToolbarTool extends BibleTool {
@@ -60,7 +61,7 @@ function getDefaultToolbarTools(): ManagedBibleTool[] {
       icon: OpenSelectorIcon,
       isDisabled: (context) => context.readingState.loading.value,
       onSelect: (context) => {
-        context.onOpenSelector();
+        context.selectorState.setOpen(true);
       },
     },
     {

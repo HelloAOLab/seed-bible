@@ -165,10 +165,7 @@ export function BibleReader(props: BibleReadingState) {
         <p>No translations available.</p>
       )}
 
-      <BibleReaderToolbar
-        readingState={props}
-        onOpenSelector={() => (isSelectorOpen.value = true)}
-      />
+      <BibleReaderToolbar readingState={props} selectorState={selectorState} />
     </div>
   );
 }
