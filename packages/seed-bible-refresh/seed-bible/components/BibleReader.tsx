@@ -5,6 +5,7 @@ import {
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
 import { BibleReaderToolbar } from "seed-bible.components.BibleReaderToolbar";
+import { useBibleSelector } from "seed-bible.managers.BibleSelectorManager";
 import { useSignal } from "@preact/signals";
 
 function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
@@ -110,6 +111,12 @@ export function BibleReader(props: BibleReadingState) {
 
   const isSelectorOpen = useSignal(false);
 
+  const selectorState = useBibleSelector({
+    isOpen: isSelectorOpen,
+    setOpen: (open: boolean) => (isSelectorOpen.value = open),
+    readingState: props,
+  });
+
   return (
     <div className="sb-bible-reader">
       <h2
@@ -127,9 +134,9 @@ export function BibleReader(props: BibleReadingState) {
 
       <BibleSelector
         isOpen={isSelectorOpen.value}
-        onOpen={() => (isSelectorOpen.value = true)}
         onClose={() => (isSelectorOpen.value = false)}
         readingState={props}
+        selectorState={selectorState}
       />
 
       {error.value && !loading.value && (

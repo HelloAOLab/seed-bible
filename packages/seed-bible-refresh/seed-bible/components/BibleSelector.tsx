@@ -1,169 +1,38 @@
-import type { TranslationBooks } from "seed-bible.managers.FreeUseBibleAPI";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
-import { useSignal } from "@preact/signals";
+import { type BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
-import { chunk } from "es-toolkit";
 import { MaterialIcon } from "seed-bible.components.icons";
-
-const { useEffect, useMemo, useRef } = os.appHooks;
 
 // const { useEffect, useMemo, useState } = os.appHooks;
 
 interface BibleSelectorProps {
   isOpen: boolean;
-  onOpen: () => void;
   onClose: () => void;
   readingState: BibleReadingState;
-}
-
-function groupBooks(translationBooks: TranslationBooks | null, search: string) {
-  if (!translationBooks) {
-    return {
-      oldTestament: [] as TranslationBooks["books"],
-      newTestament: [] as TranslationBooks["books"],
-    };
-  }
-
-  const loweredSearch = search.trim().toLowerCase();
-  const filteredBooks = loweredSearch
-    ? translationBooks.books.filter(
-        (book) =>
-          book.name.toLowerCase().includes(loweredSearch) ||
-          book.commonName.toLowerCase().includes(loweredSearch)
-      )
-    : translationBooks.books;
-
-  return {
-    oldTestament: filteredBooks.filter((book) => book.order <= 39),
-    newTestament: filteredBooks.filter((book) => book.order > 39),
-  };
+  selectorState: BibleSelectorState;
 }
 
 export function BibleSelector(props: BibleSelectorProps) {
-  const { isOpen, onOpen, onClose, readingState } = props;
+  const { isOpen, onClose, readingState, selectorState } = props;
   const {
     translationId,
     bookId,
     chapterNumber,
     availableTranslations,
-    translationBooks,
     loading,
-    selectTranslation,
-    selectChapter,
   } = readingState;
 
   const { t } = useI18n();
-
-  const search = useSignal("");
-  const expandedBookId = useSignal<string | null>(bookId.value);
-  const viewportWidth = useSignal(
-    typeof window === "undefined" ? 0 : window.innerWidth
-  );
-  const wasOpenRef = useRef(isOpen);
-  const isHandlingPopStateRef = useRef(false);
-
-  const getHistoryState = () => {
-    return history.state && typeof history.state === "object"
-      ? (history.state as Record<string, unknown>)
-      : {};
-  };
-
-  const isSelectorOpenInHistory = () => {
-    const state = getHistoryState();
-    return state.bibleSelectorOpen === true;
-  };
-
-  useEffect(() => {
-    if (isOpen) {
-      expandedBookId.value = bookId.value;
-    }
-  }, [bookId.value, isOpen]);
-
-  useEffect(() => {
-    const onResize = () => {
-      viewportWidth.value = window.innerWidth;
-    };
-
-    window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("resize", onResize);
-    };
-  }, []);
-
-  useEffect(() => {
-    const onPopState = () => {
-      const shouldBeOpen = isSelectorOpenInHistory();
-      isHandlingPopStateRef.current = true;
-
-      if (shouldBeOpen && !isOpen) {
-        onOpen();
-      } else if (!shouldBeOpen && isOpen) {
-        onClose();
-      }
-
-      setTimeout(() => {
-        isHandlingPopStateRef.current = false;
-      }, 0);
-    };
-
-    window.addEventListener("popstate", onPopState);
-    return () => {
-      window.removeEventListener("popstate", onPopState);
-    };
-  }, [isOpen, onClose, onOpen]);
-
-  useEffect(() => {
-    const wasOpen = wasOpenRef.current;
-
-    if (!wasOpen && isOpen && !isSelectorOpenInHistory()) {
-      history.pushState({ ...getHistoryState(), bibleSelectorOpen: true }, "");
-    }
-
-    if (wasOpen && !isOpen) {
-      const shouldNavigateBack =
-        !isHandlingPopStateRef.current && isSelectorOpenInHistory();
-      if (shouldNavigateBack) {
-        history.back();
-      }
-    }
-
-    wasOpenRef.current = isOpen;
-  }, [isOpen]);
-
-  const { oldTestament, newTestament } = useMemo(
-    () => groupBooks(translationBooks.value, search.value),
-    [translationBooks.value, search.value]
-  );
-
-  const { oldTestamentBooksPerRow, newTestamentBooksPerRow } = useMemo(() => {
-    if (viewportWidth.value > 1200) {
-      return {
-        oldTestamentBooksPerRow: 3,
-        newTestamentBooksPerRow: 2,
-      };
-    }
-
-    if (viewportWidth.value > 768) {
-      return {
-        oldTestamentBooksPerRow: 2,
-        newTestamentBooksPerRow: 1,
-      };
-    }
-
-    return {
-      oldTestamentBooksPerRow: 1,
-      newTestamentBooksPerRow: 1,
-    };
-  }, [viewportWidth.value]);
-
-  const oldTestamentRows = useMemo(
-    () => chunk(oldTestament, oldTestamentBooksPerRow),
-    [oldTestament, oldTestamentBooksPerRow]
-  );
-  const newTestamentRows = useMemo(
-    () => chunk(newTestament, newTestamentBooksPerRow),
-    [newTestament, newTestamentBooksPerRow]
-  );
+  const {
+    search,
+    expandedBookId,
+    oldTestamentRows,
+    newTestamentRows,
+    setSearch,
+    setExpandedBook,
+    selectTranslation,
+    selectChapter,
+  } = selectorState;
 
   return (
     <div
@@ -182,7 +51,7 @@ export function BibleSelector(props: BibleSelectorProps) {
             disabled={loading.value || !availableTranslations.value}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLSelectElement;
-              void selectTranslation(target.value);
+              selectTranslation(target.value);
             }}
             className="sb-selector-translation-select"
           >
@@ -199,7 +68,7 @@ export function BibleSelector(props: BibleSelectorProps) {
             value={search.value}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLInputElement;
-              search.value = target.value;
+              setSearch(target.value);
             }}
             placeholder={t("searchBook", {
               defaultValue: "Search book...",
@@ -238,12 +107,7 @@ export function BibleSelector(props: BibleSelectorProps) {
                       {row.map((book) => (
                         <div key={book.id}>
                           <button
-                            onClick={() => {
-                              expandedBookId.value =
-                                expandedBookId.value === book.id
-                                  ? null
-                                  : book.id;
-                            }}
+                            onClick={() => setExpandedBook(book.id)}
                             disabled={loading.value}
                             className={`sb-selector-book-button${
                               book.id === bookId.value
@@ -273,13 +137,9 @@ export function BibleSelector(props: BibleSelectorProps) {
                             return (
                               <button
                                 key={`${expandedBookInRow.id}-${chapter}`}
-                                onClick={() => {
-                                  void selectChapter(
-                                    expandedBookInRow.id,
-                                    chapter
-                                  );
-                                  onClose();
-                                }}
+                                onClick={() =>
+                                  selectChapter(expandedBookInRow.id, chapter)
+                                }
                                 disabled={loading.value}
                                 className={`sb-selector-chapter-button${
                                   isCurrentBookChapter
@@ -325,12 +185,7 @@ export function BibleSelector(props: BibleSelectorProps) {
                       {row.map((book) => (
                         <div key={book.id}>
                           <button
-                            onClick={() => {
-                              expandedBookId.value =
-                                expandedBookId.value === book.id
-                                  ? null
-                                  : book.id;
-                            }}
+                            onClick={() => setExpandedBook(book.id)}
                             disabled={loading.value}
                             className={`sb-selector-book-button${
                               book.id === bookId.value
@@ -360,13 +215,9 @@ export function BibleSelector(props: BibleSelectorProps) {
                             return (
                               <button
                                 key={`${expandedBookInRow.id}-${chapter}`}
-                                onClick={() => {
-                                  void selectChapter(
-                                    expandedBookInRow.id,
-                                    chapter
-                                  );
-                                  onClose();
-                                }}
+                                onClick={() =>
+                                  selectChapter(expandedBookInRow.id, chapter)
+                                }
                                 disabled={loading.value}
                                 className={`sb-selector-chapter-button${
                                   isCurrentBookChapter

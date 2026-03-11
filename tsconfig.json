@@ -3962,6 +3962,9 @@
       "seed-bible.managers.BibleReadingManager": [
         "./packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager.tsx"
       ],
+      "seed-bible.managers.BibleSelectorManager": [
+        "./packages/seed-bible-refresh/seed-bible/managers/BibleSelectorManager.tsx"
+      ],
       "seed-bible.managers.BibleToolsManager": [
         "./packages/seed-bible-refresh/seed-bible/managers/BibleToolsManager.tsx"
       ],

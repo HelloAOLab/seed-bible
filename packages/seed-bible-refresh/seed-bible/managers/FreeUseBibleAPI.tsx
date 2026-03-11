@@ -123,7 +123,7 @@ export interface TranslationBooks {
   books: TranslationBook[];
 }
 
-interface TranslationBook {
+export interface TranslationBook {
   /**
    * The ID of the book.
    */
