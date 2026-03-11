@@ -16,12 +16,12 @@ export interface SelectedVerse {
 interface BibleReaderToolbarProps {
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
-  selectedVerse?: SelectedVerse | null;
+  selectedVerses?: SelectedVerse[];
   onClearSelection?: () => void;
 }
 
 export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
-  const { readingState, selectorState, selectedVerse, onClearSelection } =
+  const { readingState, selectorState, selectedVerses, onClearSelection } =
     props;
 
   const toolsManager = useBibleToolsManager();
@@ -29,7 +29,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const tools: BibleReaderToolbarTool[] = toolsManager.getToolbarTools({
     readingState,
     selectorState,
-    selectedVerse: selectedVerse ?? null,
+    selectedVerses: selectedVerses ?? [],
     clearSelection: onClearSelection,
   });
 

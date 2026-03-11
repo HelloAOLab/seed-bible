@@ -17,7 +17,7 @@ export interface BibleTool {
 export interface BibleToolContext {
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
-  selectedVerse: SelectedVerse | null;
+  selectedVerses: SelectedVerse[];
   clearSelection?: () => void;
 }
 
@@ -98,19 +98,21 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 200,
       title: "Copy Verse",
       icon: CopyVerseIcon,
-      isVisible: (context) => !!context.selectedVerse,
+      isVisible: (context) => context.selectedVerses.length > 0,
       onSelect: async (context) => {
-        if (!context.selectedVerse) return;
+        if (context.selectedVerses.length === 0) return;
 
-        const { bookId, chapterNumber, verseNumber, verseText } =
-          context.selectedVerse;
-        const verseReference = `${bookId} ${chapterNumber}:${verseNumber}`;
-        const textToCopy = `${verseText} (${verseReference})`;
+        const verseTexts = context.selectedVerses
+          .map((verse) => {
+            const verseReference = `${verse.bookId} ${verse.chapterNumber}:${verse.verseNumber}`;
+            return `${verse.verseText} (${verseReference})`;
+          })
+          .join("\n\n");
 
         try {
-          os.setClipboard(textToCopy);
+          os.setClipboard(verseTexts);
           os.toast("Copied!");
-          console.log("Verse copied to clipboard");
+          console.log("Verse(s) copied to clipboard");
         } catch (err) {
           console.error("Failed to copy verse:", err);
         }
@@ -121,18 +123,20 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 300,
       title: "Share Verse",
       icon: ShareVerseIcon,
-      isVisible: (context) => !!context.selectedVerse,
+      isVisible: (context) => context.selectedVerses.length > 0,
       onSelect: (context) => {
-        if (!context.selectedVerse) return;
+        if (context.selectedVerses.length === 0) return;
 
-        const { bookId, chapterNumber, verseNumber, verseText, translationId } =
-          context.selectedVerse;
-        const verseReference = `${bookId} ${chapterNumber}:${verseNumber}`;
-        const shareText = `${verseText} (${verseReference} - ${translationId})`;
+        const verseTexts = context.selectedVerses
+          .map((verse) => {
+            const verseReference = `${verse.bookId} ${verse.chapterNumber}:${verse.verseNumber}`;
+            return `${verse.verseText} (${verseReference} - ${verse.translationId})`;
+          })
+          .join("\n\n");
 
         os.share({
-          title: "Bible Verse",
-          text: shareText,
+          title: "Bible Verse" + (context.selectedVerses.length > 1 ? "s" : ""),
+          text: verseTexts,
         });
       },
     },
@@ -141,7 +145,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 400,
       title: "Clear Selection",
       icon: ClearSelectionIcon,
-      isVisible: (context) => !!context.selectedVerse,
+      isVisible: (context) => context.selectedVerses.length > 0,
       onSelect: (context) => {
         context.clearSelection?.();
       },

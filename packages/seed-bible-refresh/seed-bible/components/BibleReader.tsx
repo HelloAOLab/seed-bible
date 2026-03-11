@@ -44,8 +44,8 @@ function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
 
 function renderChapterContent(
   chapterData: TranslationBookChapter | null,
-  onVerseClick: (selected: SelectedVerse | null) => void,
-  selectedVerse: SelectedVerse | null
+  onVerseClick: (verse: SelectedVerse, isAdding: boolean) => void,
+  selectedVerses: SelectedVerse[]
 ) {
   if (!chapterData) {
     return null;
@@ -95,30 +95,26 @@ function renderChapterContent(
           return "";
         })
         .join("");
-      const isSelected =
-        selectedVerse &&
-        selectedVerse.verseNumber === value.number &&
-        chapterData &&
-        selectedVerse.bookId === chapterData.book.id &&
-        selectedVerse.chapterNumber === chapterData.chapter.number;
+      const verse = {
+        bookId: chapterData.book.id,
+        chapterNumber: chapterData.chapter.number,
+        verseNumber: value.number,
+        verseText,
+        translationId: chapterData.translation.id,
+      };
+      const isSelected = selectedVerses.some(
+        (v) =>
+          v.verseNumber === value.number &&
+          v.bookId === chapterData.book.id &&
+          v.chapterNumber === chapterData.chapter.number
+      );
 
       return (
         <span
           key={`verse-${entryIndex}`}
           className={`sb-verse${isSelected ? " sb-verse-selected" : ""}`}
           onClick={() => {
-            if (isSelected) {
-              onVerseClick(null);
-            } else {
-              const currentChapter = chapterData as TranslationBookChapter;
-              onVerseClick({
-                bookId: currentChapter.book.id,
-                chapterNumber: currentChapter.chapter.number,
-                verseNumber: value.number,
-                verseText,
-                translationId: currentChapter.translation.id,
-              });
-            }
+            onVerseClick(verse as SelectedVerse, !isSelected);
           }}
           style={{ cursor: "pointer" }}
           role="button"
@@ -152,7 +148,7 @@ export function BibleReader(props: BibleReaderProps) {
     error,
   } = readingState;
 
-  const selectedVerse = useSignal<SelectedVerse | null>(null);
+  const selectedVerses = useSignal<SelectedVerse[]>([]);
 
   const currentBook =
     translationBooks.value?.books.find((book) => book.id === bookId.value) ??
@@ -181,10 +177,19 @@ export function BibleReader(props: BibleReaderProps) {
         <div className="sb-chapter-content">
           {renderChapterContent(
             chapterData.value,
-            (verse) => {
-              selectedVerse.value = verse;
+            (verse, isAdding) => {
+              if (isAdding) {
+                selectedVerses.value = [...selectedVerses.value, verse];
+              } else {
+                selectedVerses.value = selectedVerses.value.filter(
+                  (v) =>
+                    v.verseNumber !== verse.verseNumber ||
+                    v.bookId !== verse.bookId ||
+                    v.chapterNumber !== verse.chapterNumber
+                );
+              }
             },
-            selectedVerse.value
+            selectedVerses.value
           )}
           {chapterData.value.chapter.footnotes.length > 0 && (
             <div className="sb-reader-footnotes">
@@ -208,9 +213,9 @@ export function BibleReader(props: BibleReaderProps) {
       <BibleReaderToolbar
         readingState={readingState}
         selectorState={selectorState}
-        selectedVerse={selectedVerse.value}
+        selectedVerses={selectedVerses.value}
         onClearSelection={() => {
-          selectedVerse.value = null;
+          selectedVerses.value = [];
         }}
       />
     </div>
