@@ -1784,17 +1784,19 @@ function ThePage({
               globalThis.closePopupSettings();
               const el = e.currentTarget;
               const currentScrollTop = el.scrollTop;
-              if (currentScrollTop <= 0) {
-                document.body.classList.remove("scroll-hide-bars");
-              } else if (
-                currentScrollTop > lastScrollTopRef.current &&
-                currentScrollTop > 50
-              ) {
-                document.body.classList.add("scroll-hide-bars");
-              } else if (currentScrollTop < lastScrollTopRef.current) {
-                document.body.classList.remove("scroll-hide-bars");
+              if (globalThis.IsMobileNow && globalThis.IsMobileNow()) {
+                if (currentScrollTop <= 0) {
+                  document.body.classList.remove("scroll-hide-bars");
+                } else if (
+                  currentScrollTop > lastScrollTopRef.current &&
+                  currentScrollTop > 50
+                ) {
+                  document.body.classList.add("scroll-hide-bars");
+                } else if (currentScrollTop < lastScrollTopRef.current) {
+                  document.body.classList.remove("scroll-hide-bars");
+                }
+                lastScrollTopRef.current = currentScrollTop;
               }
-              lastScrollTopRef.current = currentScrollTop;
             }}
             style={{
               flex: "0 0 33.333%",
@@ -2043,6 +2045,47 @@ function ThePage({
           @media (max-width: 768px) {
             display: none;
           }
+        }
+
+        /* Compact scroll header - shows book/chapter when main header is hidden */
+        .mobile-compact-scroll-header {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          text-align: center;
+          padding: 8px 16px;
+          background: var(--pageBackground);
+          z-index: 99;
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--text1);
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.3s ease;
+        }
+
+        body.scroll-hide-bars .mobile-compact-scroll-header {
+          opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+          .mobile-compact-scroll-header {
+            display: block;
+          }
+        }
+
+        .compact-header-divider {
+          margin: 0 6px;
+          color: #666;
+          font-weight: 400;
+        }
+
+        .compact-header-translation {
+          font-weight: 400;
+          font-size: 12px;
+          color: #999;
         }
          `}
             </style>
@@ -2359,6 +2402,29 @@ function ThePage({
             />
           </div>
         )}
+
+      {/* Compact scroll header - shows book/chapter info when scrolled down on mobile */}
+      {globalThis.IsMobileNow && globalThis.IsMobileNow() && data && (
+        <div className="mobile-compact-scroll-header">
+          {showVerseToolbar && clickedVerses.length > 0 ? (
+            <>
+              {`Selected: ${data?.book} ${data?.chapter}:${[...clickedVerses].sort((a, b) => a - b).join(",")}`}
+              <span className="compact-header-divider">|</span>
+              <span className="compact-header-translation">
+                {data?.shortName || ""}
+              </span>
+            </>
+          ) : (
+            <>
+              {`${data?.book} ${data?.chapter}`}
+              <span className="compact-header-divider">|</span>
+              <span className="compact-header-translation">
+                {data?.shortName || ""}
+              </span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Footnote Modal rendered outside the carousel so position:fixed works relative to the viewport */}
       {showFootnoteModal && activeFootnote && (

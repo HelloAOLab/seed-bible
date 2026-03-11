@@ -1619,7 +1619,7 @@ function SideBar({ panelsNumber }) {
       <>
         <div className="mobile-sidebar-overlay">
           <div className="mobile-sidebar-header">
-            <h2>Tabs & Folders</h2>
+            <h2>Tabs</h2>
             <div className="mobile-header-actions">
               {/* <span
                 className="mobile-header-icon"
