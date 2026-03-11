@@ -61,6 +61,8 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 0,
       title: "Previous Chapter",
       icon: PreviousChapterIcon,
+      isVisible: (context) =>
+        context.readingState.selectedVerses.value.length <= 0,
       isDisabled: (context) =>
         !context.readingState.chapterData.value?.previousChapterApiLink ||
         context.readingState.loading.value,
@@ -73,6 +75,8 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 100,
       title: "Open Book Selector",
       icon: OpenSelectorIcon,
+      isVisible: (context) =>
+        context.readingState.selectedVerses.value.length <= 0,
       isDisabled: (context) => context.readingState.loading.value,
       onSelect: (context) => {
         context.selectorState.setOpen(true, context.readingState);
@@ -83,6 +87,8 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 1000,
       title: "Next Chapter",
       icon: NextChapterIcon,
+      isVisible: (context) =>
+        context.readingState.selectedVerses.value.length <= 0,
       isDisabled: (context) =>
         !context.readingState.chapterData.value?.nextChapterApiLink ||
         context.readingState.loading.value,
