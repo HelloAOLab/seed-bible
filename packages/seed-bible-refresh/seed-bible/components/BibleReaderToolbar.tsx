@@ -2,35 +2,21 @@ import {
   useBibleToolsManager,
   type BibleReaderToolbarTool,
 } from "seed-bible.managers.BibleToolsManager";
+import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 
 interface BibleReaderToolbarProps {
-  canGoToPreviousChapter: boolean;
-  canGoToNextChapter: boolean;
-  disabled: boolean;
-  onGoToPreviousChapter: () => void;
+  readingState: BibleReadingState;
   onOpenSelector: () => void;
-  onGoToNextChapter: () => void;
 }
 
 export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
-  const {
-    canGoToPreviousChapter,
-    canGoToNextChapter,
-    disabled,
-    onGoToPreviousChapter,
-    onOpenSelector,
-    onGoToNextChapter,
-  } = props;
+  const { readingState, onOpenSelector } = props;
 
   const toolsManager = useBibleToolsManager();
 
   const tools: BibleReaderToolbarTool[] = toolsManager.getToolbarTools({
-    canGoToPreviousChapter,
-    canGoToNextChapter,
-    disabled,
-    onGoToPreviousChapter,
+    readingState,
     onOpenSelector,
-    onGoToNextChapter,
   });
 
   return (

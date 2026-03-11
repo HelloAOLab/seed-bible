@@ -175,14 +175,8 @@ export function BibleReader(props: BibleReadingState) {
       )}
 
       <BibleReaderToolbar
-        canGoToPreviousChapter={Boolean(
-          chapterData.value?.previousChapterApiLink
-        )}
-        canGoToNextChapter={Boolean(chapterData.value?.nextChapterApiLink)}
-        disabled={loading.value}
-        onGoToPreviousChapter={loadPreviousChapter}
+        readingState={props}
         onOpenSelector={() => (isSelectorOpen.value = true)}
-        onGoToNextChapter={loadNextChapter}
       />
     </div>
   );

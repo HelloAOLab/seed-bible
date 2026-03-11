@@ -1,6 +1,7 @@
 import { MaterialIcon, SeedBibleIcon } from "seed-bible.components.icons";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
+import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 
 type BibleToolIcon = () => JSX.Element | VNode;
 
@@ -12,12 +13,8 @@ export interface BibleTool {
 }
 
 export interface BibleToolContext {
-  canGoToPreviousChapter: boolean;
-  canGoToNextChapter: boolean;
-  disabled: boolean;
-  onGoToPreviousChapter: () => void;
+  readingState: BibleReadingState;
   onOpenSelector: () => void;
-  onGoToNextChapter: () => void;
 }
 
 export interface BibleReaderToolbarTool extends BibleTool {
@@ -46,33 +43,36 @@ function getDefaultToolbarTools(): ManagedBibleTool[] {
   return [
     {
       id: "previous-chapter",
-      priority: 100,
+      priority: 0,
       title: "Previous Chapter",
       icon: PreviousChapterIcon,
       isDisabled: (context) =>
-        !context.canGoToPreviousChapter || context.disabled,
+        !context.readingState.chapterData.value?.previousChapterApiLink ||
+        context.readingState.loading.value,
       onSelect: (context) => {
-        context.onGoToPreviousChapter();
+        context.readingState.loadPreviousChapter();
       },
     },
     {
       id: "open-selector",
-      priority: 200,
+      priority: 100,
       title: "Open Book Selector",
       icon: OpenSelectorIcon,
-      isDisabled: (context) => context.disabled,
+      isDisabled: (context) => context.readingState.loading.value,
       onSelect: (context) => {
         context.onOpenSelector();
       },
     },
     {
       id: "next-chapter",
-      priority: 300,
+      priority: 1000,
       title: "Next Chapter",
       icon: NextChapterIcon,
-      isDisabled: (context) => !context.canGoToNextChapter || context.disabled,
+      isDisabled: (context) =>
+        !context.readingState.chapterData.value?.nextChapterApiLink ||
+        context.readingState.loading.value,
       onSelect: (context) => {
-        context.onGoToNextChapter();
+        context.readingState.loadNextChapter();
       },
     },
   ];
