@@ -102,10 +102,6 @@ export function BibleReader(props: BibleReadingState) {
     chapterData,
     loading,
     error,
-    selectTranslation,
-    selectChapter,
-    loadPreviousChapter,
-    loadNextChapter,
   } = props;
 
   const currentBook =
@@ -133,19 +129,7 @@ export function BibleReader(props: BibleReadingState) {
         isOpen={isSelectorOpen.value}
         onOpen={() => (isSelectorOpen.value = true)}
         onClose={() => (isSelectorOpen.value = false)}
-        translationId={translationId.value}
-        bookId={bookId.value}
-        chapterNumber={chapterNumber.value}
-        availableTranslations={availableTranslations.value}
-        translationBooks={translationBooks.value}
-        loading={loading.value}
-        onSelectTranslation={(translation) => {
-          void selectTranslation(translation);
-        }}
-        onSelectChapter={(book, chapter) => {
-          void selectChapter(book, chapter);
-          isSelectorOpen.value = false;
-        }}
+        readingState={props}
       />
 
       {error.value && !loading.value && (
