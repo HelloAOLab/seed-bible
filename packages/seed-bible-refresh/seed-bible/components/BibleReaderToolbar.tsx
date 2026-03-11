@@ -1,5 +1,5 @@
 import {
-  bibleToolsManager,
+  useBibleToolsManager,
   type BibleReaderToolbarTool,
 } from "seed-bible.managers.BibleToolsManager";
 
@@ -22,7 +22,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     onGoToNextChapter,
   } = props;
 
-  const tools: BibleReaderToolbarTool[] = bibleToolsManager.getToolbarTools({
+  const toolsManager = useBibleToolsManager();
+
+  const tools: BibleReaderToolbarTool[] = toolsManager.getToolbarTools({
     canGoToPreviousChapter,
     canGoToNextChapter,
     disabled,
