@@ -6,6 +6,7 @@ import {
   type TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
 import { signal, type Signal } from "@preact/signals";
+import { sortBy } from "es-toolkit";
 
 export interface BibleSelectedVerse {
   bookId: string;
@@ -89,7 +90,10 @@ export function useBibleReadingState(
       return;
     }
 
-    selectedVerses.value = [...selectedVerses.value, verse];
+    selectedVerses.value = sortBy(
+      [...selectedVerses.value, verse],
+      [(v: BibleSelectedVerse) => v.verse.number]
+    );
   };
 
   const clearSelectedVerses = () => {
