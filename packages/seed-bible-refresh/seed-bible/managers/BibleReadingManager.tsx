@@ -1,6 +1,7 @@
 import {
   FreeUseBibleAPI,
   type AvailableTranslations,
+  type ChapterVerse,
   type TranslationBookChapter,
   type TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
@@ -9,8 +10,7 @@ import { signal, type Signal } from "@preact/signals";
 export interface BibleSelectedVerse {
   bookId: string;
   chapterNumber: number;
-  verseNumber: number;
-  verseText: string;
+  verse: ChapterVerse;
   translationId: string | null;
 }
 
@@ -54,7 +54,7 @@ export function useBibleReadingState(
     return (
       left.bookId === right.bookId &&
       left.chapterNumber === right.chapterNumber &&
-      left.verseNumber === right.verseNumber
+      left.verse.number === right.verse.number
     );
   };
 

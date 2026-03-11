@@ -86,24 +86,15 @@ function renderChapterContent(
       typeof value.number === "number" &&
       Array.isArray(value.content)
     ) {
-      const verseText = value.content
-        .map((part) => {
-          if (typeof part === "string") return part;
-          if (part && typeof part === "object" && "text" in part)
-            return (part as { text: string }).text;
-          return "";
-        })
-        .join("");
       const verse: BibleSelectedVerse = {
         bookId: chapterData.book.id,
         chapterNumber: chapterData.chapter.number,
-        verseNumber: value.number,
-        verseText,
+        verse: value,
         translationId: chapterData.translation.id,
       };
       const isSelected = selectedVerses.some(
         (v) =>
-          v.verseNumber === value.number &&
+          v.verse.number === value.number &&
           v.bookId === chapterData.book.id &&
           v.chapterNumber === chapterData.chapter.number
       );
@@ -147,7 +138,6 @@ export function BibleReader(props: BibleReaderProps) {
     loading,
     error,
     selectVerse,
-    clearSelectedVerses,
   } = readingState;
 
   const currentBook =

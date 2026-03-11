@@ -102,8 +102,15 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
 
         const verseTexts = context.readingState.selectedVerses.value
           .map((verse) => {
-            const verseReference = `${verse.bookId} ${verse.chapterNumber}:${verse.verseNumber}`;
-            return `${verse.verseText} (${verseReference})`;
+            const verseReference = `${verse.bookId} ${verse.chapterNumber}:${verse.verse.number}`;
+            return `${verse.verse.content
+              .map((part) => {
+                if (typeof part === "string") return part;
+                if (part && typeof part === "object" && "text" in part)
+                  return (part as { text: string }).text;
+                return "";
+              })
+              .join("")} (${verseReference})`;
           })
           .join("\n\n");
 
@@ -128,8 +135,15 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
 
         const verseTexts = context.readingState.selectedVerses.value
           .map((verse) => {
-            const verseReference = `${verse.bookId} ${verse.chapterNumber}:${verse.verseNumber}`;
-            return `${verse.verseText} (${verseReference} - ${verse.translationId})`;
+            const verseReference = `${verse.bookId} ${verse.chapterNumber}:${verse.verse.number}`;
+            return `${verse.verse.content
+              .map((part) => {
+                if (typeof part === "string") return part;
+                if (part && typeof part === "object" && "text" in part)
+                  return (part as { text: string }).text;
+                return "";
+              })
+              .join("")} (${verseReference} - ${verse.translationId})`;
           })
           .join("\n\n");
 
