@@ -515,7 +515,7 @@ function ThePage({
       whisper(getBot("system", "introduction.searchBar"), "initialize");
     }
 
-    if (!bible || (bible && bible?.tabId && bible.tabId !== tab.id)) {
+    if (!bible || (bible && bible?.tabId && bible.tabId !== tab?.id)) {
       loadDataSafe();
     }
     globalThis.CurrentTab = tab;
