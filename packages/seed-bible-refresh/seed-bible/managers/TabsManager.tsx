@@ -14,6 +14,15 @@ export interface ReaderTab {
   readingState: BibleReadingState;
 }
 
+function createEqualPaneSizes(count: number): number[] {
+  if (count <= 0) {
+    return [];
+  }
+
+  const size = 1 / count;
+  return Array.from({ length: count }, () => size);
+}
+
 function getInitialFirstTabBookId(): string {
   return typeof configBot.tags.book === "string" && configBot.tags.book.trim()
     ? configBot.tags.book
@@ -55,6 +64,8 @@ function createInitialTabs(api: FreeUseBibleAPI): ReaderTab[] {
 
 const tabs = signal<ReaderTab[]>([]);
 const selectedTabId = signal<string>("");
+const paneTabIds = signal<string[]>([]);
+const paneSizes = signal<number[]>([]);
 let hasConfigBotListener = false;
 let isInitialized = false;
 let sharedApi: FreeUseBibleAPI | null = null;
@@ -73,7 +84,14 @@ function ensureInitialized(api: FreeUseBibleAPI) {
   const initialTabs = createInitialTabs(api);
   tabs.value = initialTabs;
   selectedTabId.value = initialTabs[0]?.id ?? "";
+  paneTabIds.value = initialTabs[0] ? [initialTabs[0].id] : [];
+  paneSizes.value = createEqualPaneSizes(paneTabIds.value.length);
   isInitialized = true;
+}
+
+function syncPaneState(nextPaneTabIds: string[]) {
+  paneTabIds.value = nextPaneTabIds;
+  paneSizes.value = createEqualPaneSizes(nextPaneTabIds.length);
 }
 
 async function syncSelectedTabFromConfig() {
@@ -160,16 +178,67 @@ export function useTabs(api: FreeUseBibleAPI) {
     };
     tabs.value = [...currentTabs, nextTab];
     selectedTabId.value = nextTab.id;
+    syncPaneState([...paneTabIds.value, nextTab.id]);
   };
 
   const selectTab = (tabId: string) => {
     selectedTabId.value = tabId;
+
+    if (!paneTabIds.value.includes(tabId)) {
+      syncPaneState([...paneTabIds.value, tabId]);
+    }
+  };
+
+  const togglePane = (tabId: string) => {
+    if (paneTabIds.value.includes(tabId)) {
+      if (paneTabIds.value.length === 1) {
+        return;
+      }
+
+      const nextPaneTabIds = paneTabIds.value.filter((id) => id !== tabId);
+      syncPaneState(nextPaneTabIds);
+
+      if (selectedTabId.value === tabId) {
+        selectedTabId.value = nextPaneTabIds[0] ?? "";
+      }
+      return;
+    }
+
+    syncPaneState([...paneTabIds.value, tabId]);
+  };
+
+  const resizePane = (
+    index: number,
+    deltaRatio: number,
+    baseSizes: number[] = paneSizes.value
+  ) => {
+    if (index < 0 || index >= baseSizes.length - 1) {
+      return;
+    }
+
+    const minSize = 0.15;
+    const nextSizes = [...baseSizes];
+    const currentSize = nextSizes[index] ?? 0;
+    const adjacentSize = nextSizes[index + 1] ?? 0;
+    const combinedSize = currentSize + adjacentSize;
+    const resizedCurrent = Math.min(
+      combinedSize - minSize,
+      Math.max(minSize, currentSize + deltaRatio)
+    );
+
+    nextSizes[index] = resizedCurrent;
+    nextSizes[index + 1] = combinedSize - resizedCurrent;
+    paneSizes.value = nextSizes;
   };
 
   return {
     tabs,
     selectedTabId,
+    paneTabIds,
+    paneSizes,
     addTab,
     selectTab,
+    togglePane,
+    resizePane,
   };
 }

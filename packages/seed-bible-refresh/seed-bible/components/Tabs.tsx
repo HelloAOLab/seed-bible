@@ -8,9 +8,11 @@ const { useEffect } = os.appHooks;
 interface TabsProps {
   tabs: ReaderTab[];
   selectedTabId: string;
+  paneTabIds: string[];
   isSettingsOpen: boolean;
   isCollapsed: boolean;
   onSelectTab: (tabId: string) => void;
+  onTogglePane: (tabId: string) => void;
   onAddTab: () => void;
   onToggleCollapse: () => void;
   onOpenSettings: () => void;
@@ -20,9 +22,11 @@ export function Tabs(props: TabsProps) {
   const {
     tabs,
     selectedTabId,
+    paneTabIds,
     isSettingsOpen,
     isCollapsed,
     onSelectTab,
+    onTogglePane,
     onAddTab,
     onToggleCollapse,
     onOpenSettings,
@@ -79,6 +83,7 @@ export function Tabs(props: TabsProps) {
           <div className="sb-sidebar-tab-list">
             {tabs.map((tab) => {
               const isSelected = tab.id === selectedTabId;
+              const isPaneVisible = paneTabIds.includes(tab.id);
               const currentBookId = tab.readingState.bookId.value;
               const currentBookName =
                 tab.readingState.translationBooks.value?.books.find(
@@ -90,18 +95,39 @@ export function Tabs(props: TabsProps) {
               const currentTranslation =
                 tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
               return (
-                <button
-                  key={tab.id}
-                  onClick={() => onSelectTab(tab.id)}
-                  className={`sb-tab-button${
-                    isSelected ? " sb-tab-button-selected" : ""
-                  }`}
-                >
-                  <span>{`${currentBookName} - ${currentChapter} • ${currentTranslation}`}</span>
-                  <span className="material-symbols-outlined sb-tab-more-icon">
-                    more_vert
-                  </span>
-                </button>
+                <div key={tab.id} className="sb-tab-row">
+                  <button
+                    onClick={() => onSelectTab(tab.id)}
+                    className={`sb-tab-button${
+                      isSelected ? " sb-tab-button-selected" : ""
+                    }`}
+                  >
+                    <span>{`${currentBookName} - ${currentChapter} • ${currentTranslation}`}</span>
+                    <span className="material-symbols-outlined sb-tab-more-icon">
+                      more_vert
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => onTogglePane(tab.id)}
+                    className={`sb-tab-pane-button${
+                      isPaneVisible ? " sb-tab-pane-button-active" : ""
+                    }`}
+                    aria-label={
+                      isPaneVisible
+                        ? "Hide tab from panes"
+                        : "Show tab in panes"
+                    }
+                    title={
+                      isPaneVisible
+                        ? "Hide tab from panes"
+                        : "Show tab in panes"
+                    }
+                  >
+                    <span className="material-symbols-outlined">
+                      {isPaneVisible ? "splitscreen" : "add_to_home_screen"}
+                    </span>
+                  </button>
+                </div>
               );
             })}
           </div>

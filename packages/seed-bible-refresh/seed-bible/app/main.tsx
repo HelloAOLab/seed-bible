@@ -14,7 +14,7 @@ import {
 } from "seed-bible.managers.ThemeManager";
 import { useSignal } from "@preact/signals";
 
-const { useMemo } = os.appHooks;
+const { useEffect, useMemo, useRef } = os.appHooks;
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -63,16 +63,14 @@ export function ExternalResourceDependencies({
 }
 
 function TabReaderPane({
-  isVisible,
   readingState,
   selectorState,
 }: {
-  isVisible: boolean;
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
 }) {
   return (
-    <div style={{ display: isVisible ? "block" : "none", width: "100%" }}>
+    <div className="sb-pane-reader">
       <BibleReader readingState={readingState} selectorState={selectorState} />
     </div>
   );
@@ -80,13 +78,69 @@ function TabReaderPane({
 
 export function Main() {
   const bibleApi = useMemo(() => new FreeUseBibleAPI(), []);
-  const { tabs, selectedTabId, addTab, selectTab } = useTabs(bibleApi);
+  const {
+    tabs,
+    selectedTabId,
+    paneTabIds,
+    paneSizes,
+    addTab,
+    selectTab,
+    togglePane,
+    resizePane,
+  } = useTabs(bibleApi);
   const { currentTheme } = useTheme();
   const theme = currentTheme.variables;
   const themeCssVariables = generateThemeCssVariables(theme);
   const isSettingsOpen = useSignal(false);
   const isSidebarCollapsed = useSignal(false);
   const selectorState = useBibleSelector();
+  const panesContainerRef = useRef<HTMLDivElement | null>(null);
+  const dragStateRef = useRef<{
+    index: number;
+    startX: number;
+    startSizes: number[];
+  } | null>(null);
+
+  const paneTabs = paneTabIds.value
+    .map((tabId) => tabs.value.find((tab) => tab.id === tabId) ?? null)
+    .filter((tab) => tab !== null);
+
+  useEffect(() => {
+    const onPointerMove = (event: PointerEvent) => {
+      const dragState = dragStateRef.current;
+      const container = panesContainerRef.current;
+      if (!dragState || !container) {
+        return;
+      }
+
+      const containerRect = container.getBoundingClientRect();
+      const isStackedLayout = window.innerWidth <= 768;
+      const containerSize = isStackedLayout
+        ? containerRect.height
+        : containerRect.width;
+      if (containerSize <= 0) {
+        return;
+      }
+
+      const pointerDelta = isStackedLayout
+        ? event.clientY - dragState.startX
+        : event.clientX - dragState.startX;
+      const deltaRatio = pointerDelta / containerSize;
+      resizePane(dragState.index, deltaRatio, dragState.startSizes);
+    };
+
+    const onPointerUp = () => {
+      dragStateRef.current = null;
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    };
+  }, [resizePane]);
 
   const handleSelectTab = (tabId: string) => {
     isSettingsOpen.value = false;
@@ -113,9 +167,11 @@ export function Main() {
         <Tabs
           tabs={tabs.value}
           selectedTabId={selectedTabId.value}
+          paneTabIds={paneTabIds.value}
           isSettingsOpen={isSettingsOpen.value}
           isCollapsed={isSidebarCollapsed.value}
           onSelectTab={handleSelectTab}
+          onTogglePane={togglePane}
           onAddTab={handleAddTab}
           onToggleCollapse={() => {
             isSidebarCollapsed.value = !isSidebarCollapsed.value;
@@ -125,18 +181,46 @@ export function Main() {
           }}
         />
 
-        <main style={{ flex: 1, overflow: "auto", scrollbarWidth: "none" }}>
+        <main className="sb-main-content">
           {isSettingsOpen.value ? (
             <SettingsPage />
           ) : (
-            tabs.value.map((tab) => (
-              <TabReaderPane
-                key={tab.id}
-                readingState={tab.readingState}
-                selectorState={selectorState}
-                isVisible={tab.id === selectedTabId.value}
-              />
-            ))
+            <div ref={panesContainerRef} className="sb-panes-layout">
+              {paneTabs.map((tab, index) => (
+                <>
+                  <div
+                    key={tab.id}
+                    className={`sb-pane-shell${
+                      tab.id === selectedTabId.value
+                        ? " sb-pane-shell-active"
+                        : ""
+                    }`}
+                    style={{ flex: `${paneSizes.value[index] ?? 1} 1 0%` }}
+                  >
+                    <TabReaderPane
+                      readingState={tab.readingState}
+                      selectorState={selectorState}
+                    />
+                  </div>
+                  {index < paneTabs.length - 1 && (
+                    <div
+                      key={`${tab.id}-splitter`}
+                      className="sb-pane-divider"
+                      onPointerDown={(event: PointerEvent) => {
+                        const isStackedLayout = window.innerWidth <= 768;
+                        dragStateRef.current = {
+                          index,
+                          startX: isStackedLayout
+                            ? event.clientY
+                            : event.clientX,
+                          startSizes: [...paneSizes.value],
+                        };
+                      }}
+                    />
+                  )}
+                </>
+              ))}
+            </div>
           )}
         </main>
 
