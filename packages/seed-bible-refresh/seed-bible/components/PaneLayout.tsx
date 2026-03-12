@@ -16,6 +16,7 @@ interface PaneLayoutProps {
     deltaWidth: number,
     deltaHeight: number
   ) => void;
+  onCloseDetachedPane: (paneId: string) => void;
 }
 
 export function PaneLayout(props: PaneLayoutProps) {
@@ -27,6 +28,7 @@ export function PaneLayout(props: PaneLayoutProps) {
     onSelectPane,
     onMovePane,
     onResizePane,
+    onCloseDetachedPane,
   } = props;
   const dragStateRef = useRef<{
     mode: "move" | "resize";
@@ -130,6 +132,20 @@ export function PaneLayout(props: PaneLayoutProps) {
             }}
           >
             <span className="sb-pane-detached-title">Detached Pane</span>
+            <button
+              className="sb-pane-detached-close-button"
+              aria-label="Close detached pane"
+              title="Close"
+              onPointerDown={(event: PointerEvent) => {
+                event.stopPropagation();
+              }}
+              onClick={(event: MouseEvent) => {
+                event.stopPropagation();
+                onCloseDetachedPane(pane.id);
+              }}
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
           </div>
 
           <div className="sb-pane-detached-body">

@@ -374,6 +374,16 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
     syncPaneState(nextPanes, nextSelectedPane?.id ?? null);
   };
 
+  const closeDetachedPane = (paneId: string) => {
+    const paneToClose = panes.value.find((pane) => pane.id === paneId) ?? null;
+    if (!paneToClose || !paneToClose.detached) {
+      return;
+    }
+
+    const nextPanes = panes.value.filter((pane) => pane.id !== paneId);
+    syncPaneState(nextPanes);
+  };
+
   const movePane = (paneId: string, deltaX: number, deltaY: number) => {
     panes.value = panes.value.map((pane) =>
       pane.id === paneId
@@ -413,6 +423,7 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
     setSelectedPaneDetached,
     openInNewPane,
     openInDetachedPane,
+    closeDetachedPane,
     movePane,
     resizePane,
   };

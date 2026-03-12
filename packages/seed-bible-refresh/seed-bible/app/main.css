@@ -112,6 +112,28 @@ button {
   letter-spacing: 0.02em;
 }
 
+.sb-pane-detached-close-button {
+  border: none;
+  background: transparent;
+  color: var(--font-color);
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sb-pane-detached-close-button:hover {
+  background: color-mix(in srgb, var(--secondary-color), transparent 65%);
+}
+
+.sb-pane-detached-close-button .material-symbols-outlined {
+  font-size: 18px;
+}
+
 .sb-pane-detached-body {
   min-height: 0;
   flex: 1;

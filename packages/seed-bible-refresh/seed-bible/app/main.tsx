@@ -83,6 +83,7 @@ export function Main() {
     setSelectedPaneTab,
     openInNewPane,
     openInDetachedPane,
+    closeDetachedPane,
     movePane,
     resizePane,
   } = usePanes(tabs.value, selectedTabId.value);
@@ -197,6 +198,7 @@ export function Main() {
               onSelectPane={handleSelectPane}
               onMovePane={movePane}
               onResizePane={resizePane}
+              onCloseDetachedPane={closeDetachedPane}
             />
           )}
         </main>
