@@ -72,4 +72,11 @@ export default defineConfig([
       "no-control-regex": "off",
     },
   },
+  {
+    files: ["test/**/*.{js,mjs,cjs,ts,tsx,jsx,css}"],
+
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
 ]);
