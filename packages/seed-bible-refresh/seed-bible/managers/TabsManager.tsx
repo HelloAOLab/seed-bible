@@ -21,10 +21,11 @@ function getInitialFirstTabBookId(): string {
 }
 
 function getInitialTranslationId(): string {
-  return typeof configBot.tags.translation === "string" &&
-    configBot.tags.translation.trim()
-    ? configBot.tags.translation
-    : DEFAULT_TRANSLATION_ID;
+  return (
+    configBot.tags.translation ??
+    configBot.tags.translationId ??
+    DEFAULT_TRANSLATION_ID
+  );
 }
 
 function getInitialFirstTabChapter(): number {
