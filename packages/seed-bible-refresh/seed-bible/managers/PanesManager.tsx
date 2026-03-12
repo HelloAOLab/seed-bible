@@ -1,65 +1,90 @@
 import { signal } from "@preact/signals";
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
 
-function createEqualPaneSizes(count: number): number[] {
-  if (count <= 0) {
+export interface Pane {
+  id: string;
+  tab: ReaderTab;
+  size: number;
+}
+
+function createPanes(nextTabs: ReaderTab[]): Pane[] {
+  if (nextTabs.length <= 0) {
     return [];
   }
 
-  const size = 1 / count;
-  return Array.from({ length: count }, () => size);
+  const size = 1 / nextTabs.length;
+  return nextTabs.map((tab) => ({
+    id: `pane-${tab.id}`,
+    tab,
+    size,
+  }));
 }
 
-const paneTabIds = signal<string[]>([]);
-const paneSizes = signal<number[]>([]);
+const panes = signal<Pane[]>([]);
 let isInitialized = false;
 
-function syncPaneState(nextPaneTabIds: string[]) {
-  paneTabIds.value = nextPaneTabIds;
-  paneSizes.value = createEqualPaneSizes(nextPaneTabIds.length);
+function syncPaneState(nextTabs: ReaderTab[]) {
+  panes.value = createPanes(nextTabs);
 }
 
 export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
   if (!isInitialized) {
-    paneTabIds.value = selectedTabId ? [selectedTabId] : [];
-    paneSizes.value = createEqualPaneSizes(paneTabIds.value.length);
+    const initialTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
+    panes.value = initialTab ? createPanes([initialTab]) : [];
     isInitialized = true;
   }
 
-  const validTabIds = new Set(tabs.map((tab) => tab.id));
-  const nextPaneTabIds = paneTabIds.value.filter((tabId) =>
-    validTabIds.has(tabId)
-  );
+  const tabMap = new Map(tabs.map((tab) => [tab.id, tab]));
+  const nextPaneTabs = panes.value
+    .map((pane) => tabMap.get(pane.tab.id) ?? null)
+    .filter((tab) => tab !== null);
 
-  if (nextPaneTabIds.length !== paneTabIds.value.length) {
-    syncPaneState(nextPaneTabIds);
+  if (
+    nextPaneTabs.length !== panes.value.length ||
+    nextPaneTabs.some((tab, index) => panes.value[index]?.tab !== tab)
+  ) {
+    syncPaneState(nextPaneTabs);
   }
 
   const ensurePaneVisible = (tabId: string) => {
-    if (!tabId || paneTabIds.value.includes(tabId)) {
+    if (!tabId || panes.value.some((pane) => pane.tab.id === tabId)) {
       return;
     }
 
-    syncPaneState([...paneTabIds.value, tabId]);
+    const nextTab = tabMap.get(tabId);
+    if (!nextTab) {
+      return;
+    }
+
+    syncPaneState([...panes.value.map((pane) => pane.tab), nextTab]);
   };
 
   const togglePane = (tabId: string) => {
-    if (paneTabIds.value.includes(tabId)) {
-      if (paneTabIds.value.length === 1) {
+    if (panes.value.some((pane) => pane.tab.id === tabId)) {
+      if (panes.value.length === 1) {
         return;
       }
 
-      syncPaneState(paneTabIds.value.filter((id) => id !== tabId));
+      syncPaneState(
+        panes.value
+          .filter((pane) => pane.tab.id !== tabId)
+          .map((pane) => pane.tab)
+      );
       return;
     }
 
-    syncPaneState([...paneTabIds.value, tabId]);
+    const nextTab = tabMap.get(tabId);
+    if (!nextTab) {
+      return;
+    }
+
+    syncPaneState([...panes.value.map((pane) => pane.tab), nextTab]);
   };
 
   const resizePane = (
     index: number,
     deltaRatio: number,
-    baseSizes: number[] = paneSizes.value
+    baseSizes: number[] = panes.value.map((pane) => pane.size)
   ) => {
     if (index < 0 || index >= baseSizes.length - 1) {
       return;
@@ -77,12 +102,21 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
 
     nextSizes[index] = resizedCurrent;
     nextSizes[index + 1] = combinedSize - resizedCurrent;
-    paneSizes.value = nextSizes;
+    panes.value = panes.value.map((pane, paneIndex) => {
+      if (paneIndex === index) {
+        return { ...pane, size: resizedCurrent };
+      }
+
+      if (paneIndex === index + 1) {
+        return { ...pane, size: combinedSize - resizedCurrent };
+      }
+
+      return { ...pane, size: nextSizes[paneIndex] ?? pane.size };
+    });
   };
 
   return {
-    paneTabIds,
-    paneSizes,
+    panes,
     ensurePaneVisible,
     togglePane,
     resizePane,

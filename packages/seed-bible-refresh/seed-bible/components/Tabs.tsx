@@ -1,4 +1,5 @@
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
+import type { Pane } from "../managers/PanesManager";
 import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager";
 // import { MobileSettingsIcon } from "./icons";
 import { MobileSettingsIcon } from "seed-bible.components.icons";
@@ -8,7 +9,7 @@ const { useEffect } = os.appHooks;
 interface TabsProps {
   tabs: ReaderTab[];
   selectedTabId: string;
-  paneTabIds: string[];
+  panes: Pane[];
   isSettingsOpen: boolean;
   isCollapsed: boolean;
   onSelectTab: (tabId: string) => void;
@@ -22,7 +23,7 @@ export function Tabs(props: TabsProps) {
   const {
     tabs,
     selectedTabId,
-    paneTabIds,
+    panes,
     isSettingsOpen,
     isCollapsed,
     onSelectTab,
@@ -83,7 +84,9 @@ export function Tabs(props: TabsProps) {
           <div className="sb-sidebar-tab-list">
             {tabs.map((tab) => {
               const isSelected = tab.id === selectedTabId;
-              const isPaneVisible = paneTabIds.includes(tab.id);
+              const isPaneVisible = panes.some(
+                (pane) => pane.tab.id === tab.id
+              );
               const currentBookId = tab.readingState.bookId.value;
               const currentBookName =
                 tab.readingState.translationBooks.value?.books.find(

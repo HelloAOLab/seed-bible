@@ -70,8 +70,10 @@ export function Main() {
   const isSettingsOpen = useSignal(false);
   const isSidebarCollapsed = useSignal(false);
   const selectorState = useBibleSelector();
-  const { paneTabIds, paneSizes, ensurePaneVisible, togglePane, resizePane } =
-    usePanes(tabs.value, selectedTabId.value);
+  const { panes, ensurePaneVisible, togglePane, resizePane } = usePanes(
+    tabs.value,
+    selectedTabId.value
+  );
 
   useEffect(() => {
     ensurePaneVisible(selectedTabId.value);
@@ -102,7 +104,7 @@ export function Main() {
         <Tabs
           tabs={tabs.value}
           selectedTabId={selectedTabId.value}
-          paneTabIds={paneTabIds.value}
+          panes={panes.value}
           isSettingsOpen={isSettingsOpen.value}
           isCollapsed={isSidebarCollapsed.value}
           onSelectTab={handleSelectTab}
@@ -121,9 +123,7 @@ export function Main() {
             <SettingsPage />
           ) : (
             <PaneLayout
-              tabs={tabs.value}
-              paneTabIds={paneTabIds.value}
-              paneSizes={paneSizes.value}
+              panes={panes.value}
               selectedTabId={selectedTabId.value}
               selectorState={selectorState}
               onResizePane={resizePane}

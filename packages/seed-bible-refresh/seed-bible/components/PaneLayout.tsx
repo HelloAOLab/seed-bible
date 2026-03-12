@@ -1,13 +1,11 @@
 import { BibleReader } from "seed-bible.components.BibleReader";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
-import type { ReaderTab } from "seed-bible.managers.TabsManager";
+import type { Pane } from "seed-bible.managers.PanesManager";
 
 const { useEffect, useRef } = os.appHooks;
 
 interface PaneLayoutProps {
-  tabs: ReaderTab[];
-  paneTabIds: string[];
-  paneSizes: number[];
+  panes: Pane[];
   selectedTabId: string;
   selectorState: BibleSelectorState;
   onResizePane: (
@@ -18,24 +16,13 @@ interface PaneLayoutProps {
 }
 
 export function PaneLayout(props: PaneLayoutProps) {
-  const {
-    tabs,
-    paneTabIds,
-    paneSizes,
-    selectedTabId,
-    selectorState,
-    onResizePane,
-  } = props;
+  const { panes, selectedTabId, selectorState, onResizePane } = props;
   const panesContainerRef = useRef<HTMLDivElement | null>(null);
   const dragStateRef = useRef<{
     index: number;
     startPointer: number;
     startSizes: number[];
   } | null>(null);
-
-  const paneTabs = paneTabIds
-    .map((tabId) => tabs.find((tab) => tab.id === tabId) ?? null)
-    .filter((tab) => tab !== null);
 
   useEffect(() => {
     const onPointerMove = (event: PointerEvent) => {
@@ -80,31 +67,31 @@ export function PaneLayout(props: PaneLayoutProps) {
 
   return (
     <div ref={panesContainerRef} className="sb-panes-layout">
-      {paneTabs.map((tab, index) => [
+      {panes.map((pane, index) => [
         <div
-          key={tab.id}
+          key={pane.id}
           className={`sb-pane-shell${
-            tab.id === selectedTabId ? " sb-pane-shell-active" : ""
+            pane.tab.id === selectedTabId ? " sb-pane-shell-active" : ""
           }`}
-          style={{ flex: `${paneSizes[index] ?? 1} 1 0%` }}
+          style={{ flex: `${pane.size} 1 0%` }}
         >
           <div className="sb-pane-reader">
             <BibleReader
-              readingState={tab.readingState}
+              readingState={pane.tab.readingState}
               selectorState={selectorState}
             />
           </div>
         </div>,
-        index < paneTabs.length - 1 ? (
+        index < panes.length - 1 ? (
           <div
-            key={`${tab.id}-splitter`}
+            key={`${pane.id}-splitter`}
             className="sb-pane-divider"
             onPointerDown={(event: PointerEvent) => {
               const isStackedLayout = window.innerWidth <= 768;
               dragStateRef.current = {
                 index,
                 startPointer: isStackedLayout ? event.clientY : event.clientX,
-                startSizes: [...paneSizes],
+                startSizes: panes.map((entry) => entry.size),
               };
             }}
           />

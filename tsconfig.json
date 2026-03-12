@@ -3953,6 +3953,9 @@
       "seed-bible.components.icons": [
         "./packages/seed-bible-refresh/seed-bible/components/icons.tsx"
       ],
+      "seed-bible.components.PaneLayout": [
+        "./packages/seed-bible-refresh/seed-bible/components/PaneLayout.tsx"
+      ],
       "seed-bible.components.SettingsPage": [
         "./packages/seed-bible-refresh/seed-bible/components/SettingsPage.tsx"
       ],
@@ -3976,6 +3979,9 @@
       ],
       "seed-bible.managers.FreeUseBibleAPI": [
         "./packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI.tsx"
+      ],
+      "seed-bible.managers.PanesManager": [
+        "./packages/seed-bible-refresh/seed-bible/managers/PanesManager.tsx"
       ],
       "seed-bible.managers.TabsManager": [
         "./packages/seed-bible-refresh/seed-bible/managers/TabsManager.tsx"
