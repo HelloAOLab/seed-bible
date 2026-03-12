@@ -40,14 +40,6 @@ button {
   scrollbar-width: none;
 }
 
-.sb-pane-shell-active {
-  background: color-mix(
-    in srgb,
-    var(--reader-background),
-    var(--primary-color) 5%
-  );
-}
-
 .sb-pane-reader {
   min-width: 0;
 }
