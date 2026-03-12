@@ -71,6 +71,34 @@ function extractEndpointFromAvailableTranslationsUrl(
   }
 }
 
+function extractTranslationFromBooksUrl(
+  value?: string | null
+): { endpoint: string; translationId: string } | null {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const url = new URL(value);
+    const normalizedPathname = url.pathname.replace(/\/+$/, "");
+    const match = normalizedPathname.match(
+      /^(.*)\/api\/([^/]+)\/books\.json$/i
+    );
+    if (!match) {
+      return null;
+    }
+
+    const [, prefixPath, encodedTranslationId] = match;
+    const endpointPath = (prefixPath ?? "").replace(/\/+$/, "");
+    return {
+      endpoint: `${url.protocol}//${url.host}${endpointPath}/`,
+      translationId: decodeURIComponent(encodedTranslationId),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function useBibleReadingState(
   api: FreeUseBibleAPI,
   options: InitialBibleReadingOptions = {}
@@ -187,9 +215,31 @@ export function useBibleReadingState(
     error.value = null;
 
     try {
+      const availableTranslationsEndpoint =
+        extractEndpointFromAvailableTranslationsUrl(translation);
+      // const translationBooksUrl = extractTranslationFromBooksUrl(translation);
+
+      let nextEndpoint = getActiveEndpoint();
+      let nextTranslationId = translation;
+
+      if (availableTranslationsEndpoint) {
+        endpointOverride.value = availableTranslationsEndpoint;
+        nextEndpoint = availableTranslationsEndpoint;
+
+        const translations = await api.getAvailableTranslations(nextEndpoint);
+        availableTranslations.value = translations;
+
+        const firstTranslation = translations.translations[0];
+        if (!firstTranslation) {
+          throw new Error("No available translations found for endpoint.");
+        }
+
+        nextTranslationId = firstTranslation.id;
+      }
+
       const books = await api.getTranslationBooks(
-        translation,
-        getActiveEndpoint()
+        nextTranslationId,
+        nextEndpoint
       );
       const firstBook = books.books[0];
       if (!firstBook) {
@@ -198,14 +248,14 @@ export function useBibleReadingState(
 
       const firstChapterNumber = firstBook.firstChapterNumber ?? 1;
       const chapter = await api.getTranslationBookChapter(
-        translation,
+        nextTranslationId,
         firstBook.id,
         firstChapterNumber,
-        getActiveEndpoint()
+        nextEndpoint
       );
 
       translationBooks.value = books;
-      translationId.value = translation;
+      translationId.value = nextTranslationId;
       bookId.value = firstBook.id;
       chapterNumber.value = firstChapterNumber;
       chapterData.value = chapter;
