@@ -18,5 +18,19 @@ registerExtension({
       },
       priority: 100,
     });
+
+    context.tools.registerVerseToolbarTool({
+      id: "my-verse-tool",
+      title: "My Verse Tool",
+      icon: () => <span>VERSE!</span>,
+      onSelect: (context) => {
+        console.log("Example verse tool selected with context:", context);
+        console.log(
+          "Selected verse:",
+          context.readingState.selectedVerses.value
+        );
+      },
+      priority: 100,
+    });
   },
 });
