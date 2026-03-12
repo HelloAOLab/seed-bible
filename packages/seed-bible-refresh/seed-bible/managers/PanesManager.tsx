@@ -367,6 +367,11 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
     syncPaneState([...panes.value, nextPane], nextPane.id);
   };
 
+  const openDetachedPane = (component: ComponentChild) => {
+    const nextPane = createPane(null, component, true);
+    syncPaneState([...panes.value, nextPane], nextPane.id);
+  };
+
   const setLayout = (layoutId: PaneLayoutId) => {
     layout.value = layoutId;
     const nextPanes = applyLayoutToPanes(
@@ -432,6 +437,7 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
     setSelectedPaneDetached,
     openInNewPane,
     openInDetachedPane,
+    openDetachedPane,
     closeDetachedPane,
     movePane,
     resizePane,
