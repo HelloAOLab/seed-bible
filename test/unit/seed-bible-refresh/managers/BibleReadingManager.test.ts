@@ -320,12 +320,16 @@ describe("useBibleReadingState", () => {
     await waitForInitialLoad(state);
 
     const verse = makeVerse(2);
-    state.selectVerse({
-      bookId: "GEN",
-      chapterNumber: 1,
-      verse,
-      translationId: "BSB",
-    });
+    state.selectVerse(
+      {
+        bookId: "GEN",
+        chapterNumber: 1,
+        verse,
+        translationId: "BSB",
+      },
+      100,
+      200
+    );
 
     expect(state.selectedVerses.value).toEqual([
       {
@@ -333,6 +337,9 @@ describe("useBibleReadingState", () => {
         chapterNumber: 1,
         verse,
         translationId: "BSB",
+        selectionX: 100,
+        selectionY: 200,
+        selectedAt: expect.any(Number),
       },
     ]);
   });
