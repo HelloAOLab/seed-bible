@@ -39,12 +39,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     };
   }, []);
 
-  useEffect(() => {
-    if (readingState.selectedVerses.value.length === 0) {
-      toolsManager.clearVerseToolbarAnchor();
-    }
-  }, [readingState.selectedVerses.value.length]);
-
   const tools: BibleReaderToolbarTool[] = toolsManager.getToolbarTools({
     readingState,
     selectorState,
@@ -60,7 +54,29 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const isSmallScreen = viewportWidth.value <= 480;
   const shouldReplaceDefaultToolbar = isSmallScreen && hasVerseSelection;
 
-  const floatingAnchor = toolsManager.verseToolbarAnchor.value;
+  const floatingAnchor = readingState.selectedVerses.value.reduce<{
+    x: number;
+    y: number;
+    selectedAt: number;
+  } | null>((latest, verse) => {
+    if (
+      typeof verse.selectionX !== "number" ||
+      typeof verse.selectionY !== "number"
+    ) {
+      return latest;
+    }
+
+    const selectedAt = verse.selectedAt ?? 0;
+    if (!latest || selectedAt >= latest.selectedAt) {
+      return {
+        x: verse.selectionX,
+        y: verse.selectionY,
+        selectedAt,
+      };
+    }
+
+    return latest;
+  }, null);
   const floatingX = Math.min(
     Math.max(floatingAnchor?.x ?? viewportWidth.value / 2, 84),
     Math.max(84, viewportWidth.value - 84)

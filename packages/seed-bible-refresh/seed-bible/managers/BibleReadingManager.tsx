@@ -13,6 +13,9 @@ export interface BibleSelectedVerse {
   chapterNumber: number;
   verse: ChapterVerse;
   translationId: string | null;
+  selectionX?: number;
+  selectionY?: number;
+  selectedAt?: number;
 }
 
 export interface BibleReadingState {
@@ -25,7 +28,11 @@ export interface BibleReadingState {
   selectedVerses: Signal<BibleSelectedVerse[]>;
   loading: Signal<boolean>;
   error: Signal<string | null>;
-  selectVerse: (verse: BibleSelectedVerse) => void;
+  selectVerse: (
+    verse: BibleSelectedVerse,
+    selectionX: number,
+    selectionY: number
+  ) => void;
   clearSelectedVerses: () => void;
   selectTranslation: (translation: string) => Promise<void>;
   selectBook: (book: string) => Promise<void>;
@@ -113,7 +120,11 @@ export function useBibleReadingState(
   const loading = signal<boolean>(true);
   const error = signal<string | null>(null);
 
-  const selectVerse = (verse: BibleSelectedVerse) => {
+  const selectVerse = (
+    verse: BibleSelectedVerse,
+    selectionX: number,
+    selectionY: number
+  ) => {
     const isSelected = selectedVerses.value.some((item) =>
       isSameSelectedVerse(item, verse)
     );
@@ -125,8 +136,15 @@ export function useBibleReadingState(
       return;
     }
 
+    const selectedVerse: BibleSelectedVerse = {
+      ...verse,
+      selectionX,
+      selectionY,
+      selectedAt: Date.now(),
+    };
+
     selectedVerses.value = sortBy(
-      [...selectedVerses.value, verse],
+      [...selectedVerses.value, selectedVerse],
       [(v: BibleSelectedVerse) => v.verse.number]
     );
   };

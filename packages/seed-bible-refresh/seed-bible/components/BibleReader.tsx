@@ -7,7 +7,6 @@ import type {
   BibleSelectedVerse,
 } from "seed-bible.managers.BibleReadingManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
-import { useBibleToolsManager } from "seed-bible.managers.BibleToolsManager";
 
 function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
   if (typeof part === "string") {
@@ -127,7 +126,6 @@ interface BibleReaderProps {
 
 export function BibleReader(props: BibleReaderProps) {
   const { readingState, selectorState } = props;
-  const toolsManager = useBibleToolsManager();
   const {
     translationId,
     bookId,
@@ -169,11 +167,7 @@ export function BibleReader(props: BibleReaderProps) {
           {renderChapterContent(
             chapterData.value,
             (verse, event) => {
-              toolsManager.setVerseToolbarAnchor({
-                x: event.clientX,
-                y: event.clientY,
-              });
-              selectVerse(verse);
+              selectVerse(verse, event.clientX, event.clientY);
             },
             selectedVerses.value
           )}

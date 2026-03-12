@@ -18,11 +18,6 @@ export interface BibleToolContext {
   selectorState: BibleSelectorState;
 }
 
-export interface VerseToolbarAnchorPosition {
-  x: number;
-  y: number;
-}
-
 export interface BibleReaderToolbarTool extends BibleTool {
   disabled: boolean;
   visible: boolean;
@@ -203,7 +198,6 @@ const toolbarTools = signal<ManagedBibleToolbarTool[]>(
 const verseToolbarTools = signal<ManagedBibleVerseToolbarTool[]>(
   getDefaultVerseToolbarTools()
 );
-const verseToolbarAnchor = signal<VerseToolbarAnchorPosition | null>(null);
 
 const sortedToolbarTools = computed(() => {
   return [...toolbarTools.value].sort(
@@ -274,14 +268,6 @@ export function useBibleToolsManager() {
       }));
   };
 
-  const setVerseToolbarAnchor = (position: VerseToolbarAnchorPosition) => {
-    verseToolbarAnchor.value = position;
-  };
-
-  const clearVerseToolbarAnchor = () => {
-    verseToolbarAnchor.value = null;
-  };
-
   return {
     registerToolbarTool,
     unregisterToolbarTool,
@@ -289,8 +275,5 @@ export function useBibleToolsManager() {
     registerVerseToolbarTool,
     unregisterVerseToolbarTool,
     getVerseToolbarTools,
-    verseToolbarAnchor,
-    setVerseToolbarAnchor,
-    clearVerseToolbarAnchor,
   };
 }
