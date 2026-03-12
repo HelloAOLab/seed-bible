@@ -49,6 +49,21 @@ describe("FreeUseBibleAPI", () => {
     );
   });
 
+  it("uses endpoint override for available translations", async () => {
+    const payload = { translations: [{ id: "eng_kjv" }] };
+    webGetMock.mockResolvedValue(createResponse(payload));
+
+    const api = new FreeUseBibleAPI("https://default.example");
+    const result = await api.getAvailableTranslations(
+      "https://override.example"
+    );
+
+    expect(result).toEqual(payload);
+    expect(webGetMock).toHaveBeenCalledWith(
+      "https://override.example/api/available_translations.json"
+    );
+  });
+
   it("encodes translation IDs when fetching books", async () => {
     const payload = { translation: { id: "ESV" }, books: [] };
     webGetMock.mockResolvedValue(createResponse(payload));
@@ -59,6 +74,22 @@ describe("FreeUseBibleAPI", () => {
     expect(result).toEqual(payload);
     expect(webGetMock).toHaveBeenCalledWith(
       "https://example.com/api/eng%20usfm%2Fesv/books.json"
+    );
+  });
+
+  it("uses endpoint override for translation books", async () => {
+    const payload = { translation: { id: "NIV" }, books: [] };
+    webGetMock.mockResolvedValue(createResponse(payload));
+
+    const api = new FreeUseBibleAPI("https://default.example");
+    const result = await api.getTranslationBooks(
+      "NIV",
+      "https://override.example"
+    );
+
+    expect(result).toEqual(payload);
+    expect(webGetMock).toHaveBeenCalledWith(
+      "https://override.example/api/NIV/books.json"
     );
   });
 
@@ -83,6 +114,28 @@ describe("FreeUseBibleAPI", () => {
     );
   });
 
+  it("uses endpoint override for chapter requests", async () => {
+    const payload = {
+      chapter: { number: 2, content: [], footnotes: [] },
+      nextChapterApiLink: null,
+      previousChapterApiLink: null,
+    };
+    webGetMock.mockResolvedValue(createResponse(payload));
+
+    const api = new FreeUseBibleAPI("https://default.example");
+    const result = await api.getTranslationBookChapter(
+      "BSB",
+      "GEN",
+      2,
+      "https://override.example"
+    );
+
+    expect(result).toEqual(payload);
+    expect(webGetMock).toHaveBeenCalledWith(
+      "https://override.example/api/BSB/GEN/2.json"
+    );
+  });
+
   it("returns null for next chapter when no link is present", async () => {
     const api = new FreeUseBibleAPI();
     const chapter = { nextChapterApiLink: null } as TranslationBookChapter;
@@ -93,6 +146,30 @@ describe("FreeUseBibleAPI", () => {
     expect(webGetMock).not.toHaveBeenCalled();
   });
 
+  it("uses endpoint override for next chapter links", async () => {
+    const payload = {
+      chapter: { number: 3, content: [], footnotes: [] },
+      nextChapterApiLink: null,
+      previousChapterApiLink: "/api/BSB/GEN/2.json",
+    };
+    webGetMock.mockResolvedValue(createResponse(payload));
+
+    const api = new FreeUseBibleAPI("https://default.example");
+    const chapter = {
+      nextChapterApiLink: "/api/BSB/GEN/3.json",
+    } as TranslationBookChapter;
+
+    const result = await api.getNextChapter(
+      chapter,
+      "https://override.example"
+    );
+
+    expect(result).toEqual(payload);
+    expect(webGetMock).toHaveBeenCalledWith(
+      "https://override.example/api/BSB/GEN/3.json"
+    );
+  });
+
   it("returns null for previous chapter when no link is present", async () => {
     const api = new FreeUseBibleAPI();
     const chapter = { previousChapterApiLink: null } as TranslationBookChapter;
@@ -101,6 +178,30 @@ describe("FreeUseBibleAPI", () => {
 
     expect(result).toBeNull();
     expect(webGetMock).not.toHaveBeenCalled();
+  });
+
+  it("uses endpoint override for previous chapter links", async () => {
+    const payload = {
+      chapter: { number: 1, content: [], footnotes: [] },
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      previousChapterApiLink: null,
+    };
+    webGetMock.mockResolvedValue(createResponse(payload));
+
+    const api = new FreeUseBibleAPI("https://default.example");
+    const chapter = {
+      previousChapterApiLink: "/api/BSB/GEN/1.json",
+    } as TranslationBookChapter;
+
+    const result = await api.getPreviousChapter(
+      chapter,
+      "https://override.example"
+    );
+
+    expect(result).toEqual(payload);
+    expect(webGetMock).toHaveBeenCalledWith(
+      "https://override.example/api/BSB/GEN/1.json"
+    );
   });
 
   it("caches in-flight requests by URL", async () => {

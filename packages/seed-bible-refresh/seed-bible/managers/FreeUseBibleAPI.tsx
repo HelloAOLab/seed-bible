@@ -1007,54 +1007,69 @@ export class FreeUseBibleAPI {
     this.endpoint = endpoint;
   }
 
-  async getAvailableTranslations(): Promise<AvailableTranslations> {
+  async getAvailableTranslations(
+    endpoint?: string
+  ): Promise<AvailableTranslations> {
     return this._getJson<AvailableTranslations>(
-      "/api/available_translations.json"
+      "/api/available_translations.json",
+      endpoint
     );
   }
 
-  async getTranslationBooks(translation: string): Promise<TranslationBooks> {
+  async getTranslationBooks(
+    translation: string,
+    endpoint?: string
+  ): Promise<TranslationBooks> {
     const encodedTranslation = encodeURIComponent(translation);
     return this._getJson<TranslationBooks>(
-      `/api/${encodedTranslation}/books.json`
+      `/api/${encodedTranslation}/books.json`,
+      endpoint
     );
   }
 
   async getTranslationBookChapter(
     translation: string,
     book: string,
-    chapter: number | string
+    chapter: number | string,
+    endpoint?: string
   ): Promise<TranslationBookChapter> {
     const encodedTranslation = encodeURIComponent(translation);
     const encodedBook = encodeURIComponent(book);
     const encodedChapter = encodeURIComponent(String(chapter));
     return this._getJson<TranslationBookChapter>(
-      `/api/${encodedTranslation}/${encodedBook}/${encodedChapter}.json`
+      `/api/${encodedTranslation}/${encodedBook}/${encodedChapter}.json`,
+      endpoint
     );
   }
 
   async getNextChapter(
-    chapter: TranslationBookChapter
+    chapter: TranslationBookChapter,
+    endpoint?: string
   ): Promise<TranslationBookChapter | null> {
     if (!chapter.nextChapterApiLink) {
       return null;
     }
-    return this._getJson<TranslationBookChapter>(chapter.nextChapterApiLink);
+    return this._getJson<TranslationBookChapter>(
+      chapter.nextChapterApiLink,
+      endpoint
+    );
   }
 
   async getPreviousChapter(
-    chapter: TranslationBookChapter
+    chapter: TranslationBookChapter,
+    endpoint?: string
   ): Promise<TranslationBookChapter | null> {
     if (!chapter.previousChapterApiLink) {
       return null;
     }
     return this._getJson<TranslationBookChapter>(
-      chapter.previousChapterApiLink
+      chapter.previousChapterApiLink,
+      endpoint
     );
   }
 
-  private _getJson<T>(path: string): Promise<T> {
-    const url = this._buildUrl(path);
+  private _getJson<T>(path: string, endpoint?: string): Promise<T> {
+    const url = this._buildUrl(path, endpoint);
     const existing = this._responseCache.get(url) as Promise<T> | undefined;
     if (existing) {
       return existing;
@@ -1079,10 +1094,15 @@ export class FreeUseBibleAPI {
     return request;
   }
 
-  private _buildUrl(path: string): string {
-    const base = this.endpoint.endsWith("/")
-      ? this.endpoint.slice(0, -1)
-      : this.endpoint;
+  private _buildUrl(path: string, endpoint?: string): string {
+    if (/^https?:\/\//i.test(path)) {
+      return path;
+    }
+
+    const baseEndpoint = endpoint ?? this.endpoint;
+    const base = baseEndpoint.endsWith("/")
+      ? baseEndpoint.slice(0, -1)
+      : baseEndpoint;
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
     return `${base}${normalizedPath}`;
   }
