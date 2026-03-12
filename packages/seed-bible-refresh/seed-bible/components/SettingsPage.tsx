@@ -1,7 +1,9 @@
+import { useConfig } from "seed-bible.managers.ConfigManager";
 import { useTheme } from "seed-bible.managers.ThemeManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 
 export function SettingsPage() {
+  const { config, setDisablePanels } = useConfig();
   const { themes, selectedThemeId, setTheme } = useTheme();
   const { language, availableLanguages, setLanguage } = useI18n();
 
@@ -48,6 +50,24 @@ export function SettingsPage() {
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-disable-panels-toggle"
+          >
+            Disable panels
+          </label>
+          <input
+            id="sb-disable-panels-toggle"
+            type="checkbox"
+            checked={config.value.disablePanels}
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLInputElement;
+              setDisablePanels(target.checked);
+            }}
+          />
         </div>
       </section>
     </div>

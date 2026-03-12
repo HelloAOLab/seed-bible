@@ -13,6 +13,7 @@ interface TabsProps {
   tabs: ReaderTab[];
   selectedTabId: string;
   paneLayout: PaneLayoutId;
+  panelsEnabled: boolean;
   isSettingsOpen: boolean;
   isCollapsed: boolean;
   onSelectTab: (tabId: string) => void;
@@ -47,6 +48,7 @@ export function Tabs(props: TabsProps) {
     tabs,
     selectedTabId,
     paneLayout,
+    panelsEnabled,
     isSettingsOpen,
     isCollapsed,
     onSelectTab,
@@ -92,47 +94,49 @@ export function Tabs(props: TabsProps) {
           </span>
         </button>
 
-        <div className="sb-sidebar-top-actions">
-          <div className="sb-pane-layout-anchor">
-            <button
-              onClick={() => {
-                openMenuTabId.value = null;
-                isLayoutMenuOpen.value = !isLayoutMenuOpen.value;
-              }}
-              className="sb-sidebar-top-icon-button"
-              aria-label="Select pane layout"
-              title="Pane layout"
-            >
-              <span className="material-symbols-outlined">dashboard</span>
-            </button>
+        {panelsEnabled && (
+          <div className="sb-sidebar-top-actions">
+            <div className="sb-pane-layout-anchor">
+              <button
+                onClick={() => {
+                  openMenuTabId.value = null;
+                  isLayoutMenuOpen.value = !isLayoutMenuOpen.value;
+                }}
+                className="sb-sidebar-top-icon-button"
+                aria-label="Select pane layout"
+                title="Pane layout"
+              >
+                <span className="material-symbols-outlined">dashboard</span>
+              </button>
 
-            {isLayoutMenuOpen.value && (
-              <div className="sb-pane-layout-menu">
-                <div className="sb-pane-layout-menu-title">Panels</div>
-                <div className="sb-pane-layout-options">
-                  {PANE_LAYOUT_OPTIONS.map((layout) => (
-                    <button
-                      key={layout.id}
-                      onClick={() => {
-                        onSelectPaneLayout(layout.id);
-                        isLayoutMenuOpen.value = false;
-                      }}
-                      className={`sb-pane-layout-option${
-                        paneLayout === layout.id
-                          ? " sb-pane-layout-option-selected"
-                          : ""
-                      }`}
-                      aria-label={layout.label}
-                      title={layout.label}
-                    >
-                      {renderLayoutPreview(layout.id)}
-                    </button>
-                  ))}
+              {isLayoutMenuOpen.value && (
+                <div className="sb-pane-layout-menu">
+                  <div className="sb-pane-layout-menu-title">Panels</div>
+                  <div className="sb-pane-layout-options">
+                    {PANE_LAYOUT_OPTIONS.map((layout) => (
+                      <button
+                        key={layout.id}
+                        onClick={() => {
+                          onSelectPaneLayout(layout.id);
+                          isLayoutMenuOpen.value = false;
+                        }}
+                        className={`sb-pane-layout-option${
+                          paneLayout === layout.id
+                            ? " sb-pane-layout-option-selected"
+                            : ""
+                        }`}
+                        aria-label={layout.label}
+                        title={layout.label}
+                      >
+                        {renderLayoutPreview(layout.id)}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {!isCollapsed && (
@@ -194,7 +198,7 @@ export function Tabs(props: TabsProps) {
                       </span>
                     </button>
 
-                    {openMenuTabId.value === tab.id && (
+                    {panelsEnabled && openMenuTabId.value === tab.id && (
                       <div className="sb-tab-menu">
                         <button
                           onClick={() => {

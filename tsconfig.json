@@ -3974,6 +3974,9 @@
       "seed-bible.managers.BibleToolsManager": [
         "./packages/seed-bible-refresh/seed-bible/managers/BibleToolsManager.tsx"
       ],
+      "seed-bible.managers.ConfigManager": [
+        "./packages/seed-bible-refresh/seed-bible/managers/ConfigManager.tsx"
+      ],
       "seed-bible.managers.esmSignals.d": [
         "./packages/seed-bible-refresh/seed-bible/managers/esmSignals.d.ts"
       ],

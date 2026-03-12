@@ -930,6 +930,20 @@ button {
   max-width: 180px;
 }
 
+.sb-settings-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.sb-settings-toggle-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--font-color);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

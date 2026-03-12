@@ -1,6 +1,7 @@
 import { PaneLayout } from "seed-bible.components.PaneLayout";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
 import { BibleReaderToolbar } from "seed-bible.components.BibleReaderToolbar";
+import { useConfig } from "seed-bible.managers.ConfigManager";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
 import { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
 import { useBibleSelector } from "seed-bible.managers.BibleSelectorManager";
@@ -13,6 +14,7 @@ import {
   useTheme,
 } from "seed-bible.managers.ThemeManager";
 import { useSignal } from "@preact/signals";
+import type { Pane } from "seed-bible.managers.PanesManager";
 
 const { useEffect, useMemo } = os.appHooks;
 
@@ -65,6 +67,7 @@ export function ExternalResourceDependencies({
 export function Main() {
   const bibleApi = useMemo(() => new FreeUseBibleAPI(), []);
   const { tabs, selectedTabId, addTab, selectTab } = useTabs(bibleApi);
+  const { config } = useConfig();
   const { currentTheme } = useTheme();
   const theme = currentTheme.variables;
   const themeCssVariables = generateThemeCssVariables(theme);
@@ -80,6 +83,14 @@ export function Main() {
     setSelectedPaneTab,
     openInNewPane,
   } = usePanes(tabs.value, selectedTabId.value);
+  const panelsEnabled = !config.value.disablePanels;
+  const selectedTab =
+    tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null;
+  const effectivePanes: Pane[] = panelsEnabled
+    ? panes.value
+    : selectedTab
+      ? [{ id: "single-pane", tab: selectedTab }]
+      : [];
 
   useEffect(() => {
     setSelectedPaneTab(selectedTabId.value);
@@ -129,7 +140,8 @@ export function Main() {
         <Tabs
           tabs={tabs.value}
           selectedTabId={selectedTabId.value}
-          paneLayout={layout.value}
+          paneLayout={panelsEnabled ? layout.value : "single"}
+          panelsEnabled={panelsEnabled}
           isSettingsOpen={isSettingsOpen.value}
           isCollapsed={isSidebarCollapsed.value}
           onSelectTab={handleSelectTab}
@@ -149,9 +161,13 @@ export function Main() {
             <SettingsPage />
           ) : (
             <PaneLayout
-              panes={panes.value}
-              layout={layout.value}
-              selectedPaneId={selectedPaneId.value}
+              panes={effectivePanes}
+              layout={panelsEnabled ? layout.value : "single"}
+              selectedPaneId={
+                panelsEnabled
+                  ? selectedPaneId.value
+                  : (effectivePanes[0]?.id ?? null)
+              }
               selectorState={selectorState}
               onSelectPane={handleSelectPane}
             />
