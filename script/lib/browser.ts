@@ -337,7 +337,10 @@ export const DEFAULT_EXTENSIONS = [
   // "Tabernacle",
 ];
 
-export const DEFAULT_REFRESH_EXTENSIONS = ["seed-bible-refresh"];
+export const DEFAULT_REFRESH_EXTENSIONS = [
+  "seed-bible-refresh",
+  "seed-bible-refresh-example-extension",
+];
 
 export async function loadSeedBibleRefresh(
   page: Page,
@@ -355,9 +358,9 @@ export async function loadSeedBibleRefresh(
     ...DEFAULT_REFRESH_EXTENSIONS,
     ...extraExtensions,
   ]);
-  const installedPackages = [...allPackages].filter(
-    (p) => p !== "seed-bible-refresh"
-  );
+  // const installedPackages = [...allPackages].filter(
+  //   (p) => p !== "seed-bible-refresh"
+  // );
 
   for (const pkg of allPackages) {
     await addAux(page, await readPackage(pkg));
@@ -366,10 +369,10 @@ export async function loadSeedBibleRefresh(
   //   await registerPackage(page, pkg);
   // }
 
-  const lastPackage = installedPackages[installedPackages.length - 1];
-  if (lastPackage) {
-    await waitForPackage(page, lastPackage);
-  }
+  // const lastPackage = installedPackages[installedPackages.length - 1];
+  // if (lastPackage) {
+  //   await waitForPackage(page, lastPackage);
+  // }
 
   // await execScript(
   //   page,
