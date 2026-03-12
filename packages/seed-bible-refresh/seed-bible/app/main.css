@@ -192,13 +192,8 @@ button {
 }
 
 .sb-pane-reader {
-  /* min-width: 0;
-  top: 0;
-  bottom: 0; */
-  /* left: 50%; */
-  /* width: 1px; */
-  /* transform: translateX(-50%); */
-  /* background: var(--secondary-color); */
+  overflow: auto;
+  scrollbar-width: none;
 }
 
 .sb-bible-reader-title {
