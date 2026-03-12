@@ -7,6 +7,7 @@ import type {
   BibleSelectedVerse,
 } from "seed-bible.managers.BibleReadingManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
+import { useBibleToolsManager } from "seed-bible.managers.BibleToolsManager";
 
 function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
   if (typeof part === "string") {
@@ -42,7 +43,7 @@ function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
 
 function renderChapterContent(
   chapterData: TranslationBookChapter | null,
-  onVerseClick: (verse: BibleSelectedVerse) => void,
+  onVerseClick: (verse: BibleSelectedVerse, event: MouseEvent) => void,
   selectedVerses: BibleSelectedVerse[]
 ) {
   if (!chapterData) {
@@ -102,8 +103,8 @@ function renderChapterContent(
         <span
           key={`verse-${entryIndex}`}
           className={`sb-verse${isSelected ? " sb-verse-selected" : ""}`}
-          onClick={() => {
-            onVerseClick(verse);
+          onClick={(event: MouseEvent) => {
+            onVerseClick(verse, event);
           }}
           style={{ cursor: "pointer" }}
           role="button"
@@ -126,6 +127,7 @@ interface BibleReaderProps {
 
 export function BibleReader(props: BibleReaderProps) {
   const { readingState, selectorState } = props;
+  const toolsManager = useBibleToolsManager();
   const {
     translationId,
     bookId,
@@ -166,7 +168,13 @@ export function BibleReader(props: BibleReaderProps) {
         <div className="sb-chapter-content">
           {renderChapterContent(
             chapterData.value,
-            selectVerse,
+            (verse, event) => {
+              toolsManager.setVerseToolbarAnchor({
+                x: event.clientX,
+                y: event.clientY,
+              });
+              selectVerse(verse);
+            },
             selectedVerses.value
           )}
           {chapterData.value.chapter.footnotes.length > 0 && (

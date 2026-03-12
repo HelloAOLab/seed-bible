@@ -18,6 +18,11 @@ export interface BibleToolContext {
   selectorState: BibleSelectorState;
 }
 
+export interface VerseToolbarAnchorPosition {
+  x: number;
+  y: number;
+}
+
 export interface BibleReaderToolbarTool extends BibleTool {
   disabled: boolean;
   visible: boolean;
@@ -25,6 +30,18 @@ export interface BibleReaderToolbarTool extends BibleTool {
 }
 
 export interface ManagedBibleToolbarTool extends BibleTool {
+  isDisabled?: (context: BibleToolContext) => boolean;
+  isVisible?: (context: BibleToolContext) => boolean;
+  onSelect?: (context: BibleToolContext) => void;
+}
+
+export interface BibleReaderVerseToolbarTool extends BibleTool {
+  disabled: boolean;
+  visible: boolean;
+  onSelect: () => void;
+}
+
+export interface ManagedBibleVerseToolbarTool extends BibleTool {
   isDisabled?: (context: BibleToolContext) => boolean;
   isVisible?: (context: BibleToolContext) => boolean;
   onSelect?: (context: BibleToolContext) => void;
@@ -96,6 +113,11 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         context.readingState.loadNextChapter();
       },
     },
+  ];
+}
+
+function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
+  return [
     {
       id: "copy-verse",
       priority: 200,
@@ -178,9 +200,19 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
 const toolbarTools = signal<ManagedBibleToolbarTool[]>(
   getDefaultToolbarTools()
 );
+const verseToolbarTools = signal<ManagedBibleVerseToolbarTool[]>(
+  getDefaultVerseToolbarTools()
+);
+const verseToolbarAnchor = signal<VerseToolbarAnchorPosition | null>(null);
 
 const sortedToolbarTools = computed(() => {
   return [...toolbarTools.value].sort(
+    (left, right) => left.priority - right.priority
+  );
+});
+
+const sortedVerseToolbarTools = computed(() => {
+  return [...verseToolbarTools.value].sort(
     (left, right) => left.priority - right.priority
   );
 });
@@ -215,9 +247,50 @@ export function useBibleToolsManager() {
       }));
   };
 
+  const registerVerseToolbarTool = (tool: ManagedBibleVerseToolbarTool) => {
+    const nextTools = verseToolbarTools.value.filter(
+      (entry) => entry.id !== tool.id
+    );
+    verseToolbarTools.value = [...nextTools, tool];
+  };
+
+  const unregisterVerseToolbarTool = (toolId: string) => {
+    verseToolbarTools.value = verseToolbarTools.value.filter(
+      (tool) => tool.id !== toolId
+    );
+  };
+
+  const getVerseToolbarTools = (context: BibleToolContext) => {
+    return sortedVerseToolbarTools.value
+      .filter((tool) => tool.isVisible?.(context) ?? true)
+      .map((tool) => ({
+        id: tool.id,
+        priority: tool.priority,
+        title: tool.title,
+        icon: tool.icon,
+        disabled: tool.isDisabled?.(context) ?? false,
+        visible: true,
+        onSelect: () => tool.onSelect?.(context),
+      }));
+  };
+
+  const setVerseToolbarAnchor = (position: VerseToolbarAnchorPosition) => {
+    verseToolbarAnchor.value = position;
+  };
+
+  const clearVerseToolbarAnchor = () => {
+    verseToolbarAnchor.value = null;
+  };
+
   return {
     registerToolbarTool,
     unregisterToolbarTool,
     getToolbarTools,
+    registerVerseToolbarTool,
+    unregisterVerseToolbarTool,
+    getVerseToolbarTools,
+    verseToolbarAnchor,
+    setVerseToolbarAnchor,
+    clearVerseToolbarAnchor,
   };
 }

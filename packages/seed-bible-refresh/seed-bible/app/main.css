@@ -341,6 +341,32 @@ button {
     transform 0.25s ease;
 }
 
+.sb-verse-toolbar {
+  position: fixed;
+  transform: translate(-50%, -100%);
+  display: flex;
+  gap: 10px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: var(--reader-background);
+  border: 1px solid var(--reader-toolbar-border, #00000024);
+  box-shadow: 0 26px 10px #0000001a;
+  z-index: 100;
+  min-height: 50px;
+}
+
+.sb-verse-toolbar-tools {
+  display: flex;
+  gap: 10px;
+}
+
+.sb-verse-toolbar-mobile {
+  left: 50%;
+  top: auto;
+  bottom: 18px;
+  transform: translateX(-50%);
+}
+
 .sb-selector-overlay {
   pointer-events: none;
   position: fixed;
