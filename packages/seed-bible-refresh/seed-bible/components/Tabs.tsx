@@ -85,9 +85,6 @@ export function Tabs(props: TabsProps) {
           <div className="sb-sidebar-tab-list">
             {tabs.map((tab) => {
               const isSelected = tab.id === selectedTabId;
-              const paneCount = panes.filter(
-                (pane) => pane.tab.id === tab.id
-              ).length;
               const currentBookId = tab.readingState.bookId.value;
               const currentBookName =
                 tab.readingState.translationBooks.value?.books.find(
@@ -111,9 +108,6 @@ export function Tabs(props: TabsProps) {
                     }`}
                   >
                     <span>{`${currentBookName} - ${currentChapter} • ${currentTranslation}`}</span>
-                    {paneCount > 0 && (
-                      <span className="sb-tab-pane-count">{paneCount}</span>
-                    )}
                   </button>
 
                   <div className="sb-tab-menu-anchor">

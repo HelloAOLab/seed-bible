@@ -550,7 +550,6 @@ button {
 .sb-tab-row {
   display: flex;
   align-items: stretch;
-  gap: 8px;
   position: relative;
 }
 
@@ -558,7 +557,7 @@ button {
   text-align: left;
   border: 1px solid var(--secondary-color);
   border-radius: 6px;
-  padding: 10px 12px;
+  padding: 10px 44px 10px 12px;
   background: var(--tertiary-color);
   font-weight: 400;
   cursor: pointer;
@@ -596,21 +595,29 @@ button {
 }
 
 .sb-tab-menu-anchor {
-  position: relative;
-  flex: 0 0 36px;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
 }
 
 .sb-tab-menu-button {
-  width: 36px;
-  border: 1px solid var(--secondary-color);
+  width: 28px;
+  height: 28px;
+  border: none;
   border-radius: 6px;
-  background: var(--tertiary-color);
+  background: transparent;
   color: var(--font-color);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
+}
+
+.sb-tab-menu-button:hover {
+  background: color-mix(in srgb, var(--secondary-color), transparent 70%);
 }
 
 .sb-tab-pane-count {
@@ -625,6 +632,7 @@ button {
   font-size: 11px;
   font-weight: 700;
   padding: 0 6px;
+  margin-right: 28px;
 }
 
 .sb-tab-menu {
