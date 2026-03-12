@@ -71,34 +71,6 @@ function extractEndpointFromAvailableTranslationsUrl(
   }
 }
 
-function extractTranslationFromBooksUrl(
-  value?: string | null
-): { endpoint: string; translationId: string } | null {
-  if (!value) {
-    return null;
-  }
-
-  try {
-    const url = new URL(value);
-    const normalizedPathname = url.pathname.replace(/\/+$/, "");
-    const match = normalizedPathname.match(
-      /^(.*)\/api\/([^/]+)\/books\.json$/i
-    );
-    if (!match) {
-      return null;
-    }
-
-    const [, prefixPath, encodedTranslationId] = match;
-    const endpointPath = (prefixPath ?? "").replace(/\/+$/, "");
-    return {
-      endpoint: `${url.protocol}//${url.host}${endpointPath}/`,
-      translationId: decodeURIComponent(encodedTranslationId),
-    };
-  } catch {
-    return null;
-  }
-}
-
 export function useBibleReadingState(
   api: FreeUseBibleAPI,
   options: InitialBibleReadingOptions = {}
@@ -217,7 +189,6 @@ export function useBibleReadingState(
     try {
       const availableTranslationsEndpoint =
         extractEndpointFromAvailableTranslationsUrl(translation);
-      // const translationBooksUrl = extractTranslationFromBooksUrl(translation);
 
       let nextEndpoint = getActiveEndpoint();
       let nextTranslationId = translation;
