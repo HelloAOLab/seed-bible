@@ -41,6 +41,7 @@
   "devDependencies": {
     "@babel/core": "^7.28.4",
     "@babel/preset-env": "^7.28.3",
+    "@babel/preset-react": "^7.28.5",
     "@babel/preset-typescript": "^7.27.1",
     "@casual-simulation/aux-common": "^3.7.0",
     "@casual-simulation/aux-records": "^3.7.0",
