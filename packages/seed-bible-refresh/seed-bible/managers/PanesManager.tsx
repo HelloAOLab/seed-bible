@@ -192,6 +192,8 @@ function syncPaneState(nextPanes: Pane[], nextSelectedPaneId?: string | null) {
   selectedPaneId.value = nextPanes[0]?.id ?? null;
 }
 
+export type PanesManager = ReturnType<typeof usePanes>;
+
 export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
   if (!isInitialized) {
     const initialTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;

@@ -185,6 +185,8 @@ const sortedToolbarTools = computed(() => {
   );
 });
 
+export type ToolsManager = ReturnType<typeof useBibleToolsManager>;
+
 export function useBibleToolsManager() {
   const registerToolbarTool = (tool: ManagedBibleToolbarTool) => {
     const nextTools = toolbarTools.value.filter(

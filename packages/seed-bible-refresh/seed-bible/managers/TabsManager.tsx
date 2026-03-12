@@ -147,6 +147,8 @@ function ensureConfigBotListener() {
   });
 }
 
+export type TabsManager = ReturnType<typeof useTabs>;
+
 export function useTabs(api: FreeUseBibleAPI) {
   ensureInitialized(api);
   ensureConfigBotListener();

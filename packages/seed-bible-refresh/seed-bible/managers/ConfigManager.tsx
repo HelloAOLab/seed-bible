@@ -97,6 +97,8 @@ function ensureConfigBotListener() {
 
 syncConfigFromBot();
 
+export type ConfigManager = ReturnType<typeof useConfig>;
+
 export function useConfig() {
   ensureConfigBotListener();
 

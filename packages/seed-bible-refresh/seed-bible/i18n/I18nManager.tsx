@@ -60,6 +60,8 @@ export function I18nProvider(props: { children: unknown }) {
   return <I18nextProvider i18n={i18n}>{props.children}</I18nextProvider>;
 }
 
+export type I18nManager = ReturnType<typeof useI18n>;
+
 export function useI18n() {
   const { t, i18n: i18nInstance } = useTranslation();
 
