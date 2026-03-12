@@ -479,6 +479,10 @@ function ThePage({
                   "1.json",
                   `${tab.data.chapter}.json`
                 );
+            os.log("opening with chapter url", chapterUrl, {
+              bookData,
+              configBot,
+            });
             await bible.open(
               bookData.id,
               configBot.tags.chapter || 1,
@@ -491,14 +495,18 @@ function ThePage({
             await bible.open(
               configBot.tags?.book,
               configBot.tags?.chapter || tab.data.chapter,
-              bookTranslationId || null,
+              configBot.tags?.translation ||
+                configBot.tags?.translationId ||
+                null,
               undefined
             );
           } else if (configBot.tags?.chapter) {
             await bible.open(
               tab.data.book,
               configBot.tags?.chapter,
-              bookTranslationId || null,
+              configBot.tags?.translation ||
+                configBot.tags?.translationId ||
+                null,
               undefined
             );
           }
@@ -617,7 +625,7 @@ function ThePage({
         book: data?.book,
         chapter: data?.chapter,
       });
-      os.syncConfigBotTagsToURL(["book", "chapter"]);
+      os.syncConfigBotTagsToURL(["book", "chapter", "translation"]);
     }
   }, [data]);
 
@@ -625,6 +633,7 @@ function ThePage({
     if (data && tab?.id === activeTab) {
       configBot.tags.book = data?.bookId;
       configBot.tags.chapter = data?.chapter;
+      configBot.tags.translation = data?.translation;
     }
   }, [activeTab, data, tab]);
 
