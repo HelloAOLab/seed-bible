@@ -1,12 +1,11 @@
-import { BibleReader } from "seed-bible.components.BibleReader";
+import { PaneLayout } from "seed-bible.components.PaneLayout";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
-import { type BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
-import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import { useBibleSelector } from "seed-bible.managers.BibleSelectorManager";
 import { Tabs } from "seed-bible.components.Tabs";
 import { I18nProvider } from "seed-bible.i18n.I18nManager";
+import { usePanes } from "seed-bible.managers.PanesManager";
 import { useTabs } from "seed-bible.managers.TabsManager";
 import {
   generateThemeCssVariables,
@@ -14,7 +13,7 @@ import {
 } from "seed-bible.managers.ThemeManager";
 import { useSignal } from "@preact/signals";
 
-const { useEffect, useMemo, useRef } = os.appHooks;
+const { useEffect, useMemo } = os.appHooks;
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -62,85 +61,21 @@ export function ExternalResourceDependencies({
   );
 }
 
-function TabReaderPane({
-  readingState,
-  selectorState,
-}: {
-  readingState: BibleReadingState;
-  selectorState: BibleSelectorState;
-}) {
-  return (
-    <div className="sb-pane-reader">
-      <BibleReader readingState={readingState} selectorState={selectorState} />
-    </div>
-  );
-}
-
 export function Main() {
   const bibleApi = useMemo(() => new FreeUseBibleAPI(), []);
-  const {
-    tabs,
-    selectedTabId,
-    paneTabIds,
-    paneSizes,
-    addTab,
-    selectTab,
-    togglePane,
-    resizePane,
-  } = useTabs(bibleApi);
+  const { tabs, selectedTabId, addTab, selectTab } = useTabs(bibleApi);
   const { currentTheme } = useTheme();
   const theme = currentTheme.variables;
   const themeCssVariables = generateThemeCssVariables(theme);
   const isSettingsOpen = useSignal(false);
   const isSidebarCollapsed = useSignal(false);
   const selectorState = useBibleSelector();
-  const panesContainerRef = useRef<HTMLDivElement | null>(null);
-  const dragStateRef = useRef<{
-    index: number;
-    startX: number;
-    startSizes: number[];
-  } | null>(null);
-
-  const paneTabs = paneTabIds.value
-    .map((tabId) => tabs.value.find((tab) => tab.id === tabId) ?? null)
-    .filter((tab) => tab !== null);
+  const { paneTabIds, paneSizes, ensurePaneVisible, togglePane, resizePane } =
+    usePanes(tabs.value, selectedTabId.value);
 
   useEffect(() => {
-    const onPointerMove = (event: PointerEvent) => {
-      const dragState = dragStateRef.current;
-      const container = panesContainerRef.current;
-      if (!dragState || !container) {
-        return;
-      }
-
-      const containerRect = container.getBoundingClientRect();
-      const isStackedLayout = window.innerWidth <= 768;
-      const containerSize = isStackedLayout
-        ? containerRect.height
-        : containerRect.width;
-      if (containerSize <= 0) {
-        return;
-      }
-
-      const pointerDelta = isStackedLayout
-        ? event.clientY - dragState.startX
-        : event.clientX - dragState.startX;
-      const deltaRatio = pointerDelta / containerSize;
-      resizePane(dragState.index, deltaRatio, dragState.startSizes);
-    };
-
-    const onPointerUp = () => {
-      dragStateRef.current = null;
-    };
-
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", onPointerUp);
-
-    return () => {
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", onPointerUp);
-    };
-  }, [resizePane]);
+    ensurePaneVisible(selectedTabId.value);
+  }, [ensurePaneVisible, selectedTabId.value]);
 
   const handleSelectTab = (tabId: string) => {
     isSettingsOpen.value = false;
@@ -185,42 +120,14 @@ export function Main() {
           {isSettingsOpen.value ? (
             <SettingsPage />
           ) : (
-            <div ref={panesContainerRef} className="sb-panes-layout">
-              {paneTabs.map((tab, index) => (
-                <>
-                  <div
-                    key={tab.id}
-                    className={`sb-pane-shell${
-                      tab.id === selectedTabId.value
-                        ? " sb-pane-shell-active"
-                        : ""
-                    }`}
-                    style={{ flex: `${paneSizes.value[index] ?? 1} 1 0%` }}
-                  >
-                    <TabReaderPane
-                      readingState={tab.readingState}
-                      selectorState={selectorState}
-                    />
-                  </div>
-                  {index < paneTabs.length - 1 && (
-                    <div
-                      key={`${tab.id}-splitter`}
-                      className="sb-pane-divider"
-                      onPointerDown={(event: PointerEvent) => {
-                        const isStackedLayout = window.innerWidth <= 768;
-                        dragStateRef.current = {
-                          index,
-                          startX: isStackedLayout
-                            ? event.clientY
-                            : event.clientX,
-                          startSizes: [...paneSizes.value],
-                        };
-                      }}
-                    />
-                  )}
-                </>
-              ))}
-            </div>
+            <PaneLayout
+              tabs={tabs.value}
+              paneTabIds={paneTabIds.value}
+              paneSizes={paneSizes.value}
+              selectedTabId={selectedTabId.value}
+              selectorState={selectorState}
+              onResizePane={resizePane}
+            />
           )}
         </main>
 
