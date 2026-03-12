@@ -89,7 +89,7 @@ export function Main() {
   const effectivePanes: Pane[] = panelsEnabled
     ? panes.value
     : selectedTab
-      ? [{ id: "single-pane", tab: selectedTab }]
+      ? [{ id: "single-pane", tab: selectedTab, component: null }]
       : [];
 
   useEffect(() => {
@@ -118,6 +118,10 @@ export function Main() {
     const selectedPane = panes.value.find((pane) => pane.id === paneId) ?? null;
     if (selectedPane?.tab) {
       selectTab(selectedPane.tab.id);
+      return;
+    }
+
+    if (selectedPane?.component !== null) {
       return;
     }
 

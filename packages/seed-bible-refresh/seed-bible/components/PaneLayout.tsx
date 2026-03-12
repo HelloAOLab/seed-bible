@@ -23,7 +23,9 @@ export function PaneLayout(props: PaneLayoutProps) {
           }`}
           onClick={() => onSelectPane(pane.id)}
         >
-          {pane.tab ? (
+          {pane.component !== null ? (
+            <div className="sb-pane-component">{pane.component}</div>
+          ) : pane.tab ? (
             <div className="sb-pane-reader">
               <BibleReader
                 readingState={pane.tab.readingState}

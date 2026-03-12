@@ -1,4 +1,5 @@
 import { signal } from "@preact/signals";
+import type { ComponentChild } from "preact";
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
 
 export type PaneLayoutId =
@@ -31,18 +32,39 @@ export const PANE_LAYOUT_OPTIONS: PaneLayoutOption[] = [
 export interface Pane {
   id: string;
   tab: ReaderTab | null;
+  component: ComponentChild | null;
+}
+
+interface PaneContent {
+  tab: ReaderTab | null;
+  component: ComponentChild | null;
 }
 
 let nextPaneId = 1;
 
-function createPane(tab: ReaderTab | null): Pane {
+function createPane(
+  tab: ReaderTab | null,
+  component: ComponentChild | null = null
+): Pane {
   const paneId = nextPaneId;
   nextPaneId += 1;
 
   return {
     id: `pane-${paneId}`,
     tab,
+    component,
   };
+}
+
+function getEmptyPaneContent(): PaneContent {
+  return {
+    tab: null,
+    component: null,
+  };
+}
+
+function isPaneEmpty(pane: Pane) {
+  return pane.tab === null && pane.component === null;
 }
 
 function getLayoutSlotCount(layoutId: PaneLayoutId) {
@@ -64,7 +86,7 @@ function getDefaultLayoutForSlotCount(slotCount: number): PaneLayoutId {
   }
 }
 
-function getPaneTabsInDisplayOrder(
+function getPaneContentsInDisplayOrder(
   nextPanes: Pane[],
   selectedId: string | null
 ) {
@@ -74,13 +96,24 @@ function getPaneTabsInDisplayOrder(
     : nextPanes;
 
   const seenTabs = new Set<string>();
-  return orderedPanes.reduce<ReaderTab[]>((result, pane) => {
+  return orderedPanes.reduce<PaneContent[]>((result, pane) => {
+    if (pane.component !== null) {
+      result.push({
+        tab: null,
+        component: pane.component,
+      });
+      return result;
+    }
+
     if (!pane.tab || seenTabs.has(pane.tab.id)) {
       return result;
     }
 
     seenTabs.add(pane.tab.id);
-    result.push(pane.tab);
+    result.push({
+      tab: pane.tab,
+      component: null,
+    });
     return result;
   }, []);
 }
@@ -91,15 +124,22 @@ function applyLayoutToPanes(
   selectedId: string | null
 ) {
   const slotCount = getLayoutSlotCount(layoutId);
-  const orderedTabs = getPaneTabsInDisplayOrder(existingPanes, selectedId);
+  const orderedContents = getPaneContentsInDisplayOrder(
+    existingPanes,
+    selectedId
+  );
 
   return Array.from({ length: slotCount }, (_, index) => {
     const existingPane = existingPanes[index] ?? null;
-    const nextTab = orderedTabs[index] ?? null;
+    const nextContent = orderedContents[index] ?? getEmptyPaneContent();
 
     return existingPane
-      ? { ...existingPane, tab: nextTab }
-      : createPane(nextTab);
+      ? {
+          ...existingPane,
+          tab: nextContent.tab,
+          component: nextContent.component,
+        }
+      : createPane(nextContent.tab, nextContent.component);
   });
 }
 
@@ -141,7 +181,13 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
     return { ...pane, tab: nextTab };
   });
 
-  if (nextPanes.some((pane, index) => panes.value[index]?.tab !== pane.tab)) {
+  if (
+    nextPanes.some(
+      (pane, index) =>
+        panes.value[index]?.tab !== pane.tab ||
+        panes.value[index]?.component !== pane.component
+    )
+  ) {
     syncPaneState(nextPanes);
   }
 
@@ -178,7 +224,23 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
     }
 
     panes.value = panes.value.map((pane) =>
-      pane.id === selectedPane.id ? { ...pane, tab: nextTab } : pane
+      pane.id === selectedPane.id
+        ? { ...pane, tab: nextTab, component: null }
+        : pane
+    );
+  };
+
+  const setSelectedPaneComponent = (component: ComponentChild) => {
+    const selectedPane = getSelectedPane();
+    if (!selectedPane) {
+      const nextPane = createPane(null, component);
+      syncPaneState([nextPane]);
+      selectedPaneId.value = nextPane.id;
+      return;
+    }
+
+    panes.value = panes.value.map((pane) =>
+      pane.id === selectedPane.id ? { ...pane, tab: null, component } : pane
     );
   };
 
@@ -195,10 +257,12 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
       return;
     }
 
-    const emptyPane = panes.value.find((pane) => pane.tab === null) ?? null;
+    const emptyPane = panes.value.find((pane) => isPaneEmpty(pane)) ?? null;
     if (emptyPane) {
       panes.value = panes.value.map((pane) =>
-        pane.id === emptyPane.id ? { ...pane, tab: nextTab } : pane
+        pane.id === emptyPane.id
+          ? { ...pane, tab: nextTab, component: null }
+          : pane
       );
       selectedPaneId.value = emptyPane.id;
       return;
@@ -230,6 +294,7 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
     const currentSelectedTabId = getSelectedPane()?.tab?.id ?? null;
     const nextSelectedPane =
       nextPanes.find((pane) => pane.tab?.id === currentSelectedTabId) ??
+      nextPanes.find((pane) => pane.component !== null) ??
       nextPanes[0] ??
       null;
     syncPaneState(nextPanes, nextSelectedPane?.id ?? null);
@@ -242,6 +307,7 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
     selectPane,
     setLayout,
     setSelectedPaneTab,
+    setSelectedPaneComponent,
     openInNewPane,
   };
 }
