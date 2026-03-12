@@ -255,6 +255,15 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
       return;
     }
 
+    // Do not auto-replace a component-backed pane with a tab.
+    if (selectedPane.component !== null) {
+      return;
+    }
+
+    if (selectedPane.tab?.id === nextTab.id) {
+      return;
+    }
+
     panes.value = panes.value.map((pane) =>
       pane.id === selectedPane.id
         ? { ...pane, tab: nextTab, component: null }

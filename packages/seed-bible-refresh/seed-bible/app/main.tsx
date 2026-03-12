@@ -109,7 +109,7 @@ export function Main() {
 
   useEffect(() => {
     setSelectedPaneTab(selectedTabId.value);
-  }, [selectedTabId.value, setSelectedPaneTab]);
+  }, [selectedTabId.value]);
 
   const handleSelectTab = (tabId: string) => {
     isSettingsOpen.value = false;
