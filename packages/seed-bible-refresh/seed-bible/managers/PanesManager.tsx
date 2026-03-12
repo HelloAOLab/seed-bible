@@ -197,10 +197,7 @@ export type PanesManager = ReturnType<typeof usePanes>;
 export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
   if (!isInitialized) {
     const initialTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
-    panes.value = [
-      createPane(initialTab),
-      createPane(null, <div>My custom pane</div>, true),
-    ];
+    panes.value = [createPane(initialTab)];
     selectedPaneId.value = panes.value[0]?.id ?? null;
     isInitialized = true;
   }
