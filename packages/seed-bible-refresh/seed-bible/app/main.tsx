@@ -82,6 +82,9 @@ export function Main() {
     setLayout,
     setSelectedPaneTab,
     openInNewPane,
+    openInDetachedPane,
+    movePane,
+    resizePane,
   } = usePanes(tabs.value, selectedTabId.value);
   const panelsEnabled = !config.value.disablePanels;
   const selectedTab =
@@ -89,7 +92,18 @@ export function Main() {
   const effectivePanes: Pane[] = panelsEnabled
     ? panes.value
     : selectedTab
-      ? [{ id: "single-pane", tab: selectedTab, component: null }]
+      ? [
+          {
+            id: "single-pane",
+            tab: selectedTab,
+            component: null,
+            detached: false,
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+          },
+        ]
       : [];
 
   useEffect(() => {
@@ -109,6 +123,12 @@ export function Main() {
   const handleOpenInNewPane = (tabId: string) => {
     isSettingsOpen.value = false;
     openInNewPane(tabId);
+    selectTab(tabId);
+  };
+
+  const handleOpenInDetachedPane = (tabId: string) => {
+    isSettingsOpen.value = false;
+    openInDetachedPane(tabId);
     selectTab(tabId);
   };
 
@@ -151,6 +171,7 @@ export function Main() {
           onSelectTab={handleSelectTab}
           onSelectPaneLayout={setLayout}
           onOpenInNewPane={handleOpenInNewPane}
+          onOpenInDetachedPane={handleOpenInDetachedPane}
           onAddTab={handleAddTab}
           onToggleCollapse={() => {
             isSidebarCollapsed.value = !isSidebarCollapsed.value;
@@ -174,6 +195,8 @@ export function Main() {
               }
               selectorState={selectorState}
               onSelectPane={handleSelectPane}
+              onMovePane={movePane}
+              onResizePane={resizePane}
             />
           )}
         </main>

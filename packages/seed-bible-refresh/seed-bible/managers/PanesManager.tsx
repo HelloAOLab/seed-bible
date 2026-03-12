@@ -33,6 +33,11 @@ export interface Pane {
   id: string;
   tab: ReaderTab | null;
   component: ComponentChild | null;
+  detached: boolean;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 interface PaneContent {
@@ -44,15 +49,22 @@ let nextPaneId = 1;
 
 function createPane(
   tab: ReaderTab | null,
-  component: ComponentChild | null = null
+  component: ComponentChild | null = null,
+  detached = false
 ): Pane {
   const paneId = nextPaneId;
   nextPaneId += 1;
+  const offset = (paneId - 1) * 24;
 
   return {
     id: `pane-${paneId}`,
     tab,
     component,
+    detached,
+    x: 48 + offset,
+    y: 48 + offset,
+    width: 480,
+    height: 320,
   };
 }
 
@@ -65,6 +77,14 @@ function getEmptyPaneContent(): PaneContent {
 
 function isPaneEmpty(pane: Pane) {
   return pane.tab === null && pane.component === null;
+}
+
+function getAttachedPanes(nextPanes: Pane[]) {
+  return nextPanes.filter((pane) => !pane.detached);
+}
+
+function getDetachedPanes(nextPanes: Pane[]) {
+  return nextPanes.filter((pane) => pane.detached);
 }
 
 function getLayoutSlotCount(layoutId: PaneLayoutId) {
@@ -90,10 +110,15 @@ function getPaneContentsInDisplayOrder(
   nextPanes: Pane[],
   selectedId: string | null
 ) {
-  const selectedPane = nextPanes.find((pane) => pane.id === selectedId) ?? null;
+  const attachedPanes = getAttachedPanes(nextPanes);
+  const selectedPane =
+    attachedPanes.find((pane) => pane.id === selectedId) ?? null;
   const orderedPanes = selectedPane
-    ? [selectedPane, ...nextPanes.filter((pane) => pane.id !== selectedPane.id)]
-    : nextPanes;
+    ? [
+        selectedPane,
+        ...attachedPanes.filter((pane) => pane.id !== selectedPane.id),
+      ]
+    : attachedPanes;
 
   const seenTabs = new Set<string>();
   return orderedPanes.reduce<PaneContent[]>((result, pane) => {
@@ -124,13 +149,15 @@ function applyLayoutToPanes(
   selectedId: string | null
 ) {
   const slotCount = getLayoutSlotCount(layoutId);
+  const attachedPanes = getAttachedPanes(existingPanes);
+  const detachedPanes = getDetachedPanes(existingPanes);
   const orderedContents = getPaneContentsInDisplayOrder(
-    existingPanes,
+    attachedPanes,
     selectedId
   );
 
-  return Array.from({ length: slotCount }, (_, index) => {
-    const existingPane = existingPanes[index] ?? null;
+  const nextAttachedPanes = Array.from({ length: slotCount }, (_, index) => {
+    const existingPane = attachedPanes[index] ?? null;
     const nextContent = orderedContents[index] ?? getEmptyPaneContent();
 
     return existingPane
@@ -141,6 +168,8 @@ function applyLayoutToPanes(
         }
       : createPane(nextContent.tab, nextContent.component);
   });
+
+  return [...nextAttachedPanes, ...detachedPanes];
 }
 
 const panes = signal<Pane[]>([]);
@@ -166,7 +195,10 @@ function syncPaneState(nextPanes: Pane[], nextSelectedPaneId?: string | null) {
 export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
   if (!isInitialized) {
     const initialTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
-    panes.value = [createPane(initialTab)];
+    panes.value = [
+      createPane(initialTab),
+      createPane(null, <div>My custom pane</div>, true),
+    ];
     selectedPaneId.value = panes.value[0]?.id ?? null;
     isInitialized = true;
   }
@@ -244,6 +276,27 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
     );
   };
 
+  const setSelectedPaneDetached = (detached: boolean) => {
+    const selectedPane = getSelectedPane();
+    if (!selectedPane || selectedPane.detached === detached) {
+      return;
+    }
+
+    const nextPanes = panes.value.map((pane) =>
+      pane.id === selectedPane.id ? { ...pane, detached } : pane
+    );
+
+    if (detached) {
+      syncPaneState(nextPanes, selectedPane.id);
+      return;
+    }
+
+    syncPaneState(
+      applyLayoutToPanes(nextPanes, layout.value, selectedPane.id),
+      selectedPane.id
+    );
+  };
+
   const openInNewPane = (tabId: string) => {
     const nextTab = tabMap.get(tabId);
     if (!nextTab) {
@@ -257,7 +310,8 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
       return;
     }
 
-    const emptyPane = panes.value.find((pane) => isPaneEmpty(pane)) ?? null;
+    const emptyPane =
+      panes.value.find((pane) => !pane.detached && isPaneEmpty(pane)) ?? null;
     if (emptyPane) {
       panes.value = panes.value.map((pane) =>
         pane.id === emptyPane.id
@@ -284,6 +338,26 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
     syncPaneState(nextPanes, nextSelectedPane?.id ?? null);
   };
 
+  const openInDetachedPane = (tabId: string) => {
+    const nextTab = tabMap.get(tabId);
+    if (!nextTab) {
+      return;
+    }
+
+    const existingPane =
+      panes.value.find((pane) => pane.tab?.id === tabId) ?? null;
+    if (existingPane) {
+      panes.value = panes.value.map((pane) =>
+        pane.id === existingPane.id ? { ...pane, detached: true } : pane
+      );
+      selectedPaneId.value = existingPane.id;
+      return;
+    }
+
+    const nextPane = createPane(nextTab, null, true);
+    syncPaneState([...panes.value, nextPane], nextPane.id);
+  };
+
   const setLayout = (layoutId: PaneLayoutId) => {
     layout.value = layoutId;
     const nextPanes = applyLayoutToPanes(
@@ -300,6 +374,34 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
     syncPaneState(nextPanes, nextSelectedPane?.id ?? null);
   };
 
+  const movePane = (paneId: string, deltaX: number, deltaY: number) => {
+    panes.value = panes.value.map((pane) =>
+      pane.id === paneId
+        ? {
+            ...pane,
+            x: Math.max(0, pane.x + deltaX),
+            y: Math.max(0, pane.y + deltaY),
+          }
+        : pane
+    );
+  };
+
+  const resizePane = (
+    paneId: string,
+    deltaWidth: number,
+    deltaHeight: number
+  ) => {
+    panes.value = panes.value.map((pane) =>
+      pane.id === paneId
+        ? {
+            ...pane,
+            width: Math.max(280, pane.width + deltaWidth),
+            height: Math.max(180, pane.height + deltaHeight),
+          }
+        : pane
+    );
+  };
+
   return {
     panes,
     layout,
@@ -308,6 +410,10 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
     setLayout,
     setSelectedPaneTab,
     setSelectedPaneComponent,
+    setSelectedPaneDetached,
     openInNewPane,
+    openInDetachedPane,
+    movePane,
+    resizePane,
   };
 }

@@ -19,6 +19,7 @@ interface TabsProps {
   onSelectTab: (tabId: string) => void;
   onSelectPaneLayout: (layoutId: PaneLayoutId) => void;
   onOpenInNewPane: (tabId: string) => void;
+  onOpenInDetachedPane: (tabId: string) => void;
   onAddTab: () => void;
   onToggleCollapse: () => void;
   onOpenSettings: () => void;
@@ -54,6 +55,7 @@ export function Tabs(props: TabsProps) {
     onSelectTab,
     onSelectPaneLayout,
     onOpenInNewPane,
+    onOpenInDetachedPane,
     onAddTab,
     onToggleCollapse,
     onOpenSettings,
@@ -208,6 +210,15 @@ export function Tabs(props: TabsProps) {
                           className="sb-tab-menu-item"
                         >
                           Open in new pane
+                        </button>
+                        <button
+                          onClick={() => {
+                            onOpenInDetachedPane(tab.id);
+                            openMenuTabId.value = null;
+                          }}
+                          className="sb-tab-menu-item"
+                        >
+                          Open in detached pane
                         </button>
                       </div>
                     )}
