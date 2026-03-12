@@ -166,6 +166,15 @@ export function useTabs(api: FreeUseBibleAPI) {
     return nextTab;
   };
 
+  const removeTab = (tabId: string) => {
+    const nextTabs = tabs.value.filter((tab) => tab.id !== tabId);
+    tabs.value = nextTabs;
+
+    if (selectedTabId.value === tabId) {
+      selectedTabId.value = nextTabs[0]?.id ?? "";
+    }
+  };
+
   const selectTab = (tabId: string) => {
     selectedTabId.value = tabId;
   };
@@ -174,6 +183,7 @@ export function useTabs(api: FreeUseBibleAPI) {
     tabs,
     selectedTabId,
     addTab,
+    removeTab,
     selectTab,
   };
 }

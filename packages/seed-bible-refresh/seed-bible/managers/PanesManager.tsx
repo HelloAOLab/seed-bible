@@ -364,11 +364,13 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
 
     const nextPane = createPane(nextTab, null, true);
     syncPaneState([...panes.value, nextPane], nextPane.id);
+    return () => closeDetachedPane(nextPane.id);
   };
 
   const openDetachedPane = (component: ComponentChild) => {
     const nextPane = createPane(null, component, true);
     syncPaneState([...panes.value, nextPane], nextPane.id);
+    return () => closeDetachedPane(nextPane.id);
   };
 
   const setLayout = (layoutId: PaneLayoutId) => {
