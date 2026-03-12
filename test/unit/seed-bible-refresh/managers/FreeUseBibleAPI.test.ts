@@ -53,7 +53,7 @@ describe("FreeUseBibleAPI", () => {
     const payload = { translations: [{ id: "eng_kjv" }] };
     webGetMock.mockResolvedValue(createResponse(payload));
 
-    const api = new FreeUseBibleAPI("https://default.example");
+    const api = new FreeUseBibleAPI("https://default.example/");
     const result = await api.getAvailableTranslations(
       "https://override.example"
     );
@@ -81,7 +81,7 @@ describe("FreeUseBibleAPI", () => {
     const payload = { translation: { id: "NIV" }, books: [] };
     webGetMock.mockResolvedValue(createResponse(payload));
 
-    const api = new FreeUseBibleAPI("https://default.example");
+    const api = new FreeUseBibleAPI("https://default.example/");
     const result = await api.getTranslationBooks(
       "NIV",
       "https://override.example"
@@ -101,7 +101,7 @@ describe("FreeUseBibleAPI", () => {
     };
     webGetMock.mockResolvedValue(createResponse(payload));
 
-    const api = new FreeUseBibleAPI("https://example.com");
+    const api = new FreeUseBibleAPI("https://example.com/");
     const result = await api.getTranslationBookChapter(
       "eng/esv",
       "1 John",
@@ -122,7 +122,7 @@ describe("FreeUseBibleAPI", () => {
     };
     webGetMock.mockResolvedValue(createResponse(payload));
 
-    const api = new FreeUseBibleAPI("https://default.example");
+    const api = new FreeUseBibleAPI("https://default.example/");
     const result = await api.getTranslationBookChapter(
       "BSB",
       "GEN",
@@ -154,7 +154,7 @@ describe("FreeUseBibleAPI", () => {
     };
     webGetMock.mockResolvedValue(createResponse(payload));
 
-    const api = new FreeUseBibleAPI("https://default.example");
+    const api = new FreeUseBibleAPI("https://default.example/");
     const chapter = {
       nextChapterApiLink: "/api/BSB/GEN/3.json",
     } as TranslationBookChapter;
@@ -188,7 +188,7 @@ describe("FreeUseBibleAPI", () => {
     };
     webGetMock.mockResolvedValue(createResponse(payload));
 
-    const api = new FreeUseBibleAPI("https://default.example");
+    const api = new FreeUseBibleAPI("https://default.example/");
     const chapter = {
       previousChapterApiLink: "/api/BSB/GEN/1.json",
     } as TranslationBookChapter;
@@ -204,11 +204,36 @@ describe("FreeUseBibleAPI", () => {
     );
   });
 
+  it("supports endpoint override with custom paths", async () => {
+    const payload = {
+      chapter: { number: 1, content: [], footnotes: [] },
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      previousChapterApiLink: null,
+    };
+    webGetMock.mockResolvedValue(createResponse(payload));
+
+    const api = new FreeUseBibleAPI("https://default.example/");
+    const chapter = {
+      // The API link is always the entire path
+      previousChapterApiLink: "/abc/def/api/BSB/GEN/1.json",
+    } as TranslationBookChapter;
+
+    const result = await api.getPreviousChapter(
+      chapter,
+      "https://override.example/abc/def/"
+    );
+
+    expect(result).toEqual(payload);
+    expect(webGetMock).toHaveBeenCalledWith(
+      "https://override.example/abc/def/api/BSB/GEN/1.json"
+    );
+  });
+
   it("caches in-flight requests by URL", async () => {
     const payload = { translations: [{ id: "eng_kjv" }] };
     webGetMock.mockResolvedValue(createResponse(payload));
 
-    const api = new FreeUseBibleAPI("https://example.com");
+    const api = new FreeUseBibleAPI("https://example.com/");
     const first = api.getAvailableTranslations();
     const second = api.getAvailableTranslations();
 
@@ -226,7 +251,7 @@ describe("FreeUseBibleAPI", () => {
       )
       .mockResolvedValueOnce(createResponse({ translations: [] }));
 
-    const api = new FreeUseBibleAPI("https://example.com");
+    const api = new FreeUseBibleAPI("https://example.com/");
 
     await expect(api.getAvailableTranslations()).rejects.toThrow(
       "Failed request to https://example.com/api/available_translations.json. Status: 500 Server Error"

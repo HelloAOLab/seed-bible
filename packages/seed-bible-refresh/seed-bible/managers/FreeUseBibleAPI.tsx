@@ -1003,7 +1003,7 @@ export class FreeUseBibleAPI {
   endpoint: string;
   private _responseCache = new Map<string, Promise<unknown>>();
 
-  constructor(endpoint: string = "https://bible.helloao.org") {
+  constructor(endpoint: string = "https://bible.helloao.org/") {
     this.endpoint = endpoint;
   }
 
@@ -1011,7 +1011,7 @@ export class FreeUseBibleAPI {
     endpoint?: string
   ): Promise<AvailableTranslations> {
     return this._getJson<AvailableTranslations>(
-      "/api/available_translations.json",
+      "api/available_translations.json",
       endpoint
     );
   }
@@ -1022,7 +1022,7 @@ export class FreeUseBibleAPI {
   ): Promise<TranslationBooks> {
     const encodedTranslation = encodeURIComponent(translation);
     return this._getJson<TranslationBooks>(
-      `/api/${encodedTranslation}/books.json`,
+      `api/${encodedTranslation}/books.json`,
       endpoint
     );
   }
@@ -1037,7 +1037,7 @@ export class FreeUseBibleAPI {
     const encodedBook = encodeURIComponent(book);
     const encodedChapter = encodeURIComponent(String(chapter));
     return this._getJson<TranslationBookChapter>(
-      `/api/${encodedTranslation}/${encodedBook}/${encodedChapter}.json`,
+      `api/${encodedTranslation}/${encodedBook}/${encodedChapter}.json`,
       endpoint
     );
   }
@@ -1100,10 +1100,11 @@ export class FreeUseBibleAPI {
     }
 
     const baseEndpoint = endpoint ?? this.endpoint;
-    const base = baseEndpoint.endsWith("/")
-      ? baseEndpoint.slice(0, -1)
-      : baseEndpoint;
-    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-    return `${base}${normalizedPath}`;
+    return new URL(path, baseEndpoint).href;
+    // // const base = baseEndpoint.endsWith("/")
+    // //   ? baseEndpoint.slice(0, -1)
+    // //   : baseEndpoint;
+    // // const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    // return `${base}${normalizedPath}`;
   }
 }

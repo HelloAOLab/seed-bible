@@ -64,8 +64,8 @@ function extractEndpointFromAvailableTranslationsUrl(
       0,
       -AVAILABLE_TRANSLATIONS_PATH.length
     );
-    const normalizedEndpointPath = endpointPath.replace(/\/+$/, "");
-    return `${url.protocol}//${url.host}${normalizedEndpointPath}`;
+    // const normalizedEndpointPath = endpointPath.replace(/\/+$/, "");
+    return `${url.protocol}//${url.host}${endpointPath}/`;
   } catch {
     return null;
   }
@@ -101,7 +101,7 @@ export function useBibleReadingState(
   const translationId = signal<string | null>(
     shouldUseFirstAvailableTranslation
       ? null
-      : (options.initialTranslationId ?? "BSB")
+      : (options.initialTranslationId ?? DEFAULT_TRANSLATION_ID)
   );
   const endpointOverride = signal<string | null>(initialEndpointOverride);
   const bookId = signal<string | null>(options.initialBookId ?? null);
