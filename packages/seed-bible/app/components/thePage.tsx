@@ -442,7 +442,7 @@ function ThePage({
             });
             if (bookData) {
               let chapterNo;
-              if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
+              if (Number(configBot.tags.chapter) <= bookData.numberOfChapters)
                 chapterNo = configBot.tags.chapter;
               const chapterUrl = chapterNo
                 ? bookData.firstChapterApiLink.replace(
@@ -468,7 +468,7 @@ function ThePage({
               }
             });
             let chapterNo;
-            if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
+            if (Number(configBot.tags.chapter) <= bookData.numberOfChapters)
               chapterNo = configBot.tags.chapter;
             const chapterUrl = chapterNo
               ? bookData.firstChapterApiLink.replace(
@@ -490,10 +490,17 @@ function ThePage({
           if (configBot.tags?.book) {
             await bible.open(
               configBot.tags?.book,
-              configBot.tags?.chapter || tab.data.chapter
+              configBot.tags?.chapter || tab.data.chapter,
+              bookTranslationId || null,
+              undefined
             );
           } else if (configBot.tags?.chapter) {
-            await bible.open(tab.data.book, configBot.tags?.chapter);
+            await bible.open(
+              tab.data.book,
+              configBot.tags?.chapter,
+              bookTranslationId || null,
+              undefined
+            );
           }
         }
         configBot.tags.defaultChecked = true;
