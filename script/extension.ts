@@ -27,9 +27,10 @@ program
     "<packageName>",
     "The name of the package to generate the extension json for."
   )
+  .argument("<mainBot>", "The name of the main bot for the extension.")
   .argument("<author>", "The author of the extension.")
-  .action(async (packageName, author) => {
-    generateExtension(packageName, author);
+  .action(async (packageName, mainBot, author) => {
+    generateExtension(packageName, mainBot, author);
     console.log(
       `Generated new extension.json for package ${packageName} by author ${author}.`
     );
