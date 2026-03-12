@@ -102,11 +102,16 @@ export function Main() {
   };
 
   const handleSelectPane = (paneId: string) => {
+    isSettingsOpen.value = false;
     selectPane(paneId);
     const selectedPane = panes.value.find((pane) => pane.id === paneId) ?? null;
     if (selectedPane?.tab) {
       selectTab(selectedPane.tab.id);
+      return;
     }
+
+    const nextTab = addTab();
+    selectorState.setOpen(true, nextTab.readingState);
   };
 
   return (

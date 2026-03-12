@@ -160,6 +160,7 @@ export function useTabs(api: FreeUseBibleAPI) {
     };
     tabs.value = [...currentTabs, nextTab];
     selectedTabId.value = nextTab.id;
+    return nextTab;
   };
 
   const selectTab = (tabId: string) => {
