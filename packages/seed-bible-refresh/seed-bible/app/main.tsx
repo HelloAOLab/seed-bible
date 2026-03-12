@@ -5,14 +5,16 @@ import { useConfig } from "seed-bible.managers.ConfigManager";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
 import { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
 import { useBibleSelector } from "seed-bible.managers.BibleSelectorManager";
+import { useBibleToolsManager } from "seed-bible.managers.BibleToolsManager";
 import { Tabs } from "seed-bible.components.Tabs";
-import { I18nProvider } from "seed-bible.i18n.I18nManager";
+import { I18nProvider, useI18n } from "seed-bible.i18n.I18nManager";
 import { usePanes } from "seed-bible.managers.PanesManager";
 import { useTabs } from "seed-bible.managers.TabsManager";
 import {
   generateThemeCssVariables,
   useTheme,
 } from "seed-bible.managers.ThemeManager";
+import { setupExtensionContext } from "seed-bible.app.api";
 import { useSignal } from "@preact/signals";
 import type { Pane } from "seed-bible.managers.PanesManager";
 
@@ -66,14 +68,18 @@ export function ExternalResourceDependencies({
 
 export function Main() {
   const bibleApi = useMemo(() => new FreeUseBibleAPI(), []);
-  const { tabs, selectedTabId, addTab, selectTab } = useTabs(bibleApi);
-  const { config } = useConfig();
-  const { currentTheme } = useTheme();
+  const tabsManager = useTabs(bibleApi);
+  const { tabs, selectedTabId, addTab, selectTab } = tabsManager;
+  const configManager = useConfig();
+  const { config } = configManager;
+  const themeManager = useTheme();
+  const { currentTheme } = themeManager;
   const theme = currentTheme.variables;
   const themeCssVariables = generateThemeCssVariables(theme);
   const isSettingsOpen = useSignal(false);
   const isSidebarCollapsed = useSignal(false);
   const selectorState = useBibleSelector();
+  const panesManager = usePanes(tabs.value, selectedTabId.value);
   const {
     panes,
     layout,
@@ -86,7 +92,9 @@ export function Main() {
     closeDetachedPane,
     movePane,
     resizePane,
-  } = usePanes(tabs.value, selectedTabId.value);
+  } = panesManager;
+  const toolsManager = useBibleToolsManager();
+  const i18nManager = useI18n();
   const panelsEnabled = !config.value.disablePanels;
   const selectedTab =
     tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null;
@@ -110,6 +118,28 @@ export function Main() {
   useEffect(() => {
     setSelectedPaneTab(selectedTabId.value);
   }, [selectedTabId.value]);
+
+  useEffect(() => {
+    setupExtensionContext({
+      api: bibleApi,
+      panes: panesManager,
+      tabs: tabsManager,
+      selector: selectorState,
+      config: configManager,
+      theme: themeManager,
+      i18n: i18nManager,
+      tools: toolsManager,
+    });
+  }, [
+    bibleApi,
+    panesManager,
+    tabsManager,
+    selectorState,
+    configManager,
+    themeManager,
+    i18nManager,
+    toolsManager,
+  ]);
 
   const handleSelectTab = (tabId: string) => {
     isSettingsOpen.value = false;

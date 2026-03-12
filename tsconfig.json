@@ -3929,6 +3929,9 @@
       "seed-bible.app.init": [
         "./packages/seed-bible-refresh/seed-bible/app/init.tsx"
       ],
+      "seed-bible.app.api": [
+        "./packages/seed-bible-refresh/seed-bible/app/api.tsx"
+      ],
       "seed-bible.app.main": [
         "./packages/seed-bible-refresh/seed-bible/app/main.tsx"
       ],
