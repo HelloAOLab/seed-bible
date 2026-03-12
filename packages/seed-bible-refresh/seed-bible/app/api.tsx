@@ -18,12 +18,19 @@ export interface ExtensionContext {
   tools: ToolsManager;
 }
 
+export type CleanupFunction = () => void;
+
+export type ExtensionInitializer = (
+  context: ExtensionContext
+) => Iterable<CleanupFunction, void, unknown> | void;
+
 export interface ExtensionRegistration {
   id: string;
-  init: (context: ExtensionContext) => void;
+  init: ExtensionInitializer;
 }
 
 const registeredExtensions = new Map<string, ExtensionRegistration>();
+const extensionCleanupFunctions = new Map<string, CleanupFunction[]>();
 const initializedExtensionIds = new Set<string>();
 
 let extensionContext: ExtensionContext | null = null;
@@ -45,14 +52,27 @@ function tryInitializeExtension(id: string) {
   initializedExtensionIds.add(id);
 
   try {
-    extension.init(extensionContext);
+    const cleanupIterator = extension.init(extensionContext);
+    const cleanupFunctions: CleanupFunction[] = [];
+    if (cleanupIterator) {
+      for (const cleanup of cleanupIterator) {
+        if (typeof cleanup === "function") {
+          cleanupFunctions.push(cleanup);
+        }
+      }
+    }
+    if (cleanupFunctions.length > 0) {
+      extensionCleanupFunctions.set(id, cleanupFunctions);
+    }
   } catch (error) {
     initializedExtensionIds.delete(id);
     console.error(`Failed to initialize extension '${id}'.`, error);
   }
 }
 
-export function registerExtension(extension: ExtensionRegistration) {
+export function registerExtension(
+  extension: ExtensionRegistration
+): CleanupFunction {
   if (!extension?.id || typeof extension.id !== "string") {
     throw new Error("registerExtension() requires a non-empty string id.");
   }
@@ -67,6 +87,23 @@ export function registerExtension(extension: ExtensionRegistration) {
   initializedExtensionIds.delete(extension.id);
 
   tryInitializeExtension(extension.id);
+
+  return () => {
+    const cleanupFunctions = extensionCleanupFunctions.get(extension.id) ?? [];
+    for (const cleanup of cleanupFunctions) {
+      try {
+        cleanup();
+      } catch (err) {
+        console.error(
+          `Error during cleanup of extension '${extension.id}':`,
+          err
+        );
+      }
+    }
+    extensionCleanupFunctions.delete(extension.id);
+    registeredExtensions.delete(extension.id);
+    initializedExtensionIds.delete(extension.id);
+  };
 }
 
 export function setupExtensionContext(context: ExtensionContext) {

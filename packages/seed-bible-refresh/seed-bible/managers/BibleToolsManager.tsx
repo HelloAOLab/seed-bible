@@ -219,6 +219,10 @@ export function useBibleToolsManager() {
       (entry) => entry.id !== tool.id
     );
     toolbarTools.value = [...nextTools, tool];
+
+    return () => {
+      unregisterToolbarTool(tool.id);
+    };
   };
 
   const unregisterToolbarTool = (toolId: string) => {
@@ -246,6 +250,10 @@ export function useBibleToolsManager() {
       (entry) => entry.id !== tool.id
     );
     verseToolbarTools.value = [...nextTools, tool];
+
+    return () => {
+      unregisterVerseToolbarTool(tool.id);
+    };
   };
 
   const unregisterVerseToolbarTool = (toolId: string) => {

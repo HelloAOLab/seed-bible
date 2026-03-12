@@ -1,12 +1,12 @@
 import { registerExtension, type ExtensionContext } from "seed-bible.app.api";
 
-registerExtension({
+const cleanup = registerExtension({
   id: "example-extension",
-  init: (context: ExtensionContext) => {
+  init: function* (context: ExtensionContext) {
     console.log("Example extension initialized with context:", context);
 
     // register a new tool
-    context.tools.registerToolbarTool({
+    yield context.tools.registerToolbarTool({
       id: "my-example-tool",
       title: "My Example Tool",
       icon: () => <span>TOOL!</span>,
@@ -19,7 +19,7 @@ registerExtension({
       priority: 100,
     });
 
-    context.tools.registerVerseToolbarTool({
+    yield context.tools.registerVerseToolbarTool({
       id: "my-verse-tool",
       title: "My Verse Tool",
       icon: () => <span>VERSE!</span>,
@@ -34,3 +34,7 @@ registerExtension({
     });
   },
 });
+
+setTimeout(() => {
+  cleanup();
+}, 5000);
