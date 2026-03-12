@@ -73,11 +73,12 @@ export function Main() {
   const selectorState = useBibleSelector();
   const {
     panes,
+    layout,
     selectedPaneId,
     selectPane,
+    setLayout,
     setSelectedPaneTab,
     openInNewPane,
-    resizePane,
   } = usePanes(tabs.value, selectedTabId.value);
 
   useEffect(() => {
@@ -103,7 +104,7 @@ export function Main() {
   const handleSelectPane = (paneId: string) => {
     selectPane(paneId);
     const selectedPane = panes.value.find((pane) => pane.id === paneId) ?? null;
-    if (selectedPane) {
+    if (selectedPane?.tab) {
       selectTab(selectedPane.tab.id);
     }
   };
@@ -123,10 +124,11 @@ export function Main() {
         <Tabs
           tabs={tabs.value}
           selectedTabId={selectedTabId.value}
-          panes={panes.value}
+          paneLayout={layout.value}
           isSettingsOpen={isSettingsOpen.value}
           isCollapsed={isSidebarCollapsed.value}
           onSelectTab={handleSelectTab}
+          onSelectPaneLayout={setLayout}
           onOpenInNewPane={handleOpenInNewPane}
           onAddTab={handleAddTab}
           onToggleCollapse={() => {
@@ -143,10 +145,10 @@ export function Main() {
           ) : (
             <PaneLayout
               panes={panes.value}
+              layout={layout.value}
               selectedPaneId={selectedPaneId.value}
               selectorState={selectorState}
               onSelectPane={handleSelectPane}
-              onResizePane={resizePane}
             />
           )}
         </main>
