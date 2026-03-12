@@ -4,11 +4,36 @@ export interface AppConfig {
   disablePanels: boolean;
 }
 
-const DEFAULT_CONFIG: AppConfig = {
+export type SettingsPresetId = "minimal" | "full";
+
+const FULL_CONFIG: AppConfig = {
   disablePanels: false,
 };
 
-const config = signal<AppConfig>(DEFAULT_CONFIG);
+const MINIMAL_CONFIG: AppConfig = {
+  disablePanels: true,
+};
+
+const DEFAULT_CONFIG_PRESETS: Record<SettingsPresetId, AppConfig> = {
+  minimal: MINIMAL_CONFIG,
+  full: FULL_CONFIG,
+};
+
+const DEFAULT_SETTINGS_PRESET: SettingsPresetId = "full";
+
+function getPresetConfig(settingsPreset: SettingsPresetId): AppConfig {
+  return DEFAULT_CONFIG_PRESETS[settingsPreset] ?? FULL_CONFIG;
+}
+
+function parseSettingsPreset(value: unknown): SettingsPresetId {
+  if (value === "minimal" || value === "full") {
+    return value;
+  }
+
+  return DEFAULT_SETTINGS_PRESET;
+}
+
+const config = signal<AppConfig>(getPresetConfig(DEFAULT_SETTINGS_PRESET));
 let hasConfigBotListener = false;
 
 function parseBoolean(value: unknown, fallback: boolean) {
@@ -31,10 +56,13 @@ function parseBoolean(value: unknown, fallback: boolean) {
 }
 
 function readConfigFromBot(): AppConfig {
+  const settingsPreset = parseSettingsPreset(configBot.tags.settingsPreset);
+  const presetConfig = getPresetConfig(settingsPreset);
+
   return {
     disablePanels: parseBoolean(
       configBot.tags["app.disablePanels"],
-      DEFAULT_CONFIG.disablePanels
+      presetConfig.disablePanels
     ),
   };
 }
@@ -58,7 +86,10 @@ function ensureConfigBotListener() {
       ? changedTagsSource
       : [];
 
-    if (changedTags.includes("app.disablePanels")) {
+    if (
+      changedTags.includes("app.disablePanels") ||
+      changedTags.includes("settingsPreset")
+    ) {
       syncConfigFromBot();
     }
   });
