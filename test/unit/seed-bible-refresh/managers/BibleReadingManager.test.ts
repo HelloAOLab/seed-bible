@@ -72,6 +72,34 @@ const books: TranslationBooks = {
   ],
 };
 
+const nivTranslation = {
+  ...translations.translations[0]!,
+  id: "NIV",
+  shortName: "NIV",
+  name: "New International Version",
+  englishName: "New International Version",
+  listOfBooksApiLink: "/api/NIV/books.json",
+};
+
+const nivBooks: TranslationBooks = {
+  translation: nivTranslation,
+  books: [
+    {
+      id: "MAT",
+      name: "Matthew",
+      commonName: "Matthew",
+      title: null,
+      order: 40,
+      numberOfChapters: 28,
+      firstChapterNumber: 1,
+      firstChapterApiLink: "/api/NIV/MAT/1.json",
+      lastChapterNumber: 28,
+      lastChapterApiLink: "/api/NIV/MAT/28.json",
+      totalNumberOfVerses: 1071,
+    },
+  ],
+};
+
 let webGetMock: jest.Mock;
 
 beforeEach(() => {
@@ -286,6 +314,35 @@ describe("useBibleReadingState", () => {
         translationId: "BSB",
       },
     ]);
+  });
+
+  it("selectTranslation() changes the translation", async () => {
+    const responses = createDefaultResponseMap();
+    responses[makeUrl("/api/NIV/books.json")] = createResponse(nivBooks);
+    responses[makeUrl("/api/NIV/MAT/1.json")] = createResponse({
+      ...makeChapter("MAT", 1),
+      translation: nivTranslation,
+      book: nivBooks.books[0]!,
+      thisChapterLink: "/api/NIV/MAT/1.json",
+      nextChapterApiLink: "/api/NIV/MAT/2.json",
+      previousChapterApiLink: null,
+    });
+
+    setWebResponses(responses);
+    const api = createApi();
+
+    const state = useBibleReadingState(api);
+    await waitForInitialLoad(state);
+
+    await state.selectTranslation("NIV");
+
+    expect(webGetMock).toHaveBeenCalledWith(makeUrl("/api/NIV/books.json"));
+    expect(webGetMock).toHaveBeenCalledWith(makeUrl("/api/NIV/MAT/1.json"));
+    expect(state.translationId.value).toBe("NIV");
+    expect(state.bookId.value).toBe("MAT");
+    expect(state.chapterNumber.value).toBe(1);
+    expect(state.translationBooks.value?.translation.id).toBe("NIV");
+    expect(state.chapterData.value?.translation.id).toBe("NIV");
   });
 
   it("catches errors and stores them in state.error", async () => {
