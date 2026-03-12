@@ -625,7 +625,7 @@ function ThePage({
         book: data?.book,
         chapter: data?.chapter,
       });
-      os.syncConfigBotTagsToURL(["book", "chapter", "translation"]);
+      os.syncConfigBotTagsToURL(["book", "chapter", "translation", "lang"]);
     }
   }, [data]);
 
