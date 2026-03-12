@@ -2,7 +2,6 @@ import {
   type TranslationBookChapter,
   type ChapterVerse,
 } from "seed-bible.managers.FreeUseBibleAPI";
-import { BibleReaderToolbar } from "seed-bible.components.BibleReaderToolbar";
 import type {
   BibleReadingState,
   BibleSelectedVerse,
@@ -188,11 +187,6 @@ export function BibleReader(props: BibleReaderProps) {
       {!availableTranslations.value && !error.value && (
         <p>No translations available.</p>
       )}
-
-      <BibleReaderToolbar
-        readingState={readingState}
-        selectorState={selectorState}
-      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { PaneLayout } from "seed-bible.components.PaneLayout";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
+import { BibleReaderToolbar } from "seed-bible.components.BibleReaderToolbar";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
 import { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
 import { useBibleSelector } from "seed-bible.managers.BibleSelectorManager";
@@ -136,6 +137,14 @@ export function Main() {
           onClose={() => selectorState.setOpen(false)}
           selectorState={selectorState}
         />
+
+        {!isSettingsOpen.value && (
+          <BibleReaderToolbar
+            tabs={tabs.value}
+            selectedTabId={selectedTabId.value}
+            selectorState={selectorState}
+          />
+        )}
       </div>
     </I18nProvider>
   );

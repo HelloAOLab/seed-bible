@@ -2,16 +2,23 @@ import {
   useBibleToolsManager,
   type BibleReaderToolbarTool,
 } from "seed-bible.managers.BibleToolsManager";
-import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
+import type { ReaderTab } from "seed-bible.managers.TabsManager";
 
 interface BibleReaderToolbarProps {
-  readingState: BibleReadingState;
+  tabs: ReaderTab[];
+  selectedTabId: string;
   selectorState: BibleSelectorState;
 }
 
 export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
-  const { readingState, selectorState } = props;
+  const { tabs, selectedTabId, selectorState } = props;
+  const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
+  const readingState = selectedTab?.readingState ?? null;
+
+  if (!readingState) {
+    return null;
+  }
 
   const toolsManager = useBibleToolsManager();
 
