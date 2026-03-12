@@ -1,7 +1,7 @@
-import type { ReaderTab } from "seed-bible.managers.TabsManager";
+import { useSignal } from "@preact/signals";
 import type { Pane } from "../managers/PanesManager";
 import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager";
-// import { MobileSettingsIcon } from "./icons";
+import type { ReaderTab } from "seed-bible.managers.TabsManager";
 import { MobileSettingsIcon } from "seed-bible.components.icons";
 
 const { useEffect } = os.appHooks;
@@ -13,7 +13,7 @@ interface TabsProps {
   isSettingsOpen: boolean;
   isCollapsed: boolean;
   onSelectTab: (tabId: string) => void;
-  onTogglePane: (tabId: string) => void;
+  onOpenInNewPane: (tabId: string) => void;
   onAddTab: () => void;
   onToggleCollapse: () => void;
   onOpenSettings: () => void;
@@ -27,11 +27,12 @@ export function Tabs(props: TabsProps) {
     isSettingsOpen,
     isCollapsed,
     onSelectTab,
-    onTogglePane,
+    onOpenInNewPane,
     onAddTab,
     onToggleCollapse,
     onOpenSettings,
   } = props;
+  const openMenuTabId = useSignal<string | null>(null);
   const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
   const selectedBookId = selectedTab?.readingState.bookId.value ?? null;
   const selectedChapter = selectedTab?.readingState.chapterNumber.value ?? null;
@@ -84,9 +85,9 @@ export function Tabs(props: TabsProps) {
           <div className="sb-sidebar-tab-list">
             {tabs.map((tab) => {
               const isSelected = tab.id === selectedTabId;
-              const isPaneVisible = panes.some(
+              const paneCount = panes.filter(
                 (pane) => pane.tab.id === tab.id
-              );
+              ).length;
               const currentBookId = tab.readingState.bookId.value;
               const currentBookName =
                 tab.readingState.translationBooks.value?.books.find(
@@ -97,39 +98,53 @@ export function Tabs(props: TabsProps) {
               const currentChapter = tab.readingState.chapterNumber.value;
               const currentTranslation =
                 tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
+
               return (
                 <div key={tab.id} className="sb-tab-row">
                   <button
-                    onClick={() => onSelectTab(tab.id)}
+                    onClick={() => {
+                      openMenuTabId.value = null;
+                      onSelectTab(tab.id);
+                    }}
                     className={`sb-tab-button${
                       isSelected ? " sb-tab-button-selected" : ""
                     }`}
                   >
                     <span>{`${currentBookName} - ${currentChapter} • ${currentTranslation}`}</span>
-                    <span className="material-symbols-outlined sb-tab-more-icon">
-                      more_vert
-                    </span>
+                    {paneCount > 0 && (
+                      <span className="sb-tab-pane-count">{paneCount}</span>
+                    )}
                   </button>
-                  <button
-                    onClick={() => onTogglePane(tab.id)}
-                    className={`sb-tab-pane-button${
-                      isPaneVisible ? " sb-tab-pane-button-active" : ""
-                    }`}
-                    aria-label={
-                      isPaneVisible
-                        ? "Hide tab from panes"
-                        : "Show tab in panes"
-                    }
-                    title={
-                      isPaneVisible
-                        ? "Hide tab from panes"
-                        : "Show tab in panes"
-                    }
-                  >
-                    <span className="material-symbols-outlined">
-                      {isPaneVisible ? "splitscreen" : "add_to_home_screen"}
-                    </span>
-                  </button>
+
+                  <div className="sb-tab-menu-anchor">
+                    <button
+                      onClick={() => {
+                        openMenuTabId.value =
+                          openMenuTabId.value === tab.id ? null : tab.id;
+                      }}
+                      className="sb-tab-menu-button"
+                      aria-label="Open tab menu"
+                      title="Tab options"
+                    >
+                      <span className="material-symbols-outlined sb-tab-more-icon">
+                        more_vert
+                      </span>
+                    </button>
+
+                    {openMenuTabId.value === tab.id && (
+                      <div className="sb-tab-menu">
+                        <button
+                          onClick={() => {
+                            onOpenInNewPane(tab.id);
+                            openMenuTabId.value = null;
+                          }}
+                          className="sb-tab-menu-item"
+                        >
+                          Open in new pane
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}

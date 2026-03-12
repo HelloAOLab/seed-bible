@@ -6,8 +6,9 @@ const { useEffect, useRef } = os.appHooks;
 
 interface PaneLayoutProps {
   panes: Pane[];
-  selectedTabId: string;
+  selectedPaneId: string | null;
   selectorState: BibleSelectorState;
+  onSelectPane: (paneId: string) => void;
   onResizePane: (
     index: number,
     deltaRatio: number,
@@ -16,7 +17,8 @@ interface PaneLayoutProps {
 }
 
 export function PaneLayout(props: PaneLayoutProps) {
-  const { panes, selectedTabId, selectorState, onResizePane } = props;
+  const { panes, selectedPaneId, selectorState, onSelectPane, onResizePane } =
+    props;
   const panesContainerRef = useRef<HTMLDivElement | null>(null);
   const dragStateRef = useRef<{
     index: number;
@@ -71,9 +73,10 @@ export function PaneLayout(props: PaneLayoutProps) {
         <div
           key={pane.id}
           className={`sb-pane-shell${
-            pane.tab.id === selectedTabId ? " sb-pane-shell-active" : ""
+            pane.id === selectedPaneId ? " sb-pane-shell-active" : ""
           }`}
           style={{ flex: `${pane.size} 1 0%` }}
+          onClick={() => onSelectPane(pane.id)}
         >
           <div className="sb-pane-reader">
             <BibleReader

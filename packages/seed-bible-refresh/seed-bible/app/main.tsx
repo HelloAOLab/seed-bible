@@ -71,14 +71,18 @@ export function Main() {
   const isSettingsOpen = useSignal(false);
   const isSidebarCollapsed = useSignal(false);
   const selectorState = useBibleSelector();
-  const { panes, ensurePaneVisible, togglePane, resizePane } = usePanes(
-    tabs.value,
-    selectedTabId.value
-  );
+  const {
+    panes,
+    selectedPaneId,
+    selectPane,
+    setSelectedPaneTab,
+    openInNewPane,
+    resizePane,
+  } = usePanes(tabs.value, selectedTabId.value);
 
   useEffect(() => {
-    ensurePaneVisible(selectedTabId.value);
-  }, [ensurePaneVisible, selectedTabId.value]);
+    setSelectedPaneTab(selectedTabId.value);
+  }, [selectedTabId.value, setSelectedPaneTab]);
 
   const handleSelectTab = (tabId: string) => {
     isSettingsOpen.value = false;
@@ -88,6 +92,20 @@ export function Main() {
   const handleAddTab = () => {
     isSettingsOpen.value = false;
     addTab();
+  };
+
+  const handleOpenInNewPane = (tabId: string) => {
+    isSettingsOpen.value = false;
+    openInNewPane(tabId);
+    selectTab(tabId);
+  };
+
+  const handleSelectPane = (paneId: string) => {
+    selectPane(paneId);
+    const selectedPane = panes.value.find((pane) => pane.id === paneId) ?? null;
+    if (selectedPane) {
+      selectTab(selectedPane.tab.id);
+    }
   };
 
   return (
@@ -109,7 +127,7 @@ export function Main() {
           isSettingsOpen={isSettingsOpen.value}
           isCollapsed={isSidebarCollapsed.value}
           onSelectTab={handleSelectTab}
-          onTogglePane={togglePane}
+          onOpenInNewPane={handleOpenInNewPane}
           onAddTab={handleAddTab}
           onToggleCollapse={() => {
             isSidebarCollapsed.value = !isSidebarCollapsed.value;
@@ -125,8 +143,9 @@ export function Main() {
           ) : (
             <PaneLayout
               panes={panes.value}
-              selectedTabId={selectedTabId.value}
+              selectedPaneId={selectedPaneId.value}
               selectorState={selectorState}
+              onSelectPane={handleSelectPane}
               onResizePane={resizePane}
             />
           )}
