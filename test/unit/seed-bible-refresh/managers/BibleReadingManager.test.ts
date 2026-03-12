@@ -100,6 +100,23 @@ const nivBooks: TranslationBooks = {
   ],
 };
 
+const ALT_API_ENDPOINT = "https://alt.example";
+
+const altTranslations: AvailableTranslations = {
+  translations: [
+    {
+      ...nivTranslation,
+      listOfBooksApiLink: "/api/NIV/books.json",
+    },
+    {
+      ...translations.translations[0]!,
+      id: "BSB",
+      shortName: "BSB",
+      listOfBooksApiLink: "/api/BSB/books.json",
+    },
+  ],
+};
+
 let webGetMock: jest.Mock;
 
 beforeEach(() => {
@@ -181,6 +198,10 @@ function createDefaultResponseMap(): WebResponseMap {
     [makeUrl("/api/BSB/GEN/5.json")]: createResponse(makeChapter("GEN", 5)),
     [makeUrl("/api/BSB/EXO/1.json")]: createResponse(makeChapter("EXO", 1)),
   };
+}
+
+function makeAltUrl(path: string): string {
+  return `${ALT_API_ENDPOINT}${path}`;
 }
 
 async function waitFor(
@@ -343,6 +364,38 @@ describe("useBibleReadingState", () => {
     expect(state.chapterNumber.value).toBe(1);
     expect(state.translationBooks.value?.translation.id).toBe("NIV");
     expect(state.chapterData.value?.translation.id).toBe("NIV");
+  });
+
+  it("uses initialTranslationId URL as endpoint and picks the first translation", async () => {
+    const responses = createDefaultResponseMap();
+    responses[makeAltUrl("/api/available_translations.json")] =
+      createResponse(altTranslations);
+    responses[makeAltUrl("/api/NIV/books.json")] = createResponse(nivBooks);
+    responses[makeAltUrl("/api/NIV/MAT/1.json")] = createResponse({
+      ...makeChapter("MAT", 1),
+      translation: altTranslations.translations[0]!,
+      book: nivBooks.books[0]!,
+      thisChapterLink: "/api/NIV/MAT/1.json",
+      nextChapterApiLink: "/api/NIV/MAT/2.json",
+      previousChapterApiLink: null,
+    });
+
+    setWebResponses(responses);
+    const api = createApi();
+
+    const state = useBibleReadingState(api, {
+      initialTranslationId: `${ALT_API_ENDPOINT}/api/available_translations.json`,
+    });
+    await waitForInitialLoad(state);
+
+    expect(webGetMock).toHaveBeenCalledWith(
+      makeAltUrl("/api/available_translations.json")
+    );
+    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
+    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/MAT/1.json"));
+    expect(state.translationId.value).toBe("NIV");
+    expect(state.bookId.value).toBe("MAT");
+    expect(state.chapterNumber.value).toBe(1);
   });
 
   it("catches errors and stores them in state.error", async () => {
