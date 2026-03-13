@@ -871,6 +871,9 @@ function SideBar({ panelsNumber }) {
     () => masks.mobileBookmarks || { "My bookmarks": [] }
   );
   const [showBookmarksFilter, setShowBookmarksFilter] = useState(false);
+  const [desktopExpandedCategories, setDesktopExpandedCategories] = useState<
+    Record<string, boolean>
+  >({});
   const [showBookmarkModal, setShowBookmarkModal] = useState(false);
   const [showNewCategoryModal, setShowNewCategoryModal] = useState(false);
   const [selectedTabForBookmark, setSelectedTabForBookmark] = useState<
@@ -909,6 +912,9 @@ function SideBar({ panelsNumber }) {
       setTagMask(thisBot, "mobileBookmarks", updated, "local");
       return updated;
     });
+    // Auto-enable bookmarks view and expand the category so the user sees it
+    setShowBookmarksFilter(true);
+    setDesktopExpandedCategories((prev) => ({ ...prev, [category]: true }));
     setShowBookmarkModal(false);
     setSelectedTabForBookmark(null);
   };
@@ -1619,7 +1625,7 @@ function SideBar({ panelsNumber }) {
       <>
         <div className="mobile-sidebar-overlay">
           <div className="mobile-sidebar-header">
-            <h2>Tabs & Folders</h2>
+            <h2>Tabs</h2>
             <div className="mobile-header-actions">
               {/* <span
                 className="mobile-header-icon"
@@ -2460,7 +2466,9 @@ function SideBar({ panelsNumber }) {
               />
             )}
             <div className="tabsContainer">
-              <span style={{ color: "var(--pageTextColor)" }}>{t("tabs")}</span>
+              <span style={{ color: "var(--pageTextColor)" }}>
+                {showBookmarksFilter ? `${t("tabs")} & Folders` : t("tabs")}
+              </span>
               <div
                 style={{ display: "flex", alignItems: "center", gap: "5px" }}
               >
@@ -2672,11 +2680,91 @@ function SideBar({ panelsNumber }) {
           onPointerUp={handleMouseUpTab}
           className={collapsed ? "tabs-collapsed" : "tabs"}
         >
+          {/* Bookmark folders (when bookmark filter is active) */}
+          {showBookmarksFilter &&
+            !collapsed &&
+            Object.entries(bookmarks).map(
+              ([categoryName, tabIds]: [string, any]) => (
+                <div key={categoryName} className="desktop-bookmark-category">
+                  <div
+                    className="desktop-bookmark-category-header"
+                    onClick={() =>
+                      setDesktopExpandedCategories((prev) => ({
+                        ...prev,
+                        [categoryName]: !prev[categoryName],
+                      }))
+                    }
+                  >
+                    <span className="desktop-bookmark-icon">
+                      <BookMarkIcon />
+                    </span>
+                    <span className="desktop-category-title">
+                      {categoryName}
+                    </span>
+                    <span
+                      className={`desktop-collapse-icon ${
+                        desktopExpandedCategories[categoryName]
+                          ? "expanded"
+                          : ""
+                      }`}
+                    >
+                      <span className="material-symbols-outlined">
+                        expand_more
+                      </span>
+                    </span>
+                  </div>
+                  {desktopExpandedCategories[categoryName] && (
+                    <div className="desktop-bookmark-items">
+                      {tabIds.length > 0 ? (
+                        tabIds.map((tabId: any) => {
+                          const tab = tabs.find((t: any) => t.id === tabId);
+                          return tab ? (
+                            <Tab
+                              key={tab.id}
+                              el={tab}
+                              index={0}
+                              onlineUsers={onlineUsers}
+                              activeTab={activeTab}
+                              setActiveTab={setActiveTab}
+                              setIsDragging={setIsDragging}
+                              setElement={setElement}
+                              collapsed={collapsed}
+                              editMode={editMode}
+                              setSidebarWidth={setSidebarWidth}
+                              setCollapsed={setCollapsed}
+                              isBookmarked={true}
+                              onBookmarkClick={(tabId: string) => {
+                                handleRemoveBookmark(tabId);
+                              }}
+                            />
+                          ) : null;
+                        })
+                      ) : (
+                        <div
+                          style={{
+                            padding: "8px 16px",
+                            color: "var(--text2)",
+                            fontSize: "13px",
+                          }}
+                        >
+                          No bookmarks in this category
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            )}
+          {/* Divider between bookmark folders and free tabs */}
+          {showBookmarksFilter &&
+            !collapsed &&
+            Object.keys(bookmarks).length > 0 && (
+              <div className="sidebarLine" style={{ margin: "6px 0" }}></div>
+            )}
+          {/* Tabs: always hide bookmarked tabs from the main list (they live inside bookmark folders) */}
           {tabs
             .filter((tab) => !tab.sharedTab)
-            .filter(
-              (tab) => !showBookmarksFilter || bookmarkedTabIds.has(tab.id)
-            )
+            .filter((tab) => !bookmarkedTabIds.has(tab.id))
             .filter((tab) => {
               if (!searchQuery) return true;
               const query = searchQuery.toLowerCase();
@@ -3283,6 +3371,49 @@ const sidebarStyles = `
     .tab-bookmark-btn:hover {
         opacity: 1;
         background: rgba(0, 0, 0, 0.06);
+    }
+
+    /* Desktop bookmark category folders */
+    .desktop-bookmark-category {
+        margin-bottom: 2px;
+    }
+    .desktop-bookmark-category-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        cursor: pointer;
+        border-radius: 6px;
+        user-select: none;
+        font-weight: 500;
+        font-size: 14px;
+        color: var(--pageTextColor);
+    }
+    .desktop-bookmark-category-header:hover {
+        background: rgba(0, 0, 0, 0.04);
+    }
+    .desktop-bookmark-icon {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    .desktop-category-title {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .desktop-collapse-icon {
+        display: flex;
+        align-items: center;
+        transition: transform 0.2s;
+        transform: rotate(-90deg);
+    }
+    .desktop-collapse-icon.expanded {
+        transform: rotate(0deg);
+    }
+    .desktop-bookmark-items {
+        padding-left: 8px;
     }
 
     /* Desktop bookmark modals */

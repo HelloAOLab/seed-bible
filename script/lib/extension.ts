@@ -2,9 +2,10 @@ import { createRecordsClient } from "@casual-simulation/aux-records/RecordsClien
 import { writeFile, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { uploadFile } from "./records";
-import { existsSync } from "node:fs";
+import { existsSync, write } from "node:fs";
 import { execSync } from "node:child_process";
 import type { StoredAux } from "@casual-simulation/aux-common";
+import fs from "fs";
 
 const downloadRecordName = "testingPublickKey";
 const uploadRecordName = "seedBibleExtensions";
@@ -60,22 +61,50 @@ export interface ExtensionMeta {
   updatedAt: string;
   userAuth: string;
   version: string;
+  mainBotTag?: string;
 }
 
 /**
  * Generates a new extension.json in the specified packages folder.
  * @param pckgName The name of the package.
+ * @param mainBot The main bot of the extension.
  * @param author The author of the extension.
  */
-export function generateExtension(pckgName: string, author: string) {
+export function generateExtension(
+  pckgName: string,
+  mainBot: string,
+  author: string
+) {
   const extensionPath = path.resolve("packages", pckgName);
+  const mainBotDirectoryPath = path.resolve(
+    extensionPath,
+    mainBot.replaceAll(".", path.sep)
+  );
   if (!existsSync(extensionPath)) {
-    throw new Error(`Package folder: "${pckgName}" does not exist.`);
+    // makes the directory if it doesn't exist
+    fs.mkdirSync(extensionPath, { recursive: true });
+  }
+  if (!existsSync(mainBotDirectoryPath)) {
+    // makes the main bot directory if it doesn't exist
+    fs.mkdirSync(mainBotDirectoryPath, { recursive: true });
   }
   const extensionFilePath = path.resolve(extensionPath, "extension.json");
   if (existsSync(extensionFilePath)) {
     throw new Error(
       `Extension "${pckgName}" with extension.json already exists.`
+    );
+  }
+  const extraAuxFilePath = path.resolve(extensionPath, "extra.aux");
+  if (existsSync(extraAuxFilePath)) {
+    throw new Error(`Extension "${pckgName}" with extra.aux already exists.`);
+  }
+  const mainBotFilePath = path.resolve(
+    mainBotDirectoryPath,
+    `${mainBot}.bot.aux`
+  );
+  if (existsSync(mainBotFilePath)) {
+    throw new Error(
+      `Extension "${pckgName}" with main bot "${mainBot}" already exists.`
     );
   }
   const extensionData: ExtensionMeta = {
@@ -110,9 +139,32 @@ export function generateExtension(pckgName: string, author: string) {
     updatedAt: new Date().toISOString(),
     userAuth: "",
     version: "0.0.1",
+    mainBotTag: mainBot,
   };
 
   writeFile(extensionFilePath, JSON.stringify(extensionData, null, 2), "utf-8");
+
+  const extraAuxData = {
+    version: 1,
+    state: {},
+  };
+
+  writeFile(extraAuxFilePath, JSON.stringify(extraAuxData, null, 2), "utf-8");
+
+  const mainBotData = {
+    state: {
+      "{id}": {
+        id: "{id}",
+        tags: {
+          forPackage: pckgName,
+          system: mainBot,
+        },
+      },
+    },
+    version: 1,
+  };
+
+  writeFile(mainBotFilePath, JSON.stringify(mainBotData, null, 2), "utf-8");
 }
 
 /**

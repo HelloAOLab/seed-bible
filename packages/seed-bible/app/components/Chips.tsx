@@ -144,7 +144,7 @@ const SharePopup = ({
   return (
     <>
       <div
-        onClick={() => closePopupSettings()}
+        onClick={() => globalThis?.closePopupSettings()}
         style={{
           position: "fixed",
           inset: 0,
@@ -186,7 +186,7 @@ const SharePopup = ({
               {popupTitle}
             </h2>
             <button
-              onClick={() => closePopupSettings()}
+              onClick={() => globalThis?.closePopupSettings()}
               style={{
                 background: "none",
                 border: "none",
