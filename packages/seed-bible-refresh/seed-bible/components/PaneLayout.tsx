@@ -1,14 +1,58 @@
 import { BibleReader } from "seed-bible.components.BibleReader";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
+import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import type { Pane, PaneLayoutId } from "seed-bible.managers.PanesManager";
+import {
+  useBibleToolsManager,
+  type BibleEmptyPaneTool,
+} from "seed-bible.managers.BibleToolsManager";
 
 const { useEffect, useRef } = os.appHooks;
+
+function EmptyPaneToolbar({
+  selectorState,
+  addTab,
+}: {
+  selectorState: BibleSelectorState;
+  addTab: () => { readingState: BibleReadingState };
+}) {
+  const toolsManager = useBibleToolsManager();
+  const tools: BibleEmptyPaneTool[] = toolsManager.getEmptyPaneTools({
+    selectorState,
+    addTab,
+  });
+
+  return (
+    <div className="sb-empty-pane-toolbar">
+      {tools.map((tool) => {
+        const ToolIcon = tool.icon;
+        return tool.visible ? (
+          <div key={tool.id} className="sb-empty-pane-toolbar-item">
+            <button
+              disabled={tool.disabled}
+              onClick={(event: MouseEvent) => {
+                event.stopPropagation();
+                tool.onSelect();
+              }}
+              className="sb-empty-pane-toolbar-button"
+              title={tool.title}
+            >
+              <ToolIcon />
+              <span className="sb-empty-pane-toolbar-label">{tool.title}</span>
+            </button>
+          </div>
+        ) : null;
+      })}
+    </div>
+  );
+}
 
 interface PaneLayoutProps {
   panes: Pane[];
   layout: PaneLayoutId;
   selectedPaneId: string | null;
   selectorState: BibleSelectorState;
+  addTab: () => { readingState: BibleReadingState };
   onSelectPane: (paneId: string) => void;
   onMovePane: (paneId: string, deltaX: number, deltaY: number) => void;
   onResizePane: (
@@ -25,6 +69,7 @@ export function PaneLayout(props: PaneLayoutProps) {
     layout,
     selectedPaneId,
     selectorState,
+    addTab,
     onSelectPane,
     onMovePane,
     onResizePane,
@@ -95,7 +140,7 @@ export function PaneLayout(props: PaneLayoutProps) {
               />
             </div>
           ) : (
-            <div className="sb-pane-empty">(empty)</div>
+            <EmptyPaneToolbar selectorState={selectorState} addTab={addTab} />
           )}
         </div>
       ))}
@@ -159,7 +204,7 @@ export function PaneLayout(props: PaneLayoutProps) {
                 />
               </div>
             ) : (
-              <div className="sb-pane-empty">(empty)</div>
+              <EmptyPaneToolbar selectorState={selectorState} addTab={addTab} />
             )}
           </div>
 

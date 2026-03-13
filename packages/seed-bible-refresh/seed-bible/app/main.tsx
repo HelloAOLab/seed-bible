@@ -225,6 +225,7 @@ export function Main() {
                   : (effectivePanes[0]?.id ?? null)
               }
               selectorState={selectorState}
+              addTab={addTab}
               onSelectPane={handleSelectPane}
               onMovePane={movePane}
               onResizePane={resizePane}

@@ -167,6 +167,59 @@ button {
   height: 100%;
 }
 
+.sb-empty-pane-toolbar {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 100%;
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.sb-empty-pane-toolbar-item {
+  flex: 0 0 auto;
+}
+
+.sb-empty-pane-toolbar-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--secondary-color);
+  border-radius: 12px;
+  padding: 20px 28px;
+  background: var(--tertiary-color);
+  color: var(--font-color);
+  cursor: pointer;
+  font: inherit;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.sb-empty-pane-toolbar-button:hover {
+  background: color-mix(
+    in srgb,
+    var(--tertiary-color),
+    var(--secondary-color) 30%
+  );
+  border-color: var(--primary-color);
+}
+
+.sb-empty-pane-toolbar-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sb-empty-pane-toolbar-label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
 .sb-pane-empty {
   display: flex;
   align-items: center;

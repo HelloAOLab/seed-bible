@@ -42,6 +42,23 @@ export interface ManagedBibleVerseToolbarTool extends BibleTool {
   onSelect?: (context: BibleToolContext) => void;
 }
 
+export interface EmptyPaneToolContext {
+  selectorState: BibleSelectorState;
+  addTab: () => { readingState: BibleReadingState };
+}
+
+export interface BibleEmptyPaneTool extends BibleTool {
+  disabled: boolean;
+  visible: boolean;
+  onSelect: () => void;
+}
+
+export interface ManagedBibleEmptyPaneTool extends BibleTool {
+  isDisabled?: (context: EmptyPaneToolContext) => boolean;
+  isVisible?: (context: EmptyPaneToolContext) => boolean;
+  onSelect?: (context: EmptyPaneToolContext) => void;
+}
+
 function PreviousChapterIcon() {
   return <MaterialIcon>chevron_left</MaterialIcon>;
 }
@@ -64,6 +81,25 @@ function ShareVerseIcon() {
 
 function ClearSelectionIcon() {
   return <MaterialIcon>clear</MaterialIcon>;
+}
+
+function OpenInSelectorIcon() {
+  return <MaterialIcon>menu_book</MaterialIcon>;
+}
+
+function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
+  return [
+    {
+      id: "open-in-selector",
+      priority: 0,
+      title: "Open a book",
+      icon: OpenInSelectorIcon,
+      onSelect: (context) => {
+        const newTab = context.addTab();
+        context.selectorState.setOpen(true, newTab.readingState);
+      },
+    },
+  ];
 }
 
 function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
@@ -192,6 +228,9 @@ const toolbarTools = signal<ManagedBibleToolbarTool[]>(
 const verseToolbarTools = signal<ManagedBibleVerseToolbarTool[]>(
   getDefaultVerseToolbarTools()
 );
+const emptyPaneTools = signal<ManagedBibleEmptyPaneTool[]>(
+  getDefaultEmptyPaneToolbarTools()
+);
 
 const sortedToolbarTools = computed(() => {
   return [...toolbarTools.value].sort(
@@ -201,6 +240,12 @@ const sortedToolbarTools = computed(() => {
 
 const sortedVerseToolbarTools = computed(() => {
   return [...verseToolbarTools.value].sort(
+    (left, right) => left.priority - right.priority
+  );
+});
+
+const sortedEmptyPaneTools = computed(() => {
+  return [...emptyPaneTools.value].sort(
     (left, right) => left.priority - right.priority
   );
 });
@@ -270,6 +315,37 @@ export function useBibleToolsManager() {
       }));
   };
 
+  const registerEmptyPaneTool = (tool: ManagedBibleEmptyPaneTool) => {
+    const nextTools = emptyPaneTools.value.filter(
+      (entry) => entry.id !== tool.id
+    );
+    emptyPaneTools.value = [...nextTools, tool];
+
+    return () => {
+      unregisterEmptyPaneTool(tool.id);
+    };
+  };
+
+  const unregisterEmptyPaneTool = (toolId: string) => {
+    emptyPaneTools.value = emptyPaneTools.value.filter(
+      (tool) => tool.id !== toolId
+    );
+  };
+
+  const getEmptyPaneTools = (context: EmptyPaneToolContext) => {
+    return sortedEmptyPaneTools.value
+      .filter((tool) => tool.isVisible?.(context) ?? true)
+      .map((tool) => ({
+        id: tool.id,
+        priority: tool.priority,
+        title: tool.title,
+        icon: tool.icon,
+        disabled: tool.isDisabled?.(context) ?? false,
+        visible: true,
+        onSelect: () => tool.onSelect?.(context),
+      }));
+  };
+
   return {
     registerToolbarTool,
     unregisterToolbarTool,
@@ -277,5 +353,8 @@ export function useBibleToolsManager() {
     registerVerseToolbarTool,
     unregisterVerseToolbarTool,
     getVerseToolbarTools,
+    registerEmptyPaneTool,
+    unregisterEmptyPaneTool,
+    getEmptyPaneTools,
   };
 }
