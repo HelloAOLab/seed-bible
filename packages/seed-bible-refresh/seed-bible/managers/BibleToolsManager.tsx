@@ -2,6 +2,7 @@ import { MaterialIcon, SeedBibleIcon } from "seed-bible.components.icons";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
+import type { Pane } from "seed-bible.managers.PanesManager";
 import type { BibleSelectorState } from "./BibleSelectorManager";
 
 type BibleToolIcon = () => JSX.Element | VNode;
@@ -44,6 +45,7 @@ export interface ManagedBibleVerseToolbarTool extends BibleTool {
 
 export interface EmptyPaneToolContext {
   selectorState: BibleSelectorState;
+  currentPane: Pane;
   addTab: () => { readingState: BibleReadingState };
 }
 

@@ -11,14 +11,17 @@ const { useEffect, useRef } = os.appHooks;
 
 function EmptyPaneToolbar({
   selectorState,
+  pane,
   addTab,
 }: {
   selectorState: BibleSelectorState;
+  pane: Pane;
   addTab: () => { readingState: BibleReadingState };
 }) {
   const toolsManager = useBibleToolsManager();
   const tools: BibleEmptyPaneTool[] = toolsManager.getEmptyPaneTools({
     selectorState,
+    currentPane: pane,
     addTab,
   });
 
@@ -140,7 +143,11 @@ export function PaneLayout(props: PaneLayoutProps) {
               />
             </div>
           ) : (
-            <EmptyPaneToolbar selectorState={selectorState} addTab={addTab} />
+            <EmptyPaneToolbar
+              selectorState={selectorState}
+              pane={pane}
+              addTab={addTab}
+            />
           )}
         </div>
       ))}
@@ -204,7 +211,11 @@ export function PaneLayout(props: PaneLayoutProps) {
                 />
               </div>
             ) : (
-              <EmptyPaneToolbar selectorState={selectorState} addTab={addTab} />
+              <EmptyPaneToolbar
+                selectorState={selectorState}
+                pane={pane}
+                addTab={addTab}
+              />
             )}
           </div>
 
