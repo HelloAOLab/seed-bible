@@ -263,6 +263,9 @@ export function useBibleSelector(
       return;
     }
 
+    // Ensure selected-tab synchronization targets this pane, not a stale selection.
+    panesManager.selectPane(activePane.value.id);
+
     const newTab = tabsManager.addTab();
     panesManager.setPaneTab(activePane.value.id, newTab.id);
     // tabsManager.selectTab(newTab.id);
