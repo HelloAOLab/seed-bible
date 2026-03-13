@@ -1,6 +1,5 @@
 import { BibleReader } from "seed-bible.components.BibleReader";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
-import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
 import type { Pane, PaneLayoutId } from "seed-bible.managers.PanesManager";
 import {
@@ -139,6 +138,7 @@ export function PaneLayout(props: PaneLayoutProps) {
           ) : pane.tab ? (
             <div className="sb-pane-reader">
               <BibleReader
+                currentPane={pane}
                 readingState={pane.tab.readingState}
                 selectorState={selectorState}
               />
@@ -207,6 +207,7 @@ export function PaneLayout(props: PaneLayoutProps) {
             ) : pane.tab ? (
               <div className="sb-pane-reader">
                 <BibleReader
+                  currentPane={pane}
                   readingState={pane.tab.readingState}
                   selectorState={selectorState}
                 />

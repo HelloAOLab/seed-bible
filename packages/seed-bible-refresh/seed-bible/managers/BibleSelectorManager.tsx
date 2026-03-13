@@ -2,24 +2,31 @@ import type {
   TranslationBook,
   TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
-import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
-import { Signal, useSignal } from "@preact/signals";
+import {
+  type BibleReadingState,
+  useBibleReadingState,
+} from "seed-bible.managers.BibleReadingManager";
+import type { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
+import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
+import type { TabsManager } from "seed-bible.managers.TabsManager";
+import { computed, Signal, useSignal, useSignalEffect } from "@preact/signals";
 import { chunk } from "es-toolkit";
 
 const { useEffect, useMemo, useRef } = os.appHooks;
 
 export interface BibleSelectorOptions {
-  readingState?: BibleReadingState;
+  pane?: Pane;
 }
 
 export interface BibleSelectorState {
   isOpen: Signal<boolean>;
+  pane: Signal<Pane | null>;
   readingState: Signal<BibleReadingState | null>;
   search: Signal<string>;
   expandedBookId: Signal<string | null>;
   oldTestamentRows: TranslationBook[][];
   newTestamentRows: TranslationBook[][];
-  setOpen: (open: boolean, readingState?: BibleReadingState) => void;
+  setOpen: (open: boolean, pane?: Pane) => void;
   setSearch: (value: string) => void;
   setExpandedBook: (bookId: string) => void;
   selectTranslation: (translationId: string) => Promise<void>;
@@ -49,9 +56,15 @@ function groupBooks(translationBooks: TranslationBooks | null, search: string) {
   };
 }
 
-export function useBibleSelector(): BibleSelectorState {
+export function useBibleSelector(
+  api: FreeUseBibleAPI,
+  tabsManager: TabsManager,
+  panesManager: PanesManager
+): BibleSelectorState {
   const isOpen = useSignal(false);
+  const pane = useSignal<Pane | null>(null);
   const readingState = useSignal<BibleReadingState | null>(null);
+  const transientReadingState = useSignal<BibleReadingState | null>(null);
 
   const search = useSignal("");
   const expandedBookId = useSignal<string | null>(null);
@@ -61,15 +74,52 @@ export function useBibleSelector(): BibleSelectorState {
   const wasOpenRef = useRef(isOpen.value);
   const isHandlingPopStateRef = useRef(false);
 
-  const activeReadingState = readingState.value;
-  const activeBookId = activeReadingState?.bookId.value ?? null;
-  const activeTranslationBooks =
-    activeReadingState?.translationBooks.value ?? null;
+  const activePaneId = computed(() => pane.value?.id ?? null);
+  const activePane = computed(() =>
+    activePaneId.value
+      ? (panesManager.panes.value.find(
+          (entry) => entry.id === activePaneId.value
+        ) ?? null)
+      : null
+  );
+  const activeReadingState = computed(
+    () => activePane.value?.tab?.readingState ?? transientReadingState.value
+  );
 
-  const setOpen = (open: boolean, nextReadingState?: BibleReadingState) => {
+  useSignalEffect(() => {
+    if (readingState.value !== activeReadingState.value) {
+      readingState.value = activeReadingState.value;
+    }
+  });
+
+  const activeBookId = computed(
+    () => activeReadingState.value?.bookId.value ?? null
+  );
+  const activeTranslationBooks = computed(
+    () => activeReadingState.value?.translationBooks.value ?? null
+  );
+
+  const setOpen = (open: boolean, nextPane?: Pane) => {
     if (open) {
-      if (nextReadingState) {
-        readingState.value = nextReadingState;
+      if (nextPane) {
+        pane.value = nextPane;
+      }
+
+      const effectivePane = nextPane ?? activePane.value;
+      if (!effectivePane) {
+        return;
+      }
+
+      pane.value = effectivePane;
+
+      if (effectivePane.tab) {
+        transientReadingState.value = null;
+        readingState.value = effectivePane.tab.readingState;
+      } else {
+        if (!transientReadingState.value) {
+          transientReadingState.value = useBibleReadingState(api);
+        }
+        readingState.value = transientReadingState.value;
       }
 
       if (!readingState.value) {
@@ -93,7 +143,7 @@ export function useBibleSelector(): BibleSelectorState {
 
   useEffect(() => {
     if (isOpen.value) {
-      expandedBookId.value = activeBookId;
+      expandedBookId.value = activeBookId.value;
     }
   }, [isOpen.value, activeBookId]);
 
@@ -149,8 +199,8 @@ export function useBibleSelector(): BibleSelectorState {
   }, [isOpen.value]);
 
   const { oldTestament, newTestament } = useMemo(
-    () => groupBooks(activeTranslationBooks, search.value),
-    [activeTranslationBooks, search.value]
+    () => groupBooks(activeTranslationBooks.value, search.value),
+    [activeTranslationBooks.value, search.value]
   );
 
   const { oldTestamentBooksPerRow, newTestamentBooksPerRow } = useMemo(() => {
@@ -196,24 +246,51 @@ export function useBibleSelector(): BibleSelectorState {
     selectedBookId: string,
     chapter: number
   ) => {
-    if (!activeReadingState) {
+    if (!activeReadingState.value) {
       return;
     }
 
-    await activeReadingState.selectChapter(selectedBookId, chapter);
+    if (activePane.value?.tab) {
+      await activePane.value.tab.readingState.selectChapter(
+        selectedBookId,
+        chapter
+      );
+      setOpen(false);
+      return;
+    }
+
+    if (!activePane.value) {
+      return;
+    }
+
+    const newTab = tabsManager.addTab();
+    panesManager.setPaneTab(activePane.value.id, newTab.id);
+    // tabsManager.selectTab(newTab.id);
+
+    const selectedTranslationId = activeReadingState.value.translationId.value;
+    if (
+      selectedTranslationId &&
+      newTab.readingState.translationId.value !== selectedTranslationId
+    ) {
+      await newTab.readingState.selectTranslation(selectedTranslationId);
+    }
+
+    await newTab.readingState.selectChapter(selectedBookId, chapter);
+    transientReadingState.value = null;
     setOpen(false);
   };
 
   const handleTranslationSelect = async (translationId: string) => {
-    if (!activeReadingState) {
+    if (!activeReadingState.value) {
       return;
     }
 
-    await activeReadingState.selectTranslation(translationId);
+    await activeReadingState.value.selectTranslation(translationId);
   };
 
   return {
     isOpen,
+    pane,
     readingState,
     search,
     expandedBookId,

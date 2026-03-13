@@ -2,7 +2,7 @@ import { MaterialIcon, SeedBibleIcon } from "seed-bible.components.icons";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
-import type { Pane } from "seed-bible.managers.PanesManager";
+import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
 import type { BibleSelectorState } from "./BibleSelectorManager";
 
@@ -19,6 +19,7 @@ export interface BibleToolContext {
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
   tabs: TabsManager;
+  panesManager: PanesManager;
 }
 
 export interface BibleReaderToolbarTool extends BibleTool {
@@ -99,8 +100,7 @@ function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
       title: "Open a book",
       icon: OpenInSelectorIcon,
       onSelect: (context) => {
-        const newTab = context.tabs.addTab();
-        context.selectorState.setOpen(true, newTab.readingState);
+        context.selectorState.setOpen(true, context.currentPane);
       },
     },
   ];
@@ -127,7 +127,15 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       icon: OpenSelectorIcon,
       isDisabled: (context) => context.readingState.loading.value,
       onSelect: (context) => {
-        context.selectorState.setOpen(true, context.readingState);
+        const currentPane =
+          context.panesManager.panes.value.find(
+            (pane) => pane.id === context.panesManager.selectedPaneId.value
+          ) ?? null;
+        if (!currentPane) {
+          return;
+        }
+
+        context.selectorState.setOpen(true, currentPane);
       },
     },
     {

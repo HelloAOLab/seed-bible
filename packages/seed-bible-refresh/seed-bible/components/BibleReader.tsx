@@ -7,6 +7,7 @@ import type {
   BibleSelectedVerse,
 } from "seed-bible.managers.BibleReadingManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
+import type { Pane } from "seed-bible.managers.PanesManager";
 
 function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
   if (typeof part === "string") {
@@ -120,12 +121,13 @@ function renderChapterContent(
 }
 
 interface BibleReaderProps {
+  currentPane: Pane;
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
 }
 
 export function BibleReader(props: BibleReaderProps) {
-  const { readingState, selectorState } = props;
+  const { currentPane, readingState, selectorState } = props;
   const {
     translationId,
     bookId,
@@ -146,7 +148,7 @@ export function BibleReader(props: BibleReaderProps) {
   return (
     <div className="sb-bible-reader">
       <h2
-        onClick={() => selectorState.setOpen(true, readingState)}
+        onClick={() => selectorState.setOpen(true, currentPane)}
         className="sb-bible-reader-title"
       >
         <span className="sb-bible-reader-book">

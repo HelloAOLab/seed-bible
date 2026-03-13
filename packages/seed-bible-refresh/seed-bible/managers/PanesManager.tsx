@@ -1,6 +1,6 @@
-import { signal } from "@preact/signals";
+import { computed, signal } from "@preact/signals";
 import type { ComponentChild } from "preact";
-import type { ReaderTab } from "seed-bible.managers.TabsManager";
+import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
 
 export type PaneLayoutId =
   | "single"
@@ -194,32 +194,37 @@ function syncPaneState(nextPanes: Pane[], nextSelectedPaneId?: string | null) {
 
 export type PanesManager = ReturnType<typeof usePanes>;
 
-export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
+export function usePanes(tabsManager: TabsManager, selectedTabId: string) {
   if (!isInitialized) {
-    const initialTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
+    const initialTab =
+      tabsManager.tabs.value.find((tab) => tab.id === selectedTabId) ?? null;
     panes.value = [createPane(initialTab)];
     selectedPaneId.value = panes.value[0]?.id ?? null;
     isInitialized = true;
   }
 
-  const tabMap = new Map(tabs.map((tab) => [tab.id, tab]));
-  const nextPanes = panes.value.map((pane) => {
-    if (!pane.tab) {
-      return pane;
-    }
+  const tabMap = computed(
+    () => new Map(tabsManager.tabs.value.map((tab) => [tab.id, tab]))
+  );
+  const nextPanes = computed(() =>
+    panes.value.map((pane) => {
+      if (!pane.tab) {
+        return pane;
+      }
 
-    const nextTab = tabMap.get(pane.tab.id) ?? null;
-    return { ...pane, tab: nextTab };
-  });
+      const nextTab = tabMap.value.get(pane.tab.id) ?? null;
+      return { ...pane, tab: nextTab };
+    })
+  );
 
   if (
-    nextPanes.some(
+    nextPanes.value.some(
       (pane, index) =>
         panes.value[index]?.tab !== pane.tab ||
         panes.value[index]?.component !== pane.component
     )
   ) {
-    syncPaneState(nextPanes);
+    syncPaneState(nextPanes.value);
   }
 
   const getSelectedPane = () => {
@@ -241,7 +246,7 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
       return;
     }
 
-    const nextTab = tabMap.get(tabId);
+    const nextTab = tabMap.value.get(tabId);
     if (!nextTab) {
       return;
     }
@@ -267,6 +272,26 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
       pane.id === selectedPane.id
         ? { ...pane, tab: nextTab, component: null }
         : pane
+    );
+  };
+
+  const setPaneTab = (paneId: string, tabId: string) => {
+    if (!tabId) {
+      return;
+    }
+
+    const nextTab = tabMap.value.get(tabId);
+    if (!nextTab) {
+      return;
+    }
+
+    const targetPane = panes.value.find((pane) => pane.id === paneId) ?? null;
+    if (!targetPane) {
+      return;
+    }
+
+    panes.value = panes.value.map((pane) =>
+      pane.id === paneId ? { ...pane, tab: nextTab, component: null } : pane
     );
   };
 
@@ -306,7 +331,7 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
   };
 
   const openInNewPane = (tabId: string) => {
-    const nextTab = tabMap.get(tabId);
+    const nextTab = tabMap.value.get(tabId);
     if (!nextTab) {
       return;
     }
@@ -347,7 +372,7 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
   };
 
   const openInDetachedPane = (tabId: string) => {
-    const nextTab = tabMap.get(tabId);
+    const nextTab = tabMap.value.get(tabId);
     if (!nextTab) {
       return;
     }
@@ -434,6 +459,7 @@ export function usePanes(tabs: ReaderTab[], selectedTabId: string) {
     selectPane,
     setLayout,
     setSelectedPaneTab,
+    setPaneTab,
     setSelectedPaneComponent,
     setSelectedPaneDetached,
     openInNewPane,

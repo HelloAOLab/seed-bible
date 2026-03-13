@@ -78,8 +78,8 @@ export function Main() {
   const themeCssVariables = generateThemeCssVariables(theme);
   const isSettingsOpen = useSignal(false);
   const isSidebarCollapsed = useSignal(false);
-  const selectorState = useBibleSelector();
-  const panesManager = usePanes(tabs.value, selectedTabId.value);
+  const panesManager = usePanes(tabsManager, selectedTabId.value);
+  const selectorState = useBibleSelector(bibleApi, tabsManager, panesManager);
   const {
     panes,
     layout,
@@ -176,8 +176,7 @@ export function Main() {
       return;
     }
 
-    const nextTab = addTab();
-    selectorState.setOpen(true, nextTab.readingState);
+    selectorState.setOpen(true, selectedPane);
   };
 
   return (
@@ -246,6 +245,7 @@ export function Main() {
             selectedTabId={selectedTabId.value}
             selectorState={selectorState}
             tabsManager={tabsManager}
+            panesManager={panesManager}
           />
         )}
       </div>
