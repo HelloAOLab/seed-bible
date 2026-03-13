@@ -14,19 +14,16 @@ function EmptyPaneToolbar({
   selectorState,
   pane,
   tabs,
-  addTab,
 }: {
   selectorState: BibleSelectorState;
   pane: Pane;
   tabs: TabsManager;
-  addTab: () => { readingState: BibleReadingState };
 }) {
   const toolsManager = useBibleToolsManager();
   const tools: BibleEmptyPaneTool[] = toolsManager.getEmptyPaneTools({
     selectorState,
     currentPane: pane,
     tabs,
-    addTab,
   });
 
   return (
@@ -60,7 +57,6 @@ interface PaneLayoutProps {
   selectedPaneId: string | null;
   selectorState: BibleSelectorState;
   tabsManager: TabsManager;
-  addTab: () => { readingState: BibleReadingState };
   onSelectPane: (paneId: string) => void;
   onMovePane: (paneId: string, deltaX: number, deltaY: number) => void;
   onResizePane: (
@@ -78,7 +74,6 @@ export function PaneLayout(props: PaneLayoutProps) {
     selectedPaneId,
     selectorState,
     tabsManager,
-    addTab,
     onSelectPane,
     onMovePane,
     onResizePane,
@@ -153,7 +148,6 @@ export function PaneLayout(props: PaneLayoutProps) {
               selectorState={selectorState}
               pane={pane}
               tabs={tabsManager}
-              addTab={addTab}
             />
           )}
         </div>
@@ -222,7 +216,6 @@ export function PaneLayout(props: PaneLayoutProps) {
                 selectorState={selectorState}
                 pane={pane}
                 tabs={tabsManager}
-                addTab={addTab}
               />
             )}
           </div>

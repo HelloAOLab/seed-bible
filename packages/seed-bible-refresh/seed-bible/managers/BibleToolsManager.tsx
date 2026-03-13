@@ -49,7 +49,6 @@ export interface EmptyPaneToolContext {
   selectorState: BibleSelectorState;
   currentPane: Pane;
   tabs: TabsManager;
-  addTab: () => { readingState: BibleReadingState };
 }
 
 export interface BibleEmptyPaneTool extends BibleTool {
@@ -100,7 +99,7 @@ function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
       title: "Open a book",
       icon: OpenInSelectorIcon,
       onSelect: (context) => {
-        const newTab = context.addTab();
+        const newTab = context.tabs.addTab();
         context.selectorState.setOpen(true, newTab.readingState);
       },
     },

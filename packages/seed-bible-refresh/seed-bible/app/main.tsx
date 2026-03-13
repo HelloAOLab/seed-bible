@@ -226,7 +226,6 @@ export function Main() {
               }
               selectorState={selectorState}
               tabsManager={tabsManager}
-              addTab={addTab}
               onSelectPane={handleSelectPane}
               onMovePane={movePane}
               onResizePane={resizePane}
