@@ -464,8 +464,8 @@
   justify-content: start !important;
   align-items: center;
   width: 100%;
-  background: rgba(var(--text1), 0.9);
-  color: var(--text1);
+
+  color: var(--pageTextColor);
   font-family: "Satoshi", system-ui, sans-serif;
   font-size: 14px;
   font-style: normal;

@@ -274,8 +274,8 @@ input:checked + .slider:not(#slider):before {
   width: 70px;
   height: 30px;
   border-radius: 5px;
-  background-color: var(--secondaryColor);
-  color: var(--text1);
+  background-color: var(--profileColor);
+  color: var(--pageTextColor);
   border: none;
 }
 

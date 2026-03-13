@@ -201,7 +201,7 @@ export const darkTheme = {
   logoColor: "#FFFFFF",
   accentColor: "#5A67D8",
   // Space selection
-  spaceSelection: "#5A67D8",
+  spaceSelection: "#FFFFFF",
   // Text colors
   text1: "#FFFFFF",
   text2: "#AAAAAA",

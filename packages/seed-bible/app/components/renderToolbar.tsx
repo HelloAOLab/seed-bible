@@ -192,7 +192,7 @@ export function Toolbar() {
                           alt={tool.label}
                         />
                       ) : (
-                        <span className="material-symbols-outlined">
+                        <span className="material-symbols-outlined flex flex-col text-sm text-[var(--pageTextColor)]">
                           {tool.icon}
                         </span>
                       )}

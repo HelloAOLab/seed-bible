@@ -368,15 +368,64 @@ export function Toolbar() {
                       onMouseLeave={() => clearTimeout(holdTimeoutRef.current)}
                     >
                       {tool.isImg ? (
-                        <img
-                          src={tool.icon}
-                          style={{ width: "25px" }}
-                          alt={tool.label}
-                        />
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: "2px",
+                            minWidth: "48px",
+                          }}
+                        >
+                          <img
+                            src={tool.icon}
+                            style={{
+                              width: "22px",
+                              height: "22px",
+                              objectFit: "contain",
+                            }}
+                            alt={tool.label}
+                          />
+                          <p
+                            style={{
+                              fontSize: "10px",
+                              fontWeight: 500,
+                              color: "var(--pageTextColor)",
+                              lineHeight: 1.2,
+                              margin: 0,
+                            }}
+                          >
+                            {tool.label}
+                          </p>
+                        </div>
                       ) : (
-                        <span className="material-symbols-outlined">
-                          {tool.icon}
-                        </span>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: "2px",
+                            minWidth: "48px",
+                          }}
+                        >
+                          <span
+                            className="material-symbols-outlined"
+                            style={{ fontSize: "22px", lineHeight: 1 }}
+                          >
+                            {tool.icon}
+                          </span>
+                          <p
+                            style={{
+                              fontSize: "10px",
+                              fontWeight: 500,
+                              color: "var(--pageTextColor)",
+                              lineHeight: 1.2,
+                              margin: 0,
+                            }}
+                          >
+                            {tool.label}
+                          </p>
+                        </div>
                       )}
                     </button>
                   )}

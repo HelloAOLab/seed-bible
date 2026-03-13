@@ -2479,9 +2479,7 @@ function SideBar({ panelsNumber }) {
                       height={16}
                       strokeWidth={2}
                       stroke={
-                        showBookmarksFilter
-                          ? "var(--addButtonIcon)"
-                          : "var(--pageTextColor)"
+                        showBookmarksFilter ? "none" : "var(--pageTextColor)"
                       }
                       fill={
                         showBookmarksFilter ? "var(--addButtonIcon)" : "none"
@@ -2547,6 +2545,7 @@ function SideBar({ panelsNumber }) {
           <div className="multiSelectActions">
             <label
               style={{
+                color: "var(--pageTextColor)",
                 display: "flex",
                 "justify-content": "center",
                 "align-items": "center",
@@ -2586,12 +2585,12 @@ function SideBar({ panelsNumber }) {
               >
                 delete
               </span>
-              <span>Delete All</span>
+              <span style={{ color: "var(--pageTextColor)" }}>Delete All</span>
             </div>
-            <div
+            {/* <div
               style={{ background: "#bbc2c2", height: "20px", width: "2px" }}
-            ></div>
-            <div
+            ></div> */}
+            {/* <div
               style={{
                 display: "flex",
                 "justify-content": "center",
@@ -2626,7 +2625,7 @@ function SideBar({ panelsNumber }) {
               >
                 create_new_folder
               </span>
-            </div>
+            </div> */}
           </div>
         )}
         {collapsed && (
@@ -3147,7 +3146,7 @@ export const UserProfile = ({ collapsed }) => {
           // border: `2px solid ${!configBot.tags.staticInst ? colors[colorIndex] : "var(--pageTextColor)"}`,
           padding: 2,
           display: "flex",
-          backgroundColor: "var(--addButtonIcon)",
+          backgroundColor: "var(--profileColor)",
           alignItems: "center",
           justifyContent: "center",
           overflow: "hidden",
@@ -3163,7 +3162,7 @@ export const UserProfile = ({ collapsed }) => {
         ) : (
           <span
             className="material-symbols-outlined"
-            style={{ color: "var(--primaryColor)" }}
+            style={{ color: "white" }}
           >
             person
           </span>

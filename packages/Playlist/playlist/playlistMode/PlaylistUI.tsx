@@ -750,10 +750,18 @@ const Playlist = () => {
                             setCreateOptions(true);
                           }}
                           secondary
+                          style={{ color: "var(--pageTextColor)" }}
                           exClass="create-button show-on-desktop"
                         >
-                          <span class="material-symbols-outlined">add</span>
-                          {t("create")}
+                          <span
+                            class="material-symbols-outlined"
+                            style={{ color: "var(--primaryColor)" }}
+                          >
+                            add
+                          </span>
+                          <p style={{ color: "var(--primaryColor)" }}>
+                            {t("create")}
+                          </p>
                         </Button>
                         <Button
                           onClick={() => {

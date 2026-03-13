@@ -9,6 +9,7 @@ import {
   BookMarkIcon,
   HighlightIcon,
 } from "app.components.icons";
+
 import { getStyleOf } from "app.styles.styler";
 
 export function VerseToolbar({
@@ -259,6 +260,24 @@ export function VerseToolbar({
     color: "#999",
     fontSize: "20px",
     marginLeft: "8px",
+  };
+
+  const itemSettings2 = {
+    display: "flex",
+    flexDirection: "row",
+    gap: "6px",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    width: "100%",
+    color: "var(--pageTextColor)",
+    fontFamily: "Satoshi, system-ui, sans-serif",
+    fontSize: "14px",
+    fontStyle: "normal",
+    fontWeight: "400",
+    lineHeight: "normal",
+    borderRadius: "10px",
+    padding: "6px",
+    cursor: "pointer",
   };
 
   const { color } = GetOrSetVisualInTags(configBot.id);
@@ -942,92 +961,64 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
   }));
 }
 
-const SubOptions = ({ items }) => {
+const SubOptions = ({ items, popupSettings2 }) => {
   return (
-    <div
-      className={"popupSettings2"}
-      style={{
-        maxHeight: "275px",
-        overflowY: "auto",
-        scrollbarWidth: "none",
-      }}
-    >
-      <style>{globalThis.ThemeCSS}</style>
-      <style>
-        {`
-.popupSettings2 {
-  position: relative;
-  width: 215px !important;
-  height: fit-content;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  background: var(--primaryColor) !important;
-  align-items: center;
-  border: 1px solid #1A1A1A;
-  gap: 2px;
-  border-radius: 10px;
-  scrollbar-width: none;
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.15),
-    0 2px 6px rgba(0, 0, 0, 0.1);
-}
+    <>
+      <style>{globalThis?.mainThemeCSS}</style>
 
-        .popupSettings2 .itemSettings2 {
-  display: flex !important;
-  flex-direction: row;
-  gap: 6px;
-  justify-content: start !important;
-  align-items: center;
-  width: 100%;
-  background: rgba(var(--text1), 0.9);
-  color: var(--pageTextColor);
-  font-family: "Satoshi", system-ui, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: normal;
-  border-radius: 10px;
-  padding: 6px;
-  cursor: pointer;
-}
-
-.popupSettings2 .itemSettings2:hover {
-  background: rgba(var(--pageTextColor), 0.3);
-}
-        `}
-      </style>
-      {items.map((item) => {
-        if (item.active === false) return;
-        if (item?.type === "line")
-          return (
-            <div
-              style={{
-                width: "100%",
-                height: "1px",
-                backgroundColor: "#cdcccc3b",
-              }}
-            ></div>
-          );
-        else
-          return (
-            <div
-              onClick={(e: MouseEvent) => {
-                item.onClick(e);
-              }}
-              className={`itemSettings2`}
-              style={{
-                cursor: item?.disabled ? "not-allowed" : "pointer",
-                color: item?.disabled ? "#929292" : "",
-              }}
-            >
-              <div>{item.icon}</div>
-              <div>
-                {typeof item.title === "function" ? item.title() : item.title}
+      <style>{globalAPI?.mainThemeCSS ? globalAPI.mainThemeCSS : ""}</style>
+      <div
+        className={"popupSettings2"}
+        style={{
+          position: "relative",
+          width: "215px",
+          height: "fit-content",
+          padding: "10px",
+          display: "flex",
+          flexDirection: "column",
+          background: "var(--pageBackground)",
+          alignItems: "center",
+          border: "1px solid #1A1A1A",
+          gap: "2px",
+          borderRadius: "10px",
+          scrollbarWidth: "none",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15), 0 2px 6px rgba(0,0,0,0.1)",
+          maxHeight: "275px",
+          overflowY: "auto",
+        }}
+      >
+        {items.map((item) => {
+          if (item.active === false) return;
+          if (item?.type === "line")
+            return (
+              <div
+                style={{
+                  width: "100%",
+                  height: "1px",
+                  backgroundColor: "#cdcccc3b",
+                }}
+              ></div>
+            );
+          else
+            return (
+              <div
+                onClick={(e: MouseEvent) => {
+                  item.onClick(e);
+                }}
+                className={`itemSettings2`}
+                style={{
+                  cursor: item?.disabled ? "not-allowed" : "pointer",
+                  color: item?.disabled ? "#929292" : "",
+                }}
+              >
+                <div>{item.icon}</div>
+                <div>
+                  {typeof item.title === "function" ? item.title() : item.title}
+                </div>
               </div>
-            </div>
-          );
-      })}
-    </div>
+            );
+        })}
+      </div>
+    </>
   );
 };

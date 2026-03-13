@@ -130,6 +130,7 @@ const builtinDefaultTheme = {
   activeTabBorder: "#E07B4C",
   activeTabFill: "#FADDD1",
   simpleTabText: "#333333",
+  profileColor: "#E07B4C",
   inactiveTabText: "#333333",
   // Buttons
   primaryButton: "#E07B4C",
@@ -297,6 +298,7 @@ const defaultThemes = [
       inactiveTabText: "#AAAAAA",
       // Buttons
       primaryButton: "#404040",
+      profileColor: "#FFFFFF50",
       primaryButtonColor: "#FFFFFF",
       primaryButtonBorder: "#5A67D8",
       primaryButtonFill: "#5A67D8",
@@ -362,7 +364,7 @@ const defaultThemes = [
       logoColor: "#FFFFFF",
       accentColor: "#5A67D8",
       // Space selection
-      spaceSelection: "#5A67D8",
+      spaceSelection: "#FFFFFF",
       // Text colors
       text1: "#FFFFFF",
       text2: "#AAAAAA",
@@ -486,6 +488,7 @@ const defaultThemes = [
       spaceNameText: "#4C1D95",
       addButtonBackground: "transparent",
       addButtonIcon: "#E07B4C",
+      profileColor: "#E07B4C",
       selectPanelIcon: "#4C1D95",
       openCloseMenuIcon: "#4C1D95",
       moreIcon: "#6B7280",
@@ -606,6 +609,7 @@ const defaultThemes = [
       activeTabBackground: "#FFFFFF",
       activeTabText: "#064E3B",
       activeTabBorder: "#059669",
+      profileColor: "#E07B4C",
       pageBookBackground: "#FFFFFF",
       activeTabFill: "#05966994",
       simpleTabText: "#6B7280",
@@ -758,6 +762,7 @@ const defaultThemes = [
       themeSideMenu: "#F0F9FF",
       panelBackground: "#E0F2FE",
       // Tab
+      profileColor: "#E07B4C",
       tabSelection: "#0284C7",
       pageBookBackground: "#FFFFFF",
       activeTabBackground: "#FFFFFF",
@@ -920,6 +925,7 @@ const defaultThemes = [
 
       activeTabBackground: "#FFFFFF",
       activeTabText: "#78350F",
+      profileColor: "#E07B4C",
       activeTabBorder: "#D97706",
       activeTabFill: "#D9770694",
       simpleTabText: "#6B7280",
@@ -1597,7 +1603,7 @@ const TabSectionContent = ({
     top: "100%",
     left: 0,
     right: 0,
-    backgroundColor: "var(--panelBackground) !important",
+    backgroundColor: "var(--pageBackground) !important",
     border: "1px solid #E1E3EA",
     borderRadius: 4,
     marginTop: 4,
@@ -2011,7 +2017,7 @@ const ButtonsSectionContent = ({
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
     borderBottom: "1px solid #F0F0F0",
-    color: "var(--panelBackground)",
+    color: "var(--pageTextColor)",
   };
 
   return (
@@ -6195,7 +6201,7 @@ const SettingsUI = () => {
   const toggleCircleStyle = (isOn) => ({
     width: "12px",
     height: "12px",
-    backgroundColor: "white",
+    backgroundColor: "var(--primaryColor)",
     borderRadius: "50%",
     position: "absolute",
     top: "2px",
@@ -6213,7 +6219,7 @@ const SettingsUI = () => {
     width: "100%",
     padding: "12px",
     backgroundColor: "var(--spaceSelection)",
-    color: "white",
+    color: "var(--primaryColor)",
     border: "none",
     borderRadius: "4px",
     fontSize: "14px",
