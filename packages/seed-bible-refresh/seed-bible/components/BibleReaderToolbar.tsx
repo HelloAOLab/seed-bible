@@ -3,7 +3,7 @@ import {
   type BibleReaderToolbarTool,
 } from "seed-bible.managers.BibleToolsManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
-import type { ReaderTab } from "seed-bible.managers.TabsManager";
+import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
 import { useSignal } from "@preact/signals";
 
 const { useEffect } = os.appHooks;
@@ -12,10 +12,11 @@ interface BibleReaderToolbarProps {
   tabs: ReaderTab[];
   selectedTabId: string;
   selectorState: BibleSelectorState;
+  tabsManager: TabsManager;
 }
 
 export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
-  const { tabs, selectedTabId, selectorState } = props;
+  const { tabs, selectedTabId, selectorState, tabsManager } = props;
   const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
   const readingState = selectedTab?.readingState ?? null;
 
@@ -42,12 +43,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const tools: BibleReaderToolbarTool[] = toolsManager.getToolbarTools({
     readingState,
     selectorState,
+    tabs: tabsManager,
   });
 
   const verseToolbarTools: BibleReaderToolbarTool[] =
     toolsManager.getVerseToolbarTools({
       readingState,
       selectorState,
+      tabs: tabsManager,
     });
 
   const hasVerseSelection = readingState.selectedVerses.value.length > 0;

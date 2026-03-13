@@ -225,6 +225,7 @@ export function Main() {
                   : (effectivePanes[0]?.id ?? null)
               }
               selectorState={selectorState}
+              tabsManager={tabsManager}
               addTab={addTab}
               onSelectPane={handleSelectPane}
               onMovePane={movePane}
@@ -245,6 +246,7 @@ export function Main() {
             tabs={tabs.value}
             selectedTabId={selectedTabId.value}
             selectorState={selectorState}
+            tabsManager={tabsManager}
           />
         )}
       </div>

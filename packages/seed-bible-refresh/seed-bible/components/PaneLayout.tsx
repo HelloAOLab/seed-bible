@@ -1,6 +1,7 @@
 import { BibleReader } from "seed-bible.components.BibleReader";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
+import type { TabsManager } from "seed-bible.managers.TabsManager";
 import type { Pane, PaneLayoutId } from "seed-bible.managers.PanesManager";
 import {
   useBibleToolsManager,
@@ -12,16 +13,19 @@ const { useEffect, useRef } = os.appHooks;
 function EmptyPaneToolbar({
   selectorState,
   pane,
+  tabs,
   addTab,
 }: {
   selectorState: BibleSelectorState;
   pane: Pane;
+  tabs: TabsManager;
   addTab: () => { readingState: BibleReadingState };
 }) {
   const toolsManager = useBibleToolsManager();
   const tools: BibleEmptyPaneTool[] = toolsManager.getEmptyPaneTools({
     selectorState,
     currentPane: pane,
+    tabs,
     addTab,
   });
 
@@ -55,6 +59,7 @@ interface PaneLayoutProps {
   layout: PaneLayoutId;
   selectedPaneId: string | null;
   selectorState: BibleSelectorState;
+  tabsManager: TabsManager;
   addTab: () => { readingState: BibleReadingState };
   onSelectPane: (paneId: string) => void;
   onMovePane: (paneId: string, deltaX: number, deltaY: number) => void;
@@ -72,6 +77,7 @@ export function PaneLayout(props: PaneLayoutProps) {
     layout,
     selectedPaneId,
     selectorState,
+    tabsManager,
     addTab,
     onSelectPane,
     onMovePane,
@@ -146,6 +152,7 @@ export function PaneLayout(props: PaneLayoutProps) {
             <EmptyPaneToolbar
               selectorState={selectorState}
               pane={pane}
+              tabs={tabsManager}
               addTab={addTab}
             />
           )}
@@ -214,6 +221,7 @@ export function PaneLayout(props: PaneLayoutProps) {
               <EmptyPaneToolbar
                 selectorState={selectorState}
                 pane={pane}
+                tabs={tabsManager}
                 addTab={addTab}
               />
             )}

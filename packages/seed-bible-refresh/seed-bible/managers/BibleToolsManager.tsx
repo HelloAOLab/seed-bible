@@ -3,6 +3,7 @@ import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import type { Pane } from "seed-bible.managers.PanesManager";
+import type { TabsManager } from "seed-bible.managers.TabsManager";
 import type { BibleSelectorState } from "./BibleSelectorManager";
 
 type BibleToolIcon = () => JSX.Element | VNode;
@@ -17,6 +18,7 @@ export interface BibleTool {
 export interface BibleToolContext {
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
+  tabs: TabsManager;
 }
 
 export interface BibleReaderToolbarTool extends BibleTool {
@@ -46,6 +48,7 @@ export interface ManagedBibleVerseToolbarTool extends BibleTool {
 export interface EmptyPaneToolContext {
   selectorState: BibleSelectorState;
   currentPane: Pane;
+  tabs: TabsManager;
   addTab: () => { readingState: BibleReadingState };
 }
 
