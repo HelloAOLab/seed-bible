@@ -193,7 +193,6 @@ export function SideBarProvider({ children }) {
 
   useLayoutEffect(() => {
     if (popupSettings || popupComponent) {
-      console.log("running pop up setting");
       os.log(themeColors);
       runPopUpSettings({
         ...popupSettings,

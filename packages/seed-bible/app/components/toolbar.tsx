@@ -307,6 +307,12 @@ export function Toolbar() {
                     : navFunctions?.openPrevChapter()
                 }
                 className="toolbar-button"
+                style={{
+                  fontSize: "24px",
+                  borderRadius: "0",
+                  border: "none",
+                  borderRight: "1px solid  var(--toolbarBorder)",
+                }}
               >
                 <span className="material-symbols-outlined">chevron_left</span>
               </button>
@@ -336,12 +342,16 @@ export function Toolbar() {
                   title={tool.label}
                 >
                   {index === draggedIndex ? (
-                    <div className={`toolbar-button placeholder`}></div>
+                    <div
+                      className={`toolbar-button placeholder`}
+                      style={{ border: "none" }}
+                    ></div>
                   ) : (
                     <button
                       className={`toolbar-button ${
                         index === 0 ? "firstToolbarbutton" : ""
                       }`}
+                      style={{ border: "none" }}
                       onMouseDown={() => {
                         hasHeldRef.current = false;
                         holdTimeoutRef.current = setTimeout(() => {
@@ -441,6 +451,12 @@ export function Toolbar() {
                     : navFunctions?.openNextChapter()
                 }
                 className="toolbar-button"
+                style={{
+                  fontSize: "24px",
+                  borderRadius: "0",
+                  border: "none",
+                  borderLeft: "1px solid var(--toolbarBorder)",
+                }}
               >
                 <span className="material-symbols-outlined">chevron_right</span>
               </button>

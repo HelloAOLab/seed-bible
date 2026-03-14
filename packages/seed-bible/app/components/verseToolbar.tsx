@@ -1,4 +1,5 @@
 const { useState, useEffect, useRef, useMemo } = os.appHooks;
+
 import {
   MenuIcon,
   ApologistIcon,
@@ -9,8 +10,8 @@ import {
   BookMarkIcon,
   HighlightIcon,
 } from "app.components.icons";
-
 import { getStyleOf } from "app.styles.styler";
+import { globalAPI } from "app.controller.controllerBuilder";
 
 export function VerseToolbar({
   clickedVersesContext,
@@ -114,7 +115,7 @@ export function VerseToolbar({
     transform: "translateX(-50%)",
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    borderRadius: "12px",
+    borderRadius: "8px",
     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
     padding: "6px 20px",
     zIndex: 1000,
@@ -124,7 +125,9 @@ export function VerseToolbar({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    background: "var(--panelBackground)",
+    background: "var(--pageBackground)",
+    border:
+      "1px solid color-mix(in srgb, var(--toolbarBorder), transparent 20%)",
   };
 
   const headerStyle = {
@@ -223,6 +226,10 @@ export function VerseToolbar({
     color: "#999",
     fontSize: "20px",
     marginLeft: "8px",
+  };
+
+  const popupSettings2 = {
+    background: "Var(--pageBackground)",
   };
 
   const itemSettings2 = {
@@ -364,6 +371,7 @@ export function VerseToolbar({
         width: 100% !important;
         max-width: 100% !important;
         border-radius: 0 !important;
+        border: 1px solid color-mix(in srgb, var(--toolbarBorder), transparent 20%);
         padding: 9px 16px !important;
         height: 64px;
         background: var(--pageBackground) !important;
@@ -440,7 +448,9 @@ export function VerseToolbar({
         font-weight: 400 !important;
         font-size: 14px !important;
     }
-
+        .popupSettings2 {
+        background: var
+        }
             .mobile-action-btn svg {
               width: 24px !important;
               height: 24px !important;
@@ -473,7 +483,7 @@ export function VerseToolbar({
               width: "100%",
               alignItems: "center",
               height: "100%",
-              gap: "1rem",
+              gap: "1.3rem",
             }}
           >
             {showMobileColors ? (
@@ -495,7 +505,10 @@ export function VerseToolbar({
                 >
                   <span
                     className="material-symbols-outlined"
-                    style={{ fontSize: "24px" }}
+                    style={{
+                      fontSize: "24px",
+                      borderRight: "1px solid var(--toolbarBorder)",
+                    }}
                   >
                     chevron_left
                   </span>
@@ -648,7 +661,10 @@ export function VerseToolbar({
               <>
                 {!removeBookMark && (
                   <button className="mobile-action-btn">
-                    <BookMarkIcon style={{ color: "var(--pageTextColor)" }} />
+                    <BookMarkIcon
+                      style={{ color: "var(--pageTextColor)" }}
+                      stroke="var(--pageTextColor)"
+                    />
                     <span>Bookmark</span>
                   </button>
                 )}
@@ -905,32 +921,60 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
   }));
 }
 
-const SubOptions = ({ items, popupSettings2 }) => {
+const SubOptions = ({ items }) => {
   return (
     <>
-      <style>{globalThis?.mainThemeCSS}</style>
-
-      <style>{globalAPI?.mainThemeCSS ? globalAPI.mainThemeCSS : ""}</style>
       <div
         className={"popupSettings2"}
         style={{
-          position: "relative",
-          width: "215px",
-          height: "fit-content",
-          padding: "10px",
-          display: "flex",
-          flexDirection: "column",
-          background: "var(--pageBackground)",
-          alignItems: "center",
-          border: "1px solid #1A1A1A",
-          gap: "2px",
-          borderRadius: "10px",
-          scrollbarWidth: "none",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.15), 0 2px 6px rgba(0,0,0,0.1)",
           maxHeight: "275px",
           overflowY: "auto",
         }}
       >
+        <style>{globalAPI.mainThemeCSS}</style>
+        <style>{`
+          
+.popupSettings2 {
+  position: relative;
+  width: 215px !important;
+  height: fit-content;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  background: var(--pageBackground) !important;
+  align-items: center;
+  gap: 2px;
+  border-radius: 10px;
+  scrollbar-width: none;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.popupSettings2 .itemSettings2 {
+  display: flex !important;
+  flex-direction: row;
+  gap: 6px;
+  justify-content: start !important;
+  align-items: center;
+  width: 100%;
+
+  color: var(--pageTextColor);
+  font-family: "Satoshi", system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  border-radius: 10px;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.popupSettings2 .itemSettings2:hover {
+  background: rgba(var(--text1), 0.3);
+}
+
+          `}</style>
         {items.map((item) => {
           if (item.active === false) return;
           if (item?.type === "line")

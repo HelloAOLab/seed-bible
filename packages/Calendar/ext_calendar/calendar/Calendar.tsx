@@ -310,8 +310,15 @@ const App = () => {
     );
   };
   const getButtonStyle = (type) => ({
-    backgroundColor: selectedTypes.includes(type) ? "#D36433" : "#F2F2F2",
-    color: selectedTypes.includes(type) ? "white" : "black",
+    backgroundColor: selectedTypes.includes(type)
+      ? "var(--addButtonIcon)"
+      : "transparent",
+    color: selectedTypes.includes(type)
+      ? "var(--primaryColor)"
+      : "var(--pageTextColor)",
+    border: selectedTypes.includes(type)
+      ? "none"
+      : "1px solid var(--addButtonIcon)",
   });
 
   const onEventsClick = () => {

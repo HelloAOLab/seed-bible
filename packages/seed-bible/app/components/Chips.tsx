@@ -1,5 +1,4 @@
 const { useState, useRef, useEffect } = os.appHooks;
-
 interface SharePopupProps {
   shareTitle: string;
   shareReference: string;
@@ -54,7 +53,7 @@ const SharePopup = ({
     // },
     {
       name: "X",
-      icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png",
+      icon: "https://static.vecteezy.com/system/resources/previews/027/395/710/original/twitter-brand-new-logo-3-d-with-new-x-shaped-graphic-of-the-world-s-most-popular-social-media-free-png.png",
       share: () =>
         window.open(
           `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`,
@@ -158,7 +157,7 @@ const SharePopup = ({
         <div
           onClick={(e) => e.stopPropagation()}
           style={{
-            background: "#fff",
+            background: "var(--pageBackground)",
             borderRadius: 16,
             padding: "20px 24px",
             maxWidth: 380,
@@ -180,7 +179,7 @@ const SharePopup = ({
                 margin: 0,
                 fontSize: 18,
                 fontWeight: 600,
-                color: "#1a1a1a",
+                color: "var(--pageTextColor)",
               }}
             >
               {popupTitle}
@@ -195,7 +194,7 @@ const SharePopup = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#999",
+                color: "var(--pageTextColor)",
               }}
             >
               <CloseIcon />
@@ -214,7 +213,7 @@ const SharePopup = ({
                 key={p.name}
                 onClick={p.share}
                 style={{
-                  background: "#f5f5f5",
+                  background: "var(--pageBackground)",
                   border: "none",
                   borderRadius: 12,
                   padding: "12px 8px",
@@ -247,7 +246,13 @@ const SharePopup = ({
                     p.svg
                   )}
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 500, color: "#666" }}>
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: "var(--pageTextColor)",
+                  }}
+                >
                   {p.name === "Copy" && copied ? "Copied!" : p.name}
                 </span>
               </button>

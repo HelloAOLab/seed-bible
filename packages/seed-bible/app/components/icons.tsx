@@ -188,7 +188,6 @@ export const BookMarkIcon = (props) => (
   >
     <path
       d="M13 5V19L7 15L1 19V5C1 3.93913 1.42143 2.92172 2.17157 2.17157C2.92172 1.42143 3.93913 1 5 1H9C10.0609 1 11.0783 1.42143 11.8284 2.17157C12.5786 2.92172 13 3.93913 13 5Z"
-      stroke="var(--currentColor)"
       strokeWidth={1}
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -839,13 +838,13 @@ export const SelectionUIIcon = (props) => (
       width="14"
       height="14"
       rx="2"
-      stroke="black"
+      stroke="currentColor"
       strokeWidth="2"
       strokeDasharray="3 3"
     />
 
     {/* Solid selection cursor */}
-    <path d="M11 12L21 16L15 17L17 22Z" fill="black" />
+    <path d="M11 12L21 16L15 17L17 22Z" fill="currentColor" />
   </svg>
 );
 const MenuIcon = ({
@@ -1208,7 +1207,6 @@ const ShareIcon = (props) => (
     />
   </svg>
 );
-
 const LocationIcon = (props) => (
   <svg
     width="16"
@@ -1218,12 +1216,27 @@ const LocationIcon = (props) => (
     xmlns="http://www.w3.org/2000/svg"
     {...props}
   >
+    {/* Outer pin shape */}
     <path
-      d="M8.00225 9.75C8.4841 9.75 8.89585 9.5784 9.2375 9.23525C9.57915 8.8921 9.75 8.4796 9.75 7.99775C9.75 7.5159 9.5784 7.10415 9.23525 6.7625C8.8921 6.42085 8.4796 6.25 7.99775 6.25C7.5159 6.25 7.10415 6.4216 6.7625 6.76475C6.42085 7.1079 6.25 7.5204 6.25 8.00225C6.25 8.4841 6.4216 8.89585 6.76475 9.2375C7.1079 9.57915 7.5204 9.75 8.00225 9.75ZM8 20C5.31665 17.7167 3.3125 15.5958 1.9875 13.6375C0.6625 11.6791 0 9.86665 0 8.2C0 5.7 0.804165 3.70835 2.4125 2.225C4.02085 0.741665 5.88335 0 8 0C10.1166 0 11.9791 0.741665 13.5875 2.225C15.1958 3.70835 16 5.7 16 8.2C16 9.86665 15.3375 11.6791 14.0125 13.6375C12.6875 15.5958 10.6833 17.7167 8 20Z"
-      fill="black"
+      d="M8 1C4.686 1 2 3.686 2 7C2 11.5 8 19 8 19C8 19 14 11.5 14 7C14 3.686 11.314 1 8 1Z"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    {/* Inner circle */}
+    <circle
+      cx="8"
+      cy="7"
+      r="2"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
     />
   </svg>
 );
+
 const BibleIcon = (props) => (
   <svg
     width={24}

@@ -146,6 +146,11 @@ export function Toolbar() {
               <button
                 onClick={() => navFunctions?.openPrevChapter()}
                 className="toolbar-button"
+                style={{
+                  fontSize: "24px",
+                  borderRadius: "0",
+                  border: "1px solid black var(--toolbarBorder)",
+                }}
               >
                 <span className="material-symbols-outlined">chevron_left</span>
               </button>
@@ -206,6 +211,11 @@ export function Toolbar() {
               <button
                 onClick={() => navFunctions?.openNextChapter()}
                 className="toolbar-button"
+                style={{
+                  fontSize: "24px",
+                  borderRadius: "0",
+                  border: "1px solid black var(--toolbarBorder)",
+                }}
               >
                 <span className="material-symbols-outlined">chevron_right</span>
               </button>

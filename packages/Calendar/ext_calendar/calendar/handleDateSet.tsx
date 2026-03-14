@@ -182,19 +182,19 @@ function handleDatesSet({
         addButton.innerHTML = `
                 
           
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--primaryColor)"
                xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
-            <path d="M9.95441 4.16602V15.8327" stroke="white" stroke-width="2"
+            <path d="M9.95441 4.16602V15.8327" stroke="var(--primaryColor)" stroke-width="2"
                   stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M4.12109 10H15.738" stroke="white" stroke-width="2"
+            <path d="M4.12109 10H15.738" stroke="var(--primaryColor)" stroke-width="2"
                   stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <span>Add Event</span> `;
         Object.assign(addButton.style, {
           display: "block",
 
-          backgroundColor: "#D36433",
-          color: "white",
+          backgroundColor: "var(--addButtonIcon)",
+          color: "var(--primaryColor)",
           fontSize: "12px",
           transform: "translateX(10px)",
           fontFamily: '"Inter",sans-serif',
@@ -286,8 +286,8 @@ function handleDatesSet({
              
         <svg width="16" height="16" viewBox="0 0 20 20" fill="none"
              xmlns="http://www.w3.org/2000/svg">
-          <path d="M9.95441 4.16602V15.8327" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M4.12109 10H15.738" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9.95441 4.16602V15.8327" stroke="var(--primaryColor)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4.12109 10H15.738" stroke="var(--primaryColor)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       `;
       if (width >= 550) {

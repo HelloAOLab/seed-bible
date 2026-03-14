@@ -830,7 +830,7 @@ svg:hover {
 }
 
 .e-btn {
-  background-color: #d36433;
+  /* background-color: var(--addButtonIcon); */
 }
 
 .event-and-map {
