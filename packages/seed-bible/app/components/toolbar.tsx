@@ -317,6 +317,7 @@ export function Toolbar() {
                 <span className="material-symbols-outlined">chevron_left</span>
               </button>
             </div>
+            <div className="toolbar-divider" />
             <div
               onClick={() => {
                 setSidebarWidth(280);
@@ -361,9 +362,6 @@ export function Toolbar() {
                         clearTimeout(holdTimeoutRef.current);
                         if (!hasHeldRef.current && tool?.onClick) {
                           tool.onClick();
-                          // EmitData("appClick", {
-                          //   name: `${tool?.pkgName}_package`,
-                          // });
                         }
                         if (isDragging) {
                           setIsDragging(false);
@@ -384,12 +382,16 @@ export function Toolbar() {
                           {tool.icon}
                         </span>
                       )}
+                      {tool.label && (
+                        <span className="toolbar-btn-label">{tool.label}</span>
+                      )}
                     </button>
                   )}
                 </div>
               )
             )}
 
+            <div className="toolbar-divider" />
             <div className="toolbar-item-wrapper rightClick">
               <button
                 onClick={() =>
