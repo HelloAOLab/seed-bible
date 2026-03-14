@@ -54,7 +54,7 @@ const SharePopup = ({
     // },
     {
       name: "X",
-      icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png",
+      icon: "https://pngimg.com/uploads/x_logo/x_logo_PNG14.png",
       share: () =>
         window.open(
           `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`,

@@ -1753,6 +1753,11 @@ function ThePage({
       configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
     ]?.appSettings?.removeBibleStack;
 
+  const removeBookMark =
+    tags?.settingsConfigs?.presets?.[
+      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+    ]?.appSettings?.removeBookMark;
+
   return (
     <>
       <div
@@ -2139,7 +2144,8 @@ function ThePage({
                         </button>
                       </div>
                     </div>
-                    {tab?.id &&
+                    {!removeBookMark &&
+                      tab?.id &&
                       masks?.mobileBookmarks &&
                       Object.values(masks.mobileBookmarks)
                         .flat()
