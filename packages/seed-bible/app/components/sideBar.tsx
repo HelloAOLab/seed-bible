@@ -2551,7 +2551,7 @@ function SideBar({ panelsNumber }) {
         {folders.length > 0 && (
           <div style={{ marginBottom: "10px" }} className={"sidebarLine"}></div>
         )}
-        {multiSelectMode && (
+        {multiSelectMode && !collapsed && (
           <div className="multiSelectActions">
             <label
               style={{
