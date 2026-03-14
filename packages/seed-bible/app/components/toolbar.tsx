@@ -149,6 +149,10 @@ export function Toolbar() {
   }, []);
 
   const moreTools = tools ? tools.filter((t) => t?.active !== false) : [];
+  const mobileBookLogo =
+    tags?.settingsConfigs?.presets?.[
+      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+    ]?.mobileBookLogo;
 
   if (!showToolbar) return <></>;
 
@@ -207,7 +211,10 @@ export function Toolbar() {
             >
               <div className="logo-container">
                 <img
-                  src="https://res.cloudinary.com/dacw0qnpr/image/upload/v1759916122/Seed_Bible_-_All_Logos_2025-25_vvawwg.png"
+                  src={
+                    mobileBookLogo ||
+                    "https://res.cloudinary.com/dacw0qnpr/image/upload/v1759916122/Seed_Bible_-_All_Logos_2025-25_vvawwg.png"
+                  }
                   alt="Seed Bible"
                   className="seed-bible-logo"
                 />
