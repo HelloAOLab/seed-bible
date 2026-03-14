@@ -41,6 +41,11 @@ export function Toolbar() {
   } = useSideBarContext();
 
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  useEffect(() => {
+    os.addBotListener(thisBot, "onMobileScrollDown", (data) => {
+      setShowMoreMenu(false);
+    });
+  }, []);
   const [activeMoreApp, setActiveMoreApp] = useState(null);
   const { setIsDragging, isDragging, setElement } = useMouseMove();
   const {
