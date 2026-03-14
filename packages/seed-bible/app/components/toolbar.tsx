@@ -1,4 +1,5 @@
 import { getStyleOf } from "app.styles.styler";
+import { getSettingsPreset } from "app.components.types";
 const { useEffect, useState, useRef } = os.appHooks;
 
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -40,6 +41,7 @@ export function Toolbar() {
   } = useSideBarContext();
 
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [activeMoreApp, setActiveMoreApp] = useState(null);
   const { setIsDragging, isDragging, setElement } = useMouseMove();
   const {
     activeSpace,
@@ -148,6 +150,8 @@ export function Toolbar() {
   }, []);
 
   const moreTools = tools ? tools.filter((t) => t?.active !== false) : [];
+  const mobileBookLogo =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.mobileBookLogo;
 
   if (!showToolbar) return <></>;
 
@@ -199,17 +203,17 @@ export function Toolbar() {
 
             <div
               onClick={() => {
-                globalThis.setOpenSidebar((prev) => !prev);
-                // if (globalThis.setOpenSidebar) {
-                //   globalThis.setSelectingTranslation &&
-                //     globalThis.setSelectingTranslation(false);
-                // }
+                globalThis.setOpenSidebar(!openSidebar);
+                globalThis.setSelectingTranslation(false);
               }}
               className="mobile-center-logo"
             >
               <div className="logo-container">
                 <img
-                  src="https://res.cloudinary.com/dacw0qnpr/image/upload/v1759916122/Seed_Bible_-_All_Logos_2025-25_vvawwg.png"
+                  src={
+                    mobileBookLogo ||
+                    "https://res.cloudinary.com/dacw0qnpr/image/upload/v1759916122/Seed_Bible_-_All_Logos_2025-25_vvawwg.png"
+                  }
                   alt="Seed Bible"
                   className="seed-bible-logo"
                 />
@@ -219,42 +223,59 @@ export function Toolbar() {
             <div className="more-btn-wrapper">
               {showMoreMenu && (
                 <div className="more-menu-popup">
-                  {moreTools.map((tool, i) => (
-                    <button
-                      key={i}
-                      className="more-menu-item"
-                      onClick={() => {
-                        tool?.onClick?.();
-                        setShowMoreMenu(false);
-                      }}
-                    >
-                      {tool?.isImg ? (
-                        <img
-                          src={tool.icon}
-                          style={{ width: "20px" }}
-                          alt={tool.label}
-                        />
-                      ) : (
-                        <span className="material-symbols-outlined">
-                          {tool?.icon}
+                  {moreTools
+                    .filter((tool) => tool.label !== "Books")
+                    .map((tool, i) => (
+                      <button
+                        key={i}
+                        className="more-menu-item"
+                        onClick={() => {
+                          tool?.onClick?.();
+                          setShowMoreMenu(false);
+                          setActiveMoreApp(tool.label);
+                        }}
+                      >
+                        {tool?.isImg ? (
+                          <img
+                            src={tool.icon}
+                            style={{ width: "20px" }}
+                            alt={tool.label}
+                          />
+                        ) : (
+                          <span className="material-symbols-outlined">
+                            {tool?.icon}
+                          </span>
+                        )}
+                        <span className="more-menu-item-label">
+                          {tool?.label}
                         </span>
-                      )}
-                      <span className="more-menu-item-label">
-                        {tool?.label}
-                      </span>
-                    </button>
-                  ))}
+                      </button>
+                    ))}
                 </div>
               )}
               <button
                 className="mobile-navbar-btn more-btn"
-                title="More"
-                aria-label="More"
-                onClick={() => setShowMoreMenu((prev) => !prev)}
+                title={activeMoreApp ? "Close" : "More"}
+                aria-label={activeMoreApp ? "Close" : "More"}
+                onClick={() => {
+                  if (activeMoreApp) {
+                    (globalThis as any).RemoveApplicationByLabel(activeMoreApp);
+                    (globalThis as any).makingApp = null;
+                    setActiveMoreApp(null);
+                  } else {
+                    setShowMoreMenu((prev) => !prev);
+                  }
+                }}
               >
                 <div className="mobile-btn-content">
-                  <MoreIcon color="var(--text1)" />
-                  <span className="mobile-btn-label">More</span>
+                  {activeMoreApp ? (
+                    <span className="material-symbols-outlined">close</span>
+                  ) : (
+                    <MoreIcon color="var(--text1)" />
+                  )}
+                  <span className="mobile-btn-label">
+                    {activeMoreApp ? "Close" : "More"}
+                  </span>
                 </div>
               </button>
             </div>
@@ -296,6 +317,7 @@ export function Toolbar() {
                 <span className="material-symbols-outlined">chevron_left</span>
               </button>
             </div>
+            <div className="toolbar-divider" />
             <div
               onClick={() => {
                 setSidebarWidth(280);
@@ -340,9 +362,6 @@ export function Toolbar() {
                         clearTimeout(holdTimeoutRef.current);
                         if (!hasHeldRef.current && tool?.onClick) {
                           tool.onClick();
-                          // EmitData("appClick", {
-                          //   name: `${tool?.pkgName}_package`,
-                          // });
                         }
                         if (isDragging) {
                           setIsDragging(false);
@@ -363,12 +382,16 @@ export function Toolbar() {
                           {tool.icon}
                         </span>
                       )}
+                      {tool.label && (
+                        <span className="toolbar-btn-label">{tool.label}</span>
+                      )}
                     </button>
                   )}
                 </div>
               )
             )}
 
+            <div className="toolbar-divider" />
             <div className="toolbar-item-wrapper rightClick">
               <button
                 onClick={() =>

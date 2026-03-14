@@ -5,6 +5,12 @@ import { MenuIcon } from "app.components.icons";
 const G = globalThis as any;
 os.hideLoadingScreen();
 
+const DEV_ENV =
+  configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
+
+G.DEV_ENV = DEV_ENV;
+G.PROD_ENV = !DEV_ENV;
+
 G.MOBILE_VIEWPORT_THRESHOLD = 600;
 G.makingPlaylist = false;
 
@@ -1194,3 +1200,38 @@ G.FloatBarStyle = {
   backgroundColor: "var(--panelBackground)",
   padding: "0.5rem",
 };
+
+G.PlayingPlaylistCheckedItems = {};
+
+const updateCheckedItemsPlayingPlaylist = async (
+  checkedItems: any,
+  id: string
+) => {
+  if (!G.PlayingPlaylistCheckedItems) {
+    G.PlayingPlaylistCheckedItems = {};
+  }
+  if (!G.PlayingPlaylistCheckedItems[id]) {
+    G.PlayingPlaylistCheckedItems[id] = {};
+  }
+  if (!id) {
+    return;
+  }
+  G.PlayingPlaylistCheckedItems[id] = { ...checkedItems };
+  if (authBot?.id) {
+    await os.recordData(
+      authBot.id,
+      "userCheckedItems",
+      { userCheckedItems: { ...G.PlayingPlaylistCheckedItems } },
+      {
+        marker: "userCheckedItems",
+      }
+    );
+  }
+};
+
+const userCheckedItems: any = await os.getData(authBot.id, "userCheckedItems");
+G.PlayingPlaylistCheckedItems = {
+  ...(userCheckedItems?.data?.userCheckedItems || {}),
+};
+
+G.UpdateCheckedItemsPlayingPlaylist = updateCheckedItemsPlayingPlaylist;

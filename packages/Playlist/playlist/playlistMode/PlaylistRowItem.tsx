@@ -437,6 +437,16 @@ const PlaylistRowItem = (props: any) => {
     }
   };
 
+  const openContextMenu = (e: any) => {
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = rect.left; // X position where the element starts (from left of screen)
+    const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
+    G.LastClickX = x;
+    G.LastClickY = y;
+    setShowMoreOptions((p) => !p);
+  };
+
   return (
     <>
       {!!warningMessage && (
@@ -478,20 +488,9 @@ const PlaylistRowItem = (props: any) => {
         className={`playlist ${(isPlayingPLaylist || isPlay) && "playingPlaylist-removeme"} ${id === opendedList ? "opened" : ""}  ${dragOverSet.itemId === id && `dropabble-${dragOverSet.position}`}`}
       >
         <div
-          onContextMenu={(e) => {
+          onClick={(e) => {
             e.preventDefault();
-
-            const rect = e.currentTarget.getBoundingClientRect();
-
-            const x = rect.left; // X position where the element starts (from left of screen)
-            const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
-
-            G.LastClickX = x;
-            G.LastClickY = y;
-            if (onSelectPlaylist) {
-              return;
-            }
-            setShowMoreOptions((p) => !p);
+            openContextMenu(e);
           }}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
@@ -501,11 +500,6 @@ const PlaylistRowItem = (props: any) => {
             width: "100%",
             position: "relative",
             zIndex: "2",
-          }}
-          onClick={() => {
-            if (onSelectPlaylist) {
-              onSelectPlaylist(id);
-            }
           }}
         >
           {selectPlaylist && (
@@ -632,7 +626,7 @@ const PlaylistRowItem = (props: any) => {
                   style={{
                     ...ButtonStyle,
                     fontSize: "1.97rem",
-                    color: "#000000",
+                    color: "var(--secondaryColor)",
                     top: "51%",
                     position: "absolute",
                     right: "0%",
@@ -671,7 +665,6 @@ const PlaylistRowItem = (props: any) => {
                   <span
                     style={{
                       ...ButtonStyle,
-                      color: "#139981",
                     }}
                     onClick={() => {
                       // os.unregisterApp("playing-playlist");
@@ -771,6 +764,7 @@ const PlaylistRowItem = (props: any) => {
             style={{
               ...(getPosition ? getPosition() : { x: 0, y: 0 }),
               width: "206px",
+              overflow: "hidden",
             }}
             className="overlay linked-item-custom"
           >

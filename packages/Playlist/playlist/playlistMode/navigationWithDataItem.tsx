@@ -262,6 +262,7 @@ G.NagiationTimeout = setTimeout(async () => {
     }
     case "verse-grouped":
     case "verse": {
+      console.log(dataToNavigate, "VERSE");
       let bookName = dataToNavigate.additionalInfo.book;
       const chapterNo = dataToNavigate.additionalInfo.chapter;
       const verseData = dataToNavigate.additionalInfo.data;

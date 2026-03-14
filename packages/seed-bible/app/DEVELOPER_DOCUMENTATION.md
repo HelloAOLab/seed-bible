@@ -2805,7 +2805,7 @@ Seed Bible integrates with external services for specific functionality.
 
 Seed Bible uses the **Free Use Bible API** for Scripture content.
 
-- **Base URL:** [bible.helloao.org](https://bible.helloao.org)
+- **Base URL:** [bible.helloao.org](https://vmfnri.helloao.org)
 - **Purpose:** Provides Bible text in multiple translations
 - **Usage:** The `useBibleData` hook fetches Scripture from this API
 - **Caching:** Scripture data is cached per-tab for performance

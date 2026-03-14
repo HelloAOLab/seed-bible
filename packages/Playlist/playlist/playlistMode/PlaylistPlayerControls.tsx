@@ -114,7 +114,9 @@ const PlayerControls = ({ parentId = "default" }) => {
   const [openAttachLink, setOpenAttachLink] = useState(false);
 
   const [checkedItems, setCheckedItems] = useState(
-    G.PPreadingPlanEnabled ? { ...G.PPpastDateEvents } : {}
+    G.PPreadingPlanEnabled
+      ? { ...G.PPpastDateEvents }
+      : { ...(G.PlayingPlaylistCheckedItems?.[G.PlayingPlaylistID] || {}) }
   );
 
   const [currIndex, setCurreIndex] = useState({
@@ -491,7 +493,6 @@ const PlayerControls = ({ parentId = "default" }) => {
     G.SetMediaURL = setMediaURL;
     G.SetTextInfo = setTextInfo;
 
-    G.PlayingPlaylistCheckedItems = checkedItems;
     G.PlayingPlaylists = playlists;
     G.SetPlayingPlaylists = setPlaylists;
     G.CurrentIndexItem = currIndex;
@@ -524,7 +525,6 @@ const PlayerControls = ({ parentId = "default" }) => {
       G.SetVideoSrc = null;
       G.SetTextInfo = null;
       G.SetMediaURL = null;
-      G.PlayingPlaylistCheckedItems = null;
       G.PlayingPlaylists = null;
       G.SetPlayingPlaylists = null;
       G.CurrentIndexItem = null;
@@ -542,6 +542,10 @@ const PlayerControls = ({ parentId = "default" }) => {
       G.EmitData("playlistStopped", {});
     };
   }, []);
+
+  useLayoutEffect(() => {
+    G.UpdateCheckedItemsPlayingPlaylist(checkedItems, G.PlayingPlaylistID);
+  }, [checkedItems]);
 
   const [
     currentPlaylistName,
@@ -769,6 +773,12 @@ const PlayerControls = ({ parentId = "default" }) => {
 
   const isItemLink = outerWebsiteItem[currentItem?.additionalInfo?.type];
 
+  const isMobile =
+    (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
+    G.MOBILE_VIEWPORT_THRESHOLD;
+
+  const GetLabelT = useMemo(() => G.GetLabel, []);
+
   return (
     <>
       <style>{thisBot.tags["Linking.css"]}</style>
@@ -784,7 +794,6 @@ const PlayerControls = ({ parentId = "default" }) => {
             // zIndex: "1001",
             textTransform: "capitalize",
             // padding: "12px",
-            background: "white",
             borderRadius: "4px",
             fontWeight: "600",
             width: "calc(100%)",
@@ -868,12 +877,13 @@ const PlayerControls = ({ parentId = "default" }) => {
                   fontFamily: "DM Sans",
                   height: "12px",
                   color: "var(--pageTextColor)",
+                  minWidth: "max-content",
                 }}
               >
                 {showCurrent
-                  ? "Playing now:"
+                  ? `${t("playingNow")}:`
                   : nextItemName?.content
-                    ? "Playing Next:"
+                    ? `${t("playingNext")}:`
                     : null}
               </p>
               <div style={{ gap: "0.5rem" }} className="align-center">
@@ -904,28 +914,38 @@ const PlayerControls = ({ parentId = "default" }) => {
                     }`}
                   >
                     {nextItemName?.content ? (
-                      <p
-                        style={{
-                          fontSize: "0.75rem",
-                          fontWeight: "600",
-                          display: "flex",
-                          alignItems: "center",
-                          fontFamily: "DM Sans",
-                          margin: "0",
-                          color: "var(--pageTextColor)",
-                        }}
-                      >
-                        {nextItemName?.content
-                          ? `${nextItemName?.content}${nextItemName?.prefix}`.substring(
-                              0,
-                              16
-                            )
-                          : ""}
-                        {`${nextItemName?.content}${nextItemName?.prefix}`
-                          .length > 16
-                          ? "..."
-                          : ""}
-                      </p>
+                      nextItemName?.additionalInfo?.book && isMobile ? (
+                        <GetLabelT
+                          needToShowInMobile={true}
+                          value="discover"
+                          fontSize="0.75rem"
+                          currentOpenedBook={{ book: nextItemName.content }}
+                          widthCompare={isMobile ? 65 : 300}
+                        />
+                      ) : (
+                        <p
+                          style={{
+                            fontSize: "0.75rem",
+                            fontWeight: "600",
+                            display: "flex",
+                            alignItems: "center",
+                            fontFamily: "DM Sans",
+                            margin: "0",
+                            color: "var(--pageTextColor)",
+                          }}
+                        >
+                          {nextItemName?.content
+                            ? `${nextItemName?.content}${nextItemName?.prefix}`.substring(
+                                0,
+                                isMobile ? 9 : 16
+                              )
+                            : ""}
+                          {`${nextItemName?.content}${nextItemName?.prefix}`
+                            .length > (isMobile ? 9 : 16)
+                            ? "..."
+                            : ""}
+                        </p>
+                      )
                     ) : (
                       <p
                         style={{
@@ -934,12 +954,31 @@ const PlayerControls = ({ parentId = "default" }) => {
                           fontWeight: "900",
                           fontFamily: "DM Sans",
                           margin: "0",
+                          minWidth: "max-content",
                         }}
                       >
                         Playlist Ended
                       </p>
                     )}
-                    {!G.ValidTypes[nextItemName?.type] && (
+                    {!G.ValidTypes[nextItemName?.type] &&
+                      !showCurrent &&
+                      !!nextItemName?.type && (
+                        <p
+                          style={{
+                            fontSize: "12px",
+                            fontWeight: "400",
+                            margin: "0",
+                            textTransform: "capitalize",
+                            color: "var(--pageTextColor)",
+                          }}
+                        >
+                          {isMobile
+                            ? nextItemName?.type.substring(0, 10)
+                            : nextItemName?.type}
+                        </p>
+                      )}
+
+                    {!G.ValidTypes[currentItem?.type] && showCurrent && (
                       <p
                         style={{
                           fontSize: "12px",
@@ -949,39 +988,51 @@ const PlayerControls = ({ parentId = "default" }) => {
                           color: "var(--pageTextColor)",
                         }}
                       >
-                        {nextItemName?.type}
+                        {isMobile
+                          ? currentItem?.type.substring(0, 10)
+                          : currentItem?.type}
                       </p>
                     )}
                   </div>
                   <div
-                    style={{ width: "100%" }}
+                    style={{ width: "100%", minWidth: "max-content" }}
                     className={`fade-in-animation overlay-top-left  ${
                       showCurrent ? "show" : ""
                     }`}
                   >
                     {currentItem?.content ? (
-                      <p
-                        style={{
-                          fontSize: "0.75rem",
-                          fontWeight: "600",
-                          display: "flex",
-                          alignItems: "center",
-                          fontFamily: "DM Sans",
-                          margin: "0",
-                          color: "var(--pageTextColor)",
-                        }}
-                      >
-                        {currentItem?.content
-                          ? `${currentItem?.content}${currentItem?.prefix}`.substring(
-                              0,
-                              16
-                            )
-                          : ""}
-                        {`${currentItem?.content}${currentItem?.prefix}`
-                          .length > 16
-                          ? "..."
-                          : ""}
-                      </p>
+                      currentItem.additionalInfo?.book && isMobile ? (
+                        <GetLabelT
+                          needToShowInMobile={true}
+                          fontSize="0.75rem"
+                          value="discover"
+                          currentOpenedBook={{ book: currentItem.content }}
+                          widthCompare={isMobile ? 65 : 300}
+                        />
+                      ) : (
+                        <p
+                          style={{
+                            fontSize: "0.65rem",
+                            fontWeight: "600",
+                            display: "flex",
+                            alignItems: "center",
+                            fontFamily: "DM Sans",
+                            margin: "0",
+                            color: "var(--pageTextColor)",
+                          }}
+                        >
+                          {currentItem?.content
+                            ? `${currentItem?.content}${currentItem?.prefix}`.substring(
+                                0,
+                                isMobile ? 10 : 16
+                              )
+                            : ""}
+                          {`${currentItem?.content}${currentItem?.prefix}`
+                            .length > (isMobile ? 10 : 16)
+                            ? "..."
+                            : ""}
+                        </p>
+                      )
                     ) : (
                       <p
                         style={{
@@ -990,13 +1041,14 @@ const PlayerControls = ({ parentId = "default" }) => {
                           fontWeight: "900",
                           fontFamily: "DM Sans",
                           margin: "0",
+                          minWidth: "max-content",
                         }}
                       >
                         Playlist Ended
                       </p>
                     )}
 
-                    {!G.ValidTypes[currentItem?.type] && (
+                    {!G.ValidTypes[currentItem?.type] && showCurrent && (
                       <p
                         style={{
                           fontSize: "12px",
@@ -1006,7 +1058,9 @@ const PlayerControls = ({ parentId = "default" }) => {
                           textTransform: "capitalize",
                         }}
                       >
-                        {currentItem?.type}
+                        {isMobile
+                          ? currentItem?.type.substring(0, 10)
+                          : currentItem?.type}
                       </p>
                     )}
                   </div>

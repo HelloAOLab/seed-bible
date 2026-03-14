@@ -22,6 +22,7 @@
   "share": "مشاركة",
   "follow": "متابعة",
   "invite": "دعوة",
+  "my": "خاصتي",
   "or": "أو",
   "on": "تشغيل",
   "off": "إيقاف",
@@ -470,6 +471,7 @@
   "makeACopy": "هل تريد عمل نسخة؟",
   "yes": "نعم",
   "no": "لا",
+  "now": "الآن",
   "shareURLCopied": "تم نسخ رابط المشاركة.",
   "playlistShareError": "يمكن مشاركة القائمة فقط في النمط المنشور. جرب التصدير.",
   "unableToCopy": "تعذر نسخ القائمة. حاول مرة أخرى!",
@@ -656,6 +658,9 @@
   "verseTextWithReference": "نص الآية مع المرجع",
   "title": "عنوان",
   "placeholder": "عنصر نائب",
+  "playing": "جاري التشغيل",
+  "playingNow": "جاري التشغيل الآن",
+  "playingNext": "التشغيل التالي",
   "activeState": "الحالة النشطة",
   "inactiveState": "الحالة غير النشطة",
   "inputBackground": "خلفية الإدخال",
@@ -680,5 +685,7 @@
   "pentateuch": "أسفار موسى الخمسة",
   "historical": "تاريخي",
   "poetic": "شعري",
-  "prophetic": "نبوي"
+  "prophetic": "نبوي",
+  "translationSwitchOption": "هل تريد التبديل إلى ترجمة {{translationName}}؟",
+  "chooseAnother": "اختر آخر"
 }

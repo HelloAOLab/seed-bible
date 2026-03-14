@@ -18,7 +18,13 @@ const splitBookAndVerse = (text: string) => {
 };
 
 const GetLabel = (props: any) => {
-  const { value, currentOpenedBook, widthCompare = 176 } = props;
+  const {
+    value,
+    currentOpenedBook,
+    widthCompare = 176,
+    fontSize,
+    needToShowInMobile = false,
+  } = props;
   const containerRef = useRef<any>(null);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -35,7 +41,9 @@ const GetLabel = (props: any) => {
 
     const observer = new ResizeObserver((entries: any) => {
       const width = entries[0].contentRect.width;
-      setIsMobile(width < widthCompare);
+      if (!needToShowInMobile) {
+        setIsMobile(width < widthCompare);
+      }
     });
 
     observer.observe(targetElement);
@@ -44,7 +52,7 @@ const GetLabel = (props: any) => {
   }, []);
 
   return (
-    <span ref={containerRef}>
+    <span ref={containerRef} style={{ fontSize: fontSize ? fontSize : "" }}>
       {value === "discover"
         ? `${
             isMobile ? book : LowerCaseBookMapping[book?.toLocaleLowerCase()]

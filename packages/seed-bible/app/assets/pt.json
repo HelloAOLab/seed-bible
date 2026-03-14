@@ -22,6 +22,7 @@
   "share": "Compartilhar",
   "follow": "Seguir",
   "invite": "Convidar",
+  "my": "Meu",
   "or": "Ou",
   "on": "Ligado",
   "off": "Desligado",
@@ -140,6 +141,9 @@
   "verseTextWithReference": "Texto do versiculo com referencia",
   "title": "Titulo",
   "placeholder": "Espaco reservado",
+  "playing": "Reproduzindo",
+  "playingNow": "Reproduzindo agora",
+  "playingNext": "Reproduzir em seguida",
   "activeState": "Estado ativo",
   "inactiveState": "Estado inativo",
   "inputBackground": "Fundo do campo de entrada",
@@ -540,6 +544,7 @@
   "makeACopy": "Gostaria de fazer uma copia?",
   "yes": "Sim",
   "no": "Nao",
+  "now": "Agora",
   "shareURLCopied": "URL de compartilhamento copiada para a area de transferencia.",
   "playlistShareError": "A playlist so pode ser compartilhada no padrao publicado. Por favor, tente exportar.",
   "unableToCopy": "Nao foi possivel copiar a playlist. Por favor, tente novamente!",
@@ -680,5 +685,7 @@
   "pentateuch": "Pentateuco",
   "historical": "Histórico",
   "poetic": "Poético",
-  "prophetic": "Profético"
+  "prophetic": "Profético",
+  "translationSwitchOption": "Gostaria de mudar para a tradução {{translationName}}?",
+  "chooseAnother": "Escolher outro"
 }

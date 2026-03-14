@@ -22,6 +22,7 @@
   "share": "ኣካፍል",
   "follow": "ተከታተል",
   "invite": "ዓድም",
+  "my": "ናይደይ",
   "or": "ወይ",
   "on": "ኣብርህ",
   "off": "ጥፍእ",
@@ -94,6 +95,9 @@
   "fill": "ምልኣ",
   "title": "ኣርእስቲ",
   "placeholder": "መተኪ ቦታ",
+  "playing": "ይጫወታል",
+  "playingNow": "ሕጂ ይጫወታል",
+  "playingNext": "ዝስዕብ ይጫወታል",
   "activeState": "ንቑሕ ሁነታ",
   "inactiveState": "ዘይንቑሕ ሁነታ",
   "companyName": "ስም ኩባንያ",
@@ -124,6 +128,7 @@
   "done": "ተዛዚሙ",
   "yes": "እወ",
   "no": "ኣይኮነን",
+  "now": "ሕጂ",
   "all": "ኩሉ",
   "file": "ፋይል",
   "headingsAndMediaCannotBeEmbedded": "መስሪያዎች & ማዘጋጃዎች አይተዳደሩም!",
@@ -147,5 +152,7 @@
   "headingAddedToPlaylist": "{{heading}} ናብ ዝርዝር ተወሲዱ",
   "addToPlaylist": "ናብ ዝርዝር ወስኽ",
   "addToNew": "ናብ ሓድሽ ወስኽ",
-  "itemsAddedToPlaylistSuccessfully": "እቃታት ናብ ዝርዝር ብዓወት ተወሲዶም።"
+  "itemsAddedToPlaylistSuccessfully": "እቃታት ናብ ዝርዝር ብዓወት ተወሲዶም።",
+  "translationSwitchOption": "ናብ {{translationName}} ትርጉም ክትቀይር ትደሊ ዶ?",
+  "chooseAnother": "ካልእ ምረጽ"
 }

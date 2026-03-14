@@ -22,6 +22,7 @@
   "share": "共有",
   "follow": "フォロー",
   "invite": "招待",
+  "my": "私の",
   "or": "または",
   "on": "オン",
   "off": "オフ",
@@ -140,6 +141,9 @@
   "verseTextWithReference": "参照付き節テキスト",
   "title": "タイトル",
   "placeholder": "プレースホルダー",
+  "playing": "再生中",
+  "playingNow": "今再生中",
+  "playingNext": "次に再生",
   "activeState": "アクティブ状態",
   "inactiveState": "非アクティブ状態",
   "inputBackground": "入力欄背景",
@@ -540,6 +544,7 @@
   "makeACopy": "コピーを作成しますか？",
   "yes": "はい",
   "no": "いいえ",
+  "now": "今",
   "shareURLCopied": "共有URLがクリップボードにコピーされました。",
   "playlistShareError": "プレイリストは公開パターンでのみ共有できます。エクスポートをお試しください。",
   "unableToCopy": "プレイリストをコピーできません。もう一度お試しください！",
@@ -680,5 +685,7 @@
   "pentateuch": "モーセ五書",
   "historical": "歴史書",
   "poetic": "詩歌書",
-  "prophetic": "預言書"
+  "prophetic": "預言書",
+  "translationSwitchOption": "{{translationName}}の翻訳に切り替えますか？",
+  "chooseAnother": "別のものを選ぶ"
 }

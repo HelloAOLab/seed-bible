@@ -13,9 +13,6 @@ const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
   G.MOBILE_VIEWPORT_THRESHOLD;
 
-const DEV_ENV =
-  configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
-
 // Replaced now with props toggleRemoved cause no need to show like this now use is to show active element
 const toggle = "null";
 
@@ -839,24 +836,25 @@ const PlaylistContentRenderer = (props: any) => {
     : additionalInfo || [];
 
   const isChecked = itemToBeShared.every(
-    (ele: any) => ele.readAlready || checkListData[ele.id]
+    (ele: any) => ele.readAlready || checkListData?.[ele.id]
   );
-  const isGreyout = itemToBeShared.every((ele: any) => oldItemsMap[ele.id]);
+
+  const isGreyout = itemToBeShared.every((ele: any) => oldItemsMap?.[ele.id]);
   const isActive = itemToBeShared.some(
-    (ele: any) => ele.id === activeItemID || activeItemList[ele.id]
+    (ele: any) => ele.id === activeItemID || activeItemList?.[ele.id]
   );
   const allIds = itemToBeShared.map((ele: any) => ele.id);
 
-  const extraClasses = `${(toggle === id || activeItemID === id || activeItemList[id] || isActive) && "current-playing-item"} ${(greyOut || oldItemsMap[id] || isGreyout) && "greyed-out"} ${embedding === data.id ? "embedding-on" : ""} ${dragOverSet.itemId === id && `dropabble-${dragOverSet.position}`}`;
+  const extraClasses = `${(toggle === id || activeItemID === id || activeItemList?.[id] || isActive) && "current-playing-item"} ${(greyOut || oldItemsMap?.[id] || isGreyout) && "greyed-out"} ${embedding === data.id ? "embedding-on" : ""} ${dragOverSet.itemId === id && `dropabble-${dragOverSet.position}`}`;
 
   useLayoutEffect(() => {
     if (!prevAutoOpen.current) {
-      if (activeItemID === id || activeItemList[id] || isActive) {
+      if (activeItemID === id || activeItemList?.[id] || isActive) {
         setOpen(true);
         prevAutoOpen.current = true;
       }
     } else {
-      if (activeItemID !== id || activeItemList[id] || isActive) {
+      if (activeItemID !== id || activeItemList?.[id] || isActive) {
         prevAutoOpen.current = false;
       }
     }
@@ -1215,8 +1213,8 @@ const PlaylistContentRenderer = (props: any) => {
                       disabled={!!embedding}
                       checked={
                         layers
-                          ? !!checkListEmbeded[data.id]
-                          : checkListData[data.id] || data.readAlready
+                          ? !!checkListEmbeded?.[data.id]
+                          : checkListData?.[data.id] || data.readAlready
                       }
                       onClick={() => {
                         const isShiftHold = G?.KEY_HOLD?.["shift"];

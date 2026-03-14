@@ -22,6 +22,7 @@
   "share": "공유",
   "follow": "팔로우",
   "invite": "초대",
+  "my": "내",
   "or": "또는",
   "on": "켜짐",
   "off": "꺼짐",
@@ -94,6 +95,9 @@
   "fill": "채우기",
   "title": "제목",
   "placeholder": "플레이스홀더",
+  "playing": "재생 중",
+  "playingNow": "지금 재생 중",
+  "playingNext": "다음 재생",
   "activeState": "활성 상태",
   "inactiveState": "비활성 상태",
   "companyName": "회사 이름",
@@ -124,6 +128,7 @@
   "done": "완료",
   "yes": "예",
   "no": "아니요",
+  "now": "지금",
   "all": "전체",
   "file": "파일",
   "headingsAndMediaCannotBeEmbedded": "제목과 미디어는 삽입할 수 없습니다!",
@@ -147,5 +152,7 @@
   "headingAddedToPlaylist": "{{heading}}이(가) 재생 목록에 추가되었습니다",
   "addToPlaylist": "재생 목록에 추가",
   "addToNew": "새로 추가",
-  "itemsAddedToPlaylistSuccessfully": "항목이 재생 목록에 성공적으로 추가되었습니다."
+  "itemsAddedToPlaylistSuccessfully": "항목이 재생 목록에 성공적으로 추가되었습니다.",
+  "translationSwitchOption": "{{translationName}} 번역으로 전환하시겠습니까?",
+  "chooseAnother": "다른 것을 선택하세요"
 }

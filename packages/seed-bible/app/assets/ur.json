@@ -22,6 +22,7 @@
   "share": "شیئر کریں",
   "follow": "فالو کریں",
   "invite": "دعوت دیں",
+  "my": "میرا",
   "or": "یا",
   "on": "آن",
   "off": "آف",
@@ -94,6 +95,9 @@
   "fill": "بھریں",
   "title": "عنوان",
   "placeholder": "پلیس ہولڈر",
+  "playing": "چل رہا ہے",
+  "playingNow": "ابھی چل رہا ہے",
+  "playingNext": "اگلا چلے گا",
   "activeState": "فعال حالت",
   "inactiveState": "غیر فعال حالت",
   "companyName": "کمپنی کا نام",
@@ -124,6 +128,7 @@
   "done": "مکمل",
   "yes": "ہاں",
   "no": "نہیں",
+  "now": "اب",
   "all": "سب",
   "file": "فائل",
   "headingsAndMediaCannotBeEmbedded": "عناوین اور میڈیا آنڈر ہوسکتے ہیں!",
@@ -147,5 +152,7 @@
   "headingAddedToPlaylist": "{{heading}} پلے لسٹ میں شامل ہو گیا",
   "addToPlaylist": "پلے لسٹ میں شامل کریں",
   "addToNew": "نئی میں شامل کریں",
-  "itemsAddedToPlaylistSuccessfully": "آئٹمز پلے لسٹ میں کامیابی سے شامل ہو گئے۔"
+  "itemsAddedToPlaylistSuccessfully": "آئٹمز پلے لسٹ میں کامیابی سے شامل ہو گئے۔",
+  "translationSwitchOption": "کیا آپ {{translationName}} ترجمے پر سوئچ کرنا چاہیں گے؟",
+  "chooseAnother": "دوسرا انتخاب کریں"
 }

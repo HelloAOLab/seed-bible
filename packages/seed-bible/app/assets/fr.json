@@ -22,6 +22,7 @@
   "share": "Partager",
   "follow": "Suivre",
   "invite": "Inviter",
+  "my": "Mon",
   "or": "Ou",
   "on": "Activé",
   "off": "Désactivé",
@@ -140,6 +141,9 @@
   "verseTextWithReference": "Texte du verset avec référence",
   "title": "Titre",
   "placeholder": "Texte indicatif",
+  "playing": "Lecture",
+  "playingNow": "En cours de lecture",
+  "playingNext": "Lecture suivante",
   "activeState": "État actif",
   "inactiveState": "État inactif",
   "inputBackground": "Arrière-plan du champ de saisie",
@@ -540,6 +544,7 @@
   "makeACopy": "Voulez-vous faire une copie ?",
   "yes": "Oui",
   "no": "Non",
+  "now": "Maintenant",
   "shareURLCopied": "URL de partage copiée dans le presse-papiers.",
   "playlistShareError": "La playlist ne peut être partagée qu'en mode publié. Veuillez essayer d'exporter.",
   "unableToCopy": "Impossible de copier la playlist. Veuillez réessayer !",
@@ -680,5 +685,7 @@
   "pentateuch": "Pentateuque",
   "historical": "Historique",
   "poetic": "Poétique",
-  "prophetic": "Prophétique"
+  "prophetic": "Prophétique",
+  "translationSwitchOption": "Souhaitez-vous passer à la traduction {{translationName}} ?",
+  "chooseAnother": "Choisir un autre"
 }

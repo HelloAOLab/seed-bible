@@ -166,6 +166,21 @@ export const useDivSpliter = ({
       return old;
     });
   };
+
+  const removeApplicationByLabel = (labelPrefix: string) => {
+    const prefix = labelPrefix?.toUpperCase()?.replace(/\s/g, "_");
+    if (!prefix) return;
+    const suffix = "_PANEL_ID";
+    for (const key of Object.keys(globalThis)) {
+      if (key.startsWith(prefix) && key.endsWith(suffix)) {
+        const appId = (globalThis as any)[key];
+        if (appId) {
+          removeApplicationByID(appId);
+          (globalThis as any)[key] = null;
+        }
+      }
+    }
+  };
   const handleTouchMove = (e) => {
     const touch = e.touches[0];
     if (verticalDragRef.current.isDragging) {
@@ -234,6 +249,7 @@ export const useDivSpliter = ({
     setApps,
     resetApps,
     removeApplicationByID,
+    removeApplicationByLabel,
     replaceApplication,
   };
 };
@@ -437,9 +453,9 @@ export const SplitApp = ({
             position: "absolute",
             right: 0,
             top: 0,
-            width: overlapWidth,
+            width: globalThis.IsMobileNow() ? "100dvw" : overlapWidth,
             height: "100%",
-            transform: overlapVisible ? "translateX(0)" : "translateX(100%)",
+            transform: overlapVisible ? "" : "translateX(100%)",
             transition: "transform 0.3s ease",
             zIndex: 10,
             display: "flex",
@@ -447,28 +463,30 @@ export const SplitApp = ({
           }}
         >
           {/* Drag handle on left edge */}
-          <div
-            style={{
-              width: "6px",
-              cursor: "col-resize",
-              backgroundColor: "transparent",
-              flexShrink: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            onMouseDown={handleOverlapDragDown}
-            onTouchStart={handleOverlapTouchDown}
-          >
+          {!globalThis.IsMobileNow() && (
             <div
               style={{
-                width: "3px",
-                height: "100%",
-                borderRadius: "2px",
-                backgroundColor: "rgba(0,0,0,0.15)",
+                width: "6px",
+                cursor: "col-resize",
+                backgroundColor: "transparent",
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
-            />
-          </div>
+              onMouseDown={handleOverlapDragDown}
+              onTouchStart={handleOverlapTouchDown}
+            >
+              <div
+                style={{
+                  width: "3px",
+                  height: "100%",
+                  borderRadius: "2px",
+                  backgroundColor: "rgba(0,0,0,0.15)",
+                }}
+              />
+            </div>
+          )}
           {/* Overlay panel content — split vertically when multiple */}
           <div
             style={{

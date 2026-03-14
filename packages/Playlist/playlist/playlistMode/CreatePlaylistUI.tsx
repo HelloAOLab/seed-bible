@@ -19,9 +19,6 @@ const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
 G.DEFAULT_UPLOAD_ICON =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/67bba604a31cc7e116124f92179d8fe06317fcf70a3c62f071dff529362ebc25.png";
 
-const DEV_ENV =
-  configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
-
 const startCreatingPlaylist = (name: string, playlist = [], id: string) => {
   G.HISTORYExploreMode = false;
   G[`${id}creatingPlaylistName`] = name;
@@ -1274,62 +1271,64 @@ const CreatePlaylistUI = (props: any) => {
                 </p>
               </Tooltip>
             </div>
-            <div
-              className="more-menu-items"
-              onClick={(e) => e.stopPropagation()}
-            >
+            {false && (
               <div
-                className="align-center"
-                style={{
-                  cursor: "pointer",
-                }}
-                onClick={() => {
-                  if (readingPlan) {
-                    deleteDateData();
-                  }
-                  setReadingPlan((p) => !p);
-                }}
+                className="more-menu-items"
+                onClick={(e) => e.stopPropagation()}
               >
-                {readingPlan ? (
-                  <span
-                    style={{ fontSize: "20px" }}
-                    class="material-symbols-outlined unfollow"
-                  >
-                    check_box
-                  </span>
-                ) : (
-                  <span
-                    style={{ fontSize: "20px" }}
-                    class="material-symbols-outlined unfollow"
-                  >
-                    check_box_outline_blank
-                  </span>
-                )}
-                <label
+                <div
+                  className="align-center"
                   style={{
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    marginLeft: "4px",
+                    cursor: "pointer",
                   }}
-                  for="playlistInclude"
+                  onClick={() => {
+                    if (readingPlan) {
+                      deleteDateData();
+                    }
+                    setReadingPlan((p) => !p);
+                  }}
                 >
-                  {t("readingPlan")}
-                </label>
-              </div>
-              <Tooltip forRight={true} text={t("readingPlanTooltip")}>
-                <p
-                  className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}
-                >
-                  <span
-                    style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow "
+                  {readingPlan ? (
+                    <span
+                      style={{ fontSize: "20px" }}
+                      class="material-symbols-outlined unfollow"
+                    >
+                      check_box
+                    </span>
+                  ) : (
+                    <span
+                      style={{ fontSize: "20px" }}
+                      class="material-symbols-outlined unfollow"
+                    >
+                      check_box_outline_blank
+                    </span>
+                  )}
+                  <label
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      marginLeft: "4px",
+                    }}
+                    for="playlistInclude"
                   >
-                    info
-                  </span>
-                </p>
-              </Tooltip>
-            </div>
+                    {t("readingPlan")}
+                  </label>
+                </div>
+                <Tooltip forRight={true} text={t("readingPlanTooltip")}>
+                  <p
+                    className="what-this center"
+                    style={{ margin: "0 0 0 0.5rem" }}
+                  >
+                    <span
+                      style={{ fontSize: "24px" }}
+                      class="material-symbols-outlined unfollow "
+                    >
+                      info
+                    </span>
+                  </p>
+                </Tooltip>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -1659,7 +1658,6 @@ const CreatePlaylistUI = (props: any) => {
 
             {!itemSelected && !regenrateUI && (
               <AttachLink
-                isDate
                 onDateClick={(date: string = "") => {
                   setRegenrateUI(false);
                   attachDate(date);

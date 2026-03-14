@@ -22,6 +22,7 @@
   "share": "ھەمبەھىرلەش",
   "follow": "ئەگىشىش",
   "invite": "تەكلىپ قىلىش",
+  "my": "مېنىڭ",
   "or": "ياكى",
   "on": "ئېچىش",
   "off": "تاقاش",
@@ -94,6 +95,9 @@
   "fill": "تولدۇرۇش",
   "title": "ماۋزۇ",
   "placeholder": "ئورۇن تۇتقۇچ",
+  "playing": "ئوينىتىلىۋاتىدۇ",
+  "playingNow": "ھازىر ئوينىتىلىۋاتىدۇ",
+  "playingNext": "كېيىنكى ئوينىتىلىدۇ",
   "activeState": "ئاكتىپ ھالەت",
   "inactiveState": "پاسسىپ ھالەت",
   "companyName": "شىركەت نامى",
@@ -124,6 +128,7 @@
   "done": "تاماملاندى",
   "yes": "ھەئە",
   "no": "ياق",
+  "now": "ھازىر",
   "all": "ھەممىسى",
   "file": "ھۆججەت",
   "headingsAndMediaCannotBeEmbedded": "ماۋزۇ ۋە مۇلازىمەتلەر يوقۇلىنىشى بولمايدۇ!",
@@ -147,5 +152,7 @@
   "headingAddedToPlaylist": "{{heading}} تىزىملىككە قوشۇلدى",
   "addToPlaylist": "تىزىملىككە قوشۇش",
   "addToNew": "يېڭىغا قوشۇش",
-  "itemsAddedToPlaylistSuccessfully": "تۈرلەر تىزىملىككە مۇۋاپىق قوشۇلدى."
+  "itemsAddedToPlaylistSuccessfully": "تۈرلەر تىزىملىككە مۇۋاپىق قوشۇلدى.",
+  "translationSwitchOption": "{{translationName}} تەرجىمىسىگە ئالماشتۇرامسىز؟",
+  "chooseAnother": "يەنە بىرنى تاللاڭ"
 }

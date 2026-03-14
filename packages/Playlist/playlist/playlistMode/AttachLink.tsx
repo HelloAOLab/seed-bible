@@ -475,16 +475,15 @@ function SubComponent(props: any) {
   }
 }
 
-const tags = [
-  "TEXT",
-  "RECORDING",
-  "LINK",
-  "FILE_UPLOAD",
-  "PLAYLIST",
-  "SCRIPTURE",
-  "DATE",
-  "TAG",
-];
+const tags = ["SCRIPTURE", "TEXT", "LINK"];
+
+if (DEV_ENV) {
+  tags.push("RECORDING");
+  tags.push("FILE_UPLOAD");
+  tags.push("PLAYLIST");
+  tags.push("DATE");
+  tags.push("TAG");
+}
 
 const WITHOUTLOGIN_TAGS: any = {
   RECORDING: true,

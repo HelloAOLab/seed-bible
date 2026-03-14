@@ -22,6 +22,7 @@
   "share": "اشتراک‌گذاری",
   "follow": "دنبال کردن",
   "invite": "دعوت",
+  "my": "من",
   "or": "یا",
   "on": "روشن",
   "off": "خاموش",
@@ -94,6 +95,9 @@
   "fill": "پر کردن",
   "title": "عنوان",
   "placeholder": "جای‌نگهدار",
+  "playing": "در حال پخش",
+  "playingNow": "الان در حال پخش",
+  "playingNext": "بعدی پخش می‌شود",
   "activeState": "وضعیت فعال",
   "inactiveState": "وضعیت غیرفعال",
   "companyName": "نام شرکت",
@@ -124,6 +128,7 @@
   "done": "انجام شد",
   "yes": "بله",
   "no": "خیر",
+  "now": "اکنون",
   "all": "همه",
   "file": "فایل",
   "headingsAndMediaCannotBeEmbedded": "عناوین و رسانه ها قابل انتقال نیستند!",
@@ -147,5 +152,7 @@
   "headingAddedToPlaylist": "{{heading}} به لیست اضافه شد",
   "addToPlaylist": "افزودن به لیست",
   "addToNew": "افزودن به جدید",
-  "itemsAddedToPlaylistSuccessfully": "آیتم‌ها با موفقیت به لیست اضافه شدند."
+  "itemsAddedToPlaylistSuccessfully": "آیتم‌ها با موفقیت به لیست اضافه شدند.",
+  "translationSwitchOption": "آیا می‌خواهید به ترجمه {{translationName}} تغییر دهید؟",
+  "chooseAnother": "یکی دیگر را انتخاب کنید"
 }

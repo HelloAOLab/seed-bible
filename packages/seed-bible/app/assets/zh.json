@@ -22,6 +22,7 @@
   "share": "分享",
   "follow": "关注",
   "invite": "邀请",
+  "my": "我的",
   "or": "或",
   "on": "开",
   "off": "关",
@@ -140,6 +141,9 @@
   "verseTextWithReference": "经文内容带引用",
   "title": "标题",
   "placeholder": "占位符",
+  "playing": "播放中",
+  "playingNow": "正在播放",
+  "playingNext": "即将播放",
   "activeState": "活动状态",
   "inactiveState": "非活动状态",
   "inputBackground": "输入框背景",
@@ -540,6 +544,7 @@
   "makeACopy": "您想创建副本吗？",
   "yes": "是",
   "no": "否",
+  "now": "现在",
   "shareURLCopied": "分享链接已复制到剪贴板。",
   "playlistShareError": "播放列表只能以已发布的形式分享。请尝试导出。",
   "unableToCopy": "无法复制播放列表，请重试！",
@@ -680,5 +685,7 @@
   "pentateuch": "摩西五经",
   "historical": "历史书",
   "poetic": "诗歌智慧书",
-  "prophetic": "先知书"
+  "prophetic": "先知书",
+  "translationSwitchOption": "您想切换到{{translationName}}翻译吗？",
+  "chooseAnother": "选择其他"
 }

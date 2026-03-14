@@ -22,6 +22,7 @@
   "share": "አጋራ",
   "follow": "ተከተል",
   "invite": "ጋብዝ",
+  "my": "የኔ",
   "or": "ወይም",
   "on": "አብራ",
   "off": "አጥፋ",
@@ -94,6 +95,9 @@
   "fill": "ሙላ",
   "title": "ርዕስ",
   "placeholder": "ቦታ ያዥ",
+  "playing": "በመጫወት ላይ",
+  "playingNow": "አሁን በመጫወት ላይ",
+  "playingNext": "ቀጣይ ይጫወታል",
   "activeState": "ንቁ ሁኔታ",
   "inactiveState": "የተዘጋ ሁኔታ",
   "companyName": "የኩባንያ ስም",
@@ -124,6 +128,7 @@
   "done": "ተጠናቀቀ",
   "yes": "አዎ",
   "no": "አይ",
+  "now": "አሁን",
   "all": "ሁሉም",
   "file": "ፋይል",
   "headingsAndMediaCannotBeEmbedded": "የሚያስደምር መስሪያዎች & ማዘጋጃዎች አይተዳደሩም!",
@@ -147,5 +152,7 @@
   "headingAddedToPlaylist": "{{heading}} ወደ ዝርዝር ታክሏል",
   "addToPlaylist": "ወደ ዝርዝር ጨምር",
   "addToNew": "ወደ አዲስ ጨምር",
-  "itemsAddedToPlaylistSuccessfully": "እቃዎች ወደ ዝርዝር በተሳካ ሁኔታ ታክለዋል።"
+  "itemsAddedToPlaylistSuccessfully": "እቃዎች ወደ ዝርዝር በተሳካ ሁኔታ ታክለዋል።",
+  "translationSwitchOption": "ወደ {{translationName}} ትርጉም መቀየር ይፈልጋሉ?",
+  "chooseAnother": "ሌላ ይምረጡ"
 }

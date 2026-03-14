@@ -22,6 +22,7 @@
   "share": "Shiriki",
   "follow": "Fuata",
   "invite": "Alika",
+  "my": "Yangu",
   "or": "Au",
   "on": "Washa",
   "off": "Zima",
@@ -94,6 +95,9 @@
   "fill": "Jaza",
   "title": "Kichwa",
   "placeholder": "Kishikilia nafasi",
+  "playing": "Inacheza",
+  "playingNow": "Inacheza sasa",
+  "playingNext": "Inayofuata",
   "activeState": "Hali iliyo hai",
   "inactiveState": "Hali isiyo hai",
   "companyName": "Jina la kampuni",
@@ -124,6 +128,7 @@
   "done": "Imekamilika",
   "yes": "Ndiyo",
   "no": "Hapana",
+  "now": "Sasa",
   "all": "Zote",
   "file": "Faili",
   "headingsAndMediaCannotBeEmbedded": "Masharti na media hainaweza kuweka!",
@@ -147,5 +152,7 @@
   "headingAddedToPlaylist": "{{heading}} imeongezwa kwenye orodha",
   "addToPlaylist": "Ongeza kwenye orodha",
   "addToNew": "Ongeza kwenye mpya",
-  "itemsAddedToPlaylistSuccessfully": "Vipengele vimeongezwa kwenye orodha kwa mafanikio."
+  "itemsAddedToPlaylistSuccessfully": "Vipengele vimeongezwa kwenye orodha kwa mafanikio.",
+  "translationSwitchOption": "Je, ungependa kubadili kwenye tafsiri ya {{translationName}}?",
+  "chooseAnother": "Chagua kingine"
 }

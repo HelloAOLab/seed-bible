@@ -22,6 +22,7 @@
   "share": "Paylaş",
   "follow": "Takip et",
   "invite": "Davet et",
+  "my": "Benim",
   "or": "Veya",
   "on": "Açık",
   "off": "Kapalı",
@@ -94,6 +95,9 @@
   "fill": "Dolgu",
   "title": "Başlık",
   "placeholder": "Yer tutucu",
+  "playing": "Oynatılıyor",
+  "playingNow": "Şu an oynatılıyor",
+  "playingNext": "Sırada oynatılacak",
   "activeState": "Aktif durum",
   "inactiveState": "Pasif durum",
   "companyName": "Şirket adı",
@@ -124,6 +128,7 @@
   "done": "Bitti",
   "yes": "Evet",
   "no": "Hayır",
+  "now": "Şimdi",
   "all": "Tümü",
   "file": "Dosya",
   "headingsAndMediaCannotBeEmbedded": "Başlıklar ve medya içeriği gömülemez!",
@@ -147,5 +152,7 @@
   "headingAddedToPlaylist": "{{heading}} listeye eklendi",
   "addToPlaylist": "Listeye ekle",
   "addToNew": "Yeniye ekle",
-  "itemsAddedToPlaylistSuccessfully": "Öğeler başarıyla listeye eklendi."
+  "itemsAddedToPlaylistSuccessfully": "Öğeler başarıyla listeye eklendi.",
+  "translationSwitchOption": "{{translationName}} çevirisine geçmek ister misiniz?",
+  "chooseAnother": "Başka birini seç"
 }

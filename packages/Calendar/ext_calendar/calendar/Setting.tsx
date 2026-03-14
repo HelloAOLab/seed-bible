@@ -17,7 +17,7 @@ const Setting = ({
 }) => {
   const { t, themeColors } = useSideBarContext();
   const handleToggle = () => setOpenSetting((prev) => !prev);
-  const primary = themeColors ? themeColors[1]?.text1 : "#1A1A1A";
+  const primary = themeColors ? themeColors[1]?.pageTextColor : "#1A1A1A";
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -56,8 +56,8 @@ const Setting = ({
         alignItems: "start",
         right: "0",
         fontSize: "12px",
-        backgroundColor: "var(--primaryColor)",
-        color: "var(--text1)",
+        background: "var(--primaryColor)",
+        color: "var(--pageTextColor)",
         border: "1px solid #1A1A1A",
         borderRadius: "6px",
         boxShadow: "0px 4px 8px rgba(0,0,0,0.5)",
@@ -83,7 +83,6 @@ const Setting = ({
             display: "flex",
             alignItems: "center",
             gap: "5px",
-            color: "var(--text1)",
           }}
         >
           <svg
@@ -115,7 +114,14 @@ const Setting = ({
           }
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
         >
-          <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              color: "var(--pageTextColor)",
+            }}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="15"
@@ -147,7 +153,14 @@ const Setting = ({
         }
         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
       >
-        <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            color: "var(--pageTextColor)",
+          }}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="15"
@@ -175,7 +188,14 @@ const Setting = ({
         }
         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
       >
-        <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            color: "var(--pageTextColor)",
+          }}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="15"
@@ -205,7 +225,14 @@ const Setting = ({
         }
         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
       >
-        <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            color: "var(--pageTextColor)",
+          }}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="15"
@@ -234,7 +261,14 @@ const Setting = ({
         }
         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
       >
-        <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            color: "var(--pageTextColor) ",
+          }}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="15"

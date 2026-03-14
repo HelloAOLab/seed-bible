@@ -22,6 +22,7 @@
   "share": "Chia sẻ",
   "follow": "Theo dõi",
   "invite": "Mời",
+  "my": "Của tôi",
   "or": "Hoặc",
   "on": "Bật",
   "off": "Tắt",
@@ -94,6 +95,9 @@
   "fill": "Tô",
   "title": "Tiêu đề",
   "placeholder": "Giữ chỗ",
+  "playing": "Đang phát",
+  "playingNow": "Đang phát bây giờ",
+  "playingNext": "Phát tiếp theo",
   "activeState": "Trạng thái hoạt động",
   "inactiveState": "Trạng thái không hoạt động",
   "companyName": "Tên công ty",
@@ -124,6 +128,7 @@
   "done": "Hoàn tất",
   "yes": "Có",
   "no": "Không",
+  "now": "Bây giờ",
   "all": "Tất cả",
   "file": "Tệp",
   "headingsAndMediaCannotBeEmbedded": "Tiêu đề và media không thể được nhúng!",
@@ -147,5 +152,7 @@
   "headingAddedToPlaylist": "{{heading}} đã được thêm vào danh sách phát",
   "addToPlaylist": "Thêm vào danh sách phát",
   "addToNew": "Thêm vào mới",
-  "itemsAddedToPlaylistSuccessfully": "Đã thêm mục vào danh sách phát thành công."
+  "itemsAddedToPlaylistSuccessfully": "Đã thêm mục vào danh sách phát thành công.",
+  "translationSwitchOption": "Bạn có muốn chuyển sang bản dịch {{translationName}} không?",
+  "chooseAnother": "Chọn cái khác"
 }

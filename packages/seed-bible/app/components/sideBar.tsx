@@ -25,7 +25,7 @@ import {
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useSideBarContext } from "app.hooks.sideBar";
 import SurroundingDivs from "app.components.surroundingDivs";
-import { TabOptions } from "app.components.types";
+import { TabOptions, getSettingsPreset } from "app.components.types";
 import { FolderIcon, OpenFolderIcon } from "app.components.icons";
 import {
   ImportSpaceModal,
@@ -50,13 +50,11 @@ const { useState, useRef, useEffect, useMemo } = os.appHooks;
 
 const LOCAL_ENV = !configBot.tags.pattern;
 const removeBookMark =
-  tags?.settingsConfigs?.presets?.[
-    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-  ]?.appSettings?.removeBookMark;
+  tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+    ?.removeBookMark;
 const removeAddSession =
-  tags?.settingsConfigs?.presets?.[
-    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-  ]?.appSettings?.removeAddSession;
+  tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+    ?.removeAddSession;
 
 const CircleCounter = ({ data, book, chapter }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -388,9 +386,8 @@ function Tab({
     tabsIcons,
   } = useTabsContext();
   const removeEditMode =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.removeEditMode;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeEditMode;
   const OPTIONS = (tab) => ({
     type: "normal",
     items: [
@@ -850,9 +847,8 @@ function SideBar({ panelsNumber }) {
     sharedTab,
   } = useTabsContext();
   const hidePanels =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.disablePanels;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.disablePanels;
   globalThis.AddTab = addTab;
   const { screens, setScreens, fullScreen, setFullScreen, ReSeed, setReSeed } =
     useBibleContext();
@@ -871,6 +867,9 @@ function SideBar({ panelsNumber }) {
     () => masks.mobileBookmarks || { "My bookmarks": [] }
   );
   const [showBookmarksFilter, setShowBookmarksFilter] = useState(false);
+  const [desktopExpandedCategories, setDesktopExpandedCategories] = useState<
+    Record<string, boolean>
+  >({});
   const [showBookmarkModal, setShowBookmarkModal] = useState(false);
   const [showNewCategoryModal, setShowNewCategoryModal] = useState(false);
   const [selectedTabForBookmark, setSelectedTabForBookmark] = useState<
@@ -909,6 +908,9 @@ function SideBar({ panelsNumber }) {
       setTagMask(thisBot, "mobileBookmarks", updated, "local");
       return updated;
     });
+    // Auto-enable bookmarks view and expand the category so the user sees it
+    setShowBookmarksFilter(true);
+    setDesktopExpandedCategories((prev) => ({ ...prev, [category]: true }));
     setShowBookmarkModal(false);
     setSelectedTabForBookmark(null);
   };
@@ -1160,7 +1162,7 @@ function SideBar({ panelsNumber }) {
           style={{
             textAlign: "left",
             marginBottom: "10px",
-            color: themeColors ? themeColors[1].text1 : "#1A1A1A",
+            color: themeColors ? themeColors[1].pageTextColor : "#1A1A1A",
             "font-family": "'Satoshi', system-ui, sans-serif",
             "font-size": "16px",
             "font-style": "normal",
@@ -1253,9 +1255,8 @@ function SideBar({ panelsNumber }) {
     </svg>
   );
   const removeJoinSession =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.removeJoinSession || false;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeJoinSession || false;
 
   const MenuOptions = {
     type: "normal",
@@ -1513,8 +1514,7 @@ function SideBar({ panelsNumber }) {
 
   const { moveMultipleTabs } = useTabsContext();
   const holdTimeout = useRef({ time: null, clicked: null });
-  const activePreset =
-    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full";
+  const activePreset = getSettingsPreset();
   const clientSite =
     tags?.settingsConfigs?.presets?.[activePreset]?.clientBranding?.clientSite;
   const clientName =
@@ -1619,7 +1619,7 @@ function SideBar({ panelsNumber }) {
       <>
         <div className="mobile-sidebar-overlay">
           <div className="mobile-sidebar-header">
-            <h2>Tabs & Folders</h2>
+            <h2>Tabs</h2>
             <div className="mobile-header-actions">
               {/* <span
                 className="mobile-header-icon"
@@ -2099,6 +2099,8 @@ function SideBar({ panelsNumber }) {
                   <>
                     {Object.keys(bookmarks).map((cat) => (
                       <label key={cat} className="category-item">
+                        <span>{cat}</span>
+
                         <input
                           type="radio"
                           name="bookmarkCat"
@@ -2106,7 +2108,6 @@ function SideBar({ panelsNumber }) {
                           checked={selectedCategory === cat}
                           onChange={() => setSelectedCategory(cat)}
                         />
-                        <span>{cat}</span>
                       </label>
                     ))}
                     <div
@@ -2364,7 +2365,7 @@ function SideBar({ panelsNumber }) {
                 <span
                   style={{
                     paddingTop: customScreens?.value >= 2 ? "3px" : "0px",
-                    color: "var(--selectPanelIcon, var(--text1))",
+                    color: "var(--selectPanelIcon, var(--pageTextColor))",
                     display: hidePanels ? "none" : "",
                     height: "22px",
                   }}
@@ -2404,13 +2405,13 @@ function SideBar({ panelsNumber }) {
                   onMouseLeave={() => clearTimeout(globalThis._holdTimeout)}
                 >
                   {panelsNumber <= 1 ? (
-                    <SingleScreenIcon />
+                    <SingleScreenIcon filter="var(--filter-mode)" />
                   ) : panelsNumber === 2 ? (
-                    <DualScreenIcon />
+                    <DualScreenIcon filter="var(--filter-mode)" />
                   ) : panelsNumber === 3 ? (
-                    <ThreeScreenIcon />
+                    <ThreeScreenIcon filter="var(--filter-mode)" />
                   ) : panelsNumber === 4 ? (
-                    <QuadScreenIcon />
+                    <QuadScreenIcon filter="var(--filter-mode)" />
                   ) : null}
                 </span>
                 <span
@@ -2459,13 +2460,15 @@ function SideBar({ panelsNumber }) {
               />
             )}
             <div className="tabsContainer">
-              <span>{t("tabs")}</span>
+              <span style={{ color: "var(--pageTextColor)" }}>
+                {showBookmarksFilter ? `${t("tabs")} & Folders` : t("tabs")}
+              </span>
               <div
                 style={{ display: "flex", alignItems: "center", gap: "5px" }}
               >
                 {!removeBookMark && (
                   <span
-                    className="sidebar-bookmark-filter-btn"
+                    className={`sidebar-bookmark-filter-btn ${showBookmarksFilter ? "activeBM" : "inactiveBM"}`}
                     onClick={() => setShowBookmarksFilter((prev) => !prev)}
                     title={
                       showBookmarksFilter
@@ -2474,15 +2477,16 @@ function SideBar({ panelsNumber }) {
                     }
                   >
                     <BookMarkIcon
+                      width={16}
+                      height={16}
+                      strokeWidth={2}
                       stroke={
                         showBookmarksFilter
-                          ? "var(--selectedSpaceColor)"
-                          : "var(--text1)"
+                          ? "var(--addButtonIcon)"
+                          : "var(--pageTextColor)"
                       }
                       fill={
-                        showBookmarksFilter
-                          ? "var(--selectedSpaceColor)"
-                          : "none"
+                        showBookmarksFilter ? "var(--addButtonIcon)" : "none"
                       }
                     />
                   </span>
@@ -2541,7 +2545,7 @@ function SideBar({ panelsNumber }) {
         {folders.length > 0 && (
           <div style={{ marginBottom: "10px" }} className={"sidebarLine"}></div>
         )}
-        {multiSelectMode && (
+        {multiSelectMode && !collapsed && (
           <div className="multiSelectActions">
             <label
               style={{
@@ -2586,10 +2590,10 @@ function SideBar({ panelsNumber }) {
               </span>
               <span>Delete All</span>
             </div>
-            <div
+            {/* <div
               style={{ background: "#bbc2c2", height: "20px", width: "2px" }}
-            ></div>
-            <div
+            ></div> */}
+            {/* <div
               style={{
                 display: "flex",
                 "justify-content": "center",
@@ -2624,7 +2628,7 @@ function SideBar({ panelsNumber }) {
               >
                 create_new_folder
               </span>
-            </div>
+            </div> */}
           </div>
         )}
         {collapsed && (
@@ -2671,11 +2675,91 @@ function SideBar({ panelsNumber }) {
           onPointerUp={handleMouseUpTab}
           className={collapsed ? "tabs-collapsed" : "tabs"}
         >
+          {/* Bookmark folders (when bookmark filter is active) */}
+          {showBookmarksFilter &&
+            !collapsed &&
+            Object.entries(bookmarks).map(
+              ([categoryName, tabIds]: [string, any]) => (
+                <div key={categoryName} className="desktop-bookmark-category">
+                  <div
+                    className="desktop-bookmark-category-header"
+                    onClick={() =>
+                      setDesktopExpandedCategories((prev) => ({
+                        ...prev,
+                        [categoryName]: !prev[categoryName],
+                      }))
+                    }
+                  >
+                    <span className="desktop-bookmark-icon">
+                      <BookMarkIcon />
+                    </span>
+                    <span className="desktop-category-title">
+                      {categoryName}
+                    </span>
+                    <span
+                      className={`desktop-collapse-icon ${
+                        desktopExpandedCategories[categoryName]
+                          ? "expanded"
+                          : ""
+                      }`}
+                    >
+                      <span className="material-symbols-outlined">
+                        expand_more
+                      </span>
+                    </span>
+                  </div>
+                  {desktopExpandedCategories[categoryName] && (
+                    <div className="desktop-bookmark-items">
+                      {tabIds.length > 0 ? (
+                        tabIds.map((tabId: any) => {
+                          const tab = tabs.find((t: any) => t.id === tabId);
+                          return tab ? (
+                            <Tab
+                              key={tab.id}
+                              el={tab}
+                              index={0}
+                              onlineUsers={onlineUsers}
+                              activeTab={activeTab}
+                              setActiveTab={setActiveTab}
+                              setIsDragging={setIsDragging}
+                              setElement={setElement}
+                              collapsed={collapsed}
+                              editMode={editMode}
+                              setSidebarWidth={setSidebarWidth}
+                              setCollapsed={setCollapsed}
+                              isBookmarked={true}
+                              onBookmarkClick={(tabId: string) => {
+                                handleRemoveBookmark(tabId);
+                              }}
+                            />
+                          ) : null;
+                        })
+                      ) : (
+                        <div
+                          style={{
+                            padding: "8px 16px",
+                            color: "var(--text2)",
+                            fontSize: "13px",
+                          }}
+                        >
+                          No bookmarks in this category
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            )}
+          {/* Divider between bookmark folders and free tabs */}
+          {showBookmarksFilter &&
+            !collapsed &&
+            Object.keys(bookmarks).length > 0 && (
+              <div className="sidebarLine" style={{ margin: "6px 0" }}></div>
+            )}
+          {/* Tabs: always hide bookmarked tabs from the main list (they live inside bookmark folders) */}
           {tabs
             .filter((tab) => !tab.sharedTab)
-            .filter(
-              (tab) => !showBookmarksFilter || bookmarkedTabIds.has(tab.id)
-            )
+            .filter((tab) => !bookmarkedTabIds.has(tab.id))
             .filter((tab) => {
               if (!searchQuery) return true;
               const query = searchQuery.toLowerCase();
@@ -2774,6 +2858,8 @@ function SideBar({ panelsNumber }) {
               <>
                 {Object.keys(bookmarks).map((cat) => (
                   <label key={cat} className="category-item">
+                    <span>{cat}</span>
+
                     <input
                       type="radio"
                       name="bookmarkCatDesktop"
@@ -2781,7 +2867,6 @@ function SideBar({ panelsNumber }) {
                       checked={selectedCategory === cat}
                       onChange={() => setSelectedCategory(cat)}
                     />
-                    <span>{cat}</span>
                   </label>
                 ))}
                 <div
@@ -2899,7 +2984,7 @@ export const SpaceUI = () => {
                 onClick={() => setSideBarMode("settings")}
                 className="material-symbols-outlined"
               >
-                <MobileSettingsIcon />
+                <MobileSettingsIcon filter="var(--filter-mode)" />
               </span>
               <SettingsProfile />
               <UserProfile />
@@ -3017,9 +3102,8 @@ export const SettingsProfile = () => {
     }
   };
   const removeSpaces =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.removeSpaces;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeSpaces;
 
   return (
     <div className="dot">
@@ -3093,9 +3177,8 @@ export const UserProfile = ({ collapsed }) => {
     userData
   );
   const removeAccountOptions =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.removeAccountOptions;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeAccountOptions;
   const Icon = icons[iconIndex];
   return (
     <div
@@ -3121,7 +3204,8 @@ export const UserProfile = ({ collapsed }) => {
                     {
                       icon: <MenuIcon name="logout" />,
                       title: "Sign out",
-                      onClick: () => {
+                      onClick: async () => {
+                        await os.signOut();
                         destroy(authBot);
                         setUserData(null);
                       },
@@ -3140,9 +3224,10 @@ export const UserProfile = ({ collapsed }) => {
           width: 30,
           height: 30,
           borderRadius: "50%",
-          border: `2px solid ${!configBot.tags.staticInst ? colors[colorIndex] : "var(--selectedSpaceColor)"}`,
+          // border: `2px solid ${!configBot.tags.staticInst ? colors[colorIndex] : "var(--pageTextColor)"}`,
           padding: 2,
           display: "flex",
+          backgroundColor: "var(--addButtonIcon)",
           alignItems: "center",
           justifyContent: "center",
           overflow: "hidden",
@@ -3156,7 +3241,12 @@ export const UserProfile = ({ collapsed }) => {
         ) : !configBot.tags.staticInst ? (
           <Icon width={15} height={15} />
         ) : (
-          <span className="material-symbols-outlined">person</span>
+          <span
+            className="material-symbols-outlined"
+            style={{ color: "var(--primaryColor)" }}
+          >
+            person
+          </span>
         )}
       </div>
       {
@@ -3227,15 +3317,24 @@ const sidebarStyles = `
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        padding: 2px;
+        padding: 4px 4px 4px 4px;
         border-radius: 4px;
-        opacity: 0.7;
+       
+        filter: none !important;
         transition: opacity 0.15s, background 0.15s;
     }
+    .inactiveBM {
+    backgorund-color: none;
+        border: 1.5px solid color-mix(in srgb, var(--pageTextColor) 30%, transparent) !important;
+        }
+    .activeBM {
+    background-color: color-mix(in srgb, var(--addButtonIcon) 10%, transparent);
+            border: 1.5px solid color-mix(in srgb, var(--addButtonIcon) 40%, transparent) !important;
+      }
 
     .sidebar-bookmark-filter-btn:hover {
         opacity: 1;
-        background: rgba(0, 0, 0, 0.06);
+     
     }
 
     /* Desktop tab bookmark icon */
@@ -3267,6 +3366,49 @@ const sidebarStyles = `
         background: rgba(0, 0, 0, 0.06);
     }
 
+    /* Desktop bookmark category folders */
+    .desktop-bookmark-category {
+        margin-bottom: 2px;
+    }
+    .desktop-bookmark-category-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        cursor: pointer;
+        border-radius: 6px;
+        user-select: none;
+        font-weight: 500;
+        font-size: 14px;
+        color: var(--pageTextColor);
+    }
+    .desktop-bookmark-category-header:hover {
+        background: rgba(0, 0, 0, 0.04);
+    }
+    .desktop-bookmark-icon {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    .desktop-category-title {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .desktop-collapse-icon {
+        display: flex;
+        align-items: center;
+        transition: transform 0.2s;
+        transform: rotate(-90deg);
+    }
+    .desktop-collapse-icon.expanded {
+        transform: rotate(0deg);
+    }
+    .desktop-bookmark-items {
+        padding-left: 8px;
+    }
+
     /* Desktop bookmark modals */
     .desktop-modal-overlay {
         position: fixed;
@@ -3279,8 +3421,8 @@ const sidebarStyles = `
     }
 
     .desktop-modal {
-        background: var(--panelBackground, #fff);
-        color: var(--text1);
+        background: var(--pageBackground);
+        color: var(--pageTextColor);
         width: 360px;
         border-radius: 12px;
         padding: 24px;
@@ -3293,7 +3435,7 @@ const sidebarStyles = `
         margin: 0 0 16px;
         font-size: 16px;
         font-weight: 700;
-        color: var(--text1);
+        color: var(--pageTextColor);
     }
 
     .desktop-modal input {
@@ -3304,19 +3446,21 @@ const sidebarStyles = `
         font-size: 14px;
         margin-bottom: 16px;
         box-sizing: border-box;
-        color: var(--text1);
-        background: var(--panelBackground, #fff);
+        color: var(--pageTextColor);
+        background: var(--inputBackground, #fff);
     }
 
     .desktop-modal .category-item {
-        display: flex;
-        align-items: center;
-        padding: 10px 12px;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        cursor: pointer;
-        transition: background 0.15s;
+      display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
     }
 
     .desktop-modal .category-item:hover {
@@ -3324,14 +3468,16 @@ const sidebarStyles = `
     }
 
     .desktop-modal .category-item input[type=radio] {
-        margin-right: 10px;
-        cursor: pointer;
+           margin-left: auto;
+    cursor: pointer;
+    width: auto;
     }
 
     .desktop-modal .category-item span {
         flex: 1;
         font-size: 14px;
         color: var(--text1);
+        width: auto;
     }
 
     .desktop-modal .add-new {
@@ -3366,13 +3512,13 @@ const sidebarStyles = `
     }
 
     .desktop-modal .modal-actions .cancel {
-        background: #f0f0f0;
-        color: var(--text1);
+        background: var(--inputBackground);
+        color: var(--pageTextColor);
     }
 
     .desktop-modal .modal-actions .create {
         background: var(--selectedSpaceColor);
-        color: #fff;
+        color: var(--pageBackground);
     }
 `;
 

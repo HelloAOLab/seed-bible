@@ -14,7 +14,7 @@ const Checkbox = (props: any) => {
       >
         {checked ? (
           <span
-            style={{ backgroundColor: "var(--primaryColor)", color: "white" }}
+            style={{ backgroundColor: "var(--secondaryColor)", color: "white" }}
             class="material-symbols-outlined unfollow checked color-inherit"
           >
             check_box
