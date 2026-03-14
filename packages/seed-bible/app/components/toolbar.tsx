@@ -1,4 +1,5 @@
 import { getStyleOf } from "app.styles.styler";
+import { getSettingsPreset } from "app.components.types";
 const { useEffect, useState, useRef } = os.appHooks;
 
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -150,9 +151,7 @@ export function Toolbar() {
 
   const moreTools = tools ? tools.filter((t) => t?.active !== false) : [];
   const mobileBookLogo =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.mobileBookLogo;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.mobileBookLogo;
 
   if (!showToolbar) return <></>;
 
