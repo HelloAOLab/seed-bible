@@ -131,13 +131,13 @@
   height: 40px;
 }
 
-.mobile-navbar-arrow:hover {
+/* .mobile-navbar-arrow:hover {
   background-color: rgba(0, 0, 0, 0.08);
 }
 
 .mobile-navbar-arrow:active {
   background-color: rgba(0, 0, 0, 0.12);
-}
+} */
 
 .mobile-navbar-arrow .material-symbols-outlined {
   font-size: 24px;
