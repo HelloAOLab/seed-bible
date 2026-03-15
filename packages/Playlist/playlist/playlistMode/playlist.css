@@ -1473,6 +1473,10 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   .show-on-desktop {
     display: none !important;
   }
+
+  .show-on-mobile {
+    display: initial !important;
+  }
 }
 
 /* MOBILE STYLES */

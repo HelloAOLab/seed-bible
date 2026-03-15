@@ -40,7 +40,9 @@ export function Toolbar() {
   } = useSideBarContext();
 
   const [showMoreMenu, setShowMoreMenu] = useState(false);
-  const [activeMoreApp, setActiveMoreApp] = useState(null);
+  const [activeMoreApp, setActiveMoreApp] = useState(
+    globalThis.ActiveMoreApp || null
+  );
   const { setIsDragging, isDragging, setElement } = useMouseMove();
   const {
     activeSpace,
@@ -49,6 +51,16 @@ export function Toolbar() {
     activeTab,
     tabs,
   } = useTabsContext();
+
+  // Get ActiveMoreApp and setActiveMoreApp
+  useEffect(() => {
+    globalThis.ActiveMoreApp = activeMoreApp;
+    globalThis.SetActiveMoreApp = setActiveMoreApp;
+    return () => {
+      globalThis.ActiveMoreApp = null;
+      globalThis.SetActiveMoreApp = null;
+    };
+  }, [activeMoreApp]);
 
   // === keep original default-toolbar logic ===
   const [showToolbar, setShowToolbar] = useState(false);
