@@ -10,6 +10,7 @@ import {
   HighlightIcon,
 } from "app.components.icons";
 import { getStyleOf } from "app.styles.styler";
+import { getSettingsPreset } from "app.components.types";
 
 export function VerseToolbar({
   clickedVersesContext,
@@ -106,28 +107,6 @@ export function VerseToolbar({
     };
   }, [isPickingColor, tempColor]);
 
-  const getVerseReference = () => {
-    if (clickedVerses.length === 0) return "";
-    const sorted = [...clickedVerses].sort((a, b) => a - b);
-
-    const groups = [];
-    let start = sorted[0];
-    let end = sorted[0];
-
-    for (let i = 1; i < sorted.length; i++) {
-      if (sorted[i] === end + 1) {
-        end = sorted[i];
-      } else {
-        groups.push(start === end ? `${start}` : `${start}-${end}`);
-        start = sorted[i];
-        end = sorted[i];
-      }
-    }
-    groups.push(start === end ? `${start}` : `${start}-${end}`);
-
-    return `${book} ${chapter}:${groups.join(",")}`;
-  };
-
   const containerStyle = {
     position: "relative",
     bottom: "20px",
@@ -137,7 +116,7 @@ export function VerseToolbar({
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     borderRadius: "12px",
     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
-    padding: "6px 10px",
+    padding: "6px 20px",
     zIndex: 1000,
     animation: "slideUp 0.3s ease-out",
     maxWidth: "95vw",
@@ -154,21 +133,6 @@ export function VerseToolbar({
     gap: "12px",
     width: "max-content",
     maxWidth: "90dvw",
-  };
-
-  const verseRefStyle = {
-    fontSize: "14px",
-    fontWeight: "600",
-    letterSpacing: "0.5px",
-    textTransform: "uppercase",
-    padding: "8px 16px",
-    borderRadius: "8px",
-    color: "var(--text1)",
-    backgroundColor: "var(--panelBackground)",
-    // border: "1px solid #e5e5e5",
-    // boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-    width: "fit-content",
-    // margin: "0 auto 8px auto",
   };
 
   const dividerStyle = {
@@ -313,13 +277,11 @@ export function VerseToolbar({
     );
   }, [clickedVersesContext, activeSpace, spaces]);
   const disableHighlighting =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.pageSettings?.disableHighlighting;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.pageSettings
+      ?.disableHighlighting;
   const removeBookMark =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.removeBookMark;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeBookMark;
 
   return (
     <>
@@ -328,26 +290,7 @@ export function VerseToolbar({
           pointer-events:${globalThis.IsMobileNow() && showVerseToolbar ? "none !important" : ""}
         }
         `}</style>
-      {globalThis.IsMobileNow() && selectionSettings.showSelectedItems && (
-        <>
-          {
-            null /*<div className="verse-ref">
-            <img src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1764875876/Rectangle_11_yzpmpm.svg" />
-          </div>*/
-          }
-          <span
-            className="verse-ref"
-            style={{
-              ...verseRefStyle,
-              padding: "8px 36px",
-              borderRadius: "2px",
-              backgroundColor: "var(--pageBackground)",
-            }}
-          >
-            {getVerseReference()}
-          </span>
-        </>
-      )}
+      {/* verse-ref moved to compact scroll header in thePage.tsx */}
       <div className="verse-toolbar" style={containerStyle}>
         <style>
           {`
@@ -754,9 +697,8 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
     return `${that.book} ${that.chapter}:${groups.join(",")}`;
   };
   const removeAiAgent =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.pageSettings?.removeAiAgent;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.pageSettings
+      ?.removeAiAgent;
 
   const MenuOptions = {
     type: "normal",

@@ -1,4 +1,5 @@
 import { getStyleOf } from "app.styles.styler";
+import { getSettingsPreset } from "app.components.types";
 const { useEffect, useState, useRef } = os.appHooks;
 
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -7,6 +8,8 @@ import SurroundingDivs from "app.components.surroundingDivs";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useTabsContext } from "app.hooks.tabs";
 import { BurgerMenuIcon, MoreIcon, TabsIcon } from "app.components.icons";
+
+const G = globalThis as any;
 
 // Simple, single-toolbar component (no edit layer). Main logic unchanged.
 export function Toolbar() {
@@ -27,7 +30,7 @@ export function Toolbar() {
     setCanvasTools,
     setMapTools,
     showNavArrows,
-  } = useBibleContext();
+  }: any = useBibleContext();
 
   const {
     sidebarMode,
@@ -37,54 +40,59 @@ export function Toolbar() {
     setOpenOnMobile,
     setCollapsed,
     setSideBarMode,
-  } = useSideBarContext();
+  }: any = useSideBarContext();
 
   const [showMoreMenu, setShowMoreMenu] = useState(false);
-  const [activeMoreApp, setActiveMoreApp] = useState(
-    globalThis.ActiveMoreApp || null
-  );
-  const { setIsDragging, isDragging, setElement } = useMouseMove();
+  useEffect(() => {
+    os.addBotListener(thisBot, "onMobileScrollDown", (data) => {
+      setShowMoreMenu(false);
+    });
+  }, []);
+
+  const [activeMoreApp, setActiveMoreApp] = useState(G.ActiveMoreApp || null);
+
+  const { setIsDragging, isDragging, setElement }: any = useMouseMove();
   const {
     activeSpace,
     updateToolsForSpace,
     getToolsForActiveSpace,
     activeTab,
     tabs,
-  } = useTabsContext();
+  }: any = useTabsContext();
 
   // Get ActiveMoreApp and setActiveMoreApp
   useEffect(() => {
-    globalThis.ActiveMoreApp = activeMoreApp;
-    globalThis.SetActiveMoreApp = setActiveMoreApp;
+    G.ActiveMoreApp = activeMoreApp;
+    G.SetActiveMoreApp = setActiveMoreApp;
     return () => {
-      globalThis.ActiveMoreApp = null;
-      globalThis.SetActiveMoreApp = null;
+      G.ActiveMoreApp = null;
+      G.SetActiveMoreApp = null;
     };
   }, [activeMoreApp]);
 
   // === keep original default-toolbar logic ===
   const [showToolbar, setShowToolbar] = useState(false);
-  globalThis.SetShowToolbar = setShowToolbar;
+  G.SetShowToolbar = setShowToolbar;
   // useEffect(() => {
   //   setShowToolbar(!openOnMobile);
   // }, [openOnMobile]);
 
   const TabTools = getToolsForActiveSpace();
-  const setActiveTools = (newTools) =>
+  const setActiveTools = (newTools: any) =>
     updateToolsForSpace(activeSpace, newTools);
 
   const [oldList, setOldList] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
-  const holdTimeoutRef = useRef(null);
+  const holdTimeoutRef = useRef<any>(null);
   const hasHeldRef = useRef(false);
 
   useEffect(() => {
-    globalThis.SetScreens = setScreens;
+    G.SetScreens = setScreens;
   }, [setScreens]);
 
   useEffect(() => () => clearTimeout(holdTimeoutRef.current), []);
 
-  function handleMouseEnter(targetIndex) {
+  function handleMouseEnter(targetIndex: any) {
     if (!isDragging || draggedIndex === null) return;
     if (targetIndex === draggedIndex) return;
 
@@ -117,7 +125,7 @@ export function Toolbar() {
   // Sync tools with active tab type (keeps main logic)
   useEffect(() => {
     if (!activeTab || !tabs) return;
-    const activeTabObj = tabs.find((t) => t.id === activeTab);
+    const activeTabObj = tabs.find((t: any) => t.id === activeTab);
 
     // Check if translation is Arabic/RTL
     const translation = activeTabObj?.data?.translation;
@@ -136,31 +144,33 @@ export function Toolbar() {
 
   // expose setters globally (kept behavior)
   useEffect(() => {
-    globalThis.SetTools = setTools;
-    globalThis.SetCanvasTools = setCanvasTools;
-    globalThis.SetMapTools = setMapTools;
+    G.SetTools = setTools;
+    G.SetCanvasTools = setCanvasTools;
+    G.SetMapTools = setMapTools;
     return () => {
-      globalThis.SetTools = null;
-      globalThis.SetCanvasTools = null;
-      globalThis.SetMapTools = null;
+      G.SetTools = null;
+      G.SetCanvasTools = null;
+      G.SetMapTools = null;
     };
   }, [setTools, setCanvasTools, setMapTools]);
 
   // Disable context menu like before
   useEffect(() => {
-    const handleContextMenu = (e) => e.preventDefault();
+    const handleContextMenu = (e: any) => e.preventDefault();
     window.addEventListener("contextmenu", handleContextMenu);
     os.addBotListener(configBot, "onBotChanged", (that) => {
       if (that.tags.includes("book")) {
-        globalThis.Open(configBot.tags.book, configBot.tags.chapter);
+        G.Open(configBot.tags.book, configBot.tags.chapter);
       } else if (that.tags.includes("chapter")) {
-        globalThis.Open(configBot.tags.book, configBot.tags.chapter);
+        G.Open(configBot.tags.book, configBot.tags.chapter);
       }
     });
     return () => window.removeEventListener("contextmenu", handleContextMenu);
   }, []);
 
-  const moreTools = tools ? tools.filter((t) => t?.active !== false) : [];
+  const moreTools = tools ? tools.filter((t: any) => t?.active !== false) : [];
+  const mobileBookLogo =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.mobileBookLogo;
 
   if (!showToolbar) return <></>;
 
@@ -212,14 +222,17 @@ export function Toolbar() {
 
             <div
               onClick={() => {
-                globalThis.setOpenSidebar(!openSidebar);
-                globalThis.setSelectingTranslation(false);
+                G.setOpenSidebar(!G.openSidebar);
+                G.setSelectingTranslation(false);
               }}
               className="mobile-center-logo"
             >
               <div className="logo-container">
                 <img
-                  src="https://res.cloudinary.com/dacw0qnpr/image/upload/v1759916122/Seed_Bible_-_All_Logos_2025-25_vvawwg.png"
+                  src={
+                    mobileBookLogo ||
+                    "https://res.cloudinary.com/dacw0qnpr/image/upload/v1759916122/Seed_Bible_-_All_Logos_2025-25_vvawwg.png"
+                  }
                   alt="Seed Bible"
                   className="seed-bible-logo"
                 />
@@ -230,8 +243,8 @@ export function Toolbar() {
               {showMoreMenu && (
                 <div className="more-menu-popup">
                   {moreTools
-                    .filter((tool) => tool.label !== "Books")
-                    .map((tool, i) => (
+                    .filter((tool: any) => tool.label !== "Books")
+                    .map((tool: any, i: any) => (
                       <button
                         key={i}
                         className="more-menu-item"
@@ -323,11 +336,12 @@ export function Toolbar() {
                 <span className="material-symbols-outlined">chevron_left</span>
               </button>
             </div>
+            <div className="toolbar-divider" />
             <div
               onClick={() => {
                 setSidebarWidth(280);
                 setOpenOnMobile(true);
-                globalThis[`setOpenSidebar`] && setOpenSidebar(false);
+                G[`setOpenSidebar`] && G.setOpenSidebar(false);
               }}
               className="toolbar-item-wrapper mobile-only"
             >
@@ -339,7 +353,7 @@ export function Toolbar() {
                 <BurgerMenuIcon size={24} color="var(--text1)" />
               </button>
             </div>
-            {tools?.map((tool, index) =>
+            {tools?.map((tool: any, index: any) =>
               tool?.active === false ? null : (
                 <div
                   key={`${tool.icon || "tool"}-${index}`}
@@ -367,9 +381,6 @@ export function Toolbar() {
                         clearTimeout(holdTimeoutRef.current);
                         if (!hasHeldRef.current && tool?.onClick) {
                           tool.onClick();
-                          // EmitData("appClick", {
-                          //   name: `${tool?.pkgName}_package`,
-                          // });
                         }
                         if (isDragging) {
                           setIsDragging(false);
@@ -390,12 +401,16 @@ export function Toolbar() {
                           {tool.icon}
                         </span>
                       )}
+                      {tool.label && (
+                        <span className="toolbar-btn-label">{tool.label}</span>
+                      )}
                     </button>
                   )}
                 </div>
               )
             )}
 
+            <div className="toolbar-divider" />
             <div className="toolbar-item-wrapper rightClick">
               <button
                 onClick={() =>

@@ -54,7 +54,7 @@ const SharePopup = ({
     // },
     {
       name: "X",
-      icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png",
+      icon: "https://pngimg.com/uploads/x_logo/x_logo_PNG14.png",
       share: () =>
         window.open(
           `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`,
@@ -144,7 +144,7 @@ const SharePopup = ({
   return (
     <>
       <div
-        onClick={() => closePopupSettings()}
+        onClick={() => globalThis?.closePopupSettings()}
         style={{
           position: "fixed",
           inset: 0,
@@ -186,7 +186,7 @@ const SharePopup = ({
               {popupTitle}
             </h2>
             <button
-              onClick={() => closePopupSettings()}
+              onClick={() => globalThis?.closePopupSettings()}
               style={{
                 background: "none",
                 border: "none",
@@ -248,7 +248,9 @@ const SharePopup = ({
                   )}
                 </div>
                 <span style={{ fontSize: 11, fontWeight: 500, color: "#666" }}>
-                  {p.name === "Copy" && copied ? "Copied!" : p.name}
+                  {p.name === "Copy" && copied
+                    ? globalThis.t?.("copied") || "Copied!"
+                    : p.name}
                 </span>
               </button>
             ))}
@@ -343,7 +345,7 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
             fontFamily: "Satoshi",
           }}
         >
-          Session QR Code
+          {globalThis.t?.("sessionQRCode") || "Session QR Code"}
         </h2>
 
         <div
@@ -406,7 +408,9 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
             color: "white",
           }}
         >
-          {copied ? "✓ Copied!" : "Copy Session Link"}
+          {copied
+            ? globalThis.t?.("copiedSessionLink") || "✓ Copied!"
+            : globalThis.t?.("copySessionLink") || "Copy Session Link"}
         </button>
       </div>
     </div>

@@ -72,7 +72,7 @@ importers:
         version: 1.3.4
       preact-render-to-string:
         specifier: ^6.6.1
-        version: 6.6.5(preact@10.19.6)
+        version: 6.6.5(preact@10.28.4)
       prompts:
         specifier: ^2.4.2
         version: 2.4.2
@@ -126,8 +126,8 @@ importers:
         specifier: ^30.1.2
         version: 30.2.0(@babel/core@7.28.6)
       casualos:
-        specifier: ^3.10.2
-        version: 3.10.5(@babel/runtime@7.28.6)(ws@8.19.0)
+        specifier: ^4.2.0
+        version: 4.2.0(@babel/runtime@7.28.6)(ws@8.19.0)
       commander:
         specifier: ^14.0.1
         version: 14.0.2
@@ -786,20 +786,38 @@ packages:
   '@casual-simulation/aux-common@3.10.5':
     resolution: {integrity: sha512-UKB/QtU839RWTE/rbWTFKldVTV2Mn6ALguesRpRq316hrQPJ24in6JbFSArtQIVy8sdluz39EHJYJvWaC2Ik+A==}
 
+  '@casual-simulation/aux-common@4.2.0':
+    resolution: {integrity: sha512-wdGIUNbQHbi3c546it1pvmxqPm7BLf2i8Vgtnp95uNOWkeOJzU508RHrpl8yXFvZ9dJydl4aNBfsCCYCpQ8S/w==}
+
   '@casual-simulation/aux-records@3.10.5':
     resolution: {integrity: sha512-piH60+KIwQUY3ag8MIbGYy9gJg4i0K1hQmOuo6+02a0RurWPDtoqKcApmNgmxDU6S6K91u4nbVAAdLKTVg/qow==}
+
+  '@casual-simulation/aux-records@4.2.0':
+    resolution: {integrity: sha512-akaWYDN5cqjoRUYLXAKTa+ScHzFFxcehtPg5hq1xLm/9fVchJ0PLIofot28uXx/P3fcQLCpnF8MLgzI6S4cPpg==}
 
   '@casual-simulation/aux-runtime@3.10.5':
     resolution: {integrity: sha512-nM1fOwT1/xW3qV2DquNVDu0jKeOrurta+8S0uqkEwIAgvJOr2JX6kYPZY7iB6x/u0di/+Pnlqr9y2ZvkOHMvmA==}
 
+  '@casual-simulation/aux-runtime@4.2.0':
+    resolution: {integrity: sha512-SQasrXH16n7yiz8yUbxqVseaqgIVYBzt1ZaP1cam9lsXaK6lc9pY70HyNR2/yoVoprkcLtUxkuP5s4qh9a4B0A==}
+
   '@casual-simulation/aux-vm@3.10.5':
     resolution: {integrity: sha512-kcAEa+sQHEQWtz8Z9U/yyySbRdnrMW+Juukxn34St0GJIkt4ejfv+h776OT2+Lt5wd18UxdMjtogTmclnH3DGg==}
+
+  '@casual-simulation/aux-vm@4.2.0':
+    resolution: {integrity: sha512-XYT6Q1hmTTdep9glot/+S7sRJGXL9biktf8BhtWO4wuaGd5gHNOT0h5vn22B6r3IfxxM7is5ilDHDodRFWu5Mw==}
 
   '@casual-simulation/chalk@3.1.11':
     resolution: {integrity: sha512-cJ2xHpo8N6HWMQ2yAJao+dFmLNMV3vd0uNYFcWa0YxsF26A4LYIpqYxGAM1U2iCTZhJiedP6//3UYvZbcsmHLw==}
 
+  '@casual-simulation/chalk@4.0.0':
+    resolution: {integrity: sha512-a/RroPXchwm3pg3NjCSjosmBb5XS2v++Kvr7CruhWs4LpUFtris7WC6+OnXMMoYdHWPlMIAVU0OYpJcjCKTw9A==}
+
   '@casual-simulation/crypto@3.10.3':
     resolution: {integrity: sha512-Hf6JPClnrKPacZZCgPf6VzF3qLuiNKqwQ584y0stS8TPmBUH1DDwg2c6UQEKPglM2BHLQvIsKMgfCppH52sMUQ==}
+
+  '@casual-simulation/crypto@4.0.5':
+    resolution: {integrity: sha512-pLJP/1LzBM9VV4jNILCtD5kMT6qgAYXCnr031YJIyZFljsLNWW2SZ/uBFiThuyOB2hJnkyd1De/jfBrvxFXKeg==}
 
   '@casual-simulation/engine262@0.0.1-4de2170374e22761996e46eb1362f4496ee57f8f':
     resolution: {integrity: sha512-kRUMP6IEnQd/zg9Zv08BfevOkwesbiZsU3QFo5Y+qijg8SjGEZUYQg9zF/psGdto/QAJPiBeo6LsIdARyAjY+A==}
@@ -812,18 +830,35 @@ packages:
     resolution: {integrity: sha512-6450lbN7UHQugyDzEUsXDKggKogsl9sU/hoZZoKGgx9y+na3jclAzp7BvKK+VjVwMjY31K0XbAXp8iImWy1Drw==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
 
+  '@casual-simulation/expect@4.0.0':
+    resolution: {integrity: sha512-DoTxMd0kgH2Et0NHzF9KLaWhOAAEp1WNKxWw/o6nIhFATy4Uh8D2F3AuqHcKVdYhVT2SednCluIipmt+r+Iw9A==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+
   '@casual-simulation/fast-json-stable-stringify@3.10.3':
     resolution: {integrity: sha512-F3vdm3oePC1ipASGr0yWBWd11jGC1SdDwJloDBUJ6T/fitXhKY9QK/67gXF6rxF7YaxVyvIGpeaLc/TSCdg4aQ==}
+    engines: {node: '>=8'}
+
+  '@casual-simulation/fast-json-stable-stringify@4.0.5':
+    resolution: {integrity: sha512-5AM764XF8NKGt6xDxZ8Vapmo7unJK5vAK65oqc5OsXbSKeqgEeuKMlePuZCJRHZB+ngxgmxjC3Xhvjv2z/IcuQ==}
     engines: {node: '>=8'}
 
   '@casual-simulation/js-interpreter@3.10.3':
     resolution: {integrity: sha512-FkB5q+8YmkYJjMLVXJVkHMqWIeuue4IZ1Og8JOFQ57rWkYz3inAu46o3IyMswCe8slCX35/3DUtZACvc1wFtOw==}
 
+  '@casual-simulation/js-interpreter@4.0.0':
+    resolution: {integrity: sha512-qvSIp4Sp7xIyeo5ZkK965d8p8Y6qPcGdZ5m9ivZAaAGkkk0e+Tp0rDoYRuZFuojeWyjqACdWRawNzP1K1JAvrQ==}
+
   '@casual-simulation/rate-limit-redis@3.4.0':
     resolution: {integrity: sha512-/QBl3xbkaIa5hIXDjCNW5Z5pubiOtY+jXqnG0pyuAe1bF98GqHlHjB8xJnSQCHhXofO6Oq/0DqvqpxFCnixrpg==}
 
+  '@casual-simulation/rate-limit-redis@4.0.0':
+    resolution: {integrity: sha512-7niwm44peOLUHL/RpmbZJtXLLpXvS5M0Vl0xiyVT/h0N7tqtAZpsLF7+UJAgcsOOdeF8cgtXu0QREnSaLeyIsA==}
+
   '@casual-simulation/stacktrace@3.1.11':
     resolution: {integrity: sha512-LUcVn9wlZHVS/VX6egw/jpNn1QSEQHBrl6OVYsB08d5/fg8X7dI8JuGV9wrNPOonSyHzB1hVRRrGDvnJhc+5Bg==}
+
+  '@casual-simulation/stacktrace@4.0.0':
+    resolution: {integrity: sha512-Ro8cVnGelEC0NJbPcN+H+J5cOWkYEFaAuyXBaM4f//axtrjhX8Fm4qqhE1/Wd89bkFQVx2lRWeBeBy0ZiTJufQ==}
 
   '@casual-simulation/three@0.140.3':
     resolution: {integrity: sha512-kAwbTV0UkqR0/IhaEIYqk2yvUVFWy7HcQtsatOuFzn2TDdRxM4OecCUPxOeDgFY8TG30t3hLF+qmALBIhGy4nQ==}
@@ -831,8 +866,14 @@ packages:
   '@casual-simulation/timesync@3.7.0':
     resolution: {integrity: sha512-c1tjAnXgdubboDqt1BCOU3iia+UXotMG+o+5t75spp/Q5L3T/NMJmQpama3QtFxWRifrluWveY0d/EhmQ2z74Q==}
 
+  '@casual-simulation/timesync@4.0.0':
+    resolution: {integrity: sha512-AgiPHu8/0jg/FN/dP+HH1CE3amOWgwZj3AZjuJBSOFGqDLehvoBg3LaRDX7CuHbPpSD9+8vB9/URkXVvPng4Wg==}
+
   '@casual-simulation/undom@3.10.3':
     resolution: {integrity: sha512-SU0kVkjMj1oAwQjuqHA79ScirysV5HimQz9TfoE7jpQT0Bw/g3YAHYsA01SUAIDsUPTCQTD9neScAf634v9dMA==}
+
+  '@casual-simulation/undom@4.0.0':
+    resolution: {integrity: sha512-pS0caGuFTDj2hPZoOxKL2MgAPDvixUndKgNc6WfrF/srd1GM9LJ+yWR6WFI4U3Nhq/kCzDAgi/fpQWf+jU3DIw==}
 
   '@emnapi/core@1.8.1':
     resolution: {integrity: sha512-AvT9QFpxK0Zd8J0jopedNm+w/2fIzvtPKPjqyw9jwvBaReTTqPBk9Hixaz7KbjimP+QNz605/XnjFcDAL2pqBg==}
@@ -1764,6 +1805,11 @@ packages:
   '@sinonjs/fake-timers@13.0.5':
     resolution: {integrity: sha512-36/hTbH2uaWuGVERyC6da9YwGWnzUZXuPro/F2LfsdOsLnCojz/iSH8MxUt/FD2S5XBSVPhmArFUXcpCQ2Hkiw==}
 
+  '@sveltejs/acorn-typescript@1.0.8':
+    resolution: {integrity: sha512-esgN+54+q0NjB0Y/4BomT9samII7jGwNy/2a3wNZbT2A2RpmXsXwUt24LvLhx6jUq2gVk4cWEvcRO6MFQbOfNA==}
+    peerDependencies:
+      acorn: ^8.9.0
+
   '@tiptap/core@3.17.0':
     resolution: {integrity: sha512-jpGwcSdr0WRmLRmQWAYo6DlR2lIoZ7XYq8/slwJvC/4GUbafVzYiyGlJLRxhh/9LYTIz5FUavThFKd4y6OtOQw==}
     peerDependencies:
@@ -2457,8 +2503,8 @@ packages:
   caniuse-lite@1.0.30001766:
     resolution: {integrity: sha512-4C0lfJ0/YPjJQHagaE9x2Elb69CIqEPZeG0anQt9SIvIoOH4a4uaRl73IavyO+0qZh6MDLH//DrXThEYKHkmYA==}
 
-  casualos@3.10.5:
-    resolution: {integrity: sha512-1W1jgAW0l+MYL+jgA6zNxJjUvRioLMbkb88zAgMyvXoblHdvrAko3zVfu44Y6ypGw94BAejT8heZXw4qPU4lug==}
+  casualos@4.2.0:
+    resolution: {integrity: sha512-xcGWOmt6x01l7NsqhM7IlOiuNTu8zKeKCkOlm3TixGoxG+TqFuS2fJXdbFHfzu0SSgyR6sSo4rC+shnPbntttQ==}
     hasBin: true
 
   chalk@4.1.2:
@@ -3442,6 +3488,11 @@ packages:
     engines: {node: '>=4.0.0'}
     hasBin: true
 
+  mime@4.1.0:
+    resolution: {integrity: sha512-X5ju04+cAzsojXKes0B/S4tcYtFAJ6tTMuSPBEn9CPGlrWr8Fiw7qYeLT0XyH80HSoAoqWCaz+MWKh22P7G1cw==}
+    engines: {node: '>=16'}
+    hasBin: true
+
   mimic-fn@2.1.0:
     resolution: {integrity: sha512-OqbOk5oEQeAZ8WXWydlu9HJjz9WVdEIvamMCcXmuqUYjTknH/sqsWvhQ3vgwKFRR1HpjvNBKQ37nbJgYzGqGcg==}
     engines: {node: '>=6'}
@@ -3664,6 +3715,9 @@ packages:
 
   preact@10.19.6:
     resolution: {integrity: sha512-gympg+T2Z1fG1unB8NH29yHJwnEaCH37Z32diPDku316OTnRPeMbiRV9kTrfZpocXjdfnWuFUl/Mj4BHaf6gnw==}
+
+  preact@10.28.4:
+    resolution: {integrity: sha512-uKFfOHWuSNpRFVTnljsCluEFq57OKT+0QdOiQo8XWnQ/pSvg7OpX5eNOejELXJMWy+BwM2nobz0FkvzmnpCNsQ==}
 
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
@@ -4013,6 +4067,9 @@ packages:
 
   text-segmentation@1.0.3:
     resolution: {integrity: sha512-iOiPUo/BGnZ6+54OsWxZidGCsdU8YbE4PSpdPinp7DeMtUJNJBoJ/ouUSTJjHkh1KntHaltHl/gDs2FC4i5+Nw==}
+
+  three@0.182.0:
+    resolution: {integrity: sha512-GbHabT+Irv+ihI1/f5kIIsZ+Ef9Sl5A1Y7imvS5RQjWgtTPfPnZ43JmlYI7NtCRDK9zir20lQpfg8/9Yd02OvQ==}
 
   tigerbeetle-node@0.16.44:
     resolution: {integrity: sha512-D2VD/N7lP53Uea+AY12liUL8NSBmRQgqkLu+e4Q1JJCIdqWkJ37niMdFLepNA3VH2olTM5/krNLzOE4HTr8xFA==}
@@ -5092,6 +5149,39 @@ snapshots:
       yjs: 13.6.8
       zod: 4.1.12
 
+  '@casual-simulation/aux-common@4.2.0':
+    dependencies:
+      '@casual-simulation/crypto': 4.0.5
+      '@casual-simulation/engine262': 0.0.1-4de2170374e22761996e46eb1362f4496ee57f8f
+      '@casual-simulation/error-stack-parser': 2.0.7
+      '@casual-simulation/expect': 4.0.0
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/js-interpreter': 4.0.0
+      '@casual-simulation/stacktrace': 4.0.0
+      '@casual-simulation/timesync': 4.0.0
+      '@opentelemetry/api': 1.9.0
+      '@opentelemetry/resources': 1.30.1(@opentelemetry/api@1.9.0)
+      '@opentelemetry/semantic-conventions': 1.39.0
+      '@tweenjs/tween.js': 18.6.0
+      '@types/estraverse': 5.1.7
+      '@types/uuid': 10.0.0
+      astring: 1.7.5
+      base64-js: 1.5.1
+      es-toolkit: 1.39.10
+      estraverse: 5.3.0
+      expect: 27.3.1
+      hash.js: 1.1.7
+      htm: 3.1.0
+      lib0: 0.2.49
+      lru-cache: 5.1.1
+      luxon: 3.4.4
+      preact: 10.28.4
+      rxjs: 8.0.0-alpha.14
+      three: 0.182.0
+      uuid: 10.0.0
+      yjs: 13.6.8
+      zod: 4.1.12
+
   '@casual-simulation/aux-records@3.10.5(@babel/runtime@7.28.6)(ws@8.19.0)':
     dependencies:
       '@anthropic-ai/sdk': 0.24.3
@@ -5120,6 +5210,48 @@ snapshots:
       openid-client: 5.6.1
       preact: 10.19.6
       preact-render-to-string: 6.6.3(preact@10.19.6)
+      tigerbeetle-node: 0.16.44
+      tweetnacl: 1.0.3
+      typesense: 2.1.0-13(@babel/runtime@7.28.6)
+      uuid: 10.0.0
+      yjs: 13.6.8
+      zod: 4.1.12
+    transitivePeerDependencies:
+      - '@babel/runtime'
+      - bufferutil
+      - debug
+      - encoding
+      - utf-8-validate
+      - ws
+
+  '@casual-simulation/aux-records@4.2.0(@babel/runtime@7.28.6)(ws@8.19.0)':
+    dependencies:
+      '@anthropic-ai/sdk': 0.24.3
+      '@casual-simulation/aux-common': 4.2.0
+      '@casual-simulation/crypto': 4.0.5
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/rate-limit-redis': 4.0.0
+      '@casual-simulation/timesync': 4.0.0
+      '@google/generative-ai': 0.11.3
+      '@libsql/client': 0.15.15
+      '@opentelemetry/api': 1.9.0
+      '@opentelemetry/resources': 1.30.1(@opentelemetry/api@1.9.0)
+      '@opentelemetry/semantic-conventions': 1.39.0
+      '@simplewebauthn/server': 9.0.3
+      '@simplewebauthn/types': 9.0.1
+      axios: 1.7.7
+      base64-js: 1.5.1
+      es-toolkit: 1.39.10
+      hash.js: 1.1.7
+      jose: 5.4.0
+      libsql: 0.5.22
+      livekit-server-sdk: 2.7.2
+      luxon: 3.4.4
+      mime: 2.4.6
+      openai: 4.89.0(ws@8.19.0)(zod@4.1.12)
+      openid-client: 5.6.1
+      preact: 10.28.4
+      preact-render-to-string: 6.6.3(preact@10.28.4)
       tigerbeetle-node: 0.16.44
       tweetnacl: 1.0.3
       typesense: 2.1.0-13(@babel/runtime@7.28.6)
@@ -5180,6 +5312,52 @@ snapshots:
       - utf-8-validate
       - ws
 
+  '@casual-simulation/aux-runtime@4.2.0(@babel/runtime@7.28.6)(ws@8.19.0)':
+    dependencies:
+      '@casual-simulation/aux-common': 4.2.0
+      '@casual-simulation/aux-records': 4.2.0(@babel/runtime@7.28.6)(ws@8.19.0)
+      '@casual-simulation/crypto': 4.0.5
+      '@casual-simulation/engine262': 0.0.1-4de2170374e22761996e46eb1362f4496ee57f8f
+      '@casual-simulation/error-stack-parser': 2.0.7
+      '@casual-simulation/expect': 4.0.0
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/js-interpreter': 4.0.0
+      '@casual-simulation/stacktrace': 4.0.0
+      '@sveltejs/acorn-typescript': 1.0.8(acorn@8.11.3)
+      '@tweenjs/tween.js': 18.6.0
+      '@types/estraverse': 5.1.7
+      '@types/seedrandom': 3.0.8
+      '@types/uuid': 10.0.0
+      acorn: 8.11.3
+      acorn-jsx: 5.3.2(acorn@8.11.3)
+      astring: 1.7.5
+      axios: 1.7.7
+      base64-js: 1.5.1
+      es-toolkit: 1.39.10
+      estraverse: 5.3.0
+      expect: 27.3.1
+      hash.js: 1.1.7
+      htm: 3.1.0
+      lib0: 0.2.49
+      lru-cache: 5.1.1
+      luxon: 3.4.4
+      mime: 2.4.6
+      preact: 10.28.4
+      rxjs: 8.0.0-alpha.14
+      seedrandom: 3.0.5
+      stackframe: 1.3.4
+      three: 0.182.0
+      typesense: 2.0.3(@babel/runtime@7.28.6)
+      uuid: 10.0.0
+      yjs: 13.6.8
+    transitivePeerDependencies:
+      - '@babel/runtime'
+      - bufferutil
+      - debug
+      - encoding
+      - utf-8-validate
+      - ws
+
   '@casual-simulation/aux-vm@3.10.5(@babel/runtime@7.28.6)(ws@8.19.0)':
     dependencies:
       '@casual-simulation/aux-common': 3.10.5
@@ -5206,11 +5384,48 @@ snapshots:
       - utf-8-validate
       - ws
 
+  '@casual-simulation/aux-vm@4.2.0(@babel/runtime@7.28.6)(ws@8.19.0)':
+    dependencies:
+      '@casual-simulation/aux-common': 4.2.0
+      '@casual-simulation/aux-records': 4.2.0(@babel/runtime@7.28.6)(ws@8.19.0)
+      '@casual-simulation/aux-runtime': 4.2.0(@babel/runtime@7.28.6)(ws@8.19.0)
+      '@casual-simulation/crypto': 4.0.5
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/timesync': 4.0.0
+      '@casual-simulation/undom': 4.0.0
+      axios: 1.7.7
+      comlink: 4.3.1
+      es-toolkit: 1.39.10
+      hash.js: 1.1.7
+      htm: 3.1.0
+      luxon: 3.4.4
+      preact: 10.28.4
+      rxjs: 8.0.0-alpha.14
+      uuid: 10.0.0
+    transitivePeerDependencies:
+      - '@babel/runtime'
+      - bufferutil
+      - debug
+      - encoding
+      - utf-8-validate
+      - ws
+
   '@casual-simulation/chalk@3.1.11': {}
+
+  '@casual-simulation/chalk@4.0.0': {}
 
   '@casual-simulation/crypto@3.10.3':
     dependencies:
       '@casual-simulation/fast-json-stable-stringify': 3.10.3(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@types/scrypt-async': 1.3.5
+      base64-js: 1.5.1
+      hash.js: 1.1.7
+      scrypt-js: 3.0.1
+      tweetnacl: 1.0.3
+
+  '@casual-simulation/crypto@4.0.5':
+    dependencies:
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
       '@types/scrypt-async': 1.3.5
       base64-js: 1.5.1
       hash.js: 1.1.7
@@ -5228,7 +5443,14 @@ snapshots:
       '@casual-simulation/chalk': 3.1.11
       '@jest/types': 27.5.1
 
+  '@casual-simulation/expect@4.0.0':
+    dependencies:
+      '@casual-simulation/chalk': 4.0.0
+      '@jest/types': 27.5.1
+
   '@casual-simulation/fast-json-stable-stringify@3.10.3(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)': {}
+
+  '@casual-simulation/fast-json-stable-stringify@4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)': {}
 
   '@casual-simulation/js-interpreter@3.10.3':
     dependencies:
@@ -5237,9 +5459,20 @@ snapshots:
       '@types/estree': 1.0.0
       stackframe: 1.3.4
 
+  '@casual-simulation/js-interpreter@4.0.0':
+    dependencies:
+      '@casual-simulation/engine262': 0.0.1-4de2170374e22761996e46eb1362f4496ee57f8f
+      '@casual-simulation/error-stack-parser': 2.0.7
+      '@types/estree': 1.0.0
+      stackframe: 1.3.4
+
   '@casual-simulation/rate-limit-redis@3.4.0': {}
 
+  '@casual-simulation/rate-limit-redis@4.0.0': {}
+
   '@casual-simulation/stacktrace@3.1.11': {}
+
+  '@casual-simulation/stacktrace@4.0.0': {}
 
   '@casual-simulation/three@0.140.3': {}
 
@@ -5248,7 +5481,14 @@ snapshots:
       es-toolkit: 1.39.10
       rxjs: 8.0.0-alpha.14
 
+  '@casual-simulation/timesync@4.0.0':
+    dependencies:
+      es-toolkit: 1.39.10
+      rxjs: 8.0.0-alpha.14
+
   '@casual-simulation/undom@3.10.3': {}
+
+  '@casual-simulation/undom@4.0.0': {}
 
   '@emnapi/core@1.8.1':
     dependencies:
@@ -6140,6 +6380,10 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 3.0.1
 
+  '@sveltejs/acorn-typescript@1.0.8(acorn@8.11.3)':
+    dependencies:
+      acorn: 8.11.3
+
   '@tiptap/core@3.17.0(@tiptap/pm@3.17.0)':
     dependencies:
       '@tiptap/pm': 3.17.0
@@ -6870,11 +7114,12 @@ snapshots:
 
   caniuse-lite@1.0.30001766: {}
 
-  casualos@3.10.5(@babel/runtime@7.28.6)(ws@8.19.0):
+  casualos@4.2.0(@babel/runtime@7.28.6)(ws@8.19.0):
     dependencies:
-      '@casual-simulation/aux-common': 3.10.5
-      '@casual-simulation/aux-records': 3.10.5(@babel/runtime@7.28.6)(ws@8.19.0)
-      '@casual-simulation/aux-runtime': 3.10.5(@babel/runtime@7.28.6)(ws@8.19.0)
+      '@casual-simulation/aux-common': 4.2.0
+      '@casual-simulation/aux-records': 4.2.0(@babel/runtime@7.28.6)(ws@8.19.0)
+      '@casual-simulation/aux-runtime': 4.2.0(@babel/runtime@7.28.6)(ws@8.19.0)
+      '@casual-simulation/aux-vm': 4.2.0(@babel/runtime@7.28.6)(ws@8.19.0)
       '@octokit/app': 15.1.6
       '@octokit/auth-oauth-device': 7.1.5
       '@octokit/core': 6.1.6
@@ -6882,6 +7127,7 @@ snapshots:
       commander: 12.0.0
       conf: 12.0.0
       esbuild: 0.25.11
+      mime: 4.1.0
       octokit: 4.1.4
       open: 10.1.0
       prompts: 2.4.2
@@ -8120,6 +8366,8 @@ snapshots:
 
   mime@2.4.6: {}
 
+  mime@4.1.0: {}
+
   mimic-fn@2.1.0: {}
 
   mimic-fn@4.0.0: {}
@@ -8323,11 +8571,17 @@ snapshots:
     dependencies:
       preact: 10.19.6
 
-  preact-render-to-string@6.6.5(preact@10.19.6):
+  preact-render-to-string@6.6.3(preact@10.28.4):
     dependencies:
-      preact: 10.19.6
+      preact: 10.28.4
+
+  preact-render-to-string@6.6.5(preact@10.28.4):
+    dependencies:
+      preact: 10.28.4
 
   preact@10.19.6: {}
+
+  preact@10.28.4: {}
 
   prelude-ls@1.2.1: {}
 
@@ -8749,6 +9003,8 @@ snapshots:
   text-segmentation@1.0.3:
     dependencies:
       utrie: 1.0.2
+
+  three@0.182.0: {}
 
   tigerbeetle-node@0.16.44: {}
 

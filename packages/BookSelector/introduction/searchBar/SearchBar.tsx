@@ -1816,7 +1816,13 @@ const SideBarChapters = (props: {
       return "";
     }
   };
-  const [currentPsalms, setCurrentPsalms] = useState("1 Psalms");
+  const [currentPsalms, setCurrentPsalms] = useState([
+    "1 Psalms",
+    "2 Psalms",
+    "3 Psalms",
+    "4 Psalms",
+    "5 Psalms",
+  ]);
 
   const renderChapters = useMemo(() => {
     const renderJSX = [];
@@ -1828,10 +1834,12 @@ const SideBarChapters = (props: {
               style={{ width: "100%" }}
               onClick={() => {
                 setCurrentPsalms(
-                  currentPsalms === "1 Psalms" ? "" : "1 Psalms"
+                  currentPsalms.includes("1 Psalms")
+                    ? currentPsalms.filter((psalm) => psalm !== "1 Psalms")
+                    : [...currentPsalms, "1 Psalms"]
                 );
               }}
-              class={`psalms-btn ${currentPsalms === "1 Psalms" ? "sidebar-selected-itm" : ""}`}
+              class={`psalms-btn ${currentPsalms.includes("1 Psalms") ? "sidebar-selected-itm" : ""}`}
             >
               <span style={{ width: "100%" }} class="">
                 1 Psalms
@@ -1844,10 +1852,12 @@ const SideBarChapters = (props: {
               style={{ width: "100%" }}
               onClick={() => {
                 setCurrentPsalms(
-                  currentPsalms === "2 Psalms" ? "" : "2 Psalms"
+                  currentPsalms.includes("2 Psalms")
+                    ? currentPsalms.filter((psalm) => psalm !== "2 Psalms")
+                    : [...currentPsalms, "2 Psalms"]
                 );
               }}
-              class={`psalms-btn ${currentPsalms === "2 Psalms" ? "sidebar-selected-itm" : ""}`}
+              class={`psalms-btn ${currentPsalms.includes("2 Psalms") ? "sidebar-selected-itm" : ""}`}
             >
               <span style={{ width: "100%" }} class="">
                 2 Psalms
@@ -1860,10 +1870,12 @@ const SideBarChapters = (props: {
               style={{ width: "100%" }}
               onClick={() => {
                 setCurrentPsalms(
-                  currentPsalms === "3 Psalms" ? "" : "3 Psalms"
+                  currentPsalms.includes("3 Psalms")
+                    ? currentPsalms.filter((psalm) => psalm !== "3 Psalms")
+                    : [...currentPsalms, "3 Psalms"]
                 );
               }}
-              class={`psalms-btn ${currentPsalms === "3 Psalms" ? "sidebar-selected-itm" : ""}`}
+              class={`psalms-btn ${currentPsalms.includes("3 Psalms") ? "sidebar-selected-itm" : ""}`}
             >
               <span style={{ width: "100%" }} class="">
                 3 Psalms
@@ -1876,10 +1888,12 @@ const SideBarChapters = (props: {
               style={{ width: "100%" }}
               onClick={() => {
                 setCurrentPsalms(
-                  currentPsalms === "4 Psalms" ? "" : "4 Psalms"
+                  currentPsalms.includes("4 Psalms")
+                    ? currentPsalms.filter((psalm) => psalm !== "4 Psalms")
+                    : [...currentPsalms, "4 Psalms"]
                 );
               }}
-              class={`psalms-btn ${currentPsalms === "4 Psalms" ? "sidebar-selected-itm" : ""}`}
+              class={`psalms-btn ${currentPsalms.includes("4 Psalms") ? "sidebar-selected-itm" : ""}`}
             >
               <span style={{ width: "100%" }} class="">
                 4 Psalms
@@ -1892,10 +1906,12 @@ const SideBarChapters = (props: {
               style={{ width: "100%" }}
               onClick={() => {
                 setCurrentPsalms(
-                  currentPsalms === "5 Psalms" ? "" : "5 Psalms"
+                  currentPsalms.includes("5 Psalms")
+                    ? currentPsalms.filter((psalm) => psalm !== "5 Psalms")
+                    : [...currentPsalms, "5 Psalms"]
                 );
               }}
-              class={`psalms-btn ${currentPsalms === "5 Psalms" ? "sidebar-selected-itm" : ""}`}
+              class={`psalms-btn ${currentPsalms.includes("5 Psalms") ? "sidebar-selected-itm" : ""}`}
             >
               <span style={{ width: "100%" }} class="">
                 5 Psalms
@@ -1906,10 +1922,9 @@ const SideBarChapters = (props: {
         renderJSX.push(
           <button
             style={{
-              display:
-                currentPsalms === psalmsPartName({ index: i })
-                  ? "flex"
-                  : "none",
+              display: currentPsalms.includes(psalmsPartName({ index: i }))
+                ? "flex"
+                : "none",
             }}
             class={`chapter-btn`}
             onClick={() =>

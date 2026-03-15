@@ -25,7 +25,7 @@ import {
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useSideBarContext } from "app.hooks.sideBar";
 import SurroundingDivs from "app.components.surroundingDivs";
-import { TabOptions } from "app.components.types";
+import { TabOptions, getSettingsPreset } from "app.components.types";
 import { FolderIcon, OpenFolderIcon } from "app.components.icons";
 import {
   ImportSpaceModal,
@@ -50,13 +50,11 @@ const { useState, useRef, useEffect, useMemo } = os.appHooks;
 
 const LOCAL_ENV = !configBot.tags.pattern;
 const removeBookMark =
-  tags?.settingsConfigs?.presets?.[
-    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-  ]?.appSettings?.removeBookMark;
+  tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+    ?.removeBookMark;
 const removeAddSession =
-  tags?.settingsConfigs?.presets?.[
-    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-  ]?.appSettings?.removeAddSession;
+  tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+    ?.removeAddSession;
 
 const CircleCounter = ({ data, book, chapter }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -388,9 +386,8 @@ function Tab({
     tabsIcons,
   } = useTabsContext();
   const removeEditMode =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.removeEditMode;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeEditMode;
   const OPTIONS = (tab) => ({
     type: "normal",
     items: [
@@ -850,9 +847,8 @@ function SideBar({ panelsNumber }) {
     sharedTab,
   } = useTabsContext();
   const hidePanels =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.disablePanels;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.disablePanels;
   globalThis.AddTab = addTab;
   const { screens, setScreens, fullScreen, setFullScreen, ReSeed, setReSeed } =
     useBibleContext();
@@ -871,6 +867,9 @@ function SideBar({ panelsNumber }) {
     () => masks.mobileBookmarks || { "My bookmarks": [] }
   );
   const [showBookmarksFilter, setShowBookmarksFilter] = useState(false);
+  const [desktopExpandedCategories, setDesktopExpandedCategories] = useState<
+    Record<string, boolean>
+  >({});
   const [showBookmarkModal, setShowBookmarkModal] = useState(false);
   const [showNewCategoryModal, setShowNewCategoryModal] = useState(false);
   const [selectedTabForBookmark, setSelectedTabForBookmark] = useState<
@@ -909,6 +908,9 @@ function SideBar({ panelsNumber }) {
       setTagMask(thisBot, "mobileBookmarks", updated, "local");
       return updated;
     });
+    // Auto-enable bookmarks view and expand the category so the user sees it
+    setShowBookmarksFilter(true);
+    setDesktopExpandedCategories((prev) => ({ ...prev, [category]: true }));
     setShowBookmarkModal(false);
     setSelectedTabForBookmark(null);
   };
@@ -1253,9 +1255,8 @@ function SideBar({ panelsNumber }) {
     </svg>
   );
   const removeJoinSession =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.removeJoinSession || false;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeJoinSession || false;
 
   const MenuOptions = {
     type: "normal",
@@ -1513,8 +1514,7 @@ function SideBar({ panelsNumber }) {
 
   const { moveMultipleTabs } = useTabsContext();
   const holdTimeout = useRef({ time: null, clicked: null });
-  const activePreset =
-    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full";
+  const activePreset = getSettingsPreset();
   const clientSite =
     tags?.settingsConfigs?.presets?.[activePreset]?.clientBranding?.clientSite;
   const clientName =
@@ -1619,7 +1619,7 @@ function SideBar({ panelsNumber }) {
       <>
         <div className="mobile-sidebar-overlay">
           <div className="mobile-sidebar-header">
-            <h2>Tabs & Folders</h2>
+            <h2>Tabs</h2>
             <div className="mobile-header-actions">
               {/* <span
                 className="mobile-header-icon"
@@ -1630,6 +1630,20 @@ function SideBar({ panelsNumber }) {
               >
                 {<MenuIcon name={"person_add"} />}
               </span> */}
+              <button
+                className="mobile-icon-button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  os.log("Opening mobile settings", setOpenOnMobile);
+                  setOpenOnMobile(true);
+                  setSidebarWidth(280);
+                  setCollapsed(false);
+                  setSideBarMode("settings");
+                }}
+                title="Settings"
+              >
+                <MobileSettingsIcon />
+              </button>
               <span
                 className="mobile-header-icon"
                 onClick={() => {
@@ -2460,7 +2474,9 @@ function SideBar({ panelsNumber }) {
               />
             )}
             <div className="tabsContainer">
-              <span style={{ color: "var(--pageTextColor)" }}>{t("tabs")}</span>
+              <span style={{ color: "var(--pageTextColor)" }}>
+                {showBookmarksFilter ? `${t("tabs")} & Folders` : t("tabs")}
+              </span>
               <div
                 style={{ display: "flex", alignItems: "center", gap: "5px" }}
               >
@@ -2543,7 +2559,7 @@ function SideBar({ panelsNumber }) {
         {folders.length > 0 && (
           <div style={{ marginBottom: "10px" }} className={"sidebarLine"}></div>
         )}
-        {multiSelectMode && (
+        {multiSelectMode && !collapsed && (
           <div className="multiSelectActions">
             <label
               style={{
@@ -2588,10 +2604,10 @@ function SideBar({ panelsNumber }) {
               </span>
               <span>Delete All</span>
             </div>
-            <div
+            {/* <div
               style={{ background: "#bbc2c2", height: "20px", width: "2px" }}
-            ></div>
-            <div
+            ></div> */}
+            {/* <div
               style={{
                 display: "flex",
                 "justify-content": "center",
@@ -2626,7 +2642,7 @@ function SideBar({ panelsNumber }) {
               >
                 create_new_folder
               </span>
-            </div>
+            </div> */}
           </div>
         )}
         {collapsed && (
@@ -2673,11 +2689,91 @@ function SideBar({ panelsNumber }) {
           onPointerUp={handleMouseUpTab}
           className={collapsed ? "tabs-collapsed" : "tabs"}
         >
+          {/* Bookmark folders (when bookmark filter is active) */}
+          {showBookmarksFilter &&
+            !collapsed &&
+            Object.entries(bookmarks).map(
+              ([categoryName, tabIds]: [string, any]) => (
+                <div key={categoryName} className="desktop-bookmark-category">
+                  <div
+                    className="desktop-bookmark-category-header"
+                    onClick={() =>
+                      setDesktopExpandedCategories((prev) => ({
+                        ...prev,
+                        [categoryName]: !prev[categoryName],
+                      }))
+                    }
+                  >
+                    <span className="desktop-bookmark-icon">
+                      <BookMarkIcon />
+                    </span>
+                    <span className="desktop-category-title">
+                      {categoryName}
+                    </span>
+                    <span
+                      className={`desktop-collapse-icon ${
+                        desktopExpandedCategories[categoryName]
+                          ? "expanded"
+                          : ""
+                      }`}
+                    >
+                      <span className="material-symbols-outlined">
+                        expand_more
+                      </span>
+                    </span>
+                  </div>
+                  {desktopExpandedCategories[categoryName] && (
+                    <div className="desktop-bookmark-items">
+                      {tabIds.length > 0 ? (
+                        tabIds.map((tabId: any) => {
+                          const tab = tabs.find((t: any) => t.id === tabId);
+                          return tab ? (
+                            <Tab
+                              key={tab.id}
+                              el={tab}
+                              index={0}
+                              onlineUsers={onlineUsers}
+                              activeTab={activeTab}
+                              setActiveTab={setActiveTab}
+                              setIsDragging={setIsDragging}
+                              setElement={setElement}
+                              collapsed={collapsed}
+                              editMode={editMode}
+                              setSidebarWidth={setSidebarWidth}
+                              setCollapsed={setCollapsed}
+                              isBookmarked={true}
+                              onBookmarkClick={(tabId: string) => {
+                                handleRemoveBookmark(tabId);
+                              }}
+                            />
+                          ) : null;
+                        })
+                      ) : (
+                        <div
+                          style={{
+                            padding: "8px 16px",
+                            color: "var(--text2)",
+                            fontSize: "13px",
+                          }}
+                        >
+                          No bookmarks in this category
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            )}
+          {/* Divider between bookmark folders and free tabs */}
+          {showBookmarksFilter &&
+            !collapsed &&
+            Object.keys(bookmarks).length > 0 && (
+              <div className="sidebarLine" style={{ margin: "6px 0" }}></div>
+            )}
+          {/* Tabs: always hide bookmarked tabs from the main list (they live inside bookmark folders) */}
           {tabs
             .filter((tab) => !tab.sharedTab)
-            .filter(
-              (tab) => !showBookmarksFilter || bookmarkedTabIds.has(tab.id)
-            )
+            .filter((tab) => !bookmarkedTabIds.has(tab.id))
             .filter((tab) => {
               if (!searchQuery) return true;
               const query = searchQuery.toLowerCase();
@@ -3020,9 +3116,8 @@ export const SettingsProfile = () => {
     }
   };
   const removeSpaces =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.removeSpaces;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeSpaces;
 
   return (
     <div className="dot">
@@ -3096,9 +3191,8 @@ export const UserProfile = ({ collapsed }) => {
     userData
   );
   const removeAccountOptions =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.removeAccountOptions;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeAccountOptions;
   const Icon = icons[iconIndex];
   return (
     <div
@@ -3124,7 +3218,8 @@ export const UserProfile = ({ collapsed }) => {
                     {
                       icon: <MenuIcon name="logout" />,
                       title: "Sign out",
-                      onClick: () => {
+                      onClick: async () => {
+                        await os.signOut();
                         destroy(authBot);
                         setUserData(null);
                       },
@@ -3283,6 +3378,49 @@ const sidebarStyles = `
     .tab-bookmark-btn:hover {
         opacity: 1;
         background: rgba(0, 0, 0, 0.06);
+    }
+
+    /* Desktop bookmark category folders */
+    .desktop-bookmark-category {
+        margin-bottom: 2px;
+    }
+    .desktop-bookmark-category-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        cursor: pointer;
+        border-radius: 6px;
+        user-select: none;
+        font-weight: 500;
+        font-size: 14px;
+        color: var(--pageTextColor);
+    }
+    .desktop-bookmark-category-header:hover {
+        background: rgba(0, 0, 0, 0.04);
+    }
+    .desktop-bookmark-icon {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    .desktop-category-title {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .desktop-collapse-icon {
+        display: flex;
+        align-items: center;
+        transition: transform 0.2s;
+        transform: rotate(-90deg);
+    }
+    .desktop-collapse-icon.expanded {
+        transform: rotate(0deg);
+    }
+    .desktop-bookmark-items {
+        padding-left: 8px;
     }
 
     /* Desktop bookmark modals */

@@ -1,5 +1,6 @@
 const { useState, useEffect, createContext, useContext } = os.appHooks;
 import { getStyleOf } from "app.styles.styler";
+import { getSettingsPreset } from "app.components.types";
 import { useSideBarContext } from "app.hooks.sideBar";
 import { useTabsContext } from "app.hooks.tabs";
 import { useBibleContext } from "app.hooks.bibleVariables";
@@ -69,7 +70,11 @@ const SettingItemWrapper = ({
               e.stopPropagation();
               toggleVisibility(fullKey);
             }}
-            title={isHidden ? "Show item" : "Hide item"}
+            title={
+              isHidden
+                ? (globalThis as any).t?.("showItem") || "Show item"
+                : (globalThis as any).t?.("hideItem") || "Hide item"
+            }
           >
             <span className="material-symbols-outlined">
               {isHidden ? "visibility" : "visibility_off"}
@@ -797,9 +802,8 @@ export const AccountSetting = ({
   if (isHidden && !editMode) return null;
 
   const isAnonymous =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.onlineUsers?.anonymous;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.onlineUsers
+      ?.anonymous;
   let colorIndex = 0;
   let iconIndex = 0;
 
@@ -1245,7 +1249,10 @@ export const SubscriptionsSetting = ({
         </div>
       ) : (
         <div style={{ justifyContent: "center" }} className="activeAccount">
-          <div className="softText">You haven't subscribed to anyone yet.</div>
+          <div className="softText">
+            {(globalThis as any).t?.("noSubscriptionsYet") ||
+              "You haven't subscribed to anyone yet."}
+          </div>
         </div>
       )}
 
@@ -1258,17 +1265,20 @@ export const SubscriptionsSetting = ({
             onClick={() => setSubscribe(true)}
             className="create-profile-btn"
           >
-            + Add Subscription
+            {(globalThis as any).t?.("addSubscription") || "+ Add Subscription"}
           </button>
         ) : (
           <div style={{ width: "100%" }}>
             <div style={{ marginBottom: "8px" }} className="blackText">
-              Enter User ID
+              {(globalThis as any).t?.("enterUserId") || "Enter User ID"}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <input
                 style={{ height: "32px", flex: 1 }}
-                placeholder="Enter user ID..."
+                placeholder={
+                  (globalThis as any).t?.("enterUserIdPlaceholder") ||
+                  "Enter user ID..."
+                }
                 className="selectInput"
                 value={searchFor}
                 disabled={subscribing}

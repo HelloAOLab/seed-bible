@@ -760,6 +760,7 @@ const Playlist = () => {
                             G.RemoveApplicationByLabel(G.ActiveMoreApp);
                             G.makingApp = null;
                             G.SetActiveMoreApp(null);
+                            G.ActiveMoreApp = null;
                           }}
                           class="material-symbols-outlined show-on-mobile"
                           style={{

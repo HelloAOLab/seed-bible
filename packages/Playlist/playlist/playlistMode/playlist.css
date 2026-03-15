@@ -1477,6 +1477,12 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   .show-on-mobile {
     display: initial !important;
   }
+
+  .mobile-compact-scroll-header {
+    opacity: 0;
+    visibility: hidden;
+    display: none;
+  }
 }
 
 /* MOBILE STYLES */
