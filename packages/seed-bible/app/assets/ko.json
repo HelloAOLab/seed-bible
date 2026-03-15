@@ -31,6 +31,8 @@
   "next": "다음",
   "previous": "이전",
   "exit": "종료",
+  "ended": "종료됨",
+  "checklistMode": "체크리스트 모드",
   "settings": "설정",
   "generalSettings": "일반 설정",
   "spaceSettings": "공간 설정",

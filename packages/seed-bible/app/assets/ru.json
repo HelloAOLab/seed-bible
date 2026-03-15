@@ -31,6 +31,8 @@
   "next": "Далее",
   "previous": "Назад",
   "exit": "Выход",
+  "ended": "Завершено",
+  "checklistMode": "Режим чек-листа",
   "settings": "Настройки",
   "generalSettings": "Общие настройки",
   "spaceSettings": "Настройки пространства",
