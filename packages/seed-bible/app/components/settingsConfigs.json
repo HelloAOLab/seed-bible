@@ -57,8 +57,13 @@
         "clientLogo": "https://res.cloudinary.com/dpudrufae/image/upload/v1773147618/KB_BibleIcon_1_klh9gg.png",
         "clientSite": "https://www.kenboa.org/"
       },
-      "mobileBookLogo": "https://res.cloudinary.com/dpudrufae/image/upload/v1771785855/book-open_mnbvoe.svg",
 
+      "mobileBookLogo": "https://res.cloudinary.com/dpudrufae/image/upload/v1771785855/book-open_mnbvoe.svg",
+      "titlesAndIcon": {
+        "icon": "explore",
+        "title": "Discovery",
+        "toolName": "Apologist"
+      },
       "useTabs": false,
       "availableThemes": [
         {
