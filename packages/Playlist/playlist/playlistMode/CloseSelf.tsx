@@ -5,6 +5,10 @@ const isMobile =
 if ((isMobile || that?.force) && G.makingPlaylist) {
   if (G["Playlist_package"]) {
     G["Playlist_package"].onClick();
+    G.RemoveApplicationByLabel(G.ActiveMoreApp);
+    G.makingApp = null;
+    G.SetActiveMoreApp(null);
+    G.ActiveMoreApp = null;
   } else {
     G.isRecording = false;
     G.SelectedItemIDForAttachments = null;
@@ -20,5 +24,9 @@ if ((isMobile || that?.force) && G.makingPlaylist) {
     G.IS_PLAYLIST_ACTIVE = false;
     G.SetSplitAppPanel2(null);
     G.makingPlaylist = false;
+    G.RemoveApplicationByLabel(G.ActiveMoreApp);
+    G.makingApp = null;
+    G.SetActiveMoreApp(null);
+    G.ActiveMoreApp = null;
   }
 }

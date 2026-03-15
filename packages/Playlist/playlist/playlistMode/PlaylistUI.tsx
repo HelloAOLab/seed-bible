@@ -757,10 +757,7 @@ const Playlist = () => {
                         </Button>
                         <span
                           onClick={() => {
-                            G.RemoveApplicationByLabel(G.ActiveMoreApp);
-                            G.makingApp = null;
-                            G.SetActiveMoreApp(null);
-                            G.ActiveMoreApp = null;
+                            thisBot.CloseSelf();
                           }}
                           class="material-symbols-outlined show-on-mobile"
                           style={{
