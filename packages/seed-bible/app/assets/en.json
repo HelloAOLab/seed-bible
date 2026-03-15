@@ -31,6 +31,8 @@
   "next": "Next",
   "previous": "Previous",
   "exit": "Exit",
+  "ended": "Ended",
+  "checklistMode": "Checklist Mode",
   "settings": "Settings",
   "generalSettings": "General settings",
   "spaceSettings": "Space settings",
