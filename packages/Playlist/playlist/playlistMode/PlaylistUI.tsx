@@ -755,6 +755,21 @@ const Playlist = () => {
                           <span class="material-symbols-outlined">add</span>
                           {t("create")}
                         </Button>
+                        <span
+                          onClick={() => {
+                            G.RemoveApplicationByLabel(G.ActiveMoreApp);
+                            G.makingApp = null;
+                            G.SetActiveMoreApp(null);
+                            G.ActiveMoreApp = null;
+                          }}
+                          class="material-symbols-outlined show-on-mobile"
+                          style={{
+                            fontSize: "24px",
+                            margin: "0 0.5rem",
+                          }}
+                        >
+                          close
+                        </span>
                         <Button
                           onClick={() => {
                             setCreateOptions(true);
