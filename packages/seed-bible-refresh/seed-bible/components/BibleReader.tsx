@@ -1,8 +1,9 @@
 import {
   type TranslationBookChapter,
   type ChapterVerse,
+  type ChapterFootnote,
 } from "seed-bible.managers.FreeUseBibleAPI";
-import { useSignal } from "@preact/signals";
+import { computed, useSignal } from "@preact/signals";
 import type {
   BibleReadingState,
   BibleSelectedVerse,
@@ -147,6 +148,12 @@ interface BibleReaderProps {
   selectorState: BibleSelectorState;
 }
 
+interface SelectedFootnote {
+  note: ChapterFootnote;
+  verse: ChapterVerse | null;
+  chapter: TranslationBookChapter;
+}
+
 export function BibleReader(props: BibleReaderProps) {
   const { currentPane, readingState, selectorState } = props;
   const {
@@ -161,19 +168,13 @@ export function BibleReader(props: BibleReaderProps) {
     error,
     selectVerse,
   } = readingState;
-  const selectedFootnoteId = useSignal<number | null>(null);
+  const selectedFootnote = useSignal<SelectedFootnote | null>(null);
 
-  const currentBook =
-    translationBooks.value?.books.find((book) => book.id === bookId.value) ??
-    null;
-  const selectedFootnote =
-    chapterData.value?.chapter.footnotes.find(
-      (note) => note.noteId === selectedFootnoteId.value
-    ) ?? null;
-
-  useEffect(() => {
-    selectedFootnoteId.value = null;
-  }, [translationId.value, bookId.value, chapterNumber.value]);
+  const currentBook = computed(
+    () =>
+      translationBooks.value?.books.find((book) => book.id === bookId.value) ??
+      null
+  );
 
   return (
     <div className="sb-bible-reader">
@@ -182,7 +183,7 @@ export function BibleReader(props: BibleReaderProps) {
         className="sb-bible-reader-title"
       >
         <span className="sb-bible-reader-book">
-          {currentBook?.name ?? bookId.value ?? "Select a book"}
+          {currentBook.value?.name ?? bookId.value ?? "Select a book"}
         </span>
         <span className="sb-bible-reader-chapter">{chapterNumber.value}</span>{" "}
         <span className="sb-bible-reader-translation">
@@ -203,7 +204,26 @@ export function BibleReader(props: BibleReaderProps) {
             },
             selectedVerses.value,
             (noteId) => {
-              selectedFootnoteId.value = noteId;
+              const footnote =
+                chapterData.value?.chapter.footnotes.find(
+                  (note) => note.noteId === noteId
+                ) ?? null;
+              if (footnote) {
+                const verses = chapterData.value!.chapter.content.filter(
+                  (c): c is ChapterVerse =>
+                    typeof c === "object" && c.type === "verse"
+                );
+                selectedFootnote.value = {
+                  note: footnote,
+                  verse:
+                    verses.find(
+                      (c) => c.number === footnote.reference?.verse
+                    ) ?? null,
+                  chapter: chapterData.value!,
+                };
+              } else {
+                selectedFootnote.value = null;
+              }
             }
           )}
         </div>
@@ -215,11 +235,11 @@ export function BibleReader(props: BibleReaderProps) {
         <p>No translations available.</p>
       )}
 
-      {selectedFootnoteId.value !== null && (
+      {selectedFootnote.value !== null && (
         <div
           className="sb-footnote-modal-overlay"
           onClick={() => {
-            selectedFootnoteId.value = null;
+            selectedFootnote.value = null;
           }}
         >
           <div
@@ -230,13 +250,15 @@ export function BibleReader(props: BibleReaderProps) {
           >
             <div className="sb-footnote-modal-header">
               <h3 className="sb-footnote-modal-title">
-                Footnote {selectedFootnoteId.value}
+                {selectedFootnote.value.chapter.book.name}{" "}
+                {selectedFootnote.value.chapter.chapter.number}:
+                {selectedFootnote.value.verse?.number ?? "?"}
               </h3>
               <button
                 className="sb-footnote-modal-close"
                 aria-label="Close footnote"
                 onClick={() => {
-                  selectedFootnoteId.value = null;
+                  selectedFootnote.value = null;
                 }}
               >
                 <span className="material-symbols-outlined">close</span>
@@ -244,7 +266,7 @@ export function BibleReader(props: BibleReaderProps) {
             </div>
 
             <div className="sb-footnote-modal-content">
-              {selectedFootnote?.text ?? "Footnote content unavailable."}
+              {selectedFootnote.value.note.text}
             </div>
           </div>
         </div>
