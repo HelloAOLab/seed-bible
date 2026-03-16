@@ -419,19 +419,27 @@ button {
 .sb-footnote-modal-overlay {
   position: fixed;
   inset: 0;
-  background: color-mix(in srgb, black, transparent 42%);
+  background: rgba(0, 0, 0, 0.45);
   z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
 }
 
 .sb-footnote-modal {
-  position: fixed;
-  inset: 0;
+  width: min(720px, 100%);
+  max-height: min(640px, calc(100dvh - 32px));
   background: var(--reader-background);
   color: var(--font-color);
   display: flex;
   flex-direction: column;
   padding: 18px 16px 24px;
   box-sizing: border-box;
+  border-radius: 14px;
+  border: 1px solid var(--secondary-color);
+  box-shadow: 0 20px 48px #00000040;
 }
 
 .sb-footnote-modal-header {
@@ -469,6 +477,15 @@ button {
   line-height: 1.6;
   color: var(--verse-text-color);
   overflow: auto;
+}
+
+.sb-footnote-modal-reference {
+  margin: 0 0 10px 0;
+  font-family:
+    var(--chapter-heading-font-family, "Plus Jakarta Sans"), sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--chapter-heading-color);
 }
 
 .sb-reader-toolbar {
