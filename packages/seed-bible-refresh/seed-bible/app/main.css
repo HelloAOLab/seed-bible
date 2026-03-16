@@ -395,14 +395,7 @@ button {
 }
 
 .sb-verse-poetry {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  column-gap: 4px;
-  align-items: start;
-}
-
-.sb-verse-poetry-body {
-  min-width: 0;
+  display: block;
 }
 
 .sb-verse-line {

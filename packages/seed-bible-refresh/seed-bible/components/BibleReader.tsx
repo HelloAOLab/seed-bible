@@ -31,55 +31,90 @@ function getPoemIndentLevel(part: ChapterVerse["content"][0]) {
   return null;
 }
 
-function isPoetryVerse(content: ChapterVerse["content"]) {
-  return content.some((part) => getPoemIndentLevel(part) !== null);
-}
+type VerseSegment =
+  | { type: "inline"; parts: ChapterVerse["content"] }
+  | { type: "poetry"; lines: VerseLine[] };
 
-function splitVerseIntoLines(content: ChapterVerse["content"]): VerseLine[] {
-  const lines: VerseLine[] = [];
-  let currentLine: VerseLine = {
-    indentLevel: 0,
-    parts: [],
-  };
+function splitVerseIntoSegments(
+  content: ChapterVerse["content"]
+): VerseSegment[] {
+  const segments: VerseSegment[] = [];
+  let currentInlineParts: ChapterVerse["content"] = [];
+  let currentPoetryLines: VerseLine[] = [];
+  let currentPoetryLine: VerseLine = { indentLevel: 0, parts: [] };
+  let inPoetry = false;
 
-  const pushCurrentLine = () => {
-    if (currentLine.parts.length > 0) {
-      lines.push(currentLine);
+  const pushCurrentPoetryLine = () => {
+    if (currentPoetryLine.parts.length > 0) {
+      currentPoetryLines.push({
+        indentLevel: currentPoetryLine.indentLevel,
+        parts: [...currentPoetryLine.parts],
+      });
+      currentPoetryLine = {
+        indentLevel: currentPoetryLine.indentLevel,
+        parts: [],
+      };
     }
-    currentLine = {
-      indentLevel: currentLine.indentLevel,
-      parts: [],
-    };
   };
 
-  content.forEach((part) => {
-    if (
+  const flushPoetry = () => {
+    pushCurrentPoetryLine();
+    if (currentPoetryLines.length > 0) {
+      segments.push({ type: "poetry", lines: currentPoetryLines });
+      currentPoetryLines = [];
+    }
+    currentPoetryLine = { indentLevel: 0, parts: [] };
+    inPoetry = false;
+  };
+
+  const flushInline = () => {
+    if (currentInlineParts.length > 0) {
+      segments.push({ type: "inline", parts: currentInlineParts });
+      currentInlineParts = [];
+    }
+  };
+
+  for (const part of content) {
+    const indentLevel = getPoemIndentLevel(part);
+    const isLineBreak =
       part &&
       typeof part === "object" &&
       "lineBreak" in part &&
-      part.lineBreak === true
-    ) {
-      pushCurrentLine();
-      return;
-    }
+      part.lineBreak === true;
 
-    const indentLevel = getPoemIndentLevel(part);
     if (indentLevel !== null) {
-      if (
-        currentLine.parts.length > 0 &&
-        currentLine.indentLevel !== indentLevel
-      ) {
-        pushCurrentLine();
+      if (!inPoetry) {
+        flushInline();
+        inPoetry = true;
       }
-      currentLine.indentLevel = indentLevel;
+      if (
+        currentPoetryLine.parts.length > 0 &&
+        currentPoetryLine.indentLevel !== indentLevel
+      ) {
+        pushCurrentPoetryLine();
+      }
+      currentPoetryLine.indentLevel = indentLevel;
+      currentPoetryLine.parts.push(part);
+    } else if (isLineBreak) {
+      if (inPoetry) {
+        pushCurrentPoetryLine();
+      } else {
+        currentInlineParts.push(part);
+      }
+    } else {
+      if (inPoetry) {
+        flushPoetry();
+      }
+      currentInlineParts.push(part);
     }
+  }
 
-    currentLine.parts.push(part);
-  });
-
-  pushCurrentLine();
-
-  return lines;
+  if (inPoetry) {
+    flushPoetry();
+  } else {
+    flushInline();
+  }
+  return segments;
 }
 
 function renderInlineContent(
@@ -197,11 +232,10 @@ function renderChapterContent(
           v.bookId === chapterData.book.id &&
           v.chapterNumber === chapterData.chapter.number
       );
-      const hasPoetryLines = isPoetryVerse(value.content);
+      const segments = splitVerseIntoSegments(value.content);
+      const hasPoetry = segments.some((s) => s.type === "poetry");
 
-      if (hasPoetryLines) {
-        const lines = splitVerseIntoLines(value.content);
-
+      if (hasPoetry) {
         return (
           <span
             key={`verse-${entryIndex}`}
@@ -213,10 +247,28 @@ function renderChapterContent(
             role="button"
             tabIndex={0}
           >
-            <span className="sb-verse-poetry-body">
-              {lines.map((line, lineIndex) => (
+            {segments.map((segment, segIndex) => {
+              if (segment.type === "inline") {
+                return segment.parts.map((part, partIndex) => {
+                  const content = renderInlineContent(
+                    part,
+                    segIndex * 10000 + partIndex,
+                    (noteId) => onOpenFootnote(noteId, value)
+                  );
+                  if (segIndex === 0 && partIndex === 0) {
+                    return (
+                      <>
+                        <sup className="sb-verse-number">{value.number}</sup>
+                        {content}
+                      </>
+                    );
+                  }
+                  return content;
+                });
+              }
+              return segment.lines.map((line, lineIndex) => (
                 <span
-                  key={`verse-${entryIndex}-line-${lineIndex}`}
+                  key={`verse-${entryIndex}-seg-${segIndex}-line-${lineIndex}`}
                   className="sb-verse-line"
                   style={{
                     paddingLeft:
@@ -225,7 +277,7 @@ function renderChapterContent(
                         : undefined,
                   }}
                 >
-                  {lineIndex === 0 && (
+                  {segIndex === 0 && lineIndex === 0 && (
                     <sup className="sb-verse-number">{value.number}</sup>
                   )}
                   {line.parts.map((part, partIndex) =>
@@ -234,8 +286,8 @@ function renderChapterContent(
                     )
                   )}
                 </span>
-              ))}
-            </span>
+              ));
+            })}
           </span>
         );
       }
