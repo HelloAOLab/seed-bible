@@ -1,4 +1,5 @@
 import { BibleReader } from "seed-bible.components.BibleReader";
+import { BelowReaderToolbar } from "seed-bible.components.BelowReaderToolbar";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
 import type { Pane, PaneLayoutId } from "seed-bible.managers.PanesManager";
@@ -142,6 +143,7 @@ export function PaneLayout(props: PaneLayoutProps) {
                 readingState={pane.tab.readingState}
                 selectorState={selectorState}
               />
+              <BelowReaderToolbar readingState={pane.tab.readingState} />
             </div>
           ) : (
             <EmptyPaneToolbar

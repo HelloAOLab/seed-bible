@@ -4,7 +4,7 @@ import { computed, signal } from "@preact/signals";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
-import type { BibleSelectorState } from "./BibleSelectorManager";
+import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 
 type BibleToolIcon = () => JSX.Element | VNode;
 
@@ -65,6 +65,22 @@ export interface ManagedBibleEmptyPaneTool extends BibleTool {
   onSelect?: (context: EmptyPaneToolContext) => void;
 }
 
+export interface BibleBelowReaderToolbarTool extends BibleTool {
+  disabled: boolean;
+  visible: boolean;
+  onSelect: () => void;
+}
+
+export interface BibleBelowReaderToolContext {
+  readingState: BibleReadingState;
+}
+
+export interface ManagedBibleBelowReaderToolbarTool extends BibleTool {
+  isDisabled?: (context: BibleBelowReaderToolContext) => boolean;
+  isVisible?: (context: BibleBelowReaderToolContext) => boolean;
+  onSelect?: (context: BibleBelowReaderToolContext) => void;
+}
+
 function MenuIcon() {
   return <MaterialIcon>menu</MaterialIcon>;
 }
@@ -107,6 +123,24 @@ function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
       onSelect: (context) => {
         context.selectorState.setOpen(true, context.currentPane);
       },
+    },
+  ];
+}
+
+function getDefaultBelowReaderToolbarTools(): ManagedBibleBelowReaderToolbarTool[] {
+  return [
+    {
+      id: "powered-by",
+      priority: 0,
+      title: "Powered by Seed Bible API",
+      icon: () => (
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <span>Powered by</span>
+          <SeedBibleIcon />
+        </span>
+      ),
+      isDisabled: () => true,
+      onSelect: () => {},
     },
   ];
 }
@@ -261,6 +295,9 @@ const verseToolbarTools = signal<ManagedBibleVerseToolbarTool[]>(
 const emptyPaneTools = signal<ManagedBibleEmptyPaneTool[]>(
   getDefaultEmptyPaneToolbarTools()
 );
+const belowReaderTools = signal<ManagedBibleBelowReaderToolbarTool[]>(
+  getDefaultBelowReaderToolbarTools()
+);
 
 const sortedToolbarTools = computed(() => {
   return [...toolbarTools.value].sort(
@@ -276,6 +313,12 @@ const sortedVerseToolbarTools = computed(() => {
 
 const sortedEmptyPaneTools = computed(() => {
   return [...emptyPaneTools.value].sort(
+    (left, right) => left.priority - right.priority
+  );
+});
+
+const sortedBelowReaderTools = computed(() => {
+  return [...belowReaderTools.value].sort(
     (left, right) => left.priority - right.priority
   );
 });
@@ -376,6 +419,39 @@ export function useBibleToolsManager() {
       }));
   };
 
+  const registerBelowReaderTool = (
+    tool: ManagedBibleBelowReaderToolbarTool
+  ) => {
+    const nextTools = belowReaderTools.value.filter(
+      (entry) => entry.id !== tool.id
+    );
+    belowReaderTools.value = [...nextTools, tool];
+
+    return () => {
+      unregisterBelowReaderTool(tool.id);
+    };
+  };
+
+  const unregisterBelowReaderTool = (toolId: string) => {
+    belowReaderTools.value = belowReaderTools.value.filter(
+      (tool) => tool.id !== toolId
+    );
+  };
+
+  const getBelowReaderTools = (context: BibleBelowReaderToolContext) => {
+    return sortedBelowReaderTools.value
+      .filter((tool) => tool.isVisible?.(context) ?? true)
+      .map((tool) => ({
+        id: tool.id,
+        priority: tool.priority,
+        title: tool.title,
+        icon: tool.icon,
+        disabled: tool.isDisabled?.(context) ?? false,
+        visible: true,
+        onSelect: () => tool.onSelect?.(context),
+      }));
+  };
+
   return {
     registerToolbarTool,
     unregisterToolbarTool,
@@ -386,5 +462,8 @@ export function useBibleToolsManager() {
     registerEmptyPaneTool,
     unregisterEmptyPaneTool,
     getEmptyPaneTools,
+    registerBelowReaderTool,
+    unregisterBelowReaderTool,
+    getBelowReaderTools,
   };
 }
