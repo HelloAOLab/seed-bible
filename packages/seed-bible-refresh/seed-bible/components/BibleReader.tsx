@@ -213,7 +213,6 @@ function renderChapterContent(
             role="button"
             tabIndex={0}
           >
-            <sup className="sb-verse-number">{value.number}</sup>
             <span className="sb-verse-poetry-body">
               {lines.map((line, lineIndex) => (
                 <span
@@ -226,6 +225,9 @@ function renderChapterContent(
                         : undefined,
                   }}
                 >
+                  {lineIndex === 0 && (
+                    <sup className="sb-verse-number">{value.number}</sup>
+                  )}
                   {line.parts.map((part, partIndex) =>
                     renderInlineContent(part, partIndex, (noteId) =>
                       onOpenFootnote(noteId, value)

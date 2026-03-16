@@ -407,6 +407,10 @@ button {
 
 .sb-verse-line {
   display: block;
+
+  .sb-verse-number {
+    margin-left: -1.2em;
+  }
 }
 
 .sb-verse-selected {
