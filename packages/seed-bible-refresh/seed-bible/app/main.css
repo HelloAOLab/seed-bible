@@ -341,6 +341,31 @@ button {
   margin-left: 2px;
 }
 
+.sb-inline-footnote-button {
+  margin-left: 4px;
+  border: none;
+  background: transparent;
+  color: var(--chapter-heading-color);
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0;
+  vertical-align: super;
+}
+
+.sb-inline-footnote-button .material-symbols-outlined {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.sb-inline-footnote-button:hover {
+  background: color-mix(in srgb, var(--secondary-color), transparent 65%);
+}
+
 .sb-chapter-content {
   line-height: 2;
   font-family: var(--verse-font-family, "Newsreader"), serif;
@@ -391,19 +416,59 @@ button {
   color: red;
 }
 
-.sb-reader-footnotes {
-  margin-top: 20px;
-  padding-top: 10px;
-  border-top: 1px solid var(--secondary-color);
+.sb-footnote-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, black, transparent 42%);
+  z-index: 1000;
 }
 
-.sb-reader-footnotes-title {
+.sb-footnote-modal {
+  position: fixed;
+  inset: 0;
+  background: var(--reader-background);
+  color: var(--font-color);
+  display: flex;
+  flex-direction: column;
+  padding: 18px 16px 24px;
+  box-sizing: border-box;
+}
+
+.sb-footnote-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--secondary-color);
+  padding-bottom: 10px;
+}
+
+.sb-footnote-modal-title {
+  margin: 0;
+  font-family:
+    var(--chapter-heading-font-family, "Plus Jakarta Sans"), sans-serif;
+  font-size: 20px;
   color: var(--chapter-heading-color);
 }
 
-.sb-reader-footnote-item {
-  margin: 6px 0;
+.sb-footnote-modal-close {
+  border: none;
+  background: transparent;
+  color: var(--font-color);
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sb-footnote-modal-content {
+  margin-top: 16px;
+  font-family: var(--verse-font-family, "Newsreader"), serif;
+  font-size: 22px;
+  line-height: 1.6;
   color: var(--verse-text-color);
+  overflow: auto;
 }
 
 .sb-reader-toolbar {

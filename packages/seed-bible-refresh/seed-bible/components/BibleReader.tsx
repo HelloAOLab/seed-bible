@@ -2,6 +2,7 @@ import {
   type TranslationBookChapter,
   type ChapterVerse,
 } from "seed-bible.managers.FreeUseBibleAPI";
+import { useSignal } from "@preact/signals";
 import type {
   BibleReadingState,
   BibleSelectedVerse,
@@ -9,7 +10,13 @@ import type {
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { Pane } from "seed-bible.managers.PanesManager";
 
-function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
+const { useEffect } = os.appHooks;
+
+function renderInlineContent(
+  part: ChapterVerse["content"][0],
+  index: number,
+  onOpenFootnote: (noteId: number) => void
+) {
   if (typeof part === "string") {
     return <span key={index}>{part}</span>;
   }
@@ -32,9 +39,18 @@ function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
 
   if ("noteId" in part && typeof part.noteId === "number") {
     return (
-      <sup key={index} className="sb-note-marker">
-        [{part.noteId}]
-      </sup>
+      <button
+        key={index}
+        className="sb-inline-footnote-button"
+        aria-label={`Open footnote ${part.noteId}`}
+        title={`Open footnote ${part.noteId}`}
+        onClick={(event: MouseEvent) => {
+          event.stopPropagation();
+          onOpenFootnote(part.noteId);
+        }}
+      >
+        <span className="material-symbols-outlined">info</span>
+      </button>
     );
   }
 
@@ -44,7 +60,8 @@ function renderInlineContent(part: ChapterVerse["content"][0], index: number) {
 function renderChapterContent(
   chapterData: TranslationBookChapter | null,
   onVerseClick: (verse: BibleSelectedVerse, event: MouseEvent) => void,
-  selectedVerses: BibleSelectedVerse[]
+  selectedVerses: BibleSelectedVerse[],
+  onOpenFootnote: (noteId: number) => void
 ) {
   if (!chapterData) {
     return null;
@@ -76,7 +93,9 @@ function renderChapterContent(
     if (value.type === "hebrew_subtitle" && Array.isArray(value.content)) {
       return (
         <p key={`subtitle-${entryIndex}`} className="sb-subtitle">
-          {value.content.map(renderInlineContent)}
+          {value.content.map((part, index) =>
+            renderInlineContent(part, index, onOpenFootnote)
+          )}
         </p>
       );
     }
@@ -111,7 +130,9 @@ function renderChapterContent(
           tabIndex={0}
         >
           <sup className="sb-verse-number">{value.number}</sup>
-          {value.content.map(renderInlineContent)}
+          {value.content.map((part, index) =>
+            renderInlineContent(part, index, onOpenFootnote)
+          )}
         </span>
       );
     }
@@ -140,10 +161,19 @@ export function BibleReader(props: BibleReaderProps) {
     error,
     selectVerse,
   } = readingState;
+  const selectedFootnoteId = useSignal<number | null>(null);
 
   const currentBook =
     translationBooks.value?.books.find((book) => book.id === bookId.value) ??
     null;
+  const selectedFootnote =
+    chapterData.value?.chapter.footnotes.find(
+      (note) => note.noteId === selectedFootnoteId.value
+    ) ?? null;
+
+  useEffect(() => {
+    selectedFootnoteId.value = null;
+  }, [translationId.value, bookId.value, chapterNumber.value]);
 
   return (
     <div className="sb-bible-reader">
@@ -171,17 +201,10 @@ export function BibleReader(props: BibleReaderProps) {
             (verse, event) => {
               selectVerse(verse, event.clientX, event.clientY);
             },
-            selectedVerses.value
-          )}
-          {chapterData.value.chapter.footnotes.length > 0 && (
-            <div className="sb-reader-footnotes">
-              <h4 className="sb-reader-footnotes-title">Footnotes</h4>
-              {chapterData.value.chapter.footnotes.map((note) => (
-                <p key={note.noteId} className="sb-reader-footnote-item">
-                  <strong>[{note.noteId}]</strong> {note.text}
-                </p>
-              ))}
-            </div>
+            selectedVerses.value,
+            (noteId) => {
+              selectedFootnoteId.value = noteId;
+            }
           )}
         </div>
       )}
@@ -190,6 +213,41 @@ export function BibleReader(props: BibleReaderProps) {
 
       {!availableTranslations.value && !error.value && (
         <p>No translations available.</p>
+      )}
+
+      {selectedFootnoteId.value !== null && (
+        <div
+          className="sb-footnote-modal-overlay"
+          onClick={() => {
+            selectedFootnoteId.value = null;
+          }}
+        >
+          <div
+            className="sb-footnote-modal"
+            onClick={(event: MouseEvent) => {
+              event.stopPropagation();
+            }}
+          >
+            <div className="sb-footnote-modal-header">
+              <h3 className="sb-footnote-modal-title">
+                Footnote {selectedFootnoteId.value}
+              </h3>
+              <button
+                className="sb-footnote-modal-close"
+                aria-label="Close footnote"
+                onClick={() => {
+                  selectedFootnoteId.value = null;
+                }}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="sb-footnote-modal-content">
+              {selectedFootnote?.text ?? "Footnote content unavailable."}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
