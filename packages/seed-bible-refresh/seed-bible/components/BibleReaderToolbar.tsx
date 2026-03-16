@@ -25,7 +25,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     selectorState,
     tabsManager,
     panesManager,
-    onOpenSidebar,
+    onOpenSidebar: openSidebar,
   } = props;
   const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
   const readingState = selectedTab?.readingState ?? null;
@@ -55,6 +55,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     selectorState,
     tabs: tabsManager,
     panesManager,
+    openSidebar,
   });
 
   const verseToolbarTools: BibleReaderToolbarTool[] =
@@ -63,6 +64,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       selectorState,
       tabs: tabsManager,
       panesManager,
+      openSidebar,
     });
 
   const hasVerseSelection = readingState.selectedVerses.value.length > 0;
@@ -102,15 +104,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     <>
       {!shouldReplaceDefaultToolbar && (
         <div className="sb-reader-toolbar">
-          <div className="sb-reader-toolbar-item sb-sidebar-open-item">
-            <button
-              onClick={onOpenSidebar}
-              className="sb-reader-toolbar-button"
-              aria-label="Open sidebar"
-            >
-              <span className="material-symbols-outlined">menu</span>
-            </button>
-          </div>
           {tools.map((tool) => {
             const ToolIcon = tool.icon;
             return tool.visible ? (

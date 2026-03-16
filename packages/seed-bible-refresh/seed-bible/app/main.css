@@ -1026,10 +1026,6 @@ button {
   border-radius: 6px;
 }
 
-.sb-sidebar-open-item {
-  display: none;
-}
-
 @media (max-width: 768px) {
   .sb-tabs-sidebar {
     display: none;
@@ -1050,12 +1046,6 @@ button {
 
   .sb-sidebar-collapse-button {
     display: none;
-  }
-
-  .sb-sidebar-open-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .sb-panes-layout {

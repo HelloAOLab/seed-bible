@@ -20,6 +20,7 @@ export interface BibleToolContext {
   selectorState: BibleSelectorState;
   tabs: TabsManager;
   panesManager: PanesManager;
+  openSidebar: () => void;
 }
 
 export interface BibleReaderToolbarTool extends BibleTool {
@@ -62,6 +63,10 @@ export interface ManagedBibleEmptyPaneTool extends BibleTool {
   isDisabled?: (context: EmptyPaneToolContext) => boolean;
   isVisible?: (context: EmptyPaneToolContext) => boolean;
   onSelect?: (context: EmptyPaneToolContext) => void;
+}
+
+function MenuIcon() {
+  return <MaterialIcon>menu</MaterialIcon>;
 }
 
 function PreviousChapterIcon() {
@@ -118,6 +123,19 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         context.readingState.loading.value,
       onSelect: (context) => {
         context.readingState.loadPreviousChapter();
+      },
+    },
+    {
+      id: "open-sidebar",
+      priority: 50,
+      title: "Open sidebar",
+      icon: MenuIcon,
+      isVisible: (context) =>
+        !!context.openSidebar &&
+        typeof window !== "undefined" &&
+        window.innerWidth < 768,
+      onSelect: (context) => {
+        context.openSidebar?.();
       },
     },
     {
