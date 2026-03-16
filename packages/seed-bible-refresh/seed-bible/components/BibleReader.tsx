@@ -290,9 +290,9 @@ function renderChapterContent(
                   key={`verse-${entryIndex}-seg-${segIndex}-line-${lineIndex}`}
                   className="sb-verse-line"
                   style={{
-                    paddingLeft:
+                    paddingInlineStart:
                       line.indentLevel > 0
-                        ? `${line.indentLevel * 20}px`
+                        ? `${line.indentLevel * 30}px`
                         : undefined,
                   }}
                 >
