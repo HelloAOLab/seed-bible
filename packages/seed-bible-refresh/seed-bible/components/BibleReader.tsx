@@ -2,7 +2,6 @@ import {
   type TranslationBookChapter,
   type ChapterVerse,
   type ChapterFootnote,
-  type ChapterContent,
 } from "seed-bible.managers.FreeUseBibleAPI";
 import { computed, useSignal } from "@preact/signals";
 import type {
@@ -12,7 +11,76 @@ import type {
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { Pane } from "seed-bible.managers.PanesManager";
 
-const { useEffect } = os.appHooks;
+interface VerseLine {
+  indentLevel: number;
+  parts: ChapterVerse["content"];
+}
+
+function getPoemIndentLevel(part: ChapterVerse["content"][0]) {
+  if (
+    part &&
+    typeof part === "object" &&
+    "text" in part &&
+    typeof part.text === "string" &&
+    typeof part.poem === "number" &&
+    part.poem > 0
+  ) {
+    return part.poem;
+  }
+
+  return null;
+}
+
+function isPoetryVerse(content: ChapterVerse["content"]) {
+  return content.some((part) => getPoemIndentLevel(part) !== null);
+}
+
+function splitVerseIntoLines(content: ChapterVerse["content"]): VerseLine[] {
+  const lines: VerseLine[] = [];
+  let currentLine: VerseLine = {
+    indentLevel: 0,
+    parts: [],
+  };
+
+  const pushCurrentLine = () => {
+    if (currentLine.parts.length > 0) {
+      lines.push(currentLine);
+    }
+    currentLine = {
+      indentLevel: currentLine.indentLevel,
+      parts: [],
+    };
+  };
+
+  content.forEach((part) => {
+    if (
+      part &&
+      typeof part === "object" &&
+      "lineBreak" in part &&
+      part.lineBreak === true
+    ) {
+      pushCurrentLine();
+      return;
+    }
+
+    const indentLevel = getPoemIndentLevel(part);
+    if (indentLevel !== null) {
+      if (
+        currentLine.parts.length > 0 &&
+        currentLine.indentLevel !== indentLevel
+      ) {
+        pushCurrentLine();
+      }
+      currentLine.indentLevel = indentLevel;
+    }
+
+    currentLine.parts.push(part);
+  });
+
+  pushCurrentLine();
+
+  return lines;
+}
 
 function renderInlineContent(
   part: ChapterVerse["content"][0],
@@ -28,7 +96,15 @@ function renderInlineContent(
   }
 
   if ("text" in part && typeof part.text === "string") {
-    return <span key={index}>{part.text}</span>;
+    let className = "";
+    if (part.wordsOfJesus) {
+      className += " sb-words-of-jesus";
+    }
+    return (
+      <span key={index} className={className.trim()}>
+        {part.text}
+      </span>
+    );
   }
 
   if ("heading" in part && typeof part.heading === "string") {
@@ -121,6 +197,46 @@ function renderChapterContent(
           v.bookId === chapterData.book.id &&
           v.chapterNumber === chapterData.chapter.number
       );
+      const hasPoetryLines = isPoetryVerse(value.content);
+
+      if (hasPoetryLines) {
+        const lines = splitVerseIntoLines(value.content);
+
+        return (
+          <span
+            key={`verse-${entryIndex}`}
+            className={`sb-verse sb-verse-poetry${isSelected ? " sb-verse-selected" : ""}`}
+            onClick={(event: MouseEvent) => {
+              onVerseClick(verse, event);
+            }}
+            style={{ cursor: "pointer" }}
+            role="button"
+            tabIndex={0}
+          >
+            <sup className="sb-verse-number">{value.number}</sup>
+            <span className="sb-verse-poetry-body">
+              {lines.map((line, lineIndex) => (
+                <span
+                  key={`verse-${entryIndex}-line-${lineIndex}`}
+                  className="sb-verse-line"
+                  style={{
+                    paddingLeft:
+                      line.indentLevel > 0
+                        ? `${line.indentLevel * 20}px`
+                        : undefined,
+                  }}
+                >
+                  {line.parts.map((part, partIndex) =>
+                    renderInlineContent(part, partIndex, (noteId) =>
+                      onOpenFootnote(noteId, value)
+                    )
+                  )}
+                </span>
+              ))}
+            </span>
+          </span>
+        );
+      }
 
       return (
         <span

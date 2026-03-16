@@ -394,6 +394,21 @@ button {
   color: var(--verse-text-color);
 }
 
+.sb-verse-poetry {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 4px;
+  align-items: start;
+}
+
+.sb-verse-poetry-body {
+  min-width: 0;
+}
+
+.sb-verse-line {
+  display: block;
+}
+
 .sb-verse-selected {
   text-decoration: underline;
 }
@@ -407,6 +422,20 @@ button {
   vertical-align: middle;
   /* margin-right: 2px;
   font-weight: 700; */
+}
+
+.sb-poem-line-1 {
+  margin-left: 0;
+  display: inline;
+}
+
+.sb-poem-line-2 {
+  margin-left: 0;
+  display: inline;
+}
+
+.sb-words-of-jesus {
+  color: var(--words-of-jesus-color, #c00);
 }
 
 .sb-reader-error {
