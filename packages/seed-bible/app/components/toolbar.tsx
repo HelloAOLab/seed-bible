@@ -171,6 +171,13 @@ export function Toolbar() {
   const moreTools = tools ? tools.filter((t: any) => t?.active !== false) : [];
   const mobileBookLogo =
     tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.mobileBookLogo;
+  const presetToolBarIcon =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.titlesAndIcon?.icon;
+  const presetToolBarTitle =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.titlesAndIcon?.title;
+  const presetToolName =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.titlesAndIcon
+      ?.toolName;
 
   if (!showToolbar) return <></>;
 
@@ -239,65 +246,92 @@ export function Toolbar() {
               </div>
             </div>
 
-            <div className="more-btn-wrapper">
-              {showMoreMenu && (
-                <div className="more-menu-popup">
-                  {moreTools
-                    .filter((tool: any) => tool.label !== "Books")
-                    .map((tool: any, i: any) => (
-                      <button
-                        key={i}
-                        className="more-menu-item"
-                        onClick={() => {
-                          tool?.onClick?.();
-                          setShowMoreMenu(false);
-                          setActiveMoreApp(tool.label);
-                        }}
-                      >
-                        {tool?.isImg ? (
-                          <img
-                            src={tool.icon}
-                            style={{ width: "20px" }}
-                            alt={tool.label}
-                          />
-                        ) : (
-                          <span className="material-symbols-outlined">
-                            {tool?.icon}
+            {!mobileBookLogo ? (
+              <div className="more-btn-wrapper">
+                {showMoreMenu && (
+                  <div className="more-menu-popup">
+                    {moreTools
+                      .filter((tool: any) => tool.label !== "Books")
+                      .map((tool: any, i: any) => (
+                        <button
+                          key={i}
+                          className="more-menu-item"
+                          onClick={() => {
+                            tool?.onClick?.();
+                            setShowMoreMenu(false);
+                            setActiveMoreApp(tool.label);
+                          }}
+                        >
+                          {tool?.isImg ? (
+                            <img
+                              src={tool.icon}
+                              style={{ width: "20px" }}
+                              alt={tool.label}
+                            />
+                          ) : (
+                            <span className="material-symbols-outlined">
+                              {tool?.icon}
+                            </span>
+                          )}
+                          <span className="more-menu-item-label">
+                            {tool?.label}
                           </span>
-                        )}
-                        <span className="more-menu-item-label">
-                          {tool?.label}
-                        </span>
-                      </button>
-                    ))}
-                </div>
-              )}
-              <button
-                className="mobile-navbar-btn more-btn"
-                title={activeMoreApp ? "Close" : "More"}
-                aria-label={activeMoreApp ? "Close" : "More"}
-                onClick={() => {
-                  if (activeMoreApp) {
-                    (globalThis as any).RemoveApplicationByLabel(activeMoreApp);
-                    (globalThis as any).makingApp = null;
-                    setActiveMoreApp(null);
-                  } else {
-                    setShowMoreMenu((prev) => !prev);
-                  }
-                }}
-              >
-                <div className="mobile-btn-content">
-                  {activeMoreApp ? (
-                    <span className="material-symbols-outlined">close</span>
-                  ) : (
-                    <MoreIcon color="var(--text1)" />
-                  )}
-                  <span className="mobile-btn-label">
-                    {activeMoreApp ? "Close" : "More"}
-                  </span>
-                </div>
-              </button>
-            </div>
+                        </button>
+                      ))}
+                  </div>
+                )}
+                <button
+                  className="mobile-navbar-btn more-btn"
+                  title={activeMoreApp ? "Close" : "More"}
+                  aria-label={activeMoreApp ? "Close" : "More"}
+                  onClick={() => {
+                    if (activeMoreApp) {
+                      (globalThis as any).RemoveApplicationByLabel(
+                        activeMoreApp
+                      );
+                      (globalThis as any).makingApp = null;
+                      setActiveMoreApp(null);
+                    } else {
+                      setShowMoreMenu((prev) => !prev);
+                    }
+                  }}
+                >
+                  <div className="mobile-btn-content">
+                    {activeMoreApp ? (
+                      <span className="material-symbols-outlined">close</span>
+                    ) : (
+                      <MoreIcon color="var(--text1)" />
+                    )}
+                    <span className="mobile-btn-label">
+                      {activeMoreApp ? "Close" : "More"}
+                    </span>
+                  </div>
+                </button>
+              </div>
+            ) : (
+              <div className="more-btn-wrapper">
+                <button
+                  className="mobile-navbar-btn"
+                  title={presetToolBarTitle}
+                  aria-label={presetToolName}
+                  onClick={() => {
+                    const exploreTool = tools?.find(
+                      (t) => t?.label === presetToolName
+                    );
+                    exploreTool?.onClick?.();
+                  }}
+                >
+                  <div className="mobile-btn-content">
+                    <span className="material-symbols-outlined">
+                      {presetToolBarIcon}
+                    </span>
+                    <span className="mobile-btn-label">
+                      {presetToolBarTitle}
+                    </span>
+                  </div>
+                </button>
+              </div>
+            )}
 
             <button
               style={{ display: showNavArrows ? "" : "none" }}
