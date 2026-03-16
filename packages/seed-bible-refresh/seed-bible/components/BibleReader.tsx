@@ -31,6 +31,15 @@ function getPoemIndentLevel(part: ChapterVerse["content"][0]) {
   return null;
 }
 
+function isFootnotePart(part: ChapterVerse["content"][0]) {
+  return (
+    !!part &&
+    typeof part === "object" &&
+    "noteId" in part &&
+    typeof part.noteId === "number"
+  );
+}
+
 type VerseSegment =
   | { type: "inline"; parts: ChapterVerse["content"] }
   | { type: "poetry"; lines: VerseLine[] };
@@ -75,12 +84,22 @@ function splitVerseIntoSegments(
   };
 
   for (const part of content) {
+    const isFootnote = isFootnotePart(part);
     const indentLevel = getPoemIndentLevel(part);
     const isLineBreak =
       part &&
       typeof part === "object" &&
       "lineBreak" in part &&
       part.lineBreak === true;
+
+    if (isFootnote) {
+      if (inPoetry) {
+        currentPoetryLine.parts.push(part);
+      } else {
+        currentInlineParts.push(part);
+      }
+      continue;
+    }
 
     if (indentLevel !== null) {
       if (!inPoetry) {
