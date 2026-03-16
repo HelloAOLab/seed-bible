@@ -446,11 +446,11 @@ button {
   .sb-reader-toolbar-wrap {
     position: fixed;
     left: 50%;
-    bottom: 18px;
+    bottom: 0;
     transform: translateX(-50%);
     z-index: 99;
-    width: calc(100vw - 24px);
-    max-width: 420px;
+    width: 100vw;
+    /* max-width: 420px; */
   }
 
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout {
@@ -460,7 +460,7 @@ button {
     bottom: auto;
     height: 70px;
     width: 100%;
-    border-radius: 16px;
+    border-radius: 0;
     padding: 10px 14px;
     justify-content: space-between;
     gap: 8px;
@@ -497,12 +497,12 @@ button {
 
   .sb-reader-toolbar-floating-button {
     position: absolute;
-    top: -28px;
+    top: -68px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 46px;
-    height: 46px;
+    width: 48px;
+    height: 48px;
     border: 1px solid var(--reader-toolbar-border, #00000024);
     border-radius: 999px;
     background: var(--reader-background);
@@ -512,11 +512,11 @@ button {
   }
 
   .sb-reader-toolbar-floating-button-left {
-    left: 64px;
+    left: 16px;
   }
 
   .sb-reader-toolbar-floating-button-right {
-    right: 64px;
+    right: 16px;
   }
 }
 

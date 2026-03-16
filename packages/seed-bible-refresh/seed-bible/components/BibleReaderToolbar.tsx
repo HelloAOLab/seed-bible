@@ -180,40 +180,42 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   </button>
                 </div>
 
-                {hasOverflowTools && (
-                  <div className="sb-reader-toolbar-item sb-reader-toolbar-more-anchor">
-                    <button
-                      onClick={() => {
-                        isMoreMenuOpen.value = !isMoreMenuOpen.value;
-                      }}
-                      className="sb-reader-toolbar-button"
-                      aria-label="More tools"
-                    >
-                      <span>more</span>
-                    </button>
-                    {isMoreMenuOpen.value && (
-                      <div className="sb-reader-toolbar-more-menu">
-                        {overflowTools.map((tool) => {
-                          const ToolIcon = tool.icon;
-                          return tool.visible ? (
-                            <button
-                              key={tool.id}
-                              disabled={tool.disabled}
-                              onClick={() => {
-                                tool.onSelect();
-                                isMoreMenuOpen.value = false;
-                              }}
-                              className="sb-reader-toolbar-more-item"
-                            >
-                              <ToolIcon />
-                              <span>{tool.title}</span>
-                            </button>
-                          ) : null;
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
+                <div className="sb-reader-toolbar-item sb-reader-toolbar-more-anchor">
+                  {hasOverflowTools && (
+                    <>
+                      <button
+                        onClick={() => {
+                          isMoreMenuOpen.value = !isMoreMenuOpen.value;
+                        }}
+                        className="sb-reader-toolbar-button"
+                        aria-label="More tools"
+                      >
+                        <span>more</span>
+                      </button>
+                      {isMoreMenuOpen.value && (
+                        <div className="sb-reader-toolbar-more-menu">
+                          {overflowTools.map((tool) => {
+                            const ToolIcon = tool.icon;
+                            return tool.visible ? (
+                              <button
+                                key={tool.id}
+                                disabled={tool.disabled}
+                                onClick={() => {
+                                  tool.onSelect();
+                                  isMoreMenuOpen.value = false;
+                                }}
+                                className="sb-reader-toolbar-more-item"
+                              >
+                                <ToolIcon />
+                                <span>{tool.title}</span>
+                              </button>
+                            ) : null;
+                          })}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               </>
             ) : (
               tools.map((tool) => {
