@@ -370,6 +370,10 @@ button {
   transition: transform 0.3s ease;
 }
 
+.sb-reader-toolbar-wrap {
+  position: static;
+}
+
 .sb-reader-toolbar-item {
   flex: 0 0 44px;
   height: 100%;
@@ -392,6 +396,128 @@ button {
   transition:
     background-color 0.2s ease,
     transform 0.25s ease;
+}
+
+.sb-reader-toolbar-center-item {
+  margin: 0 auto;
+}
+
+.sb-reader-toolbar-more-anchor {
+  position: relative;
+}
+
+.sb-reader-toolbar-more-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  min-width: 180px;
+  border-radius: 10px;
+  border: 1px solid var(--secondary-color);
+  background: var(--reader-background);
+  box-shadow: 0 10px 30px #00000014;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sb-reader-toolbar-more-item {
+  border: none;
+  background: transparent;
+  color: var(--font-color);
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.sb-reader-toolbar-more-item:hover {
+  background: var(--tertiary-color);
+}
+
+.sb-reader-toolbar-floating-button {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .sb-reader-toolbar-wrap {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    z-index: 99;
+    width: calc(100vw - 24px);
+    max-width: 420px;
+  }
+
+  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout {
+    position: static;
+    transform: none;
+    left: auto;
+    bottom: auto;
+    height: 70px;
+    width: 100%;
+    border-radius: 16px;
+    padding: 10px 14px;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout .sb-reader-toolbar-item {
+    flex: 0 0 44px;
+    height: 44px;
+  }
+
+  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
+    .sb-reader-toolbar-center-item {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
+    .sb-reader-toolbar-center-item
+    .sb-reader-toolbar-button {
+    width: 52px;
+    height: 52px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--primary-color), white 20%);
+  }
+
+  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
+    .sb-reader-toolbar-more-anchor
+    .sb-reader-toolbar-button {
+    min-width: 52px;
+    border-radius: 999px;
+    padding: 0 12px;
+  }
+
+  .sb-reader-toolbar-floating-button {
+    position: absolute;
+    top: -28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border: 1px solid var(--reader-toolbar-border, #00000024);
+    border-radius: 999px;
+    background: var(--reader-background);
+    color: var(--font-color);
+    box-shadow: 0 10px 24px #0000001a;
+    cursor: pointer;
+  }
+
+  .sb-reader-toolbar-floating-button-left {
+    left: 64px;
+  }
+
+  .sb-reader-toolbar-floating-button-right {
+    right: 64px;
+  }
 }
 
 .sb-verse-toolbar {

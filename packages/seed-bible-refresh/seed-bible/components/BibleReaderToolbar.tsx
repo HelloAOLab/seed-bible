@@ -70,6 +70,25 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const hasVerseSelection = readingState.selectedVerses.value.length > 0;
   const isSmallScreen = viewportWidth.value <= 480;
   const shouldReplaceDefaultToolbar = isSmallScreen && hasVerseSelection;
+  const isMoreMenuOpen = useSignal(false);
+
+  const previousChapterTool =
+    tools.find((tool) => tool.id === "previous-chapter") ?? null;
+  const nextChapterTool =
+    tools.find((tool) => tool.id === "next-chapter") ?? null;
+  const openSelectorTool =
+    tools.find((tool) => tool.id === "open-selector") ?? null;
+  const openSidebarTool =
+    tools.find((tool) => tool.id === "open-sidebar") ?? null;
+  const overflowTools = tools.filter(
+    (tool) =>
+      tool.visible &&
+      tool.id !== "previous-chapter" &&
+      tool.id !== "next-chapter" &&
+      tool.id !== "open-selector" &&
+      tool.id !== "open-sidebar"
+  );
+  const hasOverflowTools = overflowTools.length > 0;
 
   const floatingAnchor = readingState.selectedVerses.value.reduce<{
     x: number;
@@ -103,22 +122,117 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   return (
     <>
       {!shouldReplaceDefaultToolbar && (
-        <div className="sb-reader-toolbar">
-          {tools.map((tool) => {
-            const ToolIcon = tool.icon;
-            return tool.visible ? (
-              <div key={tool.id} className="sb-reader-toolbar-item">
-                <button
-                  disabled={tool.disabled}
-                  onClick={tool.onSelect}
-                  className="sb-reader-toolbar-button"
-                >
-                  <ToolIcon />
-                  <span className="sr-only">{tool.title}</span>
-                </button>
-              </div>
-            ) : null;
-          })}
+        <div className="sb-reader-toolbar-wrap">
+          {isSmallScreen && previousChapterTool && (
+            <button
+              disabled={previousChapterTool.disabled}
+              onClick={previousChapterTool.onSelect}
+              className="sb-reader-toolbar-floating-button sb-reader-toolbar-floating-button-left"
+              aria-label={previousChapterTool.title}
+            >
+              <previousChapterTool.icon />
+            </button>
+          )}
+
+          {isSmallScreen && nextChapterTool && (
+            <button
+              disabled={nextChapterTool.disabled}
+              onClick={nextChapterTool.onSelect}
+              className="sb-reader-toolbar-floating-button sb-reader-toolbar-floating-button-right"
+              aria-label={nextChapterTool.title}
+            >
+              <nextChapterTool.icon />
+            </button>
+          )}
+
+          <div
+            className={`sb-reader-toolbar${isSmallScreen ? " sb-reader-toolbar-mobile-layout" : ""}`}
+          >
+            {isSmallScreen ? (
+              <>
+                <div className="sb-reader-toolbar-item">
+                  <button
+                    disabled={!openSidebarTool || openSidebarTool.disabled}
+                    onClick={() => {
+                      openSidebarTool?.onSelect();
+                    }}
+                    className="sb-reader-toolbar-button"
+                    aria-label={openSidebarTool?.title ?? "Open sidebar"}
+                  >
+                    {openSidebarTool ? (
+                      <openSidebarTool.icon />
+                    ) : (
+                      <span className="material-symbols-outlined">menu</span>
+                    )}
+                  </button>
+                </div>
+
+                <div className="sb-reader-toolbar-item sb-reader-toolbar-center-item">
+                  <button
+                    disabled={!openSelectorTool || openSelectorTool.disabled}
+                    onClick={() => {
+                      openSelectorTool?.onSelect();
+                    }}
+                    className="sb-reader-toolbar-button"
+                    aria-label={openSelectorTool?.title ?? "Open Book Selector"}
+                  >
+                    {openSelectorTool ? <openSelectorTool.icon /> : null}
+                  </button>
+                </div>
+
+                {hasOverflowTools && (
+                  <div className="sb-reader-toolbar-item sb-reader-toolbar-more-anchor">
+                    <button
+                      onClick={() => {
+                        isMoreMenuOpen.value = !isMoreMenuOpen.value;
+                      }}
+                      className="sb-reader-toolbar-button"
+                      aria-label="More tools"
+                    >
+                      <span>more</span>
+                    </button>
+                    {isMoreMenuOpen.value && (
+                      <div className="sb-reader-toolbar-more-menu">
+                        {overflowTools.map((tool) => {
+                          const ToolIcon = tool.icon;
+                          return tool.visible ? (
+                            <button
+                              key={tool.id}
+                              disabled={tool.disabled}
+                              onClick={() => {
+                                tool.onSelect();
+                                isMoreMenuOpen.value = false;
+                              }}
+                              className="sb-reader-toolbar-more-item"
+                            >
+                              <ToolIcon />
+                              <span>{tool.title}</span>
+                            </button>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              tools.map((tool) => {
+                const ToolIcon = tool.icon;
+                return tool.visible ? (
+                  <div key={tool.id} className="sb-reader-toolbar-item">
+                    <button
+                      disabled={tool.disabled}
+                      onClick={tool.onSelect}
+                      className="sb-reader-toolbar-button"
+                    >
+                      <ToolIcon />
+                      <span className="sr-only">{tool.title}</span>
+                    </button>
+                  </div>
+                ) : null;
+              })
+            )}
+          </div>
         </div>
       )}
 
