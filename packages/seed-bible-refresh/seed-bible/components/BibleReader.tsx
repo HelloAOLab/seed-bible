@@ -2,6 +2,7 @@ import {
   type TranslationBookChapter,
   type ChapterVerse,
   type ChapterFootnote,
+  type ChapterContent,
 } from "seed-bible.managers.FreeUseBibleAPI";
 import { computed, useSignal } from "@preact/signals";
 import type {
@@ -62,7 +63,7 @@ function renderChapterContent(
   chapterData: TranslationBookChapter | null,
   onVerseClick: (verse: BibleSelectedVerse, event: MouseEvent) => void,
   selectedVerses: BibleSelectedVerse[],
-  onOpenFootnote: (noteId: number) => void
+  onOpenFootnote: (noteId: number, verse: ChapterVerse | null) => void
 ) {
   if (!chapterData) {
     return null;
@@ -95,7 +96,9 @@ function renderChapterContent(
       return (
         <p key={`subtitle-${entryIndex}`} className="sb-subtitle">
           {value.content.map((part, index) =>
-            renderInlineContent(part, index, onOpenFootnote)
+            renderInlineContent(part, index, (noteId) =>
+              onOpenFootnote(noteId, null)
+            )
           )}
         </p>
       );
@@ -132,7 +135,9 @@ function renderChapterContent(
         >
           <sup className="sb-verse-number">{value.number}</sup>
           {value.content.map((part, index) =>
-            renderInlineContent(part, index, onOpenFootnote)
+            renderInlineContent(part, index, (noteId) =>
+              onOpenFootnote(noteId, value)
+            )
           )}
         </span>
       );
@@ -203,22 +208,15 @@ export function BibleReader(props: BibleReaderProps) {
               selectVerse(verse, event.clientX, event.clientY);
             },
             selectedVerses.value,
-            (noteId) => {
+            (noteId, verse) => {
               const footnote =
                 chapterData.value?.chapter.footnotes.find(
                   (note) => note.noteId === noteId
                 ) ?? null;
               if (footnote) {
-                const verses = chapterData.value!.chapter.content.filter(
-                  (c): c is ChapterVerse =>
-                    typeof c === "object" && c.type === "verse"
-                );
                 selectedFootnote.value = {
                   note: footnote,
-                  verse:
-                    verses.find(
-                      (c) => c.number === footnote.reference?.verse
-                    ) ?? null,
+                  verse: verse,
                   chapter: chapterData.value!,
                 };
               } else {
@@ -251,8 +249,10 @@ export function BibleReader(props: BibleReaderProps) {
             <div className="sb-footnote-modal-header">
               <h3 className="sb-footnote-modal-title">
                 {selectedFootnote.value.chapter.book.name}{" "}
-                {selectedFootnote.value.chapter.chapter.number}:
-                {selectedFootnote.value.verse?.number ?? "?"}
+                {selectedFootnote.value.chapter.chapter.number}
+                {selectedFootnote.value.verse
+                  ? ":" + selectedFootnote.value.verse.number
+                  : ""}
               </h3>
               <button
                 className="sb-footnote-modal-close"
