@@ -31,6 +31,8 @@
   "next": "بعدی",
   "previous": "قبلی",
   "exit": "خروج",
+  "ended": "به پایان رسید",
+  "checklistMode": "حالت لیست بررسی",
   "settings": "تنظیمات",
   "generalSettings": "تنظیمات عمومی",
   "spaceSettings": "تنظیمات فضا",

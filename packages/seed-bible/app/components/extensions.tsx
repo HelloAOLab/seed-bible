@@ -64,6 +64,7 @@ function SettingsPanel({
 }) {
   const { t } = useSideBarContext();
   const [buttonEnabled, setbuttonEnabled] = useState(true);
+  const [runInBackground, setRunInBackground] = useState(false);
   const [showInToolbar, setShowInToolbar] = useState(false);
   const [showInPanel, setShowInPanel] = useState(false);
   const [showBelowPage, setShowBelowPage] = useState(false);
@@ -141,6 +142,25 @@ function SettingsPanel({
 
         {expand && (
           <div style={sectionStyle}>
+            <div style={optionStyle}>
+              <div style={optionLabelStyle}>
+                <span className="material-symbols-outlined" style={iconStyle}>
+                  play_circle
+                </span>
+                <span>{t("runInBackground")}</span>
+              </div>
+              <ToggleSwitch
+                isOn={
+                  (globalThis as any).IsToolRunInBackground &&
+                  (globalThis as any).IsToolRunInBackground(name)
+                }
+                onToggle={() => {
+                  (globalThis as any).ToToggleRunInBackground(name);
+                  setRunInBackground((prev) => !prev);
+                }}
+              />
+            </div>
+
             <div style={optionStyle}>
               <div style={optionLabelStyle}>
                 <span className="material-symbols-outlined" style={iconStyle}>

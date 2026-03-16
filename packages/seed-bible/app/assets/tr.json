@@ -31,6 +31,8 @@
   "next": "İleri",
   "previous": "Önceki",
   "exit": "Çıkış",
+  "ended": "Sona erdi",
+  "checklistMode": "Kontrol listesi modu",
   "settings": "Ayarlar",
   "generalSettings": "Genel ayarlar",
   "spaceSettings": "Alan ayarları",

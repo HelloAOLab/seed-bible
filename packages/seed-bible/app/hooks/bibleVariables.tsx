@@ -296,6 +296,16 @@ export function BibleVariablesProvider({ children }) {
 
   const [mapTools, setMapTools] = useState([]);
 
+  const [backgroundApps, setBackgroundApps] = useState([]);
+
+  function addBackgroundApp(id, AppElement) {
+    setBackgroundApps((prev) => [...prev, { id, AppElement }]);
+  }
+
+  function removeBackgroundApp(id) {
+    setBackgroundApps((prev) => prev.filter((a) => a.id !== id));
+  }
+
   useEffect(() => {
     globalThis.CanvasMode = canvasMode;
     window.CanvasMode = canvasMode;
@@ -441,6 +451,53 @@ export function BibleVariablesProvider({ children }) {
     return tool?.showInStarterToolbar === true;
   }
 
+  function toToggleRunInBackground(label, { inSet = "tools" } = {}) {
+    const setTarget =
+      inSet === "canvas"
+        ? setCanvasTools
+        : inSet === "map"
+          ? setMapTools
+          : setTools;
+    const target =
+      inSet === "canvas" ? canvasTools : inSet === "map" ? mapTools : tools;
+
+    const tool = target.find((t) => t.label === label);
+    if (!tool) return;
+
+    const isCurrentlyRunning = tool.runInBackground === true;
+
+    if (!isCurrentlyRunning && tool.AppComponent) {
+      const bgId = `bg_${label}_${Date.now()}`;
+      const AppComp = tool.AppComponent;
+      addBackgroundApp(bgId, <AppComp id={bgId} />);
+      setTarget(
+        target.map((t) =>
+          t.label === label
+            ? { ...t, runInBackground: true, backgroundAppId: bgId }
+            : t
+        )
+      );
+    } else {
+      if (tool.backgroundAppId) {
+        removeBackgroundApp(tool.backgroundAppId);
+      }
+      setTarget(
+        target.map((t) =>
+          t.label === label
+            ? { ...t, runInBackground: false, backgroundAppId: null }
+            : t
+        )
+      );
+    }
+  }
+
+  function isToolRunInBackground(label, { inSet = "tools" } = {}) {
+    const target =
+      inSet === "canvas" ? canvasTools : inSet === "map" ? mapTools : tools;
+    const tool = target.find((t) => t.label === label);
+    return tool?.runInBackground === true;
+  }
+
   function scrollToVerse(verseNumber) {
     const element = document.getElementById(`v-${verseNumber}`);
     if (element) {
@@ -462,6 +519,18 @@ export function BibleVariablesProvider({ children }) {
   globalThis.ToToggleShowInStarterToolbar = toToggleShowInStarterToolbar;
   globalThis.IsToolInPageToolbar = isToolInPageToolbar;
   globalThis.IsToolSraterToolbar = isToolSraterToolbar;
+  globalThis.ToToggleRunInBackground = toToggleRunInBackground;
+  globalThis.IsToolRunInBackground = isToolRunInBackground;
+  globalThis.AddBackgroundApp = addBackgroundApp;
+  globalThis.RemoveBackgroundApp = removeBackgroundApp;
+
+  const backgroundContainer = (
+    <div style={{ display: "none" }} aria-hidden="true">
+      {backgroundApps.map(({ id, AppElement }) => (
+        <div key={id}>{AppElement}</div>
+      ))}
+    </div>
+  );
 
   return (
     <MyContext.Provider
@@ -502,6 +571,7 @@ export function BibleVariablesProvider({ children }) {
       }}
     >
       {children}
+      {backgroundContainer}
     </MyContext.Provider>
   );
 }

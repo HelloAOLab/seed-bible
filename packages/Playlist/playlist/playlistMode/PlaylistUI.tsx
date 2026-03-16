@@ -755,6 +755,18 @@ const Playlist = () => {
                           <span class="material-symbols-outlined">add</span>
                           {t("create")}
                         </Button>
+                        <span
+                          onClick={() => {
+                            thisBot.CloseSelf();
+                          }}
+                          class="material-symbols-outlined show-on-mobile"
+                          style={{
+                            fontSize: "24px",
+                            margin: "0 0.5rem",
+                          }}
+                        >
+                          close
+                        </span>
                         <Button
                           onClick={() => {
                             setCreateOptions(true);

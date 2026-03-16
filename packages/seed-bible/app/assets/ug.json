@@ -31,6 +31,8 @@
   "next": "كېيىنكى",
   "previous": "ئالدىنقى",
   "exit": "چىقىش",
+  "ended": "ئاخىرلاشتى",
+  "checklistMode": "تەكشۈرۈش تىزىملىكى ھالىتى",
   "settings": "تەڭشەكلەر",
   "generalSettings": "ئومۇمىي تەڭشەكلەر",
   "spaceSettings": "بوشلۇق تەڭشەكلەر",

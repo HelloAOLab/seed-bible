@@ -660,6 +660,14 @@ export function VerseToolbar({
                       </span>
                     </button>
                   ))}
+                <button
+                  className="mobile-action-btn"
+                  onClick={onClose}
+                  style={{ marginLeft: "auto" }}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                  <span>Cancel</span>
+                </button>
               </>
             )}
           </div>

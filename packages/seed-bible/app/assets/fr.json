@@ -31,6 +31,8 @@
   "next": "Suivant",
   "previous": "Précédent",
   "exit": "Quitter",
+  "ended": "Terminé",
+  "checklistMode": "Mode liste de contrôle",
   "settings": "Paramètres",
   "generalSettings": "Paramètres généraux",
   "spaceSettings": "Paramètres de l'espace",

@@ -31,6 +31,8 @@
   "next": "次へ",
   "previous": "前へ",
   "exit": "終了",
+  "ended": "終了しました",
+  "checklistMode": "チェックリストモード",
   "settings": "設定",
   "generalSettings": "一般設定",
   "spaceSettings": "スペース設定",
