@@ -78,9 +78,12 @@ export function Main() {
   const {
     isSettingsOpen,
     isSidebarCollapsed,
+    isMobileOpen,
     openSettings,
     closeSettings,
+    closeSidebar,
     toggleSidebarCollapsed,
+    openSidebar,
   } = sidebarManager;
   const theme = currentTheme.variables;
   const themeCssVariables = generateThemeCssVariables(theme);
@@ -149,28 +152,33 @@ export function Main() {
 
   const handleSelectTab = (tabId: string) => {
     closeSettings();
+    closeSidebar();
     selectTab(tabId);
   };
 
   const handleAddTab = () => {
     closeSettings();
+    closeSidebar();
     addTab();
   };
 
   const handleOpenInNewPane = (tabId: string) => {
     closeSettings();
+    closeSidebar();
     openInNewPane(tabId);
     selectTab(tabId);
   };
 
   const handleOpenInDetachedPane = (tabId: string) => {
     closeSettings();
+    closeSidebar();
     openInDetachedPane(tabId);
     selectTab(tabId);
   };
 
   const handleSelectPane = (paneId: string) => {
     closeSettings();
+    closeSidebar();
     selectPane(paneId);
     const selectedPane = panes.value.find((pane) => pane.id === paneId) ?? null;
     if (selectedPane?.tab) {
@@ -204,6 +212,7 @@ export function Main() {
           panelsEnabled={panelsEnabled}
           isSettingsOpen={isSettingsOpen.value}
           isCollapsed={isSidebarCollapsed.value}
+          isMobileOpen={isMobileOpen.value}
           onSelectTab={handleSelectTab}
           onSelectPaneLayout={setLayout}
           onOpenInNewPane={handleOpenInNewPane}
@@ -211,6 +220,7 @@ export function Main() {
           onAddTab={handleAddTab}
           onToggleCollapse={toggleSidebarCollapsed}
           onOpenSettings={openSettings}
+          onClose={closeSidebar}
         />
 
         <main className="sb-main-content">
@@ -248,6 +258,7 @@ export function Main() {
             selectorState={selectorState}
             tabsManager={tabsManager}
             panesManager={panesManager}
+            onOpenSidebar={openSidebar}
           />
         )}
       </div>

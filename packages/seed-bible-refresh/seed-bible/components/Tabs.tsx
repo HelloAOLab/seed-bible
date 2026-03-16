@@ -16,6 +16,7 @@ interface TabsProps {
   panelsEnabled: boolean;
   isSettingsOpen: boolean;
   isCollapsed: boolean;
+  isMobileOpen: boolean;
   onSelectTab: (tabId: string) => void;
   onSelectPaneLayout: (layoutId: PaneLayoutId) => void;
   onOpenInNewPane: (tabId: string) => void;
@@ -23,6 +24,7 @@ interface TabsProps {
   onAddTab: () => void;
   onToggleCollapse: () => void;
   onOpenSettings: () => void;
+  onClose: () => void;
 }
 
 function renderLayoutPreview(layoutId: PaneLayoutId) {
@@ -52,6 +54,7 @@ export function Tabs(props: TabsProps) {
     panelsEnabled,
     isSettingsOpen,
     isCollapsed,
+    isMobileOpen,
     onSelectTab,
     onSelectPaneLayout,
     onOpenInNewPane,
@@ -59,7 +62,9 @@ export function Tabs(props: TabsProps) {
     onAddTab,
     onToggleCollapse,
     onOpenSettings,
+    onClose,
   } = props;
+  const effectivelyCollapsed = isCollapsed && !isMobileOpen;
   const openMenuTabId = useSignal<string | null>(null);
   const isLayoutMenuOpen = useSignal(false);
   const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
@@ -82,17 +87,19 @@ export function Tabs(props: TabsProps) {
 
   return (
     <aside
-      className={`sb-tabs-sidebar${isCollapsed ? " sb-tabs-sidebar-collapsed" : ""}`}
+      className={`sb-tabs-sidebar${effectivelyCollapsed ? " sb-tabs-sidebar-collapsed" : ""}${isMobileOpen ? " sb-tabs-sidebar-mobile-open" : ""}`}
     >
       <div className="sb-sidebar-top-row">
         <button
           onClick={onToggleCollapse}
           className="sb-sidebar-collapse-button"
-          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={
+            effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"
+          }
+          title={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           <span className="material-symbols-outlined">
-            {isCollapsed ? "menu" : "menu_open"}
+            {effectivelyCollapsed ? "menu" : "menu_open"}
           </span>
         </button>
 
@@ -139,9 +146,17 @@ export function Tabs(props: TabsProps) {
             </div>
           </div>
         )}
+        <button
+          onClick={onClose}
+          className="sb-sidebar-close-button"
+          aria-label="Close sidebar"
+          title="Close sidebar"
+        >
+          <span className="material-symbols-outlined">close</span>
+        </button>
       </div>
 
-      {!isCollapsed && (
+      {!effectivelyCollapsed && (
         <>
           <div className="sb-sidebar-tabs-header">
             <h3 className="sb-sidebar-tabs-title">Tabs</h3>

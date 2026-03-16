@@ -1011,9 +1011,51 @@ button {
   box-shadow: inset 0 0 0 2px var(--book-heading-color);
 }
 
+.sb-sidebar-close-button {
+  display: none;
+  border: none;
+  background: transparent;
+  color: var(--font-color);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 6px;
+}
+
+.sb-sidebar-open-item {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .sb-tabs-sidebar {
-    width: 240px;
+    display: none;
+  }
+
+  .sb-tabs-sidebar-mobile-open {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    z-index: 100;
+    overflow-y: auto;
+  }
+
+  .sb-sidebar-close-button {
+    display: inline-flex;
+  }
+
+  .sb-sidebar-collapse-button {
+    display: none;
+  }
+
+  .sb-sidebar-open-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .sb-panes-layout {

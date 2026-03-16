@@ -2,10 +2,12 @@ import { signal } from "@preact/signals";
 
 const isSettingsOpen = signal(false);
 const isSidebarCollapsed = signal(false);
+const isMobileOpen = signal(false);
 
 export function useSidebar() {
   const openSettings = () => {
     isSettingsOpen.value = true;
+    isMobileOpen.value = false;
   };
 
   const closeSettings = () => {
@@ -16,11 +18,22 @@ export function useSidebar() {
     isSidebarCollapsed.value = !isSidebarCollapsed.value;
   };
 
+  const openSidebar = () => {
+    isMobileOpen.value = true;
+  };
+
+  const closeSidebar = () => {
+    isMobileOpen.value = false;
+  };
+
   return {
     isSettingsOpen,
     isSidebarCollapsed,
+    isMobileOpen,
     openSettings,
     closeSettings,
     toggleSidebarCollapsed,
+    openSidebar,
+    closeSidebar,
   };
 }
