@@ -3941,6 +3941,9 @@
       "seed-bible.app.onInstJoined": [
         "./packages/seed-bible-refresh/seed-bible/app/onInstJoined.tsx"
       ],
+      "seed-bible.components.BelowReaderToolbar": [
+        "./packages/seed-bible-refresh/seed-bible/components/BelowReaderToolbar.tsx"
+      ],
       "seed-bible.components.BibleReader": [
         "./packages/seed-bible-refresh/seed-bible/components/BibleReader.tsx"
       ],

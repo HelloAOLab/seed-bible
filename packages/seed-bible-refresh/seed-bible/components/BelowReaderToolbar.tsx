@@ -3,17 +3,37 @@ import {
   type BibleBelowReaderToolbarTool,
 } from "seed-bible.managers.BibleToolsManager";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
+import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
+import type { TabsManager } from "seed-bible.managers.TabsManager";
+import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 
 interface BelowReaderToolbarProps {
   readingState: BibleReadingState;
+  selectorState: BibleSelectorState;
+  tabsManager: TabsManager;
+  panesManager: PanesManager;
+  currentPane: Pane;
+  openSidebar: () => void;
 }
 
 export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
-  const { readingState } = props;
+  const {
+    readingState,
+    selectorState,
+    tabsManager,
+    panesManager,
+    openSidebar,
+    currentPane,
+  } = props;
   const toolsManager = useBibleToolsManager();
   const tools: BibleBelowReaderToolbarTool[] = toolsManager.getBelowReaderTools(
     {
       readingState,
+      selectorState,
+      tabs: tabsManager,
+      panesManager,
+      openSidebar,
+      currentPane,
     }
   );
 

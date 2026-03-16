@@ -2,7 +2,11 @@ import { BibleReader } from "seed-bible.components.BibleReader";
 import { BelowReaderToolbar } from "seed-bible.components.BelowReaderToolbar";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
-import type { Pane, PaneLayoutId } from "seed-bible.managers.PanesManager";
+import type {
+  Pane,
+  PaneLayoutId,
+  PanesManager,
+} from "seed-bible.managers.PanesManager";
 import {
   useBibleToolsManager,
   type BibleEmptyPaneTool,
@@ -57,6 +61,8 @@ interface PaneLayoutProps {
   selectedPaneId: string | null;
   selectorState: BibleSelectorState;
   tabsManager: TabsManager;
+  panesManager: PanesManager;
+  openSidebar: () => void;
   onSelectPane: (paneId: string) => void;
   onMovePane: (paneId: string, deltaX: number, deltaY: number) => void;
   onResizePane: (
@@ -78,6 +84,8 @@ export function PaneLayout(props: PaneLayoutProps) {
     onMovePane,
     onResizePane,
     onCloseDetachedPane,
+    panesManager,
+    openSidebar,
   } = props;
   const dragStateRef = useRef<{
     mode: "move" | "resize";
@@ -143,7 +151,14 @@ export function PaneLayout(props: PaneLayoutProps) {
                 readingState={pane.tab.readingState}
                 selectorState={selectorState}
               />
-              <BelowReaderToolbar readingState={pane.tab.readingState} />
+              <BelowReaderToolbar
+                readingState={pane.tab.readingState}
+                selectorState={selectorState}
+                tabsManager={tabsManager}
+                panesManager={panesManager}
+                openSidebar={openSidebar}
+                currentPane={pane}
+              />
             </div>
           ) : (
             <EmptyPaneToolbar

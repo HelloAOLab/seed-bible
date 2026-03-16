@@ -71,8 +71,8 @@ export interface BibleBelowReaderToolbarTool extends BibleTool {
   onSelect: () => void;
 }
 
-export interface BibleBelowReaderToolContext {
-  readingState: BibleReadingState;
+export interface BibleBelowReaderToolContext extends BibleToolContext {
+  currentPane: Pane;
 }
 
 export interface ManagedBibleBelowReaderToolbarTool extends BibleTool {
