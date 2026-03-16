@@ -1076,6 +1076,20 @@ function ThePage({
     globalThis.SetInHold = setInHold;
     globalThis.SetShowCommands = setShowCommands;
 
+    globalThis.ClearMobileVerseSelection = () => {
+      setClickedVerses([]);
+      setClickedVersesContext({});
+      setShowVerseToolbar(false);
+      setCommandHighlight([]);
+      setLastSelectedVerse(null);
+      setSelectedText("");
+      setShowCommands(false);
+      if (window.getSelection) {
+        const sel = window.getSelection();
+        if (sel?.removeAllRanges) sel.removeAllRanges();
+      }
+    };
+
     globalThis.HighlightWords = highlightWords;
     globalThis.RemoveWordHighlight = removeWordHighlight;
     globalThis.ClearAllWordHighlights = clearAllWordHighlights;
@@ -1457,6 +1471,11 @@ function ThePage({
     document.addEventListener("keydown", handleEsc);
     return () => document.removeEventListener("keydown", handleEsc);
   }, []);
+
+  useEffect(() => {
+    const hasSelection = clickedVerses.length > 0 || showCommands;
+    (globalThis as any).SetMobileHasSelection?.(hasSelection);
+  }, [clickedVerses, showCommands]);
 
   // NEW: Handle verse clicks
   const handleVerseClick = useCallback(
