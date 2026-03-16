@@ -32,6 +32,13 @@ const cleanup = registerExtension({
       },
       priority: 100,
     });
+
+    yield context.tools.registerBelowReaderTool({
+      id: "my-below-reader-tool",
+      title: "My Below Reader Tool",
+      icon: () => <span>BELOW!</span>,
+      priority: 100,
+    });
   },
 });
 
