@@ -9,13 +9,13 @@ import { useBibleToolsManager } from "seed-bible.managers.BibleToolsManager";
 import { Tabs } from "seed-bible.components.Tabs";
 import { I18nProvider, useI18n } from "seed-bible.i18n.I18nManager";
 import { usePanes } from "seed-bible.managers.PanesManager";
+import { useSidebar } from "seed-bible.managers.SidebarManager";
 import { useTabs } from "seed-bible.managers.TabsManager";
 import {
   generateThemeCssVariables,
   useTheme,
 } from "seed-bible.managers.ThemeManager";
 import { setupExtensionContext } from "seed-bible.app.api";
-import { useSignal } from "@preact/signals";
 import type { Pane } from "seed-bible.managers.PanesManager";
 
 const { useEffect, useMemo } = os.appHooks;
@@ -74,10 +74,16 @@ export function Main() {
   const { config } = configManager;
   const themeManager = useTheme();
   const { currentTheme } = themeManager;
+  const sidebarManager = useSidebar();
+  const {
+    isSettingsOpen,
+    isSidebarCollapsed,
+    openSettings,
+    closeSettings,
+    toggleSidebarCollapsed,
+  } = sidebarManager;
   const theme = currentTheme.variables;
   const themeCssVariables = generateThemeCssVariables(theme);
-  const isSettingsOpen = useSignal(false);
-  const isSidebarCollapsed = useSignal(false);
   const panesManager = usePanes(tabsManager, selectedTabId.value);
   const selectorState = useBibleSelector(bibleApi, tabsManager, panesManager);
   const {
@@ -142,29 +148,29 @@ export function Main() {
   ]);
 
   const handleSelectTab = (tabId: string) => {
-    isSettingsOpen.value = false;
+    closeSettings();
     selectTab(tabId);
   };
 
   const handleAddTab = () => {
-    isSettingsOpen.value = false;
+    closeSettings();
     addTab();
   };
 
   const handleOpenInNewPane = (tabId: string) => {
-    isSettingsOpen.value = false;
+    closeSettings();
     openInNewPane(tabId);
     selectTab(tabId);
   };
 
   const handleOpenInDetachedPane = (tabId: string) => {
-    isSettingsOpen.value = false;
+    closeSettings();
     openInDetachedPane(tabId);
     selectTab(tabId);
   };
 
   const handleSelectPane = (paneId: string) => {
-    isSettingsOpen.value = false;
+    closeSettings();
     selectPane(paneId);
     const selectedPane = panes.value.find((pane) => pane.id === paneId) ?? null;
     if (selectedPane?.tab) {
@@ -203,12 +209,8 @@ export function Main() {
           onOpenInNewPane={handleOpenInNewPane}
           onOpenInDetachedPane={handleOpenInDetachedPane}
           onAddTab={handleAddTab}
-          onToggleCollapse={() => {
-            isSidebarCollapsed.value = !isSidebarCollapsed.value;
-          }}
-          onOpenSettings={() => {
-            isSettingsOpen.value = true;
-          }}
+          onToggleCollapse={toggleSidebarCollapsed}
+          onOpenSettings={openSettings}
         />
 
         <main className="sb-main-content">
