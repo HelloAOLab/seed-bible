@@ -10,9 +10,8 @@ import type { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
 import { computed, Signal, useSignal, useSignalEffect } from "@preact/signals";
+import { useEffect, useMemo, useRef } from "preact/hooks";
 import { chunk } from "es-toolkit";
-
-const { useEffect, useMemo, useRef } = os.appHooks;
 
 export interface BibleSelectorOptions {
   pane?: Pane;

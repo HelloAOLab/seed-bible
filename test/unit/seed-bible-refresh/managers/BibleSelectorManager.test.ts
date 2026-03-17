@@ -1,7 +1,8 @@
-/** @jest-environment ../../env/CasualOSEnvironment */
+/** @jest-environment ./test/env/CasualOSEnvironment.ts */
 
 import { render, h } from "preact";
 import { act } from "preact/test-utils";
+import { signal } from "@preact/signals";
 // import * as appHooks from "preact/hooks";
 import { useBibleReadingState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
 import {
@@ -15,6 +16,14 @@ import {
   type BibleSelectorState,
   useBibleSelector,
 } from "@packages/seed-bible-refresh/seed-bible/managers/BibleSelectorManager";
+import type {
+  Pane,
+  PanesManager,
+} from "@packages/seed-bible-refresh/seed-bible/managers/PanesManager";
+import type {
+  ReaderTab,
+  TabsManager,
+} from "@packages/seed-bible-refresh/seed-bible/managers/TabsManager";
 
 // type UseBibleSelectorFn = typeof useBibleSelector;
 
@@ -243,14 +252,76 @@ function getDisplayedBookIds(selector: BibleSelectorState): string[] {
   return [...oldTestament, ...newTestament];
 }
 
-function mountSelector() {
+function createTab(readingState: BibleReadingState): ReaderTab {
+  return {
+    id: "tab-test",
+    title: "Tab Test",
+    readingState,
+  };
+}
+
+function createPane(readingState: BibleReadingState): Pane {
+  return {
+    id: "pane-test",
+    tab: createTab(readingState),
+    component: null,
+    detached: false,
+    x: 0,
+    y: 0,
+    width: 480,
+    height: 320,
+  };
+}
+
+function createTabsManager(readingState: BibleReadingState): TabsManager {
+  const tabs = signal<ReaderTab[]>([createTab(readingState)]);
+  const selectedTabId = signal<string>(tabs.value[0]!.id);
+
+  return {
+    tabs,
+    selectedTabId,
+    addTab: jest.fn(() => createTab(readingState)),
+    removeTab: jest.fn(),
+    selectTab: jest.fn(),
+  } as unknown as TabsManager;
+}
+
+function createPanesManager(pane: Pane): PanesManager {
+  return {
+    panes: signal<Pane[]>([pane]),
+    selectedPaneId: signal<string | null>(pane.id),
+    selectedPane: signal<Pane | null>(pane),
+    layout: signal("single"),
+    layoutOptions: [],
+    setLayout: jest.fn(),
+    addPane: jest.fn(() => pane),
+    removePane: jest.fn(),
+    duplicatePane: jest.fn(() => pane),
+    setPaneTab: jest.fn(),
+    setPaneComponent: jest.fn(),
+    clearPane: jest.fn(),
+    detachPane: jest.fn(),
+    attachPane: jest.fn(),
+    moveDetachedPane: jest.fn(),
+    resizeDetachedPane: jest.fn(),
+    selectPane: jest.fn(),
+    getSelectedPane: jest.fn(() => pane),
+    applyLayout: jest.fn(),
+  } as unknown as PanesManager;
+}
+
+function mountSelector(
+  api: FreeUseBibleAPI,
+  tabsManager: TabsManager,
+  panesManager: PanesManager
+) {
   const container = document.createElement("div");
   document.body.appendChild(container);
 
   let latestState: BibleSelectorState | null = null;
 
   function TestHarness() {
-    latestState = useBibleSelector();
+    latestState = useBibleSelector(api, tabsManager, panesManager);
     return null;
   }
 
@@ -293,12 +364,15 @@ describe("useBibleSelector", () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
     const readingState = useBibleReadingState(api);
+    const pane = createPane(readingState);
+    const tabsManager = createTabsManager(readingState);
+    const panesManager = createPanesManager(pane);
     await waitForInitialLoad(readingState);
 
-    const { getState, unmount } = mountSelector();
+    const { getState, unmount } = mountSelector(api, tabsManager, panesManager);
     try {
       act(() => {
-        getState().setOpen(true, readingState);
+        getState().setOpen(true, pane);
       });
 
       await waitFor(() => getState().isOpen.value === true);
@@ -314,12 +388,15 @@ describe("useBibleSelector", () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
     const readingState = useBibleReadingState(api);
+    const pane = createPane(readingState);
+    const tabsManager = createTabsManager(readingState);
+    const panesManager = createPanesManager(pane);
     await waitForInitialLoad(readingState);
 
-    const { getState, unmount } = mountSelector();
+    const { getState, unmount } = mountSelector(api, tabsManager, panesManager);
     try {
       act(() => {
-        getState().setOpen(true, readingState);
+        getState().setOpen(true, pane);
       });
       await waitFor(() => getState().isOpen.value === true);
 
@@ -338,12 +415,15 @@ describe("useBibleSelector", () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
     const readingState = useBibleReadingState(api);
+    const pane = createPane(readingState);
+    const tabsManager = createTabsManager(readingState);
+    const panesManager = createPanesManager(pane);
     await waitForInitialLoad(readingState);
 
-    const { getState, unmount } = mountSelector();
+    const { getState, unmount } = mountSelector(api, tabsManager, panesManager);
     try {
       act(() => {
-        getState().setOpen(true, readingState);
+        getState().setOpen(true, pane);
       });
       await waitFor(() => getState().isOpen.value === true);
 
@@ -361,12 +441,15 @@ describe("useBibleSelector", () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
     const readingState = useBibleReadingState(api);
+    const pane = createPane(readingState);
+    const tabsManager = createTabsManager(readingState);
+    const panesManager = createPanesManager(pane);
     await waitForInitialLoad(readingState);
 
-    const { getState, unmount } = mountSelector();
+    const { getState, unmount } = mountSelector(api, tabsManager, panesManager);
     try {
       act(() => {
-        getState().setOpen(true, readingState);
+        getState().setOpen(true, pane);
       });
 
       await act(async () => {
@@ -385,16 +468,19 @@ describe("useBibleSelector", () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
     const readingState = useBibleReadingState(api);
+    const pane = createPane(readingState);
+    const tabsManager = createTabsManager(readingState);
+    const panesManager = createPanesManager(pane);
     await waitForInitialLoad(readingState);
 
-    const { getState, unmount } = mountSelector();
+    const { getState, unmount } = mountSelector(api, tabsManager, panesManager);
     try {
       act(() => {
-        getState().setOpen(true, readingState);
+        getState().setOpen(true, pane);
       });
 
       await act(async () => {
-        await (getState().selectChapter("EXO", 2) as unknown as Promise<void>);
+        await getState().selectChapter("EXO", 2);
       });
 
       expect(readingState.bookId.value).toBe("EXO");
