@@ -1,8 +1,8 @@
-/** @jest-environment jsdom */
+/** @jest-environment ../../env/CasualOSEnvironment */
 
 import { render, h } from "preact";
 import { act } from "preact/test-utils";
-import * as appHooks from "preact/hooks";
+// import * as appHooks from "preact/hooks";
 import { useBibleReadingState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
 import {
   FreeUseBibleAPI,
@@ -11,9 +11,12 @@ import {
   type TranslationBooks,
 } from "@packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI";
 import type { BibleReadingState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
-import type { BibleSelectorState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleSelectorManager";
+import {
+  type BibleSelectorState,
+  useBibleSelector,
+} from "@packages/seed-bible-refresh/seed-bible/managers/BibleSelectorManager";
 
-type UseBibleSelectorFn = () => BibleSelectorState;
+// type UseBibleSelectorFn = typeof useBibleSelector;
 
 type WebResponse<T> = {
   status: number;
@@ -125,30 +128,6 @@ const nivBooks: TranslationBooks = {
 };
 
 let webGetMock: jest.Mock;
-let useBibleSelector: UseBibleSelectorFn;
-let originalOs: unknown;
-
-beforeAll(async () => {
-  originalOs = (globalThis as any).os;
-  (globalThis as any).os = {
-    ...(typeof originalOs === "object" && originalOs
-      ? (originalOs as object)
-      : {}),
-    appHooks: {
-      useEffect: appHooks.useEffect,
-      useMemo: appHooks.useMemo,
-      useRef: appHooks.useRef,
-    },
-  };
-
-  const selectorModule =
-    await import("@packages/seed-bible-refresh/seed-bible/managers/BibleSelectorManager");
-  useBibleSelector = selectorModule.useBibleSelector;
-});
-
-afterAll(() => {
-  (globalThis as any).os = originalOs;
-});
 
 beforeEach(() => {
   webGetMock = jest.fn();
