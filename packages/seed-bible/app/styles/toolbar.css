@@ -13,8 +13,10 @@
   .toolbar-container-1 {
     bottom: 0;
     top: auto;
+    left: 0;
     width: 100vw;
     padding: 0;
+    z-index: 1000;
   }
 }
 
