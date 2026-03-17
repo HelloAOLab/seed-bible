@@ -248,9 +248,7 @@ const SharePopup = ({
                   )}
                 </div>
                 <span style={{ fontSize: 11, fontWeight: 500, color: "#666" }}>
-                  {p.name === "Copy" && copied
-                    ? globalThis.t?.("copied") || "Copied!"
-                    : p.name}
+                  {p.name === "Copy" && copied ? "Copied!" : p.name}
                 </span>
               </button>
             ))}
@@ -345,7 +343,7 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
             fontFamily: "Satoshi",
           }}
         >
-          {globalThis.t?.("sessionQRCode") || "Session QR Code"}
+          Session QR Code
         </h2>
 
         <div
@@ -408,9 +406,7 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
             color: "white",
           }}
         >
-          {copied
-            ? globalThis.t?.("copiedSessionLink") || "✓ Copied!"
-            : globalThis.t?.("copySessionLink") || "Copy Session Link"}
+          {copied ? "✓ Copied!" : "Copy Session Link"}
         </button>
       </div>
     </div>
