@@ -13,6 +13,7 @@ project.addSourceFilesAtPaths([
   "packages/seed-bible-refresh-example-extension/**/*.{ts,tsx,cts,mts,d.ts}",
   "test/**/seed-bible-refresh/**/*.{ts,tsx,cts,mts,d.ts}",
   "test/**/seed-bible-refresh-example-extension/**/*.{ts,tsx,cts,mts,d.ts}",
+  "typings/**/*.d.ts",
 ]);
 
 project.resolveSourceFileDependencies();

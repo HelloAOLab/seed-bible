@@ -857,7 +857,7 @@ const MenuIcon = ({
   size?: number;
   invert?: boolean;
   className?: string;
-  style?: React.CSSProperties;
+  style?: preact.CSSProperties;
 }) => {
   // Check if `name` looks like an image URL
   const isImage =
