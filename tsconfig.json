@@ -3989,6 +3989,9 @@
       "seed-bible.managers.FreeUseBibleAPI": [
         "./packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI.tsx"
       ],
+      "seed-bible.managers.MainAppStateManager": [
+        "./packages/seed-bible-refresh/seed-bible/managers/MainAppStateManager.tsx"
+      ],
       "seed-bible.managers.PanesManager": [
         "./packages/seed-bible-refresh/seed-bible/managers/PanesManager.tsx"
       ],

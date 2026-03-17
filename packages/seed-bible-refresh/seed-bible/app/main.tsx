@@ -1,24 +1,12 @@
 import { PaneLayout } from "seed-bible.components.PaneLayout";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
 import { BibleReaderToolbar } from "seed-bible.components.BibleReaderToolbar";
-import { useConfig } from "seed-bible.managers.ConfigManager";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
-import { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
-import { useBibleSelector } from "seed-bible.managers.BibleSelectorManager";
-import { useBibleToolsManager } from "seed-bible.managers.BibleToolsManager";
 import { Tabs } from "seed-bible.components.Tabs";
-import { I18nProvider, useI18n } from "seed-bible.i18n.I18nManager";
-import { usePanes } from "seed-bible.managers.PanesManager";
-import { useSidebar } from "seed-bible.managers.SidebarManager";
-import { useTabs } from "seed-bible.managers.TabsManager";
 import {
-  generateThemeCssVariables,
-  useTheme,
-} from "seed-bible.managers.ThemeManager";
-import { setupExtensionContext } from "seed-bible.app.api";
-import type { Pane } from "seed-bible.managers.PanesManager";
-
-const { useEffect, useMemo } = os.appHooks;
+  I18nProvider,
+  useMainAppState,
+} from "seed-bible.managers.MainAppStateManager";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -67,131 +55,8 @@ export function ExternalResourceDependencies({
 }
 
 export function Main() {
-  const bibleApi = useMemo(() => new FreeUseBibleAPI(), []);
-  const tabsManager = useTabs(bibleApi);
-  const { tabs, selectedTabId, addTab, selectTab } = tabsManager;
-  const configManager = useConfig();
-  const { config } = configManager;
-  const themeManager = useTheme();
-  const { currentTheme } = themeManager;
-  const sidebarManager = useSidebar();
-  const {
-    isSettingsOpen,
-    isSidebarCollapsed,
-    isMobileOpen,
-    openSettings,
-    closeSettings,
-    closeSidebar,
-    toggleSidebarCollapsed,
-    openSidebar,
-  } = sidebarManager;
-  const theme = currentTheme.variables;
-  const themeCssVariables = generateThemeCssVariables(theme);
-  const panesManager = usePanes(tabsManager, selectedTabId.value);
-  const selectorState = useBibleSelector(bibleApi, tabsManager, panesManager);
-  const {
-    panes,
-    layout,
-    selectedPaneId,
-    selectPane,
-    setLayout,
-    setSelectedPaneTab,
-    openInNewPane,
-    openInDetachedPane,
-    closeDetachedPane,
-    movePane,
-    resizePane,
-  } = panesManager;
-  const toolsManager = useBibleToolsManager();
-  const i18nManager = useI18n();
-  const panelsEnabled = !config.value.disablePanels;
-  const selectedTab =
-    tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null;
-  const effectivePanes: Pane[] = panelsEnabled
-    ? panes.value
-    : selectedTab
-      ? [
-          {
-            id: "single-pane",
-            tab: selectedTab,
-            component: null,
-            detached: false,
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0,
-          },
-        ]
-      : [];
-
-  useEffect(() => {
-    setSelectedPaneTab(selectedTabId.value);
-  }, [selectedTabId.value]);
-
-  useEffect(() => {
-    setupExtensionContext({
-      api: bibleApi,
-      panes: panesManager,
-      tabs: tabsManager,
-      selector: selectorState,
-      config: configManager,
-      theme: themeManager,
-      i18n: i18nManager,
-      tools: toolsManager,
-    });
-  }, [
-    bibleApi,
-    panesManager,
-    tabsManager,
-    selectorState,
-    configManager,
-    themeManager,
-    i18nManager,
-    toolsManager,
-  ]);
-
-  const handleSelectTab = (tabId: string) => {
-    closeSettings();
-    closeSidebar();
-    selectTab(tabId);
-  };
-
-  const handleAddTab = () => {
-    closeSettings();
-    closeSidebar();
-    addTab();
-  };
-
-  const handleOpenInNewPane = (tabId: string) => {
-    closeSettings();
-    closeSidebar();
-    openInNewPane(tabId);
-    selectTab(tabId);
-  };
-
-  const handleOpenInDetachedPane = (tabId: string) => {
-    closeSettings();
-    closeSidebar();
-    openInDetachedPane(tabId);
-    selectTab(tabId);
-  };
-
-  const handleSelectPane = (paneId: string) => {
-    closeSettings();
-    closeSidebar();
-    selectPane(paneId);
-    const selectedPane = panes.value.find((pane) => pane.id === paneId) ?? null;
-    if (selectedPane?.tab) {
-      selectTab(selectedPane.tab.id);
-      return;
-    }
-
-    if (selectedPane?.component !== null) {
-      return;
-    }
-
-    selectorState.setOpen(true, selectedPane);
-  };
+  const state = useMainAppState();
+  const { theme, sidebar, tabs, panes, selector, derived, handlers } = state;
 
   return (
     <I18nProvider>
@@ -199,68 +64,70 @@ export function Main() {
         style={{
           display: "flex",
           height: "100vh",
-          background: theme.readerBackground,
-          color: theme.fontColor,
+          background: theme.theme.readerBackground,
+          color: theme.theme.fontColor,
           overflow: "hidden",
         }}
       >
-        <ExternalResourceDependencies themeCssVariables={themeCssVariables} />
+        <ExternalResourceDependencies
+          themeCssVariables={theme.themeCssVariables}
+        />
         <Tabs
-          tabs={tabs.value}
-          selectedTabId={selectedTabId.value}
-          paneLayout={panelsEnabled ? layout.value : "single"}
-          panelsEnabled={panelsEnabled}
-          isSettingsOpen={isSettingsOpen.value}
-          isCollapsed={isSidebarCollapsed.value}
-          isMobileOpen={isMobileOpen.value}
-          onSelectTab={handleSelectTab}
-          onSelectPaneLayout={setLayout}
-          onOpenInNewPane={handleOpenInNewPane}
-          onOpenInDetachedPane={handleOpenInDetachedPane}
-          onAddTab={handleAddTab}
-          onToggleCollapse={toggleSidebarCollapsed}
-          onOpenSettings={openSettings}
-          onClose={closeSidebar}
+          tabs={tabs.tabs.value}
+          selectedTabId={tabs.selectedTabId.value}
+          paneLayout={derived.panelsEnabled ? panes.layout.value : "single"}
+          panelsEnabled={derived.panelsEnabled}
+          isSettingsOpen={sidebar.isSettingsOpen.value}
+          isCollapsed={sidebar.isSidebarCollapsed.value}
+          isMobileOpen={sidebar.isMobileOpen.value}
+          onSelectTab={handlers.selectTab}
+          onSelectPaneLayout={panes.setLayout}
+          onOpenInNewPane={handlers.openInNewPane}
+          onOpenInDetachedPane={handlers.openInDetachedPane}
+          onAddTab={handlers.addTab}
+          onToggleCollapse={sidebar.toggleSidebarCollapsed}
+          onOpenSettings={sidebar.openSettings}
+          onClose={sidebar.closeSidebar}
         />
 
         <main className="sb-main-content">
-          {isSettingsOpen.value ? (
+          {sidebar.isSettingsOpen.value ? (
             <SettingsPage />
           ) : (
             <PaneLayout
-              panes={effectivePanes}
-              layout={panelsEnabled ? layout.value : "single"}
+              panes={derived.effectivePanes}
+              layout={derived.panelsEnabled ? panes.layout.value : "single"}
               selectedPaneId={
-                panelsEnabled
-                  ? selectedPaneId.value
-                  : (effectivePanes[0]?.id ?? null)
+                derived.panelsEnabled
+                  ? panes.selectedPaneId.value
+                  : (derived.effectivePanes[0]?.id ?? null)
               }
-              selectorState={selectorState}
-              tabsManager={tabsManager}
-              panesManager={panesManager}
-              openSidebar={openSidebar}
-              onSelectPane={handleSelectPane}
-              onMovePane={movePane}
-              onResizePane={resizePane}
-              onCloseDetachedPane={closeDetachedPane}
+              selectorState={selector}
+              tabsManager={tabs}
+              panesManager={panes}
+              openSidebar={sidebar.openSidebar}
+              onSelectPane={handlers.selectPane}
+              onMovePane={panes.movePane}
+              onResizePane={panes.resizePane}
+              onCloseDetachedPane={panes.closeDetachedPane}
             />
           )}
         </main>
 
         <BibleSelector
-          isOpen={selectorState.isOpen.value}
-          onClose={() => selectorState.setOpen(false)}
-          selectorState={selectorState}
+          isOpen={selector.isOpen.value}
+          onClose={() => selector.setOpen(false)}
+          selectorState={selector}
         />
 
-        {!isSettingsOpen.value && (
+        {!sidebar.isSettingsOpen.value && (
           <BibleReaderToolbar
-            tabs={tabs.value}
-            selectedTabId={selectedTabId.value}
-            selectorState={selectorState}
-            tabsManager={tabsManager}
-            panesManager={panesManager}
-            onOpenSidebar={openSidebar}
+            tabs={tabs.tabs.value}
+            selectedTabId={tabs.selectedTabId.value}
+            selectorState={selector}
+            tabsManager={tabs}
+            panesManager={panes}
+            onOpenSidebar={sidebar.openSidebar}
           />
         )}
       </div>
