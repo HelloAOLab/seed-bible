@@ -28,6 +28,9 @@ jobs:
         run: |
           corepack enable
           pnpm install
+      - name: Check Refresh
+        run: |
+          pnpm check:refresh
       - name: Package
         run: |
           pnpm package
