@@ -1,27 +1,11 @@
-import type { TabsManager } from "seed-bible.managers.TabsManager";
-import type { PanesManager } from "seed-bible.managers.PanesManager";
-import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
-import type { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
-import type { ConfigManager } from "seed-bible.managers.ConfigManager";
-import type { ThemeManager } from "seed-bible.managers.ThemeManager";
-import type { I18nManager } from "seed-bible.i18n.I18nManager";
-import type { ToolsManager } from "seed-bible.managers.BibleToolsManager";
+import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 
-export interface ExtensionContext {
-  api: FreeUseBibleAPI;
-  panes: PanesManager;
-  tabs: TabsManager;
-  selector: BibleSelectorState;
-  config: ConfigManager;
-  theme: ThemeManager;
-  i18n: I18nManager;
-  tools: ToolsManager;
-}
+export type { SeedBibleState };
 
 export type CleanupFunction = () => void;
 
 export type ExtensionInitializer = (
-  context: ExtensionContext
+  context: SeedBibleState
 ) => Iterable<CleanupFunction, void, unknown> | void;
 
 export interface ExtensionRegistration {
@@ -33,7 +17,7 @@ const registeredExtensions = new Map<string, ExtensionRegistration>();
 const extensionCleanupFunctions = new Map<string, CleanupFunction[]>();
 const initializedExtensionIds = new Set<string>();
 
-let extensionContext: ExtensionContext | null = null;
+let extensionContext: SeedBibleState | null = null;
 
 function tryInitializeExtension(id: string) {
   if (initializedExtensionIds.has(id)) {
@@ -106,7 +90,7 @@ export function registerExtension(
   };
 }
 
-export function setupExtensionContext(context: ExtensionContext) {
+export function setupExtensionContext(context: SeedBibleState) {
   extensionContext = context;
 
   for (const extensionId of registeredExtensions.keys()) {

@@ -1,8 +1,8 @@
-import { registerExtension, type ExtensionContext } from "seed-bible.app.api";
+import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
 
 const cleanup = registerExtension({
   id: "example-extension",
-  init: function* (context: ExtensionContext) {
+  init: function* (context: SeedBibleState) {
     console.log("Example extension initialized with context:", context);
 
     // register a new tool

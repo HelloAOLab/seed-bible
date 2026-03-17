@@ -95,19 +95,6 @@ export function useSeedBibleState(): SeedBibleState {
     panes.setSelectedPaneTab(tabs.selectedTabId.value);
   }, [tabs.selectedTabId.value]);
 
-  useEffect(() => {
-    setupExtensionContext({
-      api,
-      panes,
-      tabs,
-      selector,
-      config,
-      theme: themeManager,
-      i18n,
-      tools,
-    });
-  }, [api, panes, tabs, selector, config, themeManager, i18n, tools]);
-
   const closeSidebarAndSettings = () => {
     sidebar.closeSettings();
     sidebar.closeSidebar();
@@ -153,7 +140,7 @@ export function useSeedBibleState(): SeedBibleState {
     selector.setOpen(true, selectedPane);
   };
 
-  return {
+  const state: SeedBibleState = {
     api,
     config,
     theme: {
@@ -177,6 +164,12 @@ export function useSeedBibleState(): SeedBibleState {
       selectPane: handleSelectPane,
     },
   };
+
+  useEffect(() => {
+    setupExtensionContext(state);
+  }, [state]);
+
+  return state;
 }
 
 export { I18nProvider } from "seed-bible.i18n.I18nManager";
