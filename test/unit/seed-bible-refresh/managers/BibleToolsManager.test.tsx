@@ -30,6 +30,9 @@ function createContext(): BibleToolContext {
     selectorState: {
       setOpen: jest.fn(),
     } as any,
+    openSidebar: jest.fn(),
+    panesManager: {} as any,
+    tabs: {} as any,
   };
 }
 
@@ -48,7 +51,7 @@ describe("useBibleToolsManager", () => {
       id: CUSTOM_TOOL_ID,
       priority: 50,
       title: "Custom Tool",
-      icon: () => null,
+      icon: () => <span>icon</span>,
       isVisible: () => true,
       isDisabled: () => false,
       onSelect: jest.fn(),
@@ -67,7 +70,7 @@ describe("useBibleToolsManager", () => {
       id: CUSTOM_TOOL_ID,
       priority: 50,
       title: "Custom Tool",
-      icon: () => null,
+      icon: () => <span>icon</span>,
       isVisible: () => true,
       onSelect: jest.fn(),
     });
@@ -87,7 +90,7 @@ describe("useBibleToolsManager", () => {
       id: CUSTOM_TOOL_ID,
       priority: 50,
       title: "Custom Tool",
-      icon: () => null,
+      icon: () => <span>icon</span>,
       isVisible: () => true,
       isDisabled: () => true,
       onSelect: jest.fn(),
@@ -97,7 +100,7 @@ describe("useBibleToolsManager", () => {
       id: `${CUSTOM_TOOL_ID}-hidden`,
       priority: 60,
       title: "Hidden Tool",
-      icon: () => null,
+      icon: () => <span>icon</span>,
       isVisible: () => false,
       onSelect: jest.fn(),
     });
@@ -123,7 +126,7 @@ describe("useBibleToolsManager", () => {
       id: CUSTOM_VERSE_TOOL_ID,
       priority: 10,
       title: "Custom Verse Tool",
-      icon: () => null,
+      icon: () => <span>icon</span>,
       isVisible: () => true,
       isDisabled: () => false,
       onSelect: jest.fn(),
@@ -142,7 +145,7 @@ describe("useBibleToolsManager", () => {
       id: CUSTOM_VERSE_TOOL_ID,
       priority: 10,
       title: "Custom Verse Tool",
-      icon: () => null,
+      icon: () => <span>icon</span>,
       isVisible: () => true,
       onSelect: jest.fn(),
     });
@@ -162,7 +165,7 @@ describe("useBibleToolsManager", () => {
       id: CUSTOM_VERSE_TOOL_ID,
       priority: 10,
       title: "Custom Verse Tool",
-      icon: () => null,
+      icon: () => <span>icon</span>,
       isVisible: () => true,
       isDisabled: () => true,
       onSelect: jest.fn(),
@@ -172,7 +175,7 @@ describe("useBibleToolsManager", () => {
       id: `${CUSTOM_VERSE_TOOL_ID}-hidden`,
       priority: 11,
       title: "Hidden Verse Tool",
-      icon: () => null,
+      icon: () => <span>icon</span>,
       isVisible: () => false,
       onSelect: jest.fn(),
     });
