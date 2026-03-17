@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": "./",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -3989,11 +3990,11 @@
       "seed-bible.managers.FreeUseBibleAPI": [
         "./packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI.tsx"
       ],
-      "seed-bible.managers.MainAppStateManager": [
-        "./packages/seed-bible-refresh/seed-bible/managers/MainAppStateManager.tsx"
-      ],
       "seed-bible.managers.PanesManager": [
         "./packages/seed-bible-refresh/seed-bible/managers/PanesManager.tsx"
+      ],
+      "seed-bible.managers.SeedBibleStateManager": [
+        "./packages/seed-bible-refresh/seed-bible/managers/SeedBibleStateManager.tsx"
       ],
       "seed-bible.managers.SidebarManager": [
         "./packages/seed-bible-refresh/seed-bible/managers/SidebarManager.tsx"

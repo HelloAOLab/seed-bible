@@ -1,4 +1,4 @@
-import { signal } from "@preact/signals";
+import { computed, signal } from "@preact/signals";
 
 export interface BibleThemeVariables {
   primaryColor: string;
@@ -91,10 +91,12 @@ const selectedThemeId = signal<string>(DEFAULT_THEME_ID);
 export type ThemeManager = ReturnType<typeof useTheme>;
 
 export function useTheme() {
-  const currentTheme =
-    themes.value.find((theme) => theme.id === selectedThemeId.value) ??
-    themes.value[0] ??
-    LIGHT_THEME;
+  const currentTheme = computed(
+    () =>
+      themes.value.find((theme) => theme.id === selectedThemeId.value) ??
+      themes.value[0] ??
+      LIGHT_THEME
+  );
 
   const setTheme = (themeId: string) => {
     if (themes.value.some((theme) => theme.id === themeId)) {

@@ -5,8 +5,8 @@ import { SettingsPage } from "seed-bible.components.SettingsPage";
 import { Tabs } from "seed-bible.components.Tabs";
 import {
   I18nProvider,
-  useMainAppState,
-} from "seed-bible.managers.MainAppStateManager";
+  useSeedBibleState,
+} from "seed-bible.managers.SeedBibleStateManager";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -55,8 +55,8 @@ export function ExternalResourceDependencies({
 }
 
 export function Main() {
-  const state = useMainAppState();
-  const { theme, sidebar, tabs, panes, selector, derived, handlers } = state;
+  const state = useSeedBibleState();
+  const { theme, sidebar, tabs, panes, selector, app } = state;
 
   return (
     <I18nProvider>
@@ -64,27 +64,27 @@ export function Main() {
         style={{
           display: "flex",
           height: "100vh",
-          background: theme.theme.readerBackground,
-          color: theme.theme.fontColor,
+          background: theme.currentTheme.value.variables.readerBackground,
+          color: theme.currentTheme.value.variables.fontColor,
           overflow: "hidden",
         }}
       >
         <ExternalResourceDependencies
-          themeCssVariables={theme.themeCssVariables}
+          themeCssVariables={theme.themeCssVariables.value}
         />
         <Tabs
           tabs={tabs.tabs.value}
           selectedTabId={tabs.selectedTabId.value}
-          paneLayout={derived.panelsEnabled ? panes.layout.value : "single"}
-          panelsEnabled={derived.panelsEnabled}
+          paneLayout={app.panelsEnabled.value ? panes.layout.value : "single"}
+          panelsEnabled={app.panelsEnabled.value}
           isSettingsOpen={sidebar.isSettingsOpen.value}
           isCollapsed={sidebar.isSidebarCollapsed.value}
           isMobileOpen={sidebar.isMobileOpen.value}
-          onSelectTab={handlers.selectTab}
+          onSelectTab={app.selectTab}
           onSelectPaneLayout={panes.setLayout}
-          onOpenInNewPane={handlers.openInNewPane}
-          onOpenInDetachedPane={handlers.openInDetachedPane}
-          onAddTab={handlers.addTab}
+          onOpenInNewPane={app.openInNewPane}
+          onOpenInDetachedPane={app.openInDetachedPane}
+          onAddTab={app.addTab}
           onToggleCollapse={sidebar.toggleSidebarCollapsed}
           onOpenSettings={sidebar.openSettings}
           onClose={sidebar.closeSidebar}
@@ -95,18 +95,18 @@ export function Main() {
             <SettingsPage />
           ) : (
             <PaneLayout
-              panes={derived.effectivePanes}
-              layout={derived.panelsEnabled ? panes.layout.value : "single"}
+              panes={app.effectivePanes.value}
+              layout={app.panelsEnabled.value ? panes.layout.value : "single"}
               selectedPaneId={
-                derived.panelsEnabled
+                app.panelsEnabled.value
                   ? panes.selectedPaneId.value
-                  : (derived.effectivePanes[0]?.id ?? null)
+                  : (app.effectivePanes.value[0]?.id ?? null)
               }
               selectorState={selector}
               tabsManager={tabs}
               panesManager={panes}
               openSidebar={sidebar.openSidebar}
-              onSelectPane={handlers.selectPane}
+              onSelectPane={app.selectPane}
               onMovePane={panes.movePane}
               onResizePane={panes.resizePane}
               onCloseDetachedPane={panes.closeDetachedPane}

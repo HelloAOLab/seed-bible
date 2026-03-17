@@ -15,23 +15,31 @@ import {
   generateThemeCssVariables,
   useTheme,
 } from "seed-bible.managers.ThemeManager";
-import type {
-  BibleThemeVariables,
-  ThemeManager,
-} from "seed-bible.managers.ThemeManager";
+import type { ThemeManager } from "seed-bible.managers.ThemeManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import type { I18nManager } from "seed-bible.i18n.I18nManager";
+import { computed, type ReadonlySignal } from "@preact/signals";
 
 const { useEffect, useMemo } = os.appHooks;
 
 type SidebarManager = ReturnType<typeof useSidebar>;
 
-export interface MainAppState {
+export interface AppState {
+  panelsEnabled: ReadonlySignal<boolean>;
+  selectedTab: ReadonlySignal<ReaderTab | null>;
+  effectivePanes: ReadonlySignal<Pane[]>;
+  selectTab: (tabId: string) => void;
+  addTab: () => void;
+  openInNewPane: (tabId: string) => void;
+  openInDetachedPane: (tabId: string) => void;
+  selectPane: (paneId: string) => void;
+}
+
+export interface SeedBibleState {
   api: FreeUseBibleAPI;
   config: ConfigManager;
   theme: ThemeManager & {
-    theme: BibleThemeVariables;
-    themeCssVariables: string;
+    themeCssVariables: ReadonlySignal<string>;
   };
   sidebar: SidebarManager;
   tabs: TabsManager;
@@ -39,21 +47,10 @@ export interface MainAppState {
   selector: BibleSelectorState;
   tools: ToolsManager;
   i18n: I18nManager;
-  derived: {
-    panelsEnabled: boolean;
-    selectedTab: ReaderTab | null;
-    effectivePanes: Pane[];
-  };
-  handlers: {
-    selectTab: (tabId: string) => void;
-    addTab: () => void;
-    openInNewPane: (tabId: string) => void;
-    openInDetachedPane: (tabId: string) => void;
-    selectPane: (paneId: string) => void;
-  };
+  app: AppState;
 }
 
-export function useMainAppState(): MainAppState {
+export function useSeedBibleState(): SeedBibleState {
   const api = useMemo(() => new FreeUseBibleAPI(), []);
   const config = useConfig();
   const themeManager = useTheme();
@@ -65,28 +62,34 @@ export function useMainAppState(): MainAppState {
   const i18n = useI18n();
 
   const { currentTheme } = themeManager;
-  const theme = currentTheme.variables;
-  const themeCssVariables = generateThemeCssVariables(theme);
+  const theme = computed(() => currentTheme.value.variables);
+  const themeCssVariables = computed(() =>
+    generateThemeCssVariables(theme.value)
+  );
 
-  const panelsEnabled = !config.config.value.disablePanels;
-  const selectedTab =
-    tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null;
-  const effectivePanes: Pane[] = panelsEnabled
-    ? panes.panes.value
-    : selectedTab
-      ? [
-          {
-            id: "single-pane",
-            tab: selectedTab,
-            component: null,
-            detached: false,
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0,
-          },
-        ]
-      : [];
+  const panelsEnabled = computed(() => !config.config.value.disablePanels);
+  const selectedTab = computed(
+    () =>
+      tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
+  );
+  const effectivePanes = computed(() =>
+    panelsEnabled.value
+      ? panes.panes.value
+      : selectedTab.value
+        ? [
+            {
+              id: "single-pane",
+              tab: selectedTab.value,
+              component: null,
+              detached: false,
+              x: 0,
+              y: 0,
+              width: 0,
+              height: 0,
+            },
+          ]
+        : []
+  );
 
   useEffect(() => {
     panes.setSelectedPaneTab(tabs.selectedTabId.value);
@@ -155,7 +158,6 @@ export function useMainAppState(): MainAppState {
     config,
     theme: {
       ...themeManager,
-      theme,
       themeCssVariables,
     },
     sidebar,
@@ -164,12 +166,10 @@ export function useMainAppState(): MainAppState {
     selector,
     tools,
     i18n,
-    derived: {
+    app: {
       panelsEnabled,
       selectedTab,
       effectivePanes,
-    },
-    handlers: {
       selectTab: handleSelectTab,
       addTab: handleAddTab,
       openInNewPane: handleOpenInNewPane,
