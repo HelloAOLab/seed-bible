@@ -5,7 +5,7 @@ import {
   type TranslationBookChapter,
   type TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
-import { signal, type Signal } from "@preact/signals";
+import { batch, signal, type Signal } from "@preact/signals";
 import { sortBy } from "es-toolkit";
 
 export interface BibleSelectedVerse {
@@ -243,12 +243,14 @@ export function useBibleReadingState(
         nextEndpoint
       );
 
-      translationBooks.value = books;
-      translationId.value = nextTranslationId;
-      bookId.value = firstBook.id;
-      chapterNumber.value = firstChapterNumber;
-      chapterData.value = chapter;
-      clearSelectedVerses();
+      batch(() => {
+        translationBooks.value = books;
+        translationId.value = nextTranslationId;
+        bookId.value = firstBook.id;
+        chapterNumber.value = firstChapterNumber;
+        chapterData.value = chapter;
+        clearSelectedVerses();
+      });
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to select translation.";

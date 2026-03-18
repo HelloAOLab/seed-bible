@@ -9,7 +9,13 @@ import {
 import type { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
-import { computed, Signal, useSignal, useSignalEffect } from "@preact/signals";
+import {
+  computed,
+  Signal,
+  useSignal,
+  useSignalEffect,
+  type ReadonlySignal,
+} from "@preact/signals";
 import { useEffect, useMemo, useRef } from "preact/hooks";
 import { chunk } from "es-toolkit";
 
@@ -20,7 +26,7 @@ export interface BibleSelectorOptions {
 export interface BibleSelectorState {
   isOpen: Signal<boolean>;
   pane: Signal<Pane | null>;
-  readingState: Signal<BibleReadingState | null>;
+  readingState: ReadonlySignal<BibleReadingState | null>;
   search: Signal<string>;
   expandedBookId: Signal<string | null>;
   oldTestamentRows: TranslationBook[][];
@@ -293,7 +299,7 @@ export function useBibleSelector(
   return {
     isOpen,
     pane,
-    readingState,
+    readingState: activeReadingState,
     search,
     expandedBookId,
     oldTestamentRows,

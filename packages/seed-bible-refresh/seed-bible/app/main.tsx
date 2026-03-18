@@ -7,6 +7,7 @@ import {
   I18nProvider,
   useSeedBibleState,
 } from "seed-bible.managers.SeedBibleStateManager";
+import { CasualOSApp } from "seed-bible.components.CasualOSApp";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -114,11 +115,18 @@ export function Main() {
           )}
         </main>
 
-        <BibleSelector
-          isOpen={selector.isOpen.value}
-          onClose={() => selector.setOpen(false)}
-          selectorState={selector}
-        />
+        <CasualOSApp id="bible-selector">
+          <>
+            <ExternalResourceDependencies
+              themeCssVariables={theme.themeCssVariables.value}
+            />
+            <BibleSelector
+              isOpen={selector.isOpen.value}
+              onClose={() => selector.setOpen(false)}
+              selectorState={selector}
+            />
+          </>
+        </CasualOSApp>
 
         {!sidebar.isSettingsOpen.value && (
           <BibleReaderToolbar
