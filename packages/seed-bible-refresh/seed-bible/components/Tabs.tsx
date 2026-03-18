@@ -4,27 +4,13 @@ import {
   PANE_LAYOUT_OPTIONS,
   type PaneLayoutId,
 } from "seed-bible.managers.PanesManager";
-import type { ReaderTab } from "seed-bible.managers.TabsManager";
+import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { MobileSettingsIcon } from "seed-bible.components.icons";
 
 const { useEffect } = os.appHooks;
 
 interface TabsProps {
-  tabs: ReaderTab[];
-  selectedTabId: string;
-  paneLayout: PaneLayoutId;
-  panelsEnabled: boolean;
-  isSettingsOpen: boolean;
-  isCollapsed: boolean;
-  isMobileOpen: boolean;
-  onSelectTab: (tabId: string) => void;
-  onSelectPaneLayout: (layoutId: PaneLayoutId) => void;
-  onOpenInNewPane: (tabId: string) => void;
-  onOpenInDetachedPane: (tabId: string) => void;
-  onAddTab: () => void;
-  onToggleCollapse: () => void;
-  onOpenSettings: () => void;
-  onClose: () => void;
+  state: SeedBibleState;
 }
 
 function renderLayoutPreview(layoutId: PaneLayoutId) {
@@ -47,23 +33,15 @@ function renderLayoutPreview(layoutId: PaneLayoutId) {
 }
 
 export function Tabs(props: TabsProps) {
-  const {
-    tabs,
-    selectedTabId,
-    paneLayout,
-    panelsEnabled,
-    isSettingsOpen,
-    isCollapsed,
-    isMobileOpen,
-    onSelectTab,
-    onSelectPaneLayout,
-    onOpenInNewPane,
-    onOpenInDetachedPane,
-    onAddTab,
-    onToggleCollapse,
-    onOpenSettings,
-    onClose,
-  } = props;
+  const { state } = props;
+  const { app, panes, sidebar, tabs: tabsManager } = state;
+  const tabs = tabsManager.tabs.value;
+  const selectedTabId = tabsManager.selectedTabId.value;
+  const paneLayout = app.panelsEnabled.value ? panes.layout.value : "single";
+  const panelsEnabled = app.panelsEnabled.value;
+  const isSettingsOpen = sidebar.isSettingsOpen.value;
+  const isCollapsed = sidebar.isSidebarCollapsed.value;
+  const isMobileOpen = sidebar.isMobileOpen.value;
   const effectivelyCollapsed = isCollapsed && !isMobileOpen;
   const openMenuTabId = useSignal<string | null>(null);
   const isLayoutMenuOpen = useSignal(false);
@@ -91,7 +69,7 @@ export function Tabs(props: TabsProps) {
     >
       <div className="sb-sidebar-top-row">
         <button
-          onClick={onToggleCollapse}
+          onClick={sidebar.toggleSidebarCollapsed}
           className="sb-sidebar-collapse-button"
           aria-label={
             effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"
@@ -126,7 +104,7 @@ export function Tabs(props: TabsProps) {
                       <button
                         key={layout.id}
                         onClick={() => {
-                          onSelectPaneLayout(layout.id);
+                          panes.setLayout(layout.id);
                           isLayoutMenuOpen.value = false;
                         }}
                         className={`sb-pane-layout-option${
@@ -147,7 +125,7 @@ export function Tabs(props: TabsProps) {
           </div>
         )}
         <button
-          onClick={onClose}
+          onClick={sidebar.closeSidebar}
           className="sb-sidebar-close-button"
           aria-label="Close sidebar"
           title="Close sidebar"
@@ -161,7 +139,7 @@ export function Tabs(props: TabsProps) {
           <div className="sb-sidebar-tabs-header">
             <h3 className="sb-sidebar-tabs-title">Tabs</h3>
             <button
-              onClick={onAddTab}
+              onClick={app.addTab}
               className="sb-tab-add-button"
               aria-label="Create new tab"
               title="New tab"
@@ -190,7 +168,7 @@ export function Tabs(props: TabsProps) {
                     onClick={() => {
                       openMenuTabId.value = null;
                       isLayoutMenuOpen.value = false;
-                      onSelectTab(tab.id);
+                      app.selectTab(tab.id);
                     }}
                     className={`sb-tab-button${
                       isSelected ? " sb-tab-button-selected" : ""
@@ -219,7 +197,7 @@ export function Tabs(props: TabsProps) {
                       <div className="sb-tab-menu">
                         <button
                           onClick={() => {
-                            onOpenInNewPane(tab.id);
+                            app.openInNewPane(tab.id);
                             openMenuTabId.value = null;
                           }}
                           className="sb-tab-menu-item"
@@ -228,7 +206,7 @@ export function Tabs(props: TabsProps) {
                         </button>
                         <button
                           onClick={() => {
-                            onOpenInDetachedPane(tab.id);
+                            app.openInDetachedPane(tab.id);
                             openMenuTabId.value = null;
                           }}
                           className="sb-tab-menu-item"
@@ -246,7 +224,7 @@ export function Tabs(props: TabsProps) {
       )}
 
       <button
-        onClick={onOpenSettings}
+        onClick={sidebar.openSettings}
         className={`sb-sidebar-icon-button${
           isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
         }`}

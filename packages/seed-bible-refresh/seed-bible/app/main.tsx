@@ -73,23 +73,7 @@ export function Main() {
         <ExternalResourceDependencies
           themeCssVariables={theme.themeCssVariables.value}
         />
-        <Tabs
-          tabs={tabs.tabs.value}
-          selectedTabId={tabs.selectedTabId.value}
-          paneLayout={app.panelsEnabled.value ? panes.layout.value : "single"}
-          panelsEnabled={app.panelsEnabled.value}
-          isSettingsOpen={sidebar.isSettingsOpen.value}
-          isCollapsed={sidebar.isSidebarCollapsed.value}
-          isMobileOpen={sidebar.isMobileOpen.value}
-          onSelectTab={app.selectTab}
-          onSelectPaneLayout={panes.setLayout}
-          onOpenInNewPane={app.openInNewPane}
-          onOpenInDetachedPane={app.openInDetachedPane}
-          onAddTab={app.addTab}
-          onToggleCollapse={sidebar.toggleSidebarCollapsed}
-          onOpenSettings={sidebar.openSettings}
-          onClose={sidebar.closeSidebar}
-        />
+        <Tabs state={state} />
 
         <main className="sb-main-content">
           {sidebar.isSettingsOpen.value ? (
