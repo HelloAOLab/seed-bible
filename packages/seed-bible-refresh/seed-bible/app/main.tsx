@@ -95,23 +95,7 @@ export function Main() {
           {sidebar.isSettingsOpen.value ? (
             <SettingsPage />
           ) : (
-            <PaneLayout
-              panes={app.effectivePanes.value}
-              layout={app.panelsEnabled.value ? panes.layout.value : "single"}
-              selectedPaneId={
-                app.panelsEnabled.value
-                  ? panes.selectedPaneId.value
-                  : (app.effectivePanes.value[0]?.id ?? null)
-              }
-              selectorState={selector}
-              tabsManager={tabs}
-              panesManager={panes}
-              openSidebar={sidebar.openSidebar}
-              onSelectPane={app.selectPane}
-              onMovePane={panes.movePane}
-              onResizePane={panes.resizePane}
-              onCloseDetachedPane={panes.closeDetachedPane}
-            />
+            <PaneLayout state={state} />
           )}
         </main>
 

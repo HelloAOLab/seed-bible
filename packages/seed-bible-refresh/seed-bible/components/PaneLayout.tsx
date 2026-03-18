@@ -2,11 +2,8 @@ import { BibleReader } from "seed-bible.components.BibleReader";
 import { BelowReaderToolbar } from "seed-bible.components.BelowReaderToolbar";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
-import type {
-  Pane,
-  PaneLayoutId,
-  PanesManager,
-} from "seed-bible.managers.PanesManager";
+import type { Pane } from "seed-bible.managers.PanesManager";
+import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import {
   useBibleToolsManager,
   type BibleEmptyPaneTool,
@@ -56,37 +53,23 @@ function EmptyPaneToolbar({
 }
 
 interface PaneLayoutProps {
-  panes: Pane[];
-  layout: PaneLayoutId;
-  selectedPaneId: string | null;
-  selectorState: BibleSelectorState;
-  tabsManager: TabsManager;
-  panesManager: PanesManager;
-  openSidebar: () => void;
-  onSelectPane: (paneId: string) => void;
-  onMovePane: (paneId: string, deltaX: number, deltaY: number) => void;
-  onResizePane: (
-    paneId: string,
-    deltaWidth: number,
-    deltaHeight: number
-  ) => void;
-  onCloseDetachedPane: (paneId: string) => void;
+  state: SeedBibleState;
 }
 
 export function PaneLayout(props: PaneLayoutProps) {
+  const { state } = props;
   const {
-    panes,
-    layout,
-    selectedPaneId,
-    selectorState,
-    tabsManager,
-    onSelectPane,
-    onMovePane,
-    onResizePane,
-    onCloseDetachedPane,
-    panesManager,
-    openSidebar,
-  } = props;
+    app,
+    panes: panesManager,
+    selector: selectorState,
+    tabs: tabsManager,
+    sidebar,
+  } = state;
+  const panes = app.effectivePanes.value;
+  const layout = app.panelsEnabled.value ? panesManager.layout.value : "single";
+  const selectedPaneId = app.panelsEnabled.value
+    ? panesManager.selectedPaneId.value
+    : (panes[0]?.id ?? null);
   const dragStateRef = useRef<{
     mode: "move" | "resize";
     paneId: string;
@@ -107,9 +90,9 @@ export function PaneLayout(props: PaneLayoutProps) {
       const deltaY = event.clientY - dragState.startY;
 
       if (dragState.mode === "move") {
-        onMovePane(dragState.paneId, deltaX, deltaY);
+        panesManager.movePane(dragState.paneId, deltaX, deltaY);
       } else {
-        onResizePane(dragState.paneId, deltaX, deltaY);
+        panesManager.resizePane(dragState.paneId, deltaX, deltaY);
       }
 
       dragStateRef.current = {
@@ -130,7 +113,7 @@ export function PaneLayout(props: PaneLayoutProps) {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [onMovePane, onResizePane]);
+  }, [panesManager]);
 
   return (
     <div className="sb-panes-layout" data-layout={layout}>
@@ -140,7 +123,7 @@ export function PaneLayout(props: PaneLayoutProps) {
           className={`sb-pane-shell sb-pane-slot-${index + 1}${
             pane.id === selectedPaneId ? " sb-pane-shell-active" : ""
           }`}
-          onClick={() => onSelectPane(pane.id)}
+          onClick={() => app.selectPane(pane.id)}
         >
           {pane.component !== null ? (
             <div className="sb-pane-component">{pane.component}</div>
@@ -156,7 +139,7 @@ export function PaneLayout(props: PaneLayoutProps) {
                 selectorState={selectorState}
                 tabsManager={tabsManager}
                 panesManager={panesManager}
-                openSidebar={openSidebar}
+                openSidebar={sidebar.openSidebar}
                 currentPane={pane}
               />
             </div>
@@ -186,13 +169,13 @@ export function PaneLayout(props: PaneLayoutProps) {
                 ? 40 + detachedPanes.length
                 : 20 + index,
           }}
-          onPointerDown={() => onSelectPane(pane.id)}
+          onPointerDown={() => app.selectPane(pane.id)}
         >
           <div
             className="sb-pane-detached-header"
             onPointerDown={(event: PointerEvent) => {
               event.stopPropagation();
-              onSelectPane(pane.id);
+              app.selectPane(pane.id);
               dragStateRef.current = {
                 mode: "move",
                 paneId: pane.id,
@@ -211,7 +194,7 @@ export function PaneLayout(props: PaneLayoutProps) {
               }}
               onClick={(event: MouseEvent) => {
                 event.stopPropagation();
-                onCloseDetachedPane(pane.id);
+                panesManager.closeDetachedPane(pane.id);
               }}
             >
               <span className="material-symbols-outlined">close</span>
@@ -242,7 +225,7 @@ export function PaneLayout(props: PaneLayoutProps) {
             className="sb-pane-detached-resize-handle"
             onPointerDown={(event: PointerEvent) => {
               event.stopPropagation();
-              onSelectPane(pane.id);
+              app.selectPane(pane.id);
               dragStateRef.current = {
                 mode: "resize",
                 paneId: pane.id,
