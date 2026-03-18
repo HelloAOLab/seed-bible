@@ -128,16 +128,7 @@ export function Main() {
           </>
         </CasualOSApp>
 
-        {!sidebar.isSettingsOpen.value && (
-          <BibleReaderToolbar
-            tabs={tabs.tabs.value}
-            selectedTabId={tabs.selectedTabId.value}
-            selectorState={selector}
-            tabsManager={tabs}
-            panesManager={panes}
-            onOpenSidebar={sidebar.openSidebar}
-          />
-        )}
+        {!sidebar.isSettingsOpen.value && <BibleReaderToolbar state={state} />}
       </div>
     </I18nProvider>
   );
