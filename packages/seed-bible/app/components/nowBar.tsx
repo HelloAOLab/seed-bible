@@ -100,7 +100,7 @@ function NowBar() {
       return {
         width: 400,
         height: 150,
-        bottom: "85px",
+        bottom: "95px",
         borderRadius: "20px",
       };
     }
