@@ -1913,7 +1913,7 @@ function SideBar({ panelsNumber }) {
             .mobile-nav-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text1);cursor:pointer}
             .mobile-nav-label{font-size:12px}
             .mobile-nav-add{
-            border-radius: 28px;
+            border-radius: 46px;
             background: var(--selectedSpaceColor);
             border: none;
             color: white;
