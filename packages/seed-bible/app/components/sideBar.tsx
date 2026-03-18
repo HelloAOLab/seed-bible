@@ -21,6 +21,7 @@ import {
   ClientLogo,
   BookMarkIcon,
   MobileSettingsIcon,
+  PlusIcon,
 } from "app.components.icons";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -1840,7 +1841,9 @@ function SideBar({ panelsNumber }) {
             )}
 
             <button className="mobile-nav-add" onClick={mobileAddTab}>
-              <span>+</span>
+              <span>
+                <PlusIcon />
+              </span>
             </button>
 
             {!removeBookMark && (

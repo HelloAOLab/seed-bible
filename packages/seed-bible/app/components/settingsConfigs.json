@@ -530,7 +530,7 @@
                 "language": { "enabled": true },
                 "reseedToggle": { "enabled": true },
                 "reportBug": { "enabled": true },
-                "help": { "enabled": true }
+                "help": { "enabled": false }
               }
             }
           }
