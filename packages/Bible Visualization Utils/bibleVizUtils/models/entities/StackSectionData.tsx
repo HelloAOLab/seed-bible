@@ -1,12 +1,35 @@
 import { StackPieceData } from "bibleVizUtils.models.entities.StackPieceData";
 import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
 import type { Bot } from "../../../../../typings/AuxLibraryDefinitions";
-import type { ParentDataIds } from "bibleVizUtils.models.canvas.models";
+import type {
+  ParentDataIds,
+  StackSectionCreationParams,
+} from "bibleVizUtils.models.canvas";
+import type { SectionInfo } from "bibleVizUtils.data.BibleVizDataRepository";
+import type { BookInfo } from "bibleVizUtils.data.BibleVizDataRepository";
 
-export class StackSectionData extends StackPieceData<StackBookData[]> {
-  #isSplitIntoBooks: boolean;
-  #isInExplodedView: boolean;
-  #isInsideTestament: boolean;
+interface DataParams {
+  childrenData?: StackBookData[][];
+  id: string;
+  piece?: Bot;
+  pieceInfo: SectionInfo;
+  parentDataIds: ParentDataIds;
+  isSplitIntoBooks?: boolean;
+  isInExplodedView?: boolean;
+  isInsideBible?: boolean;
+  isInsideTestament?: boolean;
+  creationParams: StackSectionCreationParams;
+  isActive?: boolean;
+}
+
+export class StackSectionData extends StackPieceData<
+  StackBookData[],
+  SectionInfo,
+  StackSectionCreationParams
+> {
+  #isSplitIntoBooks: DataParams["isSplitIntoBooks"];
+  #isInExplodedView: DataParams["isInExplodedView"];
+  #isInsideTestament: DataParams["isInsideTestament"];
   #shadow: Bot | undefined;
 
   constructor({
@@ -20,20 +43,8 @@ export class StackSectionData extends StackPieceData<StackBookData[]> {
     isInsideBible = true,
     isInsideTestament = true,
     isActive = false,
-    creationInfo = false,
-  }: {
-    childrenData: StackBookData[][];
-    id: string;
-    piece: Bot;
-    pieceInfo: any; // TODO: Define this
-    parentDataIds: ParentDataIds;
-    isSplitIntoBooks?: boolean;
-    isInExplodedView?: boolean;
-    isInsideBible?: boolean;
-    isInsideTestament?: boolean;
-    creationInfo: any; // TODO: Define this
-    isActive: boolean;
-  }) {
+    creationParams,
+  }: DataParams) {
     super({
       childrenData,
       id,
@@ -42,7 +53,7 @@ export class StackSectionData extends StackPieceData<StackBookData[]> {
       parentDataIds,
       isInsideBible,
       isActive,
-      creationInfo,
+      creationParams,
       isHidden: false,
     });
     this.#isSplitIntoBooks = isSplitIntoBooks;
@@ -53,25 +64,110 @@ export class StackSectionData extends StackPieceData<StackBookData[]> {
   get isSplitIntoBooks() {
     return this.#isSplitIntoBooks;
   }
-  set isSplitIntoBooks(value) {
-    this.#isSplitIntoBooks = value;
+  split() {
+    this.#isSplitIntoBooks = true;
+  }
+  combine() {
+    this.#isSplitIntoBooks = false;
   }
   get isInExplodedView() {
     return this.#isInExplodedView;
   }
-  set isInExplodedView(value) {
-    this.#isInExplodedView = value;
+  explode() {
+    this.#isInExplodedView = true;
+  }
+  implode() {
+    this.#isInExplodedView = false;
   }
   get isInsideTestament() {
     return this.#isInsideTestament;
   }
-  set isInsideTestament(value) {
-    this.#isInsideTestament = value;
+  attachToTestament() {
+    this.#isInsideTestament = true;
+  }
+  detachFromTestament() {
+    this.#isInsideTestament = false;
   }
   get shadow() {
     return this.#shadow;
   }
-  set shadow(value) {
-    this.#shadow = value;
+  attachShadow(shadow: Bot) {
+    this.#shadow = shadow;
+  }
+  detachShadow(): Bot | undefined {
+    let shadow: Bot | undefined;
+    if (this.#shadow) {
+      shadow = this.#shadow;
+      this.#shadow = undefined;
+    }
+    return shadow;
+  }
+  tryReplaceBook(currBook: StackBookData, newBook: StackBookData): boolean {
+    for (const bookGroup of this.childrenData) {
+      const index = bookGroup.indexOf(currBook);
+      if (index >= 0) {
+        bookGroup.splice(index, 1, newBook);
+        return true;
+      }
+    }
+    return false;
+  }
+  getArrangementIndex(): DataParams["creationParams"]["arrangementIndex"] {
+    return this.creationParams.arrangementIndex;
+  }
+  getTestamentIndex(): DataParams["creationParams"]["testamentIndex"] {
+    return this.creationParams.testamentIndex;
+  }
+  getSectionIndex(): DataParams["creationParams"]["sectionIndex"] {
+    return this.creationParams.sectionIndex;
+  }
+  resetHierarchy(clearPiece: boolean = false): Bot[] {
+    this.detachShadow();
+    this.implode();
+    this.combine();
+    return super.resetHierarchy(clearPiece);
+  }
+  tryExplode(): boolean {
+    if (this.isSplitIntoBooks && !this.isInExplodedView) {
+      this.explode();
+      return true;
+    }
+    return false;
+  }
+  isExplodable(): boolean {
+    return !!this.isSplitIntoBooks && !this.isInExplodedView;
+  }
+  isSplittable(): boolean {
+    return !this.isSplitIntoBooks;
+  }
+  isPieceAvailable(): boolean {
+    return !this.isSplitIntoBooks && super.isPieceAvailable();
+  }
+  getActivelySelectedBooks(): StackBookData[] {
+    return this.childrenData.flat().filter((bookData) => {
+      return bookData.isActivelySelected();
+    });
+  }
+  clearChildrenPieces(): Bot[] {
+    const pieces = this.childrenData
+      .flat()
+      .filter((book) => {
+        return book.piece;
+      })
+      .map((book) => {
+        return book.clearPiece();
+      }) as Bot[];
+    return pieces;
+  }
+  findBookByPieceInfoProperty<K extends keyof BookInfo>(
+    property: K,
+    value: BookInfo[K]
+  ): StackBookData | undefined {
+    return this.childrenData.flat().find((book) => {
+      return book.getPieceInfoProperty(property) === value;
+    });
+  }
+  getActiveBooks(): StackBookData[] {
+    return this.childrenData.flat().filter((book) => book.isActive);
   }
 }

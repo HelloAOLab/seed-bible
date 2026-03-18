@@ -4,7 +4,7 @@ import { GetRandomColor } from "bibleVizUtils.functions.colors";
 import { DebouncerService } from "bibleVizUtils.services.DebouncerService";
 import { userColorStore } from "bibleVizUtils.services.index";
 
-const updateUserColorStore = async () => {
+const updateStore = async () => {
   try {
     const componentsBot = getBot(byTag("system", "app.components"));
 
@@ -85,10 +85,7 @@ const updateUserColorStore = async () => {
   }
 };
 
-const updateUserColorStoreDebouncer = new DebouncerService(
-  updateUserColorStore,
-  500
-);
+const updateUserColorStoreDebouncer = new DebouncerService(updateStore, 500);
 
 const executer = updateUserColorStoreDebouncer.execute;
 

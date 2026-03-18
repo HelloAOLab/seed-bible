@@ -1,7 +1,7 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { CapitalizeFirstLetter } from "bibleVizUtils.functions.index";
 import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
-import { LabelPosition } from "bibleVizUtils.models.label.models";
+import { LabelPosition } from "bibleVizUtils.models.label";
 import { PieceDataRepository } from "bibleStack.services.PieceDataRepository";
 
 /**

@@ -1,4 +1,6 @@
-export const getRandomArrayElement = <K,>(array: K[]): K | undefined => {
+export const getRandomArrayElement: <K>(array: K[]) => K | undefined = (
+  array
+) => {
   const randomIndex = Math.floor(Math.random() * array.length);
   return array[randomIndex];
 };

@@ -1,6 +1,6 @@
 import { PieceDataRegistry } from "bibleVizUtils.services.PieceDataRegistry";
 import { PieceDataRepository } from "scriptureMap3D.services.PieceDataRepository";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 
 if (
   thisBot.masks.initialized ||

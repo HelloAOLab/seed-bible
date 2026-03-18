@@ -1,4 +1,4 @@
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 
 const structureCurrentlyShowingInfoCard =
   thisBot.vars.layoutBooksStructure.find((structure) => {

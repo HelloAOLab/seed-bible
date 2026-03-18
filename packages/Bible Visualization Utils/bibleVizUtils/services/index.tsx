@@ -17,7 +17,7 @@ tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
 tenDaysAgo.setHours(0, 0, 0, 0);
 const tenDaysAgoTimeSeconds = Math.floor(tenDaysAgo.getTime() / 1000);
 
-const seedBiblePresenceProvider = new SeedBiblePresenceProvider();
+export const seedBiblePresenceProvider = new SeedBiblePresenceProvider();
 export const bibleVizUtilsEventManager = new BibleVizUtilsEventManager();
 export const userColorStore: UserColorStore = new UserColorStore(
   bibleVizUtilsEventManager

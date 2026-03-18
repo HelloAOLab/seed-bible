@@ -11,7 +11,7 @@ import { GetBotScales } from "bibleVizUtils.functions.index";
 const { speedMultiplier = 1, isInstantaneous = false } = that;
 const dimension = os.getCurrentDimension();
 const bookData = BibleStackManager.GetPieceData({ piece: thisBot });
-const { sectionData } = BibleStackManager.GetDataChainFromParentDataIds({
+const { sectionData } = await BibleStackManager.GetDataChainFromParentDataIds({
   parentDataIds: bookData.parentDataIds,
 });
 const sectionPosition = sectionData

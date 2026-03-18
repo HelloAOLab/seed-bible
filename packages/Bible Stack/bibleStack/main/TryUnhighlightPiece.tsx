@@ -11,8 +11,14 @@
  * shout("TryUnhighlightPiece", {piece: someBot, delay: 4000, requestSource: BibleVizUtils.Data.tags.InteractionType.Transition, customDuration: 1});
  */
 
-import { UnhighlightDelayInfo } from "bibleStack.main.UnhighlightDelayInfo";
+import type { UnhighlightDelayInfo } from "bibleVizUtils.models.canvas";
 import { updateNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
+import type { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
+import type { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
+import type { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
+import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+import { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
+import { BibleState } from "bibleVizUtils.models.canvas";
 
 let { delay } = that;
 const {
@@ -24,8 +30,19 @@ const {
   isInstantaneous = false,
 } = that;
 
-const data = thisBot.GetPieceData({ piece });
-const { bibleData } = thisBot.GetDataChainFromParentDataIds({
+const data:
+  | StackTestamentData
+  | StackSectionData
+  | StackSectionBookData
+  | StackBookData
+  | StackChapterData
+  | undefined = thisBot.GetPieceData({ piece });
+
+if (!data) {
+  throw new Error(`data not founda at TryUnhighlightPiece`);
+}
+
+const { bibleData } = await thisBot.GetDataChainFromParentDataIds({
   parentDataIds: data.parentDataIds,
 });
 const {
@@ -36,8 +53,7 @@ if (
   !thisBot.IsBiblePieceHighlighted({ piece }) ||
   ((piece.masks.isUnhighlighting || thisBot.masks.isBibleAnimating) &&
     requestSource !== BibleVizUtils.Data.tags.InteractionType.Transition) ||
-  (bibleData &&
-    bibleData.currentState !== BibleVizUtils.Data.tags.BibleState.Open) ||
+  (bibleData && bibleData.currentState !== BibleState.Open) ||
   !piece.masks.highlightable
 )
   return;
@@ -66,7 +82,7 @@ if (delay) {
         .Unhighlight({ customDuration, isInstantaneous, speedMultiplier })
         .then(() => {
           thisBot.RemovePieceFromHighlightedList({ piece });
-          if (tryUpdateActivityNotification)
+          if (tryUpdateActivityNotification && data instanceof StackChapterData)
             updateNotification(data, thisBot.tags.activityNotificationOffset, {
               x: thisBot.tags.activityNotificationScaleX,
               y: thisBot.tags.activityNotificationScaleY,
@@ -74,16 +90,15 @@ if (delay) {
         });
     }
   }, delay);
-  thisBot.vars.unhighlightDelaysInfo.push(
-    new UnhighlightDelayInfo({ piece, timeoutId })
-  );
+  const unhighlightDelayInfo: UnhighlightDelayInfo = { piece, timeoutId };
+  thisBot.vars.unhighlightDelaysInfo.push(unhighlightDelayInfo);
 } else {
   piece.StopHighlightTransition();
   await piece
     .Unhighlight({ customDuration, speedMultiplier, isInstantaneous })
     .then(() => {
       thisBot.RemovePieceFromHighlightedList({ piece });
-      if (tryUpdateActivityNotification)
+      if (tryUpdateActivityNotification && data instanceof StackChapterData)
         updateNotification(data, thisBot.tags.activityNotificationOffset, {
           x: thisBot.tags.activityNotificationScaleX,
           y: thisBot.tags.activityNotificationScaleY,

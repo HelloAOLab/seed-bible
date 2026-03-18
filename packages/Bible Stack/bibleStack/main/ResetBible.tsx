@@ -4,14 +4,22 @@
  *
  * @param {Object} that - The context object containing the Bible data.
  * @param {StackBibleData} that.bibleData - The data structure representing the current Bible.
- * 
+ *
  * @example
  * thisBot.ResetBible({ bibleData: someBibleData });
  */
 
-const {bibleData, speedMultiplier = 1} = that;
+import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+
+const {
+  bibleData,
+  speedMultiplier = 1,
+}: { bibleData: StackBibleData; speedMultiplier?: number } = that;
 setTagMask(thisBot, "isBibleAnimating", true);
 thisBot.vars.lastInteractedStackBibleData = bibleData;
-shout("OnStackBibleResetStart", {bibleData});
-thisBot.PlaySound({soundName: "ResetBible"});
-return bibleData.staticBiblePieces.bibleTransformer?.Reset?.({bibleData, speedMultiplier});
+shout("OnStackBibleResetStart", { bibleData });
+thisBot.PlaySound({ soundName: "ResetBible" });
+return bibleData.staticBiblePieces?.bibleTransformer?.Reset?.({
+  bibleData,
+  speedMultiplier,
+}); // TODO: Fix LoD breach

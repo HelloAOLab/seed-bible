@@ -20,8 +20,9 @@ import type {
   BookUserPresence,
   ScriptureMap2DContentValue,
   ToggleShowSectionType,
-  UserPresence,
+  // UserPresence,
 } from "scriptureMap2D.main.types";
+import type { UserPresence } from "bibleVizUtils.models.userPresence";
 import type {
   ArrangementInfo,
   TestamentInfo,
@@ -105,7 +106,7 @@ export interface ScriptureMap2DContextType extends ScriptureMap2DConfig {
   handleSectionLabelsToggle: () => void;
   handleShowAllChaptersToggle: () => void;
   arrangementIndex: number;
-  arrangement: ArrangementInfo;
+  arrangement?: ArrangementInfo;
   showingAllChapters: boolean;
   setShowingAllChapters: StateUpdater<boolean>;
   isUserPresenceEnabled: boolean;

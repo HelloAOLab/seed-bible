@@ -5,10 +5,11 @@ import {
 } from "bibleVizUtils.functions.index";
 import { pieceActivityService } from "bibleVizUtils.services.index";
 import { userPresenceService } from "bibleVizUtils.services.index";
-import { Vector2 as Vector2Type } from "../../../../../typings/AuxLibraryDefinitions";
-import type { Tab } from "bibleVizUtils.models.seedBible.models";
+import type { Vector2 as Vector2Type } from "../../../../../typings/AuxLibraryDefinitions";
+import type { Tab } from "bibleVizUtils.models.seedBible";
 import { userColorStore } from "bibleVizUtils.services.index";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
+import { seedBiblePresenceProvider } from "bibleVizUtils.services.index";
 
 export const tryHideNotification: (piece: Bot) => void = (piece) => {
   const notification = piece.links.activityNotification;
@@ -58,7 +59,7 @@ export const tryUpdateNotificationDirection: (bot: Bot) => void = (bot) => {
 
 // TODO: Implement and import an actual interface for all the pieces data
 interface NotifiablePieceData {
-  piece: Bot;
+  piece: Bot | undefined;
   isSelected: boolean;
   getIsSelectedForNotification: () => boolean;
   getNotificationDirection: () => Vector2Type;
@@ -75,11 +76,11 @@ export const updateNotification: (
   });
   const userPresence = userPresenceService.getUserPresence();
 
-  const activeTab = (globalThis as unknown as { ActiveTab: Tab | undefined })
-    .ActiveTab;
+  const activeTab = seedBiblePresenceProvider.getActiveTab();
 
   for (const pieceData of filteredData) {
     const piece = pieceData.piece;
+    if (!piece) continue;
     const pieceActivity = pieceActivityService.getPieceActivity({
       piece,
     });

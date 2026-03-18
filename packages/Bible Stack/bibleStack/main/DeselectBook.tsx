@@ -6,15 +6,22 @@
  * thisBot.DeselectBook({bookData})
  */
 
-const { bookData } = that;
+import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+
+const { bookData }: { bookData: StackBookData } = that;
 thisBot.vars.lastInteractedStackBookData = bookData;
 setTagMask(thisBot, "isBibleAnimating", true);
-bookData.isSelected = false;
+bookData.deselect();
 bookData.childrenData.forEach((chapterData) => {
-  chapterData.isSelected = false;
+  chapterData.deselect();
 });
 await thisBot.UpdateStacks();
-setTagMask(bookData.piece, "pointable", true);
-setTagMask(bookData.piece, "highlightable", true);
+const piece = bookData.piece;
+if (!piece) {
+  console.warn("Piece not found at DeselectBook");
+  return;
+}
+setTagMask(piece, "pointable", true);
+setTagMask(piece, "highlightable", true);
 setTagMask(thisBot, "isBibleAnimating", false);
-shout("OnStackBookDeselectionComplete", { book: bookData.piece });
+shout("OnStackBookDeselectionComplete", { book: piece });

@@ -1,6 +1,6 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 
 const { layoutData, playlistInfo } = that;
 
@@ -109,11 +109,11 @@ for (const playlistEntryInfoIndex in playlistItemsList) {
                 ? "#FFFFFF"
                 : "#139981",
           arrangementIndex:
-            layoutBookStructure.layoutBookData.creationInfo.arrangementIndex,
+            layoutBookStructure.layoutBookData.creationParams.arrangementIndex,
           testamentIndex:
-            layoutBookStructure.layoutBookData.creationInfo.testamentIndex,
+            layoutBookStructure.layoutBookData.creationParams.testamentIndex,
           sectionIndex:
-            layoutBookStructure.layoutBookData.creationInfo.sectionIndex,
+            layoutBookStructure.layoutBookData.creationParams.sectionIndex,
           book: layoutBookStructure.layoutBookData.pieceInfo.commonName,
           chapter: chapterData.pieceInfo.number,
           index: playlistEntryInfoIndex,

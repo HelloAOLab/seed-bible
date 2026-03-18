@@ -5,12 +5,10 @@ import type {
 } from "../../../../typings/AuxLibraryDefinitions";
 import {
   LabelPosition,
-  type LabelPositionType,
-} from "bibleVizUtils.models.label.models";
-import {
-  type LabelDateFormatType,
   LabelDateFormat,
-} from "bibleVizUtils.models.label.models";
+  type LabelPositionType,
+  type LabelDateFormatType,
+} from "bibleVizUtils.models.label";
 import type { DialogBoxFormAddressesType } from "bibleVizUtils.data.DialogBoxFormAddresses";
 import { ClosestNumber } from "bibleVizUtils.functions.math";
 

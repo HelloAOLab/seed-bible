@@ -1,8 +1,8 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { labelService } from "bibleVizUtils.services.LabelService";
 import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
-import { LabelDateFormat } from "bibleVizUtils.models.label.models";
-import { LabelPosition } from "bibleVizUtils.models.label.models";
+import { LabelDateFormat } from "bibleVizUtils.models.label";
+import { LabelPosition } from "bibleVizUtils.models.label";
 
 /**
  * Highlights the book by scaling and changing its opacity, and displays an info label.
@@ -12,8 +12,13 @@ import { LabelPosition } from "bibleVizUtils.models.label.models";
  * book.Highlight();
  */
 
+import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+
 const { speedMultiplier = 1, isInstantaneous = false } = that ?? {};
-const bookData = BibleStackManager.GetPieceData({ piece: thisBot });
+const bookData: StackBookData | StackSectionBookData =
+  BibleStackManager.GetPieceData({ piece: thisBot });
 const dimension = os.getCurrentDimension();
 const duration = isInstantaneous
   ? 0
@@ -28,8 +33,17 @@ const actualInfo =
   bookData instanceof StackBookData
     ? bookData.pieceInfo
     : bookData.pieceBookInfo;
-const { relativeDateRange } =
-  BibleVizUtils.Data.tags.booksStaticInfo[actualInfo.commonName];
+
+const bookStaticInfo = BibleVizDataRepository.getBookStaticInfo(
+  actualInfo.commonName
+);
+
+if (!bookStaticInfo) {
+  console.warn("bookStaticInfo not found at Highlight");
+  return;
+}
+
+const { relativeDateRange } = bookStaticInfo;
 const date =
   labelService.getDateFormat() === LabelDateFormat.Relative
     ? `${Math.abs(relativeDateRange.min)}${relativeDateRange.min != relativeDateRange.max ? `-${Math.abs(relativeDateRange.max)}` : ``} ${relativeDateRange.min < 0 ? "B.C." : "A.D."}`
@@ -48,7 +62,8 @@ const { infoLabelTransformer } = SpawnLabelForPiece({
 });
 setTagMask(thisBot, "isHighlighting", true);
 setTagMask(thisBot, "isHighlighted", true);
-if (bookData.parentDataIds.stackBibleId) {
+const stackBibleId = bookData.getParentId("stackBibleId");
+if (stackBibleId) {
   const activeElementsInStack = getBots(
     byTag("isStackPiece", true),
     byTag(dimension, true)
@@ -59,8 +74,7 @@ if (bookData.parentDataIds.stackBibleId) {
     .filter((elementData) => {
       return (
         elementData.parentDataIds.stackBibleId &&
-        elementData.parentDataIds.stackBibleId ===
-          bookData.parentDataIds.stackBibleId
+        elementData.parentDataIds.stackBibleId === stackBibleId
       );
     });
   setTagMask(thisBot, "formRenderOrder", -activeElementsInStack.length - 20);

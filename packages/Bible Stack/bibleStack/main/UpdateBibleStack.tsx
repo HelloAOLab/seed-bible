@@ -1,5 +1,9 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
+import { CrossPosition } from "bibleVizUtils.models.canvas";
+import type { Easing } from "../../../../typings/AuxLibraryDefinitions";
 
 /**
  * Updates the Bible stack by adjusting the position of pieces based on the current state of the Bible.
@@ -14,21 +18,37 @@ import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepositor
  * thisBot.UpdateBibleStack({ bibleData: someBibleData, speedMultiplier: 2 });
  */
 
-const { bibleData, speedMultiplier, isInstantaneous } = that;
+const {
+  bibleData,
+  speedMultiplier,
+  isInstantaneous,
+}: {
+  bibleData: StackBibleData;
+  speedMultiplier: number;
+  isInstantaneous: boolean;
+} = that;
 const dimension = os.getCurrentDimension();
 const duration = isInstantaneous ? 0 : 0.5 / speedMultiplier;
-const easing = { type: "sinusoidal", mode: "inout" };
-const lowerCoverPosition = getBotPosition(
-  bibleData.staticBiblePieces.lowerCover,
-  dimension
-);
-const lowerCoverScales = GetBotScales(bibleData.staticBiblePieces.lowerCover);
-const upperCoverScales = GetBotScales(bibleData.staticBiblePieces.upperCover);
-const isBibleEmpty = IsBibleEmpty();
-const isCrossInMiddle =
-  bibleData.childrenData.every((testamentData) => {
-    return testamentData.isSplitIntoSections;
-  }) && !isBibleEmpty;
+const easing: Easing = { type: "sinusoidal", mode: "inout" };
+
+const lowerCover = bibleData.getStaticPiece("lowerCover");
+const upperCover = bibleData.getStaticPiece("upperCover");
+const crossHorizontalLine = bibleData.getStaticPiece("crossHorizontalLine");
+const crossVerticalLine = bibleData.getStaticPiece("crossVerticalLine");
+
+if (!lowerCover || !upperCover || !crossHorizontalLine || !crossVerticalLine) {
+  console.error(`Static stack pieces not found at UpdateBibleStack`, {
+    lowerCover,
+    upperCover,
+  });
+  return;
+}
+
+const lowerCoverPosition = getBotPosition(lowerCover, dimension);
+const lowerCoverScales = GetBotScales(lowerCover);
+const upperCoverScales = GetBotScales(upperCover);
+const isBibleEmpty = bibleData.isEmpty();
+const isCrossInMiddle = bibleData.areAllTestamentsSplit() && !isBibleEmpty;
 const animations = [];
 let crossNewPositionZ = null;
 const stackStructure = GetBibleStackStructure();
@@ -70,48 +90,28 @@ if (!isCrossInMiddle) {
 }
 
 const targetCrossPosition = isCrossInMiddle
-  ? BibleVizUtils.Data.tags.CrossPosition.Middle
-  : BibleVizUtils.Data.tags.CrossPosition.Top;
+  ? CrossPosition.Middle
+  : CrossPosition.Top;
 
 if (bibleData.currentCrossPosition !== targetCrossPosition) {
-  bibleData.currentCrossPosition = targetCrossPosition;
+  bibleData.changeCrossPosition(targetCrossPosition);
 
   if (isInstantaneous) {
-    setTagMask(
-      [
-        bibleData.staticBiblePieces.crossVerticalLine,
-        bibleData.staticBiblePieces.crossHorizontalLine,
-      ],
-      "formOpacity",
-      1
-    );
+    setTagMask([crossVerticalLine, crossHorizontalLine], "formOpacity", 1);
   } else {
     animations.push(
-      animateTag(
-        [
-          bibleData.staticBiblePieces.crossVerticalLine,
-          bibleData.staticBiblePieces.crossHorizontalLine,
-        ],
-        "formOpacity",
-        {
-          toValue: 0,
-          duration: duration / 2,
-          easing,
-        }
-      ).then(() => {
+      animateTag([crossVerticalLine, crossHorizontalLine], "formOpacity", {
+        toValue: 0,
+        duration: duration / 2,
+        easing,
+      }).then(() => {
         setTagMask(
-          [
-            bibleData.staticBiblePieces.crossVerticalLine,
-            bibleData.staticBiblePieces.crossHorizontalLine,
-          ],
+          [crossVerticalLine, crossHorizontalLine],
           dimension + "Z",
           crossNewPositionZ
         );
         return animateTag(
-          [
-            bibleData.staticBiblePieces.crossVerticalLine,
-            bibleData.staticBiblePieces.crossHorizontalLine,
-          ],
+          [crossVerticalLine, crossHorizontalLine],
           "formOpacity",
           {
             toValue: 1,
@@ -125,39 +125,29 @@ if (bibleData.currentCrossPosition !== targetCrossPosition) {
 } else {
   if (!isInstantaneous) {
     animations.push(
-      animateTag(
-        [
-          bibleData.staticBiblePieces.crossVerticalLine,
-          bibleData.staticBiblePieces.crossHorizontalLine,
-        ],
-        dimension + "Z",
-        {
-          toValue: crossNewPositionZ,
-          duration,
-          easing,
-        }
-      )
+      animateTag([crossVerticalLine, crossHorizontalLine], dimension + "Z", {
+        toValue: crossNewPositionZ,
+        duration,
+        easing,
+      })
     );
   }
 }
 
 if (isInstantaneous) {
   setTagMask(
-    [
-      bibleData.staticBiblePieces.crossVerticalLine,
-      bibleData.staticBiblePieces.crossHorizontalLine,
-    ],
+    [crossVerticalLine, crossHorizontalLine],
     dimension + "Z",
     crossNewPositionZ
   );
   setTagMask(
-    bibleData.staticBiblePieces.upperCover,
+    upperCover,
     dimension + "Z",
     isBibleEmpty ? initialPositionZ : nextPositionZ
   );
 } else {
   animations.push(
-    animateTag(bibleData.staticBiblePieces.upperCover, dimension + "Z", {
+    animateTag(upperCover, dimension + "Z", {
       toValue: isBibleEmpty ? initialPositionZ : nextPositionZ,
       duration,
       easing,
@@ -170,22 +160,15 @@ await Promise.all(animations);
 
 return true;
 
-function IsBibleEmpty() {
-  const result = !bibleData.childrenData.some((testamentData) => {
-    return testamentData.isSplitIntoSections
-      ? testamentData.childrenData.some((sectionData) => {
-          return sectionData.isSplitIntoBooks ? true : sectionData.isActive;
-        })
-      : testamentData.isActive;
-  });
-  return result;
-}
-
 function GetBibleStackStructure() {
+  // TODO: Move this to StackBibleData
   const filteredStructure = bibleData.childrenData.filter((testamentData) => {
     return testamentData.isSplitIntoSections
       ? testamentData.childrenData.some((sectionData) => {
-          return sectionData.isSplitIntoBooks ? true : sectionData.isActive;
+          return sectionData instanceof StackSectionData &&
+            sectionData.isSplitIntoBooks
+            ? true
+            : sectionData.isActive;
         })
       : testamentData.isActive;
   });

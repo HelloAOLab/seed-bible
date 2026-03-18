@@ -6,7 +6,18 @@ import {
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { subtractArrays } from "bibleVizUtils.functions.index";
 import { tryHideNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import {
+  BiblePiece,
+  BibleType,
+  ObjectPoolTags,
+} from "bibleVizUtils.models.canvas";
+import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+import type { Vector3 as Vecor3Type } from "../../../../typings/AuxLibraryDefinitions";
+import type { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
+import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
+import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
+import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 
 /**
  * Handles a testament selection. It modify the data of the selected testament on the bibleStructure,
@@ -17,18 +28,40 @@ import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
  * thisBot.SelectTestament({testament});
  */
 
-const { testament, speedMultiplier = 1, isInstantaneous = false } = that;
-const testamentData = thisBot.GetPieceData({ piece: testament });
-const { bibleData } = thisBot.GetDataChainFromParentDataIds({
+const {
+  testament,
+  speedMultiplier = 1,
+  isInstantaneous = false,
+  source,
+}: {
+  testament: Bot;
+  speedMultiplier?: number;
+  isInstantaneous?: boolean;
+  source?: string;
+} = that;
+
+const testamentData: StackTestamentData | undefined = thisBot.GetPieceData({
+  piece: testament,
+});
+
+if (!testamentData) {
+  console.warn("testamentData not found at SelectTestament");
+  return;
+}
+
+const {
+  bibleData,
+}: {
+  bibleData: StackBibleData | undefined;
+} = await thisBot.GetDataChainFromParentDataIds({
   parentDataIds: testamentData.parentDataIds,
 });
+
 const dimension = os.getCurrentDimension();
 const animationsDuration = isInstantaneous ? 0 : 1 / speedMultiplier;
 const animationsEasing = { type: "sinusoidal", mode: "inout" };
-const currentInfoLabelTransformer = getBot(
-  byTag("isInfoLabelTransformer", true),
-  byTag("ownerBotId", getID(testamentData.piece))
-);
+const currentInfoLabelTransformer =
+  LabelsRepository.getLabelTransformerByOwner(testament);
 const testamentPosition = getBotPosition(testament, dimension);
 const testamentScales = GetBotScales(testament);
 const sectionInitialScaleZ = 0.1;
@@ -38,17 +71,16 @@ let sectionPosition = testamentPosition;
 let sectionDesiredPositionZ =
   testamentPosition.z +
   BibleVizDataRepository.getStackSpacing("BetweenSections");
-let crossLines;
-let crossLinesPosition;
-let sectionShadows;
-let piecesAboveTestament;
+let crossLines: [Bot, Bot] | undefined;
+let crossLinesPosition: Vecor3Type | undefined;
+let sectionShadows: Bot[] | undefined;
+let piecesAboveTestament: Bot[] | undefined;
 // const collisionType = bibleData?.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame ? CollisionType.Collision : null
 
 tryHideNotification(testament);
 shout("OnStackTestamentSelected", {
   isFromPlatformerGame:
-    bibleData &&
-    bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame,
+    bibleData && bibleData.bibleType === BibleType.PlatformerGame,
 });
 setTagMask(thisBot, "isBibleAnimating", true);
 if (thisBot.vars.highlightedPieces.length > 0 && bibleData) {
@@ -87,39 +119,52 @@ if (thisBot.vars.highlightedPieces.length > 0 && bibleData) {
   }
 }
 thisBot.vars.lastInteractedStackTestamentData = testamentData;
-testamentData.isSplitIntoSections = true;
+testamentData.split();
 testamentData.childrenData.forEach((data) => {
-  data.isInsideBible = testamentData.isInsideBible;
-  data.isInsideTestament = true;
+  if (testamentData.isInsideBible) data.attachToBible();
+  else data.detachFromBible();
+  data.attachToTestament();
 });
 
 shout("OnBiblePieceSelected", { piece: testament });
 
 if (bibleData) {
-  crossLines = [
-    bibleData.staticBiblePieces.crossVerticalLine,
-    bibleData.staticBiblePieces.crossHorizontalLine,
-  ];
+  if (!bibleData.staticBiblePieces) {
+    console.warn(`bibleData.staticBiblePieces not defined at SelectTestament`);
+    return;
+  }
+  const verticalLine = bibleData.getStaticPiece("crossVerticalLine");
+  const horizontalLine = bibleData.getStaticPiece("crossHorizontalLine");
+  if (!verticalLine || !horizontalLine) {
+    console.warn(`cross lines not found at SelectTestament`);
+    return;
+  }
+  crossLines = [verticalLine, horizontalLine];
   crossLinesPosition = getBotPosition(crossLines[0], dimension);
-  sectionShadows = thisBot.vars.stackSectionsData
+  sectionShadows = (thisBot.vars.stackSectionsData as StackSectionData[])
     .filter((currentSectionData) => {
+      const bibleId = currentSectionData.getParentId("stackBibleId");
       return (
-        currentSectionData.parentDataIds.stackBibleId === bibleData.id &&
+        currentSectionData.parentDataIds &&
+        bibleId === bibleData.id &&
         currentSectionData.shadow &&
         currentSectionData.shadow.tags.isInUse &&
         currentSectionData.shadow.tags[dimension + "Z"] > testamentPosition.z
       );
     })
     .map((currentSectionData) => {
-      return currentSectionData.shadow;
+      return currentSectionData.shadow as Bot;
     });
-  piecesAboveTestament = [bibleData.staticBiblePieces.upperCover].concat(
-    sectionShadows,
-    crossLinesPosition.z > testamentPosition.z ? crossLines : [],
-    GetPiecesAboveTestament()
-  );
+  piecesAboveTestament = [bibleData.getStaticPiece("upperCover")]
+    .concat(
+      sectionShadows,
+      crossLinesPosition.z > testamentPosition.z ? crossLines : [],
+      GetPiecesAboveTestament()
+    )
+    .filter(Boolean) as Bot[];
   sectionPosition = new Vector3(0, 0, testamentPosition.z);
 }
+
 if (currentInfoLabelTransformer) {
   await currentInfoLabelTransformer.Hide({ isInstantaneous }).then(() => {
     ObjectPooler.ReleaseObject({
@@ -132,7 +177,7 @@ if (currentInfoLabelTransformer) {
 for (const data of testamentData.childrenData) {
   const sectionIndex = testamentData.childrenData.indexOf(data);
   const desiredScaleZ =
-    data.creationInfo.amountOfChaptersInSection *
+    data.getCreationParam("amountOfChaptersInSection") *
     BibleVizDataRepository.getStackPieceMeasurement(
       "SectionDesiredScaleZRatio"
     );
@@ -145,23 +190,27 @@ for (const data of testamentData.childrenData) {
   const sectionMod = {
     typeOfPiece:
       data instanceof StackSectionBookData
-        ? BibleVizUtils.Data.tags.BiblePieceType.StackSectionBook
-        : BibleVizUtils.Data.tags.BiblePieceType.StackSection,
-    arrangementIndex: data.creationInfo.arrangementIndex,
-    testamentIndex: data.creationInfo.testamentIndex,
-    sectionIndex: data.creationInfo.sectionIndex,
-    // sectionKey                  : data.creationInfo.sectionKey,
+        ? BiblePiece.StackSectionBook
+        : BiblePiece.StackSection,
+    arrangementIndex: data.getCreationParam("arrangementIndex"),
+    testamentIndex: data.getCreationParam("testamentIndex"),
+    sectionIndex: data.getCreationParam("sectionIndex"),
+    // sectionKey                  : data.creationParams.sectionKey,
     sectionName: data.pieceInfo.name,
-    amountOfChaptersInSection: data.creationInfo.amountOfChaptersInSection,
+    amountOfChaptersInSection: data.getCreationParam(
+      "amountOfChaptersInSection"
+    ),
     numberOfChapters:
       data instanceof StackSectionBookData
-        ? data.creationInfo.amountOfChaptersInSection
+        ? data.getCreationParam("amountOfChaptersInSection")
         : null,
     bookInfo:
-      data instanceof StackSectionBookData ? data.pieceInfo.books[0] : null,
+      data instanceof StackSectionBookData
+        ? data.getPieceInfoProperty("books")[0]
+        : null,
     bookName:
       data instanceof StackSectionBookData
-        ? data.pieceInfo.books[0].commonName
+        ? data.getPieceInfoProperty("books")[0]?.commonName
         : null,
     [dimension]: true,
     [dimension + "X"]: sectionPosition.x,
@@ -186,25 +235,27 @@ for (const data of testamentData.childrenData) {
         "SectionAditionalScaleOnHover"
       ),
     initialScaleZ: desiredScaleZ,
-    color: data.highlightColor ?? data.pieceInfo.color,
-    orginalColor: data.pieceInfo.color,
-    initialColor: data.pieceInfo.color,
+    color: data.highlightColor ?? data.getPieceInfoProperty("color"),
+    orginalColor: data.getPieceInfoProperty("color"),
+    initialColor: data.getPieceInfoProperty("color"),
     initialExplodedViewScaleZ:
       data instanceof StackSectionBookData
         ? null
-        : desiredScaleZ * (data.pieceInfo.customExplodedViewScaleFactor ?? 2),
+        : desiredScaleZ *
+          (data.getPieceInfoProperty("customExplodedViewScaleFactor") ?? 2),
     desiredExplodedViewScaleZ:
       data instanceof StackSectionBookData
         ? null
-        : desiredScaleZ * (data.pieceInfo.customExplodedViewScaleFactor ?? 2),
+        : desiredScaleZ *
+          (data.getPieceInfoProperty("customExplodedViewScaleFactor") ?? 2),
     labelOpacity: 0,
     formOpacity: 0.7,
-    labelTextColor: GetDarkerColor({ color: data.pieceInfo.color }),
+    labelTextColor: GetDarkerColor(data.getPieceInfoProperty("color")),
     transformer: bibleData
-      ? bibleData.staticBiblePieces.bibleTransformer.id
+      ? bibleData.getStaticPiece("bibleTransformer")?.id
       : null,
     transformerLink: bibleData
-      ? `🔗${bibleData.staticBiblePieces.bibleTransformer.id}`
+      ? `🔗${bibleData.getStaticPiece("bibleTransformer")?.id}`
       : null,
     customColorRange:
       data instanceof StackSectionBookData
@@ -213,12 +264,11 @@ for (const data of testamentData.childrenData) {
     draggable: thisBot.masks.areBiblePiecesDraggable,
     desiredPositionZ: sectionDesiredPositionZ,
     desiredScaleZ,
-    sectionIndex,
     // collisionType               : (data instanceof StackSectionBookData) ? collisionType : null
   };
   section.OnSpawned({ mod: sectionMod });
-  data.piece = section;
-  data.isActive = true;
+  data.setPiece(section);
+  data.activate();
   sectionDesiredPositionZ +=
     BibleVizDataRepository.getStackSpacing("BetweenSections") +
     sectionMod.desiredScaleZ;
@@ -235,9 +285,11 @@ const activeBiblePieces = getBots(
   byTag("isInUse", true)
 );
 try {
-  const sectionsDesiredScaleZ = testamentData.childrenData.map((data) => {
-    return data.piece.tags.desiredScaleZ;
-  });
+  const sectionsDesiredScaleZ: number[] = testamentData.childrenData.map(
+    (data) => {
+      return data.piece?.tags.desiredScaleZ ?? 1;
+    }
+  );
   const testamentDesiredScaleZ =
     sectionsDesiredScaleZ.reduce((accumulator, currentValue) => {
       return accumulator + currentValue;
@@ -247,19 +299,18 @@ try {
   const deltaScaleZ = testamentDesiredScaleZ - testamentScales.z;
 
   const firstAnimationSequence = [];
-  if (isInstantaneous)
-    setTagMask(testamentData.piece, "scaleZ", testamentDesiredScaleZ);
+  if (isInstantaneous) setTagMask(testament, "scaleZ", testamentDesiredScaleZ);
   else {
     const focusOnRotation = { x: 1.01229, y: 0.5 };
-    const testamentPosition = getBotPosition(testamentData.piece, dimension);
+    const testamentPosition = getBotPosition(testament, dimension);
     let fixedPosition = new Vector3(
       testamentPosition.x,
       testamentPosition.y,
       testamentPosition.z + testamentDesiredScaleZ / 2
     );
-    if (testamentData.parentDataIds.stackBibleId) {
+    if (testamentData.getParentId("stackBookId")) {
       const transformerPosition = getBotPosition(
-        testamentData.piece.links.transformerLink,
+        testament.links.transformerLink as Bot,
         dimension
       );
       fixedPosition = fixedPosition.add(transformerPosition);
@@ -271,7 +322,7 @@ try {
     });
 
     firstAnimationSequence.push(
-      animateTag(testamentData.piece, "scaleZ", {
+      animateTag(testament, "scaleZ", {
         toValue: testamentDesiredScaleZ,
         duration: animationsDuration,
         easing: animationsEasing,
@@ -289,7 +340,7 @@ try {
   }
 
   if (bibleData) {
-    piecesAboveTestament.forEach((piece) => {
+    piecesAboveTestament?.forEach((piece) => {
       const piecePosition = getBotPosition(piece, dimension);
       const pieceDesiredPositionZ = piecePosition.z + deltaScaleZ;
       if (piece.tags.isStackPiece)
@@ -310,9 +361,11 @@ try {
   if (!isInstantaneous) await Promise.allSettled(firstAnimationSequence);
 
   testamentData.childrenData.forEach((data) => {
-    setTagMask(data.piece, "scaleZ", data.piece.tags.desiredScaleZ);
-    setTagMask(data.piece, dimension + "Z", data.piece.tags.desiredPositionZ);
-    setTagMask(data.piece, "highlightable", true);
+    if (data.piece) {
+      setTagMask(data.piece, "scaleZ", data.piece.tags.desiredScaleZ);
+      setTagMask(data.piece, dimension + "Z", data.piece.tags.desiredPositionZ);
+      setTagMask(data.piece, "highlightable", true);
+    }
   });
   thisBot.TrySetPiecesRenderOrder(activeBiblePieces);
   if (isInstantaneous) {
@@ -348,27 +401,42 @@ return Promise.all(
   })
 );
 
-function GetPiecesAboveTestament() {
-  const pieces = [];
+function GetPiecesAboveTestament(): Bot[] {
+  const pieces: Bot[] = [];
+  if (!bibleData) {
+    console.warn(
+      "bibleData not defined at SelectTestament.GetPiecesAboveTestament"
+    );
+    return pieces;
+  }
   for (
     let i = testament.tags.testamentIndex + 1;
     i < bibleData.childrenData.length;
     i++
   ) {
     const currentTestamentData = bibleData.childrenData[i];
+    if (!currentTestamentData) {
+      console.warn(
+        "currentTestamentData not found at SelectTestament.GetPiecesAboveTestament"
+      );
+      continue;
+    }
     if (currentTestamentData.isSplitIntoSections) {
       for (const currentSectionData of currentTestamentData.childrenData) {
-        if (currentSectionData.isSplitIntoBooks) {
+        if (
+          currentSectionData instanceof StackSectionData &&
+          currentSectionData.isSplitIntoBooks
+        ) {
           for (const currentBookData of currentSectionData.childrenData.flat()) {
             if (currentBookData.isActive) {
-              pieces.push(currentBookData.piece);
+              if (currentBookData.piece) pieces.push(currentBookData.piece);
             }
           }
-        } else if (currentSectionData.isActive) {
+        } else if (currentSectionData.isActive && currentSectionData.piece) {
           pieces.push(currentSectionData.piece);
         }
       }
-    } else if (currentTestamentData.isActive) {
+    } else if (currentTestamentData.isActive && currentTestamentData.piece) {
       pieces.push(currentTestamentData.piece);
     }
   }

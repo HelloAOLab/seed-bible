@@ -1,4 +1,3 @@
-import { BookShape } from "bibleVizUtils.models.canvas.models";
 /**
  * Resets the data for all pieces within the Bible stack, including testaments, sections, books, and chapters.
  *
@@ -12,59 +11,14 @@ import { BookShape } from "bibleVizUtils.models.canvas.models";
  * StacksManger.ResetStackData({ bibleData: someBibleData });
  */
 
-const { bibleData } = that;
+import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
 
-for (const testamentData of bibleData.childrenData) {
-  if (testamentData.piece) {
-    ObjectPooler.ReleaseObject({
-      obj: testamentData.piece,
-      tag: testamentData.piece.tags.poolTag,
-    });
-    testamentData.piece = null;
-  }
-  testamentData.isSplitIntoSections = true;
-  testamentData.isActive = false;
-  for (const sectionData of testamentData.childrenData) {
-    if (sectionData.piece) {
-      ObjectPooler.ReleaseObject({
-        obj: sectionData.piece,
-        tag: sectionData.piece.tags.poolTag,
-      });
-      sectionData.piece = null;
-    }
-    if (sectionData instanceof StackSectionBookData) {
-      sectionData.isSelected = false;
-      sectionData.queuedChapterData = null;
-      sectionData.currentSelectedChapterData = null;
-      sectionData.currentShape = BookShape.Regular;
-      sectionData.isActive = false;
-      for (const chapterData of sectionData.childrenData) {
-        chapterData.isHidden = false;
-      }
-    } else {
-      sectionData.shadow = null;
-      sectionData.isInExplodedView = false;
-      sectionData.isSplitIntoBooks = false;
-      sectionData.isActive = false;
-      for (const level of sectionData.childrenData) {
-        for (const bookData of level) {
-          if (bookData.piece) {
-            ObjectPooler.ReleaseObject({
-              obj: bookData.piece,
-              tag: bookData.piece.tags.poolTag,
-            });
-            bookData.piece = null;
-          }
-          bookData.isActive = false;
-          bookData.isSelected = false;
-          bookData.queuedChapterData = null;
-          bookData.currentSelectedChapterData = null;
-          bookData.currentShape = null;
-          for (const chapterData of bookData.childrenData) {
-            chapterData.isHidden = false;
-          }
-        }
-      }
-    }
-  }
+const { bibleData }: { bibleData: StackBibleData } = that;
+
+const piecesToRelease = bibleData.resetHierarchy();
+for (const piece of piecesToRelease) {
+  ObjectPooler.ReleaseObject({
+    obj: piece,
+    tag: piece.tags.poolTag,
+  });
 }

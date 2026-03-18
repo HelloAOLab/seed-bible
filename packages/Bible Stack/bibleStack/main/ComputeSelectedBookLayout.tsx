@@ -1,8 +1,14 @@
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 
-const { data } = that;
+const {
+  data,
+}: {
+  data: StackSectionBookData | StackBookData;
+} = that;
 
-if (data.isSelected) {
+if (data.isSelected && data.piece) {
   const isSectionBookDataInstance =
     data instanceof StackSectionBookData ||
     data.constructor.name === "StackSectionBookData";

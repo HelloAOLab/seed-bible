@@ -1,4 +1,4 @@
-import {HighlightData} from "bibleVizUtils.models.highlight.models"
+import {HighlightData} from "bibleVizUtils.models.highlight"
 
 const {piece, data} = that;
 
@@ -17,7 +17,7 @@ if(data)
 else
 {
     const chapterData = thisBot.GetChapterDataById({id: piece.masks.chapterDataId})
-    let currentHighlightInfo = chapterData.GetHighlightInfoByKey(piece.masks.chunkPath ?? piece.masks.versePath)
+    let currentHighlightInfo = chapterData.getHighlightInfoByKey(piece.masks.chunkPath ?? piece.masks.versePath)
 
     if(currentHighlightInfo)
     {
@@ -37,7 +37,7 @@ else
             typeOfPiece: piece.tags.typeOfPiece, 
             key: piece.masks.chunkPath ?? piece.masks.versePath
         }
-        chapterData.AddHighlightInfo(newHighlightInfo)
+        chapterData.addHighlightInfo(newHighlightInfo)
         highlightSuccessful = true;
     }
 }

@@ -1,4 +1,6 @@
+import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
 import { HexToRgb } from "bibleVizUtils.functions.index";
+import { ColorLerpTags } from "bibleVizUtils.models.canvas";
 
 /**
  * Attempts to stop the toggle of the stack visualization. This method manages the
@@ -13,7 +15,8 @@ import { HexToRgb } from "bibleVizUtils.functions.index";
  * thisBot.TryStopStackVizToggle({ bibleData: someBibleData });
  */
 
-const { bibleData } = that;
+const { bibleData }: { bibleData: StackBibleData } = that;
+
 if (
   !thisBot.masks.isTryingToToggleStackViz ||
   thisBot.masks.isStoppingStackVizToggle
@@ -23,11 +26,13 @@ if (
 setTagMask(thisBot, "isStoppingStackVizToggle", true);
 const animationDuration = 0.25;
 const crossLines = [
-  bibleData.staticBiblePieces.crossVerticalLine,
-  bibleData.staticBiblePieces.crossHorizontalLine,
+  bibleData.getStaticPiece("crossVerticalLine"),
+  bibleData.getStaticPiece("crossHorizontalLine"),
 ];
 await Promise.all(
   crossLines.map((crossLine) => {
+    if (!crossLine) return Promise.resolve();
+
     return ColorLerper.LerpTag({
       startingColor: HexToRgb({
         hexColor: crossLine.masks.color ?? crossLine.tags.color,
@@ -35,7 +40,7 @@ await Promise.all(
       endingColor: HexToRgb({ hexColor: crossLine.tags.initialColor }),
       durationInSeconds: animationDuration,
       bot: crossLine,
-      tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color,
+      tag: ColorLerpTags.color,
     });
   })
 );

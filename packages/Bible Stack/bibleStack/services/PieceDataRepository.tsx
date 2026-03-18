@@ -1,8 +1,5 @@
 import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
-import {
-  BiblePiece,
-  type BiblePieceType,
-} from "bibleVizUtils.models. canvas.models";
+import { BiblePiece, type BiblePieceType } from "bibleVizUtils.models.canvas";
 import { getSelf as getBibleStackMain } from "bibleStack.main.selfGetter";
 
 const bibleStackMain = getBibleStackMain();

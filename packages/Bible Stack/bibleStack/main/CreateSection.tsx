@@ -3,6 +3,13 @@ import {
   stackService,
   arrangementService,
 } from "bibleVizUtils.services.index";
+import type { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
+import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
+import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import type { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
 
 /**
  * Creates a `StackSectionData` or `StackSectionBookData` instance based on the number of books in the section, and sets up the corresponding books or chapters.
@@ -38,9 +45,12 @@ const {
   sectionIndex,
   isInsideBible,
   isInsideTestament,
-  bibleData,
-  testamentData,
+  bibleDataId,
+  testamentDataId,
   isHidden = false,
+}: {
+  bibleDataId?: string;
+  testamentDataId?: string;
 } = that;
 const sectionInfo = arrangementService.getSectionByIndices({
   arrangementIndex,
@@ -56,37 +66,31 @@ if (!sectionInfo) {
 const amountOfChaptersInSection = scriptureService.getSectionChapterCount(
   sectionInfo.books
 );
-let data;
-const creationInfo = {
+let data: StackSectionData | StackSectionBookData | undefined;
+const creationParams = {
   arrangementIndex,
   testamentIndex,
   sectionIndex,
   amountOfChaptersInSection,
 };
-const parentDataIds = new ParentDataIds({
-  stackBibleId: bibleData?.id,
-  stackTestamentId: testamentData?.id,
-});
+const parentDataIds = {
+  stackBibleId: bibleDataId,
+  stackTestamentId: testamentDataId,
+};
+
+const sectionDataId = uuid();
 
 if (sectionInfo.books.length > 1) {
-  data = new StackSectionData({
-    pieceInfo: sectionInfo,
-    id: uuid(),
-    parentDataIds,
-    sectionIndex,
-    isInsideBible,
-    isInsideTestament,
-    creationInfo,
-  });
   const levels = stackService.getSectionLevels(sectionInfo.books);
   const levelsLenght = levels.length;
+  const booksDataArray: StackBookData[][] = [];
   for (const level of levels) {
-    const booksData = [];
+    const booksData: StackBookData[] = [];
     const levelIndex = levels.indexOf(level);
     for (const bookInfo of level) {
       const bookIndex = sectionInfo.books.indexOf(bookInfo);
       const bookLevelIndex = level.indexOf(bookInfo);
-      const bookData = await thisBot.CreateBook({
+      const bookData: StackBookData = await thisBot.CreateBook({
         arrangementIndex,
         testamentIndex,
         sectionIndex,
@@ -97,43 +101,61 @@ if (sectionInfo.books.length > 1) {
         isInsideBible,
         isInsideTestament,
         isInsideSection: true,
-        bibleData,
-        testamentData,
-        sectionData: data,
+        bibleDataId,
+        testamentDataId,
+        sectionDataId,
         isHidden,
       });
       booksData.push(bookData);
     }
-    data.AddChild(booksData);
+    booksDataArray.push(booksData);
   }
-  thisBot.vars.stackSectionsData.push(data);
-} else {
-  data = new StackSectionBookData({
+  data = new StackSectionData({
     pieceInfo: sectionInfo,
-    pieceBookInfo: sectionInfo.books[0],
-    id: uuid(),
+    id: sectionDataId,
     parentDataIds,
     isInsideBible,
     isInsideTestament,
-    creationInfo,
+    creationParams,
+    childrenData: booksDataArray,
   });
-  const chaptersData = await Promise.all(
-    BibleVizUtils.Data.tags.booksStaticInfo[
-      sectionInfo.books[0].commonName
-    ].chaptersInfo.map((chapterInfo) => {
-      return thisBot.CreateChapter({
-        chapterInfo,
-        isInsideBible: true,
-        isInsideBook: true,
-        bibleData,
-        testamentData,
-        sectionBookData: data,
-        isHidden,
-      });
-    })
-  );
-  data.SetChildrenData(chaptersData);
-  thisBot.vars.stackSectionBooksData.push(data);
+  thisBot.vars.stackSectionsData.push(data);
+} else {
+  const pieceBookInfo = sectionInfo.books[0];
+  if (pieceBookInfo) {
+    const bookStaticInfo = BibleVizDataRepository.getBookStaticInfo(
+      pieceBookInfo.commonName
+    );
+    if (!bookStaticInfo) {
+      console.error("bookStaticInfo not found at CreateSection");
+      return;
+    }
+    const chaptersData: StackChapterData[] = await Promise.all(
+      bookStaticInfo.chaptersInfo.map((chapterInfo) => {
+        return thisBot.CreateChapter({
+          chapterInfo,
+          isInsideBible: true,
+          isInsideBook: true,
+          bibleDataId,
+          testamentDataId,
+          sectionBookDataId: sectionDataId,
+          isHidden,
+          bookName: pieceBookInfo.commonName,
+        });
+      })
+    );
+    data = new StackSectionBookData({
+      pieceInfo: sectionInfo,
+      pieceBookInfo,
+      id: sectionDataId,
+      parentDataIds,
+      isInsideBible,
+      isInsideTestament,
+      creationParams,
+      childrenData: chaptersData,
+    });
+    thisBot.vars.stackSectionBooksData.push(data);
+  }
 }
 
 return data;

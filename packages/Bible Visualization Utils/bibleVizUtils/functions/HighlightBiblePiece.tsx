@@ -3,7 +3,7 @@ console.warn(
 );
 return;
 
-// import type { HighlightData } from "bibleVizUtils.models.highlight.models";
+// import type { HighlightData } from "bibleVizUtils.models.highlight";
 
 // const {piece, data} = that;
 
@@ -31,7 +31,7 @@ return;
 //         chapterData = BibleStackManager.GetChapterDataById({id: piece.masks.stackChapterDataId})
 //     }
 //     console.log({chapterData: {...chapterData}, piece: {...piece}})
-//     const currentHighlightInfo = chapterData.GetHighlightInfoByKey(piece.masks.chunkPath ?? piece.masks.versePath)
+//     const currentHighlightInfo = chapterData.getHighlightInfoByKey(piece.masks.chunkPath ?? piece.masks.versePath)
 
 //     if(currentHighlightInfo)
 //     {
@@ -51,7 +51,7 @@ return;
 //             typeOfPiece: piece.tags.typeOfPiece,
 //             key: piece.masks.chunkPath ?? piece.masks.versePath
 //         }
-//         chapterData.AddHighlightInfo(newHighlightInfo)
+//         chapterData.addHighlightInfo(newHighlightInfo)
 //         highlightSuccessful = true;
 //     }
 // }

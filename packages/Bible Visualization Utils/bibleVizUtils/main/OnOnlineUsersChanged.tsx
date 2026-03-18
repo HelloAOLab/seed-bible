@@ -3,8 +3,6 @@ import { updateUserColorStore } from "bibleVizUtils.controllers.userPresence.col
 
 const { onlineUsers } = that;
 
-console.log(`[Debug] OnOnlineUsersChanged`, onlineUsers);
-
 const fixedOnlineUsers = new Map();
 if (onlineUsers) {
   for (const key in onlineUsers) {

@@ -1,7 +1,7 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { tryHideIndicators } from "bibleVizUtils.controllers.userPresence.activityIndicatorsController";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 
 const {
   layoutBookData,
@@ -108,7 +108,7 @@ for (const chapterData of layoutBookData.childrenData) {
     elapsedYearsRange,
     labelFontSize: 0.5,
     parentBookName: layoutBookData.pieceInfo.commonName,
-    arrangementIndex: layoutBookData.creationInfo.arrangementIndex,
+    arrangementIndex: layoutBookData.creationParams.arrangementIndex,
     isYear: layoutData?.isDatesEnabled == 2 ? false : true,
     isShowYear: layoutData?.isDatesEnabled == 1 ? false : true,
     // layerIndex: chapterData.layerIndex,

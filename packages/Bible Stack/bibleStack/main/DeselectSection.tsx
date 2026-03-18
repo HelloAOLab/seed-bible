@@ -1,6 +1,8 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 import { subtractArrays } from "bibleVizUtils.functions.index";
+import type { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
+import type { Bot, Easing } from "../../../../typings/AuxLibraryDefinitions";
 
 /**
  * This function handles the deselection and animation of a section,
@@ -14,43 +16,48 @@ import { subtractArrays } from "bibleVizUtils.functions.index";
  * thisBot.DeselectSection({sectionData: someSectionData})
  */
 
+const { sectionData }: { sectionData: StackSectionData } = that;
+
+if (!sectionData.shadow) {
+  throw new Error("Section shadow not defined at DeselectSection");
+}
+
 setTagMask(thisBot, "isBibleAnimating", true);
-const { sectionData } = that;
 const dimension = os.getCurrentDimension();
 const sectionShadowPosition = getBotPosition(sectionData.shadow, dimension);
 const sectionDesiredScale = 1;
 const sectionDesiredFormOpacity = 1;
 const duration = 0.5;
-const easing = { type: "sinusoidal", mode: "inout" };
+const easing: Easing = { type: "sinusoidal", mode: "inout" };
 const infoLabelTransformer = LabelsRepository.getLabelTransformerByOwner(
   sectionData.shadow
 );
-const selectedBooksData = sectionData.childrenData.flat().filter((bookData) => {
-  return bookData.isActive && bookData.isSelected;
-});
+const selectedBooksData = sectionData.getActivelySelectedBooks();
 
 thisBot.vars.lastInteractedStackSectionData = sectionData;
 
 if (thisBot.vars.highlightedPieces.length > 0) {
-  const piecesToUnhighlight = sectionData.childrenData
+  // TODO: Fix LoD below
+  const piecesToUnhighlight: Bot[] = sectionData.childrenData
     .flat()
     .filter((bookData) => {
       return (
         bookData.isActive &&
-        thisBot.vars.highlightedPieces.some((piece) => {
-          return piece.id === bookData.piece.id;
+        bookData.piece &&
+        (thisBot.vars.highlightedPieces as Bot[]).some((piece) => {
+          return piece.id === bookData.piece?.id;
         })
       );
     })
     .map((bookData) => {
-      return bookData.piece;
+      return bookData.piece as Bot;
     });
   if (piecesToUnhighlight.length > 0) {
     await Promise.all(
       piecesToUnhighlight.map((piece) => {
         return thisBot.TryUnhighlightPiece({
           piece,
-          requestSource: BibleVizUtils.Data.tags.InteractionType.Transition,
+          requestSource: BibleVizUtils.Data.tags.InteractionType.Transition, // TODO: Implement actual enum for InteractionType
         });
       })
     );
@@ -62,9 +69,11 @@ if (thisBot.vars.highlightedPieces.length > 0) {
 }
 if (selectedBooksData.length > 0) {
   selectedBooksData.forEach((bookData) => {
-    bookData.isSelected = false;
-    setTagMask(bookData.piece, "pointable", true);
-    setTagMask(bookData.piece, "highlightable", true);
+    bookData.deselect();
+    if (bookData.piece) {
+      setTagMask(bookData.piece, "pointable", true);
+      setTagMask(bookData.piece, "highlightable", true);
+    } else console.warn("actively selected book is missing piece");
   });
   await thisBot.UpdateStacks();
 }
@@ -80,6 +89,10 @@ const sectionInitialPosition = new Vector3(
   sectionShadowPosition.y,
   sectionShadowPosition.z - deltaScaleZ / 2
 );
+
+if (!sectionData.piece) {
+  throw new Error("sectionData.piece not found at DeselectSection");
+}
 
 setTagMask(sectionData.piece, dimension + "X", sectionInitialPosition.x);
 setTagMask(sectionData.piece, dimension + "Y", sectionInitialPosition.y);
@@ -124,27 +137,19 @@ if (infoLabelTransformer)
       tag: infoLabelTransformer.tags.poolTag,
     });
   });
-ObjectPooler.ReleaseObject({
-  obj: sectionData.shadow,
-  tag: sectionData.shadow.tags.poolTag,
+
+const piecesToRelease = sectionData.resetHierarchy();
+console.log(`[Debug] DeselectSection`, {
+  piecesToRelease: piecesToRelease.map((piece) => {
+    return { ...piece, tags: { ...piece.tags } };
+  }),
 });
-sectionData.isSplitIntoBooks = false;
-sectionData.isInExplodedView = false;
-sectionData.shadow = null;
-sectionData.childrenData.flat().forEach((bookData) => {
-  if (bookData.piece) {
-    ObjectPooler.ReleaseObject({
-      obj: bookData.piece,
-      tag: bookData.piece.tags.poolTag,
-    });
-    bookData.piece = null;
-  }
-  bookData.isActive = false;
-  bookData.isSelected = false;
-  bookData.queuedChapterData = null;
-  bookData.currentSelectedChapterData = null;
-  bookData.currentShape = null;
-});
+for (const piece of piecesToRelease) {
+  ObjectPooler.ReleaseObject({
+    obj: piece,
+    tag: piece.tags.poolTag,
+  });
+}
 
 await thisBot.UpdateStacks();
 setTagMask(thisBot, "isBibleAnimating", false);

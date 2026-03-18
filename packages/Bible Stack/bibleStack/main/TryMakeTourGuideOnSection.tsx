@@ -1,3 +1,4 @@
+import type { TourGuideData } from "@packages/Bible Visualization Utils/bibleVizUtils/models/canvas.models";
 import {
   GetCamRotationFocusPoint,
   MakePortalRestrict,
@@ -19,7 +20,7 @@ if (thisBot.HasSectionEverBeenSelected({ sectionData })) {
   );
   if (skip) return Promise.all(shout("OnTourGuideComplete"));
   else {
-    const { bibleData } = thisBot.GetDataChainFromParentDataIds({
+    const { bibleData } = await thisBot.GetDataChainFromParentDataIds({
       parentDataIds: sectionData.parentDataIds,
     });
     const dimension = os.getCurrentDimension();
@@ -118,10 +119,11 @@ if (thisBot.HasSectionEverBeenSelected({ sectionData })) {
             ).catch((error) => {
               console.error(error);
             });
-            thisBot.vars.currentTourGuideData = new TourGuideData({
+            const tourGuideData: TourGuideData = {
               intervalId,
               promiseReject: reject,
-            });
+            };
+            thisBot.vars.currentTourGuideData = tourGuideData;
           });
         });
     } catch {

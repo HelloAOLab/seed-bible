@@ -1,6 +1,9 @@
 import { FindPreviousValidGroupBookData } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
-import { BookShape } from "bibleVizUtils.models.canvas.models";
+import { BookShape } from "bibleVizUtils.models.canvas";
+import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
+import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+import type { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
 
 const {
   bookData,
@@ -14,13 +17,22 @@ const {
   isInstantaneous,
   easing,
   speedMultiplier = 1,
+}: {
+  bookData: StackSectionBookData | StackBookData;
+  bookDataArr: (StackSectionBookData | StackBookData)[];
+  bookDataIndex: number;
+  sectionData: StackSectionData;
 } = that;
 
 let { desiredPositionX, desiredPositionY, desiredPositionZ } = that;
 
 const { chapterColumns, chapterRows, selectedBookHeight } =
   await thisBot.ComputeSelectedBookLayout({ data: bookData });
-const bookPosition = getBotPosition(bookData.piece, dimension);
+
+if (!bookData.piece) {
+  throw new Error("piece not found at HandleBookDataInStack");
+}
+
 let absBookDesiredPosition;
 let halfInitialBookScales;
 let marginToAdd = 0;
@@ -61,7 +73,7 @@ if (bookData.isSelected) {
       .then(() => {
         if (
           bookData.currentShape === BookShape.Selected &&
-          !bookData.piece.masks.isShowingChapters
+          !bookData.piece?.masks.isShowingChapters
         ) {
           thisBot.ShowChaptersInBook({ data: bookData, dimension });
         }
@@ -86,6 +98,9 @@ if (bookData.isSelected) {
 
 if (sectionData) {
   if (sectionData.isInExplodedView) {
+    if (!sectionData.piece) {
+      throw new Error("sectionData.piece not defined at HandleBookDataInStack");
+    }
     desiredPositionZ +=
       bookData.piece.tags.explodedViewPosition.z *
         sectionData.piece.tags.desiredExplodedViewScaleZ -
@@ -99,7 +114,7 @@ if (sectionData) {
         BibleVizDataRepository.getStackSpacing("SelectedBookMargin") * 2;
       if (bookDataIndex > 0) {
         const previousValidGroupBookData = FindPreviousValidGroupBookData({
-          arr: bookDataArr,
+          arr: bookDataArr, // TODO: Fix this
           currentIndex: bookDataIndex,
         });
         if (previousValidGroupBookData) {
@@ -146,6 +161,7 @@ if (isInstantaneous) {
   setTagMask(bookData.piece, dimension + "Y", desiredPositionY);
   setTagMask(bookData.piece, dimension + "Z", desiredPositionZ);
 } else {
+  const bookPosition = getBotPosition(bookData.piece, dimension);
   newBookAnimations.push(
     animateTag(bookData.piece, {
       fromValue: {

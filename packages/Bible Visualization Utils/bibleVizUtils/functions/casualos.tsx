@@ -2,10 +2,7 @@ import type {
   Bot,
   Vector3 as Vector3Type,
 } from "../../../../typings/AuxLibraryDefinitions";
-import type {
-  AnimateTagData,
-  SetTagData,
-} from "bibleVizUtils.models.casualos.models";
+import type { AnimateTagData, SetTagData } from "bibleVizUtils.models.casualos";
 
 type DistanceBetweenBotAndCameraType = (params: { bot: Bot }) => number;
 

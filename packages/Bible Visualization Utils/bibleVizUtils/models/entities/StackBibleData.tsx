@@ -1,15 +1,43 @@
 import { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
 import { StackData } from "bibleVizUtils.models.entities.StackData";
 import type { Bot } from "../../../../../typings/AuxLibraryDefinitions";
+import {
+  type CrossPositionType,
+  type BibleVisualizationStateType,
+  type BibleTypeType,
+  type BibleStateType,
+  type ExplodeStackCommand,
+  ExplodeStackActions,
+} from "bibleVizUtils.models.canvas";
+
+export interface StaticBiblePieces {
+  bibleTransformer: Bot;
+  upperCover: Bot;
+  leftCover: Bot;
+  lowerCover: Bot;
+  crossVerticalLine: Bot;
+  crossHorizontalLine: Bot;
+  bibleShadow: Bot;
+}
+
+interface DataParams {
+  childrenData?: StackTestamentData[];
+  id: string;
+  currentCrossPosition: CrossPositionType;
+  currentStackVizState: BibleVisualizationStateType;
+  staticBiblePieces?: StaticBiblePieces;
+  arrangementIndex: number;
+  bibleType: BibleTypeType;
+}
 
 export class StackBibleData extends StackData<StackTestamentData> {
-  #staticBiblePieces: Record<string, Bot> | undefined;
-  #bibleType: "Default";
-  #currentCrossPosition: "TOP" | "Middle";
-  #currentStackVizState: "Regular" | "Expanded";
+  #staticBiblePieces: DataParams["staticBiblePieces"];
+  #bibleType: DataParams["bibleType"];
+  #currentCrossPosition: DataParams["currentCrossPosition"];
+  #currentStackVizState: DataParams["currentStackVizState"];
   #hasBeenSetUp: boolean = false;
-  #currentState = null;
-  #arrangementIndex: number;
+  #currentState: undefined | BibleStateType;
+  #arrangementIndex: DataParams["arrangementIndex"];
 
   constructor({
     childrenData = [],
@@ -19,15 +47,7 @@ export class StackBibleData extends StackData<StackTestamentData> {
     staticBiblePieces,
     arrangementIndex,
     bibleType,
-  }: {
-    childrenData: StackTestamentData[];
-    id: string;
-    currentCrossPosition: "TOP" | "Middle"; // TODO: Implement actual enum for CrossPosition.json
-    currentStackVizState: "Regular" | "Expanded"; // TODO: Implement actual enum for BibleVisualizationState.json
-    staticBiblePieces: Record<string, Bot> | undefined;
-    arrangementIndex: number;
-    bibleType: "Default"; // TODO: Implement actual enum for BibleType.json
-  }) {
+  }: DataParams) {
     super({ childrenData, id });
     this.#currentCrossPosition = currentCrossPosition;
     this.#currentStackVizState = currentStackVizState;
@@ -37,7 +57,35 @@ export class StackBibleData extends StackData<StackTestamentData> {
   }
 
   get staticBiblePieces() {
-    return this.#staticBiblePieces;
+    if (this.#staticBiblePieces) {
+      return { ...this.#staticBiblePieces };
+    }
+    return undefined;
+  }
+  setStaticBiblePieces(staticPieces: StaticBiblePieces) {
+    this.#staticBiblePieces = staticPieces;
+  }
+  clearStaticBiblePieces():
+    | StaticBiblePieces[keyof StaticBiblePieces][]
+    | undefined {
+    if (this.#staticBiblePieces) {
+      const releasedPieces = Object.values(this.#staticBiblePieces);
+      this.#staticBiblePieces = undefined;
+      return releasedPieces;
+    }
+    return undefined;
+  }
+  getStaticPiece<K extends keyof StaticBiblePieces>(
+    key: K
+  ): StaticBiblePieces[K] | undefined {
+    if (!this.#staticBiblePieces) return undefined;
+
+    return this.#staticBiblePieces[key];
+  }
+  getStaticPieceId<K extends keyof StaticBiblePieces>(
+    key: K
+  ): StaticBiblePieces[K]["id"] | undefined {
+    return this.getStaticPiece(key)?.id;
   }
   get bibleType() {
     return this.#bibleType;
@@ -45,31 +93,70 @@ export class StackBibleData extends StackData<StackTestamentData> {
   get currentCrossPosition() {
     return this.#currentCrossPosition;
   }
-  set currentCrossPosition(value) {
-    this.#currentCrossPosition = value;
+  changeCrossPosition(position: DataParams["currentCrossPosition"]) {
+    this.#currentCrossPosition = position;
   }
   get currentStackVizState() {
     return this.#currentStackVizState;
   }
-  set currentStackVizState(value) {
-    this.#currentStackVizState = value;
+  changeVizState(state: DataParams["currentStackVizState"]) {
+    this.#currentStackVizState = state;
   }
   get hasBeenSetUp() {
     return this.#hasBeenSetUp;
   }
-  set hasBeenSetUp(value) {
-    this.#hasBeenSetUp = value;
+  handleSetup() {
+    this.#hasBeenSetUp = true;
   }
   get currentState() {
     return this.#currentState;
   }
-  set currentState(value) {
-    this.#currentState = value;
+  changeState(state: BibleStateType) {
+    this.#currentState = state;
   }
   get arrangementIndex() {
     return this.#arrangementIndex;
   }
-  set arrangementIndex(value) {
-    this.#arrangementIndex = value;
+  getTestamentWithExplodedSection(): StackTestamentData | undefined {
+    return this.childrenData.find((testament) =>
+      testament.hasExplodedSection()
+    );
+  }
+  tryExplodeSplitSections(): boolean {
+    return this.childrenData.some((testament) => {
+      return testament.tryExplodeSplitSections();
+    });
+  }
+  getExplodeAnimationPlan(): ExplodeStackCommand[] {
+    const plan: ExplodeStackCommand[] = [];
+
+    for (const testament of this.getReversedChildren()) {
+      if (testament.isSplittable() && testament.piece) {
+        plan.push({
+          action: ExplodeStackActions.SelectTestament,
+          piece: testament.piece,
+        });
+      }
+
+      plan.push(...testament.getExplodeAnimationCommands());
+    }
+
+    return plan;
+  }
+  implodeAllSections() {
+    this.childrenData.forEach((testament) => {
+      testament.implodeSections();
+    });
+  }
+  areAllTestamentsSplit(): boolean {
+    return this.childrenData.every((testamentData) => {
+      return testamentData.isSplitIntoSections;
+    });
+  }
+  isEmpty(): boolean {
+    const result = this.childrenData.every((testamentData) => {
+      return testamentData.isEmpty();
+    });
+    return result;
   }
 }

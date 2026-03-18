@@ -1,4 +1,10 @@
 import { DespawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
+import { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
+import { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
+import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
+import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+import { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
 
 /**
  * Deletes a Bible, Testament, Section, Book, or Chapter based on the provided `pieceData`.
@@ -57,7 +63,9 @@ if (pieceData) {
     "interactiveBible.managers.thisBot.DeletePiece. No piece data found."
   );
 
-function DeleteChapter(chapterData) {
+// TODO: Fix DRY
+
+function DeleteChapter(chapterData: StackChapterData) {
   /**
    * Deletes a `StackChapterData` object and its associated verses.
    *
@@ -65,14 +73,12 @@ function DeleteChapter(chapterData) {
    */
 
   const chapterDataIndex = thisBot.vars.stackChaptersData.indexOf(chapterData);
-  if (chapterData.piece) {
-    if (chapterData.piece.masks.isOnTheGround) {
+  const piece = chapterData.clearPiece();
+  if (piece) {
+    if (piece.masks.isOnTheGround) {
       DespawnLabelForPiece(piece);
-      if (
-        chapterData.isSelected &&
-        chapterData.piece.vars.chunksOfVerses?.length > 0
-      ) {
-        chapterData.piece.vars.chunksOfVerses.forEach((chunk) => {
+      if (chapterData.isSelected && piece.vars.chunksOfVerses?.length > 0) {
+        piece.vars.chunksOfVerses.forEach((chunk) => {
           if (chunk.masks.isSelected && chunk.vars.verses?.length > 0) {
             chunk.vars.verses.flat().forEach((verse) => {
               ObjectPooler.ReleaseObject({
@@ -89,23 +95,22 @@ function DeleteChapter(chapterData) {
             dimension: thisBot.tags.desiredDimension,
           });
         });
-        chapterData.piece.vars.chunksOfVerses = []; //.splice(0, chapterData.piece.vars.chunksOfVerses.length);
+        piece.vars.chunksOfVerses = []; //.splice(0, chapterData.piece.vars.chunksOfVerses.length);
       }
     }
     ObjectPooler.ReleaseObject({
-      obj: chapterData.piece,
-      tag: chapterData.piece.tags.poolTag,
+      obj: piece,
+      tag: piece.tags.poolTag,
       dimension: thisBot.tags.desiredDimension,
     });
-    chapterData.piece = null;
   }
-  chapterData.pieceInfo = null;
-  chapterData.parentDataIds = null;
+  // chapterData.pieceInfo = null;
+  // chapterData.parentDataIds = null;
   if (chapterDataIndex != null)
     thisBot.vars.stackChaptersData.splice(chapterDataIndex, 1);
 }
 
-function DeleteBook(bookData) {
+function DeleteBook(bookData: StackSectionBookData | StackBookData) {
   /**
    * Deletes a `StackBookData` or `StackSectionBookData` object and its associated chapters.
    *
@@ -113,39 +118,39 @@ function DeleteBook(bookData) {
    */
 
   let bookDataIndex;
-  bookData.childrenData.forEach((chapterData) => {
+  const children = bookData.clearChildren();
+  children.forEach((chapterData) => {
     DeleteChapter(chapterData);
   });
-  bookData.childrenData.splice(0, bookData.childrenData.length);
-  if (bookData.piece) {
+  const piece = bookData.clearPiece();
+  if (piece) {
     const { unhighlightDelayInfo, unhighlightDelayInfoIndex } =
-      thisBot.GetUnhighlightDelayInfo({ piece: bookData.piece });
+      thisBot.GetUnhighlightDelayInfo({ piece });
     if (unhighlightDelayInfo)
       thisBot.ClearUnhighlightDelay({
         unhighlightDelayInfo,
         unhighlightDelayInfoIndex,
       });
-    if (thisBot.IsBiblePieceHighlighted({ piece: bookData.piece }))
-      thisBot.RemovePieceFromHighlightedList({ piece: bookData.piece });
-    DespawnLabelForPiece(bookData.piece);
+    if (thisBot.IsBiblePieceHighlighted({ piece }))
+      thisBot.RemovePieceFromHighlightedList({ piece });
+    DespawnLabelForPiece(piece);
     ObjectPooler.ReleaseObject({
-      obj: bookData.piece,
-      tag: bookData.piece.tags.poolTag,
+      obj: piece,
+      tag: piece.tags.poolTag,
       dimension: thisBot.tags.desiredDimension,
     });
-    bookData.piece = null;
   }
 
-  bookData.pieceInfo = null;
-  bookData.parentDataIds = null;
-  bookData.creationInfo = null;
+  // bookData.pieceInfo = null;
+  // bookData.parentDataIds = null;
+  // bookData.creationParams = null;
 
   if (bookData instanceof StackBookData) {
     bookDataIndex = thisBot.vars.stackBooksData.indexOf(bookData);
     if (bookDataIndex != null)
       thisBot.vars.stackBooksData.splice(bookDataIndex, 1);
   } else {
-    bookData.pieceBookInfo = null;
+    // bookData.pieceBookInfo = null;
     bookDataIndex = thisBot.vars.stackSectionBooksData.indexOf(bookData);
     if (bookDataIndex != null)
       thisBot.vars.stackSectionBooksData.splice(bookDataIndex, 1);
@@ -157,7 +162,7 @@ function DeleteBook(bookData) {
     thisBot.vars.lastInteractedStackBookData = null;
 }
 
-function DeleteSection(sectionData) {
+function DeleteSection(sectionData: StackSectionData) {
   /**
    * Deletes a `StackSectionData` object and its associated books.
    *
@@ -165,41 +170,41 @@ function DeleteSection(sectionData) {
    */
 
   const sectionDataIndex = thisBot.vars.stackSectionsData.indexOf(sectionData);
-  sectionData.childrenData.flat().forEach((bookData) => {
+  const children = sectionData.clearChildren();
+  children.flat().forEach((bookData) => {
     DeleteBook(bookData);
   });
-  sectionData.childrenData.splice(0, sectionData.childrenData.length);
-  if (sectionData.piece) {
+  const piece = sectionData.clearPiece();
+  if (piece) {
     const { unhighlightDelayInfo, unhighlightDelayInfoIndex } =
-      thisBot.GetUnhighlightDelayInfo({ piece: sectionData.piece });
+      thisBot.GetUnhighlightDelayInfo({ piece });
     if (unhighlightDelayInfo)
       thisBot.ClearUnhighlightDelay({
         unhighlightDelayInfo,
         unhighlightDelayInfoIndex,
       });
-    if (thisBot.IsBiblePieceHighlighted({ piece: sectionData.piece }))
-      thisBot.RemovePieceFromHighlightedList({ piece: sectionData.piece });
-    DespawnLabelForPiece(sectionData.piece);
+    if (thisBot.IsBiblePieceHighlighted({ piece }))
+      thisBot.RemovePieceFromHighlightedList({ piece });
+    DespawnLabelForPiece(piece);
     ObjectPooler.ReleaseObject({
-      obj: sectionData.piece,
-      tag: sectionData.piece.tags.poolTag,
+      obj: piece,
+      tag: piece.tags.poolTag,
       dimension: thisBot.tags.desiredDimension,
     });
-    sectionData.piece = null;
   }
-  if (sectionData.shadow) {
-    DespawnLabelForPiece(sectionData.shadow);
+  const shadow = sectionData.detachShadow();
+  if (shadow) {
+    DespawnLabelForPiece(shadow);
     ObjectPooler.ReleaseObject({
-      obj: sectionData.shadow,
-      tag: sectionData.shadow.tags.poolTag,
+      obj: shadow,
+      tag: shadow.tags.poolTag,
       dimension: thisBot.tags.desiredDimension,
     });
-    sectionData.shadow = null;
   }
 
-  sectionData.pieceInfo = null;
-  sectionData.parentDataIds = null;
-  sectionData.creationInfo = null;
+  // sectionData.pieceInfo = null;
+  // sectionData.parentDataIds = null;
+  // sectionData.creationParams = null;
 
   if (sectionDataIndex != null)
     thisBot.vars.stackSectionsData.splice(sectionDataIndex, 1);
@@ -210,7 +215,7 @@ function DeleteSection(sectionData) {
     thisBot.vars.lastInteractedStackSectionData = null;
 }
 
-function DeleteTestament(testamentData) {
+function DeleteTestament(testamentData: StackTestamentData) {
   /**
    * Deletes a `StackTestamentData` object and its associated sections and books.
    *
@@ -219,34 +224,38 @@ function DeleteTestament(testamentData) {
 
   const testamentDataIndex =
     thisBot.vars.stackTestamentsData.indexOf(testamentData);
-  testamentData.childrenData.forEach((data) => {
+  const children = testamentData.clearChildren();
+  children.forEach((data) => {
     if (data instanceof StackSectionData) DeleteSection(data);
     else if (data instanceof StackSectionBookData) DeleteBook(data);
+    else {
+      console.error(`Unsupported child type`, { child: data });
+      return;
+    }
   });
 
-  testamentData.childrenData.splice(0, testamentData.childrenData.length);
-  if (testamentData.piece) {
+  const piece = testamentData.clearPiece();
+  if (piece) {
     const { unhighlightDelayInfo, unhighlightDelayInfoIndex } =
-      thisBot.GetUnhighlightDelayInfo({ piece: testamentData.piece });
+      thisBot.GetUnhighlightDelayInfo({ piece });
     if (unhighlightDelayInfo)
       thisBot.ClearUnhighlightDelay({
         unhighlightDelayInfo,
         unhighlightDelayInfoIndex,
       });
-    if (thisBot.IsBiblePieceHighlighted({ piece: testamentData.piece }))
-      thisBot.RemovePieceFromHighlightedList({ piece: testamentData.piece });
-    DespawnLabelForPiece(testamentData.piece);
+    if (thisBot.IsBiblePieceHighlighted({ piece }))
+      thisBot.RemovePieceFromHighlightedList({ piece });
+    DespawnLabelForPiece(piece);
     ObjectPooler.ReleaseObject({
-      obj: testamentData.piece,
-      tag: testamentData.piece.tags.poolTag,
+      obj: piece,
+      tag: piece.tags.poolTag,
       dimension: thisBot.tags.desiredDimension,
     });
-    testamentData.piece = null;
   }
 
-  testamentData.pieceInfo = null;
-  testamentData.parentDataIds = null;
-  testamentData.creationInfo = null;
+  // testamentData.pieceInfo = null;
+  // testamentData.parentDataIds = null;
+  // testamentData.creationParams = null;
 
   if (testamentDataIndex != null)
     thisBot.vars.stackTestamentsData.splice(testamentDataIndex, 1);
@@ -257,7 +266,7 @@ function DeleteTestament(testamentData) {
     thisBot.vars.lastInteractedStackTestamentData = null;
 }
 
-function DeleteBible(bibleData) {
+function DeleteBible(bibleData: StackBibleData) {
   /**
    * Deletes a `StackBibleData` object and its associated testaments, sections, and static pieces.
    *
@@ -280,31 +289,22 @@ function DeleteBible(bibleData) {
   //     })
   // }
   const bibleDataIndex = thisBot.vars.stackBiblesData.indexOf(bibleData);
-  const staticBiblePiecesKeys = Object.keys(bibleData.staticBiblePieces);
-  bibleData.childrenData.forEach((testamentData) => {
-    DeleteTestament(testamentData);
-  });
-  bibleData.childrenData.splice(0, bibleData.childrenData.length);
-  staticBiblePiecesKeys.forEach((key) => {
-    ObjectPooler.ReleaseObject({
-      obj: bibleData.staticBiblePieces[key],
-      tag: bibleData.staticBiblePieces[key].tags.poolTag,
-      dimension: thisBot.tags.desiredDimension,
-    });
-    bibleData.staticBiblePieces[key] = null;
-  });
-  console.log(`[Debug] DeletePiece.DeleteBible`, {
-    staticBiblePieces: staticBiblePiecesKeys.map((key) => {
-      const obj = bibleData.staticBiblePieces[key];
-      if (Array.isArray(obj)) {
-        return obj.map((bot) => {
-          return { ...bot };
+  if (bibleData.staticBiblePieces) {
+    const clearedPieces = bibleData.clearStaticBiblePieces();
+    if (clearedPieces) {
+      for (const staticPiece of clearedPieces) {
+        ObjectPooler.ReleaseObject({
+          obj: staticPiece,
+          tag: staticPiece.tags.poolTag,
+          dimension: thisBot.tags.desiredDimension,
         });
       }
-      return { ...obj };
-    }),
+    }
+  }
+  const clearedTestaments = bibleData.clearChildren();
+  clearedTestaments.forEach((testamentData) => {
+    DeleteTestament(testamentData);
   });
-  bibleData.staticBiblePieces = null;
   if (bibleDataIndex != null)
     thisBot.vars.stackBiblesData.splice(bibleDataIndex, 1);
   if (

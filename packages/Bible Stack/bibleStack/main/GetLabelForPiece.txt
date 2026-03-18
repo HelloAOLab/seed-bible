@@ -12,7 +12,7 @@
     * BibleVizUtils.Functions.GetLabelForPiece({piece: thisBot, label: someText, color: '#FFFFFF', labelColor: '#000000', dimension: 'home', isAside: true, isAnimatable: false});
 */
 
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 const {piece, label, date, color, labelColor, dimension, labelPositioning, isAnimatable, targetOpacity = 1} = that;
 
 const {scaleY} = BibleVizUtils.Functions.GetDialogBotScaleY({scaleXLimit: 5, line: label, paddingX: 0.4, paddingY: 0.4})

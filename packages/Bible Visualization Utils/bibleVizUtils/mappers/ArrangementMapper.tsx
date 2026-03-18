@@ -10,7 +10,7 @@ import type {
 } from "bibleVizUtils.data.BibleVizDataRepository";
 import type { StackPieceMeasurementsType } from "bibleVizUtils.data.StackPieceMeasurements";
 import type { StackSpacingsType } from "bibleVizUtils.data.StackSpacings";
-import type { ArrangementTemplate } from "bibleVizUtils.models.arrangement.models";
+import type { ArrangementTemplate } from "bibleVizUtils.models.arrangement";
 
 type TemplateToArrangement = (params: {
   template: ArrangementTemplate;

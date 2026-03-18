@@ -1,4 +1,4 @@
-import { RoundToStep } from "bibleVizUtils.functions.index";
+import { RoundToStep } from "bibleVizUtils.functions.math";
 
 // TODO: Move global types like HexString, WeightedColor, HexWithHash, etc. to models
 

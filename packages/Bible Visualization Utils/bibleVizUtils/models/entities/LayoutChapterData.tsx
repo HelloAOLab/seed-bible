@@ -1,64 +1,150 @@
-import { Vector2 as Vector2Type } from "../../../../typings/AuxLibraryDefinitions";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import type {
+  Vector2 as Vector2Type,
+  Bot,
+} from "../../../../../typings/AuxLibraryDefinitions";
+import type {
+  ParentDataIds,
+  ParentDataId,
+  BiblePieceType,
+} from "bibleVizUtils.models.canvas";
+import type { HexString } from "bibleVizUtils.models.commonTypes";
+import type { ChapterInfo } from "bibleVizUtils.data.BibleVizDataRepository";
+import { LayoutBibleData } from "bibleVizUtils.models.entities.LayoutBibleData";
+
+interface DataParams {
+  id: string;
+  piece?: Bot;
+  pieceInfo: ChapterInfo;
+  parentDataIds: ParentDataIds;
+  isActive?: boolean;
+  highlightColor?: HexString;
+  originalLayoutId: LayoutBibleData["id"] | undefined;
+  playlistEntriesItems?: Bot[];
+}
+
+type HighlightInfo = {
+  key: string;
+  typeOfPiece: BiblePieceType;
+  color: HexString;
+};
 
 export class LayoutChapterData {
+  #playlistEntriesItems: NonNullable<DataParams["playlistEntriesItems"]>;
+  #originalLayoutId: DataParams["originalLayoutId"];
+  #highlightColor: DataParams["highlightColor"];
+  #parentDataIds: DataParams["parentDataIds"];
+  #pieceInfo: DataParams["pieceInfo"];
+  #isActive: NonNullable<DataParams["isActive"]>;
+  #highlightsInfo: HighlightInfo[] = [];
+  #isSelected: boolean = false;
+  #piece: DataParams["piece"] | undefined;
+  #id: NonNullable<DataParams["id"]>;
+
   constructor({
     id,
     piece,
     pieceInfo,
     parentDataIds,
     isActive = false,
-    highlightColor = null,
-    originalLayoutId = null,
+    highlightColor,
+    originalLayoutId,
     playlistEntriesItems = [],
-  }) {
-    this.playlistEntriesItems = playlistEntriesItems;
-    this.originalLayoutId = originalLayoutId;
-    this.highlightColor = highlightColor;
-    this.parentDataIds = parentDataIds;
-    this.pieceInfo = pieceInfo;
-    this.isActive = isActive;
-    this.HighlightsInfo = [];
-    this.isSelected = false;
-    this.piece = piece;
-    this.id = id;
-  }
-  AddChild() {}
-
-  ResetData() {
-    this.piece = null;
-    this.isActive = false;
-    this.isSelected = false;
-    this.HighlightsInfo = [];
-
-    if (this.playlistEntriesItems?.length > 0) {
-      ObjectPooler.ReleaseObject({
-        obj: this.playlistEntriesItems,
-        tag: ObjectPoolTags.LayoutChapterPlaylistEntryItem,
-      });
-      this.playlistEntriesItems = [];
-    }
+  }: DataParams) {
+    this.#playlistEntriesItems = playlistEntriesItems;
+    this.#originalLayoutId = originalLayoutId;
+    this.#highlightColor = highlightColor;
+    this.#parentDataIds = parentDataIds;
+    this.#pieceInfo = pieceInfo;
+    this.#isActive = isActive;
+    this.#piece = piece;
+    this.#id = id;
   }
 
-  AddHighlightInfo(newHighlightInfo) {
-    this.HighlightsInfo.push(newHighlightInfo);
-  }
+  resetData(): Bot[] {
+    this.#piece = undefined;
+    this.#isActive = false;
+    this.#isSelected = false;
+    this.#highlightsInfo = [];
 
-  GetHighlightInfoByKey(key) {
-    return this.HighlightsInfo.find((highlightInfo) => {
+    const itemsToRelease = this.#playlistEntriesItems || [];
+
+    this.#playlistEntriesItems = [];
+
+    return itemsToRelease;
+  }
+  addHighlightInfo(newHighlightInfo: HighlightInfo) {
+    this.#highlightsInfo.push(newHighlightInfo);
+  }
+  getHighlightInfoByKey(key: string) {
+    return this.#highlightsInfo.find((highlightInfo) => {
       return highlightInfo.key == key;
     });
   }
-
-  AddEntryItem(entryItem) {
-    this.playlistEntriesItems.push(entryItem);
+  addEntryItem(
+    entryItem: NonNullable<DataParams["playlistEntriesItems"]>[number]
+  ) {
+    this.#playlistEntriesItems.push(entryItem);
   }
-
   getIsSelectedForNotification(): boolean {
-    return this.piece.masks.isExpanded;
+    return this.#piece?.masks.isExpanded ?? false;
   }
-
   getNotificationDirection(): Vector2Type {
     return new Vector2(1, -1);
+  }
+  get originalLayoutId() {
+    return this.#originalLayoutId;
+  }
+  get highlightColor() {
+    return this.#highlightColor;
+  }
+  changeHighlightColor(color: HexString) {
+    this.#highlightColor = color;
+  }
+  get parentDataIds() {
+    return this.#parentDataIds;
+  }
+  get pieceInfo() {
+    return this.#pieceInfo;
+  }
+  get isActive() {
+    return this.#isActive;
+  }
+  activate() {
+    this.#isActive = true;
+  }
+  deactivate() {
+    this.#isActive = false;
+  }
+  get isSelected() {
+    return this.#isSelected;
+  }
+  select() {
+    this.#isSelected = true;
+  }
+  deselect() {
+    this.#isSelected = false;
+  }
+  get id() {
+    return this.#id;
+  }
+  get piece() {
+    return this.#piece;
+  }
+  clearPiece(): DataParams["piece"] | undefined {
+    const clearedPiece = this.piece;
+    this.#piece = undefined;
+    return clearedPiece;
+  }
+  clearParentId(key: ParentDataId) {
+    if (this.#parentDataIds) {
+      this.#parentDataIds[key] = undefined;
+    }
+  }
+  clearParentIds(keys: ParentDataId[]) {
+    if (this.#parentDataIds) {
+      for (const key of keys) {
+        this.clearParentId(key);
+      }
+    }
   }
 }

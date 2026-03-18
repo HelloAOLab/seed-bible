@@ -1,5 +1,5 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 /**
  * Selects the chunk of verses, animating their appearance and positioning the verses in the defined layout.
  * @example
@@ -81,7 +81,7 @@ verses.forEach((verse) => {
       : ScriptureMap3DManager.GetChapterDataById({
           id: thisBot.masks.chapterDataId,
         });
-    const currentHighlightInfo = chapterData.GetHighlightInfoByKey(
+    const currentHighlightInfo = chapterData.getHighlightInfoByKey(
       verse.masks.versePath
     );
     if (currentHighlightInfo)

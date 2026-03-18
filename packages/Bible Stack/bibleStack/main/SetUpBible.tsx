@@ -1,6 +1,13 @@
 import { GetDarkerColor } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import {
+  BibleType,
+  ObjectPoolTags,
+  type BibleTypeType,
+} from "bibleVizUtils.models.canvas";
+import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import type { Vector3 as Vector3Type } from "../../../../typings/AuxLibraryDefinitions";
+import { GetIsInHistoryMode } from "bibleVizUtils.services.HistoryMode";
 
 /**
  * Sets up a Bible, positioning its pieces and initializing the testament data.
@@ -16,9 +23,13 @@ import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
 const {
   bibleData,
   position,
-  bibleType = BibleVizUtils.Data.tags.BibleType.Default,
+  bibleType = BibleType.Default,
+}: {
+  bibleData: StackBibleData;
+  position: Vector3Type;
+  bibleType: BibleTypeType;
 } = that;
-if (bibleData.hasBeenSetUp) return;
+if (bibleData.hasBeenSetUp) return false;
 
 const dimension = os.getCurrentDimension();
 const bibleTransformerPosition = position;
@@ -70,7 +81,7 @@ const crossHorizontalLineScales = new Vector3(
   0.055
 );
 // const animationDuration = 0;
-// const collisionType = bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame ? CollisionType.Collision : null
+// const collisionType = bibleType === BibleType.PlatformerGame ? CollisionType.Collision : null
 const bibleTransformerMod = {
   [dimension]: true,
   [dimension + "X"]: bibleTransformerPosition.x,
@@ -84,8 +95,8 @@ const bibleShadowMod = {
   [dimension + "X"]: bibleShadowPosition.x,
   [dimension + "Y"]: bibleShadowPosition.y,
   [dimension + "Z"]: bibleShadowPosition.z,
-  transformerLink: `🔗${bibleData.staticBiblePieces.bibleTransformer.id}`,
-  transformer: bibleData.staticBiblePieces.bibleTransformer.id,
+  transformerLink: `🔗${bibleData.getStaticPieceId("bibleTransformer")}`,
+  transformer: bibleData.getStaticPieceId("bibleTransformer"),
 };
 const upperCoverMod = {
   [dimension]: true,
@@ -95,12 +106,11 @@ const upperCoverMod = {
   scaleX: BibleVizDataRepository.getStackPieceMeasurement("CoverScales").x,
   scaleY: BibleVizDataRepository.getStackPieceMeasurement("CoverScales").y,
   scaleZ: BibleVizDataRepository.getStackPieceMeasurement("CoverScales").z,
-  pointable: bibleType === BibleVizUtils.Data.tags.BibleType.Default,
-  transformer: bibleData.staticBiblePieces.bibleTransformer.id,
-  transformerLink: `🔗${bibleData.staticBiblePieces.bibleTransformer.id}`,
+  pointable: bibleType === BibleType.Default,
+  transformer: bibleData.getStaticPieceId("bibleTransformer"),
+  transformerLink: `🔗${bibleData.getStaticPieceId("bibleTransformer")}`,
   // collisionType,
-  isGoalZonePlatform:
-    bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame,
+  isGoalZonePlatform: bibleType === BibleType.PlatformerGame,
 };
 const lowerCoverMod = {
   [dimension]: true,
@@ -110,10 +120,10 @@ const lowerCoverMod = {
   scaleX: BibleVizDataRepository.getStackPieceMeasurement("CoverScales").x,
   scaleY: BibleVizDataRepository.getStackPieceMeasurement("CoverScales").y,
   scaleZ: BibleVizDataRepository.getStackPieceMeasurement("CoverScales").z,
-  transformer: bibleData.staticBiblePieces.bibleTransformer.id,
-  transformerLink: `🔗${bibleData.staticBiblePieces.bibleTransformer.id}`,
+  transformer: bibleData.getStaticPieceId("bibleTransformer"),
+  transformerLink: `🔗${bibleData.getStaticPieceId("bibleTransformer")}`,
   draggable: true,
-  pointable: bibleType === BibleVizUtils.Data.tags.BibleType.Default,
+  pointable: bibleType === BibleType.Default,
   onDrag: `@os.enableCustomDragging();`,
   onDragging: `@const dimension = os.getCurrentDimension();
 const positionUpdateThreshold = 50;
@@ -140,9 +150,9 @@ const leftCoverMod = {
   scaleX: leftCoverScales.x,
   scaleY: leftCoverScales.y,
   scaleZ: leftCoverScales.z,
-  pointable: bibleType === BibleVizUtils.Data.tags.BibleType.Default,
-  transformer: bibleData.staticBiblePieces.bibleTransformer.id,
-  transformerLink: `🔗${bibleData.staticBiblePieces.bibleTransformer.id}`,
+  pointable: bibleType === BibleType.Default,
+  transformer: bibleData.getStaticPieceId("bibleTransformer"),
+  transformerLink: `🔗${bibleData.getStaticPieceId("bibleTransformer")}`,
   // collisionType
 };
 const crossVerticalLineMod = {
@@ -153,9 +163,9 @@ const crossVerticalLineMod = {
   scaleX: crossVerticalLineScales.x,
   scaleY: crossVerticalLineScales.y,
   scaleZ: crossVerticalLineScales.z,
-  pointable: bibleType === BibleVizUtils.Data.tags.BibleType.Default,
-  transformer: bibleData.staticBiblePieces.bibleTransformer.id,
-  transformerLink: `🔗${bibleData.staticBiblePieces.bibleTransformer.id}`,
+  pointable: bibleType === BibleType.Default,
+  transformer: bibleData.getStaticPieceId("bibleTransformer"),
+  transformerLink: `🔗${bibleData.getStaticPieceId("bibleTransformer")}`,
   // collisionType
 };
 const crossHorizontalLineMod = {
@@ -166,49 +176,44 @@ const crossHorizontalLineMod = {
   scaleX: crossHorizontalLineScales.x,
   scaleY: crossHorizontalLineScales.y,
   scaleZ: crossHorizontalLineScales.z,
-  pointable: bibleType === BibleVizUtils.Data.tags.BibleType.Default,
-  transformer: bibleData.staticBiblePieces.bibleTransformer.id,
-  transformerLink: `🔗${bibleData.staticBiblePieces.bibleTransformer.id}`,
+  pointable: bibleType === BibleType.Default,
+  transformer: bibleData.getStaticPieceId("bibleTransformer"),
+  transformerLink: `🔗${bibleData.getStaticPieceId("bibleTransformer")}`,
   // collisionType
 };
 for (const testamentData of bibleData.childrenData) {
   const testament = ObjectPooler.GetObjectFromPool({
     tag: ObjectPoolTags.StackTestament,
   });
+  const fixedColor =
+    testamentData.highlightColor ??
+    testamentData.getPieceInfoProperty("color") ??
+    "#FFFFFF";
   const testamentMod = {
-    infoLabel: testamentData.pieceInfo.name,
+    infoLabel: testamentData.getPieceInfoProperty("name"),
     formOpacity: 1,
-    testamentName: testamentData.pieceInfo.name,
+    testamentName: testamentData.getPieceInfoProperty("name"),
     draggable: thisBot.masks.areBiblePiecesDraggable,
-    arrangementIndex: testamentData.creationInfo.arrangementIndex,
-    testamentIndex: testamentData.creationInfo.testamentIndex,
+    arrangementIndex: testamentData.getCreationParam("arrangementIndex"),
+    testamentIndex: testamentData.getCreationParam("testamentIndex"),
     [dimension]: true,
     [dimension + "X"]: testamentsPosition.x,
     [dimension + "Y"]: testamentsPosition.y,
     [dimension + "Z"]: testamentsPosition.z,
     scale: 1,
-    color:
-      testamentData.highlightColor ??
-      testamentData.pieceInfo.color ??
-      "#FFFFFF",
-    orginalColor:
-      testamentData.highlightColor ??
-      testamentData.pieceInfo.color ??
-      "#FFFFFF",
-    initialColor:
-      testamentData.highlightColor ??
-      testamentData.pieceInfo.color ??
-      "#FFFFFF",
-    labelTextColor: GetDarkerColor({
-      color: testamentData.pieceInfo.color ?? "#000000",
-    }),
+    color: fixedColor,
+    orginalColor: fixedColor,
+    initialColor: fixedColor,
+    labelTextColor: GetDarkerColor(
+      testamentData.getPieceInfoProperty("color") ?? "#000000"
+    ),
     scaleX:
       BibleVizDataRepository.getStackPieceMeasurement("TestamentScales").x,
     scaleY:
       BibleVizDataRepository.getStackPieceMeasurement("TestamentScales").y,
     scaleZ:
       BibleVizDataRepository.getStackPieceMeasurement("TestamentScales").z,
-    pointable: bibleType === BibleVizUtils.Data.tags.BibleType.Default,
+    pointable: bibleType === BibleType.Default,
     initialScaleX:
       BibleVizDataRepository.getStackPieceMeasurement("TestamentScales").x,
     hoveredScaleX:
@@ -223,33 +228,32 @@ for (const testamentData of bibleData.childrenData) {
       BibleVizDataRepository.getStackPieceMeasurement("TestamentScales").z,
     desiredScaleZ:
       BibleVizDataRepository.getStackPieceMeasurement("TestamentScales").z,
-    transformer: bibleData.staticBiblePieces.bibleTransformer.id,
-    transformerLink: `🔗${bibleData.staticBiblePieces.bibleTransformer.id}`,
+    transformer: bibleData.getStaticPieceId("bibleTransformer"),
+    transformerLink: `🔗${bibleData.getStaticPieceId("bibleTransformer")}`,
   };
   testament.OnSpawned({ mod: testamentMod });
-  testamentData.piece = testament;
-  testamentData.isActive = true;
-  if (
-    BibleVizUtils.Data.masks.isInHistoryMode &&
-    bibleType === BibleVizUtils.Data.tags.BibleType.Default
-  )
+  testamentData.setPiece(testament);
+  testamentData.activate();
+  if (GetIsInHistoryMode() && bibleType === BibleType.Default)
     setTagMask(
       testament,
       "color",
-      BibleVizUtils.Functions.GetHistoryColor({ piece: testament })
+      "#FFFFFF" //BibleVizUtils.Functions.GetHistoryColor({ piece: testament }) TODO: Needs to be correctly implemented
     );
 }
 
-applyMod(bibleData.staticBiblePieces.bibleTransformer, bibleTransformerMod);
-applyMod(bibleData.staticBiblePieces.bibleShadow, bibleShadowMod);
-applyMod(bibleData.staticBiblePieces.upperCover, upperCoverMod);
-applyMod(bibleData.staticBiblePieces.lowerCover, lowerCoverMod);
-applyMod(bibleData.staticBiblePieces.leftCover, leftCoverMod);
-applyMod(bibleData.staticBiblePieces.crossVerticalLine, crossVerticalLineMod);
+applyMod(bibleData.getStaticPiece("bibleTransformer"), bibleTransformerMod);
+applyMod(bibleData.getStaticPiece("bibleShadow"), bibleShadowMod);
+applyMod(bibleData.getStaticPiece("upperCover"), upperCoverMod);
+applyMod(bibleData.getStaticPiece("lowerCover"), lowerCoverMod);
+applyMod(bibleData.getStaticPiece("leftCover"), leftCoverMod);
+applyMod(bibleData.getStaticPiece("crossVerticalLine"), crossVerticalLineMod);
 applyMod(
-  bibleData.staticBiblePieces.crossHorizontalLine,
+  bibleData.getStaticPiece("crossHorizontalLine"),
   crossHorizontalLineMod
 );
 
-bibleData.currentState = BibleVizUtils.Data.tags.BibleState.Closed;
-bibleData.hasBeenSetUp = true;
+bibleData.changeState("Closed");
+bibleData.handleSetup();
+
+return true;

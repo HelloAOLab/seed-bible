@@ -1,5 +1,5 @@
 import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
-import { LabelPosition } from "bibleVizUtils.models.label.models";
+import { LabelPosition } from "bibleVizUtils.models.label";
 import { HexToRgb } from "bibleVizUtils.functions.index";
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 const chapterData = ScriptureMap3DManager.GetPieceData({ piece: thisBot });

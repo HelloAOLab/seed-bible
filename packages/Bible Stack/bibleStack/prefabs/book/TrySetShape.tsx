@@ -1,9 +1,13 @@
-import { LabelPosition } from "bibleVizUtils.models.label.models";
+import { LabelPosition } from "bibleVizUtils.models.label";
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { HexToRgb } from "bibleVizUtils.functions.index";
-import { BookShape } from "bibleVizUtils.models.canvas.models";
+import { BookShape, type BookShapeType } from "bibleVizUtils.models.canvas";
+import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+import type { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
+import type { Easing } from "../../../../../typings/AuxLibraryDefinitions";
+import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 
 /**
  * This tag try to set the book shape into the one passed as an argument
@@ -15,21 +19,45 @@ import { BookShape } from "bibleVizUtils.models.canvas.models";
  */
 
 const dimension = os.getCurrentDimension();
-const { shape, speedMultiplier = 1, isInstantaneous = false } = that;
-let { duration = 0.5 } = that;
+const {
+  shape,
+  speedMultiplier = 1,
+  isInstantaneous = false,
+}: {
+  shape: BookShapeType;
+  speedMultiplier?: number;
+  isInstantaneous?: boolean;
+} = that;
+let { duration = 0.5 }: { duration?: number } = that;
 duration = duration / speedMultiplier;
-const bookData = BibleStackManager.GetPieceData({ piece: thisBot });
-const { sectionData } = BibleStackManager.GetDataChainFromParentDataIds({
-  parentDataIds: bookData.parentDataIds,
+const bookData: StackBookData | undefined = BibleStackManager.GetPieceData({
+  piece: thisBot,
 });
+
+if (!bookData) {
+  console.error("bookData not found at TrySetShape");
+  return;
+}
+
+const { sectionData }: { sectionData: StackSectionData } =
+  await BibleStackManager.GetDataChainFromParentDataIds({
+    parentDataIds: bookData.parentDataIds,
+  });
+
+if (!sectionData) {
+  console.error("sectionData not found at TrySetShape");
+  return;
+}
+
 const prevShape = bookData.currentShape;
-if (shape === bookData.currentShape) return false;
+if (shape === prevShape) return false;
+
 const bookScales = GetBotScales(thisBot);
-const easing = { type: "sinusoidal", mode: "inout" };
+const easing: Easing = { type: "sinusoidal", mode: "inout" };
 const selectedOpacity = 0;
 const infoLabelTransformer =
   LabelsRepository.getLabelTransformerByOwner(thisBot);
-bookData.currentShape = shape;
+bookData.changeShape(shape);
 switch (shape) {
   case BookShape.ExplodedView:
     {
@@ -48,7 +76,7 @@ switch (shape) {
           "scaleX",
           thisBot.tags.explodedViewCustomScale
             ? thisBot.tags.explodedViewCustomScale.x *
-                sectionData.piece.tags.initialScaleX
+                sectionData.piece?.tags.initialScaleX
             : thisBot.tags.initialScaleX
         );
         setTagMask(
@@ -56,7 +84,7 @@ switch (shape) {
           "scaleY",
           thisBot.tags.explodedViewCustomScale
             ? thisBot.tags.explodedViewCustomScale.y *
-                sectionData.piece.tags.initialScaleY
+                sectionData.piece?.tags.initialScaleY
             : thisBot.tags.initialScaleY
         );
         setTagMask(thisBot, "scaleZ", thisBot.tags.desiredScaleZ);
@@ -79,11 +107,11 @@ switch (shape) {
                   : null,
               scaleX: thisBot.tags.explodedViewCustomScale
                 ? thisBot.tags.explodedViewCustomScale.x *
-                  sectionData.piece.tags.initialScaleX
+                  sectionData.piece?.tags.initialScaleX
                 : thisBot.tags.initialScaleX,
               scaleY: thisBot.tags.explodedViewCustomScale
                 ? thisBot.tags.explodedViewCustomScale.y *
-                  sectionData.piece.tags.initialScaleY
+                  sectionData.piece?.tags.initialScaleY
                 : thisBot.tags.initialScaleY,
               scaleZ: thisBot.tags.desiredScaleZ,
             },
@@ -122,7 +150,7 @@ switch (shape) {
           "scaleX",
           thisBot.tags.explodedViewCustomScale
             ? thisBot.tags.explodedViewCustomScale.x *
-                sectionData.piece.tags.initialScaleX
+                sectionData.piece?.tags.initialScaleX
             : thisBot.tags.initialScaleX
         );
         setTagMask(
@@ -130,7 +158,7 @@ switch (shape) {
           "scaleY",
           thisBot.tags.explodedViewCustomScale
             ? thisBot.tags.explodedViewCustomScale.y *
-                sectionData.piece.tags.initialScaleY
+                sectionData.piece?.tags.initialScaleY
             : thisBot.tags.initialScaleY
         );
         setTagMask(thisBot, "scaleZ", thisBot.tags.desiredScaleZ);
@@ -228,12 +256,12 @@ switch (shape) {
           toValue: {
             scaleX:
               bookData instanceof StackSectionBookData
-                ? bookData.piece.tags.initialScaleX
-                : bookData.piece.tags.singleBooksScales.x,
+                ? bookData.piece?.tags.initialScaleX
+                : bookData.piece?.tags.singleBooksScales.x,
             scaleY:
               bookData instanceof StackSectionBookData
-                ? bookData.piece.tags.initialScaleY
-                : bookData.piece.tags.singleBooksScales.y,
+                ? bookData.piece?.tags.initialScaleY
+                : bookData.piece?.tags.singleBooksScales.y,
             scaleZ:
               bookData instanceof StackSectionBookData
                 ? thisBot.tags.desiredScaleZ

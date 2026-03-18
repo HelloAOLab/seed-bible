@@ -1,4 +1,4 @@
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 
 /**
  * Generates and retrieves chunks of verses from the chapter.
@@ -50,7 +50,7 @@ for (let i = 0; i < chunksCount; i++) {
       BibleVizUtils.Functions.GetHistoryColor({ piece: chunk })
     );
   else {
-    const currentHighlightInfo = chapterData.GetHighlightInfoByKey(
+    const currentHighlightInfo = chapterData.getHighlightInfoByKey(
       chunk.masks.chunkPath
     );
     if (currentHighlightInfo)

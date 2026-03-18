@@ -1,5 +1,11 @@
 import { GetCamRotationFocusPoint } from "bibleVizUtils.functions.index";
 import { tryHideNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
+import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+import {
+  type PieceSelectionSource,
+  PieceSelectionSources,
+} from "bibleVizUtils.models.canvas";
 
 /**
  * This tag handles a book selection. It modify the data of the selected book on the bibleStructure
@@ -13,9 +19,22 @@ const {
   book,
   setBibleAnimating = true,
   speedMultiplier = 1,
-  source = "Unknown",
+  source = PieceSelectionSources.Unknown,
+}: {
+  book: Bot;
+  setBibleAnimating?: boolean;
+  speedMultiplier?: number;
+  source?: PieceSelectionSource;
 } = that;
-const bookData = thisBot.GetPieceData({ piece: book });
+const bookData: StackBookData | undefined = await thisBot.GetPieceData({
+  piece: book,
+});
+
+if (!bookData) {
+  console.error("bookData not found at SelectBook");
+  return;
+}
+
 thisBot.vars.lastInteractedStackBookData = bookData;
 const dimension = os.getCurrentDimension();
 if (setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", true);
@@ -25,8 +44,9 @@ await thisBot.TryUnhighlightPiece({
   tryUpdateActivityNotification: false,
   requestSource: BibleVizUtils.Data.tags.InteractionType.Transition,
 });
-bookData.isSelected = true;
-bookData.lastInteractionSource = source;
+
+bookData.select();
+bookData.changeLastInteractionSource(source);
 shout("OnBiblePieceSelected", { piece: book });
 setTagMask(book, "pointable", false);
 setTagMask(book, "highlightable", false);
@@ -34,15 +54,27 @@ const focusOnRotation = { x: 1.01229, y: 0.5 };
 const cameraFocusDuration = 1 / speedMultiplier;
 
 const bookPosition = getBotPosition(book, dimension);
-const { selectedBookHeight } = await thisBot.ComputeSelectedBookLayout({
-  data: bookData,
-});
+const { selectedBookHeight }: { selectedBookHeight: number | undefined } =
+  await thisBot.ComputeSelectedBookLayout({
+    data: bookData,
+  });
+
+if (!selectedBookHeight) {
+  console.error(`selectedBookHeight not found at SelectBook`);
+  return;
+}
+
 let fixedPosition = new Vector3(
   bookPosition.x,
   bookPosition.y,
   bookPosition.z + selectedBookHeight / 2
 );
-if (bookData.parentDataIds.stackBibleId) {
+if (
+  bookData.getParentId("stackBibleId") &&
+  bookData.piece &&
+  bookData.piece.links.transformerLink &&
+  !Array.isArray(bookData.piece.links.transformerLink)
+) {
   const transformerPosition = getBotPosition(
     bookData.piece.links.transformerLink,
     dimension

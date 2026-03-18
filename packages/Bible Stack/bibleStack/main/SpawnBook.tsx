@@ -5,8 +5,10 @@ import {
   stackService,
   arrangementService,
 } from "bibleVizUtils.services.index";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { BiblePiece, ObjectPoolTags } from "bibleVizUtils.models.canvas";
 import { StackGeometryMapper } from "bibleVizUtils.mappers.StackGeometryMapper";
+import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
 
 /**
  * Spawns a book piece into the scene based on the provided name and position. It calculates various properties like the book's scale, color, and placement based on its section, level, and other contextual data.
@@ -36,7 +38,8 @@ if (jarvis && !spawnPosition) {
 }
 const { arrangementIndex, testamentIndex, sectionIndex, found } =
   arrangementService.getBookInfoPathByName({ name });
-let book, bookData;
+let book: Bot | undefined = undefined;
+let bookData: StackBookData | undefined = undefined;
 
 if (!found) {
   console.error(`book info path not found at bibleStack.main.SpawnBook`);
@@ -61,16 +64,37 @@ const levels = stackService.getSectionLevels(sectionInfo.books);
 const levelsLenght = levels.length;
 const level = levels.find((level) => {
   return level.some((bookInfo) => {
-    return bookInfo.commonName == name;
+    return bookInfo.commonName === name;
   });
 });
+
+if (!level) {
+  console.warn("level not found SpawnBook");
+  return;
+}
+
 const levelIndex = levels.indexOf(level);
 const bookInfo = sectionInfo.books.find((currentBookInfo) => {
-  return currentBookInfo.commonName == name;
+  return currentBookInfo.commonName === name;
 });
+
+if (!bookInfo) {
+  console.warn("bookInfo not found SpawnBook");
+  return;
+}
+
+const bookStaticInfo = BibleVizDataRepository.getBookStaticInfo(
+  bookInfo.commonName
+);
+
+if (!bookStaticInfo) {
+  console.warn("bookStaticInfo not found SpawnBook");
+  return;
+}
+
 const bookIndex = sectionInfo.books.indexOf(bookInfo);
 const bookLevelIndex = level.indexOf(bookInfo);
-bookData = await thisBot.CreateBook({
+bookData = (await thisBot.CreateBook({
   arrangementIndex,
   testamentIndex,
   sectionIndex,
@@ -78,9 +102,16 @@ bookData = await thisBot.CreateBook({
   bookIndex,
   bookLevelIndex,
   levelsLenght,
-});
-const amountOfChaptersInLevel = level.reduce((total, bookInfo) => {
-  return total + bookInfo.numberOfChapters;
+})) as StackBookData;
+const amountOfChaptersInLevel = level.reduce((total, currBookInfo) => {
+  const currStaticInfo = BibleVizDataRepository.getBookStaticInfo(
+    currBookInfo.commonName
+  );
+  if (currStaticInfo) {
+    return total + currStaticInfo.numberOfChapters;
+  }
+  console.warn("currStaticInfo not found SpawnBook");
+  return total;
 }, 0);
 const percentageOfLevelInSection =
   amountOfChaptersInLevel / amountOfChaptersInSection;
@@ -92,7 +123,7 @@ const sectionAvailableSpace =
   BibleVizDataRepository.getStackSpacing("BetweenBooks") * (levelsLenght + 1);
 const levelScaleZ = percentageOfLevelInSection * sectionAvailableSpace;
 let groupBookScaleX, groupBookScaleY;
-if (bookData.pieceInfo.group) {
+if (bookInfo.group) {
   const groupBookIndex = level.indexOf(bookInfo);
   const layout = thisBot.GetLayoutForBooksGroup({
     amountOfBooks: level.length,
@@ -114,7 +145,7 @@ const sectionColorRGB = HexToRgb({
   hexColor: sectionInfo.color,
 });
 const colorRangeSize = sectionInfo.customColorRange ?? 70;
-const levelsColorRange = {
+const levelsColorRange: { min: RGB; max: RGB } = {
   min: [
     Math.max(sectionColorRGB[0] - colorRangeSize, 0),
     Math.max(sectionColorRGB[1] - colorRangeSize, 0),
@@ -155,33 +186,33 @@ if (displayJarvisSpawnPieceAnimation)
   });
 book = ObjectPooler.GetObjectFromPool({
   tag: ObjectPoolTags.StackBook,
-});
+}) as Bot;
 const bookMod = {
   [dimension]: true,
   [dimension + "X"]: spawnPosition.x,
   [dimension + "Y"]: spawnPosition.y,
   [dimension + "Z"]: spawnPosition.z,
-  typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.StackBook,
-  bookIndex: bookData.creationInfo.levelIndex,
+  typeOfPiece: BiblePiece.StackBook,
+  bookIndex: bookData.creationParams.levelIndex,
   isStackPiece: true,
-  bookName: bookData.pieceInfo.commonName,
-  sectionName: bookData.pieceInfo.name,
-  sectionIndex: bookData.creationInfo.sectionIndex,
-  label: bookData.pieceInfo.commonName,
+  bookName: bookInfo.commonName,
+  sectionName: sectionInfo.name,
+  sectionIndex: bookData.creationParams.sectionIndex,
+  label: bookInfo.commonName,
   labelColor:
-    bookData.creationInfo.levelIndex <
-    Math.floor(bookData.creationInfo.levelsLenght / 2)
+    bookData.creationParams.levelIndex <
+    Math.floor(bookData.creationParams.levelsLenght / 2)
       ? "#FFFFFF"
       : "#000000",
   labelOpacity: 0,
   formOpacity: 1,
-  numberOfChapters: bookData.pieceInfo.numberOfChapters,
-  explodedViewPosition: bookData.pieceInfo.explodedViewPosition,
-  explodedViewCustomScale: bookData.pieceInfo.explodedViewCustomScale ?? null,
-  isGroupBook: bookData.pieceInfo.group ? true : null,
-  groupId: bookData.pieceInfo.group ?? null,
-  groupBookIndex: bookData.pieceInfo.group
-    ? bookData.creationInfo.bookLevelIndex
+  numberOfChapters: bookStaticInfo.numberOfChapters,
+  explodedViewPosition: bookInfo.explodedViewPosition,
+  explodedViewCustomScale: bookInfo.explodedViewCustomScale ?? null,
+  isGroupBook: bookInfo.group ? true : null,
+  groupId: bookInfo.group ?? null,
+  groupBookIndex: bookInfo.group
+    ? bookData.creationParams.bookLevelIndex
     : null,
   draggable: thisBot.masks.areBiblePiecesDraggable,
   desiredPositionZ: spawnPosition.z,
@@ -212,20 +243,20 @@ const bookMod = {
       "AditionalBookScaleOnHover"
     ),
   desiredScaleZ: levelScaleZ,
-  color: bookData.pieceInfo.customColor ?? levelsColors[levelIndex],
+  color: bookInfo.customColor ?? levelsColors[levelIndex],
   strokeColor: "clear",
   orginalColor: levelsColors[levelIndex],
   initialColor: levelsColors[levelIndex],
   labelTextColor: levelsColors[Math.round(levelsColors.length * 0.4) - 1],
-  // layoutBookDirectionNormalized: bookData.pieceInfo.group ? new Vector3(groupBookLayoutPositionX, groupBookLayoutPositionY, 0).normalize() : null,
-  bookInfo: bookData.pieceInfo,
+  // layoutBookDirectionNormalized: bookInfo.group ? new Vector3(groupBookLayoutPositionX, groupBookLayoutPositionY, 0).normalize() : null,
+  bookInfo,
   singleBooksScales:
     BibleVizDataRepository.getStackPieceMeasurement("BookScales"),
   toErase: true,
 };
 book.OnSpawned({ mod: bookMod });
-bookData.piece = book;
-bookData.isActive = true;
+bookData.setPiece(book);
+bookData.activate();
 setTagMask(book, "highlightable", true);
 setTagMask(book, "pointable", true);
 setTagMask(book, "isOnTheGround", true);

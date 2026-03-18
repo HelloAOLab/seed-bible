@@ -13,7 +13,7 @@ import type {
   ProjectStateStyle,
   ProjectFilters,
   ScriptureMap2DContentValue,
-  UserPresence,
+  // UserPresence,
 } from "scriptureMap2D.main.types";
 import { type ArrangementInfo } from "bibleVizUtils.data.BibleVizDataRepository";
 import { type UserData } from "bibleVizUtils.services.UserColorStore";
@@ -22,7 +22,7 @@ import {
   userColorStore,
 } from "bibleVizUtils.services.index";
 import { userPresenceService } from "bibleVizUtils.services.index";
-import type { UserPresence } from "bibleVizUtils.services.UserPresenceService";
+import type { UserPresence } from "bibleVizUtils.models.userPresence";
 import { arrangementService } from "bibleVizUtils.services.index";
 
 const { createContext, useState, useContext, useCallback, useMemo, useEffect } =

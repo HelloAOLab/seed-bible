@@ -1,4 +1,4 @@
-import type { Tab } from "bibleVizUtils.models.seedBible.models";
+import type { Tab } from "bibleVizUtils.models.seedBible";
 
 export interface UserPresenceData {
   book: string;

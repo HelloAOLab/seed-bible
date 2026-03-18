@@ -1,8 +1,26 @@
-import { LayoutBookData } from "bibleVizUtils.classes.LayoutBookData";
-import { LayoutChapterData } from "bibleVizUtils.classes.LayoutChapterData";
+import { LayoutBookData } from "bibleVizUtils.models.entities.LayoutBookData";
+import { LayoutChapterData } from "bibleVizUtils.models.entities.LayoutChapterData";
+import type { LayoutBibleData } from "bibleVizUtils.models.entities.LayoutBibleData";
 import { tryHideNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
-const { data } = that;
-const { layoutData, layoutBookData } = thisBot.GetDataChainFromParentDataIds({
+const { data }: { data: LayoutBookData | LayoutChapterData | undefined } = that;
+
+if (!data) {
+  console.error("data is not defined at OnLayoutPieceDrag");
+  return;
+}
+
+if (!data.piece) {
+  console.warn("data.piece is not defined OnLayoutPieceDrag");
+  return;
+}
+
+const {
+  layoutData,
+  layoutBookData,
+}: {
+  layoutData: LayoutBibleData | undefined;
+  layoutBookData: LayoutBookData | undefined;
+} = await thisBot.GetDataChainFromParentDataIds({
   parentDataIds: data.parentDataIds,
 });
 let pulledOutFromParent = false;
@@ -16,8 +34,10 @@ switch (true) {
     break;
   case data instanceof LayoutChapterData:
     if (layoutData || layoutBookData) pulledOutFromParent = true;
-    tryHideNotification(data.piece);
-    await data.piece.Unhighlight({ chapterData: data });
+    if (data.piece) {
+      tryHideNotification(data.piece);
+      await data.piece.Unhighlight({ chapterData: data });
+    }
     break;
   default:
     break;

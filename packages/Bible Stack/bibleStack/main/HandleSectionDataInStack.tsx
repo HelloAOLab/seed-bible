@@ -5,9 +5,12 @@ import {
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
-import { LabelPosition } from "bibleVizUtils.models.label.models";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
-
+import { LabelPosition } from "bibleVizUtils.models.label";
+import { BibleType, ObjectPoolTags } from "bibleVizUtils.models.canvas";
+import { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
+import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 const {
   sectionData,
   desiredPositionZ,
@@ -17,7 +20,7 @@ const {
   speedMultiplier = 1,
   isInstantaneous,
 }: {
-  sectionData: any; // TODO: Define interfaces for piece data entities
+  sectionData: StackSectionData;
   desiredPositionZ: number;
   dimension: string;
   duration: number;
@@ -26,20 +29,27 @@ const {
   isInstantaneous: boolean;
 } = that;
 
-const { bibleData } = thisBot.GetDataChainFromParentDataIds({
-  parentDataIds: sectionData.parentDataIds,
-});
+if (!sectionData) {
+  console.error("sectionData not defined at HandleSectionDataInStack");
+  return;
+}
+
+if (!sectionData.piece) {
+  console.error("sectionData.piece not defined at HandleSectionDataInStack");
+  return;
+}
+
+const { bibleData }: { bibleData: StackBibleData } =
+  await thisBot.GetDataChainFromParentDataIds({
+    parentDataIds: sectionData.parentDataIds,
+  });
 const sectionPosition = getBotPosition(sectionData.piece, dimension);
 let nextPositionZ = desiredPositionZ;
 const newSectionAnimations = [];
 const desiredSectionShadowFormOpacity = 0.2;
 
 if (sectionData.isSplitIntoBooks) {
-  const activeBooksInsideSection = sectionData.childrenData
-    .flat()
-    .filter((bookData) => {
-      return bookData.isActive;
-    });
+  const activeBooksInsideSection = sectionData.getActiveBooks();
   let selectedBooksTotalHeight = 0;
   let selectedBooksTotalMargin = 0;
   const sectionShadowDesiredScales = { x: 0, y: 0, z: 0 };
@@ -113,7 +123,7 @@ if (sectionData.isSplitIntoBooks) {
       nextPositionZ +=
         bookDataArr.find((bookData) => {
           return bookData.isActive;
-        }).piece.tags.desiredScaleZ +
+        })?.piece?.tags.desiredScaleZ +
         BibleVizDataRepository.getStackSpacing("BetweenBooks");
   }
   sectionShadowDesiredScales.x =
@@ -151,7 +161,7 @@ if (sectionData.isSplitIntoBooks) {
             total +
             currentRawBookData.find((bookData) => {
               return bookData.isActive;
-            }).piece.tags.desiredScaleZ
+            })?.piece?.tags.desiredScaleZ
           );
         },
         0
@@ -219,11 +229,7 @@ if (sectionData.isSplitIntoBooks) {
       if (
         !infoLabelTransformer &&
         sectionData.isInExplodedView &&
-        !(
-          bibleData &&
-          bibleData.bibleType ===
-            BibleVizUtils.Data.tags.BibleType.PlatformerGame
-        )
+        !(bibleData && bibleData.bibleType === BibleType.PlatformerGame)
       ) {
         const label = CapitalizeFirstLetter(
           sectionData.piece.tags.sectionName.split("-").join(" ")
@@ -279,24 +285,20 @@ if (sectionData.isSplitIntoBooks) {
           if (
             !infoLabelTransformer &&
             sectionData.isInExplodedView &&
-            !(
-              bibleData &&
-              bibleData.bibleType ===
-                BibleVizUtils.Data.tags.BibleType.PlatformerGame
-            )
+            !(bibleData && bibleData.bibleType === BibleType.PlatformerGame)
           ) {
             const label = CapitalizeFirstLetter(
-              sectionData.piece.tags.sectionName.split("-").join(" ")
+              sectionData.piece?.tags.sectionName.split("-").join(" ") ?? ""
             );
             const { infoLabelTransformer } = SpawnLabelForPiece({
-              piece: sectionData.shadow,
+              piece: sectionData.shadow as Bot,
               label,
               color:
                 sectionData.highlightColor ??
-                sectionData.piece.tags.labelTextColor,
+                sectionData.piece?.tags.labelTextColor,
               labelColor: "white",
               dimension,
-              labelPositioning: sectionData.piece.masks.isOnTheGround
+              labelPositioning: sectionData.piece?.masks.isOnTheGround
                 ? LabelPosition.Top
                 : LabelPosition.RightSidedCorner,
               isAnimatable: false,
@@ -341,17 +343,11 @@ if (sectionData.isSplitIntoBooks) {
         sectionDataId: sectionData.id,
       };
       sectionShadow.OnSpawned?.({ mod: sectionShadowMod });
-      sectionData.shadow = sectionShadow;
+      sectionData.attachShadow(sectionShadow);
     }
     if (isInstantaneous) {
       setTagMask(sectionShadow, "formOpacity", desiredSectionShadowFormOpacity);
-      if (
-        !(
-          bibleData &&
-          bibleData.bibleType ===
-            BibleVizUtils.Data.tags.BibleType.PlatformerGame
-        )
-      ) {
+      if (!(bibleData && bibleData.bibleType === BibleType.PlatformerGame)) {
         const label = CapitalizeFirstLetter(
           sectionData.piece.tags.sectionName.split("-").join(" ")
         );
@@ -383,24 +379,20 @@ if (sectionData.isSplitIntoBooks) {
           easing,
         }).then(() => {
           if (
-            !(
-              bibleData &&
-              bibleData.bibleType ===
-                BibleVizUtils.Data.tags.BibleType.PlatformerGame
-            )
+            !(bibleData && bibleData.bibleType === BibleType.PlatformerGame)
           ) {
             const label = CapitalizeFirstLetter(
-              sectionData.piece.tags.sectionName.split("-").join(" ")
+              sectionData.piece?.tags.sectionName.split("-").join(" ") ?? ""
             );
             const { infoLabelTransformer } = SpawnLabelForPiece({
               piece: sectionShadow,
               label,
               color:
                 sectionData.highlightColor ??
-                sectionData.piece.tags.labelTextColor,
+                sectionData.piece?.tags.labelTextColor,
               labelColor: "white",
               dimension,
-              labelPositioning: sectionData.piece.masks.isOnTheGround
+              labelPositioning: sectionData.piece?.masks.isOnTheGround
                 ? LabelPosition.Top
                 : LabelPosition.RightSidedCorner,
               isAnimatable: false,
@@ -413,7 +405,7 @@ if (sectionData.isSplitIntoBooks) {
     }
   }
   setTagMask(
-    sectionData.shadow,
+    sectionData.shadow as Bot,
     "pointable",
     activeBooksInsideSection.length === 0
   );

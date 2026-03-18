@@ -1,4 +1,4 @@
-import {HighlightData} from "bibleVizUtils.models.highlight.models"
+import {HighlightData} from "bibleVizUtils.models.highlight"
 const {piece} = that;
 
 let key, prevColor;

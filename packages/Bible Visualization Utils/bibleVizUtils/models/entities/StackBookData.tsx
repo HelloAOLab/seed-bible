@@ -3,16 +3,40 @@ import { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData
 import type {
   ParentDataIds,
   BookShapeType,
-} from "bibleVizUtils.models.canvas.models";
+  StackBookCreationParams,
+} from "bibleVizUtils.models.canvas";
 import type { Bot } from "../../../../../typings/AuxLibraryDefinitions";
+import type { BookInfo } from "bibleVizUtils.data.BibleVizDataRepository";
+import type { ChapterInfo } from "bibleVizUtils.data.BibleVizDataRepository";
 
-export class StackBookData extends StackPieceData<StackChapterData> {
-  #isSelected: boolean;
-  #currentShape: BookShapeType;
-  #queuedChapterData = undefined;
-  #currentSelectedChapterData = undefined;
-  #isInsideTestament: boolean;
-  #isInsideSection: boolean;
+interface DataParams {
+  childrenData?: StackChapterData[];
+  id: string;
+  piece?: Bot;
+  pieceInfo: BookInfo;
+  parentDataIds?: ParentDataIds;
+  isSelected?: boolean;
+  currentShape?: BookShapeType;
+  isSplitIntoBooks?: boolean;
+  isInExplodedView?: boolean;
+  isInsideBible?: boolean;
+  isInsideTestament?: boolean;
+  isInsideSection?: boolean;
+  creationParams: StackBookCreationParams;
+  isActive?: boolean;
+}
+
+export class StackBookData extends StackPieceData<
+  StackChapterData,
+  BookInfo,
+  StackBookCreationParams
+> {
+  #isSelected: DataParams["isSelected"];
+  #currentShape: DataParams["currentShape"];
+  #queuedChapterData: StackChapterData | undefined;
+  #currentSelectedChapterData: StackChapterData | undefined;
+  #isInsideTestament: DataParams["isInsideTestament"];
+  #isInsideSection: DataParams["isInsideSection"];
 
   constructor({
     childrenData = [],
@@ -26,23 +50,8 @@ export class StackBookData extends StackPieceData<StackChapterData> {
     isInsideTestament = true,
     isInsideSection = true,
     isActive = false,
-    creationInfo,
-  }: {
-    childrenData: StackChapterData[];
-    id: string;
-    piece: Bot;
-    pieceInfo: any; // TODO: Define this
-    parentDataIds?: ParentDataIds;
-    isSelected?: boolean;
-    currentShape: BookShapeType;
-    isSplitIntoBooks?: boolean;
-    isInExplodedView?: boolean;
-    isInsideBible?: boolean;
-    isInsideTestament?: boolean;
-    isInsideSection?: boolean;
-    creationInfo: any; // TODO: Define this
-    isActive: boolean;
-  }) {
+    creationParams,
+  }: DataParams) {
     super({
       childrenData,
       id,
@@ -51,7 +60,7 @@ export class StackBookData extends StackPieceData<StackChapterData> {
       parentDataIds,
       isInsideBible,
       isActive,
-      creationInfo,
+      creationParams,
       isHidden: false,
     });
     this.#isSelected = isSelected;
@@ -63,37 +72,116 @@ export class StackBookData extends StackPieceData<StackChapterData> {
   get isSelected() {
     return this.#isSelected;
   }
-  set isSelected(value) {
-    this.#isSelected = value;
+  select() {
+    this.#isSelected = true;
+  }
+  deselect() {
+    this.#isSelected = false;
   }
   get currentShape() {
     return this.#currentShape;
   }
-  set currentShape(value) {
-    this.#currentShape = value;
+  changeShape(shape: BookShapeType) {
+    this.#currentShape = shape;
+  }
+  clearShape() {
+    this.#currentShape = undefined;
   }
   get queuedChapterData() {
     return this.#queuedChapterData;
   }
-  set queuedChapterData(value) {
-    this.#queuedChapterData = value;
+  setQueuedChapterData(data: StackChapterData) {
+    this.#queuedChapterData = data;
+  }
+  clearQueuedChapterData() {
+    this.#queuedChapterData = undefined;
   }
   get currentSelectedChapterData() {
     return this.#currentSelectedChapterData;
   }
-  set currentSelectedChapterData(value) {
-    this.#currentSelectedChapterData = value;
+  setSelectedChapterData(data: StackChapterData) {
+    this.#currentSelectedChapterData = data;
+  }
+  clearSelectedChapterData() {
+    this.#currentSelectedChapterData = undefined;
   }
   get isInsideTestament() {
     return this.#isInsideTestament;
   }
-  set isInsideTestament(value) {
-    this.#isInsideTestament = value;
+  attachToTestament() {
+    this.#isInsideTestament = true;
+  }
+  detachFromTestament() {
+    this.#isInsideTestament = false;
   }
   get isInsideSection() {
     return this.#isInsideSection;
   }
-  set isInsideSection(value) {
-    this.#isInsideSection = value;
+  attachToSection() {
+    this.#isInsideSection = true;
+  }
+  detachFromSection() {
+    this.#isInsideSection = false;
+  }
+  tryReplaceChild(
+    currChild: StackChapterData,
+    newChild: StackChapterData
+  ): boolean {
+    const wasReplaced = super.tryReplaceChild(currChild, newChild);
+
+    if (wasReplaced) {
+      if (this.currentSelectedChapterData === currChild) {
+        this.clearSelectedChapterData();
+      }
+      if (this.piece?.vars.previousHighlightedChapterData === currChild) {
+        this.piece.vars.previousHighlightedChapterData = null;
+      }
+    }
+
+    return wasReplaced;
+  }
+
+  getArrangementIndex(): DataParams["creationParams"]["arrangementIndex"] {
+    return this.creationParams.arrangementIndex;
+  }
+  getTestamentIndex(): DataParams["creationParams"]["testamentIndex"] {
+    return this.creationParams.testamentIndex;
+  }
+  getSectionIndex(): DataParams["creationParams"]["sectionIndex"] {
+    return this.creationParams.sectionIndex;
+  }
+  getLevelIndex(): DataParams["creationParams"]["levelIndex"] {
+    return this.creationParams.levelIndex;
+  }
+  getBookIndex(): DataParams["creationParams"]["bookIndex"] {
+    return this.creationParams.bookIndex;
+  }
+  getBookLevelIndex(): DataParams["creationParams"]["bookLevelIndex"] {
+    return this.creationParams.bookLevelIndex;
+  }
+  getLevelsLength(): DataParams["creationParams"]["levelsLenght"] {
+    return this.creationParams.levelsLenght;
+  }
+  resetHierarchy(clearPiece: boolean = false): Bot[] {
+    this.deselect();
+    this.clearQueuedChapterData();
+    this.clearSelectedChapterData();
+    this.clearShape();
+
+    return super.resetHierarchy(clearPiece);
+  }
+  isPieceAvailable(): boolean {
+    return !this.#isSelected && super.isPieceAvailable();
+  }
+  isActivelySelected(): boolean {
+    return !!this.isActive && !!this.isSelected;
+  }
+  findChapterByPieceInfoProperty<K extends keyof ChapterInfo>(
+    property: K,
+    value: ChapterInfo[K]
+  ): StackChapterData | undefined {
+    return this.childrenData.find((chapter) => {
+      return chapter.getPieceInfoProperty(property) === value;
+    });
   }
 }

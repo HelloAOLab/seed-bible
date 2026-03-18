@@ -1,4 +1,4 @@
-import { BookShape } from "bibleVizUtils.models.canvas.models";
+import { BookShape } from "bibleVizUtils.models.canvas";
 /**
  * Handles changes to the bot, updating positions of info label transformers and chapters if applicable.
  * @param {object} that - Object that contains important data for the function.

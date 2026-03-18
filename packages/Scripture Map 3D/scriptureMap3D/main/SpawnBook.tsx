@@ -4,7 +4,7 @@ import {
   HexToRgb,
 } from "bibleVizUtils.functions.index";
 import { arrangementService } from "bibleVizUtils.services.index";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 
 const { layoutBookStructure, position } = that;
 const dimension = os.getCurrentDimension();

@@ -3,42 +3,46 @@ let ObjectPoolTags;
 
 let PoolData;
 let CustomTag;
-let StackBibleData;
-let StackTestamentData;
-let StackSectionData;
-let StackSectionBookData;
-let StackBookData;
-let StackChapterData;
-let LayoutChapterData;
-let LayoutBibleData;
-let LayoutBookData;
-let LayoutBookStructure;
-let ParentDataIds;
-let QueuedChapterData;
-let TourGuideData;
-let UnhighlightDelayInfo;
 
-const bibleVizClasses = getBot(byTag("system", "bibleVizUtils.classes"));
+const bibleVizAdapters = getBot(byTag("system", "bibleVizUtils.adapters"));
+const bibleVizLabelController = getBot(
+  byTag("system", "bibleVizUtils.controllers.label")
+);
+const bibleVizRenderController = getBot(
+  byTag("system", "bibleVizUtils.controllers.render")
+);
+const bibleVizUserPresenceController = getBot(
+  byTag("system", "bibleVizUtils.controllers.userPresence")
+);
 const bibleVizData = getBot(byTag("system", "bibleVizUtils.data"));
 const bibleVizFunctions = getBot(byTag("system", "bibleVizUtils.functions"));
+const bibleVizModels = getBot(byTag("system", "bibleVizUtils.models"));
+const bibleVizEntities = getBot(
+  byTag("system", "bibleVizUtils.models.entities")
+);
 const bibleVizServices = getBot(byTag("system", "bibleVizUtils.services"));
 
 if (
   configBot.tags.systemPortal ||
   thisBot.masks.initialized ||
   typeof BibleVizUtils !== "undefined" ||
-  !bibleVizClasses ||
   !bibleVizData ||
   !bibleVizFunctions ||
   !bibleVizServices ||
+  !bibleVizAdapters ||
+  !bibleVizLabelController ||
+  !bibleVizRenderController ||
+  !bibleVizUserPresenceController ||
+  !bibleVizModels ||
+  !bibleVizEntities ||
   !globalThis.ObjectPooler
-)
+) {
   return;
+}
 
 setTagMask(thisBot, "initialized", true);
 
 globalThis.BibleVizUtils = {
-  Classes: bibleVizClasses,
   Data: bibleVizData,
   Functions: bibleVizFunctions,
   Services: bibleVizServices,
@@ -57,50 +61,13 @@ if (authBot) {
 try {
   ({ PoolData } = await import("objectPooler.main.PoolData"));
   ({ CustomTag } = await import("objectPooler.main.CustomTag"));
-  ({ StackBibleData } = await import("bibleVizUtils.classes.StackBibleData"));
-  ({ StackTestamentData } =
-    await import("bibleVizUtils.classes.StackTestamentData"));
-  ({ StackSectionData } =
-    await import("bibleVizUtils.classes.StackSectionData"));
-  ({ StackSectionBookData } =
-    await import("bibleVizUtils.classes.StackSectionBookData"));
-  ({ StackBookData } = await import("bibleVizUtils.classes.StackBookData"));
-  ({ StackChapterData } =
-    await import("bibleVizUtils.classes.StackChapterData"));
-  ({ LayoutChapterData } =
-    await import("bibleVizUtils.classes.LayoutChapterData"));
-  ({ LayoutBibleData } = await import("bibleVizUtils.classes.LayoutBibleData"));
-  ({ LayoutBookData } = await import("bibleVizUtils.classes.LayoutBookData"));
-  ({ LayoutBookStructure } =
-    await import("bibleVizUtils.classes.LayoutBookStructure"));
-  ({ ParentDataIds } = await import("bibleVizUtils.classes.ParentDataIds"));
-  ({ QueuedChapterData } =
-    await import("bibleVizUtils.classes.QueuedChapterData"));
-  ({ TourGuideData } = await import("bibleVizUtils.classes.TourGuideData"));
-  ({ UnhighlightDelayInfo } =
-    await import("bibleVizUtils.classes.UnhighlightDelayInfo"));
 
   ({ BibleVizDataRepository } =
     await import("bibleVizUtils.data.BibleVizDataRepository"));
-  ({ ObjectPoolTags } = await import("bibleVizUtils.models.canvas.models"));
+  ({ ObjectPoolTags } = await import("bibleVizUtils.models.canvas"));
 } catch (err) {
   console.warn("Module not found:", err);
 }
-
-globalThis.StackBibleData = StackBibleData;
-globalThis.StackTestamentData = StackTestamentData;
-globalThis.StackSectionData = StackSectionData;
-globalThis.StackSectionBookData = StackSectionBookData;
-globalThis.StackBookData = StackBookData;
-globalThis.StackChapterData = StackChapterData;
-globalThis.LayoutChapterData = LayoutChapterData;
-globalThis.LayoutBibleData = LayoutBibleData;
-globalThis.LayoutBookData = LayoutBookData;
-globalThis.LayoutBookStructure = LayoutBookStructure;
-globalThis.ParentDataIds = ParentDataIds;
-globalThis.QueuedChapterData = QueuedChapterData;
-globalThis.TourGuideData = TourGuideData;
-globalThis.UnhighlightDelayInfo = UnhighlightDelayInfo;
 
 // const shoutName = 'OnCameraRotationChanged';
 // const gridBotOnBotChanged = gridPortalBot.tags.onBotChanged;

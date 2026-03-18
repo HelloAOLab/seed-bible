@@ -1,8 +1,8 @@
 import { arrangementService } from "bibleVizUtils.services.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 
-const { layoutData } = that;
+const { layoutDataId } = that;
 
 const layoutBookStructures = [];
 const arrangementIndex = arrangementService.getCurrentArrangementIndex();
@@ -50,7 +50,7 @@ for (const testamentIndex in testaments) {
       sectionLinePoints.push({ row, column });
       const layoutBookStructure = await thisBot.CreateBookStructure({
         bookInfo,
-        layoutData,
+        layoutDataId,
         column,
         row,
         structureIndex: bookIndex,
@@ -197,7 +197,7 @@ const playlistPathToggleHandle = ObjectPooler.GetObjectFromPool({
 });
 
 const settingsButtonsBaseTags = {
-  layoutId: layoutData.id,
+  layoutId: layoutDataId,
   isSettingsPiece: true,
 };
 

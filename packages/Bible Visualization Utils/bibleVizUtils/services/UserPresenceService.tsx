@@ -2,7 +2,7 @@ import type {
   UserPresenceData,
   UserPresenceProvider,
   UserPresence,
-} from "bibleVizUtils.models.userPresence.models";
+} from "bibleVizUtils.models.userPresence";
 
 interface EventManager {
   emit: (eventName: "OnUserPresenceUpdate") => void;

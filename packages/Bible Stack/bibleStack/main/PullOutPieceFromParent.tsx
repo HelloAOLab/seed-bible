@@ -14,7 +14,7 @@
  * @param {StackBookData} that.bookData? - Is optional and is the Book data structure the piece belongs to.
  *
  * @returns {Promise<void>} - This function is asynchronous and returns a promise that resolves when the operation completes.
- * 
+ *
  * @example
  * thisBot.PullOutPieceFromParent({
  *   pieceData: somePieceData,
@@ -26,165 +26,151 @@
  * });
  */
 
-const {pieceData, bibleData, testamentData, sectionData, sectionBookData, bookData} = that;
-const pieceDataCopy = await CreateDataCopy(pieceData);
-let pieceDataIndex;
+import { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
+import { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
+import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
+import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+import { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
+import { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
 
-const nullifiableIds = {
-    stackBibleId: 'stackBibleId',
-    stackTestamentId: 'stackTestamentId',
-    stackSectionId: 'stackSectionId',
-    stackSectionBookId: 'stackSectionBookId',
-    stackBookId: 'stackBookId'
+const {
+  pieceData,
+  bibleData,
+  testamentData,
+  sectionData,
+  sectionBookData,
+  bookData,
+}: {
+  bibleData: StackBibleData;
+  pieceData:
+    | StackTestamentData
+    | StackSectionData
+    | StackSectionBookData
+    | StackBookData
+    | StackChapterData;
+  testamentData: StackTestamentData | undefined;
+  sectionData: StackSectionData | undefined;
+  sectionBookData: StackSectionBookData | undefined;
+  bookData: StackBookData | undefined;
+} = that;
+
+if (pieceData.piece) {
+  pieceData.piece.tags.toErase = true;
 }
 
-pieceData.piece.tags.toErase = true;
-
-switch(true)
-{
-    case pieceData instanceof StackTestamentData: {
-        NullifyTestamentParentIds(pieceData, [nullifiableIds.stackBibleId]);
-        pieceDataIndex = bibleData.childrenData.indexOf(pieceData);
-        bibleData.childrenData.splice(pieceDataIndex, 1, pieceDataCopy);
-    }
-    break;
-    case pieceData instanceof StackSectionData: {
-        NullifySectionParentIds(pieceData, [nullifiableIds.stackBibleId, nullifiableIds.stackTestamentId])
-        pieceDataIndex = testamentData.childrenData.indexOf(pieceData);
-        testamentData.childrenData.splice(pieceDataIndex, 1, pieceDataCopy);
-    }
-    break;
-    case pieceData instanceof StackSectionBookData: {
-        NullifySectionBookParentIds(pieceData, [nullifiableIds.stackBibleId, nullifiableIds.stackTestamentId])
-        pieceDataIndex = testamentData.childrenData.indexOf(pieceData);
-        testamentData.childrenData.splice(pieceDataIndex, 1, pieceDataCopy);
-    } 
-    break;
-    case pieceData instanceof StackBookData: {
-        const bookDataArr = sectionData.childrenData.find((dataArr) => {return dataArr.includes(pieceData)});
-        NullifyBookParentIds(pieceData, [nullifiableIds.stackBibleId, nullifiableIds.stackTestamentId, nullifiableIds.stackSectionId])
-        pieceDataIndex = bookDataArr.indexOf(pieceData);
-        bookDataArr.splice(pieceDataIndex, 1, pieceDataCopy);
-    }
-    break;
-    case pieceData instanceof StackChapterData: {
-        const actualParentData = sectionBookData ?? bookData;
-        NullifyChapterParentIds(pieceData, [
-            nullifiableIds.stackBibleId, 
-            nullifiableIds.stackTestamentId, 
-            nullifiableIds.stackSectionId, 
-            nullifiableIds.stackSectionBookId, 
-            nullifiableIds.stackBookId,
-        ])
-        pieceDataIndex = actualParentData.childrenData.indexOf(pieceData);
-        actualParentData.childrenData.splice(pieceDataIndex, 1, pieceDataCopy);
-        if(actualParentData.piece.vars.previousHighlightedChapterData === pieceData) actualParentData.piece.vars.previousHighlightedChapterData = null;
-        if(actualParentData.currentSelectedChapterData == pieceData) actualParentData.currentSelectedChapterData = null;
-    }
-    break;
-    default: break;
-}
-
-return Promise.all(shout('OnStackPiecePulledOut'));
-
-function NullifyTestamentParentIds(testamentData, idsToNullify)
-{
-    NullifyParentIdsOnData(testamentData, idsToNullify);
-    testamentData.childrenData.forEach((sectionData) => {
-        if(sectionData instanceof StackSectionData) NullifySectionParentIds(sectionData, idsToNullify);
-        else NullifySectionBookParentIds(sectionData, idsToNullify);
-    })
-}
-
-function NullifySectionParentIds(sectionData, idsToNullify)
-{
-    NullifyParentIdsOnData(sectionData, idsToNullify);
-    sectionData.childrenData.flat().forEach((bookData) => {NullifyBookParentIds(bookData, idsToNullify)})
-}
-
-function NullifySectionBookParentIds(sectionBookData, idsToNullify)
-{
-    NullifyParentIdsOnData(sectionBookData, idsToNullify);
-    sectionBookData.childrenData.forEach((chapterData) => {NullifyChapterParentIds(chapterData, idsToNullify)})
-}
-
-function NullifyBookParentIds(bookData, idsToNullify)
-{
-    NullifyParentIdsOnData(bookData, idsToNullify);
-    bookData.childrenData.forEach((chapterData) => {NullifyChapterParentIds(chapterData, idsToNullify)})
-}
-
-function NullifyChapterParentIds(chapterData, idsToNullify)
-{
-    NullifyParentIdsOnData(chapterData, idsToNullify);
-}
-
-function NullifyParentIdsOnData(data, idsToNullify)
-{
-    idsToNullify.forEach((idToNullify) => {data.parentDataIds[idToNullify] = null});
-}
-
-async function CreateDataCopy(data)
-{
-    let copy;
-    switch(true)
+switch (true) {
+  case pieceData instanceof StackTestamentData:
     {
-        case data instanceof StackTestamentData: {
-            copy = await thisBot.CreateTestament({
-                arrangementIndex: data.creationInfo.arrangementIndex, 
-                testamentIndex: data.creationInfo.testamentIndex, 
-                bibleData, 
-                isHidden: true
-            });
-        }
-        break;
-        case data instanceof StackSectionData:
-        case data instanceof StackSectionBookData:
-        {
-            copy = await thisBot.CreateSection({
-                arrangementIndex: data.creationInfo.arrangementIndex, 
-                testamentIndex: data.creationInfo.testamentIndex, 
-                sectionIndex: data.creationInfo.sectionIndex, 
-                isInsideBible: true, 
-                isInsideTestament: true, 
-                bibleData, 
-                testamentData
-            });
-        }
-        break;
-        case data instanceof StackBookData: {
-            copy = await thisBot.CreateBook({
-                arrangementIndex: data.creationInfo.arrangementIndex, 
-                testamentIndex: data.creationInfo.testamentIndex, 
-                sectionIndex: data.creationInfo.sectionIndex,
-                levelIndex: data.creationInfo.levelIndex, 
-                bookIndex: data.creationInfo.bookIndex, 
-                bookLevelIndex: data.creationInfo.bookLevelIndex,
-                levelsLenght: data.creationInfo.levelsLenght, 
-                isInsideBible: true, 
-                isInsideTestament: true, 
-                isInsideSection: true,
-                bibleData,
-                testamentData,
-                sectionData,
-            });
-        }
-        break;
-        case data instanceof StackChapterData: {
-            copy = await thisBot.CreateChapter({
-                chapterInfo: data.pieceInfo,
-                isInsideBible: true, 
-                isInsideBook: true, 
-                bibleData, 
-                testamentData, 
-                sectionData,
-                sectionBookData,
-                bookData, 
-                isHidden: true
-            })
-        }
-        break;
-        default: break;
+      const testamentCopy = await CreateDataCopy(pieceData);
+      pieceData.clearParentIds(["stackBibleId"]);
+      bibleData.tryReplaceChild(pieceData, testamentCopy);
     }
-    return copy;
+    break;
+  case pieceData instanceof StackSectionBookData:
+  case pieceData instanceof StackSectionData:
+    {
+      const sectionCopy = await CreateDataCopy(pieceData);
+      pieceData.clearParentIds(["stackBibleId", "stackTestamentId"]);
+      testamentData?.tryReplaceChild(pieceData, sectionCopy);
+    }
+    break;
+  case pieceData instanceof StackBookData:
+    {
+      const bookCopy = await CreateDataCopy(pieceData);
+      pieceData.clearParentIds([
+        "stackBibleId",
+        "stackTestamentId",
+        "stackSectionId",
+      ]);
+      sectionData?.tryReplaceBook(pieceData, bookCopy);
+    }
+    break;
+  case pieceData instanceof StackChapterData:
+    {
+      const chapterCopy = await CreateDataCopy(pieceData);
+      const actualParentData = sectionBookData ?? bookData;
+      pieceData.clearParentIds([
+        "stackBibleId",
+        "stackTestamentId",
+        "stackSectionId",
+        "stackSectionBookId",
+        "stackBookId",
+      ]);
+
+      if (actualParentData) {
+        actualParentData.tryReplaceChild(pieceData, chapterCopy);
+      }
+    }
+    break;
+  default:
+    break;
+}
+
+return Promise.all(shout("OnStackPiecePulledOut"));
+
+async function CreateDataCopy<
+  K extends
+    | StackTestamentData
+    | StackSectionData
+    | StackSectionBookData
+    | StackBookData
+    | StackChapterData,
+>(data: K): Promise<K> {
+  if (data instanceof StackTestamentData) {
+    return (await thisBot.CreateTestament({
+      arrangementIndex: data.getArrangementIndex(),
+      testamentIndex: data.getTestamentIndex(),
+      bibleData,
+      isHidden: true,
+    })) as K;
+  }
+
+  if (
+    data instanceof StackSectionData ||
+    data instanceof StackSectionBookData
+  ) {
+    return (await thisBot.CreateSection({
+      arrangementIndex: data.getArrangementIndex(),
+      testamentIndex: data.getTestamentIndex(),
+      sectionIndex: data.getSectionIndex(),
+      isInsideBible: true,
+      isInsideTestament: true,
+      bibleData,
+      testamentData,
+    })) as K;
+  }
+
+  if (data instanceof StackBookData) {
+    return (await thisBot.CreateBook({
+      arrangementIndex: data.getArrangementIndex(),
+      testamentIndex: data.getTestamentIndex(),
+      sectionIndex: data.getSectionIndex(),
+      levelIndex: data.getLevelIndex(),
+      bookIndex: data.getBookIndex(),
+      bookLevelIndex: data.getBookLevelIndex(),
+      levelsLenght: data.getLevelsLength(),
+      isInsideBible: true,
+      isInsideTestament: true,
+      isInsideSection: true,
+      bibleData,
+      testamentData,
+      sectionData,
+    })) as K;
+  }
+
+  if (data instanceof StackChapterData) {
+    return (await thisBot.CreateChapter({
+      chapterInfo: data.pieceInfo,
+      isInsideBible: true,
+      isInsideBook: true,
+      bibleData,
+      testamentData,
+      sectionData,
+      sectionBookData,
+      bookData,
+      isHidden: true,
+    })) as K;
+  }
+
+  throw new Error(`CreateDataCopy: Data type not supported or unknown`);
 }

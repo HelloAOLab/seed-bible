@@ -1,11 +1,8 @@
 import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
-import type { Tab } from "bibleVizUtils.models.seedBible.models";
-import type { PieceInfo } from "bibleVizUtils.models.canvas.models";
-import {
-  BiblePiece,
-  type BiblePieceType,
-} from "bibleVizUtils.models.canvas.models";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import type { Tab } from "bibleVizUtils.models.seedBible";
+import type { PieceInfo } from "bibleVizUtils.models.canvas";
+import { BiblePiece, type BiblePieceType } from "bibleVizUtils.models.canvas";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 import type {
   ArrangementInfo,
   TestamentInfo,

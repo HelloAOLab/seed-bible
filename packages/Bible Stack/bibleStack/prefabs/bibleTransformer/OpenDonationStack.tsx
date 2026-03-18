@@ -1,5 +1,5 @@
 import { GetCamRotationFocusPoint } from "bibleVizUtils.functions.index";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 import { GetBotScales } from "bibleVizUtils.functions.index";
 // // that parameters: {duration: float, easing: {type: string, mode: string}}
 

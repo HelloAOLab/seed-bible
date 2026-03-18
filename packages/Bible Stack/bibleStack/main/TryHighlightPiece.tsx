@@ -1,3 +1,4 @@
+import { BiblePiece, BibleState } from "bibleVizUtils.models.canvas";
 import { tryHideNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
 /**
  * Highlights a Bible piece if possible
@@ -24,7 +25,7 @@ const {
 const { unhighlightDelayInfo, unhighlightDelayInfoIndex } =
   thisBot.GetUnhighlightDelayInfo({ piece });
 const data = thisBot.GetPieceData({ piece });
-const { bibleData } = thisBot.GetDataChainFromParentDataIds({
+const { bibleData } = await thisBot.GetDataChainFromParentDataIds({
   parentDataIds: data.parentDataIds,
 });
 
@@ -35,25 +36,24 @@ if (
   (thisBot.masks.isBibleAnimating &&
     highlightRequestSource !==
       BibleVizUtils.Data.tags.InteractionType.Transition) ||
-  (bibleData &&
-    bibleData.currentState !== BibleVizUtils.Data.tags.BibleState.Open) ||
+  (bibleData && bibleData.currentState !== BibleState.Open) ||
   !piece.masks.highlightable
 )
   return;
 
 switch (typeOfPiece) {
-  case BibleVizUtils.Data.tags.BiblePieceType.StackBook:
+  case BiblePiece.StackBook:
     thisBot.vars.lastInteractedStackBookData = data;
     break;
-  case BibleVizUtils.Data.tags.BiblePieceType.StackSection:
+  case BiblePiece.StackSection:
     thisBot.vars.lastInteractedStackSectionData = data;
     break;
-  case BibleVizUtils.Data.tags.BiblePieceType.StackTestament:
+  case BiblePiece.StackTestament:
     thisBot.vars.lastInteractedStackTestamentData = data;
 }
 
 if (unhighlightDelayInfo) {
-  if (typeOfPiece === BibleVizUtils.Data.tags.BiblePieceType.StackBook) {
+  if (typeOfPiece === BiblePiece.StackBook) {
     thisBot.TryIncreasePieceHighlight({
       piece,
       speedMultiplier,
@@ -76,7 +76,7 @@ if (unhighlightDelayInfo) {
   }
 
   switch (typeOfPiece) {
-    case BibleVizUtils.Data.tags.BiblePieceType.StackTestament:
+    case BiblePiece.StackTestament:
       {
         if (
           data.parentDataIds.stackBibleId &&
@@ -89,8 +89,7 @@ if (unhighlightDelayInfo) {
                 currentPiece !== piece &&
                 !currentPiece.masks.isOnTheGround &&
                 !currentPiece.masks.isUnhighlighting &&
-                currentPiece.tags.typeOfPiece ===
-                  BibleVizUtils.Data.tags.BiblePieceType.StackTestament &&
+                currentPiece.tags.typeOfPiece === BiblePiece.StackTestament &&
                 thisBot.ArePiecesOnSameStack({ pieces: [currentPiece, piece] })
               );
             }

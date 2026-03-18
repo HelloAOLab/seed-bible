@@ -1,5 +1,9 @@
+import type { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
 import { updateNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
 import { scriptureService } from "bibleVizUtils.services.index";
+import type { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
+import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 
 /**
  * This tag is called whenever a chapter is interacted
@@ -12,12 +16,39 @@ import { scriptureService } from "bibleVizUtils.services.index";
  * shout("HandleChapterInteraction", {chapterData: someChapterData, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Click});
  */
 
-const { chapterData, typeOfInteraction, dragInfo, dropInfo } = that;
-const { sectionBookData, bookData } = thisBot.GetDataChainFromParentDataIds({
+const {
+  chapterData,
+  typeOfInteraction,
+  dragInfo,
+  dropInfo,
+}: {
+  chapterData: StackChapterData;
+} = that;
+const {
+  sectionBookData,
+  bookData,
+}: {
+  sectionBookData: StackSectionBookData | undefined;
+  bookData: StackBookData | undefined;
+} = await thisBot.GetDataChainFromParentDataIds({
   parentDataIds: chapterData.parentDataIds,
 });
 const actualData = sectionBookData ?? bookData;
+
 if (thisBot.masks.isBibleAnimating) return;
+
+if (!chapterData.piece) {
+  console.error("chapterData.piece not defined at HandleChapterInteraction");
+  return;
+}
+
+const bookName = chapterData.getCreationParam("bookName");
+const bookStaticInfo = BibleVizDataRepository.getBookStaticInfo(bookName);
+
+if (!bookStaticInfo) {
+  console.error(`bookStaticInfo not found at HandleChapterInteraction`);
+  return;
+}
 
 switch (typeOfInteraction) {
   case BibleVizUtils.Data.tags.InteractionType.Click:
@@ -49,8 +80,9 @@ switch (typeOfInteraction) {
                 let tab = thisBot.vars.tabsContext.tabs.find((currTab) => {
                   return (
                     currTab.data.book ===
-                      chapterData.piece.tags.parentBookName &&
-                    currTab.data.chapter == chapterData.pieceInfo.number
+                      chapterData.piece?.tags.parentBookName &&
+                    currTab.data.chapter ==
+                      chapterData.getPieceInfoProperty("number")
                   );
                 });
 
@@ -61,11 +93,8 @@ switch (typeOfInteraction) {
                     data: {
                       use: "thePage",
                       type: "book",
-                      book: chapterData.piece.tags.parentBookName,
-                      bookId:
-                        BibleVizUtils.Data.tags.booksStaticInfo[
-                          chapterData.piece.tags.parentBookName
-                        ].abbreviation,
+                      book: bookName,
+                      bookId: bookStaticInfo.abbreviation,
                       chapter: chapterData.pieceInfo.number,
                       translation: "BSB",
                     },
@@ -75,16 +104,13 @@ switch (typeOfInteraction) {
                 thisBot.vars.tabsContext.setActiveTab(tab.id);
                 globalThis.UpdateTab(tab);
               } else {
-                let bookId =
-                  BibleVizUtils.Data.tags.booksStaticInfo[
-                    chapterData.piece.tags.parentBookName
-                  ].abbreviation;
-                let chapter = chapterData.pieceInfo.number;
+                let bookId = bookStaticInfo.abbreviation;
+                let chapter = chapterData.getPieceInfoProperty("number");
 
-                if (chapterData.piece.tags.parentBookName.includes("Psalms")) {
+                if (bookName.includes("Psalms")) {
                   ({ chapter } =
                     scriptureService.convertDividedPsalmsToComplete({
-                      book: chapterData.piece.tags.parentBookName,
+                      book: bookName,
                       chapter,
                     }));
                   bookId = "PSA";
@@ -112,7 +138,10 @@ switch (typeOfInteraction) {
         // !chapterData.piece.masks.isDeselecting
       ) {
         chapterData.piece.Unhighlight({ chapterData }).then(() => {
-          if (!chapterData.isSelected || !chapterData.piece.masks.isOnTheGround)
+          if (
+            !chapterData.isSelected ||
+            !chapterData.piece?.masks.isOnTheGround
+          )
             updateNotification(
               chapterData,
               thisBot.tags.activityNotificationOffset,

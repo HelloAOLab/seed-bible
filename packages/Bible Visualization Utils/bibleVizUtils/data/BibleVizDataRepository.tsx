@@ -15,6 +15,7 @@ import {
   DialogBoxFormAddresses,
   type DialogBoxFormAddressesType,
 } from "bibleVizUtils.data.DialogBoxFormAddresses";
+import type { HexString } from "bibleVizUtils.models.commonTypes";
 
 type FontsSchema = typeof fontsData;
 
@@ -56,6 +57,8 @@ interface BookInfo {
   };
   group?: number;
   customColor?: string;
+  customLabelColor?: string;
+  isCheckpoint?: boolean;
 }
 interface SectionInfo {
   name: string;
@@ -68,6 +71,7 @@ interface SectionInfo {
 interface TestamentInfo {
   name: string;
   sections: SectionInfo[];
+  color?: HexString;
 }
 
 interface ArrangementInfo {
@@ -133,6 +137,9 @@ class BibleVizDataRepository {
   }
 
   static getCustomArrangements(): ArrangementInfo[] {
+    if (!thisBot.vars.customArrangements) {
+      thisBot.vars.customArrangements = [];
+    }
     return thisBot.vars.customArrangements.slice();
   }
 

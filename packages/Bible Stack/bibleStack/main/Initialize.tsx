@@ -1,6 +1,6 @@
 import { PieceDataRegistry } from "bibleVizUtils.services.PieceDataRegistry";
 import { PieceDataRepository } from "bibleStack.services.PieceDataRepository";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 
 /**
  * This tag is called when this bot is created
@@ -16,8 +16,9 @@ if (
   !globalThis.ObjectPooler ||
   !globalThis.BibleVizUtils ||
   !globalThis.ColorLerper
-)
+) {
   return;
+}
 
 let PoolData, CustomTag;
 setTagMask(thisBot, "initialized", true);

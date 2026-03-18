@@ -182,7 +182,7 @@ export type SelectionOptionsType = (
   params: SelectionOptionsProps
 ) => React.JSX.Element;
 
-export type UserPresence = Map<
-  string,
-  { book: string; bookId: string; chapter: number }
->;
+// export type UserPresence = Map<
+//   string,
+//   { book: string; bookId: string; chapter: number }
+// >;

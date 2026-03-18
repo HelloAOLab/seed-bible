@@ -1,4 +1,13 @@
-import { BookShape } from "bibleVizUtils.models.canvas.models";
+import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import type { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
+import type { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
+import {
+  BiblePiece,
+  BibleState,
+  BibleVisualizationState,
+  BookShape,
+} from "bibleVizUtils.models.canvas";
+import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 
 /**
  * Called whenever a book is interacted
@@ -11,24 +20,33 @@ import { BookShape } from "bibleVizUtils.models.canvas.models";
  * thisBot.HandleBookInteraction({book: someBook, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Drag, dragInfo: someDragInfo});
  */
 
+console.log(`[Debug] HandleBookInteraction before`);
+
 const { book, typeOfInteraction, dragInfo, dropInfo } = that;
 if (
   thisBot.masks.isBibleAnimating &&
-  typeOfInteraction !== BibleVizUtils.Data.tags.InteractionType.Click &&
+  typeOfInteraction !== BibleVizUtils.Data.tags.InteractionType.Click && // TODO: Implement actual enum for InteractionType
   typeOfInteraction !== BibleVizUtils.Data.tags.InteractionType.Tap &&
   typeOfInteraction !== BibleVizUtils.Data.tags.InteractionType.PointerUp
 )
   return;
-const bookData = thisBot.GetPieceData({ piece: book });
-const { bibleData, testamentData, sectionData } =
-  thisBot.GetDataChainFromParentDataIds({
-    parentDataIds: bookData.parentDataIds,
-  });
 
-if (
-  !bibleData ||
-  bibleData.currentState === BibleVizUtils.Data.tags.BibleState.Open
-) {
+console.log(`[Debug] HandleBookInteraction after`);
+
+const bookData = thisBot.GetPieceData({ piece: book });
+const {
+  bibleData,
+  testamentData,
+  sectionData,
+}: {
+  bibleData: StackBibleData | undefined;
+  testamentData: StackTestamentData | undefined;
+  sectionData: StackSectionData | undefined;
+} = await thisBot.GetDataChainFromParentDataIds({
+  parentDataIds: bookData.parentDataIds,
+});
+
+if (!bibleData || bibleData.currentState === BibleState.Open) {
   switch (typeOfInteraction) {
     case BibleVizUtils.Data.tags.InteractionType.Click:
       {
@@ -39,7 +57,8 @@ if (
             if (thisBot.masks.isASectionMakingTourGuide) {
               if (
                 thisBot.vars.currentSectionMakingTourGuide &&
-                sectionData?.piece.id ===
+                sectionData?.piece &&
+                sectionData.piece.id ===
                   thisBot.vars.currentSectionMakingTourGuide.id
               ) {
                 thisBot.StopCurrentTourGuide();
@@ -49,14 +68,14 @@ if (
                 thisBot.SelectBook({
                   book,
                   source:
-                    BibleVizUtils.Data.tags.PieceDataSelectionSource.Click,
+                    BibleVizUtils.Data.tags.PieceDataSelectionSource.Click, // TODO: Implement actual enum for PieceDataSelectionSource
                 });
               } else {
                 thisBot.TryHighlightPiece({
                   piece: book,
                   highlightRequestSource:
                     BibleVizUtils.Data.tags.InteractionType.Click,
-                  typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.StackBook,
+                  typeOfPiece: BiblePiece.StackBook,
                 });
               }
             }
@@ -80,8 +99,8 @@ if (
             }
           } else if (
             bookData.parentDataIds.stackBibleId &&
-            bibleData.currentStackVizState ===
-              BibleVizUtils.Data.tags.BibleVisualizationState.Regular
+            bibleData &&
+            bibleData.currentStackVizState === BibleVisualizationState.Regular
           ) {
             thisBot.TrySetSectionAsExplodedView({ section: sectionData.piece });
           }
@@ -94,7 +113,8 @@ if (
           !(
             thisBot.masks.isASectionMakingTourGuide &&
             thisBot.vars.currentSectionMakingTourGuide &&
-            sectionData?.piece.id ===
+            sectionData?.piece &&
+            sectionData.piece.id ===
               thisBot.vars.currentSectionMakingTourGuide.id
           )
         ) {
@@ -103,8 +123,7 @@ if (
               piece: book,
               highlightRequestSource:
                 BibleVizUtils.Data.tags.InteractionType.HoverBegin,
-              typeOfPiece:
-                BibleVizUtils.Data.tags.BiblePieceType.StackSectionBook,
+              typeOfPiece: BiblePiece.StackSectionBook,
             });
           } else {
             if (
@@ -113,7 +132,7 @@ if (
               bookData?.parentDataIds.stackTestamentId &&
               (!bibleData ||
                 bibleData.currentStackVizState ===
-                  BibleVizUtils.Data.tags.BibleVisualizationState.Regular) &&
+                  BibleVisualizationState.Regular) &&
               (bookData.currentShape === BookShape.Regular ||
                 bookData.currentShape === BookShape.RegularSelected)
             ) {
@@ -122,18 +141,19 @@ if (
               });
             } else if (!bookData.isSelected) {
               if (bibleData || testamentData || sectionData) {
-                const booksToUnhighlight = sectionData.childrenData
+                const booksToUnhighlight = sectionData?.childrenData
                   .flat()
                   .filter((currentBookData) => {
                     return (
                       currentBookData !== bookData &&
                       currentBookData.isActive &&
+                      currentBookData.piece &&
                       !currentBookData.piece.masks.isOnTheGround &&
                       AreBothBooksInSamePlace(currentBookData, bookData)
                     );
                   })
                   .map((currentBookData) => currentBookData.piece);
-                booksToUnhighlight.forEach((book) => {
+                booksToUnhighlight?.forEach((book) => {
                   thisBot.TryUnhighlightPiece({
                     piece: book,
                     requestSource:
@@ -177,7 +197,8 @@ if (
                     .filter((currentBookData) => {
                       return (
                         currentBookData.isActive &&
-                        currentBookData.parentDataIds.stackBibleId &&
+                        currentBookData.getParentId("stackBibleId") &&
+                        currentBookData.piece &&
                         currentBookData.piece.masks.isHighlighted &&
                         !currentBookData.piece.masks.isHighlightDecreased
                       );
@@ -204,7 +225,7 @@ if (
                 piece: book,
                 highlightRequestSource:
                   BibleVizUtils.Data.tags.InteractionType.HoverBegin,
-                typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.StackBook,
+                typeOfPiece: BiblePiece.StackBook,
               });
             }
           }
@@ -218,7 +239,8 @@ if (
           !(
             thisBot.masks.isASectionMakingTourGuide &&
             thisBot.vars.currentSectionMakingTourGuide &&
-            sectionData?.piece.id ===
+            sectionData?.piece &&
+            sectionData.piece.id ===
               thisBot.vars.currentSectionMakingTourGuide.id
           )
         ) {
@@ -237,7 +259,7 @@ if (
       break;
     // case BibleVizUtils.Data.tags.InteractionType.SearchBarSelection:
     // {
-    //     if(!sectionData.isSectionBook && !sectionData.isInExplodedView && bookData.parentDataIds.stackBibleId && stackData.currentStackVizState === BibleVizUtils.Data.tags.BibleVisualizationState.Regular)
+    //     if(!sectionData.isSectionBook && !sectionData.isInExplodedView && bookData.parentDataIds.stackBibleId && stackData.currentStackVizState === BibleVisualizationState.Regular)
     //     {
     //         return thisBot.TrySetSectionAsExplodedView({section: sectionData.section}).then(() => {return thisBot.SelectBook({book})})
     //     }

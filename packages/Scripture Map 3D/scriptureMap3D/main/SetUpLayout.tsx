@@ -2,7 +2,7 @@ import { GetDialogBotScaleY } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { GetTextColorBasedOnBackground } from "bibleVizUtils.functions.index";
 import { arrangementService } from "bibleVizUtils.services.index";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 
 const { layoutData, position } = that;
 
@@ -130,16 +130,16 @@ for (let row = 0; row < layoutData.amountOfRows; row++) {
     }
 
     const arrangement = arrangementService.getArrangementByIndex(
-      layoutBookStructure.layoutBookData.creationInfo.arrangementIndex
+      layoutBookStructure.layoutBookData.creationParams.arrangementIndex
     );
 
     if (arrangement) {
       const sectionColor = arrangement.testaments
         .toReversed()
         [
-          layoutBookStructure.layoutBookData.creationInfo.testamentIndex
+          layoutBookStructure.layoutBookData.creationParams.testamentIndex
         ].sections.toReversed()[
-        layoutBookStructure.layoutBookData.creationInfo.sectionIndex
+        layoutBookStructure.layoutBookData.creationParams.sectionIndex
       ].color;
       const labelColor = GetTextColorBasedOnBackground({
         backgroundColor: sectionColor,

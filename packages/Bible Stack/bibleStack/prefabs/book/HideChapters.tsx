@@ -1,3 +1,4 @@
+import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 /**
  * Hides chapters of the book and releases their resources if they are currently shown.
@@ -8,13 +9,24 @@ import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
  */
 
 if (thisBot.tags.isBaseStackBook) return;
-const { bibleId } = that ?? {};
-const bookData = BibleStackManager.GetPieceData({ piece: thisBot });
+const {
+  bibleId,
+}: {
+  bibleId?: string;
+} = that ?? {};
+const bookData: StackBookData | undefined = BibleStackManager.GetPieceData({
+  piece: thisBot,
+});
+
+if (!bookData) {
+  throw new Error("bookData not found at HideChapters");
+}
+
+const bookBibleId = bookData.getParentId("stackBibleId");
+
 if (
   !thisBot.masks.isShowingChapters ||
-  (bibleId &&
-    (!bookData.parentDataIds.stackBibleId ||
-      bibleId !== bookData.parentDataIds.stackBibleId))
+  (bibleId && (!bookBibleId || bibleId !== bookBibleId))
 )
   return;
 // const dimension = os.getCurrentDimension();
@@ -22,21 +34,23 @@ setTagMask(thisBot, "isShowingChapters", false);
 thisBot.vars.previousHighlightedChapterData = null;
 for (const chapterData of bookData.childrenData) {
   if (chapterData.isActive && chapterData.isInsideBook) {
-    if (chapterData.piece) {
-      const infoLabelTransformer = LabelsRepository.getLabelTransformerByOwner(
-        chapterData.piece
-      );
-      if (infoLabelTransformer)
-        ObjectPooler.ReleaseObject({
-          obj: infoLabelTransformer,
-          tag: infoLabelTransformer.tags.poolTag,
-        });
+    if (!chapterData.piece) {
+      console.warn("chapterData.piece not defined at HideChapters");
+      continue;
     }
+    const infoLabelTransformer = LabelsRepository.getLabelTransformerByOwner(
+      chapterData.piece
+    );
+    if (infoLabelTransformer)
+      ObjectPooler.ReleaseObject({
+        obj: infoLabelTransformer,
+        tag: infoLabelTransformer.tags.poolTag,
+      });
 
     ObjectPooler.ReleaseObject({
       obj: chapterData.piece,
       tag: chapterData.piece.tags.poolTag,
     });
-    chapterData.ResetData();
+    chapterData.resetData();
   }
 }

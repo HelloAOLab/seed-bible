@@ -1,3 +1,4 @@
+import type { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
 import { tryHideIndicators } from "bibleVizUtils.controllers.userPresence.activityIndicatorsController";
 import { updateNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
 
@@ -15,22 +16,38 @@ import { updateNotification } from "bibleVizUtils.controllers.userPresence.activ
  * thisBot.DeselectChapter({chapterData: someChapterData, setBibleAnimating: true});
  */
 
-const { info /*, setBibleAnimating = false*/ } = that;
+type Info = { chapterData: StackChapterData };
+
+const {
+  info /*, setBibleAnimating = false*/,
+}: {
+  info: Info | Info[];
+} = that;
 
 const fixedInfo = Array.isArray(info) ? info : [info];
 
 await Promise.all(
   fixedInfo.map(({ chapterData }) => {
     // if(setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", true);
-    chapterData.isSelected = false;
+    if (!chapterData.piece) {
+      console.warn("chapterData.piece not defined at DeselectChapter");
+      return Promise.resolve();
+    }
+    chapterData.deselect();
     tryHideIndicators(chapterData.piece);
     // setTagMask(thisBot, "aChapterIsBeingDeselected", true);
-    return chapterData.piece.Deselect({ chapterData }).then(() => {
-      updateNotification(chapterData, thisBot.tags.activityNotificationOffset, {
-        x: thisBot.tags.activityNotificationScaleX,
-        y: thisBot.tags.activityNotificationScaleY,
-      });
-    });
+    return (chapterData.piece.Deselect({ chapterData }) as Promise<void>).then(
+      () => {
+        updateNotification(
+          chapterData,
+          thisBot.tags.activityNotificationOffset,
+          {
+            x: thisBot.tags.activityNotificationScaleX,
+            y: thisBot.tags.activityNotificationScaleY,
+          }
+        );
+      }
+    );
     // setTagMask(thisBot, "aChapterIsBeingDeselected", false);
     // if(setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", false);
   })

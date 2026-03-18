@@ -1,20 +1,45 @@
-import {LayoutBookData} from "bibleVizUtils.classes.LayoutBookData"
-import {ParentDataIds} from "bibleVizUtils.classes.ParentDataIds"
+import { LayoutBookData } from "bibleVizUtils.models.entities.LayoutBookData";
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import type { LayoutChapterData } from "bibleVizUtils.models.entities.LayoutChapterData";
 
-const {bookInfo, layoutData, arrangementIndex, testamentIndex, sectionIndex} = that;
-const parentDataIds = new ParentDataIds({layoutId: layoutData?.id});
-const creationInfo = {arrangementIndex, testamentIndex, sectionIndex}
+const {
+  bookInfo,
+  layoutDataId,
+  arrangementIndex,
+  testamentIndex,
+  sectionIndex,
+} = that;
+const parentDataIds = { layoutId: layoutDataId };
+const creationParams = { arrangementIndex, testamentIndex, sectionIndex };
+const bookStaticInfo = BibleVizDataRepository.getBookStaticInfo(
+  bookInfo.commonName
+);
+if (!bookStaticInfo) {
+  console.error("bookStaticInfo not found at CreateBook");
+  return;
+}
+
+const layoutBookId = uuid();
+
+const chaptersData = await Promise.all(
+  bookStaticInfo.chaptersInfo.map((chapterInfo): Promise<LayoutChapterData> => {
+    return thisBot.CreateChapter({
+      chapterInfo,
+      layoutDataId,
+      layoutBookId: layoutBookData.id,
+    });
+  })
+);
+
 const layoutBookData = new LayoutBookData({
-    id: uuid(), 
-    piece: null,
-    pieceInfo: bookInfo,
-    isSelected: false,
-    parentDataIds,
-    creationInfo
+  childrenData: chaptersData,
+  id: layoutBookId,
+  piece: undefined,
+  pieceInfo: bookInfo,
+  isSelected: false,
+  parentDataIds,
+  creationParams,
 });
 
-const chaptersData = await Promise.all(BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName].chaptersInfo.map((chapterInfo) => {return thisBot.CreateChapter({chapterInfo, layoutData, layoutBookData})}))
-
-chaptersData.forEach((chapterData) => {layoutBookData.AddChild(chapterData)});
 thisBot.vars.layoutBooksData.push(layoutBookData);
 return layoutBookData;

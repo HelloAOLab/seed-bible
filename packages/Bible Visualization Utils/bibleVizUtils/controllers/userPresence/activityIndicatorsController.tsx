@@ -1,17 +1,20 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
-import { pieceActivityService } from "bibleVizUtils.services.index";
+import {
+  pieceActivityService,
+  seedBiblePresenceProvider,
+} from "bibleVizUtils.services.index";
 import type {
   Bot,
   Point3D,
   Vector3 as Vector3Type,
 } from "../../../../../typings/AuxLibraryDefinitions";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 import {
   ActivityIndicatorDefaults,
   type ActivityIndicatorDefaultsType,
 } from "bibleVizUtils.data.ActivityIndicatorDefaults";
 import { PieceDataRegistry } from "bibleVizUtils.services.PieceDataRegistry";
-import type { Tab } from "bibleVizUtils.models.seedBible.models";
+import type { Tab } from "bibleVizUtils.models.seedBible";
 import { userPresenceService } from "bibleVizUtils.services.index";
 import { userColorStore } from "bibleVizUtils.services.index";
 
@@ -353,10 +356,8 @@ export const updateIndicators: (
         indicators.push(extraIndicatorBackground, extraIndicatorContent);
         break;
       } else {
-        const isActiveTab =
-          activity.id ===
-          (globalThis as unknown as { ActiveTab: Tab | undefined }).ActiveTab
-            ?.id;
+        const activeTabId = seedBiblePresenceProvider.getActiveTabId();
+        const isActiveTab = activity.id === activeTabId;
 
         const matchingPresence = Array.from(userPresence).find(
           ([, presenceData]) => {

@@ -1,4 +1,4 @@
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 
 /**
  * Generates and retrieves chunks of verses from the chapter.

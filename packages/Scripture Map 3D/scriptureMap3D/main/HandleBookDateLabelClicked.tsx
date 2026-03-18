@@ -1,7 +1,7 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { GetDialogBotScaleY } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 
 if (thisBot.masks.isAnimatingBible) return;
 

@@ -1,5 +1,5 @@
 import { arrangementService } from "bibleVizUtils.services.index";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 
 /**
  * Creates every piece of a regular Bible structure for the given bibleData based on a given arrangement index.
@@ -10,36 +10,40 @@ import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
  * const {testamentsData, staticBiblePieces} = await thisBot.CreateBibleStructure({arrangementIndex: BibleVizDataRepository.getCurrentArrangementIndex(), bibleData: someBibleData});
  */
 
-const { arrangementIndex, bibleData } = that;
+const {
+  arrangementIndex,
+  bibleDataId,
+}: { arrangementIndex: number; bibleDataId: string } = that;
+
 const testamentsData = [];
 const bibleTransformer = ObjectPooler.GetObjectFromPool({
   tag: ObjectPoolTags.StackBibleTransformer,
 });
-const bibleTransformerMod = { stackBibleId: bibleData.id };
+const bibleTransformerMod = { stackBibleId: bibleDataId };
 const upperCover = ObjectPooler.GetObjectFromPool({
   tag: ObjectPoolTags.StackCover,
 });
-const upperCoverMod = { stackBibleId: bibleData.id };
+const upperCoverMod = { stackBibleId: bibleDataId };
 const leftCover = ObjectPooler.GetObjectFromPool({
   tag: ObjectPoolTags.StackCover,
 });
-const leftCoverMod = { stackBibleId: bibleData.id };
+const leftCoverMod = { stackBibleId: bibleDataId };
 const lowerCover = ObjectPooler.GetObjectFromPool({
   tag: ObjectPoolTags.StackCover,
 });
-const lowerCoverMod = { stackBibleId: bibleData.id };
+const lowerCoverMod = { stackBibleId: bibleDataId };
 const crossVerticalLine = ObjectPooler.GetObjectFromPool({
   tag: ObjectPoolTags.StackCrossLine,
 });
-const crossVerticalLineMod = { stackBibleId: bibleData.id };
+const crossVerticalLineMod = { stackBibleId: bibleDataId };
 const crossHorizontalLine = ObjectPooler.GetObjectFromPool({
   tag: ObjectPoolTags.StackCrossLine,
 });
-const crossHorizontalLineMod = { stackBibleId: bibleData.id };
+const crossHorizontalLineMod = { stackBibleId: bibleDataId };
 const bibleShadow = ObjectPooler.GetObjectFromPool({
   tag: ObjectPoolTags.StackBibleShadow,
 });
-const bibleShadowMod = { stackBibleId: bibleData.id };
+const bibleShadowMod = { stackBibleId: bibleDataId };
 
 bibleTransformer.OnSpawned({ mod: bibleTransformerMod });
 upperCover.OnSpawned({ mod: upperCoverMod });
@@ -60,11 +64,15 @@ const staticBiblePieces = {
 };
 const arrangement = arrangementService.getArrangementByIndex(arrangementIndex);
 if (arrangement) {
-  for (const testamentIndex in arrangement) {
+  for (
+    let testamentIndex = 0;
+    testamentIndex < arrangement.testaments.length;
+    testamentIndex++
+  ) {
     const testamentData = await thisBot.CreateTestament({
       arrangementIndex,
       testamentIndex,
-      bibleData,
+      bibleDataId,
     });
     testamentsData.push(testamentData);
   }

@@ -1,4 +1,6 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
+import { LabelPosition } from "bibleVizUtils.models.label";
+
 /**
  * Sets the position of the info label transformer relative to its owner bot and transformer.
  * It adjusts the label's offset and positioning based on its settings.
@@ -13,10 +15,26 @@ import { GetBotScales } from "bibleVizUtils.functions.index";
  * infoLabelTransformer.SetPosition({setX: true, setY: true, setZ: true, setLabelOffset: false})
  */
 
-const { setX, setY, setZ, setLabelOffset } = that;
+const {
+  setX,
+  setY,
+  setZ,
+  setLabelOffset,
+}: {
+  setX: boolean;
+  setY: boolean;
+  setZ: boolean;
+  setLabelOffset: boolean;
+} = that;
 
 const dimension = os.getCurrentDimension();
 const ownerBot = getBot(byID(thisBot.tags.ownerBotId));
+
+if (!ownerBot) {
+  console.warn("ownerBot not found at SetPosition");
+  return;
+}
+
 const transformer = ownerBot.tags.transformer
   ? getBot(byID(ownerBot.tags.transformer))
   : null;
@@ -37,17 +55,12 @@ const infoLabelTransformerDesiredPosition = new Vector3(
   ownerBotPosition.y,
   ownerBotPosition.z +
     ownerBotScales.z /
-      (thisBot.tags.labelPositioning ===
-        BibleVizUtils.Data.tags.LabelPositioning.Top ||
-      thisBot.tags.labelPositioning ===
-        BibleVizUtils.Data.tags.LabelPositioning.RightSidedCorner
+      (thisBot.tags.labelPositioning === LabelPosition.Top ||
+      thisBot.tags.labelPositioning === LabelPosition.RightSidedCorner
         ? 1
         : 2) -
     infoLabelTransformerScales.z / 2 +
-    (thisBot.tags.labelPositioning ===
-    BibleVizUtils.Data.tags.LabelPositioning.RightSidedCorner
-      ? 1.5
-      : 0)
+    (thisBot.tags.labelPositioning === LabelPosition.RightSidedCorner ? 1.5 : 0)
 ).add(transformerPosition);
 const dateGapX = 0.2;
 
@@ -57,10 +70,7 @@ if (setY)
   setTagMask(thisBot, dimension + "Y", infoLabelTransformerDesiredPosition.y);
 if (setZ)
   setTagMask(thisBot, dimension + "Z", infoLabelTransformerDesiredPosition.z);
-if (
-  setLabelOffset &&
-  thisBot.tags.labelPositioning !== BibleVizUtils.Data.tags.LabelPositioning.Top
-) {
+if (setLabelOffset && thisBot.tags.labelPositioning !== LabelPosition.Top) {
   const { infoLabel, infoLabelTail, infoLabelDate } =
     thisBot.GetLabelElements();
 
@@ -73,14 +83,14 @@ if (
   const infoLabelOffsetMargin = 1;
   let infoLabelOffsetX, infoLabelTailOffsetX;
   const infoLabelDateOffsetX = infoLabelDate
-    ? infoLabelOffsetX +
+    ? (infoLabelOffsetX ?? 0) +
       infoLabelScales.x / 2 / infoLabelTransformerScales.x -
-      infoLabelDateScales.x / 2 -
+      (infoLabelDateScales?.x ?? 0) / 2 -
       dateGapX
     : null;
   switch (thisBot.tags.labelPositioning) {
     default:
-    case BibleVizUtils.Data.tags.LabelPositioning.LeftSided:
+    case LabelPosition.LeftSided:
       {
         infoLabelOffsetX = -(
           radialVector.length() +
@@ -94,7 +104,7 @@ if (
           infoLabelTailScales.x / 2;
       }
       break;
-    case BibleVizUtils.Data.tags.LabelPositioning.RightSided:
+    case LabelPosition.RightSided:
       {
         infoLabelOffsetX =
           radialVector.length() +
@@ -107,7 +117,7 @@ if (
           infoLabelTailScales.x / 2;
       }
       break;
-    case BibleVizUtils.Data.tags.LabelPositioning.RightSidedCorner:
+    case LabelPosition.RightSidedCorner:
       {
         infoLabelOffsetX = radialVector.length() + infoLabelScales.x / 2;
         infoLabelTailOffsetX =

@@ -1,6 +1,6 @@
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { arrangementService } from "bibleVizUtils.services.index";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 
 /**
  * Spawns a testament in the current dimension with specified properties and initializes it.

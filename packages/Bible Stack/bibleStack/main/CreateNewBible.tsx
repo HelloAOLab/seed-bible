@@ -1,6 +1,17 @@
-import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { GetCamRotationFocusPoint } from "bibleVizUtils.functions.index";
 import { arrangementService } from "bibleVizUtils.services.index";
+import {
+  StackBibleData,
+  type StaticBiblePieces,
+} from "bibleVizUtils.models.entities.StackBibleData";
+import {
+  BibleType,
+  type BibleTypeType,
+  CrossPosition,
+  BibleVisualizationState,
+} from "bibleVizUtils.models.canvas";
+import type { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
+
 /**
  * Creates a new `StackBibleData` instance, sets up the Bible structure, and initializes it.
  *
@@ -17,18 +28,18 @@ import { arrangementService } from "bibleVizUtils.services.index";
 let { position } = that;
 const {
   setBibleAnimating = true,
-  bibleType = BibleVizUtils.Data.tags.BibleType.Default,
+  bibleType = BibleType.Default,
   customArrangementIndex,
-} = that;
+} = that as {
+  bibleType: BibleTypeType;
+  setBibleAnimating?: boolean;
+  customArrangementIndex: number;
+};
 const dimension = os.getCurrentDimension();
 const jarvis = getBot("jarvis", true);
 const jarvisPosition = jarvis ? getBotPosition(jarvis, dimension) : null;
 let displayJarvisSpawnPieceAnimation = false;
-if (
-  jarvis &&
-  !position &&
-  bibleType === BibleVizUtils.Data.tags.BibleType.Default
-) {
+if (jarvis && !position && bibleType === BibleType.Default) {
   position = { x: jarvisPosition.x, y: jarvisPosition.y };
   displayJarvisSpawnPieceAnimation = true;
 }
@@ -53,25 +64,30 @@ thisBot.vars.hasStackEverBeenSpawned = true;
 const arrangementIndex = !isNaN(customArrangementIndex)
   ? customArrangementIndex
   : arrangementService.getCurrentArrangementIndex();
+const bibleDataId = uuid();
+const { testamentsData, staticBiblePieces } =
+  await (thisBot.CreateBibleStructure({
+    arrangementIndex,
+    bibleDataId,
+  }) as Promise<{
+    testamentsData: StackTestamentData[];
+    staticBiblePieces: StaticBiblePieces;
+  }>); // TODO: Correctly type this
 const bibleData = new StackBibleData({
   bibleType,
   arrangementIndex,
-  currentCrossPosition: BibleVizUtils.Data.tags.CrossPosition.Top,
-  currentStackVizState: BibleVizUtils.Data.tags.BibleVisualizationState.Regular,
-  id: uuid(),
+  currentCrossPosition: CrossPosition.Top,
+  currentStackVizState: BibleVisualizationState.Regular,
+  id: bibleDataId,
+  childrenData: testamentsData,
+  staticBiblePieces,
 });
-const { testamentsData, staticBiblePieces } =
-  await thisBot.CreateBibleStructure({ arrangementIndex, bibleData });
 const focusOnRotation = { x: 1.01229, y: 0.5 };
 const focusOnDuration = 1;
 const easing = { type: "sinusoidal", mode: "inout" };
-testamentsData.forEach((testamentData) => {
-  bibleData.AddChild(testamentData);
-});
-bibleData.staticBiblePieces = staticBiblePieces;
 thisBot.vars.stackBiblesData.push(bibleData);
 thisBot.vars.lastInteractedStackBibleData = bibleData;
-thisBot.SetUpBible({ bibleData, position, bibleType });
+await thisBot.SetUpBible({ bibleData, position, bibleType });
 
 const fixedPosition = new Vector3(position.x, position.y, 2);
 const desiredFocusOnPosition = GetCamRotationFocusPoint({

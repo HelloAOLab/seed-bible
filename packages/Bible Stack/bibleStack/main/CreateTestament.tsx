@@ -1,4 +1,7 @@
 import { arrangementService } from "bibleVizUtils.services.index";
+import { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
+import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import type { StackSectionData } from "@packages/Bible Visualization Utils/bibleVizUtils/models/entities/StackSectionData";
 
 /**
  * Creates a new `StackTestamentData` instance, sets up its sections, and stores it into the list of testaments data.
@@ -20,7 +23,18 @@ import { arrangementService } from "bibleVizUtils.services.index";
  * });
  */
 
-const { arrangementIndex, testamentIndex, bibleData, isHidden = false } = that;
+const {
+  arrangementIndex,
+  testamentIndex,
+  bibleDataId,
+  isHidden = false,
+}: {
+  arrangementIndex: number;
+  testamentIndex: number;
+  bibleData: StackBibleData;
+  bibleDataId?: string;
+  isHidden?: boolean;
+} = that;
 const testamentInfo = arrangementService.getTestamentByIndices({
   arrangementIndex,
   testamentIndex,
@@ -31,15 +45,10 @@ if (!testamentInfo) {
   return;
 }
 
-const creationInfo = { arrangementIndex, testamentIndex };
-const parentDataIds = new ParentDataIds({ stackBibleId: bibleData?.id });
-const testamentData = new StackTestamentData({
-  pieceInfo: testamentInfo,
-  id: uuid(),
-  parentDataIds,
-  isInsideBible: true,
-  creationInfo,
-});
+const creationParams = { arrangementIndex, testamentIndex };
+const parentDataIds = { stackBibleId: bibleDataId };
+const testamentDataId = uuid();
+const sectionsData: StackSectionData[] = [];
 for (const sectionIndex in testamentInfo.sections) {
   const sectionData = await thisBot.CreateSection({
     arrangementIndex,
@@ -47,12 +56,20 @@ for (const sectionIndex in testamentInfo.sections) {
     sectionIndex,
     isInsideBible: true,
     isInsideTestament: true,
-    bibleData,
-    testamentData,
+    bibleDataId,
+    testamentDataId,
     isHidden,
   });
-  testamentData.AddChild(sectionData);
+  sectionsData.push(sectionData);
 }
+const testamentData = new StackTestamentData({
+  pieceInfo: testamentInfo,
+  id: testamentDataId,
+  parentDataIds,
+  isInsideBible: true,
+  creationParams,
+  childrenData: sectionsData,
+});
 
 thisBot.vars.stackTestamentsData.push(testamentData);
 return testamentData;

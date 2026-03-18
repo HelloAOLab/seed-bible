@@ -1,5 +1,5 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas.models";
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 
 const { layoutData } = that;
 

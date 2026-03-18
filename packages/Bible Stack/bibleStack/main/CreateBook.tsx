@@ -1,5 +1,9 @@
 import { arrangementService } from "bibleVizUtils.services.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import type { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
+import type { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
+import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
 
 /**
  * Creates a new `StackBookData` instance, populates it with chapter information, and stores it in the bot's books data.
@@ -53,11 +57,16 @@ const {
   isInsideBible,
   isInsideTestament,
   isInsideSection,
-  bibleData,
-  testamentData,
-  sectionData,
+  bibleDataId,
+  testamentDataId,
+  sectionDataId,
   isHidden = false,
-} = that;
+} = that as {
+  bibleDataId?: string;
+  testamentDataId?: string;
+  sectionDataId?: string;
+};
+
 const bookInfo = arrangementService.getBookByIndices({
   arrangementIndex,
   testamentIndex,
@@ -70,12 +79,12 @@ if (!bookInfo) {
   return;
 }
 
-const parentDataIds = new ParentDataIds({
-  stackBibleId: bibleData?.id,
-  stackTestamentId: testamentData?.id,
-  stackSectionId: sectionData?.id,
-});
-const creationInfo = {
+const parentDataIds = {
+  stackBibleId: bibleDataId,
+  stackTestamentId: testamentDataId,
+  stackSectionId: sectionDataId,
+};
+const creationParams = {
   arrangementIndex,
   testamentIndex,
   sectionIndex,
@@ -84,16 +93,7 @@ const creationInfo = {
   bookLevelIndex,
   levelsLenght,
 };
-const bookData = new StackBookData({
-  piece: null,
-  pieceInfo: bookInfo,
-  id: uuid(),
-  isInsideBible,
-  isInsideTestament,
-  isInsideSection,
-  parentDataIds,
-  creationInfo,
-});
+const bookDataId = uuid();
 const bookStaticInfo = BibleVizDataRepository.getBookStaticInfo(
   bookInfo.commonName
 );
@@ -109,15 +109,25 @@ const chaptersData = await Promise.all(
       chapterInfo,
       isInsideBible: true,
       isInsideBook: true,
-      bibleData,
-      testamentData,
-      sectionData,
-      bookData,
+      bibleDataId,
+      testamentDataId,
+      sectionDataId,
+      bookDataId,
       isHidden,
+      bookName: bookInfo.commonName,
     });
   })
 );
 
-bookData.SetChildrenData(chaptersData);
+const bookData = new StackBookData({
+  pieceInfo: bookInfo,
+  id: bookDataId,
+  isInsideBible,
+  isInsideTestament,
+  isInsideSection,
+  parentDataIds,
+  creationParams,
+  childrenData: chaptersData,
+});
 thisBot.vars.stackBooksData.push(bookData);
 return bookData;

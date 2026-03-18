@@ -1,9 +1,25 @@
-import { LayoutBibleData } from "bibleVizUtils.classes.LayoutBibleData";
-import { LayoutBookData } from "bibleVizUtils.classes.LayoutBookData";
-import { LayoutChapterData } from "bibleVizUtils.classes.LayoutChapterData";
+import { LayoutBibleData } from "bibleVizUtils.models.entities.LayoutBibleData";
+import { LayoutBookData } from "bibleVizUtils.models.entities.LayoutBookData";
+import { LayoutChapterData } from "bibleVizUtils.models.entities.LayoutChapterData";
 import { tryHideNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
-let { pieceData } = that;
-const { piece } = that;
+import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+
+let {
+  pieceData,
+}: {
+  pieceData: LayoutBibleData | LayoutBookData | LayoutChapterData;
+} = that;
+const {
+  piece,
+}: {
+  piece: Bot | undefined;
+} = that;
+
+if (!pieceData || !piece) {
+  console.error("A pieceData or a piece must be provided at DeletePiece");
+  return;
+}
+
 if (!pieceData) {
   if (piece.tags.isLayoutCover) {
     pieceData = thisBot.vars.layoutsData.find((layoutData) => {
@@ -13,6 +29,7 @@ if (!pieceData) {
     pieceData = thisBot.GetPieceData({ piece });
   }
 }
+
 if (pieceData) {
   switch (true) {
     case pieceData instanceof LayoutBibleData:
@@ -29,7 +46,7 @@ if (pieceData) {
   }
 } else console.warn("scriptureMap3D.main.DeletePiece. No piece data found.");
 
-function DeleteChapter(chapterData) {
+function DeleteChapter(chapterData: LayoutChapterData) {
   const chapterDataIndex = thisBot.vars.layoutChaptersData.indexOf(chapterData);
   if (chapterData.piece) {
     tryHideNotification(chapterData.piece);
@@ -56,75 +73,72 @@ function DeleteChapter(chapterData) {
         chapterData.piece.vars.chunksOfVerses.length
       );
     }
+    const piece = chapterData.clearPiece();
     ObjectPooler.ReleaseObject({
-      obj: chapterData.piece,
-      tag: chapterData.piece.tags.poolTag,
+      obj: piece,
+      tag: piece.tags.poolTag,
     });
-    chapterData.piece = null;
   }
-  chapterData.pieceInfo = null;
-  chapterData.parentDataIds = null;
-  chapterData.ResetData();
+  // chapterData.pieceInfo = null;
+  // chapterData.parentDataIds = null;
+  // chapterData.ResetData();
   if (chapterDataIndex >= 0)
     thisBot.vars.layoutChaptersData.splice(chapterDataIndex, 1);
 }
 
-function DeleteBook(layoutBookData) {
+function DeleteBook(layoutBookData: LayoutBookData) {
   const bookDataIndex = thisBot.vars.layoutBooksData.indexOf(layoutBookData);
-  layoutBookData.childrenData.forEach((chapterData) => {
+  const clearedChapters = layoutBookData.clearChildren();
+  for (const chapterData of clearedChapters) {
     DeleteChapter(chapterData);
-  });
-  layoutBookData.childrenData.splice(0, layoutBookData.childrenData.length);
-  if (layoutBookData.piece) {
+  }
+  const piece = layoutBookData.clearPiece();
+  if (piece) {
     ObjectPooler.ReleaseObject({
-      obj: layoutBookData.piece,
-      tag: layoutBookData.piece.tags.poolTag,
+      obj: piece,
+      tag: piece.tags.poolTag,
     });
-    layoutBookData.piece = null;
   }
 
-  layoutBookData.pieceInfo = null;
-  layoutBookData.parentDataIds = null;
-  layoutBookData.creationInfo = null;
+  // layoutBookData.pieceInfo = null;
+  // layoutBookData.parentDataIds = null;
+  // layoutBookData.creationParams = null;
 
   if (bookDataIndex >= 0) thisBot.vars.layoutBooksData.splice(bookDataIndex, 1);
 }
 
-function DeleteLayout(layoutData) {
+function DeleteLayout(layoutData: LayoutBibleData) {
   const layoutDataIndex = thisBot.vars.layoutsData.indexOf(layoutData);
-  const staticLayoutPiecesKeys = Object.keys(layoutData.staticLayoutPieces);
-  layoutData.childrenStructures.forEach((layoutBookStructure) => {
-    DeleteBook(layoutBookStructure.layoutBookData);
+  const clearedPieces = layoutData.clearStaticPieces();
+  if (clearedPieces) {
+    for (const staticPiece of clearedPieces) {
+      const fixedPiece = Array.isArray(staticPiece)
+        ? staticPiece
+        : [staticPiece];
+      fixedPiece.forEach((currPiece) => {
+        ObjectPooler.ReleaseObject({
+          obj: currPiece,
+          tag: currPiece.tags.poolTag,
+        });
+      });
+    }
+  }
+  const clearedStructures = layoutData.clearChildren();
+  for (const structure of clearedStructures) {
+    DeleteBook(structure.layoutBookData);
 
     ObjectPooler.ReleaseObject({
-      obj: layoutBookStructure.nameLabel,
-      tag: layoutBookStructure.nameLabel.tags.poolTag,
+      obj: structure.nameLabel,
+      tag: structure.nameLabel.tags.poolTag,
     });
     ObjectPooler.ReleaseObject({
-      obj: layoutBookStructure.dateLabel,
-      tag: layoutBookStructure.dateLabel.tags.poolTag,
+      obj: structure.dateLabel,
+      tag: structure.dateLabel.tags.poolTag,
     });
-
-    layoutBookStructure.layoutBookData = null;
-    layoutBookStructure.nameLabel = null;
-    layoutBookStructure.dateLabel = null;
     const bookStructureIndex =
-      thisBot.vars.layoutBooksStructure.indexOf(layoutBookStructure);
+      thisBot.vars.layoutBooksStructure.indexOf(structure);
     if (bookStructureIndex >= 0)
       thisBot.vars.layoutBooksStructure.splice(bookStructureIndex, 1);
-  });
-  layoutData.childrenStructures.splice(0, layoutData.childrenStructures.length);
-  staticLayoutPiecesKeys.forEach((key) => {
-    const piece = layoutData.staticLayoutPieces[key];
-    const fixedPiece = Array.isArray(piece) ? piece : [piece];
-    fixedPiece.forEach((currPiece) => {
-      ObjectPooler.ReleaseObject({
-        obj: currPiece,
-        tag: currPiece.tags.poolTag,
-      });
-    });
-    layoutData.staticLayoutPieces[key] = null;
-  });
-  layoutData.staticLayoutPieces = null;
+  }
   if (layoutDataIndex >= 0) thisBot.vars.layoutsData.splice(layoutDataIndex, 1);
 }

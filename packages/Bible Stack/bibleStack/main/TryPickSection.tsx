@@ -21,6 +21,7 @@ if (found) {
     if (!thisBot.vars.lastInteractedStackTestamentData.isSplitIntoSections)
       await thisBot.SelectTestament({
         testament: thisBot.vars.lastInteractedStackTestamentData.piece,
+        source: "TryPickSection",
       });
     await thisBot.PickSection({
       testamentData: thisBot.vars.lastInteractedStackTestamentData,

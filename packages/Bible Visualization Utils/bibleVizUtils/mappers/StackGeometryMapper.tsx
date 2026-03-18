@@ -5,8 +5,8 @@ import type {
 import type {
   BookLayout,
   ComputedGroupBookProperties,
-} from "bibleVizUtils.models.canvas.models";
-import type { Span } from "bibleVizUtils.models.common.types";
+} from "bibleVizUtils.models.canvas";
+import type { Span } from "bibleVizUtils.models.commonTypes";
 
 export class StackGeometryMapper {
   private static computeAxisProperties(

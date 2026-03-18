@@ -96,9 +96,6 @@
       "bibleStack.main.CheckChapterAvailabilityInBook": [
         "./packages/Bible Stack/bibleStack/main/CheckChapterAvailabilityInBook.tsx"
       ],
-      "bibleStack.main.CheckQueuedChapterAction": [
-        "./packages/Bible Stack/bibleStack/main/CheckQueuedChapterAction.tsx"
-      ],
       "bibleStack.main.ClearExperience": [
         "./packages/Bible Stack/bibleStack/main/ClearExperience.tsx"
       ],
@@ -372,9 +369,6 @@
       "bibleStack.main.PushDataToSingleDataArray": [
         "./packages/Bible Stack/bibleStack/main/PushDataToSingleDataArray.tsx"
       ],
-      "bibleStack.main.QueuedChapterData": [
-        "./packages/Bible Stack/bibleStack/main/QueuedChapterData.tsm"
-      ],
       "bibleStack.main.RemovePieceFromHighlightedList": [
         "./packages/Bible Stack/bibleStack/main/RemovePieceFromHighlightedList.tsx"
       ],
@@ -509,9 +503,6 @@
       ],
       "bibleStack.main.UnhighlightChapter": [
         "./packages/Bible Stack/bibleStack/main/UnhighlightChapter.tsx"
-      ],
-      "bibleStack.main.UnhighlightDelayInfo": [
-        "./packages/Bible Stack/bibleStack/main/UnhighlightDelayInfo.tsm"
       ],
       "bibleStack.main.UpdateBibleStack": [
         "./packages/Bible Stack/bibleStack/main/UpdateBibleStack.tsx"
@@ -984,21 +975,6 @@
       "bibleVizUtils.adapters.SeedBiblePresenceProvider": [
         "./packages/Bible Visualization Utils/bibleVizUtils/adapters/SeedBiblePresenceProvider.tsx"
       ],
-      "bibleVizUtils.classes.onCreate": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/classes/onCreate.tsx"
-      ],
-      "bibleVizUtils.classes.ParentDataIds": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/classes/ParentDataIds.tsx"
-      ],
-      "bibleVizUtils.classes.QueuedChapterData": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/classes/QueuedChapterData.tsx"
-      ],
-      "bibleVizUtils.classes.TourGuideData": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/classes/TourGuideData.tsx"
-      ],
-      "bibleVizUtils.classes.UnhighlightDelayInfo": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/classes/UnhighlightDelayInfo.tsx"
-      ],
       "bibleVizUtils.controllers.label.lifecycle": [
         "./packages/Bible Visualization Utils/bibleVizUtils/controllers/label/lifecycle.tsx"
       ],
@@ -1134,26 +1110,23 @@
       "bibleVizUtils.mappers.StackGeometryMapper": [
         "./packages/Bible Visualization Utils/bibleVizUtils/mappers/StackGeometryMapper.tsx"
       ],
-      "bibleVizUtils.models.arrangement.models": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/models/arrangement.models.tsx"
+      "bibleVizUtils.models.arrangement": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/models/arrangement.tsx"
       ],
-      "bibleVizUtils.models.canvas.models": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/models/canvas.models.tsx"
+      "bibleVizUtils.models.canvas": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/models/canvas.tsx"
       ],
-      "bibleVizUtils.models.casualos.models": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/models/casualos.models.tsx"
+      "bibleVizUtils.models.casualos": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/models/casualos.tsx"
       ],
-      "bibleVizUtils.models.common.types": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/models/common.types.tsx"
+      "bibleVizUtils.models.commonTypes": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/models/commonTypes.tsx"
       ],
       "bibleVizUtils.models.entities.LayoutBibleData": [
         "./packages/Bible Visualization Utils/bibleVizUtils/models/entities/LayoutBibleData.tsx"
       ],
       "bibleVizUtils.models.entities.LayoutBookData": [
         "./packages/Bible Visualization Utils/bibleVizUtils/models/entities/LayoutBookData.tsx"
-      ],
-      "bibleVizUtils.models.entities.LayoutBookStructure": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/models/entities/LayoutBookStructure.tsx"
       ],
       "bibleVizUtils.models.entities.LayoutChapterData": [
         "./packages/Bible Visualization Utils/bibleVizUtils/models/entities/LayoutChapterData.tsx"
@@ -1182,17 +1155,17 @@
       "bibleVizUtils.models.entities.StackTestamentData": [
         "./packages/Bible Visualization Utils/bibleVizUtils/models/entities/StackTestamentData.tsx"
       ],
-      "bibleVizUtils.models.highlight.models": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/models/highlight.models.tsx"
+      "bibleVizUtils.models.highlight": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/models/highlight.tsx"
       ],
-      "bibleVizUtils.models.label.models": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/models/label.models.tsx"
+      "bibleVizUtils.models.label": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/models/label.tsx"
       ],
-      "bibleVizUtils.models.seedBible.models": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/models/seedBible.models.tsx"
+      "bibleVizUtils.models.seedBible": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/models/seedBible.tsx"
       ],
-      "bibleVizUtils.models.userPresence.models": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/models/userPresence.models.tsx"
+      "bibleVizUtils.models.userPresence": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/models/userPresence.tsx"
       ],
       "bibleVizUtils.prefabs.activityNotification.OnReleased": [
         "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/activityNotification/OnReleased.tsx"
@@ -3276,7 +3249,7 @@
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/verse/OnReleased.tsx"
       ],
       "scriptureMap3D.services.PieceDataRepository": [
-        "./packages/Scripture Map 3D/scriptureMap3D/services.tsx/PieceDataRepository.tsx"
+        "./packages/Scripture Map 3D/scriptureMap3D/services/PieceDataRepository.tsx"
       ],
       "ab.shell.chronicler.chronicleSubscription_updateLookup": [
         "./packages/seed-bible/ab/shell/chronicler/chronicleSubscription_updateLookup.tsx"

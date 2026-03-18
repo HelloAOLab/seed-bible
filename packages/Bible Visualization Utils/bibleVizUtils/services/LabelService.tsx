@@ -1,7 +1,7 @@
 import {
   type LabelDateFormatType,
   LabelDateFormat,
-} from "bibleVizUtils.models.label.models";
+} from "bibleVizUtils.models.label";
 
 class LabelService {
   #dateFormat: LabelDateFormatType = LabelDateFormat.Absolute;

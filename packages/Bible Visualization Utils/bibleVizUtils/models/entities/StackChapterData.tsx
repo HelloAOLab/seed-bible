@@ -1,14 +1,43 @@
-import {
+import type {
   Vector2 as Vector2Type,
-  type Bot,
+  Bot,
 } from "../../../../../typings/AuxLibraryDefinitions";
 import { StackPieceData } from "bibleVizUtils.models.entities.StackPieceData";
-import type { ParentDataIds } from "bibleVizUtils.models.canvas.models";
+import type {
+  ParentDataIds,
+  StackChapterCreationParams,
+  BiblePieceType,
+} from "bibleVizUtils.models.canvas";
+import type { ChapterInfo } from "bibleVizUtils.data.BibleVizDataRepository";
+import type { HexString } from "bibleVizUtils.models.commonTypes";
 
-export class StackChapterData extends StackPieceData<never> {
-  #isSelected: boolean;
-  #highlightsInfo: any[] = []; // TODO: Define this
-  #isInsideBook: boolean | undefined;
+interface DataParams {
+  isSelected: boolean;
+  id: string;
+  piece?: Bot;
+  pieceInfo: ChapterInfo;
+  parentDataIds: ParentDataIds;
+  isInsideBible: boolean;
+  isInsideBook?: boolean;
+  isActive?: boolean;
+  isHidden?: boolean;
+  creationParams: StackChapterCreationParams;
+}
+
+type HighlightInfo = {
+  key: string;
+  typeOfPiece: BiblePieceType;
+  color: HexString;
+};
+
+export class StackChapterData extends StackPieceData<
+  never,
+  ChapterInfo,
+  StackChapterCreationParams
+> {
+  #isSelected: DataParams["isSelected"];
+  #highlightsInfo: HighlightInfo[] = [];
+  #isInsideBook: DataParams["isInsideBook"];
 
   constructor({
     isSelected,
@@ -19,19 +48,8 @@ export class StackChapterData extends StackPieceData<never> {
     isInsideBible = true,
     isInsideBook = true,
     isHidden = false,
-    creationInfo = false,
-  }: {
-    isSelected: boolean;
-    id: string;
-    piece: Bot;
-    pieceInfo: any; // TODO: Define this
-    parentDataIds: ParentDataIds;
-    isInsideBible: boolean;
-    isInsideBook?: boolean;
-    isActive?: boolean;
-    isHidden?: boolean;
-    creationInfo: any; // TODO: Define this
-  }) {
+    creationParams,
+  }: DataParams) {
     super({
       id,
       piece,
@@ -39,24 +57,24 @@ export class StackChapterData extends StackPieceData<never> {
       parentDataIds,
       isInsideBible,
       isHidden,
-      creationInfo,
-      isActive: true,
+      creationParams,
+      isActive: false,
     });
     this.#isInsideBook = isInsideBook;
     this.#isSelected = isSelected;
   }
 
-  override ResetData() {
-    super.ResetData();
+  resetData() {
+    super.resetData();
     this.#isInsideBook = undefined;
     this.#isSelected = false;
   }
 
-  AddHighlightInfo(newHighlightInfo: any) {
+  addHighlightInfo(newHighlightInfo: HighlightInfo) {
     this.#highlightsInfo.push(newHighlightInfo);
   }
 
-  GetHighlightInfoByKey(key: string) {
+  getHighlightInfoByKey(key: string) {
     return this.#highlightsInfo.find((highlightInfo) => {
       return highlightInfo.key === key;
     });
@@ -73,13 +91,23 @@ export class StackChapterData extends StackPieceData<never> {
   get isSelected() {
     return this.#isSelected;
   }
-  set isSelected(value) {
-    this.#isSelected = value;
+  select() {
+    this.#isSelected = true;
+  }
+  deselect() {
+    this.#isSelected = false;
   }
   get isInsideBook() {
     return this.#isInsideBook;
   }
-  set isInsideBook(value) {
-    this.#isInsideBook = value;
+  attachToBook() {
+    this.#isInsideBook = true;
+  }
+  detachFromBook() {
+    this.#isInsideBook = false;
+  }
+  resetHierarchy(): Bot[] {
+    this.show();
+    return [];
   }
 }
