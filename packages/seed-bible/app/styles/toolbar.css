@@ -13,8 +13,10 @@
   .toolbar-container-1 {
     bottom: 0;
     top: auto;
+    left: 0;
     width: 100vw;
     padding: 0;
+    z-index: 1000;
   }
 }
 
@@ -24,21 +26,20 @@
   align-items: center;
   justify-content: space-between;
   background: var(--toolbarBackground, #ffffff);
-  border-radius: 12px;
-
-  padding: 1px 10px;
-  box-shadow: 0 26px 10px rgba(0, 0, 0, 0.1);
-  gap: 10px;
-  /* min-width: 320px; */
+  border-radius: 20px;
+  padding: 8px 12px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08);
+  gap: 4px;
   max-width: 600px;
-  /* width: 80%; */
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
   bottom: 18px;
   z-index: 99;
   border: 1px solid var(--toolbarBorder, #00000024);
-  height: 50px;
+  /* height: 72px; */
   pointer-events: none; /* Disabled until app mounts */
   transition: transform 0.3s ease;
 }
@@ -132,13 +133,13 @@
   height: 40px;
 }
 
-.mobile-navbar-arrow:hover {
+/* .mobile-navbar-arrow:hover {
   background-color: rgba(0, 0, 0, 0.08);
 }
 
 .mobile-navbar-arrow:active {
   background-color: rgba(0, 0, 0, 0.12);
-}
+} */
 
 .mobile-navbar-arrow .material-symbols-outlined {
   font-size: 24px;
@@ -224,7 +225,19 @@
 }
 
 .toolbar-button:hover {
-  /* background-color: var(--pageBackground) !important; */
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.leftClick .toolbar-button,
+.rightClick .toolbar-button {
+  border-radius: 50%;
+  padding: 8px;
+  width: 40px;
+  height: 40px;
+  flex-direction: row;
+  justify-content: center;
+  gap: 0;
+  align-self: center;
 }
 
 .toolbar-button:focus {
@@ -238,25 +251,64 @@
 }
 
 .toolbar-item-wrapper {
-  flex: 0 0 44px;
+  flex: 0 0 auto;
   height: 100%;
   position: relative;
   transition: transform 0.25s ease;
 }
 
+.toolbar-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--toolbarBorder, rgba(0, 0, 0, 0.14));
+  flex-shrink: 0;
+  align-self: center;
+  margin: 0 4px;
+}
+
 .toolbar-button {
   outline: none;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  gap: 3px;
+  border-radius: 12px;
   background-color: transparent;
   cursor: pointer;
   transition:
     background-color 0.2s ease,
     transform 0.25s ease;
   width: 100%;
-  height: 100%;
-  padding: 0;
+  height: 52px;
+  padding: 6px 10px;
+}
+
+.toolbar-button .material-symbols-outlined {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.toolbar-button img {
+  height: 24px;
+  width: 24px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.toolbar-btn-label {
+  font-size: 11px;
+  font-weight: 400;
+  font-family: "Lato", sans-serif;
+  color: var(--iconColor, #333);
+  white-space: nowrap;
+  line-height: 1;
+  height: 13px;
 }
 
 .toolbar-button:hover {

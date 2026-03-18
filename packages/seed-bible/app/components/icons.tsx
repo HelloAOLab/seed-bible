@@ -119,7 +119,31 @@ export const MobileSettingsIcon = (props) => (
     </defs>
   </svg>
 );
-
+export const PlusIcon = (props) => (
+  <svg
+    width={32}
+    height={32}
+    viewBox="0 0 32 32"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M15.9271 6.66797V25.3346"
+      stroke="white"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M6.59375 16H25.1809"
+      stroke="white"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 export const ClientLogo = ({ handleOpenClientSite, url, alt }) => {
   return (
     <img

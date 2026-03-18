@@ -21,11 +21,12 @@ import {
   ClientLogo,
   BookMarkIcon,
   MobileSettingsIcon,
+  PlusIcon,
 } from "app.components.icons";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useSideBarContext } from "app.hooks.sideBar";
 import SurroundingDivs from "app.components.surroundingDivs";
-import { TabOptions } from "app.components.types";
+import { TabOptions, getSettingsPreset } from "app.components.types";
 import { FolderIcon, OpenFolderIcon } from "app.components.icons";
 import {
   ImportSpaceModal,
@@ -50,13 +51,11 @@ const { useState, useRef, useEffect, useMemo } = os.appHooks;
 
 const LOCAL_ENV = !configBot.tags.pattern;
 const removeBookMark =
-  tags?.settingsConfigs?.presets?.[
-    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-  ]?.appSettings?.removeBookMark;
+  tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+    ?.removeBookMark;
 const removeAddSession =
-  tags?.settingsConfigs?.presets?.[
-    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-  ]?.appSettings?.removeAddSession;
+  tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+    ?.removeAddSession;
 
 const CircleCounter = ({ data, book, chapter }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -388,9 +387,8 @@ function Tab({
     tabsIcons,
   } = useTabsContext();
   const removeEditMode =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.removeEditMode;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeEditMode;
   const OPTIONS = (tab) => ({
     type: "normal",
     items: [
@@ -850,9 +848,8 @@ function SideBar({ panelsNumber }) {
     sharedTab,
   } = useTabsContext();
   const hidePanels =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.disablePanels;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.disablePanels;
   globalThis.AddTab = addTab;
   const { screens, setScreens, fullScreen, setFullScreen, ReSeed, setReSeed } =
     useBibleContext();
@@ -1259,9 +1256,8 @@ function SideBar({ panelsNumber }) {
     </svg>
   );
   const removeJoinSession =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.removeJoinSession || false;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeJoinSession || false;
 
   const MenuOptions = {
     type: "normal",
@@ -1519,8 +1515,7 @@ function SideBar({ panelsNumber }) {
 
   const { moveMultipleTabs } = useTabsContext();
   const holdTimeout = useRef({ time: null, clicked: null });
-  const activePreset =
-    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full";
+  const activePreset = getSettingsPreset();
   const clientSite =
     tags?.settingsConfigs?.presets?.[activePreset]?.clientBranding?.clientSite;
   const clientName =
@@ -1846,7 +1841,9 @@ function SideBar({ panelsNumber }) {
             )}
 
             <button className="mobile-nav-add" onClick={mobileAddTab}>
-              <span>+</span>
+              <span>
+                <PlusIcon />
+              </span>
             </button>
 
             {!removeBookMark && (
@@ -1916,7 +1913,7 @@ function SideBar({ panelsNumber }) {
             .mobile-nav-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text1);cursor:pointer}
             .mobile-nav-label{font-size:12px}
             .mobile-nav-add{
-            border-radius: 28px;
+            border-radius: 46px;
             background: var(--selectedSpaceColor);
             border: none;
             color: white;
@@ -1927,6 +1924,7 @@ function SideBar({ panelsNumber }) {
             cursor: pointer;
             width: 82px;
             height: 52px;
+            padding-top: 7px;
             }
 
             /* bookmark folder styles */
@@ -2549,7 +2547,7 @@ function SideBar({ panelsNumber }) {
         {folders.length > 0 && (
           <div style={{ marginBottom: "10px" }} className={"sidebarLine"}></div>
         )}
-        {multiSelectMode && (
+        {multiSelectMode && !collapsed && (
           <div className="multiSelectActions">
             <label
               style={{
@@ -3107,9 +3105,8 @@ export const SettingsProfile = () => {
     }
   };
   const removeSpaces =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.removeSpaces;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeSpaces;
 
   return (
     <div className="dot">
@@ -3183,9 +3180,8 @@ export const UserProfile = ({ collapsed }) => {
     userData
   );
   const removeAccountOptions =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.removeAccountOptions;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeAccountOptions;
   const Icon = icons[iconIndex];
   return (
     <div

@@ -1,5 +1,6 @@
 const { useState, useEffect, createContext, useContext } = os.appHooks;
 import { getStyleOf } from "app.styles.styler";
+import { getSettingsPreset } from "app.components.types";
 import { useSideBarContext } from "app.hooks.sideBar";
 import { useTabsContext } from "app.hooks.tabs";
 import { useBibleContext } from "app.hooks.bibleVariables";
@@ -797,9 +798,8 @@ export const AccountSetting = ({
   if (isHidden && !editMode) return null;
 
   const isAnonymous =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.onlineUsers?.anonymous;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.onlineUsers
+      ?.anonymous;
   let colorIndex = 0;
   let iconIndex = 0;
 

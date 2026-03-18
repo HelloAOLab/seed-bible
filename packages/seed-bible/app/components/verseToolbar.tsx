@@ -12,6 +12,7 @@ import {
 } from "app.components.icons";
 import { getStyleOf } from "app.styles.styler";
 import { globalAPI } from "app.controller.controllerBuilder";
+import { getSettingsPreset } from "app.components.types";
 
 export function VerseToolbar({
   clickedVersesContext,
@@ -302,13 +303,11 @@ export function VerseToolbar({
     );
   }, [clickedVersesContext, activeSpace, spaces]);
   const disableHighlighting =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.pageSettings?.disableHighlighting;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.pageSettings
+      ?.disableHighlighting;
   const removeBookMark =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.removeBookMark;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeBookMark;
 
   return (
     <>
@@ -696,6 +695,14 @@ export function VerseToolbar({
                       </span>
                     </button>
                   ))}
+                <button
+                  className="mobile-action-btn"
+                  onClick={onClose}
+                  style={{ marginLeft: "auto" }}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                  <span>Cancel</span>
+                </button>
               </>
             )}
           </div>
@@ -733,9 +740,8 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
     return `${that.book} ${that.chapter}:${groups.join(",")}`;
   };
   const removeAiAgent =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.pageSettings?.removeAiAgent;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.pageSettings
+      ?.removeAiAgent;
 
   const MenuOptions = {
     type: "normal",

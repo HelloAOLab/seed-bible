@@ -3,6 +3,7 @@ import {
   getCachedBibleData,
   getCachedFootnotes,
 } from "app.hooks.bibleDataManager";
+import { getSettingsPreset } from "app.components.types";
 
 import { getStyleOf } from "app.styles.styler";
 const {
@@ -1075,6 +1076,20 @@ function ThePage({
     globalThis.SetInHold = setInHold;
     globalThis.SetShowCommands = setShowCommands;
 
+    globalThis.ClearMobileVerseSelection = () => {
+      setClickedVerses([]);
+      setClickedVersesContext({});
+      setShowVerseToolbar(false);
+      setCommandHighlight([]);
+      setLastSelectedVerse(null);
+      setSelectedText("");
+      setShowCommands(false);
+      if (window.getSelection) {
+        const sel = window.getSelection();
+        if (sel?.removeAllRanges) sel.removeAllRanges();
+      }
+    };
+
     globalThis.HighlightWords = highlightWords;
     globalThis.RemoveWordHighlight = removeWordHighlight;
     globalThis.ClearAllWordHighlights = clearAllWordHighlights;
@@ -1457,6 +1472,11 @@ function ThePage({
     return () => document.removeEventListener("keydown", handleEsc);
   }, []);
 
+  useEffect(() => {
+    const hasSelection = clickedVerses.length > 0 || showCommands;
+    (globalThis as any).SetMobileHasSelection?.(hasSelection);
+  }, [clickedVerses, showCommands]);
+
   // NEW: Handle verse clicks
   const handleVerseClick = useCallback(
     (verseNumber, verseElement) => {
@@ -1749,9 +1769,14 @@ function ThePage({
   }, []);
 
   const removeBibleStack =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.removeBibleStack;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeBibleStack;
+
+  const removeBookMark =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeBookMark;
+  const mobileBookLogo =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.mobileBookLogo;
 
   return (
     <>
@@ -2139,7 +2164,8 @@ function ThePage({
                         </button>
                       </div>
                     </div>
-                    {tab?.id &&
+                    {!removeBookMark &&
+                      tab?.id &&
                       masks?.mobileBookmarks &&
                       Object.values(masks.mobileBookmarks)
                         .flat()
@@ -2312,7 +2338,10 @@ function ThePage({
                       <img
                         className="coloredIcon"
                         style={{ width: "50px" }}
-                        src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
+                        src={
+                          mobileBookLogo ||
+                          "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
+                        }
                       />
                     </div>
 
@@ -2335,11 +2364,13 @@ function ThePage({
                         position: "relative",
                       }}
                     >
-                      <PageToolbar
-                        panelId={panelId}
-                        tab={tab}
-                        path="showInStarterToolbar"
-                      />
+                      {!removeBibleStack && (
+                        <PageToolbar
+                          panelId={panelId}
+                          tab={tab}
+                          path="showInStarterToolbar"
+                        />
+                      )}
                     </div>
                   </div>
                 </div>

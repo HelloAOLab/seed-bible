@@ -53,7 +53,7 @@ const SharePopup = ({
     // },
     {
       name: "X",
-      icon: "https://static.vecteezy.com/system/resources/previews/027/395/710/original/twitter-brand-new-logo-3-d-with-new-x-shaped-graphic-of-the-world-s-most-popular-social-media-free-png.png",
+      icon: "https://pngimg.com/uploads/x_logo/x_logo_PNG14.png",
       share: () =>
         window.open(
           `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`,
