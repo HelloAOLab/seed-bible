@@ -91,7 +91,7 @@ export function BibleSelector(props: BibleSelectorProps) {
               {t("oldTestament", { defaultValue: "Old Testament" })}
             </h4>
             <div className="sb-selector-books-grid">
-              {oldTestamentRows.map((row, rowIndex) => {
+              {oldTestamentRows.value.map((row, rowIndex) => {
                 const expandedBookInRow =
                   row.find((book) => book.id === expandedBookId.value) ?? null;
                 return (
@@ -169,7 +169,7 @@ export function BibleSelector(props: BibleSelectorProps) {
               {t("newTestament", { defaultValue: "New Testament" })}
             </h4>
             <div className="sb-selector-books-grid">
-              {newTestamentRows.map((row, rowIndex) => {
+              {newTestamentRows.value.map((row, rowIndex) => {
                 const expandedBookInRow =
                   row.find((book) => book.id === expandedBookId.value) ?? null;
                 return (
