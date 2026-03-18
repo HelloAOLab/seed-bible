@@ -1924,6 +1924,7 @@ function SideBar({ panelsNumber }) {
             cursor: pointer;
             width: 82px;
             height: 52px;
+            padding-top: 7px;
             }
 
             /* bookmark folder styles */
