@@ -78,7 +78,7 @@ function extractEndpointFromAvailableTranslationsUrl(
   }
 }
 
-export function useBibleReadingState(
+export function createBibleReadingState(
   api: FreeUseBibleAPI,
   options: InitialBibleReadingOptions = {}
 ): BibleReadingState {

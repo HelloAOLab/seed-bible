@@ -4,7 +4,7 @@ import type {
 } from "seed-bible.managers.FreeUseBibleAPI";
 import {
   type BibleReadingState,
-  useBibleReadingState,
+  createBibleReadingState,
 } from "seed-bible.managers.BibleReadingManager";
 import type { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
@@ -122,7 +122,7 @@ export function useBibleSelector(
         readingState.value = effectivePane.tab.readingState;
       } else {
         if (!transientReadingState.value) {
-          transientReadingState.value = useBibleReadingState(api);
+          transientReadingState.value = createBibleReadingState(api);
         }
         readingState.value = transientReadingState.value;
       }

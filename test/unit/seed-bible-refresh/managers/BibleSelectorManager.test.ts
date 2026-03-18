@@ -4,7 +4,7 @@ import { render, h } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 // import * as appHooks from "preact/hooks";
-import { useBibleReadingState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
+import { createBibleReadingState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
 import {
   FreeUseBibleAPI,
   type AvailableTranslations,
@@ -363,7 +363,7 @@ describe("useBibleSelector", () => {
   it("setOpen() opens the selector and displays books", async () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
-    const readingState = useBibleReadingState(api);
+    const readingState = createBibleReadingState(api);
     const pane = createPane(readingState);
     const tabsManager = createTabsManager(readingState);
     const panesManager = createPanesManager(pane);
@@ -387,7 +387,7 @@ describe("useBibleSelector", () => {
   it("setSearch() filters books", async () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
-    const readingState = useBibleReadingState(api);
+    const readingState = createBibleReadingState(api);
     const pane = createPane(readingState);
     const tabsManager = createTabsManager(readingState);
     const panesManager = createPanesManager(pane);
@@ -414,7 +414,7 @@ describe("useBibleSelector", () => {
   it("setExpandedBook() sets expandedBookId", async () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
-    const readingState = useBibleReadingState(api);
+    const readingState = createBibleReadingState(api);
     const pane = createPane(readingState);
     const tabsManager = createTabsManager(readingState);
     const panesManager = createPanesManager(pane);
@@ -440,7 +440,7 @@ describe("useBibleSelector", () => {
   it("selectTranslation() changes the reading state translation", async () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
-    const readingState = useBibleReadingState(api);
+    const readingState = createBibleReadingState(api);
     const pane = createPane(readingState);
     const tabsManager = createTabsManager(readingState);
     const panesManager = createPanesManager(pane);
@@ -467,7 +467,7 @@ describe("useBibleSelector", () => {
   it("selectChapter() changes the reading state chapter", async () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
-    const readingState = useBibleReadingState(api);
+    const readingState = createBibleReadingState(api);
     const pane = createPane(readingState);
     const tabsManager = createTabsManager(readingState);
     const panesManager = createPanesManager(pane);

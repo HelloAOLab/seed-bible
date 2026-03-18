@@ -4,7 +4,7 @@ import {
   DEFAULT_BOOK_ID,
   DEFAULT_CHAPTER_NUMBER,
   DEFAULT_TRANSLATION_ID,
-  useBibleReadingState,
+  createBibleReadingState,
   type BibleReadingState,
 } from "seed-bible.managers.BibleReadingManager";
 
@@ -40,7 +40,7 @@ function createInitialTabs(api: FreeUseBibleAPI): ReaderTab[] {
     {
       id: "tab-1",
       title: "Tab 1",
-      readingState: useBibleReadingState(api, {
+      readingState: createBibleReadingState(api, {
         initialTranslationId: getInitialTranslationId(),
         initialBookId: getInitialFirstTabBookId(),
         initialChapterNumber: getInitialFirstTabChapter(),
@@ -49,7 +49,7 @@ function createInitialTabs(api: FreeUseBibleAPI): ReaderTab[] {
     {
       id: "tab-2",
       title: "Tab 2",
-      readingState: useBibleReadingState(api),
+      readingState: createBibleReadingState(api),
     },
   ];
 }
@@ -159,7 +159,7 @@ export function useTabs(api: FreeUseBibleAPI) {
     const nextTab: ReaderTab = {
       id: `tab-${nextNumber}`,
       title: `Tab ${nextNumber}`,
-      readingState: useBibleReadingState(sharedApi ?? api),
+      readingState: createBibleReadingState(sharedApi ?? api),
     };
     tabs.value = [...currentTabs, nextTab];
     selectedTabId.value = nextTab.id;

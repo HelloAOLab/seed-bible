@@ -1,5 +1,5 @@
 import {
-  useBibleReadingState,
+  createBibleReadingState,
   type BibleReadingState,
 } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
 import {
@@ -221,7 +221,7 @@ async function waitForInitialLoad(state: BibleReadingState): Promise<void> {
   await waitFor(() => state.loading.value === false);
 }
 
-describe("useBibleReadingState", () => {
+describe("createBibleReadingState", () => {
   let logSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -236,7 +236,7 @@ describe("useBibleReadingState", () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
 
-    const state = useBibleReadingState(api);
+    const state = createBibleReadingState(api);
     await waitForInitialLoad(state);
 
     expect(state.translationId.value).toBe("BSB");
@@ -246,7 +246,7 @@ describe("useBibleReadingState", () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
 
-    const state = useBibleReadingState(api);
+    const state = createBibleReadingState(api);
     await waitForInitialLoad(state);
 
     expect(webGetMock).toHaveBeenCalledWith(makeUrl("/api/BSB/books.json"));
@@ -257,7 +257,7 @@ describe("useBibleReadingState", () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
 
-    const state = useBibleReadingState(api);
+    const state = createBibleReadingState(api);
     await waitForInitialLoad(state);
 
     await state.selectBook("EXO");
@@ -272,7 +272,7 @@ describe("useBibleReadingState", () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
 
-    const state = useBibleReadingState(api);
+    const state = createBibleReadingState(api);
     await waitForInitialLoad(state);
 
     await state.selectChapter("GEN", 5);
@@ -287,7 +287,7 @@ describe("useBibleReadingState", () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
 
-    const state = useBibleReadingState(api);
+    const state = createBibleReadingState(api);
     await waitForInitialLoad(state);
 
     await state.loadNextChapter();
@@ -301,7 +301,7 @@ describe("useBibleReadingState", () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
 
-    const state = useBibleReadingState(api);
+    const state = createBibleReadingState(api);
     await waitForInitialLoad(state);
     await state.selectChapter("GEN", 2);
 
@@ -316,7 +316,7 @@ describe("useBibleReadingState", () => {
     setWebResponses(createDefaultResponseMap());
     const api = createApi();
 
-    const state = useBibleReadingState(api);
+    const state = createBibleReadingState(api);
     await waitForInitialLoad(state);
 
     const verse = makeVerse(2);
@@ -359,7 +359,7 @@ describe("useBibleReadingState", () => {
     setWebResponses(responses);
     const api = createApi();
 
-    const state = useBibleReadingState(api);
+    const state = createBibleReadingState(api);
     await waitForInitialLoad(state);
 
     await state.selectTranslation("NIV");
@@ -390,7 +390,7 @@ describe("useBibleReadingState", () => {
     setWebResponses(responses);
     const api = createApi();
 
-    const state = useBibleReadingState(api);
+    const state = createBibleReadingState(api);
     await waitForInitialLoad(state);
 
     await state.selectTranslation(
@@ -424,7 +424,7 @@ describe("useBibleReadingState", () => {
     setWebResponses(responses);
     const api = createApi();
 
-    const state = useBibleReadingState(api, {
+    const state = createBibleReadingState(api, {
       initialTranslationId: `${ALT_API_ENDPOINT}/api/available_translations.json`,
     });
     await waitForInitialLoad(state);
@@ -450,7 +450,7 @@ describe("useBibleReadingState", () => {
     setWebResponses(responses);
     const api = createApi();
 
-    const state = useBibleReadingState(api);
+    const state = createBibleReadingState(api);
     await waitForInitialLoad(state);
 
     await expect(state.selectChapter("GEN", 3)).resolves.toBeUndefined();
