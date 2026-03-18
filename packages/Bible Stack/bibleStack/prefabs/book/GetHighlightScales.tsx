@@ -9,9 +9,10 @@ import type { StackSectionData } from "bibleVizUtils.models.entities.StackSectio
 import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
 import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 
-const bookData: StackBookData | undefined = BibleStackManager.GetPieceData({
-  piece: thisBot,
-});
+const bookData: StackBookData | undefined =
+  await BibleStackManager.GetPieceData({
+    piece: thisBot,
+  });
 
 if (!bookData) {
   console.error("bookData not found at GetHighlightScales");
@@ -26,16 +27,11 @@ const {
   parentDataIds: bookData.parentDataIds,
 });
 
-if (!sectionData) {
-  console.error("sectionData not found at GetHighlightScales");
-  return null;
-}
-
 let scaleX: number | undefined;
 let scaleY: number | undefined;
 
 if (
-  sectionData.isInExplodedView &&
+  sectionData?.isInExplodedView &&
   (bookData.isInsideBible ||
     (!bookData.isInsideTestament && !bookData.isInsideSection))
 ) {
@@ -67,8 +63,8 @@ if (
     }
   }
 } else {
-  scaleX = thisBot.tags.initialScaleX;
-  scaleY = thisBot.tags.initialScaleY;
+  scaleX = thisBot.tags.initialScaleX as number;
+  scaleY = thisBot.tags.initialScaleY as number;
   if (
     bookData instanceof StackSectionBookData &&
     thisBot.masks.hasBeenScaledAsBook

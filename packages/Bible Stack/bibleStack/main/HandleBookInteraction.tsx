@@ -20,8 +20,6 @@ import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSection
  * thisBot.HandleBookInteraction({book: someBook, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Drag, dragInfo: someDragInfo});
  */
 
-console.log(`[Debug] HandleBookInteraction before`);
-
 const { book, typeOfInteraction, dragInfo, dropInfo } = that;
 if (
   thisBot.masks.isBibleAnimating &&
@@ -30,8 +28,6 @@ if (
   typeOfInteraction !== BibleVizUtils.Data.tags.InteractionType.PointerUp
 )
   return;
-
-console.log(`[Debug] HandleBookInteraction after`);
 
 const bookData = thisBot.GetPieceData({ piece: book });
 const {

@@ -39,15 +39,10 @@ if (!bookData) {
   return;
 }
 
-const { sectionData }: { sectionData: StackSectionData } =
+const { sectionData }: { sectionData: StackSectionData | undefined } =
   await BibleStackManager.GetDataChainFromParentDataIds({
     parentDataIds: bookData.parentDataIds,
   });
-
-if (!sectionData) {
-  console.error("sectionData not found at TrySetShape");
-  return;
-}
 
 const prevShape = bookData.currentShape;
 if (shape === prevShape) return false;
@@ -76,7 +71,7 @@ switch (shape) {
           "scaleX",
           thisBot.tags.explodedViewCustomScale
             ? thisBot.tags.explodedViewCustomScale.x *
-                sectionData.piece?.tags.initialScaleX
+                sectionData?.piece?.tags.initialScaleX
             : thisBot.tags.initialScaleX
         );
         setTagMask(
@@ -84,7 +79,7 @@ switch (shape) {
           "scaleY",
           thisBot.tags.explodedViewCustomScale
             ? thisBot.tags.explodedViewCustomScale.y *
-                sectionData.piece?.tags.initialScaleY
+                sectionData?.piece?.tags.initialScaleY
             : thisBot.tags.initialScaleY
         );
         setTagMask(thisBot, "scaleZ", thisBot.tags.desiredScaleZ);
@@ -107,11 +102,11 @@ switch (shape) {
                   : null,
               scaleX: thisBot.tags.explodedViewCustomScale
                 ? thisBot.tags.explodedViewCustomScale.x *
-                  sectionData.piece?.tags.initialScaleX
+                  sectionData?.piece?.tags.initialScaleX
                 : thisBot.tags.initialScaleX,
               scaleY: thisBot.tags.explodedViewCustomScale
                 ? thisBot.tags.explodedViewCustomScale.y *
-                  sectionData.piece?.tags.initialScaleY
+                  sectionData?.piece?.tags.initialScaleY
                 : thisBot.tags.initialScaleY,
               scaleZ: thisBot.tags.desiredScaleZ,
             },
@@ -150,7 +145,7 @@ switch (shape) {
           "scaleX",
           thisBot.tags.explodedViewCustomScale
             ? thisBot.tags.explodedViewCustomScale.x *
-                sectionData.piece?.tags.initialScaleX
+                sectionData?.piece?.tags.initialScaleX
             : thisBot.tags.initialScaleX
         );
         setTagMask(
@@ -158,7 +153,7 @@ switch (shape) {
           "scaleY",
           thisBot.tags.explodedViewCustomScale
             ? thisBot.tags.explodedViewCustomScale.y *
-                sectionData.piece?.tags.initialScaleY
+                sectionData?.piece?.tags.initialScaleY
             : thisBot.tags.initialScaleY
         );
         setTagMask(thisBot, "scaleZ", thisBot.tags.desiredScaleZ);

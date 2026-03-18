@@ -138,7 +138,7 @@ if (infoLabelTransformer)
     });
   });
 
-const piecesToRelease = sectionData.resetHierarchy();
+const piecesToRelease = sectionData.resetHierarchy(false);
 console.log(`[Debug] DeselectSection`, {
   piecesToRelease: piecesToRelease.map((piece) => {
     return { ...piece, tags: { ...piece.tags } };

@@ -121,11 +121,17 @@ export class StackSectionData extends StackPieceData<
   getSectionIndex(): DataParams["creationParams"]["sectionIndex"] {
     return this.creationParams.sectionIndex;
   }
-  resetHierarchy(clearPiece: boolean = false): Bot[] {
-    this.detachShadow();
+  resetHierarchy(clearPiece: boolean = true): Bot[] {
+    const piecesToRelease: Bot[] = [];
+    const shadow = this.detachShadow();
     this.implode();
     this.combine();
-    return super.resetHierarchy(clearPiece);
+    if (shadow) {
+      piecesToRelease.push(shadow);
+    }
+    piecesToRelease.push(...super.resetHierarchy(clearPiece));
+
+    return piecesToRelease;
   }
   tryExplode(): boolean {
     if (this.isSplitIntoBooks && !this.isInExplodedView) {

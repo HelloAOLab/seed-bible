@@ -162,11 +162,12 @@ export class StackBookData extends StackPieceData<
   getLevelsLength(): DataParams["creationParams"]["levelsLenght"] {
     return this.creationParams.levelsLenght;
   }
-  resetHierarchy(clearPiece: boolean = false): Bot[] {
+  resetHierarchy(clearPiece: boolean = true): Bot[] {
     this.deselect();
     this.clearQueuedChapterData();
     this.clearSelectedChapterData();
     this.clearShape();
+    this.deactivate();
 
     return super.resetHierarchy(clearPiece);
   }

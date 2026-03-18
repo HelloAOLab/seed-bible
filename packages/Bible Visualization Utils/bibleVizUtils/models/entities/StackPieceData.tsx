@@ -196,14 +196,13 @@ export class StackPieceData<
   clearLastInteractionSource() {
     this.#lastInteractionSource = undefined;
   }
-  resetHierarchy(clearPiece: boolean = false): Bot[] {
+  resetHierarchy(clearPiece: boolean = true): Bot[] {
     const piecesToRelease: Bot[] = [];
 
     if (this.piece && clearPiece) {
       piecesToRelease.push(this.piece);
       this.clearPiece();
     }
-    this.deactivate();
 
     piecesToRelease.push(...super.resetHierarchy());
 

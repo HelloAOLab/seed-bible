@@ -1,4 +1,4 @@
-const { mode } = that;
+const { mode } = that ?? {};
 
 if (thisBot.vars.appId) {
   globalThis.RemoveFloatingApp(thisBot.vars.appId);
