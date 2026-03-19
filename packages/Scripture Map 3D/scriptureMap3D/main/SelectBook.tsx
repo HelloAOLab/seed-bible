@@ -2,30 +2,44 @@ import { GetBotScales } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { tryHideIndicators } from "bibleVizUtils.controllers.userPresence.activityIndicatorsController";
 import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
+import type { LayoutBookData } from "bibleVizUtils.models.entities.LayoutBookData";
+import type { LayoutBibleData } from "bibleVizUtils.models.entities.LayoutBibleData";
+import type { Bot, Mod } from "../../../../typings/AuxLibraryDefinitions";
 
 const {
   layoutBookData,
   layoutData,
   fromOpenAllButton = false,
   chaptersMod = {},
+}: {
+  layoutBookData: LayoutBookData;
+  layoutData: LayoutBibleData;
+  fromOpenAllButton?: boolean;
+  chaptersMod?: Mod;
 } = that;
+
+if (!layoutBookData.piece) {
+  throw new Error("layoutBookData.piece is not defined at SelectBook");
+}
+
+const book = layoutBookData.piece;
 
 setTagMask(thisBot, "isAnimatingBible", true);
 
-layoutBookData.isSelected = true;
+layoutBookData.select();
 const dimension = os.getCurrentDimension();
-const bookPosition = getBotPosition(layoutBookData.piece, dimension);
-const bookScales = GetBotScales(layoutBookData.piece);
+const bookPosition = getBotPosition(book, dimension);
+const bookScales = GetBotScales(book);
 const chaptersOriginPosition = new Vector2(
-  bookPosition.x - layoutBookData.piece.tags.scaleX / 2,
-  bookPosition.y + layoutBookData.piece.tags.scaleY / 2
+  bookPosition.x - book.tags.scaleX / 2,
+  bookPosition.y + book.tags.scaleY / 2
 );
 let column = 0;
 let row = 0;
 const chapterShowDuration = 0.03;
 
-tryHideIndicators(layoutBookData.piece);
-shout("OnBiblePieceSelected", { piece: layoutBookData.piece });
+tryHideIndicators(book);
+shout("OnBiblePieceSelected", { piece: book });
 
 if (!fromOpenAllButton) {
   if (layoutData?.isCameraAnimationEnabled) {
@@ -37,7 +51,7 @@ if (!fromOpenAllButton) {
       }
     );
   }
-  await animateTag(layoutBookData.piece, {
+  await animateTag(book, {
     fromValue: {
       formOpacity: 1,
       scaleX: bookScales.x,
@@ -50,15 +64,23 @@ if (!fromOpenAllButton) {
     },
     duration: fromOpenAllButton ? 0.005 : 0.3,
   }).finally(() => {
-    setTagMask(layoutBookData.piece, "scaleX", bookScales.x);
-    setTagMask(layoutBookData.piece, "scaleY", bookScales.y);
+    setTagMask(book, "scaleX", bookScales.x);
+    setTagMask(book, "scaleY", bookScales.y);
   });
 }
-layoutBookData.piece.tags[dimension] = false;
+book.tags[dimension] = false;
 const currentDate = new Date();
 const currentYear = currentDate.getFullYear();
-const { relativeDateRange } =
-  BibleVizUtils.Data.tags.booksStaticInfo[layoutBookData.pieceInfo.commonName];
+
+const bookStaticInfo = BibleVizDataRepository.getBookStaticInfo(
+  layoutBookData.pieceInfo.commonName
+);
+
+if (!bookStaticInfo) {
+  throw new Error("bookStaticInfo not found at SelectBook");
+}
+
+const { relativeDateRange } = bookStaticInfo;
 const historicalDateRange = `${Math.abs(relativeDateRange.min)}${relativeDateRange.min != relativeDateRange.max ? `-${Math.abs(relativeDateRange.max)}` : ``} ${relativeDateRange.min < 0 ? "B.C." : "A.D."}`;
 const elapsedYearsRange = `${currentYear - relativeDateRange.min}${relativeDateRange.min != relativeDateRange.max ? `-${currentYear - relativeDateRange.max}` : ``} years ago`;
 
@@ -112,13 +134,13 @@ for (const chapterData of layoutBookData.childrenData) {
     isYear: layoutData?.isDatesEnabled == 2 ? false : true,
     isShowYear: layoutData?.isDatesEnabled == 1 ? false : true,
     // layerIndex: chapterData.layerIndex,
-    structureIndex: chapterData.structureIndex,
+    structureIndex: chapterData.structureIndex, // TODO: Solve this
     chapterNumber: chapterData.pieceInfo.number,
     ...chaptersMod,
   };
   chapter.OnSpawned({ mod: chapterMod });
-  chapterData.piece = chapter;
-  chapterData.isActive = true;
+  chapterData.setPiece(chapter);
+  chapterData.activate();
   if (BibleVizUtils.Data.masks.isInHistoryMode)
     setTagMask(
       chapter,
@@ -140,6 +162,9 @@ for (const chapterData of layoutBookData.childrenData) {
 
 if (fromOpenAllButton) {
   layoutBookData.childrenData.forEach((chapterData) => {
+    if (!chapterData.piece) {
+      throw new Error("chapterData.piece not found at SelectBook");
+    }
     setTag(chapterData.piece, "scale", 1);
     setTag(chapterData.piece, "label", chapterData.piece.tags.desiredLabel);
   });
@@ -147,12 +172,19 @@ if (fromOpenAllButton) {
 } else {
   return Promise.all(
     layoutBookData.childrenData.map((chapterData, index) => {
+      if (!chapterData.piece) {
+        throw new Error("chapterData.piece not found at SelectBook");
+      }
       return animateTag(chapterData.piece, "scale", {
         toValue: 1,
         duration: chapterShowDuration,
         startTime: os.localTime + index * chapterShowDuration * 1000,
       }).then(() => {
-        setTag(chapterData.piece, "label", chapterData.piece.tags.desiredLabel);
+        setTag(
+          chapterData.piece as Bot,
+          "label",
+          (chapterData.piece as Bot).tags.desiredLabel
+        );
       });
     })
   ).then(() => {

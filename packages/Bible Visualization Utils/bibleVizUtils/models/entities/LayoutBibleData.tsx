@@ -5,7 +5,7 @@ import type {
 import { DateFormats } from "bibleVizUtils.models.canvas";
 import type { Bot } from "../../../../../typings/AuxLibraryDefinitions";
 import type { HexString } from "bibleVizUtils.models.commonTypes";
-import { LayoutChapterData } from "bibleVizUtils.models.entities.LayoutChapterData";
+import type { LayoutChapterData } from "bibleVizUtils.models.entities.LayoutChapterData";
 import type {
   TestamentInfo,
   SectionInfo,

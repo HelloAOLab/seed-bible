@@ -6,6 +6,7 @@ import type {
   StackSectionBaseCreationParams,
 } from "bibleVizUtils.models.canvas";
 import type { BookInfo } from "bibleVizUtils.data.BibleVizDataRepository";
+import type { HexString } from "bibleVizUtils.models.commonTypes";
 
 interface DataParams {
   childrenData: LayoutChapterData[];
@@ -15,6 +16,8 @@ interface DataParams {
   isSelected?: boolean;
   parentDataIds: ParentDataIds;
   creationParams: StackSectionBaseCreationParams;
+  highlightColor?: HexString;
+  isActive?: boolean;
 }
 
 export class LayoutBookData {
@@ -25,6 +28,8 @@ export class LayoutBookData {
   #pieceInfo: DataParams["pieceInfo"];
   #isSelected: NonNullable<DataParams["isSelected"]>;
   #parentDataIds: DataParams["parentDataIds"];
+  #highlightColor: DataParams["highlightColor"];
+  #isActive: DataParams["isActive"];
 
   constructor({
     childrenData = [],
@@ -34,6 +39,7 @@ export class LayoutBookData {
     isSelected = false,
     parentDataIds,
     creationParams,
+    isActive = false,
   }: DataParams) {
     this.#creationParams = creationParams;
     this.#childrenData = childrenData;
@@ -42,6 +48,7 @@ export class LayoutBookData {
     this.#pieceInfo = pieceInfo;
     this.#isSelected = isSelected;
     this.#parentDataIds = parentDataIds;
+    this.#isActive = isActive;
   }
 
   addChild(newChild: DataParams["childrenData"][number]) {
@@ -78,6 +85,9 @@ export class LayoutBookData {
       piece = this.piece;
     }
     return piece;
+  }
+  setPiece(piece: Bot) {
+    this.#piece = piece;
   }
   get pieceInfo() {
     return this.#pieceInfo;
@@ -116,5 +126,23 @@ export class LayoutBookData {
         childData.clearParentIds(keys);
       });
     }
+  }
+  get highlightColor(): DataParams["highlightColor"] {
+    return this.#highlightColor;
+  }
+  setHihglightColor(color: HexString) {
+    this.#highlightColor = color;
+  }
+  clearHighlightColor() {
+    this.#highlightColor = undefined;
+  }
+  get isActive() {
+    return this.#isActive;
+  }
+  activate() {
+    this.#isActive = true;
+  }
+  deactivate() {
+    this.#isActive = false;
   }
 }

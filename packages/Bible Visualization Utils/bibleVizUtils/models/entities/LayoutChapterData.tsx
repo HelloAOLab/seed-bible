@@ -9,7 +9,7 @@ import type {
 } from "bibleVizUtils.models.canvas";
 import type { HexString } from "bibleVizUtils.models.commonTypes";
 import type { ChapterInfo } from "bibleVizUtils.data.BibleVizDataRepository";
-import { LayoutBibleData } from "bibleVizUtils.models.entities.LayoutBibleData";
+import type { LayoutBibleData } from "bibleVizUtils.models.entities.LayoutBibleData";
 
 interface DataParams {
   id: string;
@@ -134,6 +134,9 @@ export class LayoutChapterData {
     const clearedPiece = this.piece;
     this.#piece = undefined;
     return clearedPiece;
+  }
+  setPiece(piece: Bot) {
+    this.#piece = piece;
   }
   clearParentId(key: ParentDataId) {
     if (this.#parentDataIds) {

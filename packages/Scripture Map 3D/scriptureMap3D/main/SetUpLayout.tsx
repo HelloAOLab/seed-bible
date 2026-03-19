@@ -2,9 +2,25 @@ import { GetDialogBotScaleY } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { GetTextColorBasedOnBackground } from "bibleVizUtils.functions.index";
 import { arrangementService } from "bibleVizUtils.services.index";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
+import { DateFormats, ObjectPoolTags } from "bibleVizUtils.models.canvas";
+import type { LayoutBibleData } from "bibleVizUtils.models.entities.LayoutBibleData";
+import type {
+  Bot,
+  Vector2 as Vector2Type,
+} from "../../../../typings/AuxLibraryDefinitions";
 
-const { layoutData, position } = that;
+interface Segment {
+  start: number;
+  end?: number;
+}
+
+const {
+  layoutData,
+  position,
+}: {
+  layoutData: LayoutBibleData;
+  position: Vector2Type;
+} = that;
 
 const dimension = os.getCurrentDimension();
 const toggleBackgroundPadding = 0.5;
@@ -18,10 +34,10 @@ const coverPadding = new Vector2(10, 8);
 // const fixedLabelWidth = 4.5;
 const bookShowDelay = 500;
 
-layoutData.childrenStructures.forEach(async (layoutBookStructure) => {
-  thisBot.SpawnBook({ layoutBookStructure, layoutData });
-});
-const rowSegments = [];
+for (const layoutBookStructure of layoutData.childrenStructures) {
+  await thisBot.SpawnBook({ layoutBookStructure, layoutData });
+}
+const rowSegments: Segment[] = [];
 const BooksOriginOffset = new Vector2(0, 0);
 const booksOriginPosition = new Vector2(
   BooksOriginOffset.x + position.x,
@@ -30,7 +46,7 @@ const booksOriginPosition = new Vector2(
 let currRowPosition = booksOriginPosition.y;
 const sectionLineScaleY = 0.2;
 const sectionLineLabelScaleY = 1;
-const columnsSegments = [];
+const columnsSegments: Segment[] = [];
 for (
   let i = 0;
   i <
@@ -57,7 +73,7 @@ for (
 }
 
 for (let row = 0; row < layoutData.amountOfRows; row++) {
-  const rowSegment = { start: currRowPosition };
+  const rowSegment: Segment = { start: currRowPosition };
 
   let greaterBookScaleY = 0;
   const bookStructuresWithinRow = layoutData.childrenStructures.filter(
@@ -67,10 +83,15 @@ for (let row = 0; row < layoutData.amountOfRows; row++) {
   );
 
   bookStructuresWithinRow.forEach((layoutBookStructure) => {
+    if (!layoutBookStructure.layoutBookData.piece) {
+      throw new Error(
+        "layoutBookStructure.layoutBookData.piece not defined at SetUpLayout"
+      );
+    }
     if (
       layoutBookStructure.layoutBookData.piece.tags.scaleY > greaterBookScaleY
     )
-      greaterBookScaleY = layoutBookStructure.layoutBookData.piece.tags.scaleY;
+      greaterBookScaleY = layoutBookStructure.layoutBookData.piece?.tags.scaleY;
 
     const bookPosition = new Vector2(
       booksOriginPosition.x +
@@ -117,12 +138,12 @@ for (let row = 0; row < layoutData.amountOfRows; row++) {
 
     let bookDateLabelLabel;
     switch (layoutData.currentDateFormat) {
-      case BibleVizUtils.Data.tags.DateFormats.ElapsedYears:
+      case DateFormats.ElapsedYears:
         {
           bookDateLabelLabel = layoutBookStructure.elapsedYearsRange;
         }
         break;
-      case BibleVizUtils.Data.tags.DateFormats.HistoricalDate:
+      case DateFormats.HistoricalDate:
         {
           bookDateLabelLabel = layoutBookStructure.historicalDateRange;
         }
@@ -135,15 +156,17 @@ for (let row = 0; row < layoutData.amountOfRows; row++) {
 
     if (arrangement) {
       const sectionColor = arrangement.testaments
-        .toReversed()
+        ?.toReversed()
         [
           layoutBookStructure.layoutBookData.creationParams.testamentIndex
-        ].sections.toReversed()[
+        ]?.sections.toReversed()[
         layoutBookStructure.layoutBookData.creationParams.sectionIndex
-      ].color;
-      const labelColor = GetTextColorBasedOnBackground({
-        backgroundColor: sectionColor,
-      });
+      ]?.color;
+      const labelColor = sectionColor
+        ? GetTextColorBasedOnBackground({
+            backgroundColor: sectionColor,
+          })
+        : "#000000";
 
       const bookDateLabelMod = {
         [dimension]: false,
@@ -180,17 +203,37 @@ for (let row = 0; row < layoutData.amountOfRows; row++) {
   rowSegments.push(rowSegment);
 }
 
+if (!layoutData.testamentLinesInfo) {
+  throw new Error(
+    "layoutData.testamentLinesInfo is not defined at SetUpLayout"
+  );
+}
+const firstColumnSegment = columnsSegments[0];
+if (!firstColumnSegment) {
+  throw new Error("firstColumnSegment not found at SetUpLayout");
+}
 for (const testamentLineInfo of layoutData.testamentLinesInfo) {
   const scaleX = sectionLineScaleY;
-  const scaleY = Math.abs(
-    rowSegments[testamentLineInfo.endRow].end -
-      rowSegments[testamentLineInfo.startRow].start
-  );
+  const rowStartSegment = rowSegments[testamentLineInfo.startRow];
+  if (!rowStartSegment) {
+    throw new Error("rowStartSegment not defined at SetUpLayout");
+  }
+  const rowEndSegment = testamentLineInfo.endRow
+    ? rowSegments[testamentLineInfo?.endRow]
+    : undefined;
+  if (!rowEndSegment) {
+    throw new Error("rowEndSegment not defined at SetUpLayout");
+  }
+  if (!rowEndSegment.end) {
+    throw new Error("rowEndSegment.end not defined at SetUpLayout");
+  }
+  const scaleY = Math.abs(rowEndSegment.end - rowStartSegment.start);
+
   const positionX =
-    columnsSegments[0].start -
+    firstColumnSegment.start -
     BibleVizDataRepository.getBibleLayoutMeasurement("BookHorizontalGap") -
     sectionLineScaleY / 2;
-  const positionY = rowSegments[testamentLineInfo.startRow].start - scaleY / 2;
+  const positionY = rowStartSegment.start - scaleY / 2;
   const line = ObjectPooler.GetObjectFromPool({
     tag: ObjectPoolTags.LayoutLine,
   });
@@ -228,25 +271,41 @@ for (const testamentLineInfo of layoutData.testamentLinesInfo) {
   };
   line.OnSpawned({ mod: lineMod });
   label.OnSpawned({ mod: labelMod });
-  layoutData.staticLayoutPieces.testamentLines.push(line);
-  layoutData.staticLayoutPieces.testamentLabels.push(label);
+  layoutData.staticLayoutPieces.testamentLines?.push(line);
+  layoutData.staticLayoutPieces.testamentLabels?.push(label);
 }
 
+if (!layoutData.sectionLinesInfo) {
+  throw new Error("layoutData.sectionLinesInfo is not defined at SetUpLayout");
+}
 for (const sectionLineInfo of layoutData.sectionLinesInfo) {
   const segmentLabelIndex =
     sectionLineInfo.segments.length / 2 +
     (sectionLineInfo.segments.length % 2 === 0 ? -1 : -0.5);
   for (const segmentIndex in sectionLineInfo.segments) {
     const segment = sectionLineInfo.segments[segmentIndex];
-    const scaleX = Math.abs(
-      columnsSegments[segment.end.column].end -
-        columnsSegments[segment.start.column].start
-    );
-    const positionX = columnsSegments[segment.start.column].start + scaleX / 2;
+    if (!segment) {
+      throw new Error("segment not found at SetUpLayout");
+    }
+    const columnSegmentStart = columnsSegments[segment.start.column];
+    const columnSegmentEnd = columnsSegments[segment.end.column];
+    const rowSegmentStart = rowSegments[segment.start.row];
+    if (!columnSegmentStart) {
+      throw new Error("columnSegmentStart not found at SetUpLayout");
+    }
+    if (!columnSegmentEnd) {
+      throw new Error("columnSegmentEnd not found at SetUpLayout");
+    }
+    if (!columnSegmentEnd.end) {
+      throw new Error("columnSegmentEnd.end not found at SetUpLayout");
+    }
+    if (!rowSegmentStart) {
+      throw new Error("rowSegmentStart not found at SetUpLayout");
+    }
+    const scaleX = Math.abs(columnSegmentEnd.end - columnSegmentStart.start);
+    const positionX = columnSegmentStart.start + scaleX / 2;
     const positionY =
-      rowSegments[segment.start.row].start -
-      sectionLineScaleY / 2 -
-      sectionLineLabelScaleY;
+      rowSegmentStart.start - sectionLineScaleY / 2 - sectionLineLabelScaleY;
     const line = ObjectPooler.GetObjectFromPool({
       tag: ObjectPoolTags.LayoutLine,
     });
@@ -267,9 +326,9 @@ for (const sectionLineInfo of layoutData.sectionLinesInfo) {
     };
     line.OnSpawned({ mod: lineMod });
 
-    layoutData.staticLayoutPieces.sectionLines.push(line);
+    layoutData.staticLayoutPieces.sectionLines?.push(line);
 
-    if (segmentIndex == segmentLabelIndex) {
+    if (Number(segmentIndex) === segmentLabelIndex) {
       const label = ObjectPooler.GetObjectFromPool({
         tag: ObjectPoolTags.LayoutLabel,
       });
@@ -280,8 +339,7 @@ for (const sectionLineInfo of layoutData.sectionLinesInfo) {
         scaleZ: sectionLineScaleY,
         [dimension]: false,
         [dimension + "X"]: positionX,
-        [dimension + "Y"]:
-          rowSegments[segment.start.row].start - sectionLineLabelScaleY / 2,
+        [dimension + "Y"]: rowSegmentStart.start - sectionLineLabelScaleY / 2,
         [dimension + "Z"]: 1,
         label: sectionLineInfo.name,
         color: "clear",
@@ -290,15 +348,21 @@ for (const sectionLineInfo of layoutData.sectionLinesInfo) {
       };
       label.OnSpawned({ mod: labelMod });
 
-      layoutData.staticLayoutPieces.sectionLabels.push(label);
+      layoutData.staticLayoutPieces.sectionLabels?.push(label);
     }
   }
 }
 
+const lastColumnSegment = columnsSegments[columnsSegments.length - 1];
+if (!lastColumnSegment) {
+  throw new Error("lastColumnSegment not defined at SetUpLayout");
+}
+if (!lastColumnSegment.end) {
+  throw new Error("lastColumnSegment.end not defined at SetUpLayout");
+}
+
 const booksGridScales = {
-  x: Math.abs(
-    columnsSegments[columnsSegments.length - 1].end - columnsSegments[0].start
-  ),
+  x: Math.abs(lastColumnSegment.end - firstColumnSegment.start),
   y: Math.abs(currRowPosition - booksOriginPosition.y),
 };
 const coverScales = new Vector2(
@@ -310,7 +374,7 @@ const gridPieceOffset = new Vector3(
   booksGridScales.y / 2,
   0
 );
-const bookGridPieces = [
+const bookGridPieces: Bot[] = [
   ...layoutData.childrenStructures.flatMap((layoutBookStructure) => {
     return [
       layoutBookStructure.layoutBookData.piece,
@@ -318,11 +382,11 @@ const bookGridPieces = [
       layoutBookStructure.dateLabel,
     ];
   }),
-  ...layoutData.staticLayoutPieces.testamentLines,
-  ...layoutData.staticLayoutPieces.testamentLabels,
-  ...layoutData.staticLayoutPieces.sectionLines,
-  ...layoutData.staticLayoutPieces.sectionLabels,
-];
+  ...(layoutData.staticLayoutPieces.testamentLines ?? []),
+  ...(layoutData.staticLayoutPieces.testamentLabels ?? []),
+  ...(layoutData.staticLayoutPieces.sectionLines ?? []),
+  ...(layoutData.staticLayoutPieces.sectionLabels ?? []),
+].filter(Boolean) as Bot[];
 
 bookGridPieces.forEach((piece) => {
   const currPosition = getBotPosition(piece, dimension);
@@ -346,24 +410,71 @@ const coverMod = {
   pointable: false,
 };
 
+if (
+  !links.baseToggle ||
+  Array.isArray(links.baseToggle) ||
+  !links.baseToggle?.tags
+) {
+  throw new Error("links.baseToggle.tags not properly defined as SetUpLayout");
+}
+if (
+  !links.baseToggleBackground ||
+  Array.isArray(links.baseToggleBackground) ||
+  !links.baseToggleBackground?.tags
+) {
+  throw new Error(
+    "links.baseToggleBackground.tags not properly defined as SetUpLayout"
+  );
+}
+if (
+  !links.baseToggleHandle ||
+  Array.isArray(links.baseToggleHandle) ||
+  !links.baseToggleHandle?.tags
+) {
+  throw new Error(
+    "links.baseToggleHandle.tags not properly defined as SetUpLayout"
+  );
+}
+if (
+  !links.baseColorPickerBackground ||
+  Array.isArray(links.baseColorPickerBackground) ||
+  !links.baseColorPickerBackground?.tags
+) {
+  throw new Error(
+    "links.baseColorPickerBackground.tags not properly defined as SetUpLayout"
+  );
+}
+if (
+  !links.baseButtonIcon ||
+  Array.isArray(links.baseButtonIcon) ||
+  !links.baseButtonIcon?.tags
+) {
+  throw new Error(
+    "links.baseButtonIcon.tags not properly defined as SetUpLayout"
+  );
+}
+
+const baseToggleTags = links.baseToggle.tags;
+const baseToggleBackgroundTags = links.baseToggleBackground.tags;
+const baseToggleHandleTags = links.baseToggleHandle.tags;
+const baseColorPickerBackgroundTags = links.baseColorPickerBackground.tags;
+const baseButtonIconTags = links.baseButtonIcon.tags;
+
 const buttonPosition = new Vector3(
-  position.x -
-    coverScales.x / 2 -
-    links.baseToggle.tags.scaleX / 2 -
-    buttonMargin.x,
+  position.x - coverScales.x / 2 - baseToggleTags.scaleX / 2 - buttonMargin.x,
   0,
   0
 );
 const toggleHandleMarginZ = 0.01;
 
-layoutData.staticLayoutPieces.settingsButtons.forEach(
+layoutData.staticLayoutPieces.settingsButtons?.forEach(
   (settingsButton, index) => {
     buttonPosition.y =
       position.y +
       coverScales.y / 2 -
-      links.baseToggle.tags.scaleY / 2 -
+      baseToggleTags.scaleY / 2 -
       buttonMargin.y -
-      (links.baseToggle.tags.scaleY + buttonMargin.y) * index;
+      (baseToggleTags.scaleY + buttonMargin.y) * index;
 
     const buttonMod = {
       [dimension]: false,
@@ -383,25 +494,25 @@ layoutData.staticLayoutPieces.settingsButtons.forEach(
           const toggleBackgroundMod = {
             [dimension]: false,
             [dimension + "X"]:
-              buttonMod[dimension + "X"] +
-              links.baseToggle.tags.scaleX / 2 -
-              links.baseToggleBackground.tags.scaleX / 2 -
+              (buttonMod[dimension + "X"] as number) +
+              baseToggleTags.scaleX / 2 -
+              baseToggleBackgroundTags.scaleX / 2 -
               toggleBackgroundPadding,
-            [dimension + "Y"]: buttonMod[dimension + "Y"],
-            [dimension + "Z"]: buttonMod[dimension + "Z"] + toggleHandleMarginZ,
+            [dimension + "Y"]: buttonMod[dimension + "Y"] as number,
+            [dimension + "Z"]:
+              (buttonMod[dimension + "Z"] as number) + toggleHandleMarginZ,
           };
           const toggleHandleMod = {
             [dimension]: false,
             [dimension + "X"]:
-              toggleBackgroundMod[dimension + "X"] -
-              links.baseToggleBackground.tags.scaleX / 2 +
-              links.baseToggleHandle.tags.scaleX / 2 +
-              (links.baseToggleBackground.tags.scaleY -
-                links.baseToggleHandle.tags.scaleY) /
+              (toggleBackgroundMod[dimension + "X"] as number) -
+              baseToggleBackgroundTags.scaleX / 2 +
+              baseToggleHandleTags.scaleX / 2 +
+              (baseToggleBackgroundTags.scaleY - baseToggleHandleTags.scaleY) /
                 2,
-            [dimension + "Y"]: buttonMod[dimension + "Y"],
+            [dimension + "Y"]: buttonMod[dimension + "Y"] as number,
             [dimension + "Z"]:
-              buttonMod[dimension + "Z"] + toggleHandleMarginZ * 2,
+              (buttonMod[dimension + "Z"] as number) + toggleHandleMarginZ * 2,
           };
           applyMod(settingsButton.links.background, toggleBackgroundMod);
           applyMod(settingsButton.links.handle, toggleHandleMod);
@@ -412,19 +523,20 @@ layoutData.staticLayoutPieces.settingsButtons.forEach(
           const colorPickerBackgroundMod = {
             [dimension]: false,
             [dimension + "X"]:
-              buttonMod[dimension + "X"] +
-              links.baseToggle.tags.scaleX / 2 -
-              links.baseColorPickerBackground.tags.scaleX / 2 -
+              (buttonMod[dimension + "X"] as number) +
+              baseToggleTags.scaleX / 2 -
+              baseColorPickerBackgroundTags.scaleX / 2 -
               colorPickerBackgroundPadding,
-            [dimension + "Y"]: buttonMod[dimension + "Y"],
-            [dimension + "Z"]: buttonMod[dimension + "Z"] + toggleHandleMarginZ,
+            [dimension + "Y"]: buttonMod[dimension + "Y"] as number,
+            [dimension + "Z"]:
+              (buttonMod[dimension + "Z"] as number) + toggleHandleMarginZ,
           };
           const colorPickerContentMod = {
             [dimension]: false,
             [dimension + "X"]: colorPickerBackgroundMod[dimension + "X"],
             [dimension + "Y"]: colorPickerBackgroundMod[dimension + "Y"],
             [dimension + "Z"]:
-              buttonMod[dimension + "Z"] + toggleHandleMarginZ * 2,
+              (buttonMod[dimension + "Z"] as number) + toggleHandleMarginZ * 2,
             color: layoutData.chapterSelectColor,
           };
           applyMod(settingsButton.links.colorContent, colorPickerContentMod);
@@ -439,9 +551,17 @@ layoutData.staticLayoutPieces.settingsButtons.forEach(
       case BibleVizUtils.Data.tags.LayoutButtonType.PlaylistSelectorButton:
         {
           const scaleXLimit =
-            links.baseToggle.tags.scaleX -
-            links.baseButtonIcon.tags.scaleX -
-            buttonGap;
+            baseToggleTags.scaleX - baseButtonIconTags.scaleX - buttonGap;
+
+          if (
+            !settingsButton.links.buttonLabel ||
+            Array.isArray(settingsButton.links.buttonLabel) ||
+            !settingsButton.links.buttonLabel?.tags
+          ) {
+            throw new Error(
+              "settingsButton.links.buttonLabel.tags not properly defined as SetUpLayout"
+            );
+          }
           const { scaleX: labelScaleX } = GetDialogBotScaleY({
             scaleXLimit,
             line: settingsButton.links.buttonLabel.tags.label,
@@ -451,26 +571,28 @@ layoutData.staticLayoutPieces.settingsButtons.forEach(
           });
 
           const buttonContentScaleX =
-            labelScaleX + links.baseButtonIcon.tags.scaleX + buttonGap;
+            labelScaleX + baseButtonIconTags.scaleX + buttonGap;
 
           const labelMod = {
             [dimension]: false,
             [dimension + "X"]:
-              buttonMod[dimension + "X"] +
+              (buttonMod[dimension + "X"] as number) +
               buttonContentScaleX / 2 -
               labelScaleX / 2,
-            [dimension + "Y"]: buttonMod[dimension + "Y"],
-            [dimension + "Z"]: buttonMod[dimension + "Z"] + toggleHandleMarginZ,
+            [dimension + "Y"]: buttonMod[dimension + "Y"] as number,
+            [dimension + "Z"]:
+              (buttonMod[dimension + "Z"] as number) + toggleHandleMarginZ,
             scaleX: labelScaleX,
           };
           const iconMod = {
             [dimension]: false,
             [dimension + "X"]:
-              buttonMod[dimension + "X"] -
+              (buttonMod[dimension + "X"] as number) -
               buttonContentScaleX / 2 +
-              links.baseButtonIcon.tags.scaleX / 2,
-            [dimension + "Y"]: buttonMod[dimension + "Y"],
-            [dimension + "Z"]: buttonMod[dimension + "Z"] + toggleHandleMarginZ,
+              baseButtonIconTags.scaleX / 2,
+            [dimension + "Y"]: buttonMod[dimension + "Y"] as number,
+            [dimension + "Z"]:
+              (buttonMod[dimension + "Z"] as number) + toggleHandleMarginZ,
           };
           applyMod(settingsButton.links.buttonLabel, labelMod);
           applyMod(settingsButton.links.buttonIcon, iconMod);
@@ -482,17 +604,33 @@ layoutData.staticLayoutPieces.settingsButtons.forEach(
   }
 );
 
+if (
+  !links.baseSettingsButton ||
+  Array.isArray(links.baseSettingsButton) ||
+  !links.baseSettingsButton?.tags
+) {
+  throw new Error(
+    "links.baseSettingsButton.tags not properly defined as SetUpLayout"
+  );
+}
+const baseSettingsButtonTags = links.baseSettingsButton.tags;
+if (!layoutData.staticLayoutPieces.cover) {
+  throw new Error(
+    "layoutData.staticLayoutPieces.cover not defined at SetUpLayout"
+  );
+}
+
 const settingsButtonMod = {
   [dimension]: true,
   [dimension + "X"]:
     position.x -
     coverScales.x / 2 +
-    links.baseSettingsButton.tags.scaleX / 2 +
+    baseSettingsButtonTags.scaleX / 2 +
     settingsButtonMargin,
   [dimension + "Y"]:
     position.y +
     coverScales.y / 2 -
-    links.baseSettingsButton.tags.scaleY / 2 -
+    baseSettingsButtonTags.scaleY / 2 -
     settingsButtonMargin,
   [dimension + "Z"]: layoutData.staticLayoutPieces.cover.tags.scaleZ + 0.01,
   [dimension + "RotationZ"]: Math.PI,
@@ -505,14 +643,16 @@ applyMod(layoutData.staticLayoutPieces.cover, coverMod);
 // thisBot.TryShowDates({ layoutData })
 thisBot.TryShowLabels({ layoutData });
 layoutData.childrenStructures.forEach((layoutBookStructure, index) => {
-  animateTag(layoutBookStructure.layoutBookData.piece, {
-    fromValue: {
-      formOpacity: 0,
-    },
-    toValue: {
-      formOpacity: 1,
-    },
-    duration: 0.007,
-    startTime: os.localTime + bookShowDelay + index * 20,
-  });
+  if (layoutBookStructure.layoutBookData.piece) {
+    animateTag(layoutBookStructure.layoutBookData.piece, {
+      fromValue: {
+        formOpacity: 0,
+      },
+      toValue: {
+        formOpacity: 1,
+      },
+      duration: 0.007,
+      startTime: os.localTime + bookShowDelay + index * 20,
+    });
+  }
 });

@@ -26,7 +26,7 @@ const chaptersData = await Promise.all(
     return thisBot.CreateChapter({
       chapterInfo,
       layoutDataId,
-      layoutBookId: layoutBookData.id,
+      layoutBookId: layoutBookId,
     });
   })
 );

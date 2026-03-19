@@ -4,20 +4,36 @@ import {
   HexToRgb,
 } from "bibleVizUtils.functions.index";
 import { arrangementService } from "bibleVizUtils.services.index";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
+import {
+  ObjectPoolTags,
+  type LayoutBookStructure,
+} from "bibleVizUtils.models.canvas";
+import type { Vector2 as Vector2Type } from "../../../../typings/AuxLibraryDefinitions";
 
-const { layoutBookStructure, position } = that;
+const {
+  layoutBookStructure,
+  position,
+}: {
+  layoutBookStructure: LayoutBookStructure;
+  position?: Vector2Type;
+} = that;
+
+const bookStaticInfo = BibleVizDataRepository.getBookStaticInfo(
+  layoutBookStructure.layoutBookData.pieceInfo.commonName
+);
+
+if (!bookStaticInfo) {
+  throw new Error("bookStaticInfo not found at SpawnBook");
+}
+
 const dimension = os.getCurrentDimension();
-const { chaptersInfo } =
-  BibleVizUtils.Data.tags.booksStaticInfo[
-    layoutBookStructure.layoutBookData.pieceInfo.commonName
-  ];
+const { chaptersInfo } = bookStaticInfo;
 const amountOfRows = Math.ceil(
   chaptersInfo.length /
     BibleVizDataRepository.getBibleLayoutMeasurement("Book3DMaxAmountOfColumns")
 );
-// Delete? -> const amountOfColumns = Math.min(BibleVizDataRepository.getBibleLayoutMeasurement("Book3DMaxAmountOfColumns"), chaptersInfo.length)
-// Integrage -> const bookScaleY = thisBot.GetBookHeightByName({bookName: layoutBookStructure.layoutBookData.pieceInfo.commonName})
+// TODO: Delete? -> const amountOfColumns = Math.min(BibleVizDataRepository.getBibleLayoutMeasurement("Book3DMaxAmountOfColumns"), chaptersInfo.length)
+// TODO: Integrage -> const bookScaleY = thisBot.GetBookHeightByName({bookName: layoutBookStructure.layoutBookData.pieceInfo.commonName})
 const bookScales = new Vector3(
   BibleVizDataRepository.getBibleLayoutMeasurement("Book3DScaleX"),
   amountOfRows *
@@ -30,9 +46,9 @@ const bookScales = new Vector3(
 
 const book =
   layoutBookStructure.layoutBookData.piece ??
-  ObjectPooler.GetObjectFromPool({
+  (await ObjectPooler.GetObjectFromPool({
     tag: ObjectPoolTags.LayoutBook,
-  });
+  }));
 
 const { arrangementIndex, testamentIndex, sectionIndex, found } =
   arrangementService.getBookInfoPathByName({
@@ -90,8 +106,8 @@ const layoutBookMod = {
   apiName: layoutBookStructure.layoutBookData.pieceInfo.commonName,
   bookName: layoutBookStructure.layoutBookData.pieceInfo.commonName,
   sectionName: sectionInfo.name,
-  startChapter: layoutBookStructure.layoutBookData.pieceInfo.startingIndex ?? 0,
-  chapterCount: layoutBookStructure.layoutBookData.pieceInfo.numberOfChapters,
+  startChapter: bookStaticInfo.startingIndex ?? 0,
+  chapterCount: bookStaticInfo.numberOfChapters,
   index: layoutBookStructure.structureIndex,
   system: null,
   formOpacity: 0,
@@ -100,9 +116,9 @@ const layoutBookMod = {
   sectionIndex,
 };
 book.OnSpawned({ mod: layoutBookMod });
-layoutBookStructure.layoutBookData.piece = book;
-layoutBookStructure.layoutBookData.isActive = true;
-layoutBookStructure.layoutBookData.isSelected = false;
+layoutBookStructure.layoutBookData.setPiece(book);
+layoutBookStructure.layoutBookData.activate();
+layoutBookStructure.layoutBookData.deselect();
 if (BibleVizUtils.Data.masks.isInHistoryMode)
   setTagMask(
     book,
