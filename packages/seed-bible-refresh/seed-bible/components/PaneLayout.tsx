@@ -5,7 +5,7 @@ import type { TabsManager } from "seed-bible.managers.TabsManager";
 import type { Pane } from "seed-bible.managers.PanesManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import {
-  useBibleToolsManager,
+  createBibleToolsManager,
   type BibleEmptyPaneTool,
 } from "seed-bible.managers.BibleToolsManager";
 
@@ -20,7 +20,7 @@ function EmptyPaneToolbar({
   pane: Pane;
   tabs: TabsManager;
 }) {
-  const toolsManager = useBibleToolsManager();
+  const toolsManager = createBibleToolsManager();
   const tools: BibleEmptyPaneTool[] = toolsManager.getEmptyPaneTools({
     selectorState,
     currentPane: pane,

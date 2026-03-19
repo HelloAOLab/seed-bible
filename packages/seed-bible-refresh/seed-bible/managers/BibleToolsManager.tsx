@@ -323,9 +323,9 @@ const sortedBelowReaderTools = computed(() => {
   );
 });
 
-export type ToolsManager = ReturnType<typeof useBibleToolsManager>;
+export type ToolsManager = ReturnType<typeof createBibleToolsManager>;
 
-export function useBibleToolsManager() {
+export function createBibleToolsManager() {
   const registerToolbarTool = (tool: ManagedBibleToolbarTool) => {
     const nextTools = toolbarTools.value.filter(
       (entry) => entry.id !== tool.id

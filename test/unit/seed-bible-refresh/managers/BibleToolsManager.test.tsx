@@ -10,7 +10,7 @@ jest.mock(
 );
 
 import {
-  useBibleToolsManager,
+  createBibleToolsManager,
   type BibleToolContext,
 } from "@packages/seed-bible-refresh/seed-bible/managers/BibleToolsManager";
 
@@ -38,13 +38,13 @@ function createContext(): BibleToolContext {
 
 describe("useBibleToolsManager", () => {
   afterEach(() => {
-    const manager = useBibleToolsManager();
+    const manager = createBibleToolsManager();
     manager.unregisterToolbarTool(CUSTOM_TOOL_ID);
     manager.unregisterVerseToolbarTool(CUSTOM_VERSE_TOOL_ID);
   });
 
   it("registerToolbarTool() registers a toolbar tool", () => {
-    const manager = useBibleToolsManager();
+    const manager = createBibleToolsManager();
     const context = createContext();
 
     manager.registerToolbarTool({
@@ -63,7 +63,7 @@ describe("useBibleToolsManager", () => {
   });
 
   it("unregisterToolbarTool() removes a toolbar tool", () => {
-    const manager = useBibleToolsManager();
+    const manager = createBibleToolsManager();
     const context = createContext();
 
     manager.registerToolbarTool({
@@ -83,7 +83,7 @@ describe("useBibleToolsManager", () => {
   });
 
   it("getToolbarTools() returns visible mapped tools", () => {
-    const manager = useBibleToolsManager();
+    const manager = createBibleToolsManager();
     const context = createContext();
 
     manager.registerToolbarTool({
@@ -119,7 +119,7 @@ describe("useBibleToolsManager", () => {
   });
 
   it("registerVerseToolbarTool() registers a verse toolbar tool", () => {
-    const manager = useBibleToolsManager();
+    const manager = createBibleToolsManager();
     const context = createContext();
 
     manager.registerVerseToolbarTool({
@@ -138,7 +138,7 @@ describe("useBibleToolsManager", () => {
   });
 
   it("unregisterVerseToolbarTool() removes a verse toolbar tool", () => {
-    const manager = useBibleToolsManager();
+    const manager = createBibleToolsManager();
     const context = createContext();
 
     manager.registerVerseToolbarTool({
@@ -158,7 +158,7 @@ describe("useBibleToolsManager", () => {
   });
 
   it("getVerseToolbarTools() returns visible mapped tools", () => {
-    const manager = useBibleToolsManager();
+    const manager = createBibleToolsManager();
     const context = createContext();
 
     manager.registerVerseToolbarTool({

@@ -1,4 +1,4 @@
-import { useBibleToolsManager } from "seed-bible.managers.BibleToolsManager";
+import { createBibleToolsManager } from "seed-bible.managers.BibleToolsManager";
 import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 
@@ -22,7 +22,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return null;
   }
 
-  const toolsManager = useBibleToolsManager();
+  const toolsManager = createBibleToolsManager();
   const viewportWidth = useSignal(
     typeof window === "undefined" ? 0 : window.innerWidth
   );

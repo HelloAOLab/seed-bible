@@ -1,7 +1,7 @@
 import { setupExtensionContext } from "seed-bible.app.api";
 import { createBibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
-import { useBibleToolsManager } from "seed-bible.managers.BibleToolsManager";
+import { createBibleToolsManager } from "seed-bible.managers.BibleToolsManager";
 import type { ToolsManager } from "seed-bible.managers.BibleToolsManager";
 import { useConfig } from "seed-bible.managers.ConfigManager";
 import type { ConfigManager } from "seed-bible.managers.ConfigManager";
@@ -61,7 +61,7 @@ export function useSeedBibleState(): SeedBibleState {
     () => createBibleSelectorState(api, tabs, panes),
     [api, tabs, panes]
   );
-  const tools = useBibleToolsManager();
+  const tools = useMemo(() => createBibleToolsManager(), []);
   const i18n = useI18n();
 
   const { currentTheme } = themeManager;
