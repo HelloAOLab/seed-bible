@@ -1,11 +1,10 @@
-import { createTheme } from "seed-bible.managers.ThemeManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 
 export function SettingsPage(props: { state: SeedBibleState }) {
   const { state } = props;
   const { config, setDisablePanels } = state.config;
-  const { themes, selectedThemeId, setTheme } = createTheme();
+  const { themes, selectedThemeId, setTheme } = state.theme;
   const { language, availableLanguages, setLanguage } = useI18n();
 
   return (

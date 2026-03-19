@@ -60,37 +60,37 @@ const LIGHT_THEME: BibleTheme = {
   },
 };
 
-const themes = signal<BibleTheme[]>([
-  LIGHT_THEME,
-  {
-    id: "dark",
-    name: "Dark",
-    variables: {
-      primaryColor: "#4d87ff",
-      secondaryColor: "#444b5b",
-      tertiaryColor: "#2f3542",
-      sidebarBackground: "#1f2430",
-      readerBackground: "#151922",
-      bookSelectorBackground: "#1e242f",
-
-      fontFamily: "Satoshi, system-ui, sans-serif",
-      fontColor: "#eceff4",
-
-      verseFontFamily: "Newsreader, serif",
-      verseTextColor: "#d6dbe5",
-      bookHeadingColor: "#9cbaff",
-
-      chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
-      chapterHeadingColor: "inherit",
-    },
-  },
-]);
-
-const selectedThemeId = signal<string>(DEFAULT_THEME_ID);
-
 export type ThemeManager = ReturnType<typeof createTheme>;
 
 export function createTheme() {
+  const themes = signal<BibleTheme[]>([
+    LIGHT_THEME,
+    {
+      id: "dark",
+      name: "Dark",
+      variables: {
+        primaryColor: "#4d87ff",
+        secondaryColor: "#444b5b",
+        tertiaryColor: "#2f3542",
+        sidebarBackground: "#1f2430",
+        readerBackground: "#151922",
+        bookSelectorBackground: "#1e242f",
+
+        fontFamily: "Satoshi, system-ui, sans-serif",
+        fontColor: "#eceff4",
+
+        verseFontFamily: "Newsreader, serif",
+        verseTextColor: "#d6dbe5",
+        bookHeadingColor: "#9cbaff",
+
+        chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
+        chapterHeadingColor: "inherit",
+      },
+    },
+  ]);
+
+  const selectedThemeId = signal<string>(DEFAULT_THEME_ID);
+
   const currentTheme = computed(
     () =>
       themes.value.find((theme) => theme.id === selectedThemeId.value) ??
