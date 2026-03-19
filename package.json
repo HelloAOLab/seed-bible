@@ -54,6 +54,7 @@
     "@eslint/js": "^9.32.0",
     "@jest/environment": "^30.3.0",
     "@preact/signals": "^2.8.2",
+    "@preact/signals-debug": "^1.4.2",
     "@types/jest": "30.0.0",
     "@types/node": "^24.5.2",
     "axios": "^1.12.2",
