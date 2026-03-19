@@ -174,6 +174,8 @@ function createApi(): FreeUseBibleAPI {
 }
 
 const sharedApi = createApi();
+let sharedTabsManager: ReturnType<typeof createTabs> | null = null;
+let sharedPanesManager: ReturnType<typeof createPanes> | null = null;
 
 function makeUrl(path: string): string {
   return `${API_ENDPOINT}${path}`;
@@ -262,8 +264,19 @@ async function createManagersWithSelectedPane(api: FreeUseBibleAPI): Promise<{
   tabsManager: ReturnType<typeof createTabs>;
   panesManager: ReturnType<typeof createPanes>;
 }> {
-  const tabsManager = createTabs(api);
-  const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
+  if (!sharedTabsManager) {
+    sharedTabsManager = createTabs(api);
+  }
+
+  if (!sharedPanesManager) {
+    sharedPanesManager = createPanes(
+      sharedTabsManager,
+      sharedTabsManager.selectedTabId
+    );
+  }
+
+  const tabsManager = sharedTabsManager;
+  const panesManager = sharedPanesManager;
 
   const pane = panesManager.panes.value[0];
   if (!pane?.tab) {

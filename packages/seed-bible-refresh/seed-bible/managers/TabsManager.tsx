@@ -54,78 +54,55 @@ function createInitialTabs(api: FreeUseBibleAPI): ReaderTab[] {
   ];
 }
 
-const tabs = signal<ReaderTab[]>([]);
-const selectedTabId = signal<string>("");
-let hasConfigBotListener = false;
-let isInitialized = false;
-let sharedApi: FreeUseBibleAPI | null = null;
+export type TabsManager = ReturnType<typeof createTabs>;
 
-function ensureInitialized(api: FreeUseBibleAPI) {
-  if (isInitialized) {
-    if (sharedApi !== api) {
-      console.warn(
-        "useTabs() received a different FreeUseBibleAPI instance after initialization. Reusing the first instance."
-      );
+export function createTabs(api: FreeUseBibleAPI) {
+  const tabs = signal<ReaderTab[]>(createInitialTabs(api));
+  const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
+
+  const syncSelectedTabFromConfig = async () => {
+    const selectedTab =
+      tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null;
+    if (!selectedTab) {
+      return;
     }
-    return;
-  }
 
-  sharedApi = api;
-  const initialTabs = createInitialTabs(api);
-  tabs.value = initialTabs;
-  selectedTabId.value = initialTabs[0]?.id ?? "";
-  isInitialized = true;
-}
+    const requestedTranslation = getInitialTranslationId();
+    const requestedBookId = getInitialFirstTabBookId();
+    const requestedChapter = getInitialFirstTabChapter();
+    const readingState = selectedTab.readingState;
 
-async function syncSelectedTabFromConfig() {
-  const selectedTab =
-    tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null;
-  if (!selectedTab) {
-    return;
-  }
+    if (readingState.translationId.value !== requestedTranslation) {
+      await readingState.selectTranslation(requestedTranslation);
+    }
 
-  const requestedTranslation = getInitialTranslationId();
-  const requestedBookId = getInitialFirstTabBookId();
-  const requestedChapter = getInitialFirstTabChapter();
-  const readingState = selectedTab.readingState;
+    const books = readingState.translationBooks.value?.books ?? [];
+    const selectedBook =
+      books.find((book) => book.id === requestedBookId) ?? null;
+    if (!selectedBook) {
+      return;
+    }
 
-  if (readingState.translationId.value !== requestedTranslation) {
-    await readingState.selectTranslation(requestedTranslation);
-  }
+    const firstChapterNumber =
+      selectedBook.firstChapterNumber ?? DEFAULT_CHAPTER_NUMBER;
+    const maxChapterNumber =
+      firstChapterNumber + selectedBook.numberOfChapters - 1;
+    const nextChapter =
+      requestedChapter >= firstChapterNumber &&
+      requestedChapter <= maxChapterNumber
+        ? requestedChapter
+        : firstChapterNumber;
 
-  const books = readingState.translationBooks.value?.books ?? [];
-  const selectedBook =
-    books.find((book) => book.id === requestedBookId) ?? null;
-  if (!selectedBook) {
-    return;
-  }
+    if (
+      readingState.bookId.value === requestedBookId &&
+      readingState.chapterNumber.value === nextChapter
+    ) {
+      return;
+    }
 
-  const firstChapterNumber =
-    selectedBook.firstChapterNumber ?? DEFAULT_CHAPTER_NUMBER;
-  const maxChapterNumber =
-    firstChapterNumber + selectedBook.numberOfChapters - 1;
-  const nextChapter =
-    requestedChapter >= firstChapterNumber &&
-    requestedChapter <= maxChapterNumber
-      ? requestedChapter
-      : firstChapterNumber;
+    await readingState.selectChapter(requestedBookId, nextChapter);
+  };
 
-  if (
-    readingState.bookId.value === requestedBookId &&
-    readingState.chapterNumber.value === nextChapter
-  ) {
-    return;
-  }
-
-  await readingState.selectChapter(requestedBookId, nextChapter);
-}
-
-function ensureConfigBotListener() {
-  if (hasConfigBotListener) {
-    return;
-  }
-
-  hasConfigBotListener = true;
   os.addBotListener(configBot, "onBotChanged", async (that: unknown) => {
     const changedTagsSource =
       that && typeof that === "object" && "tags" in that
@@ -145,13 +122,6 @@ function ensureConfigBotListener() {
 
     await syncSelectedTabFromConfig();
   });
-}
-
-export type TabsManager = ReturnType<typeof createTabs>;
-
-export function createTabs(api: FreeUseBibleAPI) {
-  ensureInitialized(api);
-  ensureConfigBotListener();
 
   const addTab = () => {
     const currentTabs = tabs.value;
@@ -159,7 +129,7 @@ export function createTabs(api: FreeUseBibleAPI) {
     const nextTab: ReaderTab = {
       id: `tab-${nextNumber}`,
       title: `Tab ${nextNumber}`,
-      readingState: createBibleReadingState(sharedApi ?? api),
+      readingState: createBibleReadingState(api),
     };
     tabs.value = [...currentTabs, nextTab];
     selectedTabId.value = nextTab.id;
