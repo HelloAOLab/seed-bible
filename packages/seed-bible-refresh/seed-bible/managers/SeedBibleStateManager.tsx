@@ -16,11 +16,7 @@ import {
   createTheme,
 } from "seed-bible.managers.ThemeManager";
 import type { ThemeManager } from "seed-bible.managers.ThemeManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import type { I18nManager } from "seed-bible.i18n.I18nManager";
-import { computed, type ReadonlySignal } from "@preact/signals";
-
-const { useEffect, useMemo } = os.appHooks;
+import { computed, effect, type ReadonlySignal } from "@preact/signals";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 
@@ -49,18 +45,15 @@ export interface SeedBibleState {
   app: AppState;
 }
 
-export function useSeedBibleState(): SeedBibleState {
-  const api = useMemo(() => new FreeUseBibleAPI(), []);
-  const config = useMemo(() => createConfig(), []);
-  const themeManager = useMemo(() => createTheme(), []);
-  const sidebar = useMemo(() => createSidebar(), []);
-  const tabs = useMemo(() => createTabs(api), [api]);
-  const panes = useMemo(() => createPanes(tabs, tabs.selectedTabId), [tabs]);
-  const selector = useMemo(
-    () => createBibleSelectorState(api, tabs, panes),
-    [api, tabs, panes]
-  );
-  const tools = useMemo(() => createBibleToolsManager(), []);
+export function createSeedBibleState(): SeedBibleState {
+  const api = new FreeUseBibleAPI();
+  const config = createConfig();
+  const themeManager = createTheme();
+  const sidebar = createSidebar();
+  const tabs = createTabs(api);
+  const panes = createPanes(tabs, tabs.selectedTabId);
+  const selector = createBibleSelectorState(api, tabs, panes);
+  const tools = createBibleToolsManager();
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value.variables);
@@ -92,9 +85,9 @@ export function useSeedBibleState(): SeedBibleState {
         : []
   );
 
-  useEffect(() => {
+  effect(() => {
     panes.setSelectedPaneTab(tabs.selectedTabId.value);
-  }, [tabs.selectedTabId.value]);
+  });
 
   const closeSidebarAndSettings = () => {
     sidebar.closeSettings();
@@ -165,9 +158,7 @@ export function useSeedBibleState(): SeedBibleState {
     },
   };
 
-  useEffect(() => {
-    setupExtensionContext(state);
-  }, [state]);
+  setupExtensionContext(state);
 
   return state;
 }

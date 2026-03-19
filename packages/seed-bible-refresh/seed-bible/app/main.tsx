@@ -5,9 +5,11 @@ import { SettingsPage } from "seed-bible.components.SettingsPage";
 import { Tabs } from "seed-bible.components.Tabs";
 import {
   I18nProvider,
-  useSeedBibleState,
+  createSeedBibleState,
 } from "seed-bible.managers.SeedBibleStateManager";
 import { CasualOSApp } from "seed-bible.components.CasualOSApp";
+
+const { useMemo } = os.appHooks;
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -56,7 +58,7 @@ export function ExternalResourceDependencies({
 }
 
 export function Main() {
-  const state = useSeedBibleState();
+  const state = useMemo(() => createSeedBibleState(), []);
   const { theme, sidebar, tabs, panes, selector, app } = state;
 
   return (
