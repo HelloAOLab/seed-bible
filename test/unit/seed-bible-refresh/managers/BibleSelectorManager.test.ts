@@ -198,9 +198,11 @@ describe("createBibleSelectorState", () => {
 
     await selector.selectTranslation("NIV");
 
-    expect(selector.translationId.value).toBe("NIV");
-    expect(selector.bookId.value).toBe("MAT");
-    expect(selector.chapterNumber.value).toBe(1);
+    expect(selector.selectedTranslationId.value).toBe("NIV");
+
+    expect(selector.currentTranslationId.value).toBe("BSB");
+    expect(selector.currentBookId.value).toBe("GEN");
+    expect(selector.currentChapterNumber.value).toBe(1);
     expect(readingState.translationId.value).toBe("BSB");
     expect(readingState.bookId.value).toBe("GEN");
     expect(readingState.chapterNumber.value).toBe(1);

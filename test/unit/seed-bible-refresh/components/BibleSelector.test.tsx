@@ -8,7 +8,9 @@ import type { BibleSelectorState } from "@packages/seed-bible-refresh/seed-bible
 import type { BibleReadingState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
 import type {
   AvailableTranslations,
+  Translation,
   TranslationBook,
+  TranslationBooks,
 } from "@packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI";
 
 jest.mock("seed-bible.i18n.I18nManager", () => ({
@@ -80,26 +82,19 @@ function createSelectorFixture(): SelectorFixture {
 
   const search = signal("");
   const expandedBookId = signal<string | null>("GEN");
-  const translationId = signal<string | null>("BSB");
-  const bookId = signal<string | null>("GEN");
-  const chapterNumber = signal<number>(1);
-  const availableTranslationsSignal = signal<AvailableTranslations | null>(
-    availableTranslations
+  const selectedTranslationId = signal<string | null>("BSB");
+  const currentTranslationId = signal<string | null>("BSB");
+  const currentBookId = signal<string | null>("GEN");
+  const currentChapterNumber = signal<number | null>(1);
+  const availableTranslationsSignal = signal<Translation[]>(
+    availableTranslations.translations
   );
   const loading = signal(false);
   const error = signal<string | null>(null);
-  const translationBooks = signal({
+  const selectedTranslationBooks = signal<TranslationBooks | null>({
     translation: availableTranslations.translations[0]!,
     books: [...oldBooks, ...newBooks],
   });
-
-  const readingState = {
-    translationId,
-    bookId,
-    chapterNumber,
-    availableTranslations: availableTranslationsSignal,
-    loading,
-  } as unknown as BibleReadingState;
 
   const oldTestamentRows: ReadonlySignal<TranslationBook[][]> = signal([
     oldBooks,
@@ -119,12 +114,13 @@ function createSelectorFixture(): SelectorFixture {
   const selectorState: BibleSelectorState = {
     isOpen: signal(false),
     pane: signal(null),
-    readingState: signal(readingState),
-    translationId,
-    bookId,
-    chapterNumber,
+    readingState: signal<BibleReadingState | null>(null),
+    currentTranslationId,
+    currentBookId,
+    currentChapterNumber,
+    selectedTranslationId,
+    selectedTranslationBooks,
     availableTranslations: availableTranslationsSignal,
-    translationBooks,
     loading,
     error,
     search,

@@ -1,5 +1,6 @@
 import type {
   AvailableTranslations,
+  Translation,
   TranslationBook,
   TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
@@ -27,15 +28,20 @@ export interface BibleSelectorState {
   isOpen: Signal<boolean>;
   pane: Signal<Pane | null>;
   readingState: ReadonlySignal<BibleReadingState | null>;
-  translationId: Signal<string | null>;
-  bookId: Signal<string | null>;
-  chapterNumber: Signal<number>;
-  availableTranslations: Signal<AvailableTranslations | null>;
-  translationBooks: Signal<TranslationBooks | null>;
+  currentTranslationId: ReadonlySignal<string | null>;
+  currentBookId: ReadonlySignal<string | null>;
+  currentChapterNumber: ReadonlySignal<number | null>;
+
+  availableTranslations: ReadonlySignal<Translation[]>;
+
   loading: Signal<boolean>;
   error: Signal<string | null>;
   search: Signal<string>;
+
+  selectedTranslationId: Signal<string | null>;
   expandedBookId: Signal<string | null>;
+  selectedTranslationBooks: Signal<TranslationBooks | null>;
+
   oldTestamentRows: ReadonlySignal<TranslationBook[][]>;
   newTestamentRows: ReadonlySignal<TranslationBook[][]>;
   setOpen: (open: boolean, pane?: Pane) => void;
@@ -75,17 +81,26 @@ export function createBibleSelectorState(
 ): BibleSelectorState {
   const isOpen = signal(false);
   const pane = signal<Pane | null>(null);
-  const readingState = signal<BibleReadingState | null>(null);
-  const transientReadingState = signal<BibleReadingState | null>(null);
-  const translationId = signal<string | null>(null);
-  const bookId = signal<string | null>(null);
-  const chapterNumber = signal<number>(1);
-  const availableTranslations = signal<AvailableTranslations | null>(null);
-  const translationBooks = signal<TranslationBooks | null>(null);
+  const availableTranslations = computed(
+    () => dataManager.availableTranslations.value
+  );
+  const readingState = computed(() => pane.value?.tab?.readingState ?? null);
+  const currentTranslationId = computed(
+    () => readingState.value?.translationId.value ?? null
+  );
+  const currentBookId = computed<string | null>(
+    () => readingState.value?.bookId.value ?? null
+  );
+  const currentChapterNumber = computed<number | null>(
+    () => readingState.value?.chapterNumber.value ?? null
+  );
+
   const loading = signal(false);
   const error = signal<string | null>(null);
 
   const search = signal("");
+  const selectedTranslationId = signal<string | null>(null);
+  const selectedTranslationBooks = signal<TranslationBooks | null>(null);
   const expandedBookId = signal<string | null>(null);
   const viewportWidth = signal(
     typeof window === "undefined" ? 0 : window.innerWidth
@@ -101,18 +116,9 @@ export function createBibleSelectorState(
         ) ?? null)
       : null
   );
-  const activeReadingState = computed(
-    () => activePane.value?.tab?.readingState ?? transientReadingState.value
-  );
 
-  effect(() => {
-    if (readingState.value !== activeReadingState.value) {
-      readingState.value = activeReadingState.value;
-    }
-  });
-
-  const syncSelectorStateFromActiveReadingState = async () => {
-    if (!activeReadingState.value) {
+  const syncStateFromPane = async () => {
+    if (!readingState.value) {
       return;
     }
 
@@ -124,31 +130,15 @@ export function createBibleSelectorState(
         await dataManager.getTranslations();
       }
 
-      availableTranslations.value = {
-        translations: dataManager.availableTranslations.value,
-      };
-
       const nextTranslationId =
-        activeReadingState.value.translationId.value ??
+        readingState.value.translationId.value ??
         dataManager.availableTranslations.value[0]?.id ??
         null;
       if (!nextTranslationId) {
         throw new Error("No available translations found.");
       }
 
-      const books = await dataManager.getTranslationBooks(nextTranslationId);
-      const fallbackBookId = books.books[0]?.id ?? null;
-      const requestedBookId = activeReadingState.value.bookId.value;
-      const nextBookId =
-        (requestedBookId &&
-        books.books.some((entry) => entry.id === requestedBookId)
-          ? requestedBookId
-          : fallbackBookId) ?? null;
-
-      translationId.value = nextTranslationId;
-      translationBooks.value = books;
-      bookId.value = nextBookId;
-      chapterNumber.value = activeReadingState.value.chapterNumber.value;
+      selectTranslation(nextTranslationId);
     } catch (err) {
       error.value =
         err instanceof Error
@@ -172,21 +162,7 @@ export function createBibleSelectorState(
 
       pane.value = effectivePane;
 
-      if (effectivePane.tab) {
-        transientReadingState.value = null;
-        readingState.value = effectivePane.tab.readingState;
-      } else {
-        if (!transientReadingState.value) {
-          transientReadingState.value = createBibleReadingState(dataManager);
-        }
-        readingState.value = transientReadingState.value;
-      }
-
-      if (!readingState.value) {
-        return;
-      }
-
-      void syncSelectorStateFromActiveReadingState();
+      void syncStateFromPane();
     }
 
     isOpen.value = open;
@@ -205,7 +181,7 @@ export function createBibleSelectorState(
 
   effect(() => {
     if (isOpen.value) {
-      expandedBookId.value = bookId.value;
+      expandedBookId.value = currentBookId.value;
     }
   });
 
@@ -261,7 +237,7 @@ export function createBibleSelectorState(
   });
 
   const groupedBooks = computed(() =>
-    groupBooks(translationBooks.value, search.value)
+    groupBooks(selectedTranslationBooks.value, search.value)
   );
 
   const booksPerRow = computed(() => {
@@ -311,7 +287,7 @@ export function createBibleSelectorState(
     selectedBookId: string,
     chapter: number
   ) => {
-    if (!activeReadingState.value) {
+    if (!readingState.value) {
       return;
     }
 
@@ -319,9 +295,9 @@ export function createBibleSelectorState(
       return;
     }
 
-    const selectedTranslationId =
-      translationId.value ?? activeReadingState.value.translationId.value;
-    if (!selectedTranslationId) {
+    // const selectedTranslationId =
+    //   translationId.value ?? activeReadingState.value.translationId.value;
+    if (!selectedTranslationId.value) {
       return;
     }
 
@@ -331,18 +307,16 @@ export function createBibleSelectorState(
     if (activePane.value.tab) {
       if (
         activePane.value.tab.readingState.translationId.value !==
-        selectedTranslationId
+        selectedTranslationId.value
       ) {
         await activePane.value.tab.readingState.selectTranslation(
-          selectedTranslationId
+          selectedTranslationId.value
         );
       }
       await activePane.value.tab.readingState.selectChapter(
         selectedBookId,
         chapter
       );
-      bookId.value = selectedBookId;
-      chapterNumber.value = chapter;
       setOpen(false);
       return;
     }
@@ -350,18 +324,21 @@ export function createBibleSelectorState(
     const newTab = tabsManager.addTab();
     panesManager.setPaneTab(activePane.value.id, newTab.id);
 
-    if (newTab.readingState.translationId.value !== selectedTranslationId) {
-      await newTab.readingState.selectTranslation(selectedTranslationId);
+    if (
+      newTab.readingState.translationId.value !== selectedTranslationId.value
+    ) {
+      await newTab.readingState.selectTranslation(selectedTranslationId.value);
     }
 
     await newTab.readingState.selectChapter(selectedBookId, chapter);
-    bookId.value = selectedBookId;
-    chapterNumber.value = chapter;
-    transientReadingState.value = null;
     setOpen(false);
   };
 
   const handleTranslationSelect = async (nextTranslationId: string) => {
+    if (nextTranslationId === selectedTranslationId.value) {
+      return;
+    }
+
     loading.value = true;
     error.value = null;
 
@@ -369,21 +346,16 @@ export function createBibleSelectorState(
       const books = await dataManager.getTranslationBooks(nextTranslationId);
       const firstBook = books.books[0] ?? null;
 
-      availableTranslations.value = {
-        translations: dataManager.availableTranslations.value,
-      };
-      translationBooks.value = books;
+      selectedTranslationBooks.value = books;
+
       // Only update selector-internal state. Reading state updates on chapter selection.
       const nextBookId = firstBook?.id ?? null;
-      const firstChapter = firstBook?.firstChapterNumber ?? 1;
 
       if (nextBookId && !expandedBookId.value) {
         expandedBookId.value = nextBookId;
       }
 
-      translationId.value = nextTranslationId;
-      bookId.value = nextBookId;
-      chapterNumber.value = firstChapter;
+      selectedTranslationId.value = nextTranslationId;
     } catch (err) {
       error.value =
         err instanceof Error
@@ -402,15 +374,16 @@ export function createBibleSelectorState(
   return {
     isOpen,
     pane,
-    readingState: activeReadingState,
-    translationId,
-    bookId,
-    chapterNumber,
+    readingState,
     availableTranslations,
-    translationBooks,
+    currentTranslationId,
+    currentBookId,
+    currentChapterNumber,
     loading,
     error,
     search,
+    selectedTranslationId,
+    selectedTranslationBooks,
     expandedBookId,
     oldTestamentRows,
     newTestamentRows,

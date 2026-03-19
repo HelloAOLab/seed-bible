@@ -13,9 +13,9 @@ interface BibleSelectorProps {
 export function BibleSelector(props: BibleSelectorProps) {
   const { isOpen, onClose, selectorState } = props;
   const {
-    translationId,
-    bookId,
-    chapterNumber,
+    selectedTranslationId,
+    currentBookId,
+    currentChapterNumber,
     availableTranslations,
     loading,
   } = selectorState;
@@ -45,7 +45,7 @@ export function BibleSelector(props: BibleSelectorProps) {
       >
         <div className="sb-selector-controls">
           <select
-            value={translationId.value ?? ""}
+            value={selectedTranslationId.value ?? ""}
             disabled={loading.value || !availableTranslations.value}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLSelectElement;
@@ -53,13 +53,11 @@ export function BibleSelector(props: BibleSelectorProps) {
             }}
             className="sb-selector-translation-select"
           >
-            {(availableTranslations.value?.translations ?? []).map(
-              (translation) => (
-                <option key={translation.id} value={translation.id}>
-                  {translation.id}
-                </option>
-              )
-            )}
+            {availableTranslations.value.map((translation) => (
+              <option key={translation.id} value={translation.id}>
+                {translation.id}
+              </option>
+            ))}
           </select>
 
           <input
@@ -108,7 +106,7 @@ export function BibleSelector(props: BibleSelectorProps) {
                             onClick={() => setExpandedBook(book.id)}
                             disabled={loading.value}
                             className={`sb-selector-book-button${
-                              book.id === bookId.value
+                              book.id === currentBookId.value
                                 ? " sb-selector-book-button-current"
                                 : ""
                             }${expandedBookId.value === book.id ? " expanded" : ""}`}
@@ -130,8 +128,8 @@ export function BibleSelector(props: BibleSelectorProps) {
                             const chapter =
                               expandedBookInRow.firstChapterNumber + index;
                             const isCurrentBookChapter =
-                              expandedBookInRow.id === bookId.value &&
-                              chapter === chapterNumber.value;
+                              expandedBookInRow.id === currentBookId.value &&
+                              chapter === currentChapterNumber.value;
                             return (
                               <button
                                 key={`${expandedBookInRow.id}-${chapter}`}
@@ -186,7 +184,7 @@ export function BibleSelector(props: BibleSelectorProps) {
                             onClick={() => setExpandedBook(book.id)}
                             disabled={loading.value}
                             className={`sb-selector-book-button${
-                              book.id === bookId.value
+                              book.id === currentBookId.value
                                 ? " sb-selector-book-button-current"
                                 : ""
                             }${expandedBookId.value === book.id ? " expanded" : ""}`}
@@ -208,8 +206,8 @@ export function BibleSelector(props: BibleSelectorProps) {
                             const chapter =
                               expandedBookInRow.firstChapterNumber + index;
                             const isCurrentBookChapter =
-                              expandedBookInRow.id === bookId.value &&
-                              chapter === chapterNumber.value;
+                              expandedBookInRow.id === currentBookId.value &&
+                              chapter === currentChapterNumber.value;
                             return (
                               <button
                                 key={`${expandedBookInRow.id}-${chapter}`}
