@@ -1,9 +1,7 @@
 /** @jest-environment ./test/env/CasualOSEnvironment.ts */
 
-import { render, h } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-// import * as appHooks from "preact/hooks";
 import { createBibleReadingState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
 import {
   FreeUseBibleAPI,
@@ -14,7 +12,7 @@ import {
 import type { BibleReadingState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
 import {
   type BibleSelectorState,
-  useBibleSelector,
+  createBibleSelectorState,
 } from "@packages/seed-bible-refresh/seed-bible/managers/BibleSelectorManager";
 import type {
   Pane,
@@ -24,8 +22,6 @@ import type {
   ReaderTab,
   TabsManager,
 } from "@packages/seed-bible-refresh/seed-bible/managers/TabsManager";
-
-// type UseBibleSelectorFn = typeof useBibleSelector;
 
 type WebResponse<T> = {
   status: number;
@@ -247,8 +243,12 @@ async function waitForInitialLoad(state: BibleReadingState): Promise<void> {
 }
 
 function getDisplayedBookIds(selector: BibleSelectorState): string[] {
-  const oldTestament = selector.oldTestamentRows.flat().map((book) => book.id);
-  const newTestament = selector.newTestamentRows.flat().map((book) => book.id);
+  const oldTestament = selector.oldTestamentRows.value
+    .flat()
+    .map((book) => book.id);
+  const newTestament = selector.newTestamentRows.value
+    .flat()
+    .map((book) => book.id);
   return [...oldTestament, ...newTestament];
 }
 
@@ -310,46 +310,7 @@ function createPanesManager(pane: Pane): PanesManager {
   } as unknown as PanesManager;
 }
 
-function mountSelector(
-  api: FreeUseBibleAPI,
-  tabsManager: TabsManager,
-  panesManager: PanesManager
-) {
-  const container = document.createElement("div");
-  document.body.appendChild(container);
-
-  let latestState: BibleSelectorState | null = null;
-
-  function TestHarness() {
-    latestState = useBibleSelector(api, tabsManager, panesManager);
-    return null;
-  }
-
-  act(() => {
-    render(h(TestHarness, {}), container);
-  });
-
-  const getState = (): BibleSelectorState => {
-    if (!latestState) {
-      throw new Error("Selector state is not available.");
-    }
-    return latestState;
-  };
-
-  const unmount = () => {
-    act(() => {
-      render(null, container);
-    });
-    container.remove();
-  };
-
-  return {
-    getState,
-    unmount,
-  };
-}
-
-describe("useBibleSelector", () => {
+describe("createBibleSelectorState", () => {
   let logSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -369,19 +330,11 @@ describe("useBibleSelector", () => {
     const panesManager = createPanesManager(pane);
     await waitForInitialLoad(readingState);
 
-    const { getState, unmount } = mountSelector(api, tabsManager, panesManager);
-    try {
-      act(() => {
-        getState().setOpen(true, pane);
-      });
+    const selector = createBibleSelectorState(api, tabsManager, panesManager);
+    selector.setOpen(true, pane);
 
-      await waitFor(() => getState().isOpen.value === true);
-
-      expect(getState().isOpen.value).toBe(true);
-      expect(getDisplayedBookIds(getState())).toEqual(["GEN", "EXO", "MAT"]);
-    } finally {
-      unmount();
-    }
+    expect(selector.isOpen.value).toBe(true);
+    expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
   });
 
   it("setSearch() filters books", async () => {
@@ -393,22 +346,15 @@ describe("useBibleSelector", () => {
     const panesManager = createPanesManager(pane);
     await waitForInitialLoad(readingState);
 
-    const { getState, unmount } = mountSelector(api, tabsManager, panesManager);
-    try {
-      act(() => {
-        getState().setOpen(true, pane);
-      });
-      await waitFor(() => getState().isOpen.value === true);
+    const selector = createBibleSelectorState(api, tabsManager, panesManager);
 
-      act(() => {
-        getState().setSearch("exo");
-      });
+    selector.setOpen(true, pane);
+    expect(selector.isOpen.value).toBe(true);
 
-      await waitFor(() => getDisplayedBookIds(getState()).length === 1);
-      expect(getDisplayedBookIds(getState())).toEqual(["EXO"]);
-    } finally {
-      unmount();
-    }
+    selector.setSearch("exo");
+
+    expect(getDisplayedBookIds(selector).length).toBe(1);
+    expect(getDisplayedBookIds(selector)).toEqual(["EXO"]);
   });
 
   it("setExpandedBook() sets expandedBookId", async () => {
@@ -420,21 +366,14 @@ describe("useBibleSelector", () => {
     const panesManager = createPanesManager(pane);
     await waitForInitialLoad(readingState);
 
-    const { getState, unmount } = mountSelector(api, tabsManager, panesManager);
-    try {
-      act(() => {
-        getState().setOpen(true, pane);
-      });
-      await waitFor(() => getState().isOpen.value === true);
+    const selector = createBibleSelectorState(api, tabsManager, panesManager);
 
-      act(() => {
-        getState().setExpandedBook("EXO");
-      });
+    selector.setOpen(true, pane);
+    expect(selector.isOpen.value).toBe(true);
 
-      expect(getState().expandedBookId.value).toBe("EXO");
-    } finally {
-      unmount();
-    }
+    selector.setExpandedBook("EXO");
+
+    expect(selector.expandedBookId.value).toBe("EXO");
   });
 
   it("selectTranslation() changes the reading state translation", async () => {
@@ -446,22 +385,16 @@ describe("useBibleSelector", () => {
     const panesManager = createPanesManager(pane);
     await waitForInitialLoad(readingState);
 
-    const { getState, unmount } = mountSelector(api, tabsManager, panesManager);
-    try {
-      act(() => {
-        getState().setOpen(true, pane);
-      });
+    const selector = createBibleSelectorState(api, tabsManager, panesManager);
 
-      await act(async () => {
-        await getState().selectTranslation("NIV");
-      });
+    selector.setOpen(true, pane);
+    expect(selector.isOpen.value).toBe(true);
 
-      expect(readingState.translationId.value).toBe("NIV");
-      expect(readingState.bookId.value).toBe("MAT");
-      expect(readingState.chapterNumber.value).toBe(1);
-    } finally {
-      unmount();
-    }
+    await selector.selectTranslation("NIV");
+
+    expect(readingState.translationId.value).toBe("NIV");
+    expect(readingState.bookId.value).toBe("MAT");
+    expect(readingState.chapterNumber.value).toBe(1);
   });
 
   it("selectChapter() changes the reading state chapter", async () => {
@@ -473,20 +406,13 @@ describe("useBibleSelector", () => {
     const panesManager = createPanesManager(pane);
     await waitForInitialLoad(readingState);
 
-    const { getState, unmount } = mountSelector(api, tabsManager, panesManager);
-    try {
-      act(() => {
-        getState().setOpen(true, pane);
-      });
+    const selector = createBibleSelectorState(api, tabsManager, panesManager);
 
-      await act(async () => {
-        await getState().selectChapter("EXO", 2);
-      });
+    selector.setOpen(true, pane);
 
-      expect(readingState.bookId.value).toBe("EXO");
-      expect(readingState.chapterNumber.value).toBe(2);
-    } finally {
-      unmount();
-    }
+    await selector.selectChapter("EXO", 2);
+
+    expect(readingState.bookId.value).toBe("EXO");
+    expect(readingState.chapterNumber.value).toBe(2);
   });
 });
