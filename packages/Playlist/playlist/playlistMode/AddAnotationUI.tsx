@@ -1,13 +1,15 @@
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 import {
-  getUserRecord,
+  getAnnotationRecord,
   createAnnotation,
   saveAnnotation,
 } from "db.annotations.library";
 
+const G = globalThis as any;
+
 const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
-  MOBILE_VIEWPORT_THRESHOLD;
+  G.MOBILE_VIEWPORT_THRESHOLD;
 const {
   Chips,
   Checkbox,
@@ -16,53 +18,54 @@ const {
   LoaderSecondary,
   Modal,
   ButtonsCover,
-} = Components;
+} = G.Components;
 
-const AttachLink = await thisBot.AttachLink();
 const AttachmentLinkItem = thisBot.AttachmentLinkItem();
-const ChecklistGIf =
-  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/90e85308635064b3d0fdaa9c220b8547a9467a10affe3cf22f06ad6b26fbf0a1.gif";
 const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
 const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
 
+const PREVIEW_ICON_INACTIVE =
+  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/ab00f4b4a4332fd7ed0bc367cb1bb4997b885c19f422bfbcebaccffc926ce350.svg";
+const PREVIEW_ICON_ACTIVE =
+  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/c9313a31249a980b996ccabd27c6aaf0d0cc4037944f425370ff8b3500644b30.svg";
+
 import { CustomAnnotationTextEditor } from "playlist.playlistMode.CustomAnnotationTextEditor";
+import { extractHashtagsFromHTML } from "playlist.playlistMode.AutoTag";
 
-const DEV_ENV =
-  configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
-
-const AnnotationInnerDiv = ({
-  data,
-  onRemoveTag,
-  onDisembed,
-  index,
-  embedding,
-  pId = null,
-  isEditAddress,
-  checklistEnabled,
-  finalHistoryObject,
-  setList,
-  setChecklistEmbeded,
-  checkListData,
-  selectedAnnotation,
-  checkListEmbeded,
-  originalIndex,
-  editDataFromPlaylist,
-  isSomethingEmbededChecked,
-  onClick,
-  deleteAttachment,
-  selected,
-  setEmbedding,
-  dragOverSet,
-  onClickCheckbox,
-  deleteFromList,
-  singleMode,
-  embeded = false,
-  handleDragStart,
-  handleDragOver,
-  handleDragEnd,
-}) => {
+const AnnotationInnerDiv = (props: any) => {
+  const {
+    data,
+    onRemoveTag,
+    onDisembed,
+    index,
+    embedding,
+    pId = null,
+    isEditAddress,
+    checklistEnabled,
+    finalHistoryObject,
+    setList,
+    setChecklistEmbeded,
+    checkListData,
+    selectedAnnotation,
+    checkListEmbeded,
+    originalIndex,
+    editDataFromPlaylist,
+    isSomethingEmbededChecked,
+    onClick,
+    deleteAttachment,
+    selected,
+    setEmbedding,
+    dragOverSet,
+    onClickCheckbox,
+    deleteFromList,
+    singleMode,
+    embeded = false,
+    handleDragStart,
+    handleDragOver,
+    handleDragEnd,
+  } = props;
   const [expand, setExpand] = useState(false);
 
   useLayoutEffect(() => {
@@ -72,9 +75,9 @@ const AnnotationInnerDiv = ({
   }, [selectedAnnotation]);
 
   useLayoutEffect(() => {
-    globalThis[`${data.id}OpenToggle`] = setExpand;
+    G[`${data.id}OpenToggle`] = setExpand;
     return () => {
-      globalThis[`${data.id}OpenToggle`] = null;
+      G[`${data.id}OpenToggle`] = null;
     };
   }, [expand]);
 
@@ -97,24 +100,24 @@ const AnnotationInnerDiv = ({
         }}
         draggable={true}
         onPointerDown={() => {
-          globalThis.ADDING_TOPLAYLIST_TIMEOUT = setTimeout(() => {
-            globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
+          G.ADDING_TOPLAYLIST_TIMEOUT = setTimeout(() => {
+            G.ADDING_TOPLAYLIST_TIMEOUT = null;
             // if (data.type !== "heading") onClickItem({ dataItem: data });
           }, 1000);
         }}
         onPointerUp={() => {
-          if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) {
-            clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+          if (G.ADDING_TOPLAYLIST_TIMEOUT) {
+            clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
           }
         }}
         onMouseDown={(e) => e.stopPropagation()} // block parent drag
         onMouseLeave={() => {
-          if (globalThis.ADDING_TOPLAYLIST_TIMEOUT)
-            clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+          if (G.ADDING_TOPLAYLIST_TIMEOUT)
+            clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
         }}
         onTouchEnd={() => {
-          if (globalThis.ADDING_TOPLAYLIST_TIMEOUT)
-            clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+          if (G.ADDING_TOPLAYLIST_TIMEOUT)
+            clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
         }}
       >
         <div className="start-actions">
@@ -134,24 +137,24 @@ const AnnotationInnerDiv = ({
                   onClickCheckbox();
                   return;
                 }
-                const isShiftHold = globalThis?.KEY_HOLD?.["shift"];
+                const isShiftHold = G?.KEY_HOLD?.["shift"];
                 if (isShiftHold) {
-                  let upperLimit = Math.max(index, globalThis.LAST_CLICK_ID);
-                  let lowerLimit = Math.min(index, globalThis.LAST_CLICK_ID);
+                  let upperLimit = Math.max(index, G.LAST_CLICK_ID);
+                  let lowerLimit = Math.min(index, G.LAST_CLICK_ID);
                   const idsFilter = finalHistoryObject
                     .filter(
-                      ({ id }, indexInner) =>
+                      (ele: { id: string }, indexInner: number) =>
                         indexInner <= upperLimit &&
                         indexInner >= lowerLimit &&
-                        indexInner !== globalThis.LAST_CLICK_ID &&
-                        id !== embedding
+                        indexInner !== G.LAST_CLICK_ID &&
+                        ele.id !== embedding
                     )
-                    .map((ele) => ele.id);
+                    .map((ele: { id: string }) => ele.id);
                   editDataFromPlaylist(idsFilter, false);
-                  globalThis.LAST_CLICK_ID = index;
+                  G.LAST_CLICK_ID = index;
                   return;
                 } else {
-                  globalThis.LAST_CLICK_ID = index;
+                  G.LAST_CLICK_ID = index;
                 }
 
                 if (
@@ -160,10 +163,7 @@ const AnnotationInnerDiv = ({
                   !isSomethingEmbededChecked &&
                   !isEditAddress
                 ) {
-                  if (
-                    globalThis.KEY_HOLD?.["control"] ||
-                    globalThis.KEY_HOLD?.["meta"]
-                  ) {
+                  if (G.KEY_HOLD?.["control"] || G.KEY_HOLD?.["meta"]) {
                     if (!singleMode) {
                       setEmbedding(data.id);
                       return;
@@ -177,8 +177,8 @@ const AnnotationInnerDiv = ({
         </div>
         <p
           onPointerUp={() => {
-            // if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) {
-            //     clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT)
+            // if (G.ADDING_TOPLAYLIST_TIMEOUT) {
+            //     clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT)
             //     if ((data.type !== "heading")) {
             //         onClick({ dataItem: data, index });
             //     }
@@ -213,7 +213,7 @@ const AnnotationInnerDiv = ({
               } end-icon without-right-margin`}`}
               onClick={(e) => {
                 e.stopPropagation();
-                globalThis.SetEditRichText?.({
+                G.SetEditRichText?.({
                   id: data.id,
                   text: data.content,
                 });
@@ -248,7 +248,7 @@ const AnnotationInnerDiv = ({
                   e.stopPropagation();
                   if (data.type === "heading") {
                     ShowNotification({
-                      message: `Headings & Media cannot be embeded!`,
+                      message: t("headingsAndMediaCannotBeEmbedded"),
                       severity: "error",
                     });
                   } else {
@@ -310,7 +310,7 @@ const AnnotationInnerDiv = ({
               gap: "0.5rem",
             }}
           >
-            {data.additionalInfo.tags.map((ele, index) => (
+            {data.additionalInfo.tags.map((ele: string, index: number) => (
               <Chips
                 label={ele}
                 key={index}
@@ -324,7 +324,7 @@ const AnnotationInnerDiv = ({
       )}
       {!embeded && expand && (
         <div style={{ paddingLeft: "1rem" }}>
-          {data.additionalInfo.layers?.map((ele, indexInner) =>
+          {data.additionalInfo.layers?.map((ele: any, indexInner: number) =>
             ele.type === "attachment-link" || ele.type === "date" ? (
               <AttachmentLinkItem
                 linkingMode={false}
@@ -351,7 +351,6 @@ const AnnotationInnerDiv = ({
                 onClick={() => {}}
                 playlistId={false}
                 onClickItem={() => {}}
-                checkListData={{}}
                 creatingPlaylist={true}
                 checklistEnabled={checklistEnabled}
                 index={indexInner}
@@ -363,7 +362,6 @@ const AnnotationInnerDiv = ({
                 handleDragEnd={handleDragEnd}
                 toggle={false}
                 setList={() => {}}
-                layers={false}
                 pId={data.id}
                 playListSubIndex={false}
                 deleteFromList={deleteAttachment}
@@ -374,36 +372,33 @@ const AnnotationInnerDiv = ({
                   onDisembed({ id: ele.id, pId: data.id });
                 }}
                 onClickCheckbox={() => {
-                  const isShiftHold = globalThis?.KEY_HOLD?.["shift"];
-                  if (
-                    isShiftHold &&
-                    id === globalThis.LAST_CLICK_EMBED_PARENT
-                  ) {
+                  const isShiftHold = G?.KEY_HOLD?.["shift"];
+                  if (isShiftHold && data.id === G.LAST_CLICK_EMBED_PARENT) {
                     let upperLimit = Math.max(
                       indexInner,
-                      globalThis.LAST_CLICK_EMBED_ID
+                      G.LAST_CLICK_EMBED_ID
                     );
                     let lowerLimit = Math.min(
                       indexInner,
-                      globalThis.LAST_CLICK_EMBED_ID
+                      G.LAST_CLICK_EMBED_ID
                     );
                     const idsFilter = data.additionalInfo.layers
                       .filter(
-                        ({ id }, indexInner) =>
+                        (ele: { id: string }, indexInner: number) =>
                           indexInner <= upperLimit &&
                           indexInner >= lowerLimit &&
-                          indexInner !== globalThis.LAST_CLICK_EMBED_ID &&
-                          id !== embedding
+                          indexInner !== G.LAST_CLICK_EMBED_ID &&
+                          ele.id !== embedding
                       )
-                      .map((ele) => ele.id);
+                      .map((ele: { id: string }) => ele.id);
                     setChecklistEmbeded(idsFilter, data.id);
-                    globalThis.LAST_CLICK_EMBED_PARENT = data.id;
-                    globalThis.LAST_CLICK_EMBED_ID = indexInner;
+                    G.LAST_CLICK_EMBED_PARENT = data.id;
+                    G.LAST_CLICK_EMBED_ID = indexInner;
 
                     return;
                   } else {
-                    globalThis.LAST_CLICK_EMBED_PARENT = data.id;
-                    globalThis.LAST_CLICK_EMBED_ID = indexInner;
+                    G.LAST_CLICK_EMBED_PARENT = data.id;
+                    G.LAST_CLICK_EMBED_ID = indexInner;
                   }
                   setChecklistEmbeded(ele.id, data.id);
                 }}
@@ -428,42 +423,37 @@ const AnnotationInnerDiv = ({
                 checkListEmbeded={checkListEmbeded}
                 selected={ele.id === selectedAnnotation}
                 data={ele}
-                key={ele.id}
                 originalIndex={index}
                 key={`${ele.id}-${ele.readAlready}`}
                 embeded
                 pId={data.id}
-                data={ele}
                 onClickCheckbox={() => {
-                  const isShiftHold = globalThis?.KEY_HOLD?.["shift"];
-                  if (
-                    isShiftHold &&
-                    id === globalThis.LAST_CLICK_EMBED_PARENT
-                  ) {
+                  const isShiftHold = G?.KEY_HOLD?.["shift"];
+                  if (isShiftHold && data.id === G.LAST_CLICK_EMBED_PARENT) {
                     let upperLimit = Math.max(
                       indexInner,
-                      globalThis.LAST_CLICK_EMBED_ID
+                      G.LAST_CLICK_EMBED_ID
                     );
                     let lowerLimit = Math.min(
                       indexInner,
-                      globalThis.LAST_CLICK_EMBED_ID
+                      G.LAST_CLICK_EMBED_ID
                     );
                     const idsFilter = data.additionalInfo.layers
                       .filter(
-                        ({ id }, indexInner) =>
+                        (ele: { id: string }, indexInner: number) =>
                           indexInner <= upperLimit &&
                           indexInner >= lowerLimit &&
-                          indexInner !== globalThis.LAST_CLICK_EMBED_ID &&
-                          id !== embedding
+                          indexInner !== G.LAST_CLICK_EMBED_ID &&
+                          ele.id !== embedding
                       )
-                      .map((ele) => ele.id);
+                      .map((ele: { id: string }) => ele.id);
                     setChecklistEmbeded(idsFilter, false);
-                    globalThis.LAST_CLICK_EMBED_PARENT = data.id;
-                    globalThis.LAST_CLICK_EMBED_ID = indexInner;
+                    G.LAST_CLICK_EMBED_PARENT = data.id;
+                    G.LAST_CLICK_EMBED_ID = indexInner;
                     return;
                   } else {
-                    globalThis.LAST_CLICK_EMBED_PARENT = data.id;
-                    globalThis.LAST_CLICK_EMBED_ID = indexInner;
+                    G.LAST_CLICK_EMBED_PARENT = data.id;
+                    G.LAST_CLICK_EMBED_ID = indexInner;
                   }
                   setChecklistEmbeded(ele.id, data.id);
                 }}
@@ -476,41 +466,46 @@ const AnnotationInnerDiv = ({
   );
 };
 
-const AddAnotationUI = ({
-  list,
-  annoation,
-  setMode,
-  showPlaylistSettings,
-  id,
-  setShowPlaylistSettings,
-  onReset,
-  setList,
-  editData = null,
-  setTab,
-}) => {
+const AddAnotationUI = (props: any) => {
+  const {
+    list,
+    annoation,
+    setMode,
+    showPlaylistSettings,
+    id,
+    setShowPlaylistSettings,
+    onReset,
+    setList,
+    editData = null,
+    setTab,
+  } = props;
+  G[`FirstAnnnotationItem`] = list[0];
+
   // Audio
   const [mediaURL, setMediaURL] = useState("");
   const [videoSrc, setVideoSrc] = useState(false);
   const [currentItem, setCurrentItem] = useState({});
 
   const [loseProgresss, setLoseProgresss] = useState(false);
-  const loseProgressAction = useRef(null);
+  const loseProgressAction = useRef<() => void>(null);
 
   const [singleMode, setSingleMode] = useState(true);
-  const [embedItems, setEmbedItems] = useState([]);
-  const [tags, setTags] = useState([]);
-  const [textHTML, setTextHTML] = useState(globalThis.PreviousHTML || "");
+  const [embedItems, setEmbedItems] = useState<any[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [textHTML, setTextHTML] = useState(G.PreviousHTML || "");
 
   // Edit Mode
   const [isEditAddress, setIsEditAddress] = useState(editData?.address);
-  const [editDataDetails, setEditDataDetails] = useState({});
+  const [editDataDetails, setEditDataDetails] = useState<any>({});
 
-  globalThis.SetVideoSrc = setVideoSrc;
-  globalThis.SetMediaURL = setMediaURL;
-  globalThis.SetCurrentItem = setCurrentItem;
+  const [showPreview, setShowPreview] = useState(false);
+
+  G.SetVideoSrc = setVideoSrc;
+  G.SetMediaURL = setMediaURL;
+  G.SetCurrentItem = setCurrentItem;
 
   const [selectedAnnotation, setSelectedAnnotation] = useState(
-    globalThis.SelectedItemIDForAttachments
+    G.SelectedItemIDForAttachments
   );
 
   const [showMoreOptions, setShowMoreOptions] = useState(false);
@@ -519,40 +514,72 @@ const AddAnotationUI = ({
   const [loading, setLoading] = useState(false);
   const [dataFetching, setDataFetching] = useState(false);
 
-  const [checkListData, setChecklistData] = useState({});
-  const [checkListEmbeded, setChecklistEmbeded] = useState({});
-  const [embedding, setEmbedding] = useState(null);
+  const [checkListData, setChecklistData] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [checkListEmbeded, setChecklistEmbeded] = useState<
+    Record<string, boolean>
+  >({});
+  const [embedding, setEmbedding] = useState<string | boolean | null>(null);
 
   const [checklistEnabled, setChecklistEnabled] = useState(false);
 
   useLayoutEffect(() => {
-    globalThis.SetSelectedAnnotations = setSelectedAnnotation;
+    G.SetSelectedAnnotations = setSelectedAnnotation;
+    G.AddAnotationUI = true;
     if (editData?.address) {
       (async () => {
         setDataFetching(true);
         setList([]);
         try {
           // const latestData = await shout("chronicle_loadData", { record: latestRecord[0], targetVersion: 0 })[0];
-          const userRecord = await getUserRecord();
-          const res = await os.getData(userRecord, editData?.address);
-          const data = res.data.data;
-          if (data.data) {
+          const userRecord = await getAnnotationRecord();
+          const res: any = await os.getData(userRecord, editData?.address);
+          let data: any = res.data.data;
+          if (data.type === "comment") {
+            data = res.data;
+            setTextHTML(data.data.html);
+            setTags([...(data.chronicle_tags || [])]);
+            G.IsEditingAnnotation = true;
+            const booksDetails = G.findNameRank(data.bookId);
+            setEditDataDetails({
+              type: "heading",
+              content: data.data.html,
+              createdAtMs: data.data.createdAtMs,
+              updatedAtMs: data.data.updatedAtMs,
+              userId: data.data.userId,
+              userName: data.data.userName,
+              userProfilePicture: data.data.userProfilePicture,
+              additionalInfo: {
+                verse: data.verseNumber,
+                chapter: data.chapterNumber,
+                book: data.bookId,
+                data: {
+                  bookId: data.bookId,
+                },
+                bookRank: booksDetails.item,
+              },
+              id: data.id,
+            });
+          } else if (data.data) {
             setEditDataDetails({ ...data.data });
-            const layers = data.data.additionalInfo?.layers?.filter((ele) => ele.type === "heading");
+            const layers = data.data.additionalInfo?.layers?.filter(
+              (ele: any) => ele.type === "heading"
+            );
             setTextHTML(layers?.[0]?.content || "");
             setTags([...(data.chronicle_tags || [])]);
-            globalThis.IsEditingAnnotation = true;
+            G.IsEditingAnnotation = true;
           } else {
             setDataFetching(false);
             ShowNotification({
-              message: `Failed to fetch annotations.`,
+              message: t("failedToFetchAnnotations"),
               severity: "error",
             });
           }
         } catch (e) {
-          console.error("Error fetching annotations:", e);
+          console.error(`${t("errorFetchingAnnotations")}:`, e);
           ShowNotification({
-            message: `Failed to fetch annotations.`,
+            message: t("failedToFetchAnnotations"),
             severity: "error",
           });
         } finally {
@@ -560,41 +587,42 @@ const AddAnotationUI = ({
         }
       })();
     }
-    globalThis.SelectedItemIDForAttachments = null;
+    G.SelectedItemIDForAttachments = null;
     return () => {
-      globalThis.SetSelectedAnnotations = null;
-      globalThis.IsEditingAnnotation = false;
-      globalThis.SelectedItemIDForAttachments = null;
+      G.SetSelectedAnnotations = null;
+      G.IsEditingAnnotation = false;
+      G.SelectedItemIDForAttachments = null;
       if (isEditAddress) {
-        globalThis[`${id}mode`] = PlaylistModeTypes.playlist;
+        G[`${id}mode`] = G.PlaylistModeTypes.playlist;
         setList([]);
-        globalThis[`${id}currentPlaylist`] = [];
-        globalThis.SelectedItemIDForAttachments = null;
+        G[`${id}currentPlaylist`] = [];
+        G.SelectedItemIDForAttachments = null;
       }
       setIsEditAddress(false);
-      globalThis.SetEditAnnoData?.(null);
+      G.SetEditAnnoData?.(null);
     };
   }, []);
 
-  useLayoutEffect(() => {
-    globalThis.SelectedItemIDForAttachments = selectedAnnotation;
-    globalThis.PreviousHTML = textHTML;
+  G.AnnotationUISingleMode = singleMode;
 
+  useLayoutEffect(() => {
+    G.SelectedItemIDForAttachments = selectedAnnotation;
+    G.PreviousHTML = textHTML;
   }, [selectedAnnotation, textHTML]);
 
   useLayoutEffect(() => {
-    globalThis[`SetChecklistEnabled`] = setChecklistEnabled;
+    G[`SetChecklistEnabled`] = setChecklistEnabled;
     return () => {
-      globalThis[`SetChecklistEnabled`] = null;
+      G[`SetChecklistEnabled`] = null;
     };
   }, [checklistEnabled]);
 
-  const massAdd = (items) => {
+  const massAdd = (items: any[]) => {
     if (singleMode) {
       setEmbedItems((prev) => [...prev, ...items]);
       return;
     }
-    setList((old) => {
+    setList((old: any[]) => {
       const prev = [...old];
       const index = prev.findIndex((ele) => ele.id === selectedAnnotation);
       const targetVerse = prev[index];
@@ -607,9 +635,9 @@ const AddAnotationUI = ({
     });
   };
 
-  const onEmbedItems = (title, link, linkState) => {
+  const onEmbedItems = (title: string, link: string, linkState: any) => {
     const embedItem = {
-      id: createUUID(),
+      id: G.createUUID(),
       content: title,
       additionalInfo: {
         link,
@@ -622,7 +650,7 @@ const AddAnotationUI = ({
       return;
     }
 
-    setList((old) => {
+    setList((old: any[]) => {
       const prev = [...old];
       const index = prev.findIndex((ele) => ele.id === selectedAnnotation);
       const targetVerse = prev[index];
@@ -640,24 +668,24 @@ const AddAnotationUI = ({
 
     let embededItem = null;
 
-    list.forEach((ele) => {
+    list.forEach((ele: any) => {
       if (checkListData[ele.id] && ele.id !== embedding) {
-        if (!!ele.additionalInfo?.layers?.length) {
+        if (ele.additionalInfo?.layers?.length) {
           embededItem = ele.content;
         }
       }
     });
 
-    if (!!embededItem) {
+    if (embededItem) {
       ShowNotification({
-        message: `Cannot Embed the Embedded item! Content: ${embededItem}. Please remove it before embeding!`,
+        message: t("cannotEmbedEmbeddedItem", { embededItem }),
         severity: "error",
       });
       return;
     }
-    setList((prev) => {
-      const oldItems = [];
-      const newLayers = [];
+    setList((prev: any[]) => {
+      const oldItems: any[] = [];
+      const newLayers: any[] = [];
       const old = [...prev];
       old.forEach((ele) => {
         if (checkListData[ele.id]) {
@@ -691,7 +719,7 @@ const AddAnotationUI = ({
     setChecklistData({});
   };
 
-  const attachLink = (title, link, linkState) => {
+  const attachLink = (title: string, link: string, linkState: any) => {
     thisBot.tryAddDataToPlaylist({
       dataItem: {
         content: title,
@@ -702,19 +730,19 @@ const AddAnotationUI = ({
         type: linkState.type === "text" ? "heading" : "attachment-link",
       },
     });
-    setOpenAttachLink(false);
+    G.setOpenAttachLink(false);
   };
 
-  const onMassAdd = (items) => {
+  const onMassAdd = (items: any[]) => {
     items.forEach((item) => {
       thisBot.tryAddDataToPlaylist({
         dataItem: { ...item },
       });
     });
-    setOpenAttachLink(false);
+    G.setOpenAttachLink(false);
   };
 
-  const deleteFromList = (id, pid) => {
+  const deleteFromList = (id: string, pid?: string) => {
     if (singleMode && !editData?.address) {
       if (pid) {
         setEmbedItems((prev) => prev.filter((ele) => ele.id !== id));
@@ -725,51 +753,51 @@ const AddAnotationUI = ({
       return;
     } else {
       if (pid) {
-        setList((prev) => {
+        setList((prev: any[]) => {
           const old = [...prev];
-          const index = old.findIndex((ele) => ele.id === pID);
+          const index = old.findIndex((ele) => ele.id === pid);
           if (index > -1) {
             old[index].additionalInfo.layers = old[
               index
-            ].additionalInfo.layers.filter((ele) => ele.id !== id);
+            ].additionalInfo.layers.filter((ele: any) => ele.id !== id);
           }
           return old;
         });
       } else {
-        setList((prev) => prev.filter((ele) => ele.id !== id));
+        setList((prev: any[]) => prev.filter((ele: any) => ele.id !== id));
       }
     }
 
     setSelectedAnnotation(null);
   };
 
-  const deleteAttachment = (index, pID, id) => {
+  const deleteAttachment = (index: number, pID: string, id: string) => {
     if (singleMode && !editData?.address) {
-      setEmbedItems((prev) => {
-        const old = [...prev];
+      setEmbedItems((prev: any[]) => {
+        let old: any[] = [...prev];
         old = old.filter((ele) => ele.id !== id);
         return old;
       });
       return;
     }
-    setList((prev) => {
+    setList((prev: any[]) => {
       const old = [...prev];
       const index = old.findIndex((ele) => ele.id === pID);
       if (index > -1) {
         old[index].additionalInfo.layers = old[
           index
-        ].additionalInfo.layers.filter((ele) => ele.id !== id);
+        ].additionalInfo.layers.filter((ele: any) => ele.id !== id);
       }
     });
     setSelectedAnnotation(null);
   };
 
-  const onAddTags = (tags) => {
+  const onAddTags = (tags: string[]) => {
     if (singleMode) {
       setTags((prev) => [...prev, ...tags]);
       return;
     }
-    setList((old) => {
+    setList((old: any[]) => {
       const prev = [...old];
       const index = prev.findIndex((ele) => ele.id === selectedAnnotation);
       const targetVerse = prev[index];
@@ -782,7 +810,7 @@ const AddAnotationUI = ({
     });
   };
 
-  const onRemoveTag = (indexofTag, idOfParent) => {
+  const onRemoveTag = (indexofTag: number, idOfParent?: string) => {
     if (singleMode || editData?.address) {
       setTags((prev) => {
         const old = [...prev];
@@ -791,7 +819,7 @@ const AddAnotationUI = ({
       });
       return;
     }
-    setList((old) => {
+    setList((old: any[]) => {
       const prev = [...old];
       const index = prev.findIndex((ele) => ele.id === idOfParent);
       const targetVerse = prev[index];
@@ -801,16 +829,16 @@ const AddAnotationUI = ({
     });
   };
 
-  const onDisembed = (ids, isDelete) => {
+  const onDisembed = (ids: any[], isDelete?: boolean) => {
     let idtoDisembed = [ids];
     if (Array.isArray(ids)) {
       idtoDisembed = [...ids];
     }
 
-    const idsMap = {};
-    const pidsMap = {};
+    const idsMap: Record<string, boolean> = {};
+    const pidsMap: Record<string, boolean> = {};
 
-    idtoDisembed.forEach((ele, index) => {
+    idtoDisembed.forEach((ele: any, index: number) => {
       idsMap[ele.idFinal] = true;
       pidsMap[ele.pId] = true;
     });
@@ -830,16 +858,16 @@ const AddAnotationUI = ({
         return;
       }
       ShowNotification({
-        message: `You cannot unlink attachments in annotation mode!`,
+        message: t("youCannotUnlinkAttachmentsInAnnotationMode"),
         severity: "error",
       });
       return;
     }
 
-    setList((prev) => {
-      const toBeAddedAtIndex = {};
+    setList((prev: any[]) => {
+      const toBeAddedAtIndex: Record<any, any[]> = {};
 
-      const old = prev.map((ele, idx) => {
+      const old = prev.map((ele: any, idx: number) => {
         const prevEle = {
           ...ele,
           additionalInfo: {
@@ -847,10 +875,10 @@ const AddAnotationUI = ({
             layers: [...(ele.additionalInfo.layers || [])],
           },
         };
-        const layersFilter = [];
-        const remaningLayers = [];
+        const layersFilter: any[] = [];
+        const remaningLayers: any[] = [];
         if (pidsMap[prevEle.id]) {
-          prevEle.additionalInfo.layers.forEach((layer) => {
+          prevEle.additionalInfo.layers.forEach((layer: any) => {
             if (idsMap[layer.id]) {
               layersFilter.push({
                 ...layer,
@@ -868,8 +896,8 @@ const AddAnotationUI = ({
         }
         return prevEle;
       });
-      Object.keys(toBeAddedAtIndex).forEach((ele) => {
-        const items = [...toBeAddedAtIndex[ele]];
+      Object.keys(toBeAddedAtIndex).forEach((ele: any) => {
+        const items = [...(toBeAddedAtIndex[ele] || [])];
         old.splice(ele, 0, ...items);
       });
       return old;
@@ -879,15 +907,15 @@ const AddAnotationUI = ({
     setChecklistEmbeded({});
   };
 
-  const editDataFromPlaylist = (receivedIds) => {
+  const editDataFromPlaylist = (receivedIds: any[]) => {
     let ids = [receivedIds];
     if (Array.isArray(receivedIds)) {
       ids = [...receivedIds];
     }
 
     setChecklistData((prev) => {
-      const old = { ...prev };
-      ids.forEach((idEle) => {
+      const old: Record<any, boolean> = { ...prev };
+      ids.forEach((idEle: any) => {
         if (old[idEle]) {
           delete old[idEle];
         } else {
@@ -899,9 +927,9 @@ const AddAnotationUI = ({
     });
   };
 
-  const onCheckEmbeded = (id, pId) => {
+  const onCheckEmbeded = (id: any, pId: string) => {
     setChecklistEmbeded((prev) => {
-      const old = { ...prev };
+      const old: Record<any, any> = { ...prev };
       let idMap = [id];
       if (Array.isArray(id)) {
         idMap = [...idMap];
@@ -925,7 +953,7 @@ const AddAnotationUI = ({
     if (singleMode) {
       setList([]);
     } else {
-      setList((prev) => {
+      setList((prev: any[]) => {
         const old = prev.filter(
           (ele) => !checkListData[ele.id] && embedding !== ele.id
         );
@@ -940,9 +968,9 @@ const AddAnotationUI = ({
 
   const onEditSave = async () => {
     // if (list.length < 1) {
-    if (textHTML.trim().length < 1) {
+    if (textHTML?.trim().length < 1) {
       return ShowNotification({
-        message: `Cannot save empty annotation please use delete instead!`,
+        message: t("cannotSaveEmptyAnnotation"),
         severity: "error",
       });
     }
@@ -950,60 +978,82 @@ const AddAnotationUI = ({
       setLoading(true);
       const promisesArray = [];
 
-      const scripture = {
-        id: createUUID(),
-        content: textHTML,
-        additionalInfo: {
-          isValid: true,
-        },
-        type:  "heading"
-      };
+      // const scripture = {
+      //   id: createUUID(),
+      //   content: textHTML,
+      //   additionalInfo: {
+      //     isValid: true,
+      //   },
+      //   type:  "heading"
+      // };
 
-      const chroAddData = {
-        book:
-          editDataDetails.additionalInfo.chapterData?.id ||
-          editDataDetails.additionalInfo.chapterData?.bookId ||
-          editDataDetails.additionalInfo?.data?.id ||
-          editDataDetails.additionalInfo?.data?.bookId,
-        chapter: editDataDetails.additionalInfo.chapter,
-        translation: "",
-        chronicle_tags: [...(tags || [])],
-        data: {
-          ...editDataDetails,
-          additionalInfo: {
-            ...editDataDetails.additionalInfo,
-            // layers: [...list],
-            layers: [scripture],
-          },
-        },
+      // TODO: @kushagra - the book and chapter info should be taken from the old annotation - not the data in the old annotation
+      const book =
+        editDataDetails.additionalInfo?.chapterData?.id ||
+        editDataDetails.additionalInfo?.chapterData?.bookId ||
+        editDataDetails.additionalInfo?.data?.id ||
+        editDataDetails.additionalInfo?.data?.bookId;
+      const chapter = editDataDetails?.additionalInfo?.chapter;
+
+      const hashtags = extractHashtagsFromHTML(textHTML);
+
+      const comment: any = {
+        type: "comment",
+        html: textHTML,
+        createdAtMs: editDataDetails.createdAtMs ?? Date.now(),
+        updatedAtMs: Date.now(),
+        userId: editDataDetails.userId,
+        userName: editDataDetails.userName,
+        userProfilePicture: editDataDetails.userProfilePicture,
+        tags: hashtags,
+
+        // book:
+        //   editDataDetails.additionalInfo.chapterData?.id ||
+        //   editDataDetails.additionalInfo.chapterData?.bookId ||
+        //   editDataDetails.additionalInfo?.data?.id ||
+        //   editDataDetails.additionalInfo?.data?.bookId,
+        // chapter: editDataDetails.additionalInfo.chapter,
+        // translation: "",
+        // chronicle_tags: [...(tags || [])],
+        // data: {
+        //   ...editDataDetails,
+        //   additionalInfo: {
+        //     ...editDataDetails.additionalInfo,
+        //     // layers: [...list],
+        //     layers: [scripture],
+        //   },
+        // },
       };
 
       const annotation = createAnnotation(
-        chroAddData.book,
-        chroAddData.chapter,
-        { ...chroAddData, id: isEditAddress }
+        book,
+        chapter,
+        comment,
+        editDataDetails.additionalInfo?.verse
       );
-
-      const userRecord = await getUserRecord();
+      const userRecord = await getAnnotationRecord();
       promisesArray.push(
         saveAnnotation(userRecord, { ...annotation, id: isEditAddress })
       );
       await Promise.all(promisesArray);
-      globalThis.SelectedItemIDForAttachments = null;
+      G.SelectedItemIDForAttachments = null;
       ShowNotification({
-        message: `Annotations saved successfully!`,
+        message: t("annotationsSavedSuccessfully"),
         severity: "success",
       });
       setList([]);
       setSelectedAnnotation(null);
       setLoading(false);
-      globalThis.PreviousHTML = null;
+      G.PreviousHTML = null;
+      setTextHTML(null);
       if (setTab) setTab("discover");
+      delete G.AnnotationsData[`${book}-${chapter}`];
+      thisBot.fetchAnnotationsData({ ...G.CurrentBookData });
     } catch (e) {
       setLoading(false);
-      console.error("Error updating annotations:", e);
+      console.error(`${t("errorUpdatingAnnotations")}:`, e);
       ShowNotification({
-        message: `Failed to update annotations.`,
+        message: t("failedToUpdateAnnotations"),
         severity: "error",
       });
     } finally {
@@ -1014,9 +1064,9 @@ const AddAnotationUI = ({
   const onClickSave = async () => {
     if (loading) return;
     // if (list.length < 1) {
-    if (textHTML.trim().length < 1) {
+    if (textHTML?.trim().length < 1) {
       return ShowNotification({
-        message: "Cannot save empty annotations.",
+        message: t("cannotSaveEmptyAnnotations"),
         severity: "error",
       });
     }
@@ -1025,14 +1075,14 @@ const AddAnotationUI = ({
       return;
     }
 
-    const scripture = {
-      id: createUUID(),
-      content: textHTML,
-      additionalInfo: {
-        isValid: true,
-      },
-      type:  "heading"
-    };
+    // const scripture = {
+    //   id: createUUID(),
+    //   content: textHTML,
+    //   additionalInfo: {
+    //     isValid: true,
+    //   },
+    //   type:  "heading"
+    // };
 
     const currentList = [...list].filter((ele) =>
       singleMode
@@ -1041,7 +1091,7 @@ const AddAnotationUI = ({
           ele.type === "verse-grouped"
         : true
     );
-    const nonScriptureName = {
+    const nonScriptureName: Record<string, boolean> = {
       date: true,
       "attachment-link": true,
       heading: true,
@@ -1050,9 +1100,9 @@ const AddAnotationUI = ({
     let somethingNotScripture = false;
     let somethingNotEmbedded = false;
     if (singleMode) {
-      if (textHTML.trim().length === 0) {
+      if (textHTML?.trim().length === 0) {
         return ShowNotification({
-          message: `Please embed something to save annotations!`,
+          message: t("pleaseEmbedSomethingToSaveAnnotations"),
           severity: "error",
         });
       }
@@ -1068,14 +1118,14 @@ const AddAnotationUI = ({
 
       if (somethingNotScripture) {
         return ShowNotification({
-          message: `Only Verses and Chapters are allowed for top-level annotation!`,
+          message: t("onlyVersesAndChaptersAreAllowedForTopLevelAnnotation"),
           severity: "error",
         });
       }
 
       if (somethingNotEmbedded) {
         return ShowNotification({
-          message: `Some of your scriptures are not embedded. Please embed or delete them!`,
+          message: t("someOfYourScripturesAreNotEmbedded"),
           severity: "error",
         });
       }
@@ -1085,8 +1135,31 @@ const AddAnotationUI = ({
 
     try {
       const promisesArray = [];
-      const userRecord = await getUserRecord();
-      const singleRangeTrack = {};
+      const userRecord = await getAnnotationRecord();
+      const singleRangeTrack: Record<string, boolean> = {};
+
+      const data: any = await os.getData(
+        thisBot.tags.keyFetchAccountData,
+        authBot.id
+      );
+
+      const verseNumbers: number[] = [];
+
+      const hashtags = extractHashtagsFromHTML(textHTML);
+
+      const comment: any = {
+        type: "comment",
+        html: textHTML,
+        createdAtMs: Date.now(),
+        updatedAtMs: Date.now(),
+        userProfilePicture: data.data?.photoLink,
+        userName: data.data?.profileName,
+        userId: authBot.id,
+        tags: hashtags,
+      };
+
+      let book = "";
+      let chapter = "";
 
       currentList.forEach((ele) => {
         if (
@@ -1097,53 +1170,47 @@ const AddAnotationUI = ({
           if (singleMode) {
             singleRangeTrack[ele.additionalInfo.verse] = true;
           }
-          const chroAddData = {
-            book:
-              ele.additionalInfo.chapterData?.id ||
-              ele.additionalInfo.chapterData?.bookId ||
-              ele.additionalInfo?.data?.id ||
-              ele.additionalInfo?.data?.bookId,
-            chapter: ele.additionalInfo.chapter,
-            translation: "",
-            chronicle_tags: [
-              ...(singleMode ? tags : ele.additionalInfo.tags || []),
-            ],
-            data: {
-              ...ele,
-              additionalInfo: {
-                ...ele.additionalInfo,
-                layers: [
-                  scripture
-                  // ...(singleMode ? embedItems : ele.additionalInfo.layers),
-                ],
-              },
-            },
-          };
-          const annotation = createAnnotation(
-            chroAddData.book,
-            chroAddData.chapter,
-            chroAddData
-          );
-          promisesArray.push(saveAnnotation(userRecord, annotation));
+          book =
+            ele.additionalInfo?.chapterData?.id ||
+            ele.additionalInfo?.chapterData?.bookId ||
+            ele.additionalInfo?.data?.id ||
+            ele.additionalInfo?.data?.bookId;
+          chapter = ele.additionalInfo.chapter;
+
+          verseNumbers.push(ele.additionalInfo.verse);
         }
       });
 
-      await Promise.all(promisesArray);
+      if (book && chapter && verseNumbers.length > 0) {
+        const annotation = createAnnotation(
+          book,
+          Number(chapter),
+          comment,
+          verseNumbers.length > 1 ? verseNumbers : verseNumbers[0] || 0
+        );
 
-      setLoading(false);
-      globalThis.SelectedItemIDForAttachments = null;
-      ShowNotification({
-        message: `Annotations saved successfully!`,
-        severity: "success",
-      });
-      setList([]);
-      setSelectedAnnotation(null);
-      globalThis.PreviousHTML = null;
+        promisesArray.push(saveAnnotation(userRecord, annotation));
+
+        await Promise.all(promisesArray);
+
+        setLoading(false);
+        G.SelectedItemIDForAttachments = null;
+        ShowNotification({
+          message: t("annotationsSavedSuccessfully"),
+          severity: "success",
+        });
+        setList([]);
+        setSelectedAnnotation(null);
+        G.PreviousHTML = null;
+        delete G.AnnotationsData[`${book}-${chapter}`];
+        thisBot.fetchAnnotationsData({ ...G.CurrentBookData });
+        setTextHTML(null);
+      }
     } catch (e) {
       setLoading(false);
-      console.error("Error saving annotations:", e);
+      console.error(`${t("errorSavingAnnotations")}:`, e);
       ShowNotification({
-        message: `Failed to save annotations.`,
+        message: t("failedToSaveAnnotations"),
         severity: "error",
       });
     } finally {
@@ -1157,20 +1224,20 @@ const AddAnotationUI = ({
     isSomethingEmbededChecked ||
     embedding;
 
-  const toBeSetItems = useRef([]);
+  const toBeSetItems = useRef<any[]>([]);
   const [dragOverSet, setDragoverSetMutate] = useState({
     position: "top",
     itemId: null,
     pId: null,
   });
 
-  const setDragoverSet = (newState) => {
+  const setDragoverSet = (newState: any) => {
     if (
       newState.itemId !== dragOverSet.itemId ||
       newState.position !== dragOverSet.position
     ) {
-      if (globalThis[`${newState.itemId}OpenToggle`]) {
-        globalThis[`${newState.itemId}OpenToggle`](true);
+      if (G[`${newState.itemId}OpenToggle`]) {
+        G[`${newState.itemId}OpenToggle`](true);
       }
       setDragoverSetMutate(newState);
     }
@@ -1184,17 +1251,40 @@ const AddAnotationUI = ({
   const finalHistoryObject = useMemo(() => {
     if (!singleMode || editData?.address) return list;
 
-    const trackVerse = {};
+    const trackVerse: Record<string, boolean> = {};
 
+    const listItems: any[] = [];
 
-    const listFinal = list.filter(
-      (ele) =>{
-        const verse = ele.additionalInfo.verse;
-        if(trackVerse[verse]) return false;
-        trackVerse[verse] = true;
-        return (ele.type === "verse" || ele.type === "verse-range" || ele.type === "verse-grouped") 
+    list.forEach((ele: any) => {
+      const verse = ele.additionalInfo.verse;
+      if (trackVerse[verse]) return false;
+      trackVerse[verse] = true;
+      if (
+        ele.type === "verse" ||
+        ele.type === "verse-range" ||
+        ele.type === "verse-grouped"
+      ) {
+        if (ele.type === "verse-grouped") {
+          ele.additionalInfo.verse.forEach((vNumber: number) => {
+            if (trackVerse[vNumber]) return false;
+            trackVerse[vNumber] = true;
+            listItems.push({
+              ...ele,
+              additionalInfo: {
+                ...ele.additionalInfo,
+                verse: vNumber,
+              },
+            });
+          });
+        } else {
+          listItems.push(ele);
+        }
       }
-    ).sort((a,b)=>a.additionalInfo.verse > b.additionalInfo.verse);
+    });
+
+    const listFinal = listItems.sort(
+      (a: any, b: any) => a.additionalInfo.verse - b.additionalInfo.verse
+    );
 
     if (listFinal.length < 1) {
       setSelectedAnnotation(null);
@@ -1214,34 +1304,26 @@ const AddAnotationUI = ({
       setSelectedAnnotation(null);
     }
     // Compress consecutive numbers into ranges
-    const verses = listFinal.map(ele => ele.additionalInfo.verse).sort((a,b)=>a-b);
-    const ranges = [];
-    let start = verses[0];
-    let end = verses[0];
-
-    for (let i = 1; i < verses.length; i++) {
-      if (verses[i] === end + 1) {
-        end = verses[i];
-      } else {
-        ranges.push(start === end ? `${start}` : `${start}-${end}`);
-        start = end = verses[i];
-      }
-    }
-    ranges.push(start === end ? `${start}` : `${start}-${end}`);
+    const verses = listFinal
+      .map((ele) => ele.additionalInfo.verse)
+      .sort((a, b) => a - b);
+    const ranges = G.GetVerseSummaryHeading(verses);
 
     item.content = `${item.content.split(":")[0]}:${ranges.join(", ")}`;
-    
+
     return [item];
   }, [list, singleMode]);
 
-  const [draggedItemID, setDraggedItemID] = useState(null);
-  const [draggedParent, setDraggedItemParent] = useState(null);
+  // console.log("finalHistoryObject", finalHistoryObject, list);
 
-  const handleDragStart = (index, pId) => {
+  const [draggedItemID, setDraggedItemID] = useState<string | null>(null);
+  const [draggedParent, setDraggedItemParent] = useState<string | null>(null);
+
+  const handleDragStart = (index: number, pId: string) => {
     toBeSetItems.current = finalHistoryObject;
     if (pId) {
       setDraggedItemParent(pId);
-      const pIndex = finalHistoryObject.findIndex((ele) => ele.id === pId);
+      const pIndex = finalHistoryObject.findIndex((ele: any) => ele.id === pId);
       const itemId = finalHistoryObject[pIndex].additionalInfo.layers[index].id;
       setDraggedItemID(itemId);
     } else {
@@ -1251,7 +1333,12 @@ const AddAnotationUI = ({
     // console.log('Drag Start:', { index, pseudoID, id });
   };
 
-  const handleDragOver = (index, pseudoIndex = 1, pseudoID = null, event) => {
+  const handleDragOver = (
+    index: number,
+    pseudoIndex = 1,
+    pseudoID = null,
+    event: any
+  ) => {
     event.preventDefault(); // Needed to allow drop
 
     const rect = event.currentTarget.getBoundingClientRect();
@@ -1270,18 +1357,20 @@ const AddAnotationUI = ({
     let originalRespectiveIndex = index;
 
     let draggedItemIndex = finalHistoryObject.findIndex(
-      (hist) => hist.id === draggedItemID
+      (hist: any) => hist.id === draggedItemID
     );
     let parentIdx = finalHistoryObject.findIndex(
-      (ele) => ele.id === draggedParent
+      (ele: any) => ele.id === draggedParent
     );
 
-    let dragItem = [finalHistoryObject[draggedItemIndex]];
+    let dragItem: any = [finalHistoryObject[draggedItemIndex]];
 
     if (draggedItemIndex === -1 && parentIdx > -1) {
       draggedItemIndex = finalHistoryObject[
         parentIdx
-      ].additionalInfo.layers?.findIndex((hist) => hist.id === draggedItemID);
+      ].additionalInfo.layers?.findIndex(
+        (hist: any) => hist.id === draggedItemID
+      );
       dragItem = [
         finalHistoryObject[parentIdx].additionalInfo.layers[draggedItemIndex],
       ];
@@ -1291,7 +1380,7 @@ const AddAnotationUI = ({
 
     if (pseudoID) {
       const parentIndexDragOver = finalHistoryObject.findIndex(
-        (ele) => ele.id === pseudoID
+        (ele: any) => ele.id === pseudoID
       );
       draggedOverItem =
         finalHistoryObject[parentIndexDragOver].additionalInfo.layers[index];
@@ -1301,7 +1390,7 @@ const AddAnotationUI = ({
 
     // console.log("Drag Over:", { newIndex, draggedItemIndex,originalRespectiveIndex, pseudoIndex, index });
 
-    let newItems = [];
+    let newItems: any[] = [];
 
     let filterAbleItems = {
       [draggedItemID]: true,
@@ -1331,13 +1420,13 @@ const AddAnotationUI = ({
 
     // Filter out the currently dragged item
     newItems = [
-      ...finalHistoryObject.filter((hist) => !filterAbleItems[hist.id]),
+      ...finalHistoryObject.filter((hist: any) => !filterAbleItems[hist.id]),
     ];
     newItems = JSON.parse(JSON.stringify(newItems));
     if (parentIdx > -1) {
       newItems[parentIdx].additionalInfo.layers = [
         ...newItems[parentIdx].additionalInfo.layers.filter(
-          (hist) => !filterAbleItems[hist.id]
+          (hist: any) => !filterAbleItems[hist.id]
         ),
       ];
     }
@@ -1371,7 +1460,7 @@ const AddAnotationUI = ({
 
   const handleDragEnd = () => {
     const dragOverItem = finalHistoryObject.find(
-      (ele) => ele.id === dragOverSet.itemId
+      (ele: any) => ele.id === dragOverSet.itemId
     );
 
     setDragoverSet({
@@ -1384,7 +1473,9 @@ const AddAnotationUI = ({
     if (dragOverSet.position === "Embed") {
       if (isEditAddress) {
         ShowNotification({
-          message: `You are in edit mode. Editing a anotation cannot embed items inside the annotation.`,
+          message: t(
+            "youAreInEditModeEditingANotationCannotEmbedItemsInsideTheAnnotation"
+          ),
           severity: "error",
         });
         return;
@@ -1395,33 +1486,35 @@ const AddAnotationUI = ({
         dragOverItem?.type === "heading"
       ) {
         ShowNotification({
-          message: `You cannot embed items into attachment item.`,
+          message: t("youCannotEmbedItemsIntoAttachmentItem"),
           severity: "error",
         });
         return;
       }
 
       let draggedItemIndex = finalHistoryObject.findIndex(
-        (hist) => hist.id === draggedItemID
+        (hist: any) => hist.id === draggedItemID
       );
 
       let dragItem = finalHistoryObject[draggedItemIndex];
 
       let parentIdx = finalHistoryObject.findIndex(
-        (ele) => ele.id === draggedParent
+        (ele: any) => ele.id === draggedParent
       );
 
       if (draggedItemIndex === -1 && parentIdx > -1) {
         draggedItemIndex = finalHistoryObject[
           parentIdx
-        ].additionalInfo.layers?.findIndex((hist) => hist.id === draggedItemID);
+        ].additionalInfo.layers?.findIndex(
+          (hist: any) => hist.id === draggedItemID
+        );
         dragItem =
           finalHistoryObject[parentIdx].additionalInfo.layers[draggedItemIndex];
       }
 
-      if (!!dragItem.additionalInfo.layers?.length) {
+      if (dragItem.additionalInfo.layers?.length) {
         ShowNotification({
-          message: `Cannot Embed the Embedded item!. Please remove it before embeding!`,
+          message: t("cannotEmbedEmbeddedItem"),
           severity: "error",
         });
         return;
@@ -1434,9 +1527,13 @@ const AddAnotationUI = ({
 
   const showPlaylistPosition = useRef(getPosition());
 
+  const AnnotationIconI = useMemo(() => {
+    return G.AnnotationIcon;
+  }, []);
+
   useLayoutEffect(() => {
     if (!singleMode) {
-      setList((prev) => {
+      setList((prev: any[]) => {
         let old = [...prev];
         old = old.map((ele) => {
           return {
@@ -1452,7 +1549,7 @@ const AddAnotationUI = ({
       });
       setSelectedAnnotation(null);
     } else {
-      setList((prev) => {
+      setList((prev: any[]) => {
         let old = [...prev];
         old = old.map((ele) => {
           return {
@@ -1478,10 +1575,9 @@ const AddAnotationUI = ({
             setLoseProgresss(false);
           }}
         >
-          <h2 style={{ fontSize: "1rem" }}>Embedded items will be lost.</h2>
+          <h2 style={{ fontSize: "1rem" }}>{t("embeddedItemsWillBeLost")}</h2>
           <p>
-            Switching to another mode will lose the embedded items. Do you want
-            to continue?
+            t('switchingToAnotherModeWillLoseTheEmbeddedItemsDoYouWantToContinue')
           </p>
           <ButtonsCover>
             <Button
@@ -1491,7 +1587,7 @@ const AddAnotationUI = ({
               }}
               variant="black"
             >
-              Confirm
+              {t("confirm")}
             </Button>
             <Button
               secondaryAlt
@@ -1499,7 +1595,7 @@ const AddAnotationUI = ({
                 setLoseProgresss(false);
               }}
             >
-              No
+              {t("no")}
             </Button>
           </ButtonsCover>
         </Modal>
@@ -1514,8 +1610,8 @@ const AddAnotationUI = ({
               const x = rect.left; // X position where the element starts (from left of screen)
               const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
 
-              globalThis.LastClickX = x;
-              globalThis.LastClickY = y;
+              G.LastClickX = x;
+              G.LastClickY = y;
               setShowPlaylistSettings(false);
             }}
           />
@@ -1530,13 +1626,13 @@ const AddAnotationUI = ({
             <div
               className="more-menu-items active"
               onClick={() => {
-                setMode(PlaylistModeTypes.annotations);
+                setMode(G.PlaylistModeTypes.annotations);
                 setShowPlaylistSettings(false);
               }}
             >
               <div className="align-center">
                 <span
-                  style={{ fontSize: "20px", color: "white" }}
+                  style={{ fontSize: "20px" }}
                   class="material-symbols-outlined"
                 >
                   draft
@@ -1546,17 +1642,13 @@ const AddAnotationUI = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     marginLeft: "4px",
-                    color: "white",
                   }}
                   for="playlistInclude"
                 >
-                  Annotation Mode
+                  {t("annotationMode")}
                 </label>
               </div>
-              <Tooltip
-                forRight={true}
-                text="Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you."
-              >
+              <Tooltip forRight={true} text={t("annotationModeTooltip")}>
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}
@@ -1573,8 +1665,9 @@ const AddAnotationUI = ({
             <div
               className="more-menu-items"
               onClick={() => {
+                // @ts-expect-error - loseProgressAction is not typed
                 loseProgressAction.current = () => {
-                  setList((prev) => {
+                  setList((prev: any[]) => {
                     let old = [...prev];
                     old = old.filter(
                       (ele) => ele.additionalInfo.type !== "playlist"
@@ -1584,14 +1677,14 @@ const AddAnotationUI = ({
                       if (eleprev.additionalInfo.layers) {
                         eleprev.additionalInfo.layers =
                           eleprev.additionalInfo.layers.filter(
-                            (ele) => ele.additionalInfo.type !== "playlist"
+                            (ele: any) => ele.additionalInfo.type !== "playlist"
                           );
                       }
                       return eleprev;
                     });
                     return old;
                   });
-                  setMode(PlaylistModeTypes.playlist);
+                  setMode(G.PlaylistModeTypes.playlist);
                 };
                 if (singleMode && embedItems.length > 0) {
                   setLoseProgresss(true);
@@ -1603,7 +1696,7 @@ const AddAnotationUI = ({
             >
               <div className="align-center">
                 <span
-                  style={{ fontSize: "20px", color: "white" }}
+                  style={{ fontSize: "20px" }}
                   class="material-symbols-outlined"
                 >
                   playlist_play
@@ -1613,17 +1706,13 @@ const AddAnotationUI = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     marginLeft: "4px",
-                    color: "white",
                   }}
                   for="playlistInclude"
                 >
-                  Playlist Mode
+                  {t("playlistMode")}
                 </label>
               </div>
-              <Tooltip
-                forRight={true}
-                text="Playlist mode is to create playlist and share with other or play them."
-              >
+              <Tooltip forRight={true} text={t("playlistModeTooltip")}>
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}
@@ -1637,69 +1726,72 @@ const AddAnotationUI = ({
                 </p>
               </Tooltip>
             </div>
-            {DEV_ENV && <div
-              className="more-menu-items"
-              onClick={() => {
-                loseProgressAction.current = () => {
-                  setList((prev) => {
-                    let old = [...prev];
-                    old = old.filter(
-                      (ele) => ele.additionalInfo.type === "playlist"
-                    );
-                    old = old.map((ele) => {
-                      const eleprev = { ...ele };
-                      if (eleprev.additionalInfo.layers) {
-                        eleprev.additionalInfo.layers =
-                          eleprev.additionalInfo.layers.filter(
-                            (ele) => ele.additionalInfo.type === "playlist"
-                          );
-                      }
+            {DEV_ENV && (
+              <div
+                className="more-menu-items"
+                onClick={() => {
+                  // @ts-expect-error - loseProgressAction is not typed
+                  loseProgressAction.current = () => {
+                    setList((prev: any[]) => {
+                      let old = [...prev];
+                      old = old.filter(
+                        (ele) => ele.additionalInfo.type === "playlist"
+                      );
+                      old = old.map((ele) => {
+                        const eleprev = { ...ele };
+                        if (eleprev.additionalInfo.layers) {
+                          eleprev.additionalInfo.layers =
+                            eleprev.additionalInfo.layers.filter(
+                              (ele: any) =>
+                                ele.additionalInfo.type === "playlist"
+                            );
+                        }
+                      });
+                      return old;
                     });
-                    return old;
-                  });
-                  setMode(PlaylistModeTypes.project);
-                };
-                if (singleMode && embedItems.length > 0) {
-                  setLoseProgresss(true);
-                } else {
-                  loseProgressAction.current?.();
-                }
-                setShowPlaylistSettings(false);
-              }}
-            >
-              <div className="align-center">
-                <span
-                  style={{ fontSize: "20px", color: "white" }}
-                  class="material-symbols-outlined"
-                >
-                  team_dashboard
-                </span>
-                <label
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    marginLeft: "4px",
-                    color: "white",
-                  }}
-                  for="playlistInclude"
-                >
-                  Project Mode
-                </label>
-              </div>
-              <Tooltip forRight={true} text="Project mode is awesome.">
-                <p
-                  className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}
-                >
+                    setMode(G.PlaylistModeTypes.project);
+                  };
+                  if (singleMode && embedItems.length > 0) {
+                    setLoseProgresss(true);
+                  } else {
+                    loseProgressAction.current?.();
+                  }
+                  setShowPlaylistSettings(false);
+                }}
+              >
+                <div className="align-center">
                   <span
-                    style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow"
+                    style={{ fontSize: "20px" }}
+                    class="material-symbols-outlined"
                   >
-                    info
+                    team_dashboard
                   </span>
-                </p>
-              </Tooltip>
-            </div>}
+                  <label
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      marginLeft: "4px",
+                    }}
+                    for="playlistInclude"
+                  >
+                    {t("projectMode")}
+                  </label>
+                </div>
+                <Tooltip forRight={true} text={t("projectModeTooltip")}>
+                  <p
+                    className="what-this center"
+                    style={{ margin: "0 0 0 0.5rem" }}
+                  >
+                    <span
+                      style={{ fontSize: "24px" }}
+                      class="material-symbols-outlined unfollow"
+                    >
+                      info
+                    </span>
+                  </p>
+                </Tooltip>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -1712,39 +1804,25 @@ const AddAnotationUI = ({
               ...showMorePosition.current,
               left: "none",
               right: "4rem",
-              width: "200px",
+              width: "240px",
               padding: "1rem",
               top: "5rem",
             }}
             className="overlay linked-item-custom"
           >
             <p>
-              <b style={{ color: "white" }}>Publish settings</b>
+              <b>{t("publishSettings")}</b>
             </p>
-            <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              Your annotations will be available to everyone if public. If
-              private only you will have access.
-            </span>
+            <span style={{ fontSize: "10px" }}>{t("publishSettingsDesc")}</span>
             <div
               className="more-menu-items"
               onClick={() => {
                 setPublishAccess("private");
               }}
-              style={{
-                borderTop: "1px solid #3E3E3E",
-              }}
             >
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
-                lock
-              </span>
-              <p>Private Access</p>
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
+              <span class="material-symbols-outlined">lock</span>
+              <p>{t("privateAccess")}</p>
+              <span class="material-symbols-outlined">
                 {publishAccess === "private"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -1756,45 +1834,33 @@ const AddAnotationUI = ({
                 setPublishAccess("public");
               }}
             >
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
-                public
-              </span>
-              <p>Public Access</p>
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
+              <span class="material-symbols-outlined">public</span>
+              <p>{t("publicAccess")}</p>
+              <span class="material-symbols-outlined">
                 {publishAccess === "public"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
               </span>
             </div>
 
-            <div
-              className="more-menu-items"
-              onClick={() => {
-                setSingleMode((p) => !p);
-              }}
-            >
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
+            {false && (
+              <div
+                className="more-menu-items"
+                onClick={() => {
+                  setSingleMode((p) => !p);
+                }}
               >
-                auto_awesome_motion
-              </span>
-              <p>Advanced UI</p>
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
-                {!singleMode
-                  ? "radio_button_checked"
-                  : "radio_button_unchecked"}
-              </span>
-            </div>
+                <span class="material-symbols-outlined">
+                  auto_awesome_motion
+                </span>
+                <p>{t("advancedUI")}</p>
+                <span class="material-symbols-outlined">
+                  {!singleMode
+                    ? "radio_button_checked"
+                    : "radio_button_unchecked"}
+                </span>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -1816,18 +1882,18 @@ const AddAnotationUI = ({
                 onClick={() => {
                   if (isEditAddress) setList([]);
                   setIsEditAddress(false);
-                  globalThis.SetEditAnnoData?.(null);
+                  G.SetEditAnnoData?.(null);
                   if (setTab) setTab("discover");
                 }}
               >
                 <span class="material-symbols-outlined">
                   keyboard_backspace
                 </span>
-                <span>Back to Discover</span>
+                <span>{t("backToDiscover")}</span>
               </div>
             </div>
             <h4 style={{ margin: "8px 0" }}>
-              Editing Annotation For {editData.title}
+              {t("editingAnnotationFor")} {editData.title}
             </h4>
             {!!tags.length && (
               <div style={{ display: "flex" }}>
@@ -1838,7 +1904,7 @@ const AddAnotationUI = ({
                     fontWeight: "700",
                   }}
                 >
-                  Tags:
+                  {t("tags")}:
                 </p>
                 <div
                   className="align-center"
@@ -1876,17 +1942,40 @@ const AddAnotationUI = ({
                   const x = rect.left; // X position where the element starts (from left of screen)
                   const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
 
-                  globalThis.LastClickX = x;
-                  globalThis.LastClickY = y;
+                  G.LastClickX = x;
+                  G.LastClickY = y;
                   showPlaylistPosition.current = { ...getPosition() };
                   // setShowPlaylistSettings(true);
                 }}
               >
-                <AnnotationIcon invert={true} />
+                <AnnotationIconI />
               </div>
-              <p>Annotation Mode</p>
+              <p>
+                {singleMode
+                  ? finalHistoryObject[0]?.content || t("annotations")
+                  : t("annotationMode")}
+              </p>
             </div>
             <div className="align-center">
+              {list.length > 0 && (
+                <div
+                  className="publish-setting"
+                  style={{
+                    fontSize: "12px",
+                    marginRight: "0.5rem",
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setList((prev: any[]) => {
+                      const old = [...prev];
+                      old.pop();
+                      return old;
+                    });
+                  }}
+                >
+                  <span class="material-symbols-outlined">undo</span>
+                </div>
+              )}
               <div
                 className="publish-setting"
                 style={{
@@ -1894,10 +1983,15 @@ const AddAnotationUI = ({
                   marginRight: "0.5rem",
                 }}
                 onClick={(e) => {
+                  setList([]);
+                  G.PreviousHTML = null;
+                  setTextHTML(null);
+                  G[`${id}currentPlaylist`] = [];
                   if (setTab) setTab("discover");
+                  G.AddAnotationUI = false;
                 }}
               >
-                Cancel
+                {t("cancel")}
               </div>
               <TogglePlaylistHeight />
               <div
@@ -1908,13 +2002,17 @@ const AddAnotationUI = ({
                   const x = rect.left; // X position where the element starts (from left of screen)
                   const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
 
-                  globalThis.LastClickX = x;
-                  globalThis.LastClickY = y;
+                  G.LastClickX = x;
+                  G.LastClickY = y;
                   showMorePosition.current = { ...getPosition() };
                   setShowMoreOptions(true);
                 }}
               >
-                <img src={Settings_Icon} alt="Settings_Icon" />
+                <img
+                  className="img-icon"
+                  src={G.Settings_Icon}
+                  alt="Settings_Icon"
+                />
               </div>
             </div>
           </div>
@@ -1922,8 +2020,7 @@ const AddAnotationUI = ({
 
         {false && (
           <p style={{ margin: "0.25rem 0", fontWeight: "600" }}>
-            Note: Ranges of chapter will be skipped in saving annoation. Please
-            remove them if you have any.
+            {t("noteRangesOfChapterWillBeSkippedInSavingAnnotation")}
           </p>
         )}
 
@@ -1951,7 +2048,7 @@ const AddAnotationUI = ({
               >
                 delete_forever
               </span>
-              <span className="color-inherit">Delete</span>
+              <span className="color-inherit">{t("delete")}</span>
             </Button>
             {!!embedding &&
               !isEditAddress &&
@@ -1964,7 +2061,7 @@ const AddAnotationUI = ({
                   >
                     frame_source
                   </span>
-                  <span className="color-inherit">Embed</span>
+                  <span className="color-inherit">{t("embed")}</span>
                 </Button>
               )}
             <Button
@@ -1981,7 +2078,7 @@ const AddAnotationUI = ({
               >
                 close
               </span>
-              <span className="color-inherit">Cancel</span>
+              <span className="color-inherit">{t("cancel")}</span>
             </Button>
           </div>
         )}
@@ -2006,7 +2103,7 @@ const AddAnotationUI = ({
               >
                 delete_forever
               </span>
-              <span className="color-inherit">Delete</span>
+              <span className="color-inherit">{t("delete")}</span>
             </Button>
             {!singleMode && (
               <Button
@@ -2025,7 +2122,7 @@ const AddAnotationUI = ({
                 >
                   link_off
                 </span>
-                <span className="color-inherit">Remove</span>
+                <span className="color-inherit">{t("remove")}</span>
               </Button>
             )}
             <Button
@@ -2040,7 +2137,7 @@ const AddAnotationUI = ({
               >
                 close
               </span>
-              <span className="color-inherit">Cancel</span>
+              <span className="color-inherit">{t("cancel")}</span>
             </Button>
           </div>
         )}
@@ -2050,13 +2147,13 @@ const AddAnotationUI = ({
             style={{ gap: "1rem", margin: "0.5rem 0" }}
           >
             <LoaderSecondary />
-            <p>Fetching Annotation Data</p>
+            <p>{t("fetchingAnnotationData")}</p>
           </div>
         )}
         {finalHistoryObject.length === 0 && !dataFetching && (
-          <p style={{ margin: "1rem 0" }}>Add items to start annotating.</p>
+          <p style={{ margin: "1rem 0" }}>{t("addItemsToStartAnnotating")}</p>
         )}
-        {finalHistoryObject.map((ele, index) =>
+        {finalHistoryObject.map((ele: any, index: number) =>
           ele.type === "attachment-link" || ele.type === "date" ? (
             <AttachmentLinkItem
               linkingMode={false}
@@ -2093,11 +2190,10 @@ const AddAnotationUI = ({
               handleDragEnd={handleDragEnd}
               toggle={false}
               setList={setList}
-              layers={false}
               pId={null}
               originalList={finalHistoryObject}
               playListSubIndex={false}
-              deleteFromList={(_, __, id) => {
+              deleteFromList={(_: any, __: any, id: string) => {
                 deleteFromList(id);
               }}
               key={`${ele.id}-${ele.readAlready}`}
@@ -2107,92 +2203,99 @@ const AddAnotationUI = ({
             />
           ) : (
             <>
-              <AnnotationInnerDiv
-                isEditAddress={isEditAddress}
-                dragOverSet={dragOverSet}
-                onDisembed={onDisembed}
-                embedding={embedding}
-                setChecklistEmbeded={onCheckEmbeded}
-                finalHistoryObject={finalHistoryObject}
-                checklistEnabled={checkEnabled}
-                checkListEmbeded={checkListEmbeded}
-                setList={setList}
-                isSomethingEmbededChecked={isSomethingEmbededChecked}
-                selectedAnnotation={selectedAnnotation}
-                checkListData={checkListData}
-                editDataFromPlaylist={editDataFromPlaylist}
-                index={index}
-                pId={null}
-                handleDragStart={handleDragStart}
-                handleDragOver={handleDragOver}
-                handleDragEnd={handleDragEnd}
-                onRemoveTag={onRemoveTag}
-                deleteAttachment={deleteAttachment}
-                singleMode={singleMode}
-                setEmbedding={setEmbedding}
-                deleteFromList={deleteFromList}
-                selected={ele.id === selectedAnnotation}
-                data={{
-                  ...ele,
-                  additionalInfo: {
-                    ...ele.additionalInfo,
-                    layers: [
-                      ...(ele.id === "singleMode"
-                        ? embedItems
-                        : ele.additionalInfo.layers || []),
-                    ],
-                    tags: [
-                      ...(ele.id === "singleMode"
-                        ? tags
-                        : ele.additionalInfo.tags || []),
-                    ],
-                  },
-                }}
-                key={ele.id}
-                onClick={(id) => {
-                  if (isEditAddress) {
-                    ShowNotification({
-                      message: `You are in edit mode. Editing a anotation cannot embed items inside the annotation.`,
-                      severity: "error",
-                    });
-                    return;
-                  }
-                  if (ele.type !== "heading" && !checkEnabled) {
-                    const isMultiFunctionHold = CheckMultiFuntionHold();
-                    if (!isMultiFunctionHold) {
-                      if (!singleMode) {
-                        setSelectedAnnotation((prev) =>
-                          prev === id ? null : id
-                        );
-                      }
-                    } else if (embedding) {
-                      // const isShiftHold = globalThis?.KEY_HOLD?.['shift'];
-                      // if (isShiftHold && id === globalThis.LAST_CLICK_EMBED_PARENT) {
-                      //     let upperLimit = Math.max(index, globalThis.LAST_CLICK_EMBED_ID);
-                      //     let lowerLimit = Math.min(index, globalThis.LAST_CLICK_EMBED_ID);
-                      //     const idsFilter = data.additionalInfo.layers.filter(({ id }, indexInner) => indexInner <= upperLimit && indexInner >= lowerLimit && indexInner !== globalThis.LAST_CLICK_EMBED_ID && id !== embedding).map(ele => ele.id);
-                      //     setChecklistEmbeded(idsFilter, false);
-                      //     globalThis.LAST_CLICK_EMBED_PARENT = data.id;
-                      //     globalThis.LAST_CLICK_EMBED_ID = index;
-                      //     return;
-                      // } else {
-                      //     globalThis.LAST_CLICK_EMBED_PARENT = data.id;
-                      //     globalThis.LAST_CLICK_EMBED_ID = index;
-                      // }
-                      // setChecklistEmbeded(ele.id, data.id);
+              {!singleMode && (
+                <AnnotationInnerDiv
+                  isEditAddress={isEditAddress}
+                  dragOverSet={dragOverSet}
+                  onDisembed={onDisembed}
+                  embedding={embedding}
+                  setChecklistEmbeded={onCheckEmbeded}
+                  finalHistoryObject={finalHistoryObject}
+                  checklistEnabled={checkEnabled}
+                  checkListEmbeded={checkListEmbeded}
+                  setList={setList}
+                  isSomethingEmbededChecked={isSomethingEmbededChecked}
+                  selectedAnnotation={selectedAnnotation}
+                  checkListData={checkListData}
+                  editDataFromPlaylist={editDataFromPlaylist}
+                  index={index}
+                  pId={null}
+                  handleDragStart={handleDragStart}
+                  handleDragOver={handleDragOver}
+                  handleDragEnd={handleDragEnd}
+                  onRemoveTag={onRemoveTag}
+                  deleteAttachment={deleteAttachment}
+                  singleMode={singleMode}
+                  setEmbedding={setEmbedding}
+                  deleteFromList={deleteFromList}
+                  selected={ele.id === selectedAnnotation}
+                  data={{
+                    ...ele,
+                    additionalInfo: {
+                      ...ele.additionalInfo,
+                      layers: [
+                        ...(ele.id === "singleMode"
+                          ? embedItems
+                          : ele.additionalInfo.layers || []),
+                      ],
+                      tags: [
+                        ...(ele.id === "singleMode"
+                          ? tags
+                          : ele.additionalInfo.tags || []),
+                      ],
+                    },
+                  }}
+                  key={ele.id}
+                  onClick={(id: string) => {
+                    if (isEditAddress) {
+                      ShowNotification({
+                        message: t(
+                          "youAreInEditModeEditingANotationCannotEmbedItemsInsideTheAnnotation"
+                        ),
+                        severity: "error",
+                      });
+                      return;
                     }
-                  }
-                }}
-              />
-              {!draggedItemID && !dataFetching &&
+                    if (ele.type !== "heading" && !checkEnabled) {
+                      const isMultiFunctionHold = G.CheckMultiFuntionHold();
+                      if (!isMultiFunctionHold) {
+                        if (!singleMode) {
+                          setSelectedAnnotation((prev: string | null) =>
+                            prev === id ? null : id
+                          );
+                        }
+                      } else if (embedding) {
+                        // const isShiftHold = globalThis?.KEY_HOLD?.['shift'];
+                        // if (isShiftHold && id === globalThis.LAST_CLICK_EMBED_PARENT) {
+                        //     let upperLimit = Math.max(index, globalThis.LAST_CLICK_EMBED_ID);
+                        //     let lowerLimit = Math.min(index, globalThis.LAST_CLICK_EMBED_ID);
+                        //     const idsFilter = data.additionalInfo.layers.filter(({ id }, indexInner) => indexInner <= upperLimit && indexInner >= lowerLimit && indexInner !== globalThis.LAST_CLICK_EMBED_ID && id !== embedding).map(ele => ele.id);
+                        //     setChecklistEmbeded(idsFilter, false);
+                        //     globalThis.LAST_CLICK_EMBED_PARENT = data.id;
+                        //     globalThis.LAST_CLICK_EMBED_ID = index;
+                        //     return;
+                        // } else {
+                        //     globalThis.LAST_CLICK_EMBED_PARENT = data.id;
+                        //     globalThis.LAST_CLICK_EMBED_ID = index;
+                        // }
+                        // setChecklistEmbeded(ele.id, data.id);
+                      }
+                    }
+                  }}
+                />
+              )}
+              {!draggedItemID &&
+                !dataFetching &&
                 selectedAnnotation === ele.id &&
                 !embedding && (
-                  <div style={{ padding: "1rem" }}>
+                  <div style={{ padding: "1rem 1rem 0 1rem" }}>
                     <CustomAnnotationTextEditor
+                      showPreview={showPreview}
+                      setShowPreview={setShowPreview}
                       initialHTML={textHTML}
-                      onChange={(html) => {setTextHTML(html)}}
-                      massAdd={onMassAdd}
-                      attachLink={attachLink}
+                      onChange={(html: string) => {
+                        setTextHTML(html);
+                      }}
                     />
                   </div>
                 )}
@@ -2200,15 +2303,18 @@ const AddAnotationUI = ({
           )
         )}
 
-        {!selectedAnnotation && !dataFetching &&
+        {!selectedAnnotation &&
+          !dataFetching &&
           (!singleMode || editData?.address) &&
           !draggedItemID &&
           !embedding && (
             <CustomAnnotationTextEditor
-                massAdd={onMassAdd}
-                initialHTML={textHTML}
-                onChange={(html) => {setTextHTML(html)}}
-                attachLink={attachLink}
+              showPreview={showPreview}
+              setShowPreview={setShowPreview}
+              initialHTML={textHTML}
+              onChange={(html: string) => {
+                setTextHTML(html);
+              }}
             />
           )}
 
@@ -2217,21 +2323,53 @@ const AddAnotationUI = ({
         )}
         {!!mediaURL && <AudioPlayer close mediaURL={mediaURL} />}
 
-        <div style={{ padding: "1rem 0 " }}>
-          <div className="add-playlist-actions">
-            <Button onClick={onClickSave} secondary>
-              {loading ? "Saving" : "Save"}
-            </Button>
+        <div style={{ padding: "0 0.25rem" }}>
+          <div className="add-playlist-actions row">
             <Button
+              style={{
+                width: "max-content",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                padding: "0 0.5rem",
+              }}
+              secondaryAlt={!showPreview}
+              secondary={showPreview}
+              isOutline
               onClick={() => {
-                if (onReset && !loading) {
-                  onReset();
+                if (G.TogglePreview) {
+                  G.TogglePreview();
                 }
               }}
-              secondaryAlt
             >
-              Close
+              <img
+                className="img-icon"
+                src={showPreview ? PREVIEW_ICON_ACTIVE : PREVIEW_ICON_INACTIVE}
+                alt="Preview"
+              />
+              <span style={{ color: "inherit" }}>{t("preview")}</span>
             </Button>
+            <Button
+              style={{
+                width: "max-content",
+              }}
+              onClick={onClickSave}
+              secondary
+            >
+              {loading ? t("saving") : t("save")}
+            </Button>
+            {false && (
+              <Button
+                onClick={() => {
+                  if (onReset && !loading) {
+                    onReset();
+                  }
+                }}
+                secondaryAlt
+              >
+                {t("close")}
+              </Button>
+            )}
           </div>
         </div>
       </div>

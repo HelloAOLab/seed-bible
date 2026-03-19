@@ -1,21 +1,32 @@
-const isMobile = (window?.innerWidth || gridPortalBot.tags.pixelWidth) < MOBILE_VIEWPORT_THRESHOLD;
-if ((isMobile || that?.force) && globalThis.makingPlaylist) {
-    if (globalThis["Playlist_package"]) {
-        globalThis["Playlist_package"].onClick();
-    } else {
-        globalThis.isRecording = false;
-        globalThis.SelectedItemIDForAttachments = null;
-        Playlist.RemoveScreenRecordingControls();
-        try {
-            await experiment.endRecording();
-        } catch (err) { }
-        globalThis.StopVideoRecording = false;
-        RemoveApplicationByID(globalThis.PLAYLIST_PANEL_ID);
-        globalThis.PLAYLIST_PANEL_ID = null;
-        globalThis[`defaultToggleGreyCheckPLayingPlaylist`] &&
-            globalThis[`defaultToggleGreyCheckPLayingPlaylist`](null);
-        globalThis.IS_PLAYLIST_ACTIVE = false;
-        globalThis.SetSplitAppPanel2(null);
-        globalThis.makingPlaylist = false;
-    }
+const G = globalThis as any;
+const isMobile =
+  (window?.innerWidth || G.gridPortalBot.tags.pixelWidth) <
+  G.MOBILE_VIEWPORT_THRESHOLD;
+if ((isMobile || that?.force) && G.makingPlaylist) {
+  if (G["Playlist_package"]) {
+    G["Playlist_package"].onClick();
+    G.RemoveApplicationByLabel(G.ActiveMoreApp);
+    G.makingApp = null;
+    G.SetActiveMoreApp(null);
+    G.ActiveMoreApp = null;
+  } else {
+    G.isRecording = false;
+    G.SelectedItemIDForAttachments = null;
+    G.Playlist.RemoveScreenRecordingControls();
+    try {
+      await experiment.endRecording();
+    } catch (err) {}
+    G.StopVideoRecording = false;
+    G.RemoveApplicationByID(G.PLAYLIST_PANEL_ID);
+    G.PLAYLIST_PANEL_ID = null;
+    G[`defaultToggleGreyCheckPLayingPlaylist`] &&
+      G[`defaultToggleGreyCheckPLayingPlaylist`](null);
+    G.IS_PLAYLIST_ACTIVE = false;
+    G.SetSplitAppPanel2(null);
+    G.makingPlaylist = false;
+    G.RemoveApplicationByLabel(G.ActiveMoreApp);
+    G.makingApp = null;
+    G.SetActiveMoreApp(null);
+    G.ActiveMoreApp = null;
+  }
 }

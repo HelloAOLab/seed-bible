@@ -1,23 +1,33 @@
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
+import type {
+  ZoomLevelOptionType,
+  ZoomLevelSelectorType,
+  ZoomButtonType,
+} from "scriptureMap2D.main.types";
+import type { ZoomButtonProps } from "scriptureMap2D.main.interfaces";
+import { useSideBarContext } from "app.hooks.sideBar";
 
 const { useState, useCallback, useMemo, useRef, useEffect } = os.appHooks;
 const { forwardRef } = os.appCompat;
 
-const ZoomLevelOption = ({ value, handleZoomLevelClick }) => {
+const ZoomLevelOption: ZoomLevelOptionType = ({
+  value,
+  handleZoomLevelClick,
+}) => {
   const { scaleFactor } = useScriptureMap2DContext();
 
-  const zoom = useMemo(() => {
+  const zoom = useMemo<number>(() => {
     return value * 100;
   }, [scaleFactor]);
 
-  const selected = useMemo(() => {
+  const selected = useMemo<boolean>(() => {
     return value === scaleFactor;
   }, [scaleFactor]);
 
   return (
     <button
-      onClick={(e) => {
-        handleZoomLevelClick(e, value);
+      onClick={() => {
+        handleZoomLevelClick(value);
       }}
     >
       <span>{`${zoom} %`}</span>
@@ -26,33 +36,37 @@ const ZoomLevelOption = ({ value, handleZoomLevelClick }) => {
   );
 };
 
-const ZoomLevelSelector = ({ setShowOptions, toggleButtonRef }) => {
+const ZoomLevelSelector: ZoomLevelSelectorType = ({
+  setShowOptions,
+  toggleButtonRef,
+}) => {
+  const { t } = useSideBarContext();
   const { setScaleFactor } = useScriptureMap2DContext();
-  const containerRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const handleZoomLevelClick = useCallback((e, value) => {
+  const handleZoomLevelClick = useCallback<(value: number) => void>((value) => {
     setShowOptions(false);
     setScaleFactor(value);
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handleClickOutside = (e: MouseEvent) => {
       if (
         containerRef.current &&
-        !containerRef.current.contains(e.target) &&
+        !containerRef.current.contains(e.target as Node) &&
         toggleButtonRef.current &&
-        !toggleButtonRef.current.contains(e.target)
+        !toggleButtonRef.current.contains(e.target as Node)
       ) {
         setShowOptions(false);
       }
     };
 
-    const handleFocusOutside = (e) => {
+    const handleFocusOutside = (e: FocusEvent) => {
       if (
         containerRef.current &&
-        !containerRef.current.contains(e.target) &&
+        !containerRef.current.contains(e.target as Node) &&
         toggleButtonRef.current &&
-        !toggleButtonRef.current.contains(e.target)
+        !toggleButtonRef.current.contains(e.target as Node)
       ) {
         setShowOptions(false);
       }
@@ -73,9 +87,9 @@ const ZoomLevelSelector = ({ setShowOptions, toggleButtonRef }) => {
       onClick={(e) => {
         e.stopPropagation();
       }}
-      className="zoomLevelSelector"
+      className="zoom-level-selector"
     >
-      <span>Zoom level</span>
+      <span>{t("zoomLevel")}</span>
       <ZoomLevelOption
         value={1.5}
         handleZoomLevelClick={handleZoomLevelClick}
@@ -101,7 +115,7 @@ const ZoomLevelSelector = ({ setShowOptions, toggleButtonRef }) => {
   );
 };
 
-const ZoomButton = forwardRef(({ onClick, children }, ref) => {
+const ZoomButtonRaw: ZoomButtonType = ({ onClick, children }, ref) => {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -119,7 +133,11 @@ const ZoomButton = forwardRef(({ onClick, children }, ref) => {
       {children}
     </button>
   );
-});
+};
+
+const ZoomButton = forwardRef(
+  ZoomButtonRaw
+) as React.FunctionComponent<ZoomButtonProps>;
 
 export const Controls = () => {
   const { scaleFactor } = useScriptureMap2DContext();
@@ -130,22 +148,13 @@ export const Controls = () => {
 
   const [showOptions, setShowOptions] = useState(false);
 
-  const {
-    handleZoomIn,
-    handleZoomOut /*handleLabelsToggle, handleShowAllChaptersToggle, showingAllChapters, handleContentHeatmapToggle*/,
-  } = useScriptureMap2DContext();
+  const { handleZoomIn, handleZoomOut } = useScriptureMap2DContext();
 
-  const toggleButtonRef = useRef(null);
-
-  /*{<>
-        <button onClick={handleLabelsToggle}><span class="material-symbols-outlined">sell</span></button>
-        {false && <button onClick={handleShowAllChaptersToggle}><span class="material-symbols-outlined">{showingAllChapters ? "visibility_off" : "visibility"}</span></button>}
-        <button onClick={handleContentHeatmapToggle}><span class="material-symbols-outlined">description</span></button>
-    </>}*/
+  const toggleButtonRef = useRef<HTMLButtonElement | null>(null);
 
   return (
-    <div className="mapControls">
-      <div className="zoomContainer">
+    <div className="scripture-map-2d-controls">
+      <div className="zoom-container">
         <ZoomButton onClick={handleZoomOut}>
           <span className="material-symbols-outlined">remove</span>
         </ZoomButton>

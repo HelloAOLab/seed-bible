@@ -1,16 +1,15 @@
-const { createContext, useContext, useState,useRef } = os.appHooks;
+const { createContext, useContext, useState, useRef } = os.appHooks;
 const MyContext = createContext();
-export function CalendarProvider({children}){
-    const [apiCalendar,setApiCalendar]=useState({});
-    const refCalendar=useRef();
-    const [name,setName]=useState('Amit');
-    return(
-        <MyContext.Provider value={{name,apiCalendar,setApiCalendar,refCalendar}}>
-        {children}
+export function CalendarProvider({ children }) {
+  const [apiCalendar, setApiCalendar] = useState({});
+  const refCalendar = useRef();
 
-        </MyContext.Provider>
-    )
+  return (
+    <MyContext.Provider value={{ apiCalendar, setApiCalendar, refCalendar }}>
+      {children}
+    </MyContext.Provider>
+  );
 }
 export function useCalendar() {
-    return useContext(MyContext);
+  return useContext(MyContext);
 }

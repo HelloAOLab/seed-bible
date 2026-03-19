@@ -1,11 +1,12 @@
-const Overlay = ({
-  position,
-  onClose,
-  positionOverRide = {},
-  items,
-  styles,
-  children,
-}) => {
+const Overlay = (props: any) => {
+  const {
+    position,
+    onClose,
+    positionOverRide = {},
+    items,
+    styles,
+    children,
+  } = props;
   return (
     <>
       <div className="backdrop" onClick={() => onClose()} />
@@ -13,15 +14,14 @@ const Overlay = ({
         onClick={() => onClose()}
         style={{
           ...position,
-          width: "200px",
+          width: "206px",
           padding: "1rem",
           ...styles,
-          ...positionOverRide,
         }}
         className="overlay linked-item-custom"
       >
         {children}
-        {items.map((ele) => {
+        {items.map((ele: any) => {
           return (
             <div
               className={`more-menu-items ${ele.disabled ? "inactive" : ""} ${ele.noBorderBottom ? "noBorderBottom" : ""}`}

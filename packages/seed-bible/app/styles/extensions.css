@@ -1,7 +1,13 @@
 .extensions-container {
-    font-family: 'DM Sans', system-ui, sans-serif;
-    padding: 16px;
-    width: 280px;
-    height: 100%;
-    overflow: scroll;
+  font-family: "DM Sans", system-ui, sans-serif;
+  padding: 16px;
+  width: 280px;
+  height: 100%;
+  overflow: scroll;
+}
+
+@media (max-width: 768px) {
+  .extensions-container {
+    width: 100%;
+  }
 }

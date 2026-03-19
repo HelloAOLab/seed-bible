@@ -1,5 +1,5 @@
 const { useState, useRef, useLayoutEffect } = os.appHooks;
-
+const G = globalThis as any;
 const sizes = [
   {
     size: "8px",
@@ -21,14 +21,17 @@ const sizeToValueMap = new Map(sizes.map((item) => [item.size, item.value]));
 const VideoOverlay = () => {
   const [size, setSize] = useState("s");
 
-  const [position, setPosition] = useState({ x: 50, y: 50 }); // px from top/left
+  const [position, setPosition] = useState<{ x: any; y: any }>({
+    x: 50,
+    y: 50,
+  }); // px from top/left
   const draggingRef = useRef(false);
-  const dragStart = useRef({ x: 0, y: 0 });
-  const initialPos = useRef({ x: 0, y: 0 });
-  const lastPosBeforeFullScreen = useRef({ x: 0, y: 0 });
+  const dragStart = useRef<{ x: any; y: any }>({ x: 0, y: 0 });
+  const initialPos = useRef<{ x: any; y: any }>({ x: 0, y: 0 });
+  const lastPosBeforeFullScreen = useRef<{ x: any; y: any }>({ x: 0, y: 0 });
   const lastSizeBeforeFullScreen = useRef("s");
 
-  const videoRef = useRef(null);
+  const videoRef = useRef<any>(null);
 
   const StartVideo = async () => {
     try {
@@ -53,14 +56,14 @@ const VideoOverlay = () => {
       if (videoRef.current) {
         videoRef.current.srcObject
           ?.getTracks()
-          .forEach((track) => track.stop());
+          .forEach((track: any) => track.stop());
         videoRef.current.srcObject = null;
       }
     };
   }, []);
 
   // ✅ Real-time drag handlers
-  const handleMouseDown = (e) => {
+  const handleMouseDown = (e: any) => {
     if (`${position.x}`.endsWith("w")) return;
     draggingRef.current = true;
     dragStart.current = { x: e.clientX, y: e.clientY };
@@ -69,7 +72,7 @@ const VideoOverlay = () => {
     window.addEventListener("mouseup", handleMouseUp);
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: any) => {
     if (!draggingRef.current) return;
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
@@ -110,8 +113,8 @@ const VideoOverlay = () => {
           <span
             class="material-symbols-outlined"
             onClick={() => {
-              globalThis.CloseVideoOverlay();
-              globalThis.ToggleVideoLayout(true);
+              G.CloseVideoOverlay();
+              G.ToggleVideoLayout(true);
             }}
           >
             close

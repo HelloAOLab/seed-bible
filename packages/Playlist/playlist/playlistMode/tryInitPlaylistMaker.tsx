@@ -1,37 +1,16 @@
 shout("closeShareButton");
-LocaleStorage.historySaver();
+const G = globalThis as any;
+G.LocaleStorage.historySaver();
 os.unregisterApp("quitGame");
-os.registerApp("quitGame");
+os.registerApp("quitGame", thisBot);
 
-const { Button } = Components;
-
-if (globalThis.makingPlaylist) {
-    globalThis.makingPlaylist = false;
-    return;
-    const ids = Object.keys(globalThis.PlaylistsGroups);
-    globalThis.makingPlaylist = false;
-    setCurrentExperience(0);
-    globalThis.setOpenSidebar && globalThis.setOpenSidebar(false);
-    globalThis.IS_PLAYLIST_ACTIVE = false;
-    globalThis.SET_SHOW_CHECK && globalThis.SET_SHOW_CHECK(false);
-    // shout('shareButton');
-    if (globalThis.updateCustomHeight) updateCustomHeight(0);
-    ids.forEach(id => {
-        globalThis[`${id}creatingPlaylist`] = false;
-        globalThis[`${id}creatingPlaylistName`] = "";
-    })
-    os.unregisterApp("controlButtons");
-    os.unregisterApp("quitGame");
-    os.unregisterApp("message");
-    // os.unregisterApp("playing-playlist");
-    os.unregisterApp("playlist-cont-ui");
-    thisBot.cursorReset();
-    globalThis.makingPlaylist = false;
-    return;
+if (G.makingPlaylist) {
+  G.makingPlaylist = false;
+  return;
 }
 
-globalThis.makingPlaylist = true;
-globalThis.setOpenSidebar && globalThis.setOpenSidebar(false);
+G.makingPlaylist = true;
+G.setOpenSidebar && G.setOpenSidebar(false);
 const Playlist = await thisBot.PlaylistUI();
 return Playlist;
 // thisBot.showInfo(`History Mode`);

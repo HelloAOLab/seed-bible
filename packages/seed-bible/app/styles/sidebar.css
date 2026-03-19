@@ -4,7 +4,7 @@
   /* height: 100dvh; */
   position: relative;
   /* transition: width 0.3s ease; */
-  background-color: var(--themeSideMenu);
+  /* background-color: transparent; */
   font-family: "Satoshi", sans-serif;
 }
 
@@ -20,7 +20,7 @@
   appearance: none;
   width: 16px;
   height: 16px;
-  border: 2px solid #4459f3;
+  border: 2px solid var(--spaceSelection);
   /* orange border */
   border-radius: 4px;
   background-color: white;
@@ -33,9 +33,9 @@
 }
 
 .customCheckbox:checked {
-  background-color: #4459f3;
+  background-color: var(--spaceSelection);
   /* orange fill */
-  border-color: #4459f3;
+  border-color: var(--spaceSelection);
 }
 
 .customCheckbox:checked::after {
@@ -86,7 +86,7 @@
   width: 60px;
   height: 100vh;
   position: relative;
-  background: var(--themeSideMenu);
+  background: transparent;
   margin-left: 9px;
   /* transition: width 0.3s ease; */
 }
@@ -101,8 +101,10 @@
   align-items: center;
   gap: 15px;
   justify-content: space-between;
-  color: var(--text1);
+  color: var(--spaceNameText, var(--text1));
   font-weight: 700;
+  font-family: var(--sideMenu-spaceName-font, "Satoshi", sans-serif);
+  font-size: var(--sideMenu-spaceName-size, 14px);
 }
 
 .collapsedMenu {
@@ -114,7 +116,7 @@
 }
 
 .sidebarLine {
-  margin-top: 25px;
+  margin-top: 10px;
   width: 100%;
   height: 1px;
   background-color: var(--gray2-color);
@@ -152,6 +154,13 @@
   background: transparent;
   border: none;
   outline: none;
+  font-family: var(--input-title-font, "DM Sans", sans-serif);
+  font-size: var(--input-title-size, 14px);
+}
+
+.searchSection input::placeholder {
+  font-family: var(--input-placeholder-font, "DM Sans", sans-serif);
+  font-size: var(--input-placeholder-size, 14px);
 }
 
 .tabsContainer {
@@ -159,15 +168,20 @@
   gap: 16px;
   margin-top: 15px;
   justify-content: space-between;
-  color: var(--text1);
+  color: var(--pageTextColor);
   font-weight: 700;
   margin-bottom: 27px;
   align-items: center;
+  font-family: var(--sideMenu-spaceName-font, "Satoshi", sans-serif);
+  font-size: var(--sideMenu-spaceName-size, 14px);
 }
 
 .tabs {
   /* margin-left: 10px; */
-  /* height: 100%; */
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(100vh - 200px);
 }
 
 .material-symbols-outlined.addIconCollapsed {
@@ -190,7 +204,7 @@
 }
 
 .tab {
-  color: var(--text1);
+  color: var(--inactiveTabText);
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -198,29 +212,28 @@
   cursor: pointer;
   user-select: none;
   padding: 10px;
+  font-family: var(--inactiveTabFont);
+  font-size: var(--inactiveTabSize, 14px);
   /* -webkit-user-drag: element; */
 }
 
 .activeTab {
-  background: white;
-  color: var(--text1) !important;
+  color: var(--activeTabText) !important;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
   user-select: none;
-
   padding-bottom: 3px;
   padding: 10px;
-  background-color: color-mix(in srgb, var(--tabSelection) 50%, transparent);
   border-width: 1.5px;
-  border-color: var(--tabSelection);
+  background: var(--activeTabFill) !important;
+  border-color: var(--activeTabBorder) !important;
   border-style: solid;
   border-radius: 5px;
-  /* border-color: var(--tabSelection) !important;
-    border: 1px solid !important;
-    border-radius: 3px !important; */
+  font-family: var(--activeTabFont);
+  font-size: var(--activeTabSize, 14px);
 }
 
 .activeTabCollapsed {
@@ -255,8 +268,8 @@
   padding: 0;
   padding-top: 3px;
   background: transparent;
-  border: black 1px solid;
-  color: black;
+  border: var(--simpleTabText, black) 1px solid;
+  color: var(--simpleTabText, black);
 }
 
 .tabInfo {
@@ -274,9 +287,8 @@
 }
 
 .addIcon {
-  background-color: var(--primaryButton) !important;
-
-  color: var(--primaryButtonColor) !important;
+  background-color: var(--addButtonIcon) !important;
+  color: var(--primaryColor) !important;
   border-radius: 5px;
   cursor: pointer;
 }
@@ -290,7 +302,7 @@
   gap: 10px;
   justify-content: space-around;
   width: 280px !important;
-  background: var(--menuBackground) !important;
+  background: var(--panelBackground, --panelBackground) !important;
   align-items: center;
   height: 70px;
 }
@@ -304,7 +316,7 @@
   gap: 15px;
   width: 100%;
   align-items: center;
-  background: var(--themeSideMenu);
+  background: transparent;
 }
 
 .dot {
@@ -312,7 +324,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  /* width: 50px; */
+  min-width: 60px;
   gap: 0px;
 }
 
@@ -321,11 +333,11 @@
 }
 
 .activeBg {
-  /* background: #4459F34D; */
+  /* background: var(--spaceSelection)4D; */
   border-radius: 3px;
   width: 20px;
   height: 20px;
-  /* border: 1px solid #4459F3; */
+  /* border: 1px solid var(--spaceSelection); */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -333,18 +345,18 @@
   /* background-color: var(--spaceSelection) !important; */
   background-color: color-mix(
     in srgb,
-    var(--spaceSelection) 50%,
+    var(--selectedSpaceColor) 50%,
     transparent
   ) !important;
-  border: var(--spaceSelection) 1px solid !important;
-  border-color: var(--spaceSelection);
+  border: var(--selectedSpaceColor) 1px solid !important;
+  border-color: var(--selectedSpaceColor);
   /* color: var(--secondaryButtonColor) !important; */
 }
 
 .activeBg span {
   width: 8px;
   height: 8px;
-  background-color: var(--spaceSelection) !important;
+  background-color: var(--selectedSpaceColor) !important;
   border-radius: 2px;
   display: block;
 }
@@ -353,7 +365,7 @@
   cursor: pointer;
   width: 8px;
   height: 8px;
-  background-color: var(--gray2-color);
+  background-color: var(--unselectedSpaceColor) !important;
   border-radius: 2px;
   display: block;
 }
@@ -372,7 +384,8 @@
 
 .icon-button {
   cursor: pointer;
-  color: var(--text1);
+  color: var(--settingsIcon, var(--pageTextColor));
+  font-size: var(--sideMenu-icons-size, 24px);
 }
 
 .triangle-up {
@@ -396,18 +409,18 @@
 
 .popupSettings {
   position: relative;
-  width: 225px !important;
+  width: 215px !important;
   height: fit-content;
-  /* max-height: 200px; */
   padding: 10px;
-  background: #202020;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  border-radius: 15px;
-  /* overflow: auto; */
+  border-radius: 10px;
   scrollbar-width: none;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .popupSettings .itemSettings {
@@ -416,9 +429,7 @@
   gap: 6px;
   justify-content: start !important;
   align-items: center;
-  background: transparent;
   width: 100%;
-  color: #fff;
   font-family: "Satoshi", system-ui, sans-serif;
   font-size: 14px;
   font-style: normal;
@@ -429,8 +440,44 @@
   cursor: pointer;
 }
 
-.itemSettings:hover {
-  background-color: #4b4b4b;
+.popupSettings2 {
+  position: relative;
+  width: 215px !important;
+  height: fit-content;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  background: var(--primaryColor) !important;
+  align-items: center;
+  gap: 2px;
+  border-radius: 10px;
+  scrollbar-width: none;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.popupSettings2 .itemSettings2 {
+  display: flex !important;
+  flex-direction: row;
+  gap: 6px;
+  justify-content: start !important;
+  align-items: center;
+  width: 100%;
+  background: rgba(var(--text1), 0.9);
+  color: var(--text1);
+  font-family: "Satoshi", system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  border-radius: 10px;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.popupSettings2 .itemSettings2:hover {
+  background: rgba(var(--text1), 0.3);
 }
 
 .activeItemSettings {
@@ -452,4 +499,15 @@
 .folderTabs {
   margin-left: 15px;
   margin-top: 5px;
+}
+
+.option-btn {
+  background: var(--primaryColor);
+  color: var(--text1);
+  border-radius: 5px;
+  cursor: pointer;
+  padding: 6px 12px;
+  min-width: 80px;
+  width: fit-content;
+  border: 1px solid var(--buttonBorder);
 }

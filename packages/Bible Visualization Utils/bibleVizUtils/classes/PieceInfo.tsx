@@ -1,0 +1,6 @@
+export class PieceInfo {
+  constructor({ typeOfPiece, key }) {
+    this.typeOfPiece = typeOfPiece;
+    this.key = key;
+  }
+}

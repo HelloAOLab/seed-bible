@@ -1,31 +1,36 @@
 .aiSettings-container {
-    font-family: 'DM Sans', system-ui, sans-serif;
-    padding: 16px;
-    width: 280px;
-    height: 100%;
-    overflow: scroll;
+  font-family: "DM Sans", system-ui, sans-serif;
+  padding: 16px;
+  width: 280px;
+  height: 100%;
+  overflow: scroll;
 }
 
+@media (max-width: 768px) {
+  .aiSettings-container {
+    width: 100%;
+  }
+}
 
 .ai-chat {
-    display: flex;
-    flex-direction: row;
-    justify-content: start;
-    align-items: center;
-    gap: 10px;
-    /* margin-bottom: 30px; */
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  align-items: center;
+  gap: 10px;
+  /* margin-bottom: 30px; */
 }
-.ai-photo-positions{
-    display: flex;
-    flex-direction: column;
-    justify-content: start;
-    align-items: center;
-    gap: 20px;
+.ai-photo-positions {
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
+  gap: 20px;
 }
 
-.position-item{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+.position-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }

@@ -1,11 +1,25 @@
-const { createContext, useContext, useState, useEffect, useLayoutEffect } =
-  os.appHooks;
+const {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+} = os.appHooks;
 import { getStyleOf } from "app.styles.styler";
 import {
   DualScreenIcon,
   ThreeScreenIcon,
   QuadScreenIcon,
 } from "app.components.icons";
+import {
+  initI18n,
+  t as translate,
+  changeLanguage as changeLang,
+  getCurrentLanguage,
+  isRTL,
+  availableLanguages,
+} from "app.hooks.i18n";
 const MyContext = createContext();
 
 export function SideBarProvider({ children }) {
@@ -24,6 +38,39 @@ export function SideBarProvider({ children }) {
   const [packageAddingOptions, setPackageAddingOptions] = useState([]);
   const [openOnMobile, setOpenOnMobile] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  // i18n state
+  const [language, setLanguage] = useState(getCurrentLanguage());
+  const [i18nReady, setI18nReady] = useState(false);
+  const [langVersion, setLangVersion] = useState(0);
+
+  // Initialize i18n on mount
+  useEffect(() => {
+    initI18n().then(() => {
+      setLanguage(getCurrentLanguage());
+      setI18nReady(true);
+    });
+  }, []);
+
+  // Change language function
+  const changeLanguage = async (lng: string) => {
+    await changeLang(lng);
+    // Force re-render by updating state AFTER i18next has changed
+    setLanguage(lng);
+    setLangVersion((v) => v + 1);
+  };
+
+  // Translation function - wrapped in useCallback with language dependency for reactivity
+  const t = useCallback(
+    (key: string, options?: any) => translate(key, options),
+    [language]
+  );
+
+  // Expose globally
+  globalThis.t = t;
+  globalThis.changeLanguage = changeLanguage;
+  globalThis.availableLanguages = availableLanguages;
+
   useEffect(() => {
     const handleResize = () => {
       const check = window.innerWidth < 768;
@@ -58,16 +105,22 @@ export function SideBarProvider({ children }) {
     };
   }, []);
 
-  function openPopupSettings(props, wait, popupComponent) {
+  function openPopupSettings(props, wait, popupComponent, position) {
     setWait(wait);
     if (popupSettings) {
       closePopupSettings();
       return;
     }
-    const pointerX = mousePosition.x;
-    const pointerY = mousePosition.y;
+    const pointerX = position ? position.x : mousePosition.x;
+    const pointerY = position ? position.y : mousePosition.y;
 
-    const adjustedPosition = adjustPositionWithinScreen(pointerX, pointerY);
+    // Get item count from props to determine if we should adjust position
+    const itemCount = props?.items?.length ?? 0;
+    const adjustedPosition = adjustPositionWithinScreen(
+      pointerX,
+      pointerY,
+      itemCount
+    );
     setPosition(adjustedPosition);
 
     setTimeout(() => {
@@ -79,11 +132,19 @@ export function SideBarProvider({ children }) {
     }, 100);
   }
 
-  function adjustPositionWithinScreen(x, y) {
-    const popupWidth = 250;
-    const popupHeight = 230;
-    const margin = 10;
+  function adjustPositionWithinScreen(x, y, itemCount = 0) {
     const offset = 10;
+
+    // If only 1 item, skip adjustment and just apply offset
+    if (itemCount === 1) {
+      return { x: x + offset, y: y + offset };
+    }
+
+    const popupWidth = 250;
+    // Calculate height based on item count (approx 40px per item + padding)
+    const popupHeight =
+      itemCount > 0 ? Math.min(itemCount * 40 + 20, 230) : 230;
+    const margin = 10;
 
     let adjustedX = x + offset;
     let adjustedY = y + offset;
@@ -120,9 +181,11 @@ export function SideBarProvider({ children }) {
   globalThis.closePopupSettings = closePopupSettings;
   useEffect(() => {
     if (popupSettings) {
+      const itemCount = (popupSettings as any)?.items?.length ?? 0;
       const adjustedPosition = adjustPositionWithinScreen(
         position.x,
-        position.y
+        position.y,
+        itemCount
       );
       setPosition(adjustedPosition);
     }
@@ -130,14 +193,21 @@ export function SideBarProvider({ children }) {
 
   useLayoutEffect(() => {
     if (popupSettings || popupComponent) {
+      console.log("running pop up setting");
+      os.log(themeColors);
       runPopUpSettings({
         ...popupSettings,
-        sidebarContext: { closePopupSettings, position, popupComponent },
+        sidebarContext: {
+          closePopupSettings,
+          position,
+          popupComponent,
+          themeColors,
+        },
       });
     } else {
       os.unregisterApp("PopupSettings");
     }
-  }, [popupSettings, popupComponent]);
+  }, [popupSettings, popupComponent, globalThis.CurrentColors]);
 
   return (
     <MyContext.Provider
@@ -165,6 +235,14 @@ export function SideBarProvider({ children }) {
         setOpenOnMobile,
         closePopupSettings,
         isMobile,
+        // i18n
+        t,
+        language,
+        langVersion,
+        changeLanguage,
+        i18nReady,
+        availableLanguages,
+        isRTL,
       }}
     >
       {children}
@@ -174,6 +252,7 @@ export function SideBarProvider({ children }) {
 
 export function PopupSettings({ items, type, disabled, sidebarContext }) {
   const [external, setextrnal] = useState(false);
+  const colors = sidebarContext.themeColors;
   return (
     <div
       onClick={sidebarContext.closePopupSettings}
@@ -196,16 +275,24 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
         rel="stylesheet"
       />
       {sidebarContext.popupComponent || (
-        <div className={`popupSettings ${disabled ? "disabled" : null}`}>
+        <div
+          className={`popupSettings  ${disabled ? "disabled" : null}`}
+          style={{
+            background: colors ? colors[1].primaryColor : "#ffffff",
+            border: `1px solid ${colors?.text1 ?? "#1A1A1A"}`,
+          }}
+        >
           {external && <div className=" externalPopupSettings">{external}</div>}
           {null /*<div className="triangle-up"></div>*/}
           {items.map((item) => {
             if (item.active === false) return;
+            const primary = colors ? colors[1]?.pageTextColor : "#1A1A1A";
+
             if (item?.type === "line")
               return (
                 <div
                   style={{
-                    width: "100%",
+                    width: "90%",
                     height: "1px",
                     backgroundColor: "#cdcccc3b",
                   }}
@@ -218,18 +305,72 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
                     item.onClick();
                     if (item.external) setextrnal(item.external);
                   }}
-                  className={`itemSettings`}
+                  className={`itemSettings `}
                   style={{
                     cursor: item?.disabled ? "not-allowed" : "pointer",
                     color: item?.disabled ? "#929292" : "",
+                    justifyContent:
+                      item.toggle !== undefined ? "space-between" : undefined,
                   }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = primary + "40")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "")
+                  }
                 >
-                  <div>{item.icon}</div>
-                  <div>
-                    {typeof item.title === "function"
-                      ? item.title()
-                      : item.title}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        color: colors ? colors[1].pageTextColor : "#1A1A1A",
+                      }}
+                    >
+                      {item.icon}
+                    </div>
+                    <div
+                      className="font-bold"
+                      style={{
+                        color: colors ? colors[1].pageTextColor : "#1A1A1A",
+                      }}
+                    >
+                      {typeof item.title === "function"
+                        ? item.title()
+                        : item.title}
+                    </div>
                   </div>
+                  {item.toggle !== undefined && (
+                    <div
+                      style={{
+                        width: "36px",
+                        height: "20px",
+                        borderRadius: "10px",
+                        backgroundColor: item.toggle
+                          ? "var(--secondaryColor)"
+                          : "#555",
+                        position: "relative",
+                        transition: "background-color 0.2s",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          borderRadius: "50%",
+                          backgroundColor: "white",
+                          position: "absolute",
+                          top: "2px",
+                          left: item.toggle ? "18px" : "2px",
+                          transition: "left 0.2s",
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               );
           })}

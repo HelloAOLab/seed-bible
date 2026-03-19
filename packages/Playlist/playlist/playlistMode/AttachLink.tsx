@@ -1,7 +1,8 @@
 const { useState, useLayoutEffect, useMemo, useRef } = os.appHooks;
 import { MiniTextEditor } from "app.components.smallEditor";
+const G = globalThis as any;
 const { Input, Modal, Button, ButtonsCover, Select, LoaderSecondary } =
-  Components;
+  G.Components;
 
 const RecordingUI = await thisBot.RecordVoice();
 const VideoRecordUI = await thisBot.VideoRecordUI();
@@ -11,20 +12,20 @@ const RECORDING_VALUE = "voice-recording";
 
 const EditorId = "attachfile";
 
-const OPTIONS = [
+const OPTIONS = (t: any) => [
   // { value: "text", label: "Heading Text" },
   // { value: SEARCH_ADD_VALUE, label: "Search & Add Verse,Chapter" },
-  { value: "youtube", label: "YouTube" },
-  { value: "externalLink", label: "External Link" },
-  { value: "Video", label: "Video" },
-  { value: "iframe", label: "Iframe" },
+  { value: "youtube", label: t("youtube") },
+  { value: "externalLink", label: t("externalLink") },
+  { value: "Video", label: t("video") },
+  { value: "iframe", label: t("iframe") },
   // { value: RECORDING_VALUE, label: "Recording" },
   // { value: "aux", label: "AUX", disabled: true }
 ];
 
-const OPTIONS_TEXTTYPE = [
-  { value: "heading", label: "Heading" },
-  { value: "text", label: "Text" },
+const OPTIONS_TEXTTYPE = (t: any) => [
+  { value: "heading", label: t("heading") },
+  { value: "text", label: t("text") },
 ];
 
 const BIBLE_ICON =
@@ -32,7 +33,7 @@ const BIBLE_ICON =
 
 const getCurrentTime = () => new Date().toLocaleString();
 
-const imageAssets = {
+const imageAssets: any = {
   RECORDING_1:
     "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/df7ee00a951b3e90b4900ef34614ef81955e8d78546e27ce96866568a84a8397.svg",
   RECORDING_2:
@@ -76,34 +77,33 @@ const imageAssets = {
 //     }}
 // />
 
-function SubComponent({
-  editMode,
-  onAddFiles,
-  dragState,
-  recordingType,
-  setRecordingType,
-  name,
-  link,
-  setLinkState,
-  setLink,
-  setName,
-  mediaType,
-  setLoading,
-  setType,
-  data,
-  setData,
-  type,
-  textType,
-  setTextType,
-}) {
-  const playlists = useMemo(
-    () => globalThis[`${"default"}playlists`] || [],
-    []
-  );
+function SubComponent(props: any) {
+  const {
+    editMode,
+    onAddFiles,
+    dragState,
+    recordingType,
+    setRecordingType,
+    name,
+    link,
+    setLinkState,
+    setLink,
+    setName,
+    mediaType,
+    setLoading,
+    setType,
+    data,
+    setData,
+    type,
+    textType,
+    setTextType,
+    showChangeOptions = true,
+  } = props;
+  const playlists = useMemo(() => G[`${"default"}playlists`] || [], []);
   const playlistListOptions = useMemo(
     () => [
       { label: "Select Playlist", value: "" },
-      ...playlists.map((ele) => ({ label: ele.name, value: ele.id })),
+      ...playlists.map((ele: any) => ({ label: ele.name, value: ele.id })),
     ],
     []
   );
@@ -115,7 +115,7 @@ function SubComponent({
           <Input
             value={name}
             onChangeListener={setName}
-            placeholder="Tag Name"
+            placeholder={t("tagName")}
           />
         </div>
       );
@@ -143,7 +143,7 @@ function SubComponent({
                   backgroundColor: "white",
                   padding: "4px",
                   borderRadius: "12px",
-                  border: "3px dashed #4459F3",
+                  border: "3px dashed var(--spaceSelection)",
                   textAlign: "center",
                   minWidth: "280px",
                   boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
@@ -152,7 +152,7 @@ function SubComponent({
                 <div
                   style={{
                     fontSize: "1rem",
-                    color: "#4459F3",
+                    color: "var(--spaceSelection)",
                   }}
                 >
                   📁
@@ -164,7 +164,7 @@ function SubComponent({
                     fontSize: "14px",
                   }}
                 >
-                  Drop files here
+                  {t("dropFilesHere")}
                 </h3>
                 <p
                   style={{
@@ -173,7 +173,7 @@ function SubComponent({
                     fontSize: "12px",
                   }}
                 >
-                  Release to upload files
+                  {t("releaseToUploadFiles")}
                 </p>
               </div>
             </div>
@@ -181,11 +181,10 @@ function SubComponent({
           <div className="align-center" style={{ gap: "0.5rem" }}>
             <div
               onClick={() => {
-                globalThis.SET_SHOW_CHECK?.(true);
-                globalThis.setOpenSidebar && globalThis.setOpenSidebar(true);
+                G.SET_SHOW_CHECK?.(true);
+                G.setOpenSidebar && G.setOpenSidebar(true);
                 setTimeout(() => {
-                  globalThis.SetDontOpenPlaylist &&
-                    globalThis.SetDontOpenPlaylist(true);
+                  G.SetDontOpenPlaylist && G.SetDontOpenPlaylist(true);
                 }, 200);
               }}
               style={{
@@ -207,7 +206,7 @@ function SubComponent({
                 style={{ marginBottom: "0" }}
                 value={name}
                 onChangeListener={setName}
-                placeholder="Type to add scripture (e.g. Gen 1, Rev 2:4)"
+                placeholder={t("typeToAddScripture")}
               />
             </div>
           </div>
@@ -224,7 +223,7 @@ function SubComponent({
                   await onAddFiles(files);
                 }}
               >
-                Import JSON
+                {t("importJSON")}
               </Button>
             </>
           )}
@@ -236,7 +235,7 @@ function SubComponent({
           <div className="switch-tabs">
             <div
               onClick={() => {
-                if (globalThis.isRecording) {
+                if (G.isRecording) {
                   return ShowNotification({
                     message: "Cannot Switch while recording!",
                     severity: "error",
@@ -246,12 +245,16 @@ function SubComponent({
               }}
               className={`${recordingType === "audio" ? "active" : ""}`}
             >
-              <span class="material-symbols-outlined">mic</span>
+              <span
+                class={`material-symbols-outlined ${recordingType !== "audio" && "img-icon"}`}
+              >
+                mic
+              </span>
               <p>Audio</p>
             </div>
             <div
               onClick={() => {
-                if (globalThis.isRecording) {
+                if (G.isRecording) {
                   return ShowNotification({
                     message: "Cannot Switch while recording!",
                     severity: "error",
@@ -261,8 +264,12 @@ function SubComponent({
               }}
               className={`${recordingType === "video" ? "active" : ""}`}
             >
-              <span class="material-symbols-outlined">videocam</span>
-              <p>Video</p>
+              <span
+                class={`material-symbols-outlined ${recordingType !== "video" && "img-icon"}`}
+              >
+                videocam
+              </span>
+              <p>{t("video")}</p>
             </div>
           </div>
           {recordingType === "audio" ? (
@@ -280,7 +287,7 @@ function SubComponent({
           <Input
             value={name}
             onChangeListener={setName}
-            placeholder="(Optional) type to add a custom title"
+            placeholder={t("typeToAddCustomTitle")}
           />
         </div>
       );
@@ -292,11 +299,11 @@ function SubComponent({
               sxSelect={{ width: "7rem", marginBottom: "1rem" }}
               secondary
               value={textType}
-              onChangeListener={(val) => {
+              onChangeListener={(val: string) => {
                 setTextType(val);
               }}
-              name="Role:"
-              options={OPTIONS_TEXTTYPE}
+              name={`${t("role")}:`}
+              options={OPTIONS_TEXTTYPE(t)}
             />
           )}
           <MiniTextEditor
@@ -305,8 +312,8 @@ function SubComponent({
             headingControls
             showMoreOptions={false}
             placeholderHTML={name}
-            initialHtml={name}
-            onChange={(html) => {
+            initialHTML={name}
+            onChange={(html: string) => {
               setName(html);
             }}
           />
@@ -327,25 +334,25 @@ function SubComponent({
             style={{ width: "100%" }}
             value={name}
             onChangeListener={setName}
-            placeholder="(Optional) type to add a custom title"
+            placeholder={t("typeToAddCustomTitle")}
           />
           <div style={{ width: "100%", display: "flex", gap: "1rem" }}>
             <Select
               sxSelect={{ width: "7rem" }}
               secondary
               value={mediaType}
-              onChangeListener={(val) => {
+              onChangeListener={(val: string) => {
                 setLinkState({ isValid: false, type: val });
                 setType(val);
               }}
-              name="Type:"
-              options={OPTIONS}
+              name={`${t("type")}:`}
+              options={OPTIONS(t)}
             />
             <Input
               style={{ marginBottom: "0", flexGrow: "1" }}
               value={link}
               onChangeListener={setLink}
-              placeholder="e.g. https://www.youtube.com/watch?v=ALsluAKBZ-c"
+              placeholder={`${t("exampleeg")} https://www.youtube.com/watch?v=ALsluAKBZ-czs3`}
             />
           </div>
         </div>
@@ -357,10 +364,10 @@ function SubComponent({
             sxSelect={{ width: "100%" }}
             secondary
             value={data}
-            onChangeListener={(val) => {
+            onChangeListener={(val: string) => {
               setData(val);
             }}
-            name="Playlist:"
+            name={`${t("playlist")}:`}
             options={playlistListOptions}
           />
         </div>
@@ -371,22 +378,22 @@ function SubComponent({
           <div
             onClick={async () => {
               setLoading(true);
-              const files = await os.showUploadFiles();
+              const files: any = await os.showUploadFiles();
               const file = files?.[0];
 
               if (!file) {
                 setLoading(false);
                 return ShowNotification({
-                  message: "No File Uploaded!",
+                  message: t("noFileUploaded"),
                   severity: "error",
                 });
               }
 
-              const filesPromises = [];
+              const filesPromises: any = [];
 
               files.forEach((file: any) => {
                 filesPromises.push(
-                  os.recordFile(globalThis.RECORD_STOREKEY, file.data, {
+                  os.recordFile(G.RECORD_STOREKEY, file.data, {
                     name: file.name,
                     mimeType: file.mimeType,
                   })
@@ -394,19 +401,22 @@ function SubComponent({
               });
 
               try {
-                const failCount = 0;
+                let failCount = 0;
                 const fileSave = await Promise.all(filesPromises);
-                const filesResult = [];
+                const filesResult: any = [];
 
                 fileSave.forEach(
-                  ({ success, url, existingFileUrl, errorCode }, index) => {
+                  (
+                    { success, url, existingFileUrl, errorCode },
+                    index: number
+                  ) => {
                     if (!success && errorCode !== "file_already_exists") {
                       failCount++;
                       return;
                     }
                     filesResult.push({
                       content: files[index].name,
-                      id: createUUID(),
+                      id: G.createUUID(),
                       additionalInfo: {
                         link: url || existingFileUrl,
                         mimeType: files[index].mimeType,
@@ -426,7 +436,7 @@ function SubComponent({
 
                 if (failCount > 0) {
                   return ShowNotification({
-                    message: "Failed to upload some Files!",
+                    message: t("failedToUploadSomeFiles"),
                     severity: "error",
                   });
                 }
@@ -435,7 +445,7 @@ function SubComponent({
                 console.log(error);
                 setLoading(false);
                 ShowNotification({
-                  message: "File upload failed!",
+                  message: t("fileUploadFailed"),
                   severity: "error",
                 });
               }
@@ -455,28 +465,27 @@ function SubComponent({
               src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/6c8e5fa8be9c6bd0786104e4819b401b4b345a7734a7ebffb5d5e606ee182b45.png"
               style={{ height: "46px" }}
             />
-            <p className="link">Drag drop or Click to browse</p>
-            <p className="info-type">Image, .pdf, doc, .AUX etc</p>
+            <p className="link">{t("dragDropOrClickToBrowse")}</p>
+            <p className="info-type">{t("infoType")}</p>
           </div>
         </div>
       );
     default:
-      return <p>Unkown Data Type</p>;
+      return <p>{t("unknownDataType")}</p>;
   }
 }
 
-const tags = [
-  "TEXT",
-  "RECORDING",
-  "LINK",
-  "FILE_UPLOAD",
-  "PLAYLIST",
-  "SCRIPTURE",
-  "DATE",
-  "TAG",
-];
+const tags = ["SCRIPTURE", "TEXT", "LINK"];
 
-const WITHOUTLOGIN_TAGS = {
+if (DEV_ENV) {
+  tags.push("RECORDING");
+  tags.push("FILE_UPLOAD");
+  tags.push("PLAYLIST");
+  tags.push("DATE");
+  tags.push("TAG");
+}
+
+const WITHOUTLOGIN_TAGS: any = {
   RECORDING: true,
   FILE_UPLOAD: true,
 };
@@ -487,78 +496,84 @@ const SEND =
 const CLOSE =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/eee3f1736645b937d137719cbaeecf14e983237f4bf1594e765d75c0e887fa1a.png";
 
-const readFileAsText = (file) => {
+const readFileAsText = (file: any) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (event) => resolve(event.target.result);
+    reader.onload = (event: any) => resolve(event.target.result);
     reader.onerror = reject;
     reader.readAsText(file);
   });
 };
 
-const toPlainFile = (file) => ({
+const toPlainFile = (file: any) => ({
   name: file.name,
   size: file.size,
   mimeType: file.type,
   lastModified: file.lastModified,
 });
 
-const AttachLink = ({
-  sSelectedType,
-  sName,
-  sData,
-  sLink,
-  sMediaType,
-  editMode,
-  onClose,
-  canClose,
-  onAddTags,
-  massAdd,
-  attachLink,
-  isDate = false,
-  onDateClick,
-  isTags = false,
-  isPlaylist = false,
-}) => {
+const AttachLink = (props: any) => {
+  const {
+    sSelectedType,
+    sName,
+    sData,
+    sLink,
+    sMediaType,
+    editMode,
+    canRecord = true,
+    onClose,
+    canClose,
+    onAddTags,
+    massAdd,
+    attachLink,
+    isDate = false,
+    onDateClick,
+    isTags = false,
+    isPlaylist = false,
+    showSaveButton = true,
+  } = props;
   const isloggedIN = authBot?.id;
+  const datePickerRef = useRef<any>(null);
 
-  const playlists = useMemo(
-    () => globalThis[`${"default"}playlists`] || [],
-    []
-  );
+  useLayoutEffect(() => {
+    if (datePickerRef.current) {
+      (window as any).flatpickr(datePickerRef.current, {
+        dateFormat: "m/d/Y",
+        allowInput: false,
+      });
+    }
+  }, [isDate]);
+
+  const playlists = useMemo(() => G[`${"default"}playlists`] || [], []);
   const [loading, setLoading] = useState(false);
   const [selectedType, setSelectedType] = useState(
-    sSelectedType
-      ? sSelectedType
-      : globalThis.isScreenRecording
-        ? "RECORDING"
-        : tags[0]
+    sSelectedType ? sSelectedType : G.isScreenRecording ? "RECORDING" : tags[0]
   );
   const [textType, setTextType] = useState("heading");
   const [mediaType, setType] = useState(sMediaType ? sMediaType : "youtube");
   const [data, setData] = useState(sData ? sData : null);
-  const [linkState, setLinkState] = useState(false);
+  const [linkState, setLinkState] = useState<any>(false);
   const [name, setName] = useState(
-    sName ? sName : selectedType === "TEXT" ? globalThis.RawName || "" : ""
+    sName ? sName : selectedType === "TEXT" ? G.RawName || "" : ""
   );
   const [link, setLink] = useState(sLink ? sLink : "");
 
   // Audio or Video
   const [recordingType, setRecordingType] = useState(
-    globalThis.isScreenRecording ? "video" : "audio"
+    G.isScreenRecording ? "video" : "audio"
   );
 
-  const dragRef = useRef(null);
+  const dragRef = useRef<any>(null);
   const dragCounter = useRef(0);
 
   const [dragState, setDragState] = useState({
     isDragOver: false,
   });
 
-  const onAddFiles = async (files) => {
+  const onAddFiles = async (files: any) => {
     setLoading(true);
     let failCount = 0;
-    const tempData = [];
+    const tempData: any = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       try {
@@ -568,7 +583,7 @@ const AttachLink = ({
             thisBot.filterOutValidItemFromJSON(playlistImportedData);
           if (filterdArray.length) {
             tempData.push({
-              id: createUUID(),
+              id: G.createUUID(),
               ...file,
               content: file.name,
               additionalInfo: {
@@ -584,22 +599,22 @@ const AttachLink = ({
         }
       } catch (err) {
         failCount++;
-        console.log("UPLOAED JSON ERROR", err);
+        console.log(t("UPLOAEDJSONERROR"), err);
       }
     }
     setLoading(false);
     if (failCount > 0) {
       ShowNotification({
-        message: `${failCount} file(s) rejected for not being valid JSON Format.`,
+        message: `${t("fileRejectedForNotBeingValidJSON", { count: failCount })}`,
         severity: "error",
       });
     }
 
-    setData((prev) => [...(Array.isArray(prev) ? prev : []), ...tempData]);
+    setData((prev: any) => [...(Array.isArray(prev) ? prev : []), ...tempData]);
   };
 
   useLayoutEffect(() => {
-    const handleDragEnter = (e) => {
+    const handleDragEnter = (e: any) => {
       e.preventDefault();
       e.stopPropagation();
       dragCounter.current += 1;
@@ -608,7 +623,7 @@ const AttachLink = ({
       }
     };
 
-    const handleDragLeave = (e) => {
+    const handleDragLeave = (e: any) => {
       e.preventDefault();
       e.stopPropagation();
       dragCounter.current -= 1;
@@ -617,18 +632,18 @@ const AttachLink = ({
       }
     };
 
-    const handleDragOver = (e) => {
+    const handleDragOver = (e: any) => {
       e.preventDefault();
       e.stopPropagation();
     };
 
-    const handleDrop = async (e) => {
+    const handleDrop = async (e: any) => {
       e.preventDefault();
       e.stopPropagation();
 
       const files = Array.from(e.dataTransfer.files);
-      const finalFiles = [];
-      const filesPromises = [];
+      const finalFiles: any = [];
+      const filesPromises: any = [];
 
       for (const file of files) {
         filesPromises.push(readFileAsText(file));
@@ -669,7 +684,7 @@ const AttachLink = ({
   }, [selectedType]);
 
   useLayoutEffect(() => {
-    const results = validateUrl(link);
+    const results: any = G.validateUrl(link);
     if (!results.isValid) {
       return;
     }
@@ -717,9 +732,9 @@ const AttachLink = ({
     }
   }, [mediaType, link, data]);
 
-  const deleteFromList = (id) => {
+  const deleteFromList = (id: string) => {
     if (Array.isArray(data)) {
-      setData((prev) => prev.filter((ele) => ele.id !== id));
+      setData((prev: any) => prev.filter((ele: any) => ele.id !== id));
     }
   };
 
@@ -750,7 +765,7 @@ const AttachLink = ({
         selectedType !== "LINK"
       ) {
         return ShowNotification({
-          message: "Attachment Name missing!",
+          message: t("attachmentNameMissing"),
           severity: "error",
         });
       }
@@ -767,7 +782,7 @@ const AttachLink = ({
     if (selectedType === "RECORDING") {
       if (!data)
         return ShowNotification({
-          message: "Record Something to Save Recording!",
+          message: t("recordSomethingToSaveRecording"),
           severity: "error",
         });
       setData(null);
@@ -778,14 +793,10 @@ const AttachLink = ({
 
       let finalData = data;
 
-      const fileSave = await os.recordFile(
-        globalThis.RECORD_STOREKEY,
-        finalData,
-        {
-          name: name,
-          mimeType: finalData?.type || "audio/webm",
-        }
-      );
+      const fileSave: any = await os.recordFile(G.RECORD_STOREKEY, finalData, {
+        name: name,
+        mimeType: finalData?.type || "audio/webm",
+      });
 
       const url = fileSave.url || fileSave?.existingFileUrl;
 
@@ -793,7 +804,7 @@ const AttachLink = ({
 
       if (!url) {
         return ShowNotification({
-          message: "Failed to upload File!",
+          message: t("failedToUpload"),
           severity: "error",
         });
       }
@@ -811,7 +822,7 @@ const AttachLink = ({
     if (selectedType === "FILE_UPLOAD") {
       if (!Array.isArray(data) || data?.length < 1) {
         return ShowNotification({
-          message: "No files uploaded!",
+          message: t("noFilesUploaded"),
           severity: "error",
         });
       } else {
@@ -828,10 +839,10 @@ const AttachLink = ({
     if (selectedType === "PLAYLIST") {
       if (!data)
         return ShowNotification({
-          message: "Select A Playlist to annotate!",
+          message: t("selectAPlaylistToAnnotate"),
           severity: "error",
         });
-      const playlistList = playlists.find((ele) => ele.id === data);
+      const playlistList: any = playlists.find((ele: any) => ele.id === data);
       attachLink(playlistList.name, playlistList.list, {
         isValid: true,
         type: "playlist",
@@ -840,10 +851,10 @@ const AttachLink = ({
     }
 
     if (selectedType === "LINK") {
-      const results = validateUrl(link);
+      const results: any = G.validateUrl(link);
       if (!results.isValid) {
         return ShowNotification({
-          message: "Invalid Link format!",
+          message: t("invalidLinkFormat"),
           severity: "error",
         });
       } else {
@@ -866,7 +877,7 @@ const AttachLink = ({
           allItems.push(...file.data);
         });
       }
-      if (!!name.trim()) {
+      if (name.trim()) {
         allItems.push(...thisBot.getSuggestedListItems({ searchText: name }));
       }
       setName("");
@@ -881,9 +892,9 @@ const AttachLink = ({
       setSelectedType("TEXT");
       setLink("");
       const isTempID = EditorId;
-      if (globalThis[`${isTempID}ClearEditorContent`])
-        globalThis[`${isTempID}ClearEditorContent`]();
-      globalThis.RawName = "";
+      if (G[`${isTempID}ClearEditorContent`])
+        G[`${isTempID}ClearEditorContent`]();
+      G.RawName = "";
       return attachLink(name, link, {
         isValid: true,
         subType: textType,
@@ -894,167 +905,190 @@ const AttachLink = ({
 
   useLayoutEffect(() => {
     if (selectedType === "TEXT") {
-      globalThis.RawName = name;
+      G.RawName = name;
     } else {
-      globalThis.RawName = "";
+      G.RawName = "";
     }
   }, [name, selectedType]);
 
   useLayoutEffect(() => {
     if (editMode) {
-      globalThis.FireEditContent = onClickSend;
+      G.FireEditContent = onClickSend;
     }
   }, [onClickSend]);
 
   return (
-    <form
-      className="add-new-playlist"
-      ref={dragRef}
-      onSubmit={(e) => {
-        e.preventDefault(); // prevent full page reload
-        onClickSend();
-      }}
-    >
-      <div
-        className="container-render"
-        onKeyDown={(e) => {
-          e.stopPropagation();
+    <>
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+      />
+      <form
+        className="add-new-playlist"
+        ref={dragRef}
+        onSubmit={(e) => {
+          e.preventDefault(); // prevent full page reload
+          onClickSend();
         }}
       >
-        {loading && (
-          <div className="loader-container">
-            <LoaderSecondary />
-          </div>
-        )}
-
-        <SubComponent
-          link={link}
-          setLink={setLink}
-          setRecordingType={setRecordingType}
-          recordingType={recordingType}
-          data={data}
-          setData={setData}
-          editMode={editMode}
-          textType={textType}
-          setTextType={setTextType}
-          onAddFiles={onAddFiles}
-          setLinkState={setLinkState}
-          dragState={dragState}
-          name={name}
-          setLoading={setLoading}
-          setName={setName}
-          mediaType={mediaType}
-          setType={setType}
-          type={selectedType}
-        />
-      </div>
-      {Array.isArray(data) &&
-        data.map((ele) => (
-          <div
-            style={{
-              padding: "1rem",
-              border: "1px solid gray",
-              margin: "0.5rem",
-              borderRadius: "6px",
-              display: "flex",
-              alignItems: "center",
-              justifyItems: "space-between",
-            }}
-          >
-            <div className="align-center" style={{ gap: "1rem" }}>
-              <img
-                src={getFileIconByMimeType(ele?.additionalInfo?.mimeType)}
-                style={{ width: "18px" }}
-              />
-              <div className="align-center">
-                <p class="truncate-text">{ele.content}</p>
-                <p>
-                  .{getExtensionFromMimeType(ele?.additionalInfo?.mimeType)}
-                </p>
-              </div>
+        <div
+          className="container-render"
+          onKeyDown={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          {loading && (
+            <div className="loader-container">
+              <LoaderSecondary />
             </div>
-            <p
-              style={{ marginLeft: "auto", cursor: "pointer" }}
-              onClick={() => deleteFromList(ele.id)}
+          )}
+
+          <SubComponent
+            link={link}
+            setLink={setLink}
+            setRecordingType={setRecordingType}
+            recordingType={recordingType}
+            data={data}
+            setData={setData}
+            editMode={editMode}
+            textType={textType}
+            setTextType={setTextType}
+            onAddFiles={onAddFiles}
+            setLinkState={setLinkState}
+            dragState={dragState}
+            name={name}
+            setLoading={setLoading}
+            setName={setName}
+            mediaType={mediaType}
+            setType={setType}
+            type={selectedType}
+          />
+        </div>
+        {Array.isArray(data) &&
+          data.map((ele) => (
+            <div
+              style={{
+                padding: "1rem",
+                border: "1px solid gray",
+                margin: "0.5rem",
+                borderRadius: "6px",
+                display: "flex",
+                alignItems: "center",
+                justifyItems: "space-between",
+              }}
             >
-              <span class="material-symbols-outlined unfollow delete-icon">
-                delete
-              </span>
-            </p>
-          </div>
-        ))}
-      {!editMode && (
-        <div className="select_item_container">
-          {tags
-            .filter(
-              (ele) =>
-                (isloggedIN || !WITHOUTLOGIN_TAGS[ele]) &&
-                (ele === "PLAYLIST"
-                  ? isPlaylist
-                  : ele === "TAG"
-                    ? isTags
-                    : ele === "DATE"
-                      ? isDate
-                      : true)
-            )
-            .map((ele) => (
-              <div
-                key={ele.id}
-                onClick={() => {
-                  if (editMode)
-                    return ShowNotification({
-                      message: "Cannot change while being in edit mode!",
-                      severity: "error",
-                    });
-                  if (ele === "DATE" && !!onDateClick) {
-                    return onDateClick();
-                  }
-                  setName("");
-                  setSelectedType(ele);
-                  setData(null);
+              <div className="align-center" style={{ gap: "1rem" }}>
+                <img
+                  src={G.getFileIconByMimeType(ele?.additionalInfo?.mimeType)}
+                  style={{ width: "18px" }}
+                />
+                <div className="align-center">
+                  <p class="truncate-text">{ele.content}</p>
+                  <p>
+                    .{G.getExtensionFromMimeType(ele?.additionalInfo?.mimeType)}
+                  </p>
+                </div>
+              </div>
+              <p
+                style={{ marginLeft: "auto", cursor: "pointer" }}
+                onClick={() => deleteFromList(ele.id)}
+              >
+                <span class="material-symbols-outlined unfollow delete-icon">
+                  delete
+                </span>
+              </p>
+            </div>
+          ))}
+        {!editMode && (
+          <div className="select_item_container">
+            {tags
+              .filter(
+                (ele) =>
+                  (isloggedIN || !WITHOUTLOGIN_TAGS[ele]) &&
+                  (ele === "PLAYLIST"
+                    ? isPlaylist
+                    : ele === "TAG"
+                      ? isTags
+                      : ele === "DATE"
+                        ? isDate
+                        : ele === "RECORDING"
+                          ? canRecord
+                          : true)
+              )
+              .map((ele: any) => (
+                <div
+                  key={ele.id}
+                  onClick={() => {
+                    if (editMode)
+                      return ShowNotification({
+                        message: t("cannotChangeWhileBeingInEditMode"),
+                        severity: "error",
+                      });
+                    if (ele === "DATE" && !!onDateClick) {
+                      console.log(datePickerRef.current, "datePickerRef");
+                      datePickerRef.current.click();
+                      // return onDateClick();
+                      return;
+                    }
+                    setName("");
+                    setSelectedType(ele);
+                    setData(null);
+                  }}
+                  style={{ position: "relative" }}
+                  className={`${
+                    ele === selectedType ? "active" : ""
+                  } select_item_type`}
+                >
+                  {ele === "DATE" && (
+                    <input
+                      ref={datePickerRef}
+                      type="date"
+                      onChange={(e: any) => {
+                        onDateClick(e?.target?.value || "");
+                      }}
+                      className="hidden-date"
+                      placeholder="MM/DD/YYYY"
+                    />
+                  )}
+                  <img
+                    style={{ height: "16px", width: "16px" }}
+                    src={
+                      imageAssets[`${ele}${ele === selectedType ? "_2" : "_1"}`]
+                    }
+                  />
+                </div>
+              ))}
+            <div
+              className="align-center"
+              style={{ gap: "0.25rem", marginLeft: "auto" }}
+            >
+              {canClose && (
+                <div
+                  onClick={onClose}
+                  style={{ marginLeft: "auto" }}
+                  className={`active  select_item_type`}
+                >
+                  <img src={CLOSE} style={{ width: "20px" }} />
+                </div>
+              )}
+              <button
+                type="submit"
+                style={{
+                  marginLeft: "auto",
+                  cursor: isDisabled ? "not-allowed" : "",
                 }}
                 className={`${
-                  ele === selectedType ? "active" : ""
+                  !isDisabled ? "active" : "disabled"
                 } select_item_type`}
+                disabled={isDisabled}
               >
-                <img
-                  style={{ height: "16px", width: "16px" }}
-                  src={
-                    imageAssets[`${ele}${ele === selectedType ? "_2" : "_1"}`]
-                  }
-                />
-              </div>
-            ))}
-          <div
-            className="align-center"
-            style={{ gap: "0.25rem", marginLeft: "auto" }}
-          >
-            {canClose && (
-              <div
-                onClick={onClose}
-                style={{ marginLeft: "auto" }}
-                className={`active  select_item_type`}
-              >
-                <img src={CLOSE} style={{ width: "20px" }} />
-              </div>
-            )}
-            <button
-              type="submit"
-              style={{
-                marginLeft: "auto",
-                cursor: isDisabled ? "not-allowed" : "",
-              }}
-              className={`${
-                !isDisabled ? "active" : "disabled"
-              } select_item_type`}
-              disabled={isDisabled}
-            >
-              <img src={SEND} style={{ width: "20px" }} />
-            </button>
+                <img src={SEND} style={{ width: "20px" }} />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-    </form>
+        )}
+      </form>
+    </>
   );
 };
 

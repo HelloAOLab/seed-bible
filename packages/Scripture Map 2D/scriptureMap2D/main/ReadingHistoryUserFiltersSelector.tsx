@@ -1,12 +1,18 @@
 import { FiltersSelectorOption } from "scriptureMap2D.main.FiltersSelectorOption";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
-const { useMemo, useEffect } = os.appHooks;
+import { userColorStore } from "bibleVizUtils.services.UserColorStore";
+
+import { useSideBarContext } from "app.hooks.sideBar";
+
+const { useMemo } = os.appHooks;
 
 export const ReadingHistoryUserFiltersSelector = () => {
+  const { t } = useSideBarContext();
   const {
     handleReadingHistoryUserSelectorClick,
     readingHistoryUserFilters,
     myAuthBotId,
+    usersDataMap,
   } = useReadingHistoryContext();
 
   const allSelected = useMemo(() => {
@@ -16,9 +22,9 @@ export const ReadingHistoryUserFiltersSelector = () => {
   }, [readingHistoryUserFilters]);
 
   return (
-    <div className="readingHistoryUserSelector">
+    <div className="reading-history-user-selector">
       <FiltersSelectorOption
-        content="All"
+        content={t("all")}
         onClick={() => {
           handleReadingHistoryUserSelectorClick("all");
         }}
@@ -26,41 +32,40 @@ export const ReadingHistoryUserFiltersSelector = () => {
       />
 
       {Array.from(readingHistoryUserFilters).map(([userId, selected]) => {
-        return (
-          <FiltersSelectorOption
-            content={[
-              <div
-                style={{
-                  backgroundColor:
-                    userId === myAuthBotId
-                      ? BibleVizUtils.Data.tags.myUserColor
-                      : (BibleVizUtils.Data.vars.userPresenceData?.[userId]
-                          ?.user?.color ??
-                        thisBot.vars.FakeReadingHistoryUsersColorMap?.get(
-                          userId
-                        ) ??
-                        "pink"),
-                  borderStyle: "solid",
-                  borderColor:
-                    userId === myAuthBotId
-                      ? BibleVizUtils.Data.tags.myUserColor
-                      : (BibleVizUtils.Data.vars.userPresenceData?.[userId]
-                          ?.user?.color ??
-                        thisBot.vars.FakeReadingHistoryUsersColorMap?.get(
-                          userId
-                        ) ??
-                        "pink"),
-                }}
-                className="filterOptionIcon"
-              ></div>,
-              userId === myAuthBotId ? "You" : "Guest",
-            ]}
-            onClick={() => {
-              handleReadingHistoryUserSelectorClick(userId);
-            }}
-            selected={selected}
-          />
-        );
+        const userData = usersDataMap.get(userId);
+        if (userData) {
+          const { profileName } = userData;
+          const fixedName: string =
+            userId === myAuthBotId
+              ? t("you")
+              : (profileName?.length ?? 0) > 0
+                ? profileName
+                : t("Unknown User");
+          return (
+            <FiltersSelectorOption
+              content={[
+                <div
+                  style={{
+                    backgroundColor: userColorStore.getUserColor({
+                      authId: userId,
+                    }),
+                    borderStyle: "solid",
+                    borderColor: userColorStore.getUserColor({
+                      authId: userId,
+                    }),
+                  }}
+                  className="filter-option-icon"
+                ></div>,
+                fixedName,
+              ]}
+              onClick={() => {
+                handleReadingHistoryUserSelectorClick(userId);
+              }}
+              selected={selected}
+            />
+          );
+        }
+        return null;
       })}
     </div>
   );

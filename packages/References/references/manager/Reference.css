@@ -9,9 +9,10 @@
   padding: 10px;
   max-height: 100%;
   border-radius: 10px;
-  background: white;
+  background: var(--pageBackground);
   overflow-y: auto;
   scrollbar-width: none;
+  color: var(--text1);
 }
 
 .subRef {
@@ -26,11 +27,21 @@
   align-items: center;
   width: 100%;
   font-family: "Satoshi", system-ui, sans-serif;
+  height: 30px;
 }
 
 .openTab:hover {
   color: #546e7a;
   cursor: pointer;
+}
+
+.reference-body {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  scrollbar-width: none;
+  height: 340px;
+  width: 100%;
 }
 
 .reference-components {
@@ -39,7 +50,7 @@
   gap: 5px;
   width: 100%;
   height: fit-content;
-  background: white;
+  background: var(--pageBackground);
   padding: 5px;
   border-radius: 5px;
   cursor: "text";
@@ -82,8 +93,4 @@
   100% {
     background-position: 0% 50%;
   }
-}
-
-.reference-content {
-  max-height: 400px;
 }

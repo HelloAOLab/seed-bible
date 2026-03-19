@@ -1,14 +1,20 @@
 const { deltaTime, baseColor, userColor } = that;
 
+console.warn(
+  `[Debug] GetHistoryColorByDeltaTime needs to be improved with BibleVizUtils.Data.masks.readingHistoryRecencyThresholdTimeSeconds`
+);
+return baseColor;
+
 const sortedTimePeriods =
   BibleVizUtils.Data.masks.historyTimePeriodsInfo.toSorted(
     (periodInfoA, periodInfoB) => {
       return periodInfoA.GetTimePeriodInMs() - periodInfoB.GetTimePeriodInMs();
     }
   );
-const greaterTimePeriodSeconds =
-  sortedTimePeriods[sortedTimePeriods.length - 1].GetTimePeriodInMs();
-const actualDeltaTime = Math.min(deltaTime, greaterTimePeriodSeconds);
+const actualDeltaTime = Math.min(
+  deltaTime,
+  BibleVizUtils.Data.masks.readingHistoryRecencyThresholdTimeSeconds
+);
 let timePeriodLowerIndex = -1;
 let timePeriodUpperIndex = -1;
 

@@ -1,12 +1,41 @@
 import { saveUserReadingHistory } from "db.annotations.library";
-const bibleTabDataCache = new Map();
+const bibleDataCache = new Map();
+const footnotesCache = new Map();
 
+// Cache key based on content (translation:bookId:chapter)
+export function getCacheKey(translation, bookId, chapter) {
+  return `${translation}:${bookId}:${chapter}`;
+}
+
+export function getCachedBibleData(translation, bookId, chapter) {
+  const key = getCacheKey(translation, bookId, chapter);
+  return bibleDataCache.get(key);
+}
+
+export function setCachedBibleData(translation, bookId, chapter, data) {
+  const key = getCacheKey(translation, bookId, chapter);
+  bibleDataCache.set(key, data);
+}
+
+export function getCachedFootnotes(translation, bookId, chapter) {
+  const key = getCacheKey(translation, bookId, chapter);
+  return footnotesCache.get(key) || null;
+}
+
+export function setCachedFootnotes(translation, bookId, chapter, footnotes) {
+  const key = getCacheKey(translation, bookId, chapter);
+  if (footnotes) {
+    footnotesCache.set(key, footnotes);
+  }
+}
+
+// Keep old functions for backwards compatibility
 export function getCachedTabData(tabId) {
-  return bibleTabDataCache.get(tabId);
+  return null; // Deprecated - use getCachedBibleData instead
 }
 
 export function setCachedTabData(tabId, data) {
-  bibleTabDataCache.set(tabId, data);
+  // Deprecated - cache is now set automatically via setCachedBibleData
 }
 
 function parseContent(content) {
@@ -55,7 +84,7 @@ export class BibleDataManager {
     translation = "BSB",
     bookId = "GEN",
     chapter = 1,
-    baseUrl = "https://bible.helloao.org",
+    baseUrl = "https://vmfnri.helloao.org",
   } = {}) {
     this.tabId = tabId;
     this.translation = translation;
@@ -63,8 +92,11 @@ export class BibleDataManager {
     this.chapter = chapter;
     this.baseUrl = baseUrl;
 
-    this.data = getCachedTabData(tabId) || { content: [] };
-    this.footnotes = null;
+    // Try to get cached data by content key (translation:bookId:chapter)
+    this.data = getCachedBibleData(translation, bookId, chapter) || {
+      content: [],
+    };
+    this.footnotes = getCachedFootnotes(translation, bookId, chapter);
     this.loading = false;
     this.error = null;
 
@@ -84,14 +116,40 @@ export class BibleDataManager {
   }
 
   _scheduleMaskRecord() {
-    if (thisBot.masks.readingHistoryInterval)
+    // Clear any existing reading history interval first
+    if (thisBot.masks.readingHistoryInterval) {
       clearInterval(thisBot.masks.readingHistoryInterval);
+      thisBot.masks.readingHistoryInterval = null;
+    }
+
+    // Debounce: don't start new interval if we just started one
+    const now = Date.now();
+    if (
+      globalThis.__lastHistorySchedule &&
+      now - globalThis.__lastHistorySchedule < 2000
+    ) {
+      return;
+    }
+    globalThis.__lastHistorySchedule = now;
+
+    // Capture current values at schedule time (not `this` which can change)
+    const scheduledBookId = this.bookId;
+    const scheduledChapter = this.chapter;
+
+    // Validate before scheduling
+    if (!scheduledBookId || !scheduledChapter) {
+      console.log("_scheduleMaskRecord: skipping - invalid bookId or chapter");
+      return;
+    }
+
+    // Use captured values directly in the interval, not `this`
     const readingHistoryInterval = setInterval(() => {
-      saveUserReadingHistory(this.bookId, this.chapter);
+      // Double-check values are still valid
+      if (scheduledBookId && scheduledChapter) {
+        saveUserReadingHistory(scheduledBookId, scheduledChapter);
+      }
     }, 5000); // every 5 seconds
     setTagMask(thisBot, "readingHistoryInterval", readingHistoryInterval);
-
-    shout("OnHistoryUpdated");
 
     if (!this.tabId) return;
 
@@ -103,14 +161,16 @@ export class BibleDataManager {
 
     this._viewingStart = Date.now();
     const keyAtScheduleTime = this._getKey();
+    const tabIdCapture = this.tabId;
+    const translationCapture = this.translation;
 
     this._viewingTimer = setTimeout(() => {
       if (keyAtScheduleTime === this._getKey()) {
         if (this._lastRecordedKey !== keyAtScheduleTime) {
-          masks[this.tabId].push({
-            bookId: this.bookId,
-            chapter: this.chapter,
-            translation: this.translation,
+          masks[tabIdCapture].push({
+            bookId: scheduledBookId,
+            chapter: scheduledChapter,
+            translation: translationCapture,
             recordedAt: new Date().toISOString(),
             secondsOpen: Math.round((Date.now() - this._viewingStart) / 1000),
           });
@@ -160,13 +220,27 @@ export class BibleDataManager {
             json?.data?.previousChapterApiLink || json?.previousChapterApiLink,
           numberOfChapters:
             json?.data?.book?.numberOfChapters || json?.numberOfChapters,
+          baseUrl: forcedBaseUrl || this.baseUrl,
+          shortName: json?.data?.translation?.shortName || "",
         };
 
         this.footnotes = json?.data?.chapter?.footnotes || null;
 
-        if (this.tabId) {
-          setCachedTabData(this.tabId, this.data);
-        }
+        // Cache by content key (translation:bookId:chapter)
+        setCachedBibleData(
+          this.data.translation,
+          this.data.bookId,
+          this.data.chapter,
+          this.data
+        );
+
+        // Cache footnotes alongside the bible data
+        setCachedFootnotes(
+          this.data.translation,
+          this.data.bookId,
+          this.data.chapter,
+          this.footnotes
+        );
 
         // schedule the "open ≥ 1 min" record
         this._scheduleMaskRecord();
@@ -197,8 +271,16 @@ export class BibleDataManager {
         /^\/api\/([^/]+)\/([^/]+)\/(\d+)\.json$/
       );
 
+      const codexMatch = this.data.nextChapter.match(
+        /([^/]+)\/api\/([^/]+)\/([^/]+)\/(\d+)\.json$/
+      );
+
       if (match) {
         const [, , bookId, chapter] = match;
+        this.bookId = bookId;
+        this.chapter = Number(chapter);
+      } else if (codexMatch) {
+        const [, , , bookId, chapter] = codexMatch;
         this.bookId = bookId;
         this.chapter = Number(chapter);
       }
@@ -213,8 +295,16 @@ export class BibleDataManager {
         /^\/api\/([^/]+)\/([^/]+)\/(\d+)\.json$/
       );
 
+      const codexMatch = this.data.prevChapter.match(
+        /([^/]+)\/api\/([^/]+)\/([^/]+)\/(\d+)\.json$/
+      );
+
       if (match) {
         const [, , bookId, chapter] = match;
+        this.bookId = bookId;
+        this.chapter = Number(chapter);
+      } else if (codexMatch) {
+        const [, , , bookId, chapter] = codexMatch;
         this.bookId = bookId;
         this.chapter = Number(chapter);
       }
@@ -223,18 +313,30 @@ export class BibleDataManager {
     }
   }
 
-  async changeTranslation(newTranslation, bookData, forcedBaseUrl) {
-    console.log("changeTranslation tra");
+  async changeTranslation(newTranslation, booksData, forcedBaseUrl) {
+    console.log(
+      newTranslation,
+      booksData,
+      forcedBaseUrl,
+      this.getState(),
+      "changeTranslation"
+    );
     this.translation = newTranslation;
-    this.bookId = bookData?.id || "GEN";
-    if (forcedBaseUrl) {
+    const bookData =
+      booksData.find((book) => book.id === this.bookId) || booksData[0];
+    if (this.bookId !== bookData.id) {
+      this.bookId = bookData.id;
       this.chapter = 1;
     }
+    // this.bookId = bookData?.id || "GEN";
+    // if (forcedBaseUrl) {
+    //   this.chapter = 1;
+    // }
     this.baseUrl = forcedBaseUrl || this.baseUrl;
     await this.fetch(
       bookData
-        ? bookData.firstChapterApiLink
-        : `/api/${newTranslation}/${bookData?.id || "GEN"}/1.json`,
+        ? bookData.firstChapterApiLink.replace("1.json", `${this.chapter}.json`)
+        : `/api/${newTranslation}/${this.bookId}/${this.chapter}.json`,
       newTranslation,
       forcedBaseUrl
     );

@@ -709,7 +709,7 @@ export function AOBotInterface() {
             borderRadius: "16px",
             padding: "40px",
             textAlign: "center",
-            margin: "10px auto"
+            margin: "10px auto",
           }}
         >
           <h2
@@ -1095,7 +1095,7 @@ export function AOBotInterface() {
                   e.currentTarget.style.borderColor = "#3a3a3a";
                 }}
               >
-                <div style={{ fontSize: "16px", display: 'flex' }}>
+                <div style={{ fontSize: "16px", display: "flex" }}>
                   <span
                     style={{ color: "white" }}
                     class="material-symbols-outlined"

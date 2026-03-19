@@ -1,12 +1,12 @@
 const playlistUpdated = that.playlistUpdated;
 const indexesUpdate = that.indexesUpdate;
-
+const G = globalThis as any;
 if (indexesUpdate) {
-  globalThis.SetCurreIndexDirect?.(that.currIndex);
-  globalThis.UPDATE_VIA_SHOUT = true;
+  G.SetCurreIndexDirect?.(that.currIndex);
+  G.UPDATE_VIA_SHOUT = true;
 }
 
 if (playlistUpdated) {
-  globalThis.SetPlayingList?.(that.playlists);
-  globalThis.UPDATE_VIA_SHOUT = true;
+  G.SetPlayingList?.(that.playlists);
+  G.UPDATE_VIA_SHOUT = true;
 }

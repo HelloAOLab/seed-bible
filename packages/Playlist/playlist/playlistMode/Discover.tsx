@@ -1,34 +1,47 @@
 const { useState, useRef, useLayoutEffect } = os.appHooks;
 
-const { Input } = Components;
+const G = globalThis as any;
+const { Input } = G.Components;
 
 const PlaylistCont = await thisBot.PlaylistContainer();
 const AnnotationList = await thisBot.AnnotationList();
 const Bookmarks = await thisBot.Bookmarks();
 
+const itemKeys: any = [
+  "all",
+  // "pinnedItems",
+  "shared",
+  "playlist",
+  "annotations",
+  // "bookmarks",
+];
+
 const items = [
   "All",
-  "Pinned Items",
+  // "Pinned Items",
   "Shared",
   "Playlist",
   "Annotations",
-  "Bookmarks",
+  // "Bookmarks",
 ];
 
-const Discover = ({
-  currentOpenedBook,
-  setAnnotationData,
-  chapter,
-  fetchingAnnotation,
-  playingPlaylist,
-  editingPlaylist,
-  annotationData,
-  style,
-  setOpenModal,
-}) => {
-  const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
+const Discover = (props: any) => {
+  const {
+    currentOpenedBook,
+    setAnnotationData,
+    chapter,
+    fetchingAnnotation,
+    playingPlaylist,
+    editingPlaylist,
+    annotationData,
+    style,
+    setOpenModal,
+    annotationSources,
+    tagsSources,
+  } = props;
+  const IsPlaylistPlaying = G.IsPlaylistPlaying;
 
-  const [selectedChip, setSelectedChip] = useState({
+  const [selectedChip, setSelectedChip] = useState<any>({
     All: true,
   });
   const [query, setQuery] = useState("");
@@ -36,9 +49,9 @@ const Discover = ({
   const [renamingPlaylist, setRenamingPlaylist] = useState(false);
 
   useLayoutEffect(() => {
-    globalThis.SetRenamingPlaylist = setRenamingPlaylist;
+    G.SetRenamingPlaylist = setRenamingPlaylist;
     return () => {
-      globalThis.SetRenamingPlaylist = null;
+      G.SetRenamingPlaylist = null;
     };
   }, [renamingPlaylist]);
 
@@ -47,7 +60,7 @@ const Discover = ({
   const [pos, setPos] = useState("left");
 
   const checkPosition = () => {
-    const el = scrollRef.current;
+    const el: any = scrollRef.current;
     if (!el) return;
 
     // ✅ Detect if no scroll exists
@@ -70,7 +83,7 @@ const Discover = ({
   };
 
   const scrollLeftByWidth = () => {
-    const el = scrollRef.current;
+    const el: any = scrollRef.current;
     if (!el) return;
     const scrollAmount = el.clientWidth - 50;
 
@@ -81,7 +94,7 @@ const Discover = ({
   };
 
   const scrollRightByWidth = () => {
-    const el = scrollRef.current;
+    const el: any = scrollRef.current;
     if (!el) return;
     const scrollAmount = el.clientWidth - 50;
 
@@ -102,17 +115,33 @@ const Discover = ({
     };
   }, []);
 
-  const selectSelectedChip = (val) => {
+  const selectSelectedChip = (val: string) => {
     if (val === "All") {
-      setSelectedChip((prev) => ({
-        [val]: !prev[val],
-      }));
+      setSelectedChip({
+        All: true,
+      });
     } else {
-      setSelectedChip((prev) => ({
-        ...prev,
-        [val]: !prev[val],
-        All: false,
-      }));
+      setSelectedChip((prev: any) => {
+        const newSelectedChip: any = { ...prev };
+
+        if (newSelectedChip[val]) {
+          delete newSelectedChip[val];
+        } else {
+          newSelectedChip[val] = true;
+        }
+
+        if (
+          Object.keys(newSelectedChip).length === 0 ||
+          (Object.keys(newSelectedChip)[0] === "All" &&
+            Object.keys(newSelectedChip).length === 1)
+        ) {
+          newSelectedChip.All = true;
+        } else {
+          delete newSelectedChip.All;
+        }
+
+        return newSelectedChip;
+      });
     }
   };
 
@@ -123,7 +152,9 @@ const Discover = ({
         padding: "0 0.5rem",
         overflow: "auto",
         ...style,
-      }}>
+      }}
+      id="discover-container"
+    >
       {!editingPlaylist && false && (
         <div
           className="align-center"
@@ -132,7 +163,8 @@ const Discover = ({
             padding: "1rem 0",
             marginBottom: "1rem",
             borderBottom: "1px solid #CCCCCD",
-          }}>
+          }}
+        >
           <div className="content-type">
             <img
               alt="sources"
@@ -153,7 +185,7 @@ const Discover = ({
               marginBottom: "0",
             }}
             value={query}
-            onChangeListener={(text) => setQuery(text)}
+            onChangeListener={(text: string) => setQuery(text)}
             placeholder="Search..."
           />
         </div>
@@ -162,26 +194,30 @@ const Discover = ({
         <div className="align-center chips-tag-container">
           {false && (
             <div
-              onClick={() => selectSelectedChip(ele)}
+              // onClick={() => selectSelectedChip(ele)}
               className={`chip-tag`}
-              style={{ display: "flex", alignItems: "center" }}>
+              style={{ display: "flex", alignItems: "center" }}
+            >
               <span>Chapter</span>
               <span class="material-symbols-outlined">keyboard_arrow_down</span>
             </div>
           )}
           <div
             className="align-center chips-tag-container"
-            style={{ flexGrow: "1", padding: "0.5rem 0" }}>
+            style={{ flexGrow: "1", padding: "0.5rem 0" }}
+          >
             <div
               className="align-center chips-tag-container"
               style={{ width: "100%" }}
-              ref={scrollRef}>
-              {items.map((ele) => {
+              ref={scrollRef}
+            >
+              {items.map((ele, index) => {
                 return (
                   <div
                     onClick={() => selectSelectedChip(ele)}
-                    className={`chip-tag ${selectedChip[ele] ? "active" : ""}`}>
-                    {ele}
+                    className={`chip-tag ${selectedChip[ele] ? "active" : ""}`}
+                  >
+                    {t(itemKeys[index])}
                   </div>
                 );
               })}
@@ -194,8 +230,11 @@ const Discover = ({
             {pos !== "right" && pos !== "noscroll" && (
               <div
                 className="chip-tag arrow right"
-                onClick={scrollRightByWidth}>
-                <span class="material-symbols-outlined">chevron_forward</span>
+                onClick={scrollRightByWidth}
+              >
+                <span class="material-symbols-outlined color-inverted">
+                  chevron_forward
+                </span>
               </div>
             )}
           </div>
@@ -220,7 +259,9 @@ const Discover = ({
       !renamingPlaylist &&
       (isAll || selectedChip["Annotations"]) ? (
         <AnnotationList
+          annotationSources={annotationSources}
           setAnnotationData={setAnnotationData}
+          tagsSources={tagsSources}
           currentOpenedBook={currentOpenedBook}
           fetchingAnnotation={fetchingAnnotation}
           chapter={chapter}
@@ -230,6 +271,7 @@ const Discover = ({
 
       {!editingPlaylist &&
       !renamingPlaylist &&
+      false &&
       (isAll || selectedChip["Bookmarks"]) ? (
         <Bookmarks />
       ) : null}

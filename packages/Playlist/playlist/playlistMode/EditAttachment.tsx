@@ -1,7 +1,9 @@
-const { Modal, Button, ButtonsCover, } = Components;
+const G = globalThis as any;
+const { Modal, Button, ButtonsCover } = G.Components;
 const AttachLink = await thisBot.AttachLink();
 
-const EditAttachment = ({
+const EditAttachment = (props: any) => {
+  const {
     id = "default",
     contentId,
     selectedType,
@@ -10,48 +12,52 @@ const EditAttachment = ({
     link,
     mediaType,
     parentID,
-    onClose }) => {
-
-
-    const attachLink = (title, link, linkState) => {
-        const dataItem = {
-            id: contentId,
-            content: title,
-            additionalInfo: {
-                link,
-                ...linkState,
-            },
-            type: linkState.type === "text" ? "heading" : "attachment-link",
-        };
-        globalThis[`${id}EditPlaylistData`](contentId, dataItem, parentID, true);
-        ShowNotification({ message: `Updated successfully!`, severity: "success" });
-        onClose();
+    onClose,
+  } = props;
+  const attachLink = (title: string, link: string, linkState: any) => {
+    const dataItem = {
+      id: contentId,
+      content: title,
+      additionalInfo: {
+        link,
+        ...linkState,
+      },
+      type: linkState.type === "text" ? "heading" : "attachment-link",
     };
+    G[`${id}EditPlaylistData`](contentId, dataItem, parentID, true);
+    ShowNotification({
+      message: t("updatedSuccessfully"),
+      severity: "success",
+    });
+    onClose();
+  };
 
-    return <Modal title="Edit Attachment" showIcon={false} onClose={onClose}>
-        <AttachLink
-            editMode
-            sSelectedType={selectedType}
-            sName={name}
-            attachLink={attachLink}
-            sData={data}
-            sLink={link}
-            sMediaType={mediaType}
-        />
-        <ButtonsCover>
-            <Button
-                secondary
-                onClick={() => {
-                    globalThis.FireEditContent && globalThis.FireEditContent();
-                }}
-            >
-                Update
-            </Button>
-            <Button secondaryAlt onClick={onClose}>
-                Cancel
-            </Button>
-        </ButtonsCover>
+  return (
+    <Modal title={t("editAttachment")} showIcon={false} onClose={onClose}>
+      <AttachLink
+        editMode
+        sSelectedType={selectedType}
+        sName={name}
+        attachLink={attachLink}
+        sData={data}
+        sLink={link}
+        sMediaType={mediaType}
+      />
+      <ButtonsCover>
+        <Button secondaryAlt onClick={onClose}>
+          {t("close")}
+        </Button>
+        <Button
+          secondary
+          onClick={() => {
+            G.FireEditContent && G.FireEditContent();
+          }}
+        >
+          {t("update")}
+        </Button>
+      </ButtonsCover>
     </Modal>
-}
+  );
+};
 
 return EditAttachment;

@@ -5,18 +5,32 @@
   /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); */
   display: flex;
   flex-direction: column;
-  font-family: 'Satoshi', system-ui, sans-serif;
-  border-left: 1px solid #e0e0e0;
-  background-color: var(--themeSideMenu) !important;
+  font-family: "Satoshi", system-ui, sans-serif;
+  /* border-left: 1px solid #e0e0e0; */
+  background-color: transparent !important;
 }
-.disabled{
-    color: #929292 !important;
-    cursor: not-allowed;
+@media (max-width: 768px) {
+  .settings-sidebar {
+    width: 100%;
+  }
+  .themeSettings-container {
+    width: 100% !important;
+  }
+  .profileSection {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    margin-left: 0;
+  }
+}
+.disabled {
+  color: #929292 !important;
+  cursor: not-allowed;
 }
 .spin {
   animation: spin 1s linear infinite;
 }
-
 
 .settings-header {
   display: flex;
@@ -30,7 +44,7 @@
   font-size: 18px;
   font-weight: 600;
   margin: 0;
-  color: var(--text1);
+  color: var(--pageTextColor);
 }
 
 .close-button {
@@ -61,7 +75,7 @@
   font-size: 14px;
   cursor: pointer;
   font-weight: 500;
-  color: var(--text1);
+  color: var(--pageTextColor);
   transition: all 0.2s ease;
 }
 
@@ -127,24 +141,26 @@
 }
 
 .space-name {
-    margin-bottom: 4px;
-    font-family: "Helvetica Neue-Bold", Helvetica;
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text1) !important;
-  }
-
+  margin-bottom: 4px;
+  font-family: "Helvetica Neue-Bold", Helvetica;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text1) !important;
+}
 
 .space-description {
   font-size: 13px;
   color: #5f5e5c;
   color: var(--text2);
-    line-height: 1.4;
+  line-height: 1.4;
   font-family: "Open Sans-Regular", Helvetica;
   font-size: 14px;
   font-weight: 400;
   letter-spacing: 0;
-line-height: normal;
+  line-height: normal;
+  color: var(--descriptionTextColor) !important;
+  font-family: var(--descriptionTextFont), system-ui, sans-serif;
+  font-size: var(--descriptionTextSize);
 }
 
 .settings-list {
@@ -154,15 +170,17 @@ line-height: normal;
 .settings-item {
   display: flex;
   align-items: center;
-  padding: 14px 16px;
+  padding: 14px 8px;
   cursor: pointer;
   transition: background-color 0.2s;
-  color: var(--text1);
+  color: var(--pageTextColor);
   gap: 7px;
+  width: 100%;
 }
 
 .settings-item:hover {
   background-color: #00000024;
+  width: 100%;
 }
 
 .item-icon {
@@ -192,18 +210,48 @@ line-height: normal;
   color: #999;
 }
 
+.settings-toggle {
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background-color: #ccc;
+  position: relative;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.settings-toggle.active {
+  background-color: var(--spaceSelection);
+}
+
+.settings-toggle-knob {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: white;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: left 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.settings-toggle.active .settings-toggle-knob {
+  left: 22px;
+}
+
 /* Custom styling for specific icons */
 .settings-item .material-icons {
   font-size: 20px;
 }
 
 .sidebarLine {
-  margin-top: 25px;
+  margin-top: 10px;
   width: 100%;
   height: 1px;
   background-color: var(--gray2-color);
 }
-
 
 .sub-settings-list {
   margin-left: 30px;
@@ -215,15 +263,17 @@ line-height: normal;
 
 .space-description {
   color: var(--text2);
-  font-family: 'Satoshi', system-ui, sans-serif;
+  font-family: "Satoshi", system-ui, sans-serif;
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
   line-height: normal;
   padding: 0 10px;
   margin-bottom: 15px;
+  color: var(--descriptionTextColor) !important;
+  font-family: var(--descriptionTextFont), system-ui, sans-serif;
+  font-size: var(--descriptionTextSize);
 }
-
 
 .activeAccount {
   padding: 10px;
@@ -235,7 +285,7 @@ line-height: normal;
 }
 
 .create-profile-btn {
-  background-color: #4459F3;
+  background-color: var(--spaceSelection);
   color: white;
   border: none;
   /* border-radius: 8px; */
@@ -251,14 +301,12 @@ line-height: normal;
 }
 
 .create-profile-btn:hover {
-  background-color: #4459F3;
+  background-color: var(--spaceSelection);
 }
 
 .create-profile-btn:active {
   transform: translateY(1px);
 }
-
-
 
 .form-input {
   width: 100%;
@@ -266,10 +314,17 @@ line-height: normal;
   background-color: #e8e8e8;
   border: none;
   border-radius: 8px;
-  font-size: 16px;
-  color: #333;
+  font-family: var(--input-title-font, "DM Sans", sans-serif);
+  font-size: var(--input-title-size, 16px);
+  color: var(--pageTextColor);
   outline: none;
   transition: background-color 0.2s;
+}
+
+.form-input::placeholder {
+  font-family: var(--input-placeholder-font, "DM Sans", sans-serif);
+  font-size: var(--input-placeholder-size, 16px);
+  color: #999;
 }
 
 .form-input:focus {

@@ -1,4 +1,4 @@
-const { useEffect, useState, useRef } = os.appHooks;
+const { useEffect, useState, useRef, useMemo } = os.appHooks;
 
 import {
   Editor,
@@ -21,7 +21,6 @@ import {
 } from "https://esm.helloao.org/vendor-RPNXNWQB.js";
 
 import { MarginYIcon, MarginXIcon } from "app.components.icons";
-const localStorage = getBot("system", "app.localStorage");
 
 // >>> priorities: dev default order (first = highest priority)
 if (!globalThis.DEFAULT_TOOLBAR_PRIORITY)
@@ -229,6 +228,7 @@ function generateHtmlFromContent(data) {
   const sectionsHtml = data?.content
     .map((section) => {
       const versesHtml = section.verses
+        .filter((verse) => verse.verseNumber != null && !verse.lineBreak)
         .map((verse) => {
           return `
         <span class="sectionText">
@@ -303,6 +303,9 @@ const TextEditor = ({
   const [bgColor, setBgColor] = useState("#ffffff");
   const [paddingY, setPaddingY] = useState(0);
   const [paddingX, setPaddingX] = useState(0);
+  const localStorage = useMemo(() => {
+    return getBot("system", "app.localStorage");
+  }, []);
 
   const htmlString = !studyNotes
     ? generateHtmlFromContent(data)
@@ -312,6 +315,7 @@ const TextEditor = ({
     const saveData = (editor) => {
       const key = `${data?.translation}_${data?.book}_${data?.chapter}`;
       const json = editor.getJSON();
+      if (!localStorage.masks) localStorage.masks = {};
       localStorage.masks[key] = { key, data: JSON.stringify(json) };
       os.log("data saved", key, localStorage.masks[key]);
     };
@@ -633,7 +637,7 @@ const TextEditor = ({
     const editor = editorRef.current;
     if (!editor) return;
     const key = `${data?.translation}_${data?.book}_${data?.chapter}`;
-    if (localStorage.masks[key])
+    if (localStorage?.masks?.[key])
       os.log("localStorage.masks[key]", localStorage.masks[key]);
     editor.commands.setContent(htmlString);
   }, [data]);
@@ -674,6 +678,9 @@ export function ResponsiveToolbar({ editor }) {
   const [fontSize, setFontSize] = useState(16);
   const [textColor, setTextColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#ffffff");
+  const localStorage = useMemo(() => {
+    return getBot("system", "app.localStorage");
+  }, []);
 
   // >>> priorities state
   const [priority, setPriority] = useState(() => {
@@ -1475,7 +1482,7 @@ function AIPromptInput({ onAIPrompt }) {
         }}
       >
         <svg
-        className='coloredIcon'
+          className="coloredIcon"
           width="16"
           height="16"
           viewBox="0 0 16 16"
@@ -1702,7 +1709,7 @@ const styles = `
 #tiptapEditor{ padding:0px; }
 .tiptapToolbar {
   width: 100%;
-  background-color: var(--themeSideMenu);
+  background-color: transparent;
   display: flex;
   align-items: center;
   justify-content: flex-start;

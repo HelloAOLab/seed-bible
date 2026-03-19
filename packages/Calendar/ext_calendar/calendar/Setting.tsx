@@ -1,3 +1,5 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { useEffect } = os.appHooks;
 const Setting = ({
   setOpenSetting,
@@ -13,7 +15,10 @@ const Setting = ({
   showHolidays,
   setShowHolidays,
 }) => {
+  const { t, themeColors } = useSideBarContext();
   const handleToggle = () => setOpenSetting((prev) => !prev);
+  const primary = themeColors ? themeColors[1]?.pageTextColor : "#1A1A1A";
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -50,45 +55,42 @@ const Setting = ({
         top: "100%",
         alignItems: "start",
         right: "0",
-        fontSize: "15px",
-        backgroundColor: "black",
-        color: "white",
-        border: "1px solid #ccc",
+        fontSize: "12px",
+        background: "var(--primaryColor)",
+        color: "var(--pageTextColor)",
+        border: "1px solid #1A1A1A",
         borderRadius: "6px",
         boxShadow: "0px 4px 8px rgba(0,0,0,0.5)",
         zIndex: 999,
         display: "flex",
         flexDirection: "column",
         gap: "10px",
-        padding: "15px 4px",
-
-        width: "130px",
+        padding: "20px",
+        width: "170px",
       }}
     >
       <div
         onClick={handleTitle}
+        className={`settings-title `}
         style={{ width: "100%", borderRadius: "6px", padding: "2px 2px" }}
-        onMouseEnter={(e) => {
-          e.target.style.backgroundColor = "#f0f0f0";
-          e.target.style.color = "black";
-          e.target.style.cursor = "pointer";
-          const svg = e.currentTarget.querySelector("svg");
-          if (svg) svg.style.stroke = "black";
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.backgroundColor = "transparent";
-          e.target.style.color = "white";
-          const svg = e.currentTarget.querySelector("svg");
-          if (svg) svg.style.stroke = "white";
-        }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.backgroundColor = primary + "40")
+        }
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
       >
-        <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+          }}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="15"
             height="15"
             fill="none"
-            stroke="white"
+            stroke="currentColor"
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -97,7 +99,7 @@ const Setting = ({
             <path d="M9.99992 6.66611L3.33325 13.3328V16.6661L6.66659 16.6661L13.3332 9.99944M9.99992 6.66611L12.3904 4.27557L12.3919 4.27415C12.7209 3.94508 12.8858 3.78026 13.0758 3.71852C13.2431 3.66414 13.4235 3.66414 13.5908 3.71852C13.7807 3.78021 13.9453 3.94485 14.2739 4.27345L15.7238 5.72328C16.0538 6.0533 16.2189 6.21838 16.2807 6.40865C16.3351 6.57602 16.335 6.75631 16.2807 6.92368C16.2189 7.11382 16.054 7.27865 15.7245 7.60819L15.7238 7.6089L13.3332 9.99944M9.99992 6.66611L13.3332 9.99944" />
           </svg>
 
-          {hasTitle ? "Hide Title" : "Show Title"}
+          {hasTitle ? t("hideTitle") : t("showTitle")}
         </span>
       </div>
       {calendarApi.current.view.type.includes("resourceTimeline") ? (
@@ -105,28 +107,27 @@ const Setting = ({
       ) : (
         <div
           onClick={() => setShowSchedules((prev) => !prev)}
+          className={`settings-title `}
           style={{ width: "100%", borderRadius: "6px", padding: "2px 2px" }}
-          onMouseEnter={(e) => {
-            e.target.style.backgroundColor = "#f0f0f0";
-            e.target.style.color = "black";
-            e.target.style.cursor = "pointer";
-            const svg = e.currentTarget.querySelector("svg");
-            if (svg) svg.style.stroke = "black";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.backgroundColor = "transparent";
-            e.target.style.color = "white";
-            const svg = e.currentTarget.querySelector("svg");
-            if (svg) svg.style.stroke = "white";
-          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = primary + "40")
+          }
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
         >
-          <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              color: "var(--pageTextColor)",
+            }}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="15"
               height="15"
               fill="none"
-              stroke="white"
+              stroke="currentColor"
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -139,28 +140,27 @@ const Setting = ({
               <line x1="12" y1="12" x2="16" y2="12" />
             </svg>
 
-            {showSchedules ? "Hide Schedule" : "Show Schedule"}
+            {showSchedules ? t("hideSchedule") : t("showSchedule")}
           </span>
         </div>
       )}
       <div
         onClick={handleHolidays}
+        className={`settings-title `}
         style={{ width: "100%", borderRadius: "6px", padding: "2px 2px" }}
-        onMouseEnter={(e) => {
-          e.target.style.backgroundColor = "#f0f0f0";
-          e.target.style.color = "black";
-          e.target.style.cursor = "pointer";
-          const svg = e.currentTarget.querySelector("svg");
-          if (svg) svg.style.stroke = "black";
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.backgroundColor = "transparent";
-          e.target.style.color = "white";
-          const svg = e.currentTarget.querySelector("svg");
-          if (svg) svg.style.stroke = "white";
-        }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.backgroundColor = primary + "40")
+        }
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
       >
-        <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            color: "var(--pageTextColor)",
+          }}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="15"
@@ -176,33 +176,32 @@ const Setting = ({
             <path d="M6 9h16M14 9v12M9 5a2 2 0 104 0 2 2 0 10-4 0zM15 5a2 2 0 104 0 2 2 0 10-4 0z" />
           </svg>
 
-          {showHolidays ? "Hide Holidays" : "Show Holidays"}
+          {showHolidays ? t("hideHolidays") : t("showHolidays")}
         </span>
       </div>
       <div
-        style={{ width: "100%", borderRadius: "6px", padding: "2px 2px" }}
         onClick={handleOpenCalendar}
-        onMouseEnter={(e) => {
-          e.target.style.backgroundColor = "#f0f0f0";
-          e.target.style.color = "black";
-          e.target.style.cursor = "pointer";
-          const svg = e.currentTarget.querySelector("svg");
-          if (svg) svg.style.stroke = "black";
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.backgroundColor = "transparent";
-          e.target.style.color = "white";
-          const svg = e.currentTarget.querySelector("svg");
-          if (svg) svg.style.stroke = "white";
-        }}
+        className={`settings-title `}
+        style={{ width: "100%", borderRadius: "6px", padding: "2px 2px" }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.backgroundColor = primary + "40")
+        }
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
       >
-        <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            color: "var(--pageTextColor)",
+          }}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="15"
             height="15"
             fill="none"
-            stroke="white"
+            stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -213,34 +212,33 @@ const Setting = ({
             <line x1="8" y1="2" x2="8" y2="6" />
             <line x1="3" y1="10" x2="21" y2="10" />
           </svg>
-          Open Calendar
+          {t("openCalendar")}
         </span>
       </div>
 
       <div
         onClick={handleOpenMap}
+        className={`settings-title `}
         style={{ width: "100%", borderRadius: "6px", padding: "2px 2px" }}
-        onMouseEnter={(e) => {
-          e.target.style.backgroundColor = "#f0f0f0";
-          e.target.style.color = "black";
-          e.target.style.cursor = "pointer";
-          const svg = e.currentTarget.querySelector("svg");
-          if (svg) svg.style.stroke = "black";
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.backgroundColor = "transparent";
-          e.target.style.color = "white";
-          const svg = e.currentTarget.querySelector("svg");
-          if (svg) svg.style.stroke = "white";
-        }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.backgroundColor = primary + "40")
+        }
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
       >
-        <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            color: "var(--pageTextColor)",
+          }}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="15"
             height="15"
             fill="none"
-            stroke="white"
+            stroke="currentColor"
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -250,34 +248,33 @@ const Setting = ({
             <line x1="8" y1="2" x2="8" y2="19"></line>
             <line x1="16" y1="5" x2="16" y2="22"></line>
           </svg>
-          Open Map
+          {t("openMap")}
         </span>
       </div>
 
       <div
         onClick={handleOpenBoth}
+        className={`settings-title `}
         style={{ width: "100%", borderRadius: "6px", padding: "2px 2px" }}
-        onMouseEnter={(e) => {
-          e.target.style.backgroundColor = "#f0f0f0";
-          e.target.style.color = "black";
-          e.target.style.cursor = "pointer";
-          const svg = e.currentTarget.querySelector("svg");
-          if (svg) svg.style.stroke = "black";
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.backgroundColor = "transparent";
-          e.target.style.color = "white";
-          const svg = e.currentTarget.querySelector("svg");
-          if (svg) svg.style.stroke = "white";
-        }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.backgroundColor = primary + "40")
+        }
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
       >
-        <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            color: "var(--pageTextColor) ",
+          }}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="15"
             height="15"
             fill="none"
-            stroke="white"
+            stroke="currentColor"
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -291,7 +288,7 @@ const Setting = ({
             <path d="M20 21s6-5.686 6-10a6 6 0 1 0-12 0c0 4.314 6 10 6 10z"></path>
             <circle cx="20" cy="11" r="2"></circle>
           </svg>
-          Open Both
+          {t("openBoth")}
         </span>
       </div>
     </div>

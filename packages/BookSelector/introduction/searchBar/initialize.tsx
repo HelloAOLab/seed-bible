@@ -1,13 +1,11 @@
 if (configBot.tags.systemPortal) return;
+import { globalAPI } from "app.controller.controllerBuilder";
 
 import SearchBar from "introduction.searchBar.SearchBar";
 await os.unregisterApp("searchBar");
 await os.registerApp("searchBar", thisBot);
 const css = thisBot.tags["App.css"];
 const { useState, useEffect } = os.appHooks;
-if (typeof introductionSearchBar === "undefined") {
-  globalThis.introductionSearchBar = thisBot;
-}
 
 if (!masks.index) masks.index = 0;
 
@@ -15,8 +13,6 @@ const App = () => {
   const [openSidebar, setOpenSidebar] = useState(false);
   const [currentExperience, setCurrentExperience] = useState(0);
 
-  globalThis.setOpenSidebar = setOpenSidebar;
-  globalThis.openSidebar = openSidebar;
   globalThis.currentExperience = currentExperience;
   globalThis.setCurrentExperience = setCurrentExperience;
 
@@ -24,11 +20,33 @@ const App = () => {
     if (!openSidebar && globalThis?.bookModalOpen) {
       globalThis.bookModalOpen(false);
     }
+    globalThis.setOpenSidebar = setOpenSidebar;
+    globalThis.openSidebar = openSidebar;
+    return () => {
+      globalThis.setOpenSidebar = null;
+      globalThis.openSidebar = null;
+    };
+  }, [openSidebar]);
+
+  useEffect(() => {
+    if (openSidebar) {
+      window.history.pushState({ modalOpen: true }, "");
+
+      const handlePopState = () => {
+        setOpenSidebar(false);
+      };
+
+      window.addEventListener("popstate", handlePopState);
+
+      return () => {
+        window.removeEventListener("popstate", handlePopState);
+      };
+    }
   }, [openSidebar]);
 
   return (
     <>
-      <style>{globalThis?.ThemeCSS ? globalThis.ThemeCSS : ""}</style>
+      <style>{globalAPI?.mainThemeCSS ? globalAPI.mainThemeCSS : ""}</style>
       <style>{css}</style>
       <link
         href="https://fonts.googleapis.com/icon?family=Material+Icons"
@@ -60,12 +78,12 @@ const App = () => {
         >
           <style>
             {`
-                      :root {
-                        --mobileWidth: ${currentExperience === 3 ? "100%" : "200px"};
-                        }
-                    `}
+              :root {
+                --mobileWidth: ${currentExperience === 3 ? "100%" : "200px"};
+                }
+            `}
           </style>
-          <SearchBar />
+          <SearchBar openSidebar={openSidebar} />
         </div>
       </>
     </>

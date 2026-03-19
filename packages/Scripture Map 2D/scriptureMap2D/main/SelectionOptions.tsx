@@ -1,16 +1,22 @@
-export const SelectionOptions = ({handleDoneClick, handleClearSelectionClick}) => {
+import { useSideBarContext } from "app.hooks.sideBar";
+import type { SelectionOptionsType } from "scriptureMap2D.main.types";
 
-    return (
-        <div className="selectionOptions">
-            <button onClick={handleClearSelectionClick}>
-                <span className="material-symbols-outlined">close</span>
-                Clear selection
-            </button>
-            <div className="divider" ></div>
-            <button onClick={handleDoneClick}>
-                <span className="material-symbols-outlined">check</span>
-                Done
-            </button>
-        </div>
-    )
-}
+export const SelectionOptions: SelectionOptionsType = ({
+  handleDoneClick,
+  handleClearSelectionClick,
+}) => {
+  const { t } = useSideBarContext();
+  return (
+    <div className="selection-options">
+      <button onClick={handleClearSelectionClick}>
+        <span className="material-symbols-outlined">close</span>
+        {t("clearSelection")}
+      </button>
+      <div className="divider"></div>
+      <button onClick={handleDoneClick}>
+        <span className="material-symbols-outlined">check</span>
+        {t("done")}
+      </button>
+    </div>
+  );
+};

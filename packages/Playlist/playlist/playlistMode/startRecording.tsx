@@ -1,4 +1,9 @@
+const G = globalThis as any;
 const val = that;
-globalThis.ORIGINAL_DATA = null;
-globalThis.SetRecordingData?.(null);
-globalThis.SetRecording?.(val);
+G.ORIGINAL_DATA = null;
+G.ORIGINAL_DATA = null;
+G.SetRecordingData?.(null);
+G.SetRecording?.(val);
+if (val === "link") {
+  G.ToggleCommandBox();
+}

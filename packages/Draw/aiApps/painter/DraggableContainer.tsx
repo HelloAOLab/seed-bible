@@ -1,6 +1,7 @@
 const { useState, useRef, useEffect } = os.appHooks;
 
-const DraggableContainer = ({ children }) => {
+const DraggableContainer = (props: { children: HTMLElement }) => {
+  const { children } = props;
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState(
     masks?.position || {
@@ -9,9 +10,10 @@ const DraggableContainer = ({ children }) => {
     }
   );
   const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const dragRef = useRef(null);
+  const dragRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseDown = (e) => {
+  const handleMouseDown = (e: MouseEvent) => {
+    if (!dragRef.current) return;
     setIsDragging(true);
     const rect = dragRef.current.getBoundingClientRect();
     setOffset({
@@ -21,7 +23,7 @@ const DraggableContainer = ({ children }) => {
     e.preventDefault();
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: MouseEvent) => {
     if (!isDragging) return;
     setPosition({
       x: e.clientX - offset.x,
@@ -29,7 +31,7 @@ const DraggableContainer = ({ children }) => {
     });
   };
 
-  const handleMouseUp = (e) => {
+  const handleMouseUp = (e: MouseEvent) => {
     setIsDragging(false);
     setTagMask(
       thisBot,
@@ -42,12 +44,12 @@ const DraggableContainer = ({ children }) => {
     );
   };
 
-  const onESC = (evt) => {
+  const onESC = (evt: Event) => {
     let isEscape = false;
     if ("key" in evt) {
       isEscape = evt.key === "Escape" || evt.key === "Esc";
     } else {
-      isEscape = evt.keyCode === 27;
+      isEscape = (evt as KeyboardEvent).code === "Escape";
     }
     if (isEscape) {
       whisper(thisBot, "closePainter");
@@ -68,7 +70,7 @@ const DraggableContainer = ({ children }) => {
   useEffect(() => {
     document.addEventListener("keydown", onESC);
     return () => {
-      document.removeEventListener("onkeydown", onESC);
+      document.removeEventListener("keydown", onESC);
     };
   }, []);
 

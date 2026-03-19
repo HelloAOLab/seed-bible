@@ -46,41 +46,50 @@ function getOrSetVisualInTags(remoteId) {
     if (typeof tags !== "undefined") {
       if (!tags.userPresenceData) tags.userPresenceData = {};
       if (!tags.userPresenceData.visuals) tags.userPresenceData.visuals = {};
-      if (!tags.userPresenceData.usedIndices) tags.userPresenceData.usedIndices = { colors: [], icons: [] };
-      
+      if (!tags.userPresenceData.usedIndices)
+        tags.userPresenceData.usedIndices = { colors: [], icons: [] };
+
       if (!tags.userPresenceData.visuals[remoteId]) {
         // Get available indices (filter out used ones)
         let availableColorIndices = colors
           .map((_, i) => i)
-          .filter(i => !tags.userPresenceData.usedIndices.colors.includes(i));
-        
+          .filter((i) => !tags.userPresenceData.usedIndices.colors.includes(i));
+
         let availableIconIndices = icons
           .map((_, i) => i)
-          .filter(i => !tags.userPresenceData.usedIndices.icons.includes(i));
-        
+          .filter((i) => !tags.userPresenceData.usedIndices.icons.includes(i));
+
         // If all indices are used, reset and use all indices again
         if (availableColorIndices.length === 0) {
           tags.userPresenceData.usedIndices.colors = [];
           availableColorIndices = colors.map((_, i) => i);
         }
-        
+
         if (availableIconIndices.length === 0) {
           tags.userPresenceData.usedIndices.icons = [];
           availableIconIndices = icons.map((_, i) => i);
         }
-        
+
         // Compute visual with available indices
-        const visual = computeVisual(remoteId, availableColorIndices, availableIconIndices);
-        
+        const visual = computeVisual(
+          remoteId,
+          availableColorIndices,
+          availableIconIndices
+        );
+
         // Record the used indices
         tags.userPresenceData.usedIndices.colors.push(visual.colorIndex);
         tags.userPresenceData.usedIndices.icons.push(visual.iconIndex);
-        
+
         tags.userPresenceData.visuals[remoteId] = visual;
       }
-      
+
       const data = tags.userPresenceData.visuals[remoteId];
-      return { ...data, color: colors[data.colorIndex], Icon: icons[data.iconIndex] };
+      return {
+        ...data,
+        color: colors[data.colorIndex],
+        Icon: icons[data.iconIndex],
+      };
     }
   } catch (_) {
     return { color: null, Icon: null };
@@ -88,10 +97,8 @@ function getOrSetVisualInTags(remoteId) {
   return computeVisual(remoteId);
 }
 
-
 globalThis.GetOrSetVisualInTags = getOrSetVisualInTags;
-
-
+shout("onGetOrSetVisualInTagsDefined");
 
 async function getSelfIdSafe() {
   try {
@@ -158,7 +165,7 @@ function getUserSessionInfo(userId) {
 }
 globalThis.GetUserSessionInfo = getUserSessionInfo;
 
-export function UserPresence() {
+export function UserPresence({ collapsed = false }) {
   const [showSettings, setShowSettings] = useState(false);
   const [users, setUsers] = useState([]);
   const listenersAddedRef = useRef(false);
@@ -170,6 +177,9 @@ export function UserPresence() {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [, update] = useState();
+  const [isPrivateMode, setIsPrivateMode] = useState(
+    tags.isPrivateMode || false
+  );
   const {
     addTab,
     updateTab,
@@ -265,11 +275,14 @@ export function UserPresence() {
     // - All hosts
     // - Yourself (if host or following)
     // - Anyone in a session
+    // - Exclude private users
+    const privateUsers = tags.privateUsers || [];
     const visible = mapped.filter(
       (u) =>
-        u.isCurrentHost ||
-        (u.inSession && u.hostId) ||
-        (u.isSelf && (isHost || following))
+        !privateUsers.includes(u.remoteId) &&
+        (u.isCurrentHost ||
+          (u.inSession && u.hostId) ||
+          (u.isSelf && (isHost || following)))
     );
 
     // Sort: hosts first, then others
@@ -423,6 +436,27 @@ export function UserPresence() {
           setTimeout(() => {
             setNotifications((prev) => prev.filter((n) => n.id !== notifId));
           }, 15000);
+        } else if (name === "userWentPrivate") {
+          const { userId } = that.that || {};
+          if (!userId) return;
+          // Track private users so we don't show them
+          if (!tags.privateUsers) tags.privateUsers = [];
+          if (!tags.privateUsers.includes(userId)) {
+            tags.privateUsers = [...tags.privateUsers, userId];
+          }
+          // Remove user from visible users list
+          setUsers((prev) => prev.filter((u) => u.remoteId !== userId));
+          os.log?.(`[PrivateMode] User ${userId} went private`);
+        } else if (name === "userWentPublic") {
+          const { userId } = that.that || {};
+          if (!userId) return;
+          // Remove from private users list
+          if (tags.privateUsers) {
+            tags.privateUsers = tags.privateUsers.filter((id) => id !== userId);
+          }
+          // Refresh to show user again
+          refreshOthers();
+          os.log?.(`[PrivateMode] User ${userId} went public`);
         }
       };
 
@@ -446,7 +480,7 @@ export function UserPresence() {
     onlyHostNav: true,
     sharedTab: true,
     autoScroll: true,
-    onlyHostHighlight: true,
+    onlyHostHighlight: false,
     highlightDuration: 16,
     onlyHostSelect: true,
     showOthersActivity: false,
@@ -501,6 +535,7 @@ export function UserPresence() {
           bookId: "GEN",
           chapter: 1,
           translation: "BSB",
+          shortName: "BSB",
         },
       });
     masks["sharedTab"] = globalThis.CurrentTab.id;
@@ -646,6 +681,42 @@ export function UserPresence() {
     });
   };
 
+  const togglePrivateMode = async () => {
+    const newPrivateMode = !isPrivateMode;
+    setIsPrivateMode(newPrivateMode);
+    tags.isPrivateMode = newPrivateMode;
+
+    const remotes = (await os.remotes()) || [];
+    const others = remotes.filter((id) => id !== selfId);
+
+    if (newPrivateMode) {
+      // Going private: notify others that this user is going offline/invisible
+      if (others.length > 0) {
+        sendRemoteData(others, "userWentPrivate", { userId: selfId });
+      }
+      // If hosting a session, end it
+      if (isHost) {
+        stopSession();
+      }
+      // If following someone, unfollow
+      if (following) {
+        unfollowHost();
+      }
+    } else {
+      // Coming back online: notify others that this user is visible again
+      if (others.length > 0) {
+        sendRemoteData(others, "userWentPublic", { userId: selfId });
+      }
+    }
+
+    os.log?.(
+      `[PrivateMode] User ${selfId} is now ${newPrivateMode ? "private" : "public"}`
+    );
+  };
+
+  globalThis.TogglePrivateMode = togglePrivateMode;
+  globalThis.IsPrivateMode = () => isPrivateMode;
+
   const followHost = (hostId) => {
     if (!sessions[hostId]) return;
     setFollowing(hostId);
@@ -720,17 +791,23 @@ export function UserPresence() {
   return (
     <>
       <div
-        style={{
-          marginTop: "4px",
-          // border: `1px solid var(--tabSelection) !important`,
-          // borderBottom: 'none',
-          // borderRadius: '5px 5px 0 0',
-          // background: `color-mix(in srgb, var(--tabSelection) 50%, transparent) !important`,
-          // zIndex: 1000,
-          // position: 'relative',
-          // "border-bottom": 0,
-          // "opacity": activeTab !== masks['sharedTab'] ? '0.4' : null
-        }}
+        style={
+          !collapsed
+            ? {
+                marginTop: "10px",
+                // border: `1px solid var(--tabSelection) !important`,
+                // borderBottom: 'none',
+                // borderRadius: '5px 5px 0 0',
+                // background: `color-mix(in srgb, var(--tabSelection) 50%, transparent) !important`,
+                // zIndex: 1000,
+                // position: 'relative',
+                // "border-bottom": 0,
+                // "opacity": activeTab !== masks['sharedTab'] ? '0.4' : null
+              }
+            : {
+                display: "none",
+              }
+        }
         className="userPresence-container"
       >
         <div
@@ -750,6 +827,7 @@ export function UserPresence() {
             transition: "all 0.2s ease",
             height: "38px",
           }}
+          className="start-session-bar"
         >
           <style>
             {getStatusText() !== "Start session" &&
@@ -817,6 +895,7 @@ export function UserPresence() {
                   <div
                     key={remoteId}
                     style={{ display: "flex", alignItems: "center" }}
+                    className="user-presence-item"
                   >
                     <div
                       onClick={(e) => {
@@ -830,7 +909,7 @@ export function UserPresence() {
                         height: 30,
                         borderRadius: "50%",
                         border: `2px solid ${ringColor}`,
-                        padding: 2,
+                        padding: masks[`${remoteId}-photo`] ? 0 : 2,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -839,7 +918,11 @@ export function UserPresence() {
                         opacity: menuItems.length ? 1 : 0.6,
                       }}
                     >
-                      <Icon width={15} height={15} />
+                      {masks[`${remoteId}-photo`] ? (
+                        <img src={masks[`${remoteId}-photo`]} />
+                      ) : (
+                        <Icon width={15} height={15} />
+                      )}
                     </div>
                     {Object.values(sessions).some((s) =>
                       s.coHosts?.includes(remoteId)
@@ -931,60 +1014,59 @@ export function UserPresence() {
             </div>
           )}
         </div>
+      </div>
+      <div
+        style={{
+          position: "fixed",
+          top: 20,
+          right: 20,
+          zIndex: 100000,
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+        }}
+      >
+        {notifications.map((notif) =>
+          notif.type === "invite" ? (
+            <InviteNotification
+              key={notif.id}
+              inviterId={notif.inviterId}
+              onAccept={() => {
+                AcceptInvite(notif.inviterId);
+                setHasInteracted(true);
+                setNotifications((prev) =>
+                  prev.filter((n) => n.id !== notif.id)
+                );
+              }}
+              onDismiss={() =>
+                setNotifications((prev) =>
+                  prev.filter((n) => n.id !== notif.id)
+                )
+              }
+            />
+          ) : (
+            <SessionNotification
+              key={notif.id}
+              hostId={notif.hostId}
+              onJoin={() => {
+                followHost(notif.hostId);
+                setHasInteracted(true);
 
-        <div
-          style={{
-            position: "fixed",
-            top: 20,
-            right: 20,
-            zIndex: 100000,
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
-          {notifications.map((notif) =>
-            notif.type === "invite" ? (
-              <InviteNotification
-                key={notif.id}
-                inviterId={notif.inviterId}
-                onAccept={() => {
-                  AcceptInvite(notif.inviterId);
-                  setHasInteracted(true);
-                  setNotifications((prev) =>
-                    prev.filter((n) => n.id !== notif.id)
-                  );
-                }}
-                onDismiss={() =>
-                  setNotifications((prev) =>
-                    prev.filter((n) => n.id !== notif.id)
-                  )
-                }
-              />
-            ) : (
-              <SessionNotification
-                key={notif.id}
-                hostId={notif.hostId}
-                onJoin={() => {
-                  followHost(notif.hostId);
-                  setHasInteracted(true);
+                setActiveTab(tags.onlineTab.id);
+                UpdateTab(tags.onlineTab);
 
-                  setActiveTab(tags.onlineTab.id);
-                  UpdateTab(tags.onlineTab);
-
-                  setNotifications((prev) =>
-                    prev.filter((n) => n.id !== notif.id)
-                  );
-                }}
-                onDismiss={() => {
-                  setNotifications((prev) =>
-                    prev.filter((n) => n.id !== notif.id)
-                  );
-                }}
-              />
-            )
-          )}
-        </div>
+                setNotifications((prev) =>
+                  prev.filter((n) => n.id !== notif.id)
+                );
+              }}
+              onDismiss={() => {
+                setNotifications((prev) =>
+                  prev.filter((n) => n.id !== notif.id)
+                );
+              }}
+            />
+          )
+        )}
       </div>
     </>
   );
@@ -1024,7 +1106,11 @@ function FollowerPanel({ hostId, onUnfollow }) {
             justifyContent: "center",
           }}
         >
-          <Icon fill="white" width={14} height={14} />
+          {masks[`${hostId}-photo`] ? (
+            <img src={masks[`${hostId}-photo`]} />
+          ) : (
+            <Icon fill="white" width={14} height={14} />
+          )}
         </div>
         <div>
           <p style={{ color: "#999", fontSize: 12, marginTop: 4 }}>
@@ -1088,13 +1174,13 @@ function ScriptureNavigationSettings({ config, onChange, onStop }) {
       />
 
       <SettingRow
-        label="Shared Tab"
+        label={state.sharedTab ? "Shared Tab Only" : "All Tabs"}
         isOn={state.sharedTab}
         onToggle={() => toggle("sharedTab")}
       />
 
       <SettingRow
-        label="Auto Scroll"
+        label={state.autoScroll ? "Auto Scroll On" : "Auto Scroll Off"}
         isOn={state.autoScroll}
         onToggle={() => toggle("autoScroll")}
       />
@@ -1170,7 +1256,7 @@ function SettingRow({ label, isOn, onToggle }) {
         style={{
           width: 42,
           height: 24,
-          backgroundColor: isOn ? "#FF6B35" : "#444",
+          backgroundColor: isOn ? "var(--secondaryColor)" : "#444",
           borderRadius: 12,
           position: "relative",
           cursor: "pointer",
@@ -1267,7 +1353,14 @@ function InviteNotification({ inviterId, onAccept, onDismiss }) {
             flexShrink: 0,
           }}
         >
-          <Icon fill="white" width={20} height={20} />
+          {masks[`${inviterId}-photo`] ? (
+            <img
+              style={{ borderRadius: "50%" }}
+              src={masks[`${inviterId}-photo`]}
+            />
+          ) : (
+            <Icon fill="white" width={20} height={20} />
+          )}
         </div>
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>
@@ -1410,7 +1503,14 @@ function SessionNotification({ hostId, onJoin, onDismiss }) {
             flexShrink: 0,
           }}
         >
-          <Icon fill="white" width={20} height={20} />
+          {masks[`${hostId}-photo`] ? (
+            <img
+              style={{ borderRadius: "50%" }}
+              src={masks[`${hostId}-photo`]}
+            />
+          ) : (
+            <Icon fill="white" width={20} height={20} />
+          )}
         </div>
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>
@@ -1449,6 +1549,7 @@ function SessionNotification({ hostId, onJoin, onDismiss }) {
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "scale(1)";
           }}
+          class="join-session-button"
         >
           Join Session
         </button>

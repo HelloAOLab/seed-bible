@@ -1,10 +1,11 @@
-if (globalThis.NagiationTimeout) {
-  clearTimeout(globalThis.NagiationTimeout);
-  globalThis.NagiationTimeout = null;
+const G = globalThis as any;
+if (G.NagiationTimeout) {
+  clearTimeout(G.NagiationTimeout);
+  G.NagiationTimeout = null;
 }
-if (globalThis.RenderLinkTimer) clearTimeout(globalThis.RenderLinkTimer);
+if (G.RenderLinkTimer) clearTimeout(G.RenderLinkTimer);
 
-function scrollToVerse(verseNumber) {
+function scrollToVerse(verseNumber: number) {
   const element = document.getElementById(`v-${verseNumber}`);
   if (element) {
     element.scrollIntoView({
@@ -16,9 +17,9 @@ function scrollToVerse(verseNumber) {
   }
 }
 
-globalThis.NagiationTimeout = setTimeout(async () => {
-  const initialValue = globalThis.HISTORYExploreMode;
-  globalThis.HISTORYExploreMode = true;
+G.NagiationTimeout = setTimeout(async () => {
+  const initialValue = G.HISTORYExploreMode;
+  G.HISTORYExploreMode = true;
   const { dataItem, bulkAdd } = that;
 
   let dataToNavigate = dataItem;
@@ -26,15 +27,13 @@ globalThis.NagiationTimeout = setTimeout(async () => {
     dataToNavigate = dataItem[0];
   }
 
-  const openTestamentByBook = async (bookName, isFindByRank = false) => {
+  const openTestamentByBook = async (
+    bookName: string,
+    isFindByRank = false
+  ) => {
     const mainWordBibleOldTestament = getBot("isOldTestament", true);
     const mainWordBibleNewTestament = getBot("isNewTestament", true);
-    const bookDetails = globalThis.findNameRank(
-      bookName,
-      null,
-      false,
-      isFindByRank
-    );
+    const bookDetails = G.findNameRank(bookName, null, false, isFindByRank);
     const bookTestament =
       bookDetails?.testament === "Old Testament"
         ? mainWordBibleOldTestament
@@ -46,9 +45,12 @@ globalThis.NagiationTimeout = setTimeout(async () => {
     return bookDetails;
   };
 
-  const openTestamentBySection = async (sectionName, isFindByRank = false) => {
+  const openTestamentBySection = async (
+    sectionName: string,
+    isFindByRank = false
+  ) => {
     const sectionRanks = getSectionRanking();
-    let section;
+    let section: any = undefined;
     Object.keys(sectionRanks).forEach((key) => {
       if (isFindByRank) {
         const curreSec = sectionRanks[key];
@@ -74,8 +76,8 @@ globalThis.NagiationTimeout = setTimeout(async () => {
     }
   };
 
-  const openSection = async (sectionName) => {
-    let sectionBot = getBot(
+  const openSection = async (sectionName: string) => {
+    let sectionBot: any = getBot(
       byTag("isSection", true),
       byTag("sectionName", sectionName)
     );
@@ -89,7 +91,7 @@ globalThis.NagiationTimeout = setTimeout(async () => {
     }
   };
 
-  const openBook = async (commonName, chapter = 1, verse = []) => {
+  const openBook = async (commonName: string, chapter = 1, verse = []) => {
     let bookBot = getBot(byTag("bookName", commonName), byTag("isBook", true));
     if (bookBot) {
       await os
@@ -104,18 +106,18 @@ globalThis.NagiationTimeout = setTimeout(async () => {
   };
 
   async function openBookHelper(
-    bookBot,
-    commonName,
-    chapter,
+    bookBot: any,
+    commonName: string,
+    chapter: number,
     versesState = [1]
   ) {
     shout("closeFormMenu");
-    Playlist.tryAddDataToHistory({ dataItem });
+    G.Playlist.tryAddDataToHistory({ dataItem });
     if (bookBot.masks.isSelected) {
-      bible.openAt(`${bookBot.tags.bookName} ${chapter}:1`);
+      G.bible.openAt(`${bookBot.tags.bookName} ${chapter}:1`);
       await os.sleep(100);
-      updateCustomHeight(0.8);
-      globalThis.arrowActionsFreeze = false;
+      G.updateCustomHeight(0.8);
+      G.arrowActionsFreeze = false;
     } else {
       setTagMask(
         bookBot,
@@ -144,24 +146,24 @@ globalThis.NagiationTimeout = setTimeout(async () => {
           });
         }
       });
-      globalThis.arrowActionsFreeze = false;
+      G.arrowActionsFreeze = false;
     }
     try {
-      setVersesState(versesState);
+      G.setVersesState(versesState);
     } catch {
       os.log("setVersesState not global yet");
     }
   }
 
-  if (globalThis.SetMediaURL && !that.skipEmbed) {
-    globalThis.SetMediaURL(null);
+  if (G.SetMediaURL && !that.skipEmbed) {
+    G.SetMediaURL(null);
   }
   setTimeout(() => {
     thisBot.CloseFloatingApp();
   }, 100);
 
-  if (globalThis.SetVideoSrc && !that.skipEmbed) {
-    globalThis.SetVideoSrc(null);
+  if (G.SetVideoSrc && !that.skipEmbed) {
+    G.SetVideoSrc(null);
     if (
       dataToNavigate.additionalInfo?.type === "video-recording" ||
       that.additionalInfo?.type === "Video" ||
@@ -189,19 +191,19 @@ globalThis.NagiationTimeout = setTimeout(async () => {
           `${dataToNavigate.additionalInfo.bookName} is Already opened.`
         );
       }
-      globalThis.ModifyTransformedHistory &&
-        globalThis.PlayingPlaylist &&
-        globalThis.ModifyTransformedHistory((thh) => thisBot.checkGreyOut(thh));
-      if (globalThis.updateCustomHeight) updateCustomHeight(0);
+      G.ModifyTransformedHistory &&
+        G.PlayingPlaylist &&
+        G.ModifyTransformedHistory((thh: any) => thisBot.checkGreyOut(thh));
+      if (G.updateCustomHeight) G.updateCustomHeight(0);
       break;
     }
     case "section": {
       await openTestamentBySection(dataToNavigate.additionalInfo.sectionName);
       await openSection(dataToNavigate.additionalInfo.sectionName);
-      globalThis.ModifyTransformedHistory &&
-        globalThis.PlayingPlaylist &&
-        globalThis.ModifyTransformedHistory((thh) => thisBot.checkGreyOut(thh));
-      if (globalThis.updateCustomHeight) updateCustomHeight(0);
+      G.ModifyTransformedHistory &&
+        G.PlayingPlaylist &&
+        G.ModifyTransformedHistory((thh: any) => thisBot.checkGreyOut(thh));
+      if (G.updateCustomHeight) G.updateCustomHeight(0);
       break;
     }
     case "book": {
@@ -216,12 +218,12 @@ globalThis.NagiationTimeout = setTimeout(async () => {
         book = getPsalmsBookName(chapter);
       }
 
-      globalThis.SetSelected && SetSelected({});
-      globalThis.SetHolded && SetHolded({});
+      G.SetSelected && G.SetSelected({});
+      G.SetHolded && G.SetHolded({});
 
       await os.sleep(10);
 
-      globalThis.Open(
+      G.Open(
         dataToNavigate.additionalInfo.data.bookId,
         1,
         dataToNavigate.translationId
@@ -241,12 +243,12 @@ globalThis.NagiationTimeout = setTimeout(async () => {
         book = getPsalmsBookName(chapter);
       }
 
-      globalThis.SetSelected && SetSelected({});
-      globalThis.SetHolded && SetHolded({});
+      G.SetSelected && G.SetSelected({});
+      G.SetHolded && G.SetHolded({});
 
       await os.sleep(10);
 
-      globalThis.Open(
+      G.Open(
         dataToNavigate.additionalInfo.data.bookId ||
           dataToNavigate.additionalInfo.data.id,
         chapter,
@@ -260,19 +262,13 @@ globalThis.NagiationTimeout = setTimeout(async () => {
     }
     case "verse-grouped":
     case "verse": {
+      console.log(dataToNavigate, "VERSE");
       let bookName = dataToNavigate.additionalInfo.book;
       const chapterNo = dataToNavigate.additionalInfo.chapter;
       const verseData = dataToNavigate.additionalInfo.data;
 
-      const {
-        book,
-        chapter,
-        bookId,
-        sectionData,
-        viewer,
-        highlight,
-        ...verse
-      } = verseData;
+      let { book, chapter, bookId, sectionData, viewer, highlight, ...verse } =
+        verseData;
 
       if (book === "Psalms" || book === "Psalm") {
         book = getPsalmsBookName(chapter);
@@ -280,10 +276,10 @@ globalThis.NagiationTimeout = setTimeout(async () => {
 
       // const bookDetails = await openTestamentByBook(book);
 
-      globalThis.SetSelectedVerses && SetSelectedVerses([]);
-      globalThis.SetHolded && SetHolded({});
-      if (globalThis.CloseNewList) CloseNewList();
-      await globalThis.Open(
+      G.SetSelectedVerses && G.SetSelectedVerses([]);
+      G.SetHolded && G.SetHolded({});
+      if (G.CloseNewList) G.CloseNewList();
+      await G.Open(
         dataToNavigate.additionalInfo.data.bookId ||
           dataToNavigate.additionalInfo.chapterData.id ||
           dataToNavigate.additionalInfo.chapterData.bookId,
@@ -294,10 +290,10 @@ globalThis.NagiationTimeout = setTimeout(async () => {
       await os.sleep(20);
 
       const versesNumber = [];
-      const multiVerse = {};
+      const multiVerse: any = {};
       let vNumber = -2;
       if (dataToNavigate.type === "verse-grouped") {
-        dataToNavigate.additionalInfo.verse.forEach((verseP) => {
+        dataToNavigate.additionalInfo.verse.forEach((verseP: number) => {
           if (vNumber === -2) {
             vNumber = verseP;
           }
@@ -310,7 +306,7 @@ globalThis.NagiationTimeout = setTimeout(async () => {
         vNumber = dataToNavigate.additionalInfo.verse;
         multiVerse[dataToNavigate.additionalInfo.verse] = true;
       } else {
-        dataItem.forEach((data) => {
+        dataItem.forEach((data: any) => {
           if (vNumber === -2) {
             vNumber = data.additionalInfo.verse;
           }
@@ -343,9 +339,9 @@ globalThis.NagiationTimeout = setTimeout(async () => {
       //     });
 
       // }
-      if (globalThis.ScrollToVerse) ScrollToVerse({ vNumber });
-      globalThis.SetSelected && SetSelected(multiVerse);
-      globalThis.SetHolded && SetHolded(multiVerse);
+      if (G.ScrollToVerse) G.ScrollToVerse({ vNumber });
+      G.SetSelected && G.SetSelected(multiVerse);
+      G.SetHolded && G.SetHolded(multiVerse);
       break;
     }
     default: {
@@ -354,5 +350,5 @@ globalThis.NagiationTimeout = setTimeout(async () => {
   }
 
   thisBot.CloseSelf();
-  globalThis.HISTORYExploreMode = initialValue;
+  G.HISTORYExploreMode = initialValue;
 }, 75);

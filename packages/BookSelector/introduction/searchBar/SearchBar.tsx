@@ -7,6 +7,12 @@ import {
   CoffeBeanIcon,
 } from "app.components.phosphoricons";
 
+import TranslationModal from "introduction.searchBar.TranslationModal";
+import { getTranslations, getTranslatedNumber } from "app.hooks.i18n";
+import type {
+  BookInterface,
+  TranslationInterface,
+} from "introduction.searchBar.Interfaces";
 const {
   useState,
   useEffect,
@@ -17,76 +23,104 @@ const {
   useLayoutEffect,
 } = os.appHooks;
 
-const PsalmsData = [
+// Provide a fallback JSX.IntrinsicElements declaration so TSX compiles
+// even when React types are not available in the environment.
+
+const PsalmsData: BookInterface[] = [
   {
+    id: "PSA",
+    translationId: "BSB",
+    name: "Psalms",
     commonName: "1 Psalms",
-    startingBook: 0,
-    endingBook: 40,
+    title: "Psalms",
+    order: 19,
+    numberOfChapters: 41,
+    firstChapterNumber: 1,
     firstChapterApiLink: "/api/BSB/PSA/1.json",
+    lastChapterNumber: 41,
     lastChapterApiLink: "/api/BSB/PSA/41.json",
   },
   {
+    id: "PSA",
+    translationId: "BSB",
+    name: "Psalms",
     commonName: "2 Psalms",
-    startingBook: 41,
-    endingBook: 71,
+    title: "Psalms",
+    order: 19,
+    numberOfChapters: 31,
+    firstChapterNumber: 42,
     firstChapterApiLink: "/api/BSB/PSA/42.json",
+    lastChapterNumber: 72,
     lastChapterApiLink: "/api/BSB/PSA/72.json",
   },
   {
+    id: "PSA",
+    translationId: "BSB",
+    name: "Psalms",
     commonName: "3 Psalms",
-    startingBook: 72,
-    endingBook: 88,
+    title: "Psalms",
+    order: 19,
+    numberOfChapters: 17,
+    firstChapterNumber: 73,
     firstChapterApiLink: "/api/BSB/PSA/73.json",
+    lastChapterNumber: 89,
     lastChapterApiLink: "/api/BSB/PSA/89.json",
   },
   {
+    id: "PSA",
+    translationId: "BSB",
+    name: "Psalms",
     commonName: "4 Psalms",
-    startingBook: 89,
-    endingBook: 105,
+    title: "Psalms",
+    order: 19,
+    numberOfChapters: 16,
+    firstChapterNumber: 90,
     firstChapterApiLink: "/api/BSB/PSA/90.json",
+    lastChapterNumber: 106,
     lastChapterApiLink: "/api/BSB/PSA/106.json",
   },
   {
+    id: "PSA",
+    translationId: "BSB",
+    name: "Psalms",
     commonName: "5 Psalms",
-    startingBook: 106,
-    endingBook: 149,
+    title: "Psalms",
+    order: 19,
+    numberOfChapters: 20,
+    firstChapterNumber: 107,
     firstChapterApiLink: "/api/BSB/PSA/107.json",
+    lastChapterNumber: 150,
     lastChapterApiLink: "/api/BSB/PSA/150.json",
   },
 ];
 
-function generateQuery(params) {
-  const queryArray = [];
-  for (const key in params) {
-    if (params.hasOwnProperty(key)) {
-      queryArray.push(
-        encodeURIComponent(key) + "=" + encodeURIComponent(params[key])
-      );
-    }
-  }
-  return queryArray.join("&");
-}
+const tanakOrder: number[] = [
+  1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 23, 24, 26, 28, 29, 30, 31, 32, 33, 34,
+  35, 36, 37, 38, 39, 19, 20, 18, 22, 8, 25, 21, 17, 27, 15, 16, 13, 14,
+];
 
-// Function to attach query string to URL
-function attachQueryToURL(url, params) {
-  const queryString = generateQuery(params);
-  return url + (url.includes("?") ? "&" : "?") + queryString;
-}
+const tanakhIndex: { [key: number]: number } = Object.fromEntries(
+  tanakOrder.map((num, idx) => [num, idx])
+);
 
 const thePage = getBot("system", "app.components");
 
-const SearchBar = () => {
+const SearchBar = (props: { openSidebar: boolean }) => {
+  const { openSidebar } = props;
   const [query, setQuery] = useState("");
+  const [languageQuery, setLanguageQuery] = useState("");
   const inputRef = useRef(null);
+  const systemTranslation: { [key: string]: string } = getTranslations();
   const [onlineUsers, setOnlineUsers] = useState(null);
+  const [orientation, setOrientation] = useState(
+    masks?.orientation || "traditional"
+  );
 
   const [booksData, setBooksData] = useState(
     thePage.masks?.booksData || tags.booksData
   );
   const [selectedTestament, setSelectedTestament] = useState(2);
   const [apocryphaAvailable, setApocryphaAvailable] = useState(false);
-  const [openSearchBar, setOpenSearchBar] = useState(false);
-  const [searchBarFocused, setSearchBarFocused] = useState(false);
 
   const [defaultTranslations, setDefaultTranslations] = useState(
     thePage.masks?.defaultTranslations || [
@@ -111,7 +145,6 @@ const SearchBar = () => {
     }
   );
 
-  const [showAllLanguages, setShowAllLanguages] = useState(false);
   const [allowedTranslationLimit, setAllowedTranslationLimit] = useState(50);
   const [selectedTranslation, setSelectedTranslation] = useState(
     thePage.masks?.selectedTranslation || {
@@ -124,59 +157,72 @@ const SearchBar = () => {
   const [selectingTranslation, setSelectingTranslation] = useState(false);
   const [windowSize, setWindowSize] = useState(window.innerWidth);
 
-  const handleNameMatch = useCallback(({ query, bookData }) => {
-    let lowercaseQuery = query?.toLowerCase() || "";
-    const commonName = bookData.commonName?.toLowerCase() || "";
-    const bookId = bookData.id?.toLowerCase() || "";
-    const lowercaseQueryArr = lowercaseQuery.split(" ");
-    if (lowercaseQueryArr.length > 1) {
+  const handleNameMatch = useCallback(
+    (props: { query: string; bookData: BookInterface }) => {
+      const { query, bookData } = props;
+      let lowercaseQuery = query?.toLowerCase() || "";
+      const commonName = bookData.commonName?.toLowerCase() || "";
+      const bookId = bookData.id?.toLowerCase() || "";
+      const lowercaseQueryArr = lowercaseQuery.split(" ");
+      if (lowercaseQueryArr.length > 1) {
+        if (
+          lowercaseQueryArr[lowercaseQueryArr.length - 1] === "" ||
+          parseInt(lowercaseQueryArr[lowercaseQueryArr.length - 1] || "NaN")
+        ) {
+          lowercaseQuery = lowercaseQueryArr
+            .slice(0, lowercaseQueryArr.length - 1)
+            .join(" ");
+        }
+      }
       if (
-        lowercaseQueryArr[lowercaseQueryArr.length - 1] === "" ||
-        parseInt(lowercaseQueryArr[lowercaseQueryArr.length - 1])
+        commonName.slice(0, lowercaseQuery.length) === lowercaseQuery ||
+        bookId.includes(lowercaseQuery) ||
+        (commonName.slice(2, lowercaseQuery.length + 2) === lowercaseQuery &&
+          commonName.split(" ").length > 1 &&
+          parseInt(commonName.split(" ")[0] || "NaN"))
       ) {
-        lowercaseQuery = lowercaseQueryArr
-          .slice(0, lowercaseQueryArr.length - 1)
-          .join(" ");
+        return true;
       }
-    }
-    if (
-      commonName.slice(0, lowercaseQuery.length) === lowercaseQuery ||
-      bookId.includes(lowercaseQuery) ||
-      (commonName.slice(2, lowercaseQuery.length + 2) === lowercaseQuery &&
-        commonName.split(" ").length > 1 &&
-        parseInt(commonName.split(" ")[0]))
-    ) {
-      return true;
-    }
-    return false;
-  }, []);
+      return false;
+    },
+    []
+  );
 
-  const sortBooksByTestament = useCallback((books) => {
-    const OTBooks = [];
-    const NTBooks = [];
-    const ApocryphaBooks = [];
-    for (let i = 0; i < books.length; i++) {
-      if (books[i].order <= 39) {
-        OTBooks.push(books[i]);
-      } else if (books[i].order > 39 && books[i].order <= 66) {
-        NTBooks.push(books[i]);
-      } else {
-        ApocryphaBooks.push(books[i]);
+  const sortBooksByTestament = useCallback(
+    (books: BookInterface[]) => {
+      let OTBooks: BookInterface[] = [];
+      const NTBooks: BookInterface[] = [];
+      const ApocryphaBooks: BookInterface[] = [];
+      if (!books) return { OTBooks, NTBooks, ApocryphaBooks };
+      for (const book of books) {
+        if (book.order <= 39) {
+          OTBooks.push(book);
+        } else if (book.order > 39 && book.order <= 66) {
+          NTBooks.push(book);
+        } else {
+          ApocryphaBooks.push(book);
+        }
       }
-    }
-    return {
-      OTBooks,
-      NTBooks,
-      ApocryphaBooks,
-    };
-  }, []);
+      if (orientation === "tanak") {
+        OTBooks = OTBooks.sort(
+          (a, b) => (tanakhIndex[a.order] || 0) - (tanakhIndex[b.order] || 0)
+        );
+      }
+      return {
+        OTBooks,
+        NTBooks,
+        ApocryphaBooks,
+      };
+    },
+    [orientation]
+  );
 
   const selectedTestamentData = useMemo(() => {
     if (query.length > 0) {
       if (booksData === null || query === "") {
         return [];
       } else if (query.length > 0) {
-        let sortedBook = [];
+        const sortedBook = [];
         for (let i = 0; i < booksData.length; i++) {
           if (handleNameMatch({ query: query, bookData: booksData[i] })) {
             sortedBook.push(booksData[i]);
@@ -189,15 +235,16 @@ const SearchBar = () => {
         } else {
           setApocryphaAvailable(false);
         }
-        if (selectedTestament === 0) {
-          return OTBooks;
-        } else if (selectedTestament === 1) {
-          return NTBooks;
-        } else if (selectedTestament === 2) {
-          return [...OTBooks, ...NTBooks];
-        } else {
-          return ApocryphaBooks;
-        }
+        return [...OTBooks, ...NTBooks, ...ApocryphaBooks];
+        // if (selectedTestament === 0) {
+        //   return OTBooks;
+        // } else if (selectedTestament === 1) {
+        //   return NTBooks;
+        // } else if (selectedTestament === 2) {
+        //   return [...OTBooks, ...NTBooks];
+        // } else {
+        //   return ApocryphaBooks;
+        // }
       } else {
         return [];
       }
@@ -223,60 +270,9 @@ const SearchBar = () => {
         return [];
       }
     }
-  }, [selectedTestament, booksData, query, handleNameMatch]);
+  }, [selectedTestament, booksData, query, handleNameMatch, orientation]);
 
-  const filteredApiTranslations = useMemo(() => {
-    if (query !== "") {
-      let translations = {};
-      let lowercaseQuery = query.toLowerCase();
-      Object.entries(apiTranslations)
-        .slice(0, allowedTranslationLimit)
-        .forEach(([key, value]) => {
-          if (key.includes(lowercaseQuery)) {
-            translations[key] = translations[key]
-              ? { ...translations[key], ...value }
-              : { ...value };
-          } else if (
-            Object.keys(apiTranslations[key]).filter((translationKey) =>
-              translationKey.includes(lowercaseQuery)
-            ).length > 0
-          ) {
-            let values = {};
-            Object.entries(apiTranslations[key]).forEach(
-              ([subKey, subValue]) => {
-                if (subKey.includes(lowercaseQuery)) {
-                  values[subKey] = apiTranslations[key][subKey];
-                }
-              }
-            );
-            translations[key] = translations[key]
-              ? { ...translations[key], ...values }
-              : { ...values };
-          }
-        });
-      return Object.entries(translations)
-        .sort(([a, avalue], [b, bvalue]) => {
-          if (a === selectedTranslation.languageEnglishName.toLowerCase())
-            return -1;
-          if (b === selectedTranslation.languageEnglishName.toLowerCase())
-            return 1;
-          return a.localeCompare(b);
-        })
-        .slice(0, allowedTranslationLimit);
-    } else {
-      return Object.entries(apiTranslations)
-        .sort(([a, avalue], [b, bvalue]) => {
-          if (a === selectedTranslation.languageEnglishName.toLowerCase())
-            return -1;
-          if (b === selectedTranslation.languageEnglishName.toLowerCase())
-            return 1;
-          return a.localeCompare(b);
-        })
-        .slice(0, allowedTranslationLimit);
-    }
-  }, [apiTranslations, query, allowedTranslationLimit, selectedTranslation]);
-
-  const getUrlUpToKeyword = useCallback((link, keyword) => {
+  const getUrlUpToKeyword = useCallback((link: string, keyword: string) => {
     try {
       const url = new URL(link);
       const index = url.pathname.indexOf(keyword);
@@ -285,33 +281,40 @@ const SearchBar = () => {
       }
       return url.origin + url.pathname; // If keyword not found, return full URL
     } catch (error) {
-      console.error("Invalid URL:", error.message);
+      if (error instanceof Error) {
+        console.error("Invalid URL:", error.message);
+      } else {
+        console.error("Invalid URL:", String(error));
+      }
       return null;
     }
   }, []);
 
-  const handleTranslationAddition = async ({
-    type,
-    value,
-    setInputValue = () => {},
+  const handleTranslationAddition = async (props: {
+    type: string;
+    value: string;
+    setInputValue?: (s: string) => void;
   }) => {
-    let available_translations_req = await web.get(
-      "https://bible.helloao.org/api/available_translations.json"
+    const available_translations_req = await web.get(
+      "https://vmfnri.helloao.org/api/available_translations.json"
     );
+    const { type, value, setInputValue } = props;
     if (type === "id") {
-      let trValue = {
+      const trValue: { pass: boolean; value: TranslationInterface | null } = {
         pass: false,
         value: null,
       };
       if (available_translations_req.status === 200) {
-        available_translations_req.data.translations.map((translation) => {
-          if (translation.id.toLowerCase() === value.toLowerCase()) {
-            trValue.pass = true;
-            trValue.value = translation;
+        available_translations_req.data.translations.map(
+          (translation: TranslationInterface) => {
+            if (translation.id.toLowerCase() === value.toLowerCase()) {
+              trValue.pass = true;
+              trValue.value = translation;
+            }
           }
-        });
-        if (trValue.pass) {
-          let translationValue = {
+        );
+        if (trValue.pass && trValue.value) {
+          const translationValue = {
             ...trValue.value,
           };
           console.log(apiTranslations, "apiTranslations");
@@ -323,10 +326,10 @@ const SearchBar = () => {
               translationValue.shortName.toLowerCase()
             ]
           ) {
-            ChangeTranslation(translationValue.id);
+            globalThis.ChangeTranslation(translationValue.id);
             os.toast(`Translation Already Exists!`);
           } else {
-            let translations = { ...apiTranslations };
+            const translations = { ...apiTranslations };
             translations[translationValue.languageEnglishName.toLowerCase()] =
               translations[translationValue.languageEnglishName.toLowerCase()]
                 ? {
@@ -358,7 +361,7 @@ const SearchBar = () => {
                 translationValue.languageEnglishName.toLowerCase(),
               ]);
             }
-            ChangeTranslation(translationValue.id);
+            globalThis.ChangeTranslation(translationValue.id);
             os.toast(`Translation ${value} added!`);
           }
         } else {
@@ -366,32 +369,34 @@ const SearchBar = () => {
         }
       }
     } else {
-      let trValue = {
+      const trValue: { pass: boolean; value: TranslationInterface | null } = {
         pass: false,
         value: null,
       };
       if (available_translations_req.status === 200) {
-        available_translations_req.data.translations.map((translation) => {
-          if (translation.website.toLowerCase() === value.toLowerCase()) {
-            trValue.pass = true;
-            trValue.value = translation;
+        available_translations_req.data.translations.map(
+          (translation: TranslationInterface) => {
+            if (translation?.website?.toLowerCase() === value.toLowerCase()) {
+              trValue.pass = true;
+              trValue.value = translation;
+            }
           }
-        });
-        if (trValue.pass) {
-          let translationValue = {
+        );
+        if (trValue.pass && trValue.value) {
+          const translationValue = {
             ...trValue.value,
           };
           if (
             apiTranslations[
-              translationValue.languageEnglishName.toLowerCase()
+              translationValue?.languageEnglishName?.toLowerCase() || ""
             ] &&
-            apiTranslations[translationValue.languageEnglishName.toLowerCase()][
-              trValue.value.shortName.toLowerCase()
-            ]
+            apiTranslations[
+              translationValue?.languageEnglishName?.toLowerCase() || ""
+            ][trValue?.value?.shortName?.toLowerCase() || ""]
           ) {
             os.toast(`Translation Already Exists!`);
           } else {
-            let translations = { ...apiTranslations };
+            const translations = { ...apiTranslations };
             translations[translationValue.languageEnglishName.toLowerCase()] =
               translations[translationValue.languageEnglishName.toLowerCase()]
                 ? {
@@ -429,24 +434,31 @@ const SearchBar = () => {
             })
             .then((e) => {
               const url = new URL(value);
-              let origin = getUrlUpToKeyword(value, "/api");
-              let data = e.data;
+              const origin = getUrlUpToKeyword(value, "/api");
+              const data = e.data;
               if (value.includes("/available_translations.json")) {
-                let translations = data.translations;
-                let tempApiTranslations = { ...apiTranslations };
-                let defaultTranslation;
-                for (let i = 0; i < translations.length; i++) {
-                  let translation = translations[i];
-                  let languageEnglishName =
+                const translations: TranslationInterface[] = data.translations;
+                if (translations.length === 0) {
+                  os.toast("No translations found from url!");
+                  return;
+                }
+                const tempApiTranslations = { ...apiTranslations };
+                let defaultTranslation: TranslationInterface | undefined;
+                const controlledTranslations: TranslationInterface[] = [];
+                for (const translation of translations) {
+                  const languageEnglishName =
                     translation.languageEnglishName.toLowerCase();
-                  let controlledTranslation = {
+                  const controlledTranslation = {
+                    ...translation,
+                    name: translation.name,
                     languageEnglishName: languageEnglishName,
                     id: translation.id,
                     listOfBooksApiLink: `${url.origin}${translation.listOfBooksApiLink}`,
                     origin: url.origin,
                     shortName: translation.shortName,
                   };
-                  if (i === 0) {
+                  controlledTranslations.push(controlledTranslation);
+                  if (!defaultTranslation) {
                     defaultTranslation = controlledTranslation;
                   }
                   tempApiTranslations[languageEnglishName] =
@@ -467,14 +479,41 @@ const SearchBar = () => {
                     ]);
                   }
                 }
+                setTagMask(
+                  thePage,
+                  "newTranslations",
+                  masks?.newTranslations
+                    ? [...masks.newTranslations, ...controlledTranslations]
+                    : controlledTranslations,
+                  "local"
+                );
                 setSelectedTranslation(defaultTranslation);
                 setApiTranslations(tempApiTranslations);
                 setShowCustomTranslation(false);
+                if (defaultTranslation) {
+                  web
+                    .get(`${defaultTranslation.listOfBooksApiLink}`)
+                    .then((e) => {
+                      ChangeTranslation(
+                        defaultTranslation.id,
+                        e.data.books,
+                        defaultTranslation.origin
+                      );
+                      setBooksData([...e.data.books]);
+                      setSelectingTranslation(false);
+                      setOpenSidebar(false);
+                    })
+                    .catch((e) => {
+                      console.log(e);
+                    });
+                }
                 os.log("All Translations Added");
               } else {
                 if (data?.translation && data?.books) {
-                  let translation = data.translation;
-                  let controlledTranslation = {
+                  const translation = data.translation;
+                  const controlledTranslation = {
+                    ...translation,
+                    name: translation.name,
                     languageEnglishName:
                       translation.languageEnglishName.toLowerCase(),
                     id: translation.id,
@@ -488,16 +527,19 @@ const SearchBar = () => {
                     ] &&
                     apiTranslations[
                       translation.languageEnglishName.toLowerCase()
-                    ][trValue.value.shortName.toLowerCase()]
+                    ][trValue?.value?.shortName?.toLowerCase() || ""]
                   ) {
                     os.toast(`Translation Already Exists!`);
                     ChangeTranslation(
                       controlledTranslation.id,
-                      book0,
+                      data.books,
                       controlledTranslation.origin
                     );
+                    setBooksData([...data.books[0]]);
+                    setSelectingTranslation(false);
+                    setOpenSidebar(false);
                   } else {
-                    let translations = { ...apiTranslations };
+                    const translations = { ...apiTranslations };
 
                     translations[
                       translation.languageEnglishName.toLowerCase()
@@ -532,9 +574,12 @@ const SearchBar = () => {
                     }
                     ChangeTranslation(
                       controlledTranslation.id,
-                      book0,
+                      data.books,
                       controlledTranslation.origin
                     );
+                    setBooksData([...data.books[0]]);
+                    setSelectingTranslation(false);
+                    setOpenSidebar(false);
                     os.toast(`Translation ${value} added!`);
                   }
                 } else {
@@ -553,71 +598,61 @@ const SearchBar = () => {
   };
 
   const focusOnBook = useCallback(
-    ({ bookName, chapterNo }) => {
-      setOpenSidebar(false);
+    (props: { chapterNo?: number }) => {
+      const { chapterNo } = props;
+      (globalThis as any).setOpenSidebar(false);
       setQuery("");
-      let chapter, queryArr;
+      let chapter: number | null = null,
+        queryArr: string[] = [];
       if (chapterNo) {
         chapter = chapterNo;
       } else {
         queryArr = [...query.split(" ")];
-        if (parseInt(queryArr[queryArr.length - 1])) {
-          chapter = parseInt(queryArr[queryArr.length - 1]);
+        const lastPart = queryArr[queryArr.length - 1] ?? "";
+        const parsed = parseInt(lastPart, 10);
+        if (!isNaN(parsed)) {
+          chapter = parsed;
         }
       }
-      shout("closeMiniMapPortal");
-      // whisper(thisBot, "focusOnBook", { bookname: bookName, chapter: chapter ? chapter : 0 });
-      setTimeout(() => {
-        globalThis.Open(
-          selectedTestamentData[0].id,
-          chapter || 1,
-          selectedTestamentData[0].translationId
-        );
-        // Manage.open({
-        //     id: selectedTestamentData[0].id,
-        //     translationId: selectedTestamentData[0].translationId,
-        //     numberOfChapters: selectedTestamentData[0].numberOfChapters,
-        //     bookName,
-        //     chapterNo: chapter ? chapter : 1
-        // })
-      }, 500);
+      globalThis.Open(
+        selectedTestamentData[0].id,
+        chapter || 1,
+        selectedTestamentData[0].translationId
+      );
     },
     [query]
   );
 
   const handleEnter = useCallback(() => {
-    if (
-      (selectedTestamentData.length === 1 && !query?.toLowerCase()) ||
-      "".includes("psalm")
-    ) {
-      focusOnBook({ bookName: selectedTestamentData[0].commonName });
-    } else {
-      if (query?.toLowerCase() || "".includes("psalm")) {
-        if (query.split(" ").length > 1) {
-          const queryArr = query.split(" ");
-          const chapterNo = parseInt(queryArr[queryArr.length - 1]);
-          if (!isNaN(chapterNo)) {
-            let bookName;
-            for (let i = 0; i < PsalmsData.length; i++) {
-              if (chapterNo <= PsalmsData[i].endingBook + 1) {
-                bookName = PsalmsData[i].commonName;
-                break;
-              }
+    if (query?.toLowerCase() || "".includes("psalm")) {
+      if (query.split(" ").length > 1) {
+        const queryArr: string[] = query.split(" ");
+        const lastPart = queryArr[queryArr.length - 1] ?? "";
+        const chapterNo = parseInt(lastPart, 10);
+        if (!isNaN(chapterNo)) {
+          let bookName;
+          for (const psalmBook of PsalmsData) {
+            if (chapterNo <= psalmBook.lastChapterNumber) {
+              bookName = psalmBook.commonName;
+              break;
             }
-            if (bookName) {
-              focusOnBook({ bookName: bookName, chapterNo: chapterNo });
-            } else {
-              os.toast("That chapter doesn't exist!!!");
-            }
+          }
+          if (bookName) {
+            focusOnBook({ chapterNo: chapterNo });
           } else {
-            os.toast("Please check the chapter no.!!!");
+            os.toast("That chapter doesn't exist!!!");
           }
         } else {
-          focusOnBook({ bookName: "1 Psalms", chapterNo: 1 });
+          os.toast("Please check the chapter no.!!!");
         }
       } else {
-        setQuery(selectedTestamentData[0].commonName);
+        focusOnBook({ chapterNo: 1 });
       }
+    } else if (
+      Array.isArray(selectedTestamentData) &&
+      selectedTestamentData.length > 0
+    ) {
+      setQuery(selectedTestamentData[0]?.commonName ?? "");
     }
   }, [selectedTestamentData, query, focusOnBook]);
 
@@ -626,11 +661,10 @@ const SearchBar = () => {
       web
         .get(`${selectedTranslation.listOfBooksApiLink}`)
         .then((e) => {
-          let book0 = e.data.books[0];
           !thePage.masks?.translationInitiated &&
             ChangeTranslation(
               selectedTranslation.id,
-              book0,
+              e.data.books,
               selectedTranslation.origin
             );
           // ChangeTranslation(selectedTranslation.id, book0, selectedTranslation.origin);
@@ -642,17 +676,16 @@ const SearchBar = () => {
     } else {
       web
         .get(
-          `https://bible.helloao.org/api/${selectedTranslation.id}/books.json`
+          `https://vmfnri.helloao.org/api/${selectedTranslation.id}/books.json`
         )
         .then((e) => {
-          let book0 = e.data.books[0];
           !thePage.masks?.translationInitiated &&
             ChangeTranslation(
               selectedTranslation.id,
-              book0,
-              "https://bible.helloao.org"
+              e.data.books,
+              "https://vmfnri.helloao.org"
             );
-          // ChangeTranslation(selectedTranslation.id, book0, "https://bible.helloao.org");
+          // ChangeTranslation(selectedTranslation.id, book0, "https://vmfnri.helloao.org");
           setBooksData([...e.data.books]);
         })
         .catch((e) => {
@@ -664,94 +697,71 @@ const SearchBar = () => {
 
   useEffect(() => {
     if (
-      !apiTranslations[
-        selectedTranslation.languageEnglishName?.toLowerCase() || ""
-      ]
+      !defaultTranslations.includes(
+        selectedTranslation.languageEnglishName.toLowerCase()
+      )
     ) {
-      let translations = { ...apiTranslations };
-      translations[
-        selectedTranslation.languageEnglishName?.toLowerCase() || ""
-      ] = {
-        [selectedTranslation.shortName?.toLowerCase() || ""]:
-          selectedTranslation,
-      };
-      setTagMask(thePage, "apiTranslations", translations, "local");
       setTagMask(
         thePage,
         "defaultTranslations",
         [
           ...defaultTranslations,
-          selectedTranslation.languageEnglishName?.toLowerCase() || "",
+          selectedTranslation.languageEnglishName.toLowerCase(),
         ],
         "local"
       );
-      setApiTranslations(translations);
       setDefaultTranslations([
         ...defaultTranslations,
-        selectedTranslation.languageEnglishName?.toLowerCase() || "",
+        selectedTranslation.languageEnglishName.toLowerCase(),
       ]);
     }
     setTagMask(thePage, "selectedTranslation", selectedTranslation, "local");
+    // console.log(
+    //   selectedTranslation,
+    //   "defaultTranslations updated",
+    //   !apiTranslations[selectedTranslation.languageEnglishName.toLowerCase()]
+    // );
     fetchBookdata();
   }, [selectedTranslation, apiTranslations, defaultTranslations]);
 
   useEffect(() => {
-    let allTranslations = null;
+    let allTranslations = [];
     if (!thePage.masks?.allTranslations) {
       web
-        .get("https://bible.helloao.org/api/available_translations.json")
+        .get("https://vmfnri.helloao.org/api/available_translations.json")
         .then((request) => {
           if (request.status === 200) {
             allTranslations = request.data.translations;
-            allTranslations = allTranslations.map((item) => {
-              return {
-                ...item,
-                languageEnglishName:
-                  item?.languageEnglishName || item.englishName,
-              };
-            });
+            allTranslations = allTranslations.map(
+              (item: TranslationInterface) => {
+                return {
+                  ...item,
+                  languageEnglishName:
+                    item?.languageEnglishName || item.englishName,
+                };
+              }
+            );
             setTagMask(
               thePage,
               "allTranslations",
               request.data.translations,
               "local"
             );
-            let translations = { ...apiTranslations };
+            const translations = { ...apiTranslations };
 
-            allTranslations.map((translation) => {
-              let englishName =
+            allTranslations.map((translation: TranslationInterface) => {
+              const englishName =
                 translation.languageEnglishName?.toLowerCase() || "";
-              if (showAllLanguages) {
-                let shortName = translation.shortName?.toLowerCase() || "";
-                if (translations[englishName]) {
-                  if (!translations[englishName][shortName]) {
-                    translations[englishName][shortName] = translation;
-                  }
-                } else {
-                  translations[englishName] = {
-                    [shortName]: translation,
-                  };
+              // if (showAllLanguages) {
+              const shortName = translation.shortName?.toLowerCase() || "";
+              if (translations[englishName]) {
+                if (!translations[englishName][shortName]) {
+                  translations[englishName][shortName] = translation;
                 }
               } else {
-                if (!defaultTranslations.includes(englishName)) {
-                  if (translations[englishName]) {
-                    delete translations[englishName];
-                  }
-                } else {
-                  let shortName = translation.shortName?.toLowerCase() || "";
-                  if (!translations[englishName]) {
-                    translations[englishName] = {
-                      [shortName]: translation,
-                    };
-                  } else {
-                    if (!translations[englishName][shortName]) {
-                      translations[englishName] = {
-                        ...translations[englishName],
-                        [shortName]: translation,
-                      };
-                    }
-                  }
-                }
+                translations[englishName] = {
+                  [shortName]: translation,
+                };
               }
             });
             setTagMask(thePage, "apiTranslations", translations, "local");
@@ -768,92 +778,28 @@ const SearchBar = () => {
     } else {
       allTranslations = thePage.masks.allTranslations;
     }
-    let translations = { ...apiTranslations };
+    const translations = { ...apiTranslations };
 
     if (allTranslations) {
-      allTranslations.map((translation) => {
-        let englishName = translation.languageEnglishName?.toLowerCase() || "";
-        if (showAllLanguages) {
-          let shortName = translation.shortName?.toLowerCase() || "";
-          if (translations[englishName]) {
-            if (!translations[englishName][shortName]) {
-              translations[englishName][shortName] = translation;
-            }
-          } else {
-            translations[englishName] = {
-              [shortName]: translation,
-            };
+      allTranslations.map((translation: TranslationInterface) => {
+        const englishName =
+          translation.languageEnglishName?.toLowerCase() || "";
+        const shortName = translation.shortName?.toLowerCase() || "";
+        if (translations[englishName]) {
+          if (!translations[englishName][shortName]) {
+            translations[englishName][shortName] = translation;
           }
         } else {
-          if (!defaultTranslations.includes(englishName)) {
-            if (translations[englishName]) {
-              delete translations[englishName];
-            }
-          } else {
-            let shortName = translation.shortName?.toLowerCase() || "";
-            if (!translations[englishName]) {
-              translations[englishName] = {
-                [shortName]: translation,
-              };
-            } else {
-              if (!translations[englishName][shortName]) {
-                translations[englishName] = {
-                  ...translations[englishName],
-                  [shortName]: translation,
-                };
-              }
-            }
-          }
+          translations[englishName] = {
+            [shortName]: translation,
+          };
         }
       });
       setTagMask(thePage, "apiTranslations", translations, "local");
       setTagMask(thePage, "defaultTranslations", defaultTranslations, "local");
       setApiTranslations(translations);
     }
-  }, [showAllLanguages, defaultTranslations]);
-
-  useEffect(() => {
-    if (
-      (selectedTestament,
-      setQuery,
-      query,
-      openSearchBar,
-      setOpenSearchBar,
-      searchBarFocused,
-      handleEnter !== undefined || selectedTestament,
-      setQuery,
-      query,
-      openSearchBar,
-      setOpenSearchBar,
-      searchBarFocused,
-      handleEnter !== null)
-    ) {
-      globalThis.selectedTestament = selectedTestament;
-      // globalThis.setQuery = setQuery;
-      globalThis.query = query;
-      globalThis.openSearchBar = openSearchBar;
-      globalThis.setOpenSearchBar = setOpenSearchBar;
-      globalThis.searchBarFocused = searchBarFocused;
-      globalThis.handleEnter = handleEnter;
-    }
-    return () => {
-      globalThis.selectedTestament = null;
-      // globalThis.setQuery = null;
-      globalThis.query = null;
-      globalThis.openSearchBar = null;
-      globalThis.setOpenSearchBar = null;
-      globalThis.searchBarFocused = null;
-      globalThis.handleEnter = null;
-    };
-  }, [
-    selectedTestament,
-    setQuery,
-    query,
-    openSearchBar,
-    setOpenSearchBar,
-    searchBarFocused,
-    handleEnter,
-  ]);
+  }, [defaultTranslations]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -869,8 +815,23 @@ const SearchBar = () => {
   }, []);
 
   useEffect(() => {
-    setQuery("");
+    setLanguageQuery("");
   }, [selectingTranslation]);
+
+  useEffect(() => {
+    globalThis.setLanguageQuery = setLanguageQuery;
+    globalThis.setSelectedTranslation = setSelectedTranslation;
+    return () => {
+      globalThis.setLanguageQuery = null;
+      globalThis.setSelectedTranslation = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!openSidebar && globalThis?.bookModalOpen) {
+      globalThis.bookModalOpen(false);
+    }
+  }, [openSidebar]);
 
   // Use State of Element
   const [showCheck, setShowCheck] = useState(
@@ -882,6 +843,12 @@ const SearchBar = () => {
 
   const dontOpen = dontopn && showCheck;
   globalThis.SetBooksOnlineUsers = setOnlineUsers;
+  globalThis.setSelectingTranslation = setSelectingTranslation;
+
+  useEffect(() => {
+    globalThis.setSelectingTranslation = setSelectingTranslation;
+    globalThis.selectingTranslation = selectingTranslation;
+  }, [selectingTranslation]);
 
   return (
     <>
@@ -893,19 +860,19 @@ const SearchBar = () => {
               onClick={() => {
                 setSelectingTranslation(!selectingTranslation);
                 setQuery("");
-                setShowAllLanguages(false);
               }}
             >
               <span class="sidebar-selected-title">
                 {selectedTranslation.shortName}
               </span>
               <span
-                style={{ transition: "transform 0.3s", opacity: 0.3 }}
+                style={{ transition: "transform 0.3s" }}
                 class={`material-symbols-outlined ${selectingTranslation ? "upside-down" : ""}`}
               >
                 expand_more
               </span>
             </div>
+
             <div className="searchbar">
               <span className="search-icon material-symbols-outlined">
                 Search
@@ -913,9 +880,7 @@ const SearchBar = () => {
               <input
                 type="text"
                 placeholder={
-                  selectingTranslation
-                    ? "Search Translation..."
-                    : "Seach Book..."
+                  systemTranslation["searchBook"] || "Search Book..."
                 }
                 value={query}
                 ref={inputRef}
@@ -929,55 +894,58 @@ const SearchBar = () => {
                 }}
               />
             </div>
-            {!selectingTranslation && (
-              <div className="dropdown">
+            {windowSize > 768 && (
+              <div class="dropdown">
                 <select
                   value={selectedTestament}
                   onChange={(e) => setSelectedTestament(Number(e.target.value))}
-                  className="dropdown-select"
+                  class="dropdown-select"
                 >
-                  <option value={2} className="dropdown-option">
-                    All Books
+                  <option value={2} class="dropdown-option">
+                    {systemTranslation["allBooks"] || "All Books"}
                   </option>
-                  <option value={0} className="dropdown-option">
-                    {windowSize > 750 ? "Old Testament" : "OT"}
+                  <option value={0} class="dropdown-option">
+                    {windowSize > 750
+                      ? systemTranslation["oldTestament"] || "Old Testament"
+                      : systemTranslation["oldTestamentShort"] || "OT"}
                   </option>
-                  <option value={1} className="dropdown-option">
-                    {windowSize > 750 ? "New Testament" : "NT"}
+                  <option value={1} class="dropdown-option">
+                    {windowSize > 750
+                      ? systemTranslation["newTestament"] || "New Testament"
+                      : systemTranslation["newTestamentShort"] || "NT"}
                   </option>
                   {apocryphaAvailable && (
-                    <option value={3} className="dropdown-option">
-                      Apocrypha
+                    <option value={3} class="dropdown-option">
+                      {systemTranslation["apocrypha"] || "Apocrypha"}
                     </option>
                   )}
                 </select>
               </div>
             )}
-            {selectingTranslation && (
-              <div className="dropdown">
-                <select
-                  value={String(showAllLanguages)}
-                  onChange={(e) =>
-                    e.target.value === "true"
-                      ? setShowAllLanguages(true)
-                      : setShowAllLanguages(false)
-                  }
-                  className="dropdown-select"
-                >
-                  <option value="false" className="dropdown-option">
-                    {windowSize > 750 ? "Default Languages" : "Default"}
-                  </option>
-                  <option value="true" className="dropdown-option">
-                    {windowSize > 750 ? "All Languages" : "All"}
-                  </option>
-                </select>
-              </div>
+            {windowSize <= 768 && (
+              <button
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "32px",
+                  width: "32px",
+                  background: "transparent",
+                  border: "transparent",
+                }}
+                onClick={() => {
+                  globalThis.setOpenSidebar(!openSidebar);
+                  setSelectingTranslation(false);
+                }}
+              >
+                <span class="material-symbols-outlined">close</span>
+              </button>
             )}
           </div>
         </span>
       </div>
       <div class="sidebar-results starterAnimation">
-        {!selectingTranslation && showCheck && (
+        {showCheck && (
           <div
             style={{
               marginBottom: "8px",
@@ -1025,357 +993,90 @@ const SearchBar = () => {
                 }}
                 for="playlistInclude"
               >
-                Include in {showCheck === 1 ? "Queue" : "Playlist"}.
+                Include in{" "}
+                {showCheck === 1
+                  ? systemTranslation["queue"] || "Queue"
+                  : systemTranslation["playlist"] || "Playlist"}
+                .
               </label>
             </div>
           </div>
         )}
-        {booksData &&
-          selectedTestamentData &&
-          !selectingTranslation &&
-          selectedTranslation && (
-            <SideBarBooks
-              onlineUsers={onlineUsers}
-              showCheck={!selectingTranslation && showCheck}
-              dontOpen={dontOpen}
-              selectedTranslation={selectedTranslation}
-              selectedTestament={selectedTestament}
-              booksData={selectedTestamentData}
-              focusOnBook={focusOnBook}
-              sortBooksByTestament={sortBooksByTestament}
-              windowSize={windowSize}
-            />
-          )}
+        {booksData && selectedTestamentData && selectedTranslation && (
+          <SideBarBooks
+            onlineUsers={onlineUsers}
+            showCheck={showCheck}
+            dontOpen={dontOpen}
+            selectedTranslation={selectedTranslation}
+            selectedTestament={selectedTestament}
+            setSelectedTestament={setSelectedTestament}
+            booksData={selectedTestamentData}
+            sortBooksByTestament={sortBooksByTestament}
+            windowSize={windowSize}
+            systemTranslation={systemTranslation}
+            query={query}
+          />
+        )}
         {selectingTranslation && (
-          <div
-            class="sidebar-translation-options"
-            style={{ paddingBottom: showCustomTranslation ? "200px" : "36px" }}
-          >
-            {filteredApiTranslations &&
-              filteredApiTranslations?.length > 0 &&
-              filteredApiTranslations.map(([key, value]) => {
-                return (
-                  <NewTransOptions
-                    translationName={key}
-                    translations={value}
-                    selectedTranslation={selectedTranslation}
-                    setSelectedTranslation={setSelectedTranslation}
-                    setSelectingTranslation={setSelectingTranslation}
-                  />
-                );
-              })}
-            {allowedTranslationLimit < Object.entries(apiTranslations).length &&
-              filteredApiTranslations?.length > 49 && (
-                <span
-                  onClick={() =>
-                    setAllowedTranslationLimit(allowedTranslationLimit + 50)
-                  }
-                  style={{
-                    transition: "transform 0.3s",
-                    opacity: 0.8,
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "center",
-                    fontSize: "36px",
-                  }}
-                  class={`material-symbols-outlined`}
-                >
-                  expand_more
-                </span>
-              )}
-          </div>
+          <TranslationModal
+            selectedTranslation={selectedTranslation}
+            setSelectedTranslation={setSelectedTranslation}
+            setSelectingTranslation={setSelectingTranslation}
+            languageQuery={languageQuery}
+            setLanguageQuery={setLanguageQuery}
+            handleTranslationAddition={handleTranslationAddition}
+            showCustomTranslation={showCustomTranslation}
+            setShowCustomTranslation={setShowCustomTranslation}
+            allowedTranslationLimit={allowedTranslationLimit}
+            setAllowedTranslationLimit={setAllowedTranslationLimit}
+            apiTranslations={apiTranslations}
+            defaultTranslations={defaultTranslations}
+            windowSize={windowSize}
+          />
         )}
       </div>
-      {selectingTranslation && (
-        <div
-          class="sidebar-input-container custom-translation-container-main"
-          style={{ bottom: "10px" }}
-        >
-          <div
-            class="custom-translation-header"
-            onClick={() => {
-              setShowCustomTranslation(!showCustomTranslation);
-            }}
-          >
-            <span>Custom Translations</span>
-            <span
-              style={{
-                transition: "0.5s linear all",
-                transform: showCustomTranslation
-                  ? "rotateZ(45deg)"
-                  : "rotateZ(0deg)",
-                cursor: "pointer",
-              }}
-              class="material-symbols-outlined"
-            >
-              add
-            </span>
-          </div>
-          {showCustomTranslation && (
-            <CustomTranslation
-              handleTranslationAddition={handleTranslationAddition}
-            />
-          )}
-        </div>
-      )}
-      {false && (
-        <div
-          onClick={() => {
-            setOpenSearchBar(false);
-            setSearchBarFocused(true);
-            inputRef.current.focus();
-          }}
-          style={{ opacity: 0 }}
-          class={`${openSearchBar ? "open-searchbar starterAnimation" : query.length > 0 ? "open-sidebar-input-container starterAnimation" : "sidebar-input-container starterAnimation"}`}
-        >
-          <div class="box">
-            <input
-              type="text"
-              class="input"
-              value={query}
-              ref={inputRef}
-              onInput={(e) => {
-                setQuery(e.target.value);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.keyCode === 13) {
-                  handleEnter();
-                }
-              }}
-              placeholder={selectingTranslation ? "Translation" : "Book name"}
-              onBlur={() => {
-                setOpenSearchBar(false);
-                setSearchBarFocused(false);
-              }}
-            />
-            <i class="material-symbols-outlined">search</i>
-          </div>
-        </div>
-      )}
     </>
   );
 };
 
-const CustomTranslation = ({ handleTranslationAddition }) => {
-  const [currentMode, setCurrentMode] = useState("id");
-  const [inputValue, setInputValue] = useState("");
-
-  return (
-    <div class="custom-translation-container">
-      <div class="selectionsection">
-        <div>
-          <input
-            checked={currentMode === "id"}
-            onClick={(e) => setCurrentMode(e.target.value)}
-            class="radioinput"
-            type="radio"
-            id="translationId"
-            name="translation"
-            value="id"
-          />
-          <span>From ID</span>
-        </div>
-        <div>
-          <input
-            checked={currentMode === "url"}
-            onClick={(e) => setCurrentMode(e.target.value)}
-            class="radioinput"
-            type="radio"
-            id="translationURL"
-            name="translation"
-            value="url"
-          />
-          <span>From URL</span>
-        </div>
-      </div>
-      <div class="custom-tr-api">
-        <span style={{ fontSize: "18px" }}>
-          {currentMode === "id" ? "ID" : "URL"}
-        </span>
-        <div class="custom-tr-in-con">
-          <input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            class="custom-tr-in"
-            placeholder={currentMode === "id" ? "Enter ID" : "Enter URL"}
-          />
-          <button
-            onClick={() =>
-              handleTranslationAddition({
-                type: currentMode,
-                value: inputValue,
-                setInputValue: setInputValue,
-              })
-            }
-            class="import-btn"
-          >
-            Import
-          </button>
-        </div>
-        <span
-          style={{ fontSize: "16px", color: "#4459F3", cursor: "pointer" }}
-          onClick={() => {
-            os.openURL("https://bible.helloao.org/docs/");
-          }}
-        >{`View API >`}</span>
-      </div>
-    </div>
-  );
-};
-
-const NewTransOptions = ({
-  translationName,
-  translations,
-  selectedTranslation,
-  setSelectedTranslation,
-  setSelectingTranslation,
-}) => {
-  const [show, setShow] = useState(false);
-
-  const shareTranslatation = async ({ translation }) => {
-    if (translation?.origin) {
-      let url = `https://aolab-bible-api.netlify.app/api/translations/addTranslation`;
-      let params = {
-        uid: translation.id,
-        translation: JSON.stringify(translation),
-      };
-      let queryUrl = attachQueryToURL(url, params);
-      let result = await web.get(queryUrl);
-    }
-    let translationUrl = `https://ao.bot/?pattern=${configBot.tags.pattern}&bios=local%20inst&translationId=${translation.id}`;
-    // let translationUrl = `${configBot.tags.url}&translationId=${translation.id}`;
-    os.setClipboard(translationUrl);
-    os.toast("Copied translation share code");
+const SideBarBooks = (props: {
+  booksData: BookInterface[];
+  selectedTestament: number;
+  setSelectedTestament: (n: number) => void;
+  selectedTranslation: TranslationInterface;
+  dontOpen: any;
+  showCheck: any;
+  onlineUsers: any;
+  sortBooksByTestament: (books: BookInterface[]) => {
+    OTBooks: BookInterface[];
+    NTBooks: BookInterface[];
+    ApocryphaBooks: BookInterface[];
   };
-  useEffect(() => {
-    Object.entries(translations).map(([key, value]) => {
-      if (
-        value.id === selectedTranslation.id &&
-        value.languageEnglishName === selectedTranslation.languageEnglishName
-      ) {
-        setShow(true);
-      }
-    });
-  }, [selectedTranslation]);
-  return (
-    <div style={{ width: "100%" }}>
-      <div
-        class="translation-language"
-        style={{
-          backgroundColor: show
-            ? "var(--secondaryButton)"
-            : "var(--primaryButton)",
-          marginBottom: show ? "0px" : "10px",
-        }}
-        onClick={() => {
-          setShow(!show);
-        }}
-      >
-        <span style={{ textTransform: "capitalize" }}>{translationName}</span>
-        <span
-          style={{ transition: "transform 0.3s", opacity: 0.3 }}
-          class={`material-symbols-outlined ${show ? "upside-down" : ""}`}
-        >
-          expand_more
-        </span>
-      </div>
-      {show && (
-        <>
-          <div style={{ margin: "5px 5px" }}>
-            {Object.entries(translations).map(([key, value]) => {
-              return (
-                <div
-                  onClick={async () => {
-                    setSelectedTranslation(value);
-                    if (value?.listOfBooksApiLink?.includes("https")) {
-                      web
-                        .get(`${value.listOfBooksApiLink}`)
-                        .then((e) => {
-                          let book0 = e.data.books[0];
-                          ChangeTranslation(value.id, book0, value.origin);
-                          setSelectingTranslation(false);
-                        })
-                        .catch((e) => {
-                          console.log(e);
-                        });
-                    } else {
-                      web
-                        .get(
-                          `https://bible.helloao.org/api/${value.id}/books.json`
-                        )
-                        .then((e) => {
-                          let book0 = e.data.books[0];
-                          ChangeTranslation(
-                            value.id,
-                            book0,
-                            "https://bible.helloao.org"
-                          );
-                          setSelectingTranslation(false);
-                        })
-                        .catch((e) => {
-                          console.log(e);
-                        });
-                    }
-                  }}
-                  style={{
-                    background:
-                      selectedTranslation.id === value.id
-                        ? "var(--secondaryButton)"
-                        : "var(--primaryButton)",
-                  }}
-                  class="translation-option"
-                >
-                  <span class="translation-title">{value.shortName}</span>
-                  <span class="translation-description">{value.name}</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      shareTranslatation({ translation: value });
-                    }}
-                    class="material-symbols-outlined share-btn"
-                  >
-                    share
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
-
-const SideBarBooks = ({
-  booksData,
-  focusOnBook,
-  selectedTestament,
-  selectedTranslation,
-  dontOpen,
-  showCheck,
-  onlineUsers,
-  sortBooksByTestament,
-  windowSize,
+  windowSize: number;
+  systemTranslation: { [key: string]: string };
+  query: string;
 }) => {
+  const {
+    booksData,
+    selectedTestament,
+    selectedTranslation,
+    setSelectedTestament,
+    dontOpen,
+    showCheck,
+    onlineUsers,
+    sortBooksByTestament,
+    windowSize,
+    systemTranslation,
+    query,
+  } = props;
   const [lastBookClicked, setLastBookClicked] = useState(-1);
-  const [bookData, setBookData] = useState(null);
+  const [bookData, setBookData] = useState<BookInterface | null>(null);
   const [chT, setChT] = useState(0);
-
-  const refsArray = useRef([]);
-
-  // Function to update the array of refs
-  const updateRefsArray = useCallback((index, ref) => {
-    refsArray.current[index] = ref;
-    globalThis.BooksRefSearchBar = refsArray;
-  }, []);
-
-  useEffect(() => {
-    setLastBookClicked(-1);
-    setBookData(null);
-  }, [selectedTestament]);
+  const [localSelectedTestament, setLocalSelectedTestament] =
+    useState(selectedTestament);
 
   useLayoutEffect(() => {
-    if (booksData.length === 1) {
+    if (booksData.length === 1 && booksData[0]) {
       setLastBookClicked(0);
       setBookData(booksData[0]);
       if (booksData[0].order > 39) {
@@ -1390,21 +1091,9 @@ const SideBarBooks = ({
     }
   }, [booksData]);
 
-  const refsObject = useMemo(() => {
-    const refs = [];
-    if (bookData?.numberOfChapters)
-      for (let i = 0; i < bookData.numberOfChapters; i++) {
-        refs.push(createRef());
-      }
-    return refs;
-  }, [bookData]);
-
-  globalThis.FocusOnChapter = (number) => {
-    refsObject[number]?.current.focus();
-  };
-
   const handleClick = useCallback(
-    ({ index, book, cht = 0 }) => {
+    (props: { index: number; book: BookInterface; cht?: number }) => {
+      const { index, book, cht = 0 } = props;
       if (bookData?.id === book.id) {
         setBookData(null);
         setChT(0);
@@ -1418,26 +1107,43 @@ const SideBarBooks = ({
     [chT, bookData, lastBookClicked]
   );
 
-  const calcChapterPos = (index, separator) => {
+  const calcChapterPos = useCallback((index: number, separator: number) => {
     return Math.floor(index / separator) * separator + separator - 1;
-  };
+  }, []);
 
-  const ghostArray = (booksArray, allowedRows) => {
-    if (allowedRows === 1) return booksArray;
-    const booksLength = booksArray.length;
-    const additionalElements =
-      allowedRows -
-      (booksLength % allowedRows === 0
-        ? allowedRows
-        : booksLength % allowedRows);
-    const tempBooksArray = [...booksArray];
-    for (let i = 0; i < additionalElements; i++) {
-      tempBooksArray.push({ ghost: true });
-    }
-    return [...tempBooksArray];
-  };
+  // const isBook = useCallback(
+  //   (book: BookInterface | { ghost?: boolean }): book is BookInterface =>
+  //     !("ghost" in book) || !book.ghost,
+  //   []
+  // );
 
-  const getBookName = useCallback((book, onlineUsers) => {
+  const isBook = useCallback(
+    (book: BookInterface | { ghost?: boolean }) =>
+      !("ghost" in book) || !book.ghost,
+    []
+  );
+
+  const ghostArray = useCallback(
+    (booksArray: BookInterface[], allowedRows: number) => {
+      if (allowedRows === 1) return booksArray;
+      const booksLength = booksArray.length;
+      const additionalElements =
+        allowedRows -
+        (booksLength % allowedRows === 0
+          ? allowedRows
+          : booksLength % allowedRows);
+      const tempBooksArray: (BookInterface | { ghost?: boolean })[] = [
+        ...booksArray,
+      ];
+      for (let i = 0; i < additionalElements; i++) {
+        tempBooksArray.push({ ghost: true });
+      }
+      return [...tempBooksArray];
+    },
+    []
+  );
+
+  const getBookName = useCallback((book: BookInterface, onlineUsers: any) => {
     const users = onlineUsers
       ? Object.entries(onlineUsers || {}).filter(
           ([, v]) => v?.bookId === book.id
@@ -1445,11 +1151,13 @@ const SideBarBooks = ({
       : [];
     let bookName = "";
     if (book?.commonName?.length > 7 && users.length > 0) {
-      const name = book.id.toLowerCase();
-      if (isNaN(Number(name[0]))) {
+      const name: string = (book.id || "").toLowerCase();
+      if (isNaN(Number(name.charAt(0)))) {
         bookName = name;
       } else {
-        bookName = `${name[0]} ${name[1].toUpperCase()}${name.slice(2)}`;
+        const firstChar = name.charAt(0);
+        const secondChar = name.charAt(1);
+        bookName = `${firstChar} ${secondChar ? secondChar.toUpperCase() : ""}${name.slice(2)}`;
       }
     } else {
       bookName = book.commonName;
@@ -1457,28 +1165,48 @@ const SideBarBooks = ({
     return bookName;
   }, []);
 
-  const rearrangeBooks = useCallback((books, rows) => {
-    const cols = Math.ceil(books.length / rows);
-    const rearrangedBooksMatrix = [];
-    let index = 0;
-    for (let j = 0; j < rows; j++) {
-      for (let i = 0; i < cols; i++) {
-        if (!rearrangedBooksMatrix[i]) rearrangedBooksMatrix[i] = [];
-        rearrangedBooksMatrix[i][j] = books[index];
-        index += 1;
+  const selectBookSelectorBook = useCallback(
+    (bookId) => {
+      if (!bookId) {
+        setBookData(null);
+        setLastBookClicked(-1);
+        setChT(0);
+        return;
       }
+      const book = booksData.find((b) => b.id === bookId);
+      if (book) {
+        handleClick({
+          index: booksData.indexOf(book),
+          book,
+          cht: book.order > 39 ? 1 : 0,
+        });
+      }
+    },
+    [booksData, handleClick]
+  );
+  useEffect(() => {
+    const sortedBooks = sortBooksByTestament(booksData);
+    const OTBooks = sortedBooks.OTBooks;
+    const NTBooks = sortedBooks.NTBooks;
+    if (selectedTestament === 2 || query.length > 0) {
+      if (OTBooks.length > 0 && NTBooks.length === 0) {
+        setLocalSelectedTestament(0);
+      } else if (NTBooks.length > 0 && OTBooks.length === 0) {
+        setLocalSelectedTestament(1);
+      } else if (query.length > 0) {
+        setLocalSelectedTestament(2);
+      } else {
+        setLocalSelectedTestament(selectedTestament);
+      }
+    } else {
+      setLocalSelectedTestament(selectedTestament);
     }
-    const rearrangeBooks = [];
-    for (let row of rearrangedBooksMatrix) {
-      rearrangeBooks.push(...row);
-    }
-    return rearrangeBooks;
-  }, []);
+  }, [selectedTestament, booksData, query]);
 
   const RenderBooksByTestament = useMemo(() => {
     let allowedRows = 5;
 
-    if (windowSize < 768) {
+    if (windowSize <= 768) {
       allowedRows = 1;
     } else if (windowSize < 1200) {
       allowedRows = 3;
@@ -1488,7 +1216,7 @@ const SideBarBooks = ({
 
     const sortedBooks = sortBooksByTestament(booksData);
 
-    if (selectedTestament === 2) {
+    if (localSelectedTestament === 2) {
       const OTChapterSeparator =
         allowedRows === 1 ? 1 : allowedRows === 3 ? 2 : 3;
       const OTChapterPos = calcChapterPos(lastBookClicked, OTChapterSeparator);
@@ -1508,15 +1236,16 @@ const SideBarBooks = ({
               width: `${allowedRows === 5 ? 60 : allowedRows === 3 ? 66.66 : 100}%`,
             }}
           >
-            <span class="testament-title">Old Testament</span>
+            <span class="testament-title">
+              {systemTranslation["oldTestament"] || "Old Testament"}
+            </span>
             <div class="books-item">
               {OTBooks.map((book, index) => {
                 return (
                   <>
-                    {!book?.ghost && (
+                    {isBook(book) && (
                       <div
                         class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`}
-                        ref={(ref) => updateRefsArray(index, ref)}
                         tabIndex={index + 1}
                         onClick={() => {
                           handleClick({ index, book, cht: 0 });
@@ -1535,35 +1264,30 @@ const SideBarBooks = ({
                           <CircleCounter data={onlineUsers} book={book.id} />
                         </span>
                         <span
-                          style={{ transition: "transform 0.3s", opacity: 0.3 }}
+                          style={{ transition: "transform 0.3s" }}
                           class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}
                         >
                           expand_more
                         </span>
                       </div>
                     )}
-                    {book?.ghost && (
-                      <div
-                        class={`sidebar-ghost-itm`}
-                        ref={(ref) => updateRefsArray(index, ref)}
-                        tabIndex={index + 1}
-                      />
+                    {!isBook(book) && (
+                      <div class={`sidebar-ghost-itm`} tabIndex={index + 1} />
                     )}
                     {OTChapterPos === index && bookData && chT === 0 && (
                       <div
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            bookData.numberOfChapters < 3 * OTChapterSeparator
+                            windowSize <= 768 ||
+                            bookData.numberOfChapters < 4 * OTChapterSeparator
                               ? "flex-start"
                               : "space-between",
                         }}
                       >
                         <SideBarChapters
                           onlineUsers={onlineUsers}
-                          refsObject={refsObject}
                           bookData={bookData}
-                          focusOnBook={focusOnBook}
                           setLastBookClicked={setLastBookClicked}
                           dontOpen={dontOpen}
                           setBookData={setBookData}
@@ -1583,15 +1307,16 @@ const SideBarBooks = ({
               width: `${allowedRows === 5 ? 40 : allowedRows === 3 ? 33.33 : 100}%`,
             }}
           >
-            <span class="testament-title">New Testament</span>
+            <span class="testament-title">
+              {systemTranslation["newTestament"] || "New Testament"}
+            </span>
             <div class="books-item">
               {NTBooks.map((book, index) => {
                 return (
                   <>
-                    {!book?.ghost && (
+                    {isBook(book) && (
                       <div
                         class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`}
-                        ref={(ref) => updateRefsArray(index, ref)}
                         tabIndex={index + 1}
                         onClick={() => {
                           handleClick({ index, book, cht: 1 });
@@ -1609,26 +1334,23 @@ const SideBarBooks = ({
                           <CircleCounter data={onlineUsers} book={book.id} />
                         </span>
                         <span
-                          style={{ transition: "transform 0.3s", opacity: 0.3 }}
+                          style={{ transition: "transform 0.3s" }}
                           class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}
                         >
                           expand_more
                         </span>
                       </div>
                     )}
-                    {book?.ghost && (
-                      <div
-                        class={`sidebar-ghost-itm`}
-                        ref={(ref) => updateRefsArray(index, ref)}
-                        tabIndex={index + 1}
-                      />
+                    {!isBook(book) && (
+                      <div class={`sidebar-ghost-itm`} tabIndex={index + 1} />
                     )}
                     {NTChapterPos === index && bookData && chT === 1 && (
                       <div
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            bookData.numberOfChapters < 3 * NTChapterSeparator
+                            windowSize <= 768 ||
+                            bookData.numberOfChapters < 4 * NTChapterSeparator
                               ? "flex-start"
                               : "space-between",
                         }}
@@ -1636,14 +1358,12 @@ const SideBarBooks = ({
                         <style>
                           {allowedRows === 3 &&
                             `
-                                                .show-sidebar-chapter{width: calc(100% - 5px);}
-                                            `}
+                                .show-sidebar-chapter{width: calc(100% - 5px);}
+                            `}
                         </style>
                         <SideBarChapters
                           onlineUsers={onlineUsers}
-                          refsObject={refsObject}
                           bookData={bookData}
-                          focusOnBook={focusOnBook}
                           setLastBookClicked={setLastBookClicked}
                           dontOpen={dontOpen}
                           setBookData={setBookData}
@@ -1658,7 +1378,7 @@ const SideBarBooks = ({
           </div>
         </div>
       );
-    } else if (selectedTestament === 1) {
+    } else if (localSelectedTestament === 1) {
       const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
       const booksWithGhost = ghostArray(sortedBooks.NTBooks, allowedRows);
       return (
@@ -1667,15 +1387,18 @@ const SideBarBooks = ({
           style={showCheck ? { paddingTop: "40px" } : {}}
         >
           <div class="testament-container">
-            <span class="testament-title">New Testament</span>
+            {windowSize > 768 && (
+              <span class="testament-title">
+                {systemTranslation["newTestament"] || "New Testament"}
+              </span>
+            )}
             <div class="books-item">
               {booksWithGhost.map((book, index) => {
                 return (
                   <>
-                    {!book.ghost && (
+                    {isBook(book) && (
                       <div
                         class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`}
-                        ref={(ref) => updateRefsArray(index, ref)}
                         tabIndex={index + 1}
                         onClick={() => {
                           handleClick({ index, book });
@@ -1693,35 +1416,30 @@ const SideBarBooks = ({
                           <CircleCounter data={onlineUsers} book={book.id} />
                         </span>
                         <span
-                          style={{ transition: "transform 0.3s", opacity: 0.3 }}
+                          style={{ transition: "transform 0.3s" }}
                           class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}
                         >
                           expand_more
                         </span>
                       </div>
                     )}
-                    {book?.ghost && (
-                      <div
-                        class={`sidebar-ghost-itm`}
-                        ref={(ref) => updateRefsArray(index, ref)}
-                        tabIndex={index + 1}
-                      />
+                    {!isBook(book) && (
+                      <div class={`sidebar-ghost-itm`} tabIndex={index + 1} />
                     )}
                     {chapterPos === index && bookData && (
                       <div
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            bookData.numberOfChapters < 3 * allowedRows
+                            windowSize <= 768 ||
+                            bookData.numberOfChapters < 4 * allowedRows
                               ? "flex-start"
                               : "space-between",
                         }}
                       >
                         <SideBarChapters
                           onlineUsers={onlineUsers}
-                          refsObject={refsObject}
                           bookData={bookData}
-                          focusOnBook={focusOnBook}
                           setLastBookClicked={setLastBookClicked}
                           dontOpen={dontOpen}
                           setBookData={setBookData}
@@ -1736,7 +1454,7 @@ const SideBarBooks = ({
           </div>
         </div>
       );
-    } else if (selectedTestament === 0) {
+    } else if (localSelectedTestament === 0) {
       const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
       const booksWithGhost = ghostArray(sortedBooks.OTBooks, allowedRows);
       return (
@@ -1745,15 +1463,18 @@ const SideBarBooks = ({
           style={showCheck ? { paddingTop: "40px" } : {}}
         >
           <div class="testament-container">
-            <span class="testament-title">Old Testament</span>
+            {windowSize > 768 && (
+              <span class="testament-title">
+                {systemTranslation["oldTestament"] || "Old Testament"}
+              </span>
+            )}
             <div class="books-item">
               {booksWithGhost.map((book, index) => {
                 return (
                   <>
-                    {!book.ghost && (
+                    {isBook(book) && (
                       <div
                         class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`}
-                        ref={(ref) => updateRefsArray(index, ref)}
                         tabIndex={index + 1}
                         onClick={() => {
                           handleClick({ index, book });
@@ -1771,35 +1492,30 @@ const SideBarBooks = ({
                           <CircleCounter data={onlineUsers} book={book.id} />
                         </span>
                         <span
-                          style={{ transition: "transform 0.3s", opacity: 0.3 }}
+                          style={{ transition: "transform 0.3s" }}
                           class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}
                         >
                           expand_more
                         </span>
                       </div>
                     )}
-                    {book?.ghost && (
-                      <div
-                        class={`sidebar-ghost-itm`}
-                        ref={(ref) => updateRefsArray(index, ref)}
-                        tabIndex={index + 1}
-                      />
+                    {!isBook(book) && (
+                      <div class={`sidebar-ghost-itm`} tabIndex={index + 1} />
                     )}
                     {chapterPos === index && bookData && (
                       <div
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            bookData.numberOfChapters < 3 * allowedRows
+                            windowSize <= 768 ||
+                            bookData.numberOfChapters < 4 * allowedRows
                               ? "flex-start"
                               : "space-between",
                         }}
                       >
                         <SideBarChapters
                           onlineUsers={onlineUsers}
-                          refsObject={refsObject}
                           bookData={bookData}
-                          focusOnBook={focusOnBook}
                           setLastBookClicked={setLastBookClicked}
                           dontOpen={dontOpen}
                           setBookData={setBookData}
@@ -1814,7 +1530,7 @@ const SideBarBooks = ({
           </div>
         </div>
       );
-    } else if (selectedTestament === 3) {
+    } else if (localSelectedTestament === 3) {
       const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
       const booksWithGhost = ghostArray(
         sortedBooks.ApocryphaBooks,
@@ -1826,15 +1542,16 @@ const SideBarBooks = ({
           style={showCheck ? { paddingTop: "40px" } : {}}
         >
           <div class="testament-container">
-            <span class="testament-title">Apocrypha</span>
+            <span class="testament-title">
+              {systemTranslation["apocrypha"] || "Apocrypha"}
+            </span>
             <div class="books-item">
               {booksWithGhost.map((book, index) => {
                 return (
                   <>
-                    {!book.ghost && (
+                    {isBook(book) && (
                       <div
                         class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`}
-                        ref={(ref) => updateRefsArray(index, ref)}
                         tabIndex={index + 1}
                         onClick={() => {
                           handleClick({ index, book });
@@ -1852,35 +1569,30 @@ const SideBarBooks = ({
                           <CircleCounter data={onlineUsers} book={book.id} />
                         </span>
                         <span
-                          style={{ transition: "transform 0.3s", opacity: 0.3 }}
+                          style={{ transition: "transform 0.3s" }}
                           class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}
                         >
                           expand_more
                         </span>
                       </div>
                     )}
-                    {book?.ghost && (
-                      <div
-                        class={`sidebar-ghost-itm`}
-                        ref={(ref) => updateRefsArray(index, ref)}
-                        tabIndex={index + 1}
-                      />
+                    {!isBook(book) && (
+                      <div class={`sidebar-ghost-itm`} tabIndex={index + 1} />
                     )}
                     {chapterPos === index && bookData && (
                       <div
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            bookData.numberOfChapters < 3 * allowedRows
+                            windowSize <= 768 ||
+                            bookData.numberOfChapters < 4 * allowedRows
                               ? "flex-start"
                               : "space-between",
                         }}
                       >
                         <SideBarChapters
                           onlineUsers={onlineUsers}
-                          refsObject={refsObject}
                           bookData={bookData}
-                          focusOnBook={focusOnBook}
                           setLastBookClicked={setLastBookClicked}
                           dontOpen={dontOpen}
                           setBookData={setBookData}
@@ -1901,27 +1613,49 @@ const SideBarBooks = ({
     lastBookClicked,
     bookData,
     dontOpen,
-    selectedTestament,
+    localSelectedTestament,
     windowSize,
     chT,
     onlineUsers,
   ]);
 
+  useEffect(() => {
+    globalThis.selectBookSelectorBook = selectBookSelectorBook;
+    return () => {
+      globalThis.selectBookSelectorBook = null;
+    };
+  }, [selectBookSelectorBook]);
+
   return <>{RenderBooksByTestament}</>;
 };
 
-const SideBarChapters = ({
-  bookData,
-  dontOpen,
-  setLastBookClicked,
-  setBookData,
-  refsObject,
-  selectedTranslation,
-  onlineUsers,
+const SideBarChapters = (props: {
+  bookData: BookInterface;
+  dontOpen: boolean;
+  setLastBookClicked: (num: number) => void;
+  setBookData: (book: BookInterface) => void;
+  selectedTranslation: TranslationInterface;
+  onlineUsers: any;
 }) => {
-  const [highLightedButtonsID, setHighlightedButtonID] = useState({});
+  const {
+    bookData,
+    dontOpen,
+    setLastBookClicked,
+    setBookData,
+    selectedTranslation,
+    onlineUsers,
+  } = props;
+  const [highLightedButtonsID, setHighlightedButtonID] = useState<
+    Record<number, boolean>
+  >({});
 
-  const handleChapterClick = ({ bookName, chapterNo, bookData, ...data }) => {
+  const handleChapterClick = (props: {
+    bookName: string;
+    chapterNo: number;
+    bookData: BookInterface;
+    [key: string]: any;
+  }) => {
+    const { bookName, chapterNo, bookData, ...data } = props;
     if (globalThis?.findNameRank) {
       const booksDetails = globalThis.findNameRank(bookName);
       const dataItem = {
@@ -2016,14 +1750,16 @@ const SideBarChapters = ({
               data: {
                 use: "thePage",
                 type: "book",
-                book: "Genesis",
+                book: bookName,
                 bookId: data.id,
                 chapter: chapterNo,
                 translation: data.translationId,
+                shortName: data?.shortName || "",
               },
             };
             globalThis.AddTab(tab);
-            globalThis.MakingNewTab(tab);
+            // globalThis.MakingNewTab(tab);
+            globalThis.UpdateTab(tab);
             globalThis.MakingNewTab = false;
             setOpenSidebar(false);
           } else {
@@ -2064,7 +1800,8 @@ const SideBarChapters = ({
       setCurrentExperience(0);
     }
   };
-  const psalmsPartName = ({ index }) => {
+  const psalmsPartName = (props: { index: number }) => {
+    const { index } = props;
     if (index <= 40) {
       return "1 Psalms";
     } else if (index <= 71) {
@@ -2075,22 +1812,127 @@ const SideBarChapters = ({
       return "4 Psalms";
     } else if (index <= 149) {
       return "5 Psalms";
+    } else {
+      return "";
     }
   };
-  const [currentPsalms, setCurrentPsalms] = useState("1 Psalms");
+  const [currentPsalms, setCurrentPsalms] = useState([
+    "1 Psalms",
+    "2 Psalms",
+    "3 Psalms",
+    "4 Psalms",
+    "5 Psalms",
+  ]);
 
   const renderChapters = useMemo(() => {
-    let renderJSX = [];
-    if (bookData.startingBook || bookData.startingBook === 0) {
-      for (let i = bookData.startingBook; i < bookData.endingBook + 1; i++) {
+    const renderJSX = [];
+    if (bookData.commonName === "Psalms") {
+      for (let i = 0; i < bookData.numberOfChapters; i++) {
+        if (i === 0) {
+          renderJSX.push(
+            <button
+              style={{ width: "100%" }}
+              onClick={() => {
+                setCurrentPsalms(
+                  currentPsalms.includes("1 Psalms")
+                    ? currentPsalms.filter((psalm) => psalm !== "1 Psalms")
+                    : [...currentPsalms, "1 Psalms"]
+                );
+              }}
+              class={`psalms-btn ${currentPsalms.includes("1 Psalms") ? "sidebar-selected-itm" : ""}`}
+            >
+              <span style={{ width: "100%" }} class="">
+                1 Psalms
+              </span>
+            </button>
+          );
+        } else if (i === 41) {
+          renderJSX.push(
+            <button
+              style={{ width: "100%" }}
+              onClick={() => {
+                setCurrentPsalms(
+                  currentPsalms.includes("2 Psalms")
+                    ? currentPsalms.filter((psalm) => psalm !== "2 Psalms")
+                    : [...currentPsalms, "2 Psalms"]
+                );
+              }}
+              class={`psalms-btn ${currentPsalms.includes("2 Psalms") ? "sidebar-selected-itm" : ""}`}
+            >
+              <span style={{ width: "100%" }} class="">
+                2 Psalms
+              </span>
+            </button>
+          );
+        } else if (i === 72) {
+          renderJSX.push(
+            <button
+              style={{ width: "100%" }}
+              onClick={() => {
+                setCurrentPsalms(
+                  currentPsalms.includes("3 Psalms")
+                    ? currentPsalms.filter((psalm) => psalm !== "3 Psalms")
+                    : [...currentPsalms, "3 Psalms"]
+                );
+              }}
+              class={`psalms-btn ${currentPsalms.includes("3 Psalms") ? "sidebar-selected-itm" : ""}`}
+            >
+              <span style={{ width: "100%" }} class="">
+                3 Psalms
+              </span>
+            </button>
+          );
+        } else if (i === 89) {
+          renderJSX.push(
+            <button
+              style={{ width: "100%" }}
+              onClick={() => {
+                setCurrentPsalms(
+                  currentPsalms.includes("4 Psalms")
+                    ? currentPsalms.filter((psalm) => psalm !== "4 Psalms")
+                    : [...currentPsalms, "4 Psalms"]
+                );
+              }}
+              class={`psalms-btn ${currentPsalms.includes("4 Psalms") ? "sidebar-selected-itm" : ""}`}
+            >
+              <span style={{ width: "100%" }} class="">
+                4 Psalms
+              </span>
+            </button>
+          );
+        } else if (i === 106) {
+          renderJSX.push(
+            <button
+              style={{ width: "100%" }}
+              onClick={() => {
+                setCurrentPsalms(
+                  currentPsalms.includes("5 Psalms")
+                    ? currentPsalms.filter((psalm) => psalm !== "5 Psalms")
+                    : [...currentPsalms, "5 Psalms"]
+                );
+              }}
+              class={`psalms-btn ${currentPsalms.includes("5 Psalms") ? "sidebar-selected-itm" : ""}`}
+            >
+              <span style={{ width: "100%" }} class="">
+                5 Psalms
+              </span>
+            </button>
+          );
+        }
         renderJSX.push(
-          <div
-            onCLick={() =>
+          <button
+            style={{
+              display: currentPsalms.includes(psalmsPartName({ index: i }))
+                ? "flex"
+                : "none",
+            }}
+            class={`chapter-btn`}
+            onClick={() =>
               handleChapterClick({
-                id: bookData.id,
+                id: bookData?.id,
                 translationId: bookData.translationId,
                 numberOfChapters: bookData.numberOfChapters,
-                bookName: bookData.commonName,
+                bookName: psalmsPartName({ index: i }),
                 chapterNo: i + 1,
                 bookData,
               })
@@ -2106,156 +1948,37 @@ const SideBarChapters = ({
                 chapter={i + 1}
               />
             </span>
-          </div>
+          </button>
         );
       }
     } else {
-      if (bookData.commonName === "Psalms") {
-        for (let i = 0; i < bookData.numberOfChapters; i++) {
-          if (i === 0) {
-            renderJSX.push(
-              <button
-                style={{ width: "100%" }}
-                onCLick={() => {
-                  setCurrentPsalms(
-                    currentPsalms === "1 Psalms" ? "" : "1 Psalms"
-                  );
-                }}
-                class={`psalms-btn ${currentPsalms === "1 Psalms" ? "sidebar-selected-itm" : ""}`}
-              >
-                <span style={{ width: "100%" }} class="">
-                  1 Psalms
-                </span>
-              </button>
-            );
-          } else if (i === 41) {
-            renderJSX.push(
-              <button
-                style={{ width: "100%" }}
-                onCLick={() => {
-                  setCurrentPsalms(
-                    currentPsalms === "2 Psalms" ? "" : "2 Psalms"
-                  );
-                }}
-                class={`psalms-btn ${currentPsalms === "2 Psalms" ? "sidebar-selected-itm" : ""}`}
-              >
-                <span style={{ width: "100%" }} class="">
-                  2 Psalms
-                </span>
-              </button>
-            );
-          } else if (i === 72) {
-            renderJSX.push(
-              <button
-                style={{ width: "100%" }}
-                onCLick={() => {
-                  setCurrentPsalms(
-                    currentPsalms === "3 Psalms" ? "" : "3 Psalms"
-                  );
-                }}
-                class={`psalms-btn ${currentPsalms === "3 Psalms" ? "sidebar-selected-itm" : ""}`}
-              >
-                <span style={{ width: "100%" }} class="">
-                  3 Psalms
-                </span>
-              </button>
-            );
-          } else if (i === 89) {
-            renderJSX.push(
-              <button
-                style={{ width: "100%" }}
-                onCLick={() => {
-                  setCurrentPsalms(
-                    currentPsalms === "4 Psalms" ? "" : "4 Psalms"
-                  );
-                }}
-                class={`psalms-btn ${currentPsalms === "4 Psalms" ? "sidebar-selected-itm" : ""}`}
-              >
-                <span style={{ width: "100%" }} class="">
-                  4 Psalms
-                </span>
-              </button>
-            );
-          } else if (i === 106) {
-            renderJSX.push(
-              <button
-                style={{ width: "100%" }}
-                onCLick={() => {
-                  setCurrentPsalms(
-                    currentPsalms === "5 Psalms" ? "" : "5 Psalms"
-                  );
-                }}
-                class={`psalms-btn ${currentPsalms === "5 Psalms" ? "sidebar-selected-itm" : ""}`}
-              >
-                <span style={{ width: "100%" }} class="">
-                  5 Psalms
-                </span>
-              </button>
-            );
-          }
-          renderJSX.push(
-            <button
-              style={{
-                display:
-                  currentPsalms === psalmsPartName({ index: i })
-                    ? "flex"
-                    : "none",
-              }}
-              class={`chapter-btn`}
-              onCLick={() =>
-                handleChapterClick({
-                  id: bookData.id,
-                  translationId: bookData.translationId,
-                  numberOfChapters: bookData.numberOfChapters,
-                  bookName: psalmsPartName({ index: i }),
-                  chapterNo: i + 1,
-                  bookData,
-                })
-              }
+      for (let i = 0; i < bookData.numberOfChapters; i++) {
+        renderJSX.push(
+          <button
+            class={`chapter-btn ${i === bookData.numberOfChapters - 1 ? "lastOne" : ""}`}
+            onClick={() =>
+              handleChapterClick({
+                id: bookData?.id,
+                translationId: bookData.translationId,
+                numberOfChapters: bookData.numberOfChapters,
+                bookName: bookData.commonName,
+                chapterNo: i + 1,
+                bookData,
+              })
+            }
+          >
+            <span
+              className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : "un-highlight"}`}
             >
-              <span
-                className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : "un-highlight"}`}
-              >
-                {i + 1}
-                <CircleCounter
-                  data={onlineUsers}
-                  book={bookData.id}
-                  chapter={i + 1}
-                />
-              </span>
-            </button>
-          );
-        }
-      } else {
-        for (let i = 0; i < bookData.numberOfChapters; i++) {
-          renderJSX.push(
-            <button
-              ref={refsObject[i]}
-              class={`chapter-btn ${i === bookData.numberOfChapters - 1 ? "lastOne" : ""}`}
-              onCLick={() =>
-                handleChapterClick({
-                  id: bookData.id,
-                  translationId: bookData.translationId,
-                  numberOfChapters: bookData.numberOfChapters,
-                  bookName: bookData.commonName,
-                  chapterNo: i + 1,
-                  bookData,
-                })
-              }
-            >
-              <span
-                className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : "un-highlight"}`}
-              >
-                {i + 1}
-                <CircleCounter
-                  data={onlineUsers}
-                  book={bookData.id}
-                  chapter={i + 1}
-                />
-              </span>
-            </button>
-          );
-        }
+              {getTranslatedNumber(i + 1)}
+              <CircleCounter
+                data={onlineUsers}
+                book={bookData.id}
+                chapter={i + 1}
+              />
+            </span>
+          </button>
+        );
       }
     }
     return renderJSX;
@@ -2270,7 +1993,12 @@ const SideBarChapters = ({
   );
 };
 
-const CircleCounter = ({ data, book, chapter }) => {
+const CircleCounter = (props: {
+  data: any;
+  book: string;
+  chapter?: number;
+}) => {
+  const { data, book, chapter } = props;
   if (!data) return null;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -2322,10 +2050,9 @@ const CircleCounter = ({ data, book, chapter }) => {
   ];
 
   // Helper to get user's visual style
-  const getUserVisual = (userId, value, index) => {
+  const getUserVisual = (value: any) => {
     try {
       const visual = globalThis?.GetOrSetVisualInTags(value[0]);
-      console.log(visual, value, "testviz sidebar");
       if (visual) {
         const IconComponent = icons[visual.iconIndex];
         const color = colors[visual.colorIndex];
@@ -2334,17 +2061,27 @@ const CircleCounter = ({ data, book, chapter }) => {
     } catch (e) {
       console.error("Error getting user visual:", e);
     }
+    return {
+      IconComponent: TreeIcon,
+      color: "#34D399",
+    };
   };
 
   useEffect(() => {
     if (isModalOpen) {
-      globalThis.bookModalOpen = setIsModalOpen;
+      (
+        globalThis as { bookModalOpen?: ((open: boolean) => void) | null }
+      ).bookModalOpen = setIsModalOpen;
       return () => {
-        globalThis.bookModalOpen = null;
+        (
+          globalThis as { bookModalOpen?: ((open: boolean) => void) | null }
+        ).bookModalOpen = null;
       };
     }
     return () => {
-      globalThis.bookModalOpen = null;
+      (
+        globalThis as { bookModalOpen?: ((open: boolean) => void) | null }
+      ).bookModalOpen = null;
     };
   }, [isModalOpen]);
 
@@ -2361,7 +2098,7 @@ const CircleCounter = ({ data, book, chapter }) => {
         }}
       >
         {entries.slice(0, visibleCount).map(([id, value], index) => {
-          const { IconComponent, color } = getUserVisual(id, value, index);
+          const { IconComponent, color } = getUserVisual(value);
           return (
             <div
               key={id}
@@ -2377,7 +2114,21 @@ const CircleCounter = ({ data, book, chapter }) => {
                 setIsModalOpen(true);
               }}
             >
-              <IconComponent style={{ width: "12px", height: "12px" }} />
+              {getBot("system", "app.components").masks[`${value[0]}-photo`] ? (
+                <img
+                  style={{
+                    "border-radius": "50%",
+                    width: "16px",
+                  }}
+                  src={
+                    getBot("system", "app.components").masks[
+                      `${value[0]}-photo`
+                    ]
+                  }
+                />
+              ) : (
+                <IconComponent style={{ width: "12px", height: "12px" }} />
+              )}
             </div>
           );
         })}
@@ -2514,7 +2265,23 @@ const CircleCounter = ({ data, book, chapter }) => {
                         flexShrink: 0,
                       }}
                     >
-                      <Icon style={{ width: "18px", height: "18px" }} />
+                      {getBot("system", "app.components").masks[
+                        `${id}-photo`
+                      ] ? (
+                        <img
+                          style={{
+                            "border-radius": "50%",
+                            width: "16px",
+                          }}
+                          src={
+                            getBot("system", "app.components").masks[
+                              `${id}-photo`
+                            ]
+                          }
+                        />
+                      ) : (
+                        <Icon style={{ width: "18px", height: "18px" }} />
+                      )}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div

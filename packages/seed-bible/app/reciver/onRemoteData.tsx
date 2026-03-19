@@ -1,9 +1,20 @@
 /* global os, thisBot, configBot, getBot, shout, sendRemoteData */
 
+
+// shout("updatedYourData", { user: that.remoteId, tab: { ...(that.that || {}) } });
+ // ========= SHARED (GLOBAL) META =========
+  if(that.name==="updateSharingData") {
+    os.log("Handling updateSharingData for", that.remoteId);
+    shout("updatedYourData", { user: that.remoteId, tab: { ...(that.that || {}) } });
+    return;
+  }
+
 // ---- small in-memory guards to prevent loops / storms
 const lastSeenBySender = new Map(); // key: `${senderId}:${name}` -> timestamp(ms)
 const lastAppliedEvent = new Map(); // key: eventName -> timestamp(ms)
-const LOOP_GUARD_MS = 1500; // block duplicate events within 0.8s window
+const lastAppliedBookData = { bookId: null, chapter: null, timestamp: 0 }; // track last book nav
+const LOOP_GUARD_MS = 1500; // block duplicate events within window
+const BOOK_DEDUP_MS = 500; // stricter dedup for book events
 const emitter = getBot("system", "app.emitter");
 const evt = that;
 const name = evt?.name;
@@ -16,6 +27,12 @@ if (!name || !remoteId) return;
 const selfId = configBot.id;
 const senderId = payload?.senderId; // who originally emitted this message
 const now = Date.now();
+
+// Extra guard: ignore if senderId matches self (echo prevention)
+if (senderId === selfId) {
+  os.log("Ignoring own echo:", name);
+  return;
+}
 
 // helper: skip duplicate local applications for a short time
 const recentlyApplied = (eventName) => {
@@ -94,20 +111,55 @@ const forwardToFollowersExcept = (excludeId, eventName, data) => {
 switch (name) {
   // ========= NAVIGATION =========
   case "book": {
+    // Strict dedup: same book+chapter within short window
+    const bookKey = `${payload?.bookId}-${payload?.chapter}`;
+    const lastBookKey = lastAppliedEvent.get("book:data") || "";
+    const lastBookTime = lastAppliedEvent.get("book") || 0;
+
+    if (bookKey === lastBookKey && now - lastBookTime < BOOK_DEDUP_MS) {
+      os.log("Skipped duplicate 'book' (same destination):", bookKey);
+      return;
+    }
+
     if (recentlyApplied("book")) {
       os.log("Skipped duplicate 'book' (loop guard)");
       return;
     }
+
+    // Store what book we're navigating to
+    lastAppliedEvent.set("book:data", bookKey);
 
     if (!allowAllNav && remoteId !== hostId && !iAmCoHost) {
       os.log("Blocked 'book' (host-only): follower tried to navigate.");
       return;
     }
 
+    // Set flag BEFORE calling Open to prevent emit loop
     globalThis.__remoteBookUpdate = true;
-    shout("remoteBookChange", { ...(payload || {}) });
-    // rebroadcast only if host
-    if (iAmHost && allowAllNav && remoteId !== hostId) {
+
+    // Set cooldown - prevent local user from emitting nav for a short period
+    // This prevents conflicts when "Everyone can navigate" is enabled
+    globalThis.__navCooldownUntil = now + 600;
+
+    // Also mark any pending data as from remote (prevents cache emit)
+    if (globalThis.isCachedDataRef) {
+      globalThis.isCachedDataRef.current = true;
+    }
+
+    // Call Open directly instead of shouting to avoid extra event chains
+    if (globalThis.Open && payload?.bookId && payload?.chapter) {
+      globalThis.Open(payload.bookId, payload.chapter);
+    } else {
+      shout("remoteBookChange", { ...(payload || {}) });
+    }
+
+    // Reset flag after a short delay to allow the navigation to complete
+    setTimeout(() => {
+      globalThis.__remoteBookUpdate = false;
+    }, 150);
+
+    // rebroadcast only if host AND the event didn't originate from self
+    if (iAmHost && allowAllNav && remoteId !== hostId && senderId !== selfId) {
       forwardToFollowersExcept(remoteId, "book", payload || {});
     }
     return;
@@ -226,10 +278,10 @@ switch (name) {
   }
 
   // ========= SHARED (GLOBAL) META =========
-  case "updateSharingData": {
-    shout("updatedYourData", { user: remoteId, tab: { ...(payload || {}) } });
-    return;
-  }
+  // case "updateSharingData": {
+  //   shout("updatedYourData", { user: remoteId, tab: { ...(payload || {}) } });
+  //   return;
+  // }
 
   case "personLeftTheChat": {
     shout("onPersonLeftRemote", {

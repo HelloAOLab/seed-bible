@@ -1,3 +1,5 @@
+import { z } from "https://esm.helloao.org/vendor-3PZUL55I.js";
+
 /**
  * Defines an annotation. That is, a piece of information associated with a specific chapter of the Bible.
  */
@@ -23,6 +25,11 @@ export interface Annotation {
   verseNumber?: number;
 
   /**
+   * The optional verse number that the annotation ends at (inclusive).
+   */
+  endVerseNumber?: number;
+
+  /**
    * The data of the annotation.
    */
   data: AnnotationData;
@@ -33,39 +40,58 @@ export interface Annotation {
   order?: number;
 }
 
-export type AnnotationData =
-  | CommentAnnotationData
-  | LinkAnnotationData
-  | FileAnnotationData
-  | PlaylistAnnotationData
-  | HighlightAnnotationData;
+export type AnnotationData = CommentAnnotationData;
 
-// /**
-//  * Data for a scripture annotation.
-//  */
-// export interface ScriptureAnnotationData {
-//     type: 'scripture';
+export const COMMENT_SCHEMA = z.object({
+  type: z.literal("comment"),
+  html: z.string(),
+  replyTo: z.nullable(z.optional(z.string())),
 
-//     /**
-//      * The ID of the book that the scripture annotation references.
-//      */
-//     book: string;
+  // The Time in miliseconds that the comment was created
+  createdAtMs: z.nullable(z.optional(z.number())),
 
-//     /**
-//      * The chapter number that the scripture annotation references.
-//      */
-//     chapterNumber: number;
+  // The Time in miliseconds that the comment was last updated
+  updatedAtMs: z.nullable(z.optional(z.number())),
 
-//     /**
-//      * The starting verse number that the scripture annotation references.
-//      */
-//     verseStart: number;
+  // user profile picture
+  userProfilePicture: z.nullable(z.optional(z.string())),
 
-//     /**
-//      * The ending verse number that the scripture annotation references, if any.
-//      */
-//     verseEnd?: number;
-// }
+  // user name
+  userName: z.nullable(z.optional(z.string())),
+
+  // user id
+  userId: z.nullable(z.optional(z.string())),
+
+  // tags
+  tags: z.nullable(z.optional(z.array(z.string()))),
+});
+
+export const ANNOTATION_DATA_SCHEMA = z.discriminatedUnion("type", [
+  COMMENT_SCHEMA,
+]);
+
+export const ANNOTATION_SCHEMA = z.object({
+  id: z.string(),
+  bookId: z.string(),
+  chapterNumber: z.number(),
+  verseNumber: z.nullable(z.optional(z.number())),
+  endVerseNumber: z.nullable(z.optional(z.number())),
+  data: ANNOTATION_DATA_SCHEMA,
+  order: z.nullable(z.optional(z.number())),
+  verseNumbers: z.nullable(z.optional(z.array(z.number()))),
+});
+
+/**
+ * Stores all verse highlights for a single chapter.
+ */
+export type ChapterHighlights = z.infer<typeof CHAPTER_HIGHLIGHTS_SCHEMA>;
+
+export const CHAPTER_HIGHLIGHTS_SCHEMA = z.object({
+  translation: z.string(),
+  bookId: z.string(),
+  chapter: z.number(),
+  verses: z.record(z.number(), z.tuple([z.number(), z.string()])),
+});
 
 /**
  * Data for a comment annotation.
@@ -84,84 +110,6 @@ export interface CommentAnnotationData {
    * The ID of the annotation that this comment is replying to, if any.
    */
   replyTo?: string;
-}
-
-/**
- * Data for a link annotation.
- */
-export interface LinkAnnotationData {
-  type: "link";
-
-  /**
-   * The title for the link.
-   */
-  title?: string;
-
-  /**
-   * The URL that the link points to.
-   */
-  url: string;
-
-  /**
-   * The kind of the link.
-   */
-  kind: "youtube" | "external-link" | "video" | "iframe";
-}
-
-/**
- * Data for an annotation that is stored in a file record.
- */
-export interface FileAnnotationData {
-  type: "file";
-
-  /**
-   * The title for the file.
-   */
-  title?: string;
-
-  /**
-   * The kind of the file.
-   */
-  kind: "audio" | "video" | "file";
-
-  /**
-   * The URL of the file record.
-   */
-  url: string;
-}
-
-/**
- * Data for a highlight annotation.
- */
-export interface HighlightAnnotationData {
-  type: "highlight";
-
-  /**
-   * The color of the highlight.
-   */
-  color: string;
-}
-
-/**
- * Data for a playlist annotation.
- */
-export interface PlaylistAnnotationData {
-  type: "playlist";
-
-  /**
-   * The title of the playlist.
-   */
-  title: string;
-
-  /**
-   * The ID of the playlist.
-   */
-  id: string;
-
-  /**
-   * The name of the record that the playlist is stored in.
-   */
-  recordName: string;
 }
 
 /**
@@ -187,9 +135,6 @@ export async function saveFileAnnotationData(
   }
 
   return result.url;
-  return {
-    url: result.url,
-  };
 }
 
 /**
@@ -202,11 +147,18 @@ export async function saveFileAnnotationData(
 export function createAnnotation(
   bookId: string,
   chapterNumber: number,
-  data: AnnotationData
+  data: AnnotationData,
+  verseNumber: number | number[]
 ): Annotation {
+  data = COMMENT_SCHEMA.parse(data);
+  let keyName = "verseNumber";
+  if (Array.isArray(verseNumber)) {
+    keyName = "verseNumbers";
+  }
   return {
     id: uuid(),
     bookId,
+    [keyName]: verseNumber,
     chapterNumber,
     data,
   };
@@ -224,6 +176,18 @@ export function getAnnotationMarker(
   group: string = "annotations"
 ): string {
   return `publicRead:${group}/${bookId}/${chapterNumber}`;
+}
+
+/**
+ * Gets the record that should be used for annotations.
+ * @param forceLogin Whether to force the user to log in if they are not already logged in.
+ */
+export async function getAnnotationRecord(forceLogin?: boolean) {
+  const injectedRecordKey = configBot.tags.annotationRecordKey;
+  if (injectedRecordKey) {
+    return injectedRecordKey;
+  }
+  return await getUserRecord(forceLogin);
 }
 
 /**
@@ -274,13 +238,10 @@ export async function saveAnnotation(
   annotation: Annotation,
   group?: string
 ): Promise<void> {
-  const marker = getAnnotationMarker(
-    annotation.bookId,
-    annotation.chapterNumber,
-    group
-  );
+  const data = ANNOTATION_SCHEMA.parse(annotation);
+  const marker = getAnnotationMarker(data.bookId, data.chapterNumber, group);
 
-  const result = await os.recordData(recordName, annotation.id, annotation, {
+  const result = await os.recordData(recordName, data.id, data, {
     marker,
   });
 
@@ -312,6 +273,7 @@ export async function deleteAnnotation(
     console.error("Error deleting annotation: ", result);
     throw new Error("Error deleting annotation");
   }
+  return result;
 }
 
 /**
@@ -394,6 +356,263 @@ export async function loadAnnotations(
       return a.id < b.id ? -1 : 1;
     }
   });
+}
+
+/**
+ * Gets the address for chapter highlights.
+ * @param translation The translation ID.
+ * @param bookId The book ID.
+ * @param chapter The chapter number.
+ * @returns The data address for the chapter highlights.
+ */
+export function getChapterHighlightsAddress(
+  translation: string,
+  bookId: string,
+  chapter: number
+): string {
+  return `${translation}/${bookId}/${chapter}`;
+}
+
+/**
+ * Saves chapter highlights in a single data record.
+ *
+ * Uses marker `publicRead:highlights` and address `<translation>/<bookId>/<chapter>`.
+ * @param recordName The record name to save to.
+ * @param highlights The chapter highlights to save.
+ */
+export async function saveChapterHighlights(
+  recordName: string,
+  highlights: ChapterHighlights
+): Promise<void> {
+  const data = CHAPTER_HIGHLIGHTS_SCHEMA.parse(highlights);
+  const address = getChapterHighlightsAddress(
+    data.translation,
+    data.bookId,
+    data.chapter
+  );
+
+  const result = await os.recordData(recordName, address, data, {
+    markers: [
+      "publicRead:highlights",
+      `publicRead:highlights/${data.translation}`,
+    ],
+  });
+
+  if (result.success === false) {
+    console.error("Error saving chapter highlights: ", result);
+    throw new Error("Error saving chapter highlights");
+  }
+}
+
+/**
+ * Loads chapter highlights from a single data record.
+ *
+ * Uses marker `publicRead:highlights` and address `<translation>/<bookId>/<chapter>`.
+ * @param recordName The record name to load from.
+ * @param translation The translation ID.
+ * @param bookId The book ID.
+ * @param chapter The chapter number.
+ * @returns The chapter highlights, or null if not found.
+ */
+export async function loadChapterHighlights(
+  recordName: string,
+  translation: string,
+  bookId: string,
+  chapter: number
+): Promise<ChapterHighlights | null> {
+  const address = getChapterHighlightsAddress(translation, bookId, chapter);
+  const result = await os.getData(recordName, address);
+
+  if (result.success === false) {
+    if (result.errorCode === "data_not_found") {
+      return null;
+    }
+
+    console.error("Error loading chapter highlights: ", result);
+    throw new Error("Error loading chapter highlights");
+  }
+
+  return CHAPTER_HIGHLIGHTS_SCHEMA.parse(result.data);
+}
+
+/**
+ * A stateful manager for chapter verse highlights.
+ *
+ * Caches chapter highlights in memory after they are loaded.
+ */
+export class HighlightsManager {
+  private _cache = new Map<string, ChapterHighlights>();
+
+  private _recordName: string;
+
+  constructor(recordName: string) {
+    this._recordName = recordName;
+  }
+
+  private _address(
+    translation: string,
+    bookId: string,
+    chapter: number
+  ): string {
+    return getChapterHighlightsAddress(translation, bookId, chapter);
+  }
+
+  private _createEmptyChapterHighlights(
+    translation: string,
+    bookId: string,
+    chapter: number
+  ): ChapterHighlights {
+    return {
+      translation,
+      bookId,
+      chapter,
+      verses: {},
+    };
+  }
+
+  /**
+   * Loads chapter highlights and caches them.
+   *
+   * If no highlights exist yet, an empty chapter highlights object is returned and cached.
+   */
+  async loadChapterHighlights(
+    translation: string,
+    bookId: string,
+    chapter: number
+  ): Promise<ChapterHighlights> {
+    const address = this._address(translation, bookId, chapter);
+    const cached = this._cache.get(address);
+    if (cached) {
+      return cached;
+    }
+
+    const loaded = await loadChapterHighlights(
+      this._recordName,
+      translation,
+      bookId,
+      chapter
+    );
+    const highlights =
+      loaded ??
+      this._createEmptyChapterHighlights(translation, bookId, chapter);
+
+    this._cache.set(address, highlights);
+    return highlights;
+  }
+
+  /**
+   * Saves chapter highlights and updates the local cache.
+   */
+  async saveChapterHighlights(highlights: ChapterHighlights): Promise<void> {
+    await saveChapterHighlights(this._recordName, highlights);
+    const address = this._address(
+      highlights.translation,
+      highlights.bookId,
+      highlights.chapter
+    );
+    this._cache.set(address, highlights);
+  }
+
+  /**
+   * Adds or updates a single verse highlight and persists the chapter record.
+   */
+  async addVerseHighlight(
+    translation: string,
+    bookId: string,
+    chapter: number,
+    verse: number,
+    color: string,
+    timeMs: number = Date.now()
+  ): Promise<ChapterHighlights> {
+    return this.addVerseHighlights(
+      translation,
+      bookId,
+      chapter,
+      [verse],
+      color,
+      timeMs
+    );
+  }
+
+  /**
+   * Adds or updates multiple verse highlights and persists the chapter record.
+   *
+   * Applies the same color and time to each verse in the provided array.
+   */
+  async addVerseHighlights(
+    translation: string,
+    bookId: string,
+    chapter: number,
+    verses: number[],
+    color: string,
+    timeMs: number = Date.now()
+  ): Promise<ChapterHighlights> {
+    const chapterHighlights = await this.loadChapterHighlights(
+      translation,
+      bookId,
+      chapter
+    );
+
+    for (const verse of verses) {
+      chapterHighlights.verses[verse] = [timeMs, color];
+    }
+
+    await this.saveChapterHighlights(chapterHighlights);
+    return chapterHighlights;
+  }
+
+  /**
+   * Removes a verse highlight and persists the chapter record.
+   */
+  async removeVerseHighlight(
+    translation: string,
+    bookId: string,
+    chapter: number,
+    verse: number
+  ): Promise<ChapterHighlights> {
+    return this.removeVerseHighlights(translation, bookId, chapter, [verse]);
+  }
+
+  /**
+   * Removes multiple verse highlights and persists the chapter record.
+   */
+  async removeVerseHighlights(
+    translation: string,
+    bookId: string,
+    chapter: number,
+    verses: number[]
+  ): Promise<ChapterHighlights> {
+    const chapterHighlights = await this.loadChapterHighlights(
+      translation,
+      bookId,
+      chapter
+    );
+
+    for (const verse of verses) {
+      delete chapterHighlights.verses[verse];
+    }
+
+    await this.saveChapterHighlights(chapterHighlights);
+    return chapterHighlights;
+  }
+
+  /**
+   * Gets chapter highlights from cache if available.
+   */
+  getCachedChapterHighlights(
+    translation: string,
+    bookId: string,
+    chapter: number
+  ): ChapterHighlights | null {
+    return this._cache.get(this._address(translation, bookId, chapter)) ?? null;
+  }
+
+  /**
+   * Clears all cached chapter highlights.
+   */
+  clearCache(): void {
+    this._cache.clear();
+  }
 }
 
 // load translation document
@@ -956,6 +1175,323 @@ function updateSummaryTotals(summary: ReadingHistorySummary) {
       summary.totalBooksRead += 1;
     }
     summary.totalChaptersRead += user.uniqueChaptersRead;
+  }
+}
+
+// User Subscriptions
+// =======
+
+/**
+ * Represents a subscribed user with their details.
+ */
+export interface SubscribedUser {
+  id: string;
+  name?: string;
+  photoLink?: string;
+}
+
+/**
+ * Adds users to the current user's subscription list.
+ * This appends new users to the existing subscriptions without removing previous ones.
+ * Also adds the current user to each target user's subscribers list.
+ * @param users The array of users to subscribe to (with id, name, and photoLink).
+ * @returns A promise that resolves when the subscription is saved, or null if the user is not logged in.
+ */
+export async function subscribeToUsers(
+  users: SubscribedUser[]
+): Promise<void | null> {
+  const recordName = await getUserRecord(true);
+
+  if (!recordName) {
+    return null;
+  }
+
+  // Get existing subscriptions and merge with new ones
+  const existingUsers = await getUserSubscriptionsWithDetails(recordName);
+  const existingIds = new Set(existingUsers.map((u) => u.id));
+  const newUsers = users.filter((u) => !existingIds.has(u.id));
+  const mergedUsers = [...existingUsers, ...newUsers];
+
+  // Save my subscriptions
+  await saveUserSubscriptions(recordName, mergedUsers);
+
+  // Get current user's profile data to add to target users' subscribers list
+  const myProfileResult = await os.getData(recordName, recordName);
+  const myProfile = {
+    id: recordName,
+    name: myProfileResult.success ? myProfileResult.data?.name : undefined,
+    photoLink: myProfileResult.success
+      ? myProfileResult.data?.photoLink
+      : undefined,
+  };
+
+  // Add myself to each new user's subscribers list
+  for (const user of newUsers) {
+    try {
+      await addSubscriberToUser(user.id, myProfile);
+      // Notify that user subscribed
+      shout("userSubscribed", {
+        subscriber: myProfile,
+        subscribedTo: user,
+        configId: configBot.id,
+      });
+    } catch (e) {
+      console.error(`Error adding subscriber to user ${user.id}:`, e);
+    }
+  }
+}
+
+/**
+ * Adds a subscriber to a user's subscribers list.
+ * @param targetUserId The user ID to add the subscriber to.
+ * @param subscriber The subscriber to add.
+ */
+async function addSubscriberToUser(
+  targetUserId: string,
+  subscriber: SubscribedUser
+): Promise<void> {
+  const existingSubscribers = await getSubscribersOfUser(targetUserId);
+  const alreadyExists = existingSubscribers.some((s) => s.id === subscriber.id);
+
+  if (!alreadyExists) {
+    const updatedSubscribers = [...existingSubscribers, subscriber];
+    await saveSubscribers(targetUserId, updatedSubscribers);
+  }
+}
+
+/**
+ * Removes a subscriber from a user's subscribers list.
+ * @param targetUserId The user ID to remove the subscriber from.
+ * @param subscriberId The subscriber ID to remove.
+ */
+async function removeSubscriberFromUser(
+  targetUserId: string,
+  subscriberId: string
+): Promise<void> {
+  const existingSubscribers = await getSubscribersOfUser(targetUserId);
+  const updatedSubscribers = existingSubscribers.filter(
+    (s) => s.id !== subscriberId
+  );
+  await saveSubscribers(targetUserId, updatedSubscribers);
+}
+
+/**
+ * Saves the subscribers list for a user.
+ * @param recordName The user's record name.
+ * @param subscribers The list of subscribers.
+ */
+async function saveSubscribers(
+  recordName: string,
+  subscribers: SubscribedUser[]
+): Promise<void> {
+  const result = await os.recordData(
+    recordName,
+    "user_subscribers",
+    { subscribers },
+    {
+      marker: "publicRead:subscribers",
+    }
+  );
+
+  if (result.success === false) {
+    console.error("Error saving subscribers: ", result);
+  }
+}
+
+/**
+ * Gets the subscribers of a specific user.
+ * @param recordName The user's record name.
+ * @returns Array of subscribers.
+ */
+async function getSubscribersOfUser(
+  recordName: string
+): Promise<SubscribedUser[]> {
+  const result = await os.getData(recordName, "user_subscribers");
+
+  if (result.success === false) {
+    if (result.errorCode === "data_not_found") {
+      return [];
+    }
+    console.error("Error getting subscribers: ", result);
+    return [];
+  }
+
+  const data = result.data as { subscribers?: SubscribedUser[] };
+  return data.subscribers || [];
+}
+
+/**
+ * Gets all users who are subscribed to the current user.
+ * @returns Array of subscribers, or null if not logged in.
+ */
+export async function getMySubscribers(): Promise<SubscribedUser[] | null> {
+  const recordName = await getUserRecord(false);
+
+  if (!recordName) {
+    return null;
+  }
+
+  return getSubscribersOfUser(recordName);
+}
+
+/**
+ * Removes users from the current user's subscription list.
+ * Also removes the current user from each target user's subscribers list.
+ * @param userIds The array of user IDs to unsubscribe from.
+ * @returns A promise that resolves when the subscription is saved, or null if the user is not logged in.
+ */
+export async function unsubscribeFromUsers(
+  userIds: string[]
+): Promise<void | null> {
+  const recordName = await getUserRecord(true);
+
+  if (!recordName) {
+    return null;
+  }
+
+  const existingUsers = await getUserSubscriptionsWithDetails(recordName);
+  const filteredUsers = existingUsers.filter((u) => !userIds.includes(u.id));
+
+  // Save my updated subscriptions
+  await saveUserSubscriptions(recordName, filteredUsers);
+
+  // Remove myself from each user's subscribers list
+  for (const userId of userIds) {
+    try {
+      await removeSubscriberFromUser(userId, recordName);
+      // Notify that user unsubscribed
+      shout("userUnsubscribed", {
+        unsubscriberId: recordName,
+        unsubscribedFromId: userId,
+        configId: configBot.id,
+      });
+    } catch (e) {
+      console.error(`Error removing subscriber from user ${userId}:`, e);
+    }
+  }
+}
+
+/**
+ * Replaces the current user's entire subscription list.
+ * Warning: This will remove all existing subscriptions and replace them with the new list.
+ * @param users The array of users to set as subscriptions.
+ * @returns A promise that resolves when the subscription is saved, or null if the user is not logged in.
+ */
+export async function setSubscribedUsers(
+  users: SubscribedUser[]
+): Promise<void | null> {
+  const recordName = await getUserRecord(true);
+
+  if (!recordName) {
+    return null;
+  }
+
+  return saveUserSubscriptions(recordName, users);
+}
+
+/**
+ * Saves user subscriptions to a record.
+ * @param recordName The name of the record (typically the main user's authBot.id).
+ * @param users The array of subscribed users with their details.
+ * @param marker The marker to use for the subscription data. Defaults to `publicRead`.
+ */
+export async function saveUserSubscriptions(
+  recordName: string,
+  users: SubscribedUser[],
+  marker: string = "publicRead"
+): Promise<void> {
+  const result = await os.recordData(
+    recordName,
+    "user_subscriptions",
+    { users },
+    {
+      marker: `${marker}:subscriptions`,
+    }
+  );
+
+  if (result.success === false) {
+    console.error("Error saving user subscriptions: ", result);
+    throw new Error(`Error saving user subscriptions: ${result.errorCode}`);
+  }
+}
+
+/**
+ * Gets the list of subscribed users with their details for the current user.
+ * @returns A promise that resolves to an array of subscribed users, or null if the user is not logged in.
+ */
+export async function getSubscribedUsers(): Promise<SubscribedUser[] | null> {
+  const recordName = await getUserRecord(false);
+
+  if (!recordName) {
+    return null;
+  }
+
+  return getUserSubscriptionsWithDetails(recordName);
+}
+
+/**
+ * Gets the list of subscribed users with their details from a record.
+ * @param recordName The name of the record to get subscriptions from.
+ * @returns A promise that resolves to an array of subscribed users.
+ */
+export async function getUserSubscriptionsWithDetails(
+  recordName: string
+): Promise<SubscribedUser[]> {
+  const result = await os.getData(recordName, "user_subscriptions");
+
+  if (result.success === false) {
+    if (result.errorCode === "data_not_found") {
+      return [];
+    }
+    console.error("Error getting user subscriptions: ", result);
+    return [];
+  }
+
+  // Support both old format (userIds array) and new format (users array)
+  const data = result.data as { users?: SubscribedUser[]; userIds?: string[] };
+  if (data.users) {
+    return data.users;
+  }
+  // Backward compatibility: convert old userIds format to new format
+  if (data.userIds) {
+    return data.userIds.map((id) => ({ id }));
+  }
+  return [];
+}
+
+/**
+ * Gets the list of user IDs that a record is subscribed to.
+ * @param recordName The name of the record to get subscriptions from.
+ * @returns A promise that resolves to an array of user IDs.
+ * @deprecated Use getUserSubscriptionsWithDetails instead for full user details.
+ */
+export async function getUserSubscriptions(
+  recordName: string
+): Promise<string[]> {
+  const users = await getUserSubscriptionsWithDetails(recordName);
+  return users.map((u) => u.id);
+}
+
+/**
+ * Checks if a specific user is subscribed to the current user.
+ * @param userId The user ID to check.
+ * @returns A promise that resolves to true if the user is subscribed, false otherwise, or null if not logged in.
+ */
+export async function isUserSubscribedToMe(
+  userId: string
+): Promise<boolean | null> {
+  const currentUserRecord = await getUserRecord(false);
+
+  if (!currentUserRecord) {
+    return null;
+  }
+
+  try {
+    const userSubs = await getUserSubscriptionsWithDetails(userId);
+    return userSubs.some((sub) => sub.id === currentUserRecord);
+  } catch (e) {
+    console.error(`Error checking if user ${userId} is subscribed:`, e);
+    return false;
   }
 }
 

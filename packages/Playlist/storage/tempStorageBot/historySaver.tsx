@@ -1,16 +1,18 @@
-if (thisBot.tags.historySaverIntialized) return;
+const G = globalThis as any;
+
+if (thisBot.tags.historySaverIntialized && !that?.force) return;
 
 setTagMask(thisBot, "historySaverIntialized", true);
 
-const setHistory = (newHistory = [], id) => {
+const setHistory = (newHistory = [], id = "default") => {
   setTag(thisBot, `${id}playlistHistory`, newHistory);
 };
 
-globalThis.setHistoryLocale = setHistory;
+G.setHistoryLocale = setHistory;
 
 const historyPresent = (getTag(thisBot, "defaultplaylistHistory") || [])
-  .filter((ele) => ele.content !== "undefined")
-  .map((ele) => ele);
+  .filter((ele: any) => ele.content !== "undefined")
+  .map((ele: any) => ele);
 
 const parallelPlaylistPresent = getTag(thisBot, "playlistLists") || {
   default: {
@@ -22,14 +24,20 @@ const parallelPlaylistPresent = getTag(thisBot, "playlistLists") || {
 
 const collectionsPresent = getTag(thisBot, "defaultCollections") || [] || {};
 
-globalThis.defaultcurrentHistory = historyPresent;
+G.defaultcurrentHistory = historyPresent;
 
 // Playlist
 
-const setPlaylist = (newHistory = [], id, skipApi = false) => {
+const setPlaylist = (
+  newHistory = [],
+  id = "default",
+  skipApi = false,
+  force = false
+) => {
   if (!skipApi) {
     thisBot.savePlaylists({
       playlists: newHistory,
+      force: force,
     });
   }
   setTag(thisBot, `${id}playlistList`, newHistory);
@@ -45,24 +53,25 @@ const setCollections = (newCollections = {}, id = "default") => {
   setTag(thisBot, `${id}Collections`, newCollections);
 };
 
-globalThis.setPlaylistLocale = setPlaylist;
-globalThis.setPlaylistsLocale = setPlaylists;
-globalThis.setCollectionsLocale = setCollections;
+G.setPlaylistLocale = setPlaylist;
+G.setPlaylistsLocale = setPlaylists;
+G.setCollectionsLocale = setCollections;
 
 const getPlaylists = async () => {
-  let apiResults = [];
+  let apiResults: any = [];
   try {
     const authBot = await os.requestAuthBotInBackground();
     if (!authBot?.id) {
       return [];
     }
-    globalThis.WAS_PREV_AUTH = true;
+    G.WAS_PREV_AUTH = true;
     apiResults = await os.getData(authBot.id, "playlists");
     if (apiResults.data) {
       const playlists = [...(apiResults.data.playlists || [])];
       apiResults = [...playlists];
       setTag(thisBot, "defaultplaylistList", playlists);
-      globalThis.setPlaylistLocale(playlists, true);
+      G.setPlaylistLocale &&
+        G.setPlaylistLocale(playlists, "default", false, true);
       return playlists;
     }
     return [];
@@ -74,58 +83,50 @@ const getPlaylists = async () => {
 
 await getPlaylists();
 
-const playlistsPresent = globalThis.playlists
-  ? globalThis.playlists
-  : (getTag(thisBot, "defaultplaylistList") || []).map((ele) => ele);
+const playlistsPresent = G.playlists
+  ? G.playlists
+  : (getTag(thisBot, "defaultplaylistList") || []).map((ele: any) => ele);
 
 const sharedPlaylist = configBot.tags.Playlist;
 // console.log("GOT SHAERD PLATLIST", sharedPlaylist);
 
+G.RECORD_SEPARATOR = "^_^";
 if (sharedPlaylist) {
   try {
-    web
-      .hook({
-        url: `https://theographic-bible-api.netlify.app/api/playlist/getPlaylist?uid=${sharedPlaylist}`,
-        method: "GET",
-      })
-      .then(async (dbRes) => {
-        // console.log(dbRes, "dbRes");
-        const playlistDataRes = dbRes?.data?.data?.query;
-        // console.log("playlistDataRes", API, !playlistDataRes, playlistDataRes);
-        if (!playlistDataRes) return;
-        // API.decrypt()
-        const playlistDecoded = playlistDataRes;
-        // console.log("playlistDecoded", playlistDecoded);
-        const playlistData = JSON.parse(`${playlistDecoded}`);
+    const [authBotId, playlistId] = sharedPlaylist.split(G.RECORD_SEPARATOR);
+    if (!!authBotId && !!playlistId) {
+      const res = await os.getData(authBotId, playlistId);
 
-        setTag(configBot, "Playlist", null);
-
+      if (res.success) {
+        const playlistData = res.data;
         const index = playlistsPresent.findIndex(
-          (ele) => ele.id === playlistData?.id
+          (ele: any) => ele.id === playlistData?.id
         );
 
         const isPlaylistDuplicate = index > -1;
 
         if (typeof playlistData === "object") {
           // const toutour = getBot('system', 'main.totourTool')
-          globalThis.hasASharedPlaylist = playlistData.id;
-          globalThis.shareProfileName = playlistData.shareProfileName;
-          globalThis.shareProfilePic = playlistData.shareProfilePic;
+          G.hasASharedPlaylist = playlistData.id;
+          G.shareProfileName = playlistData.shareProfileName;
+          G.shareProfilePic = playlistData.shareProfilePic;
 
-          if (globalThis["Playlist_package"]) {
-            globalThis["Playlist_package"].onClick();
+          if (G["Playlist_package"]) {
+            // G["Playlist_package"].onClick();
+            G.Playlist.SharePlaylistModal({
+              playlistSharerName: playlistData.shareProfileName,
+            });
           }
           // setTagMask(toutour, "showingStep", false);
           // setTagMask(toutour, "access", false);
           // setTagMask(toutour, "isBookClicked", true);
 
-          globalThis.clickWait = false;
-          globalThis.isModalRegistered = false;
-          globalThis.isBlackFadeRegistered = false;
-          globalThis.demoInteractionWait = false;
+          G.clickWait = false;
+          G.isModalRegistered = false;
+          G.isBlackFadeRegistered = false;
+          G.demoInteractionWait = false;
 
-          if (playlistData.icons)
-            globalThis.PREDEFINED_ICONS = playlistData.icons;
+          if (playlistData.icons) G.PREDEFINED_ICONS = playlistData.icons;
 
           if (isPlaylistDuplicate) {
             playlistsPresent[index] = playlistData;
@@ -133,34 +134,31 @@ if (sharedPlaylist) {
             playlistsPresent.push(playlistData);
           }
         }
-        // console.log(playlistsPresent);
-      })
-      .catch((err) => {
-        console.log(err);
+      } else {
         ShowNotification({
-          message: "Unable to copy playlist. Please try again!",
+          message: t("unableToCopyPlaylist"),
           severity: "error",
         });
-      });
+      }
+    }
+    setTag(configBot, "Playlist", null);
   } catch (err) {
     console.log("ERROR PARSING THE SHARED PLAYLIST", err);
   }
 }
 
 Object.keys(parallelPlaylistPresent).forEach((id) => {
-  if (!globalThis[`${id}currentPlaylist`])
-    globalThis[`${id}currentPlaylist`] = [];
-  if (!globalThis[`${id}currentHistory`])
-    globalThis[`${id}currentHistory`] = [];
-  globalThis[`${id}playlists`] = globalThis[`${id}playlists`]
-    ? globalThis[`${id}playlists`]
-    : (getTag(thisBot, `${id}playlistList`) || []).map((ele) => ele);
+  if (!G[`${id}currentPlaylist`]) G[`${id}currentPlaylist`] = [];
+  if (!G[`${id}currentHistory`]) G[`${id}currentHistory`] = [];
+  G[`${id}playlists`] = G[`${id}playlists`]
+    ? G[`${id}playlists`]
+    : (getTag(thisBot, `${id}playlistList`) || []).map((ele: any) => ele);
   // console.log("ID", id, globalThis[`${id}playlists`]);
-  if (!globalThis[`${id}playlists`]) {
-    globalThis[`${id}playlists`] = [];
+  if (!G[`${id}playlists`]) {
+    G[`${id}playlists`] = [];
   }
 });
 
-globalThis["defaultplaylists"] = playlistsPresent;
-globalThis.PlaylistsGroups = parallelPlaylistPresent;
-globalThis.COLLECTIONS = collectionsPresent;
+G["defaultplaylists"] = playlistsPresent;
+G.PlaylistsGroups = parallelPlaylistPresent;
+G.COLLECTIONS = collectionsPresent;

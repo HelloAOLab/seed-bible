@@ -1,4 +1,10 @@
-import { BibleDataManager } from "app.hooks.bibleDataManager";
+import {
+  BibleDataManager,
+  getCachedBibleData,
+  getCachedFootnotes,
+} from "app.hooks.bibleDataManager";
+import { getSettingsPreset } from "app.components.types";
+
 import { getStyleOf } from "app.styles.styler";
 const {
   useEffect,
@@ -19,6 +25,13 @@ import { MiniTextEditor } from "app.components.smallEditor";
 import { ConfigurableFunctionCommands } from "app.components.commands";
 import { VerseToolbar } from "app.components.verseToolbar";
 import { useHoldAction } from "app.hooks.useHold";
+import {
+  MobileSettingsIcon,
+  MenuIcon,
+  BookMarkIcon,
+} from "app.components.icons";
+
+import { useSideBarContext } from "app.hooks.sideBar";
 function getUserSessionInfo(userId) {
   try {
     if (typeof tags === "undefined" || !tags.sessions) {
@@ -68,20 +81,46 @@ function ThePage({
   setEnableEditor,
   setData,
   data,
+  deleteTab,
+  setDeleteTab,
 }) {
   const [tab, setTab] = useState(T);
   const [commandHighlight, setCommandHighlight] = useState([]);
   const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
+  const lastScrollTopRef = useRef(0);
   const [userMovedToolbar, setUserMovedToolbar] = useState();
-
+  const {
+    openOnMobile,
+    setOpenOnMobile,
+    sidebarWidth,
+    setSidebarWidth,
+    setCollapsed,
+    setSideBarMode,
+  } = useSideBarContext();
+  useEffect(() => {
+    if (deleteTab) {
+      if (deleteTab.tabId === tab?.id) {
+        setTab(null);
+      }
+      setDeleteTab(false);
+    }
+  }, [deleteTab]);
   useEffect(() => {
     if (!T) globalThis.CurrentPanelAvailable = panelId;
     else globalThis.CurrentPanelAvailable = null;
   }, [T]);
   const { inSession, role, config } = getUserSessionInfo(configBot.id);
   const [tabEntered, setTabEntered] = useState(false);
-  const { updateTab, tabs, setActiveTab, sharedTab } = useTabsContext();
+  const {
+    updateTab,
+    tabs,
+    activeTab,
+    setActiveTab,
+    sharedTab,
+    activeSpace,
+    spaces,
+  } = useTabsContext();
   const { isDragging, setIsDragging, Element, position } = useMouseMove();
   const { navFunctions, setNavFunctions, scrollToVerse } = useBibleContext();
   const [inHold, setInHold] = useState();
@@ -109,6 +148,18 @@ function ThePage({
   const [wordHighlightsBC, setWordHighlightsBC] = useState("#ffeb3b");
 
   const [bible, setBible] = useState();
+  const [footnotes, setFootnotes] = useState(() => {
+    if (tab) {
+      return getCachedFootnotes(
+        tab.data?.translation,
+        tab.data?.bookId,
+        tab.data?.chapter
+      );
+    }
+    return null;
+  });
+  const [showFootnoteModal, setShowFootnoteModal] = useState(false);
+  const [activeFootnote, setActiveFootnote] = useState(null);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
 
   const loadTranslationFromUrl = async () => {
@@ -117,15 +168,15 @@ function ThePage({
       configBot.tags.translationId ||
       configBot.tags.translation ||
       tab.data.translation;
-    let baseUrl = "https://bible.helloao.org";
-    let bookId = "GEN";
+    let baseUrl = "https://vmfnri.helloao.org";
+    let bookId = tab.data.bookId || "GEN";
     let bookTranslationId = tab.data.translation;
     let firstBookData;
     let firstChapterApiLink;
     let books = [];
     if (translationId) {
       const available_translations_req = await web.get(
-        "https://bible.helloao.org/api/available_translations.json"
+        "https://vmfnri.helloao.org/api/available_translations.json"
       );
       let allTranslations = [];
       const translations = {};
@@ -165,7 +216,7 @@ function ThePage({
 
         if (trValue.pass && !urlId) {
           const bookData = await web.get(
-            `https://bible.helloao.org/api/${trValue.value.id}/books.json`
+            `https://vmfnri.helloao.org/api/${trValue.value.id}/books.json`
           );
           books = bookData.data.books;
           const book0 = bookData.data.books[0];
@@ -184,6 +235,7 @@ function ThePage({
               configBot.tags.translationId = null;
               configBot.tags.translation = null;
               const translationData = await loadTranslationFromUrl();
+              os.toast("No translations found from url!");
               return {
                 ...translationData,
               };
@@ -191,14 +243,24 @@ function ThePage({
             const defaultTranslation = newTranslations[0];
             newTranslations = newTranslations.map((trans) => {
               return {
-                languageEnglishName: trans.languageEnglishName,
+                ...trans,
+                name: trans.name,
+                languageEnglishName:
+                  trans.languageEnglishName || "Unspecified Language",
                 id: trans.id,
                 listOfBooksApiLink: `${url.origin}${trans.listOfBooksApiLink}`,
                 origin: url.origin,
                 shortName: trans.shortName,
               };
             });
-            allTranslations = [...allTranslations, ...newTranslations];
+            setTagMask(
+              thisBot,
+              "newTranslations",
+              masks?.newTranslations
+                ? [...masks.newTranslations, ...newTranslations]
+                : newTranslations,
+              "local"
+            );
             for (const translation of newTranslations) {
               const englishName = translation.languageEnglishName.toLowerCase();
               if (!defaultTranslations.includes(englishName)) {
@@ -206,6 +268,7 @@ function ThePage({
               }
             }
             const translation = {
+              name: defaultTranslation.name,
               languageEnglishName: defaultTranslation.languageEnglishName,
               id: defaultTranslation.id,
               listOfBooksApiLink: `${url.origin}${defaultTranslation.listOfBooksApiLink}`,
@@ -234,6 +297,9 @@ function ThePage({
             firstChapterApiLink = book0.firstChapterApiLink;
           }
         }
+        if (masks?.newTranslations) {
+          allTranslations = [...allTranslations, ...masks.newTranslations];
+        }
         allTranslations.forEach((translation) => {
           const englishName =
             translation?.languageEnglishName?.toLowerCase() ||
@@ -257,10 +323,16 @@ function ThePage({
           defaultTranslations,
           "local"
         );
-        console.log(defaultTranslations, translations, "trans");
       }
     } else {
-      return {};
+      return {
+        baseUrl,
+        bookId,
+        bookTranslationId,
+        firstChapterApiLink,
+        firstBookData,
+        books,
+      };
     }
     return {
       baseUrl,
@@ -272,117 +344,6 @@ function ThePage({
     };
   };
 
-  async function loadData() {
-    if (!tab) return;
-    const bible = new BibleDataManager({
-      tabId: tab?.id,
-      translation: tab.data.translation,
-      bookId: tab.data.bookId,
-      chapter: tab.data.chapter,
-    });
-    setBible(bible);
-
-    console.log("bible data: ", bible);
-
-    await bible.fetch();
-
-    globalThis.BookId = bible.bookId;
-
-    const { data, loading, error } = bible.getState();
-    console.log(data, tab, "the data loaded");
-
-    globalThis.refreshScrollers && globalThis.refreshScrollers();
-    const { firstBookData, bookTranslationId, baseUrl, books } =
-      await loadTranslationFromUrl();
-
-    if (!configBot.tags.defaultChecked) {
-      if (firstBookData && bookTranslationId && baseUrl) {
-        await bible.changeTranslation(
-          bookTranslationId,
-          firstBookData,
-          baseUrl
-        );
-      }
-      if (books) {
-        if (configBot.tags?.book && books && books?.length > 0) {
-          let bookData;
-          books.forEach((book) => {
-            if (book.id.toLowerCase() === configBot.tags.book.toLowerCase()) {
-              bookData = book;
-            }
-          });
-          if (bookData) {
-            let chapterNo;
-            if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
-              chapterNo = configBot.tags.chapter;
-            const chapterUrl = chapterNo
-              ? bookData.firstChapterApiLink.replace(
-                  "1.json",
-                  `${chapterNo}.json`
-                )
-              : bookData.firstChapterApiLink.replace(
-                  "1.json",
-                  `${tab.data.chapter}.json`
-                );
-            await bible.open(
-              bookData.id,
-              configBot.tags.chapter || 1,
-              bookTranslationId,
-              chapterUrl
-            );
-          }
-        } else if (configBot.tags?.chapter && books?.length > 0) {
-          let bookData;
-          books.forEach((book) => {
-            if (book.id.toLowerCase() === tab.data.bookId.toLowerCase()) {
-              bookData = book;
-            }
-          });
-          let chapterNo;
-          if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
-            chapterNo = configBot.tags.chapter;
-          const chapterUrl = chapterNo
-            ? bookData.firstChapterApiLink.replace(
-                "1.json",
-                `${chapterNo}.json`
-              )
-            : bookData.firstChapterApiLink.replace(
-                "1.json",
-                `${tab.data.chapter}.json`
-              );
-          await bible.open(
-            bookData.id,
-            configBot.tags.chapter || 1,
-            bookTranslationId,
-            chapterUrl
-          );
-        }
-      } else {
-        if (configBot.tags?.book) {
-          await bible.open(
-            configBot.tags?.book,
-            configBot.tags?.chapter || tab.data.chapter
-          );
-        } else if (configBot.tags?.chapter) {
-          await bible.open(tab.data.book, configBot.tags?.chapter);
-        }
-      }
-      configBot.tags.defaultChecked = true;
-    } else {
-      if (masks?.allTranslations) {
-        for (const translation of masks.allTranslations) {
-          if (translation.id === tab.data.translation) {
-            setTagMask(thisBot, "selectedTranslation", translation, "local");
-            break;
-          }
-        }
-      }
-    }
-
-    setData(bible.data);
-    SetShowToolbar(true);
-    whisper(getBot("system", "introduction.searchBar"), "initialize");
-  }
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") {
@@ -401,11 +362,11 @@ function ThePage({
   }, []);
   useEffect(() => {
     const onBookChange = (data) => {
-      os.log("updated shared tab", "not approved");
-      if (!globalThis.CurrentTab?.sharedTab) {
-        updateTab(masks["sharedTab"], data);
-        return;
-      }
+      // os.log("updated shared tab", "not approved");
+      // if (!globalThis.CurrentTab?.sharedTab) {
+      //   updateTab(masks["sharedTab"], data);
+      //   return;
+      // }
       console.log("remoteBookChange", data);
       globalThis.Open?.(data.bookId, data.chapter);
     };
@@ -430,9 +391,164 @@ function ThePage({
   }, []);
 
   useEffect(() => {
-    loadData();
+    let cancelled = false;
+
+    async function loadDataSafe() {
+      if (!tab) return;
+      const { firstBookData, bookTranslationId, baseUrl, books } =
+        await loadTranslationFromUrl();
+      const bible = new BibleDataManager({
+        tabId: tab?.id,
+        translation: tab.data.translation,
+        bookId: tab.data.bookId,
+        chapter: tab.data.chapter,
+        baseUrl: tab.data?.baseUrl || "https://vmfnri.helloao.org",
+      });
+      setBible(bible);
+
+      console.log("bible data: ", bible);
+
+      await bible.fetch();
+
+      if (cancelled) return; // Don't update state if navigation changed
+
+      globalThis.BookId = bible.bookId;
+
+      const {
+        data,
+        loading,
+        error,
+        footnotes: bibleFootnotes,
+      } = bible.getState();
+      console.log(data, tab, bibleFootnotes, "the data loaded");
+      setFootnotes(bibleFootnotes);
+
+      globalThis.refreshScrollers && globalThis.refreshScrollers();
+
+      if (cancelled) return; // Check again after async operation
+
+      if (!configBot.tags.defaultChecked) {
+        if (books && bookTranslationId && baseUrl) {
+          await bible.changeTranslation(bookTranslationId, books, baseUrl);
+        }
+        if (cancelled) return;
+
+        if (books) {
+          if (configBot.tags?.book && books && books?.length > 0) {
+            let bookData;
+            books.forEach((book) => {
+              if (book.id.toLowerCase() === configBot.tags.book.toLowerCase()) {
+                bookData = book;
+              }
+            });
+            if (bookData) {
+              let chapterNo;
+              if (Number(configBot.tags.chapter) <= bookData.numberOfChapters)
+                chapterNo = configBot.tags.chapter;
+              const chapterUrl = chapterNo
+                ? bookData.firstChapterApiLink.replace(
+                    "1.json",
+                    `${chapterNo}.json`
+                  )
+                : bookData.firstChapterApiLink.replace(
+                    "1.json",
+                    `${tab.data.chapter}.json`
+                  );
+              await bible.open(
+                bookData.id,
+                configBot.tags.chapter || 1,
+                bookTranslationId,
+                chapterUrl
+              );
+            }
+          } else if (configBot.tags?.chapter && books?.length > 0) {
+            let bookData;
+            books.forEach((book) => {
+              if (book.id.toLowerCase() === tab.data.bookId.toLowerCase()) {
+                bookData = book;
+              }
+            });
+            let chapterNo;
+            if (Number(configBot.tags.chapter) <= bookData.numberOfChapters)
+              chapterNo = configBot.tags.chapter;
+            const chapterUrl = chapterNo
+              ? bookData.firstChapterApiLink.replace(
+                  "1.json",
+                  `${chapterNo}.json`
+                )
+              : bookData.firstChapterApiLink.replace(
+                  "1.json",
+                  `${tab.data.chapter}.json`
+                );
+            os.log("opening with chapter url", chapterUrl, {
+              bookData,
+              configBot,
+            });
+            await bible.open(
+              bookData.id,
+              configBot.tags.chapter || 1,
+              bookTranslationId,
+              chapterUrl
+            );
+          }
+        } else {
+          if (configBot.tags?.book) {
+            await bible.open(
+              configBot.tags?.book,
+              configBot.tags?.chapter || tab.data.chapter,
+              configBot.tags?.translation ||
+                configBot.tags?.translationId ||
+                null,
+              undefined
+            );
+          } else if (configBot.tags?.chapter) {
+            await bible.open(
+              tab.data.book,
+              configBot.tags?.chapter,
+              configBot.tags?.translation ||
+                configBot.tags?.translationId ||
+                null,
+              undefined
+            );
+          }
+        }
+        configBot.tags.defaultChecked = true;
+      } else {
+        if (masks?.allTranslations) {
+          for (const translation of masks.allTranslations) {
+            if (translation.id === tab.data.translation) {
+              setTagMask(thisBot, "selectedTranslation", translation, "local");
+              break;
+            }
+          }
+        }
+      }
+
+      if (cancelled) return; // Final check before setting data
+
+      setData(bible.data);
+      SetShowToolbar(true);
+      whisper(getBot("system", "introduction.searchBar"), "initialize");
+    }
+
+    if (!bible || (bible && bible?.tabId && bible.tabId !== tab?.id)) {
+      loadDataSafe();
+    }
     globalThis.CurrentTab = tab;
-  }, []);
+
+    return () => {
+      cancelled = true; // Cancel on cleanup
+    };
+  }, [tab]);
+
+  useEffect(() => {
+    globalThis.PanelTabsMap = {
+      ...globalThis.PanelTabsMap,
+      [panelId]: {
+        ...tab,
+      },
+    };
+  }, [tab, panelId]);
 
   // GLOBAL GUARDS
   if (!globalThis.__remoteBookUpdate) globalThis.__remoteBookUpdate = false;
@@ -460,19 +576,22 @@ function ThePage({
     EmitData("book", payload);
   }
 
-
   useEffect(() => {
     if (data) {
       //  EmitData("book", { ...data });
       hanldNavFunctions();
       SetShowCommands(false);
       updateTab(tab?.id, data);
-      if (config && !config?.sharedTab && role === 'host' && masks['sharedTab'] !== tab.id) {
+      if (
+        config &&
+        !config?.sharedTab &&
+        role === "host" &&
+        masks["sharedTab"] !== tab?.id
+      ) {
         updateTab(tab?.id, data);
-        updateTab(masks['sharedTab'], data);
+        updateTab(masks["sharedTab"], data);
       }
-      if (role === 'host')
-        EmitData("book", { ...data });
+      if (role === "host") EmitData("book", { ...data });
       if (panelId && tab) {
         os.log("recoreded", panelId, {
           ...tab,
@@ -489,8 +608,7 @@ function ThePage({
       } else {
         setDirection(null);
       }
-      if (masks['sharedTab'] === tab.id)
-        EmitData("book", { ...data });
+      if (masks["sharedTab"] === tab?.id) EmitData("book", { ...data });
       // const emitter = getBot("system", "app.emitter");
       // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
       //   id: tab?.id,
@@ -499,37 +617,44 @@ function ThePage({
       //   chapter: data?.chapter,
       // });
       const emitter = getBot("system", "app.emitter");
-
+      os.log("emitter updateSharingData", emitter);
+      globalThis.CurrentBookData = data;
+      shout("bookDataUpdated", data);
       sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
         id: tab?.id,
         bookId: data?.bookId,
         book: data?.book,
         chapter: data?.chapter,
       });
-    
-      configBot.tags.book = data?.bookId;
-      configBot.tags.chapter = data?.chapter;
-      os.syncConfigBotTagsToURL(['book','chapter']);
+      os.syncConfigBotTagsToURL(["book", "chapter", "translation", "lang"]);
     }
   }, [data]);
 
   useEffect(() => {
-    // Create the interval
-    const interval = setInterval(() => {
-      if (data) {
-        const emitter = getBot("system", "app.emitter");
+    if (data && tab?.id === activeTab) {
+      configBot.tags.book = data?.bookId;
+      configBot.tags.chapter = data?.chapter;
+      configBot.tags.translation = data?.translation;
+    }
+  }, [activeTab, data, tab]);
 
-        sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
-          id: tab?.id,
-          bookId: data?.bookId,
-          book: data?.book,
-          chapter: data?.chapter,
-        });
-      }
-    }, 1000);
-    globalThis.CurrentTab = tab;
-    return () => clearInterval(interval);
-  }, [data]);
+  // useEffect(() => {
+  //   // Create the interval
+  //   const interval = setInterval(() => {
+  //     if (data) {
+  //       const emitter = getBot("system", "app.emitter");
+
+  //       sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+  //         id: tab?.id,
+  //         bookId: data?.bookId,
+  //         book: data?.book,
+  //         chapter: data?.chapter,
+  //       });
+  //     }
+  //   }, 1000);
+  //   globalThis.CurrentTab = tab;
+  //   return () => clearInterval(interval);
+  // }, [data]);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -645,18 +770,15 @@ function ThePage({
       const highestVerse = unifiedVerses[unifiedVerses.length - 1];
       const lowestVerse = unifiedVerses[0];
 
-      // Build selected text
-      const selectedTextFinal =
-        selection && !selection.isCollapsed
-          ? selection.toString()
-          : unifiedVerses
-              .map((v) => {
-                const verseObj = data?.content
-                  ?.flatMap((c) => c.verses)
-                  .find((x) => x.verseNumber === v);
-                return verseObj?.text || "";
-              })
-              .join(" ");
+      //  selected text from verse data (excludes headings)
+      const selectedTextFinal = unifiedVerses
+        .map((v) => {
+          const verseObj = data?.content
+            ?.flatMap((c) => c.verses)
+            .find((x) => x.verseNumber === v);
+          return verseObj?.text || "";
+        })
+        .join(" ");
 
       setSelectedText(selectedTextFinal);
       setLastSelectedVerse(highestVerse);
@@ -696,8 +818,8 @@ function ThePage({
         if (ele) {
           const rect = ele.getBoundingClientRect();
           setToolbarPos({
-            x: rect.left ,
-            y: rect.bottom ,
+            x: rect.left,
+            y: rect.bottom,
           });
         }
       }
@@ -708,6 +830,7 @@ function ThePage({
         text: selectedTextFinal,
         book: data?.book,
         chapter: data?.chapter,
+        translation: data?.translation,
       });
     };
 
@@ -740,7 +863,7 @@ function ThePage({
       Update(Element.data);
       if (globalThis.GetBooksDataForMenu)
         globalThis.GetBooksDataForMenu(
-          `https://bible.helloao.org/api/${Element.data.data.translation}/books.json`,
+          `https://vmfnri.helloao.org/api/${Element.data.data.translation}/books.json`,
           Element.data.data.translation
         );
     }
@@ -751,6 +874,7 @@ function ThePage({
   async function openNextChapter() {
     await bible.openNext();
     setData(bible.data);
+    setFootnotes(bible.footnotes);
 
     globalThis.GlobalChapter = bible.data.chapter - 1;
 
@@ -770,6 +894,7 @@ function ThePage({
   async function openPrevChapter() {
     await bible.openPrevious();
     setData(bible.data);
+    setFootnotes(bible.footnotes);
 
     globalThis.GlobalChapter = bible.data.chapter - 1;
 
@@ -790,8 +915,10 @@ function ThePage({
     try {
       await bible.open(bookId, chapter, (translation = null), chapterUrl);
       setData(bible.data);
+      setFootnotes(bible.footnotes);
     } catch {
-      const tab = globalThis.AddTab({
+      if (tab) return;
+      const newTab = globalThis.AddTab({
         id: uuid(),
         taken: false,
         data: {
@@ -803,14 +930,16 @@ function ThePage({
           translation: translation || "BSB",
         },
       });
-      setTab(tab);
-      setData(bible.data);
+      setTab(newTab);
+      console.log("newTab created for open error", newTab);
+      return;
     }
   }
 
-  async function changeTranslation(id, bookData, forcedBaseUrl) {
-    await bible.changeTranslation(id, bookData, forcedBaseUrl);
+  async function changeTranslation(id, booksData, forcedBaseUrl) {
+    await bible.changeTranslation(id, booksData, forcedBaseUrl);
     setData(bible.data);
+    setFootnotes(bible.footnotes);
   }
 
   const highlightWords = useCallback(
@@ -920,14 +1049,14 @@ function ThePage({
     globalThis.RemoveWordHighlight = removeWordHighlight;
     globalThis.ClearAllWordHighlights = clearAllWordHighlights;
     shout("onBookChanged", { ...data, tabId: tab?.id });
-    clearAllVerseHighlights();
-    // os.log("clearAllVerseHighlights", clearAllVerseHighlights);
+    setCommandHighlight([]);
     if (data && JSON.stringify(tab?.data) !== JSON.stringify(data)) {
       setTab((prev) => ({ ...prev, data }));
     }
   }, [data]);
 
   function hanldNavFunctions() {
+    console.log("hanldNavFunctions", { tab, sharedTab, setActiveTab, panelId });
     if (tab && tab?.id && !sharedTab) setActiveTab(tab?.id);
     setNavFunctions({
       openNextChapter,
@@ -947,6 +1076,20 @@ function ThePage({
     globalThis.SetInHold = setInHold;
     globalThis.SetShowCommands = setShowCommands;
 
+    globalThis.ClearMobileVerseSelection = () => {
+      setClickedVerses([]);
+      setClickedVersesContext({});
+      setShowVerseToolbar(false);
+      setCommandHighlight([]);
+      setLastSelectedVerse(null);
+      setSelectedText("");
+      setShowCommands(false);
+      if (window.getSelection) {
+        const sel = window.getSelection();
+        if (sel?.removeAllRanges) sel.removeAllRanges();
+      }
+    };
+
     globalThis.HighlightWords = highlightWords;
     globalThis.RemoveWordHighlight = removeWordHighlight;
     globalThis.ClearAllWordHighlights = clearAllWordHighlights;
@@ -964,6 +1107,7 @@ function ThePage({
         to: "panel",
       });
     }
+    globalThis.LastClickedPanelUpdate = panelId;
   }
 
   function Update(tab) {
@@ -1046,15 +1190,13 @@ function ThePage({
   const [highlightOnce, setHighlightOnce] = useState(false);
 
   useEffect(() => {
-    if (!globalThis.tabHighlights) {
-      globalThis.tabHighlights = {};
-    }
-    if (tab?.id && !globalThis.tabHighlights[tab?.id]) {
-      globalThis.tabHighlights[tab?.id] = {};
-    }
+    if (tab?.id) {
+      if (!masks?.tabHighlights) {
+        setTagMask(thisBot, "tabHighlights", {}, "local");
+      }
 
-    if (tab?.id && globalThis.tabHighlights[tab?.id]) {
-      setHighlighted(globalThis.tabHighlights[tab?.id]);
+      const savedHighlights = masks?.tabHighlights?.[tab.id] || {};
+      setHighlighted(savedHighlights);
     }
 
     globalThis.SetHighlighted = setHighlighted;
@@ -1062,14 +1204,23 @@ function ThePage({
     return () => {
       globalThis.SetHighlighted = null;
     };
-  }, [tab?.id, highlighted]);
+  }, [tab?.id]);
+
+  useEffect(() => {
+    if (tab?.id && data?.book && data?.chapter) {
+      const savedHighlights = masks?.tabHighlights?.[tab.id] || {};
+      setHighlighted(savedHighlights);
+    }
+  }, [tab?.id, data?.book, data?.chapter]);
 
   const clearAllVerseHighlights = useCallback(() => {
     setHighlighted({});
     setCommandHighlight([]);
 
-    if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
-    if (tab?.id) globalThis.tabHighlights[tab.id] = {};
+    if (tab?.id) {
+      const updatedMaskHighlights = { ...masks?.tabHighlights, [tab.id]: {} };
+      setTagMask(thisBot, "tabHighlights", updatedMaskHighlights, "local");
+    }
 
     shout("onAllVerseHighlightsCleared", {
       tabId: tab?.id,
@@ -1080,10 +1231,7 @@ function ThePage({
 
   const toggleVerseHighlight = useCallback(
     (verseNumbers, color, scroll, fadeIn, skipIt) => {
-      // if (!skipIt)
-      //   return
       if (!tab?.id) return;
-      
 
       const verseId = `v-${
         Array.isArray(verseNumbers)
@@ -1104,25 +1252,37 @@ function ThePage({
 
       setHighlighted((prev) => {
         const newHighlighted = { ...prev };
-        const allHighlighted = numbers.every((vn) => newHighlighted[vn]);
         const groupId = Date.now();
 
+        const allHighlighted = numbers.every((vn) => {
+          const key = `${data?.book}-${data?.chapter}-${vn}`;
+          return newHighlighted[key];
+        });
+
         if (allHighlighted) {
-          numbers.forEach((vn) => delete newHighlighted[vn]);
+          numbers.forEach((vn) => {
+            const key = `${data?.book}-${data?.chapter}-${vn}`;
+            delete newHighlighted[key];
+          });
         } else {
           numbers.forEach((vn) => {
-            newHighlighted[vn] = {
+            const key = `${data?.book}-${data?.chapter}-${vn}`;
+            newHighlighted[key] = {
               timestamp: groupId,
               book: data?.book,
               chapter: data?.chapter,
+              verseNumber: vn,
               group: groupId,
               color: color || wordHighlightsBC,
             };
           });
         }
 
-        if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
-        globalThis.tabHighlights[tab?.id] = newHighlighted;
+        const updatedMaskHighlights = {
+          ...masks?.tabHighlights,
+          [tab.id]: newHighlighted,
+        };
+        setTagMask(thisBot, "tabHighlights", updatedMaskHighlights, "local");
 
         if (
           fadeIn ||
@@ -1132,17 +1292,31 @@ function ThePage({
           if (tags?.sessions?.[configBot.id]?.config.highlightDuration)
             fadeIn = tags?.sessions?.[configBot.id]?.config.highlightDuration;
           if (fadeIn === 4) {
-            duration = 0; // Never remove highlight
+            duration = 0;
           } else if (typeof fadeIn === "number") {
-            duration = fadeIn * 1000; // Convert seconds to ms
+            duration = fadeIn * 1000;
           }
 
           if (duration > 0) {
             setTimeout(() => {
               setHighlighted((prevFade) => {
                 const faded = { ...prevFade };
-                numbers.forEach((vn) => delete faded[vn]);
-                globalThis.tabHighlights[tab?.id] = faded;
+                numbers.forEach((vn) => {
+                  const key = `${data?.book}-${data?.chapter}-${vn}`;
+                  delete faded[key];
+                });
+
+                const fadedMaskHighlights = {
+                  ...masks?.tabHighlights,
+                  [tab.id]: faded,
+                };
+                setTagMask(
+                  thisBot,
+                  "tabHighlights",
+                  fadedMaskHighlights,
+                  "local"
+                );
+
                 return faded;
               });
             }, duration);
@@ -1152,13 +1326,12 @@ function ThePage({
         return newHighlighted;
       });
     },
-    [tab?.id, data, data?.book, data?.chapter]
+    [tab?.id, data, data?.book, data?.chapter, wordHighlightsBC]
   );
 
   const highlightVerse = useCallback(
     (verseNumbers, color, scroll = true) => {
       if (!tab?.id) return;
-      // EmitData("highlight", { verseNumbers, color });
 
       const verseId = `v-${
         Array.isArray(verseNumbers)
@@ -1182,28 +1355,32 @@ function ThePage({
         const groupId = Date.now();
 
         numbers.forEach((vn) => {
-          newHighlighted[vn] = {
+          const key = `${data?.book}-${data?.chapter}-${vn}`;
+          newHighlighted[key] = {
             timestamp: groupId,
             book: data?.book,
             chapter: data?.chapter,
+            verseNumber: vn,
             group: groupId,
             color: color || wordHighlightsBC,
           };
         });
 
-        if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
-        globalThis.tabHighlights[tab?.id] = newHighlighted;
+        const updatedMaskHighlights = {
+          ...masks?.tabHighlights,
+          [tab.id]: newHighlighted,
+        };
+        setTagMask(thisBot, "tabHighlights", updatedMaskHighlights, "local");
 
         return newHighlighted;
       });
     },
-    [tab?.id, data, data?.book, data?.chapter]
+    [tab?.id, data, data?.book, data?.chapter, wordHighlightsBC]
   );
 
   const unHighlightVerse = useCallback(
     (verseNumbers) => {
       if (!tab?.id) return;
-      EmitData("highlight", { verseNumbers });
 
       const verseId = `v-${
         typeof verseNumbers === "object"
@@ -1224,18 +1401,23 @@ function ThePage({
       setHighlighted((prev) => {
         const newHighlighted = { ...prev };
 
-        const allHighlighted = numbers.every((vn) => newHighlighted[vn]);
+        const allHighlighted = numbers.every((vn) => {
+          const key = `${data?.book}-${data?.chapter}-${vn}`;
+          return newHighlighted[key];
+        });
 
         if (allHighlighted) {
           numbers.forEach((vn) => {
-            delete newHighlighted[vn];
+            const key = `${data?.book}-${data?.chapter}-${vn}`;
+            delete newHighlighted[key];
           });
         }
 
-        if (!globalThis.tabHighlights) {
-          globalThis.tabHighlights = {};
-        }
-        globalThis.tabHighlights[tab?.id] = newHighlighted;
+        const updatedMaskHighlights = {
+          ...masks?.tabHighlights,
+          [tab.id]: newHighlighted,
+        };
+        setTagMask(thisBot, "tabHighlights", updatedMaskHighlights, "local");
 
         return newHighlighted;
       });
@@ -1290,12 +1472,17 @@ function ThePage({
     return () => document.removeEventListener("keydown", handleEsc);
   }, []);
 
+  useEffect(() => {
+    const hasSelection = clickedVerses.length > 0 || showCommands;
+    (globalThis as any).SetMobileHasSelection?.(hasSelection);
+  }, [clickedVerses, showCommands]);
+
   // NEW: Handle verse clicks
   const handleVerseClick = useCallback(
     (verseNumber, verseElement) => {
       const ele = document.getElementById(`v-${verseNumber}`);
       const rect = ele.getBoundingClientRect();
-      // Only auto-position if the user has NOT moved the toolbar manually
+
       if (!userMovedToolbar) {
         setToolbarPos({
           x: rect.left + rect.width / 2,
@@ -1346,6 +1533,7 @@ function ThePage({
   );
 
   // NEW: Handle color selection from toolbar
+  // NEW: Handle color selection from toolbar
   const handleColorSelect = useCallback(
     (color) => {
       if (clickedVerses.length === 0) return;
@@ -1354,7 +1542,7 @@ function ThePage({
       clickedVerses.forEach((verseNum) => {
         toggleVerseHighlight(verseNum, color);
       });
-      EmitData("highlight", { verseNum, color });
+      EmitData("highlight", { verseNumbers: clickedVerses, color }); // Fixed: use clickedVerses instead of undefined verseNum
       // Clear clicked verses and hide toolbar
       setClickedVerses([]);
       setTimeout(() => {
@@ -1386,6 +1574,7 @@ function ThePage({
   }, [showVerseToolbar]);
   const [dragToolbar, setDragToolbar] = useState(false);
   const [toolbarPos, setToolbarPos] = useState({ x: 200, y: 200 }); // initial position
+  const { showHeading } = useBibleContext();
   useEffect(() => {
     if (!dragToolbar) return;
     setToolbarPos({
@@ -1394,19 +1583,270 @@ function ThePage({
     });
   }, [position, dragToolbar]);
 
+  // Preloaded adjacent chapter data for smooth carousel
+  const [prevChapterData, setPrevChapterData] = useState(null);
+  const [nextChapterData, setNextChapterData] = useState(null);
+  const prevChapterDataRef = useRef(null) as { current: any };
+  const nextChapterDataRef = useRef(null) as { current: any };
+  prevChapterDataRef.current = prevChapterData;
+  nextChapterDataRef.current = nextChapterData;
+
+  // Preload adjacent chapters whenever the current chapter changes
+  useEffect(() => {
+    if (!data) return;
+    const baseUrl = data.baseUrl || "https://vmfnri.helloao.org";
+
+    const preload = async (
+      url: string | null | undefined,
+      setter: (d: any) => void
+    ) => {
+      if (!url) {
+        setter(null);
+        return;
+      }
+      try {
+        const mgr = new BibleDataManager({ baseUrl });
+        await mgr.fetch(url);
+        setter(mgr.data);
+      } catch {
+        setter(null);
+      }
+    };
+
+    preload(data.nextChapter, setNextChapterData);
+    preload(data.prevChapter, setPrevChapterData);
+  }, [data?.nextChapter, data?.prevChapter]);
+
+  // Carousel refs
+  const swipeViewportRef = useRef(null) as { current: HTMLDivElement | null };
+  const swipeTrackRef = useRef(null) as { current: HTMLDivElement | null };
+  const currentPanelRef = useRef(null) as { current: HTMLDivElement | null };
+  const swipeTouchStartX = useRef(null) as { current: number | null };
+  const swipeTouchStartY = useRef(null) as { current: number | null };
+  const swipeDirectionLocked = useRef(null) as { current: "h" | "v" | null };
+  const swipeCurrentDx = useRef(0) as { current: number };
+  const openNextChapterRef = useRef(null) as {
+    current: (() => Promise<void>) | null;
+  };
+  const openPrevChapterRef = useRef(null) as {
+    current: (() => Promise<void>) | null;
+  };
+
+  const clearSelectionRef = useRef(null) as { current: (() => void) | null };
+
+  // Keep function refs fresh every render
+  openNextChapterRef.current = openNextChapter;
+  openPrevChapterRef.current = openPrevChapter;
+  clearSelectionRef.current = () => {
+    setClickedVerses([]);
+    setClickedVersesContext({});
+    setShowVerseToolbar(false);
+    setSelectedText("");
+    setCommandHighlight([]);
+    setLastSelectedVerse(null);
+    setShowCommands(false);
+  };
+
+  useEffect(() => {
+    const viewport = swipeViewportRef.current;
+    if (!viewport) return;
+
+    const PANEL_PCT = 100 / 3; // 33.333…%
+
+    const getTrack = () => swipeTrackRef.current;
+    const getPanel = () => currentPanelRef.current;
+
+    const onTouchStart = (e: TouchEvent) => {
+      swipeTouchStartX.current = e.touches[0].clientX;
+      swipeTouchStartY.current = e.touches[0].clientY;
+      swipeDirectionLocked.current = null;
+      swipeCurrentDx.current = 0;
+      const track = getTrack();
+      if (track) track.style.transition = "none";
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (
+        swipeTouchStartX.current === null ||
+        swipeTouchStartY.current === null
+      )
+        return;
+      const dx = e.touches[0].clientX - swipeTouchStartX.current;
+      const dy = e.touches[0].clientY - swipeTouchStartY.current;
+
+      if (!swipeDirectionLocked.current) {
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+          swipeDirectionLocked.current = "h";
+        } else if (Math.abs(dy) > 10) {
+          swipeDirectionLocked.current = "v";
+          return;
+        } else {
+          return;
+        }
+      }
+
+      if (swipeDirectionLocked.current === "v") return;
+      e.preventDefault();
+
+      const hasNext = !!nextChapterDataRef.current;
+      const hasPrev = !!prevChapterDataRef.current;
+      let offset = dx;
+
+      // Strong rubber-band when no adjacent content loaded yet
+      if ((dx < 0 && !hasNext) || (dx > 0 && !hasPrev)) {
+        offset = Math.sign(dx) * Math.min(Math.abs(dx) * 0.15, 30);
+      } else {
+        // Soft rubber-band past 50% of viewport
+        const limit = window.innerWidth * 0.5;
+        if (Math.abs(dx) > limit) {
+          offset = Math.sign(dx) * (limit + (Math.abs(dx) - limit) * 0.2);
+        }
+      }
+
+      swipeCurrentDx.current = offset;
+      const track = getTrack();
+      if (track)
+        track.style.transform = `translateX(calc(-${PANEL_PCT}% + ${offset}px))`;
+    };
+
+    const onTouchEnd = () => {
+      if (swipeDirectionLocked.current !== "h") {
+        swipeTouchStartX.current = null;
+        swipeDirectionLocked.current = null;
+        return;
+      }
+
+      const dx = swipeCurrentDx.current;
+      const THRESHOLD = 80;
+      const hasNext = !!nextChapterDataRef.current;
+      const hasPrev = !!prevChapterDataRef.current;
+
+      swipeTouchStartX.current = null;
+      swipeDirectionLocked.current = null;
+      swipeCurrentDx.current = 0;
+
+      const track = getTrack();
+      const panel = getPanel();
+      if (!track) return;
+
+      if (dx < -THRESHOLD && hasNext && openNextChapterRef.current) {
+        clearSelectionRef.current?.();
+        const fn = openNextChapterRef.current;
+        track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transform = `translateX(-${PANEL_PCT * 2}%)`;
+        setTimeout(async () => {
+          track.style.transition = "none";
+          track.style.transform = `translateX(-${PANEL_PCT}%)`;
+          if (panel) panel.scrollTop = 0;
+          await fn();
+        }, 250);
+      } else if (dx > THRESHOLD && hasPrev && openPrevChapterRef.current) {
+        clearSelectionRef.current?.();
+        const fn = openPrevChapterRef.current;
+        track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transform = `translateX(0%)`;
+        setTimeout(async () => {
+          track.style.transition = "none";
+          track.style.transform = `translateX(-${PANEL_PCT}%)`;
+          if (panel) panel.scrollTop = 0;
+          await fn();
+        }, 250);
+      } else {
+        track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transform = `translateX(-${PANEL_PCT}%)`;
+      }
+    };
+
+    viewport.addEventListener("touchstart", onTouchStart, { passive: true });
+    viewport.addEventListener("touchmove", onTouchMove, { passive: false });
+    viewport.addEventListener("touchend", onTouchEnd, { passive: true });
+
+    return () => {
+      viewport.removeEventListener("touchstart", onTouchStart);
+      viewport.removeEventListener("touchmove", onTouchMove);
+      viewport.removeEventListener("touchend", onTouchEnd);
+    };
+  }, []);
+
+  const removeBibleStack =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeBibleStack;
+
+  const removeBookMark =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeBookMark;
+  const mobileBookLogo =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.mobileBookLogo;
+
   return (
-    <div
-      className="pageContainer"
-      onMouseLeave={handleMouseLeave}
-      onMouseEnter={handleMouseEnter}
-      onMouseUp={handleMouseUp}
-      onClick={hanldNavFunctions}
-      style={{
-        direction,
-      }}
-    >
-      <style>
-        {`
+    <>
+      <div
+        ref={swipeViewportRef}
+        style={{
+          overflow: "hidden",
+          width: "100%",
+          height: "100%",
+          position: "relative",
+        }}
+      >
+        <div
+          ref={swipeTrackRef}
+          style={{
+            display: "flex",
+            width: "300%",
+            height: "100%",
+            transform: "translateX(-33.333%)",
+            willChange: "transform",
+          }}
+        >
+          {/* Previous chapter preview panel */}
+          <div
+            className="pageContainer"
+            style={{
+              flex: "0 0 33.333%",
+              overflowX: "hidden",
+              direction,
+              pointerEvents: "none",
+            }}
+          >
+            <SidePanelContent data={prevChapterData} />
+          </div>
+
+          {/* Current chapter panel */}
+          <div
+            className="pageContainer"
+            ref={currentPanelRef}
+            onMouseLeave={handleMouseLeave}
+            onMouseEnter={handleMouseEnter}
+            onMouseUp={handleMouseUp}
+            onClick={hanldNavFunctions}
+            onScroll={(e) => {
+              os.log("scrolling, closing popups", e);
+              globalThis.closePopupSettings();
+              const el = e.currentTarget;
+              const currentScrollTop = el.scrollTop;
+              if (globalThis.IsMobileNow && globalThis.IsMobileNow()) {
+                if (currentScrollTop <= 0) {
+                  document.body.classList.remove("scroll-hide-bars");
+                } else if (
+                  currentScrollTop > lastScrollTopRef.current &&
+                  currentScrollTop > 50
+                ) {
+                  document.body.classList.add("scroll-hide-bars");
+                } else if (currentScrollTop < lastScrollTopRef.current) {
+                  document.body.classList.remove("scroll-hide-bars");
+                }
+                lastScrollTopRef.current = currentScrollTop;
+              }
+            }}
+            style={{
+              flex: "0 0 33.333%",
+              direction,
+              overflowX: "hidden",
+            }}
+          >
+            <style>
+              {`
         .pageContainer{
           position: relative;
         }
@@ -1417,227 +1857,724 @@ function ThePage({
         .toolbar-item-wrapper{
             display:${showVerseToolbar && globalThis.IsMobileNow() ? "none !important" : ""}
           }
+        .mobile-bottom-navbar {
+          display:${showVerseToolbar && globalThis.IsMobileNow() ? "none !important" : ""}
+        }
         .bookTitle,
         .sectionTitle {
           display:${direction ? "ruby" : null}
         }
 
         .verse-clicked {
-          border-bottom: 2px dashed #4459F3 !important;
-         
+          border-bottom: 2px dashed var(--tertiaryColor) !important;
+
+        }
+
+        .footnote-icon {
+          display: inline-flex;
+          align-items: center;
+          margin-left: 4px;
+          font-size: inherit;
+          color: var(--spaceSelection);
+          cursor: pointer;
+          user-select: none;
+          vertical-align: baseline;
+          position: relative;
+          top: 0.1em;
+        }
+
+        .footnote-icon .material-symbols-outlined {
+          font-size: 0.85em;
+        }
+
+        .footnote-icon:hover {
+          color: #2030C0;
+          transform: scale(1.1);
+        }
+
+        .footnote-modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10001;
+          padding: 20px;
+        }
+
+        .footnote-modal {
+          background: var(--pageBackground);
+          border-radius: 12px;
+          max-width: 600px;
+          width: 90%;
+          max-height: 80vh;
+          overflow: hidden;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+          display: flex;
+          flex-direction: column;
+        }
+
+        .footnote-modal-header {
+          padding: 20px;
+          border-bottom: 1px solid #e0e0e0;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .footnote-modal-header h3 {
+          margin: 0;
+          font-size: 1.2em;
+          color: var(--text1);
+        }
+
+        .footnote-modal-close {
+          background: none;
+          border: none;
+          font-size: 1.5em;
+          cursor: pointer;
+          color: var(--text1);
+          padding: 0;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 4px;
+        }
+
+        .footnote-modal-close:hover {
+          background: #f0f0f0;
+          color: var(--text1);
+        }
+
+        .footnote-modal-content {
+          padding: 20px;
+          overflow-y: auto;
+        }
+
+        .footnote-item {
+          margin-bottom: 16px;
+          line-height: 1.6;
+        }
+
+        .footnote-number {
+          font-weight: 600;
+          color: var(--spaceSelection);
+          margin-right: 8px;
+          font-size: 0.95em;
+        }
+
+        .footnote-text {
+          color: var(--text1);
+          font-size: 0.95em;
+        }
+
+        /* Mobile Header Styles */
+        .mobile-header {
+          display: none;
+          position: sticky;
+          top: 0;
+          background: var(--pageBackground);
+          border-bottom: 1px solid #e0e0e0;
+          padding: 12px 16px;
+          z-index: 100;
+          transition: transform 0.3s ease;
+        }
+
+        body.scroll-hide-bars .mobile-header {
+          transform: translateY(-100%);
+        }
+
+        @media (max-width: 768px) {
+          .mobile-header {
+            display: flex;
+          }
+        }
+
+        .mobile-header-content {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+        }
+
+        .mobile-header-left {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex: 1;
+        }
+
+        .mobile-header-title {
+          font-size: 18px;
+          font-weight: 600;
+          color: var(--text1);
+          margin: 0;
+        }
+
+        .mobile-header-translation {
+          font-size: 12px;
+          color: #999;
+          margin: 0;
+          display: inline;
+        }
+
+        .mobile-header-nav {
+          display: flex;
+          gap: 8px;
+        }
+
+        .mobile-nav-button {
+          background: none;
+          border: none;
+          color: var(--spaceSelection);
+          font-size: 20px;
+          cursor: pointer;
+          padding: 4px 8px;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 36px;
+          min-height: 36px;
+          transition: background 0.2s;
+        }
+
+        .mobile-nav-button:active {
+          background: rgba(0, 0, 0, 0.05);
+        }
+
+        .mobile-header-right {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .mobile-icon-button {
+          background: none;
+          border: none;
+          color: var(--text1);
+          font-size: 24px;
+          cursor: pointer;
+          padding: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 40px;
+          min-height: 40px;
+          border-radius: 6px;
+          transition: all 0.2s;
+          background: #F8FAFC;
+          border-radius: 50%;
+        }
+
+        .mobile-icon-button:active {
+          background: rgba(0, 0, 0, 0.05);
+          transform: scale(0.95);
+        }
+
+        .mobile-bookmark-icon {
+          font-size: 22px;
+        }
+
+        .bookTitle {
+          @media (max-width: 768px) {
+            display: none;
+          }
+        }
+
+        /* Compact scroll header - shows book/chapter when main header is hidden */
+        .mobile-compact-scroll-header {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          text-align: center;
+          padding: 8px 16px;
+          background: var(--pageBackground);
+          z-index: 99;
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--text1);
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.3s ease;
+        }
+
+        body.scroll-hide-bars .mobile-compact-scroll-header {
+          opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+          .mobile-compact-scroll-header {
+            display: block;
+          }
+        }
+
+        .compact-header-divider {
+          margin: 0 6px;
+          color: #666;
+          font-weight: 400;
+        }
+
+        .compact-header-translation {
+          font-weight: 400;
+          font-size: 12px;
+          color: #999;
         }
          `}
-      </style>
-      {data && tab && !tabEntered ? (
-        <>
-          <div
-            style={{ "pointer-events": isDragging ? "none" : null }}
-            className="bookTitle"
-          >{`${data?.book} ${data?.chapter}`}</div>
-          {data &&
-            data.content.map((e) => {
-              return (
-                <>
-                  <div style={{ "pointer-events": isDragging ? "none" : null }}>
-                    <Section
-                      {...e}
-                      inHold={inHold}
-                      setInHold={setInHold}
-                      book={data.book}
-                      chapter={data.chapter}
-                      blinker={blinker}
-                      setRef={refs}
-                      holded={holded}
-                      clickedVersesContext={clickedVersesContext}
-                      selected={selected}
-                      highlighted={highlighted}
-                      wordHighlights={wordHighlights}
-                      textEdit={false}
-                      showCommands={showCommands}
-                      setShowCommands={setShowCommands}
-                      selectedText={selectedText}
-                      lastSelectedVerse={lastSelectedVerse}
-                      contextData={contextData}
-                      setContextData={setContextData}
-                      commandsRef={commandsRef}
-                      setLastSelectedVerse={setLastSelectedVerse}
-                      setCommandHighlight={setCommandHighlight}
-                      commandHighlight={commandHighlight}
-                      wordHighlightsTC={wordHighlightsTC}
-                      wordHighlightsBC={wordHighlightsBC}
-                      clickedVerses={clickedVerses}
-                      handleVerseClick={handleVerseClick}
-                      setClickedVerses={setClickedVerses}
-                      setShowVerseToolbar={setShowVerseToolbar}
-                    />
+            </style>
+            {data && tab && !tabEntered ? (
+              <>
+                {/* Mobile Header */}
+                {globalThis.IsMobileNow && globalThis.IsMobileNow() && (
+                  <div className="mobile-header">
+                    <div className="mobile-header-content">
+                      <div className="mobile-header-left">
+                        <div>
+                          <h1 className="mobile-header-title">
+                            {`${data?.book} ${data?.chapter}`}{" "}
+                            <p className="mobile-header-translation">
+                              • {data?.shortName || ""}
+                            </p>
+                          </h1>
+                        </div>
+                      </div>
+
+                      <div className="mobile-header-right">
+                        <button
+                          className="mobile-icon-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            os.log("Opening mobile settings", setOpenOnMobile);
+                            setOpenOnMobile(true);
+                            setSidebarWidth(280);
+                            setCollapsed(false);
+                            setSideBarMode("settings");
+                          }}
+                          title="Settings"
+                        >
+                          <MobileSettingsIcon />
+                        </button>
+                      </div>
+                    </div>
+                    {!removeBookMark &&
+                      tab?.id &&
+                      masks?.mobileBookmarks &&
+                      Object.values(masks.mobileBookmarks)
+                        .flat()
+                        .includes(tab.id) && (
+                        <div className={"mobile-header-bookmark"}>
+                          <BookMarkIcon
+                            stroke={"var(--selectedSpaceColor)"}
+                            fill={"var(--selectedSpaceColor)"}
+                          />
+                        </div>
+                      )}
                   </div>
-                </>
-              );
-            })}
-          <div style={{ height: "40px" }}></div>
-          <div
-            style={{
-              margin: "auto",
-              width: "80%",
-              height: "1px",
-              background: "gray",
-            }}
-          ></div>
-          <div
-            style={{
-              width: "50%",
-              display: "flex",
-              "align-items": "center",
-              "justify-content": "center",
-              position: "relative",
-            }}
-          >
-            <PageToolbar />
-          </div>
-          <div style={{ height: "160px" }}></div>
-
-          {showVerseToolbar &&
-            !(role === "follower" && config.onlyHostHighlight) && (
-              <div
-                onMouseDown={() => {
-                  if (!globalThis.IsMobileNow()) {
-                    // userMovedToolbar.current = true;
-                    setUserMovedToolbar(true);
-                    setDragToolbar(true);
-                  }
-                }}
-                onMouseUp={() => setDragToolbar(false)}
-                // onMouseLeave={() => setDragToolbar(false)}
-                style={
-                  globalThis.IsMobileNow()
-                    ? {
-                        position: "fixed",
-                        left: "50%",
-                        bottom: "20px",
-                        transform: "translateX(-50%)",
-                        zIndex: 10000,
-                        width: "90%",
-                        maxWidth: "420px",
-                        cursor: "default",
-                        userSelect: "none",
-                      }
-                    : 
-                    {
-                        position: "fixed",
-                        left: toolbarPos.x - 190,
-                        top: toolbarPos.y,
-                        zIndex: 10000,
-                        cursor: dragToolbar ? "grabbing" : "grab",
-                        userSelect: "none",
-                      }
-                }
-                className="verse-toolbar"
-              >
-                <VerseToolbar
-                  clickedVerses={clickedVerses}
-                  toggleVerseHighlight={toggleVerseHighlight}
-                  book={data?.book}
-                  setClickedVerses={setClickedVerses}
-                  chapter={data?.chapter}
-                  highlighted={highlighted}
-                  clickedVersesContext={clickedVersesContext}
-                  onColorSelect={handleColorSelect}
-                  onClose={() => {
-                    setClickedVerses([]);
-                    setTimeout(() => {
-                      setShowVerseToolbar(false);
-                    }, 5);
+                )}
+                <div
+                  onClick={(e) => {
+                    if (globalThis.setOpenSidebar && globalThis.openSidebar) {
+                      globalThis.setOpenSidebar(false);
+                      globalThis.selectBookSelectorBook &&
+                        globalThis.selectBookSelectorBook(null);
+                    } else {
+                      globalThis.setOpenSidebar &&
+                        globalThis.setOpenSidebar(true);
+                      globalThis.selectBookSelectorBook &&
+                        globalThis.selectBookSelectorBook(data.bookId);
+                    }
                   }}
-                />
-              </div>
-            )}
-        </>
-      ) : (
-        <>
-          <div
-            style={{
-              height: "100%",
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              // backgroundColor: "#f8f9fa",
-            }}
-            className={`pageContainer ${
-              tabEntered ? "tabEntered" : "tabDrop"
-            } ${highlightOnce ? "tabHighlightBg" : ""}`}
-          >
-            <div
-              style={{
-                pointerEvents: isDragging ? "none" : undefined,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                textAlign: "center",
-                padding: "40px",
-                borderRadius: "12px",
-                maxWidth: "400px",
-                width: "90%",
-              }}
-            >
-              <div
-                onClick={() => {
-                  setOpenSidebar((prev) => !prev);
-                  setCurrentExperience(0);
-                }}
-                style={{
-                  fontSize: "24px",
-                  marginBottom: "20px",
-                  color: "#333",
-                }}
-              >
-                <img
-                  className="coloredIcon"
-                  style={{ width: "50px" }}
-                  src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
-                />
-              </div>
+                  style={{ "pointer-events": isDragging ? "none" : null }}
+                  className="bookTitle"
+                >
+                  {`${data?.book} ${data?.chapter}`}{" "}
+                  <span
+                    style={{
+                      fontSize: "24px",
+                      color:
+                        "color-mix(in srgb, var(--text1), transparent 40%)",
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (globalThis.setOpenSidebar && globalThis.openSidebar) {
+                        globalThis.setOpenSidebar(false);
+                        globalThis.setSelectingTranslation &&
+                          globalThis.setSelectingTranslation(false);
+                        globalThis.selectBookSelectorBook &&
+                          globalThis.selectBookSelectorBook(null);
+                      } else {
+                        globalThis.setOpenSidebar(true);
+                        globalThis.setSelectingTranslation &&
+                          globalThis.setSelectingTranslation(true);
+                        globalThis.selectBookSelectorBook &&
+                          globalThis.selectBookSelectorBook(data.bookId);
+                      }
+                    }}
+                  >{` / ${data?.shortName}`}</span>
+                </div>
+                {showHeading[activeSpace] && (
+                  <div style={{ height: "1rem" }}></div>
+                )}
+                {data &&
+                  data.content.map((e) => {
+                    return (
+                      <>
+                        <div
+                          style={{
+                            "pointer-events": isDragging ? "none" : null,
+                          }}
+                        >
+                          <Section
+                            {...e}
+                            data={data}
+                            inHold={inHold}
+                            setInHold={setInHold}
+                            book={data.book}
+                            chapter={data.chapter}
+                            blinker={blinker}
+                            setRef={refs}
+                            holded={holded}
+                            clickedVersesContext={clickedVersesContext}
+                            selected={selected}
+                            highlighted={highlighted}
+                            wordHighlights={wordHighlights}
+                            textEdit={false}
+                            showCommands={showCommands}
+                            setShowCommands={setShowCommands}
+                            selectedText={selectedText}
+                            lastSelectedVerse={lastSelectedVerse}
+                            contextData={contextData}
+                            setContextData={setContextData}
+                            commandsRef={commandsRef}
+                            setLastSelectedVerse={setLastSelectedVerse}
+                            setCommandHighlight={setCommandHighlight}
+                            commandHighlight={commandHighlight}
+                            wordHighlightsTC={wordHighlightsTC}
+                            wordHighlightsBC={wordHighlightsBC}
+                            clickedVerses={clickedVerses}
+                            handleVerseClick={handleVerseClick}
+                            setClickedVerses={setClickedVerses}
+                            setShowVerseToolbar={setShowVerseToolbar}
+                            footnotes={footnotes}
+                            setActiveFootnote={setActiveFootnote}
+                            setShowFootnoteModal={setShowFootnoteModal}
+                          />
+                        </div>
+                      </>
+                    );
+                  })}
+                <div style={{ height: "120px" }}></div>
+                <div
+                  style={{
+                    margin: "auto",
+                    width: "80%",
+                    height: "1px",
+                    background: "gray",
+                  }}
+                ></div>
+                {removeBibleStack ? null : (
+                  <div
+                    style={{
+                      width: "50%",
+                      display: "flex",
+                      "align-items": "center",
+                      "justify-content": "center",
+                      position: "relative",
+                    }}
+                  >
+                    <PageToolbar tab={tab} panelId={panelId} />
+                  </div>
+                )}
+                <div style={{ height: "160px" }}></div>
+              </>
+            ) : (
+              <>
+                <div
+                  style={{
+                    height: "100%",
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    // backgroundColor: "#f8f9fa",
+                  }}
+                  className={`pageContainer ${
+                    tabEntered ? "tabEntered" : "tabDrop"
+                  } ${highlightOnce ? "tabHighlightBg" : ""}`}
+                >
+                  <div
+                    style={{
+                      pointerEvents: isDragging ? "none" : undefined,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      textAlign: "center",
+                      padding: "40px",
+                      borderRadius: "12px",
+                      maxWidth: "400px",
+                      width: "90%",
+                    }}
+                  >
+                    <div
+                      onClick={() => {
+                        setOpenSidebar((prev) => !prev);
+                        setCurrentExperience(0);
+                        globalThis.MakingNewTab = true;
+                      }}
+                      style={{
+                        fontSize: "24px",
+                        marginBottom: "20px",
+                        color: "#333",
+                      }}
+                    >
+                      <img
+                        className="coloredIcon"
+                        style={{ width: "50px" }}
+                        src={
+                          mobileBookLogo ||
+                          "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
+                        }
+                      />
+                    </div>
 
-              <div
-                style={{
-                  width: "80%",
-                  height: "1px",
-                  background: "#e0e0e0",
-                  marginTop: "40px",
-                  margin: "auto",
-                }}
-              ></div>
-              <div
-                style={{
-                  width: "100%",
-                  marginTop: "30px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  position: "relative",
+                    <div
+                      style={{
+                        width: "80%",
+                        height: "1px",
+                        background: "#e0e0e0",
+                        marginTop: "40px",
+                        margin: "auto",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        width: "100%",
+                        marginTop: "30px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        position: "relative",
+                      }}
+                    >
+                      {!removeBibleStack && (
+                        <PageToolbar
+                          panelId={panelId}
+                          tab={tab}
+                          path="showInStarterToolbar"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Next chapter preview panel */}
+          <div
+            className="pageContainer"
+            style={{
+              flex: "0 0 33.333%",
+              overflowX: "hidden",
+              direction,
+              pointerEvents: "none",
+            }}
+          >
+            <SidePanelContent data={nextChapterData} />
+          </div>
+        </div>
+      </div>
+
+      {/* Verse toolbar rendered outside the carousel so position:fixed works relative to the viewport */}
+      {showVerseToolbar &&
+        !(role === "follower" && config.onlyHostHighlight) && (
+          <div
+            onMouseDown={() => {
+              if (!globalThis.IsMobileNow()) {
+                setUserMovedToolbar(true);
+                setDragToolbar(true);
+              }
+            }}
+            onMouseUp={() => setDragToolbar(false)}
+            style={
+              globalThis.IsMobileNow()
+                ? {
+                    position: "fixed",
+                    left: "50%",
+                    bottom: "20px",
+                    transform: "translateX(-50%)",
+                    zIndex: 10000,
+                    width: "90%",
+                    maxWidth: "420px",
+                    cursor: "default",
+                    userSelect: "none",
+                  }
+                : {
+                    position: "fixed",
+                    left: toolbarPos.x - 50,
+                    top: toolbarPos.y,
+                    zIndex: 10000,
+                    cursor: dragToolbar ? "grabbing" : "grab",
+                    userSelect: "none",
+                  }
+            }
+            className="verse-toolbar"
+          >
+            <VerseToolbar
+              clickedVerses={clickedVerses}
+              showVerseToolbar={showVerseToolbar}
+              toggleVerseHighlight={toggleVerseHighlight}
+              book={data?.book}
+              setClickedVerses={setClickedVerses}
+              chapter={data?.chapter}
+              highlighted={highlighted}
+              clickedVersesContext={clickedVersesContext}
+              onColorSelect={handleColorSelect}
+              activeSpace={activeSpace}
+              spaces={spaces}
+              onClose={() => {
+                setClickedVerses([]);
+                setTimeout(() => {
+                  setShowVerseToolbar(false);
+                }, 5);
+              }}
+            />
+          </div>
+        )}
+
+      {/* Compact scroll header - shows book/chapter info when scrolled down on mobile */}
+      {globalThis.IsMobileNow && globalThis.IsMobileNow() && data && (
+        <div className="mobile-compact-scroll-header">
+          {showVerseToolbar && clickedVerses.length > 0 ? (
+            <>
+              {`Selected: ${data?.book} ${data?.chapter}:${[...clickedVerses].sort((a, b) => a - b).join(",")}`}
+              <span className="compact-header-divider">|</span>
+              <span className="compact-header-translation">
+                {data?.shortName || ""}
+              </span>
+            </>
+          ) : (
+            <>
+              {`${data?.book} ${data?.chapter}`}
+              <span className="compact-header-divider">|</span>
+              <span className="compact-header-translation">
+                {data?.shortName || ""}
+              </span>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Footnote Modal rendered outside the carousel so position:fixed works relative to the viewport */}
+      {showFootnoteModal && activeFootnote && (
+        <div
+          className="footnote-modal-overlay"
+          onClick={() => {
+            setShowFootnoteModal(false);
+            setActiveFootnote(null);
+          }}
+        >
+          <div className="footnote-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="footnote-modal-header">
+              <h3>
+                {`${activeFootnote.book} ${activeFootnote.chapter}:${activeFootnote.verse}`}
+              </h3>
+              <button
+                className="footnote-modal-close"
+                onClick={() => {
+                  setShowFootnoteModal(false);
+                  setActiveFootnote(null);
                 }}
               >
-                <PageToolbar path="showInStarterToolbar" />
-              </div>
+                ✕
+              </button>
+            </div>
+            <div className="footnote-modal-content">
+              {activeFootnote.footnotes.map((footnote, idx) => {
+                if (!footnote) return null;
+
+                const footnoteText =
+                  footnote.text || footnote.note || footnote.content || "";
+                if (!footnoteText) return null;
+
+                return (
+                  <div key={idx} className="footnote-item">
+                    <span className="footnote-number">
+                      {footnote.caller || idx + 1}
+                    </span>
+                    <span className="footnote-text">{footnoteText}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </>
+        </div>
       )}
-    </div>
+    </>
   );
 }
 
-function PageToolbar({ path = "showInPageToolbar" }) {
+function SidePanelContent({ data }: { data: any }) {
+  if (!data?.content) return null;
+  return (
+    <>
+      <div className="bookTitle">{`${data.book} ${data.chapter}`}</div>
+      {data.content.map((section: any, i: number) => (
+        <div key={i}>
+          {section.heading && (
+            <div className="sectionTitle">{section.heading}</div>
+          )}
+          <div className="sectionCover">
+            {section.verses?.map((verse: any, j: number) => {
+              if (verse.lineBreak) return <br key={j} />;
+              return (
+                <span key={j}>
+                  {verse.verseNumber != null && (
+                    <span className="sectionTextNumber">
+                      {verse.verseNumber}
+                    </span>
+                  )}
+                  <span className="sectionText"> {verse.text}</span>{" "}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      <div style={{ height: "160px" }} />
+    </>
+  );
+}
+
+function PageToolbar({ panelId, tab, path = "showInPageToolbar" }) {
   const { tools } = useBibleContext();
 
   const visibleTools = tools.filter((tool) => tool[path]);
   if (visibleTools.length === 0) return null;
 
   return (
-    <div className="thePageToolbar">
+    <div
+      onClick={() => {
+        globalThis.LastClickedPanelUpdate = panelId;
+      }}
+      className="thePageToolbar"
+    >
       {visibleTools.map((tool) => (
         <div
-          onClick={tool.onClick}
+          onClick={(e) => {
+            globalThis.LastClickedPanelUpdate = panelId;
+            setTimeout(() => {
+              tool.onClick({ mode: !tab ? "panel" : "" });
+            }, 5);
+          }}
           className="tool-preview-page"
           key={tool.label}
         >
@@ -1786,11 +2723,12 @@ function splitByWordHighlights(
 }
 
 function Section({
+  data,
   heading,
   hebrew_subtitle,
   commandHighlight,
   setCommandHighlight,
-  clickedVersesContext ,
+  clickedVersesContext,
   setLastSelectedVerse,
   setRef,
   commandsRef,
@@ -1817,6 +2755,9 @@ function Section({
   handleVerseClick,
   setClickedVerses,
   setShowVerseToolbar,
+  footnotes,
+  setActiveFootnote,
+  setShowFootnoteModal,
 }) {
   const selectAllHeadingVerses = useCallback(() => {
     const verseNumbers = verses.map((v) => v.verseNumber);
@@ -1916,7 +2857,7 @@ function Section({
 
   const editTextStyle = {
     "border-radius": "6px",
-    border: "2px solid #4459F3",
+    border: "2px solid var(--spaceSelection)",
     background: "rgba(68, 89, 243, 0.10)",
     padding: "8px",
     position: "relative",
@@ -1977,11 +2918,69 @@ function Section({
     };
   };
 
+  const getVerseFootnotes = (verseNumber) => {
+    if (!footnotes || !Array.isArray(footnotes)) return [];
+
+    // Filter footnotes that match this verse number
+    return footnotes.filter(
+      (footnote) => footnote?.reference?.verse === verseNumber
+    );
+  };
+
+  const parseTextWithFootnotes = (text, verseNumber) => {
+    const verseFootnotes = getVerseFootnotes(verseNumber);
+    if (!verseFootnotes || verseFootnotes.length === 0) {
+      return text;
+    }
+
+    // Parse text and insert footnote markers where needed
+    // The footnote format from API typically includes markers in the text
+    let processedText = text;
+    const parts = [];
+    let lastIndex = 0;
+
+    // If footnotes exist, they usually have a 'noteId' or marker in the original text
+    verseFootnotes.forEach((footnote, idx) => {
+      const marker = footnote.marker || footnote.noteId;
+      if (marker && typeof processedText === "string") {
+        const markerRegex = new RegExp(`\\[${marker}\\]|${marker}`, "g");
+        const matches = [...processedText.matchAll(markerRegex)];
+
+        matches.forEach((match) => {
+          if (match.index > lastIndex) {
+            parts.push({
+              type: "text",
+              content: processedText.slice(lastIndex, match.index),
+            });
+          }
+          parts.push({
+            type: "footnote",
+            marker: idx + 1,
+            content: footnote.text || footnote.note || "",
+          });
+          lastIndex = match.index + match[0].length;
+        });
+      }
+    });
+
+    if (lastIndex < processedText.length) {
+      parts.push({
+        type: "text",
+        content: processedText.slice(lastIndex),
+      });
+    }
+
+    return parts.length > 0 ? parts : text;
+  };
+
   const renderVerseText = (verse) => {
     const verseKey = `${book}-${chapter}-${verse.verseNumber}`;
     const hasWordHighlights =
       wordHighlights[verseKey] &&
       Object.keys(wordHighlights[verseKey]).length > 0;
+
+    const verseFootnotes = getVerseFootnotes(verse.verseNumber);
+    const hasFootnotes = verseFootnotes && verseFootnotes.length > 0;
 
     if (globalThis.studyNotesPresent) {
       return (chunksMap[verse.verseNumber] || []).map((part, i) => {
@@ -2090,21 +3089,25 @@ function Section({
       return verse.text;
     }
   };
-  const {showHeading,showVerses} = useBibleContext()
-  const {  activeSpace } = useTabsContext();
+  const { showHeading, showVerses, showFootnotes } = useBibleContext();
+  const { activeSpace } = useTabsContext();
   return (
     <div>
-      {showHeading[activeSpace]&&<div
-        className="sectionTitle"
-        {...eventHandlers}
-        onClick={(e) => {
-          if (shouldSuppressClick()) return; // Prevent normal click if hold already triggered
+      {showHeading[activeSpace] ? (
+        <div
+          className="sectionTitle"
+          {...eventHandlers}
+          onClick={(e) => {
+            if (shouldSuppressClick()) return; // Prevent normal click if hold already triggered
 
-          shout("onHeadingClick", { heading });
-        }}
-      >
-        {heading}
-      </div>}
+            shout("onHeadingClick", { heading });
+          }}
+        >
+          {heading}
+        </div>
+      ) : (
+        <div style={{ height: "1em" }} />
+      )}
 
       {hebrew_subtitle && <div className="sectionTitle">{hebrew_subtitle}</div>}
       <div style={textEdit ? editTextStyle : null}>
@@ -2120,8 +3123,7 @@ function Section({
         <div className="sectionCover">
           {verses.map((verse) => {
             if (verse.lineBreak) {
-              // <p class="verseLineBreak"></p>;
-              return 
+              return <p className="verseLineBreak"></p>;
             }
 
             const [c, setC] = useState(false);
@@ -2169,57 +3171,71 @@ function Section({
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
+                    console.log(data, "data in verse click");
                     if (globalThis?.SetCurrentReference) {
                       shout("ToggleReference", {
-                        book,
+                        bookId: data?.bookId,
                         chapter,
                         verse: verse.verseNumber,
+                        baseUrl: data?.baseUrl,
+                        translation: data?.translation,
+                        bookName: data?.book,
                       });
-                      return;
                     }
                     handleVerseClick(verse.verseNumber);
                     SetShowCommands(false);
+                    const highlightKey = `${book}-${chapter}-${verse.verseNumber}`;
                     os.log({
                       verseNumber: verse.verseNumber,
                       text: verse.text,
                       chapter,
                       book,
-                      highlighted: highlighted?.[verse.verseNumber],
+                      highlighted: highlighted?.[highlightKey],
                     });
                     const verseClickData = {
                       verseNumber: verse.verseNumber,
                       text: verse.text,
                       chapter,
                       book,
-                      highlighted: highlighted?.[verse.verseNumber],
+                      highlighted: highlighted?.[highlightKey],
                     };
                     EmitData("onVerseClick", verseClickData);
                     shout("onVerseClick", verseClickData);
                   }}
                   style={{
                     "background-color":
-                      (highlighted?.[verse.verseNumber] &&
-                        highlighted?.[verse.verseNumber].book === book &&
-                        highlighted?.[verse.verseNumber].chapter === chapter) ||
-                      commandHighlight.includes(verse.verseNumber)
-                        ? highlighted?.[verse.verseNumber]?.color
+                      highlighted?.[
+                        `${book}-${chapter}-${verse.verseNumber}`
+                      ] || commandHighlight.includes(verse.verseNumber)
+                        ? highlighted?.[
+                            `${book}-${chapter}-${verse.verseNumber}`
+                          ]?.color
                         : "transparent",
                     color:
-                      (highlighted?.[verse.verseNumber] &&
-                        highlighted?.[verse.verseNumber].book === book &&
-                        highlighted?.[verse.verseNumber].chapter === chapter) ||
-                      commandHighlight.includes(verse.verseNumber)
+                      highlighted?.[
+                        `${book}-${chapter}-${verse.verseNumber}`
+                      ] || commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsTC
-                        : "var(--pageTextColor) !important",
+                        : "",
                     transition: "background-color 0.2s ease, border 0.2s ease",
                     "border-radius":
-                      highlighted?.[verse.verseNumber] || isClicked
+                      highlighted?.[
+                        `${book}-${chapter}-${verse.verseNumber}`
+                      ] || isClicked
                         ? "3px"
                         : "0",
                     padding:
-                      highlighted?.[verse.verseNumber] || isClicked ? "" : "0",
+                      highlighted?.[
+                        `${book}-${chapter}-${verse.verseNumber}`
+                      ] || isClicked
+                        ? ""
+                        : "0",
                     margin:
-                      highlighted?.[verse.verseNumber] || isClicked ? "" : "0",
+                      highlighted?.[
+                        `${book}-${chapter}-${verse.verseNumber}`
+                      ] || isClicked
+                        ? ""
+                        : "0",
                     "text-decoration":
                       inHold === verse.verseNumber || isTextDecorUnderline
                         ? "underline"
@@ -2228,51 +3244,230 @@ function Section({
                       inHold === verse.verseNumber || isTextDecorUnderline
                         ? "dotted"
                         : "",
-                    borderBottom: isClicked ? "2px dashed #4459F3" : "none",
+                    borderBottom: isClicked
+                      ? "2px dashed var(--spaceSelection)"
+                      : "none",
                   }}
                   className={`sectionText ${
                     verse?.verseNumber.toString() === activeVerse.toString()
                       ? "highlighted"
                       : ""
                   } ${
-                    highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
+                    highlighted?.[`${book}-${chapter}-${verse.verseNumber}`]
+                      ? "verse-highlighted"
+                      : ""
                   } ${isClicked ? "verse-clicked" : ""}`}
                 >
-                  {<span
-                   style={{display:showVerses[activeSpace]?"":"none"}}
-                    className={`sectionTextNumber ${
-                      globalThis.studyNotesPresent ? "clickableCursor" : ""
-                    }`}
-                    onClick={() => {
-                      if (globalThis.studyNotesPresent) {
-                        HighlightStudyNoteSection(verse?.verseNumber);
-                      }
-                    }}
-                    onPointerEnter={() => {
-                      globalThis.showRefModal = true;
-                      setTimeout(() => {
-                        if (globalThis.showRefModal) {
-                          shout("toggleReferenceModal", {
-                            book,
-                            chapter,
-                            verse: verse.verseNumber,
-                          });
-                        }
-                      }, 500);
-                    }}
-                    onPointerLeave={() => {
-                      globalThis.showRefModal = false;
-                    }}
-                  >
-                    {verse?.verseNumber}
-                  </span>}
                   {!c ? (
-                    renderVerseText(verse)
+                    (() => {
+                      const verseContent = renderVerseText(verse);
+                      const verseNumberElement = showVerses[activeSpace] ? (
+                        <span
+                          className={`sectionTextNumber ${
+                            globalThis.studyNotesPresent
+                              ? "clickableCursor"
+                              : ""
+                          }`}
+                          onClick={() => {
+                            if (globalThis.studyNotesPresent) {
+                              HighlightStudyNoteSection(verse?.verseNumber);
+                            }
+                          }}
+                          onPointerEnter={(e) => {
+                            globalThis.showRefModal = true;
+                            setTimeout(() => {
+                              if (globalThis.showRefModal) {
+                                shout("toggleReferenceModal", {
+                                  book,
+                                  chapter,
+                                  verse: verse.verseNumber,
+                                  mouseEvent: e,
+                                  ...data,
+                                });
+                              }
+                            }, 500);
+                          }}
+                          onPointerLeave={() => {
+                            globalThis.showRefModal = false;
+                          }}
+                        >
+                          {verse?.verseNumber}
+                        </span>
+                      ) : null;
+
+                      // Keep verse number with first word using nowrap span
+                      // Only wrap the verse number + first word together
+                      if (typeof verseContent === "string") {
+                        const firstSpaceIdx = verseContent.indexOf(" ");
+                        if (firstSpaceIdx > 0) {
+                          const firstWord = verseContent.slice(
+                            0,
+                            firstSpaceIdx
+                          );
+                          const restText = verseContent.slice(firstSpaceIdx);
+                          return (
+                            <>
+                              <span style={{ whiteSpace: "nowrap" }}>
+                                {verseNumberElement}
+                                {firstWord}
+                              </span>
+                              {restText}
+                              {(() => {
+                                const verseFootnotes = getVerseFootnotes(
+                                  verse.verseNumber
+                                );
+                                if (
+                                  showFootnotes[activeSpace] &&
+                                  verseFootnotes &&
+                                  verseFootnotes.length > 0
+                                ) {
+                                  return (
+                                    <span
+                                      className="footnote-icon"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveFootnote({
+                                          verse: verse.verseNumber,
+                                          footnotes: verseFootnotes,
+                                          book,
+                                          chapter,
+                                        });
+                                        setShowFootnoteModal(true);
+                                      }}
+                                      title="View footnotes"
+                                    >
+                                      <span class="material-symbols-outlined">
+                                        info
+                                      </span>
+                                    </span>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </>
+                          );
+                        }
+                        // Single word verse
+                        return (
+                          <>
+                            {verseNumberElement}
+                            {verseContent}
+                            {(() => {
+                              const verseFootnotes = getVerseFootnotes(
+                                verse.verseNumber
+                              );
+                              if (
+                                showFootnotes[activeSpace] &&
+                                verseFootnotes &&
+                                verseFootnotes.length > 0
+                              ) {
+                                return (
+                                  <span
+                                    className="footnote-icon"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveFootnote({
+                                        verse: verse.verseNumber,
+                                        footnotes: verseFootnotes,
+                                        book,
+                                        chapter,
+                                      });
+                                      setShowFootnoteModal(true);
+                                    }}
+                                    title="View footnotes"
+                                  >
+                                    <span class="material-symbols-outlined">
+                                      info
+                                    </span>
+                                  </span>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </>
+                        );
+                      }
+
+                      // For JSX array content, just render inline without nowrap wrapper
+                      // The text will flow naturally
+                      return (
+                        <>
+                          {verseNumberElement}
+                          {verseContent}
+                          {(() => {
+                            const verseFootnotes = getVerseFootnotes(
+                              verse.verseNumber
+                            );
+                            if (
+                              showFootnotes[activeSpace] &&
+                              verseFootnotes &&
+                              verseFootnotes.length > 0
+                            ) {
+                              return (
+                                <span
+                                  className="footnote-icon"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveFootnote({
+                                      verse: verse.verseNumber,
+                                      footnotes: verseFootnotes,
+                                      book,
+                                      chapter,
+                                    });
+                                    setShowFootnoteModal(true);
+                                  }}
+                                  title="View footnotes"
+                                >
+                                  <span class="material-symbols-outlined">
+                                    info
+                                  </span>
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </>
+                      );
+                    })()
                   ) : (
-                    <MiniTextEditor
-                      initialHtml={verse.text}
-                      onChange={(html) => console.log("Updated HTML:", html)}
-                    />
+                    <>
+                      <span
+                        style={{
+                          display: showVerses[activeSpace] ? "" : "none",
+                        }}
+                        className={`sectionTextNumber ${
+                          globalThis.studyNotesPresent ? "clickableCursor" : ""
+                        }`}
+                        onClick={() => {
+                          if (globalThis.studyNotesPresent) {
+                            HighlightStudyNoteSection(verse?.verseNumber);
+                          }
+                        }}
+                        onPointerEnter={(e) => {
+                          globalThis.showRefModal = true;
+                          setTimeout(() => {
+                            if (globalThis.showRefModal) {
+                              shout("toggleReferenceModal", {
+                                book,
+                                chapter,
+                                verse: verse.verseNumber,
+                                mouseEvent: e,
+                                ...data,
+                              });
+                            }
+                          }, 500);
+                        }}
+                        onPointerLeave={() => {
+                          globalThis.showRefModal = false;
+                        }}
+                      >
+                        {verse?.verseNumber}
+                      </span>
+                      <MiniTextEditor
+                        initialHtml={verse.text}
+                        onChange={(html) => console.log("Updated HTML:", html)}
+                      />
+                    </>
                   )}
                   <input
                     style={{
@@ -2302,7 +3497,10 @@ function Section({
                       paddingTop: "10px",
                     }}
                   >
-                    <ConfigurableFunctionCommands contextData={clickedVersesContext} clickedVerses={clickedVerses} />
+                    <ConfigurableFunctionCommands
+                      contextData={clickedVersesContext}
+                      clickedVerses={clickedVerses}
+                    />
                   </div>
                 )}
               </span>
@@ -2339,10 +3537,33 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
   }, []);
 
   const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
+  console.log("active tab in the page", panelId, activeTab);
   const [enableEditor, setEnableEditor] = useState(false);
   useEffect(() => {}, [enableEditor]);
-  const [data, setData] = useState();
+  const [data, setData] = useState(() => {
+    if (activeTab) {
+      return getCachedBibleData(
+        activeTab?.data?.translation,
+        activeTab?.data?.bookId,
+        activeTab?.data?.chapter
+      );
+    } else {
+      return getCachedBibleData(
+        tab?.data?.translation,
+        tab?.data?.bookId,
+        tab?.data?.chapter
+      );
+    }
+  });
+  const [deleteTab, setDeleteTab] = useState(false);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
+  useEffect(() => {
+    os.addBotListener(thisBot, "onTabDelete", (data) => {
+      os.log("tab delete event received in thePage", data, panelId, activeTab);
+      setEnableEditor(false);
+      setDeleteTab(data);
+    });
+  }, []);
   return (
     <>
       <TextEditor
@@ -2353,10 +3574,13 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
           <ThePage
             data={data}
             setData={setData}
+            enableEditor={enableEditor}
             setEnableEditor={setEnableEditor}
             tab={activeTab}
             panelId={panelId}
             setPanalApp={setPanalApp}
+            deleteTab={deleteTab}
+            setDeleteTab={setDeleteTab}
           />
         }
         tab={activeTab}

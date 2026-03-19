@@ -1,8 +1,8 @@
 const CircleProgress = ({ id = "default", progress = "50" }) => {
-    return (
-        <>
-            <style>
-                {`
+  return (
+    <>
+      <style>
+        {`
                     :root {
                         --progress-${id}: ${progress};
                     }
@@ -10,7 +10,7 @@ const CircleProgress = ({ id = "default", progress = "50" }) => {
                         width: 2rem;
                         height: 2rem;
                         border-radius: 50%;
-                        background: conic-gradient(#D36433 calc(var(--progress-${id}) * 1%), #F0F1F1 0);
+                        background: conic-gradient(var(--secondaryColor) calc(var(--progress-${id}) * 1%), var(--themeSideMenu) 0);
                         display: flex;
                         align-items: center;
                         justify-content: center;
@@ -26,10 +26,10 @@ const CircleProgress = ({ id = "default", progress = "50" }) => {
                         border-radius: 50%;
                     }
                 `}
-            </style>
-            <div class={`progress-circle-${id}`} />
-        </>
-    );
+      </style>
+      <div class={`progress-circle-${id}`} />
+    </>
+  );
 };
 
 return CircleProgress;

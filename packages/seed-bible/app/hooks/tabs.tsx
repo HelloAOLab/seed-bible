@@ -1,7 +1,5 @@
 const { createContext, useContext, useState, useEffect } = os.appHooks;
-import {
-  Space,
-} from "app.components.icons";
+import { Space } from "app.components.icons";
 // const localStorage = getBot('system', 'app.localStorage')
 // const tabsData = localStorage.masks.tabsData
 // if (!tabsData) {
@@ -17,7 +15,7 @@ export function TabsProvider({ children }) {
   const { tools, setTools } = useBibleContext();
   const [spaces, setSpaces] = useState([
     {
-      id: '1',
+      id: "1",
       name: "(Optional) Add space name",
       settings: {
         theme: {},
@@ -41,12 +39,13 @@ export function TabsProvider({ children }) {
             bookId: "GEN",
             chapter: 1,
             translation: "BSB",
+            shortName: "BSB",
           },
         },
       ], // Standalone tabs (not in a folder)
     },
     {
-      id: '2',
+      id: "2",
       name: "(Optional) Add space name",
       settings: {
         theme: {},
@@ -68,12 +67,13 @@ export function TabsProvider({ children }) {
             bookId: "GEN",
             chapter: 1,
             translation: "BSB",
+            shortName: "BSB",
           },
         },
       ],
     },
     {
-      id: '3',
+      id: "3",
       name: "(Optional) Add space name",
       settings: {
         theme: {},
@@ -95,6 +95,7 @@ export function TabsProvider({ children }) {
             bookId: "GEN",
             chapter: 1,
             translation: "BSB",
+            shortName: "BSB",
           },
         },
       ],
@@ -173,6 +174,46 @@ export function TabsProvider({ children }) {
       setSharedTab(null);
       return;
     }
+    shout("onTabDelete", { tabId });
+    // Remove deleted tab from selectedTabs to keep "Select All" checkbox in sync
+    setSelectedTabs((prev) => prev.filter((id) => id !== tabId));
+
+    // If the deleted tab is the active tab, select the next tab (or previous if last)
+    try {
+      if (activeTab === tabId) {
+        const currentSpace = spaces.find((space) => space?.id === activeSpace);
+        if (currentSpace) {
+          const allTabs = currentSpace.tabs;
+          const tabIndex = allTabs.findIndex((tab) => tab?.id === tabId);
+
+          if (tabIndex !== -1) {
+            if (allTabs.length > 1) {
+              // If it's the last tab in the list, select the previous one; otherwise select the next one
+              const nextIndex =
+                tabIndex === allTabs.length - 1 ? tabIndex - 1 : tabIndex + 1;
+              const nextTab = allTabs[nextIndex];
+              if (nextTab) {
+                setActiveTab(nextTab?.id);
+                // Also update the display content for the new active tab
+                if ((globalThis as any).UpdateTab) {
+                  (globalThis as any).UpdateTab(nextTab);
+                }
+              }
+            } else {
+              // Only one tab left, clear active tab before deletion
+              setActiveTab(null);
+              // Clear global tab data to prevent errors
+              (globalThis as any).CurrentActiveTabData = null;
+              (globalThis as any).CurrentBookData = null;
+              (globalThis as any).CHAPTER_DATA = null;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error in removeTab:", e);
+    }
+
     setSpaces((prevSpaces) =>
       prevSpaces.map((space) => {
         if (space.id !== activeSpace) return space;
@@ -457,6 +498,7 @@ export function TabsProvider({ children }) {
             bookId: "GEN",
             chapter: 1,
             translation: "BSB",
+            shortName: "BSB",
           },
         },
       ],
@@ -602,7 +644,7 @@ export function TabsProvider({ children }) {
   };
 
   useEffect(() => {
-    os.log(spaces, "spaces updated");
+    // os.log(spaces, "spaces updated");
   }, [spaces]);
 
   useEffect(() => {
@@ -613,13 +655,26 @@ export function TabsProvider({ children }) {
       globalThis.SetActiveTab = null;
     };
   }, [activeTab]);
-useEffect(()=>{
-        os.log("checking active space for shared tab",tabs,activeSpace)
-          setTimeout(()=>{
-            setActiveTab(tabs[0].id);
-            globalThis.UpdateTab(tabs[0]);
-          },400)
-      },[activeSpace])
+  useEffect(() => {
+    // os.log("checking active space for shared tab", tabs, activeSpace);
+    // setTimeout(() => {
+    //   setActiveTab(tabs[0].id);
+    //   globalThis.UpdateTab(tabs[0]);
+    // }, 0);
+  }, [activeSpace]);
+
+  useEffect(() => {
+    const activeSpaceObject = spaces.find((space) => space.id === activeSpace);
+    if (activeSpaceObject) {
+      const activeTabObject = activeSpaceObject.tabs.find(
+        (tab) => tab.id === activeTab
+      );
+      if (activeTabObject) {
+        shout("onActiveTabChanged", { tab: activeTabObject });
+      }
+    }
+  }, [activeTab, activeSpace]);
+
   return (
     <MyContext.Provider
       value={{

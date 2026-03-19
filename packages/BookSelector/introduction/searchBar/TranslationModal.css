@@ -1,0 +1,161 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal {
+  width: 375px;
+  background: var(--pageBackground);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px var(--sidebarShadow);
+  padding: 10px 10px 45px 10px;
+  z-index: 2;
+  position: absolute;
+  top: 55px;
+  left: 15px;
+}
+
+.translationSettingsModal {
+  left: 185px;
+  top: 100px;
+  width: 200px;
+  z-index: 1000;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.translationInfoModal {
+  position: absolute;
+  width: fit-content;
+  max-width: 350px;
+  z-index: 1000;
+  padding: 5px;
+  border-radius: 5px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.settingsIcon {
+  height: 30px;
+  width: 30px;
+  background: var(--panelBackground);
+  border-radius: 5px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.emptyCircle {
+  display: inline-block;
+  border: 2px solid transparent;
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+}
+
+.translation-title {
+  display: inline-flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  gap: 5px;
+}
+
+.search {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  outline: none;
+  margin-bottom: 8px;
+}
+
+.language-list {
+  height: 300px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  font-family: "Satoshi";
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.item:hover {
+  background: #f5f5f5;
+}
+
+.arrow {
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+.language-separator {
+  text-align: center;
+  border-top: 1px solid #eee;
+  height: 0px;
+  background-color: #fff;
+}
+
+.footer {
+  padding: 10px;
+  text-align: center;
+  color: #ff5722;
+  font-weight: 500;
+  cursor: pointer;
+  border-top: 1px solid #eee;
+  position: absolute;
+  width: 100%;
+  left: 0;
+  bottom: 0;
+  height: fit-content;
+  background-color: var(--pageBackground);
+  border-bottom-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+@media only screen and (max-width: 768px) {
+  .modal {
+    width: 100%;
+    left: 0;
+    top: 50px;
+    height: calc(100% - 60px);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .translationSettingsModal {
+    top: 100px;
+    padding: 0px 10px;
+    height: fit-content;
+    width: 200px;
+    left: auto;
+    right: 10px;
+    box-shadow: 0 5px 10px
+      color-mix(in srgb, var(--tabSelection) 15%, transparent);
+    border-radius: 5px;
+  }
+
+  .translationInfoModal {
+    width: 250px;
+    height: fit-content;
+    border-radius: 5px;
+    box-shadow: 0 5px 10px
+      color-mix(in srgb, var(--tabSelection) 15%, transparent);
+  }
+
+  .language-list {
+    height: calc(100% - 30px);
+  }
+
+  .footer {
+    bottom: -5px;
+  }
+}

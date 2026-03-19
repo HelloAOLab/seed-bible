@@ -2,113 +2,143 @@
 // let targetRecord = scannedURL.searchParams.get("inst");
 import { MenuIcon } from "app.components.icons";
 
+const G = globalThis as any;
 os.hideLoadingScreen();
 
-globalThis.MOBILE_VIEWPORT_THRESHOLD = 600;
-globalThis.makingPlaylist = false;
+const DEV_ENV =
+  configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
 
-const storageBot = getBot("system", 'storage.tempStorageBot');
+G.DEV_ENV = DEV_ENV;
+G.PROD_ENV = !DEV_ENV;
+
+G.MOBILE_VIEWPORT_THRESHOLD = 600;
+G.makingPlaylist = false;
+
+G.LoadedPlaylistAnnotations = {};
+
+const storageBot = getBot("system", "storage.tempStorageBot");
 if (storageBot) {
   storageBot.defineGlobals();
 }
 
-globalThis.ValidTypes = {
-  "verse": true,
-  "chapter": true,
+G.ValidTypes = {
+  verse: true,
+  chapter: true,
   "verse-range": true,
   "chapter-range": true,
   "verse-grouped": true,
   "chapter-grouped": true,
-}
+};
 
 setTimeout(async () => {
   const DragDrop = await thisBot.DragDropWithGrouping();
-  globalThis.DragDrop = DragDrop;
+  G.DragDrop = DragDrop;
 }, 100);
 
-globalThis.PlaylistModeTypes = {
+G.PlaylistModeTypes = {
   playlist: "Playlist",
   annotations: "Annotations",
   project: "Project",
-}
+};
 
-globalThis.ButtonStyle = {
+G.ButtonStyle = {
   cursor: "pointer",
   border: "1px solid grey",
   borderRadius: "40px",
   padding: "6px",
   fontSize: "14px",
-  marginLeft: "4px"
-}
+  marginLeft: "4px",
+};
 
-globalThis.Settings_Icon = 'https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5a87cdff4617c9047e44ec47ddd8a101aa317e2223d83dd40f615e3f9740f03a.svg';
+G.Settings_Icon =
+  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5a87cdff4617c9047e44ec47ddd8a101aa317e2223d83dd40f615e3f9740f03a.svg";
 
-globalThis.CurrentViewerID = null;
+G.CurrentViewerID = null;
 
-globalThis.CheckMultiFuntionHold = () => globalThis?.KEY_HOLD?.['shift'] || globalThis?.KEY_HOLD?.['control'] || globalThis?.KEY_HOLD?.['meta'];
+G.CheckMultiFuntionHold = () =>
+  G?.KEY_HOLD?.["shift"] || G?.KEY_HOLD?.["control"] || G?.KEY_HOLD?.["meta"];
 
-globalThis.Playlist = thisBot;
+G.Playlist = thisBot;
 
 const bookmarks = await thisBot.getBookmarks();
 
-let recored = getBot("system", 'main.Recorder')
+G.AnnotationsData = {};
+
+thisBot.fetchAnnotationsData({ ...G.CurrentBookData });
+
+let recored = getBot("system", "main.Recorder");
 
 function getBooksDataForMenu(booksLink = false) {
-  let formMenuBot = getBot('system', 'baseElements.formMenu');
+  let formMenuBot = getBot("system", "baseElements.formMenu");
   if (booksLink) {
-    formMenuBot.tags['booksLink'] = booksLink
+    formMenuBot.tags["booksLink"] = booksLink;
   }
   let bookPromise = formMenuBot.bookData();
-  Promise.resolve(bookPromise).then((data) => {
-    if (recored?.tags) {
-      recored.tags.menuData = [...data]
-    }
-    globalThis.BOOKID_DATA = data;
-  }).catch((e) => {
-    // os.toast("something went wrong");
-    if (recored?.tags?.menuData) {
-      globalThis.BOOKID_DATA = recored.tags.menuData
-    }
-  });
+  Promise.resolve(bookPromise)
+    .then((data) => {
+      if (recored?.tags) {
+        recored.tags.menuData = [...data];
+      }
+      G.BOOKID_DATA = data;
+    })
+    .catch((e) => {
+      // os.toast("something went wrong");
+      if (recored?.tags?.menuData) {
+        G.BOOKID_DATA = recored.tags.menuData;
+      }
+    });
 }
 
 getBooksDataForMenu();
 
-function findNameRank(book1, book2, returnRanks = false, isFindByRank = false) {
-  const nameRanks = {};
+function findNameRank(
+  book1: string,
+  book2: string,
+  returnRanks = false,
+  isFindByRank = false
+) {
+  const nameRanks: any = {};
 
   let totalBooksCount = 0;
   let totalSectionCount = 0;
 
   // Iterate over each testament
-  thisBot.tags.bibleArrangementsArray[0].forEach(testament => {
+  thisBot.tags.bibleArrangementsArray[0].forEach((testament: any) => {
     // Iterate over sections in the testament
     const sectionKeys = Object.keys(testament.sections);
     totalSectionCount += sectionKeys.length;
-    Object.values(testament.sections).forEach((section, sectionIndex) => {
-      totalBooksCount += section.length;
-      // Iterate over books in the section
-      section.forEach((book, index) => {
-        const commonName = book.commonName;
-        // Check if the book's common name matches either of the provided names
-        // if (commonName.toLowerCase() === book1.toLowerCase() || commonName.toLowerCase() === book2.toLowerCase()) {
-        // Calculate the rank relative to the entire list of books
-        const rank = totalBooksCount - (section.length - index);
-        // Update rank and testament information for the matching name
-        const key = isFindByRank ? rank : commonName;
-        if (!nameRanks[key]) {
-          nameRanks[key] = { rank: 0, testament: [], sectionRank: 0, section: "" };
-        }
-        nameRanks[key].rank = rank;
-        nameRanks[key].commonName = commonName;
-        nameRanks[key].testament = testament.name;
-        nameRanks[key].sectionRank = totalSectionCount - (sectionKeys.length - sectionIndex);
-        nameRanks[key].section = sectionKeys[sectionIndex];
-        nameRanks[key].chapters = book.numberOfChapters;
-        nameRanks[key].startingIndex = book.startingIndex;
-        // }
-      });
-    });
+    Object.values(testament.sections).forEach(
+      (section: any, sectionIndex: number) => {
+        totalBooksCount += section.length;
+        // Iterate over books in the section
+        section.forEach((book: any, index: number) => {
+          const commonName = book.commonName;
+          // Check if the book's common name matches either of the provided names
+          // if (commonName.toLowerCase() === book1.toLowerCase() || commonName.toLowerCase() === book2.toLowerCase()) {
+          // Calculate the rank relative to the entire list of books
+          const rank = totalBooksCount - (section.length - index);
+          // Update rank and testament information for the matching name
+          const key = isFindByRank ? rank : commonName;
+          if (!nameRanks[key]) {
+            nameRanks[key] = {
+              rank: 0,
+              testament: [],
+              sectionRank: 0,
+              section: "",
+            };
+          }
+          nameRanks[key].rank = rank;
+          nameRanks[key].commonName = commonName;
+          nameRanks[key].testament = testament.name;
+          nameRanks[key].sectionRank =
+            totalSectionCount - (sectionKeys.length - sectionIndex);
+          nameRanks[key].section = sectionKeys[sectionIndex];
+          nameRanks[key].chapters = book.numberOfChapters;
+          nameRanks[key].startingIndex = book.startingIndex;
+          // }
+        });
+      }
+    );
   });
 
   if (returnRanks) return nameRanks;
@@ -131,51 +161,49 @@ function findNameRank(book1, book2, returnRanks = false, isFindByRank = false) {
       rank: nameRanks[book2]?.rank,
       testament: nameRanks[book2]?.testament,
       chapters: nameRanks[book2]?.chapters,
-    }
-  }
+    },
+  };
 }
 
-globalThis.findNameRank = findNameRank;
-
+G.findNameRank = findNameRank;
 
 function getSectionRanking() {
-  const nameRanks = {};
+  const nameRanks: any = {};
 
   let totalSectionCount = 0;
 
   // Iterate over each testament
-  thisBot.tags.bibleArrangementsArray[0].forEach(testament => {
+  thisBot.tags.bibleArrangementsArray[0].forEach((testament: any) => {
     // Iterate over sections in the testament
     const sectionKeys = Object.keys(testament.sections);
     totalSectionCount += sectionKeys.length;
 
-    Object.values(testament.sections).forEach((section, sectionIndex) => {
-      const sectionName = sectionKeys[sectionIndex];
-      if (!nameRanks[sectionName]) {
-        nameRanks[sectionName] = { sectionRank: 0, section: "" };
+    Object.values(testament.sections).forEach(
+      (section: any, sectionIndex: number) => {
+        const sectionName: any = sectionKeys[sectionIndex];
+        if (!nameRanks[sectionName]) {
+          nameRanks[sectionName] = { sectionRank: 0, section: "" };
+        }
+        nameRanks[sectionName].sectionRank =
+          totalSectionCount - (sectionKeys.length - sectionIndex);
+        nameRanks[sectionName].section = sectionName;
+        nameRanks[sectionName].testament = testament.name;
       }
-      nameRanks[sectionName].sectionRank = totalSectionCount - (sectionKeys.length - sectionIndex);
-      nameRanks[sectionName].section = sectionName;
-      nameRanks[sectionName].testament = testament.name;
-    });
-
+    );
   });
 
   return nameRanks;
 }
-globalThis.getSectionRanking = getSectionRanking;
-
-
+G.getSectionRanking = getSectionRanking;
 
 const SELECTIONTYPE = {
-  "TESTAMENT": "TESTAMENT",
-  "SECTION": "SECTION",
-  "BOOK": "BOOK"
-}
-globalThis.SELECTIONTYPE = SELECTIONTYPE;
+  TESTAMENT: "TESTAMENT",
+  SECTION: "SECTION",
+  BOOK: "BOOK",
+};
+G.SELECTIONTYPE = SELECTIONTYPE;
 
-
-function getSectionBookRage(sectionRank) {
+function getSectionBookRage(sectionRank: number) {
   let startIdx = 0;
   let endIdx = 0;
   let totalBooks = 0;
@@ -183,102 +211,112 @@ function getSectionBookRage(sectionRank) {
   let totalSectionCount = 0;
 
   // Iterate over each testament
-  thisBot.tags.bibleArrangementsArray[0].forEach(testament => {
+  thisBot.tags.bibleArrangementsArray[0].forEach((testament: any) => {
     // Iterate over sections in the testament
     const sectionKeys = Object.keys(testament.sections);
     totalSectionCount += sectionKeys.length;
-    Object.values(testament.sections).forEach((section, sectionIndex) => {
-      const rank = totalSectionCount - (sectionKeys.length - sectionIndex);
-      if (sectionRank === rank) {
-        startIdx = totalBooks;
-        endIdx = totalBooks + section.length - 1;
+    Object.values(testament.sections).forEach(
+      (section: any, sectionIndex: number) => {
+        const rank = totalSectionCount - (sectionKeys.length - sectionIndex);
+        if (sectionRank === rank) {
+          startIdx = totalBooks;
+          endIdx = totalBooks + section.length - 1;
+        }
+        totalBooks += section.length;
       }
-      totalBooks += section.length;
-    });
-
+    );
   });
 
   return [startIdx, endIdx];
 }
 
-globalThis.getSectionBookRage = getSectionBookRage;
+G.getSectionBookRage = getSectionBookRage;
 
+G.IMGS = {
+  AOLABSRC:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/dc29f5accefe0b99744180cce15d27f2aadb4953f75912e736501bb632e64845.png",
+};
 
-globalThis.IMGS = {
-  AOLABSRC: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/dc29f5accefe0b99744180cce15d27f2aadb4953f75912e736501bb632e64845.png"
-}
-
-globalThis.CONSTANTS = {
+G.CONSTANTS = {
   YT_PREFIX: "https://www.youtube.com/embed",
   BOT_TYPE: {
     TESTAMENT: "testament",
     SECTION: "section",
     BOOK: "book",
-  }
-}
+  },
+};
 
-
-globalThis.objectComparator = (firstData, secondData, keysComparator = []) => {
+G.objectComparator = (
+  firstData: any,
+  secondData: any,
+  keysComparator: string[] = []
+) => {
   if (!secondData) return false;
-  if (!!keysComparator) {
-    return keysComparator.some(key => {
+  if (keysComparator.length > 0) {
+    return keysComparator.some((key) => {
       return firstData[key] === secondData[key];
-    })
+    });
   }
   let isSame = true;
-  Object.keys(firstData).forEach(key => {
+  Object.keys(firstData).forEach((key) => {
     if (typeof firstData[key] !== "object") {
-      isSame = (isSame && firstData[key] === secondData[key])
+      isSame = isSame && firstData[key] === secondData[key];
     } else {
-      isSame = objectComparator(firstData[key], secondData[key])
+      isSame = G.objectComparator(firstData[key], secondData[key]);
     }
-  })
+  });
   if (isSame) {
     console.log("Last item was somehow same!");
   }
   return isSame;
-}
+};
 
-globalThis.createUUID = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+G.createUUID = () => {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 };
 
-globalThis.pseudoIndentifier = `pseudo-`;
+G.pseudoIndentifier = `pseudo-`;
 
-globalThis.playListDB = [];
+G.playListDB = [];
 
 // Regex Testing
-globalThis.isValidGoogleSheetsUrl = (url) => {
-  const regex = /https:\/\/docs\.google\.com\/spreadsheets\/(?:u\/\d\/)?d\/[a-zA-Z0-9-_]+\/(?:edit|htmlview)(?:\?[^#]*)?(?:#gid=\d+)?$/;
+G.isValidGoogleSheetsUrl = (url: string) => {
+  const regex =
+    /https:\/\/docs\.google\.com\/spreadsheets\/(?:u\/\d\/)?d\/[a-zA-Z0-9-_]+\/(?:edit|htmlview)(?:\?[^#]*)?(?:#gid=\d+)?$/;
   return regex.test(url);
-}
+};
 
-
-globalThis.extractIdFromUrl = (url) => {
-  const regex = /https:\/\/docs\.google\.com\/spreadsheets(?:\/u\/\d+)?\/d\/([^\/]+)\/(?:edit|htmlview)/;
+G.extractIdFromUrl = (url: string) => {
+  const regex =
+    /https:\/\/docs\.google\.com\/spreadsheets(?:\/u\/\d+)?\/d\/([^\/]+)\/(?:edit|htmlview)/;
   const match = url.match(regex);
   return match && match[1];
-}
+};
 
-
-globalThis.validateUrl = (url) => {
-  const videoRegex = /^https?:\/\/(?:www\.|player\.)?vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|video\/|)(\d+)(?:$|\/)|https?:\/\/.*\.(mp4|webm|ogg|mov|mkv|avi|flv|wmv|m4v)(?:\?|$)/i;
-  const ytShortsRegex = /^https?:\/\/(?:www\.|m\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/;
+G.validateUrl = (url: string) => {
+  const videoRegex =
+    /^https?:\/\/(?:www\.|player\.)?vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|video\/|)(\d+)(?:$|\/)|https?:\/\/.*\.(mp4|webm|ogg|mov|mkv|avi|flv|wmv|m4v)(?:\?|$)/i;
+  const ytShortsRegex =
+    /^https?:\/\/(?:www\.|m\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/;
   const iframeRegex = /^https?:\/\/(?:www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/?.*/;
-  const youtubeRegex = /^(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/i;
+  const youtubeRegex =
+    /^(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/i;
 
   try {
     const parsedUrl = new URL(url);
 
     // YouTube watch?v= case
-    if (parsedUrl.hostname.includes('youtube.com') && parsedUrl.pathname === '/watch') {
-      const videoId = parsedUrl.searchParams.get('v');
+    if (
+      parsedUrl.hostname.includes("youtube.com") &&
+      parsedUrl.pathname === "/watch"
+    ) {
+      const videoId = parsedUrl.searchParams.get("v");
       if (videoId) {
-        return { isValid: true, type: 'youtube', videoId };
+        return { isValid: true, type: "youtube", videoId };
       }
     }
 
@@ -286,25 +324,25 @@ globalThis.validateUrl = (url) => {
     if (match) {
       return {
         isValid: true,
-        type: 'youtube',
-        videoId: match[1]
+        type: "youtube",
+        videoId: match[1],
       };
     }
 
     // YouTube Shorts
     const ytShortsMatch = ytShortsRegex.exec(url);
     if (ytShortsMatch) {
-      return { isValid: true, type: 'youtube', videoId: ytShortsMatch[1] };
+      return { isValid: true, type: "youtube", videoId: ytShortsMatch[1] };
     }
 
     // Vimeo
     if (videoRegex.test(url)) {
-      return { isValid: true, type: 'video' };
+      return { isValid: true, type: "video" };
     }
 
     // Generic iframe
     if (iframeRegex.test(url)) {
-      return { isValid: true, type: 'externalLink' };
+      return { isValid: true, type: "externalLink" };
     }
   } catch (err) {
     // Invalid URL
@@ -313,16 +351,17 @@ globalThis.validateUrl = (url) => {
   return { isValid: false, type: null };
 };
 
-globalThis.validateImage = (url) => {
-  const imageRegex = /^https?:\/\/.*\.(jpg|jpeg|png|gif|bmp|webp|svg|tiff?|ico)(?:\?|#|$)/i;
+G.validateImage = (url: string) => {
+  const imageRegex =
+    /^https?:\/\/.*\.(jpg|jpeg|png|gif|bmp|webp|svg|tiff?|ico)(?:\?|#|$)/i;
 
   try {
-    const match = imageRegex.exec(url);
+    const match: any = imageRegex.exec(url);
     if (match) {
       return {
         isValid: true,
-        type: 'image',
-        extension: match[1].toLowerCase()
+        type: "image",
+        extension: match[1].toLowerCase(),
       };
     }
   } catch (err) {
@@ -332,17 +371,16 @@ globalThis.validateImage = (url) => {
   return { isValid: false, type: null };
 };
 
-
-globalThis.generateEmbedFromUrl = (url: string) => {
+G.generateEmbedFromUrl = (url: string, name: string = "") => {
   if (!url) return null;
 
-  const result = validateUrl(url); // your global function
+  const result = G.validateUrl(url); // your global function
 
-  if (!result.isValid)  {
-    const imageResult = validateImage(url);
+  if (!result.isValid) {
+    const imageResult = G.validateImage(url);
     if (imageResult.isValid) {
       return `
-        <img src="${url}" alt="${url}" />
+        <img src="${url}" alt="${name}" />
       `;
     }
     return null;
@@ -351,12 +389,12 @@ globalThis.generateEmbedFromUrl = (url: string) => {
   // ✅ YouTube embed
   if (result.type === "youtube") {
     const videoId = result.videoId;
-    
+
     return `<iframe
-          src="${globalThis.CONSTANTS.YT_PREFIX}/${videoId}"
+          src="${G.CONSTANTS.YT_PREFIX}/${videoId}"
           style="max-width: 100%;"
           height="auto"
-          title={content}
+          title="${name}"
           allow="accelerometer;encrypted-media;gyroscope;"
         ></iframe>`;
   }
@@ -366,6 +404,7 @@ globalThis.generateEmbedFromUrl = (url: string) => {
     return `
       <video 
         src="${url}" 
+        title="${name}"
         controls 
         height="100%"
         style="max-width: 100%;"
@@ -382,18 +421,15 @@ globalThis.generateEmbedFromUrl = (url: string) => {
         rel="noopener noreferrer"
         style="color: blue; text-decoration: underline; cursor: pointer;"
       >
-        ${url}
+        ${name || url}
       </a>
     `;
   }
 
   return null;
-}
+};
 
-
-
-globalThis.appendImageToEditorHTML = function appendImageToEditorHTML(fileObject: any) {
-
+G.appendImageToEditorHTML = function appendImageToEditorHTML(fileObject: any) {
   const imageExtensions = /\.(png|jpg|jpeg|gif|webp|bmp|svg)$/i;
 
   const link = fileObject?.additionalInfo?.link;
@@ -414,18 +450,15 @@ globalThis.appendImageToEditorHTML = function appendImageToEditorHTML(fileObject
   `;
 
   return imageHTML;
-}
+};
 
-
-globalThis.uploadFilesReusable = async function uploadFilesReusable({files}) {
+G.uploadFilesReusable = async function uploadFilesReusable(params: any) {
+  const { files } = params;
   const filesPromises: any[] = [];
-
-  console.log("files", files);
-  console.log("files", Object.values(files));
 
   files.forEach((file: any) => {
     filesPromises.push(
-      os.recordFile(globalThis.RECORD_STOREKEY, file, {
+      os.recordFile(G.RECORD_STOREKEY, file, {
         name: file.name,
         mimeType: file.mimeType,
       })
@@ -445,7 +478,7 @@ globalThis.uploadFilesReusable = async function uploadFilesReusable({files}) {
 
       filesResult.push({
         content: files[index].name,
-        id: createUUID(),
+        id: G.createUUID(),
         additionalInfo: {
           link: url || existingFileUrl,
           mimeType: files[index].mimeType,
@@ -474,10 +507,9 @@ globalThis.uploadFilesReusable = async function uploadFilesReusable({files}) {
 
     return [];
   }
-}
+};
 
-
-globalThis.getPsalmsBookName = (chapter) => {
+G.getPsalmsBookName = (chapter: number) => {
   // const psalmsDivision = [0, 41 , 72, 89, 106, 150];
 
   let BookNumber = 1;
@@ -493,17 +525,17 @@ globalThis.getPsalmsBookName = (chapter) => {
     BookNumber = 1;
   }
   return `${BookNumber} Psalms`;
-}
+};
 
-globalThis.getPsalmsBookData = (chapter) => {
+G.getPsalmsBookData = (chapter: number) => {
   // const psalmsDivision = [0, 41 , 72, 89, 106, 150];
   // Define the divisions of the Psalms books and their total verses
   const psalmsBooks = [
-    { start: 1, end: 41, totalVerse: 1013 },   // Book 1
-    { start: 42, end: 72, totalVerse: 986 },   // Book 2
-    { start: 73, end: 89, totalVerse: 478 },   // Book 3
-    { start: 90, end: 106, totalVerse: 425 },  // Book 4
-    { start: 107, end: 150, totalVerse: 2461 } // Book 5
+    { start: 1, end: 41, totalVerse: 1013 }, // Book 1
+    { start: 42, end: 72, totalVerse: 986 }, // Book 2
+    { start: 73, end: 89, totalVerse: 478 }, // Book 3
+    { start: 90, end: 106, totalVerse: 425 }, // Book 4
+    { start: 107, end: 150, totalVerse: 2461 }, // Book 5
   ];
 
   // Determine the book based on the chapter
@@ -521,16 +553,16 @@ globalThis.getPsalmsBookData = (chapter) => {
   // Return the result object
   return {
     startChapter: book.start,
-    numberOfChapters: (book.end - book.start + 1),
+    numberOfChapters: book.end - book.start + 1,
     totalVerse: book.totalVerse,
     firstChapterApiLink,
-    lastChapterApiLink
+    lastChapterApiLink,
   };
-}
+};
 
-const COPY_OBJECT = (value, seen = new Map()) => {
+const COPY_OBJECT = (value: any, seen: Map<any, any> = new Map()) => {
   // Check for non-objects and null
-  if (value === null || typeof value !== 'object') {
+  if (value === null || typeof value !== "object") {
     return value;
   }
 
@@ -569,7 +601,7 @@ const COPY_OBJECT = (value, seen = new Map()) => {
 
   // Handle arrays
   if (Array.isArray(value)) {
-    const copy = [];
+    const copy: any[] = [];
     seen.set(value, copy);
     value.forEach((item, index) => {
       copy[index] = COPY_OBJECT(item, seen);
@@ -578,7 +610,7 @@ const COPY_OBJECT = (value, seen = new Map()) => {
   }
 
   // Handle objects
-  const copy = {};
+  const copy: any = {};
   seen.set(value, copy);
   for (const key in value) {
     if (value.hasOwnProperty(key)) {
@@ -587,22 +619,54 @@ const COPY_OBJECT = (value, seen = new Map()) => {
   }
 
   return copy;
-}
+};
 
-globalThis.CLONE_DATA = COPY_OBJECT;
+G.CLONE_DATA = COPY_OBJECT;
 
-globalThis.FORMAT_DATE = function formatDate(dateInput, format = "DEFAULT") {
+G.FORMAT_DATE = function formatDate(
+  dateInput: string,
+  format = "DEFAULT",
+  inputFormat = "YYYY-MM-DD"
+) {
   const monthsFull = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
   const monthsShort = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
   ];
 
   // Ensure the input is a valid date string in the format YYYY-MM-DD
-  const [yearr, monthh, dayy] = dateInput.split('-').map(ele => Number(ele));
+  let [yearr, monthh, dayy]: any = dateInput
+    .split("-")
+    .map((ele: string) => Number(ele));
+
+  if (inputFormat === "MM-DD-YYYY") {
+    [monthh, dayy, yearr] = dateInput
+      .split("-")
+      .map((ele: string) => Number(ele));
+  }
   // const utcTimestamp = Date.UTC(yearr, monthh - 1, dayy); // Month is 0-based
   // const date = new Date(utcTimestamp);
   if (isNaN(dayy)) {
@@ -614,8 +678,8 @@ globalThis.FORMAT_DATE = function formatDate(dateInput, format = "DEFAULT") {
   const monthShort = monthsShort[monthh - 1];
   const monthFull = monthsFull[monthh - 1];
 
-  const formats = {
-    "DEFAULT": `${monthShort} - ${day} - ${year}`, // Default format
+  const formats: any = {
+    DEFAULT: `${monthShort} - ${day} - ${year}`, // Default format
     "YYYY-MM-DD": `${year}-${month}-${day}`,
     "DD-MM-YYYY": `${day}-${month}-${year}`,
     "MM-DD-YYYY": `${month}-${day}-${year}`,
@@ -629,20 +693,20 @@ globalThis.FORMAT_DATE = function formatDate(dateInput, format = "DEFAULT") {
     "DD MMMM YYYY": `${day} ${monthFull} ${year}`,
     "MMM DD, YYYY": `${monthShort} ${day}, ${year}`,
     "DD MMM YYYY": `${day} ${monthShort} ${year}`,
-    "YYYYMMDD": `${year}${month}${day}`,
-    "DDMMYYYY": `${day}${month}${year}`,
-    "MMDDYYYY": `${month}${day}${year}`,
+    YYYYMMDD: `${year}${month}${day}`,
+    DDMMYYYY: `${day}${month}${year}`,
+    MMDDYYYY: `${month}${day}${year}`,
     "MMMM DD": `${monthFull} ${day}`, // Ex: January 15
     "DD MMMM": `${day} ${monthFull}`, // Ex: 15 January
     "MMM DD": `${monthShort} ${day}`, // Ex: Jan 15
-    "DD MMM": `${day} ${monthShort}`  // Ex: 15 Jan
+    "DD MMM": `${day} ${monthShort}`, // Ex: 15 Jan
   };
 
   return formats[format] || formats["DEFAULT"];
 };
 
-globalThis.FORMAT_YYYY_MM_DD = function formatDateToYYYYMMDD(dateInput) {
-  let year, month, day;
+G.FORMAT_YYYY_MM_DD = function formatDateToYYYYMMDD(dateInput: any) {
+  let year: any, month: any, day: any;
 
   if (dateInput instanceof Date) {
     // If the input is a Date object, extract year, month, and day in UTC
@@ -651,23 +715,26 @@ globalThis.FORMAT_YYYY_MM_DD = function formatDateToYYYYMMDD(dateInput) {
     day = String(dateInput.getUTCDate()).padStart(2, "0");
   } else if (typeof dateInput === "string") {
     // If the input is a string, assume it's in YYYY-MM-DD format
-    const [yearStr, monthStr, dayStr] = dateInput.split('-');
+    const [yearStr, monthStr, dayStr] = dateInput.split("-");
     year = Number(yearStr);
     month = String(Number(monthStr)).padStart(2, "0"); // Ensure two digits
     day = String(Number(dayStr)).padStart(2, "0"); // Ensure two digits
 
     // Validate the parsed values
     if (isNaN(year) || isNaN(month) || isNaN(day)) {
-      throw new Error("Invalid date input: String must be in YYYY-MM-DD format.");
+      throw new Error(
+        "Invalid date input: String must be in YYYY-MM-DD format."
+      );
     }
   } else {
-    throw new Error("Invalid date input: Expected a Date object or a string in YYYY-MM-DD format.");
+    throw new Error(
+      "Invalid date input: Expected a Date object or a string in YYYY-MM-DD format."
+    );
   }
 
   // Return the formatted date
   return `${year}-${month}-${day}`;
 };
-
 
 const prompt = `
   You are generating a Bible playlist for a user who is already inside the Seed Bible running within CasualOS. The playlist JSON will be consumed by the app to:
@@ -789,23 +856,22 @@ const prompt = `
   - and, IF AND ONLY IF a reading plan is mentioned in $text, interleave date items per the rules above starting on $today (or the provided start date).
 
   Only valid JSON. No explanation.
-  REMEMBER TODAY value is ${FORMAT_DATE(FORMAT_YYYY_MM_DD(new Date()))}.
+  REMEMBER TODAY value is ${G.FORMAT_DATE(G.FORMAT_YYYY_MM_DD(new Date()))}.
 `;
 
-globalThis.SYSTEM_PROMPT = prompt;
-
+G.SYSTEM_PROMPT = prompt;
 
 const getPosition = () => {
-  if (globalThis.LastClickX) {
-    const left = globalThis.LastClickX;
-    const top = globalThis.LastClickY;
-    globalThis.LastClickX = null;
-    globalThis.LastClickY = null;
+  if (G.LastClickX) {
+    const left = G.LastClickX;
+    const top = G.LastClickY;
+    G.LastClickX = null;
+    G.LastClickY = null;
     return {
       left: 0,
       transform: "translate(40px, 0px)",
-      top
-    }
+      top,
+    };
   }
 
   const pointerX = gridPortalBot.tags.pointerPixelX;
@@ -816,7 +882,7 @@ const getPosition = () => {
   const edgeThreshold = 200; // Distance from edges to adjust position
   const safeMargin = "2rem"; // Fixed margin when near edges
 
-  let position = {};
+  let position: any = {};
 
   // Horizontal positioning
   if (width - pointerX < edgeThreshold) {
@@ -839,58 +905,62 @@ const getPosition = () => {
   return position;
 };
 
-const SIMPLE_FILE = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/e5ed7d7a064b801e4954efa40ad5929ee771614fc5cd4d71c9dd8669c77bdb25.png";
-const PDF = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5eedb987a0d26a60527854460e67bb0762de152f45b5be580de5aa21e524d309.png";
-const MUSIC = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/77bf95a198202b6ba29fb46b377212904ae4b16d4a988bce238645e662e08d83.png";
-const VIDEO = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/6f842b8a792a1588d7b96c9c406c2bfff36aec7fdab2519eebb7b08bd3dc427a.png";
+const SIMPLE_FILE =
+  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/e5ed7d7a064b801e4954efa40ad5929ee771614fc5cd4d71c9dd8669c77bdb25.png";
+const PDF =
+  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5eedb987a0d26a60527854460e67bb0762de152f45b5be580de5aa21e524d309.png";
+const MUSIC =
+  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/77bf95a198202b6ba29fb46b377212904ae4b16d4a988bce238645e662e08d83.png";
+const VIDEO =
+  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/6f842b8a792a1588d7b96c9c406c2bfff36aec7fdab2519eebb7b08bd3dc427a.png";
 
-function getFileIconByMimeType(mimeType) {
-  if (!mimeType || typeof mimeType !== 'string') return SIMPLE_FILE;
+function getFileIconByMimeType(mimeType: string) {
+  if (!mimeType || typeof mimeType !== "string") return SIMPLE_FILE;
 
-  if (mimeType === 'application/pdf') return PDF;
-  if (mimeType.startsWith('audio/')) return MUSIC;
-  if (mimeType.startsWith('video/') || mimeType.startsWith('image/')) return VIDEO;
+  if (mimeType === "application/pdf") return PDF;
+  if (mimeType.startsWith("audio/")) return MUSIC;
+  if (mimeType.startsWith("video/") || mimeType.startsWith("image/"))
+    return VIDEO;
 
   return SIMPLE_FILE;
 }
 
-function getExtensionFromMimeType(mimeType) {
-  const mimeMap = {
-    'application/pdf': 'pdf',
-    'application/msword': 'doc',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-    'application/vnd.ms-excel': 'xls',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
-    'application/zip': 'zip',
-    'application/json': 'json',
-    'text/plain': 'txt',
-    'text/html': 'html',
-    'image/jpeg': 'jpg',
-    'image/png': 'png',
-    'image/gif': 'gif',
-    'image/svg+xml': 'svg',
-    'audio/mpeg': 'mp3',
-    'audio/wav': 'wav',
-    'video/mp4': 'mp4',
-    'video/x-msvideo': 'avi'
+function getExtensionFromMimeType(mimeType: string) {
+  const mimeMap: any = {
+    "application/pdf": "pdf",
+    "application/msword": "doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+      "docx",
+    "application/vnd.ms-excel": "xls",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+    "application/zip": "zip",
+    "application/json": "json",
+    "text/plain": "txt",
+    "text/html": "html",
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/gif": "gif",
+    "image/svg+xml": "svg",
+    "audio/mpeg": "mp3",
+    "audio/wav": "wav",
+    "video/mp4": "mp4",
+    "video/x-msvideo": "avi",
     // Add more as needed
   };
 
-  return mimeMap[mimeType] || 'file';
+  return mimeMap[mimeType] || "file";
 }
 
-globalThis.getFileIconByMimeType = getFileIconByMimeType;
-globalThis.getExtensionFromMimeType = getExtensionFromMimeType;
+G.getFileIconByMimeType = getFileIconByMimeType;
+G.getExtensionFromMimeType = getExtensionFromMimeType;
 
-globalThis.getPosition = getPosition;
+G.getPosition = getPosition;
 
-
-
-const getColor = (index, total) => {
+const getColor = (index: number, total: number) => {
   const startColor = [255, 0, 127]; // Pink
-  const endColor = [255, 165, 0]; // Orange
+  const endColor: any = [255, 165, 0]; // Orange
 
-  const interpolate = (start, end, factor) =>
+  const interpolate = (start: number, end: number, factor: number) =>
     Math.round(start + (end - start) * factor);
 
   const factor = index / (total - 1);
@@ -901,20 +971,20 @@ const getColor = (index, total) => {
   return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 };
 
-globalThis.GetColor = getColor;
+G.GetColor = getColor;
 
-function isVideoUrl(url) {
+function isVideoUrl(url: string) {
   return /\.(mp4|webm|ogg|ogv|mov|m4v|mkv|avi|wmv|flv)$/i.test(url);
 }
 
-const videoTypes = {
+const videoTypes: any = {
   "video-recording": true,
-  "youtube": true,
-  "Video": true,
-  "video": true,
-}
+  youtube: true,
+  Video: true,
+  video: true,
+};
 
-function isVideoAttachment(dataitem) {
+function isVideoAttachment(dataitem: any) {
   let isVideoType = false;
   if (!dataitem?.additionalInfo) return isVideoType;
 
@@ -922,21 +992,28 @@ function isVideoAttachment(dataitem) {
   if (videoTypes[dataitem.additionalInfo.type]) {
     isVideoType = true;
   }
-  if (dataitem.additionalInfo.type === 'iframe') {
-    const isVideo = globalThis.IsVideoUrl(link);
+  if (dataitem.additionalInfo.type === "iframe") {
+    const isVideo = G.IsVideoUrl(link);
     isVideoType = isVideo;
   }
   return isVideoType;
 }
 
-globalThis.IsVideoAttachment = isVideoAttachment;
+G.IsVideoAttachment = isVideoAttachment;
 
-globalThis.IsVideoUrl = isVideoUrl;
+G.IsVideoUrl = isVideoUrl;
 
-function formatRelativeTime(date) {
-  if (!date) return "";
-  const now = new Date();
-  const diffMs = now - date;
+function formatRelativeTime(date: any) {
+  let dateObj = date;
+  if (!dateObj) return "";
+  if (typeof dateObj === "number") {
+    dateObj = new Date(dateObj);
+  }
+  if (typeof dateObj === "string") {
+    dateObj = new Date(dateObj);
+  }
+  const now: any = new Date();
+  const diffMs: any = now - dateObj;
   const diffSec = Math.floor(diffMs / 1000);
   const diffMin = Math.floor(diffSec / 60);
   const diffHrs = Math.floor(diffMin / 60);
@@ -959,9 +1036,9 @@ function formatRelativeTime(date) {
 
   // Same day (show "X hrs ago" if today)
   if (
-    date.getDate() === now.getDate() &&
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear()
+    dateObj.getDate() === now.getDate() &&
+    dateObj.getMonth() === now.getMonth() &&
+    dateObj.getFullYear() === now.getFullYear()
   ) {
     return `${diffHrs} hrs ago`;
   }
@@ -970,18 +1047,18 @@ function formatRelativeTime(date) {
   const yesterday = new Date();
   yesterday.setDate(now.getDate() - 1);
   if (
-    date.getDate() === yesterday.getDate() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getFullYear() === yesterday.getFullYear()
+    dateObj.getDate() === yesterday.getDate() &&
+    dateObj.getMonth() === yesterday.getMonth() &&
+    dateObj.getFullYear() === yesterday.getFullYear()
   ) {
-    return `yesterday ${date.toLocaleTimeString([], {
+    return `yesterday ${dateObj.toLocaleTimeString([], {
       hour: "numeric",
       minute: "2-digit",
     })}`;
   }
 
   // Older → show like "Sep/9 6:55 AM"
-  return date.toLocaleString("en-US", {
+  return dateObj.toLocaleString("en-US", {
     month: "short",
     day: "numeric",
     hour: "numeric",
@@ -989,17 +1066,172 @@ function formatRelativeTime(date) {
   });
 }
 
+G.FormatRelativeTime = formatRelativeTime;
 
-globalThis.FormatRelativeTime = formatRelativeTime;
+const AnnotationIcon = ({ className = "img-icon-secondary" }) => {
+  return (
+    <MenuIcon
+      size={16}
+      className={className}
+      name="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/5ea6369f9a126d9dd02e97b915f210ee6f421fdeb47b143d5fc359ee17131ea5.svg"
+    />
+  );
+};
 
+const PlaylistIcon = ({ className = "img-icon-secondary" }) => {
+  return (
+    <MenuIcon
+      size={16}
+      className={className}
+      name="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/72d4f7e1cb9d646e08c96c9752de4914840e40b85e23d879658286a2a685d595.svg"
+    />
+  );
+};
 
-const AnnotationIcon = ({invert = false}) => {
-  return <MenuIcon size={16} invert={invert} name="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/5ea6369f9a126d9dd02e97b915f210ee6f421fdeb47b143d5fc359ee17131ea5.svg" />;
+G.AnnotationIcon = AnnotationIcon;
+G.PlaylistIcon = PlaylistIcon;
+
+const getVerseSummaryHeading = (verses: number[]) => {
+  const ranges = [];
+  let start = verses[0];
+  let end: any = verses[0];
+
+  if (verses.length > 1) {
+    for (let i = 1; i < verses.length; i++) {
+      if (verses[i] === end + 1) {
+        end = verses[i];
+      } else {
+        ranges.push(start === end ? `${start}` : `${start}-${end}`);
+        start = end = verses[i];
+      }
+    }
+    ranges.push(start === end ? `${start}` : `${start}-${end}`);
+  } else {
+    ranges.push(verses[0]);
+  }
+  return ranges;
+};
+
+G.GetVerseSummaryHeading = getVerseSummaryHeading;
+
+thisBot.getLabel();
+
+function sanitizeString(str: string) {
+  // console.log("SANITIZE DONE", str);
+  // Remove control characters (U+0000 to U+001F, excluding \t, \n, \r)
+  if (typeof str === "string") {
+    return str.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+  }
+  return str;
 }
 
-const PlaylistIcon = ({invert = false}) => {
-  return <MenuIcon size={16} invert={invert} name="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/72d4f7e1cb9d646e08c96c9752de4914840e40b85e23d879658286a2a685d595.svg" />;
+function sanitizeObject(obj: any): any {
+  if (typeof obj === "string") {
+    return sanitizeString(obj);
+  } else if (Array.isArray(obj)) {
+    return obj.map(sanitizeObject);
+  } else if (obj && typeof obj === "object") {
+    return Object.keys(obj).reduce((acc: any, key: string) => {
+      acc[key] = sanitizeObject(obj[key]);
+      return acc;
+    }, {});
+  }
+  return obj; // Return other types (numbers, booleans, etc.) unchanged
 }
 
-globalThis.AnnotationIcon = AnnotationIcon;
-globalThis.PlaylistIcon = PlaylistIcon;
+G.sanitizeObject = sanitizeObject;
+
+G.RECORD_SEPARATOR = "^_^";
+
+const sortFunc = (a: any, b: any) => {
+  const parseHeading = (heading = "") => {
+    // 1️⃣ Chapter always first
+    if (heading.startsWith("Chapter")) {
+      return { group: 0, start: 0, length: heading.length };
+    }
+
+    // 2️⃣ Verse logic
+    const match = heading.match(/Verse\s*(\d+)/);
+    if (match) {
+      return {
+        group: 1,
+        start: Number(match[1]), // starting verse
+        length: heading.length,
+      };
+    }
+
+    // 3️⃣ Everything else
+    return {
+      group: 2,
+      start: Infinity,
+      length: heading.length,
+    };
+  };
+
+  const A = parseHeading(a.heading);
+  const B = parseHeading(b.heading);
+
+  // Group order: Chapter → Verse → Others
+  if (A.group !== B.group) {
+    return A.group - B.group;
+  }
+
+  // Verse number comparison
+  if (A.start !== B.start) {
+    return A.start - B.start;
+  }
+
+  // Length comparison (shorter first)
+  if (A.length !== B.length) {
+    return B.length - A.length;
+  }
+
+  // Final fallback
+  return a.heading.localeCompare(b.heading);
+};
+
+G.AnnotationSortFunction = sortFunc;
+
+G.FloatBarStyle = {
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  width: "100%",
+  backgroundColor: "var(--panelBackground)",
+  padding: "0.5rem",
+};
+
+G.PlayingPlaylistCheckedItems = {};
+
+const updateCheckedItemsPlayingPlaylist = async (
+  checkedItems: any,
+  id: string
+) => {
+  if (!G.PlayingPlaylistCheckedItems) {
+    G.PlayingPlaylistCheckedItems = {};
+  }
+  if (!G.PlayingPlaylistCheckedItems[id]) {
+    G.PlayingPlaylistCheckedItems[id] = {};
+  }
+  if (!id) {
+    return;
+  }
+  G.PlayingPlaylistCheckedItems[id] = { ...checkedItems };
+  if (authBot?.id) {
+    await os.recordData(
+      authBot.id,
+      "userCheckedItems",
+      { userCheckedItems: { ...G.PlayingPlaylistCheckedItems } },
+      {
+        marker: "userCheckedItems",
+      }
+    );
+  }
+};
+
+const userCheckedItems: any = await os.getData(authBot.id, "userCheckedItems");
+G.PlayingPlaylistCheckedItems = {
+  ...(userCheckedItems?.data?.userCheckedItems || {}),
+};
+
+G.UpdateCheckedItemsPlayingPlaylist = updateCheckedItemsPlayingPlaylist;

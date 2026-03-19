@@ -4,8 +4,9 @@
 // number -> Index of chpater / verse / book
 
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
+const G = globalThis as any;
 const { Input, Modal, Button, ButtonsCover, Checkbox, Tooltip, Select } =
-  Components;
+  G.Components;
 
 const ChecklistGIf =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/90e85308635064b3d0fdaa9c220b8547a9467a10affe3cf22f06ad6b26fbf0a1.gif";
@@ -19,30 +20,27 @@ const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
 
 // const AttachmentLinkItem = thisBot.AttachmentLinkItem();
 
-globalThis.DEFAULT_UPLOAD_ICON =
+G.DEFAULT_UPLOAD_ICON =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/67bba604a31cc7e116124f92179d8fe06317fcf70a3c62f071dff529362ebc25.png";
 
-const startCreatingPlaylist = (name, playlist = [], id) => {
-  globalThis.HISTORYExploreMode = false;
-  globalThis[`${id}creatingPlaylistName`] = name;
-  globalThis[`${id}creatingPlaylist`] = true;
+const startCreatingPlaylist = (
+  name: string,
+  playlist: any[] = [],
+  id: string
+) => {
+  G.HISTORYExploreMode = false;
+  G[`${id}creatingPlaylistName`] = name;
+  G[`${id}creatingPlaylist`] = true;
   // thisBot.showInfo(`Playlist Mode`);
-  globalThis[`${id}SetCreatingPlaylist`](true, playlist);
+  G[`${id}SetCreatingPlaylist`](true, playlist);
 };
 
-const backToCreatePlaylist = (name, playlist = [], id) => {
-  globalThis.HISTORYExploreMode = false;
-  globalThis[`${id}creatingPlaylistName`] = name;
-  globalThis[`${id}creatingPlaylist`] = false;
-  globalThis[`${id}SetCreatingPlaylist`](false, playlist);
-};
-
-const handleSheetUrl = async (link) => {
+const handleSheetUrl = async (link: string) => {
   const response = await thisBot.getSheetDataAndFetch({ link });
   return response;
 };
 
-function getSortedDateFormats(selectedValue) {
+function getSortedDateFormats(selectedValue: string) {
   const DATE_FORMAT_OPTIONS = [
     { label: "DD MMM", value: "DD MMM" }, // Ex: 15 Jan
     { label: "MM-DD-YYYY", value: "MM-DD-YYYY" },
@@ -77,7 +75,7 @@ const PROMPT_OPTIONS = [
   { label: "System Prompt", value: "system-prompt" },
 ];
 
-const AI_OPTIONS = [
+const AI_OPTIONS: { value: string; label: string }[] = [
   // { value: "openai/gpt/5-mini", label: "OpenAI GPT-5 Mini" },
   { value: "openai/gpt/4o-mini", label: "OpenAI GPT-4o Mini" },
   { value: "openai/gpt/o1-mini", label: "OpenAI GPT-o1 Mini" },
@@ -106,25 +104,30 @@ const AI_OPTIONS = [
   },
 ];
 
-const Playlist = ({
-  id,
-  query,
-  selectedChip,
-  isCreate,
-  isLayers,
-  playingPlaylist,
-  creatingPlaylist,
-  setCreatingPlaylist,
-}) => {
+const Playlist = (props: any) => {
+  const {
+    id,
+    query,
+    selectedChip,
+    isCreate,
+    isLayers,
+    playingPlaylist,
+    creatingPlaylist,
+    setCreatingPlaylist,
+  } = props;
+
+  const DragDropT = useMemo(() => {
+    return G.DragDrop;
+  }, []);
   // Audio
   const [mediaURL, setMediaURL] = useState("");
   const [videoSrc, setVideoSrc] = useState(false);
   const [currentItem, setCurrentItem] = useState({});
-  const [selectedAI, setSelectedAI] = useState(AI_OPTIONS[0].value);
+  const [selectedAI, setSelectedAI] = useState(AI_OPTIONS[0]?.value || "");
 
-  globalThis.SetVideoSrc = setVideoSrc;
-  globalThis.SetMediaURL = setMediaURL;
-  globalThis.SetCurrentItem = setCurrentItem;
+  G.SetVideoSrc = setVideoSrc;
+  G.SetMediaURL = setMediaURL;
+  G.SetCurrentItem = setCurrentItem;
 
   const [showPlaylistSettings, setShowPlaylistSettings] = useState(false);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
@@ -136,15 +139,19 @@ const Playlist = ({
   const [selectedTags, setTags] = useState([]);
   const [selectPlaylist, setSelectPlaylist] = useState(false);
 
-  const [checkListData, setChecklistData] = useState({});
-  const [checkListEmbeded, setChecklistEmbeded] = useState({});
-  const [checklistEnabled, setChecklistEnabled] = useState(false);
-  const [embedding, setEmbedding] = useState(null);
+  const [checkListData, setChecklistData] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [checkListEmbeded, setChecklistEmbeded] = useState<
+    Record<string, boolean>
+  >({});
+  const [checklistEnabled, setChecklistEnabled] = useState<any>(false);
+  const [embedding, setEmbedding] = useState<any>(null);
 
   useLayoutEffect(() => {
-    globalThis[`SetChecklistEnabled`] = setChecklistEnabled;
+    G[`SetChecklistEnabled`] = setChecklistEnabled;
     return () => {
-      globalThis[`SetChecklistEnabled`] = null;
+      G[`SetChecklistEnabled`] = null;
     };
   }, [checklistEnabled]);
 
@@ -163,9 +170,7 @@ const Playlist = ({
   const [layersWarning, setLayersWarning] = useState(false);
 
   const [openAttachLink, setOpenAttachLink] = useState(false);
-  const [attachment, setAttachment] = useState(
-    globalThis[`${id}Attachments`] || null
-  );
+  const [attachment, setAttachment] = useState(G[`${id}Attachments`] || null);
   const [openModal, setOpenModal] = useState(false);
   const [mergeMode, setMergeMode] = useState(false);
   const [renderAgain, setRenderAgain] = useState(0);
@@ -176,16 +181,14 @@ const Playlist = ({
 
   const [currentPromptText, setCurrentPromptText] = useState("prompt");
 
-  const [systemPrompt, setSystemPrompt] = useState(
-    globalThis.SYSTEM_PROMPT || ""
-  );
+  const [systemPrompt, setSystemPrompt] = useState(G.SYSTEM_PROMPT || "");
 
   const isEdit = useRef(false);
   const [openModalName, setOpenModalName] = useState(false);
 
-  const toggleOpenModalName = (val) => {
+  const toggleOpenModalName = (val: boolean) => {
     setOpenModalName(val);
-    if (globalThis.SetRenamingPlaylist) globalThis.SetRenamingPlaylist(val);
+    if (G.SetRenamingPlaylist) G.SetRenamingPlaylist(val);
   };
 
   const [autoGenerateOn, setAutoGenerateOn] = useState(false);
@@ -193,9 +196,7 @@ const Playlist = ({
 
   const [loading, setLoading] = useState(false);
 
-  const [name, setName] = useState(
-    globalThis[`${id}creatingPlaylistName`] || ""
-  );
+  const [name, setName] = useState(G[`${id}creatingPlaylistName`] || "");
   const [link, setLink] = useState("");
 
   // Features
@@ -206,17 +207,18 @@ const Playlist = ({
   const [description, setDescription] = useState("");
   const [customIcon, setCustomIcon] = useState(null);
 
-  const setEditModal = ({
-    id,
-    color,
-    isCustomColor,
-    icon,
-    name,
-    description: des,
-    isCustomIcon,
-    selectedTags,
-    isLayers,
-  }) => {
+  const setEditModal = (props: any) => {
+    const {
+      id,
+      color,
+      isCustomColor,
+      icon,
+      name,
+      description: des,
+      isCustomIcon,
+      selectedTags,
+      isLayers,
+    } = props;
     setName(name);
     if (isCustomColor) setCustomColor(color);
     if (isCustomIcon) setCustomIcon(icon);
@@ -232,36 +234,32 @@ const Playlist = ({
     }, 10);
   };
 
-  const [playLists, setPlayLists] = useState(
-    globalThis[`${id}playlists`] || []
-  );
-  const [selectedPlaylist, setSelectedPlaylist] = useState({});
+  const [playLists, setPlayLists] = useState(G[`${id}playlists`] || []);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<any>({});
 
-  const toggleSelectedPlaylist = (id, parentID) => {
-    setSelectedPlaylist((prev) => {
-      const old = { ...prev };
+  const toggleSelectedPlaylist = (id: string, parentID: string) => {
+    setSelectedPlaylist((prev: any) => {
+      const old: Record<string, boolean | string> = { ...prev };
       old[id] = old[id] ? false : parentID || true;
       return old;
     });
   };
 
-  const [playList, setPlaylist] = useState(
-    globalThis[`${id}currentPlaylist`] || []
-  );
+  const [playList, setPlaylist] = useState(G[`${id}currentPlaylist`] || []);
 
   const editPlaylistData = (
-    idRec,
-    newValueContent,
+    idRec: string,
+    newValueContent: Record<string, any>,
     parentId = null,
     fullData = false
   ) => {
-    setPlaylist((prev) => {
+    setPlaylist((prev: any[]) => {
       const old = [...prev];
       if (parentId) {
         const parentIdx = old.findIndex((e) => e.id === parentId);
         if (parentIdx > -1) {
           const idx = old[parentIdx].additionalInfo.layers.findIndex(
-            (e) => e.id === idRec
+            (e: any) => e.id === idRec
           );
           if (idx > -1) {
             if (fullData) {
@@ -290,20 +288,24 @@ const Playlist = ({
     });
   };
 
-  const addDataToPlaylist = (data, isBulk = false, combineLast = false) => {
+  const addDataToPlaylist = (
+    data: any[],
+    isBulk = false,
+    combineLast = false
+  ) => {
     if (isBulk) {
-      setPlaylist((prev) => {
+      setPlaylist((prev: any[]) => {
         const old = [...prev, ...data];
         return old;
       });
       return;
     }
 
-    setPlaylist((prev) => {
+    setPlaylist((prev: any[]) => {
       const old = [...prev];
       if (combineLast) old.pop();
       const lastData = old[old.length - 1];
-      const isSame = objectComparator(data, lastData, ["content"]);
+      const isSame = G.objectComparator(data, lastData, ["content"]);
       if (!isSame) {
         old.push(data);
       } else {
@@ -317,7 +319,7 @@ const Playlist = ({
     const allItems = thisBot.getSuggestedListItems({ searchText });
 
     setSearchText("");
-    setPlaylist((prev) => {
+    setPlaylist((prev: any[]) => {
       const old = [...prev, ...allItems];
       return old;
     });
@@ -330,17 +332,17 @@ const Playlist = ({
     setChecklist(false);
   };
 
-  const addPlaylist = (data, id = false, subId = null) => {
-    setPlayLists((p) => {
+  const addPlaylist = (data: any, id = false, subId: string | null = null) => {
+    setPlayLists((p: any[]) => {
       const old = [...p];
-      globalThis.AlreadySet = true;
+      G.AlreadySet = true;
       if (id) {
         if (subId) {
-          const subIndex = globalThis[`${id}playlists`].findIndex(
-            (pl) => pl.id === subId
+          const subIndex = G[`${id}playlists`].findIndex(
+            (pl: any) => pl.id === subId
           );
-          const index = globalThis[`${id}playlists`][subIndex].list.findIndex(
-            (pl) => pl.id === id
+          const index = G[`${id}playlists`][subIndex].list.findIndex(
+            (pl: any) => pl.id === id
           );
           if (data.list.length === 0 && !old[subIndex].list[index].attachment) {
             old[subIndex].list[index].splice(index, 1);
@@ -356,19 +358,22 @@ const Playlist = ({
           }
         }
       } else {
-        globalThis[`${"default"}playlists`] = old;
+        G[`${"default"}playlists`] = old;
         if (data.list.length === 0) return old;
         old.push(data);
       }
-      globalThis[`${"default"}playlists`] = old;
+      G[`${"default"}playlists`] = old;
       return old;
     });
   };
 
-  const deleteDataFromPlaylist = (index, pId) => {
-    setPlaylist((prev) => {
+  const deleteDataFromPlaylist = (
+    index: number | number[],
+    pId: string | null = null
+  ) => {
+    setPlaylist((prev: any[]) => {
       const isBulk = Array.isArray(index);
-      const idMaps = {};
+      const idMaps: Record<string, boolean> = {};
       let old = [...prev];
       if (pId) {
         const indexParent = old.findIndex((ele) => ele.id === pId);
@@ -388,13 +393,13 @@ const Playlist = ({
   };
 
   const deleteDateData = () => {
-    setPlaylist((prev) => {
+    setPlaylist((prev: any[]) => {
       let old = [...prev.filter((ele) => ele.type !== "date")];
       return old;
     });
   };
 
-  const SetCreatingPlaylist = (value, list = []) => {
+  const SetCreatingPlaylist = (value: boolean, list: any[] = []) => {
     const anyDate = list.findIndex((ele) => ele.type === "date") > -1;
     if (anyDate) {
       setReadingPlan(true);
@@ -406,10 +411,10 @@ const Playlist = ({
   };
 
   useLayoutEffect(() => {
-    globalThis.IS_PLAYLIST_ACTIVE = creatingPlaylist;
-    globalThis.SET_SHOW_CHECK && globalThis.SET_SHOW_CHECK(creatingPlaylist);
+    G.IS_PLAYLIST_ACTIVE = creatingPlaylist;
+    G.SET_SHOW_CHECK && G.SET_SHOW_CHECK(creatingPlaylist);
     return () => {
-      globalThis.SET_SHOW_CHECK && globalThis.SET_SHOW_CHECK(false);
+      G.SET_SHOW_CHECK && G.SET_SHOW_CHECK(false);
     };
   }, [creatingPlaylist]);
 
@@ -426,66 +431,66 @@ const Playlist = ({
   // }
 
   useLayoutEffect(() => {
-    globalThis[`${id}AddDataToPlaylist`] = addDataToPlaylist;
-    globalThis[`${id}EditPlaylistData`] = editPlaylistData;
-    globalThis[`${id}ResetPlaylist`] = resetPlayist;
-    globalThis[`${id}SetCreatingPlaylist`] = SetCreatingPlaylist;
-    globalThis[`${id}SetPlaylistName`] = setName;
-    globalThis[`${id}AddPlaylist`] = addPlaylist;
-    globalThis[`${id}creatingPlaylistName`] = name;
-    globalThis[`${id}currentPlaylist`] = playList;
-    if (globalThis.SetRenderMylist) globalThis.SetRenderMylist(playList);
-    if (!globalThis.AlreadySet) globalThis[`${id}playlists`] = playLists;
-    globalThis.AlreadySet = false;
-    globalThis[`${id}Attachments`] = attachment;
-    globalThis[`${id}SetAttachments`] = setAttachment;
-    globalThis[`${id}SetPlaylists`] = setPlayLists;
-    globalThis[`${id}SetChecklist`] = setChecklist;
-    globalThis[`${id}SetReadingPlan`] = setReadingPlan;
-    globalThis[`${id}SetCurrentFormat`] = setCurrentFormat;
-    globalThis[`${id}setCustomColor`] = setCustomColor;
-    globalThis[`${id}setCustomIcon`] = setCustomIcon;
-    globalThis[`${id}setSelectedColor`] = setSelectedColor;
-    globalThis[`${id}setSelectedIcon`] = setSelectedIcon;
-    globalThis[`${id}setDescription`] = setDescription;
-    globalThis[`${id}setPublishAccess`] = setPublishAccess;
-    globalThis[`setRenderAgain`] = setRenderAgain;
+    G[`${id}AddDataToPlaylist`] = addDataToPlaylist;
+    G[`${id}EditPlaylistData`] = editPlaylistData;
+    G[`${id}ResetPlaylist`] = resetPlayist;
+    G[`${id}SetCreatingPlaylist`] = SetCreatingPlaylist;
+    G[`${id}SetPlaylistName`] = setName;
+    G[`${id}AddPlaylist`] = addPlaylist;
+    G[`${id}creatingPlaylistName`] = name;
+    G[`${id}currentPlaylist`] = playList;
+    if (G.SetRenderMylist) G.SetRenderMylist(playList);
+    if (!G.AlreadySet) G[`${id}playlists`] = playLists;
+    G.AlreadySet = false;
+    G[`${id}Attachments`] = attachment;
+    G[`${id}SetAttachments`] = setAttachment;
+    G[`${id}SetPlaylists`] = setPlayLists;
+    G[`${id}SetChecklist`] = setChecklist;
+    G[`${id}SetReadingPlan`] = setReadingPlan;
+    G[`${id}SetCurrentFormat`] = setCurrentFormat;
+    G[`${id}setCustomColor`] = setCustomColor;
+    G[`${id}setCustomIcon`] = setCustomIcon;
+    G[`${id}setSelectedColor`] = setSelectedColor;
+    G[`${id}setSelectedIcon`] = setSelectedIcon;
+    G[`${id}setDescription`] = setDescription;
+    G[`${id}setPublishAccess`] = setPublishAccess;
+    G[`setRenderAgain`] = setRenderAgain;
     setPlaylistLocale(playLists, id);
-    globalThis[`setOpenAttachLink`] = setOpenAttachLink;
-    globalThis[`SetEditModal`] = setEditModal;
-    globalThis[`SetSelectPlaylist`] = setSelectPlaylist;
-    globalThis[`${id}SetSelectedTags`] = setTags;
-    globalThis[`${id}SetLayers`] = setLayers;
+    G[`setOpenAttachLink`] = setOpenAttachLink;
+    G[`SetEditModal`] = setEditModal;
+    G[`SetSelectPlaylist`] = setSelectPlaylist;
+    G[`${id}SetSelectedTags`] = setTags;
+    G[`${id}SetLayers`] = setLayers;
     return () => {
-      globalThis[`${id}SetPlaylistName`] = null;
-      globalThis[`${id}AddDataToPlaylist`] = null;
-      globalThis[`${id}AddPlaylist`] = null;
-      globalThis[`${id}SetChecklist`] = null;
-      globalThis[`${id}SetPlaylists`] = null;
-      globalThis[`${id}setPublishAccess`] = null;
-      globalThis[`${id}setCustomColor`] = null;
-      globalThis[`${id}setCustomIcon`] = null;
-      globalThis[`${id}setSelectedColor`] = null;
-      globalThis[`setOpenAttachLink`] = null;
-      globalThis[`${id}setSelectedIcon`] = null;
-      globalThis[`${id}setDescription`] = null;
-      globalThis[`${id}SetCurrentFormat`] = null;
-      globalThis[`${id}SetReadingPlan`] = null;
-      globalThis[`SetSelectPlaylist`] = null;
+      G[`${id}SetPlaylistName`] = null;
+      G[`${id}AddDataToPlaylist`] = null;
+      G[`${id}AddPlaylist`] = null;
+      G[`${id}SetChecklist`] = null;
+      G[`${id}SetPlaylists`] = null;
+      G[`${id}setPublishAccess`] = null;
+      G[`${id}setCustomColor`] = null;
+      G[`${id}setCustomIcon`] = null;
+      G[`${id}setSelectedColor`] = null;
+      G[`setOpenAttachLink`] = null;
+      G[`${id}setSelectedIcon`] = null;
+      G[`${id}setDescription`] = null;
+      G[`${id}SetCurrentFormat`] = null;
+      G[`${id}SetReadingPlan`] = null;
+      G[`SetSelectPlaylist`] = null;
     };
   }, [playList, name, playLists, attachment]);
 
-  const checkNameDuplicate = (newName) => {
+  const checkNameDuplicate = (newName: string) => {
     const nameValue = (newName || name).trim();
     if (!nameValue)
       return ShowNotification({
-        message: "Playlist Name not found!",
+        message: t("playlistNameNotFound"),
         severity: "error",
       });
-    const names = playLists.map((ele) => ele.name);
+    const names = playLists.map((ele: any) => ele.name);
     if (names.includes(nameValue) && !isEdit.current) {
       ShowNotification({
-        message: "Playlist Name already present!",
+        message: t("playlistNameAlreadyPresent"),
         severity: "error",
       });
       return true;
@@ -493,7 +498,7 @@ const Playlist = ({
     return false;
   };
 
-  const attachLink = (title, link, linkState) => {
+  const attachLink = (title: string, link: string, linkState: any) => {
     const dataItem = {
       content: title,
       additionalInfo: {
@@ -502,14 +507,14 @@ const Playlist = ({
       },
       type: linkState.type === "text" ? "heading" : "attachment-link",
     };
-    if (!!itemSelected) {
-      setPlaylist((old) => {
+    if (itemSelected) {
+      setPlaylist((old: any[]) => {
         const prev = [...old];
         const index = prev.findIndex((ele) => ele.id === itemSelected);
         const targetVerse = prev[index];
         targetVerse.additionalInfo.layers = [
           {
-            id: createUUID(),
+            id: G.createUUID(),
             content: title,
             additionalInfo: {
               link,
@@ -523,7 +528,7 @@ const Playlist = ({
         return prev;
       });
       setTimeout(() => {
-        globalThis[`${itemSelected}OpenToggle`](true);
+        G[`${itemSelected}OpenToggle`](true);
       }, 300);
     } else {
       thisBot.tryAddDataToPlaylist({
@@ -533,9 +538,9 @@ const Playlist = ({
     setOpenAttachLink(false);
   };
 
-  const massAdd = (items) => {
-    if (!!itemSelected) {
-      setPlaylist((old) => {
+  const massAdd = (items: any[]) => {
+    if (itemSelected) {
+      setPlaylist((old: any[]) => {
         const prev = [...old];
         const index = prev.findIndex((ele) => ele.id === itemSelected);
         const targetVerse = prev[index];
@@ -547,7 +552,7 @@ const Playlist = ({
         return prev;
       });
       setTimeout(() => {
-        globalThis[`${itemSelected}OpenToggle`](true);
+        G[`${itemSelected}OpenToggle`](true);
       }, 300);
     } else {
       items.forEach((item) => {
@@ -559,22 +564,28 @@ const Playlist = ({
     setOpenAttachLink(false);
   };
 
-  const attachDate = () => {
-    thisBot.onAddDate({
-      onAttach: (date) => {
-        setReadingPlan(true);
-        thisBot.tryAddDataToPlaylist({
-          dataItem: {
-            content: FORMAT_DATE(date || new Date()),
-            additionalInfo: {
-              date: FORMAT_YYYY_MM_DD(date || new Date()),
-            },
-            type: "date",
-          },
-        });
-        setOpenAttachLink(false);
+  const attachDate = (date: string = "") => {
+    // thisBot.onAddDate({
+    // onAttach: (date) => {
+    setReadingPlan(true);
+    thisBot.tryAddDataToPlaylist({
+      dataItem: {
+        content: G.FORMAT_DATE(
+          date.replaceAll("/", "-") || new Date(),
+          "DEFAULT",
+          "MM-DD-YYYY"
+        ),
+        additionalInfo: {
+          date: G.FORMAT_YYYY_MM_DD(
+            new Date(`${date.replaceAll("/", "-")} 12:00:00`) || new Date()
+          ),
+        },
+        type: "date",
       },
     });
+    // setOpenAttachLink(false);
+    // },
+    // });
   };
 
   useLayoutEffect(() => {
@@ -590,7 +601,7 @@ const Playlist = ({
   ]);
 
   const onBulkDelete = () => {
-    setPlayLists((prev) => {
+    setPlayLists((prev: any[]) => {
       let old = [...prev];
       old = old.filter((prev) => !selectedPlaylist[prev.id]);
       return old;
@@ -599,13 +610,14 @@ const Playlist = ({
   };
 
   const onBulkJsonDownload = () => {
-    const listToDownload = [];
-    playLists.forEach(({ list, id: playlistID }) => {
-      if (!!selectedPlaylist[playlistID]) {
-        list.forEach((ele) => {
+    const listToDownload: any[] = [];
+    playLists.forEach((props: any) => {
+      const { list, id: playlistID } = props;
+      if (selectedPlaylist[playlistID]) {
+        list.forEach((ele: any) => {
           listToDownload.push({
             ...ele,
-            id: createUUID(),
+            id: G.createUUID(),
           });
         });
       }
@@ -626,7 +638,7 @@ const Playlist = ({
     oldListRef.current = JSON.parse(JSON.stringify(playList));
     if (loading) {
       return ShowNotification({
-        message: "Regenration in progress!",
+        message: t("regenrationInProgress"),
         severity: "error",
       });
     }
@@ -643,7 +655,7 @@ const Playlist = ({
       setLoading(false);
       if (!allItems?.length) {
         ShowNotification({
-          message: "Unable to generate playlist.Please Try Again!",
+          message: t("unableToGeneratePlaylist"),
           severity: "error",
         });
         return;
@@ -655,7 +667,7 @@ const Playlist = ({
     } catch (err) {
       setLoading(false);
       return ShowNotification({
-        message: "Regenration in Failed!",
+        message: t("regenerationFailed"),
         severity: "error",
       });
     }
@@ -666,7 +678,7 @@ const Playlist = ({
     setPlaylist(oldListRef.current);
   };
 
-  const editDataFromPlaylist = (receivedIds) => {
+  const editDataFromPlaylist = (receivedIds: string | string[]) => {
     let ids = [receivedIds];
     if (Array.isArray(receivedIds)) {
       ids = [...receivedIds];
@@ -674,7 +686,7 @@ const Playlist = ({
 
     setChecklistData((prev) => {
       const old = { ...prev };
-      ids.forEach((idEle) => {
+      ids.forEach((idEle: any) => {
         if (old[idEle]) {
           delete old[idEle];
         } else {
@@ -687,7 +699,7 @@ const Playlist = ({
   };
 
   const onBulkDeleteItems = () => {
-    setPlaylist((prev) => {
+    setPlaylist((prev: any[]) => {
       const old = prev.filter(
         (ele) => !checkListData[ele.id] && embedding !== ele.id
       );
@@ -702,24 +714,24 @@ const Playlist = ({
     let embededItem = null;
     if (!embedding) return;
 
-    playList.forEach((ele) => {
+    playList.forEach((ele: any) => {
       if (checkListData[ele.id] && ele.id !== embedding) {
-        if (!!ele.additionalInfo?.layers?.length) {
+        if (ele.additionalInfo?.layers?.length) {
           embededItem = ele.content;
         }
       }
     });
 
-    if (!!embededItem) {
+    if (embededItem) {
       ShowNotification({
-        message: `Cannot Embed the Embedded item! Content: ${embededItem}. Please remove it before embeding!`,
+        message: t("cannotEmbedEmbeddedItem", { embededItem }),
         severity: "error",
       });
       return;
     }
-    setPlaylist((prev) => {
-      const oldItems = [];
-      const newLayers = [];
+    setPlaylist((prev: any[]) => {
+      const oldItems: any[] = [];
+      const newLayers: any[] = [];
       const old = [...prev];
       old.forEach((ele) => {
         if (checkListData[ele.id]) {
@@ -753,22 +765,22 @@ const Playlist = ({
     setChecklistData({});
   };
 
-  const onDisembed = (ids, isDelete) => {
+  const onDisembed = (ids: any, isDelete?: boolean) => {
     let idtoDisembed = [ids];
     if (Array.isArray(ids)) {
       idtoDisembed = [...ids];
     }
 
-    const idsMap = {};
-    const pidsMap = {};
+    const idsMap: Record<string, boolean> = {};
+    const pidsMap: Record<string, boolean> = {};
 
     idtoDisembed.forEach((ele, index) => {
       idsMap[ele.id] = true;
       pidsMap[ele.pId] = true;
     });
 
-    setPlaylist((prev) => {
-      const toBeAddedAtIndex = {};
+    setPlaylist((prev: any[]) => {
+      const toBeAddedAtIndex: Record<string, any[]> = {};
 
       const old = prev.map((ele, idx) => {
         const prevEle = {
@@ -778,10 +790,10 @@ const Playlist = ({
             layers: [...(ele.additionalInfo.layers || [])],
           },
         };
-        const layersFilter = [];
-        const remaningLayers = [];
+        const layersFilter: any[] = [];
+        const remaningLayers: any[] = [];
         if (pidsMap[prevEle.id]) {
-          prevEle.additionalInfo.layers.forEach((layer) => {
+          prevEle.additionalInfo.layers.forEach((layer: any) => {
             if (idsMap[layer.id]) {
               layersFilter.push({
                 ...layer,
@@ -799,8 +811,8 @@ const Playlist = ({
         }
         return prevEle;
       });
-      Object.keys(toBeAddedAtIndex).forEach((ele) => {
-        const items = [...toBeAddedAtIndex[ele]];
+      Object.keys(toBeAddedAtIndex).forEach((ele: any) => {
+        const items = [...(toBeAddedAtIndex[ele] || [])];
         old.splice(ele, 0, ...items);
       });
       return old;
@@ -811,9 +823,9 @@ const Playlist = ({
 
   const isSomethingEmbededChecked = Object.keys(checkListEmbeded).length > 0;
 
-  const onCheckEmbeded = (id, pId) => {
+  const onCheckEmbeded = (id: any, pId: string) => {
     setChecklistEmbeded((prev) => {
-      const old = { ...prev };
+      const old: Record<string, any> = { ...prev };
       let idMap = [id];
       if (Array.isArray(id)) {
         idMap = [...idMap];
@@ -829,15 +841,17 @@ const Playlist = ({
     });
   };
 
-  const showMorePosition = useRef(getPosition());
+  const showMorePosition = useRef(getPosition ? getPosition() : { x: 0, y: 0 });
 
-  const showPlaylistPosition = useRef(getPosition());
+  const showPlaylistPosition = useRef(
+    getPosition ? getPosition() : { x: 0, y: 0 }
+  );
 
   const [sharedFilterPlaylists, filteredPlaylist] = useMemo(() => {
     const q = query.toLocaleLowerCase();
-    const shared = [];
-    const owned = [];
-    playLists.forEach((ele) => {
+    const shared: any[] = [];
+    const owned: any[] = [];
+    playLists.forEach((ele: any) => {
       const name = ele.name?.toLocaleLowerCase();
       const des = ele.description?.toLocaleLowerCase();
       if (name.includes(q) || des.includes(q)) {
@@ -855,23 +869,20 @@ const Playlist = ({
     <>
       {layersWarning && (
         <Modal
-          title="Not Embded Items Found"
+          title={t("notEmbeddedItemsFound")}
           onClose={() => setLayersWarning(false)}
           showIcon={false}
         >
-          <h2 style={{ fontSize: "1rem" }}>
-            Some of your item are not embedded. Layers Should have all Embeded
-            Items.
-          </h2>
+          <h2 style={{ fontSize: "1rem" }}>{t("notEmbeddedItemsMsg")}</h2>
           <ButtonsCover>
             <Button
               secondary
               onClick={() => {
-                setPlaylist((prev) => {
+                setPlaylist((prev: any[]) => {
                   const old = prev.filter(
-                    (ele) => !!ele.additionalInfo.layers?.length
+                    (ele: any) => ele.additionalInfo.layers?.length
                   );
-                  globalThis[`${id}currentPlaylist`] = old;
+                  G[`${id}currentPlaylist`] = old;
                   return old;
                 });
                 setOpenAttachLink(false);
@@ -891,10 +902,10 @@ const Playlist = ({
                 setLayersWarning(false);
               }}
             >
-              Remove & Save
+              {t("removeAndSave")}
             </Button>
             <Button secondaryAlt onClick={() => setLayersWarning(false)}>
-              Close
+              {t("close")}
             </Button>
           </ButtonsCover>
         </Modal>
@@ -908,39 +919,25 @@ const Playlist = ({
               ...showMorePosition.current,
               left: "none",
               right: "4rem",
-              width: "200px",
+              width: "206px",
               padding: "1rem",
               top: "5rem",
             }}
             className="overlay linked-item-custom"
           >
             <p>
-              <b style={{ color: "white" }}>Publish settings</b>
+              <b>{t("publishSettings")}</b>
             </p>
-            <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              Your annotations will be available to everyone if public. If
-              private only you will have access.
-            </span>
+            <span style={{ fontSize: "10px" }}>{t("publishSettingsDesc")}</span>
             <div
               className="more-menu-items"
               onClick={() => {
                 setPublishAccess("private");
               }}
-              style={{
-                borderTop: "1px solid #3E3E3E",
-              }}
             >
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
-                lock
-              </span>
-              <p>Private Access</p>
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
+              <span class="material-symbols-outlined">lock</span>
+              <p>{t("privateAccess")}</p>
+              <span class="material-symbols-outlined">
                 {publishAccess === "private"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -952,17 +949,9 @@ const Playlist = ({
                 setPublishAccess("public");
               }}
             >
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
-                public
-              </span>
-              <p>Public Access</p>
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
+              <span class="material-symbols-outlined">public</span>
+              <p>{t("publicAccess")}</p>
+              <span class="material-symbols-outlined">
                 {publishAccess === "public"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -973,20 +962,13 @@ const Playlist = ({
       )}
       {openModal && creatingPlaylist && (
         <Modal
-          title="Copy Items"
+          title={t("copyItems")}
           showIcon={false}
           onClose={() => setOpenModal(false)}
         >
-          <p style={{ fontSize: "12px" }}>
-            {" "}
-            <b>Click & Hold</b> any Playlist to add it to{" "}
-            <b>Current playlist</b>.
-          </p>
-          <p style={{ textAlign: "center" }}> OR </p>
-          <p style={{ fontSize: "12px" }}>
-            <b>Click & Hold</b> any Playlist item to add that item to the{" "}
-            <b>Current playlist</b>.
-          </p>
+          <p style={{ fontSize: "12px" }}>{t("copyItemsInstructions")}</p>
+          <p style={{ textAlign: "center" }}> {t("or")} </p>
+          <p style={{ fontSize: "12px" }}>{t("copyItemInstructions")}</p>
           <PlaylistList
             creatingPlaylist={creatingPlaylist}
             isLayers={isLayers}
@@ -997,7 +979,7 @@ const Playlist = ({
           <ButtonsCover>
             <p> </p>
             <Button secondaryAlt onClick={() => setOpenModal(false)}>
-              Close
+              {t("close")}
             </Button>
           </ButtonsCover>
         </Modal>
@@ -1012,7 +994,7 @@ const Playlist = ({
           <div
             style={{
               ...showPlaylistPosition.current,
-              width: "200px",
+              width: "206px",
               padding: "1rem",
             }}
             className="overlay linked-item-custom"
@@ -1032,14 +1014,14 @@ const Playlist = ({
               >
                 {checklist ? (
                   <span
-                    style={{ fontSize: "20px", color: "white" }}
+                    style={{ fontSize: "20px" }}
                     class="material-symbols-outlined unfollow"
                   >
                     check_box
                   </span>
                 ) : (
                   <span
-                    style={{ fontSize: "20px", color: "white" }}
+                    style={{ fontSize: "20px" }}
                     class="material-symbols-outlined unfollow"
                   >
                     check_box_outline_blank
@@ -1050,17 +1032,13 @@ const Playlist = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     marginLeft: "4px",
-                    color: "white",
                   }}
                   for="playlistInclude"
                 >
-                  Checklist
+                  {t("checklist")}
                 </label>
               </div>
-              <Tooltip
-                forRight={true}
-                text="Checklist Mode gives your Playlist an option to checkout the visited items so you can keep track of your playlist progress."
-              >
+              <Tooltip forRight={true} text={t("checklistTooltip")}>
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}
@@ -1074,65 +1052,66 @@ const Playlist = ({
                 </p>
               </Tooltip>
             </div>
-            <div
-              className="more-menu-items"
-              onClick={() => {
-                setPublishAccess("public");
-              }}
-            >
+            {false && (
               <div
-                className="align-center"
-                style={{
-                  cursor: "pointer",
-                }}
+                className="more-menu-items"
                 onClick={() => {
-                  if (readingPlan) {
-                    deleteDateData();
-                  }
-                  setReadingPlan((p) => !p);
+                  setPublishAccess("public");
                 }}
               >
-                {readingPlan ? (
-                  <span
-                    style={{ fontSize: "20px", color: "white" }}
-                    class="material-symbols-outlined unfollow"
-                  >
-                    check_box
-                  </span>
-                ) : (
-                  <span
-                    style={{ fontSize: "20px", color: "white" }}
-                    class="material-symbols-outlined unfollow"
-                  >
-                    check_box_outline_blank
-                  </span>
-                )}
-                <label
+                <div
+                  className="align-center"
                   style={{
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    marginLeft: "4px",
-                    color: "white",
+                    cursor: "pointer",
                   }}
-                  for="playlistInclude"
+                  onClick={() => {
+                    if (readingPlan) {
+                      deleteDateData();
+                    }
+                    setReadingPlan((p) => !p);
+                  }}
                 >
-                  Reading Plan
-                </label>
-              </div>
-              <Tooltip text="Plan Mode lets you add dates in your playlist which keeps the date and progress in track according to date.">
-                <p
-                  className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}
-                >
-                  <span
-                    style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow "
+                  {readingPlan ? (
+                    <span
+                      style={{ fontSize: "20px" }}
+                      class="material-symbols-outlined unfollow"
+                    >
+                      check_box
+                    </span>
+                  ) : (
+                    <span
+                      style={{ fontSize: "20px" }}
+                      class="material-symbols-outlined unfollow"
+                    >
+                      check_box_outline_blank
+                    </span>
+                  )}
+                  <label
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      marginLeft: "4px",
+                    }}
+                    for="playlistInclude"
                   >
-                    info
-                  </span>
-                </p>
-              </Tooltip>
-            </div>
+                    {t("readingPlan")}
+                  </label>
+                </div>
+                <Tooltip text={t("readingPlanTooltip")}>
+                  <p
+                    className="what-this center"
+                    style={{ margin: "0 0 0 0.5rem" }}
+                  >
+                    <span
+                      style={{ fontSize: "24px" }}
+                      class="material-symbols-outlined unfollow "
+                    >
+                      info
+                    </span>
+                  </p>
+                </Tooltip>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -1155,7 +1134,7 @@ const Playlist = ({
                 >
                   delete_forever
                 </span>
-                <span className="color-inherit">Delete</span>
+                <span className="color-inherit">{t("delete")}</span>
               </Button>
               <Button onClick={onBulkJsonDownload} secondaryAlt color="#C20104">
                 <span
@@ -1164,19 +1143,48 @@ const Playlist = ({
                 >
                   system_update_alt
                 </span>
-                <span className="color-inherit">Download JSON</span>
+                <span className="color-inherit">{t("downloadJSON")}</span>
               </Button>
             </ButtonsCover>
           )}
 
         {creatingPlaylist || openModalName ? (
-          <h3 style={{ margin: "0.5rem 0" }}>Editing Playlists</h3>
+          <h3 style={{ margin: "0.5rem 0" }}>{t("editingPlaylists")}</h3>
         ) : (
           <>
+            {(playingPlaylist ||
+              selectedChip["All"] ||
+              selectedChip["Playlist"]) && (
+              <>
+                <h3
+                  style={{ margin: "0.5rem 0" }}
+                >{`${t("my")} ${t("playlists")}`}</h3>
+                <PlaylistList
+                  selectedChip={selectedChip}
+                  extraActions={() => {
+                    toggleOpenModalName(false);
+                  }}
+                  selectPlaylist={
+                    selectPlaylist ||
+                    Object.keys(selectedPlaylist).some(
+                      (ele) => !!selectedPlaylist[ele]
+                    )
+                  }
+                  playingPlaylist={playingPlaylist}
+                  mergeMode={mergeMode}
+                  parentId={id}
+                  isLayers={isLayers}
+                  selectedPlaylists={selectedPlaylist}
+                  setSelectPlaylist={toggleSelectedPlaylist}
+                  playLists={filteredPlaylist}
+                  setPlayLists={setPlayLists}
+                />
+              </>
+            )}
             {selectedChip["Shared"] && sharedFilterPlaylists.length === 0 ? (
               <>
-                <h3 style={{ margin: "0.5rem 0" }}>Shared Playlists</h3>
-                <p>No {isLayers ? "Layers" : "Playlists"} to show.</p>
+                <h3 style={{ margin: "0.5rem 0" }}>{t("sharedPlaylists")}</h3>
+                <p>{isLayers ? t("noLayersToShow") : t("noPlaylistsToShow")}</p>
               </>
             ) : null}
             {(playingPlaylist ||
@@ -1184,7 +1192,7 @@ const Playlist = ({
               selectedChip["Shared"]) &&
             sharedFilterPlaylists.length > 0 ? (
               <>
-                <h3 style={{ margin: "0.5rem 0" }}>Shared Playlists</h3>
+                <h3 style={{ margin: "0.5rem 0" }}>{t("sharedPlaylists")}</h3>
                 <PlaylistList
                   selectedChip={selectedChip}
                   extraActions={() => {
@@ -1209,33 +1217,6 @@ const Playlist = ({
             ) : (
               ""
             )}
-            {(playingPlaylist ||
-              selectedChip["All"] ||
-              selectedChip["Playlist"]) && (
-              <>
-                <h3 style={{ margin: "0.5rem 0" }}>Playlists</h3>
-                <PlaylistList
-                  selectedChip={selectedChip}
-                  extraActions={() => {
-                    toggleOpenModalName(false);
-                  }}
-                  selectPlaylist={
-                    selectPlaylist ||
-                    Object.keys(selectedPlaylist).some(
-                      (ele) => !!selectedPlaylist[ele]
-                    )
-                  }
-                  playingPlaylist={playingPlaylist}
-                  mergeMode={mergeMode}
-                  parentId={id}
-                  isLayers={isLayers}
-                  selectedPlaylists={selectedPlaylist}
-                  setSelectPlaylist={toggleSelectedPlaylist}
-                  playLists={filteredPlaylist}
-                  setPlayLists={setPlayLists}
-                />
-              </>
-            )}
           </>
         )}
         {creatingPlaylist && (
@@ -1258,14 +1239,14 @@ const Playlist = ({
                   const x = rect.left; // X position where the element starts (from left of screen)
                   const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
 
-                  globalThis.LastClickX = x;
-                  globalThis.LastClickY = y;
+                  G.LastClickX = x;
+                  G.LastClickY = y;
                   showPlaylistPosition.current = { ...getPosition() };
                   setShowPlaylistSettings(true);
                 }}
               >
                 <span class="material-symbols-outlined">playlist_play</span>
-                <span>Playlist Settings</span>
+                <span>{t("playlistSettings")}</span>
               </div>
               <div className="align-center">
                 <TogglePlaylistHeight />
@@ -1277,14 +1258,14 @@ const Playlist = ({
                     const x = rect.left; // X position where the element starts (from left of screen)
                     const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
 
-                    globalThis.LastClickX = x;
-                    globalThis.LastClickY = y;
+                    G.LastClickX = x;
+                    G.LastClickY = y;
                     showMorePosition.current = { ...getPosition() };
                     setShowMoreOptions(true);
                   }}
                 >
                   <span class="material-symbols-outlined">settings</span>
-                  <span>Publish Settings</span>
+                  <span>{t("publishSettings")}</span>
                 </div>
               </div>
             </div>
@@ -1313,7 +1294,7 @@ const Playlist = ({
                   >
                     delete_forever
                   </span>
-                  <span className="color-inherit">Delete</span>
+                  <span className="color-inherit">{t("delete")}</span>
                 </Button>
                 {!!embedding && isSomethingChecked && (
                   <Button onClick={onEmbedItems} secondaryAlt color="#3B82F6">
@@ -1323,7 +1304,7 @@ const Playlist = ({
                     >
                       frame_source
                     </span>
-                    <span className="color-inherit">Embed</span>
+                    <span className="color-inherit">{t("embed")}</span>
                   </Button>
                 )}
                 <Button
@@ -1340,7 +1321,7 @@ const Playlist = ({
                   >
                     close
                   </span>
-                  <span className="color-inherit">Cancel</span>
+                  <span className="color-inherit">{t("cancel")}</span>
                 </Button>
               </div>
             )}
@@ -1365,7 +1346,7 @@ const Playlist = ({
                   >
                     delete_forever
                   </span>
-                  <span className="color-inherit">Delete</span>
+                  <span className="color-inherit">{t("delete")}</span>
                 </Button>
                 <Button
                   onClick={() => {
@@ -1383,7 +1364,7 @@ const Playlist = ({
                   >
                     link_off
                   </span>
-                  <span className="color-inherit">Remove</span>
+                  <span className="color-inherit">{t("remove")}</span>
                 </Button>
                 <Button
                   onClick={() => {
@@ -1397,11 +1378,11 @@ const Playlist = ({
                   >
                     close
                   </span>
-                  <span className="color-inherit">Cancel</span>
+                  <span className="color-inherit">{t("cancel")}</span>
                 </Button>
               </div>
             )}
-            <DragDrop
+            <DragDropT
               massAdd={massAdd}
               attachLink={attachLink}
               itemSelected={itemSelected}
@@ -1446,14 +1427,14 @@ const Playlist = ({
                   value={searchText}
                   style={{ marginBottom: "0" }}
                   onChangeListener={setSearchText}
-                  placeholder="Type To Search"
+                  placeholder={t("typeToSearch")}
                 />
                 <p
                   onClick={onSearchHit}
                   className="playlist-action secondary self-start"
                 >
                   <span class="material-symbols-outlined unfollow">search</span>
-                  <span>Search & Add</span>
+                  <span>{t("searchAndAdd")}</span>
                 </p>
               </div>
             )}
@@ -1481,7 +1462,7 @@ const Playlist = ({
                   >
                     photo_library
                   </span>
-                  <span className="color-inherit">Add Media</span>
+                  <span className="color-inherit">{t("addMedia")}</span>
                 </Button>
                 <p
                   onClick={() => {
@@ -1494,17 +1475,16 @@ const Playlist = ({
                   <span class="material-symbols-outlined unfollow">
                     calendar_month
                   </span>
-                  <span>Insert Date</span>
+                  <span>{t("insertDate")}</span>
                 </p>
               </div>
             )}
 
             {!regenrateUI && !itemSelected && (
               <AttachLink
-                isDate
-                onDateClick={() => {
+                onDateClick={(date: string = "") => {
                   setRegenrateUI(false);
-                  attachDate();
+                  attachDate(date);
                 }}
                 massAdd={massAdd}
                 attachLink={attachLink}
@@ -1513,11 +1493,14 @@ const Playlist = ({
             )}
             {!!videoSrc && (
               <VideoPlayer
+                style={G.FloatBarStyle}
                 videoSrc={videoSrc}
                 playlistItem={{ ...currentItem }}
               />
             )}
-            {!!mediaURL && <AudioPlayer close mediaURL={mediaURL} />}
+            {!!mediaURL && (
+              <AudioPlayer style={G.FloatBarStyle} close mediaURL={mediaURL} />
+            )}
 
             {regenrateUI && (
               <div
@@ -1529,7 +1512,7 @@ const Playlist = ({
                   style={{ justifyContent: "space-between" }}
                 >
                   <p style={{ fontSize: "12px", margin: "0.5rem 0" }}>
-                    <b>Regeneration Prompt:</b>
+                    <b>{t("regenerationPrompt")}</b>
                   </p>
                   <div
                     className="align-center"
@@ -1539,7 +1522,7 @@ const Playlist = ({
                       hidden={true}
                       secondary
                       value={currentPromptText}
-                      onChangeListener={(val) => {
+                      onChangeListener={(val: any) => {
                         setCurrentPromptText(val);
                       }}
                       name="Prompt Type:"
@@ -1550,7 +1533,7 @@ const Playlist = ({
                       <Button
                         small
                         onClick={() => {
-                          setSystemPrompt(globalThis.SYSTEM_PROMPT);
+                          setSystemPrompt(G.SYSTEM_PROMPT);
                         }}
                       >
                         <span
@@ -1570,7 +1553,7 @@ const Playlist = ({
                     type="textarea"
                     value={genDetails}
                     onChangeListener={setGenDetails}
-                    placeholder="Describe the playlist you would like to make."
+                    placeholder={t("describePlaylist")}
                   />
                 ) : (
                   <Input
@@ -1579,19 +1562,17 @@ const Playlist = ({
                     type="textarea"
                     value={systemPrompt}
                     onChangeListener={setSystemPrompt}
-                    placeholder="Describe your system Prompt."
+                    placeholder={t("describeSystemPrompt")}
                   />
                 )}
                 {currentPromptText === "system-prompt" && (
-                  <p className="info">
-                    Use $text$ to use your initial prompt as variable.
-                  </p>
+                  <p className="info">{t("systemPromptInfo")}</p>
                 )}
                 <Select
                   hidden={true}
                   secondary
                   value={selectedAI}
-                  onChangeListener={(val) => {
+                  onChangeListener={(val: any) => {
                     setSelectedAI(val);
                   }}
                   name="AI:"
@@ -1600,14 +1581,14 @@ const Playlist = ({
                 />
                 <div className="attach-link-actions">
                   <Button onClick={() => setRegenrateUI(false)} secondaryAlt>
-                    Cancel
+                    {t("cancel")}
                   </Button>
                   <Button
                     // isDisabled={loading}
                     onClick={onRegenration}
                     secondary
                   >
-                    Regenrate
+                    {t("regenerate")}
                   </Button>
                 </div>
               </div>
@@ -1617,7 +1598,7 @@ const Playlist = ({
                 onClick={() => {
                   if (layers) {
                     const checkEmbed = playList.some(
-                      (ele) => !ele.additionalInfo.layers?.length
+                      (ele: any) => !ele.additionalInfo.layers?.length
                     );
                     if (checkEmbed) {
                       setLayersWarning(true);
@@ -1641,11 +1622,11 @@ const Playlist = ({
                 }}
                 secondary
               >
-                Save
+                {t("save")}
               </Button>
               {hasOldRef.current && (
                 <Button isDisabled={loading} onClick={onRevert} secondary>
-                  Revert to Previous
+                  {t("revertToPrevious")}
                 </Button>
               )}
               {!!playList?.length && false && (
@@ -1660,7 +1641,7 @@ const Playlist = ({
                   <span class="material-symbols-outlined unfollow">
                     download
                   </span>
-                  <span>Download JSON</span>
+                  <span>{t("downloadJSON")}</span>
                 </p>
               )}
               {false && !regenrateUI && (
@@ -1676,8 +1657,8 @@ const Playlist = ({
                     animated_images
                   </span>
                   <span>
-                    {hasGenrated ? "Regenerate" : "Generate"}{" "}
-                    {isLayers ? "layers" : "playlist"}
+                    {hasGenrated ? t("regenerate") : t("generate")}{" "}
+                    {isLayers ? t("layers") : t("playlist")}
                   </span>
                 </p>
               )}
@@ -1692,7 +1673,7 @@ const Playlist = ({
                   <span class="material-symbols-outlined unfollow">
                     content_copy
                   </span>
-                  <span>Copy Other Playlists</span>
+                  <span>{t("copyOtherPlaylists")}</span>
                 </p>
               )}
               <Button
@@ -1703,13 +1684,13 @@ const Playlist = ({
                 }}
                 secondaryAlt
               >
-                Close
+                {t("close")}
               </Button>
             </div>
             <p
               style={{ width: "10px", height: "10px" }}
               ref={creatingPlaylistRef}
-              tabIndex="-1"
+              tabIndex={-1}
             />
           </div>
         )}
@@ -1735,7 +1716,7 @@ const Playlist = ({
                   type="checkbox"
                   checked={mergeMode}
                   id="mergeMode"
-                  onChange={(e) => {
+                  onChange={(e: any) => {
                     setMergeMode(e.target.checked);
                   }}
                 />
@@ -1747,7 +1728,7 @@ const Playlist = ({
                   }}
                   for="mergeMode"
                 >
-                  Merge Mode
+                  {t("mergeMode")}
                 </label>
               </div>
             )}
@@ -1761,7 +1742,7 @@ const Playlist = ({
                     hidden={true}
                     secondary
                     value={currentPromptText}
-                    onChangeListener={(val) => {
+                    onChangeListener={(val: any) => {
                       setCurrentPromptText(val);
                     }}
                     name="Prompt Type:"
@@ -1772,7 +1753,7 @@ const Playlist = ({
                     <Button
                       small
                       onClick={() => {
-                        setSystemPrompt(globalThis.SYSTEM_PROMPT);
+                        setSystemPrompt(G.SYSTEM_PROMPT);
                       }}
                     >
                       <span
@@ -1790,7 +1771,7 @@ const Playlist = ({
                     type="textarea"
                     value={genDetails}
                     onChangeListener={setGenDetails}
-                    placeholder="Describe the playlist you would like to make."
+                    placeholder={t("describePlaylist")}
                   />
                 ) : (
                   <Input
@@ -1799,13 +1780,11 @@ const Playlist = ({
                     type="textarea"
                     value={systemPrompt}
                     onChangeListener={setSystemPrompt}
-                    placeholder="Describe your system Prompt."
+                    placeholder={t("describeSystemPrompt")}
                   />
                 )}
                 {currentPromptText === "system-prompt" && (
-                  <p className="info">
-                    Use $text$ to use your initial prompt as variable.
-                  </p>
+                  <p className="info">{t("systemPromptInfo")}</p>
                 )}
               </div>
             )}
@@ -1838,8 +1817,7 @@ const Playlist = ({
                     if (autoGenerateOn) {
                       if (!genDetails) {
                         ShowNotification({
-                          message:
-                            "Please enter some text for Playlist Generation!",
+                          message: t("enterTextForGeneration"),
                           severity: "error",
                         });
                         return;
@@ -1861,8 +1839,7 @@ const Playlist = ({
                         if (!allItems?.length) {
                           setLoading(false);
                           ShowNotification({
-                            message:
-                              "Unable to generate playlist.Please Try Again!",
+                            message: t("unableToGeneratePlaylist"),
                             severity: "error",
                           });
                           return;
@@ -1874,7 +1851,7 @@ const Playlist = ({
                         setDescription(suggestedDescription);
                         startCreatingPlaylist(suggestedName, allItems, id);
                         setTags((prev) => {
-                          const old = [...prev];
+                          const old: any = [...prev];
                           old.push("ai-generated", suggestedName);
                           return old;
                         });
@@ -1882,8 +1859,7 @@ const Playlist = ({
                       } catch (er) {
                         console.log("ERROR IN MAKING PLAYLIST: ", er);
                         ShowNotification({
-                          message:
-                            "Unable to generate playlist.Please Try Again!",
+                          message: t("unableToGeneratePlaylist"),
                           severity: "error",
                         });
                         setLoading(false);
@@ -1891,7 +1867,7 @@ const Playlist = ({
                       return;
                     }
                     toggleOpenModalName(true);
-                    globalThis[`${id}setCustomIcon`](DEFAULT_UPLOAD_ICON);
+                    G[`${id}setCustomIcon`](G.DEFAULT_UPLOAD_ICON);
                   }}
                   style={{ width: "100%", padding: "0" }}
                   className={`playlist-action self-start ${
@@ -1904,8 +1880,11 @@ const Playlist = ({
                         animated_images
                       </span>
                       <span>
-                        {loading ? "Generating" : "Generate"}{" "}
-                        {isLayers ? "layers" : "playlist"}
+                        {loading
+                          ? t("generating")
+                          : isLayers
+                            ? t("generateLayers")
+                            : t("generatePlaylist")}
                       </span>
                     </>
                   ) : (
@@ -1913,7 +1892,11 @@ const Playlist = ({
                       <span class="material-symbols-outlined unfollow">
                         playlist_add
                       </span>
-                      <span>Create new {isLayers ? "layer" : "playlist"}</span>
+                      <span>
+                        {isLayers
+                          ? t("createNewLayer")
+                          : t("createNewPlaylist")}
+                      </span>
                     </>
                   )}
                 </p>
@@ -1932,7 +1915,10 @@ const Playlist = ({
             list={playList}
             setLink={setLink}
             selectedTags={selectedTags}
-            onClickBackToDiscover={() => toggleOpenModalName(false)}
+            onClickBackToDiscover={() => {
+              toggleOpenModalName(false);
+              G[`${id}creatingPlaylistName`] = "";
+            }}
             setTags={setTags}
             customIcon={customIcon}
             setCustomIcon={setCustomIcon}

@@ -1,23 +1,23 @@
-if (globalThis.RenderLinkTimer) clearTimeout(globalThis.RenderLinkTimer);
-if (globalThis.NagiationTimeout) {
-  clearTimeout(globalThis.NagiationTimeout);
-  globalThis.NagiationTimeout = null;
+const G = globalThis as any;
+if (G.RenderLinkTimer) clearTimeout(G.RenderLinkTimer);
+if (G.NagiationTimeout) {
+  clearTimeout(G.NagiationTimeout);
+  G.NagiationTimeout = null;
 }
 
-globalThis.RenderLinkTimer = setTimeout(async () => {
+G.RenderLinkTimer = setTimeout(async () => {
   const appName = "media-linked-playlist";
 
   const PlaylistMedia = thisBot.playlistContentRenderer();
-  const { Modal, Button, ButtonsCover } = Components;
-
+  const { Modal, Button, ButtonsCover } = G.Components;
   DataManager.cancelCurrentPlayingSound();
-  if (globalThis.SetMediaURL && !that.skipEmbed) {
-    globalThis.SetMediaURL(null);
+  if (G.SetMediaURL && !that.skipEmbed) {
+    G.SetMediaURL(null);
   }
   thisBot.CloseFloatingApp();
 
-  if (globalThis.SetVideoSrc && !that.skipEmbed) {
-    globalThis.SetVideoSrc(null);
+  if (G.SetVideoSrc && !that.skipEmbed) {
+    G.SetVideoSrc(null);
     if (
       that.additionalInfo.type === "video-recording" ||
       that.additionalInfo.type === "video" ||
@@ -33,10 +33,8 @@ globalThis.RenderLinkTimer = setTimeout(async () => {
 
   if (that.additionalInfo.type === "voice-recording") {
     const data = await web.get(that.additionalInfo.link);
-    if (globalThis.SetIncrementalCountPlayingPlaylist) {
-      await globalThis.SetIncrementalCountPlayingPlaylist(
-        that.additionalInfo.link
-      );
+    if (G.SetIncrementalCountPlayingPlaylist) {
+      await G.SetIncrementalCountPlayingPlaylist(that.additionalInfo.link);
     }
     await DataManager.playSound({ data: data.data });
     return;
@@ -88,13 +86,13 @@ globalThis.RenderLinkTimer = setTimeout(async () => {
   // }
 
   if (data.additionalInfo.type === "externalLink") {
-    if (globalThis.OpenRefTimeout) {
-      clearTimeout(globalThis.OpenRefTimeout);
-      globalThis.OpenRefTimeout = null;
+    if (G.OpenRefTimeout) {
+      clearTimeout(G.OpenRefTimeout);
+      G.OpenRefTimeout = null;
     }
-    globalThis.OpenRefTimeout = setTimeout(() => {
+    G.OpenRefTimeout = setTimeout(() => {
       const link = that.additionalInfo.link;
-      const isVideo = globalThis.IsVideoAttachment(that);
+      const isVideo = G.IsVideoAttachment(that);
       if (isVideo) {
         thisBot.VideoPlayer({
           src: link,
@@ -112,11 +110,11 @@ globalThis.RenderLinkTimer = setTimeout(async () => {
   }
 
   if (data.additionalInfo.type === "youtube") {
-    if (globalThis.OpenRefTimeout) {
-      clearTimeout(globalThis.OpenRefTimeout);
-      globalThis.OpenRefTimeout = null;
+    if (G.OpenRefTimeout) {
+      clearTimeout(G.OpenRefTimeout);
+      G.OpenRefTimeout = null;
     }
-    globalThis.OpenRefTimeout = setTimeout(() => {
+    G.OpenRefTimeout = setTimeout(() => {
       const link = data.additionalInfo.link;
       thisBot.VideoPlayer({
         src: link,
@@ -130,7 +128,7 @@ globalThis.RenderLinkTimer = setTimeout(async () => {
   }
 
   // os.unregisterApp(appName);
-  os.registerApp(appName);
+  os.registerApp(appName, thisBot);
 
   const MediaLinkedPlaylist = () => {
     return (
@@ -139,29 +137,29 @@ globalThis.RenderLinkTimer = setTimeout(async () => {
         title="Linked Items"
         styles={{ height: "calc(100% - 120px)" }}
         sxContainer={{ height: "98dvh", width: "98vw", zIndex: "9999999" }}
-        showIcon={false}
         onClose={() => {
-          if (globalThis.SmallPlaybackContent)
-            globalThis.SmallPlaybackContent();
+          if (G.SmallPlaybackContent) G.SmallPlaybackContent();
           os.unregisterApp(appName);
-        }}>
+        }}
+      >
         <PlaylistMedia
           type={data.additionalInfo.type}
           content={data.content}
           link={data.additionalInfo.link}
           videoId={data.additionalInfo.videoId}
         />
-        {globalThis.PlayingPlaylist && (
+        {G.PlayingPlaylist && (
           <ButtonsCover>
             {!that.isFirstItem ? (
               <Button
                 style={{ minWidth: "100px", margin: "8px 0 0 0 " }}
                 onClick={() => {
-                  HandleOnButtonPress(-1);
+                  G.HandleOnButtonPress(-1);
                   os.unregisterApp(appName);
                 }}
-                backgroundColor="black">
-                Previous
+                backgroundColor="black"
+              >
+                {t("previous")}
               </Button>
             ) : (
               <p />
@@ -170,11 +168,12 @@ globalThis.RenderLinkTimer = setTimeout(async () => {
               <Button
                 style={{ minWidth: "100px", margin: "8px 0 0 0 " }}
                 onClick={() => {
-                  HandleOnButtonPress(1);
+                  G.HandleOnButtonPress(1);
                   os.unregisterApp(appName);
                 }}
-                backgroundColor="black">
-                Next
+                backgroundColor="black"
+              >
+                {t("next")}
               </Button>
             )}
           </ButtonsCover>
@@ -183,10 +182,10 @@ globalThis.RenderLinkTimer = setTimeout(async () => {
     );
   };
 
-  globalThis.ModifyTransformedHistory &&
-    globalThis.PlayingPlaylist &&
-    globalThis.ModifyTransformedHistory((thh) => thisBot.checkGreyOut(thh));
-  if (globalThis.updateCustomHeight) updateCustomHeight(0);
+  G.ModifyTransformedHistory &&
+    G.PlayingPlaylist &&
+    G.ModifyTransformedHistory((thh: any) => thisBot.checkGreyOut(thh));
+  if (G.updateCustomHeight) G.updateCustomHeight(0);
 
   os.compileApp(appName, <MediaLinkedPlaylist />);
 }, 50);

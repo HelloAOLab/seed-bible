@@ -1,12 +1,32 @@
 import { useTestamentContext } from "scriptureMap2D.main.TestamentContext";
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 import { Book } from "scriptureMap2D.main.Book";
-import { useResizeObserver } from "scriptureMap2D.main.CustomHooks";
 import { SectionToggle } from "scriptureMap2D.main.SectionToggle";
+import { BooksContainer } from "scriptureMap2D.main.BooksContainer";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
-import { calculateReadingHistorySummary } from "db.annotations.library";
-
-const { useMemo, useCallback, useState, useRef, useEffect } = os.appHooks;
+import {
+  calculateReadingHistorySummary,
+  type ReadingEvent,
+} from "db.annotations.library";
+import { userColorStore } from "bibleVizUtils.services.UserColorStore";
+import type {
+  BookUserPresence,
+  Range,
+  TestamentContentType,
+  ToggleShowSectionType,
+} from "scriptureMap2D.main.types";
+import {
+  BibleVizDataRepository,
+  type BookInfo,
+  type SectionInfo,
+} from "bibleVizUtils.data.BibleVizDataRepository";
+import {
+  HexToRgb,
+  GetChildrenLevelColors,
+  GetUserPresenceBorderGradientColors,
+  type HexString,
+} from "bibleVizUtils.functions.index";
+const { useMemo, useCallback, useState, useEffect } = os.appHooks;
 const { memo } = os.appCompat;
 
 const psalmsNames = [
@@ -17,15 +37,13 @@ const psalmsNames = [
   "5 Psalms",
 ];
 
-export const TestamentContent = memo(({ hidden }) => {
+export const TestamentContent = memo<TestamentContentType>(({ hidden }) => {
   const {
     arrangementIndex,
-    scaleFactor,
-    showLabels,
-    bookWidth,
+    showSectionLabels,
     isUserPresenceEnabled,
     activeTab,
-    usersInfo,
+    usersColors,
     userPresence,
   } = useScriptureMap2DContext();
   const {
@@ -33,34 +51,32 @@ export const TestamentContent = memo(({ hidden }) => {
     readingHistoryRangeSeconds,
     SEC_PER_MINUTE,
   } = useReadingHistoryContext();
-
-  const contentRef = useRef(null);
-  const { width: contentWidth } = useResizeObserver(contentRef);
   const { testament, testamentIndex } = useTestamentContext();
 
-  const reversedSections = useMemo(() => {
+  const reversedSections = useMemo<SectionInfo[]>(() => {
     return testament.sections.toReversed();
   }, []);
 
   const { filteredSections, sectionLevelColorMap } = useMemo(() => {
-    const getLevelColorMap = (sections) => {
+    const getLevelColorMap: (
+      sections: SectionInfo[]
+    ) => Map<string, HexString[]> = (sections) => {
       return new Map(
         sections.map((section, sectionIndex) => {
           const levelColorsKey = `${testamentIndex} ${sectionIndex}`;
-          const sectionLevelsColors =
-            BibleVizUtils.Functions.GetChildrenLevelColors({
-              sectionColorRGB: BibleVizUtils.Functions.HexToRgb({
-                hexColor: section.color,
-              }),
-              colorRange: section.customColorRange ?? 70,
-              levelsLength: section.books.length,
-            });
+          const sectionLevelsColors = GetChildrenLevelColors({
+            sectionColorRGB: HexToRgb({
+              hexColor: section.color,
+            }),
+            colorRange: section.customColorRange ?? 70,
+            levelsLength: section.books.length,
+          });
           return [levelColorsKey, sectionLevelsColors];
         })
       );
     };
 
-    let filteredSections;
+    let filteredSections: undefined | SectionInfo[];
 
     if (readingHistoryRangeSeconds) {
       filteredSections = [];
@@ -71,29 +87,40 @@ export const TestamentContent = memo(({ hidden }) => {
         sectionIndex++
       ) {
         const section = reversedSections[sectionIndex];
-        const filteredBooks = [];
-        for (let bookIndex = 0; bookIndex < section.books.length; bookIndex++) {
-          const book = section.books[bookIndex];
-          const bookId =
-            BibleVizUtils.Data.tags.booksStaticInfo[book.commonName]
-              .abbreviation;
-          const bookEvents = rangedReadingEventsByBook.get(bookId);
-          if (bookEvents) {
-            const readingTimeSeconds = bookEvents.reduce((acc, event) => {
-              return acc + event.end - event.start;
-            }, 0);
-            const isReadingTimeNoticeable =
-              readingTimeSeconds >= SEC_PER_MINUTE;
-            if (isReadingTimeNoticeable) {
-              filteredBooks.push(book);
+        if (section) {
+          const filteredBooks: BookInfo[] = [];
+          for (
+            let bookIndex = 0;
+            bookIndex < section.books.length;
+            bookIndex++
+          ) {
+            const book = section.books[bookIndex];
+            if (book) {
+              const bookStaticInfo = BibleVizDataRepository.getBookStaticInfo(
+                book.commonName
+              );
+              if (bookStaticInfo) {
+                const bookId = bookStaticInfo.abbreviation;
+                const bookEvents = rangedReadingEventsByBook.get(bookId);
+                if (bookEvents) {
+                  const readingTimeSeconds = bookEvents.reduce((acc, event) => {
+                    return acc + event.end - event.start;
+                  }, 0);
+                  const isReadingTimeNoticeable =
+                    readingTimeSeconds >= SEC_PER_MINUTE;
+                  if (isReadingTimeNoticeable) {
+                    filteredBooks.push(book);
+                  }
+                }
+              }
             }
           }
-        }
-        if (filteredBooks.length > 0) {
-          filteredSections.push({
-            ...section,
-            books: filteredBooks,
-          });
+          if (filteredBooks.length > 0) {
+            filteredSections.push({
+              ...section,
+              books: filteredBooks,
+            });
+          }
         }
       }
     } else filteredSections = reversedSections;
@@ -122,7 +149,7 @@ export const TestamentContent = memo(({ hidden }) => {
     );
 
     setSectionsShown((prev) => {
-      if (!prev || prev.size !== next.size) return next;
+      if (prev.size !== next.size) return next;
 
       for (const key of next.keys()) {
         if (!prev.has(key)) {
@@ -134,7 +161,7 @@ export const TestamentContent = memo(({ hidden }) => {
     });
   }, [filteredSections]);
 
-  const toggleShowSection = useCallback(
+  const toggleShowSection = useCallback<ToggleShowSectionType>(
     (sectionKey) => {
       const copy = new Map(sectionsShown);
       copy.set(sectionKey, !copy.get(sectionKey));
@@ -143,201 +170,146 @@ export const TestamentContent = memo(({ hidden }) => {
     [sectionsShown]
   );
 
-  const getFittingItemCount = useCallback(
-    (containerWidth, itemWidth, gapWidth) => {
-      if (itemWidth <= 0) return 0;
+  const sections = useMemo<React.ReactNode[]>(() => {
+    const elements: React.ReactNode[] = [];
 
-      const totalSpacePerItem = itemWidth + gapWidth;
-      const maxCount = Math.floor(
-        (containerWidth + gapWidth) / totalSpacePerItem
-      );
-
-      return Math.max(0, maxCount);
-    },
-    []
-  );
-
-  const { fittingBooksCount, rowPairCount } = useMemo(() => {
-    const gridGap = 16 * scaleFactor;
-    const fittingBooksCount = getFittingItemCount(
-      contentWidth,
-      bookWidth,
-      gridGap
-    );
-    const totalBooks = filteredSections.flatMap((section) => {
-      return section.books;
-    }).length;
-    const rowPairCount = Math.ceil(totalBooks / fittingBooksCount);
-    return { fittingBooksCount, rowPairCount };
-  }, [scaleFactor, contentWidth, testament, bookWidth, filteredSections]);
-
-  const sections = useMemo(() => {
-    const elements = [];
-    let sectionIndex = 0;
-    let bookIndex = 0;
-    let currentBookColumn = 1;
-
-    if (fittingBooksCount === 0) return elements;
-
-    for (let i = 1; i <= rowPairCount; i++) {
-      while (
-        currentBookColumn <= fittingBooksCount &&
-        sectionIndex < filteredSections.length
-      ) {
-        const section = filteredSections[sectionIndex];
-        const reversedBooks = section.books.toReversed();
-        const bookInfo = reversedBooks[bookIndex];
-        const book = bookInfo.commonName;
-        const bookStaticInfo = BibleVizUtils.Data.tags.booksStaticInfo[book];
-        const bookId = bookStaticInfo.abbreviation;
-
+    for (
+      let sectionIndex = 0;
+      sectionIndex < filteredSections.length;
+      sectionIndex++
+    ) {
+      const section = filteredSections[sectionIndex];
+      if (section) {
         const sectionKey = `${testamentIndex}-${testament.name}-${sectionIndex}-${section.name}`;
-        if (bookIndex === 0 && showLabels) {
-          const sectionOcupiedColumns = Math.min(
-            fittingBooksCount - (currentBookColumn - 1),
-            filteredSections[sectionIndex].books.length
-          );
+        const levelColorsKey = `${testamentIndex} ${sectionIndex}`;
+        const showingContent = sectionsShown.get(sectionKey);
+        if (showSectionLabels) {
           elements.push(
             <SectionToggle
               key={`${arrangementIndex}-${testament.name}-${section.name}`}
-              section={filteredSections[sectionIndex]}
+              section={section}
               sectionKey={sectionKey}
               toggleShowSection={toggleShowSection}
-              showingContent={sectionsShown.get(sectionKey)}
+              showingContent={showingContent}
               style={{
-                backgroundColor: `${filteredSections[sectionIndex].color}80`,
-                borderBottomColor: filteredSections[sectionIndex].color,
-                gridRow: `${i * 2 - 1} / ${i * 2}`,
-                gridColumn: `${currentBookColumn} / ${sectionsShown.get(sectionKey) ? currentBookColumn + sectionOcupiedColumns : currentBookColumn + 1}`,
+                backgroundColor: `${section.color}80`,
+                borderColor: showingContent
+                  ? "var(--secondaryColor)"
+                  : "transparent",
               }}
             />
           );
         }
+        const reversedBooks = section.books.toReversed();
+        if (showingContent) {
+          const books = reversedBooks.map((bookInfo, bookIndex) => {
+            const { commonName: book, customColor: bookCustomColor } = bookInfo;
+            const bookStaticInfo =
+              BibleVizDataRepository.getBookStaticInfo(book);
+            if (bookStaticInfo) {
+              const {
+                abbreviation: bookId,
+                startingIndex = 0,
+                numberOfChapters,
+              } = bookStaticInfo;
+              const color =
+                bookCustomColor ??
+                sectionLevelColorMap.get(levelColorsKey)?.toReversed()[
+                  bookIndex
+                ] ??
+                "#000000";
+              const readingEvents: ReadingEvent[] =
+                rangedReadingEventsByBook.get(bookId) ?? [];
+              const summary = calculateReadingHistorySummary(readingEvents);
 
-        if (sectionsShown.get(sectionKey)) {
-          const levelColorsKey = `${testamentIndex} ${sectionIndex}`;
-          const color =
-            bookInfo.customColor ??
-            sectionLevelColorMap.get(levelColorsKey).toReversed()[bookIndex];
-          const readingEvents =
-            rangedReadingEventsByBook.get(
-              BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName]
-                .abbreviation
-            ) ?? [];
-          const summary = calculateReadingHistorySummary(readingEvents);
-
-          let isPsalms = false;
-          let psalmChaptersLimits;
-          if (psalmsNames.includes(book)) {
-            isPsalms = true;
-            psalmChaptersLimits = {
-              start: bookStaticInfo.startingIndex + 1,
-              end:
-                bookStaticInfo.startingIndex + bookStaticInfo.numberOfChapters,
-            };
-          }
-          const bookUserPresence = {};
-
-          const userPresenceColors = [];
-          let borderGradientColors;
-          if (isUserPresenceEnabled) {
-            if (
-              activeTab.data.bookId === bookId ||
-              (activeTab.data.bookId === "PSA" &&
-                isPsalms &&
-                activeTab.data.chapter >= psalmChaptersLimits.start &&
-                activeTab.data.chapter <= psalmChaptersLimits.end)
-            ) {
-              bookUserPresence["me"] = {
-                chapter: activeTab.data.chapter,
-                borderColor: BibleVizUtils.Data.tags.myUserColor,
-              };
-              userPresenceColors.push(BibleVizUtils.Data.tags.myUserColor);
-            }
-            for (const user in usersInfo) {
-              const { bookId: userBookId, chapter: userChapter } =
-                userPresence[user];
-              const { borderColor: userBorderColor } = usersInfo[user];
-              if (
-                bookId === userBookId ||
-                (userBookId === "PSA" &&
-                  isPsalms &&
-                  userChapter >= psalmChaptersLimits.start &&
-                  userChapter <= psalmChaptersLimits.end)
-              ) {
-                bookUserPresence[user] = {
-                  chapter: userChapter,
-                  borderColor: userBorderColor,
+              let isPsalms = false;
+              let psalmChaptersLimits: Range | undefined;
+              if (psalmsNames.includes(book)) {
+                isPsalms = true;
+                psalmChaptersLimits = {
+                  start: startingIndex + 1,
+                  end: startingIndex + numberOfChapters,
                 };
-                userPresenceColors.push(userBorderColor);
               }
-            }
-            if (userPresenceColors.length > 0)
-              borderGradientColors =
-                BibleVizUtils.Functions.GetUserPresenceBorderGradientColors({
-                  colors: userPresenceColors,
-                  diffuse: 15,
+
+              const bookUserPresence: BookUserPresence = {};
+              const userPresenceColors: HexString[] = [];
+
+              let borderGradientColors: React.CSSProperties["backgroundImage"];
+              if (isUserPresenceEnabled) {
+                userPresence.forEach((data, userId) => {
+                  const {
+                    chapter: userPresenceChapter,
+                    bookId: userPresenceBookId,
+                  } = data;
+                  if (
+                    userPresenceBookId === bookId ||
+                    (userPresenceBookId === "PSA" &&
+                      isPsalms &&
+                      psalmChaptersLimits &&
+                      userPresenceChapter >= psalmChaptersLimits.start &&
+                      userPresenceChapter <= psalmChaptersLimits.end)
+                  ) {
+                    const userPresenceColor =
+                      userColorStore.getUserColor({ configId: userId }) ??
+                      "#000000";
+                    bookUserPresence[userId] = {
+                      chapter: userPresenceChapter,
+                      borderColor: userPresenceColor,
+                    };
+                    userPresenceColors.push(userPresenceColor);
+                  }
                 });
+                if (userPresenceColors.length > 0)
+                  borderGradientColors = GetUserPresenceBorderGradientColors({
+                    colors: userPresenceColors,
+                    diffuse: 15,
+                  });
 
-            // if (userPresenceColors.length > 0) {
-            //   tooltipContent.unshift(
-            //     <UserPresenceTooltipContent colors={userPresenceColors} />
-            //   );
-            // }
-          }
+                // if (userPresenceColors.length > 0) {
+                //   tooltipContent.unshift(
+                //     <UserPresenceTooltipContent colors={userPresenceColors} />
+                //   );
+                // }
+              }
 
-          elements.push(
-            <Book
-              isPsalms={isPsalms}
-              key={`book-${arrangementIndex}-${testament.name}-${section.name}-${bookInfo.commonName}`}
-              bookInfo={bookInfo}
-              book={book}
-              bookId={bookId}
-              bookCoverBackgroundColor={color}
-              sectionName={section.name}
-              style={{
-                gridRow: `${i * 2} / ${i * 2 + 1}`,
-                gridColumn: `${currentBookColumn} / ${currentBookColumn + 1}`,
-              }}
-              readingEvents={readingEvents}
-              readingSummary={summary}
-              bookBorderGradientColors={borderGradientColors}
-              bookUserPresence={bookUserPresence}
-              bookUserPresenceColors={userPresenceColors}
-            />
-          );
-          bookIndex++;
-          if (bookIndex === section.books.length) {
-            bookIndex = 0;
-            sectionIndex++;
-          }
-        } else sectionIndex++;
-
-        currentBookColumn++;
+              return (
+                <Book
+                  isPsalms={isPsalms}
+                  key={`book-${arrangementIndex}-${testament.name}-${section.name}-${bookInfo.commonName}`}
+                  book={book}
+                  bookId={bookId}
+                  bookCoverBackgroundColor={color}
+                  sectionName={section.name}
+                  readingEvents={readingEvents}
+                  readingSummary={summary}
+                  bookBorderGradientColors={borderGradientColors}
+                  bookUserPresence={bookUserPresence}
+                  bookUserPresenceColors={userPresenceColors}
+                />
+              );
+            }
+          });
+          elements.push(<BooksContainer>{books}</BooksContainer>);
+        }
       }
-      currentBookColumn = 1;
     }
 
     return elements;
   }, [
-    fittingBooksCount,
-    rowPairCount,
     filteredSections,
     sectionLevelColorMap,
     sectionsShown,
-    showLabels,
+    showSectionLabels,
     rangedReadingEventsByBook,
     isUserPresenceEnabled,
     activeTab,
-    usersInfo,
+    usersColors,
     userPresence,
   ]);
 
   return (
-    <div
-      className={`testamentContent ${hidden ? "hidden" : ""}`}
-      ref={contentRef}
-    >
+    <div className={`testament-content${hidden ? " hidden" : ""}`}>
       {sections}
     </div>
   );

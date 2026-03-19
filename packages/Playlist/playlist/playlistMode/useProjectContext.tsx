@@ -1,38 +1,40 @@
-const { createContext, useContext, useState, useCallback, useLayoutEffect } = os.appHooks;
+const { createContext, useContext, useState, useCallback, useLayoutEffect } =
+  os.appHooks;
+const G = globalThis as any;
+const ProjectContext = createContext<any>(null);
 
-const ProjectContext = createContext();
+export function ProjectProvider(props: any) {
+  const { children } = props;
+  const [menuState, setMenuState] = useState({
+    hideHeadings: false,
+    areBooksClosed: false,
+    projectSettings: {},
+    showVersionHistory: false,
+  });
 
-export function ProjectProvider({ children }) {
-    const [menuState, setMenuState] = useState({
-        hideHeadings: false,
-        areBooksClosed: false,
-        projectSettings: {},
-        showVersionHistory: false
-    });
-    
-    const setMenuValue = useCallback((value, name) => {
-        setMenuState(prev => ({
-            ...prev,
-            [name]: value
-        }))
-    }, []);
+  const setMenuValue = useCallback((value: any, name: string) => {
+    setMenuState((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }, []);
 
-    useLayoutEffect(() => {
-        globalThis.ProjectMenuState = { ...menuState };
-        // Optional: global access if you really need it
-        globalThis.SetProjectMenuState = setMenuState;
-        return () => {
-            globalThis.SetProjectMenuState = null;
-        }
-    }, [menuState]);
+  useLayoutEffect(() => {
+    G.ProjectMenuState = { ...menuState };
+    // Optional: global access if you really need it
+    G.SetProjectMenuState = setMenuState;
+    return () => {
+      G.SetProjectMenuState = null;
+    };
+  }, [menuState]);
 
-    return (
-        <ProjectContext.Provider value={{ menuState, setMenuValue }}>
-            {children}
-        </ProjectContext.Provider>
-    );
+  return (
+    <ProjectContext.Provider value={{ menuState, setMenuValue }}>
+      {children}
+    </ProjectContext.Provider>
+  );
 }
 
 export function useProjectMenu() {
-    return useContext(ProjectContext);
+  return useContext(ProjectContext);
 }

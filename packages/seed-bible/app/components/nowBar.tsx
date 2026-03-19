@@ -86,7 +86,7 @@ function NowBar() {
         // width: Math.min(windowWidth - 32, 350), // 16px margin on each side
         width: windowWidth - 7.5 * 16,
         height: 150, // Proportional height with max
-        bottom: windowWidth <= 480 ? "40px" : "100px", // Adjust for very small screens
+        bottom: windowWidth <= 480 ? "80px" : "100px", // Adjust for very small screens
         borderRadius: "16px",
       };
     } else if (isTablet) {
@@ -241,6 +241,8 @@ function NowBar() {
         zIndex: "999999",
         // Ensure it doesn't overflow on very small screens
         maxWidth: "95vw",
+        display: "flex",
+        alignItems: "flex-end",
       }}
     >
       {apps.map((app, index) => {
@@ -302,7 +304,7 @@ function NowBar() {
               // Prevent text selection on mobile
               WebkitUserSelect: "none",
               WebkitTouchCallout: "none",
-              backgroundColor: "white",
+              backgroundColor: "var(--pageBackground)",
             }}
           >
             {app.component}

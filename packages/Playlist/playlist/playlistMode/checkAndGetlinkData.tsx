@@ -2,7 +2,7 @@
 const booksMap = thisBot.tags.abbrevations;
 
 // Normalize ordinals like "1st", "first" to "1"
-const normalizeOrdinals = (input) => {
+const normalizeOrdinals = (input: string) => {
   return input
     .replace(/\b(first|1st)\b/i, "1")
     .replace(/\b(second|2nd)\b/i, "2")
@@ -17,13 +17,13 @@ const normalizeOrdinals = (input) => {
 };
 
 // Check if a string is a valid number
-const isNumeric = (str) => !isNaN(str);
+const isNumeric = (str: number) => !isNaN(str);
 
 // Valid file extensions
 const validExtensions = [".mp3", ".txt"];
 
 // Function to remove the file extension
-const getNameWithoutExtension = (filename) => {
+const getNameWithoutExtension = (filename: string) => {
   const regex = new RegExp(
     `(${validExtensions.map((ext) => `\\${ext}`).join("|")})$`
   );
@@ -31,8 +31,8 @@ const getNameWithoutExtension = (filename) => {
 };
 
 // Function to parse the filename
-function parseBibleReference(filename) {
-  const result = [];
+function parseBibleReference(filename: string) {
+  const result: any[] = [];
 
   // Remove file extension
   const nameWithoutExt = getNameWithoutExtension(filename);
@@ -45,7 +45,7 @@ function parseBibleReference(filename) {
 
   parts.forEach((part) => {
     // Handle multiple possible separators: . (dot), _ (underscore), : (colon), space
-    let spaceParts = part.trim().split(/[\s\._:]+/); // Allows any of the separators to act
+    let spaceParts: any = part.trim().split(/[\s\._:]+/); // Allows any of the separators to act
 
     let bookPart = spaceParts[0].toLowerCase();
     let chapterPart = spaceParts[1] ? spaceParts[1].trim() : null;
@@ -96,7 +96,7 @@ function parseBibleReference(filename) {
     if (chapterPart) {
       const chapter = chapterPart.split("-");
 
-      let tempBookName = false;
+      let tempBookName: string | false = false;
 
       if (bookName.includes("psalms")) {
         tempBookName = getPsalmsBookName(chapter || 1).toLocaleLowerCase();
@@ -106,7 +106,7 @@ function parseBibleReference(filename) {
       const chapterStart = parseInt(chapter[0], 10);
       const chapterEnd =
         chapter.length > 1 ? parseInt(chapter[1], 10) : chapterStart;
-      const chapters = Array.from(
+      const chapters: number[] = Array.from(
         { length: chapterEnd - chapterStart + 1 },
         (v, i) => chapterStart + i
       );
@@ -130,7 +130,7 @@ function parseBibleReference(filename) {
           shortAbr: bookPart,
           totalVerseInChapter:
             thisBot.tags.verseChapterBookMap[tempBookName || bookName][
-              chapters[0]
+              chapters[0] || 0
             ],
         });
       } else {

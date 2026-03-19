@@ -21,6 +21,7 @@ let UnhighlightDelayInfo;
 const bibleVizClasses = getBot(byTag("system", "bibleVizUtils.classes"));
 const bibleVizData = getBot(byTag("system", "bibleVizUtils.data"));
 const bibleVizFunctions = getBot(byTag("system", "bibleVizUtils.functions"));
+const bibleVizServices = getBot(byTag("system", "bibleVizUtils.services"));
 
 if (
   configBot.tags.systemPortal ||
@@ -29,48 +30,60 @@ if (
   !bibleVizClasses ||
   !bibleVizData ||
   !bibleVizFunctions ||
+  !bibleVizServices ||
   !globalThis.ObjectPooler
 )
   return;
+
+setTagMask(thisBot, "initialized", true);
+
+globalThis.BibleVizUtils = {
+  Classes: bibleVizClasses,
+  Data: bibleVizData,
+  Functions: bibleVizFunctions,
+  Services: bibleVizServices,
+  Main: thisBot,
+};
+
+if (authBot) {
+  try {
+    const { handleUserLoggedInDebouncer } =
+      await import("bibleVizUtils.services.HandleUserLoggedInDebouncer");
+    handleUserLoggedInDebouncer.execute({ authBot });
+  } catch (error) {
+    console.error(error);
+  }
+}
 
 try {
   ({ PoolData } = await import("objectPooler.main.PoolData"));
   ({ CustomTag } = await import("objectPooler.main.CustomTag"));
   ({ PieceInfo } = await import("bibleVizUtils.classes.PieceInfo"));
   ({ StackBibleData } = await import("bibleVizUtils.classes.StackBibleData"));
-  ({ StackTestamentData } = await import(
-    "bibleVizUtils.classes.StackTestamentData"
-  ));
-  ({ StackSectionData } = await import(
-    "bibleVizUtils.classes.StackSectionData"
-  ));
-  ({ StackSectionBookData } = await import(
-    "bibleVizUtils.classes.StackSectionBookData"
-  ));
+  ({ StackTestamentData } =
+    await import("bibleVizUtils.classes.StackTestamentData"));
+  ({ StackSectionData } =
+    await import("bibleVizUtils.classes.StackSectionData"));
+  ({ StackSectionBookData } =
+    await import("bibleVizUtils.classes.StackSectionBookData"));
   ({ StackBookData } = await import("bibleVizUtils.classes.StackBookData"));
-  ({ StackChapterData } = await import(
-    "bibleVizUtils.classes.StackChapterData"
-  ));
-  ({ LayoutChapterData } = await import(
-    "bibleVizUtils.classes.LayoutChapterData"
-  ));
-  ({ AnimateTagObject } = await import(
-    "bibleVizUtils.classes.AnimateTagObject"
-  ));
+  ({ StackChapterData } =
+    await import("bibleVizUtils.classes.StackChapterData"));
+  ({ LayoutChapterData } =
+    await import("bibleVizUtils.classes.LayoutChapterData"));
+  ({ AnimateTagObject } =
+    await import("bibleVizUtils.classes.AnimateTagObject"));
   ({ LayoutBibleData } = await import("bibleVizUtils.classes.LayoutBibleData"));
   ({ LayoutBookData } = await import("bibleVizUtils.classes.LayoutBookData"));
-  ({ LayoutBookStructure } = await import(
-    "bibleVizUtils.classes.LayoutBookStructure"
-  ));
+  ({ LayoutBookStructure } =
+    await import("bibleVizUtils.classes.LayoutBookStructure"));
   ({ ParentDataIds } = await import("bibleVizUtils.classes.ParentDataIds"));
-  ({ QueuedChapterData } = await import(
-    "bibleVizUtils.classes.QueuedChapterData"
-  ));
+  ({ QueuedChapterData } =
+    await import("bibleVizUtils.classes.QueuedChapterData"));
   ({ StackData } = await import("bibleVizUtils.classes.StackData"));
   ({ TourGuideData } = await import("bibleVizUtils.classes.TourGuideData"));
-  ({ UnhighlightDelayInfo } = await import(
-    "bibleVizUtils.classes.UnhighlightDelayInfo"
-  ));
+  ({ UnhighlightDelayInfo } =
+    await import("bibleVizUtils.classes.UnhighlightDelayInfo"));
 } catch (err) {
   console.warn("Module not found:", err);
 }
@@ -93,8 +106,6 @@ globalThis.StackData = StackData;
 globalThis.TourGuideData = TourGuideData;
 globalThis.UnhighlightDelayInfo = UnhighlightDelayInfo;
 
-setTagMask(thisBot, "initialized", true);
-
 // const shoutName = 'OnCameraRotationChanged';
 // const gridBotOnBotChanged = gridPortalBot.tags.onBotChanged;
 // if(!gridBotOnBotChanged?.includes?.(shoutName))
@@ -114,73 +125,73 @@ setTagMask(thisBot, "initialized", true);
 //     setTag(gridPortalBot, "onBotChanged", finalBotChanged);
 // }
 
-globalThis.BibleVizUtils = {
-  Classes: bibleVizClasses,
-  Data: bibleVizData,
-  Functions: bibleVizFunctions,
-};
-const { HistoryTimePeriodInfo } = await import(
-  "bibleVizUtils.classes.HistoryTimePeriodInfo"
-);
+const { HistoryTimePeriodInfo } =
+  await import("bibleVizUtils.classes.HistoryTimePeriodInfo");
 
-const historyTimePeriodsInfo = [
-  new HistoryTimePeriodInfo({ value: 1, isNowTimePeriod: true }),
-  new HistoryTimePeriodInfo({
-    value: 1,
-    timeAmount: 1,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.9,
-    timeAmount: 2,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.8,
-    timeAmount: 3,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.7,
-    timeAmount: 4,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.6,
-    timeAmount: 5,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.5,
-    timeAmount: 6,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.4,
-    timeAmount: 7,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.3,
-    timeAmount: 8,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.2,
-    timeAmount: 9,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.1,
-    timeAmount: 10,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0,
-    timeAmount: 11,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-];
+// const historyTimePeriodsInfo = [
+//   new HistoryTimePeriodInfo({ value: 1, isNowTimePeriod: true }),
+//   new HistoryTimePeriodInfo({
+//     value: 1,
+//     timeAmount: 1,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.9,
+//     timeAmount: 2,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.8,
+//     timeAmount: 3,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.7,
+//     timeAmount: 4,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.6,
+//     timeAmount: 5,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.5,
+//     timeAmount: 6,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.4,
+//     timeAmount: 7,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.3,
+//     timeAmount: 8,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.2,
+//     timeAmount: 9,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.1,
+//     timeAmount: 10,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0,
+//     timeAmount: 11,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+// ];
+const tenDaysAgo = new Date();
+tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+tenDaysAgo.setHours(0, 0, 0, 0);
+const readingHistoryRecencyThresholdTimeSeconds = Math.floor(
+  tenDaysAgo.getTime() / 1000
+);
 
 const UsersColorValues = {
   InfoLabelColorScales: { x: 0.5, y: 0.5, z: 0 },
@@ -221,7 +232,7 @@ const BibleLayoutMeasurements = {
   PlaylistStackedEntryItemGap: 0.0375,
   PlaylistEntryItemPadding: 0.01,
 
-  Book2DMaxAmountOfColumns: 5,
+  Book2DMaxColumns: 5,
 };
 BibleLayoutMeasurements.Book3DScaleX =
   BibleLayoutMeasurements.Book3DMaxAmountOfColumns *
@@ -250,7 +261,13 @@ setTag(bibleVizData, "BibleLayoutMeasurements", BibleLayoutMeasurements);
 setTag(bibleVizData, "StackPieceMeasurements", StackPieceMeasurements);
 setTagMask(bibleVizData, "isInHistoryMode", false);
 setTagMask(bibleVizData, "highlightHistoryIndex", -1);
-setTagMask(bibleVizData, "historyTimePeriodsInfo", historyTimePeriodsInfo);
+// setTagMask(bibleVizData, "historyTimePeriodsInfo", historyTimePeriodsInfo);
+setTagMask(
+  bibleVizData,
+  "readingHistoryRecencyThresholdTimeSeconds",
+  readingHistoryRecencyThresholdTimeSeconds
+);
+
 bibleVizData.vars.history = [];
 bibleVizData.vars.highlightHistory = [];
 bibleVizData.vars.customArrangements = [];

@@ -1,10 +1,21 @@
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
+import { useSideBarContext } from "app.hooks.sideBar";
+import { userColorStore } from "bibleVizUtils.services.UserColorStore";
+import type {
+  UserPresenceTooltipContentType,
+  ReadingHistoryTooltipContentType,
+  TooltipType,
+} from "scriptureMap2D.main.types";
 
 const { useRef, useState, useLayoutEffect, useMemo } = os.appHooks;
+const { createPortal } = os.appCompat;
 
-export const UserPresenceTooltipContent = ({ colors }) => {
+export const UserPresenceTooltipContent: UserPresenceTooltipContentType = ({
+  colors,
+}) => {
+  const { t } = useSideBarContext();
   return (
-    <span className="userPresenceTooltipContent">
+    <span className="user-presence-tooltip-content">
       <div>
         {colors.slice(0, 3).map((color, index) => {
           return (
@@ -28,45 +39,43 @@ export const UserPresenceTooltipContent = ({ colors }) => {
           </div>
         )}
       </div>
-      <span>reading now</span>
+      <span>{t("readingNow")}</span>
     </span>
   );
 };
 
-export const ReadingHistoryTooltipContent = ({ userId, fixedContent }) => {
+export const ReadingHistoryTooltipContent: ReadingHistoryTooltipContentType = ({
+  userId,
+  fixedContent,
+}) => {
+  const { t } = useSideBarContext();
   const { myAuthBotId } = useReadingHistoryContext();
 
-  const { userName, backgroundColor, color } = useMemo(() => {
+  const { userName, backgroundColor } = useMemo(() => {
     const isMe = userId === myAuthBotId;
-    const userName = isMe ? "You" : "Guest";
-    const backgroundColor = isMe
-      ? BibleVizUtils.Data.tags.myUserColor
-      : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user?.color ??
-        thisBot.vars.FakeReadingHistoryUsersColorMap?.get(userId) ??
-        "pink");
-    const color = BibleVizUtils.Functions.GetTextColorBasedOnBackground({
-      backgroundColor,
-    });
+    const userName = isMe ? t("you") : t("guest");
+    const backgroundColor = userColorStore.getUserColor({ authId: userId });
 
-    return { userName, backgroundColor, color };
-  }, []);
+    return { userName, backgroundColor };
+  }, [t]);
 
   return (
-    <span className="readingHistoryTooltipContent">
-      <span style={{ backgroundColor, color }}>{userName}</span>
+    <span className="tooltip-reading-history-content">
+      <span style={{ backgroundColor }}></span>
+      <span>{userName}</span>
       <span>{fixedContent}</span>
     </span>
   );
 };
 
-export const Tooltip = ({ content, anchor }) => {
-  const ref = useRef(null);
-  const [style, setStyle] = useState({
-    top: anchor.y,
+export const Tooltip: TooltipType = ({ content, anchor, offsetY = 0 }) => {
+  const ref = useRef<null | HTMLSpanElement>(null);
+  const [style, setStyle] = useState<React.CSSProperties>({
+    top: anchor.y + offsetY,
     left: anchor.x,
     "--arrowLeft": "50%",
   });
-  const [direction, setDirection] = useState("up");
+  const [direction, setDirection] = useState<string>("up");
 
   useLayoutEffect(() => {
     if (!ref.current) return;
@@ -82,6 +91,8 @@ export const Tooltip = ({ content, anchor }) => {
       newDirection = "down";
       newTop += anchor.height ?? 0;
     }
+
+    newTop += newDirection === "down" ? offsetY : -offsetY;
 
     let newLeft = anchor.x;
     const halfWidth = rect.width / 2;
@@ -103,9 +114,10 @@ export const Tooltip = ({ content, anchor }) => {
     setStyle({ top: newTop, left: newLeft, "--arrowLeft": newArrowLeft });
   }, [anchor]);
 
-  return (
+  return createPortal(
     <span ref={ref} className={`tooltip tooltip-${direction}`} style={style}>
       {content}
-    </span>
+    </span>,
+    document.body
   );
 };

@@ -26,19 +26,26 @@ jobs:
         run: |
           corepack enable
           pnpm install
-          
+
       - name: Lint
         continue-on-error: true
         run: |
           pnpm lint
+      - name: Check TypeScript
+        continue-on-error: true
+        run: |
+          pnpm check:ts
       - name: Test
         run: |
           pnpm test
       - name: Package
         run: |
           pnpm package
+      - name: Check AUXes
+        run: |
+          pnpm check:aux
       - name: Upload AUXes
         uses: actions/upload-artifact@v4
         with:
-          path: 'dist/*.aux'
+          path: "dist/*.aux"
           if-no-files-found: error
