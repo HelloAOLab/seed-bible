@@ -1,6 +1,10 @@
 import { setupExtensionContext } from "seed-bible.app.api";
 import { createBibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
+import {
+  createBibleDataManager,
+  type BibleDataManager,
+} from "./BibleDataManager";
 import { createBibleToolsManager } from "seed-bible.managers.BibleToolsManager";
 import type { ToolsManager } from "seed-bible.managers.BibleToolsManager";
 import { createConfig } from "seed-bible.managers.ConfigManager";
@@ -33,6 +37,7 @@ export interface AppState {
 
 export interface SeedBibleState {
   api: FreeUseBibleAPI;
+  data: BibleDataManager;
   config: ConfigManager;
   theme: ThemeManager & {
     themeCssVariables: ReadonlySignal<string>;
@@ -47,12 +52,13 @@ export interface SeedBibleState {
 
 export function createSeedBibleState(): SeedBibleState {
   const api = new FreeUseBibleAPI();
+  const data = createBibleDataManager(api);
   const config = createConfig();
   const themeManager = createTheme();
   const sidebar = createSidebar();
-  const tabs = createTabs(api);
+  const tabs = createTabs(data);
   const panes = createPanes(tabs, tabs.selectedTabId);
-  const selector = createBibleSelectorState(api, tabs, panes);
+  const selector = createBibleSelectorState(data, tabs, panes);
   const tools = createBibleToolsManager();
 
   const { currentTheme } = themeManager;
@@ -136,6 +142,7 @@ export function createSeedBibleState(): SeedBibleState {
 
   const state: SeedBibleState = {
     api,
+    data,
     config,
     theme: {
       ...themeManager,

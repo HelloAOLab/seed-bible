@@ -3,6 +3,7 @@ import {
   createTabs,
   type ReaderTab,
 } from "@packages/seed-bible-refresh/seed-bible/managers/TabsManager";
+import { createBibleDataManager } from "@packages/seed-bible-refresh/seed-bible/managers/BibleDataManager";
 import type { BibleReadingState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
 import { FreeUseBibleAPI } from "@packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI";
 import {
@@ -52,6 +53,10 @@ function createApi(): FreeUseBibleAPI {
   return new FreeUseBibleAPI(API_ENDPOINT);
 }
 
+function createDataManager() {
+  return createBibleDataManager(createApi());
+}
+
 async function waitFor(
   condition: () => boolean,
   timeoutMs = 1000
@@ -75,7 +80,7 @@ async function waitForTabsToLoad(tabs: ReaderTab[]): Promise<void> {
 
 async function createManagers() {
   setWebResponses(createDefaultManagerResponseMap());
-  const tabsManager = createTabs(createApi());
+  const tabsManager = createTabs(createDataManager());
   await waitForTabsToLoad(tabsManager.tabs.value);
   const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
   return { tabsManager, panesManager };

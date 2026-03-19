@@ -2,6 +2,7 @@ import {
   createTabs,
   type ReaderTab,
 } from "@packages/seed-bible-refresh/seed-bible/managers/TabsManager";
+import { createBibleDataManager } from "@packages/seed-bible-refresh/seed-bible/managers/BibleDataManager";
 import type { BibleReadingState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
 import { FreeUseBibleAPI } from "@packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI";
 import {
@@ -59,6 +60,10 @@ function createApi(): FreeUseBibleAPI {
   return new FreeUseBibleAPI(API_ENDPOINT);
 }
 
+function createDataManager() {
+  return createBibleDataManager(createApi());
+}
+
 async function waitFor(
   condition: () => boolean,
   timeoutMs = 1000
@@ -83,7 +88,7 @@ async function waitForTabsToLoad(tabs: ReaderTab[]): Promise<void> {
 describe("createTabs", () => {
   it("addTab() creates a new tab with new reading state", async () => {
     setWebResponses(createDefaultManagerResponseMap());
-    const manager = createTabs(createApi());
+    const manager = createTabs(createDataManager());
     await waitForTabsToLoad(manager.tabs.value);
 
     const existingReadingStates = manager.tabs.value.map(
@@ -103,7 +108,7 @@ describe("createTabs", () => {
 
   it("removeTab() removes the given tab", async () => {
     setWebResponses(createDefaultManagerResponseMap());
-    const manager = createTabs(createApi());
+    const manager = createTabs(createDataManager());
     await waitForTabsToLoad(manager.tabs.value);
 
     manager.removeTab("tab-2");
@@ -114,7 +119,7 @@ describe("createTabs", () => {
 
   it("selectTab() sets the selected tab", async () => {
     setWebResponses(createDefaultManagerResponseMap());
-    const manager = createTabs(createApi());
+    const manager = createTabs(createDataManager());
     await waitForTabsToLoad(manager.tabs.value);
 
     manager.selectTab("tab-2");
@@ -124,7 +129,7 @@ describe("createTabs", () => {
 
   it("syncs the selected tab to match configBot", async () => {
     setWebResponses(createDefaultManagerResponseMap());
-    const manager = createTabs(createApi());
+    const manager = createTabs(createDataManager());
     await waitForTabsToLoad(manager.tabs.value);
     manager.selectTab("tab-2");
 

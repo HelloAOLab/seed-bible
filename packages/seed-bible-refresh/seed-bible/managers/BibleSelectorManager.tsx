@@ -2,11 +2,11 @@ import type {
   TranslationBook,
   TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
+import type { BibleDataManager } from "./BibleDataManager";
 import {
   type BibleReadingState,
   createBibleReadingState,
 } from "seed-bible.managers.BibleReadingManager";
-import type { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
 import {
@@ -61,7 +61,7 @@ function groupBooks(translationBooks: TranslationBooks | null, search: string) {
 }
 
 export function createBibleSelectorState(
-  api: FreeUseBibleAPI,
+  dataManager: BibleDataManager,
   tabsManager: TabsManager,
   panesManager: PanesManager
 ): BibleSelectorState {
@@ -121,7 +121,7 @@ export function createBibleSelectorState(
         readingState.value = effectivePane.tab.readingState;
       } else {
         if (!transientReadingState.value) {
-          transientReadingState.value = createBibleReadingState(api);
+          transientReadingState.value = createBibleReadingState(dataManager);
         }
         readingState.value = transientReadingState.value;
       }

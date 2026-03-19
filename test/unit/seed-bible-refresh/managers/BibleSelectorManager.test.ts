@@ -1,5 +1,6 @@
 /** @jest-environment ./test/env/CasualOSEnvironment.ts */
 
+import { createBibleDataManager } from "@packages/seed-bible-refresh/seed-bible/managers/BibleDataManager";
 import { FreeUseBibleAPI } from "@packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI";
 import type { BibleReadingState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
 import {
@@ -52,6 +53,10 @@ function createApi(): FreeUseBibleAPI {
   return new FreeUseBibleAPI(API_ENDPOINT);
 }
 
+function createDataManager() {
+  return createBibleDataManager(createApi());
+}
+
 async function waitFor(
   condition: () => boolean,
   timeoutMs = 1000
@@ -79,13 +84,15 @@ function getDisplayedBookIds(selector: BibleSelectorState): string[] {
   return [...oldTestament, ...newTestament];
 }
 
-async function createManagersWithSelectedPane(api: FreeUseBibleAPI): Promise<{
+async function createManagersWithSelectedPane(): Promise<{
   readingState: BibleReadingState;
   pane: Pane;
   tabsManager: ReturnType<typeof createTabs>;
   panesManager: ReturnType<typeof createPanes>;
+  dataManager: ReturnType<typeof createDataManager>;
 }> {
-  const tabsManager = createTabs(api);
+  const dataManager = createDataManager();
+  const tabsManager = createTabs(dataManager);
   const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
 
   const pane = panesManager.panes.value[0];
@@ -103,6 +110,7 @@ async function createManagersWithSelectedPane(api: FreeUseBibleAPI): Promise<{
     pane,
     tabsManager,
     panesManager,
+    dataManager,
   };
 }
 
@@ -119,11 +127,14 @@ describe("createBibleSelectorState", () => {
 
   it("setOpen() opens the selector and displays books", async () => {
     setWebResponses(createDefaultManagerResponseMap());
-    const api = createApi();
-    const { pane, tabsManager, panesManager } =
-      await createManagersWithSelectedPane(api);
+    const { dataManager, pane, tabsManager, panesManager } =
+      await createManagersWithSelectedPane();
 
-    const selector = createBibleSelectorState(api, tabsManager, panesManager);
+    const selector = createBibleSelectorState(
+      dataManager,
+      tabsManager,
+      panesManager
+    );
     selector.setOpen(true, pane);
 
     expect(selector.isOpen.value).toBe(true);
@@ -132,11 +143,14 @@ describe("createBibleSelectorState", () => {
 
   it("setSearch() filters books", async () => {
     setWebResponses(createDefaultManagerResponseMap());
-    const api = createApi();
-    const { pane, tabsManager, panesManager } =
-      await createManagersWithSelectedPane(api);
+    const { dataManager, pane, tabsManager, panesManager } =
+      await createManagersWithSelectedPane();
 
-    const selector = createBibleSelectorState(api, tabsManager, panesManager);
+    const selector = createBibleSelectorState(
+      dataManager,
+      tabsManager,
+      panesManager
+    );
 
     selector.setOpen(true, pane);
     expect(selector.isOpen.value).toBe(true);
@@ -149,11 +163,14 @@ describe("createBibleSelectorState", () => {
 
   it("setExpandedBook() sets expandedBookId", async () => {
     setWebResponses(createDefaultManagerResponseMap());
-    const api = createApi();
-    const { pane, tabsManager, panesManager } =
-      await createManagersWithSelectedPane(api);
+    const { dataManager, pane, tabsManager, panesManager } =
+      await createManagersWithSelectedPane();
 
-    const selector = createBibleSelectorState(api, tabsManager, panesManager);
+    const selector = createBibleSelectorState(
+      dataManager,
+      tabsManager,
+      panesManager
+    );
 
     selector.setOpen(true, pane);
     expect(selector.isOpen.value).toBe(true);
@@ -165,11 +182,14 @@ describe("createBibleSelectorState", () => {
 
   it("selectTranslation() changes the reading state translation", async () => {
     setWebResponses(createDefaultManagerResponseMap());
-    const api = createApi();
-    const { readingState, pane, tabsManager, panesManager } =
-      await createManagersWithSelectedPane(api);
+    const { dataManager, readingState, pane, tabsManager, panesManager } =
+      await createManagersWithSelectedPane();
 
-    const selector = createBibleSelectorState(api, tabsManager, panesManager);
+    const selector = createBibleSelectorState(
+      dataManager,
+      tabsManager,
+      panesManager
+    );
 
     selector.setOpen(true, pane);
     expect(selector.isOpen.value).toBe(true);
@@ -183,11 +203,14 @@ describe("createBibleSelectorState", () => {
 
   it("selectChapter() changes the reading state chapter", async () => {
     setWebResponses(createDefaultManagerResponseMap());
-    const api = createApi();
-    const { readingState, pane, tabsManager, panesManager } =
-      await createManagersWithSelectedPane(api);
+    const { dataManager, readingState, pane, tabsManager, panesManager } =
+      await createManagersWithSelectedPane();
 
-    const selector = createBibleSelectorState(api, tabsManager, panesManager);
+    const selector = createBibleSelectorState(
+      dataManager,
+      tabsManager,
+      panesManager
+    );
 
     selector.setOpen(true, pane);
 

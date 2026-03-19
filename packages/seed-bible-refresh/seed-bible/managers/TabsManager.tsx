@@ -1,5 +1,5 @@
 import { signal } from "@preact/signals";
-import { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
+import type { BibleDataManager } from "./BibleDataManager";
 import {
   DEFAULT_BOOK_ID,
   DEFAULT_CHAPTER_NUMBER,
@@ -35,12 +35,12 @@ function getInitialFirstTabChapter(): number {
     : DEFAULT_CHAPTER_NUMBER;
 }
 
-function createInitialTabs(api: FreeUseBibleAPI): ReaderTab[] {
+function createInitialTabs(dataManager: BibleDataManager): ReaderTab[] {
   return [
     {
       id: "tab-1",
       title: "Tab 1",
-      readingState: createBibleReadingState(api, {
+      readingState: createBibleReadingState(dataManager, {
         initialTranslationId: getInitialTranslationId(),
         initialBookId: getInitialFirstTabBookId(),
         initialChapterNumber: getInitialFirstTabChapter(),
@@ -49,15 +49,15 @@ function createInitialTabs(api: FreeUseBibleAPI): ReaderTab[] {
     {
       id: "tab-2",
       title: "Tab 2",
-      readingState: createBibleReadingState(api),
+      readingState: createBibleReadingState(dataManager),
     },
   ];
 }
 
 export type TabsManager = ReturnType<typeof createTabs>;
 
-export function createTabs(api: FreeUseBibleAPI) {
-  const tabs = signal<ReaderTab[]>(createInitialTabs(api));
+export function createTabs(dataManager: BibleDataManager) {
+  const tabs = signal<ReaderTab[]>(createInitialTabs(dataManager));
   const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
 
   const syncSelectedTabFromConfig = async () => {
@@ -129,7 +129,7 @@ export function createTabs(api: FreeUseBibleAPI) {
     const nextTab: ReaderTab = {
       id: `tab-${nextNumber}`,
       title: `Tab ${nextNumber}`,
-      readingState: createBibleReadingState(api),
+      readingState: createBibleReadingState(dataManager),
     };
     tabs.value = [...currentTabs, nextTab];
     selectedTabId.value = nextTab.id;

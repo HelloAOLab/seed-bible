@@ -1,14 +1,10 @@
 import {
-  FreeUseBibleAPI,
   type AvailableTranslations,
   type ChapterVerse,
   type TranslationBookChapter,
   type TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
-import {
-  createBibleDataManager,
-  type BibleDataManager,
-} from "./BibleDataManager";
+import { type BibleDataManager } from "./BibleDataManager";
 import { batch, signal, type Signal } from "@preact/signals";
 import { sortBy } from "es-toolkit";
 
@@ -49,8 +45,6 @@ export const DEFAULT_TRANSLATION_ID = "BSB";
 export const DEFAULT_BOOK_ID = "GEN";
 export const DEFAULT_CHAPTER_NUMBER = 1;
 
-type BibleReadingDataSource = FreeUseBibleAPI | BibleDataManager;
-
 interface InitialBibleReadingOptions {
   initialTranslationId?: string | null;
   initialBookId?: string | null;
@@ -85,12 +79,9 @@ function extractEndpointFromAvailableTranslationsUrl(
 }
 
 export function createBibleReadingState(
-  source: BibleReadingDataSource,
+  dataManager: BibleDataManager,
   options: InitialBibleReadingOptions = {}
 ): BibleReadingState {
-  const dataManager: BibleDataManager =
-    "getTranslations" in source ? source : createBibleDataManager(source);
-
   const isSameSelectedVerse = (
     left: BibleSelectedVerse,
     right: BibleSelectedVerse
