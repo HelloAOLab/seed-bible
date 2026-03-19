@@ -390,6 +390,7 @@
   "checklistTooltip": "चेकलिस्ट मोड आपको विज़िट किए गए आइटम्स को चेक करके अपनी प्रगति ट्रैक करने देता है।",
   "readingPlan": "पठन योजना",
   "readingPlanTooltip": "प्लान मोड आपको अपनी प्लेलिस्ट में तारीखें जोड़ने देता है जो तारीख के अनुसार प्रगति ट्रैक करता है।",
+  "cannotDeleteFirstDayOfReadingPlan": "आप किसी पठन योजना का पहला दिन नहीं हटा सकते!",
   "revertToPrevious": "पिछले पर वापस जाएं",
   "downloadJSON": "JSON डाउनलोड करें",
   "copyOtherPlaylists": "अन्य प्लेलिस्ट कॉपी करें",

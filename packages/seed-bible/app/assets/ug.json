@@ -156,5 +156,9 @@
   "addToNew": "يېڭىغا قوشۇش",
   "itemsAddedToPlaylistSuccessfully": "تۈرلەر تىزىملىككە مۇۋاپىق قوشۇلدى.",
   "translationSwitchOption": "{{translationName}} تەرجىمىسىگە ئالماشتۇرامسىز؟",
-  "chooseAnother": "يەنە بىرنى تاللاڭ"
+  "chooseAnother": "يەنە بىرنى تاللاڭ",
+  "readingPlan": "ئوقۇش پىلانى",
+  "readingPlanTooltip": "پىلان ھالىتى پىلان تىزىملىكىڭىزگە چېسلا قوشۇشقا ياردەم بېرىپ، چېسلا ۋە ئىلگىرىلىشىنى ئىز قوغلىيالايسىز.",
+  "cannotDeleteFirstDayOfReadingPlan": "ئوقۇش پىلانىنىڭ تۇنجى كۈنىنى ئۆچۈرەلمەيسىز!",
+  "readingPlans": "ئوقۇش پىلانلىرى"
 }

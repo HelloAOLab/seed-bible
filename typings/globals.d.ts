@@ -23,6 +23,7 @@ declare global {
   const setPlaylistsLocale: (playLists: any[]) => void;
   const setCollectionsLocale: (collections: any[]) => void;
   const PlaylistModeTypes: Record<string, string>;
+  const ReadingPlanTypes: Record<string, string>;
   const DataManager: {
     playSound: (options: { data: string }) => Promise<void>;
     cancelCurrentPlayingSound: () => void;

@@ -1241,7 +1241,9 @@ const Playlist = (props: any) => {
 
                   G.LastClickX = x;
                   G.LastClickY = y;
-                  showPlaylistPosition.current = { ...getPosition() };
+                  showPlaylistPosition.current = {
+                    ...(getPosition ? getPosition() : { x: 0, y: 0 }),
+                  };
                   setShowPlaylistSettings(true);
                 }}
               >
@@ -1260,7 +1262,9 @@ const Playlist = (props: any) => {
 
                     G.LastClickX = x;
                     G.LastClickY = y;
-                    showMorePosition.current = { ...getPosition() };
+                    showMorePosition.current = {
+                      ...(getPosition ? getPosition() : { x: 0, y: 0 }),
+                    };
                     setShowMoreOptions(true);
                   }}
                 >

@@ -156,5 +156,9 @@
   "addToNew": "ናብ ሓድሽ ወስኽ",
   "itemsAddedToPlaylistSuccessfully": "እቃታት ናብ ዝርዝር ብዓወት ተወሲዶም።",
   "translationSwitchOption": "ናብ {{translationName}} ትርጉም ክትቀይር ትደሊ ዶ?",
-  "chooseAnother": "ካልእ ምረጽ"
+  "chooseAnother": "ካልእ ምረጽ",
+  "readingPlan": "ናይ ምንባብ መደብ",
+  "readingPlanTooltip": "ናይ መደብ ሞድ ኣብ ዝርዝር ምጽዋዕካ ዕለታት ከተውስን ከም ዝህበካ ብዕለት እድገት ክትከታተል ተራእዮ።",
+  "cannotDeleteFirstDayOfReadingPlan": "እቲ ናይ ምንባብ መደብ መጀመሪያ መዓልቲ ክትስርዕ ኣይትኽእልን ኢኻ!",
+  "readingPlans": "ናይ ምንባብ መደባት"
 }

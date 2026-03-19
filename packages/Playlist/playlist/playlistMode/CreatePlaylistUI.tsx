@@ -136,6 +136,8 @@ const CreatePlaylistUI = (props: any) => {
   const [selectedTags, setTags] = useState([]);
   const [selectPlaylist, setSelectPlaylist] = useState(false);
 
+  const isReadingPlanDateType = G.ReadingPlanType == ReadingPlanTypes.DATE;
+
   const [checkListData, setChecklistData] = useState<Record<string, boolean>>(
     {}
   );
@@ -144,10 +146,6 @@ const CreatePlaylistUI = (props: any) => {
   >({});
   const [checklistEnabled, setChecklistEnabled] = useState(false);
   const [embedding, setEmbedding] = useState<any>(null);
-
-  useLayoutEffect(() => {
-    G.SelectedItemIDForAttachments = null;
-  }, []);
 
   useLayoutEffect(() => {
     G.SelectedItemIDForAttachments = itemSelected;
@@ -396,6 +394,13 @@ const CreatePlaylistUI = (props: any) => {
     index: number | number[],
     pId: string | null = null
   ) => {
+    if (index === 0 && isReadingPlan) {
+      ShowNotification({
+        message: t("cannotDeleteFirstDayOfReadingPlan"),
+        severity: "error",
+      });
+      return;
+    }
     setPlaylist((prev: any[]) => {
       const isBulk = Array.isArray(index);
       const idMaps: Record<string, boolean> = {};
@@ -905,7 +910,52 @@ const CreatePlaylistUI = (props: any) => {
     );
   }
 
-  if (PlaylistModeTypes.annotations === mode) {
+  const isReadingPlan = mode == PlaylistModeTypes.readingPlan;
+  const isAnnotation = mode == PlaylistModeTypes.annotations;
+
+  // Reading plan config
+
+  useLayoutEffect(() => {
+    G.SelectedItemIDForAttachments = null;
+    const isReadingPlanDayType = G.ReadingPlanType == ReadingPlanTypes.DAY;
+    if (playList.length < 1 && isReadingPlan) {
+      // Add a date object
+      let playlistItem = null;
+      if (isReadingPlanDateType) {
+        // Add a date object
+        playlistItem = {
+          id: G.createUUID(),
+          type: "date",
+          content: G.FORMAT_YYYY_MM_DD(new Date()),
+          additionalInfo: {
+            date: G.FORMAT_YYYY_MM_DD(new Date()),
+            subType: "date",
+          },
+        };
+      } else if (isReadingPlanDayType) {
+        // Add a date object
+        playlistItem = {
+          id: G.createUUID(),
+          type: "date",
+          content: "Day 1",
+          additionalInfo: {
+            day: 1,
+            date: new Date(),
+            subType: "day",
+          },
+        };
+      }
+      if (playlistItem) {
+        setPlaylist((prev: any[]) => {
+          const old = [...prev];
+          old.unshift(playlistItem);
+          return old;
+        });
+      }
+    }
+  }, []);
+
+  if (isAnnotation) {
     return (
       <div
         style={{
@@ -1662,6 +1712,33 @@ const CreatePlaylistUI = (props: any) => {
                   setRegenrateUI(false);
                   attachDate(date);
                 }}
+                onDayRefClick={() => {
+                  const isReadingPlanDayType =
+                    G.ReadingPlanType == ReadingPlanTypes.DAY;
+                  if (isReadingPlanDayType) {
+                    setPlaylist((prev: any[]) => {
+                      const old = [...prev];
+                      const countPrevDays = old.filter(
+                        (ele: any) =>
+                          ele.type === "date" &&
+                          ele.additionalInfo.subType === "day"
+                      ).length;
+                      old.push({
+                        id: G.createUUID(),
+                        type: "date",
+                        content: `Day ${countPrevDays + 1}`,
+                        additionalInfo: {
+                          day: countPrevDays + 1,
+                          date: new Date(),
+                          subType: "day",
+                        },
+                      });
+                      return old;
+                    });
+                    return;
+                  }
+                }}
+                isDate={isReadingPlan}
                 massAdd={massAdd}
                 attachLink={attachLink}
                 onClose={() => setOpenAttachLink(false)}

@@ -156,5 +156,9 @@
   "addToNew": "নতুনে যোগ করুন",
   "itemsAddedToPlaylistSuccessfully": "আইটেমগুলি প্লেলিস্টে সফলভাবে যোগ করা হয়েছে।",
   "translationSwitchOption": "আপনি কি {{translationName}} অনুবাদে স্যুইচ করতে চান?",
-  "chooseAnother": "অন্যটি বেছে নিন"
+  "chooseAnother": "অন্যটি বেছে নিন",
+  "readingPlan": "পাঠের পরিকল্পনা",
+  "readingPlanTooltip": "পরিকল্পনা মোড আপনাকে প্লেলিস্টে তারিখ যোগ করতে দেয় যাতে তারিখ অনুযায়ী অগ্রগতি ট্র্যাক করা যায়।",
+  "cannotDeleteFirstDayOfReadingPlan": "আপনি একটি পাঠের পরিকল্পনার প্রথম দিন মুছে ফেলতে পারবেন না!",
+  "readingPlans": "পাঠের পরিকল্পনাসমূহ"
 }

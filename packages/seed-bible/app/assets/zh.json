@@ -463,6 +463,7 @@
   "checklistTooltip": "清单模式为您的播放列表提供检出已访问项目的选项，以便您跟踪播放列表进度。",
   "readingPlan": "阅读计划",
   "readingPlanTooltip": "计划模式允许您在播放列表中添加日期，根据日期跟踪进度。",
+  "cannotDeleteFirstDayOfReadingPlan": "无法删除阅读计划的第一天！",
   "revertToPrevious": "恢复到之前",
   "downloadJSON": "下载 JSON",
   "copyOtherPlaylists": "复制其他播放列表",

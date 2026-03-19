@@ -463,6 +463,7 @@
   "checklistTooltip": "チェックリストモードでは、プレイリストに訪問済みのアイテムをチェックするオプションが追加され、進捗を追跡できます。",
   "readingPlan": "読書プラン",
   "readingPlanTooltip": "プランモードでは、プレイリストに日付を追加でき、日付に応じて日程と進捗を管理できます。",
+  "cannotDeleteFirstDayOfReadingPlan": "読書プランの最初の日を削除することはできません。",
   "revertToPrevious": "以前に戻す",
   "downloadJSON": "JSONをダウンロード",
   "copyOtherPlaylists": "他のプレイリストをコピー",

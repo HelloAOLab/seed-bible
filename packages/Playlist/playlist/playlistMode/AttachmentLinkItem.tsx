@@ -437,7 +437,7 @@ const AttachLinkItem = (props: any) => {
             toggle === data.id && "current-playing-item"
           }`}
         >
-          {data.type === "date"
+          {data.type === "date" && data.additionalInfo.subType === "date"
             ? G.FORMAT_DATE(data?.additionalInfo.date, currentFormat)
             : data?.content.substr(0, 25)}{" "}
           {`${data?.content.length > 25 ? "..." : ""}`}
@@ -523,7 +523,10 @@ const AttachLinkItem = (props: any) => {
                 }`}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (data.type === "date") {
+                  if (
+                    data.type === "date" &&
+                    data.additionalInfo.subType === "date"
+                  ) {
                     datePickerRef.current.click();
                     return;
                   }

@@ -531,6 +531,7 @@ const AttachLink = (props: any) => {
     isTags = false,
     isPlaylist = false,
     showSaveButton = true,
+    onDayRefClick = null,
   } = props;
   const isloggedIN = authBot?.id;
   const datePickerRef = useRef<any>(null);
@@ -1025,7 +1026,10 @@ const AttachLink = (props: any) => {
                         severity: "error",
                       });
                     if (ele === "DATE" && !!onDateClick) {
-                      console.log(datePickerRef.current, "datePickerRef");
+                      if (onDayRefClick) {
+                        onDayRefClick();
+                        return;
+                      }
                       datePickerRef.current.click();
                       // return onDateClick();
                       return;

@@ -156,5 +156,9 @@
   "addToNew": "نوي ته اضافه کړئ",
   "itemsAddedToPlaylistSuccessfully": "توکي په لیست کې په بریالیتوب سره زیات شول.",
   "translationSwitchOption": "ایا تاسو غواړئ چې د {{translationName}} ژباړې ته لاړ شئ؟",
-  "chooseAnother": "بل یو غوره کړئ"
+  "chooseAnother": "بل یو غوره کړئ",
+  "readingPlan": "د لوستلو پلان",
+  "readingPlanTooltip": "د پلان حالت تاسو ته اجازه درکوي چې پلې لسټ کې نېټې زیات کړئ ترڅو د نېټې مطابق پرمختګ تعقیب کړئ.",
+  "cannotDeleteFirstDayOfReadingPlan": "تاسو د لوستلو پلان لومړۍ ورځ ړنګولی نشئ!",
+  "readingPlans": "د لوستلو پلانونه"
 }

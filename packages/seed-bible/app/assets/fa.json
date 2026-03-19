@@ -156,5 +156,9 @@
   "addToNew": "افزودن به جدید",
   "itemsAddedToPlaylistSuccessfully": "آیتم‌ها با موفقیت به لیست اضافه شدند.",
   "translationSwitchOption": "آیا می‌خواهید به ترجمه {{translationName}} تغییر دهید؟",
-  "chooseAnother": "یکی دیگر را انتخاب کنید"
+  "chooseAnother": "یکی دیگر را انتخاب کنید",
+  "readingPlan": "برنامه مطالعه",
+  "readingPlanTooltip": "حالت برنامه به شما امکان می‌دهد در لیست پخش خود تاریخ اضافه کنید تا پیشرفت را مطابق تاریخ پیگیری کنید.",
+  "cannotDeleteFirstDayOfReadingPlan": "نمی‌توانید روز اول برنامه مطالعه را حذف کنید!",
+  "readingPlans": "برنامه‌های مطالعه"
 }

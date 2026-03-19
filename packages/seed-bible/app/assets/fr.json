@@ -463,6 +463,7 @@
   "checklistTooltip": "Le mode liste de contrôle donne à votre playlist une option pour cocher les éléments visités afin que vous puissiez suivre la progression de votre playlist.",
   "readingPlan": "Plan de lecture",
   "readingPlanTooltip": "Le mode plan vous permet d'ajouter des dates dans votre playlist, ce qui permet de suivre la date et la progression.",
+  "cannotDeleteFirstDayOfReadingPlan": "Vous ne pouvez pas supprimer le premier jour d'un plan de lecture !",
   "revertToPrevious": "Revenir à la version précédente",
   "downloadJSON": "Télécharger JSON",
   "copyOtherPlaylists": "Copier d'autres playlists",

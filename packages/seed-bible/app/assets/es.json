@@ -390,6 +390,7 @@
   "checklistTooltip": "El modo de lista de verificación te permite marcar los elementos visitados para seguir tu progreso.",
   "readingPlan": "Plan de lectura",
   "readingPlanTooltip": "El modo de plan te permite agregar fechas en tu lista para mantener el progreso según la fecha.",
+  "cannotDeleteFirstDayOfReadingPlan": "¡No puedes eliminar el primer día de un plan de lectura!",
   "revertToPrevious": "Volver al anterior",
   "downloadJSON": "Descargar JSON",
   "copyOtherPlaylists": "Copiar otras listas",

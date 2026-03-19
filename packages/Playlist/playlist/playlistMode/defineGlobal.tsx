@@ -39,6 +39,12 @@ G.PlaylistModeTypes = {
   playlist: "Playlist",
   annotations: "Annotations",
   project: "Project",
+  readingPlan: "ReadingPlan",
+};
+
+G.ReadingPlanTypes = {
+  DAY: "DAY",
+  DATE: "DATE",
 };
 
 G.ButtonStyle = {
@@ -1229,7 +1235,9 @@ const updateCheckedItemsPlayingPlaylist = async (
   }
 };
 
-const userCheckedItems: any = await os.getData(authBot.id, "userCheckedItems");
+const userCheckedItems: any = authBot?.id
+  ? await os.getData(authBot.id, "userCheckedItems")
+  : {};
 G.PlayingPlaylistCheckedItems = {
   ...(userCheckedItems?.data?.userCheckedItems || {}),
 };

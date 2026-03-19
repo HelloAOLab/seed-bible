@@ -488,6 +488,7 @@
   "checklistTooltip": "Checklist Mode gives your Playlist an option to checkout the visited items so you can keep track of your playlist progress.",
   "readingPlan": "Reading plan",
   "readingPlanTooltip": "Plan Mode lets you add dates in your playlist which keeps the date and progress in track according to date.",
+  "cannotDeleteFirstDayOfReadingPlan": "You cannot delete the first day of a reading plan!",
   "revertToPrevious": "Revert to previous",
   "downloadJSON": "Download JSON",
   "copyOtherPlaylists": "Copy other playlists",

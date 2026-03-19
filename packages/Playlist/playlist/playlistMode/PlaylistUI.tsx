@@ -21,6 +21,8 @@ const ShowPlayingContentAnnotation =
 const EditRichText = await thisBot.EditRichText();
 const EditAttachment = await thisBot.EditAttachment();
 const AddToPlaylist = await thisBot.AddToPlaylist();
+const PlaylistTopBar = await thisBot.PlaylistTopBar();
+const ChoosingAReadingPlan = await thisBot.ChoosingAReadingPlan();
 
 const bibleVizUtils = getBot("system", "bibleVizUtils.main");
 
@@ -253,10 +255,6 @@ const Playlist = () => {
   const lastFetchAddress = useRef<string | null>(null);
   const lastFetchTab = useRef("discover");
 
-  const [PlaylistIconT, AnnotationIconT] = useMemo(() => {
-    return [G.PlaylistIcon, G.AnnotationIcon];
-  }, []);
-
   useLayoutEffect(() => {
     G.currentActiveItem = tab;
     G.setTabPlaylist = setTab;
@@ -452,18 +450,38 @@ const Playlist = () => {
     setStopPlaylistModal(false);
   };
 
-  const gotoCreate = (isAnnotation = false) => {
+  // Maintian a confirmation for reading plan creation
+  const [showReadingPlanConfirmation, setShowReadingPlanConfirmation] =
+    useState<boolean | string>(false);
+
+  const gotoCreate = (mode: string) => {
+    const isAnnotation = mode === "annotation";
+    const isReadingPlan = mode === "readingPlan";
     if (G[`${"default"}SetMode`]) {
       if (isAnnotation) {
         G[`${"default"}SetMode`](PlaylistModeTypes.annotations);
+      } else if (isReadingPlan) {
+        setShowReadingPlanConfirmation(true);
+        G.AfterReadingPlanConfirmAction = (readingPlanType: string) => {
+          G.ReadingPlanType = readingPlanType;
+          G[`${"default"}SetMode`](PlaylistModeTypes.readingPlan);
+        };
       } else {
         G[`${"default"}SetMode`](PlaylistModeTypes.playlist);
       }
     } else {
-      G.SetTab("create");
       if (isAnnotation) {
+        G.SetTab("create");
         G[`${"default"}mode`] = PlaylistModeTypes.annotations;
+      } else if (isReadingPlan) {
+        setShowReadingPlanConfirmation(true);
+        G.AfterReadingPlanConfirmAction = (readingPlanType: string) => {
+          G.ReadingPlanType = readingPlanType;
+          G.SetTab("create");
+        };
+        G[`${"default"}mode`] = PlaylistModeTypes.readingPlan;
       } else {
+        G.SetTab("create");
         G[`${"default"}mode`] = PlaylistModeTypes.playlist;
       }
     }
@@ -533,76 +551,13 @@ const Playlist = () => {
       )}
 
       {createOptions && (
-        <>
-          <div className="backdrop" onClick={() => setCreateOptions(false)} />
-          <div
-            onClick={() => setCreateOptions(false)}
-            style={{
-              ...showPlaylistPosition.current,
-              width: isMobile ? "165px" : "210px",
-              maxHeight: "105px",
-              left: "none",
-              right: isMobile ? "-9rem" : "-12rem",
-              padding: "0.5rem",
-              top: !isMobile ? "3rem" : "none",
-              bottom: !isMobile ? "none" : "11rem",
-              marginTop: 45,
-            }}
-            className="overlay linked-item-custom"
-          >
-            <div
-              className="more-menu-items"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (SplitAppPanel2) {
-                  G.PendingAction = gotoCreate;
-                  G.StopPlayingPlaylistModal(true);
-                  return;
-                }
-                gotoCreate();
-              }}
-            >
-              <div className="align-center" style={{ gap: "0.5rem" }}>
-                <PlaylistIconT />
-                <span
-                  style={{ fontFamily: `"Satoshi", system-ui, sans-serif` }}
-                >
-                  {t("playlist")}
-                </span>
-              </div>
-            </div>
-            <div
-              className="more-menu-items"
-              onClick={(e) => {
-                // if not login show notification
-                if (!authBot?.id) {
-                  ShowNotification({
-                    message: t("pleaseLoginToUseFeature"),
-                    severity: "error",
-                  });
-                  shout("tryUserLogin");
-                  return;
-                }
-                e.stopPropagation();
-                if (SplitAppPanel2) {
-                  G.PendingAction = () => gotoCreate(true);
-                  G.StopPlayingPlaylistModal(true);
-                  return;
-                }
-                gotoCreate(true);
-              }}
-            >
-              <div className="align-center" style={{ gap: "0.5rem" }}>
-                <AnnotationIconT />
-                <span
-                  style={{ fontFamily: `"Satoshi", system-ui, sans-serif` }}
-                >
-                  {t("annotation")}
-                </span>
-              </div>
-            </div>
-          </div>
-        </>
+        <PlaylistTopBar
+          setCreateOptions={setCreateOptions}
+          showPlaylistPosition={showPlaylistPosition}
+          isMobile={isMobile}
+          SplitAppPanel2={SplitAppPanel2}
+          gotoCreate={gotoCreate}
+        />
       )}
       <div
         style={{
@@ -695,93 +650,95 @@ const Playlist = () => {
                         arrow_back
                       </span>
                     )}
-                    {!editData.id && isLayers && (
-                      <div
-                        className="tabs-playlist-off"
-                        style={{
-                          width: "100%",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
-                        {[buttonConfigs[0]].map((ele: any) => {
-                          const { label, onClick, value, icon } = ele;
-                          return (
-                            <h4
-                              onClick={() => {
-                                if (SplitAppPanel2) {
-                                  G.PendingAction = onClick;
-                                  G.StopPlayingPlaylistModal(true);
-                                  return;
-                                }
-                                onClick();
-                              }}
-                              style={{
-                                width: `${75}%`,
-                              }}
-                              className={`tabs-playlist-item`}
-                            >
-                              <span
-                                onClick={closePlaylist}
-                                className="show-on-mobile material-symbols-outlined"
-                              >
-                                keyboard_backspace
-                              </span>
-                              <span
-                                className="material-symbols-outlined unfollow"
-                                style={{ fontSize: "20px" }}
-                              >
-                                {icon}
-                              </span>
-                              <span>
-                                {label}{" "}
-                                <GetLabel
-                                  widthCompare={isMobile ? 360 : 264}
-                                  value={value}
-                                  currentOpenedBook={currentOpenedBook}
-                                />
-                              </span>
-                            </h4>
-                          );
-                        })}
-                        <Button
-                          onClick={() => {
-                            setCreateOptions(true);
-                          }}
-                          secondary
-                          exClass="create-button show-on-desktop"
-                        >
-                          <span class="material-symbols-outlined">add</span>
-                          {t("create")}
-                        </Button>
-                        <span
-                          onClick={() => {
-                            thisBot.CloseSelf();
-                          }}
-                          class="material-symbols-outlined show-on-mobile"
+                    {!editData.id &&
+                      !showReadingPlanConfirmation &&
+                      isLayers && (
+                        <div
+                          className="tabs-playlist-off"
                           style={{
-                            fontSize: "24px",
-                            margin: "0 0.5rem",
+                            width: "100%",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
                           }}
                         >
-                          close
-                        </span>
-                        <Button
-                          onClick={() => {
-                            setCreateOptions(true);
-                          }}
-                          secondary
-                          exClass="create-button-mobile show-on-mobile"
-                        >
-                          <span
-                            class={`material-symbols-outlined ${createOptions ? "rotate-90" : ""}`}
+                          {[buttonConfigs[0]].map((ele: any) => {
+                            const { label, onClick, value, icon } = ele;
+                            return (
+                              <h4
+                                onClick={() => {
+                                  if (SplitAppPanel2) {
+                                    G.PendingAction = onClick;
+                                    G.StopPlayingPlaylistModal(true);
+                                    return;
+                                  }
+                                  onClick();
+                                }}
+                                style={{
+                                  width: `${75}%`,
+                                }}
+                                className={`tabs-playlist-item`}
+                              >
+                                <span
+                                  onClick={closePlaylist}
+                                  className="show-on-mobile material-symbols-outlined"
+                                >
+                                  keyboard_backspace
+                                </span>
+                                <span
+                                  className="material-symbols-outlined unfollow"
+                                  style={{ fontSize: "20px" }}
+                                >
+                                  {icon}
+                                </span>
+                                <span>
+                                  {label}{" "}
+                                  <GetLabel
+                                    widthCompare={isMobile ? 360 : 264}
+                                    value={value}
+                                    currentOpenedBook={currentOpenedBook}
+                                  />
+                                </span>
+                              </h4>
+                            );
+                          })}
+                          <Button
+                            onClick={() => {
+                              setCreateOptions(true);
+                            }}
+                            secondary
+                            exClass="create-button show-on-desktop"
                           >
-                            add
+                            <span class="material-symbols-outlined">add</span>
+                            {t("create")}
+                          </Button>
+                          <span
+                            onClick={() => {
+                              thisBot.CloseSelf();
+                            }}
+                            class="material-symbols-outlined show-on-mobile"
+                            style={{
+                              fontSize: "24px",
+                              margin: "0 0.5rem",
+                            }}
+                          >
+                            close
                           </span>
-                        </Button>
-                      </div>
-                    )}
+                          <Button
+                            onClick={() => {
+                              setCreateOptions(true);
+                            }}
+                            secondary
+                            exClass="create-button-mobile show-on-mobile"
+                          >
+                            <span
+                              class={`material-symbols-outlined ${createOptions ? "rotate-90" : ""}`}
+                            >
+                              add
+                            </span>
+                          </Button>
+                        </div>
+                      )}
 
                     {editData.id && (
                       <div
@@ -839,7 +796,11 @@ const Playlist = () => {
                   </div>
                 </div>
               )}
-              {isLayers ? (
+              {showReadingPlanConfirmation ? (
+                <ChoosingAReadingPlan
+                  goBack={() => setShowReadingPlanConfirmation(false)}
+                />
+              ) : isLayers ? (
                 <div
                   style={{
                     display: "flex",

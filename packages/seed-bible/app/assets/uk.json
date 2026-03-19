@@ -156,5 +156,9 @@
   "addToNew": "Додати до нового",
   "itemsAddedToPlaylistSuccessfully": "Елементи успішно додано до списку відтворення.",
   "translationSwitchOption": "Бажаєте перейти до перекладу {{translationName}}?",
-  "chooseAnother": "Вибрати інший"
+  "chooseAnother": "Вибрати інший",
+  "readingPlan": "План читання",
+  "readingPlanTooltip": "Режим плану дозволяє додавати дати до плейлиста для відстеження дати й прогресу.",
+  "cannotDeleteFirstDayOfReadingPlan": "Неможливо видалити перший день плану читання!",
+  "readingPlans": "Плани читання"
 }

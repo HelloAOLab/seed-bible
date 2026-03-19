@@ -156,5 +156,9 @@
   "addToNew": "Tambah ke baru",
   "itemsAddedToPlaylistSuccessfully": "Item berhasil ditambahkan ke playlist.",
   "translationSwitchOption": "Apakah Anda ingin beralih ke terjemahan {{translationName}}?",
-  "chooseAnother": "Pilih yang lain"
+  "chooseAnother": "Pilih yang lain",
+  "readingPlan": "Rencana baca",
+  "readingPlanTooltip": "Mode rencana memungkinkan Anda menambahkan tanggal di daftar putar untuk melacak tanggal dan kemajuan sesuai tanggal.",
+  "cannotDeleteFirstDayOfReadingPlan": "Anda tidak dapat menghapus hari pertama rencana baca!",
+  "readingPlans": "Rencana baca"
 }

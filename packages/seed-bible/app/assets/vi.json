@@ -156,5 +156,9 @@
   "addToNew": "Thêm vào mới",
   "itemsAddedToPlaylistSuccessfully": "Đã thêm mục vào danh sách phát thành công.",
   "translationSwitchOption": "Bạn có muốn chuyển sang bản dịch {{translationName}} không?",
-  "chooseAnother": "Chọn cái khác"
+  "chooseAnother": "Chọn cái khác",
+  "readingPlan": "Kế hoạch đọc",
+  "readingPlanTooltip": "Chế độ kế hoạch cho phép bạn thêm ngày vào danh sách phát để theo dõi tiến độ theo ngày.",
+  "cannotDeleteFirstDayOfReadingPlan": "Bạn không thể xóa ngày đầu tiên của kế hoạch đọc!",
+  "readingPlans": "Các kế hoạch đọc"
 }

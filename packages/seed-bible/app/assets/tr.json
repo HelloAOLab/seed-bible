@@ -156,5 +156,9 @@
   "addToNew": "Yeniye ekle",
   "itemsAddedToPlaylistSuccessfully": "Öğeler başarıyla listeye eklendi.",
   "translationSwitchOption": "{{translationName}} çevirisine geçmek ister misiniz?",
-  "chooseAnother": "Başka birini seç"
+  "chooseAnother": "Başka birini seç",
+  "readingPlan": "Okuma planı",
+  "readingPlanTooltip": "Plan modu, oynatma listenize tarih eklemenizi ve ilerlemeyi tarihe göre takip etmenizi sağlar.",
+  "cannotDeleteFirstDayOfReadingPlan": "Bir okuma planının ilk gününü silemezsiniz!",
+  "readingPlans": "Okuma planları"
 }

@@ -156,5 +156,9 @@
   "addToNew": "نئی میں شامل کریں",
   "itemsAddedToPlaylistSuccessfully": "آئٹمز پلے لسٹ میں کامیابی سے شامل ہو گئے۔",
   "translationSwitchOption": "کیا آپ {{translationName}} ترجمے پر سوئچ کرنا چاہیں گے؟",
-  "chooseAnother": "دوسرا انتخاب کریں"
+  "chooseAnother": "دوسرا انتخاب کریں",
+  "readingPlan": "پڑھنے کا منصوبہ",
+  "readingPlanTooltip": "پلان موڈ آپ کو اپنی پلے لسٹ میں تاریخیں شامل کرنے دیتا ہے تاکہ تاریخ کے مطابق ترقی ٹریک رہے۔",
+  "cannotDeleteFirstDayOfReadingPlan": "آپ پڑھنے کے منصوبے کا پہلا دن حذف نہیں کر سکتے!",
+  "readingPlans": "پڑھنے کے منصوبے"
 }

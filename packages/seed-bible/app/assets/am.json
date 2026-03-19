@@ -156,5 +156,9 @@
   "addToNew": "ወደ አዲስ ጨምር",
   "itemsAddedToPlaylistSuccessfully": "እቃዎች ወደ ዝርዝር በተሳካ ሁኔታ ታክለዋል።",
   "translationSwitchOption": "ወደ {{translationName}} ትርጉም መቀየር ይፈልጋሉ?",
-  "chooseAnother": "ሌላ ይምረጡ"
+  "chooseAnother": "ሌላ ይምረጡ",
+  "readingPlan": "የማንበብ እቅድ",
+  "readingPlanTooltip": "የእቅድ ሁነታ በመጫወቻ ዝርዝርዎ ውስጥ ቀናት ማከል ያስችልዎ እና እንደ ቀን እድገትን መከታተል ይችላሉ።",
+  "cannotDeleteFirstDayOfReadingPlan": "የማንበብ እቅድዎን የመጀመሪያ ቀን ማስወገድ አይቻልም!",
+  "readingPlans": "የማንበብ እቅዶች"
 }

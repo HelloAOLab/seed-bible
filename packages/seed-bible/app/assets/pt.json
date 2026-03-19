@@ -463,6 +463,7 @@
   "checklistTooltip": "O modo de lista de verificacao da a sua playlist uma opcao de marcar os itens visitados para que voce possa acompanhar o progresso da sua playlist.",
   "readingPlan": "Plano de Leitura",
   "readingPlanTooltip": "O modo de plano permite adicionar datas na sua playlist, mantendo a data e o progresso em dia de acordo com a data.",
+  "cannotDeleteFirstDayOfReadingPlan": "Não é possível excluir o primeiro dia de um plano de leitura!",
   "revertToPrevious": "Reverter para Anterior",
   "downloadJSON": "Baixar JSON",
   "copyOtherPlaylists": "Copiar Outras Playlists",

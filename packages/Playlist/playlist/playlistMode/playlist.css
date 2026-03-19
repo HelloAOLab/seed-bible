@@ -1501,3 +1501,27 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 span.material-symbols-outlined.rotate-90 {
   transform: rotate(90deg);
 }
+
+/* Reading Plan Css */
+
+.innerbox-select-readingplan {
+  background-color: var(--panelBackground);
+  width: calc(50% - 0.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid var(--primaryColor);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.innerbox-select-readingplan:hover {
+  border: 1px solid var(--secondaryColor);
+}
+
+.innerbox-select-readingplan.active {
+  background-color: var(--activeTabFill);
+  border: 1px solid var(--secondaryColor);
+}

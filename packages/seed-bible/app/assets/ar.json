@@ -390,6 +390,7 @@
   "checklistTooltip": "وضع قائمة التحقق يتيح لك تحديد العناصر التي زرتها لتتبع تقدمك.",
   "readingPlan": "خطة القراءة",
   "readingPlanTooltip": "وضع الخطة يتيح لك إضافة تواريخ في قائمتك للحفاظ على التقدم حسب التاريخ.",
+  "cannotDeleteFirstDayOfReadingPlan": "لا يمكنك حذف اليوم الأول من خطة القراءة!",
   "revertToPrevious": "العودة للسابق",
   "downloadJSON": "تحميل JSON",
   "copyOtherPlaylists": "نسخ قوائم أخرى",
