@@ -88,9 +88,9 @@ const themes = signal<BibleTheme[]>([
 
 const selectedThemeId = signal<string>(DEFAULT_THEME_ID);
 
-export type ThemeManager = ReturnType<typeof useTheme>;
+export type ThemeManager = ReturnType<typeof createTheme>;
 
-export function useTheme() {
+export function createTheme() {
   const currentTheme = computed(
     () =>
       themes.value.find((theme) => theme.id === selectedThemeId.value) ??

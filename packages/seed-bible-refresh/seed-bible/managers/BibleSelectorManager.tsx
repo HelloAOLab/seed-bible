@@ -65,7 +65,6 @@ export function createBibleSelectorState(
   tabsManager: TabsManager,
   panesManager: PanesManager
 ): BibleSelectorState {
-  debugger;
   const isOpen = signal(false);
   const pane = signal<Pane | null>(null);
   const readingState = signal<BibleReadingState | null>(null);

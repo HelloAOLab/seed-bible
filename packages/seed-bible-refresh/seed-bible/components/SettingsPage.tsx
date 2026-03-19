@@ -1,10 +1,10 @@
-import { useConfig } from "seed-bible.managers.ConfigManager";
-import { useTheme } from "seed-bible.managers.ThemeManager";
+import { createConfig } from "seed-bible.managers.ConfigManager";
+import { createTheme } from "seed-bible.managers.ThemeManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 
 export function SettingsPage() {
-  const { config, setDisablePanels } = useConfig();
-  const { themes, selectedThemeId, setTheme } = useTheme();
+  const { config, setDisablePanels } = createConfig();
+  const { themes, selectedThemeId, setTheme } = createTheme();
   const { language, availableLanguages, setLanguage } = useI18n();
 
   return (

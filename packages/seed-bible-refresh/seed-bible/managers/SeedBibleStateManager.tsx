@@ -3,17 +3,17 @@ import { createBibleSelectorState } from "seed-bible.managers.BibleSelectorManag
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import { createBibleToolsManager } from "seed-bible.managers.BibleToolsManager";
 import type { ToolsManager } from "seed-bible.managers.BibleToolsManager";
-import { useConfig } from "seed-bible.managers.ConfigManager";
+import { createConfig } from "seed-bible.managers.ConfigManager";
 import type { ConfigManager } from "seed-bible.managers.ConfigManager";
 import { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
 import { createPanes } from "seed-bible.managers.PanesManager";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
-import { useSidebar } from "seed-bible.managers.SidebarManager";
+import { createSidebar } from "seed-bible.managers.SidebarManager";
 import { createTabs } from "seed-bible.managers.TabsManager";
 import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
 import {
   generateThemeCssVariables,
-  useTheme,
+  createTheme,
 } from "seed-bible.managers.ThemeManager";
 import type { ThemeManager } from "seed-bible.managers.ThemeManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
@@ -22,7 +22,7 @@ import { computed, type ReadonlySignal } from "@preact/signals";
 
 const { useEffect, useMemo } = os.appHooks;
 
-type SidebarManager = ReturnType<typeof useSidebar>;
+type SidebarManager = ReturnType<typeof createSidebar>;
 
 export interface AppState {
   panelsEnabled: ReadonlySignal<boolean>;
@@ -46,15 +46,14 @@ export interface SeedBibleState {
   panes: PanesManager;
   selector: BibleSelectorState;
   tools: ToolsManager;
-  i18n: I18nManager;
   app: AppState;
 }
 
 export function useSeedBibleState(): SeedBibleState {
   const api = useMemo(() => new FreeUseBibleAPI(), []);
-  const config = useConfig();
-  const themeManager = useTheme();
-  const sidebar = useSidebar();
+  const config = useMemo(() => createConfig(), []);
+  const themeManager = useMemo(() => createTheme(), []);
+  const sidebar = useMemo(() => createSidebar(), []);
   const tabs = useMemo(() => createTabs(api), [api]);
   const panes = useMemo(() => createPanes(tabs, tabs.selectedTabId), [tabs]);
   const selector = useMemo(
@@ -62,7 +61,6 @@ export function useSeedBibleState(): SeedBibleState {
     [api, tabs, panes]
   );
   const tools = useMemo(() => createBibleToolsManager(), []);
-  const i18n = useI18n();
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value.variables);
@@ -155,7 +153,6 @@ export function useSeedBibleState(): SeedBibleState {
     panes,
     selector,
     tools,
-    i18n,
     app: {
       panelsEnabled,
       selectedTab,

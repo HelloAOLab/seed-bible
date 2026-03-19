@@ -97,9 +97,9 @@ function ensureConfigBotListener() {
 
 syncConfigFromBot();
 
-export type ConfigManager = ReturnType<typeof useConfig>;
+export type ConfigManager = ReturnType<typeof createConfig>;
 
-export function useConfig() {
+export function createConfig() {
   ensureConfigBotListener();
 
   const setDisablePanels = (disablePanels: boolean) => {

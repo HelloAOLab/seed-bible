@@ -4,7 +4,7 @@ const isSettingsOpen = signal(false);
 const isSidebarCollapsed = signal(false);
 const isMobileOpen = signal(false);
 
-export function useSidebar() {
+export function createSidebar() {
   const openSettings = () => {
     isSettingsOpen.value = true;
     isMobileOpen.value = false;
