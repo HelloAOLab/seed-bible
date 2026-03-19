@@ -286,46 +286,46 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
   ];
 }
 
-const toolbarTools = signal<ManagedBibleToolbarTool[]>(
-  getDefaultToolbarTools()
-);
-const verseToolbarTools = signal<ManagedBibleVerseToolbarTool[]>(
-  getDefaultVerseToolbarTools()
-);
-const emptyPaneTools = signal<ManagedBibleEmptyPaneTool[]>(
-  getDefaultEmptyPaneToolbarTools()
-);
-const belowReaderTools = signal<ManagedBibleBelowReaderToolbarTool[]>(
-  getDefaultBelowReaderToolbarTools()
-);
-
-const sortedToolbarTools = computed(() => {
-  return [...toolbarTools.value].sort(
-    (left, right) => left.priority - right.priority
-  );
-});
-
-const sortedVerseToolbarTools = computed(() => {
-  return [...verseToolbarTools.value].sort(
-    (left, right) => left.priority - right.priority
-  );
-});
-
-const sortedEmptyPaneTools = computed(() => {
-  return [...emptyPaneTools.value].sort(
-    (left, right) => left.priority - right.priority
-  );
-});
-
-const sortedBelowReaderTools = computed(() => {
-  return [...belowReaderTools.value].sort(
-    (left, right) => left.priority - right.priority
-  );
-});
-
 export type ToolsManager = ReturnType<typeof createBibleToolsManager>;
 
 export function createBibleToolsManager() {
+  const toolbarTools = signal<ManagedBibleToolbarTool[]>(
+    getDefaultToolbarTools()
+  );
+  const verseToolbarTools = signal<ManagedBibleVerseToolbarTool[]>(
+    getDefaultVerseToolbarTools()
+  );
+  const emptyPaneTools = signal<ManagedBibleEmptyPaneTool[]>(
+    getDefaultEmptyPaneToolbarTools()
+  );
+  const belowReaderTools = signal<ManagedBibleBelowReaderToolbarTool[]>(
+    getDefaultBelowReaderToolbarTools()
+  );
+
+  const sortedToolbarTools = computed(() => {
+    return [...toolbarTools.value].sort(
+      (left, right) => left.priority - right.priority
+    );
+  });
+
+  const sortedVerseToolbarTools = computed(() => {
+    return [...verseToolbarTools.value].sort(
+      (left, right) => left.priority - right.priority
+    );
+  });
+
+  const sortedEmptyPaneTools = computed(() => {
+    return [...emptyPaneTools.value].sort(
+      (left, right) => left.priority - right.priority
+    );
+  });
+
+  const sortedBelowReaderTools = computed(() => {
+    return [...belowReaderTools.value].sort(
+      (left, right) => left.priority - right.priority
+    );
+  });
+
   const registerToolbarTool = (tool: ManagedBibleToolbarTool) => {
     const nextTools = toolbarTools.value.filter(
       (entry) => entry.id !== tool.id

@@ -5,22 +5,23 @@ import type { TabsManager } from "seed-bible.managers.TabsManager";
 import type { Pane } from "seed-bible.managers.PanesManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import {
-  createBibleToolsManager,
+  type ToolsManager,
   type BibleEmptyPaneTool,
 } from "seed-bible.managers.BibleToolsManager";
 
 const { useEffect, useRef } = os.appHooks;
 
 function EmptyPaneToolbar({
+  toolsManager,
   selectorState,
   pane,
   tabs,
 }: {
+  toolsManager: ToolsManager;
   selectorState: BibleSelectorState;
   pane: Pane;
   tabs: TabsManager;
 }) {
-  const toolsManager = createBibleToolsManager();
   const tools: BibleEmptyPaneTool[] = toolsManager.getEmptyPaneTools({
     selectorState,
     currentPane: pane,
@@ -64,6 +65,7 @@ export function PaneLayout(props: PaneLayoutProps) {
     selector: selectorState,
     tabs: tabsManager,
     sidebar,
+    tools: toolsManager,
   } = state;
   const panes = app.effectivePanes.value;
   const layout = app.panelsEnabled.value ? panesManager.layout.value : "single";
@@ -135,6 +137,7 @@ export function PaneLayout(props: PaneLayoutProps) {
                 selectorState={selectorState}
               />
               <BelowReaderToolbar
+                toolsManager={toolsManager}
                 readingState={pane.tab.readingState}
                 selectorState={selectorState}
                 tabsManager={tabsManager}
@@ -145,6 +148,7 @@ export function PaneLayout(props: PaneLayoutProps) {
             </div>
           ) : (
             <EmptyPaneToolbar
+              toolsManager={toolsManager}
               selectorState={selectorState}
               pane={pane}
               tabs={tabsManager}
@@ -214,6 +218,7 @@ export function PaneLayout(props: PaneLayoutProps) {
               </div>
             ) : (
               <EmptyPaneToolbar
+                toolsManager={toolsManager}
                 selectorState={selectorState}
                 pane={pane}
                 tabs={tabsManager}

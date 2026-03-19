@@ -1,4 +1,3 @@
-import { createBibleToolsManager } from "seed-bible.managers.BibleToolsManager";
 import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 
@@ -9,7 +8,7 @@ interface BibleReaderToolbarProps {
 }
 
 export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
-  const { tabs, selector, panes, sidebar } = props.state;
+  const { tabs, selector, panes, sidebar, tools: toolsManager } = props.state;
   const selectedTab = useComputed(
     () =>
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
@@ -22,7 +21,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return null;
   }
 
-  const toolsManager = createBibleToolsManager();
   const viewportWidth = useSignal(
     typeof window === "undefined" ? 0 : window.innerWidth
   );
