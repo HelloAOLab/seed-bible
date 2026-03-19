@@ -36,7 +36,7 @@ function createContext(): BibleToolContext {
   };
 }
 
-describe("useBibleToolsManager", () => {
+describe("createBibleToolsManager", () => {
   afterEach(() => {
     const manager = createBibleToolsManager();
     manager.unregisterToolbarTool(CUSTOM_TOOL_ID);
