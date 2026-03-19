@@ -1,4 +1,4 @@
-import { computed, signal } from "@preact/signals";
+import { computed, effect, Signal, signal } from "@preact/signals";
 import type { ComponentChild } from "preact";
 import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
 
@@ -192,12 +192,16 @@ function syncPaneState(nextPanes: Pane[], nextSelectedPaneId?: string | null) {
   selectedPaneId.value = nextPanes[0]?.id ?? null;
 }
 
-export type PanesManager = ReturnType<typeof usePanes>;
+export type PanesManager = ReturnType<typeof createPanes>;
 
-export function usePanes(tabsManager: TabsManager, selectedTabId: string) {
+export function createPanes(
+  tabsManager: TabsManager,
+  selectedTabId: Signal<string>
+) {
   if (!isInitialized) {
     const initialTab =
-      tabsManager.tabs.value.find((tab) => tab.id === selectedTabId) ?? null;
+      tabsManager.tabs.value.find((tab) => tab.id === selectedTabId.value) ??
+      null;
     panes.value = [createPane(initialTab)];
     selectedPaneId.value = panes.value[0]?.id ?? null;
     isInitialized = true;
@@ -217,15 +221,17 @@ export function usePanes(tabsManager: TabsManager, selectedTabId: string) {
     })
   );
 
-  if (
-    nextPanes.value.some(
-      (pane, index) =>
-        panes.value[index]?.tab !== pane.tab ||
-        panes.value[index]?.component !== pane.component
-    )
-  ) {
-    syncPaneState(nextPanes.value);
-  }
+  effect(() => {
+    if (
+      nextPanes.value.some(
+        (pane, index) =>
+          panes.value[index]?.tab !== pane.tab ||
+          panes.value[index]?.component !== pane.component
+      )
+    ) {
+      syncPaneState(nextPanes.value);
+    }
+  });
 
   const getSelectedPane = () => {
     return (

@@ -6,10 +6,10 @@ import type { ToolsManager } from "seed-bible.managers.BibleToolsManager";
 import { useConfig } from "seed-bible.managers.ConfigManager";
 import type { ConfigManager } from "seed-bible.managers.ConfigManager";
 import { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
-import { usePanes } from "seed-bible.managers.PanesManager";
+import { createPanes } from "seed-bible.managers.PanesManager";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import { useSidebar } from "seed-bible.managers.SidebarManager";
-import { useTabs } from "seed-bible.managers.TabsManager";
+import { createTabs } from "seed-bible.managers.TabsManager";
 import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
 import {
   generateThemeCssVariables,
@@ -55,8 +55,8 @@ export function useSeedBibleState(): SeedBibleState {
   const config = useConfig();
   const themeManager = useTheme();
   const sidebar = useSidebar();
-  const tabs = useTabs(api);
-  const panes = usePanes(tabs, tabs.selectedTabId.value);
+  const tabs = useMemo(() => createTabs(api), [api]);
+  const panes = useMemo(() => createPanes(tabs, tabs.selectedTabId), [tabs]);
   const selector = useMemo(
     () => createBibleSelectorState(api, tabs, panes),
     [api, tabs, panes]
