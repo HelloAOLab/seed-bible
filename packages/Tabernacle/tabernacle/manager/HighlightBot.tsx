@@ -1,6 +1,13 @@
 import { HexToRgb } from "bibleVizUtils.functions.index";
+import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
 
-const { bot, cameraFocus } = that;
+const {
+  bot,
+  cameraFocus,
+}: {
+  bot: Bot;
+  cameraFocus: boolean;
+} = that;
 
 // const baseGlow = getBot("system", "tabernacle.glow");
 const baseCone = getBot("system", "tabernacle.cone");
