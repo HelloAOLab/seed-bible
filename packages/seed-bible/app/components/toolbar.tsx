@@ -1,4 +1,5 @@
 import { getStyleOf } from "app.styles.styler";
+import { getSettingsPreset } from "app.components.types";
 const { useEffect, useState, useRef } = os.appHooks;
 
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -6,7 +7,9 @@ import { useMouseMove } from "app.hooks.mouseMove";
 import SurroundingDivs from "app.components.surroundingDivs";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useTabsContext } from "app.hooks.tabs";
-import { BurgerMenuIcon } from "app.components.icons";
+import { BurgerMenuIcon, MoreIcon, TabsIcon } from "app.components.icons";
+
+const G = globalThis as any;
 
 // Simple, single-toolbar component (no edit layer). Main logic unchanged.
 export function Toolbar() {
@@ -26,7 +29,8 @@ export function Toolbar() {
     setTools,
     setCanvasTools,
     setMapTools,
-  } = useBibleContext();
+    showNavArrows,
+  }: any = useBibleContext();
 
   const {
     sidebarMode,
@@ -34,39 +38,94 @@ export function Toolbar() {
     isMobile,
     setSidebarWidth,
     setOpenOnMobile,
-  } = useSideBarContext();
-  const { setIsDragging, isDragging, setElement } = useMouseMove();
+    setCollapsed,
+    setSideBarMode,
+  }: any = useSideBarContext();
+
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const moreMenuRef = useRef<any>(null);
+  useEffect(() => {
+    os.addBotListener(thisBot, "onMobileScrollDown", (data) => {
+      setShowMoreMenu(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!showMoreMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) {
+        setShowMoreMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showMoreMenu]);
+
+  const [activeMoreApp, setActiveMoreApp] = useState(G.ActiveMoreApp || null);
+  const [activeApp, setActiveApp] = useState(G.makingApp || null);
+
+  // Watch globalThis.makingApp so arrows hide for ANY open app, not just More-button apps
+  useEffect(() => {
+    let _val = G.makingApp;
+    Object.defineProperty(G, "makingApp", {
+      get: () => _val,
+      set: (val) => {
+        _val = val;
+        setActiveApp(val || null);
+      },
+      configurable: true,
+    });
+    return () => {
+      Object.defineProperty(G, "makingApp", {
+        value: _val,
+        writable: true,
+        configurable: true,
+      });
+    };
+  }, []);
+
+  const { setIsDragging, isDragging, setElement }: any = useMouseMove();
   const {
     activeSpace,
     updateToolsForSpace,
     getToolsForActiveSpace,
     activeTab,
     tabs,
-  } = useTabsContext();
+  }: any = useTabsContext();
+
+  // Get ActiveMoreApp and setActiveMoreApp
+  useEffect(() => {
+    G.ActiveMoreApp = activeMoreApp;
+    G.SetActiveMoreApp = setActiveMoreApp;
+    return () => {
+      G.ActiveMoreApp = null;
+      G.SetActiveMoreApp = null;
+    };
+  }, [activeMoreApp]);
 
   // === keep original default-toolbar logic ===
   const [showToolbar, setShowToolbar] = useState(false);
-  globalThis.SetShowToolbar = setShowToolbar;
+  G.SetShowToolbar = setShowToolbar;
   // useEffect(() => {
   //   setShowToolbar(!openOnMobile);
   // }, [openOnMobile]);
 
   const TabTools = getToolsForActiveSpace();
-  const setActiveTools = (newTools) =>
+  const setActiveTools = (newTools: any) =>
     updateToolsForSpace(activeSpace, newTools);
 
   const [oldList, setOldList] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
-  const holdTimeoutRef = useRef(null);
+  const holdTimeoutRef = useRef<any>(null);
   const hasHeldRef = useRef(false);
 
   useEffect(() => {
-    globalThis.SetScreens = setScreens;
+    G.SetScreens = setScreens;
   }, [setScreens]);
 
   useEffect(() => () => clearTimeout(holdTimeoutRef.current), []);
 
-  function handleMouseEnter(targetIndex) {
+  function handleMouseEnter(targetIndex: any) {
     if (!isDragging || draggedIndex === null) return;
     if (targetIndex === draggedIndex) return;
 
@@ -99,7 +158,7 @@ export function Toolbar() {
   // Sync tools with active tab type (keeps main logic)
   useEffect(() => {
     if (!activeTab || !tabs) return;
-    const activeTabObj = tabs.find((t) => t.id === activeTab);
+    const activeTabObj = tabs.find((t: any) => t.id === activeTab);
 
     // Check if translation is Arabic/RTL
     const translation = activeTabObj?.data?.translation;
@@ -118,29 +177,40 @@ export function Toolbar() {
 
   // expose setters globally (kept behavior)
   useEffect(() => {
-    globalThis.SetTools = setTools;
-    globalThis.SetCanvasTools = setCanvasTools;
-    globalThis.SetMapTools = setMapTools;
+    G.SetTools = setTools;
+    G.SetCanvasTools = setCanvasTools;
+    G.SetMapTools = setMapTools;
     return () => {
-      globalThis.SetTools = null;
-      globalThis.SetCanvasTools = null;
-      globalThis.SetMapTools = null;
+      G.SetTools = null;
+      G.SetCanvasTools = null;
+      G.SetMapTools = null;
     };
   }, [setTools, setCanvasTools, setMapTools]);
 
   // Disable context menu like before
   useEffect(() => {
-    const handleContextMenu = (e) => e.preventDefault();
+    const handleContextMenu = (e: any) => e.preventDefault();
     window.addEventListener("contextmenu", handleContextMenu);
     os.addBotListener(configBot, "onBotChanged", (that) => {
       if (that.tags.includes("book")) {
-        globalThis.Open(configBot.tags.book, configBot.tags.chapter);
+        G.Open(configBot.tags.book, configBot.tags.chapter);
       } else if (that.tags.includes("chapter")) {
-        globalThis.Open(configBot.tags.book, configBot.tags.chapter);
+        G.Open(configBot.tags.book, configBot.tags.chapter);
       }
     });
     return () => window.removeEventListener("contextmenu", handleContextMenu);
   }, []);
+
+  const moreTools = tools ? tools.filter((t: any) => t?.active !== false) : [];
+  const mobileBookLogo =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.mobileBookLogo;
+  const presetToolBarIcon =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.titlesAndIcon?.icon;
+  const presetToolBarTitle =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.titlesAndIcon?.title;
+  const presetToolName =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.titlesAndIcon
+      ?.toolName;
 
   if (!showToolbar) return <></>;
 
@@ -153,6 +223,179 @@ export function Toolbar() {
 
       <div className="toolbar-container-1 boundElements">
         <SurroundingDivs action={handleMouseLeaveContainer}>
+          {/* Mobile Bottom Navbar */}
+          <div className="mobile-bottom-navbar">
+            <button
+              style={{ display: showNavArrows && !activeApp ? "" : "none" }}
+              className="mobile-navbar-arrow left-arrow"
+              onClick={() =>
+                isRTL
+                  ? navFunctions?.openNextChapter()
+                  : navFunctions?.openPrevChapter()
+              }
+              title="Previous"
+              aria-label="Previous chapter"
+            >
+              <span className="material-symbols-outlined">chevron_left</span>
+            </button>
+
+            <button
+              className="mobile-navbar-btn today-btn"
+              title="Today"
+              aria-label="Today"
+            >
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  os.log("Opening mobile settings", setOpenOnMobile);
+                  setOpenOnMobile(true);
+                  setSidebarWidth(280);
+                  setCollapsed(false);
+                  setSideBarMode("default");
+                }}
+                className="mobile-btn-content"
+              >
+                <TabsIcon color="var(--text1)" />
+                <span className="mobile-btn-label">Tabs</span>
+              </div>
+            </button>
+
+            <div
+              onClick={() => {
+                globalThis.setOpenSidebar(!globalThis.openSidebar);
+                globalThis.setSelectingTranslation(false);
+                setShowMoreMenu(false);
+              }}
+              className="mobile-center-logo"
+            >
+              <div className="logo-container">
+                <img
+                  src={
+                    mobileBookLogo ||
+                    "https://res.cloudinary.com/dacw0qnpr/image/upload/v1759916122/Seed_Bible_-_All_Logos_2025-25_vvawwg.png"
+                  }
+                  alt="Seed Bible"
+                  className="seed-bible-logo"
+                />
+              </div>
+            </div>
+
+            {!mobileBookLogo ? (
+              <div className="more-btn-wrapper" ref={moreMenuRef}>
+                {showMoreMenu && (
+                  <div className="more-menu-popup">
+                    {moreTools
+                      .filter((tool: any) => tool.label !== "Books")
+                      .map((tool: any, i: any) => (
+                        <button
+                          key={i}
+                          className="more-menu-item"
+                          onClick={() => {
+                            tool?.onClick?.();
+                            setShowMoreMenu(false);
+                            setActiveMoreApp(tool.label);
+                          }}
+                        >
+                          {tool?.isImg ? (
+                            <img
+                              src={tool.icon}
+                              style={{ width: "20px" }}
+                              alt={tool.label}
+                            />
+                          ) : (
+                            <span className="material-symbols-outlined">
+                              {tool?.icon}
+                            </span>
+                          )}
+                          <span className="more-menu-item-label">
+                            {tool?.label}
+                          </span>
+                        </button>
+                      ))}
+                  </div>
+                )}
+                <button
+                  className="mobile-navbar-btn more-btn"
+                  title={activeMoreApp ? "Close" : "More"}
+                  aria-label={activeMoreApp ? "Close" : "More"}
+                  onClick={() => {
+                    if (activeMoreApp) {
+                      (globalThis as any).RemoveApplicationByLabel(
+                        activeMoreApp
+                      );
+                      (globalThis as any).makingApp = null;
+                      setActiveMoreApp(null);
+                    } else {
+                      setShowMoreMenu((prev) => !prev);
+                    }
+                  }}
+                >
+                  <div className="mobile-btn-content">
+                    {activeMoreApp ? (
+                      <span className="material-symbols-outlined">close</span>
+                    ) : (
+                      <MoreIcon color="var(--text1)" />
+                    )}
+                    <span className="mobile-btn-label">
+                      {activeMoreApp ? "Close" : "More"}
+                    </span>
+                  </div>
+                </button>
+              </div>
+            ) : (
+              <div className="more-btn-wrapper">
+                <button
+                  className="mobile-navbar-btn"
+                  title={activeMoreApp ? "Close" : presetToolBarTitle}
+                  aria-label={activeMoreApp ? "Close" : presetToolName}
+                  onClick={() => {
+                    if (activeMoreApp) {
+                      (globalThis as any).RemoveApplicationByLabel(
+                        activeMoreApp
+                      );
+                      (globalThis as any).makingApp = null;
+                      setActiveMoreApp(null);
+                    } else {
+                      setActiveMoreApp(presetToolName);
+                      const exploreTool = tools?.find(
+                        (t) => t?.label === presetToolName
+                      );
+                      exploreTool?.onClick?.();
+                    }
+                  }}
+                >
+                  <div className="mobile-btn-content">
+                    {activeMoreApp ? (
+                      <span className="material-symbols-outlined">close</span>
+                    ) : (
+                      <span className="material-symbols-outlined">
+                        {presetToolBarIcon}
+                      </span>
+                    )}
+                    <span className="mobile-btn-label">
+                      {activeMoreApp ? "close" : presetToolBarTitle}
+                    </span>
+                  </div>
+                </button>
+              </div>
+            )}
+
+            <button
+              style={{ display: showNavArrows && !activeApp ? "" : "none" }}
+              className="mobile-navbar-arrow right-arrow"
+              onClick={() =>
+                isRTL
+                  ? navFunctions?.openPrevChapter()
+                  : navFunctions?.openNextChapter()
+              }
+              title="Next"
+              aria-label="Next chapter"
+            >
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+
+          {/* Desktop Toolbar */}
           <div
             onMouseUp={handleMouseUp}
             className={`toolbar-1 boundElements ${mounted ? "mounted" : ""}`}
@@ -174,11 +417,12 @@ export function Toolbar() {
                 <span className="material-symbols-outlined">chevron_left</span>
               </button>
             </div>
+            <div className="toolbar-divider" />
             <div
               onClick={() => {
                 setSidebarWidth(280);
                 setOpenOnMobile(true);
-                globalThis[`setOpenSidebar`] && setOpenSidebar(false);
+                G[`setOpenSidebar`] && G.setOpenSidebar(false);
               }}
               className="toolbar-item-wrapper mobile-only"
             >
@@ -190,7 +434,7 @@ export function Toolbar() {
                 <BurgerMenuIcon size={24} color="var(--text1)" />
               </button>
             </div>
-            {tools?.map((tool, index) =>
+            {tools?.map((tool: any, index: any) =>
               tool?.active === false ? null : (
                 <div
                   key={`${tool.icon || "tool"}-${index}`}
@@ -218,9 +462,6 @@ export function Toolbar() {
                         clearTimeout(holdTimeoutRef.current);
                         if (!hasHeldRef.current && tool?.onClick) {
                           tool.onClick();
-                          // EmitData("appClick", {
-                          //   name: `${tool?.pkgName}_package`,
-                          // });
                         }
                         if (isDragging) {
                           setIsDragging(false);
@@ -241,12 +482,16 @@ export function Toolbar() {
                           {tool.icon}
                         </span>
                       )}
+                      {tool.label && (
+                        <span className="toolbar-btn-label">{tool.label}</span>
+                      )}
                     </button>
                   )}
                 </div>
               )
             )}
 
+            <div className="toolbar-divider" />
             <div className="toolbar-item-wrapper rightClick">
               <button
                 onClick={() =>
@@ -264,6 +509,61 @@ export function Toolbar() {
         <style>{getStyleOf("toolbar.css")}</style>
       </div>
       <style>{`
+                .more-btn-wrapper {
+                    position: relative;
+                }
+
+                .more-menu-popup {
+                    position: absolute;
+                    bottom: calc(100% + 8px);
+                    right: 0;
+                    background: var(--bg1, #fff);
+                    border: 1px solid var(--border1, #e0e0e0);
+                    border-radius: 12px;
+                    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+                    min-width: 180px;
+                    overflow: hidden;
+                    z-index: 1000;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .more-menu-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 12px 16px;
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    width: 100%;
+                    text-align: left;
+                    color: var(--text1);
+                    font-size: 14px;
+                    transition: background 0.15s;
+                }
+
+                .more-menu-item:hover {
+                    background: var(--hover1, rgba(0,0,0,0.06));
+                }
+
+                .more-menu-item .material-symbols-outlined {
+                    font-size: 20px;
+                    flex-shrink: 0;
+                }
+
+                .more-menu-item-label {
+                    flex: 1;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .mobile-navbar-btn svg {
+                    width: 24px;
+                    height: 24px;
+                }
+                
                 .toolbar-edit-toggle {
                     margin-left: auto;
                 }

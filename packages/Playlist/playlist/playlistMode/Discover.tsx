@@ -1,18 +1,19 @@
 const { useState, useRef, useLayoutEffect } = os.appHooks;
 
-const { Input } = Components;
+const G = globalThis as any;
+const { Input } = G.Components;
 
 const PlaylistCont = await thisBot.PlaylistContainer();
 const AnnotationList = await thisBot.AnnotationList();
 const Bookmarks = await thisBot.Bookmarks();
 
-const itemKeys = [
+const itemKeys: any = [
   "all",
   // "pinnedItems",
   "shared",
   "playlist",
   "annotations",
-  "bookmarks",
+  // "bookmarks",
 ];
 
 const items = [
@@ -21,25 +22,26 @@ const items = [
   "Shared",
   "Playlist",
   "Annotations",
-  "Bookmarks",
+  // "Bookmarks",
 ];
 
-const Discover = ({
-  currentOpenedBook,
-  setAnnotationData,
-  chapter,
-  fetchingAnnotation,
-  playingPlaylist,
-  editingPlaylist,
-  annotationData,
-  style,
-  setOpenModal,
-  annotationSources,
-  tagsSources,
-}) => {
-  const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
+const Discover = (props: any) => {
+  const {
+    currentOpenedBook,
+    setAnnotationData,
+    chapter,
+    fetchingAnnotation,
+    playingPlaylist,
+    editingPlaylist,
+    annotationData,
+    style,
+    setOpenModal,
+    annotationSources,
+    tagsSources,
+  } = props;
+  const IsPlaylistPlaying = G.IsPlaylistPlaying;
 
-  const [selectedChip, setSelectedChip] = useState({
+  const [selectedChip, setSelectedChip] = useState<any>({
     All: true,
   });
   const [query, setQuery] = useState("");
@@ -47,9 +49,9 @@ const Discover = ({
   const [renamingPlaylist, setRenamingPlaylist] = useState(false);
 
   useLayoutEffect(() => {
-    globalThis.SetRenamingPlaylist = setRenamingPlaylist;
+    G.SetRenamingPlaylist = setRenamingPlaylist;
     return () => {
-      globalThis.SetRenamingPlaylist = null;
+      G.SetRenamingPlaylist = null;
     };
   }, [renamingPlaylist]);
 
@@ -58,7 +60,7 @@ const Discover = ({
   const [pos, setPos] = useState("left");
 
   const checkPosition = () => {
-    const el = scrollRef.current;
+    const el: any = scrollRef.current;
     if (!el) return;
 
     // ✅ Detect if no scroll exists
@@ -81,7 +83,7 @@ const Discover = ({
   };
 
   const scrollLeftByWidth = () => {
-    const el = scrollRef.current;
+    const el: any = scrollRef.current;
     if (!el) return;
     const scrollAmount = el.clientWidth - 50;
 
@@ -92,7 +94,7 @@ const Discover = ({
   };
 
   const scrollRightByWidth = () => {
-    const el = scrollRef.current;
+    const el: any = scrollRef.current;
     if (!el) return;
     const scrollAmount = el.clientWidth - 50;
 
@@ -113,13 +115,13 @@ const Discover = ({
     };
   }, []);
 
-  const selectSelectedChip = (val) => {
+  const selectSelectedChip = (val: string) => {
     if (val === "All") {
       setSelectedChip({
         All: true,
       });
     } else {
-      setSelectedChip((prev) => {
+      setSelectedChip((prev: any) => {
         const newSelectedChip: any = { ...prev };
 
         if (newSelectedChip[val]) {
@@ -183,7 +185,7 @@ const Discover = ({
               marginBottom: "0",
             }}
             value={query}
-            onChangeListener={(text) => setQuery(text)}
+            onChangeListener={(text: string) => setQuery(text)}
             placeholder="Search..."
           />
         </div>
@@ -192,7 +194,7 @@ const Discover = ({
         <div className="align-center chips-tag-container">
           {false && (
             <div
-              onClick={() => selectSelectedChip(ele)}
+              // onClick={() => selectSelectedChip(ele)}
               className={`chip-tag`}
               style={{ display: "flex", alignItems: "center" }}
             >
@@ -269,6 +271,7 @@ const Discover = ({
 
       {!editingPlaylist &&
       !renamingPlaylist &&
+      false &&
       (isAll || selectedChip["Bookmarks"]) ? (
         <Bookmarks />
       ) : null}

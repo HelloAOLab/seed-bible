@@ -8,6 +8,7 @@ import type {
 } from "scriptureMap2D.main.types";
 
 const { useRef, useState, useLayoutEffect, useMemo } = os.appHooks;
+const { createPortal } = os.appCompat;
 
 export const UserPresenceTooltipContent: UserPresenceTooltipContentType = ({
   colors,
@@ -113,9 +114,10 @@ export const Tooltip: TooltipType = ({ content, anchor, offsetY = 0 }) => {
     setStyle({ top: newTop, left: newLeft, "--arrowLeft": newArrowLeft });
   }, [anchor]);
 
-  return (
+  return createPortal(
     <span ref={ref} className={`tooltip tooltip-${direction}`} style={style}>
       {content}
-    </span>
+    </span>,
+    document.body
   );
 };

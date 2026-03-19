@@ -1,5 +1,6 @@
 import { saveUserReadingHistory } from "db.annotations.library";
 const bibleDataCache = new Map();
+const footnotesCache = new Map();
 
 // Cache key based on content (translation:bookId:chapter)
 export function getCacheKey(translation, bookId, chapter) {
@@ -14,6 +15,18 @@ export function getCachedBibleData(translation, bookId, chapter) {
 export function setCachedBibleData(translation, bookId, chapter, data) {
   const key = getCacheKey(translation, bookId, chapter);
   bibleDataCache.set(key, data);
+}
+
+export function getCachedFootnotes(translation, bookId, chapter) {
+  const key = getCacheKey(translation, bookId, chapter);
+  return footnotesCache.get(key) || null;
+}
+
+export function setCachedFootnotes(translation, bookId, chapter, footnotes) {
+  const key = getCacheKey(translation, bookId, chapter);
+  if (footnotes) {
+    footnotesCache.set(key, footnotes);
+  }
 }
 
 // Keep old functions for backwards compatibility
@@ -71,7 +84,7 @@ export class BibleDataManager {
     translation = "BSB",
     bookId = "GEN",
     chapter = 1,
-    baseUrl = "https://bible.helloao.org",
+    baseUrl = "https://vmfnri.helloao.org",
   } = {}) {
     this.tabId = tabId;
     this.translation = translation;
@@ -83,7 +96,7 @@ export class BibleDataManager {
     this.data = getCachedBibleData(translation, bookId, chapter) || {
       content: [],
     };
-    this.footnotes = null;
+    this.footnotes = getCachedFootnotes(translation, bookId, chapter);
     this.loading = false;
     this.error = null;
 
@@ -219,6 +232,14 @@ export class BibleDataManager {
           this.data.bookId,
           this.data.chapter,
           this.data
+        );
+
+        // Cache footnotes alongside the bible data
+        setCachedFootnotes(
+          this.data.translation,
+          this.data.bookId,
+          this.data.chapter,
+          this.footnotes
         );
 
         // schedule the "open ≥ 1 min" record

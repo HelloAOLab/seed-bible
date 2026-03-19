@@ -128,6 +128,9 @@ span.playlist-label-sre {
 
 .annotation-list-item.annotation-list-item-type-comment
   .render-html-content
+  *:not(.playlist-wrapper-sre, .playlist-wrapper-sre *),
+.playlist-item-type.playlist-item-heading
+  .render-html-content
   *:not(.playlist-wrapper-sre, .playlist-wrapper-sre *) {
   margin: 0;
   padding: 0;
@@ -141,6 +144,22 @@ span.playlist-label-sre {
   font-size: initial;
   line-height: initial;
   letter-spacing: initial;
+}
+
+.render-html-content strong {
+  font-weight: 700 !important;
+}
+
+.render-html-content em {
+  font-style: italic !important;
+}
+
+.render-html-content code {
+  font-family: "Monaco", monospace;
+  font-size: 12px;
+  background-color: var(--inputBackground);
+  padding: 2px 4px;
+  border-radius: 4px;
 }
 
 .material-symbols-outlined {
@@ -372,8 +391,9 @@ history-item:active {
   display: flex;
   align-items: center;
   align-self: flex-start;
-  margin-top: 6px;
+  margin-top: -3px;
   right: 4px;
+  height: 100%;
 }
 
 .side-icon {
@@ -558,15 +578,14 @@ div.history-item.greyed-out .playlist-item-type,
 div.attachment-link.greyed-out .playlist-item-type {
   background-color: #e3e3e2;
   border: 1px solid #afafaf;
-  color: black !important;
+  color: var(--pageTextColor) !important;
 }
 
 div.history-item.embedding-on .playlist-item-type,
 div.attachment-link.embedding-on .playlist-item-type {
-  background-color: #2979ff !important;
-  color: black !important;
-  border: 1px solid #448aff !important;
-  color: black !important;
+  background-color: var(--activeTabFill) !important;
+  color: var(--pageTextColor) !important;
+  border: 1px solid var(--activeTabBorder) !important;
 }
 
 div.history-item.current-playing-item,
@@ -576,9 +595,20 @@ div.attachment-link.current-playing-item {
 
 div.history-item.current-playing-item .playlist-item-type,
 div.attachment-link.current-playing-item .playlist-item-type {
-  background-color: #dcf0ec;
-  border: 1px solid #139981;
-  color: black !important;
+  background-color: var(--activeTabFill);
+  border: 1px solid var(--activeTabBorder);
+  color: var(--pageTextColor) !important;
+}
+
+div.history-item.current-playing-item
+  .playlist-item-type
+  + .actions
+  .material-symbols-outlined,
+div.attachment-link.current-playing-item
+  .playlist-item-type
+  + .actions
+  .material-symbols-outlined {
+  color: var(--primaryButtonFill) !important;
 }
 
 .mini-alert {
@@ -636,6 +666,10 @@ div.history-item.current-date-disorder .playlist-item-type {
   margin: 0 0rem 0 0.5rem;
   width: 100%;
   transition: all 0.2s linear;
+}
+
+.playlist-item-type {
+  background-color: var(--panelBackground);
 }
 
 .playlist-item-type.bookmark {
@@ -767,13 +801,6 @@ div.history-item.current-date-disorder .playlist-item-type {
 
 .playlist-item-heading:hover {
   transform: scale(1.01);
-}
-
-@media only screen and (max-width: 768px) {
-  .playlist-container-data {
-    /* height: calc(100% - 42px); */
-    overflow: auto;
-  }
 }
 
 .control-container {
@@ -1032,7 +1059,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .what-this span {
-  color: #fff;
+  color: var(--pageTextColor);
   background-color: transparent;
   border-radius: 50%;
   font-size: 20px !important;
@@ -1305,7 +1332,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 
 .welcome-box-profile {
   width: 48px;
-  height: 48px;
+  height: 48px !important;
   border-radius: 50%;
 }
 
@@ -1389,9 +1416,12 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 
 .fade-in-animation.show {
   animation: fadeInUp 1s ease forwards;
+  visibility: visible;
+  display: block;
 }
 .fade-in-animation {
   opacity: 0;
+  visibility: hidden;
   transform: translateY(10px);
 }
 
@@ -1423,4 +1453,51 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   place-items: center;
   right: 1rem;
   position: absolute;
+}
+
+.show-on-mobile {
+  display: none !important;
+}
+
+@media only screen and (max-width: 768px) {
+  .playlist-container-data {
+    /* height: calc(100% - 42px); */
+    overflow: auto;
+  }
+
+  .playlist-item-type {
+    padding: 0.5rem;
+    padding-left: 2.5rem;
+  }
+
+  .show-on-desktop {
+    display: none !important;
+  }
+
+  .show-on-mobile {
+    display: initial !important;
+  }
+
+  .mobile-compact-scroll-header {
+    opacity: 0;
+    visibility: hidden;
+    display: none;
+  }
+}
+
+/* MOBILE STYLES */
+.custom-button.secondaryAlt.create-button-mobile {
+  position: fixed;
+  bottom: 8rem;
+  right: 1rem;
+  box-shadow: 0px 2px 6px 0px #00000026;
+  height: 52px;
+  width: 52px;
+  border-radius: 8px;
+  padding: 0 !important;
+  z-index: 999;
+}
+
+span.material-symbols-outlined.rotate-90 {
+  transform: rotate(90deg);
 }

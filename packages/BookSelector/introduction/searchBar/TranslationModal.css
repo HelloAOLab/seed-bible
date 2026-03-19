@@ -9,10 +9,9 @@
 
 .modal {
   width: 375px;
-  background: var(--background);
+  background: var(--pageBackground);
   border-radius: 8px;
-  box-shadow: 0 10px 30px
-    color-mix(in srgb, var(--tabSelection) 15%, transparent);
+  box-shadow: 0 10px 30px var(--sidebarShadow);
   padding: 10px 10px 45px 10px;
   z-index: 2;
   position: absolute;
@@ -117,7 +116,7 @@
   left: 0;
   bottom: 0;
   height: fit-content;
-  background-color: var(--background);
+  background-color: var(--pageBackground);
   border-bottom-right-radius: 10px;
   border-bottom-left-radius: 10px;
 }

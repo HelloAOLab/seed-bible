@@ -1,4 +1,5 @@
-const LoaderSecondary = ({ secondary }) => {
+const LoaderSecondary = (props: any) => {
+  const { secondary } = props;
   return (
     <>
       <style>{`
@@ -20,7 +21,7 @@ const LoaderSecondary = ({ secondary }) => {
             `}</style>
       <div
         style={{
-          backgroundColor: secondary ? "grey" : "var(--primaryColor)",
+          backgroundColor: secondary ? "grey" : "var(--secondaryColor)",
         }}
         className="loader"
       />

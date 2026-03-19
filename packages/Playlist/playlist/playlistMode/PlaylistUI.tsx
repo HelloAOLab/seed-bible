@@ -9,8 +9,6 @@ const { useState, useLayoutEffect, useMemo, useRef, useCallback } = os.appHooks;
 const G = globalThis as any;
 const { Modal, Button, ButtonsCover } = G.Components;
 
-const GetLabel = G.GetLabel;
-
 const ShowPersonVideoOverlay = await thisBot.ShowPersonVideoOverlay();
 
 const Discover = await thisBot.Discover();
@@ -22,6 +20,7 @@ const ShowPlayingContentAnnotation =
   await thisBot.ShowPlayingContentAnnotation();
 const EditRichText = await thisBot.EditRichText();
 const EditAttachment = await thisBot.EditAttachment();
+const AddToPlaylist = await thisBot.AddToPlaylist();
 
 const bibleVizUtils = getBot("system", "bibleVizUtils.main");
 
@@ -32,6 +31,8 @@ if (bibleVizUtils) {
 
 const Playlist = () => {
   const IsPlaylistPlaying = G.IsPlaylistPlaying;
+
+  const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
 
   const [createOptions, setCreateOptions] = useState(false);
   const showPlaylistPosition = useRef(
@@ -46,6 +47,8 @@ const Playlist = () => {
   const [stopPlaylistModal, setStopPlaylistModal] = useState(false);
 
   G.StopPlayingPlaylistModal = setStopPlaylistModal;
+
+  const GetLabel = useMemo(() => G.GetLabel, []);
 
   const [showVideoOverlay, setShowVideoOverlay] = useState(false);
 
@@ -249,8 +252,6 @@ const Playlist = () => {
   const [authSwtich, setAuthSwitch] = useState(false);
   const lastFetchAddress = useRef<string | null>(null);
   const lastFetchTab = useRef("discover");
-  const [playlistSharerName, setPLaylistSharerName] = useState("");
-  const currentProfileNameRef = useRef("");
 
   const [PlaylistIconT, AnnotationIconT] = useMemo(() => {
     return [G.PlaylistIcon, G.AnnotationIcon];
@@ -392,7 +393,7 @@ const Playlist = () => {
       (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
       G.MOBILE_VIEWPORT_THRESHOLD;
     if (isMobile) {
-      G.SetPlaylistForcedHeight && G.SetPlaylistForcedHeight(1);
+      G.SetPlaylistForcedHeight && G.SetPlaylistForcedHeight(2);
     }
     if (IsPlaylistPlaying) {
       thisBot.Playlistplaying({
@@ -405,29 +406,10 @@ const Playlist = () => {
     G.CloseVideoOverlay = () => setShowVideoOverlay(false);
     G.SetEditAnnoData = setEditAnnoData;
     G.SetAnnotationData = setAnnotationData;
+    G.SetShowAddToPlaylist = setShowAddToPlaylist;
     G.SetTab = setTab;
     G.SetEditRichText = setEditRichText;
     G.SetEditAttachmentItem = setEditAttachmentItem;
-    const tt = setTimeout(async () => {
-      if (G.hasASharedPlaylist) {
-        const nameOfSharer = G.shareProfileName;
-        let currentProfileName = "Guest";
-        const authBot = await os.requestAuthBotInBackground();
-        if (authBot?.id) {
-          const data = await os.getData(
-            thisBot.tags.keyFetchAccountData,
-            authBot.id
-          );
-          if (data.success) {
-            const payload = data.data;
-            currentProfileName = payload.profileName || "Guest";
-          }
-        }
-        setPLaylistSharerName(nameOfSharer);
-        currentProfileNameRef.current = currentProfileName;
-        G.shareProfileName = false;
-      }
-    }, 200);
 
     document.addEventListener("keyup", onKeyUp);
     document.addEventListener("keydown", onKeyDown);
@@ -438,7 +420,6 @@ const Playlist = () => {
       document.removeEventListener("keydown", onKeyDown);
       G.SetEditRichText = null;
       G.SetEditAnnoData = null;
-      clearTimeout(tt);
       os.removeBotListener(thisBot, "onKeyDown", onKeyDown);
       os.removeBotListener(thisBot, "onKeyUp", onKeyUp);
       G.SetTab = null;
@@ -463,21 +444,9 @@ const Playlist = () => {
       G.SetVideoSrc && G.SetVideoSrc(null);
       G.SetAnnotationData = null;
       G.SetPlaylistForforcedHeight && G.SetPlaylistForforcedHeight(0);
+      G.SetShowAddToPlaylist = null;
     };
   }, []);
-
-  const onCloseSharPlaylistModal = () => {
-    setPLaylistSharerName("");
-    G.hasASharedPlaylist = false;
-  };
-
-  const playlistShared = useMemo(
-    () =>
-      (G[`${"default"}playlists`] || []).find(
-        (ele: any) => ele.id === G.hasASharedPlaylist
-      ) || {},
-    []
-  );
 
   const closeConfirmStopPlaylist = () => {
     setStopPlaylistModal(false);
@@ -501,6 +470,14 @@ const Playlist = () => {
     setCreateOptions(false);
   };
 
+  const closePlaylist = () => {
+    thisBot.CloseSelf({ force: true });
+  };
+
+  const isMobile =
+    (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
+    G.MOBILE_VIEWPORT_THRESHOLD;
+
   return (
     <>
       {!!editRichText.id && (
@@ -522,84 +499,6 @@ const Playlist = () => {
           link={editAttachmentItem.link}
           mediaType={editAttachmentItem.mediaType}
         />
-      )}
-      {!!playlistSharerName && (
-        <Modal
-          sxContainer={{ width: "460px" }}
-          title={t("welcomeToSeedBible")}
-          showIcon={false}
-          onClose={onCloseSharPlaylistModal}
-        >
-          <div className="welcome-box">
-            <img
-              src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/08ff23d5216230e0fe9b9c0f80b8192aee35c320d4c87e60046e7cc396d8f5a7.svg"
-              alt="share"
-            />
-            <div className="align-center" style={{ gap: "1rem" }}>
-              {G.shareProfilePic && (
-                <img
-                  className="welcome-box-profile"
-                  src={G.shareProfilePic}
-                  alt={playlistSharerName}
-                />
-              )}
-              {playlistSharerName ? (
-                <p>
-                  {" "}
-                  <b>{playlistSharerName}</b> {t("sharedAPlaylist")}
-                </p>
-              ) : (
-                <p>{t("hereIsYourSharedPlaylist")}</p>
-              )}
-            </div>
-            <div
-              className="welcome-box-content"
-              style={{
-                alignItems: !playlistShared.description
-                  ? "center"
-                  : "flex-start",
-              }}
-            >
-              <RenderIcon
-                isCustomIcons={playlistShared.isCustomIcon}
-                icon={playlistShared.icon}
-                list={playlistShared.list}
-              />
-              <div className="welcome-details">
-                <h4
-                  style={{
-                    fontSize: playlistShared.description ? "1rem" : "1.125rem",
-                  }}
-                >
-                  {playlistShared.name}
-                </h4>
-                {!!playlistShared.description && (
-                  <p>{playlistShared.description}</p>
-                )}
-              </div>
-            </div>
-            <Button
-              secondary
-              style={{
-                width: "205px",
-              }}
-              onClick={() => {
-                if (G.DragDrop)
-                  thisBot.Playlistplaying({
-                    playingPlaylist: playlistShared.id,
-                    startIndex: 0,
-                    startSubIndex: -1,
-                    parentId: "default",
-                    name: playlistShared.name,
-                  });
-                setPLaylistSharerName("");
-                G.hasASharedPlaylist = false;
-              }}
-            >
-              {t("start")}
-            </Button>
-          </div>
-        </Modal>
       )}
 
       {stopPlaylistModal && (
@@ -640,12 +539,14 @@ const Playlist = () => {
             onClick={() => setCreateOptions(false)}
             style={{
               ...showPlaylistPosition.current,
-              width: "210px",
+              width: isMobile ? "165px" : "210px",
               maxHeight: "105px",
               left: "none",
-              right: "-12rem",
+              right: isMobile ? "-9rem" : "-12rem",
               padding: "0.5rem",
-              top: "3rem",
+              top: !isMobile ? "3rem" : "none",
+              bottom: !isMobile ? "none" : "11rem",
+              marginTop: 45,
             }}
             className="overlay linked-item-custom"
           >
@@ -822,6 +723,12 @@ const Playlist = () => {
                               className={`tabs-playlist-item`}
                             >
                               <span
+                                onClick={closePlaylist}
+                                className="show-on-mobile material-symbols-outlined"
+                              >
+                                keyboard_backspace
+                              </span>
+                              <span
                                 className="material-symbols-outlined unfollow"
                                 style={{ fontSize: "20px" }}
                               >
@@ -830,7 +737,7 @@ const Playlist = () => {
                               <span>
                                 {label}{" "}
                                 <GetLabel
-                                  widthCompare={264}
+                                  widthCompare={isMobile ? 360 : 264}
                                   value={value}
                                   currentOpenedBook={currentOpenedBook}
                                 />
@@ -843,15 +750,35 @@ const Playlist = () => {
                             setCreateOptions(true);
                           }}
                           secondary
-                          exClass="create-button"
+                          exClass="create-button show-on-desktop"
+                        >
+                          <span class="material-symbols-outlined">add</span>
+                          {t("create")}
+                        </Button>
+                        <span
+                          onClick={() => {
+                            thisBot.CloseSelf();
+                          }}
+                          class="material-symbols-outlined show-on-mobile"
+                          style={{
+                            fontSize: "24px",
+                            margin: "0 0.5rem",
+                          }}
+                        >
+                          close
+                        </span>
+                        <Button
+                          onClick={() => {
+                            setCreateOptions(true);
+                          }}
+                          secondary
+                          exClass="create-button-mobile show-on-mobile"
                         >
                           <span
-                            style={{ color: "white" }}
-                            class="material-symbols-outlined"
+                            class={`material-symbols-outlined ${createOptions ? "rotate-90" : ""}`}
                           >
                             add
                           </span>
-                          {t("create")}
                         </Button>
                       </div>
                     )}
@@ -960,6 +887,12 @@ const Playlist = () => {
                 </div>
               )}
             </div>
+            {showAddToPlaylist && (
+              <AddToPlaylist
+                id="default"
+                onClose={() => setShowAddToPlaylist(false)}
+              />
+            )}
           </div>
         </ProjectProvider>
         {!!isLayers && !playingPlaylist && !editData.id && (

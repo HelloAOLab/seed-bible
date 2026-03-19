@@ -1,37 +1,35 @@
-const { Button } = Components;
+const G = globalThis as any;
+const { Button } = G.Components;
 const { useState, useLayoutEffect, useRef } = os.appHooks;
-
 
 const name = "ShowScreenRecordingStopButton";
 const videoGIF =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/a06426963e6f35751bdc3e76b49527f24cf646ff1ca48aaec66db6ee483f3f1c.gif";
 os.unregisterApp(name);
-os.registerApp(name);
-globalThis.StopVideoRecording = false;
+os.registerApp(name, thisBot);
+G.StopVideoRecording = false;
 
 const painterApp = getBot("system", "aiApps.painter");
 
 const ShowScreenRecordingStopButton = () => {
-  
   const [hidden, setHidden] = useState(false);
   const [isPainting, setIsPainting] = useState(false);
   const [video, setVideo] = useState(!!that.video);
 
   const toggleVideo = () => {
     if (!video) {
-      if (globalThis.OpenVideoOverlay) globalThis.OpenVideoOverlay();
+      if (G.OpenVideoOverlay) G.OpenVideoOverlay();
     } else {
-      if (globalThis.CloseVideoOverlay) globalThis.CloseVideoOverlay();
+      if (G.CloseVideoOverlay) G.CloseVideoOverlay();
     }
     setVideo((p) => !p);
   };
 
   useLayoutEffect(() => {
-    globalThis.ToggleVideoLayout = toggleVideo;
-    if (globalThis.OpenVideoOverlay && !!that.video)
-      globalThis.OpenVideoOverlay();
+    G.ToggleVideoLayout = toggleVideo;
+    if (G.OpenVideoOverlay && !!that.video) G.OpenVideoOverlay();
     return () => {
-      if (globalThis.CloseVideoOverlay) globalThis.CloseVideoOverlay();
+      if (G.CloseVideoOverlay) G.CloseVideoOverlay();
     };
   }, []);
 
@@ -45,7 +43,7 @@ const ShowScreenRecordingStopButton = () => {
   const lastPosBeforeFullScreen = useRef({ x: 0, y: 0 });
 
   // ✅ Real-time drag handlers
-  const handleMouseDown = (e) => {
+  const handleMouseDown = (e: any) => {
     if (`${position.x}`.endsWith("w")) return;
     draggingRef.current = true;
     dragStart.current = { x: e.clientX, y: e.clientY };
@@ -54,7 +52,7 @@ const ShowScreenRecordingStopButton = () => {
     window.addEventListener("mouseup", handleMouseUp);
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: any) => {
     if (!draggingRef.current) return;
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
@@ -101,20 +99,20 @@ const ShowScreenRecordingStopButton = () => {
           src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/8c36b2ef970a1ddd51de47ff2157fc2d7746fcfbb2f02f8941018052d29dbb31.svg"
           className="pointer stop-recording align-center"
           onClick={() => {
-            if (globalThis.HandleStop) {
-              globalThis.HandleStop();
+            if (G.HandleStop) {
+              G.HandleStop();
               return;
             }
-            globalThis.StopVideoRecording = true;
-            globalThis.setTabPlaylist("create");
+            G.StopVideoRecording = true;
+            G.setTabPlaylist("create");
           }}
         >
           <span class="material-symbols-outlined">cancel</span>
-          <span>{t('stopRecording')}</span>
+          <span>{t("stopRecording")}</span>
         </div>
         {!video && (
           <Button onClick={toggleVideo} secondary>
-            {video ? t('turnOff') : t('turnOn')} {t('video')}
+            {video ? t("turnOff") : t("turnOn")} {t("video")}
           </Button>
         )}
         <p

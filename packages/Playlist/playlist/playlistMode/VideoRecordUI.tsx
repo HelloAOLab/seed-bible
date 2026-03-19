@@ -1,11 +1,11 @@
 const { useState, useLayoutEffect, useRef, useMemo, useCallback } = os.appHooks;
-
+const G = globalThis as any;
 const videoGIF =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/a06426963e6f35751bdc3e76b49527f24cf646ff1ca48aaec66db6ee483f3f1c.gif";
 const screenGIF =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/4762072e89002b10128fc5fd2378aab528e60776159734a56ab048f3f337ed1d.gif";
 
-const IconsRef = {
+const IconsRef: Record<string, string> = {
   "screen&cam":
     "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5ccb9e853b00fb860c2f5891d26f0960752606951a7aa65f834c9d456cd37b74.svg",
   "screen&cam_active":
@@ -26,15 +26,12 @@ const IconsRef = {
     "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/1975ce33ad8bee6f1c178167477fc356446715eda8f5bece9958755209297526.svg",
 };
 
-const VideoRecordUI = ({ data, setData }) => {
+const VideoRecordUI = (props: any) => {
+  const { data, setData } = props;
   const [recordingProps, setRecordingProps] = useState({
     audio: true,
-    video: globalThis?.VideoRecordTab
-      ? globalThis.VideoRecordTab !== "screen"
-      : true,
-    screen: globalThis?.VideoRecordTab
-      ? globalThis.VideoRecordTab !== "cam"
-      : true,
+    video: G?.VideoRecordTab ? G.VideoRecordTab !== "screen" : true,
+    screen: G?.VideoRecordTab ? G.VideoRecordTab !== "cam" : true,
   });
 
   const isScreen = useMemo(
@@ -42,17 +39,17 @@ const VideoRecordUI = ({ data, setData }) => {
     [recordingProps.screen]
   );
 
-  const videoRef = useRef(null);
-  const [poster, setPoster] = useState(false);
-  const [isRecording, setIsRecording] = useState(!!globalThis.isRecording);
+  const videoRef = useRef<any>(null);
+  const [poster, setPoster] = useState<string | null | boolean>(false);
+  const [isRecording, setIsRecording] = useState(!!G.isRecording);
   const [isRecorded, setIsRecorded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [tab, setTab] = useState(globalThis.VideoRecordTab || "screen&cam");
+  const [tab, setTab] = useState(G.VideoRecordTab || "screen&cam");
 
-  globalThis.VideoRecordTab = tab;
+  G.VideoRecordTab = tab;
 
-  globalThis.isRecording = isRecording;
+  G.isRecording = isRecording;
 
   const handleRecord = async () => {
     try {
@@ -67,20 +64,22 @@ const VideoRecordUI = ({ data, setData }) => {
         screen: recordingProps.screen,
       });
       if (isScreen) {
-        globalThis.isRecording = true;
+        G.isRecording = true;
         thisBot.ShowScreenRecordingStopButton({ video: recordingProps.video });
-        globalThis.setTabPlaylist("discover");
+        G.setTabPlaylist("discover");
       }
     } catch (err) {
       setIsRecording(false);
-      ShowNotification({ message: err, severity: "error" });
+      ShowNotification({ message: err as string, severity: "error" });
     }
   };
 
   const handleStop = useCallback(async () => {
-    const data = await experiment.endRecording();
+    const data: any = await experiment.endRecording();
     if (videoRef.current) {
-      videoRef.current.srcObject?.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject
+        ?.getTracks()
+        .forEach((track: any) => track.stop());
       videoRef.current.srcObject = null;
     }
     thisBot.RemoveScreenRecordingControls();
@@ -112,7 +111,7 @@ const VideoRecordUI = ({ data, setData }) => {
     setIsPlaying(false);
   };
 
-  globalThis.HandleStopPlayVideo = handleStopPlay;
+  G.HandleStopPlayVideo = handleStopPlay;
 
   const handleReRecord = async () => {
     videoRef.current.pause();
@@ -138,12 +137,12 @@ const VideoRecordUI = ({ data, setData }) => {
   };
 
   useLayoutEffect(() => {
-    if (globalThis.StopVideoRecording) {
+    if (G.StopVideoRecording) {
       handleStop();
-      globalThis.StopVideoRecording = false;
+      G.StopVideoRecording = false;
       return;
     }
-    globalThis.isScreenRecording = false;
+    G.isScreenRecording = false;
     (async () => {
       if (!isScreen) {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -159,7 +158,7 @@ const VideoRecordUI = ({ data, setData }) => {
         if (videoRef.current) {
           videoRef.current.srcObject
             ?.getTracks()
-            .forEach((track) => track.stop());
+            .forEach((track: any) => track.stop());
           videoRef.current.srcObject = null;
         }
         setIsStreaming(false);
@@ -169,14 +168,14 @@ const VideoRecordUI = ({ data, setData }) => {
       if (videoRef.current) {
         videoRef.current.srcObject
           ?.getTracks()
-          .forEach((track) => track.stop());
+          .forEach((track: any) => track.stop());
         videoRef.current.srcObject = null;
       }
       setIsStreaming(false);
       if (!isScreen) {
         await experiment.endRecording();
       } else {
-        globalThis.isScreenRecording = true;
+        G.isScreenRecording = true;
       }
     };
   }, [isScreen]);
@@ -251,7 +250,7 @@ const VideoRecordUI = ({ data, setData }) => {
         const canvas = document.createElement("canvas");
         canvas.width = tempVideo.videoWidth;
         canvas.height = tempVideo.videoHeight;
-        const ctx = canvas.getContext("2d");
+        const ctx: any = canvas.getContext("2d");
         ctx.drawImage(tempVideo, 0, 0, canvas.width, canvas.height);
         const imageURL = canvas.toDataURL("image/png");
         setPoster(imageURL);
@@ -270,9 +269,9 @@ const VideoRecordUI = ({ data, setData }) => {
   }, [data]);
 
   useLayoutEffect(() => {
-    globalThis.HandleStop = handleStop;
+    G.HandleStop = handleStop;
     return () => {
-      globalThis.HandleStop = false;
+      G.HandleStop = false;
     };
   }, [handleStop]);
 
@@ -328,7 +327,7 @@ const VideoRecordUI = ({ data, setData }) => {
               ref={videoRef}
               playsInline
               poster={
-                poster ||
+                (poster as string) ||
                 `https://dummyimage.com/640x480/000/fff&text=${isScreen ? "Screen+Preview" : "Camera+Preview"}`
               }
             />

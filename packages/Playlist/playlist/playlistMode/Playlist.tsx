@@ -23,7 +23,11 @@ const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
 G.DEFAULT_UPLOAD_ICON =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/67bba604a31cc7e116124f92179d8fe06317fcf70a3c62f071dff529362ebc25.png";
 
-const startCreatingPlaylist = (name, playlist = [], id) => {
+const startCreatingPlaylist = (
+  name: string,
+  playlist: any[] = [],
+  id: string
+) => {
   G.HISTORYExploreMode = false;
   G[`${id}creatingPlaylistName`] = name;
   G[`${id}creatingPlaylist`] = true;
@@ -100,16 +104,21 @@ const AI_OPTIONS: { value: string; label: string }[] = [
   },
 ];
 
-const Playlist = ({
-  id,
-  query,
-  selectedChip,
-  isCreate,
-  isLayers,
-  playingPlaylist,
-  creatingPlaylist,
-  setCreatingPlaylist,
-}) => {
+const Playlist = (props: any) => {
+  const {
+    id,
+    query,
+    selectedChip,
+    isCreate,
+    isLayers,
+    playingPlaylist,
+    creatingPlaylist,
+    setCreatingPlaylist,
+  } = props;
+
+  const DragDropT = useMemo(() => {
+    return G.DragDrop;
+  }, []);
   // Audio
   const [mediaURL, setMediaURL] = useState("");
   const [videoSrc, setVideoSrc] = useState(false);
@@ -130,10 +139,14 @@ const Playlist = ({
   const [selectedTags, setTags] = useState([]);
   const [selectPlaylist, setSelectPlaylist] = useState(false);
 
-  const [checkListData, setChecklistData] = useState({});
-  const [checkListEmbeded, setChecklistEmbeded] = useState({});
-  const [checklistEnabled, setChecklistEnabled] = useState(false);
-  const [embedding, setEmbedding] = useState(null);
+  const [checkListData, setChecklistData] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [checkListEmbeded, setChecklistEmbeded] = useState<
+    Record<string, boolean>
+  >({});
+  const [checklistEnabled, setChecklistEnabled] = useState<any>(false);
+  const [embedding, setEmbedding] = useState<any>(null);
 
   useLayoutEffect(() => {
     G[`SetChecklistEnabled`] = setChecklistEnabled;
@@ -194,17 +207,18 @@ const Playlist = ({
   const [description, setDescription] = useState("");
   const [customIcon, setCustomIcon] = useState(null);
 
-  const setEditModal = ({
-    id,
-    color,
-    isCustomColor,
-    icon,
-    name,
-    description: des,
-    isCustomIcon,
-    selectedTags,
-    isLayers,
-  }) => {
+  const setEditModal = (props: any) => {
+    const {
+      id,
+      color,
+      isCustomColor,
+      icon,
+      name,
+      description: des,
+      isCustomIcon,
+      selectedTags,
+      isLayers,
+    } = props;
     setName(name);
     if (isCustomColor) setCustomColor(color);
     if (isCustomIcon) setCustomIcon(icon);
@@ -597,7 +611,8 @@ const Playlist = ({
 
   const onBulkJsonDownload = () => {
     const listToDownload: any[] = [];
-    playLists.forEach(({ list, id: playlistID }) => {
+    playLists.forEach((props: any) => {
+      const { list, id: playlistID } = props;
       if (selectedPlaylist[playlistID]) {
         list.forEach((ele: any) => {
           listToDownload.push({
@@ -663,7 +678,7 @@ const Playlist = ({
     setPlaylist(oldListRef.current);
   };
 
-  const editDataFromPlaylist = (receivedIds) => {
+  const editDataFromPlaylist = (receivedIds: string | string[]) => {
     let ids = [receivedIds];
     if (Array.isArray(receivedIds)) {
       ids = [...receivedIds];
@@ -671,7 +686,7 @@ const Playlist = ({
 
     setChecklistData((prev) => {
       const old = { ...prev };
-      ids.forEach((idEle) => {
+      ids.forEach((idEle: any) => {
         if (old[idEle]) {
           delete old[idEle];
         } else {
@@ -684,7 +699,7 @@ const Playlist = ({
   };
 
   const onBulkDeleteItems = () => {
-    setPlaylist((prev) => {
+    setPlaylist((prev: any[]) => {
       const old = prev.filter(
         (ele) => !checkListData[ele.id] && embedding !== ele.id
       );
@@ -699,24 +714,24 @@ const Playlist = ({
     let embededItem = null;
     if (!embedding) return;
 
-    playList.forEach((ele) => {
+    playList.forEach((ele: any) => {
       if (checkListData[ele.id] && ele.id !== embedding) {
-        if (!!ele.additionalInfo?.layers?.length) {
+        if (ele.additionalInfo?.layers?.length) {
           embededItem = ele.content;
         }
       }
     });
 
-    if (!!embededItem) {
+    if (embededItem) {
       ShowNotification({
         message: t("cannotEmbedEmbeddedItem", { embededItem }),
         severity: "error",
       });
       return;
     }
-    setPlaylist((prev) => {
-      const oldItems = [];
-      const newLayers = [];
+    setPlaylist((prev: any[]) => {
+      const oldItems: any[] = [];
+      const newLayers: any[] = [];
       const old = [...prev];
       old.forEach((ele) => {
         if (checkListData[ele.id]) {
@@ -750,22 +765,22 @@ const Playlist = ({
     setChecklistData({});
   };
 
-  const onDisembed = (ids, isDelete) => {
+  const onDisembed = (ids: any, isDelete?: boolean) => {
     let idtoDisembed = [ids];
     if (Array.isArray(ids)) {
       idtoDisembed = [...ids];
     }
 
-    const idsMap = {};
-    const pidsMap = {};
+    const idsMap: Record<string, boolean> = {};
+    const pidsMap: Record<string, boolean> = {};
 
     idtoDisembed.forEach((ele, index) => {
       idsMap[ele.id] = true;
       pidsMap[ele.pId] = true;
     });
 
-    setPlaylist((prev) => {
-      const toBeAddedAtIndex = {};
+    setPlaylist((prev: any[]) => {
+      const toBeAddedAtIndex: Record<string, any[]> = {};
 
       const old = prev.map((ele, idx) => {
         const prevEle = {
@@ -775,10 +790,10 @@ const Playlist = ({
             layers: [...(ele.additionalInfo.layers || [])],
           },
         };
-        const layersFilter = [];
-        const remaningLayers = [];
+        const layersFilter: any[] = [];
+        const remaningLayers: any[] = [];
         if (pidsMap[prevEle.id]) {
-          prevEle.additionalInfo.layers.forEach((layer) => {
+          prevEle.additionalInfo.layers.forEach((layer: any) => {
             if (idsMap[layer.id]) {
               layersFilter.push({
                 ...layer,
@@ -796,8 +811,8 @@ const Playlist = ({
         }
         return prevEle;
       });
-      Object.keys(toBeAddedAtIndex).forEach((ele) => {
-        const items = [...toBeAddedAtIndex[ele]];
+      Object.keys(toBeAddedAtIndex).forEach((ele: any) => {
+        const items = [...(toBeAddedAtIndex[ele] || [])];
         old.splice(ele, 0, ...items);
       });
       return old;
@@ -808,9 +823,9 @@ const Playlist = ({
 
   const isSomethingEmbededChecked = Object.keys(checkListEmbeded).length > 0;
 
-  const onCheckEmbeded = (id, pId) => {
+  const onCheckEmbeded = (id: any, pId: string) => {
     setChecklistEmbeded((prev) => {
-      const old = { ...prev };
+      const old: Record<string, any> = { ...prev };
       let idMap = [id];
       if (Array.isArray(id)) {
         idMap = [...idMap];
@@ -834,9 +849,9 @@ const Playlist = ({
 
   const [sharedFilterPlaylists, filteredPlaylist] = useMemo(() => {
     const q = query.toLocaleLowerCase();
-    const shared = [];
-    const owned = [];
-    playLists.forEach((ele) => {
+    const shared: any[] = [];
+    const owned: any[] = [];
+    playLists.forEach((ele: any) => {
       const name = ele.name?.toLocaleLowerCase();
       const des = ele.description?.toLocaleLowerCase();
       if (name.includes(q) || des.includes(q)) {
@@ -863,11 +878,11 @@ const Playlist = ({
             <Button
               secondary
               onClick={() => {
-                setPlaylist((prev) => {
+                setPlaylist((prev: any[]) => {
                   const old = prev.filter(
-                    (ele) => !!ele.additionalInfo.layers?.length
+                    (ele: any) => ele.additionalInfo.layers?.length
                   );
-                  globalThis[`${id}currentPlaylist`] = old;
+                  G[`${id}currentPlaylist`] = old;
                   return old;
                 });
                 setOpenAttachLink(false);
@@ -920,17 +935,9 @@ const Playlist = ({
                 setPublishAccess("private");
               }}
             >
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
-                lock
-              </span>
+              <span class="material-symbols-outlined">lock</span>
               <p>{t("privateAccess")}</p>
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
+              <span class="material-symbols-outlined">
                 {publishAccess === "private"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -942,17 +949,9 @@ const Playlist = ({
                 setPublishAccess("public");
               }}
             >
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
-                public
-              </span>
+              <span class="material-symbols-outlined">public</span>
               <p>{t("publicAccess")}</p>
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
+              <span class="material-symbols-outlined">
                 {publishAccess === "public"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -1015,14 +1014,14 @@ const Playlist = ({
               >
                 {checklist ? (
                   <span
-                    style={{ fontSize: "20px", color: "white" }}
+                    style={{ fontSize: "20px" }}
                     class="material-symbols-outlined unfollow"
                   >
                     check_box
                   </span>
                 ) : (
                   <span
-                    style={{ fontSize: "20px", color: "white" }}
+                    style={{ fontSize: "20px" }}
                     class="material-symbols-outlined unfollow"
                   >
                     check_box_outline_blank
@@ -1053,64 +1052,66 @@ const Playlist = ({
                 </p>
               </Tooltip>
             </div>
-            <div
-              className="more-menu-items"
-              onClick={() => {
-                setPublishAccess("public");
-              }}
-            >
+            {false && (
               <div
-                className="align-center"
-                style={{
-                  cursor: "pointer",
-                }}
+                className="more-menu-items"
                 onClick={() => {
-                  if (readingPlan) {
-                    deleteDateData();
-                  }
-                  setReadingPlan((p) => !p);
+                  setPublishAccess("public");
                 }}
               >
-                {readingPlan ? (
-                  <span
-                    style={{ fontSize: "20px", color: "white" }}
-                    class="material-symbols-outlined unfollow"
-                  >
-                    check_box
-                  </span>
-                ) : (
-                  <span
-                    style={{ fontSize: "20px", color: "white" }}
-                    class="material-symbols-outlined unfollow"
-                  >
-                    check_box_outline_blank
-                  </span>
-                )}
-                <label
+                <div
+                  className="align-center"
                   style={{
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    marginLeft: "4px",
+                    cursor: "pointer",
                   }}
-                  for="playlistInclude"
+                  onClick={() => {
+                    if (readingPlan) {
+                      deleteDateData();
+                    }
+                    setReadingPlan((p) => !p);
+                  }}
                 >
-                  {t("readingPlan")}
-                </label>
-              </div>
-              <Tooltip text={t("readingPlanTooltip")}>
-                <p
-                  className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}
-                >
-                  <span
-                    style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow "
+                  {readingPlan ? (
+                    <span
+                      style={{ fontSize: "20px" }}
+                      class="material-symbols-outlined unfollow"
+                    >
+                      check_box
+                    </span>
+                  ) : (
+                    <span
+                      style={{ fontSize: "20px" }}
+                      class="material-symbols-outlined unfollow"
+                    >
+                      check_box_outline_blank
+                    </span>
+                  )}
+                  <label
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      marginLeft: "4px",
+                    }}
+                    for="playlistInclude"
                   >
-                    info
-                  </span>
-                </p>
-              </Tooltip>
-            </div>
+                    {t("readingPlan")}
+                  </label>
+                </div>
+                <Tooltip text={t("readingPlanTooltip")}>
+                  <p
+                    className="what-this center"
+                    style={{ margin: "0 0 0 0.5rem" }}
+                  >
+                    <span
+                      style={{ fontSize: "24px" }}
+                      class="material-symbols-outlined unfollow "
+                    >
+                      info
+                    </span>
+                  </p>
+                </Tooltip>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -1151,6 +1152,35 @@ const Playlist = ({
           <h3 style={{ margin: "0.5rem 0" }}>{t("editingPlaylists")}</h3>
         ) : (
           <>
+            {(playingPlaylist ||
+              selectedChip["All"] ||
+              selectedChip["Playlist"]) && (
+              <>
+                <h3
+                  style={{ margin: "0.5rem 0" }}
+                >{`${t("my")} ${t("playlists")}`}</h3>
+                <PlaylistList
+                  selectedChip={selectedChip}
+                  extraActions={() => {
+                    toggleOpenModalName(false);
+                  }}
+                  selectPlaylist={
+                    selectPlaylist ||
+                    Object.keys(selectedPlaylist).some(
+                      (ele) => !!selectedPlaylist[ele]
+                    )
+                  }
+                  playingPlaylist={playingPlaylist}
+                  mergeMode={mergeMode}
+                  parentId={id}
+                  isLayers={isLayers}
+                  selectedPlaylists={selectedPlaylist}
+                  setSelectPlaylist={toggleSelectedPlaylist}
+                  playLists={filteredPlaylist}
+                  setPlayLists={setPlayLists}
+                />
+              </>
+            )}
             {selectedChip["Shared"] && sharedFilterPlaylists.length === 0 ? (
               <>
                 <h3 style={{ margin: "0.5rem 0" }}>{t("sharedPlaylists")}</h3>
@@ -1187,33 +1217,6 @@ const Playlist = ({
             ) : (
               ""
             )}
-            {(playingPlaylist ||
-              selectedChip["All"] ||
-              selectedChip["Playlist"]) && (
-              <>
-                <h3 style={{ margin: "0.5rem 0" }}>{t("playlists")}</h3>
-                <PlaylistList
-                  selectedChip={selectedChip}
-                  extraActions={() => {
-                    toggleOpenModalName(false);
-                  }}
-                  selectPlaylist={
-                    selectPlaylist ||
-                    Object.keys(selectedPlaylist).some(
-                      (ele) => !!selectedPlaylist[ele]
-                    )
-                  }
-                  playingPlaylist={playingPlaylist}
-                  mergeMode={mergeMode}
-                  parentId={id}
-                  isLayers={isLayers}
-                  selectedPlaylists={selectedPlaylist}
-                  setSelectPlaylist={toggleSelectedPlaylist}
-                  playLists={filteredPlaylist}
-                  setPlayLists={setPlayLists}
-                />
-              </>
-            )}
           </>
         )}
         {creatingPlaylist && (
@@ -1236,8 +1239,8 @@ const Playlist = ({
                   const x = rect.left; // X position where the element starts (from left of screen)
                   const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
 
-                  globalThis.LastClickX = x;
-                  globalThis.LastClickY = y;
+                  G.LastClickX = x;
+                  G.LastClickY = y;
                   showPlaylistPosition.current = { ...getPosition() };
                   setShowPlaylistSettings(true);
                 }}
@@ -1255,8 +1258,8 @@ const Playlist = ({
                     const x = rect.left; // X position where the element starts (from left of screen)
                     const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
 
-                    globalThis.LastClickX = x;
-                    globalThis.LastClickY = y;
+                    G.LastClickX = x;
+                    G.LastClickY = y;
                     showMorePosition.current = { ...getPosition() };
                     setShowMoreOptions(true);
                   }}
@@ -1379,7 +1382,7 @@ const Playlist = ({
                 </Button>
               </div>
             )}
-            <DragDrop
+            <DragDropT
               massAdd={massAdd}
               attachLink={attachLink}
               itemSelected={itemSelected}
@@ -1479,7 +1482,6 @@ const Playlist = ({
 
             {!regenrateUI && !itemSelected && (
               <AttachLink
-                isDate
                 onDateClick={(date: string = "") => {
                   setRegenrateUI(false);
                   attachDate(date);
@@ -1491,11 +1493,14 @@ const Playlist = ({
             )}
             {!!videoSrc && (
               <VideoPlayer
+                style={G.FloatBarStyle}
                 videoSrc={videoSrc}
                 playlistItem={{ ...currentItem }}
               />
             )}
-            {!!mediaURL && <AudioPlayer close mediaURL={mediaURL} />}
+            {!!mediaURL && (
+              <AudioPlayer style={G.FloatBarStyle} close mediaURL={mediaURL} />
+            )}
 
             {regenrateUI && (
               <div
@@ -1517,7 +1522,7 @@ const Playlist = ({
                       hidden={true}
                       secondary
                       value={currentPromptText}
-                      onChangeListener={(val) => {
+                      onChangeListener={(val: any) => {
                         setCurrentPromptText(val);
                       }}
                       name="Prompt Type:"
@@ -1528,7 +1533,7 @@ const Playlist = ({
                       <Button
                         small
                         onClick={() => {
-                          setSystemPrompt(globalThis.SYSTEM_PROMPT);
+                          setSystemPrompt(G.SYSTEM_PROMPT);
                         }}
                       >
                         <span
@@ -1567,7 +1572,7 @@ const Playlist = ({
                   hidden={true}
                   secondary
                   value={selectedAI}
-                  onChangeListener={(val) => {
+                  onChangeListener={(val: any) => {
                     setSelectedAI(val);
                   }}
                   name="AI:"
@@ -1593,7 +1598,7 @@ const Playlist = ({
                 onClick={() => {
                   if (layers) {
                     const checkEmbed = playList.some(
-                      (ele) => !ele.additionalInfo.layers?.length
+                      (ele: any) => !ele.additionalInfo.layers?.length
                     );
                     if (checkEmbed) {
                       setLayersWarning(true);
@@ -1685,7 +1690,7 @@ const Playlist = ({
             <p
               style={{ width: "10px", height: "10px" }}
               ref={creatingPlaylistRef}
-              tabIndex="-1"
+              tabIndex={-1}
             />
           </div>
         )}
@@ -1711,7 +1716,7 @@ const Playlist = ({
                   type="checkbox"
                   checked={mergeMode}
                   id="mergeMode"
-                  onChange={(e) => {
+                  onChange={(e: any) => {
                     setMergeMode(e.target.checked);
                   }}
                 />
@@ -1737,7 +1742,7 @@ const Playlist = ({
                     hidden={true}
                     secondary
                     value={currentPromptText}
-                    onChangeListener={(val) => {
+                    onChangeListener={(val: any) => {
                       setCurrentPromptText(val);
                     }}
                     name="Prompt Type:"
@@ -1748,7 +1753,7 @@ const Playlist = ({
                     <Button
                       small
                       onClick={() => {
-                        setSystemPrompt(globalThis.SYSTEM_PROMPT);
+                        setSystemPrompt(G.SYSTEM_PROMPT);
                       }}
                     >
                       <span
@@ -1846,7 +1851,7 @@ const Playlist = ({
                         setDescription(suggestedDescription);
                         startCreatingPlaylist(suggestedName, allItems, id);
                         setTags((prev) => {
-                          const old = [...prev];
+                          const old: any = [...prev];
                           old.push("ai-generated", suggestedName);
                           return old;
                         });
@@ -1862,7 +1867,7 @@ const Playlist = ({
                       return;
                     }
                     toggleOpenModalName(true);
-                    globalThis[`${id}setCustomIcon`](DEFAULT_UPLOAD_ICON);
+                    G[`${id}setCustomIcon`](G.DEFAULT_UPLOAD_ICON);
                   }}
                   style={{ width: "100%", padding: "0" }}
                   className={`playlist-action self-start ${

@@ -972,11 +972,20 @@
       "bibleStack.services.PieceDataRepository": [
         "./packages/Bible Stack/bibleStack/services/PieceDataRepository.tsx"
       ],
+      "bibleVizUtils.adapters.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/adapters/onCreate.tsx"
+      ],
       "bibleVizUtils.adapters.SeedBiblePresenceProvider": [
         "./packages/Bible Visualization Utils/bibleVizUtils/adapters/SeedBiblePresenceProvider.tsx"
       ],
       "bibleVizUtils.controllers.label.lifecycle": [
         "./packages/Bible Visualization Utils/bibleVizUtils/controllers/label/lifecycle.tsx"
+      ],
+      "bibleVizUtils.controllers.label.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/controllers/label/onCreate.tsx"
+      ],
+      "bibleVizUtils.controllers.render.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/controllers/render/onCreate.tsx"
       ],
       "bibleVizUtils.controllers.render.renderOrderController": [
         "./packages/Bible Visualization Utils/bibleVizUtils/controllers/render/renderOrderController.tsx"
@@ -989,6 +998,9 @@
       ],
       "bibleVizUtils.controllers.userPresence.colorStoreController": [
         "./packages/Bible Visualization Utils/bibleVizUtils/controllers/userPresence/colorStoreController.tsx"
+      ],
+      "bibleVizUtils.controllers.userPresence.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/controllers/userPresence/onCreate.tsx"
       ],
       "bibleVizUtils.data.ActivityIndicatorDefaults": [
         "./packages/Bible Visualization Utils/bibleVizUtils/data/ActivityIndicatorDefaults.tsx"
@@ -1107,6 +1119,9 @@
       "bibleVizUtils.mappers.ArrangementMapper": [
         "./packages/Bible Visualization Utils/bibleVizUtils/mappers/ArrangementMapper.tsx"
       ],
+      "bibleVizUtils.mappers.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/mappers/onCreate.tsx"
+      ],
       "bibleVizUtils.mappers.StackGeometryMapper": [
         "./packages/Bible Visualization Utils/bibleVizUtils/mappers/StackGeometryMapper.tsx"
       ],
@@ -1130,6 +1145,9 @@
       ],
       "bibleVizUtils.models.entities.LayoutChapterData": [
         "./packages/Bible Visualization Utils/bibleVizUtils/models/entities/LayoutChapterData.tsx"
+      ],
+      "bibleVizUtils.models.entities.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/models/entities/onCreate.tsx"
       ],
       "bibleVizUtils.models.entities.StackBibleData": [
         "./packages/Bible Visualization Utils/bibleVizUtils/models/entities/StackBibleData.tsx"
@@ -1160,6 +1178,9 @@
       ],
       "bibleVizUtils.models.label": [
         "./packages/Bible Visualization Utils/bibleVizUtils/models/label.tsx"
+      ],
+      "bibleVizUtils.models.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/models/onCreate.tsx"
       ],
       "bibleVizUtils.models.seedBible": [
         "./packages/Bible Visualization Utils/bibleVizUtils/models/seedBible.tsx"
@@ -2192,6 +2213,9 @@
       "playlist.playlistMode.AddNewPlaylist": [
         "./packages/Playlist/playlist/playlistMode/AddNewPlaylist.tsx"
       ],
+      "playlist.playlistMode.AddToPlaylist": [
+        "./packages/Playlist/playlist/playlistMode/AddToPlaylist.tsx"
+      ],
       "playlist.playlistMode.AnnotationList": [
         "./packages/Playlist/playlist/playlistMode/AnnotationList.tsx"
       ],
@@ -2453,6 +2477,9 @@
       "playlist.playlistMode.SetItemsPlayerPlaylist": [
         "./packages/Playlist/playlist/playlistMode/SetItemsPlayerPlaylist.tsx"
       ],
+      "playlist.playlistMode.SharePlaylistModal": [
+        "./packages/Playlist/playlist/playlistMode/SharePlaylistModal.tsx"
+      ],
       "playlist.playlistMode.showCommandBox": [
         "./packages/Playlist/playlist/playlistMode/showCommandBox.tsx"
       ],
@@ -2546,11 +2573,17 @@
       "references.manager.interfaces": [
         "./packages/References/references/manager/interfaces.tsx"
       ],
+      "references.manager.makeReferenceOptions": [
+        "./packages/References/references/manager/makeReferenceOptions.tsx"
+      ],
       "references.manager.NewReferenceApp": [
         "./packages/References/references/manager/NewReferenceApp.tsx"
       ],
       "references.manager.NewReferenceModal": [
         "./packages/References/references/manager/NewReferenceModal.tsx"
+      ],
+      "references.manager.onBookChanged": [
+        "./packages/References/references/manager/onBookChanged.tsx"
       ],
       "references.manager.onDestroy": [
         "./packages/References/references/manager/onDestroy.tsx"
@@ -3422,6 +3455,9 @@
       "app.contract.factory": [
         "./packages/seed-bible/app/contract/factory.tsx"
       ],
+      "app.contract.globalHooks": [
+        "./packages/seed-bible/app/contract/globalHooks.tsx"
+      ],
       "app.contract.hooks": ["./packages/seed-bible/app/contract/hooks.tsx"],
       "app.contract.provider": [
         "./packages/seed-bible/app/contract/provider.tsx"
@@ -3429,6 +3465,12 @@
       "app.contract.theme": ["./packages/seed-bible/app/contract/theme.tsx"],
       "app.controller.controllerBuilder": [
         "./packages/seed-bible/app/controller/controllerBuilder.tsx"
+      ],
+      "app.controller.EventController": [
+        "./packages/seed-bible/app/controller/EventController.tsx"
+      ],
+      "app.controller.GlobalApi": [
+        "./packages/seed-bible/app/controller/GlobalApi.tsx"
       ],
       "app.controller.MainController": [
         "./packages/seed-bible/app/controller/MainController.tsx"

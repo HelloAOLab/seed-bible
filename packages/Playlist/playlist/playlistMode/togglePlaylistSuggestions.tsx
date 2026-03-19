@@ -1,3 +1,4 @@
-if(globalThis.TogglePlaylistSuggestions) {
-    globalThis.TogglePlaylistSuggestions();
+const G = globalThis as any;
+if (G.TogglePlaylistSuggestions) {
+  G.TogglePlaylistSuggestions();
 }

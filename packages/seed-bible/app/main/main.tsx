@@ -15,23 +15,31 @@ import { PackageManager } from "app.packager.main";
 import { DragDropOverlay } from "app.main.dragOverlay";
 import { MainController } from "app.controller.MainController";
 import { calcThemeCSS } from "app.main.cssUtil";
+import { globalAPI } from "app.controller.controllerBuilder";
 
-globalThis.AppStartedSuccessfully = false;
+const MainThemeCSS = ({
+  themeColorOverride,
+  currentSpace,
+}: {
+  themeColorOverride: Record<string, any>;
+  currentSpace: Record<string, any>;
+}) => {
+  const ThemeCSS = useMemo(
+    () => calcThemeCSS(themeColorOverride ?? {}, currentSpace),
+    [themeColorOverride, currentSpace]
+  );
 
-//this for defining nav functions globaly
-globalThis.Open = () => {};
-globalThis.OpenNextChapter = () => {};
-globalThis.OpenPrevChapter = () => {};
-globalThis.SpaceLayouts = {}; // To store layout per space
-globalThis.SpaceScreens = {}; // Already used for screen count
-globalThis.CheckToolbarOverflow = () => {};
+  useEffect(() => {
+    globalAPI.mainThemeCSS = ThemeCSS;
+    return () => {
+      globalAPI.mainThemeCSS = "";
+    };
+  }, [ThemeCSS]);
 
-/**
- * TODO: Once casual supports it, the prop tsx types should be added back in.
- */
-export const MainContent = (
-  { controller } /*: { controller: MainController }*/
-) => {
+  return <style>{ThemeCSS}</style>;
+};
+
+export const MainContent = ({ controller }: { controller: MainController }) => {
   if (configBot.tags.extensions) return <PackageManager />;
   const { screens, fullScreen, setFullScreen } = useBibleContext();
   const { collapsed, sidebarWidth, setSidebarWidth, themeColors } =
@@ -44,6 +52,7 @@ export const MainContent = (
     updateContainerSize,
     updateApplication,
     removeApplicationByID,
+    removeApplicationByLabel,
     replaceApplication,
     addApplication,
     resetApps,
@@ -73,6 +82,10 @@ export const MainContent = (
     controller.linkViewMethod("addApplication", addApplication);
     controller.linkViewMethod("removeApplication", removeApplication);
     controller.linkViewMethod("removeApplicationById", removeApplicationByID);
+    controller.linkViewMethod(
+      "removeApplicationByLabel",
+      removeApplicationByLabel
+    );
     controller.linkViewMethod("replaceApplication", replaceApplication);
     controller.linkViewMethod("updateApplication", updateApplication);
 
@@ -123,40 +136,8 @@ export const MainContent = (
     globalThis.SpaceScreens[activeSpace] = screens.value;
   }, [screens]);
 
-  globalThis.LocateCanvas = () => {
-    const nodes = document.querySelectorAll(".mainCanvas");
-    const el = nodes[nodes.length - 1]; // last match
-    if (!el) {
-      configBot.tags.gridPortal = null;
-      configBot.tags.mapPortal = null;
-      return;
-    }
-
-    // Viewport-relative bounds:
-    const { left, top, width, height } = el.getBoundingClientRect();
-
-    // Get border radius from computed style
-    const style = window.getComputedStyle(el);
-    const borderRadius = style.borderRadius;
-    // or if you need individual corners:
-    const borderTopLeft = style.borderTopLeftRadius;
-    const borderTopRight = style.borderTopRightRadius;
-    const borderBottomLeft = style.borderBottomLeftRadius;
-    const borderBottomRight = style.borderBottomRightRadius;
-
-    configBot.tags.gridPortal = globalThis?.defaultPortalName || "thePortal";
-    globalThis.SetCanvasPositions({
-      // ...style,
-      left,
-      top,
-      width,
-      height,
-      borderRadius, // shorthand
-    });
-  };
-
   useEffect(() => {
-    globalThis.LocateCanvas();
+    globalAPI.updateCanvasStyleAndGridPortal();
   }, [
     screens,
     containerProps.apps,
@@ -213,29 +194,21 @@ export const MainContent = (
     CheckToolbarOverflow();
   }, [containerProps.leftWidth, containerProps.topHeight]);
 
-  const ThemeCSS = useMemo(
-    () =>
-      calcThemeCSS(
-        themeColors?.[activeSpace] ?? {},
-        getActiveSpace(spaces, activeSpace)
-      ),
-    [themeColors, activeSpace, spaces]
+  const currentSpace = useMemo(
+    () => getActiveSpace(spaces, activeSpace),
+    [spaces, activeSpace]
   );
-
-  useEffect(() => {
-    globalThis.ThemeCSS = ThemeCSS;
-    return () => {
-      globalThis.ThemeCSS = null;
-    };
-  }, [ThemeCSS]);
+  const themeColorOverride = useMemo(
+    () => themeColors?.[activeSpace] ?? {},
+    [themeColors, activeSpace]
+  );
 
   return (
     <>
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+      <MainThemeCSS
+        themeColorOverride={themeColorOverride}
+        currentSpace={currentSpace}
       />
-      <style>{ThemeCSS}</style>
       <MouseMoveProvider>
         <Layout panelsNumber={containerProps.apps.length}>
           <SplitApp {...containerProps} panalMode={false} />
@@ -316,5 +289,15 @@ function getActiveSpace(
   spaces: Array<{ id: string } & Record<string, any>>,
   activeSpaceId: string
 ) {
-  return spaces?.find((s) => s.id === activeSpaceId) ?? null;
+  return spaces?.find((s) => s.id === activeSpaceId) ?? {};
 }
+
+globalThis.AppStartedSuccessfully = false;
+
+//this for defining nav functions globaly
+globalThis.Open = () => {};
+globalThis.OpenNextChapter = () => {};
+globalThis.OpenPrevChapter = () => {};
+globalThis.SpaceLayouts = {}; // To store layout per space
+globalThis.SpaceScreens = {}; // Already used for screen count
+globalThis.CheckToolbarOverflow = () => {};

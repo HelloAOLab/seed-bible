@@ -1,3 +1,4 @@
-thisBot.fetchAnnotationsData({...globalThis.CurrentBookData});
-thisBot.fetchAnnotationsData({...globalThis.CurrentBookData, prev: true});
-thisBot.fetchAnnotationsData({...globalThis.CurrentBookData, next: true});
+const G = globalThis as any;
+thisBot.fetchAnnotationsData({ ...G.CurrentBookData });
+thisBot.fetchAnnotationsData({ ...G.CurrentBookData, prev: true });
+thisBot.fetchAnnotationsData({ ...G.CurrentBookData, next: true });

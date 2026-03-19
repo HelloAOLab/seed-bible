@@ -16,16 +16,14 @@ const SharePopup = ({
   closePopupSettings,
 }) => {
   const [copied, setCopied] = useState(false);
-  const [includeReference, setIncludeReference] = useState(true);
+  // always include reference; no toggle needed
 
   // Build the verse reference from context if not provided
   const reference =
     shareReference || `${configBot.tags.book} ${configBot.tags.chapter}`;
 
-  // The text to share based on toggle
-  const shareText = includeReference
-    ? `"${shareTitle}" - ${reference} (${translation})`
-    : shareTitle || "";
+  // Always include the verse reference when sharing
+  const shareText = `"${shareTitle}" - ${reference} (${translation})`;
 
   const platforms = [
     // {
@@ -56,7 +54,7 @@ const SharePopup = ({
     // },
     {
       name: "X",
-      icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png",
+      icon: "https://pngimg.com/uploads/x_logo/x_logo_PNG14.png",
       share: () =>
         window.open(
           `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`,
@@ -146,7 +144,7 @@ const SharePopup = ({
   return (
     <>
       <div
-        onClick={() => closePopupSettings()}
+        onClick={() => globalThis?.closePopupSettings()}
         style={{
           position: "fixed",
           inset: 0,
@@ -188,7 +186,7 @@ const SharePopup = ({
               {popupTitle}
             </h2>
             <button
-              onClick={() => closePopupSettings()}
+              onClick={() => globalThis?.closePopupSettings()}
               style={{
                 background: "none",
                 border: "none",
@@ -202,80 +200,6 @@ const SharePopup = ({
             >
               <CloseIcon />
             </button>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              gap: 16,
-              marginBottom: 20,
-              flexWrap: "nowrap",
-            }}
-          >
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                cursor: "pointer",
-                flex: "0 0 auto",
-              }}
-            >
-              <input
-                type="radio"
-                name="shareOption"
-                checked={includeReference}
-                onChange={() => setIncludeReference(true)}
-                style={{
-                  accentColor: "#4A90D9",
-                  width: 16,
-                  height: 16,
-                  flexShrink: 0,
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 14,
-                  color: "#4A90D9",
-                  fontWeight: includeReference ? 500 : 400,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Verse text with reference
-              </span>
-            </label>
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                cursor: "pointer",
-                flex: "0 0 auto",
-              }}
-            >
-              <input
-                type="radio"
-                name="shareOption"
-                checked={!includeReference}
-                onChange={() => setIncludeReference(false)}
-                style={{
-                  accentColor: "#666",
-                  width: 16,
-                  height: 16,
-                  flexShrink: 0,
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 14,
-                  color: "#666",
-                  fontWeight: includeReference ? 400 : 500,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Verse text only
-              </span>
-            </label>
           </div>
 
           <div
@@ -536,7 +460,7 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "#fff",
+          background: "var(--panelBackground, #fff)",
           borderRadius: 12,
           padding: "32px 24px",
           maxWidth: 543,
@@ -566,7 +490,7 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
         <h2
           style={{
             textAlign: "center",
-            color: "#000",
+            color: "var(--text1, #000)",
             marginTop: 0,
             marginBottom: 8,
             fontSize: 22,
@@ -586,7 +510,7 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
             lineHeight: 1.4,
             position: "relative",
             fontFamily: "'DM Sans'",
-            color: "#585858",
+            color: "var(--text2, #585858)",
             textAlign: "center",
           }}
         >
@@ -603,13 +527,13 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
             width: "100%",
             padding: "12px 16px",
             fontSize: 14,
-            border: "none",
+            border: "1px solid var(--inputBorder, transparent)",
             borderRadius: 4,
-            backgroundColor: "#dbdbdb",
+            backgroundColor: "var(--inputBackground, #dbdbdb)",
             outline: "none",
             boxSizing: "border-box",
             marginBottom: 16,
-            color: "rgb(127, 64, 64)",
+            color: "var(--text1, #333)",
             height: 48,
             position: "relative",
           }}
@@ -621,9 +545,10 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
             width: "100%",
             cursor: "pointer",
             padding: 12,
-            background: "#d36433",
-            color: "white",
-            border: "1px solid #d36433",
+            background: "var(--primaryButton, #d36433)",
+            color: "var(--primaryButtonColor, white)",
+            border:
+              "1px solid var(--primaryButtonBorder, var(--primaryButton, #d36433))",
             borderRadius: 4,
             fontSize: 15,
             fontWeight: 500,
@@ -632,8 +557,6 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
             position: "relative",
             boxSizing: "border-box",
           }}
-          // onMouseOver={(e) => (e.currentTarget.style.background = "#b87a50")}
-          // onMouseOut={(e) => (e.currentTarget.style.background = "#c9885c")}
         >
           {t.join}
         </button>

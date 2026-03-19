@@ -1,62 +1,65 @@
-const {useRef, useState, useLayoutEffect } = os.appHooks;
-
+const { useRef, useState, useLayoutEffect } = os.appHooks;
+const G = globalThis as any;
 const LowerCaseBookMapping = thisBot.tags.LowerCaseBookMapping;
 
-const splitBookAndVerse = (text) => {
+const splitBookAndVerse = (text: string) => {
   if (!text) return { book: text, verse: "" };
 
-  const match = text.match(/^(.*?)(\s+\d+:\d+)$/);
+  const match: any = text.match(/^(.*?)(\s+\d+:\d+)$/);
 
   if (!match) {
     return { book: text, verse: "" };
   }
 
   return {
-    book: match[1].trim(),   // "Genesis"
-    verse: match[2].trim(),  // "1:2"
+    book: match[1].trim(), // "Genesis"
+    verse: match[2].trim(), // "1:2"
   };
 };
 
-const GetLabel = ({ value, currentOpenedBook, widthCompare = 176 }) => {
-    const containerRef = useRef(null);
-    const [isMobile, setIsMobile] = useState(false);
+const GetLabel = (props: any) => {
+  const {
+    value,
+    currentOpenedBook,
+    widthCompare = 176,
+    fontSize,
+    needToShowInMobile = false,
+  } = props;
+  const containerRef = useRef<any>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
-  
-    const { book, verse } = splitBookAndVerse(currentOpenedBook?.book);
-  
-    useLayoutEffect(() => {
-      // Go up 3 levels
-      const targetElement = containerRef.current.parentElement?.parentElement;
-  
-      if (!targetElement) {
-        console.warn("GetLabel: Could not find 3rd parent");
-        return;
-      }
-  
-      const observer = new ResizeObserver((entries) => {
-        const width = entries[0].contentRect.width;
+  const { book, verse } = splitBookAndVerse(currentOpenedBook?.book);
+
+  useLayoutEffect(() => {
+    // Go up 3 levels
+    const targetElement = containerRef.current.parentElement?.parentElement;
+
+    if (!targetElement) {
+      console.warn("GetLabel: Could not find 3rd parent");
+      return;
+    }
+
+    const observer = new ResizeObserver((entries: any) => {
+      const width = entries[0].contentRect.width;
+      if (!needToShowInMobile) {
         setIsMobile(width < widthCompare);
-      });
-  
-      observer.observe(targetElement);
-  
-      return () => observer.disconnect();
-    }, []);
-  
-    return (
-      <span ref={containerRef}>
-        {value === "discover"
-          ? `${
-              !isMobile
-                ? book
-                : LowerCaseBookMapping[
-                  book?.toLocaleLowerCase()
-                  ]
-            } ${currentOpenedBook?.chapter ? `- ${currentOpenedBook?.chapter}` : ''}${verse}`
-          : ""}
-      </span>
-    );
-  };
-  
-  
-  globalThis.GetLabel = GetLabel;
+      }
+    });
+
+    observer.observe(targetElement);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <span ref={containerRef} style={{ fontSize: fontSize ? fontSize : "" }}>
+      {value === "discover"
+        ? `${
+            isMobile ? book : LowerCaseBookMapping[book?.toLocaleLowerCase()]
+          } ${currentOpenedBook?.chapter ? `- ${currentOpenedBook?.chapter}` : ""}${verse}`
+        : ""}
+    </span>
+  );
+};
+
+G.GetLabel = GetLabel;

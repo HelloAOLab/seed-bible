@@ -1,14 +1,15 @@
 const { useRef, useState, useLayoutEffect } = os.appHooks;
 
-const useDragRef = ({ onUploadFiles }) => {
-  const dragRef = useRef(null);
-  const [dragState, setDragState] = useState({
+const useDragRef = (props: any) => {
+  const { onUploadFiles } = props;
+  const dragRef = useRef<any>(null);
+  const [dragState, setDragState] = useState<any>({
     isDragOver: false,
   });
   const dragCounter = useRef(0);
 
   useLayoutEffect(() => {
-    const handleDragEnter = (e) => {
+    const handleDragEnter = (e: any) => {
       e.preventDefault();
       e.stopPropagation();
       dragCounter.current += 1;
@@ -17,7 +18,7 @@ const useDragRef = ({ onUploadFiles }) => {
       }
     };
 
-    const handleDragLeave = (e) => {
+    const handleDragLeave = (e: any) => {
       e.preventDefault();
       e.stopPropagation();
       dragCounter.current -= 1;
@@ -26,20 +27,20 @@ const useDragRef = ({ onUploadFiles }) => {
       }
     };
 
-    const handleDragOver = (e) => {
+    const handleDragOver = (e: any) => {
       e.preventDefault();
       e.stopPropagation();
     };
 
-    const handleDrop = async (e) => {
+    const handleDrop = async (e: any) => {
       e.preventDefault();
       e.stopPropagation();
       dragCounter.current = 0;
 
       const files = Array.from(e.dataTransfer.files);
-      
+
       onUploadFiles({
-        files
+        files,
       });
 
       setDragState({
@@ -53,17 +54,15 @@ const useDragRef = ({ onUploadFiles }) => {
     dragRef.current.addEventListener("drop", handleDrop);
 
     return () => {
-        dragCounter.current = 0;
-        dragRef.current.removeEventListener("dragenter", handleDragEnter);
-        dragRef.current.removeEventListener("dragleave", handleDragLeave);
-        dragRef.current.removeEventListener("dragover", handleDragOver);
-        dragRef.current.removeEventListener("drop", handleDrop);
+      dragCounter.current = 0;
+      dragRef.current.removeEventListener("dragenter", handleDragEnter);
+      dragRef.current.removeEventListener("dragleave", handleDragLeave);
+      dragRef.current.removeEventListener("dragover", handleDragOver);
+      dragRef.current.removeEventListener("drop", handleDrop);
     };
   }, []);
 
   return { dragRef, dragState, setDragState };
 };
 
-export {
-    useDragRef
-};
+export { useDragRef };

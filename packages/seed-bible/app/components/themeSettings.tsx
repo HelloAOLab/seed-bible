@@ -1,5 +1,6 @@
 const { useEffect, useState, useRef } = os.appHooks;
 import { getStyleOf } from "app.styles.styler";
+import { getSettingsPreset } from "app.components.types";
 import { MenuIcon, ThemeIcon } from "app.components.icons";
 import { useTabsContext } from "app.hooks.tabs";
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -120,6 +121,9 @@ const builtinDefaultTheme = {
   // Container backgrounds
   themeSideMenu: "#FFFFFF",
   panelBackground: "#F8FAFC",
+  pageBookBackground: "#FFFFFF",
+  inputBackground: "#E8E8E8",
+  sidebarShadow: "#E8E8E8",
   // Tab
   tabSelection: "#E07B4C",
   activeTabBackground: "#FADDD1",
@@ -160,7 +164,7 @@ const builtinDefaultTheme = {
   unselectedSpaceColor: "#E1E3EA",
   spaceNameText: "#333333",
   addButtonBackground: "#E07B4C",
-  addButtonIcon: "#FFFFFF",
+  addButtonIcon: "#E07B4C",
   selectPanelIcon: "#333333",
   openCloseMenuIcon: "#333333",
   moreIcon: "#666666",
@@ -184,7 +188,6 @@ const builtinDefaultTheme = {
   inputActiveFill: "#FFFFFF",
   inputInactiveBorder: "#E1E3EA",
   inputInactiveFill: "#FFFFFF",
-  inputBackground: "#FFFFFF",
   inputBorder: "#E1E3EA",
   inputText: "#333333",
   inputPlaceholder: "#999999",
@@ -283,14 +286,14 @@ const defaultThemes = [
       tertiaryColor: "#404040",
       // Container backgrounds
       themeSideMenu: "#2D2D2D",
-      panelBackground: "#1A1A1A",
-
+      panelBackground: "#161616",
+      pageBookBackground: "#303030",
       // Tab
       tabSelection: "#5A67D8",
       activeTabBackground: "#404040",
       activeTabText: "#FFFFFF",
-      activeTabBorder: "#5A67D8",
-      activeTabFill: "#5A67D894",
+      activeTabBorder: "#333333",
+      activeTabFill: "#333333",
       simpleTabText: "#AAAAAA",
       inactiveTabText: "#AAAAAA",
       // Buttons
@@ -309,7 +312,7 @@ const defaultThemes = [
       chapterHeadingColor: "#FFFFFF",
       verseNumberColor: "#FFFFFF",
       verseTextColor: "#FFFFFF",
-      pageBackground: "#121212",
+      pageBackground: "#1A1A1A",
       pageTextColor: "#FFFFFF",
       // Side menu
       heading1Color: "#FFFFFF",
@@ -321,11 +324,11 @@ const defaultThemes = [
       sectionBackground: "#5A67D8",
       spaceNameColor: "#FFFFFF",
       sideMenuIconsColor: "#FFFFFF",
-      selectedSpaceColor: "#5A67D8",
+      selectedSpaceColor: "#FFFFFF",
       unselectedSpaceColor: "#666666",
       spaceNameText: "#FFFFFF",
       addButtonBackground: "#404040",
-      addButtonIcon: "#5A67D8",
+      addButtonIcon: "#FFFFFF",
       selectPanelIcon: "#FFFFFF",
       openCloseMenuIcon: "#FFFFFF",
       moreIcon: "#AAAAAA",
@@ -352,6 +355,7 @@ const defaultThemes = [
       inputInactiveBorder: "#666666",
       inputInactiveFill: "#2D2D2D",
       inputBackground: "#2D2D2D",
+      sidebarShadow: "#1A1A1A",
       inputBorder: "#666666",
       inputText: "#FFFFFF",
       inputPlaceholder: "#AAAAAA",
@@ -437,6 +441,7 @@ const defaultThemes = [
       // Main colors
       primaryColor: "#FFFFFF",
       secondaryColor: "#7C3AED",
+      pageBookBackground: "#FFFFFF",
       tertiaryColor: "#EDE9FE",
       // Container backgrounds
       themeSideMenu: "#F5F3FF",
@@ -481,7 +486,7 @@ const defaultThemes = [
       unselectedSpaceColor: "#DDD6FE",
       spaceNameText: "#4C1D95",
       addButtonBackground: "transparent",
-      addButtonIcon: "#7C3AED",
+      addButtonIcon: "#E07B4C",
       selectPanelIcon: "#4C1D95",
       openCloseMenuIcon: "#4C1D95",
       moreIcon: "#6B7280",
@@ -505,9 +510,10 @@ const defaultThemes = [
       inputActiveFill: "#FFFFFF",
       inputInactiveBorder: "#DDD6FE",
       inputInactiveFill: "#FFFFFF",
-      inputBackground: "#FFFFFF",
+      inputBackground: "#E8E8E8",
+      sidebarShadow: "#E8E8E8",
       inputBorder: "#DDD6FE",
-      inputText: "#1F2937",
+      inputText: "#1F2937FFFFF",
       inputPlaceholder: "#9CA3AF",
       // Branding
       logoColor: "#4C1D95",
@@ -593,6 +599,7 @@ const defaultThemes = [
       secondaryColor: "#059669",
       tertiaryColor: "#D1FAE5",
       // Container backgrounds
+
       themeSideMenu: "#ECFDF5",
       panelBackground: "#D1FAE5",
       // Tab
@@ -600,6 +607,7 @@ const defaultThemes = [
       activeTabBackground: "#FFFFFF",
       activeTabText: "#064E3B",
       activeTabBorder: "#059669",
+      pageBookBackground: "#FFFFFF",
       activeTabFill: "#05966994",
       simpleTabText: "#6B7280",
       inactiveTabText: "#6B7280",
@@ -635,7 +643,7 @@ const defaultThemes = [
       unselectedSpaceColor: "#A7F3D0",
       spaceNameText: "#064E3B",
       addButtonBackground: "transparent",
-      addButtonIcon: "#059669",
+      addButtonIcon: "#E07B4C",
       selectPanelIcon: "#064E3B",
       openCloseMenuIcon: "#064E3B",
       moreIcon: "#6B7280",
@@ -659,7 +667,8 @@ const defaultThemes = [
       inputActiveFill: "#FFFFFF",
       inputInactiveBorder: "#A7F3D0",
       inputInactiveFill: "#FFFFFF",
-      inputBackground: "#FFFFFF",
+      inputBackground: "#E8E8E8",
+      sidebarShadow: "#E8E8E8",
       inputBorder: "#A7F3D0",
       inputText: "#1F2937",
       inputPlaceholder: "#9CA3AF",
@@ -751,6 +760,7 @@ const defaultThemes = [
       panelBackground: "#E0F2FE",
       // Tab
       tabSelection: "#0284C7",
+      pageBookBackground: "#FFFFFF",
       activeTabBackground: "#FFFFFF",
       activeTabText: "#0C4A6E",
       activeTabBorder: "#0284C7",
@@ -758,6 +768,7 @@ const defaultThemes = [
       simpleTabText: "#6B7280",
       inactiveTabText: "#6B7280",
       // Buttons
+
       primaryButton: "#0284C7",
       primaryButtonColor: "#FFFFFF",
       primaryButtonBorder: "#0284C7",
@@ -789,7 +800,7 @@ const defaultThemes = [
       unselectedSpaceColor: "#BAE6FD",
       spaceNameText: "#0C4A6E",
       addButtonBackground: "transparent",
-      addButtonIcon: "#0284C7",
+      addButtonIcon: "#E07B4C",
       selectPanelIcon: "#0C4A6E",
       openCloseMenuIcon: "#0C4A6E",
       moreIcon: "#6B7280",
@@ -813,7 +824,8 @@ const defaultThemes = [
       inputActiveFill: "#FFFFFF",
       inputInactiveBorder: "#BAE6FD",
       inputInactiveFill: "#FFFFFF",
-      inputBackground: "#FFFFFF",
+      sidebarShadow: "#E8E8E8",
+      inputBackground: "#E8E8E8",
       inputBorder: "#BAE6FD",
       inputText: "#1F2937",
       inputPlaceholder: "#9CA3AF",
@@ -900,11 +912,13 @@ const defaultThemes = [
       primaryColor: "#FFFFFF",
       secondaryColor: "#D97706",
       tertiaryColor: "#FEF3C7",
+      pageBookBackground: "#FFFFFF",
       // Container backgrounds
       themeSideMenu: "#FFFBEB",
       panelBackground: "#FEF3C7",
       // Tab
       tabSelection: "#D97706",
+
       activeTabBackground: "#FFFFFF",
       activeTabText: "#78350F",
       activeTabBorder: "#D97706",
@@ -943,7 +957,7 @@ const defaultThemes = [
       unselectedSpaceColor: "#FDE68A",
       spaceNameText: "#78350F",
       addButtonBackground: "transparent",
-      addButtonIcon: "#D97706",
+      addButtonIcon: "#E07B4C",
       selectPanelIcon: "#78350F",
       openCloseMenuIcon: "#78350F",
       moreIcon: "#6B7280",
@@ -967,8 +981,9 @@ const defaultThemes = [
       inputActiveFill: "#FFFFFF",
       inputInactiveBorder: "#FDE68A",
       inputInactiveFill: "#FFFFFF",
-      inputBackground: "#FFFFFF",
+      inputBackground: "#E8E8E8",
       inputBorder: "#FDE68A",
+      sidebarShadow: "#E8E8E8",
       inputText: "#1F2937",
       inputPlaceholder: "#9CA3AF",
       // Branding
@@ -1046,10 +1061,7 @@ const defaultThemes = [
   },
 ];
 
-const presetConfig =
-  tags?.settingsConfigs?.presets?.[
-    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-  ];
+const presetConfig = tags?.settingsConfigs?.presets?.[getSettingsPreset()];
 const presetThemes: typeof defaultThemes =
   presetConfig?.availableThemes?.length > 0
     ? presetConfig.availableThemes
@@ -5791,6 +5803,8 @@ const SettingsUI = () => {
     showVerses,
     showFootnotes,
     setShowFootnotes,
+    showNavArrows,
+    setShowNavArrows,
   } = useBibleContext();
   const handleSurpriseMe = () => {
     const randomCombo =
@@ -5847,8 +5861,7 @@ const SettingsUI = () => {
     });
   };
 
-  const settingsPreset =
-    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full";
+  const settingsPreset = getSettingsPreset();
 
   // ————————————————————————————————————————————————————————————
   // Handle Tab Icons Toggle
@@ -6457,166 +6470,208 @@ const SettingsUI = () => {
         </div>
       </div>
 
-      <div style={separatorStyle}></div>
+      <div style={toggleRowStyle}>
+        <div style={toggleLabelStyle}>
+          {t(showNavArrows ? "hideNavArrows" : "showNavArrows")}
+        </div>
 
-      <div style={sectionTitleStyle}>{t("themes")}</div>
-
-      <div style={cardContainerStyle}>
-        {presetThemes.map((theme, index) =>
-          index !== 1 ? (
-            <div
-              key={index}
-              style={cardStyle(selectedTheme === index)}
-              onClick={() => handleThemeSelect(index)}
-            >
-              <div style={cardSidebarStyle(theme.colors.panelBackground)}>
-                <div style={cardBadgeStyle(theme.colors.panelBackground)}></div>
-                <div style={cardLabelStyle}></div>
-              </div>
-              <div style={cardIconStyle(theme.colors.panelBackground)}></div>
-              <div style={{ marginTop: "14px" }}>
-                <div style={{ ...cardLineStyle, width: "53px" }}></div>
-                <div
-                  style={{ ...cardLineStyle, width: "42px", marginTop: "7px" }}
-                ></div>
-                <div
-                  style={{ ...cardLineStyle, width: "53px", marginTop: "7px" }}
-                ></div>
-                <div
-                  style={{ ...cardLineStyle, width: "35px", marginTop: "7px" }}
-                ></div>
-              </div>
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: "9px",
-                  right: "13px",
-                  width: "22px",
-                  height: "5px",
-                  backgroundColor: theme.colors.panelBackground,
-                  opacity: 0.1,
-                  borderRadius: "1px",
-                }}
-              ></div>
-
-              {selectedTheme === index && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "8px",
-                    right: "8px",
-                    width: "20px",
-                    height: "20px",
-                    backgroundColor: "var(--spaceSelection)",
-                    borderRadius: "50%",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path
-                      d="M10 3L4.5 8.5L2 6"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div
-              key={index}
-              style={{
-                ...cardStyle(selectedTheme === index),
-                backgroundColor: "#404040",
-              }}
-              onClick={() => handleThemeSelect(index)}
-            >
-              <div style={cardSidebarStyle("rgb(255 255 255)")}>
-                <div style={cardBadgeStyle("black")}></div>
-                <div style={cardLabelStyle}></div>
-              </div>
-              <div style={cardIconStyle("black")}></div>
-              <div style={{ marginTop: "14px" }}>
-                <div
-                  style={{
-                    ...cardLineStyle,
-                    backgroundColor: "white",
-                    width: "53px",
-                  }}
-                ></div>
-                <div
-                  style={{
-                    ...cardLineStyle,
-                    backgroundColor: "white",
-                    width: "42px",
-                    marginTop: "7px",
-                  }}
-                ></div>
-                <div
-                  style={{
-                    ...cardLineStyle,
-                    backgroundColor: "white",
-                    width: "53px",
-                    marginTop: "7px",
-                  }}
-                ></div>
-                <div
-                  style={{
-                    ...cardLineStyle,
-                    backgroundColor: "white",
-                    width: "35px",
-                    marginTop: "7px",
-                  }}
-                ></div>
-              </div>
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: "9px",
-                  right: "13px",
-                  width: "22px",
-                  height: "5px",
-                  backgroundColor: "white",
-                  opacity: 0.1,
-                  borderRadius: "1px",
-                }}
-              ></div>
-
-              {selectedTheme === index && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "8px",
-                    right: "8px",
-                    width: "20px",
-                    height: "20px",
-                    backgroundColor: "var(--spaceSelection)",
-                    borderRadius: "50%",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path
-                      d="M10 3L4.5 8.5L2 6"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
-              )}
-            </div>
-          )
-        )}
+        <div
+          style={toggleStyle(showNavArrows)}
+          onClick={() => setShowNavArrows((prev) => !prev)}
+        >
+          <div style={toggleCircleStyle(showNavArrows)}></div>
+        </div>
       </div>
-      {settingsPreset !== "minimal" && (
+      {presetThemes.length > 1 && (
+        <div>
+          <div style={separatorStyle}></div>
+
+          <div style={sectionTitleStyle}>{t("themes")}</div>
+
+          <div style={cardContainerStyle}>
+            {presetThemes.map((theme, index) =>
+              index !== 1 ? (
+                <div
+                  key={index}
+                  style={cardStyle(selectedTheme === index)}
+                  onClick={() => handleThemeSelect(index)}
+                >
+                  <div style={cardSidebarStyle(theme.colors.panelBackground)}>
+                    <div
+                      style={cardBadgeStyle(theme.colors.panelBackground)}
+                    ></div>
+                    <div style={cardLabelStyle}></div>
+                  </div>
+                  <div
+                    style={cardIconStyle(theme.colors.panelBackground)}
+                  ></div>
+                  <div style={{ marginTop: "14px" }}>
+                    <div style={{ ...cardLineStyle, width: "53px" }}></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        width: "42px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        width: "53px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        width: "35px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                  </div>
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "9px",
+                      right: "13px",
+                      width: "22px",
+                      height: "5px",
+                      backgroundColor: theme.colors.panelBackground,
+                      opacity: 0.1,
+                      borderRadius: "1px",
+                    }}
+                  ></div>
+
+                  {selectedTheme === index && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "8px",
+                        right: "8px",
+                        width: "20px",
+                        height: "20px",
+                        backgroundColor: "var(--spaceSelection)",
+                        borderRadius: "50%",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                      >
+                        <path
+                          d="M10 3L4.5 8.5L2 6"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div
+                  key={index}
+                  style={{
+                    ...cardStyle(selectedTheme === index),
+                    backgroundColor: "#404040",
+                  }}
+                  onClick={() => handleThemeSelect(index)}
+                >
+                  <div style={cardSidebarStyle("rgb(255 255 255)")}>
+                    <div style={cardBadgeStyle("black")}></div>
+                    <div style={cardLabelStyle}></div>
+                  </div>
+                  <div style={cardIconStyle("black")}></div>
+                  <div style={{ marginTop: "14px" }}>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        backgroundColor: "white",
+                        width: "53px",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        backgroundColor: "white",
+                        width: "42px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        backgroundColor: "white",
+                        width: "53px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        backgroundColor: "white",
+                        width: "35px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                  </div>
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "9px",
+                      right: "13px",
+                      width: "22px",
+                      height: "5px",
+                      backgroundColor: "white",
+                      opacity: 0.1,
+                      borderRadius: "1px",
+                    }}
+                  ></div>
+
+                  {selectedTheme === index && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "8px",
+                        right: "8px",
+                        width: "20px",
+                        height: "20px",
+                        backgroundColor: "var(--spaceSelection)",
+                        borderRadius: "50%",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                      >
+                        <path
+                          d="M10 3L4.5 8.5L2 6"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
+      {settingsPreset === "full" && (
         <button
           style={buttonStyle}
           onClick={() => setSideBarMode("advancedThemeSettings")}

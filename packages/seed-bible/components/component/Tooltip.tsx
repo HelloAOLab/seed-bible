@@ -4,7 +4,8 @@ const ButtonsCover = thisBot.ButtonsCover();
 
 const { useState } = os.appHooks;
 
-const Tooltip = ({ children, text, forRight, gifUrl }) => {
+const Tooltip = (props: any) => {
+  const { children, text, forRight, gifUrl } = props;
   const [infoModal, setInfoModal] = useState(false);
 
   return (

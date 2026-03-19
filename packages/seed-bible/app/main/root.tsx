@@ -1,4 +1,5 @@
 import { App } from "app.main.app";
+import { CanvasStyle } from "app.main.canvasController";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -32,17 +33,32 @@ export function ExternalResourceDependencies() {
         rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.17/main.min.css"
       />
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+      />
+    </>
+  );
+}
+
+export function InternalResourceDependencies() {
+  return (
+    <>
+      <CanvasStyle />
     </>
   );
 }
 
 /**
  * The root component of the seed-bible experience.
+ * @prop children - Any children to render within the root. This is optional and can be used for things like modals or other components that need to be rendered at the root level.
  */
-export function Root() {
+export function Root({ children }: { children?: React.ReactNode }) {
   return (
     <>
       <ExternalResourceDependencies />
+      <InternalResourceDependencies />
+      {children}
       <App />
     </>
   );

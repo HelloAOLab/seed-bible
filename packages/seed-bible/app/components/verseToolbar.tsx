@@ -5,13 +5,16 @@ import {
   CopyIcon,
   ShareIcon,
   LocationIcon,
+  AskIcon,
+  BookMarkIcon,
+  HighlightIcon,
 } from "app.components.icons";
 import { getStyleOf } from "app.styles.styler";
+import { getSettingsPreset } from "app.components.types";
 
 export function VerseToolbar({
   clickedVersesContext,
   clickedVerses,
-  setClickedVerses,
   toggleVerseHighlight,
   book,
   chapter,
@@ -23,10 +26,16 @@ export function VerseToolbar({
   spaces,
 }) {
   // Get Selection UI settings - first try globalThis, then fall back to saved space data
+  // we intentionally ignore any copyVerseMode stored in the settings
   const getSelectionSettings = () => {
-    // First check globalThis (set by SelectionUISettings component when user changes settings)
+    const pick = (s) => ({
+      showSelectedItems: s.showSelectedItems ?? true,
+      showHighlightColors: s.showHighlightColors ?? true,
+      showIconText: s.showIconText ?? true,
+    });
+    // First check globalThis (set by SelectionUISettings component)
     if (globalThis.selectionUIBehavior?.[activeSpace]) {
-      return globalThis.selectionUIBehavior[activeSpace];
+      return pick(globalThis.selectionUIBehavior[activeSpace]);
     }
     // Fall back to saved space data
     const currentSpace = spaces?.find((s) => s.id === activeSpace);
@@ -37,14 +46,13 @@ export function VerseToolbar({
       }
       globalThis.selectionUIBehavior[activeSpace] =
         currentSpace.selectionUIBehavior;
-      return currentSpace.selectionUIBehavior;
+      return pick(currentSpace.selectionUIBehavior);
     }
     // Default settings
     return {
       showSelectedItems: true,
       showHighlightColors: true,
       showIconText: true,
-      copyVerseMode: "withReference",
     };
   };
 
@@ -60,6 +68,7 @@ export function VerseToolbar({
   }, [customColors]);
   const [tempColor, setTempColor] = useState("#FDE047");
   const [isPickingColor, setIsPickingColor] = useState(false);
+  const [showMobileColors, setShowMobileColors] = useState(false);
   const colorInputRef = useRef(null);
   const colorPickerRef = useRef(null);
 
@@ -98,28 +107,6 @@ export function VerseToolbar({
     };
   }, [isPickingColor, tempColor]);
 
-  const getVerseReference = () => {
-    if (clickedVerses.length === 0) return "";
-    const sorted = [...clickedVerses].sort((a, b) => a - b);
-
-    const groups = [];
-    let start = sorted[0];
-    let end = sorted[0];
-
-    for (let i = 1; i < sorted.length; i++) {
-      if (sorted[i] === end + 1) {
-        end = sorted[i];
-      } else {
-        groups.push(start === end ? `${start}` : `${start}-${end}`);
-        start = sorted[i];
-        end = sorted[i];
-      }
-    }
-    groups.push(start === end ? `${start}` : `${start}-${end}`);
-
-    return `${book} ${chapter}:${groups.join(",")}`;
-  };
-
   const containerStyle = {
     position: "relative",
     bottom: "20px",
@@ -129,7 +116,7 @@ export function VerseToolbar({
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     borderRadius: "12px",
     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
-    padding: "6px 10px",
+    padding: "6px 20px",
     zIndex: 1000,
     animation: "slideUp 0.3s ease-out",
     maxWidth: "95vw",
@@ -144,21 +131,8 @@ export function VerseToolbar({
     display: "flex",
     alignItems: "center",
     gap: "12px",
-  };
-
-  const verseRefStyle = {
-    fontSize: "14px",
-    fontWeight: "600",
-    letterSpacing: "0.5px",
-    textTransform: "uppercase",
-    padding: "8px 16px",
-    borderRadius: "8px",
-    color: "var(--text1)",
-    backgroundColor: "var(--panelBackground)",
-    // border: "1px solid #e5e5e5",
-    // boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-    width: "fit-content",
-    // margin: "0 auto 8px auto",
+    width: "max-content",
+    maxWidth: "90dvw",
   };
 
   const dividerStyle = {
@@ -273,26 +247,18 @@ export function VerseToolbar({
     onClose();
   };
 
-  const handleClearAll = () => {
-    // Extract verse numbers from composite keys (e.g., "Genesis-1-3" -> 3)
-    const verseNumbers = Object.keys(highlighted)
-      .map((key) => {
-        const parts = key.split("-");
-        return Number(parts[parts.length - 1]);
-      })
-      .filter((num) => !isNaN(num));
-
-    // Clear all highlights
-    verseNumbers.forEach((verseNum) => {
+  const handleClearAllHighlights = () => {
+    Object.keys(highlighted).forEach((key) => {
+      const parts = key.split("-");
+      const verseNum = parseInt(parts[parts.length - 1] ?? "0");
       if (globalThis.UnHighlightVerse) {
         globalThis.UnHighlightVerse(verseNum);
       }
     });
-
-    // Close toolbar
-    setClickedVerses([]);
     onClose();
   };
+
+  const hasAnyHighlights = Object.keys(highlighted).length > 0;
 
   const handlePlusClick = () => {
     setTempColor(selectedColor);
@@ -310,6 +276,12 @@ export function VerseToolbar({
       getMenuActions(clickedVersesContext, onClose, activeSpace, spaces) || []
     );
   }, [clickedVersesContext, activeSpace, spaces]);
+  const disableHighlighting =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.pageSettings
+      ?.disableHighlighting;
+  const removeBookMark =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeBookMark;
 
   return (
     <>
@@ -317,26 +289,41 @@ export function VerseToolbar({
         .toolbar-1.mounted{
           pointer-events:${globalThis.IsMobileNow() && showVerseToolbar ? "none !important" : ""}
         }
-        
         `}</style>
-      {globalThis.IsMobileNow() && selectionSettings.showSelectedItems && (
-        <>
-          {
-            null /*<div className="verse-ref">
-            <img src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1764875876/Rectangle_11_yzpmpm.svg" />
-          </div>*/
-          }
-          <span
-            className="verse-ref"
-            style={{ ...verseRefStyle, padding: "1px 16px" }}
-          >
-            {getVerseReference()}
-          </span>
-        </>
-      )}
+      {/* verse-ref moved to compact scroll header in thePage.tsx */}
       <div className="verse-toolbar" style={containerStyle}>
         <style>
           {`
+          .mobile-action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            gap: 4px;
+            color: var(--pageTextColor);
+            padding: 0;
+            height: 100%;
+            font-family: DM Sans;
+            font-weight: 400;
+            font-size: 14px;
+          }
+
+          .mobile-action-btn svg {
+            width: 24px;
+            height: 24px;
+           
+          }
+
+          .mobile-action-btn .material-symbols-outlined {
+            font-size: 24px;
+            line-height: 1;
+            color: var(--pageTextColor) !important;
+          }
+
           @keyframes slideUp {
             from {
               transform: translateX(-50%) translateY(20px);
@@ -349,62 +336,99 @@ export function VerseToolbar({
           }
           
           @media (max-width: 480px) {
-                .verse-toolbar {
-                    position: fixed !important;
-                    bottom: 0 !important;
-                    left: 0 !important;
-                    transform: none !important;
-                    width: 100% !important;
-                    max-width: 100% !important;
-                    border-radius: 0 !important;
-                    padding: 3px 16px !important;
-                    height: 52px;
-                    background: var(--panelBackground) !important; 
-                }
-                    
+                    .verse-toolbar {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 0 !important;
+        padding: 9px 16px !important;
+        height: 64px;
+        background: var(--pageBackground) !important;
+        box-shadow: 7px 1px 9px rgba(0, 0, 0, 0.08) !important;
+    }
+
             .header-ref {
               flex-direction: row !important;
               width: 100% !important;
-              gap: 8px !important;
+              gap: 6px !important;
               align-items: center !important;
-              justify-content: center;
+              justify-content: flex-start !important;
             }
-            
+
             .verse-ref {
               position: absolute !important;
-              top: -91.8vh !important;
-              left: 50% !important;
+              top: -93vh !important;
+              left: 53% !important;
               transform: translateX(-50%) !important;
               margin: 0 !important;
-            }
-            
-            .tool-buttons button span {
-              font-size: 16px !important;
-            }
-            
-            .color-buttons {
-              
-              
-            }
-            
-            .tool-buttons {
-              
-              margin-left: 10px !important;
-            }
-            
-           
-            .clear-button, .clear-all-button {
-              width: 100px !important;
               }
-            .color-circle,
-            .header-ref{
-              // flex-wrap:wrap;
+
+            .color-buttons {
+              display: flex !important;
+              align-items: center !important;
+              gap: 10px !important;
+              flex: 1 !important;
             }
-            .divider-vertical{
+
+            .color-circle {
+              width: 34px !important;
+              height: 34px !important;
+              flex-shrink: 0 !important;
             }
+
+            .plus-button {
+              flex-shrink: 0 !important;
+            }
+
+            .clear-eraser-btn {
+              margin-left: auto !important;
+              flex-shrink: 0 !important;
+            }
+
+            .tool-buttons {
+              display: none !important;
+            }
+
+            .verse-toolbar .divider-vertical {
+              display: none !important;
+            }
+
             .icon-button {
               width: 28px !important;
               height: 28px !important;
+            }
+
+            .mobile-action-btn {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex: 1 !important;
+        background: transparent !important;
+        border: none !important;
+        cursor: pointer !important;
+        gap: 4px !important;
+        color: var(--text1) !important;
+        /* font-size: 10px !important; */
+        /* font-weight: 500 !important; */
+        padding: 0 !important;
+        height: 100% !important;
+        font-family: DM Sans !important;
+        font-weight: 400 !important;
+        font-size: 14px !important;
+    }
+
+            .mobile-action-btn svg {
+              width: 24px !important;
+              height: 24px !important;
+            }
+
+            .mobile-action-btn .material-symbols-outlined {
+              font-size: 24px !important;
+              line-height: 1 !important;
             }
           }
         `}
@@ -421,77 +445,46 @@ export function VerseToolbar({
             e.stopPropagation();
           }}
         >
-          {!globalThis.IsMobileNow() && selectionSettings.showSelectedItems && (
-            <span className="verse-ref" style={verseRefStyle}>
-              {getVerseReference()}
-            </span>
-          )}
-
-          {!globalThis.IsMobileNow() && selectionSettings.showSelectedItems && (
-            <div className="divider-vertical" style={dividerStyle}></div>
-          )}
-
-          {selectionSettings.showHighlightColors && (
-            <div
-              onMouseDown={(e) => e.stopPropagation()}
-              className="color-buttons"
-              style={colorButtonsStyle}
-            >
-              {allHighlighted ? (
-                <>
-                  <button
-                    className="clear-button"
-                    style={{
-                      ...plusButtonStyle,
-                      width: "auto",
-                      padding: "8px 16px",
-                      borderRadius: "6px",
-                      fontSize: "13px",
-                      fontWeight: "500",
-                      color: "#dc2626",
-                      border: "2px solid #dc2626",
-                      backgroundColor: "#fff",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#fee2e2";
-                      e.currentTarget.style.transform = "scale(1.05)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#fff";
-                      e.currentTarget.style.transform = "scale(1)";
-                    }}
-                    onClick={handleClearHighlights}
+          {/* ── Action buttons (mobile + desktop) ── */}
+          <div
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{
+              display: "flex",
+              width: "100%",
+              alignItems: "center",
+              height: "100%",
+              gap: "1rem",
+            }}
+          >
+            {showMobileColors ? (
+              /* Color picker panel */
+              <>
+                <button
+                  onClick={() => setShowMobileColors(false)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "var(--text1)",
+                    padding: "4px 4px 4px 0",
+                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  aria-label="Back"
+                >
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: "24px" }}
                   >
-                    Clear Selected
-                  </button>
-                  <button
-                    className="clear-all-button"
-                    style={{
-                      ...plusButtonStyle,
-                      width: "auto",
-                      padding: "8px 16px",
-                      borderRadius: "6px",
-                      fontSize: "13px",
-                      fontWeight: "500",
-                      color: "#991b1b",
-                      border: "2px solid #991b1b",
-                      backgroundColor: "#fff",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#fecaca";
-                      e.currentTarget.style.transform = "scale(1.05)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#fff";
-                      e.currentTarget.style.transform = "scale(1)";
-                    }}
-                    onClick={handleClearAll}
-                  >
-                    Clear All
-                  </button>
-                </>
-              ) : (
-                <>
+                    chevron_left
+                  </span>
+                </button>
+
+                <div
+                  className="color-buttons"
+                  style={{ ...colorButtonsStyle, flex: 1 }}
+                >
                   {isPickingColor && (
                     <>
                       <button
@@ -512,13 +505,6 @@ export function VerseToolbar({
                           setIsPickingColor(false);
                           setTempColor(selectedColor);
                         }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.transform = "scale(1.1)")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.transform = "scale(1)")
-                        }
-                        aria-label="Cancel color selection"
                       >
                         ✕
                       </button>
@@ -530,7 +516,6 @@ export function VerseToolbar({
                           border: "3px solid #666",
                           boxShadow: "0 0 8px rgba(0,0,0,0.3)",
                         }}
-                        aria-label={`Preview color ${tempColor}`}
                       />
                     </>
                   )}
@@ -540,12 +525,6 @@ export function VerseToolbar({
                       key={color}
                       className="color-circle"
                       style={circleButtonStyle(color)}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.transform = "scale(1.1)")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.transform = "scale(1)")
-                      }
                       onClick={() => handleColorClick(color)}
                       aria-label={`Highlight with ${color}`}
                     />
@@ -556,12 +535,6 @@ export function VerseToolbar({
                       key={color}
                       className="color-circle"
                       style={circleButtonStyle(color)}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.transform = "scale(1.1)")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.transform = "scale(1)")
-                      }
                       onClick={() => handleColorClick(color)}
                       aria-label={`Highlight with ${color}`}
                     />
@@ -571,23 +544,14 @@ export function VerseToolbar({
                     <button
                       className="plus-button"
                       style={plusButtonStyle}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.transform = "scale(1.1)")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.transform = "scale(1)")
-                      }
                       onClick={handlePlusClick}
                       aria-label="Add color"
                     >
                       <img
                         style={{ width: "44px", "-webkit-user-drag": "none" }}
-                        src={
-                          "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
-                        }
+                        src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
                       />
                     </button>
-
                     <input
                       ref={colorInputRef}
                       type="color"
@@ -596,46 +560,116 @@ export function VerseToolbar({
                       style={colorInputStyle}
                     />
                   </div>
-                </>
-              )}
-            </div>
-          )}
 
-          {selectionSettings.showHighlightColors && (
-            <div className="divider-vertical" style={dividerStyle}></div>
-          )}
+                  <button
+                    onClick={allHighlighted ? handleClearHighlights : undefined}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "transparent",
+                      border: "none",
+                      cursor: allHighlighted ? "pointer" : "default",
+                      gap: "2px",
+                      color: "var(--text1)",
+                      fontSize: "10px",
+                      padding: "4px 8px",
+                      marginLeft: "auto",
+                      opacity: allHighlighted ? 1 : 0.35,
+                      fontWeight: "500",
+                      flexShrink: 0,
+                    }}
+                    aria-label="Clear highlight"
+                  >
+                    <span
+                      className="material-symbols-outlined"
+                      style={{ fontSize: "20px" }}
+                    >
+                      ink_eraser
+                    </span>
+                    <span>Clear</span>
+                  </button>
 
-          <div
-            onMouseDown={(e) => e.stopPropagation()}
-            className="tool-buttons"
-            style={toolButtonsStyle}
-          >
-            {menuOptions.map((option) => {
-              if (option?.type === "line") {
-                return (
-                  <div className="divider-vertical" style={dividerStyle}></div>
-                );
-              } else {
-                return (
-                  <div class="toolbar-icon-container">
-                    <div
+                  <button
+                    onClick={
+                      hasAnyHighlights ? handleClearAllHighlights : undefined
+                    }
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "transparent",
+                      border: "none",
+                      cursor: hasAnyHighlights ? "pointer" : "default",
+                      gap: "2px",
+                      color: "#ef4444",
+                      fontSize: "10px",
+                      padding: "4px 8px",
+                      opacity: hasAnyHighlights ? 1 : 0.35,
+                      fontWeight: "500",
+                      flexShrink: 0,
+                    }}
+                    aria-label="Clear all highlights"
+                  >
+                    <span
+                      className="material-symbols-outlined"
+                      style={{ fontSize: "20px" }}
+                    >
+                      ink_eraser
+                    </span>
+                    <span>Clear All</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              /* Action buttons — same style as bottom navbar */
+              <>
+                {!removeBookMark && (
+                  <button className="mobile-action-btn">
+                    <BookMarkIcon style={{ color: "var(--pageTextColor)" }} />
+                    <span>Bookmark</span>
+                  </button>
+                )}
+                {selectionSettings.showHighlightColors &&
+                  !disableHighlighting && (
+                    <button
+                      className="mobile-action-btn"
+                      onClick={() => setShowMobileColors(true)}
+                    >
+                      <HighlightIcon
+                        style={{ color: "var(--pageTextColor)" }}
+                      />
+                      <span>Highlight</span>
+                    </button>
+                  )}
+                {menuOptions
+                  .filter((o) => o?.type !== "line")
+                  .map((option, i) => (
+                    <button
+                      key={i}
+                      className="mobile-action-btn"
                       onClick={option?.onClick}
-                      className="icon-button"
-                      style={iconButtonStyle}
                     >
                       {option.icon}
-                    </div>
-                    {selectionSettings.showIconText && (
-                      <span style={{ color: "var(--text1) !important" }}>
+                      <span style={{ width: "max-content" }}>
                         {typeof option.title === "function"
-                          ? option.title(clickedVersesContext)
+                          ? (option.title as any)(clickedVersesContext)
                           : option.title}
                       </span>
-                    )}
-                  </div>
-                );
-              }
-            })}
+                    </button>
+                  ))}
+                <button
+                  className="mobile-action-btn"
+                  onClick={onClose}
+                  style={{ marginLeft: "auto" }}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                  <span>Cancel</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -646,19 +680,8 @@ export function VerseToolbar({
 function getMenuActions(that, onClose, activeSpace, spaces) {
   os.log("GET MENU ACTIONS VERSE TOOLBAR", that);
   const { SharePopup } = thisBot.Chips();
-
-  // Get copy mode setting - first try globalThis, then fall back to saved space data
-  const getSettings = () => {
-    if (globalThis.selectionUIBehavior?.[activeSpace]) {
-      return globalThis.selectionUIBehavior[activeSpace];
-    }
-    const currentSpace = spaces?.find((s) => s.id === activeSpace);
-    if (currentSpace?.selectionUIBehavior) {
-      return currentSpace.selectionUIBehavior;
-    }
-    return { copyVerseMode: "withReference" };
-  };
-  const selectionSettings = getSettings();
+  // copy mode is fixed to always include reference – ignore any stored setting
+  // (we don't need to read selection settings for this function)
 
   // Build verse reference for copy with reference
   const buildReference = () => {
@@ -681,34 +704,53 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
     }
     return `${that.book} ${that.chapter}:${groups.join(",")}`;
   };
+  const removeAiAgent =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.pageSettings
+      ?.removeAiAgent;
 
   const MenuOptions = {
     type: "normal",
     items: [
       {
-        icon: <CopyIcon height="24" width="24" />,
+        icon: (
+          <CopyIcon
+            height="24"
+            width="24"
+            stroke="var(--pageTextColor)"
+            style={{ color: "var(--pageTextColor)" }}
+          />
+        ),
         onClick: () => {
-          const textToCopy =
-            selectionSettings.copyVerseMode === "withReference"
-              ? `${that.text}\n— ${buildReference()}`
-              : that.text;
+          // always include the verse reference when copying
+          const textToCopy = `${that.text}\n— ${buildReference()}`;
           os.setClipboard(textToCopy);
           SetInHold(null);
           onClose();
         },
         title: "Copy",
       },
+
+      ...(!removeAiAgent
+        ? [
+            {
+              icon: <AskIcon style={{ color: "var(--pageTextColor)" }} />,
+              onClick: () => {
+                ClearUserSelection();
+                SetShowCommands(true);
+                SetInHold(null);
+              },
+              title: "Ask",
+            },
+          ]
+        : []),
       {
-        icon: <ApologistIcon />,
-        onClick: () => {
-          ClearUserSelection();
-          SetShowCommands(true);
-          SetInHold(null);
-        },
-        title: "Agent",
-      },
-      {
-        icon: <ShareIcon height="24" width="24" />,
+        icon: (
+          <ShareIcon
+            height="24"
+            width="24"
+            style={{ color: "var(--pageTextColor)" }}
+          />
+        ),
         onClick: () => {
           closePopupSettings();
           setTimeout(() => {
@@ -804,8 +846,8 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
       if (!titleArray.includes(el.title)) {
         itemsHolder.push({
           ...el,
-          onClick: () => {
-            if (el.onClick) el.onClick();
+          onClick: (e: MouseEvent) => {
+            if (el.onClick) el.onClick(e);
             SetInHold({});
           },
         });
@@ -832,7 +874,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
       items.forEach((el) => {
         MenuOptions.items.push({
           icon: el.icon,
-          onClick: () => {
+          onClick: (e: MouseEvent) => {
             if (el.onClick) el.onClick(that);
             SetInHold(null);
           },
@@ -853,9 +895,58 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
 const SubOptions = ({ items }) => {
   return (
     <div
-      className={`popupSettings`}
-      style={{ maxHeight: "275px", overflowY: "auto", scrollbarWidth: "none" }}
+      className={"popupSettings2"}
+      style={{
+        maxHeight: "275px",
+        overflowY: "auto",
+        scrollbarWidth: "none",
+      }}
     >
+      <style>{globalThis.ThemeCSS}</style>
+      <style>
+        {`
+.popupSettings2 {
+  position: relative;
+  width: 215px !important;
+  height: fit-content;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  background: var(--primaryColor) !important;
+  align-items: center;
+  border: 1px solid #1A1A1A;
+  gap: 2px;
+  border-radius: 10px;
+  scrollbar-width: none;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+        .popupSettings2 .itemSettings2 {
+  display: flex !important;
+  flex-direction: row;
+  gap: 6px;
+  justify-content: start !important;
+  align-items: center;
+  width: 100%;
+  background: rgba(var(--text1), 0.9);
+  color: var(--pageTextColor);
+  font-family: "Satoshi", system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  border-radius: 10px;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.popupSettings2 .itemSettings2:hover {
+  background: rgba(var(--pageTextColor), 0.3);
+}
+        `}
+      </style>
       {items.map((item) => {
         if (item.active === false) return;
         if (item?.type === "line")
@@ -871,10 +962,10 @@ const SubOptions = ({ items }) => {
         else
           return (
             <div
-              onClick={() => {
-                item.onClick();
+              onClick={(e: MouseEvent) => {
+                item.onClick(e);
               }}
-              className={`itemSettings`}
+              className={`itemSettings2`}
               style={{
                 cursor: item?.disabled ? "not-allowed" : "pointer",
                 color: item?.disabled ? "#929292" : "",
@@ -887,7 +978,6 @@ const SubOptions = ({ items }) => {
             </div>
           );
       })}
-      <style>{getStyleOf("sidebar.css")}</style>
     </div>
   );
 };

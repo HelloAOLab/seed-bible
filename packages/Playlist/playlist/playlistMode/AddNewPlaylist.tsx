@@ -246,17 +246,9 @@ const AddNewPlaylist = (props: any) => {
                 setPublishAccess("private");
               }}
             >
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
-                lock
-              </span>
+              <span class="material-symbols-outlined">lock</span>
               <p>{t("privateAccess")}</p>
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
+              <span class="material-symbols-outlined">
                 {publishAccess === "private"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -268,17 +260,9 @@ const AddNewPlaylist = (props: any) => {
                 setPublishAccess("public");
               }}
             >
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
-                public
-              </span>
+              <span class="material-symbols-outlined">public</span>
               <p>{t("publicAccess")}</p>
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
+              <span class="material-symbols-outlined">
                 {publishAccess === "public"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}

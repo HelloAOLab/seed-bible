@@ -168,7 +168,7 @@
   gap: 16px;
   margin-top: 15px;
   justify-content: space-between;
-  color: var(--spaceNameText, var(--text1));
+  color: var(--pageTextColor);
   font-weight: 700;
   margin-bottom: 27px;
   align-items: center;
@@ -287,8 +287,8 @@
 }
 
 .addIcon {
-  background-color: var(--addButtonBackground, var(--primaryButton)) !important;
-  color: var(--addButtonIcon, var(--primaryButtonColor)) !important;
+  background-color: var(--addButtonIcon) !important;
+  color: var(--primaryColor) !important;
   border-radius: 5px;
   cursor: pointer;
 }
@@ -384,7 +384,7 @@
 
 .icon-button {
   cursor: pointer;
-  color: var(--settingsIcon, var(--text1));
+  color: var(--settingsIcon, var(--pageTextColor));
   font-size: var(--sideMenu-icons-size, 24px);
 }
 
@@ -412,13 +412,15 @@
   width: 215px !important;
   height: fit-content;
   padding: 10px;
-  background: #202020;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
   border-radius: 10px;
   scrollbar-width: none;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .popupSettings .itemSettings {
@@ -427,9 +429,7 @@
   gap: 6px;
   justify-content: start !important;
   align-items: center;
-  background: transparent;
   width: 100%;
-  color: #fff;
   font-family: "Satoshi", system-ui, sans-serif;
   font-size: 14px;
   font-style: normal;
@@ -440,8 +440,44 @@
   cursor: pointer;
 }
 
-.itemSettings:hover {
-  background-color: #4b4b4b;
+.popupSettings2 {
+  position: relative;
+  width: 215px !important;
+  height: fit-content;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  background: var(--primaryColor) !important;
+  align-items: center;
+  gap: 2px;
+  border-radius: 10px;
+  scrollbar-width: none;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.popupSettings2 .itemSettings2 {
+  display: flex !important;
+  flex-direction: row;
+  gap: 6px;
+  justify-content: start !important;
+  align-items: center;
+  width: 100%;
+  background: rgba(var(--text1), 0.9);
+  color: var(--text1);
+  font-family: "Satoshi", system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  border-radius: 10px;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.popupSettings2 .itemSettings2:hover {
+  background: rgba(var(--text1), 0.3);
 }
 
 .activeItemSettings {
@@ -463,4 +499,15 @@
 .folderTabs {
   margin-left: 15px;
   margin-top: 5px;
+}
+
+.option-btn {
+  background: var(--primaryColor);
+  color: var(--text1);
+  border-radius: 5px;
+  cursor: pointer;
+  padding: 6px 12px;
+  min-width: 80px;
+  width: fit-content;
+  border: 1px solid var(--buttonBorder);
 }

@@ -2,19 +2,26 @@
 // let targetRecord = scannedURL.searchParams.get("inst");
 import { MenuIcon } from "app.components.icons";
 
+const G = globalThis as any;
 os.hideLoadingScreen();
 
-globalThis.MOBILE_VIEWPORT_THRESHOLD = 600;
-globalThis.makingPlaylist = false;
+const DEV_ENV =
+  configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
 
-globalThis.LoadedPlaylistAnnotations = {};
+G.DEV_ENV = DEV_ENV;
+G.PROD_ENV = !DEV_ENV;
+
+G.MOBILE_VIEWPORT_THRESHOLD = 600;
+G.makingPlaylist = false;
+
+G.LoadedPlaylistAnnotations = {};
 
 const storageBot = getBot("system", "storage.tempStorageBot");
 if (storageBot) {
   storageBot.defineGlobals();
 }
 
-globalThis.ValidTypes = {
+G.ValidTypes = {
   verse: true,
   chapter: true,
   "verse-range": true,
@@ -25,16 +32,16 @@ globalThis.ValidTypes = {
 
 setTimeout(async () => {
   const DragDrop = await thisBot.DragDropWithGrouping();
-  globalThis.DragDrop = DragDrop;
+  G.DragDrop = DragDrop;
 }, 100);
 
-globalThis.PlaylistModeTypes = {
+G.PlaylistModeTypes = {
   playlist: "Playlist",
   annotations: "Annotations",
   project: "Project",
 };
 
-globalThis.ButtonStyle = {
+G.ButtonStyle = {
   cursor: "pointer",
   border: "1px solid grey",
   borderRadius: "40px",
@@ -43,23 +50,21 @@ globalThis.ButtonStyle = {
   marginLeft: "4px",
 };
 
-globalThis.Settings_Icon =
+G.Settings_Icon =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5a87cdff4617c9047e44ec47ddd8a101aa317e2223d83dd40f615e3f9740f03a.svg";
 
-globalThis.CurrentViewerID = null;
+G.CurrentViewerID = null;
 
-globalThis.CheckMultiFuntionHold = () =>
-  globalThis?.KEY_HOLD?.["shift"] ||
-  globalThis?.KEY_HOLD?.["control"] ||
-  globalThis?.KEY_HOLD?.["meta"];
+G.CheckMultiFuntionHold = () =>
+  G?.KEY_HOLD?.["shift"] || G?.KEY_HOLD?.["control"] || G?.KEY_HOLD?.["meta"];
 
-globalThis.Playlist = thisBot;
+G.Playlist = thisBot;
 
 const bookmarks = await thisBot.getBookmarks();
 
-globalThis.AnnotationsData = {};
+G.AnnotationsData = {};
 
-thisBot.fetchAnnotationsData({ ...globalThis.CurrentBookData });
+thisBot.fetchAnnotationsData({ ...G.CurrentBookData });
 
 let recored = getBot("system", "main.Recorder");
 
@@ -74,59 +79,66 @@ function getBooksDataForMenu(booksLink = false) {
       if (recored?.tags) {
         recored.tags.menuData = [...data];
       }
-      globalThis.BOOKID_DATA = data;
+      G.BOOKID_DATA = data;
     })
     .catch((e) => {
       // os.toast("something went wrong");
       if (recored?.tags?.menuData) {
-        globalThis.BOOKID_DATA = recored.tags.menuData;
+        G.BOOKID_DATA = recored.tags.menuData;
       }
     });
 }
 
 getBooksDataForMenu();
 
-function findNameRank(book1, book2, returnRanks = false, isFindByRank = false) {
-  const nameRanks = {};
+function findNameRank(
+  book1: string,
+  book2: string,
+  returnRanks = false,
+  isFindByRank = false
+) {
+  const nameRanks: any = {};
 
   let totalBooksCount = 0;
   let totalSectionCount = 0;
 
   // Iterate over each testament
-  thisBot.tags.bibleArrangementsArray[0].forEach((testament) => {
+  thisBot.tags.bibleArrangementsArray[0].forEach((testament: any) => {
     // Iterate over sections in the testament
     const sectionKeys = Object.keys(testament.sections);
     totalSectionCount += sectionKeys.length;
-    Object.values(testament.sections).forEach((section, sectionIndex) => {
-      totalBooksCount += section.length;
-      // Iterate over books in the section
-      section.forEach((book, index) => {
-        const commonName = book.commonName;
-        // Check if the book's common name matches either of the provided names
-        // if (commonName.toLowerCase() === book1.toLowerCase() || commonName.toLowerCase() === book2.toLowerCase()) {
-        // Calculate the rank relative to the entire list of books
-        const rank = totalBooksCount - (section.length - index);
-        // Update rank and testament information for the matching name
-        const key = isFindByRank ? rank : commonName;
-        if (!nameRanks[key]) {
-          nameRanks[key] = {
-            rank: 0,
-            testament: [],
-            sectionRank: 0,
-            section: "",
-          };
-        }
-        nameRanks[key].rank = rank;
-        nameRanks[key].commonName = commonName;
-        nameRanks[key].testament = testament.name;
-        nameRanks[key].sectionRank =
-          totalSectionCount - (sectionKeys.length - sectionIndex);
-        nameRanks[key].section = sectionKeys[sectionIndex];
-        nameRanks[key].chapters = book.numberOfChapters;
-        nameRanks[key].startingIndex = book.startingIndex;
-        // }
-      });
-    });
+    Object.values(testament.sections).forEach(
+      (section: any, sectionIndex: number) => {
+        totalBooksCount += section.length;
+        // Iterate over books in the section
+        section.forEach((book: any, index: number) => {
+          const commonName = book.commonName;
+          // Check if the book's common name matches either of the provided names
+          // if (commonName.toLowerCase() === book1.toLowerCase() || commonName.toLowerCase() === book2.toLowerCase()) {
+          // Calculate the rank relative to the entire list of books
+          const rank = totalBooksCount - (section.length - index);
+          // Update rank and testament information for the matching name
+          const key = isFindByRank ? rank : commonName;
+          if (!nameRanks[key]) {
+            nameRanks[key] = {
+              rank: 0,
+              testament: [],
+              sectionRank: 0,
+              section: "",
+            };
+          }
+          nameRanks[key].rank = rank;
+          nameRanks[key].commonName = commonName;
+          nameRanks[key].testament = testament.name;
+          nameRanks[key].sectionRank =
+            totalSectionCount - (sectionKeys.length - sectionIndex);
+          nameRanks[key].section = sectionKeys[sectionIndex];
+          nameRanks[key].chapters = book.numberOfChapters;
+          nameRanks[key].startingIndex = book.startingIndex;
+          // }
+        });
+      }
+    );
   });
 
   if (returnRanks) return nameRanks;
@@ -153,43 +165,45 @@ function findNameRank(book1, book2, returnRanks = false, isFindByRank = false) {
   };
 }
 
-globalThis.findNameRank = findNameRank;
+G.findNameRank = findNameRank;
 
 function getSectionRanking() {
-  const nameRanks = {};
+  const nameRanks: any = {};
 
   let totalSectionCount = 0;
 
   // Iterate over each testament
-  thisBot.tags.bibleArrangementsArray[0].forEach((testament) => {
+  thisBot.tags.bibleArrangementsArray[0].forEach((testament: any) => {
     // Iterate over sections in the testament
     const sectionKeys = Object.keys(testament.sections);
     totalSectionCount += sectionKeys.length;
 
-    Object.values(testament.sections).forEach((section, sectionIndex) => {
-      const sectionName = sectionKeys[sectionIndex];
-      if (!nameRanks[sectionName]) {
-        nameRanks[sectionName] = { sectionRank: 0, section: "" };
+    Object.values(testament.sections).forEach(
+      (section: any, sectionIndex: number) => {
+        const sectionName: any = sectionKeys[sectionIndex];
+        if (!nameRanks[sectionName]) {
+          nameRanks[sectionName] = { sectionRank: 0, section: "" };
+        }
+        nameRanks[sectionName].sectionRank =
+          totalSectionCount - (sectionKeys.length - sectionIndex);
+        nameRanks[sectionName].section = sectionName;
+        nameRanks[sectionName].testament = testament.name;
       }
-      nameRanks[sectionName].sectionRank =
-        totalSectionCount - (sectionKeys.length - sectionIndex);
-      nameRanks[sectionName].section = sectionName;
-      nameRanks[sectionName].testament = testament.name;
-    });
+    );
   });
 
   return nameRanks;
 }
-globalThis.getSectionRanking = getSectionRanking;
+G.getSectionRanking = getSectionRanking;
 
 const SELECTIONTYPE = {
   TESTAMENT: "TESTAMENT",
   SECTION: "SECTION",
   BOOK: "BOOK",
 };
-globalThis.SELECTIONTYPE = SELECTIONTYPE;
+G.SELECTIONTYPE = SELECTIONTYPE;
 
-function getSectionBookRage(sectionRank) {
+function getSectionBookRage(sectionRank: number) {
   let startIdx = 0;
   let endIdx = 0;
   let totalBooks = 0;
@@ -197,31 +211,33 @@ function getSectionBookRage(sectionRank) {
   let totalSectionCount = 0;
 
   // Iterate over each testament
-  thisBot.tags.bibleArrangementsArray[0].forEach((testament) => {
+  thisBot.tags.bibleArrangementsArray[0].forEach((testament: any) => {
     // Iterate over sections in the testament
     const sectionKeys = Object.keys(testament.sections);
     totalSectionCount += sectionKeys.length;
-    Object.values(testament.sections).forEach((section, sectionIndex) => {
-      const rank = totalSectionCount - (sectionKeys.length - sectionIndex);
-      if (sectionRank === rank) {
-        startIdx = totalBooks;
-        endIdx = totalBooks + section.length - 1;
+    Object.values(testament.sections).forEach(
+      (section: any, sectionIndex: number) => {
+        const rank = totalSectionCount - (sectionKeys.length - sectionIndex);
+        if (sectionRank === rank) {
+          startIdx = totalBooks;
+          endIdx = totalBooks + section.length - 1;
+        }
+        totalBooks += section.length;
       }
-      totalBooks += section.length;
-    });
+    );
   });
 
   return [startIdx, endIdx];
 }
 
-globalThis.getSectionBookRage = getSectionBookRage;
+G.getSectionBookRage = getSectionBookRage;
 
-globalThis.IMGS = {
+G.IMGS = {
   AOLABSRC:
     "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/dc29f5accefe0b99744180cce15d27f2aadb4953f75912e736501bb632e64845.png",
 };
 
-globalThis.CONSTANTS = {
+G.CONSTANTS = {
   YT_PREFIX: "https://www.youtube.com/embed",
   BOT_TYPE: {
     TESTAMENT: "testament",
@@ -230,9 +246,13 @@ globalThis.CONSTANTS = {
   },
 };
 
-globalThis.objectComparator = (firstData, secondData, keysComparator = []) => {
+G.objectComparator = (
+  firstData: any,
+  secondData: any,
+  keysComparator: string[] = []
+) => {
   if (!secondData) return false;
-  if (!!keysComparator) {
+  if (keysComparator.length > 0) {
     return keysComparator.some((key) => {
       return firstData[key] === secondData[key];
     });
@@ -242,7 +262,7 @@ globalThis.objectComparator = (firstData, secondData, keysComparator = []) => {
     if (typeof firstData[key] !== "object") {
       isSame = isSame && firstData[key] === secondData[key];
     } else {
-      isSame = objectComparator(firstData[key], secondData[key]);
+      isSame = G.objectComparator(firstData[key], secondData[key]);
     }
   });
   if (isSame) {
@@ -251,7 +271,7 @@ globalThis.objectComparator = (firstData, secondData, keysComparator = []) => {
   return isSame;
 };
 
-globalThis.createUUID = () => {
+G.createUUID = () => {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
     const r = (Math.random() * 16) | 0;
     const v = c === "x" ? r : (r & 0x3) | 0x8;
@@ -259,25 +279,25 @@ globalThis.createUUID = () => {
   });
 };
 
-globalThis.pseudoIndentifier = `pseudo-`;
+G.pseudoIndentifier = `pseudo-`;
 
-globalThis.playListDB = [];
+G.playListDB = [];
 
 // Regex Testing
-globalThis.isValidGoogleSheetsUrl = (url) => {
+G.isValidGoogleSheetsUrl = (url: string) => {
   const regex =
     /https:\/\/docs\.google\.com\/spreadsheets\/(?:u\/\d\/)?d\/[a-zA-Z0-9-_]+\/(?:edit|htmlview)(?:\?[^#]*)?(?:#gid=\d+)?$/;
   return regex.test(url);
 };
 
-globalThis.extractIdFromUrl = (url) => {
+G.extractIdFromUrl = (url: string) => {
   const regex =
     /https:\/\/docs\.google\.com\/spreadsheets(?:\/u\/\d+)?\/d\/([^\/]+)\/(?:edit|htmlview)/;
   const match = url.match(regex);
   return match && match[1];
 };
 
-globalThis.validateUrl = (url) => {
+G.validateUrl = (url: string) => {
   const videoRegex =
     /^https?:\/\/(?:www\.|player\.)?vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|video\/|)(\d+)(?:$|\/)|https?:\/\/.*\.(mp4|webm|ogg|mov|mkv|avi|flv|wmv|m4v)(?:\?|$)/i;
   const ytShortsRegex =
@@ -331,12 +351,12 @@ globalThis.validateUrl = (url) => {
   return { isValid: false, type: null };
 };
 
-globalThis.validateImage = (url) => {
+G.validateImage = (url: string) => {
   const imageRegex =
     /^https?:\/\/.*\.(jpg|jpeg|png|gif|bmp|webp|svg|tiff?|ico)(?:\?|#|$)/i;
 
   try {
-    const match = imageRegex.exec(url);
+    const match: any = imageRegex.exec(url);
     if (match) {
       return {
         isValid: true,
@@ -351,13 +371,13 @@ globalThis.validateImage = (url) => {
   return { isValid: false, type: null };
 };
 
-globalThis.generateEmbedFromUrl = (url: string, name: string = "") => {
+G.generateEmbedFromUrl = (url: string, name: string = "") => {
   if (!url) return null;
 
-  const result = validateUrl(url); // your global function
+  const result = G.validateUrl(url); // your global function
 
   if (!result.isValid) {
-    const imageResult = validateImage(url);
+    const imageResult = G.validateImage(url);
     if (imageResult.isValid) {
       return `
         <img src="${url}" alt="${name}" />
@@ -371,7 +391,7 @@ globalThis.generateEmbedFromUrl = (url: string, name: string = "") => {
     const videoId = result.videoId;
 
     return `<iframe
-          src="${globalThis.CONSTANTS.YT_PREFIX}/${videoId}"
+          src="${G.CONSTANTS.YT_PREFIX}/${videoId}"
           style="max-width: 100%;"
           height="auto"
           title="${name}"
@@ -409,9 +429,7 @@ globalThis.generateEmbedFromUrl = (url: string, name: string = "") => {
   return null;
 };
 
-globalThis.appendImageToEditorHTML = function appendImageToEditorHTML(
-  fileObject: any
-) {
+G.appendImageToEditorHTML = function appendImageToEditorHTML(fileObject: any) {
   const imageExtensions = /\.(png|jpg|jpeg|gif|webp|bmp|svg)$/i;
 
   const link = fileObject?.additionalInfo?.link;
@@ -434,12 +452,13 @@ globalThis.appendImageToEditorHTML = function appendImageToEditorHTML(
   return imageHTML;
 };
 
-globalThis.uploadFilesReusable = async function uploadFilesReusable({ files }) {
+G.uploadFilesReusable = async function uploadFilesReusable(params: any) {
+  const { files } = params;
   const filesPromises: any[] = [];
 
   files.forEach((file: any) => {
     filesPromises.push(
-      os.recordFile(globalThis.RECORD_STOREKEY, file, {
+      os.recordFile(G.RECORD_STOREKEY, file, {
         name: file.name,
         mimeType: file.mimeType,
       })
@@ -459,7 +478,7 @@ globalThis.uploadFilesReusable = async function uploadFilesReusable({ files }) {
 
       filesResult.push({
         content: files[index].name,
-        id: createUUID(),
+        id: G.createUUID(),
         additionalInfo: {
           link: url || existingFileUrl,
           mimeType: files[index].mimeType,
@@ -490,7 +509,7 @@ globalThis.uploadFilesReusable = async function uploadFilesReusable({ files }) {
   }
 };
 
-globalThis.getPsalmsBookName = (chapter) => {
+G.getPsalmsBookName = (chapter: number) => {
   // const psalmsDivision = [0, 41 , 72, 89, 106, 150];
 
   let BookNumber = 1;
@@ -508,7 +527,7 @@ globalThis.getPsalmsBookName = (chapter) => {
   return `${BookNumber} Psalms`;
 };
 
-globalThis.getPsalmsBookData = (chapter) => {
+G.getPsalmsBookData = (chapter: number) => {
   // const psalmsDivision = [0, 41 , 72, 89, 106, 150];
   // Define the divisions of the Psalms books and their total verses
   const psalmsBooks = [
@@ -541,7 +560,7 @@ globalThis.getPsalmsBookData = (chapter) => {
   };
 };
 
-const COPY_OBJECT = (value, seen = new Map()) => {
+const COPY_OBJECT = (value: any, seen: Map<any, any> = new Map()) => {
   // Check for non-objects and null
   if (value === null || typeof value !== "object") {
     return value;
@@ -582,7 +601,7 @@ const COPY_OBJECT = (value, seen = new Map()) => {
 
   // Handle arrays
   if (Array.isArray(value)) {
-    const copy = [];
+    const copy: any[] = [];
     seen.set(value, copy);
     value.forEach((item, index) => {
       copy[index] = COPY_OBJECT(item, seen);
@@ -591,7 +610,7 @@ const COPY_OBJECT = (value, seen = new Map()) => {
   }
 
   // Handle objects
-  const copy = {};
+  const copy: any = {};
   seen.set(value, copy);
   for (const key in value) {
     if (value.hasOwnProperty(key)) {
@@ -602,10 +621,10 @@ const COPY_OBJECT = (value, seen = new Map()) => {
   return copy;
 };
 
-globalThis.CLONE_DATA = COPY_OBJECT;
+G.CLONE_DATA = COPY_OBJECT;
 
-globalThis.FORMAT_DATE = function formatDate(
-  dateInput,
+G.FORMAT_DATE = function formatDate(
+  dateInput: string,
   format = "DEFAULT",
   inputFormat = "YYYY-MM-DD"
 ) {
@@ -639,7 +658,7 @@ globalThis.FORMAT_DATE = function formatDate(
   ];
 
   // Ensure the input is a valid date string in the format YYYY-MM-DD
-  let [yearr, monthh, dayy] = dateInput
+  let [yearr, monthh, dayy]: any = dateInput
     .split("-")
     .map((ele: string) => Number(ele));
 
@@ -659,7 +678,7 @@ globalThis.FORMAT_DATE = function formatDate(
   const monthShort = monthsShort[monthh - 1];
   const monthFull = monthsFull[monthh - 1];
 
-  const formats = {
+  const formats: any = {
     DEFAULT: `${monthShort} - ${day} - ${year}`, // Default format
     "YYYY-MM-DD": `${year}-${month}-${day}`,
     "DD-MM-YYYY": `${day}-${month}-${year}`,
@@ -686,8 +705,8 @@ globalThis.FORMAT_DATE = function formatDate(
   return formats[format] || formats["DEFAULT"];
 };
 
-globalThis.FORMAT_YYYY_MM_DD = function formatDateToYYYYMMDD(dateInput) {
-  let year, month, day;
+G.FORMAT_YYYY_MM_DD = function formatDateToYYYYMMDD(dateInput: any) {
+  let year: any, month: any, day: any;
 
   if (dateInput instanceof Date) {
     // If the input is a Date object, extract year, month, and day in UTC
@@ -837,17 +856,17 @@ const prompt = `
   - and, IF AND ONLY IF a reading plan is mentioned in $text, interleave date items per the rules above starting on $today (or the provided start date).
 
   Only valid JSON. No explanation.
-  REMEMBER TODAY value is ${FORMAT_DATE(FORMAT_YYYY_MM_DD(new Date()))}.
+  REMEMBER TODAY value is ${G.FORMAT_DATE(G.FORMAT_YYYY_MM_DD(new Date()))}.
 `;
 
-globalThis.SYSTEM_PROMPT = prompt;
+G.SYSTEM_PROMPT = prompt;
 
 const getPosition = () => {
-  if (globalThis.LastClickX) {
-    const left = globalThis.LastClickX;
-    const top = globalThis.LastClickY;
-    globalThis.LastClickX = null;
-    globalThis.LastClickY = null;
+  if (G.LastClickX) {
+    const left = G.LastClickX;
+    const top = G.LastClickY;
+    G.LastClickX = null;
+    G.LastClickY = null;
     return {
       left: 0,
       transform: "translate(40px, 0px)",
@@ -863,7 +882,7 @@ const getPosition = () => {
   const edgeThreshold = 200; // Distance from edges to adjust position
   const safeMargin = "2rem"; // Fixed margin when near edges
 
-  let position = {};
+  let position: any = {};
 
   // Horizontal positioning
   if (width - pointerX < edgeThreshold) {
@@ -895,7 +914,7 @@ const MUSIC =
 const VIDEO =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/6f842b8a792a1588d7b96c9c406c2bfff36aec7fdab2519eebb7b08bd3dc427a.png";
 
-function getFileIconByMimeType(mimeType) {
+function getFileIconByMimeType(mimeType: string) {
   if (!mimeType || typeof mimeType !== "string") return SIMPLE_FILE;
 
   if (mimeType === "application/pdf") return PDF;
@@ -906,8 +925,8 @@ function getFileIconByMimeType(mimeType) {
   return SIMPLE_FILE;
 }
 
-function getExtensionFromMimeType(mimeType) {
-  const mimeMap = {
+function getExtensionFromMimeType(mimeType: string) {
+  const mimeMap: any = {
     "application/pdf": "pdf",
     "application/msword": "doc",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
@@ -932,16 +951,16 @@ function getExtensionFromMimeType(mimeType) {
   return mimeMap[mimeType] || "file";
 }
 
-globalThis.getFileIconByMimeType = getFileIconByMimeType;
-globalThis.getExtensionFromMimeType = getExtensionFromMimeType;
+G.getFileIconByMimeType = getFileIconByMimeType;
+G.getExtensionFromMimeType = getExtensionFromMimeType;
 
-globalThis.getPosition = getPosition;
+G.getPosition = getPosition;
 
-const getColor = (index, total) => {
+const getColor = (index: number, total: number) => {
   const startColor = [255, 0, 127]; // Pink
-  const endColor = [255, 165, 0]; // Orange
+  const endColor: any = [255, 165, 0]; // Orange
 
-  const interpolate = (start, end, factor) =>
+  const interpolate = (start: number, end: number, factor: number) =>
     Math.round(start + (end - start) * factor);
 
   const factor = index / (total - 1);
@@ -952,20 +971,20 @@ const getColor = (index, total) => {
   return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 };
 
-globalThis.GetColor = getColor;
+G.GetColor = getColor;
 
-function isVideoUrl(url) {
+function isVideoUrl(url: string) {
   return /\.(mp4|webm|ogg|ogv|mov|m4v|mkv|avi|wmv|flv)$/i.test(url);
 }
 
-const videoTypes = {
+const videoTypes: any = {
   "video-recording": true,
   youtube: true,
   Video: true,
   video: true,
 };
 
-function isVideoAttachment(dataitem) {
+function isVideoAttachment(dataitem: any) {
   let isVideoType = false;
   if (!dataitem?.additionalInfo) return isVideoType;
 
@@ -974,17 +993,17 @@ function isVideoAttachment(dataitem) {
     isVideoType = true;
   }
   if (dataitem.additionalInfo.type === "iframe") {
-    const isVideo = globalThis.IsVideoUrl(link);
+    const isVideo = G.IsVideoUrl(link);
     isVideoType = isVideo;
   }
   return isVideoType;
 }
 
-globalThis.IsVideoAttachment = isVideoAttachment;
+G.IsVideoAttachment = isVideoAttachment;
 
-globalThis.IsVideoUrl = isVideoUrl;
+G.IsVideoUrl = isVideoUrl;
 
-function formatRelativeTime(date) {
+function formatRelativeTime(date: any) {
   let dateObj = date;
   if (!dateObj) return "";
   if (typeof dateObj === "number") {
@@ -993,8 +1012,8 @@ function formatRelativeTime(date) {
   if (typeof dateObj === "string") {
     dateObj = new Date(dateObj);
   }
-  const now = new Date();
-  const diffMs = now - dateObj;
+  const now: any = new Date();
+  const diffMs: any = now - dateObj;
   const diffSec = Math.floor(diffMs / 1000);
   const diffMin = Math.floor(diffSec / 60);
   const diffHrs = Math.floor(diffMin / 60);
@@ -1047,7 +1066,7 @@ function formatRelativeTime(date) {
   });
 }
 
-globalThis.FormatRelativeTime = formatRelativeTime;
+G.FormatRelativeTime = formatRelativeTime;
 
 const AnnotationIcon = ({ className = "img-icon-secondary" }) => {
   return (
@@ -1069,13 +1088,13 @@ const PlaylistIcon = ({ className = "img-icon-secondary" }) => {
   );
 };
 
-globalThis.AnnotationIcon = AnnotationIcon;
-globalThis.PlaylistIcon = PlaylistIcon;
+G.AnnotationIcon = AnnotationIcon;
+G.PlaylistIcon = PlaylistIcon;
 
 const getVerseSummaryHeading = (verses: number[]) => {
   const ranges = [];
   let start = verses[0];
-  let end = verses[0];
+  let end: any = verses[0];
 
   if (verses.length > 1) {
     for (let i = 1; i < verses.length; i++) {
@@ -1093,11 +1112,11 @@ const getVerseSummaryHeading = (verses: number[]) => {
   return ranges;
 };
 
-globalThis.GetVerseSummaryHeading = getVerseSummaryHeading;
+G.GetVerseSummaryHeading = getVerseSummaryHeading;
 
 thisBot.getLabel();
 
-function sanitizeString(str) {
+function sanitizeString(str: string) {
   // console.log("SANITIZE DONE", str);
   // Remove control characters (U+0000 to U+001F, excluding \t, \n, \r)
   if (typeof str === "string") {
@@ -1106,13 +1125,13 @@ function sanitizeString(str) {
   return str;
 }
 
-function sanitizeObject(obj) {
+function sanitizeObject(obj: any): any {
   if (typeof obj === "string") {
     return sanitizeString(obj);
   } else if (Array.isArray(obj)) {
     return obj.map(sanitizeObject);
   } else if (obj && typeof obj === "object") {
-    return Object.keys(obj).reduce((acc, key) => {
+    return Object.keys(obj).reduce((acc: any, key: string) => {
       acc[key] = sanitizeObject(obj[key]);
       return acc;
     }, {});
@@ -1120,9 +1139,9 @@ function sanitizeObject(obj) {
   return obj; // Return other types (numbers, booleans, etc.) unchanged
 }
 
-globalThis.sanitizeObject = sanitizeObject;
+G.sanitizeObject = sanitizeObject;
 
-globalThis.RECORD_SEPARATOR = "^_^";
+G.RECORD_SEPARATOR = "^_^";
 
 const sortFunc = (a: any, b: any) => {
   const parseHeading = (heading = "") => {
@@ -1171,4 +1190,48 @@ const sortFunc = (a: any, b: any) => {
   return a.heading.localeCompare(b.heading);
 };
 
-globalThis.AnnotationSortFunction = sortFunc;
+G.AnnotationSortFunction = sortFunc;
+
+G.FloatBarStyle = {
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  width: "100%",
+  backgroundColor: "var(--panelBackground)",
+  padding: "0.5rem",
+};
+
+G.PlayingPlaylistCheckedItems = {};
+
+const updateCheckedItemsPlayingPlaylist = async (
+  checkedItems: any,
+  id: string
+) => {
+  if (!G.PlayingPlaylistCheckedItems) {
+    G.PlayingPlaylistCheckedItems = {};
+  }
+  if (!G.PlayingPlaylistCheckedItems[id]) {
+    G.PlayingPlaylistCheckedItems[id] = {};
+  }
+  if (!id) {
+    return;
+  }
+  G.PlayingPlaylistCheckedItems[id] = { ...checkedItems };
+  if (authBot?.id) {
+    await os.recordData(
+      authBot.id,
+      "userCheckedItems",
+      { userCheckedItems: { ...G.PlayingPlaylistCheckedItems } },
+      {
+        marker: "userCheckedItems",
+      }
+    );
+  }
+};
+
+const userCheckedItems: any = await os.getData(authBot.id, "userCheckedItems");
+G.PlayingPlaylistCheckedItems = {
+  ...(userCheckedItems?.data?.userCheckedItems || {}),
+};
+
+G.UpdateCheckedItemsPlayingPlaylist = updateCheckedItemsPlayingPlaylist;

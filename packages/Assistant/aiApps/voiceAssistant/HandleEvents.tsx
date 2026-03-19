@@ -604,7 +604,7 @@ const HandleEvents = async ({ dc, data }) => {
       let { language } = JSON.parse(data.arguments || "{}");
       console.log(language, "language");
       let available_translations_req = await web.get(
-        "https://bible.helloao.org/api/available_translations.json"
+        "https://vmfnri.helloao.org/api/available_translations.json"
       );
       let translationOptions = [];
       available_translations_req.data.translations.map((translation) => {
@@ -634,13 +634,13 @@ const HandleEvents = async ({ dc, data }) => {
     case "changeTranslation": {
       let { translation } = JSON.parse(data.arguments || "{}");
       let translationReq = await web.get(
-        `https://bible.helloao.org/api/${translation}/books.json`
+        `https://vmfnri.helloao.org/api/${translation}/books.json`
       );
       let translationData = { ...translationReq.data };
       ChangeTranslation(
         translationData.translation.id,
         translationData.books,
-        "https://bible.helloao.org"
+        "https://vmfnri.helloao.org"
       );
       dc.send(
         JSON.stringify({

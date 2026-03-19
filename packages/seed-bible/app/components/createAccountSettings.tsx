@@ -15,16 +15,16 @@ import { useSideBarContext } from "app.hooks.sideBar";
 const { useState, useEffect } = os.appHooks;
 // await os.eraseData(tags.key, authBot.id)
 const CreateAccountSettings = () => {
-  const { sidebarMode, setSideBarMode } = useSideBarContext();
+  const { sidebarMode, setSideBarMode, themeColors } = useSideBarContext();
   const [img, setImg] = useState<string | undefined>();
   const [profileName, setProfileName] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [uid, setUid] = useState(authBot?.id);
   const [isSignedIn, setIsSignedIn] = useState(false);
-
+  const colors = themeColors;
   useEffect(() => {
-    if (!authBot.id) {
+    if (!authBot?.id) {
       setIsSignedIn(false);
       setUid("");
       setProfileName("");
@@ -209,6 +209,11 @@ const CreateAccountSettings = () => {
             <label className="form-label">Profile name</label>
             <input
               className="form-input"
+              style={{
+                background: colors
+                  ? colors[1].pageTextColor + "20"
+                  : "#1A1A1A20",
+              }}
               placeholder="e.g Craig family"
               value={profileName}
               onChange={(e) =>
@@ -225,6 +230,11 @@ const CreateAccountSettings = () => {
             </label>
             <textarea
               className="form-input profile-textarea"
+              style={{
+                background: colors
+                  ? colors[1].pageTextColor + "20"
+                  : "#1A1A1A20",
+              }}
               placeholder="Enter your profile description..."
               value={description}
               onChange={(e) =>
@@ -241,6 +251,11 @@ const CreateAccountSettings = () => {
             <input
               className="form-input"
               placeholder="e.g Austin,TX"
+              style={{
+                background: colors
+                  ? colors[1].pageTextColor + "20"
+                  : "#1A1A1A20",
+              }}
               value={location}
               onChange={(e) =>
                 setLocation((e.target as HTMLInputElement).value)
@@ -251,7 +266,14 @@ const CreateAccountSettings = () => {
           {/* UID */}
           <div className="uid-section">
             <div className="uid-label">Your UID will be:</div>
-            <div className="uid-display">
+            <div
+              className="uid-display"
+              style={{
+                background: colors
+                  ? colors[1].pageTextColor + "20"
+                  : "#1A1A1A20",
+              }}
+            >
               <span className="uid-text">{uid}</span>
               <span
                 className="copy-icon"
@@ -281,6 +303,7 @@ const CreateAccountSettings = () => {
             className="sign-out-btn"
             onClick={async () => {
               if (authBot) {
+                await os.signOut();
                 destroy(authBot);
               }
               setIsSignedIn(false);
