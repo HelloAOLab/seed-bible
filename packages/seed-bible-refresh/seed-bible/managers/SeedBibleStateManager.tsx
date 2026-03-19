@@ -91,7 +91,14 @@ export function createSeedBibleState(): SeedBibleState {
   );
 
   effect(() => {
-    panes.setSelectedPaneTab(tabs.selectedTabId.value);
+    if (selectedTab.value) {
+      const matchingPane =
+        panes.panes.value.find((p) => p.tab?.id === selectedTab.value?.id) ??
+        null;
+      if (matchingPane) {
+        panes.selectPane(matchingPane.id);
+      }
+    }
   });
 
   const closeSidebarAndSettings = () => {
@@ -102,6 +109,7 @@ export function createSeedBibleState(): SeedBibleState {
   const handleSelectTab = (tabId: string) => {
     closeSidebarAndSettings();
     tabs.selectTab(tabId);
+    panes.setSelectedPaneTab(tabId);
   };
 
   const handleAddTab = () => {

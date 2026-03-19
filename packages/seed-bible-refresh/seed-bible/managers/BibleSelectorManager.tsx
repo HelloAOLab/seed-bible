@@ -108,15 +108,6 @@ export function createBibleSelectorState(
   let wasOpen = isOpen.value;
   let isHandlingPopState = false;
 
-  const activePaneId = computed(() => pane.value?.id ?? null);
-  const activePane = computed(() =>
-    activePaneId.value
-      ? (panesManager.panes.value.find(
-          (entry) => entry.id === activePaneId.value
-        ) ?? null)
-      : null
-  );
-
   const syncStateFromPane = async () => {
     if (!readingState.value) {
       return;
@@ -159,7 +150,7 @@ export function createBibleSelectorState(
         pane.value = nextPane;
       }
 
-      const effectivePane = nextPane ?? activePane.value;
+      const effectivePane = nextPane ?? pane.value;
       if (!effectivePane) {
         return;
       }
@@ -291,7 +282,7 @@ export function createBibleSelectorState(
     selectedBookId: string,
     chapter: number
   ) => {
-    if (!activePane.value) {
+    if (!pane.value) {
       return;
     }
 
@@ -302,27 +293,24 @@ export function createBibleSelectorState(
     }
 
     // Ensure selected-tab synchronization targets this pane, not a stale selection.
-    panesManager.selectPane(activePane.value.id);
+    panesManager.selectPane(pane.value.id);
 
-    if (activePane.value.tab) {
+    if (pane.value.tab) {
       if (
-        activePane.value.tab.readingState.translationId.value !==
+        pane.value.tab.readingState.translationId.value !==
         selectedTranslationId.value
       ) {
-        await activePane.value.tab.readingState.selectTranslation(
+        await pane.value.tab.readingState.selectTranslation(
           selectedTranslationId.value
         );
       }
-      await activePane.value.tab.readingState.selectChapter(
-        selectedBookId,
-        chapter
-      );
+      await pane.value.tab.readingState.selectChapter(selectedBookId, chapter);
       setOpen(false);
       return;
     }
 
     const newTab = tabsManager.addTab();
-    panesManager.setPaneTab(activePane.value.id, newTab.id);
+    panesManager.setPaneTab(pane.value.id, newTab.id);
 
     if (
       newTab.readingState.translationId.value !== selectedTranslationId.value
