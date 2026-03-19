@@ -45,26 +45,28 @@ interface PaneContent {
   component: ComponentChild | null;
 }
 
-let nextPaneId = 1;
+function createPaneFactory() {
+  let nextPaneId = 1;
 
-function createPane(
-  tab: ReaderTab | null,
-  component: ComponentChild | null = null,
-  detached = false
-): Pane {
-  const paneId = nextPaneId;
-  nextPaneId += 1;
-  const offset = (paneId - 1) * 24;
+  return (
+    tab: ReaderTab | null,
+    component: ComponentChild | null = null,
+    detached = false
+  ): Pane => {
+    const paneId = nextPaneId;
+    nextPaneId += 1;
+    const offset = (paneId - 1) * 24;
 
-  return {
-    id: `pane-${paneId}`,
-    tab,
-    component,
-    detached,
-    x: 48 + offset,
-    y: 48 + offset,
-    width: 480,
-    height: 320,
+    return {
+      id: `pane-${paneId}`,
+      tab,
+      component,
+      detached,
+      x: 48 + offset,
+      y: 48 + offset,
+      width: 480,
+      height: 320,
+    };
   };
 }
 
@@ -146,7 +148,12 @@ function getPaneContentsInDisplayOrder(
 function applyLayoutToPanes(
   existingPanes: Pane[],
   layoutId: PaneLayoutId,
-  selectedId: string | null
+  selectedId: string | null,
+  createPane: (
+    tab: ReaderTab | null,
+    component?: ComponentChild | null,
+    detached?: boolean
+  ) => Pane
 ) {
   const slotCount = getLayoutSlotCount(layoutId);
   const attachedPanes = getAttachedPanes(existingPanes);
@@ -172,40 +179,40 @@ function applyLayoutToPanes(
   return [...nextAttachedPanes, ...detachedPanes];
 }
 
-const panes = signal<Pane[]>([]);
-const selectedPaneId = signal<string | null>(null);
-const layout = signal<PaneLayoutId>("single");
-let isInitialized = false;
-
-function syncPaneState(nextPanes: Pane[], nextSelectedPaneId?: string | null) {
-  panes.value = nextPanes;
-
-  const desiredPaneId =
-    nextSelectedPaneId !== undefined
-      ? nextSelectedPaneId
-      : selectedPaneId.value;
-  if (desiredPaneId && nextPanes.some((pane) => pane.id === desiredPaneId)) {
-    selectedPaneId.value = desiredPaneId;
-    return;
-  }
-
-  selectedPaneId.value = nextPanes[0]?.id ?? null;
-}
-
 export type PanesManager = ReturnType<typeof createPanes>;
 
 export function createPanes(
   tabsManager: TabsManager,
   selectedTabId: Signal<string>
 ) {
-  if (!isInitialized) {
-    const initialTab =
-      tabsManager.tabs.value.find((tab) => tab.id === selectedTabId.value) ??
-      null;
-    panes.value = [createPane(initialTab)];
-    selectedPaneId.value = panes.value[0]?.id ?? null;
-    isInitialized = true;
-  }
+  const createPane = createPaneFactory();
+  const panes = signal<Pane[]>([]);
+  const selectedPaneId = signal<string | null>(null);
+  const layout = signal<PaneLayoutId>("single");
+
+  const syncPaneState = (
+    nextPanes: Pane[],
+    nextSelectedPaneId?: string | null
+  ) => {
+    panes.value = nextPanes;
+
+    const desiredPaneId =
+      nextSelectedPaneId !== undefined
+        ? nextSelectedPaneId
+        : selectedPaneId.value;
+    if (desiredPaneId && nextPanes.some((pane) => pane.id === desiredPaneId)) {
+      selectedPaneId.value = desiredPaneId;
+      return;
+    }
+
+    selectedPaneId.value = nextPanes[0]?.id ?? null;
+  };
+
+  const initialTab =
+    tabsManager.tabs.value.find((tab) => tab.id === selectedTabId.value) ??
+    null;
+  panes.value = [createPane(initialTab)];
+  selectedPaneId.value = panes.value[0]?.id ?? null;
 
   const tabMap = computed(
     () => new Map(tabsManager.tabs.value.map((tab) => [tab.id, tab]))
@@ -331,7 +338,7 @@ export function createPanes(
     }
 
     syncPaneState(
-      applyLayoutToPanes(nextPanes, layout.value, selectedPane.id),
+      applyLayoutToPanes(nextPanes, layout.value, selectedPane.id, createPane),
       selectedPane.id
     );
   };
@@ -370,7 +377,8 @@ export function createPanes(
     const nextPanes = applyLayoutToPanes(
       [...panes.value, createPane(nextTab)],
       layout.value,
-      selectedPaneId.value
+      selectedPaneId.value,
+      createPane
     );
     const nextSelectedPane =
       nextPanes.find((pane) => pane.tab?.id === tabId) ?? null;
@@ -409,7 +417,8 @@ export function createPanes(
     const nextPanes = applyLayoutToPanes(
       panes.value,
       layoutId,
-      selectedPaneId.value
+      selectedPaneId.value,
+      createPane
     );
     const currentSelectedTabId = getSelectedPane()?.tab?.id ?? null;
     const nextSelectedPane =
