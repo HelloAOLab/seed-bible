@@ -135,11 +135,33 @@ describe("createBibleSelectorState", () => {
       tabsManager,
       panesManager
     );
-    selector.setOpen(true, pane);
-    await waitFor(() => getDisplayedBookIds(selector).length > 0);
+    await selector.setOpen(true, pane);
 
     expect(selector.isOpen.value).toBe(true);
     expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
+    expect(selector.expandedBookId.value).toBe("GEN");
+  });
+
+  it("setOpen() opens the selector and expands the current book", async () => {
+    setWebResponses(createDefaultManagerResponseMap());
+    const { dataManager, pane, tabsManager, panesManager } =
+      await createManagersWithSelectedPane();
+
+    await pane.tab!.readingState.selectChapter("EXO", 2);
+
+    const selector = createBibleSelectorState(
+      dataManager,
+      tabsManager,
+      panesManager
+    );
+    await selector.setOpen(true, pane);
+
+    expect(selector.isOpen.value).toBe(true);
+    expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
+
+    expect(selector.expandedBookId.value).toBe("EXO");
+    expect(selector.currentBookId.value).toBe("EXO");
+    expect(selector.currentChapterNumber.value).toBe(2);
   });
 
   it("setSearch() filters books", async () => {
@@ -153,8 +175,8 @@ describe("createBibleSelectorState", () => {
       panesManager
     );
 
-    selector.setOpen(true, pane);
-    await waitFor(() => getDisplayedBookIds(selector).length > 0);
+    await selector.setOpen(true, pane);
+
     expect(selector.isOpen.value).toBe(true);
 
     selector.setSearch("exo");
@@ -174,7 +196,7 @@ describe("createBibleSelectorState", () => {
       panesManager
     );
 
-    selector.setOpen(true, pane);
+    await selector.setOpen(true, pane);
     expect(selector.isOpen.value).toBe(true);
 
     selector.setExpandedBook("EXO");
@@ -193,7 +215,7 @@ describe("createBibleSelectorState", () => {
       panesManager
     );
 
-    selector.setOpen(true, pane);
+    await selector.setOpen(true, pane);
     expect(selector.isOpen.value).toBe(true);
 
     await selector.selectTranslation("NIV");
@@ -222,7 +244,7 @@ describe("createBibleSelectorState", () => {
       panesManager
     );
 
-    selector.setOpen(true, pane);
+    await selector.setOpen(true, pane);
     await selector.selectTranslation("NIV");
 
     await selector.selectChapter("MAT", 1);

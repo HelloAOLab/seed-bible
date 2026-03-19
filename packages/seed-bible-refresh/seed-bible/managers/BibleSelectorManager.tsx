@@ -44,7 +44,7 @@ export interface BibleSelectorState {
 
   oldTestamentRows: ReadonlySignal<TranslationBook[][]>;
   newTestamentRows: ReadonlySignal<TranslationBook[][]>;
-  setOpen: (open: boolean, pane?: Pane) => void;
+  setOpen: (open: boolean, pane?: Pane) => Promise<void>;
   setSearch: (value: string) => void;
   setExpandedBook: (bookId: string) => void;
   selectTranslation: (translationId: string) => Promise<void>;
@@ -138,7 +138,11 @@ export function createBibleSelectorState(
         throw new Error("No available translations found.");
       }
 
-      selectTranslation(nextTranslationId);
+      await selectTranslation(nextTranslationId);
+
+      if (currentBookId.value) {
+        expandedBookId.value = currentBookId.value;
+      }
     } catch (err) {
       error.value =
         err instanceof Error
@@ -149,7 +153,7 @@ export function createBibleSelectorState(
     }
   };
 
-  const setOpen = (open: boolean, nextPane?: Pane) => {
+  const setOpen = async (open: boolean, nextPane?: Pane) => {
     if (open) {
       if (nextPane) {
         pane.value = nextPane;
@@ -162,7 +166,7 @@ export function createBibleSelectorState(
 
       pane.value = effectivePane;
 
-      void syncStateFromPane();
+      await syncStateFromPane();
     }
 
     isOpen.value = open;
