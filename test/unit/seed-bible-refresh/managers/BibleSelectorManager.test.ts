@@ -136,6 +136,7 @@ describe("createBibleSelectorState", () => {
       panesManager
     );
     selector.setOpen(true, pane);
+    await waitFor(() => getDisplayedBookIds(selector).length > 0);
 
     expect(selector.isOpen.value).toBe(true);
     expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
@@ -153,6 +154,7 @@ describe("createBibleSelectorState", () => {
     );
 
     selector.setOpen(true, pane);
+    await waitFor(() => getDisplayedBookIds(selector).length > 0);
     expect(selector.isOpen.value).toBe(true);
 
     selector.setSearch("exo");
@@ -180,7 +182,7 @@ describe("createBibleSelectorState", () => {
     expect(selector.expandedBookId.value).toBe("EXO");
   });
 
-  it("selectTranslation() changes the reading state translation", async () => {
+  it("selectTranslation() changes selector state but not reading state", async () => {
     setWebResponses(createDefaultManagerResponseMap());
     const { dataManager, readingState, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
@@ -196,12 +198,15 @@ describe("createBibleSelectorState", () => {
 
     await selector.selectTranslation("NIV");
 
-    expect(readingState.translationId.value).toBe("NIV");
-    expect(readingState.bookId.value).toBe("MAT");
+    expect(selector.translationId.value).toBe("NIV");
+    expect(selector.bookId.value).toBe("MAT");
+    expect(selector.chapterNumber.value).toBe(1);
+    expect(readingState.translationId.value).toBe("BSB");
+    expect(readingState.bookId.value).toBe("GEN");
     expect(readingState.chapterNumber.value).toBe(1);
   });
 
-  it("selectChapter() changes the reading state chapter", async () => {
+  it("selectChapter() applies selector translation and chapter to reading state", async () => {
     setWebResponses(createDefaultManagerResponseMap());
     const { dataManager, readingState, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
@@ -213,10 +218,12 @@ describe("createBibleSelectorState", () => {
     );
 
     selector.setOpen(true, pane);
+    await selector.selectTranslation("NIV");
 
-    await selector.selectChapter("EXO", 2);
+    await selector.selectChapter("MAT", 1);
 
-    expect(readingState.bookId.value).toBe("EXO");
-    expect(readingState.chapterNumber.value).toBe(2);
+    expect(readingState.translationId.value).toBe("NIV");
+    expect(readingState.bookId.value).toBe("MAT");
+    expect(readingState.chapterNumber.value).toBe(1);
   });
 });

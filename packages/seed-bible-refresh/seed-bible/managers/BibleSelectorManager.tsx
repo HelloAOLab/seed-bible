@@ -1,4 +1,5 @@
 import type {
+  AvailableTranslations,
   TranslationBook,
   TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
@@ -26,6 +27,13 @@ export interface BibleSelectorState {
   isOpen: Signal<boolean>;
   pane: Signal<Pane | null>;
   readingState: ReadonlySignal<BibleReadingState | null>;
+  translationId: Signal<string | null>;
+  bookId: Signal<string | null>;
+  chapterNumber: Signal<number>;
+  availableTranslations: Signal<AvailableTranslations | null>;
+  translationBooks: Signal<TranslationBooks | null>;
+  loading: Signal<boolean>;
+  error: Signal<string | null>;
   search: Signal<string>;
   expandedBookId: Signal<string | null>;
   oldTestamentRows: ReadonlySignal<TranslationBook[][]>;
@@ -69,6 +77,13 @@ export function createBibleSelectorState(
   const pane = signal<Pane | null>(null);
   const readingState = signal<BibleReadingState | null>(null);
   const transientReadingState = signal<BibleReadingState | null>(null);
+  const translationId = signal<string | null>(null);
+  const bookId = signal<string | null>(null);
+  const chapterNumber = signal<number>(1);
+  const availableTranslations = signal<AvailableTranslations | null>(null);
+  const translationBooks = signal<TranslationBooks | null>(null);
+  const loading = signal(false);
+  const error = signal<string | null>(null);
 
   const search = signal("");
   const expandedBookId = signal<string | null>(null);
@@ -96,12 +111,53 @@ export function createBibleSelectorState(
     }
   });
 
-  const activeBookId = computed(
-    () => activeReadingState.value?.bookId.value ?? null
-  );
-  const activeTranslationBooks = computed(
-    () => activeReadingState.value?.translationBooks.value ?? null
-  );
+  const syncSelectorStateFromActiveReadingState = async () => {
+    if (!activeReadingState.value) {
+      return;
+    }
+
+    loading.value = true;
+    error.value = null;
+
+    try {
+      if (dataManager.availableTranslations.value.length === 0) {
+        await dataManager.getTranslations();
+      }
+
+      availableTranslations.value = {
+        translations: dataManager.availableTranslations.value,
+      };
+
+      const nextTranslationId =
+        activeReadingState.value.translationId.value ??
+        dataManager.availableTranslations.value[0]?.id ??
+        null;
+      if (!nextTranslationId) {
+        throw new Error("No available translations found.");
+      }
+
+      const books = await dataManager.getTranslationBooks(nextTranslationId);
+      const fallbackBookId = books.books[0]?.id ?? null;
+      const requestedBookId = activeReadingState.value.bookId.value;
+      const nextBookId =
+        (requestedBookId &&
+        books.books.some((entry) => entry.id === requestedBookId)
+          ? requestedBookId
+          : fallbackBookId) ?? null;
+
+      translationId.value = nextTranslationId;
+      translationBooks.value = books;
+      bookId.value = nextBookId;
+      chapterNumber.value = activeReadingState.value.chapterNumber.value;
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to load selector translation data.";
+    } finally {
+      loading.value = false;
+    }
+  };
 
   const setOpen = (open: boolean, nextPane?: Pane) => {
     if (open) {
@@ -129,6 +185,8 @@ export function createBibleSelectorState(
       if (!readingState.value) {
         return;
       }
+
+      void syncSelectorStateFromActiveReadingState();
     }
 
     isOpen.value = open;
@@ -147,7 +205,7 @@ export function createBibleSelectorState(
 
   effect(() => {
     if (isOpen.value) {
-      expandedBookId.value = activeBookId.value;
+      expandedBookId.value = bookId.value;
     }
   });
 
@@ -203,7 +261,7 @@ export function createBibleSelectorState(
   });
 
   const groupedBooks = computed(() =>
-    groupBooks(activeTranslationBooks.value, search.value)
+    groupBooks(translationBooks.value, search.value)
   );
 
   const booksPerRow = computed(() => {
@@ -257,51 +315,101 @@ export function createBibleSelectorState(
       return;
     }
 
-    if (activePane.value?.tab) {
-      await activePane.value.tab.readingState.selectChapter(
-        selectedBookId,
-        chapter
-      );
-      setOpen(false);
+    if (!activePane.value) {
       return;
     }
 
-    if (!activePane.value) {
+    const selectedTranslationId =
+      translationId.value ?? activeReadingState.value.translationId.value;
+    if (!selectedTranslationId) {
       return;
     }
 
     // Ensure selected-tab synchronization targets this pane, not a stale selection.
     panesManager.selectPane(activePane.value.id);
 
+    if (activePane.value.tab) {
+      if (
+        activePane.value.tab.readingState.translationId.value !==
+        selectedTranslationId
+      ) {
+        await activePane.value.tab.readingState.selectTranslation(
+          selectedTranslationId
+        );
+      }
+      await activePane.value.tab.readingState.selectChapter(
+        selectedBookId,
+        chapter
+      );
+      bookId.value = selectedBookId;
+      chapterNumber.value = chapter;
+      setOpen(false);
+      return;
+    }
+
     const newTab = tabsManager.addTab();
     panesManager.setPaneTab(activePane.value.id, newTab.id);
-    // tabsManager.selectTab(newTab.id);
 
-    const selectedTranslationId = activeReadingState.value.translationId.value;
-    if (
-      selectedTranslationId &&
-      newTab.readingState.translationId.value !== selectedTranslationId
-    ) {
+    if (newTab.readingState.translationId.value !== selectedTranslationId) {
       await newTab.readingState.selectTranslation(selectedTranslationId);
     }
 
     await newTab.readingState.selectChapter(selectedBookId, chapter);
+    bookId.value = selectedBookId;
+    chapterNumber.value = chapter;
     transientReadingState.value = null;
     setOpen(false);
   };
 
-  const handleTranslationSelect = async (translationId: string) => {
-    if (!activeReadingState.value) {
-      return;
-    }
+  const handleTranslationSelect = async (nextTranslationId: string) => {
+    loading.value = true;
+    error.value = null;
 
-    await activeReadingState.value.selectTranslation(translationId);
+    try {
+      const books = await dataManager.getTranslationBooks(nextTranslationId);
+      const firstBook = books.books[0] ?? null;
+
+      availableTranslations.value = {
+        translations: dataManager.availableTranslations.value,
+      };
+      translationBooks.value = books;
+      // Only update selector-internal state. Reading state updates on chapter selection.
+      const nextBookId = firstBook?.id ?? null;
+      const firstChapter = firstBook?.firstChapterNumber ?? 1;
+
+      if (nextBookId && !expandedBookId.value) {
+        expandedBookId.value = nextBookId;
+      }
+
+      translationId.value = nextTranslationId;
+      bookId.value = nextBookId;
+      chapterNumber.value = firstChapter;
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to load translation books.";
+      return;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const selectTranslation = async (nextTranslationId: string) => {
+    await handleTranslationSelect(nextTranslationId);
   };
 
   return {
     isOpen,
     pane,
     readingState: activeReadingState,
+    translationId,
+    bookId,
+    chapterNumber,
+    availableTranslations,
+    translationBooks,
+    loading,
+    error,
     search,
     expandedBookId,
     oldTestamentRows,
@@ -309,7 +417,7 @@ export function createBibleSelectorState(
     setOpen,
     setSearch,
     setExpandedBook,
-    selectTranslation: handleTranslationSelect,
+    selectTranslation,
     selectChapter: handleChapterSelect,
   };
 }

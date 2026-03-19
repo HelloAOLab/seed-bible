@@ -12,19 +12,13 @@ interface BibleSelectorProps {
 
 export function BibleSelector(props: BibleSelectorProps) {
   const { isOpen, onClose, selectorState } = props;
-  const readingState = selectorState.readingState.value;
-
-  if (!readingState) {
-    return null;
-  }
-
   const {
     translationId,
     bookId,
     chapterNumber,
     availableTranslations,
     loading,
-  } = readingState;
+  } = selectorState;
 
   const { t } = useI18n();
   const {

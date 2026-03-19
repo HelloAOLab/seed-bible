@@ -82,11 +82,16 @@ function createSelectorFixture(): SelectorFixture {
   const expandedBookId = signal<string | null>("GEN");
   const translationId = signal<string | null>("BSB");
   const bookId = signal<string | null>("GEN");
-  const chapterNumber = signal<number | null>(1);
+  const chapterNumber = signal<number>(1);
   const availableTranslationsSignal = signal<AvailableTranslations | null>(
     availableTranslations
   );
   const loading = signal(false);
+  const error = signal<string | null>(null);
+  const translationBooks = signal({
+    translation: availableTranslations.translations[0]!,
+    books: [...oldBooks, ...newBooks],
+  });
 
   const readingState = {
     translationId,
@@ -115,6 +120,13 @@ function createSelectorFixture(): SelectorFixture {
     isOpen: signal(false),
     pane: signal(null),
     readingState: signal(readingState),
+    translationId,
+    bookId,
+    chapterNumber,
+    availableTranslations: availableTranslationsSignal,
+    translationBooks,
+    loading,
+    error,
     search,
     expandedBookId,
     oldTestamentRows,
