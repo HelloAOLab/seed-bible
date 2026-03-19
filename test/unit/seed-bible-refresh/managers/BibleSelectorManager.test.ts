@@ -173,10 +173,6 @@ function createApi(): FreeUseBibleAPI {
   return new FreeUseBibleAPI(API_ENDPOINT);
 }
 
-const sharedApi = createApi();
-let sharedTabsManager: ReturnType<typeof createTabs> | null = null;
-let sharedPanesManager: ReturnType<typeof createPanes> | null = null;
-
 function makeUrl(path: string): string {
   return `${API_ENDPOINT}${path}`;
 }
@@ -264,19 +260,8 @@ async function createManagersWithSelectedPane(api: FreeUseBibleAPI): Promise<{
   tabsManager: ReturnType<typeof createTabs>;
   panesManager: ReturnType<typeof createPanes>;
 }> {
-  if (!sharedTabsManager) {
-    sharedTabsManager = createTabs(api);
-  }
-
-  if (!sharedPanesManager) {
-    sharedPanesManager = createPanes(
-      sharedTabsManager,
-      sharedTabsManager.selectedTabId
-    );
-  }
-
-  const tabsManager = sharedTabsManager;
-  const panesManager = sharedPanesManager;
+  const tabsManager = createTabs(api);
+  const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
 
   const pane = panesManager.panes.value[0];
   if (!pane?.tab) {
@@ -309,7 +294,7 @@ describe("createBibleSelectorState", () => {
 
   it("setOpen() opens the selector and displays books", async () => {
     setWebResponses(createDefaultResponseMap());
-    const api = sharedApi;
+    const api = createApi();
     const { pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane(api);
 
@@ -322,7 +307,7 @@ describe("createBibleSelectorState", () => {
 
   it("setSearch() filters books", async () => {
     setWebResponses(createDefaultResponseMap());
-    const api = sharedApi;
+    const api = createApi();
     const { pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane(api);
 
@@ -339,7 +324,7 @@ describe("createBibleSelectorState", () => {
 
   it("setExpandedBook() sets expandedBookId", async () => {
     setWebResponses(createDefaultResponseMap());
-    const api = sharedApi;
+    const api = createApi();
     const { pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane(api);
 
@@ -355,7 +340,7 @@ describe("createBibleSelectorState", () => {
 
   it("selectTranslation() changes the reading state translation", async () => {
     setWebResponses(createDefaultResponseMap());
-    const api = sharedApi;
+    const api = createApi();
     const { readingState, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane(api);
 
@@ -373,7 +358,7 @@ describe("createBibleSelectorState", () => {
 
   it("selectChapter() changes the reading state chapter", async () => {
     setWebResponses(createDefaultResponseMap());
-    const api = sharedApi;
+    const api = createApi();
     const { readingState, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane(api);
 
