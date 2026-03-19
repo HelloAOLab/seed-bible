@@ -4,7 +4,7 @@ import type {
   TranslationBook,
   TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
-import type { BibleDataManager } from "./BibleDataManager";
+import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
 import {
   type BibleReadingState,
   createBibleReadingState,
@@ -291,10 +291,6 @@ export function createBibleSelectorState(
     selectedBookId: string,
     chapter: number
   ) => {
-    if (!readingState.value) {
-      return;
-    }
-
     if (!activePane.value) {
       return;
     }

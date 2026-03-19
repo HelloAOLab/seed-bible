@@ -4,7 +4,7 @@ import {
   type TranslationBookChapter,
   type TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
-import { type BibleDataManager } from "./BibleDataManager";
+import { type BibleDataManager } from "seed-bible.managers.BibleDataManager";
 import { batch, signal, type Signal } from "@preact/signals";
 import { sortBy } from "es-toolkit";
 

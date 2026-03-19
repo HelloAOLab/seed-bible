@@ -3972,6 +3972,9 @@
       "seed-bible.i18n.I18nManager": [
         "./packages/seed-bible-refresh/seed-bible/i18n/I18nManager.tsx"
       ],
+      "seed-bible.managers.BibleDataManager": [
+        "./packages/seed-bible-refresh/seed-bible/managers/BibleDataManager.tsx"
+      ],
       "seed-bible.managers.BibleReadingManager": [
         "./packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager.tsx"
       ],

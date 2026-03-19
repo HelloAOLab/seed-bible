@@ -4,7 +4,7 @@ import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManage
 import {
   createBibleDataManager,
   type BibleDataManager,
-} from "./BibleDataManager";
+} from "seed-bible.managers.BibleDataManager";
 import { createBibleToolsManager } from "seed-bible.managers.BibleToolsManager";
 import type { ToolsManager } from "seed-bible.managers.BibleToolsManager";
 import { createConfig } from "seed-bible.managers.ConfigManager";
