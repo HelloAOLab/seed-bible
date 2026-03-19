@@ -348,11 +348,15 @@ export function createBibleSelectorState(
 
       selectedTranslationBooks.value = books;
 
-      // Only update selector-internal state. Reading state updates on chapter selection.
-      const nextBookId = firstBook?.id ?? null;
-
-      if (nextBookId && !expandedBookId.value) {
-        expandedBookId.value = nextBookId;
+      if (expandedBookId.value) {
+        const hasCurrentBook = books.books.some(
+          (book) => book.id === expandedBookId.value
+        );
+        if (!hasCurrentBook) {
+          expandedBookId.value = firstBook?.id ?? null;
+        }
+      } else if (firstBook) {
+        expandedBookId.value = firstBook.id;
       }
 
       selectedTranslationId.value = nextTranslationId;

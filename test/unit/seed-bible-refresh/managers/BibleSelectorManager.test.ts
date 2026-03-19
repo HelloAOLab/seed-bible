@@ -200,6 +200,9 @@ describe("createBibleSelectorState", () => {
 
     expect(selector.selectedTranslationId.value).toBe("NIV");
 
+    // Should expand the first book of the selected translation
+    expect(selector.expandedBookId.value).toBe("MAT");
+
     expect(selector.currentTranslationId.value).toBe("BSB");
     expect(selector.currentBookId.value).toBe("GEN");
     expect(selector.currentChapterNumber.value).toBe(1);
