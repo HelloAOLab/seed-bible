@@ -33,9 +33,6 @@ function parseSettingsPreset(value: unknown): SettingsPresetId {
   return DEFAULT_SETTINGS_PRESET;
 }
 
-const config = signal<AppConfig>(getPresetConfig(DEFAULT_SETTINGS_PRESET));
-let hasConfigBotListener = false;
-
 function parseBoolean(value: unknown, fallback: boolean) {
   if (typeof value === "boolean") {
     return value;
@@ -55,28 +52,27 @@ function parseBoolean(value: unknown, fallback: boolean) {
   return fallback;
 }
 
-function readConfigFromBot(): AppConfig {
-  const settingsPreset = parseSettingsPreset(configBot.tags.settingsPreset);
-  const presetConfig = getPresetConfig(settingsPreset);
+export type ConfigManager = ReturnType<typeof createConfig>;
 
-  return {
-    disablePanels: parseBoolean(
-      configBot.tags["app.disablePanels"],
-      presetConfig.disablePanels
-    ),
+export function createConfig() {
+  const readConfigFromBot = (): AppConfig => {
+    const settingsPreset = parseSettingsPreset(configBot.tags.settingsPreset);
+    const presetConfig = getPresetConfig(settingsPreset);
+
+    return {
+      disablePanels: parseBoolean(
+        configBot.tags["app.disablePanels"],
+        presetConfig.disablePanels
+      ),
+    };
   };
-}
 
-function syncConfigFromBot() {
-  config.value = readConfigFromBot();
-}
+  const config = signal<AppConfig>(readConfigFromBot());
 
-function ensureConfigBotListener() {
-  if (hasConfigBotListener) {
-    return;
-  }
+  const syncConfigFromBot = () => {
+    config.value = readConfigFromBot();
+  };
 
-  hasConfigBotListener = true;
   os.addBotListener(configBot, "onBotChanged", (that: unknown) => {
     const changedTagsSource =
       that && typeof that === "object" && "tags" in that
@@ -93,14 +89,6 @@ function ensureConfigBotListener() {
       syncConfigFromBot();
     }
   });
-}
-
-syncConfigFromBot();
-
-export type ConfigManager = ReturnType<typeof createConfig>;
-
-export function createConfig() {
-  ensureConfigBotListener();
 
   const setDisablePanels = (disablePanels: boolean) => {
     config.value = {

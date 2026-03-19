@@ -79,7 +79,7 @@ export function Main() {
 
         <main className="sb-main-content">
           {sidebar.isSettingsOpen.value ? (
-            <SettingsPage />
+            <SettingsPage state={state} />
           ) : (
             <PaneLayout state={state} />
           )}
