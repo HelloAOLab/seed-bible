@@ -114,7 +114,8 @@ export function createSeedBibleState(): SeedBibleState {
 
   const handleAddTab = () => {
     closeSidebarAndSettings();
-    tabs.addTab();
+    const tab = tabs.addTab();
+    panes.setSelectedPaneTab(tab.id);
   };
 
   const handleOpenInNewPane = (tabId: string) => {
