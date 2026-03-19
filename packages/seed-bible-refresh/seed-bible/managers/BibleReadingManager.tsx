@@ -5,6 +5,10 @@ import {
   type TranslationBookChapter,
   type TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
+import {
+  createBibleDataManager,
+  type BibleDataManager,
+} from "./BibleDataManager";
 import { batch, signal, type Signal } from "@preact/signals";
 import { sortBy } from "es-toolkit";
 
@@ -45,6 +49,8 @@ export const DEFAULT_TRANSLATION_ID = "BSB";
 export const DEFAULT_BOOK_ID = "GEN";
 export const DEFAULT_CHAPTER_NUMBER = 1;
 
+type BibleReadingDataSource = FreeUseBibleAPI | BibleDataManager;
+
 interface InitialBibleReadingOptions {
   initialTranslationId?: string | null;
   initialBookId?: string | null;
@@ -79,9 +85,12 @@ function extractEndpointFromAvailableTranslationsUrl(
 }
 
 export function createBibleReadingState(
-  api: FreeUseBibleAPI,
+  source: BibleReadingDataSource,
   options: InitialBibleReadingOptions = {}
 ): BibleReadingState {
+  const dataManager: BibleDataManager =
+    "getTranslations" in source ? source : createBibleDataManager(source);
+
   const isSameSelectedVerse = (
     left: BibleSelectedVerse,
     right: BibleSelectedVerse
@@ -155,6 +164,14 @@ export function createBibleReadingState(
 
   const getActiveEndpoint = () => endpointOverride.value ?? undefined;
 
+  const toAvailableTranslations = (
+    translationsList: BibleDataManager["availableTranslations"]["value"]
+  ): AvailableTranslations => {
+    return {
+      translations: translationsList,
+    };
+  };
+
   const syncStateFromChapter = async (chapter: TranslationBookChapter) => {
     const nextTranslationId = chapter.translation.id;
     const nextBookId = chapter.book.id;
@@ -167,11 +184,11 @@ export function createBibleReadingState(
     clearSelectedVerses();
 
     if (translationBooks.value?.translation.id !== nextTranslationId) {
-      const books = await api.getTranslationBooks(
-        nextTranslationId,
-        getActiveEndpoint()
-      );
+      const books = await dataManager.getTranslationBooks(nextTranslationId);
       translationBooks.value = books;
+      availableTranslations.value = toAvailableTranslations(
+        dataManager.availableTranslations.value
+      );
     }
   };
 
@@ -184,10 +201,7 @@ export function createBibleReadingState(
     error.value = null;
 
     try {
-      const chapter = await api.getPreviousChapter(
-        chapterData.value,
-        getActiveEndpoint()
-      );
+      const chapter = await dataManager.getPreviousChapter(chapterData.value);
       if (!chapter) {
         return;
       }
@@ -208,17 +222,19 @@ export function createBibleReadingState(
       const availableTranslationsEndpoint =
         extractEndpointFromAvailableTranslationsUrl(translation);
 
-      let nextEndpoint = getActiveEndpoint();
       let nextTranslationId = translation;
 
       if (availableTranslationsEndpoint) {
         endpointOverride.value = availableTranslationsEndpoint;
-        nextEndpoint = availableTranslationsEndpoint;
 
-        const translations = await api.getAvailableTranslations(nextEndpoint);
-        availableTranslations.value = translations;
+        const endpointTranslations = await dataManager.getTranslations(
+          availableTranslationsEndpoint
+        );
+        availableTranslations.value = toAvailableTranslations(
+          dataManager.availableTranslations.value
+        );
 
-        const firstTranslation = translations.translations[0];
+        const firstTranslation = endpointTranslations[0];
         if (!firstTranslation) {
           throw new Error("No available translations found for endpoint.");
         }
@@ -226,24 +242,23 @@ export function createBibleReadingState(
         nextTranslationId = firstTranslation.id;
       }
 
-      const books = await api.getTranslationBooks(
-        nextTranslationId,
-        nextEndpoint
-      );
+      const books = await dataManager.getTranslationBooks(nextTranslationId);
       const firstBook = books.books[0];
       if (!firstBook) {
         throw new Error("No books available for selected translation.");
       }
 
       const firstChapterNumber = firstBook.firstChapterNumber ?? 1;
-      const chapter = await api.getTranslationBookChapter(
+      const chapter = await dataManager.getTranslationBookChapter(
         nextTranslationId,
         firstBook.id,
-        firstChapterNumber,
-        nextEndpoint
+        firstChapterNumber
       );
 
       batch(() => {
+        availableTranslations.value = toAvailableTranslations(
+          dataManager.availableTranslations.value
+        );
         translationBooks.value = books;
         translationId.value = nextTranslationId;
         bookId.value = firstBook.id;
@@ -276,11 +291,10 @@ export function createBibleReadingState(
 
     try {
       const nextChapterNumber = selectedBook.firstChapterNumber ?? 1;
-      const chapter = await api.getTranslationBookChapter(
+      const chapter = await dataManager.getTranslationBookChapter(
         translationId.value,
         book,
-        nextChapterNumber,
-        getActiveEndpoint()
+        nextChapterNumber
       );
 
       bookId.value = book;
@@ -304,11 +318,10 @@ export function createBibleReadingState(
     error.value = null;
 
     try {
-      const nextChapterData = await api.getTranslationBookChapter(
+      const nextChapterData = await dataManager.getTranslationBookChapter(
         translationId.value,
         book,
-        chapter,
-        getActiveEndpoint()
+        chapter
       );
 
       bookId.value = book;
@@ -332,10 +345,7 @@ export function createBibleReadingState(
     error.value = null;
 
     try {
-      const chapter = await api.getNextChapter(
-        chapterData.value,
-        getActiveEndpoint()
-      );
+      const chapter = await dataManager.getNextChapter(chapterData.value);
       if (!chapter) {
         return;
       }
@@ -354,14 +364,18 @@ export function createBibleReadingState(
 
     try {
       console.log("Loading available translations...");
-      const translations =
-        await api.getAvailableTranslations(getActiveEndpoint());
-      availableTranslations.value = translations;
+      const loadedTranslations =
+        await dataManager.getTranslations(getActiveEndpoint());
+      availableTranslations.value = toAvailableTranslations(
+        dataManager.availableTranslations.value
+      );
 
-      console.log("loaded", translations);
+      console.log("loaded", availableTranslations.value);
       const currentTranslation = shouldUseFirstAvailableTranslation
-        ? translations.translations[0]
-        : translations.translations.find((t) => t.id === translationId.value);
+        ? loadedTranslations[0]
+        : availableTranslations.value.translations.find(
+            (t) => t.id === translationId.value
+          );
       if (!currentTranslation) {
         if (shouldUseFirstAvailableTranslation) {
           throw new Error("No available translations found for endpoint.");
@@ -374,10 +388,7 @@ export function createBibleReadingState(
       const nextTranslationId = currentTranslation.id;
       translationId.value = nextTranslationId;
 
-      const books = await api.getTranslationBooks(
-        nextTranslationId,
-        getActiveEndpoint()
-      );
+      const books = await dataManager.getTranslationBooks(nextTranslationId);
       translationBooks.value = books;
       const firstBook = books.books[0];
       if (!firstBook) {
@@ -403,11 +414,10 @@ export function createBibleReadingState(
       bookId.value = nextBookId;
       chapterNumber.value = nextChapterNumber;
 
-      const chapter = await api.getTranslationBookChapter(
+      const chapter = await dataManager.getTranslationBookChapter(
         nextTranslationId,
         nextBookId,
-        nextChapterNumber,
-        getActiveEndpoint()
+        nextChapterNumber
       );
 
       chapterData.value = chapter;
