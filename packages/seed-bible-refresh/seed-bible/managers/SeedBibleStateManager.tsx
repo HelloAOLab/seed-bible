@@ -36,8 +36,7 @@ export interface AppState {
 }
 
 export interface SeedBibleState {
-  api: FreeUseBibleAPI;
-  data: BibleDataManager;
+  bibleData: BibleDataManager;
   config: ConfigManager;
   theme: ThemeManager & {
     themeCssVariables: ReadonlySignal<string>;
@@ -141,8 +140,7 @@ export function createSeedBibleState(): SeedBibleState {
   };
 
   const state: SeedBibleState = {
-    api,
-    data,
+    bibleData: data,
     config,
     theme: {
       ...themeManager,
