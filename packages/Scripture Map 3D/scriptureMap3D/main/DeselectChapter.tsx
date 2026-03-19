@@ -1,16 +1,31 @@
+import type { LayoutChapterData } from "bibleVizUtils.models.entities.LayoutChapterData";
 import { tryHideIndicators } from "bibleVizUtils.controllers.userPresence.activityIndicatorsController";
-const { chapterData, layoutData } = that;
+import type { LayoutBibleData } from "bibleVizUtils.models.entities.LayoutBibleData";
+const {
+  chapterData,
+  layoutData,
+}: {
+  chapterData: LayoutChapterData;
+  layoutData: LayoutBibleData;
+} = that;
 
-chapterData.isSelected = false;
+if (!chapterData.piece) {
+  throw new Error("chapterData.piece not defined at DeselectChapter");
+}
+
+chapterData.deselect();
 tryHideIndicators(chapterData.piece);
 const previousLinkedChapter = getBot("lineTo", chapterData.piece.id);
-if (layoutData.currentSelectedChapterData?.id == chapterData.id) {
+if (layoutData.currentSelectedChapterData?.id === chapterData.id) {
   if (previousLinkedChapter) {
-    const previousChapterData = thisBot.GetPieceData({
+    const previousChapterData = await thisBot.GetPieceData({
       piece: previousLinkedChapter,
     });
-    layoutData.currentSelectedChapterData = previousChapterData;
-  } else layoutData.currentSelectedChapterData = null;
+    if (!previousChapterData) {
+      throw new Error("previousChapterData not found at DeselectChapter");
+    }
+    layoutData.selectChapterData(previousChapterData);
+  } else layoutData.clearSelectedChapterData();
 }
 if (previousLinkedChapter) previousLinkedChapter.tags.lineTo = null;
 chapterData.piece.tags.lineTo = null;

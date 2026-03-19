@@ -61,13 +61,15 @@ export class LayoutChapterData {
   }
 
   resetData(): Bot[] {
-    this.#piece = undefined;
-    this.#isActive = false;
-    this.#isSelected = false;
+    const itemsToRelease = [...this.#playlistEntriesItems];
+
+    const piece = this.clearPiece();
+    if (piece) {
+      itemsToRelease.push(piece);
+    }
+    this.deactivate();
+    this.deselect();
     this.#highlightsInfo = [];
-
-    const itemsToRelease = this.#playlistEntriesItems || [];
-
     this.#playlistEntriesItems = [];
 
     return itemsToRelease;

@@ -387,6 +387,7 @@ const staticLayoutPieces = {
     playlistSelectorButton,
   ],
   settingsButton,
+  colorPickerContent,
   sectionLines: [],
   sectionLabels: [],
   testamentLines: [],

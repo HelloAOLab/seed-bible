@@ -13,6 +13,7 @@ import type {
 
 interface StaticLayoutPieces {
   cover: Bot;
+  colorPickerContent: Bot;
   settingsButtons: Bot[];
   settingsButton: Bot;
   sectionLines: Bot[];
@@ -60,6 +61,7 @@ interface DataParams {
   currentPlaylistShownId?: string;
   playlistSelectedEntryIndex?: number;
   playlistEntries?: Bot[];
+  areDatesEnabled?: boolean;
 }
 
 export class LayoutBibleData {
@@ -88,6 +90,7 @@ export class LayoutBibleData {
   #playlistLastSelectedEntryItem:
     | undefined
     | NonNullable<DataParams["playlistEntries"]>[number];
+  #areDatesEnabled: NonNullable<DataParams["areDatesEnabled"]>;
 
   constructor({
     childrenStructures = [],
@@ -101,6 +104,7 @@ export class LayoutBibleData {
     currentPlaylistShownId,
     playlistSelectedEntryIndex = 0,
     playlistEntries = [],
+    areDatesEnabled = false,
   }: DataParams) {
     this.#isDatesEnabled = 2;
     this.#id = id;
@@ -114,6 +118,7 @@ export class LayoutBibleData {
     this.#currentPlaylistShownId = currentPlaylistShownId;
     this.#playlistSelectedEntryIndex = playlistSelectedEntryIndex;
     this.#playlistEntries = playlistEntries;
+    this.#areDatesEnabled = areDatesEnabled;
   }
 
   get childrenStructures() {
@@ -243,6 +248,9 @@ export class LayoutBibleData {
   handleAllBooksSelected() {
     this.#hasSelectAllBooksBeenCalled = true;
   }
+  clearAllBooksSelected() {
+    this.#hasSelectAllBooksBeenCalled = false;
+  }
   get currentSelectedChapterData(): LayoutChapterData | undefined {
     return this.#currentSelectedChapterData;
   }
@@ -292,5 +300,14 @@ export class LayoutBibleData {
   }
   changeDatesEnabled(value: number) {
     this.#isDatesEnabled = value;
+  }
+  get areDatesEnabled() {
+    return this.#areDatesEnabled;
+  }
+  enableDates() {
+    this.#areDatesEnabled = true;
+  }
+  disableDates() {
+    this.#areDatesEnabled = false;
   }
 }

@@ -1,20 +1,33 @@
+import type { LayoutChapterData } from "bibleVizUtils.models.entities.LayoutChapterData";
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 import { GetBotScales, HexToRgb } from "bibleVizUtils.functions.index";
+import { ColorLerpTags } from "bibleVizUtils.models.canvas";
 /**
  * Deselects the chapter, animating its appearance and resetting properties.
  * @example
  * chapter.Deselect();
  */
 
-const chapterData = ScriptureMap3DManager.GetPieceData({ piece: thisBot });
+const chapterData: LayoutChapterData | undefined =
+  await ScriptureMap3DManager.GetPieceData({ piece: thisBot });
+
+if (!chapterData) {
+  throw new Error("chapterData not found at Deselect");
+}
+
 const dimension = os.getCurrentDimension();
 const duration = 0.15;
 const easing = { type: "sinusoidal", mode: "out" };
-const rgbTargetColor = HexToRgb(
-  BibleVizUtils.Data.masks.isInHistoryMode
+const rgbTargetColor = HexToRgb({
+  hexColor: BibleVizUtils.Data.masks.isInHistoryMode
     ? BibleVizUtils.Functions.GetHistoryColor({ piece: thisBot })
-    : (chapterData.highlightColor ?? thisBot.tags.initialColor)
-);
+    : (chapterData.highlightColor ?? thisBot.tags.initialColor),
+});
+console.log(`[Debug] Deselect`, {
+  rgbTargetColor,
+  "chapterData.highlightColor": chapterData.highlightColor,
+  "thisBot.tags.initialColor": thisBot.tags.initialColor,
+});
 // const chapterPosition = getBotPosition(thisBot, dimension);
 const delayBetweenChunkAnimations = 35;
 const chunkAnimationDuration = 0.15;
@@ -56,7 +69,7 @@ await Promise.all([
     endingColor: rgbTargetColor,
     durationInSeconds: duration,
     bot: thisBot,
-    tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color,
+    tag: ColorLerpTags.color,
   }),
   animateTag(thisBot, "labelOpacity", {
     toValue: 0,
