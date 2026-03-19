@@ -1,10 +1,10 @@
 import { signal } from "@preact/signals";
 
-const isSettingsOpen = signal(false);
-const isSidebarCollapsed = signal(false);
-const isMobileOpen = signal(false);
-
 export function createSidebar() {
+  const isSettingsOpen = signal(false);
+  const isSidebarCollapsed = signal(false);
+  const isMobileOpen = signal(false);
+
   const openSettings = () => {
     isSettingsOpen.value = true;
     isMobileOpen.value = false;
