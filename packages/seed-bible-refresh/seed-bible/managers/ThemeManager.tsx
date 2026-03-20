@@ -126,6 +126,11 @@ export interface BibleThemeVariables {
   selectedVerseTextDecoration?: string | null;
 
   /**
+   * The decoration color for selected verses.
+   */
+  selectedVerseTextDecorationColor?: string | null;
+
+  /**
    * The font family for Hebrew text. This should generally be a font that supports Hebrew characters and is optimized for readability, but can be customized as needed.
    */
   hebrewSubtitleFontFamily?: string | null;
@@ -134,6 +139,11 @@ export interface BibleThemeVariables {
    * The font color for Hebrew text. This should generally have good contrast against the readerBackground color for readability, but can be customized as needed.
    */
   hebrewSubtitleFontColor?: string | null;
+
+  /**
+   * The font style for Hebrew subtitle text.
+   */
+  hebrewSubtitleFontStyle?: string | null;
 }
 
 export interface BibleTheme {
@@ -150,6 +160,7 @@ export function generateThemeCssVariables(
   variables: BibleThemeVariables
 ): string {
   return Object.entries(variables)
+    .filter(([, value]) => value !== undefined && value !== null)
     .map(([key, value]) => `--sb-${toKebabCase(key)}: ${value};`)
     .join("\n");
 }
@@ -160,26 +171,47 @@ const LIGHT_THEME: BibleTheme = {
   id: "light",
   name: "Light",
   variables: {
-    primaryColor: "#3c6fe8",
-    secondaryColor: "#d8d8d8",
+    primaryColor: "#e07b4c",
+    secondaryColor: "#faddd1",
     tertiaryColor: "#f0f0f0",
 
-    background: "#F8FAFC",
+    background: "#f8fafc",
 
     sidebarBackground: "transparent",
+    sidebarFontFamily: "inherit",
+    sidebarFontColor: "inherit",
+
     readerBackground: "#ffffff",
+    readerFontFamily: "inherit",
+    readerFontColor: "#333",
 
     bookSelectorBackground: "#ffffff",
-    fontFamily: "Satoshi, system-ui, sans-serif",
-    fontColor: "#222222",
+    bookSelectorFontFamily: "inherit",
+    bookSelectorFontColor: "#333",
 
-    verseFontFamily: "Newsreader, serif",
-    verseFontColor: "#2f2f2f",
-    verseCursor: "text",
-    bookTitleFontColor: "#1f2b57",
+    fontFamily: "Satoshi, system-ui, sans-serif",
+    fontColor: "#333",
+
+    bookTitleFontFamily: "Newsreader, serif",
+    bookTitleFontColor: "#333",
 
     chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
-    chapterHeadingFontColor: "inherit",
+    chapterHeadingFontColor: "#333",
+    chapterHeadingFontStyle: "italic",
+
+    verseFontFamily: "Newsreader, serif",
+    verseFontColor: "#333",
+    verseCursor: "pointer",
+
+    selectedVerseFontFamily: "inherit",
+    selectedVerseFontColor: "inherit",
+    selectedVerseBackgroundColor: "inherit",
+    selectedVerseTextDecoration: "underline",
+    selectedVerseTextDecorationColor: "currentColor",
+
+    hebrewSubtitleFontFamily: "Newsreader, serif",
+    hebrewSubtitleFontColor: "#333",
+    hebrewSubtitleFontStyle: "italic",
   },
 };
 
@@ -192,22 +224,47 @@ export function createTheme() {
       id: "dark",
       name: "Dark",
       variables: {
-        primaryColor: "#4d87ff",
-        secondaryColor: "#444b5b",
-        tertiaryColor: "#2f3542",
-        sidebarBackground: "#1f2430",
-        readerBackground: "#151922",
-        bookSelectorBackground: "#1e242f",
+        primaryColor: "#f0a67c",
+        secondaryColor: "#5c463b",
+        tertiaryColor: "#252a36",
+
+        background: "#121621",
+
+        sidebarBackground: "#161b27",
+        sidebarFontFamily: "inherit",
+        sidebarFontColor: "#d7deef",
+
+        readerBackground: "#1a2230",
+        readerFontFamily: "inherit",
+        readerFontColor: "#d7deef",
+
+        bookSelectorBackground: "#1d2534",
+        bookSelectorFontFamily: "inherit",
+        bookSelectorFontColor: "#d7deef",
 
         fontFamily: "Satoshi, system-ui, sans-serif",
-        fontColor: "#eceff4",
+        fontColor: "#d7deef",
 
-        verseFontFamily: "Newsreader, serif",
-        verseFontColor: "#d6dbe5",
-        bookHeadingColor: "#9cbaff",
+        bookTitleFontFamily: "Newsreader, serif",
+        bookTitleFontColor: "#e7edf9",
 
         chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
-        chapterHeadingFontColor: "inherit",
+        chapterHeadingFontColor: "#d7deef",
+        chapterHeadingFontStyle: "italic",
+
+        verseFontFamily: "Newsreader, serif",
+        verseFontColor: "#d7deef",
+        verseCursor: "pointer",
+
+        selectedVerseFontFamily: "inherit",
+        selectedVerseFontColor: "inherit",
+        selectedVerseBackgroundColor: "inherit",
+        selectedVerseTextDecoration: "underline",
+        selectedVerseTextDecorationColor: "currentColor",
+
+        hebrewSubtitleFontFamily: "Newsreader, serif",
+        hebrewSubtitleFontColor: "#d7deef",
+        hebrewSubtitleFontStyle: "italic",
       },
     },
   ]);
