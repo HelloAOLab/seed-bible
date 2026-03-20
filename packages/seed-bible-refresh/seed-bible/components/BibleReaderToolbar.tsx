@@ -1,4 +1,4 @@
-import { useComputed, useSignal } from "@preact/signals";
+import { batch, useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 
 const { useEffect } = os.appHooks;
@@ -24,10 +24,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const viewportWidth = useSignal(
     typeof window === "undefined" ? 0 : window.innerWidth
   );
+  const viewportHeight = useSignal(
+    typeof window === "undefined" ? 0 : window.innerHeight
+  );
 
   useEffect(() => {
     const onResize = () => {
-      viewportWidth.value = window.innerWidth;
+      batch(() => {
+        viewportWidth.value = window.innerWidth;
+        viewportHeight.value = window.innerHeight;
+      });
     };
 
     window.addEventListener("resize", onResize);
@@ -42,6 +48,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       selectorState: selector,
       tabs: tabs,
       panesManager: panes,
+      window: {
+        innerWidth: viewportWidth,
+        innerHeight: viewportHeight,
+      },
       openSidebar: sidebar.openSidebar,
     })
   );
@@ -52,6 +62,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       selectorState: selector,
       tabs: tabs,
       panesManager: panes,
+      window: {
+        innerWidth: viewportWidth,
+        innerHeight: viewportHeight,
+      },
       openSidebar: sidebar.openSidebar,
     })
   );

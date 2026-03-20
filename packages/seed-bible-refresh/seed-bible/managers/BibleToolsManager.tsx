@@ -18,11 +18,17 @@ export interface BibleTool {
   icon: BibleToolIcon;
 }
 
+export interface WindowContext {
+  innerWidth: ReadonlySignal<number>;
+  innerHeight: ReadonlySignal<number>;
+}
+
 export interface BibleToolContext {
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
   tabs: TabsManager;
   panesManager: PanesManager;
+  window?: WindowContext | null;
   openSidebar: () => void;
 }
 
@@ -54,6 +60,7 @@ export interface EmptyPaneToolContext {
   selectorState: BibleSelectorState;
   currentPane: Pane;
   tabs: TabsManager;
+  window?: WindowContext | null;
 }
 
 export interface BibleEmptyPaneTool extends BibleTool {
@@ -187,8 +194,8 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       icon: MenuIcon,
       isVisible: (context) =>
         !!context.openSidebar &&
-        typeof window !== "undefined" &&
-        window.innerWidth < 768,
+        typeof context.window?.innerWidth.value === "number" &&
+        context.window?.innerWidth.value < 768,
       onSelect: (context) => {
         context.openSidebar?.();
       },
