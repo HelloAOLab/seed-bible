@@ -29,6 +29,10 @@
   --sb-verse-font-color: #333;
   --sb-verse-cursor: pointer;
 
+  --sb-verse-words-of-jesus-color: #c00;
+  --sb-verse-words-of-jesus-font-family: inherit;
+  --sb-verse-words-of-jesus-font-style: inherit;
+
   --sb-selected-verse-font-family: inherit;
   --sb-selected-verse-font-color: inherit;
   --sb-selected-verse-background-color: inherit;
@@ -38,6 +42,16 @@
   --sb-hebrew-subtitle-font-family: "Newsreader", serif;
   --sb-hebrew-subtitle-font-color: #333;
   --sb-hebrew-subtitle-font-style: italic;
+
+  --sb-reader-toolbar-bottom: 18px;
+  --sb-reader-toolbar-gap: 10px;
+  --sb-reader-toolbar-padding: 8px 20px;
+  --sb-reader-toolbar-border-radius: 10px;
+  --sb-reader-toolbar-background: #ffffff;
+  --sb-reader-toolbar-border: 1px solid #00000024;
+  --sb-reader-toolbar-box-shadow: 0 26px 10px #0000001a;
+  --sb-reader-toolbar-z-index: 99;
+  --sb-reader-toolbar-height: 50px;
 }
 
 body {
@@ -92,7 +106,7 @@ button {
 .sb-main-content {
   flex: 1;
   overflow: hidden;
-  background: var(--reader-background);
+  background: var(--sb-reader-background);
   scrollbar-width: none;
   border-radius: 12px;
 }
@@ -103,22 +117,22 @@ button {
   align-items: stretch;
   overflow: hidden;
   position: relative;
-  border-color: color-mix(in srgb, var(--primary-color), transparent 20%);
+  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 20%);
 }
 
 .sb-pane-shell {
   min-width: 0;
   min-height: 0;
   height: 100%;
-  background: var(--reader-background);
+  background: var(--sb-reader-background);
   overflow: hidden;
   scrollbar-width: none;
 }
 
 .sb-pane-shell-active {
-  border-color: color-mix(in srgb, var(--primary-color), transparent 10%);
+  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 10%);
   box-shadow: 0 0 0 1px
-    color-mix(in srgb, var(--primary-color), transparent 45%);
+    color-mix(in srgb, var(--sb-primary-color), transparent 45%);
 }
 
 .sb-pane-shell-detached {
@@ -136,8 +150,8 @@ button {
   align-items: center;
   justify-content: space-between;
   padding: 0 12px;
-  background: color-mix(in srgb, var(--tertiary-color), white 10%);
-  border-bottom: 1px solid var(--secondary-color);
+  background: color-mix(in srgb, var(--sb-secondary-color), white 10%);
+  border-bottom: 1px solid var(--sb-secondary-color);
   cursor: move;
   user-select: none;
 }
@@ -151,7 +165,7 @@ button {
 .sb-pane-detached-close-button {
   border: none;
   background: transparent;
-  color: var(--font-color);
+  color: var(--sb-font-color);
   width: 24px;
   height: 24px;
   border-radius: 6px;
@@ -163,7 +177,7 @@ button {
 }
 
 .sb-pane-detached-close-button:hover {
-  background: color-mix(in srgb, var(--secondary-color), transparent 65%);
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 65%);
 }
 
 .sb-pane-detached-close-button .material-symbols-outlined {
@@ -192,9 +206,10 @@ button {
   bottom: 4px;
   width: 10px;
   height: 10px;
-  border-right: 2px solid color-mix(in srgb, var(--font-color), transparent 35%);
+  border-right: 2px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 35%);
   border-bottom: 2px solid
-    color-mix(in srgb, var(--font-color), transparent 35%);
+    color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
 .sb-pane-component,
@@ -225,11 +240,11 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  border: 1px solid var(--secondary-color);
+  border: 1px solid var(--sb-secondary-color);
   border-radius: 12px;
   padding: 20px 28px;
-  background: var(--tertiary-color);
-  color: var(--font-color);
+  background: var(--sb-secondary-color);
+  color: var(--sb-font-color);
   cursor: pointer;
   font: inherit;
   transition:
@@ -240,10 +255,10 @@ button {
 .sb-empty-pane-toolbar-button:hover {
   background: color-mix(
     in srgb,
-    var(--tertiary-color),
-    var(--secondary-color) 30%
+    var(--sb-secondary-color),
+    var(--sb-secondary-color) 30%
   );
-  border-color: var(--primary-color);
+  border-color: var(--sb-primary-color);
 }
 
 .sb-empty-pane-toolbar-button:disabled {
@@ -260,7 +275,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: color-mix(in srgb, var(--font-color), transparent 35%);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
   font-size: 18px;
   font-style: italic;
 }
@@ -297,8 +312,8 @@ button {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border-top: 1px solid var(--secondary-color);
-  background: var(--reader-background);
+  border-top: 1px solid var(--sb-secondary-color);
+  background: var(--sb-reader-background);
   flex-shrink: 0;
   flex-wrap: wrap;
 }
@@ -311,10 +326,10 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--secondary-color);
+  border: 1px solid var(--sb-secondary-color);
   border-radius: 6px;
-  background: var(--tertiary-color);
-  color: var(--font-color);
+  background: var(--sb-secondary-color);
+  color: var(--sb-font-color);
   cursor: pointer;
   padding: 6px 8px;
   font: inherit;
@@ -328,10 +343,10 @@ button {
 .sb-below-reader-toolbar-button:hover {
   background: color-mix(
     in srgb,
-    var(--tertiary-color),
-    var(--secondary-color) 30%
+    var(--sb-secondary-color),
+    var(--sb-secondary-color) 30%
   );
-  border-color: var(--primary-color);
+  border-color: var(--sb-primary-color);
 }
 
 .sb-below-reader-toolbar-button:disabled {
@@ -348,7 +363,7 @@ button {
 
 .sb-bible-reader-translation {
   font-size: 24px;
-  color: color-mix(in srgb, var(--font-color), transparent 40%);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
 .sb-bible-reader-meta {
@@ -366,11 +381,14 @@ button {
 }
 
 .sb-bible-reader-link-book {
-  color: var(--book-heading-color);
+  font-family: var(--sb-book-title-font-family);
+  color: var(--sb-book-title-font-color);
 }
 
 .sb-bible-reader-link-chapter {
-  color: var(--chapter-heading-color);
+  font-family: var(--sb-chapter-heading-font-family);
+  font-style: var(--sb-chapter-heading-font-style);
+  color: var(--sb-chapter-heading-font-color);
 }
 
 .sb-note-marker {
@@ -381,7 +399,7 @@ button {
   margin-left: 4px;
   border: none;
   background: transparent;
-  color: var(--chapter-heading-color);
+  color: var(--sb-verse-font-color);
   cursor: pointer;
   width: 18px;
   height: 18px;
@@ -399,12 +417,12 @@ button {
 }
 
 .sb-inline-footnote-button:hover {
-  background: color-mix(in srgb, var(--secondary-color), transparent 65%);
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 65%);
 }
 
 .sb-chapter-content {
   line-height: 2;
-  font-family: var(--verse-font-family, "Newsreader"), serif;
+  font-family: var(--sb-verse-font-family, "Newsreader"), serif;
   font-size: 20px;
 
   padding-bottom: 160px;
@@ -412,13 +430,13 @@ button {
 
 .sb-chapter-heading {
   font-family:
-    var(--chapter-heading-font-family, "Plus Jakarta Sans"), sans-serif;
+    var(--sb-chapter-heading-font-family, "Plus Jakarta Sans"), sans-serif;
   margin-top: 18px;
   margin-bottom: 12px;
-  color: var(--chapter-heading-color);
+  color: var(--sb-chapter-heading-font-color);
   font-size: 18px;
   font-weight: 200;
-  font-style: italic;
+  font-style: var(--sb-chapter-heading-font-style, italic);
 }
 
 .sb-line-break {
@@ -426,13 +444,16 @@ button {
 }
 
 .sb-subtitle {
-  font-style: italic;
-  color: var(--verse-text-color);
+  font-family: var(--sb-hebrew-subtitle-font-family);
+  font-style: var(--sb-hebrew-subtitle-font-style);
+  color: var(--sb-hebrew-subtitle-font-color);
 }
 
 .sb-verse {
   margin: 8px 0;
-  color: var(--verse-text-color);
+  color: var(--sb-verse-font-color);
+  font-family: var(--sb-verse-font-family);
+  cursor: var(--sb-verse-cursor);
 }
 
 .sb-verse-poetry {
@@ -473,7 +494,9 @@ button {
 }
 
 .sb-words-of-jesus {
-  color: var(--words-of-jesus-color, #c00);
+  color: var(--sb-verse-words-of-jesus-color);
+  font-family: var(--sb-verse-words-of-jesus-font-family);
+  font-style: var(--sb-verse-words-of-jesus-font-style);
 }
 
 .sb-reader-error {
@@ -495,14 +518,14 @@ button {
 .sb-footnote-modal {
   width: min(720px, 100%);
   max-height: min(640px, calc(100dvh - 32px));
-  background: var(--reader-background);
-  color: var(--font-color);
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
   display: flex;
   flex-direction: column;
   padding: 18px 16px 24px;
   box-sizing: border-box;
   border-radius: 14px;
-  border: 1px solid var(--secondary-color);
+  border: 1px solid var(--sb-secondary-color);
   box-shadow: 0 20px 48px #00000040;
 }
 
@@ -510,22 +533,22 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--secondary-color);
+  border-bottom: 1px solid var(--sb-secondary-color);
   padding-bottom: 10px;
 }
 
 .sb-footnote-modal-title {
   margin: 0;
   font-family:
-    var(--chapter-heading-font-family, "Plus Jakarta Sans"), sans-serif;
+    var(--sb-chapter-heading-font-family, "Plus Jakarta Sans"), sans-serif;
   font-size: 20px;
-  color: var(--chapter-heading-color);
+  color: var(--sb-chapter-heading-font-color);
 }
 
 .sb-footnote-modal-close {
   border: none;
   background: transparent;
-  color: var(--font-color);
+  color: var(--sb-font-color);
   width: 32px;
   height: 32px;
   cursor: pointer;
@@ -536,36 +559,35 @@ button {
 
 .sb-footnote-modal-content {
   margin-top: 16px;
-  font-family: var(--verse-font-family, "Newsreader"), serif;
+  font-family: var(--sb-font-family);
   font-size: 22px;
+  color: var(--sb-font-color);
   line-height: 1.6;
-  color: var(--verse-text-color);
   overflow: auto;
 }
 
 .sb-footnote-modal-reference {
   margin: 0 0 10px 0;
-  font-family:
-    var(--chapter-heading-font-family, "Plus Jakarta Sans"), sans-serif;
+  font-family: var(--sb-font-family);
+  color: var(--sb-font-color);
   font-size: 14px;
   font-weight: 600;
-  color: var(--chapter-heading-color);
 }
 
 .sb-reader-toolbar {
   position: fixed;
   left: 50%;
-  bottom: 18px;
+  bottom: var(--sb-reader-toolbar-bottom);
   transform: translateX(-50%);
   display: flex;
-  gap: 10px;
-  padding: 8px 20px;
-  border-radius: 10px;
-  background: var(--reader-background);
-  border: 1px solid var(--reader-toolbar-border, #00000024);
-  box-shadow: 0 26px 10px #0000001a;
-  z-index: 99;
-  height: 50px;
+  gap: var(--sb-reader-toolbar-gap);
+  padding: var(--sb-reader-toolbar-padding);
+  border-radius: var(--sb-reader-toolbar-border-radius);
+  background: var(--sb-reader-toolbar-background);
+  border: var(--sb-reader-toolbar-border);
+  box-shadow: var(--sb-reader-toolbar-box-shadow);
+  z-index: var(--sb-reader-toolbar-z-index);
+  height: var(--sb-reader-toolbar-height);
 
   transition: transform 0.3s ease;
 }
@@ -611,10 +633,10 @@ button {
   right: 0;
   bottom: calc(100% + 10px);
   min-width: 180px;
-  border-radius: 10px;
-  border: 1px solid var(--secondary-color);
-  background: var(--reader-background);
-  box-shadow: 0 10px 30px #00000014;
+  border-radius: var(--sb-reader-toolbar-border-radius);
+  border: var(--sb-reader-toolbar-border);
+  background: var(--sb-reader-toolbar-background);
+  box-shadow: var(--sb-reader-toolbar-box-shadow);
   padding: 6px;
   display: flex;
   flex-direction: column;
@@ -624,7 +646,6 @@ button {
 .sb-reader-toolbar-more-item {
   border: none;
   background: transparent;
-  color: var(--font-color);
   text-align: left;
   padding: 8px 10px;
   border-radius: 8px;
@@ -635,7 +656,7 @@ button {
 }
 
 .sb-reader-toolbar-more-item:hover {
-  background: var(--tertiary-color);
+  background: var(--sb-secondary-color);
 }
 
 .sb-reader-toolbar-floating-button {
@@ -684,7 +705,7 @@ button {
     width: 52px;
     height: 52px;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--primary-color), white 20%);
+    background: color-mix(in srgb, var(--sb-primary-color), white 20%);
   }
 
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
@@ -697,17 +718,32 @@ button {
 
   .sb-reader-toolbar-floating-button {
     position: absolute;
-    top: -68px;
+    top: var(--sb-reader-toolbar-floating-button-top, -68px);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
-    border: 1px solid var(--reader-toolbar-border, #00000024);
-    border-radius: 999px;
-    background: var(--reader-background);
-    color: var(--font-color);
-    box-shadow: 0 10px 24px #0000001a;
+    width: var(--sb-reader-toolbar-floating-button-width, 48px);
+    height: var(--sb-reader-toolbar-floating-button-height, 48px);
+    border: var(
+      --sb-reader-toolbar-floating-button-border,
+      1px solid #00000024
+    );
+    border-radius: var(
+      --sb-reader-toolbar-floating-button-border-radius,
+      999px
+    );
+    background: var(
+      --sb-reader-toolbar-floating-button-background,
+      var(--sb-reader-toolbar-background)
+    );
+    color: var(
+      --sb-reader-toolbar-floating-button-font-color,
+      var(--sb-reader-toolbar-font-color)
+    );
+    box-shadow: var(
+      --sb-reader-toolbar-floating-button-box-shadow,
+      var(--sb-reader-toolbar-box-shadow, 0 10px 24px #0000001a)
+    );
     cursor: pointer;
   }
 
@@ -724,12 +760,11 @@ button {
   position: fixed;
   transform: translate(-50%, -100%);
   display: flex;
-  gap: 10px;
-  padding: 8px 16px;
-  border-radius: 10px;
-  background: var(--reader-background);
-  border: 1px solid var(--reader-toolbar-border, #00000024);
-  box-shadow: 0 26px 10px #0000001a;
+  gap: var(--sb-verse-toolbar-gap, 10px);
+  padding: var(--sb-verse-toolbar-padding, 8px 16px);
+  border-radius: var(--sb-verse-toolbar-border-radius, 10px);
+  border: 1px solid var(--sb-reader-toolbar-border, #00000024);
+  box-shadow: var(--sb-verse-toolbar-box-shadow, 0 26px 10px #0000001a);
   z-index: 100;
   min-height: 50px;
 }

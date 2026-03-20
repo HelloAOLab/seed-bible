@@ -144,6 +144,51 @@ export interface BibleThemeVariables {
    * The font style for Hebrew subtitle text.
    */
   hebrewSubtitleFontStyle?: string | null;
+
+  /**
+   * The bottom offset for the reader toolbar.
+   */
+  readerToolbarBottom?: string | null;
+
+  /**
+   * The gap between items in the reader toolbar.
+   */
+  readerToolbarGap?: string | null;
+
+  /**
+   * The padding for the reader toolbar.
+   */
+  readerToolbarPadding?: string | null;
+
+  /**
+   * The border radius for the reader toolbar.
+   */
+  readerToolbarBorderRadius?: string | null;
+
+  /**
+   * The background color of the reader toolbar.
+   */
+  readerToolbarBackground?: string | null;
+
+  /**
+   * The border for the reader toolbar.
+   */
+  readerToolbarBorder?: string | null;
+
+  /**
+   * The box shadow for the reader toolbar.
+   */
+  readerToolbarBoxShadow?: string | null;
+
+  /**
+   * The z-index for the reader toolbar.
+   */
+  readerToolbarZIndex?: string | null;
+
+  /**
+   * The height of the reader toolbar.
+   */
+  readerToolbarHeight?: string | null;
 }
 
 export interface BibleTheme {
@@ -212,6 +257,16 @@ const LIGHT_THEME: BibleTheme = {
     hebrewSubtitleFontFamily: "Newsreader, serif",
     hebrewSubtitleFontColor: "#333",
     hebrewSubtitleFontStyle: "italic",
+
+    readerToolbarBottom: "18px",
+    readerToolbarGap: "10px",
+    readerToolbarPadding: "8px 20px",
+    readerToolbarBorderRadius: "10px",
+    readerToolbarBackground: "#ffffff",
+    readerToolbarBorder: "1px solid #00000024",
+    readerToolbarBoxShadow: "0 26px 10px #0000001a",
+    readerToolbarZIndex: "99",
+    readerToolbarHeight: "50px",
   },
 };
 
@@ -265,6 +320,16 @@ export function createTheme() {
         hebrewSubtitleFontFamily: "Newsreader, serif",
         hebrewSubtitleFontColor: "#d7deef",
         hebrewSubtitleFontStyle: "italic",
+
+        readerToolbarBottom: "18px",
+        readerToolbarGap: "10px",
+        readerToolbarPadding: "8px 20px",
+        readerToolbarBorderRadius: "10px",
+        readerToolbarBackground: "#1a2230",
+        readerToolbarBorder: "1px solid rgba(255, 255, 255, 0.08)",
+        readerToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.4)",
+        readerToolbarZIndex: "99",
+        readerToolbarHeight: "50px",
       },
     },
   ]);
