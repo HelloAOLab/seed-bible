@@ -51,7 +51,6 @@ button {
   flex: 1;
   overflow: hidden;
   border: 1px solid var(--secondary-color);
-  border-radius: 12px;
   background: var(--reader-background);
   scrollbar-width: none;
 }
@@ -70,8 +69,6 @@ button {
   min-height: 0;
   height: 100%;
   background: var(--reader-background);
-  border: 1px solid var(--secondary-color);
-  border-radius: 12px;
   overflow: hidden;
   scrollbar-width: none;
 }
@@ -367,6 +364,8 @@ button {
   line-height: 2;
   font-family: var(--verse-font-family, "Newsreader"), serif;
   font-size: 20px;
+
+  padding-bottom: 160px;
 }
 
 .sb-chapter-heading {
