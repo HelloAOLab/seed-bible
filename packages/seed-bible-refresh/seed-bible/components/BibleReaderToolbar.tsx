@@ -80,7 +80,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const overflowTools = useComputed(() =>
     tools.value.filter(
       (tool) =>
-        tool.visible &&
+        tool.visible.value &&
         tool.id !== "previous-chapter" &&
         tool.id !== "next-chapter" &&
         tool.id !== "open-selector" &&
@@ -130,7 +130,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         <div className="sb-reader-toolbar-wrap">
           {isSmallScreen.value && previousChapterTool.value && (
             <button
-              disabled={previousChapterTool.value.disabled}
+              disabled={previousChapterTool.value.disabled.value}
               onClick={previousChapterTool.value.onSelect}
               className="sb-reader-toolbar-floating-button sb-reader-toolbar-floating-button-left"
               aria-label={previousChapterTool.value.title}
@@ -141,7 +141,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
           {isSmallScreen.value && nextChapterTool.value && (
             <button
-              disabled={nextChapterTool.value.disabled}
+              disabled={nextChapterTool.value.disabled.value}
               onClick={nextChapterTool.value.onSelect}
               className="sb-reader-toolbar-floating-button sb-reader-toolbar-floating-button-right"
               aria-label={nextChapterTool.value.title}
@@ -158,7 +158,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 <div className="sb-reader-toolbar-item">
                   <button
                     disabled={
-                      !openSidebarTool.value || openSidebarTool.value.disabled
+                      !openSidebarTool.value ||
+                      openSidebarTool.value.disabled.value
                     }
                     onClick={() => {
                       openSidebarTool.value?.onSelect();
@@ -177,7 +178,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 <div className="sb-reader-toolbar-item sb-reader-toolbar-center-item">
                   <button
                     disabled={
-                      !openSelectorTool.value || openSelectorTool.value.disabled
+                      !openSelectorTool.value ||
+                      openSelectorTool.value.disabled.value
                     }
                     onClick={() => {
                       openSelectorTool.value?.onSelect();
@@ -209,10 +211,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         <div className="sb-reader-toolbar-more-menu">
                           {overflowTools.value.map((tool) => {
                             const ToolIcon = tool.icon;
-                            return tool.visible ? (
+                            return tool.visible.value ? (
                               <button
                                 key={tool.id}
-                                disabled={tool.disabled}
+                                disabled={tool.disabled.value}
                                 onClick={() => {
                                   tool.onSelect();
                                   isMoreMenuOpen.value = false;
@@ -233,10 +235,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             ) : (
               tools.value.map((tool) => {
                 const ToolIcon = tool.icon;
-                return tool.visible ? (
+                return tool.visible.value ? (
                   <div key={tool.id} className="sb-reader-toolbar-item">
                     <button
-                      disabled={tool.disabled}
+                      disabled={tool.disabled.value}
                       onClick={tool.onSelect}
                       className="sb-reader-toolbar-button"
                     >
@@ -266,10 +268,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           <div className="sb-verse-toolbar-tools">
             {verseToolbarTools.value.map((tool) => {
               const ToolIcon = tool.icon;
-              return tool.visible ? (
+              return tool.visible.value ? (
                 <div key={tool.id} className="sb-reader-toolbar-item">
                   <button
-                    disabled={tool.disabled}
+                    disabled={tool.disabled.value}
                     onClick={tool.onSelect}
                     className="sb-reader-toolbar-button"
                   >

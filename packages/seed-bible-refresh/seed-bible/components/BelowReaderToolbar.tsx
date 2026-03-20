@@ -46,10 +46,10 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     <div className="sb-below-reader-toolbar">
       {tools.map((tool) => {
         const ToolIcon = tool.icon;
-        return tool.visible ? (
+        return tool.visible.value ? (
           <div key={tool.id} className="sb-below-reader-toolbar-item">
             <button
-              disabled={tool.disabled}
+              disabled={tool.disabled.value}
               onClick={tool.onSelect}
               className="sb-below-reader-toolbar-button"
               aria-label={tool.title}

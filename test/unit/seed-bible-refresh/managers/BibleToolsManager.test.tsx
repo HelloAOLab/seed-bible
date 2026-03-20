@@ -109,13 +109,46 @@ describe("createBibleToolsManager", () => {
 
     const customTool = tools.find((tool) => tool.id === CUSTOM_TOOL_ID);
     expect(customTool).toBeDefined();
-    expect(customTool?.visible).toBe(true);
-    expect(customTool?.disabled).toBe(true);
+    expect(customTool?.visible.value).toBe(true);
+    expect(customTool?.disabled.value).toBe(true);
     expect(tools.some((tool) => tool.id === `${CUSTOM_TOOL_ID}-hidden`)).toBe(
       false
     );
 
     manager.unregisterToolbarTool(`${CUSTOM_TOOL_ID}-hidden`);
+  });
+
+  it("getToolbarTools() supports signal results for visibility and disabled", () => {
+    const manager = createBibleToolsManager();
+    const context = createContext();
+    const isVisible = signal(true);
+    const isDisabled = signal(false);
+
+    manager.registerToolbarTool({
+      id: CUSTOM_TOOL_ID,
+      priority: 50,
+      title: "Custom Tool",
+      icon: () => <span>icon</span>,
+      isVisible: () => isVisible,
+      isDisabled: () => isDisabled,
+      onSelect: jest.fn(),
+    });
+
+    let tools = manager.getToolbarTools(context);
+    expect(tools.some((tool) => tool.id === CUSTOM_TOOL_ID)).toBe(true);
+    expect(tools.find((tool) => tool.id === CUSTOM_TOOL_ID)?.disabled).toBe(
+      false
+    );
+
+    isDisabled.value = true;
+    tools = manager.getToolbarTools(context);
+    expect(
+      tools.find((tool) => tool.id === CUSTOM_TOOL_ID)?.disabled.value
+    ).toBe(true);
+
+    isVisible.value = false;
+    tools = manager.getToolbarTools(context);
+    expect(tools.some((tool) => tool.id === CUSTOM_TOOL_ID)).toBe(false);
   });
 
   it("registerVerseToolbarTool() registers a verse toolbar tool", () => {

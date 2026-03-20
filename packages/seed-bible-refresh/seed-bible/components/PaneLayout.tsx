@@ -32,10 +32,10 @@ function EmptyPaneToolbar({
     <div className="sb-empty-pane-toolbar">
       {tools.map((tool) => {
         const ToolIcon = tool.icon;
-        return tool.visible ? (
+        return tool.visible.value ? (
           <div key={tool.id} className="sb-empty-pane-toolbar-item">
             <button
-              disabled={tool.disabled}
+              disabled={tool.disabled.value}
               onClick={(event: MouseEvent) => {
                 event.stopPropagation();
                 tool.onSelect();
