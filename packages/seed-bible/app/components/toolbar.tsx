@@ -269,18 +269,18 @@ export function Toolbar() {
 
             <div
               onClick={() => {
-                if (activeMoreApp || activeApp) {
-                  if (activeMoreApp) {
-                    G.RemoveApplicationByLabel(activeMoreApp);
-                    setActiveMoreApp(null);
-                    G.setOpenSidebar(true);
-                  }
-                  G.makingApp = null;
-                } else {
-                  G.setOpenSidebar(!G.openSidebar);
-                }
+                // if (activeMoreApp || activeApp) {
+                //   if (activeMoreApp) {
+                //     G.RemoveApplicationByLabel(activeMoreApp);
+                //     setActiveMoreApp(null);
+                //     G.setOpenSidebar(true);
+                //   }
+                //   G.makingApp = null;
+                // } else {
+                G.setOpenSidebar(!G.openSidebar);
+                // }
                 G.setSelectingTranslation(false);
-                setShowMoreMenu(false);
+                // setShowMoreMenu(false);
               }}
               className="mobile-center-logo"
             >
