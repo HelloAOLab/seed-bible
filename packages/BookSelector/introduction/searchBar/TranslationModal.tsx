@@ -542,6 +542,13 @@ const LanguageComponent = (props: {
                           console.log(e);
                         });
                     }
+                    if (globalThis?.ActiveMoreApp) {
+                      (globalThis as any).RemoveApplicationByLabel(
+                        ActiveMoreApp
+                      );
+                      (globalThis as any).makingApp = null;
+                      globalThis?.SetActiveMoreApp(null);
+                    }
                   }}
                   style={{
                     background:
