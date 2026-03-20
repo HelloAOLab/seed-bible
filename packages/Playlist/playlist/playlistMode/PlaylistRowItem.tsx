@@ -117,6 +117,7 @@ const PlaylistRowItem = (props: any) => {
     isLayers,
     access,
     onSelectPlaylist = null,
+    draggable = true,
   } = props;
   const isCustomIcons = icon?.startsWith("https") || isCustomIcon;
   const [warningMessage, setWarningMsg] = useState(null);
@@ -484,7 +485,7 @@ const PlaylistRowItem = (props: any) => {
         }}
         style={{ zIndex: 100 - playListIndex, position: "relative" }}
         onDragEnd={handleDragEnd}
-        draggable={!isPlayingPLaylist && !viewOnly}
+        draggable={!isPlayingPLaylist && !viewOnly && draggable}
         className={`playlist ${(isPlayingPLaylist || isPlay) && "playingPlaylist-removeme"} ${id === opendedList ? "opened" : ""}  ${dragOverSet.itemId === id && `dropabble-${dragOverSet.position}`}`}
       >
         <div

@@ -9,11 +9,12 @@ const RenderIcon = (props: any) => {
     icon,
     list = [],
     onDelete,
+    isReadingPlan,
   } = props;
   const [mylist, setMylist] = useState(list);
 
   const firstItemID = useMemo(() => {
-    let name = "🎶";
+    let name = isReadingPlan ? "📖" : "🎶";
     const firstItem = mylist.find((ele: any) => G.ValidTypes[ele?.type]);
     if (firstItem) {
       const lowerCase = firstItem?.additionalInfo?.book?.toLocaleLowerCase();

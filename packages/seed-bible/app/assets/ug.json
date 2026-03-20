@@ -160,5 +160,12 @@
   "readingPlan": "ئوقۇش پىلانى",
   "readingPlanTooltip": "پىلان ھالىتى پىلان تىزىملىكىڭىزگە چېسلا قوشۇشقا ياردەم بېرىپ، چېسلا ۋە ئىلگىرىلىشىنى ئىز قوغلىيالايسىز.",
   "cannotDeleteFirstDayOfReadingPlan": "ئوقۇش پىلانىنىڭ تۇنجى كۈنىنى ئۆچۈرەلمەيسىز!",
+  "firstItemMustBeDateForReadingPlan": "ئوقۇش پىلانىدا تۇنجى تۈر چېسلا بولۇشى كېرەك.",
+  "cannotEmbedDateItemsInAReadingPlan": "ئوقۇش پىلانىدا چېسلا قۇرىغا تۈر قاندۇرۇشقا بولمايدۇ.",
+  "readingPlanSettings": "ئوقۇش پىلانى تەڭشىكى",
+  "readingPlanSettingsTooltip": "ئېھتىياجىڭىزغا ئاساسەن ئوقۇش پىلانى تەڭشىكىنى ئۆزگەرتىڭ.",
+  "groupPlan": "گۇرۇپپا پىلانى",
+  "groupPlanTooltip": "ئابونىچىلارنىڭ گۇرۇپپا شەكلىدە ئوقۇش پىلانىڭىزغا قوشۇلۇپ بىللە ئوقۇشىغا يول قويىدۇ.",
+  "readingPlanName": "ئوقۇش پىلانى نامى",
   "readingPlans": "ئوقۇش پىلانلىرى"
 }

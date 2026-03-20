@@ -71,7 +71,9 @@ const AttachLinkItem = (props: any) => {
   const [editDateModal, setEditDateModal] = useState(false);
   const datePickerRef = useRef<any>(null);
   const [date, setDate] = useState(
-    G.FORMAT_YYYY_MM_DD(data.additionalInfo.date || new Date())
+    data.additionalInfo.subType === "date"
+      ? G.FORMAT_YYYY_MM_DD(data.additionalInfo.date || new Date())
+      : data.additionalInfo.date
   );
 
   useLayoutEffect(() => {
@@ -515,6 +517,7 @@ const AttachLinkItem = (props: any) => {
             </p>
           )}
           {editAbleTypes[data.additionalInfo.type || data.type] &&
+            data.additionalInfo.subType !== "day" &&
             creatingPlaylist &&
             !viewOnly && (
               <p

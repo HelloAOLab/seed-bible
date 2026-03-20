@@ -160,5 +160,12 @@
   "readingPlan": "План читання",
   "readingPlanTooltip": "Режим плану дозволяє додавати дати до плейлиста для відстеження дати й прогресу.",
   "cannotDeleteFirstDayOfReadingPlan": "Неможливо видалити перший день плану читання!",
+  "firstItemMustBeDateForReadingPlan": "Для плану читання першим елементом має бути дата.",
+  "cannotEmbedDateItemsInAReadingPlan": "Неможливо вбудовувати елементи в рядки з датою в плані читання.",
+  "readingPlanSettings": "Налаштування плану читання",
+  "readingPlanSettingsTooltip": "Змінюйте налаштування плану читання відповідно до ваших потреб.",
+  "groupPlan": "Груповий план",
+  "groupPlanTooltip": "Дозволяє користувачам приєднатися до вашого плану читання групою й читати разом.",
+  "readingPlanName": "Назва плану читання",
   "readingPlans": "Плани читання"
 }

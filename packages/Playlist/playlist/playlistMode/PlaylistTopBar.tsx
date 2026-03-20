@@ -2,8 +2,8 @@ const G = globalThis as any;
 const { useMemo } = os.appHooks;
 
 const PlaylistTopBar = (props: any) => {
-  const [PlaylistIconT, AnnotationIconT] = useMemo(() => {
-    return [G.PlaylistIcon, G.AnnotationIcon];
+  const [PlaylistIconT, AnnotationIconT, ReadingPlanIconT] = useMemo(() => {
+    return [G.PlaylistIcon, G.AnnotationIcon, G.ReadingPlanIcon];
   }, []);
 
   const {
@@ -100,7 +100,7 @@ const PlaylistTopBar = (props: any) => {
           }}
         >
           <div className="align-center" style={{ gap: "0.5rem" }}>
-            <AnnotationIconT />
+            <ReadingPlanIconT />
             <span style={{ fontFamily: `"Satoshi", system-ui, sans-serif` }}>
               {t("readingPlan")}
             </span>

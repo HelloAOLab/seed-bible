@@ -1094,8 +1094,19 @@ const PlaylistIcon = ({ className = "img-icon-secondary" }) => {
   );
 };
 
+const ReadingPlanIcon = ({ className = "img-icon" }) => {
+  return (
+    <MenuIcon
+      size={16}
+      className={className}
+      name="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/1a434287-4a50-4122-a7e9-f3c02382f7a6/bdff110837660763e5be50768941d4ef9a40c9995457d5c4556001d824332871.png"
+    />
+  );
+};
+
 G.AnnotationIcon = AnnotationIcon;
 G.PlaylistIcon = PlaylistIcon;
+G.ReadingPlanIcon = ReadingPlanIcon;
 
 const getVerseSummaryHeading = (verses: number[]) => {
   const ranges = [];

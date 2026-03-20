@@ -160,5 +160,12 @@
   "readingPlan": "پڑھنے کا منصوبہ",
   "readingPlanTooltip": "پلان موڈ آپ کو اپنی پلے لسٹ میں تاریخیں شامل کرنے دیتا ہے تاکہ تاریخ کے مطابق ترقی ٹریک رہے۔",
   "cannotDeleteFirstDayOfReadingPlan": "آپ پڑھنے کے منصوبے کا پہلا دن حذف نہیں کر سکتے!",
+  "firstItemMustBeDateForReadingPlan": "پڑھنے کے منصوبے کے لیے پہلا آئٹم تاریخ ہونا چاہیے۔",
+  "cannotEmbedDateItemsInAReadingPlan": "پڑھنے کے منصوبے میں تاریخ کی قطاروں میں آئٹمز شامل نہیں کر سکتے۔",
+  "readingPlanSettings": "پڑھنے کے منصوبے کی ترتیبات",
+  "readingPlanSettingsTooltip": "اپنی ضرورت کے مطابق پڑھنے کے منصوبے کی ترتیبات تبدیل کریں۔",
+  "groupPlan": "گروپ منصوبہ",
+  "groupPlanTooltip": "صارفین کو مجموعہ کے طور پر آپ کے پڑھنے کے منصوبے میں شامل ہو کر ساتھ پڑھنے دیتا ہے۔",
+  "readingPlanName": "پڑھنے کے منصوبے کا نام",
   "readingPlans": "پڑھنے کے منصوبے"
 }

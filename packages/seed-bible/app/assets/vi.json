@@ -160,5 +160,12 @@
   "readingPlan": "Kế hoạch đọc",
   "readingPlanTooltip": "Chế độ kế hoạch cho phép bạn thêm ngày vào danh sách phát để theo dõi tiến độ theo ngày.",
   "cannotDeleteFirstDayOfReadingPlan": "Bạn không thể xóa ngày đầu tiên của kế hoạch đọc!",
+  "firstItemMustBeDateForReadingPlan": "Với kế hoạch đọc, mục đầu tiên phải là một ngày.",
+  "cannotEmbedDateItemsInAReadingPlan": "Bạn không thể nhúng mục vào các hàng ngày trong kế hoạch đọc.",
+  "readingPlanSettings": "Cài đặt kế hoạch đọc",
+  "readingPlanSettingsTooltip": "Thay đổi cài đặt kế hoạch đọc theo nhu cầu của bạn.",
+  "groupPlan": "Kế hoạch nhóm",
+  "groupPlanTooltip": "Cho phép người dùng tham gia kế hoạch đọc theo nhóm và đọc cùng nhau.",
+  "readingPlanName": "Tên kế hoạch đọc",
   "readingPlans": "Các kế hoạch đọc"
 }

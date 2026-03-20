@@ -160,5 +160,12 @@
   "readingPlan": "برنامه مطالعه",
   "readingPlanTooltip": "حالت برنامه به شما امکان می‌دهد در لیست پخش خود تاریخ اضافه کنید تا پیشرفت را مطابق تاریخ پیگیری کنید.",
   "cannotDeleteFirstDayOfReadingPlan": "نمی‌توانید روز اول برنامه مطالعه را حذف کنید!",
+  "firstItemMustBeDateForReadingPlan": "برای برنامه مطالعه، اولین مورد باید تاریخ باشد.",
+  "cannotEmbedDateItemsInAReadingPlan": "در برنامه مطالعه نمی‌توانید موارد را در ردیف‌های تاریخ جاسازی کنید.",
+  "readingPlanSettings": "تنظیمات برنامه مطالعه",
+  "readingPlanSettingsTooltip": "تنظیمات برنامه مطالعه را مطابق نیاز خود تغییر دهید.",
+  "groupPlan": "برنامه گروهی",
+  "groupPlanTooltip": "به کاربران اجازه می‌دهد به‌صورت گروهی به برنامه مطالعه شما بپیوندند و با هم بخوانند.",
+  "readingPlanName": "نام برنامه مطالعه",
   "readingPlans": "برنامه‌های مطالعه"
 }

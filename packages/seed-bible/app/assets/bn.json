@@ -160,5 +160,12 @@
   "readingPlan": "পাঠের পরিকল্পনা",
   "readingPlanTooltip": "পরিকল্পনা মোড আপনাকে প্লেলিস্টে তারিখ যোগ করতে দেয় যাতে তারিখ অনুযায়ী অগ্রগতি ট্র্যাক করা যায়।",
   "cannotDeleteFirstDayOfReadingPlan": "আপনি একটি পাঠের পরিকল্পনার প্রথম দিন মুছে ফেলতে পারবেন না!",
+  "firstItemMustBeDateForReadingPlan": "পাঠের পরিকল্পনার জন্য প্রথম আইটেমটি তারিখ হতে হবে।",
+  "cannotEmbedDateItemsInAReadingPlan": "পাঠের পরিকল্পনায় তারিখের সারিতে আইটেম এম্বেড করা যাবে না।",
+  "readingPlanSettings": "পাঠের পরিকল্পনা সেটিং",
+  "readingPlanSettingsTooltip": "আপনার প্রয়োজন অনুযায়ী পাঠের পরিকল্পনার সেটিং পরিবর্তন করুন।",
+  "groupPlan": "গ্রুপ পরিকল্পনা",
+  "groupPlanTooltip": "ব্যবহারকারীদের গ্রুপ হিসেবে আপনার পাঠের পরিকল্পনায় যোগ দিয়ে একসাথে পড়তে দেয়।",
+  "readingPlanName": "পাঠের পরিকল্পনার নাম",
   "readingPlans": "পাঠের পরিকল্পনাসমূহ"
 }

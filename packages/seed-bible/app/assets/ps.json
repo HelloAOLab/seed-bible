@@ -160,5 +160,12 @@
   "readingPlan": "د لوستلو پلان",
   "readingPlanTooltip": "د پلان حالت تاسو ته اجازه درکوي چې پلې لسټ کې نېټې زیات کړئ ترڅو د نېټې مطابق پرمختګ تعقیب کړئ.",
   "cannotDeleteFirstDayOfReadingPlan": "تاسو د لوستلو پلان لومړۍ ورځ ړنګولی نشئ!",
+  "firstItemMustBeDateForReadingPlan": "د لوستلو پلان لپاره لومړی توکی باید نیټه وي.",
+  "cannotEmbedDateItemsInAReadingPlan": "په لوستلو پلان کې د نیټې په قطارونو کې توکي نشئ ځای کېولی.",
+  "readingPlanSettings": "د لوستلو پلان تنظیمات",
+  "readingPlanSettingsTooltip": "د خپلو اړتیاوو سره سم د لوستلو پلان تنظیمات بدل کړئ.",
+  "groupPlan": "ګروپ پلان",
+  "groupPlanTooltip": "کاروونکو ته اجازه ورکوي چې د لوستلو پلان کې د ګروپ په توګه ګډون وکړي او ګډه ولولي.",
+  "readingPlanName": "د لوستلو پلان نوم",
   "readingPlans": "د لوستلو پلانونه"
 }

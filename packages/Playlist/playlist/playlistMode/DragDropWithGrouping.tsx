@@ -65,6 +65,7 @@ const DragDrop = (props: any) => {
     description,
     isCustomIcon,
     onSelectPlaylist = null,
+    firstItemDraggable = false,
   } = props;
 
   const [opendedList, setOpenedList] = useState("");
@@ -163,6 +164,10 @@ const DragDrop = (props: any) => {
 
     let draggedOverItem = transformedHistory[index];
 
+    const isDragOverDate = draggedOverItem.type === "date";
+
+    const isDateAndCenter = isDragOverDate && isNearCenter;
+
     if (pseudoID) {
       const parentIndexDragOver = transformedHistory.findIndex(
         (ele: any) => ele.id === pseudoID
@@ -195,7 +200,7 @@ const DragDrop = (props: any) => {
       setDragoverSet({
         itemId: draggedOverItem.id,
         position:
-          isNearCenter && !pseudoID
+          isNearCenter && !pseudoID && !isDateAndCenter
             ? "Embed"
             : originalRespectiveIndex > draggedItemIndex
               ? "Bottom"
@@ -221,7 +226,7 @@ const DragDrop = (props: any) => {
         0,
         ...dragItem
       );
-    } else if (isNearCenter) {
+    } else if (isNearCenter && !isDateAndCenter) {
       const indexForNew = newItems.findIndex(
         (ele: any) => ele.id === draggedOverItem.id
       );
@@ -289,6 +294,28 @@ const DragDrop = (props: any) => {
       if (dragItem.additionalInfo.layers?.length) {
         ShowNotification({
           message: t("cannotEmbedEmbeddedItem"),
+          severity: "error",
+        });
+        return;
+      }
+    }
+    if (readingPlanEnabled) {
+      const isFirstItemNotDate = toBeSetItems.current[0].type !== "date";
+      if (isFirstItemNotDate) {
+        ShowNotification({
+          message: t("firstItemMustBeDateForReadingPlan"),
+          severity: "error",
+        });
+        return;
+      }
+
+      const anyEmbededDateItems = toBeSetItems.current.some(
+        (item: any) =>
+          item.type === "date" && item.additionalInfo.layers?.length > 0
+      );
+      if (anyEmbededDateItems) {
+        ShowNotification({
+          message: t("cannotEmbedDateItemsInAReadingPlan"),
           severity: "error",
         });
         return;
@@ -392,6 +419,7 @@ const DragDrop = (props: any) => {
             itemSelected={itemSelected}
             setItemSelected={setItemSelected}
             attachLink={attachLink}
+            firstItemDraggable={firstItemDraggable}
             massAdd={massAdd}
             draggedItemID={draggedItemID}
             setRef={setRef}
@@ -470,6 +498,7 @@ const DragDrop = (props: any) => {
             dragOverSet={dragOverSet}
             handleDragOver={handleDragOver}
             playListIndex={index}
+            draggable={firstItemDraggable || index > 0}
             index={index}
             list={data.list}
             key={data.id}
@@ -485,6 +514,7 @@ const DragDrop = (props: any) => {
         ) : data.type === "attachment-link" || data.type === "date" ? (
           <AttachmentLinkItem
             linkingMode={linkingMode}
+            draggable={firstItemDraggable || index > 0}
             viewOnly={viewOnly}
             isSomethingEmbededChecked={isSomethingEmbededChecked}
             datesRepeat={datesRepeat}
@@ -527,7 +557,11 @@ const DragDrop = (props: any) => {
           <>
             <div
               key={`${data.id}-${data.readAlready}`}
-              draggable={!playingPlaylist && !viewOnly}
+              draggable={
+                !playingPlaylist &&
+                !viewOnly &&
+                (firstItemDraggable || index > 0)
+              }
               onMouseDown={(e) => e.stopPropagation()} // block parent drag
               onDragStart={() => handleDragStart(index)}
               onDragOver={(e) => handleDragOver(index, null, null, e)}
@@ -625,6 +659,13 @@ const DragDrop = (props: any) => {
 
                       if (!embedding && layers && !playingPlaylist) {
                         if (G.KEY_HOLD?.["control"] || G.KEY_HOLD?.["meta"]) {
+                          if (readingPlanEnabled && data.type === "date") {
+                            ShowNotification({
+                              message: t("cannotEmbedDateItemsInAReadingPlan"),
+                              severity: "error",
+                            });
+                            return;
+                          }
                           setEmbedding(data.id);
                           return;
                         }
@@ -717,6 +758,13 @@ const DragDrop = (props: any) => {
                             severity: "error",
                           });
                         } else {
+                          if (readingPlanEnabled && data.type === "date") {
+                            ShowNotification({
+                              message: t("cannotEmbedDateItemsInAReadingPlan"),
+                              severity: "error",
+                            });
+                            return;
+                          }
                           setEmbedding(data.id);
                           if (checkListData[data.id]) {
                             editDataFromPlaylist(data.id, false);
@@ -814,6 +862,7 @@ const PlaylistContentRenderer = (props: any) => {
     deleteFromList,
     dragOverSet,
     isAdditionalInfo,
+    firstItemDraggable,
   } = props;
   const [open, setOpen] = useState(false);
   const prevAutoOpen = useRef(false);
@@ -863,7 +912,9 @@ const PlaylistContentRenderer = (props: any) => {
   return (
     <div>
       <div
-        draggable={!playingPlaylist && !viewOnly}
+        draggable={
+          !playingPlaylist && !viewOnly && (firstItemDraggable || index > 0)
+        }
         tabIndex={0}
         className={`history-item ${extraClasses}`}
         onClick={(e) => {
@@ -953,6 +1004,13 @@ const PlaylistContentRenderer = (props: any) => {
                 }
                 if (!embedding && layers && !playingPlaylist) {
                   if (G.KEY_HOLD?.["control"] || G.KEY_HOLD?.["meta"]) {
+                    if (readingPlanEnabled && data.type === "date") {
+                      ShowNotification({
+                        message: t("cannotEmbedDateItemsInAReadingPlan"),
+                        severity: "error",
+                      });
+                      return;
+                    }
                     setEmbedding(data.id);
                     return;
                   }
@@ -1032,6 +1090,13 @@ const PlaylistContentRenderer = (props: any) => {
                 className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (readingPlanEnabled && data.type === "date") {
+                    ShowNotification({
+                      message: t("cannotEmbedDateItemsInAReadingPlan"),
+                      severity: "error",
+                    });
+                    return;
+                  }
                   setEmbedding(data.id);
                 }}
               >

@@ -178,8 +178,6 @@ const CreatePlaylistUI = (props: any) => {
   const [mergeMode, setMergeMode] = useState(false);
   const [renderAgain, setRenderAgain] = useState(0);
 
-  const [checklist, setChecklist] = useState(false);
-  const [readingPlan, setReadingPlan] = useState(false);
   const [currentFormat, setCurrentFormat] = useState("MM-DD-YYYY");
 
   const [currentPromptText, setCurrentPromptText] = useState("prompt");
@@ -858,8 +856,8 @@ const CreatePlaylistUI = (props: any) => {
 
   const isSomethingEmbededChecked = Object.keys(checkListEmbeded).length > 0;
 
-  const PlaylistIconT = useMemo(() => {
-    return G.PlaylistIcon;
+  const [PlaylistIconT, ReadingPlanIconT] = useMemo(() => {
+    return [G.PlaylistIcon, G.ReadingPlanIcon];
   }, []);
 
   const DragDropT = useMemo(() => {
@@ -912,6 +910,11 @@ const CreatePlaylistUI = (props: any) => {
 
   const isReadingPlan = mode == PlaylistModeTypes.readingPlan;
   const isAnnotation = mode == PlaylistModeTypes.annotations;
+
+  // Setting Configs
+  const [checklist, setChecklist] = useState(isReadingPlan || false);
+  const [groupPlan, setGroupPlan] = useState(false);
+  const [readingPlan, setReadingPlan] = useState(isReadingPlan || false);
 
   // Reading plan config
 
@@ -1233,151 +1236,160 @@ const CreatePlaylistUI = (props: any) => {
             }}
             className="overlay linked-item-custom"
           >
-            <p>
-              <b>{t("publishSettings")}</b>
-            </p>
-            <span style={{ fontSize: "10px" }}>{t("publishSettingsDesc")}</span>
-            <div
-              className="more-menu-items"
-              onClick={() => {
-                setPublishAccess("private");
-              }}
-            >
-              <span class="material-symbols-outlined">lock</span>
-              <p>{t("privateAccess")}</p>
-              <span class="material-symbols-outlined">
-                {publishAccess === "private"
-                  ? "radio_button_checked"
-                  : "radio_button_unchecked"}
-              </span>
-            </div>
-            <div
-              className="more-menu-items"
-              onClick={() => {
-                setPublishAccess("public");
-              }}
-            >
-              <span class="material-symbols-outlined">public</span>
-              <p>{t("publicAccess")}</p>
-              <span class="material-symbols-outlined">
-                {publishAccess === "public"
-                  ? "radio_button_checked"
-                  : "radio_button_unchecked"}
-              </span>
-            </div>
-            <p>
-              <b style={{ marginTop: "10px" }}>{t("playlistSettings")}</b>
-            </p>
-            <span style={{ fontSize: "10px" }}>
-              {t("playlistSettingsTooltip")}
-            </span>
-            <div
-              className="more-menu-items"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div
-                className="align-center"
-                onClick={() => {
-                  setChecklist((p) => !p);
-                }}
-              >
-                {checklist ? (
-                  <span
-                    style={{ fontSize: "20px" }}
-                    class="material-symbols-outlined unfollow"
-                  >
-                    check_box
-                  </span>
-                ) : (
-                  <span
-                    style={{ fontSize: "20px" }}
-                    class="material-symbols-outlined unfollow"
-                  >
-                    check_box_outline_blank
-                  </span>
-                )}
-                <label
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    marginLeft: "4px",
-                  }}
-                  for="playlistInclude"
-                >
-                  {t("checklist")}
-                </label>
-              </div>
-              <Tooltip forRight={true} text={t("checklistTooltip")}>
-                <p
-                  className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}
-                >
-                  <span
-                    style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow"
-                  >
-                    info
-                  </span>
+            {isReadingPlan ? (
+              <>
+                <p>
+                  <b style={{ marginTop: "10px" }}>
+                    {t("readingPlanSettings")}
+                  </b>
                 </p>
-              </Tooltip>
-            </div>
-            {false && (
-              <div
-                className="more-menu-items"
-                onClick={(e) => e.stopPropagation()}
-              >
+                <span style={{ fontSize: "10px" }}>
+                  {t("readingPlanSettingsTooltip")}
+                </span>
                 <div
-                  className="align-center"
-                  style={{
-                    cursor: "pointer",
-                  }}
+                  className="more-menu-items"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div
+                    className="align-center"
+                    onClick={() => {
+                      setChecklist((p) => !p);
+                    }}
+                  >
+                    {checklist ? (
+                      <span
+                        style={{ fontSize: "20px" }}
+                        class="material-symbols-outlined unfollow"
+                      >
+                        check_box
+                      </span>
+                    ) : (
+                      <span
+                        style={{ fontSize: "20px" }}
+                        class="material-symbols-outlined unfollow"
+                      >
+                        check_box_outline_blank
+                      </span>
+                    )}
+                    <label
+                      style={{
+                        fontSize: "12px",
+                        fontWeight: "600",
+                        marginLeft: "4px",
+                      }}
+                      for="groupPlan"
+                    >
+                      {t("groupPlan")}
+                    </label>
+                  </div>
+                  <Tooltip forRight={true} text={t("groupPlanTooltip")}>
+                    <p
+                      className="what-this center"
+                      style={{ margin: "0 0 0 0.5rem" }}
+                    >
+                      <span
+                        style={{ fontSize: "24px" }}
+                        class="material-symbols-outlined unfollow"
+                      >
+                        info
+                      </span>
+                    </p>
+                  </Tooltip>
+                </div>
+              </>
+            ) : (
+              <>
+                <p>
+                  <b>{t("publishSettings")}</b>
+                </p>
+                <span style={{ fontSize: "10px" }}>
+                  {t("publishSettingsDesc")}
+                </span>
+                <div
+                  className="more-menu-items"
                   onClick={() => {
-                    if (readingPlan) {
-                      deleteDateData();
-                    }
-                    setReadingPlan((p) => !p);
+                    setPublishAccess("private");
                   }}
                 >
-                  {readingPlan ? (
-                    <span
-                      style={{ fontSize: "20px" }}
-                      class="material-symbols-outlined unfollow"
-                    >
-                      check_box
-                    </span>
-                  ) : (
-                    <span
-                      style={{ fontSize: "20px" }}
-                      class="material-symbols-outlined unfollow"
-                    >
-                      check_box_outline_blank
-                    </span>
-                  )}
-                  <label
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: "600",
-                      marginLeft: "4px",
-                    }}
-                    for="playlistInclude"
-                  >
-                    {t("readingPlan")}
-                  </label>
+                  <span class="material-symbols-outlined">lock</span>
+                  <p>{t("privateAccess")}</p>
+                  <span class="material-symbols-outlined">
+                    {publishAccess === "private"
+                      ? "radio_button_checked"
+                      : "radio_button_unchecked"}
+                  </span>
                 </div>
-                <Tooltip forRight={true} text={t("readingPlanTooltip")}>
-                  <p
-                    className="what-this center"
-                    style={{ margin: "0 0 0 0.5rem" }}
+                <div
+                  className="more-menu-items"
+                  onClick={() => {
+                    setPublishAccess("public");
+                  }}
+                >
+                  <span class="material-symbols-outlined">public</span>
+                  <p>{t("publicAccess")}</p>
+                  <span class="material-symbols-outlined">
+                    {publishAccess === "public"
+                      ? "radio_button_checked"
+                      : "radio_button_unchecked"}
+                  </span>
+                </div>
+                <p>
+                  <b style={{ marginTop: "10px" }}>{t("playlistSettings")}</b>
+                </p>
+                <span style={{ fontSize: "10px" }}>
+                  {t("playlistSettingsTooltip")}
+                </span>
+                <div
+                  className="more-menu-items"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div
+                    className="align-center"
+                    onClick={() => {
+                      setChecklist((p) => !p);
+                    }}
                   >
-                    <span
-                      style={{ fontSize: "24px" }}
-                      class="material-symbols-outlined unfollow "
+                    {checklist ? (
+                      <span
+                        style={{ fontSize: "20px" }}
+                        class="material-symbols-outlined unfollow"
+                      >
+                        check_box
+                      </span>
+                    ) : (
+                      <span
+                        style={{ fontSize: "20px" }}
+                        class="material-symbols-outlined unfollow"
+                      >
+                        check_box_outline_blank
+                      </span>
+                    )}
+                    <label
+                      style={{
+                        fontSize: "12px",
+                        fontWeight: "600",
+                        marginLeft: "4px",
+                      }}
+                      for="playlistInclude"
                     >
-                      info
-                    </span>
-                  </p>
-                </Tooltip>
-              </div>
+                      {t("checklist")}
+                    </label>
+                  </div>
+                  <Tooltip forRight={true} text={t("checklistTooltip")}>
+                    <p
+                      className="what-this center"
+                      style={{ margin: "0 0 0 0.5rem" }}
+                    >
+                      <span
+                        style={{ fontSize: "24px" }}
+                        class="material-symbols-outlined unfollow"
+                      >
+                        info
+                      </span>
+                    </p>
+                  </Tooltip>
+                </div>
+              </>
             )}
           </div>
         </>
@@ -1412,7 +1424,7 @@ const CreatePlaylistUI = (props: any) => {
                   // setShowPlaylistSettings(true);
                 }}
               >
-                <PlaylistIconT />
+                {isReadingPlan ? <ReadingPlanIconT /> : <PlaylistIconT />}
               </div>
               <div
                 onClick={() => {
@@ -1636,6 +1648,7 @@ const CreatePlaylistUI = (props: any) => {
               embedding={embedding}
               setEmbedding={setEmbedding}
               editDataFromPlaylist={editDataFromPlaylist}
+              readingPlanEnabled={isReadingPlan}
               currentFormat={currentFormat}
               setList={setPlaylist}
               deleteFromList={deleteDataFromPlaylist}
@@ -1958,6 +1971,7 @@ const CreatePlaylistUI = (props: any) => {
             setCustomIcon={setCustomIcon}
             setOpenModalName={setOpenModalName}
             checkNameDuplicate={checkNameDuplicate}
+            isReadingPlan={isReadingPlan}
             onCreatePlaylist={() => {
               if (isTempEdit.current) {
                 backToCreatePlaylist(name, playList, id);

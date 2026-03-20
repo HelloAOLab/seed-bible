@@ -160,5 +160,12 @@
   "readingPlan": "የማንበብ እቅድ",
   "readingPlanTooltip": "የእቅድ ሁነታ በመጫወቻ ዝርዝርዎ ውስጥ ቀናት ማከል ያስችልዎ እና እንደ ቀን እድገትን መከታተል ይችላሉ።",
   "cannotDeleteFirstDayOfReadingPlan": "የማንበብ እቅድዎን የመጀመሪያ ቀን ማስወገድ አይቻልም!",
+  "firstItemMustBeDateForReadingPlan": "ለማንበብ እቅድ የመጀመሪያው ንጥል ቀን መሆን አለበት።",
+  "cannotEmbedDateItemsInAReadingPlan": "በማንበብ እቅድ ውስጥ በቀን ረድፎች ላይ ንጥሎችን መሰካት አይቻልም።",
+  "readingPlanSettings": "የማንበብ እቅድ ቅንብሮች",
+  "readingPlanSettingsTooltip": "የማንበብ እቅድ ቅንብሮችን እንደ ፍላጎትዎ ይለውጡ።",
+  "groupPlan": "ቡድን እቅድ",
+  "groupPlanTooltip": "ተጠቃሚዎች እንዲከፈቱ የማንበብ እቅድዎን እንደ ቡድን እንዲቀላቀሉ እና አብረው እንዲነብቡ ያስችላል።",
+  "readingPlanName": "የማንበብ እቅድ ስም",
   "readingPlans": "የማንበብ እቅዶች"
 }

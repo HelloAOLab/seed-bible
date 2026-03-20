@@ -160,5 +160,12 @@
   "readingPlan": "Rencana baca",
   "readingPlanTooltip": "Mode rencana memungkinkan Anda menambahkan tanggal di daftar putar untuk melacak tanggal dan kemajuan sesuai tanggal.",
   "cannotDeleteFirstDayOfReadingPlan": "Anda tidak dapat menghapus hari pertama rencana baca!",
+  "firstItemMustBeDateForReadingPlan": "Untuk rencana baca, item pertama harus berupa tanggal.",
+  "cannotEmbedDateItemsInAReadingPlan": "Anda tidak dapat menyematkan item ke baris tanggal dalam rencana baca.",
+  "readingPlanSettings": "Pengaturan rencana baca",
+  "readingPlanSettingsTooltip": "Ubah pengaturan rencana baca sesuai kebutuhan Anda.",
+  "groupPlan": "Rencana grup",
+  "groupPlanTooltip": "Memungkinkan pengguna bergabung dengan rencana baca Anda secara berkelompok dan membaca bersama.",
+  "readingPlanName": "Nama rencana baca",
   "readingPlans": "Rencana baca"
 }

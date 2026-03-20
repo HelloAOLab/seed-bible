@@ -160,5 +160,12 @@
   "readingPlan": "Mpango wa kusoma",
   "readingPlanTooltip": "Hali ya mpango inakuwezesha kuongeza tarehe kwenye orodha yako ya kucheza ili kufuatilia maendeleo kulingana na tarehe.",
   "cannotDeleteFirstDayOfReadingPlan": "Huwezi kufuta siku ya kwanza ya mpango wa kusoma!",
+  "firstItemMustBeDateForReadingPlan": "Katika mpango wa kusoma, kipengele cha kwanza lazima kiwe tarehe.",
+  "cannotEmbedDateItemsInAReadingPlan": "Huwezi kupachika vipengele kwenye safu za tarehe katika mpango wa kusoma.",
+  "readingPlanSettings": "Mipangilio ya mpango wa kusoma",
+  "readingPlanSettingsTooltip": "Badilisha mipangilio ya mpango wa kusoma kulingana na mahitaji yako.",
+  "groupPlan": "Mpango wa kikundi",
+  "groupPlanTooltip": "Inaruhusu watumiaji kujiunga na mpango wako wa kusoma kama kikundi na kusoma pamoja.",
+  "readingPlanName": "Jina la mpango wa kusoma",
   "readingPlans": "Mipango ya kusoma"
 }

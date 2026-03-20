@@ -61,6 +61,7 @@ const AddNewPlaylist = (props: any) => {
     renameScreen,
     setTags,
     isLayers,
+    isReadingPlan,
   } = props;
   const IsPlaylistPlaying = G.IsPlaylistPlaying;
 
@@ -713,6 +714,7 @@ const AddNewPlaylist = (props: any) => {
               />
               <RenderIcon
                 isCustomIcons={!!selectedIcon}
+                isReadingPlan={isReadingPlan}
                 onDelete={() => {
                   setSelectedIcon(null);
                 }}
@@ -734,7 +736,11 @@ const AddNewPlaylist = (props: any) => {
           </div>
           <div style={{ flexGrow: "1" }}>
             <h4 style={{ margin: "0 0 0.5rem 0" }}>
-              {!isLayers ? t("playlistName") : t("layerName")}
+              {!isLayers
+                ? isReadingPlan
+                  ? t("readingPlanName")
+                  : t("playlistName")
+                : t("layerName")}
             </h4>
             <Input
               value={name}

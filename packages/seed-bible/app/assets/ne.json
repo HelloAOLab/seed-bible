@@ -160,5 +160,12 @@
   "readingPlan": "पढाइ योजना",
   "readingPlanTooltip": "योजना मोडले प्लेलिस्टमा मितिहरू थप्न दिन्छ जसले मिति अनुसार प्रगति ट्र्याक गर्दछ।",
   "cannotDeleteFirstDayOfReadingPlan": "तपाईं पढाइ योजनाको पहिलो दिन मेटाउन सक्नुहुन्न!",
+  "firstItemMustBeDateForReadingPlan": "पढाइ योजनाको लागि पहिलो वस्तु मिति हुनुपर्छ।",
+  "cannotEmbedDateItemsInAReadingPlan": "पढाइ योजनामा मितिका पङ्क्तिमा वस्तुहरू इम्बेड गर्न सकिँदैन।",
+  "readingPlanSettings": "पढाइ योजना सेटिङ",
+  "readingPlanSettingsTooltip": "आफ्नो आवश्यकता अनुसार पढाइ योजनाको सेटिङ परिवर्तन गर्नुहोस्।",
+  "groupPlan": "समूह योजना",
+  "groupPlanTooltip": "प्रयोगकर्ताहरूलाई समूहमा आफ्नो पढाइ योजनामा सामेल भई सँगै पढ्न दिन्छ।",
+  "readingPlanName": "पढाइ योजनाको नाम",
   "readingPlans": "पढाइ योजनाहरू"
 }

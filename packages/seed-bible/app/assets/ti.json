@@ -160,5 +160,12 @@
   "readingPlan": "ናይ ምንባብ መደብ",
   "readingPlanTooltip": "ናይ መደብ ሞድ ኣብ ዝርዝር ምጽዋዕካ ዕለታት ከተውስን ከም ዝህበካ ብዕለት እድገት ክትከታተል ተራእዮ።",
   "cannotDeleteFirstDayOfReadingPlan": "እቲ ናይ ምንባብ መደብ መጀመሪያ መዓልቲ ክትስርዕ ኣይትኽእልን ኢኻ!",
+  "firstItemMustBeDateForReadingPlan": "ንናይ ምንባብ መደብ እቲ ቀዳም ኣቕሓ ዕለት ክኸውን ኣለዎ።",
+  "cannotEmbedDateItemsInAReadingPlan": "ኣብ ናይ ምንባብ መደብ ኣብ ዕለታዊ ረድእታት ኣቕሓታት ምውሳኽ ኣይትኽእልን ኢኻ።",
+  "readingPlanSettings": "ምትእስራት ናይ ምንባብ መደብ",
+  "readingPlanSettingsTooltip": "ንድሌካ ንምምላእ ናይ ምንባብ መደብ ምትእስራትካ ቀይር።",
+  "groupPlan": "መደብ ግሩፕ",
+  "groupPlanTooltip": "ተጠቀምቲ ናብ ናይ ምንባብ መደብካ ከም ግሩፕ ክርከቡን ኣብ ሓባር ክንበብሩን ይፈቅድ።",
+  "readingPlanName": "ሽም ናይ ምንባብ መደብ",
   "readingPlans": "ናይ ምንባብ መደባት"
 }
