@@ -31,29 +31,6 @@ export const CanvasStyle = () => {
     [position]
   );
 
-  useEffect(() => {
-    const parent = document.getElementById("app");
-
-    if (parent) {
-      let styleEl = parent.getElementById(
-        "canvas-dynamic-style"
-      ) as HTMLStyleElement;
-
-      if (!styleEl) {
-        styleEl = document.createElement("style");
-        styleEl.id = "canvas-dynamic-style";
-        parent.appendChild(styleEl);
-      }
-
-      styleEl.innerHTML = combinedStyle;
-      return () => {
-        if (styleEl && styleEl.parentNode) {
-          styleEl.parentNode.removeChild(styleEl);
-        }
-      };
-    }
-  }, [combinedStyle]);
-
   return (
     <>
       <style>{combinedStyle}</style>
