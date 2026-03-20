@@ -221,6 +221,41 @@ export interface BibleThemeVariables {
    * The box shadow of the reader toolbar floating button.
    */
   readerToolbarFloatingButtonBoxShadow?: string | null;
+
+  /**
+   * The gap between items in the verse toolbar.
+   */
+  verseToolbarGap?: string | null;
+
+  /**
+   * The padding of the verse toolbar.
+   */
+  verseToolbarPadding?: string | null;
+
+  /**
+   * The border radius of the verse toolbar.
+   */
+  verseToolbarBorderRadius?: string | null;
+
+  /**
+   * The border of the verse toolbar.
+   */
+  verseToolbarBorder?: string | null;
+
+  /**
+   * The box shadow of the verse toolbar.
+   */
+  verseToolbarBoxShadow?: string | null;
+
+  /**
+   * The z-index of the verse toolbar.
+   */
+  verseToolbarZIndex?: string | null;
+
+  /**
+   * The minimum height of the verse toolbar.
+   */
+  verseToolbarMinHeight?: string | null;
 }
 
 export interface BibleTheme {
@@ -308,6 +343,14 @@ const LIGHT_THEME: BibleTheme = {
     readerToolbarFloatingButtonBackground: "#ffffff",
     readerToolbarFloatingButtonFontColor: "#333",
     readerToolbarFloatingButtonBoxShadow: "0 10px 24px #0000001a",
+
+    verseToolbarGap: "10px",
+    verseToolbarPadding: "8px 16px",
+    verseToolbarBorderRadius: "10px",
+    verseToolbarBorder: "1px solid #00000024",
+    verseToolbarBoxShadow: "0 26px 10px #0000001a",
+    verseToolbarZIndex: "100",
+    verseToolbarMinHeight: "50px",
   },
 };
 
@@ -380,6 +423,14 @@ export function createTheme() {
         readerToolbarFloatingButtonBackground: "#1a2230",
         readerToolbarFloatingButtonFontColor: "#d7deef",
         readerToolbarFloatingButtonBoxShadow: "0 10px 24px rgba(0, 0, 0, 0.4)",
+
+        verseToolbarGap: "10px",
+        verseToolbarPadding: "8px 16px",
+        verseToolbarBorderRadius: "10px",
+        verseToolbarBorder: "1px solid rgba(255, 255, 255, 0.08)",
+        verseToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.4)",
+        verseToolbarZIndex: "100",
+        verseToolbarMinHeight: "50px",
       },
     },
   ]);

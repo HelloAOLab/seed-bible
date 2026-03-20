@@ -61,8 +61,18 @@
   --sb-reader-toolbar-floating-button-background: var(
     --sb-reader-toolbar-background
   );
-  --sb-reader-toolbar-floating-button-font-color: var(--sb-font-color);
+  --sb-reader-toolbar-floating-button-font-color: var(
+    --sb-reader-toolbar-font-color
+  );
   --sb-reader-toolbar-floating-button-box-shadow: 0 10px 24px #0000001a;
+
+  --sb-verse-toolbar-gap: 10px;
+  --sb-verse-toolbar-padding: 8px 16px;
+  --sb-verse-toolbar-border-radius: 10px;
+  --sb-verse-toolbar-border: 1px solid #00000024;
+  --sb-verse-toolbar-box-shadow: 0 26px 10px #0000001a;
+  --sb-verse-toolbar-z-index: 100;
+  --sb-verse-toolbar-min-height: 50px;
 }
 
 body {
@@ -729,32 +739,17 @@ button {
 
   .sb-reader-toolbar-floating-button {
     position: absolute;
-    top: var(--sb-reader-toolbar-floating-button-top, -68px);
+    top: var(--sb-reader-toolbar-floating-button-top);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: var(--sb-reader-toolbar-floating-button-width, 48px);
-    height: var(--sb-reader-toolbar-floating-button-height, 48px);
-    border: var(
-      --sb-reader-toolbar-floating-button-border,
-      1px solid #00000024
-    );
-    border-radius: var(
-      --sb-reader-toolbar-floating-button-border-radius,
-      999px
-    );
-    background: var(
-      --sb-reader-toolbar-floating-button-background,
-      var(--sb-reader-toolbar-background)
-    );
-    color: var(
-      --sb-reader-toolbar-floating-button-font-color,
-      var(--sb-reader-toolbar-font-color)
-    );
-    box-shadow: var(
-      --sb-reader-toolbar-floating-button-box-shadow,
-      var(--sb-reader-toolbar-box-shadow, 0 10px 24px #0000001a)
-    );
+    width: var(--sb-reader-toolbar-floating-button-width);
+    height: var(--sb-reader-toolbar-floating-button-height);
+    border: var(--sb-reader-toolbar-floating-button-border);
+    border-radius: var(--sb-reader-toolbar-floating-button-border-radius);
+    background: var(--sb-reader-toolbar-floating-button-background);
+    color: var(--sb-reader-toolbar-floating-button-font-color);
+    box-shadow: var(--sb-reader-toolbar-floating-button-box-shadow);
     cursor: pointer;
   }
 
@@ -774,10 +769,10 @@ button {
   gap: var(--sb-verse-toolbar-gap, 10px);
   padding: var(--sb-verse-toolbar-padding, 8px 16px);
   border-radius: var(--sb-verse-toolbar-border-radius, 10px);
-  border: 1px solid var(--sb-reader-toolbar-border, #00000024);
+  border: var(--sb-verse-toolbar-border, 1px solid #00000024);
   box-shadow: var(--sb-verse-toolbar-box-shadow, 0 26px 10px #0000001a);
-  z-index: 100;
-  min-height: 50px;
+  z-index: var(--sb-verse-toolbar-z-index, 100);
+  min-height: var(--sb-verse-toolbar-min-height, 50px);
 }
 
 .sb-verse-toolbar-tools {
