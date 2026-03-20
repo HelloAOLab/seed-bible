@@ -51,7 +51,7 @@ export function ExternalResourceDependencies({
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
       />
-      <style>{`:root {\n${themeCssVariables}\n}`}</style>
+      <style>{`body {\n${themeCssVariables}\n}`}</style>
       <style>{tags["main.css"]}</style>
     </>
   );
@@ -67,8 +67,6 @@ export function Main() {
         style={{
           display: "flex",
           height: "100vh",
-          background: theme.currentTheme.value.variables.readerBackground,
-          color: theme.currentTheme.value.variables.fontColor,
           overflow: "hidden",
         }}
       >

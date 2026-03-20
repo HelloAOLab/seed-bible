@@ -1,7 +1,49 @@
-body {
-  background: #fff;
+:root {
+  --sb-background: #f8fafc;
+  --sb-font-family: "Satoshi", system-ui, sans-serif;
+  --sb-font-color: #333;
 
-  font-family: var(--font-family, "Satoshi", system-ui, sans-serif);
+  --sb-primary-color: #e07b4c;
+  --sb-secondary-color: #faddd1;
+
+  --sb-sidebar-background: transparent;
+  --sb-sidebar-font-family: inherit;
+  --sb-sidebar-font-color: inherit;
+
+  --sb-book-selector-background: #ffffff;
+  --sb-book-selector-font-family: inherit;
+  --sb-book-selector-font-color: #333;
+
+  --sb-reader-background: #ffffff;
+  --sb-reader-font-family: inherit;
+  --sb-reader-font-color: #333;
+
+  --sb-book-title-font-family: "Newsreader", serif;
+  --sb-book-title-font-color: #333;
+
+  --sb-chapter-heading-font-family: "Plus Jakarta Sans", sans-serif;
+  --sb-chapter-heading-font-color: #333;
+  --sb-chapter-heading-font-style: italic;
+
+  --sb-verse-font-family: "Newsreader", serif;
+  --sb-verse-font-color: #333;
+  --sb-verse-cursor: pointer;
+
+  --sb-selected-verse-font-family: inherit;
+  --sb-selected-verse-font-color: inherit;
+  --sb-selected-verse-background-color: inherit;
+  --sb-selected-verse-text-decoration: underline;
+  --sb-selected-verse-text-decoration-color: currentColor;
+
+  --sb-hebrew-subtitle-font-family: "Newsreader", serif;
+  --sb-hebrew-subtitle-font-color: #333;
+  --sb-hebrew-subtitle-font-style: italic;
+}
+
+body {
+  background: var(--sb-background);
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
 }
 
 button {
@@ -50,9 +92,9 @@ button {
 .sb-main-content {
   flex: 1;
   overflow: hidden;
-  border: 1px solid var(--secondary-color);
   background: var(--reader-background);
   scrollbar-width: none;
+  border-radius: 12px;
 }
 
 .sb-panes-layout {
@@ -970,8 +1012,7 @@ button {
 }
 
 .sb-tabs-sidebar {
-  width: 280px;
-  border-right: 1px solid var(--secondary-color);
+  width: 300px;
   padding: 10px 12px 16px;
   display: flex;
   flex-direction: column;
