@@ -189,6 +189,38 @@ export interface BibleThemeVariables {
    * The height of the reader toolbar.
    */
   readerToolbarHeight?: string | null;
+  /**
+   * The top offset of the reader toolbar floating button.
+   */
+  readerToolbarFloatingButtonTop?: string | null;
+  /**
+   * The width of the reader toolbar floating button.
+   */
+  readerToolbarFloatingButtonWidth?: string | null;
+  /**
+   * The height of the reader toolbar floating button.
+   */
+  readerToolbarFloatingButtonHeight?: string | null;
+  /**
+   * The border of the reader toolbar floating button.
+   */
+  readerToolbarFloatingButtonBorder?: string | null;
+  /**
+   * The border radius of the reader toolbar floating button.
+   */
+  readerToolbarFloatingButtonBorderRadius?: string | null;
+  /**
+   * The background of the reader toolbar floating button.
+   */
+  readerToolbarFloatingButtonBackground?: string | null;
+  /**
+   * The font color of the reader toolbar floating button.
+   */
+  readerToolbarFloatingButtonFontColor?: string | null;
+  /**
+   * The box shadow of the reader toolbar floating button.
+   */
+  readerToolbarFloatingButtonBoxShadow?: string | null;
 }
 
 export interface BibleTheme {
@@ -267,6 +299,15 @@ const LIGHT_THEME: BibleTheme = {
     readerToolbarBoxShadow: "0 26px 10px #0000001a",
     readerToolbarZIndex: "99",
     readerToolbarHeight: "50px",
+
+    readerToolbarFloatingButtonTop: "-68px",
+    readerToolbarFloatingButtonWidth: "48px",
+    readerToolbarFloatingButtonHeight: "48px",
+    readerToolbarFloatingButtonBorder: "1px solid #00000024",
+    readerToolbarFloatingButtonBorderRadius: "999px",
+    readerToolbarFloatingButtonBackground: "#ffffff",
+    readerToolbarFloatingButtonFontColor: "#333",
+    readerToolbarFloatingButtonBoxShadow: "0 10px 24px #0000001a",
   },
 };
 
@@ -330,6 +371,15 @@ export function createTheme() {
         readerToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.4)",
         readerToolbarZIndex: "99",
         readerToolbarHeight: "50px",
+        readerToolbarFloatingButtonTop: "-68px",
+        readerToolbarFloatingButtonWidth: "48px",
+        readerToolbarFloatingButtonHeight: "48px",
+        readerToolbarFloatingButtonBorder:
+          "1px solid rgba(255, 255, 255, 0.08)",
+        readerToolbarFloatingButtonBorderRadius: "999px",
+        readerToolbarFloatingButtonBackground: "#1a2230",
+        readerToolbarFloatingButtonFontColor: "#d7deef",
+        readerToolbarFloatingButtonBoxShadow: "0 10px 24px rgba(0, 0, 0, 0.4)",
       },
     },
   ]);

@@ -52,6 +52,17 @@
   --sb-reader-toolbar-box-shadow: 0 26px 10px #0000001a;
   --sb-reader-toolbar-z-index: 99;
   --sb-reader-toolbar-height: 50px;
+
+  --sb-reader-toolbar-floating-button-top: -68px;
+  --sb-reader-toolbar-floating-button-width: 48px;
+  --sb-reader-toolbar-floating-button-height: 48px;
+  --sb-reader-toolbar-floating-button-border: 1px solid #00000024;
+  --sb-reader-toolbar-floating-button-border-radius: 999px;
+  --sb-reader-toolbar-floating-button-background: var(
+    --sb-reader-toolbar-background
+  );
+  --sb-reader-toolbar-floating-button-font-color: var(--sb-font-color);
+  --sb-reader-toolbar-floating-button-box-shadow: 0 10px 24px #0000001a;
 }
 
 body {
