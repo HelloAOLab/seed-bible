@@ -108,12 +108,14 @@ describe("createBibleToolsManager", () => {
     const tools = manager.getToolbarTools(context);
 
     const customTool = tools.find((tool) => tool.id === CUSTOM_TOOL_ID);
+    const hiddenTool = tools.find(
+      (tool) => tool.id === `${CUSTOM_TOOL_ID}-hidden`
+    );
     expect(customTool).toBeDefined();
     expect(customTool?.visible.value).toBe(true);
     expect(customTool?.disabled.value).toBe(true);
-    expect(tools.some((tool) => tool.id === `${CUSTOM_TOOL_ID}-hidden`)).toBe(
-      false
-    );
+    expect(hiddenTool).toBeDefined();
+    expect(hiddenTool?.visible.value).toBe(false);
 
     manager.unregisterToolbarTool(`${CUSTOM_TOOL_ID}-hidden`);
   });
@@ -136,9 +138,9 @@ describe("createBibleToolsManager", () => {
 
     let tools = manager.getToolbarTools(context);
     expect(tools.some((tool) => tool.id === CUSTOM_TOOL_ID)).toBe(true);
-    expect(tools.find((tool) => tool.id === CUSTOM_TOOL_ID)?.disabled).toBe(
-      false
-    );
+    expect(
+      tools.find((tool) => tool.id === CUSTOM_TOOL_ID)?.disabled.value
+    ).toBe(false);
 
     isDisabled.value = true;
     tools = manager.getToolbarTools(context);
@@ -148,7 +150,10 @@ describe("createBibleToolsManager", () => {
 
     isVisible.value = false;
     tools = manager.getToolbarTools(context);
-    expect(tools.some((tool) => tool.id === CUSTOM_TOOL_ID)).toBe(false);
+    expect(tools.some((tool) => tool.id === CUSTOM_TOOL_ID)).toBe(true);
+    expect(
+      tools.find((tool) => tool.id === CUSTOM_TOOL_ID)?.visible.value
+    ).toBe(false);
   });
 
   it("registerVerseToolbarTool() registers a verse toolbar tool", () => {
@@ -216,12 +221,14 @@ describe("createBibleToolsManager", () => {
     const tools = manager.getVerseToolbarTools(context);
 
     const customTool = tools.find((tool) => tool.id === CUSTOM_VERSE_TOOL_ID);
+    const hiddenTool = tools.find(
+      (tool) => tool.id === `${CUSTOM_VERSE_TOOL_ID}-hidden`
+    );
     expect(customTool).toBeDefined();
-    expect(customTool?.visible).toBe(true);
-    expect(customTool?.disabled).toBe(true);
-    expect(
-      tools.some((tool) => tool.id === `${CUSTOM_VERSE_TOOL_ID}-hidden`)
-    ).toBe(false);
+    expect(customTool?.visible.value).toBe(true);
+    expect(customTool?.disabled.value).toBe(true);
+    expect(hiddenTool).toBeDefined();
+    expect(hiddenTool?.visible.value).toBe(false);
 
     manager.unregisterVerseToolbarTool(`${CUSTOM_VERSE_TOOL_ID}-hidden`);
   });
