@@ -315,7 +315,7 @@ export async function loadInst(
     url.searchParams.set(key, query[key]!);
   }
 
-  await page.goto(url.href);
+  await page.goto(url.href, { timeout: 0 });
   console.log("Waiting for ao.bot to load...");
   await waitForInstLoad(page);
 }

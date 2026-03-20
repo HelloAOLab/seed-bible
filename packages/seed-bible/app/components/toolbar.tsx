@@ -247,6 +247,13 @@ export function Toolbar() {
               <div
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (activeMoreApp || activeApp) {
+                    if (activeMoreApp) {
+                      G.RemoveApplicationByLabel(activeMoreApp);
+                      setActiveMoreApp(null);
+                    }
+                    G.makingApp = null;
+                  }
                   os.log("Opening mobile settings", setOpenOnMobile);
                   setOpenOnMobile(true);
                   setSidebarWidth(280);
@@ -262,8 +269,17 @@ export function Toolbar() {
 
             <div
               onClick={() => {
-                globalThis.setOpenSidebar(!globalThis.openSidebar);
-                globalThis.setSelectingTranslation(false);
+                if (activeMoreApp || activeApp) {
+                  if (activeMoreApp) {
+                    G.RemoveApplicationByLabel(activeMoreApp);
+                    setActiveMoreApp(null);
+                    G.setOpenSidebar(true);
+                  }
+                  G.makingApp = null;
+                } else {
+                  G.setOpenSidebar(!G.openSidebar);
+                }
+                G.setSelectingTranslation(false);
                 setShowMoreMenu(false);
               }}
               className="mobile-center-logo"
