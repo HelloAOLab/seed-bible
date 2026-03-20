@@ -189,6 +189,174 @@ describe("createBibleReadingState", () => {
     ]);
   });
 
+  it("the selected footnote is cleared when the chapter changes", async () => {
+    const responses = createReadingManagerResponseMap();
+    responses[makeUrl("/api/BSB/GEN/1.json")] = createResponse({
+      ...makeChapter(bsbBooks, "GEN", 1),
+      chapter: {
+        number: 1,
+        content: [
+          {
+            type: "verse",
+            number: 1,
+            content: ["Verse 1", { noteId: 7 }],
+          },
+          {
+            type: "verse",
+            number: 2,
+            content: ["Verse 2"],
+          },
+        ],
+        footnotes: [
+          {
+            noteId: 7,
+            text: "Footnote text",
+            caller: "+",
+          },
+        ],
+      },
+    });
+
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    state.selectFootnote(7);
+
+    expect(state.selectedFootnote.value).toEqual({
+      note: {
+        noteId: 7,
+        text: "Footnote text",
+        caller: "+",
+      },
+      chapter: state.chapterData.value,
+      verse: {
+        type: "verse",
+        number: 1,
+        content: ["Verse 1", { noteId: 7 }],
+      },
+    });
+
+    await state.selectChapter("GEN", 2);
+
+    expect(state.selectedFootnote.value).toBeNull();
+  });
+
+  it("selectFootnote() selects matching footnote and verse", async () => {
+    const responses = createReadingManagerResponseMap();
+    responses[makeUrl("/api/BSB/GEN/1.json")] = createResponse({
+      ...makeChapter(bsbBooks, "GEN", 1),
+      chapter: {
+        number: 1,
+        content: [
+          {
+            type: "verse",
+            number: 1,
+            content: ["Verse 1", { noteId: 7 }],
+          },
+          {
+            type: "verse",
+            number: 2,
+            content: ["Verse 2"],
+          },
+        ],
+        footnotes: [
+          {
+            noteId: 7,
+            text: "Footnote text",
+            caller: "+",
+          },
+        ],
+      },
+    });
+
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    state.selectFootnote(7);
+
+    expect(state.selectedFootnote.value).toEqual({
+      note: {
+        noteId: 7,
+        text: "Footnote text",
+        caller: "+",
+      },
+      chapter: state.chapterData.value,
+      verse: {
+        type: "verse",
+        number: 1,
+        content: ["Verse 1", { noteId: 7 }],
+      },
+    });
+  });
+
+  it("selectFootnote() clears selected footnote when null is passed", async () => {
+    const responses = createReadingManagerResponseMap();
+    responses[makeUrl("/api/BSB/GEN/1.json")] = createResponse({
+      ...makeChapter(bsbBooks, "GEN", 1),
+      chapter: {
+        number: 1,
+        content: [
+          {
+            type: "verse",
+            number: 1,
+            content: ["Verse 1", { noteId: 3 }],
+          },
+        ],
+        footnotes: [
+          {
+            noteId: 3,
+            text: "Selected footnote",
+            caller: "+",
+          },
+        ],
+      },
+    });
+
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    state.selectFootnote(3);
+    expect(state.selectedFootnote.value?.note.noteId).toBe(3);
+
+    state.selectFootnote(null);
+    expect(state.selectedFootnote.value).toBeNull();
+  });
+
+  it("selectFootnote() returns null when noteId does not exist", async () => {
+    const responses = createReadingManagerResponseMap();
+    responses[makeUrl("/api/BSB/GEN/1.json")] = createResponse({
+      ...makeChapter(bsbBooks, "GEN", 1),
+      chapter: {
+        number: 1,
+        content: [
+          {
+            type: "verse",
+            number: 1,
+            content: ["Verse 1", { noteId: 1 }],
+          },
+        ],
+        footnotes: [
+          {
+            noteId: 1,
+            text: "Known footnote",
+            caller: "+",
+          },
+        ],
+      },
+    });
+
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    state.selectFootnote(9999);
+
+    expect(state.selectedFootnote.value).toBeNull();
+  });
+
   it("selectTranslation() changes the translation", async () => {
     const responses = createReadingManagerResponseMap();
     responses[makeUrl("/api/NIV/books.json")] = createResponse(nivBooks);
@@ -214,6 +382,68 @@ describe("createBibleReadingState", () => {
     expect(state.chapterNumber.value).toBe(1);
     expect(state.translationBooks.value?.translation.id).toBe("NIV");
     expect(state.chapterData.value?.translation.id).toBe("NIV");
+  });
+
+  it("the selected footnote is cleared when the translation changes", async () => {
+    const responses = createReadingManagerResponseMap();
+    responses[makeUrl("/api/BSB/GEN/1.json")] = createResponse({
+      ...makeChapter(bsbBooks, "GEN", 1),
+      chapter: {
+        number: 1,
+        content: [
+          {
+            type: "verse",
+            number: 1,
+            content: ["Verse 1", { noteId: 7 }],
+          },
+          {
+            type: "verse",
+            number: 2,
+            content: ["Verse 2"],
+          },
+        ],
+        footnotes: [
+          {
+            noteId: 7,
+            text: "Footnote text",
+            caller: "+",
+          },
+        ],
+      },
+    });
+    responses[makeUrl("/api/NIV/books.json")] = createResponse(nivBooks);
+    responses[makeUrl("/api/NIV/MAT/1.json")] = createResponse({
+      ...makeChapter(bsbBooks, "MAT", 1),
+      translation: nivTranslation,
+      book: nivBooks.books[0]!,
+      thisChapterLink: "/api/NIV/MAT/1.json",
+      nextChapterApiLink: "/api/NIV/MAT/2.json",
+      previousChapterApiLink: null,
+    });
+
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    state.selectFootnote(7);
+
+    expect(state.selectedFootnote.value).toEqual({
+      note: {
+        noteId: 7,
+        text: "Footnote text",
+        caller: "+",
+      },
+      chapter: state.chapterData.value,
+      verse: {
+        type: "verse",
+        number: 1,
+        content: ["Verse 1", { noteId: 7 }],
+      },
+    });
+
+    await state.selectTranslation("NIV");
+
+    expect(state.selectedFootnote.value).toBeNull();
   });
 
   it("selectTranslation() supports available_translations URL", async () => {
