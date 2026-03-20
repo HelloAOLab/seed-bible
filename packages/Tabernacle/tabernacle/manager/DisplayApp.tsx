@@ -1,7 +1,10 @@
+import { globalAPI } from "app.controller.controllerBuilder";
+
 if (thisBot.vars.appId) {
   globalThis.RemoveFloatingApp(thisBot.vars.appId);
 } else {
-  globalThis.defaultPortalName = thisBot.tags.dimension;
+  globalAPI.defaultPortalName = thisBot.tags.dimension;
+  // globalThis.defaultPortalName = thisBot.tags.dimension;
   // gridPortalBot.tags.portalCameraType = "perspective";
   gridPortalBot.tags.portalCameraType = "orthographic";
   gridPortalBot.tags.portalZoomableMin = 5;
