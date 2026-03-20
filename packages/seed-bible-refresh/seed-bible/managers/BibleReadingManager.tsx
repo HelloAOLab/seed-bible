@@ -1,11 +1,18 @@
 import {
   type AvailableTranslations,
+  type ChapterFootnote,
   type ChapterVerse,
   type TranslationBookChapter,
   type TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
 import { type BibleDataManager } from "seed-bible.managers.BibleDataManager";
-import { batch, signal, type Signal } from "@preact/signals";
+import {
+  batch,
+  computed,
+  signal,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals";
 import { sortBy } from "es-toolkit";
 
 export interface BibleSelectedVerse {
@@ -18,6 +25,12 @@ export interface BibleSelectedVerse {
   selectedAt?: number;
 }
 
+export interface SelectedFootnote {
+  note: ChapterFootnote;
+  verse: ChapterVerse | null;
+  chapter: TranslationBookChapter;
+}
+
 export interface BibleReadingState {
   translationId: Signal<string | null>;
   bookId: Signal<string | null>;
@@ -26,6 +39,7 @@ export interface BibleReadingState {
   translationBooks: Signal<TranslationBooks | null>;
   chapterData: Signal<TranslationBookChapter | null>;
   selectedVerses: Signal<BibleSelectedVerse[]>;
+  selectedFootnote: ReadonlySignal<SelectedFootnote | null>;
   loading: Signal<boolean>;
   error: Signal<string | null>;
   selectVerse: (
@@ -33,6 +47,7 @@ export interface BibleReadingState {
     selectionX: number,
     selectionY: number
   ) => void;
+  selectFootnote: (noteId: number | null) => void;
   clearSelectedVerses: () => void;
   selectTranslation: (translation: string) => Promise<void>;
   selectBook: (book: string) => Promise<void>;
@@ -117,8 +132,41 @@ export function createBibleReadingState(
   const translationBooks = signal<TranslationBooks | null>(null);
   const chapterData = signal<TranslationBookChapter | null>(null);
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
+  const selectedFootnoteId = signal<number | null>(null);
   const loading = signal<boolean>(true);
   const error = signal<string | null>(null);
+
+  const selectedFootnote = computed<SelectedFootnote | null>(() => {
+    const chapter = chapterData.value;
+    if (!chapter || selectedFootnoteId.value === null) {
+      return null;
+    }
+
+    const note =
+      chapter.chapter.footnotes.find(
+        (note) => note.noteId === selectedFootnoteId.value
+      ) ?? null;
+
+    if (!note) {
+      return null;
+    }
+
+    return {
+      note,
+      chapter,
+      verse:
+        chapter.chapter.content.find(
+          (item): item is ChapterVerse =>
+            item.type === "verse" &&
+            item.content.some(
+              (contentPart) =>
+                typeof contentPart === "object" &&
+                "noteId" in contentPart &&
+                contentPart.noteId === selectedFootnoteId.value
+            )
+        ) ?? null,
+    };
+  });
 
   const selectVerse = (
     verse: BibleSelectedVerse,
@@ -172,6 +220,7 @@ export function createBibleReadingState(
     bookId.value = nextBookId;
     chapterNumber.value = nextChapterNumber;
     chapterData.value = chapter;
+    selectedFootnoteId.value = null;
     clearSelectedVerses();
 
     if (translationBooks.value?.translation.id !== nextTranslationId) {
@@ -246,16 +295,11 @@ export function createBibleReadingState(
         firstChapterNumber
       );
 
-      batch(() => {
+      await batch(async () => {
         availableTranslations.value = toAvailableTranslations(
           dataManager.availableTranslations.value
         );
-        translationBooks.value = books;
-        translationId.value = nextTranslationId;
-        bookId.value = firstBook.id;
-        chapterNumber.value = firstChapterNumber;
-        chapterData.value = chapter;
-        clearSelectedVerses();
+        await syncStateFromChapter(chapter);
       });
     } catch (err) {
       error.value =
@@ -288,10 +332,7 @@ export function createBibleReadingState(
         nextChapterNumber
       );
 
-      bookId.value = book;
-      chapterNumber.value = nextChapterNumber;
-      chapterData.value = chapter;
-      clearSelectedVerses();
+      await syncStateFromChapter(chapter);
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to select book.";
@@ -315,10 +356,7 @@ export function createBibleReadingState(
         chapter
       );
 
-      bookId.value = book;
-      chapterNumber.value = chapter;
-      chapterData.value = nextChapterData;
-      clearSelectedVerses();
+      await syncStateFromChapter(nextChapterData);
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to select chapter.";
@@ -421,6 +459,10 @@ export function createBibleReadingState(
     }
   };
 
+  const selectFootnote = (noteId: number | null) => {
+    selectedFootnoteId.value = noteId;
+  };
+
   loadInitialData();
 
   return {
@@ -431,9 +473,11 @@ export function createBibleReadingState(
     translationBooks,
     chapterData,
     selectedVerses,
+    selectedFootnote,
     loading,
     error,
     selectVerse,
+    selectFootnote,
     clearSelectedVerses,
     selectTranslation,
     selectBook,

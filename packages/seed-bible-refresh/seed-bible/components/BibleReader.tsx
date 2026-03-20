@@ -342,12 +342,6 @@ interface BibleReaderProps {
   selectorState: BibleSelectorState;
 }
 
-interface SelectedFootnote {
-  note: ChapterFootnote;
-  verse: ChapterVerse | null;
-  chapter: TranslationBookChapter;
-}
-
 export function BibleReader(props: BibleReaderProps) {
   const { currentPane, readingState, selectorState } = props;
   const {
@@ -361,8 +355,9 @@ export function BibleReader(props: BibleReaderProps) {
     loading,
     error,
     selectVerse,
+    selectedFootnote,
+    selectFootnote,
   } = readingState;
-  const selectedFootnote = useSignal<SelectedFootnote | null>(null);
 
   const currentBook = computed(
     () =>
@@ -397,20 +392,8 @@ export function BibleReader(props: BibleReaderProps) {
               selectVerse(verse, event.clientX, event.clientY);
             },
             selectedVerses.value,
-            (noteId, verse) => {
-              const footnote =
-                chapterData.value?.chapter.footnotes.find(
-                  (note) => note.noteId === noteId
-                ) ?? null;
-              if (footnote) {
-                selectedFootnote.value = {
-                  note: footnote,
-                  verse: verse,
-                  chapter: chapterData.value!,
-                };
-              } else {
-                selectedFootnote.value = null;
-              }
+            (noteId) => {
+              selectFootnote(noteId);
             }
           )}
         </div>
@@ -426,7 +409,7 @@ export function BibleReader(props: BibleReaderProps) {
         <div
           className="sb-footnote-modal-overlay"
           onClick={() => {
-            selectedFootnote.value = null;
+            selectFootnote(null);
           }}
         >
           <div
@@ -447,7 +430,7 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-footnote-modal-close"
                 aria-label="Close footnote"
                 onClick={() => {
-                  selectedFootnote.value = null;
+                  selectFootnote(null);
                 }}
               >
                 <span className="material-symbols-outlined">close</span>
