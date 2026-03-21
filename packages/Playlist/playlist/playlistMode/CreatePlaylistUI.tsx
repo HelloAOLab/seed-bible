@@ -610,6 +610,7 @@ const CreatePlaylistUI = (props: any) => {
           date: G.FORMAT_YYYY_MM_DD(
             new Date(`${date.replaceAll("/", "-")} 12:00:00`) || new Date()
           ),
+          subType: "date",
         },
         type: "date",
       },
@@ -926,12 +927,19 @@ const CreatePlaylistUI = (props: any) => {
       let playlistItem = null;
       if (isReadingPlanDateType) {
         // Add a date object
+        const month = new Date().getMonth() + 1;
+        const day = new Date().getDate();
+        const year = new Date().getFullYear();
+        const date = `${month}-${day}-${year}`;
+
         playlistItem = {
           id: G.createUUID(),
           type: "date",
-          content: G.FORMAT_YYYY_MM_DD(new Date()),
+          content: G.FORMAT_DATE(date || new Date(), "DEFAULT", "MM-DD-YYYY"),
           additionalInfo: {
-            date: G.FORMAT_YYYY_MM_DD(new Date()),
+            date: G.FORMAT_YYYY_MM_DD(
+              new Date(`${date} 12:00:00`) || new Date()
+            ),
             subType: "date",
           },
         };
@@ -992,6 +1000,8 @@ const CreatePlaylistUI = (props: any) => {
   const showMorePosition = useRef(getPosition());
 
   const showPlaylistPosition = useRef(getPosition());
+
+  const isDateBasedReadingPlan = ReadingPlanTypes.DATE == G.ReadingPlanType;
 
   return (
     <div
@@ -1491,7 +1501,7 @@ const CreatePlaylistUI = (props: any) => {
               flexDirection: "column",
             }}
           >
-            {readingPlan && (
+            {readingPlan && isDateBasedReadingPlan && (
               <div
                 className="align-center"
                 style={{ gap: "12px", margin: "12px 0" }}

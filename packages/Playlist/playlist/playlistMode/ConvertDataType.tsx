@@ -92,7 +92,7 @@ that.results?.forEach((item: any) => {
         break;
       case "date":
         allItems.push({
-          additionalInfo: { date: item.date },
+          additionalInfo: { date: item.date, subType: "date" },
           content: G.FORMAT_DATE(item.date || new Date()),
           id: G.createUUID(),
           type: "date",

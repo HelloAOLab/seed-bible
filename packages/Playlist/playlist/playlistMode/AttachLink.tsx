@@ -1043,7 +1043,7 @@ const AttachLink = (props: any) => {
                     ele === selectedType ? "active" : ""
                   } select_item_type`}
                 >
-                  {ele === "DATE" && (
+                  {ele === "DATE" && !onDayRefClick && (
                     <input
                       ref={datePickerRef}
                       type="date"

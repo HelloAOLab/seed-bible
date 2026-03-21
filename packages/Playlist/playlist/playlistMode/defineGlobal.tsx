@@ -675,6 +675,7 @@ G.FORMAT_DATE = function formatDate(
   }
   // const utcTimestamp = Date.UTC(yearr, monthh - 1, dayy); // Month is 0-based
   // const date = new Date(utcTimestamp);
+  console.log("dayy", dayy, monthh, yearr, format);
   if (isNaN(dayy)) {
     throw new Error("Invalid date provided.");
   }
