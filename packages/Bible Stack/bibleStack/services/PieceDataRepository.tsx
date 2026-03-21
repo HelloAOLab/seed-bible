@@ -1,6 +1,11 @@
 import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
 import { BiblePiece, type BiblePieceType } from "bibleVizUtils.models.canvas";
 import { getSelf as getBibleStackMain } from "bibleStack.main.selfGetter";
+import { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
+import { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
+import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
+import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+import { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
 
 const bibleStackMain = getBibleStackMain();
 
@@ -8,40 +13,39 @@ const bibleStackMain = getBibleStackMain();
 // TODO: Define data entities
 // TODO: Define return type
 
-export class PieceDataRepository {
-  static getPieceData({ piece }: { piece: Bot }): any {
-    let data;
+type AnyStackData =
+  | StackTestamentData
+  | StackSectionData
+  | StackSectionBookData
+  | StackBookData
+  | StackChapterData;
 
-    switch (piece.tags.typeOfPiece as BiblePieceType) {
-      case BiblePiece.StackTestament:
-        data = bibleStackMain.vars.stackTestamentsData.find((data) => {
-          return data.isActive && data.piece.id === piece.id;
-        });
-        break;
-      case BiblePiece.StackSection:
-        data = bibleStackMain.vars.stackSectionsData.find((data) => {
-          return data.isActive && data.piece.id === piece.id;
-        });
-        break;
-      case BiblePiece.StackSectionBook:
-        data = bibleStackMain.vars.stackSectionBooksData.find((data) => {
-          return data.isActive && data.piece.id === piece.id;
-        });
-        break;
-      case BiblePiece.StackBook:
-        data = bibleStackMain.vars.stackBooksData.find((data) => {
-          return data.isActive && data.piece.id === piece.id;
-        });
-        break;
-      case BiblePiece.StackChapter:
-        data = bibleStackMain.vars.stackChaptersData.find((data) => {
-          return data.isActive && data.piece.id === piece.id;
-        });
-        break;
-      default:
-        break;
+const dataStrategy: Record<string, AnyStackData[]> = {
+  [BiblePiece.StackTestament]: (bibleStackMain.vars.stackTestamentsData ??
+    []) as StackTestamentData[],
+  [BiblePiece.StackSection]: (bibleStackMain.vars.stackSectionsData ??
+    []) as StackSectionData[],
+  [BiblePiece.StackSectionBook]: (bibleStackMain.vars.stackSectionBooksData ??
+    []) as StackSectionBookData[],
+  [BiblePiece.StackBook]: (bibleStackMain.vars.stackBooksData ??
+    []) as StackBookData[],
+  [BiblePiece.StackChapter]: (bibleStackMain.vars.stackChaptersData ??
+    []) as StackChapterData[],
+};
+
+export class PieceDataRepository {
+  static getPieceData({ piece }: { piece: Bot }): AnyStackData | undefined {
+    const targetArray = dataStrategy[piece.tags.typeOfPiece];
+
+    if (!targetArray) {
+      console.warn(
+        `PieceDataRepository.getPieceData: No data array found for piece type '${piece.tags.typeOfPiece}'`
+      );
+      return undefined;
     }
 
-    return data;
+    return targetArray.find((data) => {
+      return data.isActive && !!data.piece && data.piece.id === piece.id;
+    });
   }
 }

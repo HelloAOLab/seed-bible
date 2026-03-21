@@ -1,6 +1,7 @@
 import { PieceDataRegistry } from "bibleVizUtils.services.PieceDataRegistry";
 import { PieceDataRepository } from "bibleStack.services.PieceDataRepository";
 import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
+import { BiblePiece } from "bibleVizUtils.models.canvas";
 
 /**
  * This tag is called when this bot is created
@@ -72,7 +73,7 @@ const sectionShadowPool = new PoolData({
     new CustomTag({ name: "isSectionShadow", value: true }),
     new CustomTag({
       name: "typeOfPiece",
-      value: BibleVizUtils.Data.tags.BiblePieceType.StackSectionShadow,
+      value: BiblePiece.StackSectionShadow,
     }),
     new CustomTag({
       name: "poolTag",
@@ -89,7 +90,7 @@ const chapterPool = new PoolData({
     new CustomTag({ name: "isBaseStackChapter", value: false }),
     new CustomTag({
       name: "typeOfPiece",
-      value: BibleVizUtils.Data.tags.BiblePieceType.StackChapter,
+      value: BiblePiece.StackChapter,
     }),
     new CustomTag({
       name: "poolTag",
@@ -107,7 +108,7 @@ const booksPool = new PoolData({
     new CustomTag({ name: "isBaseStackBook", value: false }),
     new CustomTag({
       name: "typeOfPiece",
-      value: BibleVizUtils.Data.tags.BiblePieceType.StackBook,
+      value: BiblePiece.StackBook,
     }),
     new CustomTag({
       name: "poolTag",
@@ -125,7 +126,7 @@ const sectionsPool = new PoolData({
     new CustomTag({ name: "isBaseStackSection", value: false }),
     new CustomTag({
       name: "typeOfPiece",
-      value: BibleVizUtils.Data.tags.BiblePieceType.StackSection,
+      value: BiblePiece.StackSection,
     }),
     new CustomTag({
       name: "poolTag",
@@ -143,7 +144,7 @@ const testamentsPool = new PoolData({
     new CustomTag({ name: "isBaseStackTestament", value: false }),
     new CustomTag({
       name: "typeOfPiece",
-      value: BibleVizUtils.Data.tags.BiblePieceType.StackTestament,
+      value: BiblePiece.StackTestament,
     }),
     new CustomTag({
       name: "poolTag",
@@ -215,7 +216,7 @@ const chunkOfVersesPool = new PoolData({
     new CustomTag({ name: "isBaseStackChunkOfVerses", value: false }),
     new CustomTag({
       name: "typeOfPiece",
-      value: BibleVizUtils.Data.tags.BiblePieceType.StackChunkOfVerses,
+      value: BiblePiece.StackChunkOfVerses,
     }),
     new CustomTag({
       name: "poolTag",
@@ -232,7 +233,7 @@ const versesPool = new PoolData({
     new CustomTag({ name: "isBaseStackVerse", value: false }),
     new CustomTag({
       name: "typeOfPiece",
-      value: BibleVizUtils.Data.tags.BiblePieceType.StackVerse,
+      value: BiblePiece.StackVerse,
     }),
     new CustomTag({
       name: "poolTag",

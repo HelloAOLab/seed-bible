@@ -6,10 +6,10 @@ import { tryHideNotification } from "bibleVizUtils.controllers.userPresence.acti
  * @param {Bot} that.piece - The bot to be highlgihted
  * @param {String} that.highlightRequestSource - The source the highlight request comes from. Available values can be found at globalThis.BibleVizUtils.Data.tags.InteractionType
  * @param {Number} that.unhighlightDelay - Is optional and is a delay in miliseconds before unhighlighting the piece
- * @param {String} that.typeOfPiece - The type of piece. Available values can be found at globalThis.BibleVizUtils.Data.tags.BiblePieceType
+ * @param {String} that.typeOfPiece - The type of piece. Available values can be found at BiblePiece
  * @param {Number} that.customUnhighlightDuration? - Is optional and is a custom duration for the unhighlight animation
  * @example
- * shout("TryHighlightPiece", {piece: section, highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Click, unhighlightDelay: 4000, typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.StackTestament, customUnhighlightDuration: 1});
+ * shout("TryHighlightPiece", {piece: section, highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Click, unhighlightDelay: 4000, typeOfPiece: BiblePiece.StackTestament, customUnhighlightDuration: 1});
  */
 
 const {

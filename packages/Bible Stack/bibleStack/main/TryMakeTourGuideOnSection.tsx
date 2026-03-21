@@ -1,8 +1,13 @@
-import type { TourGuideData } from "@packages/Bible Visualization Utils/bibleVizUtils/models/canvas.models";
+import type { TourGuideData } from "bibleVizUtils.models.canvas";
+import type { StackSectionData } from "@packages/Bible Visualization Utils/bibleVizUtils/models/entities/StackSectionData";
 import {
   GetCamRotationFocusPoint,
   MakePortalRestrict,
 } from "bibleVizUtils.functions.index";
+import { BiblePiece } from "bibleVizUtils.models.canvas";
+import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import type { Easing } from "../../../../typings/AuxLibraryDefinitions";
+
 /**
  * Called to determine if a section should make a tour guide
  * @param {Object} that - Object that contains important data for the function
@@ -11,16 +16,31 @@ import {
  * StackManager.TryMakeTourGuideOnSection({sectionData});
  */
 
-const { sectionData, skip } = that;
+const {
+  sectionData,
+  skip,
+}: {
+  sectionData: StackSectionData;
+  skip: boolean;
+} = that;
 if (thisBot.HasSectionEverBeenSelected({ sectionData })) {
   return false;
 } else {
-  thisBot.vars.sectionNamesEverSelected.push(
+  if (!sectionData.piece) {
+    throw new Error(
+      "TryMakeTourGuideOnSection: sectionData.piece is not defined."
+    );
+  }
+  (thisBot.vars.sectionNamesEverSelected as StackSectionData[]).push(
     sectionData.piece.tags.sectionName
   );
   if (skip) return Promise.all(shout("OnTourGuideComplete"));
   else {
-    const { bibleData } = await thisBot.GetDataChainFromParentDataIds({
+    const {
+      bibleData,
+    }: {
+      bibleData: StackBibleData | undefined;
+    } = await thisBot.GetDataChainFromParentDataIds({
       parentDataIds: sectionData.parentDataIds,
     });
     const dimension = os.getCurrentDimension();
@@ -30,7 +50,10 @@ if (thisBot.HasSectionEverBeenSelected({ sectionData })) {
     const unhighlightDelay = 50;
     const sectionPosition = getBotPosition(sectionData.piece, dimension);
     const bibleTransformerPosition =
-      bibleData && sectionData.parentDataIds.stackBibleId
+      bibleData &&
+      sectionData.getParentId("stackBibleId") &&
+      sectionData.piece.links.transformerLink &&
+      !Array.isArray(sectionData.piece.links.transformerLink)
         ? getBotPosition(sectionData.piece.links.transformerLink, dimension)
         : new Vector3(0, 0, 0);
     const desiredFocusOnInitialPosition = GetCamRotationFocusPoint({
@@ -53,7 +76,7 @@ if (thisBot.HasSectionEverBeenSelected({ sectionData })) {
         sectionPosition.z + bibleTransformerPosition.z
       ),
     });
-    const easing = { type: "sinusoidal", mode: "inout" };
+    const easing: Easing = { type: "sinusoidal", mode: "inout" };
     const focusOnZoom = 6;
     const customUnhighlightDuration = 0.15;
     // sectionData.piece.ReleaseCurrentInfoLabel();
@@ -83,12 +106,23 @@ if (thisBot.HasSectionEverBeenSelected({ sectionData })) {
               .toReversed();
             let index = 0;
             const intervalId = setInterval(() => {
+              const bookData = normalizedBooksData[index];
+              if (!bookData) {
+                throw new Error(
+                  "TryMakeTourGuideOnSection: bookData not found."
+                );
+              }
+              if (!bookData.piece) {
+                throw new Error(
+                  "TryMakeTourGuideOnSection: bookData.piece not found."
+                );
+              }
               thisBot.TryHighlightPiece({
-                piece: normalizedBooksData[index].piece,
+                piece: bookData.piece,
                 highlightRequestSource:
                   BibleVizUtils.Data.tags.InteractionType.Transition,
                 unhighlightDelay,
-                typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.StackBook,
+                typeOfPiece: BiblePiece.StackBook,
                 customUnhighlightDuration,
               });
               shout("OnTourGuideBookHighlighted", {

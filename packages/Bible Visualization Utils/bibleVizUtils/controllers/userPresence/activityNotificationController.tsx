@@ -64,6 +64,7 @@ interface NotifiablePieceData {
   getIsSelectedForNotification: () => boolean;
   getNotificationDirection: () => Vector2Type;
 }
+
 export const updateNotification: (
   data: NotifiablePieceData | NotifiablePieceData[],
   offset: unknown,

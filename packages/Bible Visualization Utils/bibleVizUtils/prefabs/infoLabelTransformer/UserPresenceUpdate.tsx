@@ -1,9 +1,7 @@
 import { updateIndicators } from "bibleVizUtils.controllers.userPresence.activityIndicatorsController";
+import { BiblePiece } from "bibleVizUtils.models.canvas";
 
-if (
-  thisBot.tags.typeOfPiece ===
-  BibleVizUtils.Data.tags.BiblePieceType.StackSectionShadow
-) {
+if (thisBot.tags.typeOfPiece === BiblePiece.StackSectionShadow) {
   // console.log(`[Debug] UserPresenceUpdate`, {
   //     "!thisBot.tags.isBaseInfoLabelTransformer": !thisBot.tags.isBaseInfoLabelTransformer,
   //     "thisBot.tags.isInUse": thisBot.tags.isInUse,
