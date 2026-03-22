@@ -20,7 +20,7 @@ try {
 }
 
 const { useState, useLayoutEffect, useRef, useMemo, useCallback } = os.appHooks;
-import { useProjectMenu } from "@packages/Discover/playlist/playlistMode/useProjectContext";
+import { useProjectMenu } from "playlist.playlistMode.useProjectContext";
 const G = globalThis as any;
 const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <

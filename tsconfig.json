@@ -2346,361 +2346,361 @@
         "./packages/Object Pooler/objectPooler/main/RemoveObjectPools.tsx"
       ],
       "playlist.playlistMode.AddAnotationUI": [
-        "packages/Discover/playlist/playlistMode/AddAnotationUI.tsx"
+        "./packages/Playlist/playlist/playlistMode/AddAnotationUI.tsx"
       ],
       "playlist.playlistMode.AddNewPlaylist": [
-        "packages/Discover/playlist/playlistMode/AddNewPlaylist.tsx"
+        "./packages/Playlist/playlist/playlistMode/AddNewPlaylist.tsx"
       ],
       "playlist.playlistMode.AddToPlaylist": [
-        "packages/Discover/playlist/playlistMode/AddToPlaylist.tsx"
+        "./packages/Playlist/playlist/playlistMode/AddToPlaylist.tsx"
       ],
       "playlist.playlistMode.AnnotationList": [
-        "packages/Discover/playlist/playlistMode/AnnotationList.tsx"
+        "./packages/Playlist/playlist/playlistMode/AnnotationList.tsx"
       ],
       "playlist.playlistMode.AnnotationListFilters": [
-        "packages/Discover/playlist/playlistMode/AnnotationListFilters.tsx"
+        "./packages/Playlist/playlist/playlistMode/AnnotationListFilters.tsx"
       ],
       "playlist.playlistMode.AttachLink": [
-        "packages/Discover/playlist/playlistMode/AttachLink.tsx"
+        "./packages/Playlist/playlist/playlistMode/AttachLink.tsx"
       ],
       "playlist.playlistMode.AttachmentLinkItem": [
-        "packages/Discover/playlist/playlistMode/AttachmentLinkItem.tsx"
+        "./packages/Playlist/playlist/playlistMode/AttachmentLinkItem.tsx"
       ],
       "playlist.playlistMode.AudioPlayer": [
-        "packages/Discover/playlist/playlistMode/AudioPlayer.tsx"
+        "./packages/Playlist/playlist/playlistMode/AudioPlayer.tsx"
       ],
       "playlist.playlistMode.AutoTag": [
-        "packages/Discover/playlist/playlistMode/AutoTag.tsx"
+        "./packages/Playlist/playlist/playlistMode/AutoTag.tsx"
       ],
       "playlist.playlistMode.bookDataUpdated": [
-        "packages/Discover/playlist/playlistMode/bookDataUpdated.tsx"
+        "./packages/Playlist/playlist/playlistMode/bookDataUpdated.tsx"
       ],
       "playlist.playlistMode.Bookmarks": [
-        "packages/Discover/playlist/playlistMode/Bookmarks.tsx"
+        "./packages/Playlist/playlist/playlistMode/Bookmarks.tsx"
       ],
       "playlist.playlistMode.buildPlaylistFromAI": [
-        "packages/Discover/playlist/playlistMode/buildPlaylistFromAI.tsx"
+        "./packages/Playlist/playlist/playlistMode/buildPlaylistFromAI.tsx"
       ],
       "playlist.playlistMode.checkAndGetlinkData": [
-        "packages/Discover/playlist/playlistMode/checkAndGetlinkData.tsx"
+        "./packages/Playlist/playlist/playlistMode/checkAndGetlinkData.tsx"
       ],
       "playlist.playlistMode.checkGreyOut": [
-        "packages/Discover/playlist/playlistMode/checkGreyOut.tsx"
+        "./packages/Playlist/playlist/playlistMode/checkGreyOut.tsx"
       ],
       "playlist.playlistMode.checkIfNeedToSkip": [
-        "packages/Discover/playlist/playlistMode/checkIfNeedToSkip.tsx"
+        "./packages/Playlist/playlist/playlistMode/checkIfNeedToSkip.tsx"
       ],
       "playlist.playlistMode.CloseFloatingApp": [
-        "packages/Discover/playlist/playlistMode/CloseFloatingApp.tsx"
+        "./packages/Playlist/playlist/playlistMode/CloseFloatingApp.tsx"
       ],
       "playlist.playlistMode.CloseSelf": [
-        "packages/Discover/playlist/playlistMode/CloseSelf.tsx"
+        "./packages/Playlist/playlist/playlistMode/CloseSelf.tsx"
       ],
       "playlist.playlistMode.Collections": [
-        "packages/Discover/playlist/playlistMode/Collections.tsx"
+        "./packages/Playlist/playlist/playlistMode/Collections.tsx"
       ],
       "playlist.playlistMode.ConfirmationModal": [
-        "packages/Discover/playlist/playlistMode/ConfirmationModal.tsx"
+        "./packages/Playlist/playlist/playlistMode/ConfirmationModal.tsx"
       ],
       "playlist.playlistMode.ControlButtons": [
-        "packages/Discover/playlist/playlistMode/ControlButtons.tsx"
+        "./packages/Playlist/playlist/playlistMode/ControlButtons.tsx"
       ],
       "playlist.playlistMode.convertAnnotationsToReadableFormat": [
-        "packages/Discover/playlist/playlistMode/convertAnnotationsToReadableFormat.tsx"
+        "./packages/Playlist/playlist/playlistMode/convertAnnotationsToReadableFormat.tsx"
       ],
       "playlist.playlistMode.ConvertDataType": [
-        "packages/Discover/playlist/playlistMode/ConvertDataType.tsx"
+        "./packages/Playlist/playlist/playlistMode/ConvertDataType.tsx"
       ],
       "playlist.playlistMode.CreatePlaylistUI": [
-        "packages/Discover/playlist/playlistMode/CreatePlaylistUI.tsx"
+        "./packages/Playlist/playlist/playlistMode/CreatePlaylistUI.tsx"
       ],
       "playlist.playlistMode.cursorFollow": [
-        "packages/Discover/playlist/playlistMode/cursorFollow.tsx"
+        "./packages/Playlist/playlist/playlistMode/cursorFollow.tsx"
       ],
       "playlist.playlistMode.cursorReset": [
-        "packages/Discover/playlist/playlistMode/cursorReset.tsx"
+        "./packages/Playlist/playlist/playlistMode/cursorReset.tsx"
       ],
       "playlist.playlistMode.CustomAnnotationTextEditor": [
-        "packages/Discover/playlist/playlistMode/CustomAnnotationTextEditor.tsx"
+        "./packages/Playlist/playlist/playlistMode/CustomAnnotationTextEditor.tsx"
       ],
       "playlist.playlistMode.defineGlobal": [
-        "packages/Discover/playlist/playlistMode/defineGlobal.tsx"
+        "./packages/Playlist/playlist/playlistMode/defineGlobal.tsx"
       ],
       "playlist.playlistMode.Discover": [
-        "packages/Discover/playlist/playlistMode/Discover.tsx"
+        "./packages/Playlist/playlist/playlistMode/Discover.tsx"
       ],
       "playlist.playlistMode.displayOverlay": [
-        "packages/Discover/playlist/playlistMode/displayOverlay.tsx"
+        "./packages/Playlist/playlist/playlistMode/displayOverlay.tsx"
       ],
       "playlist.playlistMode.DragableDiv": [
-        "packages/Discover/playlist/playlistMode/DragableDiv.tsx"
+        "./packages/Playlist/playlist/playlistMode/DragableDiv.tsx"
       ],
       "playlist.playlistMode.DragDropWithGrouping": [
-        "packages/Discover/playlist/playlistMode/DragDropWithGrouping.tsx"
+        "./packages/Playlist/playlist/playlistMode/DragDropWithGrouping.tsx"
       ],
       "playlist.playlistMode.DynamicCircle": [
-        "packages/Discover/playlist/playlistMode/DynamicCircle.tsx"
+        "./packages/Playlist/playlist/playlistMode/DynamicCircle.tsx"
       ],
       "playlist.playlistMode.EditAttachment": [
-        "packages/Discover/playlist/playlistMode/EditAttachment.tsx"
+        "./packages/Playlist/playlist/playlistMode/EditAttachment.tsx"
       ],
       "playlist.playlistMode.EditRichText": [
-        "packages/Discover/playlist/playlistMode/EditRichText.tsx"
+        "./packages/Playlist/playlist/playlistMode/EditRichText.tsx"
       ],
       "playlist.playlistMode.FetchAnnotationContentInBg": [
-        "packages/Discover/playlist/playlistMode/FetchAnnotationContentInBg.tsx"
+        "./packages/Playlist/playlist/playlistMode/FetchAnnotationContentInBg.tsx"
       ],
       "playlist.playlistMode.fetchAnnotationsData": [
-        "packages/Discover/playlist/playlistMode/fetchAnnotationsData.tsx"
+        "./packages/Playlist/playlist/playlistMode/fetchAnnotationsData.tsx"
       ],
       "playlist.playlistMode.filterOutValidItemFromJSON": [
-        "packages/Discover/playlist/playlistMode/filterOutValidItemFromJSON.tsx"
+        "./packages/Playlist/playlist/playlistMode/filterOutValidItemFromJSON.tsx"
       ],
       "playlist.playlistMode.findVerseByAI": [
-        "packages/Discover/playlist/playlistMode/findVerseByAI.tsx"
+        "./packages/Playlist/playlist/playlistMode/findVerseByAI.tsx"
       ],
       "playlist.playlistMode.getAudioSeconds": [
-        "packages/Discover/playlist/playlistMode/getAudioSeconds.tsx"
+        "./packages/Playlist/playlist/playlistMode/getAudioSeconds.tsx"
       ],
       "playlist.playlistMode.getBookmarks": [
-        "packages/Discover/playlist/playlistMode/getBookmarks.tsx"
+        "./packages/Playlist/playlist/playlistMode/getBookmarks.tsx"
       ],
       "playlist.playlistMode.getLabel": [
-        "packages/Discover/playlist/playlistMode/getLabel.tsx"
+        "./packages/Playlist/playlist/playlistMode/getLabel.tsx"
       ],
       "playlist.playlistMode.getPlaylists": [
-        "packages/Discover/playlist/playlistMode/getPlaylists.tsx"
+        "./packages/Playlist/playlist/playlistMode/getPlaylists.tsx"
       ],
       "playlist.playlistMode.getSheetDataAndFetch": [
-        "packages/Discover/playlist/playlistMode/getSheetDataAndFetch.tsx"
+        "./packages/Playlist/playlist/playlistMode/getSheetDataAndFetch.tsx"
       ],
       "playlist.playlistMode.getSuggestedListItems": [
-        "packages/Discover/playlist/playlistMode/getSuggestedListItems.tsx"
+        "./packages/Playlist/playlist/playlistMode/getSuggestedListItems.tsx"
       ],
       "playlist.playlistMode.groupVerse": [
-        "packages/Discover/playlist/playlistMode/groupVerse.tsx"
+        "./packages/Playlist/playlist/playlistMode/groupVerse.tsx"
       ],
       "playlist.playlistMode.History": [
-        "packages/Discover/playlist/playlistMode/History.tsx"
+        "./packages/Playlist/playlist/playlistMode/History.tsx"
       ],
       "playlist.playlistMode.LinkingItems": [
-        "packages/Discover/playlist/playlistMode/LinkingItems.tsx"
+        "./packages/Playlist/playlist/playlistMode/LinkingItems.tsx"
       ],
       "playlist.playlistMode.MergeModal": [
-        "packages/Discover/playlist/playlistMode/MergeModal.tsx"
+        "./packages/Playlist/playlist/playlistMode/MergeModal.tsx"
       ],
       "playlist.playlistMode.navigationWithDataItem": [
-        "packages/Discover/playlist/playlistMode/navigationWithDataItem.tsx"
+        "./packages/Playlist/playlist/playlistMode/navigationWithDataItem.tsx"
       ],
       "playlist.playlistMode.onAddDate": [
-        "packages/Discover/playlist/playlistMode/onAddDate.tsx"
+        "./packages/Playlist/playlist/playlistMode/onAddDate.tsx"
       ],
       "playlist.playlistMode.onDownloadPlaylist": [
-        "packages/Discover/playlist/playlistMode/onDownloadPlaylist.tsx"
+        "./packages/Playlist/playlist/playlistMode/onDownloadPlaylist.tsx"
       ],
       "playlist.playlistMode.onDuplicatePlaylists": [
-        "packages/Discover/playlist/playlistMode/onDuplicatePlaylists.tsx"
+        "./packages/Playlist/playlist/playlistMode/onDuplicatePlaylists.tsx"
       ],
       "playlist.playlistMode.OnEditPlaylistName": [
-        "packages/Discover/playlist/playlistMode/OnEditPlaylistName.tsx"
+        "./packages/Playlist/playlist/playlistMode/OnEditPlaylistName.tsx"
       ],
       "playlist.playlistMode.onEggHatch": [
-        "packages/Discover/playlist/playlistMode/onEggHatch.tsx"
+        "./packages/Playlist/playlist/playlistMode/onEggHatch.tsx"
       ],
       "playlist.playlistMode.onHandleDropFiles": [
-        "packages/Discover/playlist/playlistMode/onHandleDropFiles.tsx"
+        "./packages/Playlist/playlist/playlistMode/onHandleDropFiles.tsx"
       ],
       "playlist.playlistMode.onInstJoined": [
-        "packages/Discover/playlist/playlistMode/onInstJoined.tsx"
+        "./packages/Playlist/playlist/playlistMode/onInstJoined.tsx"
       ],
       "playlist.playlistMode.onKeyDown": [
-        "packages/Discover/playlist/playlistMode/onKeyDown.tsx"
+        "./packages/Playlist/playlist/playlistMode/onKeyDown.tsx"
       ],
       "playlist.playlistMode.onKeyUp": [
-        "packages/Discover/playlist/playlistMode/onKeyUp.tsx"
+        "./packages/Playlist/playlist/playlistMode/onKeyUp.tsx"
       ],
       "playlist.playlistMode.OnSearchHit": [
-        "packages/Discover/playlist/playlistMode/OnSearchHit.tsx"
+        "./packages/Playlist/playlist/playlistMode/OnSearchHit.tsx"
       ],
       "playlist.playlistMode.onUnInstallPackage": [
-        "packages/Discover/playlist/playlistMode/onUnInstallPackage.tsx"
+        "./packages/Playlist/playlist/playlistMode/onUnInstallPackage.tsx"
       ],
       "playlist.playlistMode.OpenSelf": [
-        "packages/Discover/playlist/playlistMode/OpenSelf.tsx"
+        "./packages/Playlist/playlist/playlistMode/OpenSelf.tsx"
       ],
       "playlist.playlistMode.options": [
-        "packages/Discover/playlist/playlistMode/options.tsx"
+        "./packages/Playlist/playlist/playlistMode/options.tsx"
       ],
       "playlist.playlistMode.Overlay": [
-        "packages/Discover/playlist/playlistMode/Overlay.tsx"
+        "./packages/Playlist/playlist/playlistMode/Overlay.tsx"
       ],
       "playlist.playlistMode.PlayingLayersConversion": [
-        "packages/Discover/playlist/playlistMode/PlayingLayersConversion.tsx"
+        "./packages/Playlist/playlist/playlistMode/PlayingLayersConversion.tsx"
       ],
       "playlist.playlistMode.Playlist": [
-        "packages/Discover/playlist/playlistMode/Playlist.tsx"
+        "./packages/Playlist/playlist/playlistMode/Playlist.tsx"
       ],
       "playlist.playlistMode.PlaylistContainer": [
-        "packages/Discover/playlist/playlistMode/PlaylistContainer.tsx"
+        "./packages/Playlist/playlist/playlistMode/PlaylistContainer.tsx"
       ],
       "playlist.playlistMode.playlistContentRenderer": [
-        "packages/Discover/playlist/playlistMode/playlistContentRenderer.tsx"
+        "./packages/Playlist/playlist/playlistMode/playlistContentRenderer.tsx"
       ],
       "playlist.playlistMode.PlaylistInfoItem": [
-        "packages/Discover/playlist/playlistMode/PlaylistInfoItem.tsx"
+        "./packages/Playlist/playlist/playlistMode/PlaylistInfoItem.tsx"
       ],
       "playlist.playlistMode.PlaylistLinkModal": [
-        "packages/Discover/playlist/playlistMode/PlaylistLinkModal.tsx"
+        "./packages/Playlist/playlist/playlistMode/PlaylistLinkModal.tsx"
       ],
       "playlist.playlistMode.PlaylistList": [
-        "packages/Discover/playlist/playlistMode/PlaylistList.tsx"
+        "./packages/Playlist/playlist/playlistMode/PlaylistList.tsx"
       ],
       "playlist.playlistMode.PlaylistPlayerControls": [
-        "packages/Discover/playlist/playlistMode/PlaylistPlayerControls.tsx"
+        "./packages/Playlist/playlist/playlistMode/PlaylistPlayerControls.tsx"
       ],
       "playlist.playlistMode.Playlistplaying": [
-        "packages/Discover/playlist/playlistMode/Playlistplaying.tsx"
+        "./packages/Playlist/playlist/playlistMode/Playlistplaying.tsx"
       ],
       "playlist.playlistMode.PlaylistRowItem": [
-        "packages/Discover/playlist/playlistMode/PlaylistRowItem.tsx"
+        "./packages/Playlist/playlist/playlistMode/PlaylistRowItem.tsx"
       ],
       "playlist.playlistMode.PlaylistUI": [
-        "packages/Discover/playlist/playlistMode/PlaylistUI.tsx"
+        "./packages/Playlist/playlist/playlistMode/PlaylistUI.tsx"
       ],
       "playlist.playlistMode.ProjectMode": [
-        "packages/Discover/playlist/playlistMode/ProjectMode.tsx"
+        "./packages/Playlist/playlist/playlistMode/ProjectMode.tsx"
       ],
       "playlist.playlistMode.RecordVoice": [
-        "packages/Discover/playlist/playlistMode/RecordVoice.tsx"
+        "./packages/Playlist/playlist/playlistMode/RecordVoice.tsx"
       ],
       "playlist.playlistMode.RegenratePlaylistWithNewCommand": [
-        "packages/Discover/playlist/playlistMode/RegenratePlaylistWithNewCommand.tsx"
+        "./packages/Playlist/playlist/playlistMode/RegenratePlaylistWithNewCommand.tsx"
       ],
       "playlist.playlistMode.remotePlaylistMetaDataUpdate": [
-        "packages/Discover/playlist/playlistMode/remotePlaylistMetaDataUpdate.tsx"
+        "./packages/Playlist/playlist/playlistMode/remotePlaylistMetaDataUpdate.tsx"
       ],
       "playlist.playlistMode.remotePlaylistPlayed": [
-        "packages/Discover/playlist/playlistMode/remotePlaylistPlayed.tsx"
+        "./packages/Playlist/playlist/playlistMode/remotePlaylistPlayed.tsx"
       ],
       "playlist.playlistMode.remotePlaylistStopped": [
-        "packages/Discover/playlist/playlistMode/remotePlaylistStopped.tsx"
+        "./packages/Playlist/playlist/playlistMode/remotePlaylistStopped.tsx"
       ],
       "playlist.playlistMode.removeMessage": [
-        "packages/Discover/playlist/playlistMode/removeMessage.tsx"
+        "./packages/Playlist/playlist/playlistMode/removeMessage.tsx"
       ],
       "playlist.playlistMode.RemoveScreenRecordingControls": [
-        "packages/Discover/playlist/playlistMode/RemoveScreenRecordingControls.tsx"
+        "./packages/Playlist/playlist/playlistMode/RemoveScreenRecordingControls.tsx"
       ],
       "playlist.playlistMode.RenderHTMLContent": [
-        "packages/Discover/playlist/playlistMode/RenderHTMLContent.tsx"
+        "./packages/Playlist/playlist/playlistMode/RenderHTMLContent.tsx"
       ],
       "playlist.playlistMode.RenderIcon": [
-        "packages/Discover/playlist/playlistMode/RenderIcon.tsx"
+        "./packages/Playlist/playlist/playlistMode/RenderIcon.tsx"
       ],
       "playlist.playlistMode.RenderLinkContent": [
-        "packages/Discover/playlist/playlistMode/RenderLinkContent.tsx"
+        "./packages/Playlist/playlist/playlistMode/RenderLinkContent.tsx"
       ],
       "playlist.playlistMode.resetEditingState": [
-        "packages/Discover/playlist/playlistMode/resetEditingState.tsx"
+        "./packages/Playlist/playlist/playlistMode/resetEditingState.tsx"
       ],
       "playlist.playlistMode.saveBookmarks": [
-        "packages/Discover/playlist/playlistMode/saveBookmarks.tsx"
+        "./packages/Playlist/playlist/playlistMode/saveBookmarks.tsx"
       ],
       "playlist.playlistMode.savePlaylists": [
-        "packages/Discover/playlist/playlistMode/savePlaylists.tsx"
+        "./packages/Playlist/playlist/playlistMode/savePlaylists.tsx"
       ],
       "playlist.playlistMode.SelectionOptions": [
-        "packages/Discover/playlist/playlistMode/SelectionOptions.tsx"
+        "./packages/Playlist/playlist/playlistMode/SelectionOptions.tsx"
       ],
       "playlist.playlistMode.SetItemsPlayerPlaylist": [
-        "packages/Discover/playlist/playlistMode/SetItemsPlayerPlaylist.tsx"
+        "./packages/Playlist/playlist/playlistMode/SetItemsPlayerPlaylist.tsx"
       ],
       "playlist.playlistMode.showCommandBox": [
-        "packages/Discover/playlist/playlistMode/showCommandBox.tsx"
+        "./packages/Playlist/playlist/playlistMode/showCommandBox.tsx"
       ],
       "playlist.playlistMode.showInfo": [
-        "packages/Discover/playlist/playlistMode/showInfo.tsx"
+        "./packages/Playlist/playlist/playlistMode/showInfo.tsx"
       ],
       "playlist.playlistMode.ShowPersonVideoOverlay": [
-        "packages/Discover/playlist/playlistMode/ShowPersonVideoOverlay.tsx"
+        "./packages/Playlist/playlist/playlistMode/ShowPersonVideoOverlay.tsx"
       ],
       "playlist.playlistMode.ShowPlayingContentAnnotation": [
-        "packages/Discover/playlist/playlistMode/ShowPlayingContentAnnotation.tsx"
+        "./packages/Playlist/playlist/playlistMode/ShowPlayingContentAnnotation.tsx"
       ],
       "playlist.playlistMode.ShowScreenRecordingStopButton": [
-        "packages/Discover/playlist/playlistMode/ShowScreenRecordingStopButton.tsx"
+        "./packages/Playlist/playlist/playlistMode/ShowScreenRecordingStopButton.tsx"
       ],
       "playlist.playlistMode.startRecording": [
-        "packages/Discover/playlist/playlistMode/startRecording.tsx"
+        "./packages/Playlist/playlist/playlistMode/startRecording.tsx"
       ],
       "playlist.playlistMode.StopPlayingPlaylist": [
-        "packages/Discover/playlist/playlistMode/StopPlayingPlaylist.tsx"
+        "./packages/Playlist/playlist/playlistMode/StopPlayingPlaylist.tsx"
       ],
       "playlist.playlistMode.Tabs": [
-        "packages/Discover/playlist/playlistMode/Tabs.tsx"
+        "./packages/Playlist/playlist/playlistMode/Tabs.tsx"
       ],
       "playlist.playlistMode.TogglePlaylistHeight": [
-        "packages/Discover/playlist/playlistMode/TogglePlaylistHeight.tsx"
+        "./packages/Playlist/playlist/playlistMode/TogglePlaylistHeight.tsx"
       ],
       "playlist.playlistMode.togglePlaylistSuggestions": [
-        "packages/Discover/playlist/playlistMode/togglePlaylistSuggestions.tsx"
+        "./packages/Playlist/playlist/playlistMode/togglePlaylistSuggestions.tsx"
       ],
       "playlist.playlistMode.tryAddDataToHistory": [
-        "packages/Discover/playlist/playlistMode/tryAddDataToHistory.tsx"
+        "./packages/Playlist/playlist/playlistMode/tryAddDataToHistory.tsx"
       ],
       "playlist.playlistMode.tryAddDataToPlaylist": [
-        "packages/Discover/playlist/playlistMode/tryAddDataToPlaylist.tsx"
+        "./packages/Playlist/playlist/playlistMode/tryAddDataToPlaylist.tsx"
       ],
       "playlist.playlistMode.tryAddPlaylistToPlaylists": [
-        "packages/Discover/playlist/playlistMode/tryAddPlaylistToPlaylists.tsx"
+        "./packages/Playlist/playlist/playlistMode/tryAddPlaylistToPlaylists.tsx"
       ],
       "playlist.playlistMode.tryInitPlaylistMaker": [
-        "packages/Discover/playlist/playlistMode/tryInitPlaylistMaker.tsx"
+        "./packages/Playlist/playlist/playlistMode/tryInitPlaylistMaker.tsx"
       ],
       "playlist.playlistMode.updateInPlaylist": [
-        "packages/Discover/playlist/playlistMode/updateInPlaylist.tsx"
+        "./packages/Playlist/playlist/playlistMode/updateInPlaylist.tsx"
       ],
       "playlist.playlistMode.useDragRef": [
-        "packages/Discover/playlist/playlistMode/useDragRef.tsx"
+        "./packages/Playlist/playlist/playlistMode/useDragRef.tsx"
       ],
       "playlist.playlistMode.useProjectContext": [
-        "packages/Discover/playlist/playlistMode/useProjectContext.tsx"
+        "./packages/Playlist/playlist/playlistMode/useProjectContext.tsx"
       ],
       "playlist.playlistMode.VideoPlayer": [
-        "packages/Discover/playlist/playlistMode/VideoPlayer.tsx"
+        "./packages/Playlist/playlist/playlistMode/VideoPlayer.tsx"
       ],
       "playlist.playlistMode.VideoRecordUI": [
-        "packages/Discover/playlist/playlistMode/VideoRecordUI.tsx"
+        "./packages/Playlist/playlist/playlistMode/VideoRecordUI.tsx"
       ],
       "playlist.playlistMode.VideoSmallScreen": [
-        "packages/Discover/playlist/playlistMode/VideoSmallScreen.tsx"
+        "./packages/Playlist/playlist/playlistMode/VideoSmallScreen.tsx"
       ],
       "storage.tempStorageBot.defineGlobals": [
-        "packages/Discover/storage/tempStorageBot/defineGlobals.tsx"
+        "./packages/Playlist/storage/tempStorageBot/defineGlobals.tsx"
       ],
       "storage.tempStorageBot.historySaver": [
-        "packages/Discover/storage/tempStorageBot/historySaver.tsx"
+        "./packages/Playlist/storage/tempStorageBot/historySaver.tsx"
       ],
       "storage.tempStorageBot.iconsSaver": [
-        "packages/Discover/storage/tempStorageBot/iconsSaver.tsx"
+        "./packages/Playlist/storage/tempStorageBot/iconsSaver.tsx"
       ],
       "storage.tempStorageBot.onCreate": [
-        "packages/Discover/storage/tempStorageBot/onCreate.tsx"
+        "./packages/Playlist/storage/tempStorageBot/onCreate.tsx"
       ],
       "storage.tempStorageBot.onEggHatch": [
-        "packages/Discover/storage/tempStorageBot/onEggHatch.tsx"
+        "./packages/Playlist/storage/tempStorageBot/onEggHatch.tsx"
       ],
       "storage.tempStorageBot.onInstJoined": [
-        "packages/Discover/storage/tempStorageBot/onInstJoined.tsx"
+        "./packages/Playlist/storage/tempStorageBot/onInstJoined.tsx"
       ],
       "storage.tempStorageBot.progressSaver": [
-        "packages/Discover/storage/tempStorageBot/progressSaver.tsx"
+        "./packages/Playlist/storage/tempStorageBot/progressSaver.tsx"
       ],
       "storage.tempStorageBot.savePlaylists": [
-        "packages/Discover/storage/tempStorageBot/savePlaylists.tsx"
+        "./packages/Playlist/storage/tempStorageBot/savePlaylists.tsx"
       ],
       "storage.tempStorageBot.visitedExperinces": [
-        "packages/Discover/storage/tempStorageBot/visitedExperinces.tsx"
+        "./packages/Playlist/storage/tempStorageBot/visitedExperinces.tsx"
       ],
       "references.manager.GetReferences": [
         "./packages/References/references/manager/GetReferences.tsx"
