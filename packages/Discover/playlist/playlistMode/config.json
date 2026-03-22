@@ -3,11 +3,11 @@
   "author": "Kushagra Karki",
   "toolbarConfig": {
     "icon": "playlist_play",
-    "label": "Playlist",
+    "label": "Discover",
     "hasToggle": "true"
   },
   "tabConfig": {
-    "title": "Playlist Kushagra"
+    "title": "Discover Kushagra"
   },
   "contextMenuConfig": {
     "optionsIsOn": "@options"
