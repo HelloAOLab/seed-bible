@@ -31,8 +31,8 @@ const PREVIEW_ICON_INACTIVE =
 const PREVIEW_ICON_ACTIVE =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/c9313a31249a980b996ccabd27c6aaf0d0cc4037944f425370ff8b3500644b30.svg";
 
-import { CustomAnnotationTextEditor } from "@packages/Discover/playlist/playlistMode/CustomAnnotationTextEditor";
-import { extractHashtagsFromHTML } from "@packages/Discover/playlist/playlistMode/AutoTag";
+import { CustomAnnotationTextEditor } from "playlist.playlistMode.CustomAnnotationTextEditor";
+import { extractHashtagsFromHTML } from "playlist.playlistMode.AutoTag";
 
 const AnnotationInnerDiv = (props: any) => {
   const {

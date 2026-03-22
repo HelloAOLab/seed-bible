@@ -1,0 +1,1659 @@
+[
+    [
+        {
+            "name": "New Testament",
+            "sections": {
+                "prophecy": [
+                    {
+                        "commonName": "Revelation",
+                        "numberOfChapters": 22
+                    }
+                ],
+                "letters": [
+                    {
+                        "commonName": "Jude",
+                        "numberOfChapters": 1,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        }
+                    },
+                    {
+                        "commonName": "3 John",
+                        "numberOfChapters": 1,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0.375,
+                            "z": 0.1
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.9,
+                            "y": 0.15
+                        },
+                        "group": 1
+                    },
+                    {
+                        "commonName": "2 John",
+                        "numberOfChapters": 1,
+                        "explodedViewPosition": {
+                            "x": 0.325,
+                            "y": -0.125,
+                            "z": 0.1
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.25,
+                            "y": 0.65
+                        },
+                        "group": 1
+                    },
+                    {
+                        "commonName": "1 John",
+                        "numberOfChapters": 5,
+                        "explodedViewPosition": {
+                            "x": -0.175,
+                            "y": -0.125,
+                            "z": 0.1
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.55,
+                            "y": 0.65
+                        },
+                        "group": 1
+                    },
+                    {
+                        "commonName": "2 Peter",
+                        "numberOfChapters": 3,
+                        "explodedViewPosition": {
+                            "x": 0.1,
+                            "y": 0.268,
+                            "z": 0.19
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.75,
+                            "y": 0.2625
+                        },
+                        "group": 2
+                    },
+                    {
+                        "commonName": "1 Peter",
+                        "numberOfChapters": 5,
+                        "explodedViewPosition": {
+                            "x": -0.1,
+                            "y": -0.181,
+                            "z": 0.19
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.75,
+                            "y": 0.4375
+                        },
+                        "group": 2
+                    },
+                    {
+                        "commonName": "James",
+                        "numberOfChapters": 5,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.29
+                        }
+                    },
+                    {
+                        "commonName": "Hebrews",
+                        "numberOfChapters": 13,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.333
+                        }
+                    },
+                    {
+                        "commonName": "Philemon",
+                        "numberOfChapters": 1,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.376
+                        }
+                    },
+                    {
+                        "commonName": "Titus",
+                        "numberOfChapters": 3,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.42
+                        }
+                    },
+                    {
+                        "commonName": "2 Timothy",
+                        "numberOfChapters": 4,
+                        "explodedViewPosition": {
+                            "x": 0.1,
+                            "y": 0.225,
+                            "z": 0.51
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.7,
+                            "y": 0.35
+                        },
+                        "group": 3
+                    },
+                    {
+                        "commonName": "1 Timothy",
+                        "numberOfChapters": 6,
+                        "explodedViewPosition": {
+                            "x": -0.1,
+                            "y": -0.225,
+                            "z": 0.51
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.7,
+                            "y": 0.35
+                        },
+                        "group": 3
+                    },
+                    {
+                        "commonName": "2 Thessalonians",
+                        "numberOfChapters": 3,
+                        "explodedViewPosition": {
+                            "x": 0.225,
+                            "y": 0.05,
+                            "z": 0.59
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.35,
+                            "y": 0.6
+                        },
+                        "group": 4
+                    },
+                    {
+                        "commonName": "1 Thessalonians",
+                        "numberOfChapters": 5,
+                        "explodedViewPosition": {
+                            "x": -0.225,
+                            "y": -0.05,
+                            "z": 0.59
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.35,
+                            "y": 0.6
+                        },
+                        "group": 4
+                    },
+                    {
+                        "commonName": "Colossians",
+                        "numberOfChapters": 4,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.69
+                        }
+                    },
+                    {
+                        "commonName": "Philippians",
+                        "numberOfChapters": 4,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.733
+                        }
+                    },
+                    {
+                        "commonName": "Ephesians",
+                        "numberOfChapters": 6,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.776
+                        }
+                    },
+                    {
+                        "commonName": "Galatians",
+                        "numberOfChapters": 6,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.82
+                        }
+                    },
+                    {
+                        "commonName": "2 Corinthians",
+                        "numberOfChapters": 13,
+                        "explodedViewPosition": {
+                            "x": 0.1,
+                            "y": 0.225,
+                            "z": 0.91
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.7,
+                            "y": 0.35
+                        },
+                        "group": 5
+                    },
+                    {
+                        "commonName": "1 Corinthians",
+                        "numberOfChapters": 16,
+                        "explodedViewPosition": {
+                            "x": -0.1,
+                            "y": -0.225,
+                            "z": 0.91
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.7,
+                            "y": 0.35
+                        },
+                        "group": 5
+                    },
+                    {
+                        "commonName": "Romans",
+                        "numberOfChapters": 16,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 1
+                        }
+                    }
+                ],
+                "history": [
+                    {
+                        "commonName": "Acts",
+                        "numberOfChapters": 28
+                    }
+                ],
+                "gospels": [
+                    {
+                        "commonName": "John",
+                        "numberOfChapters": 21,
+                        "explodedViewPosition": {
+                            "x": 0.3,
+                            "y": 0,
+                            "z": 0.1
+                        }
+                    },
+                    {
+                        "commonName": "Luke",
+                        "numberOfChapters": 24,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": -0.3,
+                            "z": 0.36
+                        }
+                    },
+                    {
+                        "commonName": "Mark",
+                        "numberOfChapters": 16,
+                        "explodedViewPosition": {
+                            "x": -0.3,
+                            "y": 0,
+                            "z": 0.632
+                        }
+                    },
+                    {
+                        "commonName": "Matthew",
+                        "numberOfChapters": 28,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0.3,
+                            "z": 0.9
+                        }
+                    }
+                ]
+            },
+            "colors": [
+                {
+                    "background": "#B1B2FF"
+                },
+                {
+                    "background": "#AAC4FF"
+                },
+                {
+                    "background": "#a0aeeb"
+                },
+                {
+                    "background": "#a4accf"
+                }
+            ],
+            "customExplodedViewScaleFactors": {
+                "scaleFactors": [
+                    {
+                        "sectionName": "letters",
+                        "scaleFactor": 8
+                    },
+                    {
+                        "sectionName": "gospels",
+                        "scaleFactor": 3
+                    }
+                ]
+            },
+            "customSectionColorRange": {
+                "colorRanges": [
+                    {
+                        "sectionName": "letters",
+                        "colorRange": 120
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Old Testament",
+            "sections": {
+                "prophets": [
+                    {
+                        "commonName": "Malachi",
+                        "numberOfChapters": 4,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0.375,
+                            "z": 0
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.9,
+                            "y": 0.15
+                        }
+                    },
+                    {
+                        "commonName": "Zechariah",
+                        "numberOfChapters": 14,
+                        "explodedViewPosition": {
+                            "x": 0.175,
+                            "y": -0.125,
+                            "z": 0
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.55,
+                            "y": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Haggai",
+                        "numberOfChapters": 2,
+                        "explodedViewPosition": {
+                            "x": -0.325,
+                            "y": -0.125,
+                            "z": 0
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.25,
+                            "y": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Zephaniah",
+                        "numberOfChapters": 3,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0.375,
+                            "z": 0.12
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.9,
+                            "y": 0.15
+                        }
+                    },
+                    {
+                        "commonName": "Habakkuk",
+                        "numberOfChapters": 3,
+                        "explodedViewPosition": {
+                            "x": 0.325,
+                            "y": -0.125,
+                            "z": 0.12
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.25,
+                            "y": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Nahum",
+                        "numberOfChapters": 3,
+                        "explodedViewPosition": {
+                            "x": -0.175,
+                            "y": -0.125,
+                            "z": 0.12
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.55,
+                            "y": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Micah",
+                        "numberOfChapters": 7,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": -0.375,
+                            "z": 0.24
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.9,
+                            "y": 0.15
+                        }
+                    },
+                    {
+                        "commonName": "Jonah",
+                        "numberOfChapters": 4,
+                        "explodedViewPosition": {
+                            "x": 0.325,
+                            "y": 0.125,
+                            "z": 0.24
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.25,
+                            "y": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Obadiah",
+                        "numberOfChapters": 1,
+                        "explodedViewPosition": {
+                            "x": -0.175,
+                            "y": 0.125,
+                            "z": 0.24
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.55,
+                            "y": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Amos",
+                        "numberOfChapters": 9,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": -0.375,
+                            "z": 0.36
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.9,
+                            "y": 0.15
+                        }
+                    },
+                    {
+                        "commonName": "Joel",
+                        "numberOfChapters": 3,
+                        "explodedViewPosition": {
+                            "x": 0.175,
+                            "y": 0.125,
+                            "z": 0.36
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.55,
+                            "y": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Hosea",
+                        "numberOfChapters": 14,
+                        "explodedViewPosition": {
+                            "x": -0.325,
+                            "y": 0.125,
+                            "z": 0.36
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.25,
+                            "y": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Daniel",
+                        "numberOfChapters": 12,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.55
+                        }
+                    },
+                    {
+                        "commonName": "Ezekiel",
+                        "numberOfChapters": 48,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Lamentations",
+                        "numberOfChapters": 5,
+                        "explodedViewPosition": {
+                            "x": 0.25,
+                            "y": 0.05,
+                            "z": 0.77
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.4,
+                            "y": 0.6
+                        }
+                    },
+                    {
+                        "commonName": "Jeremiah",
+                        "numberOfChapters": 52,
+                        "explodedViewPosition": {
+                            "x": -0.25,
+                            "y": -0.05,
+                            "z": 0.79
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.4,
+                            "y": 0.6
+                        }
+                    },
+                    {
+                        "commonName": "Isaiah",
+                        "numberOfChapters": 66,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.95
+                        }
+                    }
+                ],
+                "wisdom": [
+                    {
+                        "commonName": "Song of Songs",
+                        "numberOfChapters": 8,
+                        "explodedViewPosition": {
+                            "x": 0.15,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.7,
+                            "y": 0.9
+                        }
+                    },
+                    {
+                        "commonName": "Ecclesiastes",
+                        "numberOfChapters": 12,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.075
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.7,
+                            "y": 0.9
+                        }
+                    },
+                    {
+                        "commonName": "Proverbs",
+                        "numberOfChapters": 31,
+                        "explodedViewPosition": {
+                            "x": -0.15,
+                            "y": 0,
+                            "z": 0.1875
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.7,
+                            "y": 0.9
+                        }
+                    },
+                    {
+                        "commonName": "5 Psalms",
+                        "numberOfChapters": 44,
+                        "startingIndex": 106,
+                        "explodedViewPosition": {
+                            "x": -0.3,
+                            "y": -0.35,
+                            "z": 0.42
+                        },
+                        "group": 4
+                    },
+                    {
+                        "commonName": "4 Psalms",
+                        "numberOfChapters": 17,
+                        "startingIndex": 89,
+                        "explodedViewPosition": {
+                            "x": 0.3,
+                            "y": -0.35,
+                            "z": 0.46
+                        },
+                        "group": 4
+                    },
+                    {
+                        "commonName": "3 Psalms",
+                        "numberOfChapters": 17,
+                        "startingIndex": 72,
+                        "explodedViewPosition": {
+                            "x": 0.5,
+                            "y": 0.25,
+                            "z": 0.5
+                        },
+                        "group": 4
+                    },
+                    {
+                        "commonName": "2 Psalms",
+                        "numberOfChapters": 31,
+                        "startingIndex": 41,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0.35,
+                            "z": 0.54
+                        },
+                        "group": 4
+                    },
+                    {
+                        "commonName": "1 Psalms",
+                        "numberOfChapters": 41,
+                        "startingIndex": 0,
+                        "explodedViewPosition": {
+                            "x": -0.5,
+                            "y": 0.25,
+                            "z": 0.58
+                        },
+                        "group": 4
+                    },
+                    {
+                        "commonName": "Job",
+                        "numberOfChapters": 42,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.9
+                        }
+                    }
+                ],
+                "history": [
+                    {
+                        "commonName": "Esther",
+                        "numberOfChapters": 10,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        }
+                    },
+                    {
+                        "commonName": "Nehemiah",
+                        "numberOfChapters": 13,
+                        "explodedViewPosition": {
+                            "x": 0.1,
+                            "y": -0.2,
+                            "z": 0.14
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 1.1,
+                            "y": 0.35
+                        }
+                    },
+                    {
+                        "commonName": "Ezra",
+                        "numberOfChapters": 10,
+                        "explodedViewPosition": {
+                            "x": -0.1,
+                            "y": 0.2,
+                            "z": 0.16
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 1.1,
+                            "y": 0.35
+                        }
+                    },
+                    {
+                        "commonName": "2 Chronicles",
+                        "numberOfChapters": 36,
+                        "explodedViewPosition": {
+                            "x": 0.35,
+                            "y": 0.05,
+                            "z": 0.37
+                        },
+                        "group": 3
+                    },
+                    {
+                        "commonName": "1 Chronicles",
+                        "numberOfChapters": 29,
+                        "explodedViewPosition": {
+                            "x": -0.35,
+                            "y": -0.05,
+                            "z": 0.39
+                        },
+                        "group": 3
+                    },
+                    {
+                        "commonName": "2 Kings",
+                        "numberOfChapters": 25,
+                        "explodedViewPosition": {
+                            "x": 0.35,
+                            "y": 0.05,
+                            "z": 0.49
+                        },
+                        "group": 2
+                    },
+                    {
+                        "commonName": "1 Kings",
+                        "numberOfChapters": 22,
+                        "explodedViewPosition": {
+                            "x": -0.35,
+                            "y": -0.05,
+                            "z": 0.51
+                        },
+                        "group": 2
+                    },
+                    {
+                        "commonName": "2 Samuel",
+                        "numberOfChapters": 24,
+                        "explodedViewPosition": {
+                            "x": 0.35,
+                            "y": 0.05,
+                            "z": 0.61
+                        },
+                        "group": 1
+                    },
+                    {
+                        "commonName": "1 Samuel",
+                        "numberOfChapters": 31,
+                        "explodedViewPosition": {
+                            "x": -0.35,
+                            "y": -0.05,
+                            "z": 0.63
+                        },
+                        "group": 1
+                    },
+                    {
+                        "commonName": "Ruth",
+                        "numberOfChapters": 4,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.8
+                        }
+                    },
+                    {
+                        "commonName": "Judges",
+                        "numberOfChapters": 21,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.9
+                        }
+                    },
+                    {
+                        "commonName": "Joshua",
+                        "numberOfChapters": 24,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 1
+                        }
+                    }
+                ],
+                "law": [
+                    {
+                        "commonName": "Deuteronomy",
+                        "numberOfChapters": 34,
+                        "explodedViewPosition": {
+                            "x": 0.4,
+                            "y": 0.4,
+                            "z": 0
+                        }
+                    },
+                    {
+                        "commonName": "Numbers",
+                        "numberOfChapters": 36,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.25
+                        }
+                    },
+                    {
+                        "commonName": "Leviticus",
+                        "numberOfChapters": 27,
+                        "explodedViewPosition": {
+                            "x": -0.4,
+                            "y": -0.4,
+                            "z": 0.5
+                        }
+                    },
+                    {
+                        "commonName": "Exodus",
+                        "numberOfChapters": 40,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.75
+                        }
+                    },
+                    {
+                        "commonName": "Genesis",
+                        "numberOfChapters": 50,
+                        "explodedViewPosition": {
+                            "x": 0.4,
+                            "y": 0.4,
+                            "z": 1
+                        }
+                    }
+                ]
+            },
+            "colors": [
+                {
+                    "background": "#EF9595"
+                },
+                {
+                    "background": "#EFB495"
+                },
+                {
+                    "background": "#EFD595"
+                },
+                {
+                    "background": "#E5E67E"
+                }
+            ],
+            "customExplodedViewScaleFactors": {
+                "scaleFactors": [
+                    {
+                        "sectionName": "law",
+                        "scaleFactor": 2.5
+                    },
+                    {
+                        "sectionName": "history",
+                        "scaleFactor": 2.5
+                    },
+                    {
+                        "sectionName": "wisdom",
+                        "scaleFactor": 2.5
+                    },
+                    {
+                        "sectionName": "prophets",
+                        "scaleFactor": 3
+                    }
+                ]
+            },
+            "customSectionColorRange": {
+                "colorRanges": [
+                    {
+                        "sectionName": "prophets",
+                        "colorRange": 80
+                    },
+                    {
+                        "sectionName": "wisdom",
+                        "colorRange": 80
+                    },
+                    {
+                        "sectionName": "history",
+                        "colorRange": 80
+                    }
+                ]
+            }
+        }
+    ],
+    [
+        {
+            "name": "New Testament",
+            "sections": {
+                "prophecy": [
+                    {
+                        "commonName": "Revelation",
+                        "numberOfChapters": 22
+                    }
+                ],
+                "letters": [
+                    {
+                        "commonName": "Jude",
+                        "numberOfChapters": 1,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        }
+                    },
+                    {
+                        "commonName": "1 John",
+                        "numberOfChapters": 5,
+                        "explodedViewPosition": {
+                            "x": -0.175,
+                            "y": -0.125,
+                            "z": 0.1
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.55,
+                            "y": 0.65
+                        },
+                        "group": 1
+                    },
+                    {
+                        "commonName": "2 John",
+                        "numberOfChapters": 1,
+                        "explodedViewPosition": {
+                            "x": 0.325,
+                            "y": -0.125,
+                            "z": 0.1
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.25,
+                            "y": 0.65
+                        },
+                        "group": 1
+                    },
+                    {
+                        "commonName": "3 John",
+                        "numberOfChapters": 1,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0.375,
+                            "z": 0.1
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.9,
+                            "y": 0.15
+                        },
+                        "group": 1
+                    },
+                    {
+                        "commonName": "1 Peter",
+                        "numberOfChapters": 5,
+                        "explodedViewPosition": {
+                            "x": -0.1,
+                            "y": -0.181,
+                            "z": 0.19
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.75,
+                            "y": 0.4375
+                        },
+                        "group": 2
+                    },
+                    {
+                        "commonName": "2 Peter",
+                        "numberOfChapters": 3,
+                        "explodedViewPosition": {
+                            "x": 0.1,
+                            "y": 0.268,
+                            "z": 0.19
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.75,
+                            "y": 0.2625
+                        },
+                        "group": 2
+                    },
+                    {
+                        "commonName": "James",
+                        "numberOfChapters": 5,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.29
+                        }
+                    },
+                    {
+                        "commonName": "Hebrews",
+                        "numberOfChapters": 13,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.333
+                        }
+                    },
+                    {
+                        "commonName": "Philemon",
+                        "numberOfChapters": 1,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.376
+                        }
+                    },
+                    {
+                        "commonName": "Titus",
+                        "numberOfChapters": 3,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.42
+                        }
+                    },
+                    {
+                        "commonName": "1 Timothy",
+                        "numberOfChapters": 6,
+                        "explodedViewPosition": {
+                            "x": -0.1,
+                            "y": -0.225,
+                            "z": 0.51
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.7,
+                            "y": 0.35
+                        },
+                        "group": 3
+                    },
+                    {
+                        "commonName": "2 Timothy",
+                        "numberOfChapters": 4,
+                        "explodedViewPosition": {
+                            "x": 0.1,
+                            "y": 0.225,
+                            "z": 0.51
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.7,
+                            "y": 0.35
+                        },
+                        "group": 3
+                    },
+                    {
+                        "commonName": "1 Thessalonians",
+                        "numberOfChapters": 5,
+                        "explodedViewPosition": {
+                            "x": -0.225,
+                            "y": -0.05,
+                            "z": 0.59
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.35,
+                            "y": 0.6
+                        },
+                        "group": 4
+                    },
+                    {
+                        "commonName": "2 Thessalonians",
+                        "numberOfChapters": 3,
+                        "explodedViewPosition": {
+                            "x": 0.225,
+                            "y": 0.05,
+                            "z": 0.59
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.35,
+                            "y": 0.6
+                        },
+                        "group": 4
+                    },
+                    {
+                        "commonName": "Colossians",
+                        "numberOfChapters": 4,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.69
+                        }
+                    },
+                    {
+                        "commonName": "Philippians",
+                        "numberOfChapters": 4,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.733
+                        }
+                    },
+                    {
+                        "commonName": "Ephesians",
+                        "numberOfChapters": 6,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.776
+                        }
+                    },
+                    {
+                        "commonName": "Galatians",
+                        "numberOfChapters": 6,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.82
+                        }
+                    },
+                    {
+                        "commonName": "1 Corinthians",
+                        "numberOfChapters": 16,
+                        "explodedViewPosition": {
+                            "x": -0.1,
+                            "y": -0.225,
+                            "z": 0.91
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.7,
+                            "y": 0.35
+                        },
+                        "group": 5
+                    },
+                    {
+                        "commonName": "2 Corinthians",
+                        "numberOfChapters": 13,
+                        "explodedViewPosition": {
+                            "x": 0.1,
+                            "y": 0.225,
+                            "z": 0.91
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.7,
+                            "y": 0.35
+                        },
+                        "group": 5
+                    },
+                    {
+                        "commonName": "Romans",
+                        "numberOfChapters": 16,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 1
+                        }
+                    }
+                ],
+                "history": [
+                    {
+                        "commonName": "Acts",
+                        "numberOfChapters": 28
+                    }
+                ],
+                "gospels": [
+                    {
+                        "commonName": "John",
+                        "numberOfChapters": 21,
+                        "explodedViewPosition": {
+                            "x": 0.3,
+                            "y": 0,
+                            "z": 0.1
+                        }
+                    },
+                    {
+                        "commonName": "Luke",
+                        "numberOfChapters": 24,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": -0.3,
+                            "z": 0.36
+                        }
+                    },
+                    {
+                        "commonName": "Mark",
+                        "numberOfChapters": 16,
+                        "explodedViewPosition": {
+                            "x": -0.3,
+                            "y": 0,
+                            "z": 0.632
+                        }
+                    },
+                    {
+                        "commonName": "Matthew",
+                        "numberOfChapters": 28,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0.3,
+                            "z": 0.9
+                        }
+                    }
+                ]
+            },
+            "colors": [
+                {
+                    "background": "#B1B2FF"
+                },
+                {
+                    "background": "#AAC4FF"
+                },
+                {
+                    "background": "#a0aeeb"
+                },
+                {
+                    "background": "#a4accf"
+                }
+            ],
+            "customExplodedViewScaleFactors": {
+                "scaleFactors": [
+                    {
+                        "sectionName": "letters",
+                        "scaleFactor": 8
+                    },
+                    {
+                        "sectionName": "gospels",
+                        "scaleFactor": 3
+                    }
+                ]
+            },
+            "customSectionColorRange": {
+                "colorRanges": [
+                    {
+                        "sectionName": "letters",
+                        "colorRange": 120
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Old Testament",
+            "sections": {
+                "Writings": [
+                    {
+                        "commonName": "Chronicles",
+                        "numberOfChapters": 65,
+                        "explodedViewPosition": {
+                            "x": 0.35,
+                            "y": 0.05,
+                            "z": 0.37
+                        }
+                    },
+                    {
+                        "commonName": "Ezra-Nehemiah",
+                        "numberOfChapters": 23,
+                        "explodedViewPosition": {
+                            "x": -0.1,
+                            "y": 0.2,
+                            "z": 0.16
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 1.1,
+                            "y": 0.35
+                        }
+                    },
+                    {
+                        "commonName": "Daniel",
+                        "numberOfChapters": 12,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.55
+                        }
+                    },
+                    {
+                        "commonName": "Esther",
+                        "numberOfChapters": 10,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        }
+                    },
+                    {
+                        "commonName": "Ecclesiastes",
+                        "numberOfChapters": 12,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.075
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.7,
+                            "y": 0.9
+                        }
+                    },
+                    {
+                        "commonName": "Lamentations",
+                        "numberOfChapters": 5,
+                        "explodedViewPosition": {
+                            "x": 0.25,
+                            "y": 0.05,
+                            "z": 0.77
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.4,
+                            "y": 0.6
+                        }
+                    },
+                    {
+                        "commonName": "Ruth",
+                        "numberOfChapters": 4,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.8
+                        }
+                    },
+                    {
+                        "commonName": "Song of Songs",
+                        "numberOfChapters": 8,
+                        "explodedViewPosition": {
+                            "x": 0.15,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.7,
+                            "y": 0.9
+                        }
+                    },
+                    {
+                        "commonName": "Job",
+                        "numberOfChapters": 42,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.9
+                        }
+                    },
+                    {
+                        "commonName": "Proverbs",
+                        "numberOfChapters": 31,
+                        "explodedViewPosition": {
+                            "x": -0.15,
+                            "y": 0,
+                            "z": 0.1875
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.7,
+                            "y": 0.9
+                        }
+                    },
+                    {
+                        "commonName": "Psalms",
+                        "numberOfChapters": 150,
+                        "explodedViewPosition": {
+                            "x": 0.5,
+                            "y": 0.25,
+                            "z": 0.5
+                        }
+                    }
+                ],
+                "Prophets": [
+                    {
+                        "commonName": "Malachi",
+                        "numberOfChapters": 4,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0.375,
+                            "z": 0
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.9,
+                            "y": 0.15
+                        }
+                    },
+                    {
+                        "commonName": "Zechariah",
+                        "numberOfChapters": 14,
+                        "explodedViewPosition": {
+                            "x": 0.175,
+                            "y": -0.125,
+                            "z": 0
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.55,
+                            "y": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Haggai",
+                        "numberOfChapters": 2,
+                        "explodedViewPosition": {
+                            "x": -0.325,
+                            "y": -0.125,
+                            "z": 0
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.25,
+                            "y": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Zephaniah",
+                        "numberOfChapters": 3,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0.375,
+                            "z": 0.12
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.9,
+                            "y": 0.15
+                        }
+                    },
+                    {
+                        "commonName": "Habakkuk",
+                        "numberOfChapters": 3,
+                        "explodedViewPosition": {
+                            "x": 0.325,
+                            "y": -0.125,
+                            "z": 0.12
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.25,
+                            "y": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Nahum",
+                        "numberOfChapters": 3,
+                        "explodedViewPosition": {
+                            "x": -0.175,
+                            "y": -0.125,
+                            "z": 0.12
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.55,
+                            "y": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Micah",
+                        "numberOfChapters": 7,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": -0.375,
+                            "z": 0.24
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.9,
+                            "y": 0.15
+                        }
+                    },
+                    {
+                        "commonName": "Jonah",
+                        "numberOfChapters": 4,
+                        "explodedViewPosition": {
+                            "x": 0.325,
+                            "y": 0.125,
+                            "z": 0.24
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.25,
+                            "y": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Obadiah",
+                        "numberOfChapters": 1,
+                        "explodedViewPosition": {
+                            "x": -0.175,
+                            "y": 0.125,
+                            "z": 0.24
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.55,
+                            "y": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Amos",
+                        "numberOfChapters": 9,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": -0.375,
+                            "z": 0.36
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.9,
+                            "y": 0.15
+                        }
+                    },
+                    {
+                        "commonName": "Joel",
+                        "numberOfChapters": 3,
+                        "explodedViewPosition": {
+                            "x": 0.175,
+                            "y": 0.125,
+                            "z": 0.36
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.55,
+                            "y": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Hosea",
+                        "numberOfChapters": 14,
+                        "explodedViewPosition": {
+                            "x": -0.325,
+                            "y": 0.125,
+                            "z": 0.36
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.25,
+                            "y": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Ezekiel",
+                        "numberOfChapters": 48,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.65
+                        }
+                    },
+                    {
+                        "commonName": "Jeremiah",
+                        "numberOfChapters": 52,
+                        "explodedViewPosition": {
+                            "x": -0.25,
+                            "y": -0.05,
+                            "z": 0.79
+                        },
+                        "explodedViewCustomScale": {
+                            "x": 0.4,
+                            "y": 0.6
+                        }
+                    },
+                    {
+                        "commonName": "Isaiah",
+                        "numberOfChapters": 66,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.95
+                        }
+                    },
+                    {
+                        "commonName": "Kings",
+                        "numberOfChapters": 47,
+                        "explodedViewPosition": {
+                            "x": -0.35,
+                            "y": -0.05,
+                            "z": 0.51
+                        }
+                    },
+                    {
+                        "commonName": "Samuel",
+                        "numberOfChapters": 55,
+                        "explodedViewPosition": {
+                            "x": -0.35,
+                            "y": -0.05,
+                            "z": 0.63
+                        }
+                    },
+                    {
+                        "commonName": "Judges",
+                        "numberOfChapters": 21,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.9
+                        }
+                    },
+                    {
+                        "commonName": "Joshua",
+                        "numberOfChapters": 24,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 1
+                        }
+                    }
+                ],
+                "Torah": [
+                    {
+                        "commonName": "Deuteronomy",
+                        "numberOfChapters": 34,
+                        "explodedViewPosition": {
+                            "x": 0.4,
+                            "y": 0.4,
+                            "z": 0
+                        }
+                    },
+                    {
+                        "commonName": "Numbers",
+                        "numberOfChapters": 36,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.25
+                        }
+                    },
+                    {
+                        "commonName": "Leviticus",
+                        "numberOfChapters": 27,
+                        "explodedViewPosition": {
+                            "x": -0.4,
+                            "y": -0.4,
+                            "z": 0.5
+                        }
+                    },
+                    {
+                        "commonName": "Exodus",
+                        "numberOfChapters": 40,
+                        "explodedViewPosition": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.75
+                        }
+                    },
+                    {
+                        "commonName": "Genesis",
+                        "numberOfChapters": 50,
+                        "explodedViewPosition": {
+                            "x": 0.4,
+                            "y": 0.4,
+                            "z": 1
+                        }
+                    }
+                ]
+            },
+            "colors": [
+                {
+                    "background": "#EF9595"
+                },
+                {
+                    "background": "#EFB495"
+                },
+                {
+                    "background": "#EFD595"
+                }
+            ],
+            "customExplodedViewScaleFactors": {
+                "scaleFactors": [
+                    {
+                        "sectionName": "Book of Moses",
+                        "scaleFactor": 2.5
+                    },
+                    {
+                        "sectionName": "Prophets",
+                        "scaleFactor": 2.5
+                    },
+                    {
+                        "sectionName": "Writing",
+                        "scaleFactor": 2.5
+                    }
+                ]
+            },
+            "customSectionColorRange": {
+                "colorRanges": [
+                    {
+                        "sectionName": "Book of Moses",
+                        "colorRange": 80
+                    },
+                    {
+                        "sectionName": "Prophets",
+                        "colorRange": 80
+                    },
+                    {
+                        "sectionName": "Writing",
+                        "colorRange": 80
+                    }
+                ]
+            }
+        }
+    ]
+]

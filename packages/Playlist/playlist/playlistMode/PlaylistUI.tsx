@@ -1,7 +1,7 @@
 os.unregisterApp("playlist-cont-ui");
 os.registerApp("playlist-cont-ui", thisBot);
 import { getAnnotationRecord, loadAnnotations } from "db.annotations.library";
-import { ProjectProvider } from "@packages/Discover/playlist/playlistMode/useProjectContext";
+import { ProjectProvider } from "playlist.playlistMode.useProjectContext";
 
 const RenderIcon = await thisBot.RenderIcon();
 const { useState, useLayoutEffect, useMemo, useRef, useCallback } = os.appHooks;

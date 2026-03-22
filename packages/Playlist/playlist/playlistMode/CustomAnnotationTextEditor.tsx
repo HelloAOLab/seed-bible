@@ -6,8 +6,8 @@ const VideoRecordUI = await thisBot.VideoRecordUI();
 import {
   ColorizeParagraphs,
   uncolorizeHashtags,
-} from "@packages/Discover/playlist/playlistMode/AutoTag";
-import { SelectionOptions } from "@packages/Discover/playlist/playlistMode/SelectionOptions";
+} from "playlist.playlistMode.AutoTag";
+import { SelectionOptions } from "playlist.playlistMode.SelectionOptions";
 
 import {
   Editor,
@@ -29,7 +29,7 @@ import {
   Extension,
   Plugin,
 } from "https://esm.helloao.org/vendor-RPNXNWQB.js";
-import { useDragRef } from "@packages/Discover/playlist/playlistMode/useDragRef";
+import { useDragRef } from "playlist.playlistMode.useDragRef";
 
 declare global {
   interface Window {
