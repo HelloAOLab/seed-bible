@@ -273,7 +273,9 @@ export function Toolbar() {
                   if (activeMoreApp) {
                     G.RemoveApplicationByLabel(activeMoreApp);
                     setActiveMoreApp(null);
-                    G.setOpenSidebar(true);
+                    setTimeout(() => {
+                      G.setOpenSidebar(true);
+                    }, 100);
                   }
                   G.makingApp = null;
                 } else {
