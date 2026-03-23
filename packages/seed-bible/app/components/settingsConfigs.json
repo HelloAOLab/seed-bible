@@ -44,7 +44,7 @@
           "showDivider": false,
           "items": {
             "language": { "enabled": true },
-            "uiTextSize": { "enabled": true },
+            "uiTextSize": { "enabled": false },
             "reportBug": { "enabled": true }
           }
         }
