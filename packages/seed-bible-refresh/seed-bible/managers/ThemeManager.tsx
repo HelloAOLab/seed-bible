@@ -256,6 +256,51 @@ export interface BibleThemeVariables {
    * The minimum height of the verse toolbar.
    */
   verseToolbarMinHeight?: string | null;
+
+  /**
+   * The mobile layout height of the reader toolbar.
+   */
+  readerToolbarMobileLayoutHeight?: string | null;
+
+  /**
+   * The mobile layout padding of the reader toolbar.
+   */
+  readerToolbarMobileLayoutPadding?: string | null;
+
+  /**
+   * The mobile layout gap of the reader toolbar.
+   */
+  readerToolbarMobileLayoutGap?: string | null;
+
+  /**
+   * The mobile layout item size of the reader toolbar.
+   */
+  readerToolbarMobileLayoutItemSize?: string | null;
+
+  /**
+   * The mobile layout center button size of the reader toolbar.
+   */
+  readerToolbarMobileLayoutCenterButtonSize?: string | null;
+
+  /**
+   * The mobile layout button border radius of the reader toolbar.
+   */
+  readerToolbarMobileLayoutButtonBorderRadius?: string | null;
+
+  /**
+   * The side offset of reader toolbar floating buttons.
+   */
+  readerToolbarFloatingButtonSideOffset?: string | null;
+
+  /**
+   * The gap between tools in the verse toolbar tools container.
+   */
+  verseToolbarToolsGap?: string | null;
+
+  /**
+   * The bottom offset of the mobile verse toolbar.
+   */
+  verseToolbarMobileBottom?: string | null;
 }
 
 export interface BibleTheme {
@@ -351,6 +396,18 @@ const LIGHT_THEME: BibleTheme = {
     verseToolbarBoxShadow: "0 26px 10px #0000001a",
     verseToolbarZIndex: "100",
     verseToolbarMinHeight: "50px",
+
+    readerToolbarMobileLayoutHeight: "70px",
+    readerToolbarMobileLayoutPadding: "10px 14px",
+    readerToolbarMobileLayoutGap: "8px",
+    readerToolbarMobileLayoutItemSize: "44px",
+    readerToolbarMobileLayoutCenterButtonSize: "52px",
+    readerToolbarMobileLayoutButtonBorderRadius: "999px",
+
+    readerToolbarFloatingButtonSideOffset: "16px",
+
+    verseToolbarToolsGap: "10px",
+    verseToolbarMobileBottom: "18px",
   },
 };
 
@@ -431,6 +488,18 @@ export function createTheme() {
         verseToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.4)",
         verseToolbarZIndex: "100",
         verseToolbarMinHeight: "50px",
+
+        readerToolbarMobileLayoutHeight: "70px",
+        readerToolbarMobileLayoutPadding: "10px 14px",
+        readerToolbarMobileLayoutGap: "8px",
+        readerToolbarMobileLayoutItemSize: "44px",
+        readerToolbarMobileLayoutCenterButtonSize: "52px",
+        readerToolbarMobileLayoutButtonBorderRadius: "999px",
+
+        readerToolbarFloatingButtonSideOffset: "16px",
+
+        verseToolbarToolsGap: "10px",
+        verseToolbarMobileBottom: "18px",
       },
     },
   ]);
