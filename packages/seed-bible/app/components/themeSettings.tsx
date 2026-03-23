@@ -5611,7 +5611,9 @@ const FONT_SIZES = [
   { label: "Small", value: "14" },
   { label: "Medium", value: "16" },
   { label: "Large", value: "18" },
-  { label: "Extra Large", value: "20" },
+  { label: "Extra Large1", value: "20" },
+  { label: "Extra Large2", value: "22" },
+  { label: "Extra Large3", value: "24" },
 ];
 
 const SURPRISE_COMBINATIONS = [
@@ -6275,7 +6277,7 @@ const SettingsUI = () => {
               viewBox="0 0 12 12"
               fill="none"
             >
-              <text x="6" y="9" fontSize="8" textAnchor="middle" fill="black">
+              <text x="6" y="9" fontSize="12" textAnchor="middle" fill="black">
                 A
               </text>
             </svg>
@@ -6304,7 +6306,7 @@ const SettingsUI = () => {
               <text
                 x="10"
                 y="14"
-                fontSize="14"
+                fontSize="18"
                 textAnchor="middle"
                 fill="black"
               >
@@ -6327,7 +6329,11 @@ const SettingsUI = () => {
             onClick={handleCycleLineHeight}
           >
             <svg
-              style={{ filter: "none", stroke: "var(--heading1Color)" }}
+              style={{
+                filter: "none",
+                stroke: "var(--heading1Color)",
+                scale: 1.2,
+              }}
               width="18"
               height="18"
               viewBox="0 0 18 18"
@@ -6482,166 +6488,195 @@ const SettingsUI = () => {
           <div style={toggleCircleStyle(showNavArrows)}></div>
         </div>
       </div>
+      {presetThemes.length > 1 && (
+        <div>
+          <div style={separatorStyle}></div>
 
-      <div style={separatorStyle}></div>
+          <div style={sectionTitleStyle}>{t("themes")}</div>
 
-      <div style={sectionTitleStyle}>{t("themes")}</div>
-
-      <div style={cardContainerStyle}>
-        {presetThemes.map((theme, index) =>
-          index !== 1 ? (
-            <div
-              key={index}
-              style={cardStyle(selectedTheme === index)}
-              onClick={() => handleThemeSelect(index)}
-            >
-              <div style={cardSidebarStyle(theme.colors.panelBackground)}>
-                <div style={cardBadgeStyle(theme.colors.panelBackground)}></div>
-                <div style={cardLabelStyle}></div>
-              </div>
-              <div style={cardIconStyle(theme.colors.panelBackground)}></div>
-              <div style={{ marginTop: "14px" }}>
-                <div style={{ ...cardLineStyle, width: "53px" }}></div>
+          <div style={cardContainerStyle}>
+            {presetThemes.map((theme, index) =>
+              index !== 1 ? (
                 <div
-                  style={{ ...cardLineStyle, width: "42px", marginTop: "7px" }}
-                ></div>
-                <div
-                  style={{ ...cardLineStyle, width: "53px", marginTop: "7px" }}
-                ></div>
-                <div
-                  style={{ ...cardLineStyle, width: "35px", marginTop: "7px" }}
-                ></div>
-              </div>
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: "9px",
-                  right: "13px",
-                  width: "22px",
-                  height: "5px",
-                  backgroundColor: theme.colors.panelBackground,
-                  opacity: 0.1,
-                  borderRadius: "1px",
-                }}
-              ></div>
-
-              {selectedTheme === index && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "8px",
-                    right: "8px",
-                    width: "20px",
-                    height: "20px",
-                    backgroundColor: "var(--spaceSelection)",
-                    borderRadius: "50%",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
+                  key={index}
+                  style={cardStyle(selectedTheme === index)}
+                  onClick={() => handleThemeSelect(index)}
                 >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path
-                      d="M10 3L4.5 8.5L2 6"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div
-              key={index}
-              style={{
-                ...cardStyle(selectedTheme === index),
-                backgroundColor: "#404040",
-              }}
-              onClick={() => handleThemeSelect(index)}
-            >
-              <div style={cardSidebarStyle("rgb(255 255 255)")}>
-                <div style={cardBadgeStyle("black")}></div>
-                <div style={cardLabelStyle}></div>
-              </div>
-              <div style={cardIconStyle("black")}></div>
-              <div style={{ marginTop: "14px" }}>
-                <div
-                  style={{
-                    ...cardLineStyle,
-                    backgroundColor: "white",
-                    width: "53px",
-                  }}
-                ></div>
-                <div
-                  style={{
-                    ...cardLineStyle,
-                    backgroundColor: "white",
-                    width: "42px",
-                    marginTop: "7px",
-                  }}
-                ></div>
-                <div
-                  style={{
-                    ...cardLineStyle,
-                    backgroundColor: "white",
-                    width: "53px",
-                    marginTop: "7px",
-                  }}
-                ></div>
-                <div
-                  style={{
-                    ...cardLineStyle,
-                    backgroundColor: "white",
-                    width: "35px",
-                    marginTop: "7px",
-                  }}
-                ></div>
-              </div>
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: "9px",
-                  right: "13px",
-                  width: "22px",
-                  height: "5px",
-                  backgroundColor: "white",
-                  opacity: 0.1,
-                  borderRadius: "1px",
-                }}
-              ></div>
+                  <div style={cardSidebarStyle(theme.colors.panelBackground)}>
+                    <div
+                      style={cardBadgeStyle(theme.colors.panelBackground)}
+                    ></div>
+                    <div style={cardLabelStyle}></div>
+                  </div>
+                  <div
+                    style={cardIconStyle(theme.colors.panelBackground)}
+                  ></div>
+                  <div style={{ marginTop: "14px" }}>
+                    <div style={{ ...cardLineStyle, width: "53px" }}></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        width: "42px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        width: "53px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        width: "35px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                  </div>
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "9px",
+                      right: "13px",
+                      width: "22px",
+                      height: "5px",
+                      backgroundColor: theme.colors.panelBackground,
+                      opacity: 0.1,
+                      borderRadius: "1px",
+                    }}
+                  ></div>
 
-              {selectedTheme === index && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "8px",
-                    right: "8px",
-                    width: "20px",
-                    height: "20px",
-                    backgroundColor: "var(--spaceSelection)",
-                    borderRadius: "50%",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path
-                      d="M10 3L4.5 8.5L2 6"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  {selectedTheme === index && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "8px",
+                        right: "8px",
+                        width: "20px",
+                        height: "20px",
+                        backgroundColor: "var(--spaceSelection)",
+                        borderRadius: "50%",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                      >
+                        <path
+                          d="M10 3L4.5 8.5L2 6"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          )
-        )}
-      </div>
+              ) : (
+                <div
+                  key={index}
+                  style={{
+                    ...cardStyle(selectedTheme === index),
+                    backgroundColor: "#404040",
+                  }}
+                  onClick={() => handleThemeSelect(index)}
+                >
+                  <div style={cardSidebarStyle("rgb(255 255 255)")}>
+                    <div style={cardBadgeStyle("black")}></div>
+                    <div style={cardLabelStyle}></div>
+                  </div>
+                  <div style={cardIconStyle("black")}></div>
+                  <div style={{ marginTop: "14px" }}>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        backgroundColor: "white",
+                        width: "53px",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        backgroundColor: "white",
+                        width: "42px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        backgroundColor: "white",
+                        width: "53px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        backgroundColor: "white",
+                        width: "35px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                  </div>
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "9px",
+                      right: "13px",
+                      width: "22px",
+                      height: "5px",
+                      backgroundColor: "white",
+                      opacity: 0.1,
+                      borderRadius: "1px",
+                    }}
+                  ></div>
+
+                  {selectedTheme === index && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "8px",
+                        right: "8px",
+                        width: "20px",
+                        height: "20px",
+                        backgroundColor: "var(--spaceSelection)",
+                        borderRadius: "50%",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                      >
+                        <path
+                          d="M10 3L4.5 8.5L2 6"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
       {settingsPreset === "full" && (
         <button
           style={buttonStyle}

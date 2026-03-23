@@ -247,6 +247,13 @@ export function Toolbar() {
               <div
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (activeMoreApp || activeApp) {
+                    if (activeMoreApp) {
+                      G.RemoveApplicationByLabel(activeMoreApp);
+                      setActiveMoreApp(null);
+                    }
+                    G.makingApp = null;
+                  }
                   os.log("Opening mobile settings", setOpenOnMobile);
                   setOpenOnMobile(true);
                   setSidebarWidth(280);
@@ -262,8 +269,19 @@ export function Toolbar() {
 
             <div
               onClick={() => {
-                globalThis.setOpenSidebar(!globalThis.openSidebar);
-                globalThis.setSelectingTranslation(false);
+                if (activeMoreApp || activeApp) {
+                  if (activeMoreApp) {
+                    G.setOpenSidebar(true);
+                    setTimeout(() => {
+                      G.RemoveApplicationByLabel(activeMoreApp);
+                      setActiveMoreApp(null);
+                    }, 10);
+                  }
+                  G.makingApp = null;
+                } else {
+                  G.setOpenSidebar(!G.openSidebar);
+                }
+                G.setSelectingTranslation(false);
                 setShowMoreMenu(false);
               }}
               className="mobile-center-logo"
@@ -346,21 +364,34 @@ export function Toolbar() {
               <div className="more-btn-wrapper">
                 <button
                   className="mobile-navbar-btn"
-                  title={presetToolBarTitle}
-                  aria-label={presetToolName}
+                  title={activeMoreApp ? "Close" : presetToolBarTitle}
+                  aria-label={activeMoreApp ? "Close" : presetToolName}
                   onClick={() => {
-                    const exploreTool = tools?.find(
-                      (t) => t?.label === presetToolName
-                    );
-                    exploreTool?.onClick?.();
+                    if (activeMoreApp) {
+                      (globalThis as any).RemoveApplicationByLabel(
+                        activeMoreApp
+                      );
+                      (globalThis as any).makingApp = null;
+                      setActiveMoreApp(null);
+                    } else {
+                      setActiveMoreApp(presetToolName);
+                      const exploreTool = tools?.find(
+                        (t) => t?.label === presetToolName
+                      );
+                      exploreTool?.onClick?.();
+                    }
                   }}
                 >
                   <div className="mobile-btn-content">
-                    <span className="material-symbols-outlined">
-                      {presetToolBarIcon}
-                    </span>
+                    {activeMoreApp ? (
+                      <span className="material-symbols-outlined">close</span>
+                    ) : (
+                      <span className="material-symbols-outlined">
+                        {presetToolBarIcon}
+                      </span>
+                    )}
                     <span className="mobile-btn-label">
-                      {presetToolBarTitle}
+                      {activeMoreApp ? "close" : presetToolBarTitle}
                     </span>
                   </div>
                 </button>

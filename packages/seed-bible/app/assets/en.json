@@ -52,6 +52,7 @@
   "permissions": "Permissions",
   "notifications": "Notifications",
   "keepScreenAwake": "Keep screen awake",
+  "uiTextSize": "UI text size",
   "subscriptions": "Subscriptions",
   "createProfile": "Create profile",
   "openAccountSettings": "Open account settings",

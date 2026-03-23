@@ -44,8 +44,8 @@
           "showDivider": false,
           "items": {
             "language": { "enabled": true },
-            "reportBug": { "enabled": true },
-            "help": { "enabled": true }
+            "uiTextSize": { "enabled": false },
+            "reportBug": { "enabled": true }
           }
         }
       }
@@ -62,7 +62,7 @@
       "titlesAndIcon": {
         "icon": "explore",
         "title": "Discovery",
-        "toolName": "Apologist"
+        "toolName": "Discovery"
       },
       "useTabs": false,
       "availableThemes": [
@@ -242,14 +242,17 @@
           "showDivider": false,
           "items": {
             "theme": { "enabled": true },
-            "notifications": { "enabled": true }
+            "notifications": { "enabled": true },
+            "keepScreenAwake": { "enabled": true }
           }
         },
         "preferences": {
           "enabled": true,
           "showDivider": false,
           "items": {
-            "language": { "enabled": true }
+            "language": { "enabled": true },
+            "uiTextSize": { "enabled": true },
+            "reportBug": { "enabled": true }
           }
         }
       }
@@ -440,6 +443,7 @@
           "showDivider": false,
           "items": {
             "language": { "enabled": true },
+            "uiTextSize": { "enabled": true },
             "reportBug": { "enabled": true },
             "help": { "enabled": true }
           }
@@ -527,9 +531,10 @@
               "showDivider": true,
               "items": {
                 "language": { "enabled": true },
+                "uiTextSize": { "enabled": true },
                 "reseedToggle": { "enabled": true },
                 "reportBug": { "enabled": true },
-                "help": { "enabled": true }
+                "help": { "enabled": false }
               }
             }
           }

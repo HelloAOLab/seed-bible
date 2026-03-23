@@ -550,7 +550,8 @@ const PlayerControls = ({ parentId = "default" }) => {
   }, []);
 
   useLayoutEffect(() => {
-    G.UpdateCheckedItemsPlayingPlaylist(checkedItems, G.PlayingPlaylistID);
+    G.UpdateCheckedItemsPlayingPlaylist &&
+      G.UpdateCheckedItemsPlayingPlaylist(checkedItems, G.PlayingPlaylistID);
   }, [checkedItems]);
 
   const [
