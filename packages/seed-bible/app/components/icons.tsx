@@ -99,6 +99,7 @@ export const MobileSettingsIcon = (props) => (
     height={20}
     viewBox="0 0 18 20"
     fill="none"
+    stroke={"var(--moreIcon, var(--text1))"}
     xmlns="http://www.w3.org/2000/svg"
     {...props}
   >
