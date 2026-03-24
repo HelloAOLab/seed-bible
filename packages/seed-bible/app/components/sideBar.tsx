@@ -3003,7 +3003,7 @@ export const SpaceUI = () => {
                 onClick={() => setSideBarMode("settings")}
                 className="material-symbols-outlined"
               >
-                <MobileSettingsIcon filter="var(--filter-mode)" />
+                <MobileSettingsIcon />
               </span>
               <SettingsProfile />
               <UserProfile />

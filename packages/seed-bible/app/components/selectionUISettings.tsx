@@ -106,7 +106,7 @@ const SelectionUISettings = () => {
   const toggleStyle = (isOn) => ({
     width: "44px",
     height: "24px",
-    backgroundColor: isOn ? "var(--spaceSelection)" : "#CCCCCD",
+    backgroundColor: isOn ? "var(--addButtonIcon)" : "#CCCCCD",
     borderRadius: "12px",
     position: "relative",
     cursor: "pointer",
@@ -116,7 +116,7 @@ const SelectionUISettings = () => {
   const toggleCircleStyle = (isOn) => ({
     width: "20px",
     height: "20px",
-    backgroundColor: "white",
+    backgroundColor: "var(--primaryColor)",
     borderRadius: "50%",
     position: "absolute",
     top: "2px",
