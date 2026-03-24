@@ -62,6 +62,8 @@ export function Toolbar() {
   }, [showMoreMenu]);
 
   const [activeMoreApp, setActiveMoreApp] = useState(G.ActiveMoreApp || null);
+  globalThis.setActiveMoreApp = setActiveMoreApp;
+  globalThis.ActiveMoreApp = activeMoreApp;
   const [activeApp, setActiveApp] = useState(G.makingApp || null);
 
   // Watch globalThis.makingApp so arrows hide for ANY open app, not just More-button apps
