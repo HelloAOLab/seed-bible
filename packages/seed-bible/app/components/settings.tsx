@@ -445,7 +445,7 @@ const BookOrderSetting = () => {
                 height: "15px",
                 backgroundColor:
                   selectedOrientation === opt.value
-                    ? "var(--secondaryButton)"
+                    ? "var(--addButtonIcon)"
                     : "gray",
                 borderRadius: "50%",
                 display: "flex",
@@ -456,7 +456,7 @@ const BookOrderSetting = () => {
               <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                 <path
                   d="M10 3L4.5 8.5L2 6"
-                  stroke="white"
+                  stroke="var(--primaryColor)"
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -1113,13 +1113,16 @@ export const UITextSizeSetting = ({
                 borderRadius: "6px",
                 border:
                   sizeIndex === i
-                    ? "2px solid var(--spaceSelection)"
+                    ? "2px solid var(--addButtonIcon)"
                     : "1px solid #ccc",
                 backgroundColor:
                   sizeIndex === i
-                    ? "var(--spaceSelection)"
+                    ? "var(--addButtonIcon)"
                     : "var(--pageBackground, #fff)",
-                color: sizeIndex === i ? "#fff" : "var(--pageTextColor)",
+                color:
+                  sizeIndex === i
+                    ? "var(--primaryColor)"
+                    : "var(--pageTextColor)",
                 cursor: "pointer",
                 fontSize: `${size.value - 2}px`,
                 fontWeight: 600,
@@ -1399,11 +1402,14 @@ export const SubscriptionsSetting = ({
                   borderRadius: "8px",
                   padding: "8px 12px",
                   cursor: subscribing ? "wait" : "pointer",
-                  opacity: subscribing || !searchFor ? 0.6 : 1,
+                  opacity: subscribing || !searchFor ? 1 : 1,
                 }}
                 className="create-profile-btn"
               >
-                <span className="material-symbols-outlined">
+                <span
+                  className="material-symbols-outlined"
+                  style={{ color: "var(--primaryColor)" }}
+                >
                   {subscribing ? "hourglass_empty" : "person_add"}
                 </span>
               </button>
@@ -1501,15 +1507,17 @@ export const LanguageSetting = ({
               padding: "6px 10px",
               borderRadius: "8px",
               border: "none",
-              backgroundColor: "#e8e8e8",
+              backgroundColor: "var(--activeTabFill)",
               cursor: "pointer",
               fontSize: "14px",
-              color: "var(--text1)",
+              color: "var(--pageTextColor)",
               fontFamily: "inherit",
             }}
           >
             {current.cc && <FlagImg cc={current.cc} />}
-            <span>{current.display}</span>
+            <span style={{ color: "var(--pageTextColor)" }}>
+              {current.display}
+            </span>
             <span
               className="material-symbols-outlined"
               style={{ fontSize: "16px", color: "#666" }}

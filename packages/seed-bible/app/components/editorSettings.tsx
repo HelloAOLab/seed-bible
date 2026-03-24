@@ -247,8 +247,8 @@ const EditorToolbarSettings = () => {
           onClick={savePriorities}
           disabled={loading}
           style={{
-            backgroundColor: "#007bff",
-            color: "white",
+            backgroundColor: "var(--addButtonIcon)",
+            color: "var(--primaryColor)",
             border: "none",
             borderRadius: "6px",
             padding: "10px 20px",
