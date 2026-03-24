@@ -5614,6 +5614,8 @@ const FONT_SIZES = [
   { label: "Extra Large1", value: "20" },
   { label: "Extra Large2", value: "22" },
   { label: "Extra Large3", value: "24" },
+  { label: "Extra Large4", value: "28" },
+  { label: "Extra Large5", value: "32" },
 ];
 
 const SURPRISE_COMBINATIONS = [
