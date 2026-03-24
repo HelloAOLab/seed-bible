@@ -10,7 +10,8 @@
         "removeBibleStack": true,
         "removeJoinSession": true,
         "removeBookMark": true,
-        "removeAddSession": true
+        "removeAddSession": true,
+        "removeUserIcon": true
       },
       "pageSettings": {
         "disableHighlighting": true,
@@ -25,8 +26,14 @@
           "enabled": true,
           "showDivider": false,
           "items": {
-            "generalHeader": { "enabled": true, "labelKey": "generalSettings" },
-            "generalDesc": { "enabled": true, "labelKey": "manageAccountDesc" },
+            "generalHeader": {
+              "enabled": false,
+              "labelKey": "generalSettings"
+            },
+            "generalDesc": {
+              "enabled": false,
+              "labelKey": "manageAccountDesc"
+            },
             "yourAccount": { "enabled": true }
           }
         },
@@ -232,8 +239,14 @@
           "enabled": true,
           "showDivider": false,
           "items": {
-            "generalHeader": { "enabled": true, "labelKey": "generalSettings" },
-            "generalDesc": { "enabled": true, "labelKey": "manageAccountDesc" },
+            "generalHeader": {
+              "enabled": false,
+              "labelKey": "generalSettings"
+            },
+            "generalDesc": {
+              "enabled": false,
+              "labelKey": "manageAccountDesc"
+            },
             "yourAccount": { "enabled": true }
           }
         },
