@@ -2,6 +2,7 @@ os.unregisterApp("playlist-cont-ui");
 os.registerApp("playlist-cont-ui", thisBot);
 import { getAnnotationRecord, loadAnnotations } from "db.annotations.library";
 import { ProjectProvider } from "playlist.playlistMode.useProjectContext";
+import { PlusIcon } from "app.components.icons";
 
 const RenderIcon = await thisBot.RenderIcon();
 const { useState, useLayoutEffect, useMemo, useRef, useCallback } = os.appHooks;
@@ -752,7 +753,7 @@ const Playlist = () => {
                           secondary
                           exClass="create-button show-on-desktop"
                         >
-                          <span class="material-symbols-outlined">add</span>
+                          <PlusIcon width={22} height={22} />
                           {t("create")}
                         </Button>
                         <span

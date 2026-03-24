@@ -62,6 +62,8 @@ export function Toolbar() {
   }, [showMoreMenu]);
 
   const [activeMoreApp, setActiveMoreApp] = useState(G.ActiveMoreApp || null);
+  globalThis.setActiveMoreApp = setActiveMoreApp;
+  globalThis.ActiveMoreApp = activeMoreApp;
   const [activeApp, setActiveApp] = useState(G.makingApp || null);
 
   // Watch globalThis.makingApp so arrows hide for ANY open app, not just More-button apps
@@ -247,6 +249,13 @@ export function Toolbar() {
               <div
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (activeMoreApp || activeApp) {
+                    if (activeMoreApp) {
+                      G.RemoveApplicationByLabel(activeMoreApp);
+                      setActiveMoreApp(null);
+                    }
+                    G.makingApp = null;
+                  }
                   os.log("Opening mobile settings", setOpenOnMobile);
                   setOpenOnMobile(true);
                   setSidebarWidth(280);
@@ -262,8 +271,19 @@ export function Toolbar() {
 
             <div
               onClick={() => {
-                globalThis.setOpenSidebar(!globalThis.openSidebar);
-                globalThis.setSelectingTranslation(false);
+                if (activeMoreApp || activeApp) {
+                  if (activeMoreApp) {
+                    if (G.openSidebar) {
+                      G.RemoveApplicationByLabel(activeMoreApp);
+                      setActiveMoreApp(null);
+                    }
+                    G.setOpenSidebar(!G.openSidebar);
+                  }
+                  G.makingApp = null;
+                } else {
+                  G.setOpenSidebar(!G.openSidebar);
+                }
+                G.setSelectingTranslation(false);
                 setShowMoreMenu(false);
               }}
               className="mobile-center-logo"

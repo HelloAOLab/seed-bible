@@ -302,8 +302,8 @@ svg path {
 .selectInput {
   border-radius: 8px;
   border: 1px solid #e1e3ea;
-  background: #e6e6e6;
-  color: #5f5e5c;
+  background: var(--activeTabFill);
+  color: var(--pageTextColor);
   font-family: "Satoshi", system-ui, sans-serif;
   font-size: 15px;
   font-style: normal;

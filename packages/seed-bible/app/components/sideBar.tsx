@@ -1631,6 +1631,21 @@ function SideBar({ panelsNumber }) {
               >
                 {<MenuIcon name={"person_add"} />}
               </span> */}
+              <button
+                className="mobile-icon-button"
+                style={{ background: "transparent" }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  os.log("Opening mobile settings", setOpenOnMobile);
+                  setOpenOnMobile(true);
+                  setSidebarWidth(280);
+                  setCollapsed(false);
+                  setSideBarMode("settings");
+                }}
+                title="Settings"
+              >
+                <MobileSettingsIcon />
+              </button>
               <span
                 className="mobile-header-icon"
                 onClick={() => {
@@ -2988,7 +3003,7 @@ export const SpaceUI = () => {
                 onClick={() => setSideBarMode("settings")}
                 className="material-symbols-outlined"
               >
-                <MobileSettingsIcon filter="var(--filter-mode)" />
+                <MobileSettingsIcon />
               </span>
               <SettingsProfile />
               <UserProfile />

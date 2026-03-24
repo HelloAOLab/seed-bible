@@ -2090,21 +2090,21 @@ function ThePage({
 
         /* Compact scroll header - shows book/chapter when main header is hidden */
         .mobile-compact-scroll-header {
-          display: none;
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          text-align: center;
-          padding: 8px 16px;
-          background: var(--pageBackground);
-          z-index: 99;
-          font-size: 14px;
-          font-weight: 600;
-          color: var(--text1);
-          opacity: 0;
-          pointer-events: none;
-          transition: opacity 0.3s ease;
+             display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 0px 13px;
+    background: var(--pageBackground);
+    z-index: 99;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text1);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
         }
 
         body.scroll-hide-bars .mobile-compact-scroll-header {
@@ -2147,7 +2147,7 @@ function ThePage({
                         </div>
                       </div>
 
-                      <div className="mobile-header-right">
+                      {/* <div className="mobile-header-right">
                         <button
                           className="mobile-icon-button"
                           onClick={(e) => {
@@ -2162,7 +2162,7 @@ function ThePage({
                         >
                           <MobileSettingsIcon />
                         </button>
-                      </div>
+                      </div> */}
                     </div>
                     {!removeBookMark &&
                       tab?.id &&

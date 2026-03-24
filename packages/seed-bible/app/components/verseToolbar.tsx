@@ -11,6 +11,7 @@ import {
 } from "app.components.icons";
 import { getStyleOf } from "app.styles.styler";
 import { getSettingsPreset } from "app.components.types";
+import { globalAPI } from "app.controller.controllerBuilder";
 
 export function VerseToolbar({
   clickedVersesContext,
@@ -124,7 +125,7 @@ export function VerseToolbar({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    background: "var(--panelBackground)",
+    background: "var(--pageBackground)",
   };
 
   const headerStyle = {
@@ -902,7 +903,8 @@ const SubOptions = ({ items }) => {
         scrollbarWidth: "none",
       }}
     >
-      <style>{globalThis.ThemeCSS}</style>
+      <style>{globalAPI._mainThemeCSS}</style>
+
       <style>
         {`
 .popupSettings2 {

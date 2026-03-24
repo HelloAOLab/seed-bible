@@ -1125,9 +1125,9 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .chips-tag-container .chip-tag {
-  background-color: var(--primaryButtonColor);
-  color: var(--primaryButtonFill);
-  border: 1px solid var(--primaryButtonBorder);
+  background-color: transparent;
+  color: var(--pageTextColor);
+  border: 1px solid var(--pageTextColor);
   height: 32px;
   border-radius: 24px;
   min-width: fit-content;
@@ -1162,9 +1162,9 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .chips-tag-container .chip-tag.active {
-  background-color: var(--secondaryColor);
-  border: 1px solid var(--buttonBorder);
-  color: var(--pageTextColor);
+  background-color: var(--addButtonIcon);
+  border: none;
+  color: var(--primaryColor);
 }
 
 .date-picker-container {

@@ -24,7 +24,7 @@ const ToggleSwitch = ({ isOn, onToggle, disabled = false }) => {
     width: "44px",
     height: "24px",
     backgroundColor: isOn
-      ? "var(--spaceSelection)"
+      ? "var(--addButtonIcon)"
       : disabled
         ? "#e0e0e0"
         : "#9e9e9e",
@@ -40,7 +40,7 @@ const ToggleSwitch = ({ isOn, onToggle, disabled = false }) => {
     left: isOn ? "22px" : "2px",
     width: "20px",
     height: "20px",
-    backgroundColor: "white",
+    backgroundColor: "var(--primaryColor)",
     borderRadius: "50%",
     transition: "left 0.2s ease",
     boxShadow: "0 2px 4px rgba(0,0,0,0.2)",

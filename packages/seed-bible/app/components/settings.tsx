@@ -445,7 +445,7 @@ const BookOrderSetting = () => {
                 height: "15px",
                 backgroundColor:
                   selectedOrientation === opt.value
-                    ? "var(--secondaryButton)"
+                    ? "var(--addButtonIcon)"
                     : "gray",
                 borderRadius: "50%",
                 display: "flex",
@@ -456,7 +456,7 @@ const BookOrderSetting = () => {
               <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                 <path
                   d="M10 3L4.5 8.5L2 6"
-                  stroke="white"
+                  stroke="var(--primaryColor)"
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -1043,6 +1043,105 @@ export const KeepScreenAwakeSetting = ({
   );
 };
 
+// ---------- UI Text Size ----------
+const UI_TEXT_SIZES = [
+  { label: "S", value: 0.85 },
+  { label: "M", value: 1 },
+  { label: "L", value: 1.15 },
+  { label: "XL", value: 1.3 },
+];
+
+export const UITextSizeSetting = ({
+  itemKey = "uiTextSize",
+  labelKey = "uiTextSize",
+}) => {
+  const { t, editMode, labels, visibility } = useSettingsContext();
+  const label = labels[itemKey] || t(labelKey);
+  const isHidden = visibility[itemKey] === false;
+
+  const saved = globalThis.changes?.uiTextSize || 1;
+  const [sizeIndex, setSizeIndex] = useState(() =>
+    Math.max(
+      UI_TEXT_SIZES.findIndex((s) => s.value === saved),
+      0
+    )
+  );
+
+  const applyZoom = (zoom) => {
+    document
+      .querySelectorAll(".settings-sidebar, .themeSettings-container")
+      .forEach((el) => {
+        (el as HTMLElement).style.zoom = String(zoom);
+      });
+  };
+
+  // Restore saved size on mount
+  useEffect(() => {
+    if (saved !== 1) applyZoom(saved);
+  }, []);
+
+  const apply = (index) => {
+    setSizeIndex(index);
+    const zoom = UI_TEXT_SIZES[index].value;
+    if (!globalThis.changes) globalThis.changes = {};
+    globalThis.changes.uiTextSize = zoom;
+    applyZoom(zoom);
+  };
+
+  if (isHidden && !editMode) return null;
+
+  return (
+    <SettingItemWrapper itemKey={itemKey}>
+      <div
+        className="settings-item"
+        style={{ justifyContent: "space-between" }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div className="item-icon">
+            <span className="material-symbols-outlined">format_size</span>
+          </div>
+          <div className="item-text">{label}</div>
+        </div>
+        <div style={{ display: "flex", gap: "4px" }}>
+          {UI_TEXT_SIZES.map((size, i) => (
+            <button
+              key={size.label}
+              onClick={() => apply(i)}
+              style={{
+                width: "32px",
+                height: "32px",
+                borderRadius: "6px",
+                border:
+                  sizeIndex === i
+                    ? "2px solid var(--addButtonIcon)"
+                    : "1px solid #ccc",
+                backgroundColor:
+                  sizeIndex === i
+                    ? "var(--addButtonIcon)"
+                    : "var(--pageBackground, #fff)",
+                color:
+                  sizeIndex === i
+                    ? "var(--primaryColor)"
+                    : "var(--pageTextColor)",
+                cursor: "pointer",
+                fontSize: `${size.value - 2}px`,
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                fontFamily: "inherit",
+              }}
+            >
+              {size.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </SettingItemWrapper>
+  );
+};
+
 // ---------- Report a Bug ----------
 export const ReportBugSetting = ({
   itemKey = "reportBug",
@@ -1303,11 +1402,14 @@ export const SubscriptionsSetting = ({
                   borderRadius: "8px",
                   padding: "8px 12px",
                   cursor: subscribing ? "wait" : "pointer",
-                  opacity: subscribing || !searchFor ? 0.6 : 1,
+                  opacity: subscribing || !searchFor ? 1 : 1,
                 }}
                 className="create-profile-btn"
               >
-                <span className="material-symbols-outlined">
+                <span
+                  className="material-symbols-outlined"
+                  style={{ color: "var(--primaryColor)" }}
+                >
                   {subscribing ? "hourglass_empty" : "person_add"}
                 </span>
               </button>
@@ -1405,15 +1507,17 @@ export const LanguageSetting = ({
               padding: "6px 10px",
               borderRadius: "8px",
               border: "none",
-              backgroundColor: "#e8e8e8",
+              backgroundColor: "var(--activeTabFill)",
               cursor: "pointer",
               fontSize: "14px",
-              color: "var(--text1)",
+              color: "var(--pageTextColor)",
               fontFamily: "inherit",
             }}
           >
             {current.cc && <FlagImg cc={current.cc} />}
-            <span>{current.display}</span>
+            <span style={{ color: "var(--pageTextColor)" }}>
+              {current.display}
+            </span>
             <span
               className="material-symbols-outlined"
               style={{ fontSize: "16px", color: "#666" }}
@@ -1532,6 +1636,7 @@ const COMPONENT_REGISTRY = {
   permissions: PermissionsSetting,
   notifications: NotificationsSetting,
   keepScreenAwake: KeepScreenAwakeSetting,
+  uiTextSize: UITextSizeSetting,
   subscriptions: SubscriptionsSetting,
   language: LanguageSetting,
   reseedToggle: ReSeedToggleSetting,
