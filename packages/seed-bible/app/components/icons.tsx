@@ -123,14 +123,14 @@ export const PlusIcon = (props) => (
   >
     <path
       d="M15.9271 6.66797V25.3346"
-      stroke="white"
+      stroke="var(--primaryColor)"
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <path
       d="M6.59375 16H25.1809"
-      stroke="white"
+      stroke="var(--primaryColor)"
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"

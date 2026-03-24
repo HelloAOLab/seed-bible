@@ -1,85 +1,82 @@
 .custom-button {
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid var(--pageTextColor);
-    font-weight: 700;
-    text-align: center;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease-in-out;
-    cursor: pointer;
-    background-color: transparent;
-    color: black;
-    font-size: 16px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--pageTextColor);
+  font-weight: 700;
+  text-align: center;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease-in-out;
+  cursor: pointer;
+  background-color: transparent;
+  color: black;
+  font-size: 16px;
 }
 
 .custom-button.secondaryAlt.create-button {
-    border-radius: 2rem !important;
-    padding: 4px 8px !important;
-    font-size: 12px !important;
-    margin-right: 14px !important;
+  border-radius: 2rem !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  margin-right: 14px !important;
 }
 
 .custom-button .material-symbols-outlined {
-    font-size: 24px;
+  font-size: 24px;
 }
 
 .custom-button.secondaryAlt {
-    color: #fff;
-    border: 1px solid var(--primaryButtonBorder) !important;
-    border-radius: 4px !important;
-    /* max-width: fit-content !important; */
-    background-color: var(--primaryButtonFill);
-    font-family: 'Satoshi', system-ui, sans-serif;
-    text-align: center;
-    font-size: 14px !important;
-    font-weight: 400 !important;
-    padding: 10px 24px !important;
-    line-height: 16.94px !important;
-    min-width: 0 !important;
-    display: flex;
-    justify-content: center;
+  color: var(--primaryColor);
+  border-radius: 4px !important;
+  /* max-width: fit-content !important; */
+  background-color: var(--addButtonIcon);
+  font-family: "Satoshi", system-ui, sans-serif;
+  text-align: center;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  padding: 10px 24px !important;
+  line-height: 16.94px !important;
+  min-width: 0 !important;
+  display: flex;
+  justify-content: center;
 }
 
 .custom-button.secondaryAlt.outline {
-    border: 1px solid var(--primaryButtonBorder) !important;
-    background-color: transparent !important;
-    color: var(--primaryButtonFill) !important;
+  background-color: transparent !important;
+  color: var(--primaryButtonFill) !important;
 }
 
 .custom-button.secondaryAlt.secondaryAltAlt.outline {
-    border: 1px solid var(--tertiaryButtonColor) !important;
-    background-color: transparent !important;
-    color: var(--tertiaryButtonColor) !important;
-
+  border: 1px solid var(--tertiaryButtonColor) !important;
+  background-color: transparent !important;
+  color: var(--tertiaryButtonColor) !important;
 }
 
 .custom-button.secondaryAlt.secondaryAltAlt {
-    background-color: transparent;
-    color: var(--pageTextColor);
-    border: 1px solid var(--secondaryButtonBorder) !important;
+  background-color: transparent;
+  color: var(--pageTextColor);
+  border: 1px solid var(--secondaryButtonBorder) !important;
 }
 
 .custom-button .loader {
-    margin-left: 0.5rem;
+  margin-left: 0.5rem;
 }
 
 .custom-button.secondary {
-    background-color: var(--primaryButton);
-    color: var(--primaryButtonColor);
-    width: max-content;
-    padding: 10px 24px;
+  background-color: var(--primaryButton);
+  color: var(--primaryButtonColor);
+  width: max-content;
+  padding: 10px 24px;
 }
 
 .custom-button:disabled {
-    background-color: lightgray !important;
+  background-color: lightgray !important;
 }
 
 .custom-button.small {
-    padding: 6px !important;
-    font-size: 12px !important;
+  padding: 6px !important;
+  font-size: 12px !important;
 }
 
 /* .custom-button:hover {

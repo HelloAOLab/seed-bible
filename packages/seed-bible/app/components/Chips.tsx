@@ -36,7 +36,7 @@ const SharePopup = ({
     // },
     {
       name: "Telegram",
-      icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/512px-Telegram_logo.svg.png",
+      icon: "https://iconape.com/wp-content/files/ln/119599/png/Telegram_2019_Logo.png",
       share: () => window.open(`tg://msg?text=${shareText}`, "_blank"),
     },
     {
@@ -158,7 +158,7 @@ const SharePopup = ({
         <div
           onClick={(e) => e.stopPropagation()}
           style={{
-            background: "#fff",
+            background: "var(--pageBackground)",
             borderRadius: 16,
             padding: "20px 24px",
             maxWidth: 380,
@@ -180,7 +180,7 @@ const SharePopup = ({
                 margin: 0,
                 fontSize: 18,
                 fontWeight: 600,
-                color: "#1a1a1a",
+                color: "var(--pageTextColor)",
               }}
             >
               {popupTitle}
@@ -195,7 +195,7 @@ const SharePopup = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#999",
+                color: "var(--pageTextColor)",
               }}
             >
               <CloseIcon />
@@ -247,7 +247,7 @@ const SharePopup = ({
                     p.svg
                   )}
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 500, color: "#666" }}>
+                <span style={{ fontSize: 11, fontWeight: 500, color: "#333" }}>
                   {p.name === "Copy" && copied ? "Copied!" : p.name}
                 </span>
               </button>
