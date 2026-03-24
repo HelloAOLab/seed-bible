@@ -271,11 +271,11 @@ export function Toolbar() {
               onClick={() => {
                 if (activeMoreApp || activeApp) {
                   if (activeMoreApp) {
-                    G.setOpenSidebar(true);
-                    setTimeout(() => {
+                    if (G.openSidebar) {
                       G.RemoveApplicationByLabel(activeMoreApp);
                       setActiveMoreApp(null);
-                    }, 10);
+                    }
+                    G.setOpenSidebar(!G.openSidebar);
                   }
                   G.makingApp = null;
                 } else {
