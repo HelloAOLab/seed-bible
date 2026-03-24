@@ -1,23 +1,14 @@
 import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
 
-interface GroupBookData {
-  isActive: boolean;
-  piece: Bot;
-}
-type FindPreviousValidGroupBookDataType = (params: {
-  arr: GroupBookData[];
-  currentIndex: number;
-}) => GroupBookData | null;
-
-export const FindPreviousValidGroupBookData: FindPreviousValidGroupBookDataType =
-  ({ arr, currentIndex }) => {
-    for (let i = currentIndex - 1; i >= 0; i--) {
-      const data = arr[i];
-      if (data) {
-        if (data.isActive && data.piece) {
-          return data;
-        }
-      }
+export function FindPreviousValidGroupBookData<
+  T extends { piece: Bot | undefined; isActive: boolean },
+>(params: { arr: T[]; currentIndex: number }): (T & { piece: Bot }) | null {
+  const { arr, currentIndex } = params;
+  for (let i = currentIndex - 1; i >= 0; i--) {
+    const data = arr[i];
+    if (data?.isActive && data.piece) {
+      return data as T & { piece: Bot };
     }
-    return null;
-  };
+  }
+  return null;
+}

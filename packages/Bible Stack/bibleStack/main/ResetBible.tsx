@@ -19,7 +19,7 @@ setTagMask(thisBot, "isBibleAnimating", true);
 thisBot.vars.lastInteractedStackBibleData = bibleData;
 shout("OnStackBibleResetStart", { bibleData });
 thisBot.PlaySound({ soundName: "ResetBible" });
-return bibleData.staticBiblePieces?.bibleTransformer?.Reset?.({
+return bibleData.getStaticPiece("bibleTransformer")?.Reset?.({
   bibleData,
   speedMultiplier,
-}); // TODO: Fix LoD breach
+});

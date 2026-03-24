@@ -24,8 +24,8 @@ import {
   HexToRgb,
   GetChildrenLevelColors,
   ComputeRawGradientColors,
-  type HexString,
 } from "bibleVizUtils.functions.index";
+import type { HexString } from "bibleVizUtils.models.commonTypes";
 const { useMemo, useCallback, useState, useEffect } = os.appHooks;
 const { memo } = os.appCompat;
 

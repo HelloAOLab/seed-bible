@@ -6,30 +6,53 @@ import {
   BibleState,
   BibleVisualizationState,
   BookShape,
+  PieceSelectionSources,
+  type CanvasInteraction,
 } from "bibleVizUtils.models.canvas";
 import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+import type { DraggingEvent, DropEvent } from "bibleVizUtils.models.casualos";
+import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
 
 /**
  * Called whenever a book is interacted
  * It is in charge of managing whether to highlight, select, drag or drop the book when possible
  * @param {Object} that - Object that contains important data for the function
- * @param {String} that.typeOfInteraction - Represents the type of interaction. Possible values can be found at globalThis.BibleVizUtils.Data.tags.InteractionType
- * @param {Object} that.dragInfo? - Is optional and is the information received when the type of interaction is a drag
- * @param {Object} that.dropInfo? - Is optional and is the information received when the type of interaction is a drop
+ * @param {String} that.typeOfInteraction - Represents the type of interaction. Possible values can be found at globalThis.CanvasInteractions
+ * @param {Object} that.draggingEvent? - Is optional and is the information received when the type of interaction is a drag
+ * @param {Object} that.dropEvent? - Is optional and is the information received when the type of interaction is a drop
  * @example
- * thisBot.HandleBookInteraction({book: someBook, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Drag, dragInfo: someDragInfo});
+ * thisBot.HandleBookInteraction({book: someBook, typeOfInteraction: CanvasInteractions.Drag, dragEvent: someDragInfo});
  */
 
-const { book, typeOfInteraction, dragInfo, dropInfo } = that;
+const {
+  book,
+  typeOfInteraction,
+  draggingEvent,
+  dropEvent,
+}: {
+  book: Bot;
+  typeOfInteraction: CanvasInteraction;
+  dropEvent?: DropEvent;
+  draggingEvent?: DraggingEvent;
+} = that;
 if (
   thisBot.masks.isBibleAnimating &&
-  typeOfInteraction !== BibleVizUtils.Data.tags.InteractionType.Click && // TODO: Implement actual enum for InteractionType
-  typeOfInteraction !== BibleVizUtils.Data.tags.InteractionType.Tap &&
-  typeOfInteraction !== BibleVizUtils.Data.tags.InteractionType.PointerUp
+  typeOfInteraction !== CanvasInteractions.Click &&
+  typeOfInteraction !== CanvasInteractions.Tap &&
+  typeOfInteraction !== CanvasInteractions.PointerUp
 )
   return;
 
-const bookData = thisBot.GetPieceData({ piece: book });
+const bookData = await (thisBot.GetPieceData({ piece: book }) as Promise<
+  StackBookData | StackSectionBookData | undefined
+>);
+
+if (!bookData) {
+  throw new Error("HandleBookInteraction: bookData not found.");
+}
+
 const {
   bibleData,
   testamentData,
@@ -44,7 +67,7 @@ const {
 
 if (!bibleData || bibleData.currentState === BibleState.Open) {
   switch (typeOfInteraction) {
-    case BibleVizUtils.Data.tags.InteractionType.Click:
+    case CanvasInteractions.Click:
       {
         if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
           BibleVizUtils.Functions.HighlightBiblePiece({ data: bookData });
@@ -63,14 +86,12 @@ if (!bibleData || bibleData.currentState === BibleState.Open) {
               if (book.masks.isHighlighted) {
                 thisBot.SelectBook({
                   book,
-                  source:
-                    BibleVizUtils.Data.tags.PieceDataSelectionSource.Click, // TODO: Implement actual enum for PieceDataSelectionSource
+                  source: PieceSelectionSources.Click,
                 });
               } else {
                 thisBot.TryHighlightPiece({
                   piece: book,
-                  highlightRequestSource:
-                    BibleVizUtils.Data.tags.InteractionType.Click,
+                  highlightRequestSource: CanvasInteractions.Click,
                   typeOfPiece: BiblePiece.StackBook,
                 });
               }
@@ -79,7 +100,7 @@ if (!bibleData || bibleData.currentState === BibleState.Open) {
         }
       }
       break;
-    case BibleVizUtils.Data.tags.InteractionType.Tap:
+    case CanvasInteractions.Tap:
       {
         if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
           BibleVizUtils.Functions.HighlightBiblePiece({ data: bookData });
@@ -90,11 +111,11 @@ if (!bibleData || bibleData.currentState === BibleState.Open) {
             } else {
               thisBot.SelectBook({
                 book,
-                source: BibleVizUtils.Data.tags.PieceDataSelectionSource.Click,
+                source: PieceSelectionSources.Click,
               });
             }
           } else if (
-            bookData.parentDataIds.stackBibleId &&
+            bookData.getParentId("stackBibleId") &&
             bibleData &&
             bibleData.currentStackVizState === BibleVisualizationState.Regular
           ) {
@@ -103,7 +124,7 @@ if (!bibleData || bibleData.currentState === BibleState.Open) {
         }
       }
       break;
-    case BibleVizUtils.Data.tags.InteractionType.HoverBegin:
+    case CanvasInteractions.HoverBegin:
       {
         if (
           !(
@@ -117,15 +138,14 @@ if (!bibleData || bibleData.currentState === BibleState.Open) {
           if (bookData instanceof StackSectionBookData) {
             thisBot.TryHighlightPiece({
               piece: book,
-              highlightRequestSource:
-                BibleVizUtils.Data.tags.InteractionType.HoverBegin,
+              highlightRequestSource: CanvasInteractions.HoverBegin,
               typeOfPiece: BiblePiece.StackSectionBook,
             });
           } else {
             if (
               sectionData &&
               !sectionData.isInExplodedView &&
-              bookData?.parentDataIds.stackTestamentId &&
+              bookData?.getParentId("stackTestamentId") &&
               (!bibleData ||
                 bibleData.currentStackVizState ===
                   BibleVisualizationState.Regular) &&
@@ -152,8 +172,7 @@ if (!bibleData || bibleData.currentState === BibleState.Open) {
                 booksToUnhighlight?.forEach((book) => {
                   thisBot.TryUnhighlightPiece({
                     piece: book,
-                    requestSource:
-                      BibleVizUtils.Data.tags.InteractionType.HoverBegin,
+                    requestSource: CanvasInteractions.HoverBegin,
                   });
                 });
                 if (testamentData) {
@@ -210,8 +229,7 @@ if (!bibleData || bibleData.currentState === BibleState.Open) {
                       thisBot.TryUnhighlightPiece({
                         piece: currentBook,
                         delay: unhighlightDelay,
-                        requestSource:
-                          BibleVizUtils.Data.tags.InteractionType.HoverBegin,
+                        requestSource: CanvasInteractions.HoverBegin,
                       });
                     }
                   });
@@ -219,8 +237,7 @@ if (!bibleData || bibleData.currentState === BibleState.Open) {
               }
               thisBot.TryHighlightPiece({
                 piece: book,
-                highlightRequestSource:
-                  BibleVizUtils.Data.tags.InteractionType.HoverBegin,
+                highlightRequestSource: CanvasInteractions.HoverBegin,
                 typeOfPiece: BiblePiece.StackBook,
               });
             }
@@ -228,7 +245,7 @@ if (!bibleData || bibleData.currentState === BibleState.Open) {
         }
       }
       break;
-    case BibleVizUtils.Data.tags.InteractionType.HoverEnd:
+    case CanvasInteractions.HoverEnd:
       {
         if (
           !bookData.isSelected &&
@@ -242,18 +259,18 @@ if (!bibleData || bibleData.currentState === BibleState.Open) {
         ) {
           if (
             bookData instanceof StackSectionBookData ||
-            !bookData.parentDataIds.stackBibleId
+            !bookData.getParentId("stackBibleId")
           ) {
             thisBot.TryUnhighlightPiece({
               piece: book,
               delay: 2000,
-              requestSource: BibleVizUtils.Data.tags.InteractionType.HoverEnd,
+              requestSource: CanvasInteractions.HoverEnd,
             });
           }
         }
       }
       break;
-    // case BibleVizUtils.Data.tags.InteractionType.SearchBarSelection:
+    // case CanvasInteractions.SearchBarSelection:
     // {
     //     if(!sectionData.isSectionBook && !sectionData.isInExplodedView && bookData.parentDataIds.stackBibleId && stackData.currentStackVizState === BibleVisualizationState.Regular)
     //     {
@@ -264,25 +281,25 @@ if (!bibleData || bibleData.currentState === BibleState.Open) {
     //         return thisBot.SelectBook({book})
     //     }
     // }
-    case BibleVizUtils.Data.tags.InteractionType.Drag:
+    case CanvasInteractions.Drag:
       {
         if (book.tags.draggable)
           shout("OnStackPieceDrag", { piece: book, data: bookData });
       }
       break;
-    case BibleVizUtils.Data.tags.InteractionType.Dragging:
+    case CanvasInteractions.Dragging:
       {
         if (book.tags.draggable)
-          shout("OnStackPieceDragging", { piece: book, dragInfo });
+          shout("OnStackPieceDragging", { piece: book, draggingEvent });
       }
       break;
-    case BibleVizUtils.Data.tags.InteractionType.Drop:
+    case CanvasInteractions.Drop:
       {
         if (book.tags.draggable)
-          shout("OnStackPieceDrop", { piece: book, dropInfo });
+          shout("OnStackPieceDrop", { piece: book, dropEvent });
       }
       break;
-    case BibleVizUtils.Data.tags.InteractionType.PointerUp:
+    case CanvasInteractions.PointerUp:
       {
         if (book.tags.draggable)
           shout("OnStackPiecePointerUp", { piece: book });
@@ -293,13 +310,16 @@ if (!bibleData || bibleData.currentState === BibleState.Open) {
   }
 }
 
-function AreBothBooksInSamePlace(bookData1, bookData2) {
+function AreBothBooksInSamePlace(
+  bookData1: StackBookData | StackSectionBookData,
+  bookData2: StackBookData | StackSectionBookData
+) {
   return (
-    (bookData1.parentDataIds.stackBibleId &&
-      bookData2.parentDataIds.stackBibleId) ||
-    (bookData1.parentDataIds.stackTestamentId &&
-      bookData2.parentDataIds.stackTestamentId) ||
-    (bookData1.parentDataIds.stackSectionId &&
-      bookData2.parentDataIds.stackSectionId)
+    (bookData1.getParentId("stackBibleId") &&
+      bookData2.getParentId("stackBibleId")) ||
+    (bookData1.getParentId("stackTestamentId") &&
+      bookData2.getParentId("stackTestamentId")) ||
+    (bookData1.getParentId("stackSectionId") &&
+      bookData2.getParentId("stackSectionId"))
   );
 }

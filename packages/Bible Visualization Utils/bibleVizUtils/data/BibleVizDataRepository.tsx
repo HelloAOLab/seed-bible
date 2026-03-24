@@ -16,6 +16,7 @@ import {
   type DialogBoxFormAddressesType,
 } from "bibleVizUtils.data.DialogBoxFormAddresses";
 import type { HexString } from "bibleVizUtils.models.commonTypes";
+import { StackAnimationsDuration } from "bibleVizUtils.data.StackAnimationsDuration";
 
 type FontsSchema = typeof fontsData;
 
@@ -168,6 +169,18 @@ class BibleVizDataRepository {
       keyof DialogBoxFormAddressesType
     >;
   }
+
+  static getStackAnimationsDuration(): typeof StackAnimationsDuration {
+    return StackAnimationsDuration;
+  }
+
+  static getStackAnimationDuration: <
+    K extends keyof typeof StackAnimationsDuration,
+  >(
+    key: K
+  ) => (typeof StackAnimationsDuration)[K] = (key) => {
+    return this.getStackAnimationsDuration()[key];
+  };
 }
 
 export { BibleVizDataRepository };

@@ -143,7 +143,7 @@ export class StackSectionBookData extends StackPieceData<
   getSectionIndex(): DataParams["creationParams"]["sectionIndex"] {
     return this.creationParams.sectionIndex;
   }
-  resetHierarchy(clearPiece: boolean = false): Bot[] {
+  resetHierarchy(clearPiece: boolean = true): Bot[] {
     this.deselect();
     this.clearQueuedChapterData();
     this.clearSelectedChapterData();

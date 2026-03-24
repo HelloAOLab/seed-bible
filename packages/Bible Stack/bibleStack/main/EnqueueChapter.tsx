@@ -8,6 +8,8 @@
  * thisBot.EnqueueChapter({queuedChapterData: someQueuedChapterData, data: someBookData})
  */
 
+import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+import type { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 import type { QueuedChapterData } from "bibleVizUtils.models.canvas";
 
 const {
@@ -15,5 +17,7 @@ const {
   data,
 }: {
   queuedChapterData: QueuedChapterData;
+  data: StackBookData | StackSectionBookData;
 } = that;
-data.queuedChapterData = queuedChapterData;
+
+data.setQueuedChapterData(queuedChapterData.chapterData);

@@ -1,2 +1,8 @@
-const chapterData = BibleStackManager.GetPieceData({piece: thisBot});
-shout("OnStackChapterInteracted", {chapterData, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Drop, dropInfo: that});
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+
+const chapterData = BibleStackManager.GetPieceData({ piece: thisBot });
+shout("OnStackChapterInteracted", {
+  chapterData,
+  typeOfInteraction: CanvasInteractions.Drop,
+  dropEvent: that,
+});

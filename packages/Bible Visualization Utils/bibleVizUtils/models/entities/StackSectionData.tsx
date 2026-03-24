@@ -176,4 +176,12 @@ export class StackSectionData extends StackPieceData<
   getActiveBooks(): StackBookData[] {
     return this.childrenData.flat().filter((book) => book.isActive);
   }
+  getActiveBookPieces(): Bot[] {
+    return this.childrenData
+      .flat()
+      .filter((bookData) => {
+        return bookData.isActive && bookData.piece;
+      })
+      .map((bookData) => bookData.piece as Bot);
+  }
 }

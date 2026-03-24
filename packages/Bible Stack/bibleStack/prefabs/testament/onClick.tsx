@@ -1,2 +1,11 @@
-const {modality} = that;
-shout("OnStackTestamentInteracted", {testament: thisBot, typeOfInteraction: (modality === BibleVizUtils.Data.tags.ClickModality.touch ? BibleVizUtils.Data.tags.InteractionType.Tap : BibleVizUtils.Data.tags.InteractionType.Click)});
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+import { ClickModalities } from "bibleVizUtils.models.casualos";
+
+const { modality } = that;
+shout("OnStackTestamentInteracted", {
+  testament: thisBot,
+  typeOfInteraction:
+    modality === ClickModalities.touch
+      ? CanvasInteractions.Tap
+      : CanvasInteractions.Click,
+});

@@ -3,6 +3,7 @@ import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 import { subtractArrays } from "bibleVizUtils.functions.index";
 import type { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
 import type { Bot, Easing } from "../../../../typings/AuxLibraryDefinitions";
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
 
 /**
  * This function handles the deselection and animation of a section,
@@ -37,27 +38,19 @@ const selectedBooksData = sectionData.getActivelySelectedBooks();
 thisBot.vars.lastInteractedStackSectionData = sectionData;
 
 if (thisBot.vars.highlightedPieces.length > 0) {
-  // TODO: Fix LoD below
-  const piecesToUnhighlight: Bot[] = sectionData.childrenData
-    .flat()
-    .filter((bookData) => {
-      return (
-        bookData.isActive &&
-        bookData.piece &&
-        (thisBot.vars.highlightedPieces as Bot[]).some((piece) => {
-          return piece.id === bookData.piece?.id;
-        })
-      );
-    })
-    .map((bookData) => {
-      return bookData.piece as Bot;
+  const piecesToUnhighlight: Bot[] = sectionData
+    .getActiveBookPieces()
+    .filter((bookPiece) => {
+      return (thisBot.vars.highlightedPieces as Bot[]).some((piece) => {
+        return piece.id === bookPiece.id;
+      });
     });
   if (piecesToUnhighlight.length > 0) {
     await Promise.all(
       piecesToUnhighlight.map((piece) => {
         return thisBot.TryUnhighlightPiece({
           piece,
-          requestSource: BibleVizUtils.Data.tags.InteractionType.Transition, // TODO: Implement actual enum for InteractionType
+          requestSource: CanvasInteractions.Transition,
         });
       })
     );

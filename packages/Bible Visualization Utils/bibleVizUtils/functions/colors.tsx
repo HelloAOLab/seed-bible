@@ -1,14 +1,9 @@
 import { RoundToStep } from "bibleVizUtils.functions.math";
-
-// TODO: Move global types like HexString, WeightedColor, HexWithHash, etc. to models
-
-export type RGB = [number, number, number];
-
-type HexWithHash = `#${string}`;
-
-export type HexString = HexWithHash | string;
-
-export type WeightedColor = { color: HexString; value?: number };
+import type {
+  RGB,
+  HexString,
+  WeightedColor,
+} from "bibleVizUtils.models.commonTypes";
 
 type ClampRGBColorType = (colorToClamp: RGB) => RGB;
 type HexToRgbType = (params: { hexColor: HexString }) => RGB;

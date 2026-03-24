@@ -130,17 +130,24 @@ export interface LayoutBookStructure {
   id: string;
 }
 
+export const EnqueueChapterActions = {
+  Select: "Select",
+  Deselect: "Deselect",
+} as const;
+export type EnqueueChapterAction =
+  (typeof EnqueueChapterActions)[keyof typeof EnqueueChapterActions];
+
 export interface QueuedChapterData {
   bookData: StackBookData;
   chapterNumber: number;
   stackBibleId: StackBibleData["id"];
-  action: any; // TODO: Implement actual BibleVizUtils.Data.tags.EnqueueChapterActions enum
+  action: EnqueueChapterAction;
   chapterData: StackChapterData;
 }
 
 export interface TourGuideData {
   intervalId: NodeJS.Timeout;
-  promiseReject: () => void; // TODO: Define this
+  promiseReject: (reason?: any) => void;
 }
 
 export interface UnhighlightDelayInfo {
@@ -230,3 +237,20 @@ export const ColorLerpTags = {
   strokeColor: "strokeColor",
 } as const;
 export type ColorLerpTag = (typeof ColorLerpTags)[keyof typeof ColorLerpTags];
+
+export const CanvasInteractions = {
+  Click: "Click",
+  Tap: "Tap",
+  HoverBegin: "HoverBegin",
+  HoverEnd: "HoverEnd",
+  GridClick: "GridClick",
+  Transition: "Transition",
+  SearchBarSelection: "SearchBarSelection",
+  Drag: "Drag",
+  Dragging: "Dragging",
+  Drop: "Drop",
+  PointerUp: "PointerUp",
+  PointerDown: "PointerDown",
+} as const;
+export type CanvasInteraction =
+  (typeof CanvasInteractions)[keyof typeof CanvasInteractions];

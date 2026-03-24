@@ -4,9 +4,9 @@
  * @param {Object} that - The context object containing the piece, data, and drop information.
  * @param {Object} that.piece - The piece being dropped.
  * @param {Object} that.data - The data associated with the piece being dropped.
- * @param {Object} that.dropInfo - Information about where the piece is being dropped.
+ * @param {Object} that.dropEvent - Information about where the piece is being dropped.
  * @example
- * shout('OnStackPieceDrop', {data: someStackPieceData, piece: someStackPiece, dropInfo: someDropInfo});
+ * shout('OnStackPieceDrop', {data: someStackPieceData, piece: someStackPiece, dropEvent: someDropEvent});
  */
 
 import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
@@ -16,11 +16,13 @@ import { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData
 import { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
 import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
 import { BiblePiece } from "bibleVizUtils.models.canvas";
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+import type { DropEvent } from "bibleVizUtils.models.casualos";
 
 const {
   piece,
   data,
-  dropInfo,
+  dropEvent,
 }: {
   piece: Bot;
   data:
@@ -29,15 +31,15 @@ const {
     | StackSectionBookData
     | StackSectionData
     | StackTestamentData;
-  dropInfo: any;
-} = that; // TODO: Define dropInfo
+  dropEvent?: DropEvent;
+} = that;
 const dimension = os.getCurrentDimension();
 const piecePosition = getBotPosition(piece, dimension);
 let newPosition;
 let justGrounded;
 thisBot.PlaySound({ soundName: "StackPieceDrop" });
 setTagMask(piece, "isBeingDragged", false);
-if (!dropInfo?.to.bot && !piece.masks.isOnTheGround) {
+if (!dropEvent?.to.bot && !piece.masks.isOnTheGround) {
   justGrounded = true;
   setTagMask(piece, "isOnTheGround", true);
   if (!(data instanceof StackChapterData))
@@ -75,9 +77,9 @@ if (data instanceof StackChapterData && data.isSelected && justGrounded) {
   if (piece.masks.isBeingHovered) {
     thisBot.TryHighlightPiece({
       piece,
-      highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Drop,
+      highlightRequestSource: CanvasInteractions.Drop,
       typeOfPiece: BiblePiece.StackTestament,
-    }); // TODO: Implement actual enums for InteractionTYpe
+    });
   }
 }
 

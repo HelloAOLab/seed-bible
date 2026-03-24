@@ -1,4 +1,4 @@
-import type { HexString } from "bibleVizUtils.functions.index";
+import type { HexString } from "bibleVizUtils.models.commonTypes";
 
 export interface UserIds {
   configId?: string;

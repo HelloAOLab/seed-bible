@@ -1,9 +1,3 @@
-import { GetBotScales } from "bibleVizUtils.functions.index";
-import { labelService } from "bibleVizUtils.services.LabelService";
-import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
-import { LabelDateFormat } from "bibleVizUtils.models.label";
-import { LabelPosition } from "bibleVizUtils.models.label";
-
 /**
  * Highlights the book by scaling and changing its opacity, and displays an info label.
  * @param {Object} [that] - Optional parameter containing additional data.
@@ -12,6 +6,11 @@ import { LabelPosition } from "bibleVizUtils.models.label";
  * book.Highlight();
  */
 
+import { GetBotScales } from "bibleVizUtils.functions.index";
+import { labelService } from "bibleVizUtils.services.LabelService";
+import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
+import { LabelDateFormat } from "bibleVizUtils.models.label";
+import { LabelPosition } from "bibleVizUtils.models.label";
 import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
 import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
@@ -22,7 +21,8 @@ const bookData: StackBookData | StackSectionBookData =
 const dimension = os.getCurrentDimension();
 const duration = isInstantaneous
   ? 0
-  : BibleVizUtils.Data.tags.StackAnimationsDuration.Highlight / speedMultiplier;
+  : BibleVizDataRepository.getStackAnimationDuration("Highlight") /
+    speedMultiplier;
 const easing = { type: "sinusoidal", mode: "inout" };
 const bookScales = GetBotScales(thisBot);
 const scales = await thisBot.GetHighlightScales();

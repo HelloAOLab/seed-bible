@@ -3,6 +3,7 @@ import { CapitalizeFirstLetter } from "bibleVizUtils.functions.index";
 import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
 import { LabelPosition } from "bibleVizUtils.models.label";
 import { PieceDataRepository } from "bibleStack.services.PieceDataRepository";
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 
 /**
  * Highlights the section by animating its opacity and scale, and shows the associated info label.
@@ -19,7 +20,8 @@ const { speedMultiplier = 1, isInstantaneous = false } = that ?? {};
 const dimension = os.getCurrentDimension();
 const animationDuration = isInstantaneous
   ? 0
-  : BibleVizUtils.Data.tags.StackAnimationsDuration.Highlight / speedMultiplier;
+  : BibleVizDataRepository.getStackAnimationDuration("Highlight") /
+    speedMultiplier;
 const thisBotScales = GetBotScales(thisBot);
 const animationEasing = { type: "sinusoidal", mode: "inout" };
 const label = CapitalizeFirstLetter(

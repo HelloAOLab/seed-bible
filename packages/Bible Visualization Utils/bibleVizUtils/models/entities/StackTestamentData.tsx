@@ -78,8 +78,8 @@ export class StackTestamentData extends StackPieceData<
   getTestamentIndex(): DataParams["creationParams"]["testamentIndex"] {
     return this.creationParams.testamentIndex;
   }
-  resetHierarchy(clearPiece: boolean = false): Bot[] {
-    this.split();
+  resetHierarchy(clearPiece: boolean = true, split: boolean = false): Bot[] {
+    if (split) this.split();
     return super.resetHierarchy(clearPiece);
   }
   tryExplodeSplitSections(): boolean {

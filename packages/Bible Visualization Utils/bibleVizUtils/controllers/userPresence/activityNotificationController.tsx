@@ -1,15 +1,14 @@
 import type { Bot } from "../../../../../typings/AuxLibraryDefinitions";
-import {
-  computeNotificationDirection,
-  type Scales,
-} from "bibleVizUtils.functions.index";
+import { computeNotificationDirection } from "bibleVizUtils.functions.index";
 import { pieceActivityService } from "bibleVizUtils.services.index";
 import { userPresenceService } from "bibleVizUtils.services.index";
-import type { Vector2 as Vector2Type } from "../../../../../typings/AuxLibraryDefinitions";
-import type { Tab } from "bibleVizUtils.models.seedBible";
 import { userColorStore } from "bibleVizUtils.services.index";
 import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 import { seedBiblePresenceProvider } from "bibleVizUtils.services.index";
+import type { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
+import type { LayoutChapterData } from "bibleVizUtils.models.entities.LayoutChapterData";
+
+type AnyNotifiablePieceData = StackChapterData | LayoutChapterData;
 
 export const tryHideNotification: (piece: Bot) => void = (piece) => {
   const notification = piece.links.activityNotification;
@@ -57,16 +56,8 @@ export const tryUpdateNotificationDirection: (bot: Bot) => void = (bot) => {
   });
 };
 
-// TODO: Implement and import an actual interface for all the pieces data
-interface NotifiablePieceData {
-  piece: Bot | undefined;
-  isSelected: boolean;
-  getIsSelectedForNotification: () => boolean;
-  getNotificationDirection: () => Vector2Type;
-}
-
 export const updateNotification: (
-  data: NotifiablePieceData | NotifiablePieceData[],
+  data: AnyNotifiablePieceData | AnyNotifiablePieceData[],
   offset: unknown,
   scales: { x: number; y: number }
 ) => void = (data, offset, scales) => {

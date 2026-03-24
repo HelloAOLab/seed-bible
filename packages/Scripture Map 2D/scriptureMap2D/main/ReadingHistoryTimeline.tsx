@@ -16,8 +16,8 @@ import type {
 import {
   CapitalizeFirstLetter,
   GetPastDateInfo,
-  type HexString,
 } from "bibleVizUtils.functions.index";
+import type { HexString } from "bibleVizUtils.models.commonTypes";
 import { readingHistoryService } from "bibleVizUtils.services.index";
 
 const { useState, useCallback, useMemo, useEffect, useRef } = os.appHooks;

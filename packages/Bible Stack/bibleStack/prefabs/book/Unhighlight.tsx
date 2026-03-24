@@ -11,13 +11,15 @@ import { GetBotScales } from "bibleVizUtils.functions.index";
  * book.Unhighlight();
  */
 
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+
 const { customDuration, speedMultiplier = 1, isInstantaneous } = that ?? {};
 // const bookData = BibleStackManager.GetPieceData({piece: thisBot});
 const dimension = os.getCurrentDimension();
 const animationDuration = isInstantaneous
   ? 0
   : (customDuration ??
-      BibleVizUtils.Data.tags.StackAnimationsDuration.Unhighlight) /
+      BibleVizDataRepository.getStackAnimationDuration("Unhighlight")) /
     speedMultiplier;
 const infoLabelTransformer =
   LabelsRepository.getLabelTransformerByOwner(thisBot);

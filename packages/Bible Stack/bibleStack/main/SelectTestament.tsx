@@ -18,6 +18,10 @@ import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleDat
 import { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
 import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
+import {
+  CanvasInteractions,
+  type CanvasInteraction,
+} from "bibleVizUtils.models.canvas";
 
 /**
  * Handles a testament selection. It modify the data of the selected testament on the bibleStructure,
@@ -32,12 +36,10 @@ const {
   testament,
   speedMultiplier = 1,
   isInstantaneous = false,
-  source,
 }: {
   testament: Bot;
   speedMultiplier?: number;
   isInstantaneous?: boolean;
-  source?: string;
 } = that;
 
 const testamentData: StackTestamentData | undefined = thisBot.GetPieceData({
@@ -84,21 +86,25 @@ shout("OnStackTestamentSelected", {
 });
 setTagMask(thisBot, "isBibleAnimating", true);
 if (thisBot.vars.highlightedPieces.length > 0 && bibleData) {
-  const piecesToUnhighlight = thisBot.vars.highlightedPieces
-    .map((piece) => {
-      return thisBot.GetPieceData({ piece });
-    })
-    .filter((pieceData) => {
-      return (
-        pieceData.parentDataIds.stackBibleId &&
-        pieceData.parentDataIds.stackBibleId === bibleData.id &&
-        !pieceData.piece.masks.isOnTheGround &&
-        !pieceData.piece.masks.isUnhighlighting
-      );
-    })
-    .map((pieceData) => {
-      return pieceData.piece;
-    });
+  const piecesToUnhighlight = (
+    (thisBot.vars.highlightedPieces as Bot[])
+      .map((piece) => {
+        return thisBot.GetPieceData({ piece }) as
+          | StackTestamentData
+          | undefined;
+      })
+      .filter((pieceData) => {
+        return (
+          pieceData &&
+          pieceData.getParentId("stackBibleId") &&
+          pieceData.getParentId("stackBibleId") === bibleData.id &&
+          !pieceData.piece?.masks.isOnTheGround &&
+          !pieceData.piece?.masks.isUnhighlighting
+        );
+      }) as StackTestamentData[]
+  ).map((pieceData) => {
+    return pieceData.piece as Bot;
+  });
   if (piecesToUnhighlight.length > 0) {
     await Promise.all(
       piecesToUnhighlight.map((piece) => {
@@ -108,7 +114,7 @@ if (thisBot.vars.highlightedPieces.length > 0 && bibleData) {
           piece,
           tryUpdateActivityNotification:
             piece.id == testament.id ? false : true,
-          requestSource: BibleVizUtils.Data.tags.InteractionType.Transition,
+          requestSource: CanvasInteractions.Transition,
         });
       })
     );

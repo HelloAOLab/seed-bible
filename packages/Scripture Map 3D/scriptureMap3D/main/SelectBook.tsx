@@ -131,8 +131,8 @@ for (const chapterData of layoutBookData.childrenData) {
     labelFontSize: 0.5,
     parentBookName: layoutBookData.pieceInfo.commonName,
     arrangementIndex: layoutBookData.creationParams.arrangementIndex,
-    isYear: layoutData?.isDatesEnabled == 2 ? false : true,
-    isShowYear: layoutData?.isDatesEnabled == 1 ? false : true,
+    isYear: layoutData?.isYear,
+    isShowYear: layoutData?.isShowYear,
     // layerIndex: chapterData.layerIndex,
     structureIndex: chapterData.structureIndex, // TODO: Solve this
     chapterNumber: chapterData.pieceInfo.number,

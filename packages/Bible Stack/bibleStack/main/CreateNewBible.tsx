@@ -72,7 +72,7 @@ const { testamentsData, staticBiblePieces } =
   }) as Promise<{
     testamentsData: StackTestamentData[];
     staticBiblePieces: StaticBiblePieces;
-  }>); // TODO: Correctly type this
+  }>);
 const bibleData = new StackBibleData({
   bibleType,
   arrangementIndex,

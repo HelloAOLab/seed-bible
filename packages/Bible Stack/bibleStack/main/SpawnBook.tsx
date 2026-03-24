@@ -1,5 +1,6 @@
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
-import { HexToRgb, RgbToHex, type RGB } from "bibleVizUtils.functions.index";
+import { HexToRgb, RgbToHex } from "bibleVizUtils.functions.index";
+import type { RGB } from "bibleVizUtils.models.commonTypes";
 import {
   scriptureService,
   stackService,

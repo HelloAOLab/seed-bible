@@ -114,7 +114,7 @@ if (sectionData) {
         BibleVizDataRepository.getStackSpacing("SelectedBookMargin") * 2;
       if (bookDataIndex > 0) {
         const previousValidGroupBookData = FindPreviousValidGroupBookData({
-          arr: bookDataArr, // TODO: Fix this
+          arr: bookDataArr,
           currentIndex: bookDataIndex,
         });
         if (previousValidGroupBookData) {

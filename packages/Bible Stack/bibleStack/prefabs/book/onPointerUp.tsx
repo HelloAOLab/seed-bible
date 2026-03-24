@@ -1,1 +1,6 @@
-shout("OnStackBookInteracted", {book: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.PointerUp});
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+
+shout("OnStackBookInteracted", {
+  book: thisBot,
+  typeOfInteraction: CanvasInteractions.PointerUp,
+});

@@ -11,6 +11,7 @@
 import type { StackBibleData } from "@packages/Bible Visualization Utils/bibleVizUtils/models/entities/StackBibleData";
 import { BiblePiece } from "bibleVizUtils.models.canvas";
 import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
 
 const {
   bibleData,
@@ -29,7 +30,7 @@ await os.sleep(500);
 for (const section of sectionsToHighlight) {
   thisBot.TryHighlightPiece({
     piece: section,
-    highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Transition,
+    highlightRequestSource: CanvasInteractions.Transition,
     unhighlightDelay: 2000,
     typeOfPiece: BiblePiece.StackSection,
   });

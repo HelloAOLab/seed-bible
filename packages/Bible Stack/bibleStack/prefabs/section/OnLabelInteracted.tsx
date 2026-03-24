@@ -1,7 +1,11 @@
 /**
-    * Triggers an OnStackSectionInteracted event when the section's label has been interacted.
-    * @example
-    * section.OnLabelInteracted()
-*/
+ * Triggers an OnStackSectionInteracted event when the section's label has been interacted.
+ * @example
+ * section.OnLabelInteracted()
+ */
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
 
-shout("OnStackSectionInteracted", {section: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Tap});
+shout("OnStackSectionInteracted", {
+  section: thisBot,
+  typeOfInteraction: CanvasInteractions.Tap,
+});

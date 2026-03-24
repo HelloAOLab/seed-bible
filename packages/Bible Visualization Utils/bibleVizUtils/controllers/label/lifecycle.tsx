@@ -1,7 +1,6 @@
 import {
   GetBotScales,
   GetDialogBotScaleY,
-  type HexString,
   GetLabelFormAddress,
   ComputeInfoLabelDateOffset,
   ComputeInfoLabelTransformerDesiredPosition,
@@ -19,6 +18,7 @@ import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepositor
 import type { Bot } from "../../../../../typings/AuxLibraryDefinitions";
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 import { updateIndicators } from "bibleVizUtils.controllers.userPresence.activityIndicatorsController";
+import type { HexString } from "bibleVizUtils.models.commonTypes";
 
 export type SpawnLabelForPieceType = (params: {
   piece: Bot;

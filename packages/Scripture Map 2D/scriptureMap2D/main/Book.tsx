@@ -22,14 +22,16 @@ import {
   GetTextColorBasedOnBackground,
   IsValueBetween,
   ComputeRawGradientColors,
-  type HexString,
-  type WeightedColor,
 } from "bibleVizUtils.functions.index";
 import {
   scriptureService,
   readingHistoryService,
 } from "bibleVizUtils.services.index";
 import { ComputeLinearGradient } from "bibleVizUtils.functions.index";
+import type {
+  HexString,
+  WeightedColor,
+} from "bibleVizUtils.models.commonTypes";
 
 const { useMemo, useState, useEffect } = os.appHooks;
 const { memo } = os.appCompat;

@@ -1,4 +1,4 @@
-import { type RGB } from "bibleVizUtils.functions.index";
+import { type RGB } from "bibleVizUtils.models.commonTypes";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import {
   GetCamRotationFocusPoint,
@@ -7,7 +7,6 @@ import {
   RgbToHex,
   computeAnimateTag,
 } from "bibleVizUtils.functions.index";
-import { stackService } from "bibleVizUtils.services.index";
 import { subtractArrays } from "bibleVizUtils.functions.index";
 import { tryHideNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
 import { StackGeometryMapper } from "bibleVizUtils.mappers.StackGeometryMapper";
@@ -20,13 +19,16 @@ import {
   BiblePiece,
 } from "bibleVizUtils.models.canvas";
 import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
-import type { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
+import { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
 import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
 import type { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
 import type { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
 import type { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
-import type { Span } from "bibleVizUtils.models.commonTypes";
+import {
+  CanvasInteractions,
+  type CanvasInteraction,
+} from "bibleVizUtils.models.canvas";
 
 /**
  * Handles a section selection. It modify the data of the selected section on the bibleStructure,
@@ -162,7 +164,7 @@ if (thisBot.vars.highlightedPieces.length > 0) {
           isInstantaneous,
           piece,
           tryUpdateActivityNotification: piece.id == section.id ? false : true,
-          requestSource: BibleVizUtils.Data.tags.InteractionType.Transition,
+          requestSource: CanvasInteractions.Transition,
         });
       })
     );
@@ -632,11 +634,11 @@ function GetPiecesAboveSection() {
   const pieces: Bot[] = [];
   const sectionDataIndex = testamentData
     ? testamentData.childrenData.indexOf(sectionData as StackSectionData)
-    : null;
+    : -1;
   if (bibleData) {
     if (!testamentData) {
       console.warn(
-        "testamentData not defined at SelectSection, at GetPiecesAboveSection"
+        "SelectSection.GetPiecesAboveSection: testamentData is not defined"
       );
       return pieces;
     }
@@ -649,7 +651,7 @@ function GetPiecesAboveSection() {
 
       if (!currentTestamentData) {
         console.warn(
-          "currentTestamentData not defined at SelectSection, at GetPiecesAboveSection"
+          "SelectSection.GetPiecesAboveSection: currentTestamentData not defined"
         );
         return pieces;
       }
@@ -664,17 +666,19 @@ function GetPiecesAboveSection() {
               currentSectionDataIndex <= sectionDataIndex)
           )
             continue;
-          if (currentSectionData.isSplitIntoBooks) {
-            for (const bookData of currentSectionData.childrenData.flat()) {
-              if (bookData.isActive) {
-                pieces.push(bookData.piece);
+          if (currentSectionData instanceof StackSectionData) {
+            if (currentSectionData.isSplitIntoBooks) {
+              for (const bookData of currentSectionData.childrenData.flat()) {
+                if (bookData.isActive && bookData.piece) {
+                  pieces.push(bookData.piece);
+                }
               }
             }
-          } else if (currentSectionData.isActive) {
+          } else if (currentSectionData.isActive && currentSectionData.piece) {
             pieces.push(currentSectionData.piece);
           }
         }
-      } else if (currentTestamentData.isActive) {
+      } else if (currentTestamentData.isActive && currentTestamentData.piece) {
         if (i <= testamentData.creationParams.testamentIndex) continue;
         pieces.push(currentTestamentData.piece);
       }
@@ -684,13 +688,15 @@ function GetPiecesAboveSection() {
       const currentSectionDataIndex =
         testamentData.childrenData.indexOf(currentSectionData);
       if (currentSectionDataIndex <= sectionDataIndex) continue;
-      if (currentSectionData.isSplitIntoBooks) {
-        for (const bookData of currentSectionData.childrenData.flat()) {
-          if (bookData.isActive) {
-            pieces.push(bookData.piece);
+      if (currentSectionData instanceof StackSectionData) {
+        if (currentSectionData.isSplitIntoBooks) {
+          for (const bookData of currentSectionData.childrenData.flat()) {
+            if (bookData.isActive && bookData.piece) {
+              pieces.push(bookData.piece);
+            }
           }
         }
-      } else if (currentSectionData.isActive) {
+      } else if (currentSectionData.isActive && currentSectionData.piece) {
         pieces.push(currentSectionData.piece);
       }
     }

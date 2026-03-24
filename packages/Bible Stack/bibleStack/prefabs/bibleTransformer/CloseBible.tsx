@@ -16,7 +16,10 @@ import { DespawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle"
 import { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
 import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 import { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
-import type { Bot } from "../../../../../typings/AuxLibraryDefinitions";
+import type { Bot, Easing } from "../../../../../typings/AuxLibraryDefinitions";
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+import type { StackBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/models/entities/StackBookData";
+import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 
 const {
   duration = 0.5,
@@ -24,6 +27,8 @@ const {
   bibleData,
 }: {
   bibleData: StackBibleData;
+  duration?: number;
+  easing: Easing;
 } = that ?? {};
 
 if (!bibleData) {
@@ -33,64 +38,47 @@ if (!bibleData) {
 shout("OnStackBibleClose");
 
 const dimension = os.getCurrentDimension();
-const testaments = bibleData.childrenData
-  .filter((testamentData) => {
-    return testamentData.isActive && !testamentData.isSplitIntoSections;
-  })
-  .map((testamentData) => {
-    return testamentData.piece;
-  });
-const sectionsData = bibleData.childrenData
-  .filter((testamentData) => {
-    return testamentData.isSplitIntoSections;
-  })
-  .flatMap((testamentData) => {
-    return testamentData.childrenData;
-  })
-  .filter((sectionData) => {
-    return sectionData.isActive && !sectionData.isSplitIntoBooks; // TODO: Fix this typing issue
-  });
-const sections = sectionsData.map((sectionData) => {
-  return sectionData.piece;
-});
-const booksData = (
-  bibleData.childrenData
-    .filter((testamentData) => {
-      return testamentData.isSplitIntoSections;
-    })
-    .flatMap((testamentData) => {
-      return testamentData.childrenData;
-    })
-    .filter((sectionData) => {
-      return (
-        sectionData instanceof StackSectionData && sectionData.isSplitIntoBooks
-      );
-    }) as StackSectionData[]
-)
-  .flatMap((sectionData) => {
-    return sectionData.childrenData;
-  })
-  .flat()
-  .filter((bookData) => {
-    return bookData.isActive;
-  });
-const books = booksData.map((bookData) => {
-  return bookData.piece;
-});
-const sectionShadows = bibleData.childrenData
-  .flatMap((testamentData) => {
-    return testamentData.childrenData;
-  })
-  .filter((sectionData) => {
-    return (
-      sectionData instanceof StackSectionData &&
-      sectionData.isActive &&
-      sectionData.shadow
-    );
-  })
-  .map((sectionData) => {
-    return sectionData.shadow;
-  });
+const testaments: Bot[] = [];
+const sectionsData: (StackSectionData | StackSectionBookData)[] = [];
+const sections: Bot[] = [];
+const booksData: StackBookData[] = [];
+const books: Bot[] = [];
+const sectionShadows: Bot[] = [];
+const selectedBooks: Bot[] = [];
+for (const testamentData of bibleData.childrenData) {
+  if (testamentData.isSplitIntoSections) {
+    for (const child of testamentData.childrenData) {
+      if (child.isActive) {
+        if (child instanceof StackSectionData && child.isSplitIntoBooks) {
+          for (const bookData of child.childrenData.flat()) {
+            if (bookData.isActive && bookData.piece) {
+              booksData.push(bookData);
+              books.push(bookData.piece);
+              if (bookData.isSelected) {
+                selectedBooks.push(bookData.piece);
+              }
+            }
+          }
+          if (child.shadow) {
+            sectionShadows.push(child.shadow);
+          }
+        } else {
+          if (child.piece) {
+            sectionsData.push(child);
+            sections.push(child.piece);
+            if (child instanceof StackSectionBookData && child.isSelected) {
+              selectedBooks.push(child.piece);
+            }
+          }
+        }
+      }
+    }
+  } else {
+    if (testamentData.isActive && testamentData.piece) {
+      testaments.push(testamentData.piece);
+    }
+  }
+}
 const lowerCover = bibleData.getStaticPiece("lowerCover");
 const upperCover = bibleData.getStaticPiece("upperCover");
 const verticalLine = bibleData.getStaticPiece("crossVerticalLine");
@@ -107,26 +95,11 @@ const crossClosedPositionZ = upperCoverClosedPositionZ;
 const bibleElements = testaments.concat(sections, books);
 const elementsToShrink = bibleElements.concat(sectionShadows);
 const desiredElementsScaleZ = 0;
-const selectedBooksLabelTransformers = [
-  ...booksData.filter((bookData) => {
-    return bookData.isSelected && bookData.piece;
-  }),
-  ...sectionsData.filter((sectionData) => {
-    return (
-      sectionData instanceof StackSectionBookData &&
-      sectionData.isSelected &&
-      sectionData.piece
-    );
-  }),
-]
-  .map((selectedBookData) => {
-    return getBot(
-      byTag("isInfoLabelTransformer", true),
-      byTag("ownerBotId", getID(selectedBookData.piece)),
-      byTag("isInUse", true)
-    );
+const selectedBooksLabelTransformers = selectedBooks
+  .map((book) => {
+    return LabelsRepository.getLabelTransformerByOwner(book);
   })
-  .filter(Boolean);
+  .filter(Boolean) as Bot[];
 
 shout("HideChapters", { bibleId: bibleData.id });
 setTagMask(bibleElements, "pointable", false);
@@ -135,7 +108,7 @@ await Promise.allSettled([
   ...bibleElements.map((bibleElement) => {
     return BibleStackManager.TryUnhighlightPiece({
       piece: bibleElement,
-      requestSource: BibleVizUtils.Data.tags.InteractionType.Transition,
+      requestSource: CanvasInteractions.Transition,
     });
   }),
   ...selectedBooksLabelTransformers.map((labelTransformer) => {
@@ -153,7 +126,6 @@ if (elementsToShrink.length > 0) {
     await Promise.all(
       elementsToShrink
         .map((piece) => {
-          if (!piece) return Promise.resolve();
           const elementPosition = getBotPosition(piece, dimension);
           const elementScales = GetBotScales(piece);
           return animateTag(piece, {

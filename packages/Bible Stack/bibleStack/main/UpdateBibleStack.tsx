@@ -161,7 +161,6 @@ await Promise.all(animations);
 return true;
 
 function GetBibleStackStructure() {
-  // TODO: Move this to StackBibleData
   const filteredStructure = bibleData.childrenData.filter((testamentData) => {
     return testamentData.isSplitIntoSections
       ? testamentData.childrenData.some((sectionData) => {

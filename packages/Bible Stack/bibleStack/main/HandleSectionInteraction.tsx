@@ -2,19 +2,35 @@
  * This tag is called whenever a section is interacted by clicking or hovering it
  * It is in charge of managing whether to highlight or select a section
  * @param {Object} that - Object that contains important data for the function
- * @param {String} that.typeOfInteraction - Represents the type of interaction. Possible values can be found at globalThis.BibleVizUtils.Data.tags.InteractionType
- * @param {Object} that.dragInfo? - Is optional and is the information received when the type of interaction is a drag
- * @param {Object} that.dropInfo? - Is optional and is the information received when the type of interaction is a drop
+ * @param {String} that.typeOfInteraction - Represents the type of interaction. Possible values can be found at globalThis.CanvasInteractions
+ * @param {Object} that.dragEvent? - Is optional and is the information received when the type of interaction is a drag
+ * @param {Object} that.dropEvent? - Is optional and is the information received when the type of interaction is a drop
  * @example
- * thisBot.HandleSectionInteraction({section: someSection, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Drag, dragInfo: someDraginfo});
+ * thisBot.HandleSectionInteraction({section: someSection, typeOfInteraction: CanvasInteractions.Drag, dragEvent: someDraginfo});
  */
 
 import { BiblePiece, BibleState } from "bibleVizUtils.models.canvas";
+import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+import {
+  CanvasInteractions,
+  type CanvasInteraction,
+} from "bibleVizUtils.models.canvas";
+import type { DraggingEvent, DropEvent } from "bibleVizUtils.models.casualos";
 
-const { section, typeOfInteraction, dragInfo, dropInfo } = that;
+const {
+  section,
+  typeOfInteraction,
+  draggingEvent,
+  dropEvent,
+}: {
+  section: Bot;
+  typeOfInteraction: CanvasInteraction;
+  dropEvent?: DropEvent;
+  draggingEvent?: DraggingEvent;
+} = that;
 if (
   thisBot.masks.isBibleAnimating &&
-  typeOfInteraction !== BibleVizUtils.Data.tags.InteractionType.PointerUp
+  typeOfInteraction !== CanvasInteractions.PointerUp
 )
   return;
 const sectionData = thisBot.GetPieceData({ piece: section });
@@ -25,7 +41,7 @@ const { bibleData } = await thisBot.GetDataChainFromParentDataIds({
 if (!bibleData || bibleData.currentState === BibleState.Open) {
   if (!thisBot.masks.isASectionMakingTourGuide) {
     switch (typeOfInteraction) {
-      case BibleVizUtils.Data.tags.InteractionType.Click:
+      case CanvasInteractions.Click:
         {
           if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
             BibleVizUtils.Functions.HighlightBiblePiece({ data: sectionData });
@@ -37,15 +53,14 @@ if (!bibleData || bibleData.currentState === BibleState.Open) {
             } else {
               thisBot.TryHighlightPiece({
                 piece: section,
-                highlightRequestSource:
-                  BibleVizUtils.Data.tags.InteractionType.Click,
+                highlightRequestSource: CanvasInteractions.Click,
                 typeOfPiece: BiblePiece.StackSection,
               });
             }
           }
         }
         break;
-      case BibleVizUtils.Data.tags.InteractionType.Tap:
+      case CanvasInteractions.Tap:
         {
           if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
             BibleVizUtils.Functions.HighlightBiblePiece({ data: sectionData });
@@ -54,48 +69,47 @@ if (!bibleData || bibleData.currentState === BibleState.Open) {
           }
         }
         break;
-      case BibleVizUtils.Data.tags.InteractionType.HoverBegin:
+      case CanvasInteractions.HoverBegin:
         {
           thisBot.TryHighlightPiece({
             piece: section,
-            highlightRequestSource:
-              BibleVizUtils.Data.tags.InteractionType.HoverBegin,
+            highlightRequestSource: CanvasInteractions.HoverBegin,
             typeOfPiece: BiblePiece.StackSection,
           });
         }
         break;
-      case BibleVizUtils.Data.tags.InteractionType.HoverEnd:
+      case CanvasInteractions.HoverEnd:
         {
           thisBot.TryUnhighlightPiece({
             piece: section,
             delay: 4000,
-            requestSource: BibleVizUtils.Data.tags.InteractionType.HoverEnd,
+            requestSource: CanvasInteractions.HoverEnd,
           });
         }
         break;
-      // case BibleVizUtils.Data.tags.InteractionType.SearchBarSelection:
+      // case CanvasInteractions.SearchBarSelection:
       // {
       //     return thisBot.SelectSection({section});
       // }
-      case BibleVizUtils.Data.tags.InteractionType.Drag:
+      case CanvasInteractions.Drag:
         {
           if (section.tags.draggable)
             shout("OnStackPieceDrag", { piece: section, data: sectionData });
         }
         break;
-      case BibleVizUtils.Data.tags.InteractionType.Dragging:
+      case CanvasInteractions.Dragging:
         {
           if (section.tags.draggable)
-            shout("OnStackPieceDragging", { piece: section, dragInfo });
+            shout("OnStackPieceDragging", { piece: section, draggingEvent });
         }
         break;
-      case BibleVizUtils.Data.tags.InteractionType.Drop:
+      case CanvasInteractions.Drop:
         {
           if (section.tags.draggable)
-            shout("OnStackPieceDrop", { piece: section, dropInfo });
+            shout("OnStackPieceDrop", { piece: section, dropEvent });
         }
         break;
-      case BibleVizUtils.Data.tags.InteractionType.PointerUp:
+      case CanvasInteractions.PointerUp:
         {
           if (section.tags.draggable)
             shout("OnStackPiecePointerUp", { piece: section });

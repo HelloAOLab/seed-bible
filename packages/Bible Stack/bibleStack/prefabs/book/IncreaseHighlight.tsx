@@ -5,6 +5,8 @@ import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
  * book.IncreaseHighlight();
  */
 
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+
 const infoLabelTransformer =
   LabelsRepository.getLabelTransformerByOwner(thisBot);
 const {
@@ -14,7 +16,7 @@ const {
   speedMultiplier = 1,
 } = infoLabelTransformer.GetLabelElements();
 const duration =
-  BibleVizUtils.Data.tags.StackAnimationsDuration.IncreaseHighlight /
+  BibleVizDataRepository.getStackAnimationDuration("IncreaseHighlight") /
   speedMultiplier;
 const newOpacity = 1;
 const easing = { type: "sinusoidal", mode: "inout" };

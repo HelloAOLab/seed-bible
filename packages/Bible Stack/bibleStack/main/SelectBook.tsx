@@ -6,6 +6,10 @@ import {
   type PieceSelectionSource,
   PieceSelectionSources,
 } from "bibleVizUtils.models.canvas";
+import {
+  CanvasInteractions,
+  type CanvasInteraction,
+} from "bibleVizUtils.models.canvas";
 
 /**
  * This tag handles a book selection. It modify the data of the selected book on the bibleStructure
@@ -42,7 +46,7 @@ tryHideNotification(book);
 await thisBot.TryUnhighlightPiece({
   piece: book,
   tryUpdateActivityNotification: false,
-  requestSource: BibleVizUtils.Data.tags.InteractionType.Transition,
+  requestSource: CanvasInteractions.Transition,
 });
 
 bookData.select();

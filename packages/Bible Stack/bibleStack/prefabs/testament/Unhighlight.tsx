@@ -1,4 +1,6 @@
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+
 /**
  * Reverses the highlight effect on the testament by animating its opacity and scale back to the initial state.
  * The associated info label transformer is hidden and released back to the object pool.
@@ -22,7 +24,7 @@ const {
 const duration = isInstantaneous
   ? 0
   : (customDuration ??
-      BibleVizUtils.Data.tags.StackAnimationsDuration.Unhighlight) /
+      BibleVizDataRepository.getStackAnimationDuration("Unhighlight")) /
     speedMultiplier;
 const easing = { type: "sinusoidal", mode: "inout" };
 const infoLabelTransformer =

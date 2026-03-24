@@ -8,12 +8,14 @@ import { GetBotScales } from "bibleVizUtils.functions.index";
  * book.Rehighlight();
  */
 
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+
 const { speedMultiplier = 1, isInstantaneous = false } = that ?? {};
 const bookData = BibleStackManager.GetPieceData({ piece: thisBot });
 // const dimension = os.getCurrentDimension();
 const animationDuration = isInstantaneous
   ? 0
-  : BibleVizUtils.Data.tags.StackAnimationsDuration.Rehighlight /
+  : BibleVizDataRepository.getStackAnimationDuration("Rehighlight") /
     speedMultiplier;
 const infoLabelTransformer = getBot(
   byTag("isInfoLabelTransformer", true),

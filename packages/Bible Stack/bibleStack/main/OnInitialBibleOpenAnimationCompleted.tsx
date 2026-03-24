@@ -9,15 +9,23 @@
  * shout("OnInitialBibleOpenAnimationCompleted", {bibleData: someBibleData})
  */
 
+import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
 import { BibleType } from "bibleVizUtils.models.canvas";
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
 
-const { bibleData } = that;
+const {
+  bibleData,
+}: {
+  bibleData: StackBibleData;
+} = that;
+
 if (bibleData.bibleType !== BibleType.Default) return;
+
 await os.sleep(500);
 for (const testamentData of bibleData.childrenData) {
   thisBot.TryHighlightPiece({
     piece: testamentData.piece,
-    highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Transition,
+    highlightRequestSource: CanvasInteractions.Transition,
     unhighlightDelay: 4000,
   });
   await os.sleep(100);

@@ -6,6 +6,7 @@ import { seedBiblePresenceProvider } from "bibleVizUtils.services.index";
 import type { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
 import type { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
 import { PieceSelectionSources } from "bibleVizUtils.models.canvas";
+import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
 
 if (
   thisBot.vars.stackBiblesData.lenght === 0 ||
@@ -78,31 +79,20 @@ let chapterToFocus: StackChapterData | undefined;
 );
 
 if (chapterToFocus) {
-  // TODO: Should we use GetDataChainByParentDataIds here?
-  const bookData = (thisBot.vars.stackBooksData as StackBookData[]).find(
-    (currBookData) => {
-      return currBookData.id === chapterToFocus?.getParentId("stackBookId");
-    }
-  );
-  const sectionBookData = (
-    thisBot.vars.stackSectionBooksData as StackSectionBookData[]
-  ).find((sectionBookData) => {
-    return (
-      sectionBookData.id === chapterToFocus?.getParentId("stackSectionBookId")
-    );
-  });
-  const sectionData = (
-    thisBot.vars.stackSectionsData as StackSectionData[]
-  ).find((data) => {
-    return data.id === chapterToFocus?.getParentId("stackSectionId");
-  });
-  const testamentData = (
-    thisBot.vars.stackTestamentsData as StackTestamentData[]
-  ).find((data) => {
-    return data.id === chapterToFocus?.getParentId("stackTestamentId");
-  });
-  const bibleData = thisBot.GetBibleDataById({
-    stackBibleId: chapterToFocus.getParentId("stackBibleId"),
+  const {
+    bibleData,
+    testamentData,
+    sectionData,
+    sectionBookData,
+    bookData,
+  }: {
+    bibleData: StackBibleData | undefined;
+    testamentData: StackTestamentData | undefined;
+    sectionData: StackSectionData | undefined;
+    sectionBookData: StackSectionBookData | undefined;
+    bookData: StackBookData | undefined;
+  } = await thisBot.GetDataChainFromParentDataIds({
+    parentDataIds: chapterToFocus.parentDataIds,
   });
   const shouldResetStack =
     (!testamentData?.isActive || testamentData.isSplitIntoSections) &&

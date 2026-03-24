@@ -4,25 +4,34 @@ import { scriptureService } from "bibleVizUtils.services.index";
 import type { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import {
+  CanvasInteractions,
+  type CanvasInteraction,
+} from "bibleVizUtils.models.canvas";
+import type { DraggingEvent, DropEvent } from "bibleVizUtils.models.casualos";
 
 /**
  * This tag is called whenever a chapter is interacted
  * It is in charge of managing whether to select, deselect, highlight, drag or drop a chapter if possible.
  * @param {Object} that - Object that contains important data for the function
- * @param {StackChapterData} that.chapterData - The chapterData that holds the reference to the chapter transformer, chapter front, chapter back, and some more important informati    * @param {ChapStringat.chaptypeOfInteractionhe Represents the type of interaction. Possible values can be found at globalThis.BibleVizUtils.Data.tags.InteractionType
- * @param {Object} that.dragInfo? - Is optional and is the information received when the type of interaction is a drag
- * @param {Object} that.dropInfo? - Is optional and is the information received when the type of interaction is a drop
+ * @param {StackChapterData} that.chapterData - The chapterData that holds the reference to the chapter transformer, chapter front, chapter back, and some more important informati
+ * @param {CanvasInteraction} that.typeOfInteraction Represents the type of interaction.
+ * @param {Object} that.dragEvent? - Is optional and is the information received when the type of interaction is a drag
+ * @param {Object} that.dropEvent? - Is optional and is the information received when the type of interaction is a drop
  * @example
- * shout("HandleChapterInteraction", {chapterData: someChapterData, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Click});
+ * shout("HandleChapterInteraction", {chapterData: someChapterData, typeOfInteraction: CanvasInteractions.Click});
  */
 
 const {
   chapterData,
   typeOfInteraction,
-  dragInfo,
-  dropInfo,
+  draggingEvent,
+  dropEvent,
 }: {
   chapterData: StackChapterData;
+  typeOfInteraction: CanvasInteraction;
+  dropEvent?: DropEvent;
+  draggingEvent?: DraggingEvent;
 } = that;
 const {
   sectionBookData,
@@ -51,7 +60,7 @@ if (!bookStaticInfo) {
 }
 
 switch (typeOfInteraction) {
-  case BibleVizUtils.Data.tags.InteractionType.Click:
+  case CanvasInteractions.Click:
     {
       if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
         BibleVizUtils.Functions.HighlightBiblePiece({ data: chapterData });
@@ -124,12 +133,12 @@ switch (typeOfInteraction) {
       }
     }
     break;
-  case BibleVizUtils.Data.tags.InteractionType.HoverBegin:
+  case CanvasInteractions.HoverBegin:
     {
       thisBot.TryHighlightChapter({ parentData: actualData, chapterData });
     }
     break;
-  case BibleVizUtils.Data.tags.InteractionType.HoverEnd:
+  case CanvasInteractions.HoverEnd:
     {
       if (
         !chapterData.piece.masks.isBeingDragged //&&
@@ -154,7 +163,7 @@ switch (typeOfInteraction) {
       }
     }
     break;
-  case BibleVizUtils.Data.tags.InteractionType.Drag:
+  case CanvasInteractions.Drag:
     {
       if (chapterData.piece.tags.draggable)
         shout("OnStackPieceDrag", {
@@ -163,23 +172,23 @@ switch (typeOfInteraction) {
         });
     }
     break;
-  case BibleVizUtils.Data.tags.InteractionType.Dragging:
+  case CanvasInteractions.Dragging:
     {
       if (chapterData.piece.tags.draggable)
         shout("OnStackPieceDragging", {
           piece: chapterData.piece,
-          dragInfo,
+          draggingEvent,
           data: chapterData,
         });
     }
     break;
-  case BibleVizUtils.Data.tags.InteractionType.Drop:
+  case CanvasInteractions.Drop:
     {
       if (chapterData.piece.tags.draggable)
         shout("OnStackPieceDrop", {
           data: chapterData,
           piece: chapterData.piece,
-          dropInfo,
+          dropEvent,
         });
     }
     break;

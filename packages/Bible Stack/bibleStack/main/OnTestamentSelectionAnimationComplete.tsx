@@ -12,6 +12,8 @@
 
 import { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
 import { BiblePiece } from "bibleVizUtils.models.canvas";
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 
 const {
   testamentData,
@@ -31,8 +33,7 @@ if (!isInstantaneous) {
         speedMultiplier,
         isInstantaneous,
         piece: sectionData.piece,
-        highlightRequestSource:
-          BibleVizUtils.Data.tags.InteractionType.Transition, // TODO: Implement actual enum for InteractionType
+        highlightRequestSource: CanvasInteractions.Transition,
         unhighlightDelay: 2000,
         typeOfPiece: BiblePiece.StackSection,
       })
@@ -40,11 +41,12 @@ if (!isInstantaneous) {
     await os.sleep(
       isInstantaneous
         ? 0
-        : (((BibleVizUtils.Data.tags.StackAnimationsDuration.Highlight / 3) *
+        : (((BibleVizDataRepository.getStackAnimationDuration("Highlight") /
+            3) *
             2) /
             speedMultiplier) *
             1000
-    ); // TODO: Implement actual enum for StackAnimationsDuration
+    );
   }
   await Promise.all(animations);
 }

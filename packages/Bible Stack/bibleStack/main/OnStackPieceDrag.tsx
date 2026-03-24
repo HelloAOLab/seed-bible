@@ -15,6 +15,8 @@ import { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData
 import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 import { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
 import { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
+import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
 
 const {
   piece,
@@ -29,9 +31,15 @@ const {
     | StackTestamentData;
 } = that;
 const { bibleData, testamentData, sectionData, sectionBookData, bookData } =
-  await thisBot.GetDataChainFromParentDataIds({
+  await (thisBot.GetDataChainFromParentDataIds({
     parentDataIds: data.parentDataIds,
-  });
+  }) as Promise<{
+    bibleData: StackBibleData | undefined;
+    testamentData: StackTestamentData | undefined;
+    sectionData: StackSectionData | undefined;
+    sectionBookData: StackSectionBookData | undefined;
+    bookData: StackBookData | undefined;
+  }>);
 
 if (data instanceof StackChapterData) {
   if (data.isPieceHighlighted() && !data.isSelected) {
@@ -40,9 +48,9 @@ if (data instanceof StackChapterData) {
 } else {
   await thisBot.TryUnhighlightPiece({
     piece,
-    requestSource: BibleVizUtils.Data.tags.InteractionType.Drag,
+    requestSource: CanvasInteractions.Drag,
     customDuration: 0,
-  }); // TODO: Implement actual enum for InteractionType
+  });
 }
 let pulledOutFromParent = false;
 

@@ -1,3 +1,4 @@
+import type { LayoutBibleData } from "bibleVizUtils.models.entities.LayoutBibleData";
 import { HexToRgb } from "bibleVizUtils.functions.index";
 
 const dimension = os.getCurrentDimension();
@@ -9,9 +10,16 @@ const backgroundCurrentColor = HexToRgb({
 const duration = 0.125;
 thisBot.StopToggleAnimation();
 
-const layoutData = ScriptureMap3DManager.GetLayoutDataById({
-  layoutId: thisBot.tags.layoutId,
-});
+const layoutData: LayoutBibleData | undefined =
+  ScriptureMap3DManager.GetLayoutDataById({
+    layoutId: thisBot.tags.layoutId,
+  });
+
+if (!layoutData) {
+  throw new Error(
+    "scriptureMap3D.prefabs.toggle.Activate: layoutData not found."
+  );
+}
 
 ColorLerper.LerpTag({
   startingColor: backgroundCurrentColor,

@@ -73,7 +73,8 @@ export class LayoutBibleData {
   #areLabelsEnabled: boolean = false;
   #isPlaylistPathEnabled: boolean = false;
   #isPathEnabled: boolean = false;
-  #isDatesEnabled: number; // TODO: Improve this
+  #isYear: boolean = true;
+  #isShowYear: boolean = false;
   #isChapterExpandEnabled: boolean = false;
   #currentDateFormat: NonNullable<DataParams["currentDateFormat"]>;
   #chapterSelectColor: HexString = "#02B7BE";
@@ -106,7 +107,6 @@ export class LayoutBibleData {
     playlistEntries = [],
     areDatesEnabled = false,
   }: DataParams) {
-    this.#isDatesEnabled = 2;
     this.#id = id;
     this.#staticLayoutPieces = staticLayoutPieces;
     this.#childrenStructures = childrenStructures;
@@ -295,11 +295,23 @@ export class LayoutBibleData {
   ) {
     this.#playlistLastSelectedEntryItem = item;
   }
-  get isDatesEnabled() {
-    return this.#isDatesEnabled;
+  get isYear() {
+    return this.#isYear;
   }
-  changeDatesEnabled(value: number) {
-    this.#isDatesEnabled = value;
+  enableIsYear() {
+    this.#isYear = true;
+  }
+  disableIsYear() {
+    this.#isYear = false;
+  }
+  get isShowYear() {
+    return this.#isShowYear;
+  }
+  enableIsShowYear() {
+    this.#isShowYear = true;
+  }
+  disableIsShowYear() {
+    this.#isShowYear = false;
   }
   get areDatesEnabled() {
     return this.#areDatesEnabled;

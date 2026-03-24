@@ -1,9 +1,9 @@
 import {
   HexToRgb,
   RgbToHex,
-  type RGB,
   ClampRGBColor,
 } from "bibleVizUtils.functions.index";
+import type { RGB } from "bibleVizUtils.models.commonTypes";
 
 /**
  * Make a linear interpolation (lerp) on the value of a specific tag from the given start color to the given end color.

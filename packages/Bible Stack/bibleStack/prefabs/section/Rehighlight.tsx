@@ -1,4 +1,6 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+
 /**
  * Reapplies the highlight effect to the section, including animations for opacity and scale.
  * @param {Object} [that] - An object containing parameters for the highlight.
@@ -13,7 +15,7 @@ const { speedMultiplier = 1, isInstantaneous = false } = that ?? {};
 // const dimension = os.getCurrentDimension();
 const animationDuration = isInstantaneous
   ? 0
-  : BibleVizUtils.Data.tags.StackAnimationsDuration.Rehighlight /
+  : BibleVizDataRepository.getStackAnimationDuration("Rehighlight") /
     speedMultiplier;
 // const deltaScaleZ = thisBot.tags.hoveredScaleZ - thisBot.tags.desiredScaleZ;
 const infoLabelTransformer = getBot(

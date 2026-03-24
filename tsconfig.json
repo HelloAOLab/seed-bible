@@ -1023,6 +1023,9 @@
       "bibleVizUtils.data.PieceActivityIndicatorsRepository": [
         "./packages/Bible Visualization Utils/bibleVizUtils/data/PieceActivityIndicatorsRepository.tsx"
       ],
+      "bibleVizUtils.data.StackAnimationsDuration": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/data/StackAnimationsDuration.tsx"
+      ],
       "bibleVizUtils.data.StackPieceMeasurements": [
         "./packages/Bible Visualization Utils/bibleVizUtils/data/StackPieceMeasurements.tsx"
       ],
