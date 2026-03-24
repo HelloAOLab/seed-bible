@@ -1762,6 +1762,10 @@ const SideBarChapters = (props: {
             globalThis.UpdateTab(tab);
             globalThis.MakingNewTab = false;
             setOpenSidebar(false);
+            setTimeout(() => {
+              globalThis?.RemoveApplicationByLabel(globalThis.ActiveMoreApp);
+              globalThis?.setActiveMoreApp(null);
+            }, 100);
           } else {
             let chapterUrl = bookData.firstChapterApiLink.replace(
               "1.json",
@@ -1775,6 +1779,10 @@ const SideBarChapters = (props: {
             );
             setOpenSidebar((prev) => !prev);
             setCurrentExperience(0);
+            setTimeout(() => {
+              globalThis?.RemoveApplicationByLabel(globalThis.ActiveMoreApp);
+              globalThis?.setActiveMoreApp(null);
+            }, 100);
           }
           // MainApp2({ action: 'addStudyNotes', props: { book: bookName, bookId: data.id, chapter: chapterNo, forced: true } })
         }, 0);
