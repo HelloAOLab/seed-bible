@@ -5607,6 +5607,13 @@ const FONT_OPTIONS = [
 
 const LINE_HEIGHTS = [1.5, 2, 2.5];
 
+const UI_TEXT_SIZES = [
+  { label: "S", value: 0.85 },
+  { label: "M", value: 1 },
+  { label: "L", value: 1.15 },
+  { label: "XL", value: 1.3 },
+];
+
 const FONT_SIZES = [
   { label: "Small", value: "14" },
   { label: "Medium", value: "16" },
@@ -5800,6 +5807,35 @@ const SettingsUI = () => {
   const [selectedFontSize, setSelectedFontSize] = useState(3);
   const [showFontDropdown, setShowFontDropdown] = useState(false);
   const [showFontSizeMenu, setShowFontSizeMenu] = useState(false);
+  const [uiSizeIndex, setUiSizeIndex] = useState(() => {
+    const saved = globalThis.changes?.uiTextSize || 1;
+    return Math.max(
+      UI_TEXT_SIZES.findIndex((s) => s.value === saved),
+      0
+    );
+  });
+
+  const applyUiZoom = (zoom) => {
+    document
+      .querySelectorAll(".settings-sidebar, .themeSettings-container")
+      .forEach((el) => {
+        (el as HTMLElement).style.zoom = String(zoom);
+      });
+  };
+
+  useEffect(() => {
+    const saved = globalThis.changes?.uiTextSize || 1;
+    if (saved !== 1) applyUiZoom(saved);
+  }, []);
+
+  const handleUiTextSize = (index) => {
+    setUiSizeIndex(index);
+    const zoom = UI_TEXT_SIZES[index].value;
+    if (!globalThis.changes) globalThis.changes = {};
+    globalThis.changes.uiTextSize = zoom;
+    applyUiZoom(zoom);
+  };
+
   const {
     setShowHeading,
     setShowVerses,
@@ -6256,6 +6292,61 @@ const SettingsUI = () => {
           </div>
           <div>
             {t("theme")} & {t("text")}
+          </div>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "16px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: "20px", color: "var(--heading1Color)" }}
+            >
+              format_size
+            </span>
+            <span style={{ fontSize: "13px", color: "var(--heading1Color)" }}>
+              {t("uiTextSize")}
+            </span>
+          </div>
+          <div style={{ display: "flex", gap: "4px" }}>
+            {UI_TEXT_SIZES.map((size, i) => (
+              <button
+                key={size.label}
+                onClick={() => handleUiTextSize(i)}
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "6px",
+                  border:
+                    uiSizeIndex === i
+                      ? "2px solid var(--addButtonIcon)"
+                      : "1px solid #ccc",
+                  backgroundColor:
+                    uiSizeIndex === i
+                      ? "var(--addButtonIcon)"
+                      : "var(--pageBackground, #fff)",
+                  color:
+                    uiSizeIndex === i
+                      ? "var(--primaryColor)"
+                      : "var(--pageTextColor)",
+                  cursor: "pointer",
+                  fontSize: `${size.value - 2}px`,
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 0,
+                  fontFamily: "inherit",
+                }}
+              >
+                {size.label}
+              </button>
+            ))}
           </div>
         </div>
         <div style={{ display: "flex", gap: "7px", marginBottom: "30px" }}>
