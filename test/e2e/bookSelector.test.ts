@@ -113,7 +113,7 @@ describe("bookSelector tests", () => {
     const bookItems = await page.$$(".sidebar-itm");
     for (let i = 0; i < bookItems.length; i++) {
       const item = bookItems[i];
-      const bookName = await item.$eval("span", (el) => el.textContent);
+      const bookName = await item!.$eval("span", (el) => el.textContent);
       expect(bookName.trim()).toBe(bookNames[i]);
     }
     expect(bookItems.length).toBe(bookNames.length);

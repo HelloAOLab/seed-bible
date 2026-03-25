@@ -161,7 +161,7 @@ export async function downloadExtension(
 ): Promise<ExtensionData | null> {
   const client = createRecordsClient("https://api.ao.bot");
 
-  const result = await client.getData(
+  const result: any = await client.getData(
     {
       recordName: downloadRecordName,
       address: name,
@@ -275,7 +275,7 @@ export async function uploadExtensionAux(
   meta.updatedAt = new Date().toISOString();
 
   if (saveMeta) {
-    const recordResult = await client.recordData(
+    const recordResult: any = await client.recordData(
       {
         recordKey: recordKey ?? uploadRecordName,
         address: meta.name,

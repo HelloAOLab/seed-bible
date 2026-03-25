@@ -131,6 +131,9 @@ importers:
       '@types/node':
         specifier: ^24.5.2
         version: 24.10.9
+      '@types/prompts':
+        specifier: ^2.4.9
+        version: 2.4.9
       axios:
         specifier: ^1.12.2
         version: 1.13.2
@@ -2131,6 +2134,9 @@ packages:
 
   '@types/node@24.10.9':
     resolution: {integrity: sha512-ne4A0IpG3+2ETuREInjPNhUGis1SFjv1d5asp8MzEAGtOZeTeHVDOYqOgqfhvseqg/iXty2hjBf1zAOb7RNiNw==}
+
+  '@types/prompts@2.4.9':
+    resolution: {integrity: sha512-qTxFi6Buiu8+50/+3DGIWLHM6QuWsEKugJnnP6iv2Mc4ncxE4A/OJkjuVOA+5X0X1S/nq5VJRa8Lu+nwcvbrKA==}
 
   '@types/scrypt-async@1.3.5':
     resolution: {integrity: sha512-WprBpDhqq8DemGI0QepdcLdfTfOuAgD85A0hz8PljDFlalRbnZ1Puy1qC8x8CoAzr5Ugnyerbu+mNQ4jk9dg/w==}
@@ -6872,6 +6878,11 @@ snapshots:
   '@types/node@24.10.9':
     dependencies:
       undici-types: 7.16.0
+
+  '@types/prompts@2.4.9':
+    dependencies:
+      '@types/node': 24.10.9
+      kleur: 3.0.3
 
   '@types/scrypt-async@1.3.5': {}
 

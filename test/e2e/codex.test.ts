@@ -90,7 +90,7 @@ describe("codex tests", () => {
     const url = new URL(page.url());
     const inst = url.searchParams.get("staticInst");
     await delay(3000);
-    await loadSeedBible(page, undefined, inst, undefined, {
+    await loadSeedBible(page, undefined, inst!, undefined, {
       translation: codexTranslation2,
     });
     seedBibleFrame = getSeedBibleFrame(page);
