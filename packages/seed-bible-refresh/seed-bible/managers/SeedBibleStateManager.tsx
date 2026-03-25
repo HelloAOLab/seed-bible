@@ -149,7 +149,11 @@ export function createSeedBibleState(): SeedBibleState {
       return;
     }
 
-    if (selectedPane?.component !== null) {
+    if (
+      selectedPane?.component !== null ||
+      selectedPane?.gridPortal !== null ||
+      selectedPane?.mapPortal !== null
+    ) {
       return;
     }
 
