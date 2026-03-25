@@ -2,7 +2,7 @@ import { BibleReader } from "seed-bible.components.BibleReader";
 import { BelowReaderToolbar } from "seed-bible.components.BelowReaderToolbar";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
-import type { Pane } from "seed-bible.managers.PanesManager";
+import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import {
   type ToolsManager,
@@ -14,16 +14,19 @@ const { useEffect, useRef } = os.appHooks;
 function EmptyPaneToolbar({
   toolsManager,
   selectorState,
+  panesManager,
   pane,
   tabs,
 }: {
   toolsManager: ToolsManager;
   selectorState: BibleSelectorState;
+  panesManager: PanesManager;
   pane: Pane;
   tabs: TabsManager;
 }) {
   const tools: BibleEmptyPaneTool[] = toolsManager.getEmptyPaneTools({
     selectorState,
+    panesManager,
     currentPane: pane,
     tabs,
   });
@@ -78,6 +81,7 @@ export function PaneLayout(props: PaneLayoutProps) {
     startX: number;
     startY: number;
   } | null>(null);
+  const paneElementMapRef = useRef(new Map<string, HTMLElement>());
   const attachedPanes = panes.filter((pane) => !pane.detached);
   const detachedPanes = panes.filter((pane) => pane.detached);
 
@@ -117,6 +121,74 @@ export function PaneLayout(props: PaneLayoutProps) {
     };
   }, [panesManager]);
 
+  useEffect(() => {
+    const syncGridPortalBounds = () => {
+      const gridPortalPane = panes.find((pane) => pane.gridPortal !== null);
+      if (!gridPortalPane) {
+        document.documentElement.style.setProperty(
+          "--sb-grid-portal-visible",
+          "0"
+        );
+        document.documentElement.style.setProperty(
+          "--sb-grid-portal-pointer-events",
+          "none"
+        );
+        return;
+      }
+
+      const paneElement = paneElementMapRef.current.get(gridPortalPane.id);
+      if (!paneElement) {
+        return;
+      }
+
+      const bounds = paneElement.getBoundingClientRect();
+      const paneStyle = window.getComputedStyle(paneElement);
+      document.documentElement.style.setProperty(
+        "--sb-grid-portal-visible",
+        "1"
+      );
+      document.documentElement.style.setProperty(
+        "--sb-grid-portal-pointer-events",
+        "auto"
+      );
+      document.documentElement.style.setProperty(
+        "--sb-grid-portal-left",
+        `${Math.round(bounds.left)}px`
+      );
+      document.documentElement.style.setProperty(
+        "--sb-grid-portal-top",
+        `${Math.round(bounds.top)}px`
+      );
+      document.documentElement.style.setProperty(
+        "--sb-grid-portal-width",
+        `${Math.round(bounds.width)}px`
+      );
+      document.documentElement.style.setProperty(
+        "--sb-grid-portal-height",
+        `${Math.round(bounds.height)}px`
+      );
+      document.documentElement.style.setProperty(
+        "--sb-grid-portal-border-radius",
+        paneStyle.borderRadius || "0px"
+      );
+    };
+
+    syncGridPortalBounds();
+    window.addEventListener("resize", syncGridPortalBounds);
+    window.addEventListener("scroll", syncGridPortalBounds, true);
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => syncGridPortalBounds());
+    paneElementMapRef.current.forEach((element) => observer?.observe(element));
+
+    return () => {
+      window.removeEventListener("resize", syncGridPortalBounds);
+      window.removeEventListener("scroll", syncGridPortalBounds, true);
+      observer?.disconnect();
+    };
+  }, [panes]);
+
   return (
     <div className="sb-panes-layout" data-layout={layout}>
       {attachedPanes.map((pane, index) => (
@@ -125,9 +197,21 @@ export function PaneLayout(props: PaneLayoutProps) {
           className={`sb-pane-shell sb-pane-slot-${index + 1}${
             pane.id === selectedPaneId ? " sb-pane-shell-active" : ""
           }`}
+          ref={(element: HTMLElement | null) => {
+            if (element) {
+              paneElementMapRef.current.set(pane.id, element);
+            } else {
+              paneElementMapRef.current.delete(pane.id);
+            }
+          }}
           onClick={() => app.selectPane(pane.id)}
         >
-          {pane.component !== null ? (
+          {pane.gridPortal !== null ? (
+            <div className="sb-pane-grid-portal">
+              <div className="sb-pane-grid-portal-badge">Grid Portal</div>
+              <div className="sb-pane-grid-portal-name">{pane.gridPortal}</div>
+            </div>
+          ) : pane.component !== null ? (
             <div className="sb-pane-component">{pane.component}</div>
           ) : pane.tab ? (
             <div className="sb-pane-reader">
@@ -150,6 +234,7 @@ export function PaneLayout(props: PaneLayoutProps) {
             <EmptyPaneToolbar
               toolsManager={toolsManager}
               selectorState={selectorState}
+              panesManager={panesManager}
               pane={pane}
               tabs={tabsManager}
             />
@@ -172,6 +257,13 @@ export function PaneLayout(props: PaneLayoutProps) {
               pane.id === selectedPaneId
                 ? 40 + detachedPanes.length
                 : 20 + index,
+          }}
+          ref={(element: HTMLElement | null) => {
+            if (element) {
+              paneElementMapRef.current.set(pane.id, element);
+            } else {
+              paneElementMapRef.current.delete(pane.id);
+            }
           }}
           onPointerDown={() => app.selectPane(pane.id)}
         >
@@ -206,7 +298,14 @@ export function PaneLayout(props: PaneLayoutProps) {
           </div>
 
           <div className="sb-pane-detached-body">
-            {pane.component !== null ? (
+            {pane.gridPortal !== null ? (
+              <div className="sb-pane-grid-portal">
+                <div className="sb-pane-grid-portal-badge">Grid Portal</div>
+                <div className="sb-pane-grid-portal-name">
+                  {pane.gridPortal}
+                </div>
+              </div>
+            ) : pane.component !== null ? (
               <div className="sb-pane-component">{pane.component}</div>
             ) : pane.tab ? (
               <div className="sb-pane-reader">
@@ -220,6 +319,7 @@ export function PaneLayout(props: PaneLayoutProps) {
               <EmptyPaneToolbar
                 toolsManager={toolsManager}
                 selectorState={selectorState}
+                panesManager={panesManager}
                 pane={pane}
                 tabs={tabsManager}
               />

@@ -80,6 +80,7 @@ export function createSeedBibleState(): SeedBibleState {
               id: "single-pane",
               tab: selectedTab.value,
               component: null,
+              gridPortal: null,
               detached: false,
               x: 0,
               y: 0,

@@ -33,6 +33,7 @@ export interface Pane {
   id: string;
   tab: ReaderTab | null;
   component: ComponentChild | null;
+  gridPortal: string | null;
   detached: boolean;
   x: number;
   y: number;
@@ -43,6 +44,7 @@ export interface Pane {
 interface PaneContent {
   tab: ReaderTab | null;
   component: ComponentChild | null;
+  gridPortal: string | null;
 }
 
 function createPaneFactory() {
@@ -61,6 +63,7 @@ function createPaneFactory() {
       id: `pane-${paneId}`,
       tab,
       component,
+      gridPortal: null,
       detached,
       x: 48 + offset,
       y: 48 + offset,
@@ -74,11 +77,14 @@ function getEmptyPaneContent(): PaneContent {
   return {
     tab: null,
     component: null,
+    gridPortal: null,
   };
 }
 
 function isPaneEmpty(pane: Pane) {
-  return pane.tab === null && pane.component === null;
+  return (
+    pane.tab === null && pane.component === null && pane.gridPortal === null
+  );
 }
 
 function getAttachedPanes(nextPanes: Pane[]) {
@@ -128,6 +134,16 @@ function getPaneContentsInDisplayOrder(
       result.push({
         tab: null,
         component: pane.component,
+        gridPortal: null,
+      });
+      return result;
+    }
+
+    if (pane.gridPortal !== null) {
+      result.push({
+        tab: null,
+        component: null,
+        gridPortal: pane.gridPortal,
       });
       return result;
     }
@@ -140,6 +156,7 @@ function getPaneContentsInDisplayOrder(
     result.push({
       tab: pane.tab,
       component: null,
+      gridPortal: null,
     });
     return result;
   }, []);
@@ -172,6 +189,7 @@ function applyLayoutToPanes(
           ...existingPane,
           tab: nextContent.tab,
           component: nextContent.component,
+          gridPortal: nextContent.gridPortal,
         }
       : createPane(nextContent.tab, nextContent.component);
   });
@@ -233,10 +251,19 @@ export function createPanes(
       nextPanes.value.some(
         (pane, index) =>
           panes.value[index]?.tab !== pane.tab ||
-          panes.value[index]?.component !== pane.component
+          panes.value[index]?.component !== pane.component ||
+          panes.value[index]?.gridPortal !== pane.gridPortal
       )
     ) {
       syncPaneState(nextPanes.value);
+    }
+  });
+
+  effect(() => {
+    const activeGridPortal =
+      panes.value.find((pane) => pane.gridPortal !== null)?.gridPortal ?? null;
+    if (configBot.tags.gridPortal !== activeGridPortal) {
+      configBot.tags.gridPortal = activeGridPortal;
     }
   });
 
@@ -283,7 +310,7 @@ export function createPanes(
 
     panes.value = panes.value.map((pane) =>
       pane.id === selectedPane.id
-        ? { ...pane, tab: nextTab, component: null }
+        ? { ...pane, tab: nextTab, component: null, gridPortal: null }
         : pane
     );
   };
@@ -304,7 +331,9 @@ export function createPanes(
     }
 
     panes.value = panes.value.map((pane) =>
-      pane.id === paneId ? { ...pane, tab: nextTab, component: null } : pane
+      pane.id === paneId
+        ? { ...pane, tab: nextTab, component: null, gridPortal: null }
+        : pane
     );
   };
 
@@ -318,8 +347,66 @@ export function createPanes(
     }
 
     panes.value = panes.value.map((pane) =>
-      pane.id === selectedPane.id ? { ...pane, tab: null, component } : pane
+      pane.id === selectedPane.id
+        ? { ...pane, tab: null, component, gridPortal: null }
+        : pane
     );
+  };
+
+  const setPaneGridPortal = (paneId: string, portal: string | null) => {
+    const normalizedPortal =
+      typeof portal === "string" && portal.trim().length > 0
+        ? portal.trim()
+        : "thePortal";
+    const targetPane = panes.value.find((pane) => pane.id === paneId) ?? null;
+    if (!targetPane) {
+      return;
+    }
+
+    panes.value = panes.value.map((pane) => {
+      if (pane.id === paneId) {
+        return {
+          ...pane,
+          tab: null,
+          component: null,
+          gridPortal: normalizedPortal,
+        };
+      }
+
+      if (pane.gridPortal !== null) {
+        return {
+          ...pane,
+          gridPortal: null,
+        };
+      }
+
+      return pane;
+    });
+
+    selectedPaneId.value = paneId;
+  };
+
+  const setSelectedPaneGridPortal = (portal: string | null) => {
+    const selectedPane = getSelectedPane();
+    if (!selectedPane) {
+      const nextPane = createPane(null, null, false);
+      const nextPortal =
+        typeof portal === "string" && portal.trim().length > 0
+          ? portal.trim()
+          : "thePortal";
+      const paneWithGridPortal = {
+        ...nextPane,
+        gridPortal: nextPortal,
+      };
+      const nextPanes = [
+        ...panes.value.map((pane) => ({ ...pane, gridPortal: null })),
+        paneWithGridPortal,
+      ];
+      syncPaneState(nextPanes, paneWithGridPortal.id);
+      return;
+    }
+
+    setPaneGridPortal(selectedPane.id, portal);
   };
 
   const setSelectedPaneDetached = (detached: boolean) => {
@@ -361,7 +448,7 @@ export function createPanes(
     if (emptyPane) {
       panes.value = panes.value.map((pane) =>
         pane.id === emptyPane.id
-          ? { ...pane, tab: nextTab, component: null }
+          ? { ...pane, tab: nextTab, component: null, gridPortal: null }
           : pane
       );
       selectedPaneId.value = emptyPane.id;
@@ -476,6 +563,8 @@ export function createPanes(
     setSelectedPaneTab,
     setPaneTab,
     setSelectedPaneComponent,
+    setPaneGridPortal,
+    setSelectedPaneGridPortal,
     setSelectedPaneDetached,
     openInNewPane,
     openInDetachedPane,

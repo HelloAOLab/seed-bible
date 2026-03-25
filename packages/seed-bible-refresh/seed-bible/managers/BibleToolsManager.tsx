@@ -59,6 +59,7 @@ export interface ManagedBibleVerseToolbarTool extends BibleTool {
 export interface EmptyPaneToolContext {
   selectorState: BibleSelectorState;
   currentPane: Pane;
+  panesManager: PanesManager;
   tabs: TabsManager;
   window?: WindowContext | null;
 }
@@ -141,6 +142,10 @@ function OpenInSelectorIcon() {
   return <MaterialIcon>menu_book</MaterialIcon>;
 }
 
+function OpenGridPortalIcon() {
+  return <MaterialIcon>view_in_ar</MaterialIcon>;
+}
+
 function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
   return [
     {
@@ -150,6 +155,20 @@ function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
       icon: OpenInSelectorIcon,
       onSelect: (context) => {
         context.selectorState.setOpen(true, context.currentPane);
+      },
+    },
+    {
+      id: "open-grid-portal",
+      priority: 100,
+      title: "Open grid portal",
+      icon: OpenGridPortalIcon,
+      isDisabled: (context) =>
+        context.panesManager.panes.value.some(
+          (pane) =>
+            pane.gridPortal !== null && pane.id !== context.currentPane.id
+        ),
+      onSelect: (context) => {
+        context.panesManager.setPaneGridPortal(context.currentPane.id, null);
       },
     },
   ];

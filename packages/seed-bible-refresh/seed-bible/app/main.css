@@ -251,6 +251,36 @@ button {
   height: 100%;
 }
 
+.sb-pane-grid-portal {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background:
+    radial-gradient(circle at 30% 20%, #f8e7df 0%, transparent 60%),
+    radial-gradient(circle at 80% 80%, #ebf1ff 0%, transparent 60%),
+    linear-gradient(135deg, #fffaf7, #f8fbff);
+}
+
+.sb-pane-grid-portal-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 45%);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.sb-pane-grid-portal-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 10%);
+}
+
 .sb-empty-pane-toolbar {
   display: flex;
   flex-direction: row;
