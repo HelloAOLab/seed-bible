@@ -1,7 +1,11 @@
 import { PieceDataRegistry } from "bibleVizUtils.services.PieceDataRegistry";
 import { PieceDataRepository } from "bibleStack.services.PieceDataRepository";
-import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
+import {
+  ObjectPoolTags,
+  type UnhighlightDelayInfo,
+} from "bibleVizUtils.models.canvas";
 import { BiblePiece } from "bibleVizUtils.models.canvas";
+import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
 
 /**
  * This tag is called when this bot is created
@@ -54,7 +58,7 @@ thisBot.vars.stackSectionBooksData = [];
 thisBot.vars.stackBooksData = [];
 thisBot.vars.stackChaptersData = [];
 thisBot.vars.highlightedPieces = [];
-thisBot.vars.unhighlightDelaysInfo = [];
+thisBot.vars.unhighlightDelaysInfo = new Map<Bot["id"], UnhighlightDelayInfo>();
 thisBot.vars.lastInteractedStackBookData = null;
 thisBot.vars.lastInteractedStackSectionData = null;
 thisBot.vars.lastInteractedStackTestamentData = null;

@@ -30,6 +30,7 @@ const {
   dropEvent?: DropEvent;
   draggingEvent?: DraggingEvent;
 } = that;
+
 if (
   thisBot.masks.isBibleAnimating &&
   typeOfInteraction !== CanvasInteractions.PointerUp
@@ -47,85 +48,94 @@ const { bibleData } = await (thisBot.GetDataChainFromParentDataIds({
   parentDataIds: sectionData.parentDataIds,
 }) as Promise<{ bibleData: StackBibleData | undefined }>);
 
-if (!bibleData || bibleData.currentState === BibleState.Open) {
-  if (!thisBot.masks.isASectionMakingTourGuide) {
-    switch (typeOfInteraction) {
-      case CanvasInteractions.Click:
-        {
-          if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
-            BibleVizUtils.Functions.HighlightBiblePiece({ data: sectionData });
-          } else {
-            if (section.masks.isHighlighted) {
-              if (!sectionData.isSplitIntoBooks) {
-                thisBot.SelectSection({ section });
-              }
-            } else {
-              thisBot.TryHighlightPiece({
-                piece: section,
-                highlightRequestSource: CanvasInteractions.Click,
-                typeOfPiece: BiblePiece.StackSection,
-              });
-            }
-          }
-        }
-        break;
-      case CanvasInteractions.Tap:
-        {
-          if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
-            BibleVizUtils.Functions.HighlightBiblePiece({ data: sectionData });
-          } else {
+if (bibleData?.currentState === BibleState.Closed) {
+  console.warn(
+    "HandleSectionInteraction: Unable to interact, bible is closed."
+  );
+  return;
+}
+
+if (thisBot.masks.isASectionMakingTourGuide) {
+  console.warn(
+    "HandleSectionInteraction: Unable to interact, a section is making a tour guide."
+  );
+  return;
+}
+switch (typeOfInteraction) {
+  case CanvasInteractions.Click:
+    {
+      if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
+        BibleVizUtils.Functions.HighlightBiblePiece({ data: sectionData });
+      } else {
+        if (section.masks.isHighlighted) {
+          if (!sectionData.isSplitIntoBooks) {
             thisBot.SelectSection({ section });
           }
-        }
-        break;
-      case CanvasInteractions.HoverBegin:
-        {
+        } else {
           thisBot.TryHighlightPiece({
             piece: section,
-            highlightRequestSource: CanvasInteractions.HoverBegin,
+            highlightRequestSource: CanvasInteractions.Click,
             typeOfPiece: BiblePiece.StackSection,
           });
         }
-        break;
-      case CanvasInteractions.HoverEnd:
-        {
-          thisBot.TryUnhighlightPiece({
-            piece: section,
-            delay: 4000,
-            requestSource: CanvasInteractions.HoverEnd,
-          });
-        }
-        break;
-      // case CanvasInteractions.SearchBarSelection:
-      // {
-      //     return thisBot.SelectSection({section});
-      // }
-      case CanvasInteractions.Drag:
-        {
-          if (section.tags.draggable)
-            shout("OnStackPieceDrag", { piece: section, data: sectionData });
-        }
-        break;
-      case CanvasInteractions.Dragging:
-        {
-          if (section.tags.draggable)
-            shout("OnStackPieceDragging", { piece: section, draggingEvent });
-        }
-        break;
-      case CanvasInteractions.Drop:
-        {
-          if (section.tags.draggable)
-            shout("OnStackPieceDrop", { piece: section, dropEvent });
-        }
-        break;
-      case CanvasInteractions.PointerUp:
-        {
-          if (section.tags.draggable)
-            shout("OnStackPiecePointerUp", { piece: section });
-        }
-        break;
-      default:
-        break;
+      }
     }
-  }
+    break;
+  case CanvasInteractions.Tap:
+    {
+      if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
+        BibleVizUtils.Functions.HighlightBiblePiece({ data: sectionData });
+      } else {
+        thisBot.SelectSection({ section });
+      }
+    }
+    break;
+  case CanvasInteractions.HoverBegin:
+    {
+      thisBot.TryHighlightPiece({
+        piece: section,
+        highlightRequestSource: CanvasInteractions.HoverBegin,
+        typeOfPiece: BiblePiece.StackSection,
+      });
+    }
+    break;
+  case CanvasInteractions.HoverEnd:
+    {
+      thisBot.TryUnhighlightPiece({
+        piece: section,
+        delay: 4000,
+        requestSource: CanvasInteractions.HoverEnd,
+      });
+    }
+    break;
+  // case CanvasInteractions.SearchBarSelection:
+  // {
+  //     return thisBot.SelectSection({section});
+  // }
+  case CanvasInteractions.Drag:
+    {
+      if (section.tags.draggable)
+        shout("OnStackPieceDrag", { piece: section, data: sectionData });
+    }
+    break;
+  case CanvasInteractions.Dragging:
+    {
+      if (section.tags.draggable)
+        shout("OnStackPieceDragging", { piece: section, draggingEvent });
+    }
+    break;
+  case CanvasInteractions.Drop:
+    {
+      if (section.tags.draggable)
+        shout("OnStackPieceDrop", { piece: section, dropEvent });
+    }
+    break;
+  case CanvasInteractions.PointerUp:
+    {
+      if (section.tags.draggable)
+        shout("OnStackPiecePointerUp", { piece: section });
+    }
+    break;
+  default:
+    break;
 }

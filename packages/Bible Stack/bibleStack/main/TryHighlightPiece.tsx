@@ -46,11 +46,11 @@ const {
   isInstantaneous?: boolean;
 } = that;
 
-const { unhighlightDelayInfo, unhighlightDelayInfoIndex } =
-  await (thisBot.GetUnhighlightDelayInfo({ piece }) as Promise<{
-    unhighlightDelayInfo: UnhighlightDelayInfo | undefined;
-    unhighlightDelayInfoIndex: number | undefined;
-  }>);
+const { unhighlightDelayInfo } = await (thisBot.GetUnhighlightDelayInfo({
+  piece,
+}) as Promise<{
+  unhighlightDelayInfo: UnhighlightDelayInfo | undefined;
+}>);
 const data = await (thisBot.GetPieceData({ piece }) as Promise<
   | StackTestamentData
   | StackSectionData
@@ -76,8 +76,9 @@ if (
     highlightRequestSource !== CanvasInteractions.Transition) ||
   (bibleData && bibleData.currentState !== BibleState.Open) ||
   !piece.masks.highlightable
-)
+) {
   return;
+}
 
 switch (typeOfPiece) {
   case BiblePiece.StackBook:
@@ -100,7 +101,6 @@ if (unhighlightDelayInfo) {
   }
   thisBot.ClearUnhighlightDelay({
     unhighlightDelayInfo,
-    unhighlightDelayInfoIndex,
   });
 } else {
   let highlightAction;

@@ -126,33 +126,37 @@ thisBot.PlaySound({ soundName: "SectionOpen" });
 if (thisBot.vars.highlightedPieces.length > 0) {
   const piecesToUnhighlight: Bot[] =
     bibleData || testamentData
-      ? (thisBot.vars.highlightedPieces as Bot[])
-          .map((piece) => {
-            return thisBot.GetPieceData({ piece }) as
+      ? await Promise.all(
+          (thisBot.vars.highlightedPieces as Bot[]).map((piece) => {
+            return thisBot.GetPieceData({ piece }) as Promise<
               | StackTestamentData
               | StackSectionData
               | StackSectionBookData
               | StackBookData
               | StackChapterData
-              | undefined;
+              | undefined
+            >;
           })
-          .filter((pieceData) => {
-            return (
-              pieceData &&
-              pieceData.piece &&
-              !pieceData.piece.masks.isOnTheGround &&
-              !pieceData.piece.masks.isUnhighlighting &&
-              ((bibleData &&
-                pieceData.getParentId("stackBibleId") &&
-                pieceData.getParentId("stackBibleId") === bibleData.id) ||
-                (pieceData.getParentId("stackTestamentId") &&
-                  pieceData.getParentId("stackTestamentId") ===
-                    testamentData?.id))
-            );
-          })
-          .map((pieceData) => {
-            return pieceData?.piece as Bot;
-          })
+        ).then((piecesData) => {
+          return piecesData
+            .filter((pieceData) => {
+              return (
+                pieceData &&
+                pieceData.piece &&
+                !pieceData.piece.masks.isOnTheGround &&
+                !pieceData.piece.masks.isUnhighlighting &&
+                ((bibleData &&
+                  pieceData.getParentId("stackBibleId") &&
+                  pieceData.getParentId("stackBibleId") === bibleData.id) ||
+                  (pieceData.getParentId("stackTestamentId") &&
+                    pieceData.getParentId("stackTestamentId") ===
+                      testamentData?.id))
+              );
+            })
+            .map((pieceData) => {
+              return pieceData?.piece as Bot;
+            });
+        })
       : [section];
   if (piecesToUnhighlight.length > 0) {
     await Promise.all(
@@ -663,12 +667,16 @@ function GetPiecesAboveSection() {
               currentSectionDataIndex <= sectionDataIndex)
           )
             continue;
-          if (currentSectionData instanceof StackSectionData) {
-            if (currentSectionData.isSplitIntoBooks) {
-              for (const bookData of currentSectionData.childrenData.flat()) {
-                if (bookData.isActive && bookData.piece) {
-                  pieces.push(bookData.piece);
-                }
+
+          console.log(`[Debug] SelectSection here`);
+
+          if (
+            currentSectionData instanceof StackSectionData &&
+            currentSectionData.isSplitIntoBooks
+          ) {
+            for (const bookData of currentSectionData.childrenData.flat()) {
+              if (bookData.isActive && bookData.piece) {
+                pieces.push(bookData.piece);
               }
             }
           } else if (currentSectionData.isActive && currentSectionData.piece) {

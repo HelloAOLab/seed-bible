@@ -14,6 +14,9 @@ import { LabelPosition } from "bibleVizUtils.models.label";
 import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
 import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import type { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
+import type { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
+import type { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
 
 const { speedMultiplier = 1, isInstantaneous = false } = that ?? {};
 const bookData = await (BibleStackManager.GetPieceData({
@@ -70,19 +73,27 @@ setTagMask(thisBot, "isHighlighting", true);
 setTagMask(thisBot, "isHighlighted", true);
 const stackBibleId = bookData.getParentId("stackBibleId");
 if (stackBibleId) {
-  const activeElementsInStack = getBots(
-    byTag("isStackPiece", true),
-    byTag(dimension, true)
-  )
-    .map((piece) => {
-      return BibleStackManager.GetPieceData({ piece });
-    })
-    .filter((elementData) => {
+  const activeElementsInStack = await Promise.all(
+    getBots(byTag("isStackPiece", true), byTag(dimension, true)).map(
+      (piece) => {
+        return BibleStackManager.GetPieceData({ piece }) as Promise<
+          | StackTestamentData
+          | StackSectionData
+          | StackSectionBookData
+          | StackBookData
+          | StackChapterData
+          | undefined
+        >;
+      }
+    )
+  ).then((piecesData) => {
+    return piecesData.filter((pieceData) => {
       return (
-        elementData.parentDataIds.stackBibleId &&
-        elementData.parentDataIds.stackBibleId === stackBibleId
+        pieceData?.getParentId("stackBibleId") &&
+        pieceData?.getParentId("stackBibleId") === stackBibleId
       );
     });
+  });
   setTagMask(thisBot, "formRenderOrder", -activeElementsInStack.length - 20);
 }
 if (bookData instanceof StackBookData && !bookData.isSelected) {

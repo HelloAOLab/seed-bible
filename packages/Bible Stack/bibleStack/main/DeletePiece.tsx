@@ -90,12 +90,12 @@ if (pieceData) {
   );
 
 async function ClearPiece(piece: Bot) {
-  const { unhighlightDelayInfo, unhighlightDelayInfoIndex } =
-    await thisBot.GetUnhighlightDelayInfo({ piece });
+  const { unhighlightDelayInfo } = await thisBot.GetUnhighlightDelayInfo({
+    piece,
+  });
   if (unhighlightDelayInfo) {
     await thisBot.ClearUnhighlightDelay({
       unhighlightDelayInfo,
-      unhighlightDelayInfoIndex,
     });
   }
 

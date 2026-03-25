@@ -18,12 +18,13 @@ import type { StackSectionData } from "bibleVizUtils.models.entities.StackSectio
 import type { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
 import { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
-import { BibleState } from "bibleVizUtils.models.canvas";
+import { BiblePiece, BibleState } from "bibleVizUtils.models.canvas";
 import {
   CanvasInteractions,
   type CanvasInteraction,
 } from "bibleVizUtils.models.canvas";
 import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
 
 let { delay } = that;
 const {
@@ -33,6 +34,13 @@ const {
   customDuration,
   speedMultiplier = 1,
   isInstantaneous = false,
+}: {
+  piece: Bot;
+  tryUpdateActivityNotification?: boolean;
+  requestSource: CanvasInteraction;
+  customDuration?: number;
+  speedMultiplier?: number;
+  isInstantaneous?: boolean;
 } = that;
 
 const data = await (thisBot.GetPieceData({ piece }) as Promise<
@@ -52,13 +60,17 @@ const { bibleData } = await (thisBot.GetDataChainFromParentDataIds({
   parentDataIds: data.parentDataIds,
 }) as Promise<{ bibleData: StackBibleData | undefined }>);
 
-const {
-  unhighlightDelayInfo: currentUnhighlightDelayInfo,
-  unhighlightDelayInfoIndex: currentUnhighlightDelayInfoIndex,
-} = await (thisBot.GetUnhighlightDelayInfo({ piece }) as Promise<{
-  unhighlightDelayInfo: UnhighlightDelayInfo | undefined;
-  unhighlightDelayInfoIndex: number | undefined;
-}>);
+const { unhighlightDelayInfo: currentUnhighlightDelayInfo } =
+  await (thisBot.GetUnhighlightDelayInfo({ piece }) as Promise<{
+    unhighlightDelayInfo: UnhighlightDelayInfo | undefined;
+  }>);
+
+// if(piece.tags.typeOfPiece === BiblePiece.StackSection) console.log(`[Debug] TryUnhighlightPiece`, {
+//   currentUnhighlightDelayInfo,
+//   currentUnhighlightDelayInfoIndex,
+//   data,
+//   bibleData
+// })
 
 if (
   !thisBot.IsBiblePieceHighlighted({ piece }) ||
@@ -66,33 +78,39 @@ if (
     requestSource !== CanvasInteractions.Transition) ||
   (bibleData && bibleData.currentState !== BibleState.Open) ||
   !piece.masks.highlightable
-)
+) {
+  // if(piece.tags.typeOfPiece === BiblePiece.StackSection) console.log(`[Debug] TryUnhighlightPiece returning`, {
+  //   '!thisBot.IsBiblePieceHighlighted({ piece })': !thisBot.IsBiblePieceHighlighted({ piece }),
+  //   '((piece.masks.isUnhighlighting || thisBot.masks.isBibleAnimating) && requestSource !== CanvasInteractions.Transition)': ((piece.masks.isUnhighlighting || thisBot.masks.isBibleAnimating) && requestSource !== CanvasInteractions.Transition),
+  //   '(bibleData && bibleData.currentState !== BibleState.Open)': (bibleData && bibleData.currentState !== BibleState.Open),
+  //   '!piece.masks.highlightable': !piece.masks.highlightable
+  // })
   return;
+}
 
 if (piece.masks.isUnhighlighting) {
-  piece.StopHighlightTransition();
+  await piece.StopHighlightTransition();
 }
 if (currentUnhighlightDelayInfo) {
-  thisBot.ClearUnhighlightDelay({
+  await thisBot.ClearUnhighlightDelay({
     unhighlightDelayInfo: currentUnhighlightDelayInfo,
-    unhighlightDelayInfoIndex: currentUnhighlightDelayInfoIndex,
   });
 }
 if (delay) {
   delay /= speedMultiplier;
-  const timeoutId = setTimeout(() => {
+  const timeoutId = setTimeout(async () => {
     if (piece.tags.isInUse) {
-      const { unhighlightDelayInfo, unhighlightDelayInfoIndex } =
-        thisBot.GetUnhighlightDelayInfo({ piece });
-      thisBot.ClearUnhighlightDelay({
-        unhighlightDelayInfo,
-        unhighlightDelayInfoIndex,
+      const { unhighlightDelayInfo } = await thisBot.GetUnhighlightDelayInfo({
+        piece,
       });
-      piece.StopHighlightTransition();
-      piece
+      await thisBot.ClearUnhighlightDelay({
+        unhighlightDelayInfo,
+      });
+      await piece.StopHighlightTransition();
+      await piece
         .Unhighlight({ customDuration, isInstantaneous, speedMultiplier })
-        .then(() => {
-          thisBot.RemovePieceFromHighlightedList({ piece });
+        .then(async () => {
+          await thisBot.RemovePieceFromHighlightedList({ piece });
           if (tryUpdateActivityNotification && data instanceof StackChapterData)
             updateNotification(data, thisBot.tags.activityNotificationOffset, {
               x: thisBot.tags.activityNotificationScaleX,
@@ -102,13 +120,15 @@ if (delay) {
     }
   }, delay);
   const unhighlightDelayInfo: UnhighlightDelayInfo = { piece, timeoutId };
-  thisBot.vars.unhighlightDelaysInfo.push(unhighlightDelayInfo);
+  (
+    thisBot.vars.unhighlightDelaysInfo as Map<Bot["id"], UnhighlightDelayInfo>
+  ).set(piece.id, unhighlightDelayInfo);
 } else {
-  piece.StopHighlightTransition();
+  await piece.StopHighlightTransition();
   await piece
     .Unhighlight({ customDuration, speedMultiplier, isInstantaneous })
-    .then(() => {
-      thisBot.RemovePieceFromHighlightedList({ piece });
+    .then(async () => {
+      await thisBot.RemovePieceFromHighlightedList({ piece });
       if (tryUpdateActivityNotification && data instanceof StackChapterData)
         updateNotification(data, thisBot.tags.activityNotificationOffset, {
           x: thisBot.tags.activityNotificationScaleX,

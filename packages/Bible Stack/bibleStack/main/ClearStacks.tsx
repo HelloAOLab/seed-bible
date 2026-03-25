@@ -4,6 +4,9 @@
  * shout('ClearStacks')
  */
 
+import type { UnhighlightDelayInfo } from "bibleVizUtils.models.canvas";
+import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+
 console.log(`[Debug] ClearStacks`);
 
 clearAnimations(thisBot);
@@ -26,7 +29,9 @@ for (const bookData of thisBot.vars.stackBooksData.slice()) {
 for (const chapterData of thisBot.vars.stackChaptersData.slice()) {
   await thisBot.DeletePiece({ pieceData: chapterData });
 }
-thisBot.vars.unhighlightDelaysInfo.forEach((unhighlightDelayInfo) => {
+(
+  thisBot.vars.unhighlightDelaysInfo as Map<Bot["id"], UnhighlightDelayInfo>
+).forEach((unhighlightDelayInfo) => {
   clearTimeout(unhighlightDelayInfo.timeoutId);
 });
 
@@ -35,7 +40,7 @@ thisBot.vars.lastInteractedStackSectionData = null;
 thisBot.vars.lastInteractedStackTestamentData = null;
 thisBot.vars.lastInteractedStackBibleData = null;
 thisBot.vars.highlightedPieces = [];
-thisBot.vars.unhighlightDelaysInfo = [];
+thisBot.vars.unhighlightDelaysInfo = new Map<Bot["id"], UnhighlightDelayInfo>();
 
 clearTagMasks(thisBot);
 
