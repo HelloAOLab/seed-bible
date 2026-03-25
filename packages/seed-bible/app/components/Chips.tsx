@@ -23,7 +23,7 @@ const SharePopup = ({
     shareReference || `${configBot.tags.book} ${configBot.tags.chapter}`;
 
   // Always include the verse reference when sharing
-  const shareText = `"${shareTitle}" - ${reference} (${translation})`;
+  const shareText = `"${shareTitle}" - ${reference} (${translation || "BSB"})`;
 
   const platforms = [
     // {
