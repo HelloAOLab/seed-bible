@@ -110,6 +110,10 @@ function generateGridPortalContainerCss(
       left: 0;
       top: 0;
     }
+
+    .vm-iframe-container.game-view-visible iframe:first-child {
+      pointer-events: auto !important;
+    }
   `;
 }
 
