@@ -125,7 +125,7 @@ describe("createPanes", () => {
     expect(tabsManager.tabs.value.some((tab) => tab.id === "tab-2")).toBe(true);
   });
 
-  it("supports changing the tab for a pane", async () => {
+  it("supports opening content in an existing pane", async () => {
     const { tabsManager, panesManager } = await createManagers();
 
     const nextTab = tabsManager.addTab();
@@ -133,39 +133,54 @@ describe("createPanes", () => {
     panesManager.setLayout("split-2v");
     const secondPane = panesManager.panes.value[1]!;
 
-    panesManager.setPaneTab(secondPane.id, nextTab.id);
+    const result = panesManager.openInPane(secondPane.id, {
+      tabId: nextTab.id,
+    });
 
+    expect(result).toBe(true);
     expect(
       panesManager.panes.value.find((pane) => pane.id === secondPane.id)?.tab
         ?.id
     ).toBe(nextTab.id);
   });
 
-  it("supports changing a pane to display an arbitrary component", async () => {
+  it("supports opening a component in an existing pane", async () => {
     const { panesManager } = await createManagers();
 
-    panesManager.setSelectedPaneComponent("Test Component");
+    const selectedPaneId = panesManager.selectedPaneId.value!;
+    const result = panesManager.openInPane(selectedPaneId, {
+      component: "Test Component",
+    });
 
+    expect(result).toBe(true);
     const selectedPane = panesManager.panes.value.find(
-      (pane) => pane.id === panesManager.selectedPaneId.value
+      (pane) => pane.id === selectedPaneId
     );
     expect(selectedPane?.component).toBe("Test Component");
     expect(selectedPane?.tab).toBeNull();
   });
 
-  it("supports detaching a pane from the layout", async () => {
+  it("rejects detaching the only attached pane", async () => {
     const { panesManager } = await createManagers();
 
-    panesManager.setSelectedPaneDetached(true);
+    const result = panesManager.setDetached(
+      panesManager.panes.value[0]!.id,
+      true
+    );
 
-    expect(panesManager.panes.value[0]?.detached).toBe(true);
+    expect(result).toBe(false);
+    expect(panesManager.panes.value[0]?.detached).toBe(false);
   });
 
-  it("supports opening a tab in a new pane", async () => {
+  it("supports opening a tab in a new attached pane", async () => {
     const { panesManager } = await createManagers();
 
-    panesManager.openInNewPane("tab-2");
+    const result = panesManager.openPane({
+      type: "attached",
+      tabId: "tab-2",
+    });
 
+    expect(result).toBe(true);
     expect(panesManager.panes.value).toHaveLength(2);
     expect(panesManager.layout.value).toBe("split-2v");
     expect(
@@ -176,8 +191,12 @@ describe("createPanes", () => {
   it("supports opening a tab in a detached pane", async () => {
     const { panesManager } = await createManagers();
 
-    panesManager.openInDetachedPane("tab-2");
+    const result = panesManager.openPane({
+      type: "detached",
+      tabId: "tab-2",
+    });
 
+    expect(result).toBe(true);
     const detachedPane = panesManager.panes.value.find(
       (pane) => pane.tab?.id === "tab-2"
     );
@@ -187,13 +206,60 @@ describe("createPanes", () => {
   it("supports opening a detached pane with a component", async () => {
     const { panesManager } = await createManagers();
 
-    panesManager.openDetachedPane("Detached Component");
+    const result = panesManager.openPane({
+      type: "detached",
+      component: "Detached Component",
+    });
 
+    expect(result).toBe(true);
     const detachedPane = panesManager.panes.value.find(
       (pane) => pane.component === "Detached Component"
     );
     expect(detachedPane).toBeDefined();
     expect(detachedPane?.detached).toBe(true);
+  });
+
+  it("supports opening a grid portal pane and syncing config tags", async () => {
+    const { panesManager } = await createManagers();
+
+    const result = panesManager.openPane({
+      type: "attached",
+      gridPortal: "home",
+    });
+
+    expect(result).toBe(true);
+    const portalPane = panesManager.panes.value.find(
+      (pane) => pane.gridPortal === "home"
+    );
+    expect(portalPane).toBeDefined();
+    expect((globalThis as any).configBot.tags.gridPortal).toBe("home");
+    expect((globalThis as any).configBot.tags.mapPortal ?? null).toBeNull();
+  });
+
+  it("supports replacing a grid portal pane with a map portal pane", async () => {
+    const { panesManager } = await createManagers();
+
+    panesManager.openPane({
+      type: "attached",
+      gridPortal: "home",
+    });
+    const gridPane = panesManager.panes.value.find(
+      (pane) => pane.gridPortal === "home"
+    )!;
+
+    const result = panesManager.openInPane(gridPane.id, {
+      mapPortal: "map_portal",
+    });
+
+    expect(result).toBe(true);
+    expect(
+      panesManager.panes.value.some((pane) => pane.gridPortal !== null)
+    ).toBe(false);
+    expect(
+      panesManager.panes.value.some((pane) => pane.mapPortal === "map_portal")
+    ).toBe(true);
+    expect((globalThis as any).configBot.tags.gridPortal ?? null).toBeNull();
+    expect((globalThis as any).configBot.tags.mapPortal).toBe("map_portal");
   });
 
   it("supports changing the layout", async () => {
@@ -207,26 +273,93 @@ describe("createPanes", () => {
     ).toHaveLength(4);
   });
 
+  it("supports detaching and reattaching a pane", async () => {
+    const { panesManager } = await createManagers();
+
+    panesManager.openPane({
+      type: "attached",
+      tabId: "tab-2",
+    });
+    const secondPane = panesManager.panes.value.find(
+      (pane) => pane.tab?.id === "tab-2"
+    )!;
+
+    const detachResult = panesManager.setDetached(secondPane.id, true);
+
+    expect(detachResult).toBe(true);
+    expect(
+      panesManager.panes.value.find((pane) => pane.id === secondPane.id)
+        ?.detached
+    ).toBe(true);
+    expect(panesManager.layout.value).toBe("single");
+
+    const attachResult = panesManager.setDetached(secondPane.id, false);
+
+    expect(attachResult).toBe(true);
+    expect(
+      panesManager.panes.value.find((pane) => pane.id === secondPane.id)
+        ?.detached
+    ).toBe(false);
+    expect(panesManager.layout.value).toBe("split-2v");
+  });
+
   it("supports closing detached panes", async () => {
     const { panesManager } = await createManagers();
 
-    const close = panesManager.openDetachedPane("Detached Component");
+    panesManager.openPane({
+      type: "detached",
+      component: "Detached Component",
+    });
     const detachedPane = panesManager.panes.value.find(
       (pane) => pane.component === "Detached Component"
-    );
+    )!;
 
-    close?.();
+    const result = panesManager.closePane(detachedPane.id);
 
-    expect(detachedPane).toBeDefined();
+    expect(result).toBe(true);
     expect(
-      panesManager.panes.value.some((pane) => pane.id === detachedPane!.id)
+      panesManager.panes.value.some((pane) => pane.id === detachedPane.id)
     ).toBe(false);
+  });
+
+  it("supports closing attached panes by shrinking the layout", async () => {
+    const { panesManager } = await createManagers();
+
+    panesManager.openPane({
+      type: "attached",
+      tabId: "tab-2",
+    });
+    const secondPane = panesManager.panes.value.find(
+      (pane) => pane.tab?.id === "tab-2"
+    )!;
+
+    const result = panesManager.closePane(secondPane.id);
+
+    expect(result).toBe(true);
+    expect(panesManager.layout.value).toBe("single");
+    expect(
+      panesManager.panes.value.filter((pane) => !pane.detached)
+    ).toHaveLength(1);
+  });
+
+  it("rejects closing the only attached pane", async () => {
+    const { panesManager } = await createManagers();
+
+    const result = panesManager.closePane(panesManager.panes.value[0]!.id);
+
+    expect(result).toBe(false);
+    expect(
+      panesManager.panes.value.filter((pane) => !pane.detached)
+    ).toHaveLength(1);
   });
 
   it("supports moving detached panes", async () => {
     const { panesManager } = await createManagers();
 
-    panesManager.openDetachedPane("Detached Component");
+    panesManager.openPane({
+      type: "detached",
+      component: "Detached Component",
+    });
     const detachedPane = panesManager.panes.value.find(
       (pane) => pane.component === "Detached Component"
     )!;
@@ -243,7 +376,10 @@ describe("createPanes", () => {
   it("supports resizing detached panes", async () => {
     const { panesManager } = await createManagers();
 
-    panesManager.openDetachedPane("Detached Component");
+    panesManager.openPane({
+      type: "detached",
+      component: "Detached Component",
+    });
     const detachedPane = panesManager.panes.value.find(
       (pane) => pane.component === "Detached Component"
     )!;

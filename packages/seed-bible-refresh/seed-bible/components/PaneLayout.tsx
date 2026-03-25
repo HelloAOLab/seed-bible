@@ -376,7 +376,7 @@ export function PaneLayout(props: PaneLayoutProps) {
               }}
               onClick={(event: MouseEvent) => {
                 event.stopPropagation();
-                panesManager.closeDetachedPane(pane.id);
+                panesManager.closePane(pane.id);
               }}
             >
               <span className="material-symbols-outlined">close</span>

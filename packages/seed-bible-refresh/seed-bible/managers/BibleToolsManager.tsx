@@ -177,7 +177,9 @@ function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
           home: true,
           color: "red",
         });
-        context.panesManager.setPaneGridPortal(context.currentPane.id, "home");
+        context.panesManager.openInPane(context.currentPane.id, {
+          gridPortal: "home",
+        });
       },
     },
     {
@@ -192,10 +194,9 @@ function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
             pane.id !== context.currentPane.id
         ),
       onSelect: (context) => {
-        context.panesManager.setPaneMapPortal(
-          context.currentPane.id,
-          "map_portal"
-        );
+        context.panesManager.openInPane(context.currentPane.id, {
+          mapPortal: "map_portal",
+        });
       },
     },
   ];

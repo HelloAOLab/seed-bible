@@ -310,7 +310,9 @@ export function createBibleSelectorState(
     }
 
     const newTab = tabsManager.addTab();
-    panesManager.setPaneTab(pane.value.id, newTab.id);
+    panesManager.openInPane(pane.value.id, {
+      tabId: newTab.id,
+    });
 
     if (
       newTab.readingState.translationId.value !== selectedTranslationId.value

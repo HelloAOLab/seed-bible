@@ -122,7 +122,9 @@ describe("createSeedBibleState", () => {
     state.panes.setLayout("split-2v");
     const firstPane = state.panes.panes.value[0]!;
     const secondPane = state.panes.panes.value[1]!;
-    state.panes.setPaneTab(secondPane.id, "tab-2");
+    state.panes.openInPane(secondPane.id, {
+      tabId: "tab-2",
+    });
     state.panes.selectPane(firstPane.id);
 
     state.app.selectTab("tab-2");
@@ -169,8 +171,9 @@ describe("createSeedBibleState", () => {
 
     state.panes.setLayout("split-2v");
     const secondPane = state.panes.panes.value[1]!;
-    state.panes.setPaneTab(secondPane.id, "tab-2");
-
+    state.panes.openInPane(secondPane.id, {
+      tabId: "tab-2",
+    });
     state.app.selectPane(secondPane.id);
 
     expect(state.panes.selectedPaneId.value).toBe(secondPane.id);

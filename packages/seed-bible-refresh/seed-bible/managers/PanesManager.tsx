@@ -49,6 +49,17 @@ interface PaneContent {
   mapPortal: string | null;
 }
 
+export interface PaneOpenContentOptions {
+  tabId?: string;
+  component?: ComponentChild;
+  gridPortal?: string | null;
+  mapPortal?: string | null;
+}
+
+export interface PaneOpenOptions extends PaneOpenContentOptions {
+  type: "attached" | "detached";
+}
+
 function createPaneFactory() {
   let nextPaneId = 1;
 
@@ -352,276 +363,224 @@ export function createPanes(
     );
   };
 
-  const setPaneTab = (paneId: string, tabId: string) => {
-    if (!tabId) {
-      return;
+  const parsePaneOptions = (options: PaneOpenContentOptions) => {
+    const hasTabId =
+      typeof options.tabId === "string" && options.tabId.length > 0;
+    const hasComponent = typeof options.component !== "undefined";
+    const hasGridPortal = typeof options.gridPortal !== "undefined";
+    const hasMapPortal = typeof options.mapPortal !== "undefined";
+
+    if (!hasTabId && !hasComponent && !hasGridPortal && !hasMapPortal) {
+      return null;
     }
 
-    const nextTab = tabMap.value.get(tabId);
-    if (!nextTab) {
-      return;
-    }
-
-    const targetPane = panes.value.find((pane) => pane.id === paneId) ?? null;
-    if (!targetPane) {
-      return;
-    }
-
-    panes.value = panes.value.map((pane) =>
-      pane.id === paneId
-        ? {
-            ...pane,
-            tab: nextTab,
-            component: null,
-            gridPortal: null,
-            mapPortal: null,
-          }
-        : pane
-    );
-  };
-
-  const setSelectedPaneComponent = (component: ComponentChild) => {
-    const selectedPane = getSelectedPane();
-    if (!selectedPane) {
-      const nextPane = createPane(null, component);
-      syncPaneState([nextPane]);
-      selectedPaneId.value = nextPane.id;
-      return;
-    }
-
-    panes.value = panes.value.map((pane) =>
-      pane.id === selectedPane.id
-        ? {
-            ...pane,
-            tab: null,
-            component,
-            gridPortal: null,
-            mapPortal: null,
-          }
-        : pane
-    );
-  };
-
-  const setPaneGridPortal = (paneId: string, portal: string | null) => {
-    const normalizedPortal =
-      typeof portal === "string" && portal.trim().length > 0
-        ? portal.trim()
-        : "thePortal";
-    const targetPane = panes.value.find((pane) => pane.id === paneId) ?? null;
-    if (!targetPane) {
-      return;
-    }
-
-    panes.value = panes.value.map((pane) => {
-      if (pane.id === paneId) {
-        return {
-          ...pane,
-          tab: null,
-          component: null,
-          gridPortal: normalizedPortal,
-          mapPortal: null,
-        };
+    if (hasTabId) {
+      const nextTab = tabMap.value.get(options.tabId!);
+      if (!nextTab) {
+        return null;
       }
 
-      if (pane.gridPortal !== null || pane.mapPortal !== null) {
-        return {
-          ...pane,
-          gridPortal: null,
-          mapPortal: null,
-        };
-      }
-
-      return pane;
-    });
-
-    selectedPaneId.value = paneId;
-  };
-
-  const setSelectedPaneGridPortal = (portal: string | null) => {
-    const selectedPane = getSelectedPane();
-    if (!selectedPane) {
-      const nextPane = createPane(null, null, false);
-      const nextPortal =
-        typeof portal === "string" && portal.trim().length > 0
-          ? portal.trim()
-          : "thePortal";
-      const paneWithGridPortal = {
-        ...nextPane,
-        gridPortal: nextPortal,
-        mapPortal: null,
-      };
-      const nextPanes = [
-        ...panes.value.map((pane) => ({
-          ...pane,
-          gridPortal: null,
-          mapPortal: null,
-        })),
-        paneWithGridPortal,
-      ];
-      syncPaneState(nextPanes, paneWithGridPortal.id);
-      return;
-    }
-
-    setPaneGridPortal(selectedPane.id, portal);
-  };
-
-  const setPaneMapPortal = (paneId: string, portal: string | null) => {
-    const normalizedPortal =
-      typeof portal === "string" && portal.trim().length > 0
-        ? portal.trim()
-        : "map_portal";
-    const targetPane = panes.value.find((pane) => pane.id === paneId) ?? null;
-    if (!targetPane) {
-      return;
-    }
-
-    panes.value = panes.value.map((pane) => {
-      if (pane.id === paneId) {
-        return {
-          ...pane,
-          tab: null,
-          component: null,
-          gridPortal: null,
-          mapPortal: normalizedPortal,
-        };
-      }
-
-      if (pane.gridPortal !== null || pane.mapPortal !== null) {
-        return {
-          ...pane,
-          gridPortal: null,
-          mapPortal: null,
-        };
-      }
-
-      return pane;
-    });
-
-    selectedPaneId.value = paneId;
-  };
-
-  const setSelectedPaneMapPortal = (portal: string | null) => {
-    const selectedPane = getSelectedPane();
-    if (!selectedPane) {
-      const nextPane = createPane(null, null, false);
-      const nextPortal =
-        typeof portal === "string" && portal.trim().length > 0
-          ? portal.trim()
-          : "map_portal";
-      const paneWithMapPortal = {
-        ...nextPane,
+      return {
+        tab: nextTab,
+        component: null,
         gridPortal: null,
-        mapPortal: nextPortal,
+        mapPortal: null,
+        portalType: null as "grid" | "map" | null,
       };
-      const nextPanes = [
-        ...panes.value.map((pane) => ({
+    }
+
+    if (hasComponent) {
+      return {
+        tab: null,
+        component: options.component ?? null,
+        gridPortal: null,
+        mapPortal: null,
+        portalType: null as "grid" | "map" | null,
+      };
+    }
+
+    if (hasGridPortal) {
+      const normalizedPortal =
+        typeof options.gridPortal === "string" &&
+        options.gridPortal.trim().length > 0
+          ? options.gridPortal.trim()
+          : "thePortal";
+      return {
+        tab: null,
+        component: null,
+        gridPortal: normalizedPortal,
+        mapPortal: null,
+        portalType: "grid" as const,
+      };
+    }
+
+    const normalizedPortal =
+      typeof options.mapPortal === "string" &&
+      options.mapPortal.trim().length > 0
+        ? options.mapPortal.trim()
+        : "map_portal";
+    return {
+      tab: null,
+      component: null,
+      gridPortal: null,
+      mapPortal: normalizedPortal,
+      portalType: "map" as const,
+    };
+  };
+
+  const openInPane = (paneId: string, options: PaneOpenContentOptions) => {
+    const parsed = parsePaneOptions(options);
+    if (!parsed) {
+      return false;
+    }
+
+    const targetPane = panes.value.find((pane) => pane.id === paneId) ?? null;
+    if (!targetPane) {
+      return false;
+    }
+
+    panes.value = panes.value.map((pane) => {
+      if (pane.id === paneId) {
+        return {
+          ...pane,
+          tab: parsed.tab,
+          component: parsed.component,
+          gridPortal: parsed.gridPortal,
+          mapPortal: parsed.mapPortal,
+        };
+      }
+
+      if (
+        parsed.portalType &&
+        (pane.gridPortal !== null || pane.mapPortal !== null)
+      ) {
+        return {
           ...pane,
           gridPortal: null,
           mapPortal: null,
-        })),
-        paneWithMapPortal,
-      ];
-      syncPaneState(nextPanes, paneWithMapPortal.id);
-      return;
-    }
+        };
+      }
 
-    setPaneMapPortal(selectedPane.id, portal);
+      return pane;
+    });
+
+    selectedPaneId.value = paneId;
+    return true;
   };
 
-  const setSelectedPaneDetached = (detached: boolean) => {
-    const selectedPane = getSelectedPane();
-    if (!selectedPane || selectedPane.detached === detached) {
-      return;
+  const getAttachedSlotCount = () => getAttachedPanes(panes.value).length;
+
+  const setDetached = (paneId: string, detached: boolean) => {
+    const targetPane = panes.value.find((pane) => pane.id === paneId) ?? null;
+    if (!targetPane || targetPane.detached === detached) {
+      return false;
+    }
+
+    const attachedCount = getAttachedSlotCount();
+
+    if (detached) {
+      if (attachedCount <= 1) {
+        return false;
+      }
+
+      const nextPanes = panes.value.map((pane) =>
+        pane.id === paneId ? { ...pane, detached: true } : pane
+      );
+      const nextSlotCount = Math.max(1, attachedCount - 1);
+      layout.value = getDefaultLayoutForSlotCount(nextSlotCount);
+      syncPaneState(
+        applyLayoutToPanes(nextPanes, layout.value, paneId, createPane),
+        paneId
+      );
+      return true;
+    }
+
+    if (attachedCount >= 4) {
+      return false;
     }
 
     const nextPanes = panes.value.map((pane) =>
-      pane.id === selectedPane.id ? { ...pane, detached } : pane
+      pane.id === paneId ? { ...pane, detached: false } : pane
     );
-
-    if (detached) {
-      syncPaneState(nextPanes, selectedPane.id);
-      return;
-    }
-
+    const nextSlotCount = Math.min(4, attachedCount + 1);
+    layout.value = getDefaultLayoutForSlotCount(nextSlotCount);
     syncPaneState(
-      applyLayoutToPanes(nextPanes, layout.value, selectedPane.id, createPane),
-      selectedPane.id
+      applyLayoutToPanes(nextPanes, layout.value, paneId, createPane),
+      paneId
     );
+    return true;
   };
 
-  const openInNewPane = (tabId: string) => {
-    const nextTab = tabMap.value.get(tabId);
-    if (!nextTab) {
-      return;
+  const openPane = (options: PaneOpenOptions) => {
+    const parsed = parsePaneOptions(options);
+    if (!parsed) {
+      return false;
     }
 
-    const existingPane =
-      panes.value.find((pane) => pane.tab?.id === tabId) ?? null;
-    if (existingPane) {
-      selectedPaneId.value = existingPane.id;
-      return;
+    if (parsed.tab) {
+      const existingPane =
+        panes.value.find((pane) => pane.tab?.id === parsed.tab!.id) ?? null;
+      if (existingPane) {
+        if (options.type === "detached" && !existingPane.detached) {
+          setDetached(existingPane.id, true);
+        }
+        selectedPaneId.value = existingPane.id;
+        return true;
+      }
     }
 
-    const emptyPane =
+    if (options.type === "detached") {
+      const nextPane = createPane(parsed.tab, parsed.component, true);
+      const detachedPane = {
+        ...nextPane,
+        gridPortal: parsed.gridPortal,
+        mapPortal: parsed.mapPortal,
+      };
+      const nextPanes = parsed.portalType
+        ? panes.value.map((pane) => ({
+            ...pane,
+            gridPortal: null,
+            mapPortal: null,
+          }))
+        : panes.value;
+      syncPaneState([...nextPanes, detachedPane], detachedPane.id);
+      return true;
+    }
+
+    const emptyAttachedPane =
       panes.value.find((pane) => !pane.detached && isPaneEmpty(pane)) ?? null;
-    if (emptyPane) {
-      panes.value = panes.value.map((pane) =>
-        pane.id === emptyPane.id
-          ? {
-              ...pane,
-              tab: nextTab,
-              component: null,
-              gridPortal: null,
-              mapPortal: null,
-            }
-          : pane
-      );
-      selectedPaneId.value = emptyPane.id;
-      return;
+    if (emptyAttachedPane) {
+      return openInPane(emptyAttachedPane.id, options);
     }
 
-    const nextSlotCount = Math.min(4, panes.value.length + 1);
-    if (nextSlotCount <= panes.value.length) {
-      return;
+    const attachedCount = getAttachedSlotCount();
+    const nextSlotCount = Math.min(4, attachedCount + 1);
+    if (nextSlotCount <= attachedCount) {
+      return false;
     }
 
+    const nextPane = createPane(parsed.tab, parsed.component, false);
+    const attachedPane = {
+      ...nextPane,
+      gridPortal: parsed.gridPortal,
+      mapPortal: parsed.mapPortal,
+    };
     layout.value = getDefaultLayoutForSlotCount(nextSlotCount);
+    const basePanes = parsed.portalType
+      ? panes.value.map((pane) => ({
+          ...pane,
+          gridPortal: null,
+          mapPortal: null,
+        }))
+      : panes.value;
     const nextPanes = applyLayoutToPanes(
-      [...panes.value, createPane(nextTab)],
+      [...basePanes, attachedPane],
       layout.value,
       selectedPaneId.value,
       createPane
     );
-    const nextSelectedPane =
-      nextPanes.find((pane) => pane.tab?.id === tabId) ?? null;
-    syncPaneState(nextPanes, nextSelectedPane?.id ?? null);
-  };
-
-  const openInDetachedPane = (tabId: string) => {
-    const nextTab = tabMap.value.get(tabId);
-    if (!nextTab) {
-      return;
-    }
-
-    const existingPane =
-      panes.value.find((pane) => pane.tab?.id === tabId) ?? null;
-    if (existingPane) {
-      panes.value = panes.value.map((pane) =>
-        pane.id === existingPane.id ? { ...pane, detached: true } : pane
-      );
-      selectedPaneId.value = existingPane.id;
-      return;
-    }
-
-    const nextPane = createPane(nextTab, null, true);
-    syncPaneState([...panes.value, nextPane], nextPane.id);
-    return () => closeDetachedPane(nextPane.id);
-  };
-
-  const openDetachedPane = (component: ComponentChild) => {
-    const nextPane = createPane(null, component, true);
-    syncPaneState([...panes.value, nextPane], nextPane.id);
-    return () => closeDetachedPane(nextPane.id);
+    syncPaneState(nextPanes, attachedPane.id);
+    return true;
   };
 
   const setLayout = (layoutId: PaneLayoutId) => {
@@ -641,14 +600,40 @@ export function createPanes(
     syncPaneState(nextPanes, nextSelectedPane?.id ?? null);
   };
 
-  const closeDetachedPane = (paneId: string) => {
+  const closePane = (paneId: string) => {
     const paneToClose = panes.value.find((pane) => pane.id === paneId) ?? null;
-    if (!paneToClose || !paneToClose.detached) {
-      return;
+    if (!paneToClose) {
+      return false;
     }
 
-    const nextPanes = panes.value.filter((pane) => pane.id !== paneId);
-    syncPaneState(nextPanes);
+    if (paneToClose.detached) {
+      const nextPanes = panes.value.filter((pane) => pane.id !== paneId);
+      syncPaneState(nextPanes);
+      return true;
+    }
+
+    const attachedCount = getAttachedSlotCount();
+    if (attachedCount <= 1) {
+      return false;
+    }
+
+    const nextPanesWithoutTarget = panes.value.filter(
+      (pane) => pane.id !== paneId
+    );
+    const nextSlotCount = Math.max(1, attachedCount - 1);
+    layout.value = getDefaultLayoutForSlotCount(nextSlotCount);
+    const nextSelectedPaneId =
+      selectedPaneId.value === paneId ? null : selectedPaneId.value;
+    syncPaneState(
+      applyLayoutToPanes(
+        nextPanesWithoutTarget,
+        layout.value,
+        nextSelectedPaneId,
+        createPane
+      ),
+      nextSelectedPaneId
+    );
+    return true;
   };
 
   const movePane = (paneId: string, deltaX: number, deltaY: number) => {
@@ -686,17 +671,10 @@ export function createPanes(
     selectPane,
     setLayout,
     setSelectedPaneTab,
-    setPaneTab,
-    setSelectedPaneComponent,
-    setPaneGridPortal,
-    setSelectedPaneGridPortal,
-    setPaneMapPortal,
-    setSelectedPaneMapPortal,
-    setSelectedPaneDetached,
-    openInNewPane,
-    openInDetachedPane,
-    openDetachedPane,
-    closeDetachedPane,
+    openPane,
+    openInPane,
+    closePane,
+    setDetached,
     movePane,
     resizePane,
   };

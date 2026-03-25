@@ -122,13 +122,19 @@ export function createSeedBibleState(): SeedBibleState {
 
   const handleOpenInNewPane = (tabId: string) => {
     closeSidebarAndSettings();
-    panes.openInNewPane(tabId);
+    panes.openPane({
+      type: "attached",
+      tabId,
+    });
     tabs.selectTab(tabId);
   };
 
   const handleOpenInDetachedPane = (tabId: string) => {
     closeSidebarAndSettings();
-    panes.openInDetachedPane(tabId);
+    panes.openPane({
+      type: "detached",
+      tabId,
+    });
     tabs.selectTab(tabId);
   };
 
