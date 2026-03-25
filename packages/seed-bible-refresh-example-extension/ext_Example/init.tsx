@@ -1,3 +1,4 @@
+import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
 import { MaterialIcon } from "seed-bible.components.icons";
 
@@ -92,6 +93,17 @@ const cleanup = registerExtension({
           mapPortal: "map_portal",
         });
       },
+    });
+
+    yield effect(() => {
+      if (context.app.currentReadingState.value) {
+        console.log(
+          "Current reading state in effect:",
+          context.app.currentReadingState.value.translationId,
+          context.app.currentReadingState.value.bookId,
+          context.app.currentReadingState.value.chapterNumber
+        );
+      }
     });
   },
 });
