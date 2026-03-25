@@ -156,5 +156,8 @@
   "addToNew": "Thêm vào mới",
   "itemsAddedToPlaylistSuccessfully": "Đã thêm mục vào danh sách phát thành công.",
   "translationSwitchOption": "Bạn có muốn chuyển sang bản dịch {{translationName}} không?",
-  "chooseAnother": "Chọn cái khác"
+  "chooseAnother": "Chọn cái khác",
+  "playlistHasBeenEnded": "Danh sách phát đã kết thúc.",
+  "youAreAtTheBeginningOfThePlaylist": "Bạn đang ở đầu danh sách phát.",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "Bạn cần ít nhất hai chú thích để lọc."
 }

@@ -1069,7 +1069,9 @@ export const UITextSizeSetting = ({
 
   const applyZoom = (zoom) => {
     document
-      .querySelectorAll(".settings-sidebar, .themeSettings-container")
+      .querySelectorAll(
+        ".settings-sidebar, .themeSettings-container, .profileSection"
+      )
       .forEach((el) => {
         (el as HTMLElement).style.zoom = String(zoom);
       });

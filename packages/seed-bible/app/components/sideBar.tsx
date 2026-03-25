@@ -3202,7 +3202,7 @@ export const UserProfile = ({ collapsed }) => {
     tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
       ?.removeUserIcon;
   const Icon = icons[iconIndex];
-  if (removeUserIcon) return null;
+  if (removeUserIcon) return <div style={{ width: 40 }} />;
   return (
     <div
       onClick={

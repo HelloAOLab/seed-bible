@@ -342,7 +342,7 @@ try {
 
       // Vimeo
       if (videoRegex.test(url)) {
-        return { isValid: true, type: "video" };
+        return { isValid: true, type: "Video" };
       }
 
       // Generic iframe
@@ -873,24 +873,33 @@ try {
   G.SYSTEM_PROMPT = prompt;
 
   const getPosition = () => {
+    const height = gridPortalBot.tags.pixelHeight;
+    const edgeThreshold = 270; // Distance from edges to adjust position
+
     if (G.LastClickX) {
       const left = G.LastClickX;
-      const top = G.LastClickY;
+      let top = G.LastClickY;
+      let bottom = "none";
       G.LastClickX = null;
       G.LastClickY = null;
+
+      if (height - top < edgeThreshold) {
+        top = "none";
+        bottom = "2rem";
+      }
+
       return {
         left: 0,
         transform: "translate(40px, 0px)",
         top,
+        bottom,
       };
     }
 
     const pointerX = gridPortalBot.tags.pointerPixelX;
     const pointerY = gridPortalBot.tags.pointerPixelY;
-    const height = gridPortalBot.tags.pixelHeight;
     const width = window?.innerWidth || gridPortalBot.tags.pixelWidth;
 
-    const edgeThreshold = 200; // Distance from edges to adjust position
     const safeMargin = "2rem"; // Fixed margin when near edges
 
     let position: any = {};

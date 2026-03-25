@@ -804,6 +804,7 @@ function ThePage({
         text: selectedTextFinal,
         book: data?.book,
         chapter: data?.chapter,
+        translation: data?.translation,
       });
       const sel = window.getSelection();
       if (sel && sel.removeAllRanges) sel.removeAllRanges();
@@ -1523,6 +1524,7 @@ function ThePage({
             .join(" "),
           book: data?.book,
           chapter: data?.chapter,
+          translation: data?.translation,
         });
 
         setShowVerseToolbar(true);
@@ -2138,7 +2140,26 @@ function ThePage({
                     <div className="mobile-header-content">
                       <div className="mobile-header-left">
                         <div>
-                          <h1 className="mobile-header-title">
+                          <h1
+                            onClick={(e) => {
+                              if (
+                                globalThis.setOpenSidebar &&
+                                globalThis.openSidebar
+                              ) {
+                                globalThis.setOpenSidebar(false);
+                                globalThis.selectBookSelectorBook &&
+                                  globalThis.selectBookSelectorBook(null);
+                              } else {
+                                globalThis.setOpenSidebar &&
+                                  globalThis.setOpenSidebar(true);
+                                globalThis.selectBookSelectorBook &&
+                                  globalThis.selectBookSelectorBook(
+                                    data.bookId
+                                  );
+                              }
+                            }}
+                            className="mobile-header-title"
+                          >
                             {`${data?.book} ${data?.chapter}`}{" "}
                             <p className="mobile-header-translation">
                               • {data?.shortName || ""}

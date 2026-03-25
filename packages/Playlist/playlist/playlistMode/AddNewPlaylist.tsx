@@ -216,9 +216,11 @@ const AddNewPlaylist = (props: any) => {
   useLayoutEffect(() => {
     G.PREDEFINED_ICONS = predefinedIcons;
     G.setPredefinedIcons = setPredefinedIcons;
+    G[`${id}namingPlaylist`] = true;
     G.savePlaylistProgress();
     return () => {
       G.setPredefinedIcons = true;
+      G[`${id}namingPlaylist`] = false;
     };
   }, [predefinedIcons]);
 

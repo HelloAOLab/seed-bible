@@ -284,7 +284,7 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
         >
           {external && <div className=" externalPopupSettings">{external}</div>}
           {null /*<div className="triangle-up"></div>*/}
-          {items.map((item) => {
+          {items.map((item: any) => {
             if (item.active === false) return;
             const primary = colors ? colors[1]?.pageTextColor : "#1A1A1A";
 

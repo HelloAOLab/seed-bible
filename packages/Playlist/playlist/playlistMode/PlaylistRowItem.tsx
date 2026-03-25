@@ -490,6 +490,9 @@ const PlaylistRowItem = (props: any) => {
         <div
           onClick={(e) => {
             e.preventDefault();
+            if (onSelectPlaylist) {
+              onSelectPlaylist(id);
+            }
             openContextMenu(e);
           }}
           onTouchStart={handleTouchStart}

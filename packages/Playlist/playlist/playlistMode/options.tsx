@@ -4,8 +4,23 @@ const G = globalThis as any;
 const items = [
   {
     icon: <MenuIcon name="file_export" />,
-    title: () => (!G.IsPlaylistPlaying ? t("annotate") : t("addToQueue")),
+    title: () => {
+      return !G[`defaultcreatingPlaylist`] &&
+        !G[`defaultnamingPlaylist`] &&
+        DEV_ENV
+        ? !G.IsPlaylistPlaying
+          ? t("annotate")
+          : t("addToQueue")
+        : null;
+    },
     onClick: (selectedItem: any) => {
+      if (
+        G[`defaultcreatingPlaylist`] ||
+        G[`defaultnamingPlaylist`] ||
+        !DEV_ENV
+      ) {
+        return;
+      }
       const dataTempItems: any[] = [];
       selectedItem.verseNumber?.forEach((vNumber: any) => {
         const id = G.createUUID();
@@ -154,8 +169,20 @@ const items = [
   // },
   {
     icon: <MenuIcon name="playlist_add" />,
-    title: t("addToPlaylist"),
+    title: () =>
+      G.IsPlaylistPlaying ||
+      G[`defaultcreatingPlaylist`] ||
+      G[`defaultnamingPlaylist`]
+        ? null
+        : t("addToPlaylist"),
     onClick: (selectedItem: any) => {
+      if (
+        G.IsPlaylistPlaying ||
+        G[`defaultcreatingPlaylist`] ||
+        G[`defaultnamingPlaylist`]
+      ) {
+        return;
+      }
       const dataTempItems: any[] = [];
       const joinedAndGroupedVerses: {
         verse: number | number[];

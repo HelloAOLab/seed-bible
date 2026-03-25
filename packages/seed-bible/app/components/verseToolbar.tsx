@@ -11,6 +11,7 @@ import {
 } from "app.components.icons";
 import { getStyleOf } from "app.styles.styler";
 import { getSettingsPreset } from "app.components.types";
+import { globalAPI } from "app.controller.controllerBuilder";
 
 export function VerseToolbar({
   clickedVersesContext,
@@ -124,7 +125,7 @@ export function VerseToolbar({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    background: "var(--panelBackground)",
+    background: "var(--pageBackground)",
   };
 
   const headerStyle = {
@@ -645,7 +646,13 @@ export function VerseToolbar({
                     </button>
                   )}
                 {menuOptions
-                  .filter((o) => o?.type !== "line")
+                  .filter((o: any) => {
+                    const title =
+                      typeof o.title === "function"
+                        ? o.title(clickedVersesContext)
+                        : o.title;
+                    return !!title && o?.type !== "line";
+                  })
                   .map((option, i) => (
                     <button
                       key={i}
@@ -702,7 +709,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
       }
       groups.push(start === end ? `${start}` : `${start}-${end}`);
     }
-    return `${that.book} ${that.chapter}:${groups.join(",")}`;
+    return `${that.book} ${that.chapter}:${groups.join(",")} ${that.translation || ""}`;
   };
   const removeAiAgent =
     tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.pageSettings
@@ -772,7 +779,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
               }
               groups.push(start === end ? `${start}` : `${start}-${end}`);
             }
-            const reference = `${that.book} ${that.chapter}:${groups.join(",")}`;
+            const reference = `${that.book} ${that.chapter}:${groups.join(",")} ${that.translation || ""}`;
             openPopupSettings(
               <SharePopup
                 shareTitle={`${that.text}`}
@@ -902,7 +909,8 @@ const SubOptions = ({ items }) => {
         scrollbarWidth: "none",
       }}
     >
-      <style>{globalThis.ThemeCSS}</style>
+      <style>{globalAPI._mainThemeCSS}</style>
+
       <style>
         {`
 .popupSettings2 {
@@ -947,8 +955,10 @@ const SubOptions = ({ items }) => {
 }
         `}
       </style>
-      {items.map((item) => {
-        if (item.active === false) return;
+      {items.map((item: any) => {
+        const title =
+          typeof item.title === "function" ? item.title() : item.title;
+        if (!title || item.active === false) return;
         if (item?.type === "line")
           return (
             <div
@@ -972,9 +982,7 @@ const SubOptions = ({ items }) => {
               }}
             >
               <div>{item.icon}</div>
-              <div>
-                {typeof item.title === "function" ? item.title() : item.title}
-              </div>
+              <div>{title}</div>
             </div>
           );
       })}

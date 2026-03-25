@@ -156,5 +156,8 @@
   "addToNew": "ወደ አዲስ ጨምር",
   "itemsAddedToPlaylistSuccessfully": "እቃዎች ወደ ዝርዝር በተሳካ ሁኔታ ታክለዋል።",
   "translationSwitchOption": "ወደ {{translationName}} ትርጉም መቀየር ይፈልጋሉ?",
-  "chooseAnother": "ሌላ ይምረጡ"
+  "chooseAnother": "ሌላ ይምረጡ",
+  "playlistHasBeenEnded": "ዝርዝሩ ተጠናቋል።",
+  "youAreAtTheBeginningOfThePlaylist": "በዝርዝሩ መጀመሪያ ላይ ነዎት።",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "ለማጣራት ቢያንስ ሁለት ማስታወሻዎች ያስፈልጋሉ።"
 }

@@ -55,10 +55,11 @@ const PlaylistMedia = (props: any) => {
         <>
           <iframe
             className="item-need-full-height"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share;fu"
+            referrerpolicy="strict-origin-when-cross-origin"
             src={`${G.CONSTANTS.YT_PREFIX}/${videoId}`}
             style={{ borderRadius: "16px", width: "100%", height: "100%" }}
             title={content}
-            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; autoplay;"
             allowFullScreen
           />
         </>

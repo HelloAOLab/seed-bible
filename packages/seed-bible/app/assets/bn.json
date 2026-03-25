@@ -156,5 +156,8 @@
   "addToNew": "নতুনে যোগ করুন",
   "itemsAddedToPlaylistSuccessfully": "আইটেমগুলি প্লেলিস্টে সফলভাবে যোগ করা হয়েছে।",
   "translationSwitchOption": "আপনি কি {{translationName}} অনুবাদে স্যুইচ করতে চান?",
-  "chooseAnother": "অন্যটি বেছে নিন"
+  "chooseAnother": "অন্যটি বেছে নিন",
+  "playlistHasBeenEnded": "প্লেলিস্ট শেষ হয়েছে।",
+  "youAreAtTheBeginningOfThePlaylist": "আপনি প্লেলিস্টের শুরুতে আছেন।",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "ফিল্টার করতে কমপক্ষে দুটি টীকা থাকতে হবে।"
 }

@@ -156,5 +156,8 @@
   "addToNew": "नयाँमा थप्नुहोस्",
   "itemsAddedToPlaylistSuccessfully": "आइटमहरू प्लेलिस्टमा सफलतापूर्वक थपियो।",
   "translationSwitchOption": "के तपाईं {{translationName}} अनुवादमा स्विच गर्न चाहनुहुन्छ?",
-  "chooseAnother": "अर्को छान्नुहोस्"
+  "chooseAnother": "अर्को छान्नुहोस्",
+  "playlistHasBeenEnded": "प्लेसूची समाप्त भयो।",
+  "youAreAtTheBeginningOfThePlaylist": "तपाईं प्लेसूचीको सुरुमा हुनुहुन्छ।",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "फिल्टर गर्न कम्तिमा दुई टिप्पणीहरू चाहिन्छ।"
 }

@@ -274,8 +274,8 @@ input:checked + .slider:not(#slider):before {
   width: 70px;
   height: 30px;
   border-radius: 5px;
-  background-color: var(--secondaryColor);
-  color: var(--text1);
+  background-color: var(--addButtonIcon);
+  color: var(--primaryColor);
   border: none;
 }
 
@@ -691,7 +691,7 @@ input:checked + .slider:not(#slider):before {
 }
 
 .chapter-btn:hover {
-  background-color: var(--primaryBase);
+  background-color: var(--activeTabFill);
   color: var(--text1);
 }
 

@@ -12,18 +12,23 @@ const itemKeys: any = [
   // "pinnedItems",
   "shared",
   "playlist",
-  "annotations",
   // "bookmarks",
 ];
 
+if (DEV_ENV) {
+  itemKeys.push("annotations");
+}
 const items = [
   "All",
   // "Pinned Items",
   "Shared",
   "Playlist",
-  "Annotations",
   // "Bookmarks",
 ];
+
+if (DEV_ENV) {
+  items.push("Annotations");
+}
 
 const Discover = (props: any) => {
   const {
@@ -257,6 +262,7 @@ const Discover = (props: any) => {
 
       {!editingPlaylist &&
       !renamingPlaylist &&
+      DEV_ENV &&
       (isAll || selectedChip["Annotations"]) ? (
         <AnnotationList
           annotationSources={annotationSources}
