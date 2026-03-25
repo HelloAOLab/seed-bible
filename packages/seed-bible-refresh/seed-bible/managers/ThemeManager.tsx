@@ -2,7 +2,11 @@ import { computed, signal } from "@preact/signals";
 
 export interface BibleThemeVariables {
   primaryColor: string;
+  primaryFontColor: string;
+
   secondaryColor: string;
+  secondaryFontColor: string;
+
   tertiaryColor: string;
 
   /**
@@ -301,6 +305,36 @@ export interface BibleThemeVariables {
    * The bottom offset of the mobile verse toolbar.
    */
   verseToolbarMobileBottom?: string | null;
+
+  /**
+   * The border for tabs. This is used for the border of unselected tabs. It should generally be a subtle color that complements the primary and secondary colors, but can be customized as needed. If not set, it will default to "none".
+   */
+  tabBorder: string | null;
+
+  /**
+   * The background for tabs. This is used for the background of unselected tabs. It should generally be a subtle color that complements the primary and secondary colors, but can be customized as needed. If not set, it will default to "inherit" to use the background of the parent element.
+   */
+  tabBackground: string | null;
+
+  /**
+   * The font color for tabs. This is used for the font color of unselected tabs. It should generally have good contrast against the tabBackground color for readability, but can be customized as needed. If not set, it will default to "inherit" to use the font color of the parent element.
+   */
+  tabFontColor: string | null;
+
+  /**
+   * The border for the selected tab.
+   */
+  selectedTabBorder: string | null;
+
+  /**
+   * The background for selected tabs.
+   */
+  selectedTabBackground: string | null;
+
+  /**
+   * The font color for selected tabs.
+   */
+  selectedTabFontColor: string | null;
 }
 
 export interface BibleTheme {
@@ -329,7 +363,11 @@ const LIGHT_THEME: BibleTheme = {
   name: "Light",
   variables: {
     primaryColor: "#e07b4c",
+    primaryFontColor: "#fff",
+
     secondaryColor: "#faddd1",
+    secondaryFontColor: "#333",
+
     tertiaryColor: "#f0f0f0",
 
     background: "#f8fafc",
@@ -408,6 +446,14 @@ const LIGHT_THEME: BibleTheme = {
 
     verseToolbarToolsGap: "10px",
     verseToolbarMobileBottom: "18px",
+
+    tabBorder: "none",
+    tabBackground: "inherit",
+    tabFontColor: "inherit",
+
+    selectedTabBorder: "1px solid var(--sb-primary-color)",
+    selectedTabBackground: "var(--sb-secondary-color)",
+    selectedTabFontColor: "var(--sb-primary-color)",
   },
 };
 
@@ -421,7 +467,11 @@ export function createTheme() {
       name: "Dark",
       variables: {
         primaryColor: "#f0a67c",
+        primaryFontColor: "#333",
+
         secondaryColor: "#5c463b",
+        secondaryFontColor: "#fff",
+
         tertiaryColor: "#252a36",
 
         background: "#121621",
@@ -500,6 +550,14 @@ export function createTheme() {
 
         verseToolbarToolsGap: "10px",
         verseToolbarMobileBottom: "18px",
+
+        tabBorder: "none",
+        tabBackground: "inherit",
+        tabFontColor: "inherit",
+
+        selectedTabBorder: "1px solid var(--sb-primary-color)",
+        selectedTabBackground: "var(--sb-secondary-color)",
+        selectedTabFontColor: "var(--sb-primary-color)",
       },
     },
   ]);

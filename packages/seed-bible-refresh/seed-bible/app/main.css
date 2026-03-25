@@ -1,10 +1,14 @@
+/* eslint-disable css/use-baseline */
 :root {
   --sb-background: #f8fafc;
   --sb-font-family: "Satoshi", system-ui, sans-serif;
   --sb-font-color: #333;
 
   --sb-primary-color: #e07b4c;
+  --sb-primary-font-color: #fff;
+
   --sb-secondary-color: #faddd1;
+  --sb-secondary-font-color: #333;
 
   --sb-sidebar-background: transparent;
   --sb-sidebar-font-family: inherit;
@@ -52,18 +56,16 @@
   --sb-reader-toolbar-box-shadow: 0 26px 10px #0000001a;
   --sb-reader-toolbar-z-index: 99;
   --sb-reader-toolbar-height: 50px;
+  --sb-reader-toolbar-font-family: "Satoshi", system-ui, sans-serif;
+  --sb-reader-toolbar-font-color: #333;
 
   --sb-reader-toolbar-floating-button-top: -68px;
   --sb-reader-toolbar-floating-button-width: 48px;
   --sb-reader-toolbar-floating-button-height: 48px;
   --sb-reader-toolbar-floating-button-border: 1px solid #00000024;
   --sb-reader-toolbar-floating-button-border-radius: 999px;
-  --sb-reader-toolbar-floating-button-background: var(
-    --sb-reader-toolbar-background
-  );
-  --sb-reader-toolbar-floating-button-font-color: var(
-    --sb-reader-toolbar-font-color
-  );
+  --sb-reader-toolbar-floating-button-background: #fff;
+  --sb-reader-toolbar-floating-button-font-color: #333;
   --sb-reader-toolbar-floating-button-box-shadow: 0 10px 24px #0000001a;
 
   --sb-verse-toolbar-gap: 10px;
@@ -85,6 +87,16 @@
 
   --sb-verse-toolbar-tools-gap: 10px;
   --sb-verse-toolbar-mobile-bottom: 18px;
+
+  --sb-menu-background: #fff;
+
+  --sb-tab-border: none;
+  --sb-tab-background: inherit;
+  --sb-tab-font-color: inherit;
+
+  --sb-selected-tab-border: 1px solid var(--sb-primary-color);
+  --sb-selected-tab-background: var(--sb-secondary-color);
+  --sb-selected-tab-font-color: var(--sb-primary-color);
 }
 
 body {
@@ -495,21 +507,20 @@ button {
 
 .sb-chapter-content {
   line-height: 2;
-  font-family: var(--sb-verse-font-family, "Newsreader"), serif;
+  font-family: var(--sb-verse-font-family);
   font-size: 20px;
 
   padding-bottom: 160px;
 }
 
 .sb-chapter-heading {
-  font-family:
-    var(--sb-chapter-heading-font-family, "Plus Jakarta Sans"), sans-serif;
+  font-family: var(--sb-chapter-heading-font-family);
   margin-top: 18px;
   margin-bottom: 12px;
   color: var(--sb-chapter-heading-font-color);
   font-size: 18px;
   font-weight: 200;
-  font-style: var(--sb-chapter-heading-font-style, italic);
+  font-style: var(--sb-chapter-heading-font-style);
 }
 
 .sb-line-break {
@@ -612,8 +623,7 @@ button {
 
 .sb-footnote-modal-title {
   margin: 0;
-  font-family:
-    var(--sb-chapter-heading-font-family, "Plus Jakarta Sans"), sans-serif;
+  font-family: var(--sb-chapter-heading-font-family), sans-serif;
   font-size: 20px;
   color: var(--sb-chapter-heading-font-color);
 }
@@ -661,6 +671,9 @@ button {
   box-shadow: var(--sb-reader-toolbar-box-shadow);
   z-index: var(--sb-reader-toolbar-z-index);
   height: var(--sb-reader-toolbar-height);
+
+  font-family: var(--sb-reader-toolbar-font-family);
+  color: var(--sb-reader-toolbar-font-color);
 
   transition: transform 0.3s ease;
 }
@@ -862,15 +875,15 @@ button {
   position: absolute;
   overflow: auto;
   padding: 12px;
-  background: var(--book-selector-background, #fff);
-  color: var(--font-color);
+  background: var(--sb-book-selector-background);
+  color: var(--sb-font-color);
   border-radius: 10px;
 
   width: 100%;
   height: 100dvh;
   bottom: 0;
 
-  box-shadow: 0 3px 8px var(--sidebarShadow, #e8e8e8);
+  box-shadow: 0 3px 8px #e8e8e8;
   opacity: 0;
   transform: translateY(50%);
   transition: all 0.5s;
@@ -908,17 +921,16 @@ button {
   margin-bottom: 10px;
 }
 
-.sb-selector-title {
-  color: var(--book-heading-color);
-}
+/* .sb-selector-title {
+  color: var(--sb-selector-heading-color);
+} */
 
 .sb-selector-close-button {
-  border: 1px solid var(--secondary-color);
+  border: 1px solid var(--sb-secondary-color);
   border-radius: 6px;
   padding: 4px 8px;
-  background: var(--tertiary-color);
+  background: var(--sb-secondary-color);
   cursor: pointer;
-  color: var(--font-color);
 }
 
 .sb-selector-controls {
@@ -929,28 +941,27 @@ button {
 
 .sb-selector-translation-select {
   min-width: 96px;
-  border: 1px solid var(--secondary-color);
+  border: 1px solid var(--sb-secondary-color);
   border-radius: 6px;
   padding: 6px 8px;
-  background: var(--tertiary-color);
-  color: var(--font-color);
+  background: var(--sb-secondary-color);
 }
 
 .sb-selector-search-input {
   flex: 1;
-  border: 1px solid var(--secondary-color);
+  border: 1px solid var(--sb-secondary-color);
   border-radius: 6px;
   padding: 6px 10px;
-  background: var(--tertiary-color);
-  color: var(--font-color);
+  background: var(--sb-secondary-color);
+  color: var(--sb-font-color);
 }
 
 .sb-selector-all-books {
-  border: 1px solid var(--secondary-color);
+  border: 1px solid var(--sb-secondary-color);
   border-radius: 6px;
   padding: 6px 10px;
-  background: var(--tertiary-color);
-  color: var(--font-color);
+  background: var(--sb-secondary-color);
+  color: var(--sb-font-color);
   white-space: nowrap;
 }
 
@@ -961,7 +972,7 @@ button {
 }
 
 .sb-selector-column-divider {
-  border-right: 1px solid var(--secondary-color);
+  border-right: 1px solid var(--sb-secondary-color);
   padding-right: 12px;
 }
 
@@ -969,7 +980,7 @@ button {
   margin-top: 0;
   margin-bottom: 10px;
 
-  font-family: var(--font-family, Satoshi), system-ui, sans-serif;
+  font-family: var(--sb-font-family), system-ui, sans-serif;
   font-weight: 700;
   font-size: 18px;
   padding-left: 10px;
@@ -1003,7 +1014,7 @@ button {
   cursor: pointer;
 
   font-size: 14px;
-  font-color: #333;
+  color: var(--sb-font-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1027,9 +1038,7 @@ button {
 }
 
 .sb-selector-book-button-current {
-  color: var(--book-heading-color);
   font-weight: 700;
-  background-color: #f8fafc;
 }
 
 .sb-selector-book-button > .material-symbols-outlined {
@@ -1058,17 +1067,17 @@ button {
 }
 
 .sb-selector-chapter-button {
-  border: 1px solid var(--secondary-color);
+  border: 1px solid var(--sb-secondary-color);
   border-radius: 5px;
-  background: var(--tertiary-color);
+  background: var(--sb-secondary-color);
   width: 100%;
   cursor: pointer;
-  color: var(--font-color);
+  color: var(--sb-font-color);
   aspect-ratio: 1;
 }
 
 .sb-selector-chapter-button-current {
-  background: var(--primary-color);
+  background: var(--sb-primary-color);
 }
 
 @media (min-width: 769px) {
@@ -1110,8 +1119,8 @@ button {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: var(--sidebar-background);
-  color: var(--font-color);
+  background: var(--sb-sidebar-background);
+  color: var(--sb-font-color);
   flex-shrink: 0;
   position: relative;
 }
@@ -1127,7 +1136,7 @@ button {
   justify-content: space-between;
   min-height: 28px;
   padding-bottom: 6px;
-  border-bottom: 1px solid var(--secondary-color);
+  border-bottom: 1px solid var(--sb-secondary-color);
 }
 
 .sb-sidebar-top-actions {
@@ -1139,7 +1148,7 @@ button {
 .sb-sidebar-collapse-button {
   border: none;
   background: transparent;
-  color: var(--font-color);
+  color: var(--sb-font-color);
   cursor: pointer;
   width: 24px;
   height: 24px;
@@ -1152,7 +1161,7 @@ button {
 .sb-sidebar-top-icon-button {
   border: none;
   background: transparent;
-  color: var(--font-color);
+  color: var(--sb-font-color);
   cursor: pointer;
   width: 28px;
   height: 28px;
@@ -1173,7 +1182,7 @@ button {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: var(--font-color);
+  color: var(--sb-font-color);
 }
 
 .sb-sidebar-tab-list {
@@ -1190,24 +1199,25 @@ button {
 
 .sb-tab-button {
   text-align: left;
-  border: 1px solid var(--secondary-color);
   border-radius: 6px;
   padding: 10px 44px 10px 12px;
-  background: var(--tertiary-color);
   font-weight: 400;
   cursor: pointer;
-  color: var(--font-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   flex: 1;
+
+  border: var(--sb-tab-border);
+  background: var(--sb-tab-background);
+  color: var(--sb-tab-font-color);
 }
 
 .sb-tab-button-selected {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-  color: var(--book-heading-color);
+  background: var(--sb-selected-tab-background);
+  color: var(--sb-selected-tab-font-color);
+  border: var(--sb-selected-tab-border);
 }
 
 .sb-tab-title {
@@ -1220,9 +1230,9 @@ button {
   border-radius: 7px;
   width: 30px;
   height: 30px;
-  background: var(--primary-color);
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
   cursor: pointer;
-  color: var(--book-heading-color);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1239,9 +1249,9 @@ button {
   right: 0;
   width: 372px;
   padding: 20px;
-  border: 1px solid var(--secondary-color);
+  border: 1px solid var(--sb-secondary-color);
   border-radius: 14px;
-  background: var(--reader-background);
+  background: var(--sb-menu-background);
   box-shadow: 0 20px 40px #00000018;
   z-index: 50;
 }
@@ -1266,7 +1276,7 @@ button {
 }
 
 .sb-pane-layout-option-selected .sb-pane-layout-preview {
-  box-shadow: inset 0 0 0 2px var(--primary-color);
+  box-shadow: inset 0 0 0 2px var(--sb-primary-color);
 }
 
 .sb-pane-layout-preview {
@@ -1348,7 +1358,7 @@ button {
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--font-color);
+  color: var(--sb-font-color);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1357,15 +1367,14 @@ button {
 }
 
 .sb-tab-menu-button:hover {
-  background: color-mix(in srgb, var(--secondary-color), transparent 70%);
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 70%);
 }
 
 .sb-tab-pane-count {
   min-width: 20px;
   height: 20px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--primary-color), white 25%);
-  color: var(--book-heading-color);
+  background: color-mix(in srgb, var(--sb-primary-color), white 25%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1381,9 +1390,9 @@ button {
   top: calc(100% + 6px);
   min-width: 160px;
   padding: 6px;
-  border: 1px solid var(--secondary-color);
+  border: 1px solid var(--sb-secondary-color);
   border-radius: 8px;
-  background: var(--reader-background);
+  background: var(--sb-menu-background);
   box-shadow: 0 10px 30px #00000014;
   z-index: 40;
 }
@@ -1392,7 +1401,7 @@ button {
   width: 100%;
   border: none;
   background: transparent;
-  color: var(--font-color);
+  color: var(--sb-font-color);
   text-align: left;
   padding: 8px 10px;
   border-radius: 6px;
@@ -1400,7 +1409,7 @@ button {
 }
 
 .sb-tab-menu-item:hover {
-  background: var(--tertiary-color);
+  background: var(--sb-secondary-color);
 }
 
 .sb-tab-more-icon {
@@ -1415,7 +1424,7 @@ button {
   border: none;
   border-radius: 999px;
   background: transparent;
-  color: var(--font-color);
+  color: var(--sb-font-color);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1426,14 +1435,14 @@ button {
 }
 
 .sb-sidebar-icon-button-selected {
-  box-shadow: inset 0 0 0 2px var(--book-heading-color);
+  box-shadow: inset 0 0 0 2px #333;
 }
 
 .sb-sidebar-close-button {
   display: none;
   border: none;
   background: transparent;
-  color: var(--font-color);
+  color: var(--sb-font-color);
   cursor: pointer;
   width: 32px;
   height: 32px;
@@ -1487,20 +1496,18 @@ button {
 
 .sb-settings-page {
   padding: 20px;
-  color: var(--font-color);
+  color: var(--sb-font-color);
 }
 
 .sb-settings-section {
-  border: 1px solid var(--secondary-color);
   border-radius: 10px;
   padding: 16px;
-  background: var(--reader-background);
   max-width: 480px;
 }
 
 .sb-settings-title {
   margin: 0 0 12px 0;
-  color: var(--book-heading-color);
+  /* color: var(--book-heading-color); */
 }
 
 .sb-settings-theme-options {
@@ -1511,16 +1518,16 @@ button {
 }
 
 .sb-settings-theme-button {
-  border: 1px solid var(--secondary-color);
+  border: 1px solid var(--sb-secondary-color);
   border-radius: 8px;
   padding: 8px 12px;
-  background: var(--tertiary-color);
-  color: var(--font-color);
+  background: var(--sb-secondary-color);
+  color: var(--sb-font-color);
   cursor: pointer;
 }
 
 .sb-settings-theme-button-selected {
-  background: var(--primary-color);
+  background: var(--sb-primary-color);
   font-weight: 700;
 }
 
@@ -1533,15 +1540,15 @@ button {
 .sb-settings-field-label {
   font-size: 14px;
   font-weight: 600;
-  color: var(--font-color);
+  color: var(--sb-font-color);
 }
 
 .sb-settings-language-select {
-  border: 1px solid var(--secondary-color);
+  border: 1px solid var(--sb-secondary-color);
   border-radius: 8px;
   padding: 8px 10px;
-  background: var(--tertiary-color);
-  color: var(--font-color);
+  background: var(--sb-secondary-color);
+  color: var(--sb-font-color);
   max-width: 180px;
 }
 
@@ -1556,7 +1563,7 @@ button {
 .sb-settings-toggle-label {
   font-size: 14px;
   font-weight: 600;
-  color: var(--font-color);
+  color: var(--sb-font-color);
 }
 
 .sr-only {
