@@ -35,15 +35,14 @@ export function Toolbar() {
   const {
     sidebarMode,
     openOnMobile,
-    isMobile,
     setSidebarWidth,
     setOpenOnMobile,
     setCollapsed,
     setSideBarMode,
   }: any = useSideBarContext();
 
-  // Hide nav arrows on mobile when a non-default sidebar panel (e.g. settings) is open
-  const mobileSettingsOpen = isMobile && sidebarMode !== "default";
+  // Hide nav arrows when a non-default sidebar panel (e.g. settings) is open
+  const sidebarPanelOpen = sidebarMode !== "default";
 
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const moreMenuRef = useRef<any>(null);
@@ -233,7 +232,7 @@ export function Toolbar() {
             <button
               style={{
                 display:
-                  showNavArrows && !activeApp && !mobileSettingsOpen
+                  showNavArrows && !activeApp && !sidebarPanelOpen
                     ? ""
                     : "none",
               }}
@@ -411,7 +410,7 @@ export function Toolbar() {
             <button
               style={{
                 display:
-                  showNavArrows && !activeApp && !mobileSettingsOpen
+                  showNavArrows && !activeApp && !sidebarPanelOpen
                     ? ""
                     : "none",
               }}

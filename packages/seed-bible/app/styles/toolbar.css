@@ -74,7 +74,7 @@
   transition: transform 0.3s ease;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 764px) {
   .mobile-bottom-navbar {
     display: flex;
   }
