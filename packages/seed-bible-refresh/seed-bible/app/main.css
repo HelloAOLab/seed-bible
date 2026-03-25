@@ -181,7 +181,7 @@ button {
   flex: 0 0 36px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 0 12px;
   background: color-mix(in srgb, var(--sb-secondary-color), white 10%);
   border-bottom: 1px solid var(--sb-secondary-color);
@@ -221,6 +221,46 @@ button {
   min-height: 0;
   flex: 1;
   overflow: auto;
+}
+
+.sb-detached-pane-toolbar {
+  height: 42px;
+  flex: 0 0 42px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 10px;
+  border-top: 1px solid var(--sb-secondary-color);
+  background: color-mix(in srgb, var(--sb-secondary-color), white 35%);
+  cursor: move;
+  user-select: none;
+}
+
+.sb-detached-pane-toolbar-item {
+  flex: 0 0 auto;
+}
+
+.sb-detached-pane-toolbar-button {
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  height: 28px;
+  min-width: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0 6px;
+}
+
+.sb-detached-pane-toolbar-button:hover {
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 65%);
+}
+
+.sb-detached-pane-toolbar-button .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .sb-pane-detached-resize-handle {

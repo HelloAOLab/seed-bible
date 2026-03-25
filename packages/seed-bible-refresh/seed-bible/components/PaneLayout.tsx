@@ -247,8 +247,14 @@ export function PaneLayout(props: PaneLayoutProps) {
         return;
       }
 
-      const bounds = paneElement.getBoundingClientRect();
-      const paneStyle = window.getComputedStyle(paneElement);
+      const targetElement = portalPane.detached
+        ? ((paneElement.querySelector(
+            ".sb-pane-detached-body"
+          ) as HTMLElement | null) ?? paneElement)
+        : paneElement;
+
+      const bounds = targetElement.getBoundingClientRect();
+      const paneStyle = window.getComputedStyle(targetElement);
       setGridPortalContainerCss(
         generateGridPortalContainerCss(
           {
@@ -371,20 +377,6 @@ export function PaneLayout(props: PaneLayoutProps) {
             }}
           >
             <span className="sb-pane-detached-title">Detached Pane</span>
-            <button
-              className="sb-pane-detached-close-button"
-              aria-label="Close detached pane"
-              title="Close"
-              onPointerDown={(event: PointerEvent) => {
-                event.stopPropagation();
-              }}
-              onClick={(event: MouseEvent) => {
-                event.stopPropagation();
-                panesManager.closePane(pane.id);
-              }}
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
           </div>
 
           <div className="sb-pane-detached-body">
@@ -413,6 +405,38 @@ export function PaneLayout(props: PaneLayoutProps) {
                 tabs={tabsManager}
               />
             )}
+          </div>
+
+          <div
+            className="sb-detached-pane-toolbar"
+            onPointerDown={(event: PointerEvent) => {
+              event.stopPropagation();
+              app.selectPane(pane.id);
+              dragStateRef.current = {
+                mode: "move",
+                paneId: pane.id,
+                startX: event.clientX,
+                startY: event.clientY,
+              };
+            }}
+          >
+            <div className="sb-detached-pane-toolbar-item">
+              <button
+                className="sb-detached-pane-toolbar-button"
+                aria-label="Close detached pane"
+                title="Close"
+                onPointerDown={(event: PointerEvent) => {
+                  event.stopPropagation();
+                }}
+                onClick={(event: MouseEvent) => {
+                  event.stopPropagation();
+                  panesManager.closePane(pane.id);
+                }}
+              >
+                <span className="material-symbols-outlined">close</span>
+                <span className="sr-only">Close</span>
+              </button>
+            </div>
           </div>
 
           <div
