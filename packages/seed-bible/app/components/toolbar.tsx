@@ -42,6 +42,9 @@ export function Toolbar() {
     setSideBarMode,
   }: any = useSideBarContext();
 
+  // Hide nav arrows on mobile when a non-default sidebar panel (e.g. settings) is open
+  const mobileSettingsOpen = isMobile && sidebarMode !== "default";
+
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const moreMenuRef = useRef<any>(null);
   useEffect(() => {
@@ -228,7 +231,12 @@ export function Toolbar() {
           {/* Mobile Bottom Navbar */}
           <div className="mobile-bottom-navbar">
             <button
-              style={{ display: showNavArrows && !activeApp ? "" : "none" }}
+              style={{
+                display:
+                  showNavArrows && !activeApp && !mobileSettingsOpen
+                    ? ""
+                    : "none",
+              }}
               className="mobile-navbar-arrow left-arrow"
               onClick={() =>
                 isRTL
@@ -401,7 +409,12 @@ export function Toolbar() {
             )}
 
             <button
-              style={{ display: showNavArrows && !activeApp ? "" : "none" }}
+              style={{
+                display:
+                  showNavArrows && !activeApp && !mobileSettingsOpen
+                    ? ""
+                    : "none",
+              }}
               className="mobile-navbar-arrow right-arrow"
               onClick={() =>
                 isRTL
