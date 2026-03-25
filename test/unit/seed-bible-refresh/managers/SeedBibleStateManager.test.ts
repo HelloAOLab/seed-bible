@@ -180,6 +180,34 @@ describe("createSeedBibleState", () => {
     expect(state.tabs.selectedTabId.value).toBe("tab-2");
   });
 
+  it("selecting a pane that has a grid portal doesn't open the bible selector", async () => {
+    const state = await createState();
+
+    state.panes.openPane({
+      type: "attached",
+      gridPortal: "test_portal",
+    });
+    const secondPane = state.panes.panes.value[1]!;
+    state.app.selectPane(secondPane.id);
+
+    expect(state.panes.selectedPaneId.value).toBe(secondPane.id);
+    expect(state.selector.isOpen.value).toBe(false);
+  });
+
+  it("selecting a pane that has a map portal doesn't open the bible selector", async () => {
+    const state = await createState();
+
+    state.panes.openPane({
+      type: "attached",
+      mapPortal: "test_portal",
+    });
+    const secondPane = state.panes.panes.value[1]!;
+    state.app.selectPane(secondPane.id);
+
+    expect(state.panes.selectedPaneId.value).toBe(secondPane.id);
+    expect(state.selector.isOpen.value).toBe(false);
+  });
+
   it("selecting an empty pane opens the bible selector", async () => {
     const state = await createState();
 
