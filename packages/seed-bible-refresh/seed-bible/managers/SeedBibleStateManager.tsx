@@ -81,6 +81,7 @@ export function createSeedBibleState(): SeedBibleState {
               tab: selectedTab.value,
               component: null,
               gridPortal: null,
+              mapPortal: null,
               detached: false,
               x: 0,
               y: 0,

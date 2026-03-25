@@ -146,6 +146,10 @@ function OpenGridPortalIcon() {
   return <MaterialIcon>view_in_ar</MaterialIcon>;
 }
 
+function OpenMapPortalIcon() {
+  return <MaterialIcon>map</MaterialIcon>;
+}
+
 function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
   return [
     {
@@ -165,7 +169,8 @@ function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
       isDisabled: (context) =>
         context.panesManager.panes.value.some(
           (pane) =>
-            pane.gridPortal !== null && pane.id !== context.currentPane.id
+            (pane.gridPortal !== null || pane.mapPortal !== null) &&
+            pane.id !== context.currentPane.id
         ),
       onSelect: (context) => {
         create({
@@ -173,6 +178,24 @@ function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
           color: "red",
         });
         context.panesManager.setPaneGridPortal(context.currentPane.id, "home");
+      },
+    },
+    {
+      id: "open-map-portal",
+      priority: 110,
+      title: "Open map portal",
+      icon: OpenMapPortalIcon,
+      isDisabled: (context) =>
+        context.panesManager.panes.value.some(
+          (pane) =>
+            (pane.gridPortal !== null || pane.mapPortal !== null) &&
+            pane.id !== context.currentPane.id
+        ),
+      onSelect: (context) => {
+        context.panesManager.setPaneMapPortal(
+          context.currentPane.id,
+          "map_portal"
+        );
       },
     },
   ];

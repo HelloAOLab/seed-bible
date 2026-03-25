@@ -15,6 +15,7 @@ const { render } = os.appHooks;
 os.syncConfigBotTagsToURL(["translation", "book", "chapter"]);
 
 configBot.tags.gridPortal = null;
+configBot.tags.mapPortal = null;
 
 console.log("Starting APP");
 render(<Main />, document.body);

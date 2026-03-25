@@ -14,6 +14,7 @@ const { useEffect, useRef, useState } = os.appHooks;
 
 interface GridPortalPaneProps {
   portal: string;
+  portalType: "grid" | "map";
   gameContainerCss: string;
 }
 
@@ -50,13 +51,14 @@ const GRID_PORTAL_PANE_CSS = `
 `;
 
 function GridPortalPane(props: GridPortalPaneProps) {
-  const { portal, gameContainerCss } = props;
+  const { portal, portalType, gameContainerCss } = props;
+  const portalTitle = portalType === "map" ? "Map Portal" : "Grid Portal";
 
   return (
     <>
       <style>{GRID_PORTAL_PANE_CSS}</style>
       <div className="sb-grid-portal-pane">
-        <div className="sb-grid-portal-pane-badge">Grid Portal</div>
+        <div className="sb-grid-portal-pane-badge">{portalTitle}</div>
         <div className="sb-grid-portal-pane-name">{portal}</div>
       </div>
       <CasualOSApp id="grid-portal-pane-positioner">
@@ -226,13 +228,16 @@ export function PaneLayout(props: PaneLayoutProps) {
 
   useEffect(() => {
     const syncGridPortalBounds = () => {
-      const gridPortalPane = panes.find((pane) => pane.gridPortal !== null);
-      if (!gridPortalPane) {
+      const portalPane =
+        panes.find(
+          (pane) => pane.gridPortal !== null || pane.mapPortal !== null
+        ) ?? null;
+      if (!portalPane) {
         setGridPortalContainerCss(generateGridPortalContainerCss(null, null));
         return;
       }
 
-      const paneElement = paneElementMapRef.current.get(gridPortalPane.id);
+      const paneElement = paneElementMapRef.current.get(portalPane.id);
       if (!paneElement) {
         setGridPortalContainerCss(generateGridPortalContainerCss(null, null));
         return;
@@ -286,9 +291,10 @@ export function PaneLayout(props: PaneLayoutProps) {
           }}
           onClick={() => app.selectPane(pane.id)}
         >
-          {pane.gridPortal !== null ? (
+          {pane.gridPortal !== null || pane.mapPortal !== null ? (
             <GridPortalPane
-              portal={pane.gridPortal}
+              portal={pane.gridPortal ?? pane.mapPortal ?? ""}
+              portalType={pane.mapPortal !== null ? "map" : "grid"}
               gameContainerCss={gridPortalContainerCss}
             />
           ) : pane.component !== null ? (
@@ -378,9 +384,10 @@ export function PaneLayout(props: PaneLayoutProps) {
           </div>
 
           <div className="sb-pane-detached-body">
-            {pane.gridPortal !== null ? (
+            {pane.gridPortal !== null || pane.mapPortal !== null ? (
               <GridPortalPane
-                portal={pane.gridPortal}
+                portal={pane.gridPortal ?? pane.mapPortal ?? ""}
+                portalType={pane.mapPortal !== null ? "map" : "grid"}
                 gameContainerCss={gridPortalContainerCss}
               />
             ) : pane.component !== null ? (
