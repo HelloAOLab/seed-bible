@@ -28,6 +28,15 @@ export interface AppState {
   panelsEnabled: ReadonlySignal<boolean>;
   selectedTab: ReadonlySignal<ReaderTab | null>;
   effectivePanes: ReadonlySignal<Pane[]>;
+
+  currentReadingState: ReadonlySignal<{
+    tab: ReaderTab;
+
+    translationId: string | null;
+    bookId: string | null;
+    chapterNumber: number | null;
+  } | null>;
+
   selectTab: (tabId: string) => void;
   addTab: () => void;
   openInNewPane: (tabId: string) => void;
@@ -65,7 +74,6 @@ export function createSeedBibleState(): SeedBibleState {
   const themeCssVariables = computed(() =>
     generateThemeCssVariables(theme.value)
   );
-
   const panelsEnabled = computed(() => !config.config.value.disablePanels);
   const selectedTab = computed(
     () =>
@@ -91,6 +99,21 @@ export function createSeedBibleState(): SeedBibleState {
           ]
         : []
   );
+  const currentReadingState = computed(() => {
+    const selectedTabValue = selectedTab.value;
+
+    if (!selectedTabValue) {
+      return null;
+    }
+
+    return {
+      tab: selectedTabValue,
+
+      translationId: selectedTabValue.readingState.translationId.value,
+      bookId: selectedTabValue.readingState.bookId.value,
+      chapterNumber: selectedTabValue.readingState.chapterNumber.value,
+    };
+  });
 
   effect(() => {
     if (selectedTab.value) {
@@ -176,6 +199,7 @@ export function createSeedBibleState(): SeedBibleState {
       panelsEnabled,
       selectedTab,
       effectivePanes,
+      currentReadingState,
       selectTab: handleSelectTab,
       addTab: handleAddTab,
       openInNewPane: handleOpenInNewPane,
