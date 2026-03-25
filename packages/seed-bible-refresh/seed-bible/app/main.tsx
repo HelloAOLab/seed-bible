@@ -96,23 +96,6 @@ export function Main() {
           </>
         </CasualOSApp>
 
-        <CasualOSApp id="grid-portal-pane-positioner">
-          <style>{`
-            #app-game-container {
-              position: fixed !important;
-              left: var(--sb-grid-portal-left, 0px) !important;
-              top: var(--sb-grid-portal-top, 0px) !important;
-              width: var(--sb-grid-portal-width, 0px) !important;
-              height: var(--sb-grid-portal-height, 0px) !important;
-              border-radius: var(--sb-grid-portal-border-radius, 0px) !important;
-              overflow: hidden !important;
-              opacity: calc(var(--sb-grid-portal-visible, 0) * 1) !important;
-              pointer-events: var(--sb-grid-portal-pointer-events, none) !important;
-              z-index: 5 !important;
-            }
-          `}</style>
-        </CasualOSApp>
-
         {!sidebar.isSettingsOpen.value && <BibleReaderToolbar state={state} />}
       </div>
     </I18nProvider>

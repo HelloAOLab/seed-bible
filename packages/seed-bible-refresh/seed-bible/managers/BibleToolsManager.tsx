@@ -168,7 +168,11 @@ function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
             pane.gridPortal !== null && pane.id !== context.currentPane.id
         ),
       onSelect: (context) => {
-        context.panesManager.setPaneGridPortal(context.currentPane.id, null);
+        create({
+          home: true,
+          color: "red",
+        });
+        context.panesManager.setPaneGridPortal(context.currentPane.id, "home");
       },
     },
   ];

@@ -1,5 +1,6 @@
 import { BibleReader } from "seed-bible.components.BibleReader";
 import { BelowReaderToolbar } from "seed-bible.components.BelowReaderToolbar";
+import { CasualOSApp } from "seed-bible.components.CasualOSApp";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
@@ -9,7 +10,106 @@ import {
   type BibleEmptyPaneTool,
 } from "seed-bible.managers.BibleToolsManager";
 
-const { useEffect, useRef } = os.appHooks;
+const { useEffect, useRef, useState } = os.appHooks;
+
+interface GridPortalPaneProps {
+  portal: string;
+  gameContainerCss: string;
+}
+
+const GRID_PORTAL_PANE_CSS = `
+  .sb-grid-portal-pane {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background:
+      radial-gradient(circle at 30% 20%, #f8e7df 0%, transparent 60%),
+      radial-gradient(circle at 80% 80%, #ebf1ff 0%, transparent 60%),
+      linear-gradient(135deg, #fffaf7, #f8fbff);
+  }
+
+  .sb-grid-portal-pane-badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 45%);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .sb-grid-portal-pane-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: color-mix(in srgb, var(--sb-font-color), transparent 10%);
+  }
+`;
+
+function GridPortalPane(props: GridPortalPaneProps) {
+  const { portal, gameContainerCss } = props;
+
+  return (
+    <>
+      <style>{GRID_PORTAL_PANE_CSS}</style>
+      <div className="sb-grid-portal-pane">
+        <div className="sb-grid-portal-pane-badge">Grid Portal</div>
+        <div className="sb-grid-portal-pane-name">{portal}</div>
+      </div>
+      <CasualOSApp id="grid-portal-pane-positioner">
+        <style>{gameContainerCss}</style>
+      </CasualOSApp>
+    </>
+  );
+}
+
+function generateGridPortalContainerCss(
+  bounds: { left: number; top: number; width: number; height: number } | null,
+  borderRadius: string | null
+) {
+  if (!bounds) {
+    return `
+      #app-game-container, .main-content {
+        position: fixed !important;
+        left: 0px !important;
+        top: 0px !important;
+        width: 0px !important;
+        height: 0px !important;
+        border-radius: 0px !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        z-index: 5 !important;
+      }
+    `;
+  }
+
+  return `
+    #app-game-container, .main-content {
+      position: fixed !important;
+      left: ${Math.round(bounds.left)}px !important;
+      top: ${Math.round(bounds.top)}px !important;
+      width: ${Math.round(bounds.width)}px !important;
+      height: ${Math.round(bounds.height)}px !important;
+      border-radius: ${borderRadius || "0px"} !important;
+      overflow: hidden !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      z-index: 5 !important;
+    }
+
+    .vm-iframe-container {
+      position: fixed;
+      width: 100vw;
+      height: 100vh;
+      left: 0;
+      top: 0;
+    }
+  `;
+}
 
 function EmptyPaneToolbar({
   toolsManager,
@@ -82,6 +182,9 @@ export function PaneLayout(props: PaneLayoutProps) {
     startY: number;
   } | null>(null);
   const paneElementMapRef = useRef(new Map<string, HTMLElement>());
+  const [gridPortalContainerCss, setGridPortalContainerCss] = useState(
+    generateGridPortalContainerCss(null, null)
+  );
   const attachedPanes = panes.filter((pane) => !pane.detached);
   const detachedPanes = panes.filter((pane) => pane.detached);
 
@@ -125,51 +228,28 @@ export function PaneLayout(props: PaneLayoutProps) {
     const syncGridPortalBounds = () => {
       const gridPortalPane = panes.find((pane) => pane.gridPortal !== null);
       if (!gridPortalPane) {
-        document.documentElement.style.setProperty(
-          "--sb-grid-portal-visible",
-          "0"
-        );
-        document.documentElement.style.setProperty(
-          "--sb-grid-portal-pointer-events",
-          "none"
-        );
+        setGridPortalContainerCss(generateGridPortalContainerCss(null, null));
         return;
       }
 
       const paneElement = paneElementMapRef.current.get(gridPortalPane.id);
       if (!paneElement) {
+        setGridPortalContainerCss(generateGridPortalContainerCss(null, null));
         return;
       }
 
       const bounds = paneElement.getBoundingClientRect();
       const paneStyle = window.getComputedStyle(paneElement);
-      document.documentElement.style.setProperty(
-        "--sb-grid-portal-visible",
-        "1"
-      );
-      document.documentElement.style.setProperty(
-        "--sb-grid-portal-pointer-events",
-        "auto"
-      );
-      document.documentElement.style.setProperty(
-        "--sb-grid-portal-left",
-        `${Math.round(bounds.left)}px`
-      );
-      document.documentElement.style.setProperty(
-        "--sb-grid-portal-top",
-        `${Math.round(bounds.top)}px`
-      );
-      document.documentElement.style.setProperty(
-        "--sb-grid-portal-width",
-        `${Math.round(bounds.width)}px`
-      );
-      document.documentElement.style.setProperty(
-        "--sb-grid-portal-height",
-        `${Math.round(bounds.height)}px`
-      );
-      document.documentElement.style.setProperty(
-        "--sb-grid-portal-border-radius",
-        paneStyle.borderRadius || "0px"
+      setGridPortalContainerCss(
+        generateGridPortalContainerCss(
+          {
+            left: bounds.left,
+            top: bounds.top,
+            width: bounds.width,
+            height: bounds.height,
+          },
+          paneStyle.borderRadius || "0px"
+        )
       );
     };
 
@@ -207,10 +287,10 @@ export function PaneLayout(props: PaneLayoutProps) {
           onClick={() => app.selectPane(pane.id)}
         >
           {pane.gridPortal !== null ? (
-            <div className="sb-pane-grid-portal">
-              <div className="sb-pane-grid-portal-badge">Grid Portal</div>
-              <div className="sb-pane-grid-portal-name">{pane.gridPortal}</div>
-            </div>
+            <GridPortalPane
+              portal={pane.gridPortal}
+              gameContainerCss={gridPortalContainerCss}
+            />
           ) : pane.component !== null ? (
             <div className="sb-pane-component">{pane.component}</div>
           ) : pane.tab ? (
@@ -299,12 +379,10 @@ export function PaneLayout(props: PaneLayoutProps) {
 
           <div className="sb-pane-detached-body">
             {pane.gridPortal !== null ? (
-              <div className="sb-pane-grid-portal">
-                <div className="sb-pane-grid-portal-badge">Grid Portal</div>
-                <div className="sb-pane-grid-portal-name">
-                  {pane.gridPortal}
-                </div>
-              </div>
+              <GridPortalPane
+                portal={pane.gridPortal}
+                gameContainerCss={gridPortalContainerCss}
+              />
             ) : pane.component !== null ? (
               <div className="sb-pane-component">{pane.component}</div>
             ) : pane.tab ? (
