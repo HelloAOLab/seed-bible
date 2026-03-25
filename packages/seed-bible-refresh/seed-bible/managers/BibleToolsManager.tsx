@@ -142,14 +142,6 @@ function OpenInSelectorIcon() {
   return <MaterialIcon>menu_book</MaterialIcon>;
 }
 
-function OpenGridPortalIcon() {
-  return <MaterialIcon>view_in_ar</MaterialIcon>;
-}
-
-function OpenMapPortalIcon() {
-  return <MaterialIcon>map</MaterialIcon>;
-}
-
 function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
   return [
     {
@@ -159,44 +151,6 @@ function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
       icon: OpenInSelectorIcon,
       onSelect: (context) => {
         context.selectorState.setOpen(true, context.currentPane);
-      },
-    },
-    {
-      id: "open-grid-portal",
-      priority: 100,
-      title: "Open grid portal",
-      icon: OpenGridPortalIcon,
-      isDisabled: (context) =>
-        context.panesManager.panes.value.some(
-          (pane) =>
-            (pane.gridPortal !== null || pane.mapPortal !== null) &&
-            pane.id !== context.currentPane.id
-        ),
-      onSelect: (context) => {
-        create({
-          home: true,
-          color: "red",
-        });
-        context.panesManager.openInPane(context.currentPane.id, {
-          gridPortal: "home",
-        });
-      },
-    },
-    {
-      id: "open-map-portal",
-      priority: 110,
-      title: "Open map portal",
-      icon: OpenMapPortalIcon,
-      isDisabled: (context) =>
-        context.panesManager.panes.value.some(
-          (pane) =>
-            (pane.gridPortal !== null || pane.mapPortal !== null) &&
-            pane.id !== context.currentPane.id
-        ),
-      onSelect: (context) => {
-        context.panesManager.openInPane(context.currentPane.id, {
-          mapPortal: "map_portal",
-        });
       },
     },
   ];
