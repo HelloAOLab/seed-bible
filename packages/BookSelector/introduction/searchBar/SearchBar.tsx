@@ -1655,6 +1655,11 @@ const SideBarChapters = (props: {
     bookData: BookInterface;
     [key: string]: any;
   }) => {
+    try {
+      if (globalThis.IsMobileNow()) {
+        setOpenOnMobile(false);
+      }
+    } catch (e) {}
     const { bookName, chapterNo, bookData, ...data } = props;
     if (globalThis?.findNameRank) {
       const booksDetails = globalThis.findNameRank(bookName);
