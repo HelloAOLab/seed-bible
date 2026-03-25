@@ -156,5 +156,8 @@
   "addToNew": "نوي ته اضافه کړئ",
   "itemsAddedToPlaylistSuccessfully": "توکي په لیست کې په بریالیتوب سره زیات شول.",
   "translationSwitchOption": "ایا تاسو غواړئ چې د {{translationName}} ژباړې ته لاړ شئ؟",
-  "chooseAnother": "بل یو غوره کړئ"
+  "chooseAnother": "بل یو غوره کړئ",
+  "playlistHasBeenEnded": "پلی لیست پای ته ورسید.",
+  "youAreAtTheBeginningOfThePlaylist": "تاسو د پلی لیست په پیل کې یاست.",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "د فلټر لپاره لږترلږه دوه نوټونه پکار دي."
 }

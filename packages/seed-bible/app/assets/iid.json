@@ -156,5 +156,8 @@
   "addToNew": "Tambah ke baru",
   "itemsAddedToPlaylistSuccessfully": "Item berhasil ditambahkan ke playlist.",
   "translationSwitchOption": "Apakah Anda ingin beralih ke terjemahan {{translationName}}?",
-  "chooseAnother": "Pilih yang lain"
+  "chooseAnother": "Pilih yang lain",
+  "playlistHasBeenEnded": "Playlist telah berakhir.",
+  "youAreAtTheBeginningOfThePlaylist": "Anda berada di awal playlist.",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "Anda memerlukan setidaknya dua anotasi untuk memfilter."
 }

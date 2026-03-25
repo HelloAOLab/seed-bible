@@ -156,5 +156,8 @@
   "addToNew": "ናብ ሓድሽ ወስኽ",
   "itemsAddedToPlaylistSuccessfully": "እቃታት ናብ ዝርዝር ብዓወት ተወሲዶም።",
   "translationSwitchOption": "ናብ {{translationName}} ትርጉም ክትቀይር ትደሊ ዶ?",
-  "chooseAnother": "ካልእ ምረጽ"
+  "chooseAnother": "ካልእ ምረጽ",
+  "playlistHasBeenEnded": "ዝርዝር ተዛዚሙ።",
+  "youAreAtTheBeginningOfThePlaylist": "ኣብ መጀመሪያ ዝርዝር ኢኻ።",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "ንምፍላይ ብዝወሓደ ክልተ ምልክታታት የድልየካ።"
 }

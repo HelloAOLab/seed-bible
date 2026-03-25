@@ -156,5 +156,8 @@
   "addToNew": "Ongeza kwenye mpya",
   "itemsAddedToPlaylistSuccessfully": "Vipengele vimeongezwa kwenye orodha kwa mafanikio.",
   "translationSwitchOption": "Je, ungependa kubadili kwenye tafsiri ya {{translationName}}?",
-  "chooseAnother": "Chagua kingine"
+  "chooseAnother": "Chagua kingine",
+  "playlistHasBeenEnded": "Orodha ya kucheza imekwisha.",
+  "youAreAtTheBeginningOfThePlaylist": "Uko mwanzoni mwa orodha ya kucheza.",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "Unahitaji angalau maelezo mawili kuchuja."
 }
