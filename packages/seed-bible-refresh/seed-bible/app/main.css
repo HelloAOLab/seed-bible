@@ -85,6 +85,11 @@
 
   --sb-reader-toolbar-floating-button-side-offset: 16px;
 
+  --sb-empty-pane-toolbar-button-border: 1px solid var(--sb-secondary-color);
+  --sb-empty-pane-toolbar-button-background: var(--sb-secondary-color);
+  --sb-empty-pane-toolbar-button-color: var(--sb-font-color);
+  --sb-empty-pane-toolbar-button-border-hover: 1px solid var(--sb-primary-color);
+
   --sb-verse-toolbar-tools-gap: 10px;
   --sb-verse-toolbar-mobile-bottom: 18px;
 
@@ -117,6 +122,10 @@ button {
 
   padding: 10px;
   box-sizing: border-box;
+
+  background: var(--sb-reader-background);
+  color: var(--sb-reader-font-color);
+  font-family: var(--sb-reader-font-family);
 }
 
 .sb-panes-layout[data-layout="single"] {
@@ -162,7 +171,6 @@ button {
   align-items: stretch;
   overflow: hidden;
   position: relative;
-  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 20%);
 }
 
 .sb-pane-shell {
@@ -172,12 +180,6 @@ button {
   background: var(--sb-reader-background);
   overflow: hidden;
   scrollbar-width: none;
-}
-
-.sb-pane-shell-active {
-  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 10%);
-  box-shadow: 0 0 0 1px
-    color-mix(in srgb, var(--sb-primary-color), transparent 45%);
 }
 
 .sb-pane-shell-detached {
@@ -195,6 +197,7 @@ button {
   align-items: center;
   justify-content: flex-start;
   padding: 0 12px;
+  /* TODO: Add variables */
   background: color-mix(in srgb, var(--sb-secondary-color), white 10%);
   border-bottom: 1px solid var(--sb-secondary-color);
   cursor: move;
@@ -325,11 +328,15 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  border: 1px solid var(--sb-secondary-color);
+
+  font-family: var(--sb-font-family);
+  border: var(--sb-empty-pane-toolbar-button-border);
+  background: var(--sb-empty-pane-toolbar-button-background);
+  color: var(--sb-empty-pane-toolbar-button-color);
+
   border-radius: 12px;
   padding: 20px 28px;
-  background: var(--sb-secondary-color);
-  color: var(--sb-font-color);
+
   cursor: pointer;
   font: inherit;
   transition:
@@ -338,12 +345,7 @@ button {
 }
 
 .sb-empty-pane-toolbar-button:hover {
-  background: color-mix(
-    in srgb,
-    var(--sb-secondary-color),
-    var(--sb-secondary-color) 30%
-  );
-  border-color: var(--sb-primary-color);
+  border: var(--sb-empty-pane-toolbar-button-border-hover);
 }
 
 .sb-empty-pane-toolbar-button:disabled {
@@ -360,9 +362,6 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  font-size: 18px;
-  font-style: italic;
 }
 
 .sb-panes-layout[data-layout="split-left-two-right"] .sb-pane-slot-1 {
@@ -397,8 +396,7 @@ button {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border-top: 1px solid var(--sb-secondary-color);
-  background: var(--sb-reader-background);
+  border-top: 1px solid #000;
   flex-shrink: 0;
   flex-wrap: wrap;
 }
@@ -411,10 +409,10 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--sb-secondary-color);
+  /* border: 1px solid var(--sb-secondary-color); */
   border-radius: 6px;
-  background: var(--sb-secondary-color);
-  color: var(--sb-font-color);
+  background: transparent;
+  color: inherit;
   cursor: pointer;
   padding: 6px 8px;
   font: inherit;
@@ -426,12 +424,7 @@ button {
 }
 
 .sb-below-reader-toolbar-button:hover {
-  background: color-mix(
-    in srgb,
-    var(--sb-secondary-color),
-    var(--sb-secondary-color) 30%
-  );
-  border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, #000, transparent 30%);
 }
 
 .sb-below-reader-toolbar-button:disabled {
@@ -441,7 +434,8 @@ button {
 
 .sb-bible-reader-title {
   margin-bottom: 6px;
-  font-family: "Newsreader", serif;
+  font-family: var(--sb-book-title-font-family), "Newsreader", serif;
+  color: var(--sb-book-title-font-color);
   font-weight: 600;
   font-size: 32px;
 }
@@ -454,30 +448,6 @@ button {
 .sb-bible-reader-meta {
   margin-top: 0;
   opacity: 0.8;
-}
-
-.sb-bible-reader-link {
-  border: none;
-  background: transparent;
-  padding: 0;
-  text-decoration: underline;
-  cursor: pointer;
-  font: inherit;
-}
-
-.sb-bible-reader-link-book {
-  font-family: var(--sb-book-title-font-family);
-  color: var(--sb-book-title-font-color);
-}
-
-.sb-bible-reader-link-chapter {
-  font-family: var(--sb-chapter-heading-font-family);
-  font-style: var(--sb-chapter-heading-font-style);
-  color: var(--sb-chapter-heading-font-color);
-}
-
-.sb-note-marker {
-  margin-left: 2px;
 }
 
 .sb-inline-footnote-button {
@@ -563,8 +533,6 @@ button {
   top: -0.4em;
   white-space: nowrap;
   vertical-align: middle;
-  /* margin-right: 2px;
-  font-weight: 700; */
 }
 
 .sb-poem-line-1 {
