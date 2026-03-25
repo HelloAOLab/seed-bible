@@ -26,23 +26,21 @@ const {
 
 if (thisBot.masks.isBibleAnimating && setBibleAnimating) return false;
 
-const sectionData: StackSectionData | undefined = thisBot.GetPieceData({
+const sectionData = await (thisBot.GetPieceData({
   piece: section,
-});
+}) as Promise<StackSectionData | undefined>);
 
 if (!sectionData) {
   throw new Error("sectionData not found at TrySetSectionAsExplodedView");
 }
 
-const {
-  bibleData,
-  testamentData,
-}: {
-  bibleData: StackBibleData | undefined;
-  testamentData: StackTestamentData | undefined;
-} = await thisBot.GetDataChainFromParentDataIds({
-  parentDataIds: sectionData.parentDataIds,
-});
+const { bibleData, testamentData } =
+  await (thisBot.GetDataChainFromParentDataIds({
+    parentDataIds: sectionData.parentDataIds,
+  }) as Promise<{
+    bibleData: StackBibleData | undefined;
+    testamentData: StackTestamentData | undefined;
+  }>);
 
 if (setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", true);
 

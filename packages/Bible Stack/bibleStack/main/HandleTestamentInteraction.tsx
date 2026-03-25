@@ -37,9 +37,9 @@ if (
 )
   return;
 
-const testamentData: StackTestamentData | undefined = thisBot.GetPieceData({
+const testamentData = await (thisBot.GetPieceData({
   piece: testament,
-});
+}) as Promise<StackTestamentData | undefined>);
 
 if (!testamentData) {
   throw new Error("HandleTestamentInteraction: testamentData not found.");

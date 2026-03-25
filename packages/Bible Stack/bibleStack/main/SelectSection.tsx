@@ -25,10 +25,7 @@ import type { StackTestamentData } from "bibleVizUtils.models.entities.StackTest
 import type { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
 import type { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
-import {
-  CanvasInteractions,
-  type CanvasInteraction,
-} from "bibleVizUtils.models.canvas";
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
 
 /**
  * Handles a section selection. It modify the data of the selected section on the bibleStructure,
@@ -45,7 +42,7 @@ const {
   isInstantaneous = false,
   skipTourGuide = false,
 } = that;
-const sectionData: StackSectionData | undefined = thisBot.GetPieceData({
+const sectionData: StackSectionData | undefined = await thisBot.GetPieceData({
   piece: section,
 });
 

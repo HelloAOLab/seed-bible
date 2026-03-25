@@ -2,7 +2,16 @@ import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
 import { LabelPosition } from "bibleVizUtils.models.label";
 import { HexToRgb } from "bibleVizUtils.functions.index";
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
-const chapterData = ScriptureMap3DManager.GetPieceData({ piece: thisBot });
+import type { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
+
+const chapterData = await (ScriptureMap3DManager.GetPieceData({
+  piece: thisBot,
+}) as Promise<StackChapterData | undefined>);
+
+if (!chapterData) {
+  throw new Error("Highlight: chapterData not found.");
+}
+
 const duration = 0.1;
 
 let rgbTargetColor;

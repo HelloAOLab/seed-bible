@@ -2,6 +2,7 @@ import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
 import { LabelPosition } from "bibleVizUtils.models.label";
 import { HexToRgb } from "bibleVizUtils.functions.index";
+import type { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
 
 /**
  * Highlights the chapter by animating its color and scale.
@@ -10,7 +11,14 @@ import { HexToRgb } from "bibleVizUtils.functions.index";
  * const result = chapter.Highlight();
  */
 
-const chapterData = BibleStackManager.GetPieceData({ piece: thisBot });
+const chapterData = await (BibleStackManager.GetPieceData({
+  piece: thisBot,
+}) as Promise<StackChapterData | undefined>);
+
+if (!chapterData) {
+  throw new Error("Highlight: chapterData not found.");
+}
+
 const duration = 0.1;
 const rgbTargetColor = HexToRgb({
   hexColor: BibleVizUtils.Data.masks.isInHistoryMode
@@ -22,8 +30,8 @@ thisBot.StopChapterTransition();
 const dimension = os.getCurrentDimension();
 const easing = { type: "sinusoidal", mode: "inout" };
 if (
-  !chapterData.piece.masks.isSelecting &&
-  !chapterData.piece.masks.isDeselecting &&
+  !thisBot.masks.isSelecting &&
+  !thisBot.masks.isDeselecting &&
   chapterData.isSelected &&
   thisBot.masks.isOnTheGround
 ) {
@@ -60,8 +68,8 @@ if (
 
 setTagMask(thisBot, "isHighlighting", true);
 if (
-  !chapterData.piece.masks.isSelecting &&
-  !chapterData.piece.masks.isDeselecting &&
+  !thisBot.masks.isSelecting &&
+  !thisBot.masks.isDeselecting &&
   (!chapterData.isSelected || thisBot.masks.isOnTheGround)
 )
   animations.push(

@@ -22,19 +22,44 @@ import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
  * thisBot.DeletePiece({pieceData: somePieceData, piece: somePiece});
  */
 
-let { pieceData } = that;
-const { piece } = that;
+type AnyData =
+  | StackBibleData
+  | StackTestamentData
+  | StackSectionData
+  | StackSectionBookData
+  | StackBookData
+  | StackChapterData;
+
+let {
+  pieceData,
+}: {
+  pieceData: AnyData | undefined;
+} = that;
+const {
+  piece,
+}: {
+  piece: Bot | undefined;
+} = that;
 if (!pieceData) {
+  if (!piece) {
+    throw new Error("DeletePiece: pieceData or piece must be defined.");
+  }
   if (piece.tags.isStackPiece) {
-    pieceData = thisBot.GetPieceData({ piece });
+    pieceData = await (thisBot.GetPieceData({ piece }) as Promise<
+      AnyData | undefined
+    >);
   } else if (piece.tags.isStackBibleTransformer) {
-    pieceData = thisBot.vars.stackBiblesData.find((bibleData) => {
-      return bibleData.id == piece.tags.stackBibleId;
-    });
+    pieceData = (thisBot.vars.stackBiblesData as StackBibleData[]).find(
+      (bibleData) => {
+        return bibleData.id == piece.tags.stackBibleId;
+      }
+    );
   } else if (piece.tags.isSectionShadow) {
-    pieceData = thisBot.vars.stackSectionsData.find((data) => {
-      return data.isActive && data.id == piece.tags.sectionDataId;
-    });
+    pieceData = (thisBot.vars.stackSectionsData as StackSectionData[]).find(
+      (data) => {
+        return data.isActive && data.id == piece.tags.sectionDataId;
+      }
+    );
   }
 }
 // const {bibleData, testamentData, sectionData, sectionBookData, bookData} = thisBot.GetDataChainFromParentDataIds({parentDataIds: pieceData.parentDataIds});

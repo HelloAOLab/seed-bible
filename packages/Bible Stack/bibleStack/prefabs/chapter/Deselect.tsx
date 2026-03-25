@@ -1,3 +1,4 @@
+import type { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { HexToRgb } from "bibleVizUtils.functions.index";
@@ -8,7 +9,14 @@ import { HexToRgb } from "bibleVizUtils.functions.index";
  * chapter.Deselect();
  */
 
-const chapterData = BibleStackManager.GetPieceData({ piece: thisBot });
+const chapterData = await (BibleStackManager.GetPieceData({
+  piece: thisBot,
+}) as Promise<StackChapterData | undefined>);
+
+if (!chapterData) {
+  throw new Error("Deselect: chapterData not found.");
+}
+
 const dimension = os.getCurrentDimension();
 const duration = 0.15;
 const easing = { type: "sinusoidal", mode: "out" };
@@ -17,7 +25,7 @@ const rgbTargetColor = HexToRgb({
     ? BibleVizUtils.Functions.GetHistoryColor({ piece: thisBot })
     : (chapterData.highlightColor ?? thisBot.tags.initialColor),
 });
-const chapterPosition = getBotPosition(chapterData.piece, dimension);
+const chapterPosition = getBotPosition(thisBot, dimension);
 const delayBetweenChunkAnimations = 35;
 const chunkAnimationDuration = 0.15;
 
@@ -53,23 +61,23 @@ if (chapterData) {
       ColorLerper.LerpTag({
         endingColor: rgbTargetColor,
         durationInSeconds: duration,
-        bot: chapterData.piece,
+        bot: thisBot,
         tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color,
       }),
-      animateTag(chapterData.piece, "labelOpacity", {
+      animateTag(thisBot, "labelOpacity", {
         toValue: 0,
         duration: duration / 2,
         easing,
       }).then(() => {
-        setTagMask(chapterData.piece, "labelPosition", "front");
-        setTagMask(chapterData.piece, "label", thisBot.tags.chapterNumber);
-        return animateTag(chapterData.piece, "labelOpacity", {
+        setTagMask(thisBot, "labelPosition", "front");
+        setTagMask(thisBot, "label", thisBot.tags.chapterNumber);
+        return animateTag(thisBot, "labelOpacity", {
           toValue: 1,
           duration: duration / 2,
           easing,
         });
       }),
-      animateTag(chapterData.piece, {
+      animateTag(thisBot, {
         fromValue: {
           scaleX: chapterScales.x,
           scaleY: chapterScales.y,
@@ -96,16 +104,16 @@ if (chapterData) {
       ColorLerper.LerpTag({
         endingColor: rgbTargetColor,
         durationInSeconds: duration,
-        bot: chapterData.piece,
+        bot: thisBot,
         tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color,
       }),
-      animateTag(chapterData.piece, {
+      animateTag(thisBot, {
         fromValue: {
-          scaleY: chapterData.piece.tags.selectedScaleY,
+          scaleY: thisBot.tags.selectedScaleY,
           [dimension + "Y"]: chapterPosition.y,
         },
         toValue: {
-          scaleY: chapterData.piece.tags.initialScaleY,
+          scaleY: thisBot.tags.initialScaleY,
           [dimension + "Y"]:
             chapterPosition.y +
             BibleVizDataRepository.getStackPieceMeasurement(

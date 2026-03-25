@@ -24,8 +24,6 @@ setTagMask(thisBot, "isMakingTabsVizUpdate", true);
 
 const activeTab = seedBiblePresenceProvider.getActiveTab();
 
-// console.log(`[Debug] UpdateStackTabsVisualization`, {activeTab});
-
 if (!activeTab) {
   console.warn("not active tab found at UpdateStackTabsVisualization");
   return;
@@ -241,7 +239,7 @@ const allAnimations = [
 ].filter(Boolean);
 
 return (
-  allAnimations.length > 0 ? Promise.allSettled(allAnimations) : os.sleep(1)
+  allAnimations.length > 0 ? Promise.all(allAnimations) : os.sleep(1)
 ).then(() => {
   setTagMask(thisBot, "isMakingTabsVizUpdate", false);
   if (thisBot.masks.isTabVizUpdateQueued) {

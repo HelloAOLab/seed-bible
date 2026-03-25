@@ -16,6 +16,8 @@ import {
   type CanvasInteraction,
 } from "bibleVizUtils.models.canvas";
 import type { DraggingEvent, DropEvent } from "bibleVizUtils.models.casualos";
+import type { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
+import type { StackBibleData } from "@packages/Bible Visualization Utils/bibleVizUtils/models/entities/StackBibleData";
 
 const {
   section,
@@ -33,10 +35,17 @@ if (
   typeOfInteraction !== CanvasInteractions.PointerUp
 )
   return;
-const sectionData = thisBot.GetPieceData({ piece: section });
-const { bibleData } = await thisBot.GetDataChainFromParentDataIds({
+const sectionData = await (thisBot.GetPieceData({ piece: section }) as Promise<
+  StackSectionData | undefined
+>);
+
+if (!sectionData) {
+  throw new Error("HandleSectionInteraction: sectionData not found");
+}
+
+const { bibleData } = await (thisBot.GetDataChainFromParentDataIds({
   parentDataIds: sectionData.parentDataIds,
-});
+}) as Promise<{ bibleData: StackBibleData | undefined }>);
 
 if (!bibleData || bibleData.currentState === BibleState.Open) {
   if (!thisBot.masks.isASectionMakingTourGuide) {

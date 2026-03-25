@@ -18,10 +18,7 @@ import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleDat
 import { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
 import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
-import {
-  CanvasInteractions,
-  type CanvasInteraction,
-} from "bibleVizUtils.models.canvas";
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
 
 /**
  * Handles a testament selection. It modify the data of the selected testament on the bibleStructure,
@@ -42,9 +39,10 @@ const {
   isInstantaneous?: boolean;
 } = that;
 
-const testamentData: StackTestamentData | undefined = thisBot.GetPieceData({
-  piece: testament,
-});
+const testamentData: StackTestamentData | undefined =
+  await thisBot.GetPieceData({
+    piece: testament,
+  });
 
 if (!testamentData) {
   console.warn("testamentData not found at SelectTestament");
@@ -86,22 +84,23 @@ shout("OnStackTestamentSelected", {
 });
 setTagMask(thisBot, "isBibleAnimating", true);
 if (thisBot.vars.highlightedPieces.length > 0 && bibleData) {
+  const dataToUnhighlight = await Promise.all(
+    (thisBot.vars.highlightedPieces as Bot[]).map((piece) => {
+      return thisBot.GetPieceData({ piece }) as Promise<
+        StackTestamentData | undefined
+      >;
+    })
+  );
   const piecesToUnhighlight = (
-    (thisBot.vars.highlightedPieces as Bot[])
-      .map((piece) => {
-        return thisBot.GetPieceData({ piece }) as
-          | StackTestamentData
-          | undefined;
-      })
-      .filter((pieceData) => {
-        return (
-          pieceData &&
-          pieceData.getParentId("stackBibleId") &&
-          pieceData.getParentId("stackBibleId") === bibleData.id &&
-          !pieceData.piece?.masks.isOnTheGround &&
-          !pieceData.piece?.masks.isUnhighlighting
-        );
-      }) as StackTestamentData[]
+    dataToUnhighlight.filter((pieceData) => {
+      return (
+        pieceData &&
+        pieceData.getParentId("stackBibleId") &&
+        pieceData.getParentId("stackBibleId") === bibleData.id &&
+        !pieceData.piece?.masks.isOnTheGround &&
+        !pieceData.piece?.masks.isUnhighlighting
+      );
+    }) as StackTestamentData[]
   ).map((pieceData) => {
     return pieceData.piece as Bot;
   });

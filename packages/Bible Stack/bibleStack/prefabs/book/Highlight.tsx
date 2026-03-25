@@ -16,8 +16,14 @@ import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSection
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 
 const { speedMultiplier = 1, isInstantaneous = false } = that ?? {};
-const bookData: StackBookData | StackSectionBookData =
-  BibleStackManager.GetPieceData({ piece: thisBot });
+const bookData = await (BibleStackManager.GetPieceData({
+  piece: thisBot,
+}) as Promise<StackBookData | StackSectionBookData | undefined>);
+
+if (!bookData) {
+  throw new Error("Highlight: bookData not found.");
+}
+
 const dimension = os.getCurrentDimension();
 const duration = isInstantaneous
   ? 0

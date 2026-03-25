@@ -27,6 +27,10 @@ const easing = { type: "sinusoidal", mode: "inout" };
 const label = thisBot.tags.infoLabel;
 const testamentData = PieceDataRepository.getPieceData({ piece: thisBot });
 
+if (!testamentData) {
+  throw new Error("Highlight: testamentData not found");
+}
+
 const { infoLabelTransformer } = SpawnLabelForPiece({
   piece: thisBot,
   label,

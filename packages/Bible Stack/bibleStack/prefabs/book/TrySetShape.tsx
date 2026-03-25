@@ -30,19 +30,18 @@ const {
 } = that;
 let { duration = 0.5 }: { duration?: number } = that;
 duration = duration / speedMultiplier;
-const bookData: StackBookData | undefined = BibleStackManager.GetPieceData({
+const bookData = await (BibleStackManager.GetPieceData({
   piece: thisBot,
-});
+}) as Promise<StackBookData | undefined>);
 
 if (!bookData) {
   console.error("bookData not found at TrySetShape");
   return;
 }
 
-const { sectionData }: { sectionData: StackSectionData | undefined } =
-  await BibleStackManager.GetDataChainFromParentDataIds({
-    parentDataIds: bookData.parentDataIds,
-  });
+const { sectionData } = await (BibleStackManager.GetDataChainFromParentDataIds({
+  parentDataIds: bookData.parentDataIds,
+}) as Promise<{ sectionData: StackSectionData | undefined }>);
 
 const prevShape = bookData.currentShape;
 if (shape === prevShape) return false;

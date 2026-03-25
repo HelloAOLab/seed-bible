@@ -7,7 +7,7 @@ import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
 let {
   pieceData,
 }: {
-  pieceData: LayoutBibleData | LayoutBookData | LayoutChapterData;
+  pieceData: LayoutBibleData | LayoutBookData | LayoutChapterData | undefined;
 } = that;
 const {
   piece,
@@ -22,11 +22,15 @@ if (!pieceData || !piece) {
 
 if (!pieceData) {
   if (piece.tags.isLayoutCover) {
-    pieceData = thisBot.vars.layoutsData.find((layoutData) => {
-      return layoutData.id == piece.tags.layoutId;
-    });
+    pieceData = (thisBot.vars.layoutsData as LayoutBibleData[]).find(
+      (layoutData) => {
+        return layoutData.id == piece.tags.layoutId;
+      }
+    );
   } else if (piece.tags.isLayoutPiece) {
-    pieceData = thisBot.GetPieceData({ piece });
+    pieceData = await (thisBot.GetPieceData({ piece }) as Promise<
+      LayoutBibleData | LayoutBookData | LayoutChapterData | undefined
+    >);
   }
 }
 

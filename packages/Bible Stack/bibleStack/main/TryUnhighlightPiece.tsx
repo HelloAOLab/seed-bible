@@ -35,16 +35,17 @@ const {
   isInstantaneous = false,
 } = that;
 
-const data:
+const data = await (thisBot.GetPieceData({ piece }) as Promise<
   | StackTestamentData
   | StackSectionData
   | StackSectionBookData
   | StackBookData
   | StackChapterData
-  | undefined = thisBot.GetPieceData({ piece });
+  | undefined
+>);
 
 if (!data) {
-  throw new Error(`data not founda at TryUnhighlightPiece`);
+  throw new Error(`TryUnhighlightPiece: data not found.`);
 }
 
 const { bibleData } = await (thisBot.GetDataChainFromParentDataIds({

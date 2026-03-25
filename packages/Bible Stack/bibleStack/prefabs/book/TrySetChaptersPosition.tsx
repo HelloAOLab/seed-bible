@@ -13,22 +13,18 @@ import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleDat
  * someBook.TrySetChaptersPosition({setX: true, setY: true, setZ: true});
  */
 const dimension = os.getCurrentDimension();
-const bookData: StackBookData | undefined = BibleStackManager.GetPieceData({
+const bookData = await (BibleStackManager.GetPieceData({
   piece: thisBot,
-});
+}) as Promise<StackBookData | undefined>);
 
 if (!bookData) {
   console.error("bookData not found at TrySetChaptersPosition");
   return;
 }
 
-const {
-  bibleData,
-}: {
-  bibleData: StackBibleData | undefined;
-} = await BibleStackManager.GetDataChainFromParentDataIds({
+const { bibleData } = await (BibleStackManager.GetDataChainFromParentDataIds({
   parentDataIds: bookData.parentDataIds,
-});
+}) as Promise<{ bibleData: StackBibleData | undefined }>);
 
 const activeChaptersData = bookData.childrenData.filter((chapterData) => {
   return chapterData.isInsideBook;

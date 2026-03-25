@@ -1,5 +1,7 @@
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 import { GetBotScales, HexToRgb } from "bibleVizUtils.functions.index";
+import type { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
+
 /**
  * Selects the chapter by animating its color and scaling effects, and displaying its verses if it has been dragged out of the map
  * @returns {Promise<boolean>} - Returns true if the selection animation is successful.
@@ -9,7 +11,14 @@ import { GetBotScales, HexToRgb } from "bibleVizUtils.functions.index";
 
 const { duration = 0.15, layoutData } = that;
 const dimension = os.getCurrentDimension();
-const chapterData = ScriptureMap3DManager.GetPieceData({ piece: thisBot });
+const chapterData = await (ScriptureMap3DManager.GetPieceData({
+  piece: thisBot,
+}) as Promise<StackChapterData | undefined>);
+
+if (!chapterData) {
+  throw new Error("Select: chapterData not found.");
+}
+
 const easing = { type: "sinusoidal", mode: "out" };
 const chapterPosition = getBotPosition(thisBot, dimension);
 const delayBetweenChunkAnimations = 35;

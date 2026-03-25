@@ -1,3 +1,5 @@
+import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+import type { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
 import { GetBotScales } from "bibleVizUtils.functions.index";
 /**
  * Animates the book's position and scale to the desired target values based on the current section's state.
@@ -10,11 +12,19 @@ import { GetBotScales } from "bibleVizUtils.functions.index";
 
 const { speedMultiplier = 1, isInstantaneous = false } = that;
 const dimension = os.getCurrentDimension();
-const bookData = BibleStackManager.GetPieceData({ piece: thisBot });
-const { sectionData } = await BibleStackManager.GetDataChainFromParentDataIds({
+const bookData = await (BibleStackManager.GetPieceData({
+  piece: thisBot,
+}) as Promise<StackBookData | undefined>);
+
+if (!bookData) {
+  throw new Error("AnimateToDesiredPosition: bookData not found");
+}
+
+const { sectionData } = await (BibleStackManager.GetDataChainFromParentDataIds({
   parentDataIds: bookData.parentDataIds,
-});
-const sectionPosition = sectionData
+}) as Promise<{ sectionData: StackSectionData | undefined }>);
+
+const sectionPosition = sectionData?.piece
   ? getBotPosition(sectionData.piece, dimension)
   : null;
 const animationDuration = 0.5 / speedMultiplier;
@@ -22,7 +32,7 @@ const bookPosition = getBotPosition(thisBot, dimension);
 const bookScales = GetBotScales(thisBot);
 const easeInOutSine = { type: "sinusoidal", mode: "inout" };
 if (isInstantaneous) {
-  if (sectionData?.isInExplodedView) {
+  if (sectionData?.isInExplodedView && sectionPosition && sectionData.piece) {
     setTag(
       thisBot,
       dimension + "X",
@@ -74,29 +84,33 @@ if (isInstantaneous) {
         formOpacity: thisBot.tags.formOpacity,
       },
       toValue: {
-        [dimension + "X"]: sectionData?.isInExplodedView
-          ? thisBot.tags.explodedViewPosition.x *
-              sectionData.piece.tags.initialScaleX +
-            sectionPosition.x
-          : null,
-        [dimension + "Y"]: sectionData?.isInExplodedView
-          ? thisBot.tags.explodedViewPosition.y *
-              sectionData.piece.tags.initialScaleY +
-            sectionPosition.y
-          : null,
+        [dimension + "X"]:
+          sectionData?.isInExplodedView && sectionData.piece && sectionPosition
+            ? thisBot.tags.explodedViewPosition.x *
+                sectionData.piece.tags.initialScaleX +
+              sectionPosition.x
+            : null,
+        [dimension + "Y"]:
+          sectionData?.isInExplodedView && sectionData.piece && sectionPosition
+            ? thisBot.tags.explodedViewPosition.y *
+                sectionData.piece.tags.initialScaleY +
+              sectionPosition.y
+            : null,
         [dimension + "Z"]: thisBot.tags.desiredPositionZ,
-        scaleX: sectionData?.isInExplodedView
-          ? thisBot.tags.explodedViewCustomScale
-            ? thisBot.tags.explodedViewCustomScale.x *
-              sectionData.piece.tags.initialScaleX
-            : thisBot.tags.initialScaleX
-          : null,
-        scaleY: sectionData?.isInExplodedView
-          ? thisBot.tags.explodedViewCustomScale
-            ? thisBot.tags.explodedViewCustomScale.y *
-              sectionData.piece.tags.initialScaleY
-            : thisBot.tags.initialScaleY
-          : null,
+        scaleX:
+          sectionData?.isInExplodedView && sectionData.piece
+            ? thisBot.tags.explodedViewCustomScale
+              ? thisBot.tags.explodedViewCustomScale.x *
+                sectionData.piece.tags.initialScaleX
+              : thisBot.tags.initialScaleX
+            : null,
+        scaleY:
+          sectionData?.isInExplodedView && sectionData.piece
+            ? thisBot.tags.explodedViewCustomScale
+              ? thisBot.tags.explodedViewCustomScale.y *
+                sectionData.piece.tags.initialScaleY
+              : thisBot.tags.initialScaleY
+            : null,
         scaleZ: sectionData?.isInExplodedView
           ? thisBot.tags.initialScaleZ
           : null,

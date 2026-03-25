@@ -14,9 +14,9 @@ const {
 }: {
   bibleId?: string;
 } = that ?? {};
-const bookData: StackBookData | undefined = BibleStackManager.GetPieceData({
+const bookData = await (BibleStackManager.GetPieceData({
   piece: thisBot,
-});
+}) as Promise<StackBookData | undefined>);
 
 if (!bookData) {
   throw new Error("bookData not found at HideChapters");

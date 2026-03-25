@@ -9,9 +9,18 @@ import { GetBotScales } from "bibleVizUtils.functions.index";
  */
 
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+import type { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 
 const { speedMultiplier = 1, isInstantaneous = false } = that ?? {};
-const bookData = BibleStackManager.GetPieceData({ piece: thisBot });
+const bookData = await (BibleStackManager.GetPieceData({
+  piece: thisBot,
+}) as Promise<StackBookData | StackSectionBookData | undefined>);
+
+if (!bookData) {
+  throw new Error("Rehighlight: bookData not found.");
+}
+
 // const dimension = os.getCurrentDimension();
 const animationDuration = isInstantaneous
   ? 0

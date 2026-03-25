@@ -124,10 +124,6 @@ export interface LayoutBookStructure {
   infoCardBackground?: Bot;
   infoCardcontent?: Bot;
   column: number;
-  row: number;
-  historicalDateRange: string;
-  elapsedYearsRange: string;
-  id: string;
 }
 
 export const EnqueueChapterActions = {

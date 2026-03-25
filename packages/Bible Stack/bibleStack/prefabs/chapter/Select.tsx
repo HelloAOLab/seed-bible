@@ -1,6 +1,7 @@
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 import { GetBotScales, HexToRgb } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import type { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
 
 /**
  * Selects the chapter by animating its color and scaling effects, and displaying its verses if it is on the ground.
@@ -9,11 +10,18 @@ import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepositor
  * const result = chapter.Select();
  */
 
-const chapterData = BibleStackManager.GetPieceData({ piece: thisBot });
+const chapterData = await (BibleStackManager.GetPieceData({
+  piece: thisBot,
+}) as Promise<StackChapterData | undefined>);
+
+if (!chapterData) {
+  throw new Error("Select: chapterData not found");
+}
+
 const dimension = os.getCurrentDimension();
-let duration;
+let duration: number | undefined;
 const easing = { type: "sinusoidal", mode: "out" };
-const chapterPosition = getBotPosition(chapterData.piece, dimension);
+const chapterPosition = getBotPosition(thisBot, dimension);
 
 const delayBetweenChunkAnimations = 35;
 const chunkAnimationDuration = 0.15;
@@ -45,23 +53,23 @@ if (chapterData) {
       ColorLerper.LerpTag({
         endingColor: rgbTargetColor,
         durationInSeconds: duration,
-        bot: chapterData.piece,
+        bot: thisBot,
         tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color,
       }),
-      animateTag(chapterData.piece, "labelOpacity", {
+      animateTag(thisBot, "labelOpacity", {
         toValue: 0,
         duration: duration / 2,
         easing,
       }).then(() => {
-        setTagMask(chapterData.piece, "labelPosition", "top");
-        setTagMask(chapterData.piece, "label", labelText);
-        return animateTag(chapterData.piece, "labelOpacity", {
+        setTagMask(thisBot, "labelPosition", "top");
+        setTagMask(thisBot, "label", labelText);
+        return animateTag(thisBot, "labelOpacity", {
           toValue: 1,
           duration: duration / 2,
           easing,
         });
       }),
-      animateTag(chapterData.piece, {
+      animateTag(thisBot, {
         fromValue: {
           scaleX: chapterScales.x,
           scaleY: chapterScales.y,
@@ -121,16 +129,16 @@ if (chapterData) {
       ColorLerper.LerpTag({
         endingColor: rgbTargetColor,
         durationInSeconds: duration,
-        bot: chapterData.piece,
+        bot: thisBot,
         tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color,
       }),
-      animateTag(chapterData.piece, {
+      animateTag(thisBot, {
         fromValue: {
-          scaleY: chapterData.piece.tags.initialScaleY,
+          scaleY: thisBot.tags.initialScaleY,
           [dimension + "Y"]: chapterPosition.y,
         },
         toValue: {
-          scaleY: chapterData.piece.tags.selectedScaleY,
+          scaleY: thisBot.tags.selectedScaleY,
           [dimension + "Y"]:
             chapterPosition.y -
             BibleVizDataRepository.getStackPieceMeasurement(

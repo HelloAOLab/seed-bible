@@ -7,7 +7,16 @@ import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
  * const verseChunks = chapter.GetChunksOfVerses();
  */
 
-const chapterData = BibleStackManager.GetPieceData({ piece: thisBot });
+import type { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
+
+const chapterData = await (BibleStackManager.GetPieceData({
+  piece: thisBot,
+}) as Promise<StackChapterData | undefined>);
+
+if (!chapterData) {
+  throw new Error("GetChunksOfVerses: chapterData not found.");
+}
+
 const chunks = [];
 const versesPerChunk = 12;
 let chunksCount = Math.floor(
@@ -37,15 +46,11 @@ for (let i = 0; i < chunksCount; i++) {
   setTagMask(
     chunk,
     "chunkPath",
-    `${chapterData.piece.tags.parentBookName} ${chapterData.piece.tags.chapterNumber} ${label}`
+    `${thisBot.tags.parentBookName} ${thisBot.tags.chapterNumber} ${label}`
   );
-  setTagMask(
-    chunk,
-    "arrangementIndex",
-    chapterData.piece.tags.arrangementIndex
-  );
-  setTagMask(chunk, "parentBookName", chapterData.piece.tags.parentBookName);
-  setTagMask(chunk, "chapterNumber", chapterData.piece.tags.chapterNumber);
+  setTagMask(chunk, "arrangementIndex", thisBot.tags.arrangementIndex);
+  setTagMask(chunk, "parentBookName", thisBot.tags.parentBookName);
+  setTagMask(chunk, "chapterNumber", thisBot.tags.chapterNumber);
   setTagMask(chunk, "label", label);
   if (BibleVizUtils.Data.masks.isInHistoryMode)
     setTagMask(
