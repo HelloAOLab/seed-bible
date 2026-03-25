@@ -9,7 +9,7 @@
   z-index: 10;
 }
 
-@media (max-width: 764px) {
+@media (max-width: 480px) {
   .toolbar-container-1 {
     bottom: 0;
     top: auto;
@@ -44,7 +44,7 @@
   transition: transform 0.3s ease;
 }
 
-@media (max-width: 764px) {
+@media (max-width: 480px) {
   .toolbar-1 {
     display: none;
   }
@@ -74,7 +74,7 @@
   transition: transform 0.3s ease;
 }
 
-@media (max-width: 764px) {
+@media (max-width: 480px) {
   .mobile-bottom-navbar {
     display: flex;
   }
@@ -186,7 +186,7 @@
 }
 
 /* Adjust main content for mobile navbar */
-@media (max-width: 764px) {
+@media (max-width: 480px) {
   body {
     padding-bottom: 100px;
   }
@@ -218,7 +218,7 @@
   width: 48px !important;
   height: 48px !important;
 }
-@media (min-width: 765px) {
+@media (min-width: 481px) {
   .mobile-only {
     display: none;
   }
