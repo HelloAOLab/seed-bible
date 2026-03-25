@@ -156,5 +156,8 @@
   "addToNew": "نئی میں شامل کریں",
   "itemsAddedToPlaylistSuccessfully": "آئٹمز پلے لسٹ میں کامیابی سے شامل ہو گئے۔",
   "translationSwitchOption": "کیا آپ {{translationName}} ترجمے پر سوئچ کرنا چاہیں گے؟",
-  "chooseAnother": "دوسرا انتخاب کریں"
+  "chooseAnother": "دوسرا انتخاب کریں",
+  "playlistHasBeenEnded": "پلے لسٹ ختم ہو گئی۔",
+  "youAreAtTheBeginningOfThePlaylist": "آپ پلے لسٹ کے آغاز پر ہیں۔",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "فلٹر کرنے کے لیے کم از کم دو نوٹس درکار ہیں۔"
 }

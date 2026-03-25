@@ -156,5 +156,8 @@
   "addToNew": "افزودن به جدید",
   "itemsAddedToPlaylistSuccessfully": "آیتم‌ها با موفقیت به لیست اضافه شدند.",
   "translationSwitchOption": "آیا می‌خواهید به ترجمه {{translationName}} تغییر دهید؟",
-  "chooseAnother": "یکی دیگر را انتخاب کنید"
+  "chooseAnother": "یکی دیگر را انتخاب کنید",
+  "playlistHasBeenEnded": "لیست پخش به پایان رسید.",
+  "youAreAtTheBeginningOfThePlaylist": "در ابتدای لیست پخش هستید.",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "برای فیلتر کردن حداقل به دو حاشیه‌نویسی نیاز دارید."
 }

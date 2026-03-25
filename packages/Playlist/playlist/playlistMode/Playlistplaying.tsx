@@ -410,29 +410,32 @@ const PlayingPlaylist = () => {
 
     const th = G.PlayingPlaylists[key].list;
     let index = th.findIndex((ele: any) => ele.id === data.id);
+    let subIndex = 0;
 
     if (bulkAdd || index === -1) {
       th.findIndex((item: any, i: any) => {
         const toBeMapped = item.additionalInfo.layers || [];
         if (Array.isArray(toBeMapped)) {
-          const idMap: Record<string, boolean> = {};
-          toBeMapped.forEach(({ id }) => {
-            idMap[id] = true;
+          const idMap: Record<string, number> = {};
+          toBeMapped.forEach(({ id }, index: number) => {
+            idMap[id] = index;
           });
-          if (idMap[data.id]) {
+          if (idMap[data.id] && idMap[data.id] !== 0) {
             index = i;
+            subIndex = idMap[data.id] || 0;
           }
         }
       });
     }
     if (index > -1) {
       G.UpdateJustAddedToQueue(false);
+      G.StayVIAPressOfButton = true;
       G.SetCurreIndexDirect({
         key: key,
         index: index,
         fromButton: G.CurrentIndexItem.fromButton || 1,
         isPreviousQueue: false,
-        subIndex: 0,
+        subIndex: subIndex,
       });
     }
   };
