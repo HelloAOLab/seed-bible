@@ -222,14 +222,14 @@
 }
 
 .settings-toggle.active {
-  background-color: var(--spaceSelection);
+  background-color: var(--addButtonIcon);
 }
 
 .settings-toggle-knob {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background-color: white;
+  background-color: var(--primaryColor);
   position: absolute;
   top: 2px;
   left: 2px;
@@ -285,8 +285,8 @@
 }
 
 .create-profile-btn {
-  background-color: var(--spaceSelection);
-  color: white;
+  background-color: var(--addButtonIcon);
+  color: var(--primaryColor);
   border: none;
   /* border-radius: 8px; */
   padding: 9px 10px;
@@ -295,13 +295,14 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  border-radius: 10px;
   gap: 8px;
   transition: background-color 0.2s ease;
   font-family: inherit;
 }
 
 .create-profile-btn:hover {
-  background-color: var(--spaceSelection);
+  background-color: var(--addButtonIcon);
 }
 
 .create-profile-btn:active {

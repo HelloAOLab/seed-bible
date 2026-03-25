@@ -1,15 +1,15 @@
 {
-    "app": "@tryInitPlaylistMaker",
-    "author": "Kushagra Karki",
-    "toolbarConfig": {
-        "icon": "playlist_play",
-        "label": "Playlist",
-        "hasToggle": "true"
-    },
-    "tabConfig": {
-        "title": "Playlist Kushagra"
-    },
-    "contextMenuConfig": {
-        "optionsIsOn": "@options"
-    }
+  "app": "@tryInitPlaylistMaker",
+  "author": "Kushagra Karki",
+  "toolbarConfig": {
+    "icon": "playlist_play",
+    "label": "Playlist",
+    "hasToggle": "true"
+  },
+  "tabConfig": {
+    "title": "Playlist Kushagra"
+  },
+  "contextMenuConfig": {
+    "optionsIsOn": "@options"
+  }
 }

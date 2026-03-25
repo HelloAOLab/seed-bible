@@ -156,5 +156,8 @@
   "addToNew": "Додати до нового",
   "itemsAddedToPlaylistSuccessfully": "Елементи успішно додано до списку відтворення.",
   "translationSwitchOption": "Бажаєте перейти до перекладу {{translationName}}?",
-  "chooseAnother": "Вибрати інший"
+  "chooseAnother": "Вибрати інший",
+  "playlistHasBeenEnded": "Плейлист завершено.",
+  "youAreAtTheBeginningOfThePlaylist": "Ви на початку плейлиста.",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "Для фільтрації потрібно принаймні дві анотації."
 }

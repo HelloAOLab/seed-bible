@@ -146,6 +146,10 @@ const CreatePlaylistUI = (props: any) => {
   const [embedding, setEmbedding] = useState<any>(null);
 
   useLayoutEffect(() => {
+    setItemSelected(null);
+  }, [embedding]);
+
+  useLayoutEffect(() => {
     G.SelectedItemIDForAttachments = null;
   }, []);
 
@@ -1476,7 +1480,11 @@ const CreatePlaylistUI = (props: any) => {
                   <span className="color-inherit">{t("delete")}</span>
                 </Button>
                 {!!embedding && isSomethingChecked && (
-                  <Button onClick={onEmbedItems} secondaryAlt color="#3B82F6">
+                  <Button
+                    onClick={onEmbedItems}
+                    secondaryAlt
+                    color="var(--secondaryColor)"
+                  >
                     <span
                       style={{ marginRight: "0.5rem" }}
                       class="material-symbols-outlined unfollow color-inherit"
@@ -1535,7 +1543,7 @@ const CreatePlaylistUI = (props: any) => {
                     onDisembed(values);
                   }}
                   secondaryAlt
-                  color="#3B82F6"
+                  color="var(--secondaryColor)"
                 >
                   <span
                     style={{ marginRight: "0.5rem" }}

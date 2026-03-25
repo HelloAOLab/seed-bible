@@ -156,5 +156,8 @@
   "addToNew": "يېڭىغا قوشۇش",
   "itemsAddedToPlaylistSuccessfully": "تۈرلەر تىزىملىككە مۇۋاپىق قوشۇلدى.",
   "translationSwitchOption": "{{translationName}} تەرجىمىسىگە ئالماشتۇرامسىز؟",
-  "chooseAnother": "يەنە بىرنى تاللاڭ"
+  "chooseAnother": "يەنە بىرنى تاللاڭ",
+  "playlistHasBeenEnded": "قويىما تۈگىدى.",
+  "youAreAtTheBeginningOfThePlaylist": "سىز قويىمىنىڭ بېشىدا تۇرىسىز.",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "سۈزۈش ئۈچۈن ئاز دېگەندە ئىككى ئىزاھات كېرەك."
 }

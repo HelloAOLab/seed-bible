@@ -342,7 +342,6 @@ const AttachLinkItem = (props: any) => {
         <p
           onClick={() => {
             if (data.type === "date") return;
-            console.log("FIRE 2", clickPass, onClick);
             if (onClick) {
               clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
               G.ADDING_TOPLAYLIST_TIMEOUT = null;
@@ -367,7 +366,6 @@ const AttachLinkItem = (props: any) => {
               G.SetCurrentItem({ ...data });
             }
 
-            console.log("FIRE", data);
             // if (G.SetVideoSrc) {
             // G.SetVideoSrc(null);
             if (
