@@ -66,9 +66,20 @@ function createFixture(): ReaderFixture {
       content: [
         { type: "heading", content: ["Creation"] },
         {
+          type: "hebrew_subtitle",
+          content: ["To the choirmaster."],
+        },
+        { type: "line_break" },
+        {
           type: "verse",
           number: 1,
-          content: ["In the beginning ", { noteId: 7 }, "God created."],
+          content: [
+            "In the beginning ",
+            { text: "I am the light", wordsOfJesus: true },
+            { lineBreak: true },
+            { noteId: 7 },
+            "God created.",
+          ],
         },
         {
           type: "verse",
@@ -281,6 +292,56 @@ describe("BibleReader", () => {
     const poetryVerse = container.querySelector(".sb-verse-poetry");
     expect(poetryVerse).not.toBeNull();
     expect(poetryVerse?.classList.contains("sb-verse-selected")).toBe(true);
+  });
+
+  it("renders chapter content parts and inline markers", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const heading = container.querySelector(".sb-chapter-heading");
+    expect(heading?.textContent).toContain("Creation");
+
+    const verseNumbers = Array.from(
+      container.querySelectorAll(".sb-verse-number")
+    ).map((element) => element.textContent?.trim());
+    expect(verseNumbers).toContain("1");
+    expect(verseNumbers).toContain("2");
+
+    const footnoteIndicator = container.querySelector(
+      '.sb-inline-footnote-button[aria-label="Open footnote 7"]'
+    );
+    expect(footnoteIndicator).not.toBeNull();
+
+    expect(container.querySelector(".sb-line-break")).not.toBeNull();
+
+    const verseBreaks = container.querySelectorAll(".sb-verse br");
+    expect(verseBreaks.length).toBeGreaterThan(0);
+
+    const subtitle = container.querySelector(".sb-subtitle");
+    expect(subtitle?.textContent).toContain("To the choirmaster.");
+
+    const poemLines = container.querySelectorAll(".sb-verse-line");
+    expect(poemLines.length).toBe(2);
+    expect(container.querySelector(".sb-verse-poetry")?.textContent).toContain(
+      "Poetry A"
+    );
+    expect(container.querySelector(".sb-verse-poetry")?.textContent).toContain(
+      "Poetry B"
+    );
+
+    const wordsOfJesus = container.querySelector(".sb-words-of-jesus");
+    expect(wordsOfJesus).not.toBeNull();
+    expect(wordsOfJesus?.textContent).toContain("I am the light");
   });
 
   it("renders an open footnote modal and closes it", () => {
