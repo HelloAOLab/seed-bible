@@ -81,7 +81,7 @@ function parseContent(content) {
 export class BibleDataManager {
   constructor({
     tabId = null,
-    translation = "BSB",
+    translation = "AAB",
     bookId = "GEN",
     chapter = 1,
     baseUrl = "https://vmfnri.helloao.org",

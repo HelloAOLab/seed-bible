@@ -682,7 +682,7 @@ function ThePage({
       await bible.open(
         configBot.tags.book.toUpperCase(),
         configBot.tags.chapter,
-        configBot.tags.translation || "BSB"
+        configBot.tags.translation || "AAB"
       );
       setData(bible.data);
       configBot.tags.defaultChecked = true;
@@ -928,7 +928,7 @@ function ThePage({
           book: bookId,
           bookId: bookId,
           chapter: chapter,
-          translation: translation || "BSB",
+          translation: translation || "AAB",
         },
       });
       setTab(newTab);
