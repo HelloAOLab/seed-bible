@@ -8,6 +8,11 @@ export interface LoginManager {
   userId: Signal<string | null>;
 
   /**
+   * The current auth bot. Null if not authenticated or if background auth has not completed yet.
+   */
+  authBot: Signal<Bot | null>;
+
+  /**
    * The user's profile information. Null if the user is not logged in.
    */
   profile: Signal<UserProfile | null>;
@@ -124,6 +129,7 @@ export function createLoginManager(): LoginManager {
 
   return {
     userId,
+    authBot,
     profile,
     login,
     logout,

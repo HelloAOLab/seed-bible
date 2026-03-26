@@ -5,6 +5,9 @@ declare global {
   }
 
   type Bot = import("./AuxLibraryDefinitions").Bot;
+  type SharedDocument = import("./AuxLibraryDefinitions").SharedDocument;
+  type SharedArray<T> = import("./AuxLibraryDefinitions").SharedArray<T>;
+  type SharedMap<T> = import("./AuxLibraryDefinitions").SharedMap<T>;
 
   // Your other specific globals (optional, for better intellisense)
   const that: any;

@@ -3999,6 +3999,9 @@
       "seed-bible.managers.PanesManager": [
         "./packages/seed-bible-refresh/seed-bible/managers/PanesManager.tsx"
       ],
+      "seed-bible.managers.ReadingHistoryManager": [
+        "./packages/seed-bible-refresh/seed-bible/managers/ReadingHistoryManager.tsx"
+      ],
       "seed-bible.managers.SeedBibleStateManager": [
         "./packages/seed-bible-refresh/seed-bible/managers/SeedBibleStateManager.tsx"
       ],
