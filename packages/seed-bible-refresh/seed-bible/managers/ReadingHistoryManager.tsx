@@ -1,3 +1,4 @@
+import { debounce } from "es-toolkit";
 import type { LoginManager } from "seed-bible.managers.LoginManager";
 
 export interface ReadingEvent {
@@ -535,7 +536,7 @@ export interface ReadingHistoryManager {
     bookId: string,
     chapter: number,
     recencyThresholdSeconds?: number
-  ) => Promise<void>;
+  ) => void;
   getReadingEvents: (
     startTime: number,
     endTime: number
@@ -545,28 +546,31 @@ export interface ReadingHistoryManager {
 export function createReadingHistoryManager(
   login: LoginManager
 ): ReadingHistoryManager {
-  const saveReadingHistoryForCurrentUser = async (
-    bookId: string,
-    chapter: number,
-    recencyThresholdSeconds: number = 30 * 60,
-    marker?: string,
-    name?: string
-  ) => {
-    if (!login.userId.value) {
-      // User is not logged in, so we can't save reading history
-      return;
-    }
+  const saveReadingHistoryForCurrentUser = debounce(
+    async (
+      bookId: string,
+      chapter: number,
+      recencyThresholdSeconds: number = 30 * 60,
+      marker?: string,
+      name?: string
+    ) => {
+      if (!login.userId.value) {
+        // User is not logged in, so we can't save reading history
+        return;
+      }
 
-    await saveReadingHistory(
-      login.userId.value,
-      login.userId.value,
-      bookId,
-      chapter,
-      recencyThresholdSeconds,
-      marker,
-      name
-    );
-  };
+      await saveReadingHistory(
+        login.userId.value,
+        login.userId.value,
+        bookId,
+        chapter,
+        recencyThresholdSeconds,
+        marker,
+        name
+      );
+    },
+    300
+  );
 
   const getReadingEventsForCurrentUser = async (
     startTime: number,

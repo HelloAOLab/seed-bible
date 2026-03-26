@@ -23,6 +23,10 @@ import {
 } from "seed-bible.managers.ThemeManager";
 import type { ThemeManager } from "seed-bible.managers.ThemeManager";
 import { computed, effect, type ReadonlySignal } from "@preact/signals";
+import {
+  createReadingHistoryManager,
+  type ReadingHistoryManager,
+} from "seed-bible.managers.ReadingHistoryManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 
@@ -58,6 +62,7 @@ export interface SeedBibleState {
   selector: BibleSelectorState;
   tools: ToolsManager;
   login: LoginManager;
+  readingHistory: ReadingHistoryManager;
   app: AppState;
 }
 
@@ -72,6 +77,7 @@ export function createSeedBibleState(): SeedBibleState {
   const selector = createBibleSelectorState(data, tabs, panes);
   const tools = createBibleToolsManager();
   const login = createLoginManager();
+  const readingHistory = createReadingHistoryManager(login);
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value.variables);
@@ -128,6 +134,26 @@ export function createSeedBibleState(): SeedBibleState {
         panes.selectPane(matchingPane.id);
       }
     }
+  });
+
+  effect(() => {
+    if (!selectedTab.value) {
+      return;
+    }
+
+    const chapter = selectedTab.value.readingState.chapterData.value;
+    if (!chapter) {
+      return;
+    }
+
+    const timeoutId = setInterval(() => {
+      readingHistory.saveReadingHistory(
+        chapter.book.id,
+        chapter.chapter.number
+      );
+    }, 5000);
+
+    return () => clearInterval(timeoutId);
   });
 
   const closeSidebarAndSettings = () => {
@@ -200,6 +226,7 @@ export function createSeedBibleState(): SeedBibleState {
     selector,
     tools,
     login,
+    readingHistory,
     app: {
       panelsEnabled,
       selectedTab,
