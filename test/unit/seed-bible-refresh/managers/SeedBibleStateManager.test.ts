@@ -1,8 +1,8 @@
 /** @jest-environment ./test/env/CasualOSEnvironment.ts */
 
-import { createSeedBibleState } from "@packages/seed-bible-refresh/seed-bible/managers/SeedBibleStateManager";
+import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { registerExtension } from "seed-bible.app.api";
-import type { BibleReadingState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
+import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import {
   type WebResponseMap,
   createDefaultManagerResponseMap,

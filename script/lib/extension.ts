@@ -12,7 +12,7 @@ import type {
   ExtensionMeta,
   ExtensionSet,
   UploadedExtension,
-} from "@packages/seed-bible-refresh/seed-bible/managers/ExtensionManager";
+} from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import z from "zod";
 
 const downloadRecordName = "testingPublickKey";

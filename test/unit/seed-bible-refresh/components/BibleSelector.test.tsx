@@ -8,15 +8,15 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
-import { BibleSelector } from "@packages/seed-bible-refresh/seed-bible/components/BibleSelector";
-import type { BibleSelectorState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleSelectorManager";
-import type { BibleReadingState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
+import { BibleSelector } from "@packages/seed-bible/seed-bible/components/BibleSelector";
+import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
+import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type {
   AvailableTranslations,
   Translation,
   TranslationBook,
   TranslationBooks,
-} from "@packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI";
+} from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 jest.mock("seed-bible.i18n.I18nManager", () => ({
   useI18n: () => ({

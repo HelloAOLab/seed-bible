@@ -1,7 +1,7 @@
 import {
   FreeUseBibleAPI,
   type TranslationBookChapter,
-} from "@packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI";
+} from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 type WebResponse<T> = {
   status: number;

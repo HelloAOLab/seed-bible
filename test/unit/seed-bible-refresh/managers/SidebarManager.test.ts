@@ -1,4 +1,4 @@
-import { createSidebar } from "@packages/seed-bible-refresh/seed-bible/managers/SidebarManager";
+import { createSidebar } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
 
 describe("createSidebar", () => {
   it("initializes with settings closed, sidebar expanded, and mobile closed", () => {

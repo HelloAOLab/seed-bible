@@ -3,14 +3,14 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { computed, signal, type Signal } from "@preact/signals";
-import { BibleReader } from "@packages/seed-bible-refresh/seed-bible/components/BibleReader";
+import { BibleReader } from "@packages/seed-bible/seed-bible/components/BibleReader";
 import {
   type BibleReadingState,
   type SelectedFootnote,
-} from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
-import type { BibleSelectorState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleSelectorManager";
-import type { Pane } from "@packages/seed-bible-refresh/seed-bible/managers/PanesManager";
-import type { TranslationBookChapter } from "@packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI";
+} from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
+import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 type ReaderFixture = {
   pane: Pane;

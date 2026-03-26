@@ -1,9 +1,9 @@
 import {
   createBibleDataManager,
   type BibleDataManager,
-} from "@packages/seed-bible-refresh/seed-bible/managers/BibleDataManager";
-import { FreeUseBibleAPI } from "@packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI";
-import type { Translation } from "@packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI";
+} from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
+import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
   API_ENDPOINT,
   bsbBooks,

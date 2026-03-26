@@ -1,4 +1,4 @@
-import { createLoginManager } from "@packages/seed-bible-refresh/seed-bible/managers/LoginManager";
+import { createLoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 
 jest.setTimeout(3000);
 

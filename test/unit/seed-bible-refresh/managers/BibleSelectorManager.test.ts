@@ -1,15 +1,15 @@
 /** @jest-environment ./test/env/CasualOSEnvironment.ts */
 
-import { createBibleDataManager } from "@packages/seed-bible-refresh/seed-bible/managers/BibleDataManager";
-import { FreeUseBibleAPI } from "@packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI";
-import type { BibleReadingState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
+import { createBibleDataManager } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
+import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import {
   type BibleSelectorState,
   createBibleSelectorState,
-} from "@packages/seed-bible-refresh/seed-bible/managers/BibleSelectorManager";
-import { createPanes } from "@packages/seed-bible-refresh/seed-bible/managers/PanesManager";
-import type { Pane } from "@packages/seed-bible-refresh/seed-bible/managers/PanesManager";
-import { createTabs } from "@packages/seed-bible-refresh/seed-bible/managers/TabsManager";
+} from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
+import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import { createTabs } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import {
   API_ENDPOINT,
   type WebResponseMap,

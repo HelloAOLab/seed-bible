@@ -12,7 +12,7 @@ jest.mock(
 import {
   createBibleToolsManager,
   type BibleToolContext,
-} from "@packages/seed-bible-refresh/seed-bible/managers/BibleToolsManager";
+} from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 
 const CUSTOM_TOOL_ID = "test-toolbar-tool";
 const CUSTOM_VERSE_TOOL_ID = "test-verse-toolbar-tool";

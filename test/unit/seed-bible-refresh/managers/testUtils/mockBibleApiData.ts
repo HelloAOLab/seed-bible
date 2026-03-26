@@ -3,7 +3,7 @@ import type {
   Translation,
   TranslationBookChapter,
   TranslationBooks,
-} from "@packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI";
+} from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 export type WebResponse<T> = {
   status: number;

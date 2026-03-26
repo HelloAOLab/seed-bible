@@ -1,11 +1,11 @@
-import { createPanes } from "@packages/seed-bible-refresh/seed-bible/managers/PanesManager";
+import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import {
   createTabs,
   type ReaderTab,
-} from "@packages/seed-bible-refresh/seed-bible/managers/TabsManager";
-import { createBibleDataManager } from "@packages/seed-bible-refresh/seed-bible/managers/BibleDataManager";
-import type { BibleReadingState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
-import { FreeUseBibleAPI } from "@packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI";
+} from "@packages/seed-bible/seed-bible/managers/TabsManager";
+import { createBibleDataManager } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
+import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
   API_ENDPOINT,
   type WebResponseMap,

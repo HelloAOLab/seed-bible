@@ -1,12 +1,12 @@
 import {
   createBibleReadingState,
   type BibleReadingState,
-} from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
-import { createBibleDataManager } from "@packages/seed-bible-refresh/seed-bible/managers/BibleDataManager";
+} from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import { createBibleDataManager } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import {
   FreeUseBibleAPI,
   type ChapterVerse,
-} from "@packages/seed-bible-refresh/seed-bible/managers/FreeUseBibleAPI";
+} from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
   API_ENDPOINT,
   ALT_API_ENDPOINT,

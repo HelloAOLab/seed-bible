@@ -9,7 +9,7 @@ import {
   filter,
   flat,
   type ReadingEvent,
-} from "@packages/seed-bible-refresh/seed-bible/managers/ReadingHistoryManager";
+} from "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
 
 describe("ReadingHistoryManager", () => {
   describe("getTodayTimeSpan", () => {
