@@ -596,6 +596,11 @@ const SearchBar = (props: { openSidebar: boolean }) => {
       }
     }
     setInputValue("");
+    if (globalThis?.ActiveMoreApp) {
+      (globalThis as any).RemoveApplicationByLabel(ActiveMoreApp);
+      (globalThis as any).makingApp = null;
+      globalThis?.SetActiveMoreApp(null);
+    }
   };
 
   const focusOnBook = useCallback(
@@ -1660,12 +1665,18 @@ const SideBarChapters = (props: {
     Record<number, boolean>
   >({});
 
-  const handleChapterClick = (props: {
+  const handleChapterClick = async (props: {
     bookName: string;
     chapterNo: number;
     bookData: BookInterface;
     [key: string]: any;
   }) => {
+    if (globalThis?.ActiveMoreApp) {
+      (globalThis as any).RemoveApplicationByLabel(ActiveMoreApp);
+      (globalThis as any).makingApp = null;
+      globalThis?.SetActiveMoreApp(null);
+      await os.sleep(100);
+    }
     try {
       if (globalThis.IsMobileNow()) {
         setOpenOnMobile(false);

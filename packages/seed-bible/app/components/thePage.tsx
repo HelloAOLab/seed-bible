@@ -2140,28 +2140,53 @@ function ThePage({
                     <div className="mobile-header-content">
                       <div className="mobile-header-left">
                         <div>
-                          <h1
-                            onClick={(e) => {
-                              if (
-                                globalThis.setOpenSidebar &&
-                                globalThis.openSidebar
-                              ) {
-                                globalThis.setOpenSidebar(false);
-                                globalThis.selectBookSelectorBook &&
-                                  globalThis.selectBookSelectorBook(null);
-                              } else {
-                                globalThis.setOpenSidebar &&
+                          <h1 className="mobile-header-title">
+                            <span
+                              onClick={(e) => {
+                                if (
+                                  globalThis.setOpenSidebar &&
+                                  globalThis.openSidebar
+                                ) {
+                                  globalThis.setOpenSidebar(false);
+                                  globalThis.selectBookSelectorBook &&
+                                    globalThis.selectBookSelectorBook(null);
+                                } else {
+                                  globalThis.setOpenSidebar &&
+                                    globalThis.setOpenSidebar(true);
+                                  globalThis.selectBookSelectorBook &&
+                                    globalThis.selectBookSelectorBook(
+                                      data.bookId
+                                    );
+                                }
+                              }}
+                            >
+                              {`${data?.book} ${data?.chapter}`}{" "}
+                            </span>
+
+                            <p
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (
+                                  globalThis.setOpenSidebar &&
+                                  globalThis.openSidebar
+                                ) {
+                                  globalThis.setOpenSidebar(false);
+                                  globalThis.setSelectingTranslation &&
+                                    globalThis.setSelectingTranslation(false);
+                                  globalThis.selectBookSelectorBook &&
+                                    globalThis.selectBookSelectorBook(null);
+                                } else {
                                   globalThis.setOpenSidebar(true);
-                                globalThis.selectBookSelectorBook &&
-                                  globalThis.selectBookSelectorBook(
-                                    data.bookId
-                                  );
-                              }
-                            }}
-                            className="mobile-header-title"
-                          >
-                            {`${data?.book} ${data?.chapter}`}{" "}
-                            <p className="mobile-header-translation">
+                                  globalThis.setSelectingTranslation &&
+                                    globalThis.setSelectingTranslation(true);
+                                  globalThis.selectBookSelectorBook &&
+                                    globalThis.selectBookSelectorBook(
+                                      data.bookId
+                                    );
+                                }
+                              }}
+                              className="mobile-header-translation"
+                            >
                               • {data?.shortName || ""}
                             </p>
                           </h1>

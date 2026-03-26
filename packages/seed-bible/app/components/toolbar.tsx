@@ -291,7 +291,7 @@ export function Toolbar() {
                   G.setOpenSidebar(!G.openSidebar);
                 }
                 G.setSelectingTranslation(false);
-                setShowMoreMenu(false);
+                // setShowMoreMenu(false);
               }}
               className="mobile-center-logo"
             >
