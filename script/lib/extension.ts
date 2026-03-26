@@ -6,7 +6,7 @@ import { execSync } from "node:child_process";
 import {
   isRecordKey,
   parseRecordKey,
-} from "@casual-simulation/aux-common/records";
+} from "@casual-simulation/aux-common/records/RecordKeys";
 import fs from "fs";
 import type {
   ExtensionMeta,
