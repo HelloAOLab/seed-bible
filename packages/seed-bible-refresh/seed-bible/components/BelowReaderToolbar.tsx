@@ -1,6 +1,7 @@
 import {
   type ToolsManager,
   type BibleBelowReaderToolbarTool,
+  type ToolTitle,
 } from "seed-bible.managers.BibleToolsManager";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
@@ -27,24 +28,30 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     openSidebar,
     currentPane,
   } = props;
-  const tools: BibleBelowReaderToolbarTool[] = toolsManager.getBelowReaderTools(
-    {
-      readingState,
-      selectorState,
-      tabs: tabsManager,
-      panesManager,
-      openSidebar,
-      currentPane,
-    }
-  );
+  const tools = toolsManager.getBelowReaderTools({
+    readingState,
+    selectorState,
+    tabs: tabsManager,
+    panesManager,
+    openSidebar,
+    currentPane,
+  });
 
   if (tools.length === 0) {
     return null;
   }
 
+  const translateTitle = (title: ToolTitle): string => {
+    if (typeof title === "string") {
+      return title;
+    }
+    return t(title.key, { defaultValue: title.defaultValue });
+  };
+
   return (
     <div className="sb-below-reader-toolbar">
       {tools.map((tool) => {
+        const title = translateTitle(tool.title);
         const ToolIcon = tool.icon;
         return tool.visible.value ? (
           <div key={tool.id} className="sb-below-reader-toolbar-item">
@@ -52,11 +59,11 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
               disabled={tool.disabled.value}
               onClick={tool.onSelect}
               className="sb-below-reader-toolbar-button"
-              aria-label={tool.title}
-              title={tool.title}
+              aria-label={title}
+              title={title}
             >
               <ToolIcon />
-              <span className="sr-only">{tool.title}</span>
+              <span className="sr-only">{title}</span>
             </button>
           </div>
         ) : null;

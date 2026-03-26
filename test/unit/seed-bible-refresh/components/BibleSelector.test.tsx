@@ -2,7 +2,12 @@
 
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { signal, type ReadonlySignal, type Signal } from "@preact/signals";
+import {
+  computed,
+  signal,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals";
 import { BibleSelector } from "@packages/seed-bible-refresh/seed-bible/components/BibleSelector";
 import type { BibleSelectorState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleSelectorManager";
 import type { BibleReadingState } from "@packages/seed-bible-refresh/seed-bible/managers/BibleReadingManager";
@@ -96,6 +101,10 @@ function createSelectorFixture(): SelectorFixture {
     books: [...oldBooks, ...newBooks],
   });
 
+  const selectedTranslation = computed(
+    () => selectedTranslationBooks.value?.translation ?? null
+  );
+
   const oldTestamentRows: ReadonlySignal<TranslationBook[][]> = signal([
     oldBooks,
   ]);
@@ -119,6 +128,7 @@ function createSelectorFixture(): SelectorFixture {
     currentBookId,
     currentChapterNumber,
     selectedTranslationId,
+    selectedTranslation,
     selectedTranslationBooks,
     availableTranslations: availableTranslationsSignal,
     loading,

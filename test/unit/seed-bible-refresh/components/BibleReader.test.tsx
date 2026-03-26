@@ -2,7 +2,7 @@
 
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { signal, type Signal } from "@preact/signals";
+import { computed, signal, type Signal } from "@preact/signals";
 import { BibleReader } from "@packages/seed-bible-refresh/seed-bible/components/BibleReader";
 import {
   type BibleReadingState,
@@ -103,6 +103,10 @@ function createFixture(): ReaderFixture {
   const selectFootnote = jest.fn();
   const setOpen = jest.fn(async () => undefined);
 
+  const currentTranslation = computed(
+    () => chapterData.value?.translation ?? null
+  );
+
   const readingState = {
     translationId: signal("BSB"),
     bookId: signal("GEN"),
@@ -114,6 +118,7 @@ function createFixture(): ReaderFixture {
       translation: chapterData.value!.translation,
       books: [chapterData.value!.book],
     }),
+    translation: currentTranslation,
     chapterData,
     selectedVerses,
     selectedFootnote,

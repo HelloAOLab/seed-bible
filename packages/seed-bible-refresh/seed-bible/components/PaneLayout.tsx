@@ -8,6 +8,7 @@ import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import {
   type ToolsManager,
   type BibleEmptyPaneTool,
+  type ToolTitle,
 } from "seed-bible.managers.BibleToolsManager";
 
 const { useEffect, useRef, useState } = os.appHooks;
@@ -130,16 +131,24 @@ function EmptyPaneToolbar({
   pane: Pane;
   tabs: TabsManager;
 }) {
-  const tools: BibleEmptyPaneTool[] = toolsManager.getEmptyPaneTools({
+  const tools = toolsManager.getEmptyPaneTools({
     selectorState,
     panesManager,
     currentPane: pane,
     tabs,
   });
 
+  const translateTitle = (title: ToolTitle): string => {
+    if (typeof title === "string") {
+      return title;
+    }
+    return t(title.key, { defaultValue: title.defaultValue });
+  };
+
   return (
     <div className="sb-empty-pane-toolbar">
       {tools.map((tool) => {
+        const title = translateTitle(tool.title);
         const ToolIcon = tool.icon;
         return tool.visible.value ? (
           <div key={tool.id} className="sb-empty-pane-toolbar-item">
@@ -150,10 +159,10 @@ function EmptyPaneToolbar({
                 tool.onSelect();
               }}
               className="sb-empty-pane-toolbar-button"
-              title={tool.title}
+              title={title}
             >
               <ToolIcon />
-              <span className="sb-empty-pane-toolbar-label">{tool.title}</span>
+              <span className="sb-empty-pane-toolbar-label">{title}</span>
             </button>
           </div>
         ) : null;
