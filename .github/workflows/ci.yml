@@ -31,12 +31,9 @@ jobs:
         continue-on-error: true
         run: |
           pnpm lint
-      - name: Check
+      - name: Check TypeScript
         run: |
-          pnpm check
-      - name: Check Refresh
-        run: |
-          pnpm check:refresh
+          pnpm check:ts
       - name: Test
         run: |
           pnpm test

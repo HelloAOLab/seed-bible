@@ -18,7 +18,6 @@
     "build": "tsx script/build.ts",
     "check:aux": "tsx script/check.ts",
     "check:ts": "tsc-silent --project ./tsconfig.json --suppressConfig ./tsc-silent.config.cjs",
-    "check:refresh": "tsx script/check-refresh.ts",
     "format": "prettier --write \"packages/**/*.{js,jsx,ts,tsx,css}\"",
     "format:changed": "pretty-quick",
     "prepare": "husky",
