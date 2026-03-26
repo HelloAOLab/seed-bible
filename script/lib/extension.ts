@@ -382,7 +382,7 @@ export async function upload(
   const address = options.saveMeta ? name : `${name}-${Date.now()}`;
 
   execSync(
-    `casualos ${programOptions.join(" ")} upload-package --record "${recordKey}" --address "${address}" --file "${filePath}" --markers "publicRead:extension" --description "Extension ${name}"`
+    `casualos ${programOptions.join(" ")} upload-package --record "${recordKey}" --address "${address}" --key "minor" --file "${filePath}" --markers "publicRead:extension" --description "Extension ${name}"`
   );
 
   return {
