@@ -1069,10 +1069,15 @@ export const UITextSizeSetting = ({
 
   const applyZoom = (zoom) => {
     document
-      .querySelectorAll(".settings-sidebar, .themeSettings-container")
+      .querySelectorAll(
+        ".settings-content, .themeSettings-container, .profileSection"
+      )
       .forEach((el) => {
         (el as HTMLElement).style.zoom = String(zoom);
       });
+    document.querySelectorAll(".settings-sidebar").forEach((el) => {
+      (el as HTMLElement).style.width = `${Math.round(280 * zoom)}px`;
+    });
   };
 
   // Restore saved size on mount

@@ -159,5 +159,10 @@
   "chooseAnother": "অন্যটি বেছে নিন",
   "playlistHasBeenEnded": "প্লেলিস্ট শেষ হয়েছে।",
   "youAreAtTheBeginningOfThePlaylist": "আপনি প্লেলিস্টের শুরুতে আছেন।",
-  "shouldHaveAtLeastTwoAnnotationsToFilter": "ফিল্টার করতে কমপক্ষে দুটি টীকা থাকতে হবে।"
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "ফিল্টার করতে কমপক্ষে দুটি টীকা থাকতে হবে।",
+  "thisWillLoseYourRecording": "আপনার রেকর্ডিং হারিয়ে যাবে।",
+  "switchWillLoseYourRecording": "পরিবর্তন করলে আপনার রেকর্ডিং হারিয়ে যাবে।",
+  "cannotSwitchWhileRecording": "রেকর্ডিং চলাকালীন পরিবর্তন করা যাবে না।",
+  "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich": "এই সংযুক্তিতে আপনার ডাটা আছে। এটি হারিয়ে যাবে। স্যুইচ করতে আবার ক্লিক করুন।",
+  "addToTheCurrentQueue": "বর্তমান সারিতে যোগ করুন"
 }

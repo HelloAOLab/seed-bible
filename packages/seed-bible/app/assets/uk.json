@@ -159,5 +159,10 @@
   "chooseAnother": "Вибрати інший",
   "playlistHasBeenEnded": "Плейлист завершено.",
   "youAreAtTheBeginningOfThePlaylist": "Ви на початку плейлиста.",
-  "shouldHaveAtLeastTwoAnnotationsToFilter": "Для фільтрації потрібно принаймні дві анотації."
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "Для фільтрації потрібно принаймні дві анотації.",
+  "thisWillLoseYourRecording": "Ваш запис буде втрачено.",
+  "switchWillLoseYourRecording": "Перемикання призведе до втрати запису.",
+  "cannotSwitchWhileRecording": "Під час запису перемикати неможливо.",
+  "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich": "До вкладення додано дані. Вони будуть втрачені. Натисніть ще раз, щоб перемкнути.",
+  "addToTheCurrentQueue": "Додати до поточної черги"
 }

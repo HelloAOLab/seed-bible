@@ -73,7 +73,7 @@ export function SideBarProvider({ children }) {
 
   useEffect(() => {
     const handleResize = () => {
-      const check = window.innerWidth < 768;
+      const check = window.innerWidth <= 480;
       setIsMobile(check);
       if (window.innerWidth <= 940 && !check) {
         setCollapsed(true);

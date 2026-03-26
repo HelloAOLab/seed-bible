@@ -35,15 +35,14 @@ export function Toolbar() {
   const {
     sidebarMode,
     openOnMobile,
-    isMobile,
     setSidebarWidth,
     setOpenOnMobile,
     setCollapsed,
     setSideBarMode,
   }: any = useSideBarContext();
 
-  // Hide nav arrows on mobile when a non-default sidebar panel (e.g. settings) is open
-  const mobileSettingsOpen = isMobile && sidebarMode !== "default";
+  // Hide nav arrows when a non-default sidebar panel (e.g. settings) is open
+  const sidebarPanelOpen = sidebarMode !== "default";
 
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const moreMenuRef = useRef<any>(null);
@@ -233,7 +232,7 @@ export function Toolbar() {
             <button
               style={{
                 display:
-                  showNavArrows && !activeApp && !mobileSettingsOpen
+                  showNavArrows && !activeApp && !sidebarPanelOpen
                     ? ""
                     : "none",
               }}
@@ -312,37 +311,35 @@ export function Toolbar() {
               <div className="more-btn-wrapper" ref={moreMenuRef}>
                 {showMoreMenu && (
                   <div className="more-menu-popup">
-                    {moreTools
-                      .filter((tool: any) => tool.label !== "Books")
-                      .map((tool: any, i: any) => (
-                        <button
-                          key={i}
-                          className="more-menu-item"
-                          onClick={() => {
-                            tool?.onClick?.();
-                            setShowMoreMenu(false);
-                            setActiveMoreApp(tool.label);
-                          }}
-                        >
-                          {tool?.isImg ? (
-                            <img
-                              src={tool.icon}
-                              style={{ width: "20px" }}
-                              alt={tool.label}
-                            />
-                          ) : (
-                            <span className="material-symbols-outlined">
-                              {tool?.icon}
-                            </span>
-                          )}
-                          <span className="more-menu-item-label">
-                            {tool?.label}
+                    {moreTools.map((tool: any, i: any) => (
+                      <button
+                        key={i}
+                        className="more-menu-item"
+                        onClick={() => {
+                          tool?.onClick?.();
+                          setShowMoreMenu(false);
+                          setActiveMoreApp(tool.label);
+                        }}
+                      >
+                        {tool?.isImg ? (
+                          <img
+                            src={tool.icon}
+                            style={{ width: "20px" }}
+                            alt={tool.label}
+                          />
+                        ) : (
+                          <span className="material-symbols-outlined">
+                            {tool?.icon}
                           </span>
-                        </button>
-                      ))}
+                        )}
+                        <span className="more-menu-item-label">
+                          {tool?.label}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 )}
-                <button
+                {/* <button
                   className="mobile-navbar-btn more-btn"
                   title={activeMoreApp ? "Close" : "More"}
                   aria-label={activeMoreApp ? "Close" : "More"}
@@ -368,7 +365,7 @@ export function Toolbar() {
                       {activeMoreApp ? "Close" : "More"}
                     </span>
                   </div>
-                </button>
+                </button> */}
               </div>
             ) : (
               <div className="more-btn-wrapper">
@@ -411,7 +408,7 @@ export function Toolbar() {
             <button
               style={{
                 display:
-                  showNavArrows && !activeApp && !mobileSettingsOpen
+                  showNavArrows && !activeApp && !sidebarPanelOpen
                     ? ""
                     : "none",
               }}

@@ -899,6 +899,8 @@ const AddNewPlaylist = (props: any) => {
               };
               if (!checkNameDuplicate(name)) {
                 if (isActiveTabManual()) {
+                  // Ensure the name retains
+                  G[`${id}creatingPlaylistName`] = name;
                   return onCreate();
                 }
                 onImport();

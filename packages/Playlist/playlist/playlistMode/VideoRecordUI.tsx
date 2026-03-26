@@ -50,6 +50,7 @@ const VideoRecordUI = (props: any) => {
   G.VideoRecordTab = tab;
 
   G.isRecording = isRecording;
+  G.hasRecording = isRecorded;
 
   const handleRecord = async () => {
     try {
@@ -144,7 +145,7 @@ const VideoRecordUI = (props: any) => {
     }
     G.isScreenRecording = false;
     (async () => {
-      if (!isScreen) {
+      if (!isScreen && !G.hasRecording) {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: true,

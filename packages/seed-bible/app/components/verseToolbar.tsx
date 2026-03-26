@@ -709,7 +709,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
       }
       groups.push(start === end ? `${start}` : `${start}-${end}`);
     }
-    return `${that.book} ${that.chapter}:${groups.join(",")}`;
+    return `${that.book} ${that.chapter}:${groups.join(",")} ${that.translation || ""}`;
   };
   const removeAiAgent =
     tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.pageSettings
@@ -779,7 +779,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
               }
               groups.push(start === end ? `${start}` : `${start}-${end}`);
             }
-            const reference = `${that.book} ${that.chapter}:${groups.join(",")}`;
+            const reference = `${that.book} ${that.chapter}:${groups.join(",")} ${that.translation || ""}`;
             openPopupSettings(
               <SharePopup
                 shareTitle={`${that.text}`}

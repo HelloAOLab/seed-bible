@@ -804,6 +804,7 @@ function ThePage({
         text: selectedTextFinal,
         book: data?.book,
         chapter: data?.chapter,
+        translation: data?.translation,
       });
       const sel = window.getSelection();
       if (sel && sel.removeAllRanges) sel.removeAllRanges();
@@ -1523,6 +1524,7 @@ function ThePage({
             .join(" "),
           book: data?.book,
           chapter: data?.chapter,
+          translation: data?.translation,
         });
 
         setShowVerseToolbar(true);

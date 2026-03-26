@@ -13,6 +13,7 @@ import type {
   BookInterface,
   TranslationInterface,
 } from "introduction.searchBar.Interfaces";
+
 const {
   useState,
   useEffect,
@@ -1020,6 +1021,7 @@ const SearchBar = (props: { openSidebar: boolean }) => {
             windowSize={windowSize}
             systemTranslation={systemTranslation}
             query={query}
+            setQuery={setQuery}
           />
         )}
         {selectingTranslation && (
@@ -1060,6 +1062,7 @@ const SideBarBooks = (props: {
   windowSize: number;
   systemTranslation: { [key: string]: string };
   query: string;
+  setQuery: (s: string) => void;
 }) => {
   const {
     booksData,
@@ -1073,6 +1076,7 @@ const SideBarBooks = (props: {
     windowSize,
     systemTranslation,
     query,
+    setQuery,
   } = props;
   const [lastBookClicked, setLastBookClicked] = useState(-1);
   const [bookData, setBookData] = useState<BookInterface | null>(null);
@@ -1297,6 +1301,7 @@ const SideBarBooks = (props: {
                           dontOpen={dontOpen}
                           setBookData={setBookData}
                           selectedTranslation={selectedTranslation}
+                          setQuery={setQuery}
                         />
                       </div>
                     )}
@@ -1373,6 +1378,7 @@ const SideBarBooks = (props: {
                           dontOpen={dontOpen}
                           setBookData={setBookData}
                           selectedTranslation={selectedTranslation}
+                          setQuery={setQuery}
                         />
                       </div>
                     )}
@@ -1449,6 +1455,7 @@ const SideBarBooks = (props: {
                           dontOpen={dontOpen}
                           setBookData={setBookData}
                           selectedTranslation={selectedTranslation}
+                          setQuery={setQuery}
                         />
                       </div>
                     )}
@@ -1525,6 +1532,7 @@ const SideBarBooks = (props: {
                           dontOpen={dontOpen}
                           setBookData={setBookData}
                           selectedTranslation={selectedTranslation}
+                          setQuery={setQuery}
                         />
                       </div>
                     )}
@@ -1602,6 +1610,7 @@ const SideBarBooks = (props: {
                           dontOpen={dontOpen}
                           setBookData={setBookData}
                           selectedTranslation={selectedTranslation}
+                          setQuery={setQuery}
                         />
                       </div>
                     )}
@@ -1641,6 +1650,7 @@ const SideBarChapters = (props: {
   setBookData: (book: BookInterface) => void;
   selectedTranslation: TranslationInterface;
   onlineUsers: any;
+  setQuery: (s: string) => void;
 }) => {
   const {
     bookData,
@@ -1649,6 +1659,7 @@ const SideBarChapters = (props: {
     setBookData,
     selectedTranslation,
     onlineUsers,
+    setQuery,
   } = props;
   const [highLightedButtonsID, setHighlightedButtonID] = useState<
     Record<number, boolean>
@@ -1666,7 +1677,13 @@ const SideBarChapters = (props: {
       globalThis?.SetActiveMoreApp(null);
       await os.sleep(100);
     }
+    try {
+      if (globalThis.IsMobileNow()) {
+        setOpenOnMobile(false);
+      }
+    } catch (e) {}
     const { bookName, chapterNo, bookData, ...data } = props;
+    setQuery("");
     if (globalThis?.findNameRank) {
       const booksDetails = globalThis.findNameRank(bookName);
       const dataItem = {
