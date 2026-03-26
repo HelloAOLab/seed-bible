@@ -163,7 +163,13 @@ export function Tabs(props: TabsProps) {
                 tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
 
               return (
-                <div key={tab.id} className="sb-tab-row">
+                <div
+                  key={tab.id}
+                  className="sb-tab-row"
+                  dir={
+                    tab.readingState.translation.value?.textDirection ?? "auto"
+                  }
+                >
                   <button
                     onClick={() => {
                       openMenuTabId.value = null;

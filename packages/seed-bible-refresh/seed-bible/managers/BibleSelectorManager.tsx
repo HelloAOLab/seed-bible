@@ -39,6 +39,7 @@ export interface BibleSelectorState {
   search: Signal<string>;
 
   selectedTranslationId: Signal<string | null>;
+  selectedTranslation: Signal<Translation | null>;
   expandedBookId: Signal<string | null>;
   selectedTranslationBooks: Signal<TranslationBooks | null>;
 
@@ -101,6 +102,9 @@ export function createBibleSelectorState(
   const search = signal("");
   const selectedTranslationId = signal<string | null>(null);
   const selectedTranslationBooks = signal<TranslationBooks | null>(null);
+  const selectedTranslation = computed(
+    () => selectedTranslationBooks.value?.translation ?? null
+  );
   const expandedBookId = signal<string | null>(null);
   const viewportWidth = signal(
     typeof window === "undefined" ? 0 : window.innerWidth
@@ -377,6 +381,7 @@ export function createBibleSelectorState(
     error,
     search,
     selectedTranslationId,
+    selectedTranslation,
     selectedTranslationBooks,
     expandedBookId,
     oldTestamentRows,

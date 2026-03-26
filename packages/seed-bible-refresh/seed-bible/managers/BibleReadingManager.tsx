@@ -2,6 +2,7 @@ import {
   type AvailableTranslations,
   type ChapterFootnote,
   type ChapterVerse,
+  type Translation,
   type TranslationBookChapter,
   type TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
@@ -33,6 +34,7 @@ export interface SelectedFootnote {
 
 export interface BibleReadingState {
   translationId: Signal<string | null>;
+  translation: Signal<Translation | null>;
   bookId: Signal<string | null>;
   chapterNumber: Signal<number>;
   availableTranslations: Signal<AvailableTranslations | null>;
@@ -135,6 +137,10 @@ export function createBibleReadingState(
   const selectedFootnoteId = signal<number | null>(null);
   const loading = signal<boolean>(true);
   const error = signal<string | null>(null);
+
+  const translation = computed(
+    () => translationBooks.value?.translation ?? null
+  );
 
   const selectedFootnote = computed<SelectedFootnote | null>(() => {
     const chapter = chapterData.value;
@@ -467,6 +473,7 @@ export function createBibleReadingState(
 
   return {
     translationId,
+    translation,
     bookId,
     chapterNumber,
     availableTranslations,

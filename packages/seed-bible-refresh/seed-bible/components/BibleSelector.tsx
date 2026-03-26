@@ -14,6 +14,7 @@ export function BibleSelector(props: BibleSelectorProps) {
   const { isOpen, onClose, selectorState } = props;
   const {
     selectedTranslationId,
+    selectedTranslation,
     currentBookId,
     currentChapterNumber,
     availableTranslations,
@@ -68,7 +69,10 @@ export function BibleSelector(props: BibleSelectorProps) {
           {t("allBooks", { defaultValue: "All books" })}
         </div>
       </div>,
-      <div className="sb-selector-grid">
+      <div
+        className="sb-selector-grid"
+        dir={selectedTranslation.value?.textDirection ?? "auto"}
+      >
         <div className="sb-selector-column sb-selector-column-divider">
           <h4 className="sb-selector-section-title">
             {t("oldTestament", { defaultValue: "Old Testament" })}

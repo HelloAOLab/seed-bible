@@ -346,6 +346,7 @@ export function BibleReader(props: BibleReaderProps) {
   const { currentPane, readingState, selectorState } = props;
   const {
     translationId,
+    translation,
     bookId,
     chapterNumber,
     availableTranslations,
@@ -366,7 +367,10 @@ export function BibleReader(props: BibleReaderProps) {
   );
 
   return (
-    <div className="sb-bible-reader">
+    <div
+      className="sb-bible-reader"
+      dir={translation.value?.textDirection ?? "auto"}
+    >
       <h2
         onClick={() => selectorState.setOpen(true, currentPane)}
         className="sb-bible-reader-title"
