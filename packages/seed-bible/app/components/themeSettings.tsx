@@ -6565,18 +6565,20 @@ const SettingsUI = () => {
         </div>
       </div>
 
-      <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>
-          {t(showNavArrows ? "hideNavArrows" : "showNavArrows")}
-        </div>
+      {globalThis.IsMobileNow() && (
+        <div style={toggleRowStyle}>
+          <div style={toggleLabelStyle}>
+            {t(showNavArrows ? "hideNavArrows" : "showNavArrows")}
+          </div>
 
-        <div
-          style={toggleStyle(showNavArrows)}
-          onClick={() => setShowNavArrows((prev) => !prev)}
-        >
-          <div style={toggleCircleStyle(showNavArrows)}></div>
+          <div
+            style={toggleStyle(showNavArrows)}
+            onClick={() => setShowNavArrows((prev) => !prev)}
+          >
+            <div style={toggleCircleStyle(showNavArrows)}></div>
+          </div>
         </div>
-      </div>
+      )}
       {presetThemes.length > 1 && (
         <div>
           <div style={separatorStyle}></div>
