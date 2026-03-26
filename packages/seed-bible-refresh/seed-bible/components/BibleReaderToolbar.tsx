@@ -1,5 +1,7 @@
 import { batch, useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
+import { useI18n } from "seed-bible.i18n.I18nManager";
+import type { ToolTitle } from "seed-bible.managers.BibleToolsManager";
 
 const { useEffect } = os.appHooks;
 
@@ -138,16 +140,27 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     Math.max((floatingAnchor.value?.y ?? 0) - 64, 64)
   );
 
+  const { t } = useI18n();
+  const translateTitle = (title: ToolTitle): string => {
+    if (typeof title === "string") {
+      return title;
+    }
+    return t(title.key, { defaultValue: title.defaultValue });
+  };
+
   return (
     <>
       {!shouldReplaceDefaultToolbar.value && (
-        <div className="sb-reader-toolbar-wrap">
+        <div
+          className="sb-reader-toolbar-wrap"
+          dir={readingState.value?.translation.value?.textDirection ?? "auto"}
+        >
           {isSmallScreen.value && previousChapterTool.value && (
             <button
               disabled={previousChapterTool.value.disabled.value}
               onClick={previousChapterTool.value.onSelect}
               className="sb-reader-toolbar-floating-button sb-reader-toolbar-floating-button-left"
-              aria-label={previousChapterTool.value.title}
+              aria-label={translateTitle(previousChapterTool.value.title)}
             >
               <previousChapterTool.value.icon />
             </button>
@@ -158,7 +171,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               disabled={nextChapterTool.value.disabled.value}
               onClick={nextChapterTool.value.onSelect}
               className="sb-reader-toolbar-floating-button sb-reader-toolbar-floating-button-right"
-              aria-label={nextChapterTool.value.title}
+              aria-label={translateTitle(nextChapterTool.value.title)}
             >
               <nextChapterTool.value.icon />
             </button>
@@ -179,7 +192,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       openSidebarTool.value?.onSelect();
                     }}
                     className="sb-reader-toolbar-button"
-                    aria-label={openSidebarTool.value?.title ?? "Open sidebar"}
+                    aria-label={translateTitle(
+                      openSidebarTool.value?.title ?? {
+                        key: "open_sidebar",
+                        defaultValue: "Open sidebar",
+                      }
+                    )}
                   >
                     {openSidebarTool.value ? (
                       <openSidebarTool.value.icon />
@@ -199,9 +217,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       openSelectorTool.value?.onSelect();
                     }}
                     className="sb-reader-toolbar-button"
-                    aria-label={
-                      openSelectorTool.value?.title ?? "Open Book Selector"
-                    }
+                    aria-label={translateTitle(
+                      openSelectorTool.value?.title ?? {
+                        key: "open_book_selector",
+                        defaultValue: "Open Book Selector",
+                      }
+                    )}
                   >
                     {openSelectorTool.value ? (
                       <openSelectorTool.value.icon />
@@ -236,7 +257,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                 className="sb-reader-toolbar-more-item"
                               >
                                 <ToolIcon />
-                                <span>{tool.title}</span>
+                                <span>{translateTitle(tool.title)}</span>
                               </button>
                             ) : null;
                           })}
@@ -257,7 +278,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       className="sb-reader-toolbar-button"
                     >
                       <ToolIcon />
-                      <span className="sr-only">{tool.title}</span>
+                      <span className="sr-only">
+                        {translateTitle(tool.title)}
+                      </span>
                     </button>
                   </div>
                 ) : null;
@@ -290,7 +313,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     className="sb-reader-toolbar-button"
                   >
                     <ToolIcon />
-                    <span className="sr-only">{tool.title}</span>
+                    <span className="sr-only">
+                      {translateTitle(tool.title)}
+                    </span>
                   </button>
                 </div>
               ) : null;

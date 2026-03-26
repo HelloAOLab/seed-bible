@@ -30,6 +30,8 @@
   "back": "Back",
   "next": "Next",
   "previous": "Previous",
+  "previousChapter": "Previous chapter",
+  "nextChapter": "Next chapter",
   "exit": "Exit",
   "settings": "Settings",
   "generalSettings": "General settings",
