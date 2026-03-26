@@ -668,8 +668,6 @@ function GetPiecesAboveSection() {
           )
             continue;
 
-          console.log(`[Debug] SelectSection here`);
-
           if (
             currentSectionData instanceof StackSectionData &&
             currentSectionData.isSplitIntoBooks

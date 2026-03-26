@@ -31,11 +31,9 @@ import {
 } from "scriptureMap2D.main.enums";
 import { scriptureService } from "bibleVizUtils.services.index";
 import { GetDayRangeSeconds } from "bibleVizUtils.functions.index";
-import {
-  scriptureMapEventManager,
-  Events as ScriptureMap2DEvents,
-} from "scriptureMap2D.main.eventManager";
-import { Events as BibleVizUtilsEvents } from "bibleVizUtils.services.EventManager";
+import { scriptureMap2DEventManager } from "scriptureMap2D.services.index";
+import { ScriptureMap2DEvents } from "scriptureMap2D.models.events";
+import { BibleVizUtilsEvents } from "bibleVizUtils.models.events";
 import { bibleVizUtilsEventManager } from "bibleVizUtils.services.index";
 
 const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
@@ -214,10 +212,11 @@ export const ReadingHistoryProvider: (
       BibleVizUtilsEvents.OnUserLoggedIn,
       handleUserLoggedIn
     );
-    const unsubscribeSubscriptionsChanged = scriptureMapEventManager.subscribe(
-      ScriptureMap2DEvents.SubscriptionsChanged,
-      refreshUsersDataMap
-    );
+    const unsubscribeSubscriptionsChanged =
+      scriptureMap2DEventManager.subscribe(
+        ScriptureMap2DEvents.SubscriptionsChanged,
+        refreshUsersDataMap
+      );
 
     trySetMyAuthBotId();
 

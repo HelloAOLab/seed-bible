@@ -1176,6 +1176,9 @@
       "bibleVizUtils.models.entities.StackTestamentData": [
         "./packages/Bible Visualization Utils/bibleVizUtils/models/entities/StackTestamentData.tsx"
       ],
+      "bibleVizUtils.models.events": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/models/events.tsx"
+      ],
       "bibleVizUtils.models.highlight": [
         "./packages/Bible Visualization Utils/bibleVizUtils/models/highlight.tsx"
       ],
@@ -1275,11 +1278,11 @@
       "bibleVizUtils.services.ArrangementService": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/ArrangementService.tsx"
       ],
+      "bibleVizUtils.services.BaseEventManager": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/services/BaseEventManager.tsx"
+      ],
       "bibleVizUtils.services.DebouncerService": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/DebouncerService.tsx"
-      ],
-      "bibleVizUtils.services.EventManager": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/services/EventManager.tsx"
       ],
       "bibleVizUtils.services.HistoryMode": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/HistoryMode.tsx"
@@ -2600,6 +2603,9 @@
       "references.manager.toggleReferenceModal": [
         "./packages/References/references/manager/toggleReferenceModal.tsx"
       ],
+      "scriptureMap2D.hooks.useBook": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useBook.tsx"
+      ],
       "scriptureMap2D.main.Book": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/Book.tsx"
       ],
@@ -2620,9 +2626,6 @@
       ],
       "scriptureMap2D.main.enums": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/enums.tsx"
-      ],
-      "scriptureMap2D.main.eventManager": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/eventManager.tsx"
       ],
       "scriptureMap2D.main.FiltersSelectorOption": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/FiltersSelectorOption.tsx"
@@ -2710,6 +2713,12 @@
       ],
       "scriptureMap2D.main.Wrapper": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/Wrapper.tsx"
+      ],
+      "scriptureMap2D.models.events": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/events.tsx"
+      ],
+      "scriptureMap2D.services.index": [
+        "./packages/Scripture Map 2D/scriptureMap2D/services/index.tsx"
       ],
       "scriptureMap3D.main.App": [
         "./packages/Scripture Map 3D/scriptureMap3D/main/App.tsx"
