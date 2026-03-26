@@ -159,5 +159,10 @@
   "chooseAnother": "دوسرا انتخاب کریں",
   "playlistHasBeenEnded": "پلے لسٹ ختم ہو گئی۔",
   "youAreAtTheBeginningOfThePlaylist": "آپ پلے لسٹ کے آغاز پر ہیں۔",
-  "shouldHaveAtLeastTwoAnnotationsToFilter": "فلٹر کرنے کے لیے کم از کم دو نوٹس درکار ہیں۔"
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "فلٹر کرنے کے لیے کم از کم دو نوٹس درکار ہیں۔",
+  "thisWillLoseYourRecording": "آپ کی ریکارڈنگ ضائع ہو جائے گی۔",
+  "switchWillLoseYourRecording": "تبدیل کرنے سے آپ کی ریکارڈنگ ضائع ہو جائے گی۔",
+  "cannotSwitchWhileRecording": "ریکارڈنگ کے دوران تبدیل نہیں کر سکتے۔",
+  "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich": "اس منسلکے پر آپ کا ڈیٹا ہے۔ ضائع ہو جائے گا۔ تبدیل کرنے کے لیے دوبارہ کلک کریں۔",
+  "addToTheCurrentQueue": "موجودہ قطار میں شامل کریں"
 }

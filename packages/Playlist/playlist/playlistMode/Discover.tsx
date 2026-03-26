@@ -1,4 +1,4 @@
-const { useState, useRef, useLayoutEffect } = os.appHooks;
+const { useState, useRef, useLayoutEffect, useMemo } = os.appHooks;
 
 const G = globalThis as any;
 const { Input } = G.Components;
@@ -76,12 +76,12 @@ const Discover = (props: any) => {
 
     const scrollLeft = el.scrollLeft;
     const maxScrollLeft = el.scrollWidth - el.clientWidth;
-
-    if (scrollLeft <= 20) {
-      setPos("left");
-    } else if (scrollLeft >= maxScrollLeft - 20) {
-      // Use -1 for tiny rounding error
+    console.log(scrollLeft, maxScrollLeft);
+    if (scrollLeft >= maxScrollLeft - 20) {
       setPos("right");
+    } else if (scrollLeft <= 20) {
+      // Use -1 for tiny rounding error
+      setPos("left");
     } else {
       setPos("mid");
     }
@@ -150,6 +150,13 @@ const Discover = (props: any) => {
     }
   };
 
+  const [showRightArrow, showLeftArrow] = useMemo(() => {
+    return [
+      pos !== "right" && pos !== "noscroll",
+      pos !== "left" && pos !== "noscroll",
+    ];
+  }, [pos]);
+
   return (
     <div
       style={{
@@ -213,7 +220,11 @@ const Discover = (props: any) => {
           >
             <div
               className="align-center chips-tag-container"
-              style={{ width: "100%" }}
+              style={{
+                width: "100%",
+                paddingRight: showRightArrow ? "2rem" : "0",
+                paddingLeft: showLeftArrow ? "2rem" : "0",
+              }}
               ref={scrollRef}
             >
               {items.map((ele, index) => {
@@ -227,12 +238,12 @@ const Discover = (props: any) => {
                 );
               })}
             </div>
-            {pos !== "left" && pos !== "noscroll" && (
+            {showLeftArrow && (
               <div className="chip-tag arrow left" onClick={scrollLeftByWidth}>
                 <span class="material-symbols-outlined">chevron_backward</span>
               </div>
             )}
-            {pos !== "right" && pos !== "noscroll" && (
+            {showRightArrow && (
               <div
                 className="chip-tag arrow right"
                 onClick={scrollRightByWidth}

@@ -1179,7 +1179,7 @@ const CreatePlaylistUI = (props: any) => {
             style={{
               ...showMorePosition.current,
               width: "250px",
-              maxHeight: "400px",
+              maxHeight: "350px",
               left: "none",
               right: "4rem",
               padding: "1rem",

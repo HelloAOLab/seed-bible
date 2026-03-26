@@ -1625,7 +1625,8 @@ const Playlist = (props: any) => {
                     description,
                     selectedIcon === customIcon && !!selectedIcon,
                     selectedTags,
-                    layers
+                    layers,
+                    publishAccess
                   );
                 }}
                 secondary

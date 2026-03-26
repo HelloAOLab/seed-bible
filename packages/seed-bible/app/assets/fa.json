@@ -159,5 +159,10 @@
   "chooseAnother": "یکی دیگر را انتخاب کنید",
   "playlistHasBeenEnded": "لیست پخش به پایان رسید.",
   "youAreAtTheBeginningOfThePlaylist": "در ابتدای لیست پخش هستید.",
-  "shouldHaveAtLeastTwoAnnotationsToFilter": "برای فیلتر کردن حداقل به دو حاشیه‌نویسی نیاز دارید."
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "برای فیلتر کردن حداقل به دو حاشیه‌نویسی نیاز دارید.",
+  "thisWillLoseYourRecording": "ضبط شما از دست خواهد رفت.",
+  "switchWillLoseYourRecording": "تغییر دادن ضبط شما را از دست می‌دهد.",
+  "cannotSwitchWhileRecording": "هنگام ضبط نمی‌توان تغییر داد.",
+  "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich": "به این پیوست داده متصل کرده‌اید. از دست خواهد رفت. برای تعویض دوباره کلیک کنید.",
+  "addToTheCurrentQueue": "افزودن به صف فعلی"
 }

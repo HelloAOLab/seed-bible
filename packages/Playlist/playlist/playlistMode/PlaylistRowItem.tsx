@@ -638,6 +638,13 @@ const PlaylistRowItem = (props: any) => {
                   }}
                   class="material-symbols-outlined unfollow"
                   onClick={() => {
+                    if (G.IsQueuePresent) {
+                      ShowNotification({
+                        message: t("addToTheCurrentQueue"),
+                        severity: "error",
+                      });
+                      return;
+                    }
                     thisBot.Playlistplaying({
                       playingPlaylist: playListSubId || id,
                       startIndex: playListSubIndex !== null ? index : 0,

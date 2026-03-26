@@ -272,6 +272,7 @@ const AnnotationList = (props: any) => {
         rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
       />
+      {filteredAnnotationData.length > 5 && <div ref={filterIconRef} />}
       {deleteModal.address && (
         <ConfirmationModal
           loading={loading}
@@ -346,7 +347,6 @@ const AnnotationList = (props: any) => {
             )}
             {filteredAnnotationData.map((ele: any, index: number) => (
               <>
-                {index === 1 && <div ref={filterIconRef} />}
                 <AnnotationHeading
                   key={ele.address}
                   address={ele.address}
