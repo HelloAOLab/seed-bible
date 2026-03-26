@@ -30,6 +30,7 @@ beforeEach(() => {
   (globalThis as any).os = {
     ...(globalThis as any).os,
     addBotListener: jest.fn(),
+    requestAuthBotInBackground: jest.fn().mockResolvedValue(null),
   };
 });
 
