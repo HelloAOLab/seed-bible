@@ -5608,10 +5608,12 @@ const FONT_OPTIONS = [
 const LINE_HEIGHTS = [1.5, 2, 2.5];
 
 const UI_TEXT_SIZES = [
-  { label: "S", value: 0.85 },
-  { label: "M", value: 1 },
-  { label: "L", value: 1.15 },
-  { label: "XL", value: 1.3 },
+  { label: "A", value: 0.8 },
+  { label: "A", value: 0.9 },
+  { label: "A", value: 1 },
+  { label: "A", value: 1.1 },
+  { label: "A", value: 1.2 },
+  { label: "A", value: 1.3 },
 ];
 
 const FONT_SIZES = [
@@ -5806,6 +5808,7 @@ const SettingsUI = () => {
   const [selectedFont, setSelectedFont] = useState(0);
   const [selectedFontSize, setSelectedFontSize] = useState(3);
   const [showFontDropdown, setShowFontDropdown] = useState(false);
+  const [showHeadingFontDropdown, setShowHeadingFontDropdown] = useState(false);
   const [showFontSizeMenu, setShowFontSizeMenu] = useState(false);
   const [uiSizeIndex, setUiSizeIndex] = useState(() => {
     const saved = globalThis.changes?.uiTextSize || 1;
@@ -5818,11 +5821,14 @@ const SettingsUI = () => {
   const applyUiZoom = (zoom) => {
     document
       .querySelectorAll(
-        ".settings-sidebar, .themeSettings-container, .profileSection"
+        ".settings-content, .themeSettings-container, .profileSection"
       )
       .forEach((el) => {
         (el as HTMLElement).style.zoom = String(zoom);
       });
+    document.querySelectorAll(".settings-sidebar").forEach((el) => {
+      (el as HTMLElement).style.width = `${Math.round(280 * zoom)}px`;
+    });
   };
 
   useEffect(() => {
@@ -5955,6 +5961,12 @@ const SettingsUI = () => {
 
   // Removed: this effect was overwriting the user's saved theme on every mount
 
+  const [selectedHeadingFont, setSelectedHeadingFont] = useState(0);
+  const [scriptureMargin, setScriptureMargin] = useState(() => {
+    const saved = currentSpace?.settings?.text?.data?.verse?.marginHorizontal;
+    return saved ? String(saved) : "27";
+  });
+
   const [textConfig, setTextConfig] = useState(() => {
     // Try to load from saved space settings
     const savedConfig = currentSpace?.settings?.text?.data;
@@ -5982,12 +5994,25 @@ const SettingsUI = () => {
         if (sizeIdx !== -1) setSelectedFontSize(sizeIdx);
       }
 
-      // Sync font
+      // Sync body font
       const savedFont = savedConfig?.verse?.font;
       if (savedFont) {
         const fontIdx = FONT_OPTIONS.findIndex((f) => f.value === savedFont);
         if (fontIdx !== -1) setSelectedFont(fontIdx);
       }
+
+      // Sync heading font
+      const savedHeadingFont = savedConfig?.heading?.font;
+      if (savedHeadingFont) {
+        const hfIdx = FONT_OPTIONS.findIndex(
+          (f) => f.value === savedHeadingFont
+        );
+        if (hfIdx !== -1) setSelectedHeadingFont(hfIdx);
+      }
+
+      // Sync scripture margin
+      const savedMargin = savedConfig?.verse?.marginHorizontal;
+      if (savedMargin) setScriptureMargin(String(savedMargin));
 
       // Sync line height
       const savedLineHeight = savedConfig?.verse?.lineHeight;
@@ -6014,6 +6039,46 @@ const SettingsUI = () => {
     );
 
     updateSpace(activeSpace, updateObj);
+  };
+
+  const applyHeadingFont = (fontFamily: string) => {
+    const updateObj = buildTextConfigUpdate(
+      "heading",
+      fontFamily,
+      textConfig?.heading?.fontSize || textConfig?.heading?.size || "16",
+      textConfig
+    );
+    updateSpace(activeSpace, updateObj);
+    // Also apply to bookchapter and chapter sections
+    const updateObj2 = buildTextConfigUpdate(
+      "bookchapter",
+      fontFamily,
+      textConfig?.bookchapter?.fontSize ||
+        textConfig?.bookchapter?.size ||
+        "16",
+      textConfig
+    );
+    updateSpace(activeSpace, updateObj2);
+    const updateObj3 = buildTextConfigUpdate(
+      "chapter",
+      fontFamily,
+      textConfig?.chapter?.fontSize || textConfig?.chapter?.size || "16",
+      textConfig
+    );
+    updateSpace(activeSpace, updateObj3);
+  };
+
+  const applyScriptureMargin = (value: string) => {
+    const updatedConfig = JSON.parse(JSON.stringify(textConfig));
+    updatedConfig.verse.marginHorizontal = value;
+    updatedConfig.heading.marginHorizontal = value;
+    updatedConfig.bookchapter.marginHorizontal = value;
+    updatedConfig.chapter.marginHorizontal = value;
+    const cssVars = exportTextConfigToCSS(updatedConfig);
+    setTextConfig(updatedConfig);
+    updateSpace(activeSpace, {
+      settings: { text: { root: cssVars, data: updatedConfig } },
+    });
   };
   const applyVerseFontSize = (fontSize) => {
     const updateObj = buildTextConfigUpdate(
@@ -6223,24 +6288,26 @@ const SettingsUI = () => {
   };
 
   const toggleStyle = (isOn) => ({
-    width: "32px",
-    height: "16px",
+    width: "50px",
+    height: "28px",
     backgroundColor: isOn ? "var(--addButtonIcon)" : "#CCCCCD",
-    borderRadius: "8px",
+    borderRadius: "14px",
     position: "relative",
     cursor: "pointer",
     transition: "background-color 0.3s ease",
+    flexShrink: 0,
   });
 
   const toggleCircleStyle = (isOn) => ({
-    width: "12px",
-    height: "12px",
-    backgroundColor: "var(--primaryColor)",
+    width: "22px",
+    height: "22px",
+    backgroundColor: "#fff",
     borderRadius: "50%",
     position: "absolute",
-    top: "2px",
-    left: isOn ? "18px" : "2px",
+    top: "3px",
+    left: isOn ? "25px" : "3px",
     transition: "left 0.3s ease",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
   });
 
   const separatorStyle = {
@@ -6288,6 +6355,7 @@ const SettingsUI = () => {
         <div className="softText">{t("theme")}</div>
       </div>
       <div style={{ marginTop: "20px" }}>
+        {/* Title */}
         <div className="routerTitle blackText">
           <div className="blackText">
             <ThemeIcon />
@@ -6298,125 +6366,109 @@ const SettingsUI = () => {
         </div>
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "16px",
+            fontSize: "13px",
+            color: "var(--text2, #888)",
+            marginBottom: "20px",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: "20px", color: "var(--heading1Color)" }}
-            >
-              format_size
-            </span>
-            <span style={{ fontSize: "13px", color: "var(--heading1Color)" }}>
-              {t("uiTextSize")}
-            </span>
-          </div>
-          <div style={{ display: "flex", gap: "4px" }}>
-            {UI_TEXT_SIZES.map((size, i) => (
-              <button
-                key={size.label}
-                onClick={() => handleUiTextSize(i)}
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "6px",
-                  border:
-                    uiSizeIndex === i
-                      ? "2px solid var(--addButtonIcon)"
-                      : "1px solid #ccc",
-                  backgroundColor:
-                    uiSizeIndex === i
-                      ? "var(--addButtonIcon)"
-                      : "var(--pageBackground, #fff)",
-                  color:
-                    uiSizeIndex === i
-                      ? "var(--primaryColor)"
-                      : "var(--pageTextColor)",
-                  cursor: "pointer",
-                  fontSize: `${size.value - 2}px`,
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: 0,
-                  fontFamily: "inherit",
-                }}
-              >
-                {size.label}
-              </button>
-            ))}
-          </div>
+          Edit theme for your page and everything...
         </div>
-        <div style={{ display: "flex", gap: "7px", marginBottom: "30px" }}>
+
+        {/* UI text size */}
+        <div
+          style={{
+            marginBottom: "8px",
+            fontSize: "14px",
+            fontWeight: "500",
+            color: "var(--heading1Color)",
+          }}
+        >
+          {t("uiTextSize")}
+        </div>
+        <div style={{ display: "flex", gap: "6px", marginBottom: "20px" }}>
+          {UI_TEXT_SIZES.map((size, i) => (
+            <button
+              key={i}
+              onClick={() => handleUiTextSize(i)}
+              style={{
+                width: "42px",
+                height: "42px",
+                borderRadius: "8px",
+                border:
+                  uiSizeIndex === i
+                    ? "2px solid var(--addButtonIcon)"
+                    : "1px solid #E1E3EA",
+                backgroundColor:
+                  uiSizeIndex === i
+                    ? "var(--addButtonIcon)"
+                    : "var(--pageBackground, #fff)",
+                color: uiSizeIndex === i ? "#fff" : "var(--pageTextColor)",
+                cursor: "pointer",
+                fontSize: `${12 + i * 2}px`,
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                fontFamily: "inherit",
+              }}
+            >
+              {size.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={separatorStyle}></div>
+
+        {/* Scripture settings */}
+        <div style={{ ...sectionTitleStyle, marginTop: "0px" }}>
+          Scripture settings
+        </div>
+        <div style={{ display: "flex", gap: "10px", marginBottom: "24px" }}>
           <div
             style={{
-              width: "80px",
-              height: "43px",
-              backgroundColor: "var(--pageBackground) !important",
+              flex: 1,
+              height: "48px",
+              backgroundColor: "var(--pageBackground, #fff)",
               border: "1px solid #E1E3EA",
-              borderRadius: "4px",
+              borderRadius: "8px",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               cursor: "pointer",
+              fontSize: "14px",
+              color: "var(--heading1Color)",
             }}
             onClick={handleDecreaseFontSize}
           >
-            <svg
-              style={{ filter: "none", stroke: "var(--heading1Color)" }}
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-            >
-              <text x="6" y="9" fontSize="12" textAnchor="middle" fill="black">
-                A
-              </text>
-            </svg>
+            A
           </div>
           <div
             style={{
-              width: "80px",
-              height: "43px",
-              backgroundColor: "var(--pageBackground) !important",
+              flex: 1,
+              height: "48px",
+              backgroundColor: "var(--pageBackground, #fff)",
               border: "1px solid #E1E3EA",
-              borderRadius: "4px",
+              borderRadius: "8px",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               cursor: "pointer",
+              fontSize: "20px",
+              fontWeight: 500,
+              color: "var(--heading1Color)",
             }}
             onClick={handleIncreaseFontSize}
           >
-            <svg
-              style={{ filter: "none", stroke: "var(--heading1Color)" }}
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-            >
-              <text
-                x="10"
-                y="14"
-                fontSize="18"
-                textAnchor="middle"
-                fill="black"
-              >
-                A
-              </text>
-            </svg>
+            A
           </div>
           <div
             style={{
-              width: "80px",
-              height: "43px",
-              backgroundColor: "var(--pageBackground) !important",
+              flex: 1,
+              height: "48px",
+              backgroundColor: "var(--pageBackground, #fff)",
               border: "1px solid #E1E3EA",
-              borderRadius: "4px",
+              borderRadius: "8px",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
@@ -6424,45 +6476,35 @@ const SettingsUI = () => {
             }}
             onClick={handleCycleLineHeight}
           >
-            <svg
-              style={{
-                filter: "none",
-                stroke: "var(--heading1Color)",
-                scale: 1.2,
-              }}
-              width="18"
-              height="18"
-              viewBox="0 0 18 18"
-              fill="none"
-            >
+            <svg width="20" height="14" viewBox="0 0 20 14" fill="none">
               {(() => {
                 const gap = 3.5 + lineHeightIndex * 1.5;
-                const startY = 3;
+                const startY = 1;
                 return (
                   <>
                     <rect
-                      x="3"
+                      x="0"
                       y={startY}
-                      width="12"
+                      width="20"
                       height="2"
                       rx="1"
-                      fill="black"
+                      fill="var(--heading1Color, #333)"
                     />
                     <rect
-                      x="3"
+                      x="0"
                       y={startY + gap}
-                      width="12"
+                      width="20"
                       height="2"
                       rx="1"
-                      fill="black"
+                      fill="var(--heading1Color, #333)"
                     />
                     <rect
-                      x="3"
+                      x="0"
                       y={startY + 2 * gap}
-                      width="12"
+                      width="20"
                       height="2"
                       rx="1"
-                      fill="black"
+                      fill="var(--heading1Color, #333)"
                     />
                   </>
                 );
@@ -6471,15 +6513,149 @@ const SettingsUI = () => {
           </div>
         </div>
 
+        {/* Scripture Margins */}
+        <div
+          style={{
+            fontSize: "14px",
+            fontWeight: "500",
+            color: "var(--heading1Color)",
+            marginBottom: "8px",
+          }}
+        >
+          Scripture Margins
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            border: "1px solid #E1E3EA",
+            borderRadius: "8px",
+            padding: "10px 14px",
+            marginBottom: "24px",
+            gap: "10px",
+          }}
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path
+              d="M4 2v16M16 2v16"
+              stroke="var(--heading1Color, #333)"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            <path
+              d="M4 10h12"
+              stroke="var(--heading1Color, #333)"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeDasharray="2 2"
+            />
+          </svg>
+          <div
+            style={{ width: "1px", height: "20px", background: "#E1E3EA" }}
+          ></div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
+            <input
+              type="number"
+              value={scriptureMargin}
+              onChange={(e: any) => {
+                setScriptureMargin(e.target.value);
+                applyScriptureMargin(e.target.value);
+              }}
+              style={{
+                border: "none",
+                outline: "none",
+                fontSize: "14px",
+                width: `33px`,
+                background: "transparent",
+                color: "var(--heading1Color)",
+                fontFamily: "inherit",
+                padding: 0,
+              }}
+            />
+            <span style={{ fontSize: "13px", color: "var(--text2, #888)" }}>
+              px
+            </span>
+          </div>
+        </div>
+
+        {/* Heading Font */}
+        <div
+          style={{
+            fontSize: "14px",
+            fontWeight: "500",
+            color: "var(--heading1Color)",
+            marginBottom: "4px",
+          }}
+        >
+          Heading Font
+        </div>
+        <div
+          style={{
+            fontSize: "12px",
+            color: "var(--text2, #888)",
+            marginBottom: "8px",
+          }}
+        >
+          (Book, chapter, section names)
+        </div>
+        <div
+          style={dropdownStyle}
+          onClick={() => setShowHeadingFontDropdown(!showHeadingFontDropdown)}
+        >
+          <div style={dropdownTextStyle}>
+            {FONT_OPTIONS[selectedHeadingFont]?.name}
+          </div>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M8 11L3 6L3.7 5.3L8 9.6L12.3 5.3L13 6L8 11Z"
+              fill="var(--pageTextColor)"
+            />
+          </svg>
+          {showHeadingFontDropdown && (
+            <div style={dropdownMenuStyle} onClick={(e) => e.stopPropagation()}>
+              {FONT_OPTIONS.map((font, index) => (
+                <div
+                  key={index}
+                  style={menuItemStyle(selectedHeadingFont === index)}
+                  onClick={() => {
+                    setSelectedHeadingFont(index);
+                    applyHeadingFont(FONT_OPTIONS[index]!.value);
+                    setShowHeadingFontDropdown(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Body Font */}
+        <div
+          style={{
+            fontSize: "14px",
+            fontWeight: "500",
+            color: "var(--heading1Color)",
+            marginBottom: "4px",
+          }}
+        >
+          Body Font
+        </div>
+        <div
+          style={{
+            fontSize: "12px",
+            color: "var(--text2, #888)",
+            marginBottom: "8px",
+          }}
+        >
+          (verse, descriptions etc)
+        </div>
         <div
           style={dropdownStyle}
           onClick={() => setShowFontDropdown(!showFontDropdown)}
         >
-          <div>
-            <div style={dropdownTextStyle}>
-              {FONT_OPTIONS[selectedFont].name}
-            </div>
-            <div style={dropdownSubtextStyle}>{t("font")}</div>
+          <div style={dropdownTextStyle}>
+            {FONT_OPTIONS[selectedFont]?.name}
           </div>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path
@@ -6495,7 +6671,7 @@ const SettingsUI = () => {
                   style={menuItemStyle(selectedFont === index)}
                   onClick={() => {
                     setSelectedFont(index);
-                    applyVerseFont(FONT_OPTIONS[index].value);
+                    applyVerseFont(FONT_OPTIONS[index]!.value);
                     setShowFontDropdown(false);
                   }}
                 >
@@ -6507,76 +6683,125 @@ const SettingsUI = () => {
         </div>
       </div>
 
-      <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>
-          {t(
-            showHeading[activeSpace]
-              ? "hideChapterHeadings"
-              : "showChapterHeadings"
-          )}
-        </div>
+      <div style={separatorStyle}></div>
 
+      {/* Scripture elements */}
+      <div style={{ ...sectionTitleStyle, marginTop: "0px" }}>
+        Scripture elements
+      </div>
+
+      <div style={toggleRowStyle}>
+        <div style={{ fontSize: "14px", color: "var(--heading1Color)" }}>
+          Show chapter heading
+        </div>
         <div
-          style={toggleStyle(showHeading[activeSpace])}
+          style={{
+            ...toggleStyle(showHeading[activeSpace]),
+            width: "44px",
+            height: "24px",
+          }}
           onClick={() =>
-            setShowHeading((prev) => ({
+            setShowHeading((prev: any) => ({
               ...prev,
               [activeSpace]: !prev[activeSpace],
             }))
           }
         >
-          <div style={toggleCircleStyle(showHeading[activeSpace])}></div>
+          <div
+            style={{
+              ...toggleCircleStyle(showHeading[activeSpace]),
+              width: "18px",
+              height: "18px",
+              top: "3px",
+              left: showHeading[activeSpace] ? "23px" : "3px",
+            }}
+          ></div>
         </div>
       </div>
 
       <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>
-          {t(showVerses[activeSpace] ? "hideVerseNumbers" : "showVerseNumbers")}
+        <div style={{ fontSize: "14px", color: "var(--heading1Color)" }}>
+          Show verse text
         </div>
-
         <div
-          style={toggleStyle(showVerses[activeSpace])}
+          style={{
+            ...toggleStyle(showVerses[activeSpace]),
+            width: "44px",
+            height: "24px",
+          }}
           onClick={() =>
-            setShowVerses((prev) => ({
+            setShowVerses((prev: any) => ({
               ...prev,
               [activeSpace]: !prev[activeSpace],
             }))
           }
         >
-          <div style={toggleCircleStyle(showVerses[activeSpace])}></div>
+          <div
+            style={{
+              ...toggleCircleStyle(showVerses[activeSpace]),
+              width: "18px",
+              height: "18px",
+              top: "3px",
+              left: showVerses[activeSpace] ? "23px" : "3px",
+            }}
+          ></div>
         </div>
       </div>
 
       <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>
-          {t(showFootnotes[activeSpace] ? "hideFootnotes" : "showFootnotes")}
+        <div style={{ fontSize: "14px", color: "var(--heading1Color)" }}>
+          Show/hide foot notes
         </div>
-
         <div
-          style={toggleStyle(showFootnotes[activeSpace])}
+          style={{
+            ...toggleStyle(showFootnotes[activeSpace]),
+            width: "44px",
+            height: "24px",
+          }}
           onClick={() =>
-            setShowFootnotes((prev) => ({
+            setShowFootnotes((prev: any) => ({
               ...prev,
               [activeSpace]: !prev[activeSpace],
             }))
           }
         >
-          <div style={toggleCircleStyle(showFootnotes[activeSpace])}></div>
+          <div
+            style={{
+              ...toggleCircleStyle(showFootnotes[activeSpace]),
+              width: "18px",
+              height: "18px",
+              top: "3px",
+              left: showFootnotes[activeSpace] ? "23px" : "3px",
+            }}
+          ></div>
         </div>
       </div>
 
-      <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>
-          {t(showNavArrows ? "hideNavArrows" : "showNavArrows")}
+      {(globalThis as any).IsMobileNow() && (
+        <div style={toggleRowStyle}>
+          <div style={{ fontSize: "14px", color: "var(--heading1Color)" }}>
+            {t(showNavArrows ? "hideNavArrows" : "showNavArrows")}
+          </div>
+          <div
+            style={{
+              ...toggleStyle(showNavArrows),
+              width: "44px",
+              height: "24px",
+            }}
+            onClick={() => setShowNavArrows((prev: any) => !prev)}
+          >
+            <div
+              style={{
+                ...toggleCircleStyle(showNavArrows),
+                width: "18px",
+                height: "18px",
+                top: "3px",
+                left: showNavArrows ? "23px" : "3px",
+              }}
+            ></div>
+          </div>
         </div>
-
-        <div
-          style={toggleStyle(showNavArrows)}
-          onClick={() => setShowNavArrows((prev) => !prev)}
-        >
-          <div style={toggleCircleStyle(showNavArrows)}></div>
-        </div>
-      </div>
+      )}
       {presetThemes.length > 1 && (
         <div>
           <div style={separatorStyle}></div>

@@ -622,7 +622,10 @@ function Tab({
     `}</style>
       {!collapsed ? (
         <>
-          <div className="tabInfo">
+          <div
+            className="tabInfo"
+            style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}
+          >
             {multiSelectMode && (
               <input
                 type="checkbox"
@@ -2311,7 +2314,7 @@ function SideBar({ panelsNumber }) {
       <div
         onMouseUp={() => setIsDragging(false)}
         style={{
-          width: `${sidebarWidth}px`,
+          width: `${Math.round(sidebarWidth * ((globalThis as any).changes?.uiTextSize || 1))}px`,
           display: sidebarWidth === 0 ? "none" : null,
         }}
         ref={sidebarRef}
@@ -2336,7 +2339,10 @@ function SideBar({ panelsNumber }) {
           }}
         ></div>
 
-        <div className="headbar">
+        <div
+          className="headbar"
+          style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}
+        >
           {!collapsed ? (
             <>
               <div className="menuOptions">
@@ -2478,7 +2484,10 @@ function SideBar({ panelsNumber }) {
                 setCollapsed={setCollapsed}
               />
             )}
-            <div className="tabsContainer">
+            <div
+              className="tabsContainer"
+              style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}
+            >
               <span style={{ color: "var(--pageTextColor)" }}>
                 {showBookmarksFilter ? `${t("tabs")} & Folders` : t("tabs")}
               </span>
