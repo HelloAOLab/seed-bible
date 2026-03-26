@@ -1,14 +1,12 @@
 import { createRecordsClient } from "@casual-simulation/aux-records/RecordsClient";
 import { writeFile, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import { uploadFile } from "./records";
 import { existsSync, write } from "node:fs";
 import { execSync } from "node:child_process";
 import {
   isRecordKey,
   parseRecordKey,
-  type StoredAux,
-} from "@casual-simulation/aux-common";
+} from "@casual-simulation/aux-common/records";
 import fs from "fs";
 import type {
   ExtensionMeta,
@@ -16,7 +14,6 @@ import type {
   UploadedExtension,
 } from "@packages/seed-bible-refresh/seed-bible/managers/ExtensionManager";
 import z from "zod";
-import { en } from "zod/v4/locales";
 
 const downloadRecordName = "testingPublickKey";
 const uploadRecordName = "seedBibleExtensions";
