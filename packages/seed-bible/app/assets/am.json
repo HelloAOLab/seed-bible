@@ -159,5 +159,10 @@
   "chooseAnother": "ሌላ ይምረጡ",
   "playlistHasBeenEnded": "ዝርዝሩ ተጠናቋል።",
   "youAreAtTheBeginningOfThePlaylist": "በዝርዝሩ መጀመሪያ ላይ ነዎት።",
-  "shouldHaveAtLeastTwoAnnotationsToFilter": "ለማጣራት ቢያንስ ሁለት ማስታወሻዎች ያስፈልጋሉ።"
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "ለማጣራት ቢያንስ ሁለት ማስታወሻዎች ያስፈልጋሉ።",
+  "thisWillLoseYourRecording": "መቅረጫዎ ይጠፋል።",
+  "switchWillLoseYourRecording": "መቀየር መቅረጫዎን ያጠፋል።",
+  "cannotSwitchWhileRecording": "በመቅረጽ ላይ ሳሉ መቀየር አይቻልም።",
+  "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich": "በዚህ ማያያዣ ውስጥ ዳታ አለዎት። ይጠፋል። ለመቀየር እንደገና ጠቅ ያድርጉ።",
+  "addToTheCurrentQueue": "ወደ የአሁኑ ወረፋ ጨምር"
 }

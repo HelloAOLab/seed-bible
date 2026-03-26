@@ -159,5 +159,10 @@
   "chooseAnother": "Chagua kingine",
   "playlistHasBeenEnded": "Orodha ya kucheza imekwisha.",
   "youAreAtTheBeginningOfThePlaylist": "Uko mwanzoni mwa orodha ya kucheza.",
-  "shouldHaveAtLeastTwoAnnotationsToFilter": "Unahitaji angalau maelezo mawili kuchuja."
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "Unahitaji angalau maelezo mawili kuchuja.",
+  "thisWillLoseYourRecording": "Rekodi yako itapotea.",
+  "switchWillLoseYourRecording": "Kubadilisha kutapoteza rekodi yako.",
+  "cannotSwitchWhileRecording": "Huwezi kubadilisha wakati wa kurekodi.",
+  "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich": "Una data kwenye kiambatanishi hiki. Itapotea. Bofya tena kubadilisha.",
+  "addToTheCurrentQueue": "Ongeza kwenye foleni ya sasa"
 }
