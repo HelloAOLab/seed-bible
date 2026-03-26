@@ -4,6 +4,8 @@ declare global {
     [key: string]: any;
   }
 
+  type Bot = import("./AuxLibraryDefinitions").Bot;
+
   // Your other specific globals (optional, for better intellisense)
   const that: any;
   const authBot: Bot;

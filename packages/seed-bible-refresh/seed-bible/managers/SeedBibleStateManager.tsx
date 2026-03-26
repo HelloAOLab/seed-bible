@@ -12,6 +12,8 @@ import type { ConfigManager } from "seed-bible.managers.ConfigManager";
 import { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
 import { createPanes } from "seed-bible.managers.PanesManager";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
+import { createLoginManager } from "seed-bible.managers.LoginManager";
+import type { LoginManager } from "seed-bible.managers.LoginManager";
 import { createSidebar } from "seed-bible.managers.SidebarManager";
 import { createTabs } from "seed-bible.managers.TabsManager";
 import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
@@ -55,6 +57,7 @@ export interface SeedBibleState {
   panes: PanesManager;
   selector: BibleSelectorState;
   tools: ToolsManager;
+  login: LoginManager;
   app: AppState;
 }
 
@@ -68,6 +71,7 @@ export function createSeedBibleState(): SeedBibleState {
   const panes = createPanes(tabs, tabs.selectedTabId);
   const selector = createBibleSelectorState(data, tabs, panes);
   const tools = createBibleToolsManager();
+  const login = createLoginManager();
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value.variables);
@@ -195,6 +199,7 @@ export function createSeedBibleState(): SeedBibleState {
     panes,
     selector,
     tools,
+    login,
     app: {
       panelsEnabled,
       selectedTab,
