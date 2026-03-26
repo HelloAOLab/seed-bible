@@ -1,60 +1,87 @@
 import { computed, effect, signal, type Signal } from "@preact/signals";
 import type { PackageRecord } from "typings/AuxLibraryDefinitions";
-import { z } from "zod";
+import { url, z } from "zod";
 
-// const DEFAULT_EXTENSION_RECORD = 'a';
+export interface ExtensionMeta {
+  titles: {
+    en: string;
+    [lang: string]: string;
+  };
+  descriptions: {
+    en: string;
+    [lang: string]: string;
+  };
+}
 
-// export interface ExtensionManager {
+export interface UploadedExtension {
+  name: string;
+  recordName: string;
+  address: string;
+  meta: ExtensionMeta;
+}
 
-// }
+export interface ExtensionSet {
+  recordName: string;
+  id: string;
+  extensions: UploadedExtension[];
+}
+
+const availableExtensions: ExtensionSet | null =
+  thisBot.tags.availableExtensions ?? null;
+
+export type ExtensionManager = ReturnType<typeof createExtensionManager>;
 
 export function createExtensionManager() {
-  const loadExtensionFromAuxFile = async (url: string) => {
+  const loadExtensionFromPackage = async (
+    name: string,
+    recordName: string,
+    address: string
+  ) => {
     try {
-      const response = await web.get(url);
-
-      if (response.status >= 400) {
-        console.error(
-          "Failed to fetch extension from URL:",
-          url,
-          "Response:",
-          response
-        );
+      const result = await os.installPackage(recordName, address);
+      if (result.success) {
+        shout("onExtensionInstall", name);
+        console.log(`Successfully installed extension: ${name}`);
+        return true;
+      } else {
+        console.error(`Failed to install extension ${name}:`, result);
         return false;
       }
-      await os.installAuxFile(response.data);
-      return true;
     } catch (err) {
-      console.error("Failed to load extension from URL:", url, err);
+      console.error("Failed to install extension:", name, err);
       return false;
     }
   };
 
-  const loadDefaultExtensions = async () => {};
+  const loadExtension = async (uploaded: UploadedExtension) =>
+    await loadExtensionFromPackage(
+      uploaded.name,
+      uploaded.recordName,
+      uploaded.address
+    );
 
-  // const installPackage = async (packageRecord: PackageRecord) => {
-  //   os.installPackage(packageRecord.address);
-  // }
+  const loadExtensionSet = async (set: ExtensionSet) => {
+    const promises = set.extensions.map((ext) => loadExtension(ext));
+    const results = await Promise.all(promises);
+    const successCount = results.filter((r) => r).length;
+    console.log(
+      `Finished loading extension set '${set.id}'. Successfully loaded ${successCount} out of ${set.extensions.length} extensions.`
+    );
+  };
 
-  // const listExtensionsInRecord = async (recordName: string = DEFAULT_EXTENSION_RECORD): Promise<PackageRecord[]> => {
-  //   try {
-  //     const packages = await os.listPackageContainers(recordName);
-
-  //     if (packages.success) {
-  //       return packages.items;
-  //     } else {
-  //       console.error("Failed to list extensions for record:", recordName, "Error:", packages);
-  //       return [];
-  //     }
-  //   } catch(err) {
-  //     console.error("Error while listing extensions for record:", recordName, err);
-  //     return [];
-  //   }
-  // };
+  const loadDefaultExtensions = async () => {
+    if (!availableExtensions) {
+      console.warn("No available extensions found in bot tags.");
+      return;
+    }
+    console.log("Loading default extension set:", availableExtensions);
+    await loadExtensionSet(availableExtensions);
+  };
 
   return {
     loadDefaultExtensions,
-    loadExtensionFromAuxFile,
-    // listExtensionsInRecord,
+    loadExtensionSet,
+    loadExtension,
+    loadExtensionFromPackage,
   };
 }

@@ -8,6 +8,7 @@ import {
   createSeedBibleState,
 } from "seed-bible.managers.SeedBibleStateManager";
 import { CasualOSApp } from "seed-bible.components.CasualOSApp";
+import { useEffect } from "preact/hooks";
 
 const { useMemo } = os.appHooks;
 
@@ -59,6 +60,11 @@ export function ExternalResourceDependencies({
 
 export function Main() {
   const state = useMemo(() => createSeedBibleState(), []);
+
+  useEffect(() => {
+    state.extensions.loadDefaultExtensions();
+  });
+
   const { theme, sidebar, tabs, panes, selector, app } = state;
 
   return (

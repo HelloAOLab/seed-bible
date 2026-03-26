@@ -2,8 +2,8 @@ import { program } from "commander";
 import { rmdir, writeFile } from "node:fs/promises";
 import {
   generateExtension,
-  downloadAndSave,
-  listExtensions,
+  // downloadAndSave,
+  // listExtensions,
   uploadAll,
   upload,
 } from "./lib/extension";
@@ -36,88 +36,88 @@ program
     );
   });
 
-program
-  .command("list")
-  .description("Lists all the extensions.")
-  .option("-v, --verbose", "Whether to log verbose output.", false)
-  .action(async (options) => {
-    const list = await listExtensions();
+// program
+//   .command("list")
+//   .description("Lists all the extensions.")
+//   .option("-v, --verbose", "Whether to log verbose output.", false)
+//   .action(async (options) => {
+//     const list = await listExtensions();
 
-    for (const ext of list) {
-      if (options.verbose) {
-        console.log(JSON.stringify(ext, null, 2));
-      } else {
-        console.log(ext.name);
-      }
-    }
-  });
+//     for (const ext of list) {
+//       if (options.verbose) {
+//         console.log(JSON.stringify(ext, null, 2));
+//       } else {
+//         console.log(ext.name);
+//       }
+//     }
+//   });
 
-program
-  .command("download")
-  .description("Downloads the AUX for the given extension to the dist folder.")
-  .argument("<name>", "The name of the extension to download.")
-  .action(async (name) => {
-    await downloadAndSave(name);
-  });
+// program
+//   .command("download")
+//   .description("Downloads the AUX for the given extension to the dist folder.")
+//   .argument("<name>", "The name of the extension to download.")
+//   .action(async (name) => {
+//     await downloadAndSave(name);
+//   });
 
-program
-  .command("download-all")
-  .description(
-    "Downloads all AUXes for the given extension to the dist folder."
-  )
-  .action(async () => {
-    const list = await listExtensions();
-    for (const ext of list) {
-      await downloadAndSave(ext.name);
-    }
-  });
+// program
+//   .command("download-all")
+//   .description(
+//     "Downloads all AUXes for the given extension to the dist folder."
+//   )
+//   .action(async () => {
+//     const list = await listExtensions();
+//     for (const ext of list) {
+//       await downloadAndSave(ext.name);
+//     }
+//   });
 
-async function unpack(name: string) {
-  const { filePath, ...ext } = await downloadAndSave(
-    name,
-    extensionNameMap.get(name) || `${name}.aux`
-  );
-  const extensionPath = path.resolve(
-    "packages",
-    extensionNameMap.get(name) || name
-  );
-  if (existsSync(extensionPath)) {
-    await rmdir(extensionPath, { recursive: true });
-  }
-  execSync(`casualos unpack-aux --overwrite "${filePath}" ./packages`, {
-    stdio: "ignore",
-  });
+// async function unpack(name: string) {
+//   const { filePath, ...ext } = await downloadAndSave(
+//     name,
+//     extensionNameMap.get(name) || `${name}.aux`
+//   );
+//   const extensionPath = path.resolve(
+//     "packages",
+//     extensionNameMap.get(name) || name
+//   );
+//   if (existsSync(extensionPath)) {
+//     await rmdir(extensionPath, { recursive: true });
+//   }
+//   execSync(`casualos unpack-aux --overwrite "${filePath}" ./packages`, {
+//     stdio: "ignore",
+//   });
 
-  const extensionJsonPath = path.resolve(extensionPath, "extension.json");
-  await writeFile(
-    extensionJsonPath,
-    JSON.stringify(ext.meta, null, 2),
-    "utf-8"
-  );
-  console.log(`Unpacked extension ${name} to packages folder.`);
-}
+//   const extensionJsonPath = path.resolve(extensionPath, "extension.json");
+//   await writeFile(
+//     extensionJsonPath,
+//     JSON.stringify(ext.meta, null, 2),
+//     "utf-8"
+//   );
+//   console.log(`Unpacked extension ${name} to packages folder.`);
+// }
 
-program
-  .command("unpack")
-  .description(
-    "Downloads and unpacks the AUX for the given extension into the packages folder."
-  )
-  .argument("<name>", "The name of the extension to download.")
-  .action(async (name) => {
-    await unpack(name);
-  });
+// program
+//   .command("unpack")
+//   .description(
+//     "Downloads and unpacks the AUX for the given extension into the packages folder."
+//   )
+//   .argument("<name>", "The name of the extension to download.")
+//   .action(async (name) => {
+//     await unpack(name);
+//   });
 
-program
-  .command("unpack-all")
-  .description(
-    "Downloads and unpacks the AUX for all extensions into the packages folder."
-  )
-  .action(async () => {
-    const list = await listExtensions();
-    for (const ext of list) {
-      await unpack(ext.name);
-    }
-  });
+// program
+//   .command("unpack-all")
+//   .description(
+//     "Downloads and unpacks the AUX for all extensions into the packages folder."
+//   )
+//   .action(async () => {
+//     const list = await listExtensions();
+//     for (const ext of list) {
+//       await unpack(ext.name);
+//     }
+//   });
 
 program
   .command("upload")

@@ -4,65 +4,25 @@ import path from "node:path";
 import { uploadFile } from "./records";
 import { existsSync, write } from "node:fs";
 import { execSync } from "node:child_process";
-import type { StoredAux } from "@casual-simulation/aux-common";
+import {
+  isRecordKey,
+  parseRecordKey,
+  type StoredAux,
+} from "@casual-simulation/aux-common";
 import fs from "fs";
+import type {
+  ExtensionMeta,
+  ExtensionSet,
+  UploadedExtension,
+} from "@packages/seed-bible-refresh/seed-bible/managers/ExtensionManager";
+import z from "zod";
+import { en } from "zod/v4/locales";
 
 const downloadRecordName = "testingPublickKey";
 const uploadRecordName = "seedBibleExtensions";
 const headers = {
   Origin: "https://auth.ao.bot",
 };
-
-export interface ExtensionData {
-  meta: ExtensionMeta;
-  aux: StoredAux;
-}
-
-export interface ExtensionMeta {
-  author: string;
-  configEditor: {
-    app: string;
-    author: string;
-    contextMenuConfig: {
-      optionsIsOn: string;
-    };
-    tabConfig: {
-      title: string;
-    };
-    toolbarConfig: {
-      label: string;
-      icon: string;
-      hasToggle: string;
-    };
-  };
-  createdAt: string;
-  dependencies: {
-    depId: number;
-    name: string;
-    type: "package";
-  }[];
-  description: string;
-  id: number;
-  license: string;
-  linkedDependencies: unknown[];
-  name: string;
-  otherBots: {
-    description: string;
-    tag: string;
-  }[];
-  recordFile?: {
-    sha256Hash: string;
-    success: boolean;
-    url: string;
-  };
-  source?: string;
-  status: "active";
-  type: "package";
-  updatedAt: string;
-  userAuth: string;
-  version: string;
-  mainBotTag?: string;
-}
 
 /**
  * Generates a new extension.json in the specified packages folder.
@@ -108,38 +68,12 @@ export function generateExtension(
     );
   }
   const extensionData: ExtensionMeta = {
-    author,
-    configEditor: {
-      app: "",
-      author,
-      contextMenuConfig: {
-        optionsIsOn: "<Context Menu Options Is On>",
-      },
-      tabConfig: {
-        title: "<Tab Title>",
-      },
-      toolbarConfig: {
-        label: "<Toolbar Label>",
-        icon: "icon.png",
-        hasToggle: "false",
-      },
+    titles: {
+      en: pckgName,
     },
-    createdAt: new Date().toISOString(),
-    dependencies: [],
-    description: `Extension ${pckgName} description.`,
-    id: Date.now(),
-    license: "MIT",
-    linkedDependencies: [],
-    name: pckgName,
-    otherBots: [],
-    recordFile: undefined,
-    source: undefined,
-    status: "active",
-    type: "package",
-    updatedAt: new Date().toISOString(),
-    userAuth: "",
-    version: "0.0.1",
-    mainBotTag: mainBot,
+    descriptions: {
+      en: `Extension ${pckgName} description.`,
+    },
   };
 
   writeFile(extensionFilePath, JSON.stringify(extensionData, null, 2), "utf-8");
@@ -167,198 +101,234 @@ export function generateExtension(
   writeFile(mainBotFilePath, JSON.stringify(mainBotData, null, 2), "utf-8");
 }
 
+// /**
+//  * Downloads the AUX for the given extension from the records server.
+//  * @param name The name of the extension to download.
+//  */
+// export async function listExtensions(): Promise<ExtensionMeta[]> {
+//   const client = createRecordsClient("https://api.ao.bot");
+
+//   const list: ExtensionMeta[] = [];
+//   let lastAddress: string | undefined = undefined;
+//   while (true) {
+//     const result = await client.listData(
+//       {
+//         recordName: downloadRecordName,
+//         address: lastAddress,
+//         marker: "publicRead",
+//       },
+//       {
+//         headers,
+//       }
+//     );
+
+//     if (result.success === false) {
+//       console.error("Failed to download extension:", result);
+//       break;
+//     } else {
+//       list.push(...result.items.map((i) => i.data));
+//       if (result.items.length > 0) {
+//         lastAddress = result.items[result.items.length - 1]?.address;
+//       } else {
+//         break;
+//       }
+//     }
+//   }
+
+//   return list;
+// }
+
+// /**
+//  * Downloads the AUX for the given extension from the records server.
+//  * @param name The name of the extension to download.
+//  */
+// export async function downloadExtension(
+//   name: string
+// ): Promise<ExtensionData | null> {
+//   const client = createRecordsClient("https://api.ao.bot");
+
+//   const result: any = await client.getData(
+//     {
+//       recordName: downloadRecordName,
+//       address: name,
+//     },
+//     {
+//       headers,
+//     }
+//   );
+
+//   if (result.success === false) {
+//     console.error("Failed to download extension:", result);
+//     return null;
+//   }
+
+//   const data = result.data;
+//   if (!data) {
+//     console.error("No data found for extension:", name);
+//     return null;
+//   }
+
+//   // if (!Array.isArray(data.eggVersionHistory)) {
+//   //     console.error('Invalid eggVersionHistory for pattern:', name, data);
+//   //     return null;
+//   // }
+
+//   // if (version === undefined) {
+//   //     version = data.eggVersionHistory.length - 1;
+//   // }
+
+//   // if (version < 0 || version >= data.eggVersionHistory.length) {
+//   //     console.error('Invalid version for pattern:', name, version);
+//   //     return null;
+//   // }
+
+//   // const versionFile = data.eggVersionHistory[version];
+
+//   const botsResult = await fetch(data.recordFile?.url || data.source);
+//   if (!botsResult.ok) {
+//     console.error(
+//       "Failed to download extension bots:",
+//       await botsResult.text()
+//     );
+//     return null;
+//   }
+
+//   const bots = await botsResult.json();
+//   const aux: StoredAux = {
+//     version: 1,
+//     state: {},
+//   };
+
+//   for (const b of bots) {
+//     aux.state[b.id] = b;
+//   }
+
+//   return {
+//     meta: data,
+//     aux,
+//   };
+// }
+
+// /**
+//  * Downloads and saves the given extension to the dist folder.
+//  * @param name The name of the extension to download.
+//  * @returns The path to the saved file.
+//  */
+// export async function downloadAndSave(name: string, fileName?: string) {
+//   const ext = await downloadExtension(name);
+//   if (!ext) {
+//     throw new Error("Failed to download extension: " + name);
+//   }
+//   const filePath = path.resolve("dist", fileName || `${name}.aux`);
+//   await writeFile(filePath, JSON.stringify(ext.aux, null, 2), "utf-8");
+//   return {
+//     ...ext,
+//     filePath,
+//   };
+// }
+
 /**
- * Downloads the AUX for the given extension from the records server.
- * @param name The name of the extension to download.
- */
-export async function listExtensions(): Promise<ExtensionMeta[]> {
-  const client = createRecordsClient("https://api.ao.bot");
+//  * Uploads the given extension to the records server.
+//  * @param meta The metadata of the extension to upload.
+//  * @param aux The extension data to upload.
+//  * @param sessionKey The session key to use for authentication.
+//  * @param recordKey The record key to use. If not specified, the default record name will be used.
+//  */
+// export async function uploadExtensionAux(
+//   meta: ExtensionMeta,
+//   aux: StoredAux,
+//   sessionKey: string,
+//   recordKey: string | null | undefined,
+//   saveMeta: boolean
+// ) {
+//   const { fileUrl, sha256Hash } = await uploadFile(
+//     recordKey ?? uploadRecordName,
+//     aux,
+//     sessionKey,
+//     ["publicRead"]
+//   );
+//   console.log("Extension File URL:", fileUrl);
 
-  const list: ExtensionMeta[] = [];
-  let lastAddress: string | undefined = undefined;
-  while (true) {
-    const result = await client.listData(
-      {
-        recordName: downloadRecordName,
-        address: lastAddress,
-        marker: "publicRead",
-      },
-      {
-        headers,
-      }
-    );
+//   const client = createRecordsClient("https://api.ao.bot");
+//   client.sessionKey = sessionKey;
 
-    if (result.success === false) {
-      console.error("Failed to download extension:", result);
-      break;
-    } else {
-      list.push(...result.items.map((i) => i.data));
-      if (result.items.length > 0) {
-        lastAddress = result.items[result.items.length - 1]?.address;
-      } else {
-        break;
-      }
-    }
+//   meta.recordFile = {
+//     sha256Hash,
+//     success: true,
+//     url: fileUrl,
+//   };
+//   meta.source = fileUrl;
+//   meta.updatedAt = new Date().toISOString();
+
+//   if (saveMeta) {
+//     const recordResult: any = await client.recordData(
+//       {
+//         recordKey: recordKey ?? uploadRecordName,
+//         address: meta.name,
+//         data: meta,
+//         markers: ["publicRead"],
+//       },
+//       {
+//         headers,
+//       }
+//     );
+
+//     if (recordResult.success === false) {
+//       throw new Error(
+//         "Failed to record extension: " +
+//           recordResult.errorCode +
+//           " " +
+//           recordResult.errorMessage
+//       );
+//     }
+//   } else {
+//     console.log("Skipping meta.");
+//   }
+
+//   console.log("Successfully recorded extension:", meta.name);
+
+//   return {
+//     fileUrl: fileUrl,
+//     meta,
+//     name: meta.name,
+//   };
+// }
+
+// interface UploadedExtension {
+//   recordName: string;
+//   address: string;
+//   name: string;
+//   meta: ExtensionMeta;
+// }
+
+// interface ExtensionSet {
+//   id: string;
+//   extensions: UploadedExtension[];
+// }
+
+function getRecordName(key: string) {
+  if (!isRecordKey(key)) {
+    return key;
   }
-
-  return list;
+  const parsed = parseRecordKey(key);
+  if (!parsed) {
+    throw new Error("Invalid record key: " + key);
+  }
+  return parsed[0];
 }
 
-/**
- * Downloads the AUX for the given extension from the records server.
- * @param name The name of the extension to download.
- */
-export async function downloadExtension(
-  name: string
-): Promise<ExtensionData | null> {
-  const client = createRecordsClient("https://api.ao.bot");
-
-  const result: any = await client.getData(
-    {
-      recordName: downloadRecordName,
-      address: name,
-    },
-    {
-      headers,
-    }
-  );
-
-  if (result.success === false) {
-    console.error("Failed to download extension:", result);
-    return null;
-  }
-
-  const data = result.data;
-  if (!data) {
-    console.error("No data found for extension:", name);
-    return null;
-  }
-
-  // if (!Array.isArray(data.eggVersionHistory)) {
-  //     console.error('Invalid eggVersionHistory for pattern:', name, data);
-  //     return null;
-  // }
-
-  // if (version === undefined) {
-  //     version = data.eggVersionHistory.length - 1;
-  // }
-
-  // if (version < 0 || version >= data.eggVersionHistory.length) {
-  //     console.error('Invalid version for pattern:', name, version);
-  //     return null;
-  // }
-
-  // const versionFile = data.eggVersionHistory[version];
-
-  const botsResult = await fetch(data.recordFile?.url || data.source);
-  if (!botsResult.ok) {
-    console.error(
-      "Failed to download extension bots:",
-      await botsResult.text()
-    );
-    return null;
-  }
-
-  const bots = await botsResult.json();
-  const aux: StoredAux = {
-    version: 1,
-    state: {},
-  };
-
-  for (const b of bots) {
-    aux.state[b.id] = b;
-  }
-
-  return {
-    meta: data,
-    aux,
-  };
-}
-
-/**
- * Downloads and saves the given extension to the dist folder.
- * @param name The name of the extension to download.
- * @returns The path to the saved file.
- */
-export async function downloadAndSave(name: string, fileName?: string) {
-  const ext = await downloadExtension(name);
-  if (!ext) {
-    throw new Error("Failed to download extension: " + name);
-  }
-  const filePath = path.resolve("dist", fileName || `${name}.aux`);
-  await writeFile(filePath, JSON.stringify(ext.aux, null, 2), "utf-8");
-  return {
-    ...ext,
-    filePath,
-  };
-}
-
-/**
- * Uploads the given extension to the records server.
- * @param meta The metadata of the extension to upload.
- * @param aux The extension data to upload.
- * @param sessionKey The session key to use for authentication.
- * @param recordKey The record key to use. If not specified, the default record name will be used.
- */
-export async function uploadExtensionAux(
-  meta: ExtensionMeta,
-  aux: StoredAux,
-  sessionKey: string,
-  recordKey: string | null | undefined,
-  saveMeta: boolean
-) {
-  const { fileUrl, sha256Hash } = await uploadFile(
-    recordKey ?? uploadRecordName,
-    aux,
-    sessionKey,
-    ["publicRead"]
-  );
-  console.log("Extension File URL:", fileUrl);
-
-  const client = createRecordsClient("https://api.ao.bot");
-  client.sessionKey = sessionKey;
-
-  meta.recordFile = {
-    sha256Hash,
-    success: true,
-    url: fileUrl,
-  };
-  meta.source = fileUrl;
-  meta.updatedAt = new Date().toISOString();
-
-  if (saveMeta) {
-    const recordResult: any = await client.recordData(
-      {
-        recordKey: recordKey ?? uploadRecordName,
-        address: meta.name,
-        data: meta,
-        markers: ["publicRead"],
-      },
-      {
-        headers,
-      }
-    );
-
-    if (recordResult.success === false) {
-      throw new Error(
-        "Failed to record extension: " +
-          recordResult.errorCode +
-          " " +
-          recordResult.errorMessage
-      );
-    }
-  } else {
-    console.log("Skipping meta.");
-  }
-
-  console.log("Successfully recorded extension:", meta.name);
-
-  return {
-    fileUrl: fileUrl,
-    meta,
-    name: meta.name,
-  };
-}
+const ExtensionMetaSchema = z.looseObject({
+  titles: z
+    .object({
+      en: z.string(),
+    })
+    .catchall(z.string()),
+  descriptions: z
+    .object({
+      en: z.string(),
+    })
+    .catchall(z.string()),
+});
 
 /**
  * Uploads the given extension to the records server.
@@ -368,7 +338,7 @@ export async function uploadExtensionAux(
 export async function upload(
   name: string,
   options: { sessionKey?: string; recordKey?: string; saveMeta?: boolean }
-) {
+): Promise<UploadedExtension> {
   if (!options.sessionKey) {
     throw new Error(
       "You must specify a session key using the --session-key option."
@@ -384,7 +354,17 @@ export async function upload(
   const extensionData = JSON.parse(
     await readFile(packageExtensionPath, "utf-8")
   );
-  const filePath = path.resolve("dist", `${extensionData.name}.aux`);
+  const parseResult = ExtensionMetaSchema.safeParse(extensionData);
+  if (!parseResult.success) {
+    console.error(
+      "Invalid extension.json for package:",
+      name,
+      z.treeifyError(parseResult.error)
+    );
+    throw new Error("Invalid extension.json for package: " + name);
+  }
+
+  const filePath = path.resolve("dist", `${name}.aux`);
 
   console.log("Packaging:", packagePath);
   execSync(`casualos pack-aux --overwrite "${packagePath}" "${filePath}"`, {
@@ -392,16 +372,28 @@ export async function upload(
   });
   execSync(`casualos minify-aux "${filePath}"`, { stdio: "ignore" });
 
-  const aux = await readFile(filePath, "utf-8");
-  const auxJson = JSON.parse(aux);
+  const programOptions: string[] = [
+    `--endpoint "https://api.ao.bot"`,
+    `--origin "https://auth.ao.bot"`,
+  ];
+  if (options.sessionKey) {
+    programOptions.push(`--session-key "${options.sessionKey}"`);
+  }
 
-  return await uploadExtensionAux(
-    extensionData,
-    auxJson,
-    options.sessionKey,
-    options.recordKey,
-    options.saveMeta ?? true
+  const recordKey = options.recordKey ?? uploadRecordName;
+  const recordName = getRecordName(recordKey);
+  const address = options.saveMeta ? name : `${name}-${Date.now()}`;
+
+  execSync(
+    `casualos ${programOptions.join(" ")} upload-package --record "${recordKey}" --address "${address}" --file "${filePath}" --markers "publicRead:extension" --description "Extension ${name}"`
   );
+
+  return {
+    recordName,
+    address,
+    name,
+    meta: parseResult.data,
+  };
 }
 
 /**
@@ -421,14 +413,47 @@ export async function uploadAll(options: {
     }
   }
 
-  const extensionData: {
-    fileUrl: string;
-    meta: ExtensionMeta;
-    name: string;
-  }[] = [];
+  const extensionData: UploadedExtension[] = [];
   for (const name of extensions) {
     extensionData.push(await upload(name, options));
   }
 
-  return extensionData;
+  const recordName: string = getRecordName(
+    options.recordKey ?? uploadRecordName
+  );
+  const set: ExtensionSet = {
+    recordName: recordName,
+    id: `set-${Date.now()}`,
+    extensions: extensionData,
+  };
+
+  const client = createRecordsClient("https://api.ao.bot");
+
+  if (options.sessionKey) {
+    client.sessionKey = options.sessionKey;
+  }
+
+  const result: any = await client.recordData(
+    {
+      recordKey: options.recordKey ?? uploadRecordName,
+      address: `set-${Date.now()}`,
+      data: set,
+      markers: ["publicRead:extensionSet"],
+    },
+    {
+      headers,
+    }
+  );
+
+  if (result.success === false) {
+    throw new Error(
+      "Failed to record extension set: " +
+        result.errorCode +
+        " " +
+        result.errorMessage
+    );
+  }
+
+  console.log("Successfully recorded extension set with id:", set.id);
+  return set;
 }
