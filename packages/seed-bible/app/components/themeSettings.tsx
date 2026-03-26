@@ -5964,7 +5964,7 @@ const SettingsUI = () => {
   const [selectedHeadingFont, setSelectedHeadingFont] = useState(0);
   const [scriptureMargin, setScriptureMargin] = useState(() => {
     const saved = currentSpace?.settings?.text?.data?.verse?.marginHorizontal;
-    return saved ? String(saved) : "250";
+    return saved ? String(saved) : "27";
   });
 
   const [textConfig, setTextConfig] = useState(() => {
@@ -6288,24 +6288,26 @@ const SettingsUI = () => {
   };
 
   const toggleStyle = (isOn) => ({
-    width: "32px",
-    height: "16px",
+    width: "50px",
+    height: "28px",
     backgroundColor: isOn ? "var(--addButtonIcon)" : "#CCCCCD",
-    borderRadius: "8px",
+    borderRadius: "14px",
     position: "relative",
     cursor: "pointer",
     transition: "background-color 0.3s ease",
+    flexShrink: 0,
   });
 
   const toggleCircleStyle = (isOn) => ({
-    width: "12px",
-    height: "12px",
-    backgroundColor: "var(--primaryColor)",
+    width: "22px",
+    height: "22px",
+    backgroundColor: "#fff",
     borderRadius: "50%",
     position: "absolute",
-    top: "2px",
-    left: isOn ? "18px" : "2px",
+    top: "3px",
+    left: isOn ? "25px" : "3px",
     transition: "left 0.3s ease",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
   });
 
   const separatorStyle = {
@@ -6551,26 +6553,29 @@ const SettingsUI = () => {
           <div
             style={{ width: "1px", height: "20px", background: "#E1E3EA" }}
           ></div>
-          <input
-            type="number"
-            value={scriptureMargin}
-            onChange={(e: any) => {
-              setScriptureMargin(e.target.value);
-              applyScriptureMargin(e.target.value);
-            }}
-            style={{
-              border: "none",
-              outline: "none",
-              fontSize: "14px",
-              width: "60px",
-              background: "transparent",
-              color: "var(--heading1Color)",
-              fontFamily: "inherit",
-            }}
-          />
-          <span style={{ fontSize: "13px", color: "var(--text2, #888)" }}>
-            px
-          </span>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
+            <input
+              type="number"
+              value={scriptureMargin}
+              onChange={(e: any) => {
+                setScriptureMargin(e.target.value);
+                applyScriptureMargin(e.target.value);
+              }}
+              style={{
+                border: "none",
+                outline: "none",
+                fontSize: "14px",
+                width: `33px`,
+                background: "transparent",
+                color: "var(--heading1Color)",
+                fontFamily: "inherit",
+                padding: 0,
+              }}
+            />
+            <span style={{ fontSize: "13px", color: "var(--text2, #888)" }}>
+              px
+            </span>
+          </div>
         </div>
 
         {/* Heading Font */}
