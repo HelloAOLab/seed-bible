@@ -8,6 +8,15 @@ import {
   createDefaultManagerResponseMap,
 } from "./testUtils/mockBibleApiData";
 
+const mockSaveReadingHistory = jest.fn();
+
+jest.mock("seed-bible.managers.ReadingHistoryManager", () => ({
+  createReadingHistoryManager: () => ({
+    saveReadingHistory: mockSaveReadingHistory,
+    getReadingEvents: jest.fn().mockResolvedValue([]),
+  }),
+}));
+
 jest.mock("seed-bible.i18n.I18nManager", () => ({
   I18nProvider: ({ children }: { children: unknown }) => children,
 }));
@@ -18,6 +27,7 @@ let logSpy: jest.SpyInstance;
 beforeEach(() => {
   webGetMock = jest.fn();
   logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
+  mockSaveReadingHistory.mockReset();
 
   (globalThis as any).web = {
     get: webGetMock,
@@ -225,5 +235,128 @@ describe("createSeedBibleState", () => {
 
     expect(state.selector.isOpen.value).toBe(true);
     expect(state.selector.pane.value?.id).toBe(emptyPane!.id);
+  });
+
+  describe("reading history autosave", () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    function setSelectedTabChapter(
+      state: ReturnType<typeof createSeedBibleState>,
+      bookId: string,
+      chapterNumber: number
+    ) {
+      const tab =
+        state.tabs.tabs.value.find(
+          (t) => t.id === state.tabs.selectedTabId.value
+        ) ?? null;
+      expect(tab).not.toBeNull();
+      tab!.readingState.chapterData.value = {
+        translation: { id: "test-translation", name: "Test Translation" },
+        book: { id: bookId, name: "Test Book", abbreviation: bookId },
+        chapter: {
+          number: chapterNumber,
+          id: `${bookId}-${chapterNumber}`,
+          reference: `${bookId} ${chapterNumber}`,
+        },
+        verses: [],
+        notes: [],
+      } as any;
+    }
+
+    it("does not save history when no tab is selected", async () => {
+      const state = createSeedBibleState();
+      setSelectedTabChapter(state, "genesis", 1);
+      mockSaveReadingHistory.mockClear();
+
+      state.tabs.selectedTabId.value = "missing-tab";
+
+      jest.advanceTimersByTime(6000);
+      expect(mockSaveReadingHistory).not.toHaveBeenCalled();
+    });
+
+    it("does not save history when chapter data is not available", async () => {
+      const state = createSeedBibleState();
+      setSelectedTabChapter(state, "genesis", 1);
+      mockSaveReadingHistory.mockClear();
+
+      const selected =
+        state.tabs.tabs.value.find(
+          (t) => t.id === state.tabs.selectedTabId.value
+        ) ?? null;
+      expect(selected).not.toBeNull();
+      selected!.readingState.chapterData.value = null;
+
+      jest.advanceTimersByTime(6000);
+      expect(mockSaveReadingHistory).not.toHaveBeenCalled();
+    });
+
+    it("saves first history event after 5 seconds of viewing", async () => {
+      const state = createSeedBibleState();
+      setSelectedTabChapter(state, "genesis", 1);
+      mockSaveReadingHistory.mockClear();
+
+      jest.advanceTimersByTime(4999);
+      expect(mockSaveReadingHistory).not.toHaveBeenCalled();
+
+      jest.advanceTimersByTime(1);
+      expect(mockSaveReadingHistory).toHaveBeenCalledTimes(1);
+      expect(mockSaveReadingHistory).toHaveBeenLastCalledWith("genesis", 1);
+    });
+
+    it("saves history once for each additional 5 seconds of viewing", async () => {
+      const state = createSeedBibleState();
+      setSelectedTabChapter(state, "genesis", 1);
+      mockSaveReadingHistory.mockClear();
+
+      jest.advanceTimersByTime(15000);
+
+      expect(mockSaveReadingHistory).toHaveBeenCalledTimes(3);
+      expect(mockSaveReadingHistory).toHaveBeenNthCalledWith(1, "genesis", 1);
+      expect(mockSaveReadingHistory).toHaveBeenNthCalledWith(2, "genesis", 1);
+      expect(mockSaveReadingHistory).toHaveBeenNthCalledWith(3, "genesis", 1);
+    });
+
+    it("resets autosave interval when selected tab changes", async () => {
+      const state = createSeedBibleState();
+      state.tabs.selectedTabId.value = "tab-1";
+      setSelectedTabChapter(state, "genesis", 1);
+
+      state.tabs.selectedTabId.value = "tab-2";
+      setSelectedTabChapter(state, "exodus", 2);
+      mockSaveReadingHistory.mockClear();
+
+      jest.advanceTimersByTime(3000);
+      state.tabs.selectedTabId.value = "tab-1";
+      setSelectedTabChapter(state, "genesis", 1);
+
+      jest.advanceTimersByTime(2000);
+      expect(mockSaveReadingHistory).not.toHaveBeenCalled();
+
+      jest.advanceTimersByTime(3000);
+      expect(mockSaveReadingHistory).toHaveBeenCalledTimes(1);
+      expect(mockSaveReadingHistory).toHaveBeenLastCalledWith("genesis", 1);
+    });
+
+    it("resets autosave interval when chapter data changes", async () => {
+      const state = createSeedBibleState();
+      setSelectedTabChapter(state, "genesis", 1);
+      mockSaveReadingHistory.mockClear();
+
+      jest.advanceTimersByTime(3000);
+      setSelectedTabChapter(state, "genesis", 2);
+
+      jest.advanceTimersByTime(2000);
+      expect(mockSaveReadingHistory).not.toHaveBeenCalled();
+
+      jest.advanceTimersByTime(3000);
+      expect(mockSaveReadingHistory).toHaveBeenCalledTimes(1);
+      expect(mockSaveReadingHistory).toHaveBeenLastCalledWith("genesis", 2);
+    });
   });
 });
