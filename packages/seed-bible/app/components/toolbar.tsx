@@ -311,34 +311,32 @@ export function Toolbar() {
               <div className="more-btn-wrapper" ref={moreMenuRef}>
                 {showMoreMenu && (
                   <div className="more-menu-popup">
-                    {moreTools
-                      .filter((tool: any) => tool.label !== "Books")
-                      .map((tool: any, i: any) => (
-                        <button
-                          key={i}
-                          className="more-menu-item"
-                          onClick={() => {
-                            tool?.onClick?.();
-                            setShowMoreMenu(false);
-                            setActiveMoreApp(tool.label);
-                          }}
-                        >
-                          {tool?.isImg ? (
-                            <img
-                              src={tool.icon}
-                              style={{ width: "20px" }}
-                              alt={tool.label}
-                            />
-                          ) : (
-                            <span className="material-symbols-outlined">
-                              {tool?.icon}
-                            </span>
-                          )}
-                          <span className="more-menu-item-label">
-                            {tool?.label}
+                    {moreTools.map((tool: any, i: any) => (
+                      <button
+                        key={i}
+                        className="more-menu-item"
+                        onClick={() => {
+                          tool?.onClick?.();
+                          setShowMoreMenu(false);
+                          setActiveMoreApp(tool.label);
+                        }}
+                      >
+                        {tool?.isImg ? (
+                          <img
+                            src={tool.icon}
+                            style={{ width: "20px" }}
+                            alt={tool.label}
+                          />
+                        ) : (
+                          <span className="material-symbols-outlined">
+                            {tool?.icon}
                           </span>
-                        </button>
-                      ))}
+                        )}
+                        <span className="more-menu-item-label">
+                          {tool?.label}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 )}
                 {/* <button
@@ -466,68 +464,62 @@ export function Toolbar() {
                 <BurgerMenuIcon size={24} color="var(--text1)" />
               </button>
             </div>
-            {tools
-              ?.filter((e) => e.label.toLowerCase() === "books")
-              .map((tool: any, index: any) =>
-                tool?.active === false ? null : (
-                  <div
-                    key={`${tool.icon || "tool"}-${index}`}
-                    className="toolbar-item-wrapper"
-                    onMouseEnter={() => handleMouseEnter(index)}
-                    title={tool.label}
-                  >
-                    {index === draggedIndex ? (
-                      <div className={`toolbar-button placeholder`}></div>
-                    ) : (
-                      <button
-                        className={`toolbar-button ${
-                          index === 0 ? "firstToolbarbutton" : ""
-                        }`}
-                        onMouseDown={() => {
-                          hasHeldRef.current = false;
-                          holdTimeoutRef.current = setTimeout(() => {
-                            if (tool?.onRightClick) tool.onRightClick();
-                            else if (tool?.onHold) tool.onHold();
-                            hasHeldRef.current = true;
-                          }, 600);
-                        }}
-                        onMouseUp={(e) => {
-                          e.stopPropagation();
-                          clearTimeout(holdTimeoutRef.current);
-                          if (!hasHeldRef.current && tool?.onClick) {
-                            tool.onClick();
-                          }
-                          if (isDragging) {
-                            setIsDragging(false);
-                            setElement(null);
-                            setDraggedIndex(null);
-                          }
-                        }}
-                        onMouseLeave={() =>
-                          clearTimeout(holdTimeoutRef.current)
+            {tools?.map((tool: any, index: any) =>
+              tool?.active === false ? null : (
+                <div
+                  key={`${tool.icon || "tool"}-${index}`}
+                  className="toolbar-item-wrapper"
+                  onMouseEnter={() => handleMouseEnter(index)}
+                  title={tool.label}
+                >
+                  {index === draggedIndex ? (
+                    <div className={`toolbar-button placeholder`}></div>
+                  ) : (
+                    <button
+                      className={`toolbar-button ${
+                        index === 0 ? "firstToolbarbutton" : ""
+                      }`}
+                      onMouseDown={() => {
+                        hasHeldRef.current = false;
+                        holdTimeoutRef.current = setTimeout(() => {
+                          if (tool?.onRightClick) tool.onRightClick();
+                          else if (tool?.onHold) tool.onHold();
+                          hasHeldRef.current = true;
+                        }, 600);
+                      }}
+                      onMouseUp={(e) => {
+                        e.stopPropagation();
+                        clearTimeout(holdTimeoutRef.current);
+                        if (!hasHeldRef.current && tool?.onClick) {
+                          tool.onClick();
                         }
-                      >
-                        {tool.isImg ? (
-                          <img
-                            src={tool.icon}
-                            style={{ width: "25px" }}
-                            alt={tool.label}
-                          />
-                        ) : (
-                          <span className="material-symbols-outlined">
-                            {tool.icon}
-                          </span>
-                        )}
-                        {tool.label && (
-                          <span className="toolbar-btn-label">
-                            {tool.label}
-                          </span>
-                        )}
-                      </button>
-                    )}
-                  </div>
-                )
-              )}
+                        if (isDragging) {
+                          setIsDragging(false);
+                          setElement(null);
+                          setDraggedIndex(null);
+                        }
+                      }}
+                      onMouseLeave={() => clearTimeout(holdTimeoutRef.current)}
+                    >
+                      {tool.isImg ? (
+                        <img
+                          src={tool.icon}
+                          style={{ width: "25px" }}
+                          alt={tool.label}
+                        />
+                      ) : (
+                        <span className="material-symbols-outlined">
+                          {tool.icon}
+                        </span>
+                      )}
+                      {tool.label && (
+                        <span className="toolbar-btn-label">{tool.label}</span>
+                      )}
+                    </button>
+                  )}
+                </div>
+              )
+            )}
 
             <div className="toolbar-divider" />
             <div className="toolbar-item-wrapper rightClick">

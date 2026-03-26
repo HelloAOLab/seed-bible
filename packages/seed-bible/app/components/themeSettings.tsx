@@ -1,7 +1,7 @@
 const { useEffect, useState, useRef } = os.appHooks;
 import { getStyleOf } from "app.styles.styler";
 import { getSettingsPreset } from "app.components.types";
-import { MenuIcon, ThemeIcon } from "app.components.icons";
+import { MenuIcon, ThemeIcon, MarginIcon } from "app.components.icons";
 import { useTabsContext } from "app.hooks.tabs";
 import { useSideBarContext } from "app.hooks.sideBar";
 import { useBibleContext } from "app.hooks.bibleVariables";
@@ -6535,21 +6535,7 @@ const SettingsUI = () => {
             gap: "10px",
           }}
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path
-              d="M4 2v16M16 2v16"
-              stroke="var(--heading1Color, #333)"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-            <path
-              d="M4 10h12"
-              stroke="var(--heading1Color, #333)"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeDasharray="2 2"
-            />
-          </svg>
+          <MarginIcon />
           <div
             style={{ width: "1px", height: "20px", background: "#E1E3EA" }}
           ></div>
