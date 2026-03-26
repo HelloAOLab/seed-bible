@@ -490,6 +490,9 @@ const PlaylistRowItem = (props: any) => {
         <div
           onClick={(e) => {
             e.preventDefault();
+            if (onSelectPlaylist) {
+              onSelectPlaylist(id);
+            }
             openContextMenu(e);
           }}
           onTouchStart={handleTouchStart}
@@ -626,7 +629,7 @@ const PlaylistRowItem = (props: any) => {
                   style={{
                     ...ButtonStyle,
                     fontSize: "1.97rem",
-                    color: "#000000",
+                    color: "var(--secondaryColor)",
                     top: "51%",
                     position: "absolute",
                     right: "0%",
@@ -635,6 +638,13 @@ const PlaylistRowItem = (props: any) => {
                   }}
                   class="material-symbols-outlined unfollow"
                   onClick={() => {
+                    if (G.IsQueuePresent) {
+                      ShowNotification({
+                        message: t("addToTheCurrentQueue"),
+                        severity: "error",
+                      });
+                      return;
+                    }
                     thisBot.Playlistplaying({
                       playingPlaylist: playListSubId || id,
                       startIndex: playListSubIndex !== null ? index : 0,
@@ -665,7 +675,6 @@ const PlaylistRowItem = (props: any) => {
                   <span
                     style={{
                       ...ButtonStyle,
-                      color: "#139981",
                     }}
                     onClick={() => {
                       // os.unregisterApp("playing-playlist");

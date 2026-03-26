@@ -96,7 +96,7 @@ export async function allTheInitFluff() {
 
   await preloadScripts();
 
-  thisBot.canvasController();
+  // thisBot.canvasController();
 
   await os.sleep(500);
 

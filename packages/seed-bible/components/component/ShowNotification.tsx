@@ -18,7 +18,7 @@ const notificationColors: any = {
 
 const message = that?.message;
 const severity = that?.severity;
-const onUndoActions = that?.onUndoActions;
+const onUndoActions = that?.onUndoActions || false;
 
 const { bgColor, color, ICON } =
   notificationColors[severity] || notificationColors.error;
@@ -52,16 +52,18 @@ const Notification = () => {
           gap: "10px",
         }}
       >
-        <p
-          style={{
-            cursor: "pointer",
-            color: "var(--secondaryColor)",
-            fontSize: "14px",
-          }}
-          onClick={onUndoActions}
-        >
-          Undo
-        </p>
+        {onUndoActions && (
+          <p
+            style={{
+              cursor: "pointer",
+              color: "var(--secondaryColor)",
+              fontSize: "14px",
+            }}
+            onClick={onUndoActions}
+          >
+            Undo
+          </p>
+        )}
         <span
           style={{ cursor: "pointer", color: "var(--secondaryColor)" }}
           onClick={() => os.unregisterApp("toast-notification")}

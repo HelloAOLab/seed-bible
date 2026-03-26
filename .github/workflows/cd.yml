@@ -34,6 +34,9 @@ jobs:
       - name: Package
         run: |
           pnpm package
+      - name: Check AUXes
+        run: |
+          pnpm check:aux
       - name: Upload AUXes
         uses: actions/upload-artifact@v4
         with:

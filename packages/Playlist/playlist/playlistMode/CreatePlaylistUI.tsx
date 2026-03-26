@@ -19,9 +19,6 @@ const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
 G.DEFAULT_UPLOAD_ICON =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/67bba604a31cc7e116124f92179d8fe06317fcf70a3c62f071dff529362ebc25.png";
 
-const DEV_ENV =
-  configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
-
 const startCreatingPlaylist = (name: string, playlist = [], id: string) => {
   G.HISTORYExploreMode = false;
   G[`${id}creatingPlaylistName`] = name;
@@ -147,6 +144,10 @@ const CreatePlaylistUI = (props: any) => {
   >({});
   const [checklistEnabled, setChecklistEnabled] = useState(false);
   const [embedding, setEmbedding] = useState<any>(null);
+
+  useLayoutEffect(() => {
+    setItemSelected(null);
+  }, [embedding]);
 
   useLayoutEffect(() => {
     G.SelectedItemIDForAttachments = null;
@@ -1178,7 +1179,7 @@ const CreatePlaylistUI = (props: any) => {
             style={{
               ...showMorePosition.current,
               width: "250px",
-              maxHeight: "400px",
+              maxHeight: "350px",
               left: "none",
               right: "4rem",
               padding: "1rem",
@@ -1479,7 +1480,11 @@ const CreatePlaylistUI = (props: any) => {
                   <span className="color-inherit">{t("delete")}</span>
                 </Button>
                 {!!embedding && isSomethingChecked && (
-                  <Button onClick={onEmbedItems} secondaryAlt color="#3B82F6">
+                  <Button
+                    onClick={onEmbedItems}
+                    secondaryAlt
+                    color="var(--secondaryColor)"
+                  >
                     <span
                       style={{ marginRight: "0.5rem" }}
                       class="material-symbols-outlined unfollow color-inherit"
@@ -1538,7 +1543,7 @@ const CreatePlaylistUI = (props: any) => {
                     onDisembed(values);
                   }}
                   secondaryAlt
-                  color="#3B82F6"
+                  color="var(--secondaryColor)"
                 >
                   <span
                     style={{ marginRight: "0.5rem" }}

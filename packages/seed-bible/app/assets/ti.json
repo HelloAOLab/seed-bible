@@ -31,6 +31,8 @@
   "next": "ዝቕጽል",
   "previous": "ዝሓለፈ",
   "exit": "ውጽእ",
+  "ended": "ዛዚምካ",
+  "checklistMode": "ምድላይ ቼክሊስት",
   "settings": "ምትካእ",
   "generalSettings": "ሓፈሻዊ ምትካእ",
   "spaceSettings": "ምትካእ ቦታ",
@@ -154,5 +156,13 @@
   "addToNew": "ናብ ሓድሽ ወስኽ",
   "itemsAddedToPlaylistSuccessfully": "እቃታት ናብ ዝርዝር ብዓወት ተወሲዶም።",
   "translationSwitchOption": "ናብ {{translationName}} ትርጉም ክትቀይር ትደሊ ዶ?",
-  "chooseAnother": "ካልእ ምረጽ"
+  "chooseAnother": "ካልእ ምረጽ",
+  "playlistHasBeenEnded": "ዝርዝር ተዛዚሙ።",
+  "youAreAtTheBeginningOfThePlaylist": "ኣብ መጀመሪያ ዝርዝር ኢኻ።",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "ንምፍላይ ብዝወሓደ ክልተ ምልክታታት የድልየካ።",
+  "thisWillLoseYourRecording": "መዝገብካ ክጠፍእ እዩ።",
+  "switchWillLoseYourRecording": "ምቕያር መዝገብካ ክጠፍእ እዩ።",
+  "cannotSwitchWhileRecording": "ኣብ ምዝገባ ክትቕይር ኣይትኽእልን።",
+  "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich": "ኣብዚ ምርኢት ዳታ ኣለካ። ክጠፍእ እዩ። ንምቕያር ድሒር ጠውቕ።",
+  "addToTheCurrentQueue": "ናብ ሕጂ ዝርዝር ወሲእ"
 }

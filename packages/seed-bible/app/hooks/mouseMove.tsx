@@ -854,7 +854,7 @@ const FloatingAppContainer = ({
             (app.isMinimized ? 0 : height) +
             (app.isDocked || app.isFullscreen ? 0 : toolbarGap + toolbarH)
           }px`,
-    zIndex: app.isFullscreen ? 999999 : 1000,
+    zIndex: app.isFullscreen ? 1000000 : 1000,
     pointerEvents: "auto",
     transition: app.isDragging || app.isResizing ? "none" : "all 0.18s ease",
     cursor: app.isDragging ? "grabbing" : "default",

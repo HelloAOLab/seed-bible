@@ -73,7 +73,7 @@ export function SideBarProvider({ children }) {
 
   useEffect(() => {
     const handleResize = () => {
-      const check = window.innerWidth < 768;
+      const check = window.innerWidth <= 480;
       setIsMobile(check);
       if (window.innerWidth <= 940 && !check) {
         setCollapsed(true);
@@ -284,7 +284,7 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
         >
           {external && <div className=" externalPopupSettings">{external}</div>}
           {null /*<div className="triangle-up"></div>*/}
-          {items.map((item) => {
+          {items.map((item: any) => {
             if (item.active === false) return;
             const primary = colors ? colors[1]?.pageTextColor : "#1A1A1A";
 

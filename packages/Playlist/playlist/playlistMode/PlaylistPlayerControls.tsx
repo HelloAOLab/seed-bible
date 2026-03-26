@@ -535,6 +535,12 @@ const PlayerControls = ({ parentId = "default" }) => {
   }, [handleOnButtonPress, transformedHistory]);
 
   useLayoutEffect(() => {
+    if (G.PPchecklistEnabled) {
+      setTimeout(() => {
+        thisBot.OpenSelf();
+      }, 200);
+    }
+
     return () => {
       G.IsPlaylistPlaying = false;
       G.IsQueuePresent = false;
@@ -544,7 +550,8 @@ const PlayerControls = ({ parentId = "default" }) => {
   }, []);
 
   useLayoutEffect(() => {
-    G.UpdateCheckedItemsPlayingPlaylist(checkedItems, G.PlayingPlaylistID);
+    G.UpdateCheckedItemsPlayingPlaylist &&
+      G.UpdateCheckedItemsPlayingPlaylist(checkedItems, G.PlayingPlaylistID);
   }, [checkedItems]);
 
   const [
@@ -610,7 +617,9 @@ const PlayerControls = ({ parentId = "default" }) => {
 
       if (
         targetItem?.type === "heading" ||
-        (!!targetItem?.nextTargetItem?.id && currIndex.fromButton === 1)
+        (!!targetItem?.nextTargetItem?.id &&
+          currIndex.fromButton === 1 &&
+          !G.StayVIAPressOfButton)
       ) {
         if (
           targetItem?.type === "heading"
@@ -658,9 +667,15 @@ const PlayerControls = ({ parentId = "default" }) => {
           G[`${targetItem.id}OpenToggle`] &&
             G[`${targetItem.id}OpenToggle`](true);
         }
+        if (G.StayVIAPressOfButton) {
+          G.StayVIAPressOfButton = false;
+        }
         if (!isFirstItemAndBackButton && !isLastItemAndLastButton)
           handleOnButtonPress(currIndex.fromButton);
       } else {
+        if (G.StayVIAPressOfButton) {
+          G.StayVIAPressOfButton = false;
+        }
         const skip = thisBot.checkIfNeedToSkip({ dataItem: targetItem });
         if (skip) {
           os.toast(`${targetItem.content} is Already Opened.Skipping it!`);
@@ -880,11 +895,13 @@ const PlayerControls = ({ parentId = "default" }) => {
                   minWidth: "max-content",
                 }}
               >
-                {showCurrent
-                  ? `${t("playingNow")}:`
-                  : nextItemName?.content
-                    ? `${t("playingNext")}:`
-                    : null}
+                {G.PPchecklistEnabled && showCurrent && currIndex.index === -1
+                  ? null
+                  : showCurrent
+                    ? `${t("playingNow")}:`
+                    : nextItemName?.content
+                      ? `${t("playingNext")}:`
+                      : null}
               </p>
               <div style={{ gap: "0.5rem" }} className="align-center">
                 <div
@@ -935,7 +952,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                           }}
                         >
                           {nextItemName?.content
-                            ? `${nextItemName?.content}${nextItemName?.prefix}`.substring(
+                            ? `${nextItemName?.content}${nextItemName?.prefix}`?.substring(
                                 0,
                                 isMobile ? 9 : 16
                               )
@@ -949,7 +966,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                     ) : (
                       <p
                         style={{
-                          color: "green",
+                          color: "var(--secondaryColor)",
                           fontSize: "12px",
                           fontWeight: "900",
                           fontFamily: "DM Sans",
@@ -957,7 +974,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                           minWidth: "max-content",
                         }}
                       >
-                        Playlist Ended
+                        {t("playlist")} {t("ended")}
                       </p>
                     )}
                     {!G.ValidTypes[nextItemName?.type] &&
@@ -973,7 +990,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                           }}
                         >
                           {isMobile
-                            ? nextItemName?.type.substring(0, 10)
+                            ? nextItemName?.type?.substring(0, 10)
                             : nextItemName?.type}
                         </p>
                       )}
@@ -989,7 +1006,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                         }}
                       >
                         {isMobile
-                          ? currentItem?.type.substring(0, 10)
+                          ? currentItem?.type?.substring(0, 10)
                           : currentItem?.type}
                       </p>
                     )}
@@ -1022,7 +1039,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                           }}
                         >
                           {currentItem?.content
-                            ? `${currentItem?.content}${currentItem?.prefix}`.substring(
+                            ? `${currentItem?.content}${currentItem?.prefix}`?.substring(
                                 0,
                                 isMobile ? 10 : 16
                               )
@@ -1036,7 +1053,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                     ) : (
                       <p
                         style={{
-                          color: "green",
+                          color: "var(--secondaryColor)",
                           fontSize: "12px",
                           fontWeight: "900",
                           fontFamily: "DM Sans",
@@ -1044,7 +1061,9 @@ const PlayerControls = ({ parentId = "default" }) => {
                           minWidth: "max-content",
                         }}
                       >
-                        Playlist Ended
+                        {G.PPchecklistEnabled && currIndex.index === -1
+                          ? t("checklistEnabled")
+                          : `${isMobile ? "" : t("playlist")} {t("ended")}`}
                       </p>
                     )}
 
@@ -1059,7 +1078,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                         }}
                       >
                         {isMobile
-                          ? currentItem?.type.substring(0, 10)
+                          ? currentItem?.type?.substring(0, 10)
                           : currentItem?.type}
                       </p>
                     )}
@@ -1170,7 +1189,12 @@ const PlayerControls = ({ parentId = "default" }) => {
                 fontSize: "12px",
               }}
               onClick={() => {
-                if (!prevItemName?.content) return;
+                if (!prevItemName?.content) {
+                  return ShowNotification({
+                    message: t("youAreAtTheBeginningOfThePlaylist"),
+                    severity: "error",
+                  });
+                }
                 DataManager.cancelCurrentPlayingSound();
                 if (G.HandleOnButtonPress) G.HandleOnButtonPress(-1);
               }}
@@ -1231,7 +1255,12 @@ const PlayerControls = ({ parentId = "default" }) => {
                 cursor: !nextItemName?.content ? "not-allowed" : "",
               }}
               onClick={() => {
-                if (!nextItemName?.content) return;
+                if (!nextItemName?.content) {
+                  return ShowNotification({
+                    message: t("playlistHasBeenEnded"),
+                    severity: "error",
+                  });
+                }
                 DataManager.cancelCurrentPlayingSound();
                 if (!!nextItemName?.content && !!G.HandleOnButtonPress) {
                   G.HandleOnButtonPress(1);

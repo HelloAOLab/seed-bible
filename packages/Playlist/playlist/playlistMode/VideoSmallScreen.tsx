@@ -18,7 +18,7 @@ const VideoSmallScreen = (props: any) => {
                     }
 
                     .icon:hover {
-                        color: #ff4081;
+                        color: var(--secondaryColor);
                     }
 
                 `}

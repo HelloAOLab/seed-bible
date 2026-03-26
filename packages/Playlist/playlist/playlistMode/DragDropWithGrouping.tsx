@@ -13,9 +13,6 @@ const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
   G.MOBILE_VIEWPORT_THRESHOLD;
 
-const DEV_ENV =
-  configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
-
 // Replaced now with props toggleRemoved cause no need to show like this now use is to show active element
 const toggle = "null";
 
@@ -645,20 +642,11 @@ const DragDrop = (props: any) => {
               </div>
               <p
                 onClick={() => {
-                  if (G.ADDING_TOPLAYLIST_TIMEOUT) {
+                  if (G.ADDING_TOPLAYLIST_TIMEOUT)
                     clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
-                    if (
-                      !viewOnly &&
-                      (data.type !== "heading" || allowHeadingCheck)
-                    ) {
-                      onClick({ dataItem: data, index });
-                      if (checklistEnabled) {
-                        editDataFromPlaylist(data.id);
-                      }
-                    }
-                  }
+
                   if (
-                    clickPass &&
+                    !viewOnly &&
                     (data.type !== "heading" || allowHeadingCheck)
                   ) {
                     onClick({ dataItem: data, index });
@@ -753,7 +741,12 @@ const DragDrop = (props: any) => {
             </div>
             {itemSelected === data.id && !draggedItemID && !embedding && (
               <div style={{ padding: "1rem" }}>
-                <AttachLink attachLink={attachLink} massAdd={massAdd} />
+                <AttachLink
+                  canClose
+                  onClose={() => setItemSelected(null)}
+                  attachLink={attachLink}
+                  massAdd={massAdd}
+                />
               </div>
             )}
           </>
@@ -1160,7 +1153,7 @@ const PlaylistContentRenderer = (props: any) => {
                 onDisembed={() => {
                   onDisembed({ id: data.id, pId: id });
                 }}
-                justPlay={true}
+                justPlay={!playingPlaylist}
               />
             ) : (
               <div
@@ -1263,13 +1256,18 @@ const PlaylistContentRenderer = (props: any) => {
                 </div>
                 <p
                   onClick={() => {
-                    if (G.ADDING_TOPLAYLIST_TIMEOUT && !viewOnly) {
+                    if (G.ADDING_TOPLAYLIST_TIMEOUT)
                       clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
+                    if (!viewOnly) {
                       if (data.type !== "heading") {
                         if (checklistEnabled) {
                           editDataFromPlaylist(data.id);
                         }
-                        onClick({ dataItem: data, index, justPlay: !!layers });
+                        onClick({
+                          dataItem: data,
+                          index,
+                          justPlay: !!layers && !playingPlaylist,
+                        });
                       }
                     }
                   }}
@@ -1349,7 +1347,12 @@ const PlaylistContentRenderer = (props: any) => {
       </div>
       {itemSelected === data.id && !draggedItemID && !embedding && (
         <div style={{ padding: "1rem" }}>
-          <AttachLink attachLink={attachLink} massAdd={massAdd} />
+          <AttachLink
+            canClose
+            onClose={() => setItemSelected(null)}
+            attachLink={attachLink}
+            massAdd={massAdd}
+          />
         </div>
       )}
     </div>

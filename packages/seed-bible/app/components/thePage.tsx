@@ -3,6 +3,7 @@ import {
   getCachedBibleData,
   getCachedFootnotes,
 } from "app.hooks.bibleDataManager";
+import { getSettingsPreset } from "app.components.types";
 
 import { getStyleOf } from "app.styles.styler";
 const {
@@ -442,7 +443,7 @@ function ThePage({
             });
             if (bookData) {
               let chapterNo;
-              if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
+              if (Number(configBot.tags.chapter) <= bookData.numberOfChapters)
                 chapterNo = configBot.tags.chapter;
               const chapterUrl = chapterNo
                 ? bookData.firstChapterApiLink.replace(
@@ -468,7 +469,7 @@ function ThePage({
               }
             });
             let chapterNo;
-            if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
+            if (Number(configBot.tags.chapter) <= bookData.numberOfChapters)
               chapterNo = configBot.tags.chapter;
             const chapterUrl = chapterNo
               ? bookData.firstChapterApiLink.replace(
@@ -479,6 +480,10 @@ function ThePage({
                   "1.json",
                   `${tab.data.chapter}.json`
                 );
+            os.log("opening with chapter url", chapterUrl, {
+              bookData,
+              configBot,
+            });
             await bible.open(
               bookData.id,
               configBot.tags.chapter || 1,
@@ -490,10 +495,21 @@ function ThePage({
           if (configBot.tags?.book) {
             await bible.open(
               configBot.tags?.book,
-              configBot.tags?.chapter || tab.data.chapter
+              configBot.tags?.chapter || tab.data.chapter,
+              configBot.tags?.translation ||
+                configBot.tags?.translationId ||
+                null,
+              undefined
             );
           } else if (configBot.tags?.chapter) {
-            await bible.open(tab.data.book, configBot.tags?.chapter);
+            await bible.open(
+              tab.data.book,
+              configBot.tags?.chapter,
+              configBot.tags?.translation ||
+                configBot.tags?.translationId ||
+                null,
+              undefined
+            );
           }
         }
         configBot.tags.defaultChecked = true;
@@ -515,7 +531,7 @@ function ThePage({
       whisper(getBot("system", "introduction.searchBar"), "initialize");
     }
 
-    if (!bible || (bible && bible?.tabId && bible.tabId !== tab.id)) {
+    if (!bible || (bible && bible?.tabId && bible.tabId !== tab?.id)) {
       loadDataSafe();
     }
     globalThis.CurrentTab = tab;
@@ -610,7 +626,7 @@ function ThePage({
         book: data?.book,
         chapter: data?.chapter,
       });
-      os.syncConfigBotTagsToURL(["book", "chapter"]);
+      os.syncConfigBotTagsToURL(["book", "chapter", "translation", "lang"]);
     }
   }, [data]);
 
@@ -618,6 +634,7 @@ function ThePage({
     if (data && tab?.id === activeTab) {
       configBot.tags.book = data?.bookId;
       configBot.tags.chapter = data?.chapter;
+      configBot.tags.translation = data?.translation;
     }
   }, [activeTab, data, tab]);
 
@@ -787,6 +804,7 @@ function ThePage({
         text: selectedTextFinal,
         book: data?.book,
         chapter: data?.chapter,
+        translation: data?.translation,
       });
       const sel = window.getSelection();
       if (sel && sel.removeAllRanges) sel.removeAllRanges();
@@ -1058,6 +1076,20 @@ function ThePage({
     globalThis.SetWordHighlightsBC = setWordHighlightsBC;
     globalThis.SetInHold = setInHold;
     globalThis.SetShowCommands = setShowCommands;
+
+    globalThis.ClearMobileVerseSelection = () => {
+      setClickedVerses([]);
+      setClickedVersesContext({});
+      setShowVerseToolbar(false);
+      setCommandHighlight([]);
+      setLastSelectedVerse(null);
+      setSelectedText("");
+      setShowCommands(false);
+      if (window.getSelection) {
+        const sel = window.getSelection();
+        if (sel?.removeAllRanges) sel.removeAllRanges();
+      }
+    };
 
     globalThis.HighlightWords = highlightWords;
     globalThis.RemoveWordHighlight = removeWordHighlight;
@@ -1441,6 +1473,11 @@ function ThePage({
     return () => document.removeEventListener("keydown", handleEsc);
   }, []);
 
+  useEffect(() => {
+    const hasSelection = clickedVerses.length > 0 || showCommands;
+    (globalThis as any).SetMobileHasSelection?.(hasSelection);
+  }, [clickedVerses, showCommands]);
+
   // NEW: Handle verse clicks
   const handleVerseClick = useCallback(
     (verseNumber, verseElement) => {
@@ -1487,6 +1524,7 @@ function ThePage({
             .join(" "),
           book: data?.book,
           chapter: data?.chapter,
+          translation: data?.translation,
         });
 
         setShowVerseToolbar(true);
@@ -1733,9 +1771,14 @@ function ThePage({
   }, []);
 
   const removeBibleStack =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.appSettings?.removeBibleStack;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeBibleStack;
+
+  const removeBookMark =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeBookMark;
+  const mobileBookLogo =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.mobileBookLogo;
 
   return (
     <>
@@ -1784,17 +1827,19 @@ function ThePage({
               globalThis.closePopupSettings();
               const el = e.currentTarget;
               const currentScrollTop = el.scrollTop;
-              if (currentScrollTop <= 0) {
-                document.body.classList.remove("scroll-hide-bars");
-              } else if (
-                currentScrollTop > lastScrollTopRef.current &&
-                currentScrollTop > 50
-              ) {
-                document.body.classList.add("scroll-hide-bars");
-              } else if (currentScrollTop < lastScrollTopRef.current) {
-                document.body.classList.remove("scroll-hide-bars");
+              if (globalThis.IsMobileNow && globalThis.IsMobileNow()) {
+                if (currentScrollTop <= 0) {
+                  document.body.classList.remove("scroll-hide-bars");
+                } else if (
+                  currentScrollTop > lastScrollTopRef.current &&
+                  currentScrollTop > 50
+                ) {
+                  document.body.classList.add("scroll-hide-bars");
+                } else if (currentScrollTop < lastScrollTopRef.current) {
+                  document.body.classList.remove("scroll-hide-bars");
+                }
+                lastScrollTopRef.current = currentScrollTop;
               }
-              lastScrollTopRef.current = currentScrollTop;
             }}
             style={{
               flex: "0 0 33.333%",
@@ -2044,6 +2089,47 @@ function ThePage({
             display: none;
           }
         }
+
+        /* Compact scroll header - shows book/chapter when main header is hidden */
+        .mobile-compact-scroll-header {
+             display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 0px 13px;
+    background: var(--pageBackground);
+    z-index: 99;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text1);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+        }
+
+        body.scroll-hide-bars .mobile-compact-scroll-header {
+          opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+          .mobile-compact-scroll-header {
+            display: block;
+          }
+        }
+
+        .compact-header-divider {
+          margin: 0 6px;
+          color: #666;
+          font-weight: 400;
+        }
+
+        .compact-header-translation {
+          font-weight: 400;
+          font-size: 12px;
+          color: #999;
+        }
          `}
             </style>
             {data && tab && !tabEntered ? (
@@ -2055,15 +2141,59 @@ function ThePage({
                       <div className="mobile-header-left">
                         <div>
                           <h1 className="mobile-header-title">
-                            {`${data?.book} ${data?.chapter}`}{" "}
-                            <p className="mobile-header-translation">
+                            <span
+                              onClick={(e) => {
+                                if (
+                                  globalThis.setOpenSidebar &&
+                                  globalThis.openSidebar
+                                ) {
+                                  globalThis.setOpenSidebar(false);
+                                  globalThis.selectBookSelectorBook &&
+                                    globalThis.selectBookSelectorBook(null);
+                                } else {
+                                  globalThis.setOpenSidebar &&
+                                    globalThis.setOpenSidebar(true);
+                                  globalThis.selectBookSelectorBook &&
+                                    globalThis.selectBookSelectorBook(
+                                      data.bookId
+                                    );
+                                }
+                              }}
+                            >
+                              {`${data?.book} ${data?.chapter}`}{" "}
+                            </span>
+
+                            <p
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (
+                                  globalThis.setOpenSidebar &&
+                                  globalThis.openSidebar
+                                ) {
+                                  globalThis.setOpenSidebar(false);
+                                  globalThis.setSelectingTranslation &&
+                                    globalThis.setSelectingTranslation(false);
+                                  globalThis.selectBookSelectorBook &&
+                                    globalThis.selectBookSelectorBook(null);
+                                } else {
+                                  globalThis.setOpenSidebar(true);
+                                  globalThis.setSelectingTranslation &&
+                                    globalThis.setSelectingTranslation(true);
+                                  globalThis.selectBookSelectorBook &&
+                                    globalThis.selectBookSelectorBook(
+                                      data.bookId
+                                    );
+                                }
+                              }}
+                              className="mobile-header-translation"
+                            >
                               • {data?.shortName || ""}
                             </p>
                           </h1>
                         </div>
                       </div>
 
-                      <div className="mobile-header-right">
+                      {/* <div className="mobile-header-right">
                         <button
                           className="mobile-icon-button"
                           onClick={(e) => {
@@ -2078,9 +2208,10 @@ function ThePage({
                         >
                           <MobileSettingsIcon />
                         </button>
-                      </div>
+                      </div> */}
                     </div>
-                    {tab?.id &&
+                    {!removeBookMark &&
+                      tab?.id &&
                       masks?.mobileBookmarks &&
                       Object.values(masks.mobileBookmarks)
                         .flat()
@@ -2253,7 +2384,10 @@ function ThePage({
                       <img
                         className="coloredIcon"
                         style={{ width: "50px" }}
-                        src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
+                        src={
+                          mobileBookLogo ||
+                          "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
+                        }
                       />
                     </div>
 
@@ -2276,11 +2410,13 @@ function ThePage({
                         position: "relative",
                       }}
                     >
-                      <PageToolbar
-                        panelId={panelId}
-                        tab={tab}
-                        path="showInStarterToolbar"
-                      />
+                      {!removeBibleStack && (
+                        <PageToolbar
+                          panelId={panelId}
+                          tab={tab}
+                          path="showInStarterToolbar"
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2359,6 +2495,29 @@ function ThePage({
             />
           </div>
         )}
+
+      {/* Compact scroll header - shows book/chapter info when scrolled down on mobile */}
+      {globalThis.IsMobileNow && globalThis.IsMobileNow() && data && (
+        <div className="mobile-compact-scroll-header">
+          {showVerseToolbar && clickedVerses.length > 0 ? (
+            <>
+              {`Selected: ${data?.book} ${data?.chapter}:${[...clickedVerses].sort((a, b) => a - b).join(",")}`}
+              <span className="compact-header-divider">|</span>
+              <span className="compact-header-translation">
+                {data?.shortName || ""}
+              </span>
+            </>
+          ) : (
+            <>
+              {`${data?.book} ${data?.chapter}`}
+              <span className="compact-header-divider">|</span>
+              <span className="compact-header-translation">
+                {data?.shortName || ""}
+              </span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Footnote Modal rendered outside the carousel so position:fixed works relative to the viewport */}
       {showFootnoteModal && activeFootnote && (

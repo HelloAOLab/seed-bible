@@ -149,6 +149,10 @@ const Playlist = (props: any) => {
   const [embedding, setEmbedding] = useState<any>(null);
 
   useLayoutEffect(() => {
+    setItemSelected(null);
+  }, [embedding]);
+
+  useLayoutEffect(() => {
     G[`SetChecklistEnabled`] = setChecklistEnabled;
     return () => {
       G[`SetChecklistEnabled`] = null;
@@ -1297,7 +1301,11 @@ const Playlist = (props: any) => {
                   <span className="color-inherit">{t("delete")}</span>
                 </Button>
                 {!!embedding && isSomethingChecked && (
-                  <Button onClick={onEmbedItems} secondaryAlt color="#3B82F6">
+                  <Button
+                    onClick={onEmbedItems}
+                    secondaryAlt
+                    color="var(--secondaryColor)"
+                  >
                     <span
                       style={{ marginRight: "0.5rem" }}
                       class="material-symbols-outlined unfollow color-inherit"
@@ -1356,7 +1364,7 @@ const Playlist = (props: any) => {
                     onDisembed(values);
                   }}
                   secondaryAlt
-                  color="#3B82F6"
+                  color="var(--secondaryColor)"
                 >
                   <span
                     style={{ marginRight: "0.5rem" }}
@@ -1617,7 +1625,8 @@ const Playlist = (props: any) => {
                     description,
                     selectedIcon === customIcon && !!selectedIcon,
                     selectedTags,
-                    layers
+                    layers,
+                    publishAccess
                   );
                 }}
                 secondary

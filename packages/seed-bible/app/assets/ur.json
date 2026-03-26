@@ -31,6 +31,8 @@
   "next": "اگلا",
   "previous": "پچھلا",
   "exit": "خارج ہوں",
+  "ended": "ختم ہوگیا",
+  "checklistMode": "چیک لسٹ موڈ",
   "settings": "ترتیبات",
   "generalSettings": "عمومی ترتیبات",
   "spaceSettings": "اسپیس کی ترتیبات",
@@ -154,5 +156,13 @@
   "addToNew": "نئی میں شامل کریں",
   "itemsAddedToPlaylistSuccessfully": "آئٹمز پلے لسٹ میں کامیابی سے شامل ہو گئے۔",
   "translationSwitchOption": "کیا آپ {{translationName}} ترجمے پر سوئچ کرنا چاہیں گے؟",
-  "chooseAnother": "دوسرا انتخاب کریں"
+  "chooseAnother": "دوسرا انتخاب کریں",
+  "playlistHasBeenEnded": "پلے لسٹ ختم ہو گئی۔",
+  "youAreAtTheBeginningOfThePlaylist": "آپ پلے لسٹ کے آغاز پر ہیں۔",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "فلٹر کرنے کے لیے کم از کم دو نوٹس درکار ہیں۔",
+  "thisWillLoseYourRecording": "آپ کی ریکارڈنگ ضائع ہو جائے گی۔",
+  "switchWillLoseYourRecording": "تبدیل کرنے سے آپ کی ریکارڈنگ ضائع ہو جائے گی۔",
+  "cannotSwitchWhileRecording": "ریکارڈنگ کے دوران تبدیل نہیں کر سکتے۔",
+  "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich": "اس منسلکے پر آپ کا ڈیٹا ہے۔ ضائع ہو جائے گا۔ تبدیل کرنے کے لیے دوبارہ کلک کریں۔",
+  "addToTheCurrentQueue": "موجودہ قطار میں شامل کریں"
 }

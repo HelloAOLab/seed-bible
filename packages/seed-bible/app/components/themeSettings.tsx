@@ -1,6 +1,7 @@
 const { useEffect, useState, useRef } = os.appHooks;
 import { getStyleOf } from "app.styles.styler";
-import { MenuIcon, ThemeIcon } from "app.components.icons";
+import { getSettingsPreset } from "app.components.types";
+import { MenuIcon, ThemeIcon, MarginIcon } from "app.components.icons";
 import { useTabsContext } from "app.hooks.tabs";
 import { useSideBarContext } from "app.hooks.sideBar";
 import { useBibleContext } from "app.hooks.bibleVariables";
@@ -642,7 +643,7 @@ const defaultThemes = [
       unselectedSpaceColor: "#A7F3D0",
       spaceNameText: "#064E3B",
       addButtonBackground: "transparent",
-      addButtonIcon: "#E07B4C",
+      addButtonIcon: "#059669",
       selectPanelIcon: "#064E3B",
       openCloseMenuIcon: "#064E3B",
       moreIcon: "#6B7280",
@@ -799,7 +800,7 @@ const defaultThemes = [
       unselectedSpaceColor: "#BAE6FD",
       spaceNameText: "#0C4A6E",
       addButtonBackground: "transparent",
-      addButtonIcon: "#E07B4C",
+      addButtonIcon: "#0284C7",
       selectPanelIcon: "#0C4A6E",
       openCloseMenuIcon: "#0C4A6E",
       moreIcon: "#6B7280",
@@ -956,7 +957,7 @@ const defaultThemes = [
       unselectedSpaceColor: "#FDE68A",
       spaceNameText: "#78350F",
       addButtonBackground: "transparent",
-      addButtonIcon: "#E07B4C",
+      addButtonIcon: "#78350F",
       selectPanelIcon: "#78350F",
       openCloseMenuIcon: "#78350F",
       moreIcon: "#6B7280",
@@ -1060,10 +1061,7 @@ const defaultThemes = [
   },
 ];
 
-const presetConfig =
-  tags?.settingsConfigs?.presets?.[
-    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-  ];
+const presetConfig = tags?.settingsConfigs?.presets?.[getSettingsPreset()];
 const presetThemes: typeof defaultThemes =
   presetConfig?.availableThemes?.length > 0
     ? presetConfig.availableThemes
@@ -1585,7 +1583,7 @@ const TabSectionContent = ({
     padding: "8px 12px",
     border: "1px solid #E1E3EA",
     borderRadius: 4,
-    backgroundColor: "var(--panelBackground) !important",
+    backgroundColor: "var(--pageBackground) ",
     cursor: "pointer",
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
@@ -1597,7 +1595,7 @@ const TabSectionContent = ({
     top: "100%",
     left: 0,
     right: 0,
-    backgroundColor: "var(--panelBackground) !important",
+    backgroundColor: "var(--pageBackground) !important",
     border: "1px solid #E1E3EA",
     borderRadius: 4,
     marginTop: 4,
@@ -1613,7 +1611,7 @@ const TabSectionContent = ({
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
     borderBottom: "1px solid #F0F0F0",
-    color: "var(--panelBackground)",
+    color: "var(--pageTextColor)",
   };
 
   return (
@@ -1699,7 +1697,7 @@ const TabSectionContent = ({
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
-                stroke="#666666"
+                stroke="var(--pageTextColor)"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -1818,7 +1816,7 @@ const TabSectionContent = ({
                     ...dropdownItemStyle,
                     backgroundColor:
                       tabSettings.inactiveTabFont === font.name
-                        ? "#F5F5F5"
+                        ? "var(--pageBackground)"
                         : "#FFFFFF",
                   }}
                   onClick={() => {
@@ -1857,7 +1855,7 @@ const TabSectionContent = ({
                     ...dropdownItemStyle,
                     backgroundColor:
                       tabSettings.inactiveTabSize === size
-                        ? "#F5F5F5"
+                        ? "var(--pageBackground)"
                         : "#FFFFFF",
                   }}
                   onClick={() => {
@@ -1995,7 +1993,7 @@ const ButtonsSectionContent = ({
     top: "100%",
     left: 0,
     right: 0,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "var(--pageBackground)",
     border: "1px solid #E1E3EA",
     borderRadius: 4,
     marginTop: 4,
@@ -2011,7 +2009,7 @@ const ButtonsSectionContent = ({
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
     borderBottom: "1px solid #F0F0F0",
-    color: "var(--panelBackground)",
+    color: "var(--pageTextColor)",
   };
 
   return (
@@ -2505,7 +2503,7 @@ const ScriptureTextSectionContent = ({
     padding: "8px 12px",
     border: "1px solid #E1E3EA",
     borderRadius: 4,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "var(--pageBackground)",
     cursor: "pointer",
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
@@ -2517,7 +2515,7 @@ const ScriptureTextSectionContent = ({
     top: "100%",
     left: 0,
     right: 0,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "var(--pageBackground)",
     border: "1px solid #E1E3EA",
     borderRadius: 4,
     marginTop: 4,
@@ -2533,7 +2531,7 @@ const ScriptureTextSectionContent = ({
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
     borderBottom: "1px solid #F0F0F0",
-    color: "var(--panelBackground)",
+    color: "var(--pageTextColor)",
   };
 
   return (
@@ -3048,7 +3046,7 @@ const SideMenuSectionContent = ({
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
     borderBottom: "1px solid #F0F0F0",
-    color: "var(--panelBackground)",
+    color: "var(--pageTextColor)",
   };
 
   // Reusable row with font dropdown, size dropdown, and color picker
@@ -3545,7 +3543,7 @@ const SelectionUIToolbarSectionContent = ({
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
     borderBottom: "1px solid #F0F0F0",
-    color: "var(--panelBackground)",
+    color: "var(--pageTextColor)",
   };
 
   return (
@@ -3884,7 +3882,7 @@ const InputFieldsSectionContent = ({
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
     borderBottom: "1px solid #F0F0F0",
-    color: "var(--panelBackground)",
+    color: "var(--pageTextColor)",
   };
 
   return (
@@ -4286,7 +4284,7 @@ const BrandingSectionContent = ({
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
     borderBottom: "1px solid #F0F0F0",
-    color: "var(--panelBackground)",
+    color: "var(--pageTextColor)",
   };
 
   const inputStyle = {
@@ -5609,11 +5607,24 @@ const FONT_OPTIONS = [
 
 const LINE_HEIGHTS = [1.5, 2, 2.5];
 
+const UI_TEXT_SIZES = [
+  { label: "A", value: 0.8 },
+  { label: "A", value: 0.9 },
+  { label: "A", value: 1 },
+  { label: "A", value: 1.1 },
+  { label: "A", value: 1.2 },
+  { label: "A", value: 1.3 },
+];
+
 const FONT_SIZES = [
   { label: "Small", value: "14" },
   { label: "Medium", value: "16" },
   { label: "Large", value: "18" },
-  { label: "Extra Large", value: "20" },
+  { label: "Extra Large1", value: "20" },
+  { label: "Extra Large2", value: "22" },
+  { label: "Extra Large3", value: "24" },
+  { label: "Extra Large4", value: "28" },
+  { label: "Extra Large5", value: "32" },
 ];
 
 const SURPRISE_COMBINATIONS = [
@@ -5797,7 +5808,42 @@ const SettingsUI = () => {
   const [selectedFont, setSelectedFont] = useState(0);
   const [selectedFontSize, setSelectedFontSize] = useState(3);
   const [showFontDropdown, setShowFontDropdown] = useState(false);
+  const [showHeadingFontDropdown, setShowHeadingFontDropdown] = useState(false);
   const [showFontSizeMenu, setShowFontSizeMenu] = useState(false);
+  const [uiSizeIndex, setUiSizeIndex] = useState(() => {
+    const saved = globalThis.changes?.uiTextSize || 1;
+    return Math.max(
+      UI_TEXT_SIZES.findIndex((s) => s.value === saved),
+      0
+    );
+  });
+
+  const applyUiZoom = (zoom) => {
+    document
+      .querySelectorAll(
+        ".settings-content, .themeSettings-container, .profileSection"
+      )
+      .forEach((el) => {
+        (el as HTMLElement).style.zoom = String(zoom);
+      });
+    document.querySelectorAll(".settings-sidebar").forEach((el) => {
+      (el as HTMLElement).style.width = `${Math.round(280 * zoom)}px`;
+    });
+  };
+
+  useEffect(() => {
+    const saved = globalThis.changes?.uiTextSize || 1;
+    if (saved !== 1) applyUiZoom(saved);
+  }, []);
+
+  const handleUiTextSize = (index) => {
+    setUiSizeIndex(index);
+    const zoom = UI_TEXT_SIZES[index].value;
+    if (!globalThis.changes) globalThis.changes = {};
+    globalThis.changes.uiTextSize = zoom;
+    applyUiZoom(zoom);
+  };
+
   const {
     setShowHeading,
     setShowVerses,
@@ -5863,8 +5909,7 @@ const SettingsUI = () => {
     });
   };
 
-  const settingsPreset =
-    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full";
+  const settingsPreset = getSettingsPreset();
 
   // ————————————————————————————————————————————————————————————
   // Handle Tab Icons Toggle
@@ -5916,6 +5961,12 @@ const SettingsUI = () => {
 
   // Removed: this effect was overwriting the user's saved theme on every mount
 
+  const [selectedHeadingFont, setSelectedHeadingFont] = useState(0);
+  const [scriptureMargin, setScriptureMargin] = useState(() => {
+    const saved = currentSpace?.settings?.text?.data?.verse?.marginHorizontal;
+    return saved ? String(saved) : "27";
+  });
+
   const [textConfig, setTextConfig] = useState(() => {
     // Try to load from saved space settings
     const savedConfig = currentSpace?.settings?.text?.data;
@@ -5943,12 +5994,25 @@ const SettingsUI = () => {
         if (sizeIdx !== -1) setSelectedFontSize(sizeIdx);
       }
 
-      // Sync font
+      // Sync body font
       const savedFont = savedConfig?.verse?.font;
       if (savedFont) {
         const fontIdx = FONT_OPTIONS.findIndex((f) => f.value === savedFont);
         if (fontIdx !== -1) setSelectedFont(fontIdx);
       }
+
+      // Sync heading font
+      const savedHeadingFont = savedConfig?.heading?.font;
+      if (savedHeadingFont) {
+        const hfIdx = FONT_OPTIONS.findIndex(
+          (f) => f.value === savedHeadingFont
+        );
+        if (hfIdx !== -1) setSelectedHeadingFont(hfIdx);
+      }
+
+      // Sync scripture margin
+      const savedMargin = savedConfig?.verse?.marginHorizontal;
+      if (savedMargin) setScriptureMargin(String(savedMargin));
 
       // Sync line height
       const savedLineHeight = savedConfig?.verse?.lineHeight;
@@ -5975,6 +6039,46 @@ const SettingsUI = () => {
     );
 
     updateSpace(activeSpace, updateObj);
+  };
+
+  const applyHeadingFont = (fontFamily: string) => {
+    const updateObj = buildTextConfigUpdate(
+      "heading",
+      fontFamily,
+      textConfig?.heading?.fontSize || textConfig?.heading?.size || "16",
+      textConfig
+    );
+    updateSpace(activeSpace, updateObj);
+    // Also apply to bookchapter and chapter sections
+    const updateObj2 = buildTextConfigUpdate(
+      "bookchapter",
+      fontFamily,
+      textConfig?.bookchapter?.fontSize ||
+        textConfig?.bookchapter?.size ||
+        "16",
+      textConfig
+    );
+    updateSpace(activeSpace, updateObj2);
+    const updateObj3 = buildTextConfigUpdate(
+      "chapter",
+      fontFamily,
+      textConfig?.chapter?.fontSize || textConfig?.chapter?.size || "16",
+      textConfig
+    );
+    updateSpace(activeSpace, updateObj3);
+  };
+
+  const applyScriptureMargin = (value: string) => {
+    const updatedConfig = JSON.parse(JSON.stringify(textConfig));
+    updatedConfig.verse.marginHorizontal = value;
+    updatedConfig.heading.marginHorizontal = value;
+    updatedConfig.bookchapter.marginHorizontal = value;
+    updatedConfig.chapter.marginHorizontal = value;
+    const cssVars = exportTextConfigToCSS(updatedConfig);
+    setTextConfig(updatedConfig);
+    updateSpace(activeSpace, {
+      settings: { text: { root: cssVars, data: updatedConfig } },
+    });
   };
   const applyVerseFontSize = (fontSize) => {
     const updateObj = buildTextConfigUpdate(
@@ -6066,9 +6170,7 @@ const SettingsUI = () => {
     width: "98px",
     height: "89px",
     backgroundColor: "white",
-    border: isSelected
-      ? "2px solid var(--spaceSelection)"
-      : "1px solid #E1E3EA",
+    border: isSelected ? "2px solid var(--addButtonIcon)" : "1px solid #E1E3EA",
     borderRadius: "4px",
     overflow: "hidden",
     position: "relative",
@@ -6123,7 +6225,7 @@ const SettingsUI = () => {
 
   const dropdownStyle = {
     width: "100%",
-    backgroundColor: "var(--panelBackground) !important",
+    backgroundColor: "var(--pageBackground) !important",
     border: "1px solid #E1E3EA",
     borderRadius: "4px",
     padding: "12px 16px",
@@ -6151,7 +6253,7 @@ const SettingsUI = () => {
     top: "100%",
     left: 0,
     right: 0,
-    backgroundColor: "var(--panelBackground) !important",
+    backgroundColor: "var(--pageBackground) !important",
     border: "1px solid #E1E3EA",
     borderRadius: "4px",
     marginTop: "4px",
@@ -6164,10 +6266,13 @@ const SettingsUI = () => {
   const menuItemStyle = (isSelected) => ({
     padding: "12px 16px",
     cursor: "pointer",
-    backgroundColor: isSelected ? "#F5F5F5" : "white",
+    backgroundColor: isSelected
+      ? "var(--addButtonIcon)"
+      : "var(--pageBackground)",
     borderBottom: "1px solid #F0F0F0",
     fontSize: "13px",
     transition: "background-color 0.2s",
+    color: isSelected ? "var(--primaryColor)" : "var(--pageTextColor)",
   });
 
   const toggleRowStyle = {
@@ -6183,24 +6288,26 @@ const SettingsUI = () => {
   };
 
   const toggleStyle = (isOn) => ({
-    width: "32px",
-    height: "16px",
-    backgroundColor: isOn ? "var(--spaceSelection)" : "#CCCCCD",
-    borderRadius: "8px",
+    width: "50px",
+    height: "28px",
+    backgroundColor: isOn ? "var(--addButtonIcon)" : "#CCCCCD",
+    borderRadius: "14px",
     position: "relative",
     cursor: "pointer",
     transition: "background-color 0.3s ease",
+    flexShrink: 0,
   });
 
   const toggleCircleStyle = (isOn) => ({
-    width: "12px",
-    height: "12px",
-    backgroundColor: "white",
+    width: "22px",
+    height: "22px",
+    backgroundColor: "#fff",
     borderRadius: "50%",
     position: "absolute",
-    top: "2px",
-    left: isOn ? "18px" : "2px",
+    top: "3px",
+    left: isOn ? "25px" : "3px",
     transition: "left 0.3s ease",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
   });
 
   const separatorStyle = {
@@ -6212,8 +6319,8 @@ const SettingsUI = () => {
   const buttonStyle = {
     width: "100%",
     padding: "12px",
-    backgroundColor: "var(--spaceSelection)",
-    color: "white",
+    backgroundColor: "var(--addButtonIcon)",
+    color: "var(--primaryColor)",
     border: "none",
     borderRadius: "4px",
     fontSize: "14px",
@@ -6248,6 +6355,7 @@ const SettingsUI = () => {
         <div className="softText">{t("theme")}</div>
       </div>
       <div style={{ marginTop: "20px" }}>
+        {/* Title */}
         <div className="routerTitle blackText">
           <div className="blackText">
             <ThemeIcon />
@@ -6256,72 +6364,111 @@ const SettingsUI = () => {
             {t("theme")} & {t("text")}
           </div>
         </div>
-        <div style={{ display: "flex", gap: "7px", marginBottom: "30px" }}>
+        <div
+          style={{
+            fontSize: "13px",
+            color: "var(--text2, #888)",
+            marginBottom: "20px",
+          }}
+        >
+          Edit theme for your page and everything...
+        </div>
+
+        {/* UI text size */}
+        <div
+          style={{
+            marginBottom: "8px",
+            fontSize: "14px",
+            fontWeight: "500",
+            color: "var(--heading1Color)",
+          }}
+        >
+          {t("uiTextSize")}
+        </div>
+        <div style={{ display: "flex", gap: "6px", marginBottom: "20px" }}>
+          {UI_TEXT_SIZES.map((size, i) => (
+            <button
+              key={i}
+              onClick={() => handleUiTextSize(i)}
+              style={{
+                width: "42px",
+                height: "42px",
+                borderRadius: "8px",
+                border:
+                  uiSizeIndex === i
+                    ? "2px solid var(--addButtonIcon)"
+                    : "1px solid #E1E3EA",
+                backgroundColor:
+                  uiSizeIndex === i
+                    ? "var(--addButtonIcon)"
+                    : "var(--pageBackground, #fff)",
+                color: uiSizeIndex === i ? "#fff" : "var(--pageTextColor)",
+                cursor: "pointer",
+                fontSize: `${12 + i * 2}px`,
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                fontFamily: "inherit",
+              }}
+            >
+              {size.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={separatorStyle}></div>
+
+        {/* Scripture settings */}
+        <div style={{ ...sectionTitleStyle, marginTop: "0px" }}>
+          Scripture settings
+        </div>
+        <div style={{ display: "flex", gap: "10px", marginBottom: "24px" }}>
           <div
             style={{
-              width: "80px",
-              height: "43px",
-              backgroundColor: "var(--panelBackground) !important",
+              flex: 1,
+              height: "48px",
+              backgroundColor: "var(--pageBackground, #fff)",
               border: "1px solid #E1E3EA",
-              borderRadius: "4px",
+              borderRadius: "8px",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               cursor: "pointer",
+              fontSize: "14px",
+              color: "var(--heading1Color)",
             }}
             onClick={handleDecreaseFontSize}
           >
-            <svg
-              style={{ filter: "none", stroke: "var(--heading1Color)" }}
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-            >
-              <text x="6" y="9" fontSize="8" textAnchor="middle" fill="black">
-                A
-              </text>
-            </svg>
+            A
           </div>
           <div
             style={{
-              width: "80px",
-              height: "43px",
-              backgroundColor: "var(--panelBackground) !important",
+              flex: 1,
+              height: "48px",
+              backgroundColor: "var(--pageBackground, #fff)",
               border: "1px solid #E1E3EA",
-              borderRadius: "4px",
+              borderRadius: "8px",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               cursor: "pointer",
+              fontSize: "20px",
+              fontWeight: 500,
+              color: "var(--heading1Color)",
             }}
             onClick={handleIncreaseFontSize}
           >
-            <svg
-              style={{ filter: "none", stroke: "var(--heading1Color)" }}
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-            >
-              <text
-                x="10"
-                y="14"
-                fontSize="14"
-                textAnchor="middle"
-                fill="black"
-              >
-                A
-              </text>
-            </svg>
+            A
           </div>
           <div
             style={{
-              width: "80px",
-              height: "43px",
-              backgroundColor: "var(--panelBackground) !important",
+              flex: 1,
+              height: "48px",
+              backgroundColor: "var(--pageBackground, #fff)",
               border: "1px solid #E1E3EA",
-              borderRadius: "4px",
+              borderRadius: "8px",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
@@ -6329,41 +6476,35 @@ const SettingsUI = () => {
             }}
             onClick={handleCycleLineHeight}
           >
-            <svg
-              style={{ filter: "none", stroke: "var(--heading1Color)" }}
-              width="18"
-              height="18"
-              viewBox="0 0 18 18"
-              fill="none"
-            >
+            <svg width="20" height="14" viewBox="0 0 20 14" fill="none">
               {(() => {
                 const gap = 3.5 + lineHeightIndex * 1.5;
-                const startY = 3;
+                const startY = 1;
                 return (
                   <>
                     <rect
-                      x="3"
+                      x="0"
                       y={startY}
-                      width="12"
+                      width="20"
                       height="2"
                       rx="1"
-                      fill="black"
+                      fill="var(--heading1Color, #333)"
                     />
                     <rect
-                      x="3"
+                      x="0"
                       y={startY + gap}
-                      width="12"
+                      width="20"
                       height="2"
                       rx="1"
-                      fill="black"
+                      fill="var(--heading1Color, #333)"
                     />
                     <rect
-                      x="3"
+                      x="0"
                       y={startY + 2 * gap}
-                      width="12"
+                      width="20"
                       height="2"
                       rx="1"
-                      fill="black"
+                      fill="var(--heading1Color, #333)"
                     />
                   </>
                 );
@@ -6372,20 +6513,140 @@ const SettingsUI = () => {
           </div>
         </div>
 
+        {/* Scripture Margins */}
+        <div
+          style={{
+            fontSize: "14px",
+            fontWeight: "500",
+            color: "var(--heading1Color)",
+            marginBottom: "8px",
+          }}
+        >
+          Scripture Margins
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            border: "1px solid #E1E3EA",
+            borderRadius: "8px",
+            padding: "10px 14px",
+            marginBottom: "24px",
+            gap: "10px",
+          }}
+        >
+          <MarginIcon />
+          <div
+            style={{ width: "1px", height: "20px", background: "#E1E3EA" }}
+          ></div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
+            <input
+              type="number"
+              value={scriptureMargin}
+              onChange={(e: any) => {
+                setScriptureMargin(e.target.value);
+                applyScriptureMargin(e.target.value);
+              }}
+              style={{
+                border: "none",
+                outline: "none",
+                fontSize: "14px",
+                width: `33px`,
+                background: "transparent",
+                color: "var(--heading1Color)",
+                fontFamily: "inherit",
+                padding: 0,
+              }}
+            />
+            <span style={{ fontSize: "13px", color: "var(--text2, #888)" }}>
+              px
+            </span>
+          </div>
+        </div>
+
+        {/* Heading Font */}
+        <div
+          style={{
+            fontSize: "14px",
+            fontWeight: "500",
+            color: "var(--heading1Color)",
+            marginBottom: "4px",
+          }}
+        >
+          Heading Font
+        </div>
+        <div
+          style={{
+            fontSize: "12px",
+            color: "var(--text2, #888)",
+            marginBottom: "8px",
+          }}
+        >
+          (Book, chapter, section names)
+        </div>
         <div
           style={dropdownStyle}
-          onClick={() => setShowFontDropdown(!showFontDropdown)}
+          onClick={() => setShowHeadingFontDropdown(!showHeadingFontDropdown)}
         >
-          <div>
-            <div style={dropdownTextStyle}>
-              {FONT_OPTIONS[selectedFont].name}
-            </div>
-            <div style={dropdownSubtextStyle}>{t("font")}</div>
+          <div style={dropdownTextStyle}>
+            {FONT_OPTIONS[selectedHeadingFont]?.name}
           </div>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path
               d="M8 11L3 6L3.7 5.3L8 9.6L12.3 5.3L13 6L8 11Z"
-              fill="black"
+              fill="var(--pageTextColor)"
+            />
+          </svg>
+          {showHeadingFontDropdown && (
+            <div style={dropdownMenuStyle} onClick={(e) => e.stopPropagation()}>
+              {FONT_OPTIONS.map((font, index) => (
+                <div
+                  key={index}
+                  style={menuItemStyle(selectedHeadingFont === index)}
+                  onClick={() => {
+                    setSelectedHeadingFont(index);
+                    applyHeadingFont(FONT_OPTIONS[index]!.value);
+                    setShowHeadingFontDropdown(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Body Font */}
+        <div
+          style={{
+            fontSize: "14px",
+            fontWeight: "500",
+            color: "var(--heading1Color)",
+            marginBottom: "4px",
+          }}
+        >
+          Body Font
+        </div>
+        <div
+          style={{
+            fontSize: "12px",
+            color: "var(--text2, #888)",
+            marginBottom: "8px",
+          }}
+        >
+          (verse, descriptions etc)
+        </div>
+        <div
+          style={dropdownStyle}
+          onClick={() => setShowFontDropdown(!showFontDropdown)}
+        >
+          <div style={dropdownTextStyle}>
+            {FONT_OPTIONS[selectedFont]?.name}
+          </div>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M8 11L3 6L3.7 5.3L8 9.6L12.3 5.3L13 6L8 11Z"
+              fill="var(--pageTextColor)"
             />
           </svg>
           {showFontDropdown && (
@@ -6396,16 +6657,9 @@ const SettingsUI = () => {
                   style={menuItemStyle(selectedFont === index)}
                   onClick={() => {
                     setSelectedFont(index);
-                    applyVerseFont(FONT_OPTIONS[index].value);
+                    applyVerseFont(FONT_OPTIONS[index]!.value);
                     setShowFontDropdown(false);
                   }}
-                  onMouseEnter={(e) =>
-                    (e.target.style.backgroundColor = "#F5F5F5")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.target.style.backgroundColor =
-                      selectedFont === index ? "#F5F5F5" : "white")
-                  }
                 >
                   {font.name}
                 </div>
@@ -6415,236 +6669,314 @@ const SettingsUI = () => {
         </div>
       </div>
 
-      <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>
-          {t(
-            showHeading[activeSpace]
-              ? "hideChapterHeadings"
-              : "showChapterHeadings"
-          )}
-        </div>
-
-        <div
-          style={toggleStyle(showHeading[activeSpace])}
-          onClick={() =>
-            setShowHeading((prev) => ({
-              ...prev,
-              [activeSpace]: !prev[activeSpace],
-            }))
-          }
-        >
-          <div style={toggleCircleStyle(showHeading[activeSpace])}></div>
-        </div>
-      </div>
-
-      <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>
-          {t(showVerses[activeSpace] ? "hideVerseNumbers" : "showVerseNumbers")}
-        </div>
-
-        <div
-          style={toggleStyle(showVerses[activeSpace])}
-          onClick={() =>
-            setShowVerses((prev) => ({
-              ...prev,
-              [activeSpace]: !prev[activeSpace],
-            }))
-          }
-        >
-          <div style={toggleCircleStyle(showVerses[activeSpace])}></div>
-        </div>
-      </div>
-
-      <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>
-          {t(showFootnotes[activeSpace] ? "hideFootnotes" : "showFootnotes")}
-        </div>
-
-        <div
-          style={toggleStyle(showFootnotes[activeSpace])}
-          onClick={() =>
-            setShowFootnotes((prev) => ({
-              ...prev,
-              [activeSpace]: !prev[activeSpace],
-            }))
-          }
-        >
-          <div style={toggleCircleStyle(showFootnotes[activeSpace])}></div>
-        </div>
-      </div>
-
-      <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>
-          {t(showNavArrows ? "hideNavArrows" : "showNavArrows")}
-        </div>
-
-        <div
-          style={toggleStyle(showNavArrows)}
-          onClick={() => setShowNavArrows((prev) => !prev)}
-        >
-          <div style={toggleCircleStyle(showNavArrows)}></div>
-        </div>
-      </div>
-
       <div style={separatorStyle}></div>
 
-      <div style={sectionTitleStyle}>{t("themes")}</div>
-
-      <div style={cardContainerStyle}>
-        {presetThemes.map((theme, index) =>
-          index !== 1 ? (
-            <div
-              key={index}
-              style={cardStyle(selectedTheme === index)}
-              onClick={() => handleThemeSelect(index)}
-            >
-              <div style={cardSidebarStyle(theme.colors.panelBackground)}>
-                <div style={cardBadgeStyle(theme.colors.panelBackground)}></div>
-                <div style={cardLabelStyle}></div>
-              </div>
-              <div style={cardIconStyle(theme.colors.panelBackground)}></div>
-              <div style={{ marginTop: "14px" }}>
-                <div style={{ ...cardLineStyle, width: "53px" }}></div>
-                <div
-                  style={{ ...cardLineStyle, width: "42px", marginTop: "7px" }}
-                ></div>
-                <div
-                  style={{ ...cardLineStyle, width: "53px", marginTop: "7px" }}
-                ></div>
-                <div
-                  style={{ ...cardLineStyle, width: "35px", marginTop: "7px" }}
-                ></div>
-              </div>
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: "9px",
-                  right: "13px",
-                  width: "22px",
-                  height: "5px",
-                  backgroundColor: theme.colors.panelBackground,
-                  opacity: 0.1,
-                  borderRadius: "1px",
-                }}
-              ></div>
-
-              {selectedTheme === index && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "8px",
-                    right: "8px",
-                    width: "20px",
-                    height: "20px",
-                    backgroundColor: "var(--spaceSelection)",
-                    borderRadius: "50%",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path
-                      d="M10 3L4.5 8.5L2 6"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div
-              key={index}
-              style={{
-                ...cardStyle(selectedTheme === index),
-                backgroundColor: "#404040",
-              }}
-              onClick={() => handleThemeSelect(index)}
-            >
-              <div style={cardSidebarStyle("rgb(255 255 255)")}>
-                <div style={cardBadgeStyle("black")}></div>
-                <div style={cardLabelStyle}></div>
-              </div>
-              <div style={cardIconStyle("black")}></div>
-              <div style={{ marginTop: "14px" }}>
-                <div
-                  style={{
-                    ...cardLineStyle,
-                    backgroundColor: "white",
-                    width: "53px",
-                  }}
-                ></div>
-                <div
-                  style={{
-                    ...cardLineStyle,
-                    backgroundColor: "white",
-                    width: "42px",
-                    marginTop: "7px",
-                  }}
-                ></div>
-                <div
-                  style={{
-                    ...cardLineStyle,
-                    backgroundColor: "white",
-                    width: "53px",
-                    marginTop: "7px",
-                  }}
-                ></div>
-                <div
-                  style={{
-                    ...cardLineStyle,
-                    backgroundColor: "white",
-                    width: "35px",
-                    marginTop: "7px",
-                  }}
-                ></div>
-              </div>
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: "9px",
-                  right: "13px",
-                  width: "22px",
-                  height: "5px",
-                  backgroundColor: "white",
-                  opacity: 0.1,
-                  borderRadius: "1px",
-                }}
-              ></div>
-
-              {selectedTheme === index && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "8px",
-                    right: "8px",
-                    width: "20px",
-                    height: "20px",
-                    backgroundColor: "var(--spaceSelection)",
-                    borderRadius: "50%",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path
-                      d="M10 3L4.5 8.5L2 6"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
-              )}
-            </div>
-          )
-        )}
+      {/* Scripture elements */}
+      <div style={{ ...sectionTitleStyle, marginTop: "0px" }}>
+        Scripture elements
       </div>
+
+      <div style={toggleRowStyle}>
+        <div style={{ fontSize: "14px", color: "var(--heading1Color)" }}>
+          Show chapter heading
+        </div>
+        <div
+          style={{
+            ...toggleStyle(showHeading[activeSpace]),
+            width: "44px",
+            height: "24px",
+          }}
+          onClick={() =>
+            setShowHeading((prev: any) => ({
+              ...prev,
+              [activeSpace]: !prev[activeSpace],
+            }))
+          }
+        >
+          <div
+            style={{
+              ...toggleCircleStyle(showHeading[activeSpace]),
+              width: "18px",
+              height: "18px",
+              top: "3px",
+              left: showHeading[activeSpace] ? "23px" : "3px",
+            }}
+          ></div>
+        </div>
+      </div>
+
+      <div style={toggleRowStyle}>
+        <div style={{ fontSize: "14px", color: "var(--heading1Color)" }}>
+          Show verse text
+        </div>
+        <div
+          style={{
+            ...toggleStyle(showVerses[activeSpace]),
+            width: "44px",
+            height: "24px",
+          }}
+          onClick={() =>
+            setShowVerses((prev: any) => ({
+              ...prev,
+              [activeSpace]: !prev[activeSpace],
+            }))
+          }
+        >
+          <div
+            style={{
+              ...toggleCircleStyle(showVerses[activeSpace]),
+              width: "18px",
+              height: "18px",
+              top: "3px",
+              left: showVerses[activeSpace] ? "23px" : "3px",
+            }}
+          ></div>
+        </div>
+      </div>
+
+      <div style={toggleRowStyle}>
+        <div style={{ fontSize: "14px", color: "var(--heading1Color)" }}>
+          Show/hide foot notes
+        </div>
+        <div
+          style={{
+            ...toggleStyle(showFootnotes[activeSpace]),
+            width: "44px",
+            height: "24px",
+          }}
+          onClick={() =>
+            setShowFootnotes((prev: any) => ({
+              ...prev,
+              [activeSpace]: !prev[activeSpace],
+            }))
+          }
+        >
+          <div
+            style={{
+              ...toggleCircleStyle(showFootnotes[activeSpace]),
+              width: "18px",
+              height: "18px",
+              top: "3px",
+              left: showFootnotes[activeSpace] ? "23px" : "3px",
+            }}
+          ></div>
+        </div>
+      </div>
+
+      {(globalThis as any).IsMobileNow() && (
+        <div style={toggleRowStyle}>
+          <div style={{ fontSize: "14px", color: "var(--heading1Color)" }}>
+            {t(showNavArrows ? "hideNavArrows" : "showNavArrows")}
+          </div>
+          <div
+            style={{
+              ...toggleStyle(showNavArrows),
+              width: "44px",
+              height: "24px",
+            }}
+            onClick={() => setShowNavArrows((prev: any) => !prev)}
+          >
+            <div
+              style={{
+                ...toggleCircleStyle(showNavArrows),
+                width: "18px",
+                height: "18px",
+                top: "3px",
+                left: showNavArrows ? "23px" : "3px",
+              }}
+            ></div>
+          </div>
+        </div>
+      )}
+      {presetThemes.length > 1 && (
+        <div>
+          <div style={separatorStyle}></div>
+
+          <div style={sectionTitleStyle}>{t("themes")}</div>
+
+          <div style={cardContainerStyle}>
+            {presetThemes.map((theme, index) =>
+              index !== 1 ? (
+                <div
+                  key={index}
+                  style={cardStyle(selectedTheme === index)}
+                  onClick={() => handleThemeSelect(index)}
+                >
+                  <div style={cardSidebarStyle(theme.colors.panelBackground)}>
+                    <div
+                      style={cardBadgeStyle(theme.colors.panelBackground)}
+                    ></div>
+                    <div style={cardLabelStyle}></div>
+                  </div>
+                  <div
+                    style={cardIconStyle(theme.colors.panelBackground)}
+                  ></div>
+                  <div style={{ marginTop: "14px" }}>
+                    <div style={{ ...cardLineStyle, width: "53px" }}></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        width: "42px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        width: "53px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        width: "35px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                  </div>
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "9px",
+                      right: "13px",
+                      width: "22px",
+                      height: "5px",
+                      backgroundColor: theme.colors.panelBackground,
+                      opacity: 0.1,
+                      borderRadius: "1px",
+                    }}
+                  ></div>
+
+                  {selectedTheme === index && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "8px",
+                        right: "8px",
+                        width: "20px",
+                        height: "20px",
+                        backgroundColor: "var(--addButtonIcon)",
+                        borderRadius: "50%",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                      >
+                        <path
+                          d="M10 3L4.5 8.5L2 6"
+                          stroke="var(--primaryColor)"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div
+                  key={index}
+                  style={{
+                    ...cardStyle(selectedTheme === index),
+                    backgroundColor: "#404040",
+                  }}
+                  onClick={() => handleThemeSelect(index)}
+                >
+                  <div style={cardSidebarStyle("rgb(255 255 255)")}>
+                    <div style={cardBadgeStyle("black")}></div>
+                    <div style={cardLabelStyle}></div>
+                  </div>
+                  <div style={cardIconStyle("black")}></div>
+                  <div style={{ marginTop: "14px" }}>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        backgroundColor: "white",
+                        width: "53px",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        backgroundColor: "white",
+                        width: "42px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        backgroundColor: "white",
+                        width: "53px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        ...cardLineStyle,
+                        backgroundColor: "white",
+                        width: "35px",
+                        marginTop: "7px",
+                      }}
+                    ></div>
+                  </div>
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "9px",
+                      right: "13px",
+                      width: "22px",
+                      height: "5px",
+                      backgroundColor: "white",
+                      opacity: 0.1,
+                      borderRadius: "1px",
+                    }}
+                  ></div>
+
+                  {selectedTheme === index && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "8px",
+                        right: "8px",
+                        width: "20px",
+                        height: "20px",
+                        backgroundColor: "var(--addButtonIcon)",
+                        borderRadius: "50%",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                      >
+                        <path
+                          d="M10 3L4.5 8.5L2 6"
+                          stroke="var(--primaryColor)"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
       {settingsPreset === "full" && (
         <button
           style={buttonStyle}

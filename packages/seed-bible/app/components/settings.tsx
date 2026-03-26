@@ -1,5 +1,6 @@
 const { useState, useEffect, createContext, useContext } = os.appHooks;
 import { getStyleOf } from "app.styles.styler";
+import { getSettingsPreset } from "app.components.types";
 import { useSideBarContext } from "app.hooks.sideBar";
 import { useTabsContext } from "app.hooks.tabs";
 import { useBibleContext } from "app.hooks.bibleVariables";
@@ -797,9 +798,8 @@ export const AccountSetting = ({
   if (isHidden && !editMode) return null;
 
   const isAnonymous =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ]?.onlineUsers?.anonymous;
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.onlineUsers
+      ?.anonymous;
   let colorIndex = 0;
   let iconIndex = 0;
 
@@ -1037,6 +1037,107 @@ export const KeepScreenAwakeSetting = ({
         </div>
         <div className={`settings-toggle ${isActive ? "active" : ""}`}>
           <div className="settings-toggle-knob" />
+        </div>
+      </div>
+    </SettingItemWrapper>
+  );
+};
+
+// ---------- UI Text Size ----------
+const UI_TEXT_SIZES = [
+  { label: "S", value: 0.85 },
+  { label: "M", value: 1 },
+  { label: "L", value: 1.15 },
+  { label: "XL", value: 1.3 },
+];
+
+export const UITextSizeSetting = ({
+  itemKey = "uiTextSize",
+  labelKey = "uiTextSize",
+}) => {
+  const { t, editMode, labels, visibility } = useSettingsContext();
+  const label = labels[itemKey] || t(labelKey);
+  const isHidden = visibility[itemKey] === false;
+
+  const saved = globalThis.changes?.uiTextSize || 1;
+  const [sizeIndex, setSizeIndex] = useState(() =>
+    Math.max(
+      UI_TEXT_SIZES.findIndex((s) => s.value === saved),
+      0
+    )
+  );
+
+  const applyZoom = (zoom) => {
+    document
+      .querySelectorAll(
+        ".settings-content, .themeSettings-container, .profileSection"
+      )
+      .forEach((el) => {
+        (el as HTMLElement).style.zoom = String(zoom);
+      });
+    document.querySelectorAll(".settings-sidebar").forEach((el) => {
+      (el as HTMLElement).style.width = `${Math.round(280 * zoom)}px`;
+    });
+  };
+
+  // Restore saved size on mount
+  useEffect(() => {
+    if (saved !== 1) applyZoom(saved);
+  }, []);
+
+  const apply = (index) => {
+    setSizeIndex(index);
+    const zoom = UI_TEXT_SIZES[index].value;
+    if (!globalThis.changes) globalThis.changes = {};
+    globalThis.changes.uiTextSize = zoom;
+    applyZoom(zoom);
+  };
+
+  if (isHidden && !editMode) return null;
+
+  return (
+    <SettingItemWrapper itemKey={itemKey}>
+      <div
+        className="settings-item"
+        style={{ justifyContent: "space-between" }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div className="item-icon">
+            <span className="material-symbols-outlined">format_size</span>
+          </div>
+          <div className="item-text">{label}</div>
+        </div>
+        <div style={{ display: "flex", gap: "4px" }}>
+          {UI_TEXT_SIZES.map((size, i) => (
+            <button
+              key={size.label}
+              onClick={() => apply(i)}
+              style={{
+                width: "32px",
+                height: "32px",
+                borderRadius: "6px",
+                border:
+                  sizeIndex === i
+                    ? "2px solid var(--spaceSelection)"
+                    : "1px solid #ccc",
+                backgroundColor:
+                  sizeIndex === i
+                    ? "var(--spaceSelection)"
+                    : "var(--pageBackground, #fff)",
+                color: sizeIndex === i ? "#fff" : "var(--pageTextColor)",
+                cursor: "pointer",
+                fontSize: `${size.value - 2}px`,
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                fontFamily: "inherit",
+              }}
+            >
+              {size.label}
+            </button>
+          ))}
         </div>
       </div>
     </SettingItemWrapper>
@@ -1532,6 +1633,7 @@ const COMPONENT_REGISTRY = {
   permissions: PermissionsSetting,
   notifications: NotificationsSetting,
   keepScreenAwake: KeepScreenAwakeSetting,
+  uiTextSize: UITextSizeSetting,
   subscriptions: SubscriptionsSetting,
   language: LanguageSetting,
   reseedToggle: ReSeedToggleSetting,

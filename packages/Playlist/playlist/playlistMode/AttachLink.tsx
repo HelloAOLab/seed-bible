@@ -99,6 +99,7 @@ function SubComponent(props: any) {
     setTextType,
     showChangeOptions = true,
   } = props;
+  const [isWarningModalShow, setIsWarningModalShow] = useState(false);
   const playlists = useMemo(() => G[`${"default"}playlists`] || [], []);
   const playlistListOptions = useMemo(
     () => [
@@ -107,6 +108,47 @@ function SubComponent(props: any) {
     ],
     []
   );
+
+  const recordingSwtichCallback = (callback: () => void) => {
+    if (G.isRecording) {
+      return ShowNotification({
+        message: "Cannot Switch while recording!",
+        severity: "error",
+      });
+    }
+    if (G.hasRecording) {
+      setIsWarningModalShow(true);
+      G.AfterConfirmCallBackRecording = callback;
+      return;
+    }
+    callback();
+  };
+
+  if (isWarningModalShow) {
+    return (
+      <div>
+        <h2 style={{ fontSize: "1rem" }}>{t("thisWillLoseYourRecording")}</h2>
+        <p>{t("switchWillLoseYourRecording")}</p>
+        <ButtonsCover>
+          <Button secondaryAlt onClick={() => setIsWarningModalShow(false)}>
+            {t("no")}
+          </Button>
+          <Button
+            secondary
+            onClick={() => {
+              setIsWarningModalShow(false);
+              G.AfterConfirmCallBackRecording &&
+                G.AfterConfirmCallBackRecording();
+              G.AfterConfirmCallBackRecording = null;
+            }}
+            variant="black"
+          >
+            {t("confirm")}
+          </Button>
+        </ButtonsCover>
+      </div>
+    );
+  }
 
   switch (type) {
     case "TAG":
@@ -235,13 +277,9 @@ function SubComponent(props: any) {
           <div className="switch-tabs">
             <div
               onClick={() => {
-                if (G.isRecording) {
-                  return ShowNotification({
-                    message: "Cannot Switch while recording!",
-                    severity: "error",
-                  });
-                }
-                setRecordingType("audio");
+                recordingSwtichCallback(() => {
+                  setRecordingType("audio");
+                });
               }}
               className={`${recordingType === "audio" ? "active" : ""}`}
             >
@@ -254,13 +292,9 @@ function SubComponent(props: any) {
             </div>
             <div
               onClick={() => {
-                if (G.isRecording) {
-                  return ShowNotification({
-                    message: "Cannot Switch while recording!",
-                    severity: "error",
-                  });
-                }
-                setRecordingType("video");
+                recordingSwtichCallback(() => {
+                  setRecordingType("video");
+                });
               }}
               className={`${recordingType === "video" ? "active" : ""}`}
             >
@@ -475,16 +509,15 @@ function SubComponent(props: any) {
   }
 }
 
-const tags = [
-  "SCRIPTURE",
-  "TEXT",
-  // "RECORDING",
-  "LINK",
-  // "FILE_UPLOAD",
-  // "PLAYLIST",
-  // "DATE",
-  // "TAG",
-];
+const tags = ["SCRIPTURE", "TEXT", "LINK"];
+
+if (DEV_ENV) {
+  tags.push("RECORDING");
+  tags.push("FILE_UPLOAD");
+  tags.push("PLAYLIST");
+  tags.push("DATE");
+  tags.push("TAG");
+}
 
 const WITHOUTLOGIN_TAGS: any = {
   RECORDING: true,
@@ -1020,6 +1053,18 @@ const AttachLink = (props: any) => {
                 <div
                   key={ele.id}
                   onClick={() => {
+                    if (data) {
+                      if (!G.AllowSwitchBetweenTypes) {
+                        G.AllowSwitchBetweenTypes = true;
+                        ShowNotification({
+                          message: t(
+                            "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich"
+                          ),
+                          severity: "error",
+                        });
+                        return;
+                      }
+                    }
                     if (editMode)
                       return ShowNotification({
                         message: t("cannotChangeWhileBeingInEditMode"),

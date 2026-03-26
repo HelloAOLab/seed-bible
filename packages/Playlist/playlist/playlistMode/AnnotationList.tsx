@@ -1,9 +1,7 @@
 const G = globalThis as any;
 const { LoaderSecondary } = G.Components;
 import { deleteAnnotation, getAnnotationRecord } from "db.annotations.library";
-const { useMemo, useEffect } = os.appHooks;
-
-const { useState, useRef } = os.appHooks;
+const { useMemo, useEffect, useState, useRef } = os.appHooks;
 
 const ChevronDown =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/d03c885823b300c141eed037466a2ad6ab59f9523e2ada5ac781f4f3e5e7e45f.svg";
@@ -26,7 +24,10 @@ const AnnotationListFilters = await thisBot.AnnotationListFilters();
 const FilterIcon =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/b643c8bdb01906312ff5302bb029c1b8c35cd7a9a0a1f8f22e1358ccf675794e.svg";
 
-function getTime(dateTimeStr: string): number | null {
+function getTime(
+  dateTimeStr: string,
+  isToDate: boolean = false
+): number | null {
   if (!dateTimeStr) return null;
 
   // Split date and time
@@ -36,13 +37,20 @@ function getTime(dateTimeStr: string): number | null {
   const [month, day, year] = datePart.split("/").map(Number);
   if (!day || !month || !year) return null;
 
-  // Remove 'Z' and split time
-  const [hour, minute, second] = timePart
-    .replace("Z", "")
-    .split(":")
-    .map(Number);
+  // // Remove 'Z' and split time
+  // const [hour, minute, second] = timePart
+  //   .replace("Z", "")
+  //   .split(":")
+  //   .map(Number);
 
-  return Date.UTC(year, month - 1, day, hour || 0, minute || 0, second || 0);
+  return Date.UTC(
+    year,
+    month - 1,
+    day,
+    isToDate ? 23 : 0,
+    isToDate ? 59 : 0,
+    isToDate ? 59 : 0
+  );
 }
 
 const initialFilters: any = {
@@ -66,6 +74,8 @@ const AnnotationList = (props: any) => {
   } = props;
   const [filters, setFilters] = useState({ ...initialFilters });
   const [showFilters, setShowFilters] = useState(false);
+
+  const filterIconRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const discoverContainer = document.getElementById("discover-container");
@@ -132,6 +142,48 @@ const AnnotationList = (props: any) => {
   };
 
   const filteredAnnotationData = useMemo(() => {
+    let fromDate = "";
+    let toDate = "";
+    if (filters.dateOption === "any") {
+      fromDate = "";
+      toDate = "";
+    } else if (filters.dateOption === "yesterday") {
+      fromDate = new Date(
+        new Date().setDate(new Date().getDate() - 1)
+      ).toISOString();
+      toDate = new Date().toISOString();
+    } else if (filters.dateOption === "last_week") {
+      fromDate = new Date(
+        new Date().setDate(new Date().getDate() - 7)
+      ).toISOString();
+      toDate = new Date().toISOString();
+    } else if (filters.dateOption === "last_month") {
+      fromDate = new Date(
+        new Date().setMonth(new Date().getMonth() - 1)
+      ).toISOString();
+      toDate = new Date().toISOString();
+    } else if (filters.dateOption === "last_year") {
+      fromDate = new Date(
+        new Date().setFullYear(new Date().getFullYear() - 1)
+      ).toISOString();
+      toDate = new Date().toISOString();
+    } else if (filters.dateOption === "custom") {
+      fromDate = filters.fromDate || "";
+      toDate = filters.toDate || "";
+    }
+
+    if (filters.dateOption !== "custom" && fromDate && toDate) {
+      fromDate = G.FORMAT_DATE(
+        fromDate.split("T")[0],
+        "MM-DD-YYYY",
+        "YYYY-MM-DD"
+      );
+      toDate = G.FORMAT_DATE(toDate.split("T")[0], "MM-DD-YYYY", "YYYY-MM-DD");
+    }
+
+    const fromDateMs = getTime(`${fromDate.replaceAll("-", "/")}T00:00:00Z`);
+    const toDateMs = getTime(`${toDate.replaceAll("-", "/")}T23:59:59Z`, true);
+
     return annotationData.filter((ele: any) => {
       let isMatch = true;
       if (Object.keys(filters.sources).length > 0) {
@@ -148,40 +200,6 @@ const AnnotationList = (props: any) => {
             ? ele.verse.some((verse: string) => filters.verse[verse])
             : filters.verse[ele.verse]);
       }
-
-      let fromDate = "";
-      let toDate = "";
-      if (filters.dateOption === "any") {
-        fromDate = "";
-        toDate = "";
-      } else if (filters.dateOption === "yesterday") {
-        fromDate = new Date(
-          new Date().setDate(new Date().getDate() - 1)
-        ).toISOString();
-        toDate = new Date().toISOString();
-      } else if (filters.dateOption === "last_week") {
-        fromDate = new Date(
-          new Date().setDate(new Date().getDate() - 7)
-        ).toISOString();
-        toDate = new Date().toISOString();
-      } else if (filters.dateOption === "last_month") {
-        fromDate = new Date(
-          new Date().setMonth(new Date().getMonth() - 1)
-        ).toISOString();
-        toDate = new Date().toISOString();
-      } else if (filters.dateOption === "last_year") {
-        fromDate = new Date(
-          new Date().setFullYear(new Date().getFullYear() - 1)
-        ).toISOString();
-        toDate = new Date().toISOString();
-      } else if (filters.dateOption === "custom") {
-        fromDate = filters.fromDate || "";
-        toDate = filters.toDate || "";
-      }
-
-      const fromDateMs = getTime(`${fromDate}T00:00:00Z`);
-      const toDateMs = getTime(`${toDate}T23:59:59Z`);
-
       if (fromDate && fromDateMs) {
         isMatch = isMatch && ele.data[0].updatedAtMs >= fromDateMs;
       }
@@ -254,6 +272,7 @@ const AnnotationList = (props: any) => {
         rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
       />
+      {filteredAnnotationData.length > 5 && <div ref={filterIconRef} />}
       {deleteModal.address && (
         <ConfirmationModal
           loading={loading}
@@ -285,7 +304,27 @@ const AnnotationList = (props: any) => {
               style={{
                 top: filteredAnnotationData.length > 0 ? "0.5rem" : "-2.1rem",
               }}
-              onClick={() => setShowFilters(true)}
+              onClick={() => {
+                if (filteredAnnotationData.length < 2) {
+                  return ShowNotification({
+                    message: t("shouldHaveAtLeastTwoAnnotationsToFilter"),
+                    severity: "error",
+                  });
+                }
+                setShowFilters(true);
+                const isMobile =
+                  (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
+                  G.MOBILE_VIEWPORT_THRESHOLD;
+                if (!isMobile) {
+                  // Scorll into view but 40px from the top
+                  filterIconRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                    inline: "nearest",
+                    top: 200,
+                  });
+                }
+              }}
             >
               <img
                 className="img-icon"
@@ -296,6 +335,7 @@ const AnnotationList = (props: any) => {
             </div>
             {showFilters && (
               <AnnotationListFilters
+                showAtBottom={filteredAnnotationData.length < 6}
                 onChangeFilters={onChangeFilters}
                 onClearFilters={onClearFilters}
                 currentOpenedBook={currentOpenedBook}
@@ -306,23 +346,25 @@ const AnnotationList = (props: any) => {
               />
             )}
             {filteredAnnotationData.map((ele: any, index: number) => (
-              <AnnotationHeading
-                key={ele.address}
-                address={ele.address}
-                index={index}
-                onDelete={onDelete}
-                heading={ele.heading}
-                tags={ele.tags}
-                data={ele.data}
-                currentOpenedBook={currentOpenedBook}
-                chapter={chapter}
-                deleteOverlay={deleteOverlay}
-                setDeleteOverlay={setDeleteOverlay}
-                position={position}
-                setDeleteModal={setDeleteModal}
-                setShowFilters={setShowFilters}
-                closeOverlay={closeOverlay}
-              />
+              <>
+                <AnnotationHeading
+                  key={ele.address}
+                  address={ele.address}
+                  index={index}
+                  onDelete={onDelete}
+                  heading={ele.heading}
+                  tags={ele.tags}
+                  data={ele.data}
+                  currentOpenedBook={currentOpenedBook}
+                  chapter={chapter}
+                  deleteOverlay={deleteOverlay}
+                  setDeleteOverlay={setDeleteOverlay}
+                  position={position}
+                  setDeleteModal={setDeleteModal}
+                  setShowFilters={setShowFilters}
+                  closeOverlay={closeOverlay}
+                />
+              </>
             ))}
           </div>
         </>

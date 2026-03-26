@@ -23,7 +23,7 @@ const SharePopup = ({
     shareReference || `${configBot.tags.book} ${configBot.tags.chapter}`;
 
   // Always include the verse reference when sharing
-  const shareText = `"${shareTitle}" - ${reference} (${translation})`;
+  const shareText = `"${shareTitle}" - ${reference} (${translation || "BSB"})`;
 
   const platforms = [
     // {
@@ -36,7 +36,7 @@ const SharePopup = ({
     // },
     {
       name: "Telegram",
-      icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/512px-Telegram_logo.svg.png",
+      icon: "https://iconape.com/wp-content/files/ln/119599/png/Telegram_2019_Logo.png",
       share: () => window.open(`tg://msg?text=${shareText}`, "_blank"),
     },
     {
@@ -54,7 +54,7 @@ const SharePopup = ({
     // },
     {
       name: "X",
-      icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png",
+      icon: "https://pngimg.com/uploads/x_logo/x_logo_PNG14.png",
       share: () =>
         window.open(
           `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`,
@@ -144,7 +144,7 @@ const SharePopup = ({
   return (
     <>
       <div
-        onClick={() => closePopupSettings()}
+        onClick={() => globalThis?.closePopupSettings()}
         style={{
           position: "fixed",
           inset: 0,
@@ -158,7 +158,7 @@ const SharePopup = ({
         <div
           onClick={(e) => e.stopPropagation()}
           style={{
-            background: "#fff",
+            background: "var(--pageBackground)",
             borderRadius: 16,
             padding: "20px 24px",
             maxWidth: 380,
@@ -180,13 +180,13 @@ const SharePopup = ({
                 margin: 0,
                 fontSize: 18,
                 fontWeight: 600,
-                color: "#1a1a1a",
+                color: "var(--pageTextColor)",
               }}
             >
               {popupTitle}
             </h2>
             <button
-              onClick={() => closePopupSettings()}
+              onClick={() => globalThis?.closePopupSettings()}
               style={{
                 background: "none",
                 border: "none",
@@ -195,7 +195,7 @@ const SharePopup = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#999",
+                color: "var(--pageTextColor)",
               }}
             >
               <CloseIcon />
@@ -247,7 +247,7 @@ const SharePopup = ({
                     p.svg
                   )}
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 500, color: "#666" }}>
+                <span style={{ fontSize: 11, fontWeight: 500, color: "#333" }}>
                   {p.name === "Copy" && copied ? "Copied!" : p.name}
                 </span>
               </button>

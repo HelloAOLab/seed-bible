@@ -31,6 +31,8 @@
   "next": "পরবর্তী",
   "previous": "পূর্ববর্তী",
   "exit": "প্রস্থান",
+  "ended": "শেষ হয়েছে",
+  "checklistMode": "চেকলিস্ট মোড",
   "settings": "সেটিংস",
   "generalSettings": "সাধারণ সেটিংস",
   "spaceSettings": "স্পেস সেটিংস",
@@ -154,5 +156,13 @@
   "addToNew": "নতুনে যোগ করুন",
   "itemsAddedToPlaylistSuccessfully": "আইটেমগুলি প্লেলিস্টে সফলভাবে যোগ করা হয়েছে।",
   "translationSwitchOption": "আপনি কি {{translationName}} অনুবাদে স্যুইচ করতে চান?",
-  "chooseAnother": "অন্যটি বেছে নিন"
+  "chooseAnother": "অন্যটি বেছে নিন",
+  "playlistHasBeenEnded": "প্লেলিস্ট শেষ হয়েছে।",
+  "youAreAtTheBeginningOfThePlaylist": "আপনি প্লেলিস্টের শুরুতে আছেন।",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "ফিল্টার করতে কমপক্ষে দুটি টীকা থাকতে হবে।",
+  "thisWillLoseYourRecording": "আপনার রেকর্ডিং হারিয়ে যাবে।",
+  "switchWillLoseYourRecording": "পরিবর্তন করলে আপনার রেকর্ডিং হারিয়ে যাবে।",
+  "cannotSwitchWhileRecording": "রেকর্ডিং চলাকালীন পরিবর্তন করা যাবে না।",
+  "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich": "এই সংযুক্তিতে আপনার ডাটা আছে। এটি হারিয়ে যাবে। স্যুইচ করতে আবার ক্লিক করুন।",
+  "addToTheCurrentQueue": "বর্তমান সারিতে যোগ করুন"
 }

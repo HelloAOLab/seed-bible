@@ -153,9 +153,13 @@ export async function initI18n(): Promise<any> {
     throw new Error("i18next failed to load from CDN");
   }
 
-  // Get saved language from localStorage, or detect from browser using navigator.language
+  // Check configBot.tags.lang first, then localStorage, then browser detection
+  const tagLang = configBot?.tags?.lang;
   const savedLang = localStorage.getItem("i18nextLng");
-  const detectedLang = savedLang || getBrowserLanguage();
+  const detectedLang =
+    (tagLang && supportedLangCodes.includes(tagLang) ? tagLang : null) ||
+    savedLang ||
+    getBrowserLanguage();
 
   await i18next.init({
     resources,
@@ -200,6 +204,10 @@ export function t(key: string, options?: any): string {
 export function changeLanguage(lng: string): Promise<void> {
   if (i18nInstance) {
     localStorage.setItem("i18nextLng", lng);
+    // Sync to configBot tags
+    if (configBot?.tags) {
+      configBot.tags.lang = lng;
+    }
     // Update document direction for RTL languages
     const langConfig = availableLanguages.find((l) => l.code === lng);
     document.documentElement.dir = langConfig?.rtl ? "rtl" : "ltr";

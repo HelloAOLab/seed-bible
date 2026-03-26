@@ -132,7 +132,7 @@ export class TempGlobalAPI implements GlobalApi {
       refactorme_WhenNoCanvas();
       return;
     }
-    refactorme_WhenCanvas(this.defaultPortalName);
+    refactorme_WhenCanvas(this.defaultPortalName || "thePortal");
     this.setCanvasStylePositions({
       left: bounds.left,
       top: bounds.top,
