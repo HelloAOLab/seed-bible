@@ -10,6 +10,7 @@ import {
   type BibleEmptyPaneTool,
   type ToolTitle,
 } from "seed-bible.managers.BibleToolsManager";
+import { useI18n } from "../i18n/I18nManager";
 
 const { useEffect, useRef, useState } = os.appHooks;
 
@@ -137,6 +138,8 @@ function EmptyPaneToolbar({
     currentPane: pane,
     tabs,
   });
+
+  const { t } = useI18n();
 
   const translateTitle = (title: ToolTitle): string => {
     if (typeof title === "string") {
