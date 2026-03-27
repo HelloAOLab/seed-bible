@@ -1,3 +1,5 @@
+thisBot.initPostHog();
+
 import { Main } from "seed-bible.app.main";
 
 const { render } = os.appHooks;

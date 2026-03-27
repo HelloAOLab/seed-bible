@@ -19,6 +19,7 @@ export default class CasualOSEnvironment extends TestEnvironment {
         render,
       },
     };
+    (globalThis as any).posthog = null;
   }
 
   override async teardown() {

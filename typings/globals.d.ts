@@ -16,6 +16,8 @@ declare global {
   const gridPortalBot: Bot;
   const mapPortalBot: Bot;
   const miniMapPortalBot: Bot;
+
+  const posthog: any;
 }
 
 export const G = globalThis as unknown as Record<string, any>;

@@ -96,6 +96,14 @@ export function createLoginManager(): LoginManager {
       return;
     }
 
+    if (typeof posthog !== "undefined" && posthog) {
+      console.log(
+        "[LoginManager] Identifying PostHog with auth bot ID:",
+        authBot
+      );
+      posthog.identify(userId.value);
+    }
+
     getUserProfile(userId.value).then((p) => {
       profile.value = p;
     });

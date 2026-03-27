@@ -31,6 +31,7 @@ import {
   createExtensionManager,
   type ExtensionManager,
 } from "seed-bible.managers.ExtensionManager";
+import { debounce } from "es-toolkit";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 
@@ -152,14 +153,28 @@ export function createSeedBibleState(): SeedBibleState {
       return;
     }
 
-    const timeoutId = setInterval(() => {
+    const readingHistoryTimeoutId = setInterval(() => {
       readingHistory.saveReadingHistory(
         chapter.book.id,
         chapter.chapter.number
       );
     }, 5000);
 
-    return () => clearInterval(timeoutId);
+    const posthogTimeoutId = setTimeout(() => {
+      if (typeof posthog === "undefined" || !posthog) {
+        return;
+      }
+      posthog?.capture("user_chapter_read", {
+        translationId: chapter.translation.id,
+        bookId: chapter.book.id,
+        chapter: String(chapter.chapter.number),
+      });
+    }, 30_000);
+
+    return () => {
+      clearInterval(readingHistoryTimeoutId);
+      clearTimeout(posthogTimeoutId);
+    };
   });
 
   const closeSidebarAndSettings = () => {
