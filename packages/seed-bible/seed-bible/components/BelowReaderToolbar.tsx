@@ -7,6 +7,7 @@ import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager"
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
+import { useI18n } from "seed-bible.i18n.I18nManager";
 
 interface BelowReaderToolbarProps {
   toolsManager: ToolsManager;
@@ -40,6 +41,8 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
   if (tools.length === 0) {
     return null;
   }
+
+  const { t } = useI18n();
 
   const translateTitle = (title: ToolTitle): string => {
     if (typeof title === "string") {
