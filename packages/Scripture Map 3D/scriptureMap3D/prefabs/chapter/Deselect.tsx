@@ -23,11 +23,6 @@ const rgbTargetColor = HexToRgb({
     ? BibleVizUtils.Functions.GetHistoryColor({ piece: thisBot })
     : (chapterData.highlightColor ?? thisBot.tags.initialColor),
 });
-console.log(`[Debug] Deselect`, {
-  rgbTargetColor,
-  "chapterData.highlightColor": chapterData.highlightColor,
-  "thisBot.tags.initialColor": thisBot.tags.initialColor,
-});
 // const chapterPosition = getBotPosition(thisBot, dimension);
 const delayBetweenChunkAnimations = 35;
 const chunkAnimationDuration = 0.15;

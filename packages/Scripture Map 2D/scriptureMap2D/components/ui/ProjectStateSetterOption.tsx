@@ -9,7 +9,10 @@ export const ProjectStateSetterOption: ProjectStateSetterOptionType = ({
       onClick={onClick}
       className="project-state-button project-state-setter-option"
     >
-      {content}
+      {content.iconStyle && (
+        <div style={content.iconStyle} className="filter-option-icon"></div>
+      )}
+      {content.title}
     </span>
   );
 };

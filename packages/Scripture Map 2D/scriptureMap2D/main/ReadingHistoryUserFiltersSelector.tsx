@@ -1,5 +1,5 @@
-import { FiltersSelectorOption } from "scriptureMap2D.main.FiltersSelectorOption";
-import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
+import { FiltersSelectorOption } from "scriptureMap2D.components.ui.FiltersSelectorOption";
+import { useReadingHistoryContext } from "scriptureMap2D.contexts.RadingHistory.ReadingHistoryContext";
 import { userColorStore } from "bibleVizUtils.services.index";
 
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -24,7 +24,7 @@ export const ReadingHistoryUserFiltersSelector = () => {
   return (
     <div className="reading-history-user-selector">
       <FiltersSelectorOption
-        content={t("all")}
+        content={{ title: t("all") }}
         onClick={() => {
           handleReadingHistoryUserSelectorClick("all");
         }}
@@ -43,21 +43,18 @@ export const ReadingHistoryUserFiltersSelector = () => {
                 : t("Unknown User");
           return (
             <FiltersSelectorOption
-              content={[
-                <div
-                  style={{
-                    backgroundColor: userColorStore.getUserColor({
-                      authId: userId,
-                    }),
-                    borderStyle: "solid",
-                    borderColor: userColorStore.getUserColor({
-                      authId: userId,
-                    }),
-                  }}
-                  className="filter-option-icon"
-                ></div>,
-                fixedName,
-              ]}
+              content={{
+                iconStyle: {
+                  backgroundColor: userColorStore.getUserColor({
+                    authId: userId,
+                  }),
+                  borderStyle: "solid",
+                  borderColor: userColorStore.getUserColor({
+                    authId: userId,
+                  }),
+                },
+                title: fixedName,
+              }}
               onClick={() => {
                 handleReadingHistoryUserSelectorClick(userId);
               }}

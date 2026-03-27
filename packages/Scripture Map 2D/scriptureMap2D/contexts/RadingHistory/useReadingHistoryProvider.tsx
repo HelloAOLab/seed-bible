@@ -1,17 +1,4 @@
-import { useTimeContext } from "scriptureMap2D.main.TimeContext";
-import {
-  getReadingHistoryEvents,
-  flat,
-  calculateReadingHistorySummary,
-  getSubscribedUsers,
-} from "db.annotations.library";
-import type { ReadingHistorySummary } from "db.annotations.library";
-import { useTabsContext } from "app.hooks.tabs";
-import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
-import type {
-  ReadingHistoryContextType,
-  ReadingHistoryProviderProps,
-} from "scriptureMap2D.main.interfaces";
+import type { ReadingHistoryContextType } from "scriptureMap2D.main.interfaces";
 import type {
   RangedReadingEventsByBook,
   ReadingEventsByDay,
@@ -35,21 +22,25 @@ import { scriptureMap2DEventManager } from "scriptureMap2D.services.index";
 import { ScriptureMap2DEvents } from "scriptureMap2D.models.events";
 import { BibleVizUtilsEvents } from "bibleVizUtils.models.events";
 import { bibleVizUtilsEventManager } from "bibleVizUtils.services.index";
+import { useTimeContext } from "scriptureMap2D.main.TimeContext";
+import {
+  getReadingHistoryEvents,
+  flat,
+  calculateReadingHistorySummary,
+  getSubscribedUsers,
+} from "db.annotations.library";
+import type { ReadingHistorySummary } from "db.annotations.library";
+import { useTabsContext } from "app.hooks.tabs";
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
+const { useState, useMemo, useEffect, useCallback } = os.appHooks;
 
-const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
-  os.appHooks;
-
-const ReadingHistoryContext = createContext<
-  ReadingHistoryContextType | undefined
->(undefined);
+type UseReadingHistoryProvider = () => ReadingHistoryContextType;
 
 const timelineMinYear = 2023;
 
 const initialTimelineRangeKey = new Date().getFullYear();
 
-export const ReadingHistoryProvider: (
-  args: ReadingHistoryProviderProps
-) => React.JSX.Element = ({ children }) => {
+export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
   const { mode, isReadingHistoryEnabled, setShowingBooksColors } =
     useScriptureMap2DContext();
 
@@ -353,9 +344,10 @@ export const ReadingHistoryProvider: (
     // }
 
     // requestPersmissions();
-  }, [usersDataMap]);
+  }, [tryUpdateReadingHistoryUsersFilters]);
 
   useEffect(() => {
+    let isMounted = true;
     const selectedUsers = [];
 
     for (const [userId, selected] of readingHistoryUserFilters) {
@@ -399,6 +391,7 @@ export const ReadingHistoryProvider: (
 
     Promise.all(allEventPromises)
       .then((allEvents) => {
+        if (!isMounted) return;
         const flattenedEvents = Array.from(flat(allEvents));
 
         for (let event of flattenedEvents) {
@@ -458,6 +451,9 @@ export const ReadingHistoryProvider: (
           error
         );
       });
+    return () => {
+      isMounted = false;
+    };
   }, [
     tick,
     activeTab,
@@ -518,55 +514,37 @@ export const ReadingHistoryProvider: (
     }
   }, [shouldShowReadingHistory]);
 
-  return (
-    <ReadingHistoryContext.Provider
-      value={{
-        myAuthBotId,
-        yearlyReadingHistorySummary,
-        rangedReadingEventsByBook,
-        readingEventsByDay,
-        dailyReadingHistorySummaries,
-        readingHistoryUserFilters,
-        handleReadingHistoryUserSelectorClick,
-        readingHistoryRangeSeconds,
-        handleReadingHistoryRangeSelectorClick,
-        weeksCount,
-        SEC_PER_MINUTE,
-        SEC_PER_HOUR,
-        SEC_PER_DAY,
-        SEC_PER_WEEK,
-        MS_PER_SECOND,
-        MS_PER_MINUTE,
-        MS_PER_HOUR,
-        MS_PER_DAY,
-        MS_PER_WEEK,
-        dayRangesMap,
-        selectedUsersCount,
-        usersDataMap,
-        shouldShowReadingHistory,
-        timelineRange,
-        timelineRangesMap,
-        startDateStartOfWeek,
-        endDateStartOfWeek,
-        selectedTimelineKey,
-        setSelectedTimelineKey,
-        timelineRangeMethod,
-        setTimelineRangeMethod,
-      }}
-    >
-      {children}
-    </ReadingHistoryContext.Provider>
-  );
-};
-
-export const useReadingHistoryContext: () => ReadingHistoryContextType = () => {
-  const context = useContext(ReadingHistoryContext);
-
-  if (!context) {
-    throw new Error(
-      "useReadingHistoryContext must be used within a ReadingHistoryContext"
-    );
-  }
-
-  return context as ReadingHistoryContextType;
+  return {
+    myAuthBotId,
+    yearlyReadingHistorySummary,
+    rangedReadingEventsByBook,
+    readingEventsByDay,
+    dailyReadingHistorySummaries,
+    readingHistoryUserFilters,
+    handleReadingHistoryUserSelectorClick,
+    readingHistoryRangeSeconds,
+    handleReadingHistoryRangeSelectorClick,
+    weeksCount,
+    SEC_PER_MINUTE,
+    SEC_PER_HOUR,
+    SEC_PER_DAY,
+    SEC_PER_WEEK,
+    MS_PER_SECOND,
+    MS_PER_MINUTE,
+    MS_PER_HOUR,
+    MS_PER_DAY,
+    MS_PER_WEEK,
+    dayRangesMap,
+    selectedUsersCount,
+    usersDataMap,
+    shouldShowReadingHistory,
+    timelineRange,
+    timelineRangesMap,
+    startDateStartOfWeek,
+    endDateStartOfWeek,
+    selectedTimelineKey,
+    setSelectedTimelineKey,
+    timelineRangeMethod,
+    setTimelineRangeMethod,
+  };
 };

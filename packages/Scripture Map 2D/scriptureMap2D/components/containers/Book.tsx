@@ -1,6 +1,7 @@
 import { Tooltip } from "scriptureMap2D.main.Tooltip";
 import type { BookType } from "scriptureMap2D.main.types";
 import { useBook } from "scriptureMap2D.hooks.useBook";
+import { Chapter } from "scriptureMap2D.components.containers.Chapter";
 
 const { memo } = os.appCompat;
 
@@ -20,9 +21,9 @@ export const Book = memo<BookType>(
     const {
       showChapters,
       tooltipAnchor,
-      tooltipContent,
+      tooltipContentsData,
       tooltipOffsetY,
-      chapters,
+      chaptersData,
       bookTitle,
       bookClass,
       bookCoverClass,
@@ -65,13 +66,13 @@ export const Book = memo<BookType>(
           style={bookCoverStyle}
         >
           {showChapters ? (
-            chapters
+            chaptersData.map((data) => <Chapter {...data} />)
           ) : (isReadingHistoryEnabled || isUserPresenceEnabled) &&
             tooltipAnchor &&
-            tooltipContent?.length > 0 ? (
+            tooltipContentsData?.length > 0 ? (
             <Tooltip
               anchor={tooltipAnchor}
-              content={tooltipContent}
+              contentsData={tooltipContentsData}
               offsetY={tooltipOffsetY}
             />
           ) : null}

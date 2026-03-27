@@ -1,9 +1,9 @@
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
-import { ProjectFiltersSelector } from "scriptureMap2D.main.ProjectFiltersSelector";
-import { ProjectStateSetter } from "scriptureMap2D.main.ProjectStateSetter";
+import { ProjectFiltersSelector } from "scriptureMap2D.components.containers.ProjectFiltersSelector";
+import { ProjectStateSetter } from "scriptureMap2D.components.containers.ProjectStateSetter";
 import { ReadingHistoryUserFiltersSelector } from "scriptureMap2D.main.ReadingHistoryUserFiltersSelector";
-import { ReadingHistoryTimeline } from "scriptureMap2D.main.ReadingHistoryTimeline";
-import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
+import { ReadingHistoryTimeline } from "scriptureMap2D.components.containers.ReadingHistoryTimeline";
+import { useReadingHistoryContext } from "scriptureMap2D.contexts.RadingHistory.ReadingHistoryContext";
 import {
   ScriptureMap2DModes,
   TimelineRangeMethod,

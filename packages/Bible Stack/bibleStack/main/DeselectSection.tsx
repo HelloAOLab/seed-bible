@@ -132,11 +132,6 @@ if (infoLabelTransformer)
   });
 
 const piecesToRelease = sectionData.resetHierarchy(false);
-console.log(`[Debug] DeselectSection`, {
-  piecesToRelease: piecesToRelease.map((piece) => {
-    return { ...piece, tags: { ...piece.tags } };
-  }),
-});
 for (const piece of piecesToRelease) {
   ObjectPooler.ReleaseObject({
     obj: piece,

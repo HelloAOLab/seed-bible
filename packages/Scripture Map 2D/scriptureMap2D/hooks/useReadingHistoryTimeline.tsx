@@ -1,17 +1,7 @@
-import {
-  Tooltip,
-  ReadingHistoryTooltipContent,
-} from "scriptureMap2D.main.Tooltip";
-import { useTimeContext } from "scriptureMap2D.main.TimeContext";
-import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
-import { useSideBarContext } from "app.hooks.sideBar";
-import { userColorStore } from "bibleVizUtils.services.index";
 import type {
-  ReadingHistoryTooltipHeaderType,
-  ReadingHistoryLabelType,
-  ReadingHistoryItemType,
-  TooltipAnchor,
   Range,
+  ReadingHistoryContentData,
+  TooltipContentData,
 } from "scriptureMap2D.main.types";
 import {
   CapitalizeFirstLetter,
@@ -19,113 +9,24 @@ import {
 } from "bibleVizUtils.functions.index";
 import type { HexString } from "bibleVizUtils.models.commonTypes";
 import { readingHistoryService } from "bibleVizUtils.services.index";
-
-const { useState, useCallback, useMemo, useEffect, useRef } = os.appHooks;
-const { memo } = os.appCompat;
+import { useTimeContext } from "scriptureMap2D.main.TimeContext";
+import { useReadingHistoryContext } from "scriptureMap2D.contexts.RadingHistory.ReadingHistoryContext";
+import { useSideBarContext } from "app.hooks.sideBar";
+import { userColorStore } from "bibleVizUtils.services.index";
+import type { MutableRef } from "../../../../typings/AuxLibraryDefinitions";
+const { useCallback, useMemo, useEffect, useRef } = os.appHooks;
 
 const step = 0.25;
-
 type ItemsColorMap = Map<string, React.CSSProperties["color"]>;
 
-const ReadingHistoryTooltipHeader = memo<ReadingHistoryTooltipHeaderType>(
-  ({ monthName, dayOfTheMonth, year, minutesCount }) => {
-    const { t } = useSideBarContext();
-    const showMinutesCount = useMemo(() => {
-      return minutesCount > 0;
-    }, [minutesCount]);
+interface UseReadingHistoryTimelineType {
+  itemsData: ReadingHistoryContentData[];
+  timelineRef: MutableRef<HTMLDivElement | null>;
+}
 
-    return (
-      <>
-        <span
-          className={"tooltip-reading-history-title"}
-        >{`${monthName} ${dayOfTheMonth}, ${year}`}</span>
-        {showMinutesCount ? (
-          <>
-            <span
-              className={"tooltip-reading-history-count"}
-            >{`${minutesCount} Minutes of reading`}</span>
-            <span className={"horizontal-divider"}></span>
-          </>
-        ) : null}
-      </>
-    );
-  }
-);
+type UseReadingHistoryTimeline = () => UseReadingHistoryTimelineType;
 
-const Label = memo<ReadingHistoryLabelType>(
-  ({ gridRow, gridColumn, children, isDay }) => {
-    const style = useMemo<React.CSSProperties>(() => {
-      return { gridRow, gridColumn };
-    }, [gridRow, gridColumn]);
-
-    return (
-      <div
-        style={style}
-        className={`reading-history-timeline-label reading-history-timeline-label-${isDay ? "day" : "month"}`}
-      >
-        {children}
-      </div>
-    );
-  }
-);
-
-const Item = memo<ReadingHistoryItemType>(
-  ({
-    style,
-    tooltipContent,
-    handleItemClick,
-    range,
-    readingHistoryRangeSeconds,
-    id,
-    isUpcoming,
-  }) => {
-    const selected = useMemo(() => {
-      return range === readingHistoryRangeSeconds;
-    }, [range, readingHistoryRangeSeconds]);
-
-    const [containerRect, setContainerRect] = useState<DOMRect | null>(null);
-
-    const { tooltipAnchor } = useMemo<{
-      tooltipAnchor: TooltipAnchor | undefined;
-    }>(() => {
-      let tooltipAnchor;
-
-      if (containerRect) {
-        tooltipAnchor = {
-          x: containerRect.left + containerRect.width / 2,
-          y: containerRect.top,
-          width: containerRect.width,
-          height: containerRect.height,
-        };
-      }
-
-      return { tooltipAnchor };
-    }, [containerRect]);
-
-    return (
-      <div
-        id={id}
-        onPointerEnter={(e) =>
-          setContainerRect(e.currentTarget.getBoundingClientRect())
-        }
-        onPointerLeave={() => {
-          setContainerRect(null);
-        }}
-        style={style}
-        className={`reading-history-timeline-item${selected ? " selected" : ""}${isUpcoming ? " upcoming" : ""}`}
-        onClick={() => {
-          handleItemClick(selected ? null : range);
-        }}
-      >
-        {containerRect && tooltipAnchor && (
-          <Tooltip anchor={tooltipAnchor} content={tooltipContent} />
-        )}
-      </div>
-    );
-  }
-);
-
-export const ReadingHistoryTimeline = () => {
+export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
   const { t, themeColors } = useSideBarContext();
 
   const {
@@ -142,9 +43,9 @@ export const ReadingHistoryTimeline = () => {
     yearlyReadingHistorySummary,
   } = useReadingHistoryContext();
 
-  const timelineRef = useRef<HTMLDivElement>(null);
-
   const { tick } = useTimeContext();
+
+  const timelineRef = useRef<HTMLDivElement | null>(null);
 
   const prevItemsColorMapRef = useRef<ItemsColorMap>(new Map());
 
@@ -220,23 +121,42 @@ export const ReadingHistoryTimeline = () => {
     themeColors,
   ]);
 
-  const items = useMemo(() => {
-    const items = [];
+  const itemsData = useMemo(() => {
+    const itemsData: UseReadingHistoryTimelineType["itemsData"] = [];
     const monthsSet = new Set();
     const monthLabelGridRow = `1 / 2`;
     const dayLabelGridColumn = `1 / 2`;
     const todayDate = new Date();
 
-    items.push(
-      <Label gridRow={`3 / 4`} gridColumn={dayLabelGridColumn} isDay={true}>
-        {t("monShort")}
-      </Label>,
-      <Label gridRow={`5 / 6`} gridColumn={dayLabelGridColumn} isDay={true}>
-        {t("wedShort")}
-      </Label>,
-      <Label gridRow={`7 / 8`} gridColumn={dayLabelGridColumn} isDay={true}>
-        {t("friShort")}
-      </Label>
+    const translatedMonday = t("monShort");
+    const translatedWednesday = t("wedShort");
+    const translatedFriday = t("friShort");
+
+    itemsData.push(
+      {
+        type: "label",
+        gridRow: `3 / 4`,
+        gridColumn: dayLabelGridColumn,
+        isDay: true,
+        key: translatedMonday,
+        children: translatedMonday,
+      },
+      {
+        type: "label",
+        gridRow: `5 / 6`,
+        gridColumn: dayLabelGridColumn,
+        isDay: true,
+        key: translatedWednesday,
+        children: translatedWednesday,
+      },
+      {
+        type: "label",
+        gridRow: `7 / 8`,
+        gridColumn: dayLabelGridColumn,
+        isDay: true,
+        key: translatedFriday,
+        children: translatedFriday,
+      }
     );
 
     for (let week = 0; week < weeksCount; week++) {
@@ -253,16 +173,14 @@ export const ReadingHistoryTimeline = () => {
         const monthLabelGridColumn = `${week + 2} / ${week + 4}`;
         const fixedName = CapitalizeFirstLetter(labelDateInfo.monthName);
 
-        items.push(
-          <Label
-            key={`label-${uniqueMonthKey}`}
-            gridRow={monthLabelGridRow}
-            gridColumn={monthLabelGridColumn}
-            isDay={false}
-          >
-            {fixedName}
-          </Label>
-        );
+        itemsData.push({
+          type: "label",
+          gridRow: monthLabelGridRow,
+          gridColumn: monthLabelGridColumn,
+          isDay: false,
+          key: `label-${uniqueMonthKey}`,
+          children: fixedName,
+        });
       }
 
       for (let day = 0; day < 7; day++) {
@@ -278,7 +196,7 @@ export const ReadingHistoryTimeline = () => {
         const { day: dayOfTheMonth, monthName, year } = GetPastDateInfo(time);
         const daySummary = dailyReadingHistorySummaries?.get?.(key);
 
-        const tooltipContent: React.ReactNode[] = [];
+        const tooltipContentsData: TooltipContentData[] = [];
         let timeSpentMinutes = 0;
 
         if (daySummary) {
@@ -286,14 +204,13 @@ export const ReadingHistoryTimeline = () => {
           timeSpentMinutes = Math.floor(timeSpent / SEC_PER_MINUTE);
         }
 
-        tooltipContent.push(
-          <ReadingHistoryTooltipHeader
-            monthName={monthName}
-            dayOfTheMonth={dayOfTheMonth}
-            year={year}
-            minutesCount={timeSpentMinutes}
-          />
-        );
+        tooltipContentsData.push({
+          type: "readingHistoryHeader",
+          monthName: monthName,
+          dayOfTheMonth: dayOfTheMonth,
+          year: year,
+          minutesCount: timeSpentMinutes,
+        });
         const isTimeSpentNoticeable = timeSpentMinutes > 1; // more than 1 minute
 
         if (daySummary && isTimeSpentNoticeable) {
@@ -325,12 +242,11 @@ export const ReadingHistoryTimeline = () => {
                 Math.floor(userTimeSpentSeconds / SEC_PER_MINUTE)
               );
               const fixedContent = `(${minutesCount} Min)`;
-              tooltipContent.push(
-                <ReadingHistoryTooltipContent
-                  userId={userId}
-                  fixedContent={fixedContent}
-                />
-              );
+              tooltipContentsData.push({
+                type: "readingHistory",
+                userId: userId,
+                fixedContent: fixedContent,
+              });
             }
           }
           if (extraUsers.length > 0) {
@@ -345,7 +261,7 @@ export const ReadingHistoryTimeline = () => {
               }, 0),
               1
             );
-            let extraActivityContent: string | undefined;
+            let extraActivityContent: string;
             if (extraTimeSpentSeconds > SEC_PER_HOUR) {
               const hoursCount = Math.floor(
                 extraTimeSpentSeconds / SEC_PER_HOUR
@@ -364,7 +280,10 @@ export const ReadingHistoryTimeline = () => {
                   ? `+${extraUsers.length} ${t("spentMinutes", { count: minutesCount })}`
                   : `+${extraUsers.length} ${t("spentMinute", { count: minutesCount })}`;
             }
-            tooltipContent.push(extraActivityContent);
+            tooltipContentsData.push({
+              type: "text",
+              content: extraActivityContent,
+            });
           }
         }
 
@@ -378,23 +297,22 @@ export const ReadingHistoryTimeline = () => {
         const isUpcoming = time > todayDate.getTime();
 
         if (range) {
-          items.push(
-            <Item
-              id={key}
-              key={`${week}-${day}-${dayOfTheMonth}-${monthName}-${year}`}
-              tooltipContent={tooltipContent}
-              range={range}
-              handleItemClick={handleItemClick}
-              readingHistoryRangeSeconds={readingHistoryRangeSeconds}
-              style={style}
-              isUpcoming={isUpcoming}
-            />
-          );
+          itemsData.push({
+            type: "item",
+            id: key,
+            key: `${week}-${day}-${dayOfTheMonth}-${monthName}-${year}`,
+            tooltipContentsData: tooltipContentsData,
+            range: range,
+            handleItemClick: handleItemClick,
+            readingHistoryRangeSeconds: readingHistoryRangeSeconds,
+            style: style,
+            isUpcoming: isUpcoming,
+          });
         }
       }
     }
 
-    return items;
+    return itemsData;
   }, [itemsColorMap, readingHistoryRangeSeconds, dailyReadingHistorySummaries]);
 
   useEffect(() => {
@@ -431,11 +349,8 @@ export const ReadingHistoryTimeline = () => {
     };
   }, []);
 
-  return (
-    <div className="reading-history-timeline-container">
-      <div ref={timelineRef} className="reading-history-timeline">
-        {items}
-      </div>
-    </div>
-  );
+  return {
+    itemsData,
+    timelineRef,
+  };
 };

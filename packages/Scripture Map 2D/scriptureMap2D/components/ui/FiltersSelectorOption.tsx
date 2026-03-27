@@ -10,7 +10,10 @@ export const FiltersSelectorOption: FiltersSelectorOptionType = ({
       onClick={onClick}
       className={`project-state-button project-filters-selector-option${selected ? " selected" : ""}`}
     >
-      {content}
+      {content.iconStyle && (
+        <div style={content.iconStyle} className="filter-option-icon"></div>
+      )}
+      {content.title}
     </span>
   );
 };

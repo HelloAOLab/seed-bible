@@ -7,8 +7,6 @@
 import type { UnhighlightDelayInfo } from "bibleVizUtils.models.canvas";
 import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
 
-console.log(`[Debug] ClearStacks`);
-
 clearAnimations(thisBot);
 
 for (const bibleData of thisBot.vars.stackBiblesData.slice()) {

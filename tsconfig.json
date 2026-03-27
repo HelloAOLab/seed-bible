@@ -2603,23 +2603,65 @@
       "references.manager.toggleReferenceModal": [
         "./packages/References/references/manager/toggleReferenceModal.tsx"
       ],
+      "scriptureMap2D.casualos.getApp": [
+        "./packages/Scripture Map 2D/scriptureMap2D/casualos/getApp.tsx"
+      ],
+      "scriptureMap2D.components.containers.Book": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/Book.tsx"
+      ],
+      "scriptureMap2D.components.containers.Chapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/Chapter.tsx"
+      ],
+      "scriptureMap2D.components.containers.Container": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/Container.tsx"
+      ],
+      "scriptureMap2D.components.containers.Controls": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/Controls.tsx"
+      ],
+      "scriptureMap2D.components.containers.ProjectFiltersSelector": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/ProjectFiltersSelector.tsx"
+      ],
+      "scriptureMap2D.components.containers.ProjectStateSetter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/ProjectStateSetter.tsx"
+      ],
+      "scriptureMap2D.components.containers.ReadingHistoryTimeline": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/ReadingHistoryTimeline.tsx"
+      ],
+      "scriptureMap2D.components.ui.BooksContainer": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/ui/BooksContainer.tsx"
+      ],
+      "scriptureMap2D.components.ui.FiltersSelectorOption": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/ui/FiltersSelectorOption.tsx"
+      ],
+      "scriptureMap2D.components.ui.ProjectStateSetterOption": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/ui/ProjectStateSetterOption.tsx"
+      ],
+      "scriptureMap2D.contexts.RadingHistory.ReadingHistoryContext": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/RadingHistory/ReadingHistoryContext.tsx"
+      ],
+      "scriptureMap2D.contexts.RadingHistory.useReadingHistoryProvider": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/RadingHistory/useReadingHistoryProvider.tsx"
+      ],
       "scriptureMap2D.hooks.useBook": [
         "./packages/Scripture Map 2D/scriptureMap2D/hooks/useBook.tsx"
       ],
-      "scriptureMap2D.main.Book": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/Book.tsx"
+      "scriptureMap2D.hooks.useChapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useChapter.tsx"
       ],
-      "scriptureMap2D.main.BooksContainer": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/BooksContainer.tsx"
+      "scriptureMap2D.hooks.useContainer": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useContainer.tsx"
       ],
-      "scriptureMap2D.main.Chapter": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/Chapter.tsx"
+      "scriptureMap2D.hooks.useControls": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useControls.tsx"
       ],
-      "scriptureMap2D.main.Container": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/Container.tsx"
+      "scriptureMap2D.hooks.useProjectFiltersSelector": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useProjectFiltersSelector.tsx"
       ],
-      "scriptureMap2D.main.Controls": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/Controls.tsx"
+      "scriptureMap2D.hooks.useProjectStateSetter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useProjectStateSetter.tsx"
+      ],
+      "scriptureMap2D.hooks.useReadingHistoryTimeline": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useReadingHistoryTimeline.tsx"
       ],
       "scriptureMap2D.main.CustomHooks": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/CustomHooks.tsx"
@@ -2627,41 +2669,8 @@
       "scriptureMap2D.main.enums": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/enums.tsx"
       ],
-      "scriptureMap2D.main.FiltersSelectorOption": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/FiltersSelectorOption.tsx"
-      ],
-      "scriptureMap2D.main.GetScriptureMap2D": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/GetScriptureMap2D.tsx"
-      ],
-      "scriptureMap2D.main.Initialize": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/Initialize.tsx"
-      ],
       "scriptureMap2D.main.interfaces": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/interfaces.tsx"
-      ],
-      "scriptureMap2D.main.OnBibleVizUtilsInitialized": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/OnBibleVizUtilsInitialized.tsx"
-      ],
-      "scriptureMap2D.main.onEggHatch": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/onEggHatch.tsx"
-      ],
-      "scriptureMap2D.main.onInstJoined": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/onInstJoined.tsx"
-      ],
-      "scriptureMap2D.main.ProjectFiltersSelector": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/ProjectFiltersSelector.tsx"
-      ],
-      "scriptureMap2D.main.ProjectStateSetter": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/ProjectStateSetter.tsx"
-      ],
-      "scriptureMap2D.main.ProjectStateSetterOption": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/ProjectStateSetterOption.tsx"
-      ],
-      "scriptureMap2D.main.ReadingHistoryContext": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/ReadingHistoryContext.tsx"
-      ],
-      "scriptureMap2D.main.ReadingHistoryTimeline": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/ReadingHistoryTimeline.tsx"
       ],
       "scriptureMap2D.main.ReadingHistoryUserFiltersSelector": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/ReadingHistoryUserFiltersSelector.tsx"
@@ -2671,6 +2680,9 @@
       ],
       "scriptureMap2D.main.ScriptureMap2DContext": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/ScriptureMap2DContext.tsx"
+      ],
+      "scriptureMap2D.main.ScriptureMap2DWrapper": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/ScriptureMap2DWrapper.tsx"
       ],
       "scriptureMap2D.main.SectionToggle": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/SectionToggle.tsx"
@@ -2710,9 +2722,6 @@
       ],
       "scriptureMap2D.main.userUnsubscribed": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/userUnsubscribed.tsx"
-      ],
-      "scriptureMap2D.main.Wrapper": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/Wrapper.tsx"
       ],
       "scriptureMap2D.models.events": [
         "./packages/Scripture Map 2D/scriptureMap2D/models/events.tsx"

@@ -65,13 +65,6 @@ const { unhighlightDelayInfo: currentUnhighlightDelayInfo } =
     unhighlightDelayInfo: UnhighlightDelayInfo | undefined;
   }>);
 
-// if(piece.tags.typeOfPiece === BiblePiece.StackSection) console.log(`[Debug] TryUnhighlightPiece`, {
-//   currentUnhighlightDelayInfo,
-//   currentUnhighlightDelayInfoIndex,
-//   data,
-//   bibleData
-// })
-
 if (
   !thisBot.IsBiblePieceHighlighted({ piece }) ||
   ((piece.masks.isUnhighlighting || thisBot.masks.isBibleAnimating) &&
@@ -79,12 +72,6 @@ if (
   (bibleData && bibleData.currentState !== BibleState.Open) ||
   !piece.masks.highlightable
 ) {
-  // if(piece.tags.typeOfPiece === BiblePiece.StackSection) console.log(`[Debug] TryUnhighlightPiece returning`, {
-  //   '!thisBot.IsBiblePieceHighlighted({ piece })': !thisBot.IsBiblePieceHighlighted({ piece }),
-  //   '((piece.masks.isUnhighlighting || thisBot.masks.isBibleAnimating) && requestSource !== CanvasInteractions.Transition)': ((piece.masks.isUnhighlighting || thisBot.masks.isBibleAnimating) && requestSource !== CanvasInteractions.Transition),
-  //   '(bibleData && bibleData.currentState !== BibleState.Open)': (bibleData && bibleData.currentState !== BibleState.Open),
-  //   '!piece.masks.highlightable': !piece.masks.highlightable
-  // })
   return;
 }
 

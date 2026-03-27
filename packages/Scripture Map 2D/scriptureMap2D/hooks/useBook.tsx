@@ -1,10 +1,14 @@
-import type { BookProps } from "scriptureMap2D.main.interfaces";
+import type { BookProps, ChapterProps } from "scriptureMap2D.main.interfaces";
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 import { useTestamentContext } from "scriptureMap2D.main.TestamentContext";
-import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
+import { useReadingHistoryContext } from "scriptureMap2D.contexts.RadingHistory.ReadingHistoryContext";
 import { useSideBarContext } from "app.hooks.sideBar";
 import type { BookStaticInfo } from "bibleVizUtils.data.BibleVizDataRepository";
-import type { Range, TooltipAnchor } from "scriptureMap2D.main.types";
+import type {
+  Range,
+  TooltipAnchor,
+  TooltipContentData,
+} from "scriptureMap2D.main.types";
 import {
   GetTextColorBasedOnBackground,
   IsValueBetween,
@@ -26,11 +30,6 @@ import {
 } from "db.annotations.library";
 import { userColorStore } from "bibleVizUtils.services.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
-import {
-  ReadingHistoryTooltipContent,
-  UserPresenceTooltipContent,
-} from "scriptureMap2D.main.Tooltip";
-import { Chapter } from "scriptureMap2D.main.Chapter";
 import { useClickAndHold } from "scriptureMap2D.main.CustomHooks";
 
 const { useState, useMemo, useEffect, useCallback } = os.appHooks;
@@ -49,12 +48,16 @@ type UseBookProps = Pick<
   | "bookBorderGradientColors"
 >;
 
+interface ChapterData extends ChapterProps {
+  key: `${string}-${number}`;
+}
+
 interface UseBookType {
   showChapters: boolean;
   tooltipAnchor: TooltipAnchor | undefined;
-  tooltipContent: React.ReactNode[];
+  tooltipContentsData: TooltipContentData[];
   tooltipOffsetY: number;
-  chapters: React.ReactNode[];
+  chaptersData: ChapterData[];
   bookTitle: string;
   bookClass: string;
   bookCoverClass: string;
@@ -193,13 +196,13 @@ export const useBook: UseBook = (props) => {
         sectionName,
         bookName: book,
       };
-      onBookNameClickAndHold(showChapters, key, checked);
+      onBookNameClickAndHold?.(showChapters, key, checked);
     },
     holdCancelCallback: () => {
       setShowChapters((prev) => !prev);
     },
     dependencies: [
-      ...onBookNameClickAndHoldDependencies,
+      ...(onBookNameClickAndHoldDependencies ?? []),
       checked,
       showChapters,
     ],
@@ -209,14 +212,14 @@ export const useBook: UseBook = (props) => {
     setShowChapters(showingAllChapters);
   }, [showingAllChapters]);
 
-  const { fixedBackground, tooltipContent } = useMemo<{
+  const { fixedBackground, tooltipContentsData } = useMemo<{
     fixedBackground: React.CSSProperties["color"];
-    tooltipContent: React.ReactNode[];
+    tooltipContentsData: UseBookType["tooltipContentsData"];
   }>(() => {
     const nowSeconds = Math.floor(os.localTime / 1000);
 
     let fixedBackground: React.CSSProperties["color"];
-    const tooltipContent: React.ReactNode[] = [];
+    const tooltipContentsData: UseBookType["tooltipContentsData"] = [];
     if (
       isReadingHistoryEnabled &&
       readingSummary.totalTimeSpentReading > SEC_PER_MINUTE
@@ -265,12 +268,11 @@ export const useBook: UseBook = (props) => {
                       : t("spentMinute", { count: minutesCount });
                 }
 
-                tooltipContent.push(
-                  <ReadingHistoryTooltipContent
-                    userId={userId}
-                    fixedContent={fixedContent}
-                  />
-                );
+                tooltipContentsData.push({
+                  type: "readingHistory",
+                  userId: userId,
+                  fixedContent: fixedContent,
+                });
               } else {
                 let lastEntry;
                 const bookSummary = books[bookId];
@@ -332,12 +334,11 @@ export const useBook: UseBook = (props) => {
                         ? t("readMinutesAgo", { count: minutesCount })
                         : t("readMinuteAgo", { count: minutesCount });
                   }
-                  tooltipContent.push(
-                    <ReadingHistoryTooltipContent
-                      userId={userId}
-                      fixedContent={fixedContent}
-                    />
-                  );
+                  tooltipContentsData.push({
+                    type: "readingHistory",
+                    userId: userId,
+                    fixedContent: fixedContent,
+                  });
                 }
               }
             }
@@ -359,15 +360,16 @@ export const useBook: UseBook = (props) => {
 
     if (isUserPresenceEnabled) {
       if (bookUserPresenceColors.length > 0) {
-        tooltipContent.unshift(
-          <UserPresenceTooltipContent colors={bookUserPresenceColors} />
-        );
+        tooltipContentsData.unshift({
+          type: "userPresence",
+          colors: bookUserPresenceColors,
+        });
       }
     }
 
     return {
       fixedBackground,
-      tooltipContent,
+      tooltipContentsData,
     };
   }, [
     chaptersCount,
@@ -419,7 +421,7 @@ export const useBook: UseBook = (props) => {
     return summaryMap;
   }, [readingEvents, readingHistoryRangeSeconds]);
 
-  const chapters = useMemo<React.ReactNode[]>(() => {
+  const chaptersData = useMemo<UseBookType["chaptersData"]>(() => {
     if (!showChapters) return [];
 
     const now = Date.now();
@@ -432,7 +434,7 @@ export const useBook: UseBook = (props) => {
       const chapterSummary = chapterReadingHistorySummaryMap.get(chapter);
       let historyBackground: React.CSSProperties["color"];
       let historyColor: React.CSSProperties["color"];
-      const tooltipContent: React.ReactNode[] = [];
+      const tooltipContentsData: ChapterData["tooltipContentsData"] = [];
       const colors: WeightedColor[] = [];
 
       if (isReadingHistoryEnabled) {
@@ -460,7 +462,7 @@ export const useBook: UseBook = (props) => {
                       step: 0.25,
                     });
 
-                    let fixedContent: string | undefined;
+                    let fixedContent: string;
                     if (userReadingTimeSeconds >= SEC_PER_HOUR) {
                       // more than an hour
                       const hoursCount = Math.floor(
@@ -480,12 +482,11 @@ export const useBook: UseBook = (props) => {
                           : t("spentMinute", { count: minutesCount });
                     }
 
-                    tooltipContent.push(
-                      <ReadingHistoryTooltipContent
-                        userId={userId}
-                        fixedContent={fixedContent}
-                      />
-                    );
+                    tooltipContentsData.push({
+                      type: "readingHistory",
+                      userId: userId,
+                      fixedContent: fixedContent,
+                    });
                   } else {
                     let lastValidEvent: ReadingEvent | undefined = undefined;
                     let recencySeconds: number = 0;
@@ -529,7 +530,7 @@ export const useBook: UseBook = (props) => {
                         baseColor,
                         userColor,
                       });
-                      let fixedContent: string | undefined;
+                      let fixedContent: string;
                       if (recencySeconds >= SEC_PER_DAY) {
                         const daysCount = Math.floor(
                           recencySeconds / SEC_PER_DAY
@@ -555,12 +556,11 @@ export const useBook: UseBook = (props) => {
                             ? t("readMinutesAgo", { count: minutesCount })
                             : t("readMinuteAgo", { count: minutesCount });
                       }
-                      tooltipContent.push(
-                        <ReadingHistoryTooltipContent
-                          userId={userId}
-                          fixedContent={fixedContent}
-                        />
-                      );
+                      tooltipContentsData.push({
+                        type: "readingHistory",
+                        userId: userId,
+                        fixedContent: fixedContent,
+                      });
                     }
                   }
                 }
@@ -607,25 +607,24 @@ export const useBook: UseBook = (props) => {
             colors: userPresenceColors,
             diffuse: 15,
           });
-          tooltipContent.unshift(
-            <UserPresenceTooltipContent colors={userPresenceColors} />
-          );
+          tooltipContentsData.unshift({
+            type: "userPresence",
+            colors: userPresenceColors,
+          });
         }
       }
 
-      return (
-        <Chapter
-          key={`${bookId}-${chapter}`}
-          sectionName={sectionName}
-          bookName={book}
-          chapter={chapter}
-          borderGradientColors={borderGradientColors}
-          index={index}
-          historyBackground={historyBackground}
-          historyColor={historyColor}
-          tooltipContent={tooltipContent}
-        />
-      );
+      return {
+        key: `${bookId}-${chapter}`,
+        sectionName: sectionName,
+        bookName: book,
+        chapter: chapter,
+        borderGradientColors: borderGradientColors,
+        index: index,
+        historyBackground: historyBackground,
+        historyColor: historyColor,
+        tooltipContentsData: tooltipContentsData,
+      };
     });
   }, [
     isReadingHistoryEnabled,
@@ -707,9 +706,9 @@ export const useBook: UseBook = (props) => {
   return {
     showChapters,
     tooltipAnchor,
-    tooltipContent,
+    tooltipContentsData,
     tooltipOffsetY,
-    chapters,
+    chaptersData,
     bookTitle,
     bookClass,
     bookCoverClass,

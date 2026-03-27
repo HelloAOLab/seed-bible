@@ -22,6 +22,14 @@ import type {
   ReadingHistoryLabelProps,
   ReadingHistoryItemProps,
   SelectionOptionsProps,
+  ReadingHistoryTooltipContentParams,
+  ReadingHistoryTooltipContentData,
+  UserPresenceTooltipContentParams,
+  UserPresenceTooltipContentData,
+  ReadingHistoryTooltipHeaderData,
+  TextTooltipContentData,
+  ReadingHistoryItemData,
+  ReadingHistoryLabelData,
 } from "scriptureMap2D.main.interfaces";
 import type { MutableRef } from "../../../../typings/AuxLibraryDefinitions";
 
@@ -119,19 +127,18 @@ export type BooksContainerType = (
 export type BookType = (args: BookProps) => React.JSX.Element;
 
 export type TooltipType = (params: {
-  content: React.ReactNode[];
+  contentsData: TooltipContentData[];
   anchor: TooltipAnchor;
   offsetY?: number;
 }) => React.JSX.Element;
 
-export type ReadingHistoryTooltipContentType = (params: {
-  userId: string;
-  fixedContent: React.ReactNode;
-}) => React.JSX.Element;
+export type ReadingHistoryTooltipContentType = (
+  params: ReadingHistoryTooltipContentParams
+) => React.JSX.Element;
 
-export type UserPresenceTooltipContentType = (params: {
-  colors: React.CSSProperties["backgroundColor"][];
-}) => React.JSX.Element;
+export type UserPresenceTooltipContentType = (
+  params: UserPresenceTooltipContentParams
+) => React.JSX.Element;
 
 export type ChapterType = (args: ChapterProps) => React.JSX.Element;
 
@@ -186,3 +193,13 @@ export type SelectionOptionsType = (
 //   string,
 //   { book: string; bookId: string; chapter: number }
 // >;
+
+export type TooltipContentData =
+  | ReadingHistoryTooltipContentData
+  | ReadingHistoryTooltipHeaderData
+  | UserPresenceTooltipContentData
+  | TextTooltipContentData;
+
+export type ReadingHistoryContentData =
+  | ReadingHistoryItemData
+  | ReadingHistoryLabelData;

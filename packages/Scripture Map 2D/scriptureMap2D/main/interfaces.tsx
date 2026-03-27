@@ -20,6 +20,7 @@ import type {
   BookUserPresence,
   ScriptureMap2DContentValue,
   ToggleShowSectionType,
+  TooltipContentData,
   // UserPresence,
 } from "scriptureMap2D.main.types";
 import type { UserPresence } from "bibleVizUtils.models.userPresence";
@@ -32,7 +33,10 @@ import type {
   ReadingHistorySummary,
   ReadingEvent,
 } from "db.annotations.library";
-import type { StateUpdater } from "../../../../typings/AuxLibraryDefinitions";
+import type {
+  MutableRef,
+  StateUpdater,
+} from "../../../../typings/AuxLibraryDefinitions";
 import { type UserData } from "bibleVizUtils.services.UserColorStore";
 
 export interface AppProps {
@@ -47,18 +51,18 @@ export interface ScriptureMap2DConfig {
     key: ChapterKey,
     checked: boolean
   ) => void;
-  onChapterClickDependencies: unknown[];
-  onChapterClickAndHold: (
+  onChapterClickDependencies?: unknown[];
+  onChapterClickAndHold?: (
     event: PointerEvent,
     key: ChapterKey,
     checked: boolean
   ) => void;
-  onBookNameClickAndHold: (
+  onBookNameClickAndHold?: (
     showChapters: boolean,
     key: BookKey,
     checked: boolean | undefined
   ) => void;
-  onBookNameClickAndHoldDependencies: unknown[];
+  onBookNameClickAndHoldDependencies?: unknown[];
   initialShowingAllChapters?: boolean;
   initialShowTestamentLabels?: boolean;
   initialShowSectionLabels?: boolean;
@@ -169,8 +173,8 @@ export interface ReadingHistoryContextType {
   myAuthBotId: string | null;
   yearlyReadingHistorySummary: ReadingHistorySummary | null;
   rangedReadingEventsByBook: RangedReadingEventsByBook;
-  readingEventsByDay: ReadingEventsByDay;
-  dailyReadingHistorySummaries: DailyReadingHistorySummaries;
+  readingEventsByDay: ReadingEventsByDay | null;
+  dailyReadingHistorySummaries: DailyReadingHistorySummaries | null;
   readingHistoryUserFilters: ReadingHistoryUserFilters;
   handleReadingHistoryUserSelectorClick: (key: string) => void;
   readingHistoryRangeSeconds: Range | null;
@@ -188,7 +192,7 @@ export interface ReadingHistoryContextType {
   dayRangesMap: KeyRangesMap;
   selectedUsersCount: number;
   usersDataMap: UsersDataMap;
-  shouldShowReadingHistory: number;
+  shouldShowReadingHistory: boolean;
   timelineRange: DateRange;
   timelineRangesMap: TimelineRangesMap;
   startDateStartOfWeek: Date;
@@ -239,7 +243,7 @@ export interface ChapterProps {
   sectionName: string;
   historyBackground: React.CSSProperties["color"];
   historyColor: React.CSSProperties["color"];
-  tooltipContent: React.ReactNode[];
+  tooltipContentsData: TooltipContentData[];
   chapter: number;
   borderGradientColors: React.CSSProperties["background"];
 }
@@ -264,11 +268,17 @@ export interface SettingsOptionProps {
 export interface ZoomLevelOptionProps {
   value: number;
   handleZoomLevelClick: (value: number) => void;
+  scaleFactor: number;
 }
 
 export interface ZoomLevelSelectorProps {
-  setShowOptions: StateUpdater<boolean>;
-  toggleButtonRef: React.Ref<HTMLButtonElement | null>;
+  t: (text: string) => string;
+  handleZoomLevelClick: (value: number) => void;
+  zoomLevelSelectorRef: MutableRef<HTMLDivElement | null>;
+  handleZoomLevelSelectorClick: (
+    e: React.JSX.TargetedPointerEvent<HTMLDivElement>
+  ) => void;
+  scaleFactor: number;
 }
 
 export interface ZoomButtonProps {
@@ -276,14 +286,19 @@ export interface ZoomButtonProps {
   children: React.ReactNode;
 }
 
+export interface SelectorOptionContent {
+  title: string;
+  iconStyle?: React.CSSProperties;
+}
+
 export interface FiltersSelectorOptionProps {
-  content: React.ReactNode;
+  content: SelectorOptionContent;
   onClick: (event: MouseEvent) => void;
   selected?: boolean;
 }
 
 export interface ProjectStateSetterOptionProps {
-  content: React.ReactNode | React.ReactNode[];
+  content: SelectorOptionContent;
   onClick: (event: MouseEvent) => void;
 }
 
@@ -303,7 +318,7 @@ export interface ReadingHistoryLabelProps {
 
 export interface ReadingHistoryItemProps {
   style: React.CSSProperties;
-  tooltipContent: React.ReactNode[];
+  tooltipContentsData: TooltipContentData[];
   handleItemClick: (range: Range | null) => void;
   range: Range;
   readingHistoryRangeSeconds: Range | null;
@@ -314,4 +329,52 @@ export interface ReadingHistoryItemProps {
 export interface SelectionOptionsProps {
   handleClearSelectionClick: () => void;
   handleDoneClick: () => void;
+}
+
+export interface ReadingHistoryTooltipContentParams {
+  userId: string;
+  fixedContent: string;
+}
+
+export interface ReadingHistoryTooltipContentData extends ReadingHistoryTooltipContentParams {
+  type: "readingHistory";
+}
+
+export interface ReadingHistoryTooltipHeaderData extends ReadingHistoryTooltipHeaderProps {
+  type: "readingHistoryHeader";
+}
+
+export interface UserPresenceTooltipContentParams {
+  colors: React.CSSProperties["backgroundColor"][];
+}
+
+export interface UserPresenceTooltipContentData extends UserPresenceTooltipContentParams {
+  type: "userPresence";
+}
+
+export interface TextTooltipContentData {
+  type: "text";
+  content: string;
+}
+
+export interface TestamentContainerData extends TestamentContextType {
+  key: string;
+}
+
+export interface FiltersSelectorOptionData extends FiltersSelectorOptionProps {
+  key: string;
+}
+
+export interface ProjectStateSetterOptionData extends ProjectStateSetterOptionProps {
+  key: string;
+}
+
+export interface ReadingHistoryItemData extends ReadingHistoryItemProps {
+  key: string;
+  type: "item";
+}
+
+export interface ReadingHistoryLabelData extends ReadingHistoryLabelProps {
+  key: string;
+  type: "label";
 }

@@ -1,9 +1,9 @@
 import { useTestamentContext } from "scriptureMap2D.main.TestamentContext";
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
-import { Book } from "scriptureMap2D.main.Book";
+import { Book } from "scriptureMap2D.components.containers.Book";
 import { SectionToggle } from "scriptureMap2D.main.SectionToggle";
-import { BooksContainer } from "scriptureMap2D.main.BooksContainer";
-import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
+import { BooksContainer } from "scriptureMap2D.components.ui.BooksContainer";
+import { useReadingHistoryContext } from "scriptureMap2D.contexts.RadingHistory.ReadingHistoryContext";
 import {
   calculateReadingHistorySummary,
   type ReadingEvent,

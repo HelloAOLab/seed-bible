@@ -1,10 +1,10 @@
-import { Container } from "scriptureMap2D.main.Container";
+import { Container } from "scriptureMap2D.components.containers.Container";
 import { Settings } from "scriptureMap2D.main.Settings";
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
-import { Controls } from "scriptureMap2D.main.Controls";
+import { Controls } from "scriptureMap2D.components.containers.Controls";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 
-export const Wrapper = () => {
+export const ScriptureMap2DWrapper = () => {
   const {
     bookWidth,
     chapterGap,

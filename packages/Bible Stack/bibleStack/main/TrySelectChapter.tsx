@@ -46,8 +46,6 @@ const fixedInfo = (Array.isArray(info) ? info : [info])
     return chapterData && !chapterData.isSelected;
   });
 
-// console.log(`[Debug] TrySelectChapter`, {fixedInfo, info});
-
 if (fixedInfo.length > 0) {
   await Promise.all(
     fixedInfo.map(({ chapterData }) => {

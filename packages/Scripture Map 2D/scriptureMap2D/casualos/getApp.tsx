@@ -7,11 +7,6 @@ import type {
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { scriptureService } from "bibleVizUtils.services.index";
 
-const onChapterClickDependencies: unknown[] = [];
-const onChapterClickAndHold = () => {};
-const onBookNameClickAndHold = () => {};
-const onBookNameClickAndHoldDependencies: unknown[] = [];
-
 const { useCallback } = os.appHooks;
 
 const App: (args: AppProps) => React.JSX.Element = ({ id }) => {
@@ -50,10 +45,6 @@ const App: (args: AppProps) => React.JSX.Element = ({ id }) => {
         config={{
           mode: ScriptureMap2DModes.Viewer,
           onChapterClick: handleChapterClick,
-          onChapterClickDependencies,
-          onChapterClickAndHold,
-          onBookNameClickAndHold,
-          onBookNameClickAndHoldDependencies,
           initialShowingAllChapters: true,
           initialShowTestamentLabels: true,
           initialShowSectionLabels: false,

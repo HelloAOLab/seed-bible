@@ -1,7 +1,7 @@
 import { TimeProvider } from "scriptureMap2D.main.TimeContext";
 import { ScriptureMap2DProvider } from "scriptureMap2D.main.ScriptureMap2DContext";
-import { Wrapper } from "scriptureMap2D.main.Wrapper";
-import { ReadingHistoryProvider } from "scriptureMap2D.main.ReadingHistoryContext";
+import { ScriptureMap2DWrapper } from "scriptureMap2D.main.ScriptureMap2DWrapper";
+import { ReadingHistoryProvider } from "scriptureMap2D.contexts.RadingHistory.ReadingHistoryContext";
 import { ScriptureMap2DModes } from "scriptureMap2D.main.enums";
 import type { ScriptureMap2DConfig } from "scriptureMap2D.main.interfaces";
 const { memo } = os.appCompat;
@@ -23,7 +23,7 @@ export const ScriptureMap2D = memo<
       <TimeProvider>
         <ScriptureMap2DProvider config={config}>
           <ReadingHistoryProvider>
-            <Wrapper />
+            <ScriptureMap2DWrapper />
           </ReadingHistoryProvider>
         </ScriptureMap2DProvider>
       </TimeProvider>

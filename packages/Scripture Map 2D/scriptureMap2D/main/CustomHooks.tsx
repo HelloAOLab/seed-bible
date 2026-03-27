@@ -14,9 +14,11 @@ interface UseClickAndHoldProps {
   dependencies?: any[];
 }
 
-type useClickAndHoldType = (params: UseClickAndHoldProps) => {
-  onHoldStart: (e: PointerEvent) => void;
-  onHoldEnd: (e: PointerEvent) => void;
+type useClickAndHoldType = <T extends HTMLElement = HTMLElement>(
+  params: UseClickAndHoldProps
+) => {
+  onHoldStart: (e: React.JSX.TargetedPointerEvent<T>) => void;
+  onHoldEnd: (e: React.JSX.TargetedPointerEvent<T>) => void;
 };
 
 type useWhyChangedType = (name: string, value: unknown) => void;
