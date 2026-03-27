@@ -91,6 +91,7 @@ function ThePage({
   const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
   const lastScrollTopRef = useRef(0);
+  const swipeNavOccurredRef = useRef(false);
   const [userMovedToolbar, setUserMovedToolbar] = useState();
   const {
     openOnMobile,
@@ -1739,6 +1740,7 @@ function ThePage({
         const fn = openNextChapterRef.current;
         track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
         track.style.transform = `translateX(-${PANEL_PCT * 2}%)`;
+        swipeNavOccurredRef.current = true;
         setTimeout(async () => {
           track.style.transition = "none";
           track.style.transform = `translateX(-${PANEL_PCT}%)`;
@@ -1750,6 +1752,7 @@ function ThePage({
         const fn = openPrevChapterRef.current;
         track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
         track.style.transform = `translateX(0%)`;
+        swipeNavOccurredRef.current = true;
         setTimeout(async () => {
           track.style.transition = "none";
           track.style.transform = `translateX(-${PANEL_PCT}%)`;
@@ -1831,7 +1834,18 @@ function ThePage({
               const el = e.currentTarget;
               const currentScrollTop = el.scrollTop;
               if (globalThis.IsMobileNow && globalThis.IsMobileNow()) {
-                if (currentScrollTop <= 0) {
+                if (swipeNavOccurredRef.current) {
+                  // After swipe navigation, keep bars hidden until user scrolls up
+                  if (
+                    currentScrollTop > 0 &&
+                    currentScrollTop < lastScrollTopRef.current
+                  ) {
+                    // User is scrolling up — clear the flag and show bars
+                    swipeNavOccurredRef.current = false;
+                    document.body.classList.remove("scroll-hide-bars");
+                  }
+                  // Otherwise keep bars hidden
+                } else if (currentScrollTop <= 0) {
                   document.body.classList.remove("scroll-hide-bars");
                 } else if (
                   currentScrollTop > lastScrollTopRef.current &&
