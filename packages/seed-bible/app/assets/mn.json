@@ -156,5 +156,13 @@
   "addToNew": "Шинэ рүү нэмэх",
   "itemsAddedToPlaylistSuccessfully": "Элементүүд плейлистэнд амжилттай нэмэгдлээ.",
   "translationSwitchOption": "{{translationName}} орчуулга руу шилжихийг хүсч байна уу?",
-  "chooseAnother": "Өөр сонгох"
+  "chooseAnother": "Өөр сонгох",
+  "playlistHasBeenEnded": "Тоглуулах жагсаалт дууссан.",
+  "youAreAtTheBeginningOfThePlaylist": "Та тоглуулах жагсаалтын эхэнд байна.",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "Шүүхийн тулд дор хаяж хоёр тэмдэглэл хэрэгтэй.",
+  "thisWillLoseYourRecording": "Таны бичлэг алдагдана.",
+  "switchWillLoseYourRecording": "Шилжвэл таны бичлэг алдагдана.",
+  "cannotSwitchWhileRecording": "Бичиж байх үед шилжих боломжгүй.",
+  "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich": "Энэ хавсралтад өгөгдөл холбогдсон. Алдагдана. Дахин дарж шилжинэ үү.",
+  "addToTheCurrentQueue": "Одоогийн дараалалд нэмэх"
 }

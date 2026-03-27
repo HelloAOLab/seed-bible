@@ -105,8 +105,8 @@ svg path {
   .bookTitle,
   .sectionTitle,
   .sectionCover {
-    margin-left: 15px;
-    margin-right: 15px;
+    margin-left: var(--text-heading-margin-left, 5px);
+    margin-right: var(--text-heading-margin-right, 5px);
   }
 
   .floatsidebar {

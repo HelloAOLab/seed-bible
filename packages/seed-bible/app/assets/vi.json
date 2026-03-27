@@ -156,5 +156,13 @@
   "addToNew": "Thêm vào mới",
   "itemsAddedToPlaylistSuccessfully": "Đã thêm mục vào danh sách phát thành công.",
   "translationSwitchOption": "Bạn có muốn chuyển sang bản dịch {{translationName}} không?",
-  "chooseAnother": "Chọn cái khác"
+  "chooseAnother": "Chọn cái khác",
+  "playlistHasBeenEnded": "Danh sách phát đã kết thúc.",
+  "youAreAtTheBeginningOfThePlaylist": "Bạn đang ở đầu danh sách phát.",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "Bạn cần ít nhất hai chú thích để lọc.",
+  "thisWillLoseYourRecording": "Bản ghi của bạn sẽ mất.",
+  "switchWillLoseYourRecording": "Chuyển sẽ làm mất bản ghi của bạn.",
+  "cannotSwitchWhileRecording": "Không thể chuyển khi đang ghi.",
+  "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich": "Bạn có dữ liệu trong tệp đính kèm này. Dữ liệu sẽ mất. Nhấn lại để chuyển.",
+  "addToTheCurrentQueue": "Thêm vào hàng đợi hiện tại"
 }

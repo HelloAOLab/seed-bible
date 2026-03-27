@@ -35,12 +35,14 @@ export function Toolbar() {
   const {
     sidebarMode,
     openOnMobile,
-    isMobile,
     setSidebarWidth,
     setOpenOnMobile,
     setCollapsed,
     setSideBarMode,
   }: any = useSideBarContext();
+
+  // Hide nav arrows when a non-default sidebar panel (e.g. settings) is open
+  const sidebarPanelOpen = sidebarMode !== "default";
 
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const moreMenuRef = useRef<any>(null);
@@ -228,7 +230,12 @@ export function Toolbar() {
           {/* Mobile Bottom Navbar */}
           <div className="mobile-bottom-navbar">
             <button
-              style={{ display: showNavArrows && !activeApp ? "" : "none" }}
+              style={{
+                display:
+                  showNavArrows && !activeApp && !sidebarPanelOpen
+                    ? ""
+                    : "none",
+              }}
               className="mobile-navbar-arrow left-arrow"
               onClick={() =>
                 isRTL
@@ -265,7 +272,12 @@ export function Toolbar() {
                 className="mobile-btn-content"
               >
                 <TabsIcon color="var(--text1)" />
-                <span className="mobile-btn-label">Tabs</span>
+                <span
+                  className="mobile-btn-label"
+                  style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}
+                >
+                  Tabs
+                </span>
               </div>
             </button>
 
@@ -284,7 +296,7 @@ export function Toolbar() {
                   G.setOpenSidebar(!G.openSidebar);
                 }
                 G.setSelectingTranslation(false);
-                setShowMoreMenu(false);
+                // setShowMoreMenu(false);
               }}
               className="mobile-center-logo"
             >
@@ -304,37 +316,35 @@ export function Toolbar() {
               <div className="more-btn-wrapper" ref={moreMenuRef}>
                 {showMoreMenu && (
                   <div className="more-menu-popup">
-                    {moreTools
-                      .filter((tool: any) => tool.label !== "Books")
-                      .map((tool: any, i: any) => (
-                        <button
-                          key={i}
-                          className="more-menu-item"
-                          onClick={() => {
-                            tool?.onClick?.();
-                            setShowMoreMenu(false);
-                            setActiveMoreApp(tool.label);
-                          }}
-                        >
-                          {tool?.isImg ? (
-                            <img
-                              src={tool.icon}
-                              style={{ width: "20px" }}
-                              alt={tool.label}
-                            />
-                          ) : (
-                            <span className="material-symbols-outlined">
-                              {tool?.icon}
-                            </span>
-                          )}
-                          <span className="more-menu-item-label">
-                            {tool?.label}
+                    {moreTools.map((tool: any, i: any) => (
+                      <button
+                        key={i}
+                        className="more-menu-item"
+                        onClick={() => {
+                          tool?.onClick?.();
+                          setShowMoreMenu(false);
+                          setActiveMoreApp(tool.label);
+                        }}
+                      >
+                        {tool?.isImg ? (
+                          <img
+                            src={tool.icon}
+                            style={{ width: "20px" }}
+                            alt={tool.label}
+                          />
+                        ) : (
+                          <span className="material-symbols-outlined">
+                            {tool?.icon}
                           </span>
-                        </button>
-                      ))}
+                        )}
+                        <span className="more-menu-item-label">
+                          {tool?.label}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 )}
-                <button
+                {/* <button
                   className="mobile-navbar-btn more-btn"
                   title={activeMoreApp ? "Close" : "More"}
                   aria-label={activeMoreApp ? "Close" : "More"}
@@ -356,11 +366,11 @@ export function Toolbar() {
                     ) : (
                       <MoreIcon color="var(--text1)" />
                     )}
-                    <span className="mobile-btn-label">
+                    <span className="mobile-btn-label" style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}>
                       {activeMoreApp ? "Close" : "More"}
                     </span>
                   </div>
-                </button>
+                </button> */}
               </div>
             ) : (
               <div className="more-btn-wrapper">
@@ -392,7 +402,12 @@ export function Toolbar() {
                         {presetToolBarIcon}
                       </span>
                     )}
-                    <span className="mobile-btn-label">
+                    <span
+                      className="mobile-btn-label"
+                      style={{
+                        zoom: (globalThis as any).changes?.uiTextSize || 1,
+                      }}
+                    >
                       {activeMoreApp ? "close" : presetToolBarTitle}
                     </span>
                   </div>
@@ -401,7 +416,12 @@ export function Toolbar() {
             )}
 
             <button
-              style={{ display: showNavArrows && !activeApp ? "" : "none" }}
+              style={{
+                display:
+                  showNavArrows && !activeApp && !sidebarPanelOpen
+                    ? ""
+                    : "none",
+              }}
               className="mobile-navbar-arrow right-arrow"
               onClick={() =>
                 isRTL
@@ -503,7 +523,14 @@ export function Toolbar() {
                         </span>
                       )}
                       {tool.label && (
-                        <span className="toolbar-btn-label">{tool.label}</span>
+                        <span
+                          className="toolbar-btn-label"
+                          style={{
+                            zoom: (globalThis as any).changes?.uiTextSize || 1,
+                          }}
+                        >
+                          {tool.label}
+                        </span>
                       )}
                     </button>
                   )}

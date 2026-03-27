@@ -491,7 +491,7 @@ const Playlist = () => {
       )}
       {!!editAttachmentItem.id && (
         <EditAttachment
-          parentID={editAttachmentItem.parentID}
+          parentID={editAttachmentItem.parentId}
           onClose={onCloseEditAttachmentItem}
           contentId={editAttachmentItem.id}
           selectedType={editAttachmentItem.selectedType}
@@ -572,36 +572,38 @@ const Playlist = () => {
                 </span>
               </div>
             </div>
-            <div
-              className="more-menu-items"
-              onClick={(e) => {
-                // if not login show notification
-                if (!authBot?.id) {
-                  ShowNotification({
-                    message: t("pleaseLoginToUseFeature"),
-                    severity: "error",
-                  });
-                  shout("tryUserLogin");
-                  return;
-                }
-                e.stopPropagation();
-                if (SplitAppPanel2) {
-                  G.PendingAction = () => gotoCreate(true);
-                  G.StopPlayingPlaylistModal(true);
-                  return;
-                }
-                gotoCreate(true);
-              }}
-            >
-              <div className="align-center" style={{ gap: "0.5rem" }}>
-                <AnnotationIconT />
-                <span
-                  style={{ fontFamily: `"Satoshi", system-ui, sans-serif` }}
-                >
-                  {t("annotation")}
-                </span>
+            {DEV_ENV && (
+              <div
+                className="more-menu-items"
+                onClick={(e) => {
+                  // if not login show notification
+                  if (!authBot?.id) {
+                    ShowNotification({
+                      message: t("pleaseLoginToUseFeature"),
+                      severity: "error",
+                    });
+                    shout("tryUserLogin");
+                    return;
+                  }
+                  e.stopPropagation();
+                  if (SplitAppPanel2) {
+                    G.PendingAction = () => gotoCreate(true);
+                    G.StopPlayingPlaylistModal(true);
+                    return;
+                  }
+                  gotoCreate(true);
+                }}
+              >
+                <div className="align-center" style={{ gap: "0.5rem" }}>
+                  <AnnotationIconT />
+                  <span
+                    style={{ fontFamily: `"Satoshi", system-ui, sans-serif` }}
+                  >
+                    {t("annotation")}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </>
       )}

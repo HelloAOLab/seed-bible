@@ -156,5 +156,13 @@
   "addToNew": "Yeniye ekle",
   "itemsAddedToPlaylistSuccessfully": "Öğeler başarıyla listeye eklendi.",
   "translationSwitchOption": "{{translationName}} çevirisine geçmek ister misiniz?",
-  "chooseAnother": "Başka birini seç"
+  "chooseAnother": "Başka birini seç",
+  "playlistHasBeenEnded": "Çalma listesi bitti.",
+  "youAreAtTheBeginningOfThePlaylist": "Çalma listesinin başındasınız.",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "Filtrelemek için en az iki ek açıklama gerekir.",
+  "thisWillLoseYourRecording": "Kaydınız kaybolacak.",
+  "switchWillLoseYourRecording": "Geçiş yapmak kaydınızı kaybettirir.",
+  "cannotSwitchWhileRecording": "Kayıt sırasında geçiş yapılamaz.",
+  "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich": "Bu eklentiye veri eklediniz. Kaybolacak. Geçiş yapmak için tekrar tıklayın.",
+  "addToTheCurrentQueue": "Mevcut kuyruğa ekle"
 }

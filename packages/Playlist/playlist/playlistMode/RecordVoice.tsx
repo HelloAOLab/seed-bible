@@ -13,6 +13,7 @@ const RecordingVoiceUI = (props: any) => {
   const incrementCount = useRef(0);
 
   G.isRecording = isRecording;
+  G.hasRecording = isRecorded;
 
   useLayoutEffect(() => {
     (async () => {

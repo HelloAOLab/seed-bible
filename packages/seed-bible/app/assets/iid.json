@@ -156,5 +156,13 @@
   "addToNew": "Tambah ke baru",
   "itemsAddedToPlaylistSuccessfully": "Item berhasil ditambahkan ke playlist.",
   "translationSwitchOption": "Apakah Anda ingin beralih ke terjemahan {{translationName}}?",
-  "chooseAnother": "Pilih yang lain"
+  "chooseAnother": "Pilih yang lain",
+  "playlistHasBeenEnded": "Playlist telah berakhir.",
+  "youAreAtTheBeginningOfThePlaylist": "Anda berada di awal playlist.",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "Anda memerlukan setidaknya dua anotasi untuk memfilter.",
+  "thisWillLoseYourRecording": "Rekaman Anda akan hilang.",
+  "switchWillLoseYourRecording": "Beralih akan menghapus rekaman Anda.",
+  "cannotSwitchWhileRecording": "Tidak dapat beralih saat merekam.",
+  "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich": "Anda memiliki data pada lampiran ini. Data akan hilang. Klik lagi untuk beralih.",
+  "addToTheCurrentQueue": "Tambahkan ke antrean saat ini"
 }

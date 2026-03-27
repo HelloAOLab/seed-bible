@@ -157,7 +157,7 @@
 .mobile-center-logo {
   flex: 1;
   display: flex;
-  justify-content: center;
+  justify-content: end;
   align-items: flex-end;
   cursor: pointer;
 }
@@ -218,7 +218,7 @@
   width: 48px !important;
   height: 48px !important;
 }
-@media (min-width: 768px) {
+@media (min-width: 481px) {
   .mobile-only {
     display: none;
   }

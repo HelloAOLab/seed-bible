@@ -216,9 +216,11 @@ const AddNewPlaylist = (props: any) => {
   useLayoutEffect(() => {
     G.PREDEFINED_ICONS = predefinedIcons;
     G.setPredefinedIcons = setPredefinedIcons;
+    G[`${id}namingPlaylist`] = true;
     G.savePlaylistProgress();
     return () => {
       G.setPredefinedIcons = true;
+      G[`${id}namingPlaylist`] = false;
     };
   }, [predefinedIcons]);
 
@@ -897,6 +899,8 @@ const AddNewPlaylist = (props: any) => {
               };
               if (!checkNameDuplicate(name)) {
                 if (isActiveTabManual()) {
+                  // Ensure the name retains
+                  G[`${id}creatingPlaylistName`] = name;
                   return onCreate();
                 }
                 onImport();

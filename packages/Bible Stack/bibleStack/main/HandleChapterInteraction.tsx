@@ -105,7 +105,7 @@ switch (typeOfInteraction) {
                       book: bookName,
                       bookId: bookStaticInfo.abbreviation,
                       chapter: chapterData.pieceInfo.number,
-                      translation: "BSB",
+                      translation: "AAB",
                     },
                   };
                   globalThis.AddTab(tab);

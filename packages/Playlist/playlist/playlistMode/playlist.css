@@ -422,11 +422,18 @@ history-item:active {
 }
 
 .playlist-item-type:hover ~ .actions > * {
-  display: block !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+.end-icon.visible {
+  display: grid !important;
+  place-items: center !important;
 }
 
 .actions:hover > * {
-  display: block !important;
+  display: grid !important;
+  place-items: center !important;
 }
 
 /* .history-item>p:nth-of-type(2),
@@ -1125,7 +1132,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .chips-tag-container .chip-tag {
-  background-color: transparent;
+  background-color: var(--primaryColor);
   color: var(--pageTextColor);
   border: 1px solid var(--pageTextColor);
   height: 32px;

@@ -622,7 +622,10 @@ function Tab({
     `}</style>
       {!collapsed ? (
         <>
-          <div className="tabInfo">
+          <div
+            className="tabInfo"
+            style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}
+          >
             {multiSelectMode && (
               <input
                 type="checkbox"
@@ -1469,8 +1472,8 @@ function SideBar({ panelsNumber }) {
                 book: "Genesis",
                 bookId: "GEN",
                 chapter: 1,
-                translation: "BSB",
-                shortName: "BSB",
+                translation: "AAB",
+                shortName: "AAB",
               },
             });
             closePopupSettings();
@@ -1607,8 +1610,8 @@ function SideBar({ panelsNumber }) {
           book: "Genesis",
           bookId: "GEN",
           chapter: 1,
-          translation: "BSB",
-          shortName: "BSB",
+          translation: "AAB",
+          shortName: "AAB",
         },
       };
       addTab(newTab);
@@ -1619,7 +1622,10 @@ function SideBar({ panelsNumber }) {
     return (
       <>
         <div className="mobile-sidebar-overlay">
-          <div className="mobile-sidebar-header">
+          <div
+            className="mobile-sidebar-header"
+            style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}
+          >
             <h2>Tabs</h2>
             <div className="mobile-header-actions">
               {/* <span
@@ -1727,7 +1733,14 @@ function SideBar({ panelsNumber }) {
                                 onClick={() => handleMobileTabClick(tab)}
                               >
                                 <div className="mobile-tab-left">
-                                  <div className="mobile-tab-title">
+                                  <div
+                                    className="mobile-tab-title"
+                                    style={{
+                                      zoom:
+                                        (globalThis as any).changes
+                                          ?.uiTextSize || 1,
+                                    }}
+                                  >
                                     {`${tab.data?.book || tab.data?.title || ""} – ${tab.data?.chapter || ""}`}{" "}
                                     <div className="mobile-tab-sub">
                                       • {tab.data?.shortName || ""}
@@ -1795,7 +1808,12 @@ function SideBar({ panelsNumber }) {
                 onClick={() => handleMobileTabClick(el)}
               >
                 <div className="mobile-tab-left">
-                  <div className="mobile-tab-title">
+                  <div
+                    className="mobile-tab-title"
+                    style={{
+                      zoom: (globalThis as any).changes?.uiTextSize || 1,
+                    }}
+                  >
                     {`${el.data?.book || el.data?.title || ""} – ${el.data?.chapter || ""}`}{" "}
                     <div className="mobile-tab-sub">
                       • {el.data?.shortName || ""}
@@ -1851,7 +1869,12 @@ function SideBar({ panelsNumber }) {
                 }}
               >
                 <MenuIcon name={"person_add"} />
-                <div className="mobile-nav-label">Sessions</div>
+                <div
+                  className="mobile-nav-label"
+                  style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}
+                >
+                  Sessions
+                </div>
               </button>
             )}
 
@@ -1877,7 +1900,12 @@ function SideBar({ panelsNumber }) {
                     fill={showBookmarks ? "var(--selectedSpaceColor)" : "none"}
                   />
                 </span>
-                <div className="mobile-nav-label">Bookmarks</div>
+                <div
+                  className="mobile-nav-label"
+                  style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}
+                >
+                  Bookmarks
+                </div>
               </button>
             )}
           </div>
@@ -2311,7 +2339,7 @@ function SideBar({ panelsNumber }) {
       <div
         onMouseUp={() => setIsDragging(false)}
         style={{
-          width: `${sidebarWidth}px`,
+          width: `${Math.round(sidebarWidth * ((globalThis as any).changes?.uiTextSize || 1))}px`,
           display: sidebarWidth === 0 ? "none" : null,
         }}
         ref={sidebarRef}
@@ -2336,7 +2364,10 @@ function SideBar({ panelsNumber }) {
           }}
         ></div>
 
-        <div className="headbar">
+        <div
+          className="headbar"
+          style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}
+        >
           {!collapsed ? (
             <>
               <div className="menuOptions">
@@ -2478,7 +2509,10 @@ function SideBar({ panelsNumber }) {
                 setCollapsed={setCollapsed}
               />
             )}
-            <div className="tabsContainer">
+            <div
+              className="tabsContainer"
+              style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}
+            >
               <span style={{ color: "var(--pageTextColor)" }}>
                 {showBookmarksFilter ? `${t("tabs")} & Folders` : t("tabs")}
               </span>
@@ -2532,8 +2566,8 @@ function SideBar({ panelsNumber }) {
                           book: "Genesis",
                           bookId: "GEN",
                           chapter: 1,
-                          translation: "BSB",
-                          shortName: "BSB",
+                          translation: "AAB",
+                          shortName: "AAB",
                         },
                       });
                     }
@@ -2843,8 +2877,8 @@ function SideBar({ panelsNumber }) {
                       book: "Genesis",
                       bookId: "GEN",
                       chapter: 1,
-                      translation: "BSB",
-                      shortName: "BSB",
+                      translation: "AAB",
+                      shortName: "AAB",
                     },
                   });
                 }
@@ -3003,7 +3037,7 @@ export const SpaceUI = () => {
                 onClick={() => setSideBarMode("settings")}
                 className="material-symbols-outlined"
               >
-                <MobileSettingsIcon />
+                <MobileSettingsIcon filter="var(--filter-mode)" />
               </span>
               <SettingsProfile />
               <UserProfile />
@@ -3198,7 +3232,11 @@ export const UserProfile = ({ collapsed }) => {
   const removeAccountOptions =
     tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
       ?.removeAccountOptions;
+  const removeUserIcon =
+    tags?.settingsConfigs?.presets?.[getSettingsPreset()]?.appSettings
+      ?.removeUserIcon;
   const Icon = icons[iconIndex];
+  if (removeUserIcon) return <div style={{ width: 40 }} />;
   return (
     <div
       onClick={

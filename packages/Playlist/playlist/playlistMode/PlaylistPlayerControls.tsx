@@ -617,7 +617,9 @@ const PlayerControls = ({ parentId = "default" }) => {
 
       if (
         targetItem?.type === "heading" ||
-        (!!targetItem?.nextTargetItem?.id && currIndex.fromButton === 1)
+        (!!targetItem?.nextTargetItem?.id &&
+          currIndex.fromButton === 1 &&
+          !G.StayVIAPressOfButton)
       ) {
         if (
           targetItem?.type === "heading"
@@ -665,9 +667,15 @@ const PlayerControls = ({ parentId = "default" }) => {
           G[`${targetItem.id}OpenToggle`] &&
             G[`${targetItem.id}OpenToggle`](true);
         }
+        if (G.StayVIAPressOfButton) {
+          G.StayVIAPressOfButton = false;
+        }
         if (!isFirstItemAndBackButton && !isLastItemAndLastButton)
           handleOnButtonPress(currIndex.fromButton);
       } else {
+        if (G.StayVIAPressOfButton) {
+          G.StayVIAPressOfButton = false;
+        }
         const skip = thisBot.checkIfNeedToSkip({ dataItem: targetItem });
         if (skip) {
           os.toast(`${targetItem.content} is Already Opened.Skipping it!`);
@@ -1181,7 +1189,12 @@ const PlayerControls = ({ parentId = "default" }) => {
                 fontSize: "12px",
               }}
               onClick={() => {
-                if (!prevItemName?.content) return;
+                if (!prevItemName?.content) {
+                  return ShowNotification({
+                    message: t("youAreAtTheBeginningOfThePlaylist"),
+                    severity: "error",
+                  });
+                }
                 DataManager.cancelCurrentPlayingSound();
                 if (G.HandleOnButtonPress) G.HandleOnButtonPress(-1);
               }}
@@ -1242,7 +1255,12 @@ const PlayerControls = ({ parentId = "default" }) => {
                 cursor: !nextItemName?.content ? "not-allowed" : "",
               }}
               onClick={() => {
-                if (!nextItemName?.content) return;
+                if (!nextItemName?.content) {
+                  return ShowNotification({
+                    message: t("playlistHasBeenEnded"),
+                    severity: "error",
+                  });
+                }
                 DataManager.cancelCurrentPlayingSound();
                 if (!!nextItemName?.content && !!G.HandleOnButtonPress) {
                   G.HandleOnButtonPress(1);

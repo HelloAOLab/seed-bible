@@ -156,5 +156,13 @@
   "addToNew": "نوي ته اضافه کړئ",
   "itemsAddedToPlaylistSuccessfully": "توکي په لیست کې په بریالیتوب سره زیات شول.",
   "translationSwitchOption": "ایا تاسو غواړئ چې د {{translationName}} ژباړې ته لاړ شئ؟",
-  "chooseAnother": "بل یو غوره کړئ"
+  "chooseAnother": "بل یو غوره کړئ",
+  "playlistHasBeenEnded": "پلی لیست پای ته ورسید.",
+  "youAreAtTheBeginningOfThePlaylist": "تاسو د پلی لیست په پیل کې یاست.",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "د فلټر لپاره لږترلږه دوه نوټونه پکار دي.",
+  "thisWillLoseYourRecording": "ستاسو ثبت له لاسه وځي.",
+  "switchWillLoseYourRecording": "بدلون کول به ستاسو ثبت له لاسه وویسي.",
+  "cannotSwitchWhileRecording": "په ثبت کولو کې بدلون نشي کولی.",
+  "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich": "تاسو دې سره ډاټا لرئ. له لاسه به وړل شي. د بدلولو لپاره بیا کلیک وکړئ.",
+  "addToTheCurrentQueue": "اوسنۍ لیکې ته اضافه کړئ"
 }

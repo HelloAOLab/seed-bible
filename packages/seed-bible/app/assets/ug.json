@@ -156,5 +156,13 @@
   "addToNew": "يېڭىغا قوشۇش",
   "itemsAddedToPlaylistSuccessfully": "تۈرلەر تىزىملىككە مۇۋاپىق قوشۇلدى.",
   "translationSwitchOption": "{{translationName}} تەرجىمىسىگە ئالماشتۇرامسىز؟",
-  "chooseAnother": "يەنە بىرنى تاللاڭ"
+  "chooseAnother": "يەنە بىرنى تاللاڭ",
+  "playlistHasBeenEnded": "قويىما تۈگىدى.",
+  "youAreAtTheBeginningOfThePlaylist": "سىز قويىمىنىڭ بېشىدا تۇرىسىز.",
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "سۈزۈش ئۈچۈن ئاز دېگەندە ئىككى ئىزاھات كېرەك.",
+  "thisWillLoseYourRecording": "ئۈنگىڭىز يوقىلىدۇ.",
+  "switchWillLoseYourRecording": "ئالماشتۇرسىڭىز ئۈنگىڭىز يوقىلىدۇ.",
+  "cannotSwitchWhileRecording": "ئۈنگە ئالغاندا ئالماشتۇرغىلى بولمايدۇ.",
+  "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich": "بۇ قوشۇمچىغا سانلىق مەلۇمات قوشۇپسىز. يوقىلىدۇ. ئالماشتۇرۇش ئۈچۈن يەنە بېسىڭ.",
+  "addToTheCurrentQueue": "نۆۋەتكە قوشۇش"
 }
