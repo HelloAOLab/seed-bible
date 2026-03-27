@@ -1,12 +1,22 @@
 import { computed, effect, signal, type Signal } from "@preact/signals";
-import type { PackageRecord } from "typings/AuxLibraryDefinitions";
-import { url, z } from "zod";
 
 export interface ExtensionMeta {
+  /**
+   * The identifier of this extension, which should be unique across all extensions.
+   */
+  id: string;
+
+  /**
+   * The titles of this extension in different languages. The "en" key is required and serves as the default title if a specific language is not available.
+   */
   titles: {
     en: string;
     [lang: string]: string;
   };
+
+  /**
+   * The descriptions of this extension in different languages. The "en" key is required and serves as the default description if a specific language is not available.
+   */
   descriptions: {
     en: string;
     [lang: string]: string;
@@ -14,15 +24,35 @@ export interface ExtensionMeta {
 }
 
 export interface UploadedExtension {
-  name: string;
+  /**
+   * The name of the record that this extension is stored in.
+   */
   recordName: string;
+
+  /**
+   * The address of the uploaded extension package.
+   */
   address: string;
+
+  /**
+   * The metadata for this extension.
+   */
   meta: ExtensionMeta;
 }
 
 export interface ExtensionSet {
-  recordName: string;
+  /**
+   * The ID of this extension set.
+   */
   id: string;
+  /**
+   * The name of the record that this extension set is stored in.
+   */
+  recordName: string;
+
+  /**
+   * The extensions included in this set.
+   */
   extensions: UploadedExtension[];
 }
 
@@ -34,29 +64,29 @@ export function createExtensionManager() {
   );
 
   const loadExtensionFromPackage = async (
-    name: string,
+    id: string,
     recordName: string,
     address: string
   ) => {
     try {
       const result = await os.installPackage(recordName, address);
       if (result.success) {
-        shout("onExtensionInstall", name);
-        console.log(`Successfully installed extension: ${name}`);
+        shout("onExtensionInstalled", id);
+        console.log(`Successfully installed extension: ${id}`);
         return true;
       } else {
-        console.error(`Failed to install extension ${name}:`, result);
+        console.error(`Failed to install extension ${id}:`, result);
         return false;
       }
     } catch (err) {
-      console.error("Failed to install extension:", name, err);
+      console.error("Failed to install extension:", id, err);
       return false;
     }
   };
 
   const loadExtension = async (uploaded: UploadedExtension) =>
     await loadExtensionFromPackage(
-      uploaded.name,
+      uploaded.meta.id,
       uploaded.recordName,
       uploaded.address
     );
@@ -68,6 +98,7 @@ export function createExtensionManager() {
     console.log(
       `Finished loading extension set '${set.id}'. Successfully loaded ${successCount} out of ${set.extensions.length} extensions.`
     );
+    shout("onExtensionSetLoaded", set.id);
   };
 
   const loadDefaultExtensions = async () => {

@@ -65,6 +65,7 @@ export function generateExtension(
     );
   }
   const extensionData: ExtensionMeta = {
+    id: pckgName,
     titles: {
       en: pckgName,
     },
@@ -315,6 +316,7 @@ function getRecordName(key: string) {
 }
 
 const ExtensionMetaSchema = z.looseObject({
+  id: z.string(),
   titles: z
     .object({
       en: z.string(),
@@ -329,11 +331,11 @@ const ExtensionMetaSchema = z.looseObject({
 
 /**
  * Uploads the given extension to the records server.
- * @param name The name of the extension to upload.
+ * @param directoryName The name of the extension to upload.
  * @param options The options for uploading the extension.
  */
 export async function upload(
-  name: string,
+  directoryName: string,
   options: { sessionKey?: string; recordKey?: string; saveMeta?: boolean }
 ): Promise<UploadedExtension> {
   if (!options.sessionKey) {
@@ -341,7 +343,7 @@ export async function upload(
       "You must specify a session key using the --session-key option."
     );
   }
-  const packagePath = path.resolve("packages", name);
+  const packagePath = path.resolve("packages", directoryName);
   const packageExtensionPath = path.resolve(packagePath, "extension.json");
   if (!existsSync(packageExtensionPath)) {
     throw new Error(
@@ -355,13 +357,14 @@ export async function upload(
   if (!parseResult.success) {
     console.error(
       "Invalid extension.json for package:",
-      name,
+      directoryName,
       z.treeifyError(parseResult.error)
     );
-    throw new Error("Invalid extension.json for package: " + name);
+    throw new Error("Invalid extension.json for package: " + directoryName);
   }
 
-  const filePath = path.resolve("dist", `${name}.aux`);
+  const extensionId = parseResult.data.id;
+  const filePath = path.resolve("dist", `${extensionId}.aux`);
 
   console.log("Packaging:", packagePath);
   execSync(`casualos pack-aux --overwrite "${packagePath}" "${filePath}"`, {
@@ -379,16 +382,17 @@ export async function upload(
 
   const recordKey = options.recordKey ?? uploadRecordName;
   const recordName = getRecordName(recordKey);
-  const address = options.saveMeta ? name : `${name}-${Date.now()}`;
+  const address = options.saveMeta
+    ? extensionId
+    : `${extensionId}-${Date.now()}`;
 
   execSync(
-    `casualos ${programOptions.join(" ")} upload-package --record "${recordKey}" --address "${address}" --key "minor" --file "${filePath}" --markers "publicRead:extension" --description "Extension ${name}"`
+    `casualos ${programOptions.join(" ")} upload-package --record "${recordKey}" --address "${address}" --key "minor" --file "${filePath}" --markers "publicRead:extension" --description "Extension ${extensionId}"`
   );
 
   return {
     recordName,
     address,
-    name,
     meta: parseResult.data,
   };
 }
@@ -433,7 +437,7 @@ export async function uploadAll(options: {
   const result: any = await client.recordData(
     {
       recordKey: options.recordKey ?? uploadRecordName,
-      address: `set-${Date.now()}`,
+      address: set.id,
       data: set,
       markers: ["publicRead:extensionSet"],
     },
