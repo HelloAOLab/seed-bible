@@ -75,6 +75,7 @@
   --sb-verse-toolbar-box-shadow: 0 26px 10px #0000001a;
   --sb-verse-toolbar-z-index: 100;
   --sb-verse-toolbar-min-height: 50px;
+  --sb-verse-toolbar-background: #fff;
 
   --sb-reader-toolbar-mobile-layout-height: 70px;
   --sb-reader-toolbar-mobile-layout-padding: 10px 14px;
@@ -799,6 +800,7 @@ button {
   position: fixed;
   transform: translate(-50%, -100%);
   display: flex;
+  background: var(--sb-verse-toolbar-background);
   gap: var(--sb-verse-toolbar-gap);
   padding: var(--sb-verse-toolbar-padding);
   border-radius: var(--sb-verse-toolbar-border-radius);

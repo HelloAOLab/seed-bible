@@ -7,7 +7,6 @@
     "test": "jest",
     "test:watch": "jest --watchAll",
     "dev": "tsx script/dev.ts",
-    "dev-refresh": "tsx script/dev-refresh.ts",
     "package": "tsx script/package.ts",
     "extension": "tsx script/extension.ts",
     "package:seed-bible": "casualos pack-aux --overwrite ./packages/seed-bible ./dist/seed-bible.aux",

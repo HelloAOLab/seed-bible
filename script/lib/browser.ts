@@ -322,6 +322,7 @@ export async function loadInst(
 
 export const DEFAULT_EXTENSIONS = [
   "seed-bible",
+  "seed-bible-refresh-example-extension",
   // "BookSelector",
   // "Object Pooler",
   // "GeoImporter",
@@ -337,12 +338,7 @@ export const DEFAULT_EXTENSIONS = [
   // "Tabernacle",
 ];
 
-export const DEFAULT_REFRESH_EXTENSIONS = [
-  "seed-bible-refresh",
-  "seed-bible-refresh-example-extension",
-];
-
-export async function loadSeedBibleRefresh(
+export async function loadSeedBible(
   page: Page,
   extraExtensions: string[] = [],
   inst: string = uuid(),
@@ -354,10 +350,7 @@ export async function loadSeedBibleRefresh(
 
   console.log("Uploading Seed Bible Refresh...");
 
-  const allPackages = new Set([
-    ...DEFAULT_REFRESH_EXTENSIONS,
-    ...extraExtensions,
-  ]);
+  const allPackages = new Set([...DEFAULT_EXTENSIONS, ...extraExtensions]);
   // const installedPackages = [...allPackages].filter(
   //   (p) => p !== "seed-bible-refresh"
   // );
@@ -381,48 +374,6 @@ export async function loadSeedBibleRefresh(
   //       setTagMask(packager, 'installedPackages', ${JSON.stringify(installedPackages)}, 'shared');
   //   `
   // );
-
-  console.log("Loaded!");
-
-  shout(page, "onInstJoined", null, { inst });
-
-  return inst;
-}
-
-export async function loadSeedBible(
-  page: Page,
-  extraExtensions: string[] = [],
-  inst: string = uuid(),
-  collaborative: boolean = false,
-  query: Record<string, string> = {}
-) {
-  await initPage(page);
-  await loadInst(page, inst, collaborative, query);
-
-  console.log("Uploading Seed Bible...");
-
-  const allPackages = new Set([...DEFAULT_EXTENSIONS, ...extraExtensions]);
-  const installedPackages = [...allPackages].filter((p) => p !== "seed-bible");
-
-  for (const pkg of allPackages) {
-    await addAux(page, await readPackage(pkg));
-  }
-  for (const pkg of installedPackages) {
-    await registerPackage(page, pkg);
-  }
-
-  const lastPackage = installedPackages[installedPackages.length - 1];
-  if (lastPackage) {
-    await waitForPackage(page, lastPackage);
-  }
-
-  await execScript(
-    page,
-    `
-        const packager = getBot('system', 'app.packager');
-        setTagMask(packager, 'installedPackages', ${JSON.stringify(installedPackages)}, 'shared');
-    `
-  );
 
   console.log("Loaded!");
 

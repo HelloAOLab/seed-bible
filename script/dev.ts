@@ -12,10 +12,10 @@ import {
   getPrimarySim,
   execScript,
   getPackageData,
-  loadSeedBible,
   DEFAULT_EXTENSIONS,
   loadAoBot,
   initPage,
+  loadSeedBible,
 } from "./lib/browser.js";
 import { rmdir, writeFile } from "node:fs/promises";
 import path from "node:path";
