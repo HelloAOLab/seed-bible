@@ -13,7 +13,7 @@ const config = {
       "<rootDir>/lib/vendor.ts",
     ...pathsToModuleNameMapper(compilerOptions.paths, { prefix: "<rootDir>/" }),
   },
-  testPathIgnorePatterns: ["/node_modules/", "/test/e2e/"],
+  testPathIgnorePatterns: ["/node_modules/", "/obsolete/"],
   testTimeout: 60000,
 };
 
