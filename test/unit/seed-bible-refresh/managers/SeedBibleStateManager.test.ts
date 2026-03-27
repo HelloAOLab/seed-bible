@@ -359,4 +359,88 @@ describe("createSeedBibleState", () => {
       expect(mockSaveReadingHistory).toHaveBeenLastCalledWith("genesis", 2);
     });
   });
+
+  describe("posthog user_chapter_read", () => {
+    let mockPosthogCapture: jest.Mock;
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      mockPosthogCapture = jest.fn();
+      (globalThis as any).posthog = { capture: mockPosthogCapture };
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+      delete (globalThis as any).posthog;
+    });
+
+    function setSelectedTabChapter(
+      state: ReturnType<typeof createSeedBibleState>,
+      bookId: string,
+      chapterNumber: number,
+      translationId = "test-translation"
+    ) {
+      const tab =
+        state.tabs.tabs.value.find(
+          (t) => t.id === state.tabs.selectedTabId.value
+        ) ?? null;
+      expect(tab).not.toBeNull();
+      tab!.readingState.chapterData.value = {
+        translation: { id: translationId, name: "Test Translation" },
+        book: { id: bookId, name: "Test Book", abbreviation: bookId },
+        chapter: {
+          number: chapterNumber,
+          id: `${bookId}-${chapterNumber}`,
+          reference: `${bookId} ${chapterNumber}`,
+        },
+        verses: [],
+        notes: [],
+      } as any;
+    }
+
+    it("does nothing if posthog isn't available", () => {
+      delete (globalThis as any).posthog;
+      const state = createSeedBibleState();
+      setSelectedTabChapter(state, "genesis", 1);
+
+      jest.advanceTimersByTime(30_000);
+
+      expect(mockPosthogCapture).not.toHaveBeenCalled();
+    });
+
+    it("calls capture() after 30 seconds with translationId, bookId, and chapter as a string", () => {
+      const state = createSeedBibleState();
+      setSelectedTabChapter(state, "genesis", 1, "esv");
+
+      jest.advanceTimersByTime(29_999);
+      expect(mockPosthogCapture).not.toHaveBeenCalled();
+
+      jest.advanceTimersByTime(1);
+      expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
+      expect(mockPosthogCapture).toHaveBeenCalledWith("user_chapter_read", {
+        translationId: "esv",
+        bookId: "genesis",
+        chapter: "1",
+      });
+    });
+
+    it("restarts the timer when the chapter changes", () => {
+      const state = createSeedBibleState();
+      setSelectedTabChapter(state, "genesis", 1, "esv");
+
+      jest.advanceTimersByTime(20_000);
+      setSelectedTabChapter(state, "genesis", 2, "esv");
+
+      jest.advanceTimersByTime(29_999);
+      expect(mockPosthogCapture).not.toHaveBeenCalled();
+
+      jest.advanceTimersByTime(1);
+      expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
+      expect(mockPosthogCapture).toHaveBeenCalledWith("user_chapter_read", {
+        translationId: "esv",
+        bookId: "genesis",
+        chapter: "2",
+      });
+    });
+  });
 });
