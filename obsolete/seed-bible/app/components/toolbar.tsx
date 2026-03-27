@@ -272,7 +272,12 @@ export function Toolbar() {
                 className="mobile-btn-content"
               >
                 <TabsIcon color="var(--text1)" />
-                <span className="mobile-btn-label">Tabs</span>
+                <span
+                  className="mobile-btn-label"
+                  style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}
+                >
+                  Tabs
+                </span>
               </div>
             </button>
 
@@ -361,7 +366,7 @@ export function Toolbar() {
                     ) : (
                       <MoreIcon color="var(--text1)" />
                     )}
-                    <span className="mobile-btn-label">
+                    <span className="mobile-btn-label" style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}>
                       {activeMoreApp ? "Close" : "More"}
                     </span>
                   </div>
@@ -397,7 +402,12 @@ export function Toolbar() {
                         {presetToolBarIcon}
                       </span>
                     )}
-                    <span className="mobile-btn-label">
+                    <span
+                      className="mobile-btn-label"
+                      style={{
+                        zoom: (globalThis as any).changes?.uiTextSize || 1,
+                      }}
+                    >
                       {activeMoreApp ? "close" : presetToolBarTitle}
                     </span>
                   </div>
@@ -513,7 +523,14 @@ export function Toolbar() {
                         </span>
                       )}
                       {tool.label && (
-                        <span className="toolbar-btn-label">{tool.label}</span>
+                        <span
+                          className="toolbar-btn-label"
+                          style={{
+                            zoom: (globalThis as any).changes?.uiTextSize || 1,
+                          }}
+                        >
+                          {tool.label}
+                        </span>
                       )}
                     </button>
                   )}
