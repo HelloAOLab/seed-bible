@@ -26,12 +26,13 @@ export interface ExtensionSet {
   extensions: UploadedExtension[];
 }
 
-const availableExtensions: ExtensionSet | null =
-  thisBot.tags.availableExtensions ?? null;
-
 export type ExtensionManager = ReturnType<typeof createExtensionManager>;
 
 export function createExtensionManager() {
+  const defaultExtensions = computed<ExtensionSet | null>(
+    () => thisBot.tags.availableExtensions ?? null
+  );
+
   const loadExtensionFromPackage = async (
     name: string,
     recordName: string,
@@ -70,12 +71,12 @@ export function createExtensionManager() {
   };
 
   const loadDefaultExtensions = async () => {
-    if (!availableExtensions) {
+    if (!defaultExtensions.value) {
       console.warn("No available extensions found in bot tags.");
       return;
     }
-    console.log("Loading default extension set:", availableExtensions);
-    await loadExtensionSet(availableExtensions);
+    console.log("Loading default extension set:", defaultExtensions.value);
+    await loadExtensionSet(defaultExtensions.value);
   };
 
   return {
