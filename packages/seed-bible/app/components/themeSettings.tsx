@@ -6530,7 +6530,7 @@ const SettingsUI = () => {
             alignItems: "center",
             border: "1px solid #E1E3EA",
             borderRadius: "8px",
-            padding: "10px 14px",
+            padding: "6px 10px",
             marginBottom: "24px",
             gap: "10px",
           }}
@@ -6539,28 +6539,101 @@ const SettingsUI = () => {
           <div
             style={{ width: "1px", height: "20px", background: "#E1E3EA" }}
           ></div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
-            <input
-              type="number"
-              value={scriptureMargin}
-              onChange={(e: any) => {
-                setScriptureMargin(e.target.value);
-                applyScriptureMargin(e.target.value);
+          <div style={{ display: "flex", alignItems: "center", gap: "0px" }}>
+            <button
+              onClick={() => {
+                const next = String(Math.max(0, Number(scriptureMargin) - 1));
+                setScriptureMargin(next);
+                applyScriptureMargin(next);
               }}
               style={{
                 border: "none",
-                outline: "none",
-                fontSize: "14px",
-                width: `33px`,
                 background: "transparent",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "28px",
+                height: "28px",
+                borderRadius: "6px",
                 color: "var(--heading1Color)",
-                fontFamily: "inherit",
-                padding: 0,
+                fontSize: "18px",
+                fontWeight: "600",
+                lineHeight: 1,
               }}
-            />
-            <span style={{ fontSize: "13px", color: "var(--text2, #888)" }}>
-              px
-            </span>
+              onMouseEnter={(e: any) =>
+                (e.currentTarget.style.background = "var(--bg2, #f0f0f0)")
+              }
+              onMouseLeave={(e: any) =>
+                (e.currentTarget.style.background = "transparent")
+              }
+            >
+              −
+            </button>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                justifyContent: "center",
+                minWidth: "42px",
+                gap: "2px",
+              }}
+            >
+              <input
+                type="number"
+                value={scriptureMargin}
+                onChange={(e: any) => {
+                  const val = e.target.value;
+                  setScriptureMargin(val);
+                  applyScriptureMargin(val);
+                }}
+                style={{
+                  border: "none",
+                  outline: "none",
+                  fontSize: "14px",
+                  width: "33px",
+                  background: "transparent",
+                  color: "var(--heading1Color)",
+                  fontFamily: "inherit",
+                  padding: 0,
+                  textAlign: "center",
+                  MozAppearance: "textfield",
+                }}
+              />
+              <span style={{ fontSize: "13px", color: "var(--text2, #888)" }}>
+                px
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                const next = String(Math.min(200, Number(scriptureMargin) + 1));
+                setScriptureMargin(next);
+                applyScriptureMargin(next);
+              }}
+              style={{
+                border: "none",
+                background: "transparent",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "28px",
+                height: "28px",
+                borderRadius: "6px",
+                color: "var(--heading1Color)",
+                fontSize: "18px",
+                fontWeight: "600",
+                lineHeight: 1,
+              }}
+              onMouseEnter={(e: any) =>
+                (e.currentTarget.style.background = "var(--bg2, #f0f0f0)")
+              }
+              onMouseLeave={(e: any) =>
+                (e.currentTarget.style.background = "transparent")
+              }
+            >
+              +
+            </button>
           </div>
         </div>
 

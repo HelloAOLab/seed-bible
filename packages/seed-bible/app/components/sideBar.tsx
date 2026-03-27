@@ -1622,7 +1622,10 @@ function SideBar({ panelsNumber }) {
     return (
       <>
         <div className="mobile-sidebar-overlay">
-          <div className="mobile-sidebar-header">
+          <div
+            className="mobile-sidebar-header"
+            style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}
+          >
             <h2>Tabs</h2>
             <div className="mobile-header-actions">
               {/* <span
@@ -1730,7 +1733,14 @@ function SideBar({ panelsNumber }) {
                                 onClick={() => handleMobileTabClick(tab)}
                               >
                                 <div className="mobile-tab-left">
-                                  <div className="mobile-tab-title">
+                                  <div
+                                    className="mobile-tab-title"
+                                    style={{
+                                      zoom:
+                                        (globalThis as any).changes
+                                          ?.uiTextSize || 1,
+                                    }}
+                                  >
                                     {`${tab.data?.book || tab.data?.title || ""} – ${tab.data?.chapter || ""}`}{" "}
                                     <div className="mobile-tab-sub">
                                       • {tab.data?.shortName || ""}
@@ -1798,7 +1808,12 @@ function SideBar({ panelsNumber }) {
                 onClick={() => handleMobileTabClick(el)}
               >
                 <div className="mobile-tab-left">
-                  <div className="mobile-tab-title">
+                  <div
+                    className="mobile-tab-title"
+                    style={{
+                      zoom: (globalThis as any).changes?.uiTextSize || 1,
+                    }}
+                  >
                     {`${el.data?.book || el.data?.title || ""} – ${el.data?.chapter || ""}`}{" "}
                     <div className="mobile-tab-sub">
                       • {el.data?.shortName || ""}
@@ -1854,7 +1869,12 @@ function SideBar({ panelsNumber }) {
                 }}
               >
                 <MenuIcon name={"person_add"} />
-                <div className="mobile-nav-label">Sessions</div>
+                <div
+                  className="mobile-nav-label"
+                  style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}
+                >
+                  Sessions
+                </div>
               </button>
             )}
 
@@ -1880,7 +1900,12 @@ function SideBar({ panelsNumber }) {
                     fill={showBookmarks ? "var(--selectedSpaceColor)" : "none"}
                   />
                 </span>
-                <div className="mobile-nav-label">Bookmarks</div>
+                <div
+                  className="mobile-nav-label"
+                  style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}
+                >
+                  Bookmarks
+                </div>
               </button>
             )}
           </div>
