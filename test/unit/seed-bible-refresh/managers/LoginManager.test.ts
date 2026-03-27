@@ -140,4 +140,24 @@ describe("createLoginManager", () => {
       "Cannot update profile: no authenticated user"
     );
   });
+
+  it("calls posthog.identify() with the user ID when the user logs in", async () => {
+    const mockIdentify = jest.fn();
+    (globalThis as any).posthog = { identify: mockIdentify };
+
+    try {
+      const bot = createBot("user-posthog");
+      requestAuthBotMock.mockResolvedValue(bot);
+
+      const manager = createLoginManager();
+      await manager.login();
+
+      await waitFor(() => manager.userId.value === "user-posthog");
+
+      expect(mockIdentify).toHaveBeenCalledTimes(1);
+      expect(mockIdentify).toHaveBeenCalledWith("user-posthog");
+    } finally {
+      delete (globalThis as any).posthog;
+    }
+  });
 });
