@@ -1,7 +1,12 @@
 const { useEffect, useState, useRef } = os.appHooks;
 import { getStyleOf } from "app.styles.styler";
 import { getSettingsPreset } from "app.components.types";
-import { MenuIcon, ThemeIcon, MarginIcon } from "app.components.icons";
+import {
+  MenuIcon,
+  ThemeIcon,
+  MarginIcon,
+  MobileSettingsIcon,
+} from "app.components.icons";
 import { useTabsContext } from "app.hooks.tabs";
 import { useSideBarContext } from "app.hooks.sideBar";
 import { useBibleContext } from "app.hooks.bibleVariables";
@@ -5964,7 +5969,9 @@ const SettingsUI = () => {
   const [selectedHeadingFont, setSelectedHeadingFont] = useState(0);
   const [scriptureMargin, setScriptureMargin] = useState(() => {
     const saved = currentSpace?.settings?.text?.data?.verse?.marginHorizontal;
-    return saved ? String(saved) : "27";
+    if (saved) return String(saved);
+    const isMobile = window.innerWidth <= 768;
+    return isMobile ? "5" : "27";
   });
 
   const [textConfig, setTextConfig] = useState(() => {
@@ -6080,6 +6087,18 @@ const SettingsUI = () => {
       settings: { text: { root: cssVars, data: updatedConfig } },
     });
   };
+
+  // Apply initial margin based on screen size if no saved value exists
+  useEffect(() => {
+    const saved = currentSpace?.settings?.text?.data?.verse?.marginHorizontal;
+    if (!saved) {
+      const isMobile = window.innerWidth <= 768;
+      const defaultMargin = isMobile ? "5" : "27";
+      setScriptureMargin(defaultMargin);
+      applyScriptureMargin(defaultMargin);
+    }
+  }, []);
+
   const applyVerseFontSize = (fontSize) => {
     const updateObj = buildTextConfigUpdate(
       "verse",
@@ -7062,4 +7081,463 @@ const SettingsUI = () => {
     </div>
   );
 };
-export { ThemeSettings, SettingsUI };
+const MobileSettingsCard = () => {
+  const { updateSpace, activeSpace, currentSpace } = useTabsContext();
+  const { t, setSideBarMode, setOpenOnMobile, setSidebarWidth, setCollapsed } =
+    useSideBarContext();
+
+  const [uiSizeIndex, setUiSizeIndex] = useState(() => {
+    const saved = globalThis.changes?.uiTextSize || 1;
+    return Math.max(
+      UI_TEXT_SIZES.findIndex((s) => s.value === saved),
+      0
+    );
+  });
+
+  const [selectedFontSize, setSelectedFontSize] = useState(() => {
+    const savedConfig = currentSpace?.settings?.text?.data;
+    const savedFontSize =
+      savedConfig?.verse?.fontSize || savedConfig?.verse?.size;
+    if (savedFontSize) {
+      const idx = FONT_SIZES.findIndex((s) => s.value === savedFontSize);
+      if (idx !== -1) return idx;
+    }
+    return 3;
+  });
+
+  const [selectedFont] = useState(() => {
+    const savedConfig = currentSpace?.settings?.text?.data;
+    const savedFont = savedConfig?.verse?.font;
+    if (savedFont) {
+      const idx = FONT_OPTIONS.findIndex((f) => f.value === savedFont);
+      if (idx !== -1) return idx;
+    }
+    return 0;
+  });
+
+  const [textConfig, setTextConfig] = useState(() => {
+    const savedConfig = currentSpace?.settings?.text?.data;
+    return (
+      savedConfig || {
+        heading: { ...defaultTextConfig.heading },
+        chapter: { ...defaultTextConfig.chapter },
+        verse: { ...defaultTextConfig.verse },
+        bookchapter: { ...defaultTextConfig.bookchapter },
+      }
+    );
+  });
+
+  const [scriptureMargin, setScriptureMargin] = useState(() => {
+    const saved = currentSpace?.settings?.text?.data?.verse?.marginHorizontal;
+    if (saved) return String(saved);
+    const isMobile = window.innerWidth <= 768;
+    return isMobile ? "5" : "27";
+  });
+
+  const [lineHeightIndex, setLineHeightIndex] = useState(() => {
+    const savedLineHeight =
+      currentSpace?.settings?.text?.data?.verse?.lineHeight;
+    if (savedLineHeight !== undefined) {
+      const idx = LINE_HEIGHTS.indexOf(savedLineHeight);
+      return idx !== -1 ? idx : 1;
+    }
+    return 1;
+  });
+
+  const handleUiTextSize = (index) => {
+    setUiSizeIndex(index);
+    const zoom = UI_TEXT_SIZES[index].value;
+    if (!globalThis.changes) globalThis.changes = {};
+    globalThis.changes.uiTextSize = zoom;
+    document
+      .querySelectorAll(
+        ".settings-content, .themeSettings-container, .profileSection"
+      )
+      .forEach((el) => {
+        (el as HTMLElement).style.zoom = String(zoom);
+      });
+    document.querySelectorAll(".settings-sidebar").forEach((el) => {
+      (el as HTMLElement).style.width = `${Math.round(280 * zoom)}px`;
+    });
+  };
+
+  const applyVerseFontSize = (fontSize) => {
+    const updateObj = buildTextConfigUpdate(
+      "verse",
+      FONT_OPTIONS[selectedFont].value,
+      fontSize,
+      textConfig
+    );
+    updateSpace(activeSpace, updateObj);
+  };
+
+  const handleDecreaseFontSize = () => {
+    if (selectedFontSize > 0) {
+      const newIndex = selectedFontSize - 1;
+      setSelectedFontSize(newIndex);
+      applyVerseFontSize(FONT_SIZES[newIndex].value);
+    }
+  };
+
+  const handleIncreaseFontSize = () => {
+    if (selectedFontSize < FONT_SIZES.length - 1) {
+      const newIndex = selectedFontSize + 1;
+      setSelectedFontSize(newIndex);
+      applyVerseFontSize(FONT_SIZES[newIndex].value);
+    }
+  };
+
+  const applyVerseLineHeight = (lineHeight) => {
+    const updateObj = buildTextConfigUpdate(
+      "verse",
+      FONT_OPTIONS[selectedFont].value,
+      FONT_SIZES[selectedFontSize].value,
+      {
+        ...textConfig,
+        verse: { ...textConfig.verse, lineHeight },
+      }
+    );
+    updateSpace(activeSpace, updateObj);
+  };
+
+  const handleCycleLineHeight = () => {
+    const nextIndex = (lineHeightIndex + 1) % LINE_HEIGHTS.length;
+    setLineHeightIndex(nextIndex);
+    applyVerseLineHeight(LINE_HEIGHTS[nextIndex]);
+  };
+
+  const applyScriptureMargin = (value: string) => {
+    const updatedConfig = JSON.parse(JSON.stringify(textConfig));
+    updatedConfig.verse.marginHorizontal = value;
+    updatedConfig.heading.marginHorizontal = value;
+    updatedConfig.bookchapter.marginHorizontal = value;
+    updatedConfig.chapter.marginHorizontal = value;
+    const cssVars = exportTextConfigToCSS(updatedConfig);
+    setTextConfig(updatedConfig);
+    updateSpace(activeSpace, {
+      settings: { text: { root: cssVars, data: updatedConfig } },
+    });
+  };
+
+  // Apply initial margin based on screen size if no saved value exists
+  useEffect(() => {
+    const saved = currentSpace?.settings?.text?.data?.verse?.marginHorizontal;
+    if (!saved) {
+      const isMobile = window.innerWidth <= 768;
+      const defaultMargin = isMobile ? "5" : "27";
+      setScriptureMargin(defaultMargin);
+      applyScriptureMargin(defaultMargin);
+    }
+  }, []);
+
+  const sectionTitleStyle = {
+    fontSize: "16px",
+    color: "var(--text2)",
+    fontWeight: "500",
+    marginBottom: "12px",
+  };
+
+  return (
+    <div
+      style={{
+        backgroundColor: "var(--panelBackground, #F7F7F8)",
+        borderRadius: "12px",
+        padding: "16px",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+        border: "1px solid #E1E3EA",
+        fontFamily: "Newsreader, system-ui, -apple-system, sans-serif",
+      }}
+    >
+      {/* UI text size */}
+      <div
+        style={{
+          marginBottom: "8px",
+          fontSize: "14px",
+          fontWeight: "500",
+          color: "var(--heading1Color)",
+        }}
+      >
+        {t("uiTextSize")}
+      </div>
+      <div style={{ display: "flex", gap: "6px", marginBottom: "20px" }}>
+        {UI_TEXT_SIZES.map((size, i) => (
+          <button
+            key={i}
+            onClick={() => handleUiTextSize(i)}
+            style={{
+              width: "42px",
+              height: "42px",
+              borderRadius: "8px",
+              border:
+                uiSizeIndex === i
+                  ? "2px solid var(--addButtonIcon)"
+                  : "1px solid #E1E3EA",
+              backgroundColor:
+                uiSizeIndex === i
+                  ? "var(--addButtonIcon)"
+                  : "var(--pageBackground, #fff)",
+              color: uiSizeIndex === i ? "#fff" : "var(--pageTextColor)",
+              cursor: "pointer",
+              fontSize: `${12 + i * 2}px`,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 0,
+              fontFamily: "inherit",
+            }}
+          >
+            {size.label}
+          </button>
+        ))}
+      </div>
+
+      <div
+        style={{
+          height: "1px",
+          background: "#E1E3EA",
+          margin: "0 0 20px 0",
+        }}
+      />
+
+      {/* Scripture settings */}
+      <div style={{ ...sectionTitleStyle, marginTop: "0px" }}>
+        Scripture settings
+      </div>
+      <div style={{ display: "flex", gap: "10px", marginBottom: "24px" }}>
+        <div
+          style={{
+            flex: 1,
+            height: "48px",
+            backgroundColor: "var(--pageBackground, #fff)",
+            border: "1px solid #E1E3EA",
+            borderRadius: "8px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            cursor: "pointer",
+            fontSize: "14px",
+            color: "var(--heading1Color)",
+          }}
+          onClick={handleDecreaseFontSize}
+        >
+          A
+        </div>
+        <div
+          style={{
+            flex: 1,
+            height: "48px",
+            backgroundColor: "var(--pageBackground, #fff)",
+            border: "1px solid #E1E3EA",
+            borderRadius: "8px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            cursor: "pointer",
+            fontSize: "20px",
+            fontWeight: 500,
+            color: "var(--heading1Color)",
+          }}
+          onClick={handleIncreaseFontSize}
+        >
+          A
+        </div>
+        <div
+          style={{
+            flex: 1,
+            height: "48px",
+            backgroundColor: "var(--pageBackground, #fff)",
+            border: "1px solid #E1E3EA",
+            borderRadius: "8px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            cursor: "pointer",
+          }}
+          onClick={handleCycleLineHeight}
+        >
+          <svg width="20" height="14" viewBox="0 0 20 14" fill="none">
+            {(() => {
+              const gap = 3.5 + lineHeightIndex * 1.5;
+              const startY = 1;
+              return (
+                <>
+                  <rect
+                    x="0"
+                    y={startY}
+                    width="20"
+                    height="2"
+                    rx="1"
+                    fill="var(--heading1Color, #333)"
+                  />
+                  <rect
+                    x="0"
+                    y={startY + gap}
+                    width="20"
+                    height="2"
+                    rx="1"
+                    fill="var(--heading1Color, #333)"
+                  />
+                  <rect
+                    x="0"
+                    y={startY + 2 * gap}
+                    width="20"
+                    height="2"
+                    rx="1"
+                    fill="var(--heading1Color, #333)"
+                  />
+                </>
+              );
+            })()}
+          </svg>
+        </div>
+      </div>
+
+      {/* Scripture Margins */}
+      <div
+        style={{
+          fontSize: "14px",
+          fontWeight: "500",
+          color: "var(--heading1Color)",
+          marginBottom: "8px",
+        }}
+      >
+        Scripture Margins
+      </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          border: "1px solid #E1E3EA",
+          borderRadius: "8px",
+          padding: "6px 10px",
+          gap: "10px",
+        }}
+      >
+        <MarginIcon />
+        <div style={{ width: "1px", height: "20px", background: "#E1E3EA" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: "0px" }}>
+          <button
+            onClick={() => {
+              const next = String(Math.max(0, Number(scriptureMargin) - 1));
+              setScriptureMargin(next);
+              applyScriptureMargin(next);
+            }}
+            style={{
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "28px",
+              height: "28px",
+              borderRadius: "6px",
+              color: "var(--heading1Color)",
+              fontSize: "18px",
+              fontWeight: "600",
+              lineHeight: 1,
+            }}
+          >
+            −
+          </button>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "center",
+              minWidth: "42px",
+              gap: "2px",
+            }}
+          >
+            <input
+              type="number"
+              value={scriptureMargin}
+              onChange={(e: any) => {
+                const val = e.target.value;
+                setScriptureMargin(val);
+                applyScriptureMargin(val);
+              }}
+              style={{
+                border: "none",
+                outline: "none",
+                fontSize: "14px",
+                width: "33px",
+                background: "transparent",
+                color: "var(--heading1Color)",
+                fontFamily: "inherit",
+                padding: 0,
+                textAlign: "center",
+                MozAppearance: "textfield",
+              }}
+            />
+            <span style={{ fontSize: "13px", color: "var(--text2, #888)" }}>
+              px
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              const next = String(Math.min(200, Number(scriptureMargin) + 1));
+              setScriptureMargin(next);
+              applyScriptureMargin(next);
+            }}
+            style={{
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "28px",
+              height: "28px",
+              borderRadius: "6px",
+              color: "var(--heading1Color)",
+              fontSize: "18px",
+              fontWeight: "600",
+              lineHeight: 1,
+            }}
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      {/* Open full settings */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          marginTop: "16px",
+        }}
+      >
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpenOnMobile(true);
+            setSidebarWidth(280);
+            setCollapsed(false);
+            setSideBarMode("settings");
+          }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            color: "var(--heading1Color)",
+            fontSize: "14px",
+            fontWeight: 500,
+            fontFamily: "inherit",
+            padding: "8px 12px",
+            borderRadius: "8px",
+          }}
+        >
+          <MobileSettingsIcon />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export { ThemeSettings, SettingsUI, MobileSettingsCard };

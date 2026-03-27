@@ -29,8 +29,10 @@ import {
   MobileSettingsIcon,
   MenuIcon,
   BookMarkIcon,
+  InfoSettingsIcon,
 } from "app.components.icons";
 
+import { MobileSettingsCard } from "app.components.themeSettings";
 import { useSideBarContext } from "app.hooks.sideBar";
 function getUserSessionInfo(userId) {
   try {
@@ -136,6 +138,7 @@ function ThePage({
   const [selectedText, setSelectedText] = useState("");
   const [showCommands, setShowCommands] = useState(false);
   const [lastSelectedVerse, setLastSelectedVerse] = useState(null);
+  const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [highlighted, setHighlighted] = useState({});
 
   // NEW: State for clicked verses
@@ -2071,7 +2074,6 @@ function ThePage({
           min-height: 40px;
           border-radius: 6px;
           transition: all 0.2s;
-          background: #F8FAFC;
           border-radius: 50%;
         }
 
@@ -2193,22 +2195,35 @@ function ThePage({
                         </div>
                       </div>
 
-                      {/* <div className="mobile-header-right">
+                      <div
+                        className="mobile-header-right"
+                        style={{ position: "relative" }}
+                      >
                         <button
                           className="mobile-icon-button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            os.log("Opening mobile settings", setOpenOnMobile);
-                            setOpenOnMobile(true);
-                            setSidebarWidth(280);
-                            setCollapsed(false);
-                            setSideBarMode("settings");
+                            setShowMobileSettings((prev) => !prev);
                           }}
                           title="Settings"
                         >
-                          <MobileSettingsIcon />
+                          <InfoSettingsIcon />
                         </button>
-                      </div> */}
+                        {showMobileSettings && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "100%",
+                              right: 0,
+                              marginTop: "8px",
+                              zIndex: 1000,
+                              width: "300px",
+                            }}
+                          >
+                            <MobileSettingsCard />
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {!removeBookMark &&
                       tab?.id &&
