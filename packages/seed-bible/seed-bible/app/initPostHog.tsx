@@ -28,6 +28,7 @@ console.log("[app] Initializing PostHog for error reporting...");
         // @ts-ignore
         (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(
           p,
+          // @ts-ignore
           r
         ));
       var u = e;
