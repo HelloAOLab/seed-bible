@@ -44,6 +44,7 @@ export interface BibleReadingState {
   selectedFootnote: ReadonlySignal<SelectedFootnote | null>;
   loading: Signal<boolean>;
   error: Signal<string | null>;
+  scrollPosition: Signal<number>;
   selectVerse: (
     verse: BibleSelectedVerse,
     selectionX: number,
@@ -137,6 +138,7 @@ export function createBibleReadingState(
   const selectedFootnoteId = signal<number | null>(null);
   const loading = signal<boolean>(true);
   const error = signal<string | null>(null);
+  const scrollPosition = signal<number>(0);
 
   const translation = computed(
     () => translationBooks.value?.translation ?? null
@@ -221,6 +223,12 @@ export function createBibleReadingState(
     const nextTranslationId = chapter.translation.id;
     const nextBookId = chapter.book.id;
     const nextChapterNumber = chapter.chapter.number;
+
+    const didChapterChange =
+      bookId.value !== nextBookId || chapterNumber.value !== nextChapterNumber;
+    if (didChapterChange) {
+      scrollPosition.value = 0;
+    }
 
     translationId.value = nextTranslationId;
     bookId.value = nextBookId;
@@ -483,6 +491,7 @@ export function createBibleReadingState(
     selectedFootnote,
     loading,
     error,
+    scrollPosition,
     selectVerse,
     selectFootnote,
     clearSelectedVerses,

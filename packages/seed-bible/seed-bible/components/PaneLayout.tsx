@@ -2,7 +2,7 @@ import { BibleReader } from "seed-bible.components.BibleReader";
 import { BelowReaderToolbar } from "seed-bible.components.BelowReaderToolbar";
 import { CasualOSApp } from "seed-bible.components.CasualOSApp";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
-import type { TabsManager } from "seed-bible.managers.TabsManager";
+import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import {
@@ -11,6 +11,8 @@ import {
   type ToolTitle,
 } from "seed-bible.managers.BibleToolsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
+import { effect } from "@preact/signals";
+import type { ComponentChildren } from "preact";
 
 const { useEffect, useRef, useState } = os.appHooks;
 
@@ -117,6 +119,61 @@ function generateGridPortalContainerCss(
       pointer-events: auto !important;
     }
   `;
+}
+
+interface PaneReaderScrollerProps {
+  tab: ReaderTab;
+  children: ComponentChildren;
+}
+
+function PaneReaderScroller({ tab, children }: PaneReaderScrollerProps) {
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const currentChapter = useRef(tab.readingState.chapterData.value);
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) {
+      return;
+    }
+
+    const cancel = effect(() => {
+      const el = scrollerRef.current;
+      if (!el) {
+        return;
+      }
+
+      if (tab.readingState.chapterData.value) {
+        el.scrollTop = tab.readingState.scrollPosition.peek();
+      }
+
+      currentChapter.current = tab.readingState.chapterData.value;
+    });
+
+    const handleScroll = () => {
+      if (
+        currentChapter.current?.translation.id !==
+          tab.readingState.translationId.value ||
+        currentChapter.current?.book.id !== tab.readingState.bookId.value ||
+        currentChapter.current?.chapter.number !==
+          tab.readingState.chapterNumber.value
+      ) {
+        return;
+      }
+      tab.readingState.scrollPosition.value = el.scrollTop;
+    };
+
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      cancel();
+      el.removeEventListener("scroll", handleScroll);
+    };
+  }, [tab.id]);
+
+  return (
+    <div className="sb-pane-reader" ref={scrollerRef}>
+      {children}
+    </div>
+  );
 }
 
 function EmptyPaneToolbar({
@@ -322,7 +379,7 @@ export function PaneLayout(props: PaneLayoutProps) {
           ) : pane.component !== null ? (
             <div className="sb-pane-component">{pane.component}</div>
           ) : pane.tab ? (
-            <div className="sb-pane-reader">
+            <PaneReaderScroller tab={pane.tab}>
               <BibleReader
                 currentPane={pane}
                 readingState={pane.tab.readingState}
@@ -337,7 +394,7 @@ export function PaneLayout(props: PaneLayoutProps) {
                 openSidebar={sidebar.openSidebar}
                 currentPane={pane}
               />
-            </div>
+            </PaneReaderScroller>
           ) : (
             <EmptyPaneToolbar
               toolsManager={toolsManager}
@@ -401,13 +458,13 @@ export function PaneLayout(props: PaneLayoutProps) {
             ) : pane.component !== null ? (
               <div className="sb-pane-component">{pane.component}</div>
             ) : pane.tab ? (
-              <div className="sb-pane-reader">
+              <PaneReaderScroller tab={pane.tab}>
                 <BibleReader
                   currentPane={pane}
                   readingState={pane.tab.readingState}
                   selectorState={selectorState}
                 />
-              </div>
+              </PaneReaderScroller>
             ) : (
               <EmptyPaneToolbar
                 toolsManager={toolsManager}
