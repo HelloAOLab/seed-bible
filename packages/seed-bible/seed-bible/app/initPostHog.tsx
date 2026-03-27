@@ -1,10 +1,10 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable no-var */
 console.log("[app] Initializing PostHog for error reporting...");
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 !(function (t, e) {
   var o, n, p, r;
@@ -25,7 +25,8 @@ console.log("[app] Initializing PostHog for error reporting...");
         (p.src =
           s.api_host.replace(".i.posthog.com", "-assets.i.posthog.com") +
           "/static/array.js"),
-        (r = t.getElementsByTagName("script")[0]!).parentNode!.insertBefore(
+        // @ts-ignore
+        (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(
           p,
           r
         ));
