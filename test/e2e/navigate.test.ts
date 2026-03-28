@@ -45,7 +45,7 @@ describe("navigate", () => {
     await delay(1500);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Genesis 2 / BSB");
+    ).toBe("Genesis 2 / AAB");
   });
 
   test("previous chapter", async () => {
@@ -57,8 +57,8 @@ describe("navigate", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
-    await page.locator("div.sidebar-itm:nth-child(23)").click();
-    await page.locator("button.chapter-btn:nth-child(53)").click();
+    await seedBibleFrame.locator("div.sidebar-itm:nth-child(23)").click();
+    await seedBibleFrame.locator("button.chapter-btn:nth-child(53)").click();
 
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
@@ -66,7 +66,7 @@ describe("navigate", () => {
     await delay(1000);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Isaiah 53 / BSB");
+    ).toBe("Isaiah 53 / AAB");
 
     await seedBibleFrame
       .locator("div.toolbar-item-wrapper.leftClick > button")
@@ -74,7 +74,7 @@ describe("navigate", () => {
     await delay(1000);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Isaiah 52 / BSB");
+    ).toBe("Isaiah 52 / AAB");
   });
 
   // Should work but doesn't because of the login screens
@@ -87,8 +87,8 @@ describe("navigate", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
-    await page.locator("div.sidebar-itm:nth-child(23)").click();
-    await page.locator("button.chapter-btn:nth-child(53)").click();
+    await seedBibleFrame.locator("div.sidebar-itm:nth-child(23)").click();
+    await seedBibleFrame.locator("button.chapter-btn:nth-child(53)").click();
 
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
@@ -96,7 +96,7 @@ describe("navigate", () => {
     await delay(1000);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Isaiah 53 / BSB");
+    ).toBe("Isaiah 53 / AAB");
   });
 
   test("search book", async () => {
@@ -108,8 +108,8 @@ describe("navigate", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
-    await page.locator(".searchbar > input").fill("Hos");
-    await page.locator("button.chapter-btn:nth-child(3)").click();
+    await seedBibleFrame.locator(".searchbar > input").fill("Hos");
+    await seedBibleFrame.locator("button.chapter-btn:nth-child(3)").click();
 
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
@@ -117,7 +117,7 @@ describe("navigate", () => {
     await delay(1000);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Hosea 3 / BSB");
+    ).toBe("Hosea 3 / AAB");
   });
 
   test("change translation", async () => {
@@ -129,13 +129,13 @@ describe("navigate", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
-    await page.locator(".sidebar-translation-selector").click();
-    await page.waitForSelector(".language-list");
-    await page.locator(".language-list > div:nth-child(1)").click();
+    await seedBibleFrame.locator(".sidebar-translation-selector").click();
+    await seedBibleFrame.waitForSelector(".language-list");
+    await seedBibleFrame.locator(".language-list > div:nth-child(1)").click();
     await delay(100);
-    await page.locator(".language-list > div:nth-child(2)").click();
+    await seedBibleFrame.locator(".language-list > div:nth-child(2)").click();
     await delay(100);
-    await page.locator(".translation-option:nth-child(1)").click();
+    await seedBibleFrame.locator(".translation-option:nth-child(1)").click();
 
     await delay(1000);
 
@@ -157,7 +157,7 @@ describe("navigate", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
-    await page.locator(".searchbar > input").fill("Rev 3");
+    await seedBibleFrame.locator(".searchbar > input").fill("Rev 3");
     await page.keyboard.press("Enter");
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
@@ -165,7 +165,7 @@ describe("navigate", () => {
     await delay(2000);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Revelation 3 / BSB");
+    ).toBe("Revelation 3 / AAB");
   });
 
   test("back button should go to the previous chapter", async () => {
@@ -184,7 +184,7 @@ describe("navigate", () => {
     await delay(1500);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Genesis 2 / BSB");
+    ).toBe("Genesis 2 / AAB");
 
     await page.goBack();
 
@@ -192,7 +192,7 @@ describe("navigate", () => {
 
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Genesis 1 / BSB");
+    ).toBe("Genesis 1 / AAB");
   });
 
   test("forward button should go to the next chapter after going back", async () => {
@@ -211,7 +211,7 @@ describe("navigate", () => {
     await delay(1500);
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Genesis 2 / BSB");
+    ).toBe("Genesis 2 / AAB");
 
     await page.goBack();
     await delay(500);
@@ -221,7 +221,7 @@ describe("navigate", () => {
 
     expect(
       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-    ).toBe("Genesis 2 / BSB");
+    ).toBe("Genesis 2 / AAB");
   });
 
   test("the book selector should push a history state when opened", async () => {

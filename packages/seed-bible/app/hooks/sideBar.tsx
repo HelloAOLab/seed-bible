@@ -280,6 +280,7 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
           style={{
             background: colors ? colors[1].primaryColor : "#ffffff",
             border: `1px solid ${colors?.text1 ?? "#1A1A1A"}`,
+            zoom: (globalThis as any).changes?.uiTextSize || 1,
           }}
         >
           {external && <div className=" externalPopupSettings">{external}</div>}

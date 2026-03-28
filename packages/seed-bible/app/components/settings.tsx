@@ -1716,6 +1716,23 @@ const SettingsSidebar = ({ config }) => {
     setEditMode(ReSeed);
   }, [ReSeed]);
 
+  // Apply saved UI zoom on mount so it works regardless of which tab is active
+  useEffect(() => {
+    const savedZoom = globalThis.changes?.uiTextSize || 1;
+    if (savedZoom !== 1) {
+      document
+        .querySelectorAll(
+          ".settings-content, .themeSettings-container, .profileSection"
+        )
+        .forEach((el) => {
+          (el as HTMLElement).style.zoom = String(savedZoom);
+        });
+      document.querySelectorAll(".settings-sidebar").forEach((el) => {
+        (el as HTMLElement).style.width = `${Math.round(280 * savedZoom)}px`;
+      });
+    }
+  }, []);
+
   // Initialize visibility from config
   useEffect(() => {
     const saved = globalThis.changes?.settingsVisibility || {};

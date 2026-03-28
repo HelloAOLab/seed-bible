@@ -1132,7 +1132,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .chips-tag-container .chip-tag {
-  background-color: transparent;
+  background-color: var(--primaryColor);
   color: var(--pageTextColor);
   border: 1px solid var(--pageTextColor);
   height: 32px;

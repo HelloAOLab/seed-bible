@@ -159,5 +159,10 @@
   "chooseAnother": "अर्को छान्नुहोस्",
   "playlistHasBeenEnded": "प्लेसूची समाप्त भयो।",
   "youAreAtTheBeginningOfThePlaylist": "तपाईं प्लेसूचीको सुरुमा हुनुहुन्छ।",
-  "shouldHaveAtLeastTwoAnnotationsToFilter": "फिल्टर गर्न कम्तिमा दुई टिप्पणीहरू चाहिन्छ।"
+  "shouldHaveAtLeastTwoAnnotationsToFilter": "फिल्टर गर्न कम्तिमा दुई टिप्पणीहरू चाहिन्छ।",
+  "thisWillLoseYourRecording": "तपाईंको रेकर्डिङ्ग हराउनेछ।",
+  "switchWillLoseYourRecording": "स्विच गर्दा तपाईंको रेकर्डिङ्ग हराउनेछ।",
+  "cannotSwitchWhileRecording": "रेकर्डिङ्ग हुँदा स्विच गर्न सकिँदैन।",
+  "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich": "यो संलग्नमा तपाईंको डाटा छ। यो हराउनेछ। स्विच गर्न फेरि क्लिक गर्नुहोस्।",
+  "addToTheCurrentQueue": "हालको लाइनमा थप्नुहोस्"
 }
