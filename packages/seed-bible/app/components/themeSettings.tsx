@@ -7243,10 +7243,10 @@ const MobileSettingsCard = () => {
   return (
     <div
       style={{
-        backgroundColor: "var(--pageBackground) !important",
+        backgroundColor: "var(--pageBackground)",
         borderRadius: "12px",
         padding: "16px",
-        boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+        // boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
         border: "1px solid #E1E3EA",
         fontFamily: "Newsreader, system-ui, -apple-system, sans-serif",
         zoom: (globalThis as any).changes?.uiTextSize || 1,
@@ -7539,7 +7539,7 @@ const MobileSettingsCard = () => {
             borderRadius: "8px",
           }}
         >
-          General Settings
+          <MobileSettingsIcon stroke={"#fff"} /> General Settings
         </button>
       </div>
     </div>
