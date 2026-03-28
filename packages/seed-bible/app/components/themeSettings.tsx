@@ -6533,129 +6533,132 @@ const SettingsUI = () => {
         </div>
 
         {/* Scripture Margins */}
-        <div
-          style={{
-            fontSize: "14px",
-            fontWeight: "500",
-            color: "var(--heading1Color)",
-            marginBottom: "8px",
-          }}
-        >
-          Scripture Margins
-        </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            border: "1px solid #E1E3EA",
-            borderRadius: "8px",
-            padding: "6px 10px",
-            marginBottom: "24px",
-            gap: "10px",
-          }}
-        >
-          <MarginIcon />
-          <div
-            style={{ width: "1px", height: "20px", background: "#E1E3EA" }}
-          ></div>
-          <div style={{ display: "flex", alignItems: "center", gap: "0px" }}>
-            <button
-              onClick={() => {
-                const next = String(Math.max(0, Number(scriptureMargin) - 1));
-                setScriptureMargin(next);
-                applyScriptureMargin(next);
-              }}
-              style={{
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "28px",
-                height: "28px",
-                borderRadius: "6px",
-                color: "var(--heading1Color)",
-                fontSize: "18px",
-                fontWeight: "600",
-                lineHeight: 1,
-              }}
-              onMouseEnter={(e: any) =>
-                (e.currentTarget.style.background = "var(--bg2, #f0f0f0)")
-              }
-              onMouseLeave={(e: any) =>
-                (e.currentTarget.style.background = "transparent")
-              }
-            >
-              −
-            </button>
+        {!globalThis.IsMobileNow() && (
+          <>
             <div
               style={{
                 display: "flex",
-                alignItems: "baseline",
-                justifyContent: "center",
-                minWidth: "42px",
-                gap: "2px",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "14px",
+                fontWeight: "500",
+                color: "var(--heading1Color)",
+                marginBottom: "8px",
               }}
             >
-              <input
-                type="number"
-                value={scriptureMargin}
-                onChange={(e: any) => {
-                  const val = e.target.value;
-                  setScriptureMargin(val);
-                  applyScriptureMargin(val);
-                }}
-                style={{
-                  border: "none",
-                  outline: "none",
-                  fontSize: "14px",
-                  width: "33px",
-                  background: "transparent",
-                  color: "var(--heading1Color)",
-                  fontFamily: "inherit",
-                  padding: 0,
-                  textAlign: "center",
-                  MozAppearance: "textfield",
-                }}
-              />
-              <span style={{ fontSize: "13px", color: "var(--text2, #888)" }}>
-                px
-              </span>
+              <MarginIcon />
+              Scripture Margins
             </div>
-            <button
-              onClick={() => {
-                const next = String(Math.min(200, Number(scriptureMargin) + 1));
-                setScriptureMargin(next);
-                applyScriptureMargin(next);
-              }}
+            <div
               style={{
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                width: "28px",
-                height: "28px",
-                borderRadius: "6px",
-                color: "var(--heading1Color)",
-                fontSize: "18px",
-                fontWeight: "600",
-                lineHeight: 1,
+                marginBottom: "24px",
+                gap: "8px",
               }}
-              onMouseEnter={(e: any) =>
-                (e.currentTarget.style.background = "var(--bg2, #f0f0f0)")
-              }
-              onMouseLeave={(e: any) =>
-                (e.currentTarget.style.background = "transparent")
-              }
             >
-              +
-            </button>
-          </div>
-        </div>
-
+              <button
+                onClick={() => {
+                  const next = String(Math.max(0, Number(scriptureMargin) - 1));
+                  setScriptureMargin(next);
+                  applyScriptureMargin(next);
+                }}
+                style={{
+                  border: "1px solid #E1E3EA",
+                  background: "var(--backgroundColor, #fff)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "8px",
+                  color: "var(--heading1Color)",
+                  fontSize: "20px",
+                  fontWeight: "600",
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e: any) =>
+                  (e.currentTarget.style.background = "var(--bg2, #f0f0f0)")
+                }
+                onMouseLeave={(e: any) =>
+                  (e.currentTarget.style.background =
+                    "var(--backgroundColor, #fff)")
+                }
+              >
+                −
+              </button>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  justifyContent: "center",
+                  gap: "2px",
+                }}
+              >
+                <input
+                  type="number"
+                  value={scriptureMargin}
+                  onChange={(e: any) => {
+                    const val = e.target.value;
+                    setScriptureMargin(val);
+                    applyScriptureMargin(val);
+                  }}
+                  style={{
+                    border: "none",
+                    outline: "none",
+                    fontSize: "16px",
+                    width: "40px",
+                    background: "transparent",
+                    color: "var(--heading1Color)",
+                    fontFamily: "inherit",
+                    padding: 0,
+                    textAlign: "right",
+                    MozAppearance: "textfield",
+                  }}
+                />
+                <span style={{ fontSize: "14px", color: "var(--text2, #888)" }}>
+                  px
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  const next = String(
+                    Math.min(200, Number(scriptureMargin) + 1)
+                  );
+                  setScriptureMargin(next);
+                  applyScriptureMargin(next);
+                }}
+                style={{
+                  border: "1px solid #E1E3EA",
+                  background: "var(--backgroundColor, #fff)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "8px",
+                  color: "var(--heading1Color)",
+                  fontSize: "20px",
+                  fontWeight: "600",
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e: any) =>
+                  (e.currentTarget.style.background = "var(--bg2, #f0f0f0)")
+                }
+                onMouseLeave={(e: any) =>
+                  (e.currentTarget.style.background =
+                    "var(--backgroundColor, #fff)")
+                }
+              >
+                +
+              </button>
+            </div>
+          </>
+        )}
         {/* Heading Font */}
         <div
           style={{
@@ -7240,12 +7243,13 @@ const MobileSettingsCard = () => {
   return (
     <div
       style={{
-        backgroundColor: "var(--panelBackground, #F7F7F8)",
+        backgroundColor: "var(--pageBackground) !important",
         borderRadius: "12px",
         padding: "16px",
         boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
         border: "1px solid #E1E3EA",
         fontFamily: "Newsreader, system-ui, -apple-system, sans-serif",
+        zoom: (globalThis as any).changes?.uiTextSize || 1,
       }}
     >
       {/* UI text size */}
@@ -7394,119 +7398,121 @@ const MobileSettingsCard = () => {
       </div>
 
       {/* Scripture Margins */}
-      <div
-        style={{
-          fontSize: "14px",
-          fontWeight: "500",
-          color: "var(--heading1Color)",
-          marginBottom: "8px",
-        }}
-      >
-        Scripture Margins
-      </div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          border: "1px solid #E1E3EA",
-          borderRadius: "8px",
-          padding: "6px 10px",
-          gap: "10px",
-        }}
-      >
-        <MarginIcon />
-        <div style={{ width: "1px", height: "20px", background: "#E1E3EA" }} />
-        <div style={{ display: "flex", alignItems: "center", gap: "0px" }}>
-          <button
-            onClick={() => {
-              const next = String(Math.max(0, Number(scriptureMargin) - 1));
-              setScriptureMargin(next);
-              applyScriptureMargin(next);
-            }}
-            style={{
-              border: "none",
-              background: "transparent",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "28px",
-              height: "28px",
-              borderRadius: "6px",
-              color: "var(--heading1Color)",
-              fontSize: "18px",
-              fontWeight: "600",
-              lineHeight: 1,
-            }}
-          >
-            −
-          </button>
+      {!globalThis.IsMobileNow() && (
+        <>
           <div
             style={{
               display: "flex",
-              alignItems: "baseline",
-              justifyContent: "center",
-              minWidth: "42px",
-              gap: "2px",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "14px",
+              fontWeight: "500",
+              color: "var(--heading1Color)",
+              marginBottom: "8px",
             }}
           >
-            <input
-              type="number"
-              value={scriptureMargin}
-              onChange={(e: any) => {
-                const val = e.target.value;
-                setScriptureMargin(val);
-                applyScriptureMargin(val);
-              }}
-              style={{
-                border: "none",
-                outline: "none",
-                fontSize: "14px",
-                width: "33px",
-                background: "transparent",
-                color: "var(--heading1Color)",
-                fontFamily: "inherit",
-                padding: 0,
-                textAlign: "center",
-                MozAppearance: "textfield",
-              }}
-            />
-            <span style={{ fontSize: "13px", color: "var(--text2, #888)" }}>
-              px
-            </span>
+            <MarginIcon />
+            Scripture Margins
           </div>
-          <button
-            onClick={() => {
-              const next = String(Math.min(200, Number(scriptureMargin) + 1));
-              setScriptureMargin(next);
-              applyScriptureMargin(next);
-            }}
+          <div
             style={{
-              border: "none",
-              background: "transparent",
-              cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              width: "28px",
-              height: "28px",
-              borderRadius: "6px",
-              color: "var(--heading1Color)",
-              fontSize: "18px",
-              fontWeight: "600",
-              lineHeight: 1,
+              gap: "8px",
             }}
           >
-            +
-          </button>
-        </div>
-      </div>
-
+            <button
+              onClick={() => {
+                const next = String(Math.max(0, Number(scriptureMargin) - 1));
+                setScriptureMargin(next);
+                applyScriptureMargin(next);
+              }}
+              style={{
+                border: "1px solid #E1E3EA",
+                background: "var(--backgroundColor, #fff)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "40px",
+                height: "40px",
+                borderRadius: "8px",
+                color: "var(--heading1Color)",
+                fontSize: "20px",
+                fontWeight: "600",
+                lineHeight: 1,
+                flexShrink: 0,
+              }}
+            >
+              −
+            </button>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                justifyContent: "center",
+                gap: "2px",
+                flex: 1,
+              }}
+            >
+              <input
+                type="number"
+                value={scriptureMargin}
+                onChange={(e: any) => {
+                  const val = e.target.value;
+                  setScriptureMargin(val);
+                  applyScriptureMargin(val);
+                }}
+                style={{
+                  border: "none",
+                  outline: "none",
+                  fontSize: "16px",
+                  width: "40px",
+                  background: "transparent",
+                  color: "var(--heading1Color)",
+                  fontFamily: "inherit",
+                  padding: 0,
+                  textAlign: "right",
+                  MozAppearance: "textfield",
+                }}
+              />
+              <span style={{ fontSize: "14px", color: "var(--text2, #888)" }}>
+                px
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                const next = String(Math.min(200, Number(scriptureMargin) + 1));
+                setScriptureMargin(next);
+                applyScriptureMargin(next);
+              }}
+              style={{
+                border: "1px solid #E1E3EA",
+                background: "var(--backgroundColor, #fff)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "40px",
+                height: "40px",
+                borderRadius: "8px",
+                color: "var(--heading1Color)",
+                fontSize: "20px",
+                fontWeight: "600",
+                lineHeight: 1,
+                flexShrink: 0,
+              }}
+            >
+              +
+            </button>
+          </div>
+        </>
+      )}
       {/* Open full settings */}
       <div
         style={{
           display: "flex",
-          justifyContent: "center",
+          justifyContent: "left",
           marginTop: "16px",
         }}
       >
