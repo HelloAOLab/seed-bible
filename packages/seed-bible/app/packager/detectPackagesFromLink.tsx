@@ -1,9 +1,7 @@
-
-masks?.availablePackages?.map(async pkg => {
-
-    if (configBot.tags[pkg.address]) {
-        if (!masks[`${pkg - address}-data`])
-            await thisBot.installPackage({ name: pkg.address })
-    }
-})
+masks?.availablePackages?.map(async (pkg) => {
+  if (configBot.tags[pkg.name]) {
+    if (!masks[`${pkg.name}-data`])
+      await thisBot.installPackage({ name: pkg.name });
+  }
+});
 // if(configBot.tags)
