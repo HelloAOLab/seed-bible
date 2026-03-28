@@ -11,7 +11,7 @@ const TwitchInterface = (props: {
   const [uiHidden, setUiHidden] = useState(false);
 
   const [qrValue, setQrValue] = useState<string>(
-    `https://ao.bot/?pattern=SeedBibleDev&book=GEN&chapter=1&translation=BSB&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`
+    `https://ao.bot/?pattern=SeedBibleDev&book=GEN&chapter=1&translation=AAB&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`
   );
 
   useEffect(() => {
@@ -29,7 +29,7 @@ const TwitchInterface = (props: {
       );
     } else {
       setQrValue(
-        `https://ao.bot/?pattern=SeedBibleDev&book=GEN&chapter=1&translation=BSB&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`
+        `https://ao.bot/?pattern=SeedBibleDev&book=GEN&chapter=1&translation=AAB&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`
       );
     }
   }, [broadcasterId, clientId, token]);
