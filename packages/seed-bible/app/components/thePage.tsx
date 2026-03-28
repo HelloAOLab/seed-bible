@@ -2023,6 +2023,7 @@ function ThePage({
 
         body.scroll-hide-bars .mobile-header {
           transform: translateY(-100%);
+          overflow: hidden;
         }
 
         @media (max-width: 768px) {

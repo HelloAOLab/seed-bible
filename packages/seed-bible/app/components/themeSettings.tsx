@@ -7296,13 +7296,13 @@ const MobileSettingsCard = () => {
         ))}
       </div>
 
-      <div
+      {/* <div
         style={{
           height: "1px",
           background: "#E1E3EA",
           margin: "0 0 20px 0",
         }}
-      />
+      /> */}
 
       {/* Scripture settings */}
       <div style={{ ...sectionTitleStyle, marginTop: "0px" }}>
@@ -7512,7 +7512,7 @@ const MobileSettingsCard = () => {
       <div
         style={{
           display: "flex",
-          justifyContent: "left",
+          justifyContent: "center ",
           marginTop: "16px",
         }}
       >
@@ -7529,17 +7529,17 @@ const MobileSettingsCard = () => {
             alignItems: "center",
             gap: "8px",
             border: "none",
-            background: "transparent",
+            background: "var(--addButtonIcon)",
             cursor: "pointer",
-            color: "var(--heading1Color)",
+            color: "#fff",
             fontSize: "14px",
             fontWeight: 500,
             fontFamily: "inherit",
-            padding: "8px 12px",
+            padding: "12px 36px",
             borderRadius: "8px",
           }}
         >
-          <MobileSettingsIcon />
+          General Settings
         </button>
       </div>
     </div>
