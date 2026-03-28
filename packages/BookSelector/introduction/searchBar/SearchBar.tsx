@@ -318,7 +318,6 @@ const SearchBar = (props: { openSidebar: boolean }) => {
           const translationValue = {
             ...trValue.value,
           };
-          console.log(apiTranslations, "apiTranslations");
           if (
             apiTranslations[
               translationValue.languageEnglishName.toLowerCase()
@@ -1174,24 +1173,52 @@ const SideBarBooks = (props: {
     return bookName;
   }, []);
 
+  const scrollIntoView = useCallback((bookId: string) => {
+    const bookTabElement = document.getElementById(`booktab-${bookId}`);
+    if (bookTabElement) {
+      bookTabElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      if (!bookTabElement.classList.contains("sidebar-selected-itm")) {
+        bookTabElement.click();
+      }
+    }
+  }, []);
+
   const selectBookSelectorBook = useCallback(
-    (bookId) => {
+    (bookId: string) => {
       if (!bookId) {
         setBookData(null);
         setLastBookClicked(-1);
         setChT(0);
         return;
       }
-      const book = booksData.find((b) => b.id === bookId);
+      const book =
+        booksData.find((b: BookInterface) => b.id === bookId) ||
+        thePage.masks?.booksData?.find((b: BookInterface) => b.id === bookId) ||
+        null;
       if (book) {
-        handleClick({
-          index: booksData.indexOf(book),
-          book,
-          cht: book.order > 39 ? 1 : 0,
-        });
+        const bookTabElement = document.getElementById(`booktab-${book.id}`);
+        if (bookTabElement) {
+          scrollIntoView(bookId);
+        }
+        {
+          if (book.order > 39 && selectedTestament === 0) {
+            setSelectedTestament(1);
+            setTimeout(() => {
+              scrollIntoView(bookId);
+            }, 100);
+          } else if (book.order <= 39 && selectedTestament === 1) {
+            setSelectedTestament(0);
+            setTimeout(() => {
+              scrollIntoView(bookId);
+            }, 100);
+          }
+        }
       }
     },
-    [booksData, handleClick]
+    [booksData, selectedTestament]
   );
   useEffect(() => {
     const sortedBooks = sortBooksByTestament(booksData);
@@ -1259,6 +1286,7 @@ const SideBarBooks = (props: {
                         onClick={() => {
                           handleClick({ index, book, cht: 0 });
                         }}
+                        id={`booktab-${book.id}`}
                       >
                         <span
                           style={{
@@ -1331,6 +1359,7 @@ const SideBarBooks = (props: {
                         onClick={() => {
                           handleClick({ index, book, cht: 1 });
                         }}
+                        id={`booktab-${book.id}`}
                       >
                         <span
                           style={{
@@ -1414,6 +1443,7 @@ const SideBarBooks = (props: {
                         onClick={() => {
                           handleClick({ index, book });
                         }}
+                        id={`booktab-${book.id}`}
                       >
                         <span
                           style={{
@@ -1491,6 +1521,7 @@ const SideBarBooks = (props: {
                         onClick={() => {
                           handleClick({ index, book });
                         }}
+                        id={`booktab-${book.id}`}
                       >
                         <span
                           style={{
@@ -1569,6 +1600,7 @@ const SideBarBooks = (props: {
                         onClick={() => {
                           handleClick({ index, book });
                         }}
+                        id={`booktab-${book.id}`}
                       >
                         <span
                           style={{
