@@ -5,7 +5,7 @@ import SearchBar from "introduction.searchBar.SearchBar";
 await os.unregisterApp("searchBar");
 await os.registerApp("searchBar", thisBot);
 const css = thisBot.tags["App.css"];
-const { useState, useEffect } = os.appHooks;
+const { useState, useEffect, render } = os.appHooks;
 
 if (!masks.index) masks.index = 0;
 
@@ -90,4 +90,21 @@ const App = () => {
   );
 };
 
-os.compileApp("searchBar", <App />);
+// os.compileApp("searchBar", <App />);
+
+const searchBarContainer = document.getElementById("searchBar-container");
+
+if (!searchBarContainer) {
+  const searchBarDiv = document.createElement("div");
+
+  searchBarDiv.id = "searchBar-container";
+
+  searchBarDiv.className = "searchBar";
+
+  document.body.appendChild(searchBarDiv);
+
+  const container = document.getElementById("searchBar-container");
+  if (container) {
+    render(<App />, container);
+  }
+}

@@ -110,7 +110,7 @@ describe("bookSelector tests", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
-    const bookItems = await page.$$(".sidebar-itm");
+    const bookItems = await seedBibleFrame.$$(".sidebar-itm");
     for (let i = 0; i < bookItems.length; i++) {
       const item = bookItems[i];
       const bookName = await item.$eval("span", (el) => el.textContent);
@@ -131,34 +131,34 @@ describe("bookSelector tests", () => {
 
     await delay(1000);
 
-    const isSidebarOpen = await page.$(".open-sideBar");
+    const isSidebarOpen = await seedBibleFrame.$(".open-sideBar");
     if (!isSidebarOpen) {
       await seedBibleFrame
         .locator('div.toolbar-item-wrapper[title="Books"] > button')
         .click({});
-      await page.waitForSelector(".open-sideBar", {
+      await seedBibleFrame.waitForSelector(".open-sideBar", {
         visible: true,
         timeout: 5000,
       });
     }
 
-    await page.waitForSelector(".dropdown .dropdown-select", {
+    await seedBibleFrame.waitForSelector(".dropdown .dropdown-select", {
       visible: true,
       timeout: 5000,
     });
     await delay(300);
 
-    await page.locator(".dropdown .dropdown-select").click();
+    await seedBibleFrame.locator(".dropdown .dropdown-select").click();
     await delay(200);
-    await page.select(".dropdown .dropdown-select", "0");
+    await seedBibleFrame.select(".dropdown .dropdown-select", "0");
 
     await delay(500);
-    await page.waitForSelector(".sidebar-itm", {
+    await seedBibleFrame.waitForSelector(".sidebar-itm", {
       visible: true,
       timeout: 5000,
     });
 
-    await page.waitForFunction(
+    await seedBibleFrame.waitForFunction(
       (expectedCount) => {
         const items = document.querySelectorAll(".sidebar-itm");
         return items.length === expectedCount;
@@ -167,7 +167,7 @@ describe("bookSelector tests", () => {
       OTBooks.length
     );
 
-    const bookItemsOT = await page.$$(".sidebar-itm");
+    const bookItemsOT = await seedBibleFrame.$$(".sidebar-itm");
     for (let i = 0; i < bookItemsOT.length; i++) {
       const item = bookItemsOT[i];
       if (item) {
@@ -179,21 +179,21 @@ describe("bookSelector tests", () => {
     }
     expect(bookItemsOT.length).toBe(OTBooks.length);
 
-    await page.waitForSelector(".dropdown .dropdown-select", {
+    await seedBibleFrame.waitForSelector(".dropdown .dropdown-select", {
       visible: true,
       timeout: 5000,
     });
-    await page.locator(".dropdown .dropdown-select").click();
+    await seedBibleFrame.locator(".dropdown .dropdown-select").click();
     await delay(200);
-    await page.select(".dropdown .dropdown-select", "1");
+    await seedBibleFrame.select(".dropdown .dropdown-select", "1");
 
     await delay(500);
-    await page.waitForSelector(".sidebar-itm", {
+    await seedBibleFrame.waitForSelector(".sidebar-itm", {
       visible: true,
       timeout: 5000,
     });
 
-    await page.waitForFunction(
+    await seedBibleFrame.waitForFunction(
       (expectedCount) => {
         const items = document.querySelectorAll(".sidebar-itm");
         return items.length === expectedCount;
@@ -202,7 +202,7 @@ describe("bookSelector tests", () => {
       NTBooks.length
     );
 
-    const bookItemsNT = await page.$$(".sidebar-itm");
+    const bookItemsNT = await seedBibleFrame.$$(".sidebar-itm");
     for (let i = 0; i < bookItemsNT.length; i++) {
       const item = bookItemsNT[i];
       if (item) {
@@ -224,16 +224,16 @@ describe("bookSelector tests", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
-    await page.locator(".sidebar-translation-selector").click();
-    await page.waitForSelector(".footer");
-    await page.locator(".footer").click();
+    await seedBibleFrame.locator(".sidebar-translation-selector").click();
+    await seedBibleFrame.waitForSelector(".footer");
+    await seedBibleFrame.locator(".footer").click();
     await delay(200);
-    await page.click('input[type="radio"][value="url"]');
+    await seedBibleFrame.click('input[type="radio"][value="url"]');
     const customUrl =
       "https://ao-bible-api-public-uploads.s3.amazonaws.com/b792638ce8c1e09877b63951500d2dfe70cc1333305723e4a9d808dc757771cc/api/available_translations.json";
-    await page.locator(".custom-tr-in").fill(customUrl);
+    await seedBibleFrame.locator(".custom-tr-in").fill(customUrl);
     await delay(200);
-    await page.locator(".import-btn").click();
+    await seedBibleFrame.locator(".import-btn").click();
     await delay(4000);
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
@@ -256,20 +256,27 @@ describe("bookSelector tests", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
-    await page.waitForSelector(".sidebar-translation-selector", {
+    await seedBibleFrame.waitForSelector(".sidebar-translation-selector", {
       visible: true,
     });
-    await page.locator(".sidebar-translation-selector").click();
-    await page.waitForSelector(".settingsIcon", { visible: true });
-    await page.locator(".settingsIcon").click();
+    await seedBibleFrame.locator(".sidebar-translation-selector").click();
+    await seedBibleFrame.waitForSelector(".settingsIcon", { visible: true });
+    await seedBibleFrame.locator(".settingsIcon").click();
     await delay(100);
-    await page.waitForSelector(".translationSettingsModal > div:nth-child(3)", {
+    await seedBibleFrame.waitForSelector(
+      ".translationSettingsModal > div:nth-child(3)",
+      {
+        visible: true,
+      }
+    );
+    await seedBibleFrame
+      .locator(".translationSettingsModal > div:nth-child(3)")
+      .click();
+    await delay(1500);
+    await seedBibleFrame.waitForSelector(".language-list .item", {
       visible: true,
     });
-    await page.locator(".translationSettingsModal > div:nth-child(3)").click();
-    await delay(1500);
-    await page.waitForSelector(".language-list .item", { visible: true });
-    const translationItems = await page.$$(".language-list .item");
+    const translationItems = await seedBibleFrame.$$(".language-list .item");
     const popularTranslations = [
       "english",
       "ancient greek",
