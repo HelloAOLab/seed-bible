@@ -589,7 +589,7 @@ export function VerseToolbar({
                     >
                       ink_eraser
                     </span>
-                    <span>Clear</span>
+                    <span>{t("clear")}</span>
                   </button>
 
                   <button
@@ -612,7 +612,7 @@ export function VerseToolbar({
                       fontWeight: "500",
                       flexShrink: 0,
                     }}
-                    aria-label="Clear all highlights"
+                    aria-label={t("clearAll")}
                   >
                     <span
                       className="material-symbols-outlined"
@@ -620,7 +620,7 @@ export function VerseToolbar({
                     >
                       ink_eraser
                     </span>
-                    <span>Clear All</span>
+                    <span>{t("clearAll")}</span>
                   </button>
                 </div>
               </>
@@ -630,7 +630,7 @@ export function VerseToolbar({
                 {!removeBookMark && (
                   <button className="mobile-action-btn">
                     <BookMarkIcon style={{ color: "var(--pageTextColor)" }} />
-                    <span>Bookmark</span>
+                    <span>{t("bookmark")}</span>
                   </button>
                 )}
                 {selectionSettings.showHighlightColors &&
@@ -642,7 +642,7 @@ export function VerseToolbar({
                       <HighlightIcon
                         style={{ color: "var(--pageTextColor)" }}
                       />
-                      <span>Highlight</span>
+                      <span>{t("highlight")}</span>
                     </button>
                   )}
                 {menuOptions
@@ -673,7 +673,7 @@ export function VerseToolbar({
                   style={{ marginLeft: "auto" }}
                 >
                   <span className="material-symbols-outlined">close</span>
-                  <span>Cancel</span>
+                  <span>{t("cancel")}</span>
                 </button>
               </>
             )}
@@ -734,7 +734,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
           SetInHold(null);
           onClose();
         },
-        title: "Copy",
+        title: t("copy"),
       },
 
       ...(!removeAiAgent
@@ -746,7 +746,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
                 SetShowCommands(true);
                 SetInHold(null);
               },
-              title: "Ask",
+              title: t("ask"),
             },
           ]
         : []),
@@ -791,7 +791,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
             SetInHold(null);
           }, 50);
         },
-        title: "Share",
+        title: t("share"),
       },
     ],
   };

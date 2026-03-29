@@ -1626,7 +1626,7 @@ function SideBar({ panelsNumber }) {
             className="mobile-sidebar-header"
             style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}
           >
-            <h2>Tabs</h2>
+            <h2>{t("tabs")}</h2>
             <div className="mobile-header-actions">
               {/* <span
                 className="mobile-header-icon"
@@ -1873,7 +1873,7 @@ function SideBar({ panelsNumber }) {
                   className="mobile-nav-label"
                   style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}
                 >
-                  Sessions
+                  {t("sessions")}
                 </div>
               </button>
             )}

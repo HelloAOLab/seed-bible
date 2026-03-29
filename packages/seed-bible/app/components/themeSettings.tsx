@@ -6390,7 +6390,7 @@ const SettingsUI = () => {
             marginBottom: "20px",
           }}
         >
-          Edit theme for your page and everything...
+          {t("editThemeDesc")}
         </div>
 
         {/* UI text size */}
@@ -6404,14 +6404,21 @@ const SettingsUI = () => {
         >
           {t("uiTextSize")}
         </div>
-        <div style={{ display: "flex", gap: "6px", marginBottom: "20px" }}>
+        <div
+          style={{
+            display: "flex",
+            "justify-content": "space-between",
+            gap: "6px",
+            marginBottom: "20px",
+          }}
+        >
           {UI_TEXT_SIZES.map((size, i) => (
             <button
               key={i}
               onClick={() => handleUiTextSize(i)}
               style={{
-                width: "42px",
-                height: "42px",
+                width: "48px",
+                height: "48px",
                 borderRadius: "8px",
                 border:
                   uiSizeIndex === i
@@ -6441,7 +6448,7 @@ const SettingsUI = () => {
 
         {/* Scripture settings */}
         <div style={{ ...sectionTitleStyle, marginTop: "0px" }}>
-          Scripture settings
+          {t("scriptureSettings")}
         </div>
         <div style={{ display: "flex", gap: "10px", marginBottom: "24px" }}>
           <div
@@ -6668,7 +6675,7 @@ const SettingsUI = () => {
             marginBottom: "4px",
           }}
         >
-          Heading Font
+          {t("headingFont")}
         </div>
         <div
           style={{
@@ -6677,7 +6684,7 @@ const SettingsUI = () => {
             marginBottom: "8px",
           }}
         >
-          (Book, chapter, section names)
+          {t("headingFontDesc")}
         </div>
         <div
           style={dropdownStyle}
@@ -6720,7 +6727,7 @@ const SettingsUI = () => {
             marginBottom: "4px",
           }}
         >
-          Body Font
+          {t("bodyFont")}
         </div>
         <div
           style={{
@@ -6729,7 +6736,7 @@ const SettingsUI = () => {
             marginBottom: "8px",
           }}
         >
-          (verse, descriptions etc)
+          {t("bodyFontDesc")}
         </div>
         <div
           style={dropdownStyle}
@@ -6768,12 +6775,12 @@ const SettingsUI = () => {
 
       {/* Scripture elements */}
       <div style={{ ...sectionTitleStyle, marginTop: "0px" }}>
-        Scripture elements
+        {t("scriptureElements")}
       </div>
 
       <div style={toggleRowStyle}>
         <div style={{ fontSize: "14px", color: "var(--heading1Color)" }}>
-          Show chapter heading
+          {t("showChapterHeading")}
         </div>
         <div
           style={{
@@ -6802,7 +6809,7 @@ const SettingsUI = () => {
 
       <div style={toggleRowStyle}>
         <div style={{ fontSize: "14px", color: "var(--heading1Color)" }}>
-          Show verse text
+          {t("showVerseText")}
         </div>
         <div
           style={{
@@ -6831,7 +6838,7 @@ const SettingsUI = () => {
 
       <div style={toggleRowStyle}>
         <div style={{ fontSize: "14px", color: "var(--heading1Color)" }}>
-          Show/hide foot notes
+          {t("showHideFootNotes")}
         </div>
         <div
           style={{
@@ -7268,7 +7275,7 @@ const MobileSettingsCard = ({ onClose }: { onClose?: () => void }) => {
               color: "var(--heading1Color)",
             }}
           >
-            Theme & text
+            {t("themeAndText")}
           </span>
         </div>
         {onClose && (
@@ -7352,7 +7359,7 @@ const MobileSettingsCard = ({ onClose }: { onClose?: () => void }) => {
 
       {/* Text settings */}
       <div style={{ ...sectionTitleStyle, marginTop: "0px" }}>
-        Scripture settings
+        {t("scriptureSettings")}
       </div>
       <div style={{ display: "flex", gap: "10px", marginBottom: "24px" }}>
         <div
@@ -7587,8 +7594,8 @@ const MobileSettingsCard = ({ onClose }: { onClose?: () => void }) => {
           padding: "4px 0",
         }}
       >
-        <MobileSettingsIcon stroke={"var(--addButtonIcon)"} /> Go to all
-        settings
+        <MobileSettingsIcon stroke={"var(--addButtonIcon)"} />{" "}
+        {t("goToAllSettings")}
       </button>
     </div>
   );

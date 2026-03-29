@@ -62,21 +62,21 @@ const AiSettings = () => {
         <div onClick={() => setSideBarMode("settings")} className="blackText">
           <MenuIcon name="arrow_back" />
         </div>
-        <div className="softText">Page settings</div>
+        <div className="softText">{t("pageSettings")}</div>
         <div className="softText">
           <MenuIcon name="chevron_right" />
         </div>
-        <div className="softText">Toolbar</div>
+        <div className="softText">{t("toolbar")}</div>
       </div>
 
       <div className="routerTitle blackText">
         <div className="blackText">
           <AiIcon />
         </div>
-        <div>AI</div>
+        <div>{t("ai")}</div>
       </div>
 
-      <div className="mediumText">Settings for AI features in the page</div>
+      <div className="mediumText">{t("settingsForAIInPage")}</div>
 
       <div className="ai-chat">
         <div
@@ -84,7 +84,7 @@ const AiSettings = () => {
           className="ai-chat"
         >
           <AiChatIcon />
-          <div className="blackText">AI Chat</div>
+          <div className="blackText">{t("aiChat")}</div>
         </div>
         <div>
           <MenuIcon name={`keyboard_arrow_${switcher === 1 ? "up" : "down"}`} />
@@ -93,16 +93,15 @@ const AiSettings = () => {
       <div style={{ height: "20px" }}></div>
       {switcher === 1 && (
         <>
-          <div className="blackText">Select model</div>
+          <div className="blackText">{t("selectModel")}</div>
           <div style={{ height: "20px" }}></div>
           <select style={{ width: "100%" }} className="selectInput">
             <option>gpt-4o</option>
           </select>
           <div style={{ marginTop: "10px" }} className="mediumText">
-            Different AI models can produce different or better results so feel
-            free to experiment.
+            {t("aiModelExperimentDesc")}
           </div>
-          <div className="blackText">Positive prompt</div>
+          <div className="blackText">{t("positivePrompt")}</div>
           <div style={{ height: "10px" }}></div>
           <textarea
             style={{ height: "150px", width: "100%" }}
@@ -116,13 +115,15 @@ const AiSettings = () => {
             onClick={handleChatSubmit}
             className="submitButton selectInput"
           >
-            Submit to AI{" "}
+            {t("submitToAI")}{" "}
             {loading && (
               <span class="material-symbols-outlined spin">sync</span>
             )}
           </button>
           {chatResponse && (
-            <div className="aiResponse blackText">Response: {chatResponse}</div>
+            <div className="aiResponse blackText">
+              {t("response")}: {chatResponse}
+            </div>
           )}
         </>
       )}
@@ -133,7 +134,7 @@ const AiSettings = () => {
           className="ai-chat"
         >
           <AiChatIcon />
-          <div className="blackText">AI Image</div>
+          <div className="blackText">{t("aiImage")}</div>
         </div>
         <div>
           <MenuIcon name={`keyboard_arrow_${switcher === 2 ? "up" : "down"}`} />
@@ -142,16 +143,15 @@ const AiSettings = () => {
       <div style={{ height: "20px" }}></div>
       {switcher === 2 && (
         <>
-          <div className="blackText">Select model</div>
+          <div className="blackText">{t("selectModel")}</div>
           <div style={{ height: "20px" }}></div>
           <select style={{ width: "100%" }} className="selectInput">
             <option>DALL - E 3</option>
           </select>
           <div style={{ marginTop: "10px" }} className="mediumText">
-            Different AI models can produce different or better results so feel
-            free to experiment.
+            {t("aiModelExperimentDesc")}
           </div>
-          <div className="blackText">Positive prompt</div>
+          <div className="blackText">{t("positivePrompt")}</div>
           <div style={{ height: "10px" }}></div>
           <textarea
             style={{ height: "150px", width: "100%" }}
@@ -165,7 +165,7 @@ const AiSettings = () => {
             onClick={handleImageSubmit}
             className="submitButton selectInput"
           >
-            Generate Image{" "}
+            {t("generateImage")}{" "}
             {loading && (
               <span class="material-symbols-outlined spin">sync</span>
             )}
@@ -188,7 +188,7 @@ const AiSettings = () => {
           className="ai-chat"
         >
           <AiChatIcon />
-          <div className="blackText">Editor AI</div>
+          <div className="blackText">{t("editorAI")}</div>
         </div>
         <div>
           <MenuIcon name={`keyboard_arrow_${switcher === 3 ? "up" : "down"}`} />
@@ -197,16 +197,15 @@ const AiSettings = () => {
       <div style={{ height: "20px" }}></div>
       {switcher === 3 && (
         <>
-          <div className="blackText">Select model</div>
+          <div className="blackText">{t("selectModel")}</div>
           <div style={{ height: "20px" }}></div>
           <select style={{ width: "100%" }} className="selectInput">
             <option>gpt-4o</option>
           </select>
           <div style={{ marginTop: "10px" }} className="mediumText">
-            Different AI models can produce different or better results so feel
-            free to experiment.
+            {t("aiModelExperimentDesc")}
           </div>
-          <div className="blackText">Positive prompt</div>
+          <div className="blackText">{t("positivePrompt")}</div>
           <div style={{ height: "10px" }}></div>
           <textarea
             style={{ height: "150px", width: "100%" }}
@@ -221,7 +220,7 @@ const AiSettings = () => {
               )
             }
           ></textarea>
-          <div className="blackText">Negative prompt</div>
+          <div className="blackText">{t("negativePrompt")}</div>
           <div style={{ height: "10px" }}></div>
           <textarea
             style={{ height: "150px", width: "100%" }}

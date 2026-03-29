@@ -2274,7 +2274,7 @@ function ThePage({
                             e.stopPropagation();
                             setShowMobileSettings((prev) => !prev);
                           }}
-                          title="Settings"
+                          title={t("settings")}
                         >
                           <InfoSettingsIcon />
                         </button>
@@ -3450,7 +3450,7 @@ function Section({
                                         });
                                         setShowFootnoteModal(true);
                                       }}
-                                      title="View footnotes"
+                                      title={t("viewFootnotes")}
                                     >
                                       <span class="material-symbols-outlined">
                                         info
@@ -3490,7 +3490,7 @@ function Section({
                                       });
                                       setShowFootnoteModal(true);
                                     }}
-                                    title="View footnotes"
+                                    title={t("viewFootnotes")}
                                   >
                                     <span class="material-symbols-outlined">
                                       info
@@ -3532,7 +3532,7 @@ function Section({
                                     });
                                     setShowFootnoteModal(true);
                                   }}
-                                  title="View footnotes"
+                                  title={t("viewFootnotes")}
                                 >
                                   <span class="material-symbols-outlined">
                                     info
