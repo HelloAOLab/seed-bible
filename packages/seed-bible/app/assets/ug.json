@@ -261,5 +261,8 @@
   "traditionalOrderDesc": "كۆپىنچە ھازىرقى زامان خرىستىيان مۇقەددەس كىتابلىرىدا بار بولغان تەرتىب",
   "keepDeviceAwaken": "ئېكراننى ئويغاق ساقلا",
   "youHaveNSubscriptions": "سىزدە {{count}} ئىزچىلىق بار",
-  "unknownUser": "نامەلۇم ئىشلەتكۈچى"
+  "unknownUser": "نامەلۇم ئىشلەتكۈچى",
+  "anonymous": "ئاتسىز",
+  "reportBug": "خاتالىق دوكلات قىلىش",
+  "tabs": "بەتكۈچلەر"
 }

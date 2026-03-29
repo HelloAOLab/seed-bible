@@ -261,5 +261,8 @@
   "traditionalOrderDesc": "Ихэнх орчин үеийн Христийн Библид байдаг дараалал",
   "keepDeviceAwaken": "Дэлгэцийг идэвхтэй байлгах",
   "youHaveNSubscriptions": "Танд {{count}} захиалга байна",
-  "unknownUser": "Үл мэдэгдэх хэрэглэгч"
+  "unknownUser": "Үл мэдэгдэх хэрэглэгч",
+  "anonymous": "Нэргүй",
+  "reportBug": "Алдаа мэдэгдэх",
+  "tabs": "Табууд"
 }

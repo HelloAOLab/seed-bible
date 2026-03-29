@@ -261,5 +261,8 @@
   "traditionalOrderDesc": "Modern Hristiyan İncillerinin çoğunda bulunan sıralama",
   "keepDeviceAwaken": "Ekranı açık tut",
   "youHaveNSubscriptions": "{{count}} aboneliğiniz var",
-  "unknownUser": "Bilinmeyen kullanıcı"
+  "unknownUser": "Bilinmeyen kullanıcı",
+  "anonymous": "Anonim",
+  "reportBug": "Hata bildir",
+  "tabs": "Sekmeler"
 }

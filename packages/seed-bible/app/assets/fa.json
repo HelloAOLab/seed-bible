@@ -261,5 +261,8 @@
   "traditionalOrderDesc": "ترتیبی که در بیشتر کتاب‌های مقدس مسیحی مدرن یافت می‌شود",
   "keepDeviceAwaken": "صفحه نمایش را بیدار نگه دارید",
   "youHaveNSubscriptions": "شما {{count}} اشتراک دارید",
-  "unknownUser": "کاربر ناشناس"
+  "unknownUser": "کاربر ناشناس",
+  "anonymous": "ناشناس",
+  "reportBug": "گزارش مشکل",
+  "tabs": "زبانه‌ها"
 }

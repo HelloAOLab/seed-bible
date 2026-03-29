@@ -261,5 +261,8 @@
   "traditionalOrderDesc": "대부분의 현대 기독교 성경에서 발견되는 순서",
   "keepDeviceAwaken": "화면 켜짐 유지",
   "youHaveNSubscriptions": "{{count}}개의 구독이 있습니다",
-  "unknownUser": "알 수 없는 사용자"
+  "unknownUser": "알 수 없는 사용자",
+  "anonymous": "익명",
+  "reportBug": "버그 신고",
+  "tabs": "탭"
 }

@@ -793,5 +793,6 @@
   "tanakOrderDesc": "ヘブライ語聖書の元の統一された三部構成の順序",
   "traditionalOrderDesc": "現代のキリスト教聖書の多くに見られる順序",
   "youHaveNSubscriptions": "{{count}}件のサブスクリプションがあります",
-  "unknownUser": "不明なユーザー"
+  "unknownUser": "不明なユーザー",
+  "anonymous": "匿名"
 }

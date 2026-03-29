@@ -877,7 +877,7 @@ export const AccountSetting = ({
                 marginBottom: "2px",
               }}
             >
-              Anonymous
+              {t("anonymous")}
             </div>
             <div style={{ fontSize: "12px", color: "#9ca3af" }}>
               ID:{configBot.id.slice(0, 12)}

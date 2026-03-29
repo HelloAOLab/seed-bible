@@ -261,5 +261,8 @@
   "traditionalOrderDesc": "زیادہ تر جدید عیسائی بائبلوں میں پائی جانے والی ترتیب",
   "keepDeviceAwaken": "اسکرین کو بیدار رکھیں",
   "youHaveNSubscriptions": "آپ کے پاس {{count}} سبسکرپشنز ہیں",
-  "unknownUser": "نامعلوم صارف"
+  "unknownUser": "نامعلوم صارف",
+  "anonymous": "گمنام",
+  "reportBug": "بگ رپورٹ کریں",
+  "tabs": "ٹیبز"
 }

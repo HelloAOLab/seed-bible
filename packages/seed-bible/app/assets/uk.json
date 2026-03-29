@@ -261,5 +261,8 @@
   "traditionalOrderDesc": "Порядок, прийнятий у більшості сучасних християнських Біблій",
   "keepDeviceAwaken": "Тримати екран увімкненим",
   "youHaveNSubscriptions": "У вас {{count}} підписок",
-  "unknownUser": "Невідомий користувач"
+  "unknownUser": "Невідомий користувач",
+  "anonymous": "Анонім",
+  "reportBug": "Повідомити про помилку",
+  "tabs": "Вкладки"
 }

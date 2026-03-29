@@ -261,5 +261,8 @@
   "traditionalOrderDesc": "Thứ tự được tìm thấy trong hầu hết các Kinh Thánh Cơ đốc hiện đại",
   "keepDeviceAwaken": "Giữ màn hình sáng",
   "youHaveNSubscriptions": "Bạn có {{count}} gói đăng ký",
-  "unknownUser": "Người dùng không xác định"
+  "unknownUser": "Người dùng không xác định",
+  "anonymous": "Ẩn danh",
+  "reportBug": "Báo lỗi",
+  "tabs": "Thẻ"
 }

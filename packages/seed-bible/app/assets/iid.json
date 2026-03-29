@@ -261,5 +261,8 @@
   "traditionalOrderDesc": "Urutan yang ditemukan di sebagian besar Alkitab Kristen modern",
   "keepDeviceAwaken": "Jaga layar tetap menyala",
   "youHaveNSubscriptions": "Anda memiliki {{count}} langganan",
-  "unknownUser": "Pengguna tidak dikenal"
+  "unknownUser": "Pengguna tidak dikenal",
+  "anonymous": "Anonim",
+  "reportBug": "Laporkan bug",
+  "tabs": "Tab"
 }

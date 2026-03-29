@@ -793,5 +793,6 @@
   "tanakOrderDesc": "L'ordre original, unifié et tripartite de la Bible hébraïque",
   "traditionalOrderDesc": "L'ordre trouvé dans la plupart des Bibles chrétiennes modernes",
   "youHaveNSubscriptions": "Vous avez {{count}} abonnements",
-  "unknownUser": "Utilisateur inconnu"
+  "unknownUser": "Utilisateur inconnu",
+  "anonymous": "Anonyme"
 }

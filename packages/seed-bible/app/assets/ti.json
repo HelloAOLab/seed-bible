@@ -261,5 +261,8 @@
   "traditionalOrderDesc": "ኣብ መብዛሕትኡ ዘመናዊ ክርስትያናዊ መጽሓፍ ቅዱሳት ዝርከብ ቅደም ተኸተል",
   "keepDeviceAwaken": "ስክሪን ንቑሕ ኣቐምጥ",
   "youHaveNSubscriptions": "{{count}} ምዝገባታት ኣለዉኻ",
-  "unknownUser": "ዘይተፈልጠ ተጠቃሚ"
+  "unknownUser": "ዘይተፈልጠ ተጠቃሚ",
+  "anonymous": "ስም-ኣልባ",
+  "reportBug": "ጸገም ሓብር",
+  "tabs": "ታቦች"
 }

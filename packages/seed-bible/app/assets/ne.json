@@ -261,5 +261,8 @@
   "traditionalOrderDesc": "अधिकांश आधुनिक ईसाई बाइबलहरूमा पाइने क्रम",
   "keepDeviceAwaken": "स्क्रिन जागा राख्नुहोस्",
   "youHaveNSubscriptions": "तपाईंसँग {{count}} सदस्यताहरू छन्",
-  "unknownUser": "अज्ञात प्रयोगकर्ता"
+  "unknownUser": "अज्ञात प्रयोगकर्ता",
+  "anonymous": "बेनामी",
+  "reportBug": "बग रिपोर्ट गर्नुहोस्",
+  "tabs": "ट्याबहरू"
 }

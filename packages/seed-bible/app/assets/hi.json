@@ -794,5 +794,6 @@
   "tanakOrderDesc": "हिब्रू बाइबल का मूल, एकीकृत, तीन-भाग क्रम",
   "traditionalOrderDesc": "अधिकांश आधुनिक ईसाई बाइबलों में पाया जाने वाला क्रम",
   "youHaveNSubscriptions": "आपके पास {{count}} सदस्यताएं हैं",
-  "unknownUser": "अज्ञात उपयोगकर्ता"
+  "unknownUser": "अज्ञात उपयोगकर्ता",
+  "anonymous": "गुमनाम"
 }

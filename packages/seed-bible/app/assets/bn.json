@@ -261,5 +261,8 @@
   "traditionalOrderDesc": "বেশিরভাগ আধুনিক খ্রিস্টান বাইবেলে পাওয়া ক্রম",
   "keepDeviceAwaken": "স্ক্রীন জাগ্রত রাখুন",
   "youHaveNSubscriptions": "আপনার {{count}}টি সাবস্ক্রিপশন আছে",
-  "unknownUser": "অজানা ব্যবহারকারী"
+  "unknownUser": "অজানা ব্যবহারকারী",
+  "anonymous": "বেনামী",
+  "reportBug": "বাগ রিপোর্ট করুন",
+  "tabs": "ট্যাব"
 }

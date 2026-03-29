@@ -793,5 +793,6 @@
   "tanakOrderDesc": "الترتيب الأصلي الموحد ثلاثي الأجزاء للكتاب المقدس العبري",
   "traditionalOrderDesc": "الترتيب الموجود في معظم الأناجيل المسيحية الحديثة",
   "youHaveNSubscriptions": "لديك {{count}} اشتراكات",
-  "unknownUser": "مستخدم غير معروف"
+  "unknownUser": "مستخدم غير معروف",
+  "anonymous": "مجهول"
 }

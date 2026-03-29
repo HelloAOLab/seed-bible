@@ -797,5 +797,6 @@
   "tanakOrderDesc": "The original, unified, three-part ordering of the Hebrew Bible",
   "traditionalOrderDesc": "The ordering found in most modern Christian Bibles",
   "youHaveNSubscriptions": "You have {{count}} subscriptions",
-  "unknownUser": "Unknown User"
+  "unknownUser": "Unknown User",
+  "anonymous": "Anonymous"
 }

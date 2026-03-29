@@ -261,5 +261,8 @@
   "traditionalOrderDesc": "ترتیب چې په ډیرو عصري عیسوي انجیلونو کې موندل کیږي",
   "keepDeviceAwaken": "سکرین بیدار وساتئ",
   "youHaveNSubscriptions": "تاسو {{count}} ګډونونه لرئ",
-  "unknownUser": "ناپېژندل کارن"
+  "unknownUser": "ناپېژندل کارن",
+  "anonymous": "بې نومه",
+  "reportBug": "بګ راپور ورکړئ",
+  "tabs": "ټبونه"
 }

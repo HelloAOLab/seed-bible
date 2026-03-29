@@ -261,5 +261,8 @@
   "traditionalOrderDesc": "Mpangilio unaopatikana katika Biblia nyingi za kisasa za Kikristo",
   "keepDeviceAwaken": "Weka skrini ikiwa hai",
   "youHaveNSubscriptions": "Una usajili {{count}}",
-  "unknownUser": "Mtumiaji asiyejulikana"
+  "unknownUser": "Mtumiaji asiyejulikana",
+  "anonymous": "Asiyejulikana",
+  "reportBug": "Ripoti hitilafu",
+  "tabs": "Vichupo"
 }

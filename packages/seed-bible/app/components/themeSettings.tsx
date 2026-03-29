@@ -7242,7 +7242,7 @@ const MobileSettingsCard = ({ onClose }: { onClose?: () => void }) => {
 
   const sectionTitleStyle = {
     fontSize: "16px",
-    color: "var(--text2)",
+    color: " var(--pageTextColor)",
     fontWeight: "500",
     marginBottom: "12px",
   };
@@ -7304,7 +7304,7 @@ const MobileSettingsCard = ({ onClose }: { onClose?: () => void }) => {
           marginBottom: "8px",
           fontSize: "14px",
           fontWeight: "500",
-          color: "var(--heading1Color)",
+          color: " var(--pageTextColor)",
         }}
       >
         {t("uiTextSize")}

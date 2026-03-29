@@ -261,5 +261,8 @@
   "traditionalOrderDesc": "በአብዛኛዎቹ ዘመናዊ የክርስቲያን መጽሐፍ ቅዱሶች ውስጥ ያለው ቅደም ተከተል",
   "keepDeviceAwaken": "ማያ ገጹን ንቁ ያድርጉ",
   "youHaveNSubscriptions": "{{count}} ምዝገባዎች አሉዎት",
-  "unknownUser": "ያልታወቀ ተጠቃሚ"
+  "unknownUser": "ያልታወቀ ተጠቃሚ",
+  "anonymous": "ስም-አልባ",
+  "reportBug": "ስህተት ሪፖርት ያድርጉ",
+  "tabs": "ትሮች"
 }

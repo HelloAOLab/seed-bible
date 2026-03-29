@@ -793,5 +793,6 @@
   "tanakOrderDesc": "希伯来圣经原始的、统一的三部分排序",
   "traditionalOrderDesc": "大多数现代基督教圣经中的排序",
   "youHaveNSubscriptions": "您有 {{count}} 个订阅",
-  "unknownUser": "未知用户"
+  "unknownUser": "未知用户",
+  "anonymous": "匿名"
 }
