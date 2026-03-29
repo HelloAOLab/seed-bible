@@ -1637,7 +1637,7 @@ function SideBar({ panelsNumber }) {
               >
                 {<MenuIcon name={"person_add"} />}
               </span> */}
-              <button
+              {/* <button
                 className="mobile-icon-button"
                 style={{ background: "transparent" }}
                 onClick={(e) => {
@@ -1651,7 +1651,7 @@ function SideBar({ panelsNumber }) {
                 title="Settings"
               >
                 <MobileSettingsIcon />
-              </button>
+              </button> */}
               <span
                 className="mobile-header-icon"
                 onClick={() => {
