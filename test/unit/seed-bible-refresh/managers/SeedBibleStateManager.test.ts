@@ -450,7 +450,8 @@ describe("createSeedBibleState", () => {
       bookId: string,
       bookName: string,
       chapterNumber: number,
-      translationName = "Test Translation"
+      translationName = "Test Translation",
+      textDirection: "ltr" | "rtl" = "ltr"
     ) {
       const tab =
         state.tabs.tabs.value.find(
@@ -461,7 +462,7 @@ describe("createSeedBibleState", () => {
         translation: {
           id: "test-translation",
           name: translationName,
-          textDirection: "ltr",
+          textDirection,
         },
         book: { id: bookId, name: bookName, abbreviation: bookId },
         chapter: {
@@ -495,6 +496,17 @@ describe("createSeedBibleState", () => {
       setSelectedTabChapter(state, "genesis", "Genesis", 2, "ESV");
       expect((globalThis as any).configBot.tags.pageTitle).toBe(
         "Genesis 2 - ESV | Seed Bible"
+      );
+    });
+
+    it("prepends an RTL marker for right-to-left translations", () => {
+      const state = createSeedBibleState();
+      const RTLE_CHAR = "\u202B";
+
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "Arabic", "rtl");
+
+      expect((globalThis as any).configBot.tags.pageTitle).toBe(
+        `${RTLE_CHAR}Genesis 1 - Arabic | Seed Bible`
       );
     });
   });
