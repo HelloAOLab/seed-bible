@@ -109,6 +109,7 @@ export const MobileSettingsIcon = (props) => (
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
+      {...props}
     />
   </svg>
 );

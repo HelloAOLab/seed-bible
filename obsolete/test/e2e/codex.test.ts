@@ -120,15 +120,15 @@ describe("codex tests", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
-    await page.locator(".sidebar-translation-selector").click();
+    await seedBibleFrame.locator(".sidebar-translation-selector").click();
 
-    await page.waitForSelector("#translation-search-input");
+    await seedBibleFrame.waitForSelector("#translation-search-input");
 
-    await page.type("#translation-search-input", "su1");
+    await seedBibleFrame.type("#translation-search-input", "su1");
 
     await delay(150);
 
-    await page.locator(".translation-option").click();
+    await seedBibleFrame.locator(".translation-option").click();
 
     await delay(2000);
 

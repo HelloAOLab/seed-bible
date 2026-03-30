@@ -1,0 +1,31 @@
+{
+  "author": "Sujan Barman",
+  "configEditor": {
+    "app": "",
+    "author": "Sujan Barman",
+    "toolbarConfig": {
+      "label": "Twitch Panel",
+      "icon": "close",
+      "hasToggle": "true",
+      "run": "toggleInterface",
+      "iconUrl": "https://res.cloudinary.com/dacw0qnpr/image/upload/v1774035767/Vector_6_if8usw.svg",
+      "showInPageToolbar": true,
+      "showInStarterToolbar": true,
+      "active": false
+    }
+  },
+  "createdAt": "2026-03-12T18:58:19.554Z",
+  "dependencies": [],
+  "description": "Extension ext_twitchPub description.",
+  "id": 1773341899554,
+  "license": "MIT",
+  "linkedDependencies": [],
+  "name": "ext_twitchPub",
+  "otherBots": [],
+  "status": "active",
+  "type": "package",
+  "updatedAt": "2026-03-12T18:58:19.554Z",
+  "userAuth": "",
+  "version": "0.0.1",
+  "mainBotTag": "ext_twitchPub.host"
+}

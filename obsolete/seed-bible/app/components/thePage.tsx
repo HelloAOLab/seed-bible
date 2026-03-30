@@ -140,6 +140,15 @@ function ThePage({
   const [showCommands, setShowCommands] = useState(false);
   const [lastSelectedVerse, setLastSelectedVerse] = useState(null);
   const [showMobileSettings, setShowMobileSettings] = useState(false);
+  useEffect(() => {
+    if (showMobileSettings) {
+      document.body.classList.add("mobile-settings-open");
+    } else {
+      document.body.classList.remove("mobile-settings-open");
+    }
+    return () => document.body.classList.remove("mobile-settings-open");
+  }, [showMobileSettings]);
+
   const [highlighted, setHighlighted] = useState({});
 
   // NEW: State for clicked verses
@@ -1788,6 +1797,17 @@ function ThePage({
 
   return (
     <>
+      {showMobileSettings && (
+        <>
+          <div
+            className="mobile-settings-overlay"
+            onClick={() => setShowMobileSettings(false)}
+          />
+          <div className="mobile-settings-sheet">
+            <MobileSettingsCard onClose={() => setShowMobileSettings(false)} />
+          </div>
+        </>
+      )}
       <div
         ref={swipeViewportRef}
         style={{
@@ -2007,6 +2027,7 @@ function ThePage({
 
         body.scroll-hide-bars .mobile-header {
           transform: translateY(-100%);
+          overflow: hidden;
         }
 
         @media (max-width: 768px) {
@@ -2146,6 +2167,38 @@ function ThePage({
           font-size: 12px;
           color: #999;
         }
+
+        .mobile-settings-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.3);
+          z-index: 9998;
+        }
+
+        .mobile-settings-sheet {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          z-index: 9999;
+          background: var(--pageBackground, #fff);
+          border-top-left-radius: 16px;
+          border-top-right-radius: 16px;
+          box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
+          animation: slideUpSheet 0.25s ease-out;
+        }
+
+        @keyframes slideUpSheet {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+
+        body.mobile-settings-open .mobile-bottom-navbar {
+          display: none !important;
+        }
          `}
             </style>
             {data && tab && !tabEntered ? (
@@ -2154,7 +2207,12 @@ function ThePage({
                 {globalThis.IsMobileNow && globalThis.IsMobileNow() && (
                   <div className="mobile-header">
                     <div className="mobile-header-content">
-                      <div className="mobile-header-left">
+                      <div
+                        className="mobile-header-left"
+                        style={{
+                          zoom: (globalThis as any).changes?.uiTextSize || 1,
+                        }}
+                      >
                         <div>
                           <h1 className="mobile-header-title">
                             <span
@@ -2209,34 +2267,17 @@ function ThePage({
                         </div>
                       </div>
 
-                      <div
-                        className="mobile-header-right"
-                        style={{ position: "relative" }}
-                      >
+                      <div className="mobile-header-right">
                         <button
                           className="mobile-icon-button"
                           onClick={(e) => {
                             e.stopPropagation();
                             setShowMobileSettings((prev) => !prev);
                           }}
-                          title="Settings"
+                          title={t("settings")}
                         >
                           <InfoSettingsIcon />
                         </button>
-                        {showMobileSettings && (
-                          <div
-                            style={{
-                              position: "absolute",
-                              top: "100%",
-                              right: 0,
-                              marginTop: "8px",
-                              zIndex: 1000,
-                              width: "300px",
-                            }}
-                          >
-                            <MobileSettingsCard />
-                          </div>
-                        )}
                       </div>
                     </div>
                     {!removeBookMark &&
@@ -3409,7 +3450,7 @@ function Section({
                                         });
                                         setShowFootnoteModal(true);
                                       }}
-                                      title="View footnotes"
+                                      title={t("viewFootnotes")}
                                     >
                                       <span class="material-symbols-outlined">
                                         info
@@ -3449,7 +3490,7 @@ function Section({
                                       });
                                       setShowFootnoteModal(true);
                                     }}
-                                    title="View footnotes"
+                                    title={t("viewFootnotes")}
                                   >
                                     <span class="material-symbols-outlined">
                                       info
@@ -3491,7 +3532,7 @@ function Section({
                                     });
                                     setShowFootnoteModal(true);
                                   }}
-                                  title="View footnotes"
+                                  title={t("viewFootnotes")}
                                 >
                                   <span class="material-symbols-outlined">
                                     info
