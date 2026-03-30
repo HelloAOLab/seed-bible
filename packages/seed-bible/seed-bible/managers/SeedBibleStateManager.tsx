@@ -153,6 +153,9 @@ export function createSeedBibleState(): SeedBibleState {
       return;
     }
 
+    const RTLE_CHAR = "\u202B";
+    configBot.tags.pageTitle = `${chapter.translation.textDirection === "rtl" ? RTLE_CHAR : ""}${chapter.book.name} ${chapter.chapter.number} - ${chapter.translation.name} | Seed Bible`;
+
     const readingHistoryTimeoutId = setInterval(() => {
       readingHistory.saveReadingHistory(
         chapter.book.id,
