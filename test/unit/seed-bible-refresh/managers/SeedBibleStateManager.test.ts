@@ -443,4 +443,59 @@ describe("createSeedBibleState", () => {
       });
     });
   });
+
+  describe("pageTitle tag", () => {
+    function setSelectedTabChapter(
+      state: ReturnType<typeof createSeedBibleState>,
+      bookId: string,
+      bookName: string,
+      chapterNumber: number,
+      translationName = "Test Translation"
+    ) {
+      const tab =
+        state.tabs.tabs.value.find(
+          (t) => t.id === state.tabs.selectedTabId.value
+        ) ?? null;
+      expect(tab).not.toBeNull();
+      tab!.readingState.chapterData.value = {
+        translation: {
+          id: "test-translation",
+          name: translationName,
+          textDirection: "ltr",
+        },
+        book: { id: bookId, name: bookName, abbreviation: bookId },
+        chapter: {
+          number: chapterNumber,
+          id: `${bookId}-${chapterNumber}`,
+          reference: `${bookName} ${chapterNumber}`,
+        },
+        verses: [],
+        notes: [],
+      } as any;
+    }
+
+    it("sets pageTitle from the selected book and chapter", () => {
+      const state = createSeedBibleState();
+
+      setSelectedTabChapter(state, "genesis", "Genesis", 7, "ESV");
+
+      expect((globalThis as any).configBot.tags.pageTitle).toBe(
+        "Genesis 7 - ESV | Seed Bible"
+      );
+    });
+
+    it("updates pageTitle when the chapter changes", () => {
+      const state = createSeedBibleState();
+
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "ESV");
+      expect((globalThis as any).configBot.tags.pageTitle).toBe(
+        "Genesis 1 - ESV | Seed Bible"
+      );
+
+      setSelectedTabChapter(state, "genesis", "Genesis", 2, "ESV");
+      expect((globalThis as any).configBot.tags.pageTitle).toBe(
+        "Genesis 2 - ESV | Seed Bible"
+      );
+    });
+  });
 });
