@@ -1,3 +1,5 @@
+configBot.tags.pageTitle = "Seed Bible";
+
 thisBot.initPostHog();
 
 import { Main } from "seed-bible.app.main";
