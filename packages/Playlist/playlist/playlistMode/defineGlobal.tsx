@@ -6,6 +6,61 @@ try {
   const G = globalThis as any;
   os.hideLoadingScreen();
 
+  const getPosition = () => {
+    const height = window.innerHeight;
+    const edgeThreshold = 270; // Distance from edges to adjust position
+
+    if (G.LastClickX) {
+      const left = G.LastClickX;
+      let top = G.LastClickY;
+      let bottom = "none";
+      G.LastClickX = null;
+      G.LastClickY = null;
+
+      if (height - top < edgeThreshold) {
+        top = "none";
+        bottom = "2rem";
+      }
+
+      return {
+        left: 0,
+        transform: "translate(40px, 0px)",
+        top,
+        bottom,
+      };
+    }
+
+    const pointerX = gridPortalBot.tags.pointerPixelX;
+    const pointerY = gridPortalBot.tags.pointerPixelY;
+    const width = window?.innerWidth || gridPortalBot.tags.pixelWidth;
+
+    const safeMargin = "2rem"; // Fixed margin when near edges
+
+    let position: any = {};
+
+    // Horizontal positioning
+    if (width - pointerX < edgeThreshold) {
+      position.right = `-11rem`;
+    } else if (pointerX < edgeThreshold) {
+      position.left = "2rem";
+    } else {
+      position.left = `16rem`;
+    }
+
+    // Vertical positioning
+    if (height - pointerY < edgeThreshold) {
+      position.bottom = `5rem`;
+    } else if (pointerY < edgeThreshold) {
+      position.top = safeMargin;
+    } else {
+      position.top = `${parseInt(pointerY) - 80}px`;
+    }
+
+    return position;
+  };
+
+  G.getPosition = getPosition;
+
   const DEV_ENV =
     configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
 
@@ -872,59 +927,6 @@ try {
 
   G.SYSTEM_PROMPT = prompt;
 
-  const getPosition = () => {
-    const height = gridPortalBot.tags.pixelHeight;
-    const edgeThreshold = 270; // Distance from edges to adjust position
-
-    if (G.LastClickX) {
-      const left = G.LastClickX;
-      let top = G.LastClickY;
-      let bottom = "none";
-      G.LastClickX = null;
-      G.LastClickY = null;
-
-      if (height - top < edgeThreshold) {
-        top = "none";
-        bottom = "2rem";
-      }
-
-      return {
-        left: 0,
-        transform: "translate(40px, 0px)",
-        top,
-        bottom,
-      };
-    }
-
-    const pointerX = gridPortalBot.tags.pointerPixelX;
-    const pointerY = gridPortalBot.tags.pointerPixelY;
-    const width = window?.innerWidth || gridPortalBot.tags.pixelWidth;
-
-    const safeMargin = "2rem"; // Fixed margin when near edges
-
-    let position: any = {};
-
-    // Horizontal positioning
-    if (width - pointerX < edgeThreshold) {
-      position.right = `-11rem`;
-    } else if (pointerX < edgeThreshold) {
-      position.left = "2rem";
-    } else {
-      position.left = `16rem`;
-    }
-
-    // Vertical positioning
-    if (height - pointerY < edgeThreshold) {
-      position.bottom = `5rem`;
-    } else if (pointerY < edgeThreshold) {
-      position.top = safeMargin;
-    } else {
-      position.top = `${parseInt(pointerY) - 80}px`;
-    }
-
-    return position;
-  };
-
   const SIMPLE_FILE =
     "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/e5ed7d7a064b801e4954efa40ad5929ee771614fc5cd4d71c9dd8669c77bdb25.png";
   const PDF =
@@ -974,8 +976,6 @@ try {
 
   G.getFileIconByMimeType = getFileIconByMimeType;
   G.getExtensionFromMimeType = getExtensionFromMimeType;
-
-  G.getPosition = getPosition;
 
   const getColor = (index: number, total: number) => {
     const startColor = [255, 0, 127]; // Pink

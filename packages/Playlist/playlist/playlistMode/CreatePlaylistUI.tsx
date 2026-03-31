@@ -184,7 +184,9 @@ const CreatePlaylistUI = (props: any) => {
   const [mergeMode, setMergeMode] = useState(false);
   const [renderAgain, setRenderAgain] = useState(0);
 
-  const [checklist, setChecklist] = useState(false);
+  const [checklist, setChecklist] = useState(
+    G.ChecklistEnabledRestorePlaylist || false
+  );
   const [readingPlan, setReadingPlan] = useState(false);
   const [currentFormat, setCurrentFormat] = useState("MM-DD-YYYY");
 
@@ -216,10 +218,27 @@ const CreatePlaylistUI = (props: any) => {
   // Features
   const [customColor, setCustomColor] = useState("#D3643329");
   const [selectedColor, setSelectedColor] = useState("#D9D9D9");
-  const [publishAccess, setPublishAccess] = useState("public");
-  const [selectedIcon, setSelectedIcon] = useState(null);
-  const [description, setDescription] = useState("");
-  const [customIcon, setCustomIcon] = useState(G.DEFAULT_UPLOAD_ICON);
+  const [publishAccess, setPublishAccess] = useState(
+    G.PublishAccessRestorePlaylist || "public"
+  );
+  const [selectedIcon, setSelectedIcon] = useState(
+    G.SelectedIconRestorePlaylist || null
+  );
+  const [description, setDescription] = useState(
+    G.DescriptionRestorePlaylist || ""
+  );
+  const [customIcon, setCustomIcon] = useState(
+    G.CustomIconRestorePlaylist || G.DEFAULT_UPLOAD_ICON
+  );
+
+  // Restore publish access, custom color, custom icon, selected color, selected icon, description
+  useLayoutEffect(() => {
+    G.PublishAccessRestorePlaylist = publishAccess;
+    G.CustomIconRestorePlaylist = customIcon;
+    G.SelectedIconRestorePlaylist = selectedIcon;
+    G.DescriptionRestorePlaylist = description;
+    G.ChecklistEnabledRestorePlaylist = checklist;
+  }, [publishAccess, customIcon, selectedIcon, description, checklist]);
 
   const setEditModal = (params: any) => {
     const {
@@ -1396,6 +1415,7 @@ const CreatePlaylistUI = (props: any) => {
                 }}
                 onClick={(e) => {
                   G[`${id}currentPlaylist`] = [];
+                  thisBot.resetPlaylistGlobalStateVars();
                   if (setTab) setTab("discover");
                 }}
               >

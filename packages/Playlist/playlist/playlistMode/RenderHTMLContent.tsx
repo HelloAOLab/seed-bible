@@ -111,7 +111,7 @@ const RenderHTMLContent = (props: any) => {
         G.LoadedPlaylistAnnotations[playlistId] = { ...res.data };
       }
 
-      if (res.success) {
+      if (res.success && res.data?.list) {
         const playlistData = res.data;
         thisBot.Playlistplaying({
           playingPlaylist: playlistData.id,
@@ -123,7 +123,7 @@ const RenderHTMLContent = (props: any) => {
         });
       } else {
         ShowNotification({
-          message: t("unableToCopyPlaylist"),
+          message: t("playlistNotFoundOrIsDeleted"),
           severity: "error",
         });
       }
