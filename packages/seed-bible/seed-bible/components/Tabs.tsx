@@ -45,6 +45,8 @@ export function Tabs(props: TabsProps) {
   const effectivelyCollapsed = isCollapsed && !isMobileOpen;
   const openMenuTabId = useSignal<string | null>(null);
   const isLayoutMenuOpen = useSignal(false);
+  const isJoinSessionModalOpen = useSignal(false);
+  const joinSessionId = useSignal("");
   const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
   const selectedBookId = selectedTab?.readingState.bookId.value ?? null;
   const selectedChapter = selectedTab?.readingState.chapterNumber.value ?? null;
@@ -62,6 +64,27 @@ export function Tabs(props: TabsProps) {
       configBot.tags.translation = selectedTranslation;
     }
   }, [selectedBookId, selectedChapter, selectedTranslation]);
+
+  const openJoinSessionModal = () => {
+    openMenuTabId.value = null;
+    isLayoutMenuOpen.value = false;
+    isJoinSessionModalOpen.value = true;
+  };
+
+  const closeJoinSessionModal = () => {
+    isJoinSessionModalOpen.value = false;
+    joinSessionId.value = "";
+  };
+
+  const handleJoinSharedSession = async () => {
+    const sessionId = joinSessionId.value.trim();
+    if (!sessionId) {
+      return;
+    }
+
+    await state.joinSharedSession(sessionId);
+    closeJoinSessionModal();
+  };
 
   return (
     <aside
@@ -149,6 +172,14 @@ export function Tabs(props: TabsProps) {
               <span className="material-symbols-outlined">groups</span>
             </button>
             <button
+              onClick={openJoinSessionModal}
+              className="sb-tab-add-button"
+              aria-label="Join shared reading session"
+              title="Join shared session"
+            >
+              <span className="material-symbols-outlined">group_add</span>
+            </button>
+            <button
               onClick={() => {
                 app.addTab();
               }}
@@ -212,26 +243,43 @@ export function Tabs(props: TabsProps) {
                       </span>
                     </button>
 
-                    {panelsEnabled && openMenuTabId.value === tab.id && (
+                    {openMenuTabId.value === tab.id && (
                       <div className="sb-tab-menu">
-                        <button
-                          onClick={() => {
-                            app.openInNewPane(tab.id);
-                            openMenuTabId.value = null;
-                          }}
-                          className="sb-tab-menu-item"
-                        >
-                          Open in new pane
-                        </button>
-                        <button
-                          onClick={() => {
-                            app.openInDetachedPane(tab.id);
-                            openMenuTabId.value = null;
-                          }}
-                          className="sb-tab-menu-item"
-                        >
-                          Open in detached pane
-                        </button>
+                        {tab.sharedSession && (
+                          <button
+                            className="sb-tab-menu-item"
+                            title={`Session ID: ${tab.sharedSession.id}`}
+                            onClick={() => {
+                              if (tab.sharedSession) {
+                                os.setClipboard(tab.sharedSession.id);
+                              }
+                            }}
+                          >
+                            {`Session ID: ${tab.sharedSession.id}`}
+                          </button>
+                        )}
+                        {panelsEnabled && (
+                          <>
+                            <button
+                              onClick={() => {
+                                app.openInNewPane(tab.id);
+                                openMenuTabId.value = null;
+                              }}
+                              className="sb-tab-menu-item"
+                            >
+                              Open in new pane
+                            </button>
+                            <button
+                              onClick={() => {
+                                app.openInDetachedPane(tab.id);
+                                openMenuTabId.value = null;
+                              }}
+                              className="sb-tab-menu-item"
+                            >
+                              Open in detached pane
+                            </button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -240,6 +288,57 @@ export function Tabs(props: TabsProps) {
             })}
           </div>
         </>
+      )}
+
+      {isJoinSessionModalOpen.value && (
+        <div
+          className="sb-footnote-modal-overlay"
+          onClick={closeJoinSessionModal}
+        >
+          <div
+            className="sb-footnote-modal"
+            onClick={(event: MouseEvent) => {
+              event.stopPropagation();
+            }}
+          >
+            <div className="sb-footnote-modal-header">
+              <h3 className="sb-footnote-modal-title">Join Shared Session</h3>
+              <button
+                className="sb-footnote-modal-close"
+                aria-label="Close join shared session dialog"
+                onClick={closeJoinSessionModal}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="sb-footnote-modal-content">
+              <label>
+                <span>Session ID</span>
+                <input
+                  value={joinSessionId.value}
+                  onInput={(event) => {
+                    joinSessionId.value = (
+                      event.currentTarget as HTMLInputElement
+                    ).value;
+                  }}
+                  placeholder="Enter shared session ID"
+                />
+              </label>
+              <div>
+                <button onClick={closeJoinSessionModal}>Cancel</button>
+                <button
+                  onClick={() => {
+                    void handleJoinSharedSession();
+                  }}
+                  disabled={!joinSessionId.value.trim()}
+                >
+                  Join Session
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       <button
