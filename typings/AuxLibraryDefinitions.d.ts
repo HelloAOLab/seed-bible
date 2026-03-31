@@ -12393,6 +12393,11 @@ export interface SendNotificationOptions extends RecordActionOptions {
   topic?: string;
 }
 
+export interface SubscriptionLike {
+  get closed(): boolean;
+  unsubscribe(): void;
+}
+
 /**
  * Defines an interface for objects that are able to synchronize data between multiple clients.
  */
