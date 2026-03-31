@@ -139,7 +139,19 @@ export function Tabs(props: TabsProps) {
           <div className="sb-sidebar-tabs-header">
             <h3 className="sb-sidebar-tabs-title">Tabs</h3>
             <button
-              onClick={app.addTab}
+              onClick={() => {
+                void state.createSharedSession();
+              }}
+              className="sb-tab-add-button"
+              aria-label="Create new shared reading session tab"
+              title="New shared session"
+            >
+              <span className="material-symbols-outlined">groups</span>
+            </button>
+            <button
+              onClick={() => {
+                app.addTab();
+              }}
               className="sb-tab-add-button"
               aria-label="Create new tab"
               title="New tab"
@@ -161,6 +173,7 @@ export function Tabs(props: TabsProps) {
               const currentChapter = tab.readingState.chapterNumber.value;
               const currentTranslation =
                 tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
+              const titlePrefix = tab.sharedSession ? "Shared " : "";
 
               return (
                 <div
@@ -180,7 +193,7 @@ export function Tabs(props: TabsProps) {
                       isSelected ? " sb-tab-button-selected" : ""
                     }`}
                   >
-                    <span>{`${currentBookName} - ${currentChapter} • ${currentTranslation}`}</span>
+                    <span>{`${titlePrefix}${currentBookName} - ${currentChapter} • ${currentTranslation}`}</span>
                   </button>
 
                   <div className="sb-tab-menu-anchor">
