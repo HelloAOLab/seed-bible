@@ -85,12 +85,6 @@ function toStringOrNull(value: unknown): string | null {
   return typeof value === "string" ? value : null;
 }
 
-function toPositiveIntOrDefault(value: unknown, defaultValue: number): number {
-  return typeof value === "number" && Number.isFinite(value) && value > 0
-    ? Math.floor(value)
-    : defaultValue;
-}
-
 function toPositiveIntOrNull(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) && value > 0
     ? Math.floor(value)
