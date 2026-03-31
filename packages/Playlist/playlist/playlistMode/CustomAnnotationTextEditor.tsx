@@ -580,6 +580,7 @@ function CustomAnnotationTextEditor(props: any) {
     id = "editor",
     showPreview,
     setShowPreview,
+    isEditAddress,
   } = props;
   // ----- ids & storage
   const _instanceId = useRef(
@@ -614,8 +615,6 @@ function CustomAnnotationTextEditor(props: any) {
   G.SetCommandBoxFilter = setCommandBoxFilter;
   G.ISCommandBox = isCommandBox;
 
-  console.log("commandBoxFilter", commandBoxFilter);
-
   const [isTagSuggestionsOpen, setIsTagSuggestionsOpen] = useState(false);
   const [isPlaylistSuggestionOpen, setIsPlaylistSuggestionOpen] =
     useState(false);
@@ -628,6 +627,10 @@ function CustomAnnotationTextEditor(props: any) {
       })),
     ],
     [G?.UsedTags]
+  );
+
+  const [loadingPlaylistOptions, setLoadingPlaylistOptions] = useState(
+    G.isPlaylistLoading || false
   );
 
   const PLAYLIST_OPTIONS = useMemo(
@@ -739,10 +742,26 @@ function CustomAnnotationTextEditor(props: any) {
     if (!refId) return;
     if (!playlistFind) return;
     const playlistID = PlaylistID(playlistFind.metaData.list);
-    const playlistHTML = `<span id="${refId}">< [${playlistID}] -----|---- [${playlist.label}]/> </span>`;
+    // let playlistHTML = `<p><span id="${refId}">< [${playlistID}] -----|---- [${playlist.label}]/> </span></p>`;
+    let playlistHTML = `<div className="playlist-wrapper-sre">
+        <div
+          id="${refId}"
+          className="playlist-container-sre"
+          data-icon="${playlistID}"
+          data-label="${playlist.label}"
+        >
+          <span className="playlist-icon-sre">${playlistID}</span>
+          <span className="playlist-label-sre">${playlist.label}</span>
+          <span id="${refId}" className="material-symbols-outlined sre-play-circle sre-play-circle-${refId}">play_circle</span> 
+        </div>
+      </div>
+    `;
+
     if (!editorObjRef.current) return;
 
     const { from } = editorObjRef.current.state.selection;
+    G.NeedToRemoveEmptyPTags = true;
+    playlistHTML = fakeEscapeMediaTags(playlistHTML, showPreview);
 
     if (G.ThruCommandBox) {
       editorObjRef.current
@@ -783,11 +802,10 @@ function CustomAnnotationTextEditor(props: any) {
           ColorizeParagraphs(canonicalHTMLRef.current)
         );
       } else {
-        editorObjRef.current.commands.setContent(
-          fakeEscapeMediaTags(
-            uncolorizeHashtags(editorObjRef.current.getHTML())
-          )
-        );
+        const initialHTML = editorObjRef.current.getHTML();
+        G.NeedToRemoveEmptyPTags = true;
+        const html = fakeEscapeMediaTags(uncolorizeHashtags(initialHTML));
+        editorObjRef.current.commands.setContent(html);
       }
       return !v;
     });
@@ -797,12 +815,14 @@ function CustomAnnotationTextEditor(props: any) {
 
   useEffect(() => {
     G.RecordingValue = recording;
+    G.SetLoadingPlaylistOptions = setLoadingPlaylistOptions;
     G.ShowCommandBox = toggleCommandBox;
     G.SetRecordingData = setData;
     G.SetRecording = setRecording;
     return () => {
       G.SetRecordingData = null;
       G.SetRecording = null;
+      G.SetLoadingPlaylistOptions = null;
     };
   }, [recording]);
 
@@ -1433,7 +1453,7 @@ function CustomAnnotationTextEditor(props: any) {
     if (isLink) {
       if (!link.trim())
         return ShowNotification({
-          message: "Please enter a link to save!",
+          message: t("pleaseEnterALinkToSave"),
           severity: "error",
         });
 
@@ -1444,7 +1464,7 @@ function CustomAnnotationTextEditor(props: any) {
         G.ThruCommandBox = false;
 
         return ShowNotification({
-          message: "Invalid link!",
+          message: t("invalidLink"),
           severity: "error",
         });
       }
@@ -1466,11 +1486,23 @@ function CustomAnnotationTextEditor(props: any) {
     }
 
     if (recording === RECORDING_TYPES.audio && !data) {
+      if (!data) {
+        return ShowNotification({
+          message: t("pleaseRecordSomethingToSave"),
+          severity: "error",
+        });
+      }
       G.HandleStopPlayVoice();
       return;
     }
 
     if (recording === RECORDING_TYPES.video && !data) {
+      if (!data) {
+        return ShowNotification({
+          message: t("pleaseRecordSomethingToSave"),
+          severity: "error",
+        });
+      }
       G.HandleStopPlayVideo();
       return;
     }
@@ -1479,7 +1511,7 @@ function CustomAnnotationTextEditor(props: any) {
 
     if (!data)
       return ShowNotification({
-        message: "Please record something to save!",
+        message: t("pleaseRecordSomethingToSave"),
         severity: "error",
       });
 
@@ -1491,7 +1523,7 @@ function CustomAnnotationTextEditor(props: any) {
       recording === RECORDING_TYPES.video
     ) {
       setLoading(true);
-
+      G.IsSavingAndAdding = true;
       const fileSave: any = await os.recordFile(G?.RECORD_STOREKEY, finalData, {
         name: `${new Date().toISOString()}.${recording === RECORDING_TYPES.audio ? "webm" : "mp4"}`,
         mimeType: recording,
@@ -1500,11 +1532,12 @@ function CustomAnnotationTextEditor(props: any) {
       const url = fileSave.url || fileSave?.existingFileUrl;
 
       setLoading(false);
+      G.IsSavingAndAdding = false;
 
       if (!url) {
         G.ThruCommandBox = false;
         return ShowNotification({
-          message: "Failed to upload File!",
+          message: t("failedToUploadFile"),
           severity: "error",
         });
       }
@@ -1520,7 +1553,7 @@ function CustomAnnotationTextEditor(props: any) {
         `;
       } else {
         htmlToInsert = `
-        <audio controls src="${url}" type="audio/webm">
+        <audio controls src="${url}" type="audio/webm" class="annotation-audio">
         </audio>
         `;
       }
@@ -1582,7 +1615,7 @@ function CustomAnnotationTextEditor(props: any) {
           >
             {filteredCommandBoxOptions.length === 0 && (
               <div className="command-box-option">
-                <p>No options found</p>
+                <p>{t("noOptionsFound")}</p>
               </div>
             )}
             {filteredCommandBoxOptions.map((option) => (
@@ -1611,7 +1644,7 @@ function CustomAnnotationTextEditor(props: any) {
         )}
         {isPlaylistSuggestionOpen && (
           <SelectionOptions
-            loading={savingPlaylist}
+            loading={savingPlaylist || loadingPlaylistOptions}
             isPlaylist
             dontCloseOnClick
             handleClose={() => setIsPlaylistSuggestionOpen(false)}
@@ -1642,49 +1675,59 @@ function CustomAnnotationTextEditor(props: any) {
               padding: "1rem 0",
             }}
           >
-            {isLink ? (
-              <div
-                className="input-conainter-type"
-                style={{
-                  padding: "1px 0",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
-                <Input
-                  style={{ width: "100%" }}
-                  value={name}
-                  onChangeListener={setName}
-                  placeholder={t("typeToAddCustomTitle")}
-                />
-                <div style={{ width: "100%", display: "flex", gap: "1rem" }}>
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                flexDirection: "column",
+              }}
+            >
+              {isLink ? (
+                <div
+                  className="input-conainter-type"
+                  style={{
+                    padding: "1px 0",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
                   <Input
-                    style={{ marginBottom: "0", flexGrow: "1" }}
-                    value={link}
-                    onChangeListener={setLink}
-                    placeholder={`${t("exampleeg")} https://www.youtube.com/watch?v=ALsluAKBZ-czs3`}
+                    style={{ width: "100%" }}
+                    value={name}
+                    onChangeListener={setName}
+                    placeholder={t("typeToAddCustomTitle")}
                   />
+                  <div style={{ width: "100%", display: "flex", gap: "1rem" }}>
+                    <Input
+                      style={{ marginBottom: "0", flexGrow: "1" }}
+                      value={link}
+                      onChangeListener={setLink}
+                      placeholder={`${t("exampleeg")} https://www.youtube.com/watch?v=ALsluAKBZ-czs3`}
+                    />
+                  </div>
                 </div>
-              </div>
-            ) : isVideo ? (
-              <VideoRecordUI data={data} setData={setData} />
-            ) : (
-              <RecordingUI data={data} setData={setData} />
-            )}
+              ) : isVideo ? (
+                <VideoRecordUI data={data} setData={setData} />
+              ) : (
+                <RecordingUI data={data} setData={setData} />
+              )}
 
-            <div style={{ display: "flex", gap: "10px" }}>
-              <Button onClick={onSaveAndAdd} secondary loading={loading}>
-                Save & Add
-              </Button>
-              <Button
-                onClick={() => {
-                  setRecording(null);
-                }}
-                secondaryAlt
-              >
-                Cancel
-              </Button>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <Button onClick={onSaveAndAdd} secondary loading={loading}>
+                  {t("saveAndAdd")}
+                </Button>
+                <Button
+                  onClick={() => {
+                    setRecording(null);
+                  }}
+                  secondaryAlt
+                >
+                  {t("cancel")}
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -1721,10 +1764,10 @@ function CustomAnnotationTextEditor(props: any) {
                   }}
                 >
                   <div className="sre-loading-spinner"></div>
-                  <p>Uploading files...</p>
-                  <p>Please wait while we upload the files...</p>
-                  <p>This may take a few seconds...</p>
-                  <p>Thank you for your patience...</p>
+                  <p>{t("uploadingFiles")}</p>
+                  <p>{t("pleaseWaitWhileUploadingFiles")}</p>
+                  <p>{t("uploadMayTakeAFewSeconds")}</p>
+                  <p>{t("thankYouForYourPatience")}</p>
                 </div>
               ) : (
                 <div>
@@ -2559,18 +2602,31 @@ function escapePlaylistBlocks(html: any) {
 function fakeEscapeMediaTags(html = "", showPreview = false) {
   if (showPreview) return html;
   html = escapePlaylistBlocks(html);
+  let htmlToReturn = html
+    // escape opening media tags
+    .replace(MEDIA_OPEN_TAG_REGEX, (tag) =>
+      tag.replace(/</g, "‹").replace(/>/g, "›")
+    )
+    // escape closing media tags
+    .replace(MEDIA_CLOSE_TAG_REGEX, (tag) =>
+      tag.replace(/</g, "‹").replace(/>/g, "›")
+    );
+  if (G.NeedToRemoveEmptyPTags) {
+    G.NeedToRemoveEmptyPTags = false;
+    // 🔹 Remove ONE empty <p> AFTER playlist block
+    htmlToReturn = htmlToReturn?.replace(
+      /(<p>\s*<span id="[^"]+">[\s\S]*?<\/span>\s*<\/p>)\s*<p[^>]*>\s*(?:<br[^>]*>)?\s*<\/p>/i,
+      "$1"
+    );
 
-  return (
-    html
-      // escape opening media tags
-      .replace(MEDIA_OPEN_TAG_REGEX, (tag) =>
-        tag.replace(/</g, "‹").replace(/>/g, "›")
-      )
-      // escape closing media tags
-      .replace(MEDIA_CLOSE_TAG_REGEX, (tag) =>
-        tag.replace(/</g, "‹").replace(/>/g, "›")
-      )
-  );
+    // 🔹 Remove ONE empty <p> BEFORE playlist block
+    htmlToReturn = htmlToReturn?.replace(
+      /<p[^>]*>\s*(?:<br[^>]*>)?\s*<\/p>\s*(<p>\s*<span id="[^"]+">[\s\S]*?<\/span>\s*<\/p>)/i,
+      "$1"
+    );
+  }
+
+  return htmlToReturn;
 }
 
 const P_BLOCK_REGEX = /<p\b[^>]*>([\s\S]*?)<\/p>/gi;

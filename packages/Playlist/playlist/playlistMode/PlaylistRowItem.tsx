@@ -789,7 +789,19 @@ const PlaylistRowItem = (props: any) => {
                       return;
                     }
                     setShowMoreOptions(false);
-
+                    G.SetRenamingPlaylistEditTitle?.(true);
+                    G.SetEditData?.((prev: any) => ({
+                      ...prev,
+                      id,
+                      name,
+                      description,
+                      icon,
+                      isCustomColor,
+                      color,
+                      isCustomIcon,
+                      selectedTags,
+                      access,
+                    }));
                     G[`SetEditModal`]({
                       id,
                       name,
