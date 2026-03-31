@@ -63,6 +63,22 @@ function applySessionDataToReadingState(
   }
 }
 
+function canLoadSessionData(sessionData: SessionData): sessionData is {
+  translationId: string;
+  bookId: string;
+  chapterNumber: number;
+} {
+  return (
+    typeof sessionData.translationId === "string" &&
+    !!sessionData.translationId &&
+    typeof sessionData.bookId === "string" &&
+    !!sessionData.bookId &&
+    typeof sessionData.chapterNumber === "number" &&
+    Number.isFinite(sessionData.chapterNumber) &&
+    sessionData.chapterNumber > 0
+  );
+}
+
 export interface BibleReadingSession {
   id: string;
   document: SharedDocument;
@@ -100,10 +116,87 @@ async function createBibleReadingSession(
   const stateMap =
     document.getMap<SessionData[keyof SessionData]>("reading_state");
 
-  applySessionDataToReadingState(readingState, getSessionDataFromMap(stateMap));
-
   let applyingRemoteState = false;
   let lastLocallyWrittenState: SessionData | null = null;
+  let syncVersion = 0;
+
+  const syncReadingStateFromSessionData = async (
+    sessionData: SessionData,
+    version: number
+  ) => {
+    if (!canLoadSessionData(sessionData)) {
+      applyingRemoteState = true;
+      try {
+        applySessionDataToReadingState(readingState, sessionData);
+      } finally {
+        applyingRemoteState = false;
+      }
+      return;
+    }
+
+    applyingRemoteState = true;
+    readingState.loading.value = true;
+    readingState.error.value = null;
+    applyingRemoteState = false;
+
+    try {
+      const books = await dataManager.getTranslationBooks(
+        sessionData.translationId
+      );
+      const selectedBook = books.books.find((b) => b.id === sessionData.bookId);
+      if (!selectedBook) {
+        return;
+      }
+
+      const firstChapter = selectedBook.firstChapterNumber ?? 1;
+      const maxChapter = firstChapter + selectedBook.numberOfChapters - 1;
+      const chapterNumber = Math.max(
+        firstChapter,
+        Math.min(maxChapter, sessionData.chapterNumber)
+      );
+
+      const chapterData = await dataManager.getTranslationBookChapter(
+        sessionData.translationId,
+        selectedBook.id,
+        chapterNumber
+      );
+
+      if (version !== syncVersion) {
+        return;
+      }
+
+      applyingRemoteState = true;
+      try {
+        readingState.translationBooks.value = books;
+        readingState.translationId.value = chapterData.translation.id;
+        readingState.bookId.value = chapterData.book.id;
+        readingState.chapterNumber.value = chapterData.chapter.number;
+        readingState.chapterData.value = chapterData;
+        readingState.loading.value = false;
+        readingState.error.value = null;
+      } finally {
+        applyingRemoteState = false;
+      }
+    } catch (error) {
+      if (version !== syncVersion) {
+        return;
+      }
+
+      applyingRemoteState = true;
+      try {
+        readingState.loading.value = false;
+        readingState.error.value =
+          error instanceof Error
+            ? error.message
+            : "Failed to sync shared reading session.";
+      } finally {
+        applyingRemoteState = false;
+      }
+    }
+  };
+
+  const initialSessionData = getSessionDataFromMap(stateMap);
+  await syncReadingStateFromSessionData(initialSessionData, ++syncVersion);
 
   const mapSubscription = stateMap.changes.subscribe(() => {
     const nextSessionData = getSessionDataFromMap(stateMap);
@@ -116,12 +209,8 @@ async function createBibleReadingSession(
       return;
     }
 
-    applyingRemoteState = true;
-    try {
-      applySessionDataToReadingState(readingState, nextSessionData);
-    } finally {
-      applyingRemoteState = false;
-    }
+    const version = ++syncVersion;
+    void syncReadingStateFromSessionData(nextSessionData, version);
   });
 
   const stopSync = effect(() => {
@@ -135,6 +224,9 @@ async function createBibleReadingSession(
     if (sessionDataMatches(nextSessionData, currentSessionData)) {
       return;
     }
+
+    // Any local change invalidates currently running remote sync operations.
+    syncVersion += 1;
 
     lastLocallyWrittenState = nextSessionData;
     document.transact(() => {
