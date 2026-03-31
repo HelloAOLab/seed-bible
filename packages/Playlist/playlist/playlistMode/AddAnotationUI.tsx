@@ -496,7 +496,9 @@ const AddAnotationUI = (props: any) => {
 
   // Edit Mode
   const [isEditAddress, setIsEditAddress] = useState(editData?.address);
-  const [editDataDetails, setEditDataDetails] = useState<any>({});
+  const [editDataDetails, setEditDataDetails] = useState<any>(
+    G.EditAnnoDataDetailsRestorePlaylist || {}
+  );
 
   const [showPreview, setShowPreview] = useState(false);
 
@@ -548,7 +550,7 @@ const AddAnotationUI = (props: any) => {
             setTags([...(data.chronicle_tags || [])]);
             G.IsEditingAnnotation = true;
             const booksDetails = G.findNameRank(data.bookId);
-            setEditDataDetails({
+            const ediDataBookItem = {
               type: "heading",
               content: data.data.html,
               createdAtMs: data.data.createdAtMs,
@@ -566,8 +568,11 @@ const AddAnotationUI = (props: any) => {
                 bookRank: booksDetails.item,
               },
               id: data.id,
-            });
+            };
+            G.EditAnnoDataDetailsRestorePlaylist = ediDataBookItem;
+            setEditDataDetails(ediDataBookItem);
           } else if (data.data) {
+            G.EditAnnoDataDetailsRestorePlaylist = { ...data.data };
             setEditDataDetails({ ...data.data });
             const layers = data.data.additionalInfo?.layers?.filter(
               (ele: any) => ele.type === "heading"
@@ -1061,6 +1066,7 @@ const AddAnotationUI = (props: any) => {
       delete G.AnnotationsData[`${book}-${chapter}`];
       thisBot.fetchAnnotationsData({ ...G.CurrentBookData });
       G.LastEditingAnnotationAddress = null;
+      thisBot.resetPlaylistGlobalStateVars();
     } catch (e) {
       setLoading(false);
       console.error(`${t("errorUpdatingAnnotations")}:`, e);
@@ -1217,6 +1223,7 @@ const AddAnotationUI = (props: any) => {
         delete G.AnnotationsData[`${book}-${chapter}`];
         thisBot.fetchAnnotationsData({ ...G.CurrentBookData });
         setTextHTML(null);
+        thisBot.resetPlaylistGlobalStateVars();
       }
     } catch (e) {
       setLoading(false);
