@@ -18,6 +18,8 @@ G.EditAnnoDataRestorePlaylist = null;
 G.RenamingPlaylist = false;
 G.EditAnnoDataRestorePlaylist = null;
 G.LastEditingAnnotationAddress = null;
+G.RecordingValue = false;
+G.EditAnnoDataRestorePlaylist = null;
 G.SetEditData?.((prev: any) => ({
   ...prev,
   id: null,
