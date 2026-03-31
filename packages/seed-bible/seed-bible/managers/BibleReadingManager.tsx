@@ -229,18 +229,21 @@ export function createBibleReadingState(
     const nextBookId = chapter.book.id;
     const nextChapterNumber = chapter.chapter.number;
 
-    const didChapterChange =
-      bookId.value !== nextBookId || chapterNumber.value !== nextChapterNumber;
-    if (didChapterChange) {
-      scrollPosition.value = 0;
-    }
+    batch(() => {
+      const didChapterChange =
+        bookId.value !== nextBookId ||
+        chapterNumber.value !== nextChapterNumber;
+      if (didChapterChange) {
+        scrollPosition.value = 0;
+      }
 
-    translationId.value = nextTranslationId;
-    bookId.value = nextBookId;
-    chapterNumber.value = nextChapterNumber;
-    chapterData.value = chapter;
-    selectedFootnoteId.value = null;
-    clearSelectedVerses();
+      translationId.value = nextTranslationId;
+      bookId.value = nextBookId;
+      chapterNumber.value = nextChapterNumber;
+      chapterData.value = chapter;
+      selectedFootnoteId.value = null;
+      clearSelectedVerses();
+    });
 
     if (translationBooks.value?.translation.id !== nextTranslationId) {
       const books = await dataManager.getTranslationBooks(nextTranslationId);
