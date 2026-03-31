@@ -607,7 +607,7 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
-  gap: calc(16px * var(--scale-factor));
+  gap: calc(12px * var(--scale-factor));
   width: 100%;
 }
 
@@ -618,21 +618,21 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: calc(16px * var(--scale-factor));
+  gap: calc(12px * var(--scale-factor));
   align-items: start;
   z-index: 0;
 }
 
-.testament-content .books-container {
+.testament-content .scripture-map-books-container {
   display: flex;
-  gap: calc(8px * var(--scale-factor));
+  gap: calc(12px * var(--scale-factor));
   width: 100%;
   justify-content: flex-start;
   align-items: flex-start;
   flex-wrap: wrap;
 }
 
-.books-container .book-container {
+.scripture-map-books-container .book-container {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;

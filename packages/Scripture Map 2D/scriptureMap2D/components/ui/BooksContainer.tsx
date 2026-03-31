@@ -5,5 +5,5 @@ export interface BooksContainerProps {
 }
 
 export const BooksContainer = memo(({ children }: BooksContainerProps) => {
-  return <div className="books-container">{children}</div>;
+  return <div className="scripture-map-books-container">{children}</div>;
 });
