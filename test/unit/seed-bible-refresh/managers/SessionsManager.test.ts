@@ -4,6 +4,7 @@ import {
   type BibleReadingSession,
 } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import { createBibleReadingState } from "seed-bible.managers.BibleReadingManager";
+import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 jest.mock("seed-bible.managers.BibleReadingManager", () => ({
   createBibleReadingState: jest.fn(),
@@ -48,40 +49,43 @@ function createMockSharedMap(initial: Record<string, unknown> = {}) {
 }
 
 function createMockReadingState() {
+  const translationId = signal<string | null>("BSB");
+  const bookId = signal<string | null>("GEN");
+  const chapterNumber = signal<number>(1);
+  const chapterData = signal<any>(null);
+
   return {
-    translationId: signal<string | null>("BSB"),
-    bookId: signal<string | null>("GEN"),
-    chapterNumber: signal<number>(1),
-    chapterData: signal<any>(null),
+    translationId,
+    bookId,
+    chapterNumber,
+    chapterData,
     translationBooks: signal<any>(null),
     loading: signal<boolean>(false),
     error: signal<string | null>(null),
+    selectTranslationAndChapter: jest.fn(
+      async (
+        nextTranslationId: string,
+        nextBookId: string,
+        nextChapterNumber: number
+      ) => {
+        translationId.value = nextTranslationId;
+        bookId.value = nextBookId;
+        chapterNumber.value = nextChapterNumber;
+        chapterData.value = createMockChapterData(
+          nextTranslationId,
+          nextBookId,
+          nextChapterNumber
+        );
+      }
+    ),
   } as any;
-}
-
-function createMockTranslationBooks(translationId: string, bookId: string) {
-  return {
-    translation: {
-      id: translationId,
-      name: `${translationId} Name`,
-      textDirection: "ltr",
-    },
-    books: [
-      {
-        id: bookId,
-        name: `${bookId} Name`,
-        firstChapterNumber: 1,
-        numberOfChapters: 150,
-      },
-    ],
-  };
 }
 
 function createMockChapterData(
   translationId: string,
   bookId: string,
   chapterNumber: number
-) {
+): TranslationBookChapter {
   return {
     translation: {
       id: translationId,
@@ -102,7 +106,7 @@ function createMockChapterData(
     },
     verses: [],
     notes: [],
-  };
+  } as any;
 }
 
 async function waitFor(
@@ -136,10 +140,7 @@ describe("SessionsManager", () => {
     transact: jest.Mock;
     unsubscribe: jest.Mock;
   };
-  let mockDataManager: {
-    getTranslationBooks: jest.Mock;
-    getTranslationBookChapter: jest.Mock;
-  };
+  let mockDataManager: Record<string, never>;
 
   beforeEach(() => {
     mockMap = createMockSharedMap();
@@ -150,17 +151,7 @@ describe("SessionsManager", () => {
     };
 
     getSharedDocumentMock = jest.fn().mockResolvedValue(mockDocument);
-    mockDataManager = {
-      getTranslationBooks: jest.fn((translationId: string) =>
-        Promise.resolve(createMockTranslationBooks(translationId, "GEN"))
-      ),
-      getTranslationBookChapter: jest.fn(
-        (translationId: string, bookId: string, chapterNumber: number) =>
-          Promise.resolve(
-            createMockChapterData(translationId, bookId, chapterNumber)
-          )
-      ),
-    };
+    mockDataManager = {};
 
     (globalThis as any).os = {
       getSharedDocument: getSharedDocumentMock,
@@ -211,15 +202,12 @@ describe("SessionsManager", () => {
     });
     mockDocument.getMap.mockReturnValue(mockMap);
 
-    mockDataManager.getTranslationBooks.mockResolvedValue(
-      createMockTranslationBooks("NIV", "EXO")
-    );
-    mockDataManager.getTranslationBookChapter.mockResolvedValue(
-      createMockChapterData("NIV", "EXO", 4)
-    );
-
     const manager = createSessionsManager(mockDataManager as any);
     const session = await manager.joinSession("group-abc");
+
+    expect(
+      session.readingState.selectTranslationAndChapter
+    ).toHaveBeenCalledWith("NIV", "EXO", 4);
 
     expect(session.readingState.translationId.value).toBe("NIV");
     expect(session.readingState.bookId.value).toBe("EXO");
@@ -261,13 +249,6 @@ describe("SessionsManager", () => {
   });
 
   it("applies shared document changes to the session reading state", async () => {
-    mockDataManager.getTranslationBooks.mockResolvedValue(
-      createMockTranslationBooks("ESV", "PSA")
-    );
-    mockDataManager.getTranslationBookChapter.mockResolvedValue(
-      createMockChapterData("ESV", "PSA", 23)
-    );
-
     const manager = createSessionsManager(mockDataManager as any);
     const session = (await manager.joinSession(
       "group-abc"
@@ -301,15 +282,12 @@ describe("SessionsManager", () => {
 
   it("keeps local selection when user changes chapter during remote sync", async () => {
     const chapterDeferred = deferred<any>();
-    mockDataManager.getTranslationBooks.mockResolvedValue(
-      createMockTranslationBooks("ESV", "MAT")
-    );
-    mockDataManager.getTranslationBookChapter.mockReturnValue(
-      chapterDeferred.promise
-    );
 
     const manager = createSessionsManager(mockDataManager as any);
     const session = await manager.joinSession("group-abc");
+    (
+      session.readingState.selectTranslationAndChapter as jest.Mock
+    ).mockReturnValue(chapterDeferred.promise);
 
     mockMap.get.mockImplementation((key: string) => {
       if (key === "translationId") return "ESV";
@@ -342,15 +320,47 @@ describe("SessionsManager", () => {
     const chapterDeferred1 = deferred<any>();
     const chapterDeferred2 = deferred<any>();
 
-    mockDataManager.getTranslationBooks.mockResolvedValue(
-      createMockTranslationBooks("ESV", "MAT")
-    );
-    mockDataManager.getTranslationBookChapter
-      .mockReturnValueOnce(chapterDeferred1.promise)
-      .mockReturnValueOnce(chapterDeferred2.promise);
-
     const manager = createSessionsManager(mockDataManager as any);
     const session = await manager.joinSession("group-abc");
+    (session.readingState.selectTranslationAndChapter as jest.Mock)
+      .mockImplementationOnce(async () => {
+        await chapterDeferred1.promise;
+        session.readingState.translationId.value = "ESV";
+        session.readingState.bookId.value = "MAT";
+        session.readingState.chapterNumber.value = 1;
+        session.readingState.chapterData.value = createMockChapterData(
+          "ESV",
+          "MAT",
+          1
+        );
+      })
+      .mockImplementationOnce(async () => {
+        await chapterDeferred2.promise;
+        session.readingState.translationId.value = "ESV";
+        session.readingState.bookId.value = "MAT";
+        session.readingState.chapterNumber.value = 2;
+        session.readingState.chapterData.value = createMockChapterData(
+          "ESV",
+          "MAT",
+          2
+        );
+      })
+      .mockImplementation(
+        async (
+          nextTranslationId: string,
+          nextBookId: string,
+          nextChapterNumber: number
+        ) => {
+          session.readingState.translationId.value = nextTranslationId;
+          session.readingState.bookId.value = nextBookId;
+          session.readingState.chapterNumber.value = nextChapterNumber;
+          session.readingState.chapterData.value = createMockChapterData(
+            nextTranslationId,
+            nextBookId,
+            nextChapterNumber
+          );
+        }
+      );
 
     mockMap.get.mockImplementation((key: string) => {
       if (key === "translationId") return "ESV";

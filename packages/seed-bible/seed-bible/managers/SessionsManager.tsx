@@ -119,6 +119,7 @@ async function createBibleReadingSession(
   let applyingRemoteState = false;
   let lastLocallyWrittenState: SessionData | null = null;
   let syncVersion = 0;
+  let pendingRemoteTarget: SessionData | null = null;
 
   const syncReadingStateFromSessionData = async (
     sessionData: SessionData,
@@ -134,63 +135,32 @@ async function createBibleReadingSession(
       return;
     }
 
-    applyingRemoteState = true;
-    readingState.loading.value = true;
-    readingState.error.value = null;
-    applyingRemoteState = false;
-
     try {
-      const books = await dataManager.getTranslationBooks(
-        sessionData.translationId
-      );
-      const selectedBook = books.books.find((b) => b.id === sessionData.bookId);
-      if (!selectedBook) {
-        return;
-      }
-
-      const firstChapter = selectedBook.firstChapterNumber ?? 1;
-      const maxChapter = firstChapter + selectedBook.numberOfChapters - 1;
-      const chapterNumber = Math.max(
-        firstChapter,
-        Math.min(maxChapter, sessionData.chapterNumber)
-      );
-
-      const chapterData = await dataManager.getTranslationBookChapter(
+      pendingRemoteTarget = sessionData;
+      await readingState.selectTranslationAndChapter(
         sessionData.translationId,
-        selectedBook.id,
-        chapterNumber
+        sessionData.bookId,
+        sessionData.chapterNumber
       );
-
-      if (version !== syncVersion) {
-        return;
-      }
-
-      applyingRemoteState = true;
-      try {
-        readingState.translationBooks.value = books;
-        readingState.translationId.value = chapterData.translation.id;
-        readingState.bookId.value = chapterData.book.id;
-        readingState.chapterNumber.value = chapterData.chapter.number;
-        readingState.chapterData.value = chapterData;
-        readingState.loading.value = false;
-        readingState.error.value = null;
-      } finally {
-        applyingRemoteState = false;
-      }
     } catch (error) {
       if (version !== syncVersion) {
         return;
       }
+      readingState.error.value =
+        error instanceof Error
+          ? error.message
+          : "Failed to sync shared reading session.";
+    } finally {
+      if (version === syncVersion) {
+        pendingRemoteTarget = null;
+      }
+    }
 
-      applyingRemoteState = true;
-      try {
-        readingState.loading.value = false;
-        readingState.error.value =
-          error instanceof Error
-            ? error.message
-            : "Failed to sync shared reading session.";
-      } finally {
-        applyingRemoteState = false;
+    if (version !== syncVersion) {
+      const latestSessionData = getSessionDataFromMap(stateMap);
+      if (canLoadSessionData(latestSessionData)) {
+        const nextVersion = ++syncVersion;
+        void syncReadingStateFromSessionData(latestSessionData, nextVersion);
       }
     }
   };
@@ -219,6 +189,14 @@ async function createBibleReadingSession(
     }
 
     const nextSessionData = getSessionDataSnapshot(readingState);
+
+    if (
+      pendingRemoteTarget &&
+      sessionDataMatches(nextSessionData, pendingRemoteTarget)
+    ) {
+      return;
+    }
+
     const currentSessionData = getSessionDataFromMap(stateMap);
 
     if (sessionDataMatches(nextSessionData, currentSessionData)) {
