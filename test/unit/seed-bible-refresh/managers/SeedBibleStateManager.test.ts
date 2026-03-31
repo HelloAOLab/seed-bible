@@ -9,12 +9,20 @@ import {
 } from "./testUtils/mockBibleApiData";
 
 const mockSaveReadingHistory = jest.fn();
+const mockSessionsManager = {
+  createSession: jest.fn(),
+  joinSession: jest.fn(),
+};
 
 jest.mock("seed-bible.managers.ReadingHistoryManager", () => ({
   createReadingHistoryManager: () => ({
     saveReadingHistory: mockSaveReadingHistory,
     getReadingEvents: jest.fn().mockResolvedValue([]),
   }),
+}));
+
+jest.mock("seed-bible.managers.SessionsManager", () => ({
+  createSessionsManager: () => mockSessionsManager,
 }));
 
 jest.mock("seed-bible.i18n.I18nManager", () => ({
@@ -110,6 +118,7 @@ describe("createSeedBibleState", () => {
     );
 
     expect(state.selector.isOpen.value).toBe(false);
+    expect(state.sessions).toBe(mockSessionsManager);
   });
 
   it("registered extensions are initialized", async () => {

@@ -94,6 +94,9 @@
       "seed-bible.managers.ReadingHistoryManager": [
         "./packages/seed-bible/seed-bible/managers/ReadingHistoryManager.tsx"
       ],
+      "seed-bible.managers.SessionsManager": [
+        "./packages/seed-bible/seed-bible/managers/SessionsManager.tsx"
+      ],
       "seed-bible.managers.SeedBibleStateManager": [
         "./packages/seed-bible/seed-bible/managers/SeedBibleStateManager.tsx"
       ],
