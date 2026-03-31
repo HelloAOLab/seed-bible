@@ -53,6 +53,11 @@ export interface BibleReadingState {
   selectFootnote: (noteId: number | null) => void;
   clearSelectedVerses: () => void;
   selectTranslation: (translation: string) => Promise<void>;
+  selectTranslationAndChapter: (
+    translationId: string,
+    bookId: string,
+    chapterNumber: number
+  ) => Promise<void>;
   selectBook: (book: string) => Promise<void>;
   selectChapter: (book: string, chapter: number) => Promise<void>;
   loadPreviousChapter: () => Promise<void>;
@@ -355,6 +360,77 @@ export function createBibleReadingState(
     }
   };
 
+  const selectTranslationAndChapter = async (
+    nextTranslationIdOrUrl: string,
+    nextBookId: string,
+    nextChapterNumber: number
+  ) => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const availableTranslationsEndpoint =
+        extractEndpointFromAvailableTranslationsUrl(nextTranslationIdOrUrl);
+
+      let nextTranslationId = nextTranslationIdOrUrl;
+
+      if (availableTranslationsEndpoint) {
+        endpointOverride.value = availableTranslationsEndpoint;
+
+        const endpointTranslations = await dataManager.getTranslations(
+          availableTranslationsEndpoint
+        );
+        availableTranslations.value = toAvailableTranslations(
+          dataManager.availableTranslations.value
+        );
+
+        const firstTranslation = endpointTranslations[0];
+        if (!firstTranslation) {
+          throw new Error("No available translations found for endpoint.");
+        }
+
+        nextTranslationId = firstTranslation.id;
+      }
+
+      const books = await dataManager.getTranslationBooks(nextTranslationId);
+      const selectedBook = books.books.find((book) => book.id === nextBookId);
+      if (!selectedBook) {
+        throw new Error(
+          `Book with ID "${nextBookId}" not available for translation "${nextTranslationId}".`
+        );
+      }
+
+      const firstChapterNumber = selectedBook.firstChapterNumber ?? 1;
+      const maxChapterNumber =
+        firstChapterNumber + selectedBook.numberOfChapters - 1;
+      const clampedChapterNumber =
+        nextChapterNumber >= firstChapterNumber &&
+        nextChapterNumber <= maxChapterNumber
+          ? nextChapterNumber
+          : firstChapterNumber;
+
+      const chapter = await dataManager.getTranslationBookChapter(
+        nextTranslationId,
+        selectedBook.id,
+        clampedChapterNumber
+      );
+
+      await batch(async () => {
+        availableTranslations.value = toAvailableTranslations(
+          dataManager.availableTranslations.value
+        );
+        await syncStateFromChapter(chapter);
+      });
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to select translation and chapter.";
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const selectChapter = async (book: string, chapter: number) => {
     if (!translationId.value) {
       return;
@@ -496,6 +572,7 @@ export function createBibleReadingState(
     selectFootnote,
     clearSelectedVerses,
     selectTranslation,
+    selectTranslationAndChapter,
     selectBook,
     selectChapter,
     loadPreviousChapter,
