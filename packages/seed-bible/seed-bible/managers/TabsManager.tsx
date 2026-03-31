@@ -123,13 +123,13 @@ export function createTabs(dataManager: BibleDataManager) {
     await syncSelectedTabFromConfig();
   });
 
-  const addTab = () => {
+  const addTab = (readingState?: BibleReadingState) => {
     const currentTabs = tabs.value;
     const nextNumber = currentTabs.length + 1;
     const nextTab: ReaderTab = {
       id: `tab-${nextNumber}`,
       title: `Tab ${nextNumber}`,
-      readingState: createBibleReadingState(dataManager),
+      readingState: readingState ?? createBibleReadingState(dataManager),
     };
     tabs.value = [...currentTabs, nextTab];
     selectedTabId.value = nextTab.id;
