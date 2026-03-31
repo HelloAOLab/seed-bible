@@ -155,6 +155,11 @@ export function createTabs(dataManager: BibleDataManager) {
   };
 
   const removeTab = (tabId: string) => {
+    const tab = tabs.value.find((t) => t.id === tabId);
+    if (tab?.sharedSession) {
+      tab.sharedSession.dispose();
+    }
+
     const nextTabs = tabs.value.filter((tab) => tab.id !== tabId);
     tabs.value = nextTabs;
 
