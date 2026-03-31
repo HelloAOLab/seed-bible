@@ -1508,3 +1508,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 span.material-symbols-outlined.rotate-90 {
   transform: rotate(90deg);
 }
+
+.annotation-audio {
+  min-height: 50px !important;
+}

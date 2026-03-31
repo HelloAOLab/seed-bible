@@ -279,6 +279,7 @@ function SubComponent(props: any) {
               onClick={() => {
                 recordingSwtichCallback(() => {
                   setRecordingType("audio");
+                  setName("");
                 });
               }}
               className={`${recordingType === "audio" ? "active" : ""}`}
@@ -294,6 +295,7 @@ function SubComponent(props: any) {
               onClick={() => {
                 recordingSwtichCallback(() => {
                   setRecordingType("video");
+                  setName("");
                 });
               }}
               className={`${recordingType === "video" ? "active" : ""}`}
@@ -307,14 +309,27 @@ function SubComponent(props: any) {
             </div>
           </div>
           {recordingType === "audio" ? (
-            <RecordingUI data={data} setData={setData} />
+            <RecordingUI
+              name={name}
+              setName={setName}
+              data={data}
+              setData={setData}
+            />
           ) : recordingType === "video" ? (
-            <VideoRecordUI key="audio" data={data} setData={setData} />
+            <VideoRecordUI
+              key="audio"
+              name={name}
+              setName={setName}
+              data={data}
+              setData={setData}
+            />
           ) : (
             <VideoRecordUI
               key="screen"
               data={data}
               isScreen={true}
+              name={name}
+              setName={setName}
               setData={setData}
             />
           )}
@@ -603,6 +618,83 @@ const AttachLink = (props: any) => {
   const [dragState, setDragState] = useState({
     isDragOver: false,
   });
+
+  const filteredTags = useMemo(() => {
+    return tags.filter(
+      (ele) =>
+        (isloggedIN || !WITHOUTLOGIN_TAGS[ele]) &&
+        (ele === "PLAYLIST"
+          ? isPlaylist
+          : ele === "TAG"
+            ? isTags
+            : ele === "DATE"
+              ? isDate
+              : ele === "RECORDING"
+                ? canRecord
+                : true)
+    );
+  }, [isloggedIN, isPlaylist, isTags, isDate, canRecord]);
+
+  const onRetainData = () => {
+    G.RetainData = true;
+    G.RetainDataName = name;
+    G.RetainDataData = data;
+    G.RetainDataLink = link;
+    G.RetainDataMediaType = mediaType;
+    G.RetainDataTextType = textType;
+    G.RetainDataRecordingType = recordingType;
+    G.RetainDataSelectedType = selectedType;
+    G.RetainDataLinkState = linkState;
+  };
+
+  const onReleaseData = () => {
+    G.RetainData = false;
+    G.RetainDataName = null;
+    G.RetainDataData = null;
+    G.RetainDataLink = null;
+    G.RetainDataMediaType = null;
+    G.RetainDataTextType = null;
+    G.RetainDataRecordingType = null;
+    G.RetainDataSelectedType = null;
+    G.RetainDataLinkState = null;
+  };
+
+  const onRestoreData = () => {
+    if (G.RetainData && !data && !name && !G.StopAttachLinkRetainData) {
+      const isSelectedTypePresent = filteredTags.find(
+        (ele: any) => ele === G.RetainDataSelectedType
+      );
+      if (!isSelectedTypePresent) {
+        return;
+      }
+      setName(G.RetainDataName);
+      setData(G.RetainDataData);
+      setLink(G.RetainDataLink);
+      setType(G.RetainDataMediaType);
+      setTextType(G.RetainDataTextType);
+      setRecordingType(G.RetainDataRecordingType);
+      setSelectedType(G.RetainDataSelectedType);
+      setLinkState(G.RetainDataLinkState);
+      onReleaseData();
+    }
+    G.StopAttachLinkRetainData = false;
+  };
+
+  useLayoutEffect(() => {
+    onRestoreData();
+  }, []);
+
+  useLayoutEffect(() => {
+    G.OnRetainData = onRetainData;
+    G.OnReleaseData = onReleaseData;
+    G.OnRestoreData = onRestoreData;
+    return () => {
+      onRetainData();
+      G.OnRetainData = null;
+      G.OnReleaseData = null;
+      G.OnRestoreData = null;
+    };
+  }, [onRetainData, onReleaseData, onRestoreData]);
 
   const onAddFiles = async (files: any) => {
     setLoading(true);
@@ -1035,75 +1127,60 @@ const AttachLink = (props: any) => {
           ))}
         {!editMode && (
           <div className="select_item_container">
-            {tags
-              .filter(
-                (ele) =>
-                  (isloggedIN || !WITHOUTLOGIN_TAGS[ele]) &&
-                  (ele === "PLAYLIST"
-                    ? isPlaylist
-                    : ele === "TAG"
-                      ? isTags
-                      : ele === "DATE"
-                        ? isDate
-                        : ele === "RECORDING"
-                          ? canRecord
-                          : true)
-              )
-              .map((ele: any) => (
-                <div
-                  key={ele.id}
-                  onClick={() => {
-                    if (data) {
-                      if (!G.AllowSwitchBetweenTypes) {
-                        G.AllowSwitchBetweenTypes = true;
-                        ShowNotification({
-                          message: t(
-                            "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich"
-                          ),
-                          severity: "error",
-                        });
-                        return;
-                      }
-                    }
-                    if (editMode)
-                      return ShowNotification({
-                        message: t("cannotChangeWhileBeingInEditMode"),
+            {filteredTags.map((ele: any) => (
+              <div
+                key={ele.id}
+                onClick={() => {
+                  if (data) {
+                    if (!G.AllowSwitchBetweenTypes) {
+                      G.AllowSwitchBetweenTypes = true;
+                      ShowNotification({
+                        message: t(
+                          "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich"
+                        ),
                         severity: "error",
                       });
-                    if (ele === "DATE" && !!onDateClick) {
-                      console.log(datePickerRef.current, "datePickerRef");
-                      datePickerRef.current.click();
-                      // return onDateClick();
                       return;
                     }
-                    setName("");
-                    setSelectedType(ele);
-                    setData(null);
-                  }}
-                  style={{ position: "relative" }}
-                  className={`${
-                    ele === selectedType ? "active" : ""
-                  } select_item_type`}
-                >
-                  {ele === "DATE" && (
-                    <input
-                      ref={datePickerRef}
-                      type="date"
-                      onChange={(e: any) => {
-                        onDateClick(e?.target?.value || "");
-                      }}
-                      className="hidden-date"
-                      placeholder="MM/DD/YYYY"
-                    />
-                  )}
-                  <img
-                    style={{ height: "16px", width: "16px" }}
-                    src={
-                      imageAssets[`${ele}${ele === selectedType ? "_2" : "_1"}`]
-                    }
+                  }
+                  if (editMode)
+                    return ShowNotification({
+                      message: t("cannotChangeWhileBeingInEditMode"),
+                      severity: "error",
+                    });
+                  if (ele === "DATE" && !!onDateClick) {
+                    datePickerRef.current.click();
+                    // return onDateClick();
+                    return;
+                  }
+                  setName("");
+                  setSelectedType(ele);
+                  setData(null);
+                }}
+                style={{ position: "relative" }}
+                className={`${
+                  ele === selectedType ? "active" : ""
+                } select_item_type`}
+              >
+                {ele === "DATE" && (
+                  <input
+                    ref={datePickerRef}
+                    type="date"
+                    onChange={(e: any) => {
+                      onDateClick(e?.target?.value || "");
+                    }}
+                    className="hidden-date"
+                    placeholder="MM/DD/YYYY"
                   />
-                </div>
-              ))}
+                )}
+                <img
+                  style={{ height: "16px", width: "16px" }}
+                  src={
+                    imageAssets[`${ele}${ele === selectedType ? "_2" : "_1"}`]
+                  }
+                />
+              </div>
+            ))}
             <div
               className="align-center"
               style={{ gap: "0.25rem", marginLeft: "auto" }}

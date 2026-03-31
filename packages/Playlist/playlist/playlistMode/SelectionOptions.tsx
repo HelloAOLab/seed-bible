@@ -56,7 +56,7 @@ const SelectionOptions = (props: any) => {
           )
         )}
         {options.length === 0 && (
-          <p className="selection-option-label">No options found</p>
+          <p className="selection-option-label">{t("noOptionsFound")}</p>
         )}
       </div>
     </>
