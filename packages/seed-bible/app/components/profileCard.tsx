@@ -154,7 +154,7 @@ const ProfileCard = ({
           >
             <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H5C3.89 1 3 1.89 3 3V19C3 20.11 3.89 21 5 21H11V19H5V3H13V9H21Z" />
           </svg>
-          Subscribe
+          {t("subscribe")}
         </button>
 
         <h1 style={titleStyle}>{profileName}</h1>
@@ -178,14 +178,14 @@ const ProfileCard = ({
 
         {date && (
           <div style={infoRowStyle}>
-            <span style={labelStyle}>Date created</span>
+            <span style={labelStyle}>{t("dateCreated")}</span>
             <span style={valueStyle}>{date}</span>
           </div>
         )}
 
         {location && (
           <div style={infoRowStyle}>
-            <span style={labelStyle}>Location</span>
+            <span style={labelStyle}>{t("locationLabel")}</span>
             <span style={valueStyle}>{location}</span>
           </div>
         )}
@@ -193,7 +193,7 @@ const ProfileCard = ({
         {tags && (
           <div style={tagsContainerStyle}>
             <div style={infoRowStyle}>
-              <span style={labelStyle}>Tags</span>
+              <span style={labelStyle}>{t("tags")}</span>
             </div>
             <div style={tagsWrapperStyle}>
               <span style={tagStyle}>Arts & Crafts</span>

@@ -86,7 +86,26 @@ const Layout = ({ children, panelsNumber }) => {
     >
       <style>{`${
         spaces.find((e) => e.id === activeSpace)?.settings?.text?.root ||
-        exportTextConfigToCSS(defaultTextConfig)
+        exportTextConfigToCSS(
+          window.innerWidth <= 768
+            ? {
+                ...defaultTextConfig,
+                heading: {
+                  ...defaultTextConfig.heading,
+                  marginHorizontal: "5",
+                },
+                chapter: {
+                  ...defaultTextConfig.chapter,
+                  marginHorizontal: "5",
+                },
+                verse: { ...defaultTextConfig.verse, marginHorizontal: "5" },
+                bookchapter: {
+                  ...defaultTextConfig.bookchapter,
+                  marginHorizontal: "5",
+                },
+              }
+            : defaultTextConfig
+        )
       }`}</style>
       {sidebarMode === "default" ? (
         <SideBar panelsNumber={panelsNumber} />

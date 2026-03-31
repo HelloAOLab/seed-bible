@@ -1,0 +1,21 @@
+{
+  "author": "Sujan Barman",
+  "configEditor": {
+    "app": "",
+    "author": "Sujan Barman"
+  },
+  "createdAt": "2026-03-12T19:27:26.025Z",
+  "dependencies": [],
+  "description": "Extension ext_twitchSub description.",
+  "id": 1773343646025,
+  "license": "MIT",
+  "linkedDependencies": [],
+  "name": "ext_twitchSub",
+  "otherBots": [],
+  "status": "active",
+  "type": "package",
+  "updatedAt": "2026-03-12T19:27:26.025Z",
+  "userAuth": "",
+  "version": "0.0.1",
+  "mainBotTag": "ext_twitchPub.client"
+}

@@ -166,7 +166,7 @@ export function ImportSpaceModal() {
         <div style={styles.inputContainer}>
           <input
             type="text"
-            placeholder="Space ID"
+            placeholder={t("spaceId")}
             style={styles.input}
             value={spaceId}
             onChange={(e) => setSpaceId(e.target.value)}
@@ -174,7 +174,7 @@ export function ImportSpaceModal() {
         </div>
 
         <div style={styles.orDivider}>
-          <div style={styles.orText}>OR</div>
+          <div style={styles.orText}>{t("or").toUpperCase()}</div>
         </div>
 
         <div
@@ -233,7 +233,7 @@ export function ImportSpaceModal() {
           onMouseOver={(e) => (e.target.style.backgroundColor = "#4338ca")}
           onMouseOut={(e) => (e.target.style.backgroundColor = "#4f46e5")}
         >
-          Import space
+          {t("importSpace")}
         </button>
 
         <button
@@ -242,7 +242,7 @@ export function ImportSpaceModal() {
           onMouseOver={(e) => (e.target.style.backgroundColor = "#f3f4f6")}
           onMouseOut={(e) => (e.target.style.backgroundColor = "transparent")}
         >
-          Cancel
+          {t("cancel")}
         </button>
       </div>
     </div>
@@ -434,7 +434,7 @@ export function RenameSpaceModal({ updateSpace, activeSpace }) {
         <div style={styles.headerText}>Rename Space</div>
 
         <div style={styles.formGroup}>
-          <label style={styles.label}>Space name</label>
+          <label style={styles.label}>{t("spaceName")}</label>
           <input
             type="text"
             style={styles.input}
@@ -444,7 +444,7 @@ export function RenameSpaceModal({ updateSpace, activeSpace }) {
         </div>
 
         <div style={styles.iconSelectContainer}>
-          <label style={styles.label}>Icon</label>
+          <label style={styles.label}>{t("icon")}</label>
           <div
             style={styles.iconButton}
             onClick={() => setShowIconPicker(!showIconPicker)}
@@ -496,7 +496,7 @@ export function RenameSpaceModal({ updateSpace, activeSpace }) {
             onMouseOver={(e) => (e.target.style.backgroundColor = "#e5e7eb")}
             onMouseOut={(e) => (e.target.style.backgroundColor = "#f3f4f6")}
           >
-            Cancel
+            {t("cancel")}
           </button>
 
           <button
@@ -506,7 +506,7 @@ export function RenameSpaceModal({ updateSpace, activeSpace }) {
             onMouseOut={(e) => (e.target.style.backgroundColor = "#4f46e5")}
             disabled={!spaceName.trim()}
           >
-            Save
+            {t("save")}
           </button>
         </div>
       </div>
@@ -739,22 +739,22 @@ export function CreateNewSpaceModal({ addSpace }) {
   return (
     <div style={styles.modalOverlay}>
       <div style={styles.modalContainer}>
-        <div style={styles.headerText}>Create New Space</div>
+        <div style={styles.headerText}>{t("createNewSpace")}</div>
 
         <div style={styles.formGroup}>
-          <label style={styles.label}>Space name *</label>
+          <label style={styles.label}>{t("spaceName")} *</label>
           <input
             type="text"
             style={styles.input}
             value={spaceName}
             onChange={(e) => setSpaceName(e.target.value)}
-            placeholder="Enter space name"
+            placeholder={t("enterSpaceName")}
             required
           />
         </div>
 
         <div style={styles.iconSelectContainer}>
-          <label style={styles.label}>Icon</label>
+          <label style={styles.label}>{t("icon")}</label>
           <div
             style={styles.iconButton}
             onClick={() => setShowIconPicker(!showIconPicker)}
@@ -804,12 +804,14 @@ export function CreateNewSpaceModal({ addSpace }) {
         </div>
 
         <div style={styles.formGroup}>
-          <label style={styles.label}>Description (optional)</label>
+          <label style={styles.label}>
+            {t("description")} ({t("optional").toLowerCase()})
+          </label>
           <textarea
             style={styles.textarea}
             value={spaceDescription}
             onChange={(e) => setSpaceDescription(e.target.value)}
-            placeholder="Add a brief description of your space"
+            placeholder={t("addDescription2")}
           />
           <div style={styles.helperText}>
             A good description helps others understand the purpose of this space
@@ -823,7 +825,7 @@ export function CreateNewSpaceModal({ addSpace }) {
             onMouseOver={(e) => (e.target.style.backgroundColor = "#e5e7eb")}
             onMouseOut={(e) => (e.target.style.backgroundColor = "#f3f4f6")}
           >
-            Cancel
+            {t("cancel")}
           </button>
 
           <button
@@ -833,7 +835,7 @@ export function CreateNewSpaceModal({ addSpace }) {
             onMouseOut={(e) => (e.target.style.backgroundColor = "#4f46e5")}
             disabled={!spaceName.trim()}
           >
-            Create
+            {t("create")}
           </button>
         </div>
       </div>

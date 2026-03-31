@@ -143,21 +143,21 @@ const CanvasAiSettings = () => {
         <div onClick={() => setSideBarMode("settings")} className="blackText">
           <MenuIcon name="arrow_back" />
         </div>
-        <div className="softText">Canvas AI settings</div>
+        <div className="softText">{t("canvasAISettings")}</div>
         <div className="softText">
           <MenuIcon name="chevron_right" />
         </div>
-        <div className="softText">Toolbar</div>
+        <div className="softText">{t("toolbar")}</div>
       </div>
 
       <div className="routerTitle blackText">
         <div className="blackText">
           <AiIcon />
         </div>
-        <div>AI</div>
+        <div>{t("ai")}</div>
       </div>
 
-      <div className="mediumText">Settings for AI features in the canvas</div>
+      <div className="mediumText">{t("settingsForAIInCanvas")}</div>
 
       <div className="ai-chat">
         <div
@@ -165,14 +165,14 @@ const CanvasAiSettings = () => {
           className="ai-chat"
         >
           <AiChatIcon />
-          <div className="blackText">AI Chat</div>
+          <div className="blackText">{t("aiChat")}</div>
           <MenuIcon name={`keyboard_arrow_${switcher === 1 ? "up" : "down"}`} />
         </div>
       </div>
       <div style={{ height: "20px" }}></div>
       {switcher === 1 && (
         <>
-          <div className="blackText">Select model</div>
+          <div className="blackText">{t("selectModel")}</div>
           <div style={{ height: "20px" }}></div>
           <select
             value={JSON.stringify(selectedChatAI)}
@@ -196,10 +196,9 @@ const CanvasAiSettings = () => {
             })}
           </select>
           <div style={{ marginTop: "10px" }} className="mediumText">
-            Different AI models can produce different or better results so feel
-            free to experiment.
+            {t("aiModelExperimentDesc")}
           </div>
-          <div className="blackText">Positive prompt</div>
+          <div className="blackText">{t("positivePrompt")}</div>
           <div style={{ height: "10px" }}></div>
           <textarea
             style={{ height: "150px", width: "100%" }}
@@ -218,14 +217,14 @@ const CanvasAiSettings = () => {
           className="ai-chat"
         >
           <AiChatIcon />
-          <div className="blackText">AI Image</div>
+          <div className="blackText">{t("aiImage")}</div>
           <MenuIcon name={`keyboard_arrow_${switcher === 2 ? "up" : "down"}`} />
         </div>
       </div>
       <div style={{ height: "20px" }}></div>
       {switcher === 2 && (
         <>
-          <div className="blackText">Select model</div>
+          <div className="blackText">{t("selectModel")}</div>
           <div style={{ height: "20px" }}></div>
           <select
             value={JSON.stringify(selectedImageAI)}
@@ -249,10 +248,9 @@ const CanvasAiSettings = () => {
             })}
           </select>
           <div style={{ marginTop: "10px" }} className="mediumText">
-            Different AI models can produce different or better results so feel
-            free to experiment.
+            {t("aiModelExperimentDesc")}
           </div>
-          <div className="blackText">Positive prompt</div>
+          <div className="blackText">{t("positivePrompt")}</div>
           <div style={{ height: "10px" }}></div>
           <textarea
             style={{ height: "150px", width: "100%" }}
@@ -271,14 +269,14 @@ const CanvasAiSettings = () => {
           className="ai-chat"
         >
           <AiChatIcon />
-          <div className="blackText">AI Assistant</div>
+          <div className="blackText">{t("aiAssistant")}</div>
           <MenuIcon name={`keyboard_arrow_${switcher === 3 ? "up" : "down"}`} />
         </div>
       </div>
       <div style={{ height: "20px" }}></div>
       {switcher === 3 && (
         <>
-          <div className="blackText">Select model</div>
+          <div className="blackText">{t("selectModel")}</div>
           <div style={{ height: "20px" }}></div>
           <select
             value={JSON.stringify(selectedAssistantAI)}
@@ -301,7 +299,7 @@ const CanvasAiSettings = () => {
               );
             })}
           </select>
-          <div className="blackText">Select voice</div>
+          <div className="blackText">{t("selectVoice")}</div>
           <div style={{ height: "20px" }}></div>
           <select
             value={JSON.stringify(selectedAssistantVoice)}

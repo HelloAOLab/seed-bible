@@ -613,8 +613,8 @@ try {
     }
 
     // Generate API links
-    const firstChapterApiLink = `/api/BSB/PSA/${book.start}.json`;
-    const lastChapterApiLink = `/api/BSB/PSA/${book.end}.json`;
+    const firstChapterApiLink = `/api/AAB/PSA/${book.start}.json`;
+    const lastChapterApiLink = `/api/AAB/PSA/${book.end}.json`;
 
     // Return the result object
     return {

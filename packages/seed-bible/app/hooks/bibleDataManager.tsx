@@ -81,7 +81,7 @@ function parseContent(content) {
 export class BibleDataManager {
   constructor({
     tabId = null,
-    translation = "BSB",
+    translation = "AAB",
     bookId = "GEN",
     chapter = 1,
     baseUrl = "https://vmfnri.helloao.org",
@@ -209,7 +209,8 @@ export class BibleDataManager {
         const parsedContent = parseContent(contentResponse);
 
         this.data = {
-          book: json?.data?.book?.name || json.name,
+          book:
+            json?.data?.book?.commonName || json?.data?.book?.name || json.name,
           chapter: json?.data?.chapter?.number || json.chapter,
           content: parsedContent,
           bookId: json?.data?.book?.id || this.bookId,
