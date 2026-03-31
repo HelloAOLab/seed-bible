@@ -1722,6 +1722,7 @@ function CustomAnnotationTextEditor(props: any) {
                 <Button
                   onClick={() => {
                     setRecording(null);
+                    setData(null);
                   }}
                   secondaryAlt
                 >
