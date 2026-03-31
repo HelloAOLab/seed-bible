@@ -33,6 +33,7 @@ G.SetEditData?.((prev: any) => ({
 G.HISTORYExploreMode = false;
 G[`${id}creatingPlaylistName`] = "";
 G[`${id}creatingPlaylist`] = false;
+G.PreviousHTML = "";
 G[`${id}SetCreatingPlaylist`]?.(false);
 G.SetRenamingPlaylistEditTitle?.(false);
 G.SetRenamingPlaylist?.(false);
