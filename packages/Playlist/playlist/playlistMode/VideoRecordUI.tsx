@@ -42,7 +42,7 @@ const VideoRecordUI = (props: any) => {
   const videoRef = useRef<any>(null);
   const [poster, setPoster] = useState<string | null | boolean>(false);
   const [isRecording, setIsRecording] = useState(!!G.isRecording);
-  const [isRecorded, setIsRecorded] = useState(false);
+  const [isRecorded, setIsRecorded] = useState(G.hasRecording || false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [tab, setTab] = useState(G.VideoRecordTab || "screen&cam");
