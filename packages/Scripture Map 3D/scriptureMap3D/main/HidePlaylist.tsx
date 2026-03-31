@@ -1,30 +1,35 @@
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
+
 setTagMask(thisBot, "isAnimatingBible", true);
 
-const {layoutData} = that;
+const { layoutData } = that;
 
 layoutData.playlistSelectedEntryIndex = 0;
 layoutData.currentPlaylistShownId = null;
 layoutData.playlistEntries = [];
 
-await thisBot.RespawnAllBooks({layoutData});
+await thisBot.RespawnAllBooks({ layoutData });
 
 layoutData.childrenStructures.forEach((layoutBookStructure) => {
-    if(layoutBookStructure.layoutBookData.piece)
-    {
-        const bookMod = { draggable: true }
-        applyMod(layoutBookStructure.layoutBookData.piece, bookMod);
-    }
-})
+  if (layoutBookStructure.layoutBookData.piece) {
+    const bookMod = { draggable: true };
+    applyMod(layoutBookStructure.layoutBookData.piece, bookMod);
+  }
+});
 
-if(layoutData.staticLayoutPieces.playlistPreviousButton)
-{
-    ObjectPooler.ReleaseObject({obj: layoutData.staticLayoutPieces.playlistPreviousButton, tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapPlaylistNavigationButton});
-    layoutData.staticLayoutPieces.playlistPreviousButton = null;
+if (layoutData.staticLayoutPieces.playlistPreviousButton) {
+  ObjectPooler.ReleaseObject({
+    obj: layoutData.staticLayoutPieces.playlistPreviousButton,
+    tag: ObjectPoolTags.MapPlaylistNavigationButton,
+  });
+  layoutData.staticLayoutPieces.playlistPreviousButton = null;
 }
-if(layoutData.staticLayoutPieces.playlistNextButton)
-{
-    ObjectPooler.ReleaseObject({obj: layoutData.staticLayoutPieces.playlistNextButton, tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapPlaylistNavigationButton});
-    layoutData.staticLayoutPieces.playlistNextButton = null;
+if (layoutData.staticLayoutPieces.playlistNextButton) {
+  ObjectPooler.ReleaseObject({
+    obj: layoutData.staticLayoutPieces.playlistNextButton,
+    tag: ObjectPoolTags.MapPlaylistNavigationButton,
+  });
+  layoutData.staticLayoutPieces.playlistNextButton = null;
 }
 
-shout("OnHidePlaylistComplete")
+shout("OnHidePlaylistComplete");

@@ -12,6 +12,7 @@
     * BibleVizUtils.Functions.GetLabelForPiece({piece: thisBot, label: someText, color: '#FFFFFF', labelColor: '#000000', dimension: 'home', isAside: true, isAnimatable: false});
 */
 
+import { ObjectPoolTags } from "bibleVizUtils.models.canvas";
 const {piece, label, date, color, labelColor, dimension, labelPositioning, isAnimatable, targetOpacity = 1} = that;
 
 const {scaleY} = BibleVizUtils.Functions.GetDialogBotScaleY({scaleXLimit: 5, line: label, paddingX: 0.4, paddingY: 0.4})
@@ -24,10 +25,10 @@ const transformerOffset                     = 1;
 const transformerPosition                   = transformer ? (getBotPosition(transformer, dimension).add(new Vector3(0, 0, transformerOffset))) : new Vector3(0, 0, 0);
 const piecePosition                       = getBotPosition(piece, dimension);
 const pieceScales                         = BibleVizUtils.Functions.GetBotScales(piece);
-const infoLabelTransformer                  = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer});
-const infoLabel                             = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabel});
-const infoLabelTail                         = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTail});
-const infoLabelDate                         = date ? ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelDate}) : null;
+const infoLabelTransformer                  = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.InfoLabelTransformer});
+const infoLabel                             = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.InfoLabel});
+const infoLabelTail                         = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.InfoLabelTail});
+const infoLabelDate                         = date ? ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.InfoLabelDate}) : null;
 const infoLabelTransformerDesiredScales     = {x: 1, y: 1, z: 1};
 const radialVector                          = new Vector2(pieceScales.x/2, pieceScales.y/2)
 const infoLabelOffsetMargin                 = 0.25;

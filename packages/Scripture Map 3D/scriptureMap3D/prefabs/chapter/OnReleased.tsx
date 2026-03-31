@@ -1,3 +1,6 @@
+import { tryHideIndicators } from "bibleVizUtils.controllers.userPresence.activityIndicatorsController";
+import { tryHideNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
+
 thisBot.tags.desiredLabel = null;
 thisBot.tags.toErase = null;
 thisBot.tags.parentBookName = null;
@@ -7,5 +10,5 @@ thisBot.tags.structureIndex = null;
 thisBot.tags.chapterNumber = null;
 thisBot.tags.label = null;
 thisBot.tags.dateWrote = null;
-BibleVizUtils.Functions.TryHideUsersColorOnPiece({piece: thisBot})
-BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({piece: thisBot});
+tryHideIndicators(thisBot);
+tryHideNotification(thisBot);

@@ -10,11 +10,23 @@
  * thisBot.UpdateBookStack({ bookData: someBookData });
  */
 
-const {bookData, isInstantaneous} = that;
+import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+
+const {
+  bookData,
+  isInstantaneous,
+}: {
+  bookData: StackBookData;
+  isInstantaneous: boolean;
+} = that;
 const dimension = os.getCurrentDimension();
 const animations = [];
 
-const {newBookAnimations} = await thisBot.HandleBookDataInStack({dimension, bookData, isInstantaneous});
+const { newBookAnimations } = await thisBot.HandleBookDataInStack({
+  dimension,
+  bookData,
+  isInstantaneous,
+});
 animations.push(...newBookAnimations);
 
 await Promise.allSettled(animations);

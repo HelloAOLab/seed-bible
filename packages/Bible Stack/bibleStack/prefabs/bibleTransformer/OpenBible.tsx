@@ -1,117 +1,252 @@
+import { GetBotScales, GetDarkerColor } from "bibleVizUtils.functions.index";
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import {
+  BiblePiece,
+  BibleVisualizationState,
+  ObjectPoolTags,
+} from "bibleVizUtils.models.canvas";
+import type { Easing } from "../../../../../typings/AuxLibraryDefinitions";
+import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
+
 /**
-    * Opens the Bible by animating its elements and setting their properties based on the provided Bible data.
-    * Initializes animations for the sections and adjusts their positions and scales.
-    * @param {Object} that - The context containing properties for the Bible opening process.
-    * @param {number} [that.duration=0.5] - The duration of the opening animation.
-    * @param {Object} [that.easing={type: "sinusoidal", mode: "inout"}] - Easing configuration for the animation.
-    * @param {BibleData} that.bibleData - The data related to the Bible being opened.
-    * @example
-    * bibleTransformer.OpenBible({duration: 1, easing: {type: "linear", mode: "inout"}, bibleData: someBibleData})
-*/
+ * Opens the Bible by animating its elements and setting their properties based on the provided Bible data.
+ * Initializes animations for the sections and adjusts their positions and scales.
+ * @param {Object} that - The context containing properties for the Bible opening process.
+ * @param {number} [that.duration=0.5] - The duration of the opening animation.
+ * @param {Object} [that.easing={type: "sinusoidal", mode: "inout"}] - Easing configuration for the animation.
+ * @param {BibleData} that.bibleData - The data related to the Bible being opened.
+ * @example
+ * bibleTransformer.OpenBible({duration: 1, easing: {type: "linear", mode: "inout"}, bibleData: someBibleData})
+ */
 
-const {duration = 0.5, easing = {type: "sinusoidal", mode: "inout"}, bibleData} = that ?? {};
+const {
+  duration = 0.5,
+  easing = { type: "sinusoidal", mode: "inout" },
+  bibleData,
+}: {
+  duration?: number;
+  easing: Easing;
+  bibleData: StackBibleData;
+} = that ?? {};
 const dimension = os.getCurrentDimension();
-const lowerCoverPosition = getBotPosition(bibleData.staticBiblePieces.lowerCover, dimension);
-const crossVerticalLineScales = BibleVizUtils.Functions.GetBotScales(bibleData.staticBiblePieces.crossVerticalLine)
-const sectionInitialScaleZ = 0;
-const initialPositionZ = lowerCoverPosition.z + BibleVizUtils.Data.tags.StackPieceMeasurements.CoverScales.z;
-let nextPositionZ = initialPositionZ + BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements;
-const resizeAnimations = [];
-bibleData.currentStackVizState = BibleVizUtils.Data.tags.BibleVisualizationState.Regular;
 
-for(const testamentData of bibleData.childrenData)
-{
-    nextPositionZ += BibleVizUtils.Data.tags.StackSpacing.BetweenSections;
-    for(const sectionData of testamentData.childrenData)
-    {
-        const sectionIndex = testamentData.childrenData.indexOf(sectionData);
-        const desiredScaleZ = sectionData.creationInfo.amountOfChaptersInSection * BibleVizUtils.Data.tags.StackPieceMeasurements.SectionDesiredScaleZRatio;
-        
-        const section = ObjectPooler.GetObjectFromPool({tag: sectionData instanceof StackSectionBookData ? BibleVizUtils.Data.tags.ObjectPoolTags.StackBook : BibleVizUtils.Data.tags.ObjectPoolTags.StackSection});
-        const sectionMod = {
-            typeOfPiece               : sectionData instanceof StackSectionBookData ? BibleVizUtils.Data.tags.BiblePieceType.StackSectionBook : BibleVizUtils.Data.tags.BiblePieceType.StackSection,
-            arrangementIndex            : sectionData.creationInfo.arrangementIndex,
-            testamentIndex              : sectionData.creationInfo.testamentIndex,
-            sectionIndex                : sectionData.creationInfo.sectionIndex,
-            sectionName                 : sectionData.pieceInfo.name,
-            amountOfChaptersInSection   : sectionData.creationInfo.amountOfChaptersInSection,
-            numberOfChapters            : sectionData instanceof StackSectionBookData ? sectionData.creationInfo.amountOfChaptersInSection : null,
-            bookInfo                    : sectionData instanceof StackSectionBookData ? sectionData.pieceInfo.books[0] : null,
-            bookName                    : sectionData instanceof StackSectionBookData ? sectionData.pieceInfo.books[0].commonName : null,
-            [dimension]                 : true,
-            [dimension + "X"]           : 0,
-            [dimension + "Y"]           : 0,
-            [dimension + "Z"]           : initialPositionZ,
-            [dimension + "RotationZ"]   : 0,
-            scaleX                      : BibleVizUtils.Data.tags.StackPieceMeasurements.SectionScales.x,
-            scaleY                      : BibleVizUtils.Data.tags.StackPieceMeasurements.SectionScales.y,
-            scaleZ                      : sectionInitialScaleZ,
-            initialScaleX               : BibleVizUtils.Data.tags.StackPieceMeasurements.SectionScales.x,
-            initialScaleY               : BibleVizUtils.Data.tags.StackPieceMeasurements.SectionScales.y,
-            initialScaleZ               : desiredScaleZ,
-            hoveredScaleX               : (BibleVizUtils.Data.tags.StackPieceMeasurements.SectionScales.x) + BibleVizUtils.Data.tags.StackPieceMeasurements.SectionAditionalScaleOnHover,
-            hoveredScaleY               : (BibleVizUtils.Data.tags.StackPieceMeasurements.SectionScales.y) + BibleVizUtils.Data.tags.StackPieceMeasurements.SectionAditionalScaleOnHover,
-            color                       : sectionData.highlightColor ?? sectionData.pieceInfo.color,
-            orginalColor                : sectionData.pieceInfo.color,
-            initialColor                : sectionData.pieceInfo.color,
-            strokeColor                 : "clear",
-            initialExplodedViewScaleZ   : sectionData instanceof StackSectionBookData ? null : desiredScaleZ * (sectionData.pieceInfo.customExplodedViewScaleFactor ?? 2),
-            desiredExplodedViewScaleZ   : sectionData instanceof StackSectionBookData ? null : desiredScaleZ * (sectionData.pieceInfo.customExplodedViewScaleFactor ?? 2),
-            labelOpacity                : 0,
-            formOpacity                 : 0.7,
-            labelTextColor              : BibleVizUtils.Functions.GetDarkerColor({color: sectionData.pieceInfo.color}),
-            transformer                 : thisBot.id,
-            transformerLink             : `🔗${thisBot.id}`,
-            customColorRange            : sectionData instanceof StackSectionBookData ? null : sectionData.pieceInfo.customColorRange,
-            draggable                   : BibleStackManager.masks.areBiblePiecesDraggable,
-            desiredPositionZ            : nextPositionZ,
-            desiredScaleZ,
-            sectionIndex
-        };
-        section.OnSpawned({mod: sectionMod});
-        sectionData.piece = section;
-        sectionData.isActive = true;
-        setTagMask(sectionData.piece, "formOpacity", 0.7);
-        setTagMask(sectionData.piece, "highlightable", true);
-        if(BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(section, "color", BibleVizUtils.Functions.GetHistoryColor({piece: section}))
-        resizeAnimations.push(
-            animateTag(sectionData.piece, {
-                fromValue: {
-                    [dimension + 'Z']: initialPositionZ,
-                    scaleZ: sectionInitialScaleZ
-                },
-                toValue: {
-                    [dimension + 'Z']: nextPositionZ,
-                    scaleZ: desiredScaleZ
-                },
-                duration,
-                easing
-            })
-        )
-        nextPositionZ += (desiredScaleZ + BibleVizUtils.Data.tags.StackSpacing.BetweenSections);
-    }
-    nextPositionZ += BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements
+const lowerCover = bibleData.getStaticPiece("lowerCover");
+const upperCover = bibleData.getStaticPiece("upperCover");
+const verticalLine = bibleData.getStaticPiece("crossVerticalLine");
+const horizontalLine = bibleData.getStaticPiece("crossHorizontalLine");
+
+if (!lowerCover) {
+  console.error("lowerCover not found at OpenBible");
+  return;
 }
 
-const crossOpenedPositionZ = bibleData.childrenData[bibleData.childrenData.length - 1].childrenData[0].piece.tags.desiredPositionZ - (BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements / 2) - BibleVizUtils.Data.tags.StackSpacing.BetweenSections - (crossVerticalLineScales.z/2);
+if (!upperCover) {
+  console.error("upperCover not found at OpenBible");
+  return;
+}
+
+if (!verticalLine) {
+  console.error("verticalLine not found at OpenBible");
+  return;
+}
+
+if (!horizontalLine) {
+  console.error("horizontalLine not found at OpenBible");
+  return;
+}
+
+const lowerCoverPosition = getBotPosition(lowerCover, dimension);
+const crossVerticalLineScales = GetBotScales(verticalLine);
+const sectionInitialScaleZ = 0;
+const initialPositionZ =
+  lowerCoverPosition.z +
+  BibleVizDataRepository.getStackPieceMeasurement("CoverScales").z;
+let nextPositionZ =
+  initialPositionZ +
+  BibleVizDataRepository.getStackSpacing("BetweenArrangements");
+const resizeAnimations = [];
+bibleData.changeVizState(BibleVisualizationState.Regular);
+
+for (const testamentData of bibleData.childrenData) {
+  nextPositionZ += BibleVizDataRepository.getStackSpacing("BetweenSections");
+  for (const sectionData of testamentData.childrenData) {
+    const sectionIndex = testamentData.childrenData.indexOf(sectionData);
+    const desiredScaleZ =
+      sectionData.getCreationParam("amountOfChaptersInSection") *
+      BibleVizDataRepository.getStackPieceMeasurement(
+        "SectionDesiredScaleZRatio"
+      );
+
+    const section = ObjectPooler.GetObjectFromPool({
+      tag:
+        sectionData instanceof StackSectionBookData
+          ? ObjectPoolTags.StackBook
+          : ObjectPoolTags.StackSection,
+    });
+    const sectionMod = {
+      typeOfPiece:
+        sectionData instanceof StackSectionBookData
+          ? BiblePiece.StackSectionBook
+          : BiblePiece.StackSection,
+      arrangementIndex: sectionData.getCreationParam("arrangementIndex"),
+      testamentIndex: sectionData.getCreationParam("testamentIndex"),
+      sectionIndex: sectionData.getCreationParam("sectionIndex"),
+      sectionName: sectionData.getPieceInfoProperty("name"),
+      amountOfChaptersInSection: sectionData.getCreationParam(
+        "amountOfChaptersInSection"
+      ),
+      numberOfChapters:
+        sectionData instanceof StackSectionBookData
+          ? sectionData.getCreationParam("amountOfChaptersInSection")
+          : null,
+      bookInfo:
+        sectionData instanceof StackSectionBookData
+          ? sectionData.getPieceInfoProperty("books")[0]
+          : null,
+      bookName:
+        sectionData instanceof StackSectionBookData
+          ? sectionData.getPieceInfoProperty("books")[0]?.commonName
+          : null,
+      [dimension]: true,
+      [dimension + "X"]: 0,
+      [dimension + "Y"]: 0,
+      [dimension + "Z"]: initialPositionZ,
+      [dimension + "RotationZ"]: 0,
+      scaleX:
+        BibleVizDataRepository.getStackPieceMeasurement("SectionScales").x,
+      scaleY:
+        BibleVizDataRepository.getStackPieceMeasurement("SectionScales").y,
+      scaleZ: sectionInitialScaleZ,
+      initialScaleX:
+        BibleVizDataRepository.getStackPieceMeasurement("SectionScales").x,
+      initialScaleY:
+        BibleVizDataRepository.getStackPieceMeasurement("SectionScales").y,
+      initialScaleZ: desiredScaleZ,
+      hoveredScaleX:
+        BibleVizDataRepository.getStackPieceMeasurement("SectionScales").x +
+        BibleVizDataRepository.getStackPieceMeasurement(
+          "SectionAditionalScaleOnHover"
+        ),
+      hoveredScaleY:
+        BibleVizDataRepository.getStackPieceMeasurement("SectionScales").y +
+        BibleVizDataRepository.getStackPieceMeasurement(
+          "SectionAditionalScaleOnHover"
+        ),
+      color:
+        sectionData.highlightColor ?? sectionData.getPieceInfoProperty("color"),
+      orginalColor: sectionData.getPieceInfoProperty("color"),
+      initialColor: sectionData.getPieceInfoProperty("color"),
+      strokeColor: "clear",
+      initialExplodedViewScaleZ:
+        sectionData instanceof StackSectionBookData
+          ? null
+          : desiredScaleZ *
+            (sectionData.getPieceInfoProperty(
+              "customExplodedViewScaleFactor"
+            ) ?? 2),
+      desiredExplodedViewScaleZ:
+        sectionData instanceof StackSectionBookData
+          ? null
+          : desiredScaleZ *
+            (sectionData.getPieceInfoProperty(
+              "customExplodedViewScaleFactor"
+            ) ?? 2),
+      labelOpacity: 0,
+      formOpacity: 0.7,
+      labelTextColor: GetDarkerColor(sectionData.getPieceInfoProperty("color")),
+      transformer: thisBot.id,
+      transformerLink: `🔗${thisBot.id}`,
+      customColorRange:
+        sectionData instanceof StackSectionBookData
+          ? null
+          : sectionData.getPieceInfoProperty("customColorRange"),
+      draggable: BibleStackManager.masks.areBiblePiecesDraggable,
+      desiredPositionZ: nextPositionZ,
+      desiredScaleZ,
+    };
+    section.OnSpawned({ mod: sectionMod });
+    sectionData.setPiece(section);
+    sectionData.activate();
+    if (sectionData.piece) {
+      setTagMask(sectionData.piece, "formOpacity", 0.7);
+      setTagMask(sectionData.piece, "highlightable", true);
+      resizeAnimations.push(
+        animateTag(sectionData.piece, {
+          fromValue: {
+            [dimension + "Z"]: initialPositionZ,
+            scaleZ: sectionInitialScaleZ,
+          },
+          toValue: {
+            [dimension + "Z"]: nextPositionZ,
+            scaleZ: desiredScaleZ,
+          },
+          duration,
+          easing,
+        })
+      );
+    }
+    if (BibleVizUtils.Data.masks.isInHistoryMode)
+      setTagMask(
+        section,
+        "color",
+        BibleVizUtils.Functions.GetHistoryColor({ piece: section })
+      );
+    nextPositionZ +=
+      desiredScaleZ + BibleVizDataRepository.getStackSpacing("BetweenSections");
+  }
+  nextPositionZ += BibleVizDataRepository.getStackSpacing(
+    "BetweenArrangements"
+  );
+}
+
+const lastTestament = bibleData.childrenData[bibleData.childrenData.length - 1];
+
+if (!lastTestament) {
+  console.error("lastTestament not found at OpenBible");
+  return;
+}
+
+const firstSection = lastTestament.childrenData[0];
+
+if (!firstSection) {
+  console.error("firstSection not found at OpenBible");
+  return;
+}
+
+const firstSectionPiece = firstSection.piece;
+
+if (!firstSectionPiece) {
+  console.error("firstSectionPiece not found at OpenBible");
+  return;
+}
+
+const crossOpenedPositionZ =
+  firstSectionPiece.tags.desiredPositionZ -
+  BibleVizDataRepository.getStackSpacing("BetweenArrangements") / 2 -
+  BibleVizDataRepository.getStackSpacing("BetweenSections") -
+  crossVerticalLineScales.z / 2;
 resizeAnimations.push(
-    animateTag(bibleData.staticBiblePieces.upperCover, dimension + "Z", {
-        toValue: nextPositionZ,
-        duration,
-        easing: easing
-    }),
-    animateTag([bibleData.staticBiblePieces.crossVerticalLine, bibleData.staticBiblePieces.crossHorizontalLine], dimension + "Z", {
-        toValue: crossOpenedPositionZ,
-        duration,
-        easing: easing
-    })
+  animateTag(upperCover, dimension + "Z", {
+    toValue: nextPositionZ,
+    duration,
+    easing: easing,
+  }),
+  animateTag([verticalLine, horizontalLine], dimension + "Z", {
+    toValue: crossOpenedPositionZ,
+    duration,
+    easing: easing,
+  })
 );
 
 await Promise.allSettled(resizeAnimations);
 
 setTagMask(thisBot, "isBibleClosed", false);
 
-const activeBibleElements = getBots(byTag("isStackPiece", true), byTag(dimension, true));
+const activeBibleElements = getBots(
+  byTag("isStackPiece", true),
+  byTag(dimension, true)
+);
 BibleStackManager.TrySetPiecesRenderOrder(activeBibleElements);
 
 return true;

@@ -1,13 +1,15 @@
-const {book, chapter, userId} = that;
+throw new Error("GetHistoryEntries is not implemented, outdated or deprecated");
 
-if(!thisBot.vars.hooksBot)
-{
-    const hooksBot = getBot("system", "app.hooks");
-    if(hooksBot) thisBot.vars.hooksBot = hooksBot;
-}
-if(!thisBot.vars.hooksBot) return null;
+// const {book, chapter, userId} = that;
 
-const bookId = BibleVizUtils.Data.tags.booksStaticInfo[book].abbreviation
-const timestamp = thisBot.vars.hooksBot.vars.tempReadingHistory[userId]?.[bookId]?.[chapter]
+// if(!thisBot.vars.hooksBot)
+// {
+//     const hooksBot = getBot("system", "app.hooks");
+//     if(hooksBot) thisBot.vars.hooksBot = hooksBot;
+// }
+// if(!thisBot.vars.hooksBot) return null;
 
-return timestamp
+// const bookId = BibleVizUtils.Data.tags.booksStaticInfo[book].abbreviation
+// const timestamp = thisBot.vars.hooksBot.vars.tempReadingHistory[userId]?.[bookId]?.[chapter]
+
+// return timestamp
