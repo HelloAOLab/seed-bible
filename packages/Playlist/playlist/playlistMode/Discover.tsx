@@ -51,7 +51,9 @@ const Discover = (props: any) => {
   });
   const [query, setQuery] = useState("");
 
-  const [renamingPlaylist, setRenamingPlaylist] = useState(false);
+  const [renamingPlaylist, setRenamingPlaylist] = useState(
+    G.OpenModalEditName || false
+  );
 
   useLayoutEffect(() => {
     G.SetRenamingPlaylist = setRenamingPlaylist;
@@ -76,7 +78,6 @@ const Discover = (props: any) => {
 
     const scrollLeft = el.scrollLeft;
     const maxScrollLeft = el.scrollWidth - el.clientWidth;
-    console.log(scrollLeft, maxScrollLeft);
     if (scrollLeft >= maxScrollLeft - 20) {
       setPos("right");
     } else if (scrollLeft <= 20) {

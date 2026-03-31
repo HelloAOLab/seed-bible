@@ -338,6 +338,7 @@ const AddNewPlaylist = (props: any) => {
           <div
             className="back-button"
             onClick={() => {
+              thisBot.resetPlaylistGlobalStateVars();
               if (onClickBackToDiscover) onClickBackToDiscover();
             }}
           >
@@ -350,13 +351,6 @@ const AddNewPlaylist = (props: any) => {
         <p style={{ color: "#606060", margin: "8px 0" }}>
           {t("addDetailsToSave")}
         </p>
-
-        {false && (
-          <Tabs
-            tabs={tabsVals.filter((_, i) => (!editId ? true : i !== 1))}
-            onTabChange={handleTabChange}
-          />
-        )}
 
         {isActiveTabManual() ? null : (
           <>
@@ -900,6 +894,10 @@ const AddNewPlaylist = (props: any) => {
               if (!checkNameDuplicate(name)) {
                 if (isActiveTabManual()) {
                   // Ensure the name retains
+                  G.SetEditData?.((prev: any) => ({
+                    ...prev,
+                    id: null,
+                  }));
                   G[`${id}creatingPlaylistName`] = name;
                   return onCreate();
                 }
@@ -917,6 +915,7 @@ const AddNewPlaylist = (props: any) => {
           <Button
             isDisabled={loading}
             onClick={() => {
+              thisBot.resetPlaylistGlobalStateVars();
               onClickBackToDiscover();
             }}
             secondaryAlt

@@ -57,8 +57,8 @@ describe("navigate", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
-    await page.locator("div.sidebar-itm:nth-child(23)").click();
-    await page.locator("button.chapter-btn:nth-child(53)").click();
+    await seedBibleFrame.locator("div.sidebar-itm:nth-child(23)").click();
+    await seedBibleFrame.locator("button.chapter-btn:nth-child(53)").click();
 
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
@@ -87,8 +87,8 @@ describe("navigate", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
-    await page.locator("div.sidebar-itm:nth-child(23)").click();
-    await page.locator("button.chapter-btn:nth-child(53)").click();
+    await seedBibleFrame.locator("div.sidebar-itm:nth-child(23)").click();
+    await seedBibleFrame.locator("button.chapter-btn:nth-child(53)").click();
 
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
@@ -108,8 +108,8 @@ describe("navigate", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
-    await page.locator(".searchbar > input").fill("Hos");
-    await page.locator("button.chapter-btn:nth-child(3)").click();
+    await seedBibleFrame.locator(".searchbar > input").fill("Hos");
+    await seedBibleFrame.locator("button.chapter-btn:nth-child(3)").click();
 
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
@@ -129,13 +129,13 @@ describe("navigate", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
-    await page.locator(".sidebar-translation-selector").click();
-    await page.waitForSelector(".language-list");
-    await page.locator(".language-list > div:nth-child(1)").click();
+    await seedBibleFrame.locator(".sidebar-translation-selector").click();
+    await seedBibleFrame.waitForSelector(".language-list");
+    await seedBibleFrame.locator(".language-list > div:nth-child(1)").click();
     await delay(100);
-    await page.locator(".language-list > div:nth-child(2)").click();
+    await seedBibleFrame.locator(".language-list > div:nth-child(2)").click();
     await delay(100);
-    await page.locator(".translation-option:nth-child(1)").click();
+    await seedBibleFrame.locator(".translation-option:nth-child(1)").click();
 
     await delay(1000);
 
@@ -157,7 +157,7 @@ describe("navigate", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
-    await page.locator(".searchbar > input").fill("Rev 3");
+    await seedBibleFrame.locator(".searchbar > input").fill("Rev 3");
     await page.keyboard.press("Enter");
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")

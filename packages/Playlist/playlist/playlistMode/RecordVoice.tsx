@@ -3,17 +3,18 @@ const G = globalThis as any;
 const limitOfLines = 45;
 
 const RecordingVoiceUI = (props: any) => {
-  const { data, setData } = props;
+  const { data, setData, name, setName } = props;
   const videoRef = useRef(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isRecorded, setIsRecorded] = useState(false);
+  const [isRecording, setIsRecording] = useState(G.isRecording || false);
+  const [isRecorded, setIsRecorded] = useState(G.hasRecording || false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playCount, setPlayCount] = useState(0);
-  const dataFreq = useRef<any>([]);
+  const dataFreq = useRef<any>(G.dataFreq || []);
   const incrementCount = useRef(0);
 
   G.isRecording = isRecording;
   G.hasRecording = isRecorded;
+  G.dataFreq = dataFreq.current;
 
   useLayoutEffect(() => {
     (async () => {
@@ -38,10 +39,11 @@ const RecordingVoiceUI = (props: any) => {
       }, 1000);
     }
     return () => {
+      if (isRecording) DataManager.endVoiceRecord();
+      G.isRecording = false;
       if (timer) {
         clearTimeout(timer);
       }
-      if (isRecording) DataManager.endVoiceRecord();
     };
   }, [playCount, isPlaying]);
 
@@ -76,6 +78,18 @@ const RecordingVoiceUI = (props: any) => {
   };
 
   const handleReRecord = () => {
+    if (G.IsSavingAndAdding) {
+      return ShowNotification({
+        message: t(
+          "yourRecordingIsBeingSavedAndAddedToTheAnnotationPleaseWait"
+        ),
+        severity: "error",
+      });
+    }
+    // If name start in format MM/DD/YYYY then remove the time from the name using regex
+    if (name?.match(/^\d{1,2}\/\d{1,2}\/\d{4}/)) {
+      setName("");
+    }
     setData(null);
     setIsRecorded(false);
     setIsPlaying(false);
