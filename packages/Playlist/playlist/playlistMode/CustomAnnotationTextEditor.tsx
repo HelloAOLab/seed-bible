@@ -1447,7 +1447,11 @@ function CustomAnnotationTextEditor(props: any) {
   );
   const isLink = useMemo(() => recording === RECORDING_TYPES.link, [recording]);
 
-  const [data, setData] = useState(null);
+  const [data, setData] = useState(G.AnnotationsRecordingData || null);
+
+  useEffect(() => {
+    G.AnnotationsRecordingData = data;
+  }, [data]);
 
   const onSaveAndAdd = async () => {
     if (isLink) {
@@ -1723,6 +1727,8 @@ function CustomAnnotationTextEditor(props: any) {
                   onClick={() => {
                     setRecording(null);
                     setData(null);
+                    G.hasRecording = false;
+                    G.isRecording = false;
                   }}
                   secondaryAlt
                 >
