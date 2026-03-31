@@ -13,6 +13,8 @@ interface AppProps {
   id: string;
 }
 
+const test = null; // TODO: Delete this after test
+
 const App = ({ id }: AppProps) => {
   const handleChapterClick = useCallback<
     ScriptureMap2DConfig["onChapterClick"]
