@@ -36,6 +36,8 @@ beforeEach(() => {
   webGetMock = jest.fn();
   logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
   mockSaveReadingHistory.mockReset();
+  mockSessionsManager.createSession.mockReset();
+  mockSessionsManager.joinSession.mockReset();
 
   (globalThis as any).web = {
     get: webGetMock,
@@ -172,6 +174,56 @@ describe("createSeedBibleState", () => {
     expect(state.tabs.tabs.value).toHaveLength(previousTabCount + 1);
     expect(state.tabs.selectedTabId.value).toBe(newTab.id);
     expect(selectedPane?.tab?.id).toBe(newTab.id);
+  });
+
+  it("createSharedSession() creates a shared session and adds a tab for its reading state", async () => {
+    const state = await createState();
+    const previousTabCount = state.tabs.tabs.value.length;
+    const sessionReadingState = state.tabs.tabs.value[0]!.readingState;
+    const session = {
+      id: "session-123",
+      readingState: sessionReadingState,
+      document: {} as SharedDocument,
+      dispose: jest.fn(),
+    };
+    mockSessionsManager.createSession.mockResolvedValue(session);
+
+    const result = await state.createSharedSession();
+
+    expect(mockSessionsManager.createSession).toHaveBeenCalledTimes(1);
+    expect(result).toBe(session);
+    expect(state.tabs.tabs.value).toHaveLength(previousTabCount + 1);
+    expect(state.tabs.tabs.value[previousTabCount]?.readingState).toBe(
+      sessionReadingState
+    );
+    expect(state.tabs.selectedTabId.value).toBe(
+      state.tabs.tabs.value[previousTabCount]?.id
+    );
+  });
+
+  it("joinSharedSession(id) joins a shared session and adds a tab for its reading state", async () => {
+    const state = await createState();
+    const previousTabCount = state.tabs.tabs.value.length;
+    const sessionReadingState = state.tabs.tabs.value[1]!.readingState;
+    const session = {
+      id: "group-abc",
+      readingState: sessionReadingState,
+      document: {} as SharedDocument,
+      dispose: jest.fn(),
+    };
+    mockSessionsManager.joinSession.mockResolvedValue(session);
+
+    const result = await state.joinSharedSession("group-abc");
+
+    expect(mockSessionsManager.joinSession).toHaveBeenCalledWith("group-abc");
+    expect(result).toBe(session);
+    expect(state.tabs.tabs.value).toHaveLength(previousTabCount + 1);
+    expect(state.tabs.tabs.value[previousTabCount]?.readingState).toBe(
+      sessionReadingState
+    );
+    expect(state.tabs.selectedTabId.value).toBe(
+      state.tabs.tabs.value[previousTabCount]?.id
+    );
   });
 
   it("tabs can be opened in new panes", async () => {

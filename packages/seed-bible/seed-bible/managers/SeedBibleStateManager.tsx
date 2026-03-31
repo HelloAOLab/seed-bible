@@ -33,6 +33,7 @@ import {
 } from "seed-bible.managers.ExtensionManager";
 import {
   createSessionsManager,
+  type BibleReadingSession,
   type SessionsManager,
 } from "seed-bible.managers.SessionsManager";
 import { debounce } from "es-toolkit";
@@ -73,6 +74,8 @@ export interface SeedBibleState {
   login: LoginManager;
   readingHistory: ReadingHistoryManager;
   sessions: SessionsManager;
+  createSharedSession: () => Promise<BibleReadingSession>;
+  joinSharedSession: (id: string) => Promise<BibleReadingSession>;
   app: AppState;
   extensions: ExtensionManager;
 }
@@ -243,6 +246,22 @@ export function createSeedBibleState(): SeedBibleState {
     selector.setOpen(true, selectedPane);
   };
 
+  const handleCreateSharedSession = async () => {
+    closeSidebarAndSettings();
+    const session = await sessions.createSession();
+    const tab = tabs.addTab(session.readingState);
+    panes.setSelectedPaneTab(tab.id);
+    return session;
+  };
+
+  const handleJoinSharedSession = async (id: string) => {
+    closeSidebarAndSettings();
+    const session = await sessions.joinSession(id);
+    const tab = tabs.addTab(session.readingState);
+    panes.setSelectedPaneTab(tab.id);
+    return session;
+  };
+
   const state: SeedBibleState = {
     bibleData: data,
     config,
@@ -258,6 +277,8 @@ export function createSeedBibleState(): SeedBibleState {
     login,
     readingHistory,
     sessions,
+    createSharedSession: handleCreateSharedSession,
+    joinSharedSession: handleJoinSharedSession,
     extensions,
     app: {
       panelsEnabled,
