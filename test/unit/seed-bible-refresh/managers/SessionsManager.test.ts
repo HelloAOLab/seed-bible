@@ -14,11 +14,17 @@ type MockChangesSubscriber = () => void;
 function createMockSharedMap(initial: Record<string, unknown> = {}) {
   const store = new Map<string, unknown>(Object.entries(initial));
   const subscribers = new Set<MockChangesSubscriber>();
+  let emitOnSet = false;
 
   const map = {
     get: jest.fn((key: string) => store.get(key)),
     set: jest.fn((key: string, value: unknown) => {
       store.set(key, value);
+      if (emitOnSet) {
+        for (const subscriber of subscribers) {
+          subscriber();
+        }
+      }
     }),
     changes: {
       subscribe: jest.fn((handler: MockChangesSubscriber) => {
@@ -32,6 +38,9 @@ function createMockSharedMap(initial: Record<string, unknown> = {}) {
       for (const subscriber of subscribers) {
         subscriber();
       }
+    },
+    setEmitOnSet: (enabled: boolean) => {
+      emitOnSet = enabled;
     },
   };
 
@@ -51,6 +60,7 @@ describe("SessionsManager", () => {
   let mockMap: ReturnType<typeof createMockSharedMap>;
   let mockDocument: {
     getMap: jest.Mock;
+    transact: jest.Mock;
     unsubscribe: jest.Mock;
   };
 
@@ -58,6 +68,7 @@ describe("SessionsManager", () => {
     mockMap = createMockSharedMap();
     mockDocument = {
       getMap: jest.fn().mockReturnValue(mockMap),
+      transact: jest.fn((callback: () => void) => callback()),
       unsubscribe: jest.fn(),
     };
 
@@ -130,6 +141,27 @@ describe("SessionsManager", () => {
     expect(mockMap.set).toHaveBeenCalledWith("translationId", "NIV");
     expect(mockMap.set).toHaveBeenCalledWith("bookId", "EXO");
     expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 8);
+    expect(mockDocument.transact).toHaveBeenCalled();
+  });
+
+  it("does not loop when local state changes are echoed back from the shared map", async () => {
+    mockMap.setEmitOnSet(true);
+
+    const manager = createSessionsManager({} as any);
+    const session = await manager.joinSession("group-abc");
+
+    mockMap.set.mockClear();
+    mockDocument.transact.mockClear();
+
+    session.readingState.translationId.value = "NIV";
+    session.readingState.bookId.value = "EXO";
+    session.readingState.chapterNumber.value = 8;
+
+    expect(mockMap.set).toHaveBeenCalledTimes(3);
+    expect(mockDocument.transact).toHaveBeenCalledTimes(3);
+    expect(session.readingState.translationId.value).toBe("NIV");
+    expect(session.readingState.bookId.value).toBe("EXO");
+    expect(session.readingState.chapterNumber.value).toBe(8);
   });
 
   it("applies shared document changes to the session reading state", async () => {

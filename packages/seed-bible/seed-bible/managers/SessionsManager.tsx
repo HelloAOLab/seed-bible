@@ -8,7 +8,59 @@ import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
 interface SessionData {
   translationId: string | null;
   bookId: string | null;
-  chapterNumber: number;
+  chapterNumber: number | null;
+}
+
+function getSessionDataSnapshot(
+  readingState: Pick<
+    BibleReadingState,
+    "translationId" | "bookId" | "chapterNumber"
+  >
+): SessionData {
+  return {
+    translationId: readingState.translationId.value,
+    bookId: readingState.bookId.value,
+    chapterNumber: readingState.chapterNumber.value,
+  };
+}
+
+function getSessionDataFromMap(
+  stateMap: SharedMap<SessionData[keyof SessionData]>
+): SessionData {
+  return {
+    translationId: toStringOrNull(stateMap.get("translationId")),
+    bookId: toStringOrNull(stateMap.get("bookId")),
+    chapterNumber: toPositiveIntOrNull(stateMap.get("chapterNumber")),
+  };
+}
+
+function sessionDataMatches(left: SessionData, right: SessionData): boolean {
+  return (
+    left.translationId === right.translationId &&
+    left.bookId === right.bookId &&
+    left.chapterNumber === right.chapterNumber
+  );
+}
+
+function applySessionDataToReadingState(
+  readingState: Pick<
+    BibleReadingState,
+    "translationId" | "bookId" | "chapterNumber"
+  >,
+  sessionData: SessionData
+) {
+  if (readingState.translationId.value !== sessionData.translationId) {
+    readingState.translationId.value = sessionData.translationId;
+  }
+  if (readingState.bookId.value !== sessionData.bookId) {
+    readingState.bookId.value = sessionData.bookId;
+  }
+  if (
+    sessionData.chapterNumber !== null &&
+    readingState.chapterNumber.value !== sessionData.chapterNumber
+  ) {
+    readingState.chapterNumber.value = sessionData.chapterNumber;
+  }
 }
 
 export interface BibleReadingSession {
@@ -39,6 +91,12 @@ function toPositiveIntOrDefault(value: unknown, defaultValue: number): number {
     : defaultValue;
 }
 
+function toPositiveIntOrNull(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value > 0
+    ? Math.floor(value)
+    : null;
+}
+
 async function createBibleReadingSession(
   dataManager: BibleDataManager,
   id: string
@@ -48,40 +106,25 @@ async function createBibleReadingSession(
   const stateMap =
     document.getMap<SessionData[keyof SessionData]>("reading_state");
 
-  const existingTranslationId = toStringOrNull(stateMap.get("translationId"));
-  const existingBookId = toStringOrNull(stateMap.get("bookId"));
-  const existingChapterNumber = toPositiveIntOrDefault(
-    stateMap.get("chapterNumber"),
-    readingState.chapterNumber.value
-  );
-
-  if (existingTranslationId !== null) {
-    readingState.translationId.value = existingTranslationId;
-  }
-  if (existingBookId !== null) {
-    readingState.bookId.value = existingBookId;
-  }
-  readingState.chapterNumber.value = existingChapterNumber;
+  applySessionDataToReadingState(readingState, getSessionDataFromMap(stateMap));
 
   let applyingRemoteState = false;
+  let lastLocallyWrittenState: SessionData | null = null;
 
   const mapSubscription = stateMap.changes.subscribe(() => {
+    const nextSessionData = getSessionDataFromMap(stateMap);
+
+    if (
+      lastLocallyWrittenState &&
+      sessionDataMatches(nextSessionData, lastLocallyWrittenState)
+    ) {
+      lastLocallyWrittenState = null;
+      return;
+    }
+
     applyingRemoteState = true;
     try {
-      const nextTranslationId = toStringOrNull(stateMap.get("translationId"));
-      const nextBookId = toStringOrNull(stateMap.get("bookId"));
-      const nextChapterNumber = toPositiveIntOrDefault(
-        stateMap.get("chapterNumber"),
-        readingState.chapterNumber.value
-      );
-
-      if (nextTranslationId !== null) {
-        readingState.translationId.value = nextTranslationId;
-      }
-      if (nextBookId !== null) {
-        readingState.bookId.value = nextBookId;
-      }
-      readingState.chapterNumber.value = nextChapterNumber;
+      applySessionDataToReadingState(readingState, nextSessionData);
     } finally {
       applyingRemoteState = false;
     }
@@ -92,19 +135,25 @@ async function createBibleReadingSession(
       return;
     }
 
-    const translationId = readingState.translationId.value;
-    const bookId = readingState.bookId.value;
-    const chapterNumber = readingState.chapterNumber.value;
+    const nextSessionData = getSessionDataSnapshot(readingState);
+    const currentSessionData = getSessionDataFromMap(stateMap);
 
-    if (stateMap.get("translationId") !== translationId) {
-      stateMap.set("translationId", translationId);
+    if (sessionDataMatches(nextSessionData, currentSessionData)) {
+      return;
     }
-    if (stateMap.get("bookId") !== bookId) {
-      stateMap.set("bookId", bookId);
-    }
-    if (stateMap.get("chapterNumber") !== chapterNumber) {
-      stateMap.set("chapterNumber", chapterNumber);
-    }
+
+    lastLocallyWrittenState = nextSessionData;
+    document.transact(() => {
+      if (currentSessionData.translationId !== nextSessionData.translationId) {
+        stateMap.set("translationId", nextSessionData.translationId);
+      }
+      if (currentSessionData.bookId !== nextSessionData.bookId) {
+        stateMap.set("bookId", nextSessionData.bookId);
+      }
+      if (currentSessionData.chapterNumber !== nextSessionData.chapterNumber) {
+        stateMap.set("chapterNumber", nextSessionData.chapterNumber);
+      }
+    });
   });
 
   const dispose = () => {
