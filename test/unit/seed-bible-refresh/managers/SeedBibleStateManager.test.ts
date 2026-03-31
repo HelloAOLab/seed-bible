@@ -196,6 +196,9 @@ describe("createSeedBibleState", () => {
     expect(state.tabs.tabs.value[previousTabCount]?.readingState).toBe(
       sessionReadingState
     );
+    expect(state.tabs.tabs.value[previousTabCount]?.sharedSession).toBe(
+      session
+    );
     expect(state.tabs.selectedTabId.value).toBe(
       state.tabs.tabs.value[previousTabCount]?.id
     );
@@ -220,6 +223,9 @@ describe("createSeedBibleState", () => {
     expect(state.tabs.tabs.value).toHaveLength(previousTabCount + 1);
     expect(state.tabs.tabs.value[previousTabCount]?.readingState).toBe(
       sessionReadingState
+    );
+    expect(state.tabs.tabs.value[previousTabCount]?.sharedSession).toBe(
+      session
     );
     expect(state.tabs.selectedTabId.value).toBe(
       state.tabs.tabs.value[previousTabCount]?.id

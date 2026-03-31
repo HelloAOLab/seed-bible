@@ -1,5 +1,6 @@
 import { signal } from "@preact/signals";
 import type { BibleDataManager } from "./BibleDataManager";
+import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
 import {
   DEFAULT_BOOK_ID,
   DEFAULT_CHAPTER_NUMBER,
@@ -12,6 +13,7 @@ export interface ReaderTab {
   id: string;
   title: string;
   readingState: BibleReadingState;
+  sharedSession: BibleReadingSession | null;
 }
 
 function getInitialFirstTabBookId(): string {
@@ -45,13 +47,23 @@ function createInitialTabs(dataManager: BibleDataManager): ReaderTab[] {
         initialBookId: getInitialFirstTabBookId(),
         initialChapterNumber: getInitialFirstTabChapter(),
       }),
+      sharedSession: null,
     },
     {
       id: "tab-2",
       title: "Tab 2",
       readingState: createBibleReadingState(dataManager),
+      sharedSession: null,
     },
   ];
+}
+
+type NewTabSource = BibleReadingState | BibleReadingSession;
+
+function isBibleReadingSession(
+  value: NewTabSource | undefined
+): value is BibleReadingSession {
+  return !!value && "document" in value && "readingState" in value;
 }
 
 export type TabsManager = ReturnType<typeof createTabs>;
@@ -123,13 +135,18 @@ export function createTabs(dataManager: BibleDataManager) {
     await syncSelectedTabFromConfig();
   });
 
-  const addTab = (readingState?: BibleReadingState) => {
+  const addTab = (source?: NewTabSource) => {
     const currentTabs = tabs.value;
     const nextNumber = currentTabs.length + 1;
+    const sharedSession = isBibleReadingSession(source) ? source : null;
     const nextTab: ReaderTab = {
       id: `tab-${nextNumber}`,
       title: `Tab ${nextNumber}`,
-      readingState: readingState ?? createBibleReadingState(dataManager),
+      readingState:
+        sharedSession?.readingState ??
+        source ??
+        createBibleReadingState(dataManager),
+      sharedSession,
     };
     tabs.value = [...currentTabs, nextTab];
     selectedTabId.value = nextTab.id;

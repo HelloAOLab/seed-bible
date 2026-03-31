@@ -249,7 +249,7 @@ export function createSeedBibleState(): SeedBibleState {
   const handleCreateSharedSession = async () => {
     closeSidebarAndSettings();
     const session = await sessions.createSession();
-    const tab = tabs.addTab(session.readingState);
+    const tab = tabs.addTab(session);
     panes.setSelectedPaneTab(tab.id);
     return session;
   };
@@ -257,7 +257,7 @@ export function createSeedBibleState(): SeedBibleState {
   const handleJoinSharedSession = async (id: string) => {
     closeSidebarAndSettings();
     const session = await sessions.joinSession(id);
-    const tab = tabs.addTab(session.readingState);
+    const tab = tabs.addTab(session);
     panes.setSelectedPaneTab(tab.id);
     return session;
   };

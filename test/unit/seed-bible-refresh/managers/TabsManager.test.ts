@@ -4,6 +4,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import { createBibleDataManager } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import type { BibleReadingSession } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
   API_ENDPOINT,
@@ -103,6 +104,26 @@ describe("createTabs", () => {
     expect(existingReadingStates).not.toContain(nextTab.readingState);
     expect(nextTab.id).toBe("tab-3");
     expect(nextTab.title).toBe("Tab 3");
+    expect(nextTab.sharedSession).toBeNull();
+    expect(manager.selectedTabId.value).toBe(nextTab.id);
+  });
+
+  it("addTab() accepts a shared reading session for the new tab", async () => {
+    setWebResponses(createDefaultManagerResponseMap());
+    const manager = createTabs(createDataManager());
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const sharedSession = {
+      id: "session-123",
+      readingState: manager.tabs.value[0]!.readingState,
+      document: {} as SharedDocument,
+      dispose: jest.fn(),
+    } as BibleReadingSession;
+
+    const nextTab = manager.addTab(sharedSession);
+
+    expect(nextTab.readingState).toBe(sharedSession.readingState);
+    expect(nextTab.sharedSession).toBe(sharedSession);
     expect(manager.selectedTabId.value).toBe(nextTab.id);
   });
 
