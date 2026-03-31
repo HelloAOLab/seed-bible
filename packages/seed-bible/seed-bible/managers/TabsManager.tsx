@@ -139,12 +139,13 @@ export function createTabs(dataManager: BibleDataManager) {
     const currentTabs = tabs.value;
     const nextNumber = currentTabs.length + 1;
     const sharedSession = isBibleReadingSession(source) ? source : null;
+    const readingState = !isBibleReadingSession(source) ? source : null;
     const nextTab: ReaderTab = {
       id: `tab-${nextNumber}`,
       title: `Tab ${nextNumber}`,
       readingState:
         sharedSession?.readingState ??
-        source ??
+        readingState ??
         createBibleReadingState(dataManager),
       sharedSession,
     };
