@@ -1,15 +1,19 @@
-import { ScriptureMap2D } from "scriptureMap2D.main.ScriptureMap2D";
-import { ScriptureMap2DModes } from "scriptureMap2D.main.enums";
-import type {
-  AppProps,
-  ScriptureMap2DConfig,
-} from "scriptureMap2D.main.interfaces";
+import {
+  ScriptureMap2D,
+  type ScriptureMap2DConfig,
+} from "scriptureMap2D.components.ScriptureMap2D";
+import { ScriptureMap2DModes } from "scriptureMap2D.models.scriptureMap";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { scriptureService } from "bibleVizUtils.services.index";
+import { getCustomStyles } from "scriptureMap2D.styles.adapter";
 
-const { useCallback } = os.appHooks;
+const { useCallback, useMemo } = os.appHooks;
 
-const App: (args: AppProps) => React.JSX.Element = ({ id }) => {
+interface AppProps {
+  id: string;
+}
+
+const App = ({ id }: AppProps) => {
   const handleChapterClick = useCallback<
     ScriptureMap2DConfig["onChapterClick"]
   >((_, key) => {
@@ -29,6 +33,10 @@ const App: (args: AppProps) => React.JSX.Element = ({ id }) => {
       }
       globalThis.Open(bookId, chapter);
     }
+  }, []);
+
+  const customCSS = useMemo<string | undefined>(() => {
+    return getCustomStyles();
   }, []);
 
   return (
@@ -52,6 +60,7 @@ const App: (args: AppProps) => React.JSX.Element = ({ id }) => {
           initialIsReadingHistoryEnabled: false,
           appId: id,
         }}
+        customCSS={customCSS}
       />
     </div>
   );

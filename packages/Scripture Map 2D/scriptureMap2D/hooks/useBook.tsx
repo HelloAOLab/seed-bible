@@ -1,14 +1,12 @@
-import type { BookProps, ChapterProps } from "scriptureMap2D.main.interfaces";
-import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
-import { useTestamentContext } from "scriptureMap2D.main.TestamentContext";
-import { useReadingHistoryContext } from "scriptureMap2D.contexts.RadingHistory.ReadingHistoryContext";
+import { useScriptureMap2DContext } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
+import { useTestamentContext } from "scriptureMap2D.contexts.Testament.TestamentContext";
+import { useReadingHistoryContext } from "scriptureMap2D.contexts.ReadingHistory.ReadingHistoryContext";
 import { useSideBarContext } from "app.hooks.sideBar";
 import type { BookStaticInfo } from "bibleVizUtils.data.BibleVizDataRepository";
 import type {
-  Range,
-  TooltipAnchor,
   TooltipContentData,
-} from "scriptureMap2D.main.types";
+  TooltipAnchor,
+} from "scriptureMap2D.components.containers.Tooltip";
 import {
   GetTextColorBasedOnBackground,
   IsValueBetween,
@@ -30,7 +28,12 @@ import {
 } from "db.annotations.library";
 import { userColorStore } from "bibleVizUtils.services.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
-import { useClickAndHold } from "scriptureMap2D.main.CustomHooks";
+import { useClickAndHold } from "scriptureMap2D.hooks.useClickAndHold";
+import type {
+  BookProps,
+  ChapterData,
+} from "scriptureMap2D.components.containers.Book";
+import type { Range } from "scriptureMap2D.models.commonTypes";
 
 const { useState, useMemo, useEffect, useCallback } = os.appHooks;
 
@@ -47,10 +50,6 @@ type UseBookProps = Pick<
   | "bookUserPresenceColors"
   | "bookBorderGradientColors"
 >;
-
-interface ChapterData extends ChapterProps {
-  key: `${string}-${number}`;
-}
 
 interface UseBookType {
   showChapters: boolean;
@@ -120,6 +119,7 @@ export const useBook: UseBook = (props) => {
     SEC_PER_DAY,
     SEC_PER_HOUR,
     SEC_PER_MINUTE,
+    myAuthBotId,
   } = useReadingHistoryContext();
 
   const [showChapters, setShowChapters] = useState<boolean>(showingAllChapters);
@@ -228,6 +228,8 @@ export const useBook: UseBook = (props) => {
       const colors: WeightedColor[] = [];
       for (const userId in users) {
         const userSummary = users[userId];
+        const isMe = userId === myAuthBotId;
+        const userName = isMe ? t("you") : t("guest");
         let userReadingTimeSeconds: number | undefined;
         let books: (typeof users)[string]["books"] | undefined;
         if (userSummary) {
@@ -236,6 +238,7 @@ export const useBook: UseBook = (props) => {
           let color: HexString | undefined = undefined;
           const baseColor = BASE_BACKGROUND_COLOR;
           const userColor = userColorStore.getUserColor({ authId: userId });
+          const dotStyle = { backgroundColor: userColor };
           const isTimeSpentNoticeable = userReadingTimeSeconds > SEC_PER_MINUTE; // more than a minute
 
           if (userColor) {
@@ -270,8 +273,9 @@ export const useBook: UseBook = (props) => {
 
                 tooltipContentsData.push({
                   type: "readingHistory",
-                  userId: userId,
                   fixedContent: fixedContent,
+                  userName,
+                  dotStyle,
                 });
               } else {
                 let lastEntry;
@@ -336,8 +340,9 @@ export const useBook: UseBook = (props) => {
                   }
                   tooltipContentsData.push({
                     type: "readingHistory",
-                    userId: userId,
                     fixedContent: fixedContent,
+                    userName,
+                    dotStyle,
                   });
                 }
               }
@@ -363,6 +368,7 @@ export const useBook: UseBook = (props) => {
         tooltipContentsData.unshift({
           type: "userPresence",
           colors: bookUserPresenceColors,
+          labelText: t("readingNow"),
         });
       }
     }
@@ -381,6 +387,8 @@ export const useBook: UseBook = (props) => {
     readingHistoryRangeSeconds,
     showingBooksColors,
     BASE_BACKGROUND_COLOR,
+    myAuthBotId,
+    t,
   ]);
 
   const chapterReadingHistorySummaryMap = useMemo<
@@ -442,8 +450,11 @@ export const useBook: UseBook = (props) => {
           const { users, totalTimeSpentReading: chapterReadingTimeSeconds } =
             chapterSummary;
           for (const userId in users) {
+            const isMe = userId === myAuthBotId;
+            const userName = isMe ? t("you") : t("guest");
             let color: HexString | undefined = undefined;
             const userColor = userColorStore.getUserColor({ authId: userId });
+            const dotStyle = { backgroundColor: userColor };
             const userSummary = users[userId];
             if (userSummary) {
               const { totalTimeSpentReading: userReadingTimeSeconds } =
@@ -484,7 +495,8 @@ export const useBook: UseBook = (props) => {
 
                     tooltipContentsData.push({
                       type: "readingHistory",
-                      userId: userId,
+                      userName,
+                      dotStyle,
                       fixedContent: fixedContent,
                     });
                   } else {
@@ -558,7 +570,8 @@ export const useBook: UseBook = (props) => {
                       }
                       tooltipContentsData.push({
                         type: "readingHistory",
-                        userId: userId,
+                        userName,
+                        dotStyle,
                         fixedContent: fixedContent,
                       });
                     }
@@ -610,6 +623,7 @@ export const useBook: UseBook = (props) => {
           tooltipContentsData.unshift({
             type: "userPresence",
             colors: userPresenceColors,
+            labelText: t("readingNow"),
           });
         }
       }
@@ -636,6 +650,7 @@ export const useBook: UseBook = (props) => {
     usersColors,
     showChapters,
     BASE_BACKGROUND_COLOR,
+    t,
   ]);
 
   const bookTitle = useMemo<string>(() => {

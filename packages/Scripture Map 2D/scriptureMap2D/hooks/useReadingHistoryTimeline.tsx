@@ -1,19 +1,18 @@
-import type {
-  Range,
-  ReadingHistoryContentData,
-  TooltipContentData,
-} from "scriptureMap2D.main.types";
+import type { TooltipContentData } from "scriptureMap2D.components.containers.Tooltip";
 import {
   CapitalizeFirstLetter,
   GetPastDateInfo,
 } from "bibleVizUtils.functions.index";
 import type { HexString } from "bibleVizUtils.models.commonTypes";
 import { readingHistoryService } from "bibleVizUtils.services.index";
-import { useTimeContext } from "scriptureMap2D.main.TimeContext";
-import { useReadingHistoryContext } from "scriptureMap2D.contexts.RadingHistory.ReadingHistoryContext";
+import { useTimeContext } from "scriptureMap2D.contexts.Time.TimeContext";
+import { useReadingHistoryContext } from "scriptureMap2D.contexts.ReadingHistory.ReadingHistoryContext";
 import { useSideBarContext } from "app.hooks.sideBar";
 import { userColorStore } from "bibleVizUtils.services.index";
 import type { MutableRef } from "../../../../typings/AuxLibraryDefinitions";
+import type { ReadingHistoryContentData } from "scriptureMap2D.components.containers.ReadingHistoryTimeline";
+import type { Range } from "scriptureMap2D.models.commonTypes";
+
 const { useCallback, useMemo, useEffect, useRef } = os.appHooks;
 
 const step = 0.25;
@@ -234,6 +233,11 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
 
           for (const userId of topUsers) {
             const userSummary = daySummary.users[userId];
+            const isMe = userId === myAuthBotId;
+            const userName = isMe ? t("you") : t("guest");
+            const userColor = userColorStore.getUserColor({ authId: userId });
+            const dotStyle = { backgroundColor: userColor };
+
             if (userSummary) {
               const { totalTimeSpentReading: userTimeSpentSeconds } =
                 userSummary;
@@ -244,7 +248,8 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
               const fixedContent = `(${minutesCount} Min)`;
               tooltipContentsData.push({
                 type: "readingHistory",
-                userId: userId,
+                userName,
+                dotStyle,
                 fixedContent: fixedContent,
               });
             }
@@ -313,7 +318,12 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
     }
 
     return itemsData;
-  }, [itemsColorMap, readingHistoryRangeSeconds, dailyReadingHistorySummaries]);
+  }, [
+    itemsColorMap,
+    readingHistoryRangeSeconds,
+    dailyReadingHistorySummaries,
+    myAuthBotId,
+  ]);
 
   useEffect(() => {
     const lastKey = Array.from(dayRangesMap.keys()).pop();

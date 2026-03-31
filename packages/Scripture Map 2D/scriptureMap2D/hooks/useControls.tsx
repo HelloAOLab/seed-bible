@@ -1,13 +1,11 @@
-import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
+import { useScriptureMap2DContext } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
 import type {
   MutableRef,
   StateUpdater,
 } from "../../../../typings/AuxLibraryDefinitions";
 import { useSideBarContext } from "app.hooks.sideBar";
-import type {
-  ScriptureMap2DContextType,
-  ZoomLevelSelectorProps,
-} from "scriptureMap2D.main.interfaces";
+import type { ZoomLevelSelectorProps } from "scriptureMap2D.components.containers.Controls";
+import type { ScriptureMap2DContextType } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
 
 interface UseControlsType {
   handleZoomOutButtonClick: () => void;

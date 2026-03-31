@@ -1,20 +1,40 @@
-import type {
-  ZoomLevelOptionType,
-  ZoomLevelSelectorType,
-  ZoomButtonType,
-} from "scriptureMap2D.main.types";
-import type { ZoomButtonProps } from "scriptureMap2D.main.interfaces";
+import type {} from "scriptureMap2D.main.types";
 
 import { useControls } from "scriptureMap2D.hooks.useControls";
+import type {
+  MutableRef,
+  Ref,
+} from "../../../../../typings/AuxLibraryDefinitions";
 
 const { useState, useMemo } = os.appHooks;
 const { forwardRef } = os.appCompat;
 
-const ZoomLevelOption: ZoomLevelOptionType = ({
+export interface ZoomButtonProps {
+  onClick: () => void;
+  children: React.ReactNode;
+}
+
+export interface ZoomLevelSelectorProps {
+  t: (text: string) => string;
+  handleZoomLevelClick: (value: number) => void;
+  zoomLevelSelectorRef: MutableRef<HTMLDivElement | null>;
+  handleZoomLevelSelectorClick: (
+    e: React.JSX.TargetedPointerEvent<HTMLDivElement>
+  ) => void;
+  scaleFactor: number;
+}
+
+export interface ZoomLevelOptionProps {
+  value: number;
+  handleZoomLevelClick: (value: number) => void;
+  scaleFactor: number;
+}
+
+const ZoomLevelOption = ({
   value,
   handleZoomLevelClick,
   scaleFactor,
-}) => {
+}: ZoomLevelOptionProps) => {
   const zoom = value * 100;
 
   const selected = useMemo<boolean>(() => {
@@ -33,13 +53,13 @@ const ZoomLevelOption: ZoomLevelOptionType = ({
   );
 };
 
-const ZoomLevelSelector: ZoomLevelSelectorType = ({
+const ZoomLevelSelector = ({
   t,
   handleZoomLevelClick,
   zoomLevelSelectorRef,
   handleZoomLevelSelectorClick,
   scaleFactor,
-}) => {
+}: ZoomLevelSelectorProps) => {
   const values = [1.5, 1.25, 1, 0.75, 0.5, 0.25];
 
   return (
@@ -63,7 +83,10 @@ const ZoomLevelSelector: ZoomLevelSelectorType = ({
   );
 };
 
-const ZoomButtonRaw: ZoomButtonType = ({ onClick, children }, ref) => {
+const ZoomButtonRaw = (
+  { onClick, children }: ZoomButtonProps,
+  ref: Ref<HTMLButtonElement>
+) => {
   const [hovered, setHovered] = useState(false);
 
   return (

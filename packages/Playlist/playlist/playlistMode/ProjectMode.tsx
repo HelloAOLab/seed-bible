@@ -6,7 +6,7 @@ let ProjectChapterState: any;
 
 try {
   const scriptureMap2DModule =
-    await import("scriptureMap2D.main.ScriptureMap2D");
+    await import("scriptureMap2D.components.ScriptureMap2D");
   ({ ScriptureMap2D } = scriptureMap2DModule);
   const enums = await import("scriptureMap2D.main.enums");
   ({ ScriptureMap2DModes, ProjectChapterState } = enums);

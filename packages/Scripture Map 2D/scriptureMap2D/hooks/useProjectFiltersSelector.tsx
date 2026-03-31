@@ -1,20 +1,18 @@
-import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
-import {
-  ProjectChapterState,
-  type ProjectChapterStateType,
-} from "scriptureMap2D.main.enums";
+import { useScriptureMap2DContext } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
+import { ProjectChapterState } from "scriptureMap2D.models.project";
+import { type ProjectChapterStateType } from "scriptureMap2D.models.project";
 import { useSideBarContext } from "app.hooks.sideBar";
-import type {
-  FiltersSelectorOptionData,
-  FiltersSelectorOptionProps,
-} from "scriptureMap2D.main.interfaces";
+import {
+  SelectorOptionClasses,
+  type SelectorOptionProps,
+} from "scriptureMap2D.components.ui.SelectorOption";
 const { useMemo, useCallback } = os.appHooks;
 
 interface UseProjectFiltersSelectorType {
-  allSelectorOptionContent: FiltersSelectorOptionProps["content"];
+  allSelectorOptionContent: SelectorOptionProps["content"];
   allSelectorOptionClick: () => void;
   allSelected: boolean;
-  selectorOptionsData: FiltersSelectorOptionData[];
+  selectorOptionsData: SelectorOptionProps[];
 }
 
 type UseProjectFiltersSelector = () => UseProjectFiltersSelectorType;
@@ -31,7 +29,7 @@ export const useProjectFiltersSelector: UseProjectFiltersSelector = () => {
   }, [projectFilters]);
 
   const getOptionContent = useCallback<
-    (key: ProjectChapterStateType) => FiltersSelectorOptionProps["content"]
+    (key: ProjectChapterStateType) => SelectorOptionProps["content"]
   >(
     (key) => {
       let title;
@@ -68,7 +66,7 @@ export const useProjectFiltersSelector: UseProjectFiltersSelector = () => {
   );
 
   const allSelectorOptionContent = useMemo<
-    FiltersSelectorOptionProps["content"]
+    SelectorOptionProps["content"]
   >(() => {
     return { title: t("all") };
   }, [t]);
@@ -77,7 +75,7 @@ export const useProjectFiltersSelector: UseProjectFiltersSelector = () => {
     handleProjectFilterOptionClick("all");
   }, [handleProjectFilterOptionClick]);
 
-  const selectorOptionsData = useMemo<FiltersSelectorOptionData[]>(() => {
+  const selectorOptionsData = useMemo<SelectorOptionProps[]>(() => {
     return Array.from(projectFilters).map(([key, value]) => {
       return {
         content: getOptionContent(key),
@@ -85,6 +83,7 @@ export const useProjectFiltersSelector: UseProjectFiltersSelector = () => {
           handleProjectFilterOptionClick(key);
         },
         selected: allSelected ? false : value,
+        className: SelectorOptionClasses.ProjectState,
         key,
       };
     });

@@ -1,19 +1,19 @@
-import { useProjectFiltersSelector } from "scriptureMap2D.hooks.useProjectFiltersSelector";
+import { useReadingHistoryUserFiltersSelector } from "scriptureMap2D.hooks.useReadingHistoryUserFiltersSelector";
 import {
   SelectorOptionClasses,
   SelectorOption,
 } from "scriptureMap2D.components.ui.SelectorOption";
 
-export const ProjectFiltersSelector = () => {
+export const ReadingHistoryUserFiltersSelector = () => {
   const {
     allSelectorOptionContent,
     allSelectorOptionClick,
     allSelected,
     selectorOptionsData,
-  } = useProjectFiltersSelector();
+  } = useReadingHistoryUserFiltersSelector();
 
   return (
-    <div className="project-filters-selector">
+    <div className="reading-history-user-selector">
       <SelectorOption
         content={allSelectorOptionContent}
         onClick={allSelectorOptionClick}

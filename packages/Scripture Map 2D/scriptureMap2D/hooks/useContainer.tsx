@@ -1,5 +1,5 @@
-import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
-import type { TestamentContainerData } from "scriptureMap2D.main.interfaces";
+import { useScriptureMap2DContext } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
+import type { TestamentContainerData } from "scriptureMap2D.components.containers.Container";
 
 type UseContainer = () => TestamentContainerData[];
 

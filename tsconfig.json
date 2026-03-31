@@ -2606,6 +2606,12 @@
       "scriptureMap2D.casualos.getApp": [
         "./packages/Scripture Map 2D/scriptureMap2D/casualos/getApp.tsx"
       ],
+      "scriptureMap2D.casualos.userSubscribed": [
+        "./packages/Scripture Map 2D/scriptureMap2D/casualos/userSubscribed.tsx"
+      ],
+      "scriptureMap2D.casualos.userUnsubscribed": [
+        "./packages/Scripture Map 2D/scriptureMap2D/casualos/userUnsubscribed.tsx"
+      ],
       "scriptureMap2D.components.containers.Book": [
         "./packages/Scripture Map 2D/scriptureMap2D/components/containers/Book.tsx"
       ],
@@ -2627,20 +2633,62 @@
       "scriptureMap2D.components.containers.ReadingHistoryTimeline": [
         "./packages/Scripture Map 2D/scriptureMap2D/components/containers/ReadingHistoryTimeline.tsx"
       ],
+      "scriptureMap2D.components.containers.ReadingHistoryUserFiltersSelector": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/ReadingHistoryUserFiltersSelector.tsx"
+      ],
+      "scriptureMap2D.components.containers.ScriptureMap2DWrapper": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/ScriptureMap2DWrapper.tsx"
+      ],
+      "scriptureMap2D.components.containers.SelectionOptions": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/SelectionOptions.tsx"
+      ],
+      "scriptureMap2D.components.containers.Settings": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/Settings.tsx"
+      ],
+      "scriptureMap2D.components.containers.TestamentContainer": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/TestamentContainer.tsx"
+      ],
+      "scriptureMap2D.components.containers.TestamentContent": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/TestamentContent.tsx"
+      ],
+      "scriptureMap2D.components.containers.TestamentToggle": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/TestamentToggle.tsx"
+      ],
+      "scriptureMap2D.components.containers.Tooltip": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/Tooltip.tsx"
+      ],
+      "scriptureMap2D.components.ScriptureMap2D": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/ScriptureMap2D.tsx"
+      ],
       "scriptureMap2D.components.ui.BooksContainer": [
         "./packages/Scripture Map 2D/scriptureMap2D/components/ui/BooksContainer.tsx"
       ],
-      "scriptureMap2D.components.ui.FiltersSelectorOption": [
-        "./packages/Scripture Map 2D/scriptureMap2D/components/ui/FiltersSelectorOption.tsx"
+      "scriptureMap2D.components.ui.SectionToggle": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/ui/SectionToggle.tsx"
       ],
-      "scriptureMap2D.components.ui.ProjectStateSetterOption": [
-        "./packages/Scripture Map 2D/scriptureMap2D/components/ui/ProjectStateSetterOption.tsx"
+      "scriptureMap2D.components.ui.SelectorOption": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/ui/SelectorOption.tsx"
       ],
-      "scriptureMap2D.contexts.RadingHistory.ReadingHistoryContext": [
-        "./packages/Scripture Map 2D/scriptureMap2D/contexts/RadingHistory/ReadingHistoryContext.tsx"
+      "scriptureMap2D.contexts.ReadingHistory.ReadingHistoryContext": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/ReadingHistory/ReadingHistoryContext.tsx"
       ],
-      "scriptureMap2D.contexts.RadingHistory.useReadingHistoryProvider": [
-        "./packages/Scripture Map 2D/scriptureMap2D/contexts/RadingHistory/useReadingHistoryProvider.tsx"
+      "scriptureMap2D.contexts.ReadingHistory.useReadingHistoryProvider": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/ReadingHistory/useReadingHistoryProvider.tsx"
+      ],
+      "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/ScriptureMap2D/ScriptureMap2DContext.tsx"
+      ],
+      "scriptureMap2D.contexts.ScriptureMap2D.useScriptureMap2DProvider": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/ScriptureMap2D/useScriptureMap2DProvider.tsx"
+      ],
+      "scriptureMap2D.contexts.Testament.TestamentContext": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/Testament/TestamentContext.tsx"
+      ],
+      "scriptureMap2D.contexts.Time.TimeContext": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/Time/TimeContext.tsx"
+      ],
+      "scriptureMap2D.contexts.Time.useTimeProvider": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/Time/useTimeProvider.tsx"
       ],
       "scriptureMap2D.hooks.useBook": [
         "./packages/Scripture Map 2D/scriptureMap2D/hooks/useBook.tsx"
@@ -2648,11 +2696,20 @@
       "scriptureMap2D.hooks.useChapter": [
         "./packages/Scripture Map 2D/scriptureMap2D/hooks/useChapter.tsx"
       ],
+      "scriptureMap2D.hooks.useClickAndHold": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useClickAndHold.tsx"
+      ],
+      "scriptureMap2D.hooks.useClickOutside": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useClickOutside.tsx"
+      ],
       "scriptureMap2D.hooks.useContainer": [
         "./packages/Scripture Map 2D/scriptureMap2D/hooks/useContainer.tsx"
       ],
       "scriptureMap2D.hooks.useControls": [
         "./packages/Scripture Map 2D/scriptureMap2D/hooks/useControls.tsx"
+      ],
+      "scriptureMap2D.hooks.useIsMobile": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useIsMobile.tsx"
       ],
       "scriptureMap2D.hooks.useProjectFiltersSelector": [
         "./packages/Scripture Map 2D/scriptureMap2D/hooks/useProjectFiltersSelector.tsx"
@@ -2663,71 +2720,65 @@
       "scriptureMap2D.hooks.useReadingHistoryTimeline": [
         "./packages/Scripture Map 2D/scriptureMap2D/hooks/useReadingHistoryTimeline.tsx"
       ],
-      "scriptureMap2D.main.CustomHooks": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/CustomHooks.tsx"
+      "scriptureMap2D.hooks.useReadingHistoryUserFiltersSelector": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useReadingHistoryUserFiltersSelector.tsx"
       ],
-      "scriptureMap2D.main.enums": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/enums.tsx"
+      "scriptureMap2D.hooks.useResizeObserver": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useResizeObserver.tsx"
       ],
-      "scriptureMap2D.main.interfaces": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/interfaces.tsx"
+      "scriptureMap2D.hooks.useScriptureMap2DWrapper": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useScriptureMap2DWrapper.tsx"
       ],
-      "scriptureMap2D.main.ReadingHistoryUserFiltersSelector": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/ReadingHistoryUserFiltersSelector.tsx"
+      "scriptureMap2D.hooks.useSelectionOptions": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useSelectionOptions.tsx"
       ],
-      "scriptureMap2D.main.ScriptureMap2D": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/ScriptureMap2D.tsx"
+      "scriptureMap2D.hooks.useSettings": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useSettings.tsx"
       ],
-      "scriptureMap2D.main.ScriptureMap2DContext": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/ScriptureMap2DContext.tsx"
+      "scriptureMap2D.hooks.useTestamentContainer": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useTestamentContainer.tsx"
       ],
-      "scriptureMap2D.main.ScriptureMap2DWrapper": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/ScriptureMap2DWrapper.tsx"
+      "scriptureMap2D.hooks.useTestamentContent": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useTestamentContent.tsx"
       ],
-      "scriptureMap2D.main.SectionToggle": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/SectionToggle.tsx"
+      "scriptureMap2D.hooks.useTestamentToggle": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useTestamentToggle.tsx"
       ],
-      "scriptureMap2D.main.SelectionOptions": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/SelectionOptions.tsx"
+      "scriptureMap2D.hooks.useTooltip": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useTooltip.tsx"
       ],
-      "scriptureMap2D.main.Settings": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/Settings.tsx"
+      "scriptureMap2D.hooks.useWhyChanged": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useWhyChanged.tsx"
       ],
-      "scriptureMap2D.main.TestamentContainer": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/TestamentContainer.tsx"
+      "scriptureMap2D.models.arrangement": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/arrangement.tsx"
       ],
-      "scriptureMap2D.main.TestamentContent": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/TestamentContent.tsx"
+      "scriptureMap2D.models.commonTypes": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/commonTypes.tsx"
       ],
-      "scriptureMap2D.main.TestamentContext": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/TestamentContext.tsx"
-      ],
-      "scriptureMap2D.main.TestamentToggle": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/TestamentToggle.tsx"
-      ],
-      "scriptureMap2D.main.TimeContext": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/TimeContext.tsx"
-      ],
-      "scriptureMap2D.main.Tooltip": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/Tooltip.tsx"
-      ],
-      "scriptureMap2D.main.types": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/types.tsx"
-      ],
-      "scriptureMap2D.main.UserPresenceUpdate": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/UserPresenceUpdate.tsx"
-      ],
-      "scriptureMap2D.main.userSubscribed": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/userSubscribed.tsx"
-      ],
-      "scriptureMap2D.main.userUnsubscribed": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/userUnsubscribed.tsx"
+      "scriptureMap2D.models.content": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/content.tsx"
       ],
       "scriptureMap2D.models.events": [
         "./packages/Scripture Map 2D/scriptureMap2D/models/events.tsx"
       ],
+      "scriptureMap2D.models.project": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/project.tsx"
+      ],
+      "scriptureMap2D.models.readingHistory": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/readingHistory.tsx"
+      ],
+      "scriptureMap2D.models.scriptureMap": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/scriptureMap.tsx"
+      ],
+      "scriptureMap2D.models.user": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/user.tsx"
+      ],
       "scriptureMap2D.services.index": [
         "./packages/Scripture Map 2D/scriptureMap2D/services/index.tsx"
+      ],
+      "scriptureMap2D.styles.adapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/styles/adapter.tsx"
       ],
       "scriptureMap3D.main.App": [
         "./packages/Scripture Map 3D/scriptureMap3D/main/App.tsx"

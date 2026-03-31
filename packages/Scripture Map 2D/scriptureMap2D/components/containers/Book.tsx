@@ -1,11 +1,41 @@
-import { Tooltip } from "scriptureMap2D.main.Tooltip";
-import type { BookType } from "scriptureMap2D.main.types";
+import { Tooltip } from "scriptureMap2D.components.containers.Tooltip";
 import { useBook } from "scriptureMap2D.hooks.useBook";
-import { Chapter } from "scriptureMap2D.components.containers.Chapter";
+import {
+  Chapter,
+  type ChapterProps,
+} from "scriptureMap2D.components.containers.Chapter";
+import type {
+  ReadingHistorySummary,
+  ReadingEvent,
+} from "db.annotations.library";
 
 const { memo } = os.appCompat;
 
-export const Book = memo<BookType>(
+export type BookUserPresenceItem = {
+  chapter: number;
+  borderColor: string;
+};
+
+export type BookUserPresence = Record<string, BookUserPresenceItem>;
+
+export interface BookProps {
+  book: string;
+  bookId: string;
+  bookCoverBackgroundColor: string;
+  sectionName: string;
+  readingEvents: ReadingEvent[];
+  readingSummary: ReadingHistorySummary;
+  isPsalms: boolean;
+  bookBorderGradientColors: React.CSSProperties["backgroundImage"];
+  bookUserPresence: BookUserPresence;
+  bookUserPresenceColors: string[];
+}
+
+export interface ChapterData extends ChapterProps {
+  key: `${string}-${number}`;
+}
+
+export const Book = memo(
   ({
     book,
     bookId,
@@ -17,7 +47,7 @@ export const Book = memo<BookType>(
     bookBorderGradientColors,
     bookUserPresence,
     bookUserPresenceColors,
-  }) => {
+  }: BookProps) => {
     const {
       showChapters,
       tooltipAnchor,

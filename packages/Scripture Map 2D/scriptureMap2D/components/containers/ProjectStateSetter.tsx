@@ -1,5 +1,5 @@
-import { SelectionOptions } from "scriptureMap2D.main.SelectionOptions";
-import { ProjectStateSetterOption } from "scriptureMap2D.components.ui.ProjectStateSetterOption";
+import { SelectionOptions } from "scriptureMap2D.components.containers.SelectionOptions";
+import { SelectorOption } from "scriptureMap2D.components.ui.SelectorOption";
 import { useProjectStateSetter } from "scriptureMap2D.hooks.useProjectStateSetter";
 
 export const ProjectStateSetter = () => {
@@ -37,7 +37,7 @@ export const ProjectStateSetter = () => {
         <div>
           <span>{selectionLabel}</span>
           {stateSetterOptionsData.map((data) => (
-            <ProjectStateSetterOption {...data} />
+            <SelectorOption {...data} />
           ))}
         </div>
       )}

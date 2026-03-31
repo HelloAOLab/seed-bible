@@ -1,10 +1,11 @@
-import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
-import {
-  ProjectChapterState,
-  type ProjectChapterStateType,
-} from "scriptureMap2D.main.enums";
+import { useScriptureMap2DContext } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
+import { ProjectChapterState } from "scriptureMap2D.models.project";
+import { type ProjectChapterStateType } from "scriptureMap2D.models.project";
 import { useSideBarContext } from "app.hooks.sideBar";
-import type { ProjectStateSetterOptionData } from "scriptureMap2D.main.interfaces";
+import {
+  SelectorOptionClasses,
+  type SelectorOptionData,
+} from "scriptureMap2D.components.ui.SelectorOption";
 const { useCallback, useMemo } = os.appHooks;
 
 interface UseProjectStateSetterType {
@@ -16,7 +17,7 @@ interface UseProjectStateSetterType {
   handleClearSelectionClick: (() => void) | undefined;
   handleDoneClick: (() => void) | undefined;
   selectionLabel: string;
-  stateSetterOptionsData: ProjectStateSetterOptionData[];
+  stateSetterOptionsData: SelectorOptionData[];
 }
 
 type UseProjectStateSetter = () => UseProjectStateSetterType;
@@ -33,7 +34,7 @@ export const useProjectStateSetter: UseProjectStateSetter = () => {
   } = useScriptureMap2DContext();
 
   const getOptionContent = useCallback<
-    (key: ProjectChapterStateType) => ProjectStateSetterOptionData["content"]
+    (key: ProjectChapterStateType) => SelectorOptionData["content"]
   >(
     (key) => {
       let title: string;
@@ -90,7 +91,7 @@ export const useProjectStateSetter: UseProjectStateSetter = () => {
     return `${t("status")}:`;
   }, [t]);
 
-  const stateSetterOptionsData = useMemo<ProjectStateSetterOptionData[]>(() => {
+  const stateSetterOptionsData = useMemo<SelectorOptionData[]>(() => {
     return Object.values(ProjectChapterState).map((state) => {
       return {
         content: getOptionContent(state),
@@ -98,6 +99,7 @@ export const useProjectStateSetter: UseProjectStateSetter = () => {
           onStateSetterOptionClick?.(state);
         },
         key: state,
+        className: SelectorOptionClasses.ProjectState,
       };
     });
   }, [getOptionContent, onStateSetterOptionClick]);

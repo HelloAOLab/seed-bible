@@ -1,7 +1,9 @@
-import type { BooksContainerType } from "scriptureMap2D.main.types";
-
 const { memo } = os.appCompat;
 
-export const BooksContainer = memo<BooksContainerType>(({ children }) => {
+export interface BooksContainerProps {
+  children: React.ReactNode;
+}
+
+export const BooksContainer = memo(({ children }: BooksContainerProps) => {
   return <div className="books-container">{children}</div>;
 });

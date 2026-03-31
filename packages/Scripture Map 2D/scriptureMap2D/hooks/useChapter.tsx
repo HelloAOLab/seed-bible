@@ -1,9 +1,9 @@
-import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
-import { useTestamentContext } from "scriptureMap2D.main.TestamentContext";
-import type { ChapterProps } from "scriptureMap2D.main.interfaces";
-import { useClickAndHold } from "scriptureMap2D.main.CustomHooks";
-import { ScriptureMap2DModes } from "scriptureMap2D.main.enums";
-import type { TooltipAnchor } from "scriptureMap2D.main.types";
+import { useScriptureMap2DContext } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
+import { useTestamentContext } from "scriptureMap2D.contexts.Testament.TestamentContext";
+import type { ChapterProps } from "scriptureMap2D.components.containers.Chapter";
+import { useClickAndHold } from "scriptureMap2D.hooks.useClickAndHold";
+import type { TooltipAnchor } from "scriptureMap2D.components.containers.Tooltip";
+import { ScriptureMap2DModes } from "scriptureMap2D.models.scriptureMap";
 
 type UseChapterProps = Pick<
   ChapterProps,

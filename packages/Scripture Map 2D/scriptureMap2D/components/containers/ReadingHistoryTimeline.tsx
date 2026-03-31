@@ -1,16 +1,47 @@
-import { Tooltip } from "scriptureMap2D.main.Tooltip";
-import type {
-  ReadingHistoryLabelType,
-  ReadingHistoryItemType,
-  TooltipAnchor,
-} from "scriptureMap2D.main.types";
+import {
+  Tooltip,
+  type TooltipContentData,
+  type TooltipAnchor,
+} from "scriptureMap2D.components.containers.Tooltip";
 import { useReadingHistoryTimeline } from "scriptureMap2D.hooks.useReadingHistoryTimeline";
+import type { Range } from "scriptureMap2D.models.commonTypes";
 
 const { useState, useMemo } = os.appHooks;
 const { memo } = os.appCompat;
 
-const Label = memo<ReadingHistoryLabelType>(
-  ({ gridRow, gridColumn, children, isDay }) => {
+export interface ReadingHistoryLabelProps {
+  gridRow: React.CSSProperties["gridRow"];
+  gridColumn: React.CSSProperties["gridColumn"];
+  children: React.ReactNode | React.ReactNode[];
+  isDay: boolean;
+}
+
+export interface ReadingHistoryLabelData extends ReadingHistoryLabelProps {
+  key: string;
+  type: "label";
+}
+
+export interface ReadingHistoryItemProps {
+  style: React.CSSProperties;
+  tooltipContentsData: TooltipContentData[];
+  handleItemClick: (range: Range | null) => void;
+  range: Range;
+  readingHistoryRangeSeconds: Range | null;
+  id: string;
+  isUpcoming: boolean;
+}
+
+export interface ReadingHistoryItemData extends ReadingHistoryItemProps {
+  key: string;
+  type: "item";
+}
+
+export type ReadingHistoryContentData =
+  | ReadingHistoryItemData
+  | ReadingHistoryLabelData;
+
+const Label = memo(
+  ({ gridRow, gridColumn, children, isDay }: ReadingHistoryLabelProps) => {
     const style = useMemo<React.CSSProperties>(() => {
       return { gridRow, gridColumn };
     }, [gridRow, gridColumn]);
@@ -26,7 +57,7 @@ const Label = memo<ReadingHistoryLabelType>(
   }
 );
 
-const Item = memo<ReadingHistoryItemType>(
+const Item = memo(
   ({
     style,
     tooltipContentsData,
@@ -35,7 +66,7 @@ const Item = memo<ReadingHistoryItemType>(
     readingHistoryRangeSeconds,
     id,
     isUpcoming,
-  }) => {
+  }: ReadingHistoryItemProps) => {
     const [containerRect, setContainerRect] = useState<DOMRect | null>(null);
 
     const selected = range === readingHistoryRangeSeconds;
