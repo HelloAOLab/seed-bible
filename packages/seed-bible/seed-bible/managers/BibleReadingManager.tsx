@@ -60,6 +60,7 @@ export interface BibleReadingState {
   highlightSelectedVerses: (
     highlightDetails: Omit<ChapterHighlight, "verse">
   ) => Promise<void>;
+  unhighlightSelectedVerses: () => Promise<void>;
   clearSelectedVerses: () => void;
   selectTranslation: (translation: string) => Promise<void>;
   selectTranslationAndChapter: (
@@ -333,6 +334,46 @@ export function createBibleReadingState(
       activeChapterNumber,
       verseNumbers,
       highlightDetails
+    );
+
+    await refreshChapterHighlights(
+      activeTranslationId,
+      activeBookId,
+      activeChapterNumber
+    );
+  };
+
+  const unhighlightSelectedVerses = async (): Promise<void> => {
+    const activeTranslationId = translationId.value;
+    const activeBookId = bookId.value;
+    const activeChapterNumber = chapterNumber.value;
+
+    if (!activeTranslationId || !activeBookId) {
+      return;
+    }
+
+    const verseNumbers = Array.from(
+      new Set(
+        selectedVerses.value
+          .filter(
+            (verse) =>
+              verse.translationId === activeTranslationId &&
+              verse.bookId === activeBookId &&
+              verse.chapterNumber === activeChapterNumber
+          )
+          .map((verse) => verse.verse.number)
+      )
+    );
+
+    if (verseNumbers.length === 0) {
+      return;
+    }
+
+    await highlightsManager.unhighlightVerses(
+      activeTranslationId,
+      activeBookId,
+      activeChapterNumber,
+      verseNumbers
     );
 
     await refreshChapterHighlights(
@@ -663,6 +704,7 @@ export function createBibleReadingState(
     selectVerse,
     selectFootnote,
     highlightSelectedVerses,
+    unhighlightSelectedVerses,
     clearSelectedVerses,
     selectTranslation,
     selectTranslationAndChapter,
