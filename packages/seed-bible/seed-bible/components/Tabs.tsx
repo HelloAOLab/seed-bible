@@ -6,11 +6,24 @@ import {
 } from "seed-bible.managers.PanesManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { MobileSettingsIcon } from "seed-bible.components.icons";
+import type { UserProfile } from "../managers/LoginManager";
+import type { ConnectedSessionUser } from "../managers/SessionsManager";
 
 const { useEffect } = os.appHooks;
 
 interface TabsProps {
   state: SeedBibleState;
+}
+
+function getUserDisplayName(user: ConnectedSessionUser): string {
+  return (
+    user.profile?.name ??
+    `User ${(user.userId ?? user.connectionId).slice(0, 8)}`
+  );
+}
+
+function getUserImageUrl(profile: UserProfile | null): string | null {
+  return profile?.pictureUrl ?? null;
 }
 
 function renderLayoutPreview(layoutId: PaneLayoutId) {
@@ -205,6 +218,8 @@ export function Tabs(props: TabsProps) {
               const currentTranslation =
                 tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
               const titlePrefix = tab.sharedSession ? "Shared " : "";
+              const connectedUsers =
+                tab.sharedSession?.connectedUsers.value ?? [];
 
               return (
                 <div
@@ -224,7 +239,40 @@ export function Tabs(props: TabsProps) {
                       isSelected ? " sb-tab-button-selected" : ""
                     }`}
                   >
-                    <span>{`${titlePrefix}${currentBookName} - ${currentChapter} • ${currentTranslation}`}</span>
+                    <div className="sb-tab-main-content">
+                      <span>{`${titlePrefix}${currentBookName} - ${currentChapter} • ${currentTranslation}`}</span>
+                    </div>
+
+                    {tab.sharedSession && connectedUsers.length > 0 && (
+                      <div className="sb-tab-users-section">
+                        <div className="sb-tab-users-list">
+                          {connectedUsers.map((user) => {
+                            const imageUrl = getUserImageUrl(user.profile);
+                            const displayName = getUserDisplayName(user);
+                            const style = imageUrl
+                              ? {
+                                  borderColor: user.color,
+                                  backgroundImage: `url(${imageUrl})`,
+                                }
+                              : {
+                                  borderColor: user.color,
+                                  backgroundColor: user.color,
+                                };
+
+                            return (
+                              <span
+                                key={user.connectionId}
+                                className={`sb-tab-user-icon${
+                                  imageUrl ? " sb-tab-user-icon-has-image" : ""
+                                }${user.isSelf ? " sb-tab-user-icon-self" : ""}`}
+                                title={displayName}
+                                style={style}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </button>
 
                   <div className="sb-tab-menu-anchor">

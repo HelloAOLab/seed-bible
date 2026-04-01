@@ -1170,18 +1170,62 @@ button {
 .sb-tab-button {
   text-align: left;
   border-radius: 6px;
-  padding: 10px 44px 10px 12px;
+  padding: 10px 44px 8px 12px;
   font-weight: 400;
   cursor: pointer;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   gap: 10px;
   flex: 1;
 
   border: var(--sb-tab-border);
   background: var(--sb-tab-background);
   color: var(--sb-tab-font-color);
+}
+
+.sb-tab-main-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 20px;
+}
+
+.sb-tab-users-section {
+  border-top: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 78%);
+  margin-top: 2px;
+  padding-top: 7px;
+}
+
+.sb-tab-users-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sb-tab-user-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background: transparent;
+  display: inline-flex;
+  box-sizing: border-box;
+}
+
+.sb-tab-user-icon-has-image {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.sb-tab-user-icon-self {
+  box-shadow: 0 0 0 1px
+    color-mix(in srgb, var(--sb-font-color), transparent 72%);
 }
 
 .sb-tab-button-selected {
@@ -1317,8 +1361,7 @@ button {
 .sb-tab-menu-anchor {
   position: absolute;
   right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 8px;
   z-index: 2;
 }
 
