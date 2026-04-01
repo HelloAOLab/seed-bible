@@ -2,6 +2,7 @@ import type {
   YjsSharedArray,
   YjsSharedMap,
 } from "@casual-simulation/aux-common/documents/YjsSharedDocument";
+import type { Observable } from "rxjs";
 
 // Preact Hooks Types
 type Inputs = ReadonlyArray<unknown>;
