@@ -40,11 +40,13 @@ export interface LoginManager {
   getUserProfile: (userId: string) => Promise<UserProfile>;
 }
 
-const userProfileSchema = z.object({
-  name: z.string().min(1),
+export const userProfileSchema = z.object({
+  name: z.string(),
+  location: z.string().nullable().optional(),
+  pictureUrl: z.url().optional().nullable(),
 });
 
-type UserProfile = z.infer<typeof userProfileSchema>;
+export type UserProfile = z.infer<typeof userProfileSchema>;
 
 export function createLoginManager(): LoginManager {
   const authBot: Signal<Bot | null> = signal<Bot | null>(null);

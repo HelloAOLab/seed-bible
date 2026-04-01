@@ -1,4 +1,7 @@
-import { createLoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import {
+  createLoginManager,
+  userProfileSchema,
+} from "@packages/seed-bible/seed-bible/managers/LoginManager";
 
 jest.setTimeout(3000);
 
@@ -170,5 +173,55 @@ describe("createLoginManager", () => {
 
     expect(getDataMock).toHaveBeenCalledWith("custom-user", "profile");
     expect(profile).toEqual({ name: "Dave" });
+  });
+});
+
+describe("userProfileSchema", () => {
+  it("validates a profile with only a name", () => {
+    const validProfile = {
+      name: "Alice",
+    };
+
+    const result = userProfileSchema.safeParse(validProfile);
+    expect(result).toEqual({
+      success: true,
+      data: {
+        name: "Alice",
+      },
+    });
+  });
+
+  it("validates a profile without a pictureUrl", () => {
+    const validProfile = {
+      name: "Alice",
+      location: "Wonderland",
+    };
+
+    const result = userProfileSchema.safeParse(validProfile);
+    expect(result).toEqual({
+      success: true,
+      data: {
+        name: "Alice",
+        location: "Wonderland",
+      },
+    });
+  });
+
+  it("validates a complete profile", () => {
+    const validProfile = {
+      name: "Alice",
+      location: "Wonderland",
+      pictureUrl: "https://example.com/avatar.png",
+    };
+
+    const result = userProfileSchema.safeParse(validProfile);
+    expect(result).toEqual({
+      success: true,
+      data: {
+        name: "Alice",
+        location: "Wonderland",
+        pictureUrl: "https://example.com/avatar.png",
+      },
+    });
   });
 });
