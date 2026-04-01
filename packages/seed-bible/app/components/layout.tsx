@@ -61,7 +61,6 @@ const Layout = ({ children, panelsNumber }) => {
   } = useTabsContext();
 
   const OpenVideoOverlay = () => {
-    console.log("FIRED OVERLAY");
     setShowVideoOverlay(true);
   };
   const CloseVideoOverlay = () => {
@@ -77,8 +76,6 @@ const Layout = ({ children, panelsNumber }) => {
     globalThis.OpenVideoOverlay = OpenVideoOverlay;
     globalThis.CloseVideoOverlay = CloseVideoOverlay;
 
-    console.log("FIRED");
-
     document.addEventListener("contextmenu", handleContextMenu);
     return () => {
       document.removeEventListener("contextmenu", handleContextMenu);
@@ -87,7 +84,6 @@ const Layout = ({ children, panelsNumber }) => {
     };
   }, []);
 
-  console.log("showVideoOverlay", showVideoOverlay);
   return (
     <>
       {showVideoOverlay && <ShowPersonVideoOverlay />}
