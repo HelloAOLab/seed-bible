@@ -60,6 +60,7 @@ function createHighlightsManagerMock() {
     getChapterHighlights: jest.fn().mockResolvedValue({
       highlights: [{ colorId: "yellow", verse: 1 }],
     }),
+    highlightVerses: jest.fn().mockResolvedValue(undefined),
     highlightVerse: jest.fn().mockResolvedValue(undefined),
     unhighlightVerse: jest.fn().mockResolvedValue(undefined),
     saveChapterHighlights: jest.fn().mockResolvedValue(undefined),
@@ -185,26 +186,13 @@ describe("createBibleReadingState", () => {
 
     await state.setHighlight({ colorId: "yellow" });
 
-    expect(highlightsManager.highlightVerse).toHaveBeenCalledTimes(2);
-    expect(highlightsManager.highlightVerse).toHaveBeenNthCalledWith(
-      1,
+    expect(highlightsManager.highlightVerses).toHaveBeenCalledTimes(1);
+    expect(highlightsManager.highlightVerses).toHaveBeenCalledWith(
       "BSB",
       "GEN",
       1,
-      {
-        colorId: "yellow",
-        verse: 1,
-      }
-    );
-    expect(highlightsManager.highlightVerse).toHaveBeenNthCalledWith(
-      2,
-      "BSB",
-      "GEN",
-      1,
-      {
-        colorId: "yellow",
-        verse: 2,
-      }
+      [1, 2],
+      { colorId: "yellow" }
     );
 
     expect(highlightsManager.getChapterHighlights).toHaveBeenCalledTimes(2);

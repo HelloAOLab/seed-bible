@@ -40,6 +40,9 @@ type RangeHighlight = {
   customFontColor?: string;
 };
 
+const highlightStyleSchema = chapterHighlightSchema.omit({ verse: true });
+const verseNumbersSchema = z.array(z.number().int().positive());
+
 function toVerseRange(verse: Verse): VerseRange {
   if (typeof verse === "number") {
     return {
@@ -172,6 +175,42 @@ function mergeHighlights(highlights: RangeHighlight[]): RangeHighlight[] {
   return merged;
 }
 
+function rangesFromVerseNumbers(verseNumbers: number[]): VerseRange[] {
+  if (verseNumbers.length === 0) {
+    return [];
+  }
+
+  const sorted = [...verseNumbers].sort((a, b) => a - b);
+  const ranges: VerseRange[] = [];
+
+  let rangeStart = sorted[0]!;
+  let rangeEnd = sorted[0]!;
+
+  for (let i = 1; i < sorted.length; i += 1) {
+    const verseNumber = sorted[i]!;
+
+    if (verseNumber <= rangeEnd + 1) {
+      rangeEnd = verseNumber;
+      continue;
+    }
+
+    ranges.push({
+      start: rangeStart,
+      end: rangeEnd,
+    });
+
+    rangeStart = verseNumber;
+    rangeEnd = verseNumber;
+  }
+
+  ranges.push({
+    start: rangeStart,
+    end: rangeEnd,
+  });
+
+  return ranges;
+}
+
 function normalizeHighlights(
   highlights: ChapterHighlight[]
 ): ChapterHighlight[] {
@@ -208,6 +247,13 @@ export interface HighlightsManager {
     bookId: string,
     chapterNumber: number,
     highlightDetails: ChapterHighlight
+  ) => Promise<void>;
+  highlightVerses: (
+    translationId: string,
+    bookId: string,
+    chapterNumber: number,
+    verseNumbers: number[],
+    highlightDetails: Omit<ChapterHighlight, "verse">
   ) => Promise<void>;
   unhighlightVerse: (
     translationId: string,
@@ -301,19 +347,53 @@ export function createHighlightsManager(
     highlightDetails: ChapterHighlight
   ): Promise<void> => {
     const nextHighlight = chapterHighlightSchema.parse(highlightDetails);
+    const range = toVerseRange(nextHighlight.verse);
+    const verseNumbers = Array.from(
+      { length: range.end - range.start + 1 },
+      (_, index) => range.start + index
+    );
+
+    await highlightVerses(translationId, bookId, chapterNumber, verseNumbers, {
+      colorId: nextHighlight.colorId,
+      customColor: nextHighlight.customColor,
+      customFontColor: nextHighlight.customFontColor,
+    });
+  };
+
+  const highlightVerses = async (
+    translationId: string,
+    bookId: string,
+    chapterNumber: number,
+    verseNumbers: number[],
+    highlightDetails: Omit<ChapterHighlight, "verse">
+  ): Promise<void> => {
+    const parsedStyle = highlightStyleSchema.parse(highlightDetails);
+    const parsedVerseNumbers = verseNumbersSchema.parse(verseNumbers);
+    const deduplicatedVerseNumbers = Array.from(new Set(parsedVerseNumbers));
+
+    if (deduplicatedVerseNumbers.length === 0) {
+      return;
+    }
+
     const current = await getChapterHighlights(
       translationId,
       bookId,
       chapterNumber
     );
 
-    const incomingRange = toVerseRange(nextHighlight.verse);
-    const updated = removeRangeFromHighlights(
-      current.highlights.map(toRangeHighlight),
-      incomingRange
-    );
+    const targetRanges = rangesFromVerseNumbers(deduplicatedVerseNumbers);
+    let updated = current.highlights.map(toRangeHighlight);
 
-    updated.push(toRangeHighlight(nextHighlight));
+    for (const range of targetRanges) {
+      updated = removeRangeFromHighlights(updated, range);
+      updated.push({
+        start: range.start,
+        end: range.end,
+        colorId: parsedStyle.colorId,
+        customColor: parsedStyle.customColor,
+        customFontColor: parsedStyle.customFontColor,
+      });
+    }
 
     await saveChapterHighlights(
       translationId,
@@ -354,6 +434,7 @@ export function createHighlightsManager(
     getChapterHighlights,
     saveChapterHighlights,
     highlightVerse,
+    highlightVerses,
     unhighlightVerse,
   };
 }

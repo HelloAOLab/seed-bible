@@ -234,6 +234,47 @@ describe("HighlightsManager", () => {
     );
   });
 
+  it("highlightVerses() applies a style to multiple verses in a single save", async () => {
+    getDataMock.mockResolvedValue({
+      highlights: [{ colorId: "color-6", verse: [1, 8] }],
+    });
+    const manager = createHighlightsManager(login);
+
+    await manager.highlightVerses("BSB", "GEN", 1, [2, 3, 6], {
+      colorId: "custom",
+      customColor: "#ffeeaa",
+      customFontColor: "#222222",
+    });
+
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      "highlights:BSB/GEN/1",
+      {
+        highlights: [
+          { colorId: "color-6", verse: 1 },
+          {
+            colorId: "custom",
+            customColor: "#ffeeaa",
+            customFontColor: "#222222",
+            verse: [2, 3],
+          },
+          { colorId: "color-6", verse: [4, 5] },
+          {
+            colorId: "custom",
+            customColor: "#ffeeaa",
+            customFontColor: "#222222",
+            verse: 6,
+          },
+          { colorId: "color-6", verse: [7, 8] },
+        ],
+      },
+      {
+        marker: "publicRead:highlights/BSB",
+      }
+    );
+  });
+
   it("unhighlightVerse() removes a verse range and splits impacted highlights", async () => {
     getDataMock.mockResolvedValue({
       highlights: [{ colorId: "color-6", verse: [1, 7] }],

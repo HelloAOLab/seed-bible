@@ -327,18 +327,12 @@ export function createBibleReadingState(
       return;
     }
 
-    await Promise.all(
-      verseNumbers.map(async (verseNumber) => {
-        await highlightsManager.highlightVerse(
-          activeTranslationId,
-          activeBookId,
-          activeChapterNumber,
-          {
-            ...highlightDetails,
-            verse: verseNumber,
-          }
-        );
-      })
+    await highlightsManager.highlightVerses(
+      activeTranslationId,
+      activeBookId,
+      activeChapterNumber,
+      verseNumbers,
+      highlightDetails
     );
 
     await refreshChapterHighlights(
