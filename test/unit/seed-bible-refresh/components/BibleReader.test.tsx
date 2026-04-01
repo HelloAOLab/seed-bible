@@ -128,6 +128,7 @@ function createFixture(): ReaderFixture {
     selectVerse,
     selectFootnote,
     highlightSelectedVerses: jest.fn(async () => undefined),
+    unhighlightSelectedVerses: jest.fn(async () => undefined),
     clearSelectedVerses: jest.fn(),
     selectTranslation: jest.fn(async () => undefined),
     selectBook: jest.fn(async () => undefined),

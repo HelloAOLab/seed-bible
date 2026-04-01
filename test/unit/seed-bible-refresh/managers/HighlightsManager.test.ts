@@ -48,10 +48,13 @@ describe("HighlightsManager", () => {
 
   it("getChapterHighlights() loads chapter highlights from the user record", async () => {
     getDataMock.mockResolvedValue({
-      highlights: [
-        { colorId: "color-1", verse: 3 },
-        { colorId: "color-2", verse: [5, 7] },
-      ],
+      success: true,
+      data: {
+        highlights: [
+          { colorId: "color-1", verse: 3 },
+          { colorId: "color-2", verse: [5, 7] },
+        ],
+      },
     });
     const manager = createHighlightsManager(login);
 
@@ -68,10 +71,13 @@ describe("HighlightsManager", () => {
 
   it("getChapterHighlights() normalizes overlapping stored highlights", async () => {
     getDataMock.mockResolvedValue({
-      highlights: [
-        { colorId: "color-4", verse: [1, 4] },
-        { colorId: "color-5", verse: [3, 5] },
-      ],
+      success: true,
+      data: {
+        highlights: [
+          { colorId: "color-4", verse: [1, 4] },
+          { colorId: "color-5", verse: [3, 5] },
+        ],
+      },
     });
     const manager = createHighlightsManager(login);
 
@@ -86,7 +92,10 @@ describe("HighlightsManager", () => {
   });
 
   it("getChapterHighlights() returns empty highlights when stored data is invalid", async () => {
-    getDataMock.mockResolvedValue({ highlights: [{ colorId: "#fff" }] });
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: { highlights: [{ colorId: "#fff" }] },
+    });
     const manager = createHighlightsManager(login);
 
     const result = await manager.getChapterHighlights("BSB", "GEN", 1);
@@ -182,16 +191,18 @@ describe("HighlightsManager", () => {
 
   it("highlightVerse() adds or overrides overlapping highlights", async () => {
     getDataMock.mockResolvedValue({
-      highlights: [
-        { colorId: "color-6", verse: [1, 3] },
-        { colorId: "color-6", verse: [5, 7] },
-      ],
+      success: true,
+      data: {
+        highlights: [
+          { colorId: "color-6", verse: [1, 3] },
+          { colorId: "color-6", verse: [5, 7] },
+        ],
+      },
     });
     const manager = createHighlightsManager(login);
 
     await manager.highlightVerse("BSB", "GEN", 1, {
       colorId: "color-5",
-
       verse: [3, 6],
     });
 
@@ -213,7 +224,10 @@ describe("HighlightsManager", () => {
 
   it("highlightVerse() merges adjacent highlights with identical styling", async () => {
     getDataMock.mockResolvedValue({
-      highlights: [{ colorId: "color-6", verse: [1, 2] }],
+      success: true,
+      data: {
+        highlights: [{ colorId: "color-6", verse: [1, 2] }],
+      },
     });
     const manager = createHighlightsManager(login);
 
@@ -236,7 +250,10 @@ describe("HighlightsManager", () => {
 
   it("highlightVerses() applies a style to multiple verses in a single save", async () => {
     getDataMock.mockResolvedValue({
-      highlights: [{ colorId: "color-6", verse: [1, 8] }],
+      success: true,
+      data: {
+        highlights: [{ colorId: "color-6", verse: [1, 8] }],
+      },
     });
     const manager = createHighlightsManager(login);
 
@@ -277,7 +294,10 @@ describe("HighlightsManager", () => {
 
   it("unhighlightVerse() removes a verse range and splits impacted highlights", async () => {
     getDataMock.mockResolvedValue({
-      highlights: [{ colorId: "color-6", verse: [1, 7] }],
+      success: true,
+      data: {
+        highlights: [{ colorId: "color-6", verse: [1, 7] }],
+      },
     });
     const manager = createHighlightsManager(login);
 
@@ -300,7 +320,10 @@ describe("HighlightsManager", () => {
 
   it("unhighlightVerse() can remove a single highlighted verse", async () => {
     getDataMock.mockResolvedValue({
-      highlights: [{ colorId: "color-6", verse: 4 }],
+      success: true,
+      data: {
+        highlights: [{ colorId: "color-6", verse: 4 }],
+      },
     });
     const manager = createHighlightsManager(login);
 
@@ -320,10 +343,13 @@ describe("HighlightsManager", () => {
 
   it("unhighlightVerses() removes highlights for multiple verses in a single save", async () => {
     getDataMock.mockResolvedValue({
-      highlights: [
-        { colorId: "color-6", verse: [1, 3] },
-        { colorId: "color-7", verse: [5, 8] },
-      ],
+      success: true,
+      data: {
+        highlights: [
+          { colorId: "color-6", verse: [1, 3] },
+          { colorId: "color-7", verse: [5, 8] },
+        ],
+      },
     });
     const manager = createHighlightsManager(login);
 
@@ -350,10 +376,13 @@ describe("HighlightsManager", () => {
     login.userId.value = null;
 
     getDataMock.mockResolvedValue({
-      highlights: [
-        { colorId: "color-6", verse: [1, 3] },
-        { colorId: "color-7", verse: [5, 8] },
-      ],
+      success: true,
+      data: {
+        highlights: [
+          { colorId: "color-6", verse: [1, 3] },
+          { colorId: "color-7", verse: [5, 8] },
+        ],
+      },
     });
     const manager = createHighlightsManager(login);
 
