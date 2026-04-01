@@ -103,6 +103,30 @@
   --sb-selected-tab-border: 1px solid var(--sb-primary-color);
   --sb-selected-tab-background: var(--sb-secondary-color);
   --sb-selected-tab-font-color: var(--sb-primary-color);
+
+  --sb-highlight-yellow-color: #fff59d;
+  --sb-highlight-yellow-font-color: #333;
+  --sb-highlight-yellow-words-of-jesus-font-color: #e07b4c;
+
+  --sb-highlight-green-color: #a5d6a7;
+  --sb-highlight-green-font-color: #333;
+  --sb-highlight-green-words-of-jesus-font-color: #e07b4c;
+
+  --sb-highlight-blue-color: #fff59d;
+  --sb-highlight-blue-font-color: #333;
+  --sb-highlight-blue-words-of-jesus-font-color: #e07b4c;
+
+  --sb-highlight-pink-color: #f48fb1;
+  --sb-highlight-pink-font-color: #333;
+  --sb-highlight-pink-words-of-jesus-font-color: #e07b4c;
+
+  --sb-highlight-purple-color: #ce93d8;
+  --sb-highlight-purple-font-color: #333;
+  --sb-highlight-purple-words-of-jesus-font-color: #e07b4c;
+
+  --sb-highlight-orange-color: #ffcc80;
+  --sb-highlight-orange-font-color: #333;
+  --sb-highlight-orange-words-of-jesus-font-color: #e07b4c;
 }
 
 body {

@@ -20,6 +20,7 @@ import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
 import {
   generateThemeCssVariables,
   createTheme,
+  generateThemeCssClasses,
 } from "seed-bible.managers.ThemeManager";
 import type { ThemeManager } from "seed-bible.managers.ThemeManager";
 import { computed, effect, type ReadonlySignal } from "@preact/signals";
@@ -70,6 +71,7 @@ export interface SeedBibleState {
   config: ConfigManager;
   theme: ThemeManager & {
     themeCssVariables: ReadonlySignal<string>;
+    themeCssClasses: ReadonlySignal<string>;
   };
   sidebar: SidebarManager;
   tabs: TabsManager;
@@ -101,10 +103,11 @@ export function createSeedBibleState(): SeedBibleState {
   const extensions = createExtensionManager();
 
   const { currentTheme } = themeManager;
-  const theme = computed(() => currentTheme.value.variables);
+  const theme = computed(() => currentTheme.value);
   const themeCssVariables = computed(() =>
     generateThemeCssVariables(theme.value)
   );
+  const themeCssClasses = computed(() => generateThemeCssClasses(theme.value));
   const panelsEnabled = computed(() => !config.config.value.disablePanels);
   const selectedTab = computed(
     () =>
@@ -273,6 +276,7 @@ export function createSeedBibleState(): SeedBibleState {
     theme: {
       ...themeManager,
       themeCssVariables,
+      themeCssClasses,
     },
     sidebar,
     tabs,
