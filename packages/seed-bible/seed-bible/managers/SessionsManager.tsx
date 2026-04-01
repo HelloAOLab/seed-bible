@@ -8,25 +8,24 @@ import type { LoginManager } from "seed-bible.managers.LoginManager";
 
 type UserProfile = Awaited<ReturnType<LoginManager["getUserProfile"]>>;
 
-export interface ConnectedSessionUser {
-  connectionId: string;
-  sessionId: string | null;
-  userId: string | null;
+export interface ConnectedSessionUser extends SessionConnectionInfo {
+  /**
+   * The user's profile information. Null if the user is not logged in or if the profile information could not be loaded.
+   */
   profile: UserProfile | null;
 
-  /* The color associated with the user in the session. */
+  /**
+   * A color assigned to this user for display purposes. This is generated based on the connection ID.
+   */
   color: string;
 }
 
-interface SessionConnectionInfo {
-  connectionId: string;
-  sessionId: string | null;
-  userId: string | null;
-}
-
-interface SessionRemoteClientEvent {
-  type: "client_connected" | "client_disconnected";
-  client: SessionConnectionInfo;
+export interface SessionConnectionInfo extends ConnectionInfo {
+  /**
+   * Whether this event is for the current client.
+   * This will be true when `client.connectionId` is the same as the `configBot.id` and false otherwise.
+   */
+  isSelf: boolean;
 }
 
 interface SessionData {
@@ -197,6 +196,7 @@ async function createBibleReadingSession(
         const color = getRandomColor(client.connectionId);
 
         return {
+          isSelf: client.isSelf,
           connectionId: client.connectionId,
           sessionId: client.sessionId,
           userId: client.userId,
@@ -276,9 +276,12 @@ async function createBibleReadingSession(
   });
 
   const remoteClientsSubscription = document.remoteClients.subscribe(
-    (event: SessionRemoteClientEvent) => {
+    (event) => {
       if (event.type === "client_connected") {
-        connectedClients.set(event.client.connectionId, event.client);
+        connectedClients.set(event.client.connectionId, {
+          ...event.client,
+          isSelf: event.isSelf,
+        });
       } else {
         connectedClients.delete(event.client.connectionId);
       }
