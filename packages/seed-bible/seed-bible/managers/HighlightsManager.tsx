@@ -284,6 +284,9 @@ const emptyChapterHighlights: ChapterHighlights = {
 export function createHighlightsManager(
   login: LoginManager
 ): HighlightsManager {
+  // Cache highlights by chapter address to avoid repeated network calls
+  const highlightsCache = new Map<string, ChapterHighlights>();
+
   const getChapterHighlights = async (
     translationId: string,
     bookId: string,
@@ -299,6 +302,13 @@ export function createHighlightsManager(
       bookId,
       chapterNumber
     );
+
+    // Check cache first
+    const cached = highlightsCache.get(address);
+    if (cached) {
+      return cached;
+    }
+
     const data = await os.getData(userId, address);
 
     if (!data.success || !data.data) {
@@ -311,9 +321,14 @@ export function createHighlightsManager(
       return emptyChapterHighlights;
     }
 
-    return {
+    const normalized = {
       highlights: normalizeHighlights(parsed.data.highlights),
     };
+
+    // Store in cache
+    highlightsCache.set(address, normalized);
+
+    return normalized;
   };
 
   const saveChapterHighlights = async (
@@ -337,13 +352,17 @@ export function createHighlightsManager(
       bookId,
       chapterNumber
     );
+    const normalized = normalizeHighlights(highlights);
     const payload = chapterHighlightsSchema.parse({
-      highlights: normalizeHighlights(highlights),
+      highlights: normalized,
     });
 
     await os.recordData(userId, address, payload, {
       marker: `publicRead:highlights/${translationId}`,
     });
+
+    // Update cache with the saved highlights
+    highlightsCache.set(address, { highlights: normalized });
   };
 
   const highlightVerse = async (

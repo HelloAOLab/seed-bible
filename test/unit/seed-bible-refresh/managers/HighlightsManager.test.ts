@@ -91,6 +91,28 @@ describe("HighlightsManager", () => {
     });
   });
 
+  it("getChapterHighlights() caches highlights to avoid repeated network calls", async () => {
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: {
+        highlights: [{ colorId: "color-1", verse: 3 }],
+      },
+    });
+    const manager = createHighlightsManager(login);
+
+    // First call fetches from network
+    await manager.getChapterHighlights("BSB", "GEN", 1);
+    expect(getDataMock).toHaveBeenCalledTimes(1);
+
+    // Second call returns cached result without calling os.getData
+    await manager.getChapterHighlights("BSB", "GEN", 1);
+    expect(getDataMock).toHaveBeenCalledTimes(1);
+
+    // Different chapter makes a new network call
+    await manager.getChapterHighlights("BSB", "GEN", 2);
+    expect(getDataMock).toHaveBeenCalledTimes(2);
+  });
+
   it("getChapterHighlights() returns empty highlights when stored data is invalid", async () => {
     getDataMock.mockResolvedValue({
       success: true,
@@ -187,6 +209,34 @@ describe("HighlightsManager", () => {
         marker: "publicRead:highlights/BSB",
       }
     );
+  });
+
+  it("saveChapterHighlights() updates the cache with saved highlights", async () => {
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: {
+        highlights: [{ colorId: "color-1", verse: 3 }],
+      },
+    });
+    const manager = createHighlightsManager(login);
+
+    // Load and cache initial highlights
+    const initial = await manager.getChapterHighlights("BSB", "GEN", 1);
+    expect(initial).toEqual({ highlights: [{ colorId: "color-1", verse: 3 }] });
+    expect(getDataMock).toHaveBeenCalledTimes(1);
+
+    // Save new highlights
+    await manager.saveChapterHighlights("BSB", "GEN", 1, [
+      { colorId: "color-2", verse: [5, 7] },
+    ]);
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+
+    // Subsequent getChapterHighlights call should return cached (saved) highlights without another network call
+    const updated = await manager.getChapterHighlights("BSB", "GEN", 1);
+    expect(updated).toEqual({
+      highlights: [{ colorId: "color-2", verse: [5, 7] }],
+    });
+    expect(getDataMock).toHaveBeenCalledTimes(1); // Still just 1 call
   });
 
   it("highlightVerse() adds or overrides overlapping highlights", async () => {
