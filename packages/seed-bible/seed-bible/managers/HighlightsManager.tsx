@@ -301,11 +301,11 @@ export function createHighlightsManager(
     );
     const data = await os.getData(userId, address);
 
-    if (!data) {
+    if (!data.success || !data.data) {
       return emptyChapterHighlights;
     }
 
-    const parsed = chapterHighlightsSchema.safeParse(data);
+    const parsed = chapterHighlightsSchema.safeParse(data.data);
     if (!parsed.success) {
       console.warn("Failed to parse chapter highlights:", parsed.error);
       return emptyChapterHighlights;
