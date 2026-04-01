@@ -20,8 +20,168 @@ export const chapterHighlightsSchema = z.object({
   highlights: z.array(chapterHighlightSchema),
 });
 
+export type Verse = z.infer<typeof verseSchema>;
 export type ChapterHighlight = z.infer<typeof chapterHighlightSchema>;
 export type ChapterHighlights = z.infer<typeof chapterHighlightsSchema>;
+
+type VerseRange = {
+  start: number;
+  end: number;
+};
+
+type RangeHighlight = {
+  start: number;
+  end: number;
+  color: string;
+  fontColor: string;
+};
+
+function toVerseRange(verse: Verse): VerseRange {
+  if (typeof verse === "number") {
+    return {
+      start: verse,
+      end: verse,
+    };
+  }
+
+  return {
+    start: verse[0],
+    end: verse[1],
+  };
+}
+
+function fromVerseRange(range: VerseRange): Verse {
+  if (range.start === range.end) {
+    return range.start;
+  }
+
+  return [range.start, range.end];
+}
+
+function rangesOverlap(a: VerseRange, b: VerseRange): boolean {
+  return a.start <= b.end && b.start <= a.end;
+}
+
+function subtractRange(source: VerseRange, remove: VerseRange): VerseRange[] {
+  if (!rangesOverlap(source, remove)) {
+    return [source];
+  }
+
+  const next: VerseRange[] = [];
+
+  if (remove.start > source.start) {
+    next.push({
+      start: source.start,
+      end: remove.start - 1,
+    });
+  }
+
+  if (remove.end < source.end) {
+    next.push({
+      start: remove.end + 1,
+      end: source.end,
+    });
+  }
+
+  return next;
+}
+
+function toRangeHighlight(highlight: ChapterHighlight): RangeHighlight {
+  const range = toVerseRange(highlight.verse);
+  return {
+    start: range.start,
+    end: range.end,
+    color: highlight.color,
+    fontColor: highlight.fontColor,
+  };
+}
+
+function fromRangeHighlight(highlight: RangeHighlight): ChapterHighlight {
+  return {
+    color: highlight.color,
+    fontColor: highlight.fontColor,
+    verse: fromVerseRange({
+      start: highlight.start,
+      end: highlight.end,
+    }),
+  };
+}
+
+function removeRangeFromHighlights(
+  highlights: RangeHighlight[],
+  removeRange: VerseRange
+): RangeHighlight[] {
+  return highlights.flatMap((highlight) => {
+    const pieces = subtractRange(
+      {
+        start: highlight.start,
+        end: highlight.end,
+      },
+      removeRange
+    );
+
+    return pieces.map((piece) => ({
+      ...highlight,
+      start: piece.start,
+      end: piece.end,
+    }));
+  });
+}
+
+function mergeHighlights(highlights: RangeHighlight[]): RangeHighlight[] {
+  if (highlights.length === 0) {
+    return [];
+  }
+
+  const sorted = [...highlights].sort((a, b) => {
+    if (a.start !== b.start) {
+      return a.start - b.start;
+    }
+    return a.end - b.end;
+  });
+
+  const merged: RangeHighlight[] = [];
+
+  for (const current of sorted) {
+    const last = merged[merged.length - 1];
+    if (!last) {
+      merged.push({ ...current });
+      continue;
+    }
+
+    const hasSameStyle =
+      last.color === current.color && last.fontColor === current.fontColor;
+    const canMerge = current.start <= last.end + 1;
+
+    if (hasSameStyle && canMerge) {
+      last.end = Math.max(last.end, current.end);
+      continue;
+    }
+
+    merged.push({ ...current });
+  }
+
+  return merged;
+}
+
+function normalizeHighlights(
+  highlights: ChapterHighlight[]
+): ChapterHighlight[] {
+  let normalized: RangeHighlight[] = [];
+
+  // Later entries take precedence over earlier ones, then adjacent equal styles are merged.
+  for (const highlight of highlights) {
+    const incoming = toRangeHighlight(highlight);
+    normalized = removeRangeFromHighlights(normalized, {
+      start: incoming.start,
+      end: incoming.end,
+    });
+    normalized.push(incoming);
+    normalized = mergeHighlights(normalized);
+  }
+
+  return normalized.map(fromRangeHighlight);
+}
 
 export interface HighlightsManager {
   getChapterHighlights: (
@@ -34,6 +194,18 @@ export interface HighlightsManager {
     bookId: string,
     chapterNumber: number,
     highlights: ChapterHighlight[]
+  ) => Promise<void>;
+  highlightVerse: (
+    translationId: string,
+    bookId: string,
+    chapterNumber: number,
+    highlightDetails: ChapterHighlight
+  ) => Promise<void>;
+  unhighlightVerse: (
+    translationId: string,
+    bookId: string,
+    chapterNumber: number,
+    verseDetails: Verse
   ) => Promise<void>;
 }
 
@@ -79,7 +251,9 @@ export function createHighlightsManager(
       return emptyChapterHighlights;
     }
 
-    return parsed.data;
+    return {
+      highlights: normalizeHighlights(parsed.data.highlights),
+    };
   };
 
   const saveChapterHighlights = async (
@@ -90,7 +264,6 @@ export function createHighlightsManager(
   ): Promise<void> => {
     if (!login.userId.value) {
       await login.login();
-      return;
     }
 
     const userId = login.userId.value;
@@ -104,13 +277,75 @@ export function createHighlightsManager(
       bookId,
       chapterNumber
     );
-    const payload = chapterHighlightsSchema.parse({ highlights });
+    const payload = chapterHighlightsSchema.parse({
+      highlights: normalizeHighlights(highlights),
+    });
 
-    await os.recordData(userId, address, payload);
+    await os.recordData(userId, address, payload, {
+      marker: `publicRead:highlights/${translationId}`,
+    });
+  };
+
+  const highlightVerse = async (
+    translationId: string,
+    bookId: string,
+    chapterNumber: number,
+    highlightDetails: ChapterHighlight
+  ): Promise<void> => {
+    const nextHighlight = chapterHighlightSchema.parse(highlightDetails);
+    const current = await getChapterHighlights(
+      translationId,
+      bookId,
+      chapterNumber
+    );
+
+    const incomingRange = toVerseRange(nextHighlight.verse);
+    const updated = removeRangeFromHighlights(
+      current.highlights.map(toRangeHighlight),
+      incomingRange
+    );
+
+    updated.push(toRangeHighlight(nextHighlight));
+
+    await saveChapterHighlights(
+      translationId,
+      bookId,
+      chapterNumber,
+      mergeHighlights(updated).map(fromRangeHighlight)
+    );
+  };
+
+  const unhighlightVerse = async (
+    translationId: string,
+    bookId: string,
+    chapterNumber: number,
+    verseDetails: Verse
+  ): Promise<void> => {
+    const verse = verseSchema.parse(verseDetails);
+    const removeRange = toVerseRange(verse);
+    const current = await getChapterHighlights(
+      translationId,
+      bookId,
+      chapterNumber
+    );
+
+    const updated = removeRangeFromHighlights(
+      current.highlights.map(toRangeHighlight),
+      removeRange
+    );
+
+    await saveChapterHighlights(
+      translationId,
+      bookId,
+      chapterNumber,
+      mergeHighlights(updated).map(fromRangeHighlight)
+    );
   };
 
   return {
     getChapterHighlights,
     saveChapterHighlights,
+    highlightVerse,
+    unhighlightVerse,
   };
 }

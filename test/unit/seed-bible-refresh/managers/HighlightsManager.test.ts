@@ -2,25 +2,27 @@ import {
   chapterHighlightsSchema,
   createHighlightsManager,
 } from "@packages/seed-bible/seed-bible/managers/HighlightsManager";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { signal } from "@preact/signals";
 
 describe("HighlightsManager", () => {
   let getDataMock: jest.Mock;
   let recordDataMock: jest.Mock;
   let warnSpy: jest.SpyInstance;
-  let login: {
-    userId: {
-      value: string | null;
-    };
-  };
+  let login: jest.Mocked<LoginManager>;
 
   beforeEach(() => {
     getDataMock = jest.fn().mockResolvedValue(null);
     recordDataMock = jest.fn().mockResolvedValue(undefined);
     warnSpy = jest.spyOn(console, "warn").mockImplementation(() => undefined);
     login = {
-      userId: {
-        value: "user-1",
-      },
+      authBot: signal(null),
+      userId: signal("user-1"),
+      profile: signal(null),
+      updateProfile: jest.fn().mockResolvedValue(undefined),
+      login: jest.fn().mockResolvedValue(undefined),
+      logout: jest.fn().mockResolvedValue(undefined),
+      getUserProfile: jest.fn().mockResolvedValue(null),
     };
 
     (globalThis as any).os = {
@@ -36,7 +38,7 @@ describe("HighlightsManager", () => {
 
   it("getChapterHighlights() returns empty highlights when unauthenticated", async () => {
     login.userId.value = null;
-    const manager = createHighlightsManager(login as any);
+    const manager = createHighlightsManager(login);
 
     const result = await manager.getChapterHighlights("BSB", "GEN", 1);
 
@@ -51,7 +53,7 @@ describe("HighlightsManager", () => {
         { color: "#aabbcc", fontColor: "#111111", verse: [5, 7] },
       ],
     });
-    const manager = createHighlightsManager(login as any);
+    const manager = createHighlightsManager(login);
 
     const result = await manager.getChapterHighlights("BSB", "GEN", 1);
 
@@ -64,9 +66,28 @@ describe("HighlightsManager", () => {
     });
   });
 
+  it("getChapterHighlights() normalizes overlapping stored highlights", async () => {
+    getDataMock.mockResolvedValue({
+      highlights: [
+        { color: "#111111", fontColor: "#000000", verse: [1, 4] },
+        { color: "#ff0000", fontColor: "#ffffff", verse: [3, 5] },
+      ],
+    });
+    const manager = createHighlightsManager(login);
+
+    const result = await manager.getChapterHighlights("BSB", "GEN", 1);
+
+    expect(result).toEqual({
+      highlights: [
+        { color: "#111111", fontColor: "#000000", verse: [1, 2] },
+        { color: "#ff0000", fontColor: "#ffffff", verse: [3, 5] },
+      ],
+    });
+  });
+
   it("getChapterHighlights() returns empty highlights when stored data is invalid", async () => {
     getDataMock.mockResolvedValue({ highlights: [{ color: "#fff" }] });
-    const manager = createHighlightsManager(login as any);
+    const manager = createHighlightsManager(login);
 
     const result = await manager.getChapterHighlights("BSB", "GEN", 1);
 
@@ -75,7 +96,7 @@ describe("HighlightsManager", () => {
   });
 
   it("saveChapterHighlights() stores highlights at the chapter address", async () => {
-    const manager = createHighlightsManager(login as any);
+    const manager = createHighlightsManager(login);
 
     await manager.saveChapterHighlights("BSB", "GEN", 1, [
       { color: "#ffff00", fontColor: "#000000", verse: 1 },
@@ -90,21 +111,170 @@ describe("HighlightsManager", () => {
           { color: "#ffff00", fontColor: "#000000", verse: 1 },
           { color: "#ffeeaa", fontColor: "#222222", verse: [2, 4] },
         ],
+      },
+      {
+        marker: "publicRead:highlights/BSB",
       }
     );
   });
 
-  it("saveChapterHighlights() does not save when unauthenticated", async () => {
+  it("saveChapterHighlights() attempts login before saving when unauthenticated", async () => {
     login.userId.value = null;
-    const manager = createHighlightsManager(login as any);
+    login.login.mockImplementation(async () => {
+      login.userId.value = "user-2";
+    });
+    const manager = createHighlightsManager(login);
 
     await manager.saveChapterHighlights("BSB", "GEN", 1, [
       { color: "#ffff00", fontColor: "#000000", verse: 1 },
     ]);
 
+    expect(login.login).toHaveBeenCalledTimes(1);
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-2",
+      "highlights:BSB/GEN/1",
+      {
+        highlights: [{ color: "#ffff00", fontColor: "#000000", verse: 1 }],
+      },
+      {
+        marker: "publicRead:highlights/BSB",
+      }
+    );
+  });
+
+  it("saveChapterHighlights() warns and does not save when login does not authenticate", async () => {
+    login.userId.value = null;
+    const manager = createHighlightsManager(login);
+
+    await manager.saveChapterHighlights("BSB", "GEN", 1, [
+      { color: "#ffff00", fontColor: "#000000", verse: 1 },
+    ]);
+
+    expect(login.login).toHaveBeenCalledTimes(1);
     expect(recordDataMock).not.toHaveBeenCalled();
     expect(warnSpy).toHaveBeenCalledWith(
-      "Cannot save highlights: no authenticated user"
+      "Unable to save highlights: user is not authenticated."
+    );
+  });
+
+  it("saveChapterHighlights() stores normalized highlights without overlap", async () => {
+    const manager = createHighlightsManager(login);
+
+    await manager.saveChapterHighlights("BSB", "GEN", 1, [
+      { color: "#111111", fontColor: "#000000", verse: [1, 4] },
+      { color: "#ff0000", fontColor: "#ffffff", verse: [3, 5] },
+    ]);
+
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      "highlights:BSB/GEN/1",
+      {
+        highlights: [
+          { color: "#111111", fontColor: "#000000", verse: [1, 2] },
+          { color: "#ff0000", fontColor: "#ffffff", verse: [3, 5] },
+        ],
+      },
+      {
+        marker: "publicRead:highlights/BSB",
+      }
+    );
+  });
+
+  it("highlightVerse() adds or overrides overlapping highlights", async () => {
+    getDataMock.mockResolvedValue({
+      highlights: [
+        { color: "#00ff00", fontColor: "#000000", verse: [1, 3] },
+        { color: "#00ff00", fontColor: "#000000", verse: [5, 7] },
+      ],
+    });
+    const manager = createHighlightsManager(login);
+
+    await manager.highlightVerse("BSB", "GEN", 1, {
+      color: "#ff0000",
+      fontColor: "#ffffff",
+      verse: [3, 6],
+    });
+
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      "highlights:BSB/GEN/1",
+      {
+        highlights: [
+          { color: "#00ff00", fontColor: "#000000", verse: [1, 2] },
+          { color: "#ff0000", fontColor: "#ffffff", verse: [3, 6] },
+          { color: "#00ff00", fontColor: "#000000", verse: 7 },
+        ],
+      },
+      {
+        marker: "publicRead:highlights/BSB",
+      }
+    );
+  });
+
+  it("highlightVerse() merges adjacent highlights with identical styling", async () => {
+    getDataMock.mockResolvedValue({
+      highlights: [{ color: "#00ff00", fontColor: "#000000", verse: [1, 2] }],
+    });
+    const manager = createHighlightsManager(login);
+
+    await manager.highlightVerse("BSB", "GEN", 1, {
+      color: "#00ff00",
+      fontColor: "#000000",
+      verse: [3, 4],
+    });
+
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      "highlights:BSB/GEN/1",
+      {
+        highlights: [{ color: "#00ff00", fontColor: "#000000", verse: [1, 4] }],
+      },
+      {
+        marker: "publicRead:highlights/BSB",
+      }
+    );
+  });
+
+  it("unhighlightVerse() removes a verse range and splits impacted highlights", async () => {
+    getDataMock.mockResolvedValue({
+      highlights: [{ color: "#00ff00", fontColor: "#000000", verse: [1, 7] }],
+    });
+    const manager = createHighlightsManager(login);
+
+    await manager.unhighlightVerse("BSB", "GEN", 1, [3, 5]);
+
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      "highlights:BSB/GEN/1",
+      {
+        highlights: [
+          { color: "#00ff00", fontColor: "#000000", verse: [1, 2] },
+          { color: "#00ff00", fontColor: "#000000", verse: [6, 7] },
+        ],
+      },
+      {
+        marker: "publicRead:highlights/BSB",
+      }
+    );
+  });
+
+  it("unhighlightVerse() can remove a single highlighted verse", async () => {
+    getDataMock.mockResolvedValue({
+      highlights: [{ color: "#00ff00", fontColor: "#000000", verse: 4 }],
+    });
+    const manager = createHighlightsManager(login);
+
+    await manager.unhighlightVerse("BSB", "GEN", 1, 4);
+
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      "highlights:BSB/GEN/1",
+      {
+        highlights: [],
+      },
+      {
+        marker: "publicRead:highlights/BSB",
+      }
     );
   });
 });
