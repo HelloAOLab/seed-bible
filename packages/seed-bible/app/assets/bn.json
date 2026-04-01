@@ -278,5 +278,6 @@
   "unknownUser": "অজানা ব্যবহারকারী",
   "anonymous": "বেনামী",
   "reportBug": "বাগ রিপোর্ট করুন",
-  "tabs": "ট্যাব"
+  "tabs": "ট্যাব",
+  "alreadyAnnotatedThisItem": "আপনি ইতিমধ্যে এই আইটেমটি টীকা লিখেছেন।"
 }

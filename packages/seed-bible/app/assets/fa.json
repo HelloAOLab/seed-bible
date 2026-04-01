@@ -278,5 +278,6 @@
   "unknownUser": "کاربر ناشناس",
   "anonymous": "ناشناس",
   "reportBug": "گزارش مشکل",
-  "tabs": "زبانه‌ها"
+  "tabs": "زبانه‌ها",
+  "alreadyAnnotatedThisItem": "شما قبلاً این مورد را حاشیه‌نویسی کرده‌اید."
 }

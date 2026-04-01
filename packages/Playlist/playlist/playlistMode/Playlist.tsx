@@ -189,7 +189,7 @@ const Playlist = (props: any) => {
 
   const [systemPrompt, setSystemPrompt] = useState(G.SYSTEM_PROMPT || "");
 
-  const isEdit = useRef(false);
+  const isEdit = useRef(G.EditIDRestore || false);
   const [openModalName, setOpenModalName] = useState(
     G.OpenModalEditName || false
   );
@@ -204,8 +204,8 @@ const Playlist = (props: any) => {
     G.RenamingPlaylist = renamingPlaylist;
     G.SetRenamingPlaylistEditTitle = setRenamingPlaylist;
     G.SetOpenModalEditName = setOpenModalName;
+    G.EditIDRestore = isEdit.current;
     return () => {
-      G.OpenModalEditName = null;
       G.SetRenamingPlaylistEditTitle = null;
     };
   }, [openModalName, checklist, renamingPlaylist]);

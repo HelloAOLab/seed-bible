@@ -808,5 +808,6 @@
   "traditionalOrderDesc": "大多数现代基督教圣经中的排序",
   "youHaveNSubscriptions": "您有 {{count}} 个订阅",
   "unknownUser": "未知用户",
-  "anonymous": "匿名"
+  "anonymous": "匿名",
+  "alreadyAnnotatedThisItem": "您已经注释过此项目。"
 }

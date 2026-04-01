@@ -278,5 +278,6 @@
   "unknownUser": "ناپېژندل کارن",
   "anonymous": "بې نومه",
   "reportBug": "بګ راپور ورکړئ",
-  "tabs": "ټبونه"
+  "tabs": "ټبونه",
+  "alreadyAnnotatedThisItem": "تاسو د دې توکي له مخکې څخه شرح کړی دی."
 }

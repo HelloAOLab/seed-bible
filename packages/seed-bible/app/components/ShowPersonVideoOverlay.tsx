@@ -18,7 +18,7 @@ const sizes = [
 // Create a Map: size => value
 const sizeToValueMap = new Map(sizes.map((item) => [item.size, item.value]));
 
-const VideoOverlay = () => {
+const ShowPersonVideoOverlay = () => {
   const [size, setSize] = useState("s");
 
   const [position, setPosition] = useState<{ x: any; y: any }>({
@@ -171,4 +171,4 @@ const VideoOverlay = () => {
   );
 };
 
-return VideoOverlay;
+export { ShowPersonVideoOverlay };

@@ -278,5 +278,6 @@
   "unknownUser": "ዘይተፈልጠ ተጠቃሚ",
   "anonymous": "ስም-ኣልባ",
   "reportBug": "ጸገም ሓብር",
-  "tabs": "ታቦች"
+  "tabs": "ታቦች",
+  "alreadyAnnotatedThisItem": "ነዚ ነገር ኣቐዲምካ ምርኢ ኣለካ።"
 }

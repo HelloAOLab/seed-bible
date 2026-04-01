@@ -278,5 +278,6 @@
   "unknownUser": "ያልታወቀ ተጠቃሚ",
   "anonymous": "ስም-አልባ",
   "reportBug": "ስህተት ሪፖርት ያድርጉ",
-  "tabs": "ትሮች"
+  "tabs": "ትሮች",
+  "alreadyAnnotatedThisItem": "ይህን ንጥል ቀድሞውኑ አስረድተዋል።"
 }

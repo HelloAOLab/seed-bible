@@ -278,5 +278,6 @@
   "unknownUser": "Bilinmeyen kullanıcı",
   "anonymous": "Anonim",
   "reportBug": "Hata bildir",
-  "tabs": "Sekmeler"
+  "tabs": "Sekmeler",
+  "alreadyAnnotatedThisItem": "Bu öğeyi zaten notlandırdınız."
 }
