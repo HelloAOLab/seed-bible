@@ -160,4 +160,15 @@ describe("createLoginManager", () => {
       delete (globalThis as any).posthog;
     }
   });
+
+  it("getUserProfile() retrieves the user profile from storage", async () => {
+    getDataMock.mockResolvedValue({ name: "Dave" });
+
+    const manager = createLoginManager();
+
+    const profile = await manager.getUserProfile("custom-user");
+
+    expect(getDataMock).toHaveBeenCalledWith("custom-user", "profile");
+    expect(profile).toEqual({ name: "Dave" });
+  });
 });

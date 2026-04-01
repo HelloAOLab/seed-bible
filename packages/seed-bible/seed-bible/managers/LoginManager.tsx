@@ -31,6 +31,13 @@ export interface LoginManager {
    * Updates the user's profile information.
    */
   updateProfile: (newData: UserProfile) => void;
+
+  /**
+   * Gets the user's profile information from storage.
+   * @param userId The ID of the user to get the profile for.
+   * @returns A promise that resolves with the profile information for the user.
+   */
+  getUserProfile: (userId: string) => Promise<UserProfile>;
 }
 
 const userProfileSchema = z.object({
@@ -142,5 +149,6 @@ export function createLoginManager(): LoginManager {
     login,
     logout,
     updateProfile,
+    getUserProfile,
   };
 }
