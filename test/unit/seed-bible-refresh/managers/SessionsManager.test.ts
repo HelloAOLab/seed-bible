@@ -11,6 +11,34 @@ jest.mock("seed-bible.managers.BibleReadingManager", () => ({
 }));
 
 type MockChangesSubscriber = () => void;
+type TestRemoteClientEvent = {
+  type: "client_connected" | "client_disconnected";
+  isSelf: boolean;
+  client: {
+    connectionId: string;
+    sessionId: string | null;
+    userId: string | null;
+  };
+};
+type MockRemoteClientSubscriber = (event: TestRemoteClientEvent) => void;
+
+function createMockRemoteClientsObservable() {
+  const subscribers = new Set<MockRemoteClientSubscriber>();
+
+  return {
+    subscribe: jest.fn((handler: MockRemoteClientSubscriber) => {
+      subscribers.add(handler);
+      return {
+        unsubscribe: () => subscribers.delete(handler),
+      };
+    }),
+    emit: (event: TestRemoteClientEvent) => {
+      for (const subscriber of subscribers) {
+        subscriber(event);
+      }
+    },
+  };
+}
 
 function createMockSharedMap(initial: Record<string, unknown> = {}) {
   const store = new Map<string, unknown>(Object.entries(initial));
@@ -135,23 +163,39 @@ function deferred<T>() {
 describe("SessionsManager", () => {
   let getSharedDocumentMock: jest.Mock;
   let mockMap: ReturnType<typeof createMockSharedMap>;
+  let mockRemoteClients: ReturnType<typeof createMockRemoteClientsObservable>;
   let mockDocument: {
     getMap: jest.Mock;
     transact: jest.Mock;
     unsubscribe: jest.Mock;
+    remoteClients: {
+      subscribe: jest.Mock;
+    };
   };
   let mockDataManager: Record<string, never>;
+  let mockLoginManager: {
+    getUserProfile: jest.Mock;
+  };
 
   beforeEach(() => {
     mockMap = createMockSharedMap();
+    mockRemoteClients = createMockRemoteClientsObservable();
     mockDocument = {
       getMap: jest.fn().mockReturnValue(mockMap),
       transact: jest.fn((callback: () => void) => callback()),
       unsubscribe: jest.fn(),
+      remoteClients: {
+        subscribe: mockRemoteClients.subscribe,
+      },
     };
 
     getSharedDocumentMock = jest.fn().mockResolvedValue(mockDocument);
     mockDataManager = {};
+    mockLoginManager = {
+      getUserProfile: jest.fn(async (userId: string) => ({
+        name: `Profile ${userId}`,
+      })),
+    };
 
     (globalThis as any).os = {
       getSharedDocument: getSharedDocumentMock,
@@ -170,7 +214,10 @@ describe("SessionsManager", () => {
     const randomUUID = jest.fn().mockReturnValue("session-123");
     (globalThis as any).crypto = { randomUUID };
 
-    const manager = createSessionsManager(mockDataManager as any);
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any
+    );
     const session = await manager.createSession();
 
     expect(randomUUID).toHaveBeenCalled();
@@ -183,7 +230,10 @@ describe("SessionsManager", () => {
   });
 
   it("joinSession(id) loads and returns a session with the given ID", async () => {
-    const manager = createSessionsManager(mockDataManager as any);
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any
+    );
     const session = await manager.joinSession("group-abc");
 
     expect(getSharedDocumentMock).toHaveBeenCalledWith(
@@ -202,7 +252,10 @@ describe("SessionsManager", () => {
     });
     mockDocument.getMap.mockReturnValue(mockMap);
 
-    const manager = createSessionsManager(mockDataManager as any);
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any
+    );
     const session = await manager.joinSession("group-abc");
 
     expect(
@@ -215,7 +268,10 @@ describe("SessionsManager", () => {
   });
 
   it("syncs reading state changes to the shared document", async () => {
-    const manager = createSessionsManager(mockDataManager as any);
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any
+    );
     const session = await manager.joinSession("group-abc");
 
     session.readingState.translationId.value = "NIV";
@@ -231,7 +287,10 @@ describe("SessionsManager", () => {
   it("does not loop when local state changes are echoed back from the shared map", async () => {
     mockMap.setEmitOnSet(true);
 
-    const manager = createSessionsManager(mockDataManager as any);
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any
+    );
     const session = await manager.joinSession("group-abc");
 
     mockMap.set.mockClear();
@@ -249,7 +308,10 @@ describe("SessionsManager", () => {
   });
 
   it("applies shared document changes to the session reading state", async () => {
-    const manager = createSessionsManager(mockDataManager as any);
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any
+    );
     const session = (await manager.joinSession(
       "group-abc"
     )) as BibleReadingSession;
@@ -283,7 +345,10 @@ describe("SessionsManager", () => {
   it("keeps local selection when user changes chapter during remote sync", async () => {
     const chapterDeferred = deferred<any>();
 
-    const manager = createSessionsManager(mockDataManager as any);
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any
+    );
     const session = await manager.joinSession("group-abc");
     (
       session.readingState.selectTranslationAndChapter as jest.Mock
@@ -320,7 +385,10 @@ describe("SessionsManager", () => {
     const chapterDeferred1 = deferred<any>();
     const chapterDeferred2 = deferred<any>();
 
-    const manager = createSessionsManager(mockDataManager as any);
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any
+    );
     const session = await manager.joinSession("group-abc");
     (session.readingState.selectTranslationAndChapter as jest.Mock)
       .mockImplementationOnce(async () => {
@@ -397,11 +465,96 @@ describe("SessionsManager", () => {
   });
 
   it("dispose() unsubscribes from the shared document", async () => {
-    const manager = createSessionsManager(mockDataManager as any);
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any
+    );
     const session = await manager.joinSession("group-abc");
 
     session.dispose();
 
     expect(mockDocument.unsubscribe).toHaveBeenCalled();
+  });
+
+  it("tracks connected users from remoteClients and loads profiles for authenticated users", async () => {
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockRemoteClients.emit({
+      type: "client_connected",
+      isSelf: false,
+      client: {
+        connectionId: "conn-1",
+        sessionId: "group-abc",
+        userId: "user-1",
+      },
+    });
+
+    mockRemoteClients.emit({
+      type: "client_connected",
+      isSelf: false,
+      client: {
+        connectionId: "conn-2",
+        sessionId: "group-abc",
+        userId: null,
+      },
+    });
+
+    await waitFor(() => session.connectedUsers.value.length === 2);
+
+    expect(mockLoginManager.getUserProfile).toHaveBeenCalledWith("user-1");
+    expect(session.connectedUsers.value).toEqual(
+      expect.arrayContaining([
+        {
+          connectionId: "conn-1",
+          sessionId: "group-abc",
+          userId: "user-1",
+          profile: {
+            name: "Profile user-1",
+          },
+        },
+        {
+          connectionId: "conn-2",
+          sessionId: "group-abc",
+          userId: null,
+          profile: null,
+        },
+      ])
+    );
+  });
+
+  it("removes disconnected users from the connected users list", async () => {
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockRemoteClients.emit({
+      type: "client_connected",
+      isSelf: false,
+      client: {
+        connectionId: "conn-1",
+        sessionId: "group-abc",
+        userId: "user-1",
+      },
+    });
+
+    await waitFor(() => session.connectedUsers.value.length === 1);
+
+    mockRemoteClients.emit({
+      type: "client_disconnected",
+      isSelf: false,
+      client: {
+        connectionId: "conn-1",
+        sessionId: "group-abc",
+        userId: "user-1",
+      },
+    });
+
+    await waitFor(() => session.connectedUsers.value.length === 0);
   });
 });

@@ -92,7 +92,7 @@ export function createSeedBibleState(): SeedBibleState {
   const tools = createBibleToolsManager();
   const login = createLoginManager();
   const readingHistory = createReadingHistoryManager(login);
-  const sessions = createSessionsManager(data);
+  const sessions = createSessionsManager(data, login);
   const extensions = createExtensionManager();
 
   const { currentTheme } = themeManager;
