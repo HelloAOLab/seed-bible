@@ -148,7 +148,32 @@ export function createBibleReadingState(
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const selectedFootnoteId = signal<number | null>(null);
   const highlights = signal<ChapterHighlights>({
-    highlights: [],
+    highlights: [
+      {
+        colorId: "yellow",
+        verse: [2, 4],
+      },
+      {
+        colorId: "green",
+        verse: 10,
+      },
+      {
+        colorId: "blue",
+        verse: 11,
+      },
+      {
+        colorId: "pink",
+        verse: 12,
+      },
+      {
+        colorId: "purple",
+        verse: 13,
+      },
+      {
+        colorId: "orange",
+        verse: 14,
+      },
+    ],
   });
   let highlightLoadVersion = 0;
   const loading = signal<boolean>(true);
@@ -263,24 +288,24 @@ export function createBibleReadingState(
       );
     }
 
-    const loadVersion = ++highlightLoadVersion;
+    // const loadVersion = ++highlightLoadVersion;
 
-    try {
-      const chapterHighlights = await highlightsManager.getChapterHighlights(
-        nextTranslationId,
-        nextBookId,
-        nextChapterNumber
-      );
+    // try {
+    //   const chapterHighlights = await highlightsManager.getChapterHighlights(
+    //     nextTranslationId,
+    //     nextBookId,
+    //     nextChapterNumber
+    //   );
 
-      if (loadVersion === highlightLoadVersion) {
-        highlights.value = chapterHighlights;
-      }
-    } catch (err) {
-      if (loadVersion === highlightLoadVersion) {
-        highlights.value = { highlights: [] };
-      }
-      console.warn("Failed to load chapter highlights:", err);
-    }
+    //   if (loadVersion === highlightLoadVersion) {
+    //     highlights.value = chapterHighlights;
+    //   }
+    // } catch (err) {
+    //   if (loadVersion === highlightLoadVersion) {
+    //     highlights.value = { highlights: [] };
+    //   }
+    //   console.warn("Failed to load chapter highlights:", err);
+    // }
   };
 
   const loadPreviousChapter = async () => {
