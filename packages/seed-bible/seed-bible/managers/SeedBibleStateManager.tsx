@@ -87,17 +87,17 @@ export interface SeedBibleState {
 export function createSeedBibleState(): SeedBibleState {
   const api = new FreeUseBibleAPI();
   const data = createBibleDataManager(api);
+  const login = createLoginManager();
+  const highlights = createHighlightsManager(login);
   const config = createConfig();
   const themeManager = createTheme();
   const sidebar = createSidebar();
-  const tabs = createTabs(data);
+  const tabs = createTabs(data, highlights);
   const panes = createPanes(tabs, tabs.selectedTabId);
   const selector = createBibleSelectorState(data, tabs, panes);
   const tools = createBibleToolsManager();
-  const login = createLoginManager();
   const readingHistory = createReadingHistoryManager(login);
-  const highlights = createHighlightsManager(login);
-  const sessions = createSessionsManager(data, login);
+  const sessions = createSessionsManager(data, login, highlights);
   const extensions = createExtensionManager();
 
   const { currentTheme } = themeManager;

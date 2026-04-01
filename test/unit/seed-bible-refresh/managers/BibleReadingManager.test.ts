@@ -55,6 +55,16 @@ function createDataManager() {
   return createBibleDataManager(createApi());
 }
 
+function createHighlightsManagerMock() {
+  return {
+    getChapterHighlights: jest
+      .fn()
+      .mockResolvedValue({
+        highlights: [{ color: "#ffff00", fontColor: "#000000", verse: 1 }],
+      }),
+  };
+}
+
 function makeVerse(number: number): ChapterVerse {
   return {
     type: "verse",
@@ -99,6 +109,27 @@ describe("createBibleReadingState", () => {
     expect(state.translationId.value).toBe("BSB");
   });
 
+  it("loads highlights for the current chapter during initial load", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const highlightsManager = createHighlightsManagerMock();
+    const state = createBibleReadingState(
+      createDataManager(),
+      {},
+      highlightsManager as any
+    );
+
+    await waitForInitialLoad(state);
+
+    expect(highlightsManager.getChapterHighlights).toHaveBeenCalledWith(
+      "BSB",
+      "GEN",
+      1
+    );
+    expect(state.highlights.value).toEqual({
+      highlights: [{ color: "#ffff00", fontColor: "#000000", verse: 1 }],
+    });
+  });
+
   it("loads books for BSB on initialization", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const state = createBibleReadingState(createDataManager());
@@ -132,6 +163,26 @@ describe("createBibleReadingState", () => {
     expect(state.bookId.value).toBe("GEN");
     expect(state.chapterNumber.value).toBe(5);
     expect(state.chapterData.value?.chapter.number).toBe(5);
+  });
+
+  it("loads highlights when the chapter changes", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const highlightsManager = createHighlightsManagerMock();
+    const state = createBibleReadingState(
+      createDataManager(),
+      {},
+      highlightsManager as any
+    );
+    await waitForInitialLoad(state);
+
+    await state.selectChapter("GEN", 5);
+
+    expect(highlightsManager.getChapterHighlights).toHaveBeenNthCalledWith(
+      2,
+      "BSB",
+      "GEN",
+      5
+    );
   });
 
   it("loadNextChapter() loads the next chapter", async () => {

@@ -8,6 +8,7 @@ import {
   createBibleReadingState,
   type BibleReadingState,
 } from "seed-bible.managers.BibleReadingManager";
+import type { HighlightsManager } from "seed-bible.managers.HighlightsManager";
 
 export interface ReaderTab {
   id: string;
@@ -37,22 +38,29 @@ function getInitialFirstTabChapter(): number {
     : DEFAULT_CHAPTER_NUMBER;
 }
 
-function createInitialTabs(dataManager: BibleDataManager): ReaderTab[] {
+function createInitialTabs(
+  dataManager: BibleDataManager,
+  highlightsManager?: HighlightsManager
+): ReaderTab[] {
   return [
     {
       id: "tab-1",
       title: "Tab 1",
-      readingState: createBibleReadingState(dataManager, {
-        initialTranslationId: getInitialTranslationId(),
-        initialBookId: getInitialFirstTabBookId(),
-        initialChapterNumber: getInitialFirstTabChapter(),
-      }),
+      readingState: createBibleReadingState(
+        dataManager,
+        {
+          initialTranslationId: getInitialTranslationId(),
+          initialBookId: getInitialFirstTabBookId(),
+          initialChapterNumber: getInitialFirstTabChapter(),
+        },
+        highlightsManager
+      ),
       sharedSession: null,
     },
     {
       id: "tab-2",
       title: "Tab 2",
-      readingState: createBibleReadingState(dataManager),
+      readingState: createBibleReadingState(dataManager, {}, highlightsManager),
       sharedSession: null,
     },
   ];
@@ -68,8 +76,13 @@ function isBibleReadingSession(
 
 export type TabsManager = ReturnType<typeof createTabs>;
 
-export function createTabs(dataManager: BibleDataManager) {
-  const tabs = signal<ReaderTab[]>(createInitialTabs(dataManager));
+export function createTabs(
+  dataManager: BibleDataManager,
+  highlightsManager?: HighlightsManager
+) {
+  const tabs = signal<ReaderTab[]>(
+    createInitialTabs(dataManager, highlightsManager)
+  );
   const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
 
   const syncSelectedTabFromConfig = async () => {
@@ -146,7 +159,7 @@ export function createTabs(dataManager: BibleDataManager) {
       readingState:
         sharedSession?.readingState ??
         readingState ??
-        createBibleReadingState(dataManager),
+        createBibleReadingState(dataManager, {}, highlightsManager),
       sharedSession,
     };
     tabs.value = [...currentTabs, nextTab];

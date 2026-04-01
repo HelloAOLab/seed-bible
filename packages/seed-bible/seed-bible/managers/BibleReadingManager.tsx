@@ -15,6 +15,10 @@ import {
   type Signal,
 } from "@preact/signals";
 import { sortBy } from "es-toolkit";
+import type {
+  ChapterHighlights,
+  HighlightsManager,
+} from "seed-bible.managers.HighlightsManager";
 
 export interface BibleSelectedVerse {
   bookId: string;
@@ -40,6 +44,7 @@ export interface BibleReadingState {
   availableTranslations: Signal<AvailableTranslations | null>;
   translationBooks: Signal<TranslationBooks | null>;
   chapterData: Signal<TranslationBookChapter | null>;
+  highlights: Signal<ChapterHighlights>;
   selectedVerses: Signal<BibleSelectedVerse[]>;
   selectedFootnote: ReadonlySignal<SelectedFootnote | null>;
   loading: Signal<boolean>;
@@ -103,7 +108,8 @@ function extractEndpointFromAvailableTranslationsUrl(
 
 export function createBibleReadingState(
   dataManager: BibleDataManager,
-  options: InitialBibleReadingOptions = {}
+  options: InitialBibleReadingOptions = {},
+  highlightsManager?: HighlightsManager
 ): BibleReadingState {
   const isSameSelectedVerse = (
     left: BibleSelectedVerse,
@@ -141,6 +147,10 @@ export function createBibleReadingState(
   const chapterData = signal<TranslationBookChapter | null>(null);
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const selectedFootnoteId = signal<number | null>(null);
+  const highlights = signal<ChapterHighlights>({
+    highlights: [],
+  });
+  let highlightLoadVersion = 0;
   const loading = signal<boolean>(true);
   const error = signal<string | null>(null);
   const scrollPosition = signal<number>(0);
@@ -251,6 +261,32 @@ export function createBibleReadingState(
       availableTranslations.value = toAvailableTranslations(
         dataManager.availableTranslations.value
       );
+    }
+
+    const loadVersion = ++highlightLoadVersion;
+
+    if (!highlightsManager) {
+      if (loadVersion === highlightLoadVersion) {
+        highlights.value = { highlights: [] };
+      }
+      return;
+    }
+
+    try {
+      const chapterHighlights = await highlightsManager.getChapterHighlights(
+        nextTranslationId,
+        nextBookId,
+        nextChapterNumber
+      );
+
+      if (loadVersion === highlightLoadVersion) {
+        highlights.value = chapterHighlights;
+      }
+    } catch (err) {
+      if (loadVersion === highlightLoadVersion) {
+        highlights.value = { highlights: [] };
+      }
+      console.warn("Failed to load chapter highlights:", err);
     }
   };
 
@@ -542,7 +578,7 @@ export function createBibleReadingState(
         nextChapterNumber
       );
 
-      chapterData.value = chapter;
+      await syncStateFromChapter(chapter);
       console.log("Initial chapter loaded:", chapter);
     } catch (err) {
       error.value =
@@ -566,6 +602,7 @@ export function createBibleReadingState(
     availableTranslations,
     translationBooks,
     chapterData,
+    highlights,
     selectedVerses,
     selectedFootnote,
     loading,

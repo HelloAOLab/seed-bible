@@ -3,6 +3,7 @@ import {
   createBibleReadingState,
   type BibleReadingState,
 } from "seed-bible.managers.BibleReadingManager";
+import type { HighlightsManager } from "seed-bible.managers.HighlightsManager";
 import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
 import type {
   LoginManager,
@@ -158,9 +159,14 @@ function getRandomColor(key: string): string {
 async function createBibleReadingSession(
   dataManager: BibleDataManager,
   loginManager: LoginManager,
+  highlightsManager: HighlightsManager,
   id: string
 ): Promise<BibleReadingSession> {
-  const readingState = createBibleReadingState(dataManager);
+  const readingState = createBibleReadingState(
+    dataManager,
+    {},
+    highlightsManager
+  );
   const document = await os.getSharedDocument(null, id, "session_data");
   const stateMap =
     document.getMap<SessionData[keyof SessionData]>("reading_state");
@@ -352,15 +358,26 @@ export interface SessionsManager {
 
 export function createSessionsManager(
   dataManager: BibleDataManager,
-  loginManager: LoginManager
+  loginManager: LoginManager,
+  highlightsManager: HighlightsManager
 ): SessionsManager {
   const createSession = async () => {
     const id = createSessionId();
-    return await createBibleReadingSession(dataManager, loginManager, id);
+    return await createBibleReadingSession(
+      dataManager,
+      loginManager,
+      highlightsManager,
+      id
+    );
   };
 
   const joinSession = async (id: string) => {
-    return await createBibleReadingSession(dataManager, loginManager, id);
+    return await createBibleReadingSession(
+      dataManager,
+      loginManager,
+      highlightsManager,
+      id
+    );
   };
 
   return {

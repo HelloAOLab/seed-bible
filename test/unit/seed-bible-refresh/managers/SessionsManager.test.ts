@@ -176,6 +176,9 @@ describe("SessionsManager", () => {
   let mockLoginManager: {
     getUserProfile: jest.Mock;
   };
+  let mockHighlightsManager: {
+    getChapterHighlights: jest.Mock;
+  };
 
   beforeEach(() => {
     mockMap = createMockSharedMap();
@@ -195,6 +198,9 @@ describe("SessionsManager", () => {
       getUserProfile: jest.fn(async (userId: string) => ({
         name: `Profile ${userId}`,
       })),
+    };
+    mockHighlightsManager = {
+      getChapterHighlights: jest.fn().mockResolvedValue({ highlights: [] }),
     };
 
     (globalThis as any).os = {
@@ -216,7 +222,8 @@ describe("SessionsManager", () => {
 
     const manager = createSessionsManager(
       mockDataManager as any,
-      mockLoginManager as any
+      mockLoginManager as any,
+      mockHighlightsManager as any
     );
     const session = await manager.createSession();
 
@@ -232,7 +239,8 @@ describe("SessionsManager", () => {
   it("joinSession(id) loads and returns a session with the given ID", async () => {
     const manager = createSessionsManager(
       mockDataManager as any,
-      mockLoginManager as any
+      mockLoginManager as any,
+      mockHighlightsManager as any
     );
     const session = await manager.joinSession("group-abc");
 
@@ -254,7 +262,8 @@ describe("SessionsManager", () => {
 
     const manager = createSessionsManager(
       mockDataManager as any,
-      mockLoginManager as any
+      mockLoginManager as any,
+      mockHighlightsManager as any
     );
     const session = await manager.joinSession("group-abc");
 
@@ -270,7 +279,8 @@ describe("SessionsManager", () => {
   it("syncs reading state changes to the shared document", async () => {
     const manager = createSessionsManager(
       mockDataManager as any,
-      mockLoginManager as any
+      mockLoginManager as any,
+      mockHighlightsManager as any
     );
     const session = await manager.joinSession("group-abc");
 
@@ -289,7 +299,8 @@ describe("SessionsManager", () => {
 
     const manager = createSessionsManager(
       mockDataManager as any,
-      mockLoginManager as any
+      mockLoginManager as any,
+      mockHighlightsManager as any
     );
     const session = await manager.joinSession("group-abc");
 
@@ -310,7 +321,8 @@ describe("SessionsManager", () => {
   it("applies shared document changes to the session reading state", async () => {
     const manager = createSessionsManager(
       mockDataManager as any,
-      mockLoginManager as any
+      mockLoginManager as any,
+      mockHighlightsManager as any
     );
     const session = (await manager.joinSession(
       "group-abc"
@@ -347,7 +359,8 @@ describe("SessionsManager", () => {
 
     const manager = createSessionsManager(
       mockDataManager as any,
-      mockLoginManager as any
+      mockLoginManager as any,
+      mockHighlightsManager as any
     );
     const session = await manager.joinSession("group-abc");
     (
@@ -387,7 +400,8 @@ describe("SessionsManager", () => {
 
     const manager = createSessionsManager(
       mockDataManager as any,
-      mockLoginManager as any
+      mockLoginManager as any,
+      mockHighlightsManager as any
     );
     const session = await manager.joinSession("group-abc");
     (session.readingState.selectTranslationAndChapter as jest.Mock)
@@ -467,7 +481,8 @@ describe("SessionsManager", () => {
   it("dispose() unsubscribes from the shared document", async () => {
     const manager = createSessionsManager(
       mockDataManager as any,
-      mockLoginManager as any
+      mockLoginManager as any,
+      mockHighlightsManager as any
     );
     const session = await manager.joinSession("group-abc");
 
@@ -479,7 +494,8 @@ describe("SessionsManager", () => {
   it("tracks connected users from remoteClients and loads profiles for authenticated users", async () => {
     const manager = createSessionsManager(
       mockDataManager as any,
-      mockLoginManager as any
+      mockLoginManager as any,
+      mockHighlightsManager as any
     );
     const session = await manager.joinSession("group-abc");
 
@@ -533,7 +549,8 @@ describe("SessionsManager", () => {
   it("removes disconnected users from the connected users list", async () => {
     const manager = createSessionsManager(
       mockDataManager as any,
-      mockLoginManager as any
+      mockLoginManager as any,
+      mockHighlightsManager as any
     );
     const session = await manager.joinSession("group-abc");
 
