@@ -95,7 +95,7 @@ export function Tabs(props: TabsProps) {
       return;
     }
 
-    await state.joinSharedSession(sessionId);
+    await state.app.joinSharedSession(sessionId);
     closeJoinSessionModal();
   };
 
@@ -176,7 +176,7 @@ export function Tabs(props: TabsProps) {
             <h3 className="sb-sidebar-tabs-title">Tabs</h3>
             <button
               onClick={() => {
-                void state.createSharedSession();
+                void state.app.createSharedSession();
               }}
               className="sb-tab-add-button"
               aria-label="Create new shared reading session tab"
@@ -294,18 +294,30 @@ export function Tabs(props: TabsProps) {
                     {openMenuTabId.value === tab.id && (
                       <div className="sb-tab-menu">
                         {tab.sharedSession && (
-                          <button
-                            className="sb-tab-menu-item"
-                            title={`Session ID: ${tab.sharedSession.id}`}
-                            onClick={() => {
-                              if (tab.sharedSession) {
-                                os.setClipboard(tab.sharedSession.id);
-                              }
-                            }}
-                          >
-                            {`Session ID: ${tab.sharedSession.id}`}
-                          </button>
+                          <>
+                            <button
+                              className="sb-tab-menu-item"
+                              title={`Session ID: ${tab.sharedSession.id}`}
+                              onClick={() => {
+                                if (tab.sharedSession) {
+                                  os.setClipboard(tab.sharedSession.id);
+                                }
+                                openMenuTabId.value = null;
+                              }}
+                            >
+                              {`Session ID: ${tab.sharedSession.id}`}
+                            </button>
+                          </>
                         )}
+                        <button
+                          className="sb-tab-menu-item"
+                          onClick={() => {
+                            state.tabs.removeTab(tab.id);
+                            openMenuTabId.value = null;
+                          }}
+                        >
+                          Close tab
+                        </button>
                         {panelsEnabled && (
                           <>
                             <button
