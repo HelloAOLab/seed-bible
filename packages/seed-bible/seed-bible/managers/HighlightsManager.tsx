@@ -261,6 +261,12 @@ export interface HighlightsManager {
     chapterNumber: number,
     verseDetails: Verse
   ) => Promise<void>;
+  unhighlightVerses: (
+    translationId: string,
+    bookId: string,
+    chapterNumber: number,
+    verseNumbers: number[]
+  ) => Promise<void>;
 }
 
 function createChapterHighlightsAddress(
@@ -411,16 +417,39 @@ export function createHighlightsManager(
   ): Promise<void> => {
     const verse = verseSchema.parse(verseDetails);
     const removeRange = toVerseRange(verse);
+    const verseNumbers = Array.from(
+      { length: removeRange.end - removeRange.start + 1 },
+      (_, index) => removeRange.start + index
+    );
+
+    await unhighlightVerses(translationId, bookId, chapterNumber, verseNumbers);
+  };
+
+  const unhighlightVerses = async (
+    translationId: string,
+    bookId: string,
+    chapterNumber: number,
+    verseNumbers: number[]
+  ): Promise<void> => {
+    const parsedVerseNumbers = verseNumbersSchema.parse(verseNumbers);
+    const deduplicatedVerseNumbers = Array.from(new Set(parsedVerseNumbers));
+
+    if (deduplicatedVerseNumbers.length === 0) {
+      return;
+    }
+
     const current = await getChapterHighlights(
       translationId,
       bookId,
       chapterNumber
     );
 
-    const updated = removeRangeFromHighlights(
-      current.highlights.map(toRangeHighlight),
-      removeRange
-    );
+    const targetRanges = rangesFromVerseNumbers(deduplicatedVerseNumbers);
+    let updated = current.highlights.map(toRangeHighlight);
+
+    for (const range of targetRanges) {
+      updated = removeRangeFromHighlights(updated, range);
+    }
 
     await saveChapterHighlights(
       translationId,
@@ -436,5 +465,6 @@ export function createHighlightsManager(
     highlightVerse,
     highlightVerses,
     unhighlightVerse,
+    unhighlightVerses,
   };
 }

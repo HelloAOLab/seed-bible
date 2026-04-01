@@ -317,6 +317,34 @@ describe("HighlightsManager", () => {
       }
     );
   });
+
+  it("unhighlightVerses() removes highlights for multiple verses in a single save", async () => {
+    getDataMock.mockResolvedValue({
+      highlights: [
+        { colorId: "color-6", verse: [1, 3] },
+        { colorId: "color-7", verse: [5, 8] },
+      ],
+    });
+    const manager = createHighlightsManager(login);
+
+    await manager.unhighlightVerses("BSB", "GEN", 1, [2, 3, 6, 7]);
+
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      "highlights:BSB/GEN/1",
+      {
+        highlights: [
+          { colorId: "color-6", verse: 1 },
+          { colorId: "color-7", verse: 5 },
+          { colorId: "color-7", verse: 8 },
+        ],
+      },
+      {
+        marker: "publicRead:highlights/BSB",
+      }
+    );
+  });
 });
 
 describe("chapterHighlightsSchema", () => {
