@@ -337,10 +337,41 @@ export interface BibleThemeVariables {
   selectedTabFontColor: string | null;
 }
 
+export interface ThemeHighlightColor {
+  /**
+   * The color of the background for verses which are highlighted with this color.
+   */
+  color: string;
+  /**
+   * The color of the font for verses which are highlighted with this color.
+   */
+  fontColor: string;
+
+  /**
+   * The color that should be used to display "words of jesus" text highlighted with this color.
+   */
+  wordsOfJesusFontColor: string;
+}
+
+/**
+ * The highlight colors for the given theme.
+ */
+export interface BibleThemeHighlightColors {
+  yellow: ThemeHighlightColor;
+  green: ThemeHighlightColor;
+  blue: ThemeHighlightColor;
+  pink: ThemeHighlightColor;
+  purple: ThemeHighlightColor;
+  orange: ThemeHighlightColor;
+
+  [colorId: string]: ThemeHighlightColor;
+}
+
 export interface BibleTheme {
   id: string;
   name: string;
   variables: BibleThemeVariables;
+  highlightColors: BibleThemeHighlightColors;
 }
 
 function toKebabCase(value: string): string {
@@ -455,112 +486,174 @@ const LIGHT_THEME: BibleTheme = {
     selectedTabBackground: "var(--sb-secondary-color)",
     selectedTabFontColor: "var(--sb-primary-color)",
   },
+  highlightColors: {
+    yellow: {
+      color: "#fff59d",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#e07b4c",
+    },
+    green: {
+      color: "#a5d6a7",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#e07b4c",
+    },
+    blue: {
+      color: "#90caf9",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#e07b4c",
+    },
+    pink: {
+      color: "#f48fb1",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#e07b4c",
+    },
+    purple: {
+      color: "#ce93d8",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#e07b4c",
+    },
+    orange: {
+      color: "#ffcc80",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#e07b4c",
+    },
+  },
+};
+
+const DARK_THEME: BibleTheme = {
+  id: "dark",
+  name: "Dark",
+  variables: {
+    primaryColor: "#f0a67c",
+    primaryFontColor: "#333",
+
+    secondaryColor: "#5c463b",
+    secondaryFontColor: "#fff",
+
+    tertiaryColor: "#252a36",
+
+    background: "#121621",
+
+    sidebarBackground: "#161b27",
+    sidebarFontFamily: "inherit",
+    sidebarFontColor: "#d7deef",
+
+    readerBackground: "#1a2230",
+    readerFontFamily: "inherit",
+    readerFontColor: "#d7deef",
+
+    bookSelectorBackground: "#1d2534",
+    bookSelectorFontFamily: "inherit",
+    bookSelectorFontColor: "#d7deef",
+
+    fontFamily: "Satoshi, system-ui, sans-serif",
+    fontColor: "#d7deef",
+
+    bookTitleFontFamily: "Newsreader, serif",
+    bookTitleFontColor: "#e7edf9",
+
+    chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
+    chapterHeadingFontColor: "#d7deef",
+    chapterHeadingFontStyle: "italic",
+
+    verseFontFamily: "Newsreader, serif",
+    verseFontColor: "#d7deef",
+    verseCursor: "pointer",
+
+    selectedVerseFontFamily: "inherit",
+    selectedVerseFontColor: "inherit",
+    selectedVerseBackgroundColor: "inherit",
+    selectedVerseTextDecoration: "underline",
+    selectedVerseTextDecorationColor: "currentColor",
+
+    hebrewSubtitleFontFamily: "Newsreader, serif",
+    hebrewSubtitleFontColor: "#d7deef",
+    hebrewSubtitleFontStyle: "italic",
+
+    readerToolbarBottom: "18px",
+    readerToolbarGap: "10px",
+    readerToolbarPadding: "8px 20px",
+    readerToolbarBorderRadius: "10px",
+    readerToolbarBackground: "#1a2230",
+    readerToolbarBorder: "1px solid rgba(255, 255, 255, 0.08)",
+    readerToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.4)",
+    readerToolbarZIndex: "99",
+    readerToolbarHeight: "50px",
+    readerToolbarFloatingButtonTop: "-68px",
+    readerToolbarFloatingButtonWidth: "48px",
+    readerToolbarFloatingButtonHeight: "48px",
+    readerToolbarFloatingButtonBorder: "1px solid rgba(255, 255, 255, 0.08)",
+    readerToolbarFloatingButtonBorderRadius: "999px",
+    readerToolbarFloatingButtonBackground: "#1a2230",
+    readerToolbarFloatingButtonFontColor: "#d7deef",
+    readerToolbarFloatingButtonBoxShadow: "0 10px 24px rgba(0, 0, 0, 0.4)",
+
+    verseToolbarGap: "10px",
+    verseToolbarPadding: "8px 16px",
+    verseToolbarBorderRadius: "10px",
+    verseToolbarBorder: "1px solid rgba(255, 255, 255, 0.08)",
+    verseToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.4)",
+    verseToolbarZIndex: "100",
+    verseToolbarMinHeight: "50px",
+
+    readerToolbarMobileLayoutHeight: "70px",
+    readerToolbarMobileLayoutPadding: "10px 14px",
+    readerToolbarMobileLayoutGap: "8px",
+    readerToolbarMobileLayoutItemSize: "44px",
+    readerToolbarMobileLayoutCenterButtonSize: "52px",
+    readerToolbarMobileLayoutButtonBorderRadius: "999px",
+
+    readerToolbarFloatingButtonSideOffset: "16px",
+
+    verseToolbarToolsGap: "10px",
+    verseToolbarMobileBottom: "18px",
+
+    tabBorder: "none",
+    tabBackground: "inherit",
+    tabFontColor: "inherit",
+
+    selectedTabBorder: "1px solid var(--sb-primary-color)",
+    selectedTabBackground: "var(--sb-secondary-color)",
+    selectedTabFontColor: "var(--sb-primary-color)",
+  },
+  highlightColors: {
+    yellow: {
+      color: "#fff59d",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#f0a67c",
+    },
+    green: {
+      color: "#a5d6a7",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#f0a67c",
+    },
+    blue: {
+      color: "#90caf9",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#f0a67c",
+    },
+    pink: {
+      color: "#f48fb1",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#f0a67c",
+    },
+    purple: {
+      color: "#ce93d8",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#f0a67c",
+    },
+    orange: {
+      color: "#ffcc80",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#f0a67c",
+    },
+  },
 };
 
 export type ThemeManager = ReturnType<typeof createTheme>;
 
 export function createTheme() {
-  const themes = signal<BibleTheme[]>([
-    LIGHT_THEME,
-    {
-      id: "dark",
-      name: "Dark",
-      variables: {
-        primaryColor: "#f0a67c",
-        primaryFontColor: "#333",
-
-        secondaryColor: "#5c463b",
-        secondaryFontColor: "#fff",
-
-        tertiaryColor: "#252a36",
-
-        background: "#121621",
-
-        sidebarBackground: "#161b27",
-        sidebarFontFamily: "inherit",
-        sidebarFontColor: "#d7deef",
-
-        readerBackground: "#1a2230",
-        readerFontFamily: "inherit",
-        readerFontColor: "#d7deef",
-
-        bookSelectorBackground: "#1d2534",
-        bookSelectorFontFamily: "inherit",
-        bookSelectorFontColor: "#d7deef",
-
-        fontFamily: "Satoshi, system-ui, sans-serif",
-        fontColor: "#d7deef",
-
-        bookTitleFontFamily: "Newsreader, serif",
-        bookTitleFontColor: "#e7edf9",
-
-        chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
-        chapterHeadingFontColor: "#d7deef",
-        chapterHeadingFontStyle: "italic",
-
-        verseFontFamily: "Newsreader, serif",
-        verseFontColor: "#d7deef",
-        verseCursor: "pointer",
-
-        selectedVerseFontFamily: "inherit",
-        selectedVerseFontColor: "inherit",
-        selectedVerseBackgroundColor: "inherit",
-        selectedVerseTextDecoration: "underline",
-        selectedVerseTextDecorationColor: "currentColor",
-
-        hebrewSubtitleFontFamily: "Newsreader, serif",
-        hebrewSubtitleFontColor: "#d7deef",
-        hebrewSubtitleFontStyle: "italic",
-
-        readerToolbarBottom: "18px",
-        readerToolbarGap: "10px",
-        readerToolbarPadding: "8px 20px",
-        readerToolbarBorderRadius: "10px",
-        readerToolbarBackground: "#1a2230",
-        readerToolbarBorder: "1px solid rgba(255, 255, 255, 0.08)",
-        readerToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.4)",
-        readerToolbarZIndex: "99",
-        readerToolbarHeight: "50px",
-        readerToolbarFloatingButtonTop: "-68px",
-        readerToolbarFloatingButtonWidth: "48px",
-        readerToolbarFloatingButtonHeight: "48px",
-        readerToolbarFloatingButtonBorder:
-          "1px solid rgba(255, 255, 255, 0.08)",
-        readerToolbarFloatingButtonBorderRadius: "999px",
-        readerToolbarFloatingButtonBackground: "#1a2230",
-        readerToolbarFloatingButtonFontColor: "#d7deef",
-        readerToolbarFloatingButtonBoxShadow: "0 10px 24px rgba(0, 0, 0, 0.4)",
-
-        verseToolbarGap: "10px",
-        verseToolbarPadding: "8px 16px",
-        verseToolbarBorderRadius: "10px",
-        verseToolbarBorder: "1px solid rgba(255, 255, 255, 0.08)",
-        verseToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.4)",
-        verseToolbarZIndex: "100",
-        verseToolbarMinHeight: "50px",
-
-        readerToolbarMobileLayoutHeight: "70px",
-        readerToolbarMobileLayoutPadding: "10px 14px",
-        readerToolbarMobileLayoutGap: "8px",
-        readerToolbarMobileLayoutItemSize: "44px",
-        readerToolbarMobileLayoutCenterButtonSize: "52px",
-        readerToolbarMobileLayoutButtonBorderRadius: "999px",
-
-        readerToolbarFloatingButtonSideOffset: "16px",
-
-        verseToolbarToolsGap: "10px",
-        verseToolbarMobileBottom: "18px",
-
-        tabBorder: "none",
-        tabBackground: "inherit",
-        tabFontColor: "inherit",
-
-        selectedTabBorder: "1px solid var(--sb-primary-color)",
-        selectedTabBackground: "var(--sb-secondary-color)",
-        selectedTabFontColor: "var(--sb-primary-color)",
-      },
-    },
-  ]);
+  const themes = signal<BibleTheme[]>([LIGHT_THEME, DARK_THEME]);
 
   const selectedThemeId = signal<string>(DEFAULT_THEME_ID);
 
