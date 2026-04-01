@@ -188,7 +188,7 @@ describe("createSeedBibleState", () => {
     };
     mockSessionsManager.createSession.mockResolvedValue(session);
 
-    const result = await state.createSharedSession();
+    const result = await state.app.createSharedSession();
 
     expect(mockSessionsManager.createSession).toHaveBeenCalledTimes(1);
     expect(result).toBe(session);
@@ -216,7 +216,7 @@ describe("createSeedBibleState", () => {
     };
     mockSessionsManager.joinSession.mockResolvedValue(session);
 
-    const result = await state.joinSharedSession("group-abc");
+    const result = await state.app.joinSharedSession("group-abc");
 
     expect(mockSessionsManager.joinSession).toHaveBeenCalledWith("group-abc");
     expect(result).toBe(session);

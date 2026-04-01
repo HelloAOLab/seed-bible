@@ -14,6 +14,7 @@ import {
   type WebResponseMap,
   createDefaultManagerResponseMap,
 } from "./testUtils/mockBibleApiData";
+import { signal } from "@preact/signals";
 
 let webGetMock: jest.Mock;
 let botChangedListener: ((that: unknown) => Promise<void> | void) | null;
@@ -121,6 +122,7 @@ describe("createTabs", () => {
       readingState: manager.tabs.value[0]!.readingState,
       document: {} as SharedDocument,
       dispose: jest.fn(),
+      connectedUsers: signal([]),
     } as BibleReadingSession;
 
     const nextTab = manager.addTab(sharedSession);

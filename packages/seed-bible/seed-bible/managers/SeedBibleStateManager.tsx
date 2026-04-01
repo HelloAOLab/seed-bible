@@ -58,6 +58,8 @@ export interface AppState {
   openInNewPane: (tabId: string) => void;
   openInDetachedPane: (tabId: string) => void;
   selectPane: (paneId: string) => void;
+  createSharedSession: () => Promise<BibleReadingSession>;
+  joinSharedSession: (id: string) => Promise<BibleReadingSession>;
 }
 
 export interface SeedBibleState {
@@ -74,8 +76,6 @@ export interface SeedBibleState {
   login: LoginManager;
   readingHistory: ReadingHistoryManager;
   sessions: SessionsManager;
-  createSharedSession: () => Promise<BibleReadingSession>;
-  joinSharedSession: (id: string) => Promise<BibleReadingSession>;
   app: AppState;
   extensions: ExtensionManager;
 }
@@ -277,10 +277,10 @@ export function createSeedBibleState(): SeedBibleState {
     login,
     readingHistory,
     sessions,
-    createSharedSession: handleCreateSharedSession,
-    joinSharedSession: handleJoinSharedSession,
     extensions,
     app: {
+      createSharedSession: handleCreateSharedSession,
+      joinSharedSession: handleJoinSharedSession,
       panelsEnabled,
       selectedTab,
       effectivePanes,
