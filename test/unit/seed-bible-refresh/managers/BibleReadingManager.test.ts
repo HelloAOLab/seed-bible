@@ -61,6 +61,7 @@ function createHighlightsManagerMock() {
       highlights: [{ colorId: "yellow", verse: 1 }],
     }),
     highlightVerses: jest.fn().mockResolvedValue(undefined),
+    unhighlightVerses: jest.fn().mockResolvedValue(undefined),
     highlightVerse: jest.fn().mockResolvedValue(undefined),
     unhighlightVerse: jest.fn().mockResolvedValue(undefined),
     saveChapterHighlights: jest.fn().mockResolvedValue(undefined),
@@ -202,6 +203,74 @@ describe("createBibleReadingState", () => {
         { colorId: "yellow", verse: 2 },
       ],
     });
+  });
+
+  it("unhighlightSelectedVerses() removes highlights from selected verses and reloads chapter highlights", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const highlightsManager = createHighlightsManagerMock();
+    highlightsManager.getChapterHighlights
+      .mockResolvedValueOnce({
+        highlights: [
+          { colorId: "yellow", verse: 1 },
+          { colorId: "yellow", verse: 2 },
+        ],
+      })
+      .mockResolvedValueOnce({ highlights: [] });
+
+    const state = createRawBibleReadingState(
+      createDataManager(),
+      highlightsManager as any
+    );
+    await waitForInitialLoad(state);
+
+    state.selectVerse(
+      {
+        bookId: "GEN",
+        chapterNumber: 1,
+        verse: makeVerse(1),
+        translationId: "BSB",
+      },
+      1,
+      1
+    );
+    state.selectVerse(
+      {
+        bookId: "GEN",
+        chapterNumber: 1,
+        verse: makeVerse(2),
+        translationId: "BSB",
+      },
+      2,
+      2
+    );
+
+    await state.unhighlightSelectedVerses();
+
+    expect(highlightsManager.unhighlightVerses).toHaveBeenCalledTimes(1);
+    expect(highlightsManager.unhighlightVerses).toHaveBeenCalledWith(
+      "BSB",
+      "GEN",
+      1,
+      [1, 2]
+    );
+
+    expect(highlightsManager.getChapterHighlights).toHaveBeenCalledTimes(2);
+    expect(state.highlights.value).toEqual({ highlights: [] });
+  });
+
+  it("unhighlightSelectedVerses() does nothing when no verses are selected", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const highlightsManager = createHighlightsManagerMock();
+    const state = createRawBibleReadingState(
+      createDataManager(),
+      highlightsManager as any
+    );
+    await waitForInitialLoad(state);
+
+    await state.unhighlightSelectedVerses();
+
+    expect(highlightsManager.unhighlightVerses).not.toHaveBeenCalled();
+    expect(highlightsManager.getChapterHighlights).toHaveBeenCalledTimes(1);
   });
 
   it("loads books for BSB on initialization", async () => {
