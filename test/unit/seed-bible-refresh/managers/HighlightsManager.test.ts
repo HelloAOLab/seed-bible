@@ -49,8 +49,8 @@ describe("HighlightsManager", () => {
   it("getChapterHighlights() loads chapter highlights from the user record", async () => {
     getDataMock.mockResolvedValue({
       highlights: [
-        { color: "#ffff00", fontColor: "#000000", verse: 3 },
-        { color: "#aabbcc", fontColor: "#111111", verse: [5, 7] },
+        { colorId: "color-1", verse: 3 },
+        { colorId: "color-2", verse: [5, 7] },
       ],
     });
     const manager = createHighlightsManager(login);
@@ -60,8 +60,8 @@ describe("HighlightsManager", () => {
     expect(getDataMock).toHaveBeenCalledWith("user-1", "highlights:BSB/GEN/1");
     expect(result).toEqual({
       highlights: [
-        { color: "#ffff00", fontColor: "#000000", verse: 3 },
-        { color: "#aabbcc", fontColor: "#111111", verse: [5, 7] },
+        { colorId: "color-1", verse: 3 },
+        { colorId: "color-2", verse: [5, 7] },
       ],
     });
   });
@@ -69,8 +69,8 @@ describe("HighlightsManager", () => {
   it("getChapterHighlights() normalizes overlapping stored highlights", async () => {
     getDataMock.mockResolvedValue({
       highlights: [
-        { color: "#111111", fontColor: "#000000", verse: [1, 4] },
-        { color: "#ff0000", fontColor: "#ffffff", verse: [3, 5] },
+        { colorId: "color-4", verse: [1, 4] },
+        { colorId: "color-5", verse: [3, 5] },
       ],
     });
     const manager = createHighlightsManager(login);
@@ -79,14 +79,14 @@ describe("HighlightsManager", () => {
 
     expect(result).toEqual({
       highlights: [
-        { color: "#111111", fontColor: "#000000", verse: [1, 2] },
-        { color: "#ff0000", fontColor: "#ffffff", verse: [3, 5] },
+        { colorId: "color-4", verse: [1, 2] },
+        { colorId: "color-5", verse: [3, 5] },
       ],
     });
   });
 
   it("getChapterHighlights() returns empty highlights when stored data is invalid", async () => {
-    getDataMock.mockResolvedValue({ highlights: [{ color: "#fff" }] });
+    getDataMock.mockResolvedValue({ highlights: [{ colorId: "#fff" }] });
     const manager = createHighlightsManager(login);
 
     const result = await manager.getChapterHighlights("BSB", "GEN", 1);
@@ -99,8 +99,8 @@ describe("HighlightsManager", () => {
     const manager = createHighlightsManager(login);
 
     await manager.saveChapterHighlights("BSB", "GEN", 1, [
-      { color: "#ffff00", fontColor: "#000000", verse: 1 },
-      { color: "#ffeeaa", fontColor: "#222222", verse: [2, 4] },
+      { colorId: "color-1", verse: 1 },
+      { colorId: "color-3", verse: [2, 4] },
     ]);
 
     expect(recordDataMock).toHaveBeenCalledWith(
@@ -108,8 +108,8 @@ describe("HighlightsManager", () => {
       "highlights:BSB/GEN/1",
       {
         highlights: [
-          { color: "#ffff00", fontColor: "#000000", verse: 1 },
-          { color: "#ffeeaa", fontColor: "#222222", verse: [2, 4] },
+          { colorId: "color-1", verse: 1 },
+          { colorId: "color-3", verse: [2, 4] },
         ],
       },
       {
@@ -126,7 +126,7 @@ describe("HighlightsManager", () => {
     const manager = createHighlightsManager(login);
 
     await manager.saveChapterHighlights("BSB", "GEN", 1, [
-      { color: "#ffff00", fontColor: "#000000", verse: 1 },
+      { colorId: "color-1", verse: 1 },
     ]);
 
     expect(login.login).toHaveBeenCalledTimes(1);
@@ -134,7 +134,7 @@ describe("HighlightsManager", () => {
       "user-2",
       "highlights:BSB/GEN/1",
       {
-        highlights: [{ color: "#ffff00", fontColor: "#000000", verse: 1 }],
+        highlights: [{ colorId: "color-1", verse: 1 }],
       },
       {
         marker: "publicRead:highlights/BSB",
@@ -147,7 +147,7 @@ describe("HighlightsManager", () => {
     const manager = createHighlightsManager(login);
 
     await manager.saveChapterHighlights("BSB", "GEN", 1, [
-      { color: "#ffff00", fontColor: "#000000", verse: 1 },
+      { colorId: "color-1", verse: 1 },
     ]);
 
     expect(login.login).toHaveBeenCalledTimes(1);
@@ -161,8 +161,8 @@ describe("HighlightsManager", () => {
     const manager = createHighlightsManager(login);
 
     await manager.saveChapterHighlights("BSB", "GEN", 1, [
-      { color: "#111111", fontColor: "#000000", verse: [1, 4] },
-      { color: "#ff0000", fontColor: "#ffffff", verse: [3, 5] },
+      { colorId: "color-4", verse: [1, 4] },
+      { colorId: "color-5", verse: [3, 5] },
     ]);
 
     expect(recordDataMock).toHaveBeenCalledWith(
@@ -170,8 +170,8 @@ describe("HighlightsManager", () => {
       "highlights:BSB/GEN/1",
       {
         highlights: [
-          { color: "#111111", fontColor: "#000000", verse: [1, 2] },
-          { color: "#ff0000", fontColor: "#ffffff", verse: [3, 5] },
+          { colorId: "color-4", verse: [1, 2] },
+          { colorId: "color-5", verse: [3, 5] },
         ],
       },
       {
@@ -183,15 +183,15 @@ describe("HighlightsManager", () => {
   it("highlightVerse() adds or overrides overlapping highlights", async () => {
     getDataMock.mockResolvedValue({
       highlights: [
-        { color: "#00ff00", fontColor: "#000000", verse: [1, 3] },
-        { color: "#00ff00", fontColor: "#000000", verse: [5, 7] },
+        { colorId: "color-6", verse: [1, 3] },
+        { colorId: "color-6", verse: [5, 7] },
       ],
     });
     const manager = createHighlightsManager(login);
 
     await manager.highlightVerse("BSB", "GEN", 1, {
-      color: "#ff0000",
-      fontColor: "#ffffff",
+      colorId: "color-5",
+
       verse: [3, 6],
     });
 
@@ -200,9 +200,9 @@ describe("HighlightsManager", () => {
       "highlights:BSB/GEN/1",
       {
         highlights: [
-          { color: "#00ff00", fontColor: "#000000", verse: [1, 2] },
-          { color: "#ff0000", fontColor: "#ffffff", verse: [3, 6] },
-          { color: "#00ff00", fontColor: "#000000", verse: 7 },
+          { colorId: "color-6", verse: [1, 2] },
+          { colorId: "color-5", verse: [3, 6] },
+          { colorId: "color-6", verse: 7 },
         ],
       },
       {
@@ -213,13 +213,12 @@ describe("HighlightsManager", () => {
 
   it("highlightVerse() merges adjacent highlights with identical styling", async () => {
     getDataMock.mockResolvedValue({
-      highlights: [{ color: "#00ff00", fontColor: "#000000", verse: [1, 2] }],
+      highlights: [{ colorId: "color-6", verse: [1, 2] }],
     });
     const manager = createHighlightsManager(login);
 
     await manager.highlightVerse("BSB", "GEN", 1, {
-      color: "#00ff00",
-      fontColor: "#000000",
+      colorId: "color-6",
       verse: [3, 4],
     });
 
@@ -227,7 +226,7 @@ describe("HighlightsManager", () => {
       "user-1",
       "highlights:BSB/GEN/1",
       {
-        highlights: [{ color: "#00ff00", fontColor: "#000000", verse: [1, 4] }],
+        highlights: [{ colorId: "color-6", verse: [1, 4] }],
       },
       {
         marker: "publicRead:highlights/BSB",
@@ -237,7 +236,7 @@ describe("HighlightsManager", () => {
 
   it("unhighlightVerse() removes a verse range and splits impacted highlights", async () => {
     getDataMock.mockResolvedValue({
-      highlights: [{ color: "#00ff00", fontColor: "#000000", verse: [1, 7] }],
+      highlights: [{ colorId: "color-6", verse: [1, 7] }],
     });
     const manager = createHighlightsManager(login);
 
@@ -248,8 +247,8 @@ describe("HighlightsManager", () => {
       "highlights:BSB/GEN/1",
       {
         highlights: [
-          { color: "#00ff00", fontColor: "#000000", verse: [1, 2] },
-          { color: "#00ff00", fontColor: "#000000", verse: [6, 7] },
+          { colorId: "color-6", verse: [1, 2] },
+          { colorId: "color-6", verse: [6, 7] },
         ],
       },
       {
@@ -260,7 +259,7 @@ describe("HighlightsManager", () => {
 
   it("unhighlightVerse() can remove a single highlighted verse", async () => {
     getDataMock.mockResolvedValue({
-      highlights: [{ color: "#00ff00", fontColor: "#000000", verse: 4 }],
+      highlights: [{ colorId: "color-6", verse: 4 }],
     });
     const manager = createHighlightsManager(login);
 
@@ -283,17 +282,64 @@ describe("chapterHighlightsSchema", () => {
   it("validates single-verse and range highlights", () => {
     const result = chapterHighlightsSchema.safeParse({
       highlights: [
-        { color: "#ffff00", fontColor: "#000000", verse: 6 },
-        { color: "#00ff00", fontColor: "#111111", verse: [8, 10] },
+        { colorId: "color-1", verse: 6 },
+        { colorId: "color-6", verse: [8, 10] },
       ],
     });
 
-    expect(result.success).toBe(true);
+    expect(result).toEqual({
+      success: true,
+      data: {
+        highlights: [
+          { colorId: "color-1", verse: 6 },
+          { colorId: "color-6", verse: [8, 10] },
+        ],
+      },
+    });
+  });
+
+  it("validates custom colors", () => {
+    const result = chapterHighlightsSchema.safeParse({
+      highlights: [
+        {
+          colorId: "custom",
+          customColor: "#00ff00",
+          customFontColor: "#000000",
+          verse: 6,
+        },
+        {
+          colorId: "custom",
+          customColor: "#00ff00",
+          customFontColor: "#000000",
+          verse: [8, 10],
+        },
+      ],
+    });
+
+    expect(result).toEqual({
+      success: true,
+      data: {
+        highlights: [
+          {
+            colorId: "custom",
+            customColor: "#00ff00",
+            customFontColor: "#000000",
+            verse: 6,
+          },
+          {
+            colorId: "custom",
+            customColor: "#00ff00",
+            customFontColor: "#000000",
+            verse: [8, 10],
+          },
+        ],
+      },
+    });
   });
 
   it("rejects verse ranges where start is greater than end", () => {
     const result = chapterHighlightsSchema.safeParse({
-      highlights: [{ color: "#ffff00", fontColor: "#000000", verse: [10, 8] }],
+      highlights: [{ colorId: "color-1", verse: [10, 8] }],
     });
 
     expect(result.success).toBe(false);

@@ -11,9 +11,11 @@ const verseSchema = z.union([
 ]);
 
 export const chapterHighlightSchema = z.object({
-  color: z.string().min(1),
-  fontColor: z.string().min(1),
+  colorId: z.string().min(1),
   verse: verseSchema,
+
+  customColor: z.string().min(1).optional(),
+  customFontColor: z.string().min(1).optional(),
 });
 
 export const chapterHighlightsSchema = z.object({
@@ -32,8 +34,10 @@ type VerseRange = {
 type RangeHighlight = {
   start: number;
   end: number;
-  color: string;
-  fontColor: string;
+  colorId: string;
+
+  customColor?: string;
+  customFontColor?: string;
 };
 
 function toVerseRange(verse: Verse): VerseRange {
@@ -91,19 +95,21 @@ function toRangeHighlight(highlight: ChapterHighlight): RangeHighlight {
   return {
     start: range.start,
     end: range.end,
-    color: highlight.color,
-    fontColor: highlight.fontColor,
+    colorId: highlight.colorId,
+    customColor: highlight.customColor,
+    customFontColor: highlight.customFontColor,
   };
 }
 
 function fromRangeHighlight(highlight: RangeHighlight): ChapterHighlight {
   return {
-    color: highlight.color,
-    fontColor: highlight.fontColor,
+    colorId: highlight.colorId,
     verse: fromVerseRange({
       start: highlight.start,
       end: highlight.end,
     }),
+    customColor: highlight.customColor,
+    customFontColor: highlight.customFontColor,
   };
 }
 
@@ -150,7 +156,9 @@ function mergeHighlights(highlights: RangeHighlight[]): RangeHighlight[] {
     }
 
     const hasSameStyle =
-      last.color === current.color && last.fontColor === current.fontColor;
+      last.colorId === current.colorId &&
+      last.customColor === current.customColor &&
+      last.customFontColor === current.customFontColor;
     const canMerge = current.start <= last.end + 1;
 
     if (hasSameStyle && canMerge) {
