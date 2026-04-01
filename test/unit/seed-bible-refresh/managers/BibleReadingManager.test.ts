@@ -145,7 +145,7 @@ describe("createBibleReadingState", () => {
     });
   });
 
-  it("setHighlight() applies a highlight to selected verses and reloads chapter highlights", async () => {
+  it("highlightSelectedVerses() applies a highlight to selected verses and reloads chapter highlights", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const highlightsManager = createHighlightsManagerMock();
     highlightsManager.getChapterHighlights
@@ -184,7 +184,7 @@ describe("createBibleReadingState", () => {
       2
     );
 
-    await state.setHighlight({ colorId: "yellow" });
+    await state.highlightSelectedVerses({ colorId: "yellow" });
 
     expect(highlightsManager.highlightVerses).toHaveBeenCalledTimes(1);
     expect(highlightsManager.highlightVerses).toHaveBeenCalledWith(

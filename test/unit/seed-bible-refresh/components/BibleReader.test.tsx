@@ -127,7 +127,7 @@ function createFixture(): ReaderFixture {
     error: signal<string | null>(null),
     selectVerse,
     selectFootnote,
-    setHighlight: jest.fn(async () => undefined),
+    highlightSelectedVerses: jest.fn(async () => undefined),
     clearSelectedVerses: jest.fn(),
     selectTranslation: jest.fn(async () => undefined),
     selectBook: jest.fn(async () => undefined),
@@ -341,7 +341,7 @@ describe("BibleReader", () => {
       highlights: [
         {
           verse: [1, 2],
-          colorId: "yellow",
+          colorId: "custom",
           customColor: "#123456",
           customFontColor: "#abcdef",
         },
@@ -362,7 +362,7 @@ describe("BibleReader", () => {
     const verses = container.querySelectorAll(".sb-verse");
     const firstVerse = verses[0] as HTMLElement | undefined;
     expect(firstVerse).toBeDefined();
-    expect(firstVerse?.classList.contains("sb-highlight-yellow")).toBe(true);
+    expect(firstVerse?.classList.contains("sb-highlight-yellow")).toBe(false);
     expect(firstVerse?.style.backgroundColor).toBe("rgb(18, 52, 86)");
     expect(firstVerse?.style.color).toBe("rgb(171, 205, 239)");
   });
