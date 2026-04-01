@@ -345,6 +345,22 @@ describe("HighlightsManager", () => {
       }
     );
   });
+
+  it("unhighlightVerses() does nothing when the user is not logged in", async () => {
+    login.userId.value = null;
+
+    getDataMock.mockResolvedValue({
+      highlights: [
+        { colorId: "color-6", verse: [1, 3] },
+        { colorId: "color-7", verse: [5, 8] },
+      ],
+    });
+    const manager = createHighlightsManager(login);
+
+    await manager.unhighlightVerses("BSB", "GEN", 1, [2, 3, 6, 7]);
+
+    expect(recordDataMock).toHaveBeenCalledTimes(0);
+  });
 });
 
 describe("chapterHighlightsSchema", () => {
