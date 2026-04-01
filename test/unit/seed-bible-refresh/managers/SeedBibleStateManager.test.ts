@@ -9,6 +9,10 @@ import {
 } from "./testUtils/mockBibleApiData";
 
 const mockSaveReadingHistory = jest.fn();
+const mockHighlightsManager = {
+  getChapterHighlights: jest.fn(),
+  saveChapterHighlights: jest.fn(),
+};
 const mockSessionsManager = {
   createSession: jest.fn(),
   joinSession: jest.fn(),
@@ -19,6 +23,10 @@ jest.mock("seed-bible.managers.ReadingHistoryManager", () => ({
     saveReadingHistory: mockSaveReadingHistory,
     getReadingEvents: jest.fn().mockResolvedValue([]),
   }),
+}));
+
+jest.mock("seed-bible.managers.HighlightsManager", () => ({
+  createHighlightsManager: () => mockHighlightsManager,
 }));
 
 jest.mock("seed-bible.managers.SessionsManager", () => ({
@@ -36,6 +44,8 @@ beforeEach(() => {
   webGetMock = jest.fn();
   logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
   mockSaveReadingHistory.mockReset();
+  mockHighlightsManager.getChapterHighlights.mockReset();
+  mockHighlightsManager.saveChapterHighlights.mockReset();
   mockSessionsManager.createSession.mockReset();
   mockSessionsManager.joinSession.mockReset();
 
@@ -120,6 +130,7 @@ describe("createSeedBibleState", () => {
     );
 
     expect(state.selector.isOpen.value).toBe(false);
+    expect(state.highlights).toBe(mockHighlightsManager as any);
     expect(state.sessions).toBe(mockSessionsManager);
   });
 

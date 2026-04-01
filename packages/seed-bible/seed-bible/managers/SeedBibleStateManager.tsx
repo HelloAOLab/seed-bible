@@ -32,11 +32,14 @@ import {
   type ExtensionManager,
 } from "seed-bible.managers.ExtensionManager";
 import {
+  createHighlightsManager,
+  type HighlightsManager,
+} from "seed-bible.managers.HighlightsManager";
+import {
   createSessionsManager,
   type BibleReadingSession,
   type SessionsManager,
 } from "seed-bible.managers.SessionsManager";
-import { debounce } from "es-toolkit";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 
@@ -75,6 +78,7 @@ export interface SeedBibleState {
   tools: ToolsManager;
   login: LoginManager;
   readingHistory: ReadingHistoryManager;
+  highlights: HighlightsManager;
   sessions: SessionsManager;
   app: AppState;
   extensions: ExtensionManager;
@@ -92,6 +96,7 @@ export function createSeedBibleState(): SeedBibleState {
   const tools = createBibleToolsManager();
   const login = createLoginManager();
   const readingHistory = createReadingHistoryManager(login);
+  const highlights = createHighlightsManager(login);
   const sessions = createSessionsManager(data, login);
   const extensions = createExtensionManager();
 
@@ -276,6 +281,7 @@ export function createSeedBibleState(): SeedBibleState {
     tools,
     login,
     readingHistory,
+    highlights,
     sessions,
     extensions,
     app: {

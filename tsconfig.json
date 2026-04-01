@@ -85,6 +85,9 @@
       "seed-bible.managers.FreeUseBibleAPI": [
         "./packages/seed-bible/seed-bible/managers/FreeUseBibleAPI.tsx"
       ],
+      "seed-bible.managers.HighlightsManager": [
+        "./packages/seed-bible/seed-bible/managers/HighlightsManager.tsx"
+      ],
       "seed-bible.managers.LoginManager": [
         "./packages/seed-bible/seed-bible/managers/LoginManager.tsx"
       ],
