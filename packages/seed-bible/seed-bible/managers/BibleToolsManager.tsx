@@ -335,6 +335,31 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         context.readingState.clearSelectedVerses();
       },
     },
+    {
+      id: "highlight-yellow",
+      priority: 350,
+      title: { key: "highlightYellow", defaultValue: "Highlight Yellow" },
+      icon: () => (
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            borderRadius: "4px",
+            backgroundColor: "yellow",
+            width: "16px",
+            height: "16px",
+          }}
+        />
+      ),
+      isVisible: (context) =>
+        context.readingState.selectedVerses.value.length > 0,
+      onSelect: (context) => {
+        context.readingState.highlightSelectedVerses({
+          colorId: "yellow",
+        });
+      },
+    },
   ];
 }
 
