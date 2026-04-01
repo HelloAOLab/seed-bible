@@ -4,9 +4,10 @@ import {
   type BibleReadingState,
 } from "seed-bible.managers.BibleReadingManager";
 import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
-import type { LoginManager } from "seed-bible.managers.LoginManager";
-
-type UserProfile = Awaited<ReturnType<LoginManager["getUserProfile"]>>;
+import type {
+  LoginManager,
+  UserProfile,
+} from "seed-bible.managers.LoginManager";
 
 export interface ConnectedSessionUser extends SessionConnectionInfo {
   /**

@@ -515,12 +515,16 @@ describe("SessionsManager", () => {
           profile: {
             name: "Profile user-1",
           },
+          isSelf: false,
+          color: expect.any(String),
         },
         {
           connectionId: "conn-2",
           sessionId: "group-abc",
           userId: null,
           profile: null,
+          isSelf: false,
+          color: expect.any(String),
         },
       ])
     );
