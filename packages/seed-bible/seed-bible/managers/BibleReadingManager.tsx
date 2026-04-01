@@ -57,7 +57,7 @@ export interface BibleReadingState {
     selectionY: number
   ) => void;
   selectFootnote: (noteId: number | null) => void;
-  setHighlight: (
+  highlightSelectedVerses: (
     highlightDetails: Omit<ChapterHighlight, "verse">
   ) => Promise<void>;
   clearSelectedVerses: () => void;
@@ -299,7 +299,7 @@ export function createBibleReadingState(
     }
   };
 
-  const setHighlight = async (
+  const highlightSelectedVerses = async (
     highlightDetails: Omit<ChapterHighlight, "verse">
   ): Promise<void> => {
     const activeTranslationId = translationId.value;
@@ -662,7 +662,7 @@ export function createBibleReadingState(
     scrollPosition,
     selectVerse,
     selectFootnote,
-    setHighlight,
+    highlightSelectedVerses,
     clearSelectedVerses,
     selectTranslation,
     selectTranslationAndChapter,
