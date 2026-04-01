@@ -58,8 +58,11 @@ function createDataManager() {
 function createHighlightsManagerMock() {
   return {
     getChapterHighlights: jest.fn().mockResolvedValue({
-      highlights: [{ color: "#ffff00", fontColor: "#000000", verse: 1 }],
+      highlights: [{ colorId: "yellow", verse: 1 }],
     }),
+    highlightVerse: jest.fn().mockResolvedValue(undefined),
+    unhighlightVerse: jest.fn().mockResolvedValue(undefined),
+    saveChapterHighlights: jest.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -137,7 +140,79 @@ describe("createBibleReadingState", () => {
       1
     );
     expect(state.highlights.value).toEqual({
-      highlights: [{ color: "#ffff00", fontColor: "#000000", verse: 1 }],
+      highlights: [{ colorId: "yellow", verse: 1 }],
+    });
+  });
+
+  it("setHighlight() applies a highlight to selected verses and reloads chapter highlights", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const highlightsManager = createHighlightsManagerMock();
+    highlightsManager.getChapterHighlights
+      .mockResolvedValueOnce({ highlights: [] })
+      .mockResolvedValueOnce({
+        highlights: [
+          { colorId: "yellow", verse: 1 },
+          { colorId: "yellow", verse: 2 },
+        ],
+      });
+
+    const state = createRawBibleReadingState(
+      createDataManager(),
+      highlightsManager as any
+    );
+    await waitForInitialLoad(state);
+
+    state.selectVerse(
+      {
+        bookId: "GEN",
+        chapterNumber: 1,
+        verse: makeVerse(1),
+        translationId: "BSB",
+      },
+      1,
+      1
+    );
+    state.selectVerse(
+      {
+        bookId: "GEN",
+        chapterNumber: 1,
+        verse: makeVerse(2),
+        translationId: "BSB",
+      },
+      2,
+      2
+    );
+
+    await state.setHighlight({ colorId: "yellow" });
+
+    expect(highlightsManager.highlightVerse).toHaveBeenCalledTimes(2);
+    expect(highlightsManager.highlightVerse).toHaveBeenNthCalledWith(
+      1,
+      "BSB",
+      "GEN",
+      1,
+      {
+        colorId: "yellow",
+        verse: 1,
+      }
+    );
+    expect(highlightsManager.highlightVerse).toHaveBeenNthCalledWith(
+      2,
+      "BSB",
+      "GEN",
+      1,
+      {
+        colorId: "yellow",
+        verse: 2,
+      }
+    );
+
+    expect(highlightsManager.getChapterHighlights).toHaveBeenCalledTimes(2);
+    expect(state.highlights.value).toEqual({
+      highlights: [
+        { colorId: "yellow", verse: 1 },
+        { colorId: "yellow", verse: 2 },
+      ],
     });
   });
 

@@ -16,6 +16,7 @@ import {
 } from "@preact/signals";
 import { sortBy } from "es-toolkit";
 import type {
+  ChapterHighlight,
   ChapterHighlights,
   HighlightsManager,
 } from "seed-bible.managers.HighlightsManager";
@@ -56,6 +57,9 @@ export interface BibleReadingState {
     selectionY: number
   ) => void;
   selectFootnote: (noteId: number | null) => void;
+  setHighlight: (
+    highlightDetails: Omit<ChapterHighlight, "verse">
+  ) => Promise<void>;
   clearSelectedVerses: () => void;
   selectTranslation: (translation: string) => Promise<void>;
   selectTranslationAndChapter: (
@@ -263,6 +267,18 @@ export function createBibleReadingState(
       );
     }
 
+    await refreshChapterHighlights(
+      nextTranslationId,
+      nextBookId,
+      nextChapterNumber
+    );
+  };
+
+  const refreshChapterHighlights = async (
+    nextTranslationId: string,
+    nextBookId: string,
+    nextChapterNumber: number
+  ) => {
     const loadVersion = ++highlightLoadVersion;
 
     try {
@@ -281,6 +297,55 @@ export function createBibleReadingState(
       }
       console.warn("Failed to load chapter highlights:", err);
     }
+  };
+
+  const setHighlight = async (
+    highlightDetails: Omit<ChapterHighlight, "verse">
+  ): Promise<void> => {
+    const activeTranslationId = translationId.value;
+    const activeBookId = bookId.value;
+    const activeChapterNumber = chapterNumber.value;
+
+    if (!activeTranslationId || !activeBookId) {
+      return;
+    }
+
+    const verseNumbers = Array.from(
+      new Set(
+        selectedVerses.value
+          .filter(
+            (verse) =>
+              verse.translationId === activeTranslationId &&
+              verse.bookId === activeBookId &&
+              verse.chapterNumber === activeChapterNumber
+          )
+          .map((verse) => verse.verse.number)
+      )
+    );
+
+    if (verseNumbers.length === 0) {
+      return;
+    }
+
+    await Promise.all(
+      verseNumbers.map(async (verseNumber) => {
+        await highlightsManager.highlightVerse(
+          activeTranslationId,
+          activeBookId,
+          activeChapterNumber,
+          {
+            ...highlightDetails,
+            verse: verseNumber,
+          }
+        );
+      })
+    );
+
+    await refreshChapterHighlights(
+      activeTranslationId,
+      activeBookId,
+      activeChapterNumber
+    );
   };
 
   const loadPreviousChapter = async () => {
@@ -603,6 +668,7 @@ export function createBibleReadingState(
     scrollPosition,
     selectVerse,
     selectFootnote,
+    setHighlight,
     clearSelectedVerses,
     selectTranslation,
     selectTranslationAndChapter,

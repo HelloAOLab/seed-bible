@@ -127,6 +127,7 @@ function createFixture(): ReaderFixture {
     error: signal<string | null>(null),
     selectVerse,
     selectFootnote,
+    setHighlight: jest.fn(async () => undefined),
     clearSelectedVerses: jest.fn(),
     selectTranslation: jest.fn(async () => undefined),
     selectBook: jest.fn(async () => undefined),
