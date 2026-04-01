@@ -162,11 +162,7 @@ async function createBibleReadingSession(
   highlightsManager: HighlightsManager,
   id: string
 ): Promise<BibleReadingSession> {
-  const readingState = createBibleReadingState(
-    dataManager,
-    {},
-    highlightsManager
-  );
+  const readingState = createBibleReadingState(dataManager, highlightsManager);
   const document = await os.getSharedDocument(null, id, "session_data");
   const stateMap =
     document.getMap<SessionData[keyof SessionData]>("reading_state");

@@ -40,27 +40,23 @@ function getInitialFirstTabChapter(): number {
 
 function createInitialTabs(
   dataManager: BibleDataManager,
-  highlightsManager?: HighlightsManager
+  highlightsManager: HighlightsManager
 ): ReaderTab[] {
   return [
     {
       id: "tab-1",
       title: "Tab 1",
-      readingState: createBibleReadingState(
-        dataManager,
-        {
-          initialTranslationId: getInitialTranslationId(),
-          initialBookId: getInitialFirstTabBookId(),
-          initialChapterNumber: getInitialFirstTabChapter(),
-        },
-        highlightsManager
-      ),
+      readingState: createBibleReadingState(dataManager, highlightsManager, {
+        initialTranslationId: getInitialTranslationId(),
+        initialBookId: getInitialFirstTabBookId(),
+        initialChapterNumber: getInitialFirstTabChapter(),
+      }),
       sharedSession: null,
     },
     {
       id: "tab-2",
       title: "Tab 2",
-      readingState: createBibleReadingState(dataManager, {}, highlightsManager),
+      readingState: createBibleReadingState(dataManager, highlightsManager),
       sharedSession: null,
     },
   ];
@@ -78,7 +74,7 @@ export type TabsManager = ReturnType<typeof createTabs>;
 
 export function createTabs(
   dataManager: BibleDataManager,
-  highlightsManager?: HighlightsManager
+  highlightsManager: HighlightsManager
 ) {
   const tabs = signal<ReaderTab[]>(
     createInitialTabs(dataManager, highlightsManager)
@@ -159,7 +155,7 @@ export function createTabs(
       readingState:
         sharedSession?.readingState ??
         readingState ??
-        createBibleReadingState(dataManager, {}, highlightsManager),
+        createBibleReadingState(dataManager, highlightsManager),
       sharedSession,
     };
     tabs.value = [...currentTabs, nextTab];

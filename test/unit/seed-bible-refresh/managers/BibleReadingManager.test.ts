@@ -1,5 +1,5 @@
 import {
-  createBibleReadingState,
+  createBibleReadingState as createRawBibleReadingState,
   type BibleReadingState,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { createBibleDataManager } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
@@ -57,12 +57,24 @@ function createDataManager() {
 
 function createHighlightsManagerMock() {
   return {
-    getChapterHighlights: jest
-      .fn()
-      .mockResolvedValue({
-        highlights: [{ color: "#ffff00", fontColor: "#000000", verse: 1 }],
-      }),
+    getChapterHighlights: jest.fn().mockResolvedValue({
+      highlights: [{ color: "#ffff00", fontColor: "#000000", verse: 1 }],
+    }),
   };
+}
+
+function createBibleReadingState(
+  dataManager: ReturnType<typeof createDataManager>,
+  options: { initialTranslationId?: string | null } & {
+    initialBookId?: string | null;
+    initialChapterNumber?: number | null;
+  } = {}
+) {
+  return createRawBibleReadingState(
+    dataManager,
+    createHighlightsManagerMock() as any,
+    options
+  );
 }
 
 function makeVerse(number: number): ChapterVerse {
@@ -112,9 +124,8 @@ describe("createBibleReadingState", () => {
   it("loads highlights for the current chapter during initial load", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const highlightsManager = createHighlightsManagerMock();
-    const state = createBibleReadingState(
+    const state = createRawBibleReadingState(
       createDataManager(),
-      {},
       highlightsManager as any
     );
 
@@ -168,9 +179,8 @@ describe("createBibleReadingState", () => {
   it("loads highlights when the chapter changes", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const highlightsManager = createHighlightsManagerMock();
-    const state = createBibleReadingState(
+    const state = createRawBibleReadingState(
       createDataManager(),
-      {},
       highlightsManager as any
     );
     await waitForInitialLoad(state);

@@ -57,6 +57,12 @@ function createDataManager() {
   return createBibleDataManager(createApi());
 }
 
+function createHighlightsManagerMock() {
+  return {
+    getChapterHighlights: jest.fn().mockResolvedValue({ highlights: [] }),
+  };
+}
+
 async function waitFor(
   condition: () => boolean,
   timeoutMs = 1000
@@ -92,7 +98,10 @@ async function createManagersWithSelectedPane(): Promise<{
   dataManager: ReturnType<typeof createDataManager>;
 }> {
   const dataManager = createDataManager();
-  const tabsManager = createTabs(dataManager);
+  const tabsManager = createTabs(
+    dataManager,
+    createHighlightsManagerMock() as any
+  );
   const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
 
   const pane = panesManager.panes.value[0];

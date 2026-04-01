@@ -69,6 +69,12 @@ function createDataManager() {
   return createBibleDataManager(createApi());
 }
 
+function createHighlightsManagerMock() {
+  return {
+    getChapterHighlights: jest.fn().mockResolvedValue({ highlights: [] }),
+  };
+}
+
 async function waitFor(
   condition: () => boolean,
   timeoutMs = 1000
@@ -93,7 +99,10 @@ async function waitForTabsToLoad(tabs: ReaderTab[]): Promise<void> {
 describe("createTabs", () => {
   it("addTab() creates a new tab with new reading state", async () => {
     setWebResponses(createDefaultManagerResponseMap());
-    const manager = createTabs(createDataManager());
+    const manager = createTabs(
+      createDataManager(),
+      createHighlightsManagerMock() as any
+    );
     await waitForTabsToLoad(manager.tabs.value);
 
     const existingReadingStates = manager.tabs.value.map(
@@ -114,7 +123,10 @@ describe("createTabs", () => {
 
   it("addTab() accepts a shared reading session for the new tab", async () => {
     setWebResponses(createDefaultManagerResponseMap());
-    const manager = createTabs(createDataManager());
+    const manager = createTabs(
+      createDataManager(),
+      createHighlightsManagerMock() as any
+    );
     await waitForTabsToLoad(manager.tabs.value);
 
     const sharedSession = {
@@ -135,10 +147,16 @@ describe("createTabs", () => {
   it("addTab() accepts a reading state for the new tab", async () => {
     setWebResponses(createDefaultManagerResponseMap());
     const dataManager = createDataManager();
-    const manager = createTabs(dataManager);
+    const manager = createTabs(
+      dataManager,
+      createHighlightsManagerMock() as any
+    );
     await waitForTabsToLoad(manager.tabs.value);
 
-    const readingState = createBibleReadingState(dataManager);
+    const readingState = createBibleReadingState(
+      dataManager,
+      createHighlightsManagerMock() as any
+    );
 
     const nextTab = manager.addTab(readingState);
 
@@ -149,7 +167,10 @@ describe("createTabs", () => {
 
   it("removeTab() removes the given tab", async () => {
     setWebResponses(createDefaultManagerResponseMap());
-    const manager = createTabs(createDataManager());
+    const manager = createTabs(
+      createDataManager(),
+      createHighlightsManagerMock() as any
+    );
     await waitForTabsToLoad(manager.tabs.value);
 
     manager.removeTab("tab-2");
@@ -160,7 +181,10 @@ describe("createTabs", () => {
 
   it("selectTab() sets the selected tab", async () => {
     setWebResponses(createDefaultManagerResponseMap());
-    const manager = createTabs(createDataManager());
+    const manager = createTabs(
+      createDataManager(),
+      createHighlightsManagerMock() as any
+    );
     await waitForTabsToLoad(manager.tabs.value);
 
     manager.selectTab("tab-2");
@@ -170,7 +194,10 @@ describe("createTabs", () => {
 
   it("syncs the selected tab to match configBot", async () => {
     setWebResponses(createDefaultManagerResponseMap());
-    const manager = createTabs(createDataManager());
+    const manager = createTabs(
+      createDataManager(),
+      createHighlightsManagerMock() as any
+    );
     await waitForTabsToLoad(manager.tabs.value);
     manager.selectTab("tab-2");
 

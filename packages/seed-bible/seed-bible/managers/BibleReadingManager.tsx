@@ -108,8 +108,8 @@ function extractEndpointFromAvailableTranslationsUrl(
 
 export function createBibleReadingState(
   dataManager: BibleDataManager,
-  options: InitialBibleReadingOptions = {},
-  highlightsManager?: HighlightsManager
+  highlightsManager: HighlightsManager,
+  options: InitialBibleReadingOptions = {}
 ): BibleReadingState {
   const isSameSelectedVerse = (
     left: BibleSelectedVerse,
@@ -264,13 +264,6 @@ export function createBibleReadingState(
     }
 
     const loadVersion = ++highlightLoadVersion;
-
-    if (!highlightsManager) {
-      if (loadVersion === highlightLoadVersion) {
-        highlights.value = { highlights: [] };
-      }
-      return;
-    }
 
     try {
       const chapterHighlights = await highlightsManager.getChapterHighlights(
