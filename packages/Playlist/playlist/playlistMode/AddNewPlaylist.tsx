@@ -62,6 +62,7 @@ const AddNewPlaylist = (props: any) => {
     setTags,
     isLayers,
   } = props;
+
   const IsPlaylistPlaying = G.IsPlaylistPlaying;
 
   const listPlaylist = useMemo(() => {
@@ -321,13 +322,6 @@ const AddNewPlaylist = (props: any) => {
               </p>
             </>
           )}
-
-          {/* <ButtonsCover>
-            <p> </p>
-            <Button onClick={() => setInformationModal(false)} secondaryAlt>
-              Close
-            </Button>
-          </ButtonsCover> */}
         </Modal>
       )}
       <div className="add-new-playlist" style={{ border: "none" }}>
@@ -434,207 +428,6 @@ const AddNewPlaylist = (props: any) => {
           </>
         )}
 
-        {false && (
-          <>
-            <h3 style={{ marginTop: "0.75rem" }}>{t("chooseColor")}</h3>
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                marginBottom: "10px",
-                padding: "0.5rem 0",
-              }}
-            >
-              {predefinedColors.map((color, index) => (
-                <div
-                  key={index}
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    backgroundColor: color,
-                    border:
-                      selectedColor === color
-                        ? "2px solid black"
-                        : "2px solid #C8C3C3",
-                    cursor: "pointer",
-                    borderRadius: "50%",
-                    display: "grid",
-                    placeItems: "center",
-                  }}
-                  onClick={() => setSelectedColor(color)}
-                >
-                  {selectedColor === color && (
-                    <span class="big-bold material-symbols-outlined unfollow color-inherit">
-                      check
-                    </span>
-                  )}
-                </div>
-              ))}
-              <div
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  backgroundColor: customColor,
-                  border:
-                    customColor === selectedColor
-                      ? "2px solid black"
-                      : "2px solid #D36433",
-                  cursor: "pointer",
-                  borderRadius: "50%",
-                  position: "relative",
-                  display: "grid",
-                  placeItems: "center",
-                }}
-                onClick={() => setSelectedColor(customColor)}
-              >
-                <input
-                  onChange={(e: any) => {
-                    setCustomColor(e.target.value);
-                    setSelectedColor(e.target.value);
-                  }}
-                  value={customColor}
-                  type="color"
-                  style={{
-                    position: "absolute",
-                    top: "0",
-                    left: "0",
-                    width: "100%",
-                    height: "100%",
-                    opacity: "0",
-                  }}
-                />
-                <span class="big-bold material-symbols-outlined unfollow color-inherit">
-                  add
-                </span>
-              </div>
-            </div>
-            <h3>{t("chooseIcon")}</h3>
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                marginBottom: "10px",
-                flexWrap: "wrap",
-                padding: "0.5rem 0",
-              }}
-            >
-              {predefinedIcons.map((icon, index) => {
-                const url = icon?.startsWith("https");
-                return (
-                  <div
-                    key={index}
-                    style={{
-                      width: "40px",
-                      height: "40px",
-                      backgroundColor: "#fff",
-                      border:
-                        selectedIcon === icon
-                          ? "2px solid black"
-                          : "2px solid #C8C3C3",
-                      cursor: "pointer",
-                      display: "grid",
-                      placeItems: "center",
-                      borderRadius: "50%",
-                    }}
-                    onClick={() => setSelectedIcon(icon)}
-                  >
-                    {!url ? (
-                      <span class="big-bold material-symbols-outlined unfollow color-inherit">
-                        {icon}
-                      </span>
-                    ) : (
-                      <img
-                        src={icon}
-                        style={{
-                          width: "80%",
-                          borderRadius: "50%",
-                        }}
-                        class="big-bold material-symbols-outlined unfollow color-inherit"
-                      />
-                    )}
-                  </div>
-                );
-              })}
-              <div
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  // background: `url(${customIcon})`,
-                  // border: customIcon !== selectedIcon ? '2px solid rgb(200, 195, 195)' : '2px solid #D36433',
-                  cursor: "pointer",
-                  borderRadius: "50%",
-                  position: "relative",
-                  display: "grid",
-                  placeItems: "center",
-                }}
-                onClick={() => setSelectedIcon(customIcon)}
-              >
-                <div
-                  onClick={async () => {
-                    const files = await os.showUploadFiles();
-                    const file = files?.[0];
-
-                    if (!file) {
-                      return ShowNotification({
-                        message: "No File Uploaded!",
-                        severity: "error",
-                      });
-                    }
-
-                    if (!file?.mimeType.startsWith("image/")) {
-                      return ShowNotification({
-                        message: "Please Upload Image format!",
-                        severity: "error",
-                      });
-                    }
-
-                    const fileSave: any = await os.recordFile(
-                      G.RECORD_STOREKEY,
-                      file.data,
-                      {
-                        name: file.name,
-                      }
-                    );
-                    const url = fileSave.url || fileSave?.existingFileUrl;
-
-                    if (!url) {
-                      return ShowNotification({
-                        message: "Failed to upload File!",
-                        severity: "error",
-                      });
-                    }
-
-                    // console.log(fileSave, "fileSave");
-                    // console.log(url, "url");
-                    // setCustomIcon(url);
-                    setPredefinedIcons((prev) => [...prev, url]);
-                    setSelectedIcon(url);
-                  }}
-                  value=""
-                  multiple={false}
-                  type="file"
-                  style={{
-                    position: "absolute",
-                    borderRadius: "50%",
-                    top: "0",
-                    left: "0",
-                    width: "100%",
-                    height: "100%",
-                    opacity: "0",
-                  }}
-                />
-                <img
-                  src={customIcon}
-                  style={{
-                    width: "80%",
-                    borderRadius: "50%",
-                  }}
-                  class="big-bold material-symbols-outlined unfollow color-inherit"
-                />
-              </div>
-            </div>
-          </>
-        )}
         <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem" }}>
           <div style={{ width: "auto" }}>
             <div
@@ -686,11 +479,6 @@ const AddNewPlaylist = (props: any) => {
                       severity: "error",
                     });
                   }
-
-                  // console.log(fileSave, "fileSave");
-                  // console.log(url, "url");
-                  // setCustomIcon(url);
-                  // setPredefinedIcons(prev => [...prev, url]);
                   setSelectedIcon(url);
                 }}
                 value=""
@@ -716,16 +504,6 @@ const AddNewPlaylist = (props: any) => {
                 icon={selectedIcon}
                 list={listPlaylist}
               />
-              {false && (
-                <img
-                  src={customIcon}
-                  style={{
-                    width: "80%",
-                    // borderRadius: '50%'
-                  }}
-                  class="big-bold material-symbols-outlined unfollow color-inherit"
-                />
-              )}
             </div>
           </div>
           <div style={{ flexGrow: "1" }}>
@@ -741,7 +519,6 @@ const AddNewPlaylist = (props: any) => {
         </div>
         <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem" }}>
           <div style={{ flexGrow: "1" }}>
-            {false && <h3>Description</h3>}
             <div>
               <Input
                 style={{ marginBottom: "0" }}
@@ -754,22 +531,6 @@ const AddNewPlaylist = (props: any) => {
           </div>
         </div>
 
-        {isActiveTabManual() && false && (
-          <div className="align-center">
-            <Checkbox
-              style={{
-                height: "18px",
-                marginRight: "0.5rem",
-              }}
-              checked={isChecked}
-              small
-              onClick={(val: boolean) => {
-                setIsChecked(val);
-              }}
-            />
-            <p>{t("autoGenerateByDescription")}</p>
-          </div>
-        )}
         <h3>{t("tagsHeader")}</h3>
         <div className="align-center" style={{ gap: "1rem" }}>
           <Input

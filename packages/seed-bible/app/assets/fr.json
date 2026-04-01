@@ -808,5 +808,6 @@
   "traditionalOrderDesc": "L'ordre trouvé dans la plupart des Bibles chrétiennes modernes",
   "youHaveNSubscriptions": "Vous avez {{count}} abonnements",
   "unknownUser": "Utilisateur inconnu",
-  "anonymous": "Anonyme"
+  "anonymous": "Anonyme",
+  "alreadyAnnotatedThisItem": "Vous avez déjà annoté cet élément."
 }

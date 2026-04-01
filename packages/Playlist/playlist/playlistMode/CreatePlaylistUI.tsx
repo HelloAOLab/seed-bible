@@ -194,7 +194,7 @@ const CreatePlaylistUI = (props: any) => {
 
   const [systemPrompt, setSystemPrompt] = useState(G.SYSTEM_PROMPT || "");
 
-  const isEdit = useRef(false);
+  const isEdit = useRef(G.EditIDRestore || false);
   const [openModalName, setOpenModalName] = useState(isCreate);
 
   const [autoGenerateOn, setAutoGenerateOn] = useState(false);
@@ -238,6 +238,7 @@ const CreatePlaylistUI = (props: any) => {
     G.SelectedIconRestorePlaylist = selectedIcon;
     G.DescriptionRestorePlaylist = description;
     G.ChecklistEnabledRestorePlaylist = checklist;
+    G.EditIDRestore = isEdit.current;
   }, [publishAccess, customIcon, selectedIcon, description, checklist]);
 
   const setEditModal = (params: any) => {

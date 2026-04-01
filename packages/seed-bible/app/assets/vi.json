@@ -278,5 +278,6 @@
   "unknownUser": "Người dùng không xác định",
   "anonymous": "Ẩn danh",
   "reportBug": "Báo lỗi",
-  "tabs": "Thẻ"
+  "tabs": "Thẻ",
+  "alreadyAnnotatedThisItem": "Bạn đã chú thích mục này rồi."
 }

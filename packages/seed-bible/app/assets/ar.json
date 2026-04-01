@@ -808,5 +808,6 @@
   "traditionalOrderDesc": "الترتيب الموجود في معظم الأناجيل المسيحية الحديثة",
   "youHaveNSubscriptions": "لديك {{count}} اشتراكات",
   "unknownUser": "مستخدم غير معروف",
-  "anonymous": "مجهول"
+  "anonymous": "مجهول",
+  "alreadyAnnotatedThisItem": "لقد قمت بالفعل بتعليق هذا العنصر."
 }

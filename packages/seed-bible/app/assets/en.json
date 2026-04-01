@@ -812,5 +812,6 @@
   "traditionalOrderDesc": "The ordering found in most modern Christian Bibles",
   "youHaveNSubscriptions": "You have {{count}} subscriptions",
   "unknownUser": "Unknown User",
-  "anonymous": "Anonymous"
+  "anonymous": "Anonymous",
+  "alreadyAnnotatedThisItem": "You have already annotated this item."
 }

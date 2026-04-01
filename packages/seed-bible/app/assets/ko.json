@@ -278,5 +278,6 @@
   "unknownUser": "알 수 없는 사용자",
   "anonymous": "익명",
   "reportBug": "버그 신고",
-  "tabs": "탭"
+  "tabs": "탭",
+  "alreadyAnnotatedThisItem": "이 항목은 이미 주석을 달았습니다."
 }

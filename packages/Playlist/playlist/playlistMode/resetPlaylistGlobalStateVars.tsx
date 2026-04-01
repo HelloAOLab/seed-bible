@@ -20,6 +20,8 @@ G.EditAnnoDataRestorePlaylist = null;
 G.LastEditingAnnotationAddress = null;
 G.RecordingValue = false;
 G.EditAnnoDataRestorePlaylist = null;
+G.AddAnotationUI = false;
+G.EditIDRestore = false;
 G.SetEditData?.((prev: any) => ({
   ...prev,
   id: null,

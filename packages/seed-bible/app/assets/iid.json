@@ -278,5 +278,6 @@
   "unknownUser": "Pengguna tidak dikenal",
   "anonymous": "Anonim",
   "reportBug": "Laporkan bug",
-  "tabs": "Tab"
+  "tabs": "Tab",
+  "alreadyAnnotatedThisItem": "Anda sudah menganotasi item ini."
 }

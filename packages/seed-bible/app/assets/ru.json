@@ -808,5 +808,6 @@
   "traditionalOrderDesc": "Порядок, принятый в большинстве современных христианских Библий",
   "youHaveNSubscriptions": "У вас {{count}} подписок",
   "unknownUser": "Неизвестный пользователь",
-  "anonymous": "Аноним"
+  "anonymous": "Аноним",
+  "alreadyAnnotatedThisItem": "Вы уже аннотировали этот элемент."
 }

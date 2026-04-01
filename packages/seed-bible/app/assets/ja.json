@@ -808,5 +808,6 @@
   "traditionalOrderDesc": "現代のキリスト教聖書の多くに見られる順序",
   "youHaveNSubscriptions": "{{count}}件のサブスクリプションがあります",
   "unknownUser": "不明なユーザー",
-  "anonymous": "匿名"
+  "anonymous": "匿名",
+  "alreadyAnnotatedThisItem": "この項目にはすでに注釈を付けています。"
 }
