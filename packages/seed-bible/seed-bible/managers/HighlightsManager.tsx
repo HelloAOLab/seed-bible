@@ -50,7 +50,7 @@ const emptyChapterHighlights: ChapterHighlights = {
 };
 
 export function createHighlightsManager(
-  login: Pick<LoginManager, "userId">
+  login: LoginManager
 ): HighlightsManager {
   const getChapterHighlights = async (
     translationId: string,
@@ -88,9 +88,14 @@ export function createHighlightsManager(
     chapterNumber: number,
     highlights: ChapterHighlight[]
   ): Promise<void> => {
+    if (!login.userId.value) {
+      await login.login();
+      return;
+    }
+
     const userId = login.userId.value;
     if (!userId) {
-      console.warn("Cannot save highlights: no authenticated user");
+      console.warn("Unable to save highlights: user is not authenticated.");
       return;
     }
 
