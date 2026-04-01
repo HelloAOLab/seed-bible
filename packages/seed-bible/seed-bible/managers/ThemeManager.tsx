@@ -386,9 +386,9 @@ export function generateThemeCssVariables(variables: BibleTheme): string {
 
   const highlightColorVariables = Object.entries(variables.highlightColors)
     .flatMap(([key, value]) => [
-      `--sb-highlight-${toKebabCase(key)}-color: ${value.color};`,
-      `--sb-highlight-${toKebabCase(key)}-font-color: ${value.fontColor};`,
-      `--sb-highlight-${toKebabCase(key)}-words-of-jesus-font-color: ${value.wordsOfJesusFontColor};`,
+      `--sb-highlight-${key}-color: ${value.color};`,
+      `--sb-highlight-${key}-font-color: ${value.fontColor};`,
+      `--sb-highlight-${key}-words-of-jesus-font-color: ${value.wordsOfJesusFontColor};`,
     ])
     .join("\n");
 
@@ -399,11 +399,11 @@ export function generateThemeCssClasses(theme: BibleTheme): string {
   return Object.entries(theme.highlightColors)
     .map(([colorId]) => {
       return [
-        `.sb-highlight-${toKebabCase(colorId)} {`,
-        `background-color: var(--sb-highlight-${toKebabCase(colorId)}-color);`,
-        `color: var(--sb-highlight-${toKebabCase(colorId)}-font-color);`,
+        `.sb-highlight-${colorId} {`,
+        `background-color: var(--sb-highlight-${colorId}-color);`,
+        `color: var(--sb-highlight-${colorId}-font-color);`,
         `&.sb-words-of-jesus { `,
-        `color: var(--sb-highlight-${toKebabCase(colorId)}-words-of-jesus-font-color);`,
+        `color: var(--sb-highlight-${colorId}-words-of-jesus-font-color);`,
         `}`,
         ` }`,
       ].join("\n");
