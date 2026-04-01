@@ -304,6 +304,68 @@ describe("BibleReader", () => {
     expect(poetryVerse?.classList.contains("sb-verse-selected")).toBe(true);
   });
 
+  it("applies sb-highlight-{colorId} class for color-id highlights", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    readingState.highlights.value = {
+      highlights: [
+        {
+          verse: 1,
+          colorId: "yellow",
+        },
+      ],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const verses = container.querySelectorAll(".sb-verse");
+    const firstVerse = verses[0] as HTMLElement | undefined;
+    expect(firstVerse).toBeDefined();
+    expect(firstVerse?.classList.contains("sb-highlight-yellow")).toBe(true);
+  });
+
+  it("applies inline custom highlight colors when highlight uses a custom color", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    readingState.highlights.value = {
+      highlights: [
+        {
+          verse: [1, 2],
+          colorId: "yellow",
+          customColor: "#123456",
+          customFontColor: "#abcdef",
+        },
+      ],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const verses = container.querySelectorAll(".sb-verse");
+    const firstVerse = verses[0] as HTMLElement | undefined;
+    expect(firstVerse).toBeDefined();
+    expect(firstVerse?.classList.contains("sb-highlight-yellow")).toBe(true);
+    expect(firstVerse?.style.backgroundColor).toBe("rgb(18, 52, 86)");
+    expect(firstVerse?.style.color).toBe("rgb(171, 205, 239)");
+  });
+
   it("renders chapter content parts and inline markers", () => {
     const { pane, selectorState, readingState } = createFixture();
 

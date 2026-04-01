@@ -8,6 +8,7 @@ import type {
   BibleReadingState,
   BibleSelectedVerse,
 } from "seed-bible.managers.BibleReadingManager";
+import type { ChapterHighlight } from "seed-bible.managers.HighlightsManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { Pane } from "seed-bible.managers.PanesManager";
 
@@ -193,11 +194,53 @@ function renderChapterContent(
   chapterData: TranslationBookChapter | null,
   onVerseClick: (verse: BibleSelectedVerse, event: MouseEvent) => void,
   selectedVerses: BibleSelectedVerse[],
-  onOpenFootnote: (noteId: number, verse: ChapterVerse | null) => void
+  onOpenFootnote: (noteId: number, verse: ChapterVerse | null) => void,
+  highlights: ChapterHighlight[]
 ) {
   if (!chapterData) {
     return null;
   }
+
+  const getVerseHighlight = (verseNumber: number): ChapterHighlight | null => {
+    for (const highlight of highlights) {
+      if (typeof highlight.verse === "number") {
+        if (highlight.verse === verseNumber) {
+          return highlight;
+        }
+        continue;
+      }
+
+      const [start, end] = highlight.verse;
+      if (verseNumber >= start && verseNumber <= end) {
+        return highlight;
+      }
+    }
+
+    return null;
+  };
+
+  const getHighlightPresentation = (highlight: ChapterHighlight | null) => {
+    if (!highlight) {
+      return {
+        className: "",
+        style: undefined,
+      } as const;
+    }
+
+    if (highlight.customColor && highlight.customFontColor) {
+      return {
+        className: "",
+        style: {
+          backgroundColor: highlight.customColor,
+          color: highlight.customFontColor,
+        },
+      } as const;
+    }
+
+    return {
+      className: ` sb-highlight-${highlight.colorId}`,
+    } as const;
+  };
 
   const entries = chapterData.chapter.content;
   return entries.map((entry, entryIndex) => {
@@ -253,16 +296,22 @@ function renderChapterContent(
       );
       const segments = splitVerseIntoSegments(value.content);
       const hasPoetry = segments.some((s) => s.type === "poetry");
+      const highlight = getVerseHighlight(value.number);
+      const highlightPresentation = getHighlightPresentation(highlight);
+      const verseBaseStyle = {
+        cursor: "pointer",
+        ...(highlightPresentation.style ?? {}),
+      };
 
       if (hasPoetry) {
         return (
           <span
             key={`verse-${entryIndex}`}
-            className={`sb-verse sb-verse-poetry${isSelected ? " sb-verse-selected" : ""}`}
+            className={`sb-verse sb-verse-poetry${isSelected ? " sb-verse-selected" : ""}${highlightPresentation.className}`}
             onClick={(event: MouseEvent) => {
               onVerseClick(verse, event);
             }}
-            style={{ cursor: "pointer" }}
+            style={verseBaseStyle}
             role="button"
             tabIndex={0}
           >
@@ -314,11 +363,11 @@ function renderChapterContent(
       return (
         <span
           key={`verse-${entryIndex}`}
-          className={`sb-verse${isSelected ? " sb-verse-selected" : ""}`}
+          className={`sb-verse${isSelected ? " sb-verse-selected" : ""}${highlightPresentation.className}`}
           onClick={(event: MouseEvent) => {
             onVerseClick(verse, event);
           }}
-          style={{ cursor: "pointer" }}
+          style={verseBaseStyle}
           role="button"
           tabIndex={0}
         >
@@ -353,6 +402,7 @@ export function BibleReader(props: BibleReaderProps) {
     translationBooks,
     chapterData,
     selectedVerses,
+    highlights,
     loading,
     error,
     selectVerse,
@@ -398,7 +448,8 @@ export function BibleReader(props: BibleReaderProps) {
             selectedVerses.value,
             (noteId) => {
               selectFootnote(noteId);
-            }
+            },
+            highlights.value.highlights
           )}
         </div>
       )}
