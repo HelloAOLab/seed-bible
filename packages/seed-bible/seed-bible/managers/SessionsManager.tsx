@@ -13,6 +13,9 @@ export interface ConnectedSessionUser {
   sessionId: string | null;
   userId: string | null;
   profile: UserProfile | null;
+
+  /* The color associated with the user in the session. */
+  color: string;
 }
 
 interface SessionConnectionInfo {
@@ -129,6 +132,29 @@ function toPositiveIntOrNull(value: unknown): number | null {
     : null;
 }
 
+export const connectedUserColors = [
+  "#34D399",
+  "#60A5FA",
+  "#F472B6",
+  "#FBBF24",
+  "#A78BFA",
+  "#F87171",
+  "#10B981",
+  "#F59E0B",
+];
+
+function hashString(str: string): number {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
+  return h >>> 0;
+}
+
+function getRandomColor(key: string): string {
+  const color =
+    connectedUserColors[hashString(key) % connectedUserColors.length];
+  return color ?? "#E5E7EB";
+}
+
 async function createBibleReadingSession(
   dataManager: BibleDataManager,
   loginManager: LoginManager,
@@ -168,11 +194,14 @@ async function createBibleReadingSession(
           }
         }
 
+        const color = getRandomColor(client.connectionId);
+
         return {
           connectionId: client.connectionId,
           sessionId: client.sessionId,
           userId: client.userId,
           profile,
+          color: color,
         };
       })
     );
