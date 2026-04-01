@@ -250,6 +250,7 @@ export function createBibleReadingState(
         chapterNumber.value !== nextChapterNumber;
       if (didChapterChange) {
         scrollPosition.value = 0;
+        highlights.value = { highlights: [] };
       }
 
       translationId.value = nextTranslationId;
@@ -268,11 +269,7 @@ export function createBibleReadingState(
       );
     }
 
-    await refreshChapterHighlights(
-      nextTranslationId,
-      nextBookId,
-      nextChapterNumber
-    );
+    refreshChapterHighlights(nextTranslationId, nextBookId, nextChapterNumber);
   };
 
   const refreshChapterHighlights = async (
