@@ -239,10 +239,10 @@ describe("createBibleSelectorState", () => {
     // Should expand the first book of the selected translation
     expect(selector.expandedBookId.value).toBe("MAT");
 
-    expect(selector.currentTranslationId.value).toBe("BSB");
+    expect(selector.currentTranslationId.value).toBe("AAB");
     expect(selector.currentBookId.value).toBe("GEN");
     expect(selector.currentChapterNumber.value).toBe(1);
-    expect(readingState.translationId.value).toBe("BSB");
+    expect(readingState.translationId.value).toBe("AAB");
     expect(readingState.bookId.value).toBe("GEN");
     expect(readingState.chapterNumber.value).toBe(1);
   });
@@ -296,7 +296,7 @@ describe("createBibleSelectorState", () => {
       return { dataManager, tabsManager, panesManager, tablessPane };
     }
 
-    it("setOpen() selects DEFAULT_TRANSLATION_ID (BSB) when no pane has a tab but BSB is in available translations", async () => {
+    it("setOpen() selects DEFAULT_TRANSLATION_ID (AAB) when no pane has a tab but AAB is in available translations", async () => {
       setWebResponses(createDefaultManagerResponseMap());
       const { dataManager, tabsManager, panesManager, tablessPane } =
         createManagersWithTablessPane();
@@ -309,7 +309,7 @@ describe("createBibleSelectorState", () => {
       await selector.setOpen(true, tablessPane);
 
       expect(selector.isOpen.value).toBe(true);
-      expect(selector.selectedTranslationId.value).toBe("BSB");
+      expect(selector.selectedTranslationId.value).toBe("AAB");
     });
 
     it("setOpen() uses first available translation when DEFAULT_TRANSLATION_ID (BSB) is not in available translations", async () => {

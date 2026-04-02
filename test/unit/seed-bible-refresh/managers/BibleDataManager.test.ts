@@ -107,7 +107,7 @@ describe("createBibleDataManager", () => {
     );
 
     expect(mergedById.get("NIV")?.englishName).toBe("NIV Alternate");
-    expect(mergedById.get("BSB")?.id).toBe("BSB");
+    expect(mergedById.get("AAB")?.id).toBe("AAB");
     expect(mergedById.get("ESV")?.id).toBe("ESV");
   });
 

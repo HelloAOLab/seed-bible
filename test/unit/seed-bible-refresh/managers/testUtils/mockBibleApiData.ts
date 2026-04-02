@@ -16,17 +16,17 @@ export type WebResponseMap = Record<string, WebResponse<unknown>>;
 export const API_ENDPOINT = "https://example.test";
 export const ALT_API_ENDPOINT = "https://alt.example";
 
-const BSB_TRANSLATION: Translation = {
-  id: "BSB",
-  name: "Berean Standard Bible",
-  englishName: "Berean Standard Bible",
+const AAB_TRANSLATION: Translation = {
+  id: "AAB",
+  name: "Accessible Ancients Bible",
+  englishName: "Accessible Ancients Bible",
   website: "https://example.com",
   licenseUrl: "https://example.com/license",
-  shortName: "BSB",
+  shortName: "AAB",
   language: "eng",
   textDirection: "ltr",
   availableFormats: ["json"],
-  listOfBooksApiLink: "/api/BSB/books.json",
+  listOfBooksApiLink: "/api/AAB/books.json",
   numberOfBooks: 66,
   totalNumberOfChapters: 1189,
   totalNumberOfVerses: 31102,
@@ -49,7 +49,7 @@ const NIV_TRANSLATION: Translation = {
 };
 
 export const translations: AvailableTranslations = {
-  translations: [BSB_TRANSLATION, NIV_TRANSLATION],
+  translations: [AAB_TRANSLATION, NIV_TRANSLATION],
 };
 
 export const bsbBooks: TranslationBooks = {
@@ -187,12 +187,12 @@ export function makeChapter(
 export function createDefaultManagerResponseMap(): WebResponseMap {
   return {
     [makeUrl("/api/available_translations.json")]: createResponse(translations),
-    [makeUrl("/api/BSB/books.json")]: createResponse(bsbBooks),
+    [makeUrl("/api/AAB/books.json")]: createResponse(bsbBooks),
     [makeUrl("/api/NIV/books.json")]: createResponse(nivBooks),
-    [makeUrl("/api/BSB/GEN/1.json")]: createResponse(
+    [makeUrl("/api/AAB/GEN/1.json")]: createResponse(
       makeChapter(bsbBooks, "GEN", 1)
     ),
-    [makeUrl("/api/BSB/EXO/2.json")]: createResponse(
+    [makeUrl("/api/AAB/EXO/2.json")]: createResponse(
       makeChapter(bsbBooks, "EXO", 2)
     ),
     [makeUrl("/api/NIV/MAT/1.json")]: createResponse(
@@ -204,17 +204,17 @@ export function createDefaultManagerResponseMap(): WebResponseMap {
 export function createReadingManagerResponseMap(): WebResponseMap {
   return {
     [makeUrl("/api/available_translations.json")]: createResponse(translations),
-    [makeUrl("/api/BSB/books.json")]: createResponse(bsbBooks),
-    [makeUrl("/api/BSB/GEN/1.json")]: createResponse(
+    [makeUrl("/api/AAB/books.json")]: createResponse(bsbBooks),
+    [makeUrl("/api/AAB/GEN/1.json")]: createResponse(
       makeChapter(bsbBooks, "GEN", 1)
     ),
-    [makeUrl("/api/BSB/GEN/2.json")]: createResponse(
+    [makeUrl("/api/AAB/GEN/2.json")]: createResponse(
       makeChapter(bsbBooks, "GEN", 2)
     ),
-    [makeUrl("/api/BSB/GEN/5.json")]: createResponse(
+    [makeUrl("/api/AAB/GEN/5.json")]: createResponse(
       makeChapter(bsbBooks, "GEN", 5)
     ),
-    [makeUrl("/api/BSB/EXO/1.json")]: createResponse(
+    [makeUrl("/api/AAB/EXO/1.json")]: createResponse(
       makeChapter(bsbBooks, "EXO", 1)
     ),
   };

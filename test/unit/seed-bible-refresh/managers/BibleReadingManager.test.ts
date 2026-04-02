@@ -122,12 +122,12 @@ describe("createBibleReadingState", () => {
     logSpy.mockRestore();
   });
 
-  it("uses BSB by default", async () => {
+  it("uses AAB by default", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    expect(state.translationId.value).toBe("BSB");
+    expect(state.translationId.value).toBe("AAB");
   });
 
   it("loads highlights for the current chapter during initial load", async () => {
@@ -141,7 +141,7 @@ describe("createBibleReadingState", () => {
     await waitForInitialLoad(state);
 
     expect(highlightsManager.getChapterHighlights).toHaveBeenCalledWith(
-      "BSB",
+      "AAB",
       "GEN",
       1
     );
@@ -175,7 +175,7 @@ describe("createBibleReadingState", () => {
         bookId: "GEN",
         chapterNumber: 1,
         verse: makeVerse(1),
-        translationId: "BSB",
+        translationId: "AAB",
       },
       1,
       1
@@ -185,7 +185,7 @@ describe("createBibleReadingState", () => {
         bookId: "GEN",
         chapterNumber: 1,
         verse: makeVerse(2),
-        translationId: "BSB",
+        translationId: "AAB",
       },
       2,
       2
@@ -195,7 +195,7 @@ describe("createBibleReadingState", () => {
 
     expect(highlightsManager.highlightVerses).toHaveBeenCalledTimes(1);
     expect(highlightsManager.highlightVerses).toHaveBeenCalledWith(
-      "BSB",
+      "AAB",
       "GEN",
       1,
       [1, 2],
@@ -236,7 +236,7 @@ describe("createBibleReadingState", () => {
         bookId: "GEN",
         chapterNumber: 1,
         verse: makeVerse(1),
-        translationId: "BSB",
+        translationId: "AAB",
       },
       1,
       1
@@ -246,7 +246,7 @@ describe("createBibleReadingState", () => {
         bookId: "GEN",
         chapterNumber: 1,
         verse: makeVerse(2),
-        translationId: "BSB",
+        translationId: "AAB",
       },
       2,
       2
@@ -256,7 +256,7 @@ describe("createBibleReadingState", () => {
 
     expect(highlightsManager.unhighlightVerses).toHaveBeenCalledTimes(1);
     expect(highlightsManager.unhighlightVerses).toHaveBeenCalledWith(
-      "BSB",
+      "AAB",
       "GEN",
       1,
       [1, 2]
@@ -286,7 +286,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    const decorationId = state.decorateVerses("BSB", "GEN", 1, [2, 1, 2], {
+    const decorationId = state.decorateVerses("AAB", "GEN", 1, [2, 1, 2], {
       className: "sb-test-decoration",
       style: {
         outline: "1px solid red",
@@ -297,7 +297,7 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual<VerseDecoration[]>([
       {
         id: decorationId,
-        translationId: "BSB",
+        translationId: "AAB",
         bookId: "GEN",
         chapterNumber: 1,
         verses: [1, 2],
@@ -314,7 +314,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    const decorationId = state.decorateVerses("BSB", "GEN", 1, [1], {
+    const decorationId = state.decorateVerses("AAB", "GEN", 1, [1], {
       className: "sb-test-decoration",
     });
 
@@ -328,7 +328,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    state.decorateVerses("BSB", "GEN", 1, [1, 2], {
+    state.decorateVerses("AAB", "GEN", 1, [1, 2], {
       className: "sb-test-decoration",
     });
 
@@ -342,11 +342,11 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    state.decorateVerses("BSB", "GEN", 1, [5], {
+    state.decorateVerses("AAB", "GEN", 1, [5], {
       className: "sb-test-decoration-removed",
     });
 
-    state.decorateVerses("BSB", "GEN", 1, [1, 2], {
+    state.decorateVerses("AAB", "GEN", 1, [1, 2], {
       className: "sb-test-decoration",
       preserveOnChapterChange: true,
     });
@@ -356,7 +356,7 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual([
       {
         id: expect.any(String),
-        translationId: "BSB",
+        translationId: "AAB",
         bookId: "GEN",
         chapterNumber: 1,
         verses: [1, 2],
@@ -367,12 +367,12 @@ describe("createBibleReadingState", () => {
     ]);
   });
 
-  it("loads books for BSB on initialization", async () => {
+  it("loads books for AAB on initialization", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    expect(webGetMock).toHaveBeenCalledWith(makeUrl("/api/BSB/books.json"));
+    expect(webGetMock).toHaveBeenCalledWith(makeUrl("/api/AAB/books.json"));
     expect(state.translationBooks.value).toEqual(bsbBooks);
   });
 
@@ -383,7 +383,7 @@ describe("createBibleReadingState", () => {
 
     await state.selectBook("EXO");
 
-    expect(webGetMock).toHaveBeenCalledWith(makeUrl("/api/BSB/EXO/1.json"));
+    expect(webGetMock).toHaveBeenCalledWith(makeUrl("/api/AAB/EXO/1.json"));
     expect(state.bookId.value).toBe("EXO");
     expect(state.chapterNumber.value).toBe(1);
     expect(state.chapterData.value?.book.id).toBe("EXO");
@@ -396,7 +396,7 @@ describe("createBibleReadingState", () => {
 
     await state.selectChapter("GEN", 5);
 
-    expect(webGetMock).toHaveBeenCalledWith(makeUrl("/api/BSB/GEN/5.json"));
+    expect(webGetMock).toHaveBeenCalledWith(makeUrl("/api/AAB/GEN/5.json"));
     expect(state.bookId.value).toBe("GEN");
     expect(state.chapterNumber.value).toBe(5);
     expect(state.chapterData.value?.chapter.number).toBe(5);
@@ -415,7 +415,7 @@ describe("createBibleReadingState", () => {
 
     expect(highlightsManager.getChapterHighlights).toHaveBeenNthCalledWith(
       2,
-      "BSB",
+      "AAB",
       "GEN",
       5
     );
@@ -428,7 +428,7 @@ describe("createBibleReadingState", () => {
 
     await state.loadNextChapter();
 
-    expect(webGetMock).toHaveBeenCalledWith(makeUrl("/api/BSB/GEN/2.json"));
+    expect(webGetMock).toHaveBeenCalledWith(makeUrl("/api/AAB/GEN/2.json"));
     expect(state.chapterNumber.value).toBe(2);
     expect(state.chapterData.value?.chapter.number).toBe(2);
   });
@@ -441,7 +441,7 @@ describe("createBibleReadingState", () => {
 
     await state.loadPreviousChapter();
 
-    expect(webGetMock).toHaveBeenCalledWith(makeUrl("/api/BSB/GEN/1.json"));
+    expect(webGetMock).toHaveBeenCalledWith(makeUrl("/api/AAB/GEN/1.json"));
     expect(state.chapterNumber.value).toBe(1);
     expect(state.chapterData.value?.chapter.number).toBe(1);
   });
@@ -457,7 +457,7 @@ describe("createBibleReadingState", () => {
         bookId: "GEN",
         chapterNumber: 1,
         verse,
-        translationId: "BSB",
+        translationId: "AAB",
       },
       100,
       200
@@ -468,7 +468,7 @@ describe("createBibleReadingState", () => {
         bookId: "GEN",
         chapterNumber: 1,
         verse,
-        translationId: "BSB",
+        translationId: "AAB",
         selectionX: 100,
         selectionY: 200,
         selectedAt: expect.any(Number),
@@ -478,7 +478,7 @@ describe("createBibleReadingState", () => {
 
   it("the selected footnote is cleared when the chapter changes", async () => {
     const responses = createReadingManagerResponseMap();
-    responses[makeUrl("/api/BSB/GEN/1.json")] = createResponse({
+    responses[makeUrl("/api/AAB/GEN/1.json")] = createResponse({
       ...makeChapter(bsbBooks, "GEN", 1),
       chapter: {
         number: 1,
@@ -531,7 +531,7 @@ describe("createBibleReadingState", () => {
 
   it("selectFootnote() selects matching footnote and verse", async () => {
     const responses = createReadingManagerResponseMap();
-    responses[makeUrl("/api/BSB/GEN/1.json")] = createResponse({
+    responses[makeUrl("/api/AAB/GEN/1.json")] = createResponse({
       ...makeChapter(bsbBooks, "GEN", 1),
       chapter: {
         number: 1,
@@ -580,7 +580,7 @@ describe("createBibleReadingState", () => {
 
   it("selectFootnote() clears selected footnote when null is passed", async () => {
     const responses = createReadingManagerResponseMap();
-    responses[makeUrl("/api/BSB/GEN/1.json")] = createResponse({
+    responses[makeUrl("/api/AAB/GEN/1.json")] = createResponse({
       ...makeChapter(bsbBooks, "GEN", 1),
       chapter: {
         number: 1,
@@ -614,7 +614,7 @@ describe("createBibleReadingState", () => {
 
   it("selectFootnote() returns null when noteId does not exist", async () => {
     const responses = createReadingManagerResponseMap();
-    responses[makeUrl("/api/BSB/GEN/1.json")] = createResponse({
+    responses[makeUrl("/api/AAB/GEN/1.json")] = createResponse({
       ...makeChapter(bsbBooks, "GEN", 1),
       chapter: {
         number: 1,
@@ -673,7 +673,7 @@ describe("createBibleReadingState", () => {
 
   it("the selected footnote is cleared when the translation changes", async () => {
     const responses = createReadingManagerResponseMap();
-    responses[makeUrl("/api/BSB/GEN/1.json")] = createResponse({
+    responses[makeUrl("/api/AAB/GEN/1.json")] = createResponse({
       ...makeChapter(bsbBooks, "GEN", 1),
       chapter: {
         number: 1,
@@ -859,7 +859,7 @@ describe("createBibleReadingState", () => {
 
   it("catches errors and stores them in state.error", async () => {
     const responses = createReadingManagerResponseMap();
-    responses[makeUrl("/api/BSB/GEN/3.json")] = createResponse(
+    responses[makeUrl("/api/AAB/GEN/3.json")] = createResponse(
       { error: true },
       500,
       "Server Error"
@@ -872,7 +872,7 @@ describe("createBibleReadingState", () => {
     await expect(state.selectChapter("GEN", 3)).resolves.toBeUndefined();
 
     expect(state.error.value).toBe(
-      "Failed request to https://example.test/api/BSB/GEN/3.json. Status: 500 Server Error"
+      "Failed request to https://example.test/api/AAB/GEN/3.json. Status: 500 Server Error"
     );
     expect(state.loading.value).toBe(false);
   });
