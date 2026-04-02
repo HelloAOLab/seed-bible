@@ -246,8 +246,12 @@ function renderChapterContent(
   };
 
   const getDecorationPresentation = (verseNumber: number) => {
-    const matchingDecorations = decorations.filter((decoration) =>
-      decoration.verses.includes(verseNumber)
+    const matchingDecorations = decorations.filter(
+      (decoration) =>
+        decoration.translationId === chapterData.translation.id &&
+        decoration.bookId === chapterData.book.id &&
+        decoration.chapterNumber === chapterData.chapter.number &&
+        decoration.verses.includes(verseNumber)
     );
 
     return matchingDecorations.reduce(

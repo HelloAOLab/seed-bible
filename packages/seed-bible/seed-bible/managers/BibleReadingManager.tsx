@@ -40,6 +40,9 @@ export interface SelectedFootnote {
 
 export interface VerseDecoration {
   id: string;
+  translationId: string | null;
+  bookId: string;
+  chapterNumber: number;
   verses: number[];
   className?: string;
   style?: JSX.CSSProperties;
@@ -76,6 +79,9 @@ export interface BibleReadingState {
   ) => Promise<void>;
   unhighlightSelectedVerses: () => Promise<void>;
   decorateVerses: (
+    translationId: string | null,
+    bookId: string,
+    chapterNumber: number,
     verses: number | number[],
     decoration: VerseDecorationInput
   ) => string;
@@ -390,11 +396,17 @@ export function createBibleReadingState(
   };
 
   const decorateVerses = (
+    translationId: string | null,
+    bookId: string,
+    chapterNumber: number,
     verses: number | number[],
     decoration: VerseDecorationInput
   ): string => {
     const nextDecoration: VerseDecoration = {
       id: `decoration-${nextDecorationId++}`,
+      translationId: translationId ?? translation.value?.id ?? null,
+      bookId,
+      chapterNumber,
       verses: normalizeDecorationVerses(verses),
       ...decoration,
     };
