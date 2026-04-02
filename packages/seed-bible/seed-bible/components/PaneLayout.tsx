@@ -377,7 +377,9 @@ export function PaneLayout(props: PaneLayoutProps) {
               gameContainerCss={gridPortalContainerCss}
             />
           ) : pane.component !== null ? (
-            <div className="sb-pane-component">{pane.component}</div>
+            <div className="sb-pane-component">
+              <pane.component />
+            </div>
           ) : pane.tab ? (
             <PaneReaderScroller tab={pane.tab}>
               <BibleReader
@@ -456,7 +458,9 @@ export function PaneLayout(props: PaneLayoutProps) {
                 gameContainerCss={gridPortalContainerCss}
               />
             ) : pane.component !== null ? (
-              <div className="sb-pane-component">{pane.component}</div>
+              <div className="sb-pane-component">
+                <pane.component />
+              </div>
             ) : pane.tab ? (
               <PaneReaderScroller tab={pane.tab}>
                 <BibleReader

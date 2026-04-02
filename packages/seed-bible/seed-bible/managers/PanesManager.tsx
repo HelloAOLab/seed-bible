@@ -32,7 +32,7 @@ export const PANE_LAYOUT_OPTIONS: PaneLayoutOption[] = [
 export interface Pane {
   id: string;
   tab: ReaderTab | null;
-  component: ComponentChild | null;
+  component: () => ComponentChild | null;
   gridPortal: string | null;
   mapPortal: string | null;
   detached: boolean;
