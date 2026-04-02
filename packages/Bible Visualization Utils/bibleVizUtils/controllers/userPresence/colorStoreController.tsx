@@ -13,11 +13,13 @@ const updateStore = async () => {
       getSubscribedUsers(),
     ]);
 
-    const authMap = new Map<string, string>();
-    const usersAuthIds = componentsBot?.tags?.usersAuthIds;
+    const loggedUsersInInstanceMap = new Map<string, string>();
+    const usersAuthIds = componentsBot?.tags?.usersAuthIds as
+      | UserIds[]
+      | undefined;
     if (usersAuthIds) {
-      (usersAuthIds as UserIds[]).forEach(({ configId, authId }) => {
-        if (configId && authId) authMap.set(configId, authId);
+      usersAuthIds.forEach(({ configId, authId }) => {
+        if (configId && authId) loggedUsersInInstanceMap.set(configId, authId);
       });
     }
 
@@ -25,7 +27,7 @@ const updateStore = async () => {
     const usersIdsToProcess: UserIds[] = [];
 
     for (const configId of configIds) {
-      const authId = authMap.get(configId);
+      const authId = loggedUsersInInstanceMap.get(configId);
 
       if (authId) processedAuthIds.add(authId);
       usersIdsToProcess.push({ configId, authId });
@@ -74,8 +76,12 @@ const updateStore = async () => {
           userColorStore.removeUserColor({ authId });
           userColorStore.addUserColor({ color, configId, authId });
         }
-        // User do not have an assigned color or it's color has changed
-        else if (!currConfigColor || color !== currConfigColor) {
+        // User do not have an assigned color or it's color has changed or has just signed in
+        else if (
+          !currConfigColor ||
+          color !== currConfigColor ||
+          (authId && !currAuthColor)
+        ) {
           userColorStore.addUserColor({ color, configId, authId });
         }
       }
