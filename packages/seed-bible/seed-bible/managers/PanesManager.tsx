@@ -32,7 +32,7 @@ export const PANE_LAYOUT_OPTIONS: PaneLayoutOption[] = [
 export interface Pane {
   id: string;
   tab: ReaderTab | null;
-  component: () => ComponentChild | null;
+  component: (() => ComponentChild) | null;
   gridPortal: string | null;
   mapPortal: string | null;
   detached: boolean;
@@ -44,14 +44,14 @@ export interface Pane {
 
 interface PaneContent {
   tab: ReaderTab | null;
-  component: ComponentChild | null;
+  component: (() => ComponentChild) | null;
   gridPortal: string | null;
   mapPortal: string | null;
 }
 
 export interface PaneOpenContentOptions {
   tabId?: string;
-  component?: ComponentChild;
+  component?: (() => ComponentChild) | null;
   gridPortal?: string | null;
   mapPortal?: string | null;
 }
@@ -65,7 +65,7 @@ function createPaneFactory() {
 
   return (
     tab: ReaderTab | null,
-    component: ComponentChild | null = null,
+    component: (() => ComponentChild) | null = null,
     detached = false
   ): Pane => {
     const paneId = nextPaneId;
@@ -199,7 +199,7 @@ function applyLayoutToPanes(
   selectedId: string | null,
   createPane: (
     tab: ReaderTab | null,
-    component?: ComponentChild | null,
+    component?: (() => ComponentChild) | null,
     detached?: boolean
   ) => Pane
 ) {
