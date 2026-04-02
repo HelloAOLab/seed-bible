@@ -8,6 +8,7 @@ import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
 import {
   type BibleReadingState,
   createBibleReadingState,
+  DEFAULT_TRANSLATION_ID,
 } from "seed-bible.managers.BibleReadingManager";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
@@ -113,10 +114,6 @@ export function createBibleSelectorState(
   let isHandlingPopState = false;
 
   const syncStateFromPane = async () => {
-    if (!readingState.value) {
-      return;
-    }
-
     loading.value = true;
     error.value = null;
 
@@ -126,7 +123,15 @@ export function createBibleSelectorState(
       }
 
       const nextTranslationId =
-        readingState.value.translationId.value ??
+        readingState.value?.translationId.value ??
+        // Find the first pane with a translation ID in its reading state
+        panesManager.panes.value.find(
+          (p) => p.tab?.readingState.translationId.value
+        )?.tab?.readingState.translationId.value ??
+        // Fall back to default translation or first available translation
+        dataManager.availableTranslations.value.find(
+          (t) => t.id === DEFAULT_TRANSLATION_ID
+        )?.id ??
         dataManager.availableTranslations.value[0]?.id ??
         null;
       if (!nextTranslationId) {
@@ -150,12 +155,14 @@ export function createBibleSelectorState(
 
   const setOpen = async (open: boolean, nextPane?: Pane) => {
     if (open) {
+      console.log("Opening Bible selector with pane:", nextPane);
       if (nextPane) {
         pane.value = nextPane;
       }
 
       const effectivePane = nextPane ?? pane.value;
       if (!effectivePane) {
+        console.warn("No pane available to open Bible selector with.");
         return;
       }
 
