@@ -3,10 +3,12 @@ import {
   type ChapterVerse,
   type ChapterFootnote,
 } from "seed-bible.managers.FreeUseBibleAPI";
+import type { JSX } from "preact";
 import { computed, useSignal } from "@preact/signals";
 import type {
   BibleReadingState,
   BibleSelectedVerse,
+  VerseDecoration,
 } from "seed-bible.managers.BibleReadingManager";
 import type { ChapterHighlight } from "seed-bible.managers.HighlightsManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
@@ -195,7 +197,8 @@ function renderChapterContent(
   onVerseClick: (verse: BibleSelectedVerse, event: MouseEvent) => void,
   selectedVerses: BibleSelectedVerse[],
   onOpenFootnote: (noteId: number, verse: ChapterVerse | null) => void,
-  highlights: ChapterHighlight[]
+  highlights: ChapterHighlight[],
+  decorations: VerseDecoration[]
 ) {
   if (!chapterData) {
     return null;
@@ -240,6 +243,30 @@ function renderChapterContent(
     return {
       className: ` sb-highlight-${highlight.colorId}`,
     } as const;
+  };
+
+  const getDecorationPresentation = (verseNumber: number) => {
+    const matchingDecorations = decorations.filter((decoration) =>
+      decoration.verses.includes(verseNumber)
+    );
+
+    return matchingDecorations.reduce(
+      (presentation, decoration) => ({
+        className: decoration.className
+          ? `${presentation.className} ${decoration.className}`
+          : presentation.className,
+        style: decoration.style
+          ? {
+              ...(presentation.style ?? {}),
+              ...decoration.style,
+            }
+          : presentation.style,
+      }),
+      {
+        className: "",
+        style: undefined as JSX.CSSProperties | undefined,
+      }
+    );
   };
 
   const entries = chapterData.chapter.content;
@@ -298,16 +325,27 @@ function renderChapterContent(
       const hasPoetry = segments.some((s) => s.type === "poetry");
       const highlight = getVerseHighlight(value.number);
       const highlightPresentation = getHighlightPresentation(highlight);
+      const decorationPresentation = getDecorationPresentation(value.number);
+      const verseClassName = [
+        "sb-verse",
+        hasPoetry ? "sb-verse-poetry" : "",
+        isSelected ? "sb-verse-selected" : "",
+        highlightPresentation.className.trim(),
+        decorationPresentation.className.trim(),
+      ]
+        .filter(Boolean)
+        .join(" ");
       const verseBaseStyle = {
         cursor: "pointer",
         ...(highlightPresentation.style ?? {}),
+        ...(decorationPresentation.style ?? {}),
       };
 
       if (hasPoetry) {
         return (
           <span
             key={`verse-${entryIndex}`}
-            className={`sb-verse sb-verse-poetry${isSelected ? " sb-verse-selected" : ""}${highlightPresentation.className}`}
+            className={verseClassName}
             onClick={(event: MouseEvent) => {
               onVerseClick(verse, event);
             }}
@@ -363,7 +401,7 @@ function renderChapterContent(
       return (
         <span
           key={`verse-${entryIndex}`}
-          className={`sb-verse${isSelected ? " sb-verse-selected" : ""}${highlightPresentation.className}`}
+          className={verseClassName}
           onClick={(event: MouseEvent) => {
             onVerseClick(verse, event);
           }}
@@ -403,6 +441,7 @@ export function BibleReader(props: BibleReaderProps) {
     chapterData,
     selectedVerses,
     highlights,
+    decorations,
     loading,
     error,
     selectVerse,
@@ -449,7 +488,8 @@ export function BibleReader(props: BibleReaderProps) {
             (noteId) => {
               selectFootnote(noteId);
             },
-            highlights.value.highlights
+            highlights.value.highlights,
+            decorations.value
           )}
         </div>
       )}

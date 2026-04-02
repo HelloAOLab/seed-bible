@@ -14,6 +14,7 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
+import type { JSX } from "preact";
 import { sortBy } from "es-toolkit";
 import type {
   ChapterHighlight,
@@ -37,6 +38,18 @@ export interface SelectedFootnote {
   chapter: TranslationBookChapter;
 }
 
+export interface VerseDecoration {
+  id: string;
+  verses: number[];
+  className?: string;
+  style?: JSX.CSSProperties;
+}
+
+export interface VerseDecorationInput {
+  className?: string;
+  style?: JSX.CSSProperties;
+}
+
 export interface BibleReadingState {
   translationId: Signal<string | null>;
   translation: Signal<Translation | null>;
@@ -46,6 +59,7 @@ export interface BibleReadingState {
   translationBooks: Signal<TranslationBooks | null>;
   chapterData: Signal<TranslationBookChapter | null>;
   highlights: ReadonlySignal<ChapterHighlights>;
+  decorations: ReadonlySignal<VerseDecoration[]>;
   selectedVerses: Signal<BibleSelectedVerse[]>;
   selectedFootnote: ReadonlySignal<SelectedFootnote | null>;
   loading: Signal<boolean>;
@@ -61,6 +75,11 @@ export interface BibleReadingState {
     highlightDetails: Omit<ChapterHighlight, "verse">
   ) => Promise<void>;
   unhighlightSelectedVerses: () => Promise<void>;
+  decorateVerses: (
+    verses: number | number[],
+    decoration: VerseDecorationInput
+  ) => string;
+  removeDecoration: (decorationId: string) => void;
   clearSelectedVerses: () => void;
   selectTranslation: (translation: string) => Promise<void>;
   selectTranslationAndChapter: (
@@ -82,6 +101,23 @@ interface InitialBibleReadingOptions {
   initialTranslationId?: string | null;
   initialBookId?: string | null;
   initialChapterNumber?: number | null;
+}
+
+function normalizeDecorationVerses(verses: number | number[]): number[] {
+  const verseNumbers = Array.isArray(verses) ? verses : [verses];
+  const normalized = Array.from(
+    new Set(
+      verseNumbers.filter(
+        (verseNumber) => Number.isInteger(verseNumber) && verseNumber > 0
+      )
+    )
+  ).sort((left, right) => left - right);
+
+  if (normalized.length === 0) {
+    throw new Error("At least one valid verse number is required.");
+  }
+
+  return normalized;
 }
 
 const AVAILABLE_TRANSLATIONS_PATH = "/api/available_translations.json";
@@ -160,9 +196,11 @@ export function createBibleReadingState(
   const highlights = computed<ChapterHighlights>(
     () => activeChapterHighlights.value.value
   );
+  const decorations = signal<VerseDecoration[]>([]);
   const loading = signal<boolean>(true);
   const error = signal<string | null>(null);
   const scrollPosition = signal<number>(0);
+  let nextDecorationId = 1;
 
   const translation = computed(
     () => translationBooks.value?.translation ?? null
@@ -260,6 +298,7 @@ export function createBibleReadingState(
       bookId.value = nextBookId;
       chapterNumber.value = nextChapterNumber;
       chapterData.value = chapter;
+      decorations.value = [];
       selectedFootnoteId.value = null;
       clearSelectedVerses();
     });
@@ -347,6 +386,26 @@ export function createBibleReadingState(
       activeBookId,
       activeChapterNumber,
       verseNumbers
+    );
+  };
+
+  const decorateVerses = (
+    verses: number | number[],
+    decoration: VerseDecorationInput
+  ): string => {
+    const nextDecoration: VerseDecoration = {
+      id: `decoration-${nextDecorationId++}`,
+      verses: normalizeDecorationVerses(verses),
+      ...decoration,
+    };
+
+    decorations.value = [...decorations.value, nextDecoration];
+    return nextDecoration.id;
+  };
+
+  const removeDecoration = (decorationId: string) => {
+    decorations.value = decorations.value.filter(
+      (decoration) => decoration.id !== decorationId
     );
   };
 
@@ -663,6 +722,7 @@ export function createBibleReadingState(
     translationBooks,
     chapterData,
     highlights,
+    decorations,
     selectedVerses,
     selectedFootnote,
     loading,
@@ -672,6 +732,8 @@ export function createBibleReadingState(
     selectFootnote,
     highlightSelectedVerses,
     unhighlightSelectedVerses,
+    decorateVerses,
+    removeDecoration,
     clearSelectedVerses,
     selectTranslation,
     selectTranslationAndChapter,

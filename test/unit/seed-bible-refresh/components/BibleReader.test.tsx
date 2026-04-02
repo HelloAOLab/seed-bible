@@ -7,6 +7,7 @@ import { BibleReader } from "@packages/seed-bible/seed-bible/components/BibleRea
 import {
   type BibleReadingState,
   type SelectedFootnote,
+  type VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
 import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
@@ -18,6 +19,7 @@ type ReaderFixture = {
   readingState: BibleReadingState;
   chapterData: Signal<TranslationBookChapter | null>;
   highlights: Signal<BibleReadingState["highlights"]["value"]>;
+  decorations: Signal<VerseDecoration[]>;
   selectedVerses: BibleReadingState["selectedVerses"];
   selectedFootnote: Signal<SelectedFootnote | null>;
   selectVerse: jest.Mock;
@@ -102,6 +104,7 @@ function createFixture(): ReaderFixture {
   const highlights = signal<BibleReadingState["highlights"]["value"]>({
     highlights: [],
   });
+  const decorations = signal<VerseDecoration[]>([]);
   const selectedFootnote = signal<SelectedFootnote | null>(null);
   const selectVerse = jest.fn();
   const selectFootnote = jest.fn();
@@ -126,6 +129,7 @@ function createFixture(): ReaderFixture {
     chapterData,
     selectedVerses,
     selectedFootnote,
+    decorations,
     loading: signal(false),
     scrollPosition: signal(0),
     error: signal<string | null>(null),
@@ -133,6 +137,8 @@ function createFixture(): ReaderFixture {
     selectFootnote,
     highlightSelectedVerses: jest.fn(async () => undefined),
     unhighlightSelectedVerses: jest.fn(async () => undefined),
+    decorateVerses: jest.fn(() => "decoration-1"),
+    removeDecoration: jest.fn(),
     clearSelectedVerses: jest.fn(),
     selectTranslation: jest.fn(async () => undefined),
     selectBook: jest.fn(async () => undefined),
@@ -157,6 +163,7 @@ function createFixture(): ReaderFixture {
     readingState,
     chapterData,
     highlights,
+    decorations,
     selectedVerses,
     selectedFootnote,
     selectVerse,
@@ -403,6 +410,53 @@ describe("BibleReader", () => {
     verses = container.querySelectorAll(".sb-verse");
     firstVerse = verses[0] as HTMLElement | undefined;
     expect(firstVerse?.classList.contains("sb-highlight-yellow")).toBe(true);
+  });
+
+  it("applies verse decorations and lets decoration styles override highlight styles", () => {
+    const { pane, selectorState, readingState, highlights, decorations } =
+      createFixture();
+
+    highlights.value = {
+      highlights: [
+        {
+          verse: 1,
+          colorId: "custom",
+          customColor: "#123456",
+          customFontColor: "#abcdef",
+        },
+      ],
+    };
+    decorations.value = [
+      {
+        id: "decoration-1",
+        verses: [1],
+        className: "sb-test-decoration sb-extra-decoration",
+        style: {
+          color: "rgb(255, 0, 0)",
+          borderBottom: "2px solid blue",
+        },
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const verses = container.querySelectorAll(".sb-verse");
+    const firstVerse = verses[0] as HTMLElement | undefined;
+    expect(firstVerse).toBeDefined();
+    expect(firstVerse?.classList.contains("sb-test-decoration")).toBe(true);
+    expect(firstVerse?.classList.contains("sb-extra-decoration")).toBe(true);
+    expect(firstVerse?.style.backgroundColor).toBe("rgb(18, 52, 86)");
+    expect(firstVerse?.style.color).toBe("rgb(255, 0, 0)");
+    expect(firstVerse?.style.borderBottom).toBe("2px solid blue");
   });
 
   it("renders chapter content parts and inline markers", () => {

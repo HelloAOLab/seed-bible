@@ -1,6 +1,7 @@
 import {
   createBibleReadingState as createRawBibleReadingState,
   type BibleReadingState,
+  type VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { createBibleDataManager } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import {
@@ -278,6 +279,59 @@ describe("createBibleReadingState", () => {
 
     expect(highlightsManager.unhighlightVerses).not.toHaveBeenCalled();
     expect(highlightsManager.getChapterHighlights).toHaveBeenCalledTimes(1);
+  });
+
+  it("decorateVerses() adds a decoration for one or more verses and returns its ID", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    const decorationId = state.decorateVerses([2, 1, 2], {
+      className: "sb-test-decoration",
+      style: {
+        outline: "1px solid red",
+      },
+    });
+
+    expect(decorationId).toBe("decoration-1");
+    expect(state.decorations.value).toEqual<VerseDecoration[]>([
+      {
+        id: "decoration-1",
+        verses: [1, 2],
+        className: "sb-test-decoration",
+        style: {
+          outline: "1px solid red",
+        },
+      },
+    ]);
+  });
+
+  it("removeDecoration() removes an existing decoration", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    const decorationId = state.decorateVerses(1, {
+      className: "sb-test-decoration",
+    });
+
+    state.removeDecoration(decorationId);
+
+    expect(state.decorations.value).toEqual([]);
+  });
+
+  it("clears decorations when the chapter changes", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    state.decorateVerses([1, 2], {
+      className: "sb-test-decoration",
+    });
+
+    await state.selectChapter("GEN", 2);
+
+    expect(state.decorations.value).toEqual([]);
   });
 
   it("loads books for BSB on initialization", async () => {
