@@ -42,6 +42,19 @@ const cleanup = registerExtension({
           "Selected verse:",
           context.readingState.selectedVerses.value
         );
+        const id = context.readingState.decorateVerses(
+          context.readingState.translationId.value,
+          context.readingState.bookId.value!,
+          context.readingState.chapterNumber.value,
+          context.readingState.selectedVerses.value.map((v) => v.verse.number),
+          {
+            style: {
+              textEmphasis: "sesame green",
+            },
+          }
+        );
+
+        console.log("decoration id:", id);
       },
       priority: 100,
     });
