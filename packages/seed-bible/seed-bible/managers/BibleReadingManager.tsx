@@ -46,11 +46,23 @@ export interface VerseDecoration {
   verses: number[];
   className?: string;
   style?: JSX.CSSProperties;
+
+  /**
+   * Whether to preserve the decoration when the chapter changes.
+   */
+  preserveOnChapterChange?: boolean;
 }
 
 export interface VerseDecorationInput {
   className?: string;
   style?: JSX.CSSProperties;
+
+  /**
+   * Whether to preserve the decoration when the chapter changes.
+   * By default, decorations are cleared when the chapter changes.
+   * Setting this to true will keep the decoration until it is explicitly removed.
+   */
+  preserveOnChapterChange?: boolean;
 }
 
 export interface BibleReadingState {
@@ -304,6 +316,9 @@ export function createBibleReadingState(
       chapterNumber.value = nextChapterNumber;
       chapterData.value = chapter;
       selectedFootnoteId.value = null;
+      decorations.value = decorations.value.filter(
+        (decoration) => decoration.preserveOnChapterChange
+      );
       clearSelectedVerses();
     });
 

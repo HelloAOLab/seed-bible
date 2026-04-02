@@ -323,13 +323,32 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual([]);
   });
 
-  it("doesn't clear decorations when the chapter changes", async () => {
+  it("clears decorations when the chapter changes", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
     state.decorateVerses("BSB", "GEN", 1, [1, 2], {
       className: "sb-test-decoration",
+    });
+
+    await state.selectChapter("GEN", 2);
+
+    expect(state.decorations.value).toEqual([]);
+  });
+
+  it("doesn't clear decorations that should be preserved when the chapter changes", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    state.decorateVerses("BSB", "GEN", 1, [5], {
+      className: "sb-test-decoration-removed",
+    });
+
+    state.decorateVerses("BSB", "GEN", 1, [1, 2], {
+      className: "sb-test-decoration",
+      preserveOnChapterChange: true,
     });
 
     await state.selectChapter("GEN", 2);
@@ -343,6 +362,7 @@ describe("createBibleReadingState", () => {
         verses: [1, 2],
         className: "sb-test-decoration",
         style: undefined,
+        preserveOnChapterChange: true,
       },
     ]);
   });
