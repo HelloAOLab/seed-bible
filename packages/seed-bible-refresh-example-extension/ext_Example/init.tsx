@@ -49,6 +49,7 @@ const cleanup = registerExtension({
           context.readingState.selectedVerses.value.map((v) => v.verse.number),
           {
             style: {
+              backgroundColor: "#bf7bdf",
               textEmphasis: "sesame green",
             },
           }
