@@ -206,7 +206,6 @@ export function createBibleReadingState(
   const loading = signal<boolean>(true);
   const error = signal<string | null>(null);
   const scrollPosition = signal<number>(0);
-  let nextDecorationId = 1;
 
   const translation = computed(
     () => translationBooks.value?.translation ?? null
@@ -400,10 +399,11 @@ export function createBibleReadingState(
     bookId: string,
     chapterNumber: number,
     verses: number | number[],
-    decoration: VerseDecorationInput
+    decoration: VerseDecorationInput,
+    id: string = `decoration-${uuid()}`
   ): string => {
     const nextDecoration: VerseDecoration = {
-      id: `decoration-${nextDecorationId++}`,
+      id,
       translationId: translationId ?? translation.value?.id ?? null,
       bookId,
       chapterNumber,

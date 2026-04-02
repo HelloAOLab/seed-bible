@@ -1,5 +1,3 @@
-/** @jest-environment ./test/env/CasualOSEnvironment.ts */
-
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { computed, signal, type Signal } from "@preact/signals";
@@ -429,6 +427,9 @@ describe("BibleReader", () => {
     decorations.value = [
       {
         id: "decoration-1",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
         verses: [1],
         className: "sb-test-decoration sb-extra-decoration",
         style: {

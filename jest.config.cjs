@@ -4,6 +4,7 @@ const { compilerOptions } = require("./tsconfig.json");
 /** @type {import('jest').Config} */
 const config = {
   verbose: true,
+  testEnvironment: "<rootDir>/test/env/CasualOSEnvironment.js",
   transformIgnorePatterns: [
     "/node_modules/.pnpm/(?!(uuid|preact|@preact\\+signals|@preact\\+signals-core))",
   ],

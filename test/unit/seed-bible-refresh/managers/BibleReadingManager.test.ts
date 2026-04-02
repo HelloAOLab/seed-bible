@@ -286,17 +286,20 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    const decorationId = state.decorateVerses([2, 1, 2], {
+    const decorationId = state.decorateVerses("BSB", "GEN", 1, [2, 1, 2], {
       className: "sb-test-decoration",
       style: {
         outline: "1px solid red",
       },
     });
 
-    expect(decorationId).toBe("decoration-1");
+    expect(decorationId.startsWith("decoration-")).toBe(true);
     expect(state.decorations.value).toEqual<VerseDecoration[]>([
       {
-        id: "decoration-1",
+        id: decorationId,
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
         verses: [1, 2],
         className: "sb-test-decoration",
         style: {
@@ -311,7 +314,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    const decorationId = state.decorateVerses(1, {
+    const decorationId = state.decorateVerses("BSB", "GEN", 1, [1], {
       className: "sb-test-decoration",
     });
 
@@ -325,7 +328,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    state.decorateVerses([1, 2], {
+    state.decorateVerses("BSB", "GEN", 1, [1, 2], {
       className: "sb-test-decoration",
     });
 

@@ -219,8 +219,7 @@ describe("SessionsManager", () => {
   });
 
   it("createSession() creates a session with a UUID and loads session_data in a public inst", async () => {
-    const randomUUID = jest.fn().mockReturnValue("session-123");
-    (globalThis as any).crypto = { randomUUID };
+    const spy = jest.spyOn(globalThis, "uuid").mockReturnValue("123");
 
     const manager = createSessionsManager(
       mockDataManager as any,
@@ -229,7 +228,7 @@ describe("SessionsManager", () => {
     );
     const session = await manager.createSession();
 
-    expect(randomUUID).toHaveBeenCalled();
+    expect(spy).toHaveBeenCalled();
     expect(getSharedDocumentMock).toHaveBeenCalledWith(
       null,
       "session-123",

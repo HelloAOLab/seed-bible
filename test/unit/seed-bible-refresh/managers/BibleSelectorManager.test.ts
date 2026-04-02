@@ -1,5 +1,3 @@
-/** @jest-environment ./test/env/CasualOSEnvironment.ts */
-
 import { createBibleDataManager } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";

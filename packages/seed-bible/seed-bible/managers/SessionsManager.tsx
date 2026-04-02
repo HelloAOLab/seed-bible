@@ -113,14 +113,7 @@ export interface BibleReadingSession {
 }
 
 function createSessionId(): string {
-  if (
-    typeof crypto !== "undefined" &&
-    typeof crypto.randomUUID === "function"
-  ) {
-    return crypto.randomUUID();
-  }
-
-  return `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `session-${uuid()}`;
 }
 
 function toStringOrNull(value: unknown): string | null {

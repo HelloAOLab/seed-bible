@@ -1,5 +1,3 @@
-/** @jest-environment ./test/env/CasualOSEnvironment.ts */
-
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import {
