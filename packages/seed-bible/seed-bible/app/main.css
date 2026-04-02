@@ -533,6 +533,10 @@ button {
   color: var(--sb-verse-font-color);
   font-family: var(--sb-verse-font-family);
   cursor: var(--sb-verse-cursor);
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .sb-verse-poetry {
