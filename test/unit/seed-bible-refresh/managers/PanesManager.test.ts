@@ -159,14 +159,14 @@ describe("createPanes", () => {
 
     const selectedPaneId = panesManager.selectedPaneId.value!;
     const result = panesManager.openInPane(selectedPaneId, {
-      component: "Test Component",
+      component: () => "Test Component",
     });
 
     expect(result).toBe(true);
     const selectedPane = panesManager.panes.value.find(
       (pane) => pane.id === selectedPaneId
     );
-    expect(selectedPane?.component).toBe("Test Component");
+    expect(selectedPane?.component?.()).toBe("Test Component");
     expect(selectedPane?.tab).toBeNull();
   });
 
@@ -218,12 +218,12 @@ describe("createPanes", () => {
 
     const result = panesManager.openPane({
       type: "detached",
-      component: "Detached Component",
+      component: () => "Detached Component",
     });
 
     expect(result).toBe(true);
     const detachedPane = panesManager.panes.value.find(
-      (pane) => pane.component === "Detached Component"
+      (pane) => pane.component?.() === "Detached Component"
     );
     expect(detachedPane).toBeDefined();
     expect(detachedPane?.detached).toBe(true);
@@ -318,10 +318,10 @@ describe("createPanes", () => {
 
     panesManager.openPane({
       type: "detached",
-      component: "Detached Component",
+      component: () => "Detached Component",
     });
     const detachedPane = panesManager.panes.value.find(
-      (pane) => pane.component === "Detached Component"
+      (pane) => pane.component?.() === "Detached Component"
     )!;
 
     const result = panesManager.closePane(detachedPane.id);
@@ -368,10 +368,10 @@ describe("createPanes", () => {
 
     panesManager.openPane({
       type: "detached",
-      component: "Detached Component",
+      component: () => "Detached Component",
     });
     const detachedPane = panesManager.panes.value.find(
-      (pane) => pane.component === "Detached Component"
+      (pane) => pane.component?.() === "Detached Component"
     )!;
 
     panesManager.movePane(detachedPane.id, 10, 20);
@@ -388,10 +388,10 @@ describe("createPanes", () => {
 
     panesManager.openPane({
       type: "detached",
-      component: "Detached Component",
+      component: () => "Detached Component",
     });
     const detachedPane = panesManager.panes.value.find(
-      (pane) => pane.component === "Detached Component"
+      (pane) => pane.component?.() === "Detached Component"
     )!;
 
     panesManager.resizePane(detachedPane.id, 50, 60);
