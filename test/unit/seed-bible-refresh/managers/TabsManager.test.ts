@@ -71,7 +71,7 @@ function createDataManager() {
 
 function createHighlightsManagerMock() {
   return {
-    getChapterHighlights: jest.fn().mockResolvedValue({ highlights: [] }),
+    getChapterHighlights: jest.fn().mockReturnValue(signal({ highlights: [] })),
   };
 }
 

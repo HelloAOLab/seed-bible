@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { LoginManager } from "seed-bible.managers.LoginManager";
+import { signal, type Signal } from "@preact/signals";
 
 const verseSchema = z.union([
   z.number().int().positive(),
@@ -235,7 +236,7 @@ export interface HighlightsManager {
     translationId: string,
     bookId: string,
     chapterNumber: number
-  ) => Promise<ChapterHighlights>;
+  ) => Signal<ChapterHighlights>;
   saveChapterHighlights: (
     translationId: string,
     bookId: string,
@@ -284,51 +285,88 @@ const emptyChapterHighlights: ChapterHighlights = {
 export function createHighlightsManager(
   login: LoginManager
 ): HighlightsManager {
-  // Cache highlights by chapter address to avoid repeated network calls
-  const highlightsCache = new Map<string, ChapterHighlights>();
+  // Cache highlights by chapter address in reactive signals.
+  const highlightsCache = new Map<string, Signal<ChapterHighlights>>();
+  const inFlightLoads = new Map<string, Promise<void>>();
+  const loadedAddresses = new Set<string>();
 
-  const getChapterHighlights = async (
-    translationId: string,
-    bookId: string,
-    chapterNumber: number
-  ): Promise<ChapterHighlights> => {
-    const userId = login.userId.value;
-    if (!userId) {
-      return emptyChapterHighlights;
+  const getOrCreateChapterHighlightsSignal = (
+    address: string
+  ): Signal<ChapterHighlights> => {
+    let chapterHighlights = highlightsCache.get(address);
+    if (!chapterHighlights) {
+      chapterHighlights = signal<ChapterHighlights>(emptyChapterHighlights);
+      highlightsCache.set(address, chapterHighlights);
     }
 
-    const address = createChapterHighlightsAddress(
-      translationId,
-      bookId,
-      chapterNumber
-    );
+    return chapterHighlights;
+  };
 
-    // Check cache first
-    const cached = highlightsCache.get(address);
-    if (cached) {
-      return cached;
+  const awaitChapterLoad = async (address: string): Promise<void> => {
+    const inFlightLoad = inFlightLoads.get(address);
+    if (inFlightLoad) {
+      await inFlightLoad;
     }
+  };
 
+  const loadChapterHighlights = async (
+    userId: string,
+    address: string,
+    chapterHighlightsSignal: Signal<ChapterHighlights>
+  ): Promise<void> => {
     const data = await os.getData(userId, address);
 
-    if (!data.success || !data.data) {
-      return emptyChapterHighlights;
+    if (!data || !data.success || !data.data) {
+      chapterHighlightsSignal.value = emptyChapterHighlights;
+      loadedAddresses.add(address);
+      return;
     }
 
     const parsed = chapterHighlightsSchema.safeParse(data.data);
     if (!parsed.success) {
       console.warn("Failed to parse chapter highlights:", parsed.error);
-      return emptyChapterHighlights;
+      chapterHighlightsSignal.value = emptyChapterHighlights;
+      loadedAddresses.add(address);
+      return;
     }
 
-    const normalized = {
+    chapterHighlightsSignal.value = {
       highlights: normalizeHighlights(parsed.data.highlights),
     };
+    loadedAddresses.add(address);
+  };
 
-    // Store in cache
-    highlightsCache.set(address, normalized);
+  const getChapterHighlights = (
+    translationId: string,
+    bookId: string,
+    chapterNumber: number
+  ): Signal<ChapterHighlights> => {
+    const address = createChapterHighlightsAddress(
+      translationId,
+      bookId,
+      chapterNumber
+    );
+    const chapterHighlightsSignal = getOrCreateChapterHighlightsSignal(address);
 
-    return normalized;
+    const userId = login.userId.value;
+    if (!userId) {
+      chapterHighlightsSignal.value = emptyChapterHighlights;
+      loadedAddresses.delete(address);
+      return chapterHighlightsSignal;
+    }
+
+    if (!loadedAddresses.has(address) && !inFlightLoads.has(address)) {
+      const loadPromise = loadChapterHighlights(
+        userId,
+        address,
+        chapterHighlightsSignal
+      ).finally(() => {
+        inFlightLoads.delete(address);
+      });
+      inFlightLoads.set(address, loadPromise);
+    }
+
+    return chapterHighlightsSignal;
   };
 
   const saveChapterHighlights = async (
@@ -337,6 +375,20 @@ export function createHighlightsManager(
     chapterNumber: number,
     highlights: ChapterHighlight[]
   ): Promise<void> => {
+    const address = createChapterHighlightsAddress(
+      translationId,
+      bookId,
+      chapterNumber
+    );
+    const chapterHighlightsSignal = getOrCreateChapterHighlightsSignal(address);
+    const normalized = normalizeHighlights(highlights);
+
+    // Optimistically update local state before waiting for persistence.
+    chapterHighlightsSignal.value = {
+      highlights: normalized,
+    };
+    loadedAddresses.add(address);
+
     if (!login.userId.value) {
       await login.login();
     }
@@ -347,12 +399,6 @@ export function createHighlightsManager(
       return;
     }
 
-    const address = createChapterHighlightsAddress(
-      translationId,
-      bookId,
-      chapterNumber
-    );
-    const normalized = normalizeHighlights(highlights);
     const payload = chapterHighlightsSchema.parse({
       highlights: normalized,
     });
@@ -360,9 +406,6 @@ export function createHighlightsManager(
     await os.recordData(userId, address, payload, {
       marker: `publicRead:highlights/${translationId}`,
     });
-
-    // Update cache with the saved highlights
-    highlightsCache.set(address, { highlights: normalized });
   };
 
   const highlightVerse = async (
@@ -400,14 +443,16 @@ export function createHighlightsManager(
       return;
     }
 
-    const current = await getChapterHighlights(
+    const current = getChapterHighlights(translationId, bookId, chapterNumber);
+    const address = createChapterHighlightsAddress(
       translationId,
       bookId,
       chapterNumber
     );
+    await awaitChapterLoad(address);
 
     const targetRanges = rangesFromVerseNumbers(deduplicatedVerseNumbers);
-    let updated = current.highlights.map(toRangeHighlight);
+    let updated = current.value.highlights.map(toRangeHighlight);
 
     for (const range of targetRanges) {
       updated = removeRangeFromHighlights(updated, range);
@@ -461,14 +506,16 @@ export function createHighlightsManager(
       return;
     }
 
-    const current = await getChapterHighlights(
+    const current = getChapterHighlights(translationId, bookId, chapterNumber);
+    const address = createChapterHighlightsAddress(
       translationId,
       bookId,
       chapterNumber
     );
+    await awaitChapterLoad(address);
 
     const targetRanges = rangesFromVerseNumbers(deduplicatedVerseNumbers);
-    let updated = current.highlights.map(toRangeHighlight);
+    let updated = current.value.highlights.map(toRangeHighlight);
 
     for (const range of targetRanges) {
       updated = removeRangeFromHighlights(updated, range);

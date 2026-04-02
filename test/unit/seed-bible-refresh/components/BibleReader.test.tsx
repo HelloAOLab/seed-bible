@@ -17,6 +17,7 @@ type ReaderFixture = {
   selectorState: BibleSelectorState;
   readingState: BibleReadingState;
   chapterData: Signal<TranslationBookChapter | null>;
+  highlights: Signal<BibleReadingState["highlights"]["value"]>;
   selectedVerses: BibleReadingState["selectedVerses"];
   selectedFootnote: Signal<SelectedFootnote | null>;
   selectVerse: jest.Mock;
@@ -98,6 +99,9 @@ function createFixture(): ReaderFixture {
   const selectedVerses = signal<BibleReadingState["selectedVerses"]["value"]>(
     []
   );
+  const highlights = signal<BibleReadingState["highlights"]["value"]>({
+    highlights: [],
+  });
   const selectedFootnote = signal<SelectedFootnote | null>(null);
   const selectVerse = jest.fn();
   const selectFootnote = jest.fn();
@@ -136,9 +140,7 @@ function createFixture(): ReaderFixture {
     loadPreviousChapter: jest.fn(async () => undefined),
     loadNextChapter: jest.fn(async () => undefined),
     selectTranslationAndChapter: jest.fn(async () => undefined),
-    highlights: signal({
-      highlights: [],
-    }),
+    highlights,
   } as BibleReadingState;
 
   const selectorState = {
@@ -154,6 +156,7 @@ function createFixture(): ReaderFixture {
     selectorState,
     readingState,
     chapterData,
+    highlights,
     selectedVerses,
     selectedFootnote,
     selectVerse,
@@ -307,9 +310,9 @@ describe("BibleReader", () => {
   });
 
   it("applies sb-highlight-{colorId} class for color-id highlights", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { pane, selectorState, readingState, highlights } = createFixture();
 
-    readingState.highlights.value = {
+    highlights.value = {
       highlights: [
         {
           verse: 1,
@@ -336,9 +339,9 @@ describe("BibleReader", () => {
   });
 
   it("applies inline custom highlight colors when highlight uses a custom color", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { pane, selectorState, readingState, highlights } = createFixture();
 
-    readingState.highlights.value = {
+    highlights.value = {
       highlights: [
         {
           verse: [1, 2],
@@ -366,6 +369,40 @@ describe("BibleReader", () => {
     expect(firstVerse?.classList.contains("sb-highlight-yellow")).toBe(false);
     expect(firstVerse?.style.backgroundColor).toBe("rgb(18, 52, 86)");
     expect(firstVerse?.style.color).toBe("rgb(171, 205, 239)");
+  });
+
+  it("reacts to highlight signal changes for the current chapter", () => {
+    const { pane, selectorState, readingState, highlights } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    let verses = container.querySelectorAll(".sb-verse");
+    let firstVerse = verses[0] as HTMLElement | undefined;
+    expect(firstVerse?.classList.contains("sb-highlight-yellow")).toBe(false);
+
+    act(() => {
+      highlights.value = {
+        highlights: [
+          {
+            verse: 1,
+            colorId: "yellow",
+          },
+        ],
+      };
+    });
+
+    verses = container.querySelectorAll(".sb-verse");
+    firstVerse = verses[0] as HTMLElement | undefined;
+    expect(firstVerse?.classList.contains("sb-highlight-yellow")).toBe(true);
   });
 
   it("renders chapter content parts and inline markers", () => {

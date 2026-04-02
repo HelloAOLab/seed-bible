@@ -11,6 +11,7 @@ import {
   type WebResponseMap,
   createDefaultManagerResponseMap,
 } from "./testUtils/mockBibleApiData";
+import { signal } from "@preact/signals";
 
 let webGetMock: jest.Mock;
 let logSpy: jest.SpyInstance;
@@ -59,7 +60,7 @@ function createDataManager() {
 
 function createHighlightsManagerMock() {
   return {
-    getChapterHighlights: jest.fn().mockResolvedValue({ highlights: [] }),
+    getChapterHighlights: jest.fn().mockReturnValue(signal({ highlights: [] })),
   };
 }
 

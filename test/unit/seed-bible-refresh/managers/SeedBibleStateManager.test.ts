@@ -7,10 +7,11 @@ import {
   type WebResponseMap,
   createDefaultManagerResponseMap,
 } from "./testUtils/mockBibleApiData";
+import { signal } from "@preact/signals";
 
 const mockSaveReadingHistory = jest.fn();
 const mockHighlightsManager = {
-  getChapterHighlights: jest.fn(),
+  getChapterHighlights: jest.fn().mockReturnValue(signal({ highlights: [] })),
   saveChapterHighlights: jest.fn(),
 };
 const mockSessionsManager = {
@@ -45,6 +46,9 @@ beforeEach(() => {
   logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
   mockSaveReadingHistory.mockReset();
   mockHighlightsManager.getChapterHighlights.mockReset();
+  mockHighlightsManager.getChapterHighlights.mockReturnValue(
+    signal({ highlights: [] })
+  );
   mockHighlightsManager.saveChapterHighlights.mockReset();
   mockSessionsManager.createSession.mockReset();
   mockSessionsManager.joinSession.mockReset();

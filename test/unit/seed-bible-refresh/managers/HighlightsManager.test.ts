@@ -10,6 +10,10 @@ describe("HighlightsManager", () => {
   let recordDataMock: jest.Mock;
   let warnSpy: jest.SpyInstance;
   let login: jest.Mocked<LoginManager>;
+  const flushPromises = async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  };
 
   beforeEach(() => {
     getDataMock = jest.fn().mockResolvedValue(null);
@@ -40,9 +44,9 @@ describe("HighlightsManager", () => {
     login.userId.value = null;
     const manager = createHighlightsManager(login);
 
-    const result = await manager.getChapterHighlights("BSB", "GEN", 1);
+    const result = manager.getChapterHighlights("BSB", "GEN", 1);
 
-    expect(result).toEqual({ highlights: [] });
+    expect(result.value).toEqual({ highlights: [] });
     expect(getDataMock).not.toHaveBeenCalled();
   });
 
@@ -58,10 +62,11 @@ describe("HighlightsManager", () => {
     });
     const manager = createHighlightsManager(login);
 
-    const result = await manager.getChapterHighlights("BSB", "GEN", 1);
+    const result = manager.getChapterHighlights("BSB", "GEN", 1);
+    await flushPromises();
 
     expect(getDataMock).toHaveBeenCalledWith("user-1", "highlights:BSB/GEN/1");
-    expect(result).toEqual({
+    expect(result.value).toEqual({
       highlights: [
         { colorId: "color-1", verse: 3 },
         { colorId: "color-2", verse: [5, 7] },
@@ -81,9 +86,10 @@ describe("HighlightsManager", () => {
     });
     const manager = createHighlightsManager(login);
 
-    const result = await manager.getChapterHighlights("BSB", "GEN", 1);
+    const result = manager.getChapterHighlights("BSB", "GEN", 1);
+    await flushPromises();
 
-    expect(result).toEqual({
+    expect(result.value).toEqual({
       highlights: [
         { colorId: "color-4", verse: [1, 2] },
         { colorId: "color-5", verse: [3, 5] },
@@ -101,15 +107,18 @@ describe("HighlightsManager", () => {
     const manager = createHighlightsManager(login);
 
     // First call fetches from network
-    await manager.getChapterHighlights("BSB", "GEN", 1);
+    manager.getChapterHighlights("BSB", "GEN", 1);
+    await flushPromises();
     expect(getDataMock).toHaveBeenCalledTimes(1);
 
     // Second call returns cached result without calling os.getData
-    await manager.getChapterHighlights("BSB", "GEN", 1);
+    manager.getChapterHighlights("BSB", "GEN", 1);
+    await flushPromises();
     expect(getDataMock).toHaveBeenCalledTimes(1);
 
     // Different chapter makes a new network call
-    await manager.getChapterHighlights("BSB", "GEN", 2);
+    manager.getChapterHighlights("BSB", "GEN", 2);
+    await flushPromises();
     expect(getDataMock).toHaveBeenCalledTimes(2);
   });
 
@@ -120,9 +129,10 @@ describe("HighlightsManager", () => {
     });
     const manager = createHighlightsManager(login);
 
-    const result = await manager.getChapterHighlights("BSB", "GEN", 1);
+    const result = manager.getChapterHighlights("BSB", "GEN", 1);
+    await flushPromises();
 
-    expect(result).toEqual({ highlights: [] });
+    expect(result.value).toEqual({ highlights: [] });
     expect(warnSpy).toHaveBeenCalled();
   });
 
@@ -221,8 +231,11 @@ describe("HighlightsManager", () => {
     const manager = createHighlightsManager(login);
 
     // Load and cache initial highlights
-    const initial = await manager.getChapterHighlights("BSB", "GEN", 1);
-    expect(initial).toEqual({ highlights: [{ colorId: "color-1", verse: 3 }] });
+    const initial = manager.getChapterHighlights("BSB", "GEN", 1);
+    await flushPromises();
+    expect(initial.value).toEqual({
+      highlights: [{ colorId: "color-1", verse: 3 }],
+    });
     expect(getDataMock).toHaveBeenCalledTimes(1);
 
     // Save new highlights
@@ -232,11 +245,35 @@ describe("HighlightsManager", () => {
     expect(recordDataMock).toHaveBeenCalledTimes(1);
 
     // Subsequent getChapterHighlights call should return cached (saved) highlights without another network call
-    const updated = await manager.getChapterHighlights("BSB", "GEN", 1);
-    expect(updated).toEqual({
+    const updated = manager.getChapterHighlights("BSB", "GEN", 1);
+    await flushPromises();
+    expect(updated.value).toEqual({
       highlights: [{ colorId: "color-2", verse: [5, 7] }],
     });
     expect(getDataMock).toHaveBeenCalledTimes(1); // Still just 1 call
+  });
+
+  it("saveChapterHighlights() updates local signal before persistence resolves", async () => {
+    let resolveRecordData: (() => void) | null = null;
+    recordDataMock.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveRecordData = resolve;
+        })
+    );
+    const manager = createHighlightsManager(login);
+    const chapterHighlights = manager.getChapterHighlights("BSB", "GEN", 1);
+
+    const savePromise = manager.saveChapterHighlights("BSB", "GEN", 1, [
+      { colorId: "color-9", verse: [2, 4] },
+    ]);
+
+    expect(chapterHighlights.value).toEqual({
+      highlights: [{ colorId: "color-9", verse: [2, 4] }],
+    });
+
+    (resolveRecordData as any)?.();
+    await savePromise;
   });
 
   it("highlightVerse() adds or overrides overlapping highlights", async () => {

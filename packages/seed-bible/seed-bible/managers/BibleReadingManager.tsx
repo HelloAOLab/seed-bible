@@ -45,7 +45,7 @@ export interface BibleReadingState {
   availableTranslations: Signal<AvailableTranslations | null>;
   translationBooks: Signal<TranslationBooks | null>;
   chapterData: Signal<TranslationBookChapter | null>;
-  highlights: Signal<ChapterHighlights>;
+  highlights: ReadonlySignal<ChapterHighlights>;
   selectedVerses: Signal<BibleSelectedVerse[]>;
   selectedFootnote: ReadonlySignal<SelectedFootnote | null>;
   loading: Signal<boolean>;
@@ -152,10 +152,14 @@ export function createBibleReadingState(
   const chapterData = signal<TranslationBookChapter | null>(null);
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const selectedFootnoteId = signal<number | null>(null);
-  const highlights = signal<ChapterHighlights>({
-    highlights: [],
-  });
-  let highlightLoadVersion = 0;
+  const activeChapterHighlights = signal<Signal<ChapterHighlights>>(
+    signal<ChapterHighlights>({
+      highlights: [],
+    })
+  );
+  const highlights = computed<ChapterHighlights>(
+    () => activeChapterHighlights.value.value
+  );
   const loading = signal<boolean>(true);
   const error = signal<string | null>(null);
   const scrollPosition = signal<number>(0);
@@ -250,7 +254,6 @@ export function createBibleReadingState(
         chapterNumber.value !== nextChapterNumber;
       if (didChapterChange) {
         scrollPosition.value = 0;
-        highlights.value = { highlights: [] };
       }
 
       translationId.value = nextTranslationId;
@@ -269,32 +272,11 @@ export function createBibleReadingState(
       );
     }
 
-    refreshChapterHighlights(nextTranslationId, nextBookId, nextChapterNumber);
-  };
-
-  const refreshChapterHighlights = async (
-    nextTranslationId: string,
-    nextBookId: string,
-    nextChapterNumber: number
-  ) => {
-    const loadVersion = ++highlightLoadVersion;
-
-    try {
-      const chapterHighlights = await highlightsManager.getChapterHighlights(
-        nextTranslationId,
-        nextBookId,
-        nextChapterNumber
-      );
-
-      if (loadVersion === highlightLoadVersion) {
-        highlights.value = chapterHighlights;
-      }
-    } catch (err) {
-      if (loadVersion === highlightLoadVersion) {
-        highlights.value = { highlights: [] };
-      }
-      console.warn("Failed to load chapter highlights:", err);
-    }
+    activeChapterHighlights.value = highlightsManager.getChapterHighlights(
+      nextTranslationId,
+      nextBookId,
+      nextChapterNumber
+    );
   };
 
   const highlightSelectedVerses = async (
@@ -332,12 +314,6 @@ export function createBibleReadingState(
       verseNumbers,
       highlightDetails
     );
-
-    await refreshChapterHighlights(
-      activeTranslationId,
-      activeBookId,
-      activeChapterNumber
-    );
   };
 
   const unhighlightSelectedVerses = async (): Promise<void> => {
@@ -371,12 +347,6 @@ export function createBibleReadingState(
       activeBookId,
       activeChapterNumber,
       verseNumbers
-    );
-
-    await refreshChapterHighlights(
-      activeTranslationId,
-      activeBookId,
-      activeChapterNumber
     );
   };
 

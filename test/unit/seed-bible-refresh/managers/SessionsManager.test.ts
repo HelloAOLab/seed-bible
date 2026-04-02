@@ -200,7 +200,9 @@ describe("SessionsManager", () => {
       })),
     };
     mockHighlightsManager = {
-      getChapterHighlights: jest.fn().mockResolvedValue({ highlights: [] }),
+      getChapterHighlights: jest
+        .fn()
+        .mockReturnValue(signal({ highlights: [] })),
     };
 
     (globalThis as any).os = {

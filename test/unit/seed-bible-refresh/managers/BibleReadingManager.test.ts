@@ -21,6 +21,7 @@ import {
   translations,
   type WebResponseMap,
 } from "./testUtils/mockBibleApiData";
+import { signal } from "@preact/signals";
 
 const nivTranslation = translations.translations[1]!;
 
@@ -57,9 +58,11 @@ function createDataManager() {
 
 function createHighlightsManagerMock() {
   return {
-    getChapterHighlights: jest.fn().mockResolvedValue({
-      highlights: [{ colorId: "yellow", verse: 1 }],
-    }),
+    getChapterHighlights: jest
+      .fn()
+      .mockReturnValue(
+        signal({ highlights: [{ colorId: "yellow", verse: 1 }] })
+      ),
     highlightVerses: jest.fn().mockResolvedValue(undefined),
     unhighlightVerses: jest.fn().mockResolvedValue(undefined),
     highlightVerse: jest.fn().mockResolvedValue(undefined),
@@ -149,14 +152,16 @@ describe("createBibleReadingState", () => {
   it("highlightSelectedVerses() applies a highlight to selected verses and reloads chapter highlights", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const highlightsManager = createHighlightsManagerMock();
-    highlightsManager.getChapterHighlights
-      .mockResolvedValueOnce({ highlights: [] })
-      .mockResolvedValueOnce({
+    const chapterHighlights = signal({ highlights: [] as any[] });
+    highlightsManager.getChapterHighlights.mockReturnValue(chapterHighlights);
+    highlightsManager.highlightVerses.mockImplementation(async () => {
+      chapterHighlights.value = {
         highlights: [
           { colorId: "yellow", verse: 1 },
           { colorId: "yellow", verse: 2 },
         ],
-      });
+      };
+    });
 
     const state = createRawBibleReadingState(
       createDataManager(),
@@ -196,7 +201,7 @@ describe("createBibleReadingState", () => {
       { colorId: "yellow" }
     );
 
-    expect(highlightsManager.getChapterHighlights).toHaveBeenCalledTimes(2);
+    expect(highlightsManager.getChapterHighlights).toHaveBeenCalledTimes(1);
     expect(state.highlights.value).toEqual({
       highlights: [
         { colorId: "yellow", verse: 1 },
@@ -208,14 +213,16 @@ describe("createBibleReadingState", () => {
   it("unhighlightSelectedVerses() removes highlights from selected verses and reloads chapter highlights", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const highlightsManager = createHighlightsManagerMock();
-    highlightsManager.getChapterHighlights
-      .mockResolvedValueOnce({
-        highlights: [
-          { colorId: "yellow", verse: 1 },
-          { colorId: "yellow", verse: 2 },
-        ],
-      })
-      .mockResolvedValueOnce({ highlights: [] });
+    const chapterHighlights = signal({
+      highlights: [
+        { colorId: "yellow", verse: 1 },
+        { colorId: "yellow", verse: 2 },
+      ],
+    });
+    highlightsManager.getChapterHighlights.mockReturnValue(chapterHighlights);
+    highlightsManager.unhighlightVerses.mockImplementation(async () => {
+      chapterHighlights.value = { highlights: [] };
+    });
 
     const state = createRawBibleReadingState(
       createDataManager(),
@@ -254,7 +261,7 @@ describe("createBibleReadingState", () => {
       [1, 2]
     );
 
-    expect(highlightsManager.getChapterHighlights).toHaveBeenCalledTimes(2);
+    expect(highlightsManager.getChapterHighlights).toHaveBeenCalledTimes(1);
     expect(state.highlights.value).toEqual({ highlights: [] });
   });
 
