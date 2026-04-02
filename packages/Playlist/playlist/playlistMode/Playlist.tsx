@@ -173,6 +173,9 @@ const Playlist = (props: any) => {
 
   const [layersWarning, setLayersWarning] = useState(false);
 
+  const [dataWarning, setDataWarning] = useState(false);
+  const [loseProgressWarning, setLoseProgressWarning] = useState(false);
+
   const [openAttachLink, setOpenAttachLink] = useState(false);
   const [attachment, setAttachment] = useState(G[`${id}Attachments`] || null);
   const [openModal, setOpenModal] = useState(false);
@@ -905,8 +908,99 @@ const Playlist = (props: any) => {
     return [shared, owned];
   }, [query, playLists]);
 
+  const onClickSave = () => {
+    if (layers) {
+      const checkEmbed = playList.some(
+        (ele: any) => !ele.additionalInfo.layers?.length
+      );
+      if (checkEmbed) {
+        setLayersWarning(true);
+        return;
+      }
+    }
+    setOpenAttachLink(false);
+    onSave(
+      attachment,
+      checklist,
+      readingPlan,
+      currentFormat,
+      selectedColor,
+      selectedIcon,
+      selectedColor === customColor,
+      description,
+      selectedIcon === customIcon && !!selectedIcon,
+      selectedTags,
+      layers,
+      publishAccess
+    );
+    thisBot.resetPlaylistGlobalStateVars();
+  };
+
   return (
     <>
+      {(dataWarning || loseProgressWarning) && (
+        <Modal
+          title={dataWarning ? t("dataWarning") : t("loseProgressWarning")}
+          onClose={() => {
+            if (loading) return;
+            setDataWarning(false);
+            setLoseProgressWarning(false);
+          }}
+          showIcon={false}
+        >
+          <h2 style={{ fontSize: "1rem", marginBottom: "1rem" }}>
+            {dataWarning ? t("dataWarningMsg") : t("loseProgressWarningMsg")}
+          </h2>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+          >
+            <Button
+              loading={loading}
+              secondary
+              onClick={async () => {
+                setLoading(true);
+                if (dataWarning) {
+                  await G.OnClickSend(true);
+                  setTimeout(() => {
+                    onClickSave();
+                  }, 100);
+                } else {
+                  thisBot.resetPlaylistGlobalStateVars();
+                  setOpenAttachLink(false);
+                  setHasGenrated(false);
+                  onClose();
+                }
+                setDataWarning(false);
+                setLoseProgressWarning(false);
+                setLoading(false);
+              }}
+            >
+              {dataWarning ? t("addAndSave") : t("confirm")}
+            </Button>
+            {dataWarning && (
+              <Button
+                disabled={loading}
+                secondary
+                onClick={() => {
+                  onClickSave();
+                }}
+              >
+                {t("ignoreAndSave")}
+              </Button>
+            )}
+            <Button
+              secondaryAlt
+              disabled={loading}
+              onClick={() => {
+                setDataWarning(false);
+                setLoseProgressWarning(false);
+              }}
+            >
+              {t("cancel")}
+            </Button>
+          </div>
+        </Modal>
+      )}
       {layersWarning && (
         <Modal
           title={t("notEmbeddedItemsFound")}
@@ -1515,30 +1609,11 @@ const Playlist = (props: any) => {
             <div className="add-playlist-actions">
               <Button
                 onClick={() => {
-                  if (layers) {
-                    const checkEmbed = playList.some(
-                      (ele: any) => !ele.additionalInfo.layers?.length
-                    );
-                    if (checkEmbed) {
-                      setLayersWarning(true);
-                      return;
-                    }
+                  if (G.RetainDataData) {
+                    setDataWarning(true);
+                  } else {
+                    onClickSave();
                   }
-                  setOpenAttachLink(false);
-                  onSave(
-                    attachment,
-                    checklist,
-                    readingPlan,
-                    currentFormat,
-                    selectedColor,
-                    selectedIcon,
-                    selectedColor === customColor,
-                    description,
-                    selectedIcon === customIcon && !!selectedIcon,
-                    selectedTags,
-                    layers,
-                    publishAccess
-                  );
                 }}
                 secondary
               >
@@ -1551,9 +1626,7 @@ const Playlist = (props: any) => {
               )}
               <Button
                 onClick={() => {
-                  setOpenAttachLink(false);
-                  setHasGenrated(false);
-                  onClose();
+                  setLoseProgressWarning(true);
                 }}
                 secondaryAlt
               >

@@ -880,8 +880,23 @@ const AttachLink = (props: any) => {
     return false;
   }, [name, selectedType, data]);
 
-  const onClickSend = async () => {
-    if (!name.trim()) {
+  const onClickSend = async (isForce = true) => {
+    let finalName = name;
+
+    if (isForce) {
+      finalName = getCurrentTime();
+      switch (selectedType) {
+        case "RECORDING":
+          if (recordingType === "video") {
+            finalName += "-video-recording";
+          } else {
+            finalName += "-audio-recording";
+          }
+          break;
+      }
+    }
+
+    if (!finalName.trim()) {
       if (
         !(
           selectedType === "SCRIPTURE" &&
@@ -899,7 +914,7 @@ const AttachLink = (props: any) => {
 
     if (selectedType === "TAG") {
       if (onAddTags) {
-        onAddTags([name]);
+        onAddTags([finalName]);
         setName("");
       }
       return;
@@ -920,7 +935,7 @@ const AttachLink = (props: any) => {
       let finalData = data;
 
       const fileSave: any = await os.recordFile(G.RECORD_STOREKEY, finalData, {
-        name: name,
+        name: finalName,
         mimeType: finalData?.type || "audio/webm",
       });
 
@@ -937,7 +952,7 @@ const AttachLink = (props: any) => {
       onReleaseData();
       G.isRecording = false;
       G.hasRecording = false;
-      return attachLink(name, url, {
+      return attachLink(finalName, url, {
         isValid: true,
         type: recordingType === "audio" ? RECORDING_VALUE : "video-recording",
       });
@@ -1000,7 +1015,7 @@ const AttachLink = (props: any) => {
         G.isRecording = false;
         G.hasRecording = false;
         attachLink(
-          name || link,
+          finalName || link,
           link,
           linkState.type ? linkState : { isValid: true, type: mediaType }
         );
@@ -1014,8 +1029,10 @@ const AttachLink = (props: any) => {
           allItems.push(...file.data);
         });
       }
-      if (name.trim()) {
-        allItems.push(...thisBot.getSuggestedListItems({ searchText: name }));
+      if (finalName.trim()) {
+        allItems.push(
+          ...thisBot.getSuggestedListItems({ searchText: finalName })
+        );
       }
       setName("");
       massAdd(allItems);
@@ -1038,7 +1055,7 @@ const AttachLink = (props: any) => {
       onReleaseData();
       G.isRecording = false;
       G.hasRecording = false;
-      return attachLink(name, link, {
+      return attachLink(finalName, link, {
         isValid: true,
         subType: textType,
         type: "text",
@@ -1059,6 +1076,8 @@ const AttachLink = (props: any) => {
       G.FireEditContent = onClickSend;
     }
   }, [onClickSend]);
+
+  G.OnClickSend = onClickSend;
 
   return (
     <>
