@@ -16,6 +16,12 @@ import {
   createDefaultManagerResponseMap,
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
+import {
+  makeUrl,
+  createResponse,
+  translations,
+  nivBooks,
+} from "./testUtils/mockBibleApiData";
 
 let webGetMock: jest.Mock;
 
@@ -262,5 +268,91 @@ describe("createBibleSelectorState", () => {
     expect(readingState.translationId.value).toBe("NIV");
     expect(readingState.bookId.value).toBe("MAT");
     expect(readingState.chapterNumber.value).toBe(1);
+  });
+
+  describe("default translation ID (BSB) fallback behavior", () => {
+    let nestedLogSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      nestedLogSpy = jest
+        .spyOn(console, "log")
+        .mockImplementation(() => undefined);
+    });
+
+    afterEach(() => {
+      nestedLogSpy.mockRestore();
+    });
+
+    function createManagersWithTablessPane() {
+      const dataManager = createDataManager();
+      const tabsManager = createTabs(
+        dataManager,
+        createHighlightsManagerMock() as any
+      );
+      const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
+
+      const initialPane = panesManager.panes.value[0]!;
+      panesManager.openInPane(initialPane.id, { component: null });
+      const tablessPane = panesManager.panes.value[0]!;
+
+      return { dataManager, tabsManager, panesManager, tablessPane };
+    }
+
+    it("setOpen() selects DEFAULT_TRANSLATION_ID (BSB) when no pane has a tab but BSB is in available translations", async () => {
+      setWebResponses(createDefaultManagerResponseMap());
+      const { dataManager, tabsManager, panesManager, tablessPane } =
+        createManagersWithTablessPane();
+
+      const selector = createBibleSelectorState(
+        dataManager,
+        tabsManager,
+        panesManager
+      );
+      await selector.setOpen(true, tablessPane);
+
+      expect(selector.isOpen.value).toBe(true);
+      expect(selector.selectedTranslationId.value).toBe("BSB");
+    });
+
+    it("setOpen() uses first available translation when DEFAULT_TRANSLATION_ID (BSB) is not in available translations", async () => {
+      setWebResponses({
+        [makeUrl("/api/available_translations.json")]: createResponse({
+          translations: [translations.translations[1]!],
+        }),
+        [makeUrl("/api/NIV/books.json")]: createResponse(nivBooks),
+      });
+      const { dataManager, tabsManager, panesManager, tablessPane } =
+        createManagersWithTablessPane();
+
+      const selector = createBibleSelectorState(
+        dataManager,
+        tabsManager,
+        panesManager
+      );
+      await selector.setOpen(true, tablessPane);
+
+      expect(selector.isOpen.value).toBe(true);
+      expect(selector.selectedTranslationId.value).toBe("NIV");
+    });
+
+    it("setOpen() sets an error when no translations are available", async () => {
+      setWebResponses({
+        [makeUrl("/api/available_translations.json")]: createResponse({
+          translations: [],
+        }),
+      });
+      const { dataManager, tabsManager, panesManager, tablessPane } =
+        createManagersWithTablessPane();
+
+      const selector = createBibleSelectorState(
+        dataManager,
+        tabsManager,
+        panesManager
+      );
+      await selector.setOpen(true, tablessPane);
+
+      expect(selector.error.value).toBe("No available translations found.");
+      expect(selector.isOpen.value).toBe(true);
+    });
   });
 });
