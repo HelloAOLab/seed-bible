@@ -32,6 +32,9 @@ jobs:
       - name: Check TypeScript
         run: |
           pnpm check:ts
+      - name: Test
+        run: |
+          pnpm test
       - name: Package
         run: |
           pnpm package
