@@ -323,7 +323,7 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual([]);
   });
 
-  it("clears decorations when the chapter changes", async () => {
+  it("doesn't clear decorations when the chapter changes", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
@@ -334,7 +334,17 @@ describe("createBibleReadingState", () => {
 
     await state.selectChapter("GEN", 2);
 
-    expect(state.decorations.value).toEqual([]);
+    expect(state.decorations.value).toEqual([
+      {
+        id: expect.any(String),
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1, 2],
+        className: "sb-test-decoration",
+        style: undefined,
+      },
+    ]);
   });
 
   it("loads books for BSB on initialization", async () => {

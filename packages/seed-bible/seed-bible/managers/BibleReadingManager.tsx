@@ -303,7 +303,6 @@ export function createBibleReadingState(
       bookId.value = nextBookId;
       chapterNumber.value = nextChapterNumber;
       chapterData.value = chapter;
-      decorations.value = [];
       selectedFootnoteId.value = null;
       clearSelectedVerses();
     });
