@@ -352,6 +352,64 @@ describe("createBibleReadingState", () => {
     ]);
   });
 
+  it("decorateVerses() can store a start/end index range with target content", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    const decorationId = state.decorateVerses("AAB", "GEN", 1, [1], {
+      targetContent: "created",
+      startIndex: 20,
+      endIndex: 45,
+      className: "sb-piece-decoration",
+    });
+
+    expect(state.decorations.value).toEqual<VerseDecoration[]>([
+      {
+        id: decorationId,
+        translationId: "AAB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        targetContent: "created",
+        startIndex: 20,
+        endIndex: 45,
+        className: "sb-piece-decoration",
+      },
+    ]);
+  });
+
+  it("decorateVerses() can store a start/end index range without target content", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    const decorationId = state.decorateVerses("AAB", "GEN", 1, [1], {
+      startIndex: 31,
+      endIndex: 42,
+      className: "sb-index-range-decoration",
+      style: {
+        backgroundColor: "yellow",
+      },
+    });
+
+    expect(state.decorations.value).toEqual<VerseDecoration[]>([
+      {
+        id: decorationId,
+        translationId: "AAB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        startIndex: 31,
+        endIndex: 42,
+        className: "sb-index-range-decoration",
+        style: {
+          backgroundColor: "yellow",
+        },
+      },
+    ]);
+  });
+
   it("clears decorations when the chapter changes", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const state = createBibleReadingState(createDataManager());

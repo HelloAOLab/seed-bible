@@ -45,6 +45,8 @@ export interface VerseDecoration {
   chapterNumber: number;
   verses: number[];
   targetContent?: string;
+  startIndex?: number;
+  endIndex?: number;
   className?: string;
   style?: JSX.CSSProperties;
 
@@ -56,6 +58,8 @@ export interface VerseDecoration {
 
 export interface VerseDecorationInput {
   targetContent?: string;
+  startIndex?: number;
+  endIndex?: number;
   className?: string;
   style?: JSX.CSSProperties;
 

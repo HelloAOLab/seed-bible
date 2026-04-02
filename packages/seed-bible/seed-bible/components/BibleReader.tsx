@@ -47,6 +47,98 @@ type VerseSegment =
   | { type: "inline"; parts: ChapterVerse["content"] }
   | { type: "poetry"; lines: VerseLine[] };
 
+interface ContentDecorationRange {
+  start: number;
+  end: number;
+  className: string;
+  style?: JSX.CSSProperties;
+}
+
+function getInlineText(part: ChapterVerse["content"][0]): string {
+  if (typeof part === "string") {
+    return part;
+  }
+
+  if (part && typeof part === "object" && "text" in part) {
+    return typeof part.text === "string" ? part.text : "";
+  }
+
+  return "";
+}
+
+function getVersePlainText(content: ChapterVerse["content"]): string {
+  return content.map((part) => getInlineText(part)).join("");
+}
+
+function hasContentTargeting(decoration: VerseDecoration): boolean {
+  const hasTargetContent =
+    typeof decoration.targetContent === "string" &&
+    decoration.targetContent.trim().length > 0;
+  const hasIndexRange =
+    typeof decoration.startIndex === "number" ||
+    typeof decoration.endIndex === "number";
+
+  return hasTargetContent || hasIndexRange;
+}
+
+function toContentDecorationRanges(
+  verseText: string,
+  decorations: VerseDecoration[]
+): ContentDecorationRange[] {
+  const verseLength = verseText.length;
+
+  const clampIndex = (value: number) =>
+    Math.max(0, Math.min(verseLength, Math.floor(value)));
+
+  return decorations.flatMap((decoration) => {
+    const className = decoration.className?.trim() ?? "";
+    const style = decoration.style;
+
+    const hasStart = typeof decoration.startIndex === "number";
+    const hasEnd = typeof decoration.endIndex === "number";
+    const windowStart = hasStart ? clampIndex(decoration.startIndex!) : 0;
+    const windowEnd = hasEnd ? clampIndex(decoration.endIndex!) : verseLength;
+
+    if (windowEnd <= windowStart) {
+      return [];
+    }
+
+    const targetContent = decoration.targetContent?.trim();
+    if (!targetContent) {
+      return [
+        {
+          start: windowStart,
+          end: windowEnd,
+          className,
+          style,
+        },
+      ];
+    }
+
+    const windowText = verseText.slice(windowStart, windowEnd);
+    const ranges: ContentDecorationRange[] = [];
+    let searchStart = 0;
+
+    while (searchStart <= windowText.length) {
+      const matchStartInWindow = windowText.indexOf(targetContent, searchStart);
+      if (matchStartInWindow === -1) {
+        break;
+      }
+
+      const absoluteStart = windowStart + matchStartInWindow;
+      ranges.push({
+        start: absoluteStart,
+        end: absoluteStart + targetContent.length,
+        className,
+        style,
+      });
+      searchStart = matchStartInWindow + targetContent.length;
+    }
+
+    return ranges;
+  });
+}
+
 function splitVerseIntoSegments(
   content: ChapterVerse["content"]
 ): VerseSegment[] {
@@ -143,51 +235,26 @@ function renderInlineContent(
   part: ChapterVerse["content"][0],
   index: number,
   onOpenFootnote: (noteId: number) => void,
-  contentDecorations: VerseDecoration[] = []
+  contentRanges: ContentDecorationRange[] = [],
+  partStartIndex = 0
 ) {
   const splitTextByDecorations = (text: string) => {
-    const ranges = contentDecorations
-      .flatMap((decoration, decorationIndex) => {
-        const targetContent = decoration.targetContent?.trim();
-        if (!targetContent) {
-          return [];
-        }
-
-        const matches: Array<{
-          start: number;
-          end: number;
-          className: string;
-          style?: JSX.CSSProperties;
-          decorationIndex: number;
-        }> = [];
-        let searchStart = 0;
-
-        while (searchStart <= text.length) {
-          const matchStart = text.indexOf(targetContent, searchStart);
-          if (matchStart === -1) {
-            break;
-          }
-
-          matches.push({
-            start: matchStart,
-            end: matchStart + targetContent.length,
-            className: decoration.className?.trim() ?? "",
-            style: decoration.style,
-            decorationIndex,
-          });
-          searchStart = matchStart + targetContent.length;
-        }
-
-        return matches;
-      })
+    const partEndIndex = partStartIndex + text.length;
+    const ranges = contentRanges
+      .filter(
+        (range) => range.end > partStartIndex && range.start < partEndIndex
+      )
+      .map((range) => ({
+        start: Math.max(0, range.start - partStartIndex),
+        end: Math.min(text.length, range.end - partStartIndex),
+        className: range.className,
+        style: range.style,
+      }))
       .sort((left, right) => {
         if (left.start !== right.start) {
           return left.start - right.start;
         }
-        if (left.end !== right.end) {
-          return left.end - right.end;
-        }
-        return left.decorationIndex - right.decorationIndex;
+        return left.end - right.end;
       });
 
     if (ranges.length === 0) {
@@ -382,8 +449,7 @@ function renderChapterContent(
 
   const getDecorationPresentation = (verseDecorations: VerseDecoration[]) => {
     const matchingDecorations = verseDecorations.filter((decoration) => {
-      const targetContent = decoration.targetContent?.trim();
-      return !targetContent;
+      return !hasContentTargeting(decoration);
     });
 
     return matchingDecorations.reduce(
@@ -474,11 +540,19 @@ function renderChapterContent(
       const verseDecorations = getVerseDecorations(value.number);
       const decorationPresentation =
         getDecorationPresentation(verseDecorations);
-      const contentDecorations = verseDecorations.filter(
-        (decoration) =>
-          typeof decoration.targetContent === "string" &&
-          decoration.targetContent.trim().length > 0
+      const contentDecorations = verseDecorations.filter((decoration) =>
+        hasContentTargeting(decoration)
       );
+      const contentRanges = toContentDecorationRanges(
+        getVersePlainText(value.content),
+        contentDecorations
+      );
+      let currentTextOffset = 0;
+      const getPartTextStartIndex = (part: ChapterVerse["content"][0]) => {
+        const startIndex = currentTextOffset;
+        currentTextOffset += getInlineText(part).length;
+        return startIndex;
+      };
       const verseClassName = [
         "sb-verse",
         hasPoetry ? "sb-verse-poetry" : "",
@@ -528,7 +602,8 @@ function renderChapterContent(
                         part,
                         segIndex * 10000 + partIndex,
                         (noteId) => onOpenFootnote(noteId, value),
-                        contentDecorations
+                        contentRanges,
+                        getPartTextStartIndex(part)
                       )
                     )}
                   </span>
@@ -557,7 +632,8 @@ function renderChapterContent(
                         part,
                         partIndex,
                         (noteId) => onOpenFootnote(noteId, value),
-                        contentDecorations
+                        contentRanges,
+                        getPartTextStartIndex(part)
                       )
                     )}
                   </span>
@@ -588,7 +664,8 @@ function renderChapterContent(
                 part,
                 index,
                 (noteId) => onOpenFootnote(noteId, value),
-                contentDecorations
+                contentRanges,
+                getPartTextStartIndex(part)
               )
             )}
           </span>

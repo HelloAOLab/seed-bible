@@ -596,6 +596,83 @@ describe("BibleReader", () => {
     expect(piece?.style.backgroundColor).toBe("rgb(1, 2, 3)");
   });
 
+  it("applies targetContent only within start/end indexes", () => {
+    const { pane, selectorState, readingState, decorations } = createFixture();
+
+    decorations.value = [
+      {
+        id: "decoration-indexed-target",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        targetContent: "created",
+        startIndex: 31,
+        endIndex: 43,
+        className: "sb-indexed-target-decoration",
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const decoratedPieces = Array.from(
+      container.querySelectorAll(".sb-indexed-target-decoration")
+    ) as HTMLElement[];
+    expect(decoratedPieces).toHaveLength(1);
+    expect(decoratedPieces[0]?.textContent).toBe("created");
+  });
+
+  it("applies start/end-only decoration to just that index range", () => {
+    const { pane, selectorState, readingState, decorations } = createFixture();
+
+    decorations.value = [
+      {
+        id: "decoration-index-range",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        startIndex: 31,
+        endIndex: 42,
+        className: "sb-index-range-decoration",
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const decoratedPieces = Array.from(
+      container.querySelectorAll(".sb-index-range-decoration")
+    ) as HTMLElement[];
+    expect(decoratedPieces).toHaveLength(1);
+    expect(decoratedPieces[0]?.textContent).toBe("God created");
+
+    const firstVerseDecorator = container
+      .querySelectorAll(".sb-verse")[0]
+      ?.querySelector(".sb-verse-decorator") as HTMLElement | null;
+    expect(firstVerseDecorator).not.toBeNull();
+    expect(
+      firstVerseDecorator?.classList.contains("sb-index-range-decoration")
+    ).toBe(false);
+  });
+
   it("renders chapter content parts and inline markers", () => {
     const { pane, selectorState, readingState } = createFixture();
 
