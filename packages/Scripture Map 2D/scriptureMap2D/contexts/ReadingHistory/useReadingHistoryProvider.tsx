@@ -130,22 +130,34 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
   const [readingEventsByDay, setReadingEventsByDay] =
     useState<ReadingEventsByDay | null>(null);
 
+  useEffect(() => {
+    console.log(
+      `[Debug] useReadingHistoryProvider useEffect for readingHistoryUserFilters`,
+      {
+        readingHistoryUserFilters: new Map(readingHistoryUserFilters),
+      }
+    );
+  }, [readingHistoryUserFilters]);
+
   const handleUserLoggedIn = useCallback(() => {
     if (!myAuthBotId) {
       setMyAuthBotId(authBot.id);
+      console.log(
+        `[Debug] useReadingHistoryProvider calling setReadingHistoryUserFilters from handleUserLoggedIn`
+      );
       setReadingHistoryUserFilters((prevFilters) => {
         const filtersCopy = new Map(prevFilters);
         filtersCopy.set(authBot.id, true);
         return filtersCopy;
       });
     }
-  }, [myAuthBotId]);
+  }, [myAuthBotId, setReadingHistoryUserFilters, setMyAuthBotId]);
 
   const trySetMyAuthBotId = useCallback(() => {
     if (authBot) {
       handleUserLoggedIn();
     }
-  }, [readingHistoryUserFilters, myAuthBotId]);
+  }, [handleUserLoggedIn]);
 
   const fetchUsersDataMap = useCallback(async () => {
     if (!myAuthBotId) return null;
@@ -198,6 +210,10 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
   }, [fetchUsersDataMap]);
 
   useEffect(() => {
+    trySetMyAuthBotId();
+  }, []);
+
+  useEffect(() => {
     const unsubscribeUserLoggedIn = bibleVizUtilsEventManager.subscribe(
       BibleVizUtilsEvents.OnUserLoggedIn,
       handleUserLoggedIn
@@ -208,13 +224,11 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
         refreshUsersDataMap
       );
 
-    trySetMyAuthBotId();
-
     return () => {
       unsubscribeUserLoggedIn();
       unsubscribeSubscriptionsChanged();
     };
-  }, [handleUserLoggedIn, trySetMyAuthBotId]);
+  }, [handleUserLoggedIn, refreshUsersDataMap]);
 
   useEffect(() => {
     let isMounted = true;
@@ -306,43 +320,42 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
   }, [timelineRange]);
 
   const tryUpdateReadingHistoryUsersFilters = useCallback(() => {
-    const next = new Map(readingHistoryUserFilters);
+    setReadingHistoryUserFilters((prev) => {
+      const next = new Map(prev);
 
-    let changed = false;
-    const usersAuthIds = Array.from(usersDataMap.keys());
+      let changed = false;
+      const usersAuthIds = Array.from(usersDataMap.keys());
 
-    usersAuthIds.forEach((userId) => {
-      if (!next.has(userId)) {
-        next.set(userId, false);
-        changed = true;
+      usersAuthIds.forEach((userId) => {
+        if (!next.has(userId)) {
+          next.set(userId, userId === myAuthBotId);
+          changed = true;
+        }
+      });
+
+      Array.from(next.keys()).forEach((key) => {
+        if (
+          key !== myAuthBotId &&
+          !usersAuthIds.some((userId) => userId === key)
+        ) {
+          next.delete(key);
+          changed = true;
+        }
+      });
+
+      if (changed) {
+        console.log(
+          `[Debug] useReadingHistoryProvider calling setReadingHistoryUserFilters from tryUpdateReadingHistoryUsersFilters`
+        );
+        return next;
       }
-    });
 
-    Array.from(next.keys()).forEach((key) => {
-      if (!usersAuthIds.some((userId) => userId === key)) {
-        next.delete(key);
-        changed = true;
-      }
+      return prev;
     });
-
-    if (changed) {
-      setReadingHistoryUserFilters(next);
-    }
-  }, [readingHistoryUserFilters, usersDataMap]);
+  }, [usersDataMap, setReadingHistoryUserFilters, myAuthBotId]);
 
   useEffect(() => {
     tryUpdateReadingHistoryUsersFilters();
-
-    // const requestPersmissions = async () => {
-    //   const authIds = Array.from(usersDataMap.keys());
-    //   for(const authId of authIds)
-    //   {
-    //     const result = await os.grantInstAdminPermission(authId);
-    //     console.log(`[Debug] ReadingHistoryContext useEffect for usersDataMap`, {result, authId, usersDataMap});
-    //   }
-    // }
-
-    // requestPersmissions();
   }, [tryUpdateReadingHistoryUsersFilters]);
 
   useEffect(() => {
@@ -485,9 +498,13 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
           copy.set(key, !copy.get(key));
         }
       }
+      console.log(
+        `[Debug] useReadingHistoryProvider calling setReadingHistoryUserFilters from handleReadingHistoryUserSelectorClick`
+      );
+
       setReadingHistoryUserFilters(copy);
     },
-    [readingHistoryUserFilters]
+    [readingHistoryUserFilters, setReadingHistoryUserFilters]
   );
 
   const handleReadingHistoryRangeSelectorClick = useCallback<
