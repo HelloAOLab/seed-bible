@@ -44,6 +44,7 @@ export interface VerseDecoration {
   bookId: string;
   chapterNumber: number;
   verses: number[];
+  targetContent?: string;
   className?: string;
   style?: JSX.CSSProperties;
 
@@ -54,6 +55,7 @@ export interface VerseDecoration {
 }
 
 export interface VerseDecorationInput {
+  targetContent?: string;
   className?: string;
   style?: JSX.CSSProperties;
 

@@ -547,6 +547,55 @@ describe("BibleReader", () => {
     ).toBe("2");
   });
 
+  it("applies targetContent decorations only to the matching text", () => {
+    const { pane, selectorState, readingState, decorations } = createFixture();
+
+    decorations.value = [
+      {
+        id: "decoration-piece",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        targetContent: "God created",
+        className: "sb-piece-decoration",
+        style: {
+          backgroundColor: "rgb(1, 2, 3)",
+        },
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const firstVerse = container.querySelectorAll(".sb-verse")[0] as
+      | HTMLElement
+      | undefined;
+    const firstVerseDecorator = firstVerse?.querySelector(
+      ".sb-verse-decorator"
+    ) as HTMLElement | null;
+
+    expect(firstVerseDecorator).not.toBeNull();
+    expect(firstVerseDecorator?.classList.contains("sb-piece-decoration")).toBe(
+      false
+    );
+
+    const piece = firstVerse?.querySelector(
+      ".sb-piece-decoration"
+    ) as HTMLElement | null;
+    expect(piece).not.toBeNull();
+    expect(piece?.textContent).toBe("God created");
+    expect(piece?.style.backgroundColor).toBe("rgb(1, 2, 3)");
+  });
+
   it("renders chapter content parts and inline markers", () => {
     const { pane, selectorState, readingState } = createFixture();
 

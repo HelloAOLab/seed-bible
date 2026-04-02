@@ -323,6 +323,35 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual([]);
   });
 
+  it("decorateVerses() can target specific content in the verse", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    const decorationId = state.decorateVerses("AAB", "GEN", 1, [1], {
+      targetContent: "created the",
+      className: "sb-piece-decoration",
+      style: {
+        textDecoration: "underline",
+      },
+    });
+
+    expect(state.decorations.value).toEqual<VerseDecoration[]>([
+      {
+        id: decorationId,
+        translationId: "AAB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        targetContent: "created the",
+        className: "sb-piece-decoration",
+        style: {
+          textDecoration: "underline",
+        },
+      },
+    ]);
+  });
+
   it("clears decorations when the chapter changes", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const state = createBibleReadingState(createDataManager());

@@ -142,10 +142,135 @@ function splitVerseIntoSegments(
 function renderInlineContent(
   part: ChapterVerse["content"][0],
   index: number,
-  onOpenFootnote: (noteId: number) => void
+  onOpenFootnote: (noteId: number) => void,
+  contentDecorations: VerseDecoration[] = []
 ) {
+  const splitTextByDecorations = (text: string) => {
+    const ranges = contentDecorations
+      .flatMap((decoration, decorationIndex) => {
+        const targetContent = decoration.targetContent?.trim();
+        if (!targetContent) {
+          return [];
+        }
+
+        const matches: Array<{
+          start: number;
+          end: number;
+          className: string;
+          style?: JSX.CSSProperties;
+          decorationIndex: number;
+        }> = [];
+        let searchStart = 0;
+
+        while (searchStart <= text.length) {
+          const matchStart = text.indexOf(targetContent, searchStart);
+          if (matchStart === -1) {
+            break;
+          }
+
+          matches.push({
+            start: matchStart,
+            end: matchStart + targetContent.length,
+            className: decoration.className?.trim() ?? "",
+            style: decoration.style,
+            decorationIndex,
+          });
+          searchStart = matchStart + targetContent.length;
+        }
+
+        return matches;
+      })
+      .sort((left, right) => {
+        if (left.start !== right.start) {
+          return left.start - right.start;
+        }
+        if (left.end !== right.end) {
+          return left.end - right.end;
+        }
+        return left.decorationIndex - right.decorationIndex;
+      });
+
+    if (ranges.length === 0) {
+      return [
+        {
+          text,
+          className: "",
+          style: undefined as JSX.CSSProperties | undefined,
+        },
+      ];
+    }
+
+    const boundaries = new Set<number>([0, text.length]);
+    for (const range of ranges) {
+      boundaries.add(range.start);
+      boundaries.add(range.end);
+    }
+
+    const sortedBoundaries = Array.from(boundaries).sort((a, b) => a - b);
+    const segments: Array<{
+      text: string;
+      className: string;
+      style?: JSX.CSSProperties;
+    }> = [];
+
+    for (let i = 0; i < sortedBoundaries.length - 1; i += 1) {
+      const segmentStart = sortedBoundaries[i]!;
+      const segmentEnd = sortedBoundaries[i + 1]!;
+      if (segmentStart === segmentEnd) {
+        continue;
+      }
+
+      const segmentText = text.slice(segmentStart, segmentEnd);
+      if (!segmentText) {
+        continue;
+      }
+
+      const activeRanges = ranges.filter(
+        (range) => segmentStart >= range.start && segmentEnd <= range.end
+      );
+      const className = activeRanges
+        .map((range) => range.className)
+        .filter((name) => name.length > 0)
+        .join(" ");
+      const style = activeRanges.reduce<JSX.CSSProperties | undefined>(
+        (merged, range) => {
+          if (!range.style) {
+            return merged;
+          }
+
+          return {
+            ...(merged ?? {}),
+            ...range.style,
+          };
+        },
+        undefined
+      );
+
+      segments.push({
+        text: segmentText,
+        className,
+        style,
+      });
+    }
+
+    return segments;
+  };
+
   if (typeof part === "string") {
-    return <span key={index}>{part}</span>;
+    const segments = splitTextByDecorations(part);
+    return (
+      <span key={index}>
+        {segments.map((segment, segmentIndex) => (
+          <span
+            key={`${index}-${segmentIndex}`}
+            className={segment.className}
+            style={segment.style}
+          >
+            {segment.text}
+          </span>
+        ))}
+      </span>
+    );
   }
 
   if (!part || typeof part !== "object") {
@@ -157,9 +282,19 @@ function renderInlineContent(
     if (part.wordsOfJesus) {
       className += " sb-words-of-jesus";
     }
+
+    const segments = splitTextByDecorations(part.text);
     return (
       <span key={index} className={className.trim()}>
-        {part.text}
+        {segments.map((segment, segmentIndex) => (
+          <span
+            key={`${index}-${segmentIndex}`}
+            className={segment.className}
+            style={segment.style}
+          >
+            {segment.text}
+          </span>
+        ))}
       </span>
     );
   }
@@ -245,14 +380,11 @@ function renderChapterContent(
     } as const;
   };
 
-  const getDecorationPresentation = (verseNumber: number) => {
-    const matchingDecorations = decorations.filter(
-      (decoration) =>
-        decoration.translationId === chapterData.translation.id &&
-        decoration.bookId === chapterData.book.id &&
-        decoration.chapterNumber === chapterData.chapter.number &&
-        decoration.verses.includes(verseNumber)
-    );
+  const getDecorationPresentation = (verseDecorations: VerseDecoration[]) => {
+    const matchingDecorations = verseDecorations.filter((decoration) => {
+      const targetContent = decoration.targetContent?.trim();
+      return !targetContent;
+    });
 
     return matchingDecorations.reduce(
       (presentation, decoration) => ({
@@ -270,6 +402,16 @@ function renderChapterContent(
         className: "",
         style: undefined as JSX.CSSProperties | undefined,
       }
+    );
+  };
+
+  const getVerseDecorations = (verseNumber: number) => {
+    return decorations.filter(
+      (decoration) =>
+        decoration.translationId === chapterData.translation.id &&
+        decoration.bookId === chapterData.book.id &&
+        decoration.chapterNumber === chapterData.chapter.number &&
+        decoration.verses.includes(verseNumber)
     );
   };
 
@@ -329,7 +471,14 @@ function renderChapterContent(
       const hasPoetry = segments.some((s) => s.type === "poetry");
       const highlight = getVerseHighlight(value.number);
       const highlightPresentation = getHighlightPresentation(highlight);
-      const decorationPresentation = getDecorationPresentation(value.number);
+      const verseDecorations = getVerseDecorations(value.number);
+      const decorationPresentation =
+        getDecorationPresentation(verseDecorations);
+      const contentDecorations = verseDecorations.filter(
+        (decoration) =>
+          typeof decoration.targetContent === "string" &&
+          decoration.targetContent.trim().length > 0
+      );
       const verseClassName = [
         "sb-verse",
         hasPoetry ? "sb-verse-poetry" : "",
@@ -378,7 +527,8 @@ function renderChapterContent(
                       renderInlineContent(
                         part,
                         segIndex * 10000 + partIndex,
-                        (noteId) => onOpenFootnote(noteId, value)
+                        (noteId) => onOpenFootnote(noteId, value),
+                        contentDecorations
                       )
                     )}
                   </span>
@@ -403,8 +553,11 @@ function renderChapterContent(
                       <sup className="sb-verse-number">{value.number}</sup>
                     )}
                     {line.parts.map((part, partIndex) =>
-                      renderInlineContent(part, partIndex, (noteId) =>
-                        onOpenFootnote(noteId, value)
+                      renderInlineContent(
+                        part,
+                        partIndex,
+                        (noteId) => onOpenFootnote(noteId, value),
+                        contentDecorations
                       )
                     )}
                   </span>
@@ -431,8 +584,11 @@ function renderChapterContent(
           <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
             <sup className="sb-verse-number">{value.number}</sup>
             {value.content.map((part, index) =>
-              renderInlineContent(part, index, (noteId) =>
-                onOpenFootnote(noteId, value)
+              renderInlineContent(
+                part,
+                index,
+                (noteId) => onOpenFootnote(noteId, value),
+                contentDecorations
               )
             )}
           </span>
