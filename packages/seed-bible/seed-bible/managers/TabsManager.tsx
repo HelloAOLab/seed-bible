@@ -1,4 +1,4 @@
-import { signal } from "@preact/signals";
+import { computed, effect, signal } from "@preact/signals";
 import type { BibleDataManager } from "./BibleDataManager";
 import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
 import {
@@ -80,6 +80,9 @@ export function createTabs(
     createInitialTabs(dataManager, highlightsManager)
   );
   const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
+  const selectedTab = computed(
+    () => tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null
+  );
 
   const syncSelectedTabFromConfig = async () => {
     const selectedTab =
@@ -92,10 +95,6 @@ export function createTabs(
     const requestedBookId = getInitialFirstTabBookId();
     const requestedChapter = getInitialFirstTabChapter();
     const readingState = selectedTab.readingState;
-
-    if (readingState.translationId.value !== requestedTranslation) {
-      await readingState.selectTranslation(requestedTranslation);
-    }
 
     const books = readingState.translationBooks.value?.books ?? [];
     const selectedBook =
@@ -115,14 +114,45 @@ export function createTabs(
         : firstChapterNumber;
 
     if (
+      readingState.translationId.value === requestedTranslation &&
       readingState.bookId.value === requestedBookId &&
       readingState.chapterNumber.value === nextChapter
     ) {
       return;
     }
 
-    await readingState.selectChapter(requestedBookId, nextChapter);
+    console.log("Syncing selected tab reading state to match configBot tags:", {
+      requestedTranslation,
+      requestedBookId,
+      requestedChapter,
+    });
+    await readingState.selectTranslationAndChapter(
+      requestedTranslation,
+      requestedBookId,
+      nextChapter
+    );
   };
+
+  effect(() => {
+    const selectedBookId = selectedTab.value?.readingState.bookId.value;
+    const selectedChapter = selectedTab.value?.readingState.chapterNumber.value;
+    const selectedTranslation =
+      selectedTab.value?.readingState.translationId.value;
+    console.log("selected tab changed:", {
+      selectedTranslation,
+      selectedBookId,
+      selectedChapter,
+    });
+    configBot.tags.book = selectedBookId;
+    configBot.tags.chapter = selectedChapter;
+
+    if (
+      configBot.tags.translation ||
+      selectedTranslation !== DEFAULT_TRANSLATION_ID
+    ) {
+      configBot.tags.translation = selectedTranslation;
+    }
+  });
 
   os.addBotListener(configBot, "onBotChanged", async (that: unknown) => {
     const changedTagsSource =

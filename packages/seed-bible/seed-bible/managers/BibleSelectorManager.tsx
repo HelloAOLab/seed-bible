@@ -307,15 +307,11 @@ export function createBibleSelectorState(
     panesManager.selectPane(pane.value.id);
 
     if (pane.value.tab) {
-      if (
-        pane.value.tab.readingState.translationId.value !==
-        selectedTranslationId.value
-      ) {
-        await pane.value.tab.readingState.selectTranslation(
-          selectedTranslationId.value
-        );
-      }
-      await pane.value.tab.readingState.selectChapter(selectedBookId, chapter);
+      await pane.value.tab.readingState.selectTranslationAndChapter(
+        selectedTranslationId.value,
+        selectedBookId,
+        chapter
+      );
       setOpen(false);
       return;
     }
@@ -325,13 +321,11 @@ export function createBibleSelectorState(
       tabId: newTab.id,
     });
 
-    if (
-      newTab.readingState.translationId.value !== selectedTranslationId.value
-    ) {
-      await newTab.readingState.selectTranslation(selectedTranslationId.value);
-    }
-
-    await newTab.readingState.selectChapter(selectedBookId, chapter);
+    await newTab.readingState.selectTranslationAndChapter(
+      selectedTranslationId.value,
+      selectedBookId,
+      chapter
+    );
     setOpen(false);
   };
 

@@ -60,23 +60,23 @@ export function Tabs(props: TabsProps) {
   const isLayoutMenuOpen = useSignal(false);
   const isJoinSessionModalOpen = useSignal(false);
   const joinSessionId = useSignal("");
-  const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
-  const selectedBookId = selectedTab?.readingState.bookId.value ?? null;
-  const selectedChapter = selectedTab?.readingState.chapterNumber.value ?? null;
-  const selectedTranslation =
-    selectedTab?.readingState.translationId.value ?? null;
+  // const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
+  // const selectedBookId = selectedTab?.readingState.bookId.value ?? null;
+  // const selectedChapter = selectedTab?.readingState.chapterNumber.value ?? null;
+  // const selectedTranslation =
+  //   selectedTab?.readingState.translationId.value ?? null;
 
-  useEffect(() => {
-    configBot.tags.book = selectedBookId;
-    configBot.tags.chapter = selectedChapter;
+  // useEffect(() => {
+  //   configBot.tags.book = selectedBookId;
+  //   configBot.tags.chapter = selectedChapter;
 
-    if (
-      configBot.tags.translation ||
-      selectedTranslation !== DEFAULT_TRANSLATION_ID
-    ) {
-      configBot.tags.translation = selectedTranslation;
-    }
-  }, [selectedBookId, selectedChapter, selectedTranslation]);
+  //   if (
+  //     configBot.tags.translation ||
+  //     selectedTranslation !== DEFAULT_TRANSLATION_ID
+  //   ) {
+  //     configBot.tags.translation = selectedTranslation;
+  //   }
+  // }, [selectedBookId, selectedChapter, selectedTranslation]);
 
   const openJoinSessionModal = () => {
     openMenuTabId.value = null;
