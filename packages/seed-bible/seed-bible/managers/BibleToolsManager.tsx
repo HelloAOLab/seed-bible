@@ -7,6 +7,7 @@ import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import { sortBy } from "es-toolkit";
+import { highlightContainsVerse } from "seed-bible.managers.HighlightsManager";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ToolPredicateResult = boolean | ReadonlySignal<boolean>;
@@ -353,13 +354,39 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         />
       ),
       isVisible: (context) =>
-        context.readingState.selectedVerses.value.length > 0,
+        context.readingState.selectedVerses.value.length > 0 &&
+        context.readingState.selectedVerses.value.some((verse) => {
+          const existingHighlight =
+            context.readingState.highlights.value.highlights.find((h) =>
+              highlightContainsVerse(h, verse.verse.number)
+            );
+          return !existingHighlight || existingHighlight.colorId !== "yellow";
+        }),
       onSelect: (context) => {
         context.readingState.highlightSelectedVerses({
           colorId: "yellow",
         });
       },
     },
+    {
+      id: "clear-highlights",
+      priority: 375,
+      title: { key: "clearHighlights", defaultValue: "Clear Highlights" },
+      icon: () => <MaterialIcon>cancel</MaterialIcon>,
+      isVisible: (context) =>
+        context.readingState.selectedVerses.value.length > 0 &&
+        context.readingState.selectedVerses.value.some((verse) => {
+          const existingHighlight =
+            context.readingState.highlights.value.highlights.find((h) =>
+              highlightContainsVerse(h, verse.verse.number)
+            );
+          return !!existingHighlight;
+        }),
+      onSelect: (context) => {
+        context.readingState.unhighlightSelectedVerses();
+      },
+    },
+    // TODO: Add toolbar tools for highlighting with different colors
   ];
 }
 

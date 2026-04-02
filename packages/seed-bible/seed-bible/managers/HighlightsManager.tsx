@@ -44,6 +44,14 @@ type RangeHighlight = {
 const highlightStyleSchema = chapterHighlightSchema.omit({ verse: true });
 const verseNumbersSchema = z.array(z.number().int().positive());
 
+export function highlightContainsVerse(
+  highlight: ChapterHighlight,
+  verseNumber: number
+): boolean {
+  const range = toVerseRange(highlight.verse);
+  return verseNumber >= range.start && verseNumber <= range.end;
+}
+
 function toVerseRange(verse: Verse): VerseRange {
   if (typeof verse === "number") {
     return {
