@@ -334,13 +334,17 @@ function renderChapterContent(
         "sb-verse",
         hasPoetry ? "sb-verse-poetry" : "",
         isSelected ? "sb-verse-selected" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+      const verseDecoratorClassName = [
+        "sb-verse-decorator",
         highlightPresentation.className.trim(),
         decorationPresentation.className.trim(),
       ]
         .filter(Boolean)
         .join(" ");
-      const verseBaseStyle = {
-        cursor: "pointer",
+      const verseDecoratorStyle = {
         ...(highlightPresentation.style ?? {}),
         ...(decorationPresentation.style ?? {}),
       };
@@ -353,28 +357,32 @@ function renderChapterContent(
             onClick={(event: MouseEvent) => {
               onVerseClick(verse, event);
             }}
-            style={verseBaseStyle}
+            style={{
+              cursor: "pointer",
+            }}
             role="button"
             tabIndex={0}
           >
             {segments.map((segment, segIndex) => {
               if (segment.type === "inline") {
-                return segment.parts.map((part, partIndex) => {
-                  const content = renderInlineContent(
-                    part,
-                    segIndex * 10000 + partIndex,
-                    (noteId) => onOpenFootnote(noteId, value)
-                  );
-                  if (segIndex === 0 && partIndex === 0) {
-                    return (
-                      <>
-                        <sup className="sb-verse-number">{value.number}</sup>
-                        {content}
-                      </>
-                    );
-                  }
-                  return content;
-                });
+                return (
+                  <span
+                    key={`verse-${entryIndex}-seg-${segIndex}-inline`}
+                    className={verseDecoratorClassName}
+                    style={verseDecoratorStyle}
+                  >
+                    {segIndex === 0 && (
+                      <sup className="sb-verse-number">{value.number}</sup>
+                    )}
+                    {segment.parts.map((part, partIndex) =>
+                      renderInlineContent(
+                        part,
+                        segIndex * 10000 + partIndex,
+                        (noteId) => onOpenFootnote(noteId, value)
+                      )
+                    )}
+                  </span>
+                );
               }
               return segment.lines.map((line, lineIndex) => (
                 <span
@@ -387,14 +395,19 @@ function renderChapterContent(
                         : undefined,
                   }}
                 >
-                  {segIndex === 0 && lineIndex === 0 && (
-                    <sup className="sb-verse-number">{value.number}</sup>
-                  )}
-                  {line.parts.map((part, partIndex) =>
-                    renderInlineContent(part, partIndex, (noteId) =>
-                      onOpenFootnote(noteId, value)
-                    )
-                  )}
+                  <span
+                    className={verseDecoratorClassName}
+                    style={verseDecoratorStyle}
+                  >
+                    {segIndex === 0 && lineIndex === 0 && (
+                      <sup className="sb-verse-number">{value.number}</sup>
+                    )}
+                    {line.parts.map((part, partIndex) =>
+                      renderInlineContent(part, partIndex, (noteId) =>
+                        onOpenFootnote(noteId, value)
+                      )
+                    )}
+                  </span>
                 </span>
               ));
             })}
@@ -409,16 +422,20 @@ function renderChapterContent(
           onClick={(event: MouseEvent) => {
             onVerseClick(verse, event);
           }}
-          style={verseBaseStyle}
+          style={{
+            cursor: "pointer",
+          }}
           role="button"
           tabIndex={0}
         >
-          <sup className="sb-verse-number">{value.number}</sup>
-          {value.content.map((part, index) =>
-            renderInlineContent(part, index, (noteId) =>
-              onOpenFootnote(noteId, value)
-            )
-          )}
+          <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
+            <sup className="sb-verse-number">{value.number}</sup>
+            {value.content.map((part, index) =>
+              renderInlineContent(part, index, (noteId) =>
+                onOpenFootnote(noteId, value)
+              )
+            )}
+          </span>
         </span>
       );
     }
