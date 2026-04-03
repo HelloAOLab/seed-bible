@@ -120,5 +120,11 @@ registerExtension({
         );
       }
     });
+
+    return {
+      abc: () => {
+        console.log("This is an exported function from the example extension!");
+      },
+    };
   },
 });
