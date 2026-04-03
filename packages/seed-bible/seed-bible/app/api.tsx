@@ -2,7 +2,6 @@ import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import {
   getExtensionExports as getManagerExtensionExports,
   registerExtension as registerManagerExtension,
-  setupExtensionContext as setupManagerExtensionContext,
 } from "seed-bible.managers.ExtensionManager";
 import type {
   CleanupFunction,
@@ -27,8 +26,4 @@ export function registerExtension(
   extension: ExtensionRegistration
 ): CleanupFunction {
   return registerManagerExtension(extension);
-}
-
-export function setupExtensionContext(context: SeedBibleState) {
-  setupManagerExtensionContext(context);
 }

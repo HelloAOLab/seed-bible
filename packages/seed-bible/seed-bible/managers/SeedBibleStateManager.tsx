@@ -1,4 +1,3 @@
-import { setupExtensionContext } from "seed-bible.app.api";
 import { createBibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import {
@@ -30,6 +29,7 @@ import {
 } from "seed-bible.managers.ReadingHistoryManager";
 import {
   createExtensionManager,
+  setupExtensionContext,
   type ExtensionManager,
 } from "seed-bible.managers.ExtensionManager";
 import {

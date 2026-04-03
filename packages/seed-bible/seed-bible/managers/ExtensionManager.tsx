@@ -82,16 +82,10 @@ export class ExtensionInitalizer {
     return ExtensionInitalizer._instance;
   }
 
-  private readonly registeredExtensions = new Map<
-    string,
-    ExtensionRegistration
-  >();
-  private readonly extensionCleanupFunctions = new Map<
-    string,
-    CleanupFunction[]
-  >();
-  private readonly extensionExports = new Map<string, object>();
-  private readonly initializedExtensionIds = new Set<string>();
+  private registeredExtensions = new Map<string, ExtensionRegistration>();
+  private extensionCleanupFunctions = new Map<string, CleanupFunction[]>();
+  private extensionExports = new Map<string, object>();
+  private initializedExtensionIds = new Set<string>();
   private extensionContext: SeedBibleState | null = null;
 
   constructor() {}
