@@ -1,3 +1,7 @@
 {
+  "allBooks": "모든 책",
+  "newTestament": "신약",
+  "oldTestament": "구약",
+  "searchBook": "책 검색...",
   "settings": "설정"
 }
