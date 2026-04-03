@@ -72,6 +72,9 @@
       "seed-bible.managers.BibleToolsManager": [
         "./packages/seed-bible/seed-bible/managers/BibleToolsManager.tsx"
       ],
+      "seed-bible.managers.AnnotationsManager": [
+        "./packages/seed-bible/seed-bible/managers/AnnotationsManager.tsx"
+      ],
       "seed-bible.managers.ConfigManager": [
         "./packages/seed-bible/seed-bible/managers/ConfigManager.tsx"
       ],
