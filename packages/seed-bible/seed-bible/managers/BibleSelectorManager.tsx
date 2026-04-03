@@ -19,35 +19,75 @@ import {
 } from "@preact/signals";
 import { chunk } from "es-toolkit";
 
+/** Optional options used when opening the selector. */
 export interface BibleSelectorOptions {
+  /** Pane context to bind selector actions to. */
   pane?: Pane;
 }
 
+/**
+ * Reactive state + actions for the Bible selector overlay.
+ *
+ * The selector is pane-aware: chapter selections are applied to the bound pane
+ * (or a new tab may be created if the pane has no tab content yet).
+ */
 export interface BibleSelectorState {
+  /** Whether the selector overlay is currently open. */
   isOpen: Signal<boolean>;
+  /** Pane currently targeted by selector actions. */
   pane: Signal<Pane | null>;
+  /** Reading state for the active pane (null when pane has no tab). */
   readingState: ReadonlySignal<BibleReadingState | null>;
+  /** Active pane translation ID snapshot. */
   currentTranslationId: ReadonlySignal<string | null>;
+  /** Active pane book ID snapshot. */
   currentBookId: ReadonlySignal<string | null>;
+  /** Active pane chapter number snapshot. */
   currentChapterNumber: ReadonlySignal<number | null>;
 
+  /** Available translations loaded by the data manager. */
   availableTranslations: ReadonlySignal<Translation[]>;
 
+  /** True while selector is loading translation/book data. */
   loading: Signal<boolean>;
+  /** Last selector error message, if any. */
   error: Signal<string | null>;
+  /** Current book search text for filtering selector lists. */
   search: Signal<string>;
 
+  /** Translation currently selected in the selector UI. */
   selectedTranslationId: Signal<string | null>;
+  /** Translation metadata for `selectedTranslationId`. */
   selectedTranslation: Signal<Translation | null>;
+  /** Expanded book ID in selector accordions/lists. */
   expandedBookId: Signal<string | null>;
+  /** Loaded book metadata for selected translation. */
   selectedTranslationBooks: Signal<TranslationBooks | null>;
 
+  /** Filtered/grouped Old Testament books, chunked into responsive rows. */
   oldTestamentRows: ReadonlySignal<TranslationBook[][]>;
+  /** Filtered/grouped New Testament books, chunked into responsive rows. */
   newTestamentRows: ReadonlySignal<TranslationBook[][]>;
+
+  /**
+   * Opens/closes selector.
+   * When opening, optionally rebinds selector to a pane and synchronizes data.
+   */
   setOpen: (open: boolean, pane?: Pane) => Promise<void>;
+
+  /** Sets the current selector search query. */
   setSearch: (value: string) => void;
+
+  /** Toggles expanded state for a given book ID. */
   setExpandedBook: (bookId: string) => void;
+
+  /** Loads books for a selected translation in selector UI. */
   selectTranslation: (translationId: string) => Promise<void>;
+
+  /**
+   * Applies chapter selection to the bound pane/tab and closes selector.
+   * Creates a new tab if needed when the bound pane has no tab content.
+   */
   selectChapter: (bookId: string, chapterNumber: number) => void;
 }
 
@@ -74,6 +114,16 @@ function groupBooks(translationBooks: TranslationBooks | null, search: string) {
   };
 }
 
+/**
+ * Creates the Bible selector manager.
+ *
+ * Behavior summary:
+ * - Maintains selector open/close state and pane binding.
+ * - Synchronizes selector translation/book context from active pane reading state.
+ * - Supports browser history integration (`bibleSelectorOpen`) for back-button UX.
+ * - Computes responsive Old/New Testament rows based on viewport width.
+ * - Routes chapter selection into the bound pane/tab reading state.
+ */
 export function createBibleSelectorState(
   dataManager: BibleDataManager,
   tabsManager: TabsManager,
