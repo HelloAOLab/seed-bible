@@ -48,11 +48,24 @@ import {
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 
+/**
+ * Derived app-level state and high-level actions used by UI components.
+ *
+ * These values are mostly computed from lower-level managers and represent
+ * the currently active reading context and pane selection.
+ */
 export interface AppState {
+  /** True when multi-pane layouts are enabled by config. */
   panelsEnabled: ReadonlySignal<boolean>;
+  /** Currently selected reading tab, or null when no tab is available. */
   selectedTab: ReadonlySignal<ReaderTab | null>;
+  /** Effective pane list shown by the UI (single pane fallback when panels are disabled). */
   effectivePanes: ReadonlySignal<Pane[]>;
 
+  /**
+   * Snapshot of the current chapter selection for analytics and integrations.
+   * Null when there is no active tab/chapter.
+   */
   currentReadingState: ReadonlySignal<{
     tab: ReaderTab;
 
@@ -61,36 +74,71 @@ export interface AppState {
     chapterNumber: number | null;
   } | null>;
 
+  /** Selects a tab and synchronizes pane focus. */
   selectTab: (tabId: string) => void;
+  /** Creates a new tab and selects it. */
   addTab: () => void;
+  /** Opens an existing tab in a new attached pane. */
   openInNewPane: (tabId: string) => void;
+  /** Opens an existing tab in a detached pane. */
   openInDetachedPane: (tabId: string) => void;
+  /** Selects a pane and updates related UI state. */
   selectPane: (paneId: string) => void;
+  /** Creates a shared reading session and opens it in a new tab. */
   createSharedSession: () => Promise<BibleReadingSession>;
+  /** Joins an existing shared session and opens it in a new tab. */
   joinSharedSession: (id: string) => Promise<BibleReadingSession>;
 }
 
+/**
+ * Root state container for Seed Bible.
+ *
+ * This object aggregates all domain managers plus app-level computed state so
+ * components can consume one consistent source of truth.
+ */
 export interface SeedBibleState {
+  /** Bible API and translation/chapter data orchestration. */
   bibleData: BibleDataManager;
+  /** Persisted app configuration (layout, font size, etc.). */
   config: ConfigManager;
+  /** Theme manager plus derived CSS variables/classes for rendering. */
   theme: ThemeManager & {
     themeCssVariables: ReadonlySignal<string>;
     themeCssClasses: ReadonlySignal<string>;
   };
+  /** Sidebar/settings visibility manager. */
   sidebar: SidebarManager;
+  /** Reader tab lifecycle manager. */
   tabs: TabsManager;
+  /** Pane layout and detached pane manager. */
   panes: PanesManager;
+  /** Bible selector state for book/chapter picking. */
   selector: BibleSelectorState;
+  /** Dynamic tool registry used by reader panes/toolbars. */
   tools: ToolsManager;
+  /** Authentication and user profile manager. */
   login: LoginManager;
+  /** Reading history persistence and sync manager. */
   readingHistory: ReadingHistoryManager;
+  /** Verse highlight manager. */
   highlights: HighlightsManager;
+  /** Annotation manager for notes/metadata. */
   annotations: AnnotationsManager;
+  /** Shared reading sessions manager. */
   sessions: SessionsManager;
+  /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
+  /** Extension loading and runtime manager. */
   extensions: ExtensionManager;
 }
 
+/**
+ * Creates and wires the full Seed Bible application state graph.
+ *
+ * Manager dependencies are initialized in order, then composed into derived
+ * signals/actions that power the UI. The resulting state is also passed to
+ * extension context setup.
+ */
 export function createSeedBibleState(): SeedBibleState {
   const api = new FreeUseBibleAPI();
   const data = createBibleDataManager(api);
