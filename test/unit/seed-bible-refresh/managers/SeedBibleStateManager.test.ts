@@ -136,21 +136,6 @@ describe("createSeedBibleState", () => {
     expect(state.sessions).toBe(mockSessionsManager);
   });
 
-  it("registered extensions are initialized", async () => {
-    const state = await createState();
-    const init = jest.fn(() => [] as Array<() => void>);
-
-    const unregister = registerExtension({
-      id: "test.seed-bible.extension",
-      init,
-    });
-
-    expect(init).toHaveBeenCalledTimes(1);
-    expect(init).toHaveBeenCalledWith(state);
-
-    unregister();
-  });
-
   it("selecting a tab selects the tab and switches the pane to display the selected tab", async () => {
     const state = await createState();
 

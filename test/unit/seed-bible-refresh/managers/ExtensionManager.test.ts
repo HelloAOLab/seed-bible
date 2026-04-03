@@ -43,6 +43,7 @@ describe("ExtensionInitalizer", () => {
     initializer.setupExtensionContext(context);
 
     expect(init).toHaveBeenCalledTimes(1);
+    expect(init).toHaveBeenCalledWith(context, {});
   });
 
   it("supports registering extensions after context setup", () => {
@@ -56,6 +57,7 @@ describe("ExtensionInitalizer", () => {
     });
 
     expect(init).toHaveBeenCalledTimes(1);
+    expect(init).toHaveBeenCalledWith(context, {});
   });
 
   it("supports declaring extension dependencies", () => {
