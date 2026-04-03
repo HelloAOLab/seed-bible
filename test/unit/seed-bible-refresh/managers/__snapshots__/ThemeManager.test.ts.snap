@@ -1,0 +1,42 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ThemeManager CSS helpers generateThemeCssClasses generates a highlight class for each highlight color 1`] = `
+".sb-highlight-yellow {
+background-color: var(--sb-highlight-yellow-color);
+color: var(--sb-highlight-yellow-font-color);
+&.sb-words-of-jesus { 
+color: var(--sb-highlight-yellow-words-of-jesus-font-color);
+}
+ }
+.sb-highlight-mint {
+background-color: var(--sb-highlight-mint-color);
+color: var(--sb-highlight-mint-font-color);
+&.sb-words-of-jesus { 
+color: var(--sb-highlight-mint-words-of-jesus-font-color);
+}
+ }"
+`;
+
+exports[`ThemeManager CSS helpers generateThemeCssVariables converts theme variables into CSS custom properties 1`] = `
+"--sb-primary-color: #111111;
+--sb-primary-font-color: #ffffff;
+--sb-secondary-color: #222222;
+--sb-secondary-font-color: #eeeeee;
+--sb-tertiary-color: #333333;
+--sb-background: #fafafa;
+--sb-font-family: Test Sans;
+--sb-font-color: #121212;
+--sb-reader-background: #ffffff;
+--sb-tab-border: none;
+--sb-tab-background: inherit;
+--sb-tab-font-color: inherit;
+--sb-selected-tab-border: 1px solid #111111;
+--sb-selected-tab-background: #f5f5f5;
+--sb-selected-tab-font-color: #111111;
+--sb-highlight-yellow-color: #fff59d;
+--sb-highlight-yellow-font-color: #333333;
+--sb-highlight-yellow-words-of-jesus-font-color: #b45309;
+--sb-highlight-mint-color: #86efac;
+--sb-highlight-mint-font-color: #14532d;
+--sb-highlight-mint-words-of-jesus-font-color: #166534;"
+`;
