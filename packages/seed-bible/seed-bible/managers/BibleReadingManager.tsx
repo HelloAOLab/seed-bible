@@ -23,31 +23,51 @@ import type {
 } from "seed-bible.managers.HighlightsManager";
 
 export interface BibleSelectedVerse {
+  /** Book identifier (for example: GEN, MAT). */
   bookId: string;
+  /** 1-based chapter number in the selected book. */
   chapterNumber: number;
+  /** Verse payload as returned in chapter content. */
   verse: ChapterVerse;
+  /** Active translation ID at selection time. */
   translationId: string | null;
+  /** Optional X coordinate for contextual menu/tooltip anchoring. */
   selectionX?: number;
+  /** Optional Y coordinate for contextual menu/tooltip anchoring. */
   selectionY?: number;
+  /** Epoch timestamp indicating when the verse was selected. */
   selectedAt?: number;
 }
 
 export interface SelectedFootnote {
+  /** The selected footnote definition. */
   note: ChapterFootnote;
+  /** Verse that contains the selected footnote reference, if found. */
   verse: ChapterVerse | null;
+  /** Full chapter containing the selected footnote. */
   chapter: TranslationBookChapter;
 }
 
 export interface VerseDecoration {
+  /** Unique decoration identifier used for removal. */
   id: string;
+  /** Translation ID this decoration applies to. Null targets the current translation. */
   translationId: string | null;
+  /** Book ID this decoration applies to. */
   bookId: string;
+  /** Chapter number this decoration applies to. */
   chapterNumber: number;
+  /** One or more verse numbers to decorate. */
   verses: number[];
+  /** Optional text fragment to target inside the verse content. */
   targetContent?: string;
+  /** Optional character start index for range decorations. */
   startIndex?: number;
+  /** Optional character end index for range decorations. */
   endIndex?: number;
+  /** Optional CSS class to apply to the decorated verse/range. */
   className?: string;
+  /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
 
   /**
@@ -57,10 +77,15 @@ export interface VerseDecoration {
 }
 
 export interface VerseDecorationInput {
+  /** Optional text fragment to target inside the verse content. */
   targetContent?: string;
+  /** Optional character start index for range decorations. */
   startIndex?: number;
+  /** Optional character end index for range decorations. */
   endIndex?: number;
+  /** Optional CSS class to apply to the decorated verse/range. */
   className?: string;
+  /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
 
   /**
@@ -71,31 +96,82 @@ export interface VerseDecorationInput {
   preserveOnChapterChange?: boolean;
 }
 
+/**
+ * Reactive API for Bible reading navigation, selection, highlighting, and decorations.
+ *
+ * The state is initialized asynchronously by `createBibleReadingState()`.
+ * Consumers should observe `loading`/`error` and read `chapterData`/`translationBooks`
+ * signals to know when content is ready.
+ */
 export interface BibleReadingState {
+  /** Selected translation ID. Null while unresolved or endpoint-derived during startup. */
   translationId: Signal<string | null>;
+  /** Selected translation metadata derived from `translationBooks`. */
   translation: Signal<Translation | null>;
+  /** Selected book ID (for example: GEN, JHN). */
   bookId: Signal<string | null>;
+  /** Selected 1-based chapter number. */
   chapterNumber: Signal<number>;
+  /** Available translations from the current endpoint. */
   availableTranslations: Signal<AvailableTranslations | null>;
+  /** Books metadata for the currently selected translation. */
   translationBooks: Signal<TranslationBooks | null>;
+  /** Loaded chapter payload for the current translation/book/chapter. */
   chapterData: Signal<TranslationBookChapter | null>;
+  /** Highlights scoped to the active chapter. */
   highlights: ReadonlySignal<ChapterHighlights>;
+  /** Active transient verse decorations for rendering. */
   decorations: ReadonlySignal<VerseDecoration[]>;
+  /** Current multi-verse selection in the active chapter. */
   selectedVerses: Signal<BibleSelectedVerse[]>;
+  /** Currently selected footnote with resolved verse/chapter context. */
   selectedFootnote: ReadonlySignal<SelectedFootnote | null>;
+  /** True while async loading/navigation operations are in progress. */
   loading: Signal<boolean>;
+  /** Error message from the most recent failed operation, if any. */
   error: Signal<string | null>;
+  /** Scroll position snapshot for chapter restoration/UI syncing. */
   scrollPosition: Signal<number>;
+
+  /**
+   * Toggles a verse in the current selection.
+   * If the verse is already selected, it is removed; otherwise it is added with
+   * menu anchor coordinates and a timestamp.
+   */
   selectVerse: (
     verse: BibleSelectedVerse,
     selectionX: number,
     selectionY: number
   ) => void;
+
+  /** Selects a chapter footnote by note ID, or clears selection with `null`. */
   selectFootnote: (noteId: number | null) => void;
+
+  /**
+   * Applies a highlight style to all currently selected verses in the active chapter.
+   * Does nothing if no compatible selected verses exist.
+   */
   highlightSelectedVerses: (
     highlightDetails: Omit<ChapterHighlight, "verse">
   ) => Promise<void>;
+
+  /**
+   * Removes highlight data from all currently selected verses in the active chapter.
+   * Does nothing if no compatible selected verses exist.
+   */
   unhighlightSelectedVerses: () => Promise<void>;
+
+  /**
+   * Adds a visual decoration to one or more verses and returns a decoration ID.
+   *
+   * @param translationId Translation target for the decoration. Null targets the
+   * current translation.
+   * @param bookId Book target for the decoration.
+   * @param chapterNumber Chapter target for the decoration.
+   * @param verses Single verse number or verse number list.
+   * @param decoration Decoration style and targeting details.
+   * @returns Unique decoration ID used by `removeDecoration()`.
+   */
   decorateVerses: (
     translationId: string | null,
     bookId: string,
@@ -103,17 +179,39 @@ export interface BibleReadingState {
     verses: number | number[],
     decoration: VerseDecorationInput
   ) => string;
+
+  /** Removes a previously added decoration by ID. */
   removeDecoration: (decorationId: string) => void;
+
+  /** Clears all selected verses. */
   clearSelectedVerses: () => void;
+
+  /**
+   * Selects a translation and loads its first available chapter.
+   * Accepts either a translation ID or an endpoint URL that resolves translations.
+   */
   selectTranslation: (translation: string) => Promise<void>;
+
+  /**
+   * Selects translation + book + chapter in one operation.
+   * Accepts translation ID or endpoint URL and clamps chapter if out of range.
+   */
   selectTranslationAndChapter: (
     translationId: string,
     bookId: string,
     chapterNumber: number
   ) => Promise<void>;
+
+  /** Selects a book and loads its first chapter in the active translation. */
   selectBook: (book: string) => Promise<void>;
+
+  /** Selects and loads an explicit chapter in the active translation. */
   selectChapter: (book: string, chapter: number) => Promise<void>;
+
+  /** Loads the previous chapter relative to `chapterData` when available. */
   loadPreviousChapter: () => Promise<void>;
+
+  /** Loads the next chapter relative to `chapterData` when available. */
   loadNextChapter: () => Promise<void>;
 }
 
