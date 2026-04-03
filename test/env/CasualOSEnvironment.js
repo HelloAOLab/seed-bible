@@ -24,6 +24,7 @@ export default class CasualOSEnvironment extends TestEnvironment {
     await super.setup();
     this.global.uuid = uuid;
     this.global.os = {
+      syncConfigBotTagsToURL: () => {},
       appHooks: {
         ...appHooks,
         render,

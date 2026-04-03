@@ -64,6 +64,7 @@ importers:
       html2canvas:
         specifier: ^1.4.1
         version: 1.4.1
+      i18next:
       imagetracerjs:
         specifier: ^1.2.6
         version: 1.2.6

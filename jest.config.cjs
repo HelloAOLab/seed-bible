@@ -12,6 +12,8 @@ const config = {
     "^@packages/(.*)$": "<rootDir>/packages/$1",
     "^https:\\/\\/esm\\.helloao\\.org\\/vendor-\\w+\\.js$":
       "<rootDir>/lib/vendor.ts",
+    "^https:\\/\\/esm\\.sh\\/i18next@23.16.8$":
+      "<rootDir>/node_modules/i18next/index.js",
     ...pathsToModuleNameMapper(compilerOptions.paths, { prefix: "<rootDir>/" }),
   },
   testPathIgnorePatterns: ["/node_modules/", "/obsolete/"],
