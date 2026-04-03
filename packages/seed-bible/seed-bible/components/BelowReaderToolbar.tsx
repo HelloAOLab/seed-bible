@@ -1,6 +1,5 @@
 import {
   type ToolsManager,
-  type BibleBelowReaderToolbarTool,
   type ToolTitle,
 } from "seed-bible.managers.BibleToolsManager";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";

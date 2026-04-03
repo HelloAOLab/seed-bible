@@ -7,7 +7,6 @@ import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import {
   type ToolsManager,
-  type BibleEmptyPaneTool,
   type ToolTitle,
 } from "seed-bible.managers.BibleToolsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";

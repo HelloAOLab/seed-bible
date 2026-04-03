@@ -505,13 +505,16 @@ function updateSummaryTotals(summary: ReadingHistorySummary) {
  * @returns The most recent reading event, or null if no event was found.
  */
 function findMostRecentReadingEvent(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   events: SharedArray<SharedMap<any>>,
   userId: string,
   bookId: string,
   chapter: number,
   oldestTime: number
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): SharedMap<any> | null {
   for (let i = events.length - 1; i >= 0; i--) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const event: SharedMap<any> = events.type.get(i);
     if (event.get("end") < oldestTime) {
       break;

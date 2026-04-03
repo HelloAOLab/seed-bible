@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const SplitScreenIcon = ({ size = 24 }) => {
+export const SplitScreenIcon = ({ size = 24 }) => {
   const scale = size / 24;
 
   const styles = {

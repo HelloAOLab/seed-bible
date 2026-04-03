@@ -1,10 +1,9 @@
 import {
   type TranslationBookChapter,
   type ChapterVerse,
-  type ChapterFootnote,
 } from "seed-bible.managers.FreeUseBibleAPI";
 import type { JSX } from "preact";
-import { computed, useSignal } from "@preact/signals";
+import { computed } from "@preact/signals";
 import type {
   BibleReadingState,
   BibleSelectedVerse,

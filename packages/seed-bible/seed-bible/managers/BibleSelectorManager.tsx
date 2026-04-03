@@ -1,5 +1,4 @@
 import type {
-  AvailableTranslations,
   Translation,
   TranslationBook,
   TranslationBooks,
@@ -7,7 +6,6 @@ import type {
 import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
 import {
   type BibleReadingState,
-  createBibleReadingState,
   DEFAULT_TRANSLATION_ID,
 } from "seed-bible.managers.BibleReadingManager";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";

@@ -1,4 +1,4 @@
-import { computed, effect, signal, type Signal } from "@preact/signals";
+import { computed } from "@preact/signals";
 
 export interface ExtensionMeta {
   /**

@@ -10,6 +10,7 @@ export default defineConfig([
     "**/node_modules/**",
     "**/dist/**",
     "**/typings/**",
+    "**/obsolete/**",
     "tsc-silent.config.cjs",
     "jest.config.cjs",
     "babel.config.cjs",
@@ -51,15 +52,15 @@ export default defineConfig([
 
     rules: {
       // These rules should be fixed
-      "no-constant-binary-expression": "warn",
-      "no-constant-condition": "warn",
-      "@typescript-eslint/no-unused-expressions": "warn",
-      "@typescript-eslint/no-unused-vars": "warn",
-      "@typescript-eslint/no-explicit-any": "warn",
-      "no-empty": "warn",
-      "no-prototype-builtins": "warn",
-      "no-case-declarations": "warn",
-      "no-empty-pattern": "warn",
+      "no-constant-binary-expression": "error",
+      "no-constant-condition": "error",
+      "@typescript-eslint/no-unused-expressions": "error",
+      "@typescript-eslint/no-unused-vars": "error",
+      "@typescript-eslint/no-explicit-any": "error",
+      "no-empty": "error",
+      "no-prototype-builtins": "error",
+      "no-case-declarations": "error",
+      "no-empty-pattern": "error",
 
       // These rules can be ignored for now
       "prefer-const": [

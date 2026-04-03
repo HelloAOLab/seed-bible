@@ -19,7 +19,7 @@ declare module "https://esm.sh/*" {
   export function I18nextProvider(props: {
     i18n: I18nLike;
     children: unknown;
-  }): any;
+  }): Preact.JSX.Element;
   const defaultExport: I18nLike;
   export default defaultExport;
 

@@ -10,7 +10,7 @@ function OpenMapPortalIcon() {
   return <MaterialIcon>map</MaterialIcon>;
 }
 
-const cleanup = registerExtension({
+registerExtension({
   id: "example-extension",
   init: function* (context: SeedBibleState) {
     console.log("Example extension initialized with context:", context);

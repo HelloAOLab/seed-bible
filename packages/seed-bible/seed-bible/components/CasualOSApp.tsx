@@ -1,7 +1,5 @@
 import type { JSX, VNode } from "preact";
-import { debounce } from "es-toolkit";
-
-const { useEffect, useMemo } = os.appHooks;
+const { useEffect } = os.appHooks;
 
 async function renderApp(id: string, content: JSX.Element | VNode | string) {
   setTimeout(async () => {
