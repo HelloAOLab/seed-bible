@@ -24,6 +24,7 @@ const i18nUnusedKeysRule = createRule<Options, MessageIds>({
       unused_key: "Unused translation key: '{{key}}'.",
       config_error: "i18n lint rule configuration error: {{message}}",
     },
+    fixable: "code",
   },
   defaultOptions: [],
 
@@ -56,6 +57,14 @@ const i18nUnusedKeysRule = createRule<Options, MessageIds>({
             node,
             messageId: "unused_key",
             data: { key },
+            fix(fixer) {
+              const tokenAfter: any = context.sourceCode.getTokenAfter(node);
+              if (tokenAfter?.type === "Comma") {
+                return fixer.removeRange([node.range[0], tokenAfter.range[1]]);
+              } else {
+                return fixer.remove(node);
+              }
+            },
           });
         }
       },
