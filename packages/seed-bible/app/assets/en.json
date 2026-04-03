@@ -456,6 +456,12 @@
   "generate": "Generate",
   "layers": "layers",
   "removeAndSave": " Remove & save",
+  "addAndSave": "Add & save",
+  "ignoreAndSave": "Ignore & save",
+  "dataWarning": "Unsaved data",
+  "dataWarningMsg": "You have some unsaved data in attachment link. Please confirm the action below.",
+  "loseProgressWarning": "Lose progress",
+  "loseProgressWarningMsg": "This will lose all your changes. Are you sure?",
   "noEmbdedItemsMsg": "Some of your item are not embedded. Layers Should have all Embeded Items.",
   "annotationMode": "Annotation mode",
   "playlistMode": "Playlist mode",
@@ -812,5 +818,6 @@
   "traditionalOrderDesc": "The ordering found in most modern Christian Bibles",
   "youHaveNSubscriptions": "You have {{count}} subscriptions",
   "unknownUser": "Unknown User",
-  "anonymous": "Anonymous"
+  "anonymous": "Anonymous",
+  "alreadyAnnotatedThisItem": "You have already annotated this item."
 }

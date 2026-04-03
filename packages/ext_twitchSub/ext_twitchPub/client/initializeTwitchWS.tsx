@@ -156,6 +156,7 @@ const handleWS = async () => {
   }
 
   startWebSocketClient();
+  setTagMask(thisBot, "uiLoaded", true, "local");
 };
 
 handleWS();

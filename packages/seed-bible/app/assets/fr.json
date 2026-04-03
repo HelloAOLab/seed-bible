@@ -451,6 +451,12 @@
   "generate": "Générer",
   "layers": "Couches",
   "removeAndSave": "Supprimer et enregistrer",
+  "addAndSave": "Ajouter et enregistrer",
+  "ignoreAndSave": "Ignorer et enregistrer",
+  "dataWarning": "Données non enregistrées",
+  "dataWarningMsg": "Vous avez des données non enregistrées dans le lien de pièce jointe. Veuillez confirmer l'action ci-dessous.",
+  "loseProgressWarning": "Perdre la progression",
+  "loseProgressWarningMsg": "Cela supprimera toutes vos modifications. Êtes-vous sûr ?",
   "noEmbdedItemsMsg": "Certains de vos éléments ne sont pas intégrés. Les couches doivent avoir tous les éléments intégrés.",
   "annotationMode": "Mode annotation",
   "playlistMode": "Mode playlist",
@@ -808,5 +814,6 @@
   "traditionalOrderDesc": "L'ordre trouvé dans la plupart des Bibles chrétiennes modernes",
   "youHaveNSubscriptions": "Vous avez {{count}} abonnements",
   "unknownUser": "Utilisateur inconnu",
-  "anonymous": "Anonyme"
+  "anonymous": "Anonyme",
+  "alreadyAnnotatedThisItem": "Vous avez déjà annoté cet élément."
 }

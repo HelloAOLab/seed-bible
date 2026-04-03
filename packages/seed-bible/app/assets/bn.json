@@ -3,6 +3,12 @@
   "saveChanges": "পরিবর্তন সংরক্ষণ",
   "saveOrder": "ক্রম সংরক্ষণ",
   "saveAndAdd": "সংরক্ষণ ও যোগ করুন",
+  "addAndSave": "যোগ করুন ও সংরক্ষণ করুন",
+  "ignoreAndSave": "উপেক্ষা করুন ও সংরক্ষণ করুন",
+  "dataWarning": "অসংরক্ষিত ডেটা",
+  "dataWarningMsg": "সংযুক্তি লিঙ্কে আপনার কিছু অসংরক্ষিত ডেটা রয়েছে। নিচের কাজটি নিশ্চিত করুন।",
+  "loseProgressWarning": "অগ্রগতি হারান",
+  "loseProgressWarningMsg": "এতে আপনার সমস্ত পরিবর্তন হারিয়ে যাবে। আপনি কি নিশ্চিত?",
   "cancel": "বাতিল",
   "close": "বন্ধ",
   "delete": "মুছুন",
@@ -278,5 +284,6 @@
   "unknownUser": "অজানা ব্যবহারকারী",
   "anonymous": "বেনামী",
   "reportBug": "বাগ রিপোর্ট করুন",
-  "tabs": "ট্যাব"
+  "tabs": "ট্যাব",
+  "alreadyAnnotatedThisItem": "আপনি ইতিমধ্যে এই আইটেমটি টীকা লিখেছেন।"
 }

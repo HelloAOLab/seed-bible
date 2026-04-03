@@ -2,5 +2,11 @@
 //     thisBot.TryToUnlerp();
 // }
 // InstanceManager.TryClearVideoTimeout();
+
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+
 setTagMask(thisBot, "isBeingHovered", false);
-shout("OnStackTestamentInteracted", {testament: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.HoverEnd});
+shout("OnStackTestamentInteracted", {
+  testament: thisBot,
+  typeOfInteraction: CanvasInteractions.HoverEnd,
+});

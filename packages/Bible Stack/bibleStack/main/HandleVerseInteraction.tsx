@@ -1,19 +1,29 @@
-const {typeOfInteraction, verse} = that;
-if(thisBot.masks.isBibleAnimating) return;
+import {
+  CanvasInteractions,
+  type CanvasInteraction,
+} from "bibleVizUtils.models.canvas";
+import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
 
-switch(typeOfInteraction)
-{
-    case BibleVizUtils.Data.tags.InteractionType.Click:
+const {
+  typeOfInteraction,
+  verse,
+}: {
+  typeOfInteraction: CanvasInteraction;
+  verse: Bot;
+} = that;
+
+if (thisBot.masks.isBibleAnimating) return;
+
+switch (typeOfInteraction) {
+  case CanvasInteractions.Click:
     {
-        if(BibleVizUtils.Data.masks.isHighlightToolEnabled)
-        {
-            BibleVizUtils.Functions.HighlightBiblePiece({piece: verse});
-        }
-        else
-        {
-            shout("OnBiblePieceSelected", {piece: verse});
-        }
+      if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
+        BibleVizUtils.Functions.HighlightBiblePiece({ piece: verse });
+      } else {
+        shout("OnBiblePieceSelected", { piece: verse });
+      }
     }
     break;
-    default: break;
+  default:
+    break;
 }

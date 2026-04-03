@@ -1,1 +1,7 @@
-shout("OnStackTestamentInteracted", {testament: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Dragging, dragInfo: that});
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+
+shout("OnStackTestamentInteracted", {
+  testament: thisBot,
+  typeOfInteraction: CanvasInteractions.Dragging,
+  draggingEvent: that,
+});

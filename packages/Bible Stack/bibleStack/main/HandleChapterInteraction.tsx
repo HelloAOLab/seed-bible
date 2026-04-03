@@ -1,23 +1,66 @@
+import type { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
+import { updateNotification } from "bibleVizUtils.controllers.userPresence.activityNotificationController";
+import { scriptureService } from "bibleVizUtils.services.index";
+import type { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
+import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import {
+  CanvasInteractions,
+  type CanvasInteraction,
+} from "bibleVizUtils.models.canvas";
+import type { DraggingEvent, DropEvent } from "bibleVizUtils.models.casualos";
+
 /**
  * This tag is called whenever a chapter is interacted
  * It is in charge of managing whether to select, deselect, highlight, drag or drop a chapter if possible.
  * @param {Object} that - Object that contains important data for the function
- * @param {StackChapterData} that.chapterData - The chapterData that holds the reference to the chapter transformer, chapter front, chapter back, and some more important informati    * @param {ChapStringat.chaptypeOfInteractionhe Represents the type of interaction. Possible values can be found at globalThis.BibleVizUtils.Data.tags.InteractionType
- * @param {Object} that.dragInfo? - Is optional and is the information received when the type of interaction is a drag
- * @param {Object} that.dropInfo? - Is optional and is the information received when the type of interaction is a drop
+ * @param {StackChapterData} that.chapterData - The chapterData that holds the reference to the chapter transformer, chapter front, chapter back, and some more important informati
+ * @param {CanvasInteraction} that.typeOfInteraction Represents the type of interaction.
+ * @param {Object} that.dragEvent? - Is optional and is the information received when the type of interaction is a drag
+ * @param {Object} that.dropEvent? - Is optional and is the information received when the type of interaction is a drop
  * @example
- * shout("HandleChapterInteraction", {chapterData: someChapterData, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Click});
+ * shout("HandleChapterInteraction", {chapterData: someChapterData, typeOfInteraction: CanvasInteractions.Click});
  */
 
-const { chapterData, typeOfInteraction, dragInfo, dropInfo } = that;
-const { sectionBookData, bookData } = thisBot.GetDataChainFromParentDataIds({
+const {
+  chapterData,
+  typeOfInteraction,
+  draggingEvent,
+  dropEvent,
+}: {
+  chapterData: StackChapterData;
+  typeOfInteraction: CanvasInteraction;
+  dropEvent?: DropEvent;
+  draggingEvent?: DraggingEvent;
+} = that;
+const {
+  sectionBookData,
+  bookData,
+}: {
+  sectionBookData: StackSectionBookData | undefined;
+  bookData: StackBookData | undefined;
+} = await thisBot.GetDataChainFromParentDataIds({
   parentDataIds: chapterData.parentDataIds,
 });
 const actualData = sectionBookData ?? bookData;
+
 if (thisBot.masks.isBibleAnimating) return;
 
+if (!chapterData.piece) {
+  console.error("chapterData.piece not defined at HandleChapterInteraction");
+  return;
+}
+
+const bookName = chapterData.getCreationParam("bookName");
+const bookStaticInfo = BibleVizDataRepository.getBookStaticInfo(bookName);
+
+if (!bookStaticInfo) {
+  console.error(`bookStaticInfo not found at HandleChapterInteraction`);
+  return;
+}
+
 switch (typeOfInteraction) {
-  case BibleVizUtils.Data.tags.InteractionType.Click:
+  case CanvasInteractions.Click:
     {
       if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
         BibleVizUtils.Functions.HighlightBiblePiece({ data: chapterData });
@@ -46,8 +89,9 @@ switch (typeOfInteraction) {
                 let tab = thisBot.vars.tabsContext.tabs.find((currTab) => {
                   return (
                     currTab.data.book ===
-                      chapterData.piece.tags.parentBookName &&
-                    currTab.data.chapter == chapterData.pieceInfo.number
+                      chapterData.piece?.tags.parentBookName &&
+                    currTab.data.chapter ==
+                      chapterData.getPieceInfoProperty("number")
                   );
                 });
 
@@ -58,11 +102,8 @@ switch (typeOfInteraction) {
                     data: {
                       use: "thePage",
                       type: "book",
-                      book: chapterData.piece.tags.parentBookName,
-                      bookId:
-                        BibleVizUtils.Data.tags.booksStaticInfo[
-                          chapterData.piece.tags.parentBookName
-                        ].abbreviation,
+                      book: bookName,
+                      bookId: bookStaticInfo.abbreviation,
                       chapter: chapterData.pieceInfo.number,
                       translation: "AAB",
                     },
@@ -72,16 +113,13 @@ switch (typeOfInteraction) {
                 thisBot.vars.tabsContext.setActiveTab(tab.id);
                 globalThis.UpdateTab(tab);
               } else {
-                let bookId =
-                  BibleVizUtils.Data.tags.booksStaticInfo[
-                    chapterData.piece.tags.parentBookName
-                  ].abbreviation;
-                let chapter = chapterData.pieceInfo.number;
+                let bookId = bookStaticInfo.abbreviation;
+                let chapter = chapterData.getPieceInfoProperty("number");
 
-                if (chapterData.piece.tags.parentBookName.includes("Psalms")) {
+                if (bookName.includes("Psalms")) {
                   ({ chapter } =
-                    BibleVizUtils.Functions.ConvertDividedPsalmsToComplete({
-                      book: chapterData.piece.tags.parentBookName,
+                    scriptureService.convertDividedPsalmsToComplete({
+                      book: bookName,
                       chapter,
                     }));
                   bookId = "PSA";
@@ -95,12 +133,12 @@ switch (typeOfInteraction) {
       }
     }
     break;
-  case BibleVizUtils.Data.tags.InteractionType.HoverBegin:
+  case CanvasInteractions.HoverBegin:
     {
       thisBot.TryHighlightChapter({ parentData: actualData, chapterData });
     }
     break;
-  case BibleVizUtils.Data.tags.InteractionType.HoverEnd:
+  case CanvasInteractions.HoverEnd:
     {
       if (
         !chapterData.piece.masks.isBeingDragged //&&
@@ -109,16 +147,23 @@ switch (typeOfInteraction) {
         // !chapterData.piece.masks.isDeselecting
       ) {
         chapterData.piece.Unhighlight({ chapterData }).then(() => {
-          if (!chapterData.isSelected || !chapterData.piece.masks.isOnTheGround)
-            BibleVizUtils.Functions.UpdateActivityNotificationOnPieces({
-              piecesData: [chapterData],
-              manager: thisBot,
-            });
+          if (
+            !chapterData.isSelected ||
+            !chapterData.piece?.masks.isOnTheGround
+          )
+            updateNotification(
+              chapterData,
+              thisBot.tags.activityNotificationOffset,
+              {
+                x: thisBot.tags.activityNotificationScaleX,
+                y: thisBot.tags.activityNotificationScaleY,
+              }
+            );
         });
       }
     }
     break;
-  case BibleVizUtils.Data.tags.InteractionType.Drag:
+  case CanvasInteractions.Drag:
     {
       if (chapterData.piece.tags.draggable)
         shout("OnStackPieceDrag", {
@@ -127,23 +172,23 @@ switch (typeOfInteraction) {
         });
     }
     break;
-  case BibleVizUtils.Data.tags.InteractionType.Dragging:
+  case CanvasInteractions.Dragging:
     {
       if (chapterData.piece.tags.draggable)
         shout("OnStackPieceDragging", {
           piece: chapterData.piece,
-          dragInfo,
+          draggingEvent,
           data: chapterData,
         });
     }
     break;
-  case BibleVizUtils.Data.tags.InteractionType.Drop:
+  case CanvasInteractions.Drop:
     {
       if (chapterData.piece.tags.draggable)
         shout("OnStackPieceDrop", {
           data: chapterData,
           piece: chapterData.piece,
-          dropInfo,
+          dropEvent,
         });
     }
     break;

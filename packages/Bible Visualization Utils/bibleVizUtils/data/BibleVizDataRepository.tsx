@@ -1,3 +1,29 @@
+import type fontsData from "./fonts.json";
+import {
+  StackPieceMeasurements,
+  type StackPieceMeasurementsType,
+} from "bibleVizUtils.data.StackPieceMeasurements";
+import {
+  StackSpacings,
+  type StackSpacingsType,
+} from "bibleVizUtils.data.StackSpacings";
+import {
+  BibleLayoutMeasurements,
+  type BibleLayoutMeasurementsType,
+} from "bibleVizUtils.data.BibleLayoutMeasurements";
+import {
+  DialogBoxFormAddresses,
+  type DialogBoxFormAddressesType,
+} from "bibleVizUtils.data.DialogBoxFormAddresses";
+import type { HexString } from "bibleVizUtils.models.commonTypes";
+import { StackAnimationsDuration } from "bibleVizUtils.data.StackAnimationsDuration";
+
+type FontsSchema = typeof fontsData;
+
+type FontName = keyof FontsSchema;
+
+type FontData = FontsSchema[FontName];
+
 interface ChapterInfo {
   amountOfVerses: number;
   number: number;
@@ -19,32 +45,6 @@ interface BooksStaticInfo {
   [book: string]: BookStaticInfo;
 }
 
-interface BibleLayoutMeasurements {
-  Book2DMaxColumns: number;
-  Book3DMaxAmountOfColumns: number;
-  Book3DScaleX: number;
-  BookHorizontalGap: number;
-  BookHorizontalOffset: number;
-  BookLabelHeight: number;
-  BookPositionZ: number;
-  BookVerticalGap: number;
-  Chapter3DGap: number;
-  Chapter3DHeight: number;
-  Chapter3DPadding: number;
-  Chapter3DWidth: number;
-  ChapterInitialScaleZ: number;
-  ChapterPlaylistItemDeltaHeight: number;
-  ChapterSelectedScaleZ: number;
-  GapBetweenBookAndLine: number;
-  LayersVerticalGap: number[];
-  MaxAmountOfColumns: number;
-  PlaylistEntryItemPadding: number;
-  PlaylistNavigationButtonVerticalGap: number;
-  PlaylistStackedEntryItemGap: number;
-}
-
-type BibleLayoutMeasurement = keyof BibleLayoutMeasurements;
-
 interface BookInfo {
   commonName: string;
   explodedViewPosition?: {
@@ -58,8 +58,9 @@ interface BookInfo {
   };
   group?: number;
   customColor?: string;
+  customLabelColor?: string;
+  isCheckpoint?: boolean;
 }
-
 interface SectionInfo {
   name: string;
   color: string;
@@ -71,6 +72,7 @@ interface SectionInfo {
 interface TestamentInfo {
   name: string;
   sections: SectionInfo[];
+  color?: HexString;
 }
 
 interface ArrangementInfo {
@@ -90,42 +92,105 @@ class BibleVizDataRepository {
     return booksInfo[book];
   }
 
-  // BibleLayoutMeasurements
+  // Measurements
 
-  static getBibleLayoutMeasurements(): BibleLayoutMeasurements {
-    return thisBot.tags.BibleLayoutMeasurements;
+  static getBibleLayoutMeasurements(): BibleLayoutMeasurementsType {
+    return BibleLayoutMeasurements;
   }
 
-  static getBibleLayoutMeasurement(
-    measurement: BibleLayoutMeasurement
-  ): number | number[] {
+  static getBibleLayoutMeasurement: <
+    K extends keyof BibleLayoutMeasurementsType,
+  >(
+    measurement: K
+  ) => BibleLayoutMeasurementsType[K] = (measurement) => {
     const measurements = this.getBibleLayoutMeasurements();
     return measurements[measurement];
+  };
+
+  static getStackPieceMeasurements(): StackPieceMeasurementsType {
+    return StackPieceMeasurements;
   }
+
+  static getStackPieceMeasurement: <K extends keyof StackPieceMeasurementsType>(
+    measurement: K
+  ) => StackPieceMeasurementsType[K] = (measurement) => {
+    return this.getStackPieceMeasurements()[measurement];
+  };
+
+  static getStackSpacings(): StackSpacingsType {
+    return StackSpacings;
+  }
+
+  static getStackSpacing: <K extends keyof StackSpacingsType>(
+    spacing: K
+  ) => StackSpacingsType[K] = (spacing) => {
+    return this.getStackSpacings()[spacing];
+  };
 
   static getReadingHistoryRecencyThresholdTimeSeconds(): number {
     return thisBot.masks.readingHistoryRecencyThresholdTimeSeconds;
   }
 
-  // Arrangement index
+  // Arrangement
 
-  static getCurrentArrangementIndex(): number {
-    return thisBot.vars.arrangementIndex;
+  static getStaticArrangements(): ArrangementInfo[] {
+    return thisBot.tags.arrangementsInfo.slice();
   }
 
-  static getArrangementByIndex: (params: { index: number }) => ArrangementInfo =
-    ({ index }) => {
-      return thisBot.vars.fixedArrangementsInfo[index];
-    };
+  static getCustomArrangements(): ArrangementInfo[] {
+    if (!thisBot.vars.customArrangements) {
+      thisBot.vars.customArrangements = [];
+    }
+    return thisBot.vars.customArrangements.slice();
+  }
+
+  static setCustomArrangements(arrangements: ArrangementInfo[]): void {
+    thisBot.vars.customArrangements = arrangements;
+  }
+
+  // Fonts
+
+  static getFont(name: FontName): FontData {
+    return thisBot.tags.fonts[name];
+  }
+
+  static getDialogBoxFormAddresses(): DialogBoxFormAddressesType {
+    return DialogBoxFormAddresses;
+  }
+
+  static getDialogBoxFormAddress<K extends keyof DialogBoxFormAddressesType>(
+    key: K
+  ): DialogBoxFormAddressesType[K] {
+    return this.getDialogBoxFormAddresses()[key];
+  }
+
+  static getDialogBoxAspectRatios(): Array<keyof DialogBoxFormAddressesType> {
+    return Object.keys(DialogBoxFormAddresses).map(Number) as Array<
+      keyof DialogBoxFormAddressesType
+    >;
+  }
+
+  static getStackAnimationsDuration(): typeof StackAnimationsDuration {
+    return StackAnimationsDuration;
+  }
+
+  static getStackAnimationDuration: <
+    K extends keyof typeof StackAnimationsDuration,
+  >(
+    key: K
+  ) => (typeof StackAnimationsDuration)[K] = (key) => {
+    return this.getStackAnimationsDuration()[key];
+  };
 }
 
 export { BibleVizDataRepository };
 export type {
   BookStaticInfo,
+  ChapterInfo,
   BookInfo,
   SectionInfo,
   TestamentInfo,
   ArrangementInfo,
-  BibleLayoutMeasurement,
-  BibleLayoutMeasurements,
+  FontName,
+  FontData,
 };

@@ -451,6 +451,12 @@
   "generate": "Gerar",
   "layers": "Camadas",
   "removeAndSave": "Remover e Salvar",
+  "addAndSave": "Adicionar e Salvar",
+  "ignoreAndSave": "Ignorar e Salvar",
+  "dataWarning": "Dados não salvos",
+  "dataWarningMsg": "Você tem dados não salvos no link do anexo. Confirme a ação abaixo.",
+  "loseProgressWarning": "Perder o progresso",
+  "loseProgressWarningMsg": "Isso fará você perder todas as alterações. Tem certeza?",
   "noEmbdedItemsMsg": "Alguns dos seus itens nao estao incorporados. Camadas devem ter todos os itens incorporados.",
   "annotationMode": "Modo de Anotacao",
   "playlistMode": "Modo de Playlist",
@@ -808,5 +814,6 @@
   "traditionalOrderDesc": "A ordem encontrada na maioria das Bíblias cristãs modernas",
   "youHaveNSubscriptions": "Você tem {{count}} assinaturas",
   "unknownUser": "Usuário desconhecido",
-  "anonymous": "Anônimo"
+  "anonymous": "Anônimo",
+  "alreadyAnnotatedThisItem": "Você já anotou este item."
 }

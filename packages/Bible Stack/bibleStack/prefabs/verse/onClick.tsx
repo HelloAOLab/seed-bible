@@ -1,1 +1,6 @@
-shout("OnStackVerseInteracted", {verse: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Click});
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+
+shout("OnStackVerseInteracted", {
+  verse: thisBot,
+  typeOfInteraction: CanvasInteractions.Click,
+});

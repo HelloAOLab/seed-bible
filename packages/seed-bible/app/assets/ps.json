@@ -3,6 +3,12 @@
   "saveChanges": "بدلونونه وساتئ",
   "saveOrder": "ترتیب وساتئ",
   "saveAndAdd": "وساتئ او زیات کړئ",
+  "addAndSave": "زیات کړئ او وساتئ",
+  "ignoreAndSave": "په پام کې وننیسئ او وساتئ",
+  "dataWarning": "نه ساتل شوي ډيټا",
+  "dataWarningMsg": "تاسو کې په ضمیمه لینک کې یو څه نه ساتل شوي ډيټا شته. لاندې کړنه تایید کړئ.",
+  "loseProgressWarning": "پرمختګ له لاسه ورکول",
+  "loseProgressWarningMsg": "دا به ستاسو ټول بدلونونه له لاسه ورکړي. ډاډه یاست؟",
   "cancel": "لغوه",
   "close": "بند",
   "delete": "ړنګول",
@@ -278,5 +284,6 @@
   "unknownUser": "ناپېژندل کارن",
   "anonymous": "بې نومه",
   "reportBug": "بګ راپور ورکړئ",
-  "tabs": "ټبونه"
+  "tabs": "ټبونه",
+  "alreadyAnnotatedThisItem": "تاسو د دې توکي له مخکې څخه شرح کړی دی."
 }

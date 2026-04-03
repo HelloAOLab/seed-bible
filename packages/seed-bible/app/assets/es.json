@@ -381,6 +381,12 @@
   "generate": "Generar",
   "layers": "capas",
   "removeAndSave": "Eliminar y guardar",
+  "addAndSave": "Añadir y guardar",
+  "ignoreAndSave": "Ignorar y guardar",
+  "dataWarning": "Datos sin guardar",
+  "dataWarningMsg": "Tienes datos sin guardar en el enlace del adjunto. Confirma la acción a continuación.",
+  "loseProgressWarning": "Perder el progreso",
+  "loseProgressWarningMsg": "Esto perderá todos tus cambios. ¿Estás seguro?",
   "noEmbdedItemsFound": "No se encontraron elementos incrustados.",
   "noEmbdedItemsMsg": "Algunos de tus elementos no están incrustados. Las capas deben tener todos los elementos incrustados.",
   "untitled": "[Sin título]",
@@ -808,5 +814,6 @@
   "traditionalOrderDesc": "El orden encontrado en la mayoría de las Biblias cristianas modernas",
   "youHaveNSubscriptions": "Tienes {{count}} suscripciones",
   "unknownUser": "Usuario desconocido",
-  "anonymous": "Anónimo"
+  "anonymous": "Anónimo",
+  "alreadyAnnotatedThisItem": "Ya has anotado este elemento."
 }

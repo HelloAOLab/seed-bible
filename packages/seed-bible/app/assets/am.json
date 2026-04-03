@@ -3,6 +3,12 @@
   "saveChanges": "ለውጦችን አስቀምጥ",
   "saveOrder": "ቅደም ተከተል አስቀምጥ",
   "saveAndAdd": "አስቀምጥ እና ጨምር",
+  "addAndSave": "ጨምር እና አስቀምጥ",
+  "ignoreAndSave": "አሳሳ እና አስቀምጥ",
+  "dataWarning": "ያልተቀመጡ መረጃዎች",
+  "dataWarningMsg": "በተያያዥ አገናኝ ውስጥ ካልተቀመጡ መረጃዎች አሉዎት። እባክዎ ከዚህ በታች ያለውን እርምጃ ያረጋግጡ።",
+  "loseProgressWarning": "እድገት ማጣት",
+  "loseProgressWarningMsg": "ይህ ሁሉንም ለውጦችዎን ያጣል። እርግጠኛ ነዎት?",
   "cancel": "ሰርዝ",
   "close": "ዝጋ",
   "delete": "ሰርዝ",
@@ -278,5 +284,6 @@
   "unknownUser": "ያልታወቀ ተጠቃሚ",
   "anonymous": "ስም-አልባ",
   "reportBug": "ስህተት ሪፖርት ያድርጉ",
-  "tabs": "ትሮች"
+  "tabs": "ትሮች",
+  "alreadyAnnotatedThisItem": "ይህን ንጥል ቀድሞውኑ አስረድተዋል።"
 }

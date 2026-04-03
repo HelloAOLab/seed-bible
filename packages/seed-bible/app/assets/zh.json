@@ -451,6 +451,12 @@
   "generate": "生成",
   "layers": "图层",
   "removeAndSave": "移除并保存",
+  "addAndSave": "添加并保存",
+  "ignoreAndSave": "忽略并保存",
+  "dataWarning": "未保存的数据",
+  "dataWarningMsg": "您在附件链接中有一些未保存的数据。请在下方确认操作。",
+  "loseProgressWarning": "丢失进度",
+  "loseProgressWarningMsg": "这将丢失您的所有更改。确定吗？",
   "noEmbdedItemsMsg": "您的部分项目未嵌入。图层应包含所有已嵌入的项目。",
   "annotationMode": "注释模式",
   "playlistMode": "播放列表模式",
@@ -808,5 +814,6 @@
   "traditionalOrderDesc": "大多数现代基督教圣经中的排序",
   "youHaveNSubscriptions": "您有 {{count}} 个订阅",
   "unknownUser": "未知用户",
-  "anonymous": "匿名"
+  "anonymous": "匿名",
+  "alreadyAnnotatedThisItem": "您已经注释过此项目。"
 }

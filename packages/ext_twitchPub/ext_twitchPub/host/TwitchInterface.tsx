@@ -1,13 +1,16 @@
 import QRCodeComponent from "ext_twitchPub.host.QRCode";
-import { TwitchIcon } from "ext_twitchPub.host.icons";
+import { TwitchIcon, SettingsIcon } from "ext_twitchPub.host.icons";
 
 const { useState, useEffect } = os.appHooks;
 const TwitchInterface = (props: {
   broadcasterId: string | null;
   clientId: string | null;
   token: string | null;
+  setCurrentPage: (
+    s: "login" | "authorization" | "interface" | "settings"
+  ) => void;
 }) => {
-  const { broadcasterId, clientId, token } = props;
+  const { broadcasterId, clientId, token, setCurrentPage } = props;
   const [uiHidden, setUiHidden] = useState(false);
 
   const [qrValue, setQrValue] = useState<string>(
@@ -109,12 +112,29 @@ const TwitchInterface = (props: {
             <TwitchIcon style={{ width: "24px", height: "24px" }} />
             Twitch
           </span>
-          <button
-            className="icon-btn"
-            onClick={() => whisper(thisBot, "closeInterface")}
+          <div
+            style={{
+              display: "flex",
+              gap: "5px",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "row",
+            }}
           >
-            <span className="material-symbols-outlined">close</span>
-          </button>
+            <button
+              className="icon-btn"
+              style={{ width: "fit-content", height: "fit-content" }}
+              onClick={() => setCurrentPage("settings")}
+            >
+              <SettingsIcon width={18} height={18} />
+            </button>
+            <button
+              className="icon-btn"
+              onClick={() => whisper(thisBot, "closeInterface")}
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
         </div>
         <div className="twitchPub-content">
           <div className={uiHidden ? "" : "qr-container"}>

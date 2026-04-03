@@ -880,8 +880,23 @@ const AttachLink = (props: any) => {
     return false;
   }, [name, selectedType, data]);
 
-  const onClickSend = async () => {
-    if (!name.trim()) {
+  const onClickSend = async (isForce = true) => {
+    let finalName = name;
+
+    if (isForce) {
+      finalName = getCurrentTime();
+      switch (selectedType) {
+        case "RECORDING":
+          if (recordingType === "video") {
+            finalName += "-video-recording";
+          } else {
+            finalName += "-audio-recording";
+          }
+          break;
+      }
+    }
+
+    if (!finalName.trim()) {
       if (
         !(
           selectedType === "SCRIPTURE" &&
@@ -899,7 +914,7 @@ const AttachLink = (props: any) => {
 
     if (selectedType === "TAG") {
       if (onAddTags) {
-        onAddTags([name]);
+        onAddTags([finalName]);
         setName("");
       }
       return;
@@ -920,7 +935,7 @@ const AttachLink = (props: any) => {
       let finalData = data;
 
       const fileSave: any = await os.recordFile(G.RECORD_STOREKEY, finalData, {
-        name: name,
+        name: finalName,
         mimeType: finalData?.type || "audio/webm",
       });
 
@@ -934,8 +949,10 @@ const AttachLink = (props: any) => {
           severity: "error",
         });
       }
-
-      return attachLink(name, url, {
+      onReleaseData();
+      G.isRecording = false;
+      G.hasRecording = false;
+      return attachLink(finalName, url, {
         isValid: true,
         type: recordingType === "audio" ? RECORDING_VALUE : "video-recording",
       });
@@ -957,6 +974,9 @@ const AttachLink = (props: any) => {
         setSelectedType("TEXT");
         setLink("");
         massAdd(data);
+        onReleaseData();
+        G.isRecording = false;
+        G.hasRecording = false;
         onClose();
         return;
       }
@@ -969,6 +989,9 @@ const AttachLink = (props: any) => {
           severity: "error",
         });
       const playlistList: any = playlists.find((ele: any) => ele.id === data);
+      onReleaseData();
+      G.isRecording = false;
+      G.hasRecording = false;
       attachLink(playlistList.name, playlistList.list, {
         isValid: true,
         type: "playlist",
@@ -988,8 +1011,11 @@ const AttachLink = (props: any) => {
         setName("");
         setSelectedType("TEXT");
         setLink("");
+        onReleaseData();
+        G.isRecording = false;
+        G.hasRecording = false;
         attachLink(
-          name || link,
+          finalName || link,
           link,
           linkState.type ? linkState : { isValid: true, type: mediaType }
         );
@@ -1003,12 +1029,17 @@ const AttachLink = (props: any) => {
           allItems.push(...file.data);
         });
       }
-      if (name.trim()) {
-        allItems.push(...thisBot.getSuggestedListItems({ searchText: name }));
+      if (finalName.trim()) {
+        allItems.push(
+          ...thisBot.getSuggestedListItems({ searchText: finalName })
+        );
       }
       setName("");
       massAdd(allItems);
       setData(null);
+      onReleaseData();
+      G.isRecording = false;
+      G.hasRecording = false;
       return;
     }
 
@@ -1021,7 +1052,10 @@ const AttachLink = (props: any) => {
       if (G[`${isTempID}ClearEditorContent`])
         G[`${isTempID}ClearEditorContent`]();
       G.RawName = "";
-      return attachLink(name, link, {
+      onReleaseData();
+      G.isRecording = false;
+      G.hasRecording = false;
+      return attachLink(finalName, link, {
         isValid: true,
         subType: textType,
         type: "text",
@@ -1042,6 +1076,8 @@ const AttachLink = (props: any) => {
       G.FireEditContent = onClickSend;
     }
   }, [onClickSend]);
+
+  G.OnClickSend = onClickSend;
 
   return (
     <>
@@ -1187,7 +1223,15 @@ const AttachLink = (props: any) => {
             >
               {canClose && (
                 <div
-                  onClick={onClose}
+                  onClick={() => {
+                    onReleaseData();
+                    setName("");
+                    G.RetainDataData = null;
+                    G.RetainDataName = null;
+                    G.isRecording = false;
+                    G.hasRecording = false;
+                    onClose();
+                  }}
                   style={{ marginLeft: "auto" }}
                   className={`active  select_item_type`}
                 >

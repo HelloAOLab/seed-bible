@@ -3,6 +3,12 @@
   "saveChanges": "ذخیره تغییرات",
   "saveOrder": "ذخیره ترتیب",
   "saveAndAdd": "ذخیره و افزودن",
+  "addAndSave": "افزودن و ذخیره",
+  "ignoreAndSave": "نادیده گرفتن و ذخیره",
+  "dataWarning": "داده ذخیره‌نشده",
+  "dataWarningMsg": "برخی داده‌های ذخیره‌نشده در پیوست لینک دارید. لطفاً اقدام زیر را تأیید کنید.",
+  "loseProgressWarning": "از دست دادن پیشرفت",
+  "loseProgressWarningMsg": "همه تغییرات شما از دست خواهد رفت. مطمئن هستید؟",
   "cancel": "لغو",
   "close": "بستن",
   "delete": "حذف",
@@ -278,5 +284,6 @@
   "unknownUser": "کاربر ناشناس",
   "anonymous": "ناشناس",
   "reportBug": "گزارش مشکل",
-  "tabs": "زبانه‌ها"
+  "tabs": "زبانه‌ها",
+  "alreadyAnnotatedThisItem": "شما قبلاً این مورد را حاشیه‌نویسی کرده‌اید."
 }

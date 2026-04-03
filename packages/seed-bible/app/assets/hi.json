@@ -381,6 +381,12 @@
   "generate": "जनरेट करें",
   "layers": "लेयर्स",
   "removeAndSave": "हटाएं और सहेजें",
+  "addAndSave": "जोड़ें और सहेजें",
+  "ignoreAndSave": "अनदेखा करें और सहेजें",
+  "dataWarning": "असहेजा डेटा",
+  "dataWarningMsg": "अटैचमेंट लिंक में कुछ असहेजा डेटा है. कृपया नीचे दी गई कार्रवाई की पुष्टि करें.",
+  "loseProgressWarning": "प्रगति खो दें",
+  "loseProgressWarningMsg": "इससे आपके सभी बदलाव खो जाएंगे. क्या आप सुनिश्चित हैं?",
   "noEmbdedItemsFound": "एम्बेडेड आइटम्स नहीं मिले",
   "noEmbdedItemsMsg": "आपके कुछ आइटम्स एम्बेडेड नहीं हैं। परतों में सभी एम्बेडेड आइटम्स होने चाहिए।",
   "playlistSettingsTooltip": "प्लेलिस्ट विकल्पों को नीचे बदलकर नए प्रकार की सूचियां बनाएं।",
@@ -809,5 +815,6 @@
   "traditionalOrderDesc": "अधिकांश आधुनिक ईसाई बाइबलों में पाया जाने वाला क्रम",
   "youHaveNSubscriptions": "आपके पास {{count}} सदस्यताएं हैं",
   "unknownUser": "अज्ञात उपयोगकर्ता",
-  "anonymous": "गुमनाम"
+  "anonymous": "गुमनाम",
+  "alreadyAnnotatedThisItem": "आप पहले ही इस आइटम पर टिप्पणी कर चुके हैं।"
 }

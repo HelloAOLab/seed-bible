@@ -1,8 +1,0 @@
-export class AnimateTagObject {
-  constructor({ bot, tag = null, options, then = null }) {
-    this.bot = bot;
-    this.tag = tag;
-    this.options = options;
-    this.then = then;
-  }
-}

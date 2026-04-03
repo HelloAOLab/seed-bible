@@ -30,6 +30,7 @@ import { PanelSettingsDialog } from "app.components.screenSettingsOptions";
 import { EditorToolbarSettings } from "app.components.editorSettings";
 import { NowBar } from "app.components.nowBar";
 import { SelectionUISettings } from "app.components.selectionUISettings";
+import { ShowPersonVideoOverlay } from "app.components.ShowPersonVideoOverlay";
 
 shout("initialize");
 globalThis.PanelTabsMap = {}; // { panelId: tabObject }
@@ -40,12 +41,16 @@ const Layout = ({ children, panelsNumber }) => {
   // const { spaces, activeSpace } = useTabsContext()
   const { setPosition, showScreenPanelOption, setShowScreenPanelOption } =
     useMouseMove();
+
+  const [showVideoOverlay, setShowVideoOverlay] = useState(false);
+
   globalThis.SetShowScreenPanelOption = setShowScreenPanelOption;
   const { sidebarMode, setSideBarMode, closePopupSettings, themeColors } =
     useSideBarContext();
   const { canvasMode, setCanvasMode } = useBibleContext();
   const { openOnMobile, setOpenOnMobile } = useSideBarContext();
   globalThis.setOpenOnMobile = setOpenOnMobile;
+
   const {
     spaces,
     activeSpace,
@@ -54,124 +59,142 @@ const Layout = ({ children, panelsNumber }) => {
     updateSpace,
     removeSpace,
   } = useTabsContext();
+
+  const OpenVideoOverlay = () => {
+    setShowVideoOverlay(true);
+  };
+  const CloseVideoOverlay = () => {
+    setShowVideoOverlay(false);
+  };
+
   useEffect(() => {
     const handleContextMenu = (e) => {
       // e.preventDefault();
       // console.log('Global right-click blocked');
     };
+
+    globalThis.OpenVideoOverlay = OpenVideoOverlay;
+    globalThis.CloseVideoOverlay = CloseVideoOverlay;
+
     document.addEventListener("contextmenu", handleContextMenu);
     return () => {
       document.removeEventListener("contextmenu", handleContextMenu);
+      globalThis.OpenVideoOverlay = null;
+      globalThis.CloseVideoOverlay = null;
     };
   }, []);
+
   return (
-    <div
-      onMouseMove={(e) => {
-        setPosition({ x: e.clientX, y: e.clientY });
-      }}
-      onContextMenu={(e) => {
-        // e.preventDefault()
-        // os.log('works')
-      }}
-      onClick={() => {
-        closePopupSettings();
-      }}
-      onMouseUp={() => {
-        try {
-          globalThis?.setOpenSidebar(false);
-        } catch {}
-      }}
-      className="layout"
-      style={{ background: "white" }}
-    >
-      <style>{`${
-        spaces.find((e) => e.id === activeSpace)?.settings?.text?.root ||
-        exportTextConfigToCSS(
-          window.innerWidth <= 768
-            ? {
-                ...defaultTextConfig,
-                heading: {
-                  ...defaultTextConfig.heading,
-                  marginHorizontal: "5",
-                },
-                chapter: {
-                  ...defaultTextConfig.chapter,
-                  marginHorizontal: "5",
-                },
-                verse: { ...defaultTextConfig.verse, marginHorizontal: "5" },
-                bookchapter: {
-                  ...defaultTextConfig.bookchapter,
-                  marginHorizontal: "5",
-                },
-              }
-            : defaultTextConfig
-        )
-      }`}</style>
-      {sidebarMode === "default" ? (
-        <SideBar panelsNumber={panelsNumber} />
-      ) : null}
-      <div className={`floatsidebar ${openOnMobile ? "open" : ""}`}>
-        {sidebarMode === "settings" ? (
-          <SettingsSidebar
-            config={tags?.settingsConfigs?.presets[getSettingsPreset()]}
-          />
-        ) : sidebarMode === "textSettings" ? (
-          <TextSettings />
-        ) : sidebarMode.includes("toolbarSettings") ? (
-          <ToolbarSettings />
-        ) : sidebarMode === "promtSettings" ? (
-          <PromtBarSettings />
-        ) : sidebarMode === "canvasAiSettings" ? (
-          <CanvasAiSettings />
-        ) : sidebarMode === "themeSettings" ? (
-          <SettingsUI />
-        ) : sidebarMode === "advancedThemeSettings" ? (
-          <ThemeSettings />
-        ) : sidebarMode === "aiSettings" ? (
-          <AiSettings />
-        ) : sidebarMode === "tabSettings" ? (
-          <TabSettings />
-        ) : sidebarMode === "menuTextSettings" ? (
-          <MenuTextSettings />
-        ) : sidebarMode === "editorToolbarSettings" ? (
-          <EditorToolbarSettings />
-        ) : sidebarMode === "extensions" ? (
-          <Extensions />
-        ) : sidebarMode === "createAccountSettings" ? (
-          <CreateAccountSettings />
-        ) : sidebarMode === "selectionUISettings" ? (
-          <SelectionUISettings />
-        ) : null}
-      </div>
-      {/* handling mobile ui*/ null}
-      {(sidebarMode === "default" ||
-        sidebarMode === "settings" ||
-        sidebarMode === "themeSettings") && <SpaceUI />}
-
-      {globalThis.IsMobileNow() && sidebarMode === "default" && <SpaceUI />}
-      {showScreenPanelOption && (
-        <PanelSettingsDialog
-          openPanelCount={showScreenPanelOption}
-          onClose={() => setShowScreenPanelOption(null)}
-        />
-      )}
-      <main
-        onClick={() => {
-          if (globalThis.IsMobileNow()) setSideBarMode("default");
-          setOpenOnMobile(false);
+    <>
+      {showVideoOverlay && <ShowPersonVideoOverlay />}
+      <div
+        onMouseMove={(e) => {
+          setPosition({ x: e.clientX, y: e.clientY });
         }}
-        className="content"
+        onContextMenu={(e) => {
+          // e.preventDefault()
+          // os.log('works')
+        }}
+        onClick={() => {
+          closePopupSettings();
+        }}
+        onMouseUp={() => {
+          try {
+            globalThis?.setOpenSidebar(false);
+          } catch {}
+        }}
+        className="layout"
+        style={{ background: "white" }}
       >
-        {children}
-      </main>
-      <div>
-        <Toolbar />
+        <style>{`${
+          spaces.find((e) => e.id === activeSpace)?.settings?.text?.root ||
+          exportTextConfigToCSS(
+            window.innerWidth <= 768
+              ? {
+                  ...defaultTextConfig,
+                  heading: {
+                    ...defaultTextConfig.heading,
+                    marginHorizontal: "5",
+                  },
+                  chapter: {
+                    ...defaultTextConfig.chapter,
+                    marginHorizontal: "5",
+                  },
+                  verse: { ...defaultTextConfig.verse, marginHorizontal: "5" },
+                  bookchapter: {
+                    ...defaultTextConfig.bookchapter,
+                    marginHorizontal: "5",
+                  },
+                }
+              : defaultTextConfig
+          )
+        }`}</style>
+        {sidebarMode === "default" ? (
+          <SideBar panelsNumber={panelsNumber} />
+        ) : null}
+        <div className={`floatsidebar ${openOnMobile ? "open" : ""}`}>
+          {sidebarMode === "settings" ? (
+            <SettingsSidebar
+              config={tags?.settingsConfigs?.presets[getSettingsPreset()]}
+            />
+          ) : sidebarMode === "textSettings" ? (
+            <TextSettings />
+          ) : sidebarMode.includes("toolbarSettings") ? (
+            <ToolbarSettings />
+          ) : sidebarMode === "promtSettings" ? (
+            <PromtBarSettings />
+          ) : sidebarMode === "canvasAiSettings" ? (
+            <CanvasAiSettings />
+          ) : sidebarMode === "themeSettings" ? (
+            <SettingsUI />
+          ) : sidebarMode === "advancedThemeSettings" ? (
+            <ThemeSettings />
+          ) : sidebarMode === "aiSettings" ? (
+            <AiSettings />
+          ) : sidebarMode === "tabSettings" ? (
+            <TabSettings />
+          ) : sidebarMode === "menuTextSettings" ? (
+            <MenuTextSettings />
+          ) : sidebarMode === "editorToolbarSettings" ? (
+            <EditorToolbarSettings />
+          ) : sidebarMode === "extensions" ? (
+            <Extensions />
+          ) : sidebarMode === "createAccountSettings" ? (
+            <CreateAccountSettings />
+          ) : sidebarMode === "selectionUISettings" ? (
+            <SelectionUISettings />
+          ) : null}
+        </div>
+        {/* handling mobile ui*/ null}
+        {(sidebarMode === "default" ||
+          sidebarMode === "settings" ||
+          sidebarMode === "themeSettings") && <SpaceUI />}
 
-        <NowBar />
+        {globalThis.IsMobileNow() && sidebarMode === "default" && <SpaceUI />}
+        {showScreenPanelOption && (
+          <PanelSettingsDialog
+            openPanelCount={showScreenPanelOption}
+            onClose={() => setShowScreenPanelOption(null)}
+          />
+        )}
+        <main
+          onClick={() => {
+            if (globalThis.IsMobileNow()) setSideBarMode("default");
+            setOpenOnMobile(false);
+          }}
+          className="content"
+        >
+          {children}
+        </main>
+        <div>
+          <Toolbar />
+
+          <NowBar />
+        </div>
+
+        <style>{getStyleOf("main.css")}</style>
       </div>
-
-      <style>{getStyleOf("main.css")}</style>
-    </div>
+    </>
   );
 };
 

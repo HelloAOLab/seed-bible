@@ -10,25 +10,33 @@
  * thisBot.UpdateTestamentStack({testamentData: someTestamentData});
  */
 
-const {testamentData, isInstantaneous} = that;
-if(!testamentData.isSplitIntoSections || IsTestamentEmpty()) return false;
+import { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
+import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+
+const {
+  testamentData,
+  isInstantaneous,
+}: {
+  testamentData: StackTestamentData;
+  isInstantaneous: boolean;
+} = that;
+if (!testamentData.isSplitIntoSections || testamentData.isEmpty()) return false;
 const dimension = os.getCurrentDimension();
 const duration = isInstantaneous ? 0 : 0.5;
-const easing = {type: "sinusoidal", mode: "inout"};
-const testamentPosition = getBotPosition(testamentData.piece, dimension);
-const animations = [];
+const easing = { type: "sinusoidal", mode: "inout" };
+const testamentPosition = getBotPosition(testamentData.piece as Bot, dimension);
+const animations: Promise<void>[] = [];
 
-const {newTestamentAnimations} = await thisBot.HandleTestamentDataInStack({isInstantaneous, testamentData, desiredPositionZ: testamentPosition.z, dimension, duration, easing});
-animations.push(...newTestamentAnimations)
+const { newTestamentAnimations } = await thisBot.HandleTestamentDataInStack({
+  isInstantaneous,
+  testamentData,
+  desiredPositionZ: testamentPosition.z,
+  dimension,
+  duration,
+  easing,
+});
+animations.push(...newTestamentAnimations);
 
 await Promise.allSettled(animations);
 
 return true;
-
-function IsTestamentEmpty()
-{
-    const result = !testamentData.childrenData.some((sectionData) => {
-        return sectionData.isSplitIntoBooks ? true : sectionData.isActive
-    })
-    return result;
-}

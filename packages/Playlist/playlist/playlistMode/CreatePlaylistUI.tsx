@@ -168,6 +168,9 @@ const CreatePlaylistUI = (props: any) => {
 
   const [searchText, setSearchText] = useState("");
 
+  const [dataWarning, setDataWarning] = useState(false);
+  const [loseProgressWarning, setLoseProgressWarning] = useState(false);
+
   const creatingPlaylistRef = useRef(null);
 
   const [regenrateUI, setRegenrateUI] = useState(false);
@@ -194,7 +197,7 @@ const CreatePlaylistUI = (props: any) => {
 
   const [systemPrompt, setSystemPrompt] = useState(G.SYSTEM_PROMPT || "");
 
-  const isEdit = useRef(false);
+  const isEdit = useRef(G.EditIDRestore || false);
   const [openModalName, setOpenModalName] = useState(isCreate);
 
   const [autoGenerateOn, setAutoGenerateOn] = useState(false);
@@ -238,6 +241,7 @@ const CreatePlaylistUI = (props: any) => {
     G.SelectedIconRestorePlaylist = selectedIcon;
     G.DescriptionRestorePlaylist = description;
     G.ChecklistEnabledRestorePlaylist = checklist;
+    G.EditIDRestore = isEdit.current;
   }, [publishAccess, customIcon, selectedIcon, description, checklist]);
 
   const setEditModal = (params: any) => {
@@ -963,6 +967,33 @@ const CreatePlaylistUI = (props: any) => {
 
   const showPlaylistPosition = useRef(getPosition());
 
+  const onClickSave = () => {
+    if (!playList.length)
+      return ShowNotification({
+        message: t("pleaseAddSomeItemsToSavePlaylist"),
+        severity: "error",
+      });
+    if (layers) {
+      const checkEmbed = playList.some(
+        (ele: any) => !ele.additionalInfo.layers?.length
+      );
+      if (checkEmbed) {
+        setLayersWarning(true);
+        return;
+      }
+    }
+    G.RetainDataData = false;
+    G.RetainDataSelectedType = null;
+    G.RetainDataName = "";
+    G.RetainDataLink = "";
+    G.RetainDataLinkState = null;
+    G.RetainDataLinkStateType = "";
+    G.RetainDataLinkStateSubType = "";
+    G.RetainDataLinkStateIsValid = false;
+    setOpenAttachLink(false);
+    startCreatingPlaylist("", playList, id);
+  };
+
   return (
     <div
       style={{
@@ -973,6 +1004,68 @@ const CreatePlaylistUI = (props: any) => {
         padding: "12px",
       }}
     >
+      {(dataWarning || loseProgressWarning) && (
+        <Modal
+          title={dataWarning ? t("dataWarning") : t("loseProgressWarning")}
+          onClose={() => {
+            if (loading) return;
+            setDataWarning(false);
+            setLoseProgressWarning(false);
+          }}
+          showIcon={false}
+        >
+          <h2 style={{ fontSize: "1rem", marginBottom: "1rem" }}>
+            {dataWarning ? t("dataWarningMsg") : t("loseProgressWarningMsg")}
+          </h2>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+          >
+            <Button
+              loading={loading}
+              secondary
+              onClick={async () => {
+                setLoading(true);
+                if (dataWarning) {
+                  await G.OnClickSend(true);
+                  setTimeout(() => {
+                    onClickSave();
+                  }, 100);
+                } else {
+                  isTempEdit.current = false;
+                  setPlaylist([]);
+                  setCreatingPlaylist(false);
+                }
+                setDataWarning(false);
+                setLoseProgressWarning(false);
+                setLoading(false);
+              }}
+            >
+              {dataWarning ? t("addAndSave") : t("confirm")}
+            </Button>
+            {dataWarning && (
+              <Button
+                disabled={loading}
+                secondary
+                onClick={() => {
+                  onClickSave();
+                }}
+              >
+                {t("ignoreAndSave")}
+              </Button>
+            )}
+            <Button
+              secondaryAlt
+              disabled={loading}
+              onClick={() => {
+                setDataWarning(false);
+                setLoseProgressWarning(false);
+              }}
+            >
+              {t("cancel")}
+            </Button>
+          </div>
+        </Modal>
+      )}
       {layersWarning && (
         <Modal
           title={t("noEmbdedItemsFound")}
@@ -1620,69 +1713,6 @@ const CreatePlaylistUI = (props: any) => {
               creatingPlaylist={!creatingPlaylist}
               setPlaylistFromRow={setPlaylist}
             />
-            {false && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "1rem",
-                  justifyContent: "space-between",
-                  width: "100%",
-                }}
-              >
-                <Input
-                  value={searchText}
-                  style={{ marginBottom: "0" }}
-                  onChangeListener={setSearchText}
-                  placeholder={t("typeToSearch")}
-                />
-                <p
-                  onClick={onSearchHit}
-                  className="playlist-action secondary self-start"
-                >
-                  <span class="material-symbols-outlined unfollow">search</span>
-                  <span> {t("searchAndAdd")} </span>
-                </p>
-              </div>
-            )}
-            {false && (
-              <div
-                style={{
-                  display: "flex",
-                  gap: "1rem",
-                  alignItems: "center",
-                  width: "100%",
-                }}
-              >
-                <Button
-                  style={{ fontSize: "12px" }}
-                  onClick={() => {
-                    setRegenrateUI(false);
-                    setOpenAttachLink(true);
-                  }}
-                  small
-                  secondary
-                >
-                  <span
-                    class="material-symbols-outlined unfollow color-inherit"
-                    style={{ fontSize: "1.25rem", marginRight: "0.25rem" }}
-                  >
-                    photo_library
-                  </span>
-                  <span className="color-inherit">{t("addMedia")}</span>
-                </Button>
-                <p
-                  onClick={() => {}}
-                  style={{ width: "fit-content" }}
-                  className="playlist-action small"
-                >
-                  <span class="material-symbols-outlined unfollow">
-                    calendar_month
-                  </span>
-                  <span>{t("insertDate")}</span>
-                </p>
-              </div>
-            )}
 
             {!itemSelected && !regenrateUI && (
               <AttachLink
@@ -1798,22 +1828,11 @@ const CreatePlaylistUI = (props: any) => {
             <div className="add-playlist-actions">
               <Button
                 onClick={() => {
-                  if (!playList.length)
-                    return ShowNotification({
-                      message: t("pleaseAddSomeItemsToSavePlaylist"),
-                      severity: "error",
-                    });
-                  if (layers) {
-                    const checkEmbed = playList.some(
-                      (ele: any) => !ele.additionalInfo.layers?.length
-                    );
-                    if (checkEmbed) {
-                      setLayersWarning(true);
-                      return;
-                    }
+                  if (G.RetainDataData) {
+                    setDataWarning(true);
+                  } else {
+                    onClickSave();
                   }
-                  setOpenAttachLink(false);
-                  startCreatingPlaylist("", playList, id);
                 }}
                 secondary
               >
@@ -1824,58 +1843,15 @@ const CreatePlaylistUI = (props: any) => {
                   {t("revertToPrevious")}
                 </Button>
               )}
-              {!!playList?.length && false && (
-                <p
-                  onClick={() => {
-                    const jsonStr = JSON.stringify(playList, null, 2);
-                    os.download(jsonStr, `${name}.json`);
-                  }}
-                  style={{ width: "100%", padding: "0" }}
-                  className="playlist-action self-start"
-                >
-                  <span class="material-symbols-outlined unfollow">
-                    download
-                  </span>
-                  <span>{t("downloadJSON")}</span>
-                </p>
-              )}
-              {false && !regenrateUI && (
-                <p
-                  onClick={() => {
-                    setOpenAttachLink(false);
-                    setRegenrateUI(true);
-                  }}
-                  style={{ width: "100%", padding: "0" }}
-                  className="playlist-action self-start"
-                >
-                  <span class="material-symbols-outlined unfollow">
-                    animated_images
-                  </span>
-                  <span>
-                    {hasGenrated ? t("regenerate") : t("generate")}{" "}
-                    {isLayers ? t("layers") : t("playlist")}
-                  </span>
-                </p>
-              )}
-              {!!playLists.length && false && (
-                <p
-                  onClick={() => {
-                    setOpenModal(true);
-                  }}
-                  style={{ width: "100%", padding: "0" }}
-                  className="playlist-action self-start"
-                >
-                  <span class="material-symbols-outlined unfollow">
-                    content_copy
-                  </span>
-                  <span>{t("copyOtherPlaylists")}</span>
-                </p>
-              )}
               <Button
                 onClick={() => {
-                  isTempEdit.current = false;
-                  setPlaylist([]);
-                  setCreatingPlaylist(false);
+                  if (playList.length) {
+                    setLoseProgressWarning(true);
+                  } else {
+                    isTempEdit.current = false;
+                    setPlaylist([]);
+                    setCreatingPlaylist(false);
+                  }
                 }}
                 secondaryAlt
               >

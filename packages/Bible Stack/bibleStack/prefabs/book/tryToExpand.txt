@@ -1,3 +1,5 @@
+import { HexToRgb } from "bibleVizUtils.functions.index";
+
 return
 if(thisBot.masks.isInTransition || thisBot.masks.isExpanding || thisBot.masks.isConvertedIntoATray) return;
 
@@ -86,8 +88,8 @@ setTagMask(mainWord, "lastBookExpandingId", getID(thisBot));
 //                     toValue: 0,
 //                     duration: thisBot.tags.expandAnimationDuration
 //                 }),
-//                 thisBot.lerpColor({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: thisBot.tags.expandAnimationDuration})
-//                 ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: thisBot.tags.expandAnimationDuration, bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
+//                 thisBot.lerpColor({startingColor: HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: thisBot.tags.expandAnimationDuration})
+//                 ColorLerper.LerpTag({startingColor: HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: thisBot.tags.expandAnimationDuration, bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
 
 //             ]).then(() => {
 //                 thisBot.setThisBookAsTheTray();
@@ -110,8 +112,8 @@ setTagMask(mainWord, "lastBookExpandingId", getID(thisBot));
                 easing: {type: "linear"}
             }).then(async () => {
                 const bookExpandShadow = CreateExpandShadow(thisBot.tags.trayDesiredScaleX, thisBot.tags.trayDesiredScaleY, thisBot.tags.trayDesiredScaleZ, "white");
-                thisBot.lerpColor({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: thisBot.tags.expandAnimationDuration})
-                ColorLerper.LerpTag({startingColor: [255, 255, 255], endingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), durationInSeconds: (animationDuration / 5), bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
+                thisBot.lerpColor({startingColor: HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: thisBot.tags.expandAnimationDuration})
+                ColorLerper.LerpTag({startingColor: [255, 255, 255], endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: (animationDuration / 5), bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
 
                 await Promise.all([
                     animateTag(thisBot, "scaleX", {

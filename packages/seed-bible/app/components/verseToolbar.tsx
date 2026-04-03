@@ -240,22 +240,27 @@ export function VerseToolbar({
   };
 
   const handleClearHighlights = () => {
-    clickedVerses.forEach((verseNum) => {
-      if (globalThis.UnHighlightVerse) {
-        globalThis.UnHighlightVerse(verseNum);
-      }
-    });
+    // clickedVerses.forEach((verseNum) => {
+    //   if (globalThis.UnHighlightVerse) {
+    //     globalThis.UnHighlightVerse(verseNum);
+    //   }
+    // });
+    if (globalThis.UnHighlightVerse) {
+      globalThis.UnHighlightVerse(clickedVerses);
+    }
     onClose();
   };
 
   const handleClearAllHighlights = () => {
+    const verseNums = [];
     Object.keys(highlighted).forEach((key) => {
       const parts = key.split("-");
       const verseNum = parseInt(parts[parts.length - 1] ?? "0");
-      if (globalThis.UnHighlightVerse) {
-        globalThis.UnHighlightVerse(verseNum);
-      }
+      verseNums.push(verseNum);
     });
+    if (globalThis.UnHighlightVerse) {
+      globalThis.UnHighlightVerse(verseNums);
+    }
     onClose();
   };
 

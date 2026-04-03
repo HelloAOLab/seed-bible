@@ -3,6 +3,12 @@
   "saveChanges": "Simpan perubahan",
   "saveOrder": "Simpan urutan",
   "saveAndAdd": "Simpan dan tambahkan",
+  "addAndSave": "Tambahkan dan simpan",
+  "ignoreAndSave": "Abaikan dan simpan",
+  "dataWarning": "Data belum disimpan",
+  "dataWarningMsg": "Ada data yang belum disimpan di tautan lampiran. Silakan konfirmasi tindakan di bawah.",
+  "loseProgressWarning": "Kehilangan progres",
+  "loseProgressWarningMsg": "Ini akan menghapus semua perubahan Anda. Apakah Anda yakin?",
   "cancel": "Batal",
   "close": "Tutup",
   "delete": "Hapus",
@@ -278,5 +284,6 @@
   "unknownUser": "Pengguna tidak dikenal",
   "anonymous": "Anonim",
   "reportBug": "Laporkan bug",
-  "tabs": "Tab"
+  "tabs": "Tab",
+  "alreadyAnnotatedThisItem": "Anda sudah menganotasi item ini."
 }
