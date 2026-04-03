@@ -1,10 +1,10 @@
 {
-  "settings": "設定",
+  "allBooks": "すべての書物",
 
-  "searchBook": "書物を検索...",
-
-  "oldTestament": "旧約聖書",
   "newTestament": "新約聖書",
 
-  "allBooks": "すべての書物"
+  "oldTestament": "旧約聖書",
+  "searchBook": "書物を検索...",
+
+  "settings": "設定"
 }

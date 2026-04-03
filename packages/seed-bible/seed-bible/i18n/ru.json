@@ -1,10 +1,10 @@
 {
-  "settings": "Настройки",
+  "allBooks": "Все книги",
 
-  "searchBook": "Поиск книги...",
-
-  "oldTestament": "Ветхий Завет",
   "newTestament": "Новый Завет",
 
-  "allBooks": "Все книги"
+  "oldTestament": "Ветхий Завет",
+  "searchBook": "Поиск книги...",
+
+  "settings": "Настройки"
 }

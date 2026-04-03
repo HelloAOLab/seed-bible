@@ -1,10 +1,10 @@
 {
-  "settings": "Settings",
+  "allBooks": "All books",
 
-  "searchBook": "Search book...",
-
-  "oldTestament": "Old Testament",
   "newTestament": "New Testament",
 
-  "allBooks": "All books"
+  "oldTestament": "Old Testament",
+  "searchBook": "Search book...",
+
+  "settings": "Settings"
 }

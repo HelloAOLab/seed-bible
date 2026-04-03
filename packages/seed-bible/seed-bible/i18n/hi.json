@@ -1,10 +1,10 @@
 {
-  "settings": "सेटिंग्स",
+  "allBooks": "सभी पुस्तकें",
 
-  "searchBook": "पुस्तक खोजें...",
-
-  "oldTestament": "पुराना नियम",
   "newTestament": "नया नियम",
 
-  "allBooks": "सभी पुस्तकें"
+  "oldTestament": "पुराना नियम",
+  "searchBook": "पुस्तक खोजें...",
+
+  "settings": "सेटिंग्स"
 }

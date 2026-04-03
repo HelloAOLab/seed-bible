@@ -1,10 +1,10 @@
 {
-  "settings": "الإعدادات",
+  "allBooks": "جميع الكتب",
 
-  "searchBook": "بحث عن كتاب...",
-
-  "oldTestament": "العهد القديم",
   "newTestament": "العهد الجديد",
 
-  "allBooks": "جميع الكتب"
+  "oldTestament": "العهد القديم",
+  "searchBook": "بحث عن كتاب...",
+
+  "settings": "الإعدادات"
 }

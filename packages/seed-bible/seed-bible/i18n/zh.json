@@ -1,10 +1,10 @@
 {
-  "settings": "设置",
+  "allBooks": "全部书卷",
 
-  "searchBook": "搜索书卷...",
-
-  "oldTestament": "旧约",
   "newTestament": "新约",
 
-  "allBooks": "全部书卷"
+  "oldTestament": "旧约",
+  "searchBook": "搜索书卷...",
+
+  "settings": "设置"
 }

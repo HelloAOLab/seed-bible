@@ -1,10 +1,10 @@
 {
-  "settings": "Paramètres",
+  "allBooks": "Tous les livres",
 
-  "searchBook": "Rechercher un livre...",
-
-  "oldTestament": "Ancien Testament",
   "newTestament": "Nouveau Testament",
 
-  "allBooks": "Tous les livres"
+  "oldTestament": "Ancien Testament",
+  "searchBook": "Rechercher un livre...",
+
+  "settings": "Paramètres"
 }
