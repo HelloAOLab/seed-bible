@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { ESLintUtils, TSESTree, type TSESLint } from "@typescript-eslint/utils";
+import { getTranslationUsageStats } from "../getTranslationUsageStats";
 
 type TranslationObject = Record<string, unknown>;
 
@@ -53,69 +54,9 @@ function flattenTranslationKeys(
   return output;
 }
 
-function collectFilesRecursively(
-  root: string,
-  matcher: (filePath: string) => boolean,
-  output: string[] = []
-): string[] {
-  if (!fs.existsSync(root)) {
-    return output;
-  }
-
-  const entries = fs.readdirSync(root, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(root, entry.name);
-
-    if (entry.isDirectory()) {
-      if (
-        entry.name === "node_modules" ||
-        entry.name === "dist" ||
-        entry.name === "obsolete" ||
-        entry.name === "typings"
-      ) {
-        continue;
-      }
-      collectFilesRecursively(fullPath, matcher, output);
-      continue;
-    }
-
-    if (matcher(fullPath)) {
-      output.push(fullPath);
-    }
-  }
-
-  return output;
-}
-
 function parseJsonFile(filePath: string): unknown {
   const content = fs.readFileSync(filePath, "utf8");
   return JSON.parse(content) as unknown;
-}
-
-function collectUsedKeysFromSourceFiles(projectRoot: string): Set<string> {
-  const sourceRoot = path.join(projectRoot, "packages");
-  const files = collectFilesRecursively(
-    sourceRoot,
-    (filePath) =>
-      /\.(?:[mc]?[jt]sx?)$/u.test(filePath) &&
-      !filePath.includes(`${path.sep}i18n${path.sep}`)
-  );
-
-  const used = new Set<string>();
-  const translationCallRegex = /\bt\s*\(\s*(["'])([\s\S]*?)\1\s*\)/gu;
-
-  for (const filePath of files) {
-    const content = fs.readFileSync(filePath, "utf8");
-    let match: RegExpExecArray | null;
-    while ((match = translationCallRegex.exec(content)) !== null) {
-      const key = match[2];
-      if (typeof key === "string") {
-        used.add(key);
-      }
-    }
-  }
-
-  return used;
 }
 
 function analyzeProject(projectRoot: string): ProjectAnalysis {
@@ -157,7 +98,8 @@ function analyzeProject(projectRoot: string): ProjectAnalysis {
   }
 
   const englishKeys = localeKeys.get("en") ?? new Set<string>();
-  const usedKeys = collectUsedKeysFromSourceFiles(projectRoot);
+  const usageStats = getTranslationUsageStats(projectRoot);
+  const usedKeys = new Set<string>(usageStats.uniqueTranslationKeys);
 
   const result: ProjectAnalysis = {
     englishKeys,
