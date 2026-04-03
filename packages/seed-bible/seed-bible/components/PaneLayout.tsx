@@ -412,17 +412,42 @@ export function PaneLayout(props: PaneLayoutProps) {
         <div
           key={pane.id}
           className={`sb-pane-shell sb-pane-shell-detached${
-            pane.id === selectedPaneId ? " sb-pane-shell-active" : ""
-          }`}
+            pane.detachedAnchor !== "floating"
+              ? " sb-pane-shell-detached-anchored"
+              : ""
+          }${pane.id === selectedPaneId ? " sb-pane-shell-active" : ""}`}
+          data-anchor={pane.detachedAnchor}
           style={{
-            left: `${pane.x}px`,
-            top: `${pane.y}px`,
-            width: `${pane.width}px`,
-            height: `${pane.height}px`,
+            ...(pane.detachedAnchor === "side"
+              ? {
+                  position: "fixed",
+                  top: "0px",
+                  right: "0px",
+                  bottom: "0px",
+                  left: "auto",
+                  width: `${pane.width}px`,
+                  height: "auto",
+                }
+              : pane.detachedAnchor === "bottom"
+                ? {
+                    position: "fixed",
+                    left: "0px",
+                    right: "0px",
+                    bottom: "0px",
+                    top: "auto",
+                    width: "auto",
+                    height: `${pane.height}px`,
+                  }
+                : {
+                    left: `${pane.x}px`,
+                    top: `${pane.y}px`,
+                    width: `${pane.width}px`,
+                    height: `${pane.height}px`,
+                  }),
             zIndex:
               pane.id === selectedPaneId
-                ? 40 + detachedPanes.length
-                : 20 + index,
+                ? 70 + detachedPanes.length
+                : 50 + index,
           }}
           ref={(element: HTMLElement | null) => {
             if (element) {
@@ -436,6 +461,9 @@ export function PaneLayout(props: PaneLayoutProps) {
           <div
             className="sb-pane-detached-header"
             onPointerDown={(event: PointerEvent) => {
+              if (pane.detachedAnchor !== "floating") {
+                return;
+              }
               event.stopPropagation();
               app.selectPane(pane.id);
               dragStateRef.current = {
@@ -482,6 +510,9 @@ export function PaneLayout(props: PaneLayoutProps) {
           <div
             className="sb-detached-pane-toolbar"
             onPointerDown={(event: PointerEvent) => {
+              if (pane.detachedAnchor !== "floating") {
+                return;
+              }
               event.stopPropagation();
               app.selectPane(pane.id);
               dragStateRef.current = {
@@ -492,6 +523,54 @@ export function PaneLayout(props: PaneLayoutProps) {
               };
             }}
           >
+            <div className="sb-detached-pane-toolbar-item">
+              <button
+                className={`sb-detached-pane-toolbar-button${
+                  pane.detachedAnchor === "side"
+                    ? " sb-detached-pane-toolbar-button-active"
+                    : ""
+                }`}
+                aria-label="Anchor detached pane to side"
+                title="Anchor to side"
+                onPointerDown={(event: PointerEvent) => {
+                  event.stopPropagation();
+                }}
+                onClick={(event: MouseEvent) => {
+                  event.stopPropagation();
+                  panesManager.setDetachedAnchor(pane.id, "side");
+                }}
+              >
+                <span className="material-symbols-outlined">
+                  right_panel_open
+                </span>
+                <span className="sr-only">Anchor to side</span>
+              </button>
+            </div>
+
+            <div className="sb-detached-pane-toolbar-item">
+              <button
+                className={`sb-detached-pane-toolbar-button${
+                  pane.detachedAnchor === "bottom"
+                    ? " sb-detached-pane-toolbar-button-active"
+                    : ""
+                }`}
+                aria-label="Anchor detached pane to bottom"
+                title="Anchor to bottom"
+                onPointerDown={(event: PointerEvent) => {
+                  event.stopPropagation();
+                }}
+                onClick={(event: MouseEvent) => {
+                  event.stopPropagation();
+                  panesManager.setDetachedAnchor(pane.id, "bottom");
+                }}
+              >
+                <span className="material-symbols-outlined">
+                  bottom_panel_open
+                </span>
+                <span className="sr-only">Anchor to bottom</span>
+              </button>
+            </div>
+
             <div className="sb-detached-pane-toolbar-item">
               <button
                 className="sb-detached-pane-toolbar-button"
@@ -514,6 +593,9 @@ export function PaneLayout(props: PaneLayoutProps) {
           <div
             className="sb-pane-detached-resize-handle"
             onPointerDown={(event: PointerEvent) => {
+              if (pane.detachedAnchor !== "floating") {
+                return;
+              }
               event.stopPropagation();
               app.selectPane(pane.id);
               dragStateRef.current = {

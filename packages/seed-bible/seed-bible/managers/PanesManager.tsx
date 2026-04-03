@@ -36,11 +36,14 @@ export interface Pane {
   gridPortal: string | null;
   mapPortal: string | null;
   detached: boolean;
+  detachedAnchor: DetachedPaneAnchor;
   x: number;
   y: number;
   width: number;
   height: number;
 }
+
+export type DetachedPaneAnchor = "floating" | "side" | "bottom";
 
 interface PaneContent {
   tab: ReaderTab | null;
@@ -58,6 +61,7 @@ export interface PaneOpenContentOptions {
 
 export interface PaneOpenOptions extends PaneOpenContentOptions {
   type: "attached" | "detached";
+  detachedAnchor?: Exclude<DetachedPaneAnchor, "floating">;
 }
 
 function createPaneFactory() {
@@ -66,7 +70,8 @@ function createPaneFactory() {
   return (
     tab: ReaderTab | null,
     component: (() => ComponentChild) | null = null,
-    detached = false
+    detached = false,
+    detachedAnchor: DetachedPaneAnchor = "floating"
   ): Pane => {
     const paneId = nextPaneId;
     nextPaneId += 1;
@@ -79,6 +84,7 @@ function createPaneFactory() {
       gridPortal: null,
       mapPortal: null,
       detached,
+      detachedAnchor: detached ? detachedAnchor : "floating",
       x: 48 + offset,
       y: 48 + offset,
       width: 480,
@@ -200,7 +206,8 @@ function applyLayoutToPanes(
   createPane: (
     tab: ReaderTab | null,
     component?: (() => ComponentChild) | null,
-    detached?: boolean
+    detached?: boolean,
+    detachedAnchor?: DetachedPaneAnchor
   ) => Pane
 ) {
   const slotCount = getLayoutSlotCount(layoutId);
@@ -484,7 +491,9 @@ export function createPanes(
       }
 
       const nextPanes = panes.value.map((pane) =>
-        pane.id === paneId ? { ...pane, detached: true } : pane
+        pane.id === paneId
+          ? { ...pane, detached: true, detachedAnchor: "floating" as const }
+          : pane
       );
       const nextSlotCount = Math.max(1, attachedCount - 1);
       layout.value = getDefaultLayoutForSlotCount(nextSlotCount);
@@ -500,13 +509,31 @@ export function createPanes(
     }
 
     const nextPanes = panes.value.map((pane) =>
-      pane.id === paneId ? { ...pane, detached: false } : pane
+      pane.id === paneId
+        ? { ...pane, detached: false, detachedAnchor: "floating" as const }
+        : pane
     );
     const nextSlotCount = Math.min(4, attachedCount + 1);
     layout.value = getDefaultLayoutForSlotCount(nextSlotCount);
     syncPaneState(
       applyLayoutToPanes(nextPanes, layout.value, paneId, createPane),
       paneId
+    );
+    return true;
+  };
+
+  const setDetachedAnchor = (paneId: string, anchor: DetachedPaneAnchor) => {
+    const targetPane = panes.value.find((pane) => pane.id === paneId) ?? null;
+    if (!targetPane || !targetPane.detached) {
+      return false;
+    }
+
+    if (targetPane.detachedAnchor === anchor) {
+      return false;
+    }
+
+    panes.value = panes.value.map((pane) =>
+      pane.id === paneId ? { ...pane, detachedAnchor: anchor } : pane
     );
     return true;
   };
@@ -524,13 +551,24 @@ export function createPanes(
         if (options.type === "detached" && !existingPane.detached) {
           setDetached(existingPane.id, true);
         }
+        if (options.type === "detached") {
+          setDetachedAnchor(
+            existingPane.id,
+            options.detachedAnchor ?? "floating"
+          );
+        }
         selectedPaneId.value = existingPane.id;
         return true;
       }
     }
 
     if (options.type === "detached") {
-      const nextPane = createPane(parsed.tab, parsed.component, true);
+      const nextPane = createPane(
+        parsed.tab,
+        parsed.component,
+        true,
+        options.detachedAnchor ?? "floating"
+      );
       const detachedPane = {
         ...nextPane,
         gridPortal: parsed.gridPortal,
@@ -637,15 +675,21 @@ export function createPanes(
   };
 
   const movePane = (paneId: string, deltaX: number, deltaY: number) => {
-    panes.value = panes.value.map((pane) =>
-      pane.id === paneId
-        ? {
-            ...pane,
-            x: Math.max(0, pane.x + deltaX),
-            y: Math.max(0, pane.y + deltaY),
-          }
-        : pane
-    );
+    panes.value = panes.value.map((pane) => {
+      if (pane.id !== paneId) {
+        return pane;
+      }
+
+      if (pane.detachedAnchor !== "floating") {
+        return pane;
+      }
+
+      return {
+        ...pane,
+        x: Math.max(0, pane.x + deltaX),
+        y: Math.max(0, pane.y + deltaY),
+      };
+    });
   };
 
   const resizePane = (
@@ -653,15 +697,31 @@ export function createPanes(
     deltaWidth: number,
     deltaHeight: number
   ) => {
-    panes.value = panes.value.map((pane) =>
-      pane.id === paneId
-        ? {
-            ...pane,
-            width: Math.max(280, pane.width + deltaWidth),
-            height: Math.max(180, pane.height + deltaHeight),
-          }
-        : pane
-    );
+    panes.value = panes.value.map((pane) => {
+      if (pane.id !== paneId) {
+        return pane;
+      }
+
+      if (pane.detachedAnchor === "side") {
+        return {
+          ...pane,
+          width: Math.max(320, pane.width + deltaWidth),
+        };
+      }
+
+      if (pane.detachedAnchor === "bottom") {
+        return {
+          ...pane,
+          height: Math.max(180, pane.height + deltaHeight),
+        };
+      }
+
+      return {
+        ...pane,
+        width: Math.max(280, pane.width + deltaWidth),
+        height: Math.max(180, pane.height + deltaHeight),
+      };
+    });
   };
 
   return {
@@ -675,6 +735,7 @@ export function createPanes(
     openInPane,
     closePane,
     setDetached,
+    setDetachedAnchor,
     movePane,
     resizePane,
   };

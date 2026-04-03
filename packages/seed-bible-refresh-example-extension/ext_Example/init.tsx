@@ -24,6 +24,7 @@ registerExtension({
         console.log("Example tool selected!");
         context.panes.openPane({
           type: "detached",
+          detachedAnchor: "side",
           component: () => (
             <div style={{ padding: 20 }}>Hello from the example extension!</div>
           ),
