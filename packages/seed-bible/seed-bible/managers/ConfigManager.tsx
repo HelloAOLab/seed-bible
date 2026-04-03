@@ -136,6 +136,13 @@ export function createConfig(login: LoginManager) {
         ? (existingProfile.config as Record<string, unknown>)
         : {};
 
+    if (existingConfig.lang === language) {
+      console.log(
+        "Profile already has the correct language. No update needed."
+      );
+      return;
+    }
+
     login.updateProfile({
       config: {
         ...existingConfig,
