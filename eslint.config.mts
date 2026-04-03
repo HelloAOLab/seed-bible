@@ -34,11 +34,10 @@ export default defineConfig([
     "jest.config.cjs",
     "babel.config.cjs",
   ]),
-  // {
-  //   files: ["**/*.{js,mjs,cjs,ts,tsx,jsx}"],
-  //   ...pluginJs.configs.recommended,
-  // },
-  json.configs.recommended,
+  {
+    files: ["**/*.{js,mjs,cjs,ts,tsx,jsx}"],
+    ...pluginJs.configs.recommended,
+  },
   {
     languageOptions: {
       globals: {
@@ -46,69 +45,69 @@ export default defineConfig([
       },
     },
   },
-  // ...tseslint.configs.recommended,
+  ...tseslint.configs.recommended,
   // lint css files
-  // {
-  //   files: ["**/*.css"],
-  //   plugins: {
-  //     css: cssPlugin,
-  //   },
-  //   language: "css/css",
-  //   extends: ["css/recommended"],
-  //   rules: {
-  //     "css/no-important": "warn",
-  //     "css/no-empty-blocks": "warn",
-  //     "css/use-baseline": "warn",
-  //     "css/no-invalid-properties": "warn",
-  //   },
-  // },
-  // {
-  //   files: ["**/*.json"],
-  //   language: "json/json",
-  //   plugins: {
-  //     json: jsonPlugin,
-  //   },
-  // },
+  {
+    files: ["**/*.css"],
+    plugins: {
+      css: cssPlugin,
+    },
+    language: "css/css",
+    extends: ["css/recommended"],
+    rules: {
+      "css/no-important": "warn",
+      "css/no-empty-blocks": "warn",
+      "css/use-baseline": "warn",
+      "css/no-invalid-properties": "warn",
+    },
+  },
+  {
+    files: ["**/*.json"],
+    language: "json/json",
+    plugins: {
+      json: jsonPlugin,
+    },
+  },
 
   // Disabled rules
-  // {
-  //   files: [
-  //     "packages/**/*.{js,mjs,cjs,ts,tsx,jsx,css}",
-  //     "script/**/*.{js,mjs,cjs,ts,tsx,jsx,css}",
-  //   ],
+  {
+    files: [
+      "packages/**/*.{js,mjs,cjs,ts,tsx,jsx,css}",
+      "script/**/*.{js,mjs,cjs,ts,tsx,jsx,css}",
+    ],
 
-  //   rules: {
-  //     // These rules should be fixed
-  //     "no-constant-binary-expression": "error",
-  //     "no-constant-condition": "error",
-  //     "@typescript-eslint/no-unused-expressions": "error",
-  //     "@typescript-eslint/no-unused-vars": "error",
-  //     "@typescript-eslint/no-explicit-any": "error",
-  //     "no-empty": "error",
-  //     "no-prototype-builtins": "error",
-  //     "no-case-declarations": "error",
-  //     "no-empty-pattern": "error",
+    rules: {
+      // These rules should be fixed
+      "no-constant-binary-expression": "error",
+      "no-constant-condition": "error",
+      "@typescript-eslint/no-unused-expressions": "error",
+      "@typescript-eslint/no-unused-vars": "error",
+      "@typescript-eslint/no-explicit-any": "error",
+      "no-empty": "error",
+      "no-prototype-builtins": "error",
+      "no-case-declarations": "error",
+      "no-empty-pattern": "error",
 
-  //     // These rules can be ignored for now
-  //     "prefer-const": [
-  //       "warn",
-  //       {
-  //         destructuring: "all",
-  //       },
-  //     ],
-  //     "no-useless-escape": "off",
-  //     "no-control-regex": "off",
-  //   },
-  // },
-  // {
-  //   files: ["packages/**/*.{js,mjs,cjs,ts,tsx,jsx,ts,tsx}"],
-  //   plugins: {
-  //     "seed-bible-i18n": i18nPlugin,
-  //   },
-  //   rules: {
-  //     "seed-bible-i18n/translation-missing-keys": "error",
-  //   },
-  // },
+      // These rules can be ignored for now
+      "prefer-const": [
+        "warn",
+        {
+          destructuring: "all",
+        },
+      ],
+      "no-useless-escape": "off",
+      "no-control-regex": "off",
+    },
+  },
+  {
+    files: ["packages/**/*.{js,mjs,cjs,ts,tsx,jsx,ts,tsx}"],
+    plugins: {
+      "seed-bible-i18n": i18nPlugin,
+    },
+    rules: {
+      "seed-bible-i18n/translation-missing-keys": "error",
+    },
+  },
   {
     files: ["packages/seed-bible/seed-bible/i18n/*.json"],
     language: "json/json",
