@@ -9,6 +9,7 @@ import { MobileSettingsIcon } from "seed-bible.components.icons";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
 import type { UserProfile } from "../managers/LoginManager";
 import type { ConnectedSessionUser } from "../managers/SessionsManager";
+import { useI18n } from "seed-bible.i18n.I18nManager";
 
 interface TabsProps {
   state: SeedBibleState;
@@ -60,6 +61,8 @@ export function Tabs(props: TabsProps) {
   const isLayoutMenuOpen = useSignal(false);
   const isJoinSessionModalOpen = useSignal(false);
   const joinSessionId = useSignal("");
+
+  const { t } = useI18n();
   // const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
   // const selectedBookId = selectedTab?.readingState.bookId.value ?? null;
   // const selectedChapter = selectedTab?.readingState.chapterNumber.value ?? null;
@@ -177,7 +180,7 @@ export function Tabs(props: TabsProps) {
           {isSettingsOpen ? (
             <div className="sb-sidebar-settings-view">
               <div className="sb-sidebar-tabs-header">
-                <h3 className="sb-sidebar-tabs-title">Settings</h3>
+                <h3 className="sb-sidebar-tabs-title">{t("settings")}</h3>
                 <button
                   onClick={sidebar.closeSettings}
                   className="sb-sidebar-settings-close-button"

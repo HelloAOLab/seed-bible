@@ -1,4 +1,6 @@
 import { signal } from "@preact/signals";
+import i18n from "https://esm.sh/i18next@23.16.8";
+import { DEFAULT_LANGUAGE } from "seed-bible.i18n.I18nManager";
 
 export interface AppConfig {
   disablePanels: boolean;
@@ -71,6 +73,10 @@ export function createConfig() {
 
   const syncConfigFromBot = () => {
     config.value = readConfigFromBot();
+
+    if (configBot.tags.lang && configBot.tags.lang !== i18n.language) {
+      i18n.changeLanguage(configBot.tags.lang);
+    }
   };
 
   os.addBotListener(configBot, "onBotChanged", (that: unknown) => {
@@ -84,7 +90,8 @@ export function createConfig() {
 
     if (
       changedTags.includes("app.disablePanels") ||
-      changedTags.includes("settingsPreset")
+      changedTags.includes("settingsPreset") ||
+      changedTags.includes("lang")
     ) {
       syncConfigFromBot();
     }
@@ -97,6 +104,14 @@ export function createConfig() {
     };
     configBot.tags["app.disablePanels"] = disablePanels;
   };
+
+  os.syncConfigBotTagsToURL(["lang"]);
+  i18n.on("languageChanged", (language: string) => {
+    console.log("languageChanged event received from i18n:", language);
+    if (configBot.tags.lang || language !== DEFAULT_LANGUAGE) {
+      configBot.tags.lang = language;
+    }
+  });
 
   return {
     config,

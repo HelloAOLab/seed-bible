@@ -5,6 +5,8 @@ declare module "https://esm.sh/*" {
     use(plugin: unknown): I18nLike;
     init(options: unknown): Promise<unknown>;
     changeLanguage(language: string): Promise<unknown>;
+    on(event: string, callback: (lng: string) => void): void;
+    off(event: string, callback: (lng: string) => void): void;
   }
 
   export interface TranslationHookResult {

@@ -8,7 +8,7 @@ import {
 
 const { useMemo } = os.appHooks;
 
-const DEFAULT_LANGUAGE = "en";
+export const DEFAULT_LANGUAGE = "en";
 
 function loadTranslations(): Record<
   string,
@@ -45,9 +45,11 @@ if (!resources[DEFAULT_LANGUAGE]) {
 
 const availableLanguages = Object.keys(resources).sort();
 
+const initialLanguage = configBot.tags.lang || DEFAULT_LANGUAGE;
+
 if (!i18n.isInitialized) {
   void i18n.use(initReactI18next).init({
-    lng: DEFAULT_LANGUAGE,
+    lng: initialLanguage,
     fallbackLng: DEFAULT_LANGUAGE,
     resources,
     interpolation: {
@@ -75,6 +77,7 @@ export function useI18n() {
       language: i18nInstance.language || DEFAULT_LANGUAGE,
       availableLanguages,
       setLanguage,
+      i18n: i18nInstance,
     }),
     [t, i18nInstance.language]
   );
