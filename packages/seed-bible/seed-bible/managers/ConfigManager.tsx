@@ -60,7 +60,7 @@ function parseBoolean(value: unknown, fallback: boolean) {
 
 function getProfileConfigValue(
   profile: UserProfile | null,
-  key: keyof AppConfig
+  key: string
 ): unknown {
   const profileConfig = profile?.config;
   if (!profileConfig || typeof profileConfig !== "object") {
@@ -73,21 +73,15 @@ function getProfileConfigValue(
 export type ConfigManager = ReturnType<typeof createConfig>;
 
 export function createConfig(login: LoginManager) {
-  const readConfig = (
-    profile: UserProfile | null = login.profile.value
-  ): AppConfig => {
+  const readConfig = (): AppConfig => {
     const settingsPreset = parseSettingsPreset(configBot.tags.settingsPreset);
     const presetConfig = getPresetConfig(settingsPreset);
-    const disablePanelsFromProfile = parseBoolean(
-      getProfileConfigValue(profile, "disablePanels"),
-      parseBoolean(
-        configBot.tags["app.disablePanels"],
-        presetConfig.disablePanels
-      )
-    );
 
     return {
-      disablePanels: disablePanelsFromProfile,
+      disablePanels: parseBoolean(
+        configBot.tags["app.disablePanels"],
+        presetConfig.disablePanels
+      ),
     };
   };
 
@@ -96,10 +90,16 @@ export function createConfig(login: LoginManager) {
   const syncConfigFromBot = (
     profile: UserProfile | null = login.profile.value
   ) => {
-    config.value = readConfig(profile);
+    config.value = readConfig();
 
-    if (configBot.tags.lang && configBot.tags.lang !== i18n.language) {
-      i18n.changeLanguage(configBot.tags.lang);
+    const profileLanguage = getProfileConfigValue(profile, "lang");
+    const nextLanguage =
+      typeof profileLanguage === "string" && profileLanguage.trim().length > 0
+        ? profileLanguage
+        : configBot.tags.lang;
+
+    if (nextLanguage && nextLanguage !== i18n.language) {
+      i18n.changeLanguage(nextLanguage);
     }
   };
 
@@ -125,7 +125,7 @@ export function createConfig(login: LoginManager) {
     syncConfigFromBot(login.profile.value);
   });
 
-  const saveConfigToProfile = (nextConfig: AppConfig) => {
+  const saveLangToProfile = (language: string) => {
     if (!login.userId.value) {
       return;
     }
@@ -139,7 +139,7 @@ export function createConfig(login: LoginManager) {
     login.updateProfile({
       config: {
         ...existingConfig,
-        disablePanels: nextConfig.disablePanels,
+        lang: language,
       },
     });
   };
@@ -151,7 +151,6 @@ export function createConfig(login: LoginManager) {
     };
     config.value = nextConfig;
     configBot.tags["app.disablePanels"] = disablePanels;
-    saveConfigToProfile(nextConfig);
   };
 
   os.syncConfigBotTagsToURL(["lang"]);
@@ -160,6 +159,7 @@ export function createConfig(login: LoginManager) {
     if (configBot.tags.lang || language !== DEFAULT_LANGUAGE) {
       configBot.tags.lang = language;
     }
+    saveLangToProfile(language);
   });
 
   return {
