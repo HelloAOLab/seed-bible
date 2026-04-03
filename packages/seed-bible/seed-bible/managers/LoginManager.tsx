@@ -30,7 +30,7 @@ export interface LoginManager {
   /**
    * Updates the user's profile information.
    */
-  updateProfile: (newData: UserProfile) => void;
+  updateProfile: (newData: Partial<UserProfile>) => void;
 
   /**
    * Gets the user's profile information from storage.
@@ -44,6 +44,7 @@ export const userProfileSchema = z.object({
   name: z.string(),
   location: z.string().nullable().optional(),
   pictureUrl: z.url().optional().nullable(),
+  config: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 
 export type UserProfile = z.infer<typeof userProfileSchema>;
@@ -118,17 +119,19 @@ export function createLoginManager(): LoginManager {
     });
   });
 
-  const updateProfile = (newData: UserProfile) => {
+  const updateProfile = (newData: Partial<UserProfile>) => {
     if (!userId.value) {
       console.warn("Cannot update profile: no authenticated user");
       return;
     }
-    profile.value = {
+
+    const nextProfile: UserProfile = {
       ...(profile.value ?? { name: "" }),
       ...newData,
     };
+    profile.value = nextProfile;
 
-    updateUserProfile(userId.value, profile.value);
+    updateUserProfile(userId.value, nextProfile);
   };
 
   void os

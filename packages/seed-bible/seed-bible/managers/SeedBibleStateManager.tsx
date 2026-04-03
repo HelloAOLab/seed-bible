@@ -96,7 +96,7 @@ export function createSeedBibleState(): SeedBibleState {
   const data = createBibleDataManager(api);
   const login = createLoginManager();
   const highlights = createHighlightsManager(login);
-  const config = createConfig();
+  const config = createConfig(login);
   const themeManager = createTheme();
   const sidebar = createSidebar();
   const tabs = createTabs(data, highlights);
@@ -131,6 +131,7 @@ export function createSeedBibleState(): SeedBibleState {
               gridPortal: null,
               mapPortal: null,
               detached: false,
+              detachedAnchor: "floating" as const,
               x: 0,
               y: 0,
               width: 0,

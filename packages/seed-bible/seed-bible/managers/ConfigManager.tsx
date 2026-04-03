@@ -1,6 +1,10 @@
-import { signal } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
 import i18n from "https://esm.sh/i18next@23.16.8";
 import { DEFAULT_LANGUAGE } from "seed-bible.i18n.I18nManager";
+import type {
+  LoginManager,
+  UserProfile,
+} from "seed-bible.managers.LoginManager";
 
 export interface AppConfig {
   disablePanels: boolean;
@@ -54,25 +58,45 @@ function parseBoolean(value: unknown, fallback: boolean) {
   return fallback;
 }
 
+function getProfileConfigValue(
+  profile: UserProfile | null,
+  key: keyof AppConfig
+): unknown {
+  const profileConfig = profile?.config;
+  if (!profileConfig || typeof profileConfig !== "object") {
+    return null;
+  }
+
+  return (profileConfig as Record<string, unknown>)[key];
+}
+
 export type ConfigManager = ReturnType<typeof createConfig>;
 
-export function createConfig() {
-  const readConfigFromBot = (): AppConfig => {
+export function createConfig(login: LoginManager) {
+  const readConfig = (
+    profile: UserProfile | null = login.profile.value
+  ): AppConfig => {
     const settingsPreset = parseSettingsPreset(configBot.tags.settingsPreset);
     const presetConfig = getPresetConfig(settingsPreset);
-
-    return {
-      disablePanels: parseBoolean(
+    const disablePanelsFromProfile = parseBoolean(
+      getProfileConfigValue(profile, "disablePanels"),
+      parseBoolean(
         configBot.tags["app.disablePanels"],
         presetConfig.disablePanels
-      ),
+      )
+    );
+
+    return {
+      disablePanels: disablePanelsFromProfile,
     };
   };
 
-  const config = signal<AppConfig>(readConfigFromBot());
+  const config = signal<AppConfig>(readConfig());
 
-  const syncConfigFromBot = () => {
-    config.value = readConfigFromBot();
+  const syncConfigFromBot = (
+    profile: UserProfile | null = login.profile.value
+  ) => {
+    config.value = readConfig(profile);
 
     if (configBot.tags.lang && configBot.tags.lang !== i18n.language) {
       i18n.changeLanguage(configBot.tags.lang);
@@ -97,12 +121,37 @@ export function createConfig() {
     }
   });
 
+  effect(() => {
+    syncConfigFromBot(login.profile.value);
+  });
+
+  const saveConfigToProfile = (nextConfig: AppConfig) => {
+    if (!login.userId.value) {
+      return;
+    }
+
+    const existingProfile = login.profile.value;
+    const existingConfig =
+      existingProfile?.config && typeof existingProfile.config === "object"
+        ? (existingProfile.config as Record<string, unknown>)
+        : {};
+
+    login.updateProfile({
+      config: {
+        ...existingConfig,
+        disablePanels: nextConfig.disablePanels,
+      },
+    });
+  };
+
   const setDisablePanels = (disablePanels: boolean) => {
-    config.value = {
+    const nextConfig = {
       ...config.value,
       disablePanels,
     };
+    config.value = nextConfig;
     configBot.tags["app.disablePanels"] = disablePanels;
+    saveConfigToProfile(nextConfig);
   };
 
   os.syncConfigBotTagsToURL(["lang"]);
