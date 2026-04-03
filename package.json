@@ -21,7 +21,8 @@
     "format:changed": "pretty-quick",
     "prepare": "husky",
     "update-ts-paths": "tsx script/updateModulePaths.ts",
-    "update-aux-library-definitions": "tsx script/updateAuxLibraryDefinitions.ts"
+    "update-aux-library-definitions": "tsx script/updateAuxLibraryDefinitions.ts",
+    "get-translation-usage-stats": "tsx script/getTranslationUsageStats.ts"
   },
   "repository": {
     "type": "git",
