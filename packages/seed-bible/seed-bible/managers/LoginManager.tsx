@@ -57,7 +57,7 @@ export function createLoginManager(): LoginManager {
   const getUserProfile = async (userId: string): Promise<UserProfile> => {
     const data = await os.getData(userId, "profile");
 
-    if (!data) {
+    if (!data.success) {
       console.log("[LoginManager] No profile data found for user:", userId);
       // Return a default profile
       return {
@@ -65,7 +65,7 @@ export function createLoginManager(): LoginManager {
       };
     }
 
-    const parsed = userProfileSchema.safeParse(data);
+    const parsed = userProfileSchema.safeParse(data.data);
 
     if (!parsed.success) {
       console.warn("Failed to parse user profile data:", parsed.error);
