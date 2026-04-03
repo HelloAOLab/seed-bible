@@ -15,84 +15,141 @@ type ToolPredicate<TContext> = (context: TContext) => ToolPredicateResult;
 type ToolPriority<TContext> = number | ((context: TContext) => number);
 export type ToolTitle = string | { key: string; defaultValue: string };
 
+/**
+ * Base tool contract shared by all tool surfaces.
+ */
 export interface BibleTool<TContext> {
+  /** Stable tool identifier used for registration/replacement. */
   id: string;
+  /** Sorting priority. Lower values render first. */
   priority: ToolPriority<TContext>;
+  /** Localized or plain-text tool title. */
   title: ToolTitle;
+  /** Icon renderer for the given tool context. */
   icon: BibleToolIcon<TContext>;
 }
 
+/** Window metrics provided to tools when available. */
 export interface WindowContext {
+  /** Current viewport width signal. */
   innerWidth: ReadonlySignal<number>;
+  /** Current viewport height signal. */
   innerHeight: ReadonlySignal<number>;
 }
 
+/** Runtime context passed to reader and verse toolbar tools. */
 export interface BibleToolContext {
+  /** Active reading state for current reader surface. */
   readingState: BibleReadingState;
+  /** Bible selector state for opening navigation overlays. */
   selectorState: BibleSelectorState;
+  /** Tabs manager for tab-level actions when needed by tools. */
   tabs: TabsManager;
+  /** Panes manager for pane-level actions/selection context. */
   panesManager: PanesManager;
+  /** Optional window metrics for responsive tool behavior. */
   window?: WindowContext | null;
+  /** Opens the app sidebar (typically for small-screen actions). */
   openSidebar: () => void;
 }
 
+/** Fully resolved reader toolbar tool ready for rendering. */
 export interface BibleReaderToolbarTool extends BibleTool<BibleToolContext> {
-  disabled: boolean;
-  visible: boolean;
+  /** Disabled state signal resolved for current context. */
+  disabled: ReadonlySignal<boolean>;
+  /** Visibility state signal resolved for current context. */
+  visible: ReadonlySignal<boolean>;
+  /** Invoked when the user activates the tool. */
   onSelect: () => void;
 }
 
+/** Registerable reader toolbar tool definition. */
 export interface ManagedBibleToolbarTool extends BibleTool<BibleToolContext> {
+  /** Optional disabled predicate (boolean or signal). */
   isDisabled?: ToolPredicate<BibleToolContext>;
+  /** Optional visibility predicate (boolean or signal). */
   isVisible?: ToolPredicate<BibleToolContext>;
+  /** Optional action callback for tool activation. */
   onSelect?: (context: BibleToolContext) => void;
 }
 
+/** Fully resolved verse toolbar tool ready for rendering. */
 export interface BibleReaderVerseToolbarTool extends BibleTool<BibleToolContext> {
-  disabled: boolean;
-  visible: boolean;
+  /** Disabled state signal resolved for current context. */
+  disabled: ReadonlySignal<boolean>;
+  /** Visibility state signal resolved for current context. */
+  visible: ReadonlySignal<boolean>;
+  /** Invoked when the user activates the tool. */
   onSelect: () => void;
 }
 
+/** Registerable verse toolbar tool definition. */
 export interface ManagedBibleVerseToolbarTool extends BibleTool<BibleToolContext> {
+  /** Optional disabled predicate (boolean or signal). */
   isDisabled?: ToolPredicate<BibleToolContext>;
+  /** Optional visibility predicate (boolean or signal). */
   isVisible?: ToolPredicate<BibleToolContext>;
+  /** Optional action callback for tool activation. */
   onSelect?: (context: BibleToolContext) => void;
 }
 
+/** Runtime context passed to empty-pane tool surface. */
 export interface EmptyPaneToolContext {
+  /** Bible selector state for opening in empty panes. */
   selectorState: BibleSelectorState;
+  /** Pane currently receiving empty-pane actions. */
   currentPane: Pane;
+  /** Panes manager for pane-level operations. */
   panesManager: PanesManager;
+  /** Tabs manager for cross-tab interactions. */
   tabs: TabsManager;
+  /** Optional window metrics for responsive behavior. */
   window?: WindowContext | null;
 }
 
+/** Fully resolved empty-pane tool ready for rendering. */
 export interface BibleEmptyPaneTool extends BibleTool<EmptyPaneToolContext> {
+  /** Disabled signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
+  /** Visibility signal resolved for current context. */
   visible: ReadonlySignal<boolean>;
+  /** Invoked when the user activates the tool. */
   onSelect: () => void;
 }
 
+/** Registerable empty-pane tool definition. */
 export interface ManagedBibleEmptyPaneTool extends BibleTool<EmptyPaneToolContext> {
+  /** Optional disabled predicate (boolean or signal). */
   isDisabled?: ToolPredicate<EmptyPaneToolContext>;
+  /** Optional visibility predicate (boolean or signal). */
   isVisible?: ToolPredicate<EmptyPaneToolContext>;
+  /** Optional action callback for tool activation. */
   onSelect?: (context: EmptyPaneToolContext) => void;
 }
 
+/** Fully resolved below-reader tool ready for rendering. */
 export interface BibleBelowReaderToolbarTool extends BibleTool<BibleBelowReaderToolContext> {
+  /** Disabled signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
+  /** Visibility signal resolved for current context. */
   visible: ReadonlySignal<boolean>;
+  /** Invoked when the user activates the tool. */
   onSelect: () => void;
 }
 
+/** Runtime context for below-reader tool surface. */
 export interface BibleBelowReaderToolContext extends BibleToolContext {
+  /** Pane containing the active reader. */
   currentPane: Pane;
 }
 
+/** Registerable below-reader tool definition. */
 export interface ManagedBibleBelowReaderToolbarTool extends BibleTool<BibleBelowReaderToolContext> {
+  /** Optional disabled predicate (boolean or signal). */
   isDisabled?: ToolPredicate<BibleBelowReaderToolContext>;
+  /** Optional visibility predicate (boolean or signal). */
   isVisible?: ToolPredicate<BibleBelowReaderToolContext>;
+  /** Optional action callback for tool activation. */
   onSelect?: (context: BibleBelowReaderToolContext) => void;
 }
 
@@ -390,9 +447,62 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
   ];
 }
 
-export type ToolsManager = ReturnType<typeof createBibleToolsManager>;
+/**
+ * API surface for registering and resolving tools across all reader toolbars.
+ */
+export interface ToolsManager {
+  /** Registers a reader toolbar tool and returns an unregister callback. */
+  registerToolbarTool: (tool: ManagedBibleToolbarTool) => () => void;
 
-export function createBibleToolsManager() {
+  /** Unregisters a reader toolbar tool by ID. */
+  unregisterToolbarTool: (toolId: string) => void;
+
+  /** Resolves/sorts reader toolbar tools for the given context. */
+  getToolbarTools: (context: BibleToolContext) => BibleReaderToolbarTool[];
+
+  /** Registers a verse toolbar tool and returns an unregister callback. */
+  registerVerseToolbarTool: (tool: ManagedBibleVerseToolbarTool) => () => void;
+
+  /** Unregisters a verse toolbar tool by ID. */
+  unregisterVerseToolbarTool: (toolId: string) => void;
+
+  /** Resolves/sorts verse toolbar tools for the given context. */
+  getVerseToolbarTools: (
+    context: BibleToolContext
+  ) => BibleReaderVerseToolbarTool[];
+
+  /** Registers an empty-pane tool and returns an unregister callback. */
+  registerEmptyPaneTool: (tool: ManagedBibleEmptyPaneTool) => () => void;
+
+  /** Unregisters an empty-pane tool by ID. */
+  unregisterEmptyPaneTool: (toolId: string) => void;
+
+  /** Resolves/sorts empty-pane tools for the given context. */
+  getEmptyPaneTools: (context: EmptyPaneToolContext) => BibleEmptyPaneTool[];
+
+  /** Registers a below-reader tool and returns an unregister callback. */
+  registerBelowReaderTool: (
+    tool: ManagedBibleBelowReaderToolbarTool
+  ) => () => void;
+
+  /** Unregisters a below-reader tool by ID. */
+  unregisterBelowReaderTool: (toolId: string) => void;
+
+  /** Resolves/sorts below-reader tools for the given context. */
+  getBelowReaderTools: (
+    context: BibleBelowReaderToolContext
+  ) => BibleBelowReaderToolbarTool[];
+}
+
+/**
+ * Creates the tools manager with default tool sets and registration APIs.
+ *
+ * Notes:
+ * - Registering a tool with an existing ID replaces the previous definition.
+ * - Getter methods resolve predicates and priorities for the provided context,
+ *   then return tools sorted by ascending priority.
+ */
+export function createBibleToolsManager(): ToolsManager {
   const toolbarTools = signal<ManagedBibleToolbarTool[]>(
     getDefaultToolbarTools()
   );
