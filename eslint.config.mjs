@@ -2,6 +2,7 @@ import globals from "globals";
 import pluginJs from "@eslint/js";
 import tseslint from "typescript-eslint";
 import css from "@eslint/css";
+import i18nTranslationKeysRule from "./script/eslint/i18nTranslationKeysRule.mjs";
 
 import { defineConfig, globalIgnores } from "eslint/config";
 
@@ -71,6 +72,19 @@ export default defineConfig([
       ],
       "no-useless-escape": "off",
       "no-control-regex": "off",
+    },
+  },
+  {
+    files: ["packages/seed-bible/seed-bible/**/*.{js,mjs,cjs,ts,tsx,jsx}"],
+    plugins: {
+      "seed-bible-i18n": {
+        rules: {
+          "translation-keys": i18nTranslationKeysRule,
+        },
+      },
+    },
+    rules: {
+      "seed-bible-i18n/translation-keys": "error",
     },
   },
   {
