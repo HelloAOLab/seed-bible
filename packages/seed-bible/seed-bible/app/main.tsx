@@ -68,11 +68,13 @@ export function Main() {
     state.extensions.loadDefaultExtensions();
   });
 
-  const { theme, selector } = state;
+  const { theme, selector, config } = state;
+  const fontSizeClass = `sb-font-size-${config.config.value.fontSize.toLowerCase()}`;
 
   return (
     <I18nProvider>
       <div
+        className={`sb-app-root ${fontSizeClass}`}
         style={{
           display: "flex",
           height: "100vh",
@@ -96,6 +98,7 @@ export function Main() {
               themeCssClasses={theme.themeCssClasses}
             />
             <BibleSelector
+              className={fontSizeClass}
               isOpen={selector.isOpen.value}
               onClose={() => selector.setOpen(false)}
               selectorState={selector}

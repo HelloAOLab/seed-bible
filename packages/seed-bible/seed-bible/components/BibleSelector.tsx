@@ -8,10 +8,11 @@ interface BibleSelectorProps {
   isOpen: boolean;
   onClose: () => void;
   selectorState: BibleSelectorState;
+  className?: string;
 }
 
 export function BibleSelector(props: BibleSelectorProps) {
-  const { isOpen, onClose, selectorState } = props;
+  const { isOpen, onClose, selectorState, className } = props;
   const {
     selectedTranslationId,
     selectedTranslation,
@@ -235,7 +236,9 @@ export function BibleSelector(props: BibleSelectorProps) {
   return (
     <div
       onClick={onClose}
-      className={`sb-selector-overlay ${isOpen ? "open" : ""}`}
+      className={`sb-selector-overlay ${isOpen ? "open" : ""}${
+        className ? ` ${className}` : ""
+      }`}
     >
       <div
         onClick={(event: Event) => {

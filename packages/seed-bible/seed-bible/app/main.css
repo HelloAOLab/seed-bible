@@ -153,6 +153,30 @@ button {
   font-family: var(--sb-reader-font-family);
 }
 
+.sb-font-size-xs {
+  font-size: 14px;
+}
+
+.sb-font-size-s {
+  font-size: 16px;
+}
+
+.sb-font-size-m {
+  font-size: 18px;
+}
+
+.sb-font-size-l {
+  font-size: 20px;
+}
+
+.sb-font-size-xl {
+  font-size: 22px;
+}
+
+.sb-font-size-xxl {
+  font-size: 26px;
+}
+
 .sb-panes-layout[data-layout="single"] {
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
@@ -537,7 +561,7 @@ button {
 .sb-chapter-content {
   line-height: 2;
   font-family: var(--sb-verse-font-family);
-  font-size: 20px;
+  font-size: 1.2em;
 
   padding-bottom: 160px;
 }
