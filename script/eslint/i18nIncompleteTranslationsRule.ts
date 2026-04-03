@@ -58,7 +58,7 @@ const i18nIncompleteTranslationsRule = createRule<Options, MessageIds>({
 
       "Object:exit"(node): void {
         const locale = getLocaleFromFilePath(getContextFilename(context));
-        for (const key of analysis.usedKeys) {
+        for (const key of analysis.englishKeys) {
           if (!objectKeys.has(key)) {
             context.report({
               node,
