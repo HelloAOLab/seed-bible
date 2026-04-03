@@ -379,7 +379,7 @@ function toKebabCase(value: string): string {
 }
 
 export function generateThemeCssVariables(variables: BibleTheme): string {
-  const cssVariables = Object.entries(variables)
+  const cssVariables = Object.entries(variables.variables)
     .filter(([, value]) => value !== undefined && value !== null)
     .map(([key, value]) => `--sb-${toKebabCase(key)}: ${value};`)
     .join("\n");
