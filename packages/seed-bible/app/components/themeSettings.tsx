@@ -5926,32 +5926,47 @@ const SettingsUI = () => {
   // ————————————————————————————————————————————————————————————
   // Apply Ready Theme
   // ————————————————————————————————————————————————————————————
-  const applyReadyTheme = (themeColors) => {
+  const applyReadyTheme = (newColors) => {
+    if (!newColors) return;
     setChagesSaved(false);
 
     // Apply toolbar background side-effect if needed
-    if (themeColors.toolbarBackground) {
-      globalThis.SetToolbarBackground?.(themeColors.toolbarBackground);
+    if (newColors.toolbarBackground) {
+      globalThis.SetToolbarBackground?.(newColors.toolbarBackground);
     }
 
     let filterMode;
-    if (themeColors["iconColor"]) {
-      filterMode = getColorFilterCached(themeColors["iconColor"]);
+    try {
+      if (newColors["iconColor"]) {
+        filterMode = getColorFilterCached(newColors["iconColor"]);
+      }
+    } catch (e) {
+      os.log("filter computation failed, using theme default", e);
     }
-    os.log("computed filter for icon color filterMode", filterMode);
+
+    const appliedColors = filterMode
+      ? { ...newColors, "filter-mode": filterMode }
+      : newColors;
+
+    // Immediately apply CSS variables to DOM for instant visual feedback
+    const root = document.documentElement;
+    Object.entries(appliedColors).forEach(([key, value]) => {
+      if (typeof value === "string") {
+        root.style.setProperty(`--${key}`, value);
+      }
+    });
+
     // Update local map
     setColorsMap((prev) => ({
       ...prev,
-      [activeSpace]: filterMode
-        ? { ...themeColors, "filter-mode": filterMode }
-        : themeColors,
+      [activeSpace]: appliedColors,
     }));
 
     // Update sidebar theme state (immediate apply)
-    setThemeColors((prev) => ({ ...prev, [activeSpace]: themeColors }));
+    setThemeColors((prev) => ({ ...prev, [activeSpace]: appliedColors }));
 
     // Persist to the space
-    updateSpace(activeSpace, { themeColors });
+    updateSpace(activeSpace, { themeColors: appliedColors });
   };
 
   // When switching spaces without saving, restore the last committed theme for that space
@@ -6031,10 +6046,12 @@ const SettingsUI = () => {
   }, [activeSpace, currentSpace]);
 
   const handleThemeSelect = (index) => {
+    const themeColors = presetThemes[index]?.colors;
+    if (!themeColors) return;
     setSelectedTheme(index);
-    applyReadyTheme(presetThemes[index]?.colors);
+    applyReadyTheme(themeColors);
     setChagesSaved(true);
-    globalThis.CurrentColors = presetThemes[index]?.colors || colors;
+    globalThis.CurrentColors = themeColors;
   };
 
   const applyVerseFont = (fontFamily) => {
