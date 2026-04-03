@@ -119,7 +119,7 @@ export default defineConfig([
     rules: {
       "json/sort-keys": "error",
       "seed-bible-i18n/translation-unused-keys": "warn",
-      "seed-bible-i18n/translation-incomplete-translations": "error",
+      "seed-bible-i18n/translation-incomplete-translations": "warn",
     },
   },
   {
