@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { Rule } from "eslint";
+import { ESLintUtils, TSESTree, type TSESLint } from "@typescript-eslint/utils";
 
 type TranslationObject = Record<string, unknown>;
 
@@ -10,6 +10,14 @@ interface ProjectAnalysis {
   localeKeys: Map<string, Set<string>>;
   usedKeys: Set<string>;
 }
+
+type MessageIds =
+  | "missing_key"
+  | "incomplete_translation"
+  | "unused_key"
+  | "config_error";
+
+type Options = [];
 
 const analyzedProjects = new Map<string, ProjectAnalysis>();
 let reportedGlobalDiagnostics = false;
@@ -162,7 +170,23 @@ function analyzeProject(projectRoot: string): ProjectAnalysis {
   return result;
 }
 
-const i18nTranslationKeysRule: Rule.RuleModule = {
+const createRule = ESLintUtils.RuleCreator(
+  (name) => `https://github.com/HelloAOLab/seed-bible/eslint-rules/${name}`
+);
+
+function getContextCwd(
+  context: Readonly<TSESLint.RuleContext<MessageIds, Options>>
+): string {
+  const maybeContext = context as TSESLint.RuleContext<MessageIds, Options> & {
+    cwd?: unknown;
+  };
+  return typeof maybeContext.cwd === "string"
+    ? maybeContext.cwd
+    : process.cwd();
+}
+
+const i18nTranslationKeysRule = createRule<Options, MessageIds>({
+  name: "translation-keys",
   meta: {
     type: "problem",
     docs: {
@@ -178,13 +202,13 @@ const i18nTranslationKeysRule: Rule.RuleModule = {
       config_error: "i18n lint rule configuration error: {{message}}",
     },
   },
+  defaultOptions: [],
 
   create(context) {
-    const projectRoot =
-      typeof context.cwd === "string" ? context.cwd : process.cwd();
+    const projectRoot = getContextCwd(context);
     const analysis = analyzeProject(projectRoot);
 
-    function reportGlobalDiagnostics(programNode: Rule.Node): void {
+    function reportGlobalDiagnostics(programNode: TSESTree.Program): void {
       if (reportedGlobalDiagnostics) {
         return;
       }
@@ -263,6 +287,6 @@ const i18nTranslationKeysRule: Rule.RuleModule = {
       },
     };
   },
-};
+});
 
 export default i18nTranslationKeysRule;

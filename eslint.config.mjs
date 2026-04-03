@@ -2,7 +2,7 @@ import globals from "globals";
 import pluginJs from "@eslint/js";
 import tseslint from "typescript-eslint";
 import css from "@eslint/css";
-import i18nTranslationKeysRule from "./script/eslint/i18nTranslationKeysRule.mjs";
+import i18nTranslationKeysRule from "./script/eslint/i18nTranslationKeysRule";
 import json from "@eslint/json";
 
 import { defineConfig, globalIgnores } from "eslint/config";
