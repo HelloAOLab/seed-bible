@@ -1,8 +1,17 @@
 import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
+import type { TextSize } from "seed-bible.managers.ConfigManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 
 type SettingsView = null | "account" | "theme";
+
+const FONT_SIZE_OPTIONS: TextSize[] = ["XS", "S", "M", "L", "XL", "XXL"];
+
+function parseFontSize(value: string, fallback: TextSize): TextSize {
+  return FONT_SIZE_OPTIONS.includes(value as TextSize)
+    ? (value as TextSize)
+    : fallback;
+}
 
 function SettingsSubPageHeader(props: { title: string; onBack: () => void }) {
   return (
@@ -111,6 +120,8 @@ function ThemeSettingsView(props: {
 }) {
   const { state, onBack } = props;
   const { themes, selectedThemeId, setTheme } = state.theme;
+  const { config, setFontSize } = state.config;
+  const selectedFontSize = config.value.fontSize;
 
   return (
     <div className="sb-settings-page">
@@ -131,6 +142,30 @@ function ThemeSettingsView(props: {
               </button>
             );
           })}
+        </div>
+
+        <div className="sb-settings-field-row">
+          <label
+            className="sb-settings-field-label"
+            htmlFor="sb-font-size-select"
+          >
+            Font size
+          </label>
+          <select
+            id="sb-font-size-select"
+            className="sb-settings-language-select"
+            value={selectedFontSize}
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLSelectElement;
+              setFontSize(parseFontSize(target.value, selectedFontSize));
+            }}
+          >
+            {FONT_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
         </div>
       </section>
     </div>
