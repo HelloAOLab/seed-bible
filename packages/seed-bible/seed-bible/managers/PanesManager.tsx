@@ -2,6 +2,7 @@ import { computed, effect, Signal, signal } from "@preact/signals";
 import type { ComponentChild } from "preact";
 import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
 
+/** Supported attached pane layout presets. */
 export type PaneLayoutId =
   | "single"
   | "split-2v"
@@ -11,8 +12,11 @@ export type PaneLayoutId =
   | "split-4v";
 
 export interface PaneLayoutOption {
+  /** Stable layout identifier. */
   id: PaneLayoutId;
+  /** Human-readable layout label for menus/tooltips. */
   label: string;
+  /** Number of attached pane slots in this layout. */
   slotCount: number;
 }
 
@@ -30,19 +34,31 @@ export const PANE_LAYOUT_OPTIONS: PaneLayoutOption[] = [
 ];
 
 export interface Pane {
+  /** Stable pane identifier. */
   id: string;
+  /** Tab content rendered in this pane, if present. */
   tab: ReaderTab | null;
+  /** Custom component content rendered in this pane, if present. */
   component: (() => ComponentChild) | null;
+  /** Grid portal identifier rendered in this pane, if present. */
   gridPortal: string | null;
+  /** Map portal identifier rendered in this pane, if present. */
   mapPortal: string | null;
+  /** True when pane is detached from attached layout slots. */
   detached: boolean;
+  /** Detached pane anchor mode. */
   detachedAnchor: DetachedPaneAnchor;
+  /** Detached pane X position for floating mode. */
   x: number;
+  /** Detached pane Y position for floating mode. */
   y: number;
+  /** Detached pane width (or side-panel width when anchored to side). */
   width: number;
+  /** Detached pane height (or bottom-panel height when anchored to bottom). */
   height: number;
 }
 
+/** Placement mode for detached panes. */
 export type DetachedPaneAnchor = "floating" | "side" | "bottom";
 
 interface PaneContent {
@@ -53,14 +69,20 @@ interface PaneContent {
 }
 
 export interface PaneOpenContentOptions {
+  /** Tab ID to render in the pane. */
   tabId?: string;
+  /** Custom component to render in the pane. */
   component?: (() => ComponentChild) | null;
+  /** Grid portal ID to render in the pane. */
   gridPortal?: string | null;
+  /** Map portal ID to render in the pane. */
   mapPortal?: string | null;
 }
 
 export interface PaneOpenOptions extends PaneOpenContentOptions {
+  /** Whether to open in attached slots or as a detached pane. */
   type: "attached" | "detached";
+  /** Optional anchor mode when opening as detached pane. */
   detachedAnchor?: Exclude<DetachedPaneAnchor, "floating">;
 }
 
@@ -236,12 +258,88 @@ function applyLayoutToPanes(
   return [...nextAttachedPanes, ...detachedPanes];
 }
 
-export type PanesManager = ReturnType<typeof createPanes>;
+/**
+ * API surface for pane layout, selection, and detached pane management.
+ *
+ * The manager supports attached slot-based layouts plus detached panes with
+ * floating/side/bottom anchoring.
+ */
+export interface PanesManager {
+  /** All panes (attached and detached) currently tracked by the manager. */
+  panes: Signal<Pane[]>;
 
+  /** Active attached layout preset. */
+  layout: Signal<PaneLayoutId>;
+
+  /** Currently selected pane ID. */
+  selectedPaneId: Signal<string | null>;
+
+  /** Selects a pane by ID if it exists. */
+  selectPane: (paneId: string) => void;
+
+  /** Applies an attached layout preset and redistributes attached pane content. */
+  setLayout: (layoutId: PaneLayoutId) => void;
+
+  /**
+   * Sets tab content on the currently selected pane.
+   * No-op when selected pane contains component content.
+   */
+  setSelectedPaneTab: (tabId: string) => void;
+
+  /**
+   * Opens content in a new pane when possible.
+   * Returns true when content was opened or focused, false otherwise.
+   */
+  openPane: (options: PaneOpenOptions) => boolean;
+
+  /**
+   * Opens/replaces content in an existing pane.
+   * Returns true on success, false when input/pane is invalid.
+   */
+  openInPane: (paneId: string, options: PaneOpenContentOptions) => boolean;
+
+  /**
+   * Closes a pane.
+   * Attached panes cannot be closed below one remaining attached slot.
+   * Returns true when a pane was closed.
+   */
+  closePane: (paneId: string) => boolean;
+
+  /**
+   * Toggles detached state for a pane.
+   * Enforces attached slot count constraints.
+   * Returns true when state changed.
+   */
+  setDetached: (paneId: string, detached: boolean) => boolean;
+
+  /**
+   * Sets anchor mode for a detached pane.
+   * Returns true when anchor changed.
+   */
+  setDetachedAnchor: (paneId: string, anchor: DetachedPaneAnchor) => boolean;
+
+  /** Moves a floating detached pane by delta values. */
+  movePane: (paneId: string, deltaX: number, deltaY: number) => void;
+
+  /**
+   * Resizes a detached pane by delta values.
+   * In side mode only width changes, in bottom mode only height changes.
+   */
+  resizePane: (paneId: string, deltaWidth: number, deltaHeight: number) => void;
+}
+
+/**
+ * Creates pane manager state and wiring.
+ *
+ * Behavior:
+ * - Initializes with one attached pane bound to selected tab.
+ * - Synchronizes pane tab references as tabs list changes.
+ * - Mirrors active portal IDs into configBot tags.
+ */
 export function createPanes(
   tabsManager: TabsManager,
   selectedTabId: Signal<string>
-) {
+): PanesManager {
   const createPane = createPaneFactory();
   const panes = signal<Pane[]>([]);
   const selectedPaneId = signal<string | null>(null);
