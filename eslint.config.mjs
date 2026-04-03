@@ -3,6 +3,7 @@ import pluginJs from "@eslint/js";
 import tseslint from "typescript-eslint";
 import css from "@eslint/css";
 import i18nTranslationKeysRule from "./script/eslint/i18nTranslationKeysRule.mjs";
+import json from "@eslint/json";
 
 import { defineConfig, globalIgnores } from "eslint/config";
 
@@ -41,6 +42,13 @@ export default defineConfig([
       "css/no-empty-blocks": "warn",
       "css/use-baseline": "warn",
       "css/no-invalid-properties": "warn",
+    },
+  },
+  {
+    files: ["packages/**/*.json"],
+    language: "json/json",
+    plugins: {
+      json,
     },
   },
 
