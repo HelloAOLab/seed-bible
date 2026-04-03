@@ -43,7 +43,11 @@ describe("createLoginManager", () => {
   beforeEach(() => {
     requestAuthBotInBackgroundMock = jest.fn().mockResolvedValue(null);
     requestAuthBotMock = jest.fn().mockResolvedValue(null);
-    getDataMock = jest.fn().mockResolvedValue(null);
+    getDataMock = jest.fn().mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+      errorMessage: "No data found for the given key.",
+    });
     recordDataMock = jest.fn().mockResolvedValue(undefined);
     signOutMock = jest.fn().mockResolvedValue(undefined);
     warnSpy = jest.spyOn(console, "warn").mockImplementation(() => undefined);
@@ -71,7 +75,7 @@ describe("createLoginManager", () => {
   it("loads userId and profile when background auth succeeds", async () => {
     const bot = createBot("user-1");
     requestAuthBotInBackgroundMock.mockResolvedValue(bot);
-    getDataMock.mockResolvedValue({ name: "Alice" });
+    getDataMock.mockResolvedValue({ success: true, data: { name: "Alice" } });
 
     const manager = createLoginManager();
 
@@ -84,7 +88,7 @@ describe("createLoginManager", () => {
   it("login() authenticates and loads profile", async () => {
     const bot = createBot("user-2");
     requestAuthBotMock.mockResolvedValue(bot);
-    getDataMock.mockResolvedValue({ name: "Bob" });
+    getDataMock.mockResolvedValue({ success: true, data: { name: "Bob" } });
 
     const manager = createLoginManager();
 
@@ -100,7 +104,7 @@ describe("createLoginManager", () => {
   it("logout() signs out and clears user state", async () => {
     const bot = createBot("user-3");
     requestAuthBotInBackgroundMock.mockResolvedValue(bot);
-    getDataMock.mockResolvedValue({ name: "Carol" });
+    getDataMock.mockResolvedValue({ success: true, data: { name: "Carol" } });
 
     const manager = createLoginManager();
 
@@ -165,7 +169,7 @@ describe("createLoginManager", () => {
   });
 
   it("getUserProfile() retrieves the user profile from storage", async () => {
-    getDataMock.mockResolvedValue({ name: "Dave" });
+    getDataMock.mockResolvedValue({ success: true, data: { name: "Dave" } });
 
     const manager = createLoginManager();
 
