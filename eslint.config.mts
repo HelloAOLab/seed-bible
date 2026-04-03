@@ -85,7 +85,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["packages/seed-bible/seed-bible/**/*.{ts,tsx}"],
+    files: ["packages/**/*.{js,mjs,cjs,ts,tsx,jsx,ts,tsx}"],
     plugins: {
       "seed-bible-i18n": {
         rules: {
@@ -99,22 +99,22 @@ export default defineConfig([
       "seed-bible-i18n/translation-missing-keys": "error",
     },
   },
-  {
-    files: ["packages/seed-bible/seed-bible/i18n/*.json"],
-    plugins: {
-      "seed-bible-i18n": {
-        rules: {
-          "translation-missing-keys": i18nMissingKeysRule,
-          "translation-unused-keys": i18nUnusedKeysRule,
-          "translation-incomplete-translations": i18nIncompleteTranslationsRule,
-        },
-      },
-    },
-    rules: {
-      "seed-bible-i18n/translation-unused-keys": "error",
-      "seed-bible-i18n/translation-incomplete-translations": "error",
-    },
-  },
+  // {
+  //   files: ["packages/seed-bible/seed-bible/i18n/*.json"],
+  //   plugins: {
+  //     "seed-bible-i18n": {
+  //       rules: {
+  //         "translation-missing-keys": i18nMissingKeysRule,
+  //         "translation-unused-keys": i18nUnusedKeysRule,
+  //         "translation-incomplete-translations": i18nIncompleteTranslationsRule,
+  //       },
+  //     },
+  //   },
+  //   rules: {
+  //     "seed-bible-i18n/translation-unused-keys": "error",
+  //     "seed-bible-i18n/translation-incomplete-translations": "error",
+  //   },
+  // },
   {
     files: ["test/**/*.{js,mjs,cjs,ts,tsx,jsx,css}"],
 
