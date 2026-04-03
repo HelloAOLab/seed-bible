@@ -16,10 +16,12 @@ export interface TranslationUsageStats {
   keyUsage: TranslationKeyUsage[];
 }
 
+let stats: TranslationUsageStats | null = null;
+
 /**
  * Parses the TypeScript project and returns usage stats for t("...") translation calls.
  */
-export function getTranslationUsageStats(
+function _getTranslationUsageStats(
   projectRoot = process.cwd()
 ): TranslationUsageStats {
   const tsconfigPath = path.resolve(projectRoot, "tsconfig.json");
@@ -86,10 +88,11 @@ export function getTranslationUsageStats(
   };
 }
 
-if (
-  process.argv[1] &&
-  import.meta.url === pathToFileURL(process.argv[1]).href
-) {
-  const stats = getTranslationUsageStats();
-  console.log(JSON.stringify(stats, null, 2));
+export function getTranslationUsageStats(
+  projectRoot = process.cwd()
+): TranslationUsageStats {
+  if (!stats || stats.projectRoot !== projectRoot) {
+    stats = _getTranslationUsageStats(projectRoot);
+  }
+  return stats;
 }
