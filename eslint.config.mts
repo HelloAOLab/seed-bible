@@ -9,6 +9,16 @@ import json from "@eslint/json";
 
 import { defineConfig, globalIgnores } from "eslint/config";
 
+const cssPlugin = css as unknown as Record<string, unknown>;
+const jsonPlugin = json as unknown as Record<string, unknown>;
+const i18nPlugin = {
+  rules: {
+    "translation-missing-keys": i18nMissingKeysRule,
+    "translation-unused-keys": i18nUnusedKeysRule,
+    "translation-incomplete-translations": i18nIncompleteTranslationsRule,
+  },
+} as unknown as Record<string, unknown>;
+
 export default defineConfig([
   globalIgnores([
     "**/node_modules/**",
@@ -35,7 +45,7 @@ export default defineConfig([
   {
     files: ["**/*.css"],
     plugins: {
-      css,
+      css: cssPlugin,
     },
     language: "css/css",
     extends: ["css/recommended"],
@@ -50,7 +60,7 @@ export default defineConfig([
     files: ["packages/**/*.json"],
     language: "json/json",
     plugins: {
-      json,
+      json: jsonPlugin,
     },
   },
 
@@ -87,13 +97,7 @@ export default defineConfig([
   {
     files: ["packages/**/*.{js,mjs,cjs,ts,tsx,jsx,ts,tsx}"],
     plugins: {
-      "seed-bible-i18n": {
-        rules: {
-          "translation-missing-keys": i18nMissingKeysRule,
-          "translation-unused-keys": i18nUnusedKeysRule,
-          "translation-incomplete-translations": i18nIncompleteTranslationsRule,
-        },
-      },
+      "seed-bible-i18n": i18nPlugin,
     },
     rules: {
       "seed-bible-i18n/translation-missing-keys": "error",
