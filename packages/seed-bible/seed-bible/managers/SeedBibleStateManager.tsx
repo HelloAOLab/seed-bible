@@ -44,7 +44,7 @@ import {
 import {
   createAnnotationsManager,
   type AnnotationsManager,
-} from "./AnnotationsManager";
+} from "seed-bible.managers.AnnotationsManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 
