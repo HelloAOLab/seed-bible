@@ -2,7 +2,9 @@ import globals from "globals";
 import pluginJs from "@eslint/js";
 import tseslint from "typescript-eslint";
 import css from "@eslint/css";
-import i18nTranslationKeysRule from "./script/eslint/i18nTranslationKeysRule";
+import i18nMissingKeysRule from "./script/eslint/i18nMissingKeysRule";
+import i18nUnusedKeysRule from "./script/eslint/i18nUnusedKeysRule";
+import i18nIncompleteTranslationsRule from "./script/eslint/i18nIncompleteTranslationsRule";
 import json from "@eslint/json";
 
 import { defineConfig, globalIgnores } from "eslint/config";
@@ -83,16 +85,34 @@ export default defineConfig([
     },
   },
   {
-    files: ["packages/seed-bible/seed-bible/**/*.{js,mjs,cjs,ts,tsx,jsx}"],
+    files: ["packages/seed-bible/seed-bible/**/*.{ts,tsx}"],
     plugins: {
       "seed-bible-i18n": {
         rules: {
-          "translation-keys": i18nTranslationKeysRule,
+          "translation-missing-keys": i18nMissingKeysRule,
+          "translation-unused-keys": i18nUnusedKeysRule,
+          "translation-incomplete-translations": i18nIncompleteTranslationsRule,
         },
       },
     },
     rules: {
-      "seed-bible-i18n/translation-keys": "error",
+      "seed-bible-i18n/translation-missing-keys": "error",
+    },
+  },
+  {
+    files: ["packages/seed-bible/seed-bible/i18n/*.json"],
+    plugins: {
+      "seed-bible-i18n": {
+        rules: {
+          "translation-missing-keys": i18nMissingKeysRule,
+          "translation-unused-keys": i18nUnusedKeysRule,
+          "translation-incomplete-translations": i18nIncompleteTranslationsRule,
+        },
+      },
+    },
+    rules: {
+      "seed-bible-i18n/translation-unused-keys": "error",
+      "seed-bible-i18n/translation-incomplete-translations": "error",
     },
   },
   {
