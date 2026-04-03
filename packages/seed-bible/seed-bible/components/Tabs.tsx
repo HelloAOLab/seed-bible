@@ -103,72 +103,74 @@ export function Tabs(props: TabsProps) {
     <aside
       className={`sb-tabs-sidebar${effectivelyCollapsed ? " sb-tabs-sidebar-collapsed" : ""}${isMobileOpen ? " sb-tabs-sidebar-mobile-open" : ""}`}
     >
-      <div className="sb-sidebar-top-row">
-        <button
-          onClick={sidebar.toggleSidebarCollapsed}
-          className="sb-sidebar-collapse-button"
-          aria-label={
-            effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"
-          }
-          title={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          <span className="material-symbols-outlined">
-            {effectivelyCollapsed ? "menu" : "menu_open"}
-          </span>
-        </button>
+      {!isSettingsOpen && (
+        <div className="sb-sidebar-top-row">
+          <button
+            onClick={sidebar.toggleSidebarCollapsed}
+            className="sb-sidebar-collapse-button"
+            aria-label={
+              effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"
+            }
+            title={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <span className="material-symbols-outlined">
+              {effectivelyCollapsed ? "menu" : "menu_open"}
+            </span>
+          </button>
 
-        {panelsEnabled && (
-          <div className="sb-sidebar-top-actions">
-            <div className="sb-pane-layout-anchor">
-              <button
-                onClick={() => {
-                  openMenuTabId.value = null;
-                  isLayoutMenuOpen.value = !isLayoutMenuOpen.value;
-                }}
-                className="sb-sidebar-top-icon-button"
-                aria-label="Select pane layout"
-                title="Pane layout"
-              >
-                <span className="material-symbols-outlined">dashboard</span>
-              </button>
+          {panelsEnabled && (
+            <div className="sb-sidebar-top-actions">
+              <div className="sb-pane-layout-anchor">
+                <button
+                  onClick={() => {
+                    openMenuTabId.value = null;
+                    isLayoutMenuOpen.value = !isLayoutMenuOpen.value;
+                  }}
+                  className="sb-sidebar-top-icon-button"
+                  aria-label="Select pane layout"
+                  title="Pane layout"
+                >
+                  <span className="material-symbols-outlined">dashboard</span>
+                </button>
 
-              {isLayoutMenuOpen.value && (
-                <div className="sb-pane-layout-menu">
-                  <div className="sb-pane-layout-menu-title">Panels</div>
-                  <div className="sb-pane-layout-options">
-                    {PANE_LAYOUT_OPTIONS.map((layout) => (
-                      <button
-                        key={layout.id}
-                        onClick={() => {
-                          panes.setLayout(layout.id);
-                          isLayoutMenuOpen.value = false;
-                        }}
-                        className={`sb-pane-layout-option${
-                          paneLayout === layout.id
-                            ? " sb-pane-layout-option-selected"
-                            : ""
-                        }`}
-                        aria-label={layout.label}
-                        title={layout.label}
-                      >
-                        {renderLayoutPreview(layout.id)}
-                      </button>
-                    ))}
+                {isLayoutMenuOpen.value && (
+                  <div className="sb-pane-layout-menu">
+                    <div className="sb-pane-layout-menu-title">Panels</div>
+                    <div className="sb-pane-layout-options">
+                      {PANE_LAYOUT_OPTIONS.map((layout) => (
+                        <button
+                          key={layout.id}
+                          onClick={() => {
+                            panes.setLayout(layout.id);
+                            isLayoutMenuOpen.value = false;
+                          }}
+                          className={`sb-pane-layout-option${
+                            paneLayout === layout.id
+                              ? " sb-pane-layout-option-selected"
+                              : ""
+                          }`}
+                          aria-label={layout.label}
+                          title={layout.label}
+                        >
+                          {renderLayoutPreview(layout.id)}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        )}
-        <button
-          onClick={sidebar.closeSidebar}
-          className="sb-sidebar-close-button"
-          aria-label="Close sidebar"
-          title="Close sidebar"
-        >
-          <span className="material-symbols-outlined">close</span>
-        </button>
-      </div>
+          )}
+          <button
+            onClick={sidebar.closeSidebar}
+            className="sb-sidebar-close-button"
+            aria-label="Close sidebar"
+            title="Close sidebar"
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      )}
 
       {shouldShowSidebarContent && (
         <>
