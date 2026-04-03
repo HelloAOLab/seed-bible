@@ -1,4 +1,4 @@
-import { computed, effect, signal } from "@preact/signals";
+import { computed, effect, signal, type Signal } from "@preact/signals";
 import type { BibleDataManager } from "./BibleDataManager";
 import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
 import {
@@ -11,9 +11,13 @@ import {
 import type { HighlightsManager } from "seed-bible.managers.HighlightsManager";
 
 export interface ReaderTab {
+  /** Unique tab identifier (for example: tab-1, tab-2). */
   id: string;
+  /** Display title shown in the tabs UI. */
   title: string;
+  /** Independent reading state instance owned by this tab. */
   readingState: BibleReadingState;
+  /** Attached shared session, if this tab is backed by collaborative state. */
   sharedSession: BibleReadingSession | null;
 }
 
@@ -70,12 +74,57 @@ function isBibleReadingSession(
   return !!value && "document" in value && "readingState" in value;
 }
 
-export type TabsManager = ReturnType<typeof createTabs>;
+/**
+ * API surface for creating, selecting, and removing reader tabs.
+ *
+ * Each tab owns a `BibleReadingState` instance. Tabs can also be backed by a
+ * shared reading session, in which case `sharedSession` is set and disposed
+ * automatically when the tab is removed.
+ */
+export interface TabsManager {
+  /** Ordered tab list used by the tabs UI. */
+  tabs: Signal<ReaderTab[]>;
 
+  /** ID of the currently selected tab. */
+  selectedTabId: Signal<string>;
+
+  /**
+   * Adds a new tab and selects it.
+   *
+   * @param source Optional source used to initialize the tab:
+   * - `BibleReadingState`: uses an existing reading state instance.
+   * - `BibleReadingSession`: uses the session reading state and stores session metadata.
+   * - `undefined`: creates a brand new reading state.
+   * @returns The newly created tab.
+   */
+  addTab: (source?: NewTabSource) => ReaderTab;
+
+  /**
+   * Removes a tab by ID.
+   *
+   * If the tab is associated with a shared session, the session is disposed.
+   * If the removed tab was selected, selection falls back to the first tab.
+   */
+  removeTab: (tabId: string) => void;
+
+  /** Selects a tab by ID. */
+  selectTab: (tabId: string) => void;
+}
+
+/**
+ * Creates the tabs manager and wires configBot synchronization for reading tags.
+ *
+ * Behavior:
+ * - Initializes with two tabs (first tab from config tags, second default tab).
+ * - Keeps `configBot` reading tags (`translation`, `book`, `chapter`) in sync
+ *   with the selected tab's reading state.
+ * - Listens for external `configBot` tag changes and updates selected tab
+ *   reading state accordingly.
+ */
 export function createTabs(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager
-) {
+): TabsManager {
   const tabs = signal<ReaderTab[]>(
     createInitialTabs(dataManager, highlightsManager)
   );
