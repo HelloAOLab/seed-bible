@@ -10,6 +10,7 @@ import { sortBy } from "es-toolkit";
 import { highlightContainsVerse } from "seed-bible.managers.HighlightsManager";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
+type ResolvedBibleToolIcon = () => JSX.Element | VNode;
 type ToolPredicateResult = boolean | ReadonlySignal<boolean>;
 type ToolPredicate<TContext> = (context: TContext) => ToolPredicateResult;
 type ToolPriority<TContext> = number | ((context: TContext) => number);
@@ -27,6 +28,23 @@ export interface BibleTool<TContext> {
   title: ToolTitle;
   /** Icon renderer for the given tool context. */
   icon: BibleToolIcon<TContext>;
+}
+
+/**
+ * Base resolved tool contract returned by tools manager getter methods.
+ *
+ * Unlike managed/registerable tools, resolved tools have fixed numeric priority
+ * and no-arg icon renderers because context has already been applied.
+ */
+export interface ResolvedBibleTool {
+  /** Stable tool identifier used for registration/replacement. */
+  id: string;
+  /** Resolved sorting priority. Lower values render first. */
+  priority: number;
+  /** Localized or plain-text tool title. */
+  title: ToolTitle;
+  /** Context-bound icon renderer. */
+  icon: ResolvedBibleToolIcon;
 }
 
 /** Window metrics provided to tools when available. */
@@ -54,7 +72,7 @@ export interface BibleToolContext {
 }
 
 /** Fully resolved reader toolbar tool ready for rendering. */
-export interface BibleReaderToolbarTool extends BibleTool<BibleToolContext> {
+export interface BibleReaderToolbarTool extends ResolvedBibleTool {
   /** Disabled state signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
   /** Visibility state signal resolved for current context. */
@@ -74,7 +92,7 @@ export interface ManagedBibleToolbarTool extends BibleTool<BibleToolContext> {
 }
 
 /** Fully resolved verse toolbar tool ready for rendering. */
-export interface BibleReaderVerseToolbarTool extends BibleTool<BibleToolContext> {
+export interface BibleReaderVerseToolbarTool extends ResolvedBibleTool {
   /** Disabled state signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
   /** Visibility state signal resolved for current context. */
@@ -108,7 +126,7 @@ export interface EmptyPaneToolContext {
 }
 
 /** Fully resolved empty-pane tool ready for rendering. */
-export interface BibleEmptyPaneTool extends BibleTool<EmptyPaneToolContext> {
+export interface BibleEmptyPaneTool extends ResolvedBibleTool {
   /** Disabled signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
   /** Visibility signal resolved for current context. */
@@ -128,7 +146,7 @@ export interface ManagedBibleEmptyPaneTool extends BibleTool<EmptyPaneToolContex
 }
 
 /** Fully resolved below-reader tool ready for rendering. */
-export interface BibleBelowReaderToolbarTool extends BibleTool<BibleBelowReaderToolContext> {
+export interface BibleBelowReaderToolbarTool extends ResolvedBibleTool {
   /** Disabled signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
   /** Visibility signal resolved for current context. */
