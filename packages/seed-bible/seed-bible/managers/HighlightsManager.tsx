@@ -2,6 +2,13 @@ import { z } from "zod";
 import type { LoginManager } from "seed-bible.managers.LoginManager";
 import { signal, type Signal } from "@preact/signals";
 
+/**
+ * Zod schema for a highlighted verse target.
+ *
+ * A highlight can target either:
+ * - a single verse number (for example `5`), or
+ * - an inclusive range tuple `[start, end]` (for example `[5, 9]`).
+ */
 const verseSchema = z.union([
   z.number().int().positive(),
   z
@@ -11,6 +18,7 @@ const verseSchema = z.union([
     }),
 ]);
 
+/** Schema for one chapter highlight entry. */
 export const chapterHighlightSchema = z.object({
   colorId: z.string().min(1),
   verse: verseSchema,
@@ -19,12 +27,16 @@ export const chapterHighlightSchema = z.object({
   customFontColor: z.string().min(1).optional(),
 });
 
+/** Schema for persisted chapter highlights payload. */
 export const chapterHighlightsSchema = z.object({
   highlights: z.array(chapterHighlightSchema),
 });
 
+/** Single verse target or inclusive verse range tuple. */
 export type Verse = z.infer<typeof verseSchema>;
+/** Highlight entry with style + verse targeting data. */
 export type ChapterHighlight = z.infer<typeof chapterHighlightSchema>;
+/** Container payload used in storage and reactive signals. */
 export type ChapterHighlights = z.infer<typeof chapterHighlightsSchema>;
 
 type VerseRange = {
@@ -44,6 +56,9 @@ type RangeHighlight = {
 const highlightStyleSchema = chapterHighlightSchema.omit({ verse: true });
 const verseNumbersSchema = z.array(z.number().int().positive());
 
+/**
+ * Returns whether a highlight range includes the given verse number.
+ */
 export function highlightContainsVerse(
   highlight: ChapterHighlight,
   verseNumber: number
@@ -239,24 +254,49 @@ function normalizeHighlights(
   return normalized.map(fromRangeHighlight);
 }
 
+/**
+ * Reactive API for reading and mutating chapter highlights.
+ *
+ * Highlights are keyed by `translationId/bookId/chapterNumber`, cached in
+ * signals, normalized for overlap/merge correctness, and persisted per user.
+ */
 export interface HighlightsManager {
+  /**
+   * Gets a reactive signal for one chapter's highlights.
+   *
+   * If unauthenticated, returns an empty signal value.
+   */
   getChapterHighlights: (
     translationId: string,
     bookId: string,
     chapterNumber: number
   ) => Signal<ChapterHighlights>;
+
+  /**
+   * Replaces and persists highlights for a chapter.
+   *
+   * Input highlights are normalized before being cached/stored.
+   */
   saveChapterHighlights: (
     translationId: string,
     bookId: string,
     chapterNumber: number,
     highlights: ChapterHighlight[]
   ) => Promise<void>;
+
+  /**
+   * Adds or updates highlight styling for a single verse or range.
+   */
   highlightVerse: (
     translationId: string,
     bookId: string,
     chapterNumber: number,
     highlightDetails: ChapterHighlight
   ) => Promise<void>;
+
+  /**
+   * Adds or updates highlight styling for a set of verse numbers.
+   */
   highlightVerses: (
     translationId: string,
     bookId: string,
@@ -264,12 +304,20 @@ export interface HighlightsManager {
     verseNumbers: number[],
     highlightDetails: Omit<ChapterHighlight, "verse">
   ) => Promise<void>;
+
+  /**
+   * Removes highlights from a single verse or range.
+   */
   unhighlightVerse: (
     translationId: string,
     bookId: string,
     chapterNumber: number,
     verseDetails: Verse
   ) => Promise<void>;
+
+  /**
+   * Removes highlights from a set of verse numbers.
+   */
   unhighlightVerses: (
     translationId: string,
     bookId: string,
@@ -290,6 +338,15 @@ const emptyChapterHighlights: ChapterHighlights = {
   highlights: [],
 };
 
+/**
+ * Creates the highlights manager.
+ *
+ * Behavior summary:
+ * - Caches chapter highlights in reactive signals.
+ * - Loads chapter data lazily on first access per address.
+ * - Normalizes overlapping highlight ranges to deterministic output.
+ * - Persists highlights under user-scoped storage keys.
+ */
 export function createHighlightsManager(
   login: LoginManager
 ): HighlightsManager {
