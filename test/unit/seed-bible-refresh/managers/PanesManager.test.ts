@@ -190,12 +190,10 @@ describe("createPanes", () => {
       tabId: "tab-2",
     });
 
-    expect(result).toBe(true);
+    expect(result).not.toBeNull();
+    expect(result?.tab?.id).toBe("tab-2");
     expect(panesManager.panes.value).toHaveLength(2);
     expect(panesManager.layout.value).toBe("split-2v");
-    expect(
-      panesManager.panes.value.some((pane) => pane.tab?.id === "tab-2")
-    ).toBe(true);
   });
 
   it("supports opening a tab in a detached pane", async () => {
@@ -206,11 +204,9 @@ describe("createPanes", () => {
       tabId: "tab-2",
     });
 
-    expect(result).toBe(true);
-    const detachedPane = panesManager.panes.value.find(
-      (pane) => pane.tab?.id === "tab-2"
-    );
-    expect(detachedPane?.detached).toBe(true);
+    expect(result).not.toBeNull();
+    expect(result?.tab?.id).toBe("tab-2");
+    expect(result?.detached).toBe(true);
   });
 
   it("supports opening a detached pane with a component", async () => {
@@ -221,12 +217,9 @@ describe("createPanes", () => {
       component: () => "Detached Component",
     });
 
-    expect(result).toBe(true);
-    const detachedPane = panesManager.panes.value.find(
-      (pane) => pane.component?.() === "Detached Component"
-    );
-    expect(detachedPane).toBeDefined();
-    expect(detachedPane?.detached).toBe(true);
+    expect(result).not.toBeNull();
+    expect(result?.component?.()).toBe("Detached Component");
+    expect(result?.detached).toBe(true);
   });
 
   it("supports opening a grid portal pane and syncing config tags", async () => {
@@ -237,11 +230,8 @@ describe("createPanes", () => {
       gridPortal: "home",
     });
 
-    expect(result).toBe(true);
-    const portalPane = panesManager.panes.value.find(
-      (pane) => pane.gridPortal === "home"
-    );
-    expect(portalPane).toBeDefined();
+    expect(result).not.toBeNull();
+    expect(result?.gridPortal).toBe("home");
     expect((globalThis as any).configBot.tags.gridPortal).toBe("home");
     expect((globalThis as any).configBot.tags.mapPortal ?? null).toBeNull();
   });

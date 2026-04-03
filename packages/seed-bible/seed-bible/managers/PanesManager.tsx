@@ -288,9 +288,9 @@ export interface PanesManager {
 
   /**
    * Opens content in a new pane when possible.
-   * Returns true when content was opened or focused, false otherwise.
+   * Returns the pane that was opened or focused, or null if the operation could not be completed.
    */
-  openPane: (options: PaneOpenOptions) => boolean;
+  openPane: (options: PaneOpenOptions) => Pane | null;
 
   /**
    * Opens/replaces content in an existing pane.
@@ -636,10 +636,10 @@ export function createPanes(
     return true;
   };
 
-  const openPane = (options: PaneOpenOptions) => {
+  const openPane = (options: PaneOpenOptions): Pane | null => {
     const parsed = parsePaneOptions(options);
     if (!parsed) {
-      return false;
+      return null;
     }
 
     if (parsed.tab) {
@@ -656,7 +656,10 @@ export function createPanes(
           );
         }
         selectedPaneId.value = existingPane.id;
-        return true;
+        return (
+          panes.value.find((pane) => pane.id === existingPane.id) ??
+          existingPane
+        );
       }
     }
 
@@ -680,19 +683,21 @@ export function createPanes(
           }))
         : panes.value;
       syncPaneState([...nextPanes, detachedPane], detachedPane.id);
-      return true;
+      return detachedPane;
     }
 
     const emptyAttachedPane =
       panes.value.find((pane) => !pane.detached && isPaneEmpty(pane)) ?? null;
     if (emptyAttachedPane) {
-      return openInPane(emptyAttachedPane.id, options);
+      return openInPane(emptyAttachedPane.id, options)
+        ? (panes.value.find((pane) => pane.id === emptyAttachedPane.id) ?? null)
+        : null;
     }
 
     const attachedCount = getAttachedSlotCount();
     const nextSlotCount = Math.min(4, attachedCount + 1);
     if (nextSlotCount <= attachedCount) {
-      return false;
+      return null;
     }
 
     const nextPane = createPane(parsed.tab, parsed.component, false);
@@ -716,7 +721,9 @@ export function createPanes(
       createPane
     );
     syncPaneState(nextPanes, attachedPane.id);
-    return true;
+    return (
+      panes.value.find((pane) => pane.id === attachedPane.id) ?? attachedPane
+    );
   };
 
   const setLayout = (layoutId: PaneLayoutId) => {
