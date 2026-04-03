@@ -16,17 +16,17 @@ export interface TranslationUsageStats {
   keyUsage: TranslationKeyUsage[];
 }
 
-let stats: TranslationUsageStats | null = null;
+// let stats: TranslationUsageStats | null = null;
 
 /**
  * Parses the TypeScript project and returns usage stats for t("...") translation calls.
  */
-function _getTranslationUsageStats(
+export function getTranslationUsageStats(
   projectRoot = process.cwd()
 ): TranslationUsageStats {
   const tsconfigPath = path.resolve(projectRoot, "tsconfig.json");
   const project = new Project({ tsConfigFilePath: tsconfigPath });
-  const sourceFiles = project.getSourceFiles();
+  const sourceFiles = project.getSourceFiles("packages/**/*.ts{,x}");
 
   const usage = new Map<string, { count: number; files: Set<string> }>();
   let totalTranslationCalls = 0;
@@ -88,11 +88,11 @@ function _getTranslationUsageStats(
   };
 }
 
-export function getTranslationUsageStats(
-  projectRoot = process.cwd()
-): TranslationUsageStats {
-  if (!stats || stats.projectRoot !== projectRoot) {
-    stats = _getTranslationUsageStats(projectRoot);
-  }
-  return stats;
-}
+// export function getTranslationUsageStats(
+//   projectRoot = process.cwd()
+// ): TranslationUsageStats {
+//   if (!stats || stats.projectRoot !== projectRoot) {
+//     stats = _getTranslationUsageStats(projectRoot);
+//   }
+//   return stats;
+// }

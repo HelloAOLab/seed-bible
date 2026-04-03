@@ -142,5 +142,6 @@
     "typeRoots": ["./node_modules/@types", "./typings"],
     "types": ["jest"]
   },
-  "include": ["packages", "typings", "script", "test"]
+  "include": ["packages", "typings", "script", "test"],
+  "exclude": ["obsolete"]
 }

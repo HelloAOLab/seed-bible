@@ -11,7 +11,7 @@
     "extension": "tsx script/extension.ts",
     "package:seed-bible": "casualos pack-aux --overwrite ./packages/seed-bible ./dist/seed-bible.aux",
     "package:playlist": "casualos pack-aux --overwrite ./packages/playlist ./dist/playlist.aux",
-    "lint": "eslint packages",
+    "lint": "eslint packages --debug",
     "lint:fix": "eslint packages --fix",
     "pattern": "tsx script/pattern.ts",
     "build": "tsx script/build.ts",

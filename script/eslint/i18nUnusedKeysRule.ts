@@ -17,11 +17,11 @@ const i18nUnusedKeysRule = createRule<Options, MessageIds>({
     type: "problem",
     docs: {
       description:
-        "Checks en.json for translation keys that are not used in TypeScript code",
+        "Checks for translation keys that are not used in TypeScript code",
     },
     schema: [],
     messages: {
-      unused_key: "Unused translation key in en.json: '{{key}}'.",
+      unused_key: "Unused translation key: '{{key}}'.",
       config_error: "i18n lint rule configuration error: {{message}}",
     },
   },
@@ -32,7 +32,7 @@ const i18nUnusedKeysRule = createRule<Options, MessageIds>({
     const analysis = analyzeProject(projectRoot);
 
     return {
-      Program(node): void {
+      Object(node: any): void {
         if (analysis.error) {
           if (reportedConfigError) {
             return;
@@ -46,20 +46,17 @@ const i18nUnusedKeysRule = createRule<Options, MessageIds>({
           });
           return;
         }
+      },
 
-        const locale = getLocaleFromFilePath(getContextFilename(context));
-        if (locale !== "en") {
-          return;
-        }
-
-        for (const key of analysis.englishKeys) {
-          if (!analysis.usedKeys.has(key)) {
-            context.report({
-              node,
-              messageId: "unused_key",
-              data: { key },
-            });
-          }
+      Member(node: any): void {
+        const key =
+          node.name.type === "String" ? node.name.value : node.name.name;
+        if (!analysis.usedKeys.has(key)) {
+          context.report({
+            node,
+            messageId: "unused_key",
+            data: { key },
+          });
         }
       },
     };
