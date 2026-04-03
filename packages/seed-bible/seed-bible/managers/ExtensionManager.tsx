@@ -71,169 +71,203 @@ export interface ExtensionSet {
   extensions: UploadedExtension[];
 }
 
-const registeredExtensions = new Map<string, ExtensionRegistration>();
-const extensionCleanupFunctions = new Map<string, CleanupFunction[]>();
-const extensionExports = new Map<string, object>();
-const initializedExtensionIds = new Set<string>();
+export class ExtensionInitalizer {
+  private static _instance: ExtensionInitalizer | null = null;
 
-let extensionContext: SeedBibleState | null = null;
-
-function tryInitializeExtension(
-  id: string,
-  initializationStack: Set<string> = new Set()
-): boolean {
-  if (initializedExtensionIds.has(id)) {
-    return true;
-  }
-
-  if (!extensionContext) {
-    return false;
-  }
-
-  const extension = registeredExtensions.get(id);
-  if (!extension) {
-    return false;
-  }
-
-  if (initializationStack.has(id)) {
-    console.error(
-      `Failed to initialize extension '${id}': circular dependency detected.`
-    );
-    return false;
-  }
-
-  initializationStack.add(id);
-
-  const dependencyExports: ExtensionDependencies = {};
-  const dependencyIds = extension.dependencies ?? [];
-
-  for (const dependencyId of dependencyIds) {
-    if (!registeredExtensions.has(dependencyId)) {
-      initializationStack.delete(id);
-      return false;
+  static getInstance() {
+    if (!ExtensionInitalizer._instance) {
+      ExtensionInitalizer._instance = new ExtensionInitalizer();
     }
 
-    const dependencyInitialized = tryInitializeExtension(
-      dependencyId,
-      initializationStack
-    );
-    if (!dependencyInitialized) {
-      initializationStack.delete(id);
-      return false;
-    }
-
-    const dependencyExport = extensionExports.get(dependencyId);
-    if (!dependencyExport) {
-      initializationStack.delete(id);
-      return false;
-    }
-
-    dependencyExports[dependencyId] = dependencyExport;
+    return ExtensionInitalizer._instance;
   }
 
-  initializedExtensionIds.add(id);
+  private readonly registeredExtensions = new Map<
+    string,
+    ExtensionRegistration
+  >();
+  private readonly extensionCleanupFunctions = new Map<
+    string,
+    CleanupFunction[]
+  >();
+  private readonly extensionExports = new Map<string, object>();
+  private readonly initializedExtensionIds = new Set<string>();
+  private extensionContext: SeedBibleState | null = null;
 
-  try {
-    const cleanupIteratorOrReturn = extension.init(
-      extensionContext,
-      dependencyExports
-    );
-    const cleanupFunctions: CleanupFunction[] = [];
-    if (Symbol.iterator in cleanupIteratorOrReturn) {
-      const iterator = cleanupIteratorOrReturn[Symbol.iterator]();
-      while (true) {
-        const result = iterator.next();
-        if (result.done) {
-          if (result.value) {
-            extensionExports.set(id, result.value);
-          } else {
-            extensionExports.set(id, {});
-          }
-          break;
+  constructor() {}
+
+  getExtensionExports<T extends object>(id: string): T | null {
+    return (this.extensionExports.get(id) as T) ?? null;
+  }
+
+  registerExtension(extension: ExtensionRegistration): CleanupFunction {
+    if (!extension?.id || typeof extension.id !== "string") {
+      throw new Error("registerExtension() requires a non-empty string id.");
+    }
+
+    if (typeof extension.init !== "function") {
+      throw new Error(
+        "registerExtension() requires an init(context) function."
+      );
+    }
+
+    this.registeredExtensions.set(extension.id, extension);
+
+    // Allow a replacement registration for the same id to re-run init.
+    this.initializedExtensionIds.delete(extension.id);
+
+    this.tryInitializeRegisteredExtensions();
+
+    return () => {
+      const cleanupFunctions =
+        this.extensionCleanupFunctions.get(extension.id) ?? [];
+      for (const cleanup of cleanupFunctions) {
+        try {
+          cleanup();
+        } catch (err) {
+          console.error(
+            `Error during cleanup of extension '${extension.id}':`,
+            err
+          );
         }
-        cleanupFunctions.push(result.value);
       }
-    } else if (cleanupIteratorOrReturn) {
-      extensionExports.set(id, cleanupIteratorOrReturn);
-    } else {
-      extensionExports.set(id, {});
-    }
-    if (cleanupFunctions.length > 0) {
-      extensionCleanupFunctions.set(id, cleanupFunctions);
-    }
-    initializationStack.delete(id);
-    return true;
-  } catch (error) {
-    initializedExtensionIds.delete(id);
-    initializationStack.delete(id);
-    console.error(`Failed to initialize extension '${id}'.`, error);
-    return false;
+      this.extensionCleanupFunctions.delete(extension.id);
+      this.registeredExtensions.delete(extension.id);
+      this.initializedExtensionIds.delete(extension.id);
+      this.extensionExports.delete(extension.id);
+    };
   }
-}
 
-function tryInitializeRegisteredExtensions() {
-  let madeProgress = true;
+  setupExtensionContext(context: SeedBibleState) {
+    this.extensionContext = context;
+    this.tryInitializeRegisteredExtensions();
+  }
 
-  while (madeProgress) {
-    madeProgress = false;
+  private tryInitializeExtension(
+    id: string,
+    initializationStack: Set<string> = new Set()
+  ): boolean {
+    if (this.initializedExtensionIds.has(id)) {
+      return true;
+    }
 
-    for (const extensionId of registeredExtensions.keys()) {
-      if (initializedExtensionIds.has(extensionId)) {
-        continue;
+    if (!this.extensionContext) {
+      return false;
+    }
+
+    const extension = this.registeredExtensions.get(id);
+    if (!extension) {
+      return false;
+    }
+
+    if (initializationStack.has(id)) {
+      console.error(
+        `Failed to initialize extension '${id}': circular dependency detected.`
+      );
+      return false;
+    }
+
+    initializationStack.add(id);
+
+    const dependencyExports: ExtensionDependencies = {};
+    const dependencyIds = extension.dependencies ?? [];
+
+    for (const dependencyId of dependencyIds) {
+      if (!this.registeredExtensions.has(dependencyId)) {
+        initializationStack.delete(id);
+        return false;
       }
 
-      const initialized = tryInitializeExtension(extensionId);
-      if (initialized) {
-        madeProgress = true;
+      const dependencyInitialized = this.tryInitializeExtension(
+        dependencyId,
+        initializationStack
+      );
+      if (!dependencyInitialized) {
+        initializationStack.delete(id);
+        return false;
+      }
+
+      const dependencyExport = this.extensionExports.get(dependencyId);
+      if (!dependencyExport) {
+        initializationStack.delete(id);
+        return false;
+      }
+
+      dependencyExports[dependencyId] = dependencyExport;
+    }
+
+    this.initializedExtensionIds.add(id);
+
+    try {
+      const cleanupIteratorOrReturn = extension.init(
+        this.extensionContext,
+        dependencyExports
+      );
+      const cleanupFunctions: CleanupFunction[] = [];
+      if (Symbol.iterator in cleanupIteratorOrReturn) {
+        const iterator = cleanupIteratorOrReturn[Symbol.iterator]();
+        while (true) {
+          const result = iterator.next();
+          if (result.done) {
+            if (result.value) {
+              this.extensionExports.set(id, result.value);
+            } else {
+              this.extensionExports.set(id, {});
+            }
+            break;
+          }
+          cleanupFunctions.push(result.value);
+        }
+      } else if (cleanupIteratorOrReturn) {
+        this.extensionExports.set(id, cleanupIteratorOrReturn);
+      } else {
+        this.extensionExports.set(id, {});
+      }
+      if (cleanupFunctions.length > 0) {
+        this.extensionCleanupFunctions.set(id, cleanupFunctions);
+      }
+      initializationStack.delete(id);
+      return true;
+    } catch (error) {
+      this.initializedExtensionIds.delete(id);
+      initializationStack.delete(id);
+      console.error(`Failed to initialize extension '${id}'.`, error);
+      return false;
+    }
+  }
+
+  private tryInitializeRegisteredExtensions() {
+    let madeProgress = true;
+
+    while (madeProgress) {
+      madeProgress = false;
+
+      for (const extensionId of this.registeredExtensions.keys()) {
+        if (this.initializedExtensionIds.has(extensionId)) {
+          continue;
+        }
+
+        const initialized = this.tryInitializeExtension(extensionId);
+        if (initialized) {
+          madeProgress = true;
+        }
       }
     }
   }
 }
 
 export function getExtensionExports<T extends object>(id: string): T | null {
-  return (extensionExports.get(id) as T) ?? null;
+  return ExtensionInitalizer.getInstance().getExtensionExports<T>(id);
 }
 
 export function registerExtension(
   extension: ExtensionRegistration
 ): CleanupFunction {
-  if (!extension?.id || typeof extension.id !== "string") {
-    throw new Error("registerExtension() requires a non-empty string id.");
-  }
-
-  if (typeof extension.init !== "function") {
-    throw new Error("registerExtension() requires an init(context) function.");
-  }
-
-  registeredExtensions.set(extension.id, extension);
-
-  // Allow a replacement registration for the same id to re-run init.
-  initializedExtensionIds.delete(extension.id);
-
-  tryInitializeRegisteredExtensions();
-
-  return () => {
-    const cleanupFunctions = extensionCleanupFunctions.get(extension.id) ?? [];
-    for (const cleanup of cleanupFunctions) {
-      try {
-        cleanup();
-      } catch (err) {
-        console.error(
-          `Error during cleanup of extension '${extension.id}':`,
-          err
-        );
-      }
-    }
-    extensionCleanupFunctions.delete(extension.id);
-    registeredExtensions.delete(extension.id);
-    initializedExtensionIds.delete(extension.id);
-    extensionExports.delete(extension.id);
-  };
+  return ExtensionInitalizer.getInstance().registerExtension(extension);
 }
 
 export function setupExtensionContext(context: SeedBibleState) {
-  extensionContext = context;
-  tryInitializeRegisteredExtensions();
+  ExtensionInitalizer.getInstance().setupExtensionContext(context);
 }
 
 export type ExtensionManager = ReturnType<typeof createExtensionManager>;
