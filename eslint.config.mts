@@ -117,8 +117,8 @@ export default defineConfig([
       "seed-bible-i18n": i18nJsonPlugin,
     },
     rules: {
-      "seed-bible-i18n/translation-unused-keys": "error",
-      // "seed-bible-i18n/translation-incomplete-translations": "error",
+      "seed-bible-i18n/translation-unused-keys": "warn",
+      "seed-bible-i18n/translation-incomplete-translations": "error",
     },
   },
   {

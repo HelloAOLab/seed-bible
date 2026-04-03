@@ -16,12 +16,11 @@ const i18nIncompleteTranslationsRule = createRule<Options, MessageIds>({
   meta: {
     type: "problem",
     docs: {
-      description: "Checks locale JSON files for keys missing from en.json",
+      description: "Checks locale JSON files for missing keys",
     },
     schema: [],
     messages: {
-      incomplete_translation:
-        "Locale '{{locale}}' is missing key '{{key}}' from en.json.",
+      incomplete_translation: "Locale '{{locale}}' is missing key '{{key}}'",
       config_error: "i18n lint rule configuration error: {{message}}",
     },
   },
@@ -31,8 +30,11 @@ const i18nIncompleteTranslationsRule = createRule<Options, MessageIds>({
     const projectRoot = getContextCwd(context);
     const analysis = analyzeProject(projectRoot);
 
+    let objectKeys = new Set<string>();
+
     return {
-      Program(node): void {
+      Object(node): void {
+        objectKeys = new Set<string>();
         if (analysis.error) {
           if (reportedConfigError) {
             return;
@@ -46,15 +48,18 @@ const i18nIncompleteTranslationsRule = createRule<Options, MessageIds>({
           });
           return;
         }
+      },
 
+      Member(node: any): void {
+        const key =
+          node.name.type === "String" ? node.name.value : node.name.name;
+        objectKeys.add(key);
+      },
+
+      "Object:exit"(node): void {
         const locale = getLocaleFromFilePath(getContextFilename(context));
-        if (!locale || locale === "en") {
-          return;
-        }
-
-        const localeKeys = analysis.localeKeys.get(locale) ?? new Set<string>();
-        for (const key of analysis.englishKeys) {
-          if (!localeKeys.has(key)) {
+        for (const key of analysis.usedKeys) {
+          if (!objectKeys.has(key)) {
             context.report({
               node,
               messageId: "incomplete_translation",
