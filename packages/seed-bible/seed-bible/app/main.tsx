@@ -1,7 +1,6 @@
 import { PaneLayout } from "seed-bible.components.PaneLayout";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
 import { BibleReaderToolbar } from "seed-bible.components.BibleReaderToolbar";
-import { SettingsPage } from "seed-bible.components.SettingsPage";
 import { Tabs } from "seed-bible.components.Tabs";
 import {
   I18nProvider,
@@ -69,7 +68,7 @@ export function Main() {
     state.extensions.loadDefaultExtensions();
   });
 
-  const { theme, sidebar, tabs, panes, selector, app } = state;
+  const { theme, selector } = state;
 
   return (
     <I18nProvider>
@@ -87,11 +86,7 @@ export function Main() {
         <Tabs state={state} />
 
         <main className="sb-main-content">
-          {sidebar.isSettingsOpen.value ? (
-            <SettingsPage state={state} />
-          ) : (
-            <PaneLayout state={state} />
-          )}
+          <PaneLayout state={state} />
         </main>
 
         <CasualOSApp id="bible-selector">
@@ -108,7 +103,7 @@ export function Main() {
           </>
         </CasualOSApp>
 
-        {!sidebar.isSettingsOpen.value && <BibleReaderToolbar state={state} />}
+        <BibleReaderToolbar state={state} />
       </div>
     </I18nProvider>
   );

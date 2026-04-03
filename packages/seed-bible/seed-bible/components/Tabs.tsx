@@ -6,10 +6,9 @@ import {
 } from "seed-bible.managers.PanesManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { MobileSettingsIcon } from "seed-bible.components.icons";
+import { SettingsPage } from "seed-bible.components.SettingsPage";
 import type { UserProfile } from "../managers/LoginManager";
 import type { ConnectedSessionUser } from "../managers/SessionsManager";
-
-const { useEffect } = os.appHooks;
 
 interface TabsProps {
   state: SeedBibleState;
@@ -56,6 +55,7 @@ export function Tabs(props: TabsProps) {
   const isCollapsed = sidebar.isSidebarCollapsed.value;
   const isMobileOpen = sidebar.isMobileOpen.value;
   const effectivelyCollapsed = isCollapsed && !isMobileOpen;
+  const shouldShowSidebarContent = !effectivelyCollapsed || isSettingsOpen;
   const openMenuTabId = useSignal<string | null>(null);
   const isLayoutMenuOpen = useSignal(false);
   const isJoinSessionModalOpen = useSignal(false);
@@ -170,183 +170,213 @@ export function Tabs(props: TabsProps) {
         </button>
       </div>
 
-      {!effectivelyCollapsed && (
+      {shouldShowSidebarContent && (
         <>
-          <div className="sb-sidebar-tabs-header">
-            <h3 className="sb-sidebar-tabs-title">Tabs</h3>
-            <button
-              onClick={() => {
-                void state.app.createSharedSession();
-              }}
-              className="sb-tab-add-button"
-              aria-label="Create new shared reading session tab"
-              title="New shared session"
-            >
-              <span className="material-symbols-outlined">groups</span>
-            </button>
-            <button
-              onClick={openJoinSessionModal}
-              className="sb-tab-add-button"
-              aria-label="Join shared reading session"
-              title="Join shared session"
-            >
-              <span className="material-symbols-outlined">group_add</span>
-            </button>
-            <button
-              onClick={() => {
-                app.addTab();
-              }}
-              className="sb-tab-add-button"
-              aria-label="Create new tab"
-              title="New tab"
-            >
-              <span className="material-symbols-outlined">add</span>
-            </button>
-          </div>
-
-          <div className="sb-sidebar-tab-list">
-            {tabs.map((tab) => {
-              const isSelected = tab.id === selectedTabId;
-              const currentBookId = tab.readingState.bookId.value;
-              const currentBookName =
-                tab.readingState.translationBooks.value?.books.find(
-                  (book) => book.id === currentBookId
-                )?.name ??
-                currentBookId ??
-                "-";
-              const currentChapter = tab.readingState.chapterNumber.value;
-              const currentTranslation =
-                tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
-              const titlePrefix = tab.sharedSession ? "Shared " : "";
-              const connectedUsers =
-                tab.sharedSession?.connectedUsers.value ?? [];
-
-              return (
-                <div
-                  key={tab.id}
-                  className="sb-tab-row"
-                  dir={
-                    tab.readingState.translation.value?.textDirection ?? "auto"
-                  }
+          {isSettingsOpen ? (
+            <div className="sb-sidebar-settings-view">
+              <div className="sb-sidebar-tabs-header">
+                <h3 className="sb-sidebar-tabs-title">Settings</h3>
+                <button
+                  onClick={sidebar.closeSettings}
+                  className="sb-sidebar-settings-close-button"
+                  aria-label="Close settings"
+                  title="Close settings"
                 >
-                  <button
-                    onClick={() => {
-                      openMenuTabId.value = null;
-                      isLayoutMenuOpen.value = false;
-                      app.selectTab(tab.id);
-                    }}
-                    className={`sb-tab-button${
-                      isSelected ? " sb-tab-button-selected" : ""
-                    }`}
-                  >
-                    <div className="sb-tab-main-content">
-                      <span>{`${titlePrefix}${currentBookName} - ${currentChapter} • ${currentTranslation}`}</span>
-                    </div>
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
 
-                    {tab.sharedSession && connectedUsers.length > 0 && (
-                      <div className="sb-tab-users-section">
-                        <div className="sb-tab-users-list">
-                          {connectedUsers.map((user) => {
-                            const imageUrl = getUserImageUrl(user.profile);
-                            const displayName = getUserDisplayName(user);
-                            const style = imageUrl
-                              ? {
-                                  borderColor: user.color,
-                                  backgroundImage: `url(${imageUrl})`,
-                                }
-                              : {
-                                  borderColor: user.color,
-                                  backgroundColor: user.color,
-                                };
+              <div className="sb-sidebar-settings-content">
+                <SettingsPage state={state} />
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="sb-sidebar-tabs-header">
+                <h3 className="sb-sidebar-tabs-title">Tabs</h3>
+                <button
+                  onClick={() => {
+                    void state.app.createSharedSession();
+                  }}
+                  className="sb-tab-add-button"
+                  aria-label="Create new shared reading session tab"
+                  title="New shared session"
+                >
+                  <span className="material-symbols-outlined">groups</span>
+                </button>
+                <button
+                  onClick={openJoinSessionModal}
+                  className="sb-tab-add-button"
+                  aria-label="Join shared reading session"
+                  title="Join shared session"
+                >
+                  <span className="material-symbols-outlined">group_add</span>
+                </button>
+                <button
+                  onClick={() => {
+                    app.addTab();
+                  }}
+                  className="sb-tab-add-button"
+                  aria-label="Create new tab"
+                  title="New tab"
+                >
+                  <span className="material-symbols-outlined">add</span>
+                </button>
+              </div>
 
-                            return (
-                              <span
-                                key={user.connectionId}
-                                className={`sb-tab-user-icon${
-                                  imageUrl ? " sb-tab-user-icon-has-image" : ""
-                                }${user.isSelf ? " sb-tab-user-icon-self" : ""}`}
-                                title={displayName}
-                                style={style}
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </button>
+              <div className="sb-sidebar-tab-list">
+                {tabs.map((tab) => {
+                  const isSelected = tab.id === selectedTabId;
+                  const currentBookId = tab.readingState.bookId.value;
+                  const currentBookName =
+                    tab.readingState.translationBooks.value?.books.find(
+                      (book) => book.id === currentBookId
+                    )?.name ??
+                    currentBookId ??
+                    "-";
+                  const currentChapter = tab.readingState.chapterNumber.value;
+                  const currentTranslation =
+                    tab.readingState.translationId.value ??
+                    DEFAULT_TRANSLATION_ID;
+                  const titlePrefix = tab.sharedSession ? "Shared " : "";
+                  const connectedUsers =
+                    tab.sharedSession?.connectedUsers.value ?? [];
 
-                  <div className="sb-tab-menu-anchor">
-                    <button
-                      onClick={() => {
-                        isLayoutMenuOpen.value = false;
-                        openMenuTabId.value =
-                          openMenuTabId.value === tab.id ? null : tab.id;
-                      }}
-                      className="sb-tab-menu-button"
-                      aria-label="Open tab menu"
-                      title="Tab options"
+                  return (
+                    <div
+                      key={tab.id}
+                      className="sb-tab-row"
+                      dir={
+                        tab.readingState.translation.value?.textDirection ??
+                        "auto"
+                      }
                     >
-                      <span className="material-symbols-outlined sb-tab-more-icon">
-                        more_vert
-                      </span>
-                    </button>
+                      <button
+                        onClick={() => {
+                          openMenuTabId.value = null;
+                          isLayoutMenuOpen.value = false;
+                          app.selectTab(tab.id);
+                        }}
+                        className={`sb-tab-button${
+                          isSelected ? " sb-tab-button-selected" : ""
+                        }`}
+                      >
+                        <div className="sb-tab-main-content">
+                          <span>{`${titlePrefix}${currentBookName} - ${currentChapter} • ${currentTranslation}`}</span>
+                        </div>
 
-                    {openMenuTabId.value === tab.id && (
-                      <div className="sb-tab-menu">
-                        {tab.sharedSession && (
-                          <>
-                            <button
-                              className="sb-tab-menu-item"
-                              title={`Session ID: ${tab.sharedSession.id}`}
-                              onClick={() => {
-                                if (tab.sharedSession) {
-                                  os.setClipboard(tab.sharedSession.id);
-                                }
-                                openMenuTabId.value = null;
-                              }}
-                            >
-                              {`Session ID: ${tab.sharedSession.id}`}
-                            </button>
-                          </>
+                        {tab.sharedSession && connectedUsers.length > 0 && (
+                          <div className="sb-tab-users-section">
+                            <div className="sb-tab-users-list">
+                              {connectedUsers.map((user) => {
+                                const imageUrl = getUserImageUrl(user.profile);
+                                const displayName = getUserDisplayName(user);
+                                const style = imageUrl
+                                  ? {
+                                      borderColor: user.color,
+                                      backgroundImage: `url(${imageUrl})`,
+                                    }
+                                  : {
+                                      borderColor: user.color,
+                                      backgroundColor: user.color,
+                                    };
+
+                                return (
+                                  <span
+                                    key={user.connectionId}
+                                    className={`sb-tab-user-icon${
+                                      imageUrl
+                                        ? " sb-tab-user-icon-has-image"
+                                        : ""
+                                    }${
+                                      user.isSelf
+                                        ? " sb-tab-user-icon-self"
+                                        : ""
+                                    }`}
+                                    title={displayName}
+                                    style={style}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
                         )}
+                      </button>
+
+                      <div className="sb-tab-menu-anchor">
                         <button
-                          className="sb-tab-menu-item"
                           onClick={() => {
-                            state.tabs.removeTab(tab.id);
-                            openMenuTabId.value = null;
+                            isLayoutMenuOpen.value = false;
+                            openMenuTabId.value =
+                              openMenuTabId.value === tab.id ? null : tab.id;
                           }}
+                          className="sb-tab-menu-button"
+                          aria-label="Open tab menu"
+                          title="Tab options"
                         >
-                          Close tab
+                          <span className="material-symbols-outlined sb-tab-more-icon">
+                            more_vert
+                          </span>
                         </button>
-                        {panelsEnabled && (
-                          <>
+
+                        {openMenuTabId.value === tab.id && (
+                          <div className="sb-tab-menu">
+                            {tab.sharedSession && (
+                              <>
+                                <button
+                                  className="sb-tab-menu-item"
+                                  title={`Session ID: ${tab.sharedSession.id}`}
+                                  onClick={() => {
+                                    if (tab.sharedSession) {
+                                      os.setClipboard(tab.sharedSession.id);
+                                    }
+                                    openMenuTabId.value = null;
+                                  }}
+                                >
+                                  {`Session ID: ${tab.sharedSession.id}`}
+                                </button>
+                              </>
+                            )}
                             <button
+                              className="sb-tab-menu-item"
                               onClick={() => {
-                                app.openInNewPane(tab.id);
+                                state.tabs.removeTab(tab.id);
                                 openMenuTabId.value = null;
                               }}
-                              className="sb-tab-menu-item"
                             >
-                              Open in new pane
+                              Close tab
                             </button>
-                            <button
-                              onClick={() => {
-                                app.openInDetachedPane(tab.id);
-                                openMenuTabId.value = null;
-                              }}
-                              className="sb-tab-menu-item"
-                            >
-                              Open in detached pane
-                            </button>
-                          </>
+                            {panelsEnabled && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    app.openInNewPane(tab.id);
+                                    openMenuTabId.value = null;
+                                  }}
+                                  className="sb-tab-menu-item"
+                                >
+                                  Open in new pane
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    app.openInDetachedPane(tab.id);
+                                    openMenuTabId.value = null;
+                                  }}
+                                  className="sb-tab-menu-item"
+                                >
+                                  Open in detached pane
+                                </button>
+                              </>
+                            )}
+                          </div>
                         )}
                       </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </>
       )}
 

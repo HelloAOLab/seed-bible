@@ -1189,6 +1189,43 @@ button {
   gap: 10px;
 }
 
+.sb-sidebar-settings-view {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  flex: 1;
+}
+
+.sb-sidebar-settings-close-button {
+  border: none;
+  border-radius: 7px;
+  width: 30px;
+  height: 30px;
+  background: var(--sb-secondary-color);
+  color: var(--sb-font-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.sb-sidebar-settings-content {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sb-sidebar-settings-content .sb-settings-page {
+  padding: 0;
+}
+
+.sb-sidebar-settings-content .sb-settings-section {
+  max-width: none;
+  padding: 0;
+}
+
 .sb-tab-row {
   display: flex;
   align-items: stretch;
