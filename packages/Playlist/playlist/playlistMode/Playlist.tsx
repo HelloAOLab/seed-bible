@@ -1617,7 +1617,10 @@ const Playlist = (props: any) => {
             <div className="add-playlist-actions">
               <Button
                 onClick={() => {
-                  if (G.RetainDataData) {
+                  if (
+                    G.RetainDataData ||
+                    (G.RetainDataName && G.RetainDataSelectedType === "TEXT")
+                  ) {
                     setDataWarning(true);
                   } else {
                     onClickSave();

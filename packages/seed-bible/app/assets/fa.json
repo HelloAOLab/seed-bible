@@ -161,6 +161,8 @@
   "undoActionSuccessfull": "عملیات بازگردانی با موفقیت انجام شد.",
   "headingAddedToPlaylist": "{{heading}} به لیست اضافه شد",
   "headingAddedToAnnotations": "{{heading}} به حاشیه‌نویسی اضافه شد.",
+  "playlistNotificationContentAddedToPlaylist": "{{contentLabel}} به لیست پخش اضافه شد.",
+  "playlistNotificationCountItemsAddedToPlaylist": "{{count}} مورد به لیست پخش اضافه شد.",
   "addToPlaylist": "افزودن به لیست",
   "addToNew": "افزودن به جدید",
   "itemsAddedToPlaylistSuccessfully": "آیتم‌ها با موفقیت به لیست اضافه شدند.",
