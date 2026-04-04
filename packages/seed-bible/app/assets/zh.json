@@ -386,6 +386,7 @@
   "pleaseEnterALinkToSave": "请输入链接以保存！",
   "itemsAddedToPlaylistSuccessfully": "项目已成功添加到播放列表。",
   "headingAddedToPlaylist": "{{heading}}已添加到播放列表",
+  "headingAddedToAnnotations": "{{heading}}已添加到注释。",
   "selectAPlaylistToAnnotate": "选择要注释的播放列表",
   "dragDropOrClickToBrowse": "拖放或点击浏览",
   "attachmentNameMissing": "附件名称缺失！",

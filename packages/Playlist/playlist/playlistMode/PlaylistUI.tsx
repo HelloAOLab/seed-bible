@@ -533,11 +533,11 @@ const Playlist = () => {
           </h2>
           <p>{t("playlistCurrentlyPlayingConfirm")}</p>
           <ButtonsCover>
-            <Button secondaryAlt onClick={closeConfirmStopPlaylist}>
+            <Button secondary onClick={closeConfirmStopPlaylist}>
               {t("no")}
             </Button>
             <Button
-              secondary
+              secondaryAlt
               onClick={() => {
                 G.IsPlaylistPlaying = false;
                 G.IsQueuePresent = false;
@@ -569,7 +569,7 @@ const Playlist = () => {
               left: "none",
               right: isMobile ? "-9rem" : "-12rem",
               padding: "0.5rem",
-              top: !isMobile ? "3rem" : "none",
+              top: !isMobile ? "0rem" : "none",
               bottom: !isMobile ? "none" : "11rem",
               marginTop: 45,
             }}

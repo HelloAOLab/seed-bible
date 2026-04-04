@@ -343,8 +343,13 @@ const CreatePlaylistUI = (props: any) => {
   const addDataToPlaylist = (
     data: any[],
     isBulk = false,
-    combineLast = false
+    combineLast = false,
+    setDirect = false
   ) => {
+    if (setDirect) {
+      setPlaylist(data);
+      return;
+    }
     if (isBulk) {
       setPlaylist((prev: any[]) => {
         const old = [...prev, ...data];
@@ -1022,7 +1027,8 @@ const CreatePlaylistUI = (props: any) => {
           >
             <Button
               loading={loading}
-              secondary
+              secondaryAlt={dataWarning ? false : true}
+              secondary={dataWarning ? true : false}
               onClick={async () => {
                 setLoading(true);
                 if (dataWarning) {
@@ -1054,7 +1060,8 @@ const CreatePlaylistUI = (props: any) => {
               </Button>
             )}
             <Button
-              secondaryAlt
+              secondaryAlt={dataWarning ? true : false}
+              secondary={dataWarning ? false : true}
               disabled={loading}
               onClick={() => {
                 setDataWarning(false);

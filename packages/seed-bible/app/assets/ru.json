@@ -386,6 +386,7 @@
   "pleaseEnterALinkToSave": "Введите ссылку для сохранения!",
   "itemsAddedToPlaylistSuccessfully": "Элементы успешно добавлены в плейлист.",
   "headingAddedToPlaylist": "{{heading}} добавлено в плейлист",
+  "headingAddedToAnnotations": "{{heading}} добавлено к аннотации.",
   "selectAPlaylistToAnnotate": "Выберите плейлист для аннотирования",
   "dragDropOrClickToBrowse": "Перетащите или нажмите для выбора",
   "attachmentNameMissing": "Отсутствует название вложения!",

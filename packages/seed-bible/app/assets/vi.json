@@ -160,6 +160,7 @@
   "failedToUpdateBookmark": "Cập nhật dấu trang thất bại. Vui lòng thử lại.",
   "undoActionSuccessfull": "Hoàn tác thành công.",
   "headingAddedToPlaylist": "{{heading}} đã được thêm vào danh sách phát",
+  "headingAddedToAnnotations": "{{heading}} đã được thêm vào chú thích.",
   "addToPlaylist": "Thêm vào danh sách phát",
   "addToNew": "Thêm vào mới",
   "itemsAddedToPlaylistSuccessfully": "Đã thêm mục vào danh sách phát thành công.",

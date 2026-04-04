@@ -160,6 +160,7 @@
   "failedToUpdateBookmark": "بک مارک اپ ڈیٹ کرنے میں ناکام۔ براہ کرم دوبارہ کوشش کریں۔",
   "undoActionSuccessfull": "واپس لینے کا عمل کامیاب۔",
   "headingAddedToPlaylist": "{{heading}} پلے لسٹ میں شامل ہو گیا",
+  "headingAddedToAnnotations": "{{heading}} نوٹ میں شامل ہو گیا۔",
   "addToPlaylist": "پلے لسٹ میں شامل کریں",
   "addToNew": "نئی میں شامل کریں",
   "itemsAddedToPlaylistSuccessfully": "آئٹمز پلے لسٹ میں کامیابی سے شامل ہو گئے۔",

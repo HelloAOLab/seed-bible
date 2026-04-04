@@ -160,6 +160,7 @@
   "failedToUpdateBookmark": "Imeshindwa kusasisha alama. Tafadhali jaribu tena.",
   "undoActionSuccessfull": "Tengua kitendo imefanikiwa.",
   "headingAddedToPlaylist": "{{heading}} imeongezwa kwenye orodha",
+  "headingAddedToAnnotations": "{{heading}} imeongezwa kwenye maelezo.",
   "addToPlaylist": "Ongeza kwenye orodha",
   "addToNew": "Ongeza kwenye mpya",
   "itemsAddedToPlaylistSuccessfully": "Vipengele vimeongezwa kwenye orodha kwa mafanikio.",

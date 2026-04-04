@@ -160,6 +160,7 @@
   "failedToUpdateBookmark": "Gagal memperbarui penanda. Silakan coba lagi.",
   "undoActionSuccessfull": "Tindakan undo berhasil.",
   "headingAddedToPlaylist": "{{heading}} ditambahkan ke playlist",
+  "headingAddedToAnnotations": "{{heading}} ditambahkan ke anotasi.",
   "addToPlaylist": "Tambah ke playlist",
   "addToNew": "Tambah ke baru",
   "itemsAddedToPlaylistSuccessfully": "Item berhasil ditambahkan ke playlist.",

@@ -315,6 +315,7 @@
   "pleaseEnterALinkToSave": "يُرجى إدخال رابط للحفظ!",
   "itemsAddedToPlaylistSuccessfully": "تمت إضافة العناصر إلى القائمة بنجاح.",
   "headingAddedToPlaylist": "تمت إضافة {{heading}} إلى القائمة",
+  "headingAddedToAnnotations": "تمت إضافة {{heading}} إلى التعليق التوضيحي.",
   "selectAPlaylistToAnnotate": "اختر قائمة لتعليقها",
   "noFilesUploaded": "لم يتم تحميل أي ملف!",
   "attachmentNameMissing": "اسم المرفق مفقود!",
