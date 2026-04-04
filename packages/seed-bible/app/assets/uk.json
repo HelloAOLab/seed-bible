@@ -160,6 +160,7 @@
   "failedToUpdateBookmark": "Не вдалося оновити закладку. Спробуйте ще раз.",
   "undoActionSuccessfull": "Дію скасовано успішно.",
   "headingAddedToPlaylist": "{{heading}} додано до списку відтворення",
+  "headingAddedToAnnotations": "{{heading}} додано до анотації.",
   "addToPlaylist": "Додати до списку відтворення",
   "addToNew": "Додати до нового",
   "itemsAddedToPlaylistSuccessfully": "Елементи успішно додано до списку відтворення.",

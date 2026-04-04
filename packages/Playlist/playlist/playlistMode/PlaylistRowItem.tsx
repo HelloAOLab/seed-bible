@@ -650,9 +650,8 @@ const PlaylistRowItem = (props: any) => {
                     if (G.IsQueuePresent) {
                       ShowNotification({
                         message: t("addToTheCurrentQueue"),
-                        severity: "error",
+                        severity: "success",
                       });
-                      return;
                     }
                     thisBot.Playlistplaying({
                       playingPlaylist: playListSubId || id,

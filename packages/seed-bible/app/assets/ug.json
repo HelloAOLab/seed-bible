@@ -160,6 +160,7 @@
   "failedToUpdateBookmark": "خەتكۈچنى يېڭىلاش مەغلۇپ بولدى. قايتا سىناڭ.",
   "undoActionSuccessfull": "قايتۇرۇش مۇۋاپىق بولدى.",
   "headingAddedToPlaylist": "{{heading}} تىزىملىككە قوشۇلدى",
+  "headingAddedToAnnotations": "{{heading}} ئىزاھاتقا قوشۇلدى.",
   "addToPlaylist": "تىزىملىككە قوشۇش",
   "addToNew": "يېڭىغا قوشۇش",
   "itemsAddedToPlaylistSuccessfully": "تۈرلەر تىزىملىككە مۇۋاپىق قوشۇلدى.",

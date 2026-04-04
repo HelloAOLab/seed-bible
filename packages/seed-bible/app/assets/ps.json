@@ -160,6 +160,7 @@
   "failedToUpdateBookmark": "نښه تازه کول ناکام شول. مهرباني وکړئ بیا هڅه وکړئ.",
   "undoActionSuccessfull": "په بریالیتوب سره بیرته اخیستنه.",
   "headingAddedToPlaylist": "{{heading}} لیست ته زیات شو",
+  "headingAddedToAnnotations": "{{heading}} څرګندون ته زیات شو.",
   "addToPlaylist": "لیست ته اضافه کړئ",
   "addToNew": "نوي ته اضافه کړئ",
   "itemsAddedToPlaylistSuccessfully": "توکي په لیست کې په بریالیتوب سره زیات شول.",

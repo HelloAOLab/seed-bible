@@ -315,6 +315,7 @@
   "pleaseEnterALinkToSave": "¡Introduce un enlace para guardar!",
   "itemsAddedToPlaylistSuccessfully": "Elementos añadidos a la lista correctamente.",
   "headingAddedToPlaylist": "{{heading}} añadido a la lista",
+  "headingAddedToAnnotations": "{{heading}} añadido a la anotación.",
   "importJSON": "Importar JSON",
   "selectAPlaylistToAnnotate": "Selecciona una lista para anotar",
   "attachmentNameMissing": "Nombre de archivo faltante!",

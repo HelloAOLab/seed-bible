@@ -386,6 +386,7 @@
   "pleaseEnterALinkToSave": "Insira um link para salvar!",
   "itemsAddedToPlaylistSuccessfully": "Itens adicionados à playlist com sucesso.",
   "headingAddedToPlaylist": "{{heading}} adicionado à playlist",
+  "headingAddedToAnnotations": "{{heading}} adicionado à anotação.",
   "selectAPlaylistToAnnotate": "Selecione uma playlist para anotar",
   "dragDropOrClickToBrowse": "Arraste e solte ou clique para navegar",
   "attachmentNameMissing": "Nome do anexo ausente!",

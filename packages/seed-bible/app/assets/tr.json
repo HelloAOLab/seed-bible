@@ -160,6 +160,7 @@
   "failedToUpdateBookmark": "Yer imi güncellenemedi. Lütfen tekrar deneyin.",
   "undoActionSuccessfull": "Geri alma işlemi başarılı.",
   "headingAddedToPlaylist": "{{heading}} listeye eklendi",
+  "headingAddedToAnnotations": "{{heading}} nota eklendi.",
   "addToPlaylist": "Listeye ekle",
   "addToNew": "Yeniye ekle",
   "itemsAddedToPlaylistSuccessfully": "Öğeler başarıyla listeye eklendi.",

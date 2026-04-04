@@ -314,6 +314,7 @@
   "pleaseEnterALinkToSave": "सहेजने के लिए कृपया एक लिंक दर्ज करें!",
   "itemsAddedToPlaylistSuccessfully": "आइटम प्लेलिस्ट में सफलतापूर्वक जोड़े गए।",
   "headingAddedToPlaylist": "{{heading}} प्लेलिस्ट में जोड़ा गया",
+  "headingAddedToAnnotations": "{{heading}} टिप्पणी में जोड़ा गया।",
   "UPLOAEDJSONERROR": "JSON अपलोड त्रुटि",
   "selectAPlaylistToAnnotate": "एक प्लेलिस्ट को टिप्पणी करने के लिए चुनें",
   "attachmentNameMissing": "अधिकार नाम गायब है!",

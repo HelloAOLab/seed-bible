@@ -1600,7 +1600,7 @@ const AddAnotationUI = (props: any) => {
           </p>
           <ButtonsCover>
             <Button
-              secondary
+              secondaryAlt
               onClick={() => {
                 loseProgressAction.current?.();
               }}
@@ -1609,7 +1609,7 @@ const AddAnotationUI = (props: any) => {
               {t("confirm")}
             </Button>
             <Button
-              secondaryAlt
+              secondary
               onClick={() => {
                 setLoseProgresss(false);
               }}

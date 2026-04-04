@@ -334,8 +334,14 @@ const Playlist = (props: any) => {
   const addDataToPlaylist = (
     data: any[],
     isBulk = false,
-    combineLast = false
+    combineLast = false,
+    setDirect = false
   ) => {
+    if (setDirect) {
+      setPlaylist(data);
+      return;
+    }
+
     if (isBulk) {
       setPlaylist((prev: any[]) => {
         const old = [...prev, ...data];
@@ -956,7 +962,8 @@ const Playlist = (props: any) => {
           >
             <Button
               loading={loading}
-              secondary
+              secondary={dataWarning ? true : false}
+              secondaryAlt={dataWarning ? false : true}
               onClick={async () => {
                 setLoading(true);
                 if (dataWarning) {
@@ -989,7 +996,8 @@ const Playlist = (props: any) => {
               </Button>
             )}
             <Button
-              secondaryAlt
+              secondary={dataWarning ? false : true}
+              secondaryAlt={dataWarning ? true : false}
               disabled={loading}
               onClick={() => {
                 setDataWarning(false);

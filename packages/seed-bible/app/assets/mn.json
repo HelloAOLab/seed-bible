@@ -160,6 +160,7 @@
   "failedToUpdateBookmark": "Хавчуурга шинэчлэхэд амжилтгүй боллоо. Дахин оролдоно уу.",
   "undoActionSuccessfull": "Буцаах үйлдэл амжилттай боллоо.",
   "headingAddedToPlaylist": "{{heading}} плейлистэнд нэмэгдлээ",
+  "headingAddedToAnnotations": "{{heading}} тайлбарт нэмэгдлээ.",
   "addToPlaylist": "Плейлистэнд нэмэх",
   "addToNew": "Шинэ рүү нэмэх",
   "itemsAddedToPlaylistSuccessfully": "Элементүүд плейлистэнд амжилттай нэмэгдлээ.",

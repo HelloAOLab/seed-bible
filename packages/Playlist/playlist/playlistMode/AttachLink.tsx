@@ -130,11 +130,11 @@ function SubComponent(props: any) {
         <h2 style={{ fontSize: "1rem" }}>{t("thisWillLoseYourRecording")}</h2>
         <p>{t("switchWillLoseYourRecording")}</p>
         <ButtonsCover>
-          <Button secondaryAlt onClick={() => setIsWarningModalShow(false)}>
+          <Button secondary onClick={() => setIsWarningModalShow(false)}>
             {t("no")}
           </Button>
           <Button
-            secondary
+            secondaryAlt
             onClick={() => {
               setIsWarningModalShow(false);
               G.AfterConfirmCallBackRecording &&
@@ -892,6 +892,9 @@ const AttachLink = (props: any) => {
           } else {
             finalName += "-audio-recording";
           }
+          break;
+        default:
+          finalName = name;
           break;
       }
     }

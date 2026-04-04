@@ -160,6 +160,7 @@
   "failedToUpdateBookmark": "ቡክማርክ ምዝማን ኣይተዓወተን። እባክካ እንደገና ፈትን።",
   "undoActionSuccessfull": "መመለሲ ብዓወት ተፈጺሙ።",
   "headingAddedToPlaylist": "{{heading}} ናብ ዝርዝር ተወሲዱ",
+  "headingAddedToAnnotations": "{{heading}} ናብ ምርግጋጽ ተወሲዱ።",
   "addToPlaylist": "ናብ ዝርዝር ወስኽ",
   "addToNew": "ናብ ሓድሽ ወስኽ",
   "itemsAddedToPlaylistSuccessfully": "እቃታት ናብ ዝርዝር ብዓወት ተወሲዶም።",
