@@ -392,6 +392,8 @@
   "itemsAddedToPlaylistSuccessfully": "Items added to playlist successfully.",
   "headingAddedToPlaylist": "{{heading}} added to playlist",
   "headingAddedToAnnotations": "{{heading}} added to annotation.",
+  "playlistNotificationContentAddedToPlaylist": "{{contentLabel}} added to playlist.",
+  "playlistNotificationCountItemsAddedToPlaylist": "Added {{count}} items to playlist.",
   "selectAPlaylistToAnnotate": "Select a playlist to annotate",
   "dragDropOrClickToBrowse": "Drag drop or Click to browse",
   "attachmentNameMissing": "Attachment Name missing!",

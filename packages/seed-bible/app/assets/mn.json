@@ -161,6 +161,8 @@
   "undoActionSuccessfull": "Буцаах үйлдэл амжилттай боллоо.",
   "headingAddedToPlaylist": "{{heading}} плейлистэнд нэмэгдлээ",
   "headingAddedToAnnotations": "{{heading}} тайлбарт нэмэгдлээ.",
+  "playlistNotificationContentAddedToPlaylist": "{{contentLabel}} плейлистэнд нэмэгдлээ.",
+  "playlistNotificationCountItemsAddedToPlaylist": "{{count}} зүйл плейлистэд нэмэгдлээ.",
   "addToPlaylist": "Плейлистэнд нэмэх",
   "addToNew": "Шинэ рүү нэмэх",
   "itemsAddedToPlaylistSuccessfully": "Элементүүд плейлистэнд амжилттай нэмэгдлээ.",

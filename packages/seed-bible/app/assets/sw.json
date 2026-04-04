@@ -161,6 +161,8 @@
   "undoActionSuccessfull": "Tengua kitendo imefanikiwa.",
   "headingAddedToPlaylist": "{{heading}} imeongezwa kwenye orodha",
   "headingAddedToAnnotations": "{{heading}} imeongezwa kwenye maelezo.",
+  "playlistNotificationContentAddedToPlaylist": "{{contentLabel}} imeongezwa kwenye orodha.",
+  "playlistNotificationCountItemsAddedToPlaylist": "Vitu {{count}} vimeongezwa kwenye orodha.",
   "addToPlaylist": "Ongeza kwenye orodha",
   "addToNew": "Ongeza kwenye mpya",
   "itemsAddedToPlaylistSuccessfully": "Vipengele vimeongezwa kwenye orodha kwa mafanikio.",

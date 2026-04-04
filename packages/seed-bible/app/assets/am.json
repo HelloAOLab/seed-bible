@@ -161,6 +161,8 @@
   "undoActionSuccessfull": "መመለስ በተሳካ ሁኔታ ተፈጽሟል።",
   "headingAddedToPlaylist": "{{heading}} ወደ ዝርዝር ታክሏል",
   "headingAddedToAnnotations": "{{heading}} ወደ ትርጓሜ ታክሏል።",
+  "playlistNotificationContentAddedToPlaylist": "{{contentLabel}} ወደ ዝርዝር ታክሏል።",
+  "playlistNotificationCountItemsAddedToPlaylist": "{{count}} እቃዎች ወደ ዝርዝር ታክለዋል።",
   "addToPlaylist": "ወደ ዝርዝር ጨምር",
   "addToNew": "ወደ አዲስ ጨምር",
   "itemsAddedToPlaylistSuccessfully": "እቃዎች ወደ ዝርዝር በተሳካ ሁኔታ ታክለዋል።",

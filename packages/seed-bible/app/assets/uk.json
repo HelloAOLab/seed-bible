@@ -161,6 +161,8 @@
   "undoActionSuccessfull": "Дію скасовано успішно.",
   "headingAddedToPlaylist": "{{heading}} додано до списку відтворення",
   "headingAddedToAnnotations": "{{heading}} додано до анотації.",
+  "playlistNotificationContentAddedToPlaylist": "{{contentLabel}} додано до списку відтворення.",
+  "playlistNotificationCountItemsAddedToPlaylist": "Додано {{count}} елементів до списку відтворення.",
   "addToPlaylist": "Додати до списку відтворення",
   "addToNew": "Додати до нового",
   "itemsAddedToPlaylistSuccessfully": "Елементи успішно додано до списку відтворення.",

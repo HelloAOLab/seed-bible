@@ -161,6 +161,8 @@
   "undoActionSuccessfull": "Geri alma işlemi başarılı.",
   "headingAddedToPlaylist": "{{heading}} listeye eklendi",
   "headingAddedToAnnotations": "{{heading}} nota eklendi.",
+  "playlistNotificationContentAddedToPlaylist": "{{contentLabel}} listeye eklendi.",
+  "playlistNotificationCountItemsAddedToPlaylist": "{{count}} öğe listeye eklendi.",
   "addToPlaylist": "Listeye ekle",
   "addToNew": "Yeniye ekle",
   "itemsAddedToPlaylistSuccessfully": "Öğeler başarıyla listeye eklendi.",

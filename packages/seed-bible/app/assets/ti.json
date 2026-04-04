@@ -161,6 +161,8 @@
   "undoActionSuccessfull": "መመለሲ ብዓወት ተፈጺሙ።",
   "headingAddedToPlaylist": "{{heading}} ናብ ዝርዝር ተወሲዱ",
   "headingAddedToAnnotations": "{{heading}} ናብ ምርግጋጽ ተወሲዱ።",
+  "playlistNotificationContentAddedToPlaylist": "{{contentLabel}} ናብ ዝርዝር ተወሲዱ።",
+  "playlistNotificationCountItemsAddedToPlaylist": "{{count}} ነገራት ናብ ዝርዝር ተወሲዱ።",
   "addToPlaylist": "ናብ ዝርዝር ወስኽ",
   "addToNew": "ናብ ሓድሽ ወስኽ",
   "itemsAddedToPlaylistSuccessfully": "እቃታት ናብ ዝርዝር ብዓወት ተወሲዶም።",
