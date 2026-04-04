@@ -8,7 +8,6 @@ const verses = itemList
   .map((ele: any) => ele.additionalInfo.verse || [])
   .sort((a: number, b: number) => a - b);
 const ranges = G.GetVerseSummaryHeading(verses);
-console.log("ranges", ranges);
 const heading = `${itemList[0].content.split(":")[0]}${ranges.length ? `:${ranges.join(", ")}` : ""}`;
 
 const msg = G.AddAnotationUI
