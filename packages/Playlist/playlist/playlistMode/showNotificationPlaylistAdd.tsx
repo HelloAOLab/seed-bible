@@ -24,7 +24,7 @@ const verses = itemList
   .map((ele: any) => ele.additionalInfo.verse)
   .filter((ele: any) => ele)
   .sort((a: number, b: number) => a - b);
-const ranges = G.GetVerseSummaryHeading(verses);
+const ranges = verses.length ? G.GetVerseSummaryHeading(verses) : [];
 const heading = `${itemList[0].content.split(":")[0]}${ranges.length ? `:${ranges.join(", ")}` : ""}`;
 
 let msg = "";
