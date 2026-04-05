@@ -99,6 +99,8 @@ if (G.makingPlaylist || G[`${"default"}creatingPlaylist`]) {
     return os.toast("Invalid Data format!");
 
   idsActive.forEach((id) => {
+    console.log("id", id);
+    console.log("G[`${id}creatingPlaylist`]", G[`${id}creatingPlaylist`]);
     if (G[`${id}creatingPlaylist`] || that.force) {
       thisBot.tryAddDataToPlaylist({
         dataItem,
