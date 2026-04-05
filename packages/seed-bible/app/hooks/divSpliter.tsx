@@ -307,6 +307,7 @@ export const SplitApp = ({
       globalThis.SetPlaylistForcedHeight = 0;
     };
   }, []);
+
   const { activeSpace } = useTabsContext();
   const [panelWidths, setPanelWidths] = useState(
     Array(count).fill(currentContainerWidth / count)
@@ -420,6 +421,12 @@ export const SplitApp = ({
     document.addEventListener("touchend", onEnd);
   };
 
+  useEffect(() => {
+    return () => {
+      setForcedHeightPlaylist(0);
+    };
+  }, [apps]);
+
   if (isOverlap) {
     const overlayApps = apps.slice(1);
     return (
@@ -452,9 +459,15 @@ export const SplitApp = ({
           style={{
             position: "absolute",
             right: 0,
-            top: 0,
+            top: forcedHeightPlaylist ? "auto" : 0,
+            bottom: forcedHeightPlaylist ? 0 : "auto",
             width: globalThis.IsMobileNow() ? "100dvw" : overlapWidth,
-            height: "100%",
+            height:
+              forcedHeightPlaylist === 1
+                ? 0.75 * currentContainerHeight
+                : forcedHeightPlaylist === 2
+                  ? 0.25 * currentContainerHeight
+                  : "100%",
             transform: overlapVisible ? "" : "translateX(100%)",
             transition: "transform 0.3s ease",
             zIndex: 10,
@@ -585,14 +598,7 @@ export const SplitApp = ({
           key={apps[0]?.id}
           style={{
             width: isMobile ? "100%" : leftWidth,
-            height:
-              forcedHeightPlaylist === 2
-                ? "0px"
-                : forcedHeightPlaylist === 1
-                  ? 0.25 * currentContainerHeight
-                  : isMobile
-                    ? topHeight
-                    : "100%",
+            height: "100%",
             overflow: "auto",
             padding: "0px",
             borderRadius: "12px",
@@ -604,7 +610,8 @@ export const SplitApp = ({
         <div
           style={{
             width: isMobile ? "100%" : 4,
-            height: isMobile ? 4 : "100%",
+            // height: isMobile ? 4 : "100%",
+            height: "100%",
             cursor: isMobile ? "row-resize" : "col-resize",
             background: "",
             touchAction: "none",
@@ -630,7 +637,7 @@ export const SplitApp = ({
           key={apps[1]?.id}
           style={{
             flex: 1,
-            height: isMobile ? "auto" : "100%",
+            height: "auto",
             overflow: "auto",
             padding: "0px",
             minWidth: isMobile ? "auto" : "370px",
