@@ -392,4 +392,78 @@ describe("createPanes", () => {
     expect(resizedPane?.width).toBe(detachedPane.width + 50);
     expect(resizedPane?.height).toBe(detachedPane.height + 60);
   });
+
+  it("creates an attached pane with a stable custom ID", async () => {
+    const { panesManager } = await createManagers();
+
+    const result = panesManager.openPane({
+      type: "attached",
+      id: "my-custom-pane",
+      component: () => "Custom ID Pane",
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.id).toBe("my-custom-pane");
+    expect(
+      panesManager.panes.value.find((pane) => pane.id === "my-custom-pane")
+    ).toBeDefined();
+  });
+
+  it("creates a detached pane with a stable custom ID", async () => {
+    const { panesManager } = await createManagers();
+
+    const result = panesManager.openPane({
+      type: "detached",
+      id: "my-detached-pane",
+      component: () => "Detached Custom ID",
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.id).toBe("my-detached-pane");
+    expect(result?.detached).toBe(true);
+  });
+
+  it("reuses an existing pane when its ID is provided", async () => {
+    const { panesManager } = await createManagers();
+
+    panesManager.openPane({
+      type: "attached",
+      id: "reusable-pane",
+      component: () => "First Content",
+    });
+
+    const result = panesManager.openPane({
+      type: "attached",
+      id: "reusable-pane",
+      component: () => "Updated Content",
+    });
+
+    expect(result?.id).toBe("reusable-pane");
+    expect(result?.component?.()).toBe("Updated Content");
+    expect(
+      panesManager.panes.value.filter((pane) => pane.id === "reusable-pane")
+    ).toHaveLength(1);
+  });
+
+  it("does not create a duplicate pane when reusing an ID", async () => {
+    const { panesManager } = await createManagers();
+    const initialPaneCount = panesManager.panes.value.length;
+
+    panesManager.openPane({
+      type: "attached",
+      id: "stable-pane",
+      tabId: "tab-2",
+    });
+
+    const afterFirst = panesManager.panes.value.length;
+
+    panesManager.openPane({
+      type: "attached",
+      id: "stable-pane",
+      tabId: "tab-1",
+    });
+
+    expect(panesManager.panes.value.length).toBe(afterFirst);
+    expect(panesManager.panes.value.length).toBeGreaterThan(initialPaneCount);
+  });
 });

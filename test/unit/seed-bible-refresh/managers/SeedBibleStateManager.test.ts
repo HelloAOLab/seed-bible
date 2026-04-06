@@ -1,5 +1,4 @@
 import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import { registerExtension } from "seed-bible.app.api";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import {
   type WebResponseMap,

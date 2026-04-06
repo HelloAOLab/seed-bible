@@ -84,6 +84,13 @@ export interface PaneOpenOptions extends PaneOpenContentOptions {
   type: "attached" | "detached";
   /** Optional anchor mode when opening as detached pane. */
   detachedAnchor?: Exclude<DetachedPaneAnchor, "floating">;
+  /**
+   * Optional stable pane identifier.
+   * When provided, an existing pane with this ID is reused and updated with the
+   * given content. If no pane with this ID exists, a new pane with this ID is
+   * created.
+   */
+  id?: string;
 }
 
 function createPaneFactory() {
@@ -93,14 +100,15 @@ function createPaneFactory() {
     tab: ReaderTab | null,
     component: (() => ComponentChild) | null = null,
     detached = false,
-    detachedAnchor: DetachedPaneAnchor = "floating"
+    detachedAnchor: DetachedPaneAnchor = "floating",
+    customId?: string
   ): Pane => {
     const paneId = nextPaneId;
     nextPaneId += 1;
     const offset = (paneId - 1) * 24;
 
     return {
-      id: `pane-${paneId}`,
+      id: customId ?? `pane-${paneId}`,
       tab,
       component,
       gridPortal: null,
@@ -642,6 +650,16 @@ export function createPanes(
       return null;
     }
 
+    if (options.id) {
+      const existingPane =
+        panes.value.find((pane) => pane.id === options.id) ?? null;
+      if (existingPane) {
+        return openInPane(existingPane.id, options)
+          ? (panes.value.find((pane) => pane.id === existingPane.id) ?? null)
+          : null;
+      }
+    }
+
     if (parsed.tab) {
       const existingPane =
         panes.value.find((pane) => pane.tab?.id === parsed.tab!.id) ?? null;
@@ -668,7 +686,8 @@ export function createPanes(
         parsed.tab,
         parsed.component,
         true,
-        options.detachedAnchor ?? "floating"
+        options.detachedAnchor ?? "floating",
+        options.id
       );
       const detachedPane = {
         ...nextPane,
@@ -700,7 +719,13 @@ export function createPanes(
       return null;
     }
 
-    const nextPane = createPane(parsed.tab, parsed.component, false);
+    const nextPane = createPane(
+      parsed.tab,
+      parsed.component,
+      false,
+      "floating",
+      options.id
+    );
     const attachedPane = {
       ...nextPane,
       gridPortal: parsed.gridPortal,
