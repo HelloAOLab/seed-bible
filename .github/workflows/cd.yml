@@ -54,7 +54,7 @@ jobs:
             PATTERN_NAME=${BRANCH_NAME:9};
             pnpm pattern publish-seed-bible -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
           else
-            PATTERN_NAME="-branch-${BRANCH_NAME}"
+            PATTERN_NAME="SeedBibleDev-branch-${BRANCH_NAME}"
             PATTERN_NAME=$(echo "$PATTERN_NAME" | sed "s/\//_/g")
             pnpm pattern publish-seed-bible -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
           fi
