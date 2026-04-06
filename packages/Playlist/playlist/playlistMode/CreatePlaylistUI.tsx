@@ -471,6 +471,9 @@ const CreatePlaylistUI = (props: any) => {
 
   useLayoutEffect(() => {
     G[`${id}creatingPlaylist`] = !creatingPlaylist;
+    if (editData?.address) {
+      G.EDIT_ANNOTATION_DATA = true;
+    }
     G.IS_PLAYLIST_ACTIVE = !creatingPlaylist;
     G.SET_SHOW_CHECK && G.SET_SHOW_CHECK(!creatingPlaylist);
     return () => {
