@@ -1,4 +1,6 @@
 const G = globalThis as any;
+if (G.EDIT_ANNOTATION_DATA) return;
+
 if (G[`${"default"}creatingPlaylist`]) {
   let { dataItem, bulkAdd } = that;
 
@@ -21,7 +23,10 @@ if (G[`${"default"}creatingPlaylist`]) {
   idsActive.forEach((id) => {
     if (G[`${id}creatingPlaylist`] || that.force) {
       if (G[`${id}AddDataToPlaylist`]) {
+        G.LastListState = [...G[`${id}currentPlaylist`]];
+
         G[`${id}AddDataToPlaylist`](dataItem, bulkAdd, combineLast);
+        thisBot.showNotificationPlaylistAdd({ items: dataItem });
       } else {
         const oldItems = [...(G[`${id}currentPlaylist`] || [])];
         if (combineLast) oldItems.pop();
@@ -34,7 +39,9 @@ if (G[`${"default"}creatingPlaylist`]) {
           const lastData = oldItems[oldItems.length - 1];
           const isSame = G.objectComparator(dataItem, lastData, ["content"]);
           if (!isSame) {
+            G.LastListState = [...G[`${id}currentPlaylist`]];
             G[`${id}currentPlaylist`].push(dataItem);
+            thisBot.showNotificationPlaylistAdd({ items: dataItem });
           } else {
             // os.toast("Last item repeated!");
           }

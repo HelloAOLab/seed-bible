@@ -343,8 +343,13 @@ const CreatePlaylistUI = (props: any) => {
   const addDataToPlaylist = (
     data: any[],
     isBulk = false,
-    combineLast = false
+    combineLast = false,
+    setDirect = false
   ) => {
+    if (setDirect) {
+      setPlaylist(data);
+      return;
+    }
     if (isBulk) {
       setPlaylist((prev: any[]) => {
         const old = [...prev, ...data];
@@ -466,6 +471,9 @@ const CreatePlaylistUI = (props: any) => {
 
   useLayoutEffect(() => {
     G[`${id}creatingPlaylist`] = !creatingPlaylist;
+    if (editData?.address) {
+      G.EDIT_ANNOTATION_DATA = true;
+    }
     G.IS_PLAYLIST_ACTIVE = !creatingPlaylist;
     G.SET_SHOW_CHECK && G.SET_SHOW_CHECK(!creatingPlaylist);
     return () => {
@@ -1022,7 +1030,8 @@ const CreatePlaylistUI = (props: any) => {
           >
             <Button
               loading={loading}
-              secondary
+              secondaryAlt={dataWarning ? false : true}
+              secondary={dataWarning ? true : false}
               onClick={async () => {
                 setLoading(true);
                 if (dataWarning) {
@@ -1054,7 +1063,8 @@ const CreatePlaylistUI = (props: any) => {
               </Button>
             )}
             <Button
-              secondaryAlt
+              secondaryAlt={dataWarning ? true : false}
+              secondary={dataWarning ? false : true}
               disabled={loading}
               onClick={() => {
                 setDataWarning(false);
@@ -1828,7 +1838,10 @@ const CreatePlaylistUI = (props: any) => {
             <div className="add-playlist-actions">
               <Button
                 onClick={() => {
-                  if (G.RetainDataData) {
+                  if (
+                    G.RetainDataData ||
+                    (G.RetainDataName && G.RetainDataSelectedType === "TEXT")
+                  ) {
                     setDataWarning(true);
                   } else {
                     onClickSave();

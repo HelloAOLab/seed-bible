@@ -934,7 +934,7 @@ export function getPastYearTimeSpan() {
  */
 export function getCurrentYearTimeSpan() {
   const now = new Date();
-  const startOfDay = Date.UTC(now.getUTCFullYear(), 1, 1) / 1000;
+  const startOfDay = Date.UTC(now.getUTCFullYear(), 0, 1) / 1000;
   const endOfDay =
     Date.UTC(
       now.getUTCFullYear(),

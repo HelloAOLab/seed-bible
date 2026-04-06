@@ -2,7 +2,8 @@ const G = globalThis as any;
 const { Input, Modal, Button, ButtonsCover } = G.Components;
 
 const ConfirmationModal = (props: any) => {
-  const { loading, title, para, children, onConfirm, onClose } = props;
+  const { loading, title, para, children, onConfirm, onClose, colorSwitch } =
+    props;
 
   return (
     <Modal title={title} showIcon={false} onClose={() => onClose()}>
@@ -13,14 +14,16 @@ const ConfirmationModal = (props: any) => {
       <ButtonsCover style={{ gap: "1rem", marginTop: "1rem" }}>
         <Button
           style={{ width: "calc(50% - 0.5rem)", margin: "0" }}
-          secondaryAlt
+          secondaryAlt={colorSwitch ? false : true}
+          secondary={colorSwitch ? true : false}
           onClick={() => onClose()}
         >
           {t("cancel")}
         </Button>
         <Button
           style={{ width: "calc(50% - 0.5rem)", margin: "0" }}
-          secondary
+          secondary={colorSwitch ? false : true}
+          secondaryAlt={colorSwitch ? true : false}
           loading={loading}
           onClick={async () => {
             await onConfirm();
