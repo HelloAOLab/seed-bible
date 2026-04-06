@@ -355,12 +355,10 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
                   {item.toggle !== undefined && (
                     <div
                       style={{
-                        width: "36px",
+                        width: "42px",
                         height: "20px",
                         borderRadius: "10px",
-                        backgroundColor: item.toggle
-                          ? "var(--secondaryColor)"
-                          : "#555",
+                        backgroundColor: item.toggle ? "#555" : "#555",
                         position: "relative",
                         transition: "background-color 0.2s",
                       }}
