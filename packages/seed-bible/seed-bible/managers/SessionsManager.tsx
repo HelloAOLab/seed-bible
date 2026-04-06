@@ -519,6 +519,20 @@ async function createBibleReadingSession(
       return;
     }
 
+    if (
+      options.value.allowedNavigators &&
+      options.value.allowedNavigators.length > 0
+    ) {
+      if (
+        loginManager.userId.value &&
+        !options.value.allowedNavigators.includes(loginManager.userId.value)
+      ) {
+        return;
+      } else if (!options.value.allowedNavigators.includes(localConnectionId)) {
+        return;
+      }
+    }
+
     const nextSessionData = getSessionDataSnapshot(readingState);
 
     if (

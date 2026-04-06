@@ -234,6 +234,7 @@ describe("SessionsManager", () => {
   let mockDataManager: Record<string, never>;
   let mockLoginManager: {
     getUserProfile: jest.Mock;
+    userId: ReturnType<typeof signal<string | null>>;
   };
   let mockHighlightsManager: {
     getChapterHighlights: jest.Mock;
@@ -269,6 +270,7 @@ describe("SessionsManager", () => {
       getUserProfile: jest.fn(async (userId: string) => ({
         name: `Profile ${userId}`,
       })),
+      userId: signal<string | null>(null),
     };
     mockHighlightsManager = {
       getChapterHighlights: jest
@@ -435,6 +437,65 @@ describe("SessionsManager", () => {
     });
   });
 
+  it("does not sync reading state changes when the current user is not an allowed navigator", async () => {
+    (globalThis as any).configBot = {
+      id: "conn-self",
+    };
+    mockLoginManager.userId.value = "user-blocked";
+
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockOptionsMap.setEmitOnSet(true);
+
+    session.updateOptions({
+      allowedNavigators: ["user-allowed", "conn-self"],
+    });
+
+    mockMap.set.mockClear();
+    mockDocument.transact.mockClear();
+
+    session.readingState.translationId.value = "NIV";
+    session.readingState.bookId.value = "EXO";
+    session.readingState.chapterNumber.value = 8;
+
+    expect(mockMap.set).not.toHaveBeenCalled();
+    expect(mockDocument.transact).not.toHaveBeenCalled();
+  });
+
+  it("does not sync reading state changes when the current connection is not an allowed navigator", async () => {
+    (globalThis as any).configBot = {
+      id: "conn-blocked",
+    };
+
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockOptionsMap.setEmitOnSet(true);
+
+    session.updateOptions({
+      allowedNavigators: ["conn-allowed"],
+    });
+
+    mockMap.set.mockClear();
+    mockDocument.transact.mockClear();
+
+    session.readingState.translationId.value = "NIV";
+    session.readingState.bookId.value = "EXO";
+    session.readingState.chapterNumber.value = 8;
+
+    expect(mockMap.set).not.toHaveBeenCalled();
+    expect(mockDocument.transact).not.toHaveBeenCalled();
+  });
+
   it("syncs local decorations to the shared decorations map", async () => {
     (globalThis as any).configBot = {
       id: "conn-self",
@@ -446,6 +507,8 @@ describe("SessionsManager", () => {
       mockHighlightsManager as any
     );
     const session = await manager.joinSession("group-abc");
+
+    mockOptionsMap.setEmitOnSet(true);
 
     session.readingState.decorateVerses(
       "BSB",
