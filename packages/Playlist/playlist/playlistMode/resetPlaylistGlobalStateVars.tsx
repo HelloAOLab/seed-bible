@@ -8,6 +8,7 @@ G.CustomIconRestorePlaylist = null;
 G.SelectedIconRestorePlaylist = null;
 G.DescriptionRestorePlaylist = "";
 G.OpenModalEditName = false;
+G.EDIT_ANNOTATION_DATA = false;
 G.EditAttachmentItem = null;
 G.StopAttachLinkRetainData = true;
 G.EditRichText = null;
