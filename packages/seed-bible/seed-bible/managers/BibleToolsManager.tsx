@@ -8,6 +8,7 @@ import type { TabsManager } from "seed-bible.managers.TabsManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import { sortBy } from "es-toolkit";
 import { highlightContainsVerse } from "seed-bible.managers.HighlightsManager";
+import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -59,6 +60,10 @@ export interface WindowContext {
 export interface BibleToolContext {
   /** Active reading state for current reader surface. */
   readingState: BibleReadingState;
+  /**
+   * The current shared bible reading session, if any.
+   */
+  sharedSession: BibleReadingSession | null;
   /** Bible selector state for opening navigation overlays. */
   selectorState: BibleSelectorState;
   /** Tabs manager for tab-level actions when needed by tools. */

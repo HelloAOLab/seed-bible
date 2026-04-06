@@ -389,6 +389,7 @@ export function PaneLayout(props: PaneLayoutProps) {
               <BelowReaderToolbar
                 toolsManager={toolsManager}
                 readingState={pane.tab.readingState}
+                sharedSession={pane.tab.sharedSession}
                 selectorState={selectorState}
                 tabsManager={tabsManager}
                 panesManager={panesManager}

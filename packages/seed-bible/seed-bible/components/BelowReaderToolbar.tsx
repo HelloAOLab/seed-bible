@@ -7,10 +7,12 @@ import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManage
 import type { TabsManager } from "seed-bible.managers.TabsManager";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
+import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
 
 interface BelowReaderToolbarProps {
   toolsManager: ToolsManager;
   readingState: BibleReadingState;
+  sharedSession: BibleReadingSession | null;
   selectorState: BibleSelectorState;
   tabsManager: TabsManager;
   panesManager: PanesManager;
@@ -22,6 +24,7 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
   const {
     toolsManager,
     readingState,
+    sharedSession,
     selectorState,
     tabsManager,
     panesManager,
@@ -30,6 +33,7 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
   } = props;
   const tools = toolsManager.getBelowReaderTools({
     readingState,
+    sharedSession,
     selectorState,
     tabs: tabsManager,
     panesManager,

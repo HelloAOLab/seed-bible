@@ -18,6 +18,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const readingState = useComputed(
     () => selectedTab.value?.readingState ?? null
   );
+  const sessionState = useComputed(
+    () => selectedTab.value?.sharedSession ?? null
+  );
 
   if (!readingState.value) {
     return null;
@@ -47,6 +50,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const tools = useComputed(() =>
     toolsManager.getToolbarTools({
       readingState: readingState.value!,
+      sharedSession: sessionState.value,
       selectorState: selector,
       tabs: tabs,
       panesManager: panes,
@@ -61,6 +65,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const verseToolbarTools = useComputed(() =>
     toolsManager.getVerseToolbarTools({
       readingState: readingState.value!,
+      sharedSession: sessionState.value,
       selectorState: selector,
       tabs: tabs,
       panesManager: panes,

@@ -27,6 +27,7 @@ function createContext(): BibleToolContext {
       loadPreviousChapter: jest.fn(),
       loadNextChapter: jest.fn(),
     } as any,
+    sharedSession: null,
     selectorState: {
       setOpen: jest.fn(),
     } as any,
