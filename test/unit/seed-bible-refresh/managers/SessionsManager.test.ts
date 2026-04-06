@@ -256,7 +256,9 @@ describe("SessionsManager", () => {
 
     expect(mockDocument.getMap).toHaveBeenCalledWith("options");
     expect(mockOptionsMap.set).toHaveBeenCalledWith("allowedNavigators", null);
-    expect(session.options).toBe(mockOptionsMap);
+    expect(session.options.value).toEqual({
+      allowedNavigators: null,
+    });
   });
 
   it("joinSession(id) loads and returns a session with the given ID", async () => {
@@ -289,7 +291,9 @@ describe("SessionsManager", () => {
       "allowedNavigators",
       null
     );
-    expect(session.options).toBe(mockOptionsMap);
+    expect(session.options.value).toEqual({
+      allowedNavigators: null,
+    });
   });
 
   it("joinSession(id) preserves existing options from the options map", async () => {
@@ -312,11 +316,60 @@ describe("SessionsManager", () => {
 
     const session = await manager.joinSession("group-abc");
 
-    expect(session.options.get("allowedNavigators")).toEqual([
+    expect(session.options.value).toEqual({
+      allowedNavigators: ["user-1", "conn-2"],
+    });
+    expect(mockOptionsMap.set).not.toHaveBeenCalled();
+  });
+
+  it("updates the options signal when the shared options map changes", async () => {
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockOptionsMap.get.mockImplementation((key: string) => {
+      if (key === "allowedNavigators") {
+        return ["user-1", "conn-2"];
+      }
+
+      return null;
+    });
+
+    mockOptionsMap.emitChange();
+
+    await waitFor(
+      () => session.options.value.allowedNavigators?.[0] === "user-1"
+    );
+
+    expect(session.options.value).toEqual({
+      allowedNavigators: ["user-1", "conn-2"],
+    });
+  });
+
+  it("updateOptions(newOptions) writes options to the shared options map", async () => {
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockOptionsMap.setEmitOnSet(true);
+
+    session.updateOptions({
+      allowedNavigators: ["user-1", "conn-2"],
+    });
+
+    expect(mockOptionsMap.set).toHaveBeenCalledWith("allowedNavigators", [
       "user-1",
       "conn-2",
     ]);
-    expect(mockOptionsMap.set).not.toHaveBeenCalled();
+    expect(session.options.value).toEqual({
+      allowedNavigators: ["user-1", "conn-2"],
+    });
   });
 
   it("loads existing reading state from the shared document", async () => {

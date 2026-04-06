@@ -69,6 +69,45 @@ function getSessionDataFromMap(
   };
 }
 
+function toStringArrayOrNull(value: unknown): string[] | null {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  const stringValues = value.filter((item) => typeof item === "string");
+  return stringValues.length === value.length ? stringValues : null;
+}
+
+function getSessionOptionsFromMap(
+  optionsMap: SharedMap<SessionOptionValue>
+): SessionOptions {
+  return {
+    allowedNavigators: toStringArrayOrNull(optionsMap.get("allowedNavigators")),
+  };
+}
+
+function stringArraysMatch(
+  left: string[] | null,
+  right: string[] | null
+): boolean {
+  if (left === right) {
+    return true;
+  }
+
+  if (!left || !right || left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((value, index) => value === right[index]);
+}
+
+function sessionOptionsMatch(
+  left: SessionOptions,
+  right: SessionOptions
+): boolean {
+  return stringArraysMatch(left.allowedNavigators, right.allowedNavigators);
+}
+
 function sessionDataMatches(left: SessionData, right: SessionData): boolean {
   return (
     left.translationId === right.translationId &&
@@ -117,7 +156,8 @@ function canLoadSessionData(sessionData: SessionData): sessionData is {
 export interface BibleReadingSession {
   id: string;
   document: SharedDocument;
-  options: SharedMap<SessionOptionValue>;
+  options: ReadonlySignal<SessionOptions>;
+  updateOptions: (newOptions: Partial<SessionOptions>) => void;
   readingState: BibleReadingState;
   connectedUsers: ReadonlySignal<ConnectedSessionUser[]>;
   dispose: () => void;
@@ -171,16 +211,19 @@ async function createBibleReadingSession(
   const document = await os.getSharedDocument(null, id, "session_data");
   const stateMap =
     document.getMap<SessionData[keyof SessionData]>("reading_state");
-  const options = document.getMap<SessionOptionValue>("options");
+  const optionsMap = document.getMap<SessionOptionValue>("options");
+  const options = signal<SessionOptions>(DEFAULT_SESSION_OPTIONS);
   const connectedUsers = signal<ConnectedSessionUser[]>([]);
   const connectedClients = new Map<string, SessionConnectionInfo>();
   const profileCache = new Map<string, UserProfile>();
 
   if (defaultOptions) {
     document.transact(() => {
-      options.set("allowedNavigators", defaultOptions.allowedNavigators);
+      optionsMap.set("allowedNavigators", defaultOptions.allowedNavigators);
     });
   }
+
+  options.value = getSessionOptionsFromMap(optionsMap);
 
   let applyingRemoteState = false;
   let lastLocallyWrittenState: SessionData | null = null;
@@ -290,6 +333,13 @@ async function createBibleReadingSession(
     void syncReadingStateFromSessionData(nextSessionData, version);
   });
 
+  const optionsSubscription = optionsMap.changes.subscribe(() => {
+    const nextOptions = getSessionOptionsFromMap(optionsMap);
+    if (!sessionOptionsMatch(options.value, nextOptions)) {
+      options.value = nextOptions;
+    }
+  });
+
   const remoteClientsSubscription = document.remoteClients.subscribe(
     (event) => {
       if (event.type === "client_connected") {
@@ -343,8 +393,34 @@ async function createBibleReadingSession(
     });
   });
 
+  const updateOptions = (newOptions: Partial<SessionOptions>) => {
+    const currentOptions = getSessionOptionsFromMap(optionsMap);
+    const nextOptions: SessionOptions = {
+      allowedNavigators:
+        typeof newOptions.allowedNavigators === "undefined"
+          ? currentOptions.allowedNavigators
+          : newOptions.allowedNavigators,
+    };
+
+    if (sessionOptionsMatch(currentOptions, nextOptions)) {
+      return;
+    }
+
+    document.transact(() => {
+      if (
+        !stringArraysMatch(
+          currentOptions.allowedNavigators,
+          nextOptions.allowedNavigators
+        )
+      ) {
+        optionsMap.set("allowedNavigators", nextOptions.allowedNavigators);
+      }
+    });
+  };
+
   const dispose = () => {
     mapSubscription.unsubscribe();
+    optionsSubscription.unsubscribe();
     remoteClientsSubscription.unsubscribe();
     stopSync();
     document.unsubscribe();
@@ -354,6 +430,7 @@ async function createBibleReadingSession(
     id,
     document,
     options,
+    updateOptions,
     readingState,
     connectedUsers,
     dispose,
