@@ -344,7 +344,7 @@ export function Toolbar() {
                     ))}
                   </div>
                 )}
-                <button
+                {/* <button
                   className="mobile-navbar-btn more-btn"
                   title={activeMoreApp ? "Close" : "More"}
                   aria-label={activeMoreApp ? "Close" : "More"}
@@ -375,7 +375,7 @@ export function Toolbar() {
                       {activeMoreApp ? "Close" : "More"}
                     </span>
                   </div>
-                </button>
+                </button> */}
               </div>
             ) : (
               <div className="more-btn-wrapper">
