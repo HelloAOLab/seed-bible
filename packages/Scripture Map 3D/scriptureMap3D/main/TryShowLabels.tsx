@@ -1,7 +1,20 @@
-const {layoutData} = that;
+import type { LayoutBibleData } from "bibleVizUtils.models.entities.LayoutBibleData";
 
-if(layoutData.areLabelsEnabled) return;
+const {
+  layoutData,
+}: {
+  layoutData: LayoutBibleData;
+} = that;
 
-layoutData.areLabelsEnabled = true;
-thisBot.ShowLabels({layoutData});
-layoutData.staticLayoutPieces.settingsButtons.find((button) => {return button.tags.buttonType === BibleVizUtils.Data.tags.LayoutButtonType.ShowLabelsToggle})?.Activate?.();
+if (layoutData.areLabelsEnabled) return;
+
+layoutData.enableLabels();
+thisBot.ShowLabels({ layoutData });
+layoutData.staticLayoutPieces.settingsButtons
+  ?.find((button) => {
+    return (
+      button.tags.buttonType ===
+      BibleVizUtils.Data.tags.LayoutButtonType.ShowLabelsToggle
+    );
+  })
+  ?.Activate?.();

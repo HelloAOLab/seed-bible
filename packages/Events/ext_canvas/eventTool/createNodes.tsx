@@ -211,10 +211,10 @@ const createSoureBot = async () => {
     let label = uidData[i][sourceBotDataStructure[controlBot.tags.type].name];
     if (uidData[0].type === "verse") {
       let osisRef = uidData[i].osisRef.split(".");
-      // console.log(`https://vmfnri.helloao.org/api/BSB/${uidData[0].book[0].bookName}/${osisRef[1]}.json`)
+      // console.log(`https://vmfnri.helloao.org/api/AAB/${uidData[0].book[0].bookName}/${osisRef[1]}.json`)
       const bsbtranslation = await web
         .get(
-          `https://vmfnri.helloao.org/api/BSB/${uidData[0].book[0].bookName}/${osisRef[1]}.json`
+          `https://vmfnri.helloao.org/api/AAB/${uidData[0].book[0].bookName}/${osisRef[1]}.json`
         )
         .then((data) => {
           return data.data;

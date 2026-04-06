@@ -1,4 +1,10 @@
-const { keys, type } = that;
+const {
+  keys,
+  type,
+}: {
+  keys: string[];
+  type: string;
+} = that;
 
 const bots = keys
   .map((key) => {

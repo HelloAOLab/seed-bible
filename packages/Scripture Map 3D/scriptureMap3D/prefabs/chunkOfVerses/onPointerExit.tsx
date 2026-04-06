@@ -1,1 +1,6 @@
-shout("OnLayoutChunkOfVersesInteracted", {chunk: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.HoverEnd});
+import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+
+shout("OnLayoutChunkOfVersesInteracted", {
+  chunk: thisBot,
+  typeOfInteraction: CanvasInteractions.HoverEnd,
+});

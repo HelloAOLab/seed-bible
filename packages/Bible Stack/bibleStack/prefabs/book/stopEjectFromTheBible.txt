@@ -1,3 +1,5 @@
+import { HexToRgb } from "bibleVizUtils.functions.index";
+
 return
 
 // that: {callingFrom: String [onPointerUp, onDrag]}
@@ -20,6 +22,6 @@ setTagMask(thisBot, "ejectTransitionPercentage", 0);
 // }
 // else
 // {
-    // thisBot.lerpColor({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), durationInSeconds: animationDuration});
-    ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), durationInSeconds: animationDuration, bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
+    // thisBot.lerpColor({startingColor: HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: animationDuration});
+    ColorLerper.LerpTag({startingColor: HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: animationDuration, bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
 // }

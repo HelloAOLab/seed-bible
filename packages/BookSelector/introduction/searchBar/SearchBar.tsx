@@ -13,6 +13,7 @@ import type {
   BookInterface,
   TranslationInterface,
 } from "introduction.searchBar.Interfaces";
+
 const {
   useState,
   useEffect,
@@ -29,68 +30,68 @@ const {
 const PsalmsData: BookInterface[] = [
   {
     id: "PSA",
-    translationId: "BSB",
+    translationId: "AAB",
     name: "Psalms",
     commonName: "1 Psalms",
     title: "Psalms",
     order: 19,
     numberOfChapters: 41,
     firstChapterNumber: 1,
-    firstChapterApiLink: "/api/BSB/PSA/1.json",
+    firstChapterApiLink: "/api/AAB/PSA/1.json",
     lastChapterNumber: 41,
-    lastChapterApiLink: "/api/BSB/PSA/41.json",
+    lastChapterApiLink: "/api/AAB/PSA/41.json",
   },
   {
     id: "PSA",
-    translationId: "BSB",
+    translationId: "AAB",
     name: "Psalms",
     commonName: "2 Psalms",
     title: "Psalms",
     order: 19,
     numberOfChapters: 31,
     firstChapterNumber: 42,
-    firstChapterApiLink: "/api/BSB/PSA/42.json",
+    firstChapterApiLink: "/api/AAB/PSA/42.json",
     lastChapterNumber: 72,
-    lastChapterApiLink: "/api/BSB/PSA/72.json",
+    lastChapterApiLink: "/api/AAB/PSA/72.json",
   },
   {
     id: "PSA",
-    translationId: "BSB",
+    translationId: "AAB",
     name: "Psalms",
     commonName: "3 Psalms",
     title: "Psalms",
     order: 19,
     numberOfChapters: 17,
     firstChapterNumber: 73,
-    firstChapterApiLink: "/api/BSB/PSA/73.json",
+    firstChapterApiLink: "/api/AAB/PSA/73.json",
     lastChapterNumber: 89,
-    lastChapterApiLink: "/api/BSB/PSA/89.json",
+    lastChapterApiLink: "/api/AAB/PSA/89.json",
   },
   {
     id: "PSA",
-    translationId: "BSB",
+    translationId: "AAB",
     name: "Psalms",
     commonName: "4 Psalms",
     title: "Psalms",
     order: 19,
     numberOfChapters: 16,
     firstChapterNumber: 90,
-    firstChapterApiLink: "/api/BSB/PSA/90.json",
+    firstChapterApiLink: "/api/AAB/PSA/90.json",
     lastChapterNumber: 106,
-    lastChapterApiLink: "/api/BSB/PSA/106.json",
+    lastChapterApiLink: "/api/AAB/PSA/106.json",
   },
   {
     id: "PSA",
-    translationId: "BSB",
+    translationId: "AAB",
     name: "Psalms",
     commonName: "5 Psalms",
     title: "Psalms",
     order: 19,
     numberOfChapters: 20,
     firstChapterNumber: 107,
-    firstChapterApiLink: "/api/BSB/PSA/107.json",
+    firstChapterApiLink: "/api/AAB/PSA/107.json",
     lastChapterNumber: 150,
-    lastChapterApiLink: "/api/BSB/PSA/150.json",
+    lastChapterApiLink: "/api/AAB/PSA/150.json",
   },
 ];
 
@@ -149,8 +150,8 @@ const SearchBar = (props: { openSidebar: boolean }) => {
   const [selectedTranslation, setSelectedTranslation] = useState(
     thePage.masks?.selectedTranslation || {
       languageEnglishName: "English",
-      id: "BSB",
-      shortName: "BSB",
+      id: "AAB",
+      shortName: "AAB",
     }
   );
   const [showCustomTranslation, setShowCustomTranslation] = useState(false);
@@ -317,7 +318,6 @@ const SearchBar = (props: { openSidebar: boolean }) => {
           const translationValue = {
             ...trValue.value,
           };
-          console.log(apiTranslations, "apiTranslations");
           if (
             apiTranslations[
               translationValue.languageEnglishName.toLowerCase()
@@ -595,6 +595,11 @@ const SearchBar = (props: { openSidebar: boolean }) => {
       }
     }
     setInputValue("");
+    if (globalThis?.ActiveMoreApp) {
+      (globalThis as any).RemoveApplicationByLabel(ActiveMoreApp);
+      (globalThis as any).makingApp = null;
+      globalThis?.SetActiveMoreApp(null);
+    }
   };
 
   const focusOnBook = useCallback(
@@ -1015,6 +1020,7 @@ const SearchBar = (props: { openSidebar: boolean }) => {
             windowSize={windowSize}
             systemTranslation={systemTranslation}
             query={query}
+            setQuery={setQuery}
           />
         )}
         {selectingTranslation && (
@@ -1055,6 +1061,7 @@ const SideBarBooks = (props: {
   windowSize: number;
   systemTranslation: { [key: string]: string };
   query: string;
+  setQuery: (s: string) => void;
 }) => {
   const {
     booksData,
@@ -1068,6 +1075,7 @@ const SideBarBooks = (props: {
     windowSize,
     systemTranslation,
     query,
+    setQuery,
   } = props;
   const [lastBookClicked, setLastBookClicked] = useState(-1);
   const [bookData, setBookData] = useState<BookInterface | null>(null);
@@ -1165,24 +1173,52 @@ const SideBarBooks = (props: {
     return bookName;
   }, []);
 
+  const scrollIntoView = useCallback((bookId: string) => {
+    const bookTabElement = document.getElementById(`booktab-${bookId}`);
+    if (bookTabElement) {
+      bookTabElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      if (!bookTabElement.classList.contains("sidebar-selected-itm")) {
+        bookTabElement.click();
+      }
+    }
+  }, []);
+
   const selectBookSelectorBook = useCallback(
-    (bookId) => {
+    (bookId: string) => {
       if (!bookId) {
         setBookData(null);
         setLastBookClicked(-1);
         setChT(0);
         return;
       }
-      const book = booksData.find((b) => b.id === bookId);
+      const book =
+        booksData.find((b: BookInterface) => b.id === bookId) ||
+        thePage.masks?.booksData?.find((b: BookInterface) => b.id === bookId) ||
+        null;
       if (book) {
-        handleClick({
-          index: booksData.indexOf(book),
-          book,
-          cht: book.order > 39 ? 1 : 0,
-        });
+        const bookTabElement = document.getElementById(`booktab-${book.id}`);
+        if (bookTabElement) {
+          scrollIntoView(bookId);
+        }
+        {
+          if (book.order > 39 && selectedTestament === 0) {
+            setSelectedTestament(1);
+            setTimeout(() => {
+              scrollIntoView(bookId);
+            }, 100);
+          } else if (book.order <= 39 && selectedTestament === 1) {
+            setSelectedTestament(0);
+            setTimeout(() => {
+              scrollIntoView(bookId);
+            }, 100);
+          }
+        }
       }
     },
-    [booksData, handleClick]
+    [booksData, selectedTestament]
   );
   useEffect(() => {
     const sortedBooks = sortBooksByTestament(booksData);
@@ -1250,6 +1286,7 @@ const SideBarBooks = (props: {
                         onClick={() => {
                           handleClick({ index, book, cht: 0 });
                         }}
+                        id={`booktab-${book.id}`}
                       >
                         <span
                           style={{
@@ -1292,6 +1329,7 @@ const SideBarBooks = (props: {
                           dontOpen={dontOpen}
                           setBookData={setBookData}
                           selectedTranslation={selectedTranslation}
+                          setQuery={setQuery}
                         />
                       </div>
                     )}
@@ -1321,6 +1359,7 @@ const SideBarBooks = (props: {
                         onClick={() => {
                           handleClick({ index, book, cht: 1 });
                         }}
+                        id={`booktab-${book.id}`}
                       >
                         <span
                           style={{
@@ -1368,6 +1407,7 @@ const SideBarBooks = (props: {
                           dontOpen={dontOpen}
                           setBookData={setBookData}
                           selectedTranslation={selectedTranslation}
+                          setQuery={setQuery}
                         />
                       </div>
                     )}
@@ -1403,6 +1443,7 @@ const SideBarBooks = (props: {
                         onClick={() => {
                           handleClick({ index, book });
                         }}
+                        id={`booktab-${book.id}`}
                       >
                         <span
                           style={{
@@ -1444,6 +1485,7 @@ const SideBarBooks = (props: {
                           dontOpen={dontOpen}
                           setBookData={setBookData}
                           selectedTranslation={selectedTranslation}
+                          setQuery={setQuery}
                         />
                       </div>
                     )}
@@ -1479,6 +1521,7 @@ const SideBarBooks = (props: {
                         onClick={() => {
                           handleClick({ index, book });
                         }}
+                        id={`booktab-${book.id}`}
                       >
                         <span
                           style={{
@@ -1520,6 +1563,7 @@ const SideBarBooks = (props: {
                           dontOpen={dontOpen}
                           setBookData={setBookData}
                           selectedTranslation={selectedTranslation}
+                          setQuery={setQuery}
                         />
                       </div>
                     )}
@@ -1556,6 +1600,7 @@ const SideBarBooks = (props: {
                         onClick={() => {
                           handleClick({ index, book });
                         }}
+                        id={`booktab-${book.id}`}
                       >
                         <span
                           style={{
@@ -1597,6 +1642,7 @@ const SideBarBooks = (props: {
                           dontOpen={dontOpen}
                           setBookData={setBookData}
                           selectedTranslation={selectedTranslation}
+                          setQuery={setQuery}
                         />
                       </div>
                     )}
@@ -1636,6 +1682,7 @@ const SideBarChapters = (props: {
   setBookData: (book: BookInterface) => void;
   selectedTranslation: TranslationInterface;
   onlineUsers: any;
+  setQuery: (s: string) => void;
 }) => {
   const {
     bookData,
@@ -1644,23 +1691,31 @@ const SideBarChapters = (props: {
     setBookData,
     selectedTranslation,
     onlineUsers,
+    setQuery,
   } = props;
   const [highLightedButtonsID, setHighlightedButtonID] = useState<
     Record<number, boolean>
   >({});
 
-  const handleChapterClick = (props: {
+  const handleChapterClick = async (props: {
     bookName: string;
     chapterNo: number;
     bookData: BookInterface;
     [key: string]: any;
   }) => {
+    if (globalThis?.ActiveMoreApp) {
+      (globalThis as any).RemoveApplicationByLabel(ActiveMoreApp);
+      (globalThis as any).makingApp = null;
+      globalThis?.SetActiveMoreApp(null);
+      await os.sleep(100);
+    }
     try {
       if (globalThis.IsMobileNow()) {
         setOpenOnMobile(false);
       }
     } catch (e) {}
     const { bookName, chapterNo, bookData, ...data } = props;
+    setQuery("");
     if (globalThis?.findNameRank) {
       const booksDetails = globalThis.findNameRank(bookName);
       const dataItem = {

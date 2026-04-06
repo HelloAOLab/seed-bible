@@ -34,7 +34,8 @@ import {
 // ═══════════════════════════════════════════════════════════════════════════════
 // SETTINGS CONTEXT - Shared state for all setting components
 // ═══════════════════════════════════════════════════════════════════════════════
-const SettingsContext = createContext(null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SettingsContext = createContext<any>(null);
 
 export const useSettingsContext = () => {
   const ctx = useContext(SettingsContext);
@@ -70,7 +71,7 @@ const SettingItemWrapper = ({
               e.stopPropagation();
               toggleVisibility(fullKey);
             }}
-            title={isHidden ? "Show item" : "Hide item"}
+            title={isHidden ? t("showItem") : t("hideItem")}
           >
             <span className="material-symbols-outlined">
               {isHidden ? "visibility" : "visibility_off"}
@@ -400,12 +401,12 @@ const BookOrderSetting = () => {
     {
       value: "tanak",
       title: "TaNak order",
-      desc: "The original, unified, three-part ordering of the Hebrew Bible",
+      desc: t("tanakOrderDesc"),
     },
     {
       value: "traditional",
       title: "Traditional order",
-      desc: "The ordering found in most modern Christian Bibles",
+      desc: t("traditionalOrderDesc"),
     },
   ];
 
@@ -708,9 +709,7 @@ export const SpaceDescriptionSetting = ({ itemKey = "spaceDescription" }) => {
     startEditingLabel,
     finishEditingLabel,
   } = useSettingsContext();
-  const [description, setDescription] = useState(
-    "Settings for your space. Customise toolbar, theme and add extensions."
-  );
+  const [description, setDescription] = useState(t("settingsForYourSpace"));
   const isHidden = visibility[itemKey] === false;
 
   if (isHidden && !editMode) return null;
@@ -878,7 +877,7 @@ export const AccountSetting = ({
                 marginBottom: "2px",
               }}
             >
-              Anonymous
+              {t("anonymous")}
             </div>
             <div style={{ fontSize: "12px", color: "#9ca3af" }}>
               ID:{configBot.id.slice(0, 12)}
@@ -914,7 +913,7 @@ export const AccountSetting = ({
             }}
             className="create-profile-btn"
           >
-            {userData ? "Open account settings" : " + Create profile"}
+            {userData ? t("openAccountSettings") : t("createProfileBtn")}
           </button>
         </div>
       )}
@@ -989,7 +988,7 @@ export const NotificationsSetting = ({
 // ---------- Keep Screen Awake ----------
 export const KeepScreenAwakeSetting = ({
   itemKey = "keepScreenAwake",
-  labelKey = "keepScreenAwake",
+  labelKey = "keepDeviceAwaken",
 }) => {
   const { t, editMode, labels, visibility } = useSettingsContext();
   const label = labels[itemKey] || t(labelKey);
@@ -1070,11 +1069,14 @@ export const UITextSizeSetting = ({
   const applyZoom = (zoom) => {
     document
       .querySelectorAll(
-        ".settings-sidebar, .themeSettings-container, .profileSection"
+        ".settings-content, .themeSettings-container, .profileSection"
       )
       .forEach((el) => {
         (el as HTMLElement).style.zoom = String(zoom);
       });
+    document.querySelectorAll(".settings-sidebar").forEach((el) => {
+      (el as HTMLElement).style.width = `${Math.round(280 * zoom)}px`;
+    });
   };
 
   // Restore saved size on mount
@@ -1276,7 +1278,10 @@ export const SubscriptionsSetting = ({
             className="softText"
             style={{ marginBottom: "8px", textAlign: "center" }}
           >
-            {`You have ${subscribedUsers.length} subscription${subscribedUsers.length > 1 ? "s" : ""}`}
+            {t("youHaveNSubscriptions").replace(
+              "{{count}}",
+              String(subscribedUsers.length)
+            )}
           </div>
           {subscribedUsers.map((user) => (
             <div
@@ -1308,7 +1313,7 @@ export const SubscriptionsSetting = ({
                 )}
                 <div>
                   <div style={{ fontWeight: "500", fontSize: "14px" }}>
-                    {user.name || "Unknown User"}
+                    {user.name || t("unknownUser")}
                   </div>
                   <div className="softText" style={{ fontSize: "11px" }}>
                     {user.id.slice(0, 16)}...
@@ -1343,7 +1348,7 @@ export const SubscriptionsSetting = ({
         </div>
       ) : (
         <div style={{ justifyContent: "center" }} className="activeAccount">
-          <div className="softText">You haven't subscribed to anyone yet.</div>
+          <div className="softText">{t("noSubscriptionsYet")}</div>
         </div>
       )}
 
@@ -1356,17 +1361,17 @@ export const SubscriptionsSetting = ({
             onClick={() => setSubscribe(true)}
             className="create-profile-btn"
           >
-            + Add Subscription
+            {t("addSubscription")}
           </button>
         ) : (
           <div style={{ width: "100%" }}>
             <div style={{ marginBottom: "8px" }} className="blackText">
-              Enter User ID
+              {t("enterUserID")}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <input
                 style={{ height: "32px", flex: 1 }}
-                placeholder="Enter user ID..."
+                placeholder={t("enterUserId")}
                 className="selectInput"
                 value={searchFor}
                 disabled={subscribing}
@@ -1712,6 +1717,23 @@ const SettingsSidebar = ({ config }) => {
   useEffect(() => {
     setEditMode(ReSeed);
   }, [ReSeed]);
+
+  // Apply saved UI zoom on mount so it works regardless of which tab is active
+  useEffect(() => {
+    const savedZoom = globalThis.changes?.uiTextSize || 1;
+    if (savedZoom !== 1) {
+      document
+        .querySelectorAll(
+          ".settings-content, .themeSettings-container, .profileSection"
+        )
+        .forEach((el) => {
+          (el as HTMLElement).style.zoom = String(savedZoom);
+        });
+      document.querySelectorAll(".settings-sidebar").forEach((el) => {
+        (el as HTMLElement).style.width = `${Math.round(280 * savedZoom)}px`;
+      });
+    }
+  }, []);
 
   // Initialize visibility from config
   useEffect(() => {

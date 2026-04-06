@@ -24,9 +24,9 @@ G.tt && clearTimeout(G.tt);
 os.removeBotListener(thisBot, "onKeyDown", () => {});
 os.removeBotListener(thisBot, "onKeyUp", () => {});
 G.SetTab = null;
-G.isRecording = false;
+// G.isRecording = false;
 G.SelectedItemIDForAttachments = null;
-G.Playlist.RemoveScreenRecordingControls();
+// G.Playlist.RemoveScreenRecordingControls();
 (async () => {
   try {
     await experiment.endRecording();

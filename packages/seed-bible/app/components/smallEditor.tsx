@@ -619,7 +619,7 @@ export function MiniTextEditor({
             <button
               className="sre-overflow-btn"
               onClick={() => setShowOverflow((v) => !v)}
-              title="More"
+              title={t("more")}
             >
               <span className="material-symbols-outlined">more_vert</span>
             </button>
@@ -663,12 +663,18 @@ export function MiniTextEditor({
                 <div key={`dr-${id}`} className="sre-tune-row">
                   <div className="sre-tune-id">{id}</div>
                   <div className="sre-tune-arrows">
-                    <button onClick={() => moveDraft(idx, -1)} title="Up">
+                    <button
+                      onClick={() => moveDraft(idx, -1)}
+                      title={t("moveUp")}
+                    >
                       <span className="material-symbols-outlined">
                         keyboard_arrow_up
                       </span>
                     </button>
-                    <button onClick={() => moveDraft(idx, 1)} title="Down">
+                    <button
+                      onClick={() => moveDraft(idx, 1)}
+                      title={t("moveDown")}
+                    >
                       <span className="material-symbols-outlined">
                         keyboard_arrow_down
                       </span>
@@ -865,7 +871,7 @@ export function MiniTextEditor({
     );
 
     const paragraphDrop = (
-      <select className="sre-select" title="Paragraph">
+      <select className="sre-select" title={t("paragraph")}>
         <option
           onClick={(e) => {
             e.preventDefault();
@@ -929,18 +935,18 @@ export function MiniTextEditor({
               setLineSpacing(v);
               Cmds.setLineHeight(v);
             }}
-            title="Line spacing"
+            title={t("lineSpacing")}
           />
         </div>
       ),
       "text-color": (
-        <div className="sre-inline" title="Text color">
+        <div className="sre-inline" title={t("textColor")}>
           <span className="material-symbols-outlined">title</span>
           {colorInput(textColor, (c) => Cmds.setTextColor(c))}
         </div>
       ),
       "bg-color": (
-        <div className="sre-inline" title="Highlight color">
+        <div className="sre-inline" title={t("highlightColor")}>
           <span className="material-symbols-outlined">border_color</span>
           {colorInput(bgColor, (c) => Cmds.setHighlightColor(c))}
         </div>
@@ -949,7 +955,7 @@ export function MiniTextEditor({
       "font-family": (
         <select
           className="sre-select"
-          title="Font family"
+          title={t("fontFamily")}
           onChange={(e) => Cmds.setFontFamily(e.target.value)}
         >
           {[
@@ -969,7 +975,7 @@ export function MiniTextEditor({
       "font-style": (
         <select
           className="sre-select"
-          title="Font style"
+          title={t("fontStyle")}
           onChange={(e) => {
             const v = e.target.value;
             if (v === "bold") Cmds.bold();
@@ -977,14 +983,14 @@ export function MiniTextEditor({
             else if (v === "light") Cmds.setFontFamily(""); // simple; devs can expand
           }}
         >
-          <option value="normal">Normal</option>
-          <option value="bold">Bold</option>
-          <option value="italic">Italic</option>
-          <option value="light">Light</option>
+          <option value="normal">{t("normal")}</option>
+          <option value="bold">{t("bold")}</option>
+          <option value="italic">{t("italic")}</option>
+          <option value="light">{t("light")}</option>
         </select>
       ),
       "font-size": (
-        <div className="sre-inline" title="Font size">
+        <div className="sre-inline" title={t("fontSize")}>
           <span className="material-symbols-outlined">format_size</span>
           <input
             className="sre-number"
@@ -1006,7 +1012,7 @@ export function MiniTextEditor({
       clear: iconBtn("Clear", "format_clear", Cmds.clear),
       print: iconBtn("Print", "print", Cmds.print),
       "margins-y": (
-        <div className="sre-inline" title="Vertical padding">
+        <div className="sre-inline" title={t("verticalMargin")}>
           <span className="material-symbols-outlined">height</span>
           <input
             className="sre-number"
@@ -1022,7 +1028,7 @@ export function MiniTextEditor({
         </div>
       ),
       "margins-x": (
-        <div className="sre-inline" title="Horizontal padding">
+        <div className="sre-inline" title={t("horizontalMargin")}>
           <span className="material-symbols-outlined">width</span>
           <input
             className="sre-number"
@@ -1049,7 +1055,7 @@ export function MiniTextEditor({
             setDraftOrder(orderedIds().filter((id) => id !== "tune"));
             setShowTuning(true);
           }}
-          title="Customize toolbar"
+          title={t("customizeToolbar")}
         >
           <span className="material-symbols-outlined">tune</span>
         </button>

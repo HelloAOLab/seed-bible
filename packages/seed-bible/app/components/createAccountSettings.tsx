@@ -64,12 +64,12 @@ const CreateAccountSettings = () => {
   async function uploadImage() {
     const authBot = await os.requestAuthBot();
     if (!authBot?.id) {
-      os.toast("Please sign in first");
+      os.toast(t("pleaseSignInFirst"));
       return;
     }
     const files = await os.showUploadFiles();
     if (files.length === 0) {
-      os.toast("no file uploaded");
+      os.toast(t("noFileUploaded2"));
       return;
     }
     const file = files[0];
@@ -104,7 +104,7 @@ const CreateAccountSettings = () => {
   async function saveProfileData() {
     const authBot = await os.requestAuthBot();
     if (!authBot?.id) {
-      os.toast("Please sign in first.");
+      os.toast(t("pleaseSignInFirst"));
       return;
     }
     setIsSignedIn(true);
@@ -123,9 +123,9 @@ const CreateAccountSettings = () => {
 
     if (result?.success) {
       setSideBarMode("settings");
-      os.toast("Profile saved successfully!");
+      os.toast(t("profileSavedSuccessfully"));
     } else {
-      os.toast("Error saving profile: " + result?.errorMessage);
+      os.toast(t("errorSavingProfile") + result?.errorMessage);
     }
   }
 
@@ -133,7 +133,7 @@ const CreateAccountSettings = () => {
     <div className="createAccount-settings">
       {/* Header */}
       <div className="profile-header">
-        <h2 className="profile-title">Profile</h2>
+        <h2 className="profile-title">{t("profile")}</h2>
         <div
           className="profile-close-btn"
           onClick={() => {
@@ -153,12 +153,12 @@ const CreateAccountSettings = () => {
           <MenuIcon name="close" />
         </div>
       </div>
-      <p className="subtitle">Manage your profile information here</p>
+      <p className="subtitle">{t("manageProfileInfo")}</p>
 
       {!isSignedIn && (
         <div className="sign-in-prompt">
           <div className="sign-in-prompt-text">
-            Please sign in to create or edit your profile
+            {t("signInToCreateProfile")}
           </div>
           <button
             onClick={async () => {
@@ -184,12 +184,12 @@ const CreateAccountSettings = () => {
                   init();
                 }
               } catch (e) {
-                os.toast("Sign in failed: " + (e as Error).message);
+                os.toast(t("signInFailed") + (e as Error).message);
               }
             }}
             className="save-btn"
           >
-            Sign In
+            {t("signIn")}
           </button>
         </div>
       )}
@@ -200,13 +200,13 @@ const CreateAccountSettings = () => {
           <div className="profile-photo-section">
             <div className="profile-photo">{img && <img src={img} />}</div>
             <button className="add-photo-btn" onClick={() => uploadImage()}>
-              Update picture
+              {t("updatePicture")}
             </button>
           </div>
 
           {/* Profile name */}
           <div className="form-group">
-            <label className="form-label">Profile name</label>
+            <label className="form-label">{t("profileName")}</label>
             <input
               className="form-input"
               style={{
@@ -214,19 +214,20 @@ const CreateAccountSettings = () => {
                   ? colors[1].pageTextColor + "20"
                   : "#1A1A1A20",
               }}
-              placeholder="e.g Craig family"
+              placeholder={t("profileNamePlaceholder")}
               value={profileName}
               onChange={(e) =>
                 setProfileName((e.target as HTMLInputElement).value)
               }
             />
-            <p className="helper-text">You can change this later</p>
+            <p className="helper-text">{t("youCanChangeLater")}</p>
           </div>
 
           {/* Description */}
           <div className="form-group">
             <label className="form-label">
-              Description <span className="optional-label">(Optional)</span>
+              {t("description")}{" "}
+              <span className="optional-label">({t("optional")})</span>
             </label>
             <textarea
               className="form-input profile-textarea"
@@ -235,7 +236,7 @@ const CreateAccountSettings = () => {
                   ? colors[1].pageTextColor + "20"
                   : "#1A1A1A20",
               }}
-              placeholder="Enter your profile description..."
+              placeholder={t("profileDescPlaceholder")}
               value={description}
               onChange={(e) =>
                 setDescription((e.target as HTMLTextAreaElement).value)
@@ -246,7 +247,8 @@ const CreateAccountSettings = () => {
           {/* Location */}
           <div className="form-group">
             <label className="form-label">
-              Location <span className="optional-label">(Optional)</span>
+              {t("locationLabel")}{" "}
+              <span className="optional-label">({t("optional")})</span>
             </label>
             <input
               className="form-input"
@@ -265,7 +267,7 @@ const CreateAccountSettings = () => {
 
           {/* UID */}
           <div className="uid-section">
-            <div className="uid-label">Your UID will be:</div>
+            <div className="uid-label">{t("yourUidWillBe")}</div>
             <div
               className="uid-display"
               style={{
@@ -279,7 +281,7 @@ const CreateAccountSettings = () => {
                 className="copy-icon"
                 onClick={() => {
                   os.setClipboard(uid);
-                  os.toast("UID copied!");
+                  os.toast(t("uidCopied"));
                 }}
               >
                 <MenuIcon
@@ -292,7 +294,7 @@ const CreateAccountSettings = () => {
 
           {/* Save button */}
           <button className="save-btn" onClick={saveProfileData}>
-            Save changes
+            {t("saveChanges")}
           </button>
 
           {/* Divider */}
@@ -312,11 +314,11 @@ const CreateAccountSettings = () => {
               setDescription("");
               setLocation("");
               setImg(undefined);
-              os.toast("Signed out successfully");
+              os.toast(t("signedOutSuccessfully"));
             }}
           >
             <MenuIcon style={{ color: "#B90303 !important" }} name="logout" />
-            <span>Sign out</span>
+            <span>{t("signOut")}</span>
           </button>
         </>
       )}

@@ -1132,7 +1132,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .chips-tag-container .chip-tag {
-  background-color: transparent;
+  background-color: var(--primaryColor);
   color: var(--pageTextColor);
   border: 1px solid var(--pageTextColor);
   height: 32px;
@@ -1507,4 +1507,8 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 
 span.material-symbols-outlined.rotate-90 {
   transform: rotate(90deg);
+}
+
+.annotation-audio {
+  min-height: 50px !important;
 }

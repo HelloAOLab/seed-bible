@@ -1,13 +1,23 @@
 /**
-    * Clears the specified unhighlight delay.
-    * @param {Object} that - Object that contains important data for the function
-    * @param {UnhighlightDelayInfo} that.unhighlightDelayInfo - The object containing the info of the unhighlight delay
-    * @param {Number} that.unhighlightDelayInfoIndex - The index of the instance of UnhighlightDelayInfo in thisBot.vars.unhighlightDelaysInfo
-    * @example
-    * thisBot.ClearUnhighlightDelay({unhighlightDelayInfo: someUnhighlightDelayInfo, unhighlightDelayInfoIndex: someUnhighlightDelayInfoIndex});
-*/
+ * Clears the specified unhighlight delay.
+ * @param {Object} that - Object that contains important data for the function
+ * @param {UnhighlightDelayInfo} that.unhighlightDelayInfo - The object containing the info of the unhighlight delay
+ * @example
+ * thisBot.ClearUnhighlightDelay({unhighlightDelayInfo: someUnhighlightDelayInfo});
+ */
 
-const {unhighlightDelayInfo, unhighlightDelayInfoIndex} = that;
+import type { UnhighlightDelayInfo } from "bibleVizUtils.models.canvas";
+import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+
+const {
+  unhighlightDelayInfo,
+}: {
+  unhighlightDelayInfo: UnhighlightDelayInfo;
+} = that;
+
+type UnhighlightDelaysInfo = Map<Bot["id"], UnhighlightDelayInfo>;
 
 clearTimeout(unhighlightDelayInfo.timeoutId);
-thisBot.vars.unhighlightDelaysInfo.splice(unhighlightDelayInfoIndex, 1);
+(thisBot.vars.unhighlightDelaysInfo as UnhighlightDelaysInfo).delete(
+  unhighlightDelayInfo.piece.id
+);

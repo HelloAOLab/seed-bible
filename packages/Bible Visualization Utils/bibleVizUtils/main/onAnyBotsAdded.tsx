@@ -1,3 +1,5 @@
+import { sessionService } from "bibleVizUtils.services.index";
+
 const { bots } = that;
 
 if (
@@ -7,9 +9,7 @@ if (
   })
 ) {
   try {
-    const { handleUserLoggedInDebouncer } =
-      await import("bibleVizUtils.services.HandleUserLoggedInDebouncer");
-    handleUserLoggedInDebouncer.execute({ authBot });
+    sessionService.tryEmitUserLoggedInEvent(authBot);
   } catch (error) {
     console.error(error);
   }

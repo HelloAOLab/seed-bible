@@ -99,6 +99,7 @@ function SubComponent(props: any) {
     setTextType,
     showChangeOptions = true,
   } = props;
+  const [isWarningModalShow, setIsWarningModalShow] = useState(false);
   const playlists = useMemo(() => G[`${"default"}playlists`] || [], []);
   const playlistListOptions = useMemo(
     () => [
@@ -107,6 +108,47 @@ function SubComponent(props: any) {
     ],
     []
   );
+
+  const recordingSwtichCallback = (callback: () => void) => {
+    if (G.isRecording) {
+      return ShowNotification({
+        message: "Cannot Switch while recording!",
+        severity: "error",
+      });
+    }
+    if (G.hasRecording) {
+      setIsWarningModalShow(true);
+      G.AfterConfirmCallBackRecording = callback;
+      return;
+    }
+    callback();
+  };
+
+  if (isWarningModalShow) {
+    return (
+      <div>
+        <h2 style={{ fontSize: "1rem" }}>{t("thisWillLoseYourRecording")}</h2>
+        <p>{t("switchWillLoseYourRecording")}</p>
+        <ButtonsCover>
+          <Button secondaryAlt onClick={() => setIsWarningModalShow(false)}>
+            {t("no")}
+          </Button>
+          <Button
+            secondary
+            onClick={() => {
+              setIsWarningModalShow(false);
+              G.AfterConfirmCallBackRecording &&
+                G.AfterConfirmCallBackRecording();
+              G.AfterConfirmCallBackRecording = null;
+            }}
+            variant="black"
+          >
+            {t("confirm")}
+          </Button>
+        </ButtonsCover>
+      </div>
+    );
+  }
 
   switch (type) {
     case "TAG":
@@ -235,13 +277,10 @@ function SubComponent(props: any) {
           <div className="switch-tabs">
             <div
               onClick={() => {
-                if (G.isRecording) {
-                  return ShowNotification({
-                    message: "Cannot Switch while recording!",
-                    severity: "error",
-                  });
-                }
-                setRecordingType("audio");
+                recordingSwtichCallback(() => {
+                  setRecordingType("audio");
+                  setName("");
+                });
               }}
               className={`${recordingType === "audio" ? "active" : ""}`}
             >
@@ -254,13 +293,10 @@ function SubComponent(props: any) {
             </div>
             <div
               onClick={() => {
-                if (G.isRecording) {
-                  return ShowNotification({
-                    message: "Cannot Switch while recording!",
-                    severity: "error",
-                  });
-                }
-                setRecordingType("video");
+                recordingSwtichCallback(() => {
+                  setRecordingType("video");
+                  setName("");
+                });
               }}
               className={`${recordingType === "video" ? "active" : ""}`}
             >
@@ -273,14 +309,27 @@ function SubComponent(props: any) {
             </div>
           </div>
           {recordingType === "audio" ? (
-            <RecordingUI data={data} setData={setData} />
+            <RecordingUI
+              name={name}
+              setName={setName}
+              data={data}
+              setData={setData}
+            />
           ) : recordingType === "video" ? (
-            <VideoRecordUI key="audio" data={data} setData={setData} />
+            <VideoRecordUI
+              key="audio"
+              name={name}
+              setName={setName}
+              data={data}
+              setData={setData}
+            />
           ) : (
             <VideoRecordUI
               key="screen"
               data={data}
               isScreen={true}
+              name={name}
+              setName={setName}
               setData={setData}
             />
           )}
@@ -570,6 +619,83 @@ const AttachLink = (props: any) => {
     isDragOver: false,
   });
 
+  const filteredTags = useMemo(() => {
+    return tags.filter(
+      (ele) =>
+        (isloggedIN || !WITHOUTLOGIN_TAGS[ele]) &&
+        (ele === "PLAYLIST"
+          ? isPlaylist
+          : ele === "TAG"
+            ? isTags
+            : ele === "DATE"
+              ? isDate
+              : ele === "RECORDING"
+                ? canRecord
+                : true)
+    );
+  }, [isloggedIN, isPlaylist, isTags, isDate, canRecord]);
+
+  const onRetainData = () => {
+    G.RetainData = true;
+    G.RetainDataName = name;
+    G.RetainDataData = data;
+    G.RetainDataLink = link;
+    G.RetainDataMediaType = mediaType;
+    G.RetainDataTextType = textType;
+    G.RetainDataRecordingType = recordingType;
+    G.RetainDataSelectedType = selectedType;
+    G.RetainDataLinkState = linkState;
+  };
+
+  const onReleaseData = () => {
+    G.RetainData = false;
+    G.RetainDataName = null;
+    G.RetainDataData = null;
+    G.RetainDataLink = null;
+    G.RetainDataMediaType = null;
+    G.RetainDataTextType = null;
+    G.RetainDataRecordingType = null;
+    G.RetainDataSelectedType = null;
+    G.RetainDataLinkState = null;
+  };
+
+  const onRestoreData = () => {
+    if (G.RetainData && !data && !name && !G.StopAttachLinkRetainData) {
+      const isSelectedTypePresent = filteredTags.find(
+        (ele: any) => ele === G.RetainDataSelectedType
+      );
+      if (!isSelectedTypePresent) {
+        return;
+      }
+      setName(G.RetainDataName);
+      setData(G.RetainDataData);
+      setLink(G.RetainDataLink);
+      setType(G.RetainDataMediaType);
+      setTextType(G.RetainDataTextType);
+      setRecordingType(G.RetainDataRecordingType);
+      setSelectedType(G.RetainDataSelectedType);
+      setLinkState(G.RetainDataLinkState);
+      onReleaseData();
+    }
+    G.StopAttachLinkRetainData = false;
+  };
+
+  useLayoutEffect(() => {
+    onRestoreData();
+  }, []);
+
+  useLayoutEffect(() => {
+    G.OnRetainData = onRetainData;
+    G.OnReleaseData = onReleaseData;
+    G.OnRestoreData = onRestoreData;
+    return () => {
+      onRetainData();
+      G.OnRetainData = null;
+      G.OnReleaseData = null;
+      G.OnRestoreData = null;
+    };
+  }, [onRetainData, onReleaseData, onRestoreData]);
+
   const onAddFiles = async (files: any) => {
     setLoading(true);
     let failCount = 0;
@@ -754,8 +880,23 @@ const AttachLink = (props: any) => {
     return false;
   }, [name, selectedType, data]);
 
-  const onClickSend = async () => {
-    if (!name.trim()) {
+  const onClickSend = async (isForce = true) => {
+    let finalName = name;
+
+    if (isForce) {
+      finalName = getCurrentTime();
+      switch (selectedType) {
+        case "RECORDING":
+          if (recordingType === "video") {
+            finalName += "-video-recording";
+          } else {
+            finalName += "-audio-recording";
+          }
+          break;
+      }
+    }
+
+    if (!finalName.trim()) {
       if (
         !(
           selectedType === "SCRIPTURE" &&
@@ -773,7 +914,7 @@ const AttachLink = (props: any) => {
 
     if (selectedType === "TAG") {
       if (onAddTags) {
-        onAddTags([name]);
+        onAddTags([finalName]);
         setName("");
       }
       return;
@@ -794,7 +935,7 @@ const AttachLink = (props: any) => {
       let finalData = data;
 
       const fileSave: any = await os.recordFile(G.RECORD_STOREKEY, finalData, {
-        name: name,
+        name: finalName,
         mimeType: finalData?.type || "audio/webm",
       });
 
@@ -808,8 +949,10 @@ const AttachLink = (props: any) => {
           severity: "error",
         });
       }
-
-      return attachLink(name, url, {
+      onReleaseData();
+      G.isRecording = false;
+      G.hasRecording = false;
+      return attachLink(finalName, url, {
         isValid: true,
         type: recordingType === "audio" ? RECORDING_VALUE : "video-recording",
       });
@@ -831,6 +974,9 @@ const AttachLink = (props: any) => {
         setSelectedType("TEXT");
         setLink("");
         massAdd(data);
+        onReleaseData();
+        G.isRecording = false;
+        G.hasRecording = false;
         onClose();
         return;
       }
@@ -843,6 +989,9 @@ const AttachLink = (props: any) => {
           severity: "error",
         });
       const playlistList: any = playlists.find((ele: any) => ele.id === data);
+      onReleaseData();
+      G.isRecording = false;
+      G.hasRecording = false;
       attachLink(playlistList.name, playlistList.list, {
         isValid: true,
         type: "playlist",
@@ -862,8 +1011,11 @@ const AttachLink = (props: any) => {
         setName("");
         setSelectedType("TEXT");
         setLink("");
+        onReleaseData();
+        G.isRecording = false;
+        G.hasRecording = false;
         attachLink(
-          name || link,
+          finalName || link,
           link,
           linkState.type ? linkState : { isValid: true, type: mediaType }
         );
@@ -877,12 +1029,17 @@ const AttachLink = (props: any) => {
           allItems.push(...file.data);
         });
       }
-      if (name.trim()) {
-        allItems.push(...thisBot.getSuggestedListItems({ searchText: name }));
+      if (finalName.trim()) {
+        allItems.push(
+          ...thisBot.getSuggestedListItems({ searchText: finalName })
+        );
       }
       setName("");
       massAdd(allItems);
       setData(null);
+      onReleaseData();
+      G.isRecording = false;
+      G.hasRecording = false;
       return;
     }
 
@@ -895,7 +1052,10 @@ const AttachLink = (props: any) => {
       if (G[`${isTempID}ClearEditorContent`])
         G[`${isTempID}ClearEditorContent`]();
       G.RawName = "";
-      return attachLink(name, link, {
+      onReleaseData();
+      G.isRecording = false;
+      G.hasRecording = false;
+      return attachLink(finalName, link, {
         isValid: true,
         subType: textType,
         type: "text",
@@ -916,6 +1076,8 @@ const AttachLink = (props: any) => {
       G.FireEditContent = onClickSend;
     }
   }, [onClickSend]);
+
+  G.OnClickSend = onClickSend;
 
   return (
     <>
@@ -1001,70 +1163,75 @@ const AttachLink = (props: any) => {
           ))}
         {!editMode && (
           <div className="select_item_container">
-            {tags
-              .filter(
-                (ele) =>
-                  (isloggedIN || !WITHOUTLOGIN_TAGS[ele]) &&
-                  (ele === "PLAYLIST"
-                    ? isPlaylist
-                    : ele === "TAG"
-                      ? isTags
-                      : ele === "DATE"
-                        ? isDate
-                        : ele === "RECORDING"
-                          ? canRecord
-                          : true)
-              )
-              .map((ele: any) => (
-                <div
-                  key={ele.id}
-                  onClick={() => {
-                    if (editMode)
-                      return ShowNotification({
-                        message: t("cannotChangeWhileBeingInEditMode"),
+            {filteredTags.map((ele: any) => (
+              <div
+                key={ele.id}
+                onClick={() => {
+                  if (data) {
+                    if (!G.AllowSwitchBetweenTypes) {
+                      G.AllowSwitchBetweenTypes = true;
+                      ShowNotification({
+                        message: t(
+                          "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich"
+                        ),
                         severity: "error",
                       });
-                    if (ele === "DATE" && !!onDateClick) {
-                      console.log(datePickerRef.current, "datePickerRef");
-                      datePickerRef.current.click();
-                      // return onDateClick();
                       return;
                     }
-                    setName("");
-                    setSelectedType(ele);
-                    setData(null);
-                  }}
-                  style={{ position: "relative" }}
-                  className={`${
-                    ele === selectedType ? "active" : ""
-                  } select_item_type`}
-                >
-                  {ele === "DATE" && (
-                    <input
-                      ref={datePickerRef}
-                      type="date"
-                      onChange={(e: any) => {
-                        onDateClick(e?.target?.value || "");
-                      }}
-                      className="hidden-date"
-                      placeholder="MM/DD/YYYY"
-                    />
-                  )}
-                  <img
-                    style={{ height: "16px", width: "16px" }}
-                    src={
-                      imageAssets[`${ele}${ele === selectedType ? "_2" : "_1"}`]
-                    }
+                  }
+                  if (editMode)
+                    return ShowNotification({
+                      message: t("cannotChangeWhileBeingInEditMode"),
+                      severity: "error",
+                    });
+                  if (ele === "DATE" && !!onDateClick) {
+                    datePickerRef.current.click();
+                    // return onDateClick();
+                    return;
+                  }
+                  setName("");
+                  setSelectedType(ele);
+                  setData(null);
+                }}
+                style={{ position: "relative" }}
+                className={`${
+                  ele === selectedType ? "active" : ""
+                } select_item_type`}
+              >
+                {ele === "DATE" && (
+                  <input
+                    ref={datePickerRef}
+                    type="date"
+                    onChange={(e: any) => {
+                      onDateClick(e?.target?.value || "");
+                    }}
+                    className="hidden-date"
+                    placeholder="MM/DD/YYYY"
                   />
-                </div>
-              ))}
+                )}
+                <img
+                  style={{ height: "16px", width: "16px" }}
+                  src={
+                    imageAssets[`${ele}${ele === selectedType ? "_2" : "_1"}`]
+                  }
+                />
+              </div>
+            ))}
             <div
               className="align-center"
               style={{ gap: "0.25rem", marginLeft: "auto" }}
             >
               {canClose && (
                 <div
-                  onClick={onClose}
+                  onClick={() => {
+                    onReleaseData();
+                    setName("");
+                    G.RetainDataData = null;
+                    G.RetainDataName = null;
+                    G.isRecording = false;
+                    G.hasRecording = false;
+                    onClose();
+                  }}
                   style={{ marginLeft: "auto" }}
                   className={`active  select_item_type`}
                 >

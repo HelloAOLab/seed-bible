@@ -12,18 +12,30 @@
  * thisBot.UnhighlightChapter({ parentData: someData, chapterData: someChapterData });
  */
 
-const {parentData} = that;
+import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 
-const previousHighlightedChapterData = parentData.piece.vars.previousHighlightedChapterData;
+const {
+  parentData,
+}: {
+  parentData: StackBookData | StackSectionBookData;
+} = that;
 
-if( previousHighlightedChapterData &&
-    previousHighlightedChapterData.isActive &&
-    !previousHighlightedChapterData.chapterTransformer.masks.isUnhighlighting         &&
-    previousHighlightedChapterData.chapterTransformer.tags.isInUse                    &&
-    (previousHighlightedChapterData.chapterTransformer.masks.isHighlighted || previousHighlightedChapterData.chapterTransformer.masks.isHighlighting) &&
-    !previousHighlightedChapterData.chapterTransformer.masks.isSelecting              &&
-    !previousHighlightedChapterData.chapterTransformer.masks.isSelected)
-{
-    previousHighlightedChapterData.chapterTransformer.Unhighlight({chapterData: previousHighlightedChapterData});
-    parentData.piece.vars.previousHighlightedChapterData = null;
+const previousHighlightedChapterData =
+  parentData.piece?.vars.previousHighlightedChapterData;
+
+if (
+  previousHighlightedChapterData &&
+  previousHighlightedChapterData.isActive &&
+  !previousHighlightedChapterData.chapterTransformer.masks.isUnhighlighting &&
+  previousHighlightedChapterData.chapterTransformer.tags.isInUse &&
+  (previousHighlightedChapterData.chapterTransformer.masks.isHighlighted ||
+    previousHighlightedChapterData.chapterTransformer.masks.isHighlighting) &&
+  !previousHighlightedChapterData.chapterTransformer.masks.isSelecting &&
+  !previousHighlightedChapterData.chapterTransformer.masks.isSelected
+) {
+  previousHighlightedChapterData.chapterTransformer.Unhighlight({
+    chapterData: previousHighlightedChapterData,
+  });
+  parentData.piece.vars.previousHighlightedChapterData = null;
 }

@@ -1,7 +1,12 @@
 const { useEffect, useState, useRef } = os.appHooks;
 import { getStyleOf } from "app.styles.styler";
 import { getSettingsPreset } from "app.components.types";
-import { MenuIcon, ThemeIcon } from "app.components.icons";
+import {
+  MenuIcon,
+  ThemeIcon,
+  MarginIcon,
+  MobileSettingsIcon,
+} from "app.components.icons";
 import { useTabsContext } from "app.hooks.tabs";
 import { useSideBarContext } from "app.hooks.sideBar";
 import { useBibleContext } from "app.hooks.bibleVariables";
@@ -5608,10 +5613,12 @@ const FONT_OPTIONS = [
 const LINE_HEIGHTS = [1.5, 2, 2.5];
 
 const UI_TEXT_SIZES = [
-  { label: "S", value: 0.85 },
-  { label: "M", value: 1 },
-  { label: "L", value: 1.15 },
-  { label: "XL", value: 1.3 },
+  { label: "A", value: 0.8 },
+  { label: "A", value: 0.9 },
+  { label: "A", value: 1 },
+  { label: "A", value: 1.1 },
+  { label: "A", value: 1.2 },
+  { label: "A", value: 1.3 },
 ];
 
 const FONT_SIZES = [
@@ -5806,6 +5813,7 @@ const SettingsUI = () => {
   const [selectedFont, setSelectedFont] = useState(0);
   const [selectedFontSize, setSelectedFontSize] = useState(3);
   const [showFontDropdown, setShowFontDropdown] = useState(false);
+  const [showHeadingFontDropdown, setShowHeadingFontDropdown] = useState(false);
   const [showFontSizeMenu, setShowFontSizeMenu] = useState(false);
   const [uiSizeIndex, setUiSizeIndex] = useState(() => {
     const saved = globalThis.changes?.uiTextSize || 1;
@@ -5818,11 +5826,14 @@ const SettingsUI = () => {
   const applyUiZoom = (zoom) => {
     document
       .querySelectorAll(
-        ".settings-sidebar, .themeSettings-container, .profileSection"
+        ".settings-content, .themeSettings-container, .profileSection"
       )
       .forEach((el) => {
         (el as HTMLElement).style.zoom = String(zoom);
       });
+    document.querySelectorAll(".settings-sidebar").forEach((el) => {
+      (el as HTMLElement).style.width = `${Math.round(280 * zoom)}px`;
+    });
   };
 
   useEffect(() => {
@@ -5915,32 +5926,47 @@ const SettingsUI = () => {
   // ————————————————————————————————————————————————————————————
   // Apply Ready Theme
   // ————————————————————————————————————————————————————————————
-  const applyReadyTheme = (themeColors) => {
+  const applyReadyTheme = (newColors) => {
+    if (!newColors) return;
     setChagesSaved(false);
 
     // Apply toolbar background side-effect if needed
-    if (themeColors.toolbarBackground) {
-      globalThis.SetToolbarBackground?.(themeColors.toolbarBackground);
+    if (newColors.toolbarBackground) {
+      globalThis.SetToolbarBackground?.(newColors.toolbarBackground);
     }
 
     let filterMode;
-    if (themeColors["iconColor"]) {
-      filterMode = getColorFilterCached(themeColors["iconColor"]);
+    try {
+      if (newColors["iconColor"]) {
+        filterMode = getColorFilterCached(newColors["iconColor"]);
+      }
+    } catch (e) {
+      os.log("filter computation failed, using theme default", e);
     }
-    os.log("computed filter for icon color filterMode", filterMode);
+
+    const appliedColors = filterMode
+      ? { ...newColors, "filter-mode": filterMode }
+      : newColors;
+
+    // Immediately apply CSS variables to DOM for instant visual feedback
+    const root = document.documentElement;
+    Object.entries(appliedColors).forEach(([key, value]) => {
+      if (typeof value === "string") {
+        root.style.setProperty(`--${key}`, value);
+      }
+    });
+
     // Update local map
     setColorsMap((prev) => ({
       ...prev,
-      [activeSpace]: filterMode
-        ? { ...themeColors, "filter-mode": filterMode }
-        : themeColors,
+      [activeSpace]: appliedColors,
     }));
 
     // Update sidebar theme state (immediate apply)
-    setThemeColors((prev) => ({ ...prev, [activeSpace]: themeColors }));
+    setThemeColors((prev) => ({ ...prev, [activeSpace]: appliedColors }));
 
     // Persist to the space
-    updateSpace(activeSpace, { themeColors });
+    updateSpace(activeSpace, { themeColors: appliedColors });
   };
 
   // When switching spaces without saving, restore the last committed theme for that space
@@ -5954,6 +5980,14 @@ const SettingsUI = () => {
   // }, [activeSpace]);
 
   // Removed: this effect was overwriting the user's saved theme on every mount
+
+  const [selectedHeadingFont, setSelectedHeadingFont] = useState(0);
+  const [scriptureMargin, setScriptureMargin] = useState(() => {
+    const saved = currentSpace?.settings?.text?.data?.verse?.marginHorizontal;
+    if (saved) return String(saved);
+    const isMobile = window.innerWidth <= 768;
+    return isMobile ? "5" : "27";
+  });
 
   const [textConfig, setTextConfig] = useState(() => {
     // Try to load from saved space settings
@@ -5982,12 +6016,25 @@ const SettingsUI = () => {
         if (sizeIdx !== -1) setSelectedFontSize(sizeIdx);
       }
 
-      // Sync font
+      // Sync body font
       const savedFont = savedConfig?.verse?.font;
       if (savedFont) {
         const fontIdx = FONT_OPTIONS.findIndex((f) => f.value === savedFont);
         if (fontIdx !== -1) setSelectedFont(fontIdx);
       }
+
+      // Sync heading font
+      const savedHeadingFont = savedConfig?.heading?.font;
+      if (savedHeadingFont) {
+        const hfIdx = FONT_OPTIONS.findIndex(
+          (f) => f.value === savedHeadingFont
+        );
+        if (hfIdx !== -1) setSelectedHeadingFont(hfIdx);
+      }
+
+      // Sync scripture margin
+      const savedMargin = savedConfig?.verse?.marginHorizontal;
+      if (savedMargin) setScriptureMargin(String(savedMargin));
 
       // Sync line height
       const savedLineHeight = savedConfig?.verse?.lineHeight;
@@ -5999,10 +6046,12 @@ const SettingsUI = () => {
   }, [activeSpace, currentSpace]);
 
   const handleThemeSelect = (index) => {
+    const themeColors = presetThemes[index]?.colors;
+    if (!themeColors) return;
     setSelectedTheme(index);
-    applyReadyTheme(presetThemes[index]?.colors);
+    applyReadyTheme(themeColors);
     setChagesSaved(true);
-    globalThis.CurrentColors = presetThemes[index]?.colors || colors;
+    globalThis.CurrentColors = themeColors;
   };
 
   const applyVerseFont = (fontFamily) => {
@@ -6015,6 +6064,58 @@ const SettingsUI = () => {
 
     updateSpace(activeSpace, updateObj);
   };
+
+  const applyHeadingFont = (fontFamily: string) => {
+    const updateObj = buildTextConfigUpdate(
+      "heading",
+      fontFamily,
+      textConfig?.heading?.fontSize || textConfig?.heading?.size || "16",
+      textConfig
+    );
+    updateSpace(activeSpace, updateObj);
+    // Also apply to bookchapter and chapter sections
+    const updateObj2 = buildTextConfigUpdate(
+      "bookchapter",
+      fontFamily,
+      textConfig?.bookchapter?.fontSize ||
+        textConfig?.bookchapter?.size ||
+        "16",
+      textConfig
+    );
+    updateSpace(activeSpace, updateObj2);
+    const updateObj3 = buildTextConfigUpdate(
+      "chapter",
+      fontFamily,
+      textConfig?.chapter?.fontSize || textConfig?.chapter?.size || "16",
+      textConfig
+    );
+    updateSpace(activeSpace, updateObj3);
+  };
+
+  const applyScriptureMargin = (value: string) => {
+    const updatedConfig = JSON.parse(JSON.stringify(textConfig));
+    updatedConfig.verse.marginHorizontal = value;
+    updatedConfig.heading.marginHorizontal = value;
+    updatedConfig.bookchapter.marginHorizontal = value;
+    updatedConfig.chapter.marginHorizontal = value;
+    const cssVars = exportTextConfigToCSS(updatedConfig);
+    setTextConfig(updatedConfig);
+    updateSpace(activeSpace, {
+      settings: { text: { root: cssVars, data: updatedConfig } },
+    });
+  };
+
+  // Apply initial margin based on screen size if no saved value exists
+  useEffect(() => {
+    const saved = currentSpace?.settings?.text?.data?.verse?.marginHorizontal;
+    if (!saved) {
+      const isMobile = window.innerWidth <= 768;
+      const defaultMargin = isMobile ? "5" : "27";
+      setScriptureMargin(defaultMargin);
+      applyScriptureMargin(defaultMargin);
+    }
+  }, []);
+
   const applyVerseFontSize = (fontSize) => {
     const updateObj = buildTextConfigUpdate(
       "verse",
@@ -6223,24 +6324,26 @@ const SettingsUI = () => {
   };
 
   const toggleStyle = (isOn) => ({
-    width: "32px",
-    height: "16px",
+    width: "50px",
+    height: "28px",
     backgroundColor: isOn ? "var(--addButtonIcon)" : "#CCCCCD",
-    borderRadius: "8px",
+    borderRadius: "14px",
     position: "relative",
     cursor: "pointer",
     transition: "background-color 0.3s ease",
+    flexShrink: 0,
   });
 
   const toggleCircleStyle = (isOn) => ({
-    width: "12px",
-    height: "12px",
-    backgroundColor: "var(--primaryColor)",
+    width: "22px",
+    height: "22px",
+    backgroundColor: "#fff",
     borderRadius: "50%",
     position: "absolute",
-    top: "2px",
-    left: isOn ? "18px" : "2px",
+    top: "3px",
+    left: isOn ? "25px" : "3px",
     transition: "left 0.3s ease",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
   });
 
   const separatorStyle = {
@@ -6288,6 +6391,7 @@ const SettingsUI = () => {
         <div className="softText">{t("theme")}</div>
       </div>
       <div style={{ marginTop: "20px" }}>
+        {/* Title */}
         <div className="routerTitle blackText">
           <div className="blackText">
             <ThemeIcon />
@@ -6298,125 +6402,116 @@ const SettingsUI = () => {
         </div>
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "16px",
+            fontSize: "13px",
+            color: "var(--text2, #888)",
+            marginBottom: "20px",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: "20px", color: "var(--heading1Color)" }}
-            >
-              format_size
-            </span>
-            <span style={{ fontSize: "13px", color: "var(--heading1Color)" }}>
-              {t("uiTextSize")}
-            </span>
-          </div>
-          <div style={{ display: "flex", gap: "4px" }}>
-            {UI_TEXT_SIZES.map((size, i) => (
-              <button
-                key={size.label}
-                onClick={() => handleUiTextSize(i)}
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "6px",
-                  border:
-                    uiSizeIndex === i
-                      ? "2px solid var(--addButtonIcon)"
-                      : "1px solid #ccc",
-                  backgroundColor:
-                    uiSizeIndex === i
-                      ? "var(--addButtonIcon)"
-                      : "var(--pageBackground, #fff)",
-                  color:
-                    uiSizeIndex === i
-                      ? "var(--primaryColor)"
-                      : "var(--pageTextColor)",
-                  cursor: "pointer",
-                  fontSize: `${size.value - 2}px`,
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: 0,
-                  fontFamily: "inherit",
-                }}
-              >
-                {size.label}
-              </button>
-            ))}
-          </div>
+          {t("editThemeDesc")}
         </div>
-        <div style={{ display: "flex", gap: "7px", marginBottom: "30px" }}>
+
+        {/* UI text size */}
+        <div
+          style={{
+            marginBottom: "8px",
+            fontSize: "14px",
+            fontWeight: "500",
+            color: "var(--heading1Color)",
+          }}
+        >
+          {t("uiTextSize")}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            "justify-content": "space-between",
+            gap: "6px",
+            marginBottom: "20px",
+          }}
+        >
+          {UI_TEXT_SIZES.map((size, i) => (
+            <button
+              key={i}
+              onClick={() => handleUiTextSize(i)}
+              style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "8px",
+                border:
+                  uiSizeIndex === i
+                    ? "2px solid var(--addButtonIcon)"
+                    : "1px solid #E1E3EA",
+                backgroundColor:
+                  uiSizeIndex === i
+                    ? "var(--addButtonIcon)"
+                    : "var(--pageBackground, #fff)",
+                color: uiSizeIndex === i ? "#fff" : "var(--pageTextColor)",
+                cursor: "pointer",
+                fontSize: `${12 + i * 2}px`,
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                fontFamily: "inherit",
+              }}
+            >
+              {size.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={separatorStyle}></div>
+
+        {/* Scripture settings */}
+        <div style={{ ...sectionTitleStyle, marginTop: "0px" }}>
+          {t("scriptureSettings")}
+        </div>
+        <div style={{ display: "flex", gap: "10px", marginBottom: "24px" }}>
           <div
             style={{
-              width: "80px",
-              height: "43px",
-              backgroundColor: "var(--pageBackground) !important",
+              flex: 1,
+              height: "48px",
+              backgroundColor: "var(--pageBackground, #fff)",
               border: "1px solid #E1E3EA",
-              borderRadius: "4px",
+              borderRadius: "8px",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               cursor: "pointer",
+              fontSize: "14px",
+              color: "var(--heading1Color)",
             }}
             onClick={handleDecreaseFontSize}
           >
-            <svg
-              style={{ filter: "none", stroke: "var(--heading1Color)" }}
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-            >
-              <text x="6" y="9" fontSize="12" textAnchor="middle" fill="black">
-                A
-              </text>
-            </svg>
+            A
           </div>
           <div
             style={{
-              width: "80px",
-              height: "43px",
-              backgroundColor: "var(--pageBackground) !important",
+              flex: 1,
+              height: "48px",
+              backgroundColor: "var(--pageBackground, #fff)",
               border: "1px solid #E1E3EA",
-              borderRadius: "4px",
+              borderRadius: "8px",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               cursor: "pointer",
+              fontSize: "20px",
+              fontWeight: 500,
+              color: "var(--heading1Color)",
             }}
             onClick={handleIncreaseFontSize}
           >
-            <svg
-              style={{ filter: "none", stroke: "var(--heading1Color)" }}
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-            >
-              <text
-                x="10"
-                y="14"
-                fontSize="18"
-                textAnchor="middle"
-                fill="black"
-              >
-                A
-              </text>
-            </svg>
+            A
           </div>
           <div
             style={{
-              width: "80px",
-              height: "43px",
-              backgroundColor: "var(--pageBackground) !important",
+              flex: 1,
+              height: "48px",
+              backgroundColor: "var(--pageBackground, #fff)",
               border: "1px solid #E1E3EA",
-              borderRadius: "4px",
+              borderRadius: "8px",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
@@ -6424,45 +6519,35 @@ const SettingsUI = () => {
             }}
             onClick={handleCycleLineHeight}
           >
-            <svg
-              style={{
-                filter: "none",
-                stroke: "var(--heading1Color)",
-                scale: 1.2,
-              }}
-              width="18"
-              height="18"
-              viewBox="0 0 18 18"
-              fill="none"
-            >
+            <svg width="20" height="14" viewBox="0 0 20 14" fill="none">
               {(() => {
                 const gap = 3.5 + lineHeightIndex * 1.5;
-                const startY = 3;
+                const startY = 1;
                 return (
                   <>
                     <rect
-                      x="3"
+                      x="0"
                       y={startY}
-                      width="12"
+                      width="20"
                       height="2"
                       rx="1"
-                      fill="black"
+                      fill="var(--heading1Color, #333)"
                     />
                     <rect
-                      x="3"
+                      x="0"
                       y={startY + gap}
-                      width="12"
+                      width="20"
                       height="2"
                       rx="1"
-                      fill="black"
+                      fill="var(--heading1Color, #333)"
                     />
                     <rect
-                      x="3"
+                      x="0"
                       y={startY + 2 * gap}
-                      width="12"
+                      width="20"
                       height="2"
                       rx="1"
-                      fill="black"
+                      fill="var(--heading1Color, #333)"
                     />
                   </>
                 );
@@ -6471,15 +6556,211 @@ const SettingsUI = () => {
           </div>
         </div>
 
+        {/* Scripture Margins */}
+        {!globalThis.IsMobileNow() && (
+          <>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "14px",
+                fontWeight: "500",
+                color: "var(--heading1Color)",
+                marginBottom: "8px",
+              }}
+            >
+              <MarginIcon />
+              Scripture Margins
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                marginBottom: "24px",
+                gap: "8px",
+              }}
+            >
+              <button
+                onClick={() => {
+                  const next = String(Math.max(0, Number(scriptureMargin) - 1));
+                  setScriptureMargin(next);
+                  applyScriptureMargin(next);
+                }}
+                style={{
+                  border: "1px solid #E1E3EA",
+                  background: "var(--backgroundColor, #fff)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "8px",
+                  color: "var(--heading1Color)",
+                  fontSize: "20px",
+                  fontWeight: "600",
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e: any) =>
+                  (e.currentTarget.style.background = "var(--bg2, #f0f0f0)")
+                }
+                onMouseLeave={(e: any) =>
+                  (e.currentTarget.style.background =
+                    "var(--backgroundColor, #fff)")
+                }
+              >
+                −
+              </button>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  justifyContent: "center",
+                  gap: "2px",
+                }}
+              >
+                <input
+                  type="number"
+                  value={scriptureMargin}
+                  onChange={(e: any) => {
+                    const val = e.target.value;
+                    setScriptureMargin(val);
+                    applyScriptureMargin(val);
+                  }}
+                  style={{
+                    border: "none",
+                    outline: "none",
+                    fontSize: "16px",
+                    width: "40px",
+                    background: "transparent",
+                    color: "var(--heading1Color)",
+                    fontFamily: "inherit",
+                    padding: 0,
+                    textAlign: "right",
+                    MozAppearance: "textfield",
+                  }}
+                />
+                <span style={{ fontSize: "14px", color: "var(--text2, #888)" }}>
+                  px
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  const next = String(
+                    Math.min(200, Number(scriptureMargin) + 1)
+                  );
+                  setScriptureMargin(next);
+                  applyScriptureMargin(next);
+                }}
+                style={{
+                  border: "1px solid #E1E3EA",
+                  background: "var(--backgroundColor, #fff)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "8px",
+                  color: "var(--heading1Color)",
+                  fontSize: "20px",
+                  fontWeight: "600",
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e: any) =>
+                  (e.currentTarget.style.background = "var(--bg2, #f0f0f0)")
+                }
+                onMouseLeave={(e: any) =>
+                  (e.currentTarget.style.background =
+                    "var(--backgroundColor, #fff)")
+                }
+              >
+                +
+              </button>
+            </div>
+          </>
+        )}
+        {/* Heading Font */}
+        <div
+          style={{
+            fontSize: "14px",
+            fontWeight: "500",
+            color: "var(--heading1Color)",
+            marginBottom: "4px",
+          }}
+        >
+          {t("headingFont")}
+        </div>
+        <div
+          style={{
+            fontSize: "12px",
+            color: "var(--text2, #888)",
+            marginBottom: "8px",
+          }}
+        >
+          {t("headingFontDesc")}
+        </div>
+        <div
+          style={dropdownStyle}
+          onClick={() => setShowHeadingFontDropdown(!showHeadingFontDropdown)}
+        >
+          <div style={dropdownTextStyle}>
+            {FONT_OPTIONS[selectedHeadingFont]?.name}
+          </div>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M8 11L3 6L3.7 5.3L8 9.6L12.3 5.3L13 6L8 11Z"
+              fill="var(--pageTextColor)"
+            />
+          </svg>
+          {showHeadingFontDropdown && (
+            <div style={dropdownMenuStyle} onClick={(e) => e.stopPropagation()}>
+              {FONT_OPTIONS.map((font, index) => (
+                <div
+                  key={index}
+                  style={menuItemStyle(selectedHeadingFont === index)}
+                  onClick={() => {
+                    setSelectedHeadingFont(index);
+                    applyHeadingFont(FONT_OPTIONS[index]!.value);
+                    setShowHeadingFontDropdown(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Body Font */}
+        <div
+          style={{
+            fontSize: "14px",
+            fontWeight: "500",
+            color: "var(--heading1Color)",
+            marginBottom: "4px",
+          }}
+        >
+          {t("bodyFont")}
+        </div>
+        <div
+          style={{
+            fontSize: "12px",
+            color: "var(--text2, #888)",
+            marginBottom: "8px",
+          }}
+        >
+          {t("bodyFontDesc")}
+        </div>
         <div
           style={dropdownStyle}
           onClick={() => setShowFontDropdown(!showFontDropdown)}
         >
-          <div>
-            <div style={dropdownTextStyle}>
-              {FONT_OPTIONS[selectedFont].name}
-            </div>
-            <div style={dropdownSubtextStyle}>{t("font")}</div>
+          <div style={dropdownTextStyle}>
+            {FONT_OPTIONS[selectedFont]?.name}
           </div>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path
@@ -6495,7 +6776,7 @@ const SettingsUI = () => {
                   style={menuItemStyle(selectedFont === index)}
                   onClick={() => {
                     setSelectedFont(index);
-                    applyVerseFont(FONT_OPTIONS[index].value);
+                    applyVerseFont(FONT_OPTIONS[index]!.value);
                     setShowFontDropdown(false);
                   }}
                 >
@@ -6507,76 +6788,125 @@ const SettingsUI = () => {
         </div>
       </div>
 
-      <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>
-          {t(
-            showHeading[activeSpace]
-              ? "hideChapterHeadings"
-              : "showChapterHeadings"
-          )}
-        </div>
+      <div style={separatorStyle}></div>
 
+      {/* Scripture elements */}
+      <div style={{ ...sectionTitleStyle, marginTop: "0px" }}>
+        {t("scriptureElements")}
+      </div>
+
+      <div style={toggleRowStyle}>
+        <div style={{ fontSize: "14px", color: "var(--heading1Color)" }}>
+          {t("showChapterHeading")}
+        </div>
         <div
-          style={toggleStyle(showHeading[activeSpace])}
+          style={{
+            ...toggleStyle(showHeading[activeSpace]),
+            width: "44px",
+            height: "24px",
+          }}
           onClick={() =>
-            setShowHeading((prev) => ({
+            setShowHeading((prev: any) => ({
               ...prev,
               [activeSpace]: !prev[activeSpace],
             }))
           }
         >
-          <div style={toggleCircleStyle(showHeading[activeSpace])}></div>
+          <div
+            style={{
+              ...toggleCircleStyle(showHeading[activeSpace]),
+              width: "18px",
+              height: "18px",
+              top: "3px",
+              left: showHeading[activeSpace] ? "23px" : "3px",
+            }}
+          ></div>
         </div>
       </div>
 
       <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>
-          {t(showVerses[activeSpace] ? "hideVerseNumbers" : "showVerseNumbers")}
+        <div style={{ fontSize: "14px", color: "var(--heading1Color)" }}>
+          {t("showVerseText")}
         </div>
-
         <div
-          style={toggleStyle(showVerses[activeSpace])}
+          style={{
+            ...toggleStyle(showVerses[activeSpace]),
+            width: "44px",
+            height: "24px",
+          }}
           onClick={() =>
-            setShowVerses((prev) => ({
+            setShowVerses((prev: any) => ({
               ...prev,
               [activeSpace]: !prev[activeSpace],
             }))
           }
         >
-          <div style={toggleCircleStyle(showVerses[activeSpace])}></div>
+          <div
+            style={{
+              ...toggleCircleStyle(showVerses[activeSpace]),
+              width: "18px",
+              height: "18px",
+              top: "3px",
+              left: showVerses[activeSpace] ? "23px" : "3px",
+            }}
+          ></div>
         </div>
       </div>
 
       <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>
-          {t(showFootnotes[activeSpace] ? "hideFootnotes" : "showFootnotes")}
+        <div style={{ fontSize: "14px", color: "var(--heading1Color)" }}>
+          {t("showHideFootNotes")}
         </div>
-
         <div
-          style={toggleStyle(showFootnotes[activeSpace])}
+          style={{
+            ...toggleStyle(showFootnotes[activeSpace]),
+            width: "44px",
+            height: "24px",
+          }}
           onClick={() =>
-            setShowFootnotes((prev) => ({
+            setShowFootnotes((prev: any) => ({
               ...prev,
               [activeSpace]: !prev[activeSpace],
             }))
           }
         >
-          <div style={toggleCircleStyle(showFootnotes[activeSpace])}></div>
+          <div
+            style={{
+              ...toggleCircleStyle(showFootnotes[activeSpace]),
+              width: "18px",
+              height: "18px",
+              top: "3px",
+              left: showFootnotes[activeSpace] ? "23px" : "3px",
+            }}
+          ></div>
         </div>
       </div>
 
-      <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>
-          {t(showNavArrows ? "hideNavArrows" : "showNavArrows")}
+      {(globalThis as any).IsMobileNow() && (
+        <div style={toggleRowStyle}>
+          <div style={{ fontSize: "14px", color: "var(--heading1Color)" }}>
+            {t(showNavArrows ? "hideNavArrows" : "showNavArrows")}
+          </div>
+          <div
+            style={{
+              ...toggleStyle(showNavArrows),
+              width: "44px",
+              height: "24px",
+            }}
+            onClick={() => setShowNavArrows((prev: any) => !prev)}
+          >
+            <div
+              style={{
+                ...toggleCircleStyle(showNavArrows),
+                width: "18px",
+                height: "18px",
+                top: "3px",
+                left: showNavArrows ? "23px" : "3px",
+              }}
+            ></div>
+          </div>
         </div>
-
-        <div
-          style={toggleStyle(showNavArrows)}
-          onClick={() => setShowNavArrows((prev) => !prev)}
-        >
-          <div style={toggleCircleStyle(showNavArrows)}></div>
-        </div>
-      </div>
+      )}
       {presetThemes.length > 1 && (
         <div>
           <div style={separatorStyle}></div>
@@ -6778,4 +7108,514 @@ const SettingsUI = () => {
     </div>
   );
 };
-export { ThemeSettings, SettingsUI };
+const MobileSettingsCard = ({ onClose }: { onClose?: () => void }) => {
+  const { updateSpace, activeSpace, currentSpace } = useTabsContext();
+  const { t, setSideBarMode, setOpenOnMobile, setSidebarWidth, setCollapsed } =
+    useSideBarContext();
+
+  const [uiSizeIndex, setUiSizeIndex] = useState(() => {
+    const saved = globalThis.changes?.uiTextSize || 1;
+    return Math.max(
+      UI_TEXT_SIZES.findIndex((s) => s.value === saved),
+      0
+    );
+  });
+
+  const [selectedFontSize, setSelectedFontSize] = useState(() => {
+    const savedConfig = currentSpace?.settings?.text?.data;
+    const savedFontSize =
+      savedConfig?.verse?.fontSize || savedConfig?.verse?.size;
+    if (savedFontSize) {
+      const idx = FONT_SIZES.findIndex((s) => s.value === savedFontSize);
+      if (idx !== -1) return idx;
+    }
+    return 3;
+  });
+
+  const [selectedFont] = useState(() => {
+    const savedConfig = currentSpace?.settings?.text?.data;
+    const savedFont = savedConfig?.verse?.font;
+    if (savedFont) {
+      const idx = FONT_OPTIONS.findIndex((f) => f.value === savedFont);
+      if (idx !== -1) return idx;
+    }
+    return 0;
+  });
+
+  const [textConfig, setTextConfig] = useState(() => {
+    const savedConfig = currentSpace?.settings?.text?.data;
+    return (
+      savedConfig || {
+        heading: { ...defaultTextConfig.heading },
+        chapter: { ...defaultTextConfig.chapter },
+        verse: { ...defaultTextConfig.verse },
+        bookchapter: { ...defaultTextConfig.bookchapter },
+      }
+    );
+  });
+
+  const [scriptureMargin, setScriptureMargin] = useState(() => {
+    const saved = currentSpace?.settings?.text?.data?.verse?.marginHorizontal;
+    if (saved) return String(saved);
+    const isMobile = window.innerWidth <= 768;
+    return isMobile ? "5" : "27";
+  });
+
+  const [lineHeightIndex, setLineHeightIndex] = useState(() => {
+    const savedLineHeight =
+      currentSpace?.settings?.text?.data?.verse?.lineHeight;
+    if (savedLineHeight !== undefined) {
+      const idx = LINE_HEIGHTS.indexOf(savedLineHeight);
+      return idx !== -1 ? idx : 1;
+    }
+    return 1;
+  });
+
+  const handleUiTextSize = (index) => {
+    setUiSizeIndex(index);
+    const zoom = UI_TEXT_SIZES[index].value;
+    if (!globalThis.changes) globalThis.changes = {};
+    globalThis.changes.uiTextSize = zoom;
+    document
+      .querySelectorAll(
+        ".settings-content, .themeSettings-container, .profileSection"
+      )
+      .forEach((el) => {
+        (el as HTMLElement).style.zoom = String(zoom);
+      });
+    document.querySelectorAll(".settings-sidebar").forEach((el) => {
+      (el as HTMLElement).style.width = `${Math.round(280 * zoom)}px`;
+    });
+  };
+
+  const applyVerseFontSize = (fontSize) => {
+    const updateObj = buildTextConfigUpdate(
+      "verse",
+      FONT_OPTIONS[selectedFont].value,
+      fontSize,
+      textConfig
+    );
+    updateSpace(activeSpace, updateObj);
+  };
+
+  const handleDecreaseFontSize = () => {
+    if (selectedFontSize > 0) {
+      const newIndex = selectedFontSize - 1;
+      setSelectedFontSize(newIndex);
+      applyVerseFontSize(FONT_SIZES[newIndex].value);
+    }
+  };
+
+  const handleIncreaseFontSize = () => {
+    if (selectedFontSize < FONT_SIZES.length - 1) {
+      const newIndex = selectedFontSize + 1;
+      setSelectedFontSize(newIndex);
+      applyVerseFontSize(FONT_SIZES[newIndex].value);
+    }
+  };
+
+  const applyVerseLineHeight = (lineHeight) => {
+    const updateObj = buildTextConfigUpdate(
+      "verse",
+      FONT_OPTIONS[selectedFont].value,
+      FONT_SIZES[selectedFontSize].value,
+      {
+        ...textConfig,
+        verse: { ...textConfig.verse, lineHeight },
+      }
+    );
+    updateSpace(activeSpace, updateObj);
+  };
+
+  const handleCycleLineHeight = () => {
+    const nextIndex = (lineHeightIndex + 1) % LINE_HEIGHTS.length;
+    setLineHeightIndex(nextIndex);
+    applyVerseLineHeight(LINE_HEIGHTS[nextIndex]);
+  };
+
+  const applyScriptureMargin = (value: string) => {
+    const updatedConfig = JSON.parse(JSON.stringify(textConfig));
+    updatedConfig.verse.marginHorizontal = value;
+    updatedConfig.heading.marginHorizontal = value;
+    updatedConfig.bookchapter.marginHorizontal = value;
+    updatedConfig.chapter.marginHorizontal = value;
+    const cssVars = exportTextConfigToCSS(updatedConfig);
+    setTextConfig(updatedConfig);
+    updateSpace(activeSpace, {
+      settings: { text: { root: cssVars, data: updatedConfig } },
+    });
+  };
+
+  // Apply initial margin based on screen size if no saved value exists
+  useEffect(() => {
+    const saved = currentSpace?.settings?.text?.data?.verse?.marginHorizontal;
+    if (!saved) {
+      const isMobile = window.innerWidth <= 768;
+      const defaultMargin = isMobile ? "5" : "27";
+      setScriptureMargin(defaultMargin);
+      applyScriptureMargin(defaultMargin);
+    }
+  }, []);
+
+  const sectionTitleStyle = {
+    fontSize: "16px",
+    color: " var(--pageTextColor)",
+    fontWeight: "500",
+    marginBottom: "12px",
+  };
+
+  return (
+    <div
+      style={{
+        backgroundColor: "var(--pageBackground)",
+        padding: "16px",
+        "border-radius": "10px 10px 0px 0px",
+        fontFamily: "Newsreader, system-ui, -apple-system, sans-serif",
+        zoom: (globalThis as any).changes?.uiTextSize || 1,
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "20px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <ThemeIcon />
+          <span
+            style={{
+              fontSize: "18px",
+              fontWeight: "600",
+              color: "var(--heading1Color)",
+            }}
+          >
+            {t("themeAndText")}
+          </span>
+        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "4px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "var(--heading1Color)",
+              fontSize: "22px",
+            }}
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        )}
+      </div>
+
+      {/* UI text size */}
+      <div
+        style={{
+          marginBottom: "8px",
+          fontSize: "14px",
+          fontWeight: "500",
+          color: " var(--pageTextColor)",
+        }}
+      >
+        {t("uiTextSize")}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          "justify-content": "space-between",
+          gap: "6px",
+          marginBottom: "20px",
+        }}
+      >
+        {UI_TEXT_SIZES.map((size, i) => (
+          <button
+            key={i}
+            onClick={() => handleUiTextSize(i)}
+            style={{
+              width: "48px",
+              height: "48px",
+              borderRadius: "4px",
+              border:
+                uiSizeIndex === i
+                  ? "2px solid var(--addButtonIcon)"
+                  : "1px solid #E1E3EA",
+              backgroundColor:
+                uiSizeIndex === i
+                  ? "var(--addButtonIcon)"
+                  : "var(--pageBackground, #fff)",
+              color: uiSizeIndex === i ? "#fff" : "var(--pageTextColor)",
+              cursor: "pointer",
+              fontSize: `${12 + i * 2}px`,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 0,
+              fontFamily: "inherit",
+            }}
+          >
+            {size.label}
+          </button>
+        ))}
+      </div>
+
+      {/* <div
+        style={{
+          height: "1px",
+          background: "#E1E3EA",
+          margin: "0 0 20px 0",
+        }}
+      /> */}
+
+      {/* Text settings */}
+      <div style={{ ...sectionTitleStyle, marginTop: "0px" }}>
+        {t("scriptureSettings")}
+      </div>
+      <div style={{ display: "flex", gap: "10px", marginBottom: "24px" }}>
+        <div
+          style={{
+            flex: 1,
+            height: "48px",
+            backgroundColor: "var(--pageBackground, #fff)",
+            border: "1px solid #E1E3EA",
+            borderRadius: "8px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            cursor: "pointer",
+            fontSize: "14px",
+            color: "var(--heading1Color)",
+          }}
+          onClick={handleDecreaseFontSize}
+        >
+          A
+        </div>
+        <div
+          style={{
+            flex: 1,
+            height: "48px",
+            backgroundColor: "var(--pageBackground, #fff)",
+            border: "1px solid #E1E3EA",
+            borderRadius: "8px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            cursor: "pointer",
+            fontSize: "20px",
+            fontWeight: 500,
+            color: "var(--heading1Color)",
+          }}
+          onClick={handleIncreaseFontSize}
+        >
+          A
+        </div>
+        <div
+          style={{
+            flex: 1,
+            height: "48px",
+            backgroundColor: "var(--pageBackground, #fff)",
+            border: "1px solid #E1E3EA",
+            borderRadius: "8px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            cursor: "pointer",
+          }}
+          onClick={handleCycleLineHeight}
+        >
+          <svg width="20" height="14" viewBox="0 0 20 14" fill="none">
+            {(() => {
+              const gap = 3.5 + lineHeightIndex * 1.5;
+              const startY = 1;
+              return (
+                <>
+                  <rect
+                    x="0"
+                    y={startY}
+                    width="20"
+                    height="2"
+                    rx="1"
+                    fill="var(--heading1Color, #333)"
+                  />
+                  <rect
+                    x="0"
+                    y={startY + gap}
+                    width="20"
+                    height="2"
+                    rx="1"
+                    fill="var(--heading1Color, #333)"
+                  />
+                  <rect
+                    x="0"
+                    y={startY + 2 * gap}
+                    width="20"
+                    height="2"
+                    rx="1"
+                    fill="var(--heading1Color, #333)"
+                  />
+                </>
+              );
+            })()}
+          </svg>
+        </div>
+      </div>
+
+      {/* Scripture Margins */}
+      {!globalThis.IsMobileNow() && (
+        <>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "14px",
+              fontWeight: "500",
+              color: "var(--heading1Color)",
+              marginBottom: "8px",
+            }}
+          >
+            <MarginIcon />
+            Scripture Margins
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <button
+              onClick={() => {
+                const next = String(Math.max(0, Number(scriptureMargin) - 1));
+                setScriptureMargin(next);
+                applyScriptureMargin(next);
+              }}
+              style={{
+                border: "1px solid #E1E3EA",
+                background: "var(--backgroundColor, #fff)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "40px",
+                height: "40px",
+                borderRadius: "8px",
+                color: "var(--heading1Color)",
+                fontSize: "20px",
+                fontWeight: "600",
+                lineHeight: 1,
+                flexShrink: 0,
+              }}
+            >
+              −
+            </button>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                justifyContent: "center",
+                gap: "2px",
+                flex: 1,
+              }}
+            >
+              <input
+                type="number"
+                value={scriptureMargin}
+                onChange={(e: any) => {
+                  const val = e.target.value;
+                  setScriptureMargin(val);
+                  applyScriptureMargin(val);
+                }}
+                style={{
+                  border: "none",
+                  outline: "none",
+                  fontSize: "16px",
+                  width: "40px",
+                  background: "transparent",
+                  color: "var(--heading1Color)",
+                  fontFamily: "inherit",
+                  padding: 0,
+                  textAlign: "right",
+                  MozAppearance: "textfield",
+                }}
+              />
+              <span style={{ fontSize: "14px", color: "var(--text2, #888)" }}>
+                px
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                const next = String(Math.min(200, Number(scriptureMargin) + 1));
+                setScriptureMargin(next);
+                applyScriptureMargin(next);
+              }}
+              style={{
+                border: "1px solid #E1E3EA",
+                background: "var(--backgroundColor, #fff)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "40px",
+                height: "40px",
+                borderRadius: "8px",
+                color: "var(--heading1Color)",
+                fontSize: "20px",
+                fontWeight: "600",
+                lineHeight: 1,
+                flexShrink: 0,
+              }}
+            >
+              +
+            </button>
+          </div>
+        </>
+      )}
+      {/* Divider */}
+      <div
+        style={{
+          height: "1px",
+          background: "#E1E3EA",
+          margin: "8px 0 16px 0",
+        }}
+      />
+
+      {/* Go to all settings */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose?.();
+          setOpenOnMobile(true);
+          setSidebarWidth(280);
+          setCollapsed(false);
+          setSideBarMode("settings");
+        }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          border: "none",
+          background: "none",
+          cursor: "pointer",
+          color: "var(--addButtonIcon)",
+          fontSize: "14px",
+          fontWeight: 500,
+          fontFamily: "inherit",
+          padding: "4px 0",
+        }}
+      >
+        <MobileSettingsIcon stroke={"var(--addButtonIcon)"} />{" "}
+        {t("goToAllSettings")}
+      </button>
+    </div>
+  );
+};
+
+export { ThemeSettings, SettingsUI, MobileSettingsCard };

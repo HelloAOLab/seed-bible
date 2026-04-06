@@ -1,4 +1,4 @@
-import {HighlightInfo} from "bibleVizUtils.classes.HighlightInfo"
+import {HighlightData} from "bibleVizUtils.models.highlight"
 const {piece} = that;
 
 let key, prevColor;
@@ -33,7 +33,7 @@ if(currentHighlightInfo)
 else
 {
     if(!BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(piece, "color", InstanceManager.tags.highlightColor);
-    thisBot.tags.highlightsInfo.push(new HighlightInfo({key, typeOfPiece: piece.tags.typeOfPiece, color: InstanceManager.tags.highlightColor}))
+    thisBot.tags.highlightsInfo.push({key, typeOfPiece: piece.tags.typeOfPiece, color: InstanceManager.tags.highlightColor})
     highlightSuccessful = true;
 }
 
