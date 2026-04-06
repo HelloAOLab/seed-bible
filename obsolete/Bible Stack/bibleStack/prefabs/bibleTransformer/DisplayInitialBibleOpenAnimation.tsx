@@ -1,67 +1,197 @@
-/**
-    * Animates the elements of the Bible to perform an initial open animation.
-    * This is called when the Bible is interacted for the first time.
-    * 
-    * @example
-    * thisBot.DisplayInitialBibleOpenAnimation()
-*/
+import { GetBotScales, type Scales } from "bibleVizUtils.functions.index";
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import { BibleType } from "bibleVizUtils.models.canvas";
+import type { Bot } from "../../../../../typings/AuxLibraryDefinitions";
 
-shout("OnInitialBibleOpenAnimationStart")
-const {bibleData} = that;
+/**
+ * Animates the elements of the Bible to perform an initial open animation.
+ * This is called when the Bible is interacted for the first time.
+ *
+ * @example
+ * thisBot.DisplayInitialBibleOpenAnimation()
+ */
+
+shout("OnInitialBibleOpenAnimationStart");
+const {
+  bibleData,
+}: {
+  bibleData: StackBibleData;
+} = that;
 const dimension = os.getCurrentDimension();
-const animationDuration = bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame ? 0 : 2;
-const lowerCoverPosition = getBotPosition(bibleData.staticBiblePieces.lowerCover, dimension);
-const lowerCoverScales = BibleVizUtils.Functions.GetBotScales(bibleData.staticBiblePieces.lowerCover);
-const testamentsScales = bibleData.childrenData.map((testamentData) => {return BibleVizUtils.Functions.GetBotScales(testamentData.piece)});
+const animationDuration =
+  bibleData.bibleType === BibleType.PlatformerGame ? 0 : 2;
+
+const lowerCover = bibleData.getStaticPiece("lowerCover");
+const upperCover = bibleData.getStaticPiece("upperCover");
+const leftCover = bibleData.getStaticPiece("leftCover");
+const crossVerticalLine = bibleData.getStaticPiece("crossVerticalLine");
+const crossHorizontalLine = bibleData.getStaticPiece("crossHorizontalLine");
+
+if (!lowerCover) {
+  console.error("lowerCover not found at DisplayInitialBibleOpenAnimation");
+  return;
+}
+
+if (!upperCover) {
+  console.error("upperCover not found at DisplayInitialBibleOpenAnimation");
+  return;
+}
+
+if (!leftCover) {
+  console.error("leftCover not found at DisplayInitialBibleOpenAnimation");
+  return;
+}
+
+if (!crossVerticalLine) {
+  console.error(
+    "crossVerticalLine not found at DisplayInitialBibleOpenAnimation"
+  );
+  return;
+}
+
+if (!crossHorizontalLine) {
+  console.error(
+    "crossHorizontalLine not found at DisplayInitialBibleOpenAnimation"
+  );
+  return;
+}
+
+const lowerCoverPosition = getBotPosition(lowerCover, dimension);
+const lowerCoverScales = GetBotScales(lowerCover);
+const testamentsScales: Scales[] = [];
+const testamentsPositionZ: number[] = [];
+for (
+  let testamentIndex = 0;
+  testamentIndex < bibleData.childrenData.length;
+  testamentIndex++
+) {
+  const testamentData = bibleData.childrenData[testamentIndex];
+
+  if (!testamentData) {
+    throw new Error(
+      "testamentData not found at DisplayInitialBibleOpenAnimation"
+    );
+  }
+
+  if (!testamentData.piece) {
+    throw new Error(
+      "testamentData.piece not found at DisplayInitialBibleOpenAnimation"
+    );
+  }
+
+  const scales = GetBotScales(testamentData.piece);
+  const positionZ =
+    lowerCoverPosition.z +
+    lowerCoverScales.z +
+    BibleVizDataRepository.getStackSpacing("BetweenArrangements") *
+      (testamentIndex + 1) +
+    scales.z * testamentIndex;
+  testamentsScales.push(scales);
+  testamentsPositionZ.push(positionZ);
+}
 // const testamentsPositionZ = [
-//     lowerCoverPosition.z + lowerCoverScales.z + BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements,
-//     lowerCoverPosition.z + lowerCoverScales.z + (BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements*2) + testamentsScales[0].z
+//     lowerCoverPosition.z + lowerCoverScales.z + BibleVizDataRepository.getStackSpacing("BetweenArrangements"),
+//     lowerCoverPosition.z + lowerCoverScales.z + (BibleVizDataRepository.getStackSpacing("BetweenArrangements")*2) + testamentsScales[0].z
 // ];
-const testamentsPositionZ = bibleData.childrenData.map((testamentData, index) => {
-    return  lowerCoverPosition.z + lowerCoverScales.z + (BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements * (index + 1)) + (testamentsScales[0].z * index)
-})
-const upperCoverPositionZ = testamentsPositionZ[testamentsPositionZ.length - 1] + testamentsScales[testamentsPositionZ.length - 1].z + BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements;
-const upperCoverScales = BibleVizUtils.Functions.GetBotScales(bibleData.staticBiblePieces.upperCover);
-const crossPositionZ = upperCoverPositionZ + upperCoverScales.z + BibleVizUtils.Data.tags.StackSpacing.CoverToCross;
+
+const lastIndex = bibleData.childrenData.length - 1;
+const lastTestamentScales = testamentsScales[lastIndex];
+const lastTestamentPositionZ = testamentsPositionZ[lastIndex];
+
+if (!lastTestamentScales) {
+  console.error(
+    "lastTestamentScales not found at DisplayInitialBibleOpenAnimation"
+  );
+  return;
+}
+
+if (!lastTestamentPositionZ) {
+  console.error(
+    "lastTestamentPositionZ not found at DisplayInitialBibleOpenAnimation"
+  );
+  return;
+}
+
+const upperCoverPositionZ =
+  lastTestamentPositionZ +
+  lastTestamentScales.z +
+  BibleVizDataRepository.getStackSpacing("BetweenArrangements");
+const upperCoverScales = GetBotScales(upperCover);
+const crossPositionZ =
+  upperCoverPositionZ +
+  upperCoverScales.z +
+  BibleVizDataRepository.getStackSpacing("CoverToCross");
 const animations = [];
 
 bibleData.childrenData.forEach((testamentData, index) => {
-    setTag(testamentData.piece, "desiredPositionZ", testamentsPositionZ[index]);
-    animations.push(
-        animateTag(testamentData.piece, dimension + "Z", {
-            toValue: testamentsPositionZ[index],
-            duration: animationDuration,
-            easing: {type: "sinusoidal", mode: "inout"}
-        }),
-    )
+  if (!testamentData.piece) {
+    throw new Error(
+      "testamentData.piece not found at DisplayInitialBibleOpenAnimation"
+    );
+  }
+
+  setTag(testamentData.piece, "desiredPositionZ", testamentsPositionZ[index]);
+  animations.push(
+    animateTag(testamentData.piece, dimension + "Z", {
+      toValue: testamentsPositionZ[index],
+      duration: animationDuration,
+      easing: { type: "sinusoidal", mode: "inout" },
+    })
+  );
 });
 animations.push(
-    animateTag(bibleData.staticBiblePieces.leftCover, "scaleZ", {
-        toValue: 0,
-        duration: animationDuration,
-        easing: {type: "sinusoidal", mode: "inout"}
-    }),
-    animateTag(bibleData.staticBiblePieces.upperCover, dimension + "Z", {
-        toValue: upperCoverPositionZ,
-        duration: animationDuration,
-        easing: {type: "sinusoidal", mode: "inout"}
-    }),
-    animateTag([bibleData.staticBiblePieces.crossVerticalLine, bibleData.staticBiblePieces.crossHorizontalLine], dimension + "Z", {
-        toValue: crossPositionZ,
-        duration: animationDuration,
-        easing: {type: "sinusoidal", mode: "inout"}
-    })
-)
+  animateTag(leftCover, "scaleZ", {
+    toValue: 0,
+    duration: animationDuration,
+    easing: { type: "sinusoidal", mode: "inout" },
+  }),
+  animateTag(upperCover, dimension + "Z", {
+    toValue: upperCoverPositionZ,
+    duration: animationDuration,
+    easing: { type: "sinusoidal", mode: "inout" },
+  }),
+  animateTag([crossVerticalLine, crossHorizontalLine], dimension + "Z", {
+    toValue: crossPositionZ,
+    duration: animationDuration,
+    easing: { type: "sinusoidal", mode: "inout" },
+  })
+);
 
 await Promise.all(animations)
-.then(() => {
-    setTagMask(bibleData.childrenData.map((testamentData) => {return testamentData.piece}), "highlightable", bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.Default);
-    setTagMask(bibleData.childrenData.map((testamentData) => {return testamentData.piece}), "draggable", bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.Default ? BibleStackManager.masks.areBiblePiecesDraggable : false);
-    setTagMask([bibleData.staticBiblePieces.crossVerticalLine, bibleData.staticBiblePieces.crossHorizontalLine], "pointable", bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.Default);
-    setTag(bibleData.staticBiblePieces.leftCover, dimension, false);
-    return Promise.all(shout("OnInitialBibleOpenAnimationCompleted", {bibleData}));
-})
-.catch((error) => {
-    console.log(error)
-    shout('OnInitialBibleOpenAnimationFailed')
-});
+  .then(() => {
+    const pieces: Bot[] = bibleData.childrenData.map((testamentData) => {
+      if (!testamentData.piece) {
+        throw new Error(
+          "testamentData.piece not found at DisplayInitialBibleOpenAnimation"
+        );
+      }
+      return testamentData.piece;
+    });
+
+    setTagMask(
+      pieces,
+      "highlightable",
+      bibleData.bibleType === BibleType.Default
+    );
+    setTagMask(
+      pieces,
+      "draggable",
+      bibleData.bibleType === BibleType.Default
+        ? BibleStackManager.masks.areBiblePiecesDraggable
+        : false
+    );
+    setTagMask(
+      [crossVerticalLine, crossHorizontalLine],
+      "pointable",
+      bibleData.bibleType === BibleType.Default
+    );
+    setTag(leftCover, dimension, false);
+    return Promise.all(
+      shout("OnInitialBibleOpenAnimationCompleted", { bibleData })
+    );
+  })
+  .catch((error) => {
+    console.log(error);
+    shout("OnInitialBibleOpenAnimationFailed");
+  });

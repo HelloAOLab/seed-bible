@@ -1,3 +1,5 @@
+import { HexToRgb } from "bibleVizUtils.functions.index";
+
 const callingFrom = that ? that.callingFrom ?? "" : "";
 const mainWord = getBot("isMainWord", true);
 if(!thisBot.masks.isInsideBible && (thisBot.masks.canBeDraggedBackToParent || callingFrom === "reformSection") && !mainWord.masks.isBibleClosed)
@@ -81,8 +83,8 @@ if(!thisBot.masks.isInsideBible && (thisBot.masks.canBeDraggedBackToParent || ca
             ObjectPooler.ReleaseObject({obj: trayBookOutline, tag: trayBookOutline.tags.poolTag});
         }
         setTagMask(thisBot, "isConvertedIntoATray", false);
-        // thisBot.lerpColor({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), durationInSeconds: 0.75})
-        ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), durationInSeconds: 0.75, bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
+        // thisBot.lerpColor({startingColor: HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: 0.75})
+        ColorLerper.LerpTag({startingColor: HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: 0.75, bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
     }
     
     setTagMask(mainWord, "bibleStructure", currentBibleStructure);

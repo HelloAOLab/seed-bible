@@ -9,9 +9,9 @@ keys?.forEach((key) => {
   if (!G.KEY_HOLD) {
     G.KEY_HOLD = {};
   }
-  G.KEY_HOLD[key.toLocaleLowerCase()] = false;
+  G.KEY_HOLD[key?.toLocaleLowerCase()] = false;
 
-  if (multiSelectKeys[key.toLocaleLowerCase()]) {
+  if (multiSelectKeys[key?.toLocaleLowerCase()]) {
     G[`SetSelectPlaylist`] && G[`SetSelectPlaylist`](false);
 
     G[`SetChecklistEnabled`] && G[`SetChecklistEnabled`](false);

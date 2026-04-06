@@ -344,7 +344,7 @@ export function Toolbar() {
                     ))}
                   </div>
                 )}
-                {/* <button
+                <button
                   className="mobile-navbar-btn more-btn"
                   title={activeMoreApp ? "Close" : "More"}
                   aria-label={activeMoreApp ? "Close" : "More"}
@@ -366,11 +366,16 @@ export function Toolbar() {
                     ) : (
                       <MoreIcon color="var(--text1)" />
                     )}
-                    <span className="mobile-btn-label" style={{ zoom: (globalThis as any).changes?.uiTextSize || 1 }}>
+                    <span
+                      className="mobile-btn-label"
+                      style={{
+                        zoom: (globalThis as any).changes?.uiTextSize || 1,
+                      }}
+                    >
                       {activeMoreApp ? "Close" : "More"}
                     </span>
                   </div>
-                </button> */}
+                </button>
               </div>
             ) : (
               <div className="more-btn-wrapper">

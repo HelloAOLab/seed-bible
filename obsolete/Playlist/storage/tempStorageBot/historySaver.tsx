@@ -64,18 +64,26 @@ const getPlaylists = async () => {
     if (!authBot?.id) {
       return [];
     }
+    G.SetPlaylistLoading?.(true);
+    G.IsPlaylistLoading = true;
     G.WAS_PREV_AUTH = true;
     apiResults = await os.getData(authBot.id, "playlists");
+
     if (apiResults.data) {
       const playlists = [...(apiResults.data.playlists || [])];
       apiResults = [...playlists];
       setTag(thisBot, "defaultplaylistList", playlists);
       G.setPlaylistLocale &&
         G.setPlaylistLocale(playlists, "default", false, true);
+      G.SetPlaylistLoading?.(false);
+      G.IsPlaylistLoading = false;
       return playlists;
     }
     return [];
   } catch (err) {
+    G.SetPlaylistLoading?.(false);
+    G.SetLoadingPlaylistOptions?.(false);
+    G.IsPlaylistLoading = false;
     console.log("err", err);
   }
   return apiResults;

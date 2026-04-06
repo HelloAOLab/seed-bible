@@ -27,7 +27,7 @@ const IconsRef: Record<string, string> = {
 };
 
 const VideoRecordUI = (props: any) => {
-  const { data, setData } = props;
+  const { data, setData, name, setName } = props;
   const [recordingProps, setRecordingProps] = useState({
     audio: true,
     video: G?.VideoRecordTab ? G.VideoRecordTab !== "screen" : true,
@@ -42,7 +42,7 @@ const VideoRecordUI = (props: any) => {
   const videoRef = useRef<any>(null);
   const [poster, setPoster] = useState<string | null | boolean>(false);
   const [isRecording, setIsRecording] = useState(!!G.isRecording);
-  const [isRecorded, setIsRecorded] = useState(false);
+  const [isRecorded, setIsRecorded] = useState(G.hasRecording || false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [tab, setTab] = useState(G.VideoRecordTab || "screen&cam");
@@ -67,7 +67,8 @@ const VideoRecordUI = (props: any) => {
       if (isScreen) {
         G.isRecording = true;
         thisBot.ShowScreenRecordingStopButton({ video: recordingProps.video });
-        G.setTabPlaylist("discover");
+        // G.setTabPlaylist("discover");
+        thisBot.CloseSelf({ force: true });
       }
     } catch (err) {
       setIsRecording(false);
@@ -115,6 +116,14 @@ const VideoRecordUI = (props: any) => {
   G.HandleStopPlayVideo = handleStopPlay;
 
   const handleReRecord = async () => {
+    if (G.IsSavingAndAdding) {
+      return ShowNotification({
+        message: t(
+          "yourRecordingIsBeingSavedAndAddedToTheAnnotationPleaseWait"
+        ),
+        severity: "error",
+      });
+    }
     videoRef.current.pause();
     setPoster(null);
     videoRef.current.currentTime = 0;
@@ -122,6 +131,10 @@ const VideoRecordUI = (props: any) => {
     videoRef.current.srcObject = null; // Remove live stream
     setData(null);
     setIsPlaying(false);
+    // If name start in format MM/DD/YYYY then remove the time from the name using regex
+    if (name?.match(/^\d{1,2}\/\d{1,2}\/\d{4}/)) {
+      setName("");
+    }
     setIsRecorded(false);
     if (!isScreen) {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -175,6 +188,7 @@ const VideoRecordUI = (props: any) => {
       setIsStreaming(false);
       if (!isScreen) {
         await experiment.endRecording();
+        G.isRecording = false;
       } else {
         G.isScreenRecording = true;
       }

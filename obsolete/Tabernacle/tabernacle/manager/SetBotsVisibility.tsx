@@ -4,12 +4,6 @@ const duration = 1;
 const easing = { type: "sinusoidal", mode: "inout" };
 if (!dimension) return;
 
-// console.log(`[Debug] SetBotsVisibility`, {data: data.filter((info) => {
-//     const {key, value} = info;
-//     const bot = getBot(byTag("key", key));
-//     return bot.masks.state !== value;
-// })})
-
 const animations = [];
 let delay = 0;
 

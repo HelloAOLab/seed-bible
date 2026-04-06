@@ -1,3 +1,3 @@
-import { updateUserColorStoreDebouncer } from "bibleVizUtils.services.UpdateUserColorStoreDebouncer";
+import { updateUserColorStore } from "bibleVizUtils.controllers.userPresence.colorStoreController";
 
-updateUserColorStoreDebouncer.execute();
+updateUserColorStore();

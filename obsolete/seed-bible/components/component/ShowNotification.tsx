@@ -37,46 +37,52 @@ os.registerApp("toast-notification", thisBot);
 
 const Notification = () => {
   return (
-    <FloatingBanner>
-      <img
-        src={ICON}
-        alt="notification"
-        style={{ width: "20px", height: "20px" }}
+    <>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
       />
-      {message}
-      <div
-        style={{
-          display: "flex",
-          marginLeft: "auto",
-          alignItems: "center",
-          gap: "10px",
-        }}
-      >
-        {onUndoActions && (
-          <p
-            style={{
-              cursor: "pointer",
-              color: "var(--secondaryColor)",
-              fontSize: "14px",
-            }}
-            onClick={onUndoActions}
-          >
-            Undo
-          </p>
-        )}
-        <span
-          style={{ cursor: "pointer", color: "var(--secondaryColor)" }}
-          onClick={() => os.unregisterApp("toast-notification")}
-          class="material-symbols-outlined"
+      <FloatingBanner>
+        <img
+          src={ICON}
+          alt="notification"
+          style={{ width: "20px", height: "20px" }}
+        />
+        {message}
+        <div
+          style={{
+            display: "flex",
+            marginLeft: "auto",
+            alignItems: "center",
+            gap: "10px",
+          }}
         >
-          close
-        </span>
-      </div>
-    </FloatingBanner>
+          {onUndoActions && (
+            <p
+              style={{
+                cursor: "pointer",
+                color: "var(--secondaryColor)",
+                fontSize: "14px",
+              }}
+              onClick={onUndoActions}
+            >
+              Undo
+            </p>
+          )}
+          <span
+            style={{ cursor: "pointer", color: "var(--secondaryColor)" }}
+            onClick={() => os.unregisterApp("toast-notification")}
+            class="material-symbols-outlined"
+          >
+            close
+          </span>
+        </div>
+      </FloatingBanner>
+    </>
   );
 };
 
-const timeoutTime = message.length * 75;
+const timeoutTime = message.length * 110;
 
 G.TOAST_NOTIFICATION_TIMEOUT = setTimeout(() => {
   os.unregisterApp("toast-notification");

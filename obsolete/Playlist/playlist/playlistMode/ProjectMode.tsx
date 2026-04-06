@@ -6,7 +6,7 @@ let ProjectChapterState: any;
 
 try {
   const scriptureMap2DModule =
-    await import("scriptureMap2D.main.ScriptureMap2D");
+    await import("scriptureMap2D.components.ScriptureMap2D");
   ({ ScriptureMap2D } = scriptureMap2DModule);
   const enums = await import("scriptureMap2D.main.enums");
   ({ ScriptureMap2DModes, ProjectChapterState } = enums);
@@ -525,22 +525,6 @@ const ProjectMode = (props: any) => {
           height: "100%",
         }}
       >
-        {false && (
-          <div
-            className="align-center justify-between"
-            style={{ padding: "0.5rem 0 ", justifyContent: "space-between" }}
-          >
-            <div
-              className="back-button"
-              onClick={() => {
-                if (setTab) setTab("discover");
-              }}
-            >
-              <span class="material-symbols-outlined">keyboard_backspace</span>
-              <span>Back to Create</span>
-            </div>
-          </div>
-        )}
         <div
           className="align-center justify-between"
           style={{ padding: "0.5rem 0 ", justifyContent: "space-between" }}

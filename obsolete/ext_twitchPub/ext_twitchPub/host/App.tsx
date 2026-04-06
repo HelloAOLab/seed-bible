@@ -2,6 +2,7 @@ import DraggableContainer from "ext_twitchPub.host.DraggableContainer";
 import Login from "ext_twitchPub.host.Login";
 import Authorization from "ext_twitchPub.host.Authenticate";
 import TwitchInterface from "ext_twitchPub.host.TwitchInterface";
+import TwitchSettings from "ext_twitchPub.host.TwitchSettings";
 const style = thisBot.tags["App.css"];
 
 const { useState, useEffect, useCallback } = os.appHooks;
@@ -11,7 +12,7 @@ const senderScope =
 function App() {
   const [clientId, setClientId] = useState<string>(masks?.clientId || "");
   const [currentPage, setCurrentPage] = useState<
-    "login" | "authorization" | "interface"
+    "login" | "authorization" | "interface" | "settings"
   >(masks?.currentPage || "login");
   const [deviceCode, setDeviceCode] = useState<string | null>(
     masks?.deviceCode || null
@@ -27,6 +28,13 @@ function App() {
     masks?.broadcasterId || null
   );
   const [loading, setLoading] = useState<boolean>(false);
+
+  const [translationEnabled, setTranslationEnabled] = useState(
+    masks?.translationEnabled || true
+  );
+  const [highlightEnabled, setHighlightEnabled] = useState(
+    masks?.highlightEnabled || true
+  );
 
   const fetchBroadcasterId = async (token: string) => {
     const response = await web.get("https://api.twitch.tv/helix/users", {
@@ -142,6 +150,8 @@ function App() {
     setTagMask(thisBot, "userAccessToken", userAccessToken, "local");
     setTagMask(thisBot, "senderId", senderId, "local");
     setTagMask(thisBot, "broadcasterId", broadcasterId, "local");
+    setTagMask(thisBot, "translationEnabled", translationEnabled, "local");
+    setTagMask(thisBot, "highlightEnabled", highlightEnabled, "local");
   }, [
     clientId,
     currentPage,
@@ -149,6 +159,8 @@ function App() {
     userAccessToken,
     senderId,
     broadcasterId,
+    translationEnabled,
+    highlightEnabled,
   ]);
 
   const renderPage = useCallback(() => {
@@ -170,8 +182,21 @@ function App() {
             broadcasterId={broadcasterId}
             clientId={clientId}
             token={userAccessToken}
+            setCurrentPage={setCurrentPage}
           />
         );
+      case "settings":
+        return (
+          <TwitchSettings
+            setCurrentPage={setCurrentPage}
+            translationEnabled={translationEnabled}
+            highlightEnabled={highlightEnabled}
+            setTranslationEnabled={setTranslationEnabled}
+            setHighlightEnabled={setHighlightEnabled}
+          />
+        );
+      default:
+        return null;
     }
   }, [
     currentPage,
@@ -180,6 +205,8 @@ function App() {
     senderId,
     loading,
     clientId,
+    translationEnabled,
+    highlightEnabled,
   ]);
   return (
     <>

@@ -1,2 +1,3 @@
-if(!configBot.tags.systemPortal)
+if (configBot.tags.systemPortal) return;
+
 thisBot.Initialize();

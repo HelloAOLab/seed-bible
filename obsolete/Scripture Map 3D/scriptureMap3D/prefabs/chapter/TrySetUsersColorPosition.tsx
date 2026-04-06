@@ -1,1 +1,8 @@
-if(thisBot.masks.isExpanded && !thisBot.masks.isDeselecting && !thisBot.masks.isSelecting) BibleVizUtils.Functions.UpdateUsersColorOnPiece({piece: thisBot, manager: ScriptureMap3DManager})
+import { updateIndicators } from "bibleVizUtils.controllers.userPresence.activityIndicatorsController";
+
+if (
+  thisBot.masks.isExpanded &&
+  !thisBot.masks.isDeselecting &&
+  !thisBot.masks.isSelecting
+)
+  updateIndicators(thisBot);

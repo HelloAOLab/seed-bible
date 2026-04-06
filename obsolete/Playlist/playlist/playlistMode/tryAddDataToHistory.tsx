@@ -72,7 +72,7 @@ if (G.makingPlaylist || G[`${"default"}creatingPlaylist`]) {
     });
     if (sameItem) {
       ShowNotification({
-        message: "You have already annotated this item.",
+        message: G.t("alreadyAnnotatedThisItem"),
         severity: "error",
       });
       return;

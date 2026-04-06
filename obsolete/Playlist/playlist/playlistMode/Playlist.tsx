@@ -173,13 +173,18 @@ const Playlist = (props: any) => {
 
   const [layersWarning, setLayersWarning] = useState(false);
 
+  const [dataWarning, setDataWarning] = useState(false);
+  const [loseProgressWarning, setLoseProgressWarning] = useState(false);
+
   const [openAttachLink, setOpenAttachLink] = useState(false);
   const [attachment, setAttachment] = useState(G[`${id}Attachments`] || null);
   const [openModal, setOpenModal] = useState(false);
   const [mergeMode, setMergeMode] = useState(false);
   const [renderAgain, setRenderAgain] = useState(0);
 
-  const [checklist, setChecklist] = useState(false);
+  const [checklist, setChecklist] = useState(
+    G.ChecklistEnabledRestorePlaylist || false
+  );
   const [readingPlan, setReadingPlan] = useState(false);
   const [currentFormat, setCurrentFormat] = useState("MM-DD-YYYY");
 
@@ -187,8 +192,26 @@ const Playlist = (props: any) => {
 
   const [systemPrompt, setSystemPrompt] = useState(G.SYSTEM_PROMPT || "");
 
-  const isEdit = useRef(false);
-  const [openModalName, setOpenModalName] = useState(false);
+  const isEdit = useRef(G.EditIDRestore || false);
+  const [openModalName, setOpenModalName] = useState(
+    G.OpenModalEditName || false
+  );
+  const [renamingPlaylist, setRenamingPlaylist] = useState(
+    G.RenamingPlaylist || false
+  );
+
+  // Restore edit rich text data
+  useLayoutEffect(() => {
+    G.OpenModalEditName = openModalName;
+    G.ChecklistEnabledRestorePlaylist = checklistEnabled;
+    G.RenamingPlaylist = renamingPlaylist;
+    G.SetRenamingPlaylistEditTitle = setRenamingPlaylist;
+    G.SetOpenModalEditName = setOpenModalName;
+    G.EditIDRestore = isEdit.current;
+    return () => {
+      G.SetRenamingPlaylistEditTitle = null;
+    };
+  }, [openModalName, checklist, renamingPlaylist]);
 
   const toggleOpenModalName = (val: boolean) => {
     setOpenModalName(val);
@@ -204,12 +227,28 @@ const Playlist = (props: any) => {
   const [link, setLink] = useState("");
 
   // Features
-  const [publishAccess, setPublishAccess] = useState("public");
+  const [publishAccess, setPublishAccess] = useState(
+    G.PublishAccessRestorePlaylist || "public"
+  );
   const [customColor, setCustomColor] = useState("#D3643329");
   const [selectedColor, setSelectedColor] = useState("#D9D9D9");
-  const [selectedIcon, setSelectedIcon] = useState(null);
-  const [description, setDescription] = useState("");
-  const [customIcon, setCustomIcon] = useState(null);
+  const [selectedIcon, setSelectedIcon] = useState(
+    G.SelectedIconRestorePlaylist || null
+  );
+  const [description, setDescription] = useState(
+    G.DescriptionRestorePlaylist || ""
+  );
+  const [customIcon, setCustomIcon] = useState(
+    G.CustomIconRestorePlaylist || null
+  );
+
+  // Restore publish access, custom color, custom icon, selected color, selected icon, description
+  useLayoutEffect(() => {
+    G.PublishAccessRestorePlaylist = publishAccess;
+    G.CustomIconRestorePlaylist = customIcon;
+    G.SelectedIconRestorePlaylist = selectedIcon;
+    G.DescriptionRestorePlaylist = description;
+  }, [publishAccess, customIcon, selectedIcon, description]);
 
   const setEditModal = (props: any) => {
     const {
@@ -295,8 +334,14 @@ const Playlist = (props: any) => {
   const addDataToPlaylist = (
     data: any[],
     isBulk = false,
-    combineLast = false
+    combineLast = false,
+    setDirect = false
   ) => {
+    if (setDirect) {
+      setPlaylist(data);
+      return;
+    }
+
     if (isBulk) {
       setPlaylist((prev: any[]) => {
         const old = [...prev, ...data];
@@ -869,8 +914,101 @@ const Playlist = (props: any) => {
     return [shared, owned];
   }, [query, playLists]);
 
+  const onClickSave = () => {
+    if (layers) {
+      const checkEmbed = playList.some(
+        (ele: any) => !ele.additionalInfo.layers?.length
+      );
+      if (checkEmbed) {
+        setLayersWarning(true);
+        return;
+      }
+    }
+    setOpenAttachLink(false);
+    onSave(
+      attachment,
+      checklist,
+      readingPlan,
+      currentFormat,
+      selectedColor,
+      selectedIcon,
+      selectedColor === customColor,
+      description,
+      selectedIcon === customIcon && !!selectedIcon,
+      selectedTags,
+      layers,
+      publishAccess
+    );
+    thisBot.resetPlaylistGlobalStateVars();
+  };
+
   return (
     <>
+      {(dataWarning || loseProgressWarning) && (
+        <Modal
+          title={dataWarning ? t("dataWarning") : t("loseProgressWarning")}
+          onClose={() => {
+            if (loading) return;
+            setDataWarning(false);
+            setLoseProgressWarning(false);
+          }}
+          showIcon={false}
+        >
+          <h2 style={{ fontSize: "1rem", marginBottom: "1rem" }}>
+            {dataWarning ? t("dataWarningMsg") : t("loseProgressWarningMsg")}
+          </h2>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+          >
+            <Button
+              loading={loading}
+              secondary={dataWarning ? true : false}
+              secondaryAlt={dataWarning ? false : true}
+              onClick={async () => {
+                setLoading(true);
+                if (dataWarning) {
+                  await G.OnClickSend(true);
+                  setTimeout(() => {
+                    onClickSave();
+                  }, 100);
+                } else {
+                  thisBot.resetPlaylistGlobalStateVars();
+                  setOpenAttachLink(false);
+                  setHasGenrated(false);
+                  onClose();
+                }
+                setDataWarning(false);
+                setLoseProgressWarning(false);
+                setLoading(false);
+              }}
+            >
+              {dataWarning ? t("addAndSave") : t("confirm")}
+            </Button>
+            {dataWarning && (
+              <Button
+                disabled={loading}
+                secondary
+                onClick={() => {
+                  onClickSave();
+                }}
+              >
+                {t("ignoreAndSave")}
+              </Button>
+            )}
+            <Button
+              secondary={dataWarning ? false : true}
+              secondaryAlt={dataWarning ? true : false}
+              disabled={loading}
+              onClick={() => {
+                setDataWarning(false);
+                setLoseProgressWarning(false);
+              }}
+            >
+              {t("cancel")}
+            </Button>
+          </div>
+        </Modal>
+      )}
       {layersWarning && (
         <Modal
           title={t("notEmbeddedItemsFound")}
@@ -1056,66 +1194,6 @@ const Playlist = (props: any) => {
                 </p>
               </Tooltip>
             </div>
-            {false && (
-              <div
-                className="more-menu-items"
-                onClick={() => {
-                  setPublishAccess("public");
-                }}
-              >
-                <div
-                  className="align-center"
-                  style={{
-                    cursor: "pointer",
-                  }}
-                  onClick={() => {
-                    if (readingPlan) {
-                      deleteDateData();
-                    }
-                    setReadingPlan((p) => !p);
-                  }}
-                >
-                  {readingPlan ? (
-                    <span
-                      style={{ fontSize: "20px" }}
-                      class="material-symbols-outlined unfollow"
-                    >
-                      check_box
-                    </span>
-                  ) : (
-                    <span
-                      style={{ fontSize: "20px" }}
-                      class="material-symbols-outlined unfollow"
-                    >
-                      check_box_outline_blank
-                    </span>
-                  )}
-                  <label
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: "600",
-                      marginLeft: "4px",
-                    }}
-                    for="playlistInclude"
-                  >
-                    {t("readingPlan")}
-                  </label>
-                </div>
-                <Tooltip text={t("readingPlanTooltip")}>
-                  <p
-                    className="what-this center"
-                    style={{ margin: "0 0 0 0.5rem" }}
-                  >
-                    <span
-                      style={{ fontSize: "24px" }}
-                      class="material-symbols-outlined unfollow "
-                    >
-                      info
-                    </span>
-                  </p>
-                </Tooltip>
-              </div>
-            )}
           </div>
         </>
       )}
@@ -1153,7 +1231,9 @@ const Playlist = (props: any) => {
           )}
 
         {creatingPlaylist || openModalName ? (
-          <h3 style={{ margin: "0.5rem 0" }}>{t("editingPlaylists")}</h3>
+          renamingPlaylist ? null : (
+            <h3 style={{ margin: "0.5rem 0" }}>{t("editingPlaylists")}</h3>
+          )
         ) : (
           <>
             {(playingPlaylist ||
@@ -1421,73 +1501,6 @@ const Playlist = (props: any) => {
               creatingPlaylist={creatingPlaylist}
               setPlaylistFromRow={setPlaylist}
             />
-            {false && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "1rem",
-                  justifyContent: "space-between",
-                  width: "100%",
-                }}
-              >
-                <Input
-                  value={searchText}
-                  style={{ marginBottom: "0" }}
-                  onChangeListener={setSearchText}
-                  placeholder={t("typeToSearch")}
-                />
-                <p
-                  onClick={onSearchHit}
-                  className="playlist-action secondary self-start"
-                >
-                  <span class="material-symbols-outlined unfollow">search</span>
-                  <span>{t("searchAndAdd")}</span>
-                </p>
-              </div>
-            )}
-            {false && (
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  width: "100%",
-                }}
-              >
-                <Button
-                  style={{ fontSize: "12px" }}
-                  onClick={() => {
-                    setRegenrateUI(false);
-                    setOpenAttachLink(true);
-                  }}
-                  small
-                  secondary
-                >
-                  <span
-                    class="material-symbols-outlined unfollow color-inherit"
-                    style={{ fontSize: "1.25rem", marginRight: "0.25rem" }}
-                  >
-                    photo_library
-                  </span>
-                  <span className="color-inherit">{t("addMedia")}</span>
-                </Button>
-                <p
-                  onClick={() => {
-                    setRegenrateUI(false);
-                    attachDate();
-                  }}
-                  style={{ width: "fit-content" }}
-                  className="playlist-action small"
-                >
-                  <span class="material-symbols-outlined unfollow">
-                    calendar_month
-                  </span>
-                  <span>{t("insertDate")}</span>
-                </p>
-              </div>
-            )}
-
             {!regenrateUI && !itemSelected && (
               <AttachLink
                 onDateClick={(date: string = "") => {
@@ -1604,30 +1617,14 @@ const Playlist = (props: any) => {
             <div className="add-playlist-actions">
               <Button
                 onClick={() => {
-                  if (layers) {
-                    const checkEmbed = playList.some(
-                      (ele: any) => !ele.additionalInfo.layers?.length
-                    );
-                    if (checkEmbed) {
-                      setLayersWarning(true);
-                      return;
-                    }
+                  if (
+                    G.RetainDataData ||
+                    (G.RetainDataName && G.RetainDataSelectedType === "TEXT")
+                  ) {
+                    setDataWarning(true);
+                  } else {
+                    onClickSave();
                   }
-                  setOpenAttachLink(false);
-                  onSave(
-                    attachment,
-                    checklist,
-                    readingPlan,
-                    currentFormat,
-                    selectedColor,
-                    selectedIcon,
-                    selectedColor === customColor,
-                    description,
-                    selectedIcon === customIcon && !!selectedIcon,
-                    selectedTags,
-                    layers,
-                    publishAccess
-                  );
                 }}
                 secondary
               >
@@ -1638,58 +1635,9 @@ const Playlist = (props: any) => {
                   {t("revertToPrevious")}
                 </Button>
               )}
-              {!!playList?.length && false && (
-                <p
-                  onClick={() => {
-                    const jsonStr = JSON.stringify(playList, null, 2);
-                    os.download(jsonStr, `${name}.json`);
-                  }}
-                  style={{ width: "100%", padding: "0" }}
-                  className="playlist-action self-start"
-                >
-                  <span class="material-symbols-outlined unfollow">
-                    download
-                  </span>
-                  <span>{t("downloadJSON")}</span>
-                </p>
-              )}
-              {false && !regenrateUI && (
-                <p
-                  onClick={() => {
-                    setOpenAttachLink(false);
-                    setRegenrateUI(true);
-                  }}
-                  style={{ width: "100%", padding: "0" }}
-                  className="playlist-action self-start"
-                >
-                  <span class="material-symbols-outlined unfollow">
-                    animated_images
-                  </span>
-                  <span>
-                    {hasGenrated ? t("regenerate") : t("generate")}{" "}
-                    {isLayers ? t("layers") : t("playlist")}
-                  </span>
-                </p>
-              )}
-              {!!playLists.length && false && (
-                <p
-                  onClick={() => {
-                    setOpenModal(true);
-                  }}
-                  style={{ width: "100%", padding: "0" }}
-                  className="playlist-action self-start"
-                >
-                  <span class="material-symbols-outlined unfollow">
-                    content_copy
-                  </span>
-                  <span>{t("copyOtherPlaylists")}</span>
-                </p>
-              )}
               <Button
                 onClick={() => {
-                  setOpenAttachLink(false);
-                  setHasGenrated(false);
-                  onClose();
+                  setLoseProgressWarning(true);
                 }}
                 secondaryAlt
               >

@@ -75,7 +75,7 @@ const AnnotationListFilters = (props: any) => {
       <div
         className="filter-container"
         style={{
-          top: showAtBottom ? "auto" : "2rem",
+          top: showAtBottom ? "auto" : "3.5rem",
           bottom: showAtBottom ? "2rem" : "auto",
         }}
       >
