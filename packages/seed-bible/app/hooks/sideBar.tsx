@@ -135,11 +135,6 @@ export function SideBarProvider({ children }) {
   function adjustPositionWithinScreen(x, y, itemCount = 0) {
     const offset = 10;
 
-    // If only 1 item, skip adjustment and just apply offset
-    if (itemCount === 1) {
-      return { x: x + offset, y: y + offset };
-    }
-
     const popupWidth = 250;
     // Calculate height based on item count (approx 40px per item + padding)
     const popupHeight =

@@ -1742,16 +1742,6 @@ function SideBar({ panelsNumber }) {
                                       type: "normal",
                                       items: [
                                         {
-                                          icon: (
-                                            <MenuIcon name="bookmark_remove" />
-                                          ),
-                                          title: "Remove Bookmark",
-                                          onClick: () => {
-                                            handleRemoveBookmark(tabId);
-                                            closePopupSettings();
-                                          },
-                                        },
-                                        {
                                           icon: <MenuIcon name="delete" />,
                                           title: t("deleteTab"),
                                           onClick: () => {
@@ -1809,14 +1799,6 @@ function SideBar({ panelsNumber }) {
                     const options = {
                       type: "normal",
                       items: [
-                        {
-                          icon: <MenuIcon name="bookmark" />,
-                          title: "Bookmark",
-                          onClick: () => {
-                            closePopupSettings();
-                            setTimeout(() => handleBookmarkTab(el.id), 100);
-                          },
-                        },
                         {
                           icon: <MenuIcon name="delete" />,
                           title: t("deleteTab"),
