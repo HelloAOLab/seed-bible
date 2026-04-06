@@ -163,6 +163,7 @@ function deferred<T>() {
 describe("SessionsManager", () => {
   let getSharedDocumentMock: jest.Mock;
   let mockMap: ReturnType<typeof createMockSharedMap>;
+  let mockOptionsMap: ReturnType<typeof createMockSharedMap>;
   let mockRemoteClients: ReturnType<typeof createMockRemoteClientsObservable>;
   let mockDocument: {
     getMap: jest.Mock;
@@ -182,9 +183,16 @@ describe("SessionsManager", () => {
 
   beforeEach(() => {
     mockMap = createMockSharedMap();
+    mockOptionsMap = createMockSharedMap();
     mockRemoteClients = createMockRemoteClientsObservable();
     mockDocument = {
-      getMap: jest.fn().mockReturnValue(mockMap),
+      getMap: jest.fn((name: string) => {
+        if (name === "options") {
+          return mockOptionsMap;
+        }
+
+        return mockMap;
+      }),
       transact: jest.fn((callback: () => void) => callback()),
       unsubscribe: jest.fn(),
       remoteClients: {
@@ -237,6 +245,20 @@ describe("SessionsManager", () => {
     expect(session.id).toBe("session-123");
   });
 
+  it("createSession() stores the default session options in the options map", async () => {
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+
+    const session = await manager.createSession();
+
+    expect(mockDocument.getMap).toHaveBeenCalledWith("options");
+    expect(mockOptionsMap.set).toHaveBeenCalledWith("allowedNavigators", null);
+    expect(session.options).toBe(mockOptionsMap);
+  });
+
   it("joinSession(id) loads and returns a session with the given ID", async () => {
     const manager = createSessionsManager(
       mockDataManager as any,
@@ -251,6 +273,50 @@ describe("SessionsManager", () => {
       "session_data"
     );
     expect(session.id).toBe("group-abc");
+  });
+
+  it("joinSession(id) does not set default options in the options map", async () => {
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+
+    const session = await manager.joinSession("group-abc");
+
+    expect(mockDocument.getMap).toHaveBeenCalledWith("options");
+    expect(mockOptionsMap.set).not.toHaveBeenCalledWith(
+      "allowedNavigators",
+      null
+    );
+    expect(session.options).toBe(mockOptionsMap);
+  });
+
+  it("joinSession(id) preserves existing options from the options map", async () => {
+    mockOptionsMap = createMockSharedMap({
+      allowedNavigators: ["user-1", "conn-2"],
+    });
+    mockDocument.getMap.mockImplementation((name: string) => {
+      if (name === "options") {
+        return mockOptionsMap;
+      }
+
+      return mockMap;
+    });
+
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+
+    const session = await manager.joinSession("group-abc");
+
+    expect(session.options.get("allowedNavigators")).toEqual([
+      "user-1",
+      "conn-2",
+    ]);
+    expect(mockOptionsMap.set).not.toHaveBeenCalled();
   });
 
   it("loads existing reading state from the shared document", async () => {

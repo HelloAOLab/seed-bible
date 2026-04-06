@@ -36,6 +36,16 @@ interface SessionData {
   chapterNumber: number | null;
 }
 
+export interface SessionOptions {
+  allowedNavigators: string[] | null;
+}
+
+type SessionOptionValue = SessionOptions[keyof SessionOptions];
+
+const DEFAULT_SESSION_OPTIONS: SessionOptions = {
+  allowedNavigators: null,
+};
+
 function getSessionDataSnapshot(
   readingState: Pick<
     BibleReadingState,
@@ -107,6 +117,7 @@ function canLoadSessionData(sessionData: SessionData): sessionData is {
 export interface BibleReadingSession {
   id: string;
   document: SharedDocument;
+  options: SharedMap<SessionOptionValue>;
   readingState: BibleReadingState;
   connectedUsers: ReadonlySignal<ConnectedSessionUser[]>;
   dispose: () => void;
@@ -153,15 +164,23 @@ async function createBibleReadingSession(
   dataManager: BibleDataManager,
   loginManager: LoginManager,
   highlightsManager: HighlightsManager,
-  id: string
+  id: string,
+  defaultOptions?: SessionOptions
 ): Promise<BibleReadingSession> {
   const readingState = createBibleReadingState(dataManager, highlightsManager);
   const document = await os.getSharedDocument(null, id, "session_data");
   const stateMap =
     document.getMap<SessionData[keyof SessionData]>("reading_state");
+  const options = document.getMap<SessionOptionValue>("options");
   const connectedUsers = signal<ConnectedSessionUser[]>([]);
   const connectedClients = new Map<string, SessionConnectionInfo>();
   const profileCache = new Map<string, UserProfile>();
+
+  if (defaultOptions) {
+    document.transact(() => {
+      options.set("allowedNavigators", defaultOptions.allowedNavigators);
+    });
+  }
 
   let applyingRemoteState = false;
   let lastLocallyWrittenState: SessionData | null = null;
@@ -334,6 +353,7 @@ async function createBibleReadingSession(
   return {
     id,
     document,
+    options,
     readingState,
     connectedUsers,
     dispose,
@@ -356,7 +376,8 @@ export function createSessionsManager(
       dataManager,
       loginManager,
       highlightsManager,
-      id
+      id,
+      DEFAULT_SESSION_OPTIONS
     );
   };
 
