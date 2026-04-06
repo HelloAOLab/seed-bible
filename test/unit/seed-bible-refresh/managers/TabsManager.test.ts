@@ -133,6 +133,11 @@ describe("createTabs", () => {
       id: "session-123",
       readingState: manager.tabs.value[0]!.readingState,
       document: {} as SharedDocument,
+      options: signal({
+        allowedNavigators: null,
+        allowedDecorators: null,
+      }),
+      updateOptions: jest.fn(),
       dispose: jest.fn(),
       connectedUsers: signal([]),
     } as BibleReadingSession;
