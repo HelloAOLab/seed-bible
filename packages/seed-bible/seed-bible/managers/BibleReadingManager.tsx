@@ -170,6 +170,7 @@ export interface BibleReadingState {
    * @param chapterNumber Chapter target for the decoration.
    * @param verses Single verse number or verse number list.
    * @param decoration Decoration style and targeting details.
+   * @param id Optional explicit decoration ID. When omitted, a new unique ID is generated.
    * @returns Unique decoration ID used by `removeDecoration()`.
    */
   decorateVerses: (
@@ -177,7 +178,8 @@ export interface BibleReadingState {
     bookId: string,
     chapterNumber: number,
     verses: number | number[],
-    decoration: VerseDecorationInput
+    decoration: VerseDecorationInput,
+    id?: string
   ) => string;
 
   /** Removes a previously added decoration by ID. */

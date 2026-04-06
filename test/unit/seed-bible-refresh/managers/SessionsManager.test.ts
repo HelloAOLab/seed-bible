@@ -5,6 +5,10 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import { createBibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type {
+  VerseDecoration,
+  VerseDecorationInput,
+} from "seed-bible.managers.BibleReadingManager";
 
 jest.mock("seed-bible.managers.BibleReadingManager", () => ({
   createBibleReadingState: jest.fn(),
@@ -55,6 +59,21 @@ function createMockSharedMap(initial: Record<string, unknown> = {}) {
         }
       }
     }),
+    delete: jest.fn((key: string) => {
+      store.delete(key);
+      if (emitOnSet) {
+        for (const subscriber of subscribers) {
+          subscriber();
+        }
+      }
+    }),
+    forEach: jest.fn(
+      (callback: (value: unknown, key: string, map: unknown) => void) => {
+        for (const [key, value] of store.entries()) {
+          callback(value, key, map);
+        }
+      }
+    ),
     changes: {
       subscribe: jest.fn((handler: MockChangesSubscriber) => {
         subscribers.add(handler);
@@ -81,15 +100,53 @@ function createMockReadingState() {
   const bookId = signal<string | null>("GEN");
   const chapterNumber = signal<number>(1);
   const chapterData = signal<any>(null);
+  const decorations = signal<VerseDecoration[]>([]);
+
+  const decorateVerses = jest.fn(
+    (
+      nextTranslationId: string | null,
+      nextBookId: string,
+      nextChapterNumber: number,
+      verses: number | number[],
+      decoration: VerseDecorationInput,
+      id: string = `decoration-${Math.random()}`
+    ) => {
+      const verseNumbers = Array.isArray(verses) ? verses : [verses];
+      const nextDecoration: VerseDecoration = {
+        id,
+        translationId: nextTranslationId,
+        bookId: nextBookId,
+        chapterNumber: nextChapterNumber,
+        verses: verseNumbers,
+        ...decoration,
+      };
+
+      decorations.value = [
+        ...decorations.value.filter((item) => item.id !== id),
+        nextDecoration,
+      ];
+
+      return id;
+    }
+  );
+
+  const removeDecoration = jest.fn((decorationId: string) => {
+    decorations.value = decorations.value.filter(
+      (decoration) => decoration.id !== decorationId
+    );
+  });
 
   return {
     translationId,
     bookId,
     chapterNumber,
     chapterData,
+    decorations,
     translationBooks: signal<any>(null),
     loading: signal<boolean>(false),
     error: signal<string | null>(null),
+    decorateVerses,
+    removeDecoration,
     selectTranslationAndChapter: jest.fn(
       async (
         nextTranslationId: string,
@@ -164,6 +221,7 @@ describe("SessionsManager", () => {
   let getSharedDocumentMock: jest.Mock;
   let mockMap: ReturnType<typeof createMockSharedMap>;
   let mockOptionsMap: ReturnType<typeof createMockSharedMap>;
+  let mockDecorationsMap: ReturnType<typeof createMockSharedMap>;
   let mockRemoteClients: ReturnType<typeof createMockRemoteClientsObservable>;
   let mockDocument: {
     getMap: jest.Mock;
@@ -184,11 +242,16 @@ describe("SessionsManager", () => {
   beforeEach(() => {
     mockMap = createMockSharedMap();
     mockOptionsMap = createMockSharedMap();
+    mockDecorationsMap = createMockSharedMap();
     mockRemoteClients = createMockRemoteClientsObservable();
     mockDocument = {
       getMap: jest.fn((name: string) => {
         if (name === "options") {
           return mockOptionsMap;
+        }
+
+        if (name === "decorations") {
+          return mockDecorationsMap;
         }
 
         return mockMap;
@@ -370,6 +433,165 @@ describe("SessionsManager", () => {
     expect(session.options.value).toEqual({
       allowedNavigators: ["user-1", "conn-2"],
     });
+  });
+
+  it("syncs local decorations to the shared decorations map", async () => {
+    (globalThis as any).configBot = {
+      id: "conn-self",
+    };
+
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    session.readingState.decorateVerses(
+      "BSB",
+      "GEN",
+      1,
+      [1, 2],
+      {
+        className: "remote-cursor",
+        preserveOnChapterChange: true,
+      },
+      "decoration-local"
+    );
+
+    await waitFor(() => mockDecorationsMap.set.mock.calls.length > 0);
+
+    expect(mockDecorationsMap.set).toHaveBeenCalledWith(
+      JSON.stringify(["conn-self", "decoration-local"]),
+      expect.objectContaining({
+        id: "decoration-local",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1, 2],
+        className: "remote-cursor",
+        preserveOnChapterChange: true,
+      })
+    );
+  });
+
+  it("applies shared decorations from other users to the reading state", async () => {
+    (globalThis as any).configBot = {
+      id: "conn-self",
+    };
+
+    mockMap = createMockSharedMap({
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+    });
+
+    const remoteDecoration: VerseDecoration = {
+      id: "decoration-remote",
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verses: [3],
+      className: "other-user-decoration",
+    };
+
+    mockDecorationsMap = createMockSharedMap({
+      [JSON.stringify(["conn-other", "decoration-remote"])]: remoteDecoration,
+    });
+    mockDocument.getMap.mockImplementation((name: string) => {
+      if (name === "options") {
+        return mockOptionsMap;
+      }
+
+      if (name === "decorations") {
+        return mockDecorationsMap;
+      }
+
+      return mockMap;
+    });
+
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    await waitFor(() => session.readingState.decorations.value.length === 1);
+
+    expect(session.readingState.decorations.value).toEqual([remoteDecoration]);
+  });
+
+  it("keeps decorations from different users in the shared document at the same time", async () => {
+    (globalThis as any).configBot = {
+      id: "conn-self",
+    };
+
+    mockMap = createMockSharedMap({
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+    });
+
+    const remoteDecoration: VerseDecoration = {
+      id: "decoration-remote",
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verses: [2],
+      className: "remote-decoration",
+    };
+
+    mockDecorationsMap = createMockSharedMap({
+      [JSON.stringify(["conn-other", "decoration-remote"])]: remoteDecoration,
+    });
+    mockDocument.getMap.mockImplementation((name: string) => {
+      if (name === "options") {
+        return mockOptionsMap;
+      }
+
+      if (name === "decorations") {
+        return mockDecorationsMap;
+      }
+
+      return mockMap;
+    });
+
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    session.readingState.decorateVerses(
+      "BSB",
+      "GEN",
+      1,
+      [1],
+      {
+        className: "local-decoration",
+      },
+      "decoration-local"
+    );
+
+    await waitFor(
+      () =>
+        session.readingState.decorations.value.some(
+          (decoration) => decoration.id === "decoration-remote"
+        ) &&
+        mockDecorationsMap.set.mock.calls.some(
+          (call) =>
+            call[0] === JSON.stringify(["conn-self", "decoration-local"])
+        )
+    );
+
+    expect(session.readingState.decorations.value).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "decoration-local" }),
+        expect.objectContaining({ id: "decoration-remote" }),
+      ])
+    );
   });
 
   it("loads existing reading state from the shared document", async () => {

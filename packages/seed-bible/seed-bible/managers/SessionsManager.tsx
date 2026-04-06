@@ -2,6 +2,8 @@ import { effect, signal, type ReadonlySignal } from "@preact/signals";
 import {
   createBibleReadingState,
   type BibleReadingState,
+  type VerseDecoration,
+  type VerseDecorationInput,
 } from "seed-bible.managers.BibleReadingManager";
 import type { HighlightsManager } from "seed-bible.managers.HighlightsManager";
 import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
@@ -41,6 +43,7 @@ export interface SessionOptions {
 }
 
 type SessionOptionValue = SessionOptions[keyof SessionOptions];
+type SessionDecorationValue = VerseDecoration;
 
 const DEFAULT_SESSION_OPTIONS: SessionOptions = {
   allowedNavigators: null,
@@ -106,6 +109,57 @@ function sessionOptionsMatch(
   right: SessionOptions
 ): boolean {
   return stringArraysMatch(left.allowedNavigators, right.allowedNavigators);
+}
+
+function createSessionDecorationKey(
+  connectionId: string,
+  decorationId: string
+): string {
+  return JSON.stringify([connectionId, decorationId]);
+}
+
+function parseSessionDecorationKey(key: string): {
+  connectionId: string;
+  decorationId: string;
+} | null {
+  try {
+    const value = JSON.parse(key);
+    if (
+      Array.isArray(value) &&
+      value.length === 2 &&
+      typeof value[0] === "string" &&
+      typeof value[1] === "string"
+    ) {
+      return {
+        connectionId: value[0],
+        decorationId: value[1],
+      };
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function toSessionDecorationInput(
+  decoration: VerseDecoration
+): VerseDecorationInput {
+  return {
+    targetContent: decoration.targetContent,
+    startIndex: decoration.startIndex,
+    endIndex: decoration.endIndex,
+    className: decoration.className,
+    style: decoration.style,
+    preserveOnChapterChange: decoration.preserveOnChapterChange,
+  };
+}
+
+function decorationsMatch(
+  left: VerseDecoration,
+  right: VerseDecoration
+): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
 }
 
 function sessionDataMatches(left: SessionData, right: SessionData): boolean {
@@ -212,10 +266,15 @@ async function createBibleReadingSession(
   const stateMap =
     document.getMap<SessionData[keyof SessionData]>("reading_state");
   const optionsMap = document.getMap<SessionOptionValue>("options");
+  const decorationsMap = document.getMap<SessionDecorationValue>("decorations");
   const options = signal<SessionOptions>(DEFAULT_SESSION_OPTIONS);
   const connectedUsers = signal<ConnectedSessionUser[]>([]);
   const connectedClients = new Map<string, SessionConnectionInfo>();
   const profileCache = new Map<string, UserProfile>();
+  const localConnectionId =
+    (typeof configBot !== "undefined" ? toStringOrNull(configBot?.id) : null) ??
+    "local";
+  const decorationOwners = new Map<string, string>();
 
   if (defaultOptions) {
     document.transact(() => {
@@ -230,6 +289,100 @@ async function createBibleReadingSession(
   let syncVersion = 0;
   let pendingRemoteTarget: SessionData | null = null;
   let remoteClientsVersion = 0;
+  let applyingRemoteDecorations = false;
+
+  const shouldApplySharedDecoration = (decoration: VerseDecoration) => {
+    if (decoration.preserveOnChapterChange) {
+      return true;
+    }
+
+    return (
+      decoration.translationId === readingState.translationId.value &&
+      decoration.bookId === readingState.bookId.value &&
+      decoration.chapterNumber === readingState.chapterNumber.value
+    );
+  };
+
+  const getSharedDecorationEntries = () => {
+    const entries = new Map<
+      string,
+      { key: string; connectionId: string; decoration: VerseDecoration }
+    >();
+
+    decorationsMap.forEach((value, key) => {
+      const parsedKey = parseSessionDecorationKey(key);
+      if (!parsedKey || !value || value.id !== parsedKey.decorationId) {
+        return;
+      }
+
+      entries.set(parsedKey.decorationId, {
+        key,
+        connectionId: parsedKey.connectionId,
+        decoration: value,
+      });
+    });
+
+    return entries;
+  };
+
+  const syncDecorationsFromSession = () => {
+    const sharedDecorationEntries = getSharedDecorationEntries();
+
+    applyingRemoteDecorations = true;
+    try {
+      const currentDecorations = readingState.decorations.value;
+      const currentDecorationIds = new Set(
+        currentDecorations.map((decoration) => decoration.id)
+      );
+
+      for (const decoration of currentDecorations) {
+        const nextSharedDecoration = sharedDecorationEntries.get(decoration.id);
+        if (
+          !nextSharedDecoration ||
+          !shouldApplySharedDecoration(nextSharedDecoration.decoration)
+        ) {
+          if (decorationOwners.has(decoration.id)) {
+            readingState.removeDecoration(decoration.id);
+            decorationOwners.delete(decoration.id);
+          }
+        }
+      }
+
+      for (const [decorationId, entry] of sharedDecorationEntries) {
+        decorationOwners.set(decorationId, entry.connectionId);
+
+        if (!shouldApplySharedDecoration(entry.decoration)) {
+          continue;
+        }
+
+        const existingDecoration = readingState.decorations.value.find(
+          (decoration) => decoration.id === decorationId
+        );
+
+        if (
+          existingDecoration &&
+          decorationsMatch(existingDecoration, entry.decoration)
+        ) {
+          continue;
+        }
+
+        if (currentDecorationIds.has(decorationId)) {
+          readingState.removeDecoration(decorationId);
+        }
+
+        readingState.decorateVerses(
+          entry.decoration.translationId,
+          entry.decoration.bookId,
+          entry.decoration.chapterNumber,
+          entry.decoration.verses,
+          toSessionDecorationInput(entry.decoration),
+          entry.decoration.id
+        );
+      }
+    } finally {
+      applyingRemoteDecorations = false;
+    }
+  };
 
   const syncConnectedUsers = async (version: number) => {
     const clients = Array.from(connectedClients.values());
@@ -317,6 +470,7 @@ async function createBibleReadingSession(
 
   const initialSessionData = getSessionDataFromMap(stateMap);
   await syncReadingStateFromSessionData(initialSessionData, ++syncVersion);
+  syncDecorationsFromSession();
 
   const mapSubscription = stateMap.changes.subscribe(() => {
     const nextSessionData = getSessionDataFromMap(stateMap);
@@ -338,6 +492,10 @@ async function createBibleReadingSession(
     if (!sessionOptionsMatch(options.value, nextOptions)) {
       options.value = nextOptions;
     }
+  });
+
+  const decorationsSubscription = decorationsMap.changes.subscribe(() => {
+    syncDecorationsFromSession();
   });
 
   const remoteClientsSubscription = document.remoteClients.subscribe(
@@ -393,6 +551,72 @@ async function createBibleReadingSession(
     });
   });
 
+  const stopDecorationSync = effect(() => {
+    void readingState.translationId.value;
+    void readingState.bookId.value;
+    void readingState.chapterNumber.value;
+
+    if (applyingRemoteDecorations) {
+      return;
+    }
+
+    syncDecorationsFromSession();
+
+    const currentDecorations = readingState.decorations.value;
+    const localDecorations = currentDecorations.filter((decoration) => {
+      const owner = decorationOwners.get(decoration.id);
+      if (!owner) {
+        decorationOwners.set(decoration.id, localConnectionId);
+        return true;
+      }
+
+      return owner === localConnectionId;
+    });
+
+    const sharedDecorationEntries = getSharedDecorationEntries();
+    const localSharedDecorations = Array.from(
+      sharedDecorationEntries.values()
+    ).filter((entry) => entry.connectionId === localConnectionId);
+    const localDecorationIds = new Set(
+      localDecorations.map((decoration) => decoration.id)
+    );
+
+    const keysToDelete = localSharedDecorations
+      .filter((entry) => !localDecorationIds.has(entry.decoration.id))
+      .map((entry) => entry.key);
+    const decorationsToUpsert = localDecorations.filter((decoration) => {
+      const existingDecoration = sharedDecorationEntries.get(
+        decoration.id
+      )?.decoration;
+      return (
+        !existingDecoration || !decorationsMatch(existingDecoration, decoration)
+      );
+    });
+
+    if (keysToDelete.length === 0 && decorationsToUpsert.length === 0) {
+      return;
+    }
+
+    document.transact(() => {
+      for (const key of keysToDelete) {
+        const parsedKey = parseSessionDecorationKey(key);
+        decorationsMap.delete(key);
+        if (parsedKey) {
+          decorationOwners.delete(parsedKey.decorationId);
+        }
+      }
+
+      for (const decoration of decorationsToUpsert) {
+        const key = createSessionDecorationKey(
+          localConnectionId,
+          decoration.id
+        );
+        decorationsMap.set(key, decoration);
+        decorationOwners.set(decoration.id, localConnectionId);
+      }
+    });
+  });
+
   const updateOptions = (newOptions: Partial<SessionOptions>) => {
     const currentOptions = getSessionOptionsFromMap(optionsMap);
     const nextOptions: SessionOptions = {
@@ -421,8 +645,10 @@ async function createBibleReadingSession(
   const dispose = () => {
     mapSubscription.unsubscribe();
     optionsSubscription.unsubscribe();
+    decorationsSubscription.unsubscribe();
     remoteClientsSubscription.unsubscribe();
     stopSync();
+    stopDecorationSync();
     document.unsubscribe();
   };
 
