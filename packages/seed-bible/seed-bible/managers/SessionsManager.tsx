@@ -40,6 +40,7 @@ interface SessionData {
 
 export interface SessionOptions {
   allowedNavigators: string[] | null;
+  allowedDecorators: string[] | null;
 }
 
 type SessionOptionValue = SessionOptions[keyof SessionOptions];
@@ -47,6 +48,7 @@ type SessionDecorationValue = VerseDecoration;
 
 const DEFAULT_SESSION_OPTIONS: SessionOptions = {
   allowedNavigators: null,
+  allowedDecorators: null,
 };
 
 function getSessionDataSnapshot(
@@ -86,6 +88,7 @@ function getSessionOptionsFromMap(
 ): SessionOptions {
   return {
     allowedNavigators: toStringArrayOrNull(optionsMap.get("allowedNavigators")),
+    allowedDecorators: toStringArrayOrNull(optionsMap.get("allowedDecorators")),
   };
 }
 
@@ -108,7 +111,10 @@ function sessionOptionsMatch(
   left: SessionOptions,
   right: SessionOptions
 ): boolean {
-  return stringArraysMatch(left.allowedNavigators, right.allowedNavigators);
+  return (
+    stringArraysMatch(left.allowedNavigators, right.allowedNavigators) &&
+    stringArraysMatch(left.allowedDecorators, right.allowedDecorators)
+  );
 }
 
 function createSessionDecorationKey(
@@ -279,6 +285,7 @@ async function createBibleReadingSession(
   if (defaultOptions) {
     document.transact(() => {
       optionsMap.set("allowedNavigators", defaultOptions.allowedNavigators);
+      optionsMap.set("allowedDecorators", defaultOptions.allowedDecorators);
     });
   }
 
@@ -574,6 +581,20 @@ async function createBibleReadingSession(
       return;
     }
 
+    if (
+      options.value.allowedDecorators &&
+      options.value.allowedDecorators.length > 0
+    ) {
+      if (
+        loginManager.userId.value &&
+        !options.value.allowedDecorators.includes(loginManager.userId.value)
+      ) {
+        return;
+      } else if (!options.value.allowedDecorators.includes(localConnectionId)) {
+        return;
+      }
+    }
+
     syncDecorationsFromSession();
 
     const currentDecorations = readingState.decorations.value;
@@ -638,6 +659,10 @@ async function createBibleReadingSession(
         typeof newOptions.allowedNavigators === "undefined"
           ? currentOptions.allowedNavigators
           : newOptions.allowedNavigators,
+      allowedDecorators:
+        typeof newOptions.allowedDecorators === "undefined"
+          ? currentOptions.allowedDecorators
+          : newOptions.allowedDecorators,
     };
 
     if (sessionOptionsMatch(currentOptions, nextOptions)) {
@@ -653,7 +678,20 @@ async function createBibleReadingSession(
       ) {
         optionsMap.set("allowedNavigators", nextOptions.allowedNavigators);
       }
+
+      if (
+        !stringArraysMatch(
+          currentOptions.allowedDecorators,
+          nextOptions.allowedDecorators
+        )
+      ) {
+        optionsMap.set("allowedDecorators", nextOptions.allowedDecorators);
+      }
     });
+
+    if (!sessionOptionsMatch(options.value, nextOptions)) {
+      options.value = nextOptions;
+    }
   };
 
   const dispose = () => {

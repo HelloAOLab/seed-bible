@@ -321,8 +321,10 @@ describe("SessionsManager", () => {
 
     expect(mockDocument.getMap).toHaveBeenCalledWith("options");
     expect(mockOptionsMap.set).toHaveBeenCalledWith("allowedNavigators", null);
+    expect(mockOptionsMap.set).toHaveBeenCalledWith("allowedDecorators", null);
     expect(session.options.value).toEqual({
       allowedNavigators: null,
+      allowedDecorators: null,
     });
   });
 
@@ -356,8 +358,13 @@ describe("SessionsManager", () => {
       "allowedNavigators",
       null
     );
+    expect(mockOptionsMap.set).not.toHaveBeenCalledWith(
+      "allowedDecorators",
+      null
+    );
     expect(session.options.value).toEqual({
       allowedNavigators: null,
+      allowedDecorators: null,
     });
   });
 
@@ -383,6 +390,7 @@ describe("SessionsManager", () => {
 
     expect(session.options.value).toEqual({
       allowedNavigators: ["user-1", "conn-2"],
+      allowedDecorators: null,
     });
     expect(mockOptionsMap.set).not.toHaveBeenCalled();
   });
@@ -411,6 +419,7 @@ describe("SessionsManager", () => {
 
     expect(session.options.value).toEqual({
       allowedNavigators: ["user-1", "conn-2"],
+      allowedDecorators: null,
     });
   });
 
@@ -434,6 +443,7 @@ describe("SessionsManager", () => {
     ]);
     expect(session.options.value).toEqual({
       allowedNavigators: ["user-1", "conn-2"],
+      allowedDecorators: null,
     });
   });
 
@@ -536,6 +546,81 @@ describe("SessionsManager", () => {
         preserveOnChapterChange: true,
       })
     );
+  });
+
+  it("does not sync decoration changes when the current user is not an allowed decorator", async () => {
+    (globalThis as any).configBot = {
+      id: "conn-self",
+    };
+    mockLoginManager.userId.value = "user-blocked";
+
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockOptionsMap.setEmitOnSet(true);
+    session.updateOptions({
+      allowedDecorators: ["user-allowed", "conn-self"],
+    });
+
+    mockDecorationsMap.set.mockClear();
+    mockDecorationsMap.delete.mockClear();
+    mockDocument.transact.mockClear();
+
+    session.readingState.decorateVerses(
+      "BSB",
+      "GEN",
+      1,
+      [1],
+      {
+        className: "blocked-local-decoration",
+      },
+      "decoration-blocked-user"
+    );
+
+    expect(mockDecorationsMap.set).not.toHaveBeenCalled();
+    expect(mockDecorationsMap.delete).not.toHaveBeenCalled();
+    expect(mockDocument.transact).not.toHaveBeenCalled();
+  });
+
+  it("does not sync decoration changes when the current connection is not an allowed decorator", async () => {
+    (globalThis as any).configBot = {
+      id: "conn-blocked",
+    };
+
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockOptionsMap.setEmitOnSet(true);
+    session.updateOptions({
+      allowedDecorators: ["conn-allowed"],
+    });
+
+    mockDecorationsMap.set.mockClear();
+    mockDecorationsMap.delete.mockClear();
+    mockDocument.transact.mockClear();
+
+    session.readingState.decorateVerses(
+      "BSB",
+      "GEN",
+      1,
+      [1],
+      {
+        className: "blocked-connection-decoration",
+      },
+      "decoration-blocked-connection"
+    );
+
+    expect(mockDecorationsMap.set).not.toHaveBeenCalled();
+    expect(mockDecorationsMap.delete).not.toHaveBeenCalled();
+    expect(mockDocument.transact).not.toHaveBeenCalled();
   });
 
   it("applies shared decorations from other users to the reading state", async () => {
