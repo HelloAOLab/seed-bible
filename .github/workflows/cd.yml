@@ -5,10 +5,6 @@ name: Continous Deployment
 
 on:
   push:
-    branches:
-      - "releases/**"
-      - "develop"
-      - "refactor/rebuild"
 
 jobs:
   build:
@@ -48,17 +44,18 @@ jobs:
           if-no-files-found: error
       - name: Publish SeedBible Pattern
         run: |
-          if [[ "$BRANCH_NAME" == "refactor/rebuild" ]]; then
-            PATTERN_NAME="SeedBibleRefresh";
-            pnpm pattern publish-seed-bible -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --no-save-meta --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
-          elif [[ "$BRANCH_NAME" == "develop" ]]; then
+          if [[ "$BRANCH_NAME" == "develop" ]]; then
             PATTERN_NAME="SeedBibleDev";
             pnpm pattern publish-seed-bible -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --no-save-meta --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
           elif [[ "$BRANCH_NAME" =~ ^"releases/ao.bot" ]]; then
             PATTERN_NAME=${BRANCH_NAME:9};
             pnpm pattern publish "ao.bot" -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
-          else
+          elif [[ "$BRANCH_NAME" =~ ^"releases/" ]]; then
             PATTERN_NAME=${BRANCH_NAME:9};
+            pnpm pattern publish-seed-bible -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
+          else
+            PATTERN_NAME="-branch-${BRANCH_NAME}"
+            PATTERN_NAME=$(echo "$PATTERN_NAME" | sed "s/\//_/g")
             pnpm pattern publish-seed-bible -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
           fi
         env:
