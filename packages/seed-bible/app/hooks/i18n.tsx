@@ -107,7 +107,7 @@ function loadScript(src: string): Promise<void> {
 }
 
 // Get browser language and map to supported language
-function getBrowserLanguage(): string {
+export function getBrowserLanguage(): string {
   // Use navigator.language API
   const browserLang =
     navigator.language || (navigator as any).userLanguage || "en";
