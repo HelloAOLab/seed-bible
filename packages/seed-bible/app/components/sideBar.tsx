@@ -1600,23 +1600,29 @@ function SideBar({ panelsNumber }) {
       setRenameValue("");
     };
 
-    const mobileAddTab = () => {
-      const newTab = {
-        id: uuid(),
-        taken: false,
-        data: {
-          use: "thePage",
-          type: "book",
-          book: "Genesis",
-          bookId: "GEN",
-          chapter: 1,
-          translation: "AAB",
-          shortName: "AAB",
-        },
-      };
-      addTab(newTab);
-      setActiveTab(newTab.id);
-      globalThis.UpdateTab(newTab);
+    const mobileAddTab = (e) => {
+      setOpenOnMobile(false);
+      e.preventDefault();
+      e.stopPropagation();
+      setOpenSidebar(true);
+      // setCurrentExperience(0);
+      globalThis.MakingNewTab = true;
+      // const newTab = {
+      //   id: uuid(),
+      //   taken: false,
+      //   data: {
+      //     use: "thePage",
+      //     type: "book",
+      //     book: "Genesis",
+      //     bookId: "GEN",
+      //     chapter: 1,
+      //     translation: "AAB",
+      //     shortName: "AAB",
+      //   },
+      // };
+      // addTab(newTab);
+      // setActiveTab(newTab.id);
+      // globalThis.UpdateTab(newTab);
     };
 
     return (
@@ -1860,7 +1866,7 @@ function SideBar({ panelsNumber }) {
               </button>
             )}
 
-            <button className="mobile-nav-add" onClick={mobileAddTab}>
+            <button className="mobile-nav-add" onClick={(e) => mobileAddTab(e)}>
               <span>
                 <PlusIcon />
               </span>
