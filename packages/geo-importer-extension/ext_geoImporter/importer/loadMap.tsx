@@ -1,6 +1,7 @@
 import { opentypeJs } from "https://esm.helloao.org/painter-vendor-IGDNTFOW.js";
 // import type { GeoJSON, Feature } from "geojson";
 import { z } from "zod";
+import { GEOJSON_GEOMETRY_HANDLERS } from "ext_geoImporter.importer.geometryHandlers";
 
 export const GEO_JSON_PROPERTIES = z.looseObject({
   id: z.string(),
@@ -162,14 +163,10 @@ async function parseFeature(feature: GeoJsonFeature, i = 0, showName = false) {
   if (type != null) {
     if (type == "Feature") {
       if (feature.geometry != null && feature.geometry.coordinates) {
-        if (thisBot.tags[feature.geometry.type] != null) {
-          eval(
-            "thisBot." +
-              feature.geometry.type +
-              "(" +
-              JSON.stringify(feature) +
-              ")"
-          );
+        const geometryHandler =
+          GEOJSON_GEOMETRY_HANDLERS[feature.geometry.type];
+        if (geometryHandler) {
+          geometryHandler(feature);
           if (showName) {
             const currElements = getBots(byTag("uid", feature.properties.id));
             if (currElements.length > 0) {

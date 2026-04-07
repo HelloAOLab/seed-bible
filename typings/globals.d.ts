@@ -10,6 +10,7 @@ declare global {
   type SharedMap<T> = import("./AuxLibraryDefinitions").SharedMap<T>;
   type ConnectionInfo = import("./AuxLibraryDefinitions").ConnectionInfo;
   type FocusOnOptions = import("./AuxLibraryDefinitions").FocusOnOptions;
+  type BotTags = import("./AuxLibraryDefinitions").BotTags;
 
   // Your other specific globals (optional, for better intellisense)
   const that: any;

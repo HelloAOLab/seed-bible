@@ -21,32 +21,17 @@
     "paths": {
       "@packages/*": ["./packages/*"],
       "https://esm.helloao.org/vendor-3PZUL55I.js": ["./lib/vendor.ts"],
-      "https://esm.helloao.org/painter-vendor-IGDNTFOW.js": [
-        "./lib/painter-vendor.ts"
-      ],
       "ext_geoImporter.importer.closeMiniMapPortal": [
         "./packages/geo-importer-extension/ext_geoImporter/importer/closeMiniMapPortal.tsx"
       ],
       "ext_geoImporter.importer.createCloseButton": [
         "./packages/geo-importer-extension/ext_geoImporter/importer/createCloseButton.tsx"
       ],
-      "ext_geoImporter.importer.focusOnWithCatch": [
-        "./packages/geo-importer-extension/ext_geoImporter/importer/focusOnWithCatch.tsx"
-      ],
-      "ext_geoImporter.importer.GeometryCollection": [
-        "./packages/geo-importer-extension/ext_geoImporter/importer/GeometryCollection.tsx"
-      ],
-      "ext_geoImporter.importer.interfaces": [
-        "./packages/geo-importer-extension/ext_geoImporter/importer/interfaces.tsx"
-      ],
-      "ext_geoImporter.importer.LineString": [
-        "./packages/geo-importer-extension/ext_geoImporter/importer/LineString.tsx"
+      "ext_geoImporter.importer.geometryHandlers": [
+        "./packages/geo-importer-extension/ext_geoImporter/importer/geometryHandlers.ts"
       ],
       "ext_geoImporter.importer.loadMap": [
         "./packages/geo-importer-extension/ext_geoImporter/importer/loadMap.tsx"
-      ],
-      "ext_geoImporter.importer.MultiLineString": [
-        "./packages/geo-importer-extension/ext_geoImporter/importer/MultiLineString.tsx"
       ],
       "ext_geoImporter.importer.onEggHatch": [
         "./packages/geo-importer-extension/ext_geoImporter/importer/onEggHatch.tsx"
@@ -56,12 +41,6 @@
       ],
       "ext_geoImporter.importer.onInstJoined": [
         "./packages/geo-importer-extension/ext_geoImporter/importer/onInstJoined.tsx"
-      ],
-      "ext_geoImporter.importer.Point": [
-        "./packages/geo-importer-extension/ext_geoImporter/importer/Point.tsx"
-      ],
-      "ext_geoImporter.importer.Polygon": [
-        "./packages/geo-importer-extension/ext_geoImporter/importer/Polygon.tsx"
       ],
       "ext_locations.geojson": [
         "./packages/locations-extension/ext_locations/geojson.tsx"
