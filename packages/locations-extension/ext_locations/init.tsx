@@ -1,6 +1,7 @@
 import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { computed, signal } from "@preact/signals";
 import { registerExtension } from "seed-bible.app.api";
+import { getBoundsForGeoJson } from "ext_locations.geojson";
 
 interface PlaceData {
   place: string;
@@ -83,9 +84,39 @@ registerExtension({
       }
     };
 
+    const createLabelForGeoJson = (place: PlaceData, geojson: unknown) => {
+      destroy(getBots("geojson_label", true));
+
+      const bounds = getBoundsForGeoJson(geojson);
+
+      if (!bounds) {
+        console.warn(
+          "Could not get bounds for GeoJSON, skipping label creation"
+        );
+        return;
+      }
+
+      const labelSize = bounds.dh ?? 700;
+
+      create({
+        space: "tempLocal",
+        form: "sprite",
+        pointable: false,
+        orientationMode: "billboard",
+        geojson_label: true,
+        map: true,
+        mapX: bounds.coordinates[0],
+        mapY: bounds.coordinates[1],
+        mapZ: 20,
+        scaleZ: 1.1,
+        scale: labelSize,
+        label: place.place,
+      });
+    };
+
     yield context.tools.registerVerseToolbarTool({
       id: "show-locations",
-      title: "Show locations",
+      title: "Locations",
       icon: () => <span>📍</span>,
       isVisible: () => foundPlaces.value.length > 0,
       onSelect: async () => {
@@ -120,6 +151,8 @@ registerExtension({
         if (needsFixup) {
           fixGeoJsonCoordinates(data.data);
         }
+
+        createLabelForGeoJson(firstPlace, data.data);
 
         existingLayerId.value = await os.addMapLayer("map", {
           type: "geojson",
