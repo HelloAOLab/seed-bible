@@ -253,33 +253,40 @@ async function forceFocus(props: {
 
 function generateSVGURLFromText(label: string, fontSize = 400) {
   return new Promise((resolve, reject) => {
-    opentypeJs.load(tags.font, function (err: unknown, font: opentypeJs.Font) {
-      if (err) {
-        reject(err);
-        return;
-      }
-      const path = font.getPath(label, 0, 2000, fontSize); // (text, x, y, fontSize)
-      const svgPath = path.toPathData();
-      const bbox = path.getBoundingBox();
+    opentypeJs.load(
+      tags.font,
+      function (err: unknown, font: opentypeJs.Font | undefined) {
+        if (err) {
+          reject(err);
+          return;
+        }
+        if (!font) {
+          reject(new Error("Font failed to load"));
+          return;
+        }
+        const path = font.getPath(label, 0, 2000, fontSize); // (text, x, y, fontSize)
+        const svgPath = path.toPathData(2);
+        const bbox = path.getBoundingBox();
 
-      const svgWidth = 5000;
-      const svgHeight = 2500;
-      const dx = (svgWidth - (bbox.x2 - bbox.x1)) / 2 - bbox.x1;
-      const dy = (svgHeight - (bbox.y2 - bbox.y1)) / 2 - bbox.y1;
+        const svgWidth = 5000;
+        const svgHeight = 2500;
+        const dx = (svgWidth - (bbox.x2 - bbox.x1)) / 2 - bbox.x1;
+        const dy = (svgHeight - (bbox.y2 - bbox.y1)) / 2 - bbox.y1;
 
-      const newSvg = `
+        const newSvg = `
             <svg viewBox="0 0 ${svgWidth} ${svgHeight}" width="${svgWidth}" height="${svgHeight}" shape-rendering="geometricPrecision" fill="red" xmlns="http://www.w3.org/2000/svg">
                 <path transform="translate(${dx}, ${dy})" fill-rule="evenodd" clip-rule="evenodd" d="${svgPath}" fill="white" stroke="black" stroke-width="15" stroke-linejoin="round"/>
             </svg>`;
-      const blob = new Blob([newSvg], { type: "image/svg+xml" });
-      blob.arrayBuffer().then((arrayBuffer) => {
-        const url = bytes.toBase64Url(
-          new Uint8Array(arrayBuffer),
-          "image/svg+xml"
-        );
-        resolve(url);
-      });
-    });
+        const blob = new Blob([newSvg], { type: "image/svg+xml" });
+        blob.arrayBuffer().then((arrayBuffer) => {
+          const url = bytes.toBase64Url(
+            new Uint8Array(arrayBuffer),
+            "image/svg+xml"
+          );
+          resolve(url);
+        });
+      }
+    );
   });
 }
 
