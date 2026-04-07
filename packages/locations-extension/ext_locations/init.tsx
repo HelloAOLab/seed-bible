@@ -114,75 +114,53 @@ registerExtension({
       });
     };
 
+    const showPlaceOnMap = async (place: PlaceData) => {
+      console.log("Show place!", place);
+      context.panes.openPane({
+        id: "location-map",
+        type: "detached",
+        mapPortal: "map",
+      });
+      mapPortalBot.tags.mapPortalKind = "plane";
+      mapPortalBot.tags.mapPortalGridKind = "plane";
+
+      const [url, needsFixup] = getPlaceGeoJsonUrl(place);
+      const data = await web.get(url);
+
+      if (data.status !== 200) {
+        os.toast("Something went wrong while retrieving the data");
+        return;
+      }
+
+      if (needsFixup) {
+        fixGeoJsonCoordinates(data.data);
+      }
+
+      createLabelForGeoJson(place, data.data);
+
+      existingLayerId.value = await os.addMapLayer("map", {
+        type: "geojson",
+        data: data.data,
+      });
+    };
+
     yield context.tools.registerVerseToolbarTool({
       id: "show-locations",
       title: "Locations",
       icon: () => <span>📍</span>,
       isVisible: () => foundPlaces.value.length > 0,
-      onSelect: async () => {
-        console.log("Show locations!", foundPlaces.value);
-
-        const firstPlace = foundPlaces.value[0];
-        if (!firstPlace) {
-          os.toast("No location found in the selected verses.");
-          return;
-        }
-
-        if (existingLayerId.value) {
-          await os.removeMapLayer(existingLayerId.value);
-        }
-
-        context.panes.openPane({
-          id: "location-map",
-          type: "detached",
-          mapPortal: "map",
-        });
-        mapPortalBot.tags.mapPortalKind = "plane";
-        mapPortalBot.tags.mapPortalGridKind = "plane";
-
-        const [url, needsFixup] = getPlaceGeoJsonUrl(firstPlace);
-        const data = await web.get(url);
-
-        if (data.status !== 200) {
-          os.toast("Something went wrong while retrieving the data");
-          return;
-        }
-
-        if (needsFixup) {
-          fixGeoJsonCoordinates(data.data);
-        }
-
-        createLabelForGeoJson(firstPlace, data.data);
-
-        existingLayerId.value = await os.addMapLayer("map", {
-          type: "geojson",
-          data: data.data,
-        });
+      getItems: (context) => {
+        return foundPlaces.value.map((place) => ({
+          id: `show-location-${place.place}`,
+          title: `Show ${place.place} on map`,
+          icon: () => <span></span>,
+          onSelect: async () => {
+            await showPlaceOnMap(place);
+          },
+        }));
       },
       priority: 100,
     });
-
-    // yield effect(() => {
-    //     const unregisterTools: (() => void)[] = [];
-    //     for(const placeData of foundPlaces.value) {
-    //         const unregister = context.tools.registerVerseToolbarTool({
-    //             id: `show-location-${placeData.place}`,
-    //             title: `Show ${placeData.place} on map`,
-    //             icon: () => <span>📍</span>,
-    //             onSelect: async () => {
-    //                 console.log('Show place!', placeData);
-    //             },
-    //             priority: 100,
-    //         });
-    //         unregisterTools.push(unregister);
-    //     }
-
-    //     return () => {
-    //         for(const unregister of unregisterTools) {
-    //             unregister();
-    //         }
-    //     };
-    // });
 
     return {
       findLocationsInText,
