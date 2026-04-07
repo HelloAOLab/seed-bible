@@ -85,6 +85,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     () => isSmallScreen.value && hasVerseSelection.value
   );
   const isMoreMenuOpen = useSignal(false);
+  const selectedToolbarToolId = useSignal<string | null>(null);
+  const selectedVerseToolId = useSignal<string | null>(null);
+  const selectedOverflowToolId = useSignal<string | null>(null);
 
   const previousChapterTool = useComputed(
     () => tools.value.find((tool) => tool.id === "previous-chapter") ?? null
@@ -194,6 +197,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       openSidebarTool.value.disabled.value
                     }
                     onClick={() => {
+                      selectedToolbarToolId.value = null;
                       openSidebarTool.value?.onSelect();
                     }}
                     className="sb-reader-toolbar-button"
@@ -219,6 +223,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       openSelectorTool.value.disabled.value
                     }
                     onClick={() => {
+                      selectedToolbarToolId.value = null;
                       openSelectorTool.value?.onSelect();
                     }}
                     className="sb-reader-toolbar-button"
@@ -252,18 +257,66 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           {overflowTools.value.map((tool) => {
                             const ToolIcon = tool.icon;
                             return tool.visible.value ? (
-                              <button
-                                key={tool.id}
-                                disabled={tool.disabled.value}
-                                onClick={() => {
-                                  tool.onSelect();
-                                  isMoreMenuOpen.value = false;
-                                }}
-                                className="sb-reader-toolbar-more-item"
-                              >
-                                <ToolIcon />
-                                <span>{translateTitle(tool.title)}</span>
-                              </button>
+                              <div key={tool.id}>
+                                <button
+                                  disabled={tool.disabled.value}
+                                  onClick={() => {
+                                    const menuItems = tool.getItems?.() ?? [];
+                                    if (menuItems.length > 0) {
+                                      selectedOverflowToolId.value =
+                                        selectedOverflowToolId.value === tool.id
+                                          ? null
+                                          : tool.id;
+                                      return;
+                                    }
+
+                                    selectedOverflowToolId.value = null;
+                                    tool.onSelect();
+                                    isMoreMenuOpen.value = false;
+                                  }}
+                                  className="sb-reader-toolbar-more-item"
+                                >
+                                  <ToolIcon />
+                                  <span>{translateTitle(tool.title)}</span>
+                                </button>
+                                {selectedOverflowToolId.value === tool.id &&
+                                  (() => {
+                                    const menuItems =
+                                      tool
+                                        .getItems?.()
+                                        .filter((item) => item.visible.value) ??
+                                      [];
+                                    if (menuItems.length === 0) {
+                                      return null;
+                                    }
+
+                                    return (
+                                      <div className="sb-tool-context-menu sb-tool-context-menu-inline">
+                                        {menuItems.map((item) => {
+                                          const MenuItemIcon = item.icon;
+                                          return (
+                                            <button
+                                              key={item.id}
+                                              disabled={item.disabled.value}
+                                              onClick={() => {
+                                                item.onSelect();
+                                                selectedOverflowToolId.value =
+                                                  null;
+                                                isMoreMenuOpen.value = false;
+                                              }}
+                                              className="sb-tool-context-menu-item"
+                                            >
+                                              <MenuItemIcon />
+                                              <span>
+                                                {translateTitle(item.title)}
+                                              </span>
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    );
+                                  })()}
+                              </div>
                             ) : null;
                           })}
                         </div>
@@ -275,11 +328,25 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             ) : (
               tools.value.map((tool) => {
                 const ToolIcon = tool.icon;
+                const menuItems =
+                  tool.getItems?.().filter((item) => item.visible.value) ?? [];
+                const hasMenuItems = menuItems.length > 0;
                 return tool.visible.value ? (
                   <div key={tool.id} className="sb-reader-toolbar-item">
                     <button
                       disabled={tool.disabled.value}
-                      onClick={tool.onSelect}
+                      onClick={() => {
+                        if (hasMenuItems) {
+                          selectedToolbarToolId.value =
+                            selectedToolbarToolId.value === tool.id
+                              ? null
+                              : tool.id;
+                          return;
+                        }
+
+                        selectedToolbarToolId.value = null;
+                        tool.onSelect();
+                      }}
                       className="sb-reader-toolbar-button"
                     >
                       <ToolIcon />
@@ -287,6 +354,28 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         {translateTitle(tool.title)}
                       </span>
                     </button>
+                    {hasMenuItems &&
+                      selectedToolbarToolId.value === tool.id && (
+                        <div className="sb-tool-context-menu">
+                          {menuItems.map((item) => {
+                            const MenuItemIcon = item.icon;
+                            return (
+                              <button
+                                key={item.id}
+                                disabled={item.disabled.value}
+                                onClick={() => {
+                                  item.onSelect();
+                                  selectedToolbarToolId.value = null;
+                                }}
+                                className="sb-tool-context-menu-item"
+                              >
+                                <MenuItemIcon />
+                                <span>{translateTitle(item.title)}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                   </div>
                 ) : null;
               })
@@ -310,11 +399,25 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           <div className="sb-verse-toolbar-tools">
             {verseToolbarTools.value.map((tool) => {
               const ToolIcon = tool.icon;
+              const menuItems =
+                tool.getItems?.().filter((item) => item.visible.value) ?? [];
+              const hasMenuItems = menuItems.length > 0;
               return tool.visible.value ? (
                 <div key={tool.id} className="sb-reader-toolbar-item">
                   <button
                     disabled={tool.disabled.value}
-                    onClick={tool.onSelect}
+                    onClick={() => {
+                      if (hasMenuItems) {
+                        selectedVerseToolId.value =
+                          selectedVerseToolId.value === tool.id
+                            ? null
+                            : tool.id;
+                        return;
+                      }
+
+                      selectedVerseToolId.value = null;
+                      tool.onSelect();
+                    }}
                     className="sb-reader-toolbar-button"
                   >
                     <ToolIcon />
@@ -322,6 +425,27 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       {translateTitle(tool.title)}
                     </span>
                   </button>
+                  {hasMenuItems && selectedVerseToolId.value === tool.id && (
+                    <div className="sb-tool-context-menu">
+                      {menuItems.map((item) => {
+                        const MenuItemIcon = item.icon;
+                        return (
+                          <button
+                            key={item.id}
+                            disabled={item.disabled.value}
+                            onClick={() => {
+                              item.onSelect();
+                              selectedVerseToolId.value = null;
+                            }}
+                            className="sb-tool-context-menu-item"
+                          >
+                            <MenuItemIcon />
+                            <span>{translateTitle(item.title)}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               ) : null;
             })}

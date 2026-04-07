@@ -404,6 +404,7 @@ button {
 
 .sb-empty-pane-toolbar-item {
   flex: 0 0 auto;
+  position: relative;
 }
 
 .sb-empty-pane-toolbar-button {
@@ -486,6 +487,7 @@ button {
 
 .sb-below-reader-toolbar-item {
   flex: 0 0 auto;
+  position: relative;
 }
 
 .sb-below-reader-toolbar-button {
@@ -798,6 +800,46 @@ button {
 
 .sb-reader-toolbar-more-item:hover {
   background: var(--sb-secondary-color);
+}
+
+.sb-tool-context-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  min-width: 180px;
+  border-radius: var(--sb-reader-toolbar-border-radius);
+  border: var(--sb-reader-toolbar-border);
+  background: var(--sb-reader-toolbar-background);
+  box-shadow: var(--sb-reader-toolbar-box-shadow);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 2;
+}
+
+.sb-tool-context-menu-item {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.sb-tool-context-menu-item:hover {
+  background: var(--sb-secondary-color);
+}
+
+.sb-tool-context-menu-inline {
+  position: static;
+  min-width: 0;
+  margin-top: 4px;
 }
 
 .sb-reader-toolbar-floating-button {
