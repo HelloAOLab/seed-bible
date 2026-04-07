@@ -1,15 +1,21 @@
 import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
-import { computed, effect, untracked } from "@preact/signals";
+import { computed, signal } from "@preact/signals";
 import { registerExtension } from "seed-bible.app.api";
+
+interface PlaceData {
+  place: string;
+  geojson: string;
+}
 
 registerExtension({
   id: "ext_locations",
   init: function* (context) {
+    const existingLayerId = signal<string | null>(null);
+
     const findLocationsInText = (text: string) => {
       text = text.toLowerCase();
       const foundPlaces = [];
-      const locations: Record<string, { place: string; geojson: string }> =
-        tags.locations;
+      const locations: Record<string, PlaceData> = tags.locations;
       const words = text.split(/[^\w]+/);
       console.log("words", words);
       for (const word of words) {
@@ -23,9 +29,7 @@ registerExtension({
       return foundPlaces;
     };
 
-    const findLocationsInVerses = (
-      verses: ChapterVerse[]
-    ): { place: string; geojson: string }[] => {
+    const findLocationsInVerses = (verses: ChapterVerse[]): PlaceData[] => {
       let text = "";
       for (const verse of verses) {
         for (const content of verse.content) {
@@ -40,6 +44,20 @@ registerExtension({
       return findLocationsInText(text);
     };
 
+    const getPlaceGeoJsonUrl = (place: PlaceData) => {
+      if (place.place === place.geojson) {
+        return [
+          `https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/${place.geojson}.geojson`,
+          true,
+        ] as const;
+      } else {
+        return [
+          `https://raw.githubusercontent.com/openbibleinfo/Bible-Geocoding-Data/main/geometry/${place.geojson}.geojson`,
+          false,
+        ] as const;
+      }
+    };
+
     const foundPlaces = computed(() => {
       const readingState = context.app.currentReadingState.value;
 
@@ -51,6 +69,20 @@ registerExtension({
       return findLocationsInVerses(selectedVerses.map((v) => v.verse));
     });
 
+    const fixGeoJsonCoordinates = (geoJson: any) => {
+      if (geoJson.type === "FeatureCollection") {
+        for (const feature of geoJson.features) {
+          fixGeoJsonCoordinates(feature);
+        }
+      } else if (geoJson.type === "Feature") {
+        const coords = geoJson.geometry.coordinates;
+        geoJson.geometry.coordinates = [
+          parseFloat(coords[1]),
+          parseFloat(coords[0]),
+        ];
+      }
+    };
+
     yield context.tools.registerVerseToolbarTool({
       id: "show-locations",
       title: "Show locations",
@@ -58,6 +90,41 @@ registerExtension({
       isVisible: () => foundPlaces.value.length > 0,
       onSelect: async () => {
         console.log("Show locations!", foundPlaces.value);
+
+        const firstPlace = foundPlaces.value[0];
+        if (!firstPlace) {
+          os.toast("No location found in the selected verses.");
+          return;
+        }
+
+        if (existingLayerId.value) {
+          await os.removeMapLayer(existingLayerId.value);
+        }
+
+        context.panes.openPane({
+          id: "location-map",
+          type: "detached",
+          mapPortal: "map",
+        });
+        mapPortalBot.tags.mapPortalKind = "plane";
+        mapPortalBot.tags.mapPortalGridKind = "plane";
+
+        const [url, needsFixup] = getPlaceGeoJsonUrl(firstPlace);
+        const data = await web.get(url);
+
+        if (data.status !== 200) {
+          os.toast("Something went wrong while retrieving the data");
+          return;
+        }
+
+        if (needsFixup) {
+          fixGeoJsonCoordinates(data.data);
+        }
+
+        existingLayerId.value = await os.addMapLayer("map", {
+          type: "geojson",
+          data: data.data,
+        });
       },
       priority: 100,
     });
