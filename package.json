@@ -55,6 +55,7 @@
     "@jest/environment": "^30.3.0",
     "@preact/signals": "^2.8.2",
     "@preact/signals-debug": "^1.4.2",
+    "@types/geojson": "^7946.0.16",
     "@types/jest": "30.0.0",
     "@types/node": "^24.5.2",
     "@types/prompts": "^2.4.9",

@@ -1,74 +1,125 @@
 import { opentypeJs } from "https://esm.helloao.org/painter-vendor-IGDNTFOW.js";
-import type { GeoJSON, Feature } from "https://esm.run/@types/geojson";
-import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
-import focusOnWithCatch from "ext_geoImporter.importer.focusOnWithCatch";
+// import type { GeoJSON, Feature } from "geojson";
+import z from "zod";
 
-const file = that.file;
+export const GEO_JSON_PROPERTIES = z.looseObject({
+  id: z.string(),
+});
 
-let geoObj: GeoJSON;
-try {
-  if (typeof file === "object") {
-    geoObj = file;
+export const GEO_JSON_FEATURE_SCHEMA = z.object({
+  type: z.literal("Feature"),
+  geometry: z.object({
+    type: z.string(),
+    coordinates: z.array(z.coerce.number()).optional(),
+  }),
+  bbox: z.array(z.coerce.number()).length(4).optional(),
+  properties: GEO_JSON_PROPERTIES,
+});
+
+export const GEO_JSON_FEATURE_COLLECTION_SCHEMA = z.object({
+  type: z.literal("FeatureCollection"),
+  features: z.array(GEO_JSON_FEATURE_SCHEMA),
+  bbox: z.array(z.coerce.number()).length(4).optional(),
+  properties: GEO_JSON_PROPERTIES.nullable().optional(),
+  metadata: z
+    .looseObject({
+      name: z.string().optional().nullable(),
+    })
+    .optional()
+    .nullable(),
+});
+
+export const GEO_JSON_SCHEMA = z.discriminatedUnion("type", [
+  GEO_JSON_FEATURE_SCHEMA,
+  GEO_JSON_FEATURE_COLLECTION_SCHEMA,
+]);
+
+type GeoJsonFeatureCollection = z.infer<
+  typeof GEO_JSON_FEATURE_COLLECTION_SCHEMA
+>;
+type GeoJsonFeature = z.infer<typeof GEO_JSON_FEATURE_SCHEMA>;
+
+export const focusOnWithCatch = async (props: {
+  bot: Bot;
+  position?: { x: number; y: number; z?: number };
+  options?: FocusOnOptions;
+}) => {
+  const { bot, position, options } = props;
+  if (bot) {
+    try {
+      await os.focusOn(bot, {
+        ...options,
+      });
+    } catch {
+      os.log("Focus inturrupted by user");
+    }
   } else {
-    geoObj = JSON.parse(file);
+    try {
+      await os.focusOn(position || { x: 0, y: 0, z: 0 }, {
+        ...options,
+      });
+    } catch {
+      os.log("Focus inturrupted by user");
+    }
   }
-} catch (e) {
-  os.log("geoJSONImporter - Object is not JSON serializable. Details: \n", e);
-  const enc = new TextDecoder("utf-8");
-  const parsedString = enc.decode(file);
-  geoObj = JSON.parse(parsedString);
+};
+
+// const file = that.file;
+
+export async function loadMap(geojson: unknown) {
+  const geoObj = GEO_JSON_SCHEMA.parse(geojson);
+
+  miniMapPortalBot.tags.mapPortalBasemap = thisBot.tags.GlobalBaseMap;
+  miniMapPortalBot.tags.mapPortalKind = "plane";
+  miniMapPortalBot.tags.mapPortalGridKind = "plane";
+
+  mapPortalBot.tags.mapPortalBasemap = thisBot.tags.GlobalBaseMap;
+  mapPortalBot.tags.mapPortalKind = "plane";
+  mapPortalBot.tags.mapPortalGridKind = "plane";
+  if (!configBot.tags.miniMapPortal) {
+    await animateTag(miniMapPortalBot, {
+      fromValue: {
+        miniPortalWidth: 0.1,
+        miniPortalHeight: 0.2,
+      },
+      toValue: {
+        miniPortalWidth: 1,
+        miniPortalHeight: 1,
+      },
+      duration: 1,
+    });
+    await os.sleep(500);
+    configBot.tags.miniMapPortal = tags.targetDim;
+    miniMapPortalBot.tags.miniPortalWidth = 1;
+    miniMapPortalBot.tags.miniPortalHeight = 1;
+    miniMapPortalBot.tags.miniPortalResizable = false;
+
+    configBot.tags.mapPortal = tags.targetDim;
+  }
+
+  os.log("geoObj: ", geoObj);
+
+  if (!that?.openOverlay) {
+    whisper(thisBot, "createCloseButton", { ...that });
+  }
+
+  if (geoObj.type == "FeatureCollection") {
+    parseFeatureCollection(geoObj);
+  } else if (geoObj.type == "Feature") {
+    parseFeature(geoObj, 0, true);
+  } else {
+    return;
+  }
 }
 
-miniMapPortalBot.tags.mapPortalBasemap = thisBot.tags.GlobalBaseMap;
-miniMapPortalBot.tags.mapPortalKind = "plane";
-miniMapPortalBot.tags.mapPortalGridKind = "plane";
-
-mapPortalBot.tags.mapPortalBasemap = thisBot.tags.GlobalBaseMap;
-mapPortalBot.tags.mapPortalKind = "plane";
-mapPortalBot.tags.mapPortalGridKind = "plane";
-if (!configBot.tags.miniMapPortal) {
-  await animateTag(miniMapPortalBot, {
-    fromValue: {
-      miniPortalWidth: 0.1,
-      miniPortalHeight: 0.2,
-    },
-    toValue: {
-      miniPortalWidth: 1,
-      miniPortalHeight: 1,
-    },
-    duration: 1,
-  });
-  await os.sleep(500);
-  configBot.tags.miniMapPortal = tags.targetDim;
-  miniMapPortalBot.tags.miniPortalWidth = 1;
-  miniMapPortalBot.tags.miniPortalHeight = 1;
-  miniMapPortalBot.tags.miniPortalResizable = false;
-
-  configBot.tags.mapPortal = tags.targetDim;
-}
-
-os.log("geoObj: ", geoObj);
-
-if (!that?.openOverlay) {
-  whisper(thisBot, "createCloseButton", { ...that });
-}
-
-if (geoObj.type == "FeatureCollection") {
-  parseFeatureCollection(geoObj);
-} else if (geoObj.type == "Feature") {
-  parseFeature(geoObj, 0, true);
-} else {
-  return;
-}
-
-async function parseFeatureCollection(geoObj: GeoJSON) {
+async function parseFeatureCollection(geoObj: GeoJsonFeatureCollection) {
   // Parse features
   if (geoObj.features != null) {
     const features = geoObj.features;
     if (features.length > 0) {
-      for (let i = 0; i < features.length; i++) {
-        const feature = features[i];
-        parseFeature(feature, i);
+      let i = 0;
+      for (const feature of features) {
+        parseFeature(feature, i++);
       }
     } else {
       os.log("geoJSONImporter - No features found within geoJSON");
@@ -82,25 +133,25 @@ async function parseFeatureCollection(geoObj: GeoJSON) {
     const meta = geoObj.metadata;
     const label = meta.name;
 
-    if (geoObj.bbox != null) {
+    if (geoObj.bbox != null && label) {
       const currElements = getBots(byTag("uid", label));
       if (currElements.length > 0) {
         destroy(currElements);
       }
       const bbox = geoObj.bbox;
       os.log("bbox: ", bbox);
-      const dx = angularDifference(bbox[0], bbox[2]);
-      const dy = angularDifference(bbox[1], bbox[3]);
+      const dx = angularDifference(bbox[0]!, bbox[2]!);
+      const dy = angularDifference(bbox[1]!, bbox[3]!);
       const dh = Math.sqrt(dx * dx + dy * dy);
-      const xPos = bbox[2] + dx * 0.5;
-      const yPos = bbox[3] + dy * 0.5;
+      const xPos = bbox[2]! + dx * 0.5;
+      const yPos = bbox[3]! + dy * 0.5;
 
       const zoomValue2 = mapRange(dh, 0.0, 1.0, 0.0, 500000);
       const elem = await createLabelElement({
         label: label,
         labelSize: dh * 5000.0,
-        xPos: parseFloat(xPos) + 0.000002 * dh * 500.0,
-        yPos: parseFloat(yPos),
+        xPos: xPos + 0.000002 * dh * 500.0,
+        yPos: yPos,
         zPos: 20,
         zoom: 0,
       });
@@ -112,11 +163,11 @@ async function parseFeatureCollection(geoObj: GeoJSON) {
   }
 }
 
-async function parseFeature(feature: Feature, i = 0, showName = false) {
+async function parseFeature(feature: GeoJsonFeature, i = 0, showName = false) {
   const type = feature.type;
   if (type != null) {
     if (type == "Feature") {
-      if (feature.geometry != null) {
+      if (feature.geometry != null && feature.geometry.coordinates) {
         if (thisBot.tags[feature.geometry.type] != null) {
           eval(
             "thisBot." +
@@ -133,8 +184,8 @@ async function parseFeature(feature: Feature, i = 0, showName = false) {
             const elem = await createLabelElement({
               label: feature.properties.id,
               labelSize: 700,
-              xPos: parseFloat(feature.geometry.coordinates[1]) + 0.000002 * 50,
-              yPos: parseFloat(feature.geometry.coordinates[0]),
+              xPos: feature.geometry.coordinates[1]! + 0.000002 * 50,
+              yPos: feature.geometry.coordinates[0]!,
               zPos: 10,
               zoom: 50000,
             });

@@ -21,6 +21,9 @@
     "paths": {
       "@packages/*": ["./packages/*"],
       "https://esm.helloao.org/vendor-3PZUL55I.js": ["./lib/vendor.ts"],
+      "https://esm.helloao.org/painter-vendor-IGDNTFOW.js": [
+        "./lib/painter-vendor.ts"
+      ],
       "ext_geoImporter.importer.closeMiniMapPortal": [
         "./packages/geo-importer-extension/ext_geoImporter/importer/closeMiniMapPortal.tsx"
       ],

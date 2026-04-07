@@ -1,5 +1,3 @@
-import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
-
 const feature = that;
 const geometry = feature.geometry;
 const landOrWater = feature.properties.land_or_water;
