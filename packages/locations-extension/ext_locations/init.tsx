@@ -1,30 +1,12 @@
+import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { computed, effect, untracked } from "@preact/signals";
 import { registerExtension } from "seed-bible.app.api";
 
 registerExtension({
   id: "ext_locations",
   init: function* (context) {
-    const foundPlaces = computed(() => {
-      const readingState = context.app.currentReadingState.value;
-
-      if (!readingState) {
-        return [];
-      }
-
-      const selectedVerses = readingState.tab.readingState.selectedVerses.value;
-
-      let text = "";
-      for (const selectedVerse of selectedVerses) {
-        for (const content of selectedVerse.verse.content) {
-          if (typeof content === "string") {
-            text += content;
-          } else if ("text" in content) {
-            text += content.text;
-          }
-        }
-      }
+    const findLocationsInText = (text: string) => {
       text = text.toLowerCase();
-
       const foundPlaces = [];
       const locations: Record<string, { place: string; geojson: string }> =
         tags.locations;
@@ -39,6 +21,34 @@ registerExtension({
       }
 
       return foundPlaces;
+    };
+
+    const findLocationsInVerses = (
+      verses: ChapterVerse[]
+    ): { place: string; geojson: string }[] => {
+      let text = "";
+      for (const verse of verses) {
+        for (const content of verse.content) {
+          if (typeof content === "string") {
+            text += content;
+          } else if ("text" in content) {
+            text += content.text;
+          }
+        }
+      }
+
+      return findLocationsInText(text);
+    };
+
+    const foundPlaces = computed(() => {
+      const readingState = context.app.currentReadingState.value;
+
+      if (!readingState) {
+        return [];
+      }
+
+      const selectedVerses = readingState.tab.readingState.selectedVerses.value;
+      return findLocationsInVerses(selectedVerses.map((v) => v.verse));
     });
 
     yield context.tools.registerVerseToolbarTool({
@@ -73,5 +83,11 @@ registerExtension({
     //         }
     //     };
     // });
+
+    return {
+      findLocationsInText,
+      findLocationsInVerses,
+      foundPlaces,
+    };
   },
 });
