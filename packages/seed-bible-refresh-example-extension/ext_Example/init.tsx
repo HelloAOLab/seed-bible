@@ -37,27 +37,47 @@ registerExtension({
       id: "my-verse-tool",
       title: "My Verse Tool",
       icon: () => <span>VERSE!</span>,
-      onSelect: (context) => {
-        console.log("Example verse tool selected with context:", context);
-        console.log(
-          "Selected verse:",
-          context.readingState.selectedVerses.value
-        );
-        const id = context.readingState.decorateVerses(
-          context.readingState.translationId.value,
-          context.readingState.bookId.value!,
-          context.readingState.chapterNumber.value,
-          context.readingState.selectedVerses.value.map((v) => v.verse.number),
-          {
-            style: {
-              backgroundColor: "#bf7bdf",
-              textEmphasis: "sesame green",
-            },
-          }
-        );
+      // onSelect: (context) => {
+      //   console.log("Example verse tool selected with context:", context);
+      //   console.log(
+      //     "Selected verse:",
+      //     context.readingState.selectedVerses.value
+      //   );
+      //   const id = context.readingState.decorateVerses(
+      //     context.readingState.translationId.value,
+      //     context.readingState.bookId.value!,
+      //     context.readingState.chapterNumber.value,
+      //     context.readingState.selectedVerses.value.map((v) => v.verse.number),
+      //     {
+      //       style: {
+      //         backgroundColor: "#bf7bdf",
+      //         textEmphasis: "sesame green",
+      //       },
+      //     }
+      //   );
 
-        console.log("decoration id:", id);
-      },
+      //   console.log("decoration id:", id);
+      // },
+      getItems: (context) => [
+        {
+          id: "item-1",
+          icon: () => <span>ITEM 1</span>,
+          title: "Item 1",
+          onSelect: () => {
+            console.log("Item 1 clicked with context:", context);
+            os.toast("Item 1 clicked!");
+          },
+        },
+        {
+          id: "item-2",
+          icon: () => <span>ITEM 2</span>,
+          title: "Item 2",
+          onSelect: () => {
+            console.log("Item 2 clicked with context:", context);
+            os.toast("Item 2 clicked!");
+          },
+        },
+      ],
       priority: 100,
     });
 

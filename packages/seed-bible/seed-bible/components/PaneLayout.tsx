@@ -188,6 +188,7 @@ function EmptyPaneToolbar({
   pane: Pane;
   tabs: TabsManager;
 }) {
+  const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
   const tools = toolsManager.getEmptyPaneTools({
     selectorState,
     panesManager,
@@ -209,12 +210,23 @@ function EmptyPaneToolbar({
       {tools.map((tool) => {
         const title = translateTitle(tool.title);
         const ToolIcon = tool.icon;
+        const menuItems =
+          tool.getItems?.().filter((item) => item.visible.value) ?? [];
+        const hasMenuItems = menuItems.length > 0;
         return tool.visible.value ? (
           <div key={tool.id} className="sb-empty-pane-toolbar-item">
             <button
               disabled={tool.disabled.value}
               onClick={(event: MouseEvent) => {
                 event.stopPropagation();
+                if (hasMenuItems) {
+                  setSelectedToolId((prev) =>
+                    prev === tool.id ? null : tool.id
+                  );
+                  return;
+                }
+
+                setSelectedToolId(null);
                 tool.onSelect();
               }}
               className="sb-empty-pane-toolbar-button"
@@ -223,6 +235,28 @@ function EmptyPaneToolbar({
               <ToolIcon />
               <span className="sb-empty-pane-toolbar-label">{title}</span>
             </button>
+            {hasMenuItems && selectedToolId === tool.id && (
+              <div className="sb-tool-context-menu">
+                {menuItems.map((item) => {
+                  const MenuItemIcon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      disabled={item.disabled.value}
+                      onClick={(event: MouseEvent) => {
+                        event.stopPropagation();
+                        item.onSelect();
+                        setSelectedToolId(null);
+                      }}
+                      className="sb-tool-context-menu-item"
+                    >
+                      <MenuItemIcon />
+                      <span>{translateTitle(item.title)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         ) : null;
       })}

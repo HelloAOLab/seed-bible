@@ -32,6 +32,28 @@ export interface BibleTool<TContext> {
 }
 
 /**
+ * A context-menu item that can be shown for a selected tool.
+ *
+ * Notes:
+ * - Items intentionally do not define priority. Their order is preserved from
+ *   the array returned by getItems().
+ * - Items cannot define nested getItems() submenus.
+ */
+export interface ManagedBibleToolItem<TContext> extends Omit<
+  BibleTool<TContext>,
+  "priority"
+> {
+  /** Optional disabled predicate (boolean or signal). */
+  isDisabled?: ToolPredicate<TContext>;
+  /** Optional visibility predicate (boolean or signal). */
+  isVisible?: ToolPredicate<TContext>;
+  /** Optional action callback for item activation. */
+  onSelect?: (context: TContext) => void;
+  /** Nested menu items are not supported for context menu entries. */
+  getItems?: never;
+}
+
+/**
  * Base resolved tool contract returned by tools manager getter methods.
  *
  * Unlike managed/registerable tools, resolved tools have fixed numeric priority
@@ -46,6 +68,19 @@ export interface ResolvedBibleTool {
   title: ToolTitle;
   /** Context-bound icon renderer. */
   icon: ResolvedBibleToolIcon;
+}
+
+/** Fully resolved context-menu item ready for rendering. */
+export interface ResolvedBibleToolItem extends Omit<
+  ResolvedBibleTool,
+  "priority"
+> {
+  /** Disabled state signal resolved for current context. */
+  disabled: ReadonlySignal<boolean>;
+  /** Visibility state signal resolved for current context. */
+  visible: ReadonlySignal<boolean>;
+  /** Invoked when the user activates the menu item. */
+  onSelect: () => void;
 }
 
 /** Window metrics provided to tools when available. */
@@ -84,7 +119,12 @@ export interface BibleReaderToolbarTool extends ResolvedBibleTool {
   visible: ReadonlySignal<boolean>;
   /** Invoked when the user activates the tool. */
   onSelect: () => void;
+  /** Optional context-menu items for this tool. */
+  getItems?: () => ResolvedBibleToolItem[];
 }
+
+export type ManagedBibleToolbarToolItem =
+  ManagedBibleToolItem<BibleToolContext>;
 
 /** Registerable reader toolbar tool definition. */
 export interface ManagedBibleToolbarTool extends BibleTool<BibleToolContext> {
@@ -92,8 +132,10 @@ export interface ManagedBibleToolbarTool extends BibleTool<BibleToolContext> {
   isDisabled?: ToolPredicate<BibleToolContext>;
   /** Optional visibility predicate (boolean or signal). */
   isVisible?: ToolPredicate<BibleToolContext>;
-  /** Optional action callback for tool activation. */
+  /** Optional action callback for tool activation. Mutually exclusive with getItems(). */
   onSelect?: (context: BibleToolContext) => void;
+  /** Optional context-menu items resolver. Mutually exclusive with onSelect(). */
+  getItems?: (context: BibleToolContext) => ManagedBibleToolbarToolItem[];
 }
 
 /** Fully resolved verse toolbar tool ready for rendering. */
@@ -104,7 +146,12 @@ export interface BibleReaderVerseToolbarTool extends ResolvedBibleTool {
   visible: ReadonlySignal<boolean>;
   /** Invoked when the user activates the tool. */
   onSelect: () => void;
+  /** Optional context-menu items for this tool. */
+  getItems?: () => ResolvedBibleToolItem[];
 }
+
+export type ManagedBibleVerseToolbarToolItem =
+  ManagedBibleToolItem<BibleToolContext>;
 
 /** Registerable verse toolbar tool definition. */
 export interface ManagedBibleVerseToolbarTool extends BibleTool<BibleToolContext> {
@@ -112,8 +159,10 @@ export interface ManagedBibleVerseToolbarTool extends BibleTool<BibleToolContext
   isDisabled?: ToolPredicate<BibleToolContext>;
   /** Optional visibility predicate (boolean or signal). */
   isVisible?: ToolPredicate<BibleToolContext>;
-  /** Optional action callback for tool activation. */
+  /** Optional action callback for tool activation. Mutually exclusive with getItems(). */
   onSelect?: (context: BibleToolContext) => void;
+  /** Optional context-menu items resolver. Mutually exclusive with onSelect(). */
+  getItems?: (context: BibleToolContext) => ManagedBibleVerseToolbarToolItem[];
 }
 
 /** Runtime context passed to empty-pane tool surface. */
@@ -138,7 +187,12 @@ export interface BibleEmptyPaneTool extends ResolvedBibleTool {
   visible: ReadonlySignal<boolean>;
   /** Invoked when the user activates the tool. */
   onSelect: () => void;
+  /** Optional context-menu items for this tool. */
+  getItems?: () => ResolvedBibleToolItem[];
 }
+
+export type ManagedBibleEmptyPaneToolItem =
+  ManagedBibleToolItem<EmptyPaneToolContext>;
 
 /** Registerable empty-pane tool definition. */
 export interface ManagedBibleEmptyPaneTool extends BibleTool<EmptyPaneToolContext> {
@@ -146,8 +200,10 @@ export interface ManagedBibleEmptyPaneTool extends BibleTool<EmptyPaneToolContex
   isDisabled?: ToolPredicate<EmptyPaneToolContext>;
   /** Optional visibility predicate (boolean or signal). */
   isVisible?: ToolPredicate<EmptyPaneToolContext>;
-  /** Optional action callback for tool activation. */
+  /** Optional action callback for tool activation. Mutually exclusive with getItems(). */
   onSelect?: (context: EmptyPaneToolContext) => void;
+  /** Optional context-menu items resolver. Mutually exclusive with onSelect(). */
+  getItems?: (context: EmptyPaneToolContext) => ManagedBibleEmptyPaneToolItem[];
 }
 
 /** Fully resolved below-reader tool ready for rendering. */
@@ -158,6 +214,8 @@ export interface BibleBelowReaderToolbarTool extends ResolvedBibleTool {
   visible: ReadonlySignal<boolean>;
   /** Invoked when the user activates the tool. */
   onSelect: () => void;
+  /** Optional context-menu items for this tool. */
+  getItems?: () => ResolvedBibleToolItem[];
 }
 
 /** Runtime context for below-reader tool surface. */
@@ -172,8 +230,62 @@ export interface ManagedBibleBelowReaderToolbarTool extends BibleTool<BibleBelow
   isDisabled?: ToolPredicate<BibleBelowReaderToolContext>;
   /** Optional visibility predicate (boolean or signal). */
   isVisible?: ToolPredicate<BibleBelowReaderToolContext>;
-  /** Optional action callback for tool activation. */
+  /** Optional action callback for tool activation. Mutually exclusive with getItems(). */
   onSelect?: (context: BibleBelowReaderToolContext) => void;
+  /** Optional context-menu items resolver. Mutually exclusive with onSelect(). */
+  getItems?: (
+    context: BibleBelowReaderToolContext
+  ) => ManagedBibleBelowReaderToolbarToolItem[];
+}
+
+export type ManagedBibleBelowReaderToolbarToolItem =
+  ManagedBibleToolItem<BibleBelowReaderToolContext>;
+
+function validateToolActions(
+  tool:
+    | ManagedBibleToolbarTool
+    | ManagedBibleVerseToolbarTool
+    | ManagedBibleEmptyPaneTool
+    | ManagedBibleBelowReaderToolbarTool
+) {
+  if (tool.onSelect && tool.getItems) {
+    throw new Error(
+      `Tool \"${tool.id}\" cannot define both onSelect() and getItems().`
+    );
+  }
+}
+
+function resolveToolItems<TContext>(
+  getItems:
+    | ((context: TContext) => ManagedBibleToolItem<TContext>[])
+    | undefined,
+  context: TContext,
+  parentToolId: string
+) {
+  if (!getItems) {
+    return undefined;
+  }
+
+  return () =>
+    getItems(context).map((item) => {
+      const maybeNestedItems = item as ManagedBibleToolItem<TContext> & {
+        getItems?: unknown;
+      };
+      if (maybeNestedItems.getItems) {
+        throw new Error(
+          `Tool item \"${item.id}\" in \"${parentToolId}\" cannot define getItems().`
+        );
+      }
+
+      return {
+        id: item.id,
+        title: item.title,
+        icon: () => item.icon(context),
+        disabled: resolveToolPredicate(item.isDisabled, context, false),
+        visible: resolveToolPredicate(item.isVisible, context, true),
+        onSelect: () => item.onSelect?.(context),
+      };
+    });
 }
 
 function resolveToolPredicate<TContext>(
@@ -540,6 +652,7 @@ export function createBibleToolsManager(): ToolsManager {
   );
 
   const registerToolbarTool = (tool: ManagedBibleToolbarTool) => {
+    validateToolActions(tool);
     const nextTools = toolbarTools.value.filter(
       (entry) => entry.id !== tool.id
     );
@@ -565,12 +678,14 @@ export function createBibleToolsManager(): ToolsManager {
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
       visible: resolveToolPredicate(tool.isVisible, context, true),
       onSelect: () => tool.onSelect?.(context),
+      getItems: resolveToolItems(tool.getItems, context, tool.id),
     }));
 
     return sortBy(tools, [(tool) => tool.priority]);
   };
 
   const registerVerseToolbarTool = (tool: ManagedBibleVerseToolbarTool) => {
+    validateToolActions(tool);
     const nextTools = verseToolbarTools.value.filter(
       (entry) => entry.id !== tool.id
     );
@@ -596,12 +711,14 @@ export function createBibleToolsManager(): ToolsManager {
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
       visible: resolveToolPredicate(tool.isVisible, context, true),
       onSelect: () => tool.onSelect?.(context),
+      getItems: resolveToolItems(tool.getItems, context, tool.id),
     }));
 
     return sortBy(tools, [(tool) => tool.priority]);
   };
 
   const registerEmptyPaneTool = (tool: ManagedBibleEmptyPaneTool) => {
+    validateToolActions(tool);
     const nextTools = emptyPaneTools.value.filter(
       (entry) => entry.id !== tool.id
     );
@@ -627,6 +744,7 @@ export function createBibleToolsManager(): ToolsManager {
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
       visible: resolveToolPredicate(tool.isVisible, context, true),
       onSelect: () => tool.onSelect?.(context),
+      getItems: resolveToolItems(tool.getItems, context, tool.id),
     }));
 
     return sortBy(tools, [(tool) => tool.priority]);
@@ -635,6 +753,7 @@ export function createBibleToolsManager(): ToolsManager {
   const registerBelowReaderTool = (
     tool: ManagedBibleBelowReaderToolbarTool
   ) => {
+    validateToolActions(tool);
     const nextTools = belowReaderTools.value.filter(
       (entry) => entry.id !== tool.id
     );
@@ -660,6 +779,7 @@ export function createBibleToolsManager(): ToolsManager {
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
       visible: resolveToolPredicate(tool.isVisible, context, true),
       onSelect: () => tool.onSelect?.(context),
+      getItems: resolveToolItems(tool.getItems, context, tool.id),
     }));
 
     return sortBy(tools, [(tool) => tool.priority]);
