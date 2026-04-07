@@ -323,6 +323,7 @@ export async function loadInst(
 export const DEFAULT_EXTENSIONS = [
   "seed-bible",
   "seed-bible-refresh-example-extension",
+  "locations-extension",
   // "BookSelector",
   // "Object Pooler",
   // "GeoImporter",
