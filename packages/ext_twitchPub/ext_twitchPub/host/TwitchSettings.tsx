@@ -1,6 +1,5 @@
-import { TwitchIcon, SettingsIcon } from "ext_twitchPub.host.icons";
+import { TwitchIcon } from "ext_twitchPub.host.icons";
 
-const { useState, useEffect } = os.appHooks;
 const TwitchSettings = (props: {
   setCurrentPage: (
     s: "login" | "authorization" | "interface" | "settings"
@@ -9,6 +8,8 @@ const TwitchSettings = (props: {
   highlightEnabled: boolean;
   setTranslationEnabled: (value: boolean) => void;
   setHighlightEnabled: (value: boolean) => void;
+  annoucementTimer: number;
+  setAnnouncementTimer: (value: number) => void;
 }) => {
   const {
     setCurrentPage,
@@ -16,6 +17,8 @@ const TwitchSettings = (props: {
     highlightEnabled,
     setTranslationEnabled,
     setHighlightEnabled,
+    annoucementTimer,
+    setAnnouncementTimer,
   } = props;
 
   return (
@@ -68,6 +71,24 @@ const TwitchSettings = (props: {
               id={"highlightToggle"}
             />
           </div>
+          <div className="twitchPub-settings-item">
+            <span>Announcement Timer</span>
+            <select
+              value={annoucementTimer}
+              onChange={(e) => {
+                e.stopPropagation();
+                setAnnouncementTimer(Number(e.target.value));
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              className="twitch-select-box"
+            >
+              <option value={0}>Off</option>
+              <option value={300000}>5m</option>
+              <option value={600000}>10m</option>
+              <option value={900000}>15m</option>
+              <option value={1200000}>20m</option>
+            </select>
+          </div>
         </div>
       </div>
     </>
@@ -92,7 +113,7 @@ const ToggleBtn = ({
                 background: var(--secondaryColor);
                 }
             .thumb-${id} {
-                transform: translateX(18px);
+                transform: translateX(23px);
             }
         `
           : ``}
