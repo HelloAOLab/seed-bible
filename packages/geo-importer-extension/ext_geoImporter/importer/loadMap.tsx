@@ -1,6 +1,6 @@
 import { opentypeJs } from "https://esm.helloao.org/painter-vendor-IGDNTFOW.js";
 // import type { GeoJSON, Feature } from "geojson";
-import z from "zod";
+import { z } from "zod";
 
 export const GEO_JSON_PROPERTIES = z.looseObject({
   id: z.string(),
@@ -64,8 +64,6 @@ export const focusOnWithCatch = async (props: {
   }
 };
 
-// const file = that.file;
-
 export async function loadMap(geojson: unknown) {
   const geoObj = GEO_JSON_SCHEMA.parse(geojson);
 
@@ -98,10 +96,6 @@ export async function loadMap(geojson: unknown) {
   }
 
   os.log("geoObj: ", geoObj);
-
-  if (!that?.openOverlay) {
-    whisper(thisBot, "createCloseButton", { ...that });
-  }
 
   if (geoObj.type == "FeatureCollection") {
     parseFeatureCollection(geoObj);
