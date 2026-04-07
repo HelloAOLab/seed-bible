@@ -21,8 +21,74 @@
     "paths": {
       "@packages/*": ["./packages/*"],
       "https://esm.helloao.org/vendor-3PZUL55I.js": ["./lib/vendor.ts"],
+      "ext_geoImporter.importer.closeMiniMapPortal": [
+        "./packages/geo-importer-extension/ext_geoImporter/importer/closeMiniMapPortal.tsx"
+      ],
+      "ext_geoImporter.importer.createCloseButton": [
+        "./packages/geo-importer-extension/ext_geoImporter/importer/createCloseButton.tsx"
+      ],
+      "ext_geoImporter.importer.focusOnWithCatch": [
+        "./packages/geo-importer-extension/ext_geoImporter/importer/focusOnWithCatch.tsx"
+      ],
+      "ext_geoImporter.importer.GeometryCollection": [
+        "./packages/geo-importer-extension/ext_geoImporter/importer/GeometryCollection.tsx"
+      ],
+      "ext_geoImporter.importer.interfaces": [
+        "./packages/geo-importer-extension/ext_geoImporter/importer/interfaces.tsx"
+      ],
+      "ext_geoImporter.importer.LineString": [
+        "./packages/geo-importer-extension/ext_geoImporter/importer/LineString.tsx"
+      ],
+      "ext_geoImporter.importer.loadMap": [
+        "./packages/geo-importer-extension/ext_geoImporter/importer/loadMap.tsx"
+      ],
+      "ext_geoImporter.importer.MultiLineString": [
+        "./packages/geo-importer-extension/ext_geoImporter/importer/MultiLineString.tsx"
+      ],
+      "ext_geoImporter.importer.onEggHatch": [
+        "./packages/geo-importer-extension/ext_geoImporter/importer/onEggHatch.tsx"
+      ],
+      "ext_geoImporter.importer.onFileUpload": [
+        "./packages/geo-importer-extension/ext_geoImporter/importer/onFileUpload.tsx"
+      ],
+      "ext_geoImporter.importer.onInstJoined": [
+        "./packages/geo-importer-extension/ext_geoImporter/importer/onInstJoined.tsx"
+      ],
+      "ext_geoImporter.importer.Point": [
+        "./packages/geo-importer-extension/ext_geoImporter/importer/Point.tsx"
+      ],
+      "ext_geoImporter.importer.Polygon": [
+        "./packages/geo-importer-extension/ext_geoImporter/importer/Polygon.tsx"
+      ],
+      "ext_locations.geojson": [
+        "./packages/locations-extension/ext_locations/geojson.tsx"
+      ],
+      "ext_locations.init": [
+        "./packages/locations-extension/ext_locations/init.tsx"
+      ],
+      "ext_locations.onBookChanged": [
+        "./packages/locations-extension/ext_locations/onBookChanged.tsx"
+      ],
+      "ext_locations.onEggHatch": [
+        "./packages/locations-extension/ext_locations/onEggHatch.tsx"
+      ],
+      "ext_locations.onExtensionInstalled": [
+        "./packages/locations-extension/ext_locations/onExtensionInstalled.tsx"
+      ],
+      "ext_locations.onFloatingAppRemoved": [
+        "./packages/locations-extension/ext_locations/onFloatingAppRemoved.tsx"
+      ],
+      "ext_locations.onInstJoined": [
+        "./packages/locations-extension/ext_locations/onInstJoined.tsx"
+      ],
+      "ext_locations.options": [
+        "./packages/locations-extension/ext_locations/options.tsx"
+      ],
       "seed-bible.app.api": ["./packages/seed-bible/seed-bible/app/api.tsx"],
       "seed-bible.app.init": ["./packages/seed-bible/seed-bible/app/init.tsx"],
+      "seed-bible.app.initPostHog": [
+        "./packages/seed-bible/seed-bible/app/initPostHog.tsx"
+      ],
       "seed-bible.app.main": ["./packages/seed-bible/seed-bible/app/main.tsx"],
       "seed-bible.app.onEggHatch": [
         "./packages/seed-bible/seed-bible/app/onEggHatch.tsx"
@@ -60,6 +126,9 @@
       "seed-bible.i18n.I18nManager": [
         "./packages/seed-bible/seed-bible/i18n/I18nManager.tsx"
       ],
+      "seed-bible.managers.AnnotationsManager": [
+        "./packages/seed-bible/seed-bible/managers/AnnotationsManager.tsx"
+      ],
       "seed-bible.managers.BibleDataManager": [
         "./packages/seed-bible/seed-bible/managers/BibleDataManager.tsx"
       ],
@@ -71,9 +140,6 @@
       ],
       "seed-bible.managers.BibleToolsManager": [
         "./packages/seed-bible/seed-bible/managers/BibleToolsManager.tsx"
-      ],
-      "seed-bible.managers.AnnotationsManager": [
-        "./packages/seed-bible/seed-bible/managers/AnnotationsManager.tsx"
       ],
       "seed-bible.managers.ConfigManager": [
         "./packages/seed-bible/seed-bible/managers/ConfigManager.tsx"
@@ -99,11 +165,11 @@
       "seed-bible.managers.ReadingHistoryManager": [
         "./packages/seed-bible/seed-bible/managers/ReadingHistoryManager.tsx"
       ],
-      "seed-bible.managers.SessionsManager": [
-        "./packages/seed-bible/seed-bible/managers/SessionsManager.tsx"
-      ],
       "seed-bible.managers.SeedBibleStateManager": [
         "./packages/seed-bible/seed-bible/managers/SeedBibleStateManager.tsx"
+      ],
+      "seed-bible.managers.SessionsManager": [
+        "./packages/seed-bible/seed-bible/managers/SessionsManager.tsx"
       ],
       "seed-bible.managers.SidebarManager": [
         "./packages/seed-bible/seed-bible/managers/SidebarManager.tsx"
@@ -119,6 +185,9 @@
       ],
       "ext_Example.onEggHatch": [
         "./packages/seed-bible-refresh-example-extension/ext_Example/onEggHatch.tsx"
+      ],
+      "ext_Example.onExtensionInstalled": [
+        "./packages/seed-bible-refresh-example-extension/ext_Example/onExtensionInstalled.tsx"
       ],
       "ext_Example.onInstJoined": [
         "./packages/seed-bible-refresh-example-extension/ext_Example/onInstJoined.tsx"
