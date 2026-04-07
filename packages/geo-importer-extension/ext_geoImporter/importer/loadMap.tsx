@@ -251,7 +251,7 @@ async function forceFocus(props: {
   setTagMask(thisBot, "focusing", false, "tempLocal");
 }
 
-export function generateSVGURLFromText(label: string, fontSize = 400) {
+function generateSVGURLFromText(label: string, fontSize = 400) {
   return new Promise((resolve, reject) => {
     opentypeJs.load(tags.font, function (err: unknown, font: opentypeJs.Font) {
       if (err) {
