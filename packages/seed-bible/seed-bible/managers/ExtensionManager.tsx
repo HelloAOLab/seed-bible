@@ -11,7 +11,13 @@ export type ExtensionInitializer = (
 
 export interface ExtensionRegistration {
   id: string;
+  /**
+   * The IDs of other extensions that this extension depends on. Circular dependencies are not supported.
+   *
+   * If an extension is not registered yet, but is included in an extension set that was loaded, then it will be loaded and initialized before this extension.
+   */
   dependencies?: string[];
+
   init: ExtensionInitializer;
 }
 
@@ -36,6 +42,11 @@ export interface ExtensionMeta {
     en: string;
     [lang: string]: string;
   };
+
+  /**
+   * Optional extension IDs that should be installed before this extension package.
+   */
+  dependencies?: string[];
 }
 
 export interface UploadedExtension {
@@ -89,6 +100,10 @@ export class ExtensionInitalizer {
   private extensionContext: SeedBibleState | null = null;
 
   constructor() {}
+
+  isExtensionRegistered(id: string): boolean {
+    return this.registeredExtensions.has(id);
+  }
 
   getExtensionExports<T extends object>(id: string): T | null {
     return (this.extensionExports.get(id) as T) ?? null;
@@ -270,15 +285,36 @@ export function createExtensionManager() {
   const defaultExtensions = computed<ExtensionSet | null>(
     () => thisBot.tags.availableExtensions ?? null
   );
+  const knownExtensionsById = new Map<string, UploadedExtension>();
+  const installedExtensionIds = new Set<string>();
+  const pendingInstallations = new Map<string, Promise<boolean>>();
+
+  const trackExtensionSet = (set: ExtensionSet) => {
+    for (const extension of set.extensions) {
+      knownExtensionsById.set(extension.meta.id, extension);
+    }
+  };
+
+  const isSatisfiedDependency = (id: string) => {
+    const initializer = ExtensionInitalizer.getInstance();
+    return (
+      installedExtensionIds.has(id) || initializer.isExtensionRegistered(id)
+    );
+  };
 
   const loadExtensionFromPackage = async (
     id: string,
     recordName: string,
     address: string
   ) => {
+    if (isSatisfiedDependency(id)) {
+      return true;
+    }
+
     try {
       const result = await os.installPackage(recordName, address);
       if (result.success) {
+        installedExtensionIds.add(id);
         shout("onExtensionInstalled", id);
         console.log(`Successfully installed extension: ${id}`);
         return true;
@@ -292,14 +328,72 @@ export function createExtensionManager() {
     }
   };
 
-  const loadExtension = async (uploaded: UploadedExtension) =>
-    await loadExtensionFromPackage(
-      uploaded.meta.id,
-      uploaded.recordName,
-      uploaded.address
-    );
+  const loadExtension = async (
+    uploaded: UploadedExtension,
+    installStack: Set<string> = new Set()
+  ) => {
+    const extensionId = uploaded.meta.id;
+    knownExtensionsById.set(extensionId, uploaded);
+
+    if (pendingInstallations.has(extensionId)) {
+      return pendingInstallations.get(extensionId)!;
+    }
+
+    const installationPromise = (async () => {
+      if (isSatisfiedDependency(extensionId)) {
+        return true;
+      }
+
+      if (installStack.has(extensionId)) {
+        console.error(
+          `Failed to install extension '${extensionId}': circular dependency detected in extension package metadata.`
+        );
+        return false;
+      }
+
+      installStack.add(extensionId);
+
+      const dependencies = uploaded.meta.dependencies ?? [];
+      for (const dependencyId of dependencies) {
+        if (isSatisfiedDependency(dependencyId)) {
+          continue;
+        }
+
+        const dependency = knownExtensionsById.get(dependencyId);
+        if (!dependency) {
+          installStack.delete(extensionId);
+          console.error(
+            `Failed to install extension '${extensionId}': dependency '${dependencyId}' is not registered and was not found in loaded extension sets.`
+          );
+          return false;
+        }
+
+        const loadedDependency = await loadExtension(dependency, installStack);
+        if (!loadedDependency) {
+          installStack.delete(extensionId);
+          return false;
+        }
+      }
+
+      const installed = await loadExtensionFromPackage(
+        extensionId,
+        uploaded.recordName,
+        uploaded.address
+      );
+      installStack.delete(extensionId);
+      return installed;
+    })();
+
+    pendingInstallations.set(extensionId, installationPromise);
+    try {
+      return await installationPromise;
+    } finally {
+      pendingInstallations.delete(extensionId);
+    }
+  };
 
   const loadExtensionSet = async (set: ExtensionSet) => {
+    trackExtensionSet(set);
     const promises = set.extensions.map((ext) => loadExtension(ext));
     const results = await Promise.all(promises);
     const successCount = results.filter((r) => r).length;

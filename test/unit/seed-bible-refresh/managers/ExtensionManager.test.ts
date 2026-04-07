@@ -1,5 +1,10 @@
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { ExtensionInitalizer } from "seed-bible.managers.ExtensionManager";
+import {
+  createExtensionManager,
+  ExtensionInitalizer,
+  registerExtension,
+  type ExtensionSet,
+} from "seed-bible.managers.ExtensionManager";
 
 describe("ExtensionInitalizer", () => {
   let initializer: ExtensionInitalizer;
@@ -214,5 +219,166 @@ describe("ExtensionInitalizer", () => {
     expect(circularDependencyLogExists).toBe(true);
     expect(initA).not.toHaveBeenCalled();
     expect(initB).not.toHaveBeenCalled();
+  });
+});
+
+describe("createExtensionManager", () => {
+  let installPackage: jest.Mock;
+  let shoutSpy: jest.Mock;
+
+  beforeEach(() => {
+    installPackage = jest.fn(async () => ({ success: true }));
+    shoutSpy = jest.fn();
+
+    (globalThis as any).os = {
+      ...(globalThis as any).os,
+      installPackage,
+    };
+    (globalThis as any).shout = shoutSpy;
+    (globalThis as any).thisBot = {
+      tags: {
+        availableExtensions: null,
+      },
+    };
+  });
+
+  it("loadExtensionSet() installs dependencies before dependents", async () => {
+    const manager = createExtensionManager();
+    const set: ExtensionSet = {
+      id: "set.dependencies",
+      recordName: "record",
+      extensions: [
+        {
+          recordName: "record",
+          address: "pkg://dependent",
+          meta: {
+            id: "ext.dependent",
+            titles: { en: "Dependent" },
+            descriptions: { en: "Dependent extension" },
+            dependencies: ["ext.dependency"],
+          },
+        },
+        {
+          recordName: "record",
+          address: "pkg://dependency",
+          meta: {
+            id: "ext.dependency",
+            titles: { en: "Dependency" },
+            descriptions: { en: "Dependency extension" },
+          },
+        },
+      ],
+    };
+
+    await manager.loadExtensionSet(set);
+
+    const installedIds = installPackage.mock.calls.map((call) => call[1]);
+    expect(installedIds).toEqual(["pkg://dependency", "pkg://dependent"]);
+  });
+
+  it("loadExtension() installs an unregistered dependency from loaded extension sets", async () => {
+    const manager = createExtensionManager();
+
+    await manager.loadExtensionSet({
+      id: "set.catalog",
+      recordName: "record",
+      extensions: [
+        {
+          recordName: "record",
+          address: "pkg://catalog-dependency",
+          meta: {
+            id: "ext.catalog-dependency",
+            titles: { en: "Catalog Dependency" },
+            descriptions: { en: "Catalog Dependency extension" },
+          },
+        },
+      ],
+    });
+
+    installPackage.mockClear();
+
+    const loaded = await manager.loadExtension({
+      recordName: "record",
+      address: "pkg://catalog-dependent",
+      meta: {
+        id: "ext.catalog-dependent",
+        titles: { en: "Catalog Dependent" },
+        descriptions: { en: "Catalog Dependent extension" },
+        dependencies: ["ext.catalog-dependency"],
+      },
+    });
+
+    expect(loaded).toBe(true);
+    const installedIds = installPackage.mock.calls.map((call) => call[1]);
+    expect(installedIds).toEqual(["pkg://catalog-dependent"]);
+  });
+
+  it("loadExtension() returns false when dependency is missing from registry and loaded sets", async () => {
+    const manager = createExtensionManager();
+
+    const loaded = await manager.loadExtension({
+      recordName: "record",
+      address: "pkg://missing-dependent",
+      meta: {
+        id: "ext.missing-dependent",
+        titles: { en: "Missing Dependent" },
+        descriptions: { en: "Missing Dependent extension" },
+        dependencies: ["ext.missing-dependency"],
+      },
+    });
+
+    expect(loaded).toBe(false);
+    expect(installPackage).not.toHaveBeenCalled();
+  });
+
+  it("loadExtension() does not install an already registered dependency", async () => {
+    const manager = createExtensionManager();
+    const unregisterDependency = registerExtension({
+      id: "ext.registered-dependency",
+      init: () => ({}),
+    });
+
+    try {
+      const loaded = await manager.loadExtension({
+        recordName: "record",
+        address: "pkg://registered-dependent",
+        meta: {
+          id: "ext.registered-dependent",
+          titles: { en: "Registered Dependent" },
+          descriptions: { en: "Registered Dependent extension" },
+          dependencies: ["ext.registered-dependency"],
+        },
+      });
+
+      expect(loaded).toBe(true);
+      const installedIds = installPackage.mock.calls.map((call) => call[1]);
+      expect(installedIds).toEqual(["pkg://registered-dependent"]);
+    } finally {
+      unregisterDependency();
+    }
+  });
+
+  it("loadExtensionSet() avoids reinstalling extensions that are already installed", async () => {
+    const manager = createExtensionManager();
+    const set: ExtensionSet = {
+      id: "set.reinstall",
+      recordName: "record",
+      extensions: [
+        {
+          recordName: "record",
+          address: "pkg://single",
+          meta: {
+            id: "ext.single",
+            titles: { en: "Single" },
+            descriptions: { en: "Single extension" },
+          },
+        },
+      ],
+    };
+
+    await manager.loadExtensionSet(set);
+    await manager.loadExtensionSet(set);
+
+    expect(installPackage).toHaveBeenCalledTimes(1);
   });
 });
