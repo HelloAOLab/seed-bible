@@ -16,6 +16,7 @@ import {
 
 const CUSTOM_TOOL_ID = "test-toolbar-tool";
 const CUSTOM_VERSE_TOOL_ID = "test-verse-toolbar-tool";
+const CUSTOM_ITEMS_TOOL_ID = "test-toolbar-tool-items";
 
 function createContext(): BibleToolContext {
   return {
@@ -41,6 +42,7 @@ describe("createBibleToolsManager", () => {
   afterEach(() => {
     const manager = createBibleToolsManager();
     manager.unregisterToolbarTool(CUSTOM_TOOL_ID);
+    manager.unregisterToolbarTool(CUSTOM_ITEMS_TOOL_ID);
     manager.unregisterVerseToolbarTool(CUSTOM_VERSE_TOOL_ID);
   });
 
@@ -232,5 +234,98 @@ describe("createBibleToolsManager", () => {
     expect(hiddenTool?.visible.value).toBe(false);
 
     manager.unregisterVerseToolbarTool(`${CUSTOM_VERSE_TOOL_ID}-hidden`);
+  });
+
+  it("getToolbarTools() resolves getItems() in declared order", () => {
+    const manager = createBibleToolsManager();
+    const context = createContext();
+    const firstItemOnSelect = jest.fn();
+    const secondItemOnSelect = jest.fn();
+
+    manager.registerToolbarTool({
+      id: CUSTOM_ITEMS_TOOL_ID,
+      priority: 50,
+      title: "Custom Items Tool",
+      icon: () => <span>icon</span>,
+      getItems: () => [
+        {
+          id: "first-item",
+          title: "First",
+          icon: () => <span>first</span>,
+          onSelect: firstItemOnSelect,
+        },
+        {
+          id: "second-item",
+          title: "Second",
+          icon: () => <span>second</span>,
+          onSelect: secondItemOnSelect,
+        },
+      ],
+    });
+
+    const tool = manager
+      .getToolbarTools(context)
+      .find((entry) => entry.id === CUSTOM_ITEMS_TOOL_ID);
+    const items = tool?.getItems?.();
+
+    expect(tool).toBeDefined();
+    expect(items).toBeDefined();
+    expect(items?.map((item) => item.id)).toEqual([
+      "first-item",
+      "second-item",
+    ]);
+
+    items?.[0]!.onSelect();
+    items?.[1]!.onSelect();
+
+    expect(firstItemOnSelect).toHaveBeenCalledTimes(1);
+    expect(secondItemOnSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it("registerToolbarTool() throws when both onSelect() and getItems() are provided", () => {
+    const manager = createBibleToolsManager();
+
+    expect(() => {
+      manager.registerToolbarTool({
+        id: CUSTOM_ITEMS_TOOL_ID,
+        priority: 50,
+        title: "Custom Items Tool",
+        icon: () => <span>icon</span>,
+        onSelect: jest.fn(),
+        getItems: () => [],
+      });
+    }).toThrow(
+      `Tool "${CUSTOM_ITEMS_TOOL_ID}" cannot define both onSelect() and getItems().`
+    );
+  });
+
+  it("tool getItems() throws when an item defines nested getItems()", () => {
+    const manager = createBibleToolsManager();
+    const context = createContext();
+
+    manager.registerToolbarTool({
+      id: CUSTOM_ITEMS_TOOL_ID,
+      priority: 50,
+      title: "Custom Items Tool",
+      icon: () => <span>icon</span>,
+      getItems: () =>
+        [
+          {
+            id: "nested-item",
+            title: "Nested",
+            icon: () => <span>nested</span>,
+            onSelect: jest.fn(),
+            getItems: () => [],
+          },
+        ] as any,
+    });
+
+    const tool = manager
+      .getToolbarTools(context)
+      .find((entry) => entry.id === CUSTOM_ITEMS_TOOL_ID);
+
+    expect(() => tool?.getItems?.()).toThrow(
+      `Tool item "nested-item" in "${CUSTOM_ITEMS_TOOL_ID}" cannot define getItems().`
+    );
   });
 });
