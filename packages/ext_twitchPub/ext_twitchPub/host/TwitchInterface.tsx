@@ -1,7 +1,9 @@
 import QRCodeComponent from "ext_twitchPub.host.QRCode";
 import { TwitchIcon, SettingsIcon } from "ext_twitchPub.host.icons";
+import sendAnnouncement from "ext_twitchPub.host.sendAnnouncement";
+import initializeTwitchBot from "ext_twitchPub.host.initializeTwitchBot";
 
-const { useState, useEffect } = os.appHooks;
+const { useState, useEffect, useRef } = os.appHooks;
 const TwitchInterface = (props: {
   broadcasterId: string | null;
   clientId: string | null;
@@ -9,34 +11,55 @@ const TwitchInterface = (props: {
   setCurrentPage: (
     s: "login" | "authorization" | "interface" | "settings"
   ) => void;
+  annoucementTimer: number;
 }) => {
-  const { broadcasterId, clientId, token, setCurrentPage } = props;
+  const { broadcasterId, clientId, token, setCurrentPage, annoucementTimer } =
+    props;
   const [uiHidden, setUiHidden] = useState(false);
+  const [announcementSend, setAnnouncementSend] = useState(false);
+
+  const currentBookDataRef = useRef<string | null>(
+    masks?.currentBookData || null
+  );
 
   const [qrValue, setQrValue] = useState<string>(
     `https://ao.bot/?pattern=SeedBibleDev&book=GEN&chapter=1&translation=AAB&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`
   );
 
   useEffect(() => {
+    globalThis.currentBookDataRef = currentBookDataRef;
     globalThis.SetQrValue = setQrValue;
+    globalThis.QrValue = qrValue;
     return () => {
+      globalThis.currentBookDataRef = null;
       globalThis.SetQrValue = null;
+      globalThis.QrValue = null;
     };
-  }, []);
+  }, [qrValue]);
 
   useEffect(() => {
-    if (masks?.currentData) {
-      const data = JSON.parse(masks.currentData);
+    if (announcementSend || !broadcasterId || !clientId || !token) return;
+    if (!announcementSend) {
+      sendAnnouncement(
+        token,
+        broadcasterId,
+        broadcasterId,
+        `Join me at https://ao.bot/?pattern=SeedBibleDev&book=GEN&chapter=1&translation=AAB&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`,
+        clientId || ""
+      );
+      setAnnouncementSend(true);
+    }
+    if (currentBookDataRef.current) {
+      const currentBookData = JSON.parse(currentBookDataRef.current);
       setQrValue(
-        `https://ao.bot/?pattern=SeedBibleDev&book=${data.bookId}&chapter=${data.chapter}&translation=${data.translation}&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`
+        `https://ao.bot/?pattern=SeedBibleDev&book=${currentBookData.bookId}&chapter=${currentBookData.chapter}&translation=${currentBookData.translation}&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`
       );
     } else {
       setQrValue(
         `https://ao.bot/?pattern=SeedBibleDev&book=GEN&chapter=1&translation=AAB&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`
       );
     }
-  }, [broadcasterId, clientId, token]);
-
+  }, [broadcasterId, clientId, token, announcementSend]);
   const hideUI = () => {
     if (masks?.hideUITimeout) {
       clearTimeout(masks.hideUITimeout);
@@ -66,6 +89,67 @@ const TwitchInterface = (props: {
       draggableElement.removeEventListener("mouseleave", hideUI);
     };
   }, []);
+
+  useEffect(() => {
+    if (!annoucementTimer || !broadcasterId || !clientId || !token) return;
+    const st = setInterval(() => {
+      if (masks?.uiLoaded) {
+        console.log("Announcement timer tick");
+        if (currentBookDataRef.current) {
+          const currentBookData = JSON.parse(currentBookDataRef.current);
+          sendAnnouncement(
+            token,
+            broadcasterId,
+            broadcasterId,
+            `Join me at https://ao.bot/?pattern=SeedBibleDev&book=${currentBookData.bookId}&chapter=${currentBookData.chapter}&translation=${currentBookData.translation}&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`,
+            clientId || ""
+          );
+        }
+      } else {
+        console.log("UI not loaded, skipping announcement");
+      }
+    }, annoucementTimer);
+    return () => {
+      console.log("Clearing announcement timer");
+      clearInterval(st);
+    };
+  }, [annoucementTimer, broadcasterId, clientId, token]);
+
+  useEffect(() => {
+    if (!broadcasterId || !clientId || !token) {
+      console.error(
+        "Missing broadcasterId, clientId, or token. Cannot initialize Twitch bot."
+      );
+      return;
+    }
+    let cancelled = false;
+    let twitchBot: ReturnType<typeof initializeTwitchBot> extends Promise<
+      infer T
+    >
+      ? T
+      : never;
+    (async () => {
+      const bot = await initializeTwitchBot({
+        BOT_USER_ID: broadcasterId,
+        OAUTH_TOKEN: token,
+        CLIENT_ID: clientId,
+        CHAT_CHANNEL_USER_ID: broadcasterId,
+      });
+      if (cancelled) {
+        bot?.close();
+        return;
+      }
+      twitchBot = bot;
+      console.log("Twitch bot initialized", bot);
+    })();
+    return () => {
+      cancelled = true;
+      if (twitchBot) {
+        console.log("Closing Twitch bot connection...");
+        twitchBot.close();
+      }
+    };
+  }, [broadcasterId, clientId, token]);
 
   return (
     <>

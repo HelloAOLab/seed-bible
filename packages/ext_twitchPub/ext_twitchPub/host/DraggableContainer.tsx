@@ -14,6 +14,16 @@ const DraggableContainer = (props: { children: HTMLElement }) => {
 
   const handleMouseDown = (e: MouseEvent) => {
     if (!dragRef.current) return;
+    const target = e.target as HTMLElement;
+    const tag = target.tagName.toLowerCase();
+    if (
+      tag === "select" ||
+      tag === "option" ||
+      tag === "input" ||
+      tag === "textarea" ||
+      tag === "button"
+    )
+      return;
     setIsDragging(true);
     const rect = dragRef.current.getBoundingClientRect();
     setOffset({
