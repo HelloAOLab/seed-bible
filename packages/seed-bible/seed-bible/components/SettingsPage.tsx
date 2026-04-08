@@ -1,10 +1,7 @@
 import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import type { TextSize } from "seed-bible.managers.ConfigManager";
-import {
-  ExtensionInitalizer,
-  unregisterExtension,
-} from "seed-bible.managers.ExtensionManager";
+import { ExtensionInitalizer } from "seed-bible.managers.ExtensionManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 
 type SettingsView = null | "account" | "theme" | "extensions";
@@ -202,10 +199,11 @@ function ExtensionsSettingsView(props: {
   const { state, onBack } = props;
   const { extensions } = state;
   const extensionsList = extensions.getExtensions();
-  const initializer = ExtensionInitalizer.getInstance();
   const installingIds = useSignal<Set<string>>(new Set());
+  const openMenuId = useSignal<string | null>(null);
 
   const handleInstall = async (extensionId: string) => {
+    openMenuId.value = null;
     const extensionData = extensionsList.find(
       (e) => e.extension?.meta.id === extensionId
     );
@@ -219,6 +217,7 @@ function ExtensionsSettingsView(props: {
   };
 
   const handleUninstall = (extensionId: string) => {
+    openMenuId.value = null;
     extensions.unloadExtension(extensionId);
   };
 
@@ -235,54 +234,85 @@ function ExtensionsSettingsView(props: {
             {extensionsList.map((extensionEntry) => {
               const { id, extension, installed, pendingInstallation } =
                 extensionEntry;
-              const isRegistered = initializer.isExtensionRegistered(id);
+              const isRegistered =
+                ExtensionInitalizer.getInstance().isExtensionRegistered(id);
               const installState = getExtensionInstallState(
                 installed,
                 pendingInstallation,
                 isRegistered
               );
-              const isInstalling = installingIds.value.has(id);
+
+              const stateIcon =
+                installState === "installed"
+                  ? "check_circle"
+                  : installState === "downloaded"
+                    ? "download_done"
+                    : installState === "pending"
+                      ? "downloading"
+                      : "extension";
+
+              const stateLabel =
+                installState === "installed"
+                  ? "Installed"
+                  : installState === "downloaded"
+                    ? "Downloaded"
+                    : installState === "pending"
+                      ? "Installing…"
+                      : "Not installed";
 
               return (
-                <li key={id} className="sb-extensions-list-item">
-                  <div className="sb-extension-header">
-                    <div className="sb-extension-info">
-                      <h3 className="sb-extension-name">
+                <li key={id} className="sb-extension-row">
+                  <button className="sb-extension-row-button" disabled>
+                    <span
+                      className={`material-symbols-outlined sb-extension-state-icon sb-extension-state-${installState}`}
+                      title={stateLabel}
+                    >
+                      {stateIcon}
+                    </span>
+                    <div className="sb-extension-row-content">
+                      <span className="sb-extension-name">
                         {extension?.meta.titles.en ?? id}
-                      </h3>
-                      <p className="sb-extension-description">
+                      </span>
+                      <span className="sb-extension-description">
                         {extension?.meta.descriptions.en ?? ""}
-                      </p>
-                    </div>
-                    <div className="sb-extension-status">
-                      <span
-                        className={`sb-extension-status-badge sb-extension-status-${installState}`}
-                      >
-                        {installState === "none" && "Not installed"}
-                        {installState === "pending" && "Installing..."}
-                        {installState === "downloaded" && "Downloaded"}
-                        {installState === "installed" && "Installed"}
                       </span>
                     </div>
-                  </div>
-                  <div className="sb-extension-actions">
-                    {installState === "none" && (
-                      <button
-                        className="sb-extension-install-button"
-                        onClick={() => void handleInstall(id)}
-                        disabled={isInstalling}
-                      >
-                        {isInstalling ? "Installing..." : "Install"}
-                      </button>
-                    )}
-                    {(installState === "installed" ||
-                      installState === "downloaded") && (
-                      <button
-                        className="sb-extension-uninstall-button"
-                        onClick={() => handleUninstall(id)}
-                      >
-                        Uninstall
-                      </button>
+                  </button>
+
+                  <div className="sb-extension-menu-anchor">
+                    <button
+                      className="sb-extension-menu-button"
+                      aria-label="Extension options"
+                      title="Extension options"
+                      onClick={() => {
+                        openMenuId.value = openMenuId.value === id ? null : id;
+                      }}
+                    >
+                      <span className="material-symbols-outlined sb-extension-more-icon">
+                        more_vert
+                      </span>
+                    </button>
+
+                    {openMenuId.value === id && (
+                      <div className="sb-extension-menu">
+                        {installState === "none" && (
+                          <button
+                            className="sb-extension-menu-item"
+                            onClick={() => void handleInstall(id)}
+                          >
+                            Install
+                          </button>
+                        )}
+                        {(installState === "installed" ||
+                          installState === "downloaded") && (
+                          <button
+                            className="sb-extension-menu-item"
+                            onClick={() => handleUninstall(id)}
+                          >
+                            Uninstall
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </li>
