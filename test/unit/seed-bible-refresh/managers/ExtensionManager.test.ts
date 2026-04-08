@@ -220,6 +220,108 @@ describe("ExtensionInitalizer", () => {
     expect(initA).not.toHaveBeenCalled();
     expect(initB).not.toHaveBeenCalled();
   });
+
+  it("unregisterExtension() removes a registered extension", () => {
+    const init = jest.fn(() => ({}));
+
+    initializer.registerExtension({
+      id: "ext.to-unregister",
+      init,
+    });
+
+    expect(initializer.isExtensionRegistered("ext.to-unregister")).toBe(true);
+
+    const unregistered = initializer.unregisterExtension("ext.to-unregister");
+
+    expect(unregistered).toBe(true);
+    expect(initializer.isExtensionRegistered("ext.to-unregister")).toBe(false);
+  });
+
+  it("unregisterExtension() returns false when extension is not registered", () => {
+    const unregistered = initializer.unregisterExtension("ext.non-existent");
+    expect(unregistered).toBe(false);
+  });
+
+  it("unregisterExtension() calls cleanup functions in reverse order", () => {
+    const cleanup1 = jest.fn();
+    const cleanup2 = jest.fn();
+    const cleanupOrder: number[] = [];
+
+    cleanup1.mockImplementation(() => cleanupOrder.push(1));
+    cleanup2.mockImplementation(() => cleanupOrder.push(2));
+
+    function* generatorInit() {
+      yield cleanup1;
+      yield cleanup2;
+      return { test: true };
+    }
+
+    initializer.registerExtension({
+      id: "ext.cleanup-test",
+      init: generatorInit,
+    });
+
+    initializer.setupExtensionContext(context);
+
+    expect(cleanup1).not.toHaveBeenCalled();
+    expect(cleanup2).not.toHaveBeenCalled();
+
+    initializer.unregisterExtension("ext.cleanup-test");
+
+    expect(cleanup1).toHaveBeenCalledTimes(1);
+    expect(cleanup2).toHaveBeenCalledTimes(1);
+    expect(cleanupOrder).toEqual([1, 2]);
+  });
+
+  it("unregisterExtension() clears extension exports", () => {
+    initializer.registerExtension({
+      id: "ext.exports-clear",
+      init: () => ({ exportedValue: 42 }),
+    });
+
+    initializer.setupExtensionContext(context);
+
+    expect(
+      initializer.getExtensionExports<{ exportedValue: number }>(
+        "ext.exports-clear"
+      )
+    ).toEqual({ exportedValue: 42 });
+
+    initializer.unregisterExtension("ext.exports-clear");
+
+    expect(
+      initializer.getExtensionExports<{ exportedValue: number }>(
+        "ext.exports-clear"
+      )
+    ).toBeNull();
+  });
+
+  it("unregisterExtension() allows re-registration of the same extension ID", () => {
+    const init1 = jest.fn(() => ({ version: 1 }));
+
+    initializer.registerExtension({
+      id: "ext.re-register",
+      init: init1,
+    });
+
+    initializer.setupExtensionContext(context);
+
+    expect(init1).toHaveBeenCalledTimes(1);
+
+    initializer.unregisterExtension("ext.re-register");
+
+    const init2 = jest.fn(() => ({ version: 2 }));
+
+    initializer.registerExtension({
+      id: "ext.re-register",
+      init: init2,
+    });
+
+    expect(init2).toHaveBeenCalledTimes(1);
+    expect(
+      initializer.getExtensionExports<{ version: number }>("ext.re-register")
+    ).toEqual({ version: 2 });
+  });
 });
 
 describe("createExtensionManager", () => {

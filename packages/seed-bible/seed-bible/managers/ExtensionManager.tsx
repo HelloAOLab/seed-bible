@@ -109,6 +109,26 @@ export class ExtensionInitalizer {
     return (this.extensionExports.get(id) as T) ?? null;
   }
 
+  unregisterExtension(id: string): boolean {
+    if (!this.registeredExtensions.has(id)) {
+      return false;
+    }
+
+    const cleanupFunctions = this.extensionCleanupFunctions.get(id) ?? [];
+    for (const cleanup of cleanupFunctions) {
+      try {
+        cleanup();
+      } catch (err) {
+        console.error(`Error during cleanup of extension '${id}':`, err);
+      }
+    }
+    this.extensionCleanupFunctions.delete(id);
+    this.registeredExtensions.delete(id);
+    this.initializedExtensionIds.delete(id);
+    this.extensionExports.delete(id);
+    return true;
+  }
+
   registerExtension(extension: ExtensionRegistration): CleanupFunction {
     if (!extension?.id || typeof extension.id !== "string") {
       throw new Error("registerExtension() requires a non-empty string id.");
@@ -127,24 +147,7 @@ export class ExtensionInitalizer {
 
     this.tryInitializeRegisteredExtensions();
 
-    return () => {
-      const cleanupFunctions =
-        this.extensionCleanupFunctions.get(extension.id) ?? [];
-      for (const cleanup of cleanupFunctions) {
-        try {
-          cleanup();
-        } catch (err) {
-          console.error(
-            `Error during cleanup of extension '${extension.id}':`,
-            err
-          );
-        }
-      }
-      this.extensionCleanupFunctions.delete(extension.id);
-      this.registeredExtensions.delete(extension.id);
-      this.initializedExtensionIds.delete(extension.id);
-      this.extensionExports.delete(extension.id);
-    };
+    return () => this.unregisterExtension(extension.id);
   }
 
   setupExtensionContext(context: SeedBibleState) {
@@ -273,6 +276,10 @@ export function registerExtension(
   extension: ExtensionRegistration
 ): CleanupFunction {
   return ExtensionInitalizer.getInstance().registerExtension(extension);
+}
+
+export function unregisterExtension(id: string): boolean {
+  return ExtensionInitalizer.getInstance().unregisterExtension(id);
 }
 
 export function setupExtensionContext(context: SeedBibleState) {
