@@ -6,6 +6,10 @@ import {
   type ExtensionSet,
 } from "seed-bible.managers.ExtensionManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
+import {
+  ContextMenuItem,
+  ContextMenuWithButton,
+} from "seed-bible.components.ContextMenu";
 
 type SettingsView = null | "account" | "theme" | "extensions";
 
@@ -342,42 +346,37 @@ function ExtensionsSettingsView(props: {
                     </div>
                   </button>
 
-                  <div className="sb-extension-menu-anchor">
+                  <ContextMenuWithButton>
+                    {installState === "none" && (
+                      <ContextMenuItem onClick={() => void handleInstall(id)}>
+                        Install
+                      </ContextMenuItem>
+                    )}
+                    {(installState === "installed" ||
+                      installState === "downloaded") && (
+                      <ContextMenuItem onClick={() => handleUninstall(id)}>
+                        Uninstall
+                      </ContextMenuItem>
+                    )}
+                  </ContextMenuWithButton>
+                  {/* <div className="sb-context-menu-anchor">
                     <button
-                      className="sb-extension-menu-button"
+                      className="sb-context-menu-button"
                       aria-label="Extension options"
                       title="Extension options"
                       onClick={() => {
                         openMenuId.value = openMenuId.value === id ? null : id;
                       }}
                     >
-                      <span className="material-symbols-outlined sb-extension-more-icon">
+                      <span className="material-symbols-outlined sb-context-more-icon">
                         more_vert
                       </span>
                     </button>
 
-                    {openMenuId.value === id && (
-                      <div className="sb-extension-menu">
-                        {installState === "none" && (
-                          <button
-                            className="sb-extension-menu-item"
-                            onClick={() => void handleInstall(id)}
-                          >
-                            Install
-                          </button>
-                        )}
-                        {(installState === "installed" ||
-                          installState === "downloaded") && (
-                          <button
-                            className="sb-extension-menu-item"
-                            onClick={() => handleUninstall(id)}
-                          >
-                            Uninstall
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                    <ContextMenu isOpen={openMenuId.value === id}>
+                      
+                    </ContextMenu>
+                  </div> */}
                 </li>
               );
             })}

@@ -1759,14 +1759,14 @@ button {
   color: color-mix(in srgb, #2e7d32, var(--sb-primary-color) 35%);
 }
 
-.sb-extension-menu-anchor {
+.sb-context-menu-anchor {
   position: absolute;
   right: 8px;
   top: 8px;
   z-index: 2;
 }
 
-.sb-extension-menu-button {
+.sb-context-menu-button {
   width: 28px;
   height: 28px;
   border: none;
@@ -1780,16 +1780,16 @@ button {
   padding: 0;
 }
 
-.sb-extension-menu-button:hover {
+.sb-context-menu-button:hover {
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 70%);
 }
 
-.sb-extension-more-icon {
+.sb-context-more-icon {
   font-size: 18px;
   opacity: 0.9;
 }
 
-.sb-extension-menu {
+.sb-context-menu {
   position: absolute;
   right: 0;
   top: calc(100% + 6px);
@@ -1802,7 +1802,7 @@ button {
   z-index: 40;
 }
 
-.sb-extension-menu-item {
+.sb-context-menu-item {
   width: 100%;
   border: none;
   background: transparent;
@@ -1813,7 +1813,7 @@ button {
   cursor: pointer;
 }
 
-.sb-extension-menu-item:hover {
+.sb-context-menu-item:hover {
   background: var(--sb-secondary-color);
 }
 
