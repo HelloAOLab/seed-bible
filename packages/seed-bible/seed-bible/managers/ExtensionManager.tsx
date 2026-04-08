@@ -291,6 +291,7 @@ export function createExtensionManager() {
     () => thisBot.tags.availableExtensions ?? null
   );
   const knownExtensionsById = new Map<string, UploadedExtension>();
+  const knownExtensionsSetsByExtensionId = new Map<string, ExtensionSet>();
   const installedExtensionIds = new Set<string>();
   const pendingInstallations = new Map<string, Promise<boolean>>();
 
@@ -418,9 +419,17 @@ export function createExtensionManager() {
     filter: (ext: UploadedExtension) => boolean = () => true
   ) => {
     trackExtensionSet(set);
-    const promises = set.extensions
-      .filter(filter)
-      .map((ext) => loadExtension(ext));
+
+    const promises: Promise<boolean>[] = [];
+    for (const ext of set.extensions) {
+      knownExtensionsById.set(ext.meta.id, ext);
+      knownExtensionsSetsByExtensionId.set(ext.meta.id, set);
+      if (!filter(ext)) {
+        continue;
+      }
+      promises.push(loadExtension(ext));
+    }
+
     const results = await Promise.all(promises);
     const successCount = results.filter((r) => r).length;
     console.log(
@@ -443,10 +452,24 @@ export function createExtensionManager() {
     );
   };
 
+  /**
+   * Gets the list of extensions that have been discovered from loaded extension sets.
+   */
+  const getExtensions = () => {
+    return Array.from(knownExtensionsById.values()).map((ext) => ({
+      extension: ext,
+      extensionSet: knownExtensionsSetsByExtensionId.get(ext.meta.id) ?? null,
+      installed: installedExtensionIds.has(ext.meta.id),
+      pendingInstallation: pendingInstallations.has(ext.meta.id),
+    }));
+  };
+
   return {
     loadDefaultExtensions,
     loadExtensionSet,
     loadExtension,
     loadExtensionFromPackage,
+
+    getExtensions,
   };
 }
