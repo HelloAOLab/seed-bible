@@ -6,8 +6,8 @@ export function ModalHost(props: { manager: ModalManager }) {
 
   return (
     <>
-      {manager.modals.value.map((modal) => (
-        <CasualOSApp id={`modal-${modal.id}`} key={modal.id}>
+      {manager.modals.value.map((modal) => {
+        const content = (
           <div
             className="sb-footnote-modal-overlay"
             onClick={() => {
@@ -36,8 +36,16 @@ export function ModalHost(props: { manager: ModalManager }) {
               <div className="sb-footnote-modal-content">{modal.content()}</div>
             </div>
           </div>
-        </CasualOSApp>
-      ))}
+        );
+
+        return modal.useCasualOSApp ? (
+          <CasualOSApp id={`modal-${modal.id}`} key={modal.id}>
+            {content}
+          </CasualOSApp>
+        ) : (
+          content
+        );
+      })}
     </>
   );
 }

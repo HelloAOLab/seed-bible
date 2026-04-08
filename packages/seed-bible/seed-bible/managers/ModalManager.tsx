@@ -5,12 +5,19 @@ export interface ManagedModal {
   id: string;
   title: string;
   content: () => ComponentChildren;
+  useCasualOSApp: boolean;
 }
 
 export interface ModalRegistration {
   id?: string;
   title: string;
   content: ComponentChildren | (() => ComponentChildren);
+
+  /**
+   * Whether to render the modal as a CasualOS app. This can be useful if the modal content needs to render over the grid or map portals.
+   * Defaults to true.
+   */
+  useCasualOSApp?: boolean;
 }
 
 export interface ModalManager {
@@ -45,6 +52,7 @@ export function createModalManager(): ModalManager {
         id,
         title: modal.title,
         content: toContentRenderer(modal.content),
+        useCasualOSApp: modal.useCasualOSApp ?? true,
       },
     ];
 
