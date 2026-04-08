@@ -1683,6 +1683,147 @@ button {
   max-width: 480px;
 }
 
+.sb-extensions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-extension-row {
+  display: flex;
+  align-items: stretch;
+  position: relative;
+}
+
+.sb-extension-row-button {
+  text-align: left;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  border-radius: 8px;
+  padding: 10px 44px 10px 12px;
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 75%);
+  color: var(--sb-font-color);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.sb-extension-row-button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.sb-extension-row-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.sb-extension-name {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.sb-extension-description {
+  font-size: 12px;
+  opacity: 0.78;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-extension-state-icon {
+  font-size: 18px;
+  flex: 0 0 auto;
+}
+
+.sb-extension-state-none {
+  opacity: 0.7;
+}
+
+.sb-extension-state-pending {
+  color: color-mix(in srgb, var(--sb-primary-color), black 6%);
+}
+
+.sb-extension-state-downloaded {
+  color: color-mix(in srgb, var(--sb-primary-color), black 18%);
+}
+
+.sb-extension-state-installed {
+  color: color-mix(in srgb, #2e7d32, var(--sb-primary-color) 35%);
+}
+
+.sb-extension-menu-anchor {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  z-index: 2;
+}
+
+.sb-extension-menu-button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.sb-extension-menu-button:hover {
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 70%);
+}
+
+.sb-extension-more-icon {
+  font-size: 18px;
+  opacity: 0.9;
+}
+
+.sb-extension-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 160px;
+  padding: 6px;
+  border: 1px solid var(--sb-secondary-color);
+  border-radius: 8px;
+  background: var(--sb-menu-background);
+  box-shadow: 0 10px 30px #00000014;
+  z-index: 40;
+}
+
+.sb-extension-menu-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.sb-extension-menu-item:hover {
+  background: var(--sb-secondary-color);
+}
+
+.sb-extension-footer-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .sb-settings-title {
   margin: 0 0 12px 0;
   /* color: var(--book-heading-color); */

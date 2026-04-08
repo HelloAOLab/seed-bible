@@ -1,9 +1,15 @@
 import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import type { TextSize } from "seed-bible.managers.ConfigManager";
+import {
+  ExtensionInitalizer,
+  type ExtensionSet,
+} from "seed-bible.managers.ExtensionManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 
-type SettingsView = null | "account" | "theme";
+type SettingsView = null | "account" | "theme" | "extensions";
+
+type ExtensionInstallState = "none" | "pending" | "downloaded" | "installed";
 
 const FONT_SIZE_OPTIONS: TextSize[] = ["XS", "S", "M", "L", "XL", "XXL"];
 
@@ -172,6 +178,237 @@ function ThemeSettingsView(props: {
   );
 }
 
+function getExtensionInstallState(
+  installed: boolean,
+  pendingInstallation: boolean,
+  isRegistered: boolean
+): ExtensionInstallState {
+  if (pendingInstallation) {
+    return "pending";
+  }
+  if (installed && isRegistered) {
+    return "installed";
+  }
+  if (installed && !isRegistered) {
+    return "downloaded";
+  }
+  return "none";
+}
+
+function ExtensionsSettingsView(props: {
+  state: SeedBibleState;
+  onBack: () => void;
+}) {
+  const { state, onBack } = props;
+  const { extensions } = state;
+  const extensionsList = extensions.getExtensions();
+  const installingIds = useSignal<Set<string>>(new Set());
+  const openMenuId = useSignal<string | null>(null);
+  const isDownloadingSet = useSignal(false);
+  const isUploadingSet = useSignal(false);
+
+  const handleInstall = async (extensionId: string) => {
+    openMenuId.value = null;
+    const extensionData = extensionsList.find(
+      (e) => e.extension?.meta.id === extensionId
+    );
+    if (!extensionData || !extensionData.extension) return;
+
+    installingIds.value = new Set(installingIds.value).add(extensionId);
+    await extensions.loadExtension(extensionData.extension);
+    installingIds.value = new Set(
+      [...installingIds.value].filter((id) => id !== extensionId)
+    );
+  };
+
+  const handleUninstall = (extensionId: string) => {
+    openMenuId.value = null;
+    extensions.unloadExtension(extensionId);
+  };
+
+  const handleDownloadExtensions = async () => {
+    if (isDownloadingSet.value) {
+      return;
+    }
+
+    isDownloadingSet.value = true;
+    try {
+      const set = extensions.getAllExtensionsAsSet();
+      if (!set) {
+        return;
+      }
+      os.download(set, `${set.id}.json`, "application/json");
+    } finally {
+      isDownloadingSet.value = false;
+    }
+  };
+
+  const handleUploadExtensions = async () => {
+    if (isUploadingSet.value) {
+      return;
+    }
+
+    isUploadingSet.value = true;
+    try {
+      const files = await os.showUploadFiles();
+      const firstFile = files?.[0];
+      if (!firstFile) {
+        return;
+      }
+
+      const text =
+        typeof firstFile.data === "string"
+          ? firstFile.data
+          : new TextDecoder().decode(firstFile.data);
+
+      const parsed = JSON.parse(text) as Partial<{
+        id: unknown;
+        recordName: unknown;
+        extensions: unknown;
+      }>;
+
+      if (
+        typeof parsed.id !== "string" ||
+        typeof parsed.recordName !== "string" ||
+        !Array.isArray(parsed.extensions)
+      ) {
+        console.error("Uploaded file is not a valid extension set.");
+        return;
+      }
+
+      await extensions.loadExtensionSet(parsed as ExtensionSet, () => false);
+    } catch (error) {
+      console.error("Failed to upload extension set.", error);
+    } finally {
+      isUploadingSet.value = false;
+    }
+  };
+
+  return (
+    <div className="sb-settings-page">
+      <SettingsSubPageHeader title="Extensions" onBack={onBack} />
+      <section className="sb-settings-section">
+        {extensionsList.length === 0 ? (
+          <div className="sb-settings-empty-state">
+            <p>No extensions available.</p>
+          </div>
+        ) : (
+          <ul className="sb-extensions-list">
+            {extensionsList.map((extensionEntry) => {
+              const { id, extension, installed, pendingInstallation } =
+                extensionEntry;
+              const isRegistered =
+                ExtensionInitalizer.getInstance().isExtensionRegistered(id);
+              const installState = getExtensionInstallState(
+                installed,
+                pendingInstallation,
+                isRegistered
+              );
+
+              const stateIcon =
+                installState === "installed"
+                  ? "check_circle"
+                  : installState === "downloaded"
+                    ? "download_done"
+                    : installState === "pending"
+                      ? "downloading"
+                      : "extension";
+
+              const stateLabel =
+                installState === "installed"
+                  ? "Installed"
+                  : installState === "downloaded"
+                    ? "Downloaded"
+                    : installState === "pending"
+                      ? "Installing…"
+                      : "Not installed";
+
+              return (
+                <li key={id} className="sb-extension-row">
+                  <button className="sb-extension-row-button" disabled>
+                    <span
+                      className={`material-symbols-outlined sb-extension-state-icon sb-extension-state-${installState}`}
+                      title={stateLabel}
+                    >
+                      {stateIcon}
+                    </span>
+                    <div className="sb-extension-row-content">
+                      <span className="sb-extension-name">
+                        {extension?.meta.titles.en ?? id}
+                      </span>
+                      <span className="sb-extension-description">
+                        {extension?.meta.descriptions.en ?? ""}
+                      </span>
+                    </div>
+                  </button>
+
+                  <div className="sb-extension-menu-anchor">
+                    <button
+                      className="sb-extension-menu-button"
+                      aria-label="Extension options"
+                      title="Extension options"
+                      onClick={() => {
+                        openMenuId.value = openMenuId.value === id ? null : id;
+                      }}
+                    >
+                      <span className="material-symbols-outlined sb-extension-more-icon">
+                        more_vert
+                      </span>
+                    </button>
+
+                    {openMenuId.value === id && (
+                      <div className="sb-extension-menu">
+                        {installState === "none" && (
+                          <button
+                            className="sb-extension-menu-item"
+                            onClick={() => void handleInstall(id)}
+                          >
+                            Install
+                          </button>
+                        )}
+                        {(installState === "installed" ||
+                          installState === "downloaded") && (
+                          <button
+                            className="sb-extension-menu-item"
+                            onClick={() => handleUninstall(id)}
+                          >
+                            Uninstall
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <div className="sb-extension-footer-actions">
+          <button
+            className="sb-settings-action-button"
+            onClick={() => void handleDownloadExtensions()}
+            disabled={isDownloadingSet.value}
+          >
+            {isDownloadingSet.value
+              ? "Downloading Extensions..."
+              : "Download Extensions"}
+          </button>
+          <button
+            className="sb-settings-action-button"
+            onClick={() => void handleUploadExtensions()}
+            disabled={isUploadingSet.value}
+          >
+            {isUploadingSet.value
+              ? "Uploading Extensions..."
+              : "Upload Extensions"}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function SettingsMainView(props: {
   state: SeedBibleState;
   onNavigate: (view: SettingsView) => void;
@@ -209,6 +446,15 @@ function SettingsMainView(props: {
               onClick={() => onNavigate("theme")}
             >
               <span>Theme & text</span>
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
+          </li>
+          <li>
+            <button
+              className="sb-settings-nav-item"
+              onClick={() => onNavigate("extensions")}
+            >
+              <span>Extensions</span>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
           </li>
@@ -294,6 +540,17 @@ export function SettingsPage(props: { state: SeedBibleState }) {
   if (currentView.value === "theme") {
     return (
       <ThemeSettingsView
+        state={state}
+        onBack={() => {
+          currentView.value = null;
+        }}
+      />
+    );
+  }
+
+  if (currentView.value === "extensions") {
+    return (
+      <ExtensionsSettingsView
         state={state}
         onBack={() => {
           currentView.value = null;

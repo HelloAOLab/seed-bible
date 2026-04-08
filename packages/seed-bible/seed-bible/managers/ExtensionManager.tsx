@@ -1,4 +1,5 @@
 import { computed } from "@preact/signals";
+import { orderBy, union } from "es-toolkit";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 
 export type CleanupFunction = () => void;
@@ -71,6 +72,7 @@ export interface ExtensionSet {
    * The ID of this extension set.
    */
   id: string;
+
   /**
    * The name of the record that this extension set is stored in.
    */
@@ -109,6 +111,26 @@ export class ExtensionInitalizer {
     return (this.extensionExports.get(id) as T) ?? null;
   }
 
+  unregisterExtension(id: string): boolean {
+    if (!this.registeredExtensions.has(id)) {
+      return false;
+    }
+
+    const cleanupFunctions = this.extensionCleanupFunctions.get(id) ?? [];
+    for (const cleanup of cleanupFunctions) {
+      try {
+        cleanup();
+      } catch (err) {
+        console.error(`Error during cleanup of extension '${id}':`, err);
+      }
+    }
+    this.extensionCleanupFunctions.delete(id);
+    this.registeredExtensions.delete(id);
+    this.initializedExtensionIds.delete(id);
+    this.extensionExports.delete(id);
+    return true;
+  }
+
   registerExtension(extension: ExtensionRegistration): CleanupFunction {
     if (!extension?.id || typeof extension.id !== "string") {
       throw new Error("registerExtension() requires a non-empty string id.");
@@ -127,29 +149,16 @@ export class ExtensionInitalizer {
 
     this.tryInitializeRegisteredExtensions();
 
-    return () => {
-      const cleanupFunctions =
-        this.extensionCleanupFunctions.get(extension.id) ?? [];
-      for (const cleanup of cleanupFunctions) {
-        try {
-          cleanup();
-        } catch (err) {
-          console.error(
-            `Error during cleanup of extension '${extension.id}':`,
-            err
-          );
-        }
-      }
-      this.extensionCleanupFunctions.delete(extension.id);
-      this.registeredExtensions.delete(extension.id);
-      this.initializedExtensionIds.delete(extension.id);
-      this.extensionExports.delete(extension.id);
-    };
+    return () => this.unregisterExtension(extension.id);
   }
 
   setupExtensionContext(context: SeedBibleState) {
     this.extensionContext = context;
     this.tryInitializeRegisteredExtensions();
+  }
+
+  listRegisteredExtensions() {
+    return Array.from(this.registeredExtensions.values());
   }
 
   private tryInitializeExtension(
@@ -275,6 +284,10 @@ export function registerExtension(
   return ExtensionInitalizer.getInstance().registerExtension(extension);
 }
 
+export function unregisterExtension(id: string): boolean {
+  return ExtensionInitalizer.getInstance().unregisterExtension(id);
+}
+
 export function setupExtensionContext(context: SeedBibleState) {
   ExtensionInitalizer.getInstance().setupExtensionContext(context);
 }
@@ -291,6 +304,7 @@ export function createExtensionManager() {
     () => thisBot.tags.availableExtensions ?? null
   );
   const knownExtensionsById = new Map<string, UploadedExtension>();
+  const knownExtensionsSetsByExtensionId = new Map<string, ExtensionSet>();
   const installedExtensionIds = new Set<string>();
   const pendingInstallations = new Map<string, Promise<boolean>>();
 
@@ -418,9 +432,17 @@ export function createExtensionManager() {
     filter: (ext: UploadedExtension) => boolean = () => true
   ) => {
     trackExtensionSet(set);
-    const promises = set.extensions
-      .filter(filter)
-      .map((ext) => loadExtension(ext));
+
+    const promises: Promise<boolean>[] = [];
+    for (const ext of set.extensions) {
+      knownExtensionsById.set(ext.meta.id, ext);
+      knownExtensionsSetsByExtensionId.set(ext.meta.id, set);
+      if (!filter(ext)) {
+        continue;
+      }
+      promises.push(loadExtension(ext));
+    }
+
     const results = await Promise.all(promises);
     const successCount = results.filter((r) => r).length;
     console.log(
@@ -443,10 +465,79 @@ export function createExtensionManager() {
     );
   };
 
+  /**
+   * Unloads the extension with the given ID by unregistering it and removing it from the set of installed extensions. An "onExtensionUninstalled" event will be shouted with the extension ID as a parameter.
+   * @param id The ID of the extension to unload.
+   */
+  const unloadExtension = (id: string) => {
+    unregisterExtension(id);
+    installedExtensionIds.delete(id);
+    shout("onExtensionUninstalled", id);
+  };
+
+  /**
+   * Gets the list of extensions that have been discovered from loaded extension sets.
+   */
+  const getExtensions = () => {
+    const knownExtensionPackages = knownExtensionsById;
+    const registeredExtensions =
+      ExtensionInitalizer.getInstance().listRegisteredExtensions();
+    const allExtensionIds = union(
+      Array.from(knownExtensionPackages.keys()),
+      registeredExtensions.map((ext) => ext.id)
+    );
+
+    return allExtensionIds.map((id) => ({
+      id,
+      extension: knownExtensionPackages.get(id) ?? null,
+      extensionSet: knownExtensionsSetsByExtensionId.get(id) ?? null,
+      registration: registeredExtensions.find((ext) => ext.id === id) ?? null,
+      installed:
+        installedExtensionIds.has(id) ||
+        ExtensionInitalizer.getInstance().isExtensionRegistered(id),
+      pendingInstallation: pendingInstallations.has(id),
+    }));
+  };
+
+  /**
+   * Gets all extensions as a set.
+   */
+  const getAllExtensionsAsSet = () => {
+    const extensionsToDownload = getExtensions()
+      .filter((ext) => ext.extension)
+      .map((ext) => ext.extension) as UploadedExtension[];
+    if (extensionsToDownload.length === 0) {
+      console.warn("No extensions available to download.");
+      return;
+    }
+
+    const extensions = orderBy(
+      extensionsToDownload,
+      [(ext) => ext?.meta.id],
+      ["asc"]
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hash = (crypto as any).sha256(extensions);
+
+    const setData: ExtensionSet = {
+      id: `downloaded-extension-set-${hash.slice(0, 8)}`,
+      recordName: "",
+      extensions: extensions,
+    };
+
+    return setData;
+  };
+
   return {
     loadDefaultExtensions,
     loadExtensionSet,
     loadExtension,
     loadExtensionFromPackage,
+    unloadExtension,
+
+    getExtensions,
+
+    getAllExtensionsAsSet,
   };
 }
