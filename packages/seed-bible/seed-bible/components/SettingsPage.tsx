@@ -1,9 +1,15 @@
 import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import type { TextSize } from "seed-bible.managers.ConfigManager";
+import {
+  ExtensionInitalizer,
+  unregisterExtension,
+} from "seed-bible.managers.ExtensionManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 
-type SettingsView = null | "account" | "theme";
+type SettingsView = null | "account" | "theme" | "extensions";
+
+type ExtensionInstallState = "none" | "pending" | "downloaded" | "installed";
 
 const FONT_SIZE_OPTIONS: TextSize[] = ["XS", "S", "M", "L", "XL", "XXL"];
 
@@ -172,6 +178,125 @@ function ThemeSettingsView(props: {
   );
 }
 
+function getExtensionInstallState(
+  installed: boolean,
+  pendingInstallation: boolean,
+  isRegistered: boolean
+): ExtensionInstallState {
+  if (pendingInstallation) {
+    return "pending";
+  }
+  if (installed && isRegistered) {
+    return "installed";
+  }
+  if (installed && !isRegistered) {
+    return "downloaded";
+  }
+  return "none";
+}
+
+function ExtensionsSettingsView(props: {
+  state: SeedBibleState;
+  onBack: () => void;
+}) {
+  const { state, onBack } = props;
+  const { extensions } = state;
+  const extensionsList = extensions.getExtensions();
+  const initializer = ExtensionInitalizer.getInstance();
+  const installingIds = useSignal<Set<string>>(new Set());
+
+  const handleInstall = async (extensionId: string) => {
+    const extensionData = extensionsList.find(
+      (e) => e.extension.meta.id === extensionId
+    );
+    if (!extensionData) return;
+
+    installingIds.value = new Set(installingIds.value).add(extensionId);
+    await extensions.loadExtension(extensionData.extension);
+    installingIds.value = new Set(
+      [...installingIds.value].filter((id) => id !== extensionId)
+    );
+  };
+
+  const handleUninstall = (extensionId: string) => {
+    unregisterExtension(extensionId);
+  };
+
+  return (
+    <div className="sb-settings-page">
+      <SettingsSubPageHeader title="Extensions" onBack={onBack} />
+      <section className="sb-settings-section">
+        {extensionsList.length === 0 ? (
+          <div className="sb-settings-empty-state">
+            <p>No extensions available.</p>
+          </div>
+        ) : (
+          <ul className="sb-extensions-list">
+            {extensionsList.map((extensionEntry) => {
+              const { extension, installed, pendingInstallation } =
+                extensionEntry;
+              const extensionId = extension.meta.id;
+              const isRegistered =
+                initializer.isExtensionRegistered(extensionId);
+              const installState = getExtensionInstallState(
+                installed,
+                pendingInstallation,
+                isRegistered
+              );
+              const isInstalling = installingIds.value.has(extensionId);
+
+              return (
+                <li key={extensionId} className="sb-extensions-list-item">
+                  <div className="sb-extension-header">
+                    <div className="sb-extension-info">
+                      <h3 className="sb-extension-name">
+                        {extension.meta.titles.en}
+                      </h3>
+                      <p className="sb-extension-description">
+                        {extension.meta.descriptions.en}
+                      </p>
+                    </div>
+                    <div className="sb-extension-status">
+                      <span
+                        className={`sb-extension-status-badge sb-extension-status-${installState}`}
+                      >
+                        {installState === "none" && "Not installed"}
+                        {installState === "pending" && "Installing..."}
+                        {installState === "downloaded" && "Downloaded"}
+                        {installState === "installed" && "Installed"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="sb-extension-actions">
+                    {installState === "none" && (
+                      <button
+                        className="sb-extension-install-button"
+                        onClick={() => void handleInstall(extensionId)}
+                        disabled={isInstalling}
+                      >
+                        {isInstalling ? "Installing..." : "Install"}
+                      </button>
+                    )}
+                    {(installState === "installed" ||
+                      installState === "downloaded") && (
+                      <button
+                        className="sb-extension-uninstall-button"
+                        onClick={() => handleUninstall(extensionId)}
+                      >
+                        Uninstall
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}
+
 function SettingsMainView(props: {
   state: SeedBibleState;
   onNavigate: (view: SettingsView) => void;
@@ -209,6 +334,15 @@ function SettingsMainView(props: {
               onClick={() => onNavigate("theme")}
             >
               <span>Theme & text</span>
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
+          </li>
+          <li>
+            <button
+              className="sb-settings-nav-item"
+              onClick={() => onNavigate("extensions")}
+            >
+              <span>Extensions</span>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
           </li>
@@ -294,6 +428,17 @@ export function SettingsPage(props: { state: SeedBibleState }) {
   if (currentView.value === "theme") {
     return (
       <ThemeSettingsView
+        state={state}
+        onBack={() => {
+          currentView.value = null;
+        }}
+      />
+    );
+  }
+
+  if (currentView.value === "extensions") {
+    return (
+      <ExtensionsSettingsView
         state={state}
         onBack={() => {
           currentView.value = null;
