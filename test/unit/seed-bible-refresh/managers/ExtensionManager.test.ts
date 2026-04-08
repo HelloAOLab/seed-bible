@@ -508,6 +508,7 @@ describe("createExtensionManager", () => {
       {
         extension: set.extensions[0],
         extensionSet: set,
+        registration: null,
         installed: false,
         pendingInstallation: false,
       },
@@ -536,6 +537,7 @@ describe("createExtensionManager", () => {
         extensionSet: null,
         installed: true,
         pendingInstallation: false,
+        registration: null,
       },
     ]);
   });
@@ -570,6 +572,7 @@ describe("createExtensionManager", () => {
         extensionSet: null,
         installed: false,
         pendingInstallation: true,
+        registration: null,
       },
     ]);
 
@@ -584,7 +587,70 @@ describe("createExtensionManager", () => {
         extensionSet: null,
         installed: true,
         pendingInstallation: false,
+        registration: null,
       },
     ]);
+  });
+
+  it("getExtensions() returns the union of registered extensions and extension packages", async () => {
+    const manager = createExtensionManager();
+    const packageOnlyExtension = {
+      recordName: "record",
+      address: "pkg://package-only",
+      meta: {
+        id: "ext.package-only",
+        titles: { en: "Package Only" },
+        descriptions: { en: "Package-only extension" },
+      },
+    };
+
+    const unregisterRegisteredOnly = registerExtension({
+      id: "ext.registered-only",
+      init: () => ({}),
+    });
+
+    try {
+      await manager.loadExtensionSet(
+        {
+          id: "set.union",
+          recordName: "record",
+          extensions: [packageOnlyExtension],
+        },
+        () => false
+      );
+
+      const extensions = manager.getExtensions();
+      const packageOnly = extensions.find(
+        (item) =>
+          item.registration === null &&
+          item.extension?.meta.id === "ext.package-only"
+      );
+      const registeredOnly = extensions.find(
+        (item) => item.registration?.id === "ext.registered-only"
+      );
+
+      expect(packageOnly).toEqual({
+        extension: packageOnlyExtension,
+        extensionSet: {
+          id: "set.union",
+          recordName: "record",
+          extensions: [packageOnlyExtension],
+        },
+        registration: null,
+        installed: false,
+        pendingInstallation: false,
+      });
+      expect(registeredOnly).toEqual(
+        expect.objectContaining({
+          extension: null,
+          extensionSet: null,
+          registration: expect.objectContaining({ id: "ext.registered-only" }),
+          installed: true,
+          pendingInstallation: false,
+        })
+      );
+    } finally {
+      unregisterRegisteredOnly();
+    }
   });
 });

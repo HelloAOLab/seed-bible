@@ -1,4 +1,5 @@
 import { computed } from "@preact/signals";
+import { union } from "es-toolkit";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 
 export type CleanupFunction = () => void;
@@ -153,6 +154,10 @@ export class ExtensionInitalizer {
   setupExtensionContext(context: SeedBibleState) {
     this.extensionContext = context;
     this.tryInitializeRegisteredExtensions();
+  }
+
+  listRegisteredExtensions() {
+    return Array.from(this.registeredExtensions.values());
   }
 
   private tryInitializeExtension(
@@ -463,11 +468,22 @@ export function createExtensionManager() {
    * Gets the list of extensions that have been discovered from loaded extension sets.
    */
   const getExtensions = () => {
-    return Array.from(knownExtensionsById.values()).map((ext) => ({
-      extension: ext,
-      extensionSet: knownExtensionsSetsByExtensionId.get(ext.meta.id) ?? null,
-      installed: installedExtensionIds.has(ext.meta.id),
-      pendingInstallation: pendingInstallations.has(ext.meta.id),
+    const knownExtensionPackages = knownExtensionsById;
+    const registeredExtensions =
+      ExtensionInitalizer.getInstance().listRegisteredExtensions();
+    const allExtensionIds = union(
+      Array.from(knownExtensionPackages.keys()),
+      registeredExtensions.map((ext) => ext.id)
+    );
+
+    return allExtensionIds.map((id) => ({
+      extension: knownExtensionPackages.get(id) ?? null,
+      extensionSet: knownExtensionsSetsByExtensionId.get(id) ?? null,
+      registration: registeredExtensions.find((ext) => ext.id === id) ?? null,
+      installed:
+        installedExtensionIds.has(id) ||
+        ExtensionInitalizer.getInstance().isExtensionRegistered(id),
+      pendingInstallation: pendingInstallations.has(id),
     }));
   };
 
