@@ -284,7 +284,7 @@ export type ExtensionManager = ReturnType<typeof createExtensionManager>;
 /**
  * The list of extension IDs that should be loaded by default.
  */
-export const DEFAULT_EXTENSION_IDS = new Set<string>([]);
+export const DEFAULT_EXTENSION_IDS = new Set<string>(["ext_locations"]);
 
 export function createExtensionManager() {
   const defaultExtensions = computed<ExtensionSet | null>(
