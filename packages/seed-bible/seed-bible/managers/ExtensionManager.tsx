@@ -465,6 +465,16 @@ export function createExtensionManager() {
   };
 
   /**
+   * Unloads the extension with the given ID by unregistering it and removing it from the set of installed extensions. An "onExtensionUninstalled" event will be shouted with the extension ID as a parameter.
+   * @param id The ID of the extension to unload.
+   */
+  const unloadExtension = (id: string) => {
+    unregisterExtension(id);
+    installedExtensionIds.delete(id);
+    shout("onExtensionUninstalled", id);
+  };
+
+  /**
    * Gets the list of extensions that have been discovered from loaded extension sets.
    */
   const getExtensions = () => {
@@ -493,6 +503,7 @@ export function createExtensionManager() {
     loadExtensionSet,
     loadExtension,
     loadExtensionFromPackage,
+    unloadExtension,
 
     getExtensions,
   };

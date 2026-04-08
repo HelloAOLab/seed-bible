@@ -219,7 +219,7 @@ function ExtensionsSettingsView(props: {
   };
 
   const handleUninstall = (extensionId: string) => {
-    unregisterExtension(extensionId);
+    extensions.unloadExtension(extensionId);
   };
 
   return (
