@@ -1,6 +1,8 @@
 import { computed } from "@preact/signals";
-import { union } from "es-toolkit";
+import { orderBy, union } from "es-toolkit";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
+
+declare const crypto: import("../../../../typings/AuxLibraryDefinitions").Crypto;
 
 export type CleanupFunction = () => void;
 export type ExtensionDependencies = Record<string, object>;
@@ -72,6 +74,7 @@ export interface ExtensionSet {
    * The ID of this extension set.
    */
   id: string;
+
   /**
    * The name of the record that this extension set is stored in.
    */
@@ -498,6 +501,33 @@ export function createExtensionManager() {
     }));
   };
 
+  /**
+   * Gets all extensions as a set.
+   */
+  const getAllExtensionsAsSet = () => {
+    const extensionsToDownload = getExtensions().filter((ext) => ext.extension);
+    if (extensionsToDownload.length === 0) {
+      console.warn("No extensions available to download.");
+      return;
+    }
+
+    const extensions = orderBy(
+      extensionsToDownload.map((ext) => ext.extension!),
+      [(ext) => ext.meta.id],
+      ["asc"]
+    ) as UploadedExtension[];
+
+    const hash = crypto.sha256(extensions);
+
+    const setData: ExtensionSet = {
+      id: `downloaded-extension-set-${hash.slice(0, 8)}`,
+      recordName: "",
+      extensions: extensions,
+    };
+
+    return setData;
+  };
+
   return {
     loadDefaultExtensions,
     loadExtensionSet,
@@ -506,5 +536,7 @@ export function createExtensionManager() {
     unloadExtension,
 
     getExtensions,
+
+    getAllExtensionsAsSet,
   };
 }
