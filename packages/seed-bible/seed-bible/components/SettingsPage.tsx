@@ -207,9 +207,9 @@ function ExtensionsSettingsView(props: {
 
   const handleInstall = async (extensionId: string) => {
     const extensionData = extensionsList.find(
-      (e) => e.extension.meta.id === extensionId
+      (e) => e.extension?.meta.id === extensionId
     );
-    if (!extensionData) return;
+    if (!extensionData || !extensionData.extension) return;
 
     installingIds.value = new Set(installingIds.value).add(extensionId);
     await extensions.loadExtension(extensionData.extension);
@@ -233,27 +233,25 @@ function ExtensionsSettingsView(props: {
         ) : (
           <ul className="sb-extensions-list">
             {extensionsList.map((extensionEntry) => {
-              const { extension, installed, pendingInstallation } =
+              const { id, extension, installed, pendingInstallation } =
                 extensionEntry;
-              const extensionId = extension.meta.id;
-              const isRegistered =
-                initializer.isExtensionRegistered(extensionId);
+              const isRegistered = initializer.isExtensionRegistered(id);
               const installState = getExtensionInstallState(
                 installed,
                 pendingInstallation,
                 isRegistered
               );
-              const isInstalling = installingIds.value.has(extensionId);
+              const isInstalling = installingIds.value.has(id);
 
               return (
-                <li key={extensionId} className="sb-extensions-list-item">
+                <li key={id} className="sb-extensions-list-item">
                   <div className="sb-extension-header">
                     <div className="sb-extension-info">
                       <h3 className="sb-extension-name">
-                        {extension.meta.titles.en}
+                        {extension?.meta.titles.en ?? id}
                       </h3>
                       <p className="sb-extension-description">
-                        {extension.meta.descriptions.en}
+                        {extension?.meta.descriptions.en ?? ""}
                       </p>
                     </div>
                     <div className="sb-extension-status">
@@ -271,7 +269,7 @@ function ExtensionsSettingsView(props: {
                     {installState === "none" && (
                       <button
                         className="sb-extension-install-button"
-                        onClick={() => void handleInstall(extensionId)}
+                        onClick={() => void handleInstall(id)}
                         disabled={isInstalling}
                       >
                         {isInstalling ? "Installing..." : "Install"}
@@ -281,7 +279,7 @@ function ExtensionsSettingsView(props: {
                       installState === "downloaded") && (
                       <button
                         className="sb-extension-uninstall-button"
-                        onClick={() => handleUninstall(extensionId)}
+                        onClick={() => handleUninstall(id)}
                       >
                         Uninstall
                       </button>

@@ -477,6 +477,7 @@ export function createExtensionManager() {
     );
 
     return allExtensionIds.map((id) => ({
+      id,
       extension: knownExtensionPackages.get(id) ?? null,
       extensionSet: knownExtensionsSetsByExtensionId.get(id) ?? null,
       registration: registeredExtensions.find((ext) => ext.id === id) ?? null,
