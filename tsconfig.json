@@ -24,35 +24,14 @@
       "https://esm.helloao.org/painter-vendor-IGDNTFOW.js": [
         "./lib/painter-vendor.ts"
       ],
-      "ext_geoImporter.importer.closeMiniMapPortal": [
-        "./packages/geo-importer-extension/ext_geoImporter/importer/closeMiniMapPortal.tsx"
-      ],
-      "ext_geoImporter.importer.createCloseButton": [
-        "./packages/geo-importer-extension/ext_geoImporter/importer/createCloseButton.tsx"
-      ],
       "ext_geoImporter.importer.geometryHandlers": [
-        "./packages/geo-importer-extension/ext_geoImporter/importer/geometryHandlers.ts"
+        "./packages/geo-importer-extension/ext_geoImporter/importer/geometryHandlers.tsx"
       ],
       "ext_geoImporter.importer.loadMap": [
         "./packages/geo-importer-extension/ext_geoImporter/importer/loadMap.tsx"
       ],
-      "ext_geoImporter.importer.onEggHatch": [
-        "./packages/geo-importer-extension/ext_geoImporter/importer/onEggHatch.tsx"
-      ],
-      "ext_geoImporter.importer.onFileUpload": [
-        "./packages/geo-importer-extension/ext_geoImporter/importer/onFileUpload.tsx"
-      ],
-      "ext_geoImporter.importer.onInstJoined": [
-        "./packages/geo-importer-extension/ext_geoImporter/importer/onInstJoined.tsx"
-      ],
-      "ext_locations.geojson": [
-        "./packages/locations-extension/ext_locations/geojson.tsx"
-      ],
       "ext_locations.init": [
         "./packages/locations-extension/ext_locations/init.tsx"
-      ],
-      "ext_locations.onBookChanged": [
-        "./packages/locations-extension/ext_locations/onBookChanged.tsx"
       ],
       "ext_locations.onEggHatch": [
         "./packages/locations-extension/ext_locations/onEggHatch.tsx"
@@ -60,14 +39,8 @@
       "ext_locations.onExtensionInstalled": [
         "./packages/locations-extension/ext_locations/onExtensionInstalled.tsx"
       ],
-      "ext_locations.onFloatingAppRemoved": [
-        "./packages/locations-extension/ext_locations/onFloatingAppRemoved.tsx"
-      ],
       "ext_locations.onInstJoined": [
         "./packages/locations-extension/ext_locations/onInstJoined.tsx"
-      ],
-      "ext_locations.options": [
-        "./packages/locations-extension/ext_locations/options.tsx"
       ],
       "seed-bible.app.api": ["./packages/seed-bible/seed-bible/app/api.tsx"],
       "seed-bible.app.init": ["./packages/seed-bible/seed-bible/app/init.tsx"],
