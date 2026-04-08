@@ -45,6 +45,10 @@ import {
   createAnnotationsManager,
   type AnnotationsManager,
 } from "seed-bible.managers.AnnotationsManager";
+import {
+  createModalManager,
+  type ModalManager,
+} from "seed-bible.managers.ModalManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 
@@ -126,6 +130,8 @@ export interface SeedBibleState {
   annotations: AnnotationsManager;
   /** Shared reading sessions manager. */
   sessions: SessionsManager;
+  /** Modal manager for app-wide dialog state and rendering. */
+  modals: ModalManager;
   /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
   /** Extension loading and runtime manager. */
@@ -155,6 +161,7 @@ export function createSeedBibleState(): SeedBibleState {
   const annotations = createAnnotationsManager(login);
   const sessions = createSessionsManager(data, login, highlights);
   const extensions = createExtensionManager();
+  const modals = createModalManager();
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value);
@@ -343,6 +350,7 @@ export function createSeedBibleState(): SeedBibleState {
     highlights,
     annotations,
     sessions,
+    modals,
     extensions,
     app: {
       createSharedSession: handleCreateSharedSession,

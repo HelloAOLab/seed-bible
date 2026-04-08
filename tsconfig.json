@@ -81,6 +81,9 @@
       "seed-bible.components.icons": [
         "./packages/seed-bible/seed-bible/components/icons.tsx"
       ],
+      "seed-bible.components.ModalHost": [
+        "./packages/seed-bible/seed-bible/components/ModalHost.tsx"
+      ],
       "seed-bible.components.PaneLayout": [
         "./packages/seed-bible/seed-bible/components/PaneLayout.tsx"
       ],
@@ -125,6 +128,9 @@
       ],
       "seed-bible.managers.LoginManager": [
         "./packages/seed-bible/seed-bible/managers/LoginManager.tsx"
+      ],
+      "seed-bible.managers.ModalManager": [
+        "./packages/seed-bible/seed-bible/managers/ModalManager.tsx"
       ],
       "seed-bible.managers.PanesManager": [
         "./packages/seed-bible/seed-bible/managers/PanesManager.tsx"

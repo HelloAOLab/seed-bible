@@ -361,17 +361,52 @@ export function Sidebar(props: SidebarProps) {
   const effectivelyCollapsed = isCollapsed && !isMobileOpen;
   const shouldShowSidebarContent = !effectivelyCollapsed || isSettingsOpen;
   const isLayoutMenuOpen = useSignal(false);
-  const isJoinSessionModalOpen = useSignal(false);
   const joinSessionId = useSignal("");
 
   const openJoinSessionModal = () => {
     closeContextMenus();
     isLayoutMenuOpen.value = false;
-    isJoinSessionModalOpen.value = true;
+    state.modals.openModal({
+      id: "join-shared-session",
+      title: "Join Shared Session",
+      content: () => (
+        <>
+          <label>
+            <span>Session ID</span>
+            <input
+              value={joinSessionId.value}
+              onInput={(event) => {
+                joinSessionId.value = (
+                  event.currentTarget as HTMLInputElement
+                ).value;
+              }}
+              placeholder="Enter shared session ID"
+            />
+          </label>
+          <div>
+            <button
+              onClick={() => {
+                state.modals.closeModal("join-shared-session");
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                void handleJoinSharedSession();
+              }}
+              disabled={!joinSessionId.value.trim()}
+            >
+              Join Session
+            </button>
+          </div>
+        </>
+      ),
+    });
   };
 
   const closeJoinSessionModal = () => {
-    isJoinSessionModalOpen.value = false;
+    state.modals.closeModal("join-shared-session");
     joinSessionId.value = "";
   };
 
@@ -421,57 +456,6 @@ export function Sidebar(props: SidebarProps) {
         ) : (
           <Tabs state={state} closeLayoutMenu={closeLayoutMenu} />
         ))}
-
-      {isJoinSessionModalOpen.value && (
-        <div
-          className="sb-footnote-modal-overlay"
-          onClick={closeJoinSessionModal}
-        >
-          <div
-            className="sb-footnote-modal"
-            onClick={(event: MouseEvent) => {
-              event.stopPropagation();
-            }}
-          >
-            <div className="sb-footnote-modal-header">
-              <h3 className="sb-footnote-modal-title">Join Shared Session</h3>
-              <button
-                className="sb-footnote-modal-close"
-                aria-label="Close join shared session dialog"
-                onClick={closeJoinSessionModal}
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-
-            <div className="sb-footnote-modal-content">
-              <label>
-                <span>Session ID</span>
-                <input
-                  value={joinSessionId.value}
-                  onInput={(event) => {
-                    joinSessionId.value = (
-                      event.currentTarget as HTMLInputElement
-                    ).value;
-                  }}
-                  placeholder="Enter shared session ID"
-                />
-              </label>
-              <div>
-                <button onClick={closeJoinSessionModal}>Cancel</button>
-                <button
-                  onClick={() => {
-                    void handleJoinSharedSession();
-                  }}
-                  disabled={!joinSessionId.value.trim()}
-                >
-                  Join Session
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       <button
         onClick={sidebar.openSettings}

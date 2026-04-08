@@ -10,6 +10,7 @@ import { CasualOSApp } from "seed-bible.components.CasualOSApp";
 import { useEffect } from "preact/hooks";
 import type { ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "seed-bible.components.ContextMenu";
+import { ModalHost } from "seed-bible.components.ModalHost";
 
 const { useMemo } = os.appHooks;
 
@@ -113,6 +114,8 @@ export function Main() {
         </CasualOSApp>
 
         <BibleReaderToolbar state={state} />
+
+        <ModalHost manager={state.modals} />
       </div>
     </I18nProvider>
   );
