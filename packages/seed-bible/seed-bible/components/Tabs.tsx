@@ -16,7 +16,27 @@ import type { UserProfile } from "../managers/LoginManager";
 import type { ConnectedSessionUser } from "../managers/SessionsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 
+interface SidebarProps {
+  state: SeedBibleState;
+}
+
 interface TabsProps {
+  state: SeedBibleState;
+  closeLayoutMenu: () => void;
+  openJoinSessionModal: () => void;
+}
+
+interface TabsHeaderProps {
+  state: SeedBibleState;
+  effectivelyCollapsed: boolean;
+  panelsEnabled: boolean;
+  paneLayout: PaneLayoutId | "single";
+  isLayoutMenuOpen: boolean;
+  toggleLayoutMenu: () => void;
+  setLayout: (layout: PaneLayoutId) => void;
+}
+
+interface SettingsProps {
   state: SeedBibleState;
 }
 
@@ -50,11 +70,281 @@ function renderLayoutPreview(layoutId: PaneLayoutId) {
   );
 }
 
-export function Tabs(props: TabsProps) {
+export function TabsHeader(props: TabsHeaderProps) {
+  const {
+    state,
+    effectivelyCollapsed,
+    panelsEnabled,
+    paneLayout,
+    isLayoutMenuOpen,
+    toggleLayoutMenu,
+    setLayout,
+  } = props;
+  const { sidebar } = state;
+
+  return (
+    <div className="sb-sidebar-top-row">
+      <button
+        onClick={sidebar.toggleSidebarCollapsed}
+        className="sb-sidebar-collapse-button"
+        aria-label={
+          effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"
+        }
+        title={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+      >
+        <span className="material-symbols-outlined">
+          {effectivelyCollapsed ? "menu" : "menu_open"}
+        </span>
+      </button>
+
+      {panelsEnabled && (
+        <div className="sb-sidebar-top-actions">
+          <div className="sb-pane-layout-anchor">
+            <button
+              onClick={toggleLayoutMenu}
+              className="sb-sidebar-top-icon-button"
+              aria-label="Select pane layout"
+              title="Pane layout"
+            >
+              <span className="material-symbols-outlined">dashboard</span>
+            </button>
+
+            {isLayoutMenuOpen && (
+              <div className="sb-pane-layout-menu">
+                <div className="sb-pane-layout-menu-title">Panels</div>
+                <div className="sb-pane-layout-options">
+                  {PANE_LAYOUT_OPTIONS.map((layout) => (
+                    <button
+                      key={layout.id}
+                      onClick={() => setLayout(layout.id)}
+                      className={`sb-pane-layout-option${
+                        paneLayout === layout.id
+                          ? " sb-pane-layout-option-selected"
+                          : ""
+                      }`}
+                      aria-label={layout.label}
+                      title={layout.label}
+                    >
+                      {renderLayoutPreview(layout.id)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      <button
+        onClick={sidebar.closeSidebar}
+        className="sb-sidebar-close-button"
+        aria-label="Close sidebar"
+        title="Close sidebar"
+      >
+        <span className="material-symbols-outlined">close</span>
+      </button>
+    </div>
+  );
+}
+
+export function Settings(props: SettingsProps) {
   const { state } = props;
-  const { app, panes, sidebar, tabs: tabsManager } = state;
+  const { sidebar } = state;
+  const { t } = useI18n();
+
+  return (
+    <div className="sb-sidebar-settings-view">
+      <div className="sb-sidebar-tabs-header">
+        <h3 className="sb-sidebar-tabs-title">{t("settings")}</h3>
+        <button
+          onClick={sidebar.closeSettings}
+          className="sb-sidebar-settings-close-button"
+          aria-label="Close settings"
+          title="Close settings"
+        >
+          <span className="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div className="sb-sidebar-settings-content">
+        <SettingsPage state={state} />
+      </div>
+    </div>
+  );
+}
+
+export function Tabs(props: TabsProps) {
+  const { state, closeLayoutMenu, openJoinSessionModal } = props;
+  const { app, tabs: tabsManager } = state;
   const tabs = tabsManager.tabs.value;
   const selectedTabId = tabsManager.selectedTabId.value;
+  const panelsEnabled = app.panelsEnabled.value;
+
+  return (
+    <>
+      <div className="sb-sidebar-tabs-header">
+        <h3 className="sb-sidebar-tabs-title">Tabs</h3>
+        <button
+          onClick={() => {
+            void state.app.createSharedSession();
+          }}
+          className="sb-tab-add-button"
+          aria-label="Create new shared reading session tab"
+          title="New shared session"
+        >
+          <span className="material-symbols-outlined">groups</span>
+        </button>
+        <button
+          onClick={openJoinSessionModal}
+          className="sb-tab-add-button"
+          aria-label="Join shared reading session"
+          title="Join shared session"
+        >
+          <span className="material-symbols-outlined">group_add</span>
+        </button>
+        <button
+          onClick={() => {
+            app.addTab();
+          }}
+          className="sb-tab-add-button"
+          aria-label="Create new tab"
+          title="New tab"
+        >
+          <span className="material-symbols-outlined">add</span>
+        </button>
+      </div>
+
+      <div className="sb-sidebar-tab-list">
+        {tabs.map((tab) => {
+          const isSelected = tab.id === selectedTabId;
+          const currentBookId = tab.readingState.bookId.value;
+          const currentBookName =
+            tab.readingState.translationBooks.value?.books.find(
+              (book) => book.id === currentBookId
+            )?.name ??
+            currentBookId ??
+            "-";
+          const currentChapter = tab.readingState.chapterNumber.value;
+          const currentTranslation =
+            tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
+          const titlePrefix = tab.sharedSession ? "Shared " : "";
+          const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
+
+          return (
+            <div
+              key={tab.id}
+              className="sb-tab-row"
+              dir={tab.readingState.translation.value?.textDirection ?? "auto"}
+            >
+              <button
+                onClick={() => {
+                  closeContextMenus();
+                  closeLayoutMenu();
+                  app.selectTab(tab.id);
+                }}
+                className={`sb-tab-button${
+                  isSelected ? " sb-tab-button-selected" : ""
+                }`}
+              >
+                <div className="sb-tab-main-content">
+                  <span>{`${titlePrefix}${currentBookName} - ${currentChapter} • ${currentTranslation}`}</span>
+                </div>
+
+                {tab.sharedSession && connectedUsers.length > 0 && (
+                  <div className="sb-tab-users-section">
+                    <div className="sb-tab-users-list">
+                      {connectedUsers.map((user) => {
+                        const imageUrl = getUserImageUrl(user.profile);
+                        const displayName = getUserDisplayName(user);
+                        const style = imageUrl
+                          ? {
+                              borderColor: user.color,
+                              backgroundImage: `url(${imageUrl})`,
+                            }
+                          : {
+                              borderColor: user.color,
+                              backgroundColor: user.color,
+                            };
+
+                        return (
+                          <span
+                            key={user.connectionId}
+                            className={`sb-tab-user-icon${
+                              imageUrl ? " sb-tab-user-icon-has-image" : ""
+                            }${user.isSelf ? " sb-tab-user-icon-self" : ""}`}
+                            title={displayName}
+                            style={style}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </button>
+
+              <ContextMenuWithButton
+                onClick={() => {
+                  closeLayoutMenu();
+                }}
+                anchorClassName="sb-tab-menu-anchor"
+                buttonClassName="sb-tab-menu-button"
+                menuClassName="sb-tab-menu"
+                iconClassName="sb-tab-more-icon"
+                aria-label="Open tab menu"
+                title="Tab options"
+              >
+                {tab.sharedSession && (
+                  <ContextMenuItem
+                    className="sb-tab-menu-item"
+                    title={`Session ID: ${tab.sharedSession.id}`}
+                    onClick={() => {
+                      if (tab.sharedSession) {
+                        os.setClipboard(tab.sharedSession.id);
+                      }
+                    }}
+                  >
+                    {`Session ID: ${tab.sharedSession.id}`}
+                  </ContextMenuItem>
+                )}
+                <ContextMenuItem
+                  className="sb-tab-menu-item"
+                  onClick={() => {
+                    state.tabs.removeTab(tab.id);
+                  }}
+                >
+                  Close tab
+                </ContextMenuItem>
+                {panelsEnabled && (
+                  <>
+                    <ContextMenuItem
+                      onClick={() => {
+                        app.openInNewPane(tab.id);
+                      }}
+                      className="sb-tab-menu-item"
+                    >
+                      Open in new pane
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      onClick={() => {
+                        app.openInDetachedPane(tab.id);
+                      }}
+                      className="sb-tab-menu-item"
+                    >
+                      Open in detached pane
+                    </ContextMenuItem>
+                  </>
+                )}
+              </ContextMenuWithButton>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+export function Sidebar(props: SidebarProps) {
+  const { state } = props;
+  const { app, panes, sidebar } = state;
   const paneLayout = app.panelsEnabled.value ? panes.layout.value : "single";
   const panelsEnabled = app.panelsEnabled.value;
   const isSettingsOpen = sidebar.isSettingsOpen.value;
@@ -65,25 +355,6 @@ export function Tabs(props: TabsProps) {
   const isLayoutMenuOpen = useSignal(false);
   const isJoinSessionModalOpen = useSignal(false);
   const joinSessionId = useSignal("");
-
-  const { t } = useI18n();
-  // const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
-  // const selectedBookId = selectedTab?.readingState.bookId.value ?? null;
-  // const selectedChapter = selectedTab?.readingState.chapterNumber.value ?? null;
-  // const selectedTranslation =
-  //   selectedTab?.readingState.translationId.value ?? null;
-
-  // useEffect(() => {
-  //   configBot.tags.book = selectedBookId;
-  //   configBot.tags.chapter = selectedChapter;
-
-  //   if (
-  //     configBot.tags.translation ||
-  //     selectedTranslation !== DEFAULT_TRANSLATION_ID
-  //   ) {
-  //     configBot.tags.translation = selectedTranslation;
-  //   }
-  // }, [selectedBookId, selectedChapter, selectedTranslation]);
 
   const openJoinSessionModal = () => {
     closeContextMenus();
@@ -106,273 +377,42 @@ export function Tabs(props: TabsProps) {
     closeJoinSessionModal();
   };
 
+  const closeLayoutMenu = () => {
+    isLayoutMenuOpen.value = false;
+  };
+
   return (
     <aside
       className={`sb-tabs-sidebar${effectivelyCollapsed ? " sb-tabs-sidebar-collapsed" : ""}${isMobileOpen ? " sb-tabs-sidebar-mobile-open" : ""}`}
     >
       {!isSettingsOpen && (
-        <div className="sb-sidebar-top-row">
-          <button
-            onClick={sidebar.toggleSidebarCollapsed}
-            className="sb-sidebar-collapse-button"
-            aria-label={
-              effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"
-            }
-            title={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            <span className="material-symbols-outlined">
-              {effectivelyCollapsed ? "menu" : "menu_open"}
-            </span>
-          </button>
-
-          {panelsEnabled && (
-            <div className="sb-sidebar-top-actions">
-              <div className="sb-pane-layout-anchor">
-                <button
-                  onClick={() => {
-                    closeContextMenus();
-                    isLayoutMenuOpen.value = !isLayoutMenuOpen.value;
-                  }}
-                  className="sb-sidebar-top-icon-button"
-                  aria-label="Select pane layout"
-                  title="Pane layout"
-                >
-                  <span className="material-symbols-outlined">dashboard</span>
-                </button>
-
-                {isLayoutMenuOpen.value && (
-                  <div className="sb-pane-layout-menu">
-                    <div className="sb-pane-layout-menu-title">Panels</div>
-                    <div className="sb-pane-layout-options">
-                      {PANE_LAYOUT_OPTIONS.map((layout) => (
-                        <button
-                          key={layout.id}
-                          onClick={() => {
-                            panes.setLayout(layout.id);
-                            isLayoutMenuOpen.value = false;
-                          }}
-                          className={`sb-pane-layout-option${
-                            paneLayout === layout.id
-                              ? " sb-pane-layout-option-selected"
-                              : ""
-                          }`}
-                          aria-label={layout.label}
-                          title={layout.label}
-                        >
-                          {renderLayoutPreview(layout.id)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          <button
-            onClick={sidebar.closeSidebar}
-            className="sb-sidebar-close-button"
-            aria-label="Close sidebar"
-            title="Close sidebar"
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
+        <TabsHeader
+          state={state}
+          effectivelyCollapsed={effectivelyCollapsed}
+          panelsEnabled={panelsEnabled}
+          paneLayout={paneLayout}
+          isLayoutMenuOpen={isLayoutMenuOpen.value}
+          toggleLayoutMenu={() => {
+            closeContextMenus();
+            isLayoutMenuOpen.value = !isLayoutMenuOpen.value;
+          }}
+          setLayout={(layout) => {
+            panes.setLayout(layout);
+            closeLayoutMenu();
+          }}
+        />
       )}
 
-      {shouldShowSidebarContent && (
-        <>
-          {isSettingsOpen ? (
-            <div className="sb-sidebar-settings-view">
-              <div className="sb-sidebar-tabs-header">
-                <h3 className="sb-sidebar-tabs-title">{t("settings")}</h3>
-                <button
-                  onClick={sidebar.closeSettings}
-                  className="sb-sidebar-settings-close-button"
-                  aria-label="Close settings"
-                  title="Close settings"
-                >
-                  <span className="material-symbols-outlined">close</span>
-                </button>
-              </div>
-
-              <div className="sb-sidebar-settings-content">
-                <SettingsPage state={state} />
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="sb-sidebar-tabs-header">
-                <h3 className="sb-sidebar-tabs-title">Tabs</h3>
-                <button
-                  onClick={() => {
-                    void state.app.createSharedSession();
-                  }}
-                  className="sb-tab-add-button"
-                  aria-label="Create new shared reading session tab"
-                  title="New shared session"
-                >
-                  <span className="material-symbols-outlined">groups</span>
-                </button>
-                <button
-                  onClick={openJoinSessionModal}
-                  className="sb-tab-add-button"
-                  aria-label="Join shared reading session"
-                  title="Join shared session"
-                >
-                  <span className="material-symbols-outlined">group_add</span>
-                </button>
-                <button
-                  onClick={() => {
-                    app.addTab();
-                  }}
-                  className="sb-tab-add-button"
-                  aria-label="Create new tab"
-                  title="New tab"
-                >
-                  <span className="material-symbols-outlined">add</span>
-                </button>
-              </div>
-
-              <div className="sb-sidebar-tab-list">
-                {tabs.map((tab) => {
-                  const isSelected = tab.id === selectedTabId;
-                  const currentBookId = tab.readingState.bookId.value;
-                  const currentBookName =
-                    tab.readingState.translationBooks.value?.books.find(
-                      (book) => book.id === currentBookId
-                    )?.name ??
-                    currentBookId ??
-                    "-";
-                  const currentChapter = tab.readingState.chapterNumber.value;
-                  const currentTranslation =
-                    tab.readingState.translationId.value ??
-                    DEFAULT_TRANSLATION_ID;
-                  const titlePrefix = tab.sharedSession ? "Shared " : "";
-                  const connectedUsers =
-                    tab.sharedSession?.connectedUsers.value ?? [];
-
-                  return (
-                    <div
-                      key={tab.id}
-                      className="sb-tab-row"
-                      dir={
-                        tab.readingState.translation.value?.textDirection ??
-                        "auto"
-                      }
-                    >
-                      <button
-                        onClick={() => {
-                          closeContextMenus();
-                          isLayoutMenuOpen.value = false;
-                          app.selectTab(tab.id);
-                        }}
-                        className={`sb-tab-button${
-                          isSelected ? " sb-tab-button-selected" : ""
-                        }`}
-                      >
-                        <div className="sb-tab-main-content">
-                          <span>{`${titlePrefix}${currentBookName} - ${currentChapter} • ${currentTranslation}`}</span>
-                        </div>
-
-                        {tab.sharedSession && connectedUsers.length > 0 && (
-                          <div className="sb-tab-users-section">
-                            <div className="sb-tab-users-list">
-                              {connectedUsers.map((user) => {
-                                const imageUrl = getUserImageUrl(user.profile);
-                                const displayName = getUserDisplayName(user);
-                                const style = imageUrl
-                                  ? {
-                                      borderColor: user.color,
-                                      backgroundImage: `url(${imageUrl})`,
-                                    }
-                                  : {
-                                      borderColor: user.color,
-                                      backgroundColor: user.color,
-                                    };
-
-                                return (
-                                  <span
-                                    key={user.connectionId}
-                                    className={`sb-tab-user-icon${
-                                      imageUrl
-                                        ? " sb-tab-user-icon-has-image"
-                                        : ""
-                                    }${
-                                      user.isSelf
-                                        ? " sb-tab-user-icon-self"
-                                        : ""
-                                    }`}
-                                    title={displayName}
-                                    style={style}
-                                  />
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </button>
-
-                      <ContextMenuWithButton
-                        onClick={() => {
-                          isLayoutMenuOpen.value = false;
-                        }}
-                        anchorClassName="sb-tab-menu-anchor"
-                        buttonClassName="sb-tab-menu-button"
-                        menuClassName="sb-tab-menu"
-                        iconClassName="sb-tab-more-icon"
-                        aria-label="Open tab menu"
-                        title="Tab options"
-                      >
-                        {tab.sharedSession && (
-                          <ContextMenuItem
-                            className="sb-tab-menu-item"
-                            title={`Session ID: ${tab.sharedSession.id}`}
-                            onClick={() => {
-                              if (tab.sharedSession) {
-                                os.setClipboard(tab.sharedSession.id);
-                              }
-                            }}
-                          >
-                            {`Session ID: ${tab.sharedSession.id}`}
-                          </ContextMenuItem>
-                        )}
-                        <ContextMenuItem
-                          className="sb-tab-menu-item"
-                          onClick={() => {
-                            state.tabs.removeTab(tab.id);
-                          }}
-                        >
-                          Close tab
-                        </ContextMenuItem>
-                        {panelsEnabled && (
-                          <>
-                            <ContextMenuItem
-                              onClick={() => {
-                                app.openInNewPane(tab.id);
-                              }}
-                              className="sb-tab-menu-item"
-                            >
-                              Open in new pane
-                            </ContextMenuItem>
-                            <ContextMenuItem
-                              onClick={() => {
-                                app.openInDetachedPane(tab.id);
-                              }}
-                              className="sb-tab-menu-item"
-                            >
-                              Open in detached pane
-                            </ContextMenuItem>
-                          </>
-                        )}
-                      </ContextMenuWithButton>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </>
-      )}
+      {shouldShowSidebarContent &&
+        (isSettingsOpen ? (
+          <Settings state={state} />
+        ) : (
+          <Tabs
+            state={state}
+            closeLayoutMenu={closeLayoutMenu}
+            openJoinSessionModal={openJoinSessionModal}
+          />
+        ))}
 
       {isJoinSessionModalOpen.value && (
         <div
