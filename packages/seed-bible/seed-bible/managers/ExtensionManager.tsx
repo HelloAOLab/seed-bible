@@ -281,6 +281,8 @@ export function setupExtensionContext(context: SeedBibleState) {
 
 export type ExtensionManager = ReturnType<typeof createExtensionManager>;
 
+export const DEFAULT_EXTENSION_IDS = new Set<string>([]);
+
 export function createExtensionManager() {
   const defaultExtensions = computed<ExtensionSet | null>(
     () => thisBot.tags.availableExtensions ?? null
@@ -392,9 +394,14 @@ export function createExtensionManager() {
     }
   };
 
-  const loadExtensionSet = async (set: ExtensionSet) => {
+  const loadExtensionSet = async (
+    set: ExtensionSet,
+    filter: (ext: UploadedExtension) => boolean = () => true
+  ) => {
     trackExtensionSet(set);
-    const promises = set.extensions.map((ext) => loadExtension(ext));
+    const promises = set.extensions
+      .filter(filter)
+      .map((ext) => loadExtension(ext));
     const results = await Promise.all(promises);
     const successCount = results.filter((r) => r).length;
     console.log(
@@ -409,7 +416,9 @@ export function createExtensionManager() {
       return;
     }
     console.log("Loading default extension set:", defaultExtensions.value);
-    await loadExtensionSet(defaultExtensions.value);
+    await loadExtensionSet(defaultExtensions.value, (ext) =>
+      DEFAULT_EXTENSION_IDS.has(ext.meta.id)
+    );
   };
 
   return {
