@@ -1,7 +1,10 @@
 import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import type { TextSize } from "seed-bible.managers.ConfigManager";
-import { ExtensionInitalizer } from "seed-bible.managers.ExtensionManager";
+import {
+  ExtensionInitalizer,
+  type ExtensionSet,
+} from "seed-bible.managers.ExtensionManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 
 type SettingsView = null | "account" | "theme" | "extensions";
@@ -201,6 +204,8 @@ function ExtensionsSettingsView(props: {
   const extensionsList = extensions.getExtensions();
   const installingIds = useSignal<Set<string>>(new Set());
   const openMenuId = useSignal<string | null>(null);
+  const isDownloadingSet = useSignal(false);
+  const isUploadingSet = useSignal(false);
 
   const handleInstall = async (extensionId: string) => {
     openMenuId.value = null;
@@ -219,6 +224,64 @@ function ExtensionsSettingsView(props: {
   const handleUninstall = (extensionId: string) => {
     openMenuId.value = null;
     extensions.unloadExtension(extensionId);
+  };
+
+  const handleDownloadExtensions = async () => {
+    if (isDownloadingSet.value) {
+      return;
+    }
+
+    isDownloadingSet.value = true;
+    try {
+      const set = extensions.getAllExtensionsAsSet();
+      if (!set) {
+        return;
+      }
+      os.download(set, `${set.id}.json`, "application/json");
+    } finally {
+      isDownloadingSet.value = false;
+    }
+  };
+
+  const handleUploadExtensions = async () => {
+    if (isUploadingSet.value) {
+      return;
+    }
+
+    isUploadingSet.value = true;
+    try {
+      const files = await os.showUploadFiles();
+      const firstFile = files?.[0];
+      if (!firstFile) {
+        return;
+      }
+
+      const text =
+        typeof firstFile.data === "string"
+          ? firstFile.data
+          : new TextDecoder().decode(firstFile.data);
+
+      const parsed = JSON.parse(text) as Partial<{
+        id: unknown;
+        recordName: unknown;
+        extensions: unknown;
+      }>;
+
+      if (
+        typeof parsed.id !== "string" ||
+        typeof parsed.recordName !== "string" ||
+        !Array.isArray(parsed.extensions)
+      ) {
+        console.error("Uploaded file is not a valid extension set.");
+        return;
+      }
+
+      await extensions.loadExtensionSet(parsed as ExtensionSet, () => false);
+    } catch (error) {
+      console.error("Failed to upload extension set.", error);
+    } finally {
+      isUploadingSet.value = false;
+    }
   };
 
   return (
@@ -320,6 +383,27 @@ function ExtensionsSettingsView(props: {
             })}
           </ul>
         )}
+
+        <div className="sb-extension-footer-actions">
+          <button
+            className="sb-settings-action-button"
+            onClick={() => void handleDownloadExtensions()}
+            disabled={isDownloadingSet.value}
+          >
+            {isDownloadingSet.value
+              ? "Downloading Extensions..."
+              : "Download Extensions"}
+          </button>
+          <button
+            className="sb-settings-action-button"
+            onClick={() => void handleUploadExtensions()}
+            disabled={isUploadingSet.value}
+          >
+            {isUploadingSet.value
+              ? "Uploading Extensions..."
+              : "Upload Extensions"}
+          </button>
+        </div>
       </section>
     </div>
   );

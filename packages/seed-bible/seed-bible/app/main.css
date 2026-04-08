@@ -1817,6 +1817,13 @@ button {
   background: var(--sb-secondary-color);
 }
 
+.sb-extension-footer-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .sb-settings-title {
   margin: 0 0 12px 0;
   /* color: var(--book-heading-color); */

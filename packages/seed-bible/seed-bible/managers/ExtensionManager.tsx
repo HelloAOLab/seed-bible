@@ -2,8 +2,6 @@ import { computed } from "@preact/signals";
 import { orderBy, union } from "es-toolkit";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 
-declare const crypto: import("../../../../typings/AuxLibraryDefinitions").Crypto;
-
 export type CleanupFunction = () => void;
 export type ExtensionDependencies = Record<string, object>;
 
@@ -505,19 +503,22 @@ export function createExtensionManager() {
    * Gets all extensions as a set.
    */
   const getAllExtensionsAsSet = () => {
-    const extensionsToDownload = getExtensions().filter((ext) => ext.extension);
+    const extensionsToDownload = getExtensions()
+      .filter((ext) => ext.extension)
+      .map((ext) => ext.extension) as UploadedExtension[];
     if (extensionsToDownload.length === 0) {
       console.warn("No extensions available to download.");
       return;
     }
 
     const extensions = orderBy(
-      extensionsToDownload.map((ext) => ext.extension!),
-      [(ext) => ext.meta.id],
+      extensionsToDownload,
+      [(ext) => ext?.meta.id],
       ["asc"]
-    ) as UploadedExtension[];
+    );
 
-    const hash = crypto.sha256(extensions);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hash = (crypto as any).sha256(extensions);
 
     const setData: ExtensionSet = {
       id: `downloaded-extension-set-${hash.slice(0, 8)}`,
