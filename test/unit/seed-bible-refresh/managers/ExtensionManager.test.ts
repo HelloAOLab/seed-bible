@@ -381,4 +381,108 @@ describe("createExtensionManager", () => {
 
     expect(installPackage).toHaveBeenCalledTimes(1);
   });
+
+  it("getExtensions() lists known extensions from loaded sets even when not installed", async () => {
+    const manager = createExtensionManager();
+    const set: ExtensionSet = {
+      id: "set.known-only",
+      recordName: "record",
+      extensions: [
+        {
+          recordName: "record",
+          address: "pkg://known-only",
+          meta: {
+            id: "ext.known-only",
+            titles: { en: "Known Only" },
+            descriptions: { en: "Known-only extension" },
+          },
+        },
+      ],
+    };
+
+    await manager.loadExtensionSet(set, () => false);
+
+    expect(manager.getExtensions()).toEqual([
+      {
+        extension: set.extensions[0],
+        extensionSet: set,
+        installed: false,
+        pendingInstallation: false,
+      },
+    ]);
+    expect(installPackage).not.toHaveBeenCalled();
+  });
+
+  it("getExtensions() marks direct extensions as known without an owning set", async () => {
+    const manager = createExtensionManager();
+    const extension = {
+      recordName: "record",
+      address: "pkg://direct",
+      meta: {
+        id: "ext.direct",
+        titles: { en: "Direct" },
+        descriptions: { en: "Direct extension" },
+      },
+    };
+
+    const loaded = await manager.loadExtension(extension);
+
+    expect(loaded).toBe(true);
+    expect(manager.getExtensions()).toEqual([
+      {
+        extension,
+        extensionSet: null,
+        installed: true,
+        pendingInstallation: false,
+      },
+    ]);
+  });
+
+  it("getExtensions() reports pending installation state", async () => {
+    const manager = createExtensionManager();
+    let resolveInstall: ((result: { success: boolean }) => void) | null = null;
+
+    installPackage.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveInstall = resolve as (result: { success: boolean }) => void;
+        })
+    );
+
+    const extension = {
+      recordName: "record",
+      address: "pkg://slow",
+      meta: {
+        id: "ext.slow",
+        titles: { en: "Slow" },
+        descriptions: { en: "Slow extension" },
+      },
+    };
+
+    const installationPromise = manager.loadExtension(extension);
+    await Promise.resolve();
+
+    expect(manager.getExtensions()).toEqual([
+      {
+        extension,
+        extensionSet: null,
+        installed: false,
+        pendingInstallation: true,
+      },
+    ]);
+
+    expect(resolveInstall).not.toBeNull();
+    resolveInstall!({ success: true });
+
+    await installationPromise;
+
+    expect(manager.getExtensions()).toEqual([
+      {
+        extension,
+        extensionSet: null,
+        installed: true,
+        pendingInstallation: false,
+      },
+    ]);
+  });
 });
