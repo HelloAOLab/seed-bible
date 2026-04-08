@@ -1,9 +1,32 @@
-import { useSignal } from "@preact/signals";
-import type { ComponentChildren, ComponentProps } from "preact";
+import { signal, useSignal } from "@preact/signals";
+import {
+  type ComponentChildren,
+  type ComponentProps,
+  type Signalish,
+} from "preact";
+
+const activeContextMenuId = signal<string | null>(null);
+let nextContextMenuId = 0;
+
+function joinClassNames(
+  ...classNames: Array<Signalish<string | undefined> | undefined>
+) {
+  return classNames
+    .filter(Boolean)
+    .map((className) =>
+      typeof className === "string" ? className : className?.value
+    )
+    .join(" ");
+}
+
+export function closeContextMenus() {
+  activeContextMenuId.value = null;
+}
 
 export function ContextMenu({
   isOpen,
   children,
+  className,
   ...props
 }: {
   isOpen: boolean;
@@ -14,7 +37,7 @@ export function ContextMenu({
   }
 
   return (
-    <div className="sb-context-menu" {...props}>
+    <div className={joinClassNames("sb-context-menu", className)} {...props}>
       {children}
     </div>
   );
@@ -22,12 +45,23 @@ export function ContextMenu({
 
 export function ContextMenuItem({
   children,
+  className,
+  onClick,
   ...props
 }: {
   children: ComponentChildren;
 } & ComponentProps<"button">) {
   return (
-    <button className="sb-context-menu-item" {...props}>
+    <button
+      className={joinClassNames("sb-context-menu-item", className)}
+      onClick={(event) => {
+        onClick?.(event);
+        if (!event.defaultPrevented) {
+          closeContextMenus();
+        }
+      }}
+      {...props}
+    >
       {children}
     </button>
   );
@@ -35,26 +69,65 @@ export function ContextMenuItem({
 
 export function ContextMenuWithButton({
   children,
+  anchorClassName,
+  buttonClassName,
+  menuClassName,
+  iconClassName,
+  className,
+  onClick,
   ...props
 }: {
   children: ComponentChildren;
+  anchorClassName?: string;
+  buttonClassName?: string;
+  menuClassName?: string;
+  iconClassName?: string;
 } & ComponentProps<"button">) {
-  const isOpen = useSignal(false);
+  const menuId = useSignal("");
+  if (!menuId.value) {
+    nextContextMenuId += 1;
+    menuId.value = `context-menu-${nextContextMenuId}`;
+  }
+
+  const setIsOpen = (nextIsOpen: boolean) => {
+    activeContextMenuId.value = nextIsOpen ? menuId.value : null;
+  };
+
+  const currentIsOpen = activeContextMenuId.value === menuId.value;
+
   return (
-    <div className="sb-context-menu-anchor">
+    <div className={joinClassNames("sb-context-menu-anchor", anchorClassName)}>
       <button
-        className="sb-context-menu-button"
-        onClick={() => {
-          isOpen.value = !isOpen.value;
+        className={joinClassNames(
+          "sb-context-menu-button",
+          buttonClassName,
+          className
+        )}
+        onClick={(event) => {
+          onClick?.(event);
+          if (event.defaultPrevented) {
+            return;
+          }
+          setIsOpen(!currentIsOpen);
         }}
         {...props}
       >
-        <span className="material-symbols-outlined sb-context-more-icon">
+        <span
+          className={joinClassNames(
+            "material-symbols-outlined",
+            "sb-context-more-icon",
+            iconClassName
+          )}
+        >
           more_vert
         </span>
       </button>
-
-      <ContextMenu isOpen={isOpen.value}>{children}</ContextMenu>
+      <ContextMenu
+        isOpen={currentIsOpen}
+        className={joinClassNames("sb-context-menu", menuClassName)}
+      >
+        {children}
+      </ContextMenu>
     </div>
   );
 }

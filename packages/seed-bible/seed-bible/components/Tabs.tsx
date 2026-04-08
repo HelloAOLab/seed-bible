@@ -4,6 +4,11 @@ import {
   PANE_LAYOUT_OPTIONS,
   type PaneLayoutId,
 } from "seed-bible.managers.PanesManager";
+import {
+  closeContextMenus,
+  ContextMenuItem,
+  ContextMenuWithButton,
+} from "seed-bible.components.ContextMenu";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { MobileSettingsIcon } from "seed-bible.components.icons";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
@@ -57,7 +62,6 @@ export function Tabs(props: TabsProps) {
   const isMobileOpen = sidebar.isMobileOpen.value;
   const effectivelyCollapsed = isCollapsed && !isMobileOpen;
   const shouldShowSidebarContent = !effectivelyCollapsed || isSettingsOpen;
-  const openMenuTabId = useSignal<string | null>(null);
   const isLayoutMenuOpen = useSignal(false);
   const isJoinSessionModalOpen = useSignal(false);
   const joinSessionId = useSignal("");
@@ -82,7 +86,7 @@ export function Tabs(props: TabsProps) {
   // }, [selectedBookId, selectedChapter, selectedTranslation]);
 
   const openJoinSessionModal = () => {
-    openMenuTabId.value = null;
+    closeContextMenus();
     isLayoutMenuOpen.value = false;
     isJoinSessionModalOpen.value = true;
   };
@@ -126,7 +130,7 @@ export function Tabs(props: TabsProps) {
               <div className="sb-pane-layout-anchor">
                 <button
                   onClick={() => {
-                    openMenuTabId.value = null;
+                    closeContextMenus();
                     isLayoutMenuOpen.value = !isLayoutMenuOpen.value;
                   }}
                   className="sb-sidebar-top-icon-button"
@@ -258,7 +262,7 @@ export function Tabs(props: TabsProps) {
                     >
                       <button
                         onClick={() => {
-                          openMenuTabId.value = null;
+                          closeContextMenus();
                           isLayoutMenuOpen.value = false;
                           app.selectTab(tab.id);
                         }}
@@ -308,74 +312,59 @@ export function Tabs(props: TabsProps) {
                         )}
                       </button>
 
-                      <div className="sb-tab-menu-anchor">
-                        <button
-                          onClick={() => {
-                            isLayoutMenuOpen.value = false;
-                            openMenuTabId.value =
-                              openMenuTabId.value === tab.id ? null : tab.id;
-                          }}
-                          className="sb-tab-menu-button"
-                          aria-label="Open tab menu"
-                          title="Tab options"
-                        >
-                          <span className="material-symbols-outlined sb-tab-more-icon">
-                            more_vert
-                          </span>
-                        </button>
-
-                        {openMenuTabId.value === tab.id && (
-                          <div className="sb-tab-menu">
-                            {tab.sharedSession && (
-                              <>
-                                <button
-                                  className="sb-tab-menu-item"
-                                  title={`Session ID: ${tab.sharedSession.id}`}
-                                  onClick={() => {
-                                    if (tab.sharedSession) {
-                                      os.setClipboard(tab.sharedSession.id);
-                                    }
-                                    openMenuTabId.value = null;
-                                  }}
-                                >
-                                  {`Session ID: ${tab.sharedSession.id}`}
-                                </button>
-                              </>
-                            )}
-                            <button
-                              className="sb-tab-menu-item"
-                              onClick={() => {
-                                state.tabs.removeTab(tab.id);
-                                openMenuTabId.value = null;
-                              }}
-                            >
-                              Close tab
-                            </button>
-                            {panelsEnabled && (
-                              <>
-                                <button
-                                  onClick={() => {
-                                    app.openInNewPane(tab.id);
-                                    openMenuTabId.value = null;
-                                  }}
-                                  className="sb-tab-menu-item"
-                                >
-                                  Open in new pane
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    app.openInDetachedPane(tab.id);
-                                    openMenuTabId.value = null;
-                                  }}
-                                  className="sb-tab-menu-item"
-                                >
-                                  Open in detached pane
-                                </button>
-                              </>
-                            )}
-                          </div>
+                      <ContextMenuWithButton
+                        onClick={() => {
+                          isLayoutMenuOpen.value = false;
+                        }}
+                        anchorClassName="sb-tab-menu-anchor"
+                        buttonClassName="sb-tab-menu-button"
+                        menuClassName="sb-tab-menu"
+                        iconClassName="sb-tab-more-icon"
+                        aria-label="Open tab menu"
+                        title="Tab options"
+                      >
+                        {tab.sharedSession && (
+                          <ContextMenuItem
+                            className="sb-tab-menu-item"
+                            title={`Session ID: ${tab.sharedSession.id}`}
+                            onClick={() => {
+                              if (tab.sharedSession) {
+                                os.setClipboard(tab.sharedSession.id);
+                              }
+                            }}
+                          >
+                            {`Session ID: ${tab.sharedSession.id}`}
+                          </ContextMenuItem>
                         )}
-                      </div>
+                        <ContextMenuItem
+                          className="sb-tab-menu-item"
+                          onClick={() => {
+                            state.tabs.removeTab(tab.id);
+                          }}
+                        >
+                          Close tab
+                        </ContextMenuItem>
+                        {panelsEnabled && (
+                          <>
+                            <ContextMenuItem
+                              onClick={() => {
+                                app.openInNewPane(tab.id);
+                              }}
+                              className="sb-tab-menu-item"
+                            >
+                              Open in new pane
+                            </ContextMenuItem>
+                            <ContextMenuItem
+                              onClick={() => {
+                                app.openInDetachedPane(tab.id);
+                              }}
+                              className="sb-tab-menu-item"
+                            >
+                              Open in detached pane
+                            </ContextMenuItem>
+                          </>
+                        )}
+                      </ContextMenuWithButton>
                     </div>
                   );
                 })}
