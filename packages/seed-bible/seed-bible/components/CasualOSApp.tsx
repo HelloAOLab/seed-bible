@@ -20,5 +20,11 @@ export function CasualOSApp({
     renderApp(id, children);
   }, [id, children]);
 
+  useEffect(() => {
+    return () => {
+      os.unregisterApp(id);
+    };
+  }, [id]);
+
   return <></>;
 }
