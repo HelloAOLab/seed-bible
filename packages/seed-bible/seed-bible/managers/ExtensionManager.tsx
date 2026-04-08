@@ -281,6 +281,9 @@ export function setupExtensionContext(context: SeedBibleState) {
 
 export type ExtensionManager = ReturnType<typeof createExtensionManager>;
 
+/**
+ * The list of extension IDs that should be loaded by default.
+ */
 export const DEFAULT_EXTENSION_IDS = new Set<string>([]);
 
 export function createExtensionManager() {
@@ -304,6 +307,12 @@ export function createExtensionManager() {
     );
   };
 
+  /**
+   * Loads the given extension package by installing it from the provided record name and address. If the installation is successful, the extension ID will be added to the set of installed extensions and an "onExtensionInstalled" event will be shouted with the extension ID as a parameter.
+   * @param id The ID of the extension to install.
+   * @param recordName The name of the record that the extension package is stored in.
+   * @param address The address of the extension package to install.
+   */
   const loadExtensionFromPackage = async (
     id: string,
     recordName: string,
@@ -330,6 +339,11 @@ export function createExtensionManager() {
     }
   };
 
+  /**
+   * Loads the given extension, along with its dependencies if they are not already registered. If a dependency is not registered but is included in the known extensions map, then it will be loaded first. Circular dependencies are detected and will cause the loading to fail.
+   * @param uploaded The extension to load.
+   * @param installStack The stack of extensions currently being installed in the chain of dependencies. This is used to detect circular dependencies and should not be provided when calling this function externally.
+   */
   const loadExtension = async (
     uploaded: UploadedExtension,
     installStack: Set<string> = new Set()
@@ -394,6 +408,11 @@ export function createExtensionManager() {
     }
   };
 
+  /**
+   * Loads the extensions from the given extension set.
+   * @param set The extension set to load.
+   * @param filter The filter function to determine which extensions within the set should be loaded. By default, all extensions in the set will be loaded.
+   */
   const loadExtensionSet = async (
     set: ExtensionSet,
     filter: (ext: UploadedExtension) => boolean = () => true
@@ -410,6 +429,9 @@ export function createExtensionManager() {
     shout("onExtensionSetLoaded", set.id);
   };
 
+  /**
+   * Loads the default set of extensions specified in bot tags.
+   */
   const loadDefaultExtensions = async () => {
     if (!defaultExtensions.value) {
       console.warn("No available extensions found in bot tags.");
