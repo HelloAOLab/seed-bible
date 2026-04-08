@@ -96,7 +96,7 @@
 
   --sb-menu-background: #fff;
 
-  --sb-tab-border: none;
+  --sb-tab-border: 1px solid transparent;
   --sb-tab-background: inherit;
   --sb-tab-font-color: inherit;
 
@@ -1330,24 +1330,30 @@ button {
   display: flex;
   align-items: stretch;
   position: relative;
+
+  padding: 4px;
+  padding-inline-start: 10px;
+  border-radius: 6px;
+  border: var(--sb-tab-border);
+  background: var(--sb-tab-background);
+  color: var(--sb-tab-font-color);
+}
+
+.sb-tab-row-selected {
+  background: var(--sb-selected-tab-background);
+  color: var(--sb-selected-tab-font-color);
+  border: var(--sb-selected-tab-border);
 }
 
 .sb-tab-button {
   text-align: left;
-  border-radius: 6px;
-  padding: 10px 44px 8px 12px;
-  font-weight: 400;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  gap: 10px;
-  flex: 1;
 
-  border: var(--sb-tab-border);
-  background: var(--sb-tab-background);
-  color: var(--sb-tab-font-color);
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-weight: 400;
+  flex: 1;
 }
 
 .sb-tab-main-content {
@@ -1391,12 +1397,6 @@ button {
 .sb-tab-user-icon-self {
   box-shadow: 0 0 0 1px
     color-mix(in srgb, var(--sb-font-color), transparent 72%);
-}
-
-.sb-tab-button-selected {
-  background: var(--sb-selected-tab-background);
-  color: var(--sb-selected-tab-font-color);
-  border: var(--sb-selected-tab-border);
 }
 
 .sb-tab-title {
@@ -1521,31 +1521,6 @@ button {
   color: #ffffff;
   font-size: 12px;
   font-weight: 700;
-}
-
-.sb-tab-menu-anchor {
-  position: absolute;
-  right: 8px;
-  top: 8px;
-  z-index: 2;
-}
-
-.sb-tab-menu-button {
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--sb-font-color);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-.sb-tab-menu-button:hover {
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 70%);
 }
 
 .sb-tab-pane-count {
@@ -1760,10 +1735,7 @@ button {
 }
 
 .sb-context-menu-anchor {
-  position: absolute;
-  right: 8px;
-  top: 8px;
-  z-index: 2;
+  position: relative;
 }
 
 .sb-context-menu-button {

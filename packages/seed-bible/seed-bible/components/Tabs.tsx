@@ -23,7 +23,6 @@ interface SidebarProps {
 interface TabsProps {
   state: SeedBibleState;
   closeLayoutMenu: () => void;
-  openJoinSessionModal: () => void;
 }
 
 interface TabsHeaderProps {
@@ -34,6 +33,8 @@ interface TabsHeaderProps {
   isLayoutMenuOpen: boolean;
   toggleLayoutMenu: () => void;
   setLayout: (layout: PaneLayoutId) => void;
+  createSharedSession: () => void;
+  openJoinSessionModal: () => void;
 }
 
 interface SettingsProps {
@@ -79,6 +80,8 @@ export function TabsHeader(props: TabsHeaderProps) {
     isLayoutMenuOpen,
     toggleLayoutMenu,
     setLayout,
+    createSharedSession,
+    openJoinSessionModal,
   } = props;
   const { sidebar } = state;
 
@@ -97,8 +100,8 @@ export function TabsHeader(props: TabsHeaderProps) {
         </span>
       </button>
 
-      {panelsEnabled && (
-        <div className="sb-sidebar-top-actions">
+      <div className="sb-sidebar-top-actions">
+        {panelsEnabled && (
           <div className="sb-pane-layout-anchor">
             <button
               onClick={toggleLayoutMenu}
@@ -132,8 +135,33 @@ export function TabsHeader(props: TabsHeaderProps) {
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
+
+        <ContextMenuWithButton
+          onClick={() => {
+            closeContextMenus();
+          }}
+          buttonClassName="sb-sidebar-top-icon-button"
+          aria-label="Session options"
+          title="Session options"
+        >
+          <ContextMenuItem
+            onClick={() => {
+              createSharedSession();
+            }}
+          >
+            New shared session
+          </ContextMenuItem>
+          <ContextMenuItem
+            onClick={() => {
+              openJoinSessionModal();
+            }}
+          >
+            Join shared session
+          </ContextMenuItem>
+        </ContextMenuWithButton>
+      </div>
+
       <button
         onClick={sidebar.closeSidebar}
         className="sb-sidebar-close-button"
@@ -173,7 +201,7 @@ export function Settings(props: SettingsProps) {
 }
 
 export function Tabs(props: TabsProps) {
-  const { state, closeLayoutMenu, openJoinSessionModal } = props;
+  const { state, closeLayoutMenu } = props;
   const { app, tabs: tabsManager } = state;
   const tabs = tabsManager.tabs.value;
   const selectedTabId = tabsManager.selectedTabId.value;
@@ -183,24 +211,6 @@ export function Tabs(props: TabsProps) {
     <>
       <div className="sb-sidebar-tabs-header">
         <h3 className="sb-sidebar-tabs-title">Tabs</h3>
-        <button
-          onClick={() => {
-            void state.app.createSharedSession();
-          }}
-          className="sb-tab-add-button"
-          aria-label="Create new shared reading session tab"
-          title="New shared session"
-        >
-          <span className="material-symbols-outlined">groups</span>
-        </button>
-        <button
-          onClick={openJoinSessionModal}
-          className="sb-tab-add-button"
-          aria-label="Join shared reading session"
-          title="Join shared session"
-        >
-          <span className="material-symbols-outlined">group_add</span>
-        </button>
         <button
           onClick={() => {
             app.addTab();
@@ -232,7 +242,7 @@ export function Tabs(props: TabsProps) {
           return (
             <div
               key={tab.id}
-              className="sb-tab-row"
+              className={`sb-tab-row${isSelected ? " sb-tab-row-selected" : ""}`}
               dir={tab.readingState.translation.value?.textDirection ?? "auto"}
             >
               <button
@@ -241,9 +251,7 @@ export function Tabs(props: TabsProps) {
                   closeLayoutMenu();
                   app.selectTab(tab.id);
                 }}
-                className={`sb-tab-button${
-                  isSelected ? " sb-tab-button-selected" : ""
-                }`}
+                className={`sb-tab-button`}
               >
                 <div className="sb-tab-main-content">
                   <span>{`${titlePrefix}${currentBookName} - ${currentChapter} • ${currentTranslation}`}</span>
@@ -400,6 +408,10 @@ export function Sidebar(props: SidebarProps) {
             panes.setLayout(layout);
             closeLayoutMenu();
           }}
+          createSharedSession={() => {
+            void state.app.createSharedSession();
+          }}
+          openJoinSessionModal={openJoinSessionModal}
         />
       )}
 
@@ -407,11 +419,7 @@ export function Sidebar(props: SidebarProps) {
         (isSettingsOpen ? (
           <Settings state={state} />
         ) : (
-          <Tabs
-            state={state}
-            closeLayoutMenu={closeLayoutMenu}
-            openJoinSessionModal={openJoinSessionModal}
-          />
+          <Tabs state={state} closeLayoutMenu={closeLayoutMenu} />
         ))}
 
       {isJoinSessionModalOpen.value && (

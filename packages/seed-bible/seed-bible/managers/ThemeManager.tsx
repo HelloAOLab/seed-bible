@@ -502,7 +502,7 @@ const LIGHT_THEME: BibleTheme = {
     verseToolbarToolsGap: "10px",
     verseToolbarMobileBottom: "18px",
 
-    tabBorder: "none",
+    tabBorder: "1px solid transparent",
     tabBackground: "inherit",
     tabFontColor: "inherit",
 
@@ -632,7 +632,7 @@ const DARK_THEME: BibleTheme = {
     verseToolbarToolsGap: "10px",
     verseToolbarMobileBottom: "18px",
 
-    tabBorder: "none",
+    tabBorder: "1px solid transparent",
     tabBackground: "inherit",
     tabFontColor: "inherit",
 
