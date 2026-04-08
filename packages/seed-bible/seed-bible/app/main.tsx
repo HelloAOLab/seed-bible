@@ -9,6 +9,7 @@ import {
 import { CasualOSApp } from "seed-bible.components.CasualOSApp";
 import { useEffect } from "preact/hooks";
 import type { ReadonlySignal } from "@preact/signals";
+import { closeContextMenus } from "seed-bible.components.ContextMenu";
 
 const { useMemo } = os.appHooks;
 
@@ -75,6 +76,11 @@ export function Main() {
     <I18nProvider>
       <div
         className={`sb-app-root ${fontSizeClass}`}
+        onClick={(e) => {
+          if (!e.defaultPrevented) {
+            closeContextMenus();
+          }
+        }}
         style={{
           display: "flex",
           height: "100vh",

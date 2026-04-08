@@ -109,6 +109,7 @@ export function ContextMenuWithButton({
             return;
           }
           setIsOpen(!currentIsOpen);
+          event.preventDefault();
         }}
         {...props}
       >
