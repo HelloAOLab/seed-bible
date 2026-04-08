@@ -506,6 +506,7 @@ describe("createExtensionManager", () => {
 
     expect(manager.getExtensions()).toEqual([
       {
+        id: "ext.known-only",
         extension: set.extensions[0],
         extensionSet: set,
         registration: null,
@@ -533,6 +534,7 @@ describe("createExtensionManager", () => {
     expect(loaded).toBe(true);
     expect(manager.getExtensions()).toEqual([
       {
+        id: "ext.direct",
         extension,
         extensionSet: null,
         installed: true,
@@ -568,6 +570,7 @@ describe("createExtensionManager", () => {
 
     expect(manager.getExtensions()).toEqual([
       {
+        id: "ext.slow",
         extension,
         extensionSet: null,
         installed: false,
@@ -583,6 +586,7 @@ describe("createExtensionManager", () => {
 
     expect(manager.getExtensions()).toEqual([
       {
+        id: "ext.slow",
         extension,
         extensionSet: null,
         installed: true,
@@ -630,6 +634,7 @@ describe("createExtensionManager", () => {
       );
 
       expect(packageOnly).toEqual({
+        id: "ext.package-only",
         extension: packageOnlyExtension,
         extensionSet: {
           id: "set.union",
@@ -642,6 +647,7 @@ describe("createExtensionManager", () => {
       });
       expect(registeredOnly).toEqual(
         expect.objectContaining({
+          id: "ext.registered-only",
           extension: null,
           extensionSet: null,
           registration: expect.objectContaining({ id: "ext.registered-only" }),
@@ -652,5 +658,96 @@ describe("createExtensionManager", () => {
     } finally {
       unregisterRegisteredOnly();
     }
+  });
+
+  it("unloadExtension() marks the extension as not installed", async () => {
+    const manager = createExtensionManager();
+    const extension = {
+      recordName: "record",
+      address: "pkg://unload-me",
+      meta: {
+        id: "ext.unload-me",
+        titles: { en: "Unload Me" },
+        descriptions: { en: "Extension to unload" },
+      },
+    };
+
+    await manager.loadExtension(extension);
+
+    expect(manager.getExtensions()[0]?.installed).toBe(true);
+
+    manager.unloadExtension("ext.unload-me");
+
+    expect(manager.getExtensions()[0]?.installed).toBe(false);
+  });
+
+  it("unloadExtension() unregisters the extension", async () => {
+    const manager = createExtensionManager();
+    const extension = {
+      recordName: "record",
+      address: "pkg://unload-reg",
+      meta: {
+        id: "ext.unload-reg",
+        titles: { en: "Unload Reg" },
+        descriptions: { en: "Extension to unregister" },
+      },
+    };
+
+    await manager.loadExtension(extension);
+    registerExtension({ id: "ext.unload-reg", init: () => ({}) });
+
+    expect(
+      ExtensionInitalizer.getInstance().isExtensionRegistered("ext.unload-reg")
+    ).toBe(true);
+
+    manager.unloadExtension("ext.unload-reg");
+
+    expect(
+      ExtensionInitalizer.getInstance().isExtensionRegistered("ext.unload-reg")
+    ).toBe(false);
+  });
+
+  it("unloadExtension() shouts onExtensionUninstalled", async () => {
+    const manager = createExtensionManager();
+    const extension = {
+      recordName: "record",
+      address: "pkg://unload-shout",
+      meta: {
+        id: "ext.unload-shout",
+        titles: { en: "Unload Shout" },
+        descriptions: { en: "Extension shout test" },
+      },
+    };
+
+    await manager.loadExtension(extension);
+
+    manager.unloadExtension("ext.unload-shout");
+
+    expect(shoutSpy).toHaveBeenCalledWith(
+      "onExtensionUninstalled",
+      "ext.unload-shout"
+    );
+  });
+
+  it("unloadExtension() keeps the extension in the known list", async () => {
+    const manager = createExtensionManager();
+    const extension = {
+      recordName: "record",
+      address: "pkg://unload-known",
+      meta: {
+        id: "ext.unload-known",
+        titles: { en: "Unload Known" },
+        descriptions: { en: "Extension known list test" },
+      },
+    };
+
+    await manager.loadExtension(extension);
+
+    manager.unloadExtension("ext.unload-known");
+
+    const known = manager.getExtensions();
+    expect(known).toHaveLength(1);
+    expect(known[0]?.extension?.meta.id).toBe("ext.unload-known");
+    expect(known[0]?.installed).toBe(false);
   });
 });
