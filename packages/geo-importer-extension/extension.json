@@ -1,0 +1,9 @@
+{
+  "id": "ext_geoImporter",
+  "titles": {
+    "en": "GeoImporter"
+  },
+  "descriptions": {
+    "en": "Util that help loads geojson maps"
+  }
+}
