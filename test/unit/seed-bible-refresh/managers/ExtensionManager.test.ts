@@ -327,10 +327,12 @@ describe("ExtensionInitalizer", () => {
 describe("createExtensionManager", () => {
   let installPackage: jest.Mock;
   let shoutSpy: jest.Mock;
+  let sha256Spy: jest.Mock;
 
   beforeEach(() => {
     installPackage = jest.fn(async () => ({ success: true }));
     shoutSpy = jest.fn();
+    sha256Spy = jest.fn(() => "deadbeefcafebabefeedface1234567890abcdef");
 
     (globalThis as any).os = {
       ...(globalThis as any).os,
@@ -342,6 +344,16 @@ describe("createExtensionManager", () => {
         availableExtensions: null,
       },
     };
+    if ((globalThis as any).crypto) {
+      Object.defineProperty((globalThis as any).crypto, "sha256", {
+        value: sha256Spy,
+        configurable: true,
+      });
+    } else {
+      (globalThis as any).crypto = {
+        sha256: sha256Spy,
+      };
+    }
   });
 
   it("loadExtensionSet() installs dependencies before dependents", async () => {
@@ -749,5 +761,73 @@ describe("createExtensionManager", () => {
     expect(known).toHaveLength(1);
     expect(known[0]?.extension?.meta.id).toBe("ext.unload-known");
     expect(known[0]?.installed).toBe(false);
+  });
+
+  it("getAllExtensionsAsSet() returns undefined and warns when there are no extension packages", () => {
+    const manager = createExtensionManager();
+    const warnSpy = jest
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+
+    try {
+      const result = manager.getAllExtensionsAsSet();
+
+      expect(result).toBeUndefined();
+      expect(warnSpy).toHaveBeenCalledWith(
+        "No extensions available to download."
+      );
+      expect(sha256Spy).not.toHaveBeenCalled();
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it("getAllExtensionsAsSet() returns a sorted extension set with a hash-based id", async () => {
+    const manager = createExtensionManager();
+    const extensionB = {
+      recordName: "record",
+      address: "pkg://b",
+      meta: {
+        id: "ext.b",
+        titles: { en: "B" },
+        descriptions: { en: "B extension" },
+      },
+    };
+    const extensionA = {
+      recordName: "record",
+      address: "pkg://a",
+      meta: {
+        id: "ext.a",
+        titles: { en: "A" },
+        descriptions: { en: "A extension" },
+      },
+    };
+
+    const unregisterRegisteredOnly = registerExtension({
+      id: "ext.registered-only-set",
+      init: () => ({}),
+    });
+
+    try {
+      await manager.loadExtensionSet(
+        {
+          id: "set.hash-test",
+          recordName: "record",
+          extensions: [extensionB, extensionA],
+        },
+        () => false
+      );
+
+      const result = manager.getAllExtensionsAsSet();
+
+      expect(result).toEqual({
+        id: "downloaded-extension-set-deadbeef",
+        recordName: "",
+        extensions: [extensionA, extensionB],
+      });
+      expect(sha256Spy).toHaveBeenCalledWith([extensionA, extensionB]);
+    } finally {
+      unregisterRegisteredOnly();
+    }
   });
 });
