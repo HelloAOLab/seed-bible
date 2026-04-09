@@ -66,11 +66,11 @@ export function generateExtension(
   }
   const extensionData: ExtensionMeta = {
     id: pckgName,
-    titles: {
-      en: pckgName,
-    },
-    descriptions: {
-      en: `Extension ${pckgName} description.`,
+    translations: {
+      en: {
+        title: pckgName,
+        description: `Extension ${pckgName} description.`,
+      },
     },
   };
 
@@ -315,18 +315,21 @@ function getRecordName(key: string) {
   return parsed[0];
 }
 
+const ExtensionTranslationSchema = z
+  .object({
+    title: z.string(),
+    description: z.string(),
+  })
+  .catchall(z.string());
+
 const ExtensionMetaSchema = z.looseObject({
   id: z.string(),
-  titles: z
+  translations: z
     .object({
-      en: z.string(),
+      en: ExtensionTranslationSchema,
     })
-    .catchall(z.string()),
-  descriptions: z
-    .object({
-      en: z.string(),
-    })
-    .catchall(z.string()),
+    .catchall(ExtensionTranslationSchema),
+  dependencies: z.array(z.string()).optional(),
 });
 
 /**
@@ -434,6 +437,7 @@ export async function uploadAll(options: {
     client.sessionKey = options.sessionKey;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result: any = await client.recordData(
     {
       recordKey: options.recordKey ?? uploadRecordName,

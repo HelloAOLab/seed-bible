@@ -12,20 +12,7 @@ export const DEFAULT_LANGUAGE = "en";
 
 export { i18n };
 
-export type BotTranslations = Record<
-  string,
-  { translation: Record<string, string> }
->;
-
-/**
- * Loads the translations for the specified extension from the given bot and adds them to the i18n instance under a namespace corresponding to the extension ID.
- * @param ns The namespace for the translations, typically the extension ID to avoid conflicts with other extensions.
- * @param bot The bot from which to load translations.
- */
-export function loadExtensionTranslations(ns: string, bot: Bot) {
-  const translations = getTranslations(bot);
-  addTranslations(ns, translations);
-}
+export type BotTranslations = Record<string, Record<string, string>>;
 
 /**
  * Adds the given translations to the i18n instance under the specified namespace.
@@ -33,19 +20,13 @@ export function loadExtensionTranslations(ns: string, bot: Bot) {
  * @param translations The translations to add, keyed by language code (e.g. "en", "es"), with each containing a "translation" object mapping translation keys to translated strings.
  * @param options The options for adding the translations.
  */
-function addTranslations(
+export function addTranslations(
   ns: string,
   translations: BotTranslations,
   options?: { overwrite?: boolean }
 ) {
   for (const [lang, resources] of Object.entries(translations)) {
-    i18n.addResourceBundle(
-      lang,
-      ns,
-      resources.translation,
-      true,
-      options?.overwrite
-    );
+    i18n.addResourceBundle(lang, ns, resources, true, options?.overwrite);
   }
 }
 
@@ -64,12 +45,10 @@ function getTranslations(bot: Bot): BotTranslations {
     }
     const translations = bot.tags[langCode];
     if (translations) {
-      loadedResources[langCode] = {
-        translation:
-          typeof translations === "string"
-            ? JSON.parse(translations)
-            : translations,
-      };
+      loadedResources[langCode] =
+        typeof translations === "string"
+          ? JSON.parse(translations)
+          : translations;
     }
   }
 
@@ -78,7 +57,7 @@ function getTranslations(bot: Bot): BotTranslations {
 
 const resources = getTranslations(thisBot);
 if (!resources[DEFAULT_LANGUAGE]) {
-  resources[DEFAULT_LANGUAGE] = { translation: {} };
+  resources[DEFAULT_LANGUAGE] = {};
 }
 
 const availableLanguages = Object.keys(resources).sort();

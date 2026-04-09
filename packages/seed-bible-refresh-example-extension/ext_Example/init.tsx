@@ -1,10 +1,7 @@
 import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
 import { MaterialIcon } from "seed-bible.components.icons";
-import {
-  loadExtensionTranslations,
-  useI18n,
-} from "seed-bible.i18n.I18nManager";
+import { useI18n } from "seed-bible.i18n.I18nManager";
 
 function OpenGridPortalIcon() {
   return <MaterialIcon>view_in_ar</MaterialIcon>;
@@ -17,7 +14,7 @@ function OpenMapPortalIcon() {
 registerExtension({
   id: "example-extension",
   init: function* (context: SeedBibleState) {
-    loadExtensionTranslations("example-extension", thisBot);
+    // loadExtensionTranslations("example-extension", thisBot);
 
     console.log("Example extension initialized with context:", context);
 
