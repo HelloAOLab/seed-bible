@@ -34,7 +34,11 @@ registerExtension({
           detachedAnchor: "side",
           component: () => {
             const { t } = useI18n("example-extension");
-            return <div style={{ padding: 20 }}>{t("my-example-tool")}</div>;
+            return (
+              <div style={{ padding: 20 }}>
+                {t("abc", { ns: "example-extension" })}
+              </div>
+            );
           },
         });
       },
