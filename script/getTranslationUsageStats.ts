@@ -124,6 +124,95 @@ function getNsFromLocalUseI18n(identifier: Identifier): string | null {
   return null;
 }
 
+function recordTranslationUsage(
+  usage: Map<string, { count: number; files: Set<string> }>,
+  translationKeysByNamespace: Map<string, Set<string>>,
+  key: string,
+  namespace: string | null,
+  filePath: string
+): void {
+  if (namespace) {
+    const namespacedKeys =
+      translationKeysByNamespace.get(namespace) ?? new Set<string>();
+    namespacedKeys.add(key);
+    translationKeysByNamespace.set(namespace, namespacedKeys);
+  }
+
+  const formattedKey = namespace ? `${namespace}:${key}` : key;
+  const current = usage.get(formattedKey) ?? {
+    count: 0,
+    files: new Set<string>(),
+  };
+  current.count += 1;
+  current.files.add(filePath);
+  usage.set(formattedKey, current);
+}
+
+function getObjectPropertyStaticString(
+  objectLiteral: Node,
+  propertyName: string
+): string | null {
+  if (!objectLiteral.isKind(SyntaxKind.ObjectLiteralExpression)) {
+    return null;
+  }
+
+  for (const property of objectLiteral.getProperties()) {
+    if (property.isKind(SyntaxKind.PropertyAssignment)) {
+      if (property.getName() !== propertyName) {
+        continue;
+      }
+
+      return getStaticString(property.getInitializer());
+    }
+
+    if (property.isKind(SyntaxKind.ShorthandPropertyAssignment)) {
+      if (property.getName() !== propertyName) {
+        continue;
+      }
+
+      return property.getName();
+    }
+  }
+
+  return null;
+}
+
+function getToolTitleTranslationKey(node: Node): {
+  key: string;
+  namespace: string | null;
+} | null {
+  if (!node.isKind(SyntaxKind.ObjectLiteralExpression)) {
+    return null;
+  }
+
+  let titleObject: Node | undefined;
+
+  for (const property of node.getProperties()) {
+    if (!property.isKind(SyntaxKind.PropertyAssignment)) {
+      continue;
+    }
+
+    if (property.getName() !== "title") {
+      continue;
+    }
+
+    titleObject = property.getInitializer();
+    break;
+  }
+
+  if (!titleObject || !titleObject.isKind(SyntaxKind.ObjectLiteralExpression)) {
+    return null;
+  }
+
+  const key = getObjectPropertyStaticString(titleObject, "key");
+  if (!key) {
+    return null;
+  }
+
+  const namespace = getObjectPropertyStaticString(titleObject, "ns");
+  return { key, namespace };
+}
+
 /**
  * Parses the TypeScript project and returns usage stats for t("...") translation calls.
  * Keys are formatted as "ns:key" when a namespace can be determined.
@@ -140,6 +229,8 @@ export function getTranslationUsageStats(
   let totalTranslationCalls = 0;
 
   for (const sourceFile of sourceFiles) {
+    const filePath = path.relative(projectRoot, sourceFile.getFilePath());
+
     for (const node of sourceFile.getDescendantsOfKind(
       SyntaxKind.CallExpression
     )) {
@@ -169,25 +260,32 @@ export function getTranslationUsageStats(
         ? optionsNs.namespace
         : getNsFromLocalUseI18n(expression);
 
-      if (namespace) {
-        const namespacedKeys =
-          translationKeysByNamespace.get(namespace) ?? new Set<string>();
-        namespacedKeys.add(key);
-        translationKeysByNamespace.set(namespace, namespacedKeys);
+      totalTranslationCalls += 1;
+      recordTranslationUsage(
+        usage,
+        translationKeysByNamespace,
+        key,
+        namespace,
+        filePath
+      );
+    }
+
+    for (const node of sourceFile.getDescendantsOfKind(
+      SyntaxKind.ObjectLiteralExpression
+    )) {
+      const titleTranslation = getToolTitleTranslationKey(node);
+      if (!titleTranslation) {
+        continue;
       }
 
-      const formattedKey = namespace ? `${namespace}:${key}` : key;
-
       totalTranslationCalls += 1;
-
-      const filePath = path.relative(projectRoot, sourceFile.getFilePath());
-      const current = usage.get(formattedKey) ?? {
-        count: 0,
-        files: new Set<string>(),
-      };
-      current.count += 1;
-      current.files.add(filePath);
-      usage.set(formattedKey, current);
+      recordTranslationUsage(
+        usage,
+        translationKeysByNamespace,
+        titleTranslation.key,
+        titleTranslation.namespace,
+        filePath
+      );
     }
   }
 
