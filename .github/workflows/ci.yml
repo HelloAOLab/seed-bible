@@ -28,7 +28,6 @@ jobs:
           pnpm install
 
       - name: Lint
-        continue-on-error: true
         run: |
           pnpm lint
       - name: Check TypeScript
