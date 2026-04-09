@@ -279,6 +279,7 @@ export function PaneLayout(props: PaneLayoutProps) {
     paneId: string;
     startX: number;
     startY: number;
+    anchor?: "side" | "bottom";
   } | null>(null);
   const paneElementMapRef = useRef(new Map<string, HTMLElement>());
   const [gridPortalContainerCss, setGridPortalContainerCss] = useState(
@@ -294,8 +295,14 @@ export function PaneLayout(props: PaneLayoutProps) {
         return;
       }
 
-      const deltaX = event.clientX - dragState.startX;
-      const deltaY = event.clientY - dragState.startY;
+      const deltaX =
+        dragState.anchor === "side"
+          ? dragState.startX - event.clientX
+          : event.clientX - dragState.startX;
+      const deltaY =
+        dragState.anchor === "bottom"
+          ? dragState.startY - event.clientY
+          : event.clientY - dragState.startY;
 
       if (dragState.mode === "move") {
         panesManager.movePane(dragState.paneId, deltaX, deltaY);
@@ -598,16 +605,20 @@ export function PaneLayout(props: PaneLayoutProps) {
           </div>
 
           <div
-            className="sb-pane-detached-resize-handle"
+            className={`sb-pane-detached-resize-handle${
+              pane.detachedAnchor === "side"
+                ? " sb-pane-detached-resize-handle-side"
+                : pane.detachedAnchor === "bottom"
+                  ? " sb-pane-detached-resize-handle-bottom"
+                  : ""
+            }`}
             onPointerDown={(event: PointerEvent) => {
-              if (pane.detachedAnchor !== "floating") {
-                return;
-              }
               event.stopPropagation();
               app.selectPane(pane.id);
               dragStateRef.current = {
                 mode: "resize",
                 paneId: pane.id,
+                anchor: pane.detachedAnchor,
                 startX: event.clientX,
                 startY: event.clientY,
               };

@@ -245,14 +245,6 @@ button {
     0 22px 40px #0000002c;
 }
 
-.sb-pane-shell-detached[data-anchor="side"] {
-  max-width: min(52vw, 760px);
-}
-
-.sb-pane-shell-detached[data-anchor="bottom"] {
-  max-height: min(62vh, 560px);
-}
-
 .sb-pane-detached-title {
   font-size: 12px;
   font-weight: 700;
@@ -359,9 +351,44 @@ button {
     color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
-.sb-pane-shell-detached[data-anchor="side"] .sb-pane-detached-resize-handle,
-.sb-pane-shell-detached[data-anchor="bottom"] .sb-pane-detached-resize-handle {
-  display: none;
+/* Side-anchored panes - resize handle on the left edge */
+.sb-pane-detached-resize-handle-side {
+  position: absolute;
+  left: -10px;
+  top: calc(50% - 10px);
+  width: 20px;
+  height: 20px;
+  cursor: ew-resize; /* east-west resize cursor */
+  opacity: 0.5;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.sb-pane-detached-resize-handle-side:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Bottom-anchored panes - resize handle on the top edge */
+.sb-pane-detached-resize-handle-bottom {
+  position: absolute;
+  top: -10px;
+  left: calc(50% - 10px);
+  height: 20px;
+  width: 20px;
+  cursor: ns-resize; /* north-south resize cursor */
+  opacity: 0.5;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.sb-pane-detached-resize-handle-bottom:hover {
+  opacity: 1;
+}
+
+/* Floating panes - resize handle on the bottom-right corner */
+.sb-pane-detached-resize-handle:not(.sb-pane-detached-resize-handle-side):not(
+    .sb-pane-detached-resize-handle-bottom
+  ) {
+  cursor: nwse-resize; /* northwest-southeast resize cursor */
 }
 
 .sb-pane-component,
