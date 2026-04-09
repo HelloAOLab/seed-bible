@@ -212,7 +212,9 @@ export function changeLanguage(lng: string): Promise<void> {
     const langConfig = availableLanguages.find((l) => l.code === lng);
     document.documentElement.dir = langConfig?.rtl ? "rtl" : "ltr";
     document.documentElement.lang = lng;
-    shout("onLanguageChanged", { lng });
+    if (lng !== getCurrentLanguage()) {
+      shout("onLanguageChanged", { lng });
+    }
     return i18nInstance.changeLanguage(lng);
   }
   return Promise.resolve();
