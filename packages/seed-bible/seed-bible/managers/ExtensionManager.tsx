@@ -1,6 +1,7 @@
 import { computed } from "@preact/signals";
 import { orderBy, union } from "es-toolkit";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
+import { addTranslations } from "seed-bible.i18n.I18nManager";
 
 export type CleanupFunction = () => void;
 export type ExtensionDependencies = Record<string, object>;
@@ -22,6 +23,12 @@ export interface ExtensionRegistration {
   init: ExtensionInitializer;
 }
 
+export interface ExtensionTranslation {
+  title: string;
+  description: string;
+  [key: string]: string;
+}
+
 export interface ExtensionMeta {
   /**
    * The identifier of this extension, which should be unique across all extensions.
@@ -29,19 +36,11 @@ export interface ExtensionMeta {
   id: string;
 
   /**
-   * The titles of this extension in different languages. The "en" key is required and serves as the default title if a specific language is not available.
+   * The translations for this extension in different languages.
    */
-  titles: {
-    en: string;
-    [lang: string]: string;
-  };
-
-  /**
-   * The descriptions of this extension in different languages. The "en" key is required and serves as the default description if a specific language is not available.
-   */
-  descriptions: {
-    en: string;
-    [lang: string]: string;
+  translations: {
+    en: ExtensionTranslation;
+    [lang: string]: ExtensionTranslation;
   };
 
   /**
@@ -404,6 +403,8 @@ export function createExtensionManager() {
           return false;
         }
       }
+
+      addTranslations(uploaded.meta.id, uploaded.meta.translations);
 
       const installed = await loadExtensionFromPackage(
         extensionId,

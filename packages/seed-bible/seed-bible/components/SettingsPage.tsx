@@ -288,6 +288,8 @@ function ExtensionsSettingsView(props: {
     }
   };
 
+  const { t } = useI18n();
+
   return (
     <div className="sb-settings-page">
       <SettingsSubPageHeader title="Extensions" onBack={onBack} />
@@ -299,8 +301,7 @@ function ExtensionsSettingsView(props: {
         ) : (
           <ul className="sb-extensions-list">
             {extensionsList.map((extensionEntry) => {
-              const { id, extension, installed, pendingInstallation } =
-                extensionEntry;
+              const { id, installed, pendingInstallation } = extensionEntry;
               const isRegistered =
                 ExtensionInitalizer.getInstance().isExtensionRegistered(id);
               const installState = getExtensionInstallState(
@@ -338,10 +339,10 @@ function ExtensionsSettingsView(props: {
                     </span>
                     <div className="sb-extension-row-content">
                       <span className="sb-extension-name">
-                        {extension?.meta.titles.en ?? id}
+                        {t("title", { ns: id, defaultValue: id })}
                       </span>
                       <span className="sb-extension-description">
-                        {extension?.meta.descriptions.en ?? ""}
+                        {t("description", { ns: id, defaultValue: "" })}
                       </span>
                     </div>
                   </button>

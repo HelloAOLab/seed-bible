@@ -97,7 +97,11 @@ registerExtension({
       getItems: () => {
         return foundPlaces.value.map((place) => ({
           id: `show-location-${place.place}`,
-          title: `Show ${place.place} on map`,
+          title: {
+            key: "show-location-place",
+            defaultValue: `Show ${place.place} on map`,
+            options: { place: place.place },
+          },
           icon: () => <span></span>,
           onSelect: async () => {
             await showPlaceOnMap(place);

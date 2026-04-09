@@ -1,10 +1,11 @@
 {
   "id": "ext_locations",
-  "titles": {
-    "en": "Locations"
-  },
-  "descriptions": {
-    "en": "An extension that adds locations and maps to the Seed Bible."
+  "translations": {
+    "en": {
+      "title": "Locations",
+      "description": "An extension that adds locations and maps to the Seed Bible.",
+      "show-location-place": "Show {{place}} on map"
+    }
   },
   "dependencies": ["ext_geoImporter"]
 }

@@ -1,6 +1,7 @@
 import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
 import { MaterialIcon } from "seed-bible.components.icons";
+import { useI18n } from "seed-bible.i18n.I18nManager";
 
 function OpenGridPortalIcon() {
   return <MaterialIcon>view_in_ar</MaterialIcon>;
@@ -13,21 +14,28 @@ function OpenMapPortalIcon() {
 registerExtension({
   id: "example-extension",
   init: function* (context: SeedBibleState) {
+    // loadExtensionTranslations("example-extension", thisBot);
+
     console.log("Example extension initialized with context:", context);
 
     // register a new tool
     yield context.tools.registerToolbarTool({
       id: "my-example-tool",
-      title: "My Example Tool",
+      title: {
+        key: "my-example-tool",
+        defaultValue: "My Example Tool",
+        ns: "example-extension",
+      },
       icon: () => <span>TOOL!</span>,
       onSelect: () => {
         console.log("Example tool selected!");
         context.panes.openPane({
           type: "detached",
           detachedAnchor: "side",
-          component: () => (
-            <div style={{ padding: 20 }}>Hello from the example extension!</div>
-          ),
+          component: () => {
+            const { t } = useI18n("example-extension");
+            return <div style={{ padding: 20 }}>{t("my-example-tool")}</div>;
+          },
         });
       },
       priority: 100,
@@ -35,7 +43,11 @@ registerExtension({
 
     yield context.tools.registerVerseToolbarTool({
       id: "my-verse-tool",
-      title: "My Verse Tool",
+      title: {
+        key: "my-verse-tool",
+        defaultValue: "My Verse Tool",
+        ns: "example-extension",
+      },
       icon: () => <span>VERSE!</span>,
       // onSelect: (context) => {
       //   console.log("Example verse tool selected with context:", context);
@@ -62,7 +74,11 @@ registerExtension({
         {
           id: "item-1",
           icon: () => <span>ITEM 1</span>,
-          title: "Item 1",
+          title: {
+            key: "item-1",
+            defaultValue: "Item 1",
+            ns: "example-extension",
+          },
           onSelect: () => {
             console.log("Item 1 clicked with context:", context);
             os.toast("Item 1 clicked!");
@@ -71,7 +87,11 @@ registerExtension({
         {
           id: "item-2",
           icon: () => <span>ITEM 2</span>,
-          title: "Item 2",
+          title: {
+            key: "item-2",
+            defaultValue: "Item 2",
+            ns: "example-extension",
+          },
           onSelect: () => {
             console.log("Item 2 clicked with context:", context);
             os.toast("Item 2 clicked!");
@@ -83,7 +103,11 @@ registerExtension({
 
     yield context.tools.registerBelowReaderTool({
       id: "my-below-reader-tool",
-      title: "My Below Reader Tool",
+      title: {
+        key: "my-below-reader-tool",
+        defaultValue: "My Below Reader Tool",
+        ns: "example-extension",
+      },
       icon: () => <span>BELOW!</span>,
       priority: 100,
     });
@@ -91,7 +115,11 @@ registerExtension({
     yield context.tools.registerEmptyPaneTool({
       id: "open-grid-portal",
       priority: 100,
-      title: "Open grid portal",
+      title: {
+        key: "open-grid-portal",
+        defaultValue: "Open grid portal",
+        ns: "example-extension",
+      },
       icon: OpenGridPortalIcon,
       isDisabled: (context) =>
         context.panesManager.panes.value.some(
@@ -113,7 +141,11 @@ registerExtension({
     yield context.tools.registerEmptyPaneTool({
       id: "open-map-portal",
       priority: 110,
-      title: "Open map portal",
+      title: {
+        key: "open-map-portal",
+        defaultValue: "Open map portal",
+        ns: "example-extension",
+      },
       icon: OpenMapPortalIcon,
       isDisabled: (context) =>
         context.panesManager.panes.value.some(

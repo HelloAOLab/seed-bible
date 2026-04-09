@@ -2,12 +2,15 @@ import fs from "node:fs";
 import path from "node:path";
 import { ESLintUtils, type TSESLint } from "@typescript-eslint/utils";
 import { getTranslationUsageStats } from "../getTranslationUsageStats";
+import { ExtensionMetaSchema } from "../lib/extension";
+import { treeifyError } from "zod";
 
 type TranslationObject = Record<string, unknown>;
 
 export interface ProjectAnalysis {
   error: string | null;
   englishKeys: Set<string>;
+  extensionEnglishKeys: Map<string, Set<string>>;
   usedKeys: Set<string>;
 }
 
@@ -53,6 +56,63 @@ function parseJsonFile(filePath: string): unknown {
   return JSON.parse(content) as unknown;
 }
 
+function collectExtensionManifestPaths(packagesDir: string): string[] {
+  if (!fs.existsSync(packagesDir)) {
+    return [];
+  }
+
+  const paths: string[] = [];
+
+  for (const pkg of fs.readdirSync(packagesDir, { withFileTypes: true })) {
+    if (!pkg.isDirectory()) {
+      continue;
+    }
+
+    const packagePath = path.join(packagesDir, pkg.name);
+
+    for (const entry of fs.readdirSync(packagePath, { withFileTypes: true })) {
+      if (entry.isFile() && entry.name === "extension.json") {
+        paths.push(path.join(packagePath, entry.name));
+      }
+    }
+  }
+
+  return paths;
+}
+
+function getExtensionEnglishKeys(
+  projectRoot: string
+): Map<string, Set<string>> {
+  const extensionEnglishKeys = new Map<string, Set<string>>();
+  const packagesDir = path.join(projectRoot, "packages");
+  const extensionJsonPaths = collectExtensionManifestPaths(packagesDir);
+
+  for (const extensionJsonPath of extensionJsonPaths) {
+    const extensionConfig = parseJsonFile(extensionJsonPath);
+
+    const parseResult = ExtensionMetaSchema.safeParse(extensionConfig);
+
+    if (!parseResult.success) {
+      console.warn(treeifyError(parseResult.error));
+      continue;
+    }
+
+    const extensionMeta = parseResult.data;
+    const id = extensionMeta.id;
+    const translations = extensionMeta.translations;
+
+    const englishTranslations = translations.en;
+    if (englishTranslations === undefined) {
+      continue;
+    }
+
+    const englishKeys = flattenTranslationKeys(englishTranslations);
+    extensionEnglishKeys.set(id, englishKeys);
+  }
+
+  return extensionEnglishKeys;
+}
+
 export function analyzeProject(projectRoot: string): ProjectAnalysis {
   const cached = analyzedProjects.get(projectRoot);
   if (cached) {
@@ -71,6 +131,7 @@ export function analyzeProject(projectRoot: string): ProjectAnalysis {
     const result: ProjectAnalysis = {
       error: `i18n directory not found: ${i18nDir}`,
       englishKeys: new Set<string>(),
+      extensionEnglishKeys: new Map<string, Set<string>>(),
       usedKeys: new Set<string>(),
     };
     analyzedProjects.set(projectRoot, result);
@@ -80,11 +141,14 @@ export function analyzeProject(projectRoot: string): ProjectAnalysis {
   const filePath = path.join(i18nDir, "en.json");
   const json = parseJsonFile(filePath);
   const englishKeys = flattenTranslationKeys(json);
+  const extensionEnglishKeys = getExtensionEnglishKeys(projectRoot);
+
   const usageStats = getTranslationUsageStats(projectRoot);
   const usedKeys = new Set<string>(usageStats.uniqueTranslationKeys);
 
   const result: ProjectAnalysis = {
     englishKeys,
+    extensionEnglishKeys,
     usedKeys,
     error: null,
   };

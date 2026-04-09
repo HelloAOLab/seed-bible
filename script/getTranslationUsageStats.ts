@@ -1,6 +1,11 @@
 import path from "node:path";
-import { pathToFileURL } from "node:url";
-import { Project, SyntaxKind } from "ts-morph";
+import {
+  Project,
+  SyntaxKind,
+  type CallExpression,
+  type Identifier,
+  type Node,
+} from "ts-morph";
 
 export interface TranslationKeyUsage {
   key: string;
@@ -13,13 +18,115 @@ export interface TranslationUsageStats {
   scannedSourceFiles: number;
   totalTranslationCalls: number;
   uniqueTranslationKeys: string[];
+  translationKeysByNamespace: Map<string, Set<string>>;
   keyUsage: TranslationKeyUsage[];
 }
 
 // let stats: TranslationUsageStats | null = null;
 
+function getStaticString(node: Node | undefined): string | null {
+  if (!node) {
+    return null;
+  }
+
+  if (node.isKind(SyntaxKind.StringLiteral)) {
+    return node.getLiteralText();
+  }
+
+  if (node.isKind(SyntaxKind.NoSubstitutionTemplateLiteral)) {
+    return node.getLiteralText();
+  }
+
+  return null;
+}
+
+function getNsFromOptions(callExpression: CallExpression): {
+  hasNsProperty: boolean;
+  namespace: string | null;
+} {
+  const optionsArg = callExpression.getArguments()[1];
+
+  if (!optionsArg || !optionsArg.isKind(SyntaxKind.ObjectLiteralExpression)) {
+    return { hasNsProperty: false, namespace: null };
+  }
+
+  for (const property of optionsArg.getProperties()) {
+    if (property.isKind(SyntaxKind.PropertyAssignment)) {
+      if (property.getName() !== "ns") {
+        continue;
+      }
+
+      const initializer = property.getInitializer();
+      return {
+        hasNsProperty: true,
+        namespace:
+          getStaticString(initializer) ?? initializer?.getText() ?? null,
+      };
+    }
+
+    if (property.isKind(SyntaxKind.ShorthandPropertyAssignment)) {
+      if (property.getName() !== "ns") {
+        continue;
+      }
+
+      return {
+        hasNsProperty: true,
+        namespace: "ns",
+      };
+    }
+  }
+
+  return { hasNsProperty: false, namespace: null };
+}
+
+function getNsFromLocalUseI18n(identifier: Identifier): string | null {
+  for (const definition of identifier.getDefinitions()) {
+    const declarationNode = definition.getDeclarationNode();
+    if (!declarationNode) {
+      continue;
+    }
+
+    const bindingElement = declarationNode.isKind(SyntaxKind.BindingElement)
+      ? declarationNode
+      : declarationNode.getFirstAncestorByKind(SyntaxKind.BindingElement);
+
+    if (!bindingElement) {
+      continue;
+    }
+
+    const variableDeclaration = bindingElement.getFirstAncestorByKind(
+      SyntaxKind.VariableDeclaration
+    );
+
+    if (!variableDeclaration) {
+      continue;
+    }
+
+    const initializer = variableDeclaration.getInitializerIfKind(
+      SyntaxKind.CallExpression
+    );
+
+    if (!initializer) {
+      continue;
+    }
+
+    const initializerExpression = initializer.getExpression();
+    if (
+      !initializerExpression.isKind(SyntaxKind.Identifier) ||
+      initializerExpression.getText() !== "useI18n"
+    ) {
+      continue;
+    }
+
+    return getStaticString(initializer.getArguments()[0]);
+  }
+
+  return null;
+}
+
 /**
  * Parses the TypeScript project and returns usage stats for t("...") translation calls.
+ * Keys are formatted as "ns:key" when a namespace can be determined.
  */
 export function getTranslationUsageStats(
   projectRoot = process.cwd()
@@ -29,6 +136,7 @@ export function getTranslationUsageStats(
   const sourceFiles = project.getSourceFiles("packages/**/*.ts{,x}");
 
   const usage = new Map<string, { count: number; files: Set<string> }>();
+  const translationKeysByNamespace = new Map<string, Set<string>>();
   let totalTranslationCalls = 0;
 
   for (const sourceFile of sourceFiles) {
@@ -50,24 +158,36 @@ export function getTranslationUsageStats(
         continue;
       }
 
-      let key: string | null = null;
-      if (firstArg.isKind(SyntaxKind.StringLiteral)) {
-        key = firstArg.getLiteralText();
-      } else if (firstArg.isKind(SyntaxKind.NoSubstitutionTemplateLiteral)) {
-        key = firstArg.getLiteralText();
-      }
+      const key = getStaticString(firstArg);
 
       if (!key) {
         continue;
       }
 
+      const optionsNs = getNsFromOptions(callExpression);
+      const namespace = optionsNs.hasNsProperty
+        ? optionsNs.namespace
+        : getNsFromLocalUseI18n(expression);
+
+      if (namespace) {
+        const namespacedKeys =
+          translationKeysByNamespace.get(namespace) ?? new Set<string>();
+        namespacedKeys.add(key);
+        translationKeysByNamespace.set(namespace, namespacedKeys);
+      }
+
+      const formattedKey = namespace ? `${namespace}:${key}` : key;
+
       totalTranslationCalls += 1;
 
       const filePath = path.relative(projectRoot, sourceFile.getFilePath());
-      const current = usage.get(key) ?? { count: 0, files: new Set<string>() };
+      const current = usage.get(formattedKey) ?? {
+        count: 0,
+        files: new Set<string>(),
+      };
       current.count += 1;
       current.files.add(filePath);
-      usage.set(key, current);
+      usage.set(formattedKey, current);
     }
   }
 
@@ -84,6 +204,7 @@ export function getTranslationUsageStats(
     scannedSourceFiles: sourceFiles.length,
     totalTranslationCalls,
     uniqueTranslationKeys: keyUsage.map((entry) => entry.key),
+    translationKeysByNamespace,
     keyUsage,
   };
 }

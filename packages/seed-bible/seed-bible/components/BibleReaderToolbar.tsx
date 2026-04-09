@@ -153,7 +153,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     if (typeof title === "string") {
       return title;
     }
-    return t(title.key, { defaultValue: title.defaultValue });
+    return t(title.key, {
+      defaultValue: title.defaultValue,
+      ns: title.ns,
+      ...title.options,
+    });
   };
 
   return (

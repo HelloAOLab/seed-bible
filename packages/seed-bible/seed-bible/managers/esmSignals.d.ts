@@ -7,6 +7,14 @@ declare module "https://esm.sh/*" {
     changeLanguage(language: string): Promise<unknown>;
     on(event: string, callback: (lng: string) => void): void;
     off(event: string, callback: (lng: string) => void): void;
+
+    addResourceBundle(
+      lng: string,
+      ns: string,
+      resources: Record<string, string>,
+      deep?: boolean,
+      overwrite?: boolean
+    ): void;
   }
 
   export interface TranslationHookResult {
