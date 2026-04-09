@@ -18,6 +18,7 @@ export interface TranslationUsageStats {
   scannedSourceFiles: number;
   totalTranslationCalls: number;
   uniqueTranslationKeys: string[];
+  translationKeysByNamespace: Map<string, Set<string>>;
   keyUsage: TranslationKeyUsage[];
 }
 
@@ -135,6 +136,7 @@ export function getTranslationUsageStats(
   const sourceFiles = project.getSourceFiles("packages/**/*.ts{,x}");
 
   const usage = new Map<string, { count: number; files: Set<string> }>();
+  const translationKeysByNamespace = new Map<string, Set<string>>();
   let totalTranslationCalls = 0;
 
   for (const sourceFile of sourceFiles) {
@@ -167,6 +169,13 @@ export function getTranslationUsageStats(
         ? optionsNs.namespace
         : getNsFromLocalUseI18n(expression);
 
+      if (namespace) {
+        const namespacedKeys =
+          translationKeysByNamespace.get(namespace) ?? new Set<string>();
+        namespacedKeys.add(key);
+        translationKeysByNamespace.set(namespace, namespacedKeys);
+      }
+
       const formattedKey = namespace ? `${namespace}:${key}` : key;
 
       totalTranslationCalls += 1;
@@ -195,6 +204,7 @@ export function getTranslationUsageStats(
     scannedSourceFiles: sourceFiles.length,
     totalTranslationCalls,
     uniqueTranslationKeys: keyUsage.map((entry) => entry.key),
+    translationKeysByNamespace,
     keyUsage,
   };
 }
