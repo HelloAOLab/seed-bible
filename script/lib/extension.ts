@@ -315,14 +315,14 @@ function getRecordName(key: string) {
   return parsed[0];
 }
 
-const ExtensionTranslationSchema = z
+export const ExtensionTranslationSchema = z
   .object({
     title: z.string(),
     description: z.string(),
   })
   .catchall(z.string());
 
-const ExtensionMetaSchema = z.looseObject({
+export const ExtensionMetaSchema = z.looseObject({
   id: z.string(),
   translations: z
     .object({
