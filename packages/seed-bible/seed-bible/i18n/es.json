@@ -1,7 +1,7 @@
 {
   "allBooks": "Todos los libros",
-  "newTestament": "Nuevo Testamento",
-  "oldTestament": "Antiguo Testamento",
+  "new-testament": "Nuevo Testamento",
+  "old-testament": "Antiguo Testamento",
   "searchBook": "Buscar libro...",
   "settings": "Configuración",
   "open-books": "Abrir libros",

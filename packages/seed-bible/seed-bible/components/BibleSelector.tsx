@@ -76,7 +76,7 @@ export function BibleSelector(props: BibleSelectorProps) {
       >
         <div className="sb-selector-column sb-selector-column-divider">
           <h4 className="sb-selector-section-title">
-            {t("oldTestament", { defaultValue: "Old Testament" })}
+            {t("old-testament", { defaultValue: "Old Testament" })}
           </h4>
           <div className="sb-selector-books-grid">
             {oldTestamentRows.value.map((row, rowIndex) => {
@@ -154,7 +154,7 @@ export function BibleSelector(props: BibleSelectorProps) {
 
         <div className="sb-selector-column">
           <h4 className="sb-selector-section-title">
-            {t("newTestament", { defaultValue: "New Testament" })}
+            {t("new-testament", { defaultValue: "New Testament" })}
           </h4>
           <div className="sb-selector-books-grid">
             {newTestamentRows.value.map((row, rowIndex) => {

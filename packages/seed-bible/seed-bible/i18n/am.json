@@ -1,7 +1,7 @@
 {
   "allBooks": "ሁሉም መጻሕፍት",
-  "newTestament": "አዲስ ኪዳን",
-  "oldTestament": "ብሉይ ኪዳን",
+  "new-testament": "አዲስ ኪዳን",
+  "old-testament": "ብሉይ ኪዳን",
   "searchBook": "መጽሐፍ ፈልግ...",
   "settings": "ቅንብሮች",
   "open-books": "መጻሕፍትን ክፈት",
