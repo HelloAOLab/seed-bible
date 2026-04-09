@@ -1,7 +1,4 @@
-import {
-  type ToolsManager,
-  type TranslatableTitle,
-} from "seed-bible.managers.BibleToolsManager";
+import { type ToolsManager } from "seed-bible.managers.BibleToolsManager";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
