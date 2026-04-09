@@ -93,6 +93,9 @@
       "seed-bible.components.Tabs": [
         "./packages/seed-bible/seed-bible/components/Tabs.tsx"
       ],
+      "seed-bible.components.Utils": [
+        "./packages/seed-bible/seed-bible/components/Utils.tsx"
+      ],
       "seed-bible.i18n.I18nManager": [
         "./packages/seed-bible/seed-bible/i18n/I18nManager.tsx"
       ],

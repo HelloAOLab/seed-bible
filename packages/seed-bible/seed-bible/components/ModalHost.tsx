@@ -1,8 +1,12 @@
 import { CasualOSApp } from "seed-bible.components.CasualOSApp";
 import type { ModalManager } from "seed-bible.managers.ModalManager";
+import { useI18n } from "seed-bible.i18n.I18nManager";
+import { translateTitle } from "seed-bible.components.Utils";
 
 export function ModalHost(props: { manager: ModalManager }) {
   const { manager } = props;
+
+  const { t } = useI18n();
 
   return (
     <>
@@ -21,10 +25,12 @@ export function ModalHost(props: { manager: ModalManager }) {
               }}
             >
               <div className="sb-footnote-modal-header">
-                <h3 className="sb-footnote-modal-title">{modal.title}</h3>
+                <h3 className="sb-footnote-modal-title">
+                  {translateTitle(t, modal.title)}
+                </h3>
                 <button
                   className="sb-footnote-modal-close"
-                  aria-label={`Close ${modal.title}`}
+                  aria-label={t("close", { defaultValue: "Close" })}
                   onClick={() => {
                     manager.closeModal(modal.id);
                   }}
@@ -33,7 +39,9 @@ export function ModalHost(props: { manager: ModalManager }) {
                 </button>
               </div>
 
-              <div className="sb-footnote-modal-content">{modal.content()}</div>
+              <div className="sb-footnote-modal-content">
+                {modal.content({ t })}
+              </div>
             </div>
           </div>
         );

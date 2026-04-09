@@ -15,7 +15,7 @@ type ResolvedBibleToolIcon = () => JSX.Element | VNode;
 type ToolPredicateResult = boolean | ReadonlySignal<boolean>;
 type ToolPredicate<TContext> = (context: TContext) => ToolPredicateResult;
 type ToolPriority<TContext> = number | ((context: TContext) => number);
-export type ToolTitle =
+export type TranslatableTitle =
   | string
   | {
       key: string;
@@ -33,7 +33,7 @@ export interface BibleTool<TContext> {
   /** Sorting priority. Lower values render first. */
   priority: ToolPriority<TContext>;
   /** Localized or plain-text tool title. */
-  title: ToolTitle;
+  title: TranslatableTitle;
   /** Icon renderer for the given tool context. */
   icon: BibleToolIcon<TContext>;
 }
@@ -72,7 +72,7 @@ export interface ResolvedBibleTool {
   /** Resolved sorting priority. Lower values render first. */
   priority: number;
   /** Localized or plain-text tool title. */
-  title: ToolTitle;
+  title: TranslatableTitle;
   /** Context-bound icon renderer. */
   icon: ResolvedBibleToolIcon;
 }

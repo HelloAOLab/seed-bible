@@ -12,5 +12,18 @@
   "highlight-yellow": "Highlight (Yellow)",
   "clear-highlights": "Clear Highlights",
   "share-verse": "Share",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "close": "Close",
+  "open-settings": "Open Settings",
+  "close-settings": "Close Settings",
+  "shared-tab_title": "Shared {{book}}",
+  "tabs": "Tabs",
+  "new-tab": "New tab",
+  "create-new-tab": "Create new tab",
+  "tab-options": "Tab options",
+  "open-tab-menu": "Open tab menu",
+  "session-id_x": "Session ID: {{sessionId}}",
+  "session-id": "Session ID",
+  "join-session": "Join Session",
+  "join-shared-session": "Join Shared Session"
 }

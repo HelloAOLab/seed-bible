@@ -1,6 +1,6 @@
 import {
   type ToolsManager,
-  type ToolTitle,
+  type TranslatableTitle,
 } from "seed-bible.managers.BibleToolsManager";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
@@ -8,6 +8,7 @@ import type { TabsManager } from "seed-bible.managers.TabsManager";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
+import { translateTitle } from "seed-bible.components.Utils";
 
 const { useState } = os.appHooks;
 
@@ -50,21 +51,10 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
   const { t } = useI18n();
   const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
 
-  const translateTitle = (title: ToolTitle): string => {
-    if (typeof title === "string") {
-      return title;
-    }
-    return t(title.key, {
-      defaultValue: title.defaultValue,
-      ns: title.ns,
-      ...title.options,
-    });
-  };
-
   return (
     <div className="sb-below-reader-toolbar">
       {tools.map((tool) => {
-        const title = translateTitle(tool.title);
+        const title = translateTitle(t, tool.title);
         const ToolIcon = tool.icon;
         const menuItems =
           tool.getItems?.().filter((item) => item.visible.value) ?? [];
@@ -106,7 +96,7 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
                       className="sb-tool-context-menu-item"
                     >
                       <MenuItemIcon />
-                      <span>{translateTitle(item.title)}</span>
+                      <span>{translateTitle(t, item.title)}</span>
                     </button>
                   );
                 })}

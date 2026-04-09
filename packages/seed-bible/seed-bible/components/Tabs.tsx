@@ -186,8 +186,8 @@ export function Settings(props: SettingsProps) {
         <button
           onClick={sidebar.closeSettings}
           className="sb-sidebar-settings-close-button"
-          aria-label="Close settings"
-          title="Close settings"
+          aria-label={t("close-settings", { defaultValue: "Close Settings" })}
+          title={t("close-settings", { defaultValue: "Close Settings" })}
         >
           <span className="material-symbols-outlined">close</span>
         </button>
@@ -206,18 +206,21 @@ export function Tabs(props: TabsProps) {
   const tabs = tabsManager.tabs.value;
   const selectedTabId = tabsManager.selectedTabId.value;
   const panelsEnabled = app.panelsEnabled.value;
+  const { t } = useI18n();
 
   return (
     <>
       <div className="sb-sidebar-tabs-header">
-        <h3 className="sb-sidebar-tabs-title">Tabs</h3>
+        <h3 className="sb-sidebar-tabs-title">
+          {t("tabs", { defaultValue: "Tabs" })}
+        </h3>
         <button
           onClick={() => {
             app.addTab();
           }}
           className="sb-tab-add-button"
-          aria-label="Create new tab"
-          title="New tab"
+          aria-label={t("create-new-tab", { defaultValue: "Create new tab" })}
+          title={t("new-tab", { defaultValue: "New tab" })}
         >
           <span className="material-symbols-outlined">add</span>
         </button>
@@ -236,7 +239,12 @@ export function Tabs(props: TabsProps) {
           const currentChapter = tab.readingState.chapterNumber.value;
           const currentTranslation =
             tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
-          const titlePrefix = tab.sharedSession ? "Shared " : "";
+          const title = tab.sharedSession
+            ? t("shared-tab_title", {
+                book: currentBookName,
+                defaultValue: "Shared",
+              })
+            : currentBookName;
           const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
 
           return (
@@ -254,7 +262,7 @@ export function Tabs(props: TabsProps) {
                 className={`sb-tab-button`}
               >
                 <div className="sb-tab-main-content">
-                  <span>{`${titlePrefix}${currentBookName} - ${currentChapter} • ${currentTranslation}`}</span>
+                  <span>{`${title} - ${currentChapter} • ${currentTranslation}`}</span>
                 </div>
 
                 {tab.sharedSession && connectedUsers.length > 0 && (
@@ -297,20 +305,28 @@ export function Tabs(props: TabsProps) {
                 buttonClassName="sb-tab-menu-button"
                 menuClassName="sb-tab-menu"
                 iconClassName="sb-tab-more-icon"
-                aria-label="Open tab menu"
-                title="Tab options"
+                aria-label={t("open-tab-menu", {
+                  defaultValue: "Open tab menu",
+                })}
+                title={t("tab-options", { defaultValue: "Tab options" })}
               >
                 {tab.sharedSession && (
                   <ContextMenuItem
                     className="sb-tab-menu-item"
-                    title={`Session ID: ${tab.sharedSession.id}`}
+                    title={t("session-id", {
+                      sessionId: tab.sharedSession.id,
+                      defaultValue: `Session ID: ${tab.sharedSession.id}`,
+                    })}
                     onClick={() => {
                       if (tab.sharedSession) {
                         os.setClipboard(tab.sharedSession.id);
                       }
                     }}
                   >
-                    {`Session ID: ${tab.sharedSession.id}`}
+                    {t("session-id_x", {
+                      sessionId: tab.sharedSession.id,
+                      defaultValue: `Session ID: ${tab.sharedSession.id}`,
+                    })}
                   </ContextMenuItem>
                 )}
                 <ContextMenuItem
@@ -319,7 +335,7 @@ export function Tabs(props: TabsProps) {
                     state.tabs.removeTab(tab.id);
                   }}
                 >
-                  Close tab
+                  {t("close", { defaultValue: "Close" })}
                 </ContextMenuItem>
                 {panelsEnabled && (
                   <>
@@ -368,11 +384,14 @@ export function Sidebar(props: SidebarProps) {
     isLayoutMenuOpen.value = false;
     state.modals.openModal({
       id: "join-shared-session",
-      title: "Join Shared Session",
-      content: () => (
+      title: {
+        key: "join-shared-session",
+        defaultValue: "Join Shared Session",
+      },
+      content: ({ t }) => (
         <>
           <label>
-            <span>Session ID</span>
+            <span>{t("session-id", { defaultValue: "Session ID" })}</span>
             <input
               value={joinSessionId.value}
               onInput={(event) => {
@@ -389,7 +408,7 @@ export function Sidebar(props: SidebarProps) {
                 state.modals.closeModal("join-shared-session");
               }}
             >
-              Cancel
+              {t("cancel", { defaultValue: "Cancel" })}
             </button>
             <button
               onClick={() => {
@@ -397,7 +416,7 @@ export function Sidebar(props: SidebarProps) {
               }}
               disabled={!joinSessionId.value.trim()}
             >
-              Join Session
+              {t("join-session", { defaultValue: "Join Session" })}
             </button>
           </div>
         </>
@@ -423,6 +442,8 @@ export function Sidebar(props: SidebarProps) {
   const closeLayoutMenu = () => {
     isLayoutMenuOpen.value = false;
   };
+
+  const { t } = useI18n();
 
   return (
     <aside
@@ -462,8 +483,8 @@ export function Sidebar(props: SidebarProps) {
         className={`sb-sidebar-icon-button${
           isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
         }`}
-        aria-label="Open settings"
-        title="Settings"
+        aria-label={t("open-settings", { defaultValue: "Open settings" })}
+        title={t("settings", { defaultValue: "Settings" })}
       >
         <MobileSettingsIcon />
       </button>

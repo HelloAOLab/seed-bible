@@ -1,17 +1,24 @@
 import { signal, type ReadonlySignal } from "@preact/signals";
 import type { ComponentChildren } from "preact";
+import type { TranslatableTitle } from "seed-bible.managers.BibleToolsManager";
 
 export interface ManagedModal {
   id: string;
-  title: string;
-  content: () => ComponentChildren;
+  title: TranslatableTitle;
+  content: (props: ModalContentProps) => ComponentChildren;
   useCasualOSApp: boolean;
+}
+
+export interface ModalContentProps {
+  t: (key: string, options?: Record<string, unknown>) => string;
 }
 
 export interface ModalRegistration {
   id?: string;
-  title: string;
-  content: ComponentChildren | (() => ComponentChildren);
+  title: TranslatableTitle;
+  content:
+    | ComponentChildren
+    | ((props: ModalContentProps) => ComponentChildren);
 
   /**
    * Whether to render the modal as a CasualOS app. This can be useful if the modal content needs to render over the grid or map portals.
@@ -30,10 +37,10 @@ export interface ModalManager {
 let nextModalId = 0;
 
 function toContentRenderer(
-  content: ComponentChildren | (() => ComponentChildren)
+  content: ComponentChildren | ((props: ModalContentProps) => ComponentChildren)
 ) {
   if (typeof content === "function") {
-    return content as () => ComponentChildren;
+    return content as (props: ModalContentProps) => ComponentChildren;
   }
 
   return () => content;

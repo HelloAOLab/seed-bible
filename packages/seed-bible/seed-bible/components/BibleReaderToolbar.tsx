@@ -1,7 +1,7 @@
 import { batch, useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
-import type { ToolTitle } from "seed-bible.managers.BibleToolsManager";
+import { translateTitle } from "seed-bible.components.Utils";
 
 const { useEffect } = os.appHooks;
 
@@ -149,16 +149,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   );
 
   const { t } = useI18n();
-  const translateTitle = (title: ToolTitle): string => {
-    if (typeof title === "string") {
-      return title;
-    }
-    return t(title.key, {
-      defaultValue: title.defaultValue,
-      ns: title.ns,
-      ...title.options,
-    });
-  };
 
   return (
     <>
@@ -172,7 +162,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               disabled={previousChapterTool.value.disabled.value}
               onClick={previousChapterTool.value.onSelect}
               className="sb-reader-toolbar-floating-button sb-reader-toolbar-floating-button-left"
-              aria-label={translateTitle(previousChapterTool.value.title)}
+              aria-label={translateTitle(t, previousChapterTool.value.title)}
             >
               <previousChapterTool.value.icon />
             </button>
@@ -183,7 +173,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               disabled={nextChapterTool.value.disabled.value}
               onClick={nextChapterTool.value.onSelect}
               className="sb-reader-toolbar-floating-button sb-reader-toolbar-floating-button-right"
-              aria-label={translateTitle(nextChapterTool.value.title)}
+              aria-label={translateTitle(t, nextChapterTool.value.title)}
             >
               <nextChapterTool.value.icon />
             </button>
@@ -206,6 +196,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     }}
                     className="sb-reader-toolbar-button"
                     aria-label={translateTitle(
+                      t,
                       openSidebarTool.value?.title ?? {
                         key: "open_sidebar",
                         defaultValue: "Open sidebar",
@@ -232,6 +223,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     }}
                     className="sb-reader-toolbar-button"
                     aria-label={translateTitle(
+                      t,
                       openSelectorTool.value?.title ?? {
                         key: "open_book_selector",
                         defaultValue: "Open Book Selector",
@@ -281,7 +273,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                   className="sb-reader-toolbar-more-item"
                                 >
                                   <ToolIcon />
-                                  <span>{translateTitle(tool.title)}</span>
+                                  <span>{translateTitle(t, tool.title)}</span>
                                 </button>
                                 {selectedOverflowToolId.value === tool.id &&
                                   (() => {
@@ -312,7 +304,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                             >
                                               <MenuItemIcon />
                                               <span>
-                                                {translateTitle(item.title)}
+                                                {translateTitle(t, item.title)}
                                               </span>
                                             </button>
                                           );
@@ -355,7 +347,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     >
                       <ToolIcon />
                       <span className="sr-only">
-                        {translateTitle(tool.title)}
+                        {translateTitle(t, tool.title)}
                       </span>
                     </button>
                     {hasMenuItems &&
@@ -374,7 +366,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                 className="sb-tool-context-menu-item"
                               >
                                 <MenuItemIcon />
-                                <span>{translateTitle(item.title)}</span>
+                                <span>{translateTitle(t, item.title)}</span>
                               </button>
                             );
                           })}
@@ -426,7 +418,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   >
                     <ToolIcon />
                     <span className="sr-only">
-                      {translateTitle(tool.title)}
+                      {translateTitle(t, tool.title)}
                     </span>
                   </button>
                   {hasMenuItems && selectedVerseToolId.value === tool.id && (
@@ -444,7 +436,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                             className="sb-tool-context-menu-item"
                           >
                             <MenuItemIcon />
-                            <span>{translateTitle(item.title)}</span>
+                            <span>{translateTitle(t, item.title)}</span>
                           </button>
                         );
                       })}

@@ -7,11 +7,12 @@ import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import {
   type ToolsManager,
-  type ToolTitle,
+  type TranslatableTitle,
 } from "seed-bible.managers.BibleToolsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { effect } from "@preact/signals";
 import type { ComponentChildren } from "preact";
+import { translateTitle } from "seed-bible.components.Utils";
 
 const { useEffect, useRef, useState } = os.appHooks;
 
@@ -198,21 +199,10 @@ function EmptyPaneToolbar({
 
   const { t } = useI18n();
 
-  const translateTitle = (title: ToolTitle): string => {
-    if (typeof title === "string") {
-      return title;
-    }
-    return t(title.key, {
-      defaultValue: title.defaultValue,
-      ns: title.ns,
-      ...title.options,
-    });
-  };
-
   return (
     <div className="sb-empty-pane-toolbar">
       {tools.map((tool) => {
-        const title = translateTitle(tool.title);
+        const title = translateTitle(t, tool.title);
         const ToolIcon = tool.icon;
         const menuItems =
           tool.getItems?.().filter((item) => item.visible.value) ?? [];
@@ -255,7 +245,7 @@ function EmptyPaneToolbar({
                       className="sb-tool-context-menu-item"
                     >
                       <MenuItemIcon />
-                      <span>{translateTitle(item.title)}</span>
+                      <span>{translateTitle(t, item.title)}</span>
                     </button>
                   );
                 })}
