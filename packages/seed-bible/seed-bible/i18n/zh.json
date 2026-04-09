@@ -6,5 +6,14 @@
   "oldTestament": "旧约",
   "searchBook": "搜索书卷...",
 
-  "settings": "设置"
+  "settings": "设置",
+  "open-books": "打开书卷",
+  "side-menu": "侧边菜单",
+  "copy-verse": "复制",
+  "next-chapter": "下一章",
+  "previous-chapter": "上一章",
+  "highlight-yellow": "高亮（黄色）",
+  "clear-highlights": "清除高亮",
+  "share-verse": "分享",
+  "cancel": "取消"
 }

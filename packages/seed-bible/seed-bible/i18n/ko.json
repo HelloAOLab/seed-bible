@@ -3,5 +3,14 @@
   "newTestament": "신약",
   "oldTestament": "구약",
   "searchBook": "책 검색...",
-  "settings": "설정"
+  "settings": "설정",
+  "open-books": "책 열기",
+  "side-menu": "사이드 메뉴",
+  "copy-verse": "복사",
+  "next-chapter": "다음 장",
+  "previous-chapter": "이전 장",
+  "highlight-yellow": "강조 표시 (노란색)",
+  "clear-highlights": "강조 표시 지우기",
+  "share-verse": "공유",
+  "cancel": "취소"
 }

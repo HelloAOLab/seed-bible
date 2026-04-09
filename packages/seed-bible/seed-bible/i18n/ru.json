@@ -6,5 +6,14 @@
   "oldTestament": "Ветхий Завет",
   "searchBook": "Поиск книги...",
 
-  "settings": "Настройки"
+  "settings": "Настройки",
+  "open-books": "Открыть книги",
+  "side-menu": "Боковое меню",
+  "copy-verse": "Копировать",
+  "next-chapter": "Следующая глава",
+  "previous-chapter": "Предыдущая глава",
+  "highlight-yellow": "Выделить (жёлтый)",
+  "clear-highlights": "Убрать выделение",
+  "share-verse": "Поделиться",
+  "cancel": "Отмена"
 }

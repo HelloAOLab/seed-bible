@@ -6,5 +6,14 @@
   "oldTestament": "पुराना नियम",
   "searchBook": "पुस्तक खोजें...",
 
-  "settings": "सेटिंग्स"
+  "settings": "सेटिंग्स",
+  "open-books": "किताबें खोलें",
+  "side-menu": "साइड मेनू",
+  "copy-verse": "कॉपी करें",
+  "next-chapter": "अगला अध्याय",
+  "previous-chapter": "पिछला अध्याय",
+  "highlight-yellow": "हाइलाइट (पीला)",
+  "clear-highlights": "हाइलाइट साफ़ करें",
+  "share-verse": "साझा करें",
+  "cancel": "रद्द करें"
 }

@@ -3,5 +3,14 @@
   "newTestament": "Tân Ước",
   "oldTestament": "Cựu Ước",
   "searchBook": "Tìm sách...",
-  "settings": "Cài đặt"
+  "settings": "Cài đặt",
+  "open-books": "Mở sách",
+  "side-menu": "Menu bên cạnh",
+  "copy-verse": "Sao chép",
+  "next-chapter": "Chương tiếp theo",
+  "previous-chapter": "Chương trước",
+  "highlight-yellow": "Đánh dấu (vàng)",
+  "clear-highlights": "Xóa đánh dấu",
+  "share-verse": "Chia sẻ",
+  "cancel": "Hủy"
 }

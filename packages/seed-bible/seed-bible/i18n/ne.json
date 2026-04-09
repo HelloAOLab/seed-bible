@@ -3,5 +3,14 @@
   "newTestament": "नयाँ करार",
   "oldTestament": "पुरानो करार",
   "searchBook": "पुस्तक खोज्नुहोस्...",
-  "settings": "सेटिङहरू"
+  "settings": "सेटिङहरू",
+  "open-books": "पुस्तकहरू खोल्नुहोस्",
+  "side-menu": "साइड मेनु",
+  "copy-verse": "प्रतिलिपि",
+  "next-chapter": "अर्को अध्याय",
+  "previous-chapter": "अघिल्लो अध्याय",
+  "highlight-yellow": "हाइलाइट (पहेंलो)",
+  "clear-highlights": "हाइलाइटहरू हटाउनुहोस्",
+  "share-verse": "साझा गर्नुहोस्",
+  "cancel": "रद्द गर्नुहोस्"
 }

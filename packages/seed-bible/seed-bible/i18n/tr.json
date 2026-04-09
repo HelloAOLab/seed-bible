@@ -3,5 +3,14 @@
   "newTestament": "Yeni Ahit",
   "oldTestament": "Eski Ahit",
   "searchBook": "Kitap ara...",
-  "settings": "Ayarlar"
+  "settings": "Ayarlar",
+  "open-books": "Kitapları aç",
+  "side-menu": "Yan menü",
+  "copy-verse": "Kopyala",
+  "next-chapter": "Sonraki bölüm",
+  "previous-chapter": "Önceki bölüm",
+  "highlight-yellow": "Vurgula (sarı)",
+  "clear-highlights": "Vurguları kaldır",
+  "share-verse": "Paylaş",
+  "cancel": "İptal"
 }

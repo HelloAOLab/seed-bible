@@ -3,5 +3,14 @@
   "newTestament": "አዲስ ኪዳን",
   "oldTestament": "ብሉይ ኪዳን",
   "searchBook": "መጽሐፍ ፈልግ...",
-  "settings": "ቅንብሮች"
+  "settings": "ቅንብሮች",
+  "open-books": "መጻሕፍትን ክፈት",
+  "side-menu": "የጎን ምናሌ",
+  "copy-verse": "ቅዳ",
+  "next-chapter": "ቀጣዩ ምዕራፍ",
+  "previous-chapter": "ቀዳሚው ምዕራፍ",
+  "highlight-yellow": "አጉላ (ቢጫ)",
+  "clear-highlights": "አጉላዎችን አጥፋ",
+  "share-verse": "አጋራ",
+  "cancel": "ሰርዝ"
 }

@@ -3,5 +3,14 @@
   "newTestament": "Perjanjian Baru",
   "oldTestament": "Perjanjian Lama",
   "searchBook": "Cari buku...",
-  "settings": "Pengaturan"
+  "settings": "Pengaturan",
+  "open-books": "Buka Buku",
+  "side-menu": "Menu samping",
+  "copy-verse": "Salin",
+  "next-chapter": "Bab Berikutnya",
+  "previous-chapter": "Bab Sebelumnya",
+  "highlight-yellow": "Sorot (Kuning)",
+  "clear-highlights": "Hapus Sorotan",
+  "share-verse": "Bagikan",
+  "cancel": "Batal"
 }

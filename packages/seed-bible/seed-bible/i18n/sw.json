@@ -3,5 +3,14 @@
   "newTestament": "Agano Jipya",
   "oldTestament": "Agano la Kale",
   "searchBook": "Tafuta kitabu...",
-  "settings": "Mipangilio"
+  "settings": "Mipangilio",
+  "open-books": "Fungua vitabu",
+  "side-menu": "Menyu ya upande",
+  "copy-verse": "Nakili",
+  "next-chapter": "Sura inayofuata",
+  "previous-chapter": "Sura iliyotangulia",
+  "highlight-yellow": "Angazia (njano)",
+  "clear-highlights": "Futa uangaziaji",
+  "share-verse": "Shiriki",
+  "cancel": "Ghairi"
 }

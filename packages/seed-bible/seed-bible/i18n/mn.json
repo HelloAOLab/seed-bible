@@ -3,5 +3,14 @@
   "newTestament": "Шинэ Гэрээ",
   "oldTestament": "Хуучин Гэрээ",
   "searchBook": "Ном хайх...",
-  "settings": "Тохиргоо"
+  "settings": "Тохиргоо",
+  "open-books": "Номуудыг нээх",
+  "side-menu": "Хажуугийн цэс",
+  "copy-verse": "Хуулах",
+  "next-chapter": "Дараагийн бүлэг",
+  "previous-chapter": "Өмнөх бүлэг",
+  "highlight-yellow": "Тодруулах (шар)",
+  "clear-highlights": "Тодруулгыг арилгах",
+  "share-verse": "Хуваалцах",
+  "cancel": "Цуцлах"
 }

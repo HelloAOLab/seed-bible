@@ -3,5 +3,14 @@
   "newTestament": "Новий Заповіт",
   "oldTestament": "Старий Заповіт",
   "searchBook": "Шукати книгу...",
-  "settings": "Налаштування"
+  "settings": "Налаштування",
+  "open-books": "Відкрити книги",
+  "side-menu": "Бічне меню",
+  "copy-verse": "Копіювати",
+  "next-chapter": "Наступний розділ",
+  "previous-chapter": "Попередній розділ",
+  "highlight-yellow": "Виділити (жовтий)",
+  "clear-highlights": "Прибрати виділення",
+  "share-verse": "Поділитися",
+  "cancel": "Скасувати"
 }

@@ -3,5 +3,14 @@
   "newTestament": "يېڭى ئەھدە",
   "oldTestament": "كونا ئەھدە",
   "searchBook": "كىتاب ئىزدە...",
-  "settings": "تەڭشەكلەر"
+  "settings": "تەڭشەكلەر",
+  "open-books": "كىتابلارنى ئاچ",
+  "side-menu": "يان تىزىملىك",
+  "copy-verse": "كۆچۈرۈش",
+  "next-chapter": "كىيىنكى بۆلۈم",
+  "previous-chapter": "ئالدىنقى بۆلۈم",
+  "highlight-yellow": "گەۋدىلەندۈرۈش (سېرىق)",
+  "clear-highlights": "گەۋدىلەندۈرۈشنى تازىلا",
+  "share-verse": "ئورتاقلاش",
+  "cancel": "بىكار قىل"
 }

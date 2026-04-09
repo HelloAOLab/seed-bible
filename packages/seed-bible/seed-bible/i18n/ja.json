@@ -6,5 +6,14 @@
   "oldTestament": "旧約聖書",
   "searchBook": "書物を検索...",
 
-  "settings": "設定"
+  "settings": "設定",
+  "open-books": "本を開く",
+  "side-menu": "サイドメニュー",
+  "copy-verse": "コピー",
+  "next-chapter": "次の章",
+  "previous-chapter": "前の章",
+  "highlight-yellow": "ハイライト（黄色）",
+  "clear-highlights": "ハイライトを消去",
+  "share-verse": "共有",
+  "cancel": "キャンセル"
 }

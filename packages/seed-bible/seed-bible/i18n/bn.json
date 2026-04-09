@@ -3,5 +3,14 @@
   "newTestament": "নতুন নিয়ম",
   "oldTestament": "পুরাতন নিয়ম",
   "searchBook": "বই খুঁজুন...",
-  "settings": "সেটিংস"
+  "settings": "সেটিংস",
+  "open-books": "বই খুলুন",
+  "side-menu": "পার্শ্ব মেনু",
+  "copy-verse": "কপি",
+  "next-chapter": "পরবর্তী অধ্যায়",
+  "previous-chapter": "পূর্ববর্তী অধ্যায়",
+  "highlight-yellow": "হাইলাইট (হলুদ)",
+  "clear-highlights": "হাইলাইট মুছুন",
+  "share-verse": "শেয়ার",
+  "cancel": "বাতিল"
 }

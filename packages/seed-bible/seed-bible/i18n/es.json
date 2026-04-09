@@ -1,10 +1,16 @@
 {
   "allBooks": "Todos los libros",
-
   "newTestament": "Nuevo Testamento",
-
   "oldTestament": "Antiguo Testamento",
   "searchBook": "Buscar libro...",
-
-  "settings": "Configuración"
+  "settings": "Configuración",
+  "open-books": "Abrir libros",
+  "side-menu": "Menú lateral",
+  "copy-verse": "Copiar",
+  "next-chapter": "Capítulo siguiente",
+  "previous-chapter": "Capítulo anterior",
+  "highlight-yellow": "Resaltar (amarillo)",
+  "clear-highlights": "Borrar resaltados",
+  "share-verse": "Compartir",
+  "cancel": "Cancelar"
 }

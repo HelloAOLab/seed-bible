@@ -3,5 +3,14 @@
   "newTestament": "عهد جدید",
   "oldTestament": "عهد عتیق",
   "searchBook": "جستجوی کتاب...",
-  "settings": "تنظیمات"
+  "settings": "تنظیمات",
+  "open-books": "باز کردن کتاب‌ها",
+  "side-menu": "منوی جانبی",
+  "copy-verse": "کپی",
+  "next-chapter": "فصل بعدی",
+  "previous-chapter": "فصل قبلی",
+  "highlight-yellow": "برجسته‌سازی (زرد)",
+  "clear-highlights": "پاک کردن برجسته‌سازی‌ها",
+  "share-verse": "اشتراک‌گذاری",
+  "cancel": "لغو"
 }
