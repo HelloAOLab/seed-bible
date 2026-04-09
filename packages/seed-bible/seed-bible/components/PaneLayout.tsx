@@ -5,10 +5,7 @@ import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManage
 import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import {
-  type ToolsManager,
-  type TranslatableTitle,
-} from "seed-bible.managers.BibleToolsManager";
+import { type ToolsManager } from "seed-bible.managers.BibleToolsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { effect } from "@preact/signals";
 import type { ComponentChildren } from "preact";
@@ -487,25 +484,6 @@ export function PaneLayout(props: PaneLayoutProps) {
           }}
           onPointerDown={() => app.selectPane(pane.id)}
         >
-          <div
-            className="sb-pane-detached-header"
-            onPointerDown={(event: PointerEvent) => {
-              if (pane.detachedAnchor !== "floating") {
-                return;
-              }
-              event.stopPropagation();
-              app.selectPane(pane.id);
-              dragStateRef.current = {
-                mode: "move",
-                paneId: pane.id,
-                startX: event.clientX,
-                startY: event.clientY,
-              };
-            }}
-          >
-            <span className="sb-pane-detached-title">Detached Pane</span>
-          </div>
-
           <div className="sb-pane-detached-body">
             {pane.gridPortal !== null || pane.mapPortal !== null ? (
               <GridPortalPane

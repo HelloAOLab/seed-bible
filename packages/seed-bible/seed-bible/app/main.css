@@ -253,25 +253,6 @@ button {
   max-height: min(62vh, 560px);
 }
 
-.sb-pane-detached-header {
-  height: 36px;
-  flex: 0 0 36px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 0 12px;
-  /* TODO: Add variables */
-  background: color-mix(in srgb, var(--sb-secondary-color), white 10%);
-  border-bottom: 1px solid var(--sb-secondary-color);
-  cursor: move;
-  user-select: none;
-}
-
-.sb-pane-shell-detached[data-anchor="side"] .sb-pane-detached-header,
-.sb-pane-shell-detached[data-anchor="bottom"] .sb-pane-detached-header {
-  cursor: default;
-}
-
 .sb-pane-detached-title {
   font-size: 12px;
   font-weight: 700;
