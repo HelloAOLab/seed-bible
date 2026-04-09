@@ -5,6 +5,7 @@ import css from "@eslint/css";
 import i18nMissingKeysRule from "./script/eslint/i18nMissingKeysRule";
 import i18nUnusedKeysRule from "./script/eslint/i18nUnusedKeysRule";
 import i18nIncompleteTranslationsRule from "./script/eslint/i18nIncompleteTranslationsRule";
+import i18nExtensionIncompleteTranslationsRule from "./script/eslint/i18nExtensionIncompleteTranslationsRule";
 import json from "@eslint/json";
 
 import { defineConfig, globalIgnores } from "eslint/config";
@@ -21,6 +22,8 @@ const i18nJsonPlugin = {
   rules: {
     "translation-unused-keys": i18nUnusedKeysRule,
     "translation-incomplete-translations": i18nIncompleteTranslationsRule,
+    "translation-extension-incomplete-translations":
+      i18nExtensionIncompleteTranslationsRule,
   },
 } as unknown as Record<string, unknown>;
 
@@ -119,6 +122,17 @@ export default defineConfig([
       "json/sort-keys": "error",
       "seed-bible-i18n/translation-unused-keys": "warn",
       "seed-bible-i18n/translation-incomplete-translations": "warn",
+    },
+  },
+  {
+    files: ["packages/**/extension.json"],
+    language: "json/json",
+    plugins: {
+      json: jsonPlugin,
+      "seed-bible-i18n": i18nJsonPlugin,
+    },
+    rules: {
+      "seed-bible-i18n/translation-extension-incomplete-translations": "warn",
     },
   },
   {
