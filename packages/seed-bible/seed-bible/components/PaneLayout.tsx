@@ -202,7 +202,7 @@ function EmptyPaneToolbar({
     if (typeof title === "string") {
       return title;
     }
-    return t(title.key, { defaultValue: title.defaultValue });
+    return t(title.key, { defaultValue: title.defaultValue, ns: title.ns });
   };
 
   return (

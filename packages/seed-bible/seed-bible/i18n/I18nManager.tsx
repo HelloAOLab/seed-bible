@@ -10,21 +10,59 @@ const { useMemo } = os.appHooks;
 
 export const DEFAULT_LANGUAGE = "en";
 
-function loadTranslations(): Record<
+export { i18n };
+
+export type BotTranslations = Record<
   string,
   { translation: Record<string, string> }
-> {
+>;
+
+/**
+ * Loads the translations for the specified extension from the given bot and adds them to the i18n instance under a namespace corresponding to the extension ID.
+ * @param ns The namespace for the translations, typically the extension ID to avoid conflicts with other extensions.
+ * @param bot The bot from which to load translations.
+ */
+export function loadExtensionTranslations(ns: string, bot: Bot) {
+  const translations = getTranslations(bot);
+  addTranslations(ns, translations);
+}
+
+/**
+ * Adds the given translations to the i18n instance under the specified namespace.
+ * @param ns The namespace for the translations, typically the extension ID to avoid conflicts with other extensions.
+ * @param translations The translations to add, keyed by language code (e.g. "en", "es"), with each containing a "translation" object mapping translation keys to translated strings.
+ * @param options The options for adding the translations.
+ */
+function addTranslations(
+  ns: string,
+  translations: BotTranslations,
+  options?: { overwrite?: boolean }
+) {
+  for (const [lang, resources] of Object.entries(translations)) {
+    i18n.addResourceBundle(
+      lang,
+      ns,
+      resources.translation,
+      true,
+      options?.overwrite
+    );
+  }
+}
+
+/**
+ * Loads translations from the given bot's tags.
+ * Each tag with a key of 3 characters or less is considered a language code, and its value is expected to be a JSON string or an object containing the translations for that language.
+ * @param bot The bot from which to load translations. Typically this would be the config bot or a dedicated locales bot.
+ * @returns A record of translations keyed by language code, where each value is an object containing a "translation" object mapping translation keys to translated strings.
+ */
+function getTranslations(bot: Bot): BotTranslations {
   // os.log("Loading translations from bot tags...", localesBot);
-  const loadedResources: Record<
-    string,
-    { translation: Record<string, string> }
-  > = {};
-  for (const langCode of Object.keys(thisBot.tags ?? {})) {
+  const loadedResources: BotTranslations = {};
+  for (const langCode of Object.keys(bot.tags ?? {})) {
     if (langCode.length > 3) {
       continue; // Skip non-language tags
     }
-    const translations = thisBot.tags[langCode];
-    // os.log(`Loaded translations for ${langCode}:`, translations);
+    const translations = bot.tags[langCode];
     if (translations) {
       loadedResources[langCode] = {
         translation:
@@ -38,7 +76,7 @@ function loadTranslations(): Record<
   return loadedResources;
 }
 
-const resources = loadTranslations();
+const resources = getTranslations(thisBot);
 if (!resources[DEFAULT_LANGUAGE]) {
   resources[DEFAULT_LANGUAGE] = { translation: {} };
 }
@@ -64,16 +102,27 @@ export function I18nProvider(props: { children: unknown }) {
 
 export type I18nManager = ReturnType<typeof useI18n>;
 
-export function useI18n() {
+/**
+ * Gets the i18n manager, which provides access to the translation function, current language, available languages, and a function to change the language. Also provides a helper function for translating keys within a specific namespace.
+ * @param ns The namespace for the translations, typically the extension ID to avoid conflicts with other extensions. This is optional, as the returned manager will still work without it, but it can be used to create a namespaced translation function that automatically applies the namespace to translation keys.
+ * @returns
+ */
+export function useI18n(ns?: string) {
   const { t, i18n: i18nInstance } = useTranslation();
 
   const setLanguage = async (language: string) => {
     await i18nInstance.changeLanguage(language);
   };
 
+  const translate = ns
+    ? (key: string, options?: Record<string, unknown>) =>
+        t(key, { ...options, ns })
+    : t;
+
   return useMemo(
     () => ({
-      t,
+      t: translate,
+      ns,
       language: i18nInstance.language || DEFAULT_LANGUAGE,
       availableLanguages,
       setLanguage,

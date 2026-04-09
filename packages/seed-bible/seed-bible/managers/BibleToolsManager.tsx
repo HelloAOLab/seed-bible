@@ -15,7 +15,9 @@ type ResolvedBibleToolIcon = () => JSX.Element | VNode;
 type ToolPredicateResult = boolean | ReadonlySignal<boolean>;
 type ToolPredicate<TContext> = (context: TContext) => ToolPredicateResult;
 type ToolPriority<TContext> = number | ((context: TContext) => number);
-export type ToolTitle = string | { key: string; defaultValue: string };
+export type ToolTitle =
+  | string
+  | { key: string; defaultValue: string; ns?: string };
 
 /**
  * Base tool contract shared by all tool surfaces.
