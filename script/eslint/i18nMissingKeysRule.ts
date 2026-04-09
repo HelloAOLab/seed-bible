@@ -99,7 +99,6 @@ function getTitleTranslationInfo(node: TSESTree.ObjectExpression): {
   key: string;
   namespace: string | null;
   keyNode: TSESTree.Node;
-  hasNamespace: boolean;
 } | null {
   const titleProperty = getObjectProperty(node, "title");
   if (!titleProperty || titleProperty.value.type !== "ObjectExpression") {
@@ -124,7 +123,6 @@ function getTitleTranslationInfo(node: TSESTree.ObjectExpression): {
     key,
     namespace,
     keyNode: keyProperty.value,
-    hasNamespace: !!nsProperty,
   };
 }
 
@@ -377,7 +375,7 @@ const i18nMissingKeysRule = createRule<Options, MessageIds>({
           return;
         }
 
-        const hasKey = titleInfo.hasNamespace
+        const hasKey = titleInfo.namespace
           ? hasExtensionTranslationKey(
               titleInfo.key,
               titleInfo.namespace,
@@ -389,7 +387,7 @@ const i18nMissingKeysRule = createRule<Options, MessageIds>({
           return;
         }
 
-        if (titleInfo.hasNamespace && titleInfo.namespace) {
+        if (titleInfo.namespace) {
           context.report({
             node: titleInfo.keyNode,
             messageId: "missing_key_in_extension",

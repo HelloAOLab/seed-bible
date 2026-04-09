@@ -99,6 +99,7 @@ registerExtension({
           id: `show-location-${place.place}`,
           title: {
             key: "show-location-place",
+            ns: "ext_locations",
             defaultValue: `Show ${place.place} on map`,
             options: { place: place.place },
           },

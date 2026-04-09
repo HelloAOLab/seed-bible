@@ -1,10 +1,5 @@
-import {
-  analyzeProject,
-  createRule,
-  getContextCwd,
-  getContextFilename,
-  getLocaleFromFilePath,
-} from "./i18nRuleShared";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { analyzeProject, createRule, getContextCwd } from "./i18nRuleShared";
 
 type MessageIds = "unused_key" | "config_error";
 type Options = [];

@@ -1,5 +1,4 @@
 import { program } from "commander";
-import { rmdir, writeFile } from "node:fs/promises";
 import {
   generateExtension,
   // downloadAndSave,
@@ -7,11 +6,8 @@ import {
   uploadAll,
   upload,
 } from "./lib/extension";
-import path from "node:path";
-import { execSync } from "node:child_process";
-import { existsSync } from "node:fs";
 
-const extensionNameMap = new Map<string, string>([]);
+// const extensionNameMap = new Map<string, string>([]);
 
 program
   .name("extension")
@@ -28,12 +24,9 @@ program
     "The name of the package to generate the extension json for."
   )
   .argument("<mainBot>", "The name of the main bot for the extension.")
-  .argument("<author>", "The author of the extension.")
-  .action(async (packageName, mainBot, author) => {
-    generateExtension(packageName, mainBot, author);
-    console.log(
-      `Generated new extension.json for package ${packageName} by author ${author}.`
-    );
+  .action(async (packageName, mainBot) => {
+    generateExtension(packageName, mainBot);
+    console.log(`Generated new extension.json for package ${packageName}.`);
   });
 
 // program

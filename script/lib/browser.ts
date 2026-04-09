@@ -21,11 +21,6 @@ declare global {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-// declare const aux: any;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-// declare let __name: (any: any) => any;
-
 /**
  * Runs required initialization code on the page.
  * @param page The page.
@@ -47,6 +42,7 @@ export async function getPrimarySim(page: Page) {
     const app = window.aux.getApp();
     const sim = app.simulationManager.primary;
     return sim;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   })) as JSHandle<any>;
 }
 

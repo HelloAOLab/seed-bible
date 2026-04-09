@@ -1,7 +1,7 @@
 import { createRecordsClient } from "@casual-simulation/aux-records/RecordsClient";
 import { writeFile, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import { existsSync, write } from "node:fs";
+import { existsSync } from "node:fs";
 import { execSync } from "node:child_process";
 import {
   isRecordKey,
@@ -15,7 +15,7 @@ import type {
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import z from "zod";
 
-const downloadRecordName = "testingPublickKey";
+// const downloadRecordName = "testingPublickKey";
 const uploadRecordName = "seedBibleExtensions";
 const headers = {
   Origin: "https://auth.ao.bot",
@@ -27,11 +27,7 @@ const headers = {
  * @param mainBot The main bot of the extension.
  * @param author The author of the extension.
  */
-export function generateExtension(
-  pckgName: string,
-  mainBot: string,
-  author: string
-) {
+export function generateExtension(pckgName: string, mainBot: string) {
   const extensionPath = path.resolve("packages", pckgName);
   const mainBotDirectoryPath = path.resolve(
     extensionPath,

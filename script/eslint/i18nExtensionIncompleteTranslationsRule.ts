@@ -1,14 +1,11 @@
-import { treeifyError } from "zod";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createRule } from "./i18nRuleShared";
-import { ExtensionMetaSchema } from "../lib/extension";
 import { difference } from "es-toolkit";
 
 type MessageIds = "incomplete_translation" | "config_error";
 type Options = [];
 
 type TranslationObject = Record<string, unknown>;
-
-let reportedConfigError = false;
 
 function isObject(value: unknown): value is TranslationObject {
   return value !== null && typeof value === "object" && !Array.isArray(value);
