@@ -6,6 +6,11 @@ type Options = [];
 
 let reportedConfigError = false;
 
+type NamespaceInfo = {
+  hasNamespace: boolean;
+  namespace: string | null;
+};
+
 function getStaticString(
   node: TSESTree.Node | null | undefined
 ): string | null {
@@ -29,10 +34,7 @@ function getStaticString(
   return null;
 }
 
-function getNamespaceOption(node: TSESTree.CallExpression): {
-  hasNamespace: boolean;
-  namespace: string | null;
-} {
+function getNamespaceOption(node: TSESTree.CallExpression): NamespaceInfo {
   const optionsArgument = node.arguments[1];
   if (!optionsArgument || optionsArgument.type !== "ObjectExpression") {
     return { hasNamespace: false, namespace: null };
@@ -59,6 +61,139 @@ function getNamespaceOption(node: TSESTree.CallExpression): {
       hasNamespace: true,
       namespace: getStaticString(property.value),
     };
+  }
+
+  return { hasNamespace: false, namespace: null };
+}
+
+function isUseI18nCall(
+  node: TSESTree.CallExpression["callee"] | null | undefined
+): node is TSESTree.Identifier {
+  return !!node && node.type === "Identifier" && node.name === "useI18n";
+}
+
+function objectPatternDefinesT(pattern: TSESTree.ObjectPattern): boolean {
+  for (const property of pattern.properties) {
+    if (property.type !== "Property") {
+      continue;
+    }
+
+    if (property.value.type === "Identifier" && property.value.name === "t") {
+      return true;
+    }
+
+    if (
+      property.value.type === "AssignmentPattern" &&
+      property.value.left.type === "Identifier" &&
+      property.value.left.name === "t"
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function getNamespaceFromVariableDeclaration(
+  declaration: TSESTree.VariableDeclarator
+): NamespaceInfo {
+  if (declaration.id.type !== "ObjectPattern") {
+    return { hasNamespace: false, namespace: null };
+  }
+
+  if (!objectPatternDefinesT(declaration.id)) {
+    return { hasNamespace: false, namespace: null };
+  }
+
+  if (!declaration.init || declaration.init.type !== "CallExpression") {
+    return { hasNamespace: false, namespace: null };
+  }
+
+  if (!isUseI18nCall(declaration.init.callee)) {
+    return { hasNamespace: false, namespace: null };
+  }
+
+  return {
+    hasNamespace: true,
+    namespace: getStaticString(declaration.init.arguments[0]),
+  };
+}
+
+function getNamespaceFromStatement(
+  statement: TSESTree.ProgramStatement
+): NamespaceInfo {
+  if (statement.type === "VariableDeclaration") {
+    for (
+      let index = statement.declarations.length - 1;
+      index >= 0;
+      index -= 1
+    ) {
+      const declaration = statement.declarations[index];
+      if (!declaration) {
+        continue;
+      }
+
+      const namespaceInfo = getNamespaceFromVariableDeclaration(declaration);
+      if (namespaceInfo.hasNamespace) {
+        return namespaceInfo;
+      }
+    }
+  }
+
+  if (
+    statement.type === "ExportNamedDeclaration" ||
+    statement.type === "ExportDefaultDeclaration"
+  ) {
+    const declaration = statement.declaration;
+    if (declaration?.type === "VariableDeclaration") {
+      for (
+        let index = declaration.declarations.length - 1;
+        index >= 0;
+        index -= 1
+      ) {
+        const variableDeclaration = declaration.declarations[index];
+        if (!variableDeclaration) {
+          continue;
+        }
+
+        const namespaceInfo =
+          getNamespaceFromVariableDeclaration(variableDeclaration);
+        if (namespaceInfo.hasNamespace) {
+          return namespaceInfo;
+        }
+      }
+    }
+  }
+
+  return { hasNamespace: false, namespace: null };
+}
+
+function getNamespaceFromLocalUseI18n(
+  node: TSESTree.CallExpression
+): NamespaceInfo {
+  let current: TSESTree.Node | undefined = node.parent ?? undefined;
+
+  while (current) {
+    if (current.type === "Program" || current.type === "BlockStatement") {
+      const body = current.body;
+      for (let index = body.length - 1; index >= 0; index -= 1) {
+        const statement = body[index];
+        if (!statement) {
+          continue;
+        }
+
+        if (statement.range[0] >= node.range[0]) {
+          continue;
+        }
+
+        const namespaceInfo = getNamespaceFromStatement(statement);
+        if (namespaceInfo.hasNamespace) {
+          return namespaceInfo;
+        }
+      }
+    }
+
+    current = current.parent ?? undefined;
   }
 
   return { hasNamespace: false, namespace: null };
@@ -137,20 +272,26 @@ const i18nMissingKeysRule = createRule<Options, MessageIds>({
         ) {
           const key = firstArgument.value;
           const namespaceOption = getNamespaceOption(node);
-          const hasKey = namespaceOption.hasNamespace
+          const localNamespace = namespaceOption.hasNamespace
+            ? { hasNamespace: false, namespace: null }
+            : getNamespaceFromLocalUseI18n(node);
+          const namespaceInfo = namespaceOption.hasNamespace
+            ? namespaceOption
+            : localNamespace;
+          const hasKey = namespaceInfo.hasNamespace
             ? hasExtensionTranslationKey(
                 key,
-                namespaceOption.namespace,
+                namespaceInfo.namespace,
                 analysis.extensionEnglishKeys
               )
             : analysis.englishKeys.has(key);
 
           if (!hasKey) {
-            if (namespaceOption.hasNamespace) {
+            if (namespaceInfo.hasNamespace && namespaceInfo.namespace) {
               context.report({
                 node: firstArgument,
                 messageId: "missing_key_in_extension",
-                data: { key, namespace: namespaceOption.namespace },
+                data: { key, namespace: namespaceInfo.namespace },
               });
               return;
             } else {
