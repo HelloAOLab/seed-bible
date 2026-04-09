@@ -361,7 +361,7 @@ function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
     {
       id: "open-in-selector",
       priority: 0,
-      title: { key: "openBooks", defaultValue: "Open Books" },
+      title: { key: "open-books", defaultValue: "Open Books" },
       icon: OpenInSelectorIcon,
       onSelect: (context) => {
         context.selectorState.setOpen(true, context.currentPane);
@@ -392,7 +392,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
     {
       id: "previous-chapter",
       priority: 0,
-      title: { key: "previousChapter", defaultValue: "Previous Chapter" },
+      title: { key: "previous-chapter", defaultValue: "Previous Chapter" },
       icon: (context) =>
         context.readingState.translation.value?.textDirection === "rtl" ? (
           <ChevronRightIcon />
@@ -409,7 +409,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
     {
       id: "open-sidebar",
       priority: 50,
-      title: { key: "sideMenu", defaultValue: "Side menu" },
+      title: { key: "side-menu", defaultValue: "Side menu" },
       icon: MenuIcon,
       isVisible: (context) =>
         !!context.openSidebar &&
@@ -422,7 +422,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
     {
       id: "open-selector",
       priority: 100,
-      title: { key: "openBooks", defaultValue: "Open Books" },
+      title: { key: "open-books", defaultValue: "Open Books" },
       icon: OpenSelectorIcon,
       isDisabled: (context) => context.readingState.loading.value,
       onSelect: (context) => {
@@ -440,7 +440,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
     {
       id: "next-chapter",
       priority: 1000,
-      title: { key: "nextChapter", defaultValue: "Next Chapter" },
+      title: { key: "next-chapter", defaultValue: "Next Chapter" },
       icon: (context) =>
         context.readingState.translation.value?.textDirection === "rtl" ? (
           <ChevronLeftIcon />
@@ -462,7 +462,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
     {
       id: "copy-verse",
       priority: 200,
-      title: { key: "copyVerse", defaultValue: "Copy" },
+      title: { key: "copy-verse", defaultValue: "Copy" },
       icon: CopyVerseIcon,
       isVisible: (context) =>
         context.readingState.selectedVerses.value.length > 0,
@@ -495,7 +495,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
     {
       id: "share-verse",
       priority: 300,
-      title: { key: "share", defaultValue: "Share" },
+      title: { key: "share-verse", defaultValue: "Share" },
       icon: ShareVerseIcon,
       isVisible: (context) =>
         context.readingState.selectedVerses.value.length > 0,
@@ -538,7 +538,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
     {
       id: "highlight-yellow",
       priority: 350,
-      title: { key: "highlightYellow", defaultValue: "Highlight Yellow" },
+      title: { key: "highlight-yellow", defaultValue: "Highlight Yellow" },
       icon: () => (
         <span
           style={{
@@ -570,7 +570,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
     {
       id: "clear-highlights",
       priority: 375,
-      title: { key: "clearHighlights", defaultValue: "Clear Highlights" },
+      title: { key: "clear-highlights", defaultValue: "Clear Highlights" },
       icon: () => <MaterialIcon>cancel</MaterialIcon>,
       isVisible: (context) =>
         context.readingState.selectedVerses.value.length > 0 &&

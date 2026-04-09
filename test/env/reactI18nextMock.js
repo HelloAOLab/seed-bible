@@ -14,6 +14,7 @@ function useTranslation() {
   };
 }
 
+// eslint-disable-next-line no-undef
 module.exports = {
   I18nextProvider,
   initReactI18next,

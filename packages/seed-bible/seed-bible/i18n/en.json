@@ -2,6 +2,14 @@
   "allBooks": "All books",
   "newTestament": "New Testament",
   "oldTestament": "Old Testament",
+  "open-books": "Open Books",
   "searchBook": "Search book...",
-  "settings": "Settings"
+  "settings": "Settings",
+  "side-menu": "Side menu",
+  "copy-verse": "Copy",
+  "next-chapter": "Next Chapter",
+  "previous-chapter": "Previous Chapter",
+  "highlight-yellow": "Highlight (Yellow)",
+  "clear-highlights": "Clear Highlights",
+  "share-verse": "Share"
 }

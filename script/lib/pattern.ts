@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createRecordsClient } from "@casual-simulation/aux-records/RecordsClient";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -5,7 +6,6 @@ import hash from "hash.js";
 import axios from "axios";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
 import type { StoredAux } from "@casual-simulation/aux-common";
-import type { GetDataResult } from "@casual-simulation/aux-records/DataRecordsController";
 
 const recordName = "aoBot";
 const headers = {

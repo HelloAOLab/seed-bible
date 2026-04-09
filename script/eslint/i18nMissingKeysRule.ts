@@ -7,7 +7,6 @@ type Options = [];
 let reportedConfigError = false;
 
 type NamespaceInfo = {
-  hasNamespace: boolean;
   namespace: string | null;
 };
 
@@ -37,7 +36,7 @@ function getStaticString(
 function getNamespaceOption(node: TSESTree.CallExpression): NamespaceInfo {
   const optionsArgument = node.arguments[1];
   if (!optionsArgument || optionsArgument.type !== "ObjectExpression") {
-    return { hasNamespace: false, namespace: null };
+    return { namespace: null };
   }
 
   for (const property of optionsArgument.properties) {
@@ -58,12 +57,11 @@ function getNamespaceOption(node: TSESTree.CallExpression): NamespaceInfo {
     }
 
     return {
-      hasNamespace: true,
       namespace: getStaticString(property.value),
     };
   }
 
-  return { hasNamespace: false, namespace: null };
+  return { namespace: null };
 }
 
 function getPropertyName(node: TSESTree.Property["key"]): string | null {
@@ -158,23 +156,22 @@ function getNamespaceFromVariableDeclaration(
   declaration: TSESTree.VariableDeclarator
 ): NamespaceInfo {
   if (declaration.id.type !== "ObjectPattern") {
-    return { hasNamespace: false, namespace: null };
+    return { namespace: null };
   }
 
   if (!objectPatternDefinesT(declaration.id)) {
-    return { hasNamespace: false, namespace: null };
+    return { namespace: null };
   }
 
   if (!declaration.init || declaration.init.type !== "CallExpression") {
-    return { hasNamespace: false, namespace: null };
+    return { namespace: null };
   }
 
   if (!isUseI18nCall(declaration.init.callee)) {
-    return { hasNamespace: false, namespace: null };
+    return { namespace: null };
   }
 
   return {
-    hasNamespace: true,
     namespace: getStaticString(declaration.init.arguments[0]),
   };
 }
@@ -194,7 +191,7 @@ function getNamespaceFromStatement(
       }
 
       const namespaceInfo = getNamespaceFromVariableDeclaration(declaration);
-      if (namespaceInfo.hasNamespace) {
+      if (namespaceInfo.namespace) {
         return namespaceInfo;
       }
     }
@@ -218,14 +215,14 @@ function getNamespaceFromStatement(
 
         const namespaceInfo =
           getNamespaceFromVariableDeclaration(variableDeclaration);
-        if (namespaceInfo.hasNamespace) {
+        if (namespaceInfo.namespace) {
           return namespaceInfo;
         }
       }
     }
   }
 
-  return { hasNamespace: false, namespace: null };
+  return { namespace: null };
 }
 
 function getNamespaceFromLocalUseI18n(
@@ -247,7 +244,7 @@ function getNamespaceFromLocalUseI18n(
         }
 
         const namespaceInfo = getNamespaceFromStatement(statement);
-        if (namespaceInfo.hasNamespace) {
+        if (namespaceInfo.namespace) {
           return namespaceInfo;
         }
       }
@@ -256,7 +253,7 @@ function getNamespaceFromLocalUseI18n(
     current = current.parent ?? undefined;
   }
 
-  return { hasNamespace: false, namespace: null };
+  return { namespace: null };
 }
 
 function hasExtensionTranslationKey(
@@ -332,13 +329,13 @@ const i18nMissingKeysRule = createRule<Options, MessageIds>({
         ) {
           const key = firstArgument.value;
           const namespaceOption = getNamespaceOption(node);
-          const localNamespace = namespaceOption.hasNamespace
-            ? { hasNamespace: false, namespace: null }
+          const localNamespace = namespaceOption.namespace
+            ? { namespace: null }
             : getNamespaceFromLocalUseI18n(node);
-          const namespaceInfo = namespaceOption.hasNamespace
+          const namespaceInfo = namespaceOption.namespace
             ? namespaceOption
             : localNamespace;
-          const hasKey = namespaceInfo.hasNamespace
+          const hasKey = namespaceInfo.namespace
             ? hasExtensionTranslationKey(
                 key,
                 namespaceInfo.namespace,
@@ -347,7 +344,7 @@ const i18nMissingKeysRule = createRule<Options, MessageIds>({
             : analysis.englishKeys.has(key);
 
           if (!hasKey) {
-            if (namespaceInfo.hasNamespace && namespaceInfo.namespace) {
+            if (namespaceInfo.namespace) {
               context.report({
                 node: firstArgument,
                 messageId: "missing_key_in_extension",
