@@ -10,6 +10,7 @@ type TranslationObject = Record<string, unknown>;
 export interface ProjectAnalysis {
   error: string | null;
   englishKeys: Set<string>;
+  extensionEnglishKeys: Map<string, Set<string>>;
   usedKeys: Set<string>;
 }
 
@@ -79,8 +80,10 @@ function collectExtensionManifestPaths(packagesDir: string): string[] {
   return paths;
 }
 
-function getExtensionEnglishKeys(projectRoot: string): Set<string> {
-  const extensionEnglishKeys = new Set<string>();
+function getExtensionEnglishKeys(
+  projectRoot: string
+): Map<string, Set<string>> {
+  const extensionEnglishKeys = new Map<string, Set<string>>();
   const packagesDir = path.join(projectRoot, "packages");
   const extensionJsonPaths = collectExtensionManifestPaths(packagesDir);
 
@@ -104,9 +107,7 @@ function getExtensionEnglishKeys(projectRoot: string): Set<string> {
     }
 
     const englishKeys = flattenTranslationKeys(englishTranslations);
-    for (const key of englishKeys) {
-      extensionEnglishKeys.add(`${id}:${key}`);
-    }
+    extensionEnglishKeys.set(id, englishKeys);
   }
 
   return extensionEnglishKeys;
@@ -130,6 +131,7 @@ export function analyzeProject(projectRoot: string): ProjectAnalysis {
     const result: ProjectAnalysis = {
       error: `i18n directory not found: ${i18nDir}`,
       englishKeys: new Set<string>(),
+      extensionEnglishKeys: new Map<string, Set<string>>(),
       usedKeys: new Set<string>(),
     };
     analyzedProjects.set(projectRoot, result);
@@ -140,15 +142,13 @@ export function analyzeProject(projectRoot: string): ProjectAnalysis {
   const json = parseJsonFile(filePath);
   const englishKeys = flattenTranslationKeys(json);
   const extensionEnglishKeys = getExtensionEnglishKeys(projectRoot);
-  for (const extensionKey of extensionEnglishKeys) {
-    englishKeys.add(extensionKey);
-  }
 
   const usageStats = getTranslationUsageStats(projectRoot);
   const usedKeys = new Set<string>(usageStats.uniqueTranslationKeys);
 
   const result: ProjectAnalysis = {
     englishKeys,
+    extensionEnglishKeys,
     usedKeys,
     error: null,
   };
