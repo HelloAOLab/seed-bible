@@ -1,4 +1,9 @@
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
+
+jest.mock("seed-bible.i18n.I18nManager", () => ({
+  addTranslations: jest.fn(),
+}));
+
 import {
   createExtensionManager,
   ExtensionInitalizer,
@@ -367,8 +372,12 @@ describe("createExtensionManager", () => {
           address: "pkg://dependent",
           meta: {
             id: "ext.dependent",
-            titles: { en: "Dependent" },
-            descriptions: { en: "Dependent extension" },
+            translations: {
+              en: {
+                title: "Dependent",
+                description: "Dependent extension",
+              },
+            },
             dependencies: ["ext.dependency"],
           },
         },
@@ -377,8 +386,12 @@ describe("createExtensionManager", () => {
           address: "pkg://dependency",
           meta: {
             id: "ext.dependency",
-            titles: { en: "Dependency" },
-            descriptions: { en: "Dependency extension" },
+            translations: {
+              en: {
+                title: "Dependent",
+                description: "Dependent extension",
+              },
+            },
           },
         },
       ],
@@ -402,8 +415,12 @@ describe("createExtensionManager", () => {
           address: "pkg://catalog-dependency",
           meta: {
             id: "ext.catalog-dependency",
-            titles: { en: "Catalog Dependency" },
-            descriptions: { en: "Catalog Dependency extension" },
+            translations: {
+              en: {
+                title: "Catalog Dependent",
+                description: "Catalog Dependent extension",
+              },
+            },
           },
         },
       ],
@@ -416,8 +433,12 @@ describe("createExtensionManager", () => {
       address: "pkg://catalog-dependent",
       meta: {
         id: "ext.catalog-dependent",
-        titles: { en: "Catalog Dependent" },
-        descriptions: { en: "Catalog Dependent extension" },
+        translations: {
+          en: {
+            title: "Catalog Dependent",
+            description: "Catalog Dependent extension",
+          },
+        },
         dependencies: ["ext.catalog-dependency"],
       },
     });
@@ -435,8 +456,12 @@ describe("createExtensionManager", () => {
       address: "pkg://missing-dependent",
       meta: {
         id: "ext.missing-dependent",
-        titles: { en: "Missing Dependent" },
-        descriptions: { en: "Missing Dependent extension" },
+        translations: {
+          en: {
+            title: "Missing Dependent",
+            description: "Missing Dependent extension",
+          },
+        },
         dependencies: ["ext.missing-dependency"],
       },
     });
@@ -458,8 +483,12 @@ describe("createExtensionManager", () => {
         address: "pkg://registered-dependent",
         meta: {
           id: "ext.registered-dependent",
-          titles: { en: "Registered Dependent" },
-          descriptions: { en: "Registered Dependent extension" },
+          translations: {
+            en: {
+              title: "Registered Dependent",
+              description: "Registered Dependent extension",
+            },
+          },
           dependencies: ["ext.registered-dependency"],
         },
       });
@@ -483,8 +512,12 @@ describe("createExtensionManager", () => {
           address: "pkg://single",
           meta: {
             id: "ext.single",
-            titles: { en: "Single" },
-            descriptions: { en: "Single extension" },
+            translations: {
+              en: {
+                title: "Single",
+                description: "Single extension",
+              },
+            },
           },
         },
       ],
@@ -507,8 +540,12 @@ describe("createExtensionManager", () => {
           address: "pkg://known-only",
           meta: {
             id: "ext.known-only",
-            titles: { en: "Known Only" },
-            descriptions: { en: "Known-only extension" },
+            translations: {
+              en: {
+                title: "Known-only",
+                description: "Known-only extension",
+              },
+            },
           },
         },
       ],
@@ -536,8 +573,12 @@ describe("createExtensionManager", () => {
       address: "pkg://direct",
       meta: {
         id: "ext.direct",
-        titles: { en: "Direct" },
-        descriptions: { en: "Direct extension" },
+        translations: {
+          en: {
+            title: "Direct",
+            description: "Direct extension",
+          },
+        },
       },
     };
 
@@ -572,8 +613,12 @@ describe("createExtensionManager", () => {
       address: "pkg://slow",
       meta: {
         id: "ext.slow",
-        titles: { en: "Slow" },
-        descriptions: { en: "Slow extension" },
+        translations: {
+          en: {
+            title: "Slow",
+            description: "Slow extension",
+          },
+        },
       },
     };
 
@@ -615,8 +660,12 @@ describe("createExtensionManager", () => {
       address: "pkg://package-only",
       meta: {
         id: "ext.package-only",
-        titles: { en: "Package Only" },
-        descriptions: { en: "Package-only extension" },
+        translations: {
+          en: {
+            title: "Package Only",
+            description: "Package Only extension",
+          },
+        },
       },
     };
 
@@ -679,8 +728,12 @@ describe("createExtensionManager", () => {
       address: "pkg://unload-me",
       meta: {
         id: "ext.unload-me",
-        titles: { en: "Unload Me" },
-        descriptions: { en: "Extension to unload" },
+        translations: {
+          en: {
+            title: "Unload me",
+            description: "Extension to unload",
+          },
+        },
       },
     };
 
@@ -700,8 +753,12 @@ describe("createExtensionManager", () => {
       address: "pkg://unload-reg",
       meta: {
         id: "ext.unload-reg",
-        titles: { en: "Unload Reg" },
-        descriptions: { en: "Extension to unregister" },
+        translations: {
+          en: {
+            title: "Unload Reg",
+            description: "Unload Reg extension",
+          },
+        },
       },
     };
 
@@ -726,8 +783,12 @@ describe("createExtensionManager", () => {
       address: "pkg://unload-shout",
       meta: {
         id: "ext.unload-shout",
-        titles: { en: "Unload Shout" },
-        descriptions: { en: "Extension shout test" },
+        translations: {
+          en: {
+            title: "Unload Shout",
+            description: "Unload Shout extension",
+          },
+        },
       },
     };
 
@@ -748,8 +809,12 @@ describe("createExtensionManager", () => {
       address: "pkg://unload-known",
       meta: {
         id: "ext.unload-known",
-        titles: { en: "Unload Known" },
-        descriptions: { en: "Extension known list test" },
+        translations: {
+          en: {
+            title: "Unload Known",
+            description: "Extension known list test",
+          },
+        },
       },
     };
 
@@ -789,8 +854,12 @@ describe("createExtensionManager", () => {
       address: "pkg://b",
       meta: {
         id: "ext.b",
-        titles: { en: "B" },
-        descriptions: { en: "B extension" },
+        translations: {
+          en: {
+            title: "B",
+            description: "B extension",
+          },
+        },
       },
     };
     const extensionA = {
@@ -798,8 +867,12 @@ describe("createExtensionManager", () => {
       address: "pkg://a",
       meta: {
         id: "ext.a",
-        titles: { en: "A" },
-        descriptions: { en: "A extension" },
+        translations: {
+          en: {
+            title: "A",
+            description: "A extension",
+          },
+        },
       },
     };
 

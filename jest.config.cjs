@@ -14,6 +14,8 @@ const config = {
       "<rootDir>/lib/vendor.ts",
     "^https:\\/\\/esm\\.sh\\/i18next@23.16.8$":
       "<rootDir>/node_modules/i18next/index.js",
+    "^https:\\/\\/esm\\.sh\\/react-i18next@15.1.2\\?alias=react:preact\\/compat,react-dom:preact\\/compat&external=preact$":
+      "<rootDir>/test/env/reactI18nextMock.js",
     ...pathsToModuleNameMapper(compilerOptions.paths, { prefix: "<rootDir>/" }),
   },
   testPathIgnorePatterns: ["/node_modules/", "/obsolete/"],
