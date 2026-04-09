@@ -326,6 +326,8 @@ export const ExtensionMetaSchema = z.looseObject({
     })
     .catchall(ExtensionTranslationSchema),
   dependencies: z.array(z.string()).optional(),
+
+  autoinstall: z.boolean().optional(),
 });
 
 /**

@@ -7,5 +7,6 @@
       "show-location-place": "Show {{place}} on map"
     }
   },
-  "dependencies": ["ext_geoImporter"]
+  "dependencies": ["ext_geoImporter"],
+  "autoinstall": true
 }

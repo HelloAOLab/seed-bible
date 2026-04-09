@@ -47,7 +47,15 @@ export interface ExtensionMeta {
    * Optional extension IDs that should be installed before this extension package.
    */
   dependencies?: string[];
+
+  /**
+   * Whether to automatically install this extension when loading its extension set.
+   * Defaults to false.
+   */
+  autoinstall?: boolean;
 }
+
+export type Extension = UploadedExtension | InlineExtension;
 
 export interface UploadedExtension {
   /**
@@ -66,6 +74,11 @@ export interface UploadedExtension {
   meta: ExtensionMeta;
 }
 
+export interface InlineExtension {
+  aux: StoredAux;
+  meta: ExtensionMeta;
+}
+
 export interface ExtensionSet {
   /**
    * The ID of this extension set.
@@ -80,7 +93,7 @@ export interface ExtensionSet {
   /**
    * The extensions included in this set.
    */
-  extensions: UploadedExtension[];
+  extensions: Extension[];
 }
 
 export class ExtensionInitalizer {
@@ -293,16 +306,11 @@ export function setupExtensionContext(context: SeedBibleState) {
 
 export type ExtensionManager = ReturnType<typeof createExtensionManager>;
 
-/**
- * The list of extension IDs that should be loaded by default.
- */
-export const DEFAULT_EXTENSION_IDS = new Set<string>(["ext_locations"]);
-
 export function createExtensionManager() {
   const defaultExtensions = computed<ExtensionSet | null>(
     () => thisBot.tags.availableExtensions ?? null
   );
-  const knownExtensionsById = new Map<string, UploadedExtension>();
+  const knownExtensionsById = new Map<string, Extension>();
   const knownExtensionsSetsByExtensionId = new Map<string, ExtensionSet>();
   const installedExtensionIds = new Set<string>();
   const pendingInstallations = new Map<string, Promise<boolean>>();
@@ -353,12 +361,35 @@ export function createExtensionManager() {
   };
 
   /**
+   * Loads the given extension package by installing it from the provided record name and address. If the installation is successful, the extension ID will be added to the set of installed extensions and an "onExtensionInstalled" event will be shouted with the extension ID as a parameter.
+   * @param id The ID of the extension to install.
+   * @param recordName The name of the record that the extension package is stored in.
+   * @param address The address of the extension package to install.
+   */
+  const loadExtensionFromAux = async (id: string, aux: StoredAux) => {
+    if (isSatisfiedDependency(id)) {
+      return true;
+    }
+
+    try {
+      await os.installAuxFile(aux);
+      installedExtensionIds.add(id);
+      shout("onExtensionInstalled", id);
+      console.log(`Successfully installed extension: ${id}`);
+      return true;
+    } catch (err) {
+      console.error("Failed to install extension:", id, err);
+      return false;
+    }
+  };
+
+  /**
    * Loads the given extension, along with its dependencies if they are not already registered. If a dependency is not registered but is included in the known extensions map, then it will be loaded first. Circular dependencies are detected and will cause the loading to fail.
    * @param uploaded The extension to load.
    * @param installStack The stack of extensions currently being installed in the chain of dependencies. This is used to detect circular dependencies and should not be provided when calling this function externally.
    */
   const loadExtension = async (
-    uploaded: UploadedExtension,
+    uploaded: Extension,
     installStack: Set<string> = new Set()
   ) => {
     const extensionId = uploaded.meta.id;
@@ -400,19 +431,43 @@ export function createExtensionManager() {
         const loadedDependency = await loadExtension(dependency, installStack);
         if (!loadedDependency) {
           installStack.delete(extensionId);
+          console.error(
+            "Failed to install extension:",
+            extensionId,
+            "- dependency failed to load:",
+            dependencyId
+          );
           return false;
         }
       }
 
       addTranslations(uploaded.meta.id, uploaded.meta.translations);
 
-      const installed = await loadExtensionFromPackage(
-        extensionId,
-        uploaded.recordName,
+      if (
+        "recordName" in uploaded &&
+        "address" in uploaded &&
+        uploaded.recordName &&
         uploaded.address
-      );
+      ) {
+        const installed = await loadExtensionFromPackage(
+          extensionId,
+          uploaded.recordName,
+          uploaded.address
+        );
+        installStack.delete(extensionId);
+        return installed;
+      } else if ("aux" in uploaded && uploaded.aux) {
+        const installed = await loadExtensionFromAux(extensionId, uploaded.aux);
+        installStack.delete(extensionId);
+        return installed;
+      } else {
+        console.warn(
+          "Extension package is missing installation information (recordName and address for package installation, or aux for aux installation). Marking as installed without actually installing:",
+          uploaded
+        );
+      }
       installStack.delete(extensionId);
-      return installed;
+      return true;
     })();
 
     pendingInstallations.set(extensionId, installationPromise);
@@ -430,7 +485,7 @@ export function createExtensionManager() {
    */
   const loadExtensionSet = async (
     set: ExtensionSet,
-    filter: (ext: UploadedExtension) => boolean = () => true
+    filter: (ext: Extension) => boolean = () => true
   ) => {
     trackExtensionSet(set);
 
@@ -461,8 +516,9 @@ export function createExtensionManager() {
       return;
     }
     console.log("Loading default extension set:", defaultExtensions.value);
-    await loadExtensionSet(defaultExtensions.value, (ext) =>
-      DEFAULT_EXTENSION_IDS.has(ext.meta.id)
+    await loadExtensionSet(
+      defaultExtensions.value,
+      (ext) => ext.meta.autoinstall ?? false
     );
   };
 

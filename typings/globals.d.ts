@@ -11,6 +11,7 @@ declare global {
   type ConnectionInfo = import("./AuxLibraryDefinitions").ConnectionInfo;
   type FocusOnOptions = import("./AuxLibraryDefinitions").FocusOnOptions;
   type BotTags = import("./AuxLibraryDefinitions").BotTags;
+  type StoredAux = import("./AuxLibraryDefinitions").StoredAux;
 
   // Your other specific globals (optional, for better intellisense)
   const that: any;
