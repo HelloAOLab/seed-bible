@@ -5,6 +5,8 @@ import {
 
 let manager: ModalManager;
 
+const t = () => "T";
+
 beforeEach(() => {
   manager = createModalManager();
 });
@@ -63,7 +65,7 @@ describe("openModal", () => {
 
     const renderer = manager.modals.value[0]?.content;
     expect(typeof renderer).toBe("function");
-    expect(renderer?.()).toBe("plain content");
+    expect(renderer?.({ t })).toBe("plain content");
   });
 
   it("stores function content as-is", () => {
@@ -71,7 +73,7 @@ describe("openModal", () => {
     manager.openModal({ title: "T", content: contentFn });
 
     const renderer = manager.modals.value[0]?.content;
-    expect(renderer?.()).toBe("dynamic");
+    expect(renderer?.({ t })).toBe("dynamic");
   });
 
   it("adds multiple modals in insertion order", () => {

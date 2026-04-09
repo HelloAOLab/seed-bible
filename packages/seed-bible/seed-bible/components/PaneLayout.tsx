@@ -3,7 +3,11 @@ import { BelowReaderToolbar } from "seed-bible.components.BelowReaderToolbar";
 import { CasualOSApp } from "seed-bible.components.CasualOSApp";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
-import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
+import type {
+  DetachedPaneAnchor,
+  Pane,
+  PanesManager,
+} from "seed-bible.managers.PanesManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { type ToolsManager } from "seed-bible.managers.BibleToolsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
@@ -279,7 +283,7 @@ export function PaneLayout(props: PaneLayoutProps) {
     paneId: string;
     startX: number;
     startY: number;
-    anchor?: "side" | "bottom";
+    anchor?: DetachedPaneAnchor;
   } | null>(null);
   const paneElementMapRef = useRef(new Map<string, HTMLElement>());
   const [gridPortalContainerCss, setGridPortalContainerCss] = useState(
