@@ -54,7 +54,11 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     if (typeof title === "string") {
       return title;
     }
-    return t(title.key, { defaultValue: title.defaultValue, ns: title.ns });
+    return t(title.key, {
+      defaultValue: title.defaultValue,
+      ns: title.ns,
+      ...title.options,
+    });
   };
 
   return (

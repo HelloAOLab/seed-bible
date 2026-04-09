@@ -17,7 +17,12 @@ type ToolPredicate<TContext> = (context: TContext) => ToolPredicateResult;
 type ToolPriority<TContext> = number | ((context: TContext) => number);
 export type ToolTitle =
   | string
-  | { key: string; defaultValue: string; ns?: string };
+  | {
+      key: string;
+      defaultValue: string;
+      ns?: string;
+      options?: Record<string, string>;
+    };
 
 /**
  * Base tool contract shared by all tool surfaces.
