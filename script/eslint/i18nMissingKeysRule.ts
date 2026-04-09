@@ -66,6 +66,68 @@ function getNamespaceOption(node: TSESTree.CallExpression): NamespaceInfo {
   return { hasNamespace: false, namespace: null };
 }
 
+function getPropertyName(node: TSESTree.Property["key"]): string | null {
+  if (node.type === "Identifier") {
+    return node.name;
+  }
+
+  if (node.type === "Literal" && typeof node.value === "string") {
+    return node.value;
+  }
+
+  return null;
+}
+
+function getObjectProperty(
+  objectNode: TSESTree.ObjectExpression,
+  propertyName: string
+): TSESTree.Property | null {
+  for (const property of objectNode.properties) {
+    if (property.type !== "Property" || property.kind !== "init") {
+      continue;
+    }
+
+    if (getPropertyName(property.key) === propertyName) {
+      return property;
+    }
+  }
+
+  return null;
+}
+
+function getTitleTranslationInfo(node: TSESTree.ObjectExpression): {
+  key: string;
+  namespace: string | null;
+  keyNode: TSESTree.Node;
+  hasNamespace: boolean;
+} | null {
+  const titleProperty = getObjectProperty(node, "title");
+  if (!titleProperty || titleProperty.value.type !== "ObjectExpression") {
+    return null;
+  }
+
+  const titleObject = titleProperty.value;
+  const keyProperty = getObjectProperty(titleObject, "key");
+  if (!keyProperty) {
+    return null;
+  }
+
+  const key = getStaticString(keyProperty.value);
+  if (!key) {
+    return null;
+  }
+
+  const nsProperty = getObjectProperty(titleObject, "ns");
+  const namespace = nsProperty ? getStaticString(nsProperty.value) : null;
+
+  return {
+    key,
+    namespace,
+    keyNode: keyProperty.value,
+    hasNamespace: !!nsProperty,
+  };
+}
+
 function isUseI18nCall(
   node: TSESTree.CallExpression["callee"] | null | undefined
 ): node is TSESTree.Identifier {
@@ -303,6 +365,44 @@ const i18nMissingKeysRule = createRule<Options, MessageIds>({
             }
           }
         }
+      },
+
+      ObjectExpression(node): void {
+        if (analysis.error) {
+          return;
+        }
+
+        const titleInfo = getTitleTranslationInfo(node);
+        if (!titleInfo) {
+          return;
+        }
+
+        const hasKey = titleInfo.hasNamespace
+          ? hasExtensionTranslationKey(
+              titleInfo.key,
+              titleInfo.namespace,
+              analysis.extensionEnglishKeys
+            )
+          : analysis.englishKeys.has(titleInfo.key);
+
+        if (hasKey) {
+          return;
+        }
+
+        if (titleInfo.hasNamespace && titleInfo.namespace) {
+          context.report({
+            node: titleInfo.keyNode,
+            messageId: "missing_key_in_extension",
+            data: { key: titleInfo.key, namespace: titleInfo.namespace },
+          });
+          return;
+        }
+
+        context.report({
+          node: titleInfo.keyNode,
+          messageId: "missing_key",
+          data: { key: titleInfo.key },
+        });
       },
     };
   },
