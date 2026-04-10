@@ -613,6 +613,57 @@ export function PaneLayout(props: PaneLayoutProps) {
                 };
               }}
             >
+              {pane.detachedAnchor === "floating" && (
+                <>
+                  <div className="sb-detached-pane-toolbar-item">
+                    <button
+                      className="sb-detached-pane-toolbar-button"
+                      aria-label={t("small-window")}
+                      title={t("small-window")}
+                      onPointerDown={(event: PointerEvent) => {
+                        event.stopPropagation();
+                      }}
+                      onClick={(event: MouseEvent) => {
+                        event.stopPropagation();
+                        panesManager.resizePane(
+                          pane.id,
+                          400 - pane.width,
+                          300 - pane.height
+                        );
+                      }}
+                    >
+                      <span className="material-symbols-outlined">
+                        magnification_small
+                      </span>
+                      <span className="sr-only">{t("small-window")}</span>
+                    </button>
+                  </div>
+                  <div className="sb-detached-pane-toolbar-item">
+                    <button
+                      className="sb-detached-pane-toolbar-button"
+                      aria-label={t("large-window")}
+                      title={t("large-window")}
+                      onPointerDown={(event: PointerEvent) => {
+                        event.stopPropagation();
+                      }}
+                      onClick={(event: MouseEvent) => {
+                        event.stopPropagation();
+                        panesManager.resizePane(
+                          pane.id,
+                          600 - pane.width,
+                          400 - pane.height
+                        );
+                      }}
+                    >
+                      <span className="material-symbols-outlined">
+                        magnification_large
+                      </span>
+                      <span className="sr-only">{t("large-window")}</span>
+                    </button>
+                  </div>
+                </>
+              )}
+
               <div className="sb-detached-pane-toolbar-item">
                 <button
                   className="sb-detached-pane-toolbar-button"

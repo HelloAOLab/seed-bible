@@ -30,5 +30,7 @@
   "anchor-to-side": "Anchor to side",
   "fullscreen": "Fullscreen",
   "toggle-fullscreen-panel": "Toggle fullscreen panel",
-  "return-to-floating-window": "Return to floating window"
+  "return-to-floating-window": "Return to floating window",
+  "small-window": "Small window",
+  "large-window": "Large window"
 }
