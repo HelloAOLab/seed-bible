@@ -117,6 +117,7 @@ const PlaylistRowItem = (props: any) => {
     isLayers,
     access,
     onSelectPlaylist = null,
+    isDeleteShow = false,
   } = props;
   const isCustomIcons = icon?.startsWith("https") || isCustomIcon;
   const [warningMessage, setWarningMsg] = useState(null);
@@ -456,6 +457,39 @@ const PlaylistRowItem = (props: any) => {
     setShowMoreOptions((p) => !p);
   };
 
+  const [addToQueuePopup, setAddToQueuePopup] = useState(false);
+
+  const onPlayPlaylist = (bypassQueue?: boolean) => {
+    if (G.IsQueuePresent) {
+      if (!bypassQueue) {
+        setAddToQueuePopup(true);
+        return;
+      }
+      ShowNotification({
+        message: t("addToTheCurrentQueue"),
+        severity: "success",
+      });
+    }
+    thisBot.Playlistplaying({
+      playingPlaylist: playListSubId || id,
+      startIndex: playListSubIndex !== null ? index : 0,
+      startSubIndex: playListSubIndex !== null ? 0 : -1,
+      parentId,
+      name: name,
+    });
+    setAddToQueuePopup(false);
+    setIsPlay(true);
+    setTimeout(() => {
+      setIsPlay(false);
+      setTimeout(() => {
+        setIsPlay(true);
+        setTimeout(() => {
+          setIsPlay(false);
+        }, 150);
+      }, 150);
+    }, 150);
+  };
+
   return (
     <>
       {!!warningMessage && (
@@ -477,6 +511,28 @@ const PlaylistRowItem = (props: any) => {
               {t("yes")}
             </Button>
             <Button secondaryAlt onClick={onCloseWarningPopup}>
+              {t("no")}
+            </Button>
+          </ButtonsCover>
+        </Modal>
+      )}
+      {addToQueuePopup && (
+        <Modal
+          title={t("addPlaylistToQueueTitle")}
+          showIcon={false}
+          onClose={() => setAddToQueuePopup(false)}
+        >
+          <p>{t("addPlaylistToQueueDescription")}</p>
+          <ButtonsCover style={{ gap: "1rem", marginTop: "1rem" }}>
+            <Button
+              secondary
+              onClick={() => {
+                onPlayPlaylist(true);
+              }}
+            >
+              {t("yes")}
+            </Button>
+            <Button secondaryAlt onClick={() => setAddToQueuePopup(false)}>
               {t("no")}
             </Button>
           </ButtonsCover>
@@ -646,35 +702,7 @@ const PlaylistRowItem = (props: any) => {
                     backgroundColor: "var(--themeSideMenu)",
                   }}
                   class="material-symbols-outlined unfollow"
-                  onClick={() => {
-                    if (G.IsQueuePresent) {
-                      ShowNotification({
-                        message: t("addToTheCurrentQueue"),
-                        severity: "success",
-                      });
-                    }
-                    thisBot.Playlistplaying({
-                      playingPlaylist: playListSubId || id,
-                      startIndex: playListSubIndex !== null ? index : 0,
-                      startSubIndex: playListSubIndex !== null ? 0 : -1,
-                      parentId,
-                      name: name,
-                    });
-                    setIsPlay(true);
-                    setTimeout(() => {
-                      setIsPlay(false);
-                      setTimeout(() => {
-                        setIsPlay(true);
-                        setTimeout(() => {
-                          setIsPlay(false);
-                        }, 150);
-                      }, 150);
-                    }, 150);
-
-                    // SetPlayingPlaylist(playListSubId || id);
-                    // toggleOpen();
-                    // thisBot.showInfo(`Playing Playlist!`);
-                  }}
+                  onClick={() => onPlayPlaylist(false)}
                 >
                   play_circle
                 </span>
@@ -737,6 +765,7 @@ const PlaylistRowItem = (props: any) => {
             <DragDropT
               access={access}
               description={description}
+              isDeleteShow={isDeleteShow}
               icon={icon}
               isCustomIcon={isCustomIcon}
               isCustomColor={isCustomColor}

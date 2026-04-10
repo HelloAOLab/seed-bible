@@ -225,6 +225,10 @@ html * {
   align-items: center;
 }
 
+.justify-between {
+  justify-content: space-between;
+}
+
 .f-12 {
   font-size: 12px;
 }
@@ -720,6 +724,32 @@ div.history-item.current-date-disorder .playlist-item-type {
 .playlist-item-type:not(.bookmark):hover {
   background-color: #cecece;
   border: 1px solid #afafaf;
+}
+
+/* Last row highlight when an item is appended (Playlist addDataToPlaylist) */
+@keyframes playlist-item-add-blink {
+  0%,
+  100% {
+    border: 1px solid #aca5a5;
+    background-color: var(--panelBackground);
+  }
+
+  50% {
+    border: 1px solid var(--secondaryColor);
+    background-color: var(--activeTabFill);
+  }
+}
+
+.link-playlist .playlist-item-type.playlist-item-blink {
+  animation: playlist-item-add-blink 0.6s ease-in-out 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link-playlist .playlist-item-type.playlist-item-blink {
+    animation: none;
+    border: 1px solid var(--secondaryColor);
+    background-color: var(--activeTabFill);
+  }
 }
 
 /* .playlist-item-verse {

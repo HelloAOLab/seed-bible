@@ -63,6 +63,7 @@ const Notification = () => {
                 cursor: "pointer",
                 color: "var(--secondaryColor)",
                 fontSize: "14px",
+                margin: "0",
               }}
               onClick={onUndoActions}
             >
@@ -82,7 +83,7 @@ const Notification = () => {
   );
 };
 
-const timeoutTime = message.length * 110;
+const timeoutTime = message.length * 150;
 
 G.TOAST_NOTIFICATION_TIMEOUT = setTimeout(() => {
   os.unregisterApp("toast-notification");

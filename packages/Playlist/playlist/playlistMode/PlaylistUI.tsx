@@ -795,19 +795,21 @@ const Playlist = () => {
                         >
                           close
                         </span>
-                        <Button
-                          onClick={() => {
-                            setCreateOptions(true);
-                          }}
-                          secondary
-                          exClass="create-button-mobile show-on-mobile"
-                        >
-                          <span
-                            class={`material-symbols-outlined ${createOptions ? "rotate-90" : ""}`}
+                        {!G.IsPlaylistPlaying && (
+                          <Button
+                            onClick={() => {
+                              setCreateOptions(true);
+                            }}
+                            secondary
+                            exClass="create-button-mobile show-on-mobile"
                           >
-                            add
-                          </span>
-                        </Button>
+                            <span
+                              class={`material-symbols-outlined ${createOptions ? "rotate-90" : ""}`}
+                            >
+                              add
+                            </span>
+                          </Button>
+                        )}
                       </div>
                     )}
 
