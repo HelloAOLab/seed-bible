@@ -681,28 +681,6 @@ export function PaneLayout(props: PaneLayoutProps) {
                   </button>
                 </div>
               )}
-                <button
-                  className={`sb-detached-pane-toolbar-button${
-                    pane.detachedAnchor === "bottom"
-                      ? " sb-detached-pane-toolbar-button-active"
-                      : ""
-                  }`}
-                  aria-label="Anchor detached pane to bottom"
-                  title="Anchor to bottom"
-                  onPointerDown={(event: PointerEvent) => {
-                    event.stopPropagation();
-                  }}
-                  onClick={(event: MouseEvent) => {
-                    event.stopPropagation();
-                    panesManager.setDetachedAnchor(pane.id, "bottom");
-                  }}
-                >
-                  <span className="material-symbols-outlined">
-                    bottom_panel_open
-                  </span>
-                  <span className="sr-only">Anchor to bottom</span>
-                </button>
-              </div>
 
               <div className="sb-detached-pane-toolbar-item">
                 <button
@@ -735,6 +713,7 @@ export function PaneLayout(props: PaneLayoutProps) {
               }`}
               onPointerDown={(event: PointerEvent) => {
                 event.stopPropagation();
+                event.preventDefault();
                 app.selectPane(pane.id);
                 dragStateRef.current = {
                   mode: "resize",
@@ -744,7 +723,11 @@ export function PaneLayout(props: PaneLayoutProps) {
                   startY: event.clientY,
                 };
               }}
-            />
+            >
+              {pane.detachedAnchor === "side" && (
+                <MaterialIcon>drag_indicator</MaterialIcon>
+              )}
+            </div>
           )}
         </div>
       ))}
