@@ -245,6 +245,11 @@ button {
     0 22px 40px #0000002c;
 }
 
+.sb-pane-shell-detached[data-anchor="fullscreen"] {
+  box-shadow: none;
+  border-radius: 0;
+}
+
 .sb-pane-detached-title {
   font-size: 12px;
   font-weight: 700;
