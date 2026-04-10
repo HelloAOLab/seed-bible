@@ -116,12 +116,29 @@
   bottom: 0;
   justify-content: flex-end;
   left: 0;
-  width: calc(100% - 4px);
+  width: calc(100%);
   z-index: 9999;
   display: flex;
   flex-direction: column;
   max-height: 100%;
   height: max-content;
+  transition:
+    width 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+    max-width 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+    left 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+    right 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+    bottom 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+    align-items 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.playing-queue-container--minimized {
+  /* Panel is position:absolute; hinge is bottom-right via right + width on .playing-queue */
+  pointer-events: none;
+}
+
+.playing-queue-container--minimized .playing-queue {
+  pointer-events: auto;
 }
 
 div.flaoting-attach-link {
@@ -149,33 +166,63 @@ div.flaoting-attach-link .add-new-playlist {
         padding-bottom: 11rem !important;
     } */
   .mobile-pseudogap-element.playing-playlist {
-    height: 8.25rem;
+    height: 9.25rem;
     width: 100%;
+  }
+
+  .playing-queue--minimized {
+    top: 100px;
+    right: 0px;
   }
 }
 
 .playing-queue {
-  /* position: absolute; */
-  top: 0;
-  left: 0;
-  flex-grow: 1;
-  background-color: var(--pageBackground);
+  /* Hinge: bottom-right — same right inset so width animates toward this corner */
+  position: absolute;
+  bottom: 0;
+  right: 4px;
+  left: auto;
   width: calc(100%);
-  overflow: auto;
-  /* transform: translate(0); */
-  display: block;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  transform-origin: bottom right;
+  background-color: var(--pageBackground);
+  overflow: hidden;
   visibility: visible;
   z-index: 1000;
+  transition:
+    width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    border-radius 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   /* padding-bottom: 7rem !important; */
 }
 
-.playing-queue.checklistEnabled {
+.playing-queue.checklistEnabled:not(.playing-queue--minimized) {
   height: 100%;
+  max-height: 100%;
 }
 
-.playing-queue.hide {
-  display: none;
-  visibility: hidden;
+.playing-queue--minimized {
+  flex-grow: 0;
+  flex-shrink: 0;
+  right: 4px;
+  bottom: 4px;
+  width: min(240px, calc(100vw - 28px));
+  max-height: 56px;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow:
+    0 6px 28px rgba(0, 0, 0, 0.14),
+    0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.playing-queue--minimized.checklistEnabled {
+  height: auto !important;
+  max-height: 56px;
 }
 
 .playing-queue .header {
@@ -197,10 +244,65 @@ div.flaoting-attach-link .add-new-playlist {
 
 .playing-queue .playing-queue-content {
   padding: 14px;
-  height: calc(100% - 104px);
-  overflow: scroll;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  transition:
+    max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.32s ease,
+    padding-top 0.32s ease,
+    padding-bottom 0.32s ease;
+}
+
+.playing-queue--minimized .playing-queue-content {
+  flex: 0 0 auto;
+  max-height: 0 !important;
+  min-height: 0 !important;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.playing-queue--minimized .header {
+  cursor: pointer;
+  border-bottom: none;
+  padding: 10px 12px;
+  position: relative;
+}
+
+.playing-queue--minimized .header h3 {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.playing-queue--minimized .header:focus-visible {
+  outline: 2px solid var(--secondaryColor, #3b82f6);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playing-queue-container,
+  .playing-queue,
+  .playing-queue .playing-queue-content {
+    transition: none;
+  }
 }
 
 .playing-queue h4 {
   margin-bottom: 1rem;
+}
+
+.current-playing-title {
+  font-size: 12px;
+  z-index: 99;
+  padding: 0 12px !important;
+  font-weight: 500;
 }

@@ -57,3 +57,4 @@ G.SetEditData?.((prev: any) => ({
   selectedTags: null,
   access: "public",
 }));
+G.SetPlaylistForcedHeight && G.SetPlaylistForcedHeight(0);
