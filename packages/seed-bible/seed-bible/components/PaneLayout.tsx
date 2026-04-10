@@ -14,6 +14,7 @@ import { useI18n } from "seed-bible.i18n.I18nManager";
 import { effect } from "@preact/signals";
 import type { ComponentChildren } from "preact";
 import { translateTitle } from "seed-bible.components.Utils";
+import { MaterialIcon } from "seed-bible.components.icons";
 
 const { useEffect, useRef, useState } = os.appHooks;
 
@@ -423,6 +424,8 @@ export function PaneLayout(props: PaneLayoutProps) {
     };
   }, [panes]);
 
+  const { t } = useI18n();
+
   return (
     <div className="sb-panes-layout" data-layout={layout}>
       {attachedPanes.map((pane, index) => (
@@ -612,13 +615,9 @@ export function PaneLayout(props: PaneLayoutProps) {
             >
               <div className="sb-detached-pane-toolbar-item">
                 <button
-                  className={`sb-detached-pane-toolbar-button${
-                    pane.detachedAnchor === "fullscreen"
-                      ? " sb-detached-pane-toolbar-button-active"
-                      : ""
-                  }`}
-                  aria-label="Toggle fullscreen pane"
-                  title="Fullscreen"
+                  className="sb-detached-pane-toolbar-button"
+                  aria-label={t("toggle-fullscreen-panel")}
+                  title={t("fullscreen")}
                   onPointerDown={(event: PointerEvent) => {
                     event.stopPropagation();
                   }}
@@ -633,35 +632,55 @@ export function PaneLayout(props: PaneLayoutProps) {
                   }}
                 >
                   <span className="material-symbols-outlined">fullscreen</span>
-                  <span className="sr-only">Fullscreen</span>
+                  <span className="sr-only">{t("fullscreen")}</span>
                 </button>
               </div>
 
-              <div className="sb-detached-pane-toolbar-item">
-                <button
-                  className={`sb-detached-pane-toolbar-button${
-                    pane.detachedAnchor === "side"
-                      ? " sb-detached-pane-toolbar-button-active"
-                      : ""
-                  }`}
-                  aria-label="Anchor detached pane to side"
-                  title="Anchor to side"
-                  onPointerDown={(event: PointerEvent) => {
-                    event.stopPropagation();
-                  }}
-                  onClick={(event: MouseEvent) => {
-                    event.stopPropagation();
-                    panesManager.setDetachedAnchor(pane.id, "side");
-                  }}
-                >
-                  <span className="material-symbols-outlined">
-                    right_panel_open
-                  </span>
-                  <span className="sr-only">Anchor to side</span>
-                </button>
-              </div>
+              {pane.detachedAnchor !== "side" && (
+                <div className="sb-detached-pane-toolbar-item">
+                  <button
+                    className="sb-detached-pane-toolbar-button"
+                    aria-label={t("anchor-to-side")}
+                    title={t("anchor-to-side")}
+                    onPointerDown={(event: PointerEvent) => {
+                      event.stopPropagation();
+                    }}
+                    onClick={(event: MouseEvent) => {
+                      event.stopPropagation();
+                      panesManager.setDetachedAnchor(pane.id, "side");
+                    }}
+                  >
+                    <span className="material-symbols-outlined">
+                      right_panel_open
+                    </span>
+                    <span className="sr-only">{t("anchor-to-side")}</span>
+                  </button>
+                </div>
+              )}
 
-              <div className="sb-detached-pane-toolbar-item">
+              {pane.detachedAnchor !== "floating" && (
+                <div className="sb-detached-pane-toolbar-item">
+                  <button
+                    className="sb-detached-pane-toolbar-button"
+                    aria-label={t("return-to-floating-window")}
+                    title={t("return-to-floating-window")}
+                    onPointerDown={(event: PointerEvent) => {
+                      event.stopPropagation();
+                    }}
+                    onClick={(event: MouseEvent) => {
+                      event.stopPropagation();
+                      panesManager.setDetachedAnchor(pane.id, "floating");
+                    }}
+                  >
+                    <span className="material-symbols-outlined">
+                      open_in_new
+                    </span>
+                    <span className="sr-only">
+                      {t("return-to-floating-window")}
+                    </span>
+                  </button>
+                </div>
+              )}
                 <button
                   className={`sb-detached-pane-toolbar-button${
                     pane.detachedAnchor === "bottom"
@@ -688,8 +707,8 @@ export function PaneLayout(props: PaneLayoutProps) {
               <div className="sb-detached-pane-toolbar-item">
                 <button
                   className="sb-detached-pane-toolbar-button"
-                  aria-label="Close detached pane"
-                  title="Close"
+                  aria-label={t("close-panel")}
+                  title={t("close")}
                   onPointerDown={(event: PointerEvent) => {
                     event.stopPropagation();
                   }}
@@ -699,7 +718,7 @@ export function PaneLayout(props: PaneLayoutProps) {
                   }}
                 >
                   <span className="material-symbols-outlined">close</span>
-                  <span className="sr-only">Close</span>
+                  <span className="sr-only">{t("close")}</span>
                 </button>
               </div>
             </div>
