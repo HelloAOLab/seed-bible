@@ -481,6 +481,7 @@ const PlayerControls = ({ parentId = "default" }) => {
           }
         });
 
+      G.NotPlayThisTimeTheCurrentItem = false;
       return reorderedPlaylists;
     });
     setOpenAttachLink(false);
