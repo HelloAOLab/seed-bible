@@ -10,8 +10,15 @@ function QRCodeComponent(props: {
   size?: number;
   dark?: string;
   light?: string;
+  uiHidden: boolean;
 }) {
-  const { value, size = 256, dark = "#000000", light = "#ffffff" } = props;
+  const {
+    value,
+    size = 256,
+    dark = "#000000",
+    light = "#ffffff",
+    uiHidden,
+  } = props;
   const canvasRef = useRef(null);
   const [error, setError] = useState(null);
   const [dim, setDim] = useState(masks?.qrDim || size);
@@ -79,64 +86,62 @@ function QRCodeComponent(props: {
   if (error) return <p style={{ color: "red" }}>QR Error: {error}</p>;
 
   return (
-    <div
-      style={{
-        position: "relative",
-        display: "inline-block",
-        userSelect: "none",
-      }}
-    >
-      <canvas
-        ref={canvasRef}
-        style={{ display: "block" }}
-        onClick={() => {
-          os.setClipboard(value);
-          os.toast("Link copied to clipboard!");
-        }}
-      />
-
-      <div
-        onMouseDown={onMouseDown}
-        onTouchStart={onTouchStart}
-        title={`${dim}px — drag to resize`}
-        style={{
-          position: "absolute",
-          bottom: 0,
-          right: 0,
-          width: 18,
-          height: 18,
-          cursor: "nwse-resize",
-          background: "rgba(0,0,0,0.35)",
-          borderRadius: "4px 0 0 0",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {/* Grip dots */}
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="white">
-          <circle cx="8" cy="2" r="1.2" />
-          <circle cx="8" cy="6" r="1.2" />
-          <circle cx="4" cy="6" r="1.2" />
-          <circle cx="8" cy="10" r="1.2" />
-          <circle cx="4" cy="10" r="1.2" />
-          <circle cx="0" cy="10" r="1.2" />
-        </svg>
-      </div>
-
+    <>
+      <style>
+        {uiHidden &&
+          `
+        .qr-drag-handle {
+          opacity: 0;
+        }
+      `}
+      </style>
       <div
         style={{
-          position: "absolute",
-          top: 4,
-          right: 6,
-          fontSize: 11,
-          color: "rgba(0,0,0,0.45)",
-          pointerEvents: "none",
+          position: "relative",
+          display: "inline-block",
+          userSelect: "none",
         }}
       >
-        {dim}px
+        <canvas
+          ref={canvasRef}
+          style={{ display: "block" }}
+          onClick={() => {
+            os.setClipboard(value);
+            os.toast("Link copied to clipboard!");
+          }}
+        />
+
+        <div
+          onMouseDown={onMouseDown}
+          onTouchStart={onTouchStart}
+          title={`drag to resize`}
+          style={{
+            position: "absolute",
+            bottom: 0,
+            right: 0,
+            width: 18,
+            height: 18,
+            cursor: "nwse-resize",
+            background: "rgba(0,0,0,0.35)",
+            borderRadius: "4px 0 0 0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="qr-drag-handle"
+        >
+          {/* Grip dots */}
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="white">
+            <circle cx="8" cy="2" r="1.2" />
+            <circle cx="8" cy="6" r="1.2" />
+            <circle cx="4" cy="6" r="1.2" />
+            <circle cx="8" cy="10" r="1.2" />
+            <circle cx="4" cy="10" r="1.2" />
+            <circle cx="0" cy="10" r="1.2" />
+          </svg>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 export default QRCodeComponent;

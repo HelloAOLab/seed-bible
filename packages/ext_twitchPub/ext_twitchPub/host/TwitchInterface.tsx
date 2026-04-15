@@ -222,7 +222,7 @@ const TwitchInterface = (props: {
         </div>
         <div className="twitchPub-content">
           <div className={uiHidden ? "" : "qr-container"}>
-            <QRCodeComponent value={qrValue} size={150} />
+            <QRCodeComponent value={qrValue} size={150} uiHidden={uiHidden} />
           </div>
 
           <span
@@ -241,7 +241,7 @@ const TwitchInterface = (props: {
                   }
             }
           >
-            Share this qr code
+            Share this QR code
           </span>
           <span
             style={
@@ -258,7 +258,7 @@ const TwitchInterface = (props: {
                   }
             }
           >
-            Share QR code with your viewer to let them join Seed Bible with you.
+            Your viewers can scan this to follow you on Seed Bible
           </span>
         </div>
       </div>
