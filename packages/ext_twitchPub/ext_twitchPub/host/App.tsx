@@ -11,7 +11,7 @@ const senderScope =
 
 function App() {
   const [clientId, setClientId] = useState<string>(
-    "rkp2fgvhgsi0fe7x62heitsim5zsw8"
+    "cfjslv2429r70ek579iogr02vecn6d"
   );
   const [currentPage, setCurrentPage] = useState<
     "login" | "authorization" | "interface" | "settings"

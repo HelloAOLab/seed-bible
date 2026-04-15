@@ -1,4 +1,5 @@
 import { TwitchIcon } from "ext_twitchPub.host.icons";
+const { useState, useEffect } = os.appHooks;
 
 const TwitchSettings = (props: {
   setCurrentPage: (
@@ -20,6 +21,9 @@ const TwitchSettings = (props: {
     annoucementTimer,
     setAnnouncementTimer,
   } = props;
+
+  const [customTimerFlag, setCustomTimerFlag] = useState<string>("");
+  const [customTimer, setCustomTimer] = useState<number>(0);
 
   return (
     <>
@@ -56,7 +60,7 @@ const TwitchSettings = (props: {
         </div>
         <div className="twitchPub-content">
           <div className="twitchPub-settings-item">
-            <span>Translation Seeding</span>
+            <span>Translation broadcast event</span>
             <ToggleBtn
               toggle={translationEnabled}
               setToggle={setTranslationEnabled}
@@ -64,7 +68,7 @@ const TwitchSettings = (props: {
             />
           </div>
           <div className="twitchPub-settings-item">
-            <span>Highlight Seeding</span>
+            <span>Highlight broadcast event</span>
             <ToggleBtn
               toggle={highlightEnabled}
               setToggle={setHighlightEnabled}
@@ -73,21 +77,63 @@ const TwitchSettings = (props: {
           </div>
           <div className="twitchPub-settings-item">
             <span>Announcement Timer</span>
-            <select
-              value={annoucementTimer}
-              onChange={(e) => {
-                e.stopPropagation();
-                setAnnouncementTimer(Number(e.target.value));
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              className="twitch-select-box"
-            >
-              <option value={0}>Off</option>
-              <option value={300000}>5m</option>
-              <option value={600000}>10m</option>
-              <option value={900000}>15m</option>
-              <option value={1200000}>20m</option>
-            </select>
+            <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
+              <select
+                value={annoucementTimer}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  if (e.target.value === "custom") {
+                    setCustomTimerFlag("custom");
+                  } else {
+                    setAnnouncementTimer(Number(e.target.value));
+                  }
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="twitch-select-box"
+              >
+                <option value={0}>Off</option>
+                <option value={300000}>5m</option>
+                <option value={600000}>10m</option>
+                <option value={900000}>15m</option>
+                <option value={1200000}>20m</option>
+                <option value="custom">Custom</option>
+              </select>
+              {customTimerFlag === "custom" && (
+                <div
+                  style={{
+                    position: "relative",
+                    display: "inline-flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <input
+                    type="number"
+                    placeholder="0"
+                    value={customTimer ? customTimer : ""}
+                    onChange={(e) => {
+                      const minutes = Number(e.target.value);
+                      if (!isNaN(minutes) && minutes >= 0) {
+                        setCustomTimer(minutes);
+                        setAnnouncementTimer(minutes * 60000);
+                      }
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="twitch-custom-timer-input"
+                  />
+                  <span
+                    style={{
+                      position: "absolute",
+                      right: 10,
+                      fontSize: 14,
+                      color: "#888",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    m
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
