@@ -65,6 +65,7 @@ const DragDrop = (props: any) => {
     description,
     isCustomIcon,
     onSelectPlaylist = null,
+    isDeleteShow,
   } = props;
 
   const [opendedList, setOpenedList] = useState("");
@@ -391,6 +392,7 @@ const DragDrop = (props: any) => {
             embedding={embedding}
             itemSelected={itemSelected}
             setItemSelected={setItemSelected}
+            isDeleteShow={isDeleteShow}
             attachLink={attachLink}
             massAdd={massAdd}
             draggedItemID={draggedItemID}
@@ -448,6 +450,7 @@ const DragDrop = (props: any) => {
             currentDateActive={currentDateActive}
             activeItemID={activeItemID}
             setRef={setRef}
+            isDeleteShow={isDeleteShow}
             currentFormat={currentFormat}
             oldItemsMap={oldItemsMap}
             checklistEnabled={checklistEnabled}
@@ -490,6 +493,7 @@ const DragDrop = (props: any) => {
             datesRepeat={datesRepeat}
             datesInWrongOrder={datesInWrongOrder}
             embedding={embedding}
+            isDeleteShow={isDeleteShow}
             playlistName={playlistName}
             currentFormat={currentFormat}
             readingPlanEnabled={readingPlanEnabled}
@@ -656,8 +660,12 @@ const DragDrop = (props: any) => {
                   }
                 }}
                 style={{
-                  border: data.id === itemSelected ? "1px solid #D36433" : "",
-                  backgroundColor: data.id === itemSelected ? "#D364334D" : "",
+                  border:
+                    data.id === itemSelected
+                      ? "1px solid var(--secondaryColor)"
+                      : "",
+                  backgroundColor:
+                    data.id === itemSelected ? "var(--activeTabFill)" : "",
                 }}
                 className={`playlist-item-type ${(data.type !== "heading" || allowHeadingCheck) && checklistEnabled && !viewOnly ? "" : "no-left-padding"} playlist-item-${data.type}`}
               >
@@ -718,7 +726,8 @@ const DragDrop = (props: any) => {
                       <span class="material-symbols-outlined">pip</span>
                     </p>
                   )}
-                {!playingPlaylist && creatingPlaylist && !viewOnly && (
+                {((!playingPlaylist && creatingPlaylist && !viewOnly) ||
+                  isDeleteShow) && (
                   <p
                     className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`}
                     onClick={(e) => {
@@ -810,6 +819,7 @@ const PlaylistContentRenderer = (props: any) => {
     deleteFromList,
     dragOverSet,
     isAdditionalInfo,
+    isDeleteShow,
   } = props;
   const [open, setOpen] = useState(false);
   const prevAutoOpen = useRef(false);
@@ -1034,7 +1044,7 @@ const PlaylistContentRenderer = (props: any) => {
                 <span class="material-symbols-outlined">pip</span>
               </p>
             )}
-          {!playingPlaylist && creatingPlaylist && !viewOnly && (
+          {((creatingPlaylist && !viewOnly) || isDeleteShow) && (
             <p className="without-right-margin end-icon">
               <span
                 onClick={() => {
@@ -1082,6 +1092,7 @@ const PlaylistContentRenderer = (props: any) => {
                 datesRepeat={datesRepeat}
                 datesInWrongOrder={datesInWrongOrder}
                 playlistName={playlistName}
+                isDeleteShow={isDeleteShow}
                 currentFormat={currentFormat}
                 autoPlayToggle={autoPlayToggle}
                 readingPlanEnabled={readingPlanEnabled}
@@ -1319,19 +1330,17 @@ const PlaylistContentRenderer = (props: any) => {
                         </span>
                       </p>
                     )}
-                  {!playingPlaylist &&
-                    creatingPlaylist &&
-                    open &&
-                    !viewOnly && (
-                      <p
-                        className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`}
-                        onClick={() => deleteFromList(index, id)}
-                      >
-                        <span class="material-symbols-outlined unfollow delete-icon">
-                          delete
-                        </span>
-                      </p>
-                    )}
+                  {((creatingPlaylist && open && !viewOnly) ||
+                    isDeleteShow) && (
+                    <p
+                      className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`}
+                      onClick={() => deleteFromList(index, id)}
+                    >
+                      <span class="material-symbols-outlined unfollow delete-icon">
+                        delete
+                      </span>
+                    </p>
+                  )}
                   {open && (
                     <Linking
                       linkingMode={linkingMode}

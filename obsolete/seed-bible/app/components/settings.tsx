@@ -993,13 +993,18 @@ export const KeepScreenAwakeSetting = ({
   const { t, editMode, labels, visibility } = useSettingsContext();
   const label = labels[itemKey] || t(labelKey);
   const isHidden = visibility[itemKey] === false;
-  const [isActive, setIsActive] = useState(false);
+  const [isActive, setIsActive] = useState(
+    () => !!(globalThis as any).keepAwakeActive
+  );
+  (globalThis as any).setKeepScreenAwakeActive = setIsActive;
 
   const toggle = async () => {
     if (isActive) {
       try {
         await os.disableWakeLock();
         setIsActive(false);
+        (globalThis as any).keepAwakeActive = false;
+        (globalThis as any).setKeepAwake?.(false);
       } catch (err) {
         os.toast(
           "Could not disable keep awake: " +
@@ -1010,6 +1015,8 @@ export const KeepScreenAwakeSetting = ({
       try {
         await os.requestWakeLock();
         setIsActive(true);
+        (globalThis as any).keepAwakeActive = true;
+        (globalThis as any).setKeepAwake?.(true);
       } catch (err) {
         os.toast(
           "Could not enable keep awake: " +

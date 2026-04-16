@@ -1,5 +1,5 @@
 .floating-banner {
-  padding: 14px 12px;
+  padding: 12px 12px;
   border-radius: 8px;
   font-size: 14px;
   background-color: var(--pageBackground);
@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  animation: floatingBanner 2s infinite linear;
+  animation: floatingBanner 8s infinite linear;
 }
 
 .floating-banner.not-float {

@@ -163,70 +163,71 @@ const PlaylistList = (props: any) => {
         {playLists.length === 0 && !playlistLoading && (
           <p>{isLayers ? t("noLayersToShow") : t("noPlaylistsToShow")}</p>
         )}
-        {playLists
-          .filter((pl: any) =>
-            !playingPlaylist ? true : pl.id === playingPlaylist
-          )
-          .map((playlist: any, index: number) => {
-            const {
-              shareProfileName,
-              access,
-              name: playlistName,
-              list,
-              id,
-              nesting,
-              toggleRender,
-              description,
-              readingPlanEnabled,
-              dateFormat,
-              attachment,
-              checklistEnabled,
-              color,
-              icon,
-              isCustomColor,
-              isCustomIcon,
-              selectedTags,
-              isLayers,
-            } = playlist;
+        {!playlistLoading &&
+          playLists
+            .filter((pl: any) =>
+              !playingPlaylist ? true : pl.id === playingPlaylist
+            )
+            .map((playlist: any, index: number) => {
+              const {
+                shareProfileName,
+                access,
+                name: playlistName,
+                list,
+                id,
+                nesting,
+                toggleRender,
+                description,
+                readingPlanEnabled,
+                dateFormat,
+                attachment,
+                checklistEnabled,
+                color,
+                icon,
+                isCustomColor,
+                isCustomIcon,
+                selectedTags,
+                isLayers,
+              } = playlist;
 
-            return (
-              <PlaylistRowItem
-                selectPlaylist={selectPlaylist}
-                shareProfileName={shareProfileName}
-                selectedPlaylists={selectedPlaylists}
-                access={access}
-                setSelectPlaylist={setSelectPlaylist}
-                isCustomIcon={isCustomIcon}
-                toggle={toggle}
-                totalItem={playLists.length}
-                parentId={parentId}
-                playingPlaylist={playingPlaylist}
-                handleDragStart={handleDragStart}
-                setOpenedList={setOpenedList}
-                opendedList={opendedList}
-                selectedTags={selectedTags}
-                isLayers={isLayers}
-                attachment={attachment}
-                currentFormat={dateFormat}
-                checklistEnabled={checklistEnabled}
-                handleDragOver={handleDragOver}
-                readingPlanEnabled={readingPlanEnabled}
-                handleDragEnd={handleDragEnd}
-                dragOverSet={dragOverSet}
-                key={id}
-                id={id}
-                playListIndex={index}
-                creatingPlaylist={creatingPlaylist}
-                setPlaylists={setPlayLists}
-                name={playlistName}
-                list={list}
-                color={color}
-                icon={icon}
-                isCustomColor={isCustomColor}
-                description={description}
-              />
-            );
-          })}
+              return (
+                <PlaylistRowItem
+                  selectPlaylist={selectPlaylist}
+                  shareProfileName={shareProfileName}
+                  selectedPlaylists={selectedPlaylists}
+                  access={access}
+                  setSelectPlaylist={setSelectPlaylist}
+                  isCustomIcon={isCustomIcon}
+                  toggle={toggle}
+                  totalItem={playLists.length}
+                  parentId={parentId}
+                  playingPlaylist={playingPlaylist}
+                  handleDragStart={handleDragStart}
+                  setOpenedList={setOpenedList}
+                  opendedList={opendedList}
+                  selectedTags={selectedTags}
+                  isLayers={isLayers}
+                  attachment={attachment}
+                  currentFormat={dateFormat}
+                  checklistEnabled={checklistEnabled}
+                  handleDragOver={handleDragOver}
+                  readingPlanEnabled={readingPlanEnabled}
+                  handleDragEnd={handleDragEnd}
+                  dragOverSet={dragOverSet}
+                  key={id}
+                  id={id}
+                  playListIndex={index}
+                  creatingPlaylist={creatingPlaylist}
+                  setPlaylists={setPlayLists}
+                  name={playlistName}
+                  list={list}
+                  color={color}
+                  icon={icon}
+                  isCustomColor={isCustomColor}
+                  description={description}
+                />
+              );
+            })}
       </div>
     </>
   );
