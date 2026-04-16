@@ -1542,3 +1542,18 @@ span.material-symbols-outlined.rotate-90 {
 .annotation-audio {
   min-height: 50px !important;
 }
+
+.heading-queue .material-symbols-outlined {
+  opacity: 0;
+  transition: all 0.2s linear;
+}
+
+.heading-queue:hover .material-symbols-outlined {
+  opacity: 1;
+}
+
+@media screen and (max-width: 768px) {
+  .heading-queue .material-symbols-outlined {
+    opacity: 1;
+  }
+}

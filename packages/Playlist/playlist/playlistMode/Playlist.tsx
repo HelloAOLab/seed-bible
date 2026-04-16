@@ -1015,17 +1015,17 @@ const Playlist = (props: any) => {
                 setLoading(false);
               }}
             >
-              {dataWarning ? t("addAndSave") : t("confirm")}
+              {dataWarning ? t("saveWithAttachment") : t("discardChanges")}
             </Button>
             {dataWarning && (
               <Button
                 disabled={loading}
-                secondary
+                secondaryAlt
                 onClick={() => {
                   onClickSave();
                 }}
               >
-                {t("ignoreAndSave")}
+                {t("saveWithoutAttachments")}
               </Button>
             )}
             <Button
@@ -1103,7 +1103,9 @@ const Playlist = (props: any) => {
             <p>
               <b>{t("publishSettings")}</b>
             </p>
-            <span style={{ fontSize: "10px" }}>{t("publishSettingsDesc")}</span>
+            <span style={{ fontSize: "12px" }}>
+              {t("publishSettingsDescPlaylist")}
+            </span>
             <div
               className="more-menu-items"
               onClick={() => {

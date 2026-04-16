@@ -315,32 +315,15 @@ if (!skipAll) {
   G.PPclosestNearDateEvent = closestNearDateEvent;
 }
 
-if (G.AddNowBarApp && !G.IsQueuePresent) {
-  const id = "player-playlist-bar";
-  G.AddNowBarApp(<PlaylistPlayerControls parentId={parentId} />, id);
-} else if (!G.IsQueuePresent) {
-  os.unregisterApp("playing-playlist-flaot");
-  os.registerApp("playing-playlist-flaot", thisBot);
-  const FloatApp = () => {
-    return (
-      <div
-        style={{
-          top: "1rem",
-          left: "1rem",
-          zIndex: "10000",
-          position: "fixed",
-        }}
-      >
-        <PlaylistPlayerControls parentId={parentId} />
-      </div>
-    );
-  };
-  os.compileApp("playing-playlist-flaot", <FloatApp />);
-}
+await thisBot.setupNowBarControlApp({ parentId: parentId });
 
 const PlayingPlaylist = () => {
   const [render, setRender] = useState(0);
   const [renderPlaylist, setRenderPlaylist] = useState(0);
+
+  const [isPlaybarInherited, setIsPlaybarInherited] = useState(false);
+  const [showSettingsOptions, setShowSettingsOptions] = useState(false);
+  const showMorePosition = useRef(getPosition());
 
   const DragDropT = useMemo(() => {
     return G.DragDrop;
@@ -551,6 +534,7 @@ const PlayingPlaylist = () => {
     G.RenderPlaylist = () => setRender((p) => p + 1);
     G.RenderPlaylistPlaying = () => setRenderPlaylist((p) => p + 1);
     G.SetItemsPlayer = setItemsPlayer;
+    G.SetIsPlaybarInherited = setIsPlaybarInherited;
     return () => {
       G.SetActiveDate = null;
       G.PlaylistPlaytoggleHide = null;
@@ -558,6 +542,8 @@ const PlayingPlaylist = () => {
       G.SetItemsPlayer = null;
     };
   }, []);
+
+  G.IsPlaybarInherited = isPlaybarInherited;
 
   // const tranformedList = globalThis.PlayingPlaylists?.[globalThis.CurrentIndexItem?.key]?.list;
   // const currentItem = tranformedList?.[globalThis.CurrentIndexItem?.index];
@@ -796,6 +782,79 @@ const PlayingPlaylist = () => {
         </Modal>
       )}
 
+      {showSettingsOptions && (
+        <>
+          <div
+            className="backdrop"
+            onClick={() => setShowSettingsOptions(false)}
+          />
+          <div
+            onClick={() => setShowSettingsOptions(false)}
+            style={{
+              ...showMorePosition.current,
+              left: "none",
+              right: "4rem",
+              width: "206px",
+              padding: "1rem",
+              top: "5rem",
+            }}
+            className="overlay linked-item-custom"
+          >
+            <p>
+              <b>{t("playlistActions")}</b>
+            </p>
+            <span style={{ fontSize: "12px" }}>{t("playlistActionsDesc")}</span>
+            <div
+              className="align-center"
+              style={{
+                cursor: "pointer",
+              }}
+              onClick={async () => {
+                G.IsASwitchBetweenBar = true;
+                if (isPlaybarInherited) {
+                  await thisBot.setupNowBarControlApp({
+                    force: true,
+                    parentId: parentId,
+                  });
+                } else {
+                  if (G.RemoveNowBarApp) {
+                    G.RemoveNowBarApp("player-playlist-bar");
+                  }
+                  os.unregisterApp("playing-playlist-flaot");
+                }
+                setIsPlaybarInherited((p: boolean) => !p);
+              }}
+            >
+              {isPlaybarInherited ? (
+                <span
+                  style={{ fontSize: "20px" }}
+                  class="material-symbols-outlined unfollow"
+                >
+                  check_box
+                </span>
+              ) : (
+                <span
+                  style={{ fontSize: "20px" }}
+                  class="material-symbols-outlined unfollow"
+                >
+                  check_box_outline_blank
+                </span>
+              )}
+              <label
+                style={{
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  marginLeft: "4px",
+                }}
+                for="playlistInclude"
+              >
+                {t("movePlaybarInside")}
+              </label>
+            </div>
+          </div>
+        </>
+      )}
+
       <div
         className={`playing-queue-container${
           hide ? " playing-queue-container--minimized" : ""
@@ -835,36 +894,51 @@ const PlayingPlaylist = () => {
                 : currentPlaylistName}
               {hide ? (currentPlaylistName.length > 10 ? "..." : "") : ""}
             </h3>
-            <span
-              style={{
-                cursor: "pointer",
-                border: "1px solid var(--secondaryColor)",
-                borderRadius: "3px",
-                color: "var(--secondaryColor)",
-                fontSize: "12px",
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleHide();
-              }}
-              className="material-symbols-outlined unfollow"
-            >
-              {hide ? "pip_exit" : "check_indeterminate_small"}
-            </span>
-          </div>
-          <div className="playing-queue-content">
-            {false && G.PPchecklistEnabled && (
-              <p className="align-center" style={{ justifyContent: "center" }}>
-                <span
-                  class="material-symbols-outlined unfollow"
-                  style={{ color: "lightgreen", marginRight: "8px" }}
-                >
-                  check_circle
-                </span>
-                <span>Mark as Visited</span>
-              </p>
-            )}
+            <div className="align-center" style={{ gap: "0.5rem" }}>
+              {!hide && (
+                <div
+                  className="publish-setting"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
 
+                    const x = rect.left; // X position where the element starts (from left of screen)
+                    const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
+
+                    G.LastClickX = x;
+                    G.LastClickY = y;
+                    showMorePosition.current = { ...getPosition() };
+                    setShowSettingsOptions(true);
+                  }}
+                >
+                  <img
+                    className="img-icon"
+                    src={G.Settings_Icon}
+                    alt="Settings_Icon"
+                  />
+                </div>
+              )}
+              <span
+                style={{
+                  cursor: "pointer",
+                  border: "1px solid var(--secondaryColor)",
+                  borderRadius: "3px",
+                  color: "var(--secondaryColor)",
+                  fontSize: "12px",
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleHide();
+                }}
+                className="material-symbols-outlined unfollow"
+              >
+                {hide ? "pip_exit" : "check_indeterminate_small"}
+              </span>
+            </div>
+          </div>
+          <div
+            className="playing-queue-content"
+            style={{ paddingBottom: isPlaybarInherited ? "8rem" : "14px" }}
+          >
             {queue.length ? (
               <>
                 <h4>Next in Queue</h4>
@@ -911,8 +985,8 @@ const PlayingPlaylist = () => {
               return (
                 <>
                   {index !== 0 && (
-                    <div className="align-center justify-between">
-                      <h4 key={`heading${id}`}>
+                    <div className="align-center justify-between heading-queue">
+                      <h4 key={`heading${id}`} style={{ margin: "0" }}>
                         {broken ? "" : "Next in "}
                         {name}
                       </h4>
@@ -987,8 +1061,7 @@ const PlayingPlaylist = () => {
             <div className="mobile-pseudogap-element playing-playlist" />
           </div>
         </div>
-
-        {!G.PPchecklistEnabled && !hide && (
+        {isPlaybarInherited && (
           <div
             style={{
               zIndex: "1001",
@@ -1005,13 +1078,7 @@ const PlayingPlaylist = () => {
             }}
             className="reset-css"
           >
-            {false && (
-              <span className="item-ribbon">
-                <span>
-                  {"playlistName"} {!!heading && ` - ${heading}`}
-                </span>
-              </span>
-            )}
+            <PlaylistPlayerControls parentId={parentId} inheritedBar={true} />
           </div>
         )}
       </div>
@@ -1025,86 +1092,4 @@ if ((playlist && !G.IsQueuePresent) || skipAll) {
   if (!skipAll) {
     thisBot.CloseSelf();
   }
-  // os.compileApp("playing-playlist", <PlayingPlaylist />)
 }
-
-//  <h4>Now Playing</h4>
-//                 <div
-//                     className={`history-item current-playing-item`}
-//                 >
-//                     <p
-//                         className={`playlist-item-type playlist-item-book`}
-//                     >
-//                         {name}
-//                     </p>
-//                 </div>
-
-// <h4>More in {playlistName}</h4>
-// <DragDrop
-//     list={oldList}
-//     setList={(newList) => {
-//         const listLatest = [...newList];
-//         if (typeof newList === 'function') {
-//             listLatest = newList(oldList);
-//         }
-//         setOldList(listLatest);
-//         setList((prev) => {
-//             const item = prev[currIndex.index];
-//             return [...listLatest, item, ...dragList]
-//         });
-//     }}
-//     deleteFromList={() => { }}
-//     creatingPlaylist={false}
-//     onClick={onClick}
-//     onClickItem={() => { }}
-// />
-
-//  <p style={{
-//             margin: "12px 0",
-//             display: "flex",
-//             alignItems: "center",
-//             justifyContent: "space-between",
-//         }}>
-//             Current Item:
-//             <span
-//                 style={{
-//                     fontWeight: "400",
-//                     padding: "8px",
-//                     position: "relative"
-//                 }}
-//                 className={typeContent} >
-//                 {name}
-//             </span>
-//         </p>
-//         <div style={{[0]
-//             display: "flex",
-//             alignItems: "center",
-//             fontSize: "12px",
-//             justifyContent: "space-between",
-//             margin: "12px 0",
-//             gap: "8px"
-//         }} >
-
-//             {prevItemName ?
-//                 <p style={{ fontSize: "10px" }} className="prev-tag-item" >
-//                     Previous Item:
-//                     <span
-//                         style={paraStyle}
-//                         className={prevItemType} >{prevItemName}</span>
-//                 </p>
-//                 : <p />}
-
-//             {nextItemName ?
-//                 <p style={{ fontSize: "10px" }} className="next-tag-item">
-//                     Next Item:
-//                     <span
-//                         style={paraStyle}
-//                         className={nextItemType}
-//                     >
-//                         {nextItemName}
-//                     </span>
-//                 </p>
-//                 : <p
-//                     style={paraStyle}
-//                 > <i>The end</i>  </p>}
-//         </div>

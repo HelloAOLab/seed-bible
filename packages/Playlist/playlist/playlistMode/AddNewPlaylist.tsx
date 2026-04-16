@@ -242,7 +242,9 @@ const AddNewPlaylist = (props: any) => {
             <p>
               <b>{t("publishSettings")}</b>
             </p>
-            <span style={{ fontSize: "10px" }}>{t("publishSettingsDesc")}</span>
+            <span style={{ fontSize: "12px" }}>
+              {t("publishSettingsDescPlaylist")}
+            </span>
             <div
               className="more-menu-items"
               onClick={() => {

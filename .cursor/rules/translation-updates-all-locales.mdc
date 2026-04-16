@@ -1,0 +1,12 @@
+---
+description: Update all locale translation files when asked to write translations
+alwaysApply: true
+---
+
+# Translation Updates
+
+- When the user asks to write, add, update, or replace a translation, update all 24 locale translation files in the project by default, not just English.
+- Keep the translation key consistent across all locale files unless the user explicitly asks for a different key per language.
+- Write each locale's value in that locale's original language. Do not copy English text into non-English locale files unless the user explicitly asks for English fallback text.
+- A translation task is only complete when all 24 locale files have been updated for that key.
+- If an exact translation for a non-English locale is uncertain, pause and ask the user instead of leaving only one locale updated or filling non-English locales with English.
