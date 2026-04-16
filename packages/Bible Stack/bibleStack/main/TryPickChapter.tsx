@@ -49,10 +49,7 @@ if (
     lastInteractedBook &&
     lastInteractedBook.getPieceInfoProperty("commonName") === bookName &&
     lastInteractedBook.isActive &&
-    thisBot.CheckChapterAvailabilityInBook({
-      bookData: lastInteractedBook,
-      chapterNumber,
-    })
+    lastInteractedBook.isChapterAvailable(chapterNumber)
   ) {
     if (!lastInteractedBook.isSelected)
       await thisBot.SelectBook({
@@ -75,7 +72,7 @@ if (
       bookData &&
       (!lastInteractedSection.isSplitIntoBooks ||
         (lastInteractedSection.isInExplodedView && bookData.isActive)) &&
-      thisBot.CheckChapterAvailabilityInBook({ bookData, chapterNumber })
+      bookData.isChapterAvailable(chapterNumber)
     ) {
       if (!lastInteractedSection.isSplitIntoBooks)
         await thisBot.SelectSection({
@@ -122,7 +119,7 @@ if (
             (!lastInteractedTestament.isSplitIntoSections ||
               (sectionData && !sectionData.isSplitIntoBooks) ||
               bookData.isActive) &&
-            thisBot.CheckChapterAvailabilityInBook({ bookData, chapterNumber })
+            bookData.isChapterAvailable(chapterNumber)
           ) {
             if (!lastInteractedTestament.isSplitIntoSections)
               await thisBot.SelectTestament({
@@ -163,10 +160,7 @@ if (
             (!thisBot.vars.lastInteractedStackTestamentData
               .isSplitIntoSections ||
               sectionBookData.isActive) &&
-            thisBot.CheckChapterAvailabilityInBook({
-              bookData: sectionBookData,
-              chapterNumber,
-            })
+            sectionBookData.isChapterAvailable(chapterNumber)
           ) {
             if (!lastInteractedTestament.isSplitIntoSections)
               await thisBot.SelectTestament({

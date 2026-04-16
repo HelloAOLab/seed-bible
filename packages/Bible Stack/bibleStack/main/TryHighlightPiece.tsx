@@ -27,6 +27,7 @@ import type { StackSectionBookData } from "bibleVizUtils.models.entities.StackSe
 import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
 import type { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
 import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import { ArePiecesOnSameStack } from "bibleStack.functions.stack";
 
 const {
   piece,
@@ -128,7 +129,7 @@ if (unhighlightDelayInfo) {
               !currentPiece.masks.isOnTheGround &&
               !currentPiece.masks.isUnhighlighting &&
               currentPiece.tags.typeOfPiece === BiblePiece.StackTestament &&
-              thisBot.ArePiecesOnSameStack({ pieces: [currentPiece, piece] })
+              ArePiecesOnSameStack([currentPiece, piece])
             );
           });
 

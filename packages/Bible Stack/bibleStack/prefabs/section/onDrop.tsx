@@ -1,7 +1,7 @@
-import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+import { bibleStackEventManager } from "bibleStack.services.index";
+import { thisTypedBot } from "bibleStack.prefabs.section.botAdapter";
 
-shout("OnStackSectionInteracted", {
-  section: thisBot,
-  typeOfInteraction: CanvasInteractions.Drop,
+bibleStackEventManager.emit("OnSectionDrop", {
+  section: thisTypedBot,
   dropEvent: that,
 });

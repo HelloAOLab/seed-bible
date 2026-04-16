@@ -1,10 +1,8 @@
-import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+import { bibleStackEventManager } from "bibleStack.services.index";
+import { thisTypedBot } from "bibleStack.prefabs.book.botAdapter";
 
 setTagMask(thisBot, "isBeingHovered", true);
-shout("OnStackBookInteracted", {
-  book: thisBot,
-  typeOfInteraction: CanvasInteractions.HoverEnd,
-});
+bibleStackEventManager.emit("OnBookPointerExit", { book: thisTypedBot });
 
 // InstanceManager.TryClearVideoTimeout();
 if (globalThis.CLEARABLE_LERPING) {

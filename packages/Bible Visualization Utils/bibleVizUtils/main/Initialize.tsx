@@ -34,8 +34,7 @@ if (
   !bibleVizRenderController ||
   !bibleVizUserPresenceController ||
   !bibleVizModels ||
-  !bibleVizEntities ||
-  !globalThis.ObjectPooler
+  !bibleVizEntities
 ) {
   return;
 }
@@ -113,99 +112,5 @@ setTagMask(bibleVizData, "highlightHistoryIndex", -1);
 bibleVizData.vars.history = [];
 bibleVizData.vars.highlightHistory = [];
 BibleVizDataRepository?.setCustomArrangements([]);
-
-if (PoolData && CustomTag && ObjectPoolTags) {
-  const infoLabelPool = new PoolData({
-    tag: ObjectPoolTags.InfoLabel,
-    bot: getBot(byTag("isBaseInfoLabel", true)),
-    customTags: [
-      new CustomTag({ name: "isBaseInfoLabel", value: false }),
-      new CustomTag({ name: "isInfoLabel", value: true }),
-      new CustomTag({
-        name: "poolTag",
-        value: ObjectPoolTags.InfoLabel,
-      }),
-      new CustomTag({ name: "system", value: null }),
-    ],
-    size: 8,
-  });
-  const infoLabelTailPool = new PoolData({
-    tag: ObjectPoolTags.InfoLabelTail,
-    bot: getBot(byTag("isBaseInfoLabelTail", true)),
-    customTags: [
-      new CustomTag({ name: "isBaseInfoLabelTail", value: false }),
-      new CustomTag({ name: "isInfoLabelTail", value: true }),
-      new CustomTag({
-        name: "poolTag",
-        value: ObjectPoolTags.InfoLabelTail,
-      }),
-      new CustomTag({ name: "system", value: null }),
-    ],
-    size: 8,
-  });
-  const infoLabelDatePool = new PoolData({
-    tag: ObjectPoolTags.InfoLabelDate,
-    bot: getBot("system", "bibleVizUtils.prefabs.infoLabelDate"),
-    customTags: [
-      new CustomTag({
-        name: "poolTag",
-        value: ObjectPoolTags.InfoLabelDate,
-      }),
-      new CustomTag({ name: "isInfoLabelDate", value: true }),
-      new CustomTag({ name: "system", value: null }),
-    ],
-    size: 8,
-  });
-  const infoLabelTransformerPool = new PoolData({
-    tag: ObjectPoolTags.InfoLabelTransformer,
-    bot: getBot(byTag("isBaseInfoLabelTransformer", true)),
-    customTags: [
-      new CustomTag({ name: "isBaseInfoLabelTransformer", value: false }),
-      new CustomTag({ name: "isInfoLabelTransformer", value: true }),
-      new CustomTag({
-        name: "poolTag",
-        value: ObjectPoolTags.InfoLabelTransformer,
-      }),
-      new CustomTag({ name: "system", value: null }),
-    ],
-    size: 8,
-  });
-  const userColorPool = new PoolData({
-    tag: ObjectPoolTags.ActivityIndicator,
-    bot: getBot("system", "bibleVizUtils.prefabs.userColor"),
-    customTags: [
-      new CustomTag({
-        name: "poolTag",
-        value: ObjectPoolTags.ActivityIndicator,
-      }),
-      new CustomTag({ name: "isUserColor", value: true }),
-      new CustomTag({ name: "system", value: null }),
-    ],
-    size: 8,
-  });
-  const activityNotificationPool = new PoolData({
-    tag: ObjectPoolTags.ActivityNotification,
-    bot: getBot("system", "bibleVizUtils.prefabs.activityNotification"),
-    customTags: [
-      new CustomTag({
-        name: "poolTag",
-        value: ObjectPoolTags.ActivityNotification,
-      }),
-      new CustomTag({ name: "system", value: null }),
-    ],
-    size: 5,
-  });
-
-  ObjectPooler.AddObjectPools({
-    poolsData: [
-      infoLabelPool,
-      infoLabelTailPool,
-      infoLabelDatePool,
-      infoLabelTransformerPool,
-      userColorPool,
-      activityNotificationPool,
-    ],
-  });
-}
 
 shout("OnBibleVizUtilsInitialized");

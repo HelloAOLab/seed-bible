@@ -1,8 +1,8 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
 import { LabelPosition } from "bibleVizUtils.models.label";
-import { PieceDataRepository } from "bibleStack.services.PieceDataRepository";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { pieceDataRepository } from "bibleStack.services.index";
 
 /**
  * Highlights the testament bot by scaling it and displaying its info label transformer.
@@ -25,7 +25,10 @@ const duration = isInstantaneous
     speedMultiplier;
 const easing = { type: "sinusoidal", mode: "inout" };
 const label = thisBot.tags.infoLabel;
-const testamentData = PieceDataRepository.getPieceData({ piece: thisBot });
+const testamentData = pieceDataRepository.getPieceData({
+  getTypeOfPiece: () => thisBot.tags.typeOfPiece,
+  getId: () => thisBot.id,
+});
 
 if (!testamentData) {
   throw new Error("Highlight: testamentData not found");

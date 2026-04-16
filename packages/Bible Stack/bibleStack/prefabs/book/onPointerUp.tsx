@@ -1,6 +1,6 @@
-import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+import { bibleStackEventManager } from "bibleStack.services.index";
+import { thisTypedBot } from "bibleStack.prefabs.book.botAdapter";
 
-shout("OnStackBookInteracted", {
-  book: thisBot,
-  typeOfInteraction: CanvasInteractions.PointerUp,
+bibleStackEventManager.emit("OnBookPointerUp", {
+  book: thisTypedBot,
 });

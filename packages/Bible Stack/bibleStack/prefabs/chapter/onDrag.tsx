@@ -1,17 +1,9 @@
-import { CanvasInteractions } from "bibleVizUtils.models.canvas";
-import type { StackChapterData } from "@packages/Bible Visualization Utils/bibleVizUtils/models/entities/StackChapterData";
+import { bibleStackEventManager } from "bibleStack.services.index";
+import { thisTypedBot } from "bibleStack.prefabs.chapter.botAdapter";
 
-const chapterData = await (BibleStackManager.GetPieceData({
-  piece: thisBot,
-}) as Promise<StackChapterData | undefined>);
-
-if (!chapterData) {
-  throw new Error("onDrag: chapterData not found.");
-}
-
-shout("OnStackChapterInteracted", {
-  chapterData,
+bibleStackEventManager.emit("OnChapterDrag", {
+  chapter: thisTypedBot,
   draggingEvent: that,
-  typeOfInteraction: CanvasInteractions.Drag,
 });
+
 os.enableCustomDragging();

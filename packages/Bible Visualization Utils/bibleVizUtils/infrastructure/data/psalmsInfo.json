@@ -1,0 +1,37 @@
+[
+  {
+    "chapters": {
+      "start": 1,
+      "end": 41
+    },
+    "name": "1 Psalms"
+  },
+  {
+    "chapters": {
+      "start": 42,
+      "end": 72
+    },
+    "name": "2 Psalms"
+  },
+  {
+    "chapters": {
+      "start": 73,
+      "end": 89
+    },
+    "name": "3 Psalms"
+  },
+  {
+    "chapters": {
+      "start": 90,
+      "end": 106
+    },
+    "name": "4 Psalms"
+  },
+  {
+    "chapters": {
+      "start": 107,
+      "end": 150
+    },
+    "name": "5 Psalms"
+  }
+]

@@ -1,7 +1,7 @@
-import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+import { bibleStackEventManager } from "bibleStack.services.index";
+import { thisTypedBot } from "bibleStack.prefabs.testament.botAdapter";
 
-setTagMask(thisBot, "isBeingHovered", true);
-shout("OnStackTestamentInteracted", {
-  testament: thisBot,
-  typeOfInteraction: CanvasInteractions.HoverBegin,
+thisTypedBot.masks.isBeingHovered = true;
+bibleStackEventManager.emit("OnTestamentPointerEnter", {
+  testament: thisTypedBot,
 });

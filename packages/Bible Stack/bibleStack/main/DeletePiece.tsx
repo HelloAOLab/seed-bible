@@ -6,6 +6,7 @@ import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSection
 import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
 import { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
 import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+import { pieceDataRepository } from "bibleStack.services.index";
 
 /**
  * Deletes a Bible, Testament, Section, Book, or Chapter based on the provided `pieceData`.
@@ -45,9 +46,10 @@ if (!pieceData) {
     throw new Error("DeletePiece: pieceData or piece must be defined.");
   }
   if (piece.tags.isStackPiece) {
-    pieceData = await (thisBot.GetPieceData({ piece }) as Promise<
-      AnyData | undefined
-    >);
+    pieceData = pieceDataRepository.getPieceData({
+      getTypeOfPiece: () => piece.tags.typeOfPiece,
+      getId: () => piece.id,
+    });
   } else if (piece.tags.isStackBibleTransformer) {
     pieceData = (thisBot.vars.stackBiblesData as StackBibleData[]).find(
       (bibleData) => {

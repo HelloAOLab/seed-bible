@@ -2,8 +2,8 @@ import { GetBotScales } from "bibleVizUtils.functions.index";
 import { CapitalizeFirstLetter } from "bibleVizUtils.functions.index";
 import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
 import { LabelPosition } from "bibleVizUtils.models.label";
-import { PieceDataRepository } from "bibleStack.services.PieceDataRepository";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { pieceDataRepository } from "bibleStack.services.index";
 
 /**
  * Highlights the section by animating its opacity and scale, and shows the associated info label.
@@ -27,7 +27,10 @@ const animationEasing = { type: "sinusoidal", mode: "inout" };
 const label = CapitalizeFirstLetter(
   thisBot.tags.sectionName.split("-").join(" ")
 );
-const sectionData = PieceDataRepository.getPieceData({ piece: thisBot });
+const sectionData = pieceDataRepository.getPieceData({
+  getTypeOfPiece: () => thisBot.tags.typeOfPiece,
+  getId: () => thisBot.id,
+});
 const { infoLabelTransformer } = SpawnLabelForPiece({
   piece: thisBot,
   label,

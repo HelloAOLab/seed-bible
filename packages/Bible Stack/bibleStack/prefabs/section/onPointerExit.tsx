@@ -1,7 +1,7 @@
-import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+import { bibleStackEventManager } from "bibleStack.services.index";
+import { thisTypedBot } from "bibleStack.prefabs.section.botAdapter";
 
-setTagMask(thisBot, "isBeingHovered", false);
-shout("OnStackSectionInteracted", {
-  section: thisBot,
-  typeOfInteraction: CanvasInteractions.HoverEnd,
+thisTypedBot.masks.isBeingHovered = false;
+bibleStackEventManager.emit("OnSectionPointerExit", {
+  section: thisTypedBot,
 });

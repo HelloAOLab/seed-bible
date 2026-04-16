@@ -1,6 +1,4 @@
-import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+import { thisTypedBot } from "bibleStack.prefabs.verse.botAdapter";
+import { bibleStackEventManager } from "bibleStack.services.index";
 
-shout("OnStackVerseInteracted", {
-  verse: thisBot,
-  typeOfInteraction: CanvasInteractions.Click,
-});
+bibleStackEventManager.emit("OnVerseClick", { verse: thisTypedBot });

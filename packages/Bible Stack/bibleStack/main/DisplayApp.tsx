@@ -1,4 +1,5 @@
 import { globalAPI } from "app.controller.controllerBuilder";
+import { App } from "bibleStack.components.App";
 
 const { mode } = that;
 
@@ -10,7 +11,6 @@ if (thisBot.vars.appId) {
   gridPortalBot.tags.portalZoomableMin = 5;
 
   os.log("Displaying Bible Stack App", that);
-  const App = await thisBot.App();
   const id = globalThis.AddFloatingApp({
     App: <App />,
     title: "Stack",

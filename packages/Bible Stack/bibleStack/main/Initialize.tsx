@@ -1,11 +1,59 @@
 import { PieceDataRegistry } from "bibleVizUtils.services.PieceDataRegistry";
-import { PieceDataRepository } from "bibleStack.services.PieceDataRepository";
 import {
   ObjectPoolTags,
+  type BiblePieceType,
   type UnhighlightDelayInfo,
 } from "bibleVizUtils.models.canvas";
-import { BiblePiece } from "bibleVizUtils.models.canvas";
-import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+import { BiblePiece } from "bibleVizUtils.domain.models.canvas";
+import type { Bot, BotTags } from "../../../../typings/AuxLibraryDefinitions";
+import { pieceDataRepository } from "bibleStack.services.index";
+import { BufferSounds } from "bibleStack.adapters.audioAdapter";
+import {
+  HandleBookClick,
+  HandleBookDrag,
+  HandleBookDragging,
+  HandleBookDrop,
+  HandleBookPointerEnter,
+  HandleBookPointerExit,
+  HandleBookPointerUp,
+} from "bibleStack.controllers.interaction.bookInteractionController";
+import { bibleStackEventManager } from "bibleStack.services.index";
+import {
+  HandleChapterClick,
+  HandleChapterDrag,
+  HandleChapterDragging,
+  HandleChapterDrop,
+  HandleChapterPointerEnter,
+  HandleChapterPointerExit,
+} from "../controllers/interaction/chapterInteractionController";
+import {
+  HandleSectionClick,
+  HandleSectionDrag,
+  HandleSectionDragging,
+  HandleSectionDrop,
+  HandleSectionPointerEnter,
+  HandleSectionPointerExit,
+  HandleSectionPointerUp,
+} from "bibleStack.controllers.interaction.sectionInteractionController";
+import {
+  HandleTestamentClick,
+  HandleTestamentPointerEnter,
+  HandleTestamentDrag,
+  HandleTestamentDragging,
+  HandleTestamentDrop,
+  HandleTestamentPointerUp,
+} from "bibleStack.controllers.interaction.testamentInteractionController";
+import {
+  HandleChunkOfVersesClick,
+  HandleChunkOfVersesPointerEnter,
+  HandleChunkOfVersesPointerExit,
+} from "bibleStack.controllers.interaction.chunkOfVersesInteractionController";
+import { HandleCoverClick } from "bibleStack.controllers.interaction.coverInteractionController";
+import {
+  HandleCrossLinePointerDown,
+  HandleCrossLinePointerUp,
+} from "bibleStack.controllers.interaction.crossLineInteractionController";
+import { HandleVerseClick } from "bibleStack.controllers.interaction.verseInteractionController";
 
 /**
  * This tag is called when this bot is created
@@ -30,9 +78,86 @@ setTagMask(thisBot, "initialized", true);
 globalThis.BibleStackManager = thisBot;
 
 PieceDataRegistry.registerProvider(
-  ObjectPoolTags.StackChapter,
-  PieceDataRepository.getPieceData
+  BiblePiece.StackChapter,
+  pieceDataRepository.getPieceData
 );
+
+bibleStackEventManager.subscribe("OnTestamentClick", HandleTestamentClick);
+bibleStackEventManager.subscribe(
+  "OnTestamentPointerEnter",
+  HandleTestamentPointerEnter
+);
+bibleStackEventManager.subscribe("OnTestamentDrag", HandleTestamentDrag);
+bibleStackEventManager.subscribe(
+  "OnTestamentDragging",
+  HandleTestamentDragging
+);
+bibleStackEventManager.subscribe("OnTestamentDrop", HandleTestamentDrop);
+bibleStackEventManager.subscribe(
+  "OnTestamentPointerUp",
+  HandleTestamentPointerUp
+);
+
+bibleStackEventManager.subscribe("OnSectionClick", HandleSectionClick);
+bibleStackEventManager.subscribe("OnSectionDrag", HandleSectionDrag);
+bibleStackEventManager.subscribe(
+  "OnSectionPointerEnter",
+  HandleSectionPointerEnter
+);
+bibleStackEventManager.subscribe(
+  "OnSectionPointerExit",
+  HandleSectionPointerExit
+);
+bibleStackEventManager.subscribe("OnSectionDragging", HandleSectionDragging);
+bibleStackEventManager.subscribe("OnSectionDrop", HandleSectionDrop);
+bibleStackEventManager.subscribe("OnSectionPointerUp", HandleSectionPointerUp);
+
+bibleStackEventManager.subscribe("OnBookClick", HandleBookClick);
+bibleStackEventManager.subscribe("OnBookDrag", HandleBookDrag);
+bibleStackEventManager.subscribe("OnBookDragging", HandleBookDragging);
+bibleStackEventManager.subscribe("OnBookPointerEnter", HandleBookPointerEnter);
+bibleStackEventManager.subscribe("OnBookPointerEnter", HandleBookPointerExit);
+bibleStackEventManager.subscribe("OnBookPointerUp", HandleBookPointerUp);
+bibleStackEventManager.subscribe("OnBookDrop", HandleBookDrop);
+
+bibleStackEventManager.subscribe("OnChapterClick", HandleChapterClick);
+bibleStackEventManager.subscribe("OnChapterDrag", HandleChapterDrag);
+bibleStackEventManager.subscribe("OnChapterDragging", HandleChapterDragging);
+bibleStackEventManager.subscribe("OnChapterDrop", HandleChapterDrop);
+bibleStackEventManager.subscribe(
+  "OnChapterPointerEnter",
+  HandleChapterPointerEnter
+);
+bibleStackEventManager.subscribe(
+  "OnChapterPointerExit",
+  HandleChapterPointerExit
+);
+
+bibleStackEventManager.subscribe(
+  "OnChunkOfVersesClick",
+  HandleChunkOfVersesClick
+);
+bibleStackEventManager.subscribe(
+  "OnChunkOfVersesPointerEnter",
+  HandleChunkOfVersesPointerEnter
+);
+bibleStackEventManager.subscribe(
+  "OnChunkOfVersesPointerExit",
+  HandleChunkOfVersesPointerExit
+);
+
+bibleStackEventManager.subscribe("OnCoverClick", HandleCoverClick);
+
+bibleStackEventManager.subscribe(
+  "OnCrossLinePointerDown",
+  HandleCrossLinePointerDown
+);
+bibleStackEventManager.subscribe(
+  "OnCrossLinePointerUp",
+  HandleCrossLinePointerUp
+);
+
+bibleStackEventManager.subscribe("OnVerseClick", HandleVerseClick);
 
 try {
   ({ PoolData } = await import("objectPooler.main.PoolData"));
@@ -49,7 +174,7 @@ setTagMask(
   "areBiblePiecesDraggable",
   thisBot.tags.areBiblePiecesDraggable
 );
-thisBot.BufferSounds();
+BufferSounds();
 thisBot.vars.sectionNamesEverSelected = [];
 thisBot.vars.stackBiblesData = [];
 thisBot.vars.stackTestamentsData = [];
