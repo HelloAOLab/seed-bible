@@ -293,7 +293,7 @@ button {
   justify-content: flex-end;
   gap: 8px;
   padding: 0 10px;
-  border-top: 1px solid var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
   background: color-mix(in srgb, var(--sb-secondary-color), white 35%);
   cursor: move;
   user-select: none;
@@ -311,9 +311,8 @@ button {
 .sb-detached-pane-toolbar-button {
   border: none;
   background: transparent;
-  color: var(--sb-font-color);
-  height: 28px;
-  min-width: 28px;
+  height: 40px;
+  min-width: 40px;
   border-radius: 8px;
   display: inline-flex;
   align-items: center;
