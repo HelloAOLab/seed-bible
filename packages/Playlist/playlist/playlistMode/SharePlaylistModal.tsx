@@ -107,7 +107,7 @@ const SharePlaylistModal = () => {
               G.hasASharedPlaylist = false;
             }}
           >
-            {t("start")}
+            {t("begin")}
           </Button>
         </div>
       </Modal>

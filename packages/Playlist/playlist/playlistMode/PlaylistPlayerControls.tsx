@@ -105,7 +105,7 @@ const getCurrentItem = (
   // return targetItem;
 };
 
-const PlayerControls = ({ parentId = "default" }) => {
+const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
   const [showCurrent, setShowCurrent] = useState(false);
   const [queue, setQueue] = useState([]);
 
@@ -521,25 +521,27 @@ const PlayerControls = ({ parentId = "default" }) => {
       // G.IS_PLAYLIST_ACTIVE = 0;
     }
     return () => {
-      G.SetCurreIndexPlaylist = null;
-      G.HandleOnButtonPress = null;
-      G.ModifyTransformedHistory = null;
-      G.SetQueue = false;
-      G.SetCurreIndexDirect = null;
-      G.SetPlayingList = () => {};
-      G.SetSelected && G.SetSelected({});
-      G.READING_PLAN_WORK = false;
-      G.HandleOnButtonPress = null;
-      G.SetIncrementalCountPlayingPlaylist = null;
-      G.SetVideoSrc = null;
-      G.SetTextInfo = null;
-      G.SetMediaURL = null;
-      G.PlayingPlaylists = null;
-      G.SetPlayingPlaylists = null;
-      G.CurrentIndexItem = null;
-      G.SetCheckedItemsPlayingPlaylist = null;
-      G.UpdateJustAddedToQueue = null;
-      // globalThis.IS_PLAYLIST_ACTIVE = true;
+      if (!G.IsASwitchBetweenBar) {
+        G.SetCurreIndexPlaylist = null;
+        G.HandleOnButtonPress = null;
+        G.ModifyTransformedHistory = null;
+        G.SetQueue = false;
+        G.SetCurreIndexDirect = null;
+        G.SetPlayingList = () => {};
+        G.SetSelected && G.SetSelected({});
+        G.READING_PLAN_WORK = false;
+        G.HandleOnButtonPress = null;
+        G.SetIncrementalCountPlayingPlaylist = null;
+        G.SetVideoSrc = null;
+        G.SetTextInfo = null;
+        G.SetMediaURL = null;
+        G.PlayingPlaylists = null;
+        G.SetPlayingPlaylists = null;
+        G.CurrentIndexItem = null;
+        G.SetCheckedItemsPlayingPlaylist = null;
+        G.UpdateJustAddedToQueue = null;
+        // globalThis.IS_PLAYLIST_ACTIVE = true;
+      }
     };
   }, [handleOnButtonPress, transformedHistory]);
 
@@ -551,10 +553,13 @@ const PlayerControls = ({ parentId = "default" }) => {
     }
 
     return () => {
-      G.IsPlaylistPlaying = false;
-      G.IsQueuePresent = false;
-      G.RemotePlaylistPlayed = false;
-      G.EmitData("playlistStopped", {});
+      if (!G.IsASwitchBetweenBar) {
+        G.IsPlaylistPlaying = false;
+        G.IsQueuePresent = false;
+        G.RemotePlaylistPlayed = false;
+        G.EmitData("playlistStopped", {});
+      }
+      G.IsASwitchBetweenBar = false;
     };
   }, []);
 
@@ -562,8 +567,6 @@ const PlayerControls = ({ parentId = "default" }) => {
     G.UpdateCheckedItemsPlayingPlaylist &&
       G.UpdateCheckedItemsPlayingPlaylist(checkedItems, G.PlayingPlaylistID);
   }, [checkedItems]);
-
-  console.log(playlists, currIndex);
 
   const [
     currentPlaylistName,
@@ -1124,13 +1127,23 @@ const PlayerControls = ({ parentId = "default" }) => {
                   border: "1px solid var(--secondaryColor)",
                 }}
                 className="playlist-action small"
-                onClick={() => {
-                  if (G.makingPlaylist) {
-                    // globalThis.PlaylistPlaytoggleHide();
-                    thisBot.CloseSelf({ force: true });
-                  } else {
-                    thisBot.OpenSelf();
+                onClick={async () => {
+                  if (G.IsPlaybarInherited) {
+                    G.IsASwitchBetweenBar = true;
+                    await thisBot.setupNowBarControlApp({
+                      force: true,
+                      parentId: parentId,
+                    });
+                    G.SetIsPlaybarInherited(false);
                   }
+                  setTimeout(() => {
+                    if (G.makingPlaylist) {
+                      // globalThis.PlaylistPlaytoggleHide();
+                      thisBot.CloseSelf({ force: true });
+                    } else {
+                      thisBot.OpenSelf();
+                    }
+                  }, 100);
                 }}
               >
                 <img

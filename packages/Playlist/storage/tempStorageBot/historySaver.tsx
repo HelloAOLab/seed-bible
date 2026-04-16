@@ -97,7 +97,9 @@ const playlistsPresent = G.playlists
   ? G.playlists
   : (getTag(thisBot, "defaultplaylistList") || []).map((ele: any) => ele);
 
-const sharedPlaylist = configBot.tags.Playlist;
+const sharedPlaylist =
+  configBot.tags.Playlist ||
+  "438d487a-bf23-4550-988a-9e3399ea4407^_^03c06a6b-a112-4b46-964a-c5b13cca4518";
 // console.log("GOT SHAERD PLATLIST", sharedPlaylist);
 
 G.RECORD_SEPARATOR = "^_^";
@@ -106,7 +108,6 @@ if (sharedPlaylist) {
     const [authBotId, playlistId] = sharedPlaylist.split(G.RECORD_SEPARATOR);
     if (!!authBotId && !!playlistId) {
       const res = await os.getData(authBotId, playlistId);
-
       if (res.success) {
         const playlistData = res.data;
         const index = playlistsPresent.findIndex(
