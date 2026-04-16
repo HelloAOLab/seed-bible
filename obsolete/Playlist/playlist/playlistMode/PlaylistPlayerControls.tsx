@@ -302,7 +302,11 @@ const PlayerControls = ({ parentId = "default" }) => {
           (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
           G.MOBILE_VIEWPORT_THRESHOLD;
         if (isMobile) {
-          G.SetTextInfo(targetItem.content);
+          if (!G.NotPlayThisTimeTheCurrentItem) {
+            G.SetTextInfo(targetItem.content);
+          } else {
+            G.NotPlayThisTimeTheCurrentItem = false;
+          }
         }
       }
 
@@ -337,8 +341,12 @@ const PlayerControls = ({ parentId = "default" }) => {
     // }
 
     if (targetItem.type === "verse") {
-      if (G.FocusOnVerse) {
-        G.FocusOnVerse(targetItem.additionalInfo.verse);
+      if (G.NotPlayThisTimeTheCurrentItem) {
+        G.NotPlayThisTimeTheCurrentItem = false;
+      } else {
+        if (G.FocusOnVerse) {
+          G.FocusOnVerse(targetItem.additionalInfo.verse);
+        }
       }
     }
 
@@ -473,6 +481,7 @@ const PlayerControls = ({ parentId = "default" }) => {
           }
         });
 
+      G.NotPlayThisTimeTheCurrentItem = false;
       return reorderedPlaylists;
     });
     setOpenAttachLink(false);
@@ -554,6 +563,8 @@ const PlayerControls = ({ parentId = "default" }) => {
       G.UpdateCheckedItemsPlayingPlaylist(checkedItems, G.PlayingPlaylistID);
   }, [checkedItems]);
 
+  console.log(playlists, currIndex);
+
   const [
     currentPlaylistName,
     currentItemID,
@@ -601,11 +612,15 @@ const PlayerControls = ({ parentId = "default" }) => {
     }));
 
     if (targetItem?.type === "attachment-link") {
-      thisBot.RenderLinkContent({
-        ...targetItem,
-        isLastItem: !nextItem,
-        isFirstItem: !prevItem,
-      });
+      if (!G.NotPlayThisTimeTheCurrentItem) {
+        thisBot.RenderLinkContent({
+          ...targetItem,
+          isLastItem: !nextItem,
+          isFirstItem: !prevItem,
+        });
+      } else {
+        G.NotPlayThisTimeTheCurrentItem = false;
+      }
     } else if (currIndex.fromButton !== 0) {
       const isBulk =
         !!targetItem?.additionalInfo?.layers?.length ||
@@ -643,8 +658,13 @@ const PlayerControls = ({ parentId = "default" }) => {
         if (G.SetVideoSrc) {
           G.SetVideoSrc(null);
         }
-        if (targetItem?.type === "heading")
-          G.PlayingPlaylistSetHeading(targetItem.content);
+        if (targetItem?.type === "heading") {
+          if (!G.NotPlayThisTimeTheCurrentItem) {
+            G.PlayingPlaylistSetHeading(targetItem.content);
+          } else {
+            G.NotPlayThisTimeTheCurrentItem = false;
+          }
+        }
         const allKeys: any = Object.keys(playlists);
 
         const isFirstKey = currIndex.key == 0;
@@ -659,10 +679,14 @@ const PlayerControls = ({ parentId = "default" }) => {
           isLastKey &&
           currIndex.index == th.length - 1;
         if (targetItem?.nextTargetItem) {
-          thisBot.navigationWithDataItem({
-            dataItem: isBulk ? toBeMapArray : targetItem,
-            bulkAdd: isBulk,
-          });
+          if (!G.NotPlayThisTimeTheCurrentItem) {
+            thisBot.navigationWithDataItem({
+              dataItem: isBulk ? toBeMapArray : targetItem,
+              bulkAdd: isBulk,
+            });
+          } else {
+            G.NotPlayThisTimeTheCurrentItem = false;
+          }
           handleOnButtonPress(currIndex.fromButton);
           G[`${targetItem.id}OpenToggle`] &&
             G[`${targetItem.id}OpenToggle`](true);
@@ -681,10 +705,14 @@ const PlayerControls = ({ parentId = "default" }) => {
           os.toast(`${targetItem.content} is Already Opened.Skipping it!`);
           handleOnButtonPress(currIndex.fromButton);
         } else {
-          thisBot.navigationWithDataItem({
-            dataItem: isBulk ? toBeMapArray : targetItem,
-            bulkAdd: isBulk,
-          });
+          if (!G.NotPlayThisTimeTheCurrentItem) {
+            thisBot.navigationWithDataItem({
+              dataItem: isBulk ? toBeMapArray : targetItem,
+              bulkAdd: isBulk,
+            });
+          } else {
+            G.NotPlayThisTimeTheCurrentItem = false;
+          }
         }
         // SetBlinker({});
       }
@@ -1220,6 +1248,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                   G.RemoveNowBarApp("player-playlist-bar");
                 }
                 os.unregisterApp("playing-playlist-flaot");
+                thisBot.resetPlaylistGlobalStateVars();
                 thisBot.CloseFloatingApp();
               }}
               style={{

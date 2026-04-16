@@ -10,6 +10,7 @@
   border-radius: 10px;
   box-shadow: 0px 3px 8px var(--sidebarShadow);
   transition: all 0.3s ease;
+  color: var(--text1);
 }
 
 .qr-container {
@@ -26,7 +27,7 @@
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  width: 105px;
+  width: max-content;
   margin-left: auto;
   margin-right: auto;
 }
@@ -104,8 +105,8 @@
 
 .toggle {
   position: relative;
-  width: 40px;
-  height: 24px;
+  width: 50px;
+  height: 28px;
   cursor: pointer;
 }
 
@@ -125,10 +126,10 @@
 
 .thumb {
   position: absolute;
-  top: 4px;
-  left: 3px;
-  width: 16px;
-  height: 16px;
+  top: 5px;
+  left: 5px;
+  width: 18px;
+  height: 18px;
   background: #fff;
   border-radius: 50%;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
@@ -146,4 +147,34 @@
   width: 100%;
   justify-content: space-between;
   align-items: center;
+}
+
+.twitch-select-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: center;
+  align-items: center;
+  height: 24px;
+  padding: 3px 0px 0px 0px;
+  width: 65px;
+  font-size: 12px;
+  outline: none;
+}
+
+.qr-drag-handle:hover {
+  opacity: 1;
+}
+
+.twitch-custom-timer-input {
+  width: 60px;
+  height: 24px;
+  padding: 0px 20px 0px 3px;
+  -moz-appearance: textfield;
+}
+
+.twitch-custom-timer-input::-webkit-outer-spin-button,
+.twitch-custom-timer-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }

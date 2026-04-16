@@ -340,6 +340,39 @@ const CreatePlaylistUI = (props: any) => {
     });
   };
 
+  const playlistListUiRef = useRef<HTMLDivElement | null>(null);
+  const blinkAfterPlaylistAddRef = useRef(false);
+
+  const runBlinkLastPlaylistItem = () => {
+    const root = playlistListUiRef.current;
+    if (!root) return;
+    const nodes = root.querySelectorAll(".playlist-item-type");
+    const last = nodes[nodes.length - 1] as HTMLElement | undefined;
+    if (!last) return;
+    last.classList.remove("playlist-item-blink");
+    void last.offsetWidth;
+    const done = () => {
+      last.classList.remove("playlist-item-blink");
+    };
+    const safety = window.setTimeout(done, 1800);
+    last.addEventListener(
+      "animationend",
+      () => {
+        window.clearTimeout(safety);
+        done();
+      },
+      { once: true }
+    );
+    last.classList.add("playlist-item-blink");
+    last.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useLayoutEffect(() => {
+    if (!blinkAfterPlaylistAddRef.current) return;
+    blinkAfterPlaylistAddRef.current = false;
+    runBlinkLastPlaylistItem();
+  }, [playList]);
+
   const addDataToPlaylist = (
     data: any[],
     isBulk = false,
@@ -365,6 +398,7 @@ const CreatePlaylistUI = (props: any) => {
       const isSame = G.objectComparator(data, lastData, ["content"]);
       if (!isSame) {
         old.push(data);
+        blinkAfterPlaylistAddRef.current = true;
       } else {
         // os.toast("Last item repeated!");
       }
@@ -1692,37 +1726,43 @@ const CreatePlaylistUI = (props: any) => {
                 </Button>
               </div>
             )}
-            <DragDropT
-              isPlayer={
-                checklistEnabled ||
-                isSomethingChecked ||
-                isSomethingEmbededChecked
-              }
-              isSomethingEmbededChecked={isSomethingEmbededChecked}
-              allowHeadingCheck
-              checkListData={checkListData}
-              layers={true}
-              massAdd={massAdd}
-              attachLink={attachLink}
-              list={playList}
-              onGenClick={() => {
-                setOpenAttachLink(false);
-                setRegenrateUI(true);
-              }}
-              checkListEmbeded={checkListEmbeded}
-              itemSelected={itemSelected}
-              setItemSelected={setItemSelected}
-              setChecklistEmbeded={onCheckEmbeded}
-              onDisembed={onDisembed}
-              embedding={embedding}
-              setEmbedding={setEmbedding}
-              editDataFromPlaylist={editDataFromPlaylist}
-              currentFormat={currentFormat}
-              setList={setPlaylist}
-              deleteFromList={deleteDataFromPlaylist}
-              creatingPlaylist={!creatingPlaylist}
-              setPlaylistFromRow={setPlaylist}
-            />
+            <div
+              ref={playlistListUiRef}
+              className="link-playlist"
+              style={{ width: "100%" }}
+            >
+              <DragDropT
+                isPlayer={
+                  checklistEnabled ||
+                  isSomethingChecked ||
+                  isSomethingEmbededChecked
+                }
+                isSomethingEmbededChecked={isSomethingEmbededChecked}
+                allowHeadingCheck
+                checkListData={checkListData}
+                layers={true}
+                massAdd={massAdd}
+                attachLink={attachLink}
+                list={playList}
+                onGenClick={() => {
+                  setOpenAttachLink(false);
+                  setRegenrateUI(true);
+                }}
+                checkListEmbeded={checkListEmbeded}
+                itemSelected={itemSelected}
+                setItemSelected={setItemSelected}
+                setChecklistEmbeded={onCheckEmbeded}
+                onDisembed={onDisembed}
+                embedding={embedding}
+                setEmbedding={setEmbedding}
+                editDataFromPlaylist={editDataFromPlaylist}
+                currentFormat={currentFormat}
+                setList={setPlaylist}
+                deleteFromList={deleteDataFromPlaylist}
+                creatingPlaylist={!creatingPlaylist}
+                setPlaylistFromRow={setPlaylist}
+              />
+            </div>
 
             {!itemSelected && !regenrateUI && (
               <AttachLink

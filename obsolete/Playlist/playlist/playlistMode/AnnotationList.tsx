@@ -71,6 +71,7 @@ const AnnotationList = (props: any) => {
     annotationData,
     annotationSources,
     tagsSources,
+    isPlayingPlaylist,
   } = props;
   const [filters, setFilters] = useState({ ...initialFilters });
   const [showFilters, setShowFilters] = useState(false);
@@ -355,6 +356,7 @@ const AnnotationList = (props: any) => {
                   onDelete={onDelete}
                   heading={ele.heading}
                   tags={ele.tags}
+                  isPlayingPlaylist={isPlayingPlaylist}
                   data={ele.data}
                   currentOpenedBook={currentOpenedBook}
                   chapter={chapter}
@@ -392,6 +394,7 @@ const AnnotationHeading = (props: any) => {
     index,
     getPosition,
     setShowFilters,
+    isPlayingPlaylist,
   } = props;
   const [isOpen, setIsOpen] = useState(true);
 
@@ -556,6 +559,7 @@ const AnnotationHeading = (props: any) => {
           });
           closeOverlay();
         }}
+        isPlayingPlaylist={isPlayingPlaylist}
         data={data}
         address={address}
         currentOpenedBook={currentOpenedBook}
@@ -567,8 +571,15 @@ const AnnotationHeading = (props: any) => {
 };
 
 const AnnodataMapper = (props: any) => {
-  const { data, address, currentOpenedBook, chapter, heading, onDelete } =
-    props;
+  const {
+    data,
+    address,
+    currentOpenedBook,
+    chapter,
+    heading,
+    onDelete,
+    isPlayingPlaylist,
+  } = props;
   const isMobile =
     (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
     G.MOBILE_VIEWPORT_THRESHOLD;
@@ -709,6 +720,12 @@ const AnnodataMapper = (props: any) => {
                 className="img-icon"
                 src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/86e70522cf977646771dfcffbafda114f8d4a7dbf39923d6791a66b8a25c2a56.svg"
                 onClick={() => {
+                  if (isPlayingPlaylist) {
+                    return ShowNotification({
+                      message: t("actionNotAllowedWhilePlaylistIsPlaying"),
+                      severity: "error",
+                    });
+                  }
                   onDelete(address);
                 }}
                 style={{ cursor: "pointer" }}
@@ -718,6 +735,12 @@ const AnnodataMapper = (props: any) => {
                 className="img-icon"
                 src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/badbe8b10d39a043fbf49a7d7749e4fc311c34c1c8c562ab60ee052e470f5451.svg"
                 onClick={() => {
+                  if (isPlayingPlaylist) {
+                    return ShowNotification({
+                      message: t("actionNotAllowedWhilePlaylistIsPlaying"),
+                      severity: "error",
+                    });
+                  }
                   G.SetEditAnnoData({
                     address: address,
                     prefixAddress: `${authBot?.id}.${currentOpenedBook?.bookId}.${currentOpenedBook?.chapter}`,

@@ -1,3 +1,4 @@
+import sendMessage from "ext_twitchPub.host.sendMessage";
 console.log("updated verse highlights", that);
 
 interface HighlightedVerse {
@@ -65,7 +66,7 @@ if (masks?.uiLoaded && masks?.highlightEnabled) {
     for (let i = 0; i < parts; i++) {
       const partPayload = payload.slice(i * 350, (i + 1) * 350);
       setTimeout(() => {
-        whisper(thisBot, "sendMessage", {
+        sendMessage({
           message: JSON.stringify({
             type: "highlightUpdated",
             payload: partPayload,
@@ -77,7 +78,7 @@ if (masks?.uiLoaded && masks?.highlightEnabled) {
       }, i * 200);
     }
   } else {
-    whisper(thisBot, "sendMessage", {
+    sendMessage({
       message: JSON.stringify({
         type: "highlightUpdated",
         payload,

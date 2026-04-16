@@ -1,3 +1,5 @@
+import sendMessage from "ext_twitchPub.host.sendMessage";
+
 const currentData = { ...that };
 
 let prevData = null;
@@ -7,6 +9,7 @@ if (masks?.currentBookData) {
 }
 
 setTagMask(thisBot, "currentBookData", JSON.stringify(currentData), "local");
+
 if (masks?.uiLoaded) {
   const uid = uuid().slice(0, 5);
 
@@ -19,7 +22,7 @@ if (masks?.uiLoaded) {
         bookId: currentData.bookId,
         chapter: currentData.chapter,
       });
-      whisper(thisBot, "sendMessage", {
+      sendMessage({
         message: JSON.stringify({
           type: "bookChanged",
           parts: 0,
@@ -36,7 +39,7 @@ if (masks?.uiLoaded) {
         translation: currentData.translation,
         baseUrl: currentData?.baseUrl || "https://vmfnri.helloao.org",
       });
-      whisper(thisBot, "sendMessage", {
+      sendMessage({
         message: JSON.stringify({
           type: "translationChanged",
           parts: 0,
@@ -51,7 +54,7 @@ if (masks?.uiLoaded) {
       bookId: currentData.bookId,
       chapter: currentData.chapter,
     });
-    whisper(thisBot, "sendMessage", {
+    sendMessage({
       message: JSON.stringify({
         type: "bookChanged",
         parts: 0,
@@ -62,9 +65,12 @@ if (masks?.uiLoaded) {
     });
   }
 
+  if (globalThis?.currentBookDataRef) {
+    globalThis.currentBookDataRef.current = JSON.stringify(currentData);
+  }
   if (globalThis?.SetQrValue) {
     globalThis.SetQrValue(
-      `https://ao.bot/?pattern=SeedBibleDev&book=${currentData.bookId}&chapter=${currentData.chapter}&translation=${currentData.translation}&ext_twitchSub=true&broadcasterId=${masks.broadcasterId}&clientId=${masks.clientId}&token=${masks.userAccessToken}`
+      `https://ao.bot/?pattern=SeedBibleDev&book=${currentData.bookId}&chapter=${currentData.chapter}&translation=${currentData.translation}&ext_twitchSub=true&broadcasterId=${masks?.broadcasterId || ""}&clientId=${masks?.clientId || ""}&token=${masks?.userAccessToken || ""}`
     );
   }
 }
