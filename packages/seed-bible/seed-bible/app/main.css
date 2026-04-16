@@ -91,6 +91,11 @@
   --sb-empty-pane-toolbar-button-color: var(--sb-font-color);
   --sb-empty-pane-toolbar-button-border-hover: 1px solid var(--sb-primary-color);
 
+  --sb-detached-pane-toolbar-background: #000000b0;
+  --sb-detached-pane-toolbar-font-color: #fff;
+  --sb-detached-pane-body-background: #fff;
+  --sb-detached-pane-body-font-color: #333;
+
   --sb-verse-toolbar-tools-gap: 10px;
   --sb-verse-toolbar-mobile-bottom: 18px;
 
@@ -251,6 +256,12 @@ button {
   border-radius: 0;
 }
 
+.sb-pane-shell-detached[data-anchor="floating"] {
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+}
+
 .sb-pane-detached-title {
   font-size: 12px;
   font-weight: 700;
@@ -283,6 +294,17 @@ button {
   min-height: 0;
   flex: 1;
   overflow: auto;
+
+  background: var(--sb-detached-pane-body-background);
+  color: var(--sb-detached-pane-body-font-color);
+}
+
+.sb-pane-shell-detached[data-anchor="floating"] .sb-pane-detached-body {
+  position: relative;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--sb-secondary-color), transparent 40%),
+    0 22px 40px #0000002c;
+  border-radius: 8px;
 }
 
 .sb-detached-pane-toolbar {
@@ -293,8 +315,10 @@ button {
   justify-content: flex-end;
   gap: 8px;
   padding: 0 10px;
-  color: var(--sb-secondary-font-color);
-  background: color-mix(in srgb, var(--sb-secondary-color), white 35%);
+
+  color: var(--sb-detached-pane-toolbar-font-color);
+  background: var(--sb-detached-pane-toolbar-background);
+
   cursor: move;
   user-select: none;
 }
@@ -302,6 +326,13 @@ button {
 .sb-pane-shell-detached[data-anchor="side"] .sb-detached-pane-toolbar,
 .sb-pane-shell-detached[data-anchor="bottom"] .sb-detached-pane-toolbar {
   cursor: default;
+}
+
+.sb-pane-shell-detached[data-anchor="floating"] .sb-detached-pane-toolbar {
+  margin-top: 8px;
+  border-radius: 8px;
+  align-self: center;
+  justify-content: space-evenly;
 }
 
 .sb-detached-pane-toolbar-item {
@@ -319,6 +350,7 @@ button {
   justify-content: center;
   cursor: pointer;
   padding: 0 6px;
+  color: inherit;
 }
 
 .sb-detached-pane-toolbar-button:hover {
@@ -2017,4 +2049,8 @@ button {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+.flip-x {
+  transform: scaleX(-1);
 }

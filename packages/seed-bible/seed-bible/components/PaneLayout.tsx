@@ -573,6 +573,23 @@ export function PaneLayout(props: PaneLayoutProps) {
                 tabs={tabsManager}
               />
             )}
+            {pane.detachedAnchor === "floating" && (
+              <div
+                className={`sb-pane-detached-resize-handle`}
+                onPointerDown={(event: PointerEvent) => {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  app.selectPane(pane.id);
+                  dragStateRef.current = {
+                    mode: "resize",
+                    paneId: pane.id,
+                    anchor: pane.detachedAnchor,
+                    startX: event.clientX,
+                    startY: event.clientY,
+                  };
+                }}
+              ></div>
+            )}
           </div>
 
           {pane.detachedAnchor === "fullscreen" && (
@@ -701,7 +718,7 @@ export function PaneLayout(props: PaneLayoutProps) {
                       panesManager.setDetachedAnchor(pane.id, "side");
                     }}
                   >
-                    <span className="material-symbols-outlined">
+                    <span className="material-symbols-outlined flip-x">
                       right_panel_open
                     </span>
                     <span className="sr-only">{t("anchor-to-side")}</span>
@@ -753,33 +770,34 @@ export function PaneLayout(props: PaneLayoutProps) {
             </div>
           )}
 
-          {pane.detachedAnchor !== "fullscreen" && (
-            <div
-              className={`sb-pane-detached-resize-handle${
-                pane.detachedAnchor === "side"
-                  ? " sb-pane-detached-resize-handle-side"
-                  : pane.detachedAnchor === "bottom"
-                    ? " sb-pane-detached-resize-handle-bottom"
-                    : ""
-              }`}
-              onPointerDown={(event: PointerEvent) => {
-                event.stopPropagation();
-                event.preventDefault();
-                app.selectPane(pane.id);
-                dragStateRef.current = {
-                  mode: "resize",
-                  paneId: pane.id,
-                  anchor: pane.detachedAnchor,
-                  startX: event.clientX,
-                  startY: event.clientY,
-                };
-              }}
-            >
-              {pane.detachedAnchor === "side" && (
-                <MaterialIcon>drag_indicator</MaterialIcon>
-              )}
-            </div>
-          )}
+          {pane.detachedAnchor !== "fullscreen" &&
+            pane.detachedAnchor !== "floating" && (
+              <div
+                className={`sb-pane-detached-resize-handle${
+                  pane.detachedAnchor === "side"
+                    ? " sb-pane-detached-resize-handle-side"
+                    : pane.detachedAnchor === "bottom"
+                      ? " sb-pane-detached-resize-handle-bottom"
+                      : ""
+                }`}
+                onPointerDown={(event: PointerEvent) => {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  app.selectPane(pane.id);
+                  dragStateRef.current = {
+                    mode: "resize",
+                    paneId: pane.id,
+                    anchor: pane.detachedAnchor,
+                    startX: event.clientX,
+                    startY: event.clientY,
+                  };
+                }}
+              >
+                {pane.detachedAnchor === "side" && (
+                  <MaterialIcon>drag_indicator</MaterialIcon>
+                )}
+              </div>
+            )}
         </div>
       ))}
     </div>
