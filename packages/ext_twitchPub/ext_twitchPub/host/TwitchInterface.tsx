@@ -83,6 +83,16 @@ const TwitchInterface = (props: {
     setTagMask(thisBot, "hideUITimeout", st, "local");
   };
 
+  const hideUIOnTouch = () => {
+    if (masks?.hideUITimeout) {
+      clearTimeout(masks.hideUITimeout);
+    }
+    const st = setTimeout(() => {
+      setUiHidden(true);
+    }, 4000);
+    setTagMask(thisBot, "hideUITimeout", st, "local");
+  };
+
   const showUI = () => {
     if (masks?.hideUITimeout) {
       clearTimeout(masks.hideUITimeout);
@@ -90,16 +100,26 @@ const TwitchInterface = (props: {
     setUiHidden(false);
   };
 
+  const showUIOnTouch = () => {
+    if (masks?.hideUITimeout) {
+      clearTimeout(masks.hideUITimeout);
+    }
+    setUiHidden(false);
+  };
   useEffect(() => {
     const draggableElement = document.getElementById("draggable-container");
     if (!draggableElement) return;
 
     draggableElement.addEventListener("mousedown", showUI);
     draggableElement.addEventListener("mouseleave", hideUI);
+    draggableElement.addEventListener("touchstart", showUIOnTouch);
+    draggableElement.addEventListener("touchend", hideUIOnTouch);
     hideUI();
     return () => {
       draggableElement.removeEventListener("mousedown", showUI);
       draggableElement.removeEventListener("mouseleave", hideUI);
+      draggableElement.removeEventListener("touchstart", showUIOnTouch);
+      draggableElement.removeEventListener("touchend", hideUIOnTouch);
     };
   }, []);
 
@@ -226,10 +246,10 @@ const TwitchInterface = (props: {
               <SettingsIcon width={18} height={18} />
             </button>
             <button
-              className="icon-btn"
+              className="icon-btn material-symbols-outlined"
               onClick={() => whisper(thisBot, "closeInterface")}
             >
-              <span className="material-symbols-outlined">close</span>
+              close
             </button>
           </div>
         </div>

@@ -62,9 +62,10 @@ switch (config.type) {
       }
     }
     for (const key of Object.keys(unhighlightedVerses)) {
-      const [book, chapter] = key.split("-");
+      const [, book, chapter] = key.split("-");
       const verses = unhighlightedVerses[key];
       const currentBook = JSON.parse(masks?.currentBookData || "{}");
+      console.log("Unhighlighting verses for", book, chapter, currentBook);
       if (
         currentBook.book === book &&
         currentBook.chapter == chapter &&

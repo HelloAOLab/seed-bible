@@ -2,6 +2,16 @@ const getConfig = async () => {
   const CLIENT_ID = String("cfjslv2429r70ek579iogr02vecn6d");
   const EVENTSUB_WEBSOCKET_URL = "wss://eventsub.wss.twitch.tv/ws";
 
+  if (masks?.BOT_USER_ID && masks?.OAUTH_TOKEN && masks?.CHAT_CHANNEL_USER_ID) {
+    return {
+      BOT_USER_ID: masks.BOT_USER_ID,
+      OAUTH_TOKEN: masks.OAUTH_TOKEN,
+      CLIENT_ID,
+      CHAT_CHANNEL_USER_ID: masks.CHAT_CHANNEL_USER_ID,
+      EVENTSUB_WEBSOCKET_URL,
+    };
+  }
+
   const urlString = configBot.tags.url;
 
   const hash = new URLSearchParams(new URL(urlString).hash.slice(1));
@@ -22,7 +32,10 @@ const getConfig = async () => {
     const chapter = state.chapter || 1;
     const translation = state.translation || "AAB";
     globalThis?.Open(bookId, chapter, translation);
-    configBot.tags.url = urlString.split("#")[0];
+    setTagMask(thisBot, "BOT_USER_ID", res.data.user_id, "local");
+    setTagMask(thisBot, "OAUTH_TOKEN", accessToken, "local");
+    setTagMask(thisBot, "CHAT_CHANNEL_USER_ID", broadcasterId, "local");
+    os.goToURL(urlString.split("#")[0]);
     return {
       BOT_USER_ID: res.data.user_id,
       OAUTH_TOKEN: accessToken,
