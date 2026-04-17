@@ -2,6 +2,7 @@ import QRCodeComponent from "ext_twitchPub.host.QRCode";
 import { TwitchIcon, SettingsIcon } from "ext_twitchPub.host.icons";
 import sendAnnouncement from "ext_twitchPub.host.sendAnnouncement";
 import initializeTwitchBot from "ext_twitchPub.host.initializeTwitchBot";
+import getUrl from "ext_twitchPub.host.getUrl";
 
 const { useState, useEffect, useRef } = os.appHooks;
 const TwitchInterface = (props: {
@@ -23,7 +24,7 @@ const TwitchInterface = (props: {
   );
 
   const [qrValue, setQrValue] = useState<string>(
-    `https://ao.bot/?pattern=SeedBibleDev&book=GEN&chapter=1&translation=AAB&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`
+    getUrl({ clientId: clientId || "", broadcasterId: broadcasterId || "" })
   );
 
   useEffect(() => {
@@ -44,7 +45,7 @@ const TwitchInterface = (props: {
         token,
         broadcasterId,
         broadcasterId,
-        `Join me at https://ao.bot/?pattern=SeedBibleDev&book=GEN&chapter=1&translation=AAB&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`,
+        `Join me at ${getUrl({ clientId: clientId || "", broadcasterId: broadcasterId || "" })}`,
         clientId || ""
       );
       setAnnouncementSend(true);
@@ -52,11 +53,23 @@ const TwitchInterface = (props: {
     if (currentBookDataRef.current) {
       const currentBookData = JSON.parse(currentBookDataRef.current);
       setQrValue(
-        `https://ao.bot/?pattern=SeedBibleDev&book=${currentBookData.bookId}&chapter=${currentBookData.chapter}&translation=${currentBookData.translation}&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`
+        getUrl({
+          clientId: clientId || "",
+          broadcasterId: broadcasterId || "",
+          book: currentBookData.bookId,
+          chapter: currentBookData.chapter,
+          translation: currentBookData.translation,
+        })
       );
     } else {
       setQrValue(
-        `https://ao.bot/?pattern=SeedBibleDev&book=GEN&chapter=1&translation=AAB&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`
+        getUrl({
+          clientId: clientId || "",
+          broadcasterId: broadcasterId || "",
+          book: "GEN",
+          chapter: 1,
+          translation: "AAB",
+        })
       );
     }
   }, [broadcasterId, clientId, token, announcementSend]);
@@ -101,7 +114,7 @@ const TwitchInterface = (props: {
             token,
             broadcasterId,
             broadcasterId,
-            `Join me at https://ao.bot/?pattern=SeedBibleDev&book=${currentBookData.bookId}&chapter=${currentBookData.chapter}&translation=${currentBookData.translation}&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`,
+            `Join me at ${getUrl({ clientId: clientId || "", broadcasterId: broadcasterId || "", book: currentBookData.bookId, chapter: currentBookData.chapter, translation: currentBookData.translation })}`,
             clientId || ""
           );
         }

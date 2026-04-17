@@ -1,4 +1,5 @@
 import sendMessage from "ext_twitchPub.host.sendMessage";
+import getUrl from "ext_twitchPub.host.getUrl";
 
 const currentData = { ...that };
 
@@ -70,7 +71,13 @@ if (masks?.uiLoaded) {
   }
   if (globalThis?.SetQrValue) {
     globalThis.SetQrValue(
-      `https://ao.bot/?pattern=SeedBibleDev&book=${currentData.bookId}&chapter=${currentData.chapter}&translation=${currentData.translation}&ext_twitchSub=true&broadcasterId=${masks?.broadcasterId || ""}&clientId=${masks?.clientId || ""}&token=${masks?.userAccessToken || ""}`
+      getUrl({
+        clientId: masks.clientId || "",
+        broadcasterId: masks.broadcasterId || "",
+        book: currentData.bookId,
+        chapter: currentData.chapter,
+        translation: currentData.translation,
+      })
     );
   }
 }

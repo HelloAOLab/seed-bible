@@ -2,7 +2,17 @@
   "author": "Sujan Barman",
   "configEditor": {
     "app": "",
-    "author": "Sujan Barman"
+    "author": "Sujan Barman",
+    "toolbarConfig": {
+      "label": "Twitch client",
+      "icon": "close",
+      "hasToggle": "true",
+      "run": "toggleInterface",
+      "iconUrl": "https://res.cloudinary.com/dacw0qnpr/image/upload/v1774035767/Vector_6_if8usw.svg",
+      "showInPageToolbar": true,
+      "showInStarterToolbar": true,
+      "active": false
+    }
   },
   "createdAt": "2026-03-12T19:27:26.025Z",
   "dependencies": [],

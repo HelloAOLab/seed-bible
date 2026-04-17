@@ -1,1 +1,1 @@
-whisper(thisBot, "initializeTwitchWS");
+thisBot.initializeTwitchWS();
