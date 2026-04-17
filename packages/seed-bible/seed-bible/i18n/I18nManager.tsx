@@ -108,11 +108,7 @@ export function useI18n(ns?: string) {
   const translate = ns
     ? (key: string, options?: Record<string, unknown>) =>
         t(key, { ...options, ns })
-    : (...args: any[]) => {
-        const res = t(...args);
-        console.log("Translating with args:", args, "Result:", res);
-        return res;
-      };
+    : t;
 
   return useMemo(
     () => ({
