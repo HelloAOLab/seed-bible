@@ -32,6 +32,8 @@
   --sb-verse-font-family: "Newsreader", serif;
   --sb-verse-font-color: #333;
   --sb-verse-cursor: pointer;
+  --sb-scripture-font-size: 1em;
+  --sb-scripture-line-height: 2;
 
   --sb-verse-words-of-jesus-color: #c00;
   --sb-verse-words-of-jesus-font-family: inherit;
@@ -657,9 +659,7 @@ h6 {
 }
 
 .sb-chapter-content {
-  line-height: 2;
   font-family: var(--sb-verse-font-family);
-  font-size: 1.2em;
 
   padding-bottom: 160px;
 }
@@ -682,6 +682,8 @@ h6 {
   font-family: var(--sb-hebrew-subtitle-font-family);
   font-style: var(--sb-hebrew-subtitle-font-style);
   color: var(--sb-hebrew-subtitle-font-color);
+  font-size: var(--sb-scripture-font-size);
+  line-height: var(--sb-scripture-line-height);
 }
 
 .sb-verse {
@@ -689,6 +691,8 @@ h6 {
   color: var(--sb-verse-font-color);
   font-family: var(--sb-verse-font-family);
   cursor: var(--sb-verse-cursor);
+  font-size: var(--sb-scripture-font-size);
+  line-height: var(--sb-scripture-line-height);
 
   transition:
     background-color 0.2s ease,

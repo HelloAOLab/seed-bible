@@ -529,6 +529,7 @@ export function PaneLayout(props: PaneLayoutProps) {
     tabs: tabsManager,
     sidebar,
     tools: toolsManager,
+    config: configManager,
   } = state;
   const panes = app.effectivePanes.value;
   const layout = app.panelsEnabled.value ? panesManager.layout.value : "single";
@@ -822,6 +823,16 @@ export function PaneLayout(props: PaneLayoutProps) {
                 currentPane={pane}
                 readingState={pane.tab.readingState}
                 selectorState={selectorState}
+                scriptureSettings={{
+                  scriptureFontSize:
+                    configManager.config.value.scriptureFontSize,
+                  scriptureLineSpacing:
+                    configManager.config.value.scriptureLineSpacing,
+                  scriptureShowHeadings:
+                    configManager.config.value.scriptureShowHeadings,
+                  scriptureShowVerseNumbers:
+                    configManager.config.value.scriptureShowVerseNumbers,
+                }}
               />
               <BelowReaderToolbar
                 toolsManager={toolsManager}
@@ -986,6 +997,16 @@ export function PaneLayout(props: PaneLayoutProps) {
                   currentPane={pane}
                   readingState={pane.tab.readingState}
                   selectorState={selectorState}
+                  scriptureSettings={{
+                    scriptureFontSize:
+                      configManager.config.value.scriptureFontSize,
+                    scriptureLineSpacing:
+                      configManager.config.value.scriptureLineSpacing,
+                    scriptureShowHeadings:
+                      configManager.config.value.scriptureShowHeadings,
+                    scriptureShowVerseNumbers:
+                      configManager.config.value.scriptureShowVerseNumbers,
+                  }}
                 />
               </PaneReaderScroller>
             ) : (

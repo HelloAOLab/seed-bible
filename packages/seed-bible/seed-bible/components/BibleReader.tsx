@@ -12,6 +12,17 @@ import type {
 import type { ChapterHighlight } from "seed-bible.managers.HighlightsManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { Pane } from "seed-bible.managers.PanesManager";
+import type {
+  ScriptureLineSpacing,
+  TextSize,
+} from "seed-bible.managers.ConfigManager";
+
+interface ScriptureReaderSettings {
+  scriptureFontSize: TextSize;
+  scriptureLineSpacing: ScriptureLineSpacing;
+  scriptureShowHeadings: boolean;
+  scriptureShowVerseNumbers: boolean;
+}
 
 interface VerseLine {
   indentLevel: number;
@@ -399,7 +410,8 @@ function renderChapterContent(
   selectedVerses: BibleSelectedVerse[],
   onOpenFootnote: (noteId: number, verse: ChapterVerse | null) => void,
   highlights: ChapterHighlight[],
-  decorations: VerseDecoration[]
+  decorations: VerseDecoration[],
+  settings: ScriptureReaderSettings
 ) {
   if (!chapterData) {
     return null;
@@ -488,7 +500,11 @@ function renderChapterContent(
 
     const value = entry;
 
-    if (value.type === "heading" && Array.isArray(value.content)) {
+    if (
+      settings.scriptureShowHeadings &&
+      value.type === "heading" &&
+      Array.isArray(value.content)
+    ) {
       const heading = (value.content as unknown[])
         .filter((item) => typeof item === "string")
         .join(" ");
@@ -593,7 +609,7 @@ function renderChapterContent(
                     className={verseDecoratorClassName}
                     style={verseDecoratorStyle}
                   >
-                    {segIndex === 0 && (
+                    {settings.scriptureShowVerseNumbers && segIndex === 0 && (
                       <sup className="sb-verse-number">{value.number}</sup>
                     )}
                     {segment.parts.map((part, partIndex) =>
@@ -623,9 +639,11 @@ function renderChapterContent(
                     className={verseDecoratorClassName}
                     style={verseDecoratorStyle}
                   >
-                    {segIndex === 0 && lineIndex === 0 && (
-                      <sup className="sb-verse-number">{value.number}</sup>
-                    )}
+                    {settings.scriptureShowVerseNumbers &&
+                      segIndex === 0 &&
+                      lineIndex === 0 && (
+                        <sup className="sb-verse-number">{value.number}</sup>
+                      )}
                     {line.parts.map((part, partIndex) =>
                       renderInlineContent(
                         part,
@@ -657,7 +675,9 @@ function renderChapterContent(
           tabIndex={0}
         >
           <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
-            <sup className="sb-verse-number">{value.number}</sup>
+            {settings.scriptureShowVerseNumbers && (
+              <sup className="sb-verse-number">{value.number}</sup>
+            )}
             {value.content.map((part, index) =>
               renderInlineContent(
                 part,
@@ -680,10 +700,19 @@ interface BibleReaderProps {
   currentPane: Pane;
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
+  scriptureSettings: ScriptureReaderSettings;
 }
 
+const SCRIPTURE_FONT_SIZE_SMALL = "1em";
+const SCRIPTURE_FONT_SIZE_MEDIUM = "1.2em";
+const SCRIPTURE_FONT_SIZE_LARGE = "1.4em";
+
+const SCRIPTURE_LINE_HEIGHT_SMALL = "1.6";
+const SCRIPTURE_LINE_HEIGHT_MEDIUM = "2";
+const SCRIPTURE_LINE_HEIGHT_LARGE = "2.4";
+
 export function BibleReader(props: BibleReaderProps) {
-  const { currentPane, readingState, selectorState } = props;
+  const { currentPane, readingState, selectorState, scriptureSettings } = props;
   const {
     translationId,
     translation,
@@ -708,6 +737,21 @@ export function BibleReader(props: BibleReaderProps) {
       null
   );
 
+  const scriptureFontSize =
+    scriptureSettings.scriptureFontSize === "XS" ||
+    scriptureSettings.scriptureFontSize === "S"
+      ? SCRIPTURE_FONT_SIZE_SMALL
+      : scriptureSettings.scriptureFontSize === "M"
+        ? SCRIPTURE_FONT_SIZE_MEDIUM
+        : SCRIPTURE_FONT_SIZE_LARGE;
+
+  const scriptureLineHeight =
+    scriptureSettings.scriptureLineSpacing === "S"
+      ? SCRIPTURE_LINE_HEIGHT_SMALL
+      : scriptureSettings.scriptureLineSpacing === "M"
+        ? SCRIPTURE_LINE_HEIGHT_MEDIUM
+        : SCRIPTURE_LINE_HEIGHT_LARGE;
+
   return (
     <div
       className="sb-bible-reader"
@@ -731,7 +775,13 @@ export function BibleReader(props: BibleReaderProps) {
       )}
 
       {!error.value && chapterData.value && (
-        <div className="sb-chapter-content">
+        <div
+          className="sb-chapter-content"
+          style={{
+            "--sb-scripture-font-size": scriptureFontSize,
+            "--sb-scripture-line-height": scriptureLineHeight,
+          }}
+        >
           {renderChapterContent(
             chapterData.value,
             (verse, event) => {
@@ -742,7 +792,8 @@ export function BibleReader(props: BibleReaderProps) {
               selectFootnote(noteId);
             },
             highlights.value.highlights,
-            decorations.value
+            decorations.value,
+            scriptureSettings
           )}
         </div>
       )}
