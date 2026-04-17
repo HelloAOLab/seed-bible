@@ -178,3 +178,9 @@
   -webkit-appearance: none;
   margin: 0;
 }
+
+@media only screen and (max-width: 349px) {
+  .twitchPub-container {
+    transform: scale(0.8);
+  }
+}

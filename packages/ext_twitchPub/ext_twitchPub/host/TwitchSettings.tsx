@@ -52,10 +52,10 @@ const TwitchSettings = (props: {
             Twitch Settings
           </span>
           <button
-            className="icon-btn"
+            className="icon-btn material-symbols-outlined"
             onClick={() => setCurrentPage("interface")}
           >
-            <span className="material-symbols-outlined">arrow_back</span>
+            arrow_back
           </button>
         </div>
         <div className="twitchPub-content">
