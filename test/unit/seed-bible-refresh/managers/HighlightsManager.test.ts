@@ -27,6 +27,7 @@ describe("HighlightsManager", () => {
       login: jest.fn().mockResolvedValue(undefined),
       logout: jest.fn().mockResolvedValue(undefined),
       getUserProfile: jest.fn().mockResolvedValue(null),
+      uploadProfilePicture: jest.fn().mockResolvedValue(undefined),
     };
 
     (globalThis as any).os = {

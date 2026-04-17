@@ -45,41 +45,149 @@ function AccountSettingsView(props: {
 }) {
   const { state, onBack } = props;
   const { login } = state;
+  const { t } = useI18n();
   const isLoggedIn = login.userId.value !== null;
   const profile = login.profile.value;
 
   const name = useSignal(profile?.name ?? "");
   const location = useSignal(profile?.location ?? "");
+  const description = useSignal(profile?.description ?? "");
+  const pictureUrl = useSignal(profile?.pictureUrl ?? "");
+  const isUploadingPicture = useSignal(false);
+  const uidCopied = useSignal(false);
 
   const handleSave = () => {
     login.updateProfile({
       name: name.value,
       location: location.value || null,
+      description: description.value || null,
+      pictureUrl: pictureUrl.value || null,
     });
+  };
+
+  const handleUploadPicture = async () => {
+    if (isUploadingPicture.value) {
+      return;
+    }
+    isUploadingPicture.value = true;
+    try {
+      await login.uploadProfilePicture();
+      pictureUrl.value = login.profile.value?.pictureUrl ?? pictureUrl.value;
+    } catch (error) {
+      console.error("Failed to upload profile picture.", error);
+    } finally {
+      isUploadingPicture.value = false;
+    }
+  };
+
+  const handleCopyUserId = async () => {
+    const id = login.userId.value;
+    if (!id) {
+      return;
+    }
+
+    try {
+      os.setClipboard(id);
+      uidCopied.value = true;
+      setTimeout(() => {
+        uidCopied.value = false;
+      }, 1200);
+    } catch (error) {
+      console.error("Failed to copy user ID.", error);
+    }
   };
 
   return (
     <div className="sb-settings-page">
-      <SettingsSubPageHeader title="Account settings" onBack={onBack} />
+      <SettingsSubPageHeader
+        title={t("account-settings", { defaultValue: "Account settings" })}
+        onBack={onBack}
+      />
       <section className="sb-settings-section">
         {isLoggedIn ? (
-          <>
+          <div className="sb-account-settings-layout">
+            <p className="sb-account-settings-intro">
+              {t("account-settings-intro", {
+                defaultValue: "Manage your profile information here",
+              })}
+            </p>
+
+            <div className="sb-account-picture-row">
+              {pictureUrl.value ? (
+                <img
+                  className="sb-account-picture-preview"
+                  src={pictureUrl.value}
+                  alt={t("profile-picture", {
+                    defaultValue: "Profile picture",
+                  })}
+                />
+              ) : (
+                <div
+                  className="sb-account-picture-placeholder"
+                  aria-hidden="true"
+                >
+                  <span className="material-symbols-outlined">person</span>
+                </div>
+              )}
+              <button
+                className="sb-account-picture-button"
+                onClick={() => void handleUploadPicture()}
+                disabled={isUploadingPicture.value}
+              >
+                {isUploadingPicture.value
+                  ? t("uploading", { defaultValue: "Uploading..." })
+                  : t("update-picture", { defaultValue: "Update picture" })}
+              </button>
+            </div>
+
             <div className="sb-settings-field-row">
               <label
                 className="sb-settings-field-label"
                 htmlFor="sb-profile-name"
               >
-                Name
+                {t("profile-name", { defaultValue: "Profile name" })}
               </label>
               <input
                 id="sb-profile-name"
-                className="sb-settings-text-input"
+                className="sb-settings-text-input sb-account-text-input"
                 type="text"
                 value={name.value}
                 onInput={(event: Event) => {
                   name.value = (event.currentTarget as HTMLInputElement).value;
                 }}
-                placeholder="Your name"
+                placeholder={t("profile-name-placeholder", {
+                  defaultValue: "e.g Craig family",
+                })}
+              />
+              <p className="sb-account-field-helper">
+                {t("profile-name-helper", {
+                  defaultValue: "You can change this later",
+                })}
+              </p>
+            </div>
+            <div className="sb-settings-field-row">
+              <label
+                className="sb-settings-field-label"
+                htmlFor="sb-profile-description"
+              >
+                {t("description", { defaultValue: "Description" })}{" "}
+                <span className="sb-account-label-optional">
+                  {t("optional", { defaultValue: "(Optional)" })}
+                </span>
+              </label>
+              <textarea
+                id="sb-profile-description"
+                className="sb-settings-text-input sb-settings-textarea sb-account-textarea"
+                value={description.value ?? ""}
+                maxLength={300}
+                onInput={(event: Event) => {
+                  description.value = (
+                    event.currentTarget as HTMLTextAreaElement
+                  ).value;
+                }}
+                placeholder={t("description-placeholder", {
+                  defaultValue: "Enter your profile description...",
+                })}
               />
             </div>
             <div className="sb-settings-field-row">
@@ -87,11 +195,14 @@ function AccountSettingsView(props: {
                 className="sb-settings-field-label"
                 htmlFor="sb-profile-location"
               >
-                Location
+                {t("location", { defaultValue: "Location" })}{" "}
+                <span className="sb-account-label-optional">
+                  {t("optional", { defaultValue: "(Optional)" })}
+                </span>
               </label>
               <input
                 id="sb-profile-location"
-                className="sb-settings-text-input"
+                className="sb-settings-text-input sb-account-text-input"
                 type="text"
                 value={location.value ?? ""}
                 onInput={(event: Event) => {
@@ -99,23 +210,74 @@ function AccountSettingsView(props: {
                     event.currentTarget as HTMLInputElement
                   ).value;
                 }}
-                placeholder="Your location"
+                placeholder={t("location-placeholder", {
+                  defaultValue: "e.g Austin,TX",
+                })}
               />
             </div>
+
+            <div className="sb-settings-field-row">
+              <label className="sb-settings-field-label">
+                {t("your-id-is", { defaultValue: "Your ID is:" })}
+              </label>
+              <div className="sb-account-uid-row">
+                <span
+                  className="sb-account-uid-value"
+                  title={login.userId.value ?? ""}
+                >
+                  {login.userId.value}
+                </span>
+                <button
+                  type="button"
+                  className="sb-account-copy-uid-button"
+                  onClick={() => void handleCopyUserId()}
+                  aria-label={t("copy-user-id", {
+                    defaultValue: "Copy user ID",
+                  })}
+                  title={
+                    uidCopied.value
+                      ? t("copied", { defaultValue: "Copied" })
+                      : t("copy", { defaultValue: "Copy" })
+                  }
+                >
+                  <span className="material-symbols-outlined">
+                    {uidCopied.value ? "check" : "content_copy"}
+                  </span>
+                </button>
+              </div>
+            </div>
+
             <div className="sb-settings-actions">
-              <button className="sb-settings-save-button" onClick={handleSave}>
-                Save
+              <button
+                className="sb-settings-save-button sb-account-save-button"
+                onClick={handleSave}
+              >
+                {t("save-changes", { defaultValue: "Save changes" })}
               </button>
             </div>
-          </>
+
+            <div className="sb-account-signout-section">
+              <button
+                className="sb-account-signout-button"
+                onClick={() => void os.signOut()}
+              >
+                <span className="material-symbols-outlined">logout</span>
+                {t("sign-out", { defaultValue: "Sign out" })}
+              </button>
+            </div>
+          </div>
         ) : (
           <div className="sb-settings-login-prompt">
-            <p>Please log in to view and edit your profile.</p>
+            <p>
+              {t("login-required-message", {
+                defaultValue: "Please log in to view and edit your profile.",
+              })}
+            </p>
             <button
               className="sb-settings-action-button"
               onClick={() => void login.login()}
             >
-              Log in
+              {t("log-in", { defaultValue: "Log in" })}
             </button>
           </div>
         )}
