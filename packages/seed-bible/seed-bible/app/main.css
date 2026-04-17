@@ -1279,6 +1279,12 @@ button {
     border-right: none;
     padding-right: 0;
   }
+
+  .sb-pane-shell:not(.sb-pane-shell-detached) {
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
 }
 
 .sb-tabs-sidebar {
