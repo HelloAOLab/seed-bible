@@ -584,7 +584,7 @@
   "nowPlaying": "Now playing",
   "playlistActions": "Playlist Settings",
   "playlistActionsDesc": "Adjust how your playlist behaves while playing.",
-  "movePlaybarInside": "Keep playbar inside the player",
+  "movePlaybarInside": "Move player inside the Queue",
   "checklistEnabled": "Checklist enabled",
   "planEnabled": "Plan enabled",
   "noItemsYet": "No items yet, add something below.",
