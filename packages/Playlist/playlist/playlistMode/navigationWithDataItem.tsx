@@ -260,7 +260,6 @@ G.NagiationTimeout = setTimeout(async () => {
       // await openBook(book, dataToNavigate.additionalInfo.chapter);
       break;
     }
-    case "verse-range":
     case "verse-grouped":
     case "verse": {
       let bookName = dataToNavigate.additionalInfo.book;
