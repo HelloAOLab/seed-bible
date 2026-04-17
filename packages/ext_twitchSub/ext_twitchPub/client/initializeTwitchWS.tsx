@@ -6,7 +6,7 @@ const {
   CLIENT_ID,
   CHAT_CHANNEL_USER_ID,
   EVENTSUB_WEBSOCKET_URL,
-} = getConfig();
+} = await getConfig();
 
 if (
   !BOT_USER_ID ||
@@ -79,7 +79,7 @@ function handleWebSocketMessage(data: any) {
           // First, print the message to the program's console.
           console.log("wsss:- " + data);
 
-          if (data.payload.event.chatter_user_id === BOT_USER_ID) {
+          if (data.payload.event.broadcaster_user_id === CHAT_CHANNEL_USER_ID) {
             try {
               const config = JSON.parse(data.payload.event.message.text);
               whisper(thisBot, "handleEvents", {
@@ -154,9 +154,15 @@ const handleWS = async () => {
   if (!isAuthValid) {
     return;
   }
+  setTagMask(thisBot, "translationEnabled", true, "local");
+
+  setTagMask(thisBot, "highlightEnabled", true, "local");
+
+  setTagMask(thisBot, "chapterFollowEnabled", true, "local");
+
+  setTagMask(thisBot, "WSStarted", true, "local");
 
   startWebSocketClient();
-  setTagMask(thisBot, "uiLoaded", true, "local");
 };
 
 handleWS();

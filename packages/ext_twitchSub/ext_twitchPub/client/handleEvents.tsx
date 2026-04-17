@@ -4,6 +4,10 @@ const config = that.config;
 
 switch (config.type) {
   case "bookChanged": {
+    if (masks?.chapterFollowEnabled === false) {
+      console.log("Chapter follow is disabled, not changing book");
+      break;
+    }
     const { payload } = config;
     const { bookId, chapter, translation } = JSON.parse(payload);
     console.log("Opening book", bookId, chapter, translation);
@@ -11,14 +15,12 @@ switch (config.type) {
     break;
   }
   case "translationChanged": {
+    if (masks?.translationEnabled === false) {
+      console.log("Translation change is disabled, not changing translation");
+      break;
+    }
     const { payload } = config;
     const { translation, baseUrl } = JSON.parse(payload);
-    console.log(
-      "Changing translation to",
-      translation,
-      "with base URL",
-      baseUrl
-    );
     web
       .get(`${baseUrl}/api/${translation}/books.json`)
       .then((e) => {
@@ -30,6 +32,10 @@ switch (config.type) {
     break;
   }
   case "highlightUpdated": {
+    if (masks?.highlightEnabled === false) {
+      console.log("Highlighting is disabled, not updating highlights");
+      break;
+    }
     const { payload, uid, currentPart, parts } = config;
     const fullPayload = joinParts({ payload, uid, currentPart, parts });
     if (!fullPayload) {
@@ -42,11 +48,6 @@ switch (config.type) {
       break;
     }
     const { highlightedVerses, unhighlightedVerses } = JSON.parse(fullPayload);
-    console.log(
-      "Updating verse highlights",
-      highlightedVerses,
-      unhighlightedVerses
-    );
     const highlightKeys = Object.keys(highlightedVerses);
     for (const key of highlightKeys) {
       const [color, book, chapter] = key.split("-");
