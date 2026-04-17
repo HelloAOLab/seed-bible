@@ -38,6 +38,13 @@ export interface LoginManager {
    * @returns A promise that resolves with the profile information for the user.
    */
   getUserProfile: (userId: string) => Promise<UserProfile>;
+
+  /**
+   * Prompts the user to upload a profile picture, stores it as a public file
+   * record, and saves the resulting URL to the user's profile.
+   * Resolves without changes if no file is selected or the user is not authenticated.
+   */
+  uploadProfilePicture: () => Promise<void>;
 }
 
 export const userProfileSchema = z.object({
@@ -135,6 +142,31 @@ export function createLoginManager(): LoginManager {
     updateUserProfile(userId.value, nextProfile);
   };
 
+  const uploadProfilePicture = async (): Promise<void> => {
+    if (!userId.value) {
+      console.warn("Cannot upload profile picture: no authenticated user");
+      return;
+    }
+
+    const files = await os.showUploadFiles();
+    const file = files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const result = await os.recordFile(userId.value, file.data, {
+      mimeType: file.mimeType,
+      markers: ["publicRead"],
+    });
+
+    if (result.success === false) {
+      console.error("Profile picture upload failed:", result);
+      return;
+    }
+
+    updateProfile({ pictureUrl: result.url });
+  };
+
   void os
     .requestAuthBotInBackground()
     .then((bot) => {
@@ -156,5 +188,6 @@ export function createLoginManager(): LoginManager {
     logout,
     updateProfile,
     getUserProfile,
+    uploadProfilePicture,
   };
 }

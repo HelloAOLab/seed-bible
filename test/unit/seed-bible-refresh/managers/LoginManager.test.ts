@@ -178,6 +178,111 @@ describe("createLoginManager", () => {
     expect(getDataMock).toHaveBeenCalledWith("custom-user", "profile");
     expect(profile).toEqual({ name: "Dave" });
   });
+
+  describe("uploadProfilePicture()", () => {
+    let showUploadFilesMock: jest.Mock;
+    let recordFileMock: jest.Mock;
+
+    beforeEach(() => {
+      showUploadFilesMock = jest.fn();
+      recordFileMock = jest.fn();
+
+      (globalThis as any).os = {
+        ...(globalThis as any).os,
+        showUploadFiles: showUploadFilesMock,
+        recordFile: recordFileMock,
+      };
+    });
+
+    it("does nothing when no user is authenticated", async () => {
+      const manager = createLoginManager();
+
+      await manager.uploadProfilePicture();
+
+      expect(showUploadFilesMock).not.toHaveBeenCalled();
+      expect(recordFileMock).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith(
+        "Cannot upload profile picture: no authenticated user"
+      );
+    });
+
+    it("does nothing when the user cancels file selection", async () => {
+      const bot = createBot("user-upload");
+      requestAuthBotInBackgroundMock.mockResolvedValue(bot);
+      showUploadFilesMock.mockResolvedValue([]);
+
+      const manager = createLoginManager();
+      await waitFor(() => manager.userId.value === "user-upload");
+
+      await manager.uploadProfilePicture();
+
+      expect(recordFileMock).not.toHaveBeenCalled();
+    });
+
+    it("uploads the file and saves the URL to the profile on success", async () => {
+      const bot = createBot("user-upload");
+      requestAuthBotInBackgroundMock.mockResolvedValue(bot);
+
+      const fakeFile = {
+        data: new Uint8Array([1, 2, 3]),
+        name: "avatar.png",
+        mimeType: "image/png",
+      };
+      showUploadFilesMock.mockResolvedValue([fakeFile]);
+      recordFileMock.mockResolvedValue({
+        success: true,
+        url: "https://example.com/avatar.png",
+      });
+
+      const manager = createLoginManager();
+      await waitFor(() => manager.userId.value === "user-upload");
+
+      await manager.uploadProfilePicture();
+
+      expect(recordFileMock).toHaveBeenCalledWith(
+        "user-upload",
+        fakeFile.data,
+        { mimeType: "image/png", markers: ["publicRead"] }
+      );
+      expect(manager.profile.value?.pictureUrl).toBe(
+        "https://example.com/avatar.png"
+      );
+    });
+
+    it("logs an error and does not update the profile when the upload fails", async () => {
+      const bot = createBot("user-upload-fail");
+      requestAuthBotInBackgroundMock.mockResolvedValue(bot);
+
+      const fakeFile = {
+        data: new Uint8Array([1, 2, 3]),
+        name: "avatar.png",
+        mimeType: "image/png",
+      };
+      showUploadFilesMock.mockResolvedValue([fakeFile]);
+      recordFileMock.mockResolvedValue({
+        success: false,
+        errorCode: "upload_failed",
+        errorMessage: "Upload failed.",
+      });
+
+      const errorSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+
+      const manager = createLoginManager();
+      await waitFor(() => manager.userId.value === "user-upload-fail");
+
+      await manager.uploadProfilePicture();
+
+      expect(manager.profile.value?.pictureUrl).toBeUndefined();
+      expect(errorSpy).toHaveBeenCalledWith(
+        "Profile picture upload failed:",
+        expect.objectContaining({ success: false })
+      );
+
+      errorSpy.mockRestore();
+    });
+  });
 });
 
 describe("userProfileSchema", () => {

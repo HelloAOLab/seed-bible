@@ -69,20 +69,8 @@ function AccountSettingsView(props: {
     }
     isUploadingPicture.value = true;
     try {
-      const files = await os.showUploadFiles();
-      const file = files?.[0];
-      if (!file || !login.userId.value) {
-        return;
-      }
-      const result = await os.recordFile(login.userId.value, file.data, {
-        mimeType: file.mimeType,
-        markers: ["publicRead"],
-      });
-      if (result.success === false) {
-        console.error("File upload failed:", result);
-        return;
-      }
-      pictureUrl.value = result.url;
+      await login.uploadProfilePicture();
+      pictureUrl.value = login.profile.value?.pictureUrl ?? pictureUrl.value;
     } catch (error) {
       console.error("Failed to upload profile picture.", error);
     } finally {
