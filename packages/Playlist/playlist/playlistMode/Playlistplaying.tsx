@@ -968,92 +968,25 @@ const PlayingPlaylist = () => {
             {Object.keys(G.PlayingPlaylists).map((key, index) => {
               const { name, list, broken, playlistID, id, isLayers } =
                 G.PlayingPlaylists[key];
-              if (playlistID) {
-                if (!G["defaultplaylistProgress"])
-                  G["defaultplaylistProgress"] = {};
-                if (!G["defaultplaylistChecked"])
-                  G["defaultplaylistChecked"] = {};
-                G["defaultplaylistProgress"][playlistID] = {
-                  ...itemVisitedMap,
-                };
-                G["defaultplaylistChecked"][playlistID] = {
-                  ...(G.PlayingPlaylistCheckedItems?.[G.PlayingPlaylistID] ||
-                    {}),
-                };
-                G?.savePlaylistProgress && G.savePlaylistProgress(playlistID);
-              }
               return (
                 <>
-                  {index !== 0 && (
-                    <div className="align-center justify-between heading-queue">
-                      <h4 key={`heading${id}`} style={{ margin: "0" }}>
-                        {broken ? "" : "Next in "}
-                        {name}
-                      </h4>
-                      <span
-                        onClick={() => {
-                          setQueueDeleteConfirm(parseInt(key));
-                        }}
-                        style={{ cursor: "pointer" }}
-                        className="material-symbols-outlined unfollow"
-                      >
-                        delete
-                      </span>
-                    </div>
-                  )}
-                  <DragDropT
-                    key={id}
-                    setRef={refs}
-                    isPlayer={G.PPchecklistEnabled}
-                    currentFormat={currentFormat}
+                  <PlaylistQueueContainer
+                    name={name}
                     list={list}
-                    playingPlaylist={true}
-                    layers={true}
-                    currentDateActive={activeDate}
-                    editDataFromPlaylist={(data: any, play = true) =>
-                      editDataFromPlaylist(data, key, play)
-                    }
-                    // oldItemsMap={{ ...itemVisitedMap, ...checkedItems }}
-                    checkListData={
-                      G.PlayingPlaylistCheckedItems?.[G.PlayingPlaylistID] || {}
-                    }
-                    setList={(newList: any) => {
-                      let listLatest = [...newList];
-                      if (typeof newList === "function") {
-                        listLatest = newList(list);
-                      }
-                      G.SetPlayingPlaylists?.((prev: any) => ({
-                        ...prev,
-                        [key]: { name, list: listLatest },
-                      }));
-                      // setList((prev) => {
-                      //     const item = prev[currIndex.index];
-                      //     return [...oldList, item, ...listLatest]
-                      // });
-                    }}
-                    activeItemID={
-                      key == G.CurrentIndexItem.key ? currentItemID : 0
-                    }
-                    // activeItemList={false ? activeIndexs : {}}
-                    deleteFromList={(index: any, pId: any, id: any) => {
-                      onDeleteFromQueue(key, index, pId, id);
-                    }}
-                    isDeleteShow
-                    creatingPlaylist={false}
-                    onClick={(params: any) => {
-                      const { dataItem, bulkAdd, justPlay } = params;
-                      DataManager.cancelCurrentPlayingSound();
-                      if (justPlay) {
-                        thisBot.navigationWithDataItem({ dataItem });
-                        return;
-                      }
-                      onClick({
-                        dataItem,
-                        bulkAdd,
-                        key,
-                      });
-                    }}
-                    onClickItem={() => {}}
+                    broken={broken}
+                    playlistID={playlistID}
+                    id={id}
+                    isLayers={isLayers}
+                    itemVisitedMap={itemVisitedMap}
+                    refs={refs}
+                    activeDate={activeDate}
+                    editDataFromPlaylist={editDataFromPlaylist}
+                    currentItemID={currentItemID}
+                    onDeleteFromQueue={onDeleteFromQueue}
+                    onClick={onClick}
+                    setQueueDeleteConfirm={setQueueDeleteConfirm}
+                    queueKeyName={key}
+                    index={index}
                   />
                 </>
               );
@@ -1083,6 +1016,165 @@ const PlayingPlaylist = () => {
         )}
       </div>
     </>
+  );
+};
+
+const PlaylistQueueContainer = (props: any) => {
+  const {
+    name,
+    list,
+    broken,
+    playlistID,
+    id,
+    isLayers,
+    itemVisitedMap,
+    refs,
+    activeDate,
+    editDataFromPlaylist,
+    currentItemID,
+    onDeleteFromQueue,
+    onClick,
+    setQueueDeleteConfirm,
+    queueKeyName,
+    index,
+  } = props;
+
+  const playlistListUiRef = useRef<HTMLDivElement | null>(null);
+
+  const runBlinkLastPlaylistItem = () => {
+    const root = playlistListUiRef.current;
+    if (!root) return;
+    const nodes = root.querySelectorAll(".playlist-item-type");
+    const last = nodes[nodes.length - 1] as HTMLElement | undefined;
+    if (!last) return;
+    last.classList.remove("playlist-item-blink");
+    void last.offsetWidth;
+    const done = () => {
+      last.classList.remove("playlist-item-blink");
+    };
+    const safety = window.setTimeout(done, 1800);
+    last.addEventListener(
+      "animationend",
+      () => {
+        window.clearTimeout(safety);
+        done();
+      },
+      { once: true }
+    );
+    last.classList.add("playlist-item-blink");
+    last.scrollIntoView({ behavior: "smooth" });
+  };
+
+  if (playlistID) {
+    if (!G["defaultplaylistProgress"]) G["defaultplaylistProgress"] = {};
+    if (!G["defaultplaylistChecked"]) G["defaultplaylistChecked"] = {};
+    G["defaultplaylistProgress"][playlistID] = {
+      ...itemVisitedMap,
+    };
+    G["defaultplaylistChecked"][playlistID] = {
+      ...(G.PlayingPlaylistCheckedItems?.[G.PlayingPlaylistID] || {}),
+    };
+    G?.savePlaylistProgress && G.savePlaylistProgress(playlistID);
+  }
+
+  const DragDropT = useMemo(() => {
+    return G.DragDrop;
+  }, []);
+
+  useLayoutEffect(() => {
+    if (G.BlinkAfterPlaylistAddRef != queueKeyName) return;
+    if (G.BlinkAfterPlaylistAddRef == queueKeyName) {
+      G.BlinkAfterPlaylistAddRef = false;
+    }
+    runBlinkLastPlaylistItem();
+  }, [list]);
+
+  useLayoutEffect(() => {
+    return () => {
+      if (G.BlinkAfterPlaylistAddRef == queueKeyName) {
+        G.BlinkAfterPlaylistAddRef = false;
+      }
+    };
+  }, []);
+
+  return (
+    <div
+      ref={playlistListUiRef}
+      className={`link-playlist`}
+      style={{ width: "100%" }}
+    >
+      {index !== 0 && (
+        <div className="align-center justify-between heading-queue">
+          <h4 key={`heading${id}`} style={{ margin: "0" }}>
+            {broken ? "" : "Next in "}
+            {name}
+          </h4>
+          <span
+            onClick={() => {
+              setQueueDeleteConfirm(parseInt(queueKeyName));
+            }}
+            style={{ cursor: "pointer" }}
+            className="material-symbols-outlined unfollow"
+          >
+            delete
+          </span>
+        </div>
+      )}
+      <DragDropT
+        key={id}
+        setRef={refs}
+        isPlayer={G.PPchecklistEnabled}
+        currentFormat={currentFormat}
+        list={list}
+        playingPlaylist={true}
+        layers={true}
+        currentDateActive={activeDate}
+        editDataFromPlaylist={(data: any, play = true) =>
+          editDataFromPlaylist(data, queueKeyName, play)
+        }
+        // oldItemsMap={{ ...itemVisitedMap, ...checkedItems }}
+        checkListData={
+          G.PlayingPlaylistCheckedItems?.[G.PlayingPlaylistID] || {}
+        }
+        setList={(newList: any) => {
+          let listLatest = [...newList];
+          if (typeof newList === "function") {
+            listLatest = newList(list);
+          }
+          G.SetPlayingPlaylists?.((prev: any) => ({
+            ...prev,
+            [queueKeyName]: { name, list: listLatest },
+          }));
+          // setList((prev) => {
+          //     const item = prev[currIndex.index];
+          //     return [...oldList, item, ...listLatest]
+          // });
+        }}
+        activeItemID={
+          queueKeyName == G.CurrentIndexItem.key ? currentItemID : 0
+        }
+        // activeItemList={false ? activeIndexs : {}}
+        deleteFromList={(index: any, pId: any, id: any) => {
+          onDeleteFromQueue(queueKeyName, index, pId, id);
+        }}
+        isDeleteShow
+        creatingPlaylist={false}
+        onClick={(params: any) => {
+          const { dataItem, bulkAdd, justPlay } = params;
+          DataManager.cancelCurrentPlayingSound();
+          if (justPlay) {
+            thisBot.navigationWithDataItem({ dataItem });
+            return;
+          }
+          onClick({
+            dataItem,
+            bulkAdd,
+            key: queueKeyName,
+          });
+        }}
+        onClickItem={() => {}}
+      />
+    </div>
   );
 };
 

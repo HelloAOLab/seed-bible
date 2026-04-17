@@ -39,7 +39,7 @@ const SharePlaylistModal = () => {
       <style>{thisBot.tags["playlist.css"]}</style>
       <Modal
         sxContainer={{ width: "460px" }}
-        title={t("welcomeToSeedBible")}
+        title={false}
         showIcon={false}
         onClose={onCloseSharPlaylistModal}
       >

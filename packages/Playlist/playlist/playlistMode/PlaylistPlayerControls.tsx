@@ -480,15 +480,15 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
       Object.keys(updatedPlaylists)
         .sort((a, b) => Number(a) - Number(b)) // Sort numerically
         .forEach((key, index) => {
-          if (key === keyUsed) {
+          if (key == keyUsed) {
             G.LAST_SQ_KEY_USED = index;
+            G.BlinkAfterPlaylistAddRef = index;
           }
           reorderedPlaylists[index] = { ...updatedPlaylists[key] };
           if (!reorderedPlaylists[index]?.list?.length) {
             delete reorderedPlaylists[index];
           }
         });
-
       G.NotPlayThisTimeTheCurrentItem = false;
       return reorderedPlaylists;
     });
