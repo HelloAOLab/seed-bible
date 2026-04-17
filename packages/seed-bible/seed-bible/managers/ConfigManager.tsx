@@ -9,20 +9,39 @@ import type {
 export interface AppConfig {
   disablePanels: boolean;
   fontSize: TextSize;
+  scriptureFontSize: TextSize;
+  scriptureLineSpacing: ScriptureLineSpacing;
+  scriptureShowHeadings: boolean;
+  scriptureShowVerseNumbers: boolean;
+  scriptureShowFootnotes: boolean;
+  scriptureShowHighlights: boolean;
 }
 
 export type TextSize = "XS" | "S" | "M" | "L" | "XL" | "XXL";
+export type ScriptureLineSpacing = "S" | "M" | "L";
 
 export type SettingsPresetId = "minimal" | "full";
 
 const FULL_CONFIG: AppConfig = {
   disablePanels: false,
   fontSize: "M",
+  scriptureFontSize: "M",
+  scriptureLineSpacing: "M",
+  scriptureShowHeadings: true,
+  scriptureShowVerseNumbers: true,
+  scriptureShowFootnotes: true,
+  scriptureShowHighlights: true,
 };
 
 const MINIMAL_CONFIG: AppConfig = {
   disablePanels: true,
   fontSize: "M",
+  scriptureFontSize: "M",
+  scriptureLineSpacing: "M",
+  scriptureShowHeadings: true,
+  scriptureShowVerseNumbers: true,
+  scriptureShowFootnotes: true,
+  scriptureShowHighlights: true,
 };
 
 const DEFAULT_CONFIG_PRESETS: Record<SettingsPresetId, AppConfig> = {
@@ -82,6 +101,25 @@ function parseFontSize(value: unknown, fallback: TextSize): TextSize {
   }
 }
 
+function parseScriptureLineSpacing(
+  value: unknown,
+  fallback: ScriptureLineSpacing
+): ScriptureLineSpacing {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const normalized = value.trim().toUpperCase();
+  switch (normalized) {
+    case "S":
+    case "M":
+    case "L":
+      return normalized;
+    default:
+      return fallback;
+  }
+}
+
 function getProfileConfigValue(
   profile: UserProfile | null,
   key: string
@@ -100,9 +138,58 @@ export function createConfig(login: LoginManager) {
   const readConfig = (): AppConfig => {
     const settingsPreset = parseSettingsPreset(configBot.tags.settingsPreset);
     const presetConfig = getPresetConfig(settingsPreset);
+
     const fontSizeFromProfile = parseFontSize(
       getProfileConfigValue(login.profile.value, "fontSize"),
       parseFontSize(configBot.tags["app.fontSize"], presetConfig.fontSize)
+    );
+
+    const scriptureFontSizeFromProfile = parseFontSize(
+      getProfileConfigValue(login.profile.value, "scriptureFontSize"),
+      parseFontSize(
+        configBot.tags["app.scriptureFontSize"],
+        presetConfig.scriptureFontSize
+      )
+    );
+
+    const scriptureLineSpacingFromProfile = parseScriptureLineSpacing(
+      getProfileConfigValue(login.profile.value, "scriptureLineSpacing"),
+      parseScriptureLineSpacing(
+        configBot.tags["app.scriptureLineSpacing"],
+        presetConfig.scriptureLineSpacing
+      )
+    );
+
+    const scriptureShowHeadingsFromProfile = parseBoolean(
+      getProfileConfigValue(login.profile.value, "scriptureShowHeadings"),
+      parseBoolean(
+        configBot.tags["app.scriptureShowHeadings"],
+        presetConfig.scriptureShowHeadings
+      )
+    );
+
+    const scriptureShowVerseNumbersFromProfile = parseBoolean(
+      getProfileConfigValue(login.profile.value, "scriptureShowVerseNumbers"),
+      parseBoolean(
+        configBot.tags["app.scriptureShowVerseNumbers"],
+        presetConfig.scriptureShowVerseNumbers
+      )
+    );
+
+    const scriptureShowFootnotesFromProfile = parseBoolean(
+      getProfileConfigValue(login.profile.value, "scriptureShowFootnotes"),
+      parseBoolean(
+        configBot.tags["app.scriptureShowFootnotes"],
+        presetConfig.scriptureShowFootnotes
+      )
+    );
+
+    const scriptureShowHighlightsFromProfile = parseBoolean(
+      getProfileConfigValue(login.profile.value, "scriptureShowHighlights"),
+      parseBoolean(
+        configBot.tags["app.scriptureShowHighlights"],
+        presetConfig.scriptureShowHighlights
+      )
     );
 
     return {
@@ -111,6 +198,12 @@ export function createConfig(login: LoginManager) {
         presetConfig.disablePanels
       ),
       fontSize: fontSizeFromProfile,
+      scriptureFontSize: scriptureFontSizeFromProfile,
+      scriptureLineSpacing: scriptureLineSpacingFromProfile,
+      scriptureShowHeadings: scriptureShowHeadingsFromProfile,
+      scriptureShowVerseNumbers: scriptureShowVerseNumbersFromProfile,
+      scriptureShowFootnotes: scriptureShowFootnotesFromProfile,
+      scriptureShowHighlights: scriptureShowHighlightsFromProfile,
     };
   };
 
@@ -144,6 +237,12 @@ export function createConfig(login: LoginManager) {
     if (
       changedTags.includes("app.disablePanels") ||
       changedTags.includes("app.fontSize") ||
+      changedTags.includes("app.scriptureFontSize") ||
+      changedTags.includes("app.scriptureLineSpacing") ||
+      changedTags.includes("app.scriptureShowHeadings") ||
+      changedTags.includes("app.scriptureShowVerseNumbers") ||
+      changedTags.includes("app.scriptureShowFootnotes") ||
+      changedTags.includes("app.scriptureShowHighlights") ||
       changedTags.includes("settingsPreset") ||
       changedTags.includes("lang")
     ) {
