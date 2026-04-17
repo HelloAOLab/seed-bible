@@ -53,6 +53,7 @@ function AccountSettingsView(props: {
   const description = useSignal(profile?.description ?? "");
   const pictureUrl = useSignal(profile?.pictureUrl ?? "");
   const isUploadingPicture = useSignal(false);
+  const uidCopied = useSignal(false);
 
   const handleSave = () => {
     login.updateProfile({
@@ -78,85 +79,89 @@ function AccountSettingsView(props: {
     }
   };
 
+  const handleCopyUserId = async () => {
+    const id = login.userId.value;
+    if (!id) {
+      return;
+    }
+
+    try {
+      os.setClipboard(id);
+      uidCopied.value = true;
+      setTimeout(() => {
+        uidCopied.value = false;
+      }, 1200);
+    } catch (error) {
+      console.error("Failed to copy user ID.", error);
+    }
+  };
+
   return (
     <div className="sb-settings-page">
       <SettingsSubPageHeader title="Account settings" onBack={onBack} />
       <section className="sb-settings-section">
         {isLoggedIn ? (
-          <>
-            <div className="sb-settings-field-row">
-              <label className="sb-settings-field-label">User ID</label>
-              <span className="sb-settings-field-value">
-                {login.userId.value}
-              </span>
-            </div>
-            <div className="sb-settings-field-row">
-              <label className="sb-settings-field-label">Profile picture</label>
-              <div className="sb-settings-picture-field">
-                {pictureUrl.value && (
-                  <img
-                    className="sb-settings-profile-picture-preview"
-                    src={pictureUrl.value}
-                    alt="Profile picture"
-                  />
-                )}
-                <button
-                  className="sb-settings-action-button"
-                  onClick={() => void handleUploadPicture()}
-                  disabled={isUploadingPicture.value}
+          <div className="sb-account-settings-layout">
+            <p className="sb-account-settings-intro">
+              Manage your profile information here
+            </p>
+
+            <div className="sb-account-picture-row">
+              {pictureUrl.value ? (
+                <img
+                  className="sb-account-picture-preview"
+                  src={pictureUrl.value}
+                  alt="Profile picture"
+                />
+              ) : (
+                <div
+                  className="sb-account-picture-placeholder"
+                  aria-hidden="true"
                 >
-                  {isUploadingPicture.value ? "Uploading..." : "Upload picture"}
-                </button>
-              </div>
+                  <span className="material-symbols-outlined">person</span>
+                </div>
+              )}
+              <button
+                className="sb-account-picture-button"
+                onClick={() => void handleUploadPicture()}
+                disabled={isUploadingPicture.value}
+              >
+                {isUploadingPicture.value ? "Uploading..." : "Update picture"}
+              </button>
             </div>
+
             <div className="sb-settings-field-row">
               <label
                 className="sb-settings-field-label"
                 htmlFor="sb-profile-name"
               >
-                Name
+                Profile name
               </label>
               <input
                 id="sb-profile-name"
-                className="sb-settings-text-input"
+                className="sb-settings-text-input sb-account-text-input"
                 type="text"
                 value={name.value}
                 onInput={(event: Event) => {
                   name.value = (event.currentTarget as HTMLInputElement).value;
                 }}
-                placeholder="Your name"
+                placeholder="e.g Craig family"
               />
-            </div>
-            <div className="sb-settings-field-row">
-              <label
-                className="sb-settings-field-label"
-                htmlFor="sb-profile-location"
-              >
-                Location
-              </label>
-              <input
-                id="sb-profile-location"
-                className="sb-settings-text-input"
-                type="text"
-                value={location.value ?? ""}
-                onInput={(event: Event) => {
-                  location.value = (
-                    event.currentTarget as HTMLInputElement
-                  ).value;
-                }}
-                placeholder="Your location"
-              />
+              <p className="sb-account-field-helper">
+                You can change this later
+              </p>
             </div>
             <div className="sb-settings-field-row">
               <label
                 className="sb-settings-field-label"
                 htmlFor="sb-profile-description"
               >
-                Description
+                Description{" "}
+                <span className="sb-account-label-optional">(Optional)</span>
               </label>
               <textarea
                 id="sb-profile-description"
-                className="sb-settings-text-input sb-settings-textarea"
+                className="sb-settings-text-input sb-settings-textarea sb-account-textarea"
                 value={description.value ?? ""}
                 maxLength={300}
                 onInput={(event: Event) => {
@@ -164,21 +169,75 @@ function AccountSettingsView(props: {
                     event.currentTarget as HTMLTextAreaElement
                   ).value;
                 }}
-                placeholder="A short description about yourself"
+                placeholder="Enter your profile description..."
               />
             </div>
-            <div className="sb-settings-actions">
-              <button className="sb-settings-save-button" onClick={handleSave}>
-                Save
-              </button>
-              <button
-                className="sb-settings-action-button sb-settings-signout-button"
-                onClick={() => void os.signOut()}
+            <div className="sb-settings-field-row">
+              <label
+                className="sb-settings-field-label"
+                htmlFor="sb-profile-location"
               >
-                Sign Out
+                Location{" "}
+                <span className="sb-account-label-optional">(Optional)</span>
+              </label>
+              <input
+                id="sb-profile-location"
+                className="sb-settings-text-input sb-account-text-input"
+                type="text"
+                value={location.value ?? ""}
+                onInput={(event: Event) => {
+                  location.value = (
+                    event.currentTarget as HTMLInputElement
+                  ).value;
+                }}
+                placeholder="e.g Austin,TX"
+              />
+            </div>
+
+            <div className="sb-settings-field-row">
+              <label className="sb-settings-field-label">
+                Your UID will be:
+              </label>
+              <div className="sb-account-uid-row">
+                <span
+                  className="sb-account-uid-value"
+                  title={login.userId.value ?? ""}
+                >
+                  {login.userId.value}
+                </span>
+                <button
+                  type="button"
+                  className="sb-account-copy-uid-button"
+                  onClick={() => void handleCopyUserId()}
+                  aria-label="Copy user ID"
+                  title={uidCopied.value ? "Copied" : "Copy"}
+                >
+                  <span className="material-symbols-outlined">
+                    {uidCopied.value ? "check" : "content_copy"}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="sb-settings-actions">
+              <button
+                className="sb-settings-save-button sb-account-save-button"
+                onClick={handleSave}
+              >
+                Save changes
               </button>
             </div>
-          </>
+
+            <div className="sb-account-signout-section">
+              <button
+                className="sb-account-signout-button"
+                onClick={() => void os.signOut()}
+              >
+                <span className="material-symbols-outlined">logout</span>
+                Sign out
+              </button>
+            </div>
+          </div>
         ) : (
           <div className="sb-settings-login-prompt">
             <p>Please log in to view and edit your profile.</p>
