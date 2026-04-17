@@ -832,6 +832,10 @@ export function PaneLayout(props: PaneLayoutProps) {
                     configManager.config.value.scriptureShowHeadings,
                   scriptureShowVerseNumbers:
                     configManager.config.value.scriptureShowVerseNumbers,
+                  scriptureShowFootnotes:
+                    configManager.config.value.scriptureShowFootnotes,
+                  scriptureShowHighlights:
+                    configManager.config.value.scriptureShowHighlights,
                 }}
               />
               <BelowReaderToolbar
@@ -1006,6 +1010,10 @@ export function PaneLayout(props: PaneLayoutProps) {
                       configManager.config.value.scriptureShowHeadings,
                     scriptureShowVerseNumbers:
                       configManager.config.value.scriptureShowVerseNumbers,
+                    scriptureShowFootnotes:
+                      configManager.config.value.scriptureShowFootnotes,
+                    scriptureShowHighlights:
+                      configManager.config.value.scriptureShowHighlights,
                   }}
                 />
               </PaneReaderScroller>

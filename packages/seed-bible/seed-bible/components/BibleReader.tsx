@@ -22,6 +22,8 @@ interface ScriptureReaderSettings {
   scriptureLineSpacing: ScriptureLineSpacing;
   scriptureShowHeadings: boolean;
   scriptureShowVerseNumbers: boolean;
+  scriptureShowFootnotes: boolean;
+  scriptureShowHighlights: boolean;
 }
 
 interface VerseLine {
@@ -245,6 +247,7 @@ function renderInlineContent(
   part: ChapterVerse["content"][0],
   index: number,
   onOpenFootnote: (noteId: number) => void,
+  showFootnotes: boolean,
   contentRanges: ContentDecorationRange[] = [],
   partStartIndex = 0
 ) {
@@ -385,6 +388,10 @@ function renderInlineContent(
   }
 
   if ("noteId" in part && typeof part.noteId === "number") {
+    if (!showFootnotes) {
+      return null;
+    }
+
     return (
       <button
         key={index}
@@ -523,8 +530,11 @@ function renderChapterContent(
       return (
         <p key={`subtitle-${entryIndex}`} className="sb-subtitle">
           {value.content.map((part, index) =>
-            renderInlineContent(part, index, (noteId) =>
-              onOpenFootnote(noteId, null)
+            renderInlineContent(
+              part,
+              index,
+              (noteId) => onOpenFootnote(noteId, null),
+              settings.scriptureShowFootnotes
             )
           )}
         </p>
@@ -550,7 +560,9 @@ function renderChapterContent(
       );
       const segments = splitVerseIntoSegments(value.content);
       const hasPoetry = segments.some((s) => s.type === "poetry");
-      const highlight = getVerseHighlight(value.number);
+      const highlight = settings.scriptureShowHighlights
+        ? getVerseHighlight(value.number)
+        : null;
       const highlightPresentation = getHighlightPresentation(highlight);
       const verseDecorations = getVerseDecorations(value.number);
       const decorationPresentation =
@@ -617,6 +629,7 @@ function renderChapterContent(
                         part,
                         segIndex * 10000 + partIndex,
                         (noteId) => onOpenFootnote(noteId, value),
+                        settings.scriptureShowFootnotes,
                         contentRanges,
                         getPartTextStartIndex(part)
                       )
@@ -649,6 +662,7 @@ function renderChapterContent(
                         part,
                         partIndex,
                         (noteId) => onOpenFootnote(noteId, value),
+                        settings.scriptureShowFootnotes,
                         contentRanges,
                         getPartTextStartIndex(part)
                       )
@@ -683,6 +697,7 @@ function renderChapterContent(
                 part,
                 index,
                 (noteId) => onOpenFootnote(noteId, value),
+                settings.scriptureShowFootnotes,
                 contentRanges,
                 getPartTextStartIndex(part)
               )
