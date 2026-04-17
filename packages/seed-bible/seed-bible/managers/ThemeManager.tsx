@@ -694,10 +694,27 @@ export function createTheme() {
     }
   };
 
+  const registerTheme = (theme: BibleTheme) => {
+    if (!themes.value.some((t) => t.id === theme.id)) {
+      themes.value = [...themes.value, theme];
+    } else {
+      themes.value = themes.value.map((t) => (t.id === theme.id ? theme : t));
+    }
+  };
+
+  const unregisterTheme = (themeId: string) => {
+    themes.value = themes.value.filter((t) => t.id !== themeId);
+    if (selectedThemeId.value === themeId) {
+      selectedThemeId.value = DEFAULT_THEME_ID;
+    }
+  };
+
   return {
     themes,
     selectedThemeId,
     currentTheme,
     setTheme,
+    registerTheme,
+    unregisterTheme,
   };
 }
