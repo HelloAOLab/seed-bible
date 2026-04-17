@@ -97,9 +97,7 @@ const playlistsPresent = G.playlists
   ? G.playlists
   : (getTag(thisBot, "defaultplaylistList") || []).map((ele: any) => ele);
 
-const sharedPlaylist =
-  configBot.tags.Playlist ||
-  "438d487a-bf23-4550-988a-9e3399ea4407^_^03c06a6b-a112-4b46-964a-c5b13cca4518";
+const sharedPlaylist = configBot.tags.Playlist;
 // console.log("GOT SHAERD PLATLIST", sharedPlaylist);
 
 G.RECORD_SEPARATOR = "^_^";
