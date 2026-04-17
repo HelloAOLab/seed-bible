@@ -3,8 +3,6 @@ import type { ArrangementInfo } from "bibleVizUtils.domain.models.arrangement";
 
 export interface ArrangementRepositoryPort {
   getStaticArrangements: () => ArrangementInfo[];
-  getCustomArrangements: () => ArrangementInfo[];
-  setCustomArrangements: (arrangements: ArrangementInfo[]) => void;
 }
 
 export interface ArrangementEventPort {
@@ -14,4 +12,10 @@ export interface ArrangementEventPort {
       ? [payload?: BibleVizUtilsEvents[K]]
       : [payload: BibleVizUtilsEvents[K]]
   ) => void;
+}
+
+export interface CustomArrangementStorePort {
+  tryAddArrangement: (arrangement: ArrangementInfo) => boolean;
+  tryRemoveArrangement: (arrangement: ArrangementInfo) => boolean;
+  getArrangements: () => ArrangementInfo[];
 }

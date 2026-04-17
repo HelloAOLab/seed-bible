@@ -1214,6 +1214,9 @@
       "bibleVizUtils.functions.onCreate": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/onCreate.tsx"
       ],
+      "bibleVizUtils.infrastructure.adapters.arrangement.CustomArrangementStore": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/arrangement/CustomArrangementStore.tsx"
+      ],
       "bibleVizUtils.infrastructure.adapters.casualos.ObjectPooler": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/casualos/ObjectPooler.tsx"
       ],
@@ -1448,8 +1451,8 @@
       "bibleVizUtils.infrastructure.utils.DebouncerService": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/utils/DebouncerService.tsx"
       ],
-      "bibleVizUtils.main.Initialize": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/main/Initialize.tsx"
+      "bibleVizUtils.main.deprecated_Initialize": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/deprecated_Initialize.tsx"
       ],
       "introduction.searchBar.handleGeoJsonSearch": [
         "./packages/BookSelector/introduction/searchBar/handleGeoJsonSearch.tsx"

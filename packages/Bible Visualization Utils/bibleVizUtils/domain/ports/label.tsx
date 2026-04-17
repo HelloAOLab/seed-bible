@@ -11,6 +11,7 @@ import type {
 } from "bibleVizUtils.domain.models.label";
 import type { InfoLabelData } from "bibleVizUtils.domain.entities.InfoLabelData";
 import type { LabelDataStorePort } from "./piece";
+import type { ActivityIndicatorsAdapterPort } from "bibleVizUtils.domain.ports.pieceActivity";
 
 export type SpawnLabel = (params: {
   piece: Piece;
@@ -61,6 +62,11 @@ export type LabelPropertiesStrategies<T extends BiblePieceType> = {
   [K in T]: LabelStrategy<Piece<K>>;
 };
 
+export interface LabelAnimationAdapterPort {
+  displayShakeAnimation: (data: InfoLabelData) => void;
+  stopShakeAnimation: (data: InfoLabelData) => void;
+}
+
 export interface PieceLabelServiceParams<T extends BiblePieceType> {
   labelAdapterPort: LabelAdapterPort;
   labelDataStorePort: LabelDataStorePort;
@@ -68,4 +74,6 @@ export interface PieceLabelServiceParams<T extends BiblePieceType> {
   labelPropertiesStrategies: LabelPropertiesStrategies<T>;
   labelDateFormatServicePort: LabelDateFormatServicePort;
   idGeneratorPort: IdGeneratorPort;
+  activityIndicatorsAdapterPort: ActivityIndicatorsAdapterPort;
+  labelAnimationAdapterPort: LabelAnimationAdapterPort;
 }

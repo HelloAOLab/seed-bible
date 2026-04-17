@@ -29,8 +29,7 @@ import { UserPresenceController } from "bibleVizUtils.infrastructure.controllers
 import type {
   BibleVizUtilsObjectPoolerMap,
   PoolData,
-} from "../models/casualos";
-import { BiblePiece } from "../../domain/models/canvas";
+} from "bibleVizUtils.infrastructure.models.casualos";
 
 import { thisTypedBot as activityNotificationPrefab } from "bibleVizUtils.infrastructure.prefabs.activityNotification.botAdapter";
 import { thisTypedBot as activityIndicatorPrefab } from "bibleVizUtils.infrastructure.prefabs.activityIndicator.botAdapter";
@@ -39,7 +38,13 @@ import { thisTypedBot as infoLabelDatePrefab } from "bibleVizUtils.infrastructur
 import { thisTypedBot as infoLabelTailPrefab } from "bibleVizUtils.infrastructure.prefabs.infoLabelTail.botAdapter";
 import { thisTypedBot as infoLabelTextPrefab } from "bibleVizUtils.infrastructure.prefabs.infoLabelText.botAdapter";
 import type { PieceLabelServiceParams } from "bibleVizUtils.domain.ports.label";
-import type { BiblePieceType } from "../models/canvas";
+import {
+  BiblePiece,
+  type BiblePieceType,
+} from "bibleVizUtils.domain.models.canvas";
+import { CustomArrangementStore } from "bibleVizUtils.infrastructure.adapters.arrangement.CustomArrangementStore";
+import { LabelAnimationAdapter } from "bibleVizUtils.infrastructure.adapters.labels.LabelAnimationAdapter";
+import { globalAPI } from "@packages/seed-bible/app/controller/controllerBuilder";
 
 export interface BibleVizAPI {
   readingHistoryService: ReadingHistoryService;
@@ -210,6 +215,10 @@ export const bootstrapApp = () => {
   const labelAdapter = new LabelAdapter({
     objectPooler: bibleVizUtilsObjectPooler,
   });
+  const customArrangementStore = new CustomArrangementStore();
+  const labelAnimationAdapter = new LabelAnimationAdapter(
+    () => globalAPI.defaultPortalName
+  );
 
   // 2, Instantiating services
   const pieceDataRegistry = new PieceDataRegistry();
@@ -224,6 +233,7 @@ export const bootstrapApp = () => {
   const arrangementService = new ArrangementService({
     repository: BibleVizDataRepository,
     eventManager: bibleVizUtilsEventManager,
+    customArrangementStorePort: customArrangementStore,
   });
   const scriptureService = new ScriptureService(
     BibleVizDataRepository,
@@ -280,15 +290,20 @@ export const bootstrapApp = () => {
         labelPropertiesStrategies,
         labelDateFormatServicePort: labelDateService,
         idGeneratorPort: { getId: uuid },
+        labelAnimationAdapterPort: labelAnimationAdapter,
+        activityIndicatorsAdapterPort: activityIndicatorsAdapter,
       });
     },
   };
+
+  sessionService.tryEmitUserLoggedInEvent(!!authBot);
 
   // 6. Adding dispose functions to disposal list
 
   disposeFunctions.push(
     () => bibleVizUtilsEventManager.removeAllListeners(),
-    () => bibleVizUtilsObjectPooler.disposeAllPools()
+    () => bibleVizUtilsObjectPooler.disposeAllPools(),
+    () => labelAnimationAdapter.disposeAll()
     // TODO: Create and add service dispose functions on the go
   );
 

@@ -7,6 +7,7 @@ import type {
 import type {
   ArrangementEventPort,
   ArrangementRepositoryPort,
+  CustomArrangementStorePort,
 } from "bibleVizUtils.domain.ports.arrangement";
 
 export interface TestamentPathIndices {
@@ -24,6 +25,7 @@ interface BookPathIndices extends SectionPathIndices {
 
 interface ArrangementServiceProps {
   repository: ArrangementRepositoryPort;
+  customArrangementStorePort: CustomArrangementStorePort;
   eventManager: ArrangementEventPort;
   arrangementIndex?: number;
 }
@@ -34,13 +36,16 @@ export class ArrangementService {
   #currArrangementIndex: NonNullable<
     ArrangementServiceProps["arrangementIndex"]
   > = 0;
+  #customArrangementStorePort: ArrangementServiceProps["customArrangementStorePort"];
 
   constructor({
     repository,
     eventManager,
     arrangementIndex,
+    customArrangementStorePort,
   }: ArrangementServiceProps) {
     this.#repository = repository;
+    this.#customArrangementStorePort = customArrangementStorePort;
     this.#eventManager = eventManager;
     if (arrangementIndex !== undefined)
       this.#currArrangementIndex = arrangementIndex;
@@ -48,7 +53,7 @@ export class ArrangementService {
 
   getAllArrangements(): ArrangementInfo[] {
     const statics = this.#repository.getStaticArrangements();
-    const custom = this.#repository.getCustomArrangements();
+    const custom = this.#customArrangementStorePort.getArrangements();
 
     return [...statics, ...custom];
   }
@@ -97,17 +102,10 @@ export class ArrangementService {
 
   addCustomArrangement(arrangement: ArrangementInfo): void {
     const currentArrangementName = this.getCurrentArrangementName();
-    const customArrangements = this.#repository.getCustomArrangements();
 
-    const alreadyExists = customArrangements.some((customArrangement) => {
-      return customArrangement.name === arrangement.name;
-    });
-
-    if (!alreadyExists) {
-      this.#repository.setCustomArrangements([
-        ...customArrangements,
-        arrangement,
-      ]);
+    const success =
+      this.#customArrangementStorePort.tryAddArrangement(arrangement);
+    if (success) {
       if (currentArrangementName) {
         this.setArrangementIndexByName(currentArrangementName);
       }
@@ -117,26 +115,21 @@ export class ArrangementService {
 
   removeCustomArrangement(arrangement: ArrangementInfo): void {
     const currentArrangementName = this.getCurrentArrangementName();
-    const customArrangements = this.#repository.getCustomArrangements();
 
-    const exists = customArrangements.some((customArrangement) => {
-      return customArrangement.name === arrangement.name;
-    });
+    const success =
+      this.#customArrangementStorePort.tryRemoveArrangement(arrangement);
 
-    if (!exists) return;
-
-    this.#repository.setCustomArrangements(
-      customArrangements.filter((customArrangement) => {
-        return customArrangement.name !== arrangement.name;
-      })
-    );
-
-    if (currentArrangementName && currentArrangementName !== arrangement.name) {
-      this.setArrangementIndexByName(currentArrangementName);
-    } else {
-      this.setCurrentArrangementIndex(0);
+    if (success) {
+      if (
+        currentArrangementName &&
+        currentArrangementName !== arrangement.name
+      ) {
+        this.setArrangementIndexByName(currentArrangementName);
+      } else {
+        this.setCurrentArrangementIndex(0);
+      }
+      this.#eventManager.emit("OnCustomArrangementsChanged");
     }
-    this.#eventManager.emit("OnCustomArrangementsChanged");
   }
 
   getArrangementByIndex: (index: number) => ArrangementInfo | undefined = (

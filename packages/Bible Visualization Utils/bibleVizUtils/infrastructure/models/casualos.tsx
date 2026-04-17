@@ -18,7 +18,6 @@ import type {
   ActivityContainer,
   NotifiableContainer,
 } from "../../domain/ports/pieceActivity";
-import type { LabelPositionType } from "../../domain/models/label";
 
 export interface BaseTagData<T> {
   bot: Bot;
@@ -150,7 +149,6 @@ export interface InfoLabelTransformerTags extends PieceBotTags<"InfoLabelTransfo
   ownerBotId?: string;
   ownerDataId?: string;
   isAnimatable?: boolean;
-  labelPositioning?: LabelPositionType;
   targetOpacity?: number;
   pointableDefault?: boolean;
 }
@@ -173,7 +171,6 @@ export interface InfoLabelDateTags extends PieceBotTags<"InfoLabelDate"> {
   scaleZ?: number;
   labelColor?: string;
   formOpacity?: number;
-  labelPositioning?: LabelPositionType;
 }
 
 export type InfoLabelDateBot = TypedBot<InfoLabelDateTags>;
@@ -188,7 +185,6 @@ export interface InfoLabelTailTags extends PieceBotTags<"InfoLabelTail"> {
   scaleZ: number;
   color: string;
   formOpacity: number;
-  labelPositioning?: LabelPositionType;
 }
 
 export type InfoLabelTailBot = TypedBot<InfoLabelTailTags>;
@@ -227,7 +223,6 @@ export interface InfoLabelTextTags extends PieceBotTags<"InfoLabelText"> {
   labelOpacity: number;
   color: string;
   labelColor: string;
-  labelPositioning: LabelPositionType;
 }
 
 export type InfoLabelTextBot = TypedBot<InfoLabelTextTags>;

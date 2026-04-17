@@ -177,7 +177,6 @@ export class LabelAdapter implements LabelAdapterPort {
             scaleZ: infoLabelDateDesiredScales.z,
             labelColor,
             formOpacity: 0,
-            labelPositioning,
             ownerBotId: piece.id,
           };
           applyMod(infoLabelDate, infoLabelDateMod);
@@ -199,7 +198,6 @@ export class LabelAdapter implements LabelAdapterPort {
       scaleZ: infoLabelTransformerDesiredScales.z,
       ownerBotId: piece.id,
       isAnimatable: this.#isAnimatable,
-      labelPositioning,
       targetOpacity: this.#opacityMap[translucencyMode],
       pointableDefault: isInteractable,
     };
@@ -220,7 +218,6 @@ export class LabelAdapter implements LabelAdapterPort {
       labelOpacity: 0,
       color,
       labelColor,
-      labelPositioning,
       ownerBotId: piece.id,
     };
     const infoLabelTailMod: Partial<InfoLabelTailTags> = {
@@ -236,7 +233,6 @@ export class LabelAdapter implements LabelAdapterPort {
       scaleZ: infoLabelTailDesiredScales.z,
       color,
       formOpacity: 0,
-      labelPositioning,
       ownerBotId: piece.id,
     };
     applyMod(infoLabelTransformer, infoLabelTransformerMod);

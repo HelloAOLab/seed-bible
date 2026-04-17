@@ -2,6 +2,7 @@ import type {
   Piece,
   ActivityIndicator,
 } from "bibleVizUtils.domain.models.canvas";
+import { type LabelPositionType } from "bibleVizUtils.domain.models.label";
 
 interface InfoLabelDataProps {
   id: string;
@@ -11,6 +12,7 @@ interface InfoLabelDataProps {
   date?: Piece<"InfoLabelDate">;
   activityIndicators?: Map<ActivityIndicator["id"], ActivityIndicator>;
   owner: Piece;
+  positioning: LabelPositionType;
 }
 
 export class InfoLabelData {
@@ -21,6 +23,7 @@ export class InfoLabelData {
   #activityIndicators: NonNullable<InfoLabelDataProps["activityIndicators"]>;
   #date: InfoLabelDataProps["date"];
   #owner: InfoLabelDataProps["owner"];
+  #positioning: InfoLabelDataProps["positioning"];
 
   constructor({
     id,
@@ -30,6 +33,7 @@ export class InfoLabelData {
     activityIndicators = new Map(),
     date,
     owner,
+    positioning,
   }: InfoLabelDataProps) {
     this.#id = id;
     this.#transformer = transformer;
@@ -38,6 +42,7 @@ export class InfoLabelData {
     this.#activityIndicators = activityIndicators;
     this.#date = date;
     this.#owner = owner;
+    this.#positioning = positioning;
   }
 
   get id() {
@@ -92,5 +97,11 @@ export class InfoLabelData {
     key: K
   ): InfoLabelDataProps["owner"][K] {
     return this.#owner[key];
+  }
+  get positioning() {
+    return this.#positioning;
+  }
+  changePositioning(newPositioning: LabelPositionType) {
+    this.#positioning = newPositioning;
   }
 }

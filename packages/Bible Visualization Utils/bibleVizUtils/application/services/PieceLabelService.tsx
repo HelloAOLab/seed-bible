@@ -10,6 +10,9 @@ export class PieceLabelService<T extends BiblePieceType> {
   #labelPropertiesStrategies: PieceLabelServiceParams<T>["labelPropertiesStrategies"];
   #labelDateFormatServicePort: PieceLabelServiceParams<T>["labelDateFormatServicePort"];
   #idGeneratorPort: PieceLabelServiceParams<T>["idGeneratorPort"];
+  #activityIndicatorsAdapterPort: PieceLabelServiceParams<T>["activityIndicatorsAdapterPort"];
+  #labelAnimationAdapterPort: PieceLabelServiceParams<T>["labelAnimationAdapterPort"];
+
   constructor({
     labelAdapterPort,
     labelDataStorePort,
@@ -17,6 +20,8 @@ export class PieceLabelService<T extends BiblePieceType> {
     labelPropertiesStrategies,
     labelDateFormatServicePort,
     idGeneratorPort,
+    activityIndicatorsAdapterPort,
+    labelAnimationAdapterPort,
   }: PieceLabelServiceParams<T>) {
     this.#labelAdapterPort = labelAdapterPort;
     this.#labelDataStorePort = labelDataStorePort;
@@ -24,6 +29,8 @@ export class PieceLabelService<T extends BiblePieceType> {
     this.#labelPropertiesStrategies = labelPropertiesStrategies;
     this.#labelDateFormatServicePort = labelDateFormatServicePort;
     this.#idGeneratorPort = idGeneratorPort;
+    this.#activityIndicatorsAdapterPort = activityIndicatorsAdapterPort;
+    this.#labelAnimationAdapterPort = labelAnimationAdapterPort;
   }
 
   showLabel({
@@ -71,10 +78,12 @@ export class PieceLabelService<T extends BiblePieceType> {
       label: labelText,
       date: labelDate,
       owner: piece,
+      positioning: labelPositioning,
     });
 
     this.#pieceActivityServicePort.updateIndicators(labelData);
     this.#labelDataStorePort.addLabelData(labelData);
+    this.#labelAnimationAdapterPort.displayShakeAnimation(labelData);
   }
 
   hideLabel(piece: Piece<T>) {
@@ -83,6 +92,12 @@ export class PieceLabelService<T extends BiblePieceType> {
       throw new Error(`PieceLabelService: labelData not found at hideLabel`);
     }
 
+    const activityIndicators = labelData.clearActivityIndicators();
+    if (activityIndicators) {
+      this.#activityIndicatorsAdapterPort.hideIndicators(activityIndicators);
+    }
+    this.#labelAnimationAdapterPort.stopShakeAnimation(labelData);
     this.#labelAdapterPort.despawnLabel(labelData);
+    this.#labelDataStorePort.removeLabelData(labelData);
   }
 }

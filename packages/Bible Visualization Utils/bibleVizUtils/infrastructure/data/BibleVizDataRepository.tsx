@@ -88,17 +88,6 @@ class BibleVizDataRepository {
     return thisBot.tags.arrangementsInfo.slice();
   }
 
-  static getCustomArrangements(): ArrangementInfo[] {
-    if (!thisBot.vars.customArrangements) {
-      thisBot.vars.customArrangements = [];
-    }
-    return thisBot.vars.customArrangements.slice();
-  }
-
-  static setCustomArrangements(arrangements: ArrangementInfo[]): void {
-    thisBot.vars.customArrangements = arrangements;
-  }
-
   // Fonts
 
   static getFont(name: FontName): FontData {
