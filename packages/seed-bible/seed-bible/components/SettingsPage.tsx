@@ -195,9 +195,7 @@ function AccountSettingsView(props: {
             </div>
 
             <div className="sb-settings-field-row">
-              <label className="sb-settings-field-label">
-                Your UID will be:
-              </label>
+              <label className="sb-settings-field-label">Your ID is:</label>
               <div className="sb-account-uid-row">
                 <span
                   className="sb-account-uid-value"
