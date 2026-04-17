@@ -45,6 +45,7 @@ function AccountSettingsView(props: {
 }) {
   const { state, onBack } = props;
   const { login } = state;
+  const { t } = useI18n();
   const isLoggedIn = login.userId.value !== null;
   const profile = login.profile.value;
 
@@ -98,12 +99,17 @@ function AccountSettingsView(props: {
 
   return (
     <div className="sb-settings-page">
-      <SettingsSubPageHeader title="Account settings" onBack={onBack} />
+      <SettingsSubPageHeader
+        title={t("account-settings", { defaultValue: "Account settings" })}
+        onBack={onBack}
+      />
       <section className="sb-settings-section">
         {isLoggedIn ? (
           <div className="sb-account-settings-layout">
             <p className="sb-account-settings-intro">
-              Manage your profile information here
+              {t("account-settings-intro", {
+                defaultValue: "Manage your profile information here",
+              })}
             </p>
 
             <div className="sb-account-picture-row">
@@ -111,7 +117,9 @@ function AccountSettingsView(props: {
                 <img
                   className="sb-account-picture-preview"
                   src={pictureUrl.value}
-                  alt="Profile picture"
+                  alt={t("profile-picture", {
+                    defaultValue: "Profile picture",
+                  })}
                 />
               ) : (
                 <div
@@ -126,7 +134,9 @@ function AccountSettingsView(props: {
                 onClick={() => void handleUploadPicture()}
                 disabled={isUploadingPicture.value}
               >
-                {isUploadingPicture.value ? "Uploading..." : "Update picture"}
+                {isUploadingPicture.value
+                  ? t("uploading", { defaultValue: "Uploading..." })
+                  : t("update-picture", { defaultValue: "Update picture" })}
               </button>
             </div>
 
@@ -135,7 +145,7 @@ function AccountSettingsView(props: {
                 className="sb-settings-field-label"
                 htmlFor="sb-profile-name"
               >
-                Profile name
+                {t("profile-name", { defaultValue: "Profile name" })}
               </label>
               <input
                 id="sb-profile-name"
@@ -145,10 +155,14 @@ function AccountSettingsView(props: {
                 onInput={(event: Event) => {
                   name.value = (event.currentTarget as HTMLInputElement).value;
                 }}
-                placeholder="e.g Craig family"
+                placeholder={t("profile-name-placeholder", {
+                  defaultValue: "e.g Craig family",
+                })}
               />
               <p className="sb-account-field-helper">
-                You can change this later
+                {t("profile-name-helper", {
+                  defaultValue: "You can change this later",
+                })}
               </p>
             </div>
             <div className="sb-settings-field-row">
@@ -156,8 +170,10 @@ function AccountSettingsView(props: {
                 className="sb-settings-field-label"
                 htmlFor="sb-profile-description"
               >
-                Description{" "}
-                <span className="sb-account-label-optional">(Optional)</span>
+                {t("description", { defaultValue: "Description" })}{" "}
+                <span className="sb-account-label-optional">
+                  {t("optional", { defaultValue: "(Optional)" })}
+                </span>
               </label>
               <textarea
                 id="sb-profile-description"
@@ -169,7 +185,9 @@ function AccountSettingsView(props: {
                     event.currentTarget as HTMLTextAreaElement
                   ).value;
                 }}
-                placeholder="Enter your profile description..."
+                placeholder={t("description-placeholder", {
+                  defaultValue: "Enter your profile description...",
+                })}
               />
             </div>
             <div className="sb-settings-field-row">
@@ -177,8 +195,10 @@ function AccountSettingsView(props: {
                 className="sb-settings-field-label"
                 htmlFor="sb-profile-location"
               >
-                Location{" "}
-                <span className="sb-account-label-optional">(Optional)</span>
+                {t("location", { defaultValue: "Location" })}{" "}
+                <span className="sb-account-label-optional">
+                  {t("optional", { defaultValue: "(Optional)" })}
+                </span>
               </label>
               <input
                 id="sb-profile-location"
@@ -190,12 +210,16 @@ function AccountSettingsView(props: {
                     event.currentTarget as HTMLInputElement
                   ).value;
                 }}
-                placeholder="e.g Austin,TX"
+                placeholder={t("location-placeholder", {
+                  defaultValue: "e.g Austin,TX",
+                })}
               />
             </div>
 
             <div className="sb-settings-field-row">
-              <label className="sb-settings-field-label">Your ID is:</label>
+              <label className="sb-settings-field-label">
+                {t("your-id-is", { defaultValue: "Your ID is:" })}
+              </label>
               <div className="sb-account-uid-row">
                 <span
                   className="sb-account-uid-value"
@@ -207,8 +231,14 @@ function AccountSettingsView(props: {
                   type="button"
                   className="sb-account-copy-uid-button"
                   onClick={() => void handleCopyUserId()}
-                  aria-label="Copy user ID"
-                  title={uidCopied.value ? "Copied" : "Copy"}
+                  aria-label={t("copy-user-id", {
+                    defaultValue: "Copy user ID",
+                  })}
+                  title={
+                    uidCopied.value
+                      ? t("copied", { defaultValue: "Copied" })
+                      : t("copy", { defaultValue: "Copy" })
+                  }
                 >
                   <span className="material-symbols-outlined">
                     {uidCopied.value ? "check" : "content_copy"}
@@ -222,7 +252,7 @@ function AccountSettingsView(props: {
                 className="sb-settings-save-button sb-account-save-button"
                 onClick={handleSave}
               >
-                Save changes
+                {t("save-changes", { defaultValue: "Save changes" })}
               </button>
             </div>
 
@@ -232,18 +262,22 @@ function AccountSettingsView(props: {
                 onClick={() => void os.signOut()}
               >
                 <span className="material-symbols-outlined">logout</span>
-                Sign out
+                {t("sign-out", { defaultValue: "Sign out" })}
               </button>
             </div>
           </div>
         ) : (
           <div className="sb-settings-login-prompt">
-            <p>Please log in to view and edit your profile.</p>
+            <p>
+              {t("login-required-message", {
+                defaultValue: "Please log in to view and edit your profile.",
+              })}
+            </p>
             <button
               className="sb-settings-action-button"
               onClick={() => void login.login()}
             >
-              Log in
+              {t("log-in", { defaultValue: "Log in" })}
             </button>
           </div>
         )}
