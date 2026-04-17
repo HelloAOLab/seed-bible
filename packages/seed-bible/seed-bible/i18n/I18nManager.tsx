@@ -26,6 +26,10 @@ export function addTranslations(
   options?: { overwrite?: boolean }
 ) {
   for (const [lang, resources] of Object.entries(translations)) {
+    console.log(
+      `[I18n] Adding translations for language "${lang}" and namespace "${ns}":`,
+      resources
+    );
     i18n.addResourceBundle(lang, ns, resources, true, options?.overwrite);
   }
 }
@@ -55,24 +59,32 @@ function getTranslations(bot: Bot): BotTranslations {
   return loadedResources;
 }
 
-const resources = getTranslations(thisBot);
-if (!resources[DEFAULT_LANGUAGE]) {
-  resources[DEFAULT_LANGUAGE] = {};
+const seedBibleTranslations = getTranslations(thisBot);
+if (!seedBibleTranslations[DEFAULT_LANGUAGE]) {
+  seedBibleTranslations[DEFAULT_LANGUAGE] = {};
 }
 
-const availableLanguages = Object.keys(resources).sort();
+const availableLanguages = Object.keys(seedBibleTranslations).sort();
 
 const initialLanguage = configBot.tags.lang || DEFAULT_LANGUAGE;
 
 if (!i18n.isInitialized) {
-  void i18n.use(initReactI18next).init({
+  console.log(
+    "[I18n] Initializing i18n with resources:",
+    seedBibleTranslations,
+    initialLanguage
+  );
+  i18n.use(initReactI18next).init({
     lng: initialLanguage,
     fallbackLng: DEFAULT_LANGUAGE,
-    resources,
     interpolation: {
       escapeValue: false,
     },
+    initAsync: false,
+    ns: ["seed-bible"],
   });
+
+  addTranslations("seed-bible", seedBibleTranslations);
 }
 
 export function I18nProvider(props: { children: unknown }) {

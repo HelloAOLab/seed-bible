@@ -1,11 +1,9 @@
+import { I18nProvider } from "seed-bible.i18n.I18nManager";
 import { PaneLayout } from "seed-bible.components.PaneLayout";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
 import { BibleReaderToolbar } from "seed-bible.components.BibleReaderToolbar";
 import { Sidebar } from "seed-bible.components.Tabs";
-import {
-  I18nProvider,
-  createSeedBibleState,
-} from "seed-bible.managers.SeedBibleStateManager";
+import { createSeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { CasualOSApp } from "seed-bible.components.CasualOSApp";
 import { useEffect } from "preact/hooks";
 import type { ReadonlySignal } from "@preact/signals";
