@@ -564,7 +564,9 @@ function renderChapterContent(
         ? getVerseHighlight(value.number)
         : null;
       const highlightPresentation = getHighlightPresentation(highlight);
-      const verseDecorations = getVerseDecorations(value.number);
+      const verseDecorations = settings.scriptureShowHighlights
+        ? getVerseDecorations(value.number)
+        : [];
       const decorationPresentation =
         getDecorationPresentation(verseDecorations);
       const contentDecorations = verseDecorations.filter((decoration) =>

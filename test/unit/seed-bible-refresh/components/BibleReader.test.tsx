@@ -25,6 +25,15 @@ type ReaderFixture = {
   setOpen: jest.Mock;
 };
 
+const DEFAULT_SCRIPTURE_SETTINGS = {
+  scriptureFontSize: "M",
+  scriptureLineSpacing: "M",
+  scriptureShowHeadings: true,
+  scriptureShowVerseNumbers: true,
+  scriptureShowFootnotes: true,
+  scriptureShowHighlights: true,
+} as const;
+
 function createFixture(): ReaderFixture {
   const chapterData = signal<TranslationBookChapter | null>({
     translation: {
@@ -771,5 +780,145 @@ describe("BibleReader", () => {
     });
 
     expect(selectFootnote).toHaveBeenCalledWith(null);
+  });
+
+  it("hides headings when scriptureShowHeadings is false", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureSettings={{
+            ...DEFAULT_SCRIPTURE_SETTINGS,
+            scriptureShowHeadings: false,
+          }}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-chapter-heading")).toBeNull();
+  });
+
+  it("hides verse number markers when scriptureShowVerseNumbers is false", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureSettings={{
+            ...DEFAULT_SCRIPTURE_SETTINGS,
+            scriptureShowVerseNumbers: false,
+          }}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-verse-number")).toBeNull();
+  });
+
+  it("hides footnote markers when scriptureShowFootnotes is false", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureSettings={{
+            ...DEFAULT_SCRIPTURE_SETTINGS,
+            scriptureShowFootnotes: false,
+          }}
+        />,
+        container
+      );
+    });
+
+    const footnoteIndicator = container.querySelector(
+      '.sb-inline-footnote-button[aria-label="Open footnote 7"]'
+    );
+    expect(footnoteIndicator).toBeNull();
+  });
+
+  it("hides highlights and decorations when scriptureShowHighlights is false", () => {
+    const { pane, selectorState, readingState, highlights, decorations } =
+      createFixture();
+
+    highlights.value = {
+      highlights: [
+        {
+          verse: 1,
+          colorId: "yellow",
+        },
+      ],
+    };
+    decorations.value = [
+      {
+        id: "decoration-hide-test",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        className: "sb-test-decoration",
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureSettings={{
+            ...DEFAULT_SCRIPTURE_SETTINGS,
+            scriptureShowHighlights: false,
+          }}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-highlight-yellow")).toBeNull();
+    expect(container.querySelector(".sb-test-decoration")).toBeNull();
+  });
+
+  it("applies scripture font size and line spacing as chapter CSS variables", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureSettings={{
+            ...DEFAULT_SCRIPTURE_SETTINGS,
+            scriptureFontSize: "XL",
+            scriptureLineSpacing: "L",
+          }}
+        />,
+        container
+      );
+    });
+
+    const chapterContent = container.querySelector(
+      ".sb-chapter-content"
+    ) as HTMLElement | null;
+
+    expect(chapterContent).not.toBeNull();
+    expect(
+      chapterContent?.style.getPropertyValue("--sb-scripture-font-size")
+    ).toBe("1.4em");
+    expect(
+      chapterContent?.style.getPropertyValue("--sb-scripture-line-height")
+    ).toBe("2.4");
   });
 });
