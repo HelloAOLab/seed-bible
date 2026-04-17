@@ -7,7 +7,6 @@ export function createSidebar() {
 
   const openSettings = () => {
     isSettingsOpen.value = true;
-    isMobileOpen.value = false;
   };
 
   const closeSettings = () => {
