@@ -508,7 +508,7 @@ function renderChapterContent(
     const value = entry;
 
     if (
-      settings.scriptureShowHeadings &&
+      settings?.scriptureShowHeadings &&
       value.type === "heading" &&
       Array.isArray(value.content)
     ) {
@@ -715,8 +715,17 @@ interface BibleReaderProps {
   currentPane: Pane;
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
-  scriptureSettings: ScriptureReaderSettings;
+  scriptureSettings?: ScriptureReaderSettings;
 }
+
+const DEFAULT_SCRIPTURE_SETTINGS: ScriptureReaderSettings = {
+  scriptureFontSize: "M",
+  scriptureLineSpacing: "M",
+  scriptureShowHeadings: true,
+  scriptureShowVerseNumbers: true,
+  scriptureShowFootnotes: true,
+  scriptureShowHighlights: true,
+};
 
 const SCRIPTURE_FONT_SIZE_SMALL = "1em";
 const SCRIPTURE_FONT_SIZE_MEDIUM = "1.2em";
@@ -727,7 +736,12 @@ const SCRIPTURE_LINE_HEIGHT_MEDIUM = "2";
 const SCRIPTURE_LINE_HEIGHT_LARGE = "2.4";
 
 export function BibleReader(props: BibleReaderProps) {
-  const { currentPane, readingState, selectorState, scriptureSettings } = props;
+  const {
+    currentPane,
+    readingState,
+    selectorState,
+    scriptureSettings = DEFAULT_SCRIPTURE_SETTINGS,
+  } = props;
   const {
     translationId,
     translation,
