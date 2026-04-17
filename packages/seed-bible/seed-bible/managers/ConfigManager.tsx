@@ -15,9 +15,11 @@ export interface AppConfig {
   scriptureShowVerseNumbers: boolean;
   scriptureShowFootnotes: boolean;
   scriptureShowHighlights: boolean;
+  scriptureBookOrder: BookOrder;
 }
 
 export type TextSize = "XS" | "S" | "M" | "L" | "XL" | "XXL";
+export type BookOrder = "traditional" | "tanakh";
 export type ScriptureLineSpacing = "S" | "M" | "L";
 
 export type SettingsPresetId = "minimal" | "full";
@@ -31,6 +33,7 @@ const FULL_CONFIG: AppConfig = {
   scriptureShowVerseNumbers: true,
   scriptureShowFootnotes: true,
   scriptureShowHighlights: true,
+  scriptureBookOrder: "traditional",
 };
 
 const MINIMAL_CONFIG: AppConfig = {
@@ -42,6 +45,7 @@ const MINIMAL_CONFIG: AppConfig = {
   scriptureShowVerseNumbers: true,
   scriptureShowFootnotes: true,
   scriptureShowHighlights: true,
+  scriptureBookOrder: "traditional",
 };
 
 const DEFAULT_CONFIG_PRESETS: Record<SettingsPresetId, AppConfig> = {
@@ -120,6 +124,24 @@ function parseScriptureLineSpacing(
   }
 }
 
+function parseScriptureBookOrder(
+  value: unknown,
+  fallback: BookOrder
+): BookOrder {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  switch (normalized) {
+    case "traditional":
+    case "tanakh":
+      return normalized;
+    default:
+      return fallback;
+  }
+}
+
 function getProfileConfigValue(
   profile: UserProfile | null,
   key: string
@@ -192,6 +214,14 @@ export function createConfig(login: LoginManager) {
       )
     );
 
+    const scriptureBookOrderFromProfile = parseScriptureBookOrder(
+      getProfileConfigValue(login.profile.value, "scriptureBookOrder"),
+      parseScriptureBookOrder(
+        configBot.tags["app.scriptureBookOrder"],
+        presetConfig.scriptureBookOrder
+      )
+    );
+
     return {
       disablePanels: parseBoolean(
         configBot.tags["app.disablePanels"],
@@ -204,6 +234,7 @@ export function createConfig(login: LoginManager) {
       scriptureShowVerseNumbers: scriptureShowVerseNumbersFromProfile,
       scriptureShowFootnotes: scriptureShowFootnotesFromProfile,
       scriptureShowHighlights: scriptureShowHighlightsFromProfile,
+      scriptureBookOrder: scriptureBookOrderFromProfile,
     };
   };
 
