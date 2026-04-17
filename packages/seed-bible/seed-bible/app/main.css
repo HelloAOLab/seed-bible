@@ -1688,6 +1688,7 @@ button {
     width: 100%;
     z-index: 100;
     overflow-y: auto;
+    background: var(--sb-background);
   }
 
   .sb-sidebar-close-button {
