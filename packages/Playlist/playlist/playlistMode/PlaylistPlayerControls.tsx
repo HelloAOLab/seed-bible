@@ -411,6 +411,8 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
 
       const updatedPlaylists = { ...prevPlaylists };
 
+      let keyUsed: any = currentKey;
+
       if (SQ || justAddedQueue.current) {
         if (justAddedQueue.current) {
           currentKey = Number(currIndex.key) + 1;
@@ -423,6 +425,8 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
           ...(updatedPlaylists[currentKey]?.list || []),
           ...toAddItems,
         ];
+
+        keyUsed = currentKey;
       } else {
         // Case: Splitting a playlist
         const beforeCurrentIndex = currentList.slice(0, splitIndex + 1);
@@ -448,6 +452,7 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
         // if (!readingPlanEnabled) {
         // Add the new queue
         updatedPlaylists[newQueueKey] = newQueue;
+        keyUsed = newQueueKey;
         // } else if (findLastActiveIndex > -1) {
         //     findLastActiveIndex++;
         //     currentList.splice(findLastActiveIndex, 0, item);
@@ -475,6 +480,9 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
       Object.keys(updatedPlaylists)
         .sort((a, b) => Number(a) - Number(b)) // Sort numerically
         .forEach((key, index) => {
+          if (key === keyUsed) {
+            G.LAST_SQ_KEY_USED = index;
+          }
           reorderedPlaylists[index] = { ...updatedPlaylists[key] };
           if (!reorderedPlaylists[index]?.list?.length) {
             delete reorderedPlaylists[index];
@@ -486,6 +494,12 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
     });
     setOpenAttachLink(false);
   };
+
+  const setJustAddedQueue = (val: boolean) => {
+    justAddedQueue.current = val;
+  };
+
+  G.SET_JUST_ADDED_QUEUE = setJustAddedQueue;
 
   useLayoutEffect(() => {
     G.SetCurreIndexPlaylist = handlesetIndex;

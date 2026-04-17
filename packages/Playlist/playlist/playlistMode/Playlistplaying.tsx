@@ -554,6 +554,7 @@ const PlayingPlaylist = () => {
     pId: string,
     id: string
   ) => {
+    G.LAST_QUEUE_IIEM = {};
     G.SetPlayingPlaylists?.((prev: any) => {
       const oldPlayingList = {
         ...prev,
@@ -701,6 +702,7 @@ const PlayingPlaylist = () => {
   const [queueDeleteConfirm, setQueueDeleteConfirm] = useState(-1);
 
   const onDeleteWholeQueue = (key: number) => {
+    G.LAST_QUEUE_IIEM = {};
     G.SetPlayingPlaylists?.((prev: any) => {
       const sortedKeys = Object.keys(prev).sort(
         (a, b) => Number(a) - Number(b)
@@ -729,6 +731,9 @@ const PlayingPlaylist = () => {
         newPlayingList[String(i)] = prev[oldK];
       });
       const curr = G.CurrentIndexItem;
+      if (G.LAST_SQ_KEY_USED === key) {
+        G.SET_JUST_ADDED_QUEUE?.(false);
+      }
       if (curr?.key != null) {
         const currKeyStr = String(curr.key);
         const isDeletingCurrent = curr.key == key || currKeyStr === String(key);
@@ -885,6 +890,13 @@ const PlayingPlaylist = () => {
               {!hide && (
                 <div
                   className="publish-setting"
+                  style={{
+                    height: "16px",
+                    minWidth: "16px",
+                    padding: "0",
+                    display: "grid",
+                    placeItems: "center",
+                  }}
                   onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
 
@@ -898,6 +910,7 @@ const PlayingPlaylist = () => {
                   }}
                 >
                   <img
+                    style={{ height: "14px", width: "14px" }}
                     className="img-icon"
                     src={G.Settings_Icon}
                     alt="Settings_Icon"
