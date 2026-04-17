@@ -48,9 +48,9 @@ export interface LoginManager {
 }
 
 export const userProfileSchema = z.object({
-  name: z.string(),
-  location: z.string().nullable().optional(),
-  pictureUrl: z.url().optional().nullable(),
+  name: z.string().max(100),
+  location: z.string().max(100).nullable().optional(),
+  pictureUrl: z.url().max(1024).optional().nullable(),
   description: z.string().max(300).optional().nullable(),
   config: z.record(z.string(), z.unknown()).optional().nullable(),
 });
