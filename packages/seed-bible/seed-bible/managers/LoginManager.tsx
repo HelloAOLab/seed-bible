@@ -151,7 +151,7 @@ export function createLoginManager(): LoginManager {
     const files = await os.showUploadFiles();
     const file = files?.[0];
     if (!file) {
-      return;
+      throw new Error("No file selected for upload");
     }
 
     const result = await os.recordFile(userId.value, file.data, {
@@ -161,7 +161,7 @@ export function createLoginManager(): LoginManager {
 
     if (result.success === false) {
       console.error("Profile picture upload failed:", result);
-      return;
+      throw new Error("Failed to upload profile picture");
     }
 
     updateProfile({ pictureUrl: result.url });

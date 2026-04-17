@@ -206,7 +206,7 @@ describe("createLoginManager", () => {
       );
     });
 
-    it("does nothing when the user cancels file selection", async () => {
+    it("throws an error when the user cancels file selection", async () => {
       const bot = createBot("user-upload");
       requestAuthBotInBackgroundMock.mockResolvedValue(bot);
       showUploadFilesMock.mockResolvedValue([]);
@@ -214,7 +214,9 @@ describe("createLoginManager", () => {
       const manager = createLoginManager();
       await waitFor(() => manager.userId.value === "user-upload");
 
-      await manager.uploadProfilePicture();
+      await expect(manager.uploadProfilePicture()).rejects.toThrow(
+        "No file selected for upload"
+      );
 
       expect(recordFileMock).not.toHaveBeenCalled();
     });
@@ -249,7 +251,7 @@ describe("createLoginManager", () => {
       );
     });
 
-    it("logs an error and does not update the profile when the upload fails", async () => {
+    it("throws an error and does not update the profile when the upload fails", async () => {
       const bot = createBot("user-upload-fail");
       requestAuthBotInBackgroundMock.mockResolvedValue(bot);
 
@@ -265,22 +267,14 @@ describe("createLoginManager", () => {
         errorMessage: "Upload failed.",
       });
 
-      const errorSpy = jest
-        .spyOn(console, "error")
-        .mockImplementation(() => undefined);
-
       const manager = createLoginManager();
       await waitFor(() => manager.userId.value === "user-upload-fail");
 
-      await manager.uploadProfilePicture();
-
-      expect(manager.profile.value?.pictureUrl).toBeUndefined();
-      expect(errorSpy).toHaveBeenCalledWith(
-        "Profile picture upload failed:",
-        expect.objectContaining({ success: false })
+      await expect(manager.uploadProfilePicture()).rejects.toThrow(
+        "Failed to upload profile picture"
       );
 
-      errorSpy.mockRestore();
+      expect(manager.profile.value?.pictureUrl).toBeUndefined();
     });
   });
 });
