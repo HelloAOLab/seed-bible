@@ -44,6 +44,7 @@ export const userProfileSchema = z.object({
   name: z.string(),
   location: z.string().nullable().optional(),
   pictureUrl: z.url().optional().nullable(),
+  description: z.string().max(300).optional().nullable(),
   config: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 

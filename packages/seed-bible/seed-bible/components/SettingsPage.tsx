@@ -50,12 +50,44 @@ function AccountSettingsView(props: {
 
   const name = useSignal(profile?.name ?? "");
   const location = useSignal(profile?.location ?? "");
+  const description = useSignal(profile?.description ?? "");
+  const pictureUrl = useSignal(profile?.pictureUrl ?? "");
+  const isUploadingPicture = useSignal(false);
 
   const handleSave = () => {
     login.updateProfile({
       name: name.value,
       location: location.value || null,
+      description: description.value || null,
+      pictureUrl: pictureUrl.value || null,
     });
+  };
+
+  const handleUploadPicture = async () => {
+    if (isUploadingPicture.value) {
+      return;
+    }
+    isUploadingPicture.value = true;
+    try {
+      const files = await os.showUploadFiles();
+      const file = files?.[0];
+      if (!file || !login.userId.value) {
+        return;
+      }
+      const result = await os.recordFile(login.userId.value, file.data, {
+        mimeType: file.mimeType,
+        markers: ["publicRead"],
+      });
+      if (result.success === false) {
+        console.error("File upload failed:", result);
+        return;
+      }
+      pictureUrl.value = result.url;
+    } catch (error) {
+      console.error("Failed to upload profile picture.", error);
+    } finally {
+      isUploadingPicture.value = false;
+    }
   };
 
   return (
@@ -64,6 +96,31 @@ function AccountSettingsView(props: {
       <section className="sb-settings-section">
         {isLoggedIn ? (
           <>
+            <div className="sb-settings-field-row">
+              <label className="sb-settings-field-label">User ID</label>
+              <span className="sb-settings-field-value">
+                {login.userId.value}
+              </span>
+            </div>
+            <div className="sb-settings-field-row">
+              <label className="sb-settings-field-label">Profile picture</label>
+              <div className="sb-settings-picture-field">
+                {pictureUrl.value && (
+                  <img
+                    className="sb-settings-profile-picture-preview"
+                    src={pictureUrl.value}
+                    alt="Profile picture"
+                  />
+                )}
+                <button
+                  className="sb-settings-action-button"
+                  onClick={() => void handleUploadPicture()}
+                  disabled={isUploadingPicture.value}
+                >
+                  {isUploadingPicture.value ? "Uploading..." : "Upload picture"}
+                </button>
+              </div>
+            </div>
             <div className="sb-settings-field-row">
               <label
                 className="sb-settings-field-label"
@@ -102,9 +159,35 @@ function AccountSettingsView(props: {
                 placeholder="Your location"
               />
             </div>
+            <div className="sb-settings-field-row">
+              <label
+                className="sb-settings-field-label"
+                htmlFor="sb-profile-description"
+              >
+                Description
+              </label>
+              <textarea
+                id="sb-profile-description"
+                className="sb-settings-text-input sb-settings-textarea"
+                value={description.value ?? ""}
+                maxLength={300}
+                onInput={(event: Event) => {
+                  description.value = (
+                    event.currentTarget as HTMLTextAreaElement
+                  ).value;
+                }}
+                placeholder="A short description about yourself"
+              />
+            </div>
             <div className="sb-settings-actions">
               <button className="sb-settings-save-button" onClick={handleSave}>
                 Save
+              </button>
+              <button
+                className="sb-settings-action-button sb-settings-signout-button"
+                onClick={() => void os.signOut()}
+              >
+                Sign Out
               </button>
             </div>
           </>
