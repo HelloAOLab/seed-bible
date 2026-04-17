@@ -786,24 +786,26 @@ const PlayingPlaylist = () => {
         <>
           <div
             className="backdrop"
+            style={{ zIndex: 10001 }}
             onClick={() => setShowSettingsOptions(false)}
           />
           <div
-            onClick={() => setShowSettingsOptions(false)}
             style={{
               ...showMorePosition.current,
               left: "none",
               right: "4rem",
-              width: "206px",
+              width: "236px",
               padding: "1rem",
-              top: "5rem",
+              top: "3rem",
             }}
             className="overlay linked-item-custom"
           >
-            <p>
+            <p style={{ marginBottom: "0" }}>
               <b>{t("playlistActions")}</b>
             </p>
-            <span style={{ fontSize: "12px" }}>{t("playlistActionsDesc")}</span>
+            <span style={{ fontSize: "12px", marginBottom: "6px" }}>
+              {t("playlistActionsDesc")}
+            </span>
             <div
               className="align-center"
               style={{
@@ -825,31 +827,16 @@ const PlayingPlaylist = () => {
                 setIsPlaybarInherited((p: boolean) => !p);
               }}
             >
-              {isPlaybarInherited ? (
-                <span
-                  style={{ fontSize: "20px" }}
-                  class="material-symbols-outlined unfollow"
-                >
-                  check_box
-                </span>
-              ) : (
-                <span
-                  style={{ fontSize: "20px" }}
-                  class="material-symbols-outlined unfollow"
-                >
-                  check_box_outline_blank
-                </span>
-              )}
-              <label
-                style={{
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  marginLeft: "4px",
-                }}
-                for="playlistInclude"
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "10px" }}
               >
-                {t("movePlaybarInside")}
-              </label>
+                <div
+                  className={`settings-toggle ${isPlaybarInherited ? "active" : ""}`}
+                >
+                  <div className="settings-toggle-knob" />
+                </div>
+                <div className="item-text"> {t("movePlaybarInside")}</div>
+              </div>
             </div>
           </div>
         </>
