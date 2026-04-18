@@ -106,6 +106,7 @@ function generateGridPortalContainerCss(
       opacity: 1 !important;
       pointer-events: auto !important;
       z-index: 5 !important;
+      padding: 6px !important;
     }
 
     .vm-iframe-container {
@@ -259,6 +260,26 @@ function EmptyPaneToolbar({
   );
 }
 
+function getLayoutGridDimensions(layout: string): {
+  cols: number;
+  rows: number;
+} {
+  switch (layout) {
+    case "split-2v":
+      return { cols: 2, rows: 1 };
+    case "split-3v":
+      return { cols: 3, rows: 1 };
+    case "split-4v":
+      return { cols: 4, rows: 1 };
+    case "grid-2x2":
+      return { cols: 2, rows: 2 };
+    case "split-left-two-right":
+      return { cols: 2, rows: 2 };
+    default:
+      return { cols: 1, rows: 1 };
+  }
+}
+
 interface PaneLayoutProps {
   state: SeedBibleState;
 }
@@ -292,8 +313,79 @@ export function PaneLayout(props: PaneLayoutProps) {
   const attachedPanes = panes.filter((pane) => !pane.detached);
   const detachedPanes = panes.filter((pane) => pane.detached);
 
+  const layoutContainerRef = useRef<HTMLDivElement | null>(null);
+  const { cols: layoutCols, rows: layoutRows } =
+    getLayoutGridDimensions(layout);
+  const [columnSizes, setColumnSizes] = useState<number[]>(() =>
+    Array.from({ length: layoutCols }, () => 1 / layoutCols)
+  );
+  const [rowSizes, setRowSizes] = useState<number[]>(() =>
+    Array.from({ length: layoutRows }, () => 1 / layoutRows)
+  );
+  const attachedResizeDragRef = useRef<{
+    type: "column" | "row";
+    index: number;
+    startPos: number;
+    startSizes: number[];
+  } | null>(null);
+
+  const effectiveColumnSizes =
+    columnSizes.length === layoutCols
+      ? columnSizes
+      : Array.from({ length: layoutCols }, () => 1 / layoutCols);
+  const effectiveRowSizes =
+    rowSizes.length === layoutRows
+      ? rowSizes
+      : Array.from({ length: layoutRows }, () => 1 / layoutRows);
+
+  useEffect(() => {
+    setColumnSizes(Array.from({ length: layoutCols }, () => 1 / layoutCols));
+    setRowSizes(Array.from({ length: layoutRows }, () => 1 / layoutRows));
+  }, [layout]);
+
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
+      // Handle attached pane resize
+      const resizeDrag = attachedResizeDragRef.current;
+      if (resizeDrag) {
+        event.preventDefault();
+        const container = layoutContainerRef.current;
+        if (!container) {
+          return;
+        }
+        const rect = container.getBoundingClientRect();
+
+        if (resizeDrag.type === "column") {
+          const left = resizeDrag.startSizes[resizeDrag.index] ?? 0;
+          const right = resizeDrag.startSizes[resizeDrag.index + 1] ?? 0;
+          const deltaFrac = (event.clientX - resizeDrag.startPos) / rect.width;
+          const newLeft = left + deltaFrac;
+          const newRight = right - deltaFrac;
+          const minFrac = 80 / rect.width;
+          if (newLeft >= minFrac && newRight >= minFrac) {
+            const next = [...resizeDrag.startSizes];
+            next[resizeDrag.index] = newLeft;
+            next[resizeDrag.index + 1] = newRight;
+            setColumnSizes(next);
+          }
+        } else {
+          const top = resizeDrag.startSizes[resizeDrag.index] ?? 0;
+          const bottom = resizeDrag.startSizes[resizeDrag.index + 1] ?? 0;
+          const deltaFrac = (event.clientY - resizeDrag.startPos) / rect.height;
+          const newTop = top + deltaFrac;
+          const newBottom = bottom - deltaFrac;
+          const minFrac = 60 / rect.height;
+          if (newTop >= minFrac && newBottom >= minFrac) {
+            const next = [...resizeDrag.startSizes];
+            next[resizeDrag.index] = newTop;
+            next[resizeDrag.index + 1] = newBottom;
+            setRowSizes(next);
+          }
+        }
+        return;
+      }
+
+      // Handle detached pane drag
       const dragState = dragStateRef.current;
       if (!dragState) {
         return;
@@ -323,6 +415,7 @@ export function PaneLayout(props: PaneLayoutProps) {
 
     const handlePointerUp = () => {
       dragStateRef.current = null;
+      attachedResizeDragRef.current = null;
     };
 
     window.addEventListener("pointermove", handlePointerMove);
@@ -389,7 +482,27 @@ export function PaneLayout(props: PaneLayoutProps) {
   }, [panes]);
 
   return (
-    <div className="sb-panes-layout" data-layout={layout}>
+    <div
+      className="sb-panes-layout"
+      data-layout={layout}
+      ref={layoutContainerRef}
+      style={{
+        ...(layoutCols > 1
+          ? {
+              gridTemplateColumns: effectiveColumnSizes
+                .map((s) => `minmax(0,${s}fr)`)
+                .join(" "),
+            }
+          : {}),
+        ...(layoutRows > 1
+          ? {
+              gridTemplateRows: effectiveRowSizes
+                .map((s) => `minmax(0,${s}fr)`)
+                .join(" "),
+            }
+          : {}),
+      }}
+    >
       {attachedPanes.map((pane, index) => (
         <div
           key={pane.id}
@@ -444,6 +557,60 @@ export function PaneLayout(props: PaneLayoutProps) {
           )}
         </div>
       ))}
+
+      {layoutCols > 1 &&
+        effectiveColumnSizes.slice(0, -1).map((_, i) => {
+          const leftPercent =
+            effectiveColumnSizes.slice(0, i + 1).reduce((a, b) => a + b, 0) *
+            100;
+          return (
+            <div
+              key={`col-resize-${i}`}
+              className="sb-pane-resize-handle sb-pane-resize-handle-col"
+              style={{ left: `calc(${leftPercent}% - 3px)` }}
+              onPointerDown={(event: PointerEvent) => {
+                event.preventDefault();
+                event.stopPropagation();
+                attachedResizeDragRef.current = {
+                  type: "column",
+                  index: i,
+                  startPos: event.clientX,
+                  startSizes: [...effectiveColumnSizes],
+                };
+              }}
+            />
+          );
+        })}
+
+      {layoutRows > 1 &&
+        effectiveRowSizes.slice(0, -1).map((_, i) => {
+          const topPercent =
+            effectiveRowSizes.slice(0, i + 1).reduce((a, b) => a + b, 0) * 100;
+          return (
+            <div
+              key={`row-resize-${i}`}
+              className="sb-pane-resize-handle sb-pane-resize-handle-row"
+              style={{
+                top: `calc(${topPercent}% - 3px)`,
+                left:
+                  layout === "split-left-two-right"
+                    ? `${effectiveColumnSizes[0]! * 100}%`
+                    : "0",
+                right: "0",
+              }}
+              onPointerDown={(event: PointerEvent) => {
+                event.preventDefault();
+                event.stopPropagation();
+                attachedResizeDragRef.current = {
+                  type: "row",
+                  index: i,
+                  startPos: event.clientY,
+                  startSizes: [...effectiveRowSizes],
+                };
+              }}
+            />
+          );
+        })}
 
       {detachedPanes.map((pane, index) => (
         <div
