@@ -1600,5 +1600,6 @@ span.material-symbols-outlined.rotate-90 {
 @media screen and (max-width: 440px) {
   .playlist-player-controls-info {
     flex-direction: column;
+    align-items: flex-start;
   }
 }
