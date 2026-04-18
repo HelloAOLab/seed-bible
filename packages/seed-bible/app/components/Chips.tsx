@@ -16,6 +16,8 @@ const SharePopup = ({
   closePopupSettings,
 }) => {
   const [copied, setCopied] = useState(false);
+  // @ts-expect-error globalThis.IsMobileNow is defined at runtime
+  const isMobile = globalThis.IsMobileNow();
   // always include reference; no toggle needed
 
   // Build the verse reference from context if not provided
@@ -41,7 +43,7 @@ const SharePopup = ({
     },
     {
       name: "Whatsapp",
-      icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/512px-WhatsApp.svg.png",
+      icon: "https://static.whatsapp.net/rsrc.php/v3/yP/r/rYZqPCBaG70.png",
       share: () => os.openURL(`https://wa.me/?text=${shareText}`),
     },
     // {
@@ -63,7 +65,7 @@ const SharePopup = ({
     },
     {
       name: "LinkedIn",
-      icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/LinkedIn_logo_initials.png/600px-LinkedIn_logo_initials.png",
+      icon: "https://content.linkedin.com/content/dam/me/business/en-us/amp/brand-site/v2/bg/LI-Bug.svg.original.svg",
       share: () =>
         window.open(
           `https://www.linkedin.com/shareArticle?text=${shareText}`,
@@ -87,7 +89,7 @@ const SharePopup = ({
     //     window.open("https://instagram.com", "_blank");
     //   },
     // },
-    ...(globalThis.IsMobileNow()
+    ...(isMobile
       ? [
           {
             name: "Text",
@@ -158,7 +160,7 @@ const SharePopup = ({
         <div
           onClick={(e) => e.stopPropagation()}
           style={{
-            background: "var(--pageBackground)",
+            background: "var(--pageBackground, #ffffff)",
             borderRadius: 16,
             padding: "20px 24px",
             maxWidth: 380,
@@ -205,7 +207,9 @@ const SharePopup = ({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
+              gridTemplateColumns: globalThis?.IsMobileNow()
+                ? "repeat(3, 1fr)"
+                : "repeat(4, 1fr)",
               gap: 12,
             }}
           >

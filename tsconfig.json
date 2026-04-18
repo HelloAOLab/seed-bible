@@ -3521,6 +3521,9 @@
       "app.components.verseToolbar": [
         "./packages/seed-bible/app/components/verseToolbar.tsx"
       ],
+      "app.components.welcomeModal": [
+        "./packages/seed-bible/app/components/welcomeModal.tsx"
+      ],
       "app.contract.environment": [
         "./packages/seed-bible/app/contract/environment.tsx"
       ],
