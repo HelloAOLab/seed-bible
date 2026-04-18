@@ -917,15 +917,7 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
               width: "calc(100%)",
             }}
           >
-            <div
-              style={{
-                width: "auto",
-                flexDirection: "row",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-              }}
-            >
+            <div className="playlist-player-controls-info">
               <p
                 style={{
                   fontSize: "12px",
@@ -1247,7 +1239,7 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
                 if (!prevItemName?.content) {
                   return ShowNotification({
                     message: t("youAreAtTheBeginningOfThePlaylist"),
-                    severity: "error",
+                    severity: "info",
                   });
                 }
                 DataManager.cancelCurrentPlayingSound();
@@ -1314,7 +1306,7 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
                 if (!nextItemName?.content) {
                   return ShowNotification({
                     message: t("playlistHasBeenEnded"),
-                    severity: "error",
+                    severity: "info",
                   });
                 }
                 DataManager.cancelCurrentPlayingSound();

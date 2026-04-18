@@ -1875,6 +1875,9 @@ function ThePage({
                 } else if (currentScrollTop < lastScrollTopRef.current) {
                   document.body.classList.remove("scroll-hide-bars");
                 }
+                globalThis.SetIsBottomBar(
+                  currentScrollTop > lastScrollTopRef.current
+                );
                 lastScrollTopRef.current = currentScrollTop;
               }
             }}

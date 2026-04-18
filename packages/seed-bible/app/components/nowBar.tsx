@@ -1,4 +1,5 @@
 const { useState, useRef, useEffect } = os.appHooks;
+const G = globalThis as any;
 
 function NowBar() {
   const [apps, setApps] = useState([]);
@@ -11,6 +12,9 @@ function NowBar() {
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 400
   );
+  const [isBottomBar, setIsBottomBar] = useState(false);
+
+  G.SetIsBottomBar = setIsBottomBar;
   const cardRef = useRef(null);
 
   // Track window resize for responsive behavior
@@ -231,7 +235,7 @@ function NowBar() {
     <div
       style={{
         position: "fixed",
-        bottom: dimensions.bottom,
+        bottom: isBottomBar ? "1.2rem" : dimensions.bottom,
         left: "50%",
         transform: "translateX(-50%)",
         width: `${dimensions.width}px`,
@@ -240,9 +244,9 @@ function NowBar() {
         minHeight: `${dimensions.height + extraHeight}px`,
         zIndex: "999999",
         // Ensure it doesn't overflow on very small screens
-        maxWidth: "95vw",
         display: "flex",
         alignItems: "flex-end",
+        maxWidth: "min(95vw, calc(100vw - 150px))",
       }}
     >
       {apps.map((app, index) => {
