@@ -3371,6 +3371,9 @@
       "aiApps.painterStorage.onBotChanged": [
         "./packages/seed-bible/aiApps/painterStorage/onBotChanged.tsx"
       ],
+      "app.components.addToHomeScreen": [
+        "./packages/seed-bible/app/components/addToHomeScreen.tsx"
+      ],
       "app.components.aiSettings": [
         "./packages/seed-bible/app/components/aiSettings.tsx"
       ],

@@ -1,7 +1,14 @@
-export function WelcomeModal({ onContinue }: { onContinue: () => void }) {
+export function WelcomeModal({
+  onContinue,
+  onDismiss,
+}: {
+  onContinue: () => void;
+  onDismiss: () => void;
+}) {
   return (
     <>
       <div
+        onClick={onDismiss}
         style={{
           position: "fixed",
           inset: 0,

@@ -7,6 +7,7 @@ import { SideBarProvider } from "app.hooks.sideBar";
 import { mainController } from "app.controller.controllerBuilder";
 import { getBrowserLanguage, changeLanguage } from "app.hooks.i18n";
 import { WelcomeModal } from "app.components.welcomeModal";
+import { AddToHomeScreen } from "app.components.addToHomeScreen";
 
 function getPWADisplayMode() {
   if (document.referrer.startsWith("android-app://")) return "twa";
@@ -27,6 +28,8 @@ function isPWA() {
   return mode !== "unknown" && mode !== "browser";
 }
 
+type ModalState = "welcome" | "postEnter" | "none";
+
 /**
  * The default application component concerned with root composition.
  */
@@ -37,22 +40,35 @@ export function App() {
     localStorage.setItem("seedBibleLangSelected", "true");
   }
 
-  const [showWelcome, setShowWelcome] = useState(() => {
-    if (localStorage.getItem("seedBibleWelcomeShown") === "true") return false;
-    if (isPWA()) return false;
-    return true;
+  const [modalState, setModalState] = useState<ModalState>(() => {
+    if (localStorage.getItem("seedBibleWelcomeShown") === "true") return "none";
+    if (isPWA()) return "none";
+    return "welcome";
   });
 
   const handleWelcomeContinue = () => {
     localStorage.setItem("seedBibleWelcomeShown", "true");
-    setShowWelcome(false);
+    setModalState("postEnter");
+  };
+
+  const handleDismiss = () => {
+    localStorage.setItem("seedBibleWelcomeShown", "true");
+    setModalState("none");
   };
 
   return (
     <BibleVariablesProvider>
       <TabsProvider>
         <SideBarProvider>
-          {showWelcome && <WelcomeModal onContinue={handleWelcomeContinue} />}
+          {modalState === "welcome" && (
+            <WelcomeModal
+              onContinue={handleWelcomeContinue}
+              onDismiss={handleDismiss}
+            />
+          )}
+          {modalState === "postEnter" && (
+            <AddToHomeScreen onDismiss={handleDismiss} />
+          )}
           <MainContent controller={mainController} />
         </SideBarProvider>
       </TabsProvider>
