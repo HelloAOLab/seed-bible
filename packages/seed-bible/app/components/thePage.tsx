@@ -1861,23 +1861,25 @@ function ThePage({
                     currentScrollTop < lastScrollTopRef.current
                   ) {
                     // User is scrolling up — clear the flag and show bars
+                    globalThis.SetIsBottomBar(false);
                     swipeNavOccurredRef.current = false;
                     document.body.classList.remove("scroll-hide-bars");
                   }
                   // Otherwise keep bars hidden
                 } else if (currentScrollTop <= 0) {
+                  globalThis.SetIsBottomBar(false);
                   document.body.classList.remove("scroll-hide-bars");
                 } else if (
                   currentScrollTop > lastScrollTopRef.current &&
                   currentScrollTop > 50
                 ) {
+                  globalThis.SetIsBottomBar(true);
                   document.body.classList.add("scroll-hide-bars");
                 } else if (currentScrollTop < lastScrollTopRef.current) {
+                  globalThis.SetIsBottomBar(false);
                   document.body.classList.remove("scroll-hide-bars");
                 }
-                globalThis.SetIsBottomBar(
-                  currentScrollTop > lastScrollTopRef.current
-                );
+
                 lastScrollTopRef.current = currentScrollTop;
               }
             }}
