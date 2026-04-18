@@ -322,19 +322,21 @@ export async function loadInst(
 
 export const DEFAULT_EXTENSIONS = [
   "seed-bible",
-  "BookSelector",
-  "Object Pooler",
-  "GeoImporter",
-  "Color Lerper",
-  "Location",
-  "Bible Visualization Utils",
-  "Scripture Map 2D",
-  "Draw",
-  "Scripture Map 3D",
-  "Bible Stack",
-  "Playlist",
+  "ext_twitchPub",
+  // "ext_twitchSub",
+  // "BookSelector",
+  // "Object Pooler",
+  // "GeoImporter",
+  // "Color Lerper",
+  // "Location",
+  // "Bible Visualization Utils",
+  // "Scripture Map 2D",
+  // "Draw",
+  // "Scripture Map 3D",
+  // "Bible Stack",
+  // "Playlist",
   "Calendar",
-  "Tabernacle",
+  // "Tabernacle",
 ];
 
 export async function loadSeedBible(
