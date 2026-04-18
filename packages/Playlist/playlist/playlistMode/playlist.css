@@ -1588,3 +1588,17 @@ span.material-symbols-outlined.rotate-90 {
 .settings-toggle.active .settings-toggle-knob {
   left: 22px;
 }
+
+.playlist-player-controls-info {
+  width: auto;
+  flex-direction: row;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media screen and (max-width: 440px) {
+  .playlist-player-controls-info {
+    flex-direction: column;
+  }
+}
