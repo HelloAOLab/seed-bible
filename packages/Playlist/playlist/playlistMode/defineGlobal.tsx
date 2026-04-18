@@ -68,6 +68,7 @@ try {
   G.PROD_ENV = !DEV_ENV;
 
   G.MOBILE_VIEWPORT_THRESHOLD = 600;
+  G.MOBILE_VIEWPORT_THRESHOLD_SMALL = 440;
   G.makingPlaylist = false;
 
   G.LoadedPlaylistAnnotations = {};
