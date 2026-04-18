@@ -6,6 +6,10 @@ const AudioPlayer = await thisBot.AudioPlayer();
 const AttachLink = await thisBot.AttachLink();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
 
+const isMobileSmall =
+  (window?.innerWidth || G.gridPortalBot.tags.pixelWidth) <
+  G.MOBILE_VIEWPORT_THRESHOLD;
+
 const EditPlaylist =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/a48b4bb0182ac0b5f8c8437e3d985f9af99c8b64c61249496ef797b9b8ac88df.svg";
 const SharePlaylist =
@@ -918,28 +922,35 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
             }}
           >
             <div className="playlist-player-controls-info">
-              <p
-                style={{
-                  fontSize: "12px",
-                  fontWeight: "500",
-                  display: "flex",
-                  alignItems: "center",
-                  margin: "0",
-                  // marginBottom: "0.5rem",
-                  fontFamily: "DM Sans",
-                  height: "12px",
-                  color: "var(--pageTextColor)",
-                  minWidth: "max-content",
-                }}
-              >
-                {G.PPchecklistEnabled && showCurrent && currIndex.index === -1
-                  ? null
-                  : showCurrent
-                    ? `${t("playingNow")}:`
-                    : nextItemName?.content
-                      ? `${t("playingNext")}:`
-                      : null}
-              </p>
+              {!isMobileSmall ||
+                ((showCurrent
+                  ? !!currentItem?.content
+                  : !!nextItemName?.content) && (
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "500",
+                      display: "flex",
+                      alignItems: "center",
+                      margin: "0",
+                      // marginBottom: "0.5rem",
+                      fontFamily: "DM Sans",
+                      height: "12px",
+                      color: "var(--pageTextColor)",
+                      minWidth: "max-content",
+                    }}
+                  >
+                    {G.PPchecklistEnabled &&
+                    showCurrent &&
+                    currIndex.index === -1
+                      ? null
+                      : showCurrent
+                        ? `${t("playingNow")}:`
+                        : nextItemName?.content
+                          ? `${t("playingNext")}:`
+                          : null}
+                  </p>
+                ))}
               <div style={{ gap: "0.5rem" }} className="align-center">
                 <div
                   style={{
