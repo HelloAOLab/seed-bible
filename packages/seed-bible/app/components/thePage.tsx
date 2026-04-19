@@ -2328,6 +2328,7 @@ function ThePage({
                   }}
                   style={{ "pointer-events": isDragging ? "none" : null }}
                   className="bookTitle"
+                  id="bookTitle"
                 >
                   {`${data?.book} ${data?.chapter}`}{" "}
                   <span

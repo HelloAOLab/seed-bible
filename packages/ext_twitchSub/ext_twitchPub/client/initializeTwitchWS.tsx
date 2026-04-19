@@ -66,7 +66,10 @@ function startWebSocketClient() {
 }
 // data.payload.event.chatter_user_id
 function handleWebSocketMessage(data: any) {
-  console.log("wsss:- " + data.metadata.message_type);
+  if (globalThis?.twitchWebsocketClientPaused) {
+    return;
+  }
+  console.log("wsss:- " + "WebSocket message received:", data);
   switch (data.metadata.message_type) {
     case "session_welcome": // First message you get from the WebSocket server when connecting
       // Listen to EventSub, which joins the chatroom from your bot's account
@@ -163,6 +166,12 @@ const handleWS = async () => {
   setTagMask(thisBot, "WSStarted", true, "local");
 
   startWebSocketClient();
+
+  const existingIcon = document.getElementById("twitch-extension-icon");
+  if (existingIcon) {
+    existingIcon.style.boxShadow =
+      "0px 1px 14px 0px color-mix(in srgb, var(--secondaryColor) 25%, transparent)";
+  }
 };
 
 handleWS();

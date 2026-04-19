@@ -14,6 +14,7 @@ export const TwitchIcon = (props: IconProps) => {
       xmlns="http://www.w3.org/2000/svg"
       xmlnsXlink="http://www.w3.org/1999/xlink"
       {...props}
+      onContextMenu={(e) => e.stopPropagation()}
     >
       <rect width="40" height="40" fill="url(#pattern0_6521_1003)" />
       <defs>

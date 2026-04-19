@@ -1,4 +1,5 @@
 import { TwitchIcon } from "ext_twitchPub.client.icons";
+const { useState, useEffect } = os.appHooks;
 
 const TwitchSettings = (props: {
   translationEnabled: boolean;
@@ -16,6 +17,28 @@ const TwitchSettings = (props: {
     chapterFollowEnabled,
     setChapterFollowEnabled,
   } = props;
+
+  const [websocketPaused, setWebsocketPaused] = useState(
+    globalThis?.twitchWebsocketClientPaused || false
+  );
+
+  useEffect(() => {
+    globalThis.twitchWebsocketClientPaused = websocketPaused;
+    const existingIcon = document.getElementById("twitch-extension-icon");
+    if (existingIcon) {
+      if (websocketPaused) {
+        existingIcon.style.boxShadow = "0px 1px 14px 0px rgba(0,0,0,0.1)";
+      } else {
+        existingIcon.style.boxShadow =
+          "0px 1px 14px 0px color-mix(in srgb, var(--secondaryColor) 25%, transparent)";
+      }
+    }
+    console.log(
+      "WebSocket paused state changed:",
+      websocketPaused,
+      existingIcon
+    );
+  }, [websocketPaused]);
 
   return (
     <>
@@ -42,12 +65,19 @@ const TwitchSettings = (props: {
           >
             <TwitchIcon style={{ width: "24px", height: "24px" }} />
             Twitch Settings
+            <button
+              className="icon-btn material-symbols-outlined"
+              style={{ fontSize: "20px", opacity: 0.7 }}
+              title="Choose which updates you receive when a streamer you follow takes action."
+            >
+              info
+            </button>
           </span>
           <button
-            className="icon-btn"
+            className="icon-btn material-symbols-outlined"
             onClick={() => thisBot.toggleInterface()}
           >
-            <span className="material-symbols-outlined">close</span>
+            close
           </button>
         </div>
         <div className="twitchPub-content">
@@ -74,6 +104,25 @@ const TwitchSettings = (props: {
               setToggle={setChapterFollowEnabled}
               id={"chapterFollowToggle"}
             />
+          </div>
+          <div
+            style={{
+              width: "100%",
+              height: "1px",
+              backgroundColor: "var(--text1)",
+            }}
+          ></div>
+          <div className="twitchPub-settings-item">
+            <div></div>
+            <button
+              className={`session-btn ${websocketPaused ? "rejoin-session-btn" : "leave-session-btn"}`}
+              onClick={() => setWebsocketPaused(!websocketPaused)}
+            >
+              <span className="material-symbols-outlined">
+                {websocketPaused ? "link" : "link_off"}
+              </span>
+              {websocketPaused ? "Rejoin session" : "Leave session"}
+            </button>
           </div>
         </div>
       </div>
@@ -104,7 +153,11 @@ const ToggleBtn = ({
         `
           : ``}
       </style>
-      <div className="toggle-wrapper">
+      <div
+        className="toggle-wrapper"
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
         <label className="toggle">
           <input
             type="checkbox"
