@@ -290,7 +290,7 @@
   "success": "Успешно",
   "confirm": "Вы уверены?",
   "openLinkInNewTab": "Открытие внешней ссылки",
-  "openLinkInNewTabConfirm": "Вы перейдёте на внешний веб-сайт.",
+  "openLinkInNewTabConfirm": "Вы перейдёте на внешний веб-сайт в новой вкладке.",
   "openLinkButton": "Открыть ссылку",
   "noResults": "Результаты не найдены",
   "bookmarkUpdatedSuccessfully": "Закладка успешно обновлена.",

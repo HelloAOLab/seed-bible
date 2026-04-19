@@ -118,7 +118,7 @@
   "success": "Başarılı",
   "confirm": "Emin misiniz?",
   "openLinkInNewTab": "Harici bağlantı açılıyor",
-  "openLinkInNewTabConfirm": "Bu sizi harici bir web sitesine götürecek.",
+  "openLinkInNewTabConfirm": "Bu sizi yeni bir sekmede harici bir web sitesine götürecek.",
   "openLinkButton": "Bağlantıyı aç",
   "noResults": "Sonuç bulunamadı",
   "from": "Kimden",

@@ -290,7 +290,7 @@
   "success": "Succès",
   "confirm": "Êtes-vous sûr ?",
   "openLinkInNewTab": "Ouverture d’un lien externe",
-  "openLinkInNewTabConfirm": "Cela vous mènera vers un site web externe.",
+  "openLinkInNewTabConfirm": "Cela vous mènera vers un site web externe dans un nouvel onglet.",
   "openLinkButton": "Ouvrir le lien",
   "noResults": "Aucun résultat trouvé",
   "bookmarkUpdatedSuccessfully": "Signet mis à jour avec succès.",

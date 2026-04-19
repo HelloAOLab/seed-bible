@@ -118,7 +118,7 @@
   "success": "सफल",
   "confirm": "के तपाईं निश्चित हुनुहुन्छ?",
   "openLinkInNewTab": "बाह्य लिङ्क खोल्दै",
-  "openLinkInNewTabConfirm": "यसले तपाईंलाई बाह्य वेबसाइटमा लैजान्छ।",
+  "openLinkInNewTabConfirm": "यसले तपाईंलाई नयाँ ट्याबमा बाह्य वेबसाइटमा लैजान्छ।",
   "openLinkButton": "लिङ्क खोल्नुहोस्",
   "noResults": "कुनै परिणाम फेला परेन",
   "from": "देखि",

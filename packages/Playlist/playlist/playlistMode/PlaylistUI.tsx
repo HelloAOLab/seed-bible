@@ -442,7 +442,11 @@ const Playlist = () => {
     document.addEventListener("keydown", onKeyDown);
 
     G.SetOpenExternalLink = (link: string) => {
-      setOpenExternalLink(link);
+      if (isMobile) {
+        setOpenExternalLink(link);
+      } else {
+        os.openURL(link);
+      }
     };
 
     return () => {

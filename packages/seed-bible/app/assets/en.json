@@ -294,7 +294,7 @@
   "success": "Success",
   "confirm": "Are you sure?",
   "openLinkInNewTab": "Opening External Link",
-  "openLinkInNewTabConfirm": "This will take you to an external website.",
+  "openLinkInNewTabConfirm": "This will take you to an external website in a new tab.",
   "openLinkButton": "Open Link",
   "noResults": "No results found",
   "bookmarkUpdatedSuccessfully": "Bookmark Updated successfully.",

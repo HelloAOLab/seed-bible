@@ -290,7 +290,7 @@
   "success": "成功",
   "confirm": "よろしいですか？",
   "openLinkInNewTab": "外部リンクを開く",
-  "openLinkInNewTabConfirm": "外部のウェブサイトに移動します。",
+  "openLinkInNewTabConfirm": "新しいタブで外部のウェブサイトに移動します。",
   "openLinkButton": "リンクを開く",
   "noResults": "結果が見つかりません",
   "bookmarkUpdatedSuccessfully": "ブックマークが正常に更新されました。",
