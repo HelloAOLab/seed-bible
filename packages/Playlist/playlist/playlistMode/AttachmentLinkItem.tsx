@@ -408,7 +408,7 @@ const AttachLinkItem = (props: any) => {
                 //     "_blank",
                 //     "noopener,noreferrer"
                 // );
-                os.openURL(link);
+                G.SetOpenExternalLink && G.SetOpenExternalLink(link);
               }, 200);
               return;
             }
