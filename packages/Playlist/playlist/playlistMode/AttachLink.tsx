@@ -682,6 +682,9 @@ const AttachLink = (props: any) => {
 
   useLayoutEffect(() => {
     onRestoreData();
+    return () => {
+      G.StopAttachLinkRetainData = false;
+    };
   }, []);
 
   useLayoutEffect(() => {
@@ -1192,6 +1195,7 @@ const AttachLink = (props: any) => {
                       return;
                     }
                   }
+                  G.AllowSwitchBetweenTypes = false;
                   if (editMode)
                     return ShowNotification({
                       message: t("cannotChangeWhileBeingInEditMode"),
