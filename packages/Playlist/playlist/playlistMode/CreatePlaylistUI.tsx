@@ -1390,7 +1390,7 @@ const CreatePlaylistUI = (props: any) => {
               <div
                 className="align-center"
                 onClick={() => {
-                  setChecklist((p) => !p);
+                  setChecklist((p: boolean) => !p);
                 }}
               >
                 {checklist ? (
@@ -1886,7 +1886,9 @@ const CreatePlaylistUI = (props: any) => {
                 onClick={() => {
                   if (
                     G.RetainDataData ||
-                    (G.RetainDataName && G.RetainDataSelectedType === "TEXT")
+                    (G.RetainDataName && G.RetainDataSelectedType === "TEXT") ||
+                    (G.RetainDataLink &&
+                      G.LINKS_TYPES[G.RetainDataSelectedType.toUpperCase()])
                   ) {
                     setDataWarning(true);
                   } else {
