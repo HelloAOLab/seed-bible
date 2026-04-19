@@ -179,6 +179,23 @@
   margin: 0;
 }
 
+.session-btn {
+  padding: 3px 6px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.leave-session-btn {
+  background-color: #eb5a4a;
+}
+.rejoin-session-btn {
+  background-color: lightgreen;
+}
 @media only screen and (max-width: 349px) {
   .twitchPub-container {
     transform: scale(0.8);

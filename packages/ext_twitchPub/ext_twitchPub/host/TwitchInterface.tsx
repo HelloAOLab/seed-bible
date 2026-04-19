@@ -124,7 +124,14 @@ const TwitchInterface = (props: {
   }, []);
 
   useEffect(() => {
-    if (!annoucementTimer || !broadcasterId || !clientId || !token) return;
+    if (
+      !annoucementTimer ||
+      annoucementTimer === 0 ||
+      !broadcasterId ||
+      !clientId ||
+      !token
+    )
+      return;
     const st = setInterval(() => {
       if (masks?.uiLoaded) {
         console.log("Announcement timer tick");
