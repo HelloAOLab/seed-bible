@@ -826,9 +826,9 @@ const AttachLink = (props: any) => {
           tempName += "-heading";
           break;
         case "iframe":
-        case "externalLink":
+        case "externallink":
         case "youtube":
-        case "Video":
+        case "video":
           tempName = link;
           break;
         case RECORDING_VALUE:
@@ -883,7 +883,7 @@ const AttachLink = (props: any) => {
   const onClickSend = async (isForce = true) => {
     let finalName = name;
 
-    if (isForce) {
+    if (isForce && !name.trim()) {
       finalName = getCurrentTime();
       switch (selectedType) {
         case "RECORDING":
@@ -1171,7 +1171,17 @@ const AttachLink = (props: any) => {
                 key={ele.id}
                 onClick={() => {
                   if (data) {
-                    if (!G.AllowSwitchBetweenTypes) {
+                    let dontAllowSwitch = false;
+                    if (
+                      G.RetainDataData ||
+                      (G.RetainDataName &&
+                        G.RetainDataSelectedType === "TEXT") ||
+                      (G.RetainDataLink &&
+                        G.LINKS_TYPES[G.RetainDataSelectedType.toUpperCase()])
+                    ) {
+                      dontAllowSwitch = true;
+                    }
+                    if (!G.AllowSwitchBetweenTypes && dontAllowSwitch) {
                       G.AllowSwitchBetweenTypes = true;
                       ShowNotification({
                         message: t(

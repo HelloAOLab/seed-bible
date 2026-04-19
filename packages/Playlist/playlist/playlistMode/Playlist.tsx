@@ -1660,7 +1660,9 @@ const Playlist = (props: any) => {
                 onClick={() => {
                   if (
                     G.RetainDataData ||
-                    (G.RetainDataName && G.RetainDataSelectedType === "TEXT")
+                    (G.RetainDataName && G.RetainDataSelectedType === "TEXT") ||
+                    (G.RetainDataLink &&
+                      G.LINKS_TYPES[G.RetainDataSelectedType.toUpperCase()])
                   ) {
                     setDataWarning(true);
                   } else {
