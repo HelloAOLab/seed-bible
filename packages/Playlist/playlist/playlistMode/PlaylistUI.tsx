@@ -22,6 +22,7 @@ const ShowPlayingContentAnnotation =
 const EditRichText = await thisBot.EditRichText();
 const EditAttachment = await thisBot.EditAttachment();
 const AddToPlaylist = await thisBot.AddToPlaylist();
+const ConfirmLinkModal = await thisBot.ConfirmLinkModal();
 
 const bibleVizUtils = getBot("system", "bibleVizUtils.main");
 
@@ -106,6 +107,8 @@ const Playlist = () => {
   const [openModal, setOpenModal] = useState(false);
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const [openExternalLink, setOpenExternalLink] = useState<string | null>(null);
 
   useLayoutEffect(() => {
     G.SetSidebarOpen = setSidebarOpen;
@@ -438,6 +441,14 @@ const Playlist = () => {
     document.addEventListener("keyup", onKeyUp);
     document.addEventListener("keydown", onKeyDown);
 
+    G.SetOpenExternalLink = (link: string) => {
+      if (isMobile) {
+        setOpenExternalLink(link);
+      } else {
+        os.openURL(link);
+      }
+    };
+
     return () => {
       G.makingPlaylist = false;
       document.removeEventListener("keyup", onKeyUp);
@@ -470,6 +481,7 @@ const Playlist = () => {
       G.SetAnnotationData = null;
       G.SetPlaylistForforcedHeight && G.SetPlaylistForforcedHeight(0);
       G.SetShowAddToPlaylist = null;
+      G.SetOpenExternalLink = null;
     };
   }, []);
 
@@ -523,6 +535,13 @@ const Playlist = () => {
           data={editAttachmentItem.data}
           link={editAttachmentItem.link}
           mediaType={editAttachmentItem.mediaType}
+        />
+      )}
+
+      {openExternalLink && (
+        <ConfirmLinkModal
+          onClose={() => setOpenExternalLink(null)}
+          link={openExternalLink}
         />
       )}
 
