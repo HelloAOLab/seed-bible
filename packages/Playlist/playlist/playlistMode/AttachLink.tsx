@@ -683,7 +683,17 @@ const AttachLink = (props: any) => {
   useLayoutEffect(() => {
     onRestoreData();
     return () => {
-      G.StopAttachLinkRetainData = false;
+      let dontAllowSwitch = false;
+      if (
+        data ||
+        (name && selectedType.toUpperCase() === "TEXT") ||
+        (link && G.LINKS_TYPES[selectedType.toUpperCase()])
+      ) {
+        dontAllowSwitch = true;
+      }
+      if (dontAllowSwitch) {
+        G.AllowSwitchBetweenTypes = false;
+      }
     };
   }, []);
 
@@ -1173,18 +1183,16 @@ const AttachLink = (props: any) => {
               <div
                 key={ele.id}
                 onClick={() => {
-                  if (data) {
-                    let dontAllowSwitch = false;
-                    if (
-                      G.RetainDataData ||
-                      (G.RetainDataName &&
-                        G.RetainDataSelectedType === "TEXT") ||
-                      (G.RetainDataLink &&
-                        G.LINKS_TYPES[G.RetainDataSelectedType.toUpperCase()])
-                    ) {
-                      dontAllowSwitch = true;
-                    }
-                    if (!G.AllowSwitchBetweenTypes && dontAllowSwitch) {
+                  let dontAllowSwitch = false;
+                  if (
+                    data ||
+                    (name && selectedType.toUpperCase() === "TEXT") ||
+                    (link && G.LINKS_TYPES[selectedType.toUpperCase()])
+                  ) {
+                    dontAllowSwitch = true;
+                  }
+                  if (dontAllowSwitch) {
+                    if (!G.AllowSwitchBetweenTypes) {
                       G.AllowSwitchBetweenTypes = true;
                       ShowNotification({
                         message: t(
@@ -1209,6 +1217,7 @@ const AttachLink = (props: any) => {
                   setName("");
                   setSelectedType(ele);
                   setData(null);
+                  G.hasRecording = false;
                 }}
                 style={{ position: "relative" }}
                 className={`${
