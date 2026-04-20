@@ -17,7 +17,6 @@ import type { UserProfile } from "seed-bible.managers.LoginManager";
 import type { ConnectedSessionUser } from "seed-bible.managers.SessionsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
-import type { VerseSearchHit } from "seed-bible.managers.SearchManager";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -54,116 +53,6 @@ interface SidebarSearchResult {
   verseNumber: number | null;
   reference: string;
   text: string;
-}
-
-function getSearchDocumentString(
-  document: Record<string, unknown>,
-  keys: string[]
-): string | null {
-  for (const key of keys) {
-    const value = document[key];
-    if (typeof value === "string") {
-      const trimmed = value.trim();
-      if (trimmed.length > 0) {
-        return trimmed;
-      }
-    }
-  }
-
-  return null;
-}
-
-function getSearchDocumentNumber(
-  document: Record<string, unknown>,
-  keys: string[]
-): number | null {
-  for (const key of keys) {
-    const value = document[key];
-    if (typeof value === "number" && Number.isFinite(value)) {
-      return Math.floor(value);
-    }
-
-    if (typeof value === "string") {
-      const parsed = Number(value.trim());
-      if (Number.isFinite(parsed)) {
-        return Math.floor(parsed);
-      }
-    }
-  }
-
-  return null;
-}
-
-function normalizeVerseSearchHit(
-  hit: VerseSearchHit,
-  index: number
-): SidebarSearchResult | null {
-  const document = hit.document;
-  const translationId = getSearchDocumentString(document, [
-    "translation_id",
-    "translationId",
-    "translation",
-  ]);
-  const bookId = getSearchDocumentString(document, [
-    "book_id",
-    "bookId",
-    "book",
-  ]);
-  const chapterNumber = getSearchDocumentNumber(document, [
-    "chapter",
-    "chapter_number",
-    "chapterNumber",
-  ]);
-
-  if (!translationId || !bookId || !chapterNumber) {
-    return null;
-  }
-
-  const verseNumber = getSearchDocumentNumber(document, [
-    "verse",
-    "verse_number",
-    "verseNumber",
-  ]);
-  const text =
-    getSearchDocumentString(document, [
-      "text",
-      "verse_text",
-      "verseText",
-      "content",
-    ]) ?? "";
-  const bookLabel =
-    getSearchDocumentString(document, [
-      "book_name",
-      "bookName",
-      "book_title",
-      "bookTitle",
-      "book_label",
-      "bookLabel",
-    ]) ?? bookId;
-  const translationLabel =
-    getSearchDocumentString(document, [
-      "translation_name",
-      "translationName",
-      "translation_label",
-      "translationLabel",
-    ]) ?? translationId;
-  const reference =
-    getSearchDocumentString(document, ["reference", "ref"]) ??
-    `${bookLabel} ${chapterNumber}${verseNumber ? `:${verseNumber}` : ""}`;
-
-  return {
-    id:
-      getSearchDocumentString(document, ["id", "document_id", "documentId"]) ??
-      `${translationId}:${bookId}:${chapterNumber}:${verseNumber ?? index}`,
-    translationId,
-    translationLabel,
-    bookId,
-    bookLabel,
-    chapterNumber,
-    verseNumber,
-    reference,
-    text,
-  };
 }
 
 function getOrCreateSearchTargetTab(state: SeedBibleState): ReaderTab {
@@ -405,16 +294,24 @@ export function Tabs(props: TabsProps) {
     isSearchPanelOpen.value = true;
 
     searchDebounceTimeoutRef.current = window.setTimeout(() => {
-      void state.search
+      state.search
         .search("verses", query)
         .then((response) => {
           if (latestSearchRequestRef.current !== requestId) {
             return;
           }
 
-          searchResults.value = (response.hits ?? [])
-            .map((hit, index) => normalizeVerseSearchHit(hit, index))
-            .filter((result): result is SidebarSearchResult => result !== null);
+          searchResults.value = (response.hits ?? []).map((hit) => ({
+            id: hit.document.id,
+            translationId: hit.document.translation,
+            translationLabel: hit.document.translation,
+            bookId: hit.document.book,
+            bookLabel: hit.document.book,
+            chapterNumber: hit.document.chapter,
+            verseNumber: hit.document.verse,
+            reference: hit.document.reference,
+            text: hit.document.text,
+          }));
           searchLoading.value = false;
         })
         .catch((error: unknown) => {

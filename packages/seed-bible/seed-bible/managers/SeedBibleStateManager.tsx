@@ -49,12 +49,10 @@ import {
   createModalManager,
   type ModalManager,
 } from "seed-bible.managers.ModalManager";
-import {
-  createSearchManager,
-  type SearchManager,
-} from "seed-bible.managers.SearchManager";
+import { createSearchManager } from "seed-bible.managers.SearchManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
+type SearchManager = ReturnType<typeof createSearchManager>;
 
 /**
  * Derived app-level state and high-level actions used by UI components.

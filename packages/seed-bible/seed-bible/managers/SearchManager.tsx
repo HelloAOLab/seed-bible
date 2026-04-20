@@ -1,4 +1,5 @@
 import Typesense from "typesense-fixed";
+import { z } from "zod";
 
 const TYPESENSE_NODE_URL = new URL("https://search.ao.bot");
 const TYPESENSE_API_KEY = "2q7kmXHFUNXxutBv1zgXlhWcHyda7f5I";
@@ -15,23 +16,20 @@ export type SearchFilters =
       SearchFilterPrimitive | SearchFilterPrimitive[] | null | undefined
     >;
 
-export interface VerseSearchHit {
-  document: Record<string, unknown>;
-  highlight?: Record<string, unknown>;
-  text_match?: number;
-  text_match_info?: unknown;
-}
+export const VerseSearchDocumentSchema = z.object({
+  id: z.string(),
+  translation: z.string(),
+  book: z.string(),
+  chapter: z.number(),
+  verse: z.number(),
+  text: z.string(),
+  language: z.string(),
+  reference: z.string(),
+});
 
-export interface VerseSearchResponse {
-  found: number;
-  out_of: number;
-  page: number;
-  hits?: VerseSearchHit[];
-  request_params?: Record<string, unknown>;
-  search_cutoff?: boolean;
-  search_time_ms?: number;
-  [key: string]: unknown;
-}
+export type VerseSearchDocument = z.infer<typeof VerseSearchDocumentSchema>;
+
+export type VerseSearchResponse = Typesense.SearchResponse<VerseSearchDocument>;
 
 export interface SearchManager {
   search: (
@@ -101,14 +99,14 @@ export function createSearchManager(): SearchManager {
       case "verses": {
         const filterBy = buildFilterBy(filters);
 
-        return (await client
-          .collections(VERSE_COLLECTION)
+        return await client
+          .collections<VerseSearchDocument>(VERSE_COLLECTION)
           .documents()
           .search({
             q: text,
-            query_by: "text",
+            query_by: ["referenceNormalized", "reference", "text"],
             ...(filterBy ? { filter_by: filterBy } : {}),
-          })) as VerseSearchResponse;
+          });
       }
       default: {
         throw new Error(`Unsupported search type: ${type satisfies never}`);
