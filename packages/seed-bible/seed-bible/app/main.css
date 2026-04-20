@@ -202,8 +202,8 @@ button {
 
 .sb-panes-layout[data-layout="split-4v"] {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin-left: 27%;
-  margin-right: 27%;
+  /* margin-left: 27%; */
+  /* margin-right: 27%; */
 }
 
 .sb-main-content {
