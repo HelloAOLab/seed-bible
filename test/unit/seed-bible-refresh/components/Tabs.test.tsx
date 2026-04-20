@@ -1,4 +1,4 @@
-import { render } from "preact";
+import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { Tabs } from "@packages/seed-bible/seed-bible/components/Tabs";
@@ -19,7 +19,7 @@ jest.mock("seed-bible.components.ContextMenu", () => ({
     onClick,
     className,
   }: {
-    children: unknown;
+    children: ComponentChildren;
     onClick?: () => void;
     className?: string;
   }) => (
@@ -32,7 +32,7 @@ jest.mock("seed-bible.components.ContextMenu", () => ({
     buttonClassName,
     onClick,
   }: {
-    children: unknown;
+    children: ComponentChildren;
     buttonClassName?: string;
     onClick?: () => void;
   }) => (
@@ -184,10 +184,8 @@ describe("Tabs", () => {
         {
           document: {
             id: "verse-1",
-            translation_id: "BSB",
-            translation_name: "Berean Standard Bible",
-            book_id: "GEN",
-            book_name: "Genesis",
+            translation: "BSB",
+            book: "GEN",
             chapter: 1,
             verse: 1,
             reference: "Genesis 1:1",
@@ -234,8 +232,8 @@ describe("Tabs", () => {
         {
           document: {
             id: "verse-2",
-            translation_id: "NIV",
-            book_id: "MAT",
+            translation: "NIV",
+            book: "MAT",
             chapter: 5,
             verse: 9,
             text: "Blessed are the peacemakers.",

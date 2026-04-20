@@ -1,4 +1,4 @@
-jest.mock("typesense", () => {
+jest.mock("typesense-fixed", () => {
   const search = jest.fn();
   const documents = jest.fn(() => ({ search }));
   const collections = jest.fn(() => ({ documents }));
@@ -21,7 +21,7 @@ jest.mock("typesense", () => {
 let createSearchManager: typeof import("@packages/seed-bible/seed-bible/managers/SearchManager").createSearchManager;
 
 function getTypesenseMock() {
-  const mockedTypesense = jest.requireMock("typesense") as {
+  const mockedTypesense = jest.requireMock("typesense-fixed") as {
     default: {
       Client: jest.Mock;
     };
@@ -43,7 +43,7 @@ describe("createSearchManager", () => {
   });
 
   beforeEach(() => {
-    const mockedTypesense = jest.requireMock("typesense") as {
+    const mockedTypesense = jest.requireMock("typesense-fixed") as {
       __mock: {
         client: jest.Mock;
         collections: jest.Mock;
@@ -84,7 +84,7 @@ describe("createSearchManager", () => {
     expect(typesenseMock.collections).toHaveBeenCalledWith("bible-verses");
     expect(typesenseMock.search).toHaveBeenCalledWith({
       q: "beginning",
-      query_by: "text",
+      query_by: ["referenceNormalized", "reference", "text"],
     });
   });
 
@@ -106,7 +106,7 @@ describe("createSearchManager", () => {
 
     expect(typesenseMock.search).toHaveBeenCalledWith({
       q: "light",
-      query_by: "text",
+      query_by: ["referenceNormalized", "reference", "text"],
       filter_by:
         'translation_id:="BSB" && testament:=["old", "new"] && chapter:=1',
     });
@@ -126,7 +126,7 @@ describe("createSearchManager", () => {
 
     expect(typesenseMock.search).toHaveBeenCalledWith({
       q: "faith",
-      query_by: "text",
+      query_by: ["referenceNormalized", "reference", "text"],
       filter_by: 'translation_id:="NIV"',
     });
   });

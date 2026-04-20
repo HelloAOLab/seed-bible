@@ -5,6 +5,7 @@ import {
   createDefaultManagerResponseMap,
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
+import { createSearchManager } from "@packages/seed-bible/seed-bible/managers/SearchManager";
 
 const mockSaveReadingHistory = jest.fn();
 const mockHighlightsManager = {
@@ -33,6 +34,12 @@ jest.mock("seed-bible.managers.SessionsManager", () => ({
 
 jest.mock("seed-bible.i18n.I18nManager", () => ({
   I18nProvider: ({ children }: { children: unknown }) => children,
+}));
+
+jest.mock("seed-bible.managers.SearchManager", () => ({
+  createSearchManager: jest.fn().mockReturnValue({
+    search: jest.fn(),
+  }),
 }));
 
 let webGetMock: jest.Mock;
