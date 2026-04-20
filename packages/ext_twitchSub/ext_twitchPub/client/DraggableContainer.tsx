@@ -6,9 +6,10 @@ const DraggableContainer = (props: { children: HTMLElement }) => {
   const [position, setPosition] = useState(
     masks?.position || {
       x: window.innerWidth / 2 - 175,
-      y: window.innerHeight / 2 + 100,
+      y: window.innerHeight / 2 - 175,
     }
   );
+  const [windowSize, setWindowSize] = useState(window.innerWidth);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const dragRef = useRef<HTMLDivElement>(null);
 
@@ -140,6 +141,28 @@ const DraggableContainer = (props: { children: HTMLElement }) => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize(window.innerWidth);
+    };
+
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (windowSize < 700) {
+      setPosition({
+        x: window.innerWidth / 2 - 175,
+        y: window.innerHeight / 2 - 175,
+      });
+    }
+  }, [windowSize]);
+
   return (
     <div
       ref={dragRef}
@@ -151,8 +174,14 @@ const DraggableContainer = (props: { children: HTMLElement }) => {
         left: position.x,
         zIndex: 10,
       }}
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
+      onMouseDown={(e) => {
+        if (windowSize < 768) return;
+        handleMouseDown(e);
+      }}
+      onTouchStart={(e) => {
+        if (windowSize < 768) return;
+        handleTouchStart(e);
+      }}
       onContextMenu={(e) => {
         e.stopPropagation();
       }}
