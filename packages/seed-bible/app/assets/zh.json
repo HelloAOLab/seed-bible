@@ -292,6 +292,8 @@
   "openLinkInNewTab": "正在打开外部链接",
   "openLinkInNewTabConfirm": "这将在新标签页中带您访问外部网站。",
   "openLinkButton": "打开链接",
+  "convertThisToPlaylist": "另存为新播放列表",
+  "infoTextToConvertPLaylist": "你当前的整个播放队列将保存为新的播放列表。",
   "noResults": "未找到结果",
   "bookmarkUpdatedSuccessfully": "书签更新成功。",
   "unableToCopyPlaylist": "无法复制播放列表，请重试！",

@@ -120,6 +120,8 @@
   "openLinkInNewTab": "बाह्य लिङ्क खोल्दै",
   "openLinkInNewTabConfirm": "यसले तपाईंलाई नयाँ ट्याबमा बाह्य वेबसाइटमा लैजान्छ।",
   "openLinkButton": "लिङ्क खोल्नुहोस्",
+  "convertThisToPlaylist": "नयाँ प्लेलिस्टको रूपमा बचत गर्नुहोस्",
+  "infoTextToConvertPLaylist": "तपाईंको पूरा चलिरहेको क्यु नयाँ प्लेलिस्टको रूपमा बचत हुनेछ।",
   "noResults": "कुनै परिणाम फेला परेन",
   "from": "देखि",
   "to": "सम्म",

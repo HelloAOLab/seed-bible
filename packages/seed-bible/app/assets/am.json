@@ -120,6 +120,8 @@
   "openLinkInNewTab": "የውጭ ሊንክ በመክፈት ላይ",
   "openLinkInNewTabConfirm": "ይህ በአዲስ ትር ወደ ውጫዊ ድር ጣቢያ ይወስድዎታል።",
   "openLinkButton": "ሊንክ ክፈት",
+  "convertThisToPlaylist": "እንደ አዲስ የማጫወቻ ዝርዝር አስቀምጥ",
+  "infoTextToConvertPLaylist": "መላው የአሁኑ መጫወቻ ወረፋዎ እንደ አዲስ የማጫወቻ ዝርዝር ይቀመጣል።",
   "noResults": "ምንም ውጤት አልተገኘም",
   "from": "ከ",
   "to": "እስከ",

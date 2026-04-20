@@ -120,6 +120,8 @@
   "openLinkInNewTab": "Membuka tautan eksternal",
   "openLinkInNewTabConfirm": "Ini akan membawa Anda ke situs web eksternal di tab baru.",
   "openLinkButton": "Buka tautan",
+  "convertThisToPlaylist": "Simpan sebagai Playlist Baru",
+  "infoTextToConvertPLaylist": "Seluruh antrean yang sedang diputar akan disimpan sebagai playlist baru.",
   "noResults": "Tidak ada hasil ditemukan",
   "from": "Dari",
   "to": "Ke",

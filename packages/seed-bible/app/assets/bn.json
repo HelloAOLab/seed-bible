@@ -120,6 +120,8 @@
   "openLinkInNewTab": "বাহ্যিক লিঙ্ক খোলা হচ্ছে",
   "openLinkInNewTabConfirm": "এটি আপনাকে একটি নতুন ট্যাবে বাহ্যিক ওয়েবসাইটে নিয়ে যাবে।",
   "openLinkButton": "লিঙ্ক খুলুন",
+  "convertThisToPlaylist": "নতুন প্লেলিস্ট হিসেবে সংরক্ষণ করুন",
+  "infoTextToConvertPLaylist": "আপনার পুরো প্লেয়িং কিউ একটি নতুন প্লেলিস্ট হিসেবে সংরক্ষিত হবে।",
   "noResults": "কোন ফলাফল পাওয়া যায়নি",
   "from": "থেকে",
   "to": "পর্যন্ত",

@@ -120,6 +120,8 @@
   "openLinkInNewTab": "Đang mở liên kết bên ngoài",
   "openLinkInNewTabConfirm": "Điều này sẽ đưa bạn đến một trang web bên ngoài trong một tab mới.",
   "openLinkButton": "Mở liên kết",
+  "convertThisToPlaylist": "Lưu thành danh sách phát mới",
+  "infoTextToConvertPLaylist": "Toàn bộ hàng đợi đang phát của bạn sẽ được lưu thành một danh sách phát mới.",
   "noResults": "Không tìm thấy kết quả",
   "from": "Từ",
   "to": "Đến",
