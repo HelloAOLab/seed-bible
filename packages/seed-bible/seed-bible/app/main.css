@@ -965,7 +965,7 @@ button {
   display: none;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .sb-reader-toolbar-wrap {
     position: fixed;
     left: 50%;

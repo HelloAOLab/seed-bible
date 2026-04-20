@@ -413,7 +413,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       isVisible: (context) =>
         !!context.openSidebar &&
         typeof context.window?.innerWidth.value === "number" &&
-        context.window?.innerWidth.value < 768,
+        context.window?.innerWidth.value <= 768,
       onSelect: (context) => {
         context.openSidebar?.();
       },
