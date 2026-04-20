@@ -9,14 +9,14 @@ describe("createSidebar", () => {
     expect(sidebar.isMobileOpen.value).toBe(false);
   });
 
-  it("openSettings() opens settings and closes mobile sidebar", () => {
+  it("openSettings() opens settings without changing mobile sidebar state", () => {
     const sidebar = createSidebar();
     sidebar.openSidebar();
 
     sidebar.openSettings();
 
     expect(sidebar.isSettingsOpen.value).toBe(true);
-    expect(sidebar.isMobileOpen.value).toBe(false);
+    expect(sidebar.isMobileOpen.value).toBe(true);
   });
 
   it("closeSettings() closes settings without changing mobile state", () => {

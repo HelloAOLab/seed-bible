@@ -85,13 +85,22 @@ async function waitForTabsToLoad(tabs: ReaderTab[]): Promise<void> {
   await Promise.all(tabs.map((tab) => waitForInitialLoad(tab.readingState)));
 }
 
-async function createManagers() {
+async function createManagers(options: { extraTabs?: number } = {}) {
   setWebResponses(createDefaultManagerResponseMap());
   const tabsManager = createTabs(
     createDataManager(),
     createHighlightsManagerMock() as any
   );
   await waitForTabsToLoad(tabsManager.tabs.value);
+  const initialSelectedTabId = tabsManager.selectedTabId.value;
+  const extraTabs = options.extraTabs ?? 0;
+  for (let i = 0; i < extraTabs; i++) {
+    const extraTab = tabsManager.addTab();
+    await waitForInitialLoad(extraTab.readingState);
+  }
+  if (extraTabs > 0) {
+    tabsManager.selectTab(initialSelectedTabId);
+  }
   const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
   return { tabsManager, panesManager };
 }
@@ -121,7 +130,9 @@ describe("createPanes", () => {
   });
 
   it("supports selecting a pane by tab id", async () => {
-    const { tabsManager, panesManager } = await createManagers();
+    const { tabsManager, panesManager } = await createManagers({
+      extraTabs: 1,
+    });
 
     panesManager.setLayout("split-2v");
     const secondPane = panesManager.panes.value[1]!;
@@ -183,7 +194,7 @@ describe("createPanes", () => {
   });
 
   it("supports opening a tab in a new attached pane", async () => {
-    const { panesManager } = await createManagers();
+    const { panesManager } = await createManagers({ extraTabs: 1 });
 
     const result = panesManager.openPane({
       type: "attached",
@@ -197,7 +208,7 @@ describe("createPanes", () => {
   });
 
   it("supports opening a tab in a detached pane", async () => {
-    const { panesManager } = await createManagers();
+    const { panesManager } = await createManagers({ extraTabs: 1 });
 
     const result = panesManager.openPane({
       type: "detached",
@@ -274,7 +285,7 @@ describe("createPanes", () => {
   });
 
   it("supports detaching and reattaching a pane", async () => {
-    const { panesManager } = await createManagers();
+    const { panesManager } = await createManagers({ extraTabs: 1 });
 
     panesManager.openPane({
       type: "attached",
@@ -323,7 +334,7 @@ describe("createPanes", () => {
   });
 
   it("supports closing attached panes by shrinking the layout", async () => {
-    const { panesManager } = await createManagers();
+    const { panesManager } = await createManagers({ extraTabs: 1 });
 
     panesManager.openPane({
       type: "attached",
@@ -446,7 +457,7 @@ describe("createPanes", () => {
   });
 
   it("does not create a duplicate pane when reusing an ID", async () => {
-    const { panesManager } = await createManagers();
+    const { panesManager } = await createManagers({ extraTabs: 1 });
     const initialPaneCount = panesManager.panes.value.length;
 
     panesManager.openPane({
