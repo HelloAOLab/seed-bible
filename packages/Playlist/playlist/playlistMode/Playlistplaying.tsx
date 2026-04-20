@@ -758,6 +758,16 @@ const PlayingPlaylist = () => {
     });
   };
 
+  const gotoCreate = (id = "default") => {
+    // Get Data of each playlsit queu into sinlge array
+    const data = Object.values(G.PlayingPlaylists)
+      .map((playlist: any) => playlist.list)
+      .flat();
+    G[`${id}currentPlaylist`] = data;
+    G.SetTab("create");
+    G[`${"default"}mode`] = PlaylistModeTypes.playlist;
+  };
+
   return (
     <>
       <style>{thisBot.tags["RecordingVoiceUI.css"]}</style>
@@ -843,6 +853,26 @@ const PlayingPlaylist = () => {
                 <div className="item-text"> {t("movePlaybarInside")}</div>
               </div>
             </div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: "0.5rem",
+                paddingTop: "0.5rem",
+                borderTop: "1px solid var(--gray2-color)",
+              }}
+            >
+              <Button
+                secondary
+                onClick={() => {
+                  G.StopPlayingPlaylistModal(true);
+                  G.PendingAction = gotoCreate;
+                }}
+              >
+                {t("convertThisToPlaylist")}
+              </Button>
+            </div>
+            <p className="info-type">{t("infoTextToConvertPLaylist")}</p>
           </div>
         </>
       )}

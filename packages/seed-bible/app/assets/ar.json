@@ -217,6 +217,8 @@
   "openLinkInNewTab": "فتح رابط خارجي",
   "openLinkInNewTabConfirm": "سيأخذك هذا إلى موقع ويب خارجي في علامة تبويب جديدة.",
   "openLinkButton": "فتح الرابط",
+  "convertThisToPlaylist": "حفظ كقائمة تشغيل جديدة",
+  "infoTextToConvertPLaylist": "سيتم حفظ قائمة التشغيل الحالية بالكامل كقائمة تشغيل جديدة.",
   "noResults": "لم يتم العثور على نتائج",
   "link": "رابط",
   "file": "ملف",

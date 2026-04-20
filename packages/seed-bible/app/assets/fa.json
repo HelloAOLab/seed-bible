@@ -120,6 +120,8 @@
   "openLinkInNewTab": "باز کردن پیوند خارجی",
   "openLinkInNewTabConfirm": "این شما را در یک زبانهٔ جدید به یک وب‌سایت خارجی می‌برد.",
   "openLinkButton": "باز کردن پیوند",
+  "convertThisToPlaylist": "ذخیره به‌عنوان فهرست پخش جدید",
+  "infoTextToConvertPLaylist": "کل صف پخش فعلی شما به‌عنوان یک فهرست پخش جدید ذخیره خواهد شد.",
   "noResults": "نتیجه‌ای یافت نشد",
   "from": "از",
   "to": "تا",

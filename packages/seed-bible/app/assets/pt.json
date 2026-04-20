@@ -292,6 +292,8 @@
   "openLinkInNewTab": "Abrindo link externo",
   "openLinkInNewTabConfirm": "Isso levará você a um site externo em uma nova aba.",
   "openLinkButton": "Abrir link",
+  "convertThisToPlaylist": "Salvar como nova playlist",
+  "infoTextToConvertPLaylist": "Toda a sua fila de reprodução será salva como uma nova playlist.",
   "noResults": "Nenhum resultado encontrado",
   "bookmarkUpdatedSuccessfully": "Marcador atualizado com sucesso.",
   "unableToCopyPlaylist": "Nao foi possivel copiar a playlist. Por favor, tente novamente!",

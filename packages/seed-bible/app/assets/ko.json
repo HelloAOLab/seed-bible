@@ -120,6 +120,8 @@
   "openLinkInNewTab": "외부 링크 열기",
   "openLinkInNewTabConfirm": "새 탭에서 외부 웹사이트로 이동합니다.",
   "openLinkButton": "링크 열기",
+  "convertThisToPlaylist": "새 재생목록으로 저장",
+  "infoTextToConvertPLaylist": "현재 재생 대기열 전체가 새 재생목록으로 저장됩니다.",
   "noResults": "결과가 없습니다",
   "from": "시작",
   "to": "종료",

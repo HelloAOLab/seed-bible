@@ -292,6 +292,8 @@
   "openLinkInNewTab": "外部リンクを開く",
   "openLinkInNewTabConfirm": "新しいタブで外部のウェブサイトに移動します。",
   "openLinkButton": "リンクを開く",
+  "convertThisToPlaylist": "新しいプレイリストとして保存",
+  "infoTextToConvertPLaylist": "現在の再生キュー全体が新しいプレイリストとして保存されます。",
   "noResults": "結果が見つかりません",
   "bookmarkUpdatedSuccessfully": "ブックマークが正常に更新されました。",
   "unableToCopyPlaylist": "プレイリストをコピーできません。もう一度お試しください！",

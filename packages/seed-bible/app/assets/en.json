@@ -296,6 +296,8 @@
   "openLinkInNewTab": "Opening External Link",
   "openLinkInNewTabConfirm": "This will take you to an external website in a new tab.",
   "openLinkButton": "Open Link",
+  "convertThisToPlaylist": "Save as New Playlist",
+  "infoTextToConvertPLaylist": "Your whole playing queue will be saved as a new playlist.",
   "noResults": "No results found",
   "bookmarkUpdatedSuccessfully": "Bookmark Updated successfully.",
   "unableToCopyPlaylist": "Unable to copy playlist. Please try again!",

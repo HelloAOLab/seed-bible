@@ -120,6 +120,8 @@
   "openLinkInNewTab": "Harici bağlantı açılıyor",
   "openLinkInNewTabConfirm": "Bu sizi yeni bir sekmede harici bir web sitesine götürecek.",
   "openLinkButton": "Bağlantıyı aç",
+  "convertThisToPlaylist": "Yeni Çalma Listesi Olarak Kaydet",
+  "infoTextToConvertPLaylist": "Tüm oynatma kuyruğunuz yeni bir çalma listesi olarak kaydedilecek.",
   "noResults": "Sonuç bulunamadı",
   "from": "Kimden",
   "to": "Kime",

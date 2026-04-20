@@ -292,6 +292,8 @@
   "openLinkInNewTab": "Открытие внешней ссылки",
   "openLinkInNewTabConfirm": "Вы перейдёте на внешний веб-сайт в новой вкладке.",
   "openLinkButton": "Открыть ссылку",
+  "convertThisToPlaylist": "Сохранить как новый плейлист",
+  "infoTextToConvertPLaylist": "Вся текущая очередь воспроизведения будет сохранена как новый плейлист.",
   "noResults": "Результаты не найдены",
   "bookmarkUpdatedSuccessfully": "Закладка успешно обновлена.",
   "unableToCopyPlaylist": "Не удалось скопировать плейлист. Попробуйте ещё раз!",

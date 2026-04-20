@@ -120,6 +120,8 @@
   "openLinkInNewTab": "هر بهرني لینک پرانیستل",
   "openLinkInNewTabConfirm": "دا به تاسو په نوي ټاب کې یو بیرني ویب پاڼې ته بوزي.",
   "openLinkButton": "لینک پرانیزئ",
+  "convertThisToPlaylist": "د نوې پلی لیست په توګه خوندي کړئ",
+  "infoTextToConvertPLaylist": "ستاسو ټوله روانه کتار به د نوې پلی لیست په توګه خوندي شي.",
   "noResults": "هیڅ پایله ونه موندل شوه",
   "from": "له",
   "to": "تر",
