@@ -2436,6 +2436,7 @@ button {
     width: 100%;
     z-index: 100;
     overflow-y: auto;
+    background: var(--sb-background);
   }
 
   .sb-sidebar-close-button {
@@ -2454,6 +2455,15 @@ button {
   .sb-panes-layout .sb-pane-shell {
     grid-column: auto !important;
     grid-row: auto !important;
+  }
+
+  .sb-pane-resize-handle,
+  .sb-pane-detached-resize-handle {
+    display: none !important;
+  }
+
+  .sb-pane-layout-anchor {
+    display: none;
   }
 
   .sb-pane-layout-menu {

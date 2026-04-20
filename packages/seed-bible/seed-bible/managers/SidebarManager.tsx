@@ -23,14 +23,12 @@ export function createSidebar() {
   const openSettings = () => {
     requestedSettingsView.value = null;
     isSettingsOpen.value = true;
-    isMobileOpen.value = false;
   };
 
   /** Opens the settings sidebar jumping straight to a specific subpage. */
   const openSettingsToView = (view: RequestedSettingsView) => {
     requestedSettingsView.value = view;
     isSettingsOpen.value = true;
-    isMobileOpen.value = false;
   };
 
   const closeSettings = () => {

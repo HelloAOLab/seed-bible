@@ -22,7 +22,7 @@ import {
   generateThemeCssClasses,
 } from "seed-bible.managers.ThemeManager";
 import type { ThemeManager } from "seed-bible.managers.ThemeManager";
-import { computed, effect, type ReadonlySignal } from "@preact/signals";
+import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
 import {
   createReadingHistoryManager,
   type ReadingHistoryManager,
@@ -73,6 +73,10 @@ export interface AppState {
   selectedTab: ReadonlySignal<ReaderTab | null>;
   /** Effective pane list shown by the UI (single pane fallback when panels are disabled). */
   effectivePanes: ReadonlySignal<Pane[]>;
+  /** Current window inner width in pixels. Updated on resize. */
+  viewportWidth: ReadonlySignal<number>;
+  /** True when viewport width is at or below the mobile breakpoint (768px). */
+  isMobile: ReadonlySignal<boolean>;
 
   /**
    * Snapshot of the current chapter selection for analytics and integrations.
@@ -187,27 +191,64 @@ export function createSeedBibleState(): SeedBibleState {
     () =>
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
   );
-  const effectivePanes = computed(() =>
-    panelsEnabled.value
-      ? panes.panes.value
-      : selectedTab.value
-        ? [
-            {
-              id: "single-pane",
-              tab: selectedTab.value,
-              component: null,
-              gridPortal: null,
-              mapPortal: null,
-              detached: false,
-              detachedAnchor: "floating" as const,
-              x: 0,
-              y: 0,
-              width: 0,
-              height: 0,
-            },
-          ]
-        : []
+
+  const viewportWidth = signal(
+    typeof window === "undefined" ? 0 : window.innerWidth
   );
+  const isMobile = computed(() => viewportWidth.value <= 768);
+
+  effect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const handleResize = () => {
+      viewportWidth.value = window.innerWidth;
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  });
+
+  const buildSingleSelectedPane = (): Pane[] =>
+    selectedTab.value
+      ? [
+          {
+            id: "single-pane",
+            tab: selectedTab.value,
+            component: null,
+            gridPortal: null,
+            mapPortal: null,
+            detached: false,
+            detachedAnchor: "floating" as const,
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+          },
+        ]
+      : [];
+
+  const effectivePanes = computed(() => {
+    if (!panelsEnabled.value) {
+      return buildSingleSelectedPane();
+    }
+    if (isMobile.value) {
+      // On mobile we only show a single pane at a time. Prefer the pane that
+      // hosts the currently selected tab; fall back to the manager's selected
+      // pane, then the first pane.
+      const allPanes = panes.panes.value;
+      const tab = selectedTab.value;
+      const selectedPaneId = panes.selectedPaneId.value;
+      const matching =
+        (tab ? allPanes.find((p) => p.tab?.id === tab.id) : null) ??
+        allPanes.find((p) => p.id === selectedPaneId) ??
+        allPanes[0] ??
+        null;
+      return matching ? [matching] : buildSingleSelectedPane();
+    }
+    return panes.panes.value;
+  });
   const currentReadingState = computed(() => {
     const selectedTabValue = selectedTab.value;
 
@@ -462,6 +503,8 @@ export function createSeedBibleState(): SeedBibleState {
       panelsEnabled,
       selectedTab,
       effectivePanes,
+      viewportWidth,
+      isMobile,
       currentReadingState,
       selectTab: handleSelectTab,
       addTab: handleAddTab,
