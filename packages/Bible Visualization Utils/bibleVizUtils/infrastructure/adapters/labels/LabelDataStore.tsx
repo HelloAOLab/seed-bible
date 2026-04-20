@@ -32,6 +32,26 @@ export class LabelDataStore implements LabelDataStorePort {
     return undefined;
   }
 
+  getDataByTailId(id: InfoLabelData["tail"]["id"]): InfoLabelData | undefined {
+    for (const data of this.#labelDataSet) {
+      if (data.getTailProperty("id") === id) {
+        return data;
+      }
+    }
+
+    return undefined;
+  }
+
+  getDataByTextId(id: InfoLabelData["label"]["id"]): InfoLabelData | undefined {
+    for (const data of this.#labelDataSet) {
+      if (data.getTextProperty("id") === id) {
+        return data;
+      }
+    }
+
+    return undefined;
+  }
+
   getDataByOwnerId(id: InfoLabelData["owner"]["id"]) {
     for (const data of this.#labelDataSet) {
       if (data.getOwnerProperty("id") === id) {

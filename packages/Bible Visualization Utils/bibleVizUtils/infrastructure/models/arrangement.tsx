@@ -1,53 +1,54 @@
 import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
+import type { BookName } from "bibleVizUtils.domain.models.scripture";
 
 export interface ChapterInfo {
-  amountOfVerses: number;
-  number: number;
+  readonly amountOfVerses: number;
+  readonly number: number;
 }
 
 export interface BookStaticInfo {
-  abbreviation: string;
-  author: string;
-  chaptersInfo: ChapterInfo[];
-  relativeDateRange: {
-    min: number;
-    max: number;
+  readonly abbreviation: string;
+  readonly author: string;
+  readonly chaptersInfo: readonly ChapterInfo[];
+  readonly relativeDateRange: {
+    readonly min: number;
+    readonly max: number;
   };
-  numberOfChapters: number;
-  startingIndex?: number;
+  readonly numberOfChapters: number;
+  readonly startingIndex?: number;
 }
 
 export interface BookInfo {
-  commonName: string;
-  explodedViewPosition?: {
-    x: number;
-    y: number;
-    z: number;
+  readonly commonName: BookName;
+  readonly explodedViewPosition?: {
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
   };
-  explodedViewCustomScale?: {
-    x: number;
-    y: number;
+  readonly explodedViewCustomScale?: {
+    readonly x: number;
+    readonly y: number;
   };
-  group?: number;
-  customColor?: string;
-  customLabelColor?: string;
-  isCheckpoint?: boolean;
+  readonly group?: number;
+  readonly customColor?: string;
+  readonly customLabelColor?: string;
+  readonly isCheckpoint?: boolean;
 }
 export interface SectionInfo {
-  name: string;
-  color: string;
-  books: BookInfo[];
-  customExplodedViewScaleFactor?: number;
-  customColorRange?: number;
+  readonly name: string;
+  readonly color: string;
+  readonly books: readonly BookInfo[];
+  readonly customExplodedViewScaleFactor?: number;
+  readonly customColorRange?: number;
 }
 
 export interface TestamentInfo {
-  name: string;
-  sections: SectionInfo[];
-  color?: HexString;
+  readonly name: string;
+  readonly sections: readonly SectionInfo[];
+  readonly color?: HexString;
 }
 
 export interface ArrangementInfo {
-  name: string;
-  testaments: TestamentInfo[];
+  readonly name: string;
+  readonly testaments: readonly TestamentInfo[];
 }

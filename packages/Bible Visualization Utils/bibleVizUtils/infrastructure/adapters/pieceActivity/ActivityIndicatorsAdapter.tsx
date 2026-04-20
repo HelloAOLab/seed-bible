@@ -3,10 +3,6 @@ import type {
   Point3D,
   Vector3 as Vector3Type,
 } from "../../../../../../typings/AuxLibraryDefinitions";
-import {
-  ActivityIndicatorDefaults,
-  type ActivityIndicatorDefaultsType,
-} from "bibleVizUtils.infrastructure.data.ActivityIndicatorDefaults";
 import type {
   ActivityContainer,
   ActivityIndicatorsAdapterPort,
@@ -28,15 +24,16 @@ import type {
 } from "bibleVizUtils.infrastructure.models.casualos";
 import { ActivityIndicatorMapper } from "../../mappers/ActivityIndicatorMapper";
 import { InfoLabelTextMapper } from "../../mappers/InfoLabelTextMapper";
-import { ActivityIndicatorBotsRepository } from "bibleVizUtils.infrastructure.data.ActivityIndicatorBotsRepository";
 import type { IndicatorsRepositoryPort } from "bibleVizUtils.domain.ports.pieceActivity";
 import type { ObjectPooler } from "bibleVizUtils.infrastructure.adapters.casualos.ObjectPooler";
+import type { ActivityIndicatorVisualConfigsType } from "bibleVizUtils.infrastructure.config.activityIndicators.visuals";
 
 interface PositionStrategyParams {
   ownerBot: PieceBot;
   indicatorBot: ActivityIndicatorBot;
   dimension: string;
   container: ActivityContainer;
+  configProviderPort: AdapterParams["configProviderPort"];
 }
 
 type PositionStrategyType = (params: PositionStrategyParams) => Vector3Type;
@@ -44,9 +41,10 @@ type PositionStrategyType = (params: PositionStrategyParams) => Vector3Type;
 const labelPositionStrategy: PositionStrategyType = ({
   indicatorBot,
   container,
+  configProviderPort,
 }) => {
-  const offset = ActivityIndicatorDefaults.LabelOffset;
-  const step = ActivityIndicatorDefaults.LabelStep;
+  const offset = configProviderPort.getVisualConfig("LabelOffset");
+  const step = configProviderPort.getVisualConfig("LabelStep");
   if (!(container instanceof InfoLabelData)) {
     throw new Error(
       `ActivityIndicatorsAdapter: container must be an instance of InfoLabelData at labelPositionStrategy`
@@ -73,7 +71,7 @@ const labelPositionStrategy: PositionStrategyType = ({
   const position = new Vector3(
     piecePosition.x -
       pieceScales.x / 2 +
-      ActivityIndicatorDefaults.LabelScales.x / 2 +
+      configProviderPort.getVisualConfig("LabelScales").x / 2 +
       offset.x +
       indicatorBot.tags.index * step.x,
     piecePosition.y + pieceScales.y / 2,
@@ -88,11 +86,12 @@ const labelPositionStrategy: PositionStrategyType = ({
   return position;
 };
 
-const createPositionGroundedStrategy = (offset: Point3D, step: Point3D) => {
+const createPositionGroundedStrategy = (type: "chapter" | "book") => {
   const strategy: PositionStrategyType = ({
     ownerBot,
     indicatorBot,
     dimension,
+    configProviderPort,
   }) => {
     const ownerPosition = getBotPosition(ownerBot, dimension);
     const ownerScales = GetBotScales(ownerBot);
@@ -103,15 +102,31 @@ const createPositionGroundedStrategy = (offset: Point3D, step: Point3D) => {
       );
     }
 
+    let offset: Point3D | undefined = undefined;
+    let step: Point3D | undefined = undefined;
+
+    switch (type) {
+      case "book":
+        {
+          offset = configProviderPort.getVisualConfig("ScriptureMapBookOffset");
+          step = configProviderPort.getVisualConfig("ScriptureMapBookStep");
+        }
+        break;
+      case "chapter": {
+        offset = configProviderPort.getVisualConfig("ChapterOffset");
+        step = configProviderPort.getVisualConfig("ChapterStep");
+      }
+    }
+
     return new Vector3(
       ownerPosition.x -
         ownerScales.x / 2 +
-        ActivityIndicatorDefaults.GroundedScales.x / 2 +
+        configProviderPort.getVisualConfig("GroundedScales").x / 2 +
         offset.x +
         indicatorBot.tags.index * step.x,
       ownerPosition.y +
         ownerScales.y / 2 -
-        ActivityIndicatorDefaults.GroundedScales.y / 2 -
+        configProviderPort.getVisualConfig("GroundedScales").y / 2 -
         offset.y,
       ownerPosition.z + ownerScales.z - indicatorBot.tags.scaleZ / 2
     );
@@ -121,42 +136,37 @@ const createPositionGroundedStrategy = (offset: Point3D, step: Point3D) => {
 
 const positionStrategiesMap: Record<string, PositionStrategyType> = {
   [BiblePiece.InfoLabelTransformer]: labelPositionStrategy,
-  [BiblePiece.StackChapter]: createPositionGroundedStrategy(
-    ActivityIndicatorDefaults.ChapterOffset,
-    ActivityIndicatorDefaults.ChapterStep
-  ),
-  [BiblePiece.LayoutChapter]: createPositionGroundedStrategy(
-    ActivityIndicatorDefaults.ChapterOffset,
-    ActivityIndicatorDefaults.ChapterStep
-  ),
-  [BiblePiece.LayoutBook]: createPositionGroundedStrategy(
-    ActivityIndicatorDefaults.ScriptureMapBookOffset,
-    ActivityIndicatorDefaults.ScriptureMapBookStep
-  ),
+  [BiblePiece.StackChapter]: createPositionGroundedStrategy("chapter"),
+  [BiblePiece.LayoutChapter]: createPositionGroundedStrategy("chapter"),
+  [BiblePiece.LayoutBook]: createPositionGroundedStrategy("book"),
 };
 
-type UpdateStrategyType = () => {
+type UpdateStrategyType = (
+  configProviderPort: AdapterParams["configProviderPort"]
+) => {
   indicatorScales:
-    | ActivityIndicatorDefaultsType["LabelScales"]
-    | ActivityIndicatorDefaultsType["GroundedScales"];
+    | ActivityIndicatorVisualConfigsType["LabelScales"]
+    | ActivityIndicatorVisualConfigsType["GroundedScales"];
   extraContentScales:
-    | ActivityIndicatorDefaultsType["LabelExtraUsersContentScales"]
-    | ActivityIndicatorDefaultsType["GroundedExtraUsersContentScales"];
+    | ActivityIndicatorVisualConfigsType["LabelExtraUsersContentScales"]
+    | ActivityIndicatorVisualConfigsType["GroundedExtraUsersContentScales"];
   extraBackgroundScales:
-    | ActivityIndicatorDefaultsType["LabelExtraUsersBackgroundScales"]
-    | ActivityIndicatorDefaultsType["GroundedExtraUsersBackgroundScales"];
+    | ActivityIndicatorVisualConfigsType["LabelExtraUsersBackgroundScales"]
+    | ActivityIndicatorVisualConfigsType["GroundedExtraUsersBackgroundScales"];
   form:
-    | ActivityIndicatorDefaultsType["LabelForm"]
-    | ActivityIndicatorDefaultsType["GroundedForm"];
+    | ActivityIndicatorVisualConfigsType["LabelForm"]
+    | ActivityIndicatorVisualConfigsType["GroundedForm"];
 };
 
-const updateLabelStrategy: UpdateStrategyType = () => {
-  const indicatorScales = ActivityIndicatorDefaults.LabelScales;
-  const extraContentScales =
-    ActivityIndicatorDefaults.LabelExtraUsersContentScales;
-  const extraBackgroundScales =
-    ActivityIndicatorDefaults.LabelExtraUsersBackgroundScales;
-  const form = ActivityIndicatorDefaults.LabelForm;
+const updateLabelStrategy: UpdateStrategyType = (configProviderPort) => {
+  const indicatorScales = configProviderPort.getVisualConfig("LabelScales");
+  const extraContentScales = configProviderPort.getVisualConfig(
+    "LabelExtraUsersContentScales"
+  );
+  const extraBackgroundScales = configProviderPort.getVisualConfig(
+    "LabelExtraUsersBackgroundScales"
+  );
+  const form = configProviderPort.getVisualConfig("LabelForm");
 
   return {
     indicatorScales,
@@ -166,13 +176,15 @@ const updateLabelStrategy: UpdateStrategyType = () => {
   };
 };
 
-const updatePieceStrategy: UpdateStrategyType = () => {
-  const indicatorScales = ActivityIndicatorDefaults.GroundedScales;
-  const extraContentScales =
-    ActivityIndicatorDefaults.GroundedExtraUsersContentScales;
-  const extraBackgroundScales =
-    ActivityIndicatorDefaults.GroundedExtraUsersBackgroundScales;
-  const form = ActivityIndicatorDefaults.GroundedForm;
+const updatePieceStrategy: UpdateStrategyType = (configProviderPort) => {
+  const indicatorScales = configProviderPort.getVisualConfig("GroundedScales");
+  const extraContentScales = configProviderPort.getVisualConfig(
+    "GroundedExtraUsersContentScales"
+  );
+  const extraBackgroundScales = configProviderPort.getVisualConfig(
+    "GroundedExtraUsersBackgroundScales"
+  );
+  const form = configProviderPort.getVisualConfig("GroundedForm");
 
   return {
     indicatorScales,
@@ -189,16 +201,41 @@ const updateStrategiesMap: Record<string, UpdateStrategyType> = {
   [BiblePiece.LayoutChapter]: updatePieceStrategy,
 };
 
+interface ActivityIndicatorsConfigProviderPort {
+  getVisualConfig: <K extends keyof ActivityIndicatorVisualConfigsType>(
+    key: K
+  ) => ActivityIndicatorVisualConfigsType[K];
+}
+
+interface ActivityIndicatorBotsRepositoryPort {
+  getIndicatorBotsByPieceId: (
+    pieceId: ActivityIndicatorBot["tags"]["ownerBotId"]
+  ) => ActivityIndicatorBot[];
+  getIndicatorBotsByPieceDataId: (
+    pieceDataId: ActivityIndicatorBot["tags"]["ownerDataId"]
+  ) => ActivityIndicatorBot[];
+}
+
 interface AdapterParams {
   objectPooler: ObjectPooler<BibleVizUtilsObjectPoolerMap>;
+  configProviderPort: ActivityIndicatorsConfigProviderPort;
+  botsRepositoryPort: ActivityIndicatorBotsRepositoryPort;
 }
 
 export class ActivityIndicatorsAdapter
   implements ActivityIndicatorsAdapterPort, IndicatorsRepositoryPort
 {
   #objectPooler: AdapterParams["objectPooler"];
-  constructor({ objectPooler }: AdapterParams) {
+  #configProviderPort: AdapterParams["configProviderPort"];
+  #botsRepositoryPort: AdapterParams["botsRepositoryPort"];
+  constructor({
+    objectPooler,
+    configProviderPort,
+    botsRepositoryPort,
+  }: AdapterParams) {
     this.#objectPooler = objectPooler;
+    this.#configProviderPort = configProviderPort;
+    this.#botsRepositoryPort = botsRepositoryPort;
   }
   showIndicators: ActivityIndicatorsAdapterPort["showIndicators"] = ({
     container,
@@ -232,7 +269,7 @@ export class ActivityIndicatorsAdapter
     }
 
     const { indicatorScales, extraContentScales, extraBackgroundScales, form } =
-      strategy();
+      strategy(this.#configProviderPort);
 
     for (const currCommand of commands) {
       const { index, indicator } = currCommand;
@@ -392,6 +429,7 @@ export class ActivityIndicatorsAdapter
         indicatorBot,
         dimension,
         container,
+        configProviderPort: this.#configProviderPort,
       });
       setTag(indicatorBot, dimension + "X", position.x);
       setTag(indicatorBot, dimension + "Y", position.y);
@@ -402,8 +440,7 @@ export class ActivityIndicatorsAdapter
   getIndicatorsByPieceId(
     pieceId: ActivityIndicatorBot["tags"]["ownerBotId"]
   ): ActivityIndicator[] {
-    const bots =
-      ActivityIndicatorBotsRepository.getIndicatorBotsByPieceId(pieceId);
+    const bots = this.#botsRepositoryPort.getIndicatorBotsByPieceId(pieceId);
     const indicators = bots.map((bot) => ActivityIndicatorMapper.toDomain(bot));
     return indicators;
   }
@@ -411,9 +448,7 @@ export class ActivityIndicatorsAdapter
     pieceDataId: ActivityIndicatorBot["tags"]["ownerDataId"]
   ): ActivityIndicator[] {
     const bots =
-      ActivityIndicatorBotsRepository.getIndicatorBotsByPieceDataId(
-        pieceDataId
-      );
+      this.#botsRepositoryPort.getIndicatorBotsByPieceDataId(pieceDataId);
     const indicators = bots.map((bot) => ActivityIndicatorMapper.toDomain(bot));
     return indicators;
   }

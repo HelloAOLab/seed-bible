@@ -539,7 +539,9 @@ export class PieceActivityService implements PieceActivityServicePort {
   };
 
   updateAllIndicators() {
-    const labelsData = this.#labelDataStorePort.getAllLabelsData();
+    const labelsData = this.#labelDataStorePort
+      .getAllLabelsData()
+      .filter((data) => !data.isHiding);
     const stackChaptersData =
       this.#dataRegistryPort.getAllPiecesDataByType("StackChapter");
     const layoutChaptersData =

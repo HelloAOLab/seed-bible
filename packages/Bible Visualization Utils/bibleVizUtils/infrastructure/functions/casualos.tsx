@@ -3,7 +3,6 @@ import type {
   Vector3 as Vector3Type,
 } from "../../../../../typings/AuxLibraryDefinitions";
 import type {
-  ActivityIndicatorBot,
   AnimateTagData,
   SetTagData,
   TypedBot,

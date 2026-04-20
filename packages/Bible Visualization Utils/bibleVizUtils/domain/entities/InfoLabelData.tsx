@@ -24,6 +24,7 @@ export class InfoLabelData {
   #date: InfoLabelDataProps["date"];
   #owner: InfoLabelDataProps["owner"];
   #positioning: InfoLabelDataProps["positioning"];
+  #isHiding: boolean;
 
   constructor({
     id,
@@ -55,6 +56,16 @@ export class InfoLabelData {
     key: K
   ): InfoLabelDataProps["transformer"][K] {
     return this.#transformer[key];
+  }
+  getTailProperty<K extends keyof InfoLabelDataProps["tail"]>(
+    key: K
+  ): InfoLabelDataProps["tail"][K] {
+    return this.#tail[key];
+  }
+  getTextProperty<K extends keyof InfoLabelDataProps["label"]>(
+    key: K
+  ): InfoLabelDataProps["label"][K] {
+    return this.#label[key];
   }
   get tail() {
     return this.#tail;
@@ -103,5 +114,14 @@ export class InfoLabelData {
   }
   changePositioning(newPositioning: LabelPositionType) {
     this.#positioning = newPositioning;
+  }
+  get isHiding() {
+    return this.#isHiding;
+  }
+  beginHiding() {
+    this.#isHiding = true;
+  }
+  endHiding() {
+    this.#isHiding = false;
   }
 }

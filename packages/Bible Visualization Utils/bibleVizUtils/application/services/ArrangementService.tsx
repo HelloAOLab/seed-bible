@@ -6,7 +6,7 @@ import type {
 } from "bibleVizUtils.domain.models.arrangement";
 import type {
   ArrangementEventPort,
-  ArrangementRepositoryPort,
+  ArrangementConfigProviderPort,
   CustomArrangementStorePort,
 } from "bibleVizUtils.domain.ports.arrangement";
 
@@ -24,14 +24,14 @@ interface BookPathIndices extends SectionPathIndices {
 }
 
 interface ArrangementServiceProps {
-  repository: ArrangementRepositoryPort;
+  arrangementConfigProviderPort: ArrangementConfigProviderPort;
   customArrangementStorePort: CustomArrangementStorePort;
   eventManager: ArrangementEventPort;
   arrangementIndex?: number;
 }
 
 export class ArrangementService {
-  #repository: ArrangementServiceProps["repository"];
+  #arrangementConfigProviderPort: ArrangementServiceProps["arrangementConfigProviderPort"];
   #eventManager: ArrangementServiceProps["eventManager"];
   #currArrangementIndex: NonNullable<
     ArrangementServiceProps["arrangementIndex"]
@@ -39,12 +39,12 @@ export class ArrangementService {
   #customArrangementStorePort: ArrangementServiceProps["customArrangementStorePort"];
 
   constructor({
-    repository,
+    arrangementConfigProviderPort,
     eventManager,
     arrangementIndex,
     customArrangementStorePort,
   }: ArrangementServiceProps) {
-    this.#repository = repository;
+    this.#arrangementConfigProviderPort = arrangementConfigProviderPort;
     this.#customArrangementStorePort = customArrangementStorePort;
     this.#eventManager = eventManager;
     if (arrangementIndex !== undefined)
@@ -52,7 +52,7 @@ export class ArrangementService {
   }
 
   getAllArrangements(): ArrangementInfo[] {
-    const statics = this.#repository.getStaticArrangements();
+    const statics = this.#arrangementConfigProviderPort.getStaticArrangements();
     const custom = this.#customArrangementStorePort.getArrangements();
 
     return [...statics, ...custom];

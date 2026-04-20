@@ -12,6 +12,8 @@ import type {
 import type { InfoLabelData } from "bibleVizUtils.domain.entities.InfoLabelData";
 import type { LabelDataStorePort } from "./piece";
 import type { ActivityIndicatorsAdapterPort } from "bibleVizUtils.domain.ports.pieceActivity";
+import type { BibleVizUtilsEvents } from "bibleVizUtils.domain.models.events";
+import type { ShowAnimationPacing } from "../../infrastructure/models/label";
 
 export type SpawnLabel = (params: {
   piece: Piece;
@@ -62,9 +64,23 @@ export type LabelPropertiesStrategies<T extends BiblePieceType> = {
   [K in T]: LabelStrategy<Piece<K>>;
 };
 
-export interface LabelAnimationAdapterPort {
-  displayShakeAnimation: (data: InfoLabelData) => void;
-  stopShakeAnimation: (data: InfoLabelData) => void;
+export interface LabelFeedbackAdapterPort {
+  displayAttentionFeedback: (data: InfoLabelData) => void;
+  stopAttentionFeedback: (data: InfoLabelData) => void;
+  displayShowFeedback: ({
+    data,
+    pacing,
+  }: {
+    data: InfoLabelData;
+    pacing: ShowAnimationPacing;
+  }) => Promise<void>;
+  displayHideFeedback({
+    data,
+    pacing,
+  }: {
+    data: InfoLabelData;
+    pacing: ShowAnimationPacing;
+  }): Promise<void>;
 }
 
 export interface PieceLabelServiceParams<T extends BiblePieceType> {
@@ -75,5 +91,19 @@ export interface PieceLabelServiceParams<T extends BiblePieceType> {
   labelDateFormatServicePort: LabelDateFormatServicePort;
   idGeneratorPort: IdGeneratorPort;
   activityIndicatorsAdapterPort: ActivityIndicatorsAdapterPort;
-  labelAnimationAdapterPort: LabelAnimationAdapterPort;
+  labelAnimationAdapterPort: LabelFeedbackAdapterPort;
+}
+
+export interface LabelInteractionServicePort {
+  handleLabelTailClick: (labelTail: Piece<"InfoLabelTail">) => void;
+  handleLabelTextClick: (labelText: Piece<"InfoLabelText">) => void;
+}
+
+export interface LabelInteractionEventPort {
+  emit: <K extends "OnPieceClick">(
+    eventName: K,
+    ...args: BibleVizUtilsEvents[K] extends undefined | void
+      ? [payload?: BibleVizUtilsEvents[K]]
+      : [payload: BibleVizUtilsEvents[K]]
+  ) => void;
 }

@@ -13,7 +13,6 @@ import {
   LabelDateFormat,
   LabelTranslucencyModes,
 } from "bibleVizUtils.domain.models.label";
-import { BibleVizDataRepository } from "bibleVizUtils.infrastructure.data.BibleVizDataRepository";
 import { PieceMapper } from "bibleVizUtils.infrastructure.mappers.PieceMapper";
 import type {
   BibleVizUtilsObjectPoolerMap,
@@ -32,16 +31,32 @@ import { InfoLabelTransformerMapper } from "bibleVizUtils.infrastructure.mappers
 import { InfoLabelTailMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTailMapper";
 import { InfoLabelTextMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTextMapper";
 import { InfoLabelDateMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelDateMapper";
-import { LabelablePieceMapper } from "../../mappers/LabelablePieceMapper";
+import type {
+  FontData,
+  FontName,
+} from "bibleVizUtils.infrastructure.config.labels.LabelsConfigProvider";
+import type { DialogBoxFormAddressesType } from "bibleVizUtils.infrastructure.config.labels.formAddresses";
+import type { LabelDateConfigsType } from "bibleVizUtils.infrastructure.config.labels.date";
+
+interface LabelConfigProviderPort {
+  getFontData: (font: FontName) => FontData;
+  getDialogBoxFormAddresses: () => DialogBoxFormAddressesType;
+  getDateConfig: <K extends keyof LabelDateConfigsType>(
+    key: K
+  ) => LabelDateConfigsType[K];
+}
 
 interface ServiceParams {
   objectPooler: ObjectPooler<BibleVizUtilsObjectPoolerMap>;
+  labelConfigProviderPort: LabelConfigProviderPort;
 }
 
 export class LabelAdapter implements LabelAdapterPort {
   #objectPooler: ServiceParams["objectPooler"];
-  constructor({ objectPooler }: ServiceParams) {
+  #labelConfigProviderPort: ServiceParams["labelConfigProviderPort"];
+  constructor({ objectPooler, labelConfigProviderPort }: ServiceParams) {
     this.#objectPooler = objectPooler;
+    this.#labelConfigProviderPort = labelConfigProviderPort;
   }
 
   #isAnimatable: boolean = true; // TODO: Define how to decide this and move its decision to the aplication layer.
@@ -62,7 +77,7 @@ export class LabelAdapter implements LabelAdapterPort {
     translucencyMode,
   }) => {
     const dimension = globalAPI.defaultPortalName;
-    const pieceBot = LabelablePieceMapper.toInfrastructure(piece);
+    const pieceBot = PieceMapper.toInfrastructure(piece);
     if (!pieceBot) {
       throw new Error(`LabelAdapter: pieceBot not found at spawnLabelForPiece`);
     }
@@ -71,13 +86,13 @@ export class LabelAdapter implements LabelAdapterPort {
       line: label,
       paddingX: 0.4,
       paddingY: 0.4,
-      font: BibleVizDataRepository.getFont("Roboto"),
+      font: this.#labelConfigProviderPort.getFontData("Roboto"),
     });
     const infoLabelScales = { x: 5, y: scaleY, z: 1 };
     const infoLabelAspectRatio = infoLabelScales.x / infoLabelScales.y;
     const infoLabelFormAddress = GetLabelFormAddress(
       infoLabelAspectRatio,
-      BibleVizDataRepository.getDialogBoxFormAddresses()
+      this.#labelConfigProviderPort.getDialogBoxFormAddresses()
     );
     const transformer = pieceBot.tags.transformer
       ? getBot(byID(pieceBot.tags.transformer))
@@ -137,54 +152,55 @@ export class LabelAdapter implements LabelAdapterPort {
       infoLabelDate = this.#objectPooler.getObject(BiblePiece.InfoLabelDate);
       if (infoLabelDate) {
         const infoLabelDateScales = GetBotScales(infoLabelDate);
-        if (
-          infoLabelDate.tags?.relativeDateScales?.x &&
-          infoLabelDate.tags?.absoluteDateScales?.x
-        ) {
-          const infoLabelDateDesiredScales = {
-            x:
-              dateFormat === LabelDateFormat.Relative
-                ? infoLabelDate.tags.relativeDateScales.x // TODO: Figure out what is the source and purpose of relativeDateScales and absoluteDateScales and move it outside of the tags if necessary.
-                : infoLabelDate.tags.absoluteDateScales.x,
-            y: 0.375 / infoLabelTransformerDesiredScales.y,
-            z: infoLabelScales.z / infoLabelTransformerDesiredScales.z,
-          };
-          const infoLabelDateOffset = ComputeInfoLabelDateOffset({
-            infoLabelOffset,
-            infoLabelScales,
-            infoLabelTransformerDesiredScales,
-            dateFormat: dateFormat,
-            relativeDateScalesX: infoLabelDate.tags.relativeDateScales.x,
-            absoluteDateScalesX: infoLabelDate.tags.absoluteDateScales.x,
-            dateGap,
-            infoLabelDateScales,
-          });
-          const infoLabelDateMod: Partial<InfoLabelDateTags> = {
-            [dimension]: true,
-            [dimension + "X"]: infoLabelDateOffset.x,
-            [dimension + "Y"]: infoLabelDateOffset.y,
-            [dimension + "Z"]: infoLabelDateOffset.z,
-            initialPosition: infoLabelDateOffset,
-            transformer: getID(infoLabelTransformer),
-            label: date,
-            color,
-            formAddress:
-              dateFormat === LabelDateFormat.Relative
-                ? infoLabelDate.tags.relativeDateFormAddress // TODO: Figure out what is the source and purpose of relativeDateFormAddress and absoluteDateFormAddress and move it outside of the tags if necessary.
-                : infoLabelDate.tags.absoluteDateFormAddress,
-            scaleX: infoLabelDateDesiredScales.x,
-            scaleY: infoLabelDateDesiredScales.y,
-            scaleZ: infoLabelDateDesiredScales.z,
-            labelColor,
-            formOpacity: 0,
-            ownerBotId: piece.id,
-          };
-          applyMod(infoLabelDate, infoLabelDateMod);
-        } else {
-          throw new Error(
-            "relativeDateScales and absoluteDateScales of infoLabelDate are not defined at LabelController"
-          );
-        }
+        const infoLabelDateDesiredScales = {
+          x:
+            dateFormat === LabelDateFormat.Relative
+              ? this.#labelConfigProviderPort.getDateConfig(
+                  "relativeDateScales"
+                ).x
+              : this.#labelConfigProviderPort.getDateConfig(
+                  "absoluteDateScales"
+                ).x,
+          y: 0.375 / infoLabelTransformerDesiredScales.y,
+          z: infoLabelScales.z / infoLabelTransformerDesiredScales.z,
+        };
+        const infoLabelDateOffset = ComputeInfoLabelDateOffset({
+          infoLabelOffset,
+          infoLabelScales,
+          infoLabelTransformerDesiredScales,
+          dateFormat: dateFormat,
+          relativeDateScalesX:
+            this.#labelConfigProviderPort.getDateConfig("relativeDateScales").x,
+          absoluteDateScalesX:
+            this.#labelConfigProviderPort.getDateConfig("absoluteDateScales").x,
+          dateGap,
+          infoLabelDateScales,
+        });
+        const infoLabelDateMod: Partial<InfoLabelDateTags> = {
+          [dimension]: true,
+          [dimension + "X"]: infoLabelDateOffset.x,
+          [dimension + "Y"]: infoLabelDateOffset.y,
+          [dimension + "Z"]: infoLabelDateOffset.z,
+          initialPosition: infoLabelDateOffset,
+          transformer: getID(infoLabelTransformer),
+          label: date,
+          color,
+          formAddress:
+            dateFormat === LabelDateFormat.Relative
+              ? this.#labelConfigProviderPort.getDateConfig(
+                  "relativeDateFormAddress"
+                )
+              : this.#labelConfigProviderPort.getDateConfig(
+                  "absoluteDateFormAddress"
+                ),
+          scaleX: infoLabelDateDesiredScales.x,
+          scaleY: infoLabelDateDesiredScales.y,
+          scaleZ: infoLabelDateDesiredScales.z,
+          labelColor,
+          formOpacity: 0,
+          ownerBotId: piece.id,
+        };
+        applyMod(infoLabelDate, infoLabelDateMod);
       }
     }
 

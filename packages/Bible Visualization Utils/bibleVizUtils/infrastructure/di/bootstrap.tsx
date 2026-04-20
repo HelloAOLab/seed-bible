@@ -11,6 +11,7 @@ import type { BibleVizUtilsEvents } from "bibleVizUtils.domain.models.events";
 import { LabelDateService } from "bibleVizUtils.application.services.LabelDateService";
 import { UserColorSyncService } from "bibleVizUtils.application.services.UserColorSyncService";
 import { PieceLabelService } from "bibleVizUtils.application.services.PieceLabelService";
+import { LabelInteractionService } from "bibleVizUtils.application.services.LabelInteractionService";
 
 import { SeedBiblePresenceProvider } from "bibleVizUtils.infrastructure.adapters.userPresence.SeedBiblePresenceProvider";
 import { ActivityIndicatorsAdapter } from "bibleVizUtils.infrastructure.adapters.pieceActivity.ActivityIndicatorsAdapter";
@@ -26,6 +27,7 @@ import { UserColorController } from "bibleVizUtils.infrastructure.controllers.se
 import { SessionController } from "bibleVizUtils.infrastructure.controllers.session.SessionController";
 import { ArrangementController } from "bibleVizUtils.infrastructure.controllers.arrangement.ArrangementController";
 import { UserPresenceController } from "bibleVizUtils.infrastructure.controllers.userPresence.UserPresenceController";
+import { LabelInteractionController } from "bibleVizUtils.infrastructure.controllers.label.LabelInteractionController";
 import type {
   BibleVizUtilsObjectPoolerMap,
   PoolData,
@@ -43,8 +45,13 @@ import {
   type BiblePieceType,
 } from "bibleVizUtils.domain.models.canvas";
 import { CustomArrangementStore } from "bibleVizUtils.infrastructure.adapters.arrangement.CustomArrangementStore";
-import { LabelAnimationAdapter } from "bibleVizUtils.infrastructure.adapters.labels.LabelAnimationAdapter";
-import { globalAPI } from "@packages/seed-bible/app/controller/controllerBuilder";
+import { LabelFeedbackAdapter } from "bibleVizUtils.infrastructure.adapters.labels.LabelFeedbackAdapter";
+import { globalAPI } from "app.controller.controllerBuilder";
+import { ArrangementsConfigProvider } from "bibleVizUtils.infrastructure.config.arrangements.ArrangementsConfigProvider";
+import { ArrangementAdapter } from "bibleVizUtils.infrastructure.adapters.arrangement.ArrangementAdapter";
+import { LabelsConfigProvider } from "bibleVizUtils.infrastructure.config.labels.LabelsConfigProvider";
+import { ActivityIndicatorBotsRepository } from "bibleVizUtils.infrastructure.adapters.pieceActivity.ActivityIndicatorBotsRepository";
+import { ActivityIndicatorsConfigProvider } from "bibleVizUtils.infrastructure.config.activityIndicators.ActivityIndicatorsConfigProvider";
 
 export interface BibleVizAPI {
   readingHistoryService: ReadingHistoryService;
@@ -53,12 +60,17 @@ export interface BibleVizAPI {
   createPieceLabelService: <T extends BiblePieceType>(
     labelPropertiesStrategies: PieceLabelServiceParams<T>["labelPropertiesStrategies"]
   ) => PieceLabelService<T>;
+  createEventManager: <
+    TEventMap extends Record<string, any>,
+  >() => BaseEventManager<TEventMap>;
 }
 
 export let userColorController: UserColorController | undefined = undefined;
 export let sessionController: SessionController | undefined = undefined;
 export let arrangementController: ArrangementController | undefined = undefined;
 export let userPresenceController: UserPresenceController | undefined =
+  undefined;
+export let labelInteractionController: LabelInteractionController | undefined =
   undefined;
 
 export let bibleVizAPI: BibleVizAPI | undefined = undefined;
@@ -200,10 +212,15 @@ export const bootstrapApp = () => {
       ],
       { getDimension: () => os.getCurrentDimension() }
     );
+  const activityIndicatorsConfigProvider =
+    new ActivityIndicatorsConfigProvider();
+  const activityIndicatorBotsRepository = new ActivityIndicatorBotsRepository();
   const bibleVizUtilsEventManager = new BaseEventManager<BibleVizUtilsEvents>();
   const seedBiblePresenceProvider = new SeedBiblePresenceProvider();
   const activityIndicatorsAdapter = new ActivityIndicatorsAdapter({
     objectPooler: bibleVizUtilsObjectPooler,
+    botsRepositoryPort: activityIndicatorBotsRepository,
+    configProviderPort: activityIndicatorsConfigProvider,
   });
   const activityNotificationAdapter = new ActivityNotificationAdapter({
     objectPooler: bibleVizUtilsObjectPooler,
@@ -212,12 +229,22 @@ export const bootstrapApp = () => {
   const userColorStore = new UserColorStore(bibleVizUtilsEventManager);
   const sessionProvider = new SessionProvider();
   const userDatabase = new UserDatabase();
+  const labelsConfigProvider = new LabelsConfigProvider();
   const labelAdapter = new LabelAdapter({
     objectPooler: bibleVizUtilsObjectPooler,
+    labelConfigProviderPort: labelsConfigProvider,
   });
-  const customArrangementStore = new CustomArrangementStore();
-  const labelAnimationAdapter = new LabelAnimationAdapter(
-    () => globalAPI.defaultPortalName
+  const bibleVizDataRepository = new BibleVizDataRepository();
+  const arrangementAdapter = new ArrangementAdapter(bibleVizDataRepository);
+  const customArrangementStore = new CustomArrangementStore({
+    arrangementAdapterPort: arrangementAdapter,
+  });
+  const labelAnimationAdapter = new LabelFeedbackAdapter({
+    dimensionProvider: () => globalAPI.defaultPortalName,
+    labelConfigProviderPort: labelsConfigProvider,
+  });
+  const arrangementsConfigProvider = new ArrangementsConfigProvider(
+    arrangementAdapter
   );
 
   // 2, Instantiating services
@@ -231,12 +258,12 @@ export const bootstrapApp = () => {
   );
   const sessionService = new SessionService(bibleVizUtilsEventManager);
   const arrangementService = new ArrangementService({
-    repository: BibleVizDataRepository,
+    arrangementConfigProviderPort: arrangementsConfigProvider,
     eventManager: bibleVizUtilsEventManager,
     customArrangementStorePort: customArrangementStore,
   });
   const scriptureService = new ScriptureService(
-    BibleVizDataRepository,
+    bibleVizDataRepository,
     arrangementService
   );
   const userPresenceService = new UserPresenceService({
@@ -262,6 +289,10 @@ export const bootstrapApp = () => {
     userDatabasePort: userDatabase,
     userColorStorePort: userColorStore,
   });
+  const labelInteractionService = new LabelInteractionService({
+    labelInteractionEventPort: bibleVizUtilsEventManager,
+    labelDataStorePort: labelDataStore,
+  });
 
   // 3. Instantiating controllers
 
@@ -269,9 +300,20 @@ export const bootstrapApp = () => {
   sessionController = new SessionController(sessionService);
   arrangementController = new ArrangementController(arrangementService);
   userPresenceController = new UserPresenceController(userPresenceService);
+  labelInteractionController = new LabelInteractionController({
+    labelInteractionServicePort: labelInteractionService,
+  });
 
   // 4. Event wiring
 
+  bibleVizUtilsEventManager.subscribe(
+    "OnUserPresenceUpdate",
+    pieceActivityService.updateAllIndicators
+  );
+  bibleVizUtilsEventManager.subscribe(
+    "OnUserPresenceUpdate",
+    pieceActivityService.updateAllNotifications
+  );
   // TODO: Wire events on the go
 
   // 5. Building API
@@ -293,6 +335,9 @@ export const bootstrapApp = () => {
         labelAnimationAdapterPort: labelAnimationAdapter,
         activityIndicatorsAdapterPort: activityIndicatorsAdapter,
       });
+    },
+    createEventManager: <TEventMap extends Record<string, any>>() => {
+      return new BaseEventManager<TEventMap>();
     },
   };
 

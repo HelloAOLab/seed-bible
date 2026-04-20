@@ -1,8 +1,11 @@
 import type { BibleVizUtilsEvents } from "bibleVizUtils.domain.models.events";
-import type { ArrangementInfo } from "bibleVizUtils.domain.models.arrangement";
+import type { BookStaticInfo } from "bibleVizUtils.infrastructure.models.arrangement";
+import type { BookName } from "bibleVizUtils.domain.models.scripture";
+import type { ArrangementInfo as InfrastructureArrangementInfo } from "bibleVizUtils.infrastructure.models.arrangement";
+import type { ArrangementInfo as DomainArrangementInfo } from "bibleVizUtils.domain.models.arrangement";
 
-export interface ArrangementRepositoryPort {
-  getStaticArrangements: () => ArrangementInfo[];
+export interface ArrangementConfigProviderPort {
+  getStaticArrangements: () => readonly DomainArrangementInfo[];
 }
 
 export interface ArrangementEventPort {
@@ -15,7 +18,17 @@ export interface ArrangementEventPort {
 }
 
 export interface CustomArrangementStorePort {
-  tryAddArrangement: (arrangement: ArrangementInfo) => boolean;
-  tryRemoveArrangement: (arrangement: ArrangementInfo) => boolean;
-  getArrangements: () => ArrangementInfo[];
+  tryAddArrangement: (arrangement: DomainArrangementInfo) => boolean;
+  tryRemoveArrangement: (arrangement: DomainArrangementInfo) => boolean;
+  getArrangements: () => DomainArrangementInfo[];
+}
+
+export interface BooksStaticInfoRepository {
+  getBookStaticInfo: (book: BookName) => BookStaticInfo;
+}
+
+export interface ArrangementAdapterPort {
+  toDomain: (
+    infrastructureArrangement: InfrastructureArrangementInfo
+  ) => DomainArrangementInfo;
 }

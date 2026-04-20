@@ -1,12 +1,12 @@
 import type {
   Vector2 as Vector2Type,
   Vector3 as Vector3Type,
-} from "../../../../typings/AuxLibraryDefinitions";
+} from "../../../../../typings/AuxLibraryDefinitions";
 import type {
   BookLayout,
   ComputedGroupBookProperties,
-} from "bibleVizUtils.models.canvas";
-import type { Span } from "bibleVizUtils.models.commonTypes";
+} from "bibleVizUtils.infrastructure.models.canvas";
+import type { Span } from "bibleVizUtils.domain.models.commonTypes";
 
 export class StackGeometryMapper {
   private static computeAxisProperties(

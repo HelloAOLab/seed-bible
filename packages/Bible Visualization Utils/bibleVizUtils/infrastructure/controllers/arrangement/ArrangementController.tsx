@@ -6,7 +6,7 @@ export class ArrangementController {
     this.#arrangementService = arrangementService;
   }
 
-  handleBookOientationChanged(orientation: string) {
+  handleBookOrientationChanged(orientation: string) {
     this.#arrangementService.setArrangementIndexByName(orientation);
   }
 }

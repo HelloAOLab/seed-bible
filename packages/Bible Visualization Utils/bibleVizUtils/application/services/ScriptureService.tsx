@@ -4,6 +4,7 @@ import type {
   ArrangementInfo,
   BookStaticInfo,
 } from "bibleVizUtils.domain.models.arrangement";
+import type { BookName } from "bibleVizUtils.domain.models.scripture";
 
 export type CompletePsalm = {
   chapter: number;
@@ -16,7 +17,7 @@ export type DividedPsalm = {
   bookId: string;
 };
 type ConvertDividedPsalmsToCompleteType = (params: {
-  book: string;
+  book: BookName;
   chapter: number;
 }) => CompletePsalm;
 type ConvertCompletePsalmsToDividedType = (params: {
@@ -25,7 +26,7 @@ type ConvertCompletePsalmsToDividedType = (params: {
 type GetBiggerChapterType = (arrangementIndex?: number) => number;
 
 interface DataRepositoryPort {
-  getBookStaticInfo: (book: string) => BookStaticInfo | undefined;
+  getBookStaticInfo: (book: BookName) => BookStaticInfo;
 }
 
 interface ArrangementServicePort {
@@ -72,7 +73,7 @@ export class ScriptureService {
   convertCompletePsalmsToDivided: ConvertCompletePsalmsToDividedType = ({
     chapter,
   }) => {
-    const dividedPsalmsNames = [
+    const dividedPsalmsNames: BookName[] = [
       "1 Psalms",
       "2 Psalms",
       "3 Psalms",
@@ -172,7 +173,7 @@ export class ScriptureService {
     }, 0);
   };
 
-  getBookChapterCount(book: string): number {
+  getBookChapterCount(book: BookName): number {
     const bookInfo = this.#dataRepositoryPort.getBookStaticInfo(book);
     if (!bookInfo)
       throw new Error(

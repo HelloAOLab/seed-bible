@@ -1,3 +1,5 @@
+import type { Piece } from "bibleVizUtils.domain.models.canvas";
+
 export type BibleVizUtilsEventCallback = (payload?: any) => void;
 
 export interface BibleVizUtilsEvents {
@@ -10,6 +12,7 @@ export interface BibleVizUtilsEvents {
   OnArrangementIndexChanged: { newIndex: number };
   OnCustomArrangementsChanged: undefined;
   OnLabelDateFormatChange: undefined;
+  OnPieceClick: { piece: Piece };
 }
 
 export type BibleVizUtilsEvent = keyof BibleVizUtilsEvents;

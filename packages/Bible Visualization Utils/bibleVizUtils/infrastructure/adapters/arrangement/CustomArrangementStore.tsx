@@ -1,10 +1,17 @@
 import type { ArrangementInfo } from "bibleVizUtils.infrastructure.models.arrangement";
 import type { CustomArrangementStorePort } from "bibleVizUtils.domain.ports.arrangement";
+import type { ArrangementAdapterPort } from "bibleVizUtils.domain.ports.arrangement";
+
+interface StoreProps {
+  initialArrangements?: ArrangementInfo[];
+  arrangementAdapterPort: ArrangementAdapterPort;
+}
 
 export class CustomArrangementStore implements CustomArrangementStorePort {
   #customArrangements: Map<ArrangementInfo["name"], ArrangementInfo>;
+  #arrangementAdapterPort: StoreProps["arrangementAdapterPort"];
 
-  constructor(initialArrangements?: ArrangementInfo[]) {
+  constructor({ initialArrangements, arrangementAdapterPort }: StoreProps) {
     const customArrangements: Map<ArrangementInfo["name"], ArrangementInfo> =
       new Map();
     if (initialArrangements) {
@@ -13,6 +20,7 @@ export class CustomArrangementStore implements CustomArrangementStorePort {
       }
     }
     this.#customArrangements = customArrangements;
+    this.#arrangementAdapterPort = arrangementAdapterPort;
   }
 
   tryAddArrangement(arrangement: ArrangementInfo): boolean {
@@ -31,7 +39,9 @@ export class CustomArrangementStore implements CustomArrangementStorePort {
     return false;
   }
 
-  getArrangements(): ArrangementInfo[] {
-    return [...this.#customArrangements.values()];
-  }
+  getArrangements: CustomArrangementStorePort["getArrangements"] = () => {
+    return [...this.#customArrangements.values()].map((arrangement) =>
+      this.#arrangementAdapterPort.toDomain(arrangement)
+    );
+  };
 }

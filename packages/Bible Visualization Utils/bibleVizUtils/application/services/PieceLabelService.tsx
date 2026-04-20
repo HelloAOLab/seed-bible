@@ -83,7 +83,11 @@ export class PieceLabelService<T extends BiblePieceType> {
 
     this.#pieceActivityServicePort.updateIndicators(labelData);
     this.#labelDataStorePort.addLabelData(labelData);
-    this.#labelAnimationAdapterPort.displayShakeAnimation(labelData);
+    this.#labelAnimationAdapterPort.displayAttentionFeedback(labelData);
+    this.#labelAnimationAdapterPort.displayShowFeedback({
+      data: labelData,
+      pacing: "Regular",
+    });
   }
 
   hideLabel(piece: Piece<T>) {
@@ -92,12 +96,23 @@ export class PieceLabelService<T extends BiblePieceType> {
       throw new Error(`PieceLabelService: labelData not found at hideLabel`);
     }
 
-    const activityIndicators = labelData.clearActivityIndicators();
-    if (activityIndicators) {
-      this.#activityIndicatorsAdapterPort.hideIndicators(activityIndicators);
-    }
-    this.#labelAnimationAdapterPort.stopShakeAnimation(labelData);
-    this.#labelAdapterPort.despawnLabel(labelData);
-    this.#labelDataStorePort.removeLabelData(labelData);
+    labelData.beginHiding();
+    this.#labelAnimationAdapterPort
+      .displayHideFeedback({
+        data: labelData,
+        pacing: "Regular",
+      })
+      .then(() => {
+        labelData.endHiding();
+        const activityIndicators = labelData.clearActivityIndicators();
+        if (activityIndicators) {
+          this.#activityIndicatorsAdapterPort.hideIndicators(
+            activityIndicators
+          );
+        }
+        this.#labelAnimationAdapterPort.stopAttentionFeedback(labelData);
+        this.#labelAdapterPort.despawnLabel(labelData);
+        this.#labelDataStorePort.removeLabelData(labelData);
+      });
   }
 }

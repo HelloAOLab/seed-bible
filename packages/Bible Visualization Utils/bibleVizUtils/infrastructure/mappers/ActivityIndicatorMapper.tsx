@@ -16,6 +16,17 @@ export class ActivityIndicatorMapper {
         index: bot.tags.index,
       };
     }
+    if (!bot.tags.indicatorType) {
+      throw new Error(
+        `ActivityIndicatorMapper: bot.tags.indicatorType not defined at toDomain`
+      );
+    }
+    if (!bot.tags.index) {
+      throw new Error(
+        `ActivityIndicatorMapper: bot.tags.index not defined at toDomain`
+      );
+    }
+
     return {
       id: bot.id,
       indicatorType: bot.tags.indicatorType,

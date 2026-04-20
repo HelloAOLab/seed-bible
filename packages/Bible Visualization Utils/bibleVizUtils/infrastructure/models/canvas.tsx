@@ -256,3 +256,32 @@ export const InfoLabelDefaultConfig = {
   relativeDateScales: { x: 1, y: 1, z: 1 },
   absoluteDateScales: { x: 1, y: 1, z: 1 },
 } as const;
+
+export const GameState = {
+  WaitingToStart: "WaitingToStart",
+  CountdownToStart: "CountdownToStart",
+  Playing: "Playing",
+  Pause: "Pause",
+  GameOver: "GameOver",
+} as const;
+
+export const LayoutButtons = {
+  PlaylistPathToggle: "PlaylistPathToggle",
+  CameraAnimationToggle: "CameraAnimationToggle",
+  ShowLabelsToggle: "ShowLabelsToggle",
+  PathToggle: "PathToggle",
+  ChapterExpandToggle: "ChapterExpandToggle",
+  ColorPickerButton: "ColorPickerButton",
+  ShowDatesToggle: "ShowDatesToggle",
+  DateFormatSelectorButton: "DateFormatSelectorButton",
+  OpenAllBooksButton: "OpenAllBooksButton",
+  PlaylistSelectorButton: "PlaylistSelectorButton",
+} as const;
+
+export type LayoutButton = (typeof LayoutButtons)[keyof typeof LayoutButtons];
+
+export const ScriptureMap3DPlaylistItem = {
+  Verse: "Verse",
+  Date: "Date",
+  Chapter: "Chapter",
+} as const;

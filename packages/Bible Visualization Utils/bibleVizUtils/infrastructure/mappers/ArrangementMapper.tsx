@@ -1,43 +1,45 @@
 import {
-  GetExplodedViewBooksPositions,
   GetChildrenLevelColors,
   HexToRgb,
-} from "bibleVizUtils.functions.index";
+} from "bibleVizUtils.domain.functions.colors";
+// import { GetExplodedViewBooksPositions } from "bibleVizUtils.infrastructure.functions.layout";
 import type {
-  ArrangementInfo,
+  ArrangementInfo as DomainArrangementInfo,
   BookInfo,
-  BookStaticInfo,
-} from "bibleVizUtils.data.BibleVizDataRepository";
-import type { StackPieceMeasurementsType } from "bibleVizUtils.data.StackPieceMeasurements";
-import type { StackSpacingsType } from "bibleVizUtils.data.StackSpacings";
-import type { ArrangementTemplate } from "bibleVizUtils.models.arrangement";
+  // BookStaticInfo,
+  ArrangementTemplate,
+} from "bibleVizUtils.domain.models.arrangement";
+// import type { StackPieceMeasurementsType } from "bibleVizUtils.infrastructure.data.StackPieceMeasurements";
+// import type { StackSpacingsType } from "bibleVizUtils.infrastructure.data.StackSpacings";
+import { BibleVizDataRepository } from "bibleVizUtils.infrastructure.data.BibleVizDataRepository";
 
 type TemplateToArrangement = (params: {
   template: ArrangementTemplate;
-  getSectionChapterCount: (books: BookInfo[]) => number;
-  getStackPieceMeasurement: <K extends keyof StackPieceMeasurementsType>(
-    measurement: K
-  ) => StackPieceMeasurementsType[K];
-  getBookStaticInfo: (book: string) => BookStaticInfo | undefined;
-  getStackSpacing: <K extends keyof StackSpacingsType>(
-    spacing: K
-  ) => StackSpacingsType[K];
-}) => ArrangementInfo;
+  // getSectionChapterCount: (books: { commonName: string }[]) => number;
+  // getStackPieceMeasurement: <K extends keyof StackPieceMeasurementsType>(
+  //   measurement: K
+  // ) => StackPieceMeasurementsType[K];
+  // getBookStaticInfo: (book: string) => BookStaticInfo | undefined;
+  // getStackSpacing: <K extends keyof StackSpacingsType>(
+  //   spacing: K
+  // ) => StackSpacingsType[K];
+}) => DomainArrangementInfo;
+
 type ArrangementToTemplate = (
-  arrangement: ArrangementInfo,
+  arrangement: DomainArrangementInfo,
   generateId: () => string
 ) => ArrangementTemplate;
 
 export class ArrangementMapper {
   static toArrangement: TemplateToArrangement = ({
     template,
-    getSectionChapterCount,
-    getStackPieceMeasurement,
-    getBookStaticInfo,
-    getStackSpacing,
+    // getSectionChapterCount,
+    // getStackPieceMeasurement,
+    // getBookStaticInfo,
+    // getStackSpacing,
   }) => {
     const { name: templateName, testaments } = template;
-    const arrangement: ArrangementInfo = {
+    const arrangement: DomainArrangementInfo = {
       name: templateName,
       testaments: testaments.map((testament) => {
         const {
@@ -50,43 +52,52 @@ export class ArrangementMapper {
           color: testamentColor,
           sections: sections.map((section) => {
             const { books } = section;
-            const amountOfChaptersInSection = getSectionChapterCount(
-              books.map((book) => {
-                return { commonName: book.name };
-              })
-            );
-            const sectionDesiredScaleZ =
-              amountOfChaptersInSection *
-              getStackPieceMeasurement("SectionDesiredScaleZRatio");
-            const sectionAvailableSpace =
-              sectionDesiredScaleZ -
-              getStackSpacing("BetweenBooks") * (books.length + 1);
-            const sectionExplodedViewScaleZ = sectionDesiredScaleZ * 2;
+            // const amountOfChaptersInSection = getSectionChapterCount(
+            //   books.map((book) => {
+            //     return { commonName: book.name };
+            //   })
+            // );
+            // const sectionDesiredScaleZ =
+            //   amountOfChaptersInSection *
+            //   getStackPieceMeasurement("SectionDesiredScaleZRatio");
+            // const sectionAvailableSpace =
+            //   sectionDesiredScaleZ -
+            //   getStackSpacing("BetweenBooks") * (books.length + 1);
+            // const sectionExplodedViewScaleZ = sectionDesiredScaleZ * 2;
 
-            const booksScalesZ = books.map((book) => {
-              const { name: bookName } = book;
-              const chaptersCount =
-                getBookStaticInfo(bookName)?.numberOfChapters ?? 0;
-              const percentageOfBookInSection =
-                chaptersCount / amountOfChaptersInSection;
-              const bookScaleZ =
-                percentageOfBookInSection * sectionAvailableSpace;
-              return bookScaleZ;
-            });
-            const positions = GetExplodedViewBooksPositions({
-              booksScalesZ,
-              sectionExplodedViewScaleZ,
-            });
+            // const booksScalesZ = books.map((book) => {
+            //   const { name: bookName } = book;
+            //   const chaptersCount =
+            //     getBookStaticInfo(bookName)?.numberOfChapters ?? 0;
+            //   const percentageOfBookInSection =
+            //     chaptersCount / amountOfChaptersInSection;
+            //   const bookScaleZ =
+            //     percentageOfBookInSection * sectionAvailableSpace;
+            //   return bookScaleZ;
+            // });
+            // const positions = GetExplodedViewBooksPositions({
+            //   booksScalesZ,
+            //   sectionExplodedViewScaleZ,
+            // });
 
             return {
               name: section.name,
               color: section.color,
-              books: books.map((book, index) => {
-                const positionZ = positions[index];
+              books: books.map((book /*, index*/): BookInfo => {
+                // const positionZ = positions[index];
+                const bookStaticInfo = BibleVizDataRepository.getBookStaticInfo(
+                  book.name
+                );
+                if (!bookStaticInfo) {
+                  throw new Error(
+                    `ArrangementMapper: bookStaticInfo not found at toArrangement`
+                  );
+                }
                 return {
                   commonName: book.name,
                   customColor: book.color,
-                  explodedViewPosition: { x: 0, y: 0, z: positionZ ?? 0 },
+                  // explodedViewPosition: { x: 0, y: 0, z: positionZ ?? 0 },
+                  ...bookStaticInfo,
                 };
               }),
             };
@@ -113,13 +124,13 @@ export class ArrangementMapper {
               name: sectionName,
               color: sectionColor,
               books,
-              customColorRange,
+              // customColorRange,
             }) => {
               const bookLevelColors = GetChildrenLevelColors({
                 sectionColorRGB: HexToRgb({
                   hexColor: sectionColor,
                 }),
-                colorRange: customColorRange ?? 70,
+                colorRange: /*customColorRange ??*/ 70,
                 levelsLength: books.length,
               });
               return {
