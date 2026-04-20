@@ -1,4 +1,4 @@
-import Typesense from "typesense";
+import Typesense from "typesense-fixed";
 
 const TYPESENSE_NODE_URL = new URL("https://search.ao.bot");
 const TYPESENSE_API_KEY = "2q7kmXHFUNXxutBv1zgXlhWcHyda7f5I";

@@ -1,4 +1,5 @@
 import { useSignal } from "@preact/signals";
+import { useEffect, useRef } from "preact/hooks";
 import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager";
 import {
   PANE_LAYOUT_OPTIONS,
@@ -12,9 +13,11 @@ import {
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { MobileSettingsIcon } from "seed-bible.components.icons";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
-import type { UserProfile } from "../managers/LoginManager";
-import type { ConnectedSessionUser } from "../managers/SessionsManager";
+import type { UserProfile } from "seed-bible.managers.LoginManager";
+import type { ConnectedSessionUser } from "seed-bible.managers.SessionsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
+import type { ReaderTab } from "seed-bible.managers.TabsManager";
+import type { VerseSearchHit } from "seed-bible.managers.SearchManager";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -39,6 +42,140 @@ interface TabsHeaderProps {
 
 interface SettingsProps {
   state: SeedBibleState;
+}
+
+interface SidebarSearchResult {
+  id: string;
+  translationId: string;
+  translationLabel: string;
+  bookId: string;
+  bookLabel: string;
+  chapterNumber: number;
+  verseNumber: number | null;
+  reference: string;
+  text: string;
+}
+
+function getSearchDocumentString(
+  document: Record<string, unknown>,
+  keys: string[]
+): string | null {
+  for (const key of keys) {
+    const value = document[key];
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed.length > 0) {
+        return trimmed;
+      }
+    }
+  }
+
+  return null;
+}
+
+function getSearchDocumentNumber(
+  document: Record<string, unknown>,
+  keys: string[]
+): number | null {
+  for (const key of keys) {
+    const value = document[key];
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return Math.floor(value);
+    }
+
+    if (typeof value === "string") {
+      const parsed = Number(value.trim());
+      if (Number.isFinite(parsed)) {
+        return Math.floor(parsed);
+      }
+    }
+  }
+
+  return null;
+}
+
+function normalizeVerseSearchHit(
+  hit: VerseSearchHit,
+  index: number
+): SidebarSearchResult | null {
+  const document = hit.document;
+  const translationId = getSearchDocumentString(document, [
+    "translation_id",
+    "translationId",
+    "translation",
+  ]);
+  const bookId = getSearchDocumentString(document, [
+    "book_id",
+    "bookId",
+    "book",
+  ]);
+  const chapterNumber = getSearchDocumentNumber(document, [
+    "chapter",
+    "chapter_number",
+    "chapterNumber",
+  ]);
+
+  if (!translationId || !bookId || !chapterNumber) {
+    return null;
+  }
+
+  const verseNumber = getSearchDocumentNumber(document, [
+    "verse",
+    "verse_number",
+    "verseNumber",
+  ]);
+  const text =
+    getSearchDocumentString(document, [
+      "text",
+      "verse_text",
+      "verseText",
+      "content",
+    ]) ?? "";
+  const bookLabel =
+    getSearchDocumentString(document, [
+      "book_name",
+      "bookName",
+      "book_title",
+      "bookTitle",
+      "book_label",
+      "bookLabel",
+    ]) ?? bookId;
+  const translationLabel =
+    getSearchDocumentString(document, [
+      "translation_name",
+      "translationName",
+      "translation_label",
+      "translationLabel",
+    ]) ?? translationId;
+  const reference =
+    getSearchDocumentString(document, ["reference", "ref"]) ??
+    `${bookLabel} ${chapterNumber}${verseNumber ? `:${verseNumber}` : ""}`;
+
+  return {
+    id:
+      getSearchDocumentString(document, ["id", "document_id", "documentId"]) ??
+      `${translationId}:${bookId}:${chapterNumber}:${verseNumber ?? index}`,
+    translationId,
+    translationLabel,
+    bookId,
+    bookLabel,
+    chapterNumber,
+    verseNumber,
+    reference,
+    text,
+  };
+}
+
+function getOrCreateSearchTargetTab(state: SeedBibleState): ReaderTab {
+  const selectedTab = state.app.selectedTab.value;
+  if (selectedTab) {
+    state.app.selectTab(selectedTab.id);
+    return selectedTab;
+  }
+
+  const tab = state.tabs.addTab();
+  state.panes.setSelectedPaneTab(tab.id);
+  return tab;
 }
 
 function getUserDisplayName(user: ConnectedSessionUser): string {
@@ -207,6 +344,104 @@ export function Tabs(props: TabsProps) {
   const selectedTabId = tabsManager.selectedTabId.value;
   const panelsEnabled = app.panelsEnabled.value;
   const { t } = useI18n();
+  const searchQuery = useSignal("");
+  const searchResults = useSignal<SidebarSearchResult[]>([]);
+  const searchLoading = useSignal(false);
+  const searchError = useSignal<string | null>(null);
+  const isSearchPanelOpen = useSignal(false);
+  const searchContainerRef = useRef<HTMLDivElement | null>(null);
+  const latestSearchRequestRef = useRef(0);
+  const searchDebounceTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (searchContainerRef.current?.contains(target)) {
+        return;
+      }
+
+      isSearchPanelOpen.value = false;
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (searchDebounceTimeoutRef.current !== null) {
+        window.clearTimeout(searchDebounceTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const runSearch = (nextQuery: string) => {
+    searchQuery.value = nextQuery;
+
+    if (searchDebounceTimeoutRef.current !== null) {
+      window.clearTimeout(searchDebounceTimeoutRef.current);
+      searchDebounceTimeoutRef.current = null;
+    }
+
+    const query = nextQuery.trim();
+    const requestId = ++latestSearchRequestRef.current;
+
+    if (!query) {
+      searchResults.value = [];
+      searchLoading.value = false;
+      searchError.value = null;
+      isSearchPanelOpen.value = false;
+      return;
+    }
+
+    searchLoading.value = true;
+    searchError.value = null;
+    isSearchPanelOpen.value = true;
+
+    searchDebounceTimeoutRef.current = window.setTimeout(() => {
+      void state.search
+        .search("verses", query)
+        .then((response) => {
+          if (latestSearchRequestRef.current !== requestId) {
+            return;
+          }
+
+          searchResults.value = (response.hits ?? [])
+            .map((hit, index) => normalizeVerseSearchHit(hit, index))
+            .filter((result): result is SidebarSearchResult => result !== null);
+          searchLoading.value = false;
+        })
+        .catch((error: unknown) => {
+          if (latestSearchRequestRef.current !== requestId) {
+            return;
+          }
+
+          searchResults.value = [];
+          searchLoading.value = false;
+          searchError.value =
+            error instanceof Error ? error.message : "Unable to search verses.";
+        });
+    }, 180);
+  };
+
+  const openSearchResult = async (result: SidebarSearchResult) => {
+    closeContextMenus();
+    closeLayoutMenu();
+    isSearchPanelOpen.value = false;
+
+    const targetTab = getOrCreateSearchTargetTab(state);
+    await targetTab.readingState.selectTranslationAndChapter(
+      result.translationId,
+      result.bookId,
+      result.chapterNumber
+    );
+  };
 
   return (
     <>
@@ -224,6 +459,91 @@ export function Tabs(props: TabsProps) {
         >
           <span className="material-symbols-outlined">add</span>
         </button>
+      </div>
+
+      <div className="sb-sidebar-search-shell" ref={searchContainerRef}>
+        <label className="sb-sidebar-search-bar">
+          <span className="material-symbols-outlined sb-sidebar-search-icon">
+            search
+          </span>
+          <input
+            value={searchQuery.value}
+            onInput={(event) => {
+              runSearch((event.currentTarget as HTMLInputElement).value);
+            }}
+            onFocus={() => {
+              if (searchQuery.value.trim()) {
+                isSearchPanelOpen.value = true;
+              }
+            }}
+            className="sb-sidebar-search-input"
+            placeholder="Search verses"
+            aria-label="Search verses"
+          />
+          {searchQuery.value.trim().length > 0 && (
+            <button
+              onClick={() => {
+                runSearch("");
+              }}
+              className="sb-sidebar-search-clear-button"
+              aria-label="Clear search"
+              title="Clear search"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          )}
+        </label>
+
+        {isSearchPanelOpen.value && searchQuery.value.trim().length > 0 && (
+          <div className="sb-sidebar-search-panel">
+            {searchLoading.value && (
+              <div className="sb-sidebar-search-status">Searching...</div>
+            )}
+
+            {!searchLoading.value && searchError.value && (
+              <div className="sb-sidebar-search-status sb-sidebar-search-status-error">
+                {searchError.value}
+              </div>
+            )}
+
+            {!searchLoading.value &&
+              !searchError.value &&
+              searchResults.value.length === 0 && (
+                <div className="sb-sidebar-search-status">
+                  No matching verses.
+                </div>
+              )}
+
+            {!searchLoading.value &&
+              !searchError.value &&
+              searchResults.value.length > 0 && (
+                <div className="sb-sidebar-search-results-list">
+                  {searchResults.value.map((result) => (
+                    <button
+                      key={result.id}
+                      onClick={() => {
+                        void openSearchResult(result);
+                      }}
+                      className="sb-sidebar-search-result-button"
+                    >
+                      <div className="sb-sidebar-search-result-reference">
+                        {result.reference}
+                      </div>
+                      <div className="sb-sidebar-search-result-meta">
+                        <span>{result.translationLabel}</span>
+                        {result.verseNumber !== null && (
+                          <span>{`${result.bookLabel} ${result.chapterNumber}:${result.verseNumber}`}</span>
+                        )}
+                      </div>
+                      <div className="sb-sidebar-search-result-text">
+                        {result.text || "Open chapter"}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+          </div>
+        )}
       </div>
 
       <div className="sb-sidebar-tab-list">

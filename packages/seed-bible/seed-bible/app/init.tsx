@@ -2,6 +2,15 @@ configBot.tags.pageTitle = "Seed Bible";
 
 thisBot.initPostHog();
 
+const importMap = document.createElement("script");
+importMap.type = "importmap";
+importMap.textContent = JSON.stringify({
+  imports: {
+    "typesense-fixed": "/lib/Typesense.js",
+  },
+});
+document.head.prepend(importMap);
+
 import { Main } from "seed-bible.app.main";
 
 const { render } = os.appHooks;
