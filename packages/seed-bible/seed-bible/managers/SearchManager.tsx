@@ -109,7 +109,7 @@ export function createSearchManager(): SearchManager {
           });
       }
       default: {
-        throw new Error(`Unsupported search type: ${type satisfies never}`);
+        throw new Error(`Unsupported search type: ${type}`);
       }
     }
   };
