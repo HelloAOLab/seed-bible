@@ -141,6 +141,9 @@
       "seed-bible.managers.ReadingHistoryManager": [
         "./packages/seed-bible/seed-bible/managers/ReadingHistoryManager.tsx"
       ],
+      "seed-bible.managers.SearchManager": [
+        "./packages/seed-bible/seed-bible/managers/SearchManager.ts"
+      ],
       "seed-bible.managers.SeedBibleStateManager": [
         "./packages/seed-bible/seed-bible/managers/SeedBibleStateManager.tsx"
       ],

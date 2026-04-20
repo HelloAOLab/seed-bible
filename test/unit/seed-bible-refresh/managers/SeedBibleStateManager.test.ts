@@ -133,6 +133,7 @@ describe("createSeedBibleState", () => {
     expect(state.selector.isOpen.value).toBe(false);
     expect(state.highlights).toBe(mockHighlightsManager as any);
     expect(state.sessions).toBe(mockSessionsManager);
+    expect(typeof state.search.search).toBe("function");
   });
 
   it("selecting a tab selects the tab and switches the pane to display the selected tab", async () => {
