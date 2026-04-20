@@ -4,6 +4,8 @@ import { useI18n } from "seed-bible.i18n.I18nManager";
 import { translateTitle } from "seed-bible.components.Utils";
 import { applyToolbarCustomization } from "seed-bible.managers.SettingsManager";
 import { highlightContainsVerse } from "seed-bible.managers.HighlightsManager";
+import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
+import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 
@@ -20,6 +22,142 @@ function getContrastTextColor(hex: string): string {
 }
 
 const { useEffect, useRef } = os.appHooks;
+
+/**
+ * Deterministic decoration id for a per-verse shared highlight. Using a
+ * stable id means re-highlighting the same verse overwrites the previous
+ * decoration and un-highlighting it can target the decoration directly.
+ */
+function sharedHighlightDecorationId(
+  bookId: string,
+  chapterNumber: number,
+  verseNumber: number
+): string {
+  return `shared-highlight:${bookId}:${chapterNumber}:${verseNumber}`;
+}
+
+/**
+ * Broadcasts a highlight to the rest of a shared session by creating one
+ * `VerseDecoration` per selected verse. The decoration is synced through
+ * `SessionsManager`'s existing decorations CRDT, so other connected clients
+ * see the exact same visual styling.
+ *
+ * If the session's `highlightDurationSeconds` is set (non-null, non-zero),
+ * we schedule a local removal after that many seconds — the removal also
+ * propagates through the CRDT so every client clears it at once.
+ */
+function broadcastHighlightToSession(
+  session: BibleReadingSession | null,
+  rs: BibleReadingState,
+  details: {
+    colorId: string;
+    customColor?: string;
+    customFontColor?: string;
+  }
+): void {
+  if (!session) return;
+  const verses = rs.selectedVerses.value;
+  if (verses.length === 0) return;
+
+  const duration = session.options.value.highlightDurationSeconds;
+  const style = details.customColor
+    ? {
+        backgroundColor: details.customColor,
+        color: details.customFontColor ?? "#333333",
+      }
+    : undefined;
+  const className = details.customColor
+    ? ""
+    : `sb-highlight-${details.colorId}`;
+
+  for (const verse of verses) {
+    const id = sharedHighlightDecorationId(
+      verse.bookId,
+      verse.chapterNumber,
+      verse.verse.number
+    );
+    rs.decorateVerses(
+      verse.translationId,
+      verse.bookId,
+      verse.chapterNumber,
+      verse.verse.number,
+      {
+        className,
+        ...(style ? { style } : {}),
+        preserveOnChapterChange: false,
+      },
+      id
+    );
+    if (duration !== null && duration > 0) {
+      window.setTimeout(() => {
+        // Remove from the CRDT map first — the sync subscriber will
+        // clear the local copy. Calling `rs.removeDecoration` directly
+        // would race with the sync effect, which would re-seed the
+        // decoration from the still-present map entry.
+        session.removeSharedDecoration(id);
+      }, duration * 1000);
+    }
+  }
+}
+
+/**
+ * Removes any shared-highlight decorations that match the currently
+ * selected verses — keeps the session view in sync when the user
+ * explicitly un-highlights verses rather than waiting for the timer.
+ * Routes through the session's CRDT map so the removal propagates.
+ */
+function removeSharedHighlightsFromSelection(
+  session: BibleReadingSession | null,
+  rs: BibleReadingState
+): void {
+  for (const verse of rs.selectedVerses.value) {
+    const id = sharedHighlightDecorationId(
+      verse.bookId,
+      verse.chapterNumber,
+      verse.verse.number
+    );
+    if (session) {
+      session.removeSharedDecoration(id);
+    } else {
+      rs.removeDecoration(id);
+    }
+  }
+}
+
+/**
+ * Applies a highlight to the current selection with the right lifetime for
+ * the current context:
+ *
+ * - Not in a shared session → save permanently via HighlightsManager.
+ * - In a shared session with `highlightDurationSeconds` = null (∞) → save
+ *   permanently AND broadcast a decoration so other clients see it.
+ * - In a shared session with a finite duration → broadcast a decoration
+ *   only. Don't persist to HighlightsManager, and also clear any existing
+ *   permanent highlight on the same verses so the originating user's view
+ *   stays in sync with the timer.
+ */
+function applyHighlightWithSession(
+  rs: BibleReadingState,
+  session: BibleReadingSession | null,
+  details: {
+    colorId: string;
+    customColor?: string;
+    customFontColor?: string;
+  }
+): void {
+  const duration = session?.options.value.highlightDurationSeconds ?? null;
+  const isTransient = session !== null && duration !== null && duration > 0;
+
+  if (isTransient) {
+    // Wipe any prior permanent highlight on these verses so the timer is
+    // the sole source of truth for how long the highlight shows.
+    void rs.unhighlightSelectedVerses();
+  } else {
+    void rs.highlightSelectedVerses(details);
+  }
+
+  broadcastHighlightToSession(session, rs, details);
+}
 
 interface BibleReaderToolbarProps {
   state: SeedBibleState;
@@ -250,11 +388,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     }
     customColorCommitTimeoutRef.current = window.setTimeout(() => {
       settings.addCustomHighlightColor(color);
-      readingState.value?.highlightSelectedVerses({
-        colorId: "yellow",
-        customColor: color,
-        customFontColor: getContrastTextColor(color),
-      });
+      const rs = readingState.value;
+      if (rs) {
+        applyHighlightWithSession(rs, sessionState.value, {
+          colorId: "yellow",
+          customColor: color,
+          customFontColor: getContrastTextColor(color),
+        });
+      }
       customColorCommitTimeoutRef.current = null;
     }, 300);
   };
@@ -622,7 +763,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   type="button"
                   className="sb-verse-toolbar-color-button"
                   onClick={() => {
-                    readingState.value?.highlightSelectedVerses({ colorId });
+                    const rs = readingState.value;
+                    if (!rs) return;
+                    applyHighlightWithSession(rs, sessionState.value, {
+                      colorId,
+                    });
                   }}
                   aria-label={`Highlight ${colorId}`}
                   title={colorId}
@@ -642,7 +787,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   type="button"
                   className="sb-verse-toolbar-color-button"
                   onClick={() => {
-                    readingState.value?.highlightSelectedVerses({
+                    const rs = readingState.value;
+                    if (!rs) return;
+                    applyHighlightWithSession(rs, sessionState.value, {
                       colorId: "yellow",
                       customColor: hex,
                       customFontColor: getContrastTextColor(hex),
@@ -692,7 +839,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 className="sb-verse-toolbar-clear"
                 disabled={!hasAnyHighlighted.value}
                 onClick={() => {
-                  readingState.value?.unhighlightSelectedVerses();
+                  const rs = readingState.value;
+                  if (!rs) return;
+                  // Clean up the shared decoration first so the removal
+                  // propagates to other clients even if the local
+                  // unhighlight is a no-op (e.g. user isn't logged in
+                  // with HighlightsManager but the session had a
+                  // decoration broadcast earlier).
+                  removeSharedHighlightsFromSelection(sessionState.value, rs);
+                  rs.unhighlightSelectedVerses();
                 }}
                 aria-label="Clear highlight"
                 title="Clear"

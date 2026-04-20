@@ -1,5 +1,4 @@
-import { useComputed, useSignal } from "@preact/signals";
-import type { AvailableSharedSession } from "seed-bible.managers.InvitationsManager";
+import { useSignal } from "@preact/signals";
 import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager";
 import {
   PANE_LAYOUT_OPTIONS,
@@ -179,6 +178,157 @@ function renderLayoutPreview(layoutId: PaneLayoutId) {
           {index + 1}
         </div>
       ))}
+    </div>
+  );
+}
+
+const HIGHLIGHT_DURATION_OPTIONS: { label: string; value: number | null }[] = [
+  { label: "∞", value: null },
+  { label: "8s", value: 8 },
+  { label: "16s", value: 16 },
+  { label: "20s", value: 20 },
+];
+
+/**
+ * Modal content: host-side controls for a shared session. Ported from
+ * develop's "Scripture Navigation" panel.
+ *
+ * - "Only Host can navigate" toggles `allowedNavigators` between `null`
+ *   (everyone) and `[hostUserId]` (host only).
+ * - "Only Host can highlight" toggles `allowedDecorators` the same way.
+ * - Highlight duration picker writes `highlightDurationSeconds`.
+ * - "End Session" removes the tab (which disposes the session and removes
+ *   its registry entry automatically via `wrapSessionLifecycle`).
+ *
+ * Non-host participants see the current settings but can't change them.
+ */
+function SessionSettingsModalContent(props: {
+  state: SeedBibleState;
+  session: import("../managers/SessionsManager").BibleReadingSession;
+  onEndSession: () => void;
+  onClose: () => void;
+}) {
+  const { state, session, onEndSession, onClose } = props;
+  const options = session.options.value;
+  const hostId = options.hostUserId;
+  const currentIdentity = getSelfVisualKey(state);
+  const isHost =
+    hostId !== null &&
+    (state.login.userId.value === hostId || currentIdentity === hostId);
+
+  const onlyHostNavigate =
+    Array.isArray(options.allowedNavigators) &&
+    options.allowedNavigators.length > 0;
+  const onlyHostHighlight =
+    Array.isArray(options.allowedDecorators) &&
+    options.allowedDecorators.length > 0;
+
+  const setNavigatorsOnlyHost = (onlyHost: boolean) => {
+    if (!isHost || !hostId) return;
+    session.updateOptions({
+      allowedNavigators: onlyHost ? [hostId] : null,
+    });
+  };
+
+  const setDecoratorsOnlyHost = (onlyHost: boolean) => {
+    if (!isHost || !hostId) return;
+    session.updateOptions({
+      allowedDecorators: onlyHost ? [hostId] : null,
+    });
+  };
+
+  const setHighlightDuration = (seconds: number | null) => {
+    if (!isHost) return;
+    session.updateOptions({ highlightDurationSeconds: seconds });
+  };
+
+  return (
+    <div className="sb-session-settings">
+      {!isHost && (
+        <p className="sb-session-settings-note">
+          Only the session host can change these settings.
+        </p>
+      )}
+
+      <div className="sb-session-settings-row">
+        <label
+          className="sb-session-settings-label"
+          htmlFor="sb-session-only-host-navigate"
+        >
+          Only host can navigate
+        </label>
+        <input
+          id="sb-session-only-host-navigate"
+          type="checkbox"
+          checked={onlyHostNavigate}
+          disabled={!isHost}
+          onChange={(event: Event) => {
+            setNavigatorsOnlyHost(
+              (event.currentTarget as HTMLInputElement).checked
+            );
+          }}
+        />
+      </div>
+
+      <div className="sb-session-settings-row">
+        <label
+          className="sb-session-settings-label"
+          htmlFor="sb-session-only-host-highlight"
+        >
+          Only host can highlight
+        </label>
+        <input
+          id="sb-session-only-host-highlight"
+          type="checkbox"
+          checked={onlyHostHighlight}
+          disabled={!isHost}
+          onChange={(event: Event) => {
+            setDecoratorsOnlyHost(
+              (event.currentTarget as HTMLInputElement).checked
+            );
+          }}
+        />
+      </div>
+
+      <div className="sb-session-settings-duration">
+        <div className="sb-session-settings-duration-title">Highlight for</div>
+        <div className="sb-session-settings-duration-options">
+          {HIGHLIGHT_DURATION_OPTIONS.map((option) => {
+            const selected = options.highlightDurationSeconds === option.value;
+            return (
+              <button
+                key={option.label}
+                type="button"
+                className={`sb-session-settings-duration-option${selected ? " sb-session-settings-duration-option-selected" : ""}`}
+                disabled={!isHost}
+                onClick={() => setHighlightDuration(option.value)}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="sb-session-settings-actions">
+        <button
+          type="button"
+          className="sb-session-settings-cancel"
+          onClick={onClose}
+        >
+          Close
+        </button>
+        <button
+          type="button"
+          className="sb-session-settings-end"
+          onClick={() => {
+            onEndSession();
+            onClose();
+          }}
+        >
+          End Session
+        </button>
+      </div>
     </div>
   );
 }
@@ -468,6 +618,49 @@ export function Tabs(props: TabsProps) {
                         defaultValue: `Session ID: ${tab.sharedSession.id}`,
                       })}
                     </ContextMenuItem>
+                    {(() => {
+                      // Only the session host sees the settings entry.
+                      const hostId = tab.sharedSession.options.value.hostUserId;
+                      const selfIdentity = getSelfVisualKey(state);
+                      const isHost =
+                        hostId !== null &&
+                        (state.login.userId.value === hostId ||
+                          selfIdentity === hostId);
+                      if (!isHost) return null;
+                      return (
+                        <ContextMenuItem
+                          className="sb-tab-menu-item"
+                          onClick={() => {
+                            const session = tab.sharedSession;
+                            if (!session) return;
+                            const modalId = `session-settings-${session.id}`;
+                            state.modals.openModal({
+                              id: modalId,
+                              title: {
+                                key: "session-settings",
+                                defaultValue: "Session settings",
+                              },
+                              content: () => (
+                                <SessionSettingsModalContent
+                                  state={state}
+                                  session={session}
+                                  onEndSession={() => {
+                                    state.tabs.removeTab(tab.id);
+                                  }}
+                                  onClose={() => {
+                                    state.modals.closeModal(modalId);
+                                  }}
+                                />
+                              ),
+                            });
+                          }}
+                        >
+                          {t("session-settings", {
+                            defaultValue: "Session settings",
+                          })}
+                        </ContextMenuItem>
+                      );
+                    })()}
                   </>
                 )}
                 <ContextMenuItem

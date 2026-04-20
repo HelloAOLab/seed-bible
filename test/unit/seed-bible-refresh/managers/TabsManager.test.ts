@@ -136,8 +136,12 @@ describe("createTabs", () => {
       options: signal({
         allowedNavigators: null,
         allowedDecorators: null,
+        hostUserId: null,
+        highlightDurationSeconds: 16,
+        endedAt: null,
       }),
       updateOptions: jest.fn(),
+      removeSharedDecoration: jest.fn(),
       dispose: jest.fn(),
       connectedUsers: signal([]),
     } as BibleReadingSession;

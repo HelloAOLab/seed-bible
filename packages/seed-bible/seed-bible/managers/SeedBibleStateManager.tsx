@@ -333,16 +333,80 @@ export function createSeedBibleState(): SeedBibleState {
   // entry is removed from the global shared-sessions registry too. The
   // registry is opened by every client, so other users see the session
   // disappear automatically.
+  //
+  // Additionally: if THIS client is the host (by user id or connection id),
+  // mark `endedAt` in the session's shared options before tearing down.
+  // Participants watch for `endedAt` and auto-close their tab (see the
+  // effect below), which is the behavior the host expects when they end
+  // or close a shared tab.
   const wrapSessionLifecycle = (
     session: BibleReadingSession
   ): BibleReadingSession => {
     const originalDispose = session.dispose.bind(session);
     session.dispose = () => {
+      const hostUserId = session.options.value.hostUserId;
+      const localId = login.userId.value;
+      const localConnectionId =
+        typeof configBot !== "undefined" && configBot?.id
+          ? String(configBot.id)
+          : null;
+      const isHost =
+        hostUserId !== null &&
+        (hostUserId === localId || hostUserId === localConnectionId);
+
+      if (isHost && session.options.value.endedAt === null) {
+        try {
+          session.updateOptions({ endedAt: Date.now() });
+        } catch {
+          // Best-effort — don't block teardown if the CRDT write fails.
+        }
+      }
+
       void invitations.unpublishSession(session.id);
       originalDispose();
     };
     return session;
   };
+
+  // Auto-close participant tabs when the host goes away. Two signals:
+  //  (a) `options.endedAt` was written by the host (clean "End Session"
+  //      action — works when the CRDT flushes before the host disconnects).
+  //  (b) The host was previously in `connectedUsers` but has since left —
+  //      catches the host-browser-close case even if the `endedAt` write
+  //      never made it across the wire.
+  //
+  // We remember per-session that the host was at least once connected, so
+  // joiners don't immediately close their own tab on connect before they
+  // even see the host.
+  const sessionsWhereHostWasSeen = new Set<string>();
+  effect(() => {
+    for (const tab of tabs.tabs.value) {
+      const session = tab.sharedSession;
+      if (!session) continue;
+
+      if (session.options.value.endedAt !== null) {
+        sessionsWhereHostWasSeen.delete(session.id);
+        tabs.removeTab(tab.id);
+        continue;
+      }
+
+      const hostId = session.options.value.hostUserId;
+      if (!hostId) continue;
+
+      const users = session.connectedUsers.value;
+      const hostIsConnected = users.some(
+        (user) => user.userId === hostId || user.connectionId === hostId
+      );
+
+      if (hostIsConnected) {
+        sessionsWhereHostWasSeen.add(session.id);
+      } else if (sessionsWhereHostWasSeen.has(session.id)) {
+        // Host was here and has now dropped off — close the tab.
+        sessionsWhereHostWasSeen.delete(session.id);
+        tabs.removeTab(tab.id);
+      }
+    }
+  });
 
   const handleCreateSharedSession = async () => {
     closeSidebarAndSettings();
