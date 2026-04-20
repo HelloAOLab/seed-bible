@@ -39,7 +39,11 @@ export interface AppSettings {
   textConfig: TextConfig;
   toolbar: ToolbarCustomization;
   keepScreenAwake: boolean;
+  /** User-added custom highlight colors (hex strings, max 3). */
+  customHighlightColors: string[];
 }
+
+export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
 
 const TAG_BOOK_ORIENTATION = "app.bookOrientation";
 const TAG_UI_TEXT_SIZE = "app.uiTextSize";
@@ -47,6 +51,7 @@ const TAG_SELECTION_UI = "app.selectionUI";
 const TAG_TEXT_CONFIG = "app.textConfig";
 const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
+const TAG_CUSTOM_HIGHLIGHT_COLORS = "app.customHighlightColors";
 
 export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
   { value: "'Newsreader', serif", label: "Newsreader" },
@@ -124,7 +129,23 @@ const DEFAULT_SETTINGS: AppSettings = {
   textConfig: DEFAULT_TEXT_CONFIG,
   toolbar: DEFAULT_TOOLBAR_CONFIG,
   keepScreenAwake: false,
+  customHighlightColors: [],
 };
+
+function parseCustomHighlightColors(value: unknown): string[] {
+  let parsed: unknown = value;
+  if (typeof parsed === "string" && parsed.length > 0) {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(parsed)) return [];
+  return parsed
+    .filter((v): v is string => typeof v === "string" && v.length > 0)
+    .slice(0, MAX_CUSTOM_HIGHLIGHT_COLORS);
+}
 
 function parseBoolean(value: unknown, fallback: boolean): boolean {
   if (typeof value === "boolean") return value;
@@ -344,6 +365,8 @@ export interface SettingsManager {
   setToolbarOrder: (order: string[]) => void;
   resetToolbarConfig: () => void;
   setKeepScreenAwake: (enabled: boolean) => void;
+  addCustomHighlightColor: (color: string) => void;
+  removeCustomHighlightColor: (color: string) => void;
   resetToDefaults: () => void;
 }
 
@@ -373,6 +396,9 @@ export function createSettings(): SettingsManager {
       configBot.tags[TAG_KEEP_AWAKE],
       DEFAULT_SETTINGS.keepScreenAwake
     ),
+    customHighlightColors: parseCustomHighlightColors(
+      configBot.tags[TAG_CUSTOM_HIGHLIGHT_COLORS]
+    ),
   });
 
   const settings = signal<AppSettings>(readFromTags());
@@ -396,7 +422,8 @@ export function createSettings(): SettingsManager {
       changedTags.includes(TAG_SELECTION_UI) ||
       changedTags.includes(TAG_TEXT_CONFIG) ||
       changedTags.includes(TAG_TOOLBAR) ||
-      changedTags.includes(TAG_KEEP_AWAKE)
+      changedTags.includes(TAG_KEEP_AWAKE) ||
+      changedTags.includes(TAG_CUSTOM_HIGHLIGHT_COLORS)
     ) {
       syncFromBot();
     }
@@ -464,6 +491,34 @@ export function createSettings(): SettingsManager {
     configBot.tags[TAG_KEEP_AWAKE] = enabled;
   };
 
+  const writeCustomHighlightColors = (colors: string[]) => {
+    settings.value = { ...settings.value, customHighlightColors: colors };
+    configBot.tags[TAG_CUSTOM_HIGHLIGHT_COLORS] =
+      colors.length === 0 ? "" : JSON.stringify(colors);
+  };
+
+  const addCustomHighlightColor = (color: string) => {
+    const normalized = color.trim().toLowerCase();
+    if (!normalized) return;
+    const current = settings.value.customHighlightColors;
+    // Move to front if already present; evict oldest when over the cap.
+    const withoutDuplicate = current.filter(
+      (c) => c.toLowerCase() !== normalized
+    );
+    writeCustomHighlightColors(
+      [normalized, ...withoutDuplicate].slice(0, MAX_CUSTOM_HIGHLIGHT_COLORS)
+    );
+  };
+
+  const removeCustomHighlightColor = (color: string) => {
+    const normalized = color.trim().toLowerCase();
+    writeCustomHighlightColors(
+      settings.value.customHighlightColors.filter(
+        (c) => c.toLowerCase() !== normalized
+      )
+    );
+  };
+
   const resetToDefaults = () => {
     settings.value = DEFAULT_SETTINGS;
     configBot.tags[TAG_BOOK_ORIENTATION] = DEFAULT_SETTINGS.bookOrientation;
@@ -474,6 +529,7 @@ export function createSettings(): SettingsManager {
     configBot.tags[TAG_TEXT_CONFIG] = "";
     configBot.tags[TAG_TOOLBAR] = "";
     configBot.tags[TAG_KEEP_AWAKE] = false;
+    configBot.tags[TAG_CUSTOM_HIGHLIGHT_COLORS] = "";
   };
 
   // Scale UI surfaces via `zoom` on the document root, while exposing
@@ -517,6 +573,8 @@ export function createSettings(): SettingsManager {
     setToolbarOrder,
     resetToolbarConfig,
     setKeepScreenAwake,
+    addCustomHighlightColor,
+    removeCustomHighlightColor,
     resetToDefaults,
   };
 }

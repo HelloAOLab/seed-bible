@@ -560,10 +560,6 @@ export function createHighlightsManager(
     chapterNumber: number,
     verseNumbers: number[]
   ): Promise<void> => {
-    if (!login.userId.value) {
-      return;
-    }
-
     const parsedVerseNumbers = verseNumbersSchema.parse(verseNumbers);
     const deduplicatedVerseNumbers = Array.from(new Set(parsedVerseNumbers));
 

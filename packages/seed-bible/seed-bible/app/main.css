@@ -1057,6 +1057,123 @@ button {
   min-height: var(--sb-verse-toolbar-min-height);
 }
 
+.sb-verse-toolbar-draggable {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.sb-verse-toolbar-draggable:active {
+  cursor: grabbing;
+}
+
+.sb-verse-toolbar-draggable button {
+  cursor: pointer;
+}
+
+/* Selected-verse reference label shown above the verse toolbar tools */
+.sb-verse-toolbar {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.sb-verse-toolbar-ref {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  padding: 0 4px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+/* Verse toolbar — color picker mode (ported from develop) */
+.sb-verse-toolbar-picker {
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-verse-toolbar-color-button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sb-verse-toolbar-color {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  transition: transform 0.15s ease;
+}
+
+.sb-verse-toolbar-color-button:hover .sb-verse-toolbar-color {
+  transform: scale(1.1);
+}
+
+.sb-verse-toolbar-color-button:active .sb-verse-toolbar-color {
+  transform: scale(0.95);
+}
+
+.sb-verse-toolbar-back,
+.sb-verse-toolbar-plus,
+.sb-verse-toolbar-clear {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+}
+
+.sb-verse-toolbar-back:hover,
+.sb-verse-toolbar-plus:hover,
+.sb-verse-toolbar-clear:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+}
+
+.sb-verse-toolbar-clear:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.sb-verse-toolbar-plus {
+  border: 1px dashed color-mix(in srgb, var(--sb-font-color), transparent 60%);
+}
+
+.sb-verse-toolbar-back .material-symbols-outlined,
+.sb-verse-toolbar-plus .material-symbols-outlined,
+.sb-verse-toolbar-clear .material-symbols-outlined,
+.sb-verse-toolbar-highlight-trigger .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.sb-verse-toolbar-color-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  padding: 0;
+  border: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .sb-verse-toolbar-tools {
   display: flex;
   gap: var(--sb-verse-toolbar-tools-gap);

@@ -7,7 +7,6 @@ import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import { sortBy } from "es-toolkit";
-import { highlightContainsVerse } from "seed-bible.managers.HighlightsManager";
 import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
@@ -535,57 +534,6 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         context.readingState.clearSelectedVerses();
       },
     },
-    {
-      id: "highlight-yellow",
-      priority: 350,
-      title: { key: "highlight-yellow", defaultValue: "Highlight Yellow" },
-      icon: () => (
-        <span
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            borderRadius: "4px",
-            backgroundColor: "yellow",
-            width: "16px",
-            height: "16px",
-          }}
-        />
-      ),
-      isVisible: (context) =>
-        context.readingState.selectedVerses.value.length > 0 &&
-        context.readingState.selectedVerses.value.some((verse) => {
-          const existingHighlight =
-            context.readingState.highlights.value.highlights.find((h) =>
-              highlightContainsVerse(h, verse.verse.number)
-            );
-          return !existingHighlight || existingHighlight.colorId !== "yellow";
-        }),
-      onSelect: (context) => {
-        context.readingState.highlightSelectedVerses({
-          colorId: "yellow",
-        });
-      },
-    },
-    {
-      id: "clear-highlights",
-      priority: 375,
-      title: { key: "clear-highlights", defaultValue: "Clear Highlights" },
-      icon: () => <MaterialIcon>cancel</MaterialIcon>,
-      isVisible: (context) =>
-        context.readingState.selectedVerses.value.length > 0 &&
-        context.readingState.selectedVerses.value.some((verse) => {
-          const existingHighlight =
-            context.readingState.highlights.value.highlights.find((h) =>
-              highlightContainsVerse(h, verse.verse.number)
-            );
-          return !!existingHighlight;
-        }),
-      onSelect: (context) => {
-        context.readingState.unhighlightSelectedVerses();
-      },
-    },
-    // TODO: Add toolbar tools for highlighting with different colors
   ];
 }
 
