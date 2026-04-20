@@ -20,7 +20,11 @@ import { LabelDataStore } from "bibleVizUtils.infrastructure.adapters.labels.Lab
 import { UserColorStore } from "bibleVizUtils.infrastructure.adapters.userPresence.UserColorStore";
 import { SessionProvider } from "bibleVizUtils.infrastructure.adapters.session.SessionProvider";
 import { UserDatabase } from "bibleVizUtils.infrastructure.adapters.user.UserDatabase";
-import { ObjectPooler } from "bibleVizUtils.infrastructure.adapters.casualos.ObjectPooler";
+import {
+  ObjectPooler,
+  type ObjectPoolerConfig,
+  type DimensionGetter as ObjectPoolerDimensionGetter,
+} from "bibleVizUtils.infrastructure.adapters.casualos.ObjectPooler";
 import { LabelAdapter } from "bibleVizUtils.infrastructure.adapters.labels.LabelAdapter";
 
 import { UserColorController } from "bibleVizUtils.infrastructure.controllers.session.UserColorController";
@@ -30,7 +34,9 @@ import { UserPresenceController } from "bibleVizUtils.infrastructure.controllers
 import { LabelInteractionController } from "bibleVizUtils.infrastructure.controllers.label.LabelInteractionController";
 import type {
   BibleVizUtilsObjectPoolerMap,
+  PieceBotTags,
   PoolData,
+  TypedBot,
 } from "bibleVizUtils.infrastructure.models.casualos";
 
 import { thisTypedBot as activityNotificationPrefab } from "bibleVizUtils.infrastructure.prefabs.activityNotification.botAdapter";
@@ -63,6 +69,13 @@ export interface BibleVizAPI {
   createEventManager: <
     TEventMap extends Record<string, any>,
   >() => BaseEventManager<TEventMap>;
+  createObjectPooler: <P extends Record<keyof P, TypedBot<PieceBotTags>>>({
+    poolsData,
+    dimensionGetter,
+  }: {
+    poolsData: ObjectPoolerConfig<P>;
+    dimensionGetter: ObjectPoolerDimensionGetter;
+  }) => ObjectPooler<P>;
 }
 
 export let userColorController: UserColorController | undefined = undefined;
@@ -339,6 +352,13 @@ export const bootstrapApp = () => {
     createEventManager: <TEventMap extends Record<string, any>>() => {
       return new BaseEventManager<TEventMap>();
     },
+    createObjectPooler: <P extends Record<keyof P, TypedBot<PieceBotTags>>>({
+      poolsData,
+      dimensionGetter,
+    }: {
+      poolsData: ObjectPoolerConfig<P>;
+      dimensionGetter: ObjectPoolerDimensionGetter;
+    }) => new ObjectPooler<P>(poolsData, dimensionGetter),
   };
 
   sessionService.tryEmitUserLoggedInEvent(!!authBot);

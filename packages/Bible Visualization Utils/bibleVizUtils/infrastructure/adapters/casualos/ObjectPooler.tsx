@@ -5,11 +5,13 @@ import type {
   PieceBotTags,
 } from "bibleVizUtils.infrastructure.models.casualos";
 
-type ObjectPoolerConfig<P extends Record<keyof P, TypedBot<PieceBotTags>>> = {
+export type ObjectPoolerConfig<
+  P extends Record<keyof P, TypedBot<PieceBotTags>>,
+> = {
   [K in keyof P]: PoolData<K, P[K]>;
 }[keyof P][];
 
-interface DimensionGetter {
+export interface DimensionGetter {
   getDimension: () => string;
 }
 
