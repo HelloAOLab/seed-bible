@@ -590,6 +590,15 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
 }
 
 /**
+ * Lightweight tool descriptor used for introspection (e.g. settings UI)
+ * where we need to list tools without a full rendering context.
+ */
+export interface ToolMetadata {
+  id: string;
+  title: TranslatableTitle;
+}
+
+/**
  * API surface for registering and resolving tools across all reader toolbars.
  */
 export interface ToolsManager {
@@ -602,6 +611,9 @@ export interface ToolsManager {
   /** Resolves/sorts reader toolbar tools for the given context. */
   getToolbarTools: (context: BibleToolContext) => BibleReaderToolbarTool[];
 
+  /** Lists reader toolbar tool metadata without resolving any context. */
+  listToolbarTools: () => ToolMetadata[];
+
   /** Registers a verse toolbar tool and returns an unregister callback. */
   registerVerseToolbarTool: (tool: ManagedBibleVerseToolbarTool) => () => void;
 
@@ -612,6 +624,9 @@ export interface ToolsManager {
   getVerseToolbarTools: (
     context: BibleToolContext
   ) => BibleReaderVerseToolbarTool[];
+
+  /** Lists verse toolbar tool metadata without resolving any context. */
+  listVerseToolbarTools: () => ToolMetadata[];
 
   /** Registers an empty-pane tool and returns an unregister callback. */
   registerEmptyPaneTool: (tool: ManagedBibleEmptyPaneTool) => () => void;
@@ -691,6 +706,9 @@ export function createBibleToolsManager(): ToolsManager {
     return sortBy(tools, [(tool) => tool.priority]);
   };
 
+  const listToolbarTools = (): ToolMetadata[] =>
+    toolbarTools.value.map((tool) => ({ id: tool.id, title: tool.title }));
+
   const registerVerseToolbarTool = (tool: ManagedBibleVerseToolbarTool) => {
     validateToolActions(tool);
     const nextTools = verseToolbarTools.value.filter(
@@ -723,6 +741,9 @@ export function createBibleToolsManager(): ToolsManager {
 
     return sortBy(tools, [(tool) => tool.priority]);
   };
+
+  const listVerseToolbarTools = (): ToolMetadata[] =>
+    verseToolbarTools.value.map((tool) => ({ id: tool.id, title: tool.title }));
 
   const registerEmptyPaneTool = (tool: ManagedBibleEmptyPaneTool) => {
     validateToolActions(tool);
@@ -796,9 +817,11 @@ export function createBibleToolsManager(): ToolsManager {
     registerToolbarTool,
     unregisterToolbarTool,
     getToolbarTools,
+    listToolbarTools,
     registerVerseToolbarTool,
     unregisterVerseToolbarTool,
     getVerseToolbarTools,
+    listVerseToolbarTools,
     registerEmptyPaneTool,
     unregisterEmptyPaneTool,
     getEmptyPaneTools,

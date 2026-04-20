@@ -125,6 +125,7 @@ function createSelectorFixture(): SelectorFixture {
     currentTranslationId,
     currentBookId,
     currentChapterNumber,
+    orientation: signal("traditional"),
     selectedTranslationId,
     selectedTranslation,
     selectedTranslationBooks,

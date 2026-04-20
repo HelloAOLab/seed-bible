@@ -2,6 +2,7 @@ import { batch, useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { translateTitle } from "seed-bible.components.Utils";
+import { applyToolbarCustomization } from "seed-bible.managers.SettingsManager";
 
 const { useEffect } = os.appHooks;
 
@@ -10,7 +11,14 @@ interface BibleReaderToolbarProps {
 }
 
 export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
-  const { tabs, selector, panes, sidebar, tools: toolsManager } = props.state;
+  const {
+    tabs,
+    selector,
+    panes,
+    sidebar,
+    tools: toolsManager,
+    settings,
+  } = props.state;
   const selectedTab = useComputed(
     () =>
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
@@ -47,8 +55,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     };
   }, []);
 
-  const tools = useComputed(() =>
-    toolsManager.getToolbarTools({
+  const tools = useComputed(() => {
+    const resolved = toolsManager.getToolbarTools({
       readingState: readingState.value!,
       sharedSession: sessionState.value,
       selectorState: selector,
@@ -59,11 +67,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         innerHeight: viewportHeight,
       },
       openSidebar: sidebar.openSidebar,
-    })
-  );
+    });
+    return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
+  });
 
-  const verseToolbarTools = useComputed(() =>
-    toolsManager.getVerseToolbarTools({
+  const verseToolbarTools = useComputed(() => {
+    const resolved = toolsManager.getVerseToolbarTools({
       readingState: readingState.value!,
       sharedSession: sessionState.value,
       selectorState: selector,
@@ -74,8 +83,17 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         innerHeight: viewportHeight,
       },
       openSidebar: sidebar.openSidebar,
-    })
-  );
+    });
+
+    const { selectionUI } = settings.settings.value;
+    if (!selectionUI.showHighlightColors) {
+      return resolved.filter(
+        (tool) =>
+          !tool.id.startsWith("highlight-") && tool.id !== "clear-highlights"
+      );
+    }
+    return resolved;
+  });
 
   const hasVerseSelection = useComputed(
     () => readingState.value!.selectedVerses.value.length > 0

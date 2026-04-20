@@ -147,6 +147,9 @@
       "seed-bible.managers.SessionsManager": [
         "./packages/seed-bible/seed-bible/managers/SessionsManager.tsx"
       ],
+      "seed-bible.managers.SettingsManager": [
+        "./packages/seed-bible/seed-bible/managers/SettingsManager.tsx"
+      ],
       "seed-bible.managers.SidebarManager": [
         "./packages/seed-bible/seed-bible/managers/SidebarManager.tsx"
       ],

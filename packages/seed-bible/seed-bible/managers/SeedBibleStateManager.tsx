@@ -49,6 +49,10 @@ import {
   createModalManager,
   type ModalManager,
 } from "seed-bible.managers.ModalManager";
+import {
+  createSettings,
+  type SettingsManager,
+} from "seed-bible.managers.SettingsManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 
@@ -132,6 +136,8 @@ export interface SeedBibleState {
   sessions: SessionsManager;
   /** Modal manager for app-wide dialog state and rendering. */
   modals: ModalManager;
+  /** App-level settings: book orientation, UI text size, selection UI, etc. */
+  settings: SettingsManager;
   /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
   /** Extension loading and runtime manager. */
@@ -155,7 +161,8 @@ export function createSeedBibleState(): SeedBibleState {
   const sidebar = createSidebar();
   const tabs = createTabs(data, highlights);
   const panes = createPanes(tabs, tabs.selectedTabId);
-  const selector = createBibleSelectorState(data, tabs, panes);
+  const settings = createSettings();
+  const selector = createBibleSelectorState(data, tabs, panes, settings);
   const tools = createBibleToolsManager();
   const readingHistory = createReadingHistoryManager(login);
   const annotations = createAnnotationsManager(login);
@@ -351,6 +358,7 @@ export function createSeedBibleState(): SeedBibleState {
     annotations,
     sessions,
     modals,
+    settings,
     extensions,
     app: {
       createSharedSession: handleCreateSharedSession,
