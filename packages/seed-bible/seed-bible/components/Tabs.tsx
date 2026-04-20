@@ -1,4 +1,5 @@
-import { useSignal } from "@preact/signals";
+import { useComputed, useSignal } from "@preact/signals";
+import type { AvailableSharedSession } from "seed-bible.managers.InvitationsManager";
 import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager";
 import {
   PANE_LAYOUT_OPTIONS,
@@ -35,6 +36,117 @@ interface TabsHeaderProps {
   setLayout: (layout: PaneLayoutId) => void;
   createSharedSession: () => void;
   openJoinSessionModal: () => void;
+}
+
+/**
+ * Deterministic animal-icon + color assignment for a user.
+ *
+ * Ports develop's `userPresence.tsx` approach: a stable hash of the user id
+ * picks one of 6 nature/animal icons and one of 8 bright colors. The same
+ * user always gets the same visual across clients.
+ */
+const USER_ANIMAL_ICONS = [
+  "forest", // tree
+  "park", // log/park
+  "eco", // leaf
+  "pets", // cat/dog
+  "cruelty_free", // bunny-style
+  "local_cafe", // coffee bean
+] as const;
+
+const USER_PRESENCE_COLORS = [
+  "#34D399",
+  "#60A5FA",
+  "#F472B6",
+  "#FBBF24",
+  "#A78BFA",
+  "#F87171",
+  "#10B981",
+  "#F59E0B",
+] as const;
+
+function hashUserKey(key: string): number {
+  let h = 5381;
+  for (let i = 0; i < key.length; i++) {
+    h = ((h << 5) + h) ^ key.charCodeAt(i);
+  }
+  return h >>> 0;
+}
+
+/** Hash-only visual — used in isolation (e.g. the current user's own avatar). */
+function getUserAnimalVisual(key: string): { icon: string; color: string } {
+  const hash = hashUserKey(key || "anonymous");
+  const iconIndex = hash % USER_ANIMAL_ICONS.length;
+  const colorIndex =
+    Math.floor(hash / USER_ANIMAL_ICONS.length) % USER_PRESENCE_COLORS.length;
+  return {
+    icon: USER_ANIMAL_ICONS[iconIndex]!,
+    color: USER_PRESENCE_COLORS[colorIndex]!,
+  };
+}
+
+/**
+ * Assigns icon + color pairs to a list of user keys in a globally
+ * deterministic way: keys are processed in lexicographic order, each picks
+ * its hash-preferred slot, and on collision walks forward to the next
+ * unused slot in the shared 6×8 palette. The sort makes the output
+ * identical on every client viewing the same user list — so Alice and
+ * Bob agree on who owns which color, rather than each seeing themselves
+ * as the same "first pick" color.
+ *
+ * Beyond the palette size (6 icons / 8 colors) picks are reused.
+ */
+function getUserAnimalVisualsForKeys(
+  keys: string[]
+): Map<string, { icon: string; color: string }> {
+  const result = new Map<string, { icon: string; color: string }>();
+  const usedIcons = new Set<string>();
+  const usedColors = new Set<string>();
+  const sorted = [...new Set(keys.filter((k) => k && k.length > 0))].sort();
+
+  const pickUnused = <T,>(
+    arr: readonly T[],
+    preferredIndex: number,
+    used: Set<T>
+  ): T => {
+    for (let i = 0; i < arr.length; i++) {
+      const candidate = arr[(preferredIndex + i) % arr.length]!;
+      if (!used.has(candidate)) return candidate;
+    }
+    return arr[preferredIndex]!;
+  };
+
+  for (const key of sorted) {
+    const hash = hashUserKey(key);
+    const preferredIcon = hash % USER_ANIMAL_ICONS.length;
+    const preferredColor =
+      Math.floor(hash / USER_ANIMAL_ICONS.length) % USER_PRESENCE_COLORS.length;
+    const icon = pickUnused(USER_ANIMAL_ICONS, preferredIcon, usedIcons);
+    const color = pickUnused(USER_PRESENCE_COLORS, preferredColor, usedColors);
+    usedIcons.add(icon);
+    usedColors.add(color);
+    result.set(key, { icon, color });
+  }
+
+  return result;
+}
+
+/**
+ * Returns the current client's local identity key used for deterministic
+ * animal-icon assignment. Prefers the logged-in user id, falls back to
+ * the connection id so anonymous users still get a stable visual.
+ */
+function getSelfVisualKey(state: SeedBibleState): string {
+  const userId = state.login.userId.value;
+  if (userId) return userId;
+  try {
+    if (typeof configBot !== "undefined" && configBot?.id) {
+      return String(configBot.id);
+    }
+  } catch {
+    /* ignore */
+  }
+  return "me";
 }
 
 interface SettingsProps {
@@ -265,36 +377,63 @@ export function Tabs(props: TabsProps) {
                   <span>{`${title} - ${currentChapter} • ${currentTranslation}`}</span>
                 </div>
 
-                {tab.sharedSession && connectedUsers.length > 0 && (
-                  <div className="sb-tab-users-section">
-                    <div className="sb-tab-users-list">
-                      {connectedUsers.map((user) => {
-                        const imageUrl = getUserImageUrl(user.profile);
-                        const displayName = getUserDisplayName(user);
-                        const style = imageUrl
-                          ? {
-                              borderColor: user.color,
-                              backgroundImage: `url(${imageUrl})`,
-                            }
-                          : {
-                              borderColor: user.color,
-                              backgroundColor: user.color,
-                            };
+                {tab.sharedSession &&
+                  connectedUsers.length > 0 &&
+                  (() => {
+                    // Compute icon+color visuals for ALL users in this session
+                    // as a group so no two users share the same icon/color
+                    // within the visible list. Globally deterministic: every
+                    // client viewing this session computes the same map.
+                    const visualKeys = connectedUsers.map(
+                      (user) => user.userId ?? user.connectionId ?? ""
+                    );
+                    const visualsMap = getUserAnimalVisualsForKeys(visualKeys);
+                    return (
+                      <div className="sb-tab-users-section">
+                        <div className="sb-tab-users-list">
+                          {connectedUsers.map((user) => {
+                            const imageUrl = getUserImageUrl(user.profile);
+                            const displayName = getUserDisplayName(user);
+                            const visualKey =
+                              user.userId ?? user.connectionId ?? displayName;
+                            const visual =
+                              visualsMap.get(visualKey) ??
+                              getUserAnimalVisual(visualKey);
 
-                        return (
-                          <span
-                            key={user.connectionId}
-                            className={`sb-tab-user-icon${
-                              imageUrl ? " sb-tab-user-icon-has-image" : ""
-                            }${user.isSelf ? " sb-tab-user-icon-self" : ""}`}
-                            title={displayName}
-                            style={style}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                            if (imageUrl) {
+                              return (
+                                <span
+                                  key={user.connectionId}
+                                  className={`sb-tab-user-icon sb-tab-user-icon-has-image${user.isSelf ? " sb-tab-user-icon-self" : ""}`}
+                                  title={displayName}
+                                  style={{
+                                    borderColor: visual.color,
+                                    backgroundImage: `url(${imageUrl})`,
+                                  }}
+                                />
+                              );
+                            }
+
+                            return (
+                              <span
+                                key={user.connectionId}
+                                className={`sb-tab-user-icon sb-tab-user-icon-animal${user.isSelf ? " sb-tab-user-icon-self" : ""}`}
+                                title={displayName}
+                                style={{
+                                  borderColor: visual.color,
+                                  backgroundColor: visual.color,
+                                }}
+                              >
+                                <span className="material-symbols-outlined">
+                                  {visual.icon}
+                                </span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
               </button>
 
               <ContextMenuWithButton
@@ -311,23 +450,25 @@ export function Tabs(props: TabsProps) {
                 title={t("tab-options", { defaultValue: "Tab options" })}
               >
                 {tab.sharedSession && (
-                  <ContextMenuItem
-                    className="sb-tab-menu-item"
-                    title={t("session-id", {
-                      sessionId: tab.sharedSession.id,
-                      defaultValue: `Session ID: ${tab.sharedSession.id}`,
-                    })}
-                    onClick={() => {
-                      if (tab.sharedSession) {
-                        os.setClipboard(tab.sharedSession.id);
-                      }
-                    }}
-                  >
-                    {t("session-id_x", {
-                      sessionId: tab.sharedSession.id,
-                      defaultValue: `Session ID: ${tab.sharedSession.id}`,
-                    })}
-                  </ContextMenuItem>
+                  <>
+                    <ContextMenuItem
+                      className="sb-tab-menu-item"
+                      title={t("session-id", {
+                        sessionId: tab.sharedSession.id,
+                        defaultValue: `Session ID: ${tab.sharedSession.id}`,
+                      })}
+                      onClick={() => {
+                        if (tab.sharedSession) {
+                          os.setClipboard(tab.sharedSession.id);
+                        }
+                      }}
+                    >
+                      {t("session-id_x", {
+                        sessionId: tab.sharedSession.id,
+                        defaultValue: `Session ID: ${tab.sharedSession.id}`,
+                      })}
+                    </ContextMenuItem>
+                  </>
                 )}
                 <ContextMenuItem
                   className="sb-tab-menu-item"
@@ -363,6 +504,156 @@ export function Tabs(props: TabsProps) {
         })}
       </div>
     </>
+  );
+}
+
+/**
+ * Fixed-position toast list at the top-left of the viewport showing live
+ * shared sessions from other users that the current client isn't already
+ * in. Ported from develop's top-left notification pattern — no separate
+ * notifications box; the toasts ARE the notifications.
+ */
+export function SharedSessionsToasts(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { invitations, tabs: tabsManager } = state;
+  const { t } = useI18n();
+
+  const openSharedSessionIds = new Set(
+    tabsManager.tabs.value
+      .map((tab) => tab.sharedSession?.id)
+      .filter(Boolean) as string[]
+  );
+  const entries = invitations.availableSessions.value.filter(
+    (entry) => !openSharedSessionIds.has(entry.sessionId)
+  );
+
+  if (entries.length === 0) {
+    return null;
+  }
+
+  // Ensure each visible host gets a distinct icon+color combo — important
+  // when two different hosts happen to hash to the same pick.
+  const visualsMap = getUserAnimalVisualsForKeys(
+    entries.map((entry) => entry.hostUserId)
+  );
+
+  return (
+    <div
+      className="sb-shared-toasts"
+      role="region"
+      aria-label="Shared sessions"
+    >
+      {entries.map((entry) => {
+        const hostName =
+          entry.hostProfile?.name ?? `User ${entry.hostUserId.slice(0, 8)}`;
+        const visual =
+          visualsMap.get(entry.hostUserId) ??
+          getUserAnimalVisual(entry.hostUserId);
+        const hostImage = entry.hostProfile?.pictureUrl ?? null;
+
+        return (
+          <div key={entry.sessionId} className="sb-shared-toast">
+            <button
+              className="sb-shared-toast-button"
+              onClick={() => {
+                closeContextMenus();
+                void invitations.joinAvailableSession(entry);
+              }}
+            >
+              {hostImage ? (
+                <span
+                  className="sb-tab-user-icon sb-tab-user-icon-has-image"
+                  style={{
+                    borderColor: visual.color,
+                    backgroundImage: `url(${hostImage})`,
+                  }}
+                />
+              ) : (
+                <span
+                  className="sb-tab-user-icon sb-tab-user-icon-animal"
+                  style={{
+                    borderColor: visual.color,
+                    backgroundColor: visual.color,
+                  }}
+                >
+                  <span className="material-symbols-outlined">
+                    {visual.icon}
+                  </span>
+                </span>
+              )}
+              <div className="sb-shared-toast-main">
+                <span className="sb-shared-toast-host">{hostName}</span>
+                <span className="sb-shared-toast-label">
+                  {t("shared-session-click-to-join", {
+                    defaultValue: "is sharing — click to join",
+                  })}
+                </span>
+              </div>
+            </button>
+            <button
+              className="sb-shared-toast-dismiss"
+              aria-label={t("dismiss", { defaultValue: "Dismiss" })}
+              title={t("dismiss", { defaultValue: "Dismiss" })}
+              onClick={(event: Event) => {
+                event.stopPropagation();
+                invitations.dismissAvailableSession(entry);
+              }}
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Button at the bottom-right of the sidebar showing the current user's own
+ * animal icon + color. Opens account settings when clicked (matches the
+ * bottom-of-sidebar avatar slot in develop).
+ */
+function SelfAvatarButton(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { login, sidebar } = state;
+  const userId = login.userId.value;
+  const profile = login.profile.value;
+  // Share identity with connected-user rendering so the sidebar avatar
+  // shows the same icon/color as my row inside a shared session.
+  const visualKey = getSelfVisualKey(state);
+  const visual = getUserAnimalVisual(visualKey);
+  const displayName = profile?.name ?? (userId ? userId.slice(0, 8) : "Guest");
+  const imageUrl = profile?.pictureUrl ?? null;
+
+  return (
+    <button
+      className="sb-sidebar-self-avatar"
+      onClick={() => {
+        sidebar.openSettingsToView("account");
+      }}
+      aria-label={`Open account settings (${displayName})`}
+      title={displayName}
+    >
+      {imageUrl ? (
+        <span
+          className="sb-tab-user-icon sb-tab-user-icon-has-image"
+          style={{
+            borderColor: visual.color,
+            backgroundImage: `url(${imageUrl})`,
+          }}
+        />
+      ) : (
+        <span
+          className="sb-tab-user-icon sb-tab-user-icon-animal"
+          style={{
+            borderColor: visual.color,
+            backgroundColor: visual.color,
+          }}
+        >
+          <span className="material-symbols-outlined">{visual.icon}</span>
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -488,6 +779,7 @@ export function Sidebar(props: SidebarProps) {
       >
         <MobileSettingsIcon />
       </button>
+      <SelfAvatarButton state={state} />
     </aside>
   );
 }

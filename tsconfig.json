@@ -129,6 +129,9 @@
       "seed-bible.managers.HighlightsManager": [
         "./packages/seed-bible/seed-bible/managers/HighlightsManager.tsx"
       ],
+      "seed-bible.managers.InvitationsManager": [
+        "./packages/seed-bible/seed-bible/managers/InvitationsManager.tsx"
+      ],
       "seed-bible.managers.LoginManager": [
         "./packages/seed-bible/seed-bible/managers/LoginManager.tsx"
       ],

@@ -53,6 +53,10 @@ import {
   createSettings,
   type SettingsManager,
 } from "seed-bible.managers.SettingsManager";
+import {
+  createInvitationsManager,
+  type InvitationsManager,
+} from "seed-bible.managers.InvitationsManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 
@@ -138,6 +142,8 @@ export interface SeedBibleState {
   modals: ModalManager;
   /** App-level settings: book orientation, UI text size, selection UI, etc. */
   settings: SettingsManager;
+  /** Incoming session invitations and invite-sending. */
+  invitations: InvitationsManager;
   /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
   /** Extension loading and runtime manager. */
@@ -323,9 +329,29 @@ export function createSeedBibleState(): SeedBibleState {
     selector.setOpen(true, selectedPane);
   };
 
+  // Wraps a session so that when it's disposed (via tabs.removeTab), its
+  // entry is removed from the global shared-sessions registry too. The
+  // registry is opened by every client, so other users see the session
+  // disappear automatically.
+  const wrapSessionLifecycle = (
+    session: BibleReadingSession
+  ): BibleReadingSession => {
+    const originalDispose = session.dispose.bind(session);
+    session.dispose = () => {
+      void invitations.unpublishSession(session.id);
+      originalDispose();
+    };
+    return session;
+  };
+
   const handleCreateSharedSession = async () => {
     closeSidebarAndSettings();
     const session = await sessions.createSession();
+    wrapSessionLifecycle(session);
+    // Auto-publish: the moment a shared tab is created, other logged-in
+    // users see it in their sidebar and can click to join — no manual
+    // invite/notification step.
+    void invitations.publishSession(session);
     const tab = tabs.addTab(session);
     panes.setSelectedPaneTab(tab.id);
     return session;
@@ -334,10 +360,15 @@ export function createSeedBibleState(): SeedBibleState {
   const handleJoinSharedSession = async (id: string) => {
     closeSidebarAndSettings();
     const session = await sessions.joinSession(id);
+    wrapSessionLifecycle(session);
     const tab = tabs.addTab(session);
     panes.setSelectedPaneTab(tab.id);
     return session;
   };
+
+  const invitations = createInvitationsManager(login, async (sessionId) => {
+    await handleJoinSharedSession(sessionId);
+  });
 
   const state: SeedBibleState = {
     bibleData: data,
@@ -359,6 +390,7 @@ export function createSeedBibleState(): SeedBibleState {
     sessions,
     modals,
     settings,
+    invitations,
     extensions,
     app: {
       createSharedSession: handleCreateSharedSession,

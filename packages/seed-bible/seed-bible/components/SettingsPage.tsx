@@ -1383,7 +1383,16 @@ function SettingsMainView(props: {
 
 export function SettingsPage(props: { state: SeedBibleState }) {
   const { state } = props;
-  const currentView = useSignal<SettingsView>(null);
+  // Honor a deep-link requested by the sidebar (e.g. clicking the
+  // bottom-right avatar opens Account settings directly). Consumed once and
+  // cleared so subsequent opens start at the main list.
+  const requested = state.sidebar.requestedSettingsView.value;
+  const currentView = useSignal<SettingsView>(
+    (requested as SettingsView | null) ?? null
+  );
+  if (requested) {
+    state.sidebar.requestedSettingsView.value = null;
+  }
 
   if (currentView.value === "account") {
     return (
