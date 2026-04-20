@@ -15,19 +15,19 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: var(--pageBackground);
+  background-color: var(--pageBackground, white);
   border-radius: 12px;
   overflow: hidden;
-  z-index: 1000;
+  z-index: 99999;
 }
 
 .modal-container h3,
 .modal-container .material-symbols-outlined {
-  color: var(--pageTextColor);
+  color: var(--pageTextColor, black);
 }
 
 .modal-container .img {
-  background: var(--pageBackground);
+  background: var(--pageBackground, white);
   position: absolute;
   border: 2px black solid;
   left: 50%;
@@ -88,7 +88,7 @@
   }
 }
 
-.modal-header {
+div.modal-header {
   padding: 12px 20px;
   display: flex;
   align-items: center;
@@ -99,7 +99,7 @@
   border-top-right-radius: 12px;
 }
 
-.modal-header h3 {
+div.modal-header h3 {
   font-family: "Satoshi", system-ui, sans-serif;
   font-size: 18px;
   font-weight: 600;
@@ -107,7 +107,7 @@
   line-height: 24.51px;
 }
 
-.modal-header .close-modal {
+div.modal-header .close-modal {
   font-size: 26px;
   font-weight: 500;
   top: 50%;
@@ -117,7 +117,7 @@
   cursor: pointer;
 }
 
-.modal-inner-cont {
+div.modal-inner-cont {
   padding: 28px 20px;
   color: var(--pageTextColor);
   background-color: var(--panelBackground);

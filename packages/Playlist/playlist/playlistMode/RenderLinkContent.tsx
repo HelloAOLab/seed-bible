@@ -104,7 +104,7 @@ G.RenderLinkTimer = setTimeout(async () => {
       //     "_blank",
       //     "noopener,noreferrer"
       // );
-      os.openURL(link);
+      G.SetOpenExternalLink && G.SetOpenExternalLink(link);
     }, 200);
     return;
   }

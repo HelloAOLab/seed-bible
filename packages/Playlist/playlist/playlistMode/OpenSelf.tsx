@@ -6,7 +6,9 @@ if (!G.makingPlaylist) {
   if (G["Playlist_package"]) {
     G["Playlist_package"].onClick();
   } else {
-    let PlayList = await G.Playlist.tryInitPlaylistMaker();
+    let PlayList = await G.Playlist.tryInitPlaylistMaker({
+      makeBooleansTrue: true,
+    });
     if (PlayList) {
       let id = uuid();
       G.PLAYLIST_PANEL_ID = id;

@@ -648,15 +648,15 @@ const AttachLink = (props: any) => {
   };
 
   const onReleaseData = () => {
-    G.RetainData = false;
-    G.RetainDataName = null;
-    G.RetainDataData = null;
-    G.RetainDataLink = null;
-    G.RetainDataMediaType = null;
-    G.RetainDataTextType = null;
-    G.RetainDataRecordingType = null;
-    G.RetainDataSelectedType = null;
-    G.RetainDataLinkState = null;
+    setTimeout(() => {
+      G.RetainData = false;
+      G.RetainDataName = null;
+      G.RetainDataData = null;
+      G.RetainDataLink = null;
+      G.RetainDataMediaType = null;
+      G.RetainDataTextType = null;
+      G.RetainDataRecordingType = null;
+    }, 100);
   };
 
   const onRestoreData = () => {
@@ -682,6 +682,19 @@ const AttachLink = (props: any) => {
 
   useLayoutEffect(() => {
     onRestoreData();
+    return () => {
+      let dontAllowSwitch = false;
+      if (
+        data ||
+        (name && selectedType.toUpperCase() === "TEXT") ||
+        (link && G.LINKS_TYPES[selectedType.toUpperCase()])
+      ) {
+        dontAllowSwitch = true;
+      }
+      if (dontAllowSwitch) {
+        G.AllowSwitchBetweenTypes = false;
+      }
+    };
   }, []);
 
   useLayoutEffect(() => {
@@ -826,9 +839,9 @@ const AttachLink = (props: any) => {
           tempName += "-heading";
           break;
         case "iframe":
-        case "externalLink":
+        case "externallink":
         case "youtube":
-        case "Video":
+        case "video":
           tempName = link;
           break;
         case RECORDING_VALUE:
@@ -883,7 +896,7 @@ const AttachLink = (props: any) => {
   const onClickSend = async (isForce = true) => {
     let finalName = name;
 
-    if (isForce) {
+    if (isForce && !name.trim()) {
       finalName = getCurrentTime();
       switch (selectedType) {
         case "RECORDING":
@@ -1170,7 +1183,15 @@ const AttachLink = (props: any) => {
               <div
                 key={ele.id}
                 onClick={() => {
-                  if (data) {
+                  let dontAllowSwitch = false;
+                  if (
+                    data ||
+                    (name && selectedType.toUpperCase() === "TEXT") ||
+                    (link && G.LINKS_TYPES[selectedType.toUpperCase()])
+                  ) {
+                    dontAllowSwitch = true;
+                  }
+                  if (dontAllowSwitch) {
                     if (!G.AllowSwitchBetweenTypes) {
                       G.AllowSwitchBetweenTypes = true;
                       ShowNotification({
@@ -1182,6 +1203,7 @@ const AttachLink = (props: any) => {
                       return;
                     }
                   }
+                  G.AllowSwitchBetweenTypes = false;
                   if (editMode)
                     return ShowNotification({
                       message: t("cannotChangeWhileBeingInEditMode"),
@@ -1195,6 +1217,7 @@ const AttachLink = (props: any) => {
                   setName("");
                   setSelectedType(ele);
                   setData(null);
+                  G.hasRecording = false;
                 }}
                 style={{ position: "relative" }}
                 className={`${

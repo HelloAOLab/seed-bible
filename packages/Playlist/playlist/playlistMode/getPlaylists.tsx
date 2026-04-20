@@ -25,6 +25,8 @@ try {
   if (!authBot?.id) {
     return [];
   }
+  G.SetPlaylistLoading?.(true);
+  G.IsPlaylistLoading = true;
   G.WAS_PREV_AUTH = true;
   apiResults = await os.getData(authBot.id, "playlists");
   if (apiResults.data) {
@@ -36,11 +38,20 @@ try {
     if (G[`${id}SetPlaylists`]) {
       G[`${id}SetPlaylists`](apiResults);
     }
-    G.setPlaylistLocale(apiResults, true);
+    G.SetLoadingPlaylistOptions?.(false);
+    G.SetPlaylistLoading?.(false);
+    G.IsPlaylistLoading = false;
+    G.SetLoadingPlaylistOptions?.(false);
     return apiResults;
   }
+  G.SetPlaylistLoading?.(false);
+  G.IsPlaylistLoading = false;
+  G.SetLoadingPlaylistOptions?.(false);
   return [];
 } catch (err) {
+  G.SetPlaylistLoading?.(false);
+  G.IsPlaylistLoading = false;
+  G.SetLoadingPlaylistOptions?.(false);
   console.log("err", err);
 }
 return apiResults;

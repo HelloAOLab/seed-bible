@@ -340,6 +340,39 @@ const CreatePlaylistUI = (props: any) => {
     });
   };
 
+  const playlistListUiRef = useRef<HTMLDivElement | null>(null);
+  const blinkAfterPlaylistAddRef = useRef(false);
+
+  const runBlinkLastPlaylistItem = () => {
+    const root = playlistListUiRef.current;
+    if (!root) return;
+    const nodes = root.querySelectorAll(".playlist-item-type");
+    const last = nodes[nodes.length - 1] as HTMLElement | undefined;
+    if (!last) return;
+    last.classList.remove("playlist-item-blink");
+    void last.offsetWidth;
+    const done = () => {
+      last.classList.remove("playlist-item-blink");
+    };
+    const safety = window.setTimeout(done, 1800);
+    last.addEventListener(
+      "animationend",
+      () => {
+        window.clearTimeout(safety);
+        done();
+      },
+      { once: true }
+    );
+    last.classList.add("playlist-item-blink");
+    last.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useLayoutEffect(() => {
+    if (!blinkAfterPlaylistAddRef.current) return;
+    blinkAfterPlaylistAddRef.current = false;
+    runBlinkLastPlaylistItem();
+  }, [playList]);
+
   const addDataToPlaylist = (
     data: any[],
     isBulk = false,
@@ -365,6 +398,7 @@ const CreatePlaylistUI = (props: any) => {
       const isSame = G.objectComparator(data, lastData, ["content"]);
       if (!isSame) {
         old.push(data);
+        blinkAfterPlaylistAddRef.current = true;
       } else {
         // os.toast("Last item repeated!");
       }
@@ -1040,26 +1074,26 @@ const CreatePlaylistUI = (props: any) => {
                     onClickSave();
                   }, 100);
                 } else {
-                  isTempEdit.current = false;
-                  setPlaylist([]);
-                  setCreatingPlaylist(false);
+                  G[`${id}currentPlaylist`] = [];
+                  thisBot.resetPlaylistGlobalStateVars();
+                  if (setTab) setTab("discover");
                 }
                 setDataWarning(false);
                 setLoseProgressWarning(false);
                 setLoading(false);
               }}
             >
-              {dataWarning ? t("addAndSave") : t("confirm")}
+              {dataWarning ? t("saveWithAttachment") : t("discardChanges")}
             </Button>
             {dataWarning && (
               <Button
                 disabled={loading}
-                secondary
+                secondaryAlt
                 onClick={() => {
                   onClickSave();
                 }}
               >
-                {t("ignoreAndSave")}
+                {t("saveWithoutAttachments")}
               </Button>
             )}
             <Button
@@ -1312,7 +1346,9 @@ const CreatePlaylistUI = (props: any) => {
             <p>
               <b>{t("publishSettings")}</b>
             </p>
-            <span style={{ fontSize: "10px" }}>{t("publishSettingsDesc")}</span>
+            <span style={{ fontSize: "12px" }}>
+              {t("publishSettingsDescPlaylist")}
+            </span>
             <div
               className="more-menu-items"
               onClick={() => {
@@ -1344,7 +1380,7 @@ const CreatePlaylistUI = (props: any) => {
             <p>
               <b style={{ marginTop: "10px" }}>{t("playlistSettings")}</b>
             </p>
-            <span style={{ fontSize: "10px" }}>
+            <span style={{ fontSize: "12px" }}>
               {t("playlistSettingsTooltip")}
             </span>
             <div
@@ -1354,7 +1390,7 @@ const CreatePlaylistUI = (props: any) => {
               <div
                 className="align-center"
                 onClick={() => {
-                  setChecklist((p) => !p);
+                  setChecklist((p: boolean) => !p);
                 }}
               >
                 {checklist ? (
@@ -1517,9 +1553,13 @@ const CreatePlaylistUI = (props: any) => {
                   marginRight: "0.5rem",
                 }}
                 onClick={(e) => {
-                  G[`${id}currentPlaylist`] = [];
-                  thisBot.resetPlaylistGlobalStateVars();
-                  if (setTab) setTab("discover");
+                  if (playList.length) {
+                    setLoseProgressWarning(true);
+                  } else {
+                    G[`${id}currentPlaylist`] = [];
+                    thisBot.resetPlaylistGlobalStateVars();
+                    if (setTab) setTab("discover");
+                  }
                 }}
               >
                 {t("cancel")}
@@ -1692,37 +1732,43 @@ const CreatePlaylistUI = (props: any) => {
                 </Button>
               </div>
             )}
-            <DragDropT
-              isPlayer={
-                checklistEnabled ||
-                isSomethingChecked ||
-                isSomethingEmbededChecked
-              }
-              isSomethingEmbededChecked={isSomethingEmbededChecked}
-              allowHeadingCheck
-              checkListData={checkListData}
-              layers={true}
-              massAdd={massAdd}
-              attachLink={attachLink}
-              list={playList}
-              onGenClick={() => {
-                setOpenAttachLink(false);
-                setRegenrateUI(true);
-              }}
-              checkListEmbeded={checkListEmbeded}
-              itemSelected={itemSelected}
-              setItemSelected={setItemSelected}
-              setChecklistEmbeded={onCheckEmbeded}
-              onDisembed={onDisembed}
-              embedding={embedding}
-              setEmbedding={setEmbedding}
-              editDataFromPlaylist={editDataFromPlaylist}
-              currentFormat={currentFormat}
-              setList={setPlaylist}
-              deleteFromList={deleteDataFromPlaylist}
-              creatingPlaylist={!creatingPlaylist}
-              setPlaylistFromRow={setPlaylist}
-            />
+            <div
+              ref={playlistListUiRef}
+              className="link-playlist"
+              style={{ width: "100%" }}
+            >
+              <DragDropT
+                isPlayer={
+                  checklistEnabled ||
+                  isSomethingChecked ||
+                  isSomethingEmbededChecked
+                }
+                isSomethingEmbededChecked={isSomethingEmbededChecked}
+                allowHeadingCheck
+                checkListData={checkListData}
+                layers={true}
+                massAdd={massAdd}
+                attachLink={attachLink}
+                list={playList}
+                onGenClick={() => {
+                  setOpenAttachLink(false);
+                  setRegenrateUI(true);
+                }}
+                checkListEmbeded={checkListEmbeded}
+                itemSelected={itemSelected}
+                setItemSelected={setItemSelected}
+                setChecklistEmbeded={onCheckEmbeded}
+                onDisembed={onDisembed}
+                embedding={embedding}
+                setEmbedding={setEmbedding}
+                editDataFromPlaylist={editDataFromPlaylist}
+                currentFormat={currentFormat}
+                setList={setPlaylist}
+                deleteFromList={deleteDataFromPlaylist}
+                creatingPlaylist={!creatingPlaylist}
+                setPlaylistFromRow={setPlaylist}
+              />
+            </div>
 
             {!itemSelected && !regenrateUI && (
               <AttachLink
@@ -1840,7 +1886,9 @@ const CreatePlaylistUI = (props: any) => {
                 onClick={() => {
                   if (
                     G.RetainDataData ||
-                    (G.RetainDataName && G.RetainDataSelectedType === "TEXT")
+                    (G.RetainDataName && G.RetainDataSelectedType === "TEXT") ||
+                    (G.RetainDataLink &&
+                      G.LINKS_TYPES[G.RetainDataSelectedType.toUpperCase()])
                   ) {
                     setDataWarning(true);
                   } else {
@@ -1856,20 +1904,6 @@ const CreatePlaylistUI = (props: any) => {
                   {t("revertToPrevious")}
                 </Button>
               )}
-              <Button
-                onClick={() => {
-                  if (playList.length) {
-                    setLoseProgressWarning(true);
-                  } else {
-                    isTempEdit.current = false;
-                    setPlaylist([]);
-                    setCreatingPlaylist(false);
-                  }
-                }}
-                secondaryAlt
-              >
-                {t("reset")}
-              </Button>
             </div>
             <p
               style={{ width: "10px", height: "10px" }}

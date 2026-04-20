@@ -1,6 +1,5 @@
 const G = globalThis as any;
 if (G.EDIT_ANNOTATION_DATA) return;
-
 if (G[`${"default"}creatingPlaylist`]) {
   let { dataItem, bulkAdd } = that;
 

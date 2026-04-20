@@ -2,11 +2,10 @@ import { TwitchIcon } from "ext_twitchPub.host.icons";
 
 const Login = (props: {
   clientId: string;
-  setClientId: (clientId: string) => void;
   getDeviceAuthUrl: () => void;
   loading: boolean;
 }) => {
-  const { clientId, setClientId, getDeviceAuthUrl } = props;
+  const { clientId, getDeviceAuthUrl } = props;
   return (
     <div
       style={{
@@ -30,13 +29,13 @@ const Login = (props: {
           }}
         >
           <TwitchIcon style={{ width: "24px", height: "24px" }} />
-          Login with Twitch
+          Twitch Host
         </span>
         <button
-          className="icon-btn"
+          className="icon-btn material-symbols-outlined"
           onClick={() => whisper(thisBot, "closeInterface")}
         >
-          <span className="material-symbols-outlined">close</span>
+          close
         </button>
       </div>
       <div className="twitchPub-content">
@@ -44,26 +43,12 @@ const Login = (props: {
           onMouseDown={(e) => e.stopPropagation()}
           className="twitchPub-inputGroup"
         >
-          <span
-            style={{ fontSize: "14px", fontWeight: "bold" }}
-            htmlFor="clientId"
-          >
-            Enter client ID
-          </span>
-          <input
-            type="text"
-            id="clientId"
-            value={clientId}
-            onChange={(e: any) => setClientId(e.target.value)}
-            placeholder="Client ID"
-            disabled={props.loading}
-          />
           <button
             className="twitchBtn"
             onClick={getDeviceAuthUrl}
             disabled={!clientId || props.loading}
           >
-            {props.loading ? "Loading..." : "Login"}
+            {props.loading ? "Loading..." : "Login with Twitch"}
           </button>
         </div>
       </div>

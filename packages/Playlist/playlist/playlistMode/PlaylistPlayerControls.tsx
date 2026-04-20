@@ -6,6 +6,10 @@ const AudioPlayer = await thisBot.AudioPlayer();
 const AttachLink = await thisBot.AttachLink();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
 
+const isMobileSmall =
+  (window?.innerWidth || G.gridPortalBot.tags.pixelWidth) <
+  G.MOBILE_VIEWPORT_THRESHOLD;
+
 const EditPlaylist =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/a48b4bb0182ac0b5f8c8437e3d985f9af99c8b64c61249496ef797b9b8ac88df.svg";
 const SharePlaylist =
@@ -105,7 +109,7 @@ const getCurrentItem = (
   // return targetItem;
 };
 
-const PlayerControls = ({ parentId = "default" }) => {
+const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
   const [showCurrent, setShowCurrent] = useState(false);
   const [queue, setQueue] = useState([]);
 
@@ -302,7 +306,11 @@ const PlayerControls = ({ parentId = "default" }) => {
           (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
           G.MOBILE_VIEWPORT_THRESHOLD;
         if (isMobile) {
-          G.SetTextInfo(targetItem.content);
+          if (!G.NotPlayThisTimeTheCurrentItem) {
+            G.SetTextInfo(targetItem.content);
+          } else {
+            G.NotPlayThisTimeTheCurrentItem = false;
+          }
         }
       }
 
@@ -337,8 +345,12 @@ const PlayerControls = ({ parentId = "default" }) => {
     // }
 
     if (targetItem.type === "verse") {
-      if (G.FocusOnVerse) {
-        G.FocusOnVerse(targetItem.additionalInfo.verse);
+      if (G.NotPlayThisTimeTheCurrentItem) {
+        G.NotPlayThisTimeTheCurrentItem = false;
+      } else {
+        if (G.FocusOnVerse) {
+          G.FocusOnVerse(targetItem.additionalInfo.verse);
+        }
       }
     }
 
@@ -403,6 +415,8 @@ const PlayerControls = ({ parentId = "default" }) => {
 
       const updatedPlaylists = { ...prevPlaylists };
 
+      let keyUsed: any = currentKey;
+
       if (SQ || justAddedQueue.current) {
         if (justAddedQueue.current) {
           currentKey = Number(currIndex.key) + 1;
@@ -415,6 +429,8 @@ const PlayerControls = ({ parentId = "default" }) => {
           ...(updatedPlaylists[currentKey]?.list || []),
           ...toAddItems,
         ];
+
+        keyUsed = currentKey;
       } else {
         // Case: Splitting a playlist
         const beforeCurrentIndex = currentList.slice(0, splitIndex + 1);
@@ -440,6 +456,7 @@ const PlayerControls = ({ parentId = "default" }) => {
         // if (!readingPlanEnabled) {
         // Add the new queue
         updatedPlaylists[newQueueKey] = newQueue;
+        keyUsed = newQueueKey;
         // } else if (findLastActiveIndex > -1) {
         //     findLastActiveIndex++;
         //     currentList.splice(findLastActiveIndex, 0, item);
@@ -467,16 +484,26 @@ const PlayerControls = ({ parentId = "default" }) => {
       Object.keys(updatedPlaylists)
         .sort((a, b) => Number(a) - Number(b)) // Sort numerically
         .forEach((key, index) => {
+          if (key == keyUsed) {
+            G.LAST_SQ_KEY_USED = index;
+            G.BlinkAfterPlaylistAddRef = index;
+          }
           reorderedPlaylists[index] = { ...updatedPlaylists[key] };
           if (!reorderedPlaylists[index]?.list?.length) {
             delete reorderedPlaylists[index];
           }
         });
-
+      G.NotPlayThisTimeTheCurrentItem = false;
       return reorderedPlaylists;
     });
     setOpenAttachLink(false);
   };
+
+  const setJustAddedQueue = (val: boolean) => {
+    justAddedQueue.current = val;
+  };
+
+  G.SET_JUST_ADDED_QUEUE = setJustAddedQueue;
 
   useLayoutEffect(() => {
     G.SetCurreIndexPlaylist = handlesetIndex;
@@ -512,25 +539,27 @@ const PlayerControls = ({ parentId = "default" }) => {
       // G.IS_PLAYLIST_ACTIVE = 0;
     }
     return () => {
-      G.SetCurreIndexPlaylist = null;
-      G.HandleOnButtonPress = null;
-      G.ModifyTransformedHistory = null;
-      G.SetQueue = false;
-      G.SetCurreIndexDirect = null;
-      G.SetPlayingList = () => {};
-      G.SetSelected && G.SetSelected({});
-      G.READING_PLAN_WORK = false;
-      G.HandleOnButtonPress = null;
-      G.SetIncrementalCountPlayingPlaylist = null;
-      G.SetVideoSrc = null;
-      G.SetTextInfo = null;
-      G.SetMediaURL = null;
-      G.PlayingPlaylists = null;
-      G.SetPlayingPlaylists = null;
-      G.CurrentIndexItem = null;
-      G.SetCheckedItemsPlayingPlaylist = null;
-      G.UpdateJustAddedToQueue = null;
-      // globalThis.IS_PLAYLIST_ACTIVE = true;
+      if (!G.IsASwitchBetweenBar) {
+        G.SetCurreIndexPlaylist = null;
+        G.HandleOnButtonPress = null;
+        G.ModifyTransformedHistory = null;
+        G.SetQueue = false;
+        G.SetCurreIndexDirect = null;
+        G.SetPlayingList = () => {};
+        G.SetSelected && G.SetSelected({});
+        G.READING_PLAN_WORK = false;
+        G.HandleOnButtonPress = null;
+        G.SetIncrementalCountPlayingPlaylist = null;
+        G.SetVideoSrc = null;
+        G.SetTextInfo = null;
+        G.SetMediaURL = null;
+        G.PlayingPlaylists = null;
+        G.SetPlayingPlaylists = null;
+        G.CurrentIndexItem = null;
+        G.SetCheckedItemsPlayingPlaylist = null;
+        G.UpdateJustAddedToQueue = null;
+        // globalThis.IS_PLAYLIST_ACTIVE = true;
+      }
     };
   }, [handleOnButtonPress, transformedHistory]);
 
@@ -542,10 +571,13 @@ const PlayerControls = ({ parentId = "default" }) => {
     }
 
     return () => {
-      G.IsPlaylistPlaying = false;
-      G.IsQueuePresent = false;
-      G.RemotePlaylistPlayed = false;
-      G.EmitData("playlistStopped", {});
+      if (!G.IsASwitchBetweenBar) {
+        G.IsPlaylistPlaying = false;
+        G.IsQueuePresent = false;
+        G.RemotePlaylistPlayed = false;
+        G.EmitData("playlistStopped", {});
+      }
+      G.IsASwitchBetweenBar = false;
     };
   }, []);
 
@@ -601,11 +633,15 @@ const PlayerControls = ({ parentId = "default" }) => {
     }));
 
     if (targetItem?.type === "attachment-link") {
-      thisBot.RenderLinkContent({
-        ...targetItem,
-        isLastItem: !nextItem,
-        isFirstItem: !prevItem,
-      });
+      if (!G.NotPlayThisTimeTheCurrentItem) {
+        thisBot.RenderLinkContent({
+          ...targetItem,
+          isLastItem: !nextItem,
+          isFirstItem: !prevItem,
+        });
+      } else {
+        G.NotPlayThisTimeTheCurrentItem = false;
+      }
     } else if (currIndex.fromButton !== 0) {
       const isBulk =
         !!targetItem?.additionalInfo?.layers?.length ||
@@ -643,8 +679,13 @@ const PlayerControls = ({ parentId = "default" }) => {
         if (G.SetVideoSrc) {
           G.SetVideoSrc(null);
         }
-        if (targetItem?.type === "heading")
-          G.PlayingPlaylistSetHeading(targetItem.content);
+        if (targetItem?.type === "heading") {
+          if (!G.NotPlayThisTimeTheCurrentItem) {
+            G.PlayingPlaylistSetHeading(targetItem.content);
+          } else {
+            G.NotPlayThisTimeTheCurrentItem = false;
+          }
+        }
         const allKeys: any = Object.keys(playlists);
 
         const isFirstKey = currIndex.key == 0;
@@ -659,10 +700,14 @@ const PlayerControls = ({ parentId = "default" }) => {
           isLastKey &&
           currIndex.index == th.length - 1;
         if (targetItem?.nextTargetItem) {
-          thisBot.navigationWithDataItem({
-            dataItem: isBulk ? toBeMapArray : targetItem,
-            bulkAdd: isBulk,
-          });
+          if (!G.NotPlayThisTimeTheCurrentItem) {
+            thisBot.navigationWithDataItem({
+              dataItem: isBulk ? toBeMapArray : targetItem,
+              bulkAdd: isBulk,
+            });
+          } else {
+            G.NotPlayThisTimeTheCurrentItem = false;
+          }
           handleOnButtonPress(currIndex.fromButton);
           G[`${targetItem.id}OpenToggle`] &&
             G[`${targetItem.id}OpenToggle`](true);
@@ -681,10 +726,14 @@ const PlayerControls = ({ parentId = "default" }) => {
           os.toast(`${targetItem.content} is Already Opened.Skipping it!`);
           handleOnButtonPress(currIndex.fromButton);
         } else {
-          thisBot.navigationWithDataItem({
-            dataItem: isBulk ? toBeMapArray : targetItem,
-            bulkAdd: isBulk,
-          });
+          if (!G.NotPlayThisTimeTheCurrentItem) {
+            thisBot.navigationWithDataItem({
+              dataItem: isBulk ? toBeMapArray : targetItem,
+              bulkAdd: isBulk,
+            });
+          } else {
+            G.NotPlayThisTimeTheCurrentItem = false;
+          }
         }
         // SetBlinker({});
       }
@@ -872,37 +921,36 @@ const PlayerControls = ({ parentId = "default" }) => {
               width: "calc(100%)",
             }}
           >
-            <div
-              style={{
-                width: "auto",
-                flexDirection: "row",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: "12px",
-                  fontWeight: "500",
-                  display: "flex",
-                  alignItems: "center",
-                  margin: "0",
-                  // marginBottom: "0.5rem",
-                  fontFamily: "DM Sans",
-                  height: "12px",
-                  color: "var(--pageTextColor)",
-                  minWidth: "max-content",
-                }}
-              >
-                {G.PPchecklistEnabled && showCurrent && currIndex.index === -1
-                  ? null
-                  : showCurrent
-                    ? `${t("playingNow")}:`
-                    : nextItemName?.content
-                      ? `${t("playingNext")}:`
-                      : null}
-              </p>
+            <div className="playlist-player-controls-info">
+              {!isMobileSmall ||
+                ((showCurrent
+                  ? !!currentItem?.content
+                  : !!nextItemName?.content) && (
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "500",
+                      display: "flex",
+                      alignItems: "center",
+                      margin: "0",
+                      // marginBottom: "0.5rem",
+                      fontFamily: "DM Sans",
+                      height: "12px",
+                      color: "var(--pageTextColor)",
+                      minWidth: "max-content",
+                    }}
+                  >
+                    {G.PPchecklistEnabled &&
+                    showCurrent &&
+                    currIndex.index === -1
+                      ? null
+                      : showCurrent
+                        ? `${t("playingNow")}:`
+                        : nextItemName?.content
+                          ? `${t("playingNext")}:`
+                          : null}
+                  </p>
+                ))}
               <div style={{ gap: "0.5rem" }} className="align-center">
                 <div
                   style={{
@@ -1096,13 +1144,23 @@ const PlayerControls = ({ parentId = "default" }) => {
                   border: "1px solid var(--secondaryColor)",
                 }}
                 className="playlist-action small"
-                onClick={() => {
-                  if (G.makingPlaylist) {
-                    // globalThis.PlaylistPlaytoggleHide();
-                    thisBot.CloseSelf({ force: true });
-                  } else {
-                    thisBot.OpenSelf();
+                onClick={async () => {
+                  if (G.IsPlaybarInherited) {
+                    G.IsASwitchBetweenBar = true;
+                    await thisBot.setupNowBarControlApp({
+                      force: true,
+                      parentId: parentId,
+                    });
+                    G.SetIsPlaybarInherited(false);
                   }
+                  setTimeout(() => {
+                    if (G.makingPlaylist) {
+                      // globalThis.PlaylistPlaytoggleHide();
+                      thisBot.CloseSelf({ force: true });
+                    } else {
+                      thisBot.OpenSelf();
+                    }
+                  }, 100);
                 }}
               >
                 <img
@@ -1192,7 +1250,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                 if (!prevItemName?.content) {
                   return ShowNotification({
                     message: t("youAreAtTheBeginningOfThePlaylist"),
-                    severity: "error",
+                    severity: "info",
                   });
                 }
                 DataManager.cancelCurrentPlayingSound();
@@ -1220,6 +1278,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                   G.RemoveNowBarApp("player-playlist-bar");
                 }
                 os.unregisterApp("playing-playlist-flaot");
+                thisBot.resetPlaylistGlobalStateVars();
                 thisBot.CloseFloatingApp();
               }}
               style={{
@@ -1258,7 +1317,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                 if (!nextItemName?.content) {
                   return ShowNotification({
                     message: t("playlistHasBeenEnded"),
-                    severity: "error",
+                    severity: "info",
                   });
                 }
                 DataManager.cancelCurrentPlayingSound();

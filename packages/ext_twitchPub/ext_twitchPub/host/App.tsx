@@ -7,10 +7,12 @@ const style = thisBot.tags["App.css"];
 
 const { useState, useEffect, useCallback } = os.appHooks;
 const senderScope =
-  "user:read:email user:write:chat user:read:chat chat:edit chat:read user:bot moderator:manage:announcements";
+  "user:read:email user:write:chat user:read:chat chat:read user:bot moderator:manage:announcements user:manage:whispers moderator:manage:chat_messages";
 
 function App() {
-  const [clientId, setClientId] = useState<string>(masks?.clientId || "");
+  const [clientId, setClientId] = useState<string>(
+    "cfjslv2429r70ek579iogr02vecn6d"
+  );
   const [currentPage, setCurrentPage] = useState<
     "login" | "authorization" | "interface" | "settings"
   >(masks?.currentPage || "login");
@@ -34,6 +36,9 @@ function App() {
   );
   const [highlightEnabled, setHighlightEnabled] = useState(
     masks?.highlightEnabled || true
+  );
+  const [annoucementTimer, setAnnouncementTimer] = useState<number>(
+    masks?.annoucementTimer || 0
   );
 
   const fetchBroadcasterId = async (token: string) => {
@@ -126,7 +131,6 @@ function App() {
       })
       .catch((error) => {
         console.error("Error requesting device authorization URL:", error);
-        setClientId("");
         os.toast(
           "Failed to get device authorization URL. Please check your Client ID and try again."
         );
@@ -152,6 +156,7 @@ function App() {
     setTagMask(thisBot, "broadcasterId", broadcasterId, "local");
     setTagMask(thisBot, "translationEnabled", translationEnabled, "local");
     setTagMask(thisBot, "highlightEnabled", highlightEnabled, "local");
+    setTagMask(thisBot, "annoucementTimer", annoucementTimer, "local");
   }, [
     clientId,
     currentPage,
@@ -161,6 +166,7 @@ function App() {
     broadcasterId,
     translationEnabled,
     highlightEnabled,
+    annoucementTimer,
   ]);
 
   const renderPage = useCallback(() => {
@@ -169,7 +175,6 @@ function App() {
         return (
           <Login
             clientId={clientId}
-            setClientId={setClientId}
             getDeviceAuthUrl={getDeviceAuthUrl}
             loading={loading}
           />
@@ -183,6 +188,7 @@ function App() {
             clientId={clientId}
             token={userAccessToken}
             setCurrentPage={setCurrentPage}
+            annoucementTimer={annoucementTimer}
           />
         );
       case "settings":
@@ -193,6 +199,8 @@ function App() {
             highlightEnabled={highlightEnabled}
             setTranslationEnabled={setTranslationEnabled}
             setHighlightEnabled={setHighlightEnabled}
+            annoucementTimer={annoucementTimer}
+            setAnnouncementTimer={setAnnouncementTimer}
           />
         );
       default:
@@ -207,6 +215,7 @@ function App() {
     clientId,
     translationEnabled,
     highlightEnabled,
+    annoucementTimer,
   ]);
   return (
     <>

@@ -68,6 +68,7 @@ try {
   G.PROD_ENV = !DEV_ENV;
 
   G.MOBILE_VIEWPORT_THRESHOLD = 600;
+  G.MOBILE_VIEWPORT_THRESHOLD_SMALL = 440;
   G.makingPlaylist = false;
 
   G.LoadedPlaylistAnnotations = {};
@@ -1261,6 +1262,18 @@ try {
   };
 
   G.UpdateCheckedItemsPlayingPlaylist = updateCheckedItemsPlayingPlaylist;
+
+  const LINKS_TYPES: Record<string, boolean> = {
+    TEXT: true,
+    VIDEO: true,
+    YOUTUBE: true,
+    IFRAME: true,
+    EXTERNAL_LINK: true,
+    AUX: true,
+    LINK: true,
+  };
+
+  G.LINKS_TYPES = LINKS_TYPES;
 } catch (err) {
   console.log("Error in defineGlobal.tsx", err);
 }
