@@ -19,12 +19,15 @@ const sendMessage = async ({
   console.log("Sending message with token:", masks?.userAccessToken);
 
   try {
+    const encriptedMessage = bytes.toBase64String(
+      new Uint8Array([...message].map((c) => c.charCodeAt(0)))
+    );
     const response = await web.post(
       "https://api.twitch.tv/helix/chat/messages",
       JSON.stringify({
         broadcaster_id: masks?.broadcasterId,
         sender_id: masks?.senderId,
-        message,
+        message: encriptedMessage,
         reply_parent_message_id: to_user,
       }),
       {

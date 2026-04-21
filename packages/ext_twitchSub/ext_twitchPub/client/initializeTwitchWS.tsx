@@ -84,7 +84,11 @@ function handleWebSocketMessage(data: any) {
 
           if (data.payload.event.broadcaster_user_id === CHAT_CHANNEL_USER_ID) {
             try {
-              const config = JSON.parse(data.payload.event.message.text);
+              const stateUnit8Array = bytes.fromBase64String(
+                data.payload.event.message.text || ""
+              );
+              const configString = new TextDecoder().decode(stateUnit8Array);
+              const config = JSON.parse(configString);
               whisper(thisBot, "handleEvents", {
                 config: config,
               });
