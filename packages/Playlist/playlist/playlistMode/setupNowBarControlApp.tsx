@@ -5,6 +5,11 @@ const nowBarId = "player-playlist-bar";
 const PlayerControls = await thisBot.PlaylistPlayerControls();
 if (G.AddNowBarApp && (!G.IsQueuePresent || force)) {
   G.AddNowBarApp(<PlayerControls parentId={parentId} />, nowBarId);
+  G.NowBarFullWidth = true;
+  setTimeout(() => {
+    G.SetIsFullWidth(true);
+    G.NowBarFullWidth = false;
+  }, 100);
 } else if (!G.IsQueuePresent) {
   os.unregisterApp("playing-playlist-flaot");
   os.registerApp("playing-playlist-flaot", thisBot);
