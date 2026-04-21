@@ -21,9 +21,8 @@ declare global {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // declare const aux: any;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 // declare let __name: (any: any) => any;
 
 /**
