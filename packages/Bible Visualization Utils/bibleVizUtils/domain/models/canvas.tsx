@@ -26,6 +26,8 @@ export const BiblePiece = {
   StackChapter: "StackChapter",
   StackChunkOfVerses: "StackChunkOfVerses",
   StackVerse: "StackVerse",
+  StackCover: "StackCover",
+  StackCrossLine: "StackCrossLine",
   LayoutBook: "LayoutBook",
   LayoutChapter: "LayoutChapter",
   LayoutChunkOfVerses: "LayoutChunkOfVerses",
@@ -231,3 +233,11 @@ export interface ExplodeStackCommand {
   action: ExplodeStackAction;
   piece: Piece;
 }
+
+export const SelectionModalities = {
+  Precise: "Precise",
+  Coarse: "Coarse",
+} as const;
+
+export type SelectionModality =
+  (typeof SelectionModalities)[keyof typeof SelectionModalities];

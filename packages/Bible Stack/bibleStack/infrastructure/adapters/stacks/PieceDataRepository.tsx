@@ -1,51 +1,39 @@
-import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+import type { Bot } from "../../../../../../typings/AuxLibraryDefinitions";
 import {
   BiblePiece,
   type BiblePieceType,
+  type Piece,
 } from "bibleVizUtils.domain.models.canvas";
-import { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
-import { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
-import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
-import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
-import { StackChapterData } from "bibleVizUtils.models.entities.StackChapterData";
-import type { PieceDataMap } from "bibleVizUtils.domain.models.pieceData";
-
-type AnyStackData =
-  | StackTestamentData
-  | StackSectionData
-  | StackSectionBookData
-  | StackBookData
-  | StackChapterData;
-
-type StackPieceDataMap = Pick<
-  PieceDataMap,
-  | "StackTestament"
-  | "StackSection"
-  | "StackSectionBook"
-  | "StackBook"
-  | "StackChapter"
->;
+import { StackTestamentData } from "bibleVizUtils.domain.entities.StackTestamentData";
+import { StackSectionData } from "bibleVizUtils.domain.entities.StackSectionData";
+import { StackSectionBookData } from "bibleVizUtils.domain.entities.StackSectionBookData";
+import { StackBookData } from "bibleVizUtils.domain.entities.StackBookData";
+import { StackChapterData } from "bibleVizUtils.domain.entities.StackChapterData";
+import type {
+  PieceDataRepositoryPort,
+  StackPieceDataMap,
+} from "bibleStack.application.ports.pieces";
 
 export interface PieceRepository {
   getTypeOfPiece: () => BiblePieceType | undefined;
   getId: () => Bot["id"];
 }
 
-export class PieceDataRepository {
+export class PieceDataRepository implements PieceDataRepositoryPort {
   #testamentsData: Set<StackTestamentData> = new Set();
   #sectionsData: Set<StackSectionData> = new Set();
   #sectionBooksData: Set<StackSectionBookData> = new Set();
   #booksData: Set<StackBookData> = new Set();
   #chaptersData: Set<StackChapterData> = new Set();
-  #dataStrategy = {
+  #dataStrategy: {
+    [K in keyof StackPieceDataMap]: Set<StackPieceDataMap[K]>;
+  } = {
     [BiblePiece.StackTestament]: this.#testamentsData,
     [BiblePiece.StackSection]: this.#sectionsData,
     [BiblePiece.StackSectionBook]: this.#sectionBooksData,
     [BiblePiece.StackBook]: this.#booksData,
     [BiblePiece.StackChapter]: this.#chaptersData,
   };
-
-  constructor() {}
 
   addTestamentData(data: StackTestamentData) {
     this.#testamentsData.add(data);
@@ -137,29 +125,20 @@ export class PieceDataRepository {
     return [...this.#chaptersData.values()];
   }
 
-  getPieceData(pieceRepository: PieceRepository): AnyStackData | undefined {
-    const typeOfPiece = pieceRepository.getTypeOfPiece();
-
-    if (!typeOfPiece) {
-      console.warn(
-        `PieceDataRepository.getPieceData: type of piece is undefined`
-      );
-      return undefined;
-    }
-
-    const targetSet = this.#dataStrategy[typeOfPiece];
+  getPieceData<K extends keyof StackPieceDataMap>(
+    piece: Piece<K>
+  ): StackPieceDataMap[K] | undefined {
+    const targetSet = this.#dataStrategy[piece.type];
 
     if (!targetSet) {
       console.warn(
-        `PieceDataRepository.getPieceData: Target array not found for piece type '${typeOfPiece}'`
+        `PieceDataRepository.getPieceData: Target array not found for piece type '${piece.type}'`
       );
       return undefined;
     }
 
-    const pieceId = pieceRepository.getId();
-
     for (const data of targetSet) {
-      if (data.isActive && !!data.piece && data.piece.id === pieceId) {
+      if (data.isActive && !!data.piece && data.piece.id === piece.id) {
         return data;
       }
     }
@@ -173,4 +152,17 @@ export class PieceDataRepository {
 
     return Array.from(data);
   }
+
+  getDataById: <K extends keyof StackPieceDataMap>(
+    type: K,
+    id: StackPieceDataMap[K]["id"]
+  ) => StackPieceDataMap[K] | undefined = (type, id) => {
+    const targetSet = this.#dataStrategy[type];
+    for (const data of targetSet) {
+      if (data.id === id) {
+        return data;
+      }
+    }
+    return undefined;
+  };
 }

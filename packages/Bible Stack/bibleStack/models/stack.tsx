@@ -1,78 +1,67 @@
-import type { TypedBot } from "bibleVizUtils.models.casualos";
-import type { BotTags } from "../../../../typings/AuxLibraryDefinitions";
-import { BiblePiece } from "bibleVizUtils.models.canvas";
+import type {
+  PieceBotTags,
+  TypedBot,
+} from "bibleVizUtils.infrastructure.models.casualos";
+import { BiblePiece } from "bibleVizUtils.domain.models.canvas";
 
-export interface TestamentBotTags extends BotTags {
-  typeOfPiece: (typeof BiblePiece)["StackTestament"];
-  draggable: boolean;
-  isHighlighted: boolean;
-}
+type TBiblePiece = typeof BiblePiece;
 
-export interface TestamentBotMasks extends BotTags {
-  isBeingHovered: boolean;
-}
-
-export type TestamentBot = TypedBot<TestamentBotTags, TestamentBotMasks>;
-
-export interface SectionBotTags extends BotTags {
-  typeOfPiece: (typeof BiblePiece)["StackSection"];
-  draggable: boolean;
-}
-
-export interface SectionBotMasks extends BotTags {
-  isHighlighted: boolean;
-  isBeingHovered: boolean;
-}
-
-export type SectionBot = TypedBot<SectionBotTags, SectionBotMasks>;
-
-export interface BookBotTags extends BotTags {
-  typeOfPiece:
-    | (typeof BiblePiece)["StackBook"]
-    | (typeof BiblePiece)["StackSectionBook"];
-  draggable: boolean;
-}
-
-export type BookBot = TypedBot<BookBotTags>;
-
-export interface ChapterBotTags extends BotTags {
-  typeOfPiece: (typeof BiblePiece)["StackChapter"];
-  draggable: boolean;
-}
-
-export type ChapterBot = TypedBot<ChapterBotTags>;
-
-export interface ChunkOfVersesBotTags extends BotTags {
-  typeOfPiece: (typeof BiblePiece)["StackChunkOfVerses"];
-  draggable: boolean;
-}
-
-export interface ChunkOfVersesBotMasks extends BotTags {
-  isBeingDragged: boolean;
-  isSelected: boolean;
-}
-
-export type ChunkOfVersesBot = TypedBot<
-  ChunkOfVersesBotTags,
-  ChunkOfVersesBotMasks
+export type StackDraggablePiece = keyof Pick<
+  TBiblePiece,
+  | "StackBook"
+  | "StackVerse"
+  | "StackTestament"
+  | "StackSectionBook"
+  | "StackSection"
+  | "StackChunkOfVerses"
+  | "StackChapter"
 >;
 
-export interface CoverBotTags extends BotTags {
+export interface StackDraggablePieceBotTags<
+  T extends StackDraggablePiece,
+> extends PieceBotTags<T> {
+  draggable: boolean;
+}
+
+export type TestamentTags = StackDraggablePieceBotTags<"StackTestament">;
+
+export type TestamentBot = TypedBot<TestamentTags>;
+
+export type SectionTags = StackDraggablePieceBotTags<"StackSection">;
+
+export type SectionBot = TypedBot<SectionTags>;
+
+export type BookTags = StackDraggablePieceBotTags<
+  "StackBook" | "StackSectionBook"
+>;
+
+export type BookBot = TypedBot<BookTags>;
+
+export type ChapterTags = StackDraggablePieceBotTags<"StackChapter">;
+
+export type ChapterBot = TypedBot<ChapterTags>;
+
+export type ChunkOfVersesTags =
+  StackDraggablePieceBotTags<"StackChunkOfVerses">;
+
+export type ChunkOfVersesBot = TypedBot<ChunkOfVersesTags>;
+export type VerseBot = TypedBot<PieceBotTags<"StackVerse">>;
+
+export type StackStaticPiece = keyof Pick<
+  TBiblePiece,
+  "StackCover" | "StackCrossLine"
+>;
+
+export interface StackStaticPieceBotTags<
+  T extends StackStaticPiece,
+> extends PieceBotTags<T> {
   stackBibleId: string;
 }
 
-// export interface CoverBotMasks extends BotTags {
+export interface CoverTags extends StackStaticPieceBotTags<"StackCover"> {}
 
-// }
+export type CoverBot = TypedBot<CoverTags>;
 
-export type CoverBot = TypedBot<CoverBotTags>;
+export interface CrossLineTags extends StackStaticPieceBotTags<"StackCrossLine"> {}
 
-export interface CrossLineBotTags extends BotTags {
-  stackBibleId: string;
-}
-
-export type CrossLineBot = TypedBot<CrossLineBotTags>;
-
-export interface VerseBotTags extends BotTags {}
-
-export type VerseBot = TypedBot<VerseBotTags>;
+export type CrossLineBot = TypedBot<CrossLineTags>;

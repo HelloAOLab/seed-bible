@@ -1,9 +1,8 @@
-import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import type { BibleDataRepositoryPort } from "bibleStack.application.ports.stacks";
+import type { StackBibleData } from "bibleVizUtils.domain.entities.StackBibleData";
 
-export class PieceDataRepository {
+export class BibleDataRepository implements BibleDataRepositoryPort {
   #biblesData: Set<StackBibleData> = new Set();
-
-  constructor() {}
 
   addBibleData(data: StackBibleData) {
     this.#biblesData.add(data);
@@ -19,8 +18,12 @@ export class PieceDataRepository {
     return bibles;
   }
 
-  getBibleData(): StackBibleData | undefined {
-    // TODO: Create a mechanism to get a bible data
+  getBibleDataById(id: StackBibleData["id"]): StackBibleData | undefined {
+    for (const data of this.#biblesData) {
+      if (data.id === id) {
+        return data;
+      }
+    }
     return undefined;
   }
 
