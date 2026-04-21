@@ -156,6 +156,10 @@ function ThePage({
   const [clickedVersesContext, setClickedVersesContext] = useState({});
   const [showVerseToolbar, setShowVerseToolbar] = useState(false);
 
+  useEffect(() => {
+    globalThis.SetIsVerseToolBarOpen?.(showVerseToolbar);
+  }, [showVerseToolbar]);
+
   const [wordHighlights, setWordHighlights] = useState({});
   const [wordHighlightsTC, setWordHighlightsTC] = useState("black");
   const [wordHighlightsBC, setWordHighlightsBC] = useState("#ffeb3b");
