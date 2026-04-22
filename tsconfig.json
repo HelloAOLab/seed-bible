@@ -93,6 +93,9 @@
       "seed-bible.components.Tabs": [
         "./packages/seed-bible/seed-bible/components/Tabs.tsx"
       ],
+      "seed-bible.components.SidebarSearch": [
+        "./packages/seed-bible/seed-bible/components/SidebarSearch.tsx"
+      ],
       "seed-bible.components.Utils": [
         "./packages/seed-bible/seed-bible/components/Utils.tsx"
       ],
