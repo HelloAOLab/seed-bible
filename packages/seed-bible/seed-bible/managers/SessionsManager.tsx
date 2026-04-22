@@ -36,6 +36,7 @@ interface SessionData {
   translationId: string | null;
   bookId: string | null;
   chapterNumber: number | null;
+  scrollToVerse: number | null;
 }
 
 export interface SessionOptions {
@@ -54,13 +55,14 @@ const DEFAULT_SESSION_OPTIONS: SessionOptions = {
 function getSessionDataSnapshot(
   readingState: Pick<
     BibleReadingState,
-    "translationId" | "bookId" | "chapterNumber"
+    "translationId" | "bookId" | "chapterNumber" | "scrollToVerse"
   >
 ): SessionData {
   return {
     translationId: readingState.translationId.value,
     bookId: readingState.bookId.value,
     chapterNumber: readingState.chapterNumber.value,
+    scrollToVerse: readingState.scrollToVerse.value,
   };
 }
 
@@ -71,6 +73,7 @@ function getSessionDataFromMap(
     translationId: toStringOrNull(stateMap.get("translationId")),
     bookId: toStringOrNull(stateMap.get("bookId")),
     chapterNumber: toPositiveIntOrNull(stateMap.get("chapterNumber")),
+    scrollToVerse: toPositiveIntOrNull(stateMap.get("scrollToVerse")),
   };
 }
 
@@ -173,14 +176,15 @@ function sessionDataMatches(left: SessionData, right: SessionData): boolean {
   return (
     left.translationId === right.translationId &&
     left.bookId === right.bookId &&
-    left.chapterNumber === right.chapterNumber
+    left.chapterNumber === right.chapterNumber &&
+    left.scrollToVerse === right.scrollToVerse
   );
 }
 
 function applySessionDataToReadingState(
   readingState: Pick<
     BibleReadingState,
-    "translationId" | "bookId" | "chapterNumber"
+    "translationId" | "bookId" | "chapterNumber" | "scrollToVerse"
   >,
   sessionData: SessionData
 ) {
@@ -196,12 +200,16 @@ function applySessionDataToReadingState(
   ) {
     readingState.chapterNumber.value = sessionData.chapterNumber;
   }
+  if (readingState.scrollToVerse.value !== sessionData.scrollToVerse) {
+    readingState.scrollToVerse.value = sessionData.scrollToVerse;
+  }
 }
 
 function canLoadSessionData(sessionData: SessionData): sessionData is {
   translationId: string;
   bookId: string;
   chapterNumber: number;
+  scrollToVerse: number | null;
 } {
   return (
     typeof sessionData.translationId === "string" &&
@@ -448,10 +456,15 @@ async function createBibleReadingSession(
 
     try {
       pendingRemoteTarget = sessionData;
+      const options =
+        typeof sessionData.scrollToVerse === "number"
+          ? { scrollToVerse: sessionData.scrollToVerse }
+          : undefined;
       await readingState.selectTranslationAndChapter(
         sessionData.translationId,
         sessionData.bookId,
-        sessionData.chapterNumber
+        sessionData.chapterNumber,
+        options
       );
     } catch (error) {
       if (version !== syncVersion) {
@@ -569,6 +582,9 @@ async function createBibleReadingSession(
       }
       if (currentSessionData.chapterNumber !== nextSessionData.chapterNumber) {
         stateMap.set("chapterNumber", nextSessionData.chapterNumber);
+      }
+      if (currentSessionData.scrollToVerse !== nextSessionData.scrollToVerse) {
+        stateMap.set("scrollToVerse", nextSessionData.scrollToVerse);
       }
     });
   });

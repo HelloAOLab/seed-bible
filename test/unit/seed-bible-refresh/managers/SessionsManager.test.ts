@@ -99,6 +99,7 @@ function createMockReadingState() {
   const translationId = signal<string | null>("BSB");
   const bookId = signal<string | null>("GEN");
   const chapterNumber = signal<number>(1);
+  const scrollToVerse = signal<number | null>(null);
   const chapterData = signal<any>(null);
   const decorations = signal<VerseDecoration[]>([]);
 
@@ -140,6 +141,7 @@ function createMockReadingState() {
     translationId,
     bookId,
     chapterNumber,
+    scrollToVerse,
     chapterData,
     decorations,
     translationBooks: signal<any>(null),
@@ -151,11 +153,15 @@ function createMockReadingState() {
       async (
         nextTranslationId: string,
         nextBookId: string,
-        nextChapterNumber: number
+        nextChapterNumber: number,
+        options?: {
+          scrollToVerse?: number;
+        }
       ) => {
         translationId.value = nextTranslationId;
         bookId.value = nextBookId;
         chapterNumber.value = nextChapterNumber;
+        scrollToVerse.value = options?.scrollToVerse ?? null;
         chapterData.value = createMockChapterData(
           nextTranslationId,
           nextBookId,
@@ -808,11 +814,34 @@ describe("SessionsManager", () => {
 
     expect(
       session.readingState.selectTranslationAndChapter
-    ).toHaveBeenCalledWith("NIV", "EXO", 4);
+    ).toHaveBeenCalledWith("NIV", "EXO", 4, undefined);
 
     expect(session.readingState.translationId.value).toBe("NIV");
     expect(session.readingState.bookId.value).toBe("EXO");
     expect(session.readingState.chapterNumber.value).toBe(4);
+  });
+
+  it("loads existing scrollToVerse from the shared document", async () => {
+    mockMap = createMockSharedMap({
+      translationId: "NIV",
+      bookId: "EXO",
+      chapterNumber: 4,
+      scrollToVerse: 12,
+    });
+    mockDocument.getMap.mockReturnValue(mockMap);
+
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    expect(
+      session.readingState.selectTranslationAndChapter
+    ).toHaveBeenCalledWith("NIV", "EXO", 4, {
+      scrollToVerse: 12,
+    });
   });
 
   it("syncs reading state changes to the shared document", async () => {
@@ -826,10 +855,12 @@ describe("SessionsManager", () => {
     session.readingState.translationId.value = "NIV";
     session.readingState.bookId.value = "EXO";
     session.readingState.chapterNumber.value = 8;
+    session.readingState.scrollToVerse.value = 6;
 
     expect(mockMap.set).toHaveBeenCalledWith("translationId", "NIV");
     expect(mockMap.set).toHaveBeenCalledWith("bookId", "EXO");
     expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 8);
+    expect(mockMap.set).toHaveBeenCalledWith("scrollToVerse", 6);
     expect(mockDocument.transact).toHaveBeenCalled();
   });
 
