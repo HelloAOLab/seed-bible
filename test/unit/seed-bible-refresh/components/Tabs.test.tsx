@@ -140,17 +140,23 @@ function createFixture(options?: { hasSelectedTab?: boolean }): TabsFixture {
 
 describe("Tabs", () => {
   let container: HTMLDivElement;
+  let scrollIntoViewMock: jest.Mock;
+  let originalScrollIntoView: typeof HTMLElement.prototype.scrollIntoView;
 
   beforeEach(() => {
     jest.useFakeTimers();
     container = document.createElement("div");
     document.body.appendChild(container);
+    scrollIntoViewMock = jest.fn();
+    originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
   });
 
   afterEach(() => {
     render(null, container);
     container.remove();
     jest.useRealTimers();
+    HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
   });
 
   async function searchForVerse(query: string) {
@@ -166,6 +172,20 @@ describe("Tabs", () => {
       }
       jest.advanceTimersByTime(200);
       await Promise.resolve();
+      await Promise.resolve();
+    });
+  }
+
+  async function pressSearchKey(key: string) {
+    const input = container.querySelector(
+      ".sb-sidebar-search-input"
+    ) as HTMLInputElement | null;
+    expect(input).not.toBeNull();
+
+    await act(async () => {
+      input?.dispatchEvent(
+        new KeyboardEvent("keydown", { key, bubbles: true })
+      );
       await Promise.resolve();
     });
   }
@@ -268,5 +288,86 @@ describe("Tabs", () => {
       "MAT",
       5
     );
+  });
+
+  it("supports keyboard navigation for search results", async () => {
+    const fixture = createFixture();
+    const currentTab = fixture.state.app.selectedTab.value!;
+    const currentSelect = currentTab.readingState
+      .selectTranslationAndChapter as jest.Mock;
+
+    fixture.search.mockResolvedValue({
+      found: 2,
+      out_of: 2,
+      page: 1,
+      hits: [
+        {
+          document: {
+            id: "verse-1",
+            translation: "BSB",
+            book: "GEN",
+            chapter: 1,
+            verse: 1,
+            reference: "Genesis 1:1",
+            text: "In the beginning.",
+          },
+        },
+        {
+          document: {
+            id: "verse-2",
+            translation: "BSB",
+            book: "GEN",
+            chapter: 1,
+            verse: 2,
+            reference: "Genesis 1:2",
+            text: "The earth was formless.",
+          },
+        },
+      ],
+    });
+
+    act(() => {
+      render(
+        <Tabs state={fixture.state} closeLayoutMenu={jest.fn()} />,
+        container
+      );
+    });
+
+    await searchForVerse("genesis");
+
+    await pressSearchKey("ArrowDown");
+
+    let resultButtons = Array.from(
+      container.querySelectorAll(".sb-sidebar-search-result-button")
+    ) as HTMLButtonElement[];
+    expect(resultButtons[0]?.className).toContain(
+      "sb-sidebar-search-result-button-highlighted"
+    );
+    expect(resultButtons[1]?.className).not.toContain(
+      "sb-sidebar-search-result-button-highlighted"
+    );
+    expect(scrollIntoViewMock).toHaveBeenLastCalledWith({
+      block: "nearest",
+    });
+
+    await pressSearchKey("ArrowUp");
+
+    resultButtons = Array.from(
+      container.querySelectorAll(".sb-sidebar-search-result-button")
+    ) as HTMLButtonElement[];
+    expect(resultButtons[0]?.className).not.toContain(
+      "sb-sidebar-search-result-button-highlighted"
+    );
+    expect(resultButtons[1]?.className).toContain(
+      "sb-sidebar-search-result-button-highlighted"
+    );
+    expect(scrollIntoViewMock).toHaveBeenLastCalledWith({
+      block: "nearest",
+    });
+
+    await pressSearchKey("Enter");
+
+    expect(currentSelect).toHaveBeenCalledWith("BSB", "GEN", 1);
+    expect(currentSelect).toHaveBeenCalledTimes(1);
   });
 });

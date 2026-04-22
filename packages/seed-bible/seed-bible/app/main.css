@@ -1477,6 +1477,10 @@ h6 {
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 28%);
 }
 
+.sb-sidebar-search-result-button-highlighted {
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 28%);
+}
+
 .sb-sidebar-search-result-reference {
   font-weight: 700;
   color: color-mix(in srgb, var(--sb-font-color), #000 12%);

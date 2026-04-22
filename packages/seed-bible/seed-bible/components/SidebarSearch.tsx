@@ -41,7 +41,9 @@ export function SidebarSearch(props: SidebarSearchProps) {
   const searchLoading = useSignal(false);
   const searchError = useSignal<string | null>(null);
   const isSearchPanelOpen = useSignal(false);
+  const highlightedResultIndex = useSignal(-1);
   const searchContainerRef = useRef<HTMLDivElement | null>(null);
+  const searchResultRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const latestSearchRequestRef = useRef(0);
   const searchDebounceTimeoutRef = useRef<number | null>(null);
 
@@ -73,6 +75,16 @@ export function SidebarSearch(props: SidebarSearchProps) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isSearchPanelOpen.value || highlightedResultIndex.value < 0) {
+      return;
+    }
+
+    searchResultRefs.current[highlightedResultIndex.value]?.scrollIntoView({
+      block: "nearest",
+    });
+  }, [highlightedResultIndex.value, isSearchPanelOpen.value]);
+
   const runSearch = (nextQuery: string) => {
     searchQuery.value = nextQuery;
 
@@ -89,12 +101,14 @@ export function SidebarSearch(props: SidebarSearchProps) {
       searchLoading.value = false;
       searchError.value = null;
       isSearchPanelOpen.value = false;
+      highlightedResultIndex.value = -1;
       return;
     }
 
     searchLoading.value = true;
     searchError.value = null;
     isSearchPanelOpen.value = true;
+    highlightedResultIndex.value = -1;
 
     searchDebounceTimeoutRef.current = window.setTimeout(() => {
       state.search
@@ -115,6 +129,7 @@ export function SidebarSearch(props: SidebarSearchProps) {
             reference: hit.document.reference,
             text: hit.document.text,
           }));
+          highlightedResultIndex.value = -1;
           searchLoading.value = false;
         })
         .catch((error: unknown) => {
@@ -124,6 +139,7 @@ export function SidebarSearch(props: SidebarSearchProps) {
 
           searchResults.value = [];
           searchLoading.value = false;
+          highlightedResultIndex.value = -1;
           searchError.value =
             error instanceof Error ? error.message : "Unable to search verses.";
         });
@@ -143,6 +159,62 @@ export function SidebarSearch(props: SidebarSearchProps) {
     );
   };
 
+  const moveHighlightedResult = (direction: 1 | -1) => {
+    if (searchResults.value.length === 0) {
+      return;
+    }
+
+    if (!isSearchPanelOpen.value) {
+      isSearchPanelOpen.value = true;
+    }
+
+    const nextIndex = highlightedResultIndex.value + direction;
+
+    if (nextIndex < 0) {
+      highlightedResultIndex.value = searchResults.value.length - 1;
+      return;
+    }
+
+    if (nextIndex >= searchResults.value.length) {
+      highlightedResultIndex.value = 0;
+      return;
+    }
+
+    highlightedResultIndex.value = nextIndex;
+  };
+
+  const handleSearchInputKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      moveHighlightedResult(1);
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      moveHighlightedResult(-1);
+      return;
+    }
+
+    if (event.key === "Enter") {
+      const highlightedResult =
+        searchResults.value[highlightedResultIndex.value] ?? null;
+
+      if (!highlightedResult) {
+        return;
+      }
+
+      event.preventDefault();
+      void openSearchResult(highlightedResult);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      isSearchPanelOpen.value = false;
+      highlightedResultIndex.value = -1;
+    }
+  };
+
   return (
     <div className="sb-sidebar-search-shell" ref={searchContainerRef}>
       <label className="sb-sidebar-search-bar">
@@ -153,6 +225,9 @@ export function SidebarSearch(props: SidebarSearchProps) {
           value={searchQuery.value}
           onInput={(event) => {
             runSearch((event.currentTarget as HTMLInputElement).value);
+          }}
+          onKeyDown={(event) => {
+            handleSearchInputKeyDown(event);
           }}
           onFocus={() => {
             if (searchQuery.value.trim()) {
@@ -178,7 +253,7 @@ export function SidebarSearch(props: SidebarSearchProps) {
       </label>
 
       {isSearchPanelOpen.value && searchQuery.value.trim().length > 0 && (
-        <div className="sb-sidebar-search-panel">
+        <div className="sb-sidebar-search-panel" role="listbox">
           {searchLoading.value && (
             <div className="sb-sidebar-search-status">Searching...</div>
           )}
@@ -201,13 +276,25 @@ export function SidebarSearch(props: SidebarSearchProps) {
             !searchError.value &&
             searchResults.value.length > 0 && (
               <div className="sb-sidebar-search-results-list">
-                {searchResults.value.map((result) => (
+                {searchResults.value.map((result, index) => (
                   <button
                     key={result.id}
+                    ref={(element) => {
+                      searchResultRefs.current[index] = element;
+                    }}
                     onClick={() => {
                       void openSearchResult(result);
                     }}
-                    className="sb-sidebar-search-result-button"
+                    onMouseEnter={() => {
+                      highlightedResultIndex.value = index;
+                    }}
+                    className={`sb-sidebar-search-result-button${
+                      highlightedResultIndex.value === index
+                        ? " sb-sidebar-search-result-button-highlighted"
+                        : ""
+                    }`}
+                    role="option"
+                    aria-selected={highlightedResultIndex.value === index}
                   >
                     <div className="sb-sidebar-search-result-reference">
                       {result.reference}
