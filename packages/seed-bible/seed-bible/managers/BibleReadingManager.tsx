@@ -136,6 +136,8 @@ export interface BibleReadingState {
   error: Signal<string | null>;
   /** Scroll position snapshot for chapter restoration/UI syncing. */
   scrollPosition: Signal<number>;
+  /** Pending verse number to scroll to after chapter content renders. */
+  scrollToVerse: Signal<number | null>;
 
   /**
    * Toggles a verse in the current selection.
@@ -205,7 +207,8 @@ export interface BibleReadingState {
   selectTranslationAndChapter: (
     translationId: string,
     bookId: string,
-    chapterNumber: number
+    chapterNumber: number,
+    options?: SelectTranslationAndChapterOptions
   ) => Promise<void>;
 
   /** Selects a book and loads its first chapter in the active translation. */
@@ -229,6 +232,10 @@ interface InitialBibleReadingOptions {
   initialTranslationId?: string | null;
   initialBookId?: string | null;
   initialChapterNumber?: number | null;
+}
+
+export interface SelectTranslationAndChapterOptions {
+  scrollToVerse?: number;
 }
 
 function normalizeDecorationVerses(verses: number | number[]): number[] {
@@ -332,6 +339,7 @@ export function createBibleReadingState(
   const loading = signal<boolean>(true);
   const error = signal<string | null>(null);
   const scrollPosition = signal<number>(0);
+  const scrollToVerse = signal<number | null>(null);
 
   const translation = computed(
     () => translationBooks.value?.translation ?? null
@@ -705,7 +713,8 @@ export function createBibleReadingState(
   const selectTranslationAndChapter = async (
     nextTranslationIdOrUrl: string,
     nextBookId: string,
-    nextChapterNumber: number
+    nextChapterNumber: number,
+    options?: SelectTranslationAndChapterOptions
   ) => {
     loading.value = true;
     error.value = null;
@@ -763,6 +772,18 @@ export function createBibleReadingState(
         );
         await syncStateFromChapter(chapter);
       });
+
+      const requestedVerse = options?.scrollToVerse;
+      if (
+        typeof requestedVerse === "number" &&
+        Number.isFinite(requestedVerse) &&
+        Number.isInteger(requestedVerse) &&
+        requestedVerse > 0
+      ) {
+        scrollToVerse.value = requestedVerse;
+      } else {
+        scrollToVerse.value = null;
+      }
     } catch (err) {
       error.value =
         err instanceof Error
@@ -912,6 +933,7 @@ export function createBibleReadingState(
     loading,
     error,
     scrollPosition,
+    scrollToVerse,
     selectVerse,
     selectFootnote,
     highlightSelectedVerses,

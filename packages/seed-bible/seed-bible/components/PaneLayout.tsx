@@ -404,6 +404,26 @@ function PaneReaderScroller({ tab, children }: PaneReaderScrollerProps) {
         el.scrollTop = tab.readingState.scrollPosition.peek();
       }
 
+      const verseToScroll = tab.readingState.scrollToVerse.value;
+      if (tab.readingState.chapterData.value && verseToScroll !== null) {
+        requestAnimationFrame(() => {
+          const scroller = scrollerRef.current;
+          if (!scroller) {
+            return;
+          }
+
+          const targetVerse = scroller.querySelector(
+            `[data-verse-number="${verseToScroll}"]`
+          );
+          if (!(targetVerse instanceof HTMLElement)) {
+            return;
+          }
+
+          targetVerse.scrollIntoView({ block: "center", inline: "nearest" });
+          tab.readingState.scrollToVerse.value = null;
+        });
+      }
+
       currentChapter.current = tab.readingState.chapterData.value;
     });
 

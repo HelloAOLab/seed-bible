@@ -130,6 +130,7 @@ function createFixture(): ReaderFixture {
     decorations,
     loading: signal(false),
     scrollPosition: signal(0),
+    scrollToVerse: signal<number | null>(null),
     error: signal<string | null>(null),
     selectVerse,
     selectFootnote,

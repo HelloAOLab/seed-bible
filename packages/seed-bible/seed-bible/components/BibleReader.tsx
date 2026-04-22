@@ -576,6 +576,7 @@ function renderChapterContent(
           <span
             key={`verse-${entryIndex}`}
             className={verseClassName}
+            data-verse-number={value.number}
             onClick={(event: MouseEvent) => {
               onVerseClick(verse, event);
             }}
@@ -647,6 +648,7 @@ function renderChapterContent(
         <span
           key={`verse-${entryIndex}`}
           className={verseClassName}
+          data-verse-number={value.number}
           onClick={(event: MouseEvent) => {
             onVerseClick(verse, event);
           }}

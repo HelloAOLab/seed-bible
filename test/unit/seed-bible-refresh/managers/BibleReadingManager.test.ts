@@ -556,6 +556,22 @@ describe("createBibleReadingState", () => {
     expect(state.chapterData.value?.chapter.number).toBe(5);
   });
 
+  it("selectTranslationAndChapter() can request scrolling to verse", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    await state.selectTranslationAndChapter("AAB", "GEN", 5, {
+      scrollToVerse: 3,
+    });
+
+    expect(webGetMock).toHaveBeenCalledWith(makeUrl("/api/AAB/GEN/5.json"));
+    expect(state.translationId.value).toBe("AAB");
+    expect(state.bookId.value).toBe("GEN");
+    expect(state.chapterNumber.value).toBe(5);
+    expect(state.scrollToVerse.value).toBe(3);
+  });
+
   it("loads highlights when the chapter changes", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const highlightsManager = createHighlightsManagerMock();
