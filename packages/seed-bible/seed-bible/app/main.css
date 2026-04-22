@@ -1461,12 +1461,12 @@ h6 {
 }
 
 .sb-sidebar-search-result-button {
-  border: none;
+  border: 2px solid transparent;
   border-radius: 10px;
   background: transparent;
   color: inherit;
   text-align: left;
-  padding: 12px;
+  padding: 10px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -1478,7 +1478,8 @@ h6 {
 }
 
 .sb-sidebar-search-result-button-highlighted {
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 28%);
+  border: 2px solid
+    color-mix(in srgb, var(--sb-secondary-color), transparent 28%);
 }
 
 .sb-sidebar-search-result-reference {
