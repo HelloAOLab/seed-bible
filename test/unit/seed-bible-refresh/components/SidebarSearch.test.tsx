@@ -1,16 +1,9 @@
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { Tabs } from "@packages/seed-bible/seed-bible/components/Tabs";
+import { SidebarSearch } from "@packages/seed-bible/seed-bible/components/SidebarSearch";
 import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-
-jest.mock("seed-bible.i18n.I18nManager", () => ({
-  useI18n: () => ({
-    t: (key: string, options?: { defaultValue?: string }) =>
-      options?.defaultValue ?? key,
-  }),
-}));
 
 jest.mock("seed-bible.components.ContextMenu", () => ({
   closeContextMenus: jest.fn(),
@@ -45,7 +38,7 @@ jest.mock("seed-bible.components.ContextMenu", () => ({
   ),
 }));
 
-type TabsFixture = {
+type SidebarSearchFixture = {
   state: SeedBibleState;
   search: jest.Mock;
   selectTranslationAndChapter: jest.Mock;
@@ -80,7 +73,9 @@ function createTab(
   };
 }
 
-function createFixture(options?: { hasSelectedTab?: boolean }): TabsFixture {
+function createFixture(options?: {
+  hasSelectedTab?: boolean;
+}): SidebarSearchFixture {
   const currentTabSelectTranslationAndChapter = jest.fn(async () => undefined);
   const newTabSelectTranslationAndChapter = jest.fn(async () => undefined);
   const currentTab = createTab("tab-1", currentTabSelectTranslationAndChapter);
@@ -138,7 +133,7 @@ function createFixture(options?: { hasSelectedTab?: boolean }): TabsFixture {
   };
 }
 
-describe("Tabs", () => {
+describe("SidebarSearch", () => {
   let container: HTMLDivElement;
   let scrollIntoViewMock: jest.Mock;
   let originalScrollIntoView: typeof HTMLElement.prototype.scrollIntoView;
@@ -217,7 +212,7 @@ describe("Tabs", () => {
 
     act(() => {
       render(
-        <Tabs state={fixture.state} closeLayoutMenu={jest.fn()} />,
+        <SidebarSearch state={fixture.state} closeLayoutMenu={jest.fn()} />,
         container
       );
     });
@@ -264,7 +259,7 @@ describe("Tabs", () => {
 
     act(() => {
       render(
-        <Tabs state={fixture.state} closeLayoutMenu={jest.fn()} />,
+        <SidebarSearch state={fixture.state} closeLayoutMenu={jest.fn()} />,
         container
       );
     });
@@ -328,7 +323,7 @@ describe("Tabs", () => {
 
     act(() => {
       render(
-        <Tabs state={fixture.state} closeLayoutMenu={jest.fn()} />,
+        <SidebarSearch state={fixture.state} closeLayoutMenu={jest.fn()} />,
         container
       );
     });
