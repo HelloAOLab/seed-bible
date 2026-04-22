@@ -670,6 +670,55 @@ describe("SessionsManager", () => {
     expect(session.readingState.decorations.value).toEqual([remoteDecoration]);
   });
 
+  it("applies removeAfterMs from shared decorations", async () => {
+    (globalThis as any).configBot = {
+      id: "conn-self",
+    };
+
+    mockMap = createMockSharedMap({
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+    });
+
+    const remoteDecoration: VerseDecoration = {
+      id: "decoration-remote-timeout",
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verses: [4],
+      className: "other-user-timeout-decoration",
+      removeAfterMs: 2500,
+    };
+
+    mockDecorationsMap = createMockSharedMap({
+      [JSON.stringify(["conn-other", "decoration-remote-timeout"])]:
+        remoteDecoration,
+    });
+    mockDocument.getMap.mockImplementation((name: string) => {
+      if (name === "options") {
+        return mockOptionsMap;
+      }
+
+      if (name === "decorations") {
+        return mockDecorationsMap;
+      }
+
+      return mockMap;
+    });
+
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    await waitFor(() => session.readingState.decorations.value.length === 1);
+
+    expect(session.readingState.decorations.value).toEqual([remoteDecoration]);
+  });
+
   it("keeps decorations from different users in the shared document at the same time", async () => {
     (globalThis as any).configBot = {
       id: "conn-self",

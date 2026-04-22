@@ -410,6 +410,73 @@ describe("createBibleReadingState", () => {
     ]);
   });
 
+  it("decorateVerses() stores removeAfterMs on the decoration", async () => {
+    jest.useRealTimers();
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    jest.useFakeTimers();
+    try {
+      const decorationId = state.decorateVerses("AAB", "GEN", 1, [1], {
+        className: "sb-timeout-decoration",
+        removeAfterMs: 1500,
+      });
+
+      expect(state.decorations.value).toEqual<VerseDecoration[]>([
+        {
+          id: decorationId,
+          translationId: "AAB",
+          bookId: "GEN",
+          chapterNumber: 1,
+          verses: [1],
+          className: "sb-timeout-decoration",
+          removeAfterMs: 1500,
+        },
+      ]);
+    } finally {
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    }
+  });
+
+  it("decorateVerses() auto-removes a decoration after removeAfterMs", async () => {
+    jest.useRealTimers();
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    jest.useFakeTimers();
+    try {
+      const decorationId = state.decorateVerses("AAB", "GEN", 1, [1], {
+        className: "sb-temporary-decoration",
+        removeAfterMs: 100,
+      });
+
+      expect(state.decorations.value).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: decorationId,
+            removeAfterMs: 100,
+          }),
+        ])
+      );
+
+      jest.advanceTimersByTime(99);
+      expect(state.decorations.value.some((d) => d.id === decorationId)).toBe(
+        true
+      );
+
+      jest.advanceTimersByTime(1);
+      expect(state.decorations.value.some((d) => d.id === decorationId)).toBe(
+        false
+      );
+    } finally {
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    }
+  });
+
   it("clears decorations when the chapter changes", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const state = createBibleReadingState(createDataManager());
