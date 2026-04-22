@@ -1,5 +1,9 @@
 const { useState, useRef, useEffect } = os.appHooks;
+import { useBibleContext } from "app.hooks.bibleVariables";
 const G = globalThis as any;
+
+const isMobileSmall =
+  (window?.innerWidth || G.gridPortalBot.tags.pixelWidth) < 480;
 
 function NowBar() {
   const [apps, setApps] = useState([]);
@@ -9,11 +13,15 @@ function NowBar() {
   const [startY, setStartY] = useState(0);
   const [startDragIndex, setStartDragIndex] = useState(0);
   const [extraHeight, setExtraHeight] = useState(0);
+  const { showNavArrows } = useBibleContext();
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 400
   );
+  const [isFullWidth, setIsFullWidth] = useState(G.NowBarFullWidth || false);
   const [isBottomBar, setIsBottomBar] = useState(false);
+  const [isVerseToolBarOpen, setIsVerseToolBarOpen] = useState(false);
 
+  G.SetIsVerseToolBarOpen = setIsVerseToolBarOpen;
   G.SetIsBottomBar = setIsBottomBar;
   const cardRef = useRef(null);
 
@@ -25,10 +33,13 @@ function NowBar() {
 
     globalThis.SetExtraHeight = setExtraHeight;
 
+    G.SetIsFullWidth = setIsFullWidth;
+
     window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
       globalThis.SetExtraHeight = null;
+      G.SetIsFullWidth = null;
     };
   }, []);
 
@@ -235,10 +246,11 @@ function NowBar() {
     <div
       style={{
         position: "fixed",
-        bottom: isBottomBar ? "1.2rem" : dimensions.bottom,
+        bottom:
+          isBottomBar && !isVerseToolBarOpen ? "1.2rem" : dimensions.bottom,
         left: "50%",
         transform: "translateX(-50%)",
-        width: `${dimensions.width}px`,
+        width: isFullWidth && isMobileSmall ? "96dvw" : `${dimensions.width}px`,
         transition: "all 0.3s linear",
         // Shall be min height not exact height
         minHeight: `${dimensions.height + extraHeight}px`,
@@ -246,7 +258,7 @@ function NowBar() {
         // Ensure it doesn't overflow on very small screens
         display: "flex",
         alignItems: "flex-end",
-        maxWidth: "min(95vw, calc(100vw - 150px))",
+        maxWidth: isFullWidth ? "96dvw" : "min(95vw, calc(100vw - 150px))",
       }}
     >
       {apps.map((app, index) => {

@@ -460,6 +460,7 @@ const PlaylistRowItem = (props: any) => {
   const [addToQueuePopup, setAddToQueuePopup] = useState(false);
 
   const onPlayPlaylist = (bypassQueue?: boolean) => {
+    globalThis.SetIsBottomBar?.(false);
     if (G.IsQueuePresent) {
       if (!bypassQueue) {
         setAddToQueuePopup(true);

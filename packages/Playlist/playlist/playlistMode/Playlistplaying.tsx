@@ -1027,6 +1027,9 @@ const PlayingPlaylist = () => {
         {isPlaybarInherited && (
           <div
             style={{
+              display: hide ? "none" : "block",
+              opacity: hide ? 0 : 1,
+              transition: "opacity 0.3s ease-in-out",
               zIndex: "1001",
               textTransform: " capitalize",
               padding: "12px",
