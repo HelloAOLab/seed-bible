@@ -5,7 +5,6 @@ import {
   createDefaultManagerResponseMap,
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
-import { createSearchManager } from "@packages/seed-bible/seed-bible/managers/SearchManager";
 
 const mockSaveReadingHistory = jest.fn();
 const mockHighlightsManager = {

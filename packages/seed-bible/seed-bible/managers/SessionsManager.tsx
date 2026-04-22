@@ -157,6 +157,7 @@ function toSessionDecorationInput(
     endIndex: decoration.endIndex,
     className: decoration.className,
     style: decoration.style,
+    removeAfterMs: decoration.removeAfterMs,
     preserveOnChapterChange: decoration.preserveOnChapterChange,
   };
 }

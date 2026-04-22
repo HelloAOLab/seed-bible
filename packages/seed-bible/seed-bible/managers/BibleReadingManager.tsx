@@ -69,6 +69,8 @@ export interface VerseDecoration {
   className?: string;
   /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
+  /** Optional delay in milliseconds before this decoration auto-removes itself. */
+  removeAfterMs?: number;
 
   /**
    * Whether to preserve the decoration when the chapter changes.
@@ -87,6 +89,8 @@ export interface VerseDecorationInput {
   className?: string;
   /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
+  /** Optional delay in milliseconds before this decoration auto-removes itself. */
+  removeAfterMs?: number;
 
   /**
    * Whether to preserve the decoration when the chapter changes.
@@ -321,6 +325,10 @@ export function createBibleReadingState(
     () => activeChapterHighlights.value.value
   );
   const decorations = signal<VerseDecoration[]>([]);
+  const decorationRemovalTimers = new Map<
+    string,
+    ReturnType<typeof setTimeout>
+  >();
   const loading = signal<boolean>(true);
   const error = signal<string | null>(null);
   const scrollPosition = signal<number>(0);
@@ -422,9 +430,19 @@ export function createBibleReadingState(
       chapterNumber.value = nextChapterNumber;
       chapterData.value = chapter;
       selectedFootnoteId.value = null;
+      const removedDecorationIds = decorations.value
+        .filter((decoration) => !decoration.preserveOnChapterChange)
+        .map((decoration) => decoration.id);
       decorations.value = decorations.value.filter(
         (decoration) => decoration.preserveOnChapterChange
       );
+      for (const decorationId of removedDecorationIds) {
+        const timer = decorationRemovalTimers.get(decorationId);
+        if (timer) {
+          clearTimeout(timer);
+          decorationRemovalTimers.delete(decorationId);
+        }
+      }
       clearSelectedVerses();
     });
 
@@ -522,6 +540,16 @@ export function createBibleReadingState(
     decoration: VerseDecorationInput,
     id: string = `decoration-${uuid()}`
   ): string => {
+    const existingTimer = decorationRemovalTimers.get(id);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      decorationRemovalTimers.delete(id);
+    }
+
+    const existingDecorationIndex = decorations.value.findIndex(
+      (currentDecoration) => currentDecoration.id === id
+    );
+
     const nextDecoration: VerseDecoration = {
       id,
       translationId: translationId ?? translation.value?.id ?? null,
@@ -531,11 +559,35 @@ export function createBibleReadingState(
       ...decoration,
     };
 
-    decorations.value = [...decorations.value, nextDecoration];
+    if (existingDecorationIndex >= 0) {
+      decorations.value = decorations.value.map((currentDecoration, index) =>
+        index === existingDecorationIndex ? nextDecoration : currentDecoration
+      );
+    } else {
+      decorations.value = [...decorations.value, nextDecoration];
+    }
+
+    if (
+      typeof nextDecoration.removeAfterMs === "number" &&
+      Number.isFinite(nextDecoration.removeAfterMs) &&
+      nextDecoration.removeAfterMs > 0
+    ) {
+      const timer = setTimeout(() => {
+        removeDecoration(nextDecoration.id);
+      }, nextDecoration.removeAfterMs);
+      decorationRemovalTimers.set(nextDecoration.id, timer);
+    }
+
     return nextDecoration.id;
   };
 
   const removeDecoration = (decorationId: string) => {
+    const timer = decorationRemovalTimers.get(decorationId);
+    if (timer) {
+      clearTimeout(timer);
+      decorationRemovalTimers.delete(decorationId);
+    }
+
     decorations.value = decorations.value.filter(
       (decoration) => decoration.id !== decorationId
     );
