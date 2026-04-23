@@ -1,4 +1,4 @@
-import { signal } from "@preact/signals";
+import { batch, signal } from "@preact/signals";
 import {
   createSessionsManager,
   type BibleReadingSession,
@@ -852,10 +852,12 @@ describe("SessionsManager", () => {
     );
     const session = await manager.joinSession("group-abc");
 
-    session.readingState.translationId.value = "NIV";
-    session.readingState.bookId.value = "EXO";
-    session.readingState.chapterNumber.value = 8;
-    session.readingState.scrollToVerse.value = 6;
+    batch(() => {
+      session.readingState.translationId.value = "NIV";
+      session.readingState.bookId.value = "EXO";
+      session.readingState.chapterNumber.value = 8;
+      session.readingState.scrollToVerse.value = 6;
+    });
 
     expect(mockMap.set).toHaveBeenCalledWith("translationId", "NIV");
     expect(mockMap.set).toHaveBeenCalledWith("bookId", "EXO");
