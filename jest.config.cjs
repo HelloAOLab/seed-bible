@@ -16,7 +16,7 @@ const config = {
       "<rootDir>/node_modules/i18next/index.js",
     "^https:\\/\\/esm\\.sh\\/react-i18next@15.1.2\\?alias=react:preact\\/compat,react-dom:preact\\/compat&external=preact$":
       "<rootDir>/test/env/reactI18nextMock.js",
-    "typesense-fixed": "<rootDir>/node_modules/typesense/dist/typesense.js",
+    "typesense-fixed": "<rootDir>/test/mocks/typesense.ts",
     ...pathsToModuleNameMapper(compilerOptions.paths, { prefix: "<rootDir>/" }),
   },
   testPathIgnorePatterns: ["/node_modules/", "/obsolete/"],
