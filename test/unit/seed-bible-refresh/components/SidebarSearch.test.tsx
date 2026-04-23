@@ -60,6 +60,7 @@ function createTab(
       chapterNumber: signal(1),
       translationId: signal("BSB"),
       translation: signal({ textDirection: "ltr" } as any),
+      decorateVerses: jest.fn(),
       translationBooks: signal({
         books: [
           {
@@ -232,7 +233,9 @@ describe("SidebarSearch", () => {
       await Promise.resolve();
     });
 
-    expect(currentSelect).toHaveBeenCalledWith("BSB", "GEN", 1);
+    expect(currentSelect).toHaveBeenCalledWith("BSB", "GEN", 1, {
+      scrollToVerse: 1,
+    });
     expect(fixture.addTab).not.toHaveBeenCalled();
   });
 
@@ -281,7 +284,8 @@ describe("SidebarSearch", () => {
     expect(fixture.newTabSelectTranslationAndChapter).toHaveBeenCalledWith(
       "NIV",
       "MAT",
-      5
+      5,
+      { scrollToVerse: 9 }
     );
   });
 
@@ -362,7 +366,9 @@ describe("SidebarSearch", () => {
 
     await pressSearchKey("Enter");
 
-    expect(currentSelect).toHaveBeenCalledWith("BSB", "GEN", 1);
+    expect(currentSelect).toHaveBeenCalledWith("BSB", "GEN", 1, {
+      scrollToVerse: 2,
+    });
     expect(currentSelect).toHaveBeenCalledTimes(1);
   });
 });
