@@ -22,7 +22,7 @@ import {
   translations,
   type WebResponseMap,
 } from "./testUtils/mockBibleApiData";
-import { signal } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
 
 const nivTranslation = translations.translations[1]!;
 
@@ -491,6 +491,32 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual([]);
   });
 
+  it("changing the chapter keeps decorations that target the new chapter even when preserveOnChapterChange is false", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    const decorationId = state.decorateVerses("AAB", "GEN", 2, [3], {
+      className: "sb-next-chapter-decoration",
+      preserveOnChapterChange: false,
+    });
+
+    await state.selectChapter("GEN", 2);
+
+    expect(state.decorations.value).toEqual([
+      {
+        id: decorationId,
+        translationId: "AAB",
+        bookId: "GEN",
+        chapterNumber: 2,
+        verses: [3],
+        className: "sb-next-chapter-decoration",
+        style: undefined,
+        preserveOnChapterChange: false,
+      },
+    ]);
+  });
+
   it("doesn't clear decorations that should be preserved when the chapter changes", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const state = createBibleReadingState(createDataManager());
@@ -570,6 +596,82 @@ describe("createBibleReadingState", () => {
     expect(state.bookId.value).toBe("GEN");
     expect(state.chapterNumber.value).toBe(5);
     expect(state.scrollToVerse.value).toBe(3);
+  });
+
+  it("selectTranslationAndChapter() updates scrollToVerse in the same batch as chapterData", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    const chapterFiveScrollSnapshots: Array<number | null> = [];
+    const stop = effect(() => {
+      const chapter = state.chapterData.value;
+      if (chapter?.book.id === "GEN" && chapter.chapter.number === 5) {
+        chapterFiveScrollSnapshots.push(state.scrollToVerse.value);
+      }
+    });
+
+    await state.selectTranslationAndChapter("AAB", "GEN", 5, {
+      scrollToVerse: 3,
+    });
+
+    stop();
+
+    expect(chapterFiveScrollSnapshots).toEqual([3]);
+    expect(state.chapterData.value?.book.id).toBe("GEN");
+    expect(state.chapterData.value?.chapter.number).toBe(5);
+    expect(state.scrollToVerse.value).toBe(3);
+  });
+
+  it("decorateVerses() supports null translationId so decorations can work across translations", async () => {
+    const responses = createReadingManagerResponseMap();
+    responses[makeUrl("/api/NIV/books.json")] = createResponse({
+      ...bsbBooks,
+      translation: nivTranslation,
+    });
+    responses[makeUrl("/api/NIV/GEN/1.json")] = createResponse({
+      ...makeChapter(bsbBooks, "GEN", 1),
+      translation: nivTranslation,
+      book: bsbBooks.books.find((book) => book.id === "GEN")!,
+      thisChapterLink: "/api/NIV/GEN/1.json",
+      nextChapterApiLink: "/api/NIV/GEN/2.json",
+      previousChapterApiLink: null,
+    });
+
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    const decorationId = state.decorateVerses(null, "GEN", 1, [1], {
+      className: "sb-any-translation-decoration",
+    });
+
+    expect(state.decorations.value).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: decorationId,
+          translationId: null,
+          bookId: "GEN",
+          chapterNumber: 1,
+          verses: [1],
+          className: "sb-any-translation-decoration",
+        }),
+      ])
+    );
+
+    await state.selectTranslationAndChapter("NIV", "GEN", 1);
+
+    expect(state.decorations.value).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: decorationId,
+          translationId: null,
+          bookId: "GEN",
+          chapterNumber: 1,
+          verses: [1],
+        }),
+      ])
+    );
   });
 
   it("loads highlights when the chapter changes", async () => {

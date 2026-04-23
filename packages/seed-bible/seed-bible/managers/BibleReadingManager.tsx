@@ -586,7 +586,7 @@ export function createBibleReadingState(
 
     const nextDecoration: VerseDecoration = {
       id,
-      translationId: translationId ?? translation.value?.id ?? null,
+      translationId,
       bookId,
       chapterNumber,
       verses: normalizeDecorationVerses(verses),
