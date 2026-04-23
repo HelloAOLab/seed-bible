@@ -34,6 +34,7 @@ export type VerseSearchResponse = Typesense.SearchResponse<VerseSearchDocument>;
 export interface SearchManager {
   search: (
     type: SearchType,
+    translationId: string,
     text: string,
     filters?: SearchFilters
   ) => Promise<VerseSearchResponse>;
@@ -78,6 +79,20 @@ function buildFilterBy(filters?: SearchFilters): string | undefined {
   return clauses.length > 0 ? clauses.join(" && ") : undefined;
 }
 
+function buildVerseFilterBy(
+  translationId: string,
+  filters?: SearchFilters
+): string {
+  const translationFilter = `translation:=${formatFilterValue(translationId)}`;
+  const additionalFilter = buildFilterBy(filters);
+
+  if (!additionalFilter) {
+    return translationFilter;
+  }
+
+  return `${translationFilter} && ${additionalFilter}`;
+}
+
 export function createSearchManager(): SearchManager {
   const client = new Typesense.Client({
     apiKey: TYPESENSE_API_KEY,
@@ -92,12 +107,13 @@ export function createSearchManager(): SearchManager {
 
   const search = async (
     type: SearchType,
+    translationId: string,
     text: string,
     filters?: SearchFilters
   ): Promise<VerseSearchResponse> => {
     switch (type) {
       case "verses": {
-        const filterBy = buildFilterBy(filters);
+        const filterBy = buildVerseFilterBy(translationId, filters);
 
         return await client
           .collections<VerseSearchDocument>(VERSE_COLLECTION)
@@ -105,7 +121,7 @@ export function createSearchManager(): SearchManager {
           .search({
             q: text,
             query_by: ["referenceNormalized", "reference", "text"],
-            ...(filterBy ? { filter_by: filterBy } : {}),
+            filter_by: filterBy,
           });
       }
       default: {

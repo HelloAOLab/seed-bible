@@ -68,7 +68,7 @@ describe("createSearchManager", () => {
     const manager = createSearchManager();
     const typesenseMock = getTypesenseMock();
     typesenseMock.search.mockResolvedValue(response);
-    const result = await manager.search("verses", "beginning");
+    const result = await manager.search("verses", "BSB", "beginning");
 
     expect(result).toBe(response);
     expect(typesenseMock.client).toHaveBeenCalledWith({
@@ -85,6 +85,7 @@ describe("createSearchManager", () => {
     expect(typesenseMock.search).toHaveBeenCalledWith({
       q: "beginning",
       query_by: ["referenceNormalized", "reference", "text"],
+      filter_by: 'translation:="BSB"',
     });
   });
 
@@ -98,7 +99,7 @@ describe("createSearchManager", () => {
       hits: [],
     });
 
-    await manager.search("verses", "light", {
+    await manager.search("verses", "BSB", "light", {
       translation_id: "BSB",
       testament: ["old", "new"],
       chapter: 1,
@@ -108,7 +109,7 @@ describe("createSearchManager", () => {
       q: "light",
       query_by: ["referenceNormalized", "reference", "text"],
       filter_by:
-        'translation_id:="BSB" && testament:=["old", "new"] && chapter:=1',
+        'translation:="BSB" && translation_id:="BSB" && testament:=["old", "new"] && chapter:=1',
     });
   });
 
@@ -122,12 +123,12 @@ describe("createSearchManager", () => {
       hits: [],
     });
 
-    await manager.search("verses", "faith", 'translation_id:="NIV"');
+    await manager.search("verses", "NIV", "faith", 'translation_id:="NIV"');
 
     expect(typesenseMock.search).toHaveBeenCalledWith({
       q: "faith",
       query_by: ["referenceNormalized", "reference", "text"],
-      filter_by: 'translation_id:="NIV"',
+      filter_by: 'translation:="NIV" && translation_id:="NIV"',
     });
   });
 });

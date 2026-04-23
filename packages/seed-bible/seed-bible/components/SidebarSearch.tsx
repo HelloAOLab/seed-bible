@@ -94,6 +94,8 @@ export function SidebarSearch(props: SidebarSearchProps) {
     }
 
     const query = nextQuery.trim();
+    const activeTranslationId =
+      state.app.currentReadingState.value?.translationId ?? "BSB";
     const requestId = ++latestSearchRequestRef.current;
 
     if (!query) {
@@ -112,7 +114,7 @@ export function SidebarSearch(props: SidebarSearchProps) {
 
     searchDebounceTimeoutRef.current = window.setTimeout(() => {
       state.search
-        .search("verses", query)
+        .search("verses", activeTranslationId, query)
         .then((response) => {
           if (latestSearchRequestRef.current !== requestId) {
             return;
