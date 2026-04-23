@@ -420,7 +420,6 @@ function PaneReaderScroller({ tab, children }: PaneReaderScrollerProps) {
           }
 
           targetVerse.scrollIntoView({ block: "center", inline: "nearest" });
-          tab.readingState.scrollToVerse.value = null;
         });
       }
 

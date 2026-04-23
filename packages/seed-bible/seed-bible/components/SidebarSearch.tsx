@@ -155,7 +155,10 @@ export function SidebarSearch(props: SidebarSearchProps) {
     await targetTab.readingState.selectTranslationAndChapter(
       result.translationId,
       result.bookId,
-      result.chapterNumber
+      result.chapterNumber,
+      {
+        scrollToVerse: result.verseNumber ?? undefined,
+      }
     );
   };
 
