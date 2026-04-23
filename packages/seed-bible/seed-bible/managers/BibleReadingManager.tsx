@@ -420,10 +420,14 @@ export function createBibleReadingState(
     };
   };
 
-  const syncStateFromChapter = async (chapter: TranslationBookChapter) => {
+  const syncStateFromChapter = async (
+    chapter: TranslationBookChapter,
+    options?: SelectTranslationAndChapterOptions
+  ) => {
     const nextTranslationId = chapter.translation.id;
     const nextBookId = chapter.book.id;
     const nextChapterNumber = chapter.chapter.number;
+    const nextScrollToVerse = options?.scrollToVerse ?? null;
 
     batch(() => {
       const didChapterChange =
@@ -437,6 +441,7 @@ export function createBibleReadingState(
       bookId.value = nextBookId;
       chapterNumber.value = nextChapterNumber;
       chapterData.value = chapter;
+      scrollToVerse.value = nextScrollToVerse;
       selectedFootnoteId.value = null;
       const removedDecorationIds = decorations.value
         .filter((decoration) => !decoration.preserveOnChapterChange)
@@ -770,20 +775,8 @@ export function createBibleReadingState(
         availableTranslations.value = toAvailableTranslations(
           dataManager.availableTranslations.value
         );
-        await syncStateFromChapter(chapter);
+        await syncStateFromChapter(chapter, options);
       });
-
-      const requestedVerse = options?.scrollToVerse;
-      if (
-        typeof requestedVerse === "number" &&
-        Number.isFinite(requestedVerse) &&
-        Number.isInteger(requestedVerse) &&
-        requestedVerse > 0
-      ) {
-        scrollToVerse.value = requestedVerse;
-      } else {
-        scrollToVerse.value = null;
-      }
     } catch (err) {
       error.value =
         err instanceof Error

@@ -176,8 +176,7 @@ function sessionDataMatches(left: SessionData, right: SessionData): boolean {
   return (
     left.translationId === right.translationId &&
     left.bookId === right.bookId &&
-    left.chapterNumber === right.chapterNumber &&
-    left.scrollToVerse === right.scrollToVerse
+    left.chapterNumber === right.chapterNumber
   );
 }
 
