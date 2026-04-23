@@ -68,7 +68,7 @@ describe("createSearchManager", () => {
     const manager = createSearchManager();
     const typesenseMock = getTypesenseMock();
     typesenseMock.search.mockResolvedValue(response);
-    const result = await manager.search("verses", "BSB", "beginning");
+    const result = await manager.searchVerses("BSB", "beginning");
 
     expect(result).toBe(response);
     expect(typesenseMock.client).toHaveBeenCalledWith({
@@ -99,7 +99,7 @@ describe("createSearchManager", () => {
       hits: [],
     });
 
-    await manager.search("verses", "BSB", "light", {
+    await manager.searchVerses("BSB", "light", {
       translation_id: "BSB",
       testament: ["old", "new"],
       chapter: 1,
@@ -123,7 +123,7 @@ describe("createSearchManager", () => {
       hits: [],
     });
 
-    await manager.search("verses", "NIV", "faith", 'translation_id:="NIV"');
+    await manager.searchVerses("NIV", "faith", 'translation_id:="NIV"');
 
     expect(typesenseMock.search).toHaveBeenCalledWith({
       q: "faith",

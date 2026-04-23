@@ -114,7 +114,7 @@ export function SidebarSearch(props: SidebarSearchProps) {
 
     searchDebounceTimeoutRef.current = window.setTimeout(() => {
       state.search
-        .search("verses", activeTranslationId, query)
+        .searchVerses(activeTranslationId, query)
         .then((response) => {
           if (latestSearchRequestRef.current !== requestId) {
             return;

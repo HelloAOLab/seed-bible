@@ -32,10 +32,15 @@ export type VerseSearchDocument = z.infer<typeof VerseSearchDocumentSchema>;
 export type VerseSearchResponse = Typesense.SearchResponse<VerseSearchDocument>;
 
 export interface SearchManager {
-  search: (
-    type: SearchType,
+  /**
+   * Searches for verses matching the given text and filters.
+   * @param translationId The ID of the translation to search within.
+   * @param query The search query text.
+   * @param filters The filters to apply to the search.
+   */
+  searchVerses: (
     translationId: string,
-    text: string,
+    query: string,
     filters?: SearchFilters
   ) => Promise<VerseSearchResponse>;
 }
@@ -105,32 +110,24 @@ export function createSearchManager(): SearchManager {
     ],
   });
 
-  const search = async (
-    type: SearchType,
+  const searchVerses = async (
     translationId: string,
     text: string,
     filters?: SearchFilters
   ): Promise<VerseSearchResponse> => {
-    switch (type) {
-      case "verses": {
-        const filterBy = buildVerseFilterBy(translationId, filters);
+    const filterBy = buildVerseFilterBy(translationId, filters);
 
-        return await client
-          .collections<VerseSearchDocument>(VERSE_COLLECTION)
-          .documents()
-          .search({
-            q: text,
-            query_by: ["referenceNormalized", "reference", "text"],
-            filter_by: filterBy,
-          });
-      }
-      default: {
-        throw new Error(`Unsupported search type: ${type}`);
-      }
-    }
+    return await client
+      .collections<VerseSearchDocument>(VERSE_COLLECTION)
+      .documents()
+      .search({
+        q: text,
+        query_by: ["referenceNormalized", "reference", "text"],
+        filter_by: filterBy,
+      });
   };
 
   return {
-    search,
+    searchVerses,
   };
 }

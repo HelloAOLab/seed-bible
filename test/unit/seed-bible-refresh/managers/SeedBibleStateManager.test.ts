@@ -33,7 +33,7 @@ jest.mock("seed-bible.i18n.I18nManager", () => ({
 
 jest.mock("seed-bible.managers.SearchManager", () => ({
   createSearchManager: jest.fn().mockReturnValue({
-    search: jest.fn(),
+    searchVerses: jest.fn(),
   }),
 }));
 
@@ -103,7 +103,7 @@ describe("createSeedBibleState", () => {
     expect(state.selector.isOpen.value).toBe(false);
     expect(state.highlights).toBe(mockHighlightsManager as any);
     expect(state.sessions).toBe(mockSessionsManager);
-    expect(typeof state.search.search).toBe("function");
+    expect(typeof state.search.searchVerses).toBe("function");
   });
 
   it("selecting a tab selects the tab and switches the pane to display the selected tab", async () => {

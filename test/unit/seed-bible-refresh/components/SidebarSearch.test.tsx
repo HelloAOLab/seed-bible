@@ -60,7 +60,7 @@ async function createFixture(options?: {
   }
 
   const addTabOriginal = state.tabs.addTab.bind(state.tabs);
-  const search = jest.spyOn(state.search, "search");
+  const search = jest.spyOn(state.search, "searchVerses");
   const addTab = jest.spyOn(state.tabs, "addTab");
   const setSelectedPaneTab = jest.spyOn(state.panes, "setSelectedPaneTab");
 
@@ -161,7 +161,7 @@ describe("SidebarSearch", () => {
 
     await searchForVerse("beginning");
 
-    expect(fixture.search).toHaveBeenCalledWith("verses", "AAB", "beginning");
+    expect(fixture.search).toHaveBeenCalledWith("AAB", "beginning");
     expect(container.querySelector(".sb-sidebar-search-panel")).not.toBeNull();
 
     const resultButton = container.querySelector(
