@@ -2,7 +2,10 @@ import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
 import { SidebarSearch } from "@packages/seed-bible/seed-bible/components/SidebarSearch";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
+import {
+  createTestSeedBibleState,
+  waitFor,
+} from "../testUtils/createTestSeedBibleState";
 
 jest.mock("seed-bible.components.ContextMenu", () => ({
   closeContextMenus: jest.fn(),
@@ -175,6 +178,26 @@ describe("SidebarSearch", () => {
       scrollToVerse: 1,
     });
     expect(fixture.addTab).not.toHaveBeenCalled();
+
+    await waitFor(
+      () =>
+        fixture.state.app.selectedTab.value!.readingState.loading.value ===
+        false
+    );
+
+    expect(
+      fixture.state.app.selectedTab.value!.readingState.decorations.value
+    ).toEqual([
+      {
+        id: expect.any(String),
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        className: "sb-verse-decoration-search-result",
+        removeAfterMs: 3000,
+      },
+    ]);
   });
 
   it("opens a new tab when there is no current tab", async () => {

@@ -24,7 +24,7 @@ export interface CreateTestSeedBibleStateOptions {
   timeoutMs?: number;
 }
 
-async function waitFor(
+export async function waitFor(
   condition: () => boolean,
   timeoutMs: number = 1000
 ): Promise<void> {

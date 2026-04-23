@@ -167,7 +167,7 @@ export function SidebarSearch(props: SidebarSearchProps) {
         result.chapterNumber,
         result.verseNumber,
         {
-          className: "sb-search-highlighted-verse",
+          className: "sb-verse-decoration-search-result",
           removeAfterMs: 3000,
         }
       );
