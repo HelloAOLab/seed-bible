@@ -286,7 +286,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    const decorationId = state.decorateVerses("AAB", "GEN", 1, [2, 1, 2], {
+    const decorationId = state.decorateVerses("GEN", 1, [2, 1, 2], {
       className: "sb-test-decoration",
       style: {
         outline: "1px solid red",
@@ -297,7 +297,7 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual<VerseDecoration[]>([
       {
         id: decorationId,
-        translationId: "AAB",
+        translationId: null,
         bookId: "GEN",
         chapterNumber: 1,
         verses: [1, 2],
@@ -328,7 +328,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    const decorationId = state.decorateVerses("AAB", "GEN", 1, [1], {
+    const decorationId = state.decorateVerses("GEN", 1, [1], {
       targetContent: "created the",
       className: "sb-piece-decoration",
       style: {
@@ -339,7 +339,7 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual<VerseDecoration[]>([
       {
         id: decorationId,
-        translationId: "AAB",
+        translationId: null,
         bookId: "GEN",
         chapterNumber: 1,
         verses: [1],
@@ -357,7 +357,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    const decorationId = state.decorateVerses("AAB", "GEN", 1, [1], {
+    const decorationId = state.decorateVerses("GEN", 1, [1], {
       targetContent: "created",
       startIndex: 20,
       endIndex: 45,
@@ -367,7 +367,7 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual<VerseDecoration[]>([
       {
         id: decorationId,
-        translationId: "AAB",
+        translationId: null,
         bookId: "GEN",
         chapterNumber: 1,
         verses: [1],
@@ -384,7 +384,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    const decorationId = state.decorateVerses("AAB", "GEN", 1, [1], {
+    const decorationId = state.decorateVerses("GEN", 1, [1], {
       startIndex: 31,
       endIndex: 42,
       className: "sb-index-range-decoration",
@@ -396,7 +396,7 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual<VerseDecoration[]>([
       {
         id: decorationId,
-        translationId: "AAB",
+        translationId: null,
         bookId: "GEN",
         chapterNumber: 1,
         verses: [1],
@@ -418,7 +418,7 @@ describe("createBibleReadingState", () => {
 
     jest.useFakeTimers();
     try {
-      const decorationId = state.decorateVerses("AAB", "GEN", 1, [1], {
+      const decorationId = state.decorateVerses("GEN", 1, [1], {
         className: "sb-timeout-decoration",
         removeAfterMs: 1500,
       });
@@ -426,7 +426,7 @@ describe("createBibleReadingState", () => {
       expect(state.decorations.value).toEqual<VerseDecoration[]>([
         {
           id: decorationId,
-          translationId: "AAB",
+          translationId: null,
           bookId: "GEN",
           chapterNumber: 1,
           verses: [1],
@@ -448,7 +448,7 @@ describe("createBibleReadingState", () => {
 
     jest.useFakeTimers();
     try {
-      const decorationId = state.decorateVerses("AAB", "GEN", 1, [1], {
+      const decorationId = state.decorateVerses("GEN", 1, [1], {
         className: "sb-temporary-decoration",
         removeAfterMs: 100,
       });
@@ -482,7 +482,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    state.decorateVerses("AAB", "GEN", 1, [1, 2], {
+    state.decorateVerses("GEN", 1, [1, 2], {
       className: "sb-test-decoration",
     });
 
@@ -496,7 +496,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    const decorationId = state.decorateVerses("AAB", "GEN", 2, [3], {
+    const decorationId = state.decorateVerses("GEN", 2, [3], {
       className: "sb-next-chapter-decoration",
       preserveOnChapterChange: false,
     });
@@ -506,7 +506,7 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual([
       {
         id: decorationId,
-        translationId: "AAB",
+        translationId: null,
         bookId: "GEN",
         chapterNumber: 2,
         verses: [3],
@@ -522,11 +522,11 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    state.decorateVerses("AAB", "GEN", 1, [5], {
+    state.decorateVerses("GEN", 1, [5], {
       className: "sb-test-decoration-removed",
     });
 
-    state.decorateVerses("AAB", "GEN", 1, [1, 2], {
+    state.decorateVerses("GEN", 1, [1, 2], {
       className: "sb-test-decoration",
       preserveOnChapterChange: true,
     });
@@ -536,7 +536,7 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual([
       {
         id: expect.any(String),
-        translationId: "AAB",
+        translationId: null,
         bookId: "GEN",
         chapterNumber: 1,
         verses: [1, 2],
@@ -623,7 +623,7 @@ describe("createBibleReadingState", () => {
     expect(state.scrollToVerse.value).toBe(3);
   });
 
-  it("decorateVerses() supports null translationId so decorations can work across translations", async () => {
+  it("decorateVerses() supports specifying a translationId so decorations can only work within the same translation", async () => {
     const responses = createReadingManagerResponseMap();
     responses[makeUrl("/api/NIV/books.json")] = createResponse({
       ...bsbBooks,
@@ -642,15 +642,16 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    const decorationId = state.decorateVerses(null, "GEN", 1, [1], {
+    const decorationId = state.decorateVerses("GEN", 1, [1], {
       className: "sb-any-translation-decoration",
+      translationId: "NIV",
     });
 
     expect(state.decorations.value).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: decorationId,
-          translationId: null,
+          translationId: "NIV",
           bookId: "GEN",
           chapterNumber: 1,
           verses: [1],
@@ -665,7 +666,7 @@ describe("createBibleReadingState", () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: decorationId,
-          translationId: null,
+          translationId: "NIV",
           bookId: "GEN",
           chapterNumber: 1,
           verses: [1],

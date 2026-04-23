@@ -56,7 +56,6 @@ registerExtension({
       //     context.readingState.selectedVerses.value
       //   );
       //   const id = context.readingState.decorateVerses(
-      //     context.readingState.translationId.value,
       //     context.readingState.bookId.value!,
       //     context.readingState.chapterNumber.value,
       //     context.readingState.selectedVerses.value.map((v) => v.verse.number),

@@ -105,7 +105,6 @@ function createMockReadingState() {
 
   const decorateVerses = jest.fn(
     (
-      nextTranslationId: string | null,
       nextBookId: string,
       nextChapterNumber: number,
       verses: number | number[],
@@ -115,11 +114,11 @@ function createMockReadingState() {
       const verseNumbers = Array.isArray(verses) ? verses : [verses];
       const nextDecoration: VerseDecoration = {
         id,
-        translationId: nextTranslationId,
         bookId: nextBookId,
         chapterNumber: nextChapterNumber,
         verses: verseNumbers,
         ...decoration,
+        translationId: decoration.translationId ?? null,
       };
 
       decorations.value = [
@@ -527,13 +526,13 @@ describe("SessionsManager", () => {
     mockOptionsMap.setEmitOnSet(true);
 
     session.readingState.decorateVerses(
-      "BSB",
       "GEN",
       1,
       [1, 2],
       {
         className: "remote-cursor",
         preserveOnChapterChange: true,
+        translationId: "BSB",
       },
       "decoration-local"
     );
@@ -569,7 +568,6 @@ describe("SessionsManager", () => {
     mockOptionsMap.setEmitOnSet(true);
 
     session.readingState.decorateVerses(
-      "BSB",
       "GEN",
       1,
       [5],
@@ -614,7 +612,6 @@ describe("SessionsManager", () => {
     mockDocument.transact.mockClear();
 
     session.readingState.decorateVerses(
-      "BSB",
       "GEN",
       1,
       [1],
@@ -651,7 +648,6 @@ describe("SessionsManager", () => {
     mockDocument.transact.mockClear();
 
     session.readingState.decorateVerses(
-      "BSB",
       "GEN",
       1,
       [1],
@@ -805,7 +801,6 @@ describe("SessionsManager", () => {
     const session = await manager.joinSession("group-abc");
 
     session.readingState.decorateVerses(
-      "BSB",
       "GEN",
       1,
       [1],

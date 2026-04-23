@@ -162,6 +162,7 @@ function toSessionDecorationInput(
     style: decoration.style,
     removeAfterMs: decoration.removeAfterMs,
     preserveOnChapterChange: decoration.preserveOnChapterChange,
+    translationId: decoration.translationId,
   };
 }
 
@@ -367,7 +368,6 @@ async function createBibleReadingSession(
         }
 
         readingState.decorateVerses(
-          entry.decoration.translationId,
           entry.decoration.bookId,
           entry.decoration.chapterNumber,
           entry.decoration.verses,

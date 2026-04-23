@@ -98,6 +98,15 @@ export interface VerseDecorationInput {
    * Setting this to true will keep the decoration until it is explicitly removed.
    */
   preserveOnChapterChange?: boolean;
+
+  /**
+   * The ID of the translation that this decoration should be limited to.
+   * If null or omitted, then the decoration will apply to all translations.
+   *
+   * Should only be used when you have a specific need to target a decoration to a specific translation,
+   * since decorations may be shared across sessions and users may not all have the same translation selected.
+   */
+  translationId?: string | null;
 }
 
 /**
@@ -170,8 +179,6 @@ export interface BibleReadingState {
   /**
    * Adds a visual decoration to one or more verses and returns a decoration ID.
    *
-   * @param translationId Translation target for the decoration. Null targets the
-   * current translation.
    * @param bookId Book target for the decoration.
    * @param chapterNumber Chapter target for the decoration.
    * @param verses Single verse number or verse number list.
@@ -180,7 +187,6 @@ export interface BibleReadingState {
    * @returns Unique decoration ID used by `removeDecoration()`.
    */
   decorateVerses: (
-    translationId: string | null,
     bookId: string,
     chapterNumber: number,
     verses: number | number[],
@@ -567,7 +573,6 @@ export function createBibleReadingState(
   };
 
   const decorateVerses = (
-    translationId: string | null,
     bookId: string,
     chapterNumber: number,
     verses: number | number[],
@@ -586,11 +591,11 @@ export function createBibleReadingState(
 
     const nextDecoration: VerseDecoration = {
       id,
-      translationId,
       bookId,
       chapterNumber,
       verses: normalizeDecorationVerses(verses),
       ...decoration,
+      translationId: decoration.translationId ?? null,
     };
 
     if (existingDecorationIndex >= 0) {
