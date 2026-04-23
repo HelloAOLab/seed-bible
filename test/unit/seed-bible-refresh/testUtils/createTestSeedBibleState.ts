@@ -35,7 +35,9 @@ async function waitFor(
       throw new Error("Timed out waiting for condition.");
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    const p = new Promise((resolve) => setTimeout(resolve, 0));
+    jest.runAllTimers();
+    await p;
   }
 }
 
