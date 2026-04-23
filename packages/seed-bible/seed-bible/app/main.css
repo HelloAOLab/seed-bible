@@ -692,6 +692,14 @@ h6 {
 
   transition:
     background-color 0.2s ease,
+    background 0.3s ease,
+    color 0.2s ease;
+}
+
+.sb-verse-decorator {
+  transition:
+    background-color 0.2s ease,
+    background 0.3s ease,
     color 0.2s ease;
 }
 
@@ -1471,6 +1479,10 @@ h6 {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.sb-search-highlighted-verse {
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 28%);
 }
 
 .sb-sidebar-search-result-button:hover {

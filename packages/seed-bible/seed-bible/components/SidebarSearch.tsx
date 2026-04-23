@@ -160,6 +160,18 @@ export function SidebarSearch(props: SidebarSearchProps) {
         scrollToVerse: result.verseNumber ?? undefined,
       }
     );
+    if (result.verseNumber) {
+      targetTab.readingState.decorateVerses(
+        result.translationId,
+        result.bookId,
+        result.chapterNumber,
+        result.verseNumber,
+        {
+          className: "sb-search-highlighted-verse",
+          removeAfterMs: 3000,
+        }
+      );
+    }
   };
 
   const moveHighlightedResult = (direction: 1 | -1) => {
