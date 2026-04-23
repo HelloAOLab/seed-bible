@@ -377,6 +377,19 @@ export function createBibleReadingState(
     };
   });
 
+  const decorationMatchesState = (decoration: VerseDecoration): boolean => {
+    if (
+      decoration.translationId &&
+      decoration.translationId !== translationId.value
+    ) {
+      return false;
+    }
+    return (
+      decoration.bookId === bookId.value &&
+      decoration.chapterNumber === chapterNumber.value
+    );
+  };
+
   const selectVerse = (
     verse: BibleSelectedVerse,
     selectionX: number,
@@ -444,10 +457,18 @@ export function createBibleReadingState(
       scrollToVerse.value = nextScrollToVerse;
       selectedFootnoteId.value = null;
       const removedDecorationIds = decorations.value
-        .filter((decoration) => !decoration.preserveOnChapterChange)
+        .filter(
+          (decoration) =>
+            !(
+              decoration.preserveOnChapterChange ||
+              decorationMatchesState(decoration)
+            )
+        )
         .map((decoration) => decoration.id);
       decorations.value = decorations.value.filter(
-        (decoration) => decoration.preserveOnChapterChange
+        (decoration) =>
+          decoration.preserveOnChapterChange ||
+          decorationMatchesState(decoration)
       );
       for (const decorationId of removedDecorationIds) {
         const timer = decorationRemovalTimers.get(decorationId);

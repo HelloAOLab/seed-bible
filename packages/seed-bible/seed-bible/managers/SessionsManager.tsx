@@ -307,15 +307,7 @@ async function createBibleReadingSession(
   let applyingRemoteDecorations = false;
 
   const shouldApplySharedDecoration = (decoration: VerseDecoration) => {
-    if (decoration.preserveOnChapterChange) {
-      return true;
-    }
-
-    return (
-      decoration.translationId === readingState.translationId.value &&
-      decoration.bookId === readingState.bookId.value &&
-      decoration.chapterNumber === readingState.chapterNumber.value
-    );
+    return true;
   };
 
   const getSharedDecorationEntries = () => {
@@ -610,8 +602,6 @@ async function createBibleReadingSession(
         return;
       }
     }
-
-    syncDecorationsFromSession();
 
     const currentDecorations = readingState.decorations.value;
     const localDecorations = currentDecorations.filter((decoration) => {
