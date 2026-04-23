@@ -314,7 +314,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    const decorationId = state.decorateVerses("AAB", "GEN", 1, [1], {
+    const decorationId = state.decorateVerses("GEN", 1, [1], {
       className: "sb-test-decoration",
     });
 
