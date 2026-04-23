@@ -554,6 +554,43 @@ describe("SessionsManager", () => {
     );
   });
 
+  it("syncs removeAfterMs for local decorations to the shared decorations map", async () => {
+    (globalThis as any).configBot = {
+      id: "conn-self",
+    };
+
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockOptionsMap.setEmitOnSet(true);
+
+    session.readingState.decorateVerses(
+      "BSB",
+      "GEN",
+      1,
+      [5],
+      {
+        className: "temp-decoration",
+        removeAfterMs: 1500,
+      },
+      "decoration-local-timeout"
+    );
+
+    await waitFor(() => mockDecorationsMap.set.mock.calls.length > 0);
+
+    expect(mockDecorationsMap.set).toHaveBeenCalledWith(
+      JSON.stringify(["conn-self", "decoration-local-timeout"]),
+      expect.objectContaining({
+        id: "decoration-local-timeout",
+        removeAfterMs: 1500,
+      })
+    );
+  });
+
   it("does not sync decoration changes when the current user is not an allowed decorator", async () => {
     (globalThis as any).configBot = {
       id: "conn-self",
@@ -864,6 +901,23 @@ describe("SessionsManager", () => {
     expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 8);
     expect(mockMap.set).toHaveBeenCalledWith("scrollToVerse", 6);
     expect(mockDocument.transact).toHaveBeenCalled();
+  });
+
+  it("does not update the shared document when only scrollToVerse changes", async () => {
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockMap.set.mockClear();
+    mockDocument.transact.mockClear();
+
+    session.readingState.scrollToVerse.value = 9;
+
+    expect(mockMap.set).not.toHaveBeenCalled();
+    expect(mockDocument.transact).not.toHaveBeenCalled();
   });
 
   it("does not loop when local state changes are echoed back from the shared map", async () => {
