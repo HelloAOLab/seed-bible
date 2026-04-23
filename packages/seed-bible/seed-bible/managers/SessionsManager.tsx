@@ -306,10 +306,6 @@ async function createBibleReadingSession(
   let remoteClientsVersion = 0;
   let applyingRemoteDecorations = false;
 
-  const shouldApplySharedDecoration = (decoration: VerseDecoration) => {
-    return true;
-  };
-
   const getSharedDecorationEntries = () => {
     const entries = new Map<
       string,
@@ -344,10 +340,7 @@ async function createBibleReadingSession(
 
       for (const decoration of currentDecorations) {
         const nextSharedDecoration = sharedDecorationEntries.get(decoration.id);
-        if (
-          !nextSharedDecoration ||
-          !shouldApplySharedDecoration(nextSharedDecoration.decoration)
-        ) {
+        if (!nextSharedDecoration) {
           if (decorationOwners.has(decoration.id)) {
             readingState.removeDecoration(decoration.id);
             decorationOwners.delete(decoration.id);
@@ -357,10 +350,6 @@ async function createBibleReadingSession(
 
       for (const [decorationId, entry] of sharedDecorationEntries) {
         decorationOwners.set(decorationId, entry.connectionId);
-
-        if (!shouldApplySharedDecoration(entry.decoration)) {
-          continue;
-        }
 
         const existingDecoration = readingState.decorations.value.find(
           (decoration) => decoration.id === decorationId
