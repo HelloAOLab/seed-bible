@@ -12,7 +12,7 @@ import type {
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { type ToolsManager } from "seed-bible.managers.BibleToolsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
-import { batch, effect, untracked } from "@preact/signals";
+import { batch, effect } from "@preact/signals";
 import type { ComponentChildren } from "preact";
 import { translateTitle } from "seed-bible.components.Utils";
 import { MaterialIcon } from "seed-bible.components.icons";
