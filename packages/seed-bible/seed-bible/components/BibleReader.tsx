@@ -473,7 +473,8 @@ function renderChapterContent(
   const getVerseDecorations = (verseNumber: number) => {
     return decorations.filter(
       (decoration) =>
-        decoration.translationId === chapterData.translation.id &&
+        (!decoration.translationId ||
+          decoration.translationId === chapterData.translation.id) &&
         decoration.bookId === chapterData.book.id &&
         decoration.chapterNumber === chapterData.chapter.number &&
         decoration.verses.includes(verseNumber)
