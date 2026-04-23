@@ -324,7 +324,7 @@ export const DEFAULT_EXTENSIONS = [
   "seed-bible",
   "ext_twitchPub",
   // "ext_twitchSub",
-  // "BookSelector",
+  "BookSelector",
   // "Object Pooler",
   // "GeoImporter",
   // "Color Lerper",

@@ -1794,7 +1794,6 @@ const SideBarChapters = (props: {
       }
 
       globalThis.LAST_CLICKED_BOOK_CHAPTER = { ...dataItem };
-
       if (!dontOpen) {
         shout("playSound", { soundName: "UI_Numpad_Click" });
 
@@ -1859,13 +1858,38 @@ const SideBarChapters = (props: {
         }
       }
     } else {
-      const chapterUrl = bookData.firstChapterApiLink.replace(
-        "1.json",
-        `${chapterNo}.json`
-      );
-      globalThis.Open(data.id, chapterNo, selectedTranslation.id, chapterUrl);
-      setOpenSidebar((prev) => !prev);
-      setCurrentExperience(0);
+      if (globalThis.MakingNewTab) {
+        const tab = {
+          id: uuid(),
+          taken: false,
+          data: {
+            use: "thePage",
+            type: "book",
+            book: bookName,
+            bookId: data.id,
+            chapter: chapterNo,
+            translation: data.translationId,
+            shortName: data?.shortName || "",
+          },
+        };
+        globalThis.AddTab(tab);
+        // globalThis.MakingNewTab(tab);
+        globalThis.UpdateTab(tab);
+        globalThis.MakingNewTab = false;
+        setOpenSidebar(false);
+        setTimeout(() => {
+          globalThis?.RemoveApplicationByLabel(globalThis.ActiveMoreApp);
+          globalThis?.setActiveMoreApp(null);
+        }, 100);
+      } else {
+        const chapterUrl = bookData.firstChapterApiLink.replace(
+          "1.json",
+          `${chapterNo}.json`
+        );
+        globalThis.Open(data.id, chapterNo, selectedTranslation.id, chapterUrl);
+        setOpenSidebar((prev) => !prev);
+        setCurrentExperience(0);
+      }
     }
   };
   const psalmsPartName = (props: { index: number }) => {
