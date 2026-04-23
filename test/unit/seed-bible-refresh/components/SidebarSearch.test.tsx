@@ -1,9 +1,8 @@
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
-import { signal } from "@preact/signals";
 import { SidebarSearch } from "@packages/seed-bible/seed-bible/components/SidebarSearch";
-import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
 
 jest.mock("seed-bible.components.ContextMenu", () => ({
   closeContextMenus: jest.fn(),
@@ -40,97 +39,34 @@ jest.mock("seed-bible.components.ContextMenu", () => ({
 
 type SidebarSearchFixture = {
   state: SeedBibleState;
-  search: jest.Mock;
-  selectTranslationAndChapter: jest.Mock;
-  addTab: jest.Mock;
-  setSelectedPaneTab: jest.Mock;
-  newTabSelectTranslationAndChapter: jest.Mock;
+  search: jest.SpyInstance;
+  addTab: jest.SpyInstance;
+  addTabOriginal: SeedBibleState["tabs"]["addTab"];
+  setSelectedPaneTab: jest.SpyInstance;
 };
 
-function createTab(
-  id: string,
-  selectTranslationAndChapter: jest.Mock
-): ReaderTab {
-  return {
-    id,
-    title: id,
-    sharedSession: null,
-    readingState: {
-      bookId: signal("GEN"),
-      chapterNumber: signal(1),
-      translationId: signal("BSB"),
-      translation: signal({ textDirection: "ltr" } as any),
-      decorateVerses: jest.fn(),
-      translationBooks: signal({
-        books: [
-          {
-            id: "GEN",
-            name: "Genesis",
-          },
-        ],
-      } as any),
-      selectTranslationAndChapter,
-    } as any,
-  };
-}
-
-function createFixture(options?: {
+async function createFixture(options?: {
   hasSelectedTab?: boolean;
-}): SidebarSearchFixture {
-  const currentTabSelectTranslationAndChapter = jest.fn(async () => undefined);
-  const newTabSelectTranslationAndChapter = jest.fn(async () => undefined);
-  const currentTab = createTab("tab-1", currentTabSelectTranslationAndChapter);
-  const newTab = createTab("tab-2", newTabSelectTranslationAndChapter);
+}): Promise<SidebarSearchFixture> {
+  const state = await createTestSeedBibleState();
   const hasSelectedTab = options?.hasSelectedTab ?? true;
-  const selectedTabSignal = signal<ReaderTab | null>(
-    hasSelectedTab ? currentTab : null
-  );
-  const tabsSignal = signal(hasSelectedTab ? [currentTab] : []);
-  const selectedTabId = signal(hasSelectedTab ? currentTab.id : "");
-  const search = jest.fn();
-  const setSelectedPaneTab = jest.fn();
-  const addTab = jest.fn(() => {
-    tabsSignal.value = [...tabsSignal.value, newTab];
-    selectedTabSignal.value = newTab;
-    selectedTabId.value = newTab.id;
-    return newTab;
-  });
-  const appSelectTab = jest.fn((tabId: string) => {
-    const nextTab = tabsSignal.value.find((tab) => tab.id === tabId) ?? null;
-    selectedTabSignal.value = nextTab;
-    selectedTabId.value = tabId;
-  });
 
-  const state = {
-    app: {
-      panelsEnabled: signal(true),
-      selectedTab: selectedTabSignal,
-      addTab: jest.fn(),
-      selectTab: appSelectTab,
-      openInNewPane: jest.fn(),
-      openInDetachedPane: jest.fn(),
-    },
-    tabs: {
-      tabs: tabsSignal,
-      selectedTabId,
-      addTab,
-      removeTab: jest.fn(),
-    },
-    panes: {
-      setSelectedPaneTab,
-    },
-    search: {
-      search,
-    },
-  } as any as SeedBibleState;
+  if (!hasSelectedTab) {
+    state.tabs.tabs.value = [];
+    state.tabs.selectedTabId.value = "";
+  }
+
+  const addTabOriginal = state.tabs.addTab.bind(state.tabs);
+  const search = jest.spyOn(state.search, "search");
+  const addTab = jest.spyOn(state.tabs, "addTab");
+  const setSelectedPaneTab = jest.spyOn(state.panes, "setSelectedPaneTab");
 
   return {
     state,
     search,
-    selectTranslationAndChapter: currentTabSelectTranslationAndChapter,
     addTab,
+    addTabOriginal,
     setSelectedPaneTab,
-    newTabSelectTranslationAndChapter,
   };
 }
 
@@ -187,10 +123,12 @@ describe("SidebarSearch", () => {
   }
 
   it("searches verses and opens the chapter in the current tab when a result is clicked", async () => {
-    const fixture = createFixture();
+    const fixture = await createFixture();
     const currentTab = fixture.state.app.selectedTab.value!;
-    const currentSelect = currentTab.readingState
-      .selectTranslationAndChapter as jest.Mock;
+    const currentSelect = jest.spyOn(
+      currentTab.readingState,
+      "selectTranslationAndChapter"
+    );
 
     fixture.search.mockResolvedValue({
       found: 1,
@@ -240,7 +178,17 @@ describe("SidebarSearch", () => {
   });
 
   it("opens a new tab when there is no current tab", async () => {
-    const fixture = createFixture({ hasSelectedTab: false });
+    const fixture = await createFixture({ hasSelectedTab: false });
+    let newTabSelect: jest.SpyInstance | null = null;
+
+    fixture.addTab.mockImplementation((...args: any[]) => {
+      const tab = fixture.addTabOriginal(...args);
+      newTabSelect = jest.spyOn(
+        tab.readingState,
+        "selectTranslationAndChapter"
+      );
+      return tab;
+    });
 
     fixture.search.mockResolvedValue({
       found: 1,
@@ -280,20 +228,22 @@ describe("SidebarSearch", () => {
     });
 
     expect(fixture.addTab).toHaveBeenCalledTimes(1);
-    expect(fixture.setSelectedPaneTab).toHaveBeenCalledWith("tab-2");
-    expect(fixture.newTabSelectTranslationAndChapter).toHaveBeenCalledWith(
-      "NIV",
-      "MAT",
-      5,
-      { scrollToVerse: 9 }
-    );
+    const newTab = fixture.state.app.selectedTab.value;
+    expect(newTab).not.toBeNull();
+    expect(fixture.setSelectedPaneTab).toHaveBeenCalledWith(newTab!.id);
+    expect(newTabSelect).not.toBeNull();
+    expect(newTabSelect).toHaveBeenCalledWith("NIV", "MAT", 5, {
+      scrollToVerse: 9,
+    });
   });
 
   it("supports keyboard navigation for search results", async () => {
-    const fixture = createFixture();
+    const fixture = await createFixture();
     const currentTab = fixture.state.app.selectedTab.value!;
-    const currentSelect = currentTab.readingState
-      .selectTranslationAndChapter as jest.Mock;
+    const currentSelect = jest.spyOn(
+      currentTab.readingState,
+      "selectTranslationAndChapter"
+    );
 
     fixture.search.mockResolvedValue({
       found: 2,
