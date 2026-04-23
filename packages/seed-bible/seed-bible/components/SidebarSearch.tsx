@@ -162,7 +162,8 @@ export function SidebarSearch(props: SidebarSearchProps) {
     );
     if (result.verseNumber) {
       targetTab.readingState.decorateVerses(
-        result.translationId,
+        // Null translation ID so that shared sessions can apply this decoration to all translations
+        null,
         result.bookId,
         result.chapterNumber,
         result.verseNumber,

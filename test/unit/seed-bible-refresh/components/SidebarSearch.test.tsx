@@ -190,7 +190,7 @@ describe("SidebarSearch", () => {
     ).toEqual([
       {
         id: expect.any(String),
-        translationId: "BSB",
+        translationId: null,
         bookId: "GEN",
         chapterNumber: 1,
         verses: [1],
