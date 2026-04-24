@@ -25,6 +25,27 @@ type ReaderFixture = {
   setOpen: jest.Mock;
 };
 
+const VERSE_MARKER_JOINER = "\u2060";
+
+function expectMarkerHasOnlyJoinerBeforeContent(
+  marker: Element | null | undefined
+) {
+  expect(marker).not.toBeNull();
+
+  const joinerNode = marker?.nextSibling;
+  expect(joinerNode?.nodeType).toBe(Node.TEXT_NODE);
+  expect(joinerNode?.textContent).toBe(VERSE_MARKER_JOINER);
+
+  const contentNode = joinerNode?.nextSibling;
+  expect(contentNode).not.toBeNull();
+  expect(
+    !(
+      contentNode?.nodeType === Node.TEXT_NODE &&
+      /\s/.test(contentNode.textContent ?? "")
+    )
+  ).toBe(true);
+}
+
 function createFixture(): ReaderFixture {
   const chapterData = signal<TranslationBookChapter | null>({
     translation: {
@@ -545,6 +566,97 @@ describe("BibleReader", () => {
     expect(
       poetryDecorators?.[0]?.querySelector(".sb-verse-number")?.textContent
     ).toBe("2");
+  });
+
+  it("uses only the verse marker joiner between marker and content for non-poetry verses", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const firstVerse = container.querySelectorAll(".sb-verse")[0] as
+      | HTMLElement
+      | undefined;
+    const marker = firstVerse?.querySelector(".sb-verse-number");
+
+    expect(marker?.textContent).toBe("1");
+    expectMarkerHasOnlyJoinerBeforeContent(marker);
+  });
+
+  it("uses only the verse marker joiner between marker and content for poetry verses", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const poetryVerse = container.querySelector(
+      ".sb-verse-poetry"
+    ) as HTMLElement | null;
+    const marker = poetryVerse?.querySelector(
+      ".sb-verse-line .sb-verse-number"
+    );
+
+    expect(marker?.textContent).toBe("2");
+    expectMarkerHasOnlyJoinerBeforeContent(marker);
+  });
+
+  it("uses only the verse marker joiner between marker and content when a verse has both regular and poetry lines", () => {
+    const { pane, selectorState, readingState, chapterData } = createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      numberOfVerses: 3,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          ...chapterData.value!.chapter.content,
+          {
+            type: "verse",
+            number: 3,
+            content: [
+              "Regular line first.",
+              { lineBreak: true },
+              { text: "Poetry line", poem: 1 },
+            ],
+          },
+        ],
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const mixedVerse = Array.from(container.querySelectorAll(".sb-verse")).find(
+      (verse) => verse.querySelector(".sb-verse-number")?.textContent === "3"
+    ) as HTMLElement | undefined;
+    const marker = mixedVerse?.querySelector(".sb-verse-number");
+
+    expect(mixedVerse?.classList.contains("sb-verse-poetry")).toBe(true);
+    expectMarkerHasOnlyJoinerBeforeContent(marker);
   });
 
   it("applies targetContent decorations only to the matching text", () => {

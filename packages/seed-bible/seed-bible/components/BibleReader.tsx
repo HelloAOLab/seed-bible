@@ -53,6 +53,8 @@ interface ContentDecorationRange {
   style?: JSX.CSSProperties;
 }
 
+const VERSE_MARKER_JOINER = "\u2060";
+
 function getInlineText(part: ChapterVerse["content"][0]): string {
   if (typeof part === "string") {
     return part;
@@ -594,7 +596,10 @@ function renderChapterContent(
                     style={verseDecoratorStyle}
                   >
                     {segIndex === 0 && (
-                      <sup className="sb-verse-number">{value.number}</sup>
+                      <>
+                        <sup className="sb-verse-number">{value.number}</sup>
+                        {VERSE_MARKER_JOINER}
+                      </>
                     )}
                     {segment.parts.map((part, partIndex) =>
                       renderInlineContent(
@@ -624,7 +629,10 @@ function renderChapterContent(
                     style={verseDecoratorStyle}
                   >
                     {segIndex === 0 && lineIndex === 0 && (
-                      <sup className="sb-verse-number">{value.number}</sup>
+                      <>
+                        <sup className="sb-verse-number">{value.number}</sup>
+                        {VERSE_MARKER_JOINER}
+                      </>
                     )}
                     {line.parts.map((part, partIndex) =>
                       renderInlineContent(
@@ -658,6 +666,7 @@ function renderChapterContent(
         >
           <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
             <sup className="sb-verse-number">{value.number}</sup>
+            {VERSE_MARKER_JOINER}
             {value.content.map((part, index) =>
               renderInlineContent(
                 part,

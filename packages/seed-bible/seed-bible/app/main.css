@@ -718,6 +718,8 @@ h6 {
   top: -0.4em;
   white-space: nowrap;
   vertical-align: middle;
+  padding-inline-start: 0.2em;
+  padding-inline-end: 0.4em;
 }
 
 .sb-poem-line-1 {
