@@ -1,7 +1,20 @@
-console.log("onInstJoined ext_twitchPub");
-await os.sleep(1000);
-
-if (configBot.tags.pattern === "SeedBible") {
+const unInstallSelf = async ({ pkg = "ext_twitchPub", reRun = 1 }) => {
+  await os.sleep(3000);
+  if (reRun > 3) {
+    return;
+  }
   const Packager = getBot("system", "app.packager");
-  Packager.uninstallPackage({ address: "ext_twitchPub" });
-}
+  if (Packager.masks.installedPackages.includes(pkg)) {
+    Packager.uninstallPackage({ address: pkg });
+    setTimeout(() => {
+      const Packager = getBot("system", "app.packager");
+      if (Packager.masks.installedPackages.includes(pkg)) {
+        unInstallSelf({ pkg, reRun: reRun + 1 });
+      }
+    }, 3000);
+  } else {
+    unInstallSelf({ pkg, reRun: reRun + 1 });
+  }
+};
+
+unInstallSelf({ pkg: "ext_twitchPub" });
