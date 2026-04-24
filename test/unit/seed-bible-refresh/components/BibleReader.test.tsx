@@ -772,4 +772,43 @@ describe("BibleReader", () => {
 
     expect(selectFootnote).toHaveBeenCalledWith(null);
   });
+
+  it("shows translation license notice and website when licenseNotice is present", () => {
+    const { pane, selectorState, readingState, chapterData } = createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      translation: {
+        ...chapterData.value!.translation,
+        licenseNotice: "Used by permission. All rights reserved.",
+        website: "https://example.org/translation",
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const notice = container.querySelector(".sb-translation-license-notice");
+    expect(notice).not.toBeNull();
+    expect(notice?.textContent).toContain(
+      "Used by permission. All rights reserved."
+    );
+
+    const websiteLink = container.querySelector(
+      ".sb-translation-website a"
+    ) as HTMLAnchorElement | null;
+    expect(websiteLink).not.toBeNull();
+    expect(websiteLink?.textContent).toBe("https://example.org/translation");
+    expect(websiteLink?.getAttribute("href")).toBe(
+      "https://example.org/translation"
+    );
+  });
 });

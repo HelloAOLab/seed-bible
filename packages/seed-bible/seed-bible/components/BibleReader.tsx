@@ -707,6 +707,12 @@ export function BibleReader(props: BibleReaderProps) {
       translationBooks.value?.books.find((book) => book.id === bookId.value) ??
       null
   );
+  const translationLicenseNotice = computed(
+    () => translation.value?.licenseNotice?.trim() ?? ""
+  );
+  const translationWebsite = computed(
+    () => translation.value?.website.trim() ?? ""
+  );
 
   return (
     <div
@@ -751,6 +757,25 @@ export function BibleReader(props: BibleReaderProps) {
 
       {!availableTranslations.value && !error.value && (
         <p>No translations available.</p>
+      )}
+
+      {!error.value && translationLicenseNotice.value.length > 0 && (
+        <>
+          <p className="sb-translation-license-notice">
+            {translationLicenseNotice.value}
+          </p>
+          {translationWebsite.value.length > 0 && (
+            <p className="sb-translation-website">
+              <a
+                href={translationWebsite.value}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {translationWebsite.value}
+              </a>
+            </p>
+          )}
+        </>
       )}
 
       {selectedFootnote.value !== null && (
