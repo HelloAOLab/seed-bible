@@ -5,8 +5,12 @@ import type {
   ArrangementAdapterPort,
   ArrangementConfigProviderPort,
 } from "bibleVizUtils.domain.ports.arrangement";
+import type { ArrangementConfigProviderPort as BookInfoMapperProviderPort } from "bibleVizUtils.infrastructure.ports.bookInfo";
+import type { ArrangementInfo as InfrastructureArrangementInfo } from "bibleVizUtils.infrastructure.models.arrangement";
 
-export class ArrangementsConfigProvider implements ArrangementConfigProviderPort {
+export class ArrangementsConfigProvider
+  implements ArrangementConfigProviderPort, BookInfoMapperProviderPort
+{
   #arrangementAdapterPort: ArrangementAdapterPort;
 
   constructor(arrangementAdapterPort: ArrangementAdapterPort) {
@@ -18,6 +22,11 @@ export class ArrangementsConfigProvider implements ArrangementConfigProviderPort
       return staticArrangements.map((staticArrangement) =>
         this.#arrangementAdapterPort.toDomain(staticArrangement)
       );
+    };
+
+  getRawStaticArrangements: () => readonly InfrastructureArrangementInfo[] =
+    () => {
+      return staticArrangements;
     };
 
   getPsalmConfig<K extends keyof typeof PsalmsConfig>(

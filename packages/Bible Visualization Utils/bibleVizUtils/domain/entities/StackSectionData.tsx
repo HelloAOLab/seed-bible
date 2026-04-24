@@ -13,7 +13,7 @@ import type { Piece } from "bibleVizUtils.domain.models.canvas";
 interface DataParams {
   childrenData?: StackBookData[][];
   id: string;
-  piece?: Piece;
+  piece?: Piece<"StackSection">;
   pieceInfo: SectionInfo;
   parentDataIds: ParentDataIds;
   isSplitIntoBooks?: boolean;
@@ -27,7 +27,8 @@ interface DataParams {
 export class StackSectionData extends StackPieceData<
   StackBookData[],
   SectionInfo,
-  StackSectionCreationParams
+  StackSectionCreationParams,
+  "StackSection"
 > {
   #isSplitIntoBooks: DataParams["isSplitIntoBooks"];
   #isInExplodedView: DataParams["isInExplodedView"];
@@ -57,6 +58,7 @@ export class StackSectionData extends StackPieceData<
       isActive,
       creationParams,
       isHidden: false,
+      type: "StackSection",
     });
     this.#isSplitIntoBooks = isSplitIntoBooks;
     this.#isInExplodedView = isInExplodedView;

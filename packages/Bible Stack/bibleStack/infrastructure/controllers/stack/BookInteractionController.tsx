@@ -25,6 +25,13 @@ export class BookInteractionController {
       interaction: interaction === "Click" ? "Precise" : "Coarse",
     });
   }
+
+  handleBookDrag({ book }: { book: BookBot }) {
+    const piece = PieceMapper.toDomain(book);
+    this.#bookInteractionServicePort.handleBookDrag({
+      book: piece,
+    });
+  }
 }
 
 import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
@@ -42,34 +49,6 @@ import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
 import { pieceDataRepository } from "bibleStack.services.index";
 import type { BibleStackEvents } from "bibleStack.models.events";
 import type { PieceRepository } from "bibleStack.services.PieceDataRepository";
-
-export async function HandleBookDrag({ book }: BibleStackEvents["OnBookDrag"]) {
-  if (thisBot.masks.isBibleAnimating) return;
-
-  const bookData = pieceDataRepository.getPieceData(getBookRepository(book)) as
-    | StackBookData
-    | StackSectionBookData
-    | undefined;
-
-  if (!bookData) {
-    throw new Error("HandleBookDrag: bookData not found.");
-  }
-
-  const {
-    bibleData,
-  }: {
-    bibleData: StackBibleData | undefined;
-    testamentData: StackTestamentData | undefined;
-    sectionData: StackSectionData | undefined;
-  } = await thisBot.GetDataChainFromParentDataIds({
-    parentDataIds: bookData.parentDataIds,
-  });
-
-  if (bibleData?.currentState !== BibleState.Open || !book.tags.draggable)
-    return;
-
-  shout("OnStackPieceDrag", { piece: book, data: bookData });
-}
 
 export async function HandleBookDragging({
   book,

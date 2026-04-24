@@ -15,6 +15,11 @@ export interface BookInteractionServicePort {
     book: Piece<"StackBook" | "StackSectionBook">;
     interaction: SelectionModality;
   }) => void;
+  handleBookDrag: ({
+    book,
+  }: {
+    book: Piece<"StackBook" | "StackSectionBook">;
+  }) => void;
 }
 
 export type BookDataRepositoryPort = Pick<
@@ -28,4 +33,8 @@ export interface BookSelectionServicePort {
     source: PieceSelectionSource
   ) => void;
   deselectBook: (data: StackBookData | StackSectionBookData) => void;
+}
+
+export interface PieceAdapterPort {
+  isPieceAnchored: (piece: Piece) => boolean;
 }

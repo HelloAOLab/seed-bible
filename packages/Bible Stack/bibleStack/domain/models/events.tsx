@@ -10,6 +10,7 @@ import type {
   VerseBot,
 } from "bibleStack.models.stack";
 import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+import type { Piece } from "bibleVizUtils.domain.models.canvas";
 
 export interface BibleStackEvents {
   OnTestamentClick: {
@@ -133,6 +134,9 @@ export interface BibleStackEvents {
   OnVerseClick: {
     verse: VerseBot;
   };
+  OnStackSequenceStart: void;
+  OnStackSequenceEnd: void;
+  OnTestamentDelete: { piece: Piece<"StackTestament"> };
 }
 
 export type BibleStackEvent = keyof BibleStackEvents;

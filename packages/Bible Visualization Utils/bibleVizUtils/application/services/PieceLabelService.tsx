@@ -1,9 +1,15 @@
-import type { PieceLabelServiceParams } from "bibleVizUtils.domain.ports.label";
+import type {
+  PieceLabelServiceParams,
+  PieceLabelServicePort,
+} from "bibleVizUtils.domain.ports.label";
 import { InfoLabelData } from "../../domain/entities/InfoLabelData";
 import type { LabelTranslucencyMode } from "bibleVizUtils.domain.models.label";
 import type { BiblePieceType, Piece } from "bibleVizUtils.domain.models.canvas";
+import type { ShowAnimationPacing } from "../../infrastructure/models/label";
 
-export class PieceLabelService<T extends BiblePieceType> {
+export class PieceLabelService<
+  T extends BiblePieceType,
+> implements PieceLabelServicePort<T> {
   #labelAdapterPort: PieceLabelServiceParams<T>["labelAdapterPort"];
   #labelDataStorePort: PieceLabelServiceParams<T>["labelDataStorePort"];
   #pieceActivityServicePort: PieceLabelServiceParams<T>["pieceActivityServicePort"];
@@ -36,9 +42,11 @@ export class PieceLabelService<T extends BiblePieceType> {
   showLabel({
     piece,
     translucencyMode,
+    pacing = "Regular",
   }: {
     piece: Piece<T>;
     translucencyMode: LabelTranslucencyMode;
+    pacing?: ShowAnimationPacing;
   }) {
     const strategy = this.#labelPropertiesStrategies[piece.type];
 
@@ -86,11 +94,11 @@ export class PieceLabelService<T extends BiblePieceType> {
     this.#labelAnimationAdapterPort.displayAttentionFeedback(labelData);
     this.#labelAnimationAdapterPort.displayShowFeedback({
       data: labelData,
-      pacing: "Regular",
+      pacing,
     });
   }
 
-  hideLabel(piece: Piece<T>) {
+  hideLabel(piece: Piece<T>, pacing: ShowAnimationPacing = "Regular") {
     const labelData = this.#labelDataStorePort.getDataByOwnerId(piece.id);
     if (!labelData) {
       throw new Error(`PieceLabelService: labelData not found at hideLabel`);
@@ -100,7 +108,7 @@ export class PieceLabelService<T extends BiblePieceType> {
     this.#labelAnimationAdapterPort
       .displayHideFeedback({
         data: labelData,
-        pacing: "Regular",
+        pacing,
       })
       .then(() => {
         labelData.endHiding();

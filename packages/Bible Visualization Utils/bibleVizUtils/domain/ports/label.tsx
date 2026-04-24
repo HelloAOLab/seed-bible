@@ -107,3 +107,12 @@ export interface LabelInteractionEventPort {
       : [payload: BibleVizUtilsEvents[K]]
   ) => void;
 }
+
+export interface PieceLabelServicePort<T extends BiblePieceType> {
+  showLabel: (params: {
+    piece: Piece<T>;
+    translucencyMode: LabelTranslucencyMode;
+    pacing?: ShowAnimationPacing;
+  }) => void;
+  hideLabel: (piece: Piece<T>, pacing?: ShowAnimationPacing) => void;
+}

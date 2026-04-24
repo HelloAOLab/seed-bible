@@ -1,4 +1,4 @@
-import type { BookInfo } from "bibleVizUtils.domain.models.arrangement";
+import type { BookInfo } from "bibleVizUtils.infrastructure.models.arrangement";
 
 export class StackService {
   constructor() {}

@@ -14,7 +14,7 @@ import type { Point2D } from "bibleVizUtils.domain.models.commonTypes";
 interface DataParams {
   isSelected: boolean;
   id: string;
-  piece?: Piece;
+  piece?: Piece<"StackChapter">;
   pieceInfo: ChapterInfo;
   parentDataIds: ParentDataIds;
   isInsideBible: boolean;
@@ -36,7 +36,8 @@ type HighlightInfo = {
 export class StackChapterData extends StackPieceData<
   never,
   ChapterInfo,
-  ChapterCreationParams
+  ChapterCreationParams,
+  "StackChapter"
 > {
   #isSelected: DataParams["isSelected"];
   #highlightsInfo: HighlightInfo[] = [];
@@ -68,6 +69,7 @@ export class StackChapterData extends StackPieceData<
       isHidden,
       creationParams,
       isActive: false,
+      type: "StackChapter",
     });
     this.#isInsideBook = isInsideBook;
     this.#isSelected = isSelected;

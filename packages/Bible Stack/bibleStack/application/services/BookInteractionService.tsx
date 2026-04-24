@@ -2,6 +2,8 @@ import type {
   BookDataRepositoryPort,
   BookInteractionServicePort,
   BookSelectionServicePort,
+  PieceAdapterPort,
+  SequenceStateServicePort,
 } from "bibleStack.application.ports.books";
 import {
   BibleState,
@@ -27,6 +29,8 @@ interface ServiceParams {
   bookSelectionServicePort: BookSelectionServicePort;
   pieceHighlightServicePort: PieceHighlightServicePort;
   explodedViewServicePort: ExplodedViewServicePort;
+  sequenceStateServicePort: SequenceStateServicePort;
+  pieceAdapterPort: PieceAdapterPort;
 }
 
 export class BookInteractionService implements BookInteractionServicePort {
@@ -36,6 +40,8 @@ export class BookInteractionService implements BookInteractionServicePort {
   #bookSelectionServicePort: ServiceParams["bookSelectionServicePort"];
   #pieceHighlightServicePort: ServiceParams["pieceHighlightServicePort"];
   #explodedViewServicePort: ServiceParams["explodedViewServicePort"];
+  #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
+  #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
 
   constructor({
     bookDataRepositoryPort,
@@ -44,6 +50,8 @@ export class BookInteractionService implements BookInteractionServicePort {
     bookSelectionServicePort,
     pieceHighlightServicePort,
     explodedViewServicePort,
+    sequenceStateServicePort,
+    pieceAdapterPort,
   }: ServiceParams) {
     this.#bookDataRepositoryPort = bookDataRepositoryPort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
@@ -51,6 +59,8 @@ export class BookInteractionService implements BookInteractionServicePort {
     this.#bookSelectionServicePort = bookSelectionServicePort;
     this.#pieceHighlightServicePort = pieceHighlightServicePort;
     this.#explodedViewServicePort = explodedViewServicePort;
+    this.#sequenceStateServicePort = sequenceStateServicePort;
+    this.#pieceAdapterPort = pieceAdapterPort;
   }
 
   handleBookClick({
@@ -134,4 +144,32 @@ export class BookInteractionService implements BookInteractionServicePort {
       }
     }
   }
+
+  handleBookDrag: ({
+    book,
+  }: {
+    book: Piece<"StackBook" | "StackSectionBook">;
+  }) => void = ({ book }) => {
+    if (this.#sequenceStateServicePort.isThereAnOngoingSequence()) return;
+
+    const bookData = this.#bookDataRepositoryPort.getPieceData(book);
+
+    if (!bookData) {
+      throw new Error(
+        "BookInteractionService: bookData not found at handleBookDrag."
+      );
+    }
+
+    const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
+      bookData.parentDataIds as StackParentDataIds
+    );
+
+    if (
+      bibleData?.currentState !== BibleState.Open ||
+      this.#pieceAdapterPort.isPieceAnchored(book)
+    )
+      return;
+
+    shout("OnStackPieceDrag", { piece: book, data: bookData });
+  };
 }

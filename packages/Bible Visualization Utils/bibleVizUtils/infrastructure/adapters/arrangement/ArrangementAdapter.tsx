@@ -14,26 +14,33 @@ export class ArrangementAdapter {
   ): DomainArrangementInfo {
     return {
       ...infrastructureArrangement,
-      testaments: infrastructureArrangement.testaments.map((testament) => {
-        return {
-          ...testament,
-          sections: testament.sections.map((section) => {
-            return {
-              ...section,
-              books: section.books.map((book) => {
-                const staticInfo =
-                  this.#booksStaticInfoRepository.getBookStaticInfo(
-                    book.commonName
-                  );
-                return {
-                  ...book,
-                  ...staticInfo,
-                };
-              }),
-            };
-          }),
-        };
-      }),
+      testaments: infrastructureArrangement.testaments.map(
+        (testament, testamentIndex) => {
+          return {
+            ...testament,
+            sections: testament.sections.map((section, sectionIndex) => {
+              return {
+                ...section,
+                books: section.books.map((book) => {
+                  const staticInfo =
+                    this.#booksStaticInfoRepository.getBookStaticInfo(
+                      book.commonName
+                    );
+                  return {
+                    ...book,
+                    ...staticInfo,
+                    path: {
+                      arrangementName: infrastructureArrangement.name,
+                      testamentIndex,
+                      sectionIndex,
+                    },
+                  };
+                }),
+              };
+            }),
+          };
+        }
+      ),
     };
   }
 }

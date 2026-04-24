@@ -15,7 +15,7 @@ import type { Piece } from "bibleVizUtils.domain.models.canvas";
 interface DataParams {
   childrenData?: StackChapterData[];
   id: string;
-  piece?: Piece;
+  piece?: Piece<"StackSectionBook">;
   pieceInfo: SectionInfo;
   pieceBookInfo: BookInfo;
   parentDataIds?: ParentDataIds;
@@ -31,7 +31,8 @@ interface DataParams {
 export class StackSectionBookData extends StackPieceData<
   StackChapterData,
   SectionInfo,
-  StackSectionCreationParams
+  StackSectionCreationParams,
+  "StackSectionBook"
 > {
   #isSelected: DataParams["isSelected"];
   #currentShape: DataParams["currentShape"];
@@ -65,6 +66,7 @@ export class StackSectionBookData extends StackPieceData<
       isActive,
       creationParams,
       isHidden: false,
+      type: "StackSectionBook",
     });
     this.#isSelected = isSelected;
     this.#currentShape = currentShape;

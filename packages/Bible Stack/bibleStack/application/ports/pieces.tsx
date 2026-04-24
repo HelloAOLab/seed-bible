@@ -8,7 +8,11 @@ import type { StackTestamentData } from "bibleVizUtils.domain.entities.StackTest
 import type { ParentDataIds } from "bibleVizUtils.domain.models.canvas";
 import type { StackBibleData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBibleData";
 import type { BibleDataRepositoryPort } from "./stacks";
-import type { HighlightRequestSource } from "bibleStack.domain.models.pieces";
+import type {
+  HighlightRequestSource,
+  UnhighlightPacing,
+  UnhighlightRequestSource,
+} from "bibleStack.domain.models.pieces";
 
 export type StackParentDataIds = Pick<
   ParentDataIds,
@@ -93,5 +97,10 @@ export interface PieceHighlightServicePort {
   tryHighlightPiece: (params: {
     piece: Piece;
     source: HighlightRequestSource;
-  }) => void;
+  }) => Promise<void>;
+  tryUnhighlightPiece: (params: {
+    piece: Piece;
+    source: UnhighlightRequestSource;
+    pacing: UnhighlightPacing;
+  }) => Promise<void>;
 }

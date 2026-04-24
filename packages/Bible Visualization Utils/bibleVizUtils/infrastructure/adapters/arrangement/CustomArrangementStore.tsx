@@ -1,13 +1,16 @@
 import type { ArrangementInfo } from "bibleVizUtils.infrastructure.models.arrangement";
 import type { CustomArrangementStorePort } from "bibleVizUtils.domain.ports.arrangement";
 import type { ArrangementAdapterPort } from "bibleVizUtils.domain.ports.arrangement";
+import type { CustomArrangementStorePort as BookInfoCustomArrangementStorePort } from "../../ports/bookInfo";
 
 interface StoreProps {
   initialArrangements?: ArrangementInfo[];
   arrangementAdapterPort: ArrangementAdapterPort;
 }
 
-export class CustomArrangementStore implements CustomArrangementStorePort {
+export class CustomArrangementStore
+  implements CustomArrangementStorePort, BookInfoCustomArrangementStorePort
+{
   #customArrangements: Map<ArrangementInfo["name"], ArrangementInfo>;
   #arrangementAdapterPort: StoreProps["arrangementAdapterPort"];
 
@@ -43,5 +46,9 @@ export class CustomArrangementStore implements CustomArrangementStorePort {
     return [...this.#customArrangements.values()].map((arrangement) =>
       this.#arrangementAdapterPort.toDomain(arrangement)
     );
+  };
+
+  getRawArrangements: () => readonly ArrangementInfo[] = () => {
+    return [...this.#customArrangements.values()];
   };
 }

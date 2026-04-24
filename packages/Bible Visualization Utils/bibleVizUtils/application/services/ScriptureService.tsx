@@ -164,7 +164,9 @@ export class ScriptureService {
     return this.#biggerChapter;
   };
 
-  getSectionChapterCount: (section: BookInfo[]) => number = (section) => {
+  getSectionChapterCount: (section: readonly BookInfo[]) => number = (
+    section
+  ) => {
     const values = section.map((bookInfo) => {
       return bookInfo.numberOfChapters ?? 0;
     });

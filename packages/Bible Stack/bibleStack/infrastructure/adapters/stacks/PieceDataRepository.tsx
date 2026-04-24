@@ -1,9 +1,4 @@
-import type { Bot } from "../../../../../../typings/AuxLibraryDefinitions";
-import {
-  BiblePiece,
-  type BiblePieceType,
-  type Piece,
-} from "bibleVizUtils.domain.models.canvas";
+import { BiblePiece, type Piece } from "bibleVizUtils.domain.models.canvas";
 import { StackTestamentData } from "bibleVizUtils.domain.entities.StackTestamentData";
 import { StackSectionData } from "bibleVizUtils.domain.entities.StackSectionData";
 import { StackSectionBookData } from "bibleVizUtils.domain.entities.StackSectionBookData";
@@ -13,11 +8,6 @@ import type {
   PieceDataRepositoryPort,
   StackPieceDataMap,
 } from "bibleStack.application.ports.pieces";
-
-export interface PieceRepository {
-  getTypeOfPiece: () => BiblePieceType | undefined;
-  getId: () => Bot["id"];
-}
 
 export class PieceDataRepository implements PieceDataRepositoryPort {
   #testamentsData: Set<StackTestamentData> = new Set();

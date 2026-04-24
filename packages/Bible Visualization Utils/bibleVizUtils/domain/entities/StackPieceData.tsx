@@ -1,5 +1,5 @@
 import { StackData } from "bibleVizUtils.domain.entities.StackData";
-import type { Piece } from "bibleVizUtils.domain.models.canvas";
+import type { BiblePieceType, Piece } from "bibleVizUtils.domain.models.canvas";
 import type {
   ParentDataId,
   ParentDataIds,
@@ -7,10 +7,16 @@ import type {
 } from "bibleVizUtils.domain.models.canvas";
 import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
 
-interface DataParams<TChild, TPieceInfo, TCreationParams> {
+interface DataParams<
+  TChild,
+  TPieceInfo,
+  TCreationParams,
+  TPiece extends BiblePieceType,
+> {
   childrenData?: TChild[];
   id: string;
-  piece?: Piece;
+  piece?: Piece<TPiece>;
+  type: TPiece;
   pieceInfo: TPieceInfo;
   parentDataIds: ParentDataIds | undefined;
   isInsideBible?: boolean;
@@ -26,34 +32,52 @@ export class StackPieceData<
   TChild,
   TPieceInfo,
   TCreationParams,
+  TPiece extends BiblePieceType = BiblePieceType,
 > extends StackData<TChild> {
-  #piece: DataParams<TChild, TPieceInfo, TCreationParams>["piece"];
-  #pieceInfo: DataParams<TChild, TPieceInfo, TCreationParams>["pieceInfo"];
+  #piece: DataParams<TChild, TPieceInfo, TCreationParams, TPiece>["piece"];
+  #type: DataParams<TChild, TPieceInfo, TCreationParams, TPiece>["type"];
+  #pieceInfo: DataParams<
+    TChild,
+    TPieceInfo,
+    TCreationParams,
+    TPiece
+  >["pieceInfo"];
   #parentDataIds: DataParams<
     TChild,
     TPieceInfo,
-    TCreationParams
+    TCreationParams,
+    TPiece
   >["parentDataIds"];
   #isInsideBible: DataParams<
     TChild,
     TPieceInfo,
-    TCreationParams
+    TCreationParams,
+    TPiece
   >["isInsideBible"];
   #isActive: NonNullable<
-    DataParams<TChild, TPieceInfo, TCreationParams>["isActive"]
+    DataParams<TChild, TPieceInfo, TCreationParams, TPiece>["isActive"]
   >;
-  #isHidden: DataParams<TChild, TPieceInfo, TCreationParams>["isHidden"];
+  #isHidden: DataParams<
+    TChild,
+    TPieceInfo,
+    TCreationParams,
+    TPiece
+  >["isHidden"];
   #creationParams: DataParams<
     TChild,
     TPieceInfo,
-    TCreationParams
+    TCreationParams,
+    TPiece
   >["creationParams"];
   #highlightColor: HighlightColor;
   #lastInteractionSource: LastInteractionSource;
   #isHighlighted: NonNullable<
-    DataParams<TChild, TPieceInfo, TCreationParams>["isHighlighted"]
+    DataParams<TChild, TPieceInfo, TCreationParams, TPiece>["isHighlighted"]
   >;
   #isHighlighting: boolean = false;
+  #isOnTheGround: boolean = false;
+  #isBeingDragged: boolean = false;
+  #isHighlightable: boolean = false;
 
   constructor({
     childrenData = [],
@@ -66,9 +90,11 @@ export class StackPieceData<
     isHidden = false,
     creationParams,
     isHighlighted = false,
-  }: DataParams<TChild, TPieceInfo, TCreationParams>) {
+    type,
+  }: DataParams<TChild, TPieceInfo, TCreationParams, TPiece>) {
     super({ childrenData, id });
     this.#piece = piece;
+    this.#type = type;
     this.#pieceInfo = pieceInfo;
     this.#parentDataIds = parentDataIds;
     this.#isInsideBible = isInsideBible;
@@ -80,6 +106,9 @@ export class StackPieceData<
     this.#isHighlighted = isHighlighted;
   }
 
+  get type() {
+    return this.#type;
+  }
   resetData() {
     this.#piece = undefined;
     this.#isInsideBible = undefined;
@@ -88,10 +117,10 @@ export class StackPieceData<
   get piece() {
     return this.#piece;
   }
-  setPiece(newPiece: Piece) {
+  setPiece(newPiece: Piece<TPiece>) {
     this.#piece = newPiece;
   }
-  clearPiece(): Piece | undefined {
+  clearPiece(): Piece<TPiece> | undefined {
     let piece: Piece | undefined;
     if (this.#piece) {
       piece = this.#piece;
@@ -239,5 +268,29 @@ export class StackPieceData<
       this.#isHighlighting = false;
       this.highlight();
     }
+  }
+  placeOnGround() {
+    this.#isOnTheGround = true;
+  }
+  pickFromGround() {
+    this.#isOnTheGround = false;
+  }
+  get isOnTheGround() {
+    return this.#isOnTheGround;
+  }
+  beginDrag() {
+    this.#isBeingDragged = true;
+  }
+  endDrag() {
+    this.#isBeingDragged = false;
+  }
+  get isBeingDragged() {
+    return this.#isBeingDragged;
+  }
+  becomeHighlightable() {
+    this.#isHighlightable = true;
+  }
+  becomeNotHighlightable() {
+    this.#isHighlightable = false;
   }
 }
