@@ -2,8 +2,8 @@ import Typesense from "typesense-fixed";
 import { z } from "zod";
 
 const TYPESENSE_NODE_URL = new URL("https://search.ao.bot");
-const TYPESENSE_API_KEY = "2q7kmXHFUNXxutBv1zgXlhWcHyda7f5I";
-const VERSE_COLLECTION = "bible-verses";
+const TYPESENSE_API_KEY = "5A496vKeCWhVxntITkcrZ6i7Fehh9lCB";
+const VERSE_COLLECTION_PREFIX = "bibleVerses";
 
 export type SearchType = "verses";
 
@@ -34,11 +34,13 @@ export type VerseSearchResponse = Typesense.SearchResponse<VerseSearchDocument>;
 export interface SearchManager {
   /**
    * Searches for verses matching the given text and filters.
+   * @param language The ISO 639-3 language code of the verses to search within.
    * @param translationId The ID of the translation to search within.
    * @param query The search query text.
    * @param filters The filters to apply to the search.
    */
   searchVerses: (
+    language: string,
     translationId: string,
     query: string,
     filters?: SearchFilters
@@ -111,14 +113,16 @@ export function createSearchManager(): SearchManager {
   });
 
   const searchVerses = async (
+    language: string,
     translationId: string,
     text: string,
     filters?: SearchFilters
   ): Promise<VerseSearchResponse> => {
     const filterBy = buildVerseFilterBy(translationId, filters);
 
+    const collection = `${VERSE_COLLECTION_PREFIX}.${language}`;
     return await client
-      .collections<VerseSearchDocument>(VERSE_COLLECTION)
+      .collections<VerseSearchDocument>(collection)
       .documents()
       .search({
         q: text,

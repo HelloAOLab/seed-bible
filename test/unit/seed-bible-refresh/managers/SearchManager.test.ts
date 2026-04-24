@@ -68,11 +68,11 @@ describe("createSearchManager", () => {
     const manager = createSearchManager();
     const typesenseMock = getTypesenseMock();
     typesenseMock.search.mockResolvedValue(response);
-    const result = await manager.searchVerses("BSB", "beginning");
+    const result = await manager.searchVerses("eng", "BSB", "beginning");
 
     expect(result).toBe(response);
     expect(typesenseMock.client).toHaveBeenCalledWith({
-      apiKey: "2q7kmXHFUNXxutBv1zgXlhWcHyda7f5I",
+      apiKey: expect.any(String),
       nodes: [
         {
           host: "search.ao.bot",
@@ -81,7 +81,7 @@ describe("createSearchManager", () => {
         },
       ],
     });
-    expect(typesenseMock.collections).toHaveBeenCalledWith("bible-verses");
+    expect(typesenseMock.collections).toHaveBeenCalledWith("bibleVerses.eng");
     expect(typesenseMock.search).toHaveBeenCalledWith({
       q: "beginning",
       query_by: ["referenceNormalized", "reference", "text"],
@@ -99,7 +99,7 @@ describe("createSearchManager", () => {
       hits: [],
     });
 
-    await manager.searchVerses("BSB", "light", {
+    await manager.searchVerses("eng", "BSB", "light", {
       translation_id: "BSB",
       testament: ["old", "new"],
       chapter: 1,
@@ -123,7 +123,7 @@ describe("createSearchManager", () => {
       hits: [],
     });
 
-    await manager.searchVerses("NIV", "faith", 'translation_id:="NIV"');
+    await manager.searchVerses("eng", "NIV", "faith", 'translation_id:="NIV"');
 
     expect(typesenseMock.search).toHaveBeenCalledWith({
       q: "faith",

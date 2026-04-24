@@ -231,6 +231,7 @@ export interface BibleReadingState {
 }
 
 export const DEFAULT_TRANSLATION_ID = "AAB";
+export const DEFAULT_TRANSLATION_LANGUAGE = "eng";
 export const DEFAULT_BOOK_ID = "GEN";
 export const DEFAULT_CHAPTER_NUMBER = 1;
 

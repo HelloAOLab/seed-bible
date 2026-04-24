@@ -3,6 +3,10 @@ import { useEffect, useRef } from "preact/hooks";
 import { closeContextMenus } from "seed-bible.components.ContextMenu";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
+import {
+  DEFAULT_TRANSLATION_ID,
+  DEFAULT_TRANSLATION_LANGUAGE,
+} from "seed-bible.managers.BibleReadingManager";
 
 export interface SidebarSearchResult {
   id: string;
@@ -95,7 +99,11 @@ export function SidebarSearch(props: SidebarSearchProps) {
 
     const query = nextQuery.trim();
     const activeTranslationId =
-      state.app.currentReadingState.value?.translationId ?? "BSB";
+      state.app.currentReadingState.value?.translationId ??
+      DEFAULT_TRANSLATION_ID;
+    const activeLanguage =
+      state.app.currentReadingState.value?.tab.readingState.translation.value
+        ?.language ?? DEFAULT_TRANSLATION_LANGUAGE;
     const requestId = ++latestSearchRequestRef.current;
 
     if (!query) {
@@ -114,7 +122,7 @@ export function SidebarSearch(props: SidebarSearchProps) {
 
     searchDebounceTimeoutRef.current = window.setTimeout(() => {
       state.search
-        .searchVerses(activeTranslationId, query)
+        .searchVerses(activeLanguage, activeTranslationId, query)
         .then((response) => {
           if (latestSearchRequestRef.current !== requestId) {
             return;

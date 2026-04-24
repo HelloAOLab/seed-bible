@@ -161,7 +161,7 @@ describe("SidebarSearch", () => {
 
     await searchForVerse("beginning");
 
-    expect(fixture.search).toHaveBeenCalledWith("AAB", "beginning");
+    expect(fixture.search).toHaveBeenCalledWith("eng", "AAB", "beginning");
     expect(container.querySelector(".sb-sidebar-search-panel")).not.toBeNull();
 
     const resultButton = container.querySelector(
