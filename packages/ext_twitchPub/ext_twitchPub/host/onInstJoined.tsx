@@ -17,4 +17,6 @@ const unInstallSelf = async ({ pkg = "ext_twitchPub", reRun = 1 }) => {
   }
 };
 
-unInstallSelf({ pkg: "ext_twitchPub" });
+if (configBot.tags.pattern === "SeedBible") {
+  unInstallSelf({ pkg: "ext_twitchPub" });
+}
