@@ -204,22 +204,13 @@ function applyFlatResources(
   }
 }
 
-function getTranslationClientConfig(options: {
-  googleCloudApiKey?: string;
-  projectId?: string;
-}): { googleCloudApiKey: string; projectId: string } {
-  const googleCloudApiKey =
-    options.googleCloudApiKey ?? process.env.GOOGLE_CLOUD_API_KEY;
+function getTranslationClientConfig(options: { projectId?: string }): {
+  projectId: string;
+} {
   const projectId =
     options.projectId ??
     process.env.GOOGLE_CLOUD_PROJECT_ID ??
     process.env.GCLOUD_PROJECT;
-
-  if (!googleCloudApiKey) {
-    throw new Error(
-      "Missing Google Cloud API key. Provide --google-cloud-api-key or set GOOGLE_CLOUD_API_KEY."
-    );
-  }
 
   if (!projectId) {
     throw new Error(
@@ -228,13 +219,11 @@ function getTranslationClientConfig(options: {
   }
 
   return {
-    googleCloudApiKey,
     projectId,
   };
 }
 
 async function translateMissingCoreKeys(options: {
-  googleCloudApiKey: string;
   projectId: string;
 }): Promise<void> {
   const files = await readdir(I18N_DIR, { withFileTypes: true });
@@ -275,7 +264,6 @@ async function translateMissingCoreKeys(options: {
     }
 
     const translated = await translateResources(
-      options.googleCloudApiKey,
       options.projectId,
       {
         language: ENGLISH_LANGUAGE,
@@ -296,7 +284,6 @@ async function translateMissingCoreKeys(options: {
 }
 
 async function translateMissingExtensionKeys(options: {
-  googleCloudApiKey: string;
   projectId: string;
 }): Promise<void> {
   const extensions = await readExtensionDefinitions();
@@ -349,7 +336,6 @@ async function translateMissingExtensionKeys(options: {
       }
 
       const translated = await translateResources(
-        options.googleCloudApiKey,
         options.projectId,
         {
           language: ENGLISH_LANGUAGE,
@@ -456,10 +442,6 @@ program
   .command("translate-missing-keys")
   .description(
     "Translates keys missing from a language but present in English for core app and extensions."
-  )
-  .option(
-    "--google-cloud-api-key <key>",
-    "Google Cloud Translation API key. Defaults to GOOGLE_CLOUD_API_KEY env var."
   )
   .option(
     "--project-id <projectId>",

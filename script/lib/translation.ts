@@ -42,18 +42,15 @@ function splitTranslationValue(value: string): Segment[] {
 
 /**
  * Translates the given translation resources from the input language to the output language using the Google Cloud Translation API.
- * @param googleCloudApiKey The API key for the Google Cloud Translation API.
  * @param projectId The project ID for the Google Cloud project that has the Translation API enabled.
  * @param input The translation language object containing the input language code and its translation resources.
  */
 export async function translateResources(
-  googleCloudApiKey: string,
   projectId: string,
   input: TranslationLanguage,
   outputLanguage: string
 ): Promise<TranslationLanguage> {
   const client = new TranslationServiceClient({
-    key: googleCloudApiKey,
     projectId,
   });
 
@@ -81,39 +78,49 @@ export async function translateResources(
     }
   }
 
-  for (let i = 0; i < textSegmentsToTranslate.length; i += BATCH_SIZE) {
-    const batch = textSegmentsToTranslate.slice(i, i + BATCH_SIZE);
-    const [response] = await client.translateText({
-      sourceLanguageCode: input.language,
-      targetLanguageCode: outputLanguage,
-      mimeType: "text/plain",
-      contents: batch.map(({ key, segmentIndex }) => {
-        const segments = resourceSegments.get(key)!;
-        const segment = segments[segmentIndex]!;
-        return segment.value;
-      }),
-    });
+  try {
+    for (let i = 0; i < textSegmentsToTranslate.length; i += BATCH_SIZE) {
+      const batch = textSegmentsToTranslate.slice(i, i + BATCH_SIZE);
+      const [response] = await client.translateText({
+        parent: `projects/${projectId}/locations/global`,
+        sourceLanguageCode: input.language,
+        targetLanguageCode: outputLanguage,
+        mimeType: "text/plain",
+        contents: batch.map(({ key, segmentIndex }) => {
+          const segments = resourceSegments.get(key)!;
+          const segment = segments[segmentIndex]!;
+          return segment.value;
+        }),
+      });
 
-    if (response.translations) {
-      for (
-        let j = 0;
-        j < response.translations.length && j < batch.length;
-        j++
-      ) {
-        const t = response.translations[j];
-        const { key, segmentIndex } = batch[j]!;
-        const segments = resourceSegments.get(key)!;
-        const segment = segments[segmentIndex]!;
+      if (response.translations) {
+        for (
+          let j = 0;
+          j < response.translations.length && j < batch.length;
+          j++
+        ) {
+          const t = response.translations[j];
+          const { key, segmentIndex } = batch[j]!;
+          const segments = resourceSegments.get(key)!;
+          const segment = segments[segmentIndex]!;
 
-        if (t?.translatedText) {
-          segment.value = t.translatedText;
-        } else {
-          console.warn(
-            `Missing translated text for language "${outputLanguage}" in batch starting at index ${i}. Original key was: "${key}", segment index: ${segmentIndex}.`
-          );
+          if (t?.translatedText) {
+            segment.value = t.translatedText;
+          } else {
+            console.warn(
+              `Missing translated text for language "${outputLanguage}" in batch starting at index ${i}. Original key was: "${key}", segment index: ${segmentIndex}.`
+            );
+          }
         }
       }
     }
+  } catch (err) {
+    console.error(
+      "Error translating resources for language:",
+      outputLanguage,
+      err
+    );
+    throw err;
   }
 
   const resources: TranslationResources = {};
