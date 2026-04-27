@@ -325,9 +325,6 @@ describe("SessionsManager", () => {
     expect(session.options.value).toEqual({
       allowedNavigators: null,
       allowedDecorators: null,
-      hostUserId: null,
-      highlightDurationSeconds: 16,
-      endedAt: null,
     });
   });
 
@@ -368,9 +365,6 @@ describe("SessionsManager", () => {
     expect(session.options.value).toEqual({
       allowedNavigators: null,
       allowedDecorators: null,
-      hostUserId: null,
-      highlightDurationSeconds: 16,
-      endedAt: null,
     });
   });
 
@@ -397,9 +391,6 @@ describe("SessionsManager", () => {
     expect(session.options.value).toEqual({
       allowedNavigators: ["user-1", "conn-2"],
       allowedDecorators: null,
-      hostUserId: null,
-      highlightDurationSeconds: 16,
-      endedAt: null,
     });
     expect(mockOptionsMap.set).not.toHaveBeenCalled();
   });
@@ -429,9 +420,6 @@ describe("SessionsManager", () => {
     expect(session.options.value).toEqual({
       allowedNavigators: ["user-1", "conn-2"],
       allowedDecorators: null,
-      hostUserId: null,
-      highlightDurationSeconds: null,
-      endedAt: null,
     });
   });
 
@@ -456,9 +444,6 @@ describe("SessionsManager", () => {
     expect(session.options.value).toEqual({
       allowedNavigators: ["user-1", "conn-2"],
       allowedDecorators: null,
-      hostUserId: null,
-      highlightDurationSeconds: 16,
-      endedAt: null,
     });
   });
 

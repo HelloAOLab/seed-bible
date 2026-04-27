@@ -20,14 +20,9 @@ export function BibleSelector(props: BibleSelectorProps) {
     currentChapterNumber,
     availableTranslations,
     loading,
-    orientation,
   } = selectorState;
 
   const { t } = useI18n();
-  const oldTestamentLabel =
-    orientation.value === "tanak"
-      ? t("tanakh", { defaultValue: "Tanakh" })
-      : t("old-testament", { defaultValue: "Old Testament" });
   const {
     search,
     expandedBookId,
@@ -80,7 +75,9 @@ export function BibleSelector(props: BibleSelectorProps) {
         dir={selectedTranslation.value?.textDirection ?? "auto"}
       >
         <div className="sb-selector-column sb-selector-column-divider">
-          <h4 className="sb-selector-section-title">{oldTestamentLabel}</h4>
+          <h4 className="sb-selector-section-title">
+            {t("old-testament", { defaultValue: "Old Testament" })}
+          </h4>
           <div className="sb-selector-books-grid">
             {oldTestamentRows.value.map((row, rowIndex) => {
               const expandedBookInRow =

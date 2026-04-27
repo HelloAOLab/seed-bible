@@ -22,7 +22,7 @@ import {
   generateThemeCssClasses,
 } from "seed-bible.managers.ThemeManager";
 import type { ThemeManager } from "seed-bible.managers.ThemeManager";
-import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
+import { computed, effect, type ReadonlySignal } from "@preact/signals";
 import {
   createReadingHistoryManager,
   type ReadingHistoryManager,
@@ -49,14 +49,6 @@ import {
   createModalManager,
   type ModalManager,
 } from "seed-bible.managers.ModalManager";
-import {
-  createSettings,
-  type SettingsManager,
-} from "seed-bible.managers.SettingsManager";
-import {
-  createInvitationsManager,
-  type InvitationsManager,
-} from "seed-bible.managers.InvitationsManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 
@@ -73,10 +65,6 @@ export interface AppState {
   selectedTab: ReadonlySignal<ReaderTab | null>;
   /** Effective pane list shown by the UI (single pane fallback when panels are disabled). */
   effectivePanes: ReadonlySignal<Pane[]>;
-  /** Current window inner width in pixels. Updated on resize. */
-  viewportWidth: ReadonlySignal<number>;
-  /** True when viewport width is at or below the mobile breakpoint (768px). */
-  isMobile: ReadonlySignal<boolean>;
 
   /**
    * Snapshot of the current chapter selection for analytics and integrations.
@@ -144,10 +132,6 @@ export interface SeedBibleState {
   sessions: SessionsManager;
   /** Modal manager for app-wide dialog state and rendering. */
   modals: ModalManager;
-  /** App-level settings: book orientation, UI text size, selection UI, etc. */
-  settings: SettingsManager;
-  /** Incoming session invitations and invite-sending. */
-  invitations: InvitationsManager;
   /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
   /** Extension loading and runtime manager. */
@@ -171,8 +155,7 @@ export function createSeedBibleState(): SeedBibleState {
   const sidebar = createSidebar();
   const tabs = createTabs(data, highlights);
   const panes = createPanes(tabs, tabs.selectedTabId);
-  const settings = createSettings();
-  const selector = createBibleSelectorState(data, tabs, panes, settings);
+  const selector = createBibleSelectorState(data, tabs, panes);
   const tools = createBibleToolsManager();
   const readingHistory = createReadingHistoryManager(login);
   const annotations = createAnnotationsManager(login);
@@ -186,80 +169,32 @@ export function createSeedBibleState(): SeedBibleState {
     generateThemeCssVariables(theme.value)
   );
   const themeCssClasses = computed(() => generateThemeCssClasses(theme.value));
-
-  // Theme is the source of truth for text colors. When the user switches
-  // theme presets, drop any per-section color override from the text editor
-  // so verse / book title / heading pick up the new theme's colors.
-  let prevPresetId = themeManager.selectedThemeId.peek();
-  effect(() => {
-    const id = themeManager.selectedThemeId.value;
-    if (id === prevPresetId) return;
-    prevPresetId = id;
-    settings.resetTextColors();
-  });
   const panelsEnabled = computed(() => !config.config.value.disablePanels);
   const selectedTab = computed(
     () =>
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
   );
-
-  const viewportWidth = signal(
-    typeof window === "undefined" ? 0 : window.innerWidth
+  const effectivePanes = computed(() =>
+    panelsEnabled.value
+      ? panes.panes.value
+      : selectedTab.value
+        ? [
+            {
+              id: "single-pane",
+              tab: selectedTab.value,
+              component: null,
+              gridPortal: null,
+              mapPortal: null,
+              detached: false,
+              detachedAnchor: "floating" as const,
+              x: 0,
+              y: 0,
+              width: 0,
+              height: 0,
+            },
+          ]
+        : []
   );
-  const isMobile = computed(() => viewportWidth.value <= 768);
-
-  effect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const handleResize = () => {
-      viewportWidth.value = window.innerWidth;
-    };
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  });
-
-  const buildSingleSelectedPane = (): Pane[] =>
-    selectedTab.value
-      ? [
-          {
-            id: "single-pane",
-            tab: selectedTab.value,
-            component: null,
-            gridPortal: null,
-            mapPortal: null,
-            detached: false,
-            detachedAnchor: "floating" as const,
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0,
-          },
-        ]
-      : [];
-
-  const effectivePanes = computed(() => {
-    if (!panelsEnabled.value) {
-      return buildSingleSelectedPane();
-    }
-    if (isMobile.value) {
-      // On mobile we only show a single pane at a time. Prefer the pane that
-      // hosts the currently selected tab; fall back to the manager's selected
-      // pane, then the first pane.
-      const allPanes = panes.panes.value;
-      const tab = selectedTab.value;
-      const selectedPaneId = panes.selectedPaneId.value;
-      const matching =
-        (tab ? allPanes.find((p) => p.tab?.id === tab.id) : null) ??
-        allPanes.find((p) => p.id === selectedPaneId) ??
-        allPanes[0] ??
-        null;
-      return matching ? [matching] : buildSingleSelectedPane();
-    }
-    return panes.panes.value;
-  });
   const currentReadingState = computed(() => {
     const selectedTabValue = selectedTab.value;
 
@@ -381,93 +316,9 @@ export function createSeedBibleState(): SeedBibleState {
     selector.setOpen(true, selectedPane);
   };
 
-  // Wraps a session so that when it's disposed (via tabs.removeTab), its
-  // entry is removed from the global shared-sessions registry too. The
-  // registry is opened by every client, so other users see the session
-  // disappear automatically.
-  //
-  // Additionally: if THIS client is the host (by user id or connection id),
-  // mark `endedAt` in the session's shared options before tearing down.
-  // Participants watch for `endedAt` and auto-close their tab (see the
-  // effect below), which is the behavior the host expects when they end
-  // or close a shared tab.
-  const wrapSessionLifecycle = (
-    session: BibleReadingSession
-  ): BibleReadingSession => {
-    const originalDispose = session.dispose.bind(session);
-    session.dispose = () => {
-      const hostUserId = session.options.value.hostUserId;
-      const localId = login.userId.value;
-      const localConnectionId =
-        typeof configBot !== "undefined" && configBot?.id
-          ? String(configBot.id)
-          : null;
-      const isHost =
-        hostUserId !== null &&
-        (hostUserId === localId || hostUserId === localConnectionId);
-
-      if (isHost && session.options.value.endedAt === null) {
-        try {
-          session.updateOptions({ endedAt: Date.now() });
-        } catch {
-          // Best-effort — don't block teardown if the CRDT write fails.
-        }
-      }
-
-      void invitations.unpublishSession(session.id);
-      originalDispose();
-    };
-    return session;
-  };
-
-  // Auto-close participant tabs when the host goes away. Two signals:
-  //  (a) `options.endedAt` was written by the host (clean "End Session"
-  //      action — works when the CRDT flushes before the host disconnects).
-  //  (b) The host was previously in `connectedUsers` but has since left —
-  //      catches the host-browser-close case even if the `endedAt` write
-  //      never made it across the wire.
-  //
-  // We remember per-session that the host was at least once connected, so
-  // joiners don't immediately close their own tab on connect before they
-  // even see the host.
-  const sessionsWhereHostWasSeen = new Set<string>();
-  effect(() => {
-    for (const tab of tabs.tabs.value) {
-      const session = tab.sharedSession;
-      if (!session) continue;
-
-      if (session.options.value.endedAt !== null) {
-        sessionsWhereHostWasSeen.delete(session.id);
-        tabs.removeTab(tab.id);
-        continue;
-      }
-
-      const hostId = session.options.value.hostUserId;
-      if (!hostId) continue;
-
-      const users = session.connectedUsers.value;
-      const hostIsConnected = users.some(
-        (user) => user.userId === hostId || user.connectionId === hostId
-      );
-
-      if (hostIsConnected) {
-        sessionsWhereHostWasSeen.add(session.id);
-      } else if (sessionsWhereHostWasSeen.has(session.id)) {
-        // Host was here and has now dropped off — close the tab.
-        sessionsWhereHostWasSeen.delete(session.id);
-        tabs.removeTab(tab.id);
-      }
-    }
-  });
-
   const handleCreateSharedSession = async () => {
     closeSidebarAndSettings();
     const session = await sessions.createSession();
-    wrapSessionLifecycle(session);
-    // Auto-publish: the moment a shared tab is created, other logged-in
-    // users see it in their sidebar and can click to join — no manual
-    // invite/notification step.
-    void invitations.publishSession(session);
     const tab = tabs.addTab(session);
     panes.setSelectedPaneTab(tab.id);
     return session;
@@ -476,15 +327,10 @@ export function createSeedBibleState(): SeedBibleState {
   const handleJoinSharedSession = async (id: string) => {
     closeSidebarAndSettings();
     const session = await sessions.joinSession(id);
-    wrapSessionLifecycle(session);
     const tab = tabs.addTab(session);
     panes.setSelectedPaneTab(tab.id);
     return session;
   };
-
-  const invitations = createInvitationsManager(login, async (sessionId) => {
-    await handleJoinSharedSession(sessionId);
-  });
 
   const state: SeedBibleState = {
     bibleData: data,
@@ -505,8 +351,6 @@ export function createSeedBibleState(): SeedBibleState {
     annotations,
     sessions,
     modals,
-    settings,
-    invitations,
     extensions,
     app: {
       createSharedSession: handleCreateSharedSession,
@@ -514,8 +358,6 @@ export function createSeedBibleState(): SeedBibleState {
       panelsEnabled,
       selectedTab,
       effectivePanes,
-      viewportWidth,
-      isMobile,
       currentReadingState,
       selectTab: handleSelectTab,
       addTab: handleAddTab,
