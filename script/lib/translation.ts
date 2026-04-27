@@ -13,31 +13,46 @@ import { TranslationServiceClient } from "@google-cloud/translate";
 const BATCH_SIZE = 128;
 const PLACEHOLDER_REGEX = /(\{\{[^{}]+\}\})/g;
 
-type Segment =
-  | {
-      kind: "placeholder";
-      value: string;
-    }
-  | {
-      kind: "text";
-      value: string;
-      translatedValue?: string;
-    };
+function htmlEncode(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
-function splitTranslationValue(value: string): Segment[] {
-  return value.split(PLACEHOLDER_REGEX).map((segment) => {
-    if (segment.match(/^\{\{[^{}]+\}\}$/)) {
-      return {
-        kind: "placeholder",
-        value: segment,
-      };
-    }
+function htmlDecode(text: string): string {
+  // Decode in reverse order of encoding so &amp; is always decoded last,
+  // preventing double-decoding of sequences like &amp;lt; → &lt; → <.
+  return text
+    .replace(/&quot;/g, '"')
+    .replace(/&gt;/g, ">")
+    .replace(/&lt;/g, "<")
+    .replace(/&amp;/g, "&");
+}
 
-    return {
-      kind: "text",
-      value: segment,
-    };
-  });
+/**
+ * Encodes a translation value for the Google Cloud Translate HTML mode.
+ * Non-placeholder text is HTML-encoded; each placeholder is wrapped in a
+ * `<span translate="no">` tag so the API preserves it verbatim.
+ */
+export function encodeValueForHtml(value: string): string {
+  return value
+    .split(PLACEHOLDER_REGEX)
+    .map((part) =>
+      part.match(/^\{\{[^{}]+\}\}$/)
+        ? `<span translate="no">${part}</span>`
+        : htmlEncode(part)
+    )
+    .join("");
+}
+
+/**
+ * Strips `<span translate="no">…</span>` wrappers left by the API and
+ * HTML-decodes the remaining text.
+ */
+export function decodeValueFromHtml(html: string): string {
+  return htmlDecode(html.replace(/<span translate="no">(.*?)<\/span>/gs, "$1"));
 }
 
 /**
@@ -55,42 +70,17 @@ export async function translateResources(
   });
 
   const entries = Object.entries(input.resources);
-  const resourceSegments = new Map<string, Segment[]>();
-  const textSegmentsToTranslate: Array<{ key: string; segmentIndex: number }> =
-    [];
-
-  for (const [key, value] of entries) {
-    const segments = splitTranslationValue(value);
-    resourceSegments.set(key, segments);
-
-    for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex++) {
-      const segment = segments[segmentIndex]!;
-      if (segment.kind !== "text") {
-        continue;
-      }
-
-      // Skip empty/whitespace-only chunks to preserve exact spacing around placeholders.
-      if (!segment.value.trim()) {
-        continue;
-      }
-
-      textSegmentsToTranslate.push({ key, segmentIndex });
-    }
-  }
+  const resources: TranslationResources = {};
 
   try {
-    for (let i = 0; i < textSegmentsToTranslate.length; i += BATCH_SIZE) {
-      const batch = textSegmentsToTranslate.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < entries.length; i += BATCH_SIZE) {
+      const batch = entries.slice(i, i + BATCH_SIZE);
       const [response] = await client.translateText({
         parent: `projects/${projectId}/locations/global`,
         sourceLanguageCode: input.language,
         targetLanguageCode: outputLanguage,
-        mimeType: "text/plain",
-        contents: batch.map(({ key, segmentIndex }) => {
-          const segments = resourceSegments.get(key)!;
-          const segment = segments[segmentIndex]!;
-          return segment.value;
-        }),
+        mimeType: "text/html",
+        contents: batch.map(([, value]) => encodeValueForHtml(value)),
       });
 
       if (response.translations) {
@@ -100,15 +90,13 @@ export async function translateResources(
           j++
         ) {
           const t = response.translations[j];
-          const { key, segmentIndex } = batch[j]!;
-          const segments = resourceSegments.get(key)!;
-          const segment = segments[segmentIndex]!;
+          const [key] = batch[j]!;
 
           if (t?.translatedText) {
-            segment.value = t.translatedText;
+            resources[key] = decodeValueFromHtml(t.translatedText);
           } else {
             console.warn(
-              `Missing translated text for language "${outputLanguage}" in batch starting at index ${i}. Original key was: "${key}", segment index: ${segmentIndex}.`
+              `Missing translated text for language "${outputLanguage}" in batch starting at index ${i}. Original key was: "${key}".`
             );
           }
         }
@@ -121,19 +109,6 @@ export async function translateResources(
       err
     );
     throw err;
-  }
-
-  const resources: TranslationResources = {};
-  for (const [key, segments] of resourceSegments) {
-    resources[key] = segments
-      .map((segment) => {
-        if (segment.kind === "placeholder") {
-          return segment.value;
-        }
-
-        return segment.translatedValue ?? segment.value;
-      })
-      .join("");
   }
 
   return { language: outputLanguage, resources };
