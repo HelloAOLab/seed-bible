@@ -307,6 +307,11 @@ async function translateExtensionKeys(
   options: { projectId: string },
   mode: "missing" | "all"
 ): Promise<void> {
+  const coreResourcesByLanguage = await readMainAppResourcesByLanguage();
+  const coreLanguages = [...coreResourcesByLanguage.keys()]
+    .filter((language) => language !== ENGLISH_LANGUAGE)
+    .sort((a, b) => a.localeCompare(b));
+
   const extensions = await readExtensionDefinitions();
 
   if (extensions.length === 0) {
@@ -341,9 +346,12 @@ async function translateExtensionKeys(
 
     console.log(`  ${extension.packageName}:`);
 
-    const supportedLanguages = Object.keys(translations)
-      .filter((language) => language !== ENGLISH_LANGUAGE)
-      .sort((a, b) => a.localeCompare(b));
+    const existingLanguages = Object.keys(translations).filter(
+      (language) => language !== ENGLISH_LANGUAGE
+    );
+    const supportedLanguages = [
+      ...new Set([...existingLanguages, ...coreLanguages]),
+    ].sort((a, b) => a.localeCompare(b));
 
     if (supportedLanguages.length === 0) {
       console.log("    no non-English languages to update");
@@ -353,6 +361,7 @@ async function translateExtensionKeys(
     for (const language of supportedLanguages) {
       const languageRawResources =
         (translations[language] as TranslationResources | undefined) ?? {};
+      const wasMissingLanguage = !(language in translations);
 
       const resourcesToTranslate =
         mode === "missing"
@@ -378,7 +387,13 @@ async function translateExtensionKeys(
       applyFlatResources(languageRawResources, translated.resources);
       translations[language] = languageRawResources;
       extensionUpdated = true;
-      console.log(`    ${language}: translated ${count} key(s)`);
+      if (wasMissingLanguage) {
+        console.log(
+          `    ${language}: added language and translated ${count} key(s)`
+        );
+      } else {
+        console.log(`    ${language}: translated ${count} key(s)`);
+      }
     }
 
     if (extensionUpdated) {
