@@ -121,8 +121,8 @@ function SelectLanguage(props: {
           background: "white",
           padding: "10px",
           flexDirection: "column",
-          boxShadow:
-            "color-mix(in srgb, var(--tabSelection) 20%, transparent) 0px 3px 8px",
+          boxShadow: "color-mix(in srgb, black 20%, transparent) 0px 3px 8px",
+          borderRadius: "5px",
         }}
       >
         <h4 style={{ margin: "0 0 0 20px" }}>

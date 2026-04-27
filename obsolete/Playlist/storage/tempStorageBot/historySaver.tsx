@@ -68,7 +68,9 @@ const getPlaylists = async () => {
     G.IsPlaylistLoading = true;
     G.WAS_PREV_AUTH = true;
     apiResults = await os.getData(authBot.id, "playlists");
-
+    G.SetPlaylistLoading?.(false);
+    G.IsPlaylistLoading = false;
+    G.SetLoadingPlaylistOptions?.(false);
     if (apiResults.data) {
       const playlists = [...(apiResults.data.playlists || [])];
       apiResults = [...playlists];

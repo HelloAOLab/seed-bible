@@ -42,6 +42,7 @@ describe("AnnotationsManager", () => {
       logout: jest.fn().mockResolvedValue(undefined),
       updateProfile: jest.fn().mockResolvedValue(undefined),
       getUserProfile: jest.fn().mockResolvedValue({ name: "" }),
+      uploadProfilePicture: jest.fn().mockResolvedValue(undefined),
     };
 
     (globalThis as any).os = {

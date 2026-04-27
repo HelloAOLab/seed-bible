@@ -18,7 +18,7 @@
   background-color: var(--pageBackground);
   border-radius: 12px;
   overflow: hidden;
-  z-index: 1000;
+  z-index: 99999;
 }
 
 .modal-container h3,
@@ -88,7 +88,7 @@
   }
 }
 
-.modal-header {
+div.modal-header {
   padding: 12px 20px;
   display: flex;
   align-items: center;
@@ -99,7 +99,7 @@
   border-top-right-radius: 12px;
 }
 
-.modal-header h3 {
+div.modal-header h3 {
   font-family: "Satoshi", system-ui, sans-serif;
   font-size: 18px;
   font-weight: 600;
@@ -107,7 +107,7 @@
   line-height: 24.51px;
 }
 
-.modal-header .close-modal {
+div.modal-header .close-modal {
   font-size: 26px;
   font-weight: 500;
   top: 50%;
@@ -117,7 +117,7 @@
   cursor: pointer;
 }
 
-.modal-inner-cont {
+div.modal-inner-cont {
   padding: 28px 20px;
   color: var(--pageTextColor);
   background-color: var(--panelBackground);

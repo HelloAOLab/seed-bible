@@ -529,5 +529,3 @@ export function createSeedBibleState(): SeedBibleState {
 
   return state;
 }
-
-export { I18nProvider } from "seed-bible.i18n.I18nManager";

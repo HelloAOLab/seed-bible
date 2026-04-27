@@ -648,15 +648,15 @@ const AttachLink = (props: any) => {
   };
 
   const onReleaseData = () => {
-    G.RetainData = false;
-    G.RetainDataName = null;
-    G.RetainDataData = null;
-    G.RetainDataLink = null;
-    G.RetainDataMediaType = null;
-    G.RetainDataTextType = null;
-    G.RetainDataRecordingType = null;
-    G.RetainDataSelectedType = null;
-    G.RetainDataLinkState = null;
+    setTimeout(() => {
+      G.RetainData = false;
+      G.RetainDataName = null;
+      G.RetainDataData = null;
+      G.RetainDataLink = null;
+      G.RetainDataMediaType = null;
+      G.RetainDataTextType = null;
+      G.RetainDataRecordingType = null;
+    }, 100);
   };
 
   const onRestoreData = () => {

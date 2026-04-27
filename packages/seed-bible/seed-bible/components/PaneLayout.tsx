@@ -6,6 +6,7 @@ import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
 import type {
   DetachedPaneAnchor,
   Pane,
+  PaneLayoutId,
   PanesManager,
 } from "seed-bible.managers.PanesManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
@@ -14,14 +15,270 @@ import { useI18n } from "seed-bible.i18n.I18nManager";
 import { effect } from "@preact/signals";
 import type { ComponentChildren } from "preact";
 import { translateTitle } from "seed-bible.components.Utils";
+import { MaterialIcon } from "seed-bible.components.icons";
 
 const { useEffect, useRef, useState } = os.appHooks;
+
+const ATTACHED_PANE_MIN_SIZE_PX = 180;
+const ATTACHED_RESIZE_HANDLE_SIZE_PX = 14;
+
+type MultiPaneLayoutId = Exclude<PaneLayoutId, "single">;
+
+interface AttachedPaneSizesState {
+  "split-2v": { columns: number[] };
+  "split-left-two-right": { columns: number[]; rows: number[] };
+  "split-3v": { columns: number[] };
+  "grid-2x2": { columns: number[]; rows: number[] };
+  "split-4v": { columns: number[] };
+}
+
+type AttachedResizeHandleDescriptor = {
+  id: string;
+  axis: "x" | "y";
+  ratio: number;
+  crossStart: number;
+  crossEnd: number;
+};
+
+const DEFAULT_ATTACHED_PANE_SIZES: AttachedPaneSizesState = {
+  "split-2v": { columns: [1, 1] },
+  "split-left-two-right": { columns: [1.2, 1], rows: [1, 1] },
+  "split-3v": { columns: [1, 1, 1] },
+  "grid-2x2": { columns: [1, 1], rows: [1, 1] },
+  "split-4v": { columns: [1, 1, 1, 1] },
+};
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function toGridTrack(value: number) {
+  return `minmax(0, ${value}fr)`;
+}
+
+function getRatioAtIndex(values: number[], index: number) {
+  const total = values.reduce((sum, current) => sum + current, 0);
+  if (total <= 0) {
+    return 0;
+  }
+
+  const before = values
+    .slice(0, index + 1)
+    .reduce((sum, current) => sum + current, 0);
+  return clamp(before / total, 0, 1);
+}
+
+function resizeAdjacentTracks(
+  tracks: number[],
+  index: number,
+  deltaPx: number,
+  containerSizePx: number
+) {
+  if (index < 0 || index >= tracks.length - 1 || containerSizePx <= 0) {
+    return tracks;
+  }
+
+  const nextTracks = [...tracks];
+  const currentTrack = tracks[index] ?? 0;
+  const adjacentTrack = tracks[index + 1] ?? 0;
+  const pairTotal = currentTrack + adjacentTrack;
+  const minimumTrack =
+    (ATTACHED_PANE_MIN_SIZE_PX / containerSizePx) * pairTotal;
+  const boundedMinimumTrack = clamp(minimumTrack, 0.05, pairTotal / 2 - 0.0001);
+  if (boundedMinimumTrack * 2 >= pairTotal) {
+    return tracks;
+  }
+
+  const deltaTrack = (deltaPx / containerSizePx) * pairTotal;
+  const nextCurrentTrack = clamp(
+    currentTrack + deltaTrack,
+    boundedMinimumTrack,
+    pairTotal - boundedMinimumTrack
+  );
+
+  nextTracks[index] = nextCurrentTrack;
+  nextTracks[index + 1] = pairTotal - nextCurrentTrack;
+  return nextTracks;
+}
+
+function getAttachedResizeHandles(
+  layout: PaneLayoutId,
+  attachedPaneSizes: AttachedPaneSizesState
+): AttachedResizeHandleDescriptor[] {
+  if (layout === "split-2v") {
+    return [
+      {
+        id: "col-0",
+        axis: "x",
+        ratio: getRatioAtIndex(attachedPaneSizes["split-2v"].columns, 0),
+        crossStart: 0,
+        crossEnd: 1,
+      },
+    ];
+  }
+
+  if (layout === "split-3v") {
+    return [0, 1].map((index) => ({
+      id: `col-${index}`,
+      axis: "x" as const,
+      ratio: getRatioAtIndex(attachedPaneSizes["split-3v"].columns, index),
+      crossStart: 0,
+      crossEnd: 1,
+    }));
+  }
+
+  if (layout === "split-4v") {
+    return [0, 1, 2].map((index) => ({
+      id: `col-${index}`,
+      axis: "x" as const,
+      ratio: getRatioAtIndex(attachedPaneSizes["split-4v"].columns, index),
+      crossStart: 0,
+      crossEnd: 1,
+    }));
+  }
+
+  if (layout === "grid-2x2") {
+    return [
+      {
+        id: "col-0",
+        axis: "x",
+        ratio: getRatioAtIndex(attachedPaneSizes["grid-2x2"].columns, 0),
+        crossStart: 0,
+        crossEnd: 1,
+      },
+      {
+        id: "row-0",
+        axis: "y",
+        ratio: getRatioAtIndex(attachedPaneSizes["grid-2x2"].rows, 0),
+        crossStart: 0,
+        crossEnd: 1,
+      },
+    ];
+  }
+
+  if (layout === "split-left-two-right") {
+    const columnRatio = getRatioAtIndex(
+      attachedPaneSizes["split-left-two-right"].columns,
+      0
+    );
+
+    return [
+      {
+        id: "col-0",
+        axis: "x",
+        ratio: columnRatio,
+        crossStart: 0,
+        crossEnd: 1,
+      },
+      {
+        id: "row-0",
+        axis: "y",
+        ratio: getRatioAtIndex(
+          attachedPaneSizes["split-left-two-right"].rows,
+          0
+        ),
+        crossStart: columnRatio,
+        crossEnd: 1,
+      },
+    ];
+  }
+
+  return [];
+}
+
+function getAttachedLayoutStyle(
+  layout: PaneLayoutId,
+  attachedPaneSizes: AttachedPaneSizesState
+) {
+  if (layout === "split-2v") {
+    return {
+      gridTemplateColumns: attachedPaneSizes["split-2v"].columns
+        .map(toGridTrack)
+        .join(" "),
+    };
+  }
+
+  if (layout === "split-left-two-right") {
+    return {
+      gridTemplateColumns: attachedPaneSizes["split-left-two-right"].columns
+        .map(toGridTrack)
+        .join(" "),
+      gridTemplateRows: attachedPaneSizes["split-left-two-right"].rows
+        .map(toGridTrack)
+        .join(" "),
+    };
+  }
+
+  if (layout === "split-3v") {
+    return {
+      gridTemplateColumns: attachedPaneSizes["split-3v"].columns
+        .map(toGridTrack)
+        .join(" "),
+    };
+  }
+
+  if (layout === "grid-2x2") {
+    return {
+      gridTemplateColumns: attachedPaneSizes["grid-2x2"].columns
+        .map(toGridTrack)
+        .join(" "),
+      gridTemplateRows: attachedPaneSizes["grid-2x2"].rows
+        .map(toGridTrack)
+        .join(" "),
+    };
+  }
+
+  if (layout === "split-4v") {
+    return {
+      gridTemplateColumns: attachedPaneSizes["split-4v"].columns
+        .map(toGridTrack)
+        .join(" "),
+    };
+  }
+
+  return {};
+}
 
 interface GridPortalPaneProps {
   portal: string;
   portalType: "grid" | "map";
   gameContainerCss: string;
 }
+
+const FULLSCREEN_EXIT_BUTTON_CSS = `
+  .sb-fullscreen-exit-wrapper {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 1000;
+    pointer-events: auto;
+  }
+
+  .sb-fullscreen-exit-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.72);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.32);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
+
+  .sb-fullscreen-exit-button:hover {
+    background: rgba(0, 0, 0, 0.88);
+  }
+
+  .sb-fullscreen-exit-button .material-symbols-outlined {
+    font-size: 18px;
+  }
+`;
 
 const GRID_PORTAL_PANE_CSS = `
   .sb-grid-portal-pane {
@@ -299,14 +556,30 @@ export function PaneLayout(props: PaneLayoutProps) {
   const selectedPaneId = app.panelsEnabled.value
     ? panesManager.selectedPaneId.value
     : (panes[0]?.id ?? null);
-  const dragStateRef = useRef<{
-    mode: "move" | "resize";
-    paneId: string;
-    startX: number;
-    startY: number;
-    anchor?: DetachedPaneAnchor;
-  } | null>(null);
+  const dragStateRef = useRef<
+    | {
+        type: "detached";
+        mode: "move" | "resize";
+        paneId: string;
+        startX: number;
+        startY: number;
+        anchor?: DetachedPaneAnchor;
+      }
+    | {
+        type: "attached-resize";
+        layout: MultiPaneLayoutId;
+        splitterId: string;
+        axis: "x" | "y";
+        startClient: number;
+        containerSizePx: number;
+        startSizes: AttachedPaneSizesState;
+      }
+    | null
+  >(null);
+  const attachedLayoutRef = useRef<HTMLDivElement | null>(null);
   const paneElementMapRef = useRef(new Map<string, HTMLElement>());
+  const [attachedPaneSizes, setAttachedPaneSizes] =
+    useState<AttachedPaneSizesState>(DEFAULT_ATTACHED_PANE_SIZES);
   const [gridPortalContainerCss, setGridPortalContainerCss] = useState(
     generateGridPortalContainerCss(null, null)
   );
@@ -388,6 +661,122 @@ export function PaneLayout(props: PaneLayoutProps) {
       // Handle detached pane drag
       const dragState = dragStateRef.current;
       if (!dragState) {
+        return;
+      }
+
+      if (dragState.type === "attached-resize") {
+        const deltaPx =
+          dragState.axis === "x"
+            ? event.clientX - dragState.startClient
+            : event.clientY - dragState.startClient;
+        const splitterIndex = Number.parseInt(
+          dragState.splitterId.split("-")[1] ?? "-1",
+          10
+        );
+
+        setAttachedPaneSizes((previousSizes) => {
+          const baseSizes = dragState.startSizes;
+
+          if (dragState.layout === "split-2v") {
+            return {
+              ...previousSizes,
+              "split-2v": {
+                columns: resizeAdjacentTracks(
+                  baseSizes["split-2v"].columns,
+                  0,
+                  deltaPx,
+                  dragState.containerSizePx
+                ),
+              },
+            };
+          }
+
+          if (dragState.layout === "split-left-two-right") {
+            if (dragState.splitterId === "col-0") {
+              return {
+                ...previousSizes,
+                "split-left-two-right": {
+                  ...previousSizes["split-left-two-right"],
+                  columns: resizeAdjacentTracks(
+                    baseSizes["split-left-two-right"].columns,
+                    0,
+                    deltaPx,
+                    dragState.containerSizePx
+                  ),
+                },
+              };
+            }
+
+            return {
+              ...previousSizes,
+              "split-left-two-right": {
+                ...previousSizes["split-left-two-right"],
+                rows: resizeAdjacentTracks(
+                  baseSizes["split-left-two-right"].rows,
+                  0,
+                  deltaPx,
+                  dragState.containerSizePx
+                ),
+              },
+            };
+          }
+
+          if (dragState.layout === "split-3v") {
+            return {
+              ...previousSizes,
+              "split-3v": {
+                columns: resizeAdjacentTracks(
+                  baseSizes["split-3v"].columns,
+                  splitterIndex,
+                  deltaPx,
+                  dragState.containerSizePx
+                ),
+              },
+            };
+          }
+
+          if (dragState.layout === "grid-2x2") {
+            if (dragState.splitterId === "col-0") {
+              return {
+                ...previousSizes,
+                "grid-2x2": {
+                  ...previousSizes["grid-2x2"],
+                  columns: resizeAdjacentTracks(
+                    baseSizes["grid-2x2"].columns,
+                    0,
+                    deltaPx,
+                    dragState.containerSizePx
+                  ),
+                },
+              };
+            }
+
+            return {
+              ...previousSizes,
+              "grid-2x2": {
+                ...previousSizes["grid-2x2"],
+                rows: resizeAdjacentTracks(
+                  baseSizes["grid-2x2"].rows,
+                  0,
+                  deltaPx,
+                  dragState.containerSizePx
+                ),
+              },
+            };
+          }
+
+          return {
+            ...previousSizes,
+            "split-4v": {
+              columns: resizeAdjacentTracks(
+                baseSizes["split-4v"].columns,
+                splitterIndex,
+                deltaPx,
+                dragState.containerSizePx
+              ),
+            },
+          };
+        });
         return;
       }
 
@@ -480,6 +869,13 @@ export function PaneLayout(props: PaneLayoutProps) {
       observer?.disconnect();
     };
   }, [panes]);
+
+  const { t } = useI18n();
+  const attachedResizeHandles = getAttachedResizeHandles(
+    layout,
+    attachedPaneSizes
+  );
+  const attachedLayoutStyle = getAttachedLayoutStyle(layout, attachedPaneSizes);
 
   return (
     <div
@@ -622,36 +1018,48 @@ export function PaneLayout(props: PaneLayoutProps) {
           }${pane.id === selectedPaneId ? " sb-pane-shell-active" : ""}`}
           data-anchor={pane.detachedAnchor}
           style={{
-            ...(pane.detachedAnchor === "side"
+            ...(pane.detachedAnchor === "fullscreen"
               ? {
                   position: "fixed",
                   top: "0px",
+                  left: "0px",
                   right: "0px",
                   bottom: "0px",
-                  left: "auto",
-                  width: `${pane.width}px`,
-                  height: "auto",
+                  width: "100%",
+                  height: "100%",
                 }
-              : pane.detachedAnchor === "bottom"
+              : pane.detachedAnchor === "side"
                 ? {
                     position: "fixed",
-                    left: "0px",
+                    top: "0px",
                     right: "0px",
                     bottom: "0px",
-                    top: "auto",
-                    width: "auto",
-                    height: `${pane.height}px`,
-                  }
-                : {
-                    left: `${pane.x}px`,
-                    top: `${pane.y}px`,
+                    left: "auto",
                     width: `${pane.width}px`,
-                    height: `${pane.height}px`,
-                  }),
+                    height: "auto",
+                  }
+                : pane.detachedAnchor === "bottom"
+                  ? {
+                      position: "fixed",
+                      left: "0px",
+                      right: "0px",
+                      bottom: "0px",
+                      top: "auto",
+                      width: "auto",
+                      height: `${pane.height}px`,
+                    }
+                  : {
+                      left: `${pane.x}px`,
+                      top: `${pane.y}px`,
+                      width: `${pane.width}px`,
+                      height: `${pane.height}px`,
+                    }),
             zIndex:
-              pane.id === selectedPaneId
-                ? 70 + detachedPanes.length
-                : 50 + index,
+              pane.detachedAnchor === "fullscreen"
+                ? 100
+                : pane.id === selectedPaneId
+                  ? 70 + detachedPanes.length
+                  : 50 + index,
           }}
           ref={(element: HTMLElement | null) => {
             if (element) {
@@ -690,111 +1098,234 @@ export function PaneLayout(props: PaneLayoutProps) {
                 tabs={tabsManager}
               />
             )}
+            {pane.detachedAnchor === "floating" && (
+              <div
+                className={`sb-pane-detached-resize-handle`}
+                onPointerDown={(event: PointerEvent) => {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  app.selectPane(pane.id);
+                  dragStateRef.current = {
+                    type: "detached",
+                    mode: "resize",
+                    paneId: pane.id,
+                    anchor: pane.detachedAnchor,
+                    startX: event.clientX,
+                    startY: event.clientY,
+                  };
+                }}
+              ></div>
+            )}
           </div>
 
-          <div
-            className="sb-detached-pane-toolbar"
-            onPointerDown={(event: PointerEvent) => {
-              if (pane.detachedAnchor !== "floating") {
-                return;
-              }
-              event.stopPropagation();
-              app.selectPane(pane.id);
-              dragStateRef.current = {
-                mode: "move",
-                paneId: pane.id,
-                startX: event.clientX,
-                startY: event.clientY,
-              };
-            }}
-          >
-            <div className="sb-detached-pane-toolbar-item">
-              <button
-                className={`sb-detached-pane-toolbar-button${
+          {pane.detachedAnchor === "fullscreen" && (
+            <CasualOSApp id={`pane-fullscreen-exit-${pane.id}`}>
+              <>
+                <style>{FULLSCREEN_EXIT_BUTTON_CSS}</style>
+                <div className="sb-fullscreen-exit-wrapper">
+                  <button
+                    className="sb-fullscreen-exit-button"
+                    onClick={() =>
+                      panesManager.setDetachedAnchor(pane.id, "floating")
+                    }
+                  >
+                    <span className="material-symbols-outlined">
+                      fullscreen_exit
+                    </span>
+                    <span>Exit Full Screen</span>
+                  </button>
+                </div>
+              </>
+            </CasualOSApp>
+          )}
+
+          {pane.detachedAnchor !== "fullscreen" && (
+            <div
+              className="sb-detached-pane-toolbar"
+              onPointerDown={(event: PointerEvent) => {
+                if (pane.detachedAnchor !== "floating") {
+                  return;
+                }
+                event.stopPropagation();
+                app.selectPane(pane.id);
+                dragStateRef.current = {
+                  type: "detached",
+                  mode: "move",
+                  paneId: pane.id,
+                  startX: event.clientX,
+                  startY: event.clientY,
+                };
+              }}
+            >
+              {pane.detachedAnchor === "floating" && (
+                <>
+                  <div className="sb-detached-pane-toolbar-item">
+                    <button
+                      className="sb-detached-pane-toolbar-button"
+                      aria-label={t("small-window")}
+                      title={t("small-window")}
+                      onPointerDown={(event: PointerEvent) => {
+                        event.stopPropagation();
+                      }}
+                      onClick={(event: MouseEvent) => {
+                        event.stopPropagation();
+                        panesManager.resizePane(
+                          pane.id,
+                          400 - pane.width,
+                          300 - pane.height
+                        );
+                      }}
+                    >
+                      <span className="material-symbols-outlined">
+                        magnification_small
+                      </span>
+                      <span className="sr-only">{t("small-window")}</span>
+                    </button>
+                  </div>
+                  <div className="sb-detached-pane-toolbar-item">
+                    <button
+                      className="sb-detached-pane-toolbar-button"
+                      aria-label={t("large-window")}
+                      title={t("large-window")}
+                      onPointerDown={(event: PointerEvent) => {
+                        event.stopPropagation();
+                      }}
+                      onClick={(event: MouseEvent) => {
+                        event.stopPropagation();
+                        panesManager.resizePane(
+                          pane.id,
+                          600 - pane.width,
+                          400 - pane.height
+                        );
+                      }}
+                    >
+                      <span className="material-symbols-outlined">
+                        magnification_large
+                      </span>
+                      <span className="sr-only">{t("large-window")}</span>
+                    </button>
+                  </div>
+                </>
+              )}
+
+              <div className="sb-detached-pane-toolbar-item">
+                <button
+                  className="sb-detached-pane-toolbar-button"
+                  aria-label={t("toggle-fullscreen-panel")}
+                  title={t("fullscreen")}
+                  onPointerDown={(event: PointerEvent) => {
+                    event.stopPropagation();
+                  }}
+                  onClick={(event: MouseEvent) => {
+                    event.stopPropagation();
+                    panesManager.setDetachedAnchor(
+                      pane.id,
+                      pane.detachedAnchor === "fullscreen"
+                        ? "floating"
+                        : "fullscreen"
+                    );
+                  }}
+                >
+                  <span className="material-symbols-outlined">fullscreen</span>
+                  <span className="sr-only">{t("fullscreen")}</span>
+                </button>
+              </div>
+
+              {pane.detachedAnchor !== "side" && (
+                <div className="sb-detached-pane-toolbar-item">
+                  <button
+                    className="sb-detached-pane-toolbar-button"
+                    aria-label={t("anchor-to-side")}
+                    title={t("anchor-to-side")}
+                    onPointerDown={(event: PointerEvent) => {
+                      event.stopPropagation();
+                    }}
+                    onClick={(event: MouseEvent) => {
+                      event.stopPropagation();
+                      panesManager.setDetachedAnchor(pane.id, "side");
+                    }}
+                  >
+                    <span className="material-symbols-outlined flip-x">
+                      right_panel_open
+                    </span>
+                    <span className="sr-only">{t("anchor-to-side")}</span>
+                  </button>
+                </div>
+              )}
+
+              {pane.detachedAnchor !== "floating" && (
+                <div className="sb-detached-pane-toolbar-item">
+                  <button
+                    className="sb-detached-pane-toolbar-button"
+                    aria-label={t("return-to-floating-window")}
+                    title={t("return-to-floating-window")}
+                    onPointerDown={(event: PointerEvent) => {
+                      event.stopPropagation();
+                    }}
+                    onClick={(event: MouseEvent) => {
+                      event.stopPropagation();
+                      panesManager.setDetachedAnchor(pane.id, "floating");
+                    }}
+                  >
+                    <span className="material-symbols-outlined">
+                      open_in_new
+                    </span>
+                    <span className="sr-only">
+                      {t("return-to-floating-window")}
+                    </span>
+                  </button>
+                </div>
+              )}
+
+              <div className="sb-detached-pane-toolbar-item">
+                <button
+                  className="sb-detached-pane-toolbar-button"
+                  aria-label={t("close-panel")}
+                  title={t("close")}
+                  onPointerDown={(event: PointerEvent) => {
+                    event.stopPropagation();
+                  }}
+                  onClick={(event: MouseEvent) => {
+                    event.stopPropagation();
+                    panesManager.closePane(pane.id);
+                  }}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                  <span className="sr-only">{t("close")}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {pane.detachedAnchor !== "fullscreen" &&
+            pane.detachedAnchor !== "floating" && (
+              <div
+                className={`sb-pane-detached-resize-handle${
                   pane.detachedAnchor === "side"
-                    ? " sb-detached-pane-toolbar-button-active"
-                    : ""
+                    ? " sb-pane-detached-resize-handle-side"
+                    : pane.detachedAnchor === "bottom"
+                      ? " sb-pane-detached-resize-handle-bottom"
+                      : ""
                 }`}
-                aria-label="Anchor detached pane to side"
-                title="Anchor to side"
                 onPointerDown={(event: PointerEvent) => {
                   event.stopPropagation();
-                }}
-                onClick={(event: MouseEvent) => {
-                  event.stopPropagation();
-                  panesManager.setDetachedAnchor(pane.id, "side");
-                }}
-              >
-                <span className="material-symbols-outlined">
-                  right_panel_open
-                </span>
-                <span className="sr-only">Anchor to side</span>
-              </button>
-            </div>
-
-            <div className="sb-detached-pane-toolbar-item">
-              <button
-                className={`sb-detached-pane-toolbar-button${
-                  pane.detachedAnchor === "bottom"
-                    ? " sb-detached-pane-toolbar-button-active"
-                    : ""
-                }`}
-                aria-label="Anchor detached pane to bottom"
-                title="Anchor to bottom"
-                onPointerDown={(event: PointerEvent) => {
-                  event.stopPropagation();
-                }}
-                onClick={(event: MouseEvent) => {
-                  event.stopPropagation();
-                  panesManager.setDetachedAnchor(pane.id, "bottom");
+                  event.preventDefault();
+                  app.selectPane(pane.id);
+                  dragStateRef.current = {
+                    type: "detached",
+                    mode: "resize",
+                    paneId: pane.id,
+                    anchor: pane.detachedAnchor,
+                    startX: event.clientX,
+                    startY: event.clientY,
+                  };
                 }}
               >
-                <span className="material-symbols-outlined">
-                  bottom_panel_open
-                </span>
-                <span className="sr-only">Anchor to bottom</span>
-              </button>
-            </div>
-
-            <div className="sb-detached-pane-toolbar-item">
-              <button
-                className="sb-detached-pane-toolbar-button"
-                aria-label="Close detached pane"
-                title="Close"
-                onPointerDown={(event: PointerEvent) => {
-                  event.stopPropagation();
-                }}
-                onClick={(event: MouseEvent) => {
-                  event.stopPropagation();
-                  panesManager.closePane(pane.id);
-                }}
-              >
-                <span className="material-symbols-outlined">close</span>
-                <span className="sr-only">Close</span>
-              </button>
-            </div>
-          </div>
-
-          <div
-            className={`sb-pane-detached-resize-handle${
-              pane.detachedAnchor === "side"
-                ? " sb-pane-detached-resize-handle-side"
-                : pane.detachedAnchor === "bottom"
-                  ? " sb-pane-detached-resize-handle-bottom"
-                  : ""
-            }`}
-            onPointerDown={(event: PointerEvent) => {
-              event.stopPropagation();
-              app.selectPane(pane.id);
-              dragStateRef.current = {
-                mode: "resize",
-                paneId: pane.id,
-                anchor: pane.detachedAnchor,
-                startX: event.clientX,
-                startY: event.clientY,
-              };
-            }}
-          />
+                {pane.detachedAnchor === "side" && (
+                  <MaterialIcon>drag_indicator</MaterialIcon>
+                )}
+              </div>
+            )}
         </div>
       ))}
     </div>
