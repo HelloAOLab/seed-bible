@@ -25,6 +25,10 @@ export interface BibleSelectorOptions {
   pane?: Pane;
 }
 
+export interface CodexTranslation extends Translation {
+  origin?: string;
+}
+
 /**
  * Reactive state + actions for the Bible selector overlay.
  *
@@ -52,8 +56,6 @@ export interface BibleSelectorState {
   loading: Signal<boolean>;
   /** Last selector error message, if any. */
   error: Signal<string | null>;
-  /** Current book search text for filtering selector lists. */
-  search: Signal<string>;
 
   /** Translation currently selected in the selector UI. */
   selectedTranslationId: Signal<string | null>;
@@ -64,10 +66,15 @@ export interface BibleSelectorState {
   /** Loaded book metadata for selected translation. */
   selectedTranslationBooks: Signal<TranslationBooks | null>;
 
-  /** Filtered/grouped Old Testament books, chunked into responsive rows. */
-  oldTestamentRows: ReadonlySignal<TranslationBook[][]>;
-  /** Filtered/grouped New Testament books, chunked into responsive rows. */
-  newTestamentRows: ReadonlySignal<TranslationBook[][]>;
+  groupedBooks: ReadonlySignal<{
+    oldTestament: TranslationBook[];
+    newTestament: TranslationBook[];
+    apocrypha: TranslationBook[];
+  }>;
+
+  search: Signal<string>;
+
+  viewportWidth: Signal<number>;
 
   /**
    * Opens/closes selector.
@@ -89,6 +96,47 @@ export interface BibleSelectorState {
    * Creates a new tab if needed when the bound pane has no tab content.
    */
   selectChapter: (bookId: string, chapterNumber: number) => void;
+
+  selectedTestament: Signal<number>;
+  apocryphaAvailable: Signal<boolean>;
+  selectingTranslation: Signal<boolean>;
+  showCheck: Signal<any>;
+  dontopn: Signal<boolean>;
+  dontOpen: Signal<boolean>;
+  lastBookClicked: Signal<number>;
+  bookData: Signal<TranslationBook | null>;
+  chT: Signal<number>;
+  localSelectedTestament: Signal<number>;
+  highLightedButtonsID: Signal<Record<number, boolean>>;
+  currentPsalms: Signal<string[]>;
+  selectedTestamentData: Signal<TranslationBook[] | null>;
+  handleClick: (props: {
+    index: number;
+    book: TranslationBook;
+    cht?: number;
+  }) => void;
+  calcChapterPos: (index: number, separator: number) => number;
+  isBook: (book: TranslationBook | { ghost?: boolean }) => boolean;
+  ghostArray: (
+    booksArray: TranslationBook[],
+    allowedRows: number
+  ) => (TranslationBook | { ghost?: boolean })[];
+  handleEnter: () => void;
+  languageQuery: Signal<string>;
+  showCustomTranslation: Signal<boolean>;
+  allowedTranslationLimit: Signal<number>;
+  apiTranslations: Signal<Record<string, Record<string, Translation>>>;
+  showAllLanguages: Signal<"complete" | "all" | "popular">;
+  showTranslationSettings: Signal<boolean>;
+  showTranslationInfo: Signal<{
+    translation: Translation;
+    position: { x: number; y: number };
+  } | null>;
+  inputValue: Signal<string>;
+  filteredApiTranslations: ReadonlySignal<
+    [string, Record<string, Translation>][]
+  >;
+  handleTranslationAddition: () => void;
 }
 
 function groupBooks(translationBooks: TranslationBooks | null, search: string) {
@@ -96,10 +144,12 @@ function groupBooks(translationBooks: TranslationBooks | null, search: string) {
     return {
       oldTestament: [] as TranslationBook[],
       newTestament: [] as TranslationBook[],
+      apocrypha: [] as TranslationBook[],
     };
   }
 
-  const loweredSearch = search.trim().toLowerCase();
+  const actualSearch = search.split(" ").slice(0, 1).join(" ");
+  const loweredSearch = actualSearch.trim().toLowerCase();
   const filteredBooks = loweredSearch
     ? translationBooks.books.filter(
         (book) =>
@@ -110,7 +160,10 @@ function groupBooks(translationBooks: TranslationBooks | null, search: string) {
 
   return {
     oldTestament: filteredBooks.filter((book) => book.order <= 39),
-    newTestament: filteredBooks.filter((book) => book.order > 39),
+    newTestament: filteredBooks.filter(
+      (book) => book.order > 39 && book.order <= 66
+    ),
+    apocrypha: filteredBooks.filter((book) => book.order > 66),
   };
 }
 
@@ -294,40 +347,6 @@ export function createBibleSelectorState(
     groupBooks(selectedTranslationBooks.value, search.value)
   );
 
-  const booksPerRow = computed(() => {
-    if (viewportWidth.value > 1200) {
-      return {
-        oldTestamentBooksPerRow: 3,
-        newTestamentBooksPerRow: 2,
-      };
-    }
-
-    if (viewportWidth.value > 768) {
-      return {
-        oldTestamentBooksPerRow: 2,
-        newTestamentBooksPerRow: 1,
-      };
-    }
-
-    return {
-      oldTestamentBooksPerRow: 1,
-      newTestamentBooksPerRow: 1,
-    };
-  });
-
-  const oldTestamentRows = computed(() =>
-    chunk(
-      groupedBooks.value.oldTestament,
-      booksPerRow.value.oldTestamentBooksPerRow
-    )
-  );
-  const newTestamentRows = computed(() =>
-    chunk(
-      groupedBooks.value.newTestament,
-      booksPerRow.value.newTestamentBooksPerRow
-    )
-  );
-
   const setSearch = (value: string) => {
     search.value = value;
   };
@@ -403,6 +422,11 @@ export function createBibleSelectorState(
       }
 
       selectedTranslationId.value = nextTranslationId;
+      pane.value?.tab?.readingState.selectTranslation(nextTranslationId);
+      search.value = "";
+      languageQuery.value = "";
+      selectingTranslation.value = false;
+      isOpen.value = false;
     } catch (err) {
       error.value =
         err instanceof Error
@@ -418,10 +442,565 @@ export function createBibleSelectorState(
     await handleTranslationSelect(nextTranslationId);
   };
 
+  // seperation
+
+  const thePage = getBot("system", "app.components");
+
+  const languageQuery = signal<string>("");
+
+  const selectedTestament = signal<number>(2);
+
+  const apocryphaAvailable = signal<boolean>(false);
+
+  const defaultTranslations = signal<string[]>(
+    thePage?.masks?.defaultTranslations || [
+      "english",
+      "spanish",
+      "arabic",
+      "hindi",
+      "hebrew",
+      "ancient greek",
+      "custom",
+    ]
+  );
+
+  const apiTranslations = signal<Record<string, Record<string, Translation>>>(
+    thePage?.masks?.apiTranslations || {
+      english: {},
+      spanish: {},
+      arabic: {},
+      hindi: {},
+      hebrew: {},
+      "ancient greek": {},
+    }
+  );
+
+  const allowedTranslationLimit = signal<number>(50);
+
+  const showCustomTranslation = signal<boolean>(false);
+
+  const selectingTranslation = signal<boolean>(false);
+
+  /** Raw "dontOpen" toggle — see dontOpen computed below. */
+  const dontopn = signal<boolean>(false);
+
+  const showCheck = signal<any>(
+    (globalThis as any).IS_PLAYLIST_ACTIVE ||
+      (globalThis as any).IsPlaylistPlaying
+  );
+
+  /**
+   * Derived: true only when the user has ticked "don't open" AND a
+   * playlist/queue is active.
+   */
+  const dontOpen = computed<boolean>(() => dontopn.value && !!showCheck.value);
+
+  // ─── SideBarBooks State ───────────────────────────────────────────────────────
+  // NOTE: These signals are logically local to the single SideBarBooks instance
+  // that exists at any given time.  If multiple instances were ever mounted
+  // simultaneously they would share state — that matches the original behaviour
+  // since the state lived in the single SearchBar render tree.
+
+  const lastBookClicked = signal<number>(-1);
+
+  const bookData = signal<
+    TranslationBook | { ghost?: boolean | undefined } | null
+  >(null);
+
+  const chT = signal<number>(0);
+
+  const localSelectedTestament = signal<number>(2);
+
+  // ─── SideBarChapters State ────────────────────────────────────────────────────
+  // NOTE: Same single-instance assumption as SideBarBooks above.
+
+  const highLightedButtonsID = signal<Record<number, boolean>>({});
+
+  const currentPsalms = signal<string[]>([
+    "1 Psalms",
+    "2 Psalms",
+    "3 Psalms",
+    "4 Psalms",
+    "5 Psalms",
+  ]);
+
+  // ─── CircleCounter State ──────────────────────────────────────────────────────
+  // NOTE: CircleCounter can be rendered many times simultaneously (once per
+  // book/chapter).  Each component instance creates its own local signal via
+  // useRef so it persists across re-renders without being shared.
+  // See CircleCounter in SearchBar.tsx for the usage pattern.
+
+  // ─── TranslationModal State ───────────────────────────────────────────────────
+
+  const showAllLanguages = signal<"complete" | "all" | "popular">(
+    (thisBot as any).masks?.showAllLanguages || "complete"
+  );
+
+  const showTranslationSettings = signal<boolean>(false);
+
+  const showTranslationInfo = signal<{
+    translation: Translation;
+    position: { x: number; y: number };
+  } | null>(null);
+
+  const inputValue = signal<string>("");
+
+  // ─── Tanak ordering helpers ───────────────────────────────────────────────────
+
+  const tanakOrder: number[] = [
+    1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 23, 24, 26, 28, 29, 30, 31, 32, 33, 34,
+    35, 36, 37, 38, 39, 19, 20, 18, 22, 8, 25, 21, 17, 27, 15, 16, 13, 14,
+  ];
+
+  const tanakhIndex: { [key: number]: number } = Object.fromEntries(
+    tanakOrder.map((num, idx) => [num, idx])
+  );
+
+  const PsalmsData: any[] = [
+    {
+      id: "PSA",
+      translationId: "AAB",
+      name: "Psalms",
+      commonName: "1 Psalms",
+      title: "Psalms",
+      order: 19,
+      numberOfChapters: 41,
+      firstChapterNumber: 1,
+      firstChapterApiLink: "/api/AAB/PSA/1.json",
+      lastChapterNumber: 41,
+      lastChapterApiLink: "/api/AAB/PSA/41.json",
+    },
+    {
+      id: "PSA",
+      translationId: "AAB",
+      name: "Psalms",
+      commonName: "2 Psalms",
+      title: "Psalms",
+      order: 19,
+      numberOfChapters: 31,
+      firstChapterNumber: 42,
+      firstChapterApiLink: "/api/AAB/PSA/42.json",
+      lastChapterNumber: 72,
+      lastChapterApiLink: "/api/AAB/PSA/72.json",
+    },
+    {
+      id: "PSA",
+      translationId: "AAB",
+      name: "Psalms",
+      commonName: "3 Psalms",
+      title: "Psalms",
+      order: 19,
+      numberOfChapters: 17,
+      firstChapterNumber: 73,
+      firstChapterApiLink: "/api/AAB/PSA/73.json",
+      lastChapterNumber: 89,
+      lastChapterApiLink: "/api/AAB/PSA/89.json",
+    },
+    {
+      id: "PSA",
+      translationId: "AAB",
+      name: "Psalms",
+      commonName: "4 Psalms",
+      title: "Psalms",
+      order: 19,
+      numberOfChapters: 16,
+      firstChapterNumber: 90,
+      firstChapterApiLink: "/api/AAB/PSA/90.json",
+      lastChapterNumber: 106,
+      lastChapterApiLink: "/api/AAB/PSA/106.json",
+    },
+    {
+      id: "PSA",
+      translationId: "AAB",
+      name: "Psalms",
+      commonName: "5 Psalms",
+      title: "Psalms",
+      order: 19,
+      numberOfChapters: 20,
+      firstChapterNumber: 107,
+      firstChapterApiLink: "/api/AAB/PSA/107.json",
+      lastChapterNumber: 150,
+      lastChapterApiLink: "/api/AAB/PSA/150.json",
+    },
+  ];
+
+  const selectedTestamentData = computed<TranslationBook[]>(() => {
+    const grouped = groupedBooks.value;
+    if (selectedTestament.value === 0) return grouped.oldTestament;
+    if (selectedTestament.value === 1) return grouped.newTestament;
+    if (selectedTestament.value === 2)
+      return [...grouped.oldTestament, ...grouped.newTestament];
+    return grouped.apocrypha;
+  });
+
+  // Keep apocryphaAvailable in sync with the computed book data.
+  effect(() => {
+    const bd = selectedTranslationBooks.value;
+    if (!bd) {
+      apocryphaAvailable.value = false;
+      return;
+    }
+    const { apocrypha } = groupedBooks.value;
+    apocryphaAvailable.value = apocrypha.length > 0;
+  });
+
+  /**
+   * Adds a custom translation by ID or URL.
+   * Reads & writes multiple signals.
+   * Formerly an inline async function in SearchBar (not useCallback).
+   */
+  const handleTranslationAddition = async (): Promise<void> => {
+    let inputUrl = inputValue.value;
+    if (inputUrl.includes("api/available_translations.json")) {
+      inputUrl = inputUrl.replace("api/available_translations.json", "");
+    }
+    const translations = await dataManager.getTranslations(inputUrl);
+    const firstTranslation = translations[0];
+    if (firstTranslation) {
+      selectTranslation(firstTranslation.id);
+    }
+  };
+
+  /**
+   * Navigates to the first match / a specific chapter.
+   * Reads `query.value` and `selectedTestamentData.value`.
+   * Formerly `useCallback(fn, [query])`.
+   */
+  const focusOnBook = (props: { chapterNo: number }): void => {
+    const { chapterNo } = props;
+    const testamentData = selectedTestamentData.value;
+    if (testamentData && testamentData[0]) {
+      handleChapterSelect(testamentData[0].id, chapterNo || 1);
+    }
+    isOpen.value = false;
+    search.value = "";
+  };
+
+  /**
+   * Handles Enter key press in the search input.
+   * Reads `search.value` and `selectedTestamentData.value`.
+   */
+  const handleEnter = (): void => {
+    const q = search.value;
+    const testamentData = selectedTestamentData.value;
+    if (q?.toLowerCase() || "".includes("psalm")) {
+      if (q.split(" ").length > 1) {
+        const queryArr: string[] = q.split(" ");
+        const lastPart = queryArr[queryArr.length - 1] ?? "";
+        const chapterNo = parseInt(lastPart, 10);
+        if (!isNaN(chapterNo)) {
+          let bookName: string | undefined;
+          for (const psalmBook of PsalmsData) {
+            if (chapterNo <= psalmBook.lastChapterNumber) {
+              bookName = psalmBook.commonName;
+              break;
+            }
+          }
+          if (bookName) {
+            focusOnBook({ chapterNo: chapterNo });
+          } else {
+            os.toast("That chapter doesn't exist!!!");
+          }
+        } else {
+          os.toast("Please check the chapter no.!!!");
+        }
+      } else {
+        focusOnBook({ chapterNo: 1 });
+      }
+    } else if (Array.isArray(testamentData) && testamentData.length > 0) {
+      search.value = testamentData[0]?.commonName ?? "";
+    }
+  };
+
+  const handleClick = (props: {
+    index: number;
+    book: TranslationBook | { ghost?: boolean | undefined };
+    cht?: number;
+  }): void => {
+    const { index, book, cht = 0 } = props;
+    if (bookData.value?.id === book.id) {
+      bookData.value = null;
+      chT.value = 0;
+      lastBookClicked.value = -1;
+    } else {
+      bookData.value = book;
+      chT.value = cht;
+      lastBookClicked.value = index;
+    }
+  };
+
+  const calcChapterPos = (index: number, separator: number): number =>
+    Math.floor(index / separator) * separator + separator - 1;
+
+  const isBook = (book: TranslationBook | { ghost?: boolean }): boolean =>
+    !("ghost" in book) || !book.ghost;
+
+  const ghostArray = (
+    booksArray: TranslationBook[],
+    allowedRows: number
+  ): (TranslationBook | { ghost?: boolean })[] => {
+    if (allowedRows === 1) return booksArray;
+    const booksLength = booksArray.length;
+    const additionalElements =
+      allowedRows -
+      (booksLength % allowedRows === 0
+        ? allowedRows
+        : booksLength % allowedRows);
+    const tempBooksArray: (TranslationBook | { ghost?: boolean })[] = [
+      ...booksArray,
+    ];
+    for (let i = 0; i < additionalElements; i++) {
+      tempBooksArray.push({ ghost: true });
+    }
+    return [...tempBooksArray];
+  };
+
+  const scrollIntoView = (bookId: string): void => {
+    const bookTabElement = document.getElementById(`booktab-${bookId}`);
+    if (bookTabElement) {
+      bookTabElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (!bookTabElement.classList.contains("sidebar-selected-itm")) {
+        bookTabElement.click();
+      }
+    }
+  };
+
+  const selectBookSelectorBook = (bookId: string): void => {
+    if (!bookId) {
+      bookData.value = null;
+      lastBookClicked.value = -1;
+      chT.value = 0;
+      return;
+    }
+    const bd = selectedTranslationBooks.value;
+    const st = selectedTestament.value;
+    const book =
+      (bd ? bd.books.find((b: TranslationBook) => b.id === bookId) : null) ||
+      thePage?.masks?.booksData?.find(
+        (b: TranslationBook) => b.id === bookId
+      ) ||
+      null;
+    if (book) {
+      const bookTabElement = document.getElementById(`booktab-${book.id}`);
+      if (bookTabElement) {
+        scrollIntoView(bookId);
+      }
+      if (book.order > 39 && st === 0) {
+        selectedTestament.value = 1;
+        setTimeout(() => scrollIntoView(bookId), 100);
+      } else if (book.order <= 39 && st === 1) {
+        selectedTestament.value = 0;
+        setTimeout(() => scrollIntoView(bookId), 100);
+      }
+    }
+  };
+
+  effect(() => {
+    const tr = selectedTranslation.value;
+    const dtr = defaultTranslations.value;
+
+    const langName = tr?.languageEnglishName?.toLowerCase() || "unknown";
+    if (!dtr.includes(langName)) {
+      setTagMask(thePage, "defaultTranslations", [...dtr, langName], "local");
+      defaultTranslations.value = [...dtr, langName];
+    }
+  });
+
+  effect(() => {
+    const dtr = defaultTranslations.value;
+    const source = thePage?.masks?.allTranslations
+      ? Promise.resolve(thePage?.masks.allTranslations as Translation[])
+      : web
+          .get("https://vmfnri.helloao.org/api/available_translations.json")
+          .then((request) => {
+            if (request.status !== 200) return [] as Translation[];
+            setTagMask(
+              thePage,
+              "allTranslations",
+              request.data.translations,
+              "local"
+            );
+            return request.data.translations as Translation[];
+          });
+
+    source.then((allTranslations) => {
+      const normalized = allTranslations.map((item: Translation) => ({
+        ...item,
+        languageEnglishName:
+          item?.languageEnglishName || (item as any).englishName,
+      }));
+      const translations = { ...apiTranslations.value };
+      let changed = false;
+
+      normalized.forEach((translation: Translation) => {
+        const englishName =
+          translation.languageEnglishName?.toLowerCase() || "unknown";
+        const shortName = translation.shortName?.toLowerCase() || "unknown";
+        if (translations[englishName]) {
+          if (!translations[englishName][shortName]) {
+            translations[englishName][shortName] = translation;
+            changed = true;
+          }
+        } else {
+          translations[englishName] = { [shortName]: translation };
+          changed = true;
+        }
+      });
+
+      if (changed) {
+        setTagMask(thePage, "apiTranslations", translations, "local");
+        apiTranslations.value = translations;
+      }
+      setTagMask(thePage, "defaultTranslations", dtr, "local");
+    });
+  });
+
+  effect(() => {
+    const bd = selectedTestamentData.value;
+    if (bd && bd.length === 1 && bd[0]) {
+      lastBookClicked.value = 0;
+      bookData.value = bd[0];
+      chT.value = bd[0].order > 39 ? 1 : 0;
+    } else {
+      lastBookClicked.value = -1;
+      bookData.value = null;
+      chT.value = 0;
+    }
+  });
+
+  effect(() => {
+    const st = selectedTestament.value;
+    const bd = selectedTranslationBooks.value?.books;
+    const q = search.value;
+    if (!bd) return;
+    const { oldTestament, newTestament } = groupedBooks.value;
+    if (st === 2 || q.length > 0) {
+      if (oldTestament.length > 0 && newTestament.length === 0) {
+        localSelectedTestament.value = 0;
+      } else if (newTestament.length > 0 && oldTestament.length === 0) {
+        localSelectedTestament.value = 1;
+      } else if (q.length > 0) {
+        localSelectedTestament.value = 2;
+      } else {
+        localSelectedTestament.value = st;
+      }
+    } else {
+      localSelectedTestament.value = st;
+    }
+  });
+
+  const filteredApiTranslations = computed<
+    Array<[string, Record<string, Translation>]>
+  >(() => {
+    const lq = languageQuery.value;
+    const apiTr = apiTranslations.value;
+    const limit = allowedTranslationLimit.value;
+    const selTr = selectedTranslation.value;
+    const sal = showAllLanguages.value;
+    const dtr = defaultTranslations.value;
+
+    console.log(selTr, "selected translation in filteredApiTranslations");
+
+    const cloneTranslations = (
+      translations: Record<string, Record<string, Translation>>
+    ): Record<string, Record<string, Translation>> =>
+      JSON.parse(JSON.stringify(translations));
+
+    const filterByMode = (
+      translations: Record<string, Record<string, Translation>>
+    ): Record<string, Record<string, Translation>> => {
+      if (sal === "all") {
+        return cloneTranslations(translations);
+      }
+
+      const next: Record<string, Record<string, Translation>> = {};
+
+      Object.entries(translations).forEach(([englishName, group]) => {
+        if (sal === "popular" && !dtr.includes(englishName)) {
+          return;
+        }
+
+        if (sal === "complete") {
+          const filteredGroup: Record<string, Translation> = {};
+          Object.entries(group).forEach(([shortName, translation]) => {
+            const hideForComplete =
+              translation.numberOfBooks < 66 && translation.id !== selTr?.id;
+            if (!hideForComplete) {
+              filteredGroup[shortName] = translation;
+            }
+          });
+          if (Object.keys(filteredGroup).length > 0) {
+            next[englishName] = filteredGroup;
+          }
+          return;
+        }
+
+        next[englishName] = { ...group };
+      });
+
+      return next;
+    };
+
+    const filterByQuery = (
+      translations: Record<string, Record<string, Translation>>,
+      lowercaseQuery: string
+    ): Record<string, Record<string, Translation>> => {
+      const next: Record<string, Record<string, Translation>> = {};
+
+      Object.entries(translations).forEach(([englishName, group]) => {
+        if (englishName.includes(lowercaseQuery)) {
+          next[englishName] = { ...group };
+          return;
+        }
+
+        const matchedGroup: Record<string, Translation> = {};
+        Object.entries(group).forEach(([shortName, translation]) => {
+          if (
+            shortName.includes(lowercaseQuery) ||
+            translation?.name?.toLowerCase().includes(lowercaseQuery)
+          ) {
+            matchedGroup[shortName] = translation;
+          }
+        });
+
+        if (Object.keys(matchedGroup).length > 0) {
+          next[englishName] = matchedGroup;
+        }
+      });
+
+      return next;
+    };
+
+    const sortFn = (
+      [a]: [string, Record<string, Translation>],
+      [b]: [string, Record<string, Translation>]
+    ): number => {
+      if (a === selTr?.languageEnglishName?.toLowerCase()) return -1;
+      if (b === selTr?.languageEnglishName?.toLowerCase()) return 1;
+      return a.localeCompare(b);
+    };
+
+    if (lq !== "") {
+      const lowercaseQuery = lq.toLowerCase();
+      const queryFiltered = filterByQuery(apiTr, lowercaseQuery);
+      const modeFiltered = filterByMode(queryFiltered);
+
+      return Object.entries(modeFiltered).slice(0, limit).sort(sortFn);
+    } else {
+      const modeFiltered = filterByMode(apiTr);
+      return Object.entries(modeFiltered).sort(sortFn).slice(0, limit);
+    }
+  });
+
+  effect(() => {
+    setTagMask(thisBot, "showAllLanguages", showAllLanguages.value, "local");
+  });
+
   return {
     isOpen,
     pane,
     readingState,
+    groupedBooks,
     availableTranslations,
     currentTranslationId,
     currentBookId,
@@ -433,12 +1012,39 @@ export function createBibleSelectorState(
     selectedTranslation,
     selectedTranslationBooks,
     expandedBookId,
-    oldTestamentRows,
-    newTestamentRows,
+    viewportWidth,
     setOpen,
     setSearch,
     setExpandedBook,
     selectTranslation,
     selectChapter: handleChapterSelect,
+    selectedTestament,
+    apocryphaAvailable,
+    selectingTranslation,
+    showCheck,
+    dontopn,
+    dontOpen,
+    lastBookClicked,
+    bookData,
+    chT,
+    localSelectedTestament,
+    highLightedButtonsID,
+    currentPsalms,
+    selectedTestamentData,
+    handleClick,
+    calcChapterPos,
+    isBook,
+    ghostArray,
+    handleEnter,
+    languageQuery,
+    showCustomTranslation,
+    allowedTranslationLimit,
+    apiTranslations,
+    showAllLanguages,
+    showTranslationSettings,
+    showTranslationInfo,
+    inputValue,
+    filteredApiTranslations,
+    handleTranslationAddition,
   };
 }
