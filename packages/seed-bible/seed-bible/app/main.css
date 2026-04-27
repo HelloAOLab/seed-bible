@@ -1,6 +1,7 @@
 /* eslint-disable css/use-baseline */
 :root {
   --sb-ui-zoom: 1;
+  --sb-scripture-margin: 27px;
 
   /* Text config variables — overridden at runtime by SettingsManager. */
   --text-bookTitle-font: "Newsreader", serif;
@@ -35,6 +36,7 @@
   --text-verse-margin-bottom: 0;
   --text-verse-margin-left: 0;
   --text-verse-margin-right: 0;
+  --text-verse-line-height: 1.5;
 
   --sb-background: #f8fafc;
   --sb-font-family: "Satoshi", system-ui, sans-serif;
@@ -176,12 +178,12 @@ button {
 }
 
 .sb-bible-reader {
-  padding: 16px;
+  padding-top: 10px;
+  padding-right: var(--sb-scripture-margin);
   padding-bottom: 96px;
+  padding-left: var(--sb-scripture-margin);
   max-width: 500px;
   margin: 0 auto;
-
-  padding: 10px;
   box-sizing: border-box;
 
   background: var(--sb-reader-background);
@@ -710,6 +712,7 @@ button {
   font-style: var(--text-verse-font-style);
   text-decoration: var(--text-verse-text-decoration);
   text-align: var(--text-verse-alignment);
+  line-height: var(--text-verse-line-height);
   margin-top: var(--text-verse-margin-top);
   margin-bottom: var(--text-verse-margin-bottom);
   margin-left: var(--text-verse-margin-left);
@@ -3110,6 +3113,120 @@ button {
 .sb-theme-ready-check {
   font-size: 16px;
   color: var(--sb-primary-color);
+}
+
+/* Scripture quick-settings (font size + line height) */
+.sb-scripture-quick-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.sb-scripture-quick-btn {
+  flex: 1;
+  height: 48px;
+  background: var(--sb-reader-background, var(--sb-background));
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  padding: 0;
+  transition: background-color 0.15s ease;
+}
+
+.sb-scripture-quick-btn:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+}
+
+.sb-scripture-quick-btn-a-small {
+  font-size: 14px;
+}
+
+.sb-scripture-quick-btn-a-large {
+  font-size: 20px;
+  font-weight: 500;
+}
+
+/* Scripture margins control (- 27 px +) */
+.sb-scripture-margins-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--sb-font-color);
+  margin-bottom: 8px;
+}
+
+.sb-scripture-margins-label .sb-margin-icon-wrap {
+  display: inline-flex;
+  color: var(--sb-font-color);
+}
+
+.sb-scripture-margins-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 8px;
+}
+
+.sb-scripture-margins-step {
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  background: var(--sb-reader-background, var(--sb-background));
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  color: var(--sb-font-color);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+  flex-shrink: 0;
+  font-family: inherit;
+  transition: background-color 0.15s ease;
+}
+
+.sb-scripture-margins-step:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+}
+
+.sb-scripture-margins-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+}
+
+.sb-scripture-margins-input {
+  border: none;
+  outline: none;
+  font-size: 16px;
+  width: 20px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  padding: 0;
+  text-align: right;
+  -moz-appearance: textfield;
+}
+
+.sb-scripture-margins-input::-webkit-outer-spin-button,
+.sb-scripture-margins-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+.sb-scripture-margins-unit {
+  font-size: 14px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
 /* Text settings per-section block */

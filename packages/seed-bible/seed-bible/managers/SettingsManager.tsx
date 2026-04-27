@@ -21,7 +21,12 @@ export interface TextSectionConfig {
   italic: boolean;
   underline: boolean;
   alignment: TextAlignment;
+  /** Line height for the verse section. Other sections ignore this. */
+  lineHeight?: number;
 }
+
+export const VERSE_LINE_HEIGHT_OPTIONS: number[] = [1.5, 2, 2.5];
+export const DEFAULT_VERSE_LINE_HEIGHT = 1.5;
 
 export type TextConfig = Record<TextSectionId, TextSectionConfig>;
 
@@ -41,7 +46,12 @@ export interface AppSettings {
   keepScreenAwake: boolean;
   /** User-added custom highlight colors (hex strings, max 3). */
   customHighlightColors: string[];
+  /** Horizontal padding (px) applied to the bible reader container. */
+  scriptureMargin: number;
 }
+
+export const DEFAULT_SCRIPTURE_MARGIN = 27;
+export const MOBILE_SCRIPTURE_MARGIN = 5;
 
 export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
 
@@ -52,6 +62,7 @@ const TAG_TEXT_CONFIG = "app.textConfig";
 const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
 const TAG_CUSTOM_HIGHLIGHT_COLORS = "app.customHighlightColors";
+const TAG_SCRIPTURE_MARGIN = "app.scriptureMargin";
 
 export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
   { value: "'Newsreader', serif", label: "Newsreader" },
@@ -121,6 +132,7 @@ const DEFAULT_TEXT_CONFIG: TextConfig = {
     italic: false,
     underline: false,
     alignment: "left",
+    lineHeight: DEFAULT_VERSE_LINE_HEIGHT,
   },
 };
 
@@ -148,6 +160,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   toolbar: DEFAULT_TOOLBAR_CONFIG,
   keepScreenAwake: false,
   customHighlightColors: [],
+  scriptureMargin: DEFAULT_SCRIPTURE_MARGIN,
 };
 
 function parseCustomHighlightColors(value: unknown): string[] {
@@ -302,6 +315,9 @@ function parseTextSection(
     underline:
       typeof obj.underline === "boolean" ? obj.underline : fallback.underline,
     alignment: parseAlignment(obj.alignment, fallback.alignment),
+    ...(fallback.lineHeight !== undefined || obj.lineHeight !== undefined
+      ? { lineHeight: parseNumber(obj.lineHeight, fallback.lineHeight ?? 1.5) }
+      : {}),
   };
 }
 
@@ -369,6 +385,9 @@ function applyTextConfigToCSSVars(config: TextConfig) {
     root.setProperty(`${prefix}-margin-bottom`, `${cfg.marginVertical}px`);
     root.setProperty(`${prefix}-margin-left`, `${cfg.marginHorizontal}px`);
     root.setProperty(`${prefix}-margin-right`, `${cfg.marginHorizontal}px`);
+    if (cfg.lineHeight !== undefined) {
+      root.setProperty(`${prefix}-line-height`, String(cfg.lineHeight));
+    }
 
     if (body) {
       const themeVar = TEXT_SECTION_THEME_COLOR_VAR[section as TextSectionId];
@@ -390,6 +409,10 @@ export interface SettingsManager {
     section: TextSectionId,
     patch: Partial<TextSectionConfig>
   ) => void;
+  /** Set the same horizontal margin on bookTitle, heading, and verse (Scripture Margins control). */
+  setScriptureMargin: (margin: number) => void;
+  /** Set the verse line-height (Scripture line-spacing control). */
+  setVerseLineHeight: (lineHeight: number) => void;
   /** Clear per-section color overrides so the active theme drives text colors. */
   resetTextColors: () => void;
   resetTextConfig: () => void;
@@ -431,6 +454,10 @@ export function createSettings(): SettingsManager {
     customHighlightColors: parseCustomHighlightColors(
       configBot.tags[TAG_CUSTOM_HIGHLIGHT_COLORS]
     ),
+    scriptureMargin: parseNumber(
+      configBot.tags[TAG_SCRIPTURE_MARGIN],
+      DEFAULT_SETTINGS.scriptureMargin
+    ),
   });
 
   const settings = signal<AppSettings>(readFromTags());
@@ -455,7 +482,8 @@ export function createSettings(): SettingsManager {
       changedTags.includes(TAG_TEXT_CONFIG) ||
       changedTags.includes(TAG_TOOLBAR) ||
       changedTags.includes(TAG_KEEP_AWAKE) ||
-      changedTags.includes(TAG_CUSTOM_HIGHLIGHT_COLORS)
+      changedTags.includes(TAG_CUSTOM_HIGHLIGHT_COLORS) ||
+      changedTags.includes(TAG_SCRIPTURE_MARGIN)
     ) {
       syncFromBot();
     }
@@ -485,6 +513,24 @@ export function createSettings(): SettingsManager {
     const nextTextConfig = {
       ...settings.value.textConfig,
       [section]: nextSection,
+    };
+    settings.value = { ...settings.value, textConfig: nextTextConfig };
+    configBot.tags[TAG_TEXT_CONFIG] = JSON.stringify(nextTextConfig);
+  };
+
+  const setScriptureMargin = (margin: number) => {
+    if (!Number.isFinite(margin)) return;
+    const clamped = Math.max(0, Math.min(200, margin));
+    settings.value = { ...settings.value, scriptureMargin: clamped };
+    configBot.tags[TAG_SCRIPTURE_MARGIN] = clamped;
+  };
+
+  const setVerseLineHeight = (lineHeight: number) => {
+    if (!Number.isFinite(lineHeight)) return;
+    const current = settings.value.textConfig;
+    const nextTextConfig: TextConfig = {
+      ...current,
+      verse: { ...current.verse, lineHeight },
     };
     settings.value = { ...settings.value, textConfig: nextTextConfig };
     configBot.tags[TAG_TEXT_CONFIG] = JSON.stringify(nextTextConfig);
@@ -580,6 +626,7 @@ export function createSettings(): SettingsManager {
     configBot.tags[TAG_TOOLBAR] = "";
     configBot.tags[TAG_KEEP_AWAKE] = false;
     configBot.tags[TAG_CUSTOM_HIGHLIGHT_COLORS] = "";
+    configBot.tags[TAG_SCRIPTURE_MARGIN] = DEFAULT_SETTINGS.scriptureMargin;
   };
 
   // Scale UI surfaces via `zoom` on the document root, while exposing
@@ -601,6 +648,16 @@ export function createSettings(): SettingsManager {
     applyTextConfigToCSSVars(settings.value.textConfig);
   });
 
+  // Publish the scripture margin (px) as a CSS variable consumed by
+  // `.sb-bible-reader`'s horizontal padding.
+  effect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.style.setProperty(
+      "--sb-scripture-margin",
+      `${settings.value.scriptureMargin}px`
+    );
+  });
+
   // Keep the OS wake-lock in sync with the persisted setting. Survives
   // SettingsPage mount/unmount so re-opening settings shows the real state.
   effect(() => {
@@ -618,6 +675,8 @@ export function createSettings(): SettingsManager {
     setUITextSize,
     setSelectionUI,
     updateTextSection,
+    setScriptureMargin,
+    setVerseLineHeight,
     resetTextColors,
     resetTextConfig,
     setToolbarHidden,

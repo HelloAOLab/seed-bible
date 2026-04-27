@@ -7,6 +7,8 @@ import {
   TEXT_SECTION_THEME_COLOR_VAR,
   TEXT_WEIGHT_OPTIONS,
   UI_TEXT_SIZE_OPTIONS,
+  VERSE_LINE_HEIGHT_OPTIONS,
+  DEFAULT_VERSE_LINE_HEIGHT,
   type BookOrientation,
   type TextAlignment,
   type TextSectionConfig,
@@ -30,6 +32,7 @@ import {
 } from "seed-bible.components.ContextMenu";
 import {
   ExtensionsIcon,
+  MarginIcon,
   MaterialIcon,
   TheNewSettingsIcon,
   ThemeIcon,
@@ -39,8 +42,7 @@ type SettingsView =
   | null
   | "account"
   | "theme"
-  | "theme-colors"
-  | "text"
+  | "all-settings"
   | "toolbar"
   | "extensions"
   | "display";
@@ -92,12 +94,6 @@ function toHexInputValue(value: string | null | undefined): string {
 type ExtensionInstallState = "none" | "pending" | "downloaded" | "installed";
 
 const FONT_SIZE_OPTIONS: TextSize[] = ["XS", "S", "M", "L", "XL", "XXL"];
-
-function parseFontSize(value: string, fallback: TextSize): TextSize {
-  return FONT_SIZE_OPTIONS.includes(value as TextSize)
-    ? (value as TextSize)
-    : fallback;
-}
 
 function SettingsSubPageHeader(props: { title: string; onBack: () => void }) {
   return (
@@ -256,23 +252,89 @@ function AccountSettingsView(props: {
   );
 }
 
-function ThemeSettingsView(props: {
+function ScriptureLineHeightIcon({ index }: { index: number }) {
+  const gap = 3.5 + index * 1.5;
+  const startY = 1;
+  return (
+    <svg width="20" height="14" viewBox="0 0 20 14" fill="none">
+      <rect x="0" y={startY} width="20" height="2" rx="1" fill="currentColor" />
+      <rect
+        x="0"
+        y={startY + gap}
+        width="20"
+        height="2"
+        rx="1"
+        fill="currentColor"
+      />
+      <rect
+        x="0"
+        y={startY + 2 * gap}
+        width="20"
+        height="2"
+        rx="1"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function ThemeAndTextSettingsView(props: {
   state: SeedBibleState;
   onBack: () => void;
-  onOpenColorPicker: () => void;
+  onOpenAllSettings: () => void;
 }) {
-  const { state, onBack, onOpenColorPicker } = props;
+  const { state, onBack, onOpenAllSettings } = props;
   const { themes, selectedThemeId, setTheme } = state.theme;
   const { config, setFontSize } = state.config;
   const selectedFontSize = config.value.fontSize;
+  const settings = state.settings;
+  const isMobile = state.app.isMobile.value;
+
+  const verseConfig = settings.settings.value.textConfig.verse;
+  const currentMargin = settings.settings.value.scriptureMargin;
+  const currentLineHeight = verseConfig.lineHeight ?? DEFAULT_VERSE_LINE_HEIGHT;
+  const lineHeightIndex = (() => {
+    const idx = VERSE_LINE_HEIGHT_OPTIONS.indexOf(currentLineHeight);
+    return idx === -1 ? 0 : idx;
+  })();
+
+  const fontSizeIndex = FONT_SIZE_OPTIONS.indexOf(selectedFontSize);
+
+  const handleDecreaseFontSize = () => {
+    if (fontSizeIndex > 0) {
+      const next = FONT_SIZE_OPTIONS[fontSizeIndex - 1];
+      if (next) setFontSize(next);
+    }
+  };
+
+  const handleIncreaseFontSize = () => {
+    if (fontSizeIndex < FONT_SIZE_OPTIONS.length - 1) {
+      const next = FONT_SIZE_OPTIONS[fontSizeIndex + 1];
+      if (next) setFontSize(next);
+    }
+  };
+
+  const handleCycleLineHeight = () => {
+    const nextIndex = (lineHeightIndex + 1) % VERSE_LINE_HEIGHT_OPTIONS.length;
+    const next = VERSE_LINE_HEIGHT_OPTIONS[nextIndex];
+    if (next !== undefined) settings.setVerseLineHeight(next);
+  };
+
+  const setMargin = (next: number) => {
+    if (!Number.isFinite(next)) return;
+    settings.setScriptureMargin(Math.max(0, Math.min(200, next)));
+  };
 
   return (
     <div className="sb-settings-page">
-      <SettingsBreadcrumbs onBack={onBack} trail={["Page settings", "Theme"]} />
+      <SettingsBreadcrumbs
+        onBack={onBack}
+        trail={["Page settings", "Theme and Text"]}
+      />
       <SettingsHero
         icon="palette"
-        title="Theme"
-        description="Pick a ready-made theme or customize the look of the app."
+        title="Theme and Text"
+        description="Pick a theme and tune the Scripture reading experience."
       />
 
       <section className="sb-settings-section">
@@ -325,32 +387,87 @@ function ThemeSettingsView(props: {
           })}
         </div>
 
-        <h3 className="sb-settings-subheading">Reader font size</h3>
-        <div className="sb-settings-field-row">
-          <select
-            id="sb-font-size-select"
-            className="sb-settings-language-select"
-            value={selectedFontSize}
-            onChange={(event: Event) => {
-              const target = event.currentTarget as HTMLSelectElement;
-              setFontSize(parseFontSize(target.value, selectedFontSize));
-            }}
+        <h3 className="sb-settings-subheading">Scripture settings</h3>
+        <div className="sb-scripture-quick-row">
+          <button
+            type="button"
+            className="sb-scripture-quick-btn sb-scripture-quick-btn-a-small"
+            onClick={handleDecreaseFontSize}
+            disabled={fontSizeIndex <= 0}
+            aria-label="Decrease scripture font size"
           >
-            {FONT_SIZE_OPTIONS.map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
+            A
+          </button>
+          <button
+            type="button"
+            className="sb-scripture-quick-btn sb-scripture-quick-btn-a-large"
+            onClick={handleIncreaseFontSize}
+            disabled={fontSizeIndex >= FONT_SIZE_OPTIONS.length - 1}
+            aria-label="Increase scripture font size"
+          >
+            A
+          </button>
+          <button
+            type="button"
+            className="sb-scripture-quick-btn"
+            onClick={handleCycleLineHeight}
+            aria-label="Cycle line spacing"
+            title={`Line spacing: ${currentLineHeight}`}
+          >
+            <ScriptureLineHeightIcon index={lineHeightIndex} />
+          </button>
         </div>
 
-        <h3 className="sb-settings-subheading">Advanced</h3>
+        {!isMobile && (
+          <>
+            <div className="sb-scripture-margins-label">
+              <span className="sb-margin-icon-wrap">
+                <MarginIcon />
+              </span>
+              Scripture Margins
+            </div>
+            <div className="sb-scripture-margins-row">
+              <button
+                type="button"
+                className="sb-scripture-margins-step"
+                onClick={() => setMargin(currentMargin - 1)}
+                aria-label="Decrease scripture margin"
+              >
+                −
+              </button>
+              <div className="sb-scripture-margins-value">
+                <input
+                  type="number"
+                  className="sb-scripture-margins-input"
+                  value={currentMargin}
+                  min={0}
+                  max={200}
+                  onInput={(event: Event) => {
+                    const target = event.currentTarget as HTMLInputElement;
+                    const parsed = Number(target.value);
+                    if (Number.isFinite(parsed)) setMargin(parsed);
+                  }}
+                />
+                <span className="sb-scripture-margins-unit">px</span>
+              </div>
+              <button
+                type="button"
+                className="sb-scripture-margins-step"
+                onClick={() => setMargin(currentMargin + 1)}
+                aria-label="Increase scripture margin"
+              >
+                +
+              </button>
+            </div>
+          </>
+        )}
+
         <button
           type="button"
           className="sb-settings-nav-item"
-          onClick={onOpenColorPicker}
+          onClick={onOpenAllSettings}
         >
-          <span>Customize colors</span>
+          <span>All settings</span>
           <span className="material-symbols-outlined">chevron_right</span>
         </button>
       </section>
@@ -845,137 +962,122 @@ function TextFormattingToolbar(props: {
   );
 }
 
-function TextSettingsView(props: {
-  state: SeedBibleState;
-  onBack: () => void;
-}) {
-  const { state, onBack } = props;
+function TextSettingsContent(props: { state: SeedBibleState }) {
+  const { state } = props;
   const { settings } = state;
   const textConfig = settings.settings.value.textConfig;
 
   return (
-    <div className="sb-settings-page">
-      <SettingsBreadcrumbs onBack={onBack} trail={["Page settings", "Text"]} />
-      <SettingsHero
-        icon="text_fields"
-        title="Text"
-        description="Settings for the text on page."
-      />
+    <section className="sb-settings-section">
+      {TEXT_SECTION_ORDER.map((section) => {
+        const config = textConfig[section];
+        const handleChange = (patch: Partial<TextSectionConfig>) =>
+          settings.updateTextSection(section, patch);
 
-      <section className="sb-settings-section">
-        {TEXT_SECTION_ORDER.map((section) => {
-          const config = textConfig[section];
-          const handleChange = (patch: Partial<TextSectionConfig>) =>
-            settings.updateTextSection(section, patch);
+        return (
+          <div key={section} className="sb-text-section">
+            <h3 className="sb-text-section-title">
+              {TEXT_SECTION_LABELS[section]} Text
+            </h3>
 
-          return (
-            <div key={section} className="sb-text-section">
-              <h3 className="sb-text-section-title">
-                {TEXT_SECTION_LABELS[section]} Text
-              </h3>
+            <div className="sb-settings-field-row">
+              <label className="sb-settings-field-label">Font</label>
+              <select
+                className="sb-settings-language-select"
+                value={config.font}
+                onChange={(event: Event) => {
+                  const target = event.currentTarget as HTMLSelectElement;
+                  handleChange({ font: target.value });
+                }}
+              >
+                {TEXT_FONT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              <div className="sb-settings-field-row">
-                <label className="sb-settings-field-label">Font</label>
-                <select
-                  className="sb-settings-language-select"
-                  value={config.font}
-                  onChange={(event: Event) => {
-                    const target = event.currentTarget as HTMLSelectElement;
-                    handleChange({ font: target.value });
-                  }}
-                >
-                  {TEXT_FONT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="sb-settings-field-row">
+              <label className="sb-settings-field-label">Weight</label>
+              <select
+                className="sb-settings-language-select"
+                value={config.weight}
+                onChange={(event: Event) => {
+                  const target = event.currentTarget as HTMLSelectElement;
+                  handleChange({ weight: target.value });
+                }}
+              >
+                {TEXT_WEIGHT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              <div className="sb-settings-field-row">
-                <label className="sb-settings-field-label">Weight</label>
-                <select
-                  className="sb-settings-language-select"
-                  value={config.weight}
-                  onChange={(event: Event) => {
-                    const target = event.currentTarget as HTMLSelectElement;
-                    handleChange({ weight: target.value });
-                  }}
-                >
-                  {TEXT_WEIGHT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="sb-settings-field-row">
-                <label className="sb-settings-field-label">
-                  Margin (vertical, px)
-                </label>
-                <input
-                  type="number"
-                  className="sb-settings-text-input"
-                  value={config.marginVertical}
-                  onInput={(event: Event) => {
-                    const target = event.currentTarget as HTMLInputElement;
-                    const parsed = Number(target.value);
-                    if (Number.isFinite(parsed)) {
-                      handleChange({ marginVertical: parsed });
-                    }
-                  }}
-                  placeholder="10"
-                />
-              </div>
-
-              <div className="sb-settings-field-row">
-                <label className="sb-settings-field-label">
-                  Margin (horizontal, px)
-                </label>
-                <input
-                  type="number"
-                  className="sb-settings-text-input"
-                  value={config.marginHorizontal}
-                  onInput={(event: Event) => {
-                    const target = event.currentTarget as HTMLInputElement;
-                    const parsed = Number(target.value);
-                    if (Number.isFinite(parsed)) {
-                      handleChange({ marginHorizontal: parsed });
-                    }
-                  }}
-                  placeholder="10"
-                />
-              </div>
-
-              <TextFormattingToolbar
-                sectionId={section}
-                section={config}
-                onChange={handleChange}
+            <div className="sb-settings-field-row">
+              <label className="sb-settings-field-label">
+                Margin (vertical, px)
+              </label>
+              <input
+                type="number"
+                className="sb-settings-text-input"
+                value={config.marginVertical}
+                onInput={(event: Event) => {
+                  const target = event.currentTarget as HTMLInputElement;
+                  const parsed = Number(target.value);
+                  if (Number.isFinite(parsed)) {
+                    handleChange({ marginVertical: parsed });
+                  }
+                }}
+                placeholder="10"
               />
             </div>
-          );
-        })}
 
-        <div className="sb-settings-actions">
-          <button
-            type="button"
-            className="sb-settings-action-button"
-            onClick={() => settings.resetTextConfig()}
-          >
-            Reset text settings
-          </button>
-        </div>
-      </section>
-    </div>
+            <div className="sb-settings-field-row">
+              <label className="sb-settings-field-label">
+                Margin (horizontal, px)
+              </label>
+              <input
+                type="number"
+                className="sb-settings-text-input"
+                value={config.marginHorizontal}
+                onInput={(event: Event) => {
+                  const target = event.currentTarget as HTMLInputElement;
+                  const parsed = Number(target.value);
+                  if (Number.isFinite(parsed)) {
+                    handleChange({ marginHorizontal: parsed });
+                  }
+                }}
+                placeholder="10"
+              />
+            </div>
+
+            <TextFormattingToolbar
+              sectionId={section}
+              section={config}
+              onChange={handleChange}
+            />
+          </div>
+        );
+      })}
+
+      <div className="sb-settings-actions">
+        <button
+          type="button"
+          className="sb-settings-action-button"
+          onClick={() => settings.resetTextConfig()}
+        >
+          Reset text settings
+        </button>
+      </div>
+    </section>
   );
 }
 
-function ThemeCustomColorsView(props: {
-  state: SeedBibleState;
-  onBack: () => void;
-}) {
-  const { state, onBack } = props;
+function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
+  const { state } = props;
   const { theme } = state;
 
   const effectiveTheme = useComputed(() => theme.currentTheme.value);
@@ -985,146 +1087,160 @@ function ThemeCustomColorsView(props: {
   );
 
   return (
-    <div className="sb-settings-page">
-      <SettingsSubPageHeader title="Customize colors" onBack={onBack} />
-      <section className="sb-settings-section">
-        {THEME_COLOR_GROUPS.map((group) => (
-          <div key={group.id} className="sb-theme-colors-group">
-            <h3 className="sb-settings-subheading">{group.title}</h3>
-            <ul className="sb-theme-colors-list">
-              {group.fields.map((field) => {
-                const currentValue =
-                  effectiveTheme.value.variables[field.key] ?? "";
-                const hexValue = toHexInputValue(
-                  typeof currentValue === "string" ? currentValue : ""
-                );
-                const isOverridden =
-                  overrides.value[field.key as ThemeColorKey] !== undefined;
+    <section className="sb-settings-section">
+      <h3 className="sb-settings-subheading">Customize colors</h3>
+      {THEME_COLOR_GROUPS.map((group) => (
+        <div key={group.id} className="sb-theme-colors-group">
+          <h3 className="sb-settings-subheading">{group.title}</h3>
+          <ul className="sb-theme-colors-list">
+            {group.fields.map((field) => {
+              const currentValue =
+                effectiveTheme.value.variables[field.key] ?? "";
+              const hexValue = toHexInputValue(
+                typeof currentValue === "string" ? currentValue : ""
+              );
+              const isOverridden =
+                overrides.value[field.key as ThemeColorKey] !== undefined;
 
-                return (
-                  <li key={field.key} className="sb-theme-color-row">
-                    <div className="sb-theme-color-row-main">
-                      <span className="sb-theme-color-label">
-                        {field.label}
-                      </span>
-                      <span className="sb-theme-color-value">
-                        {typeof currentValue === "string" && currentValue
-                          ? currentValue
-                          : "—"}
-                      </span>
-                    </div>
-                    <div className="sb-theme-color-row-controls">
-                      <input
-                        type="color"
-                        className="sb-theme-color-input"
-                        value={hexValue}
-                        aria-label={field.label}
-                        onInput={(event: Event) => {
-                          const target =
-                            event.currentTarget as HTMLInputElement;
-                          theme.setCustomColor(field.key, target.value);
-                        }}
-                      />
-                      {isOverridden && (
-                        <button
-                          type="button"
-                          className="sb-theme-color-reset"
-                          title="Reset to preset"
-                          aria-label={`Reset ${field.label}`}
-                          onClick={() => theme.resetCustomColor(field.key)}
-                        >
-                          <span className="material-symbols-outlined">
-                            restart_alt
-                          </span>
-                        </button>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
+              return (
+                <li key={field.key} className="sb-theme-color-row">
+                  <div className="sb-theme-color-row-main">
+                    <span className="sb-theme-color-label">{field.label}</span>
+                    <span className="sb-theme-color-value">
+                      {typeof currentValue === "string" && currentValue
+                        ? currentValue
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="sb-theme-color-row-controls">
+                    <input
+                      type="color"
+                      className="sb-theme-color-input"
+                      value={hexValue}
+                      aria-label={field.label}
+                      onInput={(event: Event) => {
+                        const target = event.currentTarget as HTMLInputElement;
+                        theme.setCustomColor(field.key, target.value);
+                      }}
+                    />
+                    {isOverridden && (
+                      <button
+                        type="button"
+                        className="sb-theme-color-reset"
+                        title="Reset to preset"
+                        aria-label={`Reset ${field.label}`}
+                        onClick={() => theme.resetCustomColor(field.key)}
+                      >
+                        <span className="material-symbols-outlined">
+                          restart_alt
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
 
-        <h3 className="sb-settings-subheading">Highlight colors</h3>
-        <ul className="sb-theme-colors-list">
-          {DEFAULT_HIGHLIGHT_IDS.map((id) => {
-            const effective = effectiveTheme.value.highlightColors[id];
-            const bg = effective?.color ?? "";
-            const fg = effective?.fontColor ?? "";
-            const isOverridden =
-              theme.customHighlightOverrides.value[id] !== undefined;
+      <h3 className="sb-settings-subheading">Highlight colors</h3>
+      <ul className="sb-theme-colors-list">
+        {DEFAULT_HIGHLIGHT_IDS.map((id) => {
+          const effective = effectiveTheme.value.highlightColors[id];
+          const bg = effective?.color ?? "";
+          const fg = effective?.fontColor ?? "";
+          const isOverridden =
+            theme.customHighlightOverrides.value[id] !== undefined;
 
-            return (
-              <li key={id} className="sb-theme-color-row">
-                <div className="sb-theme-color-row-main">
-                  <span
-                    className="sb-highlight-preview-pill"
-                    style={{ background: bg, color: fg }}
-                    aria-hidden="true"
+          return (
+            <li key={id} className="sb-theme-color-row">
+              <div className="sb-theme-color-row-main">
+                <span
+                  className="sb-highlight-preview-pill"
+                  style={{ background: bg, color: fg }}
+                  aria-hidden="true"
+                >
+                  {id.charAt(0).toUpperCase() + id.slice(1)}
+                </span>
+                <span className="sb-theme-color-value">{bg || "—"}</span>
+              </div>
+              <div className="sb-theme-color-row-controls">
+                <input
+                  type="color"
+                  className="sb-theme-color-input"
+                  value={toHexInputValue(bg)}
+                  aria-label={`${id} background color`}
+                  title="Highlight background"
+                  onInput={(event: Event) => {
+                    const target = event.currentTarget as HTMLInputElement;
+                    theme.setHighlightColor(id, { color: target.value });
+                  }}
+                />
+                <input
+                  type="color"
+                  className="sb-theme-color-input"
+                  value={toHexInputValue(fg)}
+                  aria-label={`${id} text color`}
+                  title="Highlight text"
+                  onInput={(event: Event) => {
+                    const target = event.currentTarget as HTMLInputElement;
+                    theme.setHighlightColor(id, { fontColor: target.value });
+                  }}
+                />
+                {isOverridden && (
+                  <button
+                    type="button"
+                    className="sb-theme-color-reset"
+                    title="Reset to preset"
+                    aria-label={`Reset ${id}`}
+                    onClick={() => theme.resetHighlightColor(id)}
                   >
-                    {id.charAt(0).toUpperCase() + id.slice(1)}
-                  </span>
-                  <span className="sb-theme-color-value">{bg || "—"}</span>
-                </div>
-                <div className="sb-theme-color-row-controls">
-                  <input
-                    type="color"
-                    className="sb-theme-color-input"
-                    value={toHexInputValue(bg)}
-                    aria-label={`${id} background color`}
-                    title="Highlight background"
-                    onInput={(event: Event) => {
-                      const target = event.currentTarget as HTMLInputElement;
-                      theme.setHighlightColor(id, { color: target.value });
-                    }}
-                  />
-                  <input
-                    type="color"
-                    className="sb-theme-color-input"
-                    value={toHexInputValue(fg)}
-                    aria-label={`${id} text color`}
-                    title="Highlight text"
-                    onInput={(event: Event) => {
-                      const target = event.currentTarget as HTMLInputElement;
-                      theme.setHighlightColor(id, { fontColor: target.value });
-                    }}
-                  />
-                  {isOverridden && (
-                    <button
-                      type="button"
-                      className="sb-theme-color-reset"
-                      title="Reset to preset"
-                      aria-label={`Reset ${id}`}
-                      onClick={() => theme.resetHighlightColor(id)}
-                    >
-                      <span className="material-symbols-outlined">
-                        restart_alt
-                      </span>
-                    </button>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                    <span className="material-symbols-outlined">
+                      restart_alt
+                    </span>
+                  </button>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
 
-        {(hasOverrides.value ||
-          Object.keys(theme.customHighlightOverrides.value).length > 0) && (
-          <div className="sb-settings-actions">
-            <button
-              type="button"
-              className="sb-settings-action-button"
-              onClick={() => {
-                theme.resetAllCustomColors();
-                theme.resetAllHighlightColors();
-              }}
-            >
-              Reset all custom colors
-            </button>
-          </div>
-        )}
-      </section>
+      {(hasOverrides.value ||
+        Object.keys(theme.customHighlightOverrides.value).length > 0) && (
+        <div className="sb-settings-actions">
+          <button
+            type="button"
+            className="sb-settings-action-button"
+            onClick={() => {
+              theme.resetAllCustomColors();
+              theme.resetAllHighlightColors();
+            }}
+          >
+            Reset all custom colors
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AllSettingsView(props: { state: SeedBibleState; onBack: () => void }) {
+  const { state, onBack } = props;
+  return (
+    <div className="sb-settings-page">
+      <SettingsBreadcrumbs
+        onBack={onBack}
+        trail={["Page settings", "Theme and Text", "All settings"]}
+      />
+      <SettingsHero
+        icon="tune"
+        title="All settings"
+        description="Fine-tune every text section and customize each theme color."
+      />
+      <TextSettingsContent state={state} />
+      <ThemeCustomColorsContent state={state} />
     </div>
   );
 }
@@ -1288,19 +1404,7 @@ function SettingsMainView(props: {
               <span className="sb-settings-nav-icon">
                 <ThemeIcon />
               </span>
-              <span className="sb-settings-nav-label">Theme</span>
-              <span className="material-symbols-outlined">chevron_right</span>
-            </button>
-          </li>
-          <li>
-            <button
-              className="sb-settings-nav-item"
-              onClick={() => onNavigate("text")}
-            >
-              <span className="sb-settings-nav-icon">
-                <MaterialIcon>text_fields</MaterialIcon>
-              </span>
-              <span className="sb-settings-nav-label">Text</span>
+              <span className="sb-settings-nav-label">Theme and Text</span>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
           </li>
@@ -1430,35 +1534,24 @@ export function SettingsPage(props: { state: SeedBibleState }) {
 
   if (currentView.value === "theme") {
     return (
-      <ThemeSettingsView
+      <ThemeAndTextSettingsView
         state={state}
         onBack={() => {
           currentView.value = null;
         }}
-        onOpenColorPicker={() => {
-          currentView.value = "theme-colors";
+        onOpenAllSettings={() => {
+          currentView.value = "all-settings";
         }}
       />
     );
   }
 
-  if (currentView.value === "theme-colors") {
+  if (currentView.value === "all-settings") {
     return (
-      <ThemeCustomColorsView
+      <AllSettingsView
         state={state}
         onBack={() => {
           currentView.value = "theme";
-        }}
-      />
-    );
-  }
-
-  if (currentView.value === "text") {
-    return (
-      <TextSettingsView
-        state={state}
-        onBack={() => {
-          currentView.value = null;
         }}
       />
     );
