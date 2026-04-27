@@ -223,9 +223,10 @@ function getTranslationClientConfig(options: { projectId?: string }): {
   };
 }
 
-async function translateMissingCoreKeys(options: {
-  projectId: string;
-}): Promise<void> {
+async function translateCoreKeys(
+  options: { projectId: string },
+  mode: "missing" | "all"
+): Promise<void> {
   const files = await readdir(I18N_DIR, { withFileTypes: true });
   const languageCodes = files
     .filter((file) => file.isFile() && file.name.endsWith(".json"))
@@ -240,8 +241,17 @@ async function translateMissingCoreKeys(options: {
     await readFile(englishFilePath, "utf-8")
   ) as TranslationResources;
   const englishResources = flattenTranslationKeys(englishRaw);
+  const allEnglishResources = Object.fromEntries(englishResources) as Record<
+    string,
+    string
+  >;
 
-  console.log("Translating missing core app keys...");
+  const label =
+    mode === "missing"
+      ? "Translating missing core app keys..."
+      : "Translating all core app keys...";
+  console.log(label);
+
   for (const language of languageCodes.sort((a, b) => a.localeCompare(b))) {
     if (language === ENGLISH_LANGUAGE) {
       continue;
@@ -251,24 +261,25 @@ async function translateMissingCoreKeys(options: {
     const languageRaw = JSON.parse(
       await readFile(languageFilePath, "utf-8")
     ) as TranslationResources;
-    const languageResources = flattenTranslationKeys(languageRaw);
-    const missingResources = getMissingEnglishResources(
-      englishResources,
-      languageResources
-    );
-    const missingCount = Object.keys(missingResources).length;
 
-    if (missingCount === 0) {
+    const resourcesToTranslate =
+      mode === "missing"
+        ? getMissingEnglishResources(
+            englishResources,
+            flattenTranslationKeys(languageRaw)
+          )
+        : allEnglishResources;
+
+    const count = Object.keys(resourcesToTranslate).length;
+
+    if (count === 0) {
       console.log(`  ${language}: no missing keys`);
       continue;
     }
 
     const translated = await translateResources(
       options.projectId,
-      {
-        language: ENGLISH_LANGUAGE,
-        resources: missingResources,
-      },
+      { language: ENGLISH_LANGUAGE, resources: resourcesToTranslate },
       language
     );
 
@@ -279,13 +290,23 @@ async function translateMissingCoreKeys(options: {
       "utf-8"
     );
 
-    console.log(`  ${language}: translated ${missingCount} missing key(s)`);
+    const verb = mode === "missing" ? "missing" : "";
+    console.log(
+      `  ${language}: translated ${count} ${verb} key(s)`.replace("  ", "  ")
+    );
   }
 }
 
-async function translateMissingExtensionKeys(options: {
+async function translateMissingCoreKeys(options: {
   projectId: string;
 }): Promise<void> {
+  await translateCoreKeys(options, "missing");
+}
+
+async function translateExtensionKeys(
+  options: { projectId: string },
+  mode: "missing" | "all"
+): Promise<void> {
   const extensions = await readExtensionDefinitions();
 
   if (extensions.length === 0) {
@@ -293,7 +314,12 @@ async function translateMissingExtensionKeys(options: {
     return;
   }
 
-  console.log("Translating missing extension keys...");
+  const label =
+    mode === "missing"
+      ? "Translating missing extension keys..."
+      : "Translating all extension keys...";
+  console.log(label);
+
   for (const extension of extensions) {
     const englishRawResources = extension.translations[ENGLISH_LANGUAGE];
 
@@ -305,6 +331,10 @@ async function translateMissingExtensionKeys(options: {
     }
 
     const englishResources = flattenTranslationKeys(englishRawResources);
+    const allEnglishResources = Object.fromEntries(englishResources) as Record<
+      string,
+      string
+    >;
     const translations =
       (extension.raw.translations as ExtensionTranslationMap | undefined) ?? {};
     let extensionUpdated = false;
@@ -323,31 +353,32 @@ async function translateMissingExtensionKeys(options: {
     for (const language of supportedLanguages) {
       const languageRawResources =
         (translations[language] as TranslationResources | undefined) ?? {};
-      const languageResources = flattenTranslationKeys(languageRawResources);
-      const missingResources = getMissingEnglishResources(
-        englishResources,
-        languageResources
-      );
-      const missingCount = Object.keys(missingResources).length;
 
-      if (missingCount === 0) {
+      const resourcesToTranslate =
+        mode === "missing"
+          ? getMissingEnglishResources(
+              englishResources,
+              flattenTranslationKeys(languageRawResources)
+            )
+          : allEnglishResources;
+
+      const count = Object.keys(resourcesToTranslate).length;
+
+      if (count === 0) {
         console.log(`    ${language}: no missing keys`);
         continue;
       }
 
       const translated = await translateResources(
         options.projectId,
-        {
-          language: ENGLISH_LANGUAGE,
-          resources: missingResources,
-        },
+        { language: ENGLISH_LANGUAGE, resources: resourcesToTranslate },
         language
       );
 
       applyFlatResources(languageRawResources, translated.resources);
       translations[language] = languageRawResources;
       extensionUpdated = true;
-      console.log(`    ${language}: translated ${missingCount} missing key(s)`);
+      console.log(`    ${language}: translated ${count} key(s)`);
     }
 
     if (extensionUpdated) {
@@ -361,13 +392,26 @@ async function translateMissingExtensionKeys(options: {
   }
 }
 
+async function translateMissingExtensionKeys(options: {
+  projectId: string;
+}): Promise<void> {
+  await translateExtensionKeys(options, "missing");
+}
+
 async function translateMissingKeysCommand(options: {
-  googleCloudApiKey?: string;
   projectId?: string;
 }): Promise<void> {
   const translationConfig = getTranslationClientConfig(options);
   await translateMissingCoreKeys(translationConfig);
   await translateMissingExtensionKeys(translationConfig);
+}
+
+async function translateAllCommand(options: {
+  projectId?: string;
+}): Promise<void> {
+  const translationConfig = getTranslationClientConfig(options);
+  await translateCoreKeys(translationConfig, "all");
+  await translateExtensionKeys(translationConfig, "all");
 }
 
 function getExtensionResourcesByLanguage(
@@ -449,6 +493,19 @@ program
   )
   .action(async (options) => {
     await translateMissingKeysCommand(options);
+  });
+
+program
+  .command("translate-all")
+  .description(
+    "Translates all keys for every non-English language in the core app and extensions, overwriting any existing translations."
+  )
+  .option(
+    "--project-id <projectId>",
+    "Google Cloud project ID. Defaults to GOOGLE_CLOUD_PROJECT_ID env var."
+  )
+  .action(async (options) => {
+    await translateAllCommand(options);
   });
 
 await program.parseAsync();
