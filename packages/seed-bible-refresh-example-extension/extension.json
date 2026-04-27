@@ -13,13 +13,13 @@
       "item-2": "Item 2"
     },
     "es": {
-      "title": "Extensión de Ejemplo",
-      "description": "Una extensión de ejemplo para el proyecto Seed Bible Refresh.",
-      "my-example-tool": "Mi Herramienta de Ejemplo",
-      "my-verse-tool": "Mi Herramienta de Versículo",
-      "my-below-reader-tool": "Mi Herramienta Debajo del Lector",
-      "open-grid-portal": "Abrir portal de cuadrícula",
-      "open-map-portal": "Abrir portal de mapa",
+      "title": "Ejemplo de extensión",
+      "description": "Ejemplo de extensión para el proyecto Seed Bible Refresh.",
+      "my-example-tool": "Mi herramienta de ejemplo",
+      "my-verse-tool": "Mi herramienta de versos",
+      "my-below-reader-tool": "Mi herramienta de lectura inferior",
+      "open-grid-portal": "Portal de cuadrícula abierta",
+      "open-map-portal": "Abrir el portal del mapa",
       "item-1": "Artículo 1",
       "item-2": "Artículo 2"
     }
