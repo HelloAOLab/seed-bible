@@ -165,21 +165,23 @@ describe("createSeedBibleState", () => {
     expect(selectedPane?.tab?.id).toBe("tab-2");
   });
 
-  it("adding a tab creates the tab, and displays it in the selected pane", async () => {
+  it("adding a tab opens the bible selector in new-tab mode for the selected pane", async () => {
     const state = await createState();
     const selectedPaneId = state.panes.selectedPaneId.value;
     const previousTabCount = state.tabs.tabs.value.length;
 
     state.app.addTab();
 
-    const newTab = state.tabs.tabs.value[previousTabCount]!;
-    const selectedPane = state.panes.panes.value.find(
-      (pane) => pane.id === selectedPaneId
-    );
+    // forceNewTab is set synchronously inside setOpen before the async
+    // syncStateFromPane work; isOpen flips to true only after that work
+    // resolves, so wait for it.
+    await waitFor(() => state.selector.isOpen.value === true);
 
-    expect(state.tabs.tabs.value).toHaveLength(previousTabCount + 1);
-    expect(state.tabs.selectedTabId.value).toBe(newTab.id);
-    expect(selectedPane?.tab?.id).toBe(newTab.id);
+    // No tab is created until the user picks a chapter — addTab opens the
+    // selector first so the new tab can be seeded with the chosen book.
+    expect(state.tabs.tabs.value).toHaveLength(previousTabCount);
+    expect(state.selector.forceNewTab.value).toBe(true);
+    expect(state.selector.pane.value?.id).toBe(selectedPaneId);
   });
 
   it("createSharedSession() creates a shared session and adds a tab for its reading state", async () => {
