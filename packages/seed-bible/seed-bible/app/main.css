@@ -1273,6 +1273,43 @@ button {
   cursor: pointer;
 }
 
+.sb-selector-pane-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.sb-selector-pane-picker-label {
+  font-size: 13px;
+  color: var(--sb-font-color);
+  opacity: 0.85;
+}
+
+.sb-selector-pane-picker-options {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sb-selector-pane-chip {
+  border: 1px solid var(--sb-secondary-color);
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: var(--sb-secondary-color);
+  color: var(--sb-font-color);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sb-selector-pane-chip-selected {
+  border-color: var(--sb-primary-color);
+  background: var(--sb-primary-color);
+  color: var(--sb-secondary-color);
+}
+
 .sb-selector-controls {
   display: flex;
   gap: 8px;

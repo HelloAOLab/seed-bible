@@ -37,10 +37,53 @@ export function BibleSelector(props: BibleSelectorProps) {
     setExpandedBook,
     selectTranslation,
     selectChapter,
+    forceNewTab,
+    availablePanes,
+    pane: currentPane,
+    setTargetPane,
   } = selectorState;
 
   const panelContents = [];
   if (isOpen) {
+    const showPanePicker = forceNewTab.value && availablePanes.value.length > 1;
+
+    if (showPanePicker) {
+      panelContents.push(
+        <div className="sb-selector-pane-picker">
+          <span className="sb-selector-pane-picker-label">
+            {t("open-in-pane", { defaultValue: "Open in pane:" })}
+          </span>
+          <div className="sb-selector-pane-picker-options">
+            {availablePanes.value.map((p, index) => {
+              const tabBookId = p.tab?.readingState.bookId.value ?? null;
+              const tabBookName =
+                p.tab?.readingState.translationBooks.value?.books.find(
+                  (book) => book.id === tabBookId
+                )?.name ??
+                tabBookId ??
+                null;
+              const subtitle = tabBookName
+                ? ` · ${tabBookName}`
+                : ` · ${t("empty", { defaultValue: "empty" })}`;
+              const isSelected = currentPane.value?.id === p.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`sb-selector-pane-chip${
+                    isSelected ? " sb-selector-pane-chip-selected" : ""
+                  }`}
+                  onClick={() => setTargetPane(p.id)}
+                >
+                  {`${t("pane", { defaultValue: "Pane" })} ${index + 1}${subtitle}`}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
     panelContents.push(
       <div className="sb-selector-controls">
         <select

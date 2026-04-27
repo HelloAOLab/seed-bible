@@ -337,8 +337,22 @@ export function createSeedBibleState(): SeedBibleState {
 
   const handleAddTab = () => {
     closeSidebarAndSettings();
-    const tab = tabs.addTab();
-    panes.setSelectedPaneTab(tab.id);
+    const targetPane =
+      panes.panes.value.find(
+        (pane) => pane.id === panes.selectedPaneId.value
+      ) ??
+      panes.panes.value.find((pane) => !pane.detached) ??
+      panes.panes.value[0] ??
+      null;
+
+    if (!targetPane) {
+      // No panes — fall back to plain tab creation.
+      const tab = tabs.addTab();
+      panes.setSelectedPaneTab(tab.id);
+      return;
+    }
+
+    void selector.setOpen(true, targetPane, { forNewTab: true });
   };
 
   const handleOpenInNewPane = (tabId: string) => {

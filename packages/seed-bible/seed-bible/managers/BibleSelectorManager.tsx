@@ -29,6 +29,16 @@ export interface BibleSelectorOptions {
   pane?: Pane;
 }
 
+/** Options passed to `setOpen` to control selector behavior on open. */
+export interface BibleSelectorSetOpenOptions {
+  /**
+   * When true, the next chapter selection always creates a new tab and binds
+   * it to the target pane, even if the pane already has a tab.
+   * Cleared automatically when the selector closes.
+   */
+  forNewTab?: boolean;
+}
+
 /**
  * Reactive state + actions for the Bible selector overlay.
  *
@@ -77,10 +87,27 @@ export interface BibleSelectorState {
   newTestamentRows: ReadonlySignal<TranslationBook[][]>;
 
   /**
+   * True while the selector is in "create a new tab" mode — chapter
+   * selections create a brand new tab and bind it to the target pane
+   * instead of reusing the pane's existing tab.
+   */
+  forceNewTab: ReadonlySignal<boolean>;
+
+  /** All panes available as targets for the selector. */
+  availablePanes: ReadonlySignal<Pane[]>;
+
+  /**
    * Opens/closes selector.
    * When opening, optionally rebinds selector to a pane and synchronizes data.
    */
-  setOpen: (open: boolean, pane?: Pane) => Promise<void>;
+  setOpen: (
+    open: boolean,
+    pane?: Pane,
+    options?: BibleSelectorSetOpenOptions
+  ) => Promise<void>;
+
+  /** Switches the target pane while the selector is open. */
+  setTargetPane: (paneId: string) => void;
 
   /** Sets the current selector search query. */
   setSearch: (value: string) => void;
@@ -93,7 +120,8 @@ export interface BibleSelectorState {
 
   /**
    * Applies chapter selection to the bound pane/tab and closes selector.
-   * Creates a new tab if needed when the bound pane has no tab content.
+   * Creates a new tab if needed when the bound pane has no tab content,
+   * or when `forceNewTab` is true.
    */
   selectChapter: (bookId: string, chapterNumber: number) => void;
 }
@@ -139,6 +167,8 @@ export function createBibleSelectorState(
 ): BibleSelectorState {
   const isOpen = signal(false);
   const pane = signal<Pane | null>(null);
+  const forceNewTab = signal(false);
+  const availablePanes = computed(() => panesManager.panes.value);
   const availableTranslations = computed(
     () => dataManager.availableTranslations.value
   );
@@ -213,9 +243,13 @@ export function createBibleSelectorState(
     }
   };
 
-  const setOpen = async (open: boolean, nextPane?: Pane) => {
+  const setOpen = async (
+    open: boolean,
+    nextPane?: Pane,
+    options?: BibleSelectorSetOpenOptions
+  ) => {
     if (open) {
-      console.log("Opening Bible selector with pane:", nextPane);
+      console.log("Opening Bible selector with pane:", nextPane, options);
       if (nextPane) {
         pane.value = nextPane;
       }
@@ -227,11 +261,23 @@ export function createBibleSelectorState(
       }
 
       pane.value = effectivePane;
+      forceNewTab.value = options?.forNewTab === true;
 
       await syncStateFromPane();
+    } else {
+      forceNewTab.value = false;
     }
 
     isOpen.value = open;
+  };
+
+  const setTargetPane = (paneId: string) => {
+    const nextPane =
+      panesManager.panes.value.find((p) => p.id === paneId) ?? null;
+    if (!nextPane) {
+      return;
+    }
+    pane.value = nextPane;
   };
 
   const getHistoryState = () => {
@@ -366,7 +412,7 @@ export function createBibleSelectorState(
     // Ensure selected-tab synchronization targets this pane, not a stale selection.
     panesManager.selectPane(pane.value.id);
 
-    if (pane.value.tab) {
+    if (pane.value.tab && !forceNewTab.value) {
       await pane.value.tab.readingState.selectTranslationAndChapter(
         selectedTranslationId.value,
         selectedBookId,
@@ -448,7 +494,10 @@ export function createBibleSelectorState(
     expandedBookId,
     oldTestamentRows,
     newTestamentRows,
+    forceNewTab,
+    availablePanes,
     setOpen,
+    setTargetPane,
     setSearch,
     setExpandedBook,
     selectTranslation,
