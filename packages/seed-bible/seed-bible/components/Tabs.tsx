@@ -12,9 +12,10 @@ import {
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { MobileSettingsIcon } from "seed-bible.components.icons";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
-import type { UserProfile } from "../managers/LoginManager";
-import type { ConnectedSessionUser } from "../managers/SessionsManager";
+import type { UserProfile } from "seed-bible.managers.LoginManager";
+import type { ConnectedSessionUser } from "seed-bible.managers.SessionsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
+import { SidebarSearch } from "seed-bible.components.SidebarSearch";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -225,6 +226,8 @@ export function Tabs(props: TabsProps) {
           <span className="material-symbols-outlined">add</span>
         </button>
       </div>
+
+      <SidebarSearch state={state} closeLayoutMenu={closeLayoutMenu} />
 
       <div className="sb-sidebar-tab-list">
         {tabs.map((tab) => {

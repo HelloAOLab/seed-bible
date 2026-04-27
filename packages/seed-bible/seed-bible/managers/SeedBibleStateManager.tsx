@@ -49,8 +49,10 @@ import {
   createModalManager,
   type ModalManager,
 } from "seed-bible.managers.ModalManager";
+import { createSearchManager } from "seed-bible.managers.SearchManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
+type SearchManager = ReturnType<typeof createSearchManager>;
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -132,6 +134,8 @@ export interface SeedBibleState {
   sessions: SessionsManager;
   /** Modal manager for app-wide dialog state and rendering. */
   modals: ModalManager;
+  /** Search manager for Typesense-backed queries. */
+  search: SearchManager;
   /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
   /** Extension loading and runtime manager. */
@@ -162,6 +166,7 @@ export function createSeedBibleState(): SeedBibleState {
   const sessions = createSessionsManager(data, login, highlights);
   const extensions = createExtensionManager();
   const modals = createModalManager();
+  const search = createSearchManager();
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value);
@@ -351,6 +356,7 @@ export function createSeedBibleState(): SeedBibleState {
     annotations,
     sessions,
     modals,
+    search,
     extensions,
     app: {
       createSharedSession: handleCreateSharedSession,
