@@ -186,6 +186,17 @@ export function createSeedBibleState(): SeedBibleState {
     generateThemeCssVariables(theme.value)
   );
   const themeCssClasses = computed(() => generateThemeCssClasses(theme.value));
+
+  // Theme is the source of truth for text colors. When the user switches
+  // theme presets, drop any per-section color override from the text editor
+  // so verse / book title / heading pick up the new theme's colors.
+  let prevPresetId = themeManager.selectedThemeId.peek();
+  effect(() => {
+    const id = themeManager.selectedThemeId.value;
+    if (id === prevPresetId) return;
+    prevPresetId = id;
+    settings.resetTextColors();
+  });
   const panelsEnabled = computed(() => !config.config.value.disablePanels);
   const selectedTab = computed(
     () =>

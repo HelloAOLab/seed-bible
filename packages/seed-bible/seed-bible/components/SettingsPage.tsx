@@ -4,6 +4,7 @@ import type { TextSize } from "seed-bible.managers.ConfigManager";
 import {
   TEXT_FONT_OPTIONS,
   TEXT_SECTION_LABELS,
+  TEXT_SECTION_THEME_COLOR_VAR,
   TEXT_WEIGHT_OPTIONS,
   UI_TEXT_SIZE_OPTIONS,
   type BookOrientation,
@@ -714,11 +715,14 @@ function ToolbarSettingsView(props: {
 }
 
 function TextFormattingToolbar(props: {
+  sectionId: TextSectionId;
   section: TextSectionConfig;
   onChange: (patch: Partial<TextSectionConfig>) => void;
 }) {
-  const { section, onChange } = props;
+  const { sectionId, section, onChange } = props;
   const paletteOpen = useSignal(false);
+  const themeFallback = `var(${TEXT_SECTION_THEME_COLOR_VAR[sectionId]})`;
+  const swatchBackground = section.color || themeFallback;
 
   const toggle = (key: "bold" | "italic" | "underline") => {
     onChange({ [key]: !section[key] } as Partial<TextSectionConfig>);
@@ -786,11 +790,26 @@ function TextFormattingToolbar(props: {
         >
           <span
             className="sb-text-format-color-swatch"
-            style={{ background: section.color }}
+            style={{ background: swatchBackground }}
           />
         </button>
         {paletteOpen.value && (
           <div className="sb-text-format-palette" role="menu">
+            <button
+              type="button"
+              className={`sb-text-format-palette-swatch${
+                section.color === ""
+                  ? " sb-text-format-palette-swatch-selected"
+                  : ""
+              }`}
+              style={{ background: themeFallback }}
+              aria-label="Follow theme"
+              title="Follow theme"
+              onClick={() => {
+                onChange({ color: "" });
+                paletteOpen.value = false;
+              }}
+            />
             {TEXT_COLOR_PALETTE.map((color) => (
               <button
                 key={color}
@@ -929,7 +948,11 @@ function TextSettingsView(props: {
                 />
               </div>
 
-              <TextFormattingToolbar section={config} onChange={handleChange} />
+              <TextFormattingToolbar
+                sectionId={section}
+                section={config}
+                onChange={handleChange}
+              />
             </div>
           );
         })}

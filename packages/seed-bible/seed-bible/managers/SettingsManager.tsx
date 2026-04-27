@@ -81,11 +81,18 @@ const DEFAULT_SELECTION_UI: SelectionUIBehavior = {
   showIconText: true,
 };
 
+/**
+ * Empty `color` means "follow the active theme". The reader CSS reads
+ * `--sb-{section}-font-color` directly; the text editor's color setting
+ * writes to that same variable as a body inline override (so it beats the
+ * theme's body-scoped CSS rule). Switching theme presets clears the
+ * override — see `resetTextColors`.
+ */
 const DEFAULT_TEXT_CONFIG: TextConfig = {
   bookTitle: {
     font: "'Newsreader', serif",
     weight: "700",
-    color: "#333333",
+    color: "",
     marginVertical: 0,
     marginHorizontal: 0,
     bold: true,
@@ -96,7 +103,7 @@ const DEFAULT_TEXT_CONFIG: TextConfig = {
   heading: {
     font: "'Plus Jakarta Sans', sans-serif",
     weight: "300",
-    color: "#333333",
+    color: "",
     marginVertical: 18,
     marginHorizontal: 0,
     bold: false,
@@ -107,7 +114,7 @@ const DEFAULT_TEXT_CONFIG: TextConfig = {
   verse: {
     font: "'Newsreader', serif",
     weight: "400",
-    color: "#333333",
+    color: "",
     marginVertical: 0,
     marginHorizontal: 0,
     bold: false,
@@ -115,6 +122,17 @@ const DEFAULT_TEXT_CONFIG: TextConfig = {
     underline: false,
     alignment: "left",
   },
+};
+
+/**
+ * Maps each text section to the theme color variable it should override.
+ * Exported so the settings UI can render the resolved theme color in the
+ * "follow theme" swatch.
+ */
+export const TEXT_SECTION_THEME_COLOR_VAR: Record<TextSectionId, string> = {
+  bookTitle: "--sb-book-title-font-color",
+  heading: "--sb-chapter-heading-font-color",
+  verse: "--sb-verse-font-color",
 };
 
 const DEFAULT_TOOLBAR_CONFIG: ToolbarCustomization = {
@@ -333,11 +351,14 @@ function parseTextConfig(value: unknown, fallback: TextConfig): TextConfig {
 function applyTextConfigToCSSVars(config: TextConfig) {
   if (typeof document === "undefined") return;
   const root = document.documentElement.style;
+  // The theme writes `--sb-*-font-color` to `body { ... }`. Inline styles on
+  // body win over CSS rules on body, so we override there. Writing to :root
+  // would lose to body's own custom property.
+  const body = document.body?.style ?? null;
   for (const [section, cfg] of Object.entries(config)) {
     const prefix = `--text-${section}`;
     root.setProperty(`${prefix}-font`, cfg.font);
     root.setProperty(`${prefix}-weight`, cfg.bold ? "700" : cfg.weight);
-    root.setProperty(`${prefix}-color`, cfg.color);
     root.setProperty(`${prefix}-font-style`, cfg.italic ? "italic" : "normal");
     root.setProperty(
       `${prefix}-text-decoration`,
@@ -348,6 +369,15 @@ function applyTextConfigToCSSVars(config: TextConfig) {
     root.setProperty(`${prefix}-margin-bottom`, `${cfg.marginVertical}px`);
     root.setProperty(`${prefix}-margin-left`, `${cfg.marginHorizontal}px`);
     root.setProperty(`${prefix}-margin-right`, `${cfg.marginHorizontal}px`);
+
+    if (body) {
+      const themeVar = TEXT_SECTION_THEME_COLOR_VAR[section as TextSectionId];
+      if (cfg.color) {
+        body.setProperty(themeVar, cfg.color);
+      } else {
+        body.removeProperty(themeVar);
+      }
+    }
   }
 }
 
@@ -360,6 +390,8 @@ export interface SettingsManager {
     section: TextSectionId,
     patch: Partial<TextSectionConfig>
   ) => void;
+  /** Clear per-section color overrides so the active theme drives text colors. */
+  resetTextColors: () => void;
   resetTextConfig: () => void;
   setToolbarHidden: (toolId: string, hidden: boolean) => void;
   setToolbarOrder: (order: string[]) => void;
@@ -461,6 +493,24 @@ export function createSettings(): SettingsManager {
   const resetTextConfig = () => {
     settings.value = { ...settings.value, textConfig: DEFAULT_TEXT_CONFIG };
     configBot.tags[TAG_TEXT_CONFIG] = "";
+  };
+
+  const resetTextColors = () => {
+    const current = settings.value.textConfig;
+    let changed = false;
+    const next = {} as TextConfig;
+    for (const section of Object.keys(current) as TextSectionId[]) {
+      const cfg = current[section];
+      if (cfg.color !== "") {
+        changed = true;
+        next[section] = { ...cfg, color: "" };
+      } else {
+        next[section] = cfg;
+      }
+    }
+    if (!changed) return;
+    settings.value = { ...settings.value, textConfig: next };
+    configBot.tags[TAG_TEXT_CONFIG] = JSON.stringify(next);
   };
 
   const writeToolbarConfig = (next: ToolbarCustomization) => {
@@ -568,6 +618,7 @@ export function createSettings(): SettingsManager {
     setUITextSize,
     setSelectionUI,
     updateTextSection,
+    resetTextColors,
     resetTextConfig,
     setToolbarHidden,
     setToolbarOrder,

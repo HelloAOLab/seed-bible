@@ -617,7 +617,8 @@ button {
 
 .sb-bible-reader-title {
   font-family: var(--text-bookTitle-font);
-  color: var(--text-bookTitle-color);
+  /* color: var(--text-bookTitle-color); */
+  color: var(--sb-book-title-font-color);
   font-weight: var(--text-bookTitle-weight);
   font-style: var(--text-bookTitle-font-style);
   text-decoration: var(--text-bookTitle-text-decoration);
@@ -678,7 +679,8 @@ button {
 
 .sb-chapter-heading {
   font-family: var(--text-heading-font);
-  color: var(--text-heading-color);
+  /* color: var(--text-heading-color); */
+  color: var(--sb-chapter-heading-font-color);
   font-weight: var(--text-heading-weight);
   font-style: var(--text-heading-font-style);
   text-decoration: var(--text-heading-text-decoration);
@@ -701,7 +703,8 @@ button {
 }
 
 .sb-verse {
-  color: var(--text-verse-color);
+  /* color: var(--text-verse-color); */
+  color: var(--sb-verse-font-color);
   font-family: var(--text-verse-font);
   font-weight: var(--text-verse-weight);
   font-style: var(--text-verse-font-style);
