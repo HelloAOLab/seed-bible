@@ -19,87 +19,87 @@ registerExtension({
     console.log("Example extension initialized with context:", context);
 
     // register a new tool
-    yield context.tools.registerToolbarTool({
-      id: "my-example-tool",
-      title: {
-        key: "my-example-tool",
-        defaultValue: "My Example Tool",
-        ns: "example-extension",
-      },
-      icon: () => <span>TOOL!</span>,
-      onSelect: () => {
-        console.log("Example tool selected!");
-        context.panes.openPane({
-          type: "detached",
-          detachedAnchor: "side",
-          component: () => {
-            const { t } = useI18n("example-extension");
-            return <div style={{ padding: 20 }}>{t("my-example-tool")}</div>;
-          },
-        });
-      },
-      priority: 100,
-    });
+    // yield context.tools.registerToolbarTool({
+    //   id: "my-example-tool",
+    //   title: {
+    //     key: "my-example-tool",
+    //     defaultValue: "My Example Tool",
+    //     ns: "example-extension",
+    //   },
+    //   icon: () => <span>TOOL!</span>,
+    //   onSelect: () => {
+    //     console.log("Example tool selected!");
+    //     context.panes.openPane({
+    //       type: "detached",
+    //       detachedAnchor: "side",
+    //       component: () => {
+    //         const { t } = useI18n("example-extension");
+    //         return <div style={{ padding: 20 }}>{t("my-example-tool")}</div>;
+    //       },
+    //     });
+    //   },
+    //   priority: 100,
+    // });
 
-    yield context.tools.registerVerseToolbarTool({
-      id: "my-verse-tool",
-      title: {
-        key: "my-verse-tool",
-        defaultValue: "My Verse Tool",
-        ns: "example-extension",
-      },
-      icon: () => <span>VERSE!</span>,
-      // onSelect: (context) => {
-      //   console.log("Example verse tool selected with context:", context);
-      //   console.log(
-      //     "Selected verse:",
-      //     context.readingState.selectedVerses.value
-      //   );
-      //   const id = context.readingState.decorateVerses(
-      //     context.readingState.translationId.value,
-      //     context.readingState.bookId.value!,
-      //     context.readingState.chapterNumber.value,
-      //     context.readingState.selectedVerses.value.map((v) => v.verse.number),
-      //     {
-      //       style: {
-      //         backgroundColor: "#bf7bdf",
-      //         textEmphasis: "sesame green",
-      //       },
-      //     }
-      //   );
+    // yield context.tools.registerVerseToolbarTool({
+    //   id: "my-verse-tool",
+    //   title: {
+    //     key: "my-verse-tool",
+    //     defaultValue: "My Verse Tool",
+    //     ns: "example-extension",
+    //   },
+    //   icon: () => <span>VERSE!</span>,
+    //   // onSelect: (context) => {
+    //   //   console.log("Example verse tool selected with context:", context);
+    //   //   console.log(
+    //   //     "Selected verse:",
+    //   //     context.readingState.selectedVerses.value
+    //   //   );
+    //   //   const id = context.readingState.decorateVerses(
+    //   //     context.readingState.translationId.value,
+    //   //     context.readingState.bookId.value!,
+    //   //     context.readingState.chapterNumber.value,
+    //   //     context.readingState.selectedVerses.value.map((v) => v.verse.number),
+    //   //     {
+    //   //       style: {
+    //   //         backgroundColor: "#bf7bdf",
+    //   //         textEmphasis: "sesame green",
+    //   //       },
+    //   //     }
+    //   //   );
 
-      //   console.log("decoration id:", id);
-      // },
-      getItems: (context) => [
-        {
-          id: "item-1",
-          icon: () => <span>ITEM 1</span>,
-          title: {
-            key: "item-1",
-            defaultValue: "Item 1",
-            ns: "example-extension",
-          },
-          onSelect: () => {
-            console.log("Item 1 clicked with context:", context);
-            os.toast("Item 1 clicked!");
-          },
-        },
-        {
-          id: "item-2",
-          icon: () => <span>ITEM 2</span>,
-          title: {
-            key: "item-2",
-            defaultValue: "Item 2",
-            ns: "example-extension",
-          },
-          onSelect: () => {
-            console.log("Item 2 clicked with context:", context);
-            os.toast("Item 2 clicked!");
-          },
-        },
-      ],
-      priority: 100,
-    });
+    //   //   console.log("decoration id:", id);
+    //   // },
+    //   getItems: (context) => [
+    //     {
+    //       id: "item-1",
+    //       icon: () => <span>ITEM 1</span>,
+    //       title: {
+    //         key: "item-1",
+    //         defaultValue: "Item 1",
+    //         ns: "example-extension",
+    //       },
+    //       onSelect: () => {
+    //         console.log("Item 1 clicked with context:", context);
+    //         os.toast("Item 1 clicked!");
+    //       },
+    //     },
+    //     {
+    //       id: "item-2",
+    //       icon: () => <span>ITEM 2</span>,
+    //       title: {
+    //         key: "item-2",
+    //         defaultValue: "Item 2",
+    //         ns: "example-extension",
+    //       },
+    //       onSelect: () => {
+    //         console.log("Item 2 clicked with context:", context);
+    //         os.toast("Item 2 clicked!");
+    //       },
+    //     },
+    //   ],
+    //   priority: 100,
+    // });
 
     yield context.tools.registerBelowReaderTool({
       id: "my-below-reader-tool",

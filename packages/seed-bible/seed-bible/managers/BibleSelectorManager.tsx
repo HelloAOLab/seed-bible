@@ -10,6 +10,10 @@ import {
 } from "seed-bible.managers.BibleReadingManager";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
+import type {
+  BookOrientation,
+  SettingsManager,
+} from "seed-bible.managers.SettingsManager";
 import {
   computed,
   effect,
@@ -44,6 +48,9 @@ export interface BibleSelectorState {
   currentBookId: ReadonlySignal<string | null>;
   /** Active pane chapter number snapshot. */
   currentChapterNumber: ReadonlySignal<number | null>;
+
+  /** Current book-arrangement orientation (used for section labelling). */
+  orientation: ReadonlySignal<BookOrientation>;
 
   /** Available translations loaded by the data manager. */
   availableTranslations: ReadonlySignal<Translation[]>;
@@ -127,7 +134,8 @@ function groupBooks(translationBooks: TranslationBooks | null, search: string) {
 export function createBibleSelectorState(
   dataManager: BibleDataManager,
   tabsManager: TabsManager,
-  panesManager: PanesManager
+  panesManager: PanesManager,
+  settings?: SettingsManager
 ): BibleSelectorState {
   const isOpen = signal(false);
   const pane = signal<Pane | null>(null);
@@ -143,6 +151,10 @@ export function createBibleSelectorState(
   );
   const currentChapterNumber = computed<number | null>(
     () => readingState.value?.chapterNumber.value ?? null
+  );
+
+  const orientation = computed<BookOrientation>(
+    () => settings?.settings.value.bookOrientation ?? "traditional"
   );
 
   const loading = signal(false);
@@ -426,6 +438,7 @@ export function createBibleSelectorState(
     currentTranslationId,
     currentBookId,
     currentChapterNumber,
+    orientation,
     loading,
     error,
     search,
