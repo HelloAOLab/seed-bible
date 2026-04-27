@@ -2378,3 +2378,9 @@ h6 {
 .flip-x {
   transform: scaleX(-1);
 }
+
+.sb-translation-license-notice,
+.sb-translation-website {
+  text-align: center;
+  opacity: 0.75;
+}

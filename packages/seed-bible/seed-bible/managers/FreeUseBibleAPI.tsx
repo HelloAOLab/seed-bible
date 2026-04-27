@@ -33,6 +33,11 @@ export interface Translation {
   licenseUrl: string;
 
   /**
+   * The license notice for the translation.
+   */
+  licenseNotice?: string | null;
+
+  /**
    * The short name for the translation.
    */
   shortName: string;
