@@ -473,7 +473,8 @@ function renderChapterContent(
   const getVerseDecorations = (verseNumber: number) => {
     return decorations.filter(
       (decoration) =>
-        decoration.translationId === chapterData.translation.id &&
+        (!decoration.translationId ||
+          decoration.translationId === chapterData.translation.id) &&
         decoration.bookId === chapterData.book.id &&
         decoration.chapterNumber === chapterData.chapter.number &&
         decoration.verses.includes(verseNumber)
@@ -576,6 +577,7 @@ function renderChapterContent(
           <span
             key={`verse-${entryIndex}`}
             className={verseClassName}
+            data-verse-number={value.number}
             onClick={(event: MouseEvent) => {
               onVerseClick(verse, event);
             }}
@@ -647,6 +649,7 @@ function renderChapterContent(
         <span
           key={`verse-${entryIndex}`}
           className={verseClassName}
+          data-verse-number={value.number}
           onClick={(event: MouseEvent) => {
             onVerseClick(verse, event);
           }}

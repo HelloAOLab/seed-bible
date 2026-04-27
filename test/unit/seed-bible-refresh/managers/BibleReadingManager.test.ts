@@ -22,7 +22,7 @@ import {
   translations,
   type WebResponseMap,
 } from "./testUtils/mockBibleApiData";
-import { signal } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
 
 const nivTranslation = translations.translations[1]!;
 
@@ -286,7 +286,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    const decorationId = state.decorateVerses("AAB", "GEN", 1, [2, 1, 2], {
+    const decorationId = state.decorateVerses("GEN", 1, [2, 1, 2], {
       className: "sb-test-decoration",
       style: {
         outline: "1px solid red",
@@ -297,7 +297,7 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual<VerseDecoration[]>([
       {
         id: decorationId,
-        translationId: "AAB",
+        translationId: null,
         bookId: "GEN",
         chapterNumber: 1,
         verses: [1, 2],
@@ -314,7 +314,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    const decorationId = state.decorateVerses("AAB", "GEN", 1, [1], {
+    const decorationId = state.decorateVerses("GEN", 1, [1], {
       className: "sb-test-decoration",
     });
 
@@ -328,7 +328,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    const decorationId = state.decorateVerses("AAB", "GEN", 1, [1], {
+    const decorationId = state.decorateVerses("GEN", 1, [1], {
       targetContent: "created the",
       className: "sb-piece-decoration",
       style: {
@@ -339,7 +339,7 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual<VerseDecoration[]>([
       {
         id: decorationId,
-        translationId: "AAB",
+        translationId: null,
         bookId: "GEN",
         chapterNumber: 1,
         verses: [1],
@@ -357,7 +357,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    const decorationId = state.decorateVerses("AAB", "GEN", 1, [1], {
+    const decorationId = state.decorateVerses("GEN", 1, [1], {
       targetContent: "created",
       startIndex: 20,
       endIndex: 45,
@@ -367,7 +367,7 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual<VerseDecoration[]>([
       {
         id: decorationId,
-        translationId: "AAB",
+        translationId: null,
         bookId: "GEN",
         chapterNumber: 1,
         verses: [1],
@@ -384,7 +384,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    const decorationId = state.decorateVerses("AAB", "GEN", 1, [1], {
+    const decorationId = state.decorateVerses("GEN", 1, [1], {
       startIndex: 31,
       endIndex: 42,
       className: "sb-index-range-decoration",
@@ -396,7 +396,7 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual<VerseDecoration[]>([
       {
         id: decorationId,
-        translationId: "AAB",
+        translationId: null,
         bookId: "GEN",
         chapterNumber: 1,
         verses: [1],
@@ -410,12 +410,79 @@ describe("createBibleReadingState", () => {
     ]);
   });
 
+  it("decorateVerses() stores removeAfterMs on the decoration", async () => {
+    jest.useRealTimers();
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    jest.useFakeTimers();
+    try {
+      const decorationId = state.decorateVerses("GEN", 1, [1], {
+        className: "sb-timeout-decoration",
+        removeAfterMs: 1500,
+      });
+
+      expect(state.decorations.value).toEqual<VerseDecoration[]>([
+        {
+          id: decorationId,
+          translationId: null,
+          bookId: "GEN",
+          chapterNumber: 1,
+          verses: [1],
+          className: "sb-timeout-decoration",
+          removeAfterMs: 1500,
+        },
+      ]);
+    } finally {
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    }
+  });
+
+  it("decorateVerses() auto-removes a decoration after removeAfterMs", async () => {
+    jest.useRealTimers();
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    jest.useFakeTimers();
+    try {
+      const decorationId = state.decorateVerses("GEN", 1, [1], {
+        className: "sb-temporary-decoration",
+        removeAfterMs: 100,
+      });
+
+      expect(state.decorations.value).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: decorationId,
+            removeAfterMs: 100,
+          }),
+        ])
+      );
+
+      jest.advanceTimersByTime(99);
+      expect(state.decorations.value.some((d) => d.id === decorationId)).toBe(
+        true
+      );
+
+      jest.advanceTimersByTime(1);
+      expect(state.decorations.value.some((d) => d.id === decorationId)).toBe(
+        false
+      );
+    } finally {
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    }
+  });
+
   it("clears decorations when the chapter changes", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    state.decorateVerses("AAB", "GEN", 1, [1, 2], {
+    state.decorateVerses("GEN", 1, [1, 2], {
       className: "sb-test-decoration",
     });
 
@@ -424,16 +491,42 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual([]);
   });
 
+  it("changing the chapter keeps decorations that target the new chapter even when preserveOnChapterChange is false", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    const decorationId = state.decorateVerses("GEN", 2, [3], {
+      className: "sb-next-chapter-decoration",
+      preserveOnChapterChange: false,
+    });
+
+    await state.selectChapter("GEN", 2);
+
+    expect(state.decorations.value).toEqual([
+      {
+        id: decorationId,
+        translationId: null,
+        bookId: "GEN",
+        chapterNumber: 2,
+        verses: [3],
+        className: "sb-next-chapter-decoration",
+        style: undefined,
+        preserveOnChapterChange: false,
+      },
+    ]);
+  });
+
   it("doesn't clear decorations that should be preserved when the chapter changes", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    state.decorateVerses("AAB", "GEN", 1, [5], {
+    state.decorateVerses("GEN", 1, [5], {
       className: "sb-test-decoration-removed",
     });
 
-    state.decorateVerses("AAB", "GEN", 1, [1, 2], {
+    state.decorateVerses("GEN", 1, [1, 2], {
       className: "sb-test-decoration",
       preserveOnChapterChange: true,
     });
@@ -443,7 +536,7 @@ describe("createBibleReadingState", () => {
     expect(state.decorations.value).toEqual([
       {
         id: expect.any(String),
-        translationId: "AAB",
+        translationId: null,
         bookId: "GEN",
         chapterNumber: 1,
         verses: [1, 2],
@@ -487,6 +580,99 @@ describe("createBibleReadingState", () => {
     expect(state.bookId.value).toBe("GEN");
     expect(state.chapterNumber.value).toBe(5);
     expect(state.chapterData.value?.chapter.number).toBe(5);
+  });
+
+  it("selectTranslationAndChapter() can request scrolling to verse", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    await state.selectTranslationAndChapter("AAB", "GEN", 5, {
+      scrollToVerse: 3,
+    });
+
+    expect(webGetMock).toHaveBeenCalledWith(makeUrl("/api/AAB/GEN/5.json"));
+    expect(state.translationId.value).toBe("AAB");
+    expect(state.bookId.value).toBe("GEN");
+    expect(state.chapterNumber.value).toBe(5);
+    expect(state.scrollToVerse.value).toBe(3);
+  });
+
+  it("selectTranslationAndChapter() updates scrollToVerse in the same batch as chapterData", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    const chapterFiveScrollSnapshots: Array<number | null> = [];
+    const stop = effect(() => {
+      const chapter = state.chapterData.value;
+      if (chapter?.book.id === "GEN" && chapter.chapter.number === 5) {
+        chapterFiveScrollSnapshots.push(state.scrollToVerse.value);
+      }
+    });
+
+    await state.selectTranslationAndChapter("AAB", "GEN", 5, {
+      scrollToVerse: 3,
+    });
+
+    stop();
+
+    expect(chapterFiveScrollSnapshots).toEqual([3]);
+    expect(state.chapterData.value?.book.id).toBe("GEN");
+    expect(state.chapterData.value?.chapter.number).toBe(5);
+    expect(state.scrollToVerse.value).toBe(3);
+  });
+
+  it("decorateVerses() supports specifying a translationId so decorations can only work within the same translation", async () => {
+    const responses = createReadingManagerResponseMap();
+    responses[makeUrl("/api/NIV/books.json")] = createResponse({
+      ...bsbBooks,
+      translation: nivTranslation,
+    });
+    responses[makeUrl("/api/NIV/GEN/1.json")] = createResponse({
+      ...makeChapter(bsbBooks, "GEN", 1),
+      translation: nivTranslation,
+      book: bsbBooks.books.find((book) => book.id === "GEN")!,
+      thisChapterLink: "/api/NIV/GEN/1.json",
+      nextChapterApiLink: "/api/NIV/GEN/2.json",
+      previousChapterApiLink: null,
+    });
+
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    const decorationId = state.decorateVerses("GEN", 1, [1], {
+      className: "sb-any-translation-decoration",
+      translationId: "NIV",
+    });
+
+    expect(state.decorations.value).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: decorationId,
+          translationId: "NIV",
+          bookId: "GEN",
+          chapterNumber: 1,
+          verses: [1],
+          className: "sb-any-translation-decoration",
+        }),
+      ])
+    );
+
+    await state.selectTranslationAndChapter("NIV", "GEN", 1);
+
+    expect(state.decorations.value).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: decorationId,
+          translationId: "NIV",
+          bookId: "GEN",
+          chapterNumber: 1,
+          verses: [1],
+        }),
+      ])
+    );
   });
 
   it("loads highlights when the chapter changes", async () => {
