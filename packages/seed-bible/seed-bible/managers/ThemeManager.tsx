@@ -1,9 +1,4 @@
-import {
-  computed,
-  signal,
-  type ReadonlySignal,
-  type Signal,
-} from "@preact/signals";
+import { computed, signal } from "@preact/signals";
 
 export interface BibleThemeVariables {
   primaryColor: string;
@@ -679,491 +674,47 @@ const DARK_THEME: BibleTheme = {
   },
 };
 
-/**
- * Keys of `BibleThemeVariables` that represent a plain color value and are
- * safe to expose in a generic color-picker UI. Typography, spacing, borders,
- * and composite CSS values are intentionally excluded.
- */
-export type ThemeColorKey =
-  | "primaryColor"
-  | "primaryFontColor"
-  | "secondaryColor"
-  | "secondaryFontColor"
-  | "tertiaryColor"
-  | "background"
-  | "fontColor"
-  | "sidebarBackground"
-  | "sidebarFontColor"
-  | "bookSelectorBackground"
-  | "bookSelectorFontColor"
-  | "readerBackground"
-  | "readerFontColor"
-  | "bookTitleFontColor"
-  | "chapterHeadingFontColor"
-  | "verseFontColor"
-  | "selectedVerseFontColor"
-  | "selectedVerseBackgroundColor"
-  | "selectedVerseTextDecorationColor"
-  | "hebrewSubtitleFontColor"
-  | "readerToolbarBackground"
-  | "readerToolbarFloatingButtonBackground"
-  | "readerToolbarFloatingButtonFontColor"
-  | "tabFontColor"
-  | "selectedTabFontColor";
+export type ThemeManager = ReturnType<typeof createTheme>;
 
-export interface ThemeColorField {
-  key: ThemeColorKey;
-  label: string;
-}
-
-export interface ThemeColorGroup {
-  id: string;
-  title: string;
-  fields: ThemeColorField[];
-}
-
-export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
-  {
-    id: "brand",
-    title: "Brand",
-    fields: [
-      { key: "primaryColor", label: "Primary" },
-      { key: "primaryFontColor", label: "Primary text" },
-      { key: "secondaryColor", label: "Secondary" },
-      { key: "secondaryFontColor", label: "Secondary text" },
-      { key: "tertiaryColor", label: "Tertiary" },
-    ],
-  },
-  {
-    id: "surfaces",
-    title: "Surfaces",
-    fields: [
-      { key: "background", label: "App background" },
-      { key: "readerBackground", label: "Reader background" },
-      { key: "sidebarBackground", label: "Sidebar background" },
-      { key: "bookSelectorBackground", label: "Book selector background" },
-      { key: "readerToolbarBackground", label: "Reader toolbar background" },
-      {
-        key: "readerToolbarFloatingButtonBackground",
-        label: "Floating button background",
-      },
-    ],
-  },
-  {
-    id: "text",
-    title: "Text",
-    fields: [
-      { key: "fontColor", label: "Default text" },
-      { key: "readerFontColor", label: "Reader text" },
-      { key: "sidebarFontColor", label: "Sidebar text" },
-      { key: "bookSelectorFontColor", label: "Book selector text" },
-      { key: "bookTitleFontColor", label: "Book title" },
-      { key: "chapterHeadingFontColor", label: "Chapter heading" },
-      { key: "verseFontColor", label: "Verse" },
-      { key: "hebrewSubtitleFontColor", label: "Hebrew subtitle" },
-      {
-        key: "readerToolbarFloatingButtonFontColor",
-        label: "Floating button text",
-      },
-    ],
-  },
-  {
-    id: "selection",
-    title: "Verse selection",
-    fields: [
-      { key: "selectedVerseFontColor", label: "Selected verse text" },
-      {
-        key: "selectedVerseBackgroundColor",
-        label: "Selected verse background",
-      },
-      {
-        key: "selectedVerseTextDecorationColor",
-        label: "Selected verse decoration",
-      },
-    ],
-  },
-  {
-    id: "tabs",
-    title: "Tabs",
-    fields: [
-      { key: "tabFontColor", label: "Tab text" },
-      { key: "selectedTabFontColor", label: "Selected tab text" },
-    ],
-  },
-];
-
-const TAG_THEME_ID = "app.themeId";
-const TAG_CUSTOM_THEME = "app.customTheme";
-const TAG_CUSTOM_HIGHLIGHTS = "app.customHighlights";
-
-export const DEFAULT_HIGHLIGHT_IDS = [
-  "yellow",
-  "green",
-  "blue",
-  "pink",
-  "purple",
-  "orange",
-] as const;
-
-export type HighlightId = (typeof DEFAULT_HIGHLIGHT_IDS)[number];
-
-type ThemeOverrides = Partial<Record<ThemeColorKey, string>>;
-type HighlightOverrides = Partial<Record<string, Partial<ThemeHighlightColor>>>;
-
-const THEME_COLOR_KEYS: ThemeColorKey[] = THEME_COLOR_GROUPS.flatMap((group) =>
-  group.fields.map((field) => field.key)
-);
-
-function parseThemeId(value: unknown, fallback: string): string {
-  return typeof value === "string" && value.trim().length > 0
-    ? value
-    : fallback;
-}
-
-function parseHighlightOverrides(value: unknown): HighlightOverrides {
-  let parsed: unknown = value;
-  if (typeof parsed === "string") {
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      return {};
-    }
-  }
-  if (!parsed || typeof parsed !== "object") {
-    return {};
-  }
-  const obj = parsed as Record<string, unknown>;
-  const overrides: HighlightOverrides = {};
-  for (const [id, entry] of Object.entries(obj)) {
-    if (!entry || typeof entry !== "object") continue;
-    const e = entry as Record<string, unknown>;
-    const sub: Partial<ThemeHighlightColor> = {};
-    if (typeof e.color === "string") sub.color = e.color;
-    if (typeof e.fontColor === "string") sub.fontColor = e.fontColor;
-    if (typeof e.wordsOfJesusFontColor === "string") {
-      sub.wordsOfJesusFontColor = e.wordsOfJesusFontColor;
-    }
-    if (Object.keys(sub).length > 0) overrides[id] = sub;
-  }
-  return overrides;
-}
-
-function applyHighlightOverrides(
-  theme: BibleTheme,
-  overrides: HighlightOverrides
-): BibleTheme {
-  if (Object.keys(overrides).length === 0) return theme;
-  const mergedHighlights: Record<string, ThemeHighlightColor> = {};
-  for (const [id, colors] of Object.entries(theme.highlightColors)) {
-    mergedHighlights[id] = { ...colors, ...(overrides[id] ?? {}) };
-  }
-  return {
-    ...theme,
-    highlightColors: mergedHighlights as BibleThemeHighlightColors,
-  };
-}
-
-function parseCustomTheme(value: unknown): ThemeOverrides {
-  let parsed: unknown = value;
-  if (typeof parsed === "string") {
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      return {};
-    }
-  }
-  if (!parsed || typeof parsed !== "object") {
-    return {};
-  }
-  const obj = parsed as Record<string, unknown>;
-  const overrides: ThemeOverrides = {};
-  for (const key of THEME_COLOR_KEYS) {
-    const raw = obj[key];
-    if (typeof raw === "string" && raw.length > 0) {
-      overrides[key] = raw;
-    }
-  }
-  return overrides;
-}
-
-function applyOverrides(
-  theme: BibleTheme,
-  overrides: ThemeOverrides
-): BibleTheme {
-  const anyOverrides = Object.keys(overrides).length > 0;
-  if (!anyOverrides) {
-    return theme;
-  }
-  return {
-    ...theme,
-    variables: { ...theme.variables, ...overrides },
-  };
-}
-
-export interface ThemeManager {
-  themes: Signal<BibleTheme[]>;
-  selectedThemeId: Signal<string>;
-  /** Effective theme = preset with custom overrides applied. */
-  currentTheme: ReadonlySignal<BibleTheme>;
-  /** The base preset for `selectedThemeId`, without custom overrides. */
-  basePresetTheme: ReadonlySignal<BibleTheme>;
-  /** User color overrides layered on top of the selected preset. */
-  customOverrides: Signal<ThemeOverrides>;
-  /** User highlight color overrides layered on top of the preset highlights. */
-  customHighlightOverrides: Signal<HighlightOverrides>;
-  setTheme: (themeId: string) => void;
-  setCustomColor: (key: ThemeColorKey, value: string) => void;
-  resetCustomColor: (key: ThemeColorKey) => void;
-  resetAllCustomColors: () => void;
-  setHighlightColor: (
-    colorId: string,
-    patch: Partial<ThemeHighlightColor>
-  ) => void;
-  resetHighlightColor: (colorId: string) => void;
-  resetAllHighlightColors: () => void;
-}
-
-const SEPIA_THEME: BibleTheme = {
-  id: "sepia",
-  name: "Sepia",
-  variables: {
-    primaryColor: "#b5803d",
-    primaryFontColor: "#fff8ec",
-    secondaryColor: "#e8d9b8",
-    secondaryFontColor: "#5b4636",
-    tertiaryColor: "#ede1c7",
-    background: "#f4ecd8",
-    sidebarBackground: "#f0e6cf",
-    sidebarFontFamily: "inherit",
-    sidebarFontColor: "#5b4636",
-    readerBackground: "#faf3e0",
-    readerFontFamily: "inherit",
-    readerFontColor: "#5b4636",
-    bookSelectorBackground: "#f4ecd8",
-    bookSelectorFontFamily: "inherit",
-    bookSelectorFontColor: "#5b4636",
-    fontFamily: "Satoshi, system-ui, sans-serif",
-    fontColor: "#5b4636",
-    bookTitleFontFamily: "Newsreader, serif",
-    bookTitleFontColor: "#5b4636",
-    chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
-    chapterHeadingFontColor: "#7a5c3d",
-    chapterHeadingFontStyle: "italic",
-    verseFontFamily: "Newsreader, serif",
-    verseFontColor: "#4a3828",
-    verseCursor: "pointer",
-    selectedVerseFontFamily: "inherit",
-    selectedVerseFontColor: "inherit",
-    selectedVerseBackgroundColor: "inherit",
-    selectedVerseTextDecoration: "underline",
-    selectedVerseTextDecorationColor: "currentColor",
-    hebrewSubtitleFontFamily: "Newsreader, serif",
-    hebrewSubtitleFontColor: "#7a5c3d",
-    hebrewSubtitleFontStyle: "italic",
-    readerToolbarBottom: "18px",
-    readerToolbarGap: "10px",
-    readerToolbarPadding: "8px 20px",
-    readerToolbarBorderRadius: "10px",
-    readerToolbarBackground: "#faf3e0",
-    readerToolbarBorder: "1px solid #00000020",
-    readerToolbarBoxShadow: "0 26px 10px #0000001a",
-    readerToolbarZIndex: "99",
-    readerToolbarHeight: "50px",
-    readerToolbarFloatingButtonTop: "-68px",
-    readerToolbarFloatingButtonWidth: "48px",
-    readerToolbarFloatingButtonHeight: "48px",
-    readerToolbarFloatingButtonBorder: "1px solid #00000020",
-    readerToolbarFloatingButtonBorderRadius: "999px",
-    readerToolbarFloatingButtonBackground: "#faf3e0",
-    readerToolbarFloatingButtonFontColor: "#5b4636",
-    readerToolbarFloatingButtonBoxShadow: "0 10px 24px #0000001a",
-    verseToolbarGap: "10px",
-    verseToolbarPadding: "8px 16px",
-    verseToolbarBorderRadius: "10px",
-    verseToolbarBorder: "1px solid #00000020",
-    verseToolbarBoxShadow: "0 26px 10px #0000001a",
-    verseToolbarZIndex: "100",
-    verseToolbarMinHeight: "50px",
-    readerToolbarMobileLayoutHeight: "70px",
-    readerToolbarMobileLayoutPadding: "10px 14px",
-    readerToolbarMobileLayoutGap: "8px",
-    readerToolbarMobileLayoutItemSize: "44px",
-    readerToolbarMobileLayoutCenterButtonSize: "52px",
-    readerToolbarMobileLayoutButtonBorderRadius: "999px",
-    readerToolbarFloatingButtonSideOffset: "16px",
-    verseToolbarToolsGap: "10px",
-    verseToolbarMobileBottom: "18px",
-    tabBorder: "1px solid transparent",
-    tabBackground: "inherit",
-    tabFontColor: "inherit",
-    selectedTabBorder: "1px solid var(--sb-primary-color)",
-    selectedTabBackground: "var(--sb-secondary-color)",
-    selectedTabFontColor: "var(--sb-primary-color)",
-  },
-  highlightColors: {
-    yellow: {
-      color: "#f6e58d",
-      fontColor: "#5b4636",
-      wordsOfJesusFontColor: "#b5803d",
-    },
-    green: {
-      color: "#c5d3a8",
-      fontColor: "#5b4636",
-      wordsOfJesusFontColor: "#b5803d",
-    },
-    blue: {
-      color: "#a8c5d3",
-      fontColor: "#5b4636",
-      wordsOfJesusFontColor: "#b5803d",
-    },
-    pink: {
-      color: "#e3a8b5",
-      fontColor: "#5b4636",
-      wordsOfJesusFontColor: "#b5803d",
-    },
-    purple: {
-      color: "#c2a8d3",
-      fontColor: "#5b4636",
-      wordsOfJesusFontColor: "#b5803d",
-    },
-    orange: {
-      color: "#e3b88a",
-      fontColor: "#5b4636",
-      wordsOfJesusFontColor: "#b5803d",
-    },
-  },
-};
-
-export function createTheme(): ThemeManager {
+export function createTheme() {
   const themes = signal<BibleTheme[]>([LIGHT_THEME, DARK_THEME]);
 
-  const selectedThemeId = signal<string>(
-    parseThemeId(configBot.tags[TAG_THEME_ID], DEFAULT_THEME_ID)
-  );
+  const selectedThemeId = signal<string>(DEFAULT_THEME_ID);
 
-  const customOverrides = signal<ThemeOverrides>(
-    parseCustomTheme(configBot.tags[TAG_CUSTOM_THEME])
-  );
-
-  const customHighlightOverrides = signal<HighlightOverrides>(
-    parseHighlightOverrides(configBot.tags[TAG_CUSTOM_HIGHLIGHTS])
-  );
-
-  const basePresetTheme = computed<BibleTheme>(
+  const currentTheme = computed(
     () =>
       themes.value.find((theme) => theme.id === selectedThemeId.value) ??
       themes.value[0] ??
       LIGHT_THEME
   );
 
-  const currentTheme = computed<BibleTheme>(() =>
-    applyHighlightOverrides(
-      applyOverrides(basePresetTheme.value, customOverrides.value),
-      customHighlightOverrides.value
-    )
-  );
-
-  os.addBotListener(configBot, "onBotChanged", (that: unknown) => {
-    const changedTagsSource =
-      that && typeof that === "object" && "tags" in that
-        ? (that as { tags?: unknown }).tags
-        : null;
-    const changedTags = Array.isArray(changedTagsSource)
-      ? changedTagsSource
-      : [];
-
-    if (changedTags.includes(TAG_THEME_ID)) {
-      selectedThemeId.value = parseThemeId(
-        configBot.tags[TAG_THEME_ID],
-        DEFAULT_THEME_ID
-      );
-    }
-    if (changedTags.includes(TAG_CUSTOM_THEME)) {
-      customOverrides.value = parseCustomTheme(
-        configBot.tags[TAG_CUSTOM_THEME]
-      );
-    }
-    if (changedTags.includes(TAG_CUSTOM_HIGHLIGHTS)) {
-      customHighlightOverrides.value = parseHighlightOverrides(
-        configBot.tags[TAG_CUSTOM_HIGHLIGHTS]
-      );
-    }
-  });
-
   const setTheme = (themeId: string) => {
     if (themes.value.some((theme) => theme.id === themeId)) {
       selectedThemeId.value = themeId;
-      configBot.tags[TAG_THEME_ID] = themeId;
     }
   };
 
-  const writeOverrides = (next: ThemeOverrides) => {
-    customOverrides.value = next;
-    if (Object.keys(next).length === 0) {
-      configBot.tags[TAG_CUSTOM_THEME] = "";
+  const registerTheme = (theme: BibleTheme) => {
+    if (!themes.value.some((t) => t.id === theme.id)) {
+      themes.value = [...themes.value, theme];
     } else {
-      configBot.tags[TAG_CUSTOM_THEME] = JSON.stringify(next);
+      themes.value = themes.value.map((t) => (t.id === theme.id ? theme : t));
     }
   };
 
-  const setCustomColor = (key: ThemeColorKey, value: string) => {
-    writeOverrides({ ...customOverrides.value, [key]: value });
-  };
-
-  const resetCustomColor = (key: ThemeColorKey) => {
-    const next = { ...customOverrides.value };
-    delete next[key];
-    writeOverrides(next);
-  };
-
-  const resetAllCustomColors = () => {
-    writeOverrides({});
-  };
-
-  const writeHighlightOverrides = (next: HighlightOverrides) => {
-    customHighlightOverrides.value = next;
-    if (Object.keys(next).length === 0) {
-      configBot.tags[TAG_CUSTOM_HIGHLIGHTS] = "";
-    } else {
-      configBot.tags[TAG_CUSTOM_HIGHLIGHTS] = JSON.stringify(next);
+  const unregisterTheme = (themeId: string) => {
+    themes.value = themes.value.filter((t) => t.id !== themeId);
+    if (selectedThemeId.value === themeId) {
+      selectedThemeId.value = DEFAULT_THEME_ID;
     }
-  };
-
-  const setHighlightColor = (
-    colorId: string,
-    patch: Partial<ThemeHighlightColor>
-  ) => {
-    const current = customHighlightOverrides.value;
-    const existing = current[colorId] ?? {};
-    writeHighlightOverrides({
-      ...current,
-      [colorId]: { ...existing, ...patch },
-    });
-  };
-
-  const resetHighlightColor = (colorId: string) => {
-    const next = { ...customHighlightOverrides.value };
-    delete next[colorId];
-    writeHighlightOverrides(next);
-  };
-
-  const resetAllHighlightColors = () => {
-    writeHighlightOverrides({});
   };
 
   return {
     themes,
     selectedThemeId,
     currentTheme,
-    basePresetTheme,
-    customOverrides,
-    customHighlightOverrides,
     setTheme,
-    setCustomColor,
-    resetCustomColor,
-    resetAllCustomColors,
-    setHighlightColor,
-    resetHighlightColor,
-    resetAllHighlightColors,
+    registerTheme,
+    unregisterTheme,
   };
 }

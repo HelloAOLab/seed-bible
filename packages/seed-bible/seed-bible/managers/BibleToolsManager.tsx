@@ -7,6 +7,7 @@ import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import { sortBy } from "es-toolkit";
+import { highlightContainsVerse } from "seed-bible.managers.HighlightsManager";
 import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
@@ -413,7 +414,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       isVisible: (context) =>
         !!context.openSidebar &&
         typeof context.window?.innerWidth.value === "number" &&
-        context.window?.innerWidth.value <= 768,
+        context.window?.innerWidth.value < 768,
       onSelect: (context) => {
         context.openSidebar?.();
       },
@@ -534,16 +535,58 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         context.readingState.clearSelectedVerses();
       },
     },
+    {
+      id: "highlight-yellow",
+      priority: 350,
+      title: { key: "highlight-yellow", defaultValue: "Highlight Yellow" },
+      icon: () => (
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            borderRadius: "4px",
+            backgroundColor: "yellow",
+            width: "16px",
+            height: "16px",
+          }}
+        />
+      ),
+      isVisible: (context) =>
+        context.readingState.selectedVerses.value.length > 0 &&
+        context.readingState.selectedVerses.value.some((verse) => {
+          const existingHighlight =
+            context.readingState.highlights.value.highlights.find((h) =>
+              highlightContainsVerse(h, verse.verse.number)
+            );
+          return !existingHighlight || existingHighlight.colorId !== "yellow";
+        }),
+      onSelect: (context) => {
+        context.readingState.highlightSelectedVerses({
+          colorId: "yellow",
+        });
+      },
+    },
+    {
+      id: "clear-highlights",
+      priority: 375,
+      title: { key: "clear-highlights", defaultValue: "Clear Highlights" },
+      icon: () => <MaterialIcon>cancel</MaterialIcon>,
+      isVisible: (context) =>
+        context.readingState.selectedVerses.value.length > 0 &&
+        context.readingState.selectedVerses.value.some((verse) => {
+          const existingHighlight =
+            context.readingState.highlights.value.highlights.find((h) =>
+              highlightContainsVerse(h, verse.verse.number)
+            );
+          return !!existingHighlight;
+        }),
+      onSelect: (context) => {
+        context.readingState.unhighlightSelectedVerses();
+      },
+    },
+    // TODO: Add toolbar tools for highlighting with different colors
   ];
-}
-
-/**
- * Lightweight tool descriptor used for introspection (e.g. settings UI)
- * where we need to list tools without a full rendering context.
- */
-export interface ToolMetadata {
-  id: string;
-  title: TranslatableTitle;
 }
 
 /**
@@ -559,9 +602,6 @@ export interface ToolsManager {
   /** Resolves/sorts reader toolbar tools for the given context. */
   getToolbarTools: (context: BibleToolContext) => BibleReaderToolbarTool[];
 
-  /** Lists reader toolbar tool metadata without resolving any context. */
-  listToolbarTools: () => ToolMetadata[];
-
   /** Registers a verse toolbar tool and returns an unregister callback. */
   registerVerseToolbarTool: (tool: ManagedBibleVerseToolbarTool) => () => void;
 
@@ -572,9 +612,6 @@ export interface ToolsManager {
   getVerseToolbarTools: (
     context: BibleToolContext
   ) => BibleReaderVerseToolbarTool[];
-
-  /** Lists verse toolbar tool metadata without resolving any context. */
-  listVerseToolbarTools: () => ToolMetadata[];
 
   /** Registers an empty-pane tool and returns an unregister callback. */
   registerEmptyPaneTool: (tool: ManagedBibleEmptyPaneTool) => () => void;
@@ -654,9 +691,6 @@ export function createBibleToolsManager(): ToolsManager {
     return sortBy(tools, [(tool) => tool.priority]);
   };
 
-  const listToolbarTools = (): ToolMetadata[] =>
-    toolbarTools.value.map((tool) => ({ id: tool.id, title: tool.title }));
-
   const registerVerseToolbarTool = (tool: ManagedBibleVerseToolbarTool) => {
     validateToolActions(tool);
     const nextTools = verseToolbarTools.value.filter(
@@ -689,9 +723,6 @@ export function createBibleToolsManager(): ToolsManager {
 
     return sortBy(tools, [(tool) => tool.priority]);
   };
-
-  const listVerseToolbarTools = (): ToolMetadata[] =>
-    verseToolbarTools.value.map((tool) => ({ id: tool.id, title: tool.title }));
 
   const registerEmptyPaneTool = (tool: ManagedBibleEmptyPaneTool) => {
     validateToolActions(tool);
@@ -765,11 +796,9 @@ export function createBibleToolsManager(): ToolsManager {
     registerToolbarTool,
     unregisterToolbarTool,
     getToolbarTools,
-    listToolbarTools,
     registerVerseToolbarTool,
     unregisterVerseToolbarTool,
     getVerseToolbarTools,
-    listVerseToolbarTools,
     registerEmptyPaneTool,
     unregisterEmptyPaneTool,
     getEmptyPaneTools,

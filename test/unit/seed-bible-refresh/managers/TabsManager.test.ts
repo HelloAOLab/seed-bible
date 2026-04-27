@@ -112,11 +112,11 @@ describe("createTabs", () => {
     const nextTab = manager.addTab();
     await waitForInitialLoad(nextTab.readingState);
 
-    expect(manager.tabs.value).toHaveLength(2);
-    expect(manager.tabs.value[1]).toBe(nextTab);
+    expect(manager.tabs.value).toHaveLength(3);
+    expect(manager.tabs.value[2]).toBe(nextTab);
     expect(existingReadingStates).not.toContain(nextTab.readingState);
-    expect(nextTab.id).toBe("tab-2");
-    expect(nextTab.title).toBe("Tab 2");
+    expect(nextTab.id).toBe("tab-3");
+    expect(nextTab.title).toBe("Tab 3");
     expect(nextTab.sharedSession).toBeNull();
     expect(manager.selectedTabId.value).toBe(nextTab.id);
   });
@@ -136,12 +136,8 @@ describe("createTabs", () => {
       options: signal({
         allowedNavigators: null,
         allowedDecorators: null,
-        hostUserId: null,
-        highlightDurationSeconds: 16,
-        endedAt: null,
       }),
       updateOptions: jest.fn(),
-      removeSharedDecoration: jest.fn(),
       dispose: jest.fn(),
       connectedUsers: signal([]),
     } as BibleReadingSession;
@@ -208,9 +204,7 @@ describe("createTabs", () => {
       createHighlightsManagerMock() as any
     );
     await waitForTabsToLoad(manager.tabs.value);
-    const secondTab = manager.addTab();
-    await waitForInitialLoad(secondTab.readingState);
-    manager.selectTab(secondTab.id);
+    manager.selectTab("tab-2");
 
     (globalThis as any).configBot.tags.translation = "NIV";
     (globalThis as any).configBot.tags.book = "MAT";

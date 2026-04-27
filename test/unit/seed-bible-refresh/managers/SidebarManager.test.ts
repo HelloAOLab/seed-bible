@@ -9,7 +9,7 @@ describe("createSidebar", () => {
     expect(sidebar.isMobileOpen.value).toBe(false);
   });
 
-  it("openSettings() opens settings without changing mobile sidebar state", () => {
+  it("openSettings() opens settings and does not change mobile sidebar", () => {
     const sidebar = createSidebar();
     sidebar.openSidebar();
 

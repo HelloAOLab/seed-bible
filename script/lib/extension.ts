@@ -1,7 +1,12 @@
+import { createRecordsClient } from "@casual-simulation/aux-records/RecordsClient";
 import { writeFile, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { existsSync } from "node:fs";
 import { execSync } from "node:child_process";
+import {
+  isRecordKey,
+  parseRecordKey,
+} from "@casual-simulation/aux-common/records/RecordKeys";
 import fs from "fs";
 import type {
   ExtensionMeta,
@@ -295,9 +300,7 @@ export function generateExtension(pckgName: string, mainBot: string) {
 //   extensions: UploadedExtension[];
 // }
 
-async function getRecordName(key: string) {
-  const { isRecordKey, parseRecordKey } =
-    await import("@casual-simulation/aux-common/records/RecordKeys.js");
+function getRecordName(key: string) {
   if (!isRecordKey(key)) {
     return key;
   }
@@ -379,7 +382,7 @@ export async function upload(
   }
 
   const recordKey = options.recordKey ?? uploadRecordName;
-  const recordName = await getRecordName(recordKey);
+  const recordName = getRecordName(recordKey);
   const address = options.saveMeta
     ? extensionId
     : `${extensionId}-${Date.now()}`;
@@ -417,7 +420,7 @@ export async function uploadAll(options: {
     extensionData.push(await upload(name, options));
   }
 
-  const recordName: string = await getRecordName(
+  const recordName: string = getRecordName(
     options.recordKey ?? uploadRecordName
   );
   const set: ExtensionSet = {
@@ -426,8 +429,6 @@ export async function uploadAll(options: {
     extensions: extensionData,
   };
 
-  const { createRecordsClient } =
-    await import("@casual-simulation/aux-records/RecordsClient.js");
   const client = createRecordsClient("https://api.ao.bot");
 
   if (options.sessionKey) {

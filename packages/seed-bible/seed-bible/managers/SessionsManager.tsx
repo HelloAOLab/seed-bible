@@ -41,24 +41,6 @@ interface SessionData {
 export interface SessionOptions {
   allowedNavigators: string[] | null;
   allowedDecorators: string[] | null;
-  /**
-   * The user id (or connection id for anonymous hosts) of the session
-   * creator. Set once at creation and never changes; used by the session
-   * settings UI to show host-only controls to the right user.
-   */
-  hostUserId: string | null;
-  /**
-   * How long a navigation highlight from another user should stay visible
-   * locally, in seconds. `null` means "forever until dismissed". Matches
-   * develop's "Highlight For" picker (8 / 16 / 20 / ∞).
-   */
-  highlightDurationSeconds: number | null;
-  /**
-   * Epoch ms when the host ended the session. Non-null signals participants
-   * to close their tabs. Set via `updateOptions` before the host disposes
-   * so the CRDT update propagates to other clients.
-   */
-  endedAt: number | null;
 }
 
 type SessionOptionValue = SessionOptions[keyof SessionOptions];
@@ -67,9 +49,6 @@ type SessionDecorationValue = VerseDecoration;
 const DEFAULT_SESSION_OPTIONS: SessionOptions = {
   allowedNavigators: null,
   allowedDecorators: null,
-  hostUserId: null,
-  highlightDurationSeconds: 16,
-  endedAt: null,
 };
 
 function getSessionDataSnapshot(
@@ -107,24 +86,9 @@ function toStringArrayOrNull(value: unknown): string[] | null {
 function getSessionOptionsFromMap(
   optionsMap: SharedMap<SessionOptionValue>
 ): SessionOptions {
-  const rawDuration = optionsMap.get("highlightDurationSeconds");
-  const rawEndedAt = optionsMap.get("endedAt");
   return {
     allowedNavigators: toStringArrayOrNull(optionsMap.get("allowedNavigators")),
     allowedDecorators: toStringArrayOrNull(optionsMap.get("allowedDecorators")),
-    hostUserId: toStringOrNull(optionsMap.get("hostUserId")),
-    highlightDurationSeconds:
-      typeof rawDuration === "number" &&
-      Number.isFinite(rawDuration) &&
-      rawDuration > 0
-        ? rawDuration
-        : rawDuration === null
-          ? null
-          : DEFAULT_SESSION_OPTIONS.highlightDurationSeconds,
-    endedAt:
-      typeof rawEndedAt === "number" && Number.isFinite(rawEndedAt)
-        ? rawEndedAt
-        : null,
   };
 }
 
@@ -149,10 +113,7 @@ function sessionOptionsMatch(
 ): boolean {
   return (
     stringArraysMatch(left.allowedNavigators, right.allowedNavigators) &&
-    stringArraysMatch(left.allowedDecorators, right.allowedDecorators) &&
-    left.hostUserId === right.hostUserId &&
-    left.highlightDurationSeconds === right.highlightDurationSeconds &&
-    left.endedAt === right.endedAt
+    stringArraysMatch(left.allowedDecorators, right.allowedDecorators)
   );
 }
 
@@ -259,14 +220,6 @@ export interface BibleReadingSession {
   updateOptions: (newOptions: Partial<SessionOptions>) => void;
   readingState: BibleReadingState;
   connectedUsers: ReadonlySignal<ConnectedSessionUser[]>;
-  /**
-   * Removes a decoration by id from the session's shared CRDT map. Use
-   * this instead of `readingState.removeDecoration` when you need the
-   * removal to propagate globally — otherwise the sync effect re-seeds
-   * the decoration from the still-present map entry and the removal is
-   * undone locally.
-   */
-  removeSharedDecoration: (decorationId: string) => void;
   dispose: () => void;
 }
 
@@ -333,17 +286,6 @@ async function createBibleReadingSession(
     document.transact(() => {
       optionsMap.set("allowedNavigators", defaultOptions.allowedNavigators);
       optionsMap.set("allowedDecorators", defaultOptions.allowedDecorators);
-      // Only claim host on first-time creation — never overwrite an
-      // existing hostUserId written by a previous creator.
-      if (!optionsMap.get("hostUserId") && defaultOptions.hostUserId) {
-        optionsMap.set("hostUserId", defaultOptions.hostUserId);
-      }
-      if (optionsMap.get("highlightDurationSeconds") === undefined) {
-        optionsMap.set(
-          "highlightDurationSeconds",
-          defaultOptions.highlightDurationSeconds
-        );
-      }
     });
   }
 
@@ -721,18 +663,6 @@ async function createBibleReadingSession(
         typeof newOptions.allowedDecorators === "undefined"
           ? currentOptions.allowedDecorators
           : newOptions.allowedDecorators,
-      hostUserId:
-        typeof newOptions.hostUserId === "undefined"
-          ? currentOptions.hostUserId
-          : newOptions.hostUserId,
-      highlightDurationSeconds:
-        typeof newOptions.highlightDurationSeconds === "undefined"
-          ? currentOptions.highlightDurationSeconds
-          : newOptions.highlightDurationSeconds,
-      endedAt:
-        typeof newOptions.endedAt === "undefined"
-          ? currentOptions.endedAt
-          : newOptions.endedAt,
     };
 
     if (sessionOptionsMatch(currentOptions, nextOptions)) {
@@ -757,57 +687,11 @@ async function createBibleReadingSession(
       ) {
         optionsMap.set("allowedDecorators", nextOptions.allowedDecorators);
       }
-
-      if (currentOptions.hostUserId !== nextOptions.hostUserId) {
-        optionsMap.set("hostUserId", nextOptions.hostUserId);
-      }
-
-      if (
-        currentOptions.highlightDurationSeconds !==
-        nextOptions.highlightDurationSeconds
-      ) {
-        optionsMap.set(
-          "highlightDurationSeconds",
-          nextOptions.highlightDurationSeconds
-        );
-      }
-
-      if (currentOptions.endedAt !== nextOptions.endedAt) {
-        optionsMap.set("endedAt", nextOptions.endedAt);
-      }
     });
 
     if (!sessionOptionsMatch(options.value, nextOptions)) {
       options.value = nextOptions;
     }
-  };
-
-  /**
-   * Deletes every CRDT entry for a given decoration id (there can be
-   * multiple if different connections have written with the same id).
-   * The `decorationsMap.changes` subscriber then syncs the removal down
-   * to every connected client's local `readingState.decorations` — which
-   * is exactly what we want for the transient-highlight timer.
-   */
-  const removeSharedDecoration = (decorationId: string) => {
-    const keysToDelete: string[] = [];
-    decorationsMap.forEach((_value, key) => {
-      const parsed = parseSessionDecorationKey(key);
-      if (parsed && parsed.decorationId === decorationId) {
-        keysToDelete.push(key);
-      }
-    });
-    if (keysToDelete.length === 0) {
-      // Nothing in the CRDT — make sure the local copy is cleared too in
-      // case it got added without a corresponding map entry.
-      readingState.removeDecoration(decorationId);
-      return;
-    }
-    document.transact(() => {
-      for (const key of keysToDelete) {
-        decorationsMap.delete(key);
-      }
-    });
   };
 
   const dispose = () => {
@@ -827,7 +711,6 @@ async function createBibleReadingSession(
     updateOptions,
     readingState,
     connectedUsers,
-    removeSharedDecoration,
     dispose,
   };
 }
@@ -844,17 +727,12 @@ export function createSessionsManager(
 ): SessionsManager {
   const createSession = async () => {
     const id = createSessionId();
-    // Claim host at create time so the settings UI knows which connected
-    // user is allowed to change session-wide toggles.
-    const hostUserId =
-      loginManager.userId.value ??
-      (typeof configBot !== "undefined" ? toStringOrNull(configBot?.id) : null);
     return await createBibleReadingSession(
       dataManager,
       loginManager,
       highlightsManager,
       id,
-      { ...DEFAULT_SESSION_OPTIONS, hostUserId }
+      DEFAULT_SESSION_OPTIONS
     );
   };
 
