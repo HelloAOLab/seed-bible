@@ -55,6 +55,10 @@ export function decodeValueFromHtml(html: string): string {
   return htmlDecode(html.replace(/<span translate="no">(.*?)<\/span>/gs, "$1"));
 }
 
+const languageMap = new Map([
+  ["ind", "id"], // Google Translate uses "id" for Indonesian, but we use "ind" because "id" is a reserved tag in CasualOS.
+]);
+
 /**
  * Translates the given translation resources from the input language to the output language using the Google Cloud Translation API.
  * @param projectId The project ID for the Google Cloud project that has the Translation API enabled.
@@ -77,8 +81,8 @@ export async function translateResources(
       const batch = entries.slice(i, i + BATCH_SIZE);
       const [response] = await client.translateText({
         parent: `projects/${projectId}/locations/global`,
-        sourceLanguageCode: input.language,
-        targetLanguageCode: outputLanguage,
+        sourceLanguageCode: languageMap.get(input.language) ?? input.language,
+        targetLanguageCode: languageMap.get(outputLanguage) ?? outputLanguage,
         mimeType: "text/html",
         contents: batch.map(([, value]) => encodeValueForHtml(value)),
       });
