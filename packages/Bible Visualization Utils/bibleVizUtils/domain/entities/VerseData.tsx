@@ -1,0 +1,30 @@
+import type { Piece } from "bibleVizUtils.domain.models.canvas";
+
+interface DataParams {
+  id: string;
+  piece?: Piece<"Verse">;
+}
+
+export class VerseData {
+  #id: DataParams["id"];
+  #piece: DataParams["piece"];
+
+  constructor({ id }: DataParams) {
+    this.#id = id;
+  }
+
+  get id() {
+    return this.#id;
+  }
+  get piece() {
+    return this.#piece;
+  }
+  clearPiece() {
+    const piece = this.#piece;
+    this.#piece = undefined;
+    return piece;
+  }
+  setPiece(piece: Piece<"Verse">) {
+    this.#piece = piece;
+  }
+}
