@@ -4,6 +4,7 @@ const { Button } = G.Components;
 const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();
 const AttachLink = await thisBot.AttachLink();
+const ConfirmationModal = await thisBot.ConfirmationModal();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
 
 const isMobileSmall =
@@ -107,6 +108,82 @@ const getCurrentItem = (
   //     targetItem = list[index];
   // }
   // return targetItem;
+};
+
+const getItemCount = (item: any): number => {
+  if (!item) return 0;
+
+  if (Array.isArray(item?.list) && item.list.length) {
+    return item.list.reduce(
+      (acc: number, nestedItem: any) => acc + getItemCount(nestedItem),
+      0
+    );
+  }
+
+  const layers = item?.additionalInfo?.layers;
+  if (Array.isArray(layers) && layers.length) {
+    return layers.length;
+  }
+
+  return 1;
+};
+
+const getPlaylistProgress = (playlists: any, currIndex: any) => {
+  const keys = Object.keys(playlists || {}).sort(
+    (a, b) => Number(a) - Number(b)
+  );
+  let totalItems = 0;
+  let currentPosition = 0;
+
+  keys.forEach((key) => {
+    const list = playlists[key]?.list || [];
+    totalItems += list.reduce(
+      (acc: number, item: any) => acc + getItemCount(item),
+      0
+    );
+  });
+
+  for (const key of keys) {
+    const list = playlists[key]?.list || [];
+    if (String(key) !== String(currIndex?.key)) {
+      currentPosition += list.reduce(
+        (acc: number, item: any) => acc + getItemCount(item),
+        0
+      );
+      continue;
+    }
+
+    for (let i = 0; i < list.length; i++) {
+      const item = list[i];
+      if (i < currIndex?.index) {
+        currentPosition += getItemCount(item);
+        continue;
+      }
+
+      if (i === currIndex?.index) {
+        if (
+          Array.isArray(item?.additionalInfo?.layers) &&
+          item.additionalInfo.layers.length
+        ) {
+          currentPosition += Math.min(
+            Math.max((currIndex?.subIndex || 0) + 1, 1),
+            item.additionalInfo.layers.length
+          );
+        } else {
+          currentPosition += 1;
+        }
+      }
+      break;
+    }
+    break;
+  }
+
+  const safeTotal = Math.max(totalItems, 0);
+  const safeCurrent =
+    safeTotal > 0 ? Math.min(Math.max(currentPosition, 0), safeTotal) : 0;
+  const percent = safeTotal > 0 ? (safeCurrent / safeTotal) * 100 : 0;
+
+  return { safeCurrent, safeTotal, percent };
 };
 
 const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
@@ -305,7 +382,13 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
         const isMobile =
           (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
           G.MOBILE_VIEWPORT_THRESHOLD;
-        if (isMobile) {
+        if (targetItem.additionalInfo.isQuotedText) {
+          if (!G.NotPlayThisTimeTheCurrentItem) {
+            thisBot.ShowQuoteText({ quoteText: targetItem.content });
+          } else {
+            G.NotPlayThisTimeTheCurrentItem = false;
+          }
+        } else if (isMobile) {
           if (!G.NotPlayThisTimeTheCurrentItem) {
             G.SetTextInfo(targetItem.content);
           } else {
@@ -665,7 +748,9 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
           const isMobile =
             (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
             G.MOBILE_VIEWPORT_THRESHOLD;
-          if (isMobile) {
+          if (targetItem.additionalInfo.isQuotedText) {
+            thisBot.ShowQuoteText({ quoteText: targetItem.content });
+          } else if (isMobile) {
             G.SetTextInfo(targetItem.content);
           }
         }
@@ -836,6 +921,10 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
   }, [currIndex, playlists]);
 
   const isItemLink = outerWebsiteItem[currentItem?.additionalInfo?.type];
+  const { safeCurrent, safeTotal, percent } = useMemo(
+    () => getPlaylistProgress(playlists, currIndex),
+    [playlists, currIndex]
+  );
 
   const isMobile =
     (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
@@ -1202,15 +1291,45 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
             </div>
           </div>
 
-          <p
+          <div
             style={{
-              height: "1px",
-              backgroundColor: "#000000",
-              opacity: "0.1",
               width: "100%",
               margin: "0.5rem 0",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
             }}
-          />
+          >
+            <div
+              style={{
+                height: "4px",
+                width: "100%",
+                backgroundColor: "var(--gray2-color)",
+                borderRadius: "999px",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${percent}%`,
+                  backgroundColor: "var(--secondaryColor)",
+                  transition: "width 0.2s ease",
+                }}
+              />
+            </div>
+            <p
+              style={{
+                margin: "0",
+                minWidth: "fit-content",
+                color: "var(--gray1-color)",
+                fontSize: "0.85rem",
+                fontWeight: "500",
+              }}
+            >
+              {safeCurrent}/{safeTotal}
+            </p>
+          </div>
 
           <div
             style={{

@@ -112,9 +112,17 @@ const AttachLinkItem = (props: any) => {
   }
 
   const isVideoItem = G.IsVideoAttachment(data);
+  const isTextType = data.type === "heading" || data.type === "text";
+  const isQuotedText = data.additionalInfo.IsQuotedText;
 
   const toggleAutoPlay = () => {
     if (autoPlayToggle) autoPlayToggle(originalIndex, pId, data.id);
+  };
+
+  const toggleIsQuoteText = (e: any) => {
+    if (playingPlaylist) return;
+    e.stopPropagation();
+    G.SetIsQuotedText(true);
   };
 
   const comparator = playingPlaylist ? 1 : 0;
@@ -513,6 +521,22 @@ const AttachLinkItem = (props: any) => {
               />
             </p>
           )}
+
+          {((isTextType && !!toggleIsQuoteText) ||
+            (isTextType && isQuotedText && playingPlaylist)) && (
+            <p
+              className={`end-icon without-right-margin ${isQuotedText ? "active" : ""} ${`${
+                isMobile && "visible"
+              }`}`}
+              onClick={(e) => {
+                if (playingPlaylist) return;
+                e.stopPropagation();
+                toggleIsQuoteText(e);
+              }}
+            >
+              <span class="material-symbols-outlined">home_max</span>
+            </p>
+          )}
           {editAbleTypes[data.additionalInfo.type || data.type] &&
             creatingPlaylist &&
             !viewOnly && (
@@ -534,6 +558,7 @@ const AttachLinkItem = (props: any) => {
                     data: data.link,
                     link: data.additionalInfo.link,
                     mediaType: data.additionalInfo.type,
+                    isQuotedText: data.additionalInfo.isQuotedText,
                   });
                 }}
               >

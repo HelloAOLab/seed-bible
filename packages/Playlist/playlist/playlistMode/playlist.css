@@ -577,7 +577,11 @@ history-item:active {
 }
 
 .with-padding-activation.active {
-  background-color: #d364334d;
+  background-color: var(--secondaryLight);
+}
+
+.end-icon.active .material-symbols-outlined {
+  color: var(--secondaryColor);
 }
 
 .end-icon.without-right-margin {
@@ -1602,4 +1606,29 @@ span.material-symbols-outlined.rotate-90 {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+.quoted-text-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0;
+  position: absolute;
+  right: 25px;
+  top: 18px;
+}
+
+.quoted-text-icon.alter {
+  right: 15px;
+  top: 0px;
+}
+
+.quoted-text-icon .material-symbols-outlined {
+  cursor: pointer;
+  transition: all 0.2s linear;
+  font-size: 1rem;
+}
+
+.quoted-text-icon.alter .material-symbols-outlined {
+  font-size: 2rem;
 }

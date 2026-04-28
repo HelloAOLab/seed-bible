@@ -1,7 +1,7 @@
 const parentId = that?.parentId || "default";
 const G = globalThis as any;
 thisBot.CloseFloatingApp();
-DataManager.cancelCurrentPlayingSound();
+G.DataManager && DataManager?.cancelCurrentPlayingSound();
 G.SetSelected && G.SetSelected({});
 G.SetHolded && G.SetHolded({});
 // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);

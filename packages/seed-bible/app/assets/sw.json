@@ -308,5 +308,8 @@
   "publishSettingsDescPlaylist": "Orodha yako ya kucheza itapatikana kwa kila mtu ikiwa ni ya umma. Ikiwa ni ya faragha, ni wewe tu utakayekuwa na ufikiaji.",
   "playlistActions": "Mipangilio ya orodha ya kucheza",
   "playlistActionsDesc": "Rekebisha jinsi orodha yako ya kucheza inavyofanya kazi wakati wa kucheza.",
-  "movePlaybarInside": "Weka upau wa kucheza ndani ya kichezaji"
+  "movePlaybarInside": "Weka upau wa kucheza ndani ya kichezaji",
+  "quotedTextModalDisplayOn": "Onyesho la modal limewashwa.",
+  "quotedTextModalDisplayDescription": "Litakapo kuwa washa, kipengele hiki kitaonyeshwa kwenye dirisha kama nukuu.",
+  "headingText": "Maandishi ya kichwa"
 }

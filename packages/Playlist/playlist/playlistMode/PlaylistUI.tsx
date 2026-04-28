@@ -357,6 +357,7 @@ const Playlist = () => {
     id: G.EditRichText?.id,
     text: G.EditRichText?.text,
     parentID: G.EditRichText?.parentID,
+    isQuotedText: G.EditRichText?.isQuotedText,
   });
 
   // Restore edit rich text data
@@ -374,6 +375,7 @@ const Playlist = () => {
       link: "",
       mediaType: "",
       text: null,
+      isQuotedText: false,
     }
   );
 
@@ -387,6 +389,7 @@ const Playlist = () => {
       id: null,
       text: null,
       parentID: null,
+      isQuotedText: false,
     });
   };
 
@@ -400,6 +403,7 @@ const Playlist = () => {
       data: "",
       link: "",
       mediaType: "",
+      isQuotedText: false,
     });
   };
 
@@ -522,11 +526,13 @@ const Playlist = () => {
           parentID={editRichText.parentID}
           onClose={onCloseEditRichText}
           contentId={editRichText.id}
+          isQuotedText={editRichText.isQuotedText}
           text={editRichText.text}
         />
       )}
       {!!editAttachmentItem.id && (
         <EditAttachment
+          isQuotedText={editAttachmentItem.isQuotedText}
           parentID={editAttachmentItem.parentId}
           onClose={onCloseEditAttachmentItem}
           contentId={editAttachmentItem.id}

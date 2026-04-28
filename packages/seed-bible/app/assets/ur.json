@@ -308,5 +308,8 @@
   "publishSettingsDescPlaylist": "اگر آپ کی پلے لسٹ پبلک ہو تو سب کے لیے دستیاب ہوگی۔ اگر پرائیویٹ ہو تو صرف آپ کو ہی رسائی حاصل ہوگی۔",
   "playlistActions": "پلے لسٹ کی ترتیبات",
   "playlistActionsDesc": "چلتے وقت آپ کی پلے لسٹ کیسے برتاؤ کرے، اسے ایڈجسٹ کریں۔",
-  "movePlaybarInside": "پلے بار کو پلیئر کے اندر رکھیں"
+  "movePlaybarInside": "پلے بار کو پلیئر کے اندر رکھیں",
+  "quotedTextModalDisplayOn": "ماڈل ڈسپلے آن ہے۔",
+  "quotedTextModalDisplayDescription": "آن ہونے پر یہ آئٹم حوالے جیسے ماڈل میں دکھایا جائے گا۔",
+  "headingText": "عنوان کا متن"
 }
