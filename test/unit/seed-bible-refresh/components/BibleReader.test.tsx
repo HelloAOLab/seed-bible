@@ -130,6 +130,7 @@ function createFixture(): ReaderFixture {
     decorations,
     loading: signal(false),
     scrollPosition: signal(0),
+    scrollToVerse: signal<number | null>(null),
     error: signal<string | null>(null),
     selectVerse,
     selectFootnote,
@@ -488,6 +489,196 @@ describe("BibleReader", () => {
     expect(firstDecorator?.style.borderBottom).toBe("2px solid blue");
   });
 
+  it("displays decorations for any translation when decoration translationId is null", () => {
+    const { pane, selectorState, readingState, decorations } = createFixture();
+
+    decorations.value = [
+      {
+        id: "decoration-any-translation",
+        translationId: null,
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        className: "sb-any-translation-decoration",
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const firstVerse = container.querySelectorAll(".sb-verse")[0] as
+      | HTMLElement
+      | undefined;
+    const firstDecorator = firstVerse?.querySelector(
+      ".sb-verse-decorator"
+    ) as HTMLElement | null;
+
+    expect(firstDecorator).not.toBeNull();
+    expect(
+      firstDecorator?.classList.contains("sb-any-translation-decoration")
+    ).toBe(true);
+  });
+
+  it("displays multiple decorations on a single verse", () => {
+    const { pane, selectorState, readingState, decorations } = createFixture();
+
+    decorations.value = [
+      {
+        id: "decoration-one",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        className: "sb-decoration-one",
+        style: {
+          borderBottom: "1px solid red",
+        },
+      },
+      {
+        id: "decoration-two",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        className: "sb-decoration-two",
+        style: {
+          textDecoration: "underline",
+        },
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const firstVerse = container.querySelectorAll(".sb-verse")[0] as
+      | HTMLElement
+      | undefined;
+    const firstDecorator = firstVerse?.querySelector(
+      ".sb-verse-decorator"
+    ) as HTMLElement | null;
+
+    expect(firstDecorator).not.toBeNull();
+    expect(firstDecorator?.classList.contains("sb-decoration-one")).toBe(true);
+    expect(firstDecorator?.classList.contains("sb-decoration-two")).toBe(true);
+    expect(firstDecorator?.style.borderBottom).toBe("1px solid red");
+    expect(firstDecorator?.style.textDecoration).toBe("underline");
+  });
+
+  it("merges decoration classes together for a single verse", () => {
+    const { pane, selectorState, readingState, decorations } = createFixture();
+
+    decorations.value = [
+      {
+        id: "decoration-class-a",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        className: "sb-decoration-class-a",
+      },
+      {
+        id: "decoration-class-b",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        className: "sb-decoration-class-b",
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const firstVerse = container.querySelectorAll(".sb-verse")[0] as
+      | HTMLElement
+      | undefined;
+    const firstDecorator = firstVerse?.querySelector(
+      ".sb-verse-decorator"
+    ) as HTMLElement | null;
+
+    expect(firstDecorator).not.toBeNull();
+    expect(firstDecorator?.classList.contains("sb-decoration-class-a")).toBe(
+      true
+    );
+    expect(firstDecorator?.classList.contains("sb-decoration-class-b")).toBe(
+      true
+    );
+  });
+
+  it("displays decorations and highlights together for a single verse", () => {
+    const { pane, selectorState, readingState, highlights, decorations } =
+      createFixture();
+
+    highlights.value = {
+      highlights: [
+        {
+          verse: 1,
+          colorId: "yellow",
+        },
+      ],
+    };
+    decorations.value = [
+      {
+        id: "decoration-highlight-combo",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        className: "sb-decoration-with-highlight",
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const firstVerse = container.querySelectorAll(".sb-verse")[0] as
+      | HTMLElement
+      | undefined;
+    const firstDecorator = firstVerse?.querySelector(
+      ".sb-verse-decorator"
+    ) as HTMLElement | null;
+
+    expect(firstDecorator).not.toBeNull();
+    expect(firstDecorator?.classList.contains("sb-highlight-yellow")).toBe(
+      true
+    );
+    expect(
+      firstDecorator?.classList.contains("sb-decoration-with-highlight")
+    ).toBe(true);
+  });
+
   it("wraps inline verse groups in a verse decorator span", () => {
     const { pane, selectorState, readingState } = createFixture();
 
@@ -771,5 +962,44 @@ describe("BibleReader", () => {
     });
 
     expect(selectFootnote).toHaveBeenCalledWith(null);
+  });
+
+  it("shows translation license notice and website when licenseNotice is present", () => {
+    const { pane, selectorState, readingState, chapterData } = createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      translation: {
+        ...chapterData.value!.translation,
+        licenseNotice: "Used by permission. All rights reserved.",
+        website: "https://example.org/translation",
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const notice = container.querySelector(".sb-translation-license-notice");
+    expect(notice).not.toBeNull();
+    expect(notice?.textContent).toContain(
+      "Used by permission. All rights reserved."
+    );
+
+    const websiteLink = container.querySelector(
+      ".sb-translation-website a"
+    ) as HTMLAnchorElement | null;
+    expect(websiteLink).not.toBeNull();
+    expect(websiteLink?.textContent).toBe("https://example.org/translation");
+    expect(websiteLink?.getAttribute("href")).toBe(
+      "https://example.org/translation"
+    );
   });
 });

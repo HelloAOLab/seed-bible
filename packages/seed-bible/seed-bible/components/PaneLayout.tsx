@@ -12,7 +12,7 @@ import type {
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { type ToolsManager } from "seed-bible.managers.BibleToolsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
-import { effect } from "@preact/signals";
+import { batch, effect } from "@preact/signals";
 import type { ComponentChildren } from "preact";
 import { translateTitle } from "seed-bible.components.Utils";
 import { MaterialIcon } from "seed-bible.components.icons";
@@ -386,50 +386,67 @@ interface PaneReaderScrollerProps {
 }
 
 function PaneReaderScroller({ tab, children }: PaneReaderScrollerProps) {
-  const scrollerRef = useRef<HTMLDivElement | null>(null);
   const currentChapter = useRef(tab.readingState.chapterData.value);
 
-  useEffect(() => {
-    const el = scrollerRef.current;
+  // We use a callback instead of a ref object
+  // because we want to set up and cleaup event listeners immediately when element ownership changes.
+  // If we use a ref object and useEffect(), then there will be a period of time where we might recieve scroll events from the element when it is transitioning between
+  // PaneReaderScroller instances, causing the tab scroll position to be updated as Preact is updating the DOM.
+  const scrollerRefCallback = (el: HTMLDivElement | null) => {
     if (!el) {
       return;
     }
 
-    const cancel = effect(() => {
-      const el = scrollerRef.current;
-      if (!el) {
-        return;
-      }
-
+    const cleanup = effect(() => {
       if (tab.readingState.chapterData.value) {
         el.scrollTop = tab.readingState.scrollPosition.peek();
       }
 
+      const verseToScroll = tab.readingState.scrollToVerse.value;
+      if (tab.readingState.chapterData.value && verseToScroll !== null) {
+        requestAnimationFrame(() => {
+          const targetVerse = el.querySelector(
+            `[data-verse-number="${verseToScroll}"]`
+          );
+          if (!(targetVerse instanceof HTMLElement)) {
+            return;
+          }
+
+          targetVerse.scrollIntoView({ block: "center", inline: "nearest" });
+          batch(() => {
+            tab.readingState.scrollToVerse.value = null;
+            tab.readingState.scrollPosition.value = el.scrollTop;
+          });
+        });
+      }
+
       currentChapter.current = tab.readingState.chapterData.value;
+
+      const handleScroll = () => {
+        if (
+          currentChapter.current?.translation.id !==
+            tab.readingState.translationId.value ||
+          currentChapter.current?.book.id !== tab.readingState.bookId.value ||
+          currentChapter.current?.chapter.number !==
+            tab.readingState.chapterNumber.value
+        ) {
+          return;
+        }
+        tab.readingState.scrollPosition.value = el.scrollTop;
+      };
+
+      el.addEventListener("scroll", handleScroll, { passive: true });
+
+      return () => {
+        el.removeEventListener("scroll", handleScroll);
+      };
     });
 
-    const handleScroll = () => {
-      if (
-        currentChapter.current?.translation.id !==
-          tab.readingState.translationId.value ||
-        currentChapter.current?.book.id !== tab.readingState.bookId.value ||
-        currentChapter.current?.chapter.number !==
-          tab.readingState.chapterNumber.value
-      ) {
-        return;
-      }
-      tab.readingState.scrollPosition.value = el.scrollTop;
-    };
-
-    el.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      cancel();
-      el.removeEventListener("scroll", handleScroll);
-    };
-  }, [tab.id]);
+    return cleanup;
+  };
 
   return (
-    <div className="sb-pane-reader" ref={scrollerRef}>
+    <div className="sb-pane-reader" ref={scrollerRefCallback}>
       {children}
     </div>
   );
