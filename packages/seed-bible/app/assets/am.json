@@ -308,5 +308,8 @@
   "publishSettingsDescPlaylist": "የእርስዎ የተጫዋች ዝርዝር ከሆነ ለሁሉም ይገኛል። የግል ከሆነ ግን እርስዎ ብቻ መዳረሻ ይኖርዎታል።",
   "playlistActions": "የተጫዋች ዝርዝር ቅንብሮች",
   "playlistActionsDesc": "የተጫዋች ዝርዝርዎ በመጫወት ጊዜ እንዴት እንደሚሰራ ያስተካክሉ።",
-  "movePlaybarInside": "የማጫወቻ አሞሌውን በማጫወቻው ውስጥ አቆይ"
+  "movePlaybarInside": "የማጫወቻ አሞሌውን በማጫወቻው ውስጥ አቆይ",
+  "quotedTextModalDisplayOn": "የሞዳል ማሳያ በርቷል።",
+  "quotedTextModalDisplayDescription": "በርቶ ሲሆን ይህ ንጥል እንደ ጥቅስ በሞዳል ይታያል።",
+  "headingText": "የአርዕስት ጽሑፍ"
 }

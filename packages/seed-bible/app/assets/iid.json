@@ -308,5 +308,8 @@
   "publishSettingsDescPlaylist": "Daftar putar Anda akan tersedia untuk semua orang jika bersifat publik. Jika privat, hanya Anda yang akan memiliki akses.",
   "playlistActions": "Pengaturan Playlist",
   "playlistActionsDesc": "Sesuaikan bagaimana playlist Anda berperilaku saat diputar.",
-  "movePlaybarInside": "Pertahankan bilah putar di dalam pemutar"
+  "movePlaybarInside": "Pertahankan bilah putar di dalam pemutar",
+  "quotedTextModalDisplayOn": "Tampilan modal aktif.",
+  "quotedTextModalDisplayDescription": "Saat diaktifkan, item ini akan ditampilkan dalam modal seperti kutipan.",
+  "headingText": "Teks judul"
 }

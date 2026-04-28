@@ -308,5 +308,8 @@
   "publishSettingsDescPlaylist": "공개로 설정하면 회원님의 재생목록을 모든 사람이 이용할 수 있습니다. 비공개로 설정하면 회원님만 접근할 수 있습니다.",
   "playlistActions": "재생목록 설정",
   "playlistActionsDesc": "재생 중 재생목록의 동작 방식을 조정합니다.",
-  "movePlaybarInside": "재생 막대를 플레이어 안에 유지"
+  "movePlaybarInside": "재생 막대를 플레이어 안에 유지",
+  "quotedTextModalDisplayOn": "모달 표시가 켜져 있습니다.",
+  "quotedTextModalDisplayDescription": "켜면 이 항목이 인용 스타일 모달로 표시됩니다.",
+  "headingText": "제목 텍스트"
 }

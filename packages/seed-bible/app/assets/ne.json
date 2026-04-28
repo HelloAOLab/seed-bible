@@ -308,5 +308,8 @@
   "publishSettingsDescPlaylist": "तपाईंको प्लेलिस्ट सार्वजनिक भए सबैका लागि उपलब्ध हुनेछ। निजी भए केवल तपाईंले मात्र पहुँच पाउनुहुनेछ।",
   "playlistActions": "प्लेलिस्ट सेटिङहरू",
   "playlistActionsDesc": "चलिरहेको बेला तपाईंको प्लेलिस्टले कसरी व्यवहार गर्ने भन्ने मिलाउनुहोस्।",
-  "movePlaybarInside": "प्लेबारलाई प्लेयरभित्र राख्नुहोस्"
+  "movePlaybarInside": "प्लेबारलाई प्लेयरभित्र राख्नुहोस्",
+  "quotedTextModalDisplayOn": "मोडल प्रदर्शन सक्रिय छ।",
+  "quotedTextModalDisplayDescription": "सक्रिय हुँदा यो वस्तु उद्धरण जस्तै मोडलमा देखाइनेछ।",
+  "headingText": "शीर्षक पाठ"
 }

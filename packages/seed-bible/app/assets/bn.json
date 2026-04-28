@@ -308,5 +308,8 @@
   "publishSettingsDescPlaylist": "আপনার প্লেলিস্টটি পাবলিক হলে সবার জন্য উপলভ্য হবে। প্রাইভেট হলে শুধুমাত্র আপনারই অ্যাক্সেস থাকবে।",
   "playlistActions": "প্লেলিস্ট সেটিংস",
   "playlistActionsDesc": "চলাকালীন আপনার প্লেলিস্ট কীভাবে আচরণ করবে তা সমন্বয় করুন।",
-  "movePlaybarInside": "প্লেবারটি প্লেয়ারের ভিতরে রাখুন"
+  "movePlaybarInside": "প্লেবারটি প্লেয়ারের ভিতরে রাখুন",
+  "quotedTextModalDisplayOn": "মোডাল প্রদর্শন চালু আছে।",
+  "quotedTextModalDisplayDescription": "চালু থাকলে এই আইটমটি উদ্ধৃতি-ধরণের মোডালে দেখাবে।",
+  "headingText": "শিরোনামের টেক্সট"
 }

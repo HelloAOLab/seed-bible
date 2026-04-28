@@ -308,5 +308,8 @@
   "publishSettingsDescPlaylist": "Calma listeniz herkese aciksa herkes tarafindan kullanilabilir olur. Ozel ise yalnizca siz erisebilirsiniz.",
   "playlistActions": "Calma listesi ayarlari",
   "playlistActionsDesc": "Calarken calma listenizin nasil davranacagini ayarlayin.",
-  "movePlaybarInside": "Oynatma cubugunu oynaticinin icinde tut"
+  "movePlaybarInside": "Oynatma cubugunu oynaticinin icinde tut",
+  "quotedTextModalDisplayOn": "Modal gorunumu acik.",
+  "quotedTextModalDisplayDescription": "Acikken bu oge, alinti tarzi bir modalda gosterilir.",
+  "headingText": "Baslik metni"
 }

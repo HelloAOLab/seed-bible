@@ -326,7 +326,8 @@ const Playlist = (props: any) => {
     idRec: string,
     newValueContent: Record<string, any>,
     parentId = null,
-    fullData = false
+    fullData = false,
+    isQuotedText = undefined
   ) => {
     setPlaylist((prev: any[]) => {
       const old = [...prev];
@@ -346,6 +347,11 @@ const Playlist = (props: any) => {
                 ...old[parentIdx].additionalInfo.layers[idx],
                 content: newValueContent,
               };
+              if (isQuotedText !== undefined) {
+                old[parentIdx].additionalInfo.layers[
+                  idx
+                ].additionalInfo.isQuotedText = isQuotedText;
+              }
             }
           }
         }
@@ -356,6 +362,9 @@ const Playlist = (props: any) => {
             old[idx] = { ...newValueContent };
           } else {
             old[idx] = { ...old[idx], content: newValueContent };
+            if (isQuotedText !== undefined) {
+              old[idx].additionalInfo.isQuotedText = isQuotedText;
+            }
           }
         }
       }
