@@ -8,6 +8,7 @@ import type {
 import {
   BibleState,
   BibleVisualizationState,
+  BookShape,
   PieceSelectionSources,
   SelectionModalities,
   type Piece,
@@ -19,8 +20,18 @@ import type {
   StackParentDataIds,
 } from "bibleStack.application.ports.pieces";
 import type { TourGuideServicePort } from "bibleStack.application.ports.tourGuide";
-import { HighlightRequestSources } from "../../domain/models/pieces";
+import {
+  HighlightRequestSources,
+  UnhighlightPacings,
+  UnhighlightRequestSources,
+} from "../../domain/models/pieces";
 import type { ExplodedViewServicePort } from "bibleStack.application.ports.explodedView";
+import type { StackBookData } from "bibleVizUtils.domain.entities.StackBookData";
+import type { StackSectionBookData } from "bibleVizUtils.domain.entities.StackSectionBookData";
+import type { StackSectionData } from "bibleVizUtils.domain.entities.StackSectionData";
+import { LabelTranslucencyModes } from "bibleVizUtils.domain.models.label";
+import type { BookInteractionConfigProviderPort } from "bibleStack.infrastructure.ports.bookInteraction";
+import { BookInteractionDelays } from "bibleStack.infrastructure.config.bookInteraction.delays";
 
 interface ServiceParams {
   bookDataRepositoryPort: BookDataRepositoryPort;
@@ -31,6 +42,7 @@ interface ServiceParams {
   explodedViewServicePort: ExplodedViewServicePort;
   sequenceStateServicePort: SequenceStateServicePort;
   pieceAdapterPort: PieceAdapterPort;
+  bookInteractionConfigProviderPort: BookInteractionConfigProviderPort;
 }
 
 export class BookInteractionService implements BookInteractionServicePort {
@@ -41,7 +53,8 @@ export class BookInteractionService implements BookInteractionServicePort {
   #pieceHighlightServicePort: ServiceParams["pieceHighlightServicePort"];
   #explodedViewServicePort: ServiceParams["explodedViewServicePort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
-  #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
+  // #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
+  #bookInteractionConfigProviderPort: ServiceParams["bookInteractionConfigProviderPort"];
 
   constructor({
     bookDataRepositoryPort,
@@ -51,7 +64,8 @@ export class BookInteractionService implements BookInteractionServicePort {
     pieceHighlightServicePort,
     explodedViewServicePort,
     sequenceStateServicePort,
-    pieceAdapterPort,
+    // pieceAdapterPort,
+    bookInteractionConfigProviderPort,
   }: ServiceParams) {
     this.#bookDataRepositoryPort = bookDataRepositoryPort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
@@ -60,10 +74,11 @@ export class BookInteractionService implements BookInteractionServicePort {
     this.#pieceHighlightServicePort = pieceHighlightServicePort;
     this.#explodedViewServicePort = explodedViewServicePort;
     this.#sequenceStateServicePort = sequenceStateServicePort;
-    this.#pieceAdapterPort = pieceAdapterPort;
+    // this.#pieceAdapterPort = pieceAdapterPort;
+    this.#bookInteractionConfigProviderPort = bookInteractionConfigProviderPort;
   }
 
-  handleBookClick({
+  handleBookSelection({
     book,
     interaction,
   }: {
@@ -145,31 +160,207 @@ export class BookInteractionService implements BookInteractionServicePort {
     }
   }
 
-  handleBookDrag: ({
-    book,
-  }: {
-    book: Piece<"StackBook" | "StackSectionBook">;
-  }) => void = ({ book }) => {
-    if (this.#sequenceStateServicePort.isThereAnOngoingSequence()) return;
-
+  handleBookFocusBegin(book: Piece<"StackBook"> | Piece<"StackSectionBook">) {
     const bookData = this.#bookDataRepositoryPort.getPieceData(book);
 
     if (!bookData) {
       throw new Error(
-        "BookInteractionService: bookData not found at handleBookDrag."
+        "BookInteractionService: bookData not found at handleBookFocusBegin."
       );
     }
 
-    const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
-      bookData.parentDataIds as StackParentDataIds
-    );
+    bookData.beginFocus();
+
+    if (this.#sequenceStateServicePort.isThereAnOngoingSequence()) return;
+
+    const { bibleData, testamentData, sectionData } =
+      this.#pieceHierarchyServicePort.getParentDataChain(
+        bookData.parentDataIds as StackParentDataIds
+      );
 
     if (
       bibleData?.currentState !== BibleState.Open ||
-      this.#pieceAdapterPort.isPieceAnchored(book)
+      (this.#tourGuideServicePort.isThereAnOngoingTourGuide() &&
+        this.#tourGuideServicePort.ongoingTourGuideSectionData?.id ===
+          sectionData?.id)
     )
       return;
 
-    shout("OnStackPieceDrag", { piece: book, data: bookData });
-  };
+    switch (bookData.type) {
+      case "StackSectionBook":
+        {
+          this.#pieceHighlightServicePort.tryHighlightPiece({
+            piece: book,
+            source: HighlightRequestSources.UserFocus,
+          });
+        }
+        break;
+      case "StackBook":
+        {
+          if (
+            sectionData &&
+            !sectionData.isInExplodedView &&
+            bookData?.getParentId("stackTestamentId") &&
+            (!bibleData ||
+              bibleData.currentStackVizState ===
+                BibleVisualizationState.Regular) &&
+            (bookData.currentShape === BookShape.Regular ||
+              bookData.currentShape === BookShape.RegularSelected)
+          ) {
+            this.#explodedViewServicePort.explodeSection(sectionData);
+          } else if (!bookData.isSelected) {
+            if (bibleData || testamentData || sectionData) {
+              const booksToUnhighlight = sectionData?.childrenData
+                .flat()
+                .filter((currentBookData) => {
+                  return (
+                    currentBookData !== bookData &&
+                    currentBookData.isActive &&
+                    currentBookData.piece &&
+                    !currentBookData.isOnTheGround &&
+                    AreBothBooksInSamePlace(currentBookData, bookData)
+                  );
+                })
+                .map((currentBookData) => currentBookData.piece);
+              if (
+                Array.isArray(booksToUnhighlight) &&
+                booksToUnhighlight?.length > 0
+              ) {
+                for (const bookToUnhighlight of booksToUnhighlight) {
+                  if (bookToUnhighlight) {
+                    this.#pieceHighlightServicePort.tryUnhighlightPiece({
+                      piece: bookToUnhighlight,
+                      source: HighlightRequestSources.UserFocus,
+                      pacing: UnhighlightPacings.Regular,
+                    });
+                  }
+                }
+              }
+              if (testamentData) {
+                const sectionsToCheck = bibleData
+                  ? (bibleData.childrenData
+                      .flatMap((currentTestamentData) => {
+                        return currentTestamentData.childrenData;
+                      })
+                      .filter((currentSectionData) => {
+                        return (
+                          currentSectionData.type !== "StackSectionBook" &&
+                          currentSectionData != sectionData &&
+                          currentSectionData.isActive &&
+                          currentSectionData.isSplitIntoBooks
+                        );
+                      }) as StackSectionData[])
+                  : (testamentData.childrenData.filter((currentSectionData) => {
+                      return (
+                        currentSectionData.type !== "StackSectionBook" &&
+                        currentSectionData != sectionData &&
+                        currentSectionData.isActive &&
+                        currentSectionData.isSplitIntoBooks
+                      );
+                    }) as StackSectionData[]);
+                const unhighlightDelay =
+                  this.#bookInteractionConfigProviderPort.getDelay(
+                    BookInteractionDelays.UnhighlightOtherSectionBooks
+                  );
+                const booksToDecreaseHighlight = sectionsToCheck
+                  .map((currentSectionData) => {
+                    return currentSectionData.childrenData;
+                  })
+                  .flat(2)
+                  .filter((currentBookData) => {
+                    return (
+                      currentBookData.isActive &&
+                      currentBookData.getParentId("stackBibleId") &&
+                      currentBookData.piece &&
+                      currentBookData.isPieceHighlighted() &&
+                      currentBookData.labelTranslucency ===
+                        LabelTranslucencyModes.Solid
+                    );
+                  })
+                  .map((currentBookData) => {
+                    return currentBookData.piece;
+                  });
+                for (const bookToDecreateHighlight of booksToDecreaseHighlight) {
+                  if (bookToDecreateHighlight) {
+                    this.#pieceHighlightServicePort.changeHighlightIntensity({
+                      piece: bookToDecreateHighlight,
+                      intensity: LabelTranslucencyModes.Faded,
+                    });
+                    if (
+                      !this.#pieceHighlightServicePort.isUnhighlightScheduled(
+                        bookToDecreateHighlight
+                      )
+                    ) {
+                      this.#pieceHighlightServicePort.tryUnhighlightPiece({
+                        piece: bookToDecreateHighlight,
+                        source: HighlightRequestSources.UserFocus,
+                        pacing: UnhighlightPacings.Regular,
+                        delay: unhighlightDelay,
+                      });
+                    }
+                  }
+                }
+              }
+            }
+            this.#pieceHighlightServicePort.tryHighlightPiece({
+              piece: book,
+              source: HighlightRequestSources.UserFocus,
+            });
+          }
+        }
+        break;
+    }
+  }
+
+  handleBookFocusEnd(book: Piece<"StackBook" | "StackSectionBook">): void {
+    const bookData = this.#bookDataRepositoryPort.getPieceData(book);
+
+    if (!bookData) {
+      throw new Error(
+        "BookInteractionService: bookData not found at handleBookFocusEnd."
+      );
+    }
+
+    bookData.endFocus();
+
+    if (this.#sequenceStateServicePort.isThereAnOngoingSequence()) return;
+
+    const { bibleData, sectionData } =
+      this.#pieceHierarchyServicePort.getParentDataChain(
+        bookData.parentDataIds as StackParentDataIds
+      );
+
+    if (
+      bibleData?.currentState !== BibleState.Open ||
+      bookData.isSelected ||
+      (this.#tourGuideServicePort.isThereAnOngoingTourGuide() &&
+        this.#tourGuideServicePort.ongoingTourGuideSectionData?.id ===
+          sectionData?.id) ||
+      (bookData.type === "StackBook" && bookData.getParentId("stackBibleId"))
+    )
+      return;
+
+    this.#pieceHighlightServicePort.tryUnhighlightPiece({
+      piece: book,
+      source: UnhighlightRequestSources.UserUnfocus,
+      pacing: UnhighlightPacings.Regular,
+      delay: this.#bookInteractionConfigProviderPort.getDelay(
+        BookInteractionDelays.UnhighlightBook
+      ),
+    });
+  }
+}
+
+function AreBothBooksInSamePlace(
+  bookData1: StackBookData | StackSectionBookData,
+  bookData2: StackBookData | StackSectionBookData
+) {
+  return (
+    (bookData1.getParentId("stackBibleId") &&
+      bookData2.getParentId("stackBibleId")) ||
+    (bookData1.getParentId("stackTestamentId") &&
+      bookData2.getParentId("stackTestamentId")) ||
+    (bookData1.getParentId("stackSectionId") &&
+      bookData2.getParentId("stackSectionId"))
+  );
 }

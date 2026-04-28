@@ -1,5 +1,7 @@
 export const HighlightRequestSources = {
   UserSelection: "UserSelection",
+  UserFocus: "UserFocus",
+  UserDrop: "UserDrop",
 } as const;
 
 export type HighlightRequestSource =
@@ -7,6 +9,8 @@ export type HighlightRequestSource =
 
 export const UnhighlightRequestSources = {
   UserDrag: "UserDrag",
+  UserFocus: "UserFocus",
+  UserUnfocus: "UserUnfocus",
 } as const;
 
 export type UnhighlightRequestSource =

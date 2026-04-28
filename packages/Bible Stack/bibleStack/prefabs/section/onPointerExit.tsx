@@ -1,7 +1,4 @@
-import { bibleStackEventManager } from "bibleStack.services.index";
 import { thisTypedBot } from "bibleStack.prefabs.section.botAdapter";
+import { sectionInteractionController } from "bibleStack.infrastructure.di.bootstrap";
 
-thisTypedBot.masks.isBeingHovered = false;
-bibleStackEventManager.emit("OnSectionPointerExit", {
-  section: thisTypedBot,
-});
+sectionInteractionController?.handleSectionPointerExit(thisTypedBot);

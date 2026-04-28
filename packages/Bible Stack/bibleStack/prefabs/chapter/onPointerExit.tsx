@@ -1,5 +1,4 @@
-import { bibleStackEventManager } from "bibleStack.services.index";
 import { thisTypedBot } from "bibleStack.prefabs.chapter.botAdapter";
+import { chapterInteractionController } from "bibleStack.infrastructure.di.bootstrap";
 
-bibleStackEventManager.emit("OnChapterPointerExit", { chapter: thisTypedBot });
-setTagMask(thisBot, "isPointed", false);
+chapterInteractionController?.handleChapterPointerExit(thisTypedBot);

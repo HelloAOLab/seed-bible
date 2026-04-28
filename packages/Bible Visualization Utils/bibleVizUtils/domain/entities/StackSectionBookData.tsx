@@ -11,6 +11,7 @@ import type {
   SectionInfo,
 } from "bibleVizUtils.domain.models.arrangement";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
+import type { LabelTranslucencyMode } from "bibleVizUtils.domain.models.label";
 
 interface DataParams {
   childrenData?: StackChapterData[];
@@ -41,6 +42,7 @@ export class StackSectionBookData extends StackPieceData<
   #isInsideTestament: DataParams["isInsideTestament"];
   #pieceBookInfo: DataParams["pieceBookInfo"];
   #previousHighlightedChapterData: StackChapterData | undefined;
+  #labelTranslucency: LabelTranslucencyMode | undefined = undefined;
 
   constructor({
     childrenData = [],
@@ -73,6 +75,18 @@ export class StackSectionBookData extends StackPieceData<
     this.#isInsideTestament = isInsideTestament;
     this.#pieceBookInfo = pieceBookInfo;
     this.#isSelected = isSelected;
+  }
+
+  get labelTranslucency() {
+    return this.#labelTranslucency;
+  }
+
+  changeLabelTranslucency(translucency: LabelTranslucencyMode) {
+    this.#labelTranslucency = translucency;
+  }
+
+  clearLabelTranslucency() {
+    this.#labelTranslucency = undefined;
   }
 
   get isSelected() {

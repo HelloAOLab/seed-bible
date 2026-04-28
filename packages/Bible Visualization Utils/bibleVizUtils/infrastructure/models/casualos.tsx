@@ -34,9 +34,9 @@ export interface SetTagData extends BaseTagData<SetTagData> {
 }
 
 interface BaseRelocationEvent {
-  bot: Bot;
+  bot: PieceBot;
   to: {
-    bot: Bot;
+    bot: PieceBot;
     x: number;
     y: number;
     dimension: string;

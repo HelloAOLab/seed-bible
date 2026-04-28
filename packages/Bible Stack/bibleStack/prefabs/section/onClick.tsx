@@ -1,10 +1,10 @@
-import { CanvasInteractions } from "bibleVizUtils.models.canvas";
-import { ClickModalities } from "bibleVizUtils.models.casualos";
-import { bibleStackEventManager } from "bibleStack.services.index";
+import { CanvasInteractions } from "bibleVizUtils.infrastructure.models.canvas";
+import { ClickModalities } from "bibleVizUtils.infrastructure.models.casualos";
 import { thisTypedBot } from "bibleStack.prefabs.section.botAdapter";
+import { sectionInteractionController } from "bibleStack.infrastructure.di.bootstrap";
 
 const { modality } = that;
-bibleStackEventManager.emit("OnSectionClick", {
+sectionInteractionController?.handleSectionClick({
   section: thisTypedBot,
   typeOfInteraction:
     modality === ClickModalities.touch

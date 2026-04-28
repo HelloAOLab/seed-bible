@@ -1,10 +1,9 @@
-import { bibleStackEventManager } from "bibleStack.services.index";
 import { thisTypedBot } from "bibleStack.prefabs.book.botAdapter";
+import { bookInteractionController } from "bibleStack.infrastructure.di.bootstrap";
 
-setTagMask(thisBot, "isBeingHovered", true);
-bibleStackEventManager.emit("OnBookPointerExit", { book: thisTypedBot });
+bookInteractionController?.handleBookPointerExit(thisTypedBot);
 
 // InstanceManager.TryClearVideoTimeout();
-if (globalThis.CLEARABLE_LERPING) {
-  thisBot.TryToUnlerp();
-}
+// if (globalThis.CLEARABLE_LERPING) {
+//   thisBot.TryToUnlerp();
+// }

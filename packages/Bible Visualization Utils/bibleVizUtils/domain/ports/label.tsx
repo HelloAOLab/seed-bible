@@ -13,7 +13,7 @@ import type { InfoLabelData } from "bibleVizUtils.domain.entities.InfoLabelData"
 import type { LabelDataStorePort } from "./piece";
 import type { ActivityIndicatorsAdapterPort } from "bibleVizUtils.domain.ports.pieceActivity";
 import type { BibleVizUtilsEvents } from "bibleVizUtils.domain.models.events";
-import type { ShowAnimationPacing } from "../../infrastructure/models/label";
+import type { ShowSequencePacing } from "bibleVizUtils.domain.models.label";
 
 export type SpawnLabel = (params: {
   piece: Piece;
@@ -72,14 +72,14 @@ export interface LabelFeedbackAdapterPort {
     pacing,
   }: {
     data: InfoLabelData;
-    pacing: ShowAnimationPacing;
+    pacing: ShowSequencePacing;
   }) => Promise<void>;
   displayHideFeedback({
     data,
     pacing,
   }: {
     data: InfoLabelData;
-    pacing: ShowAnimationPacing;
+    pacing: ShowSequencePacing;
   }): Promise<void>;
 }
 
@@ -112,7 +112,7 @@ export interface PieceLabelServicePort<T extends BiblePieceType> {
   showLabel: (params: {
     piece: Piece<T>;
     translucencyMode: LabelTranslucencyMode;
-    pacing?: ShowAnimationPacing;
+    pacing?: ShowSequencePacing;
   }) => void;
-  hideLabel: (piece: Piece<T>, pacing?: ShowAnimationPacing) => void;
+  hideLabel: (piece: Piece<T>, pacing?: ShowSequencePacing) => void;
 }

@@ -1,3 +1,11 @@
+export const ShowSequencePacings = {
+  Slow: "Slow",
+  Regular: "Regular",
+  Fast: "Fast",
+  Instant: "Instant",
+} as const;
+export type ShowSequencePacing = keyof typeof ShowSequencePacings;
+
 export const LabelDateFormat = {
   Absolute: "Absolute",
   Relative: "Relative",

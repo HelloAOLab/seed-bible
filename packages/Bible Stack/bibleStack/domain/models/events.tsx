@@ -1,8 +1,11 @@
-import type { DraggingEvent, DropEvent } from "bibleVizUtils.models.casualos";
+import type {
+  DraggingEvent,
+  DropEvent,
+} from "bibleVizUtils.infrastructure.models.casualos";
 import type {
   BookBot,
   ChapterBot,
-  ChunkOfVersesBot,
+  VersesBundleBot,
   CoverBot,
   CrossLineBot,
   SectionBot,
@@ -114,13 +117,13 @@ export interface BibleStackEvents {
   };
 
   OnChunkOfVersesClick: {
-    chunkOfVerses: ChunkOfVersesBot;
+    chunkOfVerses: VersesBundleBot;
   };
   OnChunkOfVersesPointerEnter: {
-    chunkOfVerses: ChunkOfVersesBot;
+    chunkOfVerses: VersesBundleBot;
   };
   OnChunkOfVersesPointerExit: {
-    chunkOfVerses: ChunkOfVersesBot;
+    chunkOfVerses: VersesBundleBot;
   };
   OnCoverClick: {
     cover: CoverBot;
@@ -137,6 +140,8 @@ export interface BibleStackEvents {
   OnStackSequenceStart: void;
   OnStackSequenceEnd: void;
   OnTestamentDelete: { piece: Piece<"StackTestament"> };
+  OnStackPiecePulledOut: void;
+  OnStackPieceDrop: { piece: Piece };
 }
 
 export type BibleStackEvent = keyof BibleStackEvents;

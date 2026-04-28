@@ -38,7 +38,11 @@ export class BookInfoMapper {
       info.commonName
     );
     return {
-      ...info,
+      commonName: info.commonName,
+      customColor: info.customColor,
+      customLabelColor: info.customLabelColor,
+      isCheckpoint: info.isCheckpoint,
+      group: info.group,
       ...staticInfo,
       path,
     };

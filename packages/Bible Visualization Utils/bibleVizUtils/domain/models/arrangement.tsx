@@ -43,6 +43,7 @@ export interface BookInfo extends BookStaticInfo {
   readonly customColor?: string;
   readonly customLabelColor?: string;
   readonly isCheckpoint?: boolean;
+  readonly group?: number;
   readonly path: {
     arrangementName: string;
     testamentIndex: number;

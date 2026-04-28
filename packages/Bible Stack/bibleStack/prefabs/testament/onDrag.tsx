@@ -1,8 +1,5 @@
-import { bibleStackEventManager } from "bibleStack.services.index";
 import { thisTypedBot } from "bibleStack.prefabs.testament.botAdapter";
+import { testamentInteractionController } from "bibleStack.infrastructure.di.bootstrap";
 
-bibleStackEventManager.emit("OnTestamentDrag", {
-  testament: thisTypedBot,
-  draggingEvent: that,
-});
+testamentInteractionController?.handleTestamentDrag(thisTypedBot);
 os.enableCustomDragging();

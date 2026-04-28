@@ -10,6 +10,7 @@ import type { ChapterInfo } from "bibleVizUtils.domain.models.arrangement";
 import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
 import type { Point2D } from "bibleVizUtils.domain.models.commonTypes";
+import type { VersesBundleData } from "bibleVizUtils.domain.entities.VersesBunbleData";
 
 interface DataParams {
   isSelected: boolean;
@@ -25,6 +26,7 @@ interface DataParams {
   isExpanded?: boolean;
   activityIndicators?: Map<ActivityIndicator["id"], ActivityIndicator>;
   activityNotification?: ActivityNotification;
+  childrenData?: VersesBundleData[];
 }
 
 type HighlightInfo = {
@@ -34,7 +36,7 @@ type HighlightInfo = {
 };
 
 export class StackChapterData extends StackPieceData<
-  never,
+  VersesBundleData,
   ChapterInfo,
   ChapterCreationParams,
   "StackChapter"
@@ -45,6 +47,8 @@ export class StackChapterData extends StackPieceData<
   #isExpanded: NonNullable<boolean>;
   #activityIndicators: NonNullable<DataParams["activityIndicators"]>;
   #activityNotification: DataParams["activityNotification"];
+  #isSelecting: boolean = false;
+  #isDeselecting: boolean = false;
 
   constructor({
     isSelected,
@@ -59,6 +63,7 @@ export class StackChapterData extends StackPieceData<
     isExpanded = false,
     activityIndicators = new Map(),
     activityNotification,
+    childrenData,
   }: DataParams) {
     super({
       id,
@@ -70,6 +75,7 @@ export class StackChapterData extends StackPieceData<
       creationParams,
       isActive: false,
       type: "StackChapter",
+      childrenData,
     });
     this.#isInsideBook = isInsideBook;
     this.#isSelected = isSelected;
@@ -107,9 +113,43 @@ export class StackChapterData extends StackPieceData<
   }
   select() {
     this.#isSelected = true;
+    this.#isSelecting = false;
   }
   deselect() {
     this.#isSelected = false;
+    this.#isDeselecting = false;
+  }
+  get isSelecting() {
+    return this.#isSelecting;
+  }
+  get isDeselecting() {
+    return this.#isDeselecting;
+  }
+  beginSelect() {
+    if (this.isSelected || this.isSelecting) {
+      return;
+    }
+
+    this.#isDeselecting = false;
+    this.#isSelecting = true;
+  }
+  endSelect() {
+    if (!this.#isSelecting) return;
+
+    this.select();
+  }
+  beginDeselect() {
+    if (!this.isSelected || this.isDeselecting) {
+      return;
+    }
+
+    this.#isSelecting = false;
+    this.#isDeselecting = true;
+  }
+  endDeselect() {
+    if (!this.isDeselecting) return;
+
+    this.deselect();
   }
   get isInsideBook() {
     return this.#isInsideBook;

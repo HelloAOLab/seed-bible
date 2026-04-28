@@ -20,7 +20,7 @@ import type {
   InfoLabelTransformerBot,
   PieceBot,
 } from "../../models/casualos";
-import type { ShowAnimationPacing } from "bibleVizUtils.infrastructure.models.label";
+import type { ShowSequencePacing } from "bibleVizUtils.domain.models.label";
 import { InfoLabelTransformerMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTransformerMapper";
 import type {
   ShowAnimationDurationMapType,
@@ -28,7 +28,7 @@ import type {
 } from "bibleVizUtils.infrastructure.config.labels.showAnimation";
 
 interface LabelConfigProviderPort {
-  getShowAnimationDuration: <P extends ShowAnimationPacing>(
+  getShowAnimationDuration: <P extends ShowSequencePacing>(
     pacing: P
   ) => ShowAnimationDurationMapType[P];
   getShowAnimationConfig: <K extends keyof ShowAnimationConfigType>(
@@ -197,7 +197,7 @@ export class LabelFeedbackAdapter {
     pacing,
   }: {
     data: InfoLabelData;
-    pacing: ShowAnimationPacing;
+    pacing: ShowSequencePacing;
   }) {
     const duration =
       this.#labelConfigProviderPort.getShowAnimationDuration(pacing);
@@ -252,7 +252,7 @@ export class LabelFeedbackAdapter {
     pacing,
   }: {
     data: InfoLabelData;
-    pacing: ShowAnimationPacing;
+    pacing: ShowSequencePacing;
   }) {
     const duration =
       this.#labelConfigProviderPort.getShowAnimationDuration(pacing);

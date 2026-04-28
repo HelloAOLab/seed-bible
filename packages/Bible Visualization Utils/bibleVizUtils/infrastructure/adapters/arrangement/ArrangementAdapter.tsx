@@ -1,12 +1,16 @@
 import type { ArrangementInfo as InfrastructureArrangementInfo } from "bibleVizUtils.infrastructure.models.arrangement";
 import type { ArrangementInfo as DomainArrangementInfo } from "bibleVizUtils.domain.models.arrangement";
-import type { BooksStaticInfoRepository } from "bibleVizUtils.domain.ports.arrangement";
+import type { BookInfoMapperPort } from "bibleVizUtils.infrastructure.ports.arrangement";
+
+interface AdapterParams {
+  bookInfoMapperPort: BookInfoMapperPort;
+}
 
 export class ArrangementAdapter {
-  #booksStaticInfoRepository: BooksStaticInfoRepository;
+  #bookInfoMapperPort: AdapterParams["bookInfoMapperPort"];
 
-  constructor(booksStaticInfoRepository: BooksStaticInfoRepository) {
-    this.#booksStaticInfoRepository = booksStaticInfoRepository;
+  constructor({ bookInfoMapperPort }: AdapterParams) {
+    this.#bookInfoMapperPort = bookInfoMapperPort;
   }
 
   toDomain(
@@ -21,20 +25,13 @@ export class ArrangementAdapter {
             sections: testament.sections.map((section, sectionIndex) => {
               return {
                 ...section,
-                books: section.books.map((book) => {
-                  const staticInfo =
-                    this.#booksStaticInfoRepository.getBookStaticInfo(
-                      book.commonName
-                    );
-                  return {
-                    ...book,
-                    ...staticInfo,
-                    path: {
-                      arrangementName: infrastructureArrangement.name,
-                      testamentIndex,
-                      sectionIndex,
-                    },
-                  };
+                books: section.books.map((book, bookIndex) => {
+                  return this.#bookInfoMapperPort.toDomain(book, {
+                    arrangementName: infrastructureArrangement.name,
+                    testamentIndex,
+                    sectionIndex,
+                    bookIndex,
+                  });
                 }),
               };
             }),

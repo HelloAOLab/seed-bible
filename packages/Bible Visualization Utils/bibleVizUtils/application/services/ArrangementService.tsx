@@ -19,7 +19,7 @@ export interface SectionPathIndices extends TestamentPathIndices {
   sectionIndex: number;
 }
 
-interface BookPathIndices extends SectionPathIndices {
+export interface BookPathIndices extends SectionPathIndices {
   bookIndex: number;
 }
 

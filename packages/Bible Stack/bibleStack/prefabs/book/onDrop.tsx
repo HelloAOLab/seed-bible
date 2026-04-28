@@ -1,7 +1,7 @@
-import { bibleStackEventManager } from "bibleStack.services.index";
 import { thisTypedBot } from "bibleStack.prefabs.book.botAdapter";
+import { bookInteractionController } from "bibleStack.infrastructure.di.bootstrap";
 
-bibleStackEventManager.emit("OnBookDrop", {
+bookInteractionController?.handleBookDrop({
   book: thisTypedBot,
   dropEvent: that,
 });

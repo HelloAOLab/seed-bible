@@ -1,6 +1,4 @@
-import { bibleStackEventManager } from "bibleStack.services.index";
 import { thisTypedBot } from "bibleStack.prefabs.section.botAdapter";
+import { sectionInteractionController } from "bibleStack.infrastructure.di.bootstrap";
 
-bibleStackEventManager.emit("OnSectionPointerUp", {
-  section: thisTypedBot,
-});
+sectionInteractionController?.handleSectionPointerUp(thisTypedBot);

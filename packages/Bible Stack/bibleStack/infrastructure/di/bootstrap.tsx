@@ -13,6 +13,9 @@ import { TourGuideAdapter } from "bibleStack.infrastructure.adapters.stacks.Tour
 
 // Controller import
 import { BookInteractionController } from "bibleStack.infrastructure.controllers.stack.BookInteractionController";
+import { TestamentInteractionController } from "bibleStack.infrastructure.controllers.stack.TestamentInteractionController";
+import { SectionInteractionController } from "bibleStack.infrastructure.controllers.stack.SectionInteractionController";
+import { ChapterInteractionController } from "bibleStack.infrastructure.controllers.stack.ChapterInteractionController";
 
 // API Import
 import { bibleVizAPI } from "bibleVizUtils.infrastructure.di.bootstrap";
@@ -23,6 +26,15 @@ import {
 
 export let bookInteractionController: BookInteractionController | undefined =
   undefined;
+export let testamentInteractionController:
+  | TestamentInteractionController
+  | undefined = undefined;
+export let sectionInteractionController:
+  | SectionInteractionController
+  | undefined = undefined;
+export let chapterInteractionController:
+  | ChapterInteractionController
+  | undefined = undefined;
 
 const disposeFunctions: (() => void)[] = [];
 
@@ -190,6 +202,12 @@ export const bootstrapApp = () => {
     bookInteractionService
   );
 
+  testamentInteractionController = new TestamentInteractionController(
+    {} as any
+  );
+  sectionInteractionController = new SectionInteractionController({} as any);
+  chapterInteractionController = new ChapterInteractionController({} as any);
+
   // 4. Event wiring
   // TODO: Wire events on the go
 
@@ -213,6 +231,9 @@ export const teardownApp = () => {
 
   disposeFunctions.forEach((func) => func());
   bookInteractionController = undefined;
+  testamentInteractionController = undefined;
+  sectionInteractionController = undefined;
+  chapterInteractionController = undefined;
 
   console.log(`Bible Stack successfully uninstalled.`);
 };

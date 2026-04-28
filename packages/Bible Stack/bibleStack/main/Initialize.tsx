@@ -339,34 +339,34 @@ const bibleShadowsPool = new PoolData({
   size: 1,
 });
 const chunkOfVersesPool = new PoolData({
-  tag: ObjectPoolTags.StackChunkOfVerses,
+  tag: ObjectPoolTags.VersesBundle,
   bot: getBot(byTag("isBaseStackChunkOfVerses", true)),
   customTags: [
     new CustomTag({ name: "isBaseStackChunkOfVerses", value: false }),
     new CustomTag({
       name: "typeOfPiece",
-      value: BiblePiece.StackChunkOfVerses,
+      value: BiblePiece.VersesBundle,
     }),
     new CustomTag({
       name: "poolTag",
-      value: ObjectPoolTags.StackChunkOfVerses,
+      value: ObjectPoolTags.VersesBundle,
     }),
     new CustomTag({ name: "system", value: null }),
   ],
   size: 3,
 });
 const versesPool = new PoolData({
-  tag: ObjectPoolTags.StackVerse,
+  tag: ObjectPoolTags.Verse,
   bot: getBot(byTag("isBaseStackVerse", true)),
   customTags: [
     new CustomTag({ name: "isBaseStackVerse", value: false }),
     new CustomTag({
       name: "typeOfPiece",
-      value: BiblePiece.StackVerse,
+      value: BiblePiece.Verse,
     }),
     new CustomTag({
       name: "poolTag",
-      value: ObjectPoolTags.StackVerse,
+      value: ObjectPoolTags.Verse,
     }),
     new CustomTag({ name: "system", value: null }),
   ],

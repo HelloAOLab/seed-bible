@@ -3,11 +3,12 @@ import {
   BibleState,
   type BiblePieceType,
   type Piece,
-} from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
+} from "bibleVizUtils.domain.models.canvas";
 import type {
   SequenceStateServicePort,
   PieceAdapterPort,
   ScripturePieceDataRepositoryPort,
+  StackStructureServicePort,
 } from "bibleStack.application.ports.scripturePieceDrag";
 import type {
   PieceHierarchyServicePort,
@@ -17,7 +18,10 @@ import type {
 import {
   UnhighlightPacings,
   UnhighlightRequestSources,
-} from "../../domain/models/pieces";
+} from "bibleStack.domain.models.pieces";
+import type { DragServicePort as BookInteractionControllerDragServicePort } from "bibleStack.application.ports.books";
+import type { DragServicePort as TestamentInteractionControllerDragServicePort } from "bibleStack.application.ports.testaments";
+import type { DragServicePort as ChapterInteractionControllerDragServicePort } from "bibleStack.application.ports.chapters";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
@@ -25,6 +29,7 @@ interface ServiceParams {
   scripturePieceDataRepositoryPort: ScripturePieceDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   pieceHighlightServicePort: PieceHighlightServicePort;
+  stackStructureServicePort: StackStructureServicePort;
 }
 
 type PieceConditionGetter = (params: {
@@ -45,12 +50,18 @@ const pieceConditionStrategy: Partial<
   [BiblePiece.StackBook]: bookConditionGetter,
 };
 
-export class ScripturePieceDragService {
+export class ScripturePieceDragService
+  implements
+    BookInteractionControllerDragServicePort,
+    TestamentInteractionControllerDragServicePort,
+    ChapterInteractionControllerDragServicePort
+{
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
   #scripturePieceDataRepositoryPort: ServiceParams["scripturePieceDataRepositoryPort"];
   #pieceHierarchyServicePort: ServiceParams["pieceHierarchyServicePort"];
   #pieceHighlightServicePort: ServiceParams["pieceHighlightServicePort"];
+  #stackStructureServicePort: ServiceParams["stackStructureServicePort"];
 
   constructor({
     sequenceStateServicePort,
@@ -58,12 +69,14 @@ export class ScripturePieceDragService {
     scripturePieceDataRepositoryPort,
     pieceHierarchyServicePort,
     pieceHighlightServicePort,
+    stackStructureServicePort,
   }: ServiceParams) {
     this.#sequenceStateServicePort = sequenceStateServicePort;
     this.#pieceAdapterPort = pieceAdapterPort;
     this.#scripturePieceDataRepositoryPort = scripturePieceDataRepositoryPort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
     this.#pieceHighlightServicePort = pieceHighlightServicePort;
+    this.#stackStructureServicePort = stackStructureServicePort;
   }
 
   async handlePieceDrag(
@@ -89,7 +102,7 @@ export class ScripturePieceDragService {
         data.parentDataIds as StackParentDataIds
       );
 
-    const particularReturnCondition =
+    const pieceConditionFails =
       particularCondition &&
       !particularCondition({
         pieceAdapterPort: this.#pieceAdapterPort,
@@ -98,7 +111,7 @@ export class ScripturePieceDragService {
 
     if (
       this.#sequenceStateServicePort.isThereAnOngoingSequence() ||
-      particularReturnCondition ||
+      pieceConditionFails ||
       bibleData?.currentState !== BibleState.Open
     )
       return;
@@ -111,7 +124,7 @@ export class ScripturePieceDragService {
 
     data.pickFromGround();
     data.beginDrag();
-    data.becomeNotHighlightable();
+    data.becomeNonHighlightable();
 
     if (
       bibleData ||
@@ -120,8 +133,7 @@ export class ScripturePieceDragService {
       sectionBookData ||
       bookData
     ) {
-      thisBot.PullOutPieceFromParent({
-        // TODO: Refactor this to a service method
+      this.#stackStructureServicePort.pullOutPieceFromParent({
         pieceData: data,
         bibleData,
         testamentData,

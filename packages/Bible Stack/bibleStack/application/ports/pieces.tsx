@@ -13,6 +13,7 @@ import type {
   UnhighlightPacing,
   UnhighlightRequestSource,
 } from "bibleStack.domain.models.pieces";
+import type { LabelTranslucencyMode } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/label";
 
 export type StackParentDataIds = Pick<
   ParentDataIds,
@@ -102,5 +103,14 @@ export interface PieceHighlightServicePort {
     piece: Piece;
     source: UnhighlightRequestSource;
     pacing: UnhighlightPacing;
+    delay?: number;
   }) => Promise<void>;
+  isUnhighlightScheduled: (piece: Piece) => boolean;
+  changeHighlightIntensity: ({
+    piece,
+    intensity,
+  }: {
+    piece: Piece;
+    intensity: LabelTranslucencyMode;
+  }) => void; // TODO: Change this to use a particular interface for the intensity. Leave LabelTranslucencyMode to the label only.
 }

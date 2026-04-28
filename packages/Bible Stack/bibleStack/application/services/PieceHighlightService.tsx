@@ -5,6 +5,7 @@ import type {
   UnhighlightPacing,
   UnhighlightRequestSource,
 } from "../../domain/models/pieces";
+import type { LabelTranslucencyMode } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/label";
 
 export class PieceHighlightService implements PieceHighlightServicePort {
   tryHighlightPiece: (params: {
@@ -18,7 +19,20 @@ export class PieceHighlightService implements PieceHighlightServicePort {
     piece: Piece;
     source: UnhighlightRequestSource;
     pacing: UnhighlightPacing;
-  }) => Promise<void> = ({ piece, source, pacing }) => {
+    dealy?: number;
+  }) => Promise<void> = ({ piece, source, pacing, dealy }) => {
     return Promise.resolve();
   };
+
+  isUnhighlightScheduled: (piece: Piece) => boolean = (piece) => {
+    return true;
+  };
+
+  changeHighlightIntensity: ({
+    piece,
+    intensity,
+  }: {
+    piece: Piece;
+    intensity: LabelTranslucencyMode;
+  }) => void = () => {};
 }

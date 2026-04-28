@@ -28,7 +28,7 @@ if (chapterData.pieceInfo.amountOfVerses - versesPerChunk * chunksCount > 0)
   chunksCount++;
 for (let i = 0; i < chunksCount; i++) {
   const chunk = ObjectPooler.GetObjectFromPool({
-    tag: ObjectPoolTags.StackChunkOfVerses,
+    tag: ObjectPoolTags.VersesBundle,
   });
   const amountOfVerses = Math.min(remainingVerses, versesPerChunk);
   setTagMask(chunk, "initialVerseNumber", currentVerseNumber);

@@ -4,6 +4,7 @@ import type { StackBookData } from "bibleVizUtils.domain.entities.StackBookData"
 import type { StackBibleData } from "bibleVizUtils.domain.entities.StackBibleData";
 import type { StackChapterData } from "bibleVizUtils.domain.entities.StackChapterData";
 import type { Point2D, Point3D } from "bibleVizUtils.domain.models.commonTypes";
+import type { BookName } from "bibleVizUtils.domain.models.scripture";
 
 export interface Piece<T extends BiblePieceType = BiblePieceType> {
   id: string;
@@ -24,8 +25,8 @@ export const BiblePiece = {
   StackSectionBook: "StackSectionBook",
   StackBook: "StackBook",
   StackChapter: "StackChapter",
-  StackChunkOfVerses: "StackChunkOfVerses",
-  StackVerse: "StackVerse",
+  VersesBundle: "VersesBundle",
+  Verse: "Verse",
   StackCover: "StackCover",
   StackCrossLine: "StackCrossLine",
   LayoutBook: "LayoutBook",
@@ -55,8 +56,8 @@ export const ObjectPoolTags = {
   StackSectionShadow: "StackSectionShadow",
   DonationOutline: "DonationOutline",
   StackChapter: "StackChapter",
-  StackChunkOfVerses: "StackChunkOfVerses",
-  StackVerse: "StackVerse",
+  VersesBundle: "VersesBundle",
+  Verse: "Verse",
   StackBook: "StackBook",
   StackSection: "StackSection",
   StackTestament: "StackTestament",
@@ -204,7 +205,7 @@ export interface StackBookCreationParams extends StackSectionBaseCreationParams 
 }
 
 export interface ChapterCreationParams {
-  bookName: string;
+  bookName: BookName;
 }
 
 export const PieceSelectionSources = {
@@ -241,3 +242,20 @@ export const SelectionModalities = {
 
 export type SelectionModality =
   (typeof SelectionModalities)[keyof typeof SelectionModalities];
+
+export interface BaseRelocationEvent {
+  piece: Piece;
+  to: {
+    piece: Piece;
+    x: number;
+    y: number;
+  };
+  from: {
+    x: number;
+    y: number;
+  };
+}
+
+export type DropEvent = BaseRelocationEvent;
+
+export type DraggingEvent = BaseRelocationEvent;

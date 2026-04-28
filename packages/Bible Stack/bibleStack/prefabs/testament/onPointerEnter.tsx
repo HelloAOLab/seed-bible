@@ -1,7 +1,5 @@
-import { bibleStackEventManager } from "bibleStack.services.index";
 import { thisTypedBot } from "bibleStack.prefabs.testament.botAdapter";
+import { testamentInteractionController } from "bibleStack.infrastructure.di.bootstrap";
 
 thisTypedBot.masks.isBeingHovered = true;
-bibleStackEventManager.emit("OnTestamentPointerEnter", {
-  testament: thisTypedBot,
-});
+testamentInteractionController?.handleTestamentPointerEnter(thisTypedBot);

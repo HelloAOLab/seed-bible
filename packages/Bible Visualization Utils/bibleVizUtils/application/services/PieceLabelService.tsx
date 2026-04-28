@@ -5,7 +5,7 @@ import type {
 import { InfoLabelData } from "../../domain/entities/InfoLabelData";
 import type { LabelTranslucencyMode } from "bibleVizUtils.domain.models.label";
 import type { BiblePieceType, Piece } from "bibleVizUtils.domain.models.canvas";
-import type { ShowAnimationPacing } from "../../infrastructure/models/label";
+import type { ShowSequencePacing } from "bibleVizUtils.domain.models.label";
 
 export class PieceLabelService<
   T extends BiblePieceType,
@@ -46,7 +46,7 @@ export class PieceLabelService<
   }: {
     piece: Piece<T>;
     translucencyMode: LabelTranslucencyMode;
-    pacing?: ShowAnimationPacing;
+    pacing?: ShowSequencePacing;
   }) {
     const strategy = this.#labelPropertiesStrategies[piece.type];
 
@@ -98,7 +98,7 @@ export class PieceLabelService<
     });
   }
 
-  hideLabel(piece: Piece<T>, pacing: ShowAnimationPacing = "Regular") {
+  hideLabel(piece: Piece<T>, pacing: ShowSequencePacing = "Regular") {
     const labelData = this.#labelDataStorePort.getDataByOwnerId(piece.id);
     if (!labelData) {
       throw new Error(`PieceLabelService: labelData not found at hideLabel`);

@@ -33,7 +33,7 @@ export class StackSectionData extends StackPieceData<
   #isSplitIntoBooks: DataParams["isSplitIntoBooks"];
   #isInExplodedView: DataParams["isInExplodedView"];
   #isInsideTestament: DataParams["isInsideTestament"];
-  #shadow: Piece | undefined;
+  #shadow: Piece<"StackSectionShadow"> | undefined;
 
   constructor({
     childrenData = [],
@@ -95,11 +95,11 @@ export class StackSectionData extends StackPieceData<
   get shadow() {
     return this.#shadow;
   }
-  attachShadow(shadow: Piece) {
+  attachShadow(shadow: Piece<"StackSectionShadow">) {
     this.#shadow = shadow;
   }
-  detachShadow(): Piece | undefined {
-    let shadow: Piece | undefined;
+  detachShadow(): Piece<"StackSectionShadow"> | undefined {
+    let shadow: Piece<"StackSectionShadow"> | undefined;
     if (this.#shadow) {
       shadow = this.#shadow;
       this.#shadow = undefined;

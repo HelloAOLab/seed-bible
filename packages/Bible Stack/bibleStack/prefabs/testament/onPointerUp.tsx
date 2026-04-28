@@ -1,6 +1,6 @@
-import { bibleStackEventManager } from "bibleStack.services.index";
 import { thisTypedBot } from "bibleStack.prefabs.testament.botAdapter";
+import { testamentInteractionController } from "bibleStack.infrastructure.di.bootstrap";
 
-bibleStackEventManager.emit("OnTestamentPointerUp", {
+testamentInteractionController?.handleTestamentPointerUp({
   testament: thisTypedBot,
 });

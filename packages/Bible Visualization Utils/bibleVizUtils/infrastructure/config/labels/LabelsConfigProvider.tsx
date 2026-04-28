@@ -13,7 +13,7 @@ import {
   type ShowAnimationDurationMapType,
   type ShowAnimationConfigType,
 } from "bibleVizUtils.infrastructure.config.labels.showAnimation";
-import { type ShowAnimationPacing } from "bibleVizUtils.infrastructure.models.label";
+import { type ShowSequencePacing } from "bibleVizUtils.domain.models.label";
 
 type FontsSchema = typeof Fonts;
 
@@ -49,7 +49,7 @@ export class LabelsConfigProvider {
     return LabelDateConfigs[key];
   }
 
-  getShowAnimationDuration<P extends ShowAnimationPacing>(
+  getShowAnimationDuration<P extends ShowSequencePacing>(
     pacing: P
   ): ShowAnimationDurationMapType[P] {
     return ShowAnimationDurationMap[pacing];

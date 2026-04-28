@@ -5,11 +5,15 @@ import type {
   BookBot,
   ChapterBot,
   SectionBot,
+  SectionShadowBot,
   TestamentBot,
+  VerseBot,
+  VersesBundleBot,
 } from "bibleStack.models.stack";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
 import type { BibleStackEvents } from "bibleStack.domain.models.events";
 import type {
+  BookPathIndices,
   SectionPathIndices,
   TestamentPathIndices,
 } from "bibleVizUtils.application.services.ArrangementService";
@@ -18,6 +22,7 @@ import type {
   SectionInfo,
   TestamentInfo,
 } from "bibleVizUtils.domain.models.arrangement";
+import type { VersesBundleData } from "bibleVizUtils.domain.entities.VersesBunbleData";
 
 export type PieceDataRepositoryPort = Pick<
   BasePieceDataRepositoryPort,
@@ -26,6 +31,11 @@ export type PieceDataRepositoryPort = Pick<
   | "removeSectionBookData"
   | "removeBookData"
   | "removeChapterData"
+  | "addChapterData"
+  | "addBookData"
+  | "addSectionBookData"
+  | "addSectionData"
+  | "addTestamentData"
 >;
 
 export type PieceLabelServicePort = Pick<
@@ -33,7 +43,7 @@ export type PieceLabelServicePort = Pick<
   "hideLabel" | "showLabel"
 >;
 
-export interface StackPieceLifecycleAdapter {
+export interface StackPieceLifecycleAdapterPort {
   spawnTestament: () => TestamentBot;
   despawnTestament: (piece: Piece<"StackTestament">) => void;
   spawnSection: () => SectionBot;
@@ -42,6 +52,13 @@ export interface StackPieceLifecycleAdapter {
   despawnBook: (piece: Piece<"StackBook">) => void;
   spawnChapter: () => ChapterBot;
   despawnChapter: (piece: Piece<"StackChapter">) => void;
+  spawnSectionShadow: () => SectionShadowBot;
+  despawnSectionShadow: (piece: Piece<"StackSectionShadow">) => void;
+  despawnSectionBook: (piece: Piece<"StackSectionBook">) => void;
+  spawnVersesBundle: () => VersesBundleBot;
+  despawnVersesBundle: (piece: Piece<"VersesBundle">) => void;
+  spawnVerse: () => VerseBot;
+  despawnVerse: (piece: Piece<"Verse">) => void;
 }
 
 export interface PieceLifecycleEventPort {
@@ -57,7 +74,8 @@ export interface ArrangementServicePort {
   getTestamentByIndices: (
     path: TestamentPathIndices
   ) => TestamentInfo | undefined;
-  getSectionByIndices(path: SectionPathIndices): SectionInfo | undefined;
+  getSectionByIndices: (path: SectionPathIndices) => SectionInfo | undefined;
+  getBookByIndices: (path: BookPathIndices) => BookInfo | undefined;
 }
 
 export interface ScriptureServicePort {
@@ -66,4 +84,13 @@ export interface ScriptureServicePort {
 
 export interface IdGeneratorPort {
   getId: () => string;
+}
+
+export interface StackStructureServicePort {
+  getSectionLevels: (books: readonly BookInfo[]) => BookInfo[][];
+}
+
+export interface VersesBundleDataRepositoryPort {
+  addBundleData(data: VersesBundleData): void;
+  removeBundleData(data: VersesBundleData): void;
 }

@@ -78,6 +78,7 @@ export class StackPieceData<
   #isOnTheGround: boolean = false;
   #isBeingDragged: boolean = false;
   #isHighlightable: boolean = false;
+  #isFocused: boolean = false;
 
   constructor({
     childrenData = [],
@@ -178,6 +179,20 @@ export class StackPieceData<
         });
       });
     }
+  }
+  clearAllParentIds(propagate = true) {
+    this.clearParentIds(
+      [
+        "layoutBookId",
+        "layoutId",
+        "stackBibleId",
+        "stackBookId",
+        "stackSectionBookId",
+        "stackSectionId",
+        "stackTestamentId",
+      ],
+      propagate
+    );
   }
   get creationParams() {
     return this.#creationParams;
@@ -290,7 +305,19 @@ export class StackPieceData<
   becomeHighlightable() {
     this.#isHighlightable = true;
   }
-  becomeNotHighlightable() {
+  becomeNonHighlightable() {
     this.#isHighlightable = false;
+  }
+  get isHighlightable() {
+    return this.#isHighlightable;
+  }
+  get isFocused() {
+    return this.#isFocused;
+  }
+  beginFocus() {
+    this.#isFocused = true;
+  }
+  endFocus() {
+    this.#isFocused = false;
   }
 }

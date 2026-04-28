@@ -1,60 +1,80 @@
-import type { StackBookData } from "bibleVizUtils.domain.entities.StackBookData";
-import type { StackChapterData } from "bibleVizUtils.domain.entities.StackChapterData";
-import type { StackSectionBookData } from "bibleVizUtils.domain.entities.StackSectionBookData";
+import { StackBookData } from "bibleVizUtils.domain.entities.StackBookData";
+import { StackChapterData } from "bibleVizUtils.domain.entities.StackChapterData";
+import { StackSectionBookData } from "bibleVizUtils.domain.entities.StackSectionBookData";
 import { StackSectionData } from "bibleVizUtils.domain.entities.StackSectionData";
-import type { StackTestamentData } from "bibleVizUtils.domain.entities.StackTestamentData";
+import { StackTestamentData } from "bibleVizUtils.domain.entities.StackTestamentData";
+import { StackBibleData } from "bibleVizUtils.domain.entities.StackBibleData";
 import type {
   PieceDataRepositoryPort,
   PieceLabelServicePort,
-  StackPieceLifecycleAdapter,
+  StackPieceLifecycleAdapterPort,
   PieceLifecycleEventPort,
   ArrangementServicePort,
   IdGeneratorPort,
   ScriptureServicePort,
+  StackStructureServicePort,
+  VersesBundleDataRepositoryPort,
 } from "bibleStack.application.ports.pieceLifecycle";
 import type {
-  ParentDataIds,
+  ChapterCreationParams,
   Piece,
+  StackBookCreationParams,
   StackSectionCreationParams,
   StackTestamentCreationParams,
 } from "bibleVizUtils.domain.models.canvas";
-import type { StackBibleData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBibleData";
+import type { StackParentDataIds } from "bibleStack.application.ports.pieces";
+import type {
+  BookInfo,
+  ChapterInfo,
+} from "bibleVizUtils.domain.models.arrangement";
+import type { VersesBundleData } from "bibleVizUtils.domain.entities.VersesBunbleData";
+import type { VerseData } from "bibleVizUtils.domain.entities.VerseData";
+import { ShowSequencePacings } from "bibleVizUtils.domain.models.label";
+import type { PieceLifecycleServicePort as StackStructurePieceLifecycleServicePort } from "bibleStack.application.ports.stackStructure";
 
 interface PieceLifecycleServiceProps {
   pieceDataRepositoryPort: PieceDataRepositoryPort;
   pieceLabelServicePort: PieceLabelServicePort;
-  stackPieceLifecycleAdapter: StackPieceLifecycleAdapter;
+  stackPieceLifecycleAdapterPort: StackPieceLifecycleAdapterPort;
   pieceLifecycleEventPort: PieceLifecycleEventPort;
   arrangementServicePort: ArrangementServicePort;
   idGenerator: IdGeneratorPort;
   scriptureServicePort: ScriptureServicePort;
+  stackStructureServicePort: StackStructureServicePort;
+  versesBundleDataRepositoryPort: VersesBundleDataRepositoryPort;
 }
 
-export class PieceManagementService {
+export class PieceLifecycleService implements StackStructurePieceLifecycleServicePort {
   #pieceDataRepositoryPort: PieceLifecycleServiceProps["pieceDataRepositoryPort"];
   #pieceLabelServicePort: PieceLifecycleServiceProps["pieceLabelServicePort"];
-  #stackPieceLifecycleAdapter: PieceLifecycleServiceProps["stackPieceLifecycleAdapter"];
+  #stackPieceLifecycleAdapterPort: PieceLifecycleServiceProps["stackPieceLifecycleAdapterPort"];
   #pieceLifecycleEventPort: PieceLifecycleServiceProps["pieceLifecycleEventPort"];
   #arrangementServicePort: PieceLifecycleServiceProps["arrangementServicePort"];
   #idGenerator: PieceLifecycleServiceProps["idGenerator"];
   #scriptureServicePort: PieceLifecycleServiceProps["scriptureServicePort"];
+  #stackStructureServicePort: PieceLifecycleServiceProps["stackStructureServicePort"];
+  #versesBundleDataRepositoryPort: PieceLifecycleServiceProps["versesBundleDataRepositoryPort"];
 
   constructor({
     pieceDataRepositoryPort,
     pieceLabelServicePort,
-    stackPieceLifecycleAdapter,
+    stackPieceLifecycleAdapterPort,
     pieceLifecycleEventPort,
     arrangementServicePort,
     idGenerator,
     scriptureServicePort,
+    stackStructureServicePort,
+    versesBundleDataRepositoryPort,
   }: PieceLifecycleServiceProps) {
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
     this.#pieceLabelServicePort = pieceLabelServicePort;
-    this.#stackPieceLifecycleAdapter = stackPieceLifecycleAdapter;
+    this.#stackPieceLifecycleAdapterPort = stackPieceLifecycleAdapterPort;
     this.#pieceLifecycleEventPort = pieceLifecycleEventPort;
     this.#arrangementServicePort = arrangementServicePort;
     this.#idGenerator = idGenerator;
     this.#scriptureServicePort = scriptureServicePort;
+    this.#stackStructureServicePort = stackStructureServicePort;
+    this.#versesBundleDataRepositoryPort = versesBundleDataRepositoryPort;
   }
 
   createTestament({
@@ -68,10 +88,6 @@ export class PieceManagementService {
     bibleDataId?: StackBibleData["id"];
     isHidden?: boolean;
   }): StackTestamentData {
-    // Spawn the piece
-    // Create the data
-    // Add the data to the data repository
-
     const testamentInfo = this.#arrangementServicePort.getTestamentByIndices({
       arrangementIndex,
       testamentIndex,
@@ -87,9 +103,9 @@ export class PieceManagementService {
       arrangementIndex,
       testamentIndex,
     };
-    const parentDataIds: ParentDataIds = { stackBibleId: bibleDataId };
+    const parentDataIds: StackParentDataIds = { stackBibleId: bibleDataId };
     const testamentDataId = this.#idGenerator.getId();
-    const sectionsData: StackSectionData[] = [];
+    const sectionsData: (StackSectionData | StackSectionBookData)[] = [];
     for (
       let sectionIndex = 0;
       sectionIndex < testamentInfo.sections.length;
@@ -116,7 +132,7 @@ export class PieceManagementService {
       childrenData: sectionsData,
     });
 
-    thisBot.vars.stackTestamentsData.push(testamentData);
+    this.#pieceDataRepositoryPort.addTestamentData(testamentData);
     return testamentData;
   }
 
@@ -138,7 +154,7 @@ export class PieceManagementService {
     bibleDataId?: StackBibleData["id"];
     testamentDataId?: StackTestamentData["id"];
     isHidden?: boolean;
-  }): StackSectionData {
+  }): StackSectionData | StackSectionBookData {
     const sectionInfo = this.#arrangementServicePort.getSectionByIndices({
       arrangementIndex,
       testamentIndex,
@@ -160,7 +176,7 @@ export class PieceManagementService {
       sectionIndex,
       amountOfChaptersInSection,
     };
-    const parentDataIds: ParentDataIds = {
+    const parentDataIds: StackParentDataIds = {
       stackBibleId: bibleDataId,
       stackTestamentId: testamentDataId,
     };
@@ -168,16 +184,27 @@ export class PieceManagementService {
     const sectionDataId = this.#idGenerator.getId();
 
     if (sectionInfo.books.length > 1) {
-      const levels = stackService.getSectionLevels(sectionInfo.books);
+      const levels = this.#stackStructureServicePort.getSectionLevels(
+        sectionInfo.books
+      );
       const levelsLenght = levels.length;
       const booksDataArray: StackBookData[][] = [];
-      for (const level of levels) {
+      const bookIndexMap = new Map(
+        sectionInfo.books.map((book, i) => [book, i])
+      );
+      for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
+        const level = levels[levelIndex];
+        if (!level) continue;
         const booksData: StackBookData[] = [];
-        const levelIndex = levels.indexOf(level);
-        for (const bookInfo of level) {
-          const bookIndex = sectionInfo.books.indexOf(bookInfo);
-          const bookLevelIndex = level.indexOf(bookInfo);
-          const bookData: StackBookData = await thisBot.CreateBook({
+        for (
+          let bookLevelIndex = 0;
+          bookLevelIndex < level.length;
+          bookLevelIndex++
+        ) {
+          const bookInfo = level[bookLevelIndex];
+          if (!bookInfo) continue;
+          const bookIndex = bookIndexMap.get(bookInfo) ?? -1;
+          const bookData = this.createBook({
             arrangementIndex,
             testamentIndex,
             sectionIndex,
@@ -206,29 +233,20 @@ export class PieceManagementService {
         creationParams,
         childrenData: booksDataArray,
       });
-      thisBot.vars.stackSectionsData.push(data);
+      this.#pieceDataRepositoryPort.addSectionData(data);
     } else {
       const pieceBookInfo = sectionInfo.books[0];
       if (pieceBookInfo) {
-        const bookStaticInfo = BibleVizDataRepository.getBookStaticInfo(
-          pieceBookInfo.commonName
-        );
-        if (!bookStaticInfo) {
-          console.error("bookStaticInfo not found at CreateSection");
-          return;
-        }
-        const chaptersData: StackChapterData[] = await Promise.all(
-          bookStaticInfo.chaptersInfo.map((chapterInfo) => {
-            return thisBot.CreateChapter({
-              chapterInfo,
-              isInsideBible: true,
-              isInsideBook: true,
-              bibleDataId,
-              testamentDataId,
-              sectionBookDataId: sectionDataId,
-              isHidden,
-              bookName: pieceBookInfo.commonName,
-            });
+        const chaptersData = pieceBookInfo.chaptersInfo.map((chapterInfo) =>
+          this.createChapter({
+            chapterInfo,
+            isInsideBible: true,
+            isInsideBook: true,
+            bibleDataId,
+            testamentDataId,
+            sectionBookDataId: sectionDataId,
+            isHidden,
+            bookName: pieceBookInfo.commonName,
           })
         );
         data = new StackSectionBookData({
@@ -241,11 +259,150 @@ export class PieceManagementService {
           creationParams,
           childrenData: chaptersData,
         });
-        thisBot.vars.stackSectionBooksData.push(data);
+        this.#pieceDataRepositoryPort.addSectionBookData(data);
       }
     }
 
+    if (!data) {
+      throw new Error(
+        `PieceLifecycleService: data not defined at createSection`
+      );
+    }
+
     return data;
+  }
+
+  createBook({
+    arrangementIndex,
+    testamentIndex,
+    sectionIndex,
+    levelIndex,
+    bookIndex,
+    bookLevelIndex,
+    levelsLenght,
+    isInsideBible,
+    isInsideTestament,
+    isInsideSection,
+    bibleDataId,
+    testamentDataId,
+    sectionDataId,
+    isHidden = false,
+  }: {
+    arrangementIndex: number;
+    testamentIndex: number;
+    sectionIndex: number;
+    levelIndex: number;
+    bookIndex: number;
+    bookLevelIndex: number;
+    levelsLenght: number;
+    isInsideBible: boolean;
+    isInsideTestament: boolean;
+    isInsideSection: boolean;
+    bibleDataId?: string;
+    testamentDataId?: string;
+    sectionDataId?: string;
+    isHidden?: boolean;
+  }) {
+    const bookInfo = this.#arrangementServicePort.getBookByIndices({
+      arrangementIndex,
+      testamentIndex,
+      sectionIndex,
+      bookIndex,
+    });
+
+    if (!bookInfo) {
+      throw new Error(
+        `PieceLifecycleService: bookInfo not found at createBook.`
+      );
+    }
+
+    const parentDataIds: StackParentDataIds = {
+      stackBibleId: bibleDataId,
+      stackTestamentId: testamentDataId,
+      stackSectionId: sectionDataId,
+    };
+    const creationParams: StackBookCreationParams = {
+      arrangementIndex,
+      testamentIndex,
+      sectionIndex,
+      levelIndex,
+      bookIndex,
+      bookLevelIndex,
+      levelsLenght,
+    };
+    const bookDataId = this.#idGenerator.getId();
+
+    const chaptersData = bookInfo.chaptersInfo.map((chapterInfo) =>
+      this.createChapter({
+        chapterInfo,
+        isInsideBible: true,
+        isInsideBook: true,
+        bibleDataId,
+        testamentDataId,
+        sectionDataId,
+        bookDataId,
+        isHidden,
+        bookName: bookInfo.commonName,
+      })
+    );
+
+    const bookData = new StackBookData({
+      pieceInfo: bookInfo,
+      id: bookDataId,
+      isInsideBible,
+      isInsideTestament,
+      isInsideSection,
+      parentDataIds,
+      creationParams,
+      childrenData: chaptersData,
+    });
+    this.#pieceDataRepositoryPort.addBookData(bookData);
+    return bookData;
+  }
+
+  createChapter({
+    chapterInfo,
+    isInsideBible,
+    isInsideBook,
+    isHidden = false,
+    bibleDataId,
+    testamentDataId,
+    sectionDataId,
+    sectionBookDataId,
+    bookDataId,
+    bookName,
+  }: {
+    bibleDataId?: StackBibleData["id"];
+    testamentDataId?: StackTestamentData["id"];
+    sectionDataId?: StackSectionData["id"];
+    sectionBookDataId?: StackSectionBookData["id"];
+    bookDataId?: StackBookData["id"];
+    isHidden?: boolean;
+    isInsideBible: boolean;
+    isInsideBook: boolean;
+    chapterInfo: ChapterInfo;
+    bookName: BookInfo["commonName"];
+  }) {
+    const parentDataIds: StackParentDataIds = {
+      stackBibleId: bibleDataId,
+      stackTestamentId: testamentDataId,
+      stackSectionBookId: sectionBookDataId,
+      stackSectionId: sectionDataId,
+      stackBookId: bookDataId,
+    };
+    const creationParams: ChapterCreationParams = { bookName };
+    const chapterData = new StackChapterData({
+      id: this.#idGenerator.getId(),
+      pieceInfo: chapterInfo,
+      parentDataIds,
+      isInsideBible,
+      isInsideBook,
+      isHidden,
+      creationParams,
+      isSelected: false,
+    });
+    this.#pieceDataRepositoryPort.addChapterData(chapterData);
+    return chapterData;
   }
 
   deleteTestament(testament: StackTestamentData) {
@@ -255,7 +412,11 @@ export class PieceManagementService {
     const piece = testament.clearPiece();
 
     if (piece) {
-      this.clearPiece(piece, this.#stackPieceLifecycleAdapter.despawnTestament);
+      this.#pieceLabelServicePort.hideLabel(piece, ShowSequencePacings.Instant);
+      this.clearPiece(
+        piece,
+        this.#stackPieceLifecycleAdapterPort.despawnTestament
+      );
       this.#pieceLifecycleEventPort.emit("OnTestamentDelete", { piece }); // TODO: Wire this event to a StackInteractionManager to check if the deleted testament is the last interacted
     }
 
@@ -284,11 +445,22 @@ export class PieceManagementService {
     }
 
     if (piece) {
-      this.clearPiece(piece);
+      this.#pieceLabelServicePort.hideLabel(piece, ShowSequencePacings.Instant);
+      this.clearPiece(
+        piece,
+        this.#stackPieceLifecycleAdapterPort.despawnSection
+      );
     }
 
     if (shadow) {
-      this.clearPiece(shadow);
+      this.#pieceLabelServicePort.hideLabel(
+        shadow,
+        ShowSequencePacings.Instant
+      );
+      this.clearPiece(
+        shadow,
+        this.#stackPieceLifecycleAdapterPort.despawnSectionShadow
+      );
     }
 
     // TODO: Send OnSectionDelete event that will be listened by the StackInteractionManager to check if the deleted section is the last interacted
@@ -311,7 +483,11 @@ export class PieceManagementService {
     }
 
     if (piece) {
-      this.clearPiece(piece);
+      this.#pieceLabelServicePort.hideLabel(piece, ShowSequencePacings.Instant);
+      this.clearPiece(
+        piece,
+        this.#stackPieceLifecycleAdapterPort.despawnSectionBook
+      );
     }
 
     // TODO: Send OnSectionBookDelete event that will be listened by the StackInteractionManager to check if the deleted section book is the last interacted
@@ -334,7 +510,8 @@ export class PieceManagementService {
     }
 
     if (piece) {
-      this.clearPiece(piece);
+      this.#pieceLabelServicePort.hideLabel(piece, ShowSequencePacings.Instant);
+      this.clearPiece(piece, this.#stackPieceLifecycleAdapterPort.despawnBook);
     }
 
     // TODO: Send OnBookDelete event that will be listened by the StackInteractionManager to check if the deleted book is the last interacted
@@ -349,31 +526,18 @@ export class PieceManagementService {
   deleteChapter(chapter: StackChapterData) {
     this.#pieceDataRepositoryPort.removeChapterData(chapter);
     const piece = chapter.clearPiece();
-    if (piece) {
-      // TODO: Move every non casualos's built-in tag and mask to the chapter data
-      if (piece.masks.isOnTheGround) {
-        if (chapter.isSelected && piece.vars.chunksOfVerses?.length > 0) {
-          piece.vars.chunksOfVerses.forEach((chunk) => {
-            if (chunk.masks.isSelected && chunk.vars.verses?.length > 0) {
-              chunk.vars.verses.flat().forEach((verse) => {
-                this.#objectPoolerService.releaseObject({
-                  obj: verse,
-                  tag: verse.tags.poolTag,
-                  dimension: thisBot.tags.desiredDimension,
-                });
-              });
-              chunk.vars.verses = [];
-            }
-            this.#objectPoolerService.releaseObject({
-              obj: chunk,
-              tag: chunk.tags.poolTag,
-              dimension: thisBot.tags.desiredDimension,
-            });
-          });
-          piece.vars.chunksOfVerses = [];
-        }
+    if (chapter.isOnTheGround && chapter.isSelected) {
+      const bundles = chapter.clearChildren();
+      for (const bundle of bundles) {
+        this.deleteVersesBundle(bundle);
       }
-      this.clearPiece(piece);
+    }
+    if (piece) {
+      this.#pieceLabelServicePort.hideLabel(piece, ShowSequencePacings.Instant);
+      this.clearPiece(
+        piece,
+        this.#stackPieceLifecycleAdapterPort.despawnChapter
+      );
     }
   }
 
@@ -383,14 +547,41 @@ export class PieceManagementService {
     }
   }
 
-  async clearPiece(
-    piece: Piece,
-    despawnMethod:
-      | StackPieceLifecycleAdapter["despawnBook"]
-      | StackPieceLifecycleAdapter["despawnChapter"]
-      | StackPieceLifecycleAdapter["despawnSection"]
-      | StackPieceLifecycleAdapter["despawnTestament"]
-  ) {
+  // TODO: Add a method to create verses bunbles.
+
+  deleteVersesBundle(bundle: VersesBundleData) {
+    this.#versesBundleDataRepositoryPort.removeBundleData(bundle);
+    const piece = bundle.clearPiece();
+    const verses = bundle.clearVerses();
+    for (const verse of verses) {
+      this.deleteVerse(verse);
+    }
+    if (piece) {
+      this.clearPiece(
+        piece,
+        this.#stackPieceLifecycleAdapterPort.despawnVersesBundle
+      );
+    }
+  }
+
+  deleteVerse(verse: VerseData) {
+    const piece = verse.clearPiece();
+    if (piece) {
+      this.clearPiece(piece, this.#stackPieceLifecycleAdapterPort.despawnVerse);
+    }
+  }
+
+  async clearPiece<
+    K extends
+      | "StackTestament"
+      | "StackSection"
+      | "StackSectionBook"
+      | "StackBook"
+      | "StackChapter"
+      | "StackSectionShadow"
+      | "VersesBundle"
+      | "Verse",
+  >(piece: Piece<K>, despawnMethod: (piece: Piece<K>) => void) {
     // TODO: Create a PieceHighlightService, add the logic for highlight and unhighlight delay store and management and replace the following references
 
     const { unhighlightDelayInfo } = await thisBot.GetUnhighlightDelayInfo({
@@ -407,12 +598,6 @@ export class PieceManagementService {
     if (isHighlighted) {
       await thisBot.RemovePieceFromHighlightedList({ piece });
     }
-
-    this.#pieceLabelServicePort.despawnPieceLabel(piece);
-    this.#objectPoolerService.releaseObject({
-      obj: piece,
-      tag: piece.tags.poolTag,
-      dimension: thisBot.tags.desiredDimension,
-    });
+    despawnMethod(piece);
   }
 }

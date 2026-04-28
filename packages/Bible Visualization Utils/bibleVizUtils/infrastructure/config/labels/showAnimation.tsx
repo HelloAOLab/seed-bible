@@ -1,13 +1,13 @@
 import {
-  ShowAnimationPacings,
-  type ShowAnimationPacing,
-} from "bibleVizUtils.infrastructure.models.label";
+  ShowSequencePacings,
+  type ShowSequencePacing,
+} from "bibleVizUtils.domain.models.label";
 
-export const ShowAnimationDurationMap: Record<ShowAnimationPacing, number> = {
-  [ShowAnimationPacings.Slow]: 0.3,
-  [ShowAnimationPacings.Regular]: 0.15,
-  [ShowAnimationPacings.Fast]: 0.075,
-  [ShowAnimationPacings.Instant]: 0,
+export const ShowAnimationDurationMap: Record<ShowSequencePacing, number> = {
+  [ShowSequencePacings.Slow]: 0.3,
+  [ShowSequencePacings.Regular]: 0.15,
+  [ShowSequencePacings.Fast]: 0.075,
+  [ShowSequencePacings.Instant]: 0,
 };
 export type ShowAnimationDurationMapType = typeof ShowAnimationDurationMap;
 

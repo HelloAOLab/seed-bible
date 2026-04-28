@@ -9,11 +9,11 @@ type TBiblePiece = typeof BiblePiece;
 export type StackDraggablePiece = keyof Pick<
   TBiblePiece,
   | "StackBook"
-  | "StackVerse"
+  | "Verse"
   | "StackTestament"
   | "StackSectionBook"
   | "StackSection"
-  | "StackChunkOfVerses"
+  | "VersesBundle"
   | "StackChapter"
 >;
 
@@ -31,6 +31,8 @@ export type SectionTags = StackDraggablePieceBotTags<"StackSection">;
 
 export type SectionBot = TypedBot<SectionTags>;
 
+export type SectionShadowBot = TypedBot<PieceBotTags<"StackSectionShadow">>;
+
 export type BookTags = StackDraggablePieceBotTags<
   "StackBook" | "StackSectionBook"
 >;
@@ -41,11 +43,10 @@ export type ChapterTags = StackDraggablePieceBotTags<"StackChapter">;
 
 export type ChapterBot = TypedBot<ChapterTags>;
 
-export type ChunkOfVersesTags =
-  StackDraggablePieceBotTags<"StackChunkOfVerses">;
+export type VersesBundleTags = StackDraggablePieceBotTags<"VersesBundle">;
 
-export type ChunkOfVersesBot = TypedBot<ChunkOfVersesTags>;
-export type VerseBot = TypedBot<PieceBotTags<"StackVerse">>;
+export type VersesBundleBot = TypedBot<VersesBundleTags>;
+export type VerseBot = TypedBot<PieceBotTags<"Verse">>;
 
 export type StackStaticPiece = keyof Pick<
   TBiblePiece,
@@ -58,10 +59,10 @@ export interface StackStaticPieceBotTags<
   stackBibleId: string;
 }
 
-export interface CoverTags extends StackStaticPieceBotTags<"StackCover"> {}
+export type CoverTags = StackStaticPieceBotTags<"StackCover">;
 
 export type CoverBot = TypedBot<CoverTags>;
 
-export interface CrossLineTags extends StackStaticPieceBotTags<"StackCrossLine"> {}
+export type CrossLineTags = StackStaticPieceBotTags<"StackCrossLine">;
 
 export type CrossLineBot = TypedBot<CrossLineTags>;

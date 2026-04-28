@@ -11,7 +11,7 @@ const dimension = os.getCurrentDimension();
 const amountOfVerses =
   thisBot.masks.finalVerseNumber - thisBot.masks.initialVerseNumber + 1;
 let verses = ObjectPooler.GetObjectFromPool({
-  tag: ObjectPoolTags.StackVerse,
+  tag: ObjectPoolTags.Verse,
   amount: amountOfVerses,
 });
 verses = Array.isArray(verses) ? verses : [verses];
