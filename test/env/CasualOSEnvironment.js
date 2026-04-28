@@ -25,6 +25,8 @@ export default class CasualOSEnvironment extends TestEnvironment {
     this.global.uuid = uuid;
     this.global.os = {
       syncConfigBotTagsToURL: () => {},
+      requestWakeLock: async () => {},
+      disableWakeLock: async () => {},
       appHooks: {
         ...appHooks,
         render,
