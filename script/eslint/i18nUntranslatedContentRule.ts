@@ -1,7 +1,7 @@
 import { createRule } from "./i18nRuleShared";
 import type { TSESTree } from "@typescript-eslint/utils";
 
-type MessageIds = "untranslated_content";
+type MessageIds = "untranslated_content" | "untranslated_attribute";
 type Options = [];
 
 const ALPHABETIC_PATTERN = /\p{L}/u;
@@ -26,7 +26,29 @@ function getAttributeValueAsString(
     return value.expression.value;
   }
 
+  if (
+    value.type === "JSXExpressionContainer" &&
+    value.expression.type === "TemplateLiteral" &&
+    value.expression.expressions.length === 0 &&
+    value.expression.quasis.length === 1
+  ) {
+    const quasi = value.expression.quasis[0];
+    return quasi ? (quasi.value.cooked ?? null) : null;
+  }
+
   return null;
+}
+
+function normalizeText(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function createPreview(value: string): string {
+  return value.length > 80 ? `${value.slice(0, 77)}...` : value;
+}
+
+function isTranslatableAttributeName(name: string): boolean {
+  return name === "aria-label" || name === "title";
 }
 
 function hasMaterialSymbolsOutlinedClass(node: TSESTree.JSXElement): boolean {
@@ -95,6 +117,8 @@ const i18nUntranslatedContentRule = createRule<Options, MessageIds>({
     messages: {
       untranslated_content:
         "Untranslated content detected in JSX text node: '{{text}}'.",
+      untranslated_attribute:
+        "Untranslated content detected in JSX attribute '{{attribute}}': '{{text}}'.",
     },
   },
   defaultOptions: [],
@@ -106,8 +130,7 @@ const i18nUntranslatedContentRule = createRule<Options, MessageIds>({
           return;
         }
 
-        const rawText = node.value;
-        const normalizedText = rawText.replace(/\s+/g, " ").trim();
+        const normalizedText = normalizeText(node.value);
 
         if (!normalizedText) {
           return;
@@ -117,16 +140,44 @@ const i18nUntranslatedContentRule = createRule<Options, MessageIds>({
           return;
         }
 
-        const preview =
-          normalizedText.length > 80
-            ? `${normalizedText.slice(0, 77)}...`
-            : normalizedText;
-
         context.report({
           node,
           messageId: "untranslated_content",
           data: {
-            text: preview,
+            text: createPreview(normalizedText),
+          },
+        });
+      },
+
+      JSXAttribute(node: TSESTree.JSXAttribute): void {
+        if (node.name.type !== "JSXIdentifier") {
+          return;
+        }
+
+        if (!isTranslatableAttributeName(node.name.name)) {
+          return;
+        }
+
+        const value = getAttributeValueAsString(node);
+        if (!value) {
+          return;
+        }
+
+        const normalizedText = normalizeText(value);
+        if (!normalizedText) {
+          return;
+        }
+
+        if (!ALPHABETIC_PATTERN.test(normalizedText)) {
+          return;
+        }
+
+        context.report({
+          node,
+          messageId: "untranslated_attribute",
+          data: {
+            attribute: node.name.name,
+            text: createPreview(normalizedText),
           },
         });
       },
