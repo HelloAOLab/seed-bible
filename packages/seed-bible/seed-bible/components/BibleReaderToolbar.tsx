@@ -77,7 +77,6 @@ function broadcastHighlightToSession(
       verse.verse.number
     );
     rs.decorateVerses(
-      verse.translationId,
       verse.bookId,
       verse.chapterNumber,
       verse.verse.number,

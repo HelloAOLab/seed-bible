@@ -1,5 +1,8 @@
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
+import {
+  createTestSeedBibleState,
+  waitForInitialLoad,
+} from "../testUtils/createTestSeedBibleState";
 import { signal } from "@preact/signals";
 
 const mockSaveReadingHistory = jest.fn();
@@ -87,7 +90,7 @@ async function createStateWithTwoTabs() {
   const state = await createState();
   const initialSelectedTabId = state.tabs.selectedTabId.value;
   const nextTab = state.tabs.addTab();
-  await waitForInitialLoad(nextTab.readingState);
+  await waitForInitialLoad(nextTab.readingState, 1000);
   state.tabs.selectTab(initialSelectedTabId);
   return state;
 }

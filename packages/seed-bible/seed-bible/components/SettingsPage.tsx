@@ -798,7 +798,6 @@ function ExtensionsSettingsView(props: {
                         {t("title", { ns: id, defaultValue: id })}
                       </span>
                       <span className="sb-extension-description">
-                        {/* eslint-disable-next-line seed-bible-i18n/translation-missing-keys */}
                         {t("description", { ns: id, defaultValue: "" })}
                       </span>
                     </div>
