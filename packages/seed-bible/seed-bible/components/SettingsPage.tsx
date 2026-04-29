@@ -1752,17 +1752,19 @@ function SettingsMainView(props: {
             </div>
           </li>
           <li>
-            <button
-              className="sb-settings-action-button"
-              onClick={() => {
-                window.open(
-                  "https://docs.google.com/forms/d/e/1FAIpQLSejiuVM8xguEHKZ2Kv5DX-jE98zYwxFiPwpYrFSmvVgMejZzQ/viewform",
-                  "_blank"
-                );
-              }}
-            >
-              {t("report-a-bug", { defaultValue: "Report a bug" })}
-            </button>
+            <div className="sb-settings-field-row">
+              <button
+                className="sb-settings-action-button"
+                onClick={() => {
+                  window.open(
+                    "https://docs.google.com/forms/d/e/1FAIpQLSejiuVM8xguEHKZ2Kv5DX-jE98zYwxFiPwpYrFSmvVgMejZzQ/viewform",
+                    "_blank"
+                  );
+                }}
+              >
+                {t("report-a-bug", { defaultValue: "Report a bug" })}
+              </button>
+            </div>
           </li>
         </ul>
       </section>
