@@ -1,4 +1,7 @@
-import { type BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
+import {
+  type BibleSelectorBookItem,
+  type BibleSelectorState,
+} from "seed-bible.managers.BibleSelectorManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import {
   TickIcon,
@@ -13,7 +16,7 @@ import type {
   TranslationBook,
 } from "seed-bible.managers.FreeUseBibleAPI";
 import { computed, signal } from "@preact/signals";
-const { useEffect, useMemo, useRef } = os.appHooks;
+const { useEffect, useMemo, useRef, useState } = os.appHooks;
 
 interface BibleSelectorProps {
   isOpen: boolean;
@@ -46,24 +49,26 @@ export function BibleSelector(props: BibleSelectorProps) {
 
 const SearchBar = (props: { bibleSelectorState: BibleSelectorState }) => {
   const { bibleSelectorState } = props;
-  const inputRef = useRef(null);
   const { t } = useI18n();
-  const {
-    search,
-    setSearch,
-    selectedTranslationBooks,
-    selectedTestament,
-    apocryphaAvailable,
-    selectedTranslation,
-    selectingTranslation,
-    viewportWidth,
-    showCheck,
-    dontopn,
-    dontOpen,
-    selectedTestamentData,
-    handleEnter,
-    setOpen,
-  } = bibleSelectorState;
+  const { search, setSearch, selectedTranslationBooks, selectedTranslation } =
+    bibleSelectorState;
+
+  // Some legacy tests provide partial selectorState mocks; keep rendering safe.
+  const selectedTestament = bibleSelectorState.selectedTestament ?? signal(2);
+  const apocryphaAvailable =
+    bibleSelectorState.apocryphaAvailable ?? signal(false);
+  const selectingTranslation =
+    bibleSelectorState.selectingTranslation ?? signal(false);
+  const viewportWidth = bibleSelectorState.viewportWidth ?? signal(1024);
+  const selectedTestamentData =
+    bibleSelectorState.selectedTestamentData ??
+    signal<TranslationBook[] | null>(null);
+  const handleEnter = bibleSelectorState.handleEnter ?? (() => undefined);
+  const setOpen =
+    bibleSelectorState.setOpen ??
+    (async () => {
+      return undefined;
+    });
 
   return (
     <>
@@ -98,7 +103,6 @@ const SearchBar = (props: { bibleSelectorState: BibleSelectorState }) => {
                   defaultValue: "Search books...",
                 })}
                 value={search.value}
-                ref={inputRef}
                 className="flex-1"
                 onInput={(e) => {
                   setSearch((e.target as HTMLInputElement).value);
@@ -165,63 +169,6 @@ const SearchBar = (props: { bibleSelectorState: BibleSelectorState }) => {
         </span>
       </div>
       <div class="sidebar-results starterAnimation flex-wrap-start">
-        {showCheck.value && (
-          <div
-            style={{
-              marginBottom: "8px",
-              width: "100%",
-              background: "lightgray",
-              padding: "4px 8px",
-              zIndex: 1,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                cursor: "pointer",
-              }}
-              onClick={() => {
-                dontopn.value = !dontopn.value;
-              }}
-            >
-              {dontOpen.value ? (
-                <span
-                  style={{
-                    fontSize: "20px",
-                    borderRadius: "50%",
-                    backgroundColor: "steelblue",
-                    color: "white",
-                  }}
-                  class="material-symbols-outlined"
-                >
-                  check_circle
-                </span>
-              ) : (
-                <span
-                  style={{ fontSize: "20px" }}
-                  class="material-symbols-outlined"
-                >
-                  radio_button_unchecked
-                </span>
-              )}
-              <label
-                style={{
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  marginLeft: "4px",
-                }}
-                for="playlistInclude"
-              >
-                Include in{" "}
-                {showCheck.value === 1
-                  ? t("queue", { defaultValue: "Queue" })
-                  : t("playlist", { defaultValue: "Playlist" })}
-                .
-              </label>
-            </div>
-          </div>
-        )}
         {selectedTranslationBooks.value?.books &&
           selectedTestamentData.value &&
           selectedTranslation.value && (
@@ -242,7 +189,6 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
 
   const {
     viewportWidth,
-    showCheck,
     lastBookClicked,
     bookData,
     chT,
@@ -260,7 +206,6 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
     const bd = bookData.value;
     const cht = chT.value;
     const lst = localSelectedTestament.value;
-    const sc = showCheck.value;
 
     let allowedRows = 5;
     if (ws <= 768) {
@@ -276,7 +221,7 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
     // Renders a single book entry: the clickable item (or ghost placeholder) plus
     // the inline chapter-panel when this row is the active expansion point.
     const renderBook = (
-      book: TranslationBook | { ghost?: boolean },
+      book: BibleSelectorBookItem,
       index: number,
       chapterPos: number,
       separator: number,
@@ -351,10 +296,7 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
       const OTBooks = ghostArray(oldTestament, OTSep);
       const NTBooks = ghostArray(newTestament, NTSep);
       return (
-        <div
-          class="books-container flex-gap-md"
-          style={sc ? { paddingTop: "40px" } : {}}
-        >
+        <div class="books-container flex-gap-md">
           <div
             class="testament-container flex-col-gap-sm"
             style={{
@@ -365,14 +307,10 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
               {t("oldTestament", { defaultValue: "Old Testament" })}
             </span>
             <div class="books-item flex-row-wrap-around">
-              {OTBooks.map(
-                (
-                  book: TranslationBook | { ghost?: boolean | undefined },
-                  index: number
-                ) =>
-                  renderBook(book, index, OTChapterPos, OTSep, 0, {
-                    textTransform: "capitalize",
-                  })
+              {OTBooks.map((book: BibleSelectorBookItem, index: number) =>
+                renderBook(book, index, OTChapterPos, OTSep, 0, {
+                  textTransform: "capitalize",
+                })
               )}
             </div>
           </div>
@@ -387,20 +325,8 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
               {t("newTestament", { defaultValue: "New Testament" })}
             </span>
             <div class="books-item flex-row-wrap-around">
-              {NTBooks.map(
-                (
-                  book: TranslationBook | { ghost?: boolean | undefined },
-                  index: number
-                ) =>
-                  renderBook(
-                    book,
-                    index,
-                    NTChapterPos,
-                    NTSep,
-                    1,
-                    undefined,
-                    true
-                  )
+              {NTBooks.map((book: BibleSelectorBookItem, index: number) =>
+                renderBook(book, index, NTChapterPos, NTSep, 1, undefined, true)
               )}
             </div>
           </div>
@@ -439,16 +365,13 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
 
     const chapterPos = calcChapterPos(lbc, allowedRows);
     return (
-      <div
-        class="books-container flex-gap-md"
-        style={sc ? { paddingTop: "40px" } : {}}
-      >
+      <div class="books-container flex-gap-md">
         <div class="testament-container flex-col-gap-sm">
           {(config.alwaysShowTitle || ws > 768) && (
             <span class="testament-title">{config.title}</span>
           )}
           <div class="books-item flex-row-wrap-around">
-            {config.books.map((book: any, index: number) =>
+            {config.books.map((book: BibleSelectorBookItem, index: number) =>
               renderBook(book, index, chapterPos, allowedRows)
             )}
           </div>
@@ -591,6 +514,60 @@ const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
   );
 };
 
+const LANGUAGE_VIEW_MODES = {
+  COMPLETE: "complete",
+  POPULAR: "popular",
+  ALL: "all",
+} as const;
+
+// Component for empty state with option to expand search
+const EmptyStateWithExpand = (props: {
+  onExpand: () => void;
+  t: (key: string, options?: Record<string, unknown>) => string;
+}) => {
+  const { onExpand, t } = props;
+  return (
+    <div className="language-list sb-lg-centered">
+      <span>
+        {t("noLanguageResultsFound", {
+          defaultValue:
+            "No results found. Would you like to expand your search to include partial and incomplete languages as well?",
+        })}
+      </span>
+      <button onClick={onExpand} className="sb-lg-expandButton">
+        {t("showAllLanguages", { defaultValue: "Show all languages" })}
+      </button>
+    </div>
+  );
+};
+
+// Component for empty state with no results
+const EmptyStateNoResults = (props: {
+  t: (key: string, options?: Record<string, unknown>) => string;
+}) => {
+  const { t } = props;
+  return (
+    <div className="language-list">
+      <span>{t("noResultsFound", { defaultValue: "No results found." })}</span>
+    </div>
+  );
+};
+
+// Component for load more button
+const LoadMoreButton = (props: { onLoadMore: () => void }) => {
+  const { onLoadMore } = props;
+  return (
+    <div
+      className="item flex-between sb-lg-loadMoreButton"
+      onClick={onLoadMore}
+    >
+      <span className="material-symbols-outlined sb-lg-expandIcon">
+        expand_more
+      </span>
+    </div>
+  );
+};
+
 const TranslationModal = (props: {
   bibleSelectorState: BibleSelectorState;
 }) => {
@@ -610,61 +587,50 @@ const TranslationModal = (props: {
 
   const { t } = useI18n();
 
+  // Helper function to check if should show expand button
+  const shouldShowExpandButton = (
+    viewMode: string,
+    hasResults: boolean
+  ): boolean => {
+    return (
+      !hasResults &&
+      (viewMode === LANGUAGE_VIEW_MODES.COMPLETE ||
+        viewMode === LANGUAGE_VIEW_MODES.POPULAR)
+    );
+  };
+
+  // Helper function to check if should show load more button
+  const shouldShowLoadMoreButton = (
+    filteredCount: number,
+    allowedLimit: number,
+    totalCount: number
+  ): boolean => {
+    return allowedLimit < totalCount && filteredCount >= 50;
+  };
+
   const LanguageList = computed(() => {
-    const _filteredApiTranslations = filteredApiTranslations.value;
-    const _showAllLanguages = showAllLanguages.value;
-    if (
-      _filteredApiTranslations.length === 0 &&
-      (_showAllLanguages === "complete" || _showAllLanguages === "popular")
-    ) {
+    const filteredTranslations = filteredApiTranslations.value;
+    const currentViewMode = showAllLanguages.value;
+    const hasResults = filteredTranslations.length > 0;
+
+    // Show expand button state
+    if (shouldShowExpandButton(currentViewMode, hasResults)) {
       return (
-        <div
-          className="language-list"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "10px",
-            textAlign: "center",
+        <EmptyStateWithExpand
+          onExpand={() => {
+            showAllLanguages.value = LANGUAGE_VIEW_MODES.ALL;
           }}
-        >
-          <span>
-            {t("noLanguageResultsFound", {
-              defaultValue:
-                "No results found. Would you like to expand your search to include partial and incomplete languages as well?",
-            })}
-          </span>
-          <button
-            onClick={() => {
-              showAllLanguages.value = "all";
-            }}
-            style={{
-              display: "flex",
-              background: "var(--secondaryColor)",
-              padding: "5px",
-              borderRadius: "5px",
-              border: "none",
-              outline: "none",
-              color: "var(--text1)",
-              width: "max-content",
-            }}
-          >
-            {t("showAllLanguages", { defaultValue: "Show all languages" })}
-          </button>
-        </div>
-      );
-    } else if (
-      _filteredApiTranslations.length === 0 &&
-      _showAllLanguages === "all"
-    ) {
-      return (
-        <div className="language-list">
-          <span>
-            {t("noResultsFound", { defaultValue: "No results found." })}
-          </span>
-        </div>
+          t={t}
+        />
       );
     }
+
+    // Show no results state
+    if (!hasResults && currentViewMode === LANGUAGE_VIEW_MODES.ALL) {
+      return <EmptyStateNoResults t={t} />;
+    }
+
+    // Show language list
     return (
       <div
         className="language-list"
@@ -673,35 +639,25 @@ const TranslationModal = (props: {
           showTranslationSettings.value = false;
         }}
       >
-        {_filteredApiTranslations.map(([language, value]) => {
-          return (
-            <LanguageComponent
-              language={language}
-              translationArray={value}
-              bibleSelectorState={bibleSelectorState}
-            />
-          );
-        })}
-        {_showAllLanguages &&
-          allowedTranslationLimit.value <
-            Object.entries(apiTranslations.value).length &&
-          Object.entries(_filteredApiTranslations).length >= 50 && (
-            <div
-              className="item flex-between"
-              onClick={() => {
-                allowedTranslationLimit.value =
-                  allowedTranslationLimit.value + 50;
-              }}
-              style={{ justifyContent: "center" }}
-            >
-              <span
-                style={{ transition: "transform 0.3s" }}
-                className={`material-symbols-outlined`}
-              >
-                expand_more
-              </span>
-            </div>
-          )}
+        {filteredTranslations.map(([language, value]) => (
+          <LanguageComponent
+            language={language}
+            translationArray={value}
+            bibleSelectorState={bibleSelectorState}
+          />
+        ))}
+        {shouldShowLoadMoreButton(
+          filteredTranslations.length,
+          allowedTranslationLimit.value,
+          Object.entries(apiTranslations.value).length
+        ) && (
+          <LoadMoreButton
+            onLoadMore={() => {
+              allowedTranslationLimit.value =
+                allowedTranslationLimit.value + 50;
+            }}
+          />
+        )}
       </div>
     );
   });
@@ -924,7 +880,7 @@ const LanguageComponent = (props: {
                       <span
                         class="emptyCircle"
                         style={{
-                          background: `linear-gradient(white, white) padding-box, conic-gradient(from -${rotation}deg, var(--secondaryColor) ${completionPercentage}%, #eee 0) border-box`,
+                          background: `linear-gradient(white, white) padding-box, conic-gradient(from -${rotation}deg, var(--sb-primary-color) ${completionPercentage}%, #eee 0) border-box`,
                         }}
                       ></span>
                     ) : (
@@ -1127,7 +1083,7 @@ const TranslationInfo = (props: {
         if (part !== "\n" && part.trim() !== "") {
           if (urlRegex.test(part)) {
             formattedParts.push(
-              `<a href="${part}" target="_blank" style="color: var(--secondaryColor)">${part}</a>`
+              `<a href="${part}" target="_blank" style="color: var(--sb-primary-color)">${part}</a>`
             );
           } else {
             formattedParts.push(part);

@@ -1,4 +1,4 @@
-import { signal, type Signal } from "@preact/signals";
+import { signal, effect, type Signal } from "@preact/signals";
 import {
   FreeUseBibleAPI,
   type Translation,
@@ -130,6 +130,40 @@ export function createBibleDataManager(
     const endpoint = getEndpointForTranslation(chapter.translation.id);
     return await api.getPreviousChapter(chapter, endpoint);
   };
+
+  effect(() => {
+    if (availableTranslations.value.length > 0) {
+      window.localStorage.setItem(
+        "availableTranslations",
+        JSON.stringify(availableTranslations.value)
+      );
+    }
+  });
+
+  effect(() => {
+    const stored = window.localStorage.getItem("availableTranslations");
+    if (stored) {
+      const parsed: Translation[] = JSON.parse(stored);
+      availableTranslations.value = parsed;
+    }
+  });
+
+  effect(() => {
+    if (translationEndpoints.value.size > 0) {
+      window.localStorage.setItem(
+        "endpoints",
+        JSON.stringify(Array.from(translationEndpoints.value.entries()))
+      );
+    }
+  });
+
+  effect(() => {
+    const stored = window.localStorage.getItem("endpoints");
+    if (stored) {
+      const parsed: [string, string][] = JSON.parse(stored);
+      translationEndpoints.value = new Map(parsed);
+    }
+  });
 
   return {
     endpoints,

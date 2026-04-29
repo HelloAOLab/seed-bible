@@ -1,13 +1,11 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import {
-  computed,
-  signal,
-  type ReadonlySignal,
-  type Signal,
-} from "@preact/signals";
+import { computed, signal, type Signal } from "@preact/signals";
 import { BibleSelector } from "@packages/seed-bible/seed-bible/components/BibleSelector";
-import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
+import type {
+  BibleSelectorBookItem,
+  BibleSelectorState,
+} from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type {
   AvailableTranslations,
@@ -47,10 +45,9 @@ function createBook(
 type SelectorFixture = {
   selectorState: BibleSelectorState;
   search: Signal<string>;
-  expandedBookId: Signal<string | null>;
   selectChapter: jest.Mock;
-  setExpandedBook: jest.Mock;
   setSearch: jest.Mock;
+  handleClick: jest.Mock;
 };
 
 function createSelectorFixture(): SelectorFixture {
@@ -89,6 +86,32 @@ function createSelectorFixture(): SelectorFixture {
   const currentTranslationId = signal<string | null>("BSB");
   const currentBookId = signal<string | null>("GEN");
   const currentChapterNumber = signal<number | null>(1);
+  const selectedTestament = signal(2);
+  const apocryphaAvailable = signal(false);
+  const selectingTranslation = signal(false);
+  const viewportWidth = signal(1024);
+  const lastBookClicked = signal(-1);
+  const bookData = signal<TranslationBook | null>(null);
+  const chT = signal(0);
+  const localSelectedTestament = signal(2);
+  const highLightedButtonsID = signal<Record<number, boolean>>({});
+  const currentPsalms = signal<string[]>([
+    "1 Psalms",
+    "2 Psalms",
+    "3 Psalms",
+    "4 Psalms",
+    "5 Psalms",
+  ]);
+  const languageQuery = signal("");
+  const showCustomTranslation = signal(false);
+  const allowedTranslationLimit = signal(50);
+  const showAllLanguages = signal<"complete" | "all" | "popular">("complete");
+  const showTranslationSettings = signal(false);
+  const showTranslationInfo = signal<{
+    translation: Translation;
+    position: { x: number; y: number };
+  } | null>(null);
+  const inputValue = signal("");
   const availableTranslationsSignal = signal<Translation[]>(
     availableTranslations.translations
   );
@@ -103,12 +126,31 @@ function createSelectorFixture(): SelectorFixture {
     () => selectedTranslationBooks.value?.translation ?? null
   );
 
-  const oldTestamentRows: ReadonlySignal<TranslationBook[][]> = signal([
-    oldBooks,
-  ]);
-  const newTestamentRows: ReadonlySignal<TranslationBook[][]> = signal([
-    newBooks,
-  ]);
+  const groupedBooks = computed(() => ({
+    oldTestament: oldBooks,
+    newTestament: newBooks,
+    apocrypha: [],
+  }));
+
+  const selectedTestamentData = computed<TranslationBook[]>(() => {
+    const grouped = groupedBooks.value;
+    if (selectedTestament.value === 0) return grouped.oldTestament;
+    if (selectedTestament.value === 1) return grouped.newTestament;
+    if (selectedTestament.value === 2) {
+      return [...grouped.oldTestament, ...grouped.newTestament];
+    }
+    return grouped.apocrypha;
+  });
+
+  const apiTranslations = signal<Record<string, Record<string, Translation>>>({
+    english: {
+      bsb: availableTranslations.translations[0]!,
+    },
+  });
+
+  const filteredApiTranslations = computed<
+    Array<[string, Record<string, Translation>]>
+  >(() => Object.entries(apiTranslations.value));
 
   const setSearch = jest.fn((value: string) => {
     search.value = value;
@@ -117,6 +159,45 @@ function createSelectorFixture(): SelectorFixture {
     expandedBookId.value = bookId;
   });
   const selectChapter = jest.fn();
+  const handleClick = jest.fn(
+    (props: { index: number; book: TranslationBook; cht?: number }) => {
+      const { index, book, cht = 0 } = props;
+      if (bookData.value?.id === book.id) {
+        bookData.value = null;
+        chT.value = 0;
+        lastBookClicked.value = -1;
+        return;
+      }
+
+      bookData.value = book;
+      chT.value = cht;
+      lastBookClicked.value = index;
+    }
+  );
+
+  const calcChapterPos = (index: number, separator: number): number =>
+    Math.floor(index / separator) * separator + separator - 1;
+
+  const isBook = (book: BibleSelectorBookItem): book is TranslationBook =>
+    typeof book === "object" && !("ghost" in book);
+
+  const ghostArray = (
+    booksArray: TranslationBook[],
+    allowedRows: number
+  ): BibleSelectorBookItem[] => {
+    if (allowedRows === 1) return booksArray;
+    const booksLength = booksArray.length;
+    const additionalElements =
+      allowedRows -
+      (booksLength % allowedRows === 0
+        ? allowedRows
+        : booksLength % allowedRows);
+    const tempBooksArray: BibleSelectorBookItem[] = [...booksArray];
+    for (let i = 0; i < additionalElements; i++) {
+      tempBooksArray.push({ ghost: true });
+    }
+    return tempBooksArray;
+  };
 
   const selectorState: BibleSelectorState = {
     isOpen: signal(false),
@@ -125,6 +206,7 @@ function createSelectorFixture(): SelectorFixture {
     currentTranslationId,
     currentBookId,
     currentChapterNumber,
+    groupedBooks,
     selectedTranslationId,
     selectedTranslation,
     selectedTranslationBooks,
@@ -132,23 +214,46 @@ function createSelectorFixture(): SelectorFixture {
     loading,
     error,
     search,
+    viewportWidth,
     expandedBookId,
-    oldTestamentRows,
-    newTestamentRows,
+    selectedTestament,
+    apocryphaAvailable,
+    selectingTranslation,
+    lastBookClicked,
+    bookData,
+    chT,
+    localSelectedTestament,
+    highLightedButtonsID,
+    currentPsalms,
+    selectedTestamentData,
+    calcChapterPos,
+    isBook,
+    ghostArray,
+    handleEnter: jest.fn(),
+    languageQuery,
+    showCustomTranslation,
+    allowedTranslationLimit,
+    apiTranslations,
+    showAllLanguages,
+    showTranslationSettings,
+    showTranslationInfo,
+    inputValue,
+    filteredApiTranslations,
+    handleTranslationAddition: jest.fn(async () => undefined),
     setOpen: jest.fn(),
     setSearch,
     setExpandedBook,
     selectTranslation: jest.fn(async () => undefined),
     selectChapter,
+    handleClick,
   };
 
   return {
     selectorState,
     search,
-    expandedBookId,
     selectChapter,
-    setExpandedBook,
     setSearch,
+    handleClick,
   };
 }
 
@@ -234,8 +339,18 @@ describe("BibleSelector", () => {
       );
     });
 
+    const genesisButton = Array.from(
+      container.querySelectorAll("#booktab-GEN")
+    )[0] as HTMLDivElement | undefined;
+
+    expect(genesisButton).toBeDefined();
+
+    act(() => {
+      genesisButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
     const chapterTwoButton = Array.from(
-      container.querySelectorAll(".sb-selector-chapter-button")
+      container.querySelectorAll(".chapter-btn")
     ).find((button) => button.textContent?.trim() === "2") as
       | HTMLButtonElement
       | undefined;
@@ -251,8 +366,8 @@ describe("BibleSelector", () => {
     expect(selectChapter).toHaveBeenCalledWith("GEN", 2);
   });
 
-  it("clicking on a book expands it", () => {
-    const { selectorState, setExpandedBook } = createSelectorFixture();
+  it("clicking on a book updates the expanded book state", () => {
+    const { selectorState, handleClick } = createSelectorFixture();
 
     act(() => {
       render(
@@ -266,10 +381,8 @@ describe("BibleSelector", () => {
     });
 
     const exodusButton = Array.from(
-      container.querySelectorAll(".sb-selector-book-button")
-    ).find((button) => button.textContent?.includes("Exodus")) as
-      | HTMLButtonElement
-      | undefined;
+      container.querySelectorAll("#booktab-EXO")
+    )[0] as HTMLDivElement | undefined;
 
     expect(exodusButton).toBeDefined();
 
@@ -277,7 +390,14 @@ describe("BibleSelector", () => {
       exodusButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    expect(setExpandedBook).toHaveBeenCalledWith("EXO");
+    expect(handleClick).toHaveBeenCalledWith(
+      expect.objectContaining({
+        index: 1,
+        book: expect.objectContaining({ id: "EXO" }),
+      })
+    );
+    expect(container.textContent ?? "").toContain("1");
+    expect(container.textContent ?? "").toContain("2");
   });
 
   it("changing the search input sets the search", () => {
@@ -295,7 +415,7 @@ describe("BibleSelector", () => {
     });
 
     const searchInput = container.querySelector(
-      ".sb-selector-search-input"
+      'input[placeholder="Search books..."]'
     ) as HTMLInputElement | null;
 
     expect(searchInput).not.toBeNull();

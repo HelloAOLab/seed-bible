@@ -17,7 +17,6 @@ import {
   Signal,
   type ReadonlySignal,
 } from "@preact/signals";
-import { chunk } from "es-toolkit";
 
 /** Optional options used when opening the selector. */
 export interface BibleSelectorOptions {
@@ -25,9 +24,11 @@ export interface BibleSelectorOptions {
   pane?: Pane;
 }
 
-export interface CodexTranslation extends Translation {
-  origin?: string;
+export interface GhostBook {
+  ghost?: boolean;
 }
+
+export type BibleSelectorBookItem = TranslationBook | GhostBook;
 
 /**
  * Reactive state + actions for the Bible selector overlay.
@@ -100,9 +101,6 @@ export interface BibleSelectorState {
   selectedTestament: Signal<number>;
   apocryphaAvailable: Signal<boolean>;
   selectingTranslation: Signal<boolean>;
-  showCheck: Signal<any>;
-  dontopn: Signal<boolean>;
-  dontOpen: Signal<boolean>;
   lastBookClicked: Signal<number>;
   bookData: Signal<TranslationBook | null>;
   chT: Signal<number>;
@@ -116,11 +114,11 @@ export interface BibleSelectorState {
     cht?: number;
   }) => void;
   calcChapterPos: (index: number, separator: number) => number;
-  isBook: (book: TranslationBook | { ghost?: boolean }) => boolean;
+  isBook: (book: BibleSelectorBookItem) => book is TranslationBook;
   ghostArray: (
     booksArray: TranslationBook[],
     allowedRows: number
-  ) => (TranslationBook | { ghost?: boolean })[];
+  ) => BibleSelectorBookItem[];
   handleEnter: () => void;
   languageQuery: Signal<string>;
   showCustomTranslation: Signal<boolean>;
@@ -148,7 +146,7 @@ function groupBooks(translationBooks: TranslationBooks | null, search: string) {
     };
   }
 
-  const actualSearch = search.split(" ").slice(0, 1).join(" ");
+  const actualSearch = search.replace(/\d+$/, "");
   const loweredSearch = actualSearch.trim().toLowerCase();
   const filteredBooks = loweredSearch
     ? translationBooks.books.filter(
@@ -442,58 +440,35 @@ export function createBibleSelectorState(
     await handleTranslationSelect(nextTranslationId);
   };
 
-  // seperation
-
-  const thePage = getBot("system", "app.components");
-
   const languageQuery = signal<string>("");
 
   const selectedTestament = signal<number>(2);
 
   const apocryphaAvailable = signal<boolean>(false);
 
-  const defaultTranslations = signal<string[]>(
-    thePage?.masks?.defaultTranslations || [
-      "english",
-      "spanish",
-      "arabic",
-      "hindi",
-      "hebrew",
-      "ancient greek",
-      "custom",
-    ]
-  );
+  const defaultTranslations = signal<string[]>([
+    "english",
+    "spanish",
+    "arabic",
+    "hindi",
+    "hebrew",
+    "ancient greek",
+  ]);
 
-  const apiTranslations = signal<Record<string, Record<string, Translation>>>(
-    thePage?.masks?.apiTranslations || {
-      english: {},
-      spanish: {},
-      arabic: {},
-      hindi: {},
-      hebrew: {},
-      "ancient greek": {},
-    }
-  );
+  const apiTranslations = signal<Record<string, Record<string, Translation>>>({
+    english: {},
+    spanish: {},
+    arabic: {},
+    hindi: {},
+    hebrew: {},
+    "ancient greek": {},
+  });
 
   const allowedTranslationLimit = signal<number>(50);
 
   const showCustomTranslation = signal<boolean>(false);
 
   const selectingTranslation = signal<boolean>(false);
-
-  /** Raw "dontOpen" toggle — see dontOpen computed below. */
-  const dontopn = signal<boolean>(false);
-
-  const showCheck = signal<any>(
-    (globalThis as any).IS_PLAYLIST_ACTIVE ||
-      (globalThis as any).IsPlaylistPlaying
-  );
-
-  /**
-   * Derived: true only when the user has ticked "don't open" AND a
-   * playlist/queue is active.
-   */
-  const dontOpen = computed<boolean>(() => dontopn.value && !!showCheck.value);
 
   // ─── SideBarBooks State ───────────────────────────────────────────────────────
   // NOTE: These signals are logically local to the single SideBarBooks instance
@@ -503,9 +478,7 @@ export function createBibleSelectorState(
 
   const lastBookClicked = signal<number>(-1);
 
-  const bookData = signal<
-    TranslationBook | { ghost?: boolean | undefined } | null
-  >(null);
+  const bookData = signal<TranslationBook | null>(null);
 
   const chT = signal<number>(0);
 
@@ -524,16 +497,10 @@ export function createBibleSelectorState(
     "5 Psalms",
   ]);
 
-  // ─── CircleCounter State ──────────────────────────────────────────────────────
-  // NOTE: CircleCounter can be rendered many times simultaneously (once per
-  // book/chapter).  Each component instance creates its own local signal via
-  // useRef so it persists across re-renders without being shared.
-  // See CircleCounter in SearchBar.tsx for the usage pattern.
-
   // ─── TranslationModal State ───────────────────────────────────────────────────
 
   const showAllLanguages = signal<"complete" | "all" | "popular">(
-    (thisBot as any).masks?.showAllLanguages || "complete"
+    window.localStorage.showAllLanguages || "complete"
   );
 
   const showTranslationSettings = signal<boolean>(false);
@@ -544,85 +511,6 @@ export function createBibleSelectorState(
   } | null>(null);
 
   const inputValue = signal<string>("");
-
-  // ─── Tanak ordering helpers ───────────────────────────────────────────────────
-
-  const tanakOrder: number[] = [
-    1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 23, 24, 26, 28, 29, 30, 31, 32, 33, 34,
-    35, 36, 37, 38, 39, 19, 20, 18, 22, 8, 25, 21, 17, 27, 15, 16, 13, 14,
-  ];
-
-  const tanakhIndex: { [key: number]: number } = Object.fromEntries(
-    tanakOrder.map((num, idx) => [num, idx])
-  );
-
-  const PsalmsData: any[] = [
-    {
-      id: "PSA",
-      translationId: "AAB",
-      name: "Psalms",
-      commonName: "1 Psalms",
-      title: "Psalms",
-      order: 19,
-      numberOfChapters: 41,
-      firstChapterNumber: 1,
-      firstChapterApiLink: "/api/AAB/PSA/1.json",
-      lastChapterNumber: 41,
-      lastChapterApiLink: "/api/AAB/PSA/41.json",
-    },
-    {
-      id: "PSA",
-      translationId: "AAB",
-      name: "Psalms",
-      commonName: "2 Psalms",
-      title: "Psalms",
-      order: 19,
-      numberOfChapters: 31,
-      firstChapterNumber: 42,
-      firstChapterApiLink: "/api/AAB/PSA/42.json",
-      lastChapterNumber: 72,
-      lastChapterApiLink: "/api/AAB/PSA/72.json",
-    },
-    {
-      id: "PSA",
-      translationId: "AAB",
-      name: "Psalms",
-      commonName: "3 Psalms",
-      title: "Psalms",
-      order: 19,
-      numberOfChapters: 17,
-      firstChapterNumber: 73,
-      firstChapterApiLink: "/api/AAB/PSA/73.json",
-      lastChapterNumber: 89,
-      lastChapterApiLink: "/api/AAB/PSA/89.json",
-    },
-    {
-      id: "PSA",
-      translationId: "AAB",
-      name: "Psalms",
-      commonName: "4 Psalms",
-      title: "Psalms",
-      order: 19,
-      numberOfChapters: 16,
-      firstChapterNumber: 90,
-      firstChapterApiLink: "/api/AAB/PSA/90.json",
-      lastChapterNumber: 106,
-      lastChapterApiLink: "/api/AAB/PSA/106.json",
-    },
-    {
-      id: "PSA",
-      translationId: "AAB",
-      name: "Psalms",
-      commonName: "5 Psalms",
-      title: "Psalms",
-      order: 19,
-      numberOfChapters: 20,
-      firstChapterNumber: 107,
-      firstChapterApiLink: "/api/AAB/PSA/107.json",
-      lastChapterNumber: 150,
-      lastChapterApiLink: "/api/AAB/PSA/150.json",
-    },
-  ];
 
   const selectedTestamentData = computed<TranslationBook[]>(() => {
     const grouped = groupedBooks.value;
@@ -635,11 +523,6 @@ export function createBibleSelectorState(
 
   // Keep apocryphaAvailable in sync with the computed book data.
   effect(() => {
-    const bd = selectedTranslationBooks.value;
-    if (!bd) {
-      apocryphaAvailable.value = false;
-      return;
-    }
     const { apocrypha } = groupedBooks.value;
     apocryphaAvailable.value = apocrypha.length > 0;
   });
@@ -681,44 +564,27 @@ export function createBibleSelectorState(
    * Reads `search.value` and `selectedTestamentData.value`.
    */
   const handleEnter = (): void => {
-    const q = search.value;
     const testamentData = selectedTestamentData.value;
-    if (q?.toLowerCase() || "".includes("psalm")) {
-      if (q.split(" ").length > 1) {
-        const queryArr: string[] = q.split(" ");
-        const lastPart = queryArr[queryArr.length - 1] ?? "";
-        const chapterNo = parseInt(lastPart, 10);
-        if (!isNaN(chapterNo)) {
-          let bookName: string | undefined;
-          for (const psalmBook of PsalmsData) {
-            if (chapterNo <= psalmBook.lastChapterNumber) {
-              bookName = psalmBook.commonName;
-              break;
-            }
-          }
-          if (bookName) {
-            focusOnBook({ chapterNo: chapterNo });
-          } else {
-            os.toast("That chapter doesn't exist!!!");
-          }
-        } else {
-          os.toast("Please check the chapter no.!!!");
-        }
-      } else {
-        focusOnBook({ chapterNo: 1 });
-      }
-    } else if (Array.isArray(testamentData) && testamentData.length > 0) {
-      search.value = testamentData[0]?.commonName ?? "";
+    const chapterQueryMatch = search.value.match(/(\d+)$/)?.[0];
+
+    if (!isNaN(Number(chapterQueryMatch)) && testamentData.length === 1) {
+      const chapterNo = Number(chapterQueryMatch);
+      focusOnBook({ chapterNo });
+      return;
+    } else if (testamentData[0]) {
+      search.value = testamentData[0].name;
+      console.log("Auto-filled search with book name:", testamentData[0].name);
+      return;
     }
   };
 
   const handleClick = (props: {
     index: number;
-    book: TranslationBook | { ghost?: boolean | undefined };
+    book: TranslationBook;
     cht?: number;
   }): void => {
     const { index, book, cht = 0 } = props;
-    if (bookData.value?.id === book.id) {
+    if (bookData?.value?.id === book.id) {
       bookData.value = null;
       chT.value = 0;
       lastBookClicked.value = -1;
@@ -732,13 +598,13 @@ export function createBibleSelectorState(
   const calcChapterPos = (index: number, separator: number): number =>
     Math.floor(index / separator) * separator + separator - 1;
 
-  const isBook = (book: TranslationBook | { ghost?: boolean }): boolean =>
-    !("ghost" in book) || !book.ghost;
+  const isBook = (book: BibleSelectorBookItem): book is TranslationBook =>
+    typeof book === "object" && !("ghost" in book);
 
   const ghostArray = (
     booksArray: TranslationBook[],
     allowedRows: number
-  ): (TranslationBook | { ghost?: boolean })[] => {
+  ): BibleSelectorBookItem[] => {
     if (allowedRows === 1) return booksArray;
     const booksLength = booksArray.length;
     const additionalElements =
@@ -746,113 +612,48 @@ export function createBibleSelectorState(
       (booksLength % allowedRows === 0
         ? allowedRows
         : booksLength % allowedRows);
-    const tempBooksArray: (TranslationBook | { ghost?: boolean })[] = [
-      ...booksArray,
-    ];
+    const tempBooksArray: BibleSelectorBookItem[] = [...booksArray];
     for (let i = 0; i < additionalElements; i++) {
       tempBooksArray.push({ ghost: true });
     }
     return [...tempBooksArray];
   };
 
-  const scrollIntoView = (bookId: string): void => {
-    const bookTabElement = document.getElementById(`booktab-${bookId}`);
-    if (bookTabElement) {
-      bookTabElement.scrollIntoView({ behavior: "smooth", block: "center" });
-      if (!bookTabElement.classList.contains("sidebar-selected-itm")) {
-        bookTabElement.click();
-      }
-    }
-  };
-
-  const selectBookSelectorBook = (bookId: string): void => {
-    if (!bookId) {
-      bookData.value = null;
-      lastBookClicked.value = -1;
-      chT.value = 0;
-      return;
-    }
-    const bd = selectedTranslationBooks.value;
-    const st = selectedTestament.value;
-    const book =
-      (bd ? bd.books.find((b: TranslationBook) => b.id === bookId) : null) ||
-      thePage?.masks?.booksData?.find(
-        (b: TranslationBook) => b.id === bookId
-      ) ||
-      null;
-    if (book) {
-      const bookTabElement = document.getElementById(`booktab-${book.id}`);
-      if (bookTabElement) {
-        scrollIntoView(bookId);
-      }
-      if (book.order > 39 && st === 0) {
-        selectedTestament.value = 1;
-        setTimeout(() => scrollIntoView(bookId), 100);
-      } else if (book.order <= 39 && st === 1) {
-        selectedTestament.value = 0;
-        setTimeout(() => scrollIntoView(bookId), 100);
-      }
-    }
-  };
-
   effect(() => {
     const tr = selectedTranslation.value;
     const dtr = defaultTranslations.value;
-
-    const langName = tr?.languageEnglishName?.toLowerCase() || "unknown";
-    if (!dtr.includes(langName)) {
-      setTagMask(thePage, "defaultTranslations", [...dtr, langName], "local");
-      defaultTranslations.value = [...dtr, langName];
+    if (tr) {
+      const langName =
+        tr.languageEnglishName?.toLowerCase() || tr.englishName.toLowerCase();
+      if (!dtr.includes(langName)) {
+        defaultTranslations.value = [...dtr, langName];
+      }
     }
   });
 
   effect(() => {
-    const dtr = defaultTranslations.value;
-    const source = thePage?.masks?.allTranslations
-      ? Promise.resolve(thePage?.masks.allTranslations as Translation[])
-      : web
-          .get("https://vmfnri.helloao.org/api/available_translations.json")
-          .then((request) => {
-            if (request.status !== 200) return [] as Translation[];
-            setTagMask(
-              thePage,
-              "allTranslations",
-              request.data.translations,
-              "local"
-            );
-            return request.data.translations as Translation[];
-          });
+    const allTranslations = availableTranslations.value;
 
-    source.then((allTranslations) => {
-      const normalized = allTranslations.map((item: Translation) => ({
-        ...item,
-        languageEnglishName:
-          item?.languageEnglishName || (item as any).englishName,
-      }));
-      const translations = { ...apiTranslations.value };
-      let changed = false;
+    const normalized = allTranslations.map((item: Translation) => ({
+      ...item,
+      languageEnglishName: item?.languageEnglishName || item.englishName,
+    }));
+    const translations = {} as Record<string, Record<string, Translation>>;
 
-      normalized.forEach((translation: Translation) => {
-        const englishName =
-          translation.languageEnglishName?.toLowerCase() || "unknown";
-        const shortName = translation.shortName?.toLowerCase() || "unknown";
-        if (translations[englishName]) {
-          if (!translations[englishName][shortName]) {
-            translations[englishName][shortName] = translation;
-            changed = true;
-          }
-        } else {
-          translations[englishName] = { [shortName]: translation };
-          changed = true;
+    normalized.forEach((translation: Translation) => {
+      const englishName =
+        translation.languageEnglishName?.toLowerCase() ||
+        translation.englishName.toLowerCase();
+      const shortName = translation.shortName.toLowerCase();
+      if (translations[englishName]) {
+        if (!translations[englishName][shortName]) {
+          translations[englishName][shortName] = translation;
         }
-      });
-
-      if (changed) {
-        setTagMask(thePage, "apiTranslations", translations, "local");
-        apiTranslations.value = translations;
+      } else {
+        translations[englishName] = { [shortName]: translation };
       }
-      setTagMask(thePage, "defaultTranslations", dtr, "local");
     });
+    apiTranslations.value = translations;
   });
 
   effect(() => {
@@ -898,8 +699,6 @@ export function createBibleSelectorState(
     const selTr = selectedTranslation.value;
     const sal = showAllLanguages.value;
     const dtr = defaultTranslations.value;
-
-    console.log(selTr, "selected translation in filteredApiTranslations");
 
     const cloneTranslations = (
       translations: Record<string, Record<string, Translation>>
@@ -993,7 +792,7 @@ export function createBibleSelectorState(
   });
 
   effect(() => {
-    setTagMask(thisBot, "showAllLanguages", showAllLanguages.value, "local");
+    window.localStorage.setItem("showAllLanguages", showAllLanguages.value);
   });
 
   return {
@@ -1021,9 +820,6 @@ export function createBibleSelectorState(
     selectedTestament,
     apocryphaAvailable,
     selectingTranslation,
-    showCheck,
-    dontopn,
-    dontOpen,
     lastBookClicked,
     bookData,
     chT,
