@@ -69,6 +69,8 @@ export interface VerseDecoration {
   className?: string;
   /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
+  /** Optional delay in milliseconds before this decoration auto-removes itself. */
+  removeAfterMs?: number;
 
   /**
    * Whether to preserve the decoration when the chapter changes.
@@ -87,6 +89,8 @@ export interface VerseDecorationInput {
   className?: string;
   /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
+  /** Optional delay in milliseconds before this decoration auto-removes itself. */
+  removeAfterMs?: number;
 
   /**
    * Whether to preserve the decoration when the chapter changes.
@@ -94,6 +98,15 @@ export interface VerseDecorationInput {
    * Setting this to true will keep the decoration until it is explicitly removed.
    */
   preserveOnChapterChange?: boolean;
+
+  /**
+   * The ID of the translation that this decoration should be limited to.
+   * If null or omitted, then the decoration will apply to all translations.
+   *
+   * Should only be used when you have a specific need to target a decoration to a specific translation,
+   * since decorations may be shared across sessions and users may not all have the same translation selected.
+   */
+  translationId?: string | null;
 }
 
 /**
@@ -132,6 +145,8 @@ export interface BibleReadingState {
   error: Signal<string | null>;
   /** Scroll position snapshot for chapter restoration/UI syncing. */
   scrollPosition: Signal<number>;
+  /** Pending verse number to scroll to after chapter content renders. */
+  scrollToVerse: Signal<number | null>;
 
   /**
    * Toggles a verse in the current selection.
@@ -164,8 +179,6 @@ export interface BibleReadingState {
   /**
    * Adds a visual decoration to one or more verses and returns a decoration ID.
    *
-   * @param translationId Translation target for the decoration. Null targets the
-   * current translation.
    * @param bookId Book target for the decoration.
    * @param chapterNumber Chapter target for the decoration.
    * @param verses Single verse number or verse number list.
@@ -174,7 +187,6 @@ export interface BibleReadingState {
    * @returns Unique decoration ID used by `removeDecoration()`.
    */
   decorateVerses: (
-    translationId: string | null,
     bookId: string,
     chapterNumber: number,
     verses: number | number[],
@@ -201,7 +213,8 @@ export interface BibleReadingState {
   selectTranslationAndChapter: (
     translationId: string,
     bookId: string,
-    chapterNumber: number
+    chapterNumber: number,
+    options?: SelectTranslationAndChapterOptions
   ) => Promise<void>;
 
   /** Selects a book and loads its first chapter in the active translation. */
@@ -218,6 +231,7 @@ export interface BibleReadingState {
 }
 
 export const DEFAULT_TRANSLATION_ID = "AAB";
+export const DEFAULT_TRANSLATION_LANGUAGE = "eng";
 export const DEFAULT_BOOK_ID = "GEN";
 export const DEFAULT_CHAPTER_NUMBER = 1;
 
@@ -225,6 +239,10 @@ interface InitialBibleReadingOptions {
   initialTranslationId?: string | null;
   initialBookId?: string | null;
   initialChapterNumber?: number | null;
+}
+
+export interface SelectTranslationAndChapterOptions {
+  scrollToVerse?: number;
 }
 
 function normalizeDecorationVerses(verses: number | number[]): number[] {
@@ -321,9 +339,14 @@ export function createBibleReadingState(
     () => activeChapterHighlights.value.value
   );
   const decorations = signal<VerseDecoration[]>([]);
+  const decorationRemovalTimers = new Map<
+    string,
+    ReturnType<typeof setTimeout>
+  >();
   const loading = signal<boolean>(true);
   const error = signal<string | null>(null);
   const scrollPosition = signal<number>(0);
+  const scrollToVerse = signal<number | null>(null);
 
   const translation = computed(
     () => translationBooks.value?.translation ?? null
@@ -360,6 +383,19 @@ export function createBibleReadingState(
         ) ?? null,
     };
   });
+
+  const decorationMatchesState = (decoration: VerseDecoration): boolean => {
+    if (
+      decoration.translationId &&
+      decoration.translationId !== translationId.value
+    ) {
+      return false;
+    }
+    return (
+      decoration.bookId === bookId.value &&
+      decoration.chapterNumber === chapterNumber.value
+    );
+  };
 
   const selectVerse = (
     verse: BibleSelectedVerse,
@@ -404,10 +440,14 @@ export function createBibleReadingState(
     };
   };
 
-  const syncStateFromChapter = async (chapter: TranslationBookChapter) => {
+  const syncStateFromChapter = async (
+    chapter: TranslationBookChapter,
+    options?: SelectTranslationAndChapterOptions
+  ) => {
     const nextTranslationId = chapter.translation.id;
     const nextBookId = chapter.book.id;
     const nextChapterNumber = chapter.chapter.number;
+    const nextScrollToVerse = options?.scrollToVerse ?? null;
 
     batch(() => {
       const didChapterChange =
@@ -421,10 +461,29 @@ export function createBibleReadingState(
       bookId.value = nextBookId;
       chapterNumber.value = nextChapterNumber;
       chapterData.value = chapter;
+      scrollToVerse.value = nextScrollToVerse;
       selectedFootnoteId.value = null;
+      const removedDecorationIds = decorations.value
+        .filter(
+          (decoration) =>
+            !(
+              decoration.preserveOnChapterChange ||
+              decorationMatchesState(decoration)
+            )
+        )
+        .map((decoration) => decoration.id);
       decorations.value = decorations.value.filter(
-        (decoration) => decoration.preserveOnChapterChange
+        (decoration) =>
+          decoration.preserveOnChapterChange ||
+          decorationMatchesState(decoration)
       );
+      for (const decorationId of removedDecorationIds) {
+        const timer = decorationRemovalTimers.get(decorationId);
+        if (timer) {
+          clearTimeout(timer);
+          decorationRemovalTimers.delete(decorationId);
+        }
+      }
       clearSelectedVerses();
     });
 
@@ -515,27 +574,60 @@ export function createBibleReadingState(
   };
 
   const decorateVerses = (
-    translationId: string | null,
     bookId: string,
     chapterNumber: number,
     verses: number | number[],
     decoration: VerseDecorationInput,
     id: string = `decoration-${uuid()}`
   ): string => {
+    const existingTimer = decorationRemovalTimers.get(id);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      decorationRemovalTimers.delete(id);
+    }
+
+    const existingDecorationIndex = decorations.value.findIndex(
+      (currentDecoration) => currentDecoration.id === id
+    );
+
     const nextDecoration: VerseDecoration = {
       id,
-      translationId: translationId ?? translation.value?.id ?? null,
       bookId,
       chapterNumber,
       verses: normalizeDecorationVerses(verses),
       ...decoration,
+      translationId: decoration.translationId ?? null,
     };
 
-    decorations.value = [...decorations.value, nextDecoration];
+    if (existingDecorationIndex >= 0) {
+      decorations.value = decorations.value.map((currentDecoration, index) =>
+        index === existingDecorationIndex ? nextDecoration : currentDecoration
+      );
+    } else {
+      decorations.value = [...decorations.value, nextDecoration];
+    }
+
+    if (
+      typeof nextDecoration.removeAfterMs === "number" &&
+      Number.isFinite(nextDecoration.removeAfterMs) &&
+      nextDecoration.removeAfterMs > 0
+    ) {
+      const timer = setTimeout(() => {
+        removeDecoration(nextDecoration.id);
+      }, nextDecoration.removeAfterMs);
+      decorationRemovalTimers.set(nextDecoration.id, timer);
+    }
+
     return nextDecoration.id;
   };
 
   const removeDecoration = (decorationId: string) => {
+    const timer = decorationRemovalTimers.get(decorationId);
+    if (timer) {
+      clearTimeout(timer);
+      decorationRemovalTimers.delete(decorationId);
+    }
+
     decorations.value = decorations.value.filter(
       (decoration) => decoration.id !== decorationId
     );
@@ -653,7 +745,8 @@ export function createBibleReadingState(
   const selectTranslationAndChapter = async (
     nextTranslationIdOrUrl: string,
     nextBookId: string,
-    nextChapterNumber: number
+    nextChapterNumber: number,
+    options?: SelectTranslationAndChapterOptions
   ) => {
     loading.value = true;
     error.value = null;
@@ -709,7 +802,7 @@ export function createBibleReadingState(
         availableTranslations.value = toAvailableTranslations(
           dataManager.availableTranslations.value
         );
-        await syncStateFromChapter(chapter);
+        await syncStateFromChapter(chapter, options);
       });
     } catch (err) {
       error.value =
@@ -860,6 +953,7 @@ export function createBibleReadingState(
     loading,
     error,
     scrollPosition,
+    scrollToVerse,
     selectVerse,
     selectFootnote,
     highlightSelectedVerses,

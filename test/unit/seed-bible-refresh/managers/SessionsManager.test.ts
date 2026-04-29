@@ -1,4 +1,4 @@
-import { signal } from "@preact/signals";
+import { batch, signal } from "@preact/signals";
 import {
   createSessionsManager,
   type BibleReadingSession,
@@ -99,12 +99,12 @@ function createMockReadingState() {
   const translationId = signal<string | null>("BSB");
   const bookId = signal<string | null>("GEN");
   const chapterNumber = signal<number>(1);
+  const scrollToVerse = signal<number | null>(null);
   const chapterData = signal<any>(null);
   const decorations = signal<VerseDecoration[]>([]);
 
   const decorateVerses = jest.fn(
     (
-      nextTranslationId: string | null,
       nextBookId: string,
       nextChapterNumber: number,
       verses: number | number[],
@@ -114,11 +114,11 @@ function createMockReadingState() {
       const verseNumbers = Array.isArray(verses) ? verses : [verses];
       const nextDecoration: VerseDecoration = {
         id,
-        translationId: nextTranslationId,
         bookId: nextBookId,
         chapterNumber: nextChapterNumber,
         verses: verseNumbers,
         ...decoration,
+        translationId: decoration.translationId ?? null,
       };
 
       decorations.value = [
@@ -140,6 +140,7 @@ function createMockReadingState() {
     translationId,
     bookId,
     chapterNumber,
+    scrollToVerse,
     chapterData,
     decorations,
     translationBooks: signal<any>(null),
@@ -151,11 +152,15 @@ function createMockReadingState() {
       async (
         nextTranslationId: string,
         nextBookId: string,
-        nextChapterNumber: number
+        nextChapterNumber: number,
+        options?: {
+          scrollToVerse?: number;
+        }
       ) => {
         translationId.value = nextTranslationId;
         bookId.value = nextBookId;
         chapterNumber.value = nextChapterNumber;
+        scrollToVerse.value = options?.scrollToVerse ?? null;
         chapterData.value = createMockChapterData(
           nextTranslationId,
           nextBookId,
@@ -536,13 +541,13 @@ describe("SessionsManager", () => {
     mockOptionsMap.setEmitOnSet(true);
 
     session.readingState.decorateVerses(
-      "BSB",
       "GEN",
       1,
       [1, 2],
       {
         className: "remote-cursor",
         preserveOnChapterChange: true,
+        translationId: "BSB",
       },
       "decoration-local"
     );
@@ -559,6 +564,42 @@ describe("SessionsManager", () => {
         verses: [1, 2],
         className: "remote-cursor",
         preserveOnChapterChange: true,
+      })
+    );
+  });
+
+  it("syncs removeAfterMs for local decorations to the shared decorations map", async () => {
+    (globalThis as any).configBot = {
+      id: "conn-self",
+    };
+
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockOptionsMap.setEmitOnSet(true);
+
+    session.readingState.decorateVerses(
+      "GEN",
+      1,
+      [5],
+      {
+        className: "temp-decoration",
+        removeAfterMs: 1500,
+      },
+      "decoration-local-timeout"
+    );
+
+    await waitFor(() => mockDecorationsMap.set.mock.calls.length > 0);
+
+    expect(mockDecorationsMap.set).toHaveBeenCalledWith(
+      JSON.stringify(["conn-self", "decoration-local-timeout"]),
+      expect.objectContaining({
+        id: "decoration-local-timeout",
+        removeAfterMs: 1500,
       })
     );
   });
@@ -586,7 +627,6 @@ describe("SessionsManager", () => {
     mockDocument.transact.mockClear();
 
     session.readingState.decorateVerses(
-      "BSB",
       "GEN",
       1,
       [1],
@@ -623,7 +663,6 @@ describe("SessionsManager", () => {
     mockDocument.transact.mockClear();
 
     session.readingState.decorateVerses(
-      "BSB",
       "GEN",
       1,
       [1],
@@ -660,6 +699,55 @@ describe("SessionsManager", () => {
 
     mockDecorationsMap = createMockSharedMap({
       [JSON.stringify(["conn-other", "decoration-remote"])]: remoteDecoration,
+    });
+    mockDocument.getMap.mockImplementation((name: string) => {
+      if (name === "options") {
+        return mockOptionsMap;
+      }
+
+      if (name === "decorations") {
+        return mockDecorationsMap;
+      }
+
+      return mockMap;
+    });
+
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    await waitFor(() => session.readingState.decorations.value.length === 1);
+
+    expect(session.readingState.decorations.value).toEqual([remoteDecoration]);
+  });
+
+  it("applies removeAfterMs from shared decorations", async () => {
+    (globalThis as any).configBot = {
+      id: "conn-self",
+    };
+
+    mockMap = createMockSharedMap({
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+    });
+
+    const remoteDecoration: VerseDecoration = {
+      id: "decoration-remote-timeout",
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verses: [4],
+      className: "other-user-timeout-decoration",
+      removeAfterMs: 2500,
+    };
+
+    mockDecorationsMap = createMockSharedMap({
+      [JSON.stringify(["conn-other", "decoration-remote-timeout"])]:
+        remoteDecoration,
     });
     mockDocument.getMap.mockImplementation((name: string) => {
       if (name === "options") {
@@ -728,7 +816,6 @@ describe("SessionsManager", () => {
     const session = await manager.joinSession("group-abc");
 
     session.readingState.decorateVerses(
-      "BSB",
       "GEN",
       1,
       [1],
@@ -774,11 +861,34 @@ describe("SessionsManager", () => {
 
     expect(
       session.readingState.selectTranslationAndChapter
-    ).toHaveBeenCalledWith("NIV", "EXO", 4);
+    ).toHaveBeenCalledWith("NIV", "EXO", 4, undefined);
 
     expect(session.readingState.translationId.value).toBe("NIV");
     expect(session.readingState.bookId.value).toBe("EXO");
     expect(session.readingState.chapterNumber.value).toBe(4);
+  });
+
+  it("loads existing scrollToVerse from the shared document", async () => {
+    mockMap = createMockSharedMap({
+      translationId: "NIV",
+      bookId: "EXO",
+      chapterNumber: 4,
+      scrollToVerse: 12,
+    });
+    mockDocument.getMap.mockReturnValue(mockMap);
+
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    expect(
+      session.readingState.selectTranslationAndChapter
+    ).toHaveBeenCalledWith("NIV", "EXO", 4, {
+      scrollToVerse: 12,
+    });
   });
 
   it("syncs reading state changes to the shared document", async () => {
@@ -789,14 +899,35 @@ describe("SessionsManager", () => {
     );
     const session = await manager.joinSession("group-abc");
 
-    session.readingState.translationId.value = "NIV";
-    session.readingState.bookId.value = "EXO";
-    session.readingState.chapterNumber.value = 8;
+    batch(() => {
+      session.readingState.translationId.value = "NIV";
+      session.readingState.bookId.value = "EXO";
+      session.readingState.chapterNumber.value = 8;
+      session.readingState.scrollToVerse.value = 6;
+    });
 
     expect(mockMap.set).toHaveBeenCalledWith("translationId", "NIV");
     expect(mockMap.set).toHaveBeenCalledWith("bookId", "EXO");
     expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 8);
+    expect(mockMap.set).toHaveBeenCalledWith("scrollToVerse", 6);
     expect(mockDocument.transact).toHaveBeenCalled();
+  });
+
+  it("does not update the shared document when only scrollToVerse changes", async () => {
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockMap.set.mockClear();
+    mockDocument.transact.mockClear();
+
+    session.readingState.scrollToVerse.value = 9;
+
+    expect(mockMap.set).not.toHaveBeenCalled();
+    expect(mockDocument.transact).not.toHaveBeenCalled();
   });
 
   it("does not loop when local state changes are echoed back from the shared map", async () => {

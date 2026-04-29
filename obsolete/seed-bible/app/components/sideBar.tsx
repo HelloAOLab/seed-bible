@@ -864,7 +864,10 @@ function SideBar({ panelsNumber }) {
   const [showSearch, setShowSearch] = useState(false); // New state for search visibility
   const [searchQuery, setSearchQuery] = useState(""); // Search filter for tabs
   const [editMode, setEditMode] = useState(false); // New state for edit mode
-  const [keepAwake, setKeepAwake] = useState(false); // New state for keep device awaken
+  const [keepAwake, setKeepAwake] = useState(
+    () => !!(globalThis as any).keepAwakeActive
+  ); // New state for keep device awaken
+  (globalThis as any).setKeepAwake = setKeepAwake;
 
   // Bookmark state (shared between mobile and desktop)
   const [bookmarks, setBookmarks] = useState(
@@ -1135,6 +1138,8 @@ function SideBar({ panelsNumber }) {
       try {
         await os.disableWakeLock();
         setKeepAwake(false);
+        (globalThis as any).keepAwakeActive = false;
+        (globalThis as any).setKeepScreenAwakeActive?.(false);
       } catch (err: any) {
         os.toast("Could not disable keep awake: " + err?.message);
       }
@@ -1143,6 +1148,8 @@ function SideBar({ panelsNumber }) {
       try {
         await os.requestWakeLock();
         setKeepAwake(true);
+        (globalThis as any).keepAwakeActive = true;
+        (globalThis as any).setKeepScreenAwakeActive?.(true);
       } catch (err: any) {
         os.toast("Could not enable keep awake: " + err?.message);
       }
@@ -1600,23 +1607,29 @@ function SideBar({ panelsNumber }) {
       setRenameValue("");
     };
 
-    const mobileAddTab = () => {
-      const newTab = {
-        id: uuid(),
-        taken: false,
-        data: {
-          use: "thePage",
-          type: "book",
-          book: "Genesis",
-          bookId: "GEN",
-          chapter: 1,
-          translation: "AAB",
-          shortName: "AAB",
-        },
-      };
-      addTab(newTab);
-      setActiveTab(newTab.id);
-      globalThis.UpdateTab(newTab);
+    const mobileAddTab = (e) => {
+      setOpenOnMobile(false);
+      e.preventDefault();
+      e.stopPropagation();
+      setOpenSidebar(true);
+      // setCurrentExperience(0);
+      globalThis.MakingNewTab = true;
+      // const newTab = {
+      //   id: uuid(),
+      //   taken: false,
+      //   data: {
+      //     use: "thePage",
+      //     type: "book",
+      //     book: "Genesis",
+      //     bookId: "GEN",
+      //     chapter: 1,
+      //     translation: "AAB",
+      //     shortName: "AAB",
+      //   },
+      // };
+      // addTab(newTab);
+      // setActiveTab(newTab.id);
+      // globalThis.UpdateTab(newTab);
     };
 
     return (
@@ -1860,7 +1873,7 @@ function SideBar({ panelsNumber }) {
               </button>
             )}
 
-            <button className="mobile-nav-add" onClick={mobileAddTab}>
+            <button className="mobile-nav-add" onClick={(e) => mobileAddTab(e)}>
               <span>
                 <PlusIcon />
               </span>

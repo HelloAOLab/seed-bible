@@ -1,9 +1,5 @@
-import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
-import {
-  type WebResponseMap,
-  createDefaultManagerResponseMap,
-} from "./testUtils/mockBibleApiData";
+import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
 import { signal } from "@preact/signals";
 
 const mockSaveReadingHistory = jest.fn();
@@ -35,11 +31,15 @@ jest.mock("seed-bible.i18n.I18nManager", () => ({
   I18nProvider: ({ children }: { children: unknown }) => children,
 }));
 
-let webGetMock: jest.Mock;
+jest.mock("seed-bible.managers.SearchManager", () => ({
+  createSearchManager: jest.fn().mockReturnValue({
+    searchVerses: jest.fn(),
+  }),
+}));
+
 let logSpy: jest.SpyInstance;
 
 beforeEach(() => {
-  webGetMock = jest.fn();
   logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
   mockSaveReadingHistory.mockReset();
   mockHighlightsManager.getChapterHighlights.mockReset();
@@ -49,10 +49,6 @@ beforeEach(() => {
   mockHighlightsManager.saveChapterHighlights.mockReset();
   mockSessionsManager.createSession.mockReset();
   mockSessionsManager.joinSession.mockReset();
-
-  (globalThis as any).web = {
-    get: webGetMock,
-  };
 
   (globalThis as any).configBot = {
     tags: {},
@@ -67,19 +63,8 @@ beforeEach(() => {
 
 afterEach(() => {
   logSpy.mockRestore();
-  delete (globalThis as any).web;
   delete (globalThis as any).configBot;
 });
-
-function setWebResponses(responses: WebResponseMap): void {
-  webGetMock.mockImplementation((url: string) => {
-    const response = responses[url];
-    if (!response) {
-      throw new Error(`No mocked response for ${url}`);
-    }
-    return Promise.resolve(response);
-  });
-}
 
 async function waitFor(
   condition: () => boolean,
@@ -94,23 +79,8 @@ async function waitFor(
   }
 }
 
-async function waitForInitialLoad(state: BibleReadingState): Promise<void> {
-  await waitFor(() => state.loading.value === false);
-}
-
-async function waitForTabsToLoad(
-  state: ReturnType<typeof createSeedBibleState>
-) {
-  await Promise.all(
-    state.tabs.tabs.value.map((tab) => waitForInitialLoad(tab.readingState))
-  );
-}
-
 async function createState() {
-  setWebResponses(createDefaultManagerResponseMap());
-  const state = createSeedBibleState();
-  await waitForTabsToLoad(state);
-  return state;
+  return createTestSeedBibleState();
 }
 
 async function createStateWithTwoTabs() {
@@ -142,6 +112,7 @@ describe("createSeedBibleState", () => {
     expect(state.selector.isOpen.value).toBe(false);
     expect(state.highlights).toBe(mockHighlightsManager as any);
     expect(state.sessions).toBe(mockSessionsManager);
+    expect(typeof state.search.searchVerses).toBe("function");
   });
 
   it("selecting a tab selects the tab and switches the pane to display the selected tab", async () => {
@@ -342,7 +313,7 @@ describe("createSeedBibleState", () => {
     });
 
     function setSelectedTabChapter(
-      state: ReturnType<typeof createSeedBibleState>,
+      state: SeedBibleState,
       bookId: string,
       chapterNumber: number
     ) {
@@ -365,7 +336,7 @@ describe("createSeedBibleState", () => {
     }
 
     it("does not save history when no tab is selected", async () => {
-      const state = createSeedBibleState();
+      const state = await createState();
       setSelectedTabChapter(state, "genesis", 1);
       mockSaveReadingHistory.mockClear();
 
@@ -376,7 +347,7 @@ describe("createSeedBibleState", () => {
     });
 
     it("does not save history when chapter data is not available", async () => {
-      const state = createSeedBibleState();
+      const state = await createState();
       setSelectedTabChapter(state, "genesis", 1);
       mockSaveReadingHistory.mockClear();
 
@@ -392,7 +363,7 @@ describe("createSeedBibleState", () => {
     });
 
     it("saves first history event after 5 seconds of viewing", async () => {
-      const state = createSeedBibleState();
+      const state = await createState();
       setSelectedTabChapter(state, "genesis", 1);
       mockSaveReadingHistory.mockClear();
 
@@ -405,7 +376,7 @@ describe("createSeedBibleState", () => {
     });
 
     it("saves history once for each additional 5 seconds of viewing", async () => {
-      const state = createSeedBibleState();
+      const state = await createState();
       setSelectedTabChapter(state, "genesis", 1);
       mockSaveReadingHistory.mockClear();
 
@@ -418,7 +389,7 @@ describe("createSeedBibleState", () => {
     });
 
     it("resets autosave interval when selected tab changes", async () => {
-      const state = createSeedBibleState();
+      const state = await createState();
       state.tabs.addTab();
       state.tabs.selectedTabId.value = "tab-1";
       setSelectedTabChapter(state, "genesis", 1);
@@ -440,7 +411,7 @@ describe("createSeedBibleState", () => {
     });
 
     it("resets autosave interval when chapter data changes", async () => {
-      const state = createSeedBibleState();
+      const state = await createState();
       setSelectedTabChapter(state, "genesis", 1);
       mockSaveReadingHistory.mockClear();
 
@@ -471,7 +442,7 @@ describe("createSeedBibleState", () => {
     });
 
     function setSelectedTabChapter(
-      state: ReturnType<typeof createSeedBibleState>,
+      state: SeedBibleState,
       bookId: string,
       chapterNumber: number,
       translationId = "test-translation"
@@ -494,9 +465,9 @@ describe("createSeedBibleState", () => {
       } as any;
     }
 
-    it("does nothing if posthog isn't available", () => {
+    it("does nothing if posthog isn't available", async () => {
       delete (globalThis as any).posthog;
-      const state = createSeedBibleState();
+      const state = await createState();
       setSelectedTabChapter(state, "genesis", 1);
 
       jest.advanceTimersByTime(30_000);
@@ -504,8 +475,8 @@ describe("createSeedBibleState", () => {
       expect(mockPosthogCapture).not.toHaveBeenCalled();
     });
 
-    it("calls capture() after 30 seconds with translationId, bookId, and chapter as a string", () => {
-      const state = createSeedBibleState();
+    it("calls capture() after 30 seconds with translationId, bookId, and chapter as a string", async () => {
+      const state = await createState();
       setSelectedTabChapter(state, "genesis", 1, "esv");
 
       jest.advanceTimersByTime(29_999);
@@ -520,8 +491,8 @@ describe("createSeedBibleState", () => {
       });
     });
 
-    it("restarts the timer when the chapter changes", () => {
-      const state = createSeedBibleState();
+    it("restarts the timer when the chapter changes", async () => {
+      const state = await createState();
       setSelectedTabChapter(state, "genesis", 1, "esv");
 
       jest.advanceTimersByTime(20_000);
@@ -542,7 +513,7 @@ describe("createSeedBibleState", () => {
 
   describe("pageTitle tag", () => {
     function setSelectedTabChapter(
-      state: ReturnType<typeof createSeedBibleState>,
+      state: SeedBibleState,
       bookId: string,
       bookName: string,
       chapterNumber: number,
@@ -571,8 +542,8 @@ describe("createSeedBibleState", () => {
       } as any;
     }
 
-    it("sets pageTitle from the selected book and chapter", () => {
-      const state = createSeedBibleState();
+    it("sets pageTitle from the selected book and chapter", async () => {
+      const state = await createState();
 
       setSelectedTabChapter(state, "genesis", "Genesis", 7, "ESV");
 
@@ -581,8 +552,8 @@ describe("createSeedBibleState", () => {
       );
     });
 
-    it("updates pageTitle when the chapter changes", () => {
-      const state = createSeedBibleState();
+    it("updates pageTitle when the chapter changes", async () => {
+      const state = await createState();
 
       setSelectedTabChapter(state, "genesis", "Genesis", 1, "ESV");
       expect((globalThis as any).configBot.tags.pageTitle).toBe(
@@ -595,8 +566,8 @@ describe("createSeedBibleState", () => {
       );
     });
 
-    it("prepends an RTL marker for right-to-left translations", () => {
-      const state = createSeedBibleState();
+    it("prepends an RTL marker for right-to-left translations", async () => {
+      const state = await createState();
       const RTLE_CHAR = "\u202B";
 
       setSelectedTabChapter(state, "genesis", "Genesis", 1, "Arabic", "rtl");

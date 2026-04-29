@@ -1,3 +1,4 @@
+import { I18nProvider } from "seed-bible.i18n.I18nManager";
 import { PaneLayout } from "seed-bible.components.PaneLayout";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
 import { BibleReaderToolbar } from "seed-bible.components.BibleReaderToolbar";

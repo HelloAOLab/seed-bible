@@ -2,6 +2,13 @@ const { items } = that;
 const G = globalThis as any;
 const id = "default";
 
+const isMobile =
+  (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
+  G.MOBILE_VIEWPORT_THRESHOLD;
+if (G.makingPlaylist && !isMobile) {
+  return;
+}
+
 const itemList = Array.isArray(items) ? items : [items];
 
 const NOTIFICATION_CONTENT_TITLE: any = {
@@ -23,7 +30,8 @@ const areItemsTypesVaring = itemList.some(
 const verses = itemList
   .map((ele: any) => ele.additionalInfo.verse)
   .filter((ele: any) => ele)
-  .sort((a: number, b: number) => a - b);
+  .sort((a: number, b: number) => a - b)
+  .flat();
 const ranges = verses.length ? G.GetVerseSummaryHeading(verses) : [];
 const heading = `${itemList[0].content.split(":")[0]}${ranges.length ? `:${ranges.join(", ")}` : ""}`;
 

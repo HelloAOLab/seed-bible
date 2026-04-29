@@ -10885,6 +10885,11 @@ interface RecordFileOptions {
    * See https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types for more information.
    */
   mimeType?: string;
+
+  /**
+   * The markers for the file.
+   */
+  markers?: string[];
 }
 
 /**

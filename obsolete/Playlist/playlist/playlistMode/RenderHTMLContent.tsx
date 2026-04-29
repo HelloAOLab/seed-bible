@@ -1,5 +1,5 @@
 const G = globalThis as any;
-const { Button } = G.Components;
+const { Button, Modal, ButtonsCover } = G.Components;
 const { useState, useMemo, useLayoutEffect, useRef, useEffect } = os.appHooks;
 
 const RenderHTMLContent = (props: any) => {
@@ -7,6 +7,7 @@ const RenderHTMLContent = (props: any) => {
   const [shouldRender, setShouldRender] = useState(false);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<any>(null);
+  const [addToQueuePopup, setAddToQueuePopup] = useState(false);
 
   useLayoutEffect(() => {
     // If html content contains image, video , iframe, audio, etc. then set shouldRender to true
@@ -24,6 +25,70 @@ const RenderHTMLContent = (props: any) => {
       }
     }
   }, [htmlContent]);
+
+  const handlePlayCircleClick = async (e: any, bypassQueue?: boolean) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    if (G.IsQueuePresent) {
+      if (!bypassQueue) {
+        setAddToQueuePopup(true);
+        return;
+      }
+      ShowNotification({
+        message: t("addToTheCurrentQueue"),
+        severity: "success",
+      });
+    }
+    const id = e.target.getAttribute("id");
+    if (!id) return;
+    const [authBotId, playlistId] = id.split(G.RECORD_SEPARATOR);
+    if (!authBotId || !playlistId) return;
+
+    if (G.LoadingOldPlaylist) {
+      return ShowNotification({
+        message: t("pleaseWaitOldPlaylistIsLoading"),
+        severity: "error",
+      });
+    }
+
+    ShowNotification({
+      message: t("loadingPlaylistPleaseWait"),
+      severity: "success",
+    });
+
+    G.LoadingOldPlaylist = true;
+
+    let res: any = null;
+
+    if (G.LoadedPlaylistAnnotations[playlistId]) {
+      res = {
+        success: true,
+        data: G.LoadedPlaylistAnnotations[playlistId],
+      };
+    } else {
+      res = await os.getData(authBotId, playlistId);
+      G.LoadedPlaylistAnnotations[playlistId] = { ...res.data };
+    }
+
+    if (res.success && res.data?.list) {
+      const playlistData = res.data;
+      thisBot.Playlistplaying({
+        playingPlaylist: playlistData.id,
+        startIndex: 0,
+        startSubIndex: -1,
+        parentId: "default",
+        name: playlistData.name,
+        list: [...playlistData.list],
+      });
+    } else {
+      ShowNotification({
+        message: t("playlistNotFoundOrIsDeleted"),
+        severity: "error",
+      });
+    }
+    setAddToQueuePopup(false);
+    G.LoadingOldPlaylist = false;
+  };
 
   // ⭐ Add event listeners for video and iframe tags
   useEffect(() => {
@@ -75,59 +140,6 @@ const RenderHTMLContent = (props: any) => {
       thisBot.VideoPlayer({
         src: src,
       });
-    };
-
-    const handlePlayCircleClick = async (e: any) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const id = e.target.getAttribute("id");
-      if (!id) return;
-      const [authBotId, playlistId] = id.split(G.RECORD_SEPARATOR);
-      if (!authBotId || !playlistId) return;
-
-      if (G.LoadingOldPlaylist) {
-        return ShowNotification({
-          message: t("pleaseWaitOldPlaylistIsLoading"),
-          severity: "error",
-        });
-      }
-
-      ShowNotification({
-        message: t("loadingPlaylistPleaseWait"),
-        severity: "success",
-      });
-
-      G.LoadingOldPlaylist = true;
-
-      let res: any = null;
-
-      if (G.LoadedPlaylistAnnotations[playlistId]) {
-        res = {
-          success: true,
-          data: G.LoadedPlaylistAnnotations[playlistId],
-        };
-      } else {
-        res = await os.getData(authBotId, playlistId);
-        G.LoadedPlaylistAnnotations[playlistId] = { ...res.data };
-      }
-
-      if (res.success && res.data?.list) {
-        const playlistData = res.data;
-        thisBot.Playlistplaying({
-          playingPlaylist: playlistData.id,
-          startIndex: 0,
-          startSubIndex: -1,
-          parentId: "default",
-          name: playlistData.name,
-          list: [...playlistData.list],
-        });
-      } else {
-        ShowNotification({
-          message: t("playlistNotFoundOrIsDeleted"),
-          severity: "error",
-        });
-      }
-      G.LoadingOldPlaylist = false;
     };
 
     // Function to handle iframe overlay clicks
@@ -221,42 +233,66 @@ const RenderHTMLContent = (props: any) => {
   }, [htmlContent]);
 
   return (
-    <div>
-      <div
-        className="render-html-content"
-        ref={containerRef}
-        style={{
-          overflow: "hidden",
-          height: shouldRender ? (open ? "auto" : "60px") : "auto",
-          textTransform: "none",
-          transition: "all 0.2s linear",
-          paddingBottom: "0.25rem",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          backgroundColor: "white",
-        }}
-        dangerouslySetInnerHTML={{ __html: breakHTMLCONTENT }}
-      />
-
-      {shouldRender && (
-        <span
-          style={{
-            textAlign: "center",
-            cursor: "pointer",
-            fontSize: "12px",
-            color: "var(--primaryButtonFill)",
-            marginTop: "0.25rem",
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            setOpen(!open);
-          }}
+    <>
+      {addToQueuePopup && (
+        <Modal
+          title={t("addPlaylistToQueueTitle")}
+          showIcon={false}
+          onClose={() => setAddToQueuePopup(false)}
         >
-          {open ? "Show less" : "Show more"}
-        </span>
+          <p>{t("addPlaylistToQueueDescription")}</p>
+          <ButtonsCover style={{ gap: "1rem", marginTop: "1rem" }}>
+            <Button
+              secondary
+              onClick={() => {
+                handlePlayCircleClick(null, true);
+              }}
+            >
+              {t("yes")}
+            </Button>
+            <Button secondaryAlt onClick={() => setAddToQueuePopup(false)}>
+              {t("no")}
+            </Button>
+          </ButtonsCover>
+        </Modal>
       )}
-    </div>
+      <div>
+        <div
+          className="render-html-content"
+          ref={containerRef}
+          style={{
+            overflow: "hidden",
+            height: shouldRender ? (open ? "auto" : "60px") : "auto",
+            textTransform: "none",
+            transition: "all 0.2s linear",
+            paddingBottom: "0.25rem",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            backgroundColor: "white",
+          }}
+          dangerouslySetInnerHTML={{ __html: breakHTMLCONTENT }}
+        />
+
+        {shouldRender && (
+          <span
+            style={{
+              textAlign: "center",
+              cursor: "pointer",
+              fontSize: "12px",
+              color: "var(--primaryButtonFill)",
+              marginTop: "0.25rem",
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(!open);
+            }}
+          >
+            {open ? "Show less" : "Show more"}
+          </span>
+        )}
+      </div>
+    </>
   );
 };
 

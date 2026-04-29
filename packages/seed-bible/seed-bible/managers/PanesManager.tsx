@@ -59,7 +59,7 @@ export interface Pane {
 }
 
 /** Placement mode for detached panes. */
-export type DetachedPaneAnchor = "floating" | "side" | "bottom";
+export type DetachedPaneAnchor = "floating" | "side" | "bottom" | "fullscreen";
 
 interface PaneContent {
   tab: ReaderTab | null;
@@ -829,6 +829,10 @@ export function createPanes(
   ) => {
     panes.value = panes.value.map((pane) => {
       if (pane.id !== paneId) {
+        return pane;
+      }
+
+      if (pane.detachedAnchor === "fullscreen") {
         return pane;
       }
 
