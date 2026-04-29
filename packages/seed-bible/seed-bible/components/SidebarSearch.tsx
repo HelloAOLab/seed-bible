@@ -261,8 +261,8 @@ export function SidebarSearch(props: SidebarSearchProps) {
             }
           }}
           className="sb-sidebar-search-input"
-          placeholder="Search verses"
-          aria-label="Search verses"
+          placeholder={t("search-verses", { defaultValue: "Search verses" })}
+          aria-label={t("search-verses", { defaultValue: "Search verses" })}
         />
         {searchQuery.value.trim().length > 0 && (
           <button
@@ -270,8 +270,8 @@ export function SidebarSearch(props: SidebarSearchProps) {
               runSearch("");
             }}
             className="sb-sidebar-search-clear-button"
-            aria-label="Clear search"
-            title="Clear search"
+            aria-label={t("clear-search", { defaultValue: "Clear search" })}
+            title={t("clear-search", { defaultValue: "Clear search" })}
           >
             <span className="material-symbols-outlined">close</span>
           </button>

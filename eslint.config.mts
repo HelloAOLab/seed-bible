@@ -122,7 +122,19 @@ export default defineConfig([
       "seed-bible-i18n": i18nJsonPlugin,
     },
     rules: {
-      "seed-bible-i18n/translation-unused-keys": "warn",
+      "seed-bible-i18n/translation-unused-keys": [
+        "error",
+        {
+          exemptKeys: [
+            "text-section-bookTitle",
+            "text-section-heading",
+            "text-section-verse",
+            "bold",
+            "regular",
+            "light",
+          ],
+        },
+      ],
       "seed-bible-i18n/translation-incomplete-translations": "warn",
     },
   },
