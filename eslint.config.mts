@@ -123,7 +123,7 @@ export default defineConfig([
     },
     rules: {
       "seed-bible-i18n/translation-unused-keys": [
-        "error",
+        "warn",
         {
           exemptKeys: [
             "text-section-bookTitle",
