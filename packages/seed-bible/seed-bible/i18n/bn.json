@@ -9,8 +9,7 @@
   "copy-verse": "অনুলিপি",
   "next-chapter": "পরবর্তী অধ্যায়",
   "previous-chapter": "পূর্ববর্তী অধ্যায়",
-  "highlight-yellow": "হাইলাইট (হলুদ)",
-  "clear-highlights": "পরিষ্কার হাইলাইট",
+
   "share-verse": "শেয়ার",
   "cancel": "বাতিল করুন",
   "close": "বন্ধ করুন",
@@ -30,7 +29,7 @@
   "clear-search": "পরিষ্কার অনুসন্ধান",
   "searching": "অনুসন্ধান করা হচ্ছে...",
   "no-search-results": "কোনো মিল থাকা শ্লোক নেই।",
-  "verse-result": "অধ্যায় খুলুন",
+
   "close-panel": "প্যানেল বন্ধ করুন",
   "anchor-to-side": "পাশে নোঙর করুন",
   "fullscreen": "পূর্ণ পর্দা",

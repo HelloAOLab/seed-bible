@@ -9,8 +9,7 @@
   "copy-verse": "Копіювати",
   "next-chapter": "Наступний розділ",
   "previous-chapter": "Попередній розділ",
-  "highlight-yellow": "Виділення (жовтий)",
-  "clear-highlights": "Очистити основні моменти",
+
   "share-verse": "Поділитися",
   "cancel": "Скасувати",
   "close": "Закрити",
@@ -30,7 +29,7 @@
   "clear-search": "Очистити пошук",
   "searching": "Пошук...",
   "no-search-results": "Немає відповідних віршів.",
-  "verse-result": "Відкрити розділ",
+
   "close-panel": "Закрити панель",
   "anchor-to-side": "Якір до бокової частини",
   "fullscreen": "Повноекранний режим",

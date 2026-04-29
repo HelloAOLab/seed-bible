@@ -9,8 +9,7 @@
   "copy-verse": "コピー",
   "next-chapter": "次の章",
   "previous-chapter": "前の章",
-  "highlight-yellow": "ハイライト（黄色）",
-  "clear-highlights": "明確なハイライト",
+
   "share-verse": "共有",
   "cancel": "キャンセル",
   "close": "近い",
@@ -30,7 +29,7 @@
   "clear-search": "検索をクリアする",
   "searching": "検索中...",
   "no-search-results": "該当する詩句はありません。",
-  "verse-result": "オープンチャプター",
+
   "close-panel": "パネルを閉じる",
   "anchor-to-side": "側面にアンカー",
   "fullscreen": "全画面表示",

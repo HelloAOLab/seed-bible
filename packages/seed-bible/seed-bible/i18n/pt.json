@@ -9,8 +9,7 @@
   "copy-verse": "Cópia",
   "next-chapter": "Próximo capítulo",
   "previous-chapter": "Capítulo anterior",
-  "highlight-yellow": "Destaque (Amarelo)",
-  "clear-highlights": "Destaques nítidos",
+
   "share-verse": "Compartilhar",
   "cancel": "Cancelar",
   "close": "Fechar",
@@ -30,7 +29,7 @@
   "clear-search": "Limpar pesquisa",
   "searching": "Procurando...",
   "no-search-results": "Não há versículos correspondentes.",
-  "verse-result": "Capítulo aberto",
+
   "close-panel": "Fechar painel",
   "anchor-to-side": "Ancore na lateral",
   "fullscreen": "Tela cheia",

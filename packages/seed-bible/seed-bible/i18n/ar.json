@@ -9,8 +9,7 @@
   "copy-verse": "ينسخ",
   "next-chapter": "الفصل التالي",
   "previous-chapter": "الفصل السابق",
-  "highlight-yellow": "تمييز (أصفر)",
-  "clear-highlights": "تمييز واضح",
+
   "share-verse": "يشارك",
   "cancel": "يلغي",
   "close": "يغلق",
@@ -30,7 +29,7 @@
   "clear-search": "مسح البحث",
   "searching": "جارٍ البحث...",
   "no-search-results": "لا توجد آيات متطابقة.",
-  "verse-result": "الفصل المفتوح",
+
   "close-panel": "إغلاق اللوحة",
   "anchor-to-side": "مرساة على الجانب",
   "fullscreen": "ملء الشاشة",

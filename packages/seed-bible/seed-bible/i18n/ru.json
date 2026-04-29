@@ -9,8 +9,7 @@
   "copy-verse": "Копия",
   "next-chapter": "Следующая глава",
   "previous-chapter": "Предыдущая глава",
-  "highlight-yellow": "Выделить (жёлтым)",
-  "clear-highlights": "Чёткое выделение",
+
   "share-verse": "Делиться",
   "cancel": "Отмена",
   "close": "Закрывать",
@@ -30,7 +29,7 @@
   "clear-search": "Очистить поиск",
   "searching": "Идет поиск...",
   "no-search-results": "Нет подходящих стихов.",
-  "verse-result": "Открыть главу",
+
   "close-panel": "Закрыть панель",
   "anchor-to-side": "Прикрепить якорь к боковой стенке",
   "fullscreen": "Полноэкранный",

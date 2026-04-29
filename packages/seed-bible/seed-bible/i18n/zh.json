@@ -9,8 +9,7 @@
   "copy-verse": "复制",
   "next-chapter": "下一章",
   "previous-chapter": "上一章",
-  "highlight-yellow": "高亮显示（黄色）",
-  "clear-highlights": "清晰高亮",
+
   "share-verse": "分享",
   "cancel": "取消",
   "close": "关闭",
@@ -30,7 +29,7 @@
   "clear-search": "清除搜索",
   "searching": "正在搜索……",
   "no-search-results": "没有匹配的诗句。",
-  "verse-result": "打开章节",
+
   "close-panel": "关闭面板",
   "anchor-to-side": "锚定在侧面",
   "fullscreen": "全屏",

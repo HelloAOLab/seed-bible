@@ -9,8 +9,7 @@
   "copy-verse": "복사",
   "next-chapter": "다음 장",
   "previous-chapter": "이전 장",
-  "highlight-yellow": "강조 표시(노란색)",
-  "clear-highlights": "선명한 하이라이트",
+
   "share-verse": "공유하다",
   "cancel": "취소",
   "close": "닫다",
@@ -30,7 +29,7 @@
   "clear-search": "검색 결과 지우기",
   "searching": "수색...",
   "no-search-results": "일치하는 구절이 없습니다.",
-  "verse-result": "챕터 열기",
+
   "close-panel": "패널 닫기",
   "anchor-to-side": "측면에 고정",
   "fullscreen": "전체 화면",
