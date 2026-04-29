@@ -1,3 +1,4 @@
+/* eslint-disable seed-bible-i18n/i18n-untranslated-content */
 import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
 import { MaterialIcon } from "seed-bible.components.icons";

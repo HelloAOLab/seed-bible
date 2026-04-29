@@ -1140,7 +1140,11 @@ export function PaneLayout(props: PaneLayoutProps) {
                     <span className="material-symbols-outlined">
                       fullscreen_exit
                     </span>
-                    <span>Exit Full Screen</span>
+                    <span>
+                      {t("exit-full-screen", {
+                        defaultValue: "Exit Full Screen",
+                      })}
+                    </span>
                   </button>
                 </div>
               </>

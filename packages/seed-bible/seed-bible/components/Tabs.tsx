@@ -236,11 +236,15 @@ function SessionSettingsModalContent(props: {
     session.updateOptions({ highlightDurationSeconds: seconds });
   };
 
+  const { t } = useI18n();
+
   return (
     <div className="sb-session-settings">
       {!isHost && (
         <p className="sb-session-settings-note">
-          Only the session host can change these settings.
+          {t("session-settings-host-only_note", {
+            defaultValue: "Only the session host can change these settings.",
+          })}
         </p>
       )}
 
@@ -249,7 +253,9 @@ function SessionSettingsModalContent(props: {
           className="sb-session-settings-label"
           htmlFor="sb-session-only-host-navigate"
         >
-          Only host can navigate
+          {t("session-settings-host-only_navigate", {
+            defaultValue: "Only host can navigate",
+          })}
         </label>
         <input
           id="sb-session-only-host-navigate"
@@ -269,7 +275,9 @@ function SessionSettingsModalContent(props: {
           className="sb-session-settings-label"
           htmlFor="sb-session-only-host-highlight"
         >
-          Only host can highlight
+          {t("session-settings-host-only_highlight", {
+            defaultValue: "Only host can highlight",
+          })}
         </label>
         <input
           id="sb-session-only-host-highlight"
@@ -285,7 +293,11 @@ function SessionSettingsModalContent(props: {
       </div>
 
       <div className="sb-session-settings-duration">
-        <div className="sb-session-settings-duration-title">Highlight for</div>
+        <div className="sb-session-settings-duration-title">
+          {t("session-settings-highlight-duration", {
+            defaultValue: "Highlight for",
+          })}
+        </div>
         <div className="sb-session-settings-duration-options">
           {HIGHLIGHT_DURATION_OPTIONS.map((option) => {
             const selected = options.highlightDurationSeconds === option.value;
@@ -310,7 +322,7 @@ function SessionSettingsModalContent(props: {
           className="sb-session-settings-cancel"
           onClick={onClose}
         >
-          Close
+          {t("close", { defaultValue: "Close" })}
         </button>
         <button
           type="button"
@@ -320,7 +332,7 @@ function SessionSettingsModalContent(props: {
             onClose();
           }}
         >
-          End Session
+          {t("end-session", { defaultValue: "End Session" })}
         </button>
       </div>
     </div>
@@ -340,6 +352,7 @@ export function TabsHeader(props: TabsHeaderProps) {
     openJoinSessionModal,
   } = props;
   const { sidebar } = state;
+  const { t } = useI18n();
 
   return (
     <div className="sb-sidebar-top-row">
@@ -370,7 +383,9 @@ export function TabsHeader(props: TabsHeaderProps) {
 
             {isLayoutMenuOpen && (
               <div className="sb-pane-layout-menu">
-                <div className="sb-pane-layout-menu-title">Panels</div>
+                <div className="sb-pane-layout-menu-title">
+                  {t("panels", { defaultValue: "Panels" })}
+                </div>
                 <div className="sb-pane-layout-options">
                   {PANE_LAYOUT_OPTIONS.map((layout) => (
                     <button
@@ -406,14 +421,14 @@ export function TabsHeader(props: TabsHeaderProps) {
               createSharedSession();
             }}
           >
-            New shared session
+            {t("new-shared-session", { defaultValue: "New shared session" })}
           </ContextMenuItem>
           <ContextMenuItem
             onClick={() => {
               openJoinSessionModal();
             }}
           >
-            Join shared session
+            {t("join-shared-session", { defaultValue: "Join shared session" })}
           </ContextMenuItem>
         </ContextMenuWithButton>
       </div>
@@ -665,7 +680,9 @@ export function Tabs(props: TabsProps) {
                       }}
                       className="sb-tab-menu-item"
                     >
-                      Open in new pane
+                      {t("open-in-new-panel", {
+                        defaultValue: "Open in new panel",
+                      })}
                     </ContextMenuItem>
                     <ContextMenuItem
                       onClick={() => {
@@ -673,7 +690,9 @@ export function Tabs(props: TabsProps) {
                       }}
                       className="sb-tab-menu-item"
                     >
-                      Open in detached pane
+                      {t("open-in-detached-panel", {
+                        defaultValue: "Open in detached panel",
+                      })}
                     </ContextMenuItem>
                   </>
                 )}

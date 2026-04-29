@@ -119,6 +119,7 @@ export function ContextMenuWithButton({
             "sb-context-more-icon",
             iconClassName
           )}
+          // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
         >
           more_vert
         </span>

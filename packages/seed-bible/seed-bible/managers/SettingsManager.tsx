@@ -75,16 +75,16 @@ export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
 ];
 
 export const TEXT_WEIGHT_OPTIONS: { value: string; label: string }[] = [
-  { value: "700", label: "Bold" },
-  { value: "400", label: "Regular" },
-  { value: "300", label: "Light" },
+  { value: "700", label: "bold" },
+  { value: "400", label: "regular" },
+  { value: "300", label: "light" },
 ];
 
-export const TEXT_SECTION_LABELS: Record<TextSectionId, string> = {
-  bookTitle: "Book title",
-  heading: "Heading",
-  verse: "Verse",
-};
+// export const TEXT_SECTION_LABELS: Record<TextSectionId, string> = {
+//   bookTitle: "Book title",
+//   heading: "Heading",
+//   verse: "Verse",
+// };
 
 const DEFAULT_SELECTION_UI: SelectionUIBehavior = {
   showSelectedItems: true,

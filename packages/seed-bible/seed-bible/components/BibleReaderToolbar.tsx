@@ -578,7 +578,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         className="sb-reader-toolbar-button"
                         aria-label="More tools"
                       >
-                        <span>more</span>
+                        <span>{t("more", { defaultValue: "More" })}</span>
                       </button>
                       {isMoreMenuOpen.value && (
                         <div className="sb-reader-toolbar-more-menu">
