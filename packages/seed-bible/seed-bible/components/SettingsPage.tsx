@@ -94,23 +94,6 @@ type ExtensionInstallState = "none" | "pending" | "downloaded" | "installed";
 
 const FONT_SIZE_OPTIONS: TextSize[] = ["XS", "S", "M", "L", "XL", "XXL"];
 
-function SettingsSubPageHeader(props: { title: string; onBack: () => void }) {
-  const { t } = useI18n();
-  return (
-    <div className="sb-settings-subpage-header">
-      <button
-        className="sb-settings-back-button"
-        onClick={props.onBack}
-        aria-label={t("back-to-settings", { defaultValue: "Back to settings" })}
-        title={t("back", { defaultValue: "Back" })}
-      >
-        <span className="material-symbols-outlined">arrow_back</span>
-      </button>
-      <h2 className="sb-settings-subpage-title">{props.title}</h2>
-    </div>
-  );
-}
-
 function SettingsBreadcrumbs(props: { onBack: () => void; trail: string[] }) {
   const { t } = useI18n();
   return (
@@ -228,9 +211,12 @@ function AccountSettingsView(props: {
 
   return (
     <div className="sb-settings-page">
-      <SettingsSubPageHeader
-        title={t("account-settings", { defaultValue: "Account settings" })}
+      <SettingsBreadcrumbs
         onBack={onBack}
+        trail={[
+          t("page-settings", { defaultValue: "Page settings" }),
+          t("account-settings", { defaultValue: "Account settings" }),
+        ]}
       />
       <section className="sb-settings-section">
         {isLoggedIn ? (
@@ -774,9 +760,12 @@ function ExtensionsSettingsView(props: {
 
   return (
     <div className="sb-settings-page">
-      <SettingsSubPageHeader
-        title={t("extensions", { defaultValue: "Extensions" })}
+      <SettingsBreadcrumbs
         onBack={onBack}
+        trail={[
+          t("page-settings", { defaultValue: "Page settings" }),
+          t("extensions", { defaultValue: "Extensions" }),
+        ]}
       />
       <section className="sb-settings-section">
         {extensionsList.length === 0 ? (
@@ -1494,9 +1483,12 @@ function DisplaySettingsView(props: {
 
   return (
     <div className="sb-settings-page">
-      <SettingsSubPageHeader
-        title={t("display", { defaultValue: "Display" })}
+      <SettingsBreadcrumbs
         onBack={onBack}
+        trail={[
+          t("page-settings", { defaultValue: "Page settings" }),
+          t("display", { defaultValue: "Display" }),
+        ]}
       />
       <section className="sb-settings-section">
         <div className="sb-settings-field-row">
