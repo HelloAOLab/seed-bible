@@ -58,5 +58,19 @@
   "save-changes": "Save changes",
   "sign-out": "Sign out",
   "login-required-message": "Please log in to view and edit your profile.",
-  "log-in": "Log in"
+  "log-in": "Log in",
+  "searchTranslation": "Search translations...",
+  "oldTestament": "Old Testament",
+  "newTestament": "New Testament",
+  "oldTestamentShort": "OT",
+  "newTestamentShort": "NT",
+  "apocrypha": "Apocrypha",
+  "customTranslations": "Custom translations",
+  "fromId": "from ID",
+  "fromUrl": "from URL",
+  "enterId": "Enter ID",
+  "Queue": "Queue",
+  "file": "File",
+  "noLanguageResultsFound": "No results found. Would you like to expand your search to include partially complete languages as well?",
+  "showAllLanguages": "Show all languages"
 }
