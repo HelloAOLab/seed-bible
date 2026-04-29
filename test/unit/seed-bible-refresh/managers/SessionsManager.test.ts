@@ -330,7 +330,7 @@ describe("SessionsManager", () => {
     expect(session.options.value).toEqual({
       allowedNavigators: null,
       allowedDecorators: null,
-      hostUserId: null,
+      hostUserId: "test-config-bot-id",
       highlightDurationSeconds: 16,
       endedAt: null,
     });
