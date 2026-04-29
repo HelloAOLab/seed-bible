@@ -16,6 +16,9 @@
   "close": "Close",
   "open-settings": "Open Settings",
   "close-settings": "Close Settings",
+  "session-settings": "Session settings",
+  "shared-session-click-to-join": "is sharing — click to join",
+  "dismiss": "Dismiss",
   "shared-tab_title": "Shared {{book}}",
   "tabs": "Tabs",
   "new-tab": "New tab",
@@ -58,5 +61,9 @@
   "save-changes": "Save changes",
   "sign-out": "Sign out",
   "login-required-message": "Please log in to view and edit your profile.",
-  "log-in": "Log in"
+  "log-in": "Log in",
+  "open-in-pane": "Open in pane:",
+  "empty": "empty",
+  "pane_number": "Pane {{number}}",
+  "tanakh": "Tanakh"
 }

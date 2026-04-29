@@ -75,7 +75,7 @@ export function BibleSelector(props: BibleSelectorProps) {
                   }`}
                   onClick={() => setTargetPane(p.id)}
                 >
-                  {`${t("pane", { defaultValue: "Pane" })} ${index + 1}${subtitle}`}
+                  {`${t("pane_number", { number: index + 1, defaultValue: "Pane {{number}}" })}${subtitle}`}
                 </button>
               );
             })}

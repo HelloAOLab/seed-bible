@@ -19,8 +19,7 @@ import { MaterialIcon } from "seed-bible.components.icons";
 
 const { useEffect, useRef, useState } = os.appHooks;
 
-const ATTACHED_PANE_MIN_SIZE_PX = 180;
-const ATTACHED_RESIZE_HANDLE_SIZE_PX = 14;
+// const ATTACHED_PANE_MIN_SIZE_PX = 180;
 
 type MultiPaneLayoutId = Exclude<PaneLayoutId, "single">;
 
@@ -32,212 +31,212 @@ interface AttachedPaneSizesState {
   "split-4v": { columns: number[] };
 }
 
-type AttachedResizeHandleDescriptor = {
-  id: string;
-  axis: "x" | "y";
-  ratio: number;
-  crossStart: number;
-  crossEnd: number;
-};
+// type AttachedResizeHandleDescriptor = {
+//   id: string;
+//   axis: "x" | "y";
+//   ratio: number;
+//   crossStart: number;
+//   crossEnd: number;
+// };
 
-const DEFAULT_ATTACHED_PANE_SIZES: AttachedPaneSizesState = {
-  "split-2v": { columns: [1, 1] },
-  "split-left-two-right": { columns: [1.2, 1], rows: [1, 1] },
-  "split-3v": { columns: [1, 1, 1] },
-  "grid-2x2": { columns: [1, 1], rows: [1, 1] },
-  "split-4v": { columns: [1, 1, 1, 1] },
-};
+// const DEFAULT_ATTACHED_PANE_SIZES: AttachedPaneSizesState = {
+//   "split-2v": { columns: [1, 1] },
+//   "split-left-two-right": { columns: [1.2, 1], rows: [1, 1] },
+//   "split-3v": { columns: [1, 1, 1] },
+//   "grid-2x2": { columns: [1, 1], rows: [1, 1] },
+//   "split-4v": { columns: [1, 1, 1, 1] },
+// };
 
-function clamp(value: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, value));
-}
+// function clamp(value: number, min: number, max: number) {
+//   return Math.max(min, Math.min(max, value));
+// }
 
-function toGridTrack(value: number) {
-  return `minmax(0, ${value}fr)`;
-}
+// function toGridTrack(value: number) {
+//   return `minmax(0, ${value}fr)`;
+// }
 
-function getRatioAtIndex(values: number[], index: number) {
-  const total = values.reduce((sum, current) => sum + current, 0);
-  if (total <= 0) {
-    return 0;
-  }
+// function getRatioAtIndex(values: number[], index: number) {
+//   const total = values.reduce((sum, current) => sum + current, 0);
+//   if (total <= 0) {
+//     return 0;
+//   }
 
-  const before = values
-    .slice(0, index + 1)
-    .reduce((sum, current) => sum + current, 0);
-  return clamp(before / total, 0, 1);
-}
+//   const before = values
+//     .slice(0, index + 1)
+//     .reduce((sum, current) => sum + current, 0);
+//   return clamp(before / total, 0, 1);
+// }
 
-function resizeAdjacentTracks(
-  tracks: number[],
-  index: number,
-  deltaPx: number,
-  containerSizePx: number
-) {
-  if (index < 0 || index >= tracks.length - 1 || containerSizePx <= 0) {
-    return tracks;
-  }
+// function resizeAdjacentTracks(
+//   tracks: number[],
+//   index: number,
+//   deltaPx: number,
+//   containerSizePx: number
+// ) {
+//   if (index < 0 || index >= tracks.length - 1 || containerSizePx <= 0) {
+//     return tracks;
+//   }
 
-  const nextTracks = [...tracks];
-  const currentTrack = tracks[index] ?? 0;
-  const adjacentTrack = tracks[index + 1] ?? 0;
-  const pairTotal = currentTrack + adjacentTrack;
-  const minimumTrack =
-    (ATTACHED_PANE_MIN_SIZE_PX / containerSizePx) * pairTotal;
-  const boundedMinimumTrack = clamp(minimumTrack, 0.05, pairTotal / 2 - 0.0001);
-  if (boundedMinimumTrack * 2 >= pairTotal) {
-    return tracks;
-  }
+//   const nextTracks = [...tracks];
+//   const currentTrack = tracks[index] ?? 0;
+//   const adjacentTrack = tracks[index + 1] ?? 0;
+//   const pairTotal = currentTrack + adjacentTrack;
+//   const minimumTrack =
+//     (ATTACHED_PANE_MIN_SIZE_PX / containerSizePx) * pairTotal;
+//   const boundedMinimumTrack = clamp(minimumTrack, 0.05, pairTotal / 2 - 0.0001);
+//   if (boundedMinimumTrack * 2 >= pairTotal) {
+//     return tracks;
+//   }
 
-  const deltaTrack = (deltaPx / containerSizePx) * pairTotal;
-  const nextCurrentTrack = clamp(
-    currentTrack + deltaTrack,
-    boundedMinimumTrack,
-    pairTotal - boundedMinimumTrack
-  );
+//   const deltaTrack = (deltaPx / containerSizePx) * pairTotal;
+//   const nextCurrentTrack = clamp(
+//     currentTrack + deltaTrack,
+//     boundedMinimumTrack,
+//     pairTotal - boundedMinimumTrack
+//   );
 
-  nextTracks[index] = nextCurrentTrack;
-  nextTracks[index + 1] = pairTotal - nextCurrentTrack;
-  return nextTracks;
-}
+//   nextTracks[index] = nextCurrentTrack;
+//   nextTracks[index + 1] = pairTotal - nextCurrentTrack;
+//   return nextTracks;
+// }
 
-function getAttachedResizeHandles(
-  layout: PaneLayoutId,
-  attachedPaneSizes: AttachedPaneSizesState
-): AttachedResizeHandleDescriptor[] {
-  if (layout === "split-2v") {
-    return [
-      {
-        id: "col-0",
-        axis: "x",
-        ratio: getRatioAtIndex(attachedPaneSizes["split-2v"].columns, 0),
-        crossStart: 0,
-        crossEnd: 1,
-      },
-    ];
-  }
+// function getAttachedResizeHandles(
+//   layout: PaneLayoutId,
+//   attachedPaneSizes: AttachedPaneSizesState
+// ): AttachedResizeHandleDescriptor[] {
+//   if (layout === "split-2v") {
+//     return [
+//       {
+//         id: "col-0",
+//         axis: "x",
+//         ratio: getRatioAtIndex(attachedPaneSizes["split-2v"].columns, 0),
+//         crossStart: 0,
+//         crossEnd: 1,
+//       },
+//     ];
+//   }
 
-  if (layout === "split-3v") {
-    return [0, 1].map((index) => ({
-      id: `col-${index}`,
-      axis: "x" as const,
-      ratio: getRatioAtIndex(attachedPaneSizes["split-3v"].columns, index),
-      crossStart: 0,
-      crossEnd: 1,
-    }));
-  }
+//   if (layout === "split-3v") {
+//     return [0, 1].map((index) => ({
+//       id: `col-${index}`,
+//       axis: "x" as const,
+//       ratio: getRatioAtIndex(attachedPaneSizes["split-3v"].columns, index),
+//       crossStart: 0,
+//       crossEnd: 1,
+//     }));
+//   }
 
-  if (layout === "split-4v") {
-    return [0, 1, 2].map((index) => ({
-      id: `col-${index}`,
-      axis: "x" as const,
-      ratio: getRatioAtIndex(attachedPaneSizes["split-4v"].columns, index),
-      crossStart: 0,
-      crossEnd: 1,
-    }));
-  }
+//   if (layout === "split-4v") {
+//     return [0, 1, 2].map((index) => ({
+//       id: `col-${index}`,
+//       axis: "x" as const,
+//       ratio: getRatioAtIndex(attachedPaneSizes["split-4v"].columns, index),
+//       crossStart: 0,
+//       crossEnd: 1,
+//     }));
+//   }
 
-  if (layout === "grid-2x2") {
-    return [
-      {
-        id: "col-0",
-        axis: "x",
-        ratio: getRatioAtIndex(attachedPaneSizes["grid-2x2"].columns, 0),
-        crossStart: 0,
-        crossEnd: 1,
-      },
-      {
-        id: "row-0",
-        axis: "y",
-        ratio: getRatioAtIndex(attachedPaneSizes["grid-2x2"].rows, 0),
-        crossStart: 0,
-        crossEnd: 1,
-      },
-    ];
-  }
+//   if (layout === "grid-2x2") {
+//     return [
+//       {
+//         id: "col-0",
+//         axis: "x",
+//         ratio: getRatioAtIndex(attachedPaneSizes["grid-2x2"].columns, 0),
+//         crossStart: 0,
+//         crossEnd: 1,
+//       },
+//       {
+//         id: "row-0",
+//         axis: "y",
+//         ratio: getRatioAtIndex(attachedPaneSizes["grid-2x2"].rows, 0),
+//         crossStart: 0,
+//         crossEnd: 1,
+//       },
+//     ];
+//   }
 
-  if (layout === "split-left-two-right") {
-    const columnRatio = getRatioAtIndex(
-      attachedPaneSizes["split-left-two-right"].columns,
-      0
-    );
+//   if (layout === "split-left-two-right") {
+//     const columnRatio = getRatioAtIndex(
+//       attachedPaneSizes["split-left-two-right"].columns,
+//       0
+//     );
 
-    return [
-      {
-        id: "col-0",
-        axis: "x",
-        ratio: columnRatio,
-        crossStart: 0,
-        crossEnd: 1,
-      },
-      {
-        id: "row-0",
-        axis: "y",
-        ratio: getRatioAtIndex(
-          attachedPaneSizes["split-left-two-right"].rows,
-          0
-        ),
-        crossStart: columnRatio,
-        crossEnd: 1,
-      },
-    ];
-  }
+//     return [
+//       {
+//         id: "col-0",
+//         axis: "x",
+//         ratio: columnRatio,
+//         crossStart: 0,
+//         crossEnd: 1,
+//       },
+//       {
+//         id: "row-0",
+//         axis: "y",
+//         ratio: getRatioAtIndex(
+//           attachedPaneSizes["split-left-two-right"].rows,
+//           0
+//         ),
+//         crossStart: columnRatio,
+//         crossEnd: 1,
+//       },
+//     ];
+//   }
 
-  return [];
-}
+//   return [];
+// }
 
-function getAttachedLayoutStyle(
-  layout: PaneLayoutId,
-  attachedPaneSizes: AttachedPaneSizesState
-) {
-  if (layout === "split-2v") {
-    return {
-      gridTemplateColumns: attachedPaneSizes["split-2v"].columns
-        .map(toGridTrack)
-        .join(" "),
-    };
-  }
+// function getAttachedLayoutStyle(
+//   layout: PaneLayoutId,
+//   attachedPaneSizes: AttachedPaneSizesState
+// ) {
+//   if (layout === "split-2v") {
+//     return {
+//       gridTemplateColumns: attachedPaneSizes["split-2v"].columns
+//         .map(toGridTrack)
+//         .join(" "),
+//     };
+//   }
 
-  if (layout === "split-left-two-right") {
-    return {
-      gridTemplateColumns: attachedPaneSizes["split-left-two-right"].columns
-        .map(toGridTrack)
-        .join(" "),
-      gridTemplateRows: attachedPaneSizes["split-left-two-right"].rows
-        .map(toGridTrack)
-        .join(" "),
-    };
-  }
+//   if (layout === "split-left-two-right") {
+//     return {
+//       gridTemplateColumns: attachedPaneSizes["split-left-two-right"].columns
+//         .map(toGridTrack)
+//         .join(" "),
+//       gridTemplateRows: attachedPaneSizes["split-left-two-right"].rows
+//         .map(toGridTrack)
+//         .join(" "),
+//     };
+//   }
 
-  if (layout === "split-3v") {
-    return {
-      gridTemplateColumns: attachedPaneSizes["split-3v"].columns
-        .map(toGridTrack)
-        .join(" "),
-    };
-  }
+//   if (layout === "split-3v") {
+//     return {
+//       gridTemplateColumns: attachedPaneSizes["split-3v"].columns
+//         .map(toGridTrack)
+//         .join(" "),
+//     };
+//   }
 
-  if (layout === "grid-2x2") {
-    return {
-      gridTemplateColumns: attachedPaneSizes["grid-2x2"].columns
-        .map(toGridTrack)
-        .join(" "),
-      gridTemplateRows: attachedPaneSizes["grid-2x2"].rows
-        .map(toGridTrack)
-        .join(" "),
-    };
-  }
+//   if (layout === "grid-2x2") {
+//     return {
+//       gridTemplateColumns: attachedPaneSizes["grid-2x2"].columns
+//         .map(toGridTrack)
+//         .join(" "),
+//       gridTemplateRows: attachedPaneSizes["grid-2x2"].rows
+//         .map(toGridTrack)
+//         .join(" "),
+//     };
+//   }
 
-  if (layout === "split-4v") {
-    return {
-      gridTemplateColumns: attachedPaneSizes["split-4v"].columns
-        .map(toGridTrack)
-        .join(" "),
-    };
-  }
+//   if (layout === "split-4v") {
+//     return {
+//       gridTemplateColumns: attachedPaneSizes["split-4v"].columns
+//         .map(toGridTrack)
+//         .join(" "),
+//     };
+//   }
 
-  return {};
-}
+//   return {};
+// }
 
 interface GridPortalPaneProps {
   portal: string;
@@ -593,10 +592,7 @@ export function PaneLayout(props: PaneLayoutProps) {
       }
     | null
   >(null);
-  const attachedLayoutRef = useRef<HTMLDivElement | null>(null);
   const paneElementMapRef = useRef(new Map<string, HTMLElement>());
-  const [attachedPaneSizes, setAttachedPaneSizes] =
-    useState<AttachedPaneSizesState>(DEFAULT_ATTACHED_PANE_SIZES);
   const [gridPortalContainerCss, setGridPortalContainerCss] = useState(
     generateGridPortalContainerCss(null, null)
   );
@@ -682,118 +678,118 @@ export function PaneLayout(props: PaneLayoutProps) {
       }
 
       if (dragState.type === "attached-resize") {
-        const deltaPx =
-          dragState.axis === "x"
-            ? event.clientX - dragState.startClient
-            : event.clientY - dragState.startClient;
-        const splitterIndex = Number.parseInt(
-          dragState.splitterId.split("-")[1] ?? "-1",
-          10
-        );
+        // const deltaPx =
+        //   dragState.axis === "x"
+        //     ? event.clientX - dragState.startClient
+        //     : event.clientY - dragState.startClient;
+        // const splitterIndex = Number.parseInt(
+        //   dragState.splitterId.split("-")[1] ?? "-1",
+        //   10
+        // );
 
-        setAttachedPaneSizes((previousSizes) => {
-          const baseSizes = dragState.startSizes;
+        // setAttachedPaneSizes((previousSizes) => {
+        //   const baseSizes = dragState.startSizes;
 
-          if (dragState.layout === "split-2v") {
-            return {
-              ...previousSizes,
-              "split-2v": {
-                columns: resizeAdjacentTracks(
-                  baseSizes["split-2v"].columns,
-                  0,
-                  deltaPx,
-                  dragState.containerSizePx
-                ),
-              },
-            };
-          }
+        //   if (dragState.layout === "split-2v") {
+        //     return {
+        //       ...previousSizes,
+        //       "split-2v": {
+        //         columns: resizeAdjacentTracks(
+        //           baseSizes["split-2v"].columns,
+        //           0,
+        //           deltaPx,
+        //           dragState.containerSizePx
+        //         ),
+        //       },
+        //     };
+        //   }
 
-          if (dragState.layout === "split-left-two-right") {
-            if (dragState.splitterId === "col-0") {
-              return {
-                ...previousSizes,
-                "split-left-two-right": {
-                  ...previousSizes["split-left-two-right"],
-                  columns: resizeAdjacentTracks(
-                    baseSizes["split-left-two-right"].columns,
-                    0,
-                    deltaPx,
-                    dragState.containerSizePx
-                  ),
-                },
-              };
-            }
+        //   if (dragState.layout === "split-left-two-right") {
+        //     if (dragState.splitterId === "col-0") {
+        //       return {
+        //         ...previousSizes,
+        //         "split-left-two-right": {
+        //           ...previousSizes["split-left-two-right"],
+        //           columns: resizeAdjacentTracks(
+        //             baseSizes["split-left-two-right"].columns,
+        //             0,
+        //             deltaPx,
+        //             dragState.containerSizePx
+        //           ),
+        //         },
+        //       };
+        //     }
 
-            return {
-              ...previousSizes,
-              "split-left-two-right": {
-                ...previousSizes["split-left-two-right"],
-                rows: resizeAdjacentTracks(
-                  baseSizes["split-left-two-right"].rows,
-                  0,
-                  deltaPx,
-                  dragState.containerSizePx
-                ),
-              },
-            };
-          }
+        //     return {
+        //       ...previousSizes,
+        //       "split-left-two-right": {
+        //         ...previousSizes["split-left-two-right"],
+        //         rows: resizeAdjacentTracks(
+        //           baseSizes["split-left-two-right"].rows,
+        //           0,
+        //           deltaPx,
+        //           dragState.containerSizePx
+        //         ),
+        //       },
+        //     };
+        //   }
 
-          if (dragState.layout === "split-3v") {
-            return {
-              ...previousSizes,
-              "split-3v": {
-                columns: resizeAdjacentTracks(
-                  baseSizes["split-3v"].columns,
-                  splitterIndex,
-                  deltaPx,
-                  dragState.containerSizePx
-                ),
-              },
-            };
-          }
+        //   if (dragState.layout === "split-3v") {
+        //     return {
+        //       ...previousSizes,
+        //       "split-3v": {
+        //         columns: resizeAdjacentTracks(
+        //           baseSizes["split-3v"].columns,
+        //           splitterIndex,
+        //           deltaPx,
+        //           dragState.containerSizePx
+        //         ),
+        //       },
+        //     };
+        //   }
 
-          if (dragState.layout === "grid-2x2") {
-            if (dragState.splitterId === "col-0") {
-              return {
-                ...previousSizes,
-                "grid-2x2": {
-                  ...previousSizes["grid-2x2"],
-                  columns: resizeAdjacentTracks(
-                    baseSizes["grid-2x2"].columns,
-                    0,
-                    deltaPx,
-                    dragState.containerSizePx
-                  ),
-                },
-              };
-            }
+        //   if (dragState.layout === "grid-2x2") {
+        //     if (dragState.splitterId === "col-0") {
+        //       return {
+        //         ...previousSizes,
+        //         "grid-2x2": {
+        //           ...previousSizes["grid-2x2"],
+        //           columns: resizeAdjacentTracks(
+        //             baseSizes["grid-2x2"].columns,
+        //             0,
+        //             deltaPx,
+        //             dragState.containerSizePx
+        //           ),
+        //         },
+        //       };
+        //     }
 
-            return {
-              ...previousSizes,
-              "grid-2x2": {
-                ...previousSizes["grid-2x2"],
-                rows: resizeAdjacentTracks(
-                  baseSizes["grid-2x2"].rows,
-                  0,
-                  deltaPx,
-                  dragState.containerSizePx
-                ),
-              },
-            };
-          }
+        //     return {
+        //       ...previousSizes,
+        //       "grid-2x2": {
+        //         ...previousSizes["grid-2x2"],
+        //         rows: resizeAdjacentTracks(
+        //           baseSizes["grid-2x2"].rows,
+        //           0,
+        //           deltaPx,
+        //           dragState.containerSizePx
+        //         ),
+        //       },
+        //     };
+        //   }
 
-          return {
-            ...previousSizes,
-            "split-4v": {
-              columns: resizeAdjacentTracks(
-                baseSizes["split-4v"].columns,
-                splitterIndex,
-                deltaPx,
-                dragState.containerSizePx
-              ),
-            },
-          };
-        });
+        //   return {
+        //     ...previousSizes,
+        //     "split-4v": {
+        //       columns: resizeAdjacentTracks(
+        //         baseSizes["split-4v"].columns,
+        //         splitterIndex,
+        //         deltaPx,
+        //         dragState.containerSizePx
+        //       ),
+        //     },
+        //   };
+        // });
         return;
       }
 
@@ -888,11 +884,6 @@ export function PaneLayout(props: PaneLayoutProps) {
   }, [panes]);
 
   const { t } = useI18n();
-  const attachedResizeHandles = getAttachedResizeHandles(
-    layout,
-    attachedPaneSizes
-  );
-  const attachedLayoutStyle = getAttachedLayoutStyle(layout, attachedPaneSizes);
 
   return (
     <div
