@@ -2819,7 +2819,6 @@ h6 {
   font-size: 12px;
   opacity: 0.78;
   line-height: 1.25;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
