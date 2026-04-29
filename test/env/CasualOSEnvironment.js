@@ -3,8 +3,6 @@ import { TestEnvironment } from "jest-environment-jsdom";
 //   EnvironmentContext,
 //   JestEnvironmentConfig,
 // } from "@jest/environment";
-import * as appHooks from "preact/hooks";
-import { render } from "preact";
 import { v4 as uuid } from "uuid";
 
 /**
@@ -27,12 +25,20 @@ export default class CasualOSEnvironment extends TestEnvironment {
       syncConfigBotTagsToURL: () => {},
       requestWakeLock: async () => {},
       disableWakeLock: async () => {},
-      appHooks: {
-        ...appHooks,
-        render,
-      },
+      // Hooks are assigned in test/env/setupCasualOSAppHooks.js from the test runtime context.
+      appHooks: {},
     };
     this.global.posthog = null;
+    this.global.thisBot = {
+      id: "test-bot-id",
+      tags: {},
+      masks: {},
+    };
+    this.global.configBot = {
+      id: "test-config-bot-id",
+      tags: {},
+      masks: {},
+    };
   }
 
   async teardown() {

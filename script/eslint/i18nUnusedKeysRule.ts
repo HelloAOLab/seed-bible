@@ -2,7 +2,10 @@
 import { analyzeProject, createRule, getContextCwd } from "./i18nRuleShared";
 
 type MessageIds = "unused_key" | "config_error";
-type Options = [];
+type RuleOption = {
+  exemptKeys?: string[];
+};
+type Options = [RuleOption?];
 
 let reportedConfigError = false;
 
@@ -14,18 +17,31 @@ const i18nUnusedKeysRule = createRule<Options, MessageIds>({
       description:
         "Checks for translation keys that are not used in TypeScript code",
     },
-    schema: [],
+    schema: [
+      {
+        type: "object",
+        properties: {
+          exemptKeys: {
+            type: "array",
+            items: { type: "string" },
+            uniqueItems: true,
+          },
+        },
+        additionalProperties: false,
+      },
+    ],
     messages: {
       unused_key: "Unused translation key: '{{key}}'.",
       config_error: "i18n lint rule configuration error: {{message}}",
     },
     fixable: "code",
   },
-  defaultOptions: [],
+  defaultOptions: [{}],
 
   create(context) {
     const projectRoot = getContextCwd(context);
     const analysis = analyzeProject(projectRoot);
+    const exemptKeys = new Set(context.options[0]?.exemptKeys ?? []);
 
     return {
       Object(node: any): void {
@@ -47,6 +63,11 @@ const i18nUnusedKeysRule = createRule<Options, MessageIds>({
       Member(node: any): void {
         const key =
           node.name.type === "String" ? node.name.value : node.name.name;
+
+        if (exemptKeys.has(key)) {
+          return;
+        }
+
         if (!analysis.usedKeys.has(key)) {
           context.report({
             node,

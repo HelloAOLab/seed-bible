@@ -96,6 +96,10 @@
     "zh": {
       "title": "地理导入器",
       "description": "帮助加载 GeoJSON 地图的工具"
+    },
+    "ind": {
+      "title": "Pengimpor Geografis",
+      "description": "Manfaatkan fitur yang membantu memuat peta geojson."
     }
   }
 }

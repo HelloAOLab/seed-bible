@@ -264,6 +264,17 @@
       "open-map-portal": "打开地图门户",
       "item-1": "项目 1",
       "item-2": "项目 2"
+    },
+    "ind": {
+      "title": "Contoh Perluasan",
+      "description": "Contoh ekstensi untuk proyek Seed Bible Refresh.",
+      "my-example-tool": "Alat Contoh Saya",
+      "my-verse-tool": "Alat Ayatku",
+      "my-below-reader-tool": "Alat Pembaca Saya di Bawah Ini",
+      "open-grid-portal": "Portal jaringan terbuka",
+      "open-map-portal": "Buka portal peta",
+      "item-1": "Item 1",
+      "item-2": "Item 2"
     }
   }
 }

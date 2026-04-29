@@ -3,7 +3,6 @@ import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import type { TextSize } from "seed-bible.managers.ConfigManager";
 import {
   TEXT_FONT_OPTIONS,
-  TEXT_SECTION_LABELS,
   TEXT_SECTION_THEME_COLOR_VAR,
   TEXT_WEIGHT_OPTIONS,
   UI_TEXT_SIZE_OPTIONS,
@@ -96,13 +95,14 @@ type ExtensionInstallState = "none" | "pending" | "downloaded" | "installed";
 const FONT_SIZE_OPTIONS: TextSize[] = ["XS", "S", "M", "L", "XL", "XXL"];
 
 function SettingsSubPageHeader(props: { title: string; onBack: () => void }) {
+  const { t } = useI18n();
   return (
     <div className="sb-settings-subpage-header">
       <button
         className="sb-settings-back-button"
         onClick={props.onBack}
-        aria-label="Back to settings"
-        title="Back"
+        aria-label={t("back-to-settings", { defaultValue: "Back to settings" })}
+        title={t("back", { defaultValue: "Back" })}
       >
         <span className="material-symbols-outlined">arrow_back</span>
       </button>
@@ -112,13 +112,14 @@ function SettingsSubPageHeader(props: { title: string; onBack: () => void }) {
 }
 
 function SettingsBreadcrumbs(props: { onBack: () => void; trail: string[] }) {
+  const { t } = useI18n();
   return (
     <div className="sb-settings-breadcrumbs">
       <button
         className="sb-settings-breadcrumbs-back"
         onClick={props.onBack}
-        aria-label="Back"
-        title="Back"
+        aria-label={t("back", { defaultValue: "Back" })}
+        title={t("back", { defaultValue: "Back" })}
       >
         <span className="material-symbols-outlined">arrow_back</span>
       </button>
@@ -487,20 +488,30 @@ function ThemeAndTextSettingsView(props: {
     settings.setScriptureMargin(Math.max(0, Math.min(200, next)));
   };
 
+  const { t } = useI18n();
+
   return (
     <div className="sb-settings-page">
       <SettingsBreadcrumbs
         onBack={onBack}
-        trail={["Page settings", "Theme and Text"]}
+        trail={[
+          t("page-settings", { defaultValue: "Page settings" }),
+          t("theme-and-text", { defaultValue: "Theme and Text" }),
+        ]}
       />
       <SettingsHero
         icon="palette"
-        title="Theme and Text"
-        description="Pick a theme and tune the Scripture reading experience."
+        title={t("theme-and-text", { defaultValue: "Theme and Text" })}
+        description={t("theme-and-text-description", {
+          defaultValue:
+            "Pick a theme and tune the Scripture reading experience.",
+        })}
       />
 
       <section className="sb-settings-section">
-        <h3 className="sb-settings-subheading">Ready themes</h3>
+        <h3 className="sb-settings-subheading">
+          {t("themes", { defaultValue: "Themes" })}
+        </h3>
         <div className="sb-theme-ready-gallery">
           {themes.value.map((theme) => {
             const isSelected = theme.id === selectedThemeId.value;
@@ -538,7 +549,7 @@ function ThemeAndTextSettingsView(props: {
                   {isSelected && (
                     <span
                       className="material-symbols-outlined sb-theme-ready-check"
-                      aria-label="Selected"
+                      aria-label={t("selected", { defaultValue: "Selected" })}
                     >
                       check_circle
                     </span>
@@ -549,32 +560,43 @@ function ThemeAndTextSettingsView(props: {
           })}
         </div>
 
-        <h3 className="sb-settings-subheading">Scripture settings</h3>
+        <h3 className="sb-settings-subheading">
+          {t("scripture-settings", { defaultValue: "Scripture settings" })}
+        </h3>
         <div className="sb-scripture-quick-row">
           <button
             type="button"
             className="sb-scripture-quick-btn sb-scripture-quick-btn-a-small"
             onClick={handleDecreaseFontSize}
             disabled={fontSizeIndex <= 0}
-            aria-label="Decrease scripture font size"
+            aria-label={t("decrease-scripture-font-size", {
+              defaultValue: "Decrease scripture font size",
+            })}
           >
-            A
+            {t("scripture-settings-font-size-example", { defaultValue: "A" })}
           </button>
           <button
             type="button"
             className="sb-scripture-quick-btn sb-scripture-quick-btn-a-large"
             onClick={handleIncreaseFontSize}
             disabled={fontSizeIndex >= FONT_SIZE_OPTIONS.length - 1}
-            aria-label="Increase scripture font size"
+            aria-label={t("increase-scripture-font-size", {
+              defaultValue: "Increase scripture font size",
+            })}
           >
-            A
+            {t("scripture-settings-font-size-example", { defaultValue: "A" })}
           </button>
           <button
             type="button"
             className="sb-scripture-quick-btn"
             onClick={handleCycleLineHeight}
-            aria-label="Cycle line spacing"
-            title={`Line spacing: ${currentLineHeight}`}
+            aria-label={t("change-line-spacing", {
+              defaultValue: "Change line spacing",
+            })}
+            title={t("line-spacing_lineHeight", {
+              lineHeight: currentLineHeight,
+              defaultValue: `Line spacing: ${currentLineHeight}`,
+            })}
           >
             <ScriptureLineHeightIcon index={lineHeightIndex} />
           </button>
@@ -586,14 +608,16 @@ function ThemeAndTextSettingsView(props: {
               <span className="sb-margin-icon-wrap">
                 <MarginIcon />
               </span>
-              Scripture Margins
+              {t("scripture-margins", { defaultValue: "Scripture Margins" })}
             </div>
             <div className="sb-scripture-margins-row">
               <button
                 type="button"
                 className="sb-scripture-margins-step"
                 onClick={() => setMargin(currentMargin - 1)}
-                aria-label="Decrease scripture margin"
+                aria-label={t("decrease-scripture-margin", {
+                  defaultValue: "Decrease scripture margin",
+                })}
               >
                 −
               </button>
@@ -610,13 +634,16 @@ function ThemeAndTextSettingsView(props: {
                     if (Number.isFinite(parsed)) setMargin(parsed);
                   }}
                 />
+                {/* eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content */}
                 <span className="sb-scripture-margins-unit">px</span>
               </div>
               <button
                 type="button"
                 className="sb-scripture-margins-step"
                 onClick={() => setMargin(currentMargin + 1)}
-                aria-label="Increase scripture margin"
+                aria-label={t("increase-scripture-margin", {
+                  defaultValue: "Increase scripture margin",
+                })}
               >
                 +
               </button>
@@ -629,7 +656,7 @@ function ThemeAndTextSettingsView(props: {
           className="sb-settings-nav-item"
           onClick={onOpenAllSettings}
         >
-          <span>All settings</span>
+          <span>{t("all-settings", { defaultValue: "All settings" })}</span>
           <span className="material-symbols-outlined">chevron_right</span>
         </button>
       </section>
@@ -747,11 +774,18 @@ function ExtensionsSettingsView(props: {
 
   return (
     <div className="sb-settings-page">
-      <SettingsSubPageHeader title="Extensions" onBack={onBack} />
+      <SettingsSubPageHeader
+        title={t("extensions", { defaultValue: "Extensions" })}
+        onBack={onBack}
+      />
       <section className="sb-settings-section">
         {extensionsList.length === 0 ? (
           <div className="sb-settings-empty-state">
-            <p>No extensions available.</p>
+            <p>
+              {t("no-extensions-available", {
+                defaultValue: "No extensions available.",
+              })}
+            </p>
           </div>
         ) : (
           <ul className="sb-extensions-list">
@@ -806,13 +840,13 @@ function ExtensionsSettingsView(props: {
                   <ContextMenuWithButton>
                     {installState === "none" && (
                       <ContextMenuItem onClick={() => void handleInstall(id)}>
-                        Install
+                        {t("install", { defaultValue: "Install" })}
                       </ContextMenuItem>
                     )}
                     {(installState === "installed" ||
                       installState === "downloaded") && (
                       <ContextMenuItem onClick={() => handleUninstall(id)}>
-                        Uninstall
+                        {t("uninstall", { defaultValue: "Uninstall" })}
                       </ContextMenuItem>
                     )}
                   </ContextMenuWithButton>
@@ -910,8 +944,11 @@ function ToolbarSettingsView(props: {
       />
       <SettingsHero
         icon="tune"
-        title="Toolbar"
-        description="Choose which reader toolbar tools appear and in what order."
+        title={t("toolbar", { defaultValue: "Toolbar" })}
+        description={t("toolbar_description", {
+          defaultValue:
+            "Choose which reader toolbar tools appear and in what order.",
+        })}
       />
 
       <section className="sb-settings-section">
@@ -983,7 +1020,7 @@ function ToolbarSettingsView(props: {
               className="sb-settings-action-button"
               onClick={() => settings.resetToolbarConfig()}
             >
-              Reset toolbar
+              {t("reset-toolbar", { defaultValue: "Reset toolbar" })}
             </button>
           </div>
         )}
@@ -1001,6 +1038,7 @@ function TextFormattingToolbar(props: {
   const paletteOpen = useSignal(false);
   const themeFallback = `var(${TEXT_SECTION_THEME_COLOR_VAR[sectionId]})`;
   const swatchBackground = section.color || themeFallback;
+  const { t } = useI18n();
 
   const toggle = (key: "bold" | "italic" | "underline") => {
     onChange({ [key]: !section[key] } as Partial<TextSectionConfig>);
@@ -1016,7 +1054,8 @@ function TextFormattingToolbar(props: {
         type="button"
         className={`sb-text-format-btn${section.bold ? " sb-text-format-btn-active" : ""}`}
         onClick={() => toggle("bold")}
-        aria-label="Bold"
+        aria-label={t("bold", { defaultValue: "Bold" })}
+        title={t("bold")}
         aria-pressed={section.bold}
       >
         <span className="material-symbols-outlined">format_bold</span>
@@ -1025,7 +1064,8 @@ function TextFormattingToolbar(props: {
         type="button"
         className={`sb-text-format-btn${section.italic ? " sb-text-format-btn-active" : ""}`}
         onClick={() => toggle("italic")}
-        aria-label="Italic"
+        aria-label={t("italic", { defaultValue: "Italic" })}
+        title={t("italic")}
         aria-pressed={section.italic}
       >
         <span className="material-symbols-outlined">format_italic</span>
@@ -1034,7 +1074,8 @@ function TextFormattingToolbar(props: {
         type="button"
         className={`sb-text-format-btn${section.underline ? " sb-text-format-btn-active" : ""}`}
         onClick={() => toggle("underline")}
-        aria-label="Underline"
+        aria-label={t("underline", { defaultValue: "Underline" })}
+        title={t("underline")}
         aria-pressed={section.underline}
       >
         <span className="material-symbols-outlined">format_underlined</span>
@@ -1046,8 +1087,10 @@ function TextFormattingToolbar(props: {
         type="button"
         className="sb-text-format-btn"
         onClick={cycleAlignment}
-        aria-label={`Alignment: ${section.alignment}`}
-        title="Cycle alignment"
+        aria-label={t("alignment_x", {
+          defaultValue: `Alignment: ${section.alignment}`,
+        })}
+        title={t("change_alignment", { defaultValue: "Change alignment" })}
       >
         <span className="material-symbols-outlined">
           {ALIGNMENT_ICON[section.alignment]}
@@ -1063,8 +1106,8 @@ function TextFormattingToolbar(props: {
           onClick={() => {
             paletteOpen.value = !paletteOpen.value;
           }}
-          aria-label="Pick text color"
-          title="Text color"
+          aria-label={t("pick_text_color", { defaultValue: "Pick text color" })}
+          title={t("text_color", { defaultValue: "Text color" })}
         >
           <span
             className="sb-text-format-color-swatch"
@@ -1081,8 +1124,8 @@ function TextFormattingToolbar(props: {
                   : ""
               }`}
               style={{ background: themeFallback }}
-              aria-label="Follow theme"
-              title="Follow theme"
+              aria-label={t("follow_theme", { defaultValue: "Follow theme" })}
+              title={t("follow_theme", { defaultValue: "Follow theme" })}
               onClick={() => {
                 onChange({ color: "" });
                 paletteOpen.value = false;
@@ -1106,7 +1149,7 @@ function TextFormattingToolbar(props: {
               />
             ))}
             <label className="sb-text-format-palette-custom">
-              <span>Custom</span>
+              <span>{t("custom", { defaultValue: "Custom" })}</span>
               <input
                 type="color"
                 value={toHexInputValue(section.color)}
@@ -1127,6 +1170,7 @@ function TextSettingsContent(props: { state: SeedBibleState }) {
   const { state } = props;
   const { settings } = state;
   const textConfig = settings.settings.value.textConfig;
+  const { t } = useI18n();
 
   return (
     <section className="sb-settings-section">
@@ -1138,11 +1182,13 @@ function TextSettingsContent(props: { state: SeedBibleState }) {
         return (
           <div key={section} className="sb-text-section">
             <h3 className="sb-text-section-title">
-              {TEXT_SECTION_LABELS[section]} Text
+              {t(`text-section-${section}`, { defaultValue: section })}
             </h3>
 
             <div className="sb-settings-field-row">
-              <label className="sb-settings-field-label">Font</label>
+              <label className="sb-settings-field-label">
+                {t("font", { defaultValue: "Font" })}
+              </label>
               <select
                 className="sb-settings-language-select"
                 value={config.font}
@@ -1153,14 +1199,16 @@ function TextSettingsContent(props: { state: SeedBibleState }) {
               >
                 {TEXT_FONT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.label, { defaultValue: option.label })}
                   </option>
                 ))}
               </select>
             </div>
 
             <div className="sb-settings-field-row">
-              <label className="sb-settings-field-label">Weight</label>
+              <label className="sb-settings-field-label">
+                {t("weight", { defaultValue: "Weight" })}
+              </label>
               <select
                 className="sb-settings-language-select"
                 value={config.weight}
@@ -1171,7 +1219,7 @@ function TextSettingsContent(props: { state: SeedBibleState }) {
               >
                 {TEXT_WEIGHT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.label, { defaultValue: option.label })}
                   </option>
                 ))}
               </select>
@@ -1179,7 +1227,9 @@ function TextSettingsContent(props: { state: SeedBibleState }) {
 
             <div className="sb-settings-field-row">
               <label className="sb-settings-field-label">
-                Margin (vertical, px)
+                {t("margin-vertical", {
+                  defaultValue: "Margin (vertical, px)",
+                })}
               </label>
               <input
                 type="number"
@@ -1198,7 +1248,9 @@ function TextSettingsContent(props: { state: SeedBibleState }) {
 
             <div className="sb-settings-field-row">
               <label className="sb-settings-field-label">
-                Margin (horizontal, px)
+                {t("margin-horizontal", {
+                  defaultValue: "Margin (horizontal, px)",
+                })}
               </label>
               <input
                 type="number"
@@ -1230,7 +1282,7 @@ function TextSettingsContent(props: { state: SeedBibleState }) {
           className="sb-settings-action-button"
           onClick={() => settings.resetTextConfig()}
         >
-          Reset text settings
+          {t("reset-text-settings", { defaultValue: "Reset text settings" })}
         </button>
       </div>
     </section>
@@ -1240,6 +1292,7 @@ function TextSettingsContent(props: { state: SeedBibleState }) {
 function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
   const { state } = props;
   const { theme } = state;
+  const { t } = useI18n();
 
   const effectiveTheme = useComputed(() => theme.currentTheme.value);
   const overrides = useComputed(() => theme.customOverrides.value);
@@ -1249,7 +1302,9 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
 
   return (
     <section className="sb-settings-section">
-      <h3 className="sb-settings-subheading">Customize colors</h3>
+      <h3 className="sb-settings-subheading">
+        {t("customize-colors", { defaultValue: "Customize colors" })}
+      </h3>
       {THEME_COLOR_GROUPS.map((group) => (
         <div key={group.id} className="sb-theme-colors-group">
           <h3 className="sb-settings-subheading">{group.title}</h3>
@@ -1288,7 +1343,9 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                       <button
                         type="button"
                         className="sb-theme-color-reset"
-                        title="Reset to preset"
+                        title={t("reset-to-default", {
+                          defaultValue: "Reset to default",
+                        })}
                         aria-label={`Reset ${field.label}`}
                         onClick={() => theme.resetCustomColor(field.key)}
                       >
@@ -1305,7 +1362,9 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
         </div>
       ))}
 
-      <h3 className="sb-settings-subheading">Highlight colors</h3>
+      <h3 className="sb-settings-subheading">
+        {t("highlight-colors", { defaultValue: "Highlight colors" })}
+      </h3>
       <ul className="sb-theme-colors-list">
         {DEFAULT_HIGHLIGHT_IDS.map((id) => {
           const effective = effectiveTheme.value.highlightColors[id];
@@ -1331,8 +1390,10 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                   type="color"
                   className="sb-theme-color-input"
                   value={toHexInputValue(bg)}
-                  aria-label={`${id} background color`}
-                  title="Highlight background"
+                  aria-label={t("id_highlight-background-color", { id })}
+                  title={t("highlight-background-color", {
+                    defaultValue: "Highlight background color",
+                  })}
                   onInput={(event: Event) => {
                     const target = event.currentTarget as HTMLInputElement;
                     theme.setHighlightColor(id, { color: target.value });
@@ -1342,8 +1403,10 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                   type="color"
                   className="sb-theme-color-input"
                   value={toHexInputValue(fg)}
-                  aria-label={`${id} text color`}
-                  title="Highlight text"
+                  aria-label={t("id_highlight-text-color", { id })}
+                  title={t("highlight-text-color", {
+                    defaultValue: "Highlight text color",
+                  })}
                   onInput={(event: Event) => {
                     const target = event.currentTarget as HTMLInputElement;
                     theme.setHighlightColor(id, { fontColor: target.value });
@@ -1353,8 +1416,12 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                   <button
                     type="button"
                     className="sb-theme-color-reset"
-                    title="Reset to preset"
-                    aria-label={`Reset ${id}`}
+                    title={t("reset-to-default", {
+                      defaultValue: "Reset to default",
+                    })}
+                    aria-label={t("reset-to-default", {
+                      defaultValue: "Reset to default",
+                    })}
                     onClick={() => theme.resetHighlightColor(id)}
                   >
                     <span className="material-symbols-outlined">
@@ -1379,7 +1446,9 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
               theme.resetAllHighlightColors();
             }}
           >
-            Reset all custom colors
+            {t("reset-all-custom-colors", {
+              defaultValue: "Reset all custom colors",
+            })}
           </button>
         </div>
       )}
@@ -1389,16 +1458,24 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
 
 function AllSettingsView(props: { state: SeedBibleState; onBack: () => void }) {
   const { state, onBack } = props;
+  const { t } = useI18n();
   return (
     <div className="sb-settings-page">
       <SettingsBreadcrumbs
         onBack={onBack}
-        trail={["Page settings", "Theme and Text", "All settings"]}
+        trail={[
+          t("page-settings", { defaultValue: "Page settings" }),
+          t("theme-and-text", { defaultValue: "Theme and Text" }),
+          t("all-settings", { defaultValue: "All settings" }),
+        ]}
       />
       <SettingsHero
         icon="tune"
-        title="All settings"
-        description="Fine-tune every text section and customize each theme color."
+        title={t("all-settings", { defaultValue: "All settings" })}
+        description={t("all-settings-description", {
+          defaultValue:
+            "Fine-tune every text section and customize each theme color.",
+        })}
       />
       <TextSettingsContent state={state} />
       <ThemeCustomColorsContent state={state} />
@@ -1413,17 +1490,21 @@ function DisplaySettingsView(props: {
   const { state, onBack } = props;
   const { settings } = state;
   const current = settings.settings.value;
+  const { t } = useI18n();
 
   return (
     <div className="sb-settings-page">
-      <SettingsSubPageHeader title="Display" onBack={onBack} />
+      <SettingsSubPageHeader
+        title={t("display", { defaultValue: "Display" })}
+        onBack={onBack}
+      />
       <section className="sb-settings-section">
         <div className="sb-settings-field-row">
           <label
             className="sb-settings-field-label"
             htmlFor="sb-ui-text-size-select"
           >
-            UI text size
+            {t("ui-text-size", { defaultValue: "UI text size" })}
           </label>
           <select
             id="sb-ui-text-size-select"
@@ -1447,7 +1528,7 @@ function DisplaySettingsView(props: {
             className="sb-settings-field-label"
             htmlFor="sb-book-orientation-select"
           >
-            Book order
+            {t("book-order", { defaultValue: "Book order" })}
           </label>
           <select
             id="sb-book-orientation-select"
@@ -1458,19 +1539,25 @@ function DisplaySettingsView(props: {
               settings.setBookOrientation(target.value as BookOrientation);
             }}
           >
-            <option value="traditional">Traditional</option>
-            <option value="tanak">TaNaK</option>
+            <option value="traditional">
+              {t("traditional", { defaultValue: "Traditional" })}
+            </option>
+            <option value="tanak">
+              {t("tanakh", { defaultValue: "Tanakh" })}
+            </option>
           </select>
         </div>
 
-        <h3 className="sb-settings-subheading">Selection UI</h3>
+        <h3 className="sb-settings-subheading">
+          {t("selection-ui", { defaultValue: "Selection UI" })}
+        </h3>
 
         <div className="sb-settings-toggle-row">
           <label
             className="sb-settings-toggle-label"
             htmlFor="sb-show-selected-items"
           >
-            Show selected items
+            {t("show-selected-items", { defaultValue: "Show selected items" })}
           </label>
           <input
             id="sb-show-selected-items"
@@ -1490,7 +1577,9 @@ function DisplaySettingsView(props: {
             className="sb-settings-toggle-label"
             htmlFor="sb-show-highlight-colors"
           >
-            Show highlight colors
+            {t("show-highlight-colors", {
+              defaultValue: "Show highlight colors",
+            })}
           </label>
           <input
             id="sb-show-highlight-colors"
@@ -1510,7 +1599,7 @@ function DisplaySettingsView(props: {
             className="sb-settings-toggle-label"
             htmlFor="sb-show-icon-text"
           >
-            Show icon text
+            {t("show-icon-text", { defaultValue: "Show icon text" })}
           </label>
           <input
             id="sb-show-icon-text"
@@ -1533,7 +1622,7 @@ function SettingsMainView(props: {
   onNavigate: (view: SettingsView) => void;
 }) {
   const { state, onNavigate } = props;
-  const { language, availableLanguages, setLanguage } = useI18n();
+  const { t, language, availableLanguages, setLanguage } = useI18n();
   const isAwake = state.settings.settings.value.keepScreenAwake;
 
   const handleWakeLockToggle = (checked: boolean) => {
@@ -1543,7 +1632,9 @@ function SettingsMainView(props: {
   return (
     <div className="sb-settings-page">
       <section className="sb-settings-section">
-        <h2 className="sb-settings-title">General Settings</h2>
+        <h2 className="sb-settings-title">
+          {t("general-settings", { defaultValue: "General settings" })}
+        </h2>
         <ul className="sb-settings-list">
           <li>
             <button
@@ -1553,7 +1644,9 @@ function SettingsMainView(props: {
               <span className="sb-settings-nav-icon">
                 <MaterialIcon>person</MaterialIcon>
               </span>
-              <span className="sb-settings-nav-label">Account settings</span>
+              <span className="sb-settings-nav-label">
+                {t("account-settings", { defaultValue: "Account settings" })}
+              </span>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
           </li>
@@ -1565,7 +1658,9 @@ function SettingsMainView(props: {
               <span className="sb-settings-nav-icon">
                 <ThemeIcon />
               </span>
-              <span className="sb-settings-nav-label">Theme and Text</span>
+              <span className="sb-settings-nav-label">
+                {t("theme-and-text", { defaultValue: "Theme and Text" })}
+              </span>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
           </li>
@@ -1577,7 +1672,9 @@ function SettingsMainView(props: {
               <span className="sb-settings-nav-icon">
                 <MaterialIcon>tune</MaterialIcon>
               </span>
-              <span className="sb-settings-nav-label">Toolbar</span>
+              <span className="sb-settings-nav-label">
+                {t("toolbar", { defaultValue: "Toolbar" })}
+              </span>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
           </li>
@@ -1589,7 +1686,9 @@ function SettingsMainView(props: {
               <span className="sb-settings-nav-icon">
                 <ExtensionsIcon />
               </span>
-              <span className="sb-settings-nav-label">Extensions</span>
+              <span className="sb-settings-nav-label">
+                {t("extensions", { defaultValue: "Extensions" })}
+              </span>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
           </li>
@@ -1601,7 +1700,9 @@ function SettingsMainView(props: {
               <span className="sb-settings-nav-icon">
                 <TheNewSettingsIcon />
               </span>
-              <span className="sb-settings-nav-label">Display</span>
+              <span className="sb-settings-nav-label">
+                {t("display", { defaultValue: "Display" })}
+              </span>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
           </li>
@@ -1611,7 +1712,7 @@ function SettingsMainView(props: {
                 className="sb-settings-toggle-label"
                 htmlFor="sb-wake-lock-toggle"
               >
-                Keep screen awake
+                {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
               </label>
               <input
                 id="sb-wake-lock-toggle"
@@ -1631,7 +1732,7 @@ function SettingsMainView(props: {
                 className="sb-settings-field-label"
                 htmlFor="sb-language-select"
               >
-                Language
+                {t("language", { defaultValue: "Language" })}
               </label>
               <select
                 id="sb-language-select"
@@ -1660,7 +1761,7 @@ function SettingsMainView(props: {
                 );
               }}
             >
-              Report a bug
+              {t("report-a-bug", { defaultValue: "Report a bug" })}
             </button>
           </li>
         </ul>
