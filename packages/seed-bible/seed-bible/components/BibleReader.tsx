@@ -817,7 +817,9 @@ export function BibleReader(props: BibleReaderProps) {
               </h3>
               <button
                 className="sb-footnote-modal-close"
-                aria-label="Close footnote"
+                aria-label={t("close-footnote", {
+                  defaultValue: "Close footnote",
+                })}
                 onClick={() => {
                   selectFootnote(null);
                 }}

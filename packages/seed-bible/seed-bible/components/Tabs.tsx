@@ -375,8 +375,10 @@ export function TabsHeader(props: TabsHeaderProps) {
             <button
               onClick={toggleLayoutMenu}
               className="sb-sidebar-top-icon-button"
-              aria-label="Select pane layout"
-              title="Pane layout"
+              aria-label={t("select-pane-layout", {
+                defaultValue: "Select pane layout",
+              })}
+              title={t("pane-layout", { defaultValue: "Pane layout" })}
             >
               <span className="material-symbols-outlined">dashboard</span>
             </button>
@@ -413,8 +415,8 @@ export function TabsHeader(props: TabsHeaderProps) {
             closeContextMenus();
           }}
           buttonClassName="sb-sidebar-top-icon-button"
-          aria-label="Session options"
-          title="Session options"
+          aria-label={t("session-options", { defaultValue: "Session options" })}
+          title={t("session-options", { defaultValue: "Session options" })}
         >
           <ContextMenuItem
             onClick={() => {
@@ -436,8 +438,8 @@ export function TabsHeader(props: TabsHeaderProps) {
       <button
         onClick={sidebar.closeSidebar}
         className="sb-sidebar-close-button"
-        aria-label="Close sidebar"
-        title="Close sidebar"
+        aria-label={t("close-sidebar", { defaultValue: "Close sidebar" })}
+        title={t("close-sidebar", { defaultValue: "Close sidebar" })}
       >
         <span className="material-symbols-outlined">close</span>
       </button>
@@ -733,7 +735,7 @@ export function SharedSessionsToasts(props: { state: SeedBibleState }) {
     <div
       className="sb-shared-toasts"
       role="region"
-      aria-label="Shared sessions"
+      aria-label={t("shared-sessions", { defaultValue: "Shared sessions" })}
     >
       {entries.map((entry) => {
         const hostName =

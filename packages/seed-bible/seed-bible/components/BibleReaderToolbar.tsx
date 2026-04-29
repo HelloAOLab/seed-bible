@@ -576,7 +576,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           isMoreMenuOpen.value = !isMoreMenuOpen.value;
                         }}
                         className="sb-reader-toolbar-button"
-                        aria-label="More tools"
+                        aria-label={t("more-tools", {
+                          defaultValue: "More tools",
+                        })}
                       >
                         <span>{t("more", { defaultValue: "More" })}</span>
                       </button>
@@ -753,8 +755,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 onClick={() => {
                   isHighlightPickerOpen.value = false;
                 }}
-                aria-label="Back"
-                title="Back"
+                aria-label={t("back", { defaultValue: "Back" })}
+                title={t("back", { defaultValue: "Back" })}
               >
                 <span className="material-symbols-outlined">chevron_left</span>
               </button>
@@ -817,8 +819,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 onClick={() => {
                   colorInputRef.current?.click();
                 }}
-                aria-label="Add custom color"
-                title="Add color"
+                aria-label={t("add-custom-color", {
+                  defaultValue: "Add custom color",
+                })}
+                title={t("add-color", { defaultValue: "Add color" })}
               >
                 <span className="material-symbols-outlined">add</span>
               </button>
@@ -851,8 +855,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   removeSharedHighlightsFromSelection(sessionState.value, rs);
                   rs.unhighlightSelectedVerses();
                 }}
-                aria-label="Clear highlight"
-                title="Clear"
+                aria-label={t("clear-highlight", {
+                  defaultValue: "Clear highlight",
+                })}
+                title={t("clear", { defaultValue: "Clear" })}
               >
                 <span className="material-symbols-outlined">ink_eraser</span>
               </button>
@@ -935,8 +941,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           onClick={() => {
                             isHighlightPickerOpen.value = true;
                           }}
-                          aria-label="Highlight"
-                          title="Highlight"
+                          aria-label={t("highlight-selection", {
+                            defaultValue: "Highlight selection",
+                          })}
+                          title={t("highlight", { defaultValue: "Highlight" })}
                         >
                           <span className="material-symbols-outlined">
                             format_ink_highlighter
