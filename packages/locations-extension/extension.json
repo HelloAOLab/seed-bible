@@ -120,6 +120,11 @@
       "title": "地点",
       "description": "为 Seed Bible 添加地点和地图的扩展程序。",
       "show-location-place": "在地图上显示{{place}}"
+    },
+    "ind": {
+      "title": "Lokasi",
+      "description": "Ekstensi yang menambahkan lokasi dan peta ke dalam Seed Bible.",
+      "show-location-place": "Tampilkan {{place}} di peta"
     }
   },
   "dependencies": ["ext_geoImporter"],
