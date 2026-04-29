@@ -942,17 +942,19 @@ export function Sidebar(props: SidebarProps) {
           <Tabs state={state} closeLayoutMenu={closeLayoutMenu} />
         ))}
 
-      <button
-        onClick={sidebar.openSettings}
-        className={`sb-sidebar-icon-button${
-          isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
-        }`}
-        aria-label={t("open-settings", { defaultValue: "Open settings" })}
-        title={t("settings", { defaultValue: "Settings" })}
-      >
-        <MobileSettingsIcon />
-      </button>
-      <SelfAvatarButton state={state} />
+      <div className="sb-sidebar-bottom-actions">
+        <button
+          onClick={sidebar.openSettings}
+          className={`sb-sidebar-icon-button${
+            isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
+          }`}
+          aria-label={t("open-settings", { defaultValue: "Open settings" })}
+          title={t("settings", { defaultValue: "Settings" })}
+        >
+          <MobileSettingsIcon />
+        </button>
+        <SelfAvatarButton state={state} />
+      </div>
     </aside>
   );
 }

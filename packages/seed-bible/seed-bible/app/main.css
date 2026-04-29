@@ -1605,6 +1605,13 @@ h6 {
   padding: 10px 8px 16px;
 }
 
+.sb-sidebar-bottom-actions {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .sb-sidebar-top-row {
   display: flex;
   align-items: center;
@@ -2198,12 +2205,7 @@ h6 {
   background: #dc2626;
 }
 
-/* Own-avatar button — pinned at the bottom-right of the sidebar,
-   mirroring the fixed-position settings button at the bottom-left. */
 .sb-sidebar-self-avatar {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
   width: 36px;
   height: 36px;
   padding: 0;
@@ -2215,7 +2217,6 @@ h6 {
   align-items: center;
   justify-content: center;
   transition: transform 0.15s ease;
-  z-index: 20;
 }
 
 .sb-sidebar-self-avatar:hover {
@@ -2656,9 +2657,6 @@ h6 {
 }
 
 .sb-sidebar-icon-button {
-  position: fixed;
-  left: 10px;
-  bottom: 10px;
   border: none;
   border-radius: 999px;
   background: transparent;
@@ -2669,7 +2667,6 @@ h6 {
   justify-content: center;
   height: 28px;
   width: 28px;
-  z-index: 20;
 }
 
 .sb-sidebar-icon-button-selected {
