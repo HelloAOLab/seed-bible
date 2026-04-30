@@ -262,6 +262,48 @@ describe("BibleSelector", () => {
     );
   });
 
+  it("renders all chapters for the selected book", async () => {
+    const { selectorState, bibleDataManager } = await createSelectorFixture();
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    await waitFor(() => Boolean(container.querySelector("#booktab-EXO")));
+
+    const exodusButton = container.querySelector(
+      "#booktab-EXO"
+    ) as HTMLDivElement | null;
+    expect(exodusButton).not.toBeNull();
+
+    act(() => {
+      exodusButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => selectorState.bookData.value?.id === "EXO");
+    await waitFor(
+      () => container.querySelectorAll(".chapter-btn").length === 40
+    );
+
+    const chapterNumbers = Array.from(
+      container.querySelectorAll(".chapter-btn")
+    )
+      .map((button) => Number(button.textContent?.trim()))
+      .filter((chapter) => Number.isFinite(chapter));
+
+    expect(chapterNumbers).toEqual(
+      Array.from({ length: 40 }, (_, index) => index + 1)
+    );
+  });
+
   it("changing the search input sets the search", async () => {
     const { selectorState, setSearch, bibleDataManager } =
       await createSelectorFixture();
