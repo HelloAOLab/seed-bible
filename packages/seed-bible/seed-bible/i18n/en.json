@@ -166,6 +166,8 @@
   "enterId": "Enter ID",
   "Queue": "Queue",
   "file": "File",
+  "searchBooks": "Search books...",
+  "noResultsFound": "No results found.",
   "noLanguageResultsFound": "No results found. Would you like to expand your search to include partially complete languages as well?",
   "showAllLanguages": "Show all languages",
   "search-books": "Search books...",
