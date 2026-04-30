@@ -1305,6 +1305,22 @@ export const MaterialIcon = ({ children, className, ...props }: any) => (
   </span>
 );
 
+export const MarginIcon = (props: any) => (
+  <svg
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M6 3C7.10457 3 8 3.89543 8 5V19C8 20.1046 7.10457 21 6 21H4C3.44772 21 3 20.5523 3 20C3 19.4477 3.44772 19 4 19H6V5H4C3.44772 5 3 4.55228 3 4C3 3.44772 3.44772 3 4 3H6ZM20 3C20.5523 3 21 3.44772 21 4C21 4.55228 20.5523 5 20 5H18V19H20C20.5523 19 21 19.4477 21 20C21 20.5523 20.5523 21 20 21H18C16.8954 21 16 20.1046 16 19V5C16 3.89543 16.8954 3 18 3H20ZM12 6C12.5523 6 13 6.44772 13 7V17C13 17.5523 12.5523 18 12 18C11.4477 18 11 17.5523 11 17V7C11 6.44772 11.4477 6 12 6Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
 export {
   DualScreenIcon,
   ColorSelect,

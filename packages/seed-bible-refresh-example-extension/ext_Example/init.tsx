@@ -1,3 +1,4 @@
+/* eslint-disable seed-bible-i18n/i18n-untranslated-content */
 import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
 import { MaterialIcon } from "seed-bible.components.icons";
@@ -14,8 +15,6 @@ function OpenMapPortalIcon() {
 registerExtension({
   id: "example-extension",
   init: function* (context: SeedBibleState) {
-    // loadExtensionTranslations("example-extension", thisBot);
-
     console.log("Example extension initialized with context:", context);
 
     // register a new tool
@@ -33,6 +32,7 @@ registerExtension({
           type: "detached",
           detachedAnchor: "side",
           component: () => {
+            // You can use the useI18n hook in your tool component to get translated strings
             const { t } = useI18n("example-extension");
             return <div style={{ padding: 20 }}>{t("my-example-tool")}</div>;
           },
@@ -49,26 +49,7 @@ registerExtension({
         ns: "example-extension",
       },
       icon: () => <span>VERSE!</span>,
-      // onSelect: (context) => {
-      //   console.log("Example verse tool selected with context:", context);
-      //   console.log(
-      //     "Selected verse:",
-      //     context.readingState.selectedVerses.value
-      //   );
-      //   const id = context.readingState.decorateVerses(
-      //     context.readingState.bookId.value!,
-      //     context.readingState.chapterNumber.value,
-      //     context.readingState.selectedVerses.value.map((v) => v.verse.number),
-      //     {
-      //       style: {
-      //         backgroundColor: "#bf7bdf",
-      //         textEmphasis: "sesame green",
-      //       },
-      //     }
-      //   );
-
-      //   console.log("decoration id:", id);
-      // },
+      // You can use getItems to return the list of items for the toolbar dynamically based on the context
       getItems: (context) => [
         {
           id: "item-1",
@@ -100,6 +81,7 @@ registerExtension({
       priority: 100,
     });
 
+    // Below reader tools are displayed in a toolbar below the bible reader
     yield context.tools.registerBelowReaderTool({
       id: "my-below-reader-tool",
       title: {
@@ -111,6 +93,7 @@ registerExtension({
       priority: 100,
     });
 
+    // Empty pane tools are shown in the empty state of a pane and can be used to open portals or other content in the pane
     yield context.tools.registerEmptyPaneTool({
       id: "open-grid-portal",
       priority: 100,
@@ -161,6 +144,7 @@ registerExtension({
       },
     });
 
+    // You can use effects in your extension to react to changes in the app state. For example, this effect will log the current reading state whenever it changes.
     yield effect(() => {
       if (context.app.currentReadingState.value) {
         console.log(
@@ -172,6 +156,8 @@ registerExtension({
       }
     });
 
+    // You can return a value to export functions or data from your extension that can be used by other extensions.
+    // For example, this will export a function called "abc" that other extensions can call if they have a reference to this extension.
     return {
       abc: () => {
         console.log("This is an exported function from the example extension!");

@@ -9,6 +9,7 @@ import {
 import { BibleSelector } from "@packages/seed-bible/seed-bible/components/BibleSelector";
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type {
   AvailableTranslations,
   Translation,
@@ -125,6 +126,7 @@ function createSelectorFixture(): SelectorFixture {
     currentTranslationId,
     currentBookId,
     currentChapterNumber,
+    orientation: signal("traditional"),
     selectedTranslationId,
     selectedTranslation,
     selectedTranslationBooks,
@@ -135,7 +137,10 @@ function createSelectorFixture(): SelectorFixture {
     expandedBookId,
     oldTestamentRows,
     newTestamentRows,
+    forceNewTab: signal(false),
+    availablePanes: signal<Pane[]>([]),
     setOpen: jest.fn(),
+    setTargetPane: jest.fn(),
     setSearch,
     setExpandedBook,
     selectTranslation: jest.fn(async () => undefined),

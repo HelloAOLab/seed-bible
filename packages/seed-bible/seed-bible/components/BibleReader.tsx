@@ -12,6 +12,7 @@ import type {
 import type { ChapterHighlight } from "seed-bible.managers.HighlightsManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { Pane } from "seed-bible.managers.PanesManager";
+import { useI18n } from "seed-bible.i18n.I18nManager";
 
 interface VerseLine {
   indentLevel: number;
@@ -717,6 +718,8 @@ export function BibleReader(props: BibleReaderProps) {
     () => translation.value?.website.trim() ?? ""
   );
 
+  const { t } = useI18n();
+
   return (
     <div
       className="sb-bible-reader"
@@ -756,10 +759,20 @@ export function BibleReader(props: BibleReaderProps) {
         </div>
       )}
 
-      {!error.value && !chapterData.value && <p>No chapter content found.</p>}
+      {!error.value && !chapterData.value && (
+        <p>
+          {t("no-chapter-content-found", {
+            defaultValue: "No chapter content found.",
+          })}
+        </p>
+      )}
 
       {!availableTranslations.value && !error.value && (
-        <p>No translations available.</p>
+        <p>
+          {t("no-translations-available", {
+            defaultValue: "No translations available.",
+          })}
+        </p>
       )}
 
       {!error.value && translationLicenseNotice.value.length > 0 && (
@@ -804,7 +817,9 @@ export function BibleReader(props: BibleReaderProps) {
               </h3>
               <button
                 className="sb-footnote-modal-close"
-                aria-label="Close footnote"
+                aria-label={t("close-footnote", {
+                  defaultValue: "Close footnote",
+                })}
                 onClick={() => {
                   selectFootnote(null);
                 }}
