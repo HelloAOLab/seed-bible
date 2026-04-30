@@ -540,13 +540,13 @@ const EmptyStateWithExpand = (props: {
   return (
     <div className="language-list sb-lg-centered">
       <span>
-        {t("no-language-results-found", {
+        {t("no-translation-results-found", {
           defaultValue:
-            "No results found. Would you like to expand your search to include partial and incomplete languages as well?",
+            "No results found. Would you like to expand your search to include partial and incomplete translations as well?",
         })}
       </span>
       <button onClick={onExpand} className="sb-lg-expandButton">
-        {t("show-all-languages", { defaultValue: "Show all languages" })}
+        {t("show-all-translations", { defaultValue: "Show all translations" })}
       </button>
     </div>
   );
@@ -791,7 +791,6 @@ const LanguageComponent = (props: {
     showTranslationInfo,
     filteredApiTranslations,
     selectTranslation,
-    isOpen,
   } = bibleSelectorState;
   const showRef = useRef<ReturnType<typeof signal<boolean>> | null>(null);
   if (!showRef.current) showRef.current = signal(false);
@@ -1037,7 +1036,9 @@ const TranslationSettings = (props: {
             ></span>
           )}
           <span class="translation-description">
-            {t("complete-languages", { defaultValue: "Complete languages" })}
+            {t("complete-translations", {
+              defaultValue: "Complete translations",
+            })}
           </span>
         </span>
       </div>
@@ -1066,7 +1067,7 @@ const TranslationSettings = (props: {
             ></span>
           )}
           <span class="translation-description">
-            {t("all-languages", { defaultValue: "All languages" })}
+            {t("all-translations", { defaultValue: "All translations" })}
           </span>
         </span>
       </div>
@@ -1095,7 +1096,9 @@ const TranslationSettings = (props: {
             ></span>
           )}
           <span class="translation-description">
-            {t("popular-languages", { defaultValue: "Popular languages" })}
+            {t("popular-translations", {
+              defaultValue: "Popular translations",
+            })}
           </span>
         </span>
       </div>
