@@ -107,6 +107,7 @@ export function Main() {
               isOpen={selector.isOpen.value}
               onClose={() => selector.setOpen(false)}
               selectorState={selector}
+              bibleDataManager={state.bibleData}
             />
           </>
         </CasualOSApp>

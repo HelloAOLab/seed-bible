@@ -16,17 +16,19 @@ import type {
   TranslationBook,
 } from "seed-bible.managers.FreeUseBibleAPI";
 import { computed, signal } from "@preact/signals";
+import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
 const { useEffect, useMemo, useRef, useState } = os.appHooks;
 
 interface BibleSelectorProps {
   isOpen: boolean;
   onClose: () => void;
   selectorState: BibleSelectorState;
+  bibleDataManager: BibleDataManager;
   className?: string;
 }
 
 export function BibleSelector(props: BibleSelectorProps) {
-  const { isOpen, onClose, selectorState, className } = props;
+  const { isOpen, onClose, selectorState, bibleDataManager, className } = props;
 
   return (
     <div
@@ -41,14 +43,20 @@ export function BibleSelector(props: BibleSelectorProps) {
         }}
         className="sb-selector-panel"
       >
-        <SearchBar bibleSelectorState={selectorState} />
+        <SearchBar
+          bibleSelectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />
       </div>
     </div>
   );
 }
 
-const SearchBar = (props: { bibleSelectorState: BibleSelectorState }) => {
-  const { bibleSelectorState } = props;
+const SearchBar = (props: {
+  bibleSelectorState: BibleSelectorState;
+  bibleDataManager: BibleDataManager;
+}) => {
+  const { bibleSelectorState, bibleDataManager } = props;
   const { t } = useI18n();
   const { search, setSearch, selectedTranslationBooks, selectedTranslation } =
     bibleSelectorState;
@@ -176,7 +184,10 @@ const SearchBar = (props: { bibleSelectorState: BibleSelectorState }) => {
             <SideBarBooks bibleSelectorState={bibleSelectorState} />
           )}
         {selectingTranslation.value && (
-          <TranslationModal bibleSelectorState={bibleSelectorState} />
+          <TranslationModal
+            bibleSelectorState={bibleSelectorState}
+            bibleDataManager={bibleDataManager}
+          />
         )}
       </div>
     </>
@@ -574,8 +585,9 @@ const LoadMoreButton = (props: { onLoadMore: () => void }) => {
 
 const TranslationModal = (props: {
   bibleSelectorState: BibleSelectorState;
+  bibleDataManager: BibleDataManager;
 }) => {
-  const { bibleSelectorState } = props;
+  const { bibleSelectorState, bibleDataManager } = props;
   const {
     languageQuery,
     selectingTranslation,
@@ -648,6 +660,7 @@ const TranslationModal = (props: {
             language={language}
             translationArray={value}
             bibleSelectorState={bibleSelectorState}
+            bibleDataManager={bibleDataManager}
           />
         ))}
         {shouldShowLoadMoreButton(
@@ -768,8 +781,10 @@ const LanguageComponent = (props: {
   language: string;
   translationArray: Record<string, Translation>;
   bibleSelectorState: BibleSelectorState;
+  bibleDataManager: BibleDataManager;
 }) => {
-  const { language, translationArray, bibleSelectorState } = props;
+  const { language, translationArray, bibleSelectorState, bibleDataManager } =
+    props;
   const {
     languageQuery,
     selectedTranslation,
@@ -787,18 +802,23 @@ const LanguageComponent = (props: {
   const shareTranslatation = async (props: { translation: Translation }) => {
     const { translation } = props;
     console.log(translation, "translation");
-    let translationUrl = "";
-    // TODO:
-    // if (translation?.origin) {
-    //   const translationOrigin = `${translation.listOfBooksApiLink}`.replace(
-    //     `${translation.id}/books.json`,
-    //     "available_translations.json"
-    //   );
-    //   translationUrl = `https://ao.bot/?pattern=${configBot.tags.pattern || "SeedBible"}&bios=local%20inst&translation=${translationOrigin}`;
-    // } else {
-    translationUrl = `https://ao.bot/?pattern=${configBot.tags.pattern || "SeedBible"}&translation=${translation.id}`;
-    // }
-    os.setClipboard(translationUrl);
+
+    const endpointInfo = bibleDataManager.getTranslationEndpointInfo(
+      translation.id
+    );
+
+    const url = new URL(`https://ao.bot/`);
+    url.searchParams.set("pattern", configBot.tags.pattern || "SeedBible");
+    if (endpointInfo.isDefault) {
+      url.searchParams.set("translation", translation.id);
+    } else {
+      const translationUrl = new URL(
+        `api/${translation.id}/books.json`,
+        endpointInfo.endpoint
+      );
+      url.searchParams.set("translation", translationUrl.href);
+    }
+    os.setClipboard(url.href);
     os.toast("Copied translation share code");
   };
 
