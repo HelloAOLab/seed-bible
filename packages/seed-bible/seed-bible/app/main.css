@@ -4465,6 +4465,7 @@ h6 {
   border-radius: 5px;
   padding: 3px;
   color: var(--sb-font-color);
+  cursor: pointer;
 }
 
 .share-btn:active {
