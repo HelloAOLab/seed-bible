@@ -854,6 +854,74 @@ describe("BibleSelector translation selector", () => {
     expect(labels.some((l) => l?.includes("klingon"))).toBe(false);
   });
 
+  it("displays percentage complete indicator circles with conic-gradient in all and popular modes but not in complete mode", async () => {
+    const { selectorState, bibleDataManager } = await createSelectorFixture();
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    // "all" mode: incomplete non-selected translation shows circle with conic-gradient
+    act(() => {
+      selectorState.apiTranslations.value = {
+        english: {
+          inc: makeTranslation("INC", "English", 27),
+        },
+      };
+      selectorState.showAllLanguages.value = "all";
+      selectorState.selectingTranslation.value = true;
+      selectorState.languageQuery.value = "inc";
+    });
+
+    await waitFor(() => Boolean(container.querySelector(".emptyCircle")));
+
+    const circleAll = container.querySelector(
+      ".emptyCircle"
+    ) as HTMLElement | null;
+    expect(circleAll).not.toBeNull();
+    expect(circleAll?.style.background).toContain("conic-gradient");
+
+    // "popular" mode: same incomplete translation (english is a popular language)
+    act(() => {
+      selectorState.showAllLanguages.value = "popular";
+    });
+
+    await waitFor(() => Boolean(container.querySelector(".emptyCircle")));
+
+    const circlePopular = container.querySelector(
+      ".emptyCircle"
+    ) as HTMLElement | null;
+    expect(circlePopular).not.toBeNull();
+    expect(circlePopular?.style.background).toContain("conic-gradient");
+
+    // "complete" mode: only complete translations shown; their circles have no conic-gradient
+    act(() => {
+      selectorState.apiTranslations.value = {
+        english: {
+          bsb: makeTranslation("BSB", "English", 66),
+        },
+      };
+      selectorState.showAllLanguages.value = "complete";
+      selectorState.languageQuery.value = "bsb";
+    });
+
+    await waitFor(() => Boolean(container.querySelector(".emptyCircle")));
+
+    const circleComplete = container.querySelector(
+      ".emptyCircle"
+    ) as HTMLElement | null;
+    expect(circleComplete).not.toBeNull();
+    expect(circleComplete?.style.background).not.toContain("conic-gradient");
+  });
+
   it("entering a custom translation URL and clicking Import loads the translations", async () => {
     const customTranslation = makeTranslation("CST", "Klingon", 66);
     const responses = {
