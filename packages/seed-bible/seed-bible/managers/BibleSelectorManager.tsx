@@ -817,7 +817,8 @@ export function createBibleSelectorState(
         Object.entries(group).forEach(([shortName, translation]) => {
           if (
             shortName.includes(lowercaseQuery) ||
-            translation?.name?.toLowerCase().includes(lowercaseQuery)
+            translation?.name?.toLowerCase().includes(lowercaseQuery) ||
+            translation?.languageName?.toLowerCase().includes(lowercaseQuery)
           ) {
             matchedGroup[shortName] = translation;
           }
