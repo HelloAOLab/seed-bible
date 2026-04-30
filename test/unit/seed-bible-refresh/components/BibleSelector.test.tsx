@@ -12,6 +12,7 @@ import {
 import {
   createDefaultManagerResponseMap,
   createResponse,
+  makeUrl,
   makeExampleUrl,
   EXAMPLE_API_ENDPOINT,
   translations as mockTranslations,
@@ -294,6 +295,159 @@ describe("BibleSelector", () => {
 
     expect(setSearch).toHaveBeenCalledWith("exo");
     expect(selectorState.search.value).toBe("exo");
+  });
+
+  it("entering gen 10 and pressing Enter selects Genesis chapter 10", async () => {
+    const responses = {
+      ...createDefaultManagerResponseMap(),
+      [makeUrl("/api/AAB/GEN/10.json")]: createResponse(
+        makeChapter(bsbBooks, "GEN", 10)
+      ),
+    };
+
+    const state = await createTestSeedBibleState({ responses });
+    const pane = state.panes.panes.value[0] as Pane;
+    if (!pane) {
+      throw new Error("Expected an initial pane.");
+    }
+    await state.selector.setOpen(true, pane);
+
+    const { selectorState, bibleDataManager } = {
+      selectorState: state.selector,
+      bibleDataManager: state.bibleData,
+    };
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    const searchInput = container.querySelector(
+      'input[placeholder="Search books..."]'
+    ) as HTMLInputElement | null;
+
+    expect(searchInput).not.toBeNull();
+
+    await act(async () => {
+      if (!searchInput) {
+        return;
+      }
+      searchInput.value = "gen 10";
+      searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+      searchInput.dispatchEvent(new Event("change", { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    await waitFor(() => selectorState.search.value === "gen 10");
+    await waitFor(() => selectorState.selectedTranslationId.value === "AAB");
+    await waitFor(
+      () => selectorState.selectedTestamentData.value?.length === 1
+    );
+
+    await act(async () => {
+      selectorState.handleEnter();
+      await Promise.resolve();
+    });
+
+    await waitFor(() => pane.tab?.readingState.bookId.value === "GEN");
+    await waitFor(() => pane.tab?.readingState.chapterNumber.value === 10);
+
+    expect(pane.tab?.readingState.bookId.value).toBe("GEN");
+    expect(pane.tab?.readingState.chapterNumber.value).toBe(10);
+    expect(selectorState.isOpen.value).toBe(false);
+  });
+
+  it("entering {bookName} 1 and pressing Enter selects the matching book chapter 1", async () => {
+    const responses = {
+      ...createDefaultManagerResponseMap(),
+      [makeUrl("/api/AAB/EXO/1.json")]: createResponse(
+        makeChapter(bsbBooks, "EXO", 1)
+      ),
+      [makeUrl("/api/AAB/MAT/1.json")]: createResponse(
+        makeChapter(bsbBooks, "MAT", 1)
+      ),
+    };
+
+    const cases = [
+      { bookName: "Genesis", expectedBookId: "GEN" },
+      { bookName: "Exodus", expectedBookId: "EXO" },
+      { bookName: "Matthew", expectedBookId: "MAT" },
+    ];
+
+    for (const testCase of cases) {
+      const state = await createTestSeedBibleState({ responses });
+      const pane = state.panes.panes.value[0] as Pane;
+      if (!pane) {
+        throw new Error("Expected an initial pane.");
+      }
+      await state.selector.setOpen(true, pane);
+
+      const { selectorState, bibleDataManager } = {
+        selectorState: state.selector,
+        bibleDataManager: state.bibleData,
+      };
+
+      act(() => {
+        render(
+          <BibleSelector
+            isOpen={true}
+            onClose={jest.fn()}
+            selectorState={selectorState}
+            bibleDataManager={bibleDataManager}
+          />,
+          container
+        );
+      });
+
+      await waitFor(() => Boolean(container.querySelector("#booktab-GEN")));
+
+      const searchInput = container.querySelector(
+        'input[placeholder="Search books..."]'
+      ) as HTMLInputElement | null;
+
+      expect(searchInput).not.toBeNull();
+
+      await act(async () => {
+        if (!searchInput) {
+          return;
+        }
+        searchInput.value = `${testCase.bookName} 1`;
+        searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+        searchInput.dispatchEvent(new Event("change", { bubbles: true }));
+        await Promise.resolve();
+      });
+
+      await waitFor(
+        () => selectorState.search.value === `${testCase.bookName} 1`
+      );
+      await waitFor(() => selectorState.selectedTranslationId.value === "AAB");
+      await waitFor(
+        () => selectorState.selectedTestamentData.value?.length === 1
+      );
+
+      await act(async () => {
+        selectorState.handleEnter();
+        await Promise.resolve();
+      });
+
+      await waitFor(
+        () => pane.tab?.readingState.bookId.value === testCase.expectedBookId
+      );
+      await waitFor(() => pane.tab?.readingState.chapterNumber.value === 1);
+
+      expect(pane.tab?.readingState.bookId.value).toBe(testCase.expectedBookId);
+      expect(pane.tab?.readingState.chapterNumber.value).toBe(1);
+      expect(selectorState.isOpen.value).toBe(false);
+
+      render(null, container);
+    }
   });
 });
 
