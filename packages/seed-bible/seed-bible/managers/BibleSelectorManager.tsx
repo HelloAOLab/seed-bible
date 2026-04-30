@@ -98,6 +98,8 @@ export interface BibleSelectorState {
    */
   selectChapter: (bookId: string, chapterNumber: number) => void;
 
+  dataManager: BibleDataManager;
+
   selectedTestament: Signal<number>;
   apocryphaAvailable: Signal<boolean>;
   selectingTranslation: Signal<boolean>;
@@ -573,7 +575,6 @@ export function createBibleSelectorState(
       return;
     } else if (testamentData[0]) {
       search.value = testamentData[0].name;
-      console.log("Auto-filled search with book name:", testamentData[0].name);
       return;
     }
   };
@@ -817,6 +818,7 @@ export function createBibleSelectorState(
     setExpandedBook,
     selectTranslation,
     selectChapter: handleChapterSelect,
+    dataManager,
     selectedTestament,
     apocryphaAvailable,
     selectingTranslation,

@@ -775,6 +775,7 @@ const LanguageComponent = (props: {
     filteredApiTranslations,
     selectTranslation,
     isOpen,
+    dataManager,
   } = bibleSelectorState;
   const showRef = useRef<ReturnType<typeof signal<boolean>> | null>(null);
   if (!showRef.current) showRef.current = signal(false);
@@ -783,13 +784,13 @@ const LanguageComponent = (props: {
   const shareTranslatation = async (props: { translation: Translation }) => {
     const { translation } = props;
     console.log(translation, "translation");
+    const translationEndpoint = dataManager.getEndpointForTranslation(
+      translation.id
+    );
+    const defaultEndpoint = dataManager.api.endpoint;
     let translationUrl = "";
-    if (translation?.origin) {
-      const translationOrigin = `${translation.listOfBooksApiLink}`.replace(
-        `${translation.id}/books.json`,
-        "available_translations.json"
-      );
-      translationUrl = `https://ao.bot/?pattern=${configBot.tags.pattern || "SeedBible"}&bios=local%20inst&translation=${translationOrigin}`;
+    if (translationEndpoint && translationEndpoint !== defaultEndpoint) {
+      translationUrl = `https://ao.bot/?pattern=${configBot.tags.pattern || "SeedBible"}&bios=local%20inst&translation=${translation.id}&endpoint=${encodeURIComponent(translationEndpoint)}`;
     } else {
       translationUrl = `https://ao.bot/?pattern=${configBot.tags.pattern || "SeedBible"}&bios=local%20inst&translation=${translation.id}`;
     }
