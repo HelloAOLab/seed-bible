@@ -651,6 +651,83 @@ describe("BibleSelector translation selector", () => {
     expect(labels.some((l) => l?.includes("english"))).toBe(false);
   });
 
+  it("selecting a translation updates selector without changing tab until a chapter is selected", async () => {
+    const { selectorState, bibleDataManager, pane } =
+      await createSelectorFixture();
+
+    const initialTranslationId = pane.tab?.readingState.translationId.value;
+    const initialChapter = pane.tab?.readingState.chapterNumber.value;
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      selectorState.selectingTranslation.value = true;
+      selectorState.showAllLanguages.value = "all";
+      selectorState.languageQuery.value = "niv";
+    });
+
+    await waitFor(() =>
+      Boolean(container.querySelector(".translation-option"))
+    );
+
+    const nivOption = Array.from(
+      container.querySelectorAll(".translation-option")
+    ).find((option) =>
+      (option.textContent ?? "").toLowerCase().includes("(niv)")
+    ) as HTMLDivElement | undefined;
+
+    expect(nivOption).toBeDefined();
+
+    act(() => {
+      nivOption?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => selectorState.selectedTranslationId.value === "NIV");
+
+    expect(selectorState.isOpen.value).toBe(true);
+    expect(selectorState.selectingTranslation.value).toBe(false);
+    expect(pane.tab?.readingState.translationId.value).toBe(
+      initialTranslationId
+    );
+    expect(pane.tab?.readingState.chapterNumber.value).toBe(initialChapter);
+
+    await waitFor(() => selectorState.bookData.value?.id === "MAT");
+    await waitFor(() =>
+      Array.from(container.querySelectorAll(".chapter-btn")).some(
+        (button) => button.textContent?.trim() === "1"
+      )
+    );
+
+    const chapterOneButton = Array.from(
+      container.querySelectorAll(".chapter-btn")
+    ).find((button) => button.textContent?.trim() === "1") as
+      | HTMLButtonElement
+      | undefined;
+
+    expect(chapterOneButton).toBeDefined();
+
+    act(() => {
+      chapterOneButton?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    await waitFor(() => pane.tab?.readingState.translationId.value === "NIV");
+    expect(pane.tab?.readingState.translationId.value).toBe("NIV");
+    expect(pane.tab?.readingState.bookId.value).toBe("MAT");
+    expect(pane.tab?.readingState.chapterNumber.value).toBe(1);
+  });
+
   it("displays only complete translations when in complete mode", async () => {
     const { selectorState, bibleDataManager } = await createSelectorFixture();
 

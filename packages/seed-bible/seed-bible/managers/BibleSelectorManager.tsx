@@ -481,11 +481,9 @@ export function createBibleSelectorState(
       }
 
       selectedTranslationId.value = nextTranslationId;
-      pane.value?.tab?.readingState.selectTranslation(nextTranslationId);
       search.value = "";
       languageQuery.value = "";
       selectingTranslation.value = false;
-      isOpen.value = false;
     } catch (err) {
       error.value =
         err instanceof Error
