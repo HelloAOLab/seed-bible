@@ -794,7 +794,6 @@ const LanguageComponent = (props: {
     filteredApiTranslations,
     selectTranslation,
     isOpen,
-    dataManager,
   } = bibleSelectorState;
   const showRef = useRef<ReturnType<typeof signal<boolean>> | null>(null);
   if (!showRef.current) showRef.current = signal(false);

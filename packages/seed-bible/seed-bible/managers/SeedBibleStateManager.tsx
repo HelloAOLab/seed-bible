@@ -329,26 +329,6 @@ export function createSeedBibleState(): SeedBibleState {
     };
   });
 
-  effect(() => {
-    const urlEncodedEndpoint = configBot.tags?.endpoint;
-    if (urlEncodedEndpoint) {
-      const decodedEndpoint = decodeURIComponent(urlEncodedEndpoint);
-      console.log("Setting API endpoint from config tag:", decodedEndpoint);
-      data.getTranslations(decodedEndpoint).then((translations) => {
-        const translationId =
-          configBot.tags.translation ??
-          configBot.tags.translationId ??
-          translations[0]?.id;
-        if (translationId) {
-          panes.panes.value[0]?.tab?.readingState.selectTranslation(
-            translationId
-          );
-        }
-      });
-      configBot.tags.endpoint = null;
-    }
-  });
-
   const closeSidebarAndSettings = () => {
     sidebar.closeSettings();
     sidebar.closeSidebar();

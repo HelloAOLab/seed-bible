@@ -12,7 +12,6 @@ export interface BibleDataManager {
   translationBooks: Signal<Map<string, TranslationBooks>>;
   api: FreeUseBibleAPI;
   getTranslations: (endpoint?: string) => Promise<Translation[]>;
-  getEndpointForTranslation: (translationId: string) => string;
   getTranslationBooks: (translationId: string) => Promise<TranslationBooks>;
   getTranslationBookChapter: (
     translationId: string,
@@ -192,7 +191,6 @@ export function createBibleDataManager(
     translationBooks,
     api,
     getTranslations,
-    getEndpointForTranslation,
     getTranslationBooks,
     getTranslationBookChapter,
     getNextChapter,
