@@ -297,7 +297,12 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
       const OTBooks = ghostArray(oldTestament, OTSep);
       const NTBooks = ghostArray(newTestament, NTSep);
       return (
-        <div class="books-container flex-gap-md">
+        <div
+          class="books-container flex-gap-md"
+          dir={
+            bibleSelectorState.selectedTranslation.value?.textDirection ?? "ltr"
+          }
+        >
           <div
             class="testament-container flex-col-gap-sm"
             style={{
@@ -366,7 +371,12 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
 
     const chapterPos = calcChapterPos(lbc, allowedRows);
     return (
-      <div class="books-container flex-gap-md">
+      <div
+        class="books-container flex-gap-md"
+        dir={
+          bibleSelectorState.selectedTranslation.value?.textDirection ?? "ltr"
+        }
+      >
         <div class="testament-container flex-col-gap-sm">
           {(config.alwaysShowTitle || ws > 768) && (
             <span class="testament-title">{config.title}</span>

@@ -112,6 +112,43 @@ describe("BibleSelector", () => {
     expect(container.querySelector(".sb-selector-overlay.open")).not.toBeNull();
   });
 
+  it("sets dir to match selected translation text direction", async () => {
+    const { selectorState, bibleDataManager } = await createSelectorFixture();
+
+    act(() => {
+      if (selectorState.selectedTranslationBooks.value) {
+        selectorState.selectedTranslationBooks.value = {
+          ...selectorState.selectedTranslationBooks.value,
+          translation: {
+            ...selectorState.selectedTranslationBooks.value.translation,
+            textDirection: "rtl",
+          },
+        };
+      }
+    });
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    await waitFor(() => Boolean(container.querySelector(".books-container")));
+
+    const booksContainer = container.querySelector(
+      ".books-container"
+    ) as HTMLDivElement | null;
+
+    expect(booksContainer).not.toBeNull();
+    expect(booksContainer?.getAttribute("dir")).toBe("rtl");
+  });
+
   it("displays all old and new testament books", async () => {
     const { selectorState, bibleDataManager } = await createSelectorFixture();
 
