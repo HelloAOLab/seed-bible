@@ -45,6 +45,7 @@ function createBook(
 
 type SelectorFixture = {
   selectorState: BibleSelectorState;
+  bibleDataManager: any;
   search: Signal<string>;
   selectChapter: jest.Mock;
   setSearch: jest.Mock;
@@ -253,8 +254,13 @@ function createSelectorFixture(): SelectorFixture {
     handleClick,
   };
 
+  const bibleDataManager = {
+    availableTranslations: availableTranslationsSignal,
+  } as any;
+
   return {
     selectorState,
+    bibleDataManager,
     search,
     selectChapter,
     setSearch,
@@ -276,7 +282,7 @@ describe("BibleSelector", () => {
   });
 
   it("is not displayed when closed", () => {
-    const { selectorState } = createSelectorFixture();
+    const { selectorState, bibleDataManager } = createSelectorFixture();
 
     act(() => {
       render(
@@ -284,6 +290,7 @@ describe("BibleSelector", () => {
           isOpen={false}
           onClose={jest.fn()}
           selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
         />,
         container
       );
@@ -293,7 +300,7 @@ describe("BibleSelector", () => {
   });
 
   it("is displayed when open", () => {
-    const { selectorState } = createSelectorFixture();
+    const { selectorState, bibleDataManager } = createSelectorFixture();
 
     act(() => {
       render(
@@ -301,6 +308,7 @@ describe("BibleSelector", () => {
           isOpen={true}
           onClose={jest.fn()}
           selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
         />,
         container
       );
@@ -310,7 +318,7 @@ describe("BibleSelector", () => {
   });
 
   it("displays all old and new testament books", () => {
-    const { selectorState } = createSelectorFixture();
+    const { selectorState, bibleDataManager } = createSelectorFixture();
 
     act(() => {
       render(
@@ -318,6 +326,7 @@ describe("BibleSelector", () => {
           isOpen={true}
           onClose={jest.fn()}
           selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
         />,
         container
       );
@@ -331,7 +340,8 @@ describe("BibleSelector", () => {
   });
 
   it("clicking a chapter selects it", () => {
-    const { selectorState, selectChapter } = createSelectorFixture();
+    const { selectorState, selectChapter, bibleDataManager } =
+      createSelectorFixture();
 
     act(() => {
       render(
@@ -339,6 +349,7 @@ describe("BibleSelector", () => {
           isOpen={true}
           onClose={jest.fn()}
           selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
         />,
         container
       );
@@ -372,7 +383,8 @@ describe("BibleSelector", () => {
   });
 
   it("clicking on a book updates the expanded book state", () => {
-    const { selectorState, handleClick } = createSelectorFixture();
+    const { selectorState, handleClick, bibleDataManager } =
+      createSelectorFixture();
 
     act(() => {
       render(
@@ -380,6 +392,7 @@ describe("BibleSelector", () => {
           isOpen={true}
           onClose={jest.fn()}
           selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
         />,
         container
       );
@@ -406,7 +419,8 @@ describe("BibleSelector", () => {
   });
 
   it("changing the search input sets the search", () => {
-    const { selectorState, setSearch, search } = createSelectorFixture();
+    const { selectorState, setSearch, search, bibleDataManager } =
+      createSelectorFixture();
 
     act(() => {
       render(
@@ -414,6 +428,7 @@ describe("BibleSelector", () => {
           isOpen={true}
           onClose={jest.fn()}
           selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
         />,
         container
       );
