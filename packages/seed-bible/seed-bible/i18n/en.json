@@ -167,5 +167,13 @@
   "Queue": "Queue",
   "file": "File",
   "noLanguageResultsFound": "No results found. Would you like to expand your search to include partially complete languages as well?",
-  "showAllLanguages": "Show all languages"
+  "showAllLanguages": "Show all languages",
+  "search-books": "Search books...",
+  "no-results-found": "No results found.",
+  "information-about-this-translation": "Information about this translation",
+  "import": "Import",
+  "enter-url": "Enter URL",
+  "complete-languages": "Complete languages",
+  "all-languages": "All languages",
+  "popular-languages": "Popular languages"
 }

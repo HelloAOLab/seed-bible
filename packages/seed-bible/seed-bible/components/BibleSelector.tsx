@@ -88,6 +88,7 @@ const SearchBar = (props: { bibleSelectorState: BibleSelectorState }) => {
               <span
                 style={{ transition: "transform 0.3s" }}
                 class={`material-symbols-outlined ${selectingTranslation.value ? "upside-down" : ""}`}
+                // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
               >
                 expand_more
               </span>
@@ -99,7 +100,7 @@ const SearchBar = (props: { bibleSelectorState: BibleSelectorState }) => {
               </span>
               <input
                 type="text"
-                placeholder={t("searchBooks", {
+                placeholder={t("search-books", {
                   defaultValue: "Search books...",
                 })}
                 value={search.value}
@@ -259,6 +260,7 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
               <span
                 style={{ transition: "transform 0.3s" }}
                 class={`material-symbols-outlined ${isSelected ? "upside-down" : ""}`}
+                // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
               >
                 expand_more
               </span>
@@ -548,7 +550,9 @@ const EmptyStateNoResults = (props: {
   const { t } = props;
   return (
     <div className="language-list">
-      <span>{t("noResultsFound", { defaultValue: "No results found." })}</span>
+      <span>
+        {t("no-results-found", { defaultValue: "No results found." })}
+      </span>
     </div>
   );
 };
@@ -784,15 +788,16 @@ const LanguageComponent = (props: {
     const { translation } = props;
     console.log(translation, "translation");
     let translationUrl = "";
-    if (translation?.origin) {
-      const translationOrigin = `${translation.listOfBooksApiLink}`.replace(
-        `${translation.id}/books.json`,
-        "available_translations.json"
-      );
-      translationUrl = `https://ao.bot/?pattern=${configBot.tags.pattern || "SeedBible"}&bios=local%20inst&translation=${translationOrigin}`;
-    } else {
-      translationUrl = `https://ao.bot/?pattern=${configBot.tags.pattern || "SeedBible"}&bios=local%20inst&translation=${translation.id}`;
-    }
+    // TODO:
+    // if (translation?.origin) {
+    //   const translationOrigin = `${translation.listOfBooksApiLink}`.replace(
+    //     `${translation.id}/books.json`,
+    //     "available_translations.json"
+    //   );
+    //   translationUrl = `https://ao.bot/?pattern=${configBot.tags.pattern || "SeedBible"}&bios=local%20inst&translation=${translationOrigin}`;
+    // } else {
+    translationUrl = `https://ao.bot/?pattern=${configBot.tags.pattern || "SeedBible"}&translation=${translation.id}`;
+    // }
     os.setClipboard(translationUrl);
     os.toast("Copied translation share code");
   };
@@ -828,6 +833,8 @@ const LanguageComponent = (props: {
     language,
   ]);
 
+  const { t } = useI18n();
+
   return (
     <>
       <div
@@ -845,6 +852,7 @@ const LanguageComponent = (props: {
         <span
           style={{ transition: "transform 0.3s" }}
           class={`material-symbols-outlined ${showSig.value ? "upside-down" : ""}`}
+          // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
         >
           expand_more
         </span>
@@ -913,7 +921,9 @@ const LanguageComponent = (props: {
                             position: { x: e.clientX, y: e.clientY },
                           };
                         }}
-                        title="Information about this translation"
+                        title={t("information-about-this-translation", {
+                          defaultValue: "Information about this translation",
+                        })}
                       >
                         <span
                           style={{ fontSize: "18px" }}
@@ -949,6 +959,7 @@ const CustomTranslation = (props: {
 }) => {
   const { bibleSelectorState } = props;
   const { inputValue, handleTranslationAddition } = bibleSelectorState;
+  const { t } = useI18n();
   return (
     <div class="custom-translation-container flex-col-gap-md">
       <div class="custom-tr-api flex-col-gap-md">
@@ -959,13 +970,13 @@ const CustomTranslation = (props: {
               inputValue.value = (e.target as HTMLInputElement).value;
             }}
             class="custom-tr-in"
-            placeholder={"Enter URL"}
+            placeholder={t("enter-url", { defaultValue: "Enter URL" })}
           />
           <button
             onClick={() => handleTranslationAddition()}
             class="import-btn"
           >
-            Import
+            {t("import", { defaultValue: "Import" })}
           </button>
         </div>
       </div>
@@ -978,6 +989,7 @@ const TranslationSettings = (props: {
 }) => {
   const { bibleSelectorState } = props;
   const { showAllLanguages, showTranslationSettings } = bibleSelectorState;
+  const { t } = useI18n();
   return (
     <div className="modal translationSettingsModal">
       <div
@@ -1004,7 +1016,9 @@ const TranslationSettings = (props: {
               style={{ border: "1px solid #ccc" }}
             ></span>
           )}
-          <span class="translation-description">Complete languages</span>
+          <span class="translation-description">
+            {t("complete-languages", { defaultValue: "Complete languages" })}
+          </span>
         </span>
       </div>
       <div
@@ -1031,7 +1045,9 @@ const TranslationSettings = (props: {
               style={{ border: "1px solid #ccc" }}
             ></span>
           )}
-          <span class="translation-description">All languages</span>
+          <span class="translation-description">
+            {t("all-languages", { defaultValue: "All languages" })}
+          </span>
         </span>
       </div>
       <div
@@ -1058,7 +1074,9 @@ const TranslationSettings = (props: {
               style={{ border: "1px solid #ccc" }}
             ></span>
           )}
-          <span class="translation-description">Popular languages</span>
+          <span class="translation-description">
+            {t("popular-languages", { defaultValue: "Popular languages" })}
+          </span>
         </span>
       </div>
     </div>
