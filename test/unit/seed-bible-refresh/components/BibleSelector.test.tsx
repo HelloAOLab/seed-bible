@@ -584,11 +584,11 @@ describe("BibleSelector", () => {
       expect(getVisibleChapterNumbers()).toEqual(expected);
     };
 
-    await expectVisibleChapterRange("1 Psalms", 1, 40);
-    await expectVisibleChapterRange("2 Psalms", 41, 71);
-    await expectVisibleChapterRange("3 Psalms", 72, 88);
-    await expectVisibleChapterRange("4 Psalms", 89, 105);
-    await expectVisibleChapterRange("5 Psalms", 106, 150);
+    await expectVisibleChapterRange("1 Psalms", 1, 41);
+    await expectVisibleChapterRange("2 Psalms", 42, 72);
+    await expectVisibleChapterRange("3 Psalms", 73, 89);
+    await expectVisibleChapterRange("4 Psalms", 90, 106);
+    await expectVisibleChapterRange("5 Psalms", 107, 150);
   });
 });
 

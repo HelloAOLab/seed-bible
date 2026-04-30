@@ -409,16 +409,16 @@ const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
   } = bibleSelectorState;
 
   const psalmsPartName = (props: {
-    index: number;
+    chapterNumber: number;
   }): BibleSelectorPsalmsGroups => {
-    const { index } = props;
-    if (index <= 40) {
+    const { chapterNumber } = props;
+    if (chapterNumber <= 41) {
       return "1-psalms";
-    } else if (index <= 71) {
+    } else if (chapterNumber <= 72) {
       return "2-psalms";
-    } else if (index <= 88) {
+    } else if (chapterNumber <= 89) {
       return "3-psalms";
-    } else if (index <= 105) {
+    } else if (chapterNumber <= 106) {
       return "4-psalms";
     } else {
       return "5-psalms";
@@ -451,12 +451,11 @@ const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
     );
 
     const renderChapterButton = (props: {
-      index: number;
-      chapterLabel: number | string;
+      chapterNumber: number;
       isVisible?: boolean;
       isLast?: boolean;
     }) => {
-      const { index, chapterLabel, isVisible, isLast } = props;
+      const { chapterNumber, isVisible, isLast } = props;
       return (
         <button
           style={
@@ -466,50 +465,48 @@ const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
           }
           class={`chapter-btn flex-center ${isLast ? "lastOne" : ""}`}
           onClick={() => {
-            selectChapter(bd.id, index + 1);
+            selectChapter(bd.id, chapterNumber);
             isOpen.value = false;
           }}
         >
           <span
-            className={`sidebar-chapter-itm ${hlb[index + 1] ? "highlight" : "un-highlight"}`}
+            className={`sidebar-chapter-itm ${hlb[chapterNumber] ? "highlight" : "un-highlight"}`}
           >
-            {chapterLabel}
+            {chapterNumber}
           </span>
         </button>
       );
     };
 
     const psalmPartByStartIndex: Record<number, BibleSelectorPsalmsGroups> = {
-      0: "1-psalms",
-      41: "2-psalms",
-      72: "3-psalms",
-      89: "4-psalms",
-      106: "5-psalms",
+      1: "1-psalms",
+      42: "2-psalms",
+      73: "3-psalms",
+      90: "4-psalms",
+      107: "5-psalms",
     };
 
     if (bd.id === "PSA") {
-      for (let i = 0; i < bd.numberOfChapters; i++) {
+      for (let i = 1; i <= bd.numberOfChapters; i++) {
         const partToggle = psalmPartByStartIndex[i];
         if (partToggle) {
           renderJSX.push(renderPsalmPartToggle(partToggle));
         }
 
-        const partName = psalmsPartName({ index: i });
+        const partName = psalmsPartName({ chapterNumber: i });
         renderJSX.push(
           renderChapterButton({
-            index: i,
-            chapterLabel: i + 1,
+            chapterNumber: i,
             isVisible: cp.includes(partName),
           })
         );
       }
     } else {
-      for (let i = 0; i < bd.numberOfChapters; i++) {
+      for (let i = 1; i <= bd.numberOfChapters; i++) {
         renderJSX.push(
           renderChapterButton({
-            index: i,
-            chapterLabel: i + 1,
-            isLast: i === bd.numberOfChapters - 1,
+            chapterNumber: i,
+            isLast: i === bd.numberOfChapters,
           })
         );
       }
