@@ -268,6 +268,70 @@ describe("createBibleSelectorState", () => {
     expect(readingState.chapterNumber.value).toBe(1);
   });
 
+  it("setOpen({forNewTab}) flips forceNewTab and selectChapter creates a new tab bound to the pane", async () => {
+    setWebResponses(createDefaultManagerResponseMap());
+    const { dataManager, pane, tabsManager, panesManager } =
+      await createManagersWithSelectedPane();
+
+    const selector = createBibleSelectorState(
+      dataManager,
+      tabsManager,
+      panesManager
+    );
+
+    const initialTabCount = tabsManager.tabs.value.length;
+    const originalTabId = pane.tab!.id;
+
+    await selector.setOpen(true, pane, { forNewTab: true });
+    expect(selector.forceNewTab.value).toBe(true);
+
+    await selector.selectChapter("EXO", 2);
+
+    // A brand new tab is created — the pane's existing tab is not reused.
+    expect(tabsManager.tabs.value).toHaveLength(initialTabCount + 1);
+    const newTab = tabsManager.tabs.value[initialTabCount]!;
+    expect(newTab.id).not.toBe(originalTabId);
+
+    // The new tab is bound to the originally targeted pane.
+    const updatedPane = panesManager.panes.value.find((p) => p.id === pane.id);
+    expect(updatedPane?.tab?.id).toBe(newTab.id);
+
+    // forceNewTab is cleared, selector closes.
+    expect(selector.isOpen.value).toBe(false);
+    expect(selector.forceNewTab.value).toBe(false);
+  });
+
+  it("setTargetPane() switches the pane that the next chapter selection binds to", async () => {
+    setWebResponses(createDefaultManagerResponseMap());
+    const { dataManager, pane, tabsManager, panesManager } =
+      await createManagersWithSelectedPane();
+
+    panesManager.setLayout("split-2v");
+    const otherPane =
+      panesManager.panes.value.find((p) => p.id !== pane.id) ?? null;
+    expect(otherPane).not.toBeNull();
+
+    const selector = createBibleSelectorState(
+      dataManager,
+      tabsManager,
+      panesManager
+    );
+
+    await selector.setOpen(true, pane, { forNewTab: true });
+    expect(selector.pane.value?.id).toBe(pane.id);
+
+    selector.setTargetPane(otherPane!.id);
+    expect(selector.pane.value?.id).toBe(otherPane!.id);
+
+    await selector.selectChapter("GEN", 1);
+
+    const updatedOtherPane = panesManager.panes.value.find(
+      (p) => p.id === otherPane!.id
+    );
+    const newTabId = tabsManager.tabs.value.at(-1)!.id;
+    expect(updatedOtherPane?.tab?.id).toBe(newTabId);
+  });
+
   describe("default translation ID (BSB) fallback behavior", () => {
     let nestedLogSpy: jest.SpyInstance;
 

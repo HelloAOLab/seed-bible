@@ -57,12 +57,6 @@ function createInitialTabs(
       }),
       sharedSession: null,
     },
-    {
-      id: "tab-2",
-      title: "Tab 2",
-      readingState: createBibleReadingState(dataManager, highlightsManager),
-      sharedSession: null,
-    },
   ];
 }
 
@@ -115,7 +109,7 @@ export interface TabsManager {
  * Creates the tabs manager and wires configBot synchronization for reading tags.
  *
  * Behavior:
- * - Initializes with two tabs (first tab from config tags, second default tab).
+ * - Initializes with a single tab seeded from config tags.
  * - Keeps `configBot` reading tags (`translation`, `book`, `chapter`) in sync
  *   with the selected tab's reading state.
  * - Listens for external `configBot` tag changes and updates selected tab

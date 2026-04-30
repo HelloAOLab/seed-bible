@@ -1,5 +1,8 @@
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
+import {
+  createTestSeedBibleState,
+  waitForInitialLoad,
+} from "../testUtils/createTestSeedBibleState";
 import { signal } from "@preact/signals";
 
 const mockSaveReadingHistory = jest.fn();
@@ -83,6 +86,15 @@ async function createState() {
   return createTestSeedBibleState();
 }
 
+async function createStateWithTwoTabs() {
+  const state = await createState();
+  const initialSelectedTabId = state.tabs.selectedTabId.value;
+  const nextTab = state.tabs.addTab();
+  await waitForInitialLoad(nextTab.readingState, 1000);
+  state.tabs.selectTab(initialSelectedTabId);
+  return state;
+}
+
 describe("createSeedBibleState", () => {
   it("created with default values", async () => {
     const state = await createState();
@@ -90,7 +102,7 @@ describe("createSeedBibleState", () => {
     expect(state.config.config.value.disablePanels).toBe(false);
     expect(state.app.panelsEnabled.value).toBe(true);
 
-    expect(state.tabs.tabs.value).toHaveLength(2);
+    expect(state.tabs.tabs.value).toHaveLength(1);
     expect(state.tabs.selectedTabId.value).toBe("tab-1");
     expect(state.app.selectedTab.value?.id).toBe("tab-1");
 
@@ -107,7 +119,7 @@ describe("createSeedBibleState", () => {
   });
 
   it("selecting a tab selects the tab and switches the pane to display the selected tab", async () => {
-    const state = await createState();
+    const state = await createStateWithTwoTabs();
 
     state.panes.setLayout("split-2v");
     const firstPane = state.panes.panes.value[0]!;
@@ -127,21 +139,23 @@ describe("createSeedBibleState", () => {
     expect(selectedPane?.tab?.id).toBe("tab-2");
   });
 
-  it("adding a tab creates the tab, and displays it in the selected pane", async () => {
+  it("adding a tab opens the bible selector in new-tab mode for the selected pane", async () => {
     const state = await createState();
     const selectedPaneId = state.panes.selectedPaneId.value;
     const previousTabCount = state.tabs.tabs.value.length;
 
     state.app.addTab();
 
-    const newTab = state.tabs.tabs.value[previousTabCount]!;
-    const selectedPane = state.panes.panes.value.find(
-      (pane) => pane.id === selectedPaneId
-    );
+    // forceNewTab is set synchronously inside setOpen before the async
+    // syncStateFromPane work; isOpen flips to true only after that work
+    // resolves, so wait for it.
+    await waitFor(() => state.selector.isOpen.value === true);
 
-    expect(state.tabs.tabs.value).toHaveLength(previousTabCount + 1);
-    expect(state.tabs.selectedTabId.value).toBe(newTab.id);
-    expect(selectedPane?.tab?.id).toBe(newTab.id);
+    // No tab is created until the user picks a chapter — addTab opens the
+    // selector first so the new tab can be seeded with the chosen book.
+    expect(state.tabs.tabs.value).toHaveLength(previousTabCount);
+    expect(state.selector.forceNewTab.value).toBe(true);
+    expect(state.selector.pane.value?.id).toBe(selectedPaneId);
   });
 
   it("createSharedSession() creates a shared session and adds a tab for its reading state", async () => {
@@ -152,6 +166,16 @@ describe("createSeedBibleState", () => {
       id: "session-123",
       readingState: sessionReadingState,
       document: {} as SharedDocument,
+      options: signal({
+        allowedNavigators: null,
+        allowedDecorators: null,
+        hostUserId: null,
+        highlightDurationSeconds: 16,
+        endedAt: null,
+      }),
+      connectedUsers: signal([]),
+      updateOptions: jest.fn(),
+      removeSharedDecoration: jest.fn(),
       dispose: jest.fn(),
     };
     mockSessionsManager.createSession.mockResolvedValue(session);
@@ -173,13 +197,23 @@ describe("createSeedBibleState", () => {
   });
 
   it("joinSharedSession(id) joins a shared session and adds a tab for its reading state", async () => {
-    const state = await createState();
+    const state = await createStateWithTwoTabs();
     const previousTabCount = state.tabs.tabs.value.length;
     const sessionReadingState = state.tabs.tabs.value[1]!.readingState;
     const session = {
       id: "group-abc",
       readingState: sessionReadingState,
       document: {} as SharedDocument,
+      options: signal({
+        allowedNavigators: null,
+        allowedDecorators: null,
+        hostUserId: null,
+        highlightDurationSeconds: 16,
+        endedAt: null,
+      }),
+      connectedUsers: signal([]),
+      updateOptions: jest.fn(),
+      removeSharedDecoration: jest.fn(),
       dispose: jest.fn(),
     };
     mockSessionsManager.joinSession.mockResolvedValue(session);
@@ -201,7 +235,7 @@ describe("createSeedBibleState", () => {
   });
 
   it("tabs can be opened in new panes", async () => {
-    const state = await createState();
+    const state = await createStateWithTwoTabs();
 
     state.app.openInNewPane("tab-2");
 
@@ -213,7 +247,7 @@ describe("createSeedBibleState", () => {
   });
 
   it("selecting a pane that has a tab also selects the tab for the pane", async () => {
-    const state = await createState();
+    const state = await createStateWithTwoTabs();
 
     state.panes.setLayout("split-2v");
     const secondPane = state.panes.panes.value[1]!;
@@ -359,6 +393,7 @@ describe("createSeedBibleState", () => {
 
     it("resets autosave interval when selected tab changes", async () => {
       const state = await createState();
+      state.tabs.addTab();
       state.tabs.selectedTabId.value = "tab-1";
       setSelectedTabChapter(state, "genesis", 1);
 

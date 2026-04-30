@@ -2,15 +2,175 @@ import { batch, useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { translateTitle } from "seed-bible.components.Utils";
+import { applyToolbarCustomization } from "seed-bible.managers.SettingsManager";
+import { highlightContainsVerse } from "seed-bible.managers.HighlightsManager";
+import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
+import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
 
-const { useEffect } = os.appHooks;
+const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
+
+function getContrastTextColor(hex: string): string {
+  const match = hex
+    .replace("#", "")
+    .match(/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  if (!match) return "#333333";
+  const r = parseInt(match[1] ?? "00", 16);
+  const g = parseInt(match[2] ?? "00", 16);
+  const b = parseInt(match[3] ?? "00", 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 160 ? "#333333" : "#ffffff";
+}
+
+const { useEffect, useRef } = os.appHooks;
+
+/**
+ * Deterministic decoration id for a per-verse shared highlight. Using a
+ * stable id means re-highlighting the same verse overwrites the previous
+ * decoration and un-highlighting it can target the decoration directly.
+ */
+function sharedHighlightDecorationId(
+  bookId: string,
+  chapterNumber: number,
+  verseNumber: number
+): string {
+  return `shared-highlight:${bookId}:${chapterNumber}:${verseNumber}`;
+}
+
+/**
+ * Broadcasts a highlight to the rest of a shared session by creating one
+ * `VerseDecoration` per selected verse. The decoration is synced through
+ * `SessionsManager`'s existing decorations CRDT, so other connected clients
+ * see the exact same visual styling.
+ *
+ * If the session's `highlightDurationSeconds` is set (non-null, non-zero),
+ * we schedule a local removal after that many seconds — the removal also
+ * propagates through the CRDT so every client clears it at once.
+ */
+function broadcastHighlightToSession(
+  session: BibleReadingSession | null,
+  rs: BibleReadingState,
+  details: {
+    colorId: string;
+    customColor?: string;
+    customFontColor?: string;
+  }
+): void {
+  if (!session) return;
+  const verses = rs.selectedVerses.value;
+  if (verses.length === 0) return;
+
+  const duration = session.options.value.highlightDurationSeconds;
+  const style = details.customColor
+    ? {
+        backgroundColor: details.customColor,
+        color: details.customFontColor ?? "#333333",
+      }
+    : undefined;
+  const className = details.customColor
+    ? ""
+    : `sb-highlight-${details.colorId}`;
+
+  for (const verse of verses) {
+    const id = sharedHighlightDecorationId(
+      verse.bookId,
+      verse.chapterNumber,
+      verse.verse.number
+    );
+    rs.decorateVerses(
+      verse.bookId,
+      verse.chapterNumber,
+      verse.verse.number,
+      {
+        className,
+        ...(style ? { style } : {}),
+        preserveOnChapterChange: false,
+      },
+      id
+    );
+    if (duration !== null && duration > 0) {
+      window.setTimeout(() => {
+        // Remove from the CRDT map first — the sync subscriber will
+        // clear the local copy. Calling `rs.removeDecoration` directly
+        // would race with the sync effect, which would re-seed the
+        // decoration from the still-present map entry.
+        session.removeSharedDecoration(id);
+      }, duration * 1000);
+    }
+  }
+}
+
+/**
+ * Removes any shared-highlight decorations that match the currently
+ * selected verses — keeps the session view in sync when the user
+ * explicitly un-highlights verses rather than waiting for the timer.
+ * Routes through the session's CRDT map so the removal propagates.
+ */
+function removeSharedHighlightsFromSelection(
+  session: BibleReadingSession | null,
+  rs: BibleReadingState
+): void {
+  for (const verse of rs.selectedVerses.value) {
+    const id = sharedHighlightDecorationId(
+      verse.bookId,
+      verse.chapterNumber,
+      verse.verse.number
+    );
+    if (session) {
+      session.removeSharedDecoration(id);
+    } else {
+      rs.removeDecoration(id);
+    }
+  }
+}
+
+/**
+ * Applies a highlight to the current selection with the right lifetime for
+ * the current context:
+ *
+ * - Not in a shared session → save permanently via HighlightsManager.
+ * - In a shared session with `highlightDurationSeconds` = null (∞) → save
+ *   permanently AND broadcast a decoration so other clients see it.
+ * - In a shared session with a finite duration → broadcast a decoration
+ *   only. Don't persist to HighlightsManager, and also clear any existing
+ *   permanent highlight on the same verses so the originating user's view
+ *   stays in sync with the timer.
+ */
+function applyHighlightWithSession(
+  rs: BibleReadingState,
+  session: BibleReadingSession | null,
+  details: {
+    colorId: string;
+    customColor?: string;
+    customFontColor?: string;
+  }
+): void {
+  const duration = session?.options.value.highlightDurationSeconds ?? null;
+  const isTransient = session !== null && duration !== null && duration > 0;
+
+  if (isTransient) {
+    // Wipe any prior permanent highlight on these verses so the timer is
+    // the sole source of truth for how long the highlight shows.
+    void rs.unhighlightSelectedVerses();
+  } else {
+    void rs.highlightSelectedVerses(details);
+  }
+
+  broadcastHighlightToSession(session, rs, details);
+}
 
 interface BibleReaderToolbarProps {
   state: SeedBibleState;
 }
 
 export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
-  const { tabs, selector, panes, sidebar, tools: toolsManager } = props.state;
+  const {
+    tabs,
+    selector,
+    panes,
+    sidebar,
+    tools: toolsManager,
+    settings,
+  } = props.state;
   const selectedTab = useComputed(
     () =>
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
@@ -47,8 +207,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     };
   }, []);
 
-  const tools = useComputed(() =>
-    toolsManager.getToolbarTools({
+  const tools = useComputed(() => {
+    const resolved = toolsManager.getToolbarTools({
       readingState: readingState.value!,
       sharedSession: sessionState.value,
       selectorState: selector,
@@ -59,11 +219,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         innerHeight: viewportHeight,
       },
       openSidebar: sidebar.openSidebar,
-    })
-  );
+    });
+    return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
+  });
 
-  const verseToolbarTools = useComputed(() =>
-    toolsManager.getVerseToolbarTools({
+  const verseToolbarTools = useComputed(() => {
+    const resolved = toolsManager.getVerseToolbarTools({
       readingState: readingState.value!,
       sharedSession: sessionState.value,
       selectorState: selector,
@@ -74,13 +235,25 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         innerHeight: viewportHeight,
       },
       openSidebar: sidebar.openSidebar,
-    })
-  );
+    });
+
+    const { selectionUI } = settings.settings.value;
+    if (!selectionUI.showHighlightColors) {
+      return resolved.filter(
+        (tool) =>
+          !tool.id.startsWith("highlight-") && tool.id !== "clear-highlights"
+      );
+    }
+    return resolved;
+  });
 
   const hasVerseSelection = useComputed(
     () => readingState.value!.selectedVerses.value.length > 0
   );
-  const isSmallScreen = useComputed(() => viewportWidth.value <= 480);
+  // Align with the app-wide mobile breakpoint (`state.app.isMobile`, 768px).
+  // Kept as a local computed signal so its own viewport listener continues to
+  // drive re-renders even if `app.isMobile` is not consumed elsewhere.
+  const isSmallScreen = useComputed(() => viewportWidth.value <= 768);
   const shouldReplaceDefaultToolbar = useComputed(
     () => isSmallScreen.value && hasVerseSelection.value
   );
@@ -147,6 +320,165 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const floatingY = useComputed(() =>
     Math.max((floatingAnchor.value?.y ?? 0) - 64, 64)
   );
+
+  // Drag-to-move offset applied on top of the anchor-computed position.
+  // Reset when a fresh verse selection arrives so the toolbar re-docks.
+  const verseToolbarOffset = useSignal({ dx: 0, dy: 0 });
+  const verseToolbarDrag = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startDx: number;
+    startDy: number;
+  } | null>(null);
+  const lastSelectedAtRef = useRef<number | null>(null);
+
+  const currentSelectedAt = floatingAnchor.value?.selectedAt ?? null;
+  if (lastSelectedAtRef.current !== currentSelectedAt) {
+    lastSelectedAtRef.current = currentSelectedAt;
+    verseToolbarOffset.value = { dx: 0, dy: 0 };
+  }
+
+  const handleVerseToolbarPointerDown = (event: PointerEvent) => {
+    if (isSmallScreen.value) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest("button")) return;
+    const container = event.currentTarget as HTMLElement;
+    container.setPointerCapture?.(event.pointerId);
+    verseToolbarDrag.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startDx: verseToolbarOffset.value.dx,
+      startDy: verseToolbarOffset.value.dy,
+    };
+    event.preventDefault();
+  };
+
+  const handleVerseToolbarPointerMove = (event: PointerEvent) => {
+    const drag = verseToolbarDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    verseToolbarOffset.value = {
+      dx: drag.startDx + (event.clientX - drag.startX),
+      dy: drag.startDy + (event.clientY - drag.startY),
+    };
+  };
+
+  const handleVerseToolbarPointerUp = (event: PointerEvent) => {
+    const drag = verseToolbarDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const container = event.currentTarget as HTMLElement;
+    container.releasePointerCapture?.(event.pointerId);
+    verseToolbarDrag.current = null;
+  };
+
+  // Verse toolbar highlight picker state
+  const isHighlightPickerOpen = useSignal(false);
+  const colorInputRef = useRef<HTMLInputElement | null>(null);
+  const customColorCommitTimeoutRef = useRef<number | null>(null);
+  const customHighlightColors = useComputed(
+    () => settings.settings.value.customHighlightColors
+  );
+  const selectionUI = useComputed(() => settings.settings.value.selectionUI);
+
+  // Debounce the commit so rapid `change` events from the native color
+  // picker (fired as the user drags) don't add each intermediate color to
+  // the custom palette — only the final settled color is saved.
+  const commitCustomColor = (color: string) => {
+    if (customColorCommitTimeoutRef.current !== null) {
+      window.clearTimeout(customColorCommitTimeoutRef.current);
+    }
+    customColorCommitTimeoutRef.current = window.setTimeout(() => {
+      settings.addCustomHighlightColor(color);
+      const rs = readingState.value;
+      if (rs) {
+        applyHighlightWithSession(rs, sessionState.value, {
+          colorId: "yellow",
+          customColor: color,
+          customFontColor: getContrastTextColor(color),
+        });
+      }
+      customColorCommitTimeoutRef.current = null;
+    }, 300);
+  };
+
+  const hasAnyHighlighted = useComputed(() => {
+    const rs = readingState.value;
+    if (!rs) return false;
+    return rs.selectedVerses.value.some((verse) => {
+      const existing = rs.highlights.value.highlights.find((h) =>
+        highlightContainsVerse(h, verse.verse.number)
+      );
+      return !!existing;
+    });
+  });
+
+  // Human-readable reference for the currently selected verses —
+  // "Genesis 1:5", "Genesis 1:5-7", or "Genesis 1:5, 7, 9" for gaps.
+  const selectedVerseReference = useComputed(() => {
+    const rs = readingState.value;
+    if (!rs) return "";
+    const chapter = rs.chapterData.value;
+    if (!chapter) return "";
+    const selected = rs.selectedVerses.value;
+    if (selected.length === 0) return "";
+
+    const bookName = chapter.book.name;
+    const chapterNumber = chapter.chapter.number;
+    const verseNumbers = Array.from(
+      new Set(selected.map((v) => v.verse.number))
+    ).sort((a, b) => a - b);
+
+    if (verseNumbers.length === 0) return `${bookName} ${chapterNumber}`;
+
+    // Collapse contiguous runs into ranges (e.g. 5,6,7 → "5-7")
+    const segments: string[] = [];
+    let runStart = verseNumbers[0]!;
+    let runEnd = runStart;
+    for (let i = 1; i < verseNumbers.length; i++) {
+      const n = verseNumbers[i]!;
+      if (n === runEnd + 1) {
+        runEnd = n;
+      } else {
+        segments.push(
+          runStart === runEnd ? `${runStart}` : `${runStart}-${runEnd}`
+        );
+        runStart = n;
+        runEnd = n;
+      }
+    }
+    segments.push(
+      runStart === runEnd ? `${runStart}` : `${runStart}-${runEnd}`
+    );
+
+    return `${bookName} ${chapterNumber}:${segments.join(", ")}`;
+  });
+
+  // Reset picker when selection is cleared
+  useEffect(() => {
+    if (!hasVerseSelection.value) {
+      isHighlightPickerOpen.value = false;
+    }
+  }, [hasVerseSelection.value]);
+
+  // Clicking anywhere outside the chapter content or the verse toolbar
+  // dismisses the verse selection (and therefore the toolbar).
+  useEffect(() => {
+    if (!hasVerseSelection.value) return;
+
+    const handleDocumentPointerDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      if (target.closest(".sb-chapter-content")) return;
+      if (target.closest(".sb-verse-toolbar")) return;
+      readingState.value?.clearSelectedVerses();
+    };
+
+    document.addEventListener("pointerdown", handleDocumentPointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handleDocumentPointerDown);
+    };
+  }, [hasVerseSelection.value]);
 
   const { t } = useI18n();
 
@@ -244,9 +576,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           isMoreMenuOpen.value = !isMoreMenuOpen.value;
                         }}
                         className="sb-reader-toolbar-button"
-                        aria-label="More tools"
+                        aria-label={t("more-tools", {
+                          defaultValue: "More tools",
+                        })}
                       >
-                        <span>more</span>
+                        <span>{t("more", { defaultValue: "More" })}</span>
                       </button>
                       {isMoreMenuOpen.value && (
                         <div className="sb-reader-toolbar-more-menu">
@@ -382,70 +716,248 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
       {hasVerseSelection.value && verseToolbarTools.value.length > 0 && (
         <div
-          className={`sb-verse-toolbar${isSmallScreen.value ? " sb-verse-toolbar-mobile" : ""}`}
+          className={`sb-verse-toolbar${isSmallScreen.value ? " sb-verse-toolbar-mobile" : " sb-verse-toolbar-draggable"}`}
           style={
             isSmallScreen.value
               ? undefined
               : {
-                  left: `${floatingX}px`,
-                  top: `${floatingY}px`,
+                  left: `${floatingX.value + verseToolbarOffset.value.dx}px`,
+                  top: `${floatingY.value + verseToolbarOffset.value.dy}px`,
                 }
           }
+          onPointerDown={
+            isSmallScreen.value ? undefined : handleVerseToolbarPointerDown
+          }
+          onPointerMove={
+            isSmallScreen.value ? undefined : handleVerseToolbarPointerMove
+          }
+          onPointerUp={
+            isSmallScreen.value ? undefined : handleVerseToolbarPointerUp
+          }
+          onPointerCancel={
+            isSmallScreen.value ? undefined : handleVerseToolbarPointerUp
+          }
         >
-          <div className="sb-verse-toolbar-tools">
-            {verseToolbarTools.value.map((tool) => {
-              const ToolIcon = tool.icon;
-              const menuItems =
-                tool.getItems?.().filter((item) => item.visible.value) ?? [];
-              const hasMenuItems = menuItems.length > 0;
-              return tool.visible.value ? (
-                <div key={tool.id} className="sb-reader-toolbar-item">
-                  <button
-                    disabled={tool.disabled.value}
-                    onClick={() => {
-                      if (hasMenuItems) {
-                        selectedVerseToolId.value =
-                          selectedVerseToolId.value === tool.id
-                            ? null
-                            : tool.id;
-                        return;
-                      }
+          {selectedVerseReference.value && (
+            <div
+              className="sb-verse-toolbar-ref"
+              aria-live="polite"
+              title={selectedVerseReference.value}
+            >
+              {selectedVerseReference.value}
+            </div>
+          )}
+          {isHighlightPickerOpen.value ? (
+            <div className="sb-verse-toolbar-tools sb-verse-toolbar-picker">
+              <button
+                type="button"
+                className="sb-verse-toolbar-back"
+                onClick={() => {
+                  isHighlightPickerOpen.value = false;
+                }}
+                aria-label={t("back", { defaultValue: "Back" })}
+                title={t("back", { defaultValue: "Back" })}
+              >
+                <span className="material-symbols-outlined">chevron_left</span>
+              </button>
 
-                      selectedVerseToolId.value = null;
-                      tool.onSelect();
+              {DEFAULT_HIGHLIGHT_COLOR_IDS.map((colorId) => (
+                <button
+                  key={colorId}
+                  type="button"
+                  className="sb-verse-toolbar-color-button"
+                  onClick={() => {
+                    const rs = readingState.value;
+                    if (!rs) return;
+                    applyHighlightWithSession(rs, sessionState.value, {
+                      colorId,
+                    });
+                  }}
+                  aria-label={`Highlight ${colorId}`}
+                  title={colorId}
+                >
+                  <span
+                    className="sb-verse-toolbar-color"
+                    style={{
+                      background: `var(--sb-highlight-${colorId}-color)`,
                     }}
-                    className="sb-reader-toolbar-button"
-                  >
-                    <ToolIcon />
-                    <span className="sr-only">
-                      {translateTitle(t, tool.title)}
-                    </span>
-                  </button>
-                  {hasMenuItems && selectedVerseToolId.value === tool.id && (
-                    <div className="sb-tool-context-menu">
-                      {menuItems.map((item) => {
-                        const MenuItemIcon = item.icon;
-                        return (
-                          <button
-                            key={item.id}
-                            disabled={item.disabled.value}
-                            onClick={() => {
-                              item.onSelect();
-                              selectedVerseToolId.value = null;
-                            }}
-                            className="sb-tool-context-menu-item"
-                          >
-                            <MenuItemIcon />
-                            <span>{translateTitle(t, item.title)}</span>
-                          </button>
-                        );
-                      })}
+                  />
+                </button>
+              ))}
+
+              {customHighlightColors.value.map((hex) => (
+                <button
+                  key={hex}
+                  type="button"
+                  className="sb-verse-toolbar-color-button"
+                  onClick={() => {
+                    const rs = readingState.value;
+                    if (!rs) return;
+                    applyHighlightWithSession(rs, sessionState.value, {
+                      colorId: "yellow",
+                      customColor: hex,
+                      customFontColor: getContrastTextColor(hex),
+                    });
+                  }}
+                  onContextMenu={(event: MouseEvent) => {
+                    event.preventDefault();
+                    settings.removeCustomHighlightColor(hex);
+                  }}
+                  aria-label={`Highlight ${hex}`}
+                  title={`${hex} — right-click to remove`}
+                >
+                  <span
+                    className="sb-verse-toolbar-color"
+                    style={{ background: hex }}
+                  />
+                </button>
+              ))}
+
+              <button
+                type="button"
+                className="sb-verse-toolbar-plus"
+                onClick={() => {
+                  colorInputRef.current?.click();
+                }}
+                aria-label={t("add-custom-color", {
+                  defaultValue: "Add custom color",
+                })}
+                title={t("add-color", { defaultValue: "Add color" })}
+              >
+                <span className="material-symbols-outlined">add</span>
+              </button>
+              <input
+                ref={colorInputRef}
+                type="color"
+                className="sb-verse-toolbar-color-input"
+                onChange={(event: Event) => {
+                  const target = event.currentTarget as HTMLInputElement;
+                  commitCustomColor(target.value);
+                }}
+                onInput={(event: Event) => {
+                  const target = event.currentTarget as HTMLInputElement;
+                  commitCustomColor(target.value);
+                }}
+              />
+
+              <button
+                type="button"
+                className="sb-verse-toolbar-clear"
+                disabled={!hasAnyHighlighted.value}
+                onClick={() => {
+                  const rs = readingState.value;
+                  if (!rs) return;
+                  // Clean up the shared decoration first so the removal
+                  // propagates to other clients even if the local
+                  // unhighlight is a no-op (e.g. user isn't logged in
+                  // with HighlightsManager but the session had a
+                  // decoration broadcast earlier).
+                  removeSharedHighlightsFromSelection(sessionState.value, rs);
+                  rs.unhighlightSelectedVerses();
+                }}
+                aria-label={t("clear-highlight", {
+                  defaultValue: "Clear highlight",
+                })}
+                title={t("clear", { defaultValue: "Clear" })}
+              >
+                <span className="material-symbols-outlined">ink_eraser</span>
+              </button>
+            </div>
+          ) : (
+            <div className="sb-verse-toolbar-tools">
+              {(() => {
+                const renderTool = (
+                  tool: (typeof verseToolbarTools.value)[number]
+                ) => {
+                  const ToolIcon = tool.icon;
+                  const menuItems =
+                    tool.getItems?.().filter((item) => item.visible.value) ??
+                    [];
+                  const hasMenuItems = menuItems.length > 0;
+                  return tool.visible.value ? (
+                    <div key={tool.id} className="sb-reader-toolbar-item">
+                      <button
+                        disabled={tool.disabled.value}
+                        onClick={() => {
+                          if (hasMenuItems) {
+                            selectedVerseToolId.value =
+                              selectedVerseToolId.value === tool.id
+                                ? null
+                                : tool.id;
+                            return;
+                          }
+
+                          selectedVerseToolId.value = null;
+                          tool.onSelect();
+                        }}
+                        className="sb-reader-toolbar-button"
+                      >
+                        <ToolIcon />
+                        <span className="sr-only">
+                          {translateTitle(t, tool.title)}
+                        </span>
+                      </button>
+                      {hasMenuItems &&
+                        selectedVerseToolId.value === tool.id && (
+                          <div className="sb-tool-context-menu">
+                            {menuItems.map((item) => {
+                              const MenuItemIcon = item.icon;
+                              return (
+                                <button
+                                  key={item.id}
+                                  disabled={item.disabled.value}
+                                  onClick={() => {
+                                    item.onSelect();
+                                    selectedVerseToolId.value = null;
+                                  }}
+                                  className="sb-tool-context-menu-item"
+                                >
+                                  <MenuItemIcon />
+                                  <span>{translateTitle(t, item.title)}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                     </div>
-                  )}
-                </div>
-              ) : null;
-            })}
-          </div>
+                  ) : null;
+                };
+
+                const nonCancel = verseToolbarTools.value.filter(
+                  (tool) => tool.id !== "clear-selection"
+                );
+                const cancelTools = verseToolbarTools.value.filter(
+                  (tool) => tool.id === "clear-selection"
+                );
+
+                return (
+                  <>
+                    {nonCancel.map(renderTool)}
+                    {selectionUI.value.showHighlightColors && (
+                      <div className="sb-reader-toolbar-item">
+                        <button
+                          type="button"
+                          className="sb-reader-toolbar-button sb-verse-toolbar-highlight-trigger"
+                          onClick={() => {
+                            isHighlightPickerOpen.value = true;
+                          }}
+                          aria-label={t("highlight-selection", {
+                            defaultValue: "Highlight selection",
+                          })}
+                          title={t("highlight", { defaultValue: "Highlight" })}
+                        >
+                          <span className="material-symbols-outlined">
+                            format_ink_highlighter
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                    {cancelTools.map(renderTool)}
+                  </>
+                );
+              })()}
+            </div>
+          )}
         </div>
       )}
     </>

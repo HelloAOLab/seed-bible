@@ -38,6 +38,110 @@ interface TabsHeaderProps {
   openJoinSessionModal: () => void;
 }
 
+/**
+ * Deterministic animal-icon + color assignment for a user.
+ *
+ * One function, one rule: a given user key always maps to the same
+ * `(icon, color)` pair — everywhere on every client. No list context, no
+ * walk-forward. Used for:
+ *   - The sidebar self-avatar (bottom-right)
+ *   - The connected-users list inside a shared tab
+ *   - The "Shared with you" toasts
+ *
+ * We lift the palette to 10 icons × 12 colors = 120 combos. Collision
+ * probability for N users visible at the same time is `1 - Π(1 - i/120)`
+ * for i ∈ [0..N-1] — ~4% for 3 users, ~8% for 5 users. In exchange we get
+ * full cross-client and cross-surface consistency: the color you see on
+ * the sidebar is the same color the tab shows is the same color every
+ * other participant sees for you.
+ */
+const USER_ANIMAL_ICONS = [
+  "forest", // tree
+  "park", // log
+  "eco", // leaf
+  "pets", // cat/dog
+  "cruelty_free", // bunny-style
+  "local_cafe", // coffee
+  "local_florist", // flower
+  "grass", // grass
+  "potted_plant", // plant
+  "nature", // mountain/tree
+] as const;
+
+const USER_PRESENCE_COLORS = [
+  "#34D399", // emerald
+  "#60A5FA", // blue
+  "#F472B6", // pink
+  "#FBBF24", // amber
+  "#A78BFA", // violet
+  "#F87171", // red
+  "#10B981", // green
+  "#F59E0B", // orange
+  "#06B6D4", // cyan
+  "#EC4899", // rose
+  "#8B5CF6", // purple
+  "#14B8A6", // teal
+] as const;
+
+function hashUserKey(key: string): number {
+  let h = 5381;
+  for (let i = 0; i < key.length; i++) {
+    h = ((h << 5) + h) ^ key.charCodeAt(i);
+  }
+  return h >>> 0;
+}
+
+/**
+ * Pure-hash user visual. Same input → same output, forever. The icon and
+ * color are derived independently from the hash so small changes to the
+ * key (e.g. user id suffix) distribute across the whole palette.
+ */
+function getUserAnimalVisual(key: string): { icon: string; color: string } {
+  const normalized = key && key.length > 0 ? key : "anonymous";
+  const hash = hashUserKey(normalized);
+  const iconIndex = hash % USER_ANIMAL_ICONS.length;
+  const colorIndex =
+    Math.floor(hash / USER_ANIMAL_ICONS.length) % USER_PRESENCE_COLORS.length;
+  return {
+    icon: USER_ANIMAL_ICONS[iconIndex]!,
+    color: USER_PRESENCE_COLORS[colorIndex]!,
+  };
+}
+
+/**
+ * Returns the current client's identity key. For a user visible inside a
+ * session, use whatever the `ConnectedSessionUser` entry exposes (userId
+ * if logged in, otherwise connectionId). For the sidebar self-avatar we
+ * derive the SAME thing from `login.userId` with a fallback to
+ * `configBot.id` — so the two call sites always agree on the key and
+ * therefore on the visual.
+ */
+function getSelfVisualKey(state: SeedBibleState): string {
+  const userId = state.login.userId.value;
+  if (userId) return userId;
+  try {
+    if (typeof configBot !== "undefined" && configBot?.id) {
+      return String(configBot.id);
+    }
+  } catch {
+    /* ignore */
+  }
+  return "me";
+}
+
+/**
+ * Given a `ConnectedSessionUser`, returns the SAME key that the sidebar
+ * self-avatar would use for this same person on their own client. This
+ * guarantees visual consistency between "how I see myself in the sidebar"
+ * and "how others see me in the connected users row".
+ */
+function getConnectedUserVisualKey(user: {
+  userId?: string | null;
+  connectionId?: string | null;
+}): string {
+  return user.userId ?? user.connectionId ?? "anonymous";
+}
+
 interface SettingsProps {
   state: SeedBibleState;
 }
@@ -72,6 +176,169 @@ function renderLayoutPreview(layoutId: PaneLayoutId) {
   );
 }
 
+const HIGHLIGHT_DURATION_OPTIONS: { label: string; value: number | null }[] = [
+  { label: "∞", value: null },
+  { label: "8s", value: 8 },
+  { label: "16s", value: 16 },
+  { label: "20s", value: 20 },
+];
+
+/**
+ * Modal content: host-side controls for a shared session. Ported from
+ * develop's "Scripture Navigation" panel.
+ *
+ * - "Only Host can navigate" toggles `allowedNavigators` between `null`
+ *   (everyone) and `[hostUserId]` (host only).
+ * - "Only Host can highlight" toggles `allowedDecorators` the same way.
+ * - Highlight duration picker writes `highlightDurationSeconds`.
+ * - "End Session" removes the tab (which disposes the session and removes
+ *   its registry entry automatically via `wrapSessionLifecycle`).
+ *
+ * Non-host participants see the current settings but can't change them.
+ */
+function SessionSettingsModalContent(props: {
+  state: SeedBibleState;
+  session: import("../managers/SessionsManager").BibleReadingSession;
+  onEndSession: () => void;
+  onClose: () => void;
+}) {
+  const { state, session, onEndSession, onClose } = props;
+  const options = session.options.value;
+  const hostId = options.hostUserId;
+  const currentIdentity = getSelfVisualKey(state);
+  const isHost =
+    hostId !== null &&
+    (state.login.userId.value === hostId || currentIdentity === hostId);
+
+  const onlyHostNavigate =
+    Array.isArray(options.allowedNavigators) &&
+    options.allowedNavigators.length > 0;
+  const onlyHostHighlight =
+    Array.isArray(options.allowedDecorators) &&
+    options.allowedDecorators.length > 0;
+
+  const setNavigatorsOnlyHost = (onlyHost: boolean) => {
+    if (!isHost || !hostId) return;
+    session.updateOptions({
+      allowedNavigators: onlyHost ? [hostId] : null,
+    });
+  };
+
+  const setDecoratorsOnlyHost = (onlyHost: boolean) => {
+    if (!isHost || !hostId) return;
+    session.updateOptions({
+      allowedDecorators: onlyHost ? [hostId] : null,
+    });
+  };
+
+  const setHighlightDuration = (seconds: number | null) => {
+    if (!isHost) return;
+    session.updateOptions({ highlightDurationSeconds: seconds });
+  };
+
+  const { t } = useI18n();
+
+  return (
+    <div className="sb-session-settings">
+      {!isHost && (
+        <p className="sb-session-settings-note">
+          {t("session-settings-host-only_note", {
+            defaultValue: "Only the session host can change these settings.",
+          })}
+        </p>
+      )}
+
+      <div className="sb-session-settings-row">
+        <label
+          className="sb-session-settings-label"
+          htmlFor="sb-session-only-host-navigate"
+        >
+          {t("session-settings-host-only_navigate", {
+            defaultValue: "Only host can navigate",
+          })}
+        </label>
+        <input
+          id="sb-session-only-host-navigate"
+          type="checkbox"
+          checked={onlyHostNavigate}
+          disabled={!isHost}
+          onChange={(event: Event) => {
+            setNavigatorsOnlyHost(
+              (event.currentTarget as HTMLInputElement).checked
+            );
+          }}
+        />
+      </div>
+
+      <div className="sb-session-settings-row">
+        <label
+          className="sb-session-settings-label"
+          htmlFor="sb-session-only-host-highlight"
+        >
+          {t("session-settings-host-only_highlight", {
+            defaultValue: "Only host can highlight",
+          })}
+        </label>
+        <input
+          id="sb-session-only-host-highlight"
+          type="checkbox"
+          checked={onlyHostHighlight}
+          disabled={!isHost}
+          onChange={(event: Event) => {
+            setDecoratorsOnlyHost(
+              (event.currentTarget as HTMLInputElement).checked
+            );
+          }}
+        />
+      </div>
+
+      <div className="sb-session-settings-duration">
+        <div className="sb-session-settings-duration-title">
+          {t("session-settings-highlight-duration", {
+            defaultValue: "Highlight for",
+          })}
+        </div>
+        <div className="sb-session-settings-duration-options">
+          {HIGHLIGHT_DURATION_OPTIONS.map((option) => {
+            const selected = options.highlightDurationSeconds === option.value;
+            return (
+              <button
+                key={option.label}
+                type="button"
+                className={`sb-session-settings-duration-option${selected ? " sb-session-settings-duration-option-selected" : ""}`}
+                disabled={!isHost}
+                onClick={() => setHighlightDuration(option.value)}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="sb-session-settings-actions">
+        <button
+          type="button"
+          className="sb-session-settings-cancel"
+          onClick={onClose}
+        >
+          {t("close", { defaultValue: "Close" })}
+        </button>
+        <button
+          type="button"
+          className="sb-session-settings-end"
+          onClick={() => {
+            onEndSession();
+            onClose();
+          }}
+        >
+          {t("end-session", { defaultValue: "End Session" })}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function TabsHeader(props: TabsHeaderProps) {
   const {
     state,
@@ -85,6 +352,7 @@ export function TabsHeader(props: TabsHeaderProps) {
     openJoinSessionModal,
   } = props;
   const { sidebar } = state;
+  const { t } = useI18n();
 
   return (
     <div className="sb-sidebar-top-row">
@@ -107,15 +375,19 @@ export function TabsHeader(props: TabsHeaderProps) {
             <button
               onClick={toggleLayoutMenu}
               className="sb-sidebar-top-icon-button"
-              aria-label="Select pane layout"
-              title="Pane layout"
+              aria-label={t("select-pane-layout", {
+                defaultValue: "Select pane layout",
+              })}
+              title={t("pane-layout", { defaultValue: "Pane layout" })}
             >
               <span className="material-symbols-outlined">dashboard</span>
             </button>
 
             {isLayoutMenuOpen && (
               <div className="sb-pane-layout-menu">
-                <div className="sb-pane-layout-menu-title">Panels</div>
+                <div className="sb-pane-layout-menu-title">
+                  {t("panels", { defaultValue: "Panels" })}
+                </div>
                 <div className="sb-pane-layout-options">
                   {PANE_LAYOUT_OPTIONS.map((layout) => (
                     <button
@@ -143,22 +415,22 @@ export function TabsHeader(props: TabsHeaderProps) {
             closeContextMenus();
           }}
           buttonClassName="sb-sidebar-top-icon-button"
-          aria-label="Session options"
-          title="Session options"
+          aria-label={t("session-options", { defaultValue: "Session options" })}
+          title={t("session-options", { defaultValue: "Session options" })}
         >
           <ContextMenuItem
             onClick={() => {
               createSharedSession();
             }}
           >
-            New shared session
+            {t("new-shared-session", { defaultValue: "New shared session" })}
           </ContextMenuItem>
           <ContextMenuItem
             onClick={() => {
               openJoinSessionModal();
             }}
           >
-            Join shared session
+            {t("join-shared-session", { defaultValue: "Join shared session" })}
           </ContextMenuItem>
         </ContextMenuWithButton>
       </div>
@@ -166,8 +438,8 @@ export function TabsHeader(props: TabsHeaderProps) {
       <button
         onClick={sidebar.closeSidebar}
         className="sb-sidebar-close-button"
-        aria-label="Close sidebar"
-        title="Close sidebar"
+        aria-label={t("close-sidebar", { defaultValue: "Close sidebar" })}
+        title={t("close-sidebar", { defaultValue: "Close sidebar" })}
       >
         <span className="material-symbols-outlined">close</span>
       </button>
@@ -274,25 +546,42 @@ export function Tabs(props: TabsProps) {
                       {connectedUsers.map((user) => {
                         const imageUrl = getUserImageUrl(user.profile);
                         const displayName = getUserDisplayName(user);
-                        const style = imageUrl
-                          ? {
-                              borderColor: user.color,
-                              backgroundImage: `url(${imageUrl})`,
-                            }
-                          : {
-                              borderColor: user.color,
-                              backgroundColor: user.color,
-                            };
+                        // Every user has a single, stable visual derived
+                        // purely from their identity key. That guarantees
+                        // a user's color/icon on the tab row matches the
+                        // color/icon on their own sidebar avatar and on
+                        // every other client that sees them.
+                        const visualKey = getConnectedUserVisualKey(user);
+                        const visual = getUserAnimalVisual(visualKey);
+
+                        if (imageUrl) {
+                          return (
+                            <span
+                              key={user.connectionId}
+                              className={`sb-tab-user-icon sb-tab-user-icon-has-image${user.isSelf ? " sb-tab-user-icon-self" : ""}`}
+                              title={displayName}
+                              style={{
+                                borderColor: visual.color,
+                                backgroundImage: `url(${imageUrl})`,
+                              }}
+                            />
+                          );
+                        }
 
                         return (
                           <span
                             key={user.connectionId}
-                            className={`sb-tab-user-icon${
-                              imageUrl ? " sb-tab-user-icon-has-image" : ""
-                            }${user.isSelf ? " sb-tab-user-icon-self" : ""}`}
+                            className={`sb-tab-user-icon sb-tab-user-icon-animal${user.isSelf ? " sb-tab-user-icon-self" : ""}`}
                             title={displayName}
-                            style={style}
-                          />
+                            style={{
+                              borderColor: visual.color,
+                              backgroundColor: visual.color,
+                            }}
+                          >
+                            <span className="material-symbols-outlined">
+                              {visual.icon}
+                            </span>
+                          </span>
                         );
                       })}
                     </div>
@@ -314,23 +603,68 @@ export function Tabs(props: TabsProps) {
                 title={t("tab-options", { defaultValue: "Tab options" })}
               >
                 {tab.sharedSession && (
-                  <ContextMenuItem
-                    className="sb-tab-menu-item"
-                    title={t("session-id", {
-                      sessionId: tab.sharedSession.id,
-                      defaultValue: `Session ID: ${tab.sharedSession.id}`,
-                    })}
-                    onClick={() => {
-                      if (tab.sharedSession) {
-                        os.setClipboard(tab.sharedSession.id);
-                      }
-                    }}
-                  >
-                    {t("session-id_x", {
-                      sessionId: tab.sharedSession.id,
-                      defaultValue: `Session ID: ${tab.sharedSession.id}`,
-                    })}
-                  </ContextMenuItem>
+                  <>
+                    <ContextMenuItem
+                      className="sb-tab-menu-item"
+                      title={t("session-id", {
+                        sessionId: tab.sharedSession.id,
+                        defaultValue: `Session ID: ${tab.sharedSession.id}`,
+                      })}
+                      onClick={() => {
+                        if (tab.sharedSession) {
+                          os.setClipboard(tab.sharedSession.id);
+                        }
+                      }}
+                    >
+                      {t("session-id_x", {
+                        sessionId: tab.sharedSession.id,
+                        defaultValue: `Session ID: ${tab.sharedSession.id}`,
+                      })}
+                    </ContextMenuItem>
+                    {(() => {
+                      // Only the session host sees the settings entry.
+                      const hostId = tab.sharedSession.options.value.hostUserId;
+                      const selfIdentity = getSelfVisualKey(state);
+                      const isHost =
+                        hostId !== null &&
+                        (state.login.userId.value === hostId ||
+                          selfIdentity === hostId);
+                      if (!isHost) return null;
+                      return (
+                        <ContextMenuItem
+                          className="sb-tab-menu-item"
+                          onClick={() => {
+                            const session = tab.sharedSession;
+                            if (!session) return;
+                            const modalId = `session-settings-${session.id}`;
+                            state.modals.openModal({
+                              id: modalId,
+                              title: {
+                                key: "session-settings",
+                                defaultValue: "Session settings",
+                              },
+                              content: () => (
+                                <SessionSettingsModalContent
+                                  state={state}
+                                  session={session}
+                                  onEndSession={() => {
+                                    state.tabs.removeTab(tab.id);
+                                  }}
+                                  onClose={() => {
+                                    state.modals.closeModal(modalId);
+                                  }}
+                                />
+                              ),
+                            });
+                          }}
+                        >
+                          {t("session-settings", {
+                            defaultValue: "Session settings",
+                          })}
+                        </ContextMenuItem>
+                      );
+                    })()}
+                  </>
                 )}
                 <ContextMenuItem
                   className="sb-tab-menu-item"
@@ -348,7 +682,9 @@ export function Tabs(props: TabsProps) {
                       }}
                       className="sb-tab-menu-item"
                     >
-                      Open in new pane
+                      {t("open-in-new-panel", {
+                        defaultValue: "Open in new panel",
+                      })}
                     </ContextMenuItem>
                     <ContextMenuItem
                       onClick={() => {
@@ -356,7 +692,9 @@ export function Tabs(props: TabsProps) {
                       }}
                       className="sb-tab-menu-item"
                     >
-                      Open in detached pane
+                      {t("open-in-detached-panel", {
+                        defaultValue: "Open in detached panel",
+                      })}
                     </ContextMenuItem>
                   </>
                 )}
@@ -366,6 +704,150 @@ export function Tabs(props: TabsProps) {
         })}
       </div>
     </>
+  );
+}
+
+/**
+ * Fixed-position toast list at the top-left of the viewport showing live
+ * shared sessions from other users that the current client isn't already
+ * in. Ported from develop's top-left notification pattern — no separate
+ * notifications box; the toasts ARE the notifications.
+ */
+export function SharedSessionsToasts(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { invitations, tabs: tabsManager } = state;
+  const { t } = useI18n();
+
+  const openSharedSessionIds = new Set(
+    tabsManager.tabs.value
+      .map((tab) => tab.sharedSession?.id)
+      .filter(Boolean) as string[]
+  );
+  const entries = invitations.availableSessions.value.filter(
+    (entry) => !openSharedSessionIds.has(entry.sessionId)
+  );
+
+  if (entries.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      className="sb-shared-toasts"
+      role="region"
+      aria-label={t("shared-sessions", { defaultValue: "Shared sessions" })}
+    >
+      {entries.map((entry) => {
+        const hostName =
+          entry.hostProfile?.name ?? `User ${entry.hostUserId.slice(0, 8)}`;
+        // Pure-hash visual keyed by hostUserId — same key every client uses
+        // for this host, so everyone sees the same icon+color combo.
+        const visual = getUserAnimalVisual(entry.hostUserId);
+        const hostImage = entry.hostProfile?.pictureUrl ?? null;
+
+        return (
+          <div key={entry.sessionId} className="sb-shared-toast">
+            <button
+              className="sb-shared-toast-button"
+              onClick={() => {
+                closeContextMenus();
+                void invitations.joinAvailableSession(entry);
+              }}
+            >
+              {hostImage ? (
+                <span
+                  className="sb-tab-user-icon sb-tab-user-icon-has-image"
+                  style={{
+                    borderColor: visual.color,
+                    backgroundImage: `url(${hostImage})`,
+                  }}
+                />
+              ) : (
+                <span
+                  className="sb-tab-user-icon sb-tab-user-icon-animal"
+                  style={{
+                    borderColor: visual.color,
+                    backgroundColor: visual.color,
+                  }}
+                >
+                  <span className="material-symbols-outlined">
+                    {visual.icon}
+                  </span>
+                </span>
+              )}
+              <div className="sb-shared-toast-main">
+                <span className="sb-shared-toast-host">{hostName}</span>
+                <span className="sb-shared-toast-label">
+                  {t("shared-session-click-to-join", {
+                    defaultValue: "is sharing — click to join",
+                  })}
+                </span>
+              </div>
+            </button>
+            <button
+              className="sb-shared-toast-dismiss"
+              aria-label={t("dismiss", { defaultValue: "Dismiss" })}
+              title={t("dismiss", { defaultValue: "Dismiss" })}
+              onClick={(event: Event) => {
+                event.stopPropagation();
+                invitations.dismissAvailableSession(entry);
+              }}
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Button at the bottom-right of the sidebar showing the current user's own
+ * animal icon + color. Opens account settings when clicked (matches the
+ * bottom-of-sidebar avatar slot in develop).
+ */
+function SelfAvatarButton(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { login, sidebar } = state;
+  const userId = login.userId.value;
+  const profile = login.profile.value;
+  // Share identity with connected-user rendering so the sidebar avatar
+  // shows the same icon/color as my row inside a shared session.
+  const visualKey = getSelfVisualKey(state);
+  const visual = getUserAnimalVisual(visualKey);
+  const displayName = profile?.name ?? (userId ? userId.slice(0, 8) : "Guest");
+  const imageUrl = profile?.pictureUrl ?? null;
+
+  return (
+    <button
+      className="sb-sidebar-self-avatar"
+      onClick={() => {
+        sidebar.openSettingsToView("account");
+      }}
+      aria-label={`Open account settings (${displayName})`}
+      title={displayName}
+    >
+      {imageUrl ? (
+        <span
+          className="sb-tab-user-icon sb-tab-user-icon-has-image"
+          style={{
+            borderColor: visual.color,
+            backgroundImage: `url(${imageUrl})`,
+          }}
+        />
+      ) : (
+        <span
+          className="sb-tab-user-icon sb-tab-user-icon-animal"
+          style={{
+            borderColor: visual.color,
+            backgroundColor: visual.color,
+          }}
+        >
+          <span className="material-symbols-outlined">{visual.icon}</span>
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -481,16 +963,19 @@ export function Sidebar(props: SidebarProps) {
           <Tabs state={state} closeLayoutMenu={closeLayoutMenu} />
         ))}
 
-      <button
-        onClick={sidebar.openSettings}
-        className={`sb-sidebar-icon-button${
-          isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
-        }`}
-        aria-label={t("open-settings", { defaultValue: "Open settings" })}
-        title={t("settings", { defaultValue: "Settings" })}
-      >
-        <MobileSettingsIcon />
-      </button>
+      <div className="sb-sidebar-bottom-actions">
+        <button
+          onClick={sidebar.openSettings}
+          className={`sb-sidebar-icon-button${
+            isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
+          }`}
+          aria-label={t("open-settings", { defaultValue: "Open settings" })}
+          title={t("settings", { defaultValue: "Settings" })}
+        >
+          <MobileSettingsIcon />
+        </button>
+        <SelfAvatarButton state={state} />
+      </div>
     </aside>
   );
 }

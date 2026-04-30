@@ -10,6 +10,10 @@ import {
 } from "seed-bible.managers.BibleReadingManager";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import type { TabsManager } from "seed-bible.managers.TabsManager";
+import type {
+  BookOrientation,
+  SettingsManager,
+} from "seed-bible.managers.SettingsManager";
 import {
   computed,
   effect,
@@ -22,6 +26,16 @@ import {
 export interface BibleSelectorOptions {
   /** Pane context to bind selector actions to. */
   pane?: Pane;
+}
+
+/** Options passed to `setOpen` to control selector behavior on open. */
+export interface BibleSelectorSetOpenOptions {
+  /**
+   * When true, the next chapter selection always creates a new tab and binds
+   * it to the target pane, even if the pane already has a tab.
+   * Cleared automatically when the selector closes.
+   */
+  forNewTab?: boolean;
 }
 
 export interface GhostBook {
@@ -49,6 +63,9 @@ export interface BibleSelectorState {
   currentBookId: ReadonlySignal<string | null>;
   /** Active pane chapter number snapshot. */
   currentChapterNumber: ReadonlySignal<number | null>;
+
+  /** Current book-arrangement orientation (used for section labelling). */
+  orientation: ReadonlySignal<BookOrientation>;
 
   /** Available translations loaded by the data manager. */
   availableTranslations: ReadonlySignal<Translation[]>;
@@ -78,10 +95,27 @@ export interface BibleSelectorState {
   viewportWidth: Signal<number>;
 
   /**
+   * True while the selector is in "create a new tab" mode — chapter
+   * selections create a brand new tab and bind it to the target pane
+   * instead of reusing the pane's existing tab.
+   */
+  forceNewTab: ReadonlySignal<boolean>;
+
+  /** All panes available as targets for the selector. */
+  availablePanes: ReadonlySignal<Pane[]>;
+
+  /**
    * Opens/closes selector.
    * When opening, optionally rebinds selector to a pane and synchronizes data.
    */
-  setOpen: (open: boolean, pane?: Pane) => Promise<void>;
+  setOpen: (
+    open: boolean,
+    pane?: Pane,
+    options?: BibleSelectorSetOpenOptions
+  ) => Promise<void>;
+
+  /** Switches the target pane while the selector is open. */
+  setTargetPane: (paneId: string) => void;
 
   /** Sets the current selector search query. */
   setSearch: (value: string) => void;
@@ -94,7 +128,8 @@ export interface BibleSelectorState {
 
   /**
    * Applies chapter selection to the bound pane/tab and closes selector.
-   * Creates a new tab if needed when the bound pane has no tab content.
+   * Creates a new tab if needed when the bound pane has no tab content,
+   * or when `forceNewTab` is true.
    */
   selectChapter: (bookId: string, chapterNumber: number) => void;
 
@@ -178,10 +213,13 @@ function groupBooks(translationBooks: TranslationBooks | null, search: string) {
 export function createBibleSelectorState(
   dataManager: BibleDataManager,
   tabsManager: TabsManager,
-  panesManager: PanesManager
+  panesManager: PanesManager,
+  settings?: SettingsManager
 ): BibleSelectorState {
   const isOpen = signal(false);
   const pane = signal<Pane | null>(null);
+  const forceNewTab = signal(false);
+  const availablePanes = computed(() => panesManager.panes.value);
   const availableTranslations = computed(
     () => dataManager.availableTranslations.value
   );
@@ -194,6 +232,10 @@ export function createBibleSelectorState(
   );
   const currentChapterNumber = computed<number | null>(
     () => readingState.value?.chapterNumber.value ?? null
+  );
+
+  const orientation = computed<BookOrientation>(
+    () => settings?.settings.value.bookOrientation ?? "traditional"
   );
 
   const loading = signal(false);
@@ -252,9 +294,13 @@ export function createBibleSelectorState(
     }
   };
 
-  const setOpen = async (open: boolean, nextPane?: Pane) => {
+  const setOpen = async (
+    open: boolean,
+    nextPane?: Pane,
+    options?: BibleSelectorSetOpenOptions
+  ) => {
     if (open) {
-      console.log("Opening Bible selector with pane:", nextPane);
+      console.log("Opening Bible selector with pane:", nextPane, options);
       if (nextPane) {
         pane.value = nextPane;
       }
@@ -266,11 +312,23 @@ export function createBibleSelectorState(
       }
 
       pane.value = effectivePane;
+      forceNewTab.value = options?.forNewTab === true;
 
       await syncStateFromPane();
+    } else {
+      forceNewTab.value = false;
     }
 
     isOpen.value = open;
+  };
+
+  const setTargetPane = (paneId: string) => {
+    const nextPane =
+      panesManager.panes.value.find((p) => p.id === paneId) ?? null;
+    if (!nextPane) {
+      return;
+    }
+    pane.value = nextPane;
   };
 
   const getHistoryState = () => {
@@ -371,7 +429,7 @@ export function createBibleSelectorState(
     // Ensure selected-tab synchronization targets this pane, not a stale selection.
     panesManager.selectPane(pane.value.id);
 
-    if (pane.value.tab) {
+    if (pane.value.tab && !forceNewTab.value) {
       await pane.value.tab.readingState.selectTranslationAndChapter(
         selectedTranslationId.value,
         selectedBookId,
@@ -804,6 +862,7 @@ export function createBibleSelectorState(
     currentTranslationId,
     currentBookId,
     currentChapterNumber,
+    orientation,
     loading,
     error,
     search,
@@ -812,7 +871,10 @@ export function createBibleSelectorState(
     selectedTranslationBooks,
     expandedBookId,
     viewportWidth,
+    forceNewTab,
+    availablePanes,
     setOpen,
+    setTargetPane,
     setSearch,
     setExpandedBook,
     selectTranslation,

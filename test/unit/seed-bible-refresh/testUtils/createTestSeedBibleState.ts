@@ -41,14 +41,14 @@ export async function waitFor(
   }
 }
 
-async function waitForInitialLoad(
+export async function waitForInitialLoad(
   state: BibleReadingState,
   timeoutMs: number
 ): Promise<void> {
   await waitFor(() => state.loading.value === false, timeoutMs);
 }
 
-async function waitForTabsToLoad(
+export async function waitForTabsToLoad(
   state: SeedBibleState,
   timeoutMs: number
 ): Promise<void> {

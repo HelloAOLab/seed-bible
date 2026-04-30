@@ -7,6 +7,7 @@ import {
   DEFAULT_TRANSLATION_ID,
   DEFAULT_TRANSLATION_LANGUAGE,
 } from "seed-bible.managers.BibleReadingManager";
+import { useI18n } from "seed-bible.i18n.I18nManager";
 
 export interface SidebarSearchResult {
   id: string;
@@ -238,6 +239,7 @@ export function SidebarSearch(props: SidebarSearchProps) {
       highlightedResultIndex.value = -1;
     }
   };
+  const { t } = useI18n();
 
   return (
     <div className="sb-sidebar-search-shell" ref={searchContainerRef}>
@@ -259,8 +261,8 @@ export function SidebarSearch(props: SidebarSearchProps) {
             }
           }}
           className="sb-sidebar-search-input"
-          placeholder="Search verses"
-          aria-label="Search verses"
+          placeholder={t("search-verses", { defaultValue: "Search verses" })}
+          aria-label={t("search-verses", { defaultValue: "Search verses" })}
         />
         {searchQuery.value.trim().length > 0 && (
           <button
@@ -268,8 +270,8 @@ export function SidebarSearch(props: SidebarSearchProps) {
               runSearch("");
             }}
             className="sb-sidebar-search-clear-button"
-            aria-label="Clear search"
-            title="Clear search"
+            aria-label={t("clear-search", { defaultValue: "Clear search" })}
+            title={t("clear-search", { defaultValue: "Clear search" })}
           >
             <span className="material-symbols-outlined">close</span>
           </button>
@@ -279,7 +281,9 @@ export function SidebarSearch(props: SidebarSearchProps) {
       {isSearchPanelOpen.value && searchQuery.value.trim().length > 0 && (
         <div className="sb-sidebar-search-panel" role="listbox">
           {searchLoading.value && (
-            <div className="sb-sidebar-search-status">Searching...</div>
+            <div className="sb-sidebar-search-status">
+              {t("searching", { defaultValue: "Searching..." })}
+            </div>
           )}
 
           {!searchLoading.value && searchError.value && (
@@ -292,7 +296,9 @@ export function SidebarSearch(props: SidebarSearchProps) {
             !searchError.value &&
             searchResults.value.length === 0 && (
               <div className="sb-sidebar-search-status">
-                No matching verses.
+                {t("no-search-results", {
+                  defaultValue: "No matching verses.",
+                })}
               </div>
             )}
 
@@ -330,7 +336,8 @@ export function SidebarSearch(props: SidebarSearchProps) {
                       )}
                     </div>
                     <div className="sb-sidebar-search-result-text">
-                      {result.text || "Open chapter"}
+                      {result.text ||
+                        t("open-chapter", { defaultValue: "Open chapter" })}
                     </div>
                   </button>
                 ))}

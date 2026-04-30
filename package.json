@@ -17,6 +17,7 @@
     "build": "tsx script/build.ts",
     "check:aux": "tsx script/check.ts",
     "check:ts": "tsc-silent --project ./tsconfig.json --suppressConfig ./tsc-silent.config.cjs",
+    "i18n": "tsx script/i18n.ts",
     "format": "prettier --write \"packages/**/*.{js,jsx,ts,tsx,css}\"",
     "format:changed": "pretty-quick",
     "prepare": "husky",
@@ -52,6 +53,7 @@
     "@eslint/css": "^0.10.0",
     "@eslint/js": "^9.32.0",
     "@eslint/json": "^1.2.0",
+    "@google-cloud/translate": "^9.3.0",
     "@jest/environment": "^30.3.0",
     "@preact/signals": "^2.8.2",
     "@preact/signals-debug": "^1.4.2",
@@ -87,7 +89,8 @@
     "tsx": "^4.20.5",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "react-i18next": "17.0.6"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
