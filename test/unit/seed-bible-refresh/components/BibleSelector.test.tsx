@@ -9,7 +9,16 @@ import {
   createTestSeedBibleState,
   waitFor,
 } from "../testUtils/createTestSeedBibleState";
-import { createDefaultManagerResponseMap } from "../managers/testUtils/mockBibleApiData";
+import {
+  createDefaultManagerResponseMap,
+  createResponse,
+  makeExampleUrl,
+  EXAMPLE_API_ENDPOINT,
+  translations as mockTranslations,
+  bsbBooks,
+  nivBooks,
+  makeChapter,
+} from "../managers/testUtils/mockBibleApiData";
 
 jest.mock("seed-bible.i18n.I18nManager", () => ({
   useI18n: () => ({
@@ -447,5 +456,82 @@ describe("BibleSelector translation selector", () => {
     expect(labels.some((l) => l?.includes("english"))).toBe(true);
     // Klingon is not a popular language and should be hidden
     expect(labels.some((l) => l?.includes("klingon"))).toBe(false);
+  });
+
+  it("entering a custom translation URL and clicking Import loads the translations", async () => {
+    const customTranslation = makeTranslation("CST", "Klingon", 66);
+    const responses = {
+      ...createDefaultManagerResponseMap(),
+      [makeExampleUrl("/api/available_translations.json")]: createResponse({
+        translations: [customTranslation],
+      }),
+      [makeExampleUrl("/api/CST/books.json")]: createResponse({
+        translation: customTranslation,
+        books: [],
+      }),
+    };
+
+    const state = await createTestSeedBibleState({ responses });
+    const pane = state.panes.panes.value[0] as Pane;
+    if (!pane) throw new Error("Expected an initial pane.");
+    await state.selector.setOpen(true, pane);
+
+    const { selectorState, bibleDataManager } = {
+      selectorState: state.selector,
+      bibleDataManager: state.bibleData,
+    };
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    // Open the translation modal and expand the custom translation panel
+    act(() => {
+      selectorState.selectingTranslation.value = true;
+      selectorState.showCustomTranslation.value = true;
+    });
+
+    await waitFor(() => Boolean(container.querySelector("input.custom-tr-in")));
+
+    const urlInput = container.querySelector(
+      "input.custom-tr-in"
+    ) as HTMLInputElement;
+    expect(urlInput).not.toBeNull();
+
+    act(() => {
+      urlInput.value = EXAMPLE_API_ENDPOINT;
+      urlInput.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    expect(selectorState.inputValue.value).toBe(EXAMPLE_API_ENDPOINT);
+
+    const importButton = Array.from(container.querySelectorAll("button")).find(
+      (btn) => btn.textContent?.trim() === "Import"
+    ) as HTMLButtonElement | undefined;
+    expect(importButton).toBeDefined();
+
+    act(() => {
+      importButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    // After import the custom translation should appear in apiTranslations
+    await waitFor(() =>
+      Object.values(selectorState.apiTranslations.value).some((group) =>
+        Object.values(group).some((t) => t.id === "CST")
+      )
+    );
+
+    const allTranslations = Object.values(
+      selectorState.apiTranslations.value
+    ).flatMap((group) => Object.values(group));
+    expect(allTranslations.some((t) => t.id === "CST")).toBe(true);
   });
 });
