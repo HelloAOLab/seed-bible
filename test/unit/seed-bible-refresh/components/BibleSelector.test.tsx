@@ -4,6 +4,7 @@ import { BibleSelector } from "@packages/seed-bible/seed-bible/components/BibleS
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
   createTestSeedBibleState,
   waitFor,
@@ -39,7 +40,6 @@ async function createSelectorFixture(
 
   if (options.open !== false) {
     await state.selector.setOpen(true, pane);
-    // await waitFor(() => state.selector.groupedBooks.value.oldTestament.length > 0);
   }
 
   return {
@@ -248,5 +248,204 @@ describe("BibleSelector", () => {
 
     expect(setSearch).toHaveBeenCalledWith("exo");
     expect(selectorState.search.value).toBe("exo");
+  });
+});
+
+describe("BibleSelector translation selector", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  function makeTranslation(
+    id: string,
+    languageEnglishName: string,
+    numberOfBooks = 66
+  ): Translation {
+    return {
+      id,
+      name: `${id} Bible`,
+      englishName: `${id} Bible`,
+      languageEnglishName,
+      website: "https://example.com",
+      licenseUrl: "https://example.com/license",
+      shortName: id,
+      language: languageEnglishName.slice(0, 3).toLowerCase(),
+      textDirection: "ltr",
+      availableFormats: ["json"],
+      listOfBooksApiLink: `/api/${id}/books.json`,
+      numberOfBooks,
+      totalNumberOfChapters: 1189,
+      totalNumberOfVerses: 31102,
+    };
+  }
+
+  it("displays translations grouped by language", async () => {
+    const { selectorState, bibleDataManager } = await createSelectorFixture();
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      selectorState.apiTranslations.value = {
+        english: {
+          aab: makeTranslation("AAB", "English"),
+          niv: makeTranslation("NIV", "English"),
+        },
+        spanish: {
+          rvr: makeTranslation("RVR", "Spanish"),
+        },
+      };
+      selectorState.selectingTranslation.value = true;
+    });
+
+    await waitFor(() => Boolean(container.querySelector(".language-list")));
+
+    const items = Array.from(container.querySelectorAll(".item"));
+    const labels = items.map((el) => el.textContent?.trim().toLowerCase());
+    expect(labels.some((l) => l?.includes("english"))).toBe(true);
+    expect(labels.some((l) => l?.includes("spanish"))).toBe(true);
+  });
+
+  it("displays only complete translations when in complete mode", async () => {
+    const { selectorState, bibleDataManager } = await createSelectorFixture();
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      selectorState.apiTranslations.value = {
+        // english has one complete and one incomplete translation
+        english: {
+          aab: makeTranslation("AAB", "English", 66),
+          inc: makeTranslation("INC", "English", 27),
+        },
+        // french has only incomplete translations – the whole group should be hidden
+        french: {
+          fls: makeTranslation("FLS", "French", 27),
+        },
+      };
+      selectorState.showAllLanguages.value = "complete";
+      selectorState.selectingTranslation.value = true;
+    });
+
+    await waitFor(() => Boolean(container.querySelector(".language-list")));
+
+    const items = Array.from(container.querySelectorAll(".item"));
+    const labels = items.map((el) => el.textContent?.trim().toLowerCase());
+
+    // English group is visible because it contains at least one complete translation
+    expect(labels.some((l) => l?.includes("english"))).toBe(true);
+    // French group is hidden because all its translations are incomplete
+    expect(labels.some((l) => l?.includes("french"))).toBe(false);
+  });
+
+  it("displays all translations across all languages when in all mode", async () => {
+    const { selectorState, bibleDataManager } = await createSelectorFixture();
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      selectorState.apiTranslations.value = {
+        english: {
+          aab: makeTranslation("AAB", "English", 66),
+        },
+        // french is not in the popular list and is incomplete
+        french: {
+          fls: makeTranslation("FLS", "French", 27),
+        },
+        // klingon is not in the popular list
+        klingon: {
+          klg: makeTranslation("KLG", "Klingon", 10),
+        },
+      };
+      selectorState.showAllLanguages.value = "all";
+      selectorState.selectingTranslation.value = true;
+    });
+
+    await waitFor(() => Boolean(container.querySelector(".language-list")));
+
+    const items = Array.from(container.querySelectorAll(".item"));
+    const labels = items.map((el) => el.textContent?.trim().toLowerCase());
+
+    expect(labels.some((l) => l?.includes("english"))).toBe(true);
+    expect(labels.some((l) => l?.includes("french"))).toBe(true);
+    expect(labels.some((l) => l?.includes("klingon"))).toBe(true);
+  });
+
+  it("displays only popular languages when in popular mode", async () => {
+    const { selectorState, bibleDataManager } = await createSelectorFixture();
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      selectorState.apiTranslations.value = {
+        // english is in the default popular list
+        english: {
+          aab: makeTranslation("AAB", "English", 66),
+        },
+        // klingon is not a popular language
+        klingon: {
+          klg: makeTranslation("KLG", "Klingon", 10),
+        },
+      };
+      selectorState.showAllLanguages.value = "popular";
+      selectorState.selectingTranslation.value = true;
+    });
+
+    await waitFor(() => Boolean(container.querySelector(".language-list")));
+
+    const items = Array.from(container.querySelectorAll(".item"));
+    const labels = items.map((el) => el.textContent?.trim().toLowerCase());
+
+    // English is a popular language and should be visible
+    expect(labels.some((l) => l?.includes("english"))).toBe(true);
+    // Klingon is not a popular language and should be hidden
+    expect(labels.some((l) => l?.includes("klingon"))).toBe(false);
   });
 });
