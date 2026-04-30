@@ -127,13 +127,13 @@ const SearchBar = (props: {
                   </option>
                   <option value={0} class="dropdown-option">
                     {viewportWidth.value > 750
-                      ? t("oldTestament", { defaultValue: "Old Testament" })
-                      : t("oldTestamentShort", { defaultValue: "OT" })}
+                      ? t("old-testament", { defaultValue: "Old Testament" })
+                      : t("old-testament_short", { defaultValue: "OT" })}
                   </option>
                   <option value={1} class="dropdown-option">
                     {viewportWidth.value > 750
-                      ? t("newTestament", { defaultValue: "New Testament" })
-                      : t("newTestamentShort", { defaultValue: "NT" })}
+                      ? t("new-testament", { defaultValue: "New Testament" })
+                      : t("new-testament_short", { defaultValue: "NT" })}
                   </option>
                   {apocryphaAvailable.value && (
                     <option value={3} class="dropdown-option">
@@ -305,7 +305,7 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
             }}
           >
             <span class="testament-title">
-              {t("oldTestament", { defaultValue: "Old Testament" })}
+              {t("old-testament", { defaultValue: "Old Testament" })}
             </span>
             <div class="books-item flex-row-wrap-around">
               {OTBooks.map((book: BibleSelectorBookItem, index: number) =>
@@ -323,7 +323,7 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
             }}
           >
             <span class="testament-title">
-              {t("newTestament", { defaultValue: "New Testament" })}
+              {t("new-testament", { defaultValue: "New Testament" })}
             </span>
             <div class="books-item flex-row-wrap-around">
               {NTBooks.map((book: BibleSelectorBookItem, index: number) =>
@@ -346,12 +346,12 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
     > = {
       0: {
         books: ghostArray(oldTestament, allowedRows),
-        title: t("oldTestament", { defaultValue: "Old Testament" }),
+        title: t("old-testament", { defaultValue: "Old Testament" }),
         alwaysShowTitle: false,
       },
       1: {
         books: ghostArray(newTestament, allowedRows),
-        title: t("newTestament", { defaultValue: "New Testament" }),
+        title: t("new-testament", { defaultValue: "New Testament" }),
         alwaysShowTitle: false,
       },
       3: {
@@ -530,13 +530,13 @@ const EmptyStateWithExpand = (props: {
   return (
     <div className="language-list sb-lg-centered">
       <span>
-        {t("noLanguageResultsFound", {
+        {t("no-language-results-found", {
           defaultValue:
             "No results found. Would you like to expand your search to include partial and incomplete languages as well?",
         })}
       </span>
       <button onClick={onExpand} className="sb-lg-expandButton">
-        {t("showAllLanguages", { defaultValue: "Show all languages" })}
+        {t("show-all-languages", { defaultValue: "Show all languages" })}
       </button>
     </div>
   );
@@ -697,7 +697,7 @@ const TranslationModal = (props: {
               </span>
               <input
                 type="text"
-                placeholder={t("searchTranslation", {
+                placeholder={t("search-translation", {
                   defaultValue: "Search Translation",
                 })}
                 value={languageQuery.value}
@@ -729,7 +729,7 @@ const TranslationModal = (props: {
               }}
             >
               <span>
-                {t("customTranslations", {
+                {t("custom-translations", {
                   defaultValue: "Custom Translations",
                 })}
               </span>
@@ -786,6 +786,7 @@ const LanguageComponent = (props: {
   const showRef = useRef<ReturnType<typeof signal<boolean>> | null>(null);
   if (!showRef.current) showRef.current = signal(false);
   const showSig = showRef.current;
+  const { t } = useI18n();
 
   const shareTranslatation = async (props: { translation: Translation }) => {
     const { translation } = props;
@@ -807,7 +808,11 @@ const LanguageComponent = (props: {
       url.searchParams.set("translation", translationUrl.href);
     }
     os.setClipboard(url.href);
-    os.toast("Copied translation share code");
+    os.toast(
+      t("copied-translation-share-link", {
+        defaultValue: "Copied translation share link",
+      })
+    );
   };
 
   const sortedTranslations = useMemo(() => {
@@ -840,8 +845,6 @@ const LanguageComponent = (props: {
     filteredApiTranslations.value,
     language,
   ]);
-
-  const { t } = useI18n();
 
   return (
     <>
