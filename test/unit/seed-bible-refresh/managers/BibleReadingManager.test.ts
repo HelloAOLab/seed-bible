@@ -1038,6 +1038,70 @@ describe("createBibleReadingState", () => {
     expect(state.chapterNumber.value).toBe(1);
   });
 
+  it("selectTranslation() supports books URL and uses translation ID from the URL", async () => {
+    const bsbAltBooks = {
+      ...bsbBooks,
+      translation: altTranslations.translations[1]!,
+    };
+    const responses = createReadingManagerResponseMap();
+    responses[makeAltUrl("/api/available_translations.json")] =
+      createResponse(altTranslations);
+    responses[makeAltUrl("/api/BSB/books.json")] = createResponse(bsbAltBooks);
+    responses[makeAltUrl("/api/BSB/GEN/1.json")] = createResponse({
+      ...makeChapter(bsbAltBooks, "GEN", 1),
+      translation: altTranslations.translations[1]!,
+      book: bsbAltBooks.books[0]!,
+      thisChapterLink: "/api/BSB/GEN/1.json",
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      previousChapterApiLink: null,
+    });
+
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    await state.selectTranslation(`${ALT_API_ENDPOINT}/api/BSB/books.json`);
+
+    expect(webGetMock).toHaveBeenCalledWith(
+      makeAltUrl("/api/available_translations.json")
+    );
+    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/BSB/books.json"));
+    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/BSB/GEN/1.json"));
+    expect(state.translationId.value).toBe("BSB");
+    expect(state.bookId.value).toBe("GEN");
+    expect(state.chapterNumber.value).toBe(1);
+  });
+
+  it("selectTranslation() falls back to first translation when books URL translation is missing", async () => {
+    const responses = createReadingManagerResponseMap();
+    responses[makeAltUrl("/api/available_translations.json")] =
+      createResponse(altTranslations);
+    responses[makeAltUrl("/api/NIV/books.json")] = createResponse(nivBooks);
+    responses[makeAltUrl("/api/NIV/MAT/1.json")] = createResponse({
+      ...makeChapter(nivBooks, "MAT", 1),
+      translation: altTranslations.translations[0]!,
+      book: nivBooks.books[0]!,
+      thisChapterLink: "/api/NIV/MAT/1.json",
+      nextChapterApiLink: "/api/NIV/MAT/2.json",
+      previousChapterApiLink: null,
+    });
+
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    await state.selectTranslation(`${ALT_API_ENDPOINT}/api/ZZZ/books.json`);
+
+    expect(webGetMock).toHaveBeenCalledWith(
+      makeAltUrl("/api/available_translations.json")
+    );
+    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
+    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/MAT/1.json"));
+    expect(state.translationId.value).toBe("NIV");
+    expect(state.bookId.value).toBe("MAT");
+    expect(state.chapterNumber.value).toBe(1);
+  });
+
   it("selectTranslationAndChapter() changes translation, book, and chapter together", async () => {
     const responses = createReadingManagerResponseMap();
     responses[makeUrl("/api/NIV/books.json")] = createResponse(nivBooks);
@@ -1100,6 +1164,44 @@ describe("createBibleReadingState", () => {
     expect(state.chapterNumber.value).toBe(2);
   });
 
+  it("selectTranslationAndChapter() supports books URL and uses translation ID from the URL", async () => {
+    const bsbAltBooks = {
+      ...bsbBooks,
+      translation: altTranslations.translations[1]!,
+    };
+    const responses = createReadingManagerResponseMap();
+    responses[makeAltUrl("/api/available_translations.json")] =
+      createResponse(altTranslations);
+    responses[makeAltUrl("/api/BSB/books.json")] = createResponse(bsbAltBooks);
+    responses[makeAltUrl("/api/BSB/GEN/2.json")] = createResponse({
+      ...makeChapter(bsbAltBooks, "GEN", 2),
+      translation: altTranslations.translations[1]!,
+      book: bsbAltBooks.books[0]!,
+      thisChapterLink: "/api/BSB/GEN/2.json",
+      nextChapterApiLink: "/api/BSB/GEN/3.json",
+      previousChapterApiLink: "/api/BSB/GEN/1.json",
+    });
+
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    await state.selectTranslationAndChapter(
+      `${ALT_API_ENDPOINT}/api/BSB/books.json`,
+      "GEN",
+      2
+    );
+
+    expect(webGetMock).toHaveBeenCalledWith(
+      makeAltUrl("/api/available_translations.json")
+    );
+    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/BSB/books.json"));
+    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/BSB/GEN/2.json"));
+    expect(state.translationId.value).toBe("BSB");
+    expect(state.bookId.value).toBe("GEN");
+    expect(state.chapterNumber.value).toBe(2);
+  });
+
   it("uses initialTranslationId URL as endpoint and picks the first translation", async () => {
     const responses = createReadingManagerResponseMap();
     responses[makeAltUrl("/api/available_translations.json")] =
@@ -1117,6 +1219,36 @@ describe("createBibleReadingState", () => {
     setWebResponses(responses);
     const state = createBibleReadingState(createDataManager(), {
       initialTranslationId: `${ALT_API_ENDPOINT}/api/available_translations.json`,
+    });
+    await waitForInitialLoad(state);
+
+    expect(webGetMock).toHaveBeenCalledWith(
+      makeAltUrl("/api/available_translations.json")
+    );
+    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
+    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/MAT/1.json"));
+    expect(state.translationId.value).toBe("NIV");
+    expect(state.bookId.value).toBe("MAT");
+    expect(state.chapterNumber.value).toBe(1);
+  });
+
+  it("uses initialTranslationId books URL translation and falls back to first translation if missing", async () => {
+    const responses = createReadingManagerResponseMap();
+    responses[makeAltUrl("/api/available_translations.json")] =
+      createResponse(altTranslations);
+    responses[makeAltUrl("/api/NIV/books.json")] = createResponse(nivBooks);
+    responses[makeAltUrl("/api/NIV/MAT/1.json")] = createResponse({
+      ...makeChapter(bsbBooks, "MAT", 1),
+      translation: altTranslations.translations[0]!,
+      book: nivBooks.books[0]!,
+      thisChapterLink: "/api/NIV/MAT/1.json",
+      nextChapterApiLink: "/api/NIV/MAT/2.json",
+      previousChapterApiLink: null,
+    });
+
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager(), {
+      initialTranslationId: `${ALT_API_ENDPOINT}/api/ZZZ/books.json`,
     });
     await waitForInitialLoad(state);
 
