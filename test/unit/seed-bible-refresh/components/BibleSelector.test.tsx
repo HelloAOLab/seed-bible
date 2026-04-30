@@ -535,3 +535,147 @@ describe("BibleSelector translation selector", () => {
     expect(allTranslations.some((t) => t.id === "CST")).toBe(true);
   });
 });
+
+describe("BibleSelector sharing translations", () => {
+  let container: HTMLDivElement;
+
+  type TestGlobalScope = typeof globalThis & {
+    os?: Record<string, unknown>;
+    configBot?: { tags: Record<string, unknown> };
+  };
+
+  function makeTranslation(
+    id: string,
+    languageEnglishName: string,
+    numberOfBooks = 66
+  ): Translation {
+    return {
+      id,
+      name: `${id} Bible`,
+      englishName: `${id} Bible`,
+      languageEnglishName,
+      website: "https://example.com",
+      licenseUrl: "https://example.com/license",
+      shortName: id,
+      language: languageEnglishName.slice(0, 3).toLowerCase(),
+      textDirection: "ltr",
+      availableFormats: ["json"],
+      listOfBooksApiLink: `/api/${id}/books.json`,
+      numberOfBooks,
+      totalNumberOfChapters: 1189,
+      totalNumberOfVerses: 31102,
+    };
+  }
+
+  let setClipboard: jest.Mock;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+
+    setClipboard = jest.fn();
+    const scope = globalThis as TestGlobalScope;
+    scope.os = { ...(scope.os ?? {}), setClipboard, toast: jest.fn() };
+    scope.configBot = { tags: { pattern: "SeedBible" } };
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  async function openTranslationModalWithGroup(
+    translationId: string,
+    languageEnglishName: string,
+    endpointInfoOverride?: {
+      endpoint: string;
+      isDefault: boolean;
+    }
+  ) {
+    const translation = makeTranslation(translationId, languageEnglishName);
+    const { selectorState, bibleDataManager } = await createSelectorFixture();
+
+    if (endpointInfoOverride) {
+      jest
+        .spyOn(bibleDataManager, "getTranslationEndpointInfo")
+        .mockReturnValue({
+          translationId,
+          endpoint: endpointInfoOverride.endpoint,
+          isDefault: endpointInfoOverride.isDefault,
+        });
+    }
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      selectorState.apiTranslations.value = {
+        [languageEnglishName.toLowerCase()]: {
+          [translationId.toLowerCase()]: translation,
+        },
+      };
+      selectorState.showAllLanguages.value = "all";
+      selectorState.selectingTranslation.value = true;
+      // Setting a query causes the language group to auto-expand
+      selectorState.languageQuery.value = translationId.toLowerCase();
+    });
+
+    await waitFor(() => Boolean(container.querySelector(".share-btn")));
+
+    return { selectorState, bibleDataManager };
+  }
+
+  it("clicking share on a default-endpoint translation copies a URL with just the translation ID", async () => {
+    await openTranslationModalWithGroup("AAB", "English");
+
+    const shareButton = container.querySelector(
+      ".share-btn"
+    ) as HTMLButtonElement | null;
+    expect(shareButton).not.toBeNull();
+
+    act(() => {
+      shareButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => setClipboard.mock.calls.length > 0);
+
+    const copiedUrl = new URL(setClipboard.mock.calls[0][0] as string);
+    expect(copiedUrl.hostname).toBe("ao.bot");
+    expect(copiedUrl.searchParams.get("translation")).toBe("AAB");
+  });
+
+  it("clicking share on a non-default-endpoint translation copies a URL with the full books.json URL", async () => {
+    const customEndpoint = `${EXAMPLE_API_ENDPOINT}/`;
+    await openTranslationModalWithGroup("CST", "Klingon", {
+      endpoint: customEndpoint,
+      isDefault: false,
+    });
+
+    const shareButton = container.querySelector(
+      ".share-btn"
+    ) as HTMLButtonElement | null;
+    expect(shareButton).not.toBeNull();
+
+    act(() => {
+      shareButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => setClipboard.mock.calls.length > 0);
+
+    const copiedUrl = new URL(setClipboard.mock.calls[0][0] as string);
+    expect(copiedUrl.hostname).toBe("ao.bot");
+    const translationParam = copiedUrl.searchParams.get("translation")!;
+    expect(translationParam).toContain("example.test");
+    expect(translationParam).toContain("CST");
+    expect(translationParam).toContain("books.json");
+  });
+});
