@@ -24,6 +24,7 @@ import {
 let webGetMock: jest.Mock;
 
 beforeEach(() => {
+  window.localStorage.clear();
   webGetMock = jest.fn();
   (globalThis as any).web = {
     get: webGetMock,
@@ -86,12 +87,12 @@ async function waitForInitialLoad(state: BibleReadingState): Promise<void> {
 }
 
 function getDisplayedBookIds(selector: BibleSelectorState): string[] {
-  const oldTestament = selector.oldTestamentRows.value
-    .flat()
-    .map((book) => book.id);
-  const newTestament = selector.newTestamentRows.value
-    .flat()
-    .map((book) => book.id);
+  const oldTestament = selector.groupedBooks.value.oldTestament.map(
+    (book) => book.id
+  );
+  const newTestament = selector.groupedBooks.value.newTestament.map(
+    (book) => book.id
+  );
   return [...oldTestament, ...newTestament];
 }
 
@@ -386,6 +387,13 @@ describe("createBibleSelectorState", () => {
       const { dataManager, tabsManager, panesManager, tablessPane } =
         createManagersWithTablessPane();
 
+      // Ensure there is no preselected translation in pane reading states.
+      for (const pane of panesManager.panes.value) {
+        if (pane.tab?.readingState.translationId) {
+          pane.tab.readingState.translationId.value = null;
+        }
+      }
+
       const selector = createBibleSelectorState(
         dataManager,
         tabsManager,
@@ -405,6 +413,13 @@ describe("createBibleSelectorState", () => {
       });
       const { dataManager, tabsManager, panesManager, tablessPane } =
         createManagersWithTablessPane();
+
+      // Ensure there is no preselected translation in pane reading states.
+      for (const pane of panesManager.panes.value) {
+        if (pane.tab?.readingState.translationId) {
+          pane.tab.readingState.translationId.value = null;
+        }
+      }
 
       const selector = createBibleSelectorState(
         dataManager,
