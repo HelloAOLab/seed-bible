@@ -485,7 +485,7 @@ const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
       106: "5 Psalms",
     };
 
-    if (bd.commonName === "Psalms") {
+    if (bd.id === "PSA") {
       for (let i = 0; i < bd.numberOfChapters; i++) {
         const partToggle = psalmPartByStartIndex[i];
         if (partToggle) {
