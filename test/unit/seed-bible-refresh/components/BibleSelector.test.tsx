@@ -449,6 +449,147 @@ describe("BibleSelector", () => {
       render(null, container);
     }
   });
+
+  it("breaks Psalms into 1 Psalms through 5 Psalms with expected chapter ranges", async () => {
+    const psalmsBooks = {
+      ...bsbBooks,
+      books: [
+        ...bsbBooks.books.filter((book) => book.id !== "MAT"),
+        {
+          id: "PSA",
+          name: "Psalms",
+          commonName: "Psalms",
+          title: null,
+          order: 19,
+          numberOfChapters: 150,
+          firstChapterNumber: 1,
+          firstChapterApiLink: "/api/AAB/PSA/1.json",
+          lastChapterNumber: 150,
+          lastChapterApiLink: "/api/AAB/PSA/150.json",
+          totalNumberOfVerses: 2461,
+        },
+        ...bsbBooks.books.filter((book) => book.id === "MAT"),
+      ],
+    };
+
+    const responses = {
+      ...createDefaultManagerResponseMap(),
+      [makeUrl("/api/AAB/books.json")]: createResponse(psalmsBooks),
+    };
+
+    const state = await createTestSeedBibleState({ responses });
+    const pane = state.panes.panes.value[0] as Pane;
+    if (!pane) {
+      throw new Error("Expected an initial pane.");
+    }
+    await state.selector.setOpen(true, pane);
+
+    const { selectorState, bibleDataManager } = {
+      selectorState: state.selector,
+      bibleDataManager: state.bibleData,
+    };
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    await waitFor(() => Boolean(container.querySelector("#booktab-PSA")));
+
+    const psalmsButton = container.querySelector(
+      "#booktab-PSA"
+    ) as HTMLDivElement | null;
+    expect(psalmsButton).not.toBeNull();
+
+    act(() => {
+      psalmsButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => container.querySelectorAll(".psalms-btn").length === 5);
+
+    const getPsalmSectionButton = (sectionName: string): HTMLButtonElement => {
+      const button = Array.from(container.querySelectorAll(".psalms-btn")).find(
+        (element) => element.textContent?.trim() === sectionName
+      ) as HTMLButtonElement | undefined;
+
+      if (!button) {
+        throw new Error(`Could not find Psalms section button: ${sectionName}`);
+      }
+
+      return button;
+    };
+
+    const isSectionActive = (sectionName: string): boolean =>
+      getPsalmSectionButton(sectionName).classList.contains(
+        "sidebar-selected-itm"
+      );
+
+    const setActiveSectionOnly = async (sectionName: string): Promise<void> => {
+      const sections = [
+        "1 Psalms",
+        "2 Psalms",
+        "3 Psalms",
+        "4 Psalms",
+        "5 Psalms",
+      ];
+
+      for (const section of sections) {
+        const shouldBeActive = section === sectionName;
+        const currentlyActive = isSectionActive(section);
+        if (shouldBeActive !== currentlyActive) {
+          act(() => {
+            getPsalmSectionButton(section).dispatchEvent(
+              new MouseEvent("click", { bubbles: true })
+            );
+          });
+
+          await waitFor(() => isSectionActive(section) === shouldBeActive);
+        }
+      }
+
+      await waitFor(() =>
+        sections.every(
+          (section) => isSectionActive(section) === (section === sectionName)
+        )
+      );
+    };
+
+    const getVisibleChapterNumbers = (): number[] => {
+      return Array.from(container.querySelectorAll(".chapter-btn"))
+        .filter(
+          (button) => (button as HTMLButtonElement).style.display !== "none"
+        )
+        .map((button) => Number(button.textContent?.trim()))
+        .filter((chapter) => Number.isFinite(chapter));
+    };
+
+    const expectVisibleChapterRange = async (
+      sectionName: string,
+      startChapter: number,
+      endChapter: number
+    ): Promise<void> => {
+      await setActiveSectionOnly(sectionName);
+
+      const expected = Array.from(
+        { length: endChapter - startChapter + 1 },
+        (_, index) => startChapter + index
+      );
+      expect(getVisibleChapterNumbers()).toEqual(expected);
+    };
+
+    await expectVisibleChapterRange("1 Psalms", 1, 40);
+    await expectVisibleChapterRange("2 Psalms", 41, 71);
+    await expectVisibleChapterRange("3 Psalms", 72, 88);
+    await expectVisibleChapterRange("4 Psalms", 89, 105);
+    await expectVisibleChapterRange("5 Psalms", 106, 150);
+  });
 });
 
 describe("BibleSelector translation selector", () => {
