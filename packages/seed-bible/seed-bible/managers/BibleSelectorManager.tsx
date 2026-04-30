@@ -143,7 +143,7 @@ export interface BibleSelectorState {
   highLightedButtonsID: Signal<Record<number, boolean>>;
   currentPsalms: Signal<string[]>;
   selectedTestamentData: Signal<TranslationBook[] | null>;
-  handleClick: (props: {
+  handleChapterClick: (props: {
     index: number;
     book: TranslationBook;
     cht?: number;
@@ -637,7 +637,7 @@ export function createBibleSelectorState(
     }
   };
 
-  const handleClick = (props: {
+  const handleChapterClick = (props: {
     index: number;
     book: TranslationBook;
     cht?: number;
@@ -891,7 +891,7 @@ export function createBibleSelectorState(
     highLightedButtonsID,
     currentPsalms,
     selectedTestamentData,
-    handleClick,
+    handleChapterClick,
     calcChapterPos,
     isBook,
     ghostArray,

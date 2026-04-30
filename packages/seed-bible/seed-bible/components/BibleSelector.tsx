@@ -194,7 +194,7 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
     chT,
     localSelectedTestament,
     groupedBooks,
-    handleClick,
+    handleChapterClick: handleClick,
     calcChapterPos,
     isBook,
     ghostArray,
