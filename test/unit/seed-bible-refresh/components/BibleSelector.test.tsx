@@ -332,6 +332,215 @@ describe("BibleSelector translation selector", () => {
     expect(labels.some((l) => l?.includes("spanish"))).toBe(true);
   });
 
+  it("allows opening translation selector and searching translations by name", async () => {
+    const { selectorState, bibleDataManager } = await createSelectorFixture();
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      selectorState.apiTranslations.value = {
+        english: {
+          niv: {
+            ...makeTranslation("NIV", "English", 66),
+            name: "New International Version",
+          },
+          bsb: {
+            ...makeTranslation("BSB", "English", 66),
+            name: "Berean Study Bible",
+          },
+        },
+      };
+      selectorState.showAllLanguages.value = "all";
+    });
+
+    const openTranslationSelectorButton = container.querySelector(
+      ".sidebar-translation-selector"
+    ) as HTMLDivElement | null;
+    expect(openTranslationSelectorButton).not.toBeNull();
+
+    act(() => {
+      openTranslationSelectorButton?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    await waitFor(() =>
+      Boolean(container.querySelector("#translation-search-input"))
+    );
+
+    const translationSearchInput = container.querySelector(
+      "#translation-search-input"
+    ) as HTMLInputElement | null;
+    expect(translationSearchInput).not.toBeNull();
+
+    act(() => {
+      if (!translationSearchInput) {
+        return;
+      }
+      translationSearchInput.value = "international";
+      translationSearchInput.dispatchEvent(
+        new Event("change", { bubbles: true })
+      );
+    });
+
+    await waitFor(() => selectorState.languageQuery.value === "international");
+
+    const modalText = container.textContent?.toLowerCase() ?? "";
+    expect(modalText).toContain("new international version");
+    expect(modalText).not.toContain("berean study bible");
+  });
+
+  it("allows opening translation selector and searching translations by abbreviation", async () => {
+    const { selectorState, bibleDataManager } = await createSelectorFixture();
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      selectorState.apiTranslations.value = {
+        english: {
+          niv: {
+            ...makeTranslation("NIV", "English", 66),
+            name: "New International Version",
+          },
+        },
+        spanish: {
+          rvr: {
+            ...makeTranslation("RVR", "Spanish", 66),
+            name: "Reina Valera",
+          },
+        },
+      };
+      selectorState.showAllLanguages.value = "all";
+    });
+
+    const openTranslationSelectorButton = container.querySelector(
+      ".sidebar-translation-selector"
+    ) as HTMLDivElement | null;
+    expect(openTranslationSelectorButton).not.toBeNull();
+
+    act(() => {
+      openTranslationSelectorButton?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    await waitFor(() =>
+      Boolean(container.querySelector("#translation-search-input"))
+    );
+
+    const translationSearchInput = container.querySelector(
+      "#translation-search-input"
+    ) as HTMLInputElement | null;
+    expect(translationSearchInput).not.toBeNull();
+
+    act(() => {
+      if (!translationSearchInput) {
+        return;
+      }
+      translationSearchInput.value = "rvr";
+      translationSearchInput.dispatchEvent(
+        new Event("change", { bubbles: true })
+      );
+    });
+
+    await waitFor(() => selectorState.languageQuery.value === "rvr");
+
+    const modalText = container.textContent?.toLowerCase() ?? "";
+    expect(modalText).toContain("reina valera (rvr)");
+    expect(modalText).not.toContain("new international version (niv)");
+  });
+
+  it("allows opening translation selector and searching translations by language", async () => {
+    const { selectorState, bibleDataManager } = await createSelectorFixture();
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      selectorState.apiTranslations.value = {
+        english: {
+          niv: {
+            ...makeTranslation("NIV", "English", 66),
+            name: "New International Version",
+          },
+        },
+        spanish: {
+          rvr: {
+            ...makeTranslation("RVR", "Spanish", 66),
+            name: "Reina Valera",
+          },
+        },
+      };
+      selectorState.showAllLanguages.value = "all";
+    });
+
+    const openTranslationSelectorButton = container.querySelector(
+      ".sidebar-translation-selector"
+    ) as HTMLDivElement | null;
+    expect(openTranslationSelectorButton).not.toBeNull();
+
+    act(() => {
+      openTranslationSelectorButton?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    await waitFor(() =>
+      Boolean(container.querySelector("#translation-search-input"))
+    );
+
+    const translationSearchInput = container.querySelector(
+      "#translation-search-input"
+    ) as HTMLInputElement | null;
+    expect(translationSearchInput).not.toBeNull();
+
+    act(() => {
+      if (!translationSearchInput) {
+        return;
+      }
+      translationSearchInput.value = "spanish";
+      translationSearchInput.dispatchEvent(
+        new Event("change", { bubbles: true })
+      );
+    });
+
+    await waitFor(() => selectorState.languageQuery.value === "spanish");
+
+    const items = Array.from(container.querySelectorAll(".item"));
+    const labels = items.map((el) => el.textContent?.trim().toLowerCase());
+    expect(labels.some((l) => l?.includes("spanish"))).toBe(true);
+    expect(labels.some((l) => l?.includes("english"))).toBe(false);
+  });
+
   it("displays only complete translations when in complete mode", async () => {
     const { selectorState, bibleDataManager } = await createSelectorFixture();
 
