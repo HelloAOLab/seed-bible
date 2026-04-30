@@ -289,6 +289,9 @@ export function createBibleSelectorState(
         err instanceof Error
           ? err.message
           : "Failed to load selector translation data.";
+      if (typeof process === "object" && process.env.NODE_ENV === "test") {
+        console.error("Error syncing Bible selector state from pane:", err);
+      }
     } finally {
       loading.value = false;
     }

@@ -9,13 +9,13 @@ import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManag
 import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import { createTabs } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import {
-  API_ENDPOINT,
+  EXAMPLE_API_ENDPOINT,
   type WebResponseMap,
-  createDefaultManagerResponseMap,
+  createExampleManagerResponseMap,
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
 import {
-  makeUrl,
+  makeExampleUrl,
   createResponse,
   translations,
   nivBooks,
@@ -56,7 +56,7 @@ function setWebResponses(responses: WebResponseMap): void {
 }
 
 function createApi(): FreeUseBibleAPI {
-  return new FreeUseBibleAPI(API_ENDPOINT);
+  return new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT);
 }
 
 function createDataManager() {
@@ -141,7 +141,7 @@ describe("createBibleSelectorState", () => {
   });
 
   it("setOpen() opens the selector and displays books", async () => {
-    setWebResponses(createDefaultManagerResponseMap());
+    setWebResponses(createExampleManagerResponseMap());
     const { dataManager, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
 
@@ -158,7 +158,7 @@ describe("createBibleSelectorState", () => {
   });
 
   it("setOpen() opens the selector and expands the current book", async () => {
-    setWebResponses(createDefaultManagerResponseMap());
+    setWebResponses(createExampleManagerResponseMap());
     const { dataManager, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
 
@@ -180,7 +180,7 @@ describe("createBibleSelectorState", () => {
   });
 
   it("setSearch() filters books", async () => {
-    setWebResponses(createDefaultManagerResponseMap());
+    setWebResponses(createExampleManagerResponseMap());
     const { dataManager, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
 
@@ -201,7 +201,7 @@ describe("createBibleSelectorState", () => {
   });
 
   it("setExpandedBook() sets expandedBookId", async () => {
-    setWebResponses(createDefaultManagerResponseMap());
+    setWebResponses(createExampleManagerResponseMap());
     const { dataManager, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
 
@@ -220,7 +220,7 @@ describe("createBibleSelectorState", () => {
   });
 
   it("selectTranslation() changes selector state but not reading state", async () => {
-    setWebResponses(createDefaultManagerResponseMap());
+    setWebResponses(createExampleManagerResponseMap());
     const { dataManager, readingState, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
 
@@ -249,7 +249,7 @@ describe("createBibleSelectorState", () => {
   });
 
   it("selectChapter() applies selector translation and chapter to reading state", async () => {
-    setWebResponses(createDefaultManagerResponseMap());
+    setWebResponses(createExampleManagerResponseMap());
     const { dataManager, readingState, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
 
@@ -270,7 +270,7 @@ describe("createBibleSelectorState", () => {
   });
 
   it("setOpen({forNewTab}) flips forceNewTab and selectChapter creates a new tab bound to the pane", async () => {
-    setWebResponses(createDefaultManagerResponseMap());
+    setWebResponses(createExampleManagerResponseMap());
     const { dataManager, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
 
@@ -303,7 +303,7 @@ describe("createBibleSelectorState", () => {
   });
 
   it("setTargetPane() switches the pane that the next chapter selection binds to", async () => {
-    setWebResponses(createDefaultManagerResponseMap());
+    setWebResponses(createExampleManagerResponseMap());
     const { dataManager, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
 
@@ -362,7 +362,7 @@ describe("createBibleSelectorState", () => {
     }
 
     it("setOpen() selects DEFAULT_TRANSLATION_ID (AAB) when no pane has a tab but AAB is in available translations", async () => {
-      setWebResponses(createDefaultManagerResponseMap());
+      setWebResponses(createExampleManagerResponseMap());
       const { dataManager, tabsManager, panesManager, tablessPane } =
         createManagersWithTablessPane();
 
@@ -379,10 +379,10 @@ describe("createBibleSelectorState", () => {
 
     it("setOpen() uses first available translation when DEFAULT_TRANSLATION_ID (BSB) is not in available translations", async () => {
       setWebResponses({
-        [makeUrl("/api/available_translations.json")]: createResponse({
+        [makeExampleUrl("/api/available_translations.json")]: createResponse({
           translations: [translations.translations[1]!],
         }),
-        [makeUrl("/api/NIV/books.json")]: createResponse(nivBooks),
+        [makeExampleUrl("/api/NIV/books.json")]: createResponse(nivBooks),
       });
       const { dataManager, tabsManager, panesManager, tablessPane } =
         createManagersWithTablessPane();
@@ -407,7 +407,7 @@ describe("createBibleSelectorState", () => {
 
     it("setOpen() sets an error when no translations are available", async () => {
       setWebResponses({
-        [makeUrl("/api/available_translations.json")]: createResponse({
+        [makeExampleUrl("/api/available_translations.json")]: createResponse({
           translations: [],
         }),
       });
@@ -426,6 +426,7 @@ describe("createBibleSelectorState", () => {
         tabsManager,
         panesManager
       );
+
       await selector.setOpen(true, tablessPane);
 
       expect(selector.error.value).toBe("No available translations found.");

@@ -5,7 +5,7 @@ import {
 import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
-  API_ENDPOINT,
+  EXAMPLE_API_ENDPOINT,
   bsbBooks,
   createResponse,
   makeChapter,
@@ -43,7 +43,9 @@ function makeEndpointUrl(endpoint: string, path: string): string {
   return new URL(path, endpoint).href;
 }
 
-function createManager(endpoint: string = API_ENDPOINT): BibleDataManager {
+function createManager(
+  endpoint: string = EXAMPLE_API_ENDPOINT
+): BibleDataManager {
   return createBibleDataManager(new FreeUseBibleAPI(endpoint));
 }
 
@@ -65,7 +67,7 @@ describe("createBibleDataManager", () => {
   });
 
   it("exposes the underlying api instance", () => {
-    const api = new FreeUseBibleAPI(API_ENDPOINT);
+    const api = new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT);
     const manager = createBibleDataManager(api);
 
     expect(manager.api).toBe(api);
@@ -82,8 +84,10 @@ describe("createBibleDataManager", () => {
     };
 
     const responses: WebResponseMap = {
-      [makeEndpointUrl(API_ENDPOINT, "api/available_translations.json")]:
-        createResponse(translations),
+      [makeEndpointUrl(
+        EXAMPLE_API_ENDPOINT,
+        "api/available_translations.json"
+      )]: createResponse(translations),
       [makeEndpointUrl(ALT_ENDPOINT, "api/available_translations.json")]:
         createResponse({ translations: [altNiv, altEsv] }),
     };
@@ -95,7 +99,7 @@ describe("createBibleDataManager", () => {
     await manager.getTranslations(ALT_ENDPOINT);
 
     expect(manager.endpoints.value).toEqual([
-      `${API_ENDPOINT}/`,
+      `${EXAMPLE_API_ENDPOINT}/`,
       `${ALT_ENDPOINT}/`,
     ]);
 
@@ -207,9 +211,8 @@ describe("createBibleDataManager", () => {
         createResponse(chapter2),
       [makeEndpointUrl(ALT_ENDPOINT, "api/NIV/MAT/1.json")]:
         createResponse(chapter1),
-      [makeEndpointUrl(API_ENDPOINT, "api/BSB/GEN/1.json")]: createResponse(
-        makeChapter(bsbBooks, "GEN", 1)
-      ),
+      [makeEndpointUrl(EXAMPLE_API_ENDPOINT, "api/BSB/GEN/1.json")]:
+        createResponse(makeChapter(bsbBooks, "GEN", 1)),
     };
 
     setWebResponses(responses);

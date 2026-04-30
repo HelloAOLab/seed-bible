@@ -11,10 +11,7 @@ import {
   MinusIcon,
   ShareIcon,
 } from "seed-bible.components.icons";
-import type {
-  Translation,
-  TranslationBook,
-} from "seed-bible.managers.FreeUseBibleAPI";
+import type { Translation } from "seed-bible.managers.FreeUseBibleAPI";
 import { computed, signal } from "@preact/signals";
 import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
 const { useEffect, useMemo, useRef, useState } = os.appHooks;
@@ -61,22 +58,13 @@ const SearchBar = (props: {
   const { search, setSearch, selectedTranslationBooks, selectedTranslation } =
     bibleSelectorState;
 
-  // Some legacy tests provide partial selectorState mocks; keep rendering safe.
-  const selectedTestament = bibleSelectorState.selectedTestament ?? signal(2);
-  const apocryphaAvailable =
-    bibleSelectorState.apocryphaAvailable ?? signal(false);
-  const selectingTranslation =
-    bibleSelectorState.selectingTranslation ?? signal(false);
-  const viewportWidth = bibleSelectorState.viewportWidth ?? signal(1024);
-  const selectedTestamentData =
-    bibleSelectorState.selectedTestamentData ??
-    signal<TranslationBook[] | null>(null);
-  const handleEnter = bibleSelectorState.handleEnter ?? (() => undefined);
-  const setOpen =
-    bibleSelectorState.setOpen ??
-    (async () => {
-      return undefined;
-    });
+  const selectedTestament = bibleSelectorState.selectedTestament;
+  const apocryphaAvailable = bibleSelectorState.apocryphaAvailable;
+  const selectingTranslation = bibleSelectorState.selectingTranslation;
+  const viewportWidth = bibleSelectorState.viewportWidth;
+  const selectedTestamentData = bibleSelectorState.selectedTestamentData;
+  const handleEnter = bibleSelectorState.handleEnter;
+  const setOpen = bibleSelectorState.setOpen;
 
   return (
     <>

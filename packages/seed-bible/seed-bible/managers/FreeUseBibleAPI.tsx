@@ -1004,11 +1004,13 @@ interface DatasetReference {
   score?: number;
 }
 
+export const DEFAULT_API_ENDPOINT = "https://bible.helloao.org/";
+
 export class FreeUseBibleAPI {
   endpoint: string;
   private _responseCache = new Map<string, Promise<unknown>>();
 
-  constructor(endpoint: string = "https://bible.helloao.org/") {
+  constructor(endpoint: string = DEFAULT_API_ENDPOINT) {
     this.endpoint = endpoint;
   }
 
