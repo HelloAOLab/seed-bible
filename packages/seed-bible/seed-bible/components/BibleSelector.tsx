@@ -1,5 +1,6 @@
 import {
   type BibleSelectorBookItem,
+  type BibleSelectorPsalmsGroups,
   type BibleSelectorState,
 } from "seed-bible.managers.BibleSelectorManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
@@ -397,6 +398,8 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
 const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
   const { bibleSelectorState } = props;
 
+  const { t } = useI18n();
+
   const {
     bookData,
     highLightedButtonsID,
@@ -405,20 +408,20 @@ const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
     isOpen,
   } = bibleSelectorState;
 
-  const psalmsPartName = (props: { index: number }) => {
+  const psalmsPartName = (props: {
+    index: number;
+  }): BibleSelectorPsalmsGroups => {
     const { index } = props;
     if (index <= 40) {
-      return "1 Psalms";
+      return "1-psalms";
     } else if (index <= 71) {
-      return "2 Psalms";
+      return "2-psalms";
     } else if (index <= 88) {
-      return "3 Psalms";
+      return "3-psalms";
     } else if (index <= 105) {
-      return "4 Psalms";
-    } else if (index <= 149) {
-      return "5 Psalms";
+      return "4-psalms";
     } else {
-      return "";
+      return "5-psalms";
     }
   };
 
@@ -429,20 +432,20 @@ const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
     const cp = currentPsalms.value;
     const renderJSX = [];
 
-    const togglePsalmPart = (partName: string) => {
+    const togglePsalmPart = (partName: BibleSelectorPsalmsGroups) => {
       currentPsalms.value = cp.includes(partName)
         ? cp.filter((psalm) => psalm !== partName)
         : [...cp, partName];
     };
 
-    const renderPsalmPartToggle = (partName: string) => (
+    const renderPsalmPartToggle = (partName: BibleSelectorPsalmsGroups) => (
       <button
         style={{ width: "100%" }}
         onClick={() => togglePsalmPart(partName)}
         class={`psalms-btn flex-start-start ${cp.includes(partName) ? "sidebar-selected-itm" : ""}`}
       >
         <span style={{ width: "100%" }} class="">
-          {partName}
+          {t(partName, { defaultValue: `${partName.slice(0, 1)} Psalms` })}
         </span>
       </button>
     );
@@ -450,7 +453,6 @@ const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
     const renderChapterButton = (props: {
       index: number;
       chapterLabel: number | string;
-      bookName: string;
       isVisible?: boolean;
       isLast?: boolean;
     }) => {
@@ -477,12 +479,12 @@ const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
       );
     };
 
-    const psalmPartByStartIndex: Record<number, string> = {
-      0: "1 Psalms",
-      41: "2 Psalms",
-      72: "3 Psalms",
-      89: "4 Psalms",
-      106: "5 Psalms",
+    const psalmPartByStartIndex: Record<number, BibleSelectorPsalmsGroups> = {
+      0: "1-psalms",
+      41: "2-psalms",
+      72: "3-psalms",
+      89: "4-psalms",
+      106: "5-psalms",
     };
 
     if (bd.id === "PSA") {
@@ -497,7 +499,6 @@ const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
           renderChapterButton({
             index: i,
             chapterLabel: i + 1,
-            bookName: partName,
             isVisible: cp.includes(partName),
           })
         );
@@ -508,7 +509,6 @@ const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
           renderChapterButton({
             index: i,
             chapterLabel: i + 1,
-            bookName: bd.commonName,
             isLast: i === bd.numberOfChapters - 1,
           })
         );

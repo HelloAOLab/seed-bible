@@ -44,6 +44,13 @@ export interface GhostBook {
 
 export type BibleSelectorBookItem = TranslationBook | GhostBook;
 
+export type BibleSelectorPsalmsGroups =
+  | "1-psalms"
+  | "2-psalms"
+  | "3-psalms"
+  | "4-psalms"
+  | "5-psalms";
+
 /**
  * Reactive state + actions for the Bible selector overlay.
  *
@@ -141,7 +148,7 @@ export interface BibleSelectorState {
   chT: Signal<number>;
   localSelectedTestament: Signal<number>;
   highLightedButtonsID: Signal<Record<number, boolean>>;
-  currentPsalms: Signal<string[]>;
+  currentPsalms: Signal<BibleSelectorPsalmsGroups[]>;
   selectedTestamentData: Signal<TranslationBook[] | null>;
   handleChapterClick: (props: {
     index: number;
@@ -548,12 +555,12 @@ export function createBibleSelectorState(
 
   const highLightedButtonsID = signal<Record<number, boolean>>({});
 
-  const currentPsalms = signal<string[]>([
-    "1 Psalms",
-    "2 Psalms",
-    "3 Psalms",
-    "4 Psalms",
-    "5 Psalms",
+  const currentPsalms = signal<BibleSelectorPsalmsGroups[]>([
+    "1-psalms",
+    "2-psalms",
+    "3-psalms",
+    "4-psalms",
+    "5-psalms",
   ]);
 
   // ─── TranslationModal State ───────────────────────────────────────────────────
