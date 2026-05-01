@@ -2,6 +2,7 @@ import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/Free
 import { computed } from "@preact/signals";
 import { registerExtension } from "seed-bible.app.api";
 import { loadMap } from "ext_geoImporter.importer.loadMap";
+import { LocationIcon } from "seed-bible.components.icons";
 
 interface PlaceData {
   place: string;
@@ -91,8 +92,8 @@ registerExtension({
 
     yield context.tools.registerVerseToolbarTool({
       id: "show-locations",
-      title: "Locations",
-      icon: () => <span>📍</span>,
+      title: { key: "title", ns: "ext_locations", defaultValue: "Locations" },
+      icon: () => <LocationIcon />,
       isVisible: () => foundPlaces.value.length > 0,
       getItems: () => {
         return foundPlaces.value.map((place) => ({
