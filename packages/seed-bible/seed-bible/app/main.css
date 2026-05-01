@@ -731,7 +731,8 @@ h6 {
 }
 
 .sb-inline-footnote-button {
-  margin-left: 4px;
+  margin-inline-start: 4px;
+  margin-inline-end: 4px;
   border: none;
   background: transparent;
   color: var(--sb-verse-font-color);
