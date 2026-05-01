@@ -884,7 +884,9 @@ export function Sidebar(props: SidebarProps) {
                   event.currentTarget as HTMLInputElement
                 ).value;
               }}
-              placeholder="Enter shared session ID"
+              placeholder={t("enter-shared-session-id", {
+                defaultValue: "Enter shared session ID",
+              })}
             />
           </label>
           <div>
