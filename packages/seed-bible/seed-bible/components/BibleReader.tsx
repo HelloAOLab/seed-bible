@@ -732,9 +732,12 @@ export function BibleReader(props: BibleReaderProps) {
         <span className="sb-bible-reader-book">
           {currentBook.value?.name ?? bookId.value ?? "Select a book"}
         </span>
-        <span className="sb-bible-reader-chapter">{chapterNumber.value}</span>{" "}
+        {String.fromCharCode(160)}
+        <span className="sb-bible-reader-chapter">{chapterNumber.value}</span>
+        {String.fromCharCode(160)}
         <span className="sb-bible-reader-translation">
-          / {translationId.value ?? ""}
+          {String.fromCharCode(160)}/{String.fromCharCode(160)}
+          {translationId.value ?? ""}
         </span>
       </h2>
 
