@@ -828,7 +828,7 @@ h6 {
   display: block;
 
   .sb-verse-number {
-    margin-left: -1.2em;
+    margin-inline-start: -1.2em;
   }
 }
 
@@ -843,6 +843,8 @@ h6 {
   top: -0.4em;
   white-space: nowrap;
   vertical-align: middle;
+  margin-inline-start: 6px;
+  margin-inline-end: 3px;
 }
 
 .sb-poem-line-1 {
