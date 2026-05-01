@@ -4,6 +4,7 @@ import {
   type ComponentProps,
   type Signalish,
 } from "preact";
+import { useEffect, useRef } from "preact/hooks";
 
 const activeContextMenuId = signal<string | null>(null);
 let nextContextMenuId = 0;
@@ -27,17 +28,23 @@ export function ContextMenu({
   isOpen,
   children,
   className,
+  menuElementRef,
   ...props
 }: {
   isOpen: boolean;
   children: ComponentChildren;
+  menuElementRef?: (element: HTMLDivElement | null) => void;
 } & ComponentProps<"div">) {
   if (!isOpen) {
     return null;
   }
 
   return (
-    <div className={joinClassNames("sb-context-menu", className)} {...props}>
+    <div
+      ref={menuElementRef}
+      className={joinClassNames("sb-context-menu", className)}
+      {...props}
+    >
       {children}
     </div>
   );
@@ -84,6 +91,10 @@ export function ContextMenuWithButton({
   iconClassName?: string;
 } & ComponentProps<"button">) {
   const menuId = useSignal("");
+  const menuStyle = useSignal<ComponentProps<"div">["style"]>(undefined);
+  const anchorRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
   if (!menuId.value) {
     nextContextMenuId += 1;
     menuId.value = `context-menu-${nextContextMenuId}`;
@@ -95,8 +106,55 @@ export function ContextMenuWithButton({
 
   const currentIsOpen = activeContextMenuId.value === menuId.value;
 
+  useEffect(() => {
+    if (!currentIsOpen) {
+      menuStyle.value = undefined;
+      return;
+    }
+
+    const positionMenu = () => {
+      const anchor = anchorRef.current;
+      const menu = menuRef.current;
+      if (!anchor || !menu) {
+        return;
+      }
+
+      const anchorRect = anchor.getBoundingClientRect();
+
+      const distanceToRightEdge = window.innerWidth - anchorRect.right;
+      const distanceToLeftEdge = anchorRect.left;
+
+      if (distanceToLeftEdge < distanceToRightEdge) {
+        menuStyle.value = {
+          left: `0px`,
+        };
+      } else {
+        menuStyle.value = {
+          right: `0px`,
+        };
+      }
+    };
+
+    const updateMenuPosition = () => {
+      requestAnimationFrame(positionMenu);
+    };
+
+    updateMenuPosition();
+
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
+    };
+  }, [currentIsOpen]);
+
   return (
-    <div className={joinClassNames("sb-context-menu-anchor", anchorClassName)}>
+    <div
+      ref={anchorRef}
+      className={joinClassNames("sb-context-menu-anchor", anchorClassName)}
+    >
       <button
         className={joinClassNames(
           "sb-context-menu-button",
@@ -126,6 +184,10 @@ export function ContextMenuWithButton({
       </button>
       <ContextMenu
         isOpen={currentIsOpen}
+        menuElementRef={(element) => {
+          menuRef.current = element;
+        }}
+        style={menuStyle.value}
         className={joinClassNames("sb-context-menu", menuClassName)}
       >
         {children}

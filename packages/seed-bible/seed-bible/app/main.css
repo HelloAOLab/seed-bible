@@ -2876,8 +2876,6 @@ h6 {
 
 .sb-context-menu {
   position: absolute;
-  right: 0;
-  top: calc(100% + 6px);
   min-width: 160px;
   padding: 6px;
   border: 1px solid var(--sb-secondary-color);
