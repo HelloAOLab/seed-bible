@@ -1,7 +1,7 @@
 /* eslint-disable css/use-baseline */
 :root {
   --sb-ui-zoom: 1;
-  --sb-scripture-margin: 27px;
+  --sb-scripture-margin: 35%;
 
   /* Text config variables — overridden at runtime by SettingsManager. */
   --text-bookTitle-font: "Newsreader", serif;
@@ -215,7 +215,7 @@ h6 {
   padding-right: var(--sb-scripture-margin);
   padding-bottom: 96px;
   padding-left: var(--sb-scripture-margin);
-  max-width: 500px;
+  /* max-width: 500px; */
   margin: 0 auto;
   box-sizing: border-box;
 
@@ -374,7 +374,7 @@ h6 {
 .sb-pane-shell:not(.sb-pane-shell-detached) {
   border-radius: 8px;
   margin: 8px;
-  box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.2);
+  /* box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.2); */
 }
 
 .sb-pane-shell-detached {
@@ -2962,14 +2962,15 @@ h6 {
 .sb-settings-language-select {
   border: none;
   border-radius: 8px;
-  padding: 12px 14px;
+  padding: 12px 16px;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
   font-size: 15px;
   font-family: inherit;
   cursor: pointer;
-  max-width: 220px;
+  /* max-width: 220px; */
   transition: background-color 0.2s ease;
+  width: 100%;
 }
 
 .sb-settings-language-select:hover {
@@ -2979,6 +2980,62 @@ h6 {
 .sb-settings-language-select:focus {
   outline: none;
   background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
+}
+
+.sb-language-picker {
+  position: relative;
+}
+
+.sb-language-picker-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-language-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+}
+
+.sb-language-picker-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 100;
+  min-width: 200px;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--sb-menu-background);
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+}
+
+.sb-language-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.sb-language-picker-item:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-language-picker-item-selected {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  font-weight: 600;
 }
 
 .sb-settings-toggle-row {

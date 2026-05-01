@@ -78,6 +78,50 @@ const TEXT_COLOR_PALETTE = [
 ];
 
 const HEX_6 = /^#[0-9a-fA-F]{6}$/;
+
+const LANG_META: Record<string, { cc: string; display: string }> = {
+  am: { cc: "et", display: "Amharic" },
+  ar: { cc: "sa", display: "Arabic" },
+  bn: { cc: "bd", display: "Bengali" },
+  zh: { cc: "cn", display: "Chinese" },
+  en: { cc: "us", display: "English – US" },
+  fr: { cc: "fr", display: "French" },
+  hi: { cc: "in", display: "Hindi – हिन्दी" },
+  iid: { cc: "id", display: "Indonesian" },
+  ja: { cc: "jp", display: "Japanese" },
+  ko: { cc: "kr", display: "Korean" },
+  mn: { cc: "mn", display: "Mongolian" },
+  ne: { cc: "np", display: "Nepali" },
+  ps: { cc: "af", display: "Pashto" },
+  fa: { cc: "ir", display: "Persian" },
+  pt: { cc: "br", display: "Portuguese" },
+  ru: { cc: "ru", display: "Russian" },
+  es: { cc: "es", display: "Spanish" },
+  sw: { cc: "tz", display: "Swahili" },
+  ti: { cc: "er", display: "Tigrinya" },
+  tr: { cc: "tr", display: "Turkish" },
+  uk: { cc: "ua", display: "Ukrainian" },
+  ur: { cc: "pk", display: "Urdu" },
+  ug: { cc: "cn", display: "Uyghur" },
+  vi: { cc: "vn", display: "Vietnamese" },
+  de: { cc: "de", display: "German" },
+};
+
+function FlagImg({ cc }: { cc: string }) {
+  return (
+    <img
+      src={`https://flagcdn.com/w40/${cc}.png`}
+      alt=""
+      style={{
+        width: "20px",
+        height: "20px",
+        borderRadius: "50%",
+        objectFit: "cover",
+        flexShrink: 0,
+      }}
+    />
+  );
+}
 const HEX_3 = /^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/;
 
 /** Normalize an arbitrary color string to #RRGGBB for `<input type="color">`. */
@@ -613,7 +657,7 @@ function ThemeAndTextSettingsView(props: {
                   className="sb-scripture-margins-input"
                   value={currentMargin}
                   min={0}
-                  max={200}
+                  max={45}
                   onInput={(event: Event) => {
                     const target = event.currentTarget as HTMLInputElement;
                     const parsed = Number(target.value);
@@ -621,7 +665,7 @@ function ThemeAndTextSettingsView(props: {
                   }}
                 />
                 {/* eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content */}
-                <span className="sb-scripture-margins-unit">px</span>
+                <span className="sb-scripture-margins-unit">%</span>
               </div>
               <button
                 type="button"
@@ -1616,17 +1660,23 @@ function SettingsMainView(props: {
   const { state, onNavigate } = props;
   const { t, language, availableLanguages, setLanguage } = useI18n();
   const isAwake = state.settings.settings.value.keepScreenAwake;
+  const isLanguageMenuOpen = useSignal(false);
 
   const handleWakeLockToggle = (checked: boolean) => {
     state.settings.setKeepScreenAwake(checked);
   };
 
+  const currentLangMeta = LANG_META[language] ?? {
+    cc: "",
+    display: language.toUpperCase(),
+  };
+
   return (
     <div className="sb-settings-page">
       <section className="sb-settings-section">
-        <h2 className="sb-settings-title">
+        {/* <h2 className="sb-settings-title">
           {t("general-settings", { defaultValue: "General settings" })}
-        </h2>
+        </h2> */}
         <ul className="sb-settings-list">
           <li>
             <button
@@ -1720,27 +1770,64 @@ function SettingsMainView(props: {
           </li>
           <li>
             <div className="sb-settings-field-row">
-              <label
-                className="sb-settings-field-label"
-                htmlFor="sb-language-select"
-              >
+              <span className="sb-settings-field-label">
                 {t("language", { defaultValue: "Language" })}
-              </label>
-              <select
-                id="sb-language-select"
-                className="sb-settings-language-select"
-                value={language}
-                onChange={(event: Event) => {
-                  const target = event.currentTarget as HTMLSelectElement;
-                  void setLanguage(target.value);
-                }}
-              >
-                {availableLanguages.map((languageCode) => (
-                  <option key={languageCode} value={languageCode}>
-                    {languageCode.toUpperCase()}
-                  </option>
-                ))}
-              </select>
+              </span>
+              <div className="sb-language-picker">
+                <button
+                  type="button"
+                  id="sb-language-select"
+                  className="sb-settings-language-select sb-language-picker-button"
+                  onClick={() => {
+                    isLanguageMenuOpen.value = !isLanguageMenuOpen.value;
+                  }}
+                >
+                  {currentLangMeta.cc && <FlagImg cc={currentLangMeta.cc} />}
+                  <span>{currentLangMeta.display}</span>
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: "16px" }}
+                  >
+                    expand_more
+                  </span>
+                </button>
+                {isLanguageMenuOpen.value && (
+                  <>
+                    <div
+                      className="sb-language-picker-overlay"
+                      onClick={() => {
+                        isLanguageMenuOpen.value = false;
+                      }}
+                    />
+                    <div className="sb-language-picker-menu">
+                      {availableLanguages.map((languageCode) => {
+                        const meta = LANG_META[languageCode];
+                        const isSelected = languageCode === language;
+                        return (
+                          <button
+                            key={languageCode}
+                            type="button"
+                            className={`sb-language-picker-item${
+                              isSelected
+                                ? " sb-language-picker-item-selected"
+                                : ""
+                            }`}
+                            onClick={() => {
+                              void setLanguage(languageCode);
+                              isLanguageMenuOpen.value = false;
+                            }}
+                          >
+                            {meta?.cc && <FlagImg cc={meta.cc} />}
+                            <span>
+                              {meta?.display ?? languageCode.toUpperCase()}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </li>
           <li>

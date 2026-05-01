@@ -50,7 +50,7 @@ export interface AppSettings {
   scriptureMargin: number;
 }
 
-export const DEFAULT_SCRIPTURE_MARGIN = 27;
+export const DEFAULT_SCRIPTURE_MARGIN = 35;
 export const MOBILE_SCRIPTURE_MARGIN = 5;
 
 export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
@@ -520,7 +520,7 @@ export function createSettings(): SettingsManager {
 
   const setScriptureMargin = (margin: number) => {
     if (!Number.isFinite(margin)) return;
-    const clamped = Math.max(0, Math.min(200, margin));
+    const clamped = Math.max(0, Math.min(45, margin));
     settings.value = { ...settings.value, scriptureMargin: clamped };
     configBot.tags[TAG_SCRIPTURE_MARGIN] = clamped;
   };
@@ -648,13 +648,13 @@ export function createSettings(): SettingsManager {
     applyTextConfigToCSSVars(settings.value.textConfig);
   });
 
-  // Publish the scripture margin (px) as a CSS variable consumed by
+  // Publish the scripture margin (%) as a CSS variable consumed by
   // `.sb-bible-reader`'s horizontal padding.
   effect(() => {
     if (typeof document === "undefined") return;
     document.documentElement.style.setProperty(
       "--sb-scripture-margin",
-      `${settings.value.scriptureMargin}px`
+      `${settings.value.scriptureMargin}%`
     );
   });
 
