@@ -73,6 +73,8 @@
   "page-settings": "Хуудасны тохиргоо",
   "theme-and-text": "Сэдэв ба текст",
   "theme-and-text-description": "Сэдэв сонгоод, Судрын унших туршлагыг тохируул.",
+  "display-and-theme": "Дэлгэц ба сэдэв",
+  "display-and-theme-description": "Сэдэв сонгоод, Судар болон хэрэглэгчийн интерфэйс хэрхэн харагдахыг тохируул.",
   "scripture-settings": "Судрын тохиргоо",
   "scripture-settings-font-size-example": "А",
   "scripture-margins": "Судрын зах",

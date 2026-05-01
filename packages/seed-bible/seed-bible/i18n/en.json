@@ -72,6 +72,8 @@
   "page-settings": "Page settings",
   "theme-and-text": "Theme and Text",
   "theme-and-text-description": "Pick a theme and tune the Scripture reading experience.",
+  "display-and-theme": "Display & Theme",
+  "display-and-theme-description": "Pick a theme and tune how Scripture and the UI are displayed.",
   "scripture-settings": "Scripture settings",
   "scripture-settings-font-size-example": "A",
   "scripture-margins": "Scripture Margins",

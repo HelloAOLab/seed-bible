@@ -5,6 +5,10 @@ import type {
   LoginManager,
   UserProfile,
 } from "seed-bible.managers.LoginManager";
+import {
+  getProfileConfigValue,
+  saveProfileConfigValue,
+} from "seed-bible.managers.ProfileConfigSync";
 
 export interface AppConfig {
   disablePanels: boolean;
@@ -82,34 +86,27 @@ function parseFontSize(value: unknown, fallback: TextSize): TextSize {
   }
 }
 
-function getProfileConfigValue(
-  profile: UserProfile | null,
-  key: string
-): unknown {
-  const profileConfig = profile?.config;
-  if (!profileConfig || typeof profileConfig !== "object") {
-    return null;
-  }
-
-  return (profileConfig as Record<string, unknown>)[key];
-}
-
 export type ConfigManager = ReturnType<typeof createConfig>;
 
 export function createConfig(login: LoginManager) {
   const readConfig = (): AppConfig => {
     const settingsPreset = parseSettingsPreset(configBot.tags.settingsPreset);
     const presetConfig = getPresetConfig(settingsPreset);
+    const profile = login.profile.value;
     const fontSizeFromProfile = parseFontSize(
-      getProfileConfigValue(login.profile.value, "fontSize"),
+      getProfileConfigValue(profile, "fontSize"),
       parseFontSize(configBot.tags["app.fontSize"], presetConfig.fontSize)
+    );
+    const disablePanelsFromProfile = parseBoolean(
+      getProfileConfigValue(profile, "disablePanels"),
+      parseBoolean(
+        configBot.tags["app.disablePanels"],
+        presetConfig.disablePanels
+      )
     );
 
     return {
-      disablePanels: parseBoolean(
-        configBot.tags["app.disablePanels"],
-        presetConfig.disablePanels
-      ),
+      disablePanels: disablePanelsFromProfile,
       fontSize: fontSizeFromProfile,
     };
   };
@@ -155,30 +152,6 @@ export function createConfig(login: LoginManager) {
     syncConfigFromBot(login.profile.value);
   });
 
-  const saveProfileConfigValue = (key: string, value: unknown) => {
-    if (!login.userId.value) {
-      return;
-    }
-
-    const existingProfile = login.profile.value;
-    const existingConfig =
-      existingProfile?.config && typeof existingProfile.config === "object"
-        ? (existingProfile.config as Record<string, unknown>)
-        : {};
-
-    if (existingConfig[key] === value) {
-      console.log(`Profile already has the correct ${key}. No update needed.`);
-      return;
-    }
-
-    login.updateProfile({
-      config: {
-        ...existingConfig,
-        [key]: value,
-      },
-    });
-  };
-
   const setDisablePanels = (disablePanels: boolean) => {
     const nextConfig = {
       ...config.value,
@@ -186,6 +159,7 @@ export function createConfig(login: LoginManager) {
     };
     config.value = nextConfig;
     configBot.tags["app.disablePanels"] = disablePanels;
+    saveProfileConfigValue(login, "disablePanels", disablePanels);
   };
 
   const setFontSize = (fontSize: TextSize) => {
@@ -196,7 +170,7 @@ export function createConfig(login: LoginManager) {
     };
     config.value = nextConfig;
     configBot.tags["app.fontSize"] = nextFontSize;
-    saveProfileConfigValue("fontSize", nextFontSize);
+    saveProfileConfigValue(login, "fontSize", nextFontSize);
   };
 
   os.syncConfigBotTagsToURL(["lang"]);
@@ -205,7 +179,7 @@ export function createConfig(login: LoginManager) {
     if (configBot.tags.lang || language !== DEFAULT_LANGUAGE) {
       configBot.tags.lang = language;
     }
-    saveProfileConfigValue("lang", language);
+    saveProfileConfigValue(login, "lang", language);
   });
 
   return {

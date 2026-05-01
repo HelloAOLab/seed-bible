@@ -63,7 +63,8 @@ function broadcastHighlightToSession(
   const style = details.customColor
     ? {
         backgroundColor: details.customColor,
-        color: details.customFontColor ?? "#333333",
+        color:
+          details.customFontColor ?? getContrastTextColor(details.customColor),
       }
     : undefined;
   const className = details.customColor

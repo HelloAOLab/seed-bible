@@ -144,6 +144,9 @@
       "seed-bible.managers.PanesManager": [
         "./packages/seed-bible/seed-bible/managers/PanesManager.tsx"
       ],
+      "seed-bible.managers.ProfileConfigSync": [
+        "./packages/seed-bible/seed-bible/managers/ProfileConfigSync.tsx"
+      ],
       "seed-bible.managers.ReadingHistoryManager": [
         "./packages/seed-bible/seed-bible/managers/ReadingHistoryManager.tsx"
       ],

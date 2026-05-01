@@ -8,11 +8,9 @@ import { signal } from "@preact/signals";
 export type RequestedSettingsView =
   | null
   | "account"
-  | "theme"
-  | "text"
+  | "display-and-theme"
   | "toolbar"
-  | "extensions"
-  | "display";
+  | "extensions";
 
 export function createSidebar() {
   const isSettingsOpen = signal(false);

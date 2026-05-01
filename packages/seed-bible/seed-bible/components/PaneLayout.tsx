@@ -289,9 +289,9 @@ const GRID_PORTAL_PANE_CSS = `
     justify-content: center;
     gap: 10px;
     background:
-      radial-gradient(circle at 30% 20%, #f8e7df 0%, transparent 60%),
-      radial-gradient(circle at 80% 80%, #ebf1ff 0%, transparent 60%),
-      linear-gradient(135deg, #fffaf7, #f8fbff);
+      radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--sb-primary-color), transparent 80%) 0%, transparent 60%),
+      radial-gradient(circle at 80% 80%, color-mix(in srgb, var(--sb-secondary-color), transparent 60%) 0%, transparent 60%),
+      var(--sb-reader-background);
   }
 
   .sb-grid-portal-pane-badge {

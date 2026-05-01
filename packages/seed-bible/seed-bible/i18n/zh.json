@@ -73,6 +73,8 @@
   "page-settings": "页面设置",
   "theme-and-text": "主题和文本",
   "theme-and-text-description": "选择一个主题，并调整你的读经体验。",
+  "display-and-theme": "显示与主题",
+  "display-and-theme-description": "选择一个主题，并调整经文与界面的显示方式。",
   "scripture-settings": "经文背景",
   "scripture-settings-font-size-example": "一个",
   "scripture-margins": "经文页边空白",

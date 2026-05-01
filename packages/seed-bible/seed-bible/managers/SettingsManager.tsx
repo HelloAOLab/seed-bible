@@ -1,4 +1,9 @@
 import { effect, signal, type Signal } from "@preact/signals";
+import type { LoginManager } from "seed-bible.managers.LoginManager";
+import {
+  getProfileConfigValue,
+  saveProfileConfigValue,
+} from "seed-bible.managers.ProfileConfigSync";
 
 export type BookOrientation = "traditional" | "tanak";
 export type UITextSize = "S" | "M" | "L" | "XL";
@@ -26,7 +31,7 @@ export interface TextSectionConfig {
 }
 
 export const VERSE_LINE_HEIGHT_OPTIONS: number[] = [1.5, 2, 2.5];
-export const DEFAULT_VERSE_LINE_HEIGHT = 1.5;
+export const DEFAULT_VERSE_LINE_HEIGHT = 2;
 
 export type TextConfig = Record<TextSectionId, TextSectionConfig>;
 
@@ -63,6 +68,17 @@ const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
 const TAG_CUSTOM_HIGHLIGHT_COLORS = "app.customHighlightColors";
 const TAG_SCRIPTURE_MARGIN = "app.scriptureMargin";
+
+// Profile.config keys are stored unprefixed (matching the pattern set by
+// ConfigManager for `fontSize`, `lang`, `disablePanels`).
+const PROFILE_BOOK_ORIENTATION = "bookOrientation";
+const PROFILE_UI_TEXT_SIZE = "uiTextSize";
+const PROFILE_SELECTION_UI = "selectionUI";
+const PROFILE_TEXT_CONFIG = "textConfig";
+const PROFILE_TOOLBAR = "toolbarConfig";
+const PROFILE_KEEP_AWAKE = "keepScreenAwake";
+const PROFILE_CUSTOM_HIGHLIGHT_COLORS = "customHighlightColors";
+const PROFILE_SCRIPTURE_MARGIN = "scriptureMargin";
 
 export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
   { value: "'Newsreader', serif", label: "Newsreader" },
@@ -425,46 +441,69 @@ export interface SettingsManager {
   resetToDefaults: () => void;
 }
 
-export function createSettings(): SettingsManager {
-  const readFromTags = (): AppSettings => ({
-    bookOrientation: parseBookOrientation(
-      configBot.tags[TAG_BOOK_ORIENTATION],
-      DEFAULT_SETTINGS.bookOrientation
-    ),
-    uiTextSize: parseUITextSize(
-      configBot.tags[TAG_UI_TEXT_SIZE],
-      DEFAULT_SETTINGS.uiTextSize
-    ),
-    selectionUI: parseSelectionUI(
-      configBot.tags[TAG_SELECTION_UI],
-      DEFAULT_SETTINGS.selectionUI
-    ),
-    textConfig: parseTextConfig(
-      configBot.tags[TAG_TEXT_CONFIG],
-      DEFAULT_SETTINGS.textConfig
-    ),
-    toolbar: parseToolbarConfig(
-      configBot.tags[TAG_TOOLBAR],
-      DEFAULT_SETTINGS.toolbar
-    ),
-    keepScreenAwake: parseBoolean(
-      configBot.tags[TAG_KEEP_AWAKE],
-      DEFAULT_SETTINGS.keepScreenAwake
-    ),
-    customHighlightColors: parseCustomHighlightColors(
-      configBot.tags[TAG_CUSTOM_HIGHLIGHT_COLORS]
-    ),
-    scriptureMargin: parseNumber(
-      configBot.tags[TAG_SCRIPTURE_MARGIN],
-      DEFAULT_SETTINGS.scriptureMargin
-    ),
-  });
+export function createSettings(login: LoginManager): SettingsManager {
+  // Read each setting with the precedence: user profile > local configBot tag
+  // > default. The profile is the source of truth when the user is logged
+  // in; configBot.tags acts as a local cache for anonymous use and offline
+  // bootstrapping before the profile loads.
+  const readSettings = (): AppSettings => {
+    const profile = login.profile.value;
+    return {
+      bookOrientation: parseBookOrientation(
+        getProfileConfigValue(profile, PROFILE_BOOK_ORIENTATION) ??
+          configBot.tags[TAG_BOOK_ORIENTATION],
+        DEFAULT_SETTINGS.bookOrientation
+      ),
+      uiTextSize: parseUITextSize(
+        getProfileConfigValue(profile, PROFILE_UI_TEXT_SIZE) ??
+          configBot.tags[TAG_UI_TEXT_SIZE],
+        DEFAULT_SETTINGS.uiTextSize
+      ),
+      selectionUI: parseSelectionUI(
+        getProfileConfigValue(profile, PROFILE_SELECTION_UI) ??
+          configBot.tags[TAG_SELECTION_UI],
+        DEFAULT_SETTINGS.selectionUI
+      ),
+      textConfig: parseTextConfig(
+        getProfileConfigValue(profile, PROFILE_TEXT_CONFIG) ??
+          configBot.tags[TAG_TEXT_CONFIG],
+        DEFAULT_SETTINGS.textConfig
+      ),
+      toolbar: parseToolbarConfig(
+        getProfileConfigValue(profile, PROFILE_TOOLBAR) ??
+          configBot.tags[TAG_TOOLBAR],
+        DEFAULT_SETTINGS.toolbar
+      ),
+      keepScreenAwake: parseBoolean(
+        getProfileConfigValue(profile, PROFILE_KEEP_AWAKE) ??
+          configBot.tags[TAG_KEEP_AWAKE],
+        DEFAULT_SETTINGS.keepScreenAwake
+      ),
+      customHighlightColors: parseCustomHighlightColors(
+        getProfileConfigValue(profile, PROFILE_CUSTOM_HIGHLIGHT_COLORS) ??
+          configBot.tags[TAG_CUSTOM_HIGHLIGHT_COLORS]
+      ),
+      scriptureMargin: parseNumber(
+        getProfileConfigValue(profile, PROFILE_SCRIPTURE_MARGIN) ??
+          configBot.tags[TAG_SCRIPTURE_MARGIN],
+        DEFAULT_SETTINGS.scriptureMargin
+      ),
+    };
+  };
 
-  const settings = signal<AppSettings>(readFromTags());
+  const settings = signal<AppSettings>(readSettings());
 
   const syncFromBot = () => {
-    settings.value = readFromTags();
+    settings.value = readSettings();
   };
+
+  // Re-read whenever the user logs in/out so the profile's saved settings
+  // overlay the local cache.
+  effect(() => {
+    // Track profile.value as a dependency.
+    void login.profile.value;
+    syncFromBot();
+  });
 
   os.addBotListener(configBot, "onBotChanged", (that: unknown) => {
     const changedTagsSource =
@@ -492,17 +531,26 @@ export function createSettings(): SettingsManager {
   const setBookOrientation = (orientation: BookOrientation) => {
     settings.value = { ...settings.value, bookOrientation: orientation };
     configBot.tags[TAG_BOOK_ORIENTATION] = orientation;
+    saveProfileConfigValue(login, PROFILE_BOOK_ORIENTATION, orientation);
   };
 
   const setUITextSize = (size: UITextSize) => {
     settings.value = { ...settings.value, uiTextSize: size };
     configBot.tags[TAG_UI_TEXT_SIZE] = size;
+    saveProfileConfigValue(login, PROFILE_UI_TEXT_SIZE, size);
   };
 
   const setSelectionUI = (patch: Partial<SelectionUIBehavior>) => {
     const next = { ...settings.value.selectionUI, ...patch };
     settings.value = { ...settings.value, selectionUI: next };
     configBot.tags[TAG_SELECTION_UI] = JSON.stringify(next);
+    saveProfileConfigValue(login, PROFILE_SELECTION_UI, next);
+  };
+
+  const writeTextConfig = (next: TextConfig) => {
+    settings.value = { ...settings.value, textConfig: next };
+    configBot.tags[TAG_TEXT_CONFIG] = JSON.stringify(next);
+    saveProfileConfigValue(login, PROFILE_TEXT_CONFIG, next);
   };
 
   const updateTextSection = (
@@ -514,8 +562,7 @@ export function createSettings(): SettingsManager {
       ...settings.value.textConfig,
       [section]: nextSection,
     };
-    settings.value = { ...settings.value, textConfig: nextTextConfig };
-    configBot.tags[TAG_TEXT_CONFIG] = JSON.stringify(nextTextConfig);
+    writeTextConfig(nextTextConfig);
   };
 
   const setScriptureMargin = (margin: number) => {
@@ -523,6 +570,7 @@ export function createSettings(): SettingsManager {
     const clamped = Math.max(0, Math.min(45, margin));
     settings.value = { ...settings.value, scriptureMargin: clamped };
     configBot.tags[TAG_SCRIPTURE_MARGIN] = clamped;
+    saveProfileConfigValue(login, PROFILE_SCRIPTURE_MARGIN, clamped);
   };
 
   const setVerseLineHeight = (lineHeight: number) => {
@@ -532,13 +580,13 @@ export function createSettings(): SettingsManager {
       ...current,
       verse: { ...current.verse, lineHeight },
     };
-    settings.value = { ...settings.value, textConfig: nextTextConfig };
-    configBot.tags[TAG_TEXT_CONFIG] = JSON.stringify(nextTextConfig);
+    writeTextConfig(nextTextConfig);
   };
 
   const resetTextConfig = () => {
     settings.value = { ...settings.value, textConfig: DEFAULT_TEXT_CONFIG };
     configBot.tags[TAG_TEXT_CONFIG] = "";
+    saveProfileConfigValue(login, PROFILE_TEXT_CONFIG, DEFAULT_TEXT_CONFIG);
   };
 
   const resetTextColors = () => {
@@ -555,14 +603,14 @@ export function createSettings(): SettingsManager {
       }
     }
     if (!changed) return;
-    settings.value = { ...settings.value, textConfig: next };
-    configBot.tags[TAG_TEXT_CONFIG] = JSON.stringify(next);
+    writeTextConfig(next);
   };
 
   const writeToolbarConfig = (next: ToolbarCustomization) => {
     settings.value = { ...settings.value, toolbar: next };
     const isDefault = next.hidden.length === 0 && next.order.length === 0;
     configBot.tags[TAG_TOOLBAR] = isDefault ? "" : JSON.stringify(next);
+    saveProfileConfigValue(login, PROFILE_TOOLBAR, next);
   };
 
   const setToolbarHidden = (toolId: string, hidden: boolean) => {
@@ -585,12 +633,14 @@ export function createSettings(): SettingsManager {
     if (settings.value.keepScreenAwake === enabled) return;
     settings.value = { ...settings.value, keepScreenAwake: enabled };
     configBot.tags[TAG_KEEP_AWAKE] = enabled;
+    saveProfileConfigValue(login, PROFILE_KEEP_AWAKE, enabled);
   };
 
   const writeCustomHighlightColors = (colors: string[]) => {
     settings.value = { ...settings.value, customHighlightColors: colors };
     configBot.tags[TAG_CUSTOM_HIGHLIGHT_COLORS] =
       colors.length === 0 ? "" : JSON.stringify(colors);
+    saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHT_COLORS, colors);
   };
 
   const addCustomHighlightColor = (color: string) => {
@@ -627,6 +677,38 @@ export function createSettings(): SettingsManager {
     configBot.tags[TAG_KEEP_AWAKE] = false;
     configBot.tags[TAG_CUSTOM_HIGHLIGHT_COLORS] = "";
     configBot.tags[TAG_SCRIPTURE_MARGIN] = DEFAULT_SETTINGS.scriptureMargin;
+    saveProfileConfigValue(
+      login,
+      PROFILE_BOOK_ORIENTATION,
+      DEFAULT_SETTINGS.bookOrientation
+    );
+    saveProfileConfigValue(
+      login,
+      PROFILE_UI_TEXT_SIZE,
+      DEFAULT_SETTINGS.uiTextSize
+    );
+    saveProfileConfigValue(
+      login,
+      PROFILE_SELECTION_UI,
+      DEFAULT_SETTINGS.selectionUI
+    );
+    saveProfileConfigValue(
+      login,
+      PROFILE_TEXT_CONFIG,
+      DEFAULT_SETTINGS.textConfig
+    );
+    saveProfileConfigValue(login, PROFILE_TOOLBAR, DEFAULT_SETTINGS.toolbar);
+    saveProfileConfigValue(
+      login,
+      PROFILE_KEEP_AWAKE,
+      DEFAULT_SETTINGS.keepScreenAwake
+    );
+    saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHT_COLORS, []);
+    saveProfileConfigValue(
+      login,
+      PROFILE_SCRIPTURE_MARGIN,
+      DEFAULT_SETTINGS.scriptureMargin
+    );
   };
 
   // Scale UI surfaces via `zoom` on the document root, while exposing

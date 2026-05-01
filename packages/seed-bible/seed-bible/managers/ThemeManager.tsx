@@ -1,9 +1,15 @@
 import {
   computed,
+  effect,
   signal,
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
+import type { LoginManager } from "seed-bible.managers.LoginManager";
+import {
+  getProfileConfigValue,
+  saveProfileConfigValue,
+} from "seed-bible.managers.ProfileConfigSync";
 
 export interface BibleThemeVariables {
   primaryColor: string;
@@ -312,6 +318,57 @@ export interface BibleThemeVariables {
   verseToolbarMobileBottom?: string | null;
 
   /**
+   * Whether to invert raster `<img>` toolbar icons supplied by extensions.
+   * `0` keeps them as-is (correct for light themes where extension icons
+   * are typically dark glyphs on transparent backgrounds); `1` flips
+   * black↔white via `filter: invert(...)` so silhouette icons remain
+   * visible on dark surfaces. Set as a unitless number, used directly
+   * inside `invert(var(--sb-toolbar-icon-invert))`.
+   */
+  toolbarIconInvert?: string | null;
+
+  /**
+   * Background for popover surfaces — context menus, tab menus, sidebar
+   * search results, dropdown panels. Should generally be opaque and have
+   * good contrast against the menu's text color in both themes.
+   */
+  menuBackground?: string | null;
+
+  /**
+   * Font color for popover surfaces — context menus, tab menus, sidebar
+   * search results, dropdown panels. Should generally have good contrast
+   * against `menuBackground`.
+   */
+  menuFontColor?: string | null;
+
+  /**
+   * Font color for the reader toolbar (also drives icon color since icons
+   * inherit `currentColor`). Should have good contrast against
+   * `readerToolbarBackground`.
+   */
+  readerToolbarFontColor?: string | null;
+
+  /**
+   * Font family for the reader toolbar text. Defaults to the app font family
+   * when unset.
+   */
+  readerToolbarFontFamily?: string | null;
+
+  /**
+   * Subtle separator color used for dividers, hairline borders, and resize
+   * handles. Should have low contrast against the surrounding background but
+   * remain visible in both light and dark themes.
+   */
+  dividerColor?: string | null;
+
+  /**
+   * Tint used for drop shadows and elevation effects. Typically a very dark
+   * semi-transparent color in light themes and a darker / more opaque value
+   * in dark themes so shadows still register on near-black surfaces.
+   */
+  shadowColor?: string | null;
+
+  /**
    * The border for tabs. This is used for the border of unselected tabs. It should generally be a subtle color that complements the primary and secondary colors, but can be customized as needed. If not set, it will default to "none".
    */
   tabBorder: string | null;
@@ -507,6 +564,17 @@ const LIGHT_THEME: BibleTheme = {
     verseToolbarToolsGap: "10px",
     verseToolbarMobileBottom: "18px",
 
+    menuBackground: "#ffffff",
+    menuFontColor: "#333",
+
+    toolbarIconInvert: "0",
+
+    readerToolbarFontColor: "#333",
+    readerToolbarFontFamily: "Satoshi, system-ui, sans-serif",
+
+    dividerColor: "rgba(0, 0, 0, 0.12)",
+    shadowColor: "rgba(0, 0, 0, 0.14)",
+
     tabBorder: "1px solid transparent",
     tabBackground: "inherit",
     tabFontColor: "inherit",
@@ -636,6 +704,17 @@ const DARK_THEME: BibleTheme = {
 
     verseToolbarToolsGap: "10px",
     verseToolbarMobileBottom: "18px",
+
+    menuBackground: "#1d2534",
+    menuFontColor: "#d7deef",
+
+    toolbarIconInvert: "1",
+
+    readerToolbarFontColor: "#d7deef",
+    readerToolbarFontFamily: "Satoshi, system-ui, sans-serif",
+
+    dividerColor: "rgba(255, 255, 255, 0.1)",
+    shadowColor: "rgba(0, 0, 0, 0.45)",
 
     tabBorder: "1px solid transparent",
     tabBackground: "inherit",
@@ -795,6 +874,12 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
 const TAG_THEME_ID = "app.themeId";
 const TAG_CUSTOM_THEME = "app.customTheme";
 const TAG_CUSTOM_HIGHLIGHTS = "app.customHighlights";
+
+// Profile.config keys (matches the unprefixed convention used by
+// ConfigManager / SettingsManager).
+const PROFILE_THEME_ID = "themeId";
+const PROFILE_CUSTOM_THEME = "customTheme";
+const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";
 
 export const DEFAULT_HIGHLIGHT_IDS = [
   "yellow",
@@ -1034,20 +1119,42 @@ export interface ThemeManager {
 //   },
 // };
 
-export function createTheme(): ThemeManager {
+export function createTheme(login: LoginManager): ThemeManager {
   const themes = signal<BibleTheme[]>([LIGHT_THEME, DARK_THEME]);
 
-  const selectedThemeId = signal<string>(
-    parseThemeId(configBot.tags[TAG_THEME_ID], DEFAULT_THEME_ID)
-  );
+  const readThemeId = () =>
+    parseThemeId(
+      getProfileConfigValue(login.profile.value, PROFILE_THEME_ID) ??
+        configBot.tags[TAG_THEME_ID],
+      DEFAULT_THEME_ID
+    );
 
-  const customOverrides = signal<ThemeOverrides>(
-    parseCustomTheme(configBot.tags[TAG_CUSTOM_THEME])
-  );
+  const readCustomOverrides = () =>
+    parseCustomTheme(
+      getProfileConfigValue(login.profile.value, PROFILE_CUSTOM_THEME) ??
+        configBot.tags[TAG_CUSTOM_THEME]
+    );
 
+  const readHighlightOverrides = () =>
+    parseHighlightOverrides(
+      getProfileConfigValue(login.profile.value, PROFILE_CUSTOM_HIGHLIGHTS) ??
+        configBot.tags[TAG_CUSTOM_HIGHLIGHTS]
+    );
+
+  const selectedThemeId = signal<string>(readThemeId());
+  const customOverrides = signal<ThemeOverrides>(readCustomOverrides());
   const customHighlightOverrides = signal<HighlightOverrides>(
-    parseHighlightOverrides(configBot.tags[TAG_CUSTOM_HIGHLIGHTS])
+    readHighlightOverrides()
   );
+
+  // Re-read whenever the user logs in/out so the profile's saved theme
+  // overlays the local cache.
+  effect(() => {
+    void login.profile.value;
+    selectedThemeId.value = readThemeId();
+    customOverrides.value = readCustomOverrides();
+    customHighlightOverrides.value = readHighlightOverrides();
+  });
 
   const basePresetTheme = computed<BibleTheme>(
     () =>
@@ -1094,6 +1201,7 @@ export function createTheme(): ThemeManager {
     if (themes.value.some((theme) => theme.id === themeId)) {
       selectedThemeId.value = themeId;
       configBot.tags[TAG_THEME_ID] = themeId;
+      saveProfileConfigValue(login, PROFILE_THEME_ID, themeId);
     }
   };
 
@@ -1104,6 +1212,7 @@ export function createTheme(): ThemeManager {
     } else {
       configBot.tags[TAG_CUSTOM_THEME] = JSON.stringify(next);
     }
+    saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, next);
   };
 
   const setCustomColor = (key: ThemeColorKey, value: string) => {
@@ -1127,6 +1236,7 @@ export function createTheme(): ThemeManager {
     } else {
       configBot.tags[TAG_CUSTOM_HIGHLIGHTS] = JSON.stringify(next);
     }
+    saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, next);
   };
 
   const setHighlightColor = (

@@ -36,7 +36,7 @@
   --text-verse-margin-bottom: 0;
   --text-verse-margin-left: 0;
   --text-verse-margin-right: 0;
-  --text-verse-line-height: 1.5;
+  --text-verse-line-height: 2;
 
   --sb-background: #f8fafc;
   --sb-font-family: "Satoshi", system-ui, sans-serif;
@@ -137,7 +137,13 @@
   --sb-verse-toolbar-tools-gap: 10px;
   --sb-verse-toolbar-mobile-bottom: 18px;
 
+  --sb-divider-color: rgba(0, 0, 0, 0.12);
+  --sb-shadow-color: rgba(0, 0, 0, 0.14);
+
   --sb-menu-background: #fff;
+  --sb-menu-font-color: #333;
+
+  --sb-toolbar-icon-invert: 0;
 
   --sb-tab-border: 1px solid transparent;
   --sb-tab-background: inherit;
@@ -538,7 +544,7 @@ h6 {
   width: 24px;
   height: 60px;
   cursor: ew-resize; /* east-west resize cursor */
-  background: #ddd;
+  background: var(--sb-divider-color);
   display: flex;
   justify-items: center;
   align-items: center;
@@ -546,7 +552,11 @@ h6 {
 }
 
 .sb-pane-detached-resize-handle-side:hover {
-  background: #dcdcdc;
+  background: color-mix(
+    in srgb,
+    var(--sb-divider-color),
+    var(--sb-font-color) 12%
+  );
 }
 
 /* Bottom-anchored panes - resize handle on the top edge */
@@ -668,7 +678,7 @@ h6 {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border-top: 1px solid #000;
+  border-top: 1px solid var(--sb-divider-color);
   flex-shrink: 0;
   flex-wrap: wrap;
 }
@@ -756,7 +766,7 @@ h6 {
 }
 
 .sb-chapter-content {
-  line-height: 2;
+  line-height: var(--text-verse-line-height, 2);
   font-family: var(--sb-verse-font-family);
   font-size: 1.2em;
 
@@ -980,6 +990,18 @@ h6 {
   transition:
     background-color 0.2s ease,
     transform 0.25s ease;
+}
+
+/* Raster icons supplied by extensions can't inherit `currentColor`, so we
+ * invert them in dark themes (toolbarIconInvert=1) to keep dark glyphs
+ * visible on dark surfaces. SVG icons are unaffected — they already use
+ * `currentColor` and follow the toolbar font color. */
+.sb-reader-toolbar-button img,
+.sb-reader-toolbar-more-item img,
+.sb-tool-context-menu-item img,
+.sb-verse-toolbar-draggable button img,
+.sb-verse-toolbar img {
+  filter: invert(var(--sb-toolbar-icon-invert));
 }
 
 .sb-reader-toolbar-center-item {
@@ -1310,14 +1332,14 @@ h6 {
   overflow: auto;
   padding: 12px;
   background: var(--sb-book-selector-background);
-  color: var(--sb-font-color);
+  color: var(--sb-book-selector-font-color);
   border-radius: 10px;
 
   width: 100%;
   height: 100dvh;
   bottom: 0;
 
-  box-shadow: 0 3px 8px #e8e8e8;
+  box-shadow: 0 3px 8px var(--sb-shadow-color);
   opacity: 0;
   transform: translateY(50%);
   transition: all 0.5s;
@@ -1364,6 +1386,7 @@ h6 {
   border-radius: 6px;
   padding: 4px 8px;
   background: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
   cursor: pointer;
 }
 
@@ -1377,7 +1400,7 @@ h6 {
 
 .sb-selector-pane-picker-label {
   font-size: 13px;
-  color: var(--sb-font-color);
+  color: var(--sb-book-selector-font-color);
   opacity: 0.85;
 }
 
@@ -1392,7 +1415,7 @@ h6 {
   border-radius: 999px;
   padding: 4px 10px;
   background: var(--sb-secondary-color);
-  color: var(--sb-font-color);
+  color: var(--sb-secondary-font-color);
   font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
@@ -1401,7 +1424,7 @@ h6 {
 .sb-selector-pane-chip-selected {
   border-color: var(--sb-primary-color);
   background: var(--sb-primary-color);
-  color: var(--sb-secondary-color);
+  color: var(--sb-primary-font-color);
 }
 
 .sb-selector-controls {
@@ -1416,6 +1439,7 @@ h6 {
   border-radius: 6px;
   padding: 6px 8px;
   background: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
 }
 
 .sb-selector-search-input {
@@ -1424,7 +1448,7 @@ h6 {
   border-radius: 6px;
   padding: 6px 10px;
   background: var(--sb-secondary-color);
-  color: var(--sb-font-color);
+  color: var(--sb-secondary-font-color);
 }
 
 .sb-selector-all-books {
@@ -1432,7 +1456,7 @@ h6 {
   border-radius: 6px;
   padding: 6px 10px;
   background: var(--sb-secondary-color);
-  color: var(--sb-font-color);
+  color: var(--sb-secondary-font-color);
   white-space: nowrap;
 }
 
@@ -1483,7 +1507,7 @@ h6 {
   font-weight: 400;
   cursor: pointer;
 
-  color: var(--sb-font-color);
+  color: var(--sb-book-selector-font-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1492,7 +1516,8 @@ h6 {
 }
 
 .sb-selector-book-button:hover {
-  background-color: #f8fafc;
+  background-color: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
 }
 
 .sb-selector-book-button-name {
@@ -1527,7 +1552,7 @@ h6 {
   gap: 13px 10px;
   padding: 2px 4px 8px 4px;
 
-  background-color: #f8fafc;
+  background-color: var(--sb-book-selector-background);
 }
 
 .sb-selector-chapter-grid-inline {
@@ -1541,12 +1566,13 @@ h6 {
   background: var(--sb-secondary-color);
   width: 100%;
   cursor: pointer;
-  color: var(--sb-font-color);
+  color: var(--sb-secondary-font-color);
   aspect-ratio: 1;
 }
 
 .sb-selector-chapter-button-current {
   background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
 }
 
 @media (min-width: 769px) {
@@ -1727,6 +1753,7 @@ h6 {
   border: 1px solid color-mix(in srgb, var(--sb-secondary-color), #000 8%);
   border-radius: 14px;
   background: var(--sb-menu-background);
+  color: var(--sb-menu-font-color);
   box-shadow: 0 18px 36px #00000024;
   z-index: 45;
 }
@@ -1860,6 +1887,7 @@ h6 {
 
   border: none;
   background: none;
+  color: inherit;
   padding: 0;
   cursor: pointer;
   font-weight: 400;
@@ -2632,6 +2660,7 @@ h6 {
   border: 1px solid var(--sb-secondary-color);
   border-radius: 8px;
   background: var(--sb-menu-background);
+  color: var(--sb-menu-font-color);
   box-shadow: 0 10px 30px #00000014;
   z-index: 40;
 }
@@ -2670,7 +2699,7 @@ h6 {
 }
 
 .sb-sidebar-icon-button-selected {
-  box-shadow: inset 0 0 0 2px #333;
+  box-shadow: inset 0 0 0 2px var(--sb-primary-color);
 }
 
 .sb-sidebar-close-button {
@@ -2880,6 +2909,7 @@ h6 {
   border: 1px solid var(--sb-secondary-color);
   border-radius: 8px;
   background: var(--sb-menu-background);
+  color: var(--sb-menu-font-color);
   box-shadow: 0 10px 30px #00000014;
   z-index: 40;
 }
@@ -3007,6 +3037,7 @@ h6 {
   max-height: 260px;
   overflow-y: auto;
   background: var(--sb-menu-background);
+  color: var(--sb-menu-font-color);
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
   border-radius: 10px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);

@@ -33,18 +33,16 @@ import {
   ExtensionsIcon,
   MarginIcon,
   MaterialIcon,
-  TheNewSettingsIcon,
   ThemeIcon,
 } from "seed-bible.components.icons";
 
 type SettingsView =
   | null
   | "account"
-  | "theme"
+  | "display-and-theme"
   | "all-settings"
   | "toolbar"
-  | "extensions"
-  | "display";
+  | "extensions";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
 
@@ -471,7 +469,7 @@ function ScriptureLineHeightIcon({ index }: { index: number }) {
   );
 }
 
-function ThemeAndTextSettingsView(props: {
+function DisplayAndThemeSettingsView(props: {
   state: SeedBibleState;
   onBack: () => void;
   onOpenAllSettings: () => void;
@@ -481,6 +479,7 @@ function ThemeAndTextSettingsView(props: {
   const { config, setFontSize } = state.config;
   const selectedFontSize = config.value.fontSize;
   const settings = state.settings;
+  const current = settings.settings.value;
   const isMobile = state.app.isMobile.value;
 
   const verseConfig = settings.settings.value.textConfig.verse;
@@ -508,7 +507,12 @@ function ThemeAndTextSettingsView(props: {
   };
 
   const handleCycleLineHeight = () => {
-    const nextIndex = (lineHeightIndex + 1) % VERSE_LINE_HEIGHT_OPTIONS.length;
+    const currentLh =
+      settings.settings.value.textConfig.verse.lineHeight ??
+      DEFAULT_VERSE_LINE_HEIGHT;
+    const idx = VERSE_LINE_HEIGHT_OPTIONS.indexOf(currentLh);
+    const currentIdx = idx === -1 ? 0 : idx;
+    const nextIndex = (currentIdx + 1) % VERSE_LINE_HEIGHT_OPTIONS.length;
     const next = VERSE_LINE_HEIGHT_OPTIONS[nextIndex];
     if (next !== undefined) settings.setVerseLineHeight(next);
   };
@@ -526,15 +530,15 @@ function ThemeAndTextSettingsView(props: {
         onBack={onBack}
         trail={[
           t("page-settings", { defaultValue: "Page settings" }),
-          t("theme-and-text", { defaultValue: "Theme and Text" }),
+          t("display-and-theme", { defaultValue: "Display & Theme" }),
         ]}
       />
       <SettingsHero
         icon="palette"
-        title={t("theme-and-text", { defaultValue: "Theme and Text" })}
-        description={t("theme-and-text-description", {
+        title={t("display-and-theme", { defaultValue: "Display & Theme" })}
+        description={t("display-and-theme-description", {
           defaultValue:
-            "Pick a theme and tune the Scripture reading experience.",
+            "Pick a theme and tune how Scripture and the UI are displayed.",
         })}
       />
 
@@ -680,6 +684,124 @@ function ThemeAndTextSettingsView(props: {
             </div>
           </>
         )}
+
+        <h3 className="sb-settings-subheading">
+          {t("display", { defaultValue: "Display" })}
+        </h3>
+
+        <div className="sb-settings-field-row">
+          <label
+            className="sb-settings-field-label"
+            htmlFor="sb-ui-text-size-select"
+          >
+            {t("ui-text-size", { defaultValue: "UI text size" })}
+          </label>
+          <select
+            id="sb-ui-text-size-select"
+            className="sb-settings-language-select"
+            value={current.uiTextSize}
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLSelectElement;
+              settings.setUITextSize(target.value as UITextSize);
+            }}
+          >
+            {UI_TEXT_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="sb-settings-field-row">
+          <label
+            className="sb-settings-field-label"
+            htmlFor="sb-book-orientation-select"
+          >
+            {t("book-order", { defaultValue: "Book order" })}
+          </label>
+          <select
+            id="sb-book-orientation-select"
+            className="sb-settings-language-select"
+            value={current.bookOrientation}
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLSelectElement;
+              settings.setBookOrientation(target.value as BookOrientation);
+            }}
+          >
+            <option value="traditional">
+              {t("traditional", { defaultValue: "Traditional" })}
+            </option>
+            <option value="tanak">
+              {t("tanakh", { defaultValue: "Tanakh" })}
+            </option>
+          </select>
+        </div>
+
+        <h3 className="sb-settings-subheading">
+          {t("selection-ui", { defaultValue: "Selection UI" })}
+        </h3>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-selected-items"
+          >
+            {t("show-selected-items", { defaultValue: "Show selected items" })}
+          </label>
+          <input
+            id="sb-show-selected-items"
+            type="checkbox"
+            checked={current.selectionUI.showSelectedItems}
+            onChange={(event: Event) => {
+              settings.setSelectionUI({
+                showSelectedItems: (event.currentTarget as HTMLInputElement)
+                  .checked,
+              });
+            }}
+          />
+        </div>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-highlight-colors"
+          >
+            {t("show-highlight-colors", {
+              defaultValue: "Show highlight colors",
+            })}
+          </label>
+          <input
+            id="sb-show-highlight-colors"
+            type="checkbox"
+            checked={current.selectionUI.showHighlightColors}
+            onChange={(event: Event) => {
+              settings.setSelectionUI({
+                showHighlightColors: (event.currentTarget as HTMLInputElement)
+                  .checked,
+              });
+            }}
+          />
+        </div>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-icon-text"
+          >
+            {t("show-icon-text", { defaultValue: "Show icon text" })}
+          </label>
+          <input
+            id="sb-show-icon-text"
+            type="checkbox"
+            checked={current.selectionUI.showIconText}
+            onChange={(event: Event) => {
+              settings.setSelectionUI({
+                showIconText: (event.currentTarget as HTMLInputElement).checked,
+              });
+            }}
+          />
+        </div>
 
         <button
           type="button"
@@ -1498,7 +1620,7 @@ function AllSettingsView(props: { state: SeedBibleState; onBack: () => void }) {
         onBack={onBack}
         trail={[
           t("page-settings", { defaultValue: "Page settings" }),
-          t("theme-and-text", { defaultValue: "Theme and Text" }),
+          t("display-and-theme", { defaultValue: "Display & Theme" }),
           t("all-settings", { defaultValue: "All settings" }),
         ]}
       />
@@ -1512,143 +1634,6 @@ function AllSettingsView(props: { state: SeedBibleState; onBack: () => void }) {
       />
       <TextSettingsContent state={state} />
       <ThemeCustomColorsContent state={state} />
-    </div>
-  );
-}
-
-function DisplaySettingsView(props: {
-  state: SeedBibleState;
-  onBack: () => void;
-}) {
-  const { state, onBack } = props;
-  const { settings } = state;
-  const current = settings.settings.value;
-  const { t } = useI18n();
-
-  return (
-    <div className="sb-settings-page">
-      <SettingsBreadcrumbs
-        onBack={onBack}
-        trail={[
-          t("page-settings", { defaultValue: "Page settings" }),
-          t("display", { defaultValue: "Display" }),
-        ]}
-      />
-      <section className="sb-settings-section">
-        <div className="sb-settings-field-row">
-          <label
-            className="sb-settings-field-label"
-            htmlFor="sb-ui-text-size-select"
-          >
-            {t("ui-text-size", { defaultValue: "UI text size" })}
-          </label>
-          <select
-            id="sb-ui-text-size-select"
-            className="sb-settings-language-select"
-            value={current.uiTextSize}
-            onChange={(event: Event) => {
-              const target = event.currentTarget as HTMLSelectElement;
-              settings.setUITextSize(target.value as UITextSize);
-            }}
-          >
-            {UI_TEXT_SIZE_OPTIONS.map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="sb-settings-field-row">
-          <label
-            className="sb-settings-field-label"
-            htmlFor="sb-book-orientation-select"
-          >
-            {t("book-order", { defaultValue: "Book order" })}
-          </label>
-          <select
-            id="sb-book-orientation-select"
-            className="sb-settings-language-select"
-            value={current.bookOrientation}
-            onChange={(event: Event) => {
-              const target = event.currentTarget as HTMLSelectElement;
-              settings.setBookOrientation(target.value as BookOrientation);
-            }}
-          >
-            <option value="traditional">
-              {t("traditional", { defaultValue: "Traditional" })}
-            </option>
-            <option value="tanak">
-              {t("tanakh", { defaultValue: "Tanakh" })}
-            </option>
-          </select>
-        </div>
-
-        <h3 className="sb-settings-subheading">
-          {t("selection-ui", { defaultValue: "Selection UI" })}
-        </h3>
-
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-selected-items"
-          >
-            {t("show-selected-items", { defaultValue: "Show selected items" })}
-          </label>
-          <input
-            id="sb-show-selected-items"
-            type="checkbox"
-            checked={current.selectionUI.showSelectedItems}
-            onChange={(event: Event) => {
-              settings.setSelectionUI({
-                showSelectedItems: (event.currentTarget as HTMLInputElement)
-                  .checked,
-              });
-            }}
-          />
-        </div>
-
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-highlight-colors"
-          >
-            {t("show-highlight-colors", {
-              defaultValue: "Show highlight colors",
-            })}
-          </label>
-          <input
-            id="sb-show-highlight-colors"
-            type="checkbox"
-            checked={current.selectionUI.showHighlightColors}
-            onChange={(event: Event) => {
-              settings.setSelectionUI({
-                showHighlightColors: (event.currentTarget as HTMLInputElement)
-                  .checked,
-              });
-            }}
-          />
-        </div>
-
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-icon-text"
-          >
-            {t("show-icon-text", { defaultValue: "Show icon text" })}
-          </label>
-          <input
-            id="sb-show-icon-text"
-            type="checkbox"
-            checked={current.selectionUI.showIconText}
-            onChange={(event: Event) => {
-              settings.setSelectionUI({
-                showIconText: (event.currentTarget as HTMLInputElement).checked,
-              });
-            }}
-          />
-        </div>
-      </section>
     </div>
   );
 }
@@ -1695,13 +1680,13 @@ function SettingsMainView(props: {
           <li>
             <button
               className="sb-settings-nav-item"
-              onClick={() => onNavigate("theme")}
+              onClick={() => onNavigate("display-and-theme")}
             >
               <span className="sb-settings-nav-icon">
                 <ThemeIcon />
               </span>
               <span className="sb-settings-nav-label">
-                {t("theme-and-text", { defaultValue: "Theme and Text" })}
+                {t("display-and-theme", { defaultValue: "Display & Theme" })}
               </span>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
@@ -1730,20 +1715,6 @@ function SettingsMainView(props: {
               </span>
               <span className="sb-settings-nav-label">
                 {t("extensions", { defaultValue: "Extensions" })}
-              </span>
-              <span className="material-symbols-outlined">chevron_right</span>
-            </button>
-          </li>
-          <li>
-            <button
-              className="sb-settings-nav-item"
-              onClick={() => onNavigate("display")}
-            >
-              <span className="sb-settings-nav-icon">
-                <TheNewSettingsIcon />
-              </span>
-              <span className="sb-settings-nav-label">
-                {t("display", { defaultValue: "Display" })}
               </span>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
@@ -1875,9 +1846,9 @@ export function SettingsPage(props: { state: SeedBibleState }) {
     );
   }
 
-  if (currentView.value === "theme") {
+  if (currentView.value === "display-and-theme") {
     return (
-      <ThemeAndTextSettingsView
+      <DisplayAndThemeSettingsView
         state={state}
         onBack={() => {
           currentView.value = null;
@@ -1894,7 +1865,7 @@ export function SettingsPage(props: { state: SeedBibleState }) {
       <AllSettingsView
         state={state}
         onBack={() => {
-          currentView.value = "theme";
+          currentView.value = "display-and-theme";
         }}
       />
     );
@@ -1914,17 +1885,6 @@ export function SettingsPage(props: { state: SeedBibleState }) {
   if (currentView.value === "extensions") {
     return (
       <ExtensionsSettingsView
-        state={state}
-        onBack={() => {
-          currentView.value = null;
-        }}
-      />
-    );
-  }
-
-  if (currentView.value === "display") {
-    return (
-      <DisplaySettingsView
         state={state}
         onBack={() => {
           currentView.value = null;

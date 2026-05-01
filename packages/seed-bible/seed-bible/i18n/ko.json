@@ -73,6 +73,8 @@
   "page-settings": "페이지 설정",
   "theme-and-text": "테마 및 텍스트",
   "theme-and-text-description": "주제를 선택하고 성경 읽기 경험을 맞춤 설정하세요.",
+  "display-and-theme": "디스플레이 및 테마",
+  "display-and-theme-description": "테마를 선택하고 성경과 UI가 표시되는 방식을 조정하세요.",
   "scripture-settings": "성경 설정",
   "scripture-settings-font-size-example": "에이",
   "scripture-margins": "성경 여백",
