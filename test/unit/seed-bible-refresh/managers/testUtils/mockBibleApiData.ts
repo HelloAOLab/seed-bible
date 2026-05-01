@@ -4,6 +4,7 @@ import type {
   TranslationBookChapter,
   TranslationBooks,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { DEFAULT_API_ENDPOINT } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 export type WebResponse<T> = {
   status: number;
@@ -13,7 +14,7 @@ export type WebResponse<T> = {
 
 export type WebResponseMap = Record<string, WebResponse<unknown>>;
 
-export const API_ENDPOINT = "https://example.test";
+export const EXAMPLE_API_ENDPOINT = "https://example.test";
 export const ALT_API_ENDPOINT = "https://alt.example";
 
 const AAB_TRANSLATION: Translation = {
@@ -143,12 +144,19 @@ export function createResponse<T>(
   };
 }
 
-export function makeUrl(path: string, endpoint: string = API_ENDPOINT): string {
+export function makeUrl(
+  path: string,
+  endpoint: string = DEFAULT_API_ENDPOINT.slice(0, -1)
+): string {
   return `${endpoint}${path}`;
 }
 
 export function makeAltUrl(path: string): string {
   return makeUrl(path, ALT_API_ENDPOINT);
+}
+
+export function makeExampleUrl(path: string): string {
+  return makeUrl(path, EXAMPLE_API_ENDPOINT);
 }
 
 export function makeChapter(
@@ -201,20 +209,39 @@ export function createDefaultManagerResponseMap(): WebResponseMap {
   };
 }
 
-export function createReadingManagerResponseMap(): WebResponseMap {
+export function createExampleManagerResponseMap(): WebResponseMap {
   return {
-    [makeUrl("/api/available_translations.json")]: createResponse(translations),
-    [makeUrl("/api/AAB/books.json")]: createResponse(bsbBooks),
-    [makeUrl("/api/AAB/GEN/1.json")]: createResponse(
+    [makeExampleUrl("/api/available_translations.json")]:
+      createResponse(translations),
+    [makeExampleUrl("/api/AAB/books.json")]: createResponse(bsbBooks),
+    [makeExampleUrl("/api/NIV/books.json")]: createResponse(nivBooks),
+    [makeExampleUrl("/api/AAB/GEN/1.json")]: createResponse(
       makeChapter(bsbBooks, "GEN", 1)
     ),
-    [makeUrl("/api/AAB/GEN/2.json")]: createResponse(
+    [makeExampleUrl("/api/AAB/EXO/2.json")]: createResponse(
+      makeChapter(bsbBooks, "EXO", 2)
+    ),
+    [makeExampleUrl("/api/NIV/MAT/1.json")]: createResponse(
+      makeChapter(nivBooks, "MAT", 1)
+    ),
+  };
+}
+
+export function createReadingManagerResponseMap(): WebResponseMap {
+  return {
+    [makeExampleUrl("/api/available_translations.json")]:
+      createResponse(translations),
+    [makeExampleUrl("/api/AAB/books.json")]: createResponse(bsbBooks),
+    [makeExampleUrl("/api/AAB/GEN/1.json")]: createResponse(
+      makeChapter(bsbBooks, "GEN", 1)
+    ),
+    [makeExampleUrl("/api/AAB/GEN/2.json")]: createResponse(
       makeChapter(bsbBooks, "GEN", 2)
     ),
-    [makeUrl("/api/AAB/GEN/5.json")]: createResponse(
+    [makeExampleUrl("/api/AAB/GEN/5.json")]: createResponse(
       makeChapter(bsbBooks, "GEN", 5)
     ),
-    [makeUrl("/api/AAB/EXO/1.json")]: createResponse(
+    [makeExampleUrl("/api/AAB/EXO/1.json")]: createResponse(
       makeChapter(bsbBooks, "EXO", 1)
     ),
   };

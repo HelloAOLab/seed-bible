@@ -10,9 +10,9 @@ import {
 import type { BibleReadingSession } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
-  API_ENDPOINT,
+  EXAMPLE_API_ENDPOINT,
   type WebResponseMap,
-  createDefaultManagerResponseMap,
+  createExampleManagerResponseMap,
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
 
@@ -62,7 +62,7 @@ function setWebResponses(responses: WebResponseMap): void {
 }
 
 function createApi(): FreeUseBibleAPI {
-  return new FreeUseBibleAPI(API_ENDPOINT);
+  return new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT);
 }
 
 function createDataManager() {
@@ -98,7 +98,7 @@ async function waitForTabsToLoad(tabs: ReaderTab[]): Promise<void> {
 
 describe("createTabs", () => {
   it("addTab() creates a new tab with new reading state", async () => {
-    setWebResponses(createDefaultManagerResponseMap());
+    setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
       createDataManager(),
       createHighlightsManagerMock() as any
@@ -122,7 +122,7 @@ describe("createTabs", () => {
   });
 
   it("addTab() accepts a shared reading session for the new tab", async () => {
-    setWebResponses(createDefaultManagerResponseMap());
+    setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
       createDataManager(),
       createHighlightsManagerMock() as any
@@ -154,7 +154,7 @@ describe("createTabs", () => {
   });
 
   it("addTab() accepts a reading state for the new tab", async () => {
-    setWebResponses(createDefaultManagerResponseMap());
+    setWebResponses(createExampleManagerResponseMap());
     const dataManager = createDataManager();
     const manager = createTabs(
       dataManager,
@@ -175,7 +175,7 @@ describe("createTabs", () => {
   });
 
   it("removeTab() removes the given tab", async () => {
-    setWebResponses(createDefaultManagerResponseMap());
+    setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
       createDataManager(),
       createHighlightsManagerMock() as any
@@ -189,7 +189,7 @@ describe("createTabs", () => {
   });
 
   it("selectTab() sets the selected tab", async () => {
-    setWebResponses(createDefaultManagerResponseMap());
+    setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
       createDataManager(),
       createHighlightsManagerMock() as any
@@ -202,7 +202,7 @@ describe("createTabs", () => {
   });
 
   it("syncs the selected tab to match configBot", async () => {
-    setWebResponses(createDefaultManagerResponseMap());
+    setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
       createDataManager(),
       createHighlightsManagerMock() as any
