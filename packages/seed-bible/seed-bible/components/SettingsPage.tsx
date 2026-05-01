@@ -79,6 +79,7 @@ const TEXT_COLOR_PALETTE = [
 
 const HEX_6 = /^#[0-9a-fA-F]{6}$/;
 const HEX_3 = /^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/;
+const languageDisplayNameCache = new Map<string, Intl.DisplayNames | null>();
 
 /** Normalize an arbitrary color string to #RRGGBB for `<input type="color">`. */
 function toHexInputValue(value: string | null | undefined): string {
@@ -88,6 +89,38 @@ function toHexInputValue(value: string | null | undefined): string {
   const m = trimmed.match(HEX_3);
   if (m) return `#${m[1]}${m[1]}${m[2]}${m[2]}${m[3]}${m[3]}`.toLowerCase();
   return "#000000";
+}
+
+function getNativeLanguageName(languageCode: string): string {
+  const normalizedCode = languageCode.trim();
+  if (!normalizedCode) {
+    return languageCode;
+  }
+
+  if (typeof Intl === "undefined" || typeof Intl.DisplayNames !== "function") {
+    return normalizedCode.toUpperCase();
+  }
+
+  if (!languageDisplayNameCache.has(normalizedCode)) {
+    try {
+      languageDisplayNameCache.set(
+        normalizedCode,
+        new Intl.DisplayNames([normalizedCode], {
+          type: "language",
+        })
+      );
+    } catch {
+      languageDisplayNameCache.set(normalizedCode, null);
+    }
+  }
+
+  const formatter = languageDisplayNameCache.get(normalizedCode);
+  const name = formatter?.of(normalizedCode);
+  if (typeof name === "string" && name.trim().length > 0) {
+    return name;
+  }
+
+  return normalizedCode.toUpperCase();
 }
 
 type ExtensionInstallState = "none" | "pending" | "downloaded" | "installed";
@@ -1737,7 +1770,7 @@ function SettingsMainView(props: {
               >
                 {availableLanguages.map((languageCode) => (
                   <option key={languageCode} value={languageCode}>
-                    {languageCode.toUpperCase()}
+                    {getNativeLanguageName(languageCode)}
                   </option>
                 ))}
               </select>
