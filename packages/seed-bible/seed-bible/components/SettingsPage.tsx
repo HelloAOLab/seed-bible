@@ -35,6 +35,12 @@ import {
   MaterialIcon,
   ThemeIcon,
 } from "seed-bible.components.icons";
+import {
+  handleGridKeyNav,
+  handleMenuTriggerKeyDown,
+  handleVerticalListKeyNav,
+} from "seed-bible.components.KeyboardNav";
+import { useRef } from "preact/hooks";
 
 type SettingsView =
   | null
@@ -546,7 +552,13 @@ function DisplayAndThemeSettingsView(props: {
         <h3 className="sb-settings-subheading">
           {t("themes", { defaultValue: "Themes" })}
         </h3>
-        <div className="sb-theme-ready-gallery">
+        <div
+          className="sb-theme-ready-gallery"
+          role="radiogroup"
+          onKeyDown={(event) => {
+            handleGridKeyNav(event, event.currentTarget);
+          }}
+        >
           {themes.value.map((theme) => {
             const isSelected = theme.id === selectedThemeId.value;
             const vars = theme.variables;
@@ -1270,7 +1282,18 @@ function TextFormattingToolbar(props: {
           />
         </button>
         {paletteOpen.value && (
-          <div className="sb-text-format-palette" role="menu">
+          <div
+            className="sb-text-format-palette"
+            role="menu"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                paletteOpen.value = false;
+                return;
+              }
+              handleGridKeyNav(event, event.currentTarget);
+            }}
+          >
             <button
               type="button"
               className={`sb-text-format-palette-swatch${
@@ -1646,6 +1669,8 @@ function SettingsMainView(props: {
   const { t, language, availableLanguages, setLanguage } = useI18n();
   const isAwake = state.settings.settings.value.keepScreenAwake;
   const isLanguageMenuOpen = useSignal(false);
+  const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const languageMenuRef = useRef<HTMLDivElement | null>(null);
 
   const handleWakeLockToggle = (checked: boolean) => {
     state.settings.setKeepScreenAwake(checked);
@@ -1746,11 +1771,23 @@ function SettingsMainView(props: {
               </span>
               <div className="sb-language-picker">
                 <button
+                  ref={languageTriggerRef}
                   type="button"
                   id="sb-language-select"
                   className="sb-settings-language-select sb-language-picker-button"
+                  aria-haspopup="listbox"
+                  aria-expanded={isLanguageMenuOpen.value}
                   onClick={() => {
                     isLanguageMenuOpen.value = !isLanguageMenuOpen.value;
+                  }}
+                  onKeyDown={(event) => {
+                    handleMenuTriggerKeyDown(event, {
+                      isOpen: isLanguageMenuOpen.value,
+                      open: () => {
+                        isLanguageMenuOpen.value = true;
+                      },
+                      getMenuContainer: () => languageMenuRef.current,
+                    });
                   }}
                 >
                   {currentLangMeta.cc && <FlagImg cc={currentLangMeta.cc} />}
@@ -1770,7 +1807,31 @@ function SettingsMainView(props: {
                         isLanguageMenuOpen.value = false;
                       }}
                     />
-                    <div className="sb-language-picker-menu">
+                    <div
+                      ref={(el) => {
+                        languageMenuRef.current = el;
+                        if (el && !el.contains(document.activeElement)) {
+                          const selected = el.querySelector<HTMLElement>(
+                            '[role="option"][aria-selected="true"]:not([disabled])'
+                          );
+                          const first = el.querySelector<HTMLElement>(
+                            '[role="option"]:not([disabled])'
+                          );
+                          (selected ?? first)?.focus();
+                        }
+                      }}
+                      className="sb-language-picker-menu"
+                      role="listbox"
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") {
+                          event.preventDefault();
+                          isLanguageMenuOpen.value = false;
+                          languageTriggerRef.current?.focus();
+                          return;
+                        }
+                        handleVerticalListKeyNav(event, event.currentTarget);
+                      }}
+                    >
                       {availableLanguages.map((languageCode) => {
                         const meta = LANG_META[languageCode];
                         const isSelected = languageCode === language;
@@ -1778,6 +1839,8 @@ function SettingsMainView(props: {
                           <button
                             key={languageCode}
                             type="button"
+                            role="option"
+                            aria-selected={isSelected}
                             className={`sb-language-picker-item${
                               isSelected
                                 ? " sb-language-picker-item-selected"

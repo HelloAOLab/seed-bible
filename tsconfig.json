@@ -81,6 +81,9 @@
       "seed-bible.components.icons": [
         "./packages/seed-bible/seed-bible/components/icons.tsx"
       ],
+      "seed-bible.components.KeyboardNav": [
+        "./packages/seed-bible/seed-bible/components/KeyboardNav.tsx"
+      ],
       "seed-bible.components.ModalHost": [
         "./packages/seed-bible/seed-bible/components/ModalHost.tsx"
       ],
@@ -90,11 +93,11 @@
       "seed-bible.components.SettingsPage": [
         "./packages/seed-bible/seed-bible/components/SettingsPage.tsx"
       ],
-      "seed-bible.components.Tabs": [
-        "./packages/seed-bible/seed-bible/components/Tabs.tsx"
-      ],
       "seed-bible.components.SidebarSearch": [
         "./packages/seed-bible/seed-bible/components/SidebarSearch.tsx"
+      ],
+      "seed-bible.components.Tabs": [
+        "./packages/seed-bible/seed-bible/components/Tabs.tsx"
       ],
       "seed-bible.components.Utils": [
         "./packages/seed-bible/seed-bible/components/Utils.tsx"

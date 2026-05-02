@@ -230,6 +230,16 @@ h6 {
   font-family: var(--sb-reader-font-family);
 }
 
+/* Force a tight 1% reader margin in mobile view, regardless of the
+   user's saved scriptureMargin setting. Breakpoint mirrors `isMobile`
+   in SeedBibleStateManager (viewportWidth <= 768). */
+@media (max-width: 768px) {
+  .sb-bible-reader {
+    padding-right: 1%;
+    padding-left: 1%;
+  }
+}
+
 .sb-font-size-xs {
   font-size: 12px;
 }

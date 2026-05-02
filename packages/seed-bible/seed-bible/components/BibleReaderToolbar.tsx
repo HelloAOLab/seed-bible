@@ -6,6 +6,10 @@ import { applyToolbarCustomization } from "seed-bible.managers.SettingsManager";
 import { highlightContainsVerse } from "seed-bible.managers.HighlightsManager";
 import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
+import {
+  handleHorizontalListKeyNav,
+  handleVerticalListKeyNav,
+} from "seed-bible.components.KeyboardNav";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 
@@ -584,7 +588,21 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         <span>{t("more", { defaultValue: "More" })}</span>
                       </button>
                       {isMoreMenuOpen.value && (
-                        <div className="sb-reader-toolbar-more-menu">
+                        <div
+                          className="sb-reader-toolbar-more-menu"
+                          role="menu"
+                          onKeyDown={(event) => {
+                            if (event.key === "Escape") {
+                              event.preventDefault();
+                              isMoreMenuOpen.value = false;
+                              return;
+                            }
+                            handleVerticalListKeyNav(
+                              event,
+                              event.currentTarget
+                            );
+                          }}
+                        >
                           {overflowTools.value.map((tool) => {
                             const ToolIcon = tool.icon;
                             return tool.visible.value ? (
@@ -622,7 +640,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                     }
 
                                     return (
-                                      <div className="sb-tool-context-menu sb-tool-context-menu-inline">
+                                      <div
+                                        className="sb-tool-context-menu sb-tool-context-menu-inline"
+                                        role="menu"
+                                      >
                                         {menuItems.map((item) => {
                                           const MenuItemIcon = item.icon;
                                           return (
@@ -636,6 +657,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                                 isMoreMenuOpen.value = false;
                                               }}
                                               className="sb-tool-context-menu-item"
+                                              role="menuitem"
                                             >
                                               <MenuItemIcon />
                                               <span>
@@ -687,7 +709,21 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     </button>
                     {hasMenuItems &&
                       selectedToolbarToolId.value === tool.id && (
-                        <div className="sb-tool-context-menu">
+                        <div
+                          className="sb-tool-context-menu"
+                          role="menu"
+                          onKeyDown={(event) => {
+                            if (event.key === "Escape") {
+                              event.preventDefault();
+                              selectedToolbarToolId.value = null;
+                              return;
+                            }
+                            handleVerticalListKeyNav(
+                              event,
+                              event.currentTarget
+                            );
+                          }}
+                        >
                           {menuItems.map((item) => {
                             const MenuItemIcon = item.icon;
                             return (
@@ -699,6 +735,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                   selectedToolbarToolId.value = null;
                                 }}
                                 className="sb-tool-context-menu-item"
+                                role="menuitem"
                               >
                                 <MenuItemIcon />
                                 <span>{translateTitle(t, item.title)}</span>
@@ -749,7 +786,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             </div>
           )}
           {isHighlightPickerOpen.value ? (
-            <div className="sb-verse-toolbar-tools sb-verse-toolbar-picker">
+            <div
+              className="sb-verse-toolbar-tools sb-verse-toolbar-picker"
+              role="toolbar"
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  isHighlightPickerOpen.value = false;
+                  return;
+                }
+                handleHorizontalListKeyNav(event, event.currentTarget);
+              }}
+            >
               <button
                 type="button"
                 className="sb-verse-toolbar-back"
@@ -900,7 +948,21 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       </button>
                       {hasMenuItems &&
                         selectedVerseToolId.value === tool.id && (
-                          <div className="sb-tool-context-menu">
+                          <div
+                            className="sb-tool-context-menu"
+                            role="menu"
+                            onKeyDown={(event) => {
+                              if (event.key === "Escape") {
+                                event.preventDefault();
+                                selectedVerseToolId.value = null;
+                                return;
+                              }
+                              handleVerticalListKeyNav(
+                                event,
+                                event.currentTarget
+                              );
+                            }}
+                          >
                             {menuItems.map((item) => {
                               const MenuItemIcon = item.icon;
                               return (
@@ -912,6 +974,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                     selectedVerseToolId.value = null;
                                   }}
                                   className="sb-tool-context-menu-item"
+                                  role="menuitem"
                                 >
                                   <MenuItemIcon />
                                   <span>{translateTitle(t, item.title)}</span>

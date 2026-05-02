@@ -6,6 +6,7 @@ import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
 import { translateTitle } from "seed-bible.components.Utils";
+import { handleVerticalListKeyNav } from "seed-bible.components.KeyboardNav";
 
 const { useState } = os.appHooks;
 
@@ -79,7 +80,18 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
               <span className="sr-only">{title}</span>
             </button>
             {hasMenuItems && selectedToolId === tool.id && (
-              <div className="sb-tool-context-menu">
+              <div
+                className="sb-tool-context-menu"
+                role="menu"
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    setSelectedToolId(null);
+                    return;
+                  }
+                  handleVerticalListKeyNav(event, event.currentTarget);
+                }}
+              >
                 {menuItems.map((item) => {
                   const MenuItemIcon = item.icon;
                   return (
@@ -91,6 +103,7 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
                         setSelectedToolId(null);
                       }}
                       className="sb-tool-context-menu-item"
+                      role="menuitem"
                     >
                       <MenuItemIcon />
                       <span>{translateTitle(t, item.title)}</span>

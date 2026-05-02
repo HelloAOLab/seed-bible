@@ -4,6 +4,12 @@ import {
   type ComponentProps,
   type Signalish,
 } from "preact";
+import {
+  handleMenuTriggerKeyDown,
+  handleVerticalListKeyNav,
+} from "seed-bible.components.KeyboardNav";
+
+const { useEffect, useRef } = os.appHooks;
 
 const activeContextMenuId = signal<string | null>(null);
 let nextContextMenuId = 0;
@@ -23,10 +29,48 @@ export function closeContextMenus() {
   activeContextMenuId.value = null;
 }
 
-export function ContextMenu({
-  isOpen,
+function ContextMenuInner({
   children,
   className,
+  onKeyDown,
+  ...props
+}: {
+  children: ComponentChildren;
+} & ComponentProps<"div">) {
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  // Auto-focus the first menu item when the menu mounts. The menu is
+  // remounted on each open (since `ContextMenu` returns null when
+  // `isOpen` is false), so this fires for every open.
+  useEffect(() => {
+    const container = ref.current;
+    if (!container) return;
+    if (container.contains(document.activeElement)) return;
+    const first = container.querySelector<HTMLElement>(
+      '[role="menuitem"]:not([disabled]),[role="menuitemradio"]:not([disabled]),[role="menuitemcheckbox"]:not([disabled])'
+    );
+    first?.focus();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={joinClassNames("sb-context-menu", className)}
+      role="menu"
+      onKeyDown={(event) => {
+        onKeyDown?.(event);
+        if (event.defaultPrevented) return;
+        handleVerticalListKeyNav(event, event.currentTarget);
+      }}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function ContextMenu({
+  isOpen,
   ...props
 }: {
   isOpen: boolean;
@@ -35,12 +79,7 @@ export function ContextMenu({
   if (!isOpen) {
     return null;
   }
-
-  return (
-    <div className={joinClassNames("sb-context-menu", className)} {...props}>
-      {children}
-    </div>
-  );
+  return <ContextMenuInner {...props} />;
 }
 
 export function ContextMenuItem({
@@ -54,6 +93,7 @@ export function ContextMenuItem({
   return (
     <button
       className={joinClassNames("sb-context-menu-item", className)}
+      role="menuitem"
       onClick={(event) => {
         onClick?.(event);
         if (!event.defaultPrevented) {
@@ -75,6 +115,7 @@ export function ContextMenuWithButton({
   iconClassName,
   className,
   onClick,
+  onKeyDown,
   ...props
 }: {
   children: ComponentChildren;
@@ -84,6 +125,8 @@ export function ContextMenuWithButton({
   iconClassName?: string;
 } & ComponentProps<"button">) {
   const menuId = useSignal("");
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const anchorRef = useRef<HTMLDivElement | null>(null);
   if (!menuId.value) {
     nextContextMenuId += 1;
     menuId.value = `context-menu-${nextContextMenuId}`;
@@ -95,14 +138,23 @@ export function ContextMenuWithButton({
 
   const currentIsOpen = activeContextMenuId.value === menuId.value;
 
+  const getMenuContainer = () =>
+    anchorRef.current?.querySelector<HTMLDivElement>('[role="menu"]') ?? null;
+
   return (
-    <div className={joinClassNames("sb-context-menu-anchor", anchorClassName)}>
+    <div
+      ref={anchorRef}
+      className={joinClassNames("sb-context-menu-anchor", anchorClassName)}
+    >
       <button
+        ref={triggerRef}
         className={joinClassNames(
           "sb-context-menu-button",
           buttonClassName,
           className
         )}
+        aria-haspopup="menu"
+        aria-expanded={currentIsOpen}
         onClick={(event) => {
           onClick?.(event);
           if (event.defaultPrevented) {
@@ -110,6 +162,15 @@ export function ContextMenuWithButton({
           }
           setIsOpen(!currentIsOpen);
           event.preventDefault();
+        }}
+        onKeyDown={(event) => {
+          onKeyDown?.(event);
+          if (event.defaultPrevented) return;
+          handleMenuTriggerKeyDown(event, {
+            isOpen: currentIsOpen,
+            open: () => setIsOpen(true),
+            getMenuContainer,
+          });
         }}
         {...props}
       >
@@ -127,6 +188,13 @@ export function ContextMenuWithButton({
       <ContextMenu
         isOpen={currentIsOpen}
         className={joinClassNames("sb-context-menu", menuClassName)}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            setIsOpen(false);
+            triggerRef.current?.focus();
+          }
+        }}
       >
         {children}
       </ContextMenu>

@@ -1,6 +1,10 @@
 import { type BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { MaterialIcon } from "seed-bible.components.icons";
+import {
+  handleGridKeyNav,
+  handleHorizontalListKeyNav,
+} from "seed-bible.components.KeyboardNav";
 
 // const { useEffect, useMemo, useState } = os.appHooks;
 
@@ -53,7 +57,13 @@ export function BibleSelector(props: BibleSelectorProps) {
           <span className="sb-selector-pane-picker-label">
             {t("open-in-pane", { defaultValue: "Open in pane:" })}
           </span>
-          <div className="sb-selector-pane-picker-options">
+          <div
+            className="sb-selector-pane-picker-options"
+            role="radiogroup"
+            onKeyDown={(event) => {
+              handleHorizontalListKeyNav(event, event.currentTarget);
+            }}
+          >
             {availablePanes.value.map((p, index) => {
               const tabBookId = p.tab?.readingState.bookId.value ?? null;
               const tabBookName =
@@ -124,7 +134,12 @@ export function BibleSelector(props: BibleSelectorProps) {
       >
         <div className="sb-selector-column sb-selector-column-divider">
           <h4 className="sb-selector-section-title">{oldTestamentLabel}</h4>
-          <div className="sb-selector-books-grid">
+          <div
+            className="sb-selector-books-grid"
+            onKeyDown={(event) => {
+              handleGridKeyNav(event, event.currentTarget);
+            }}
+          >
             {oldTestamentRows.value.map((row, rowIndex) => {
               const expandedBookInRow =
                 row.find((book) => book.id === expandedBookId.value) ?? null;
@@ -163,7 +178,15 @@ export function BibleSelector(props: BibleSelectorProps) {
                   </div>
 
                   {expandedBookInRow && (
-                    <div className="sb-selector-chapter-grid sb-selector-chapter-grid-inline">
+                    <div
+                      className="sb-selector-chapter-grid sb-selector-chapter-grid-inline"
+                      role="radiogroup"
+                      onKeyDown={(event) => {
+                        if (handleGridKeyNav(event, event.currentTarget)) {
+                          event.stopPropagation();
+                        }
+                      }}
+                    >
                       {Array.from(
                         { length: expandedBookInRow.numberOfChapters },
                         (_, index) => {
@@ -202,7 +225,12 @@ export function BibleSelector(props: BibleSelectorProps) {
           <h4 className="sb-selector-section-title">
             {t("new-testament", { defaultValue: "New Testament" })}
           </h4>
-          <div className="sb-selector-books-grid">
+          <div
+            className="sb-selector-books-grid"
+            onKeyDown={(event) => {
+              handleGridKeyNav(event, event.currentTarget);
+            }}
+          >
             {newTestamentRows.value.map((row, rowIndex) => {
               const expandedBookInRow =
                 row.find((book) => book.id === expandedBookId.value) ?? null;
@@ -241,7 +269,15 @@ export function BibleSelector(props: BibleSelectorProps) {
                   </div>
 
                   {expandedBookInRow && (
-                    <div className="sb-selector-chapter-grid sb-selector-chapter-grid-inline">
+                    <div
+                      className="sb-selector-chapter-grid sb-selector-chapter-grid-inline"
+                      role="radiogroup"
+                      onKeyDown={(event) => {
+                        if (handleGridKeyNav(event, event.currentTarget)) {
+                          event.stopPropagation();
+                        }
+                      }}
+                    >
                       {Array.from(
                         { length: expandedBookInRow.numberOfChapters },
                         (_, index) => {

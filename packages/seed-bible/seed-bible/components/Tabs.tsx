@@ -16,6 +16,10 @@ import type { UserProfile } from "seed-bible.managers.LoginManager";
 import type { ConnectedSessionUser } from "seed-bible.managers.SessionsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { SidebarSearch } from "seed-bible.components.SidebarSearch";
+import {
+  handleGridKeyNav,
+  handleHorizontalListKeyNav,
+} from "seed-bible.components.KeyboardNav";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -298,7 +302,13 @@ function SessionSettingsModalContent(props: {
             defaultValue: "Highlight for",
           })}
         </div>
-        <div className="sb-session-settings-duration-options">
+        <div
+          className="sb-session-settings-duration-options"
+          role="radiogroup"
+          onKeyDown={(event) => {
+            handleHorizontalListKeyNav(event, event.currentTarget);
+          }}
+        >
           {HIGHLIGHT_DURATION_OPTIONS.map((option) => {
             const selected = options.highlightDurationSeconds === option.value;
             return (
@@ -388,7 +398,13 @@ export function TabsHeader(props: TabsHeaderProps) {
                 <div className="sb-pane-layout-menu-title">
                   {t("panels", { defaultValue: "Panels" })}
                 </div>
-                <div className="sb-pane-layout-options">
+                <div
+                  className="sb-pane-layout-options"
+                  role="radiogroup"
+                  onKeyDown={(event) => {
+                    handleGridKeyNav(event, event.currentTarget);
+                  }}
+                >
                   {PANE_LAYOUT_OPTIONS.map((layout) => (
                     <button
                       key={layout.id}
