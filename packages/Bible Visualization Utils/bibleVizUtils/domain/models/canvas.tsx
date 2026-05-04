@@ -213,6 +213,7 @@ export interface ChapterCreationParams {
 export const PieceSelectionSources = {
   UserSelection: "UserSelection",
   StackUserPresenceUpdate: "StackUserPresenceUpdate",
+  StackPresenceNavigation: "StackPresenceNavigation",
   Unknown: "Unknown",
 } as const;
 export type PieceSelectionSource =

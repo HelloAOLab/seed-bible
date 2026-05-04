@@ -1,4 +1,3 @@
-import type { ExperienceServicePort as CoverInteractionExperienceServicePort } from "bibleStack.infrastructure.ports.coverInteraction";
 import type {
   EnvironmentAdapterPort,
   StackManagementService,
@@ -8,6 +7,8 @@ import type {
   ScripturePiecesStateServicePort,
   ExperienceConfigProviderPort,
   SequenceStateServicePort,
+  StackPresenceNavigationPort,
+  AwaiterPort,
 } from "bibleStack.application.ports.experience";
 import type {
   CameraAdapterPort,
@@ -28,9 +29,11 @@ interface ExperienceServiceParams {
   cameraAdapterPort: CameraAdapterPort;
   bibleLifecycleServicePort: BibleLifecycleServicePort;
   bibleSequenceServicePort: BibleSequenceServicePort;
+  stackPresenceNavigationPort: StackPresenceNavigationPort;
+  awaiterPort: AwaiterPort;
 }
 
-export class ExperienceService implements CoverInteractionExperienceServicePort {
+export class ExperienceService {
   #environmentAdapterPort: ExperienceServiceParams["environmentAdapterPort"];
   #stackManagementServicePort: ExperienceServiceParams["stackManagementServicePort"];
   #pieceHighlightServicePort: ExperienceServiceParams["pieceHighlightServicePort"];
@@ -44,6 +47,8 @@ export class ExperienceService implements CoverInteractionExperienceServicePort 
   #cameraAdapterPort: ExperienceServiceParams["cameraAdapterPort"];
   #bibleLifecycleServicePort: ExperienceServiceParams["bibleLifecycleServicePort"];
   #bibleSequenceServicePort: ExperienceServiceParams["bibleSequenceServicePort"];
+  #stackPresenceNavigationPort: ExperienceServiceParams["stackPresenceNavigationPort"];
+  #awaiterPort: ExperienceServiceParams["awaiterPort"];
 
   constructor({
     environmentAdapterPort,
@@ -57,6 +62,8 @@ export class ExperienceService implements CoverInteractionExperienceServicePort 
     cameraAdapterPort,
     bibleLifecycleServicePort,
     bibleSequenceServicePort,
+    stackPresenceNavigationPort,
+    awaiterPort,
   }: ExperienceServiceParams) {
     this.#environmentAdapterPort = environmentAdapterPort;
     this.#stackManagementServicePort = stackManagementServicePort;
@@ -69,6 +76,8 @@ export class ExperienceService implements CoverInteractionExperienceServicePort 
     this.#cameraAdapterPort = cameraAdapterPort;
     this.#bibleLifecycleServicePort = bibleLifecycleServicePort;
     this.#bibleSequenceServicePort = bibleSequenceServicePort;
+    this.#stackPresenceNavigationPort = stackPresenceNavigationPort;
+    this.#awaiterPort = awaiterPort;
   }
 
   clearExperience() {
@@ -80,27 +89,28 @@ export class ExperienceService implements CoverInteractionExperienceServicePort 
     this.#scripturePiecesStateServicePort.resetToDefault();
   }
 
-  displayExperience() {
+  async displayExperience() {
     if (!this.#experienceId) {
       const id = this.#experienceAdapterPort.displayExperience();
       this.#experienceId = id;
 
-      setTimeout(() => {
-        if (this.#experienceId && this.#experienceId === id) {
-          this.#sequenceStateServicePort.executeAsSequence(async () => {
-            const position = { x: 0, y: 0, z: 0 };
-            const { bibleData } = this.#bibleLifecycleServicePort.createBible({
-              position,
-              type: BibleType.Default,
-            });
-            this.#cameraAdapterPort.focusOn(position);
-            await this.#bibleSequenceServicePort.crackOpenBible(bibleData);
-            await thisBot.UpdateStackTabsVisualization({
-              source: "DisplayApp",
-            });
+      await this.#awaiterPort.sleep(
+        this.#experienceConfigProviderPort.getInitialBibleCreationDelay()
+      );
+
+      if (this.#experienceId && this.#experienceId === id) {
+        this.#sequenceStateServicePort.executeAsSequence(async () => {
+          const position =
+            this.#experienceConfigProviderPort.getBibleCreationPosition();
+          const { bibleData } = this.#bibleLifecycleServicePort.createBible({
+            position,
+            type: BibleType.Default,
           });
-        }
-      }, this.#experienceConfigProviderPort.getInitialBibleCreationDelay());
+          this.#cameraAdapterPort.focusOn(position);
+          await this.#bibleSequenceServicePort.crackOpenBible(bibleData);
+          await this.#stackPresenceNavigationPort.update();
+        });
+      }
     }
   }
 

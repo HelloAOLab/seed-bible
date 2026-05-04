@@ -6,6 +6,7 @@ import type { PieceAdapterPort as SelectionReleasePieceAdapterPort } from "bible
 import type { PieceAdapterPort as StructurePieceAdapterPort } from "bibleStack.application.ports.stackStructure";
 import type { PieceAdapterParams } from "bibleStack.infrastructure.ports.pieceAdapter";
 import type { PieceAdapterPort as DropPieceAdapterPort } from "bibleStack.application.ports.scripturePieceDrop";
+import type { PieceAdapterPort as NavigationPieceAdapterPort } from "bibleStack.application.ports.userPresence";
 import type { PieceBot } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/casualos";
 import { SetStrictTag } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/functions/casualos";
 
@@ -16,7 +17,8 @@ export class PieceAdapter
     DraggingPieceAdapterPort,
     SelectionReleasePieceAdapterPort,
     StructurePieceAdapterPort,
-    DropPieceAdapterPort
+    DropPieceAdapterPort,
+    NavigationPieceAdapterPort
 {
   #pieceMapperPort: PieceAdapterParams["pieceMapperPort"];
   #dimensionProviderPort: PieceAdapterParams["dimensionProviderPort"];
@@ -59,6 +61,13 @@ export class PieceAdapter
     setTagMask(pieceBot, dimension + "Y", position.y);
     setTagMask(pieceBot, dimension + "Z", position.z);
   };
+
+  isPieceBeingUsed(piece: Piece): boolean {
+    const pieceBot = this.#pieceMapperPort.toInfrastructure(piece);
+    if (!pieceBot) return false;
+    const dimension = this.#dimensionProviderPort.getDimension();
+    return !!pieceBot.tags.isInUse && pieceBot.tags[dimension] === true;
+  }
 
   hasTransformer(piece: Piece): boolean {
     const pieceBot = this.#pieceMapperPort.toInfrastructure(piece);

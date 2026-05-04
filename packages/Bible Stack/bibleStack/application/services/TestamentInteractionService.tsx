@@ -102,10 +102,10 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
         case SelectionModalities.Precise:
           {
             if (testamentData.isPieceHighlighted()) {
-              this.#testamentSelectionServicePort.selectTestament(
-                testamentData,
-                PieceSelectionSources.UserSelection
-              );
+              this.#testamentSelectionServicePort.selectTestament({
+                data: testamentData,
+                source: PieceSelectionSources.UserSelection,
+              });
             } else {
               this.#pieceHighlightServicePort.tryHighlightPiece({
                 piece: testament,

@@ -120,10 +120,10 @@ export class BookInteractionService implements BookInteractionServicePort {
                 }
               } else {
                 if (bookData.isPieceHighlighted()) {
-                  this.#bookSelectionServicePort.selectBook(
-                    bookData,
-                    PieceSelectionSources.UserSelection
-                  );
+                  this.#bookSelectionServicePort.selectBook({
+                    data: bookData,
+                    source: PieceSelectionSources.UserSelection,
+                  });
                 } else {
                   this.#pieceHighlightServicePort.tryHighlightPiece({
                     piece: book,
@@ -140,17 +140,19 @@ export class BookInteractionService implements BookInteractionServicePort {
               if (bookData.isSelected) {
                 this.#bookSelectionServicePort.deselectBook(bookData);
               } else {
-                this.#bookSelectionServicePort.selectBook(
-                  bookData,
-                  PieceSelectionSources.StackUserPresenceUpdate
-                );
+                this.#bookSelectionServicePort.selectBook({
+                  data: bookData,
+                  source: PieceSelectionSources.StackUserPresenceUpdate,
+                });
               }
             } else if (
               bookData.getParentId("stackBibleId") &&
               bibleData &&
               bibleData.currentStackVizState === BibleVisualizationState.Regular
             ) {
-              this.#explodedViewServicePort.explodeSection(sectionData);
+              this.#explodedViewServicePort.explodeSection({
+                data: sectionData,
+              });
             }
           }
           break;
@@ -207,7 +209,7 @@ export class BookInteractionService implements BookInteractionServicePort {
             (bookData.currentShape === BookShape.Regular ||
               bookData.currentShape === BookShape.RegularSelected)
           ) {
-            this.#explodedViewServicePort.explodeSection(sectionData);
+            this.#explodedViewServicePort.explodeSection({ data: sectionData });
           } else if (!bookData.isSelected) {
             if (bibleData || testamentData || sectionData) {
               const booksToUnhighlight = sectionData?.childrenData

@@ -12,6 +12,7 @@ import type {
 } from "bibleVizUtils.domain.models.canvas";
 import type { PieceDataRepositoryPort } from "bibleStack.application.ports.pieces";
 import type { StackTestamentData } from "bibleVizUtils.domain.entities.StackTestamentData";
+import type { StackPresenceNavigationPacing } from "bibleStack.domain.models.userPresence";
 
 export interface TestamentInteractionServicePort {
   handleTestamentSelection({
@@ -38,10 +39,11 @@ export type TestamentDataRepositoryPort = Pick<
 >;
 
 export interface TestamentSelectionServicePort {
-  selectTestament: (
-    data: StackTestamentData,
-    source: PieceSelectionSource
-  ) => void;
+  selectTestament: (params: {
+    data: StackTestamentData;
+    pacing?: StackPresenceNavigationPacing;
+    source: PieceSelectionSource;
+  }) => void;
   deselectTestament: (data: StackTestamentData) => void;
 }
 

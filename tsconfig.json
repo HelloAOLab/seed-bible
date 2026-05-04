@@ -107,6 +107,9 @@
       "bibleStack.application.ports.pieces": [
         "./packages/Bible Stack/bibleStack/application/ports/pieces.tsx"
       ],
+      "bibleStack.application.ports.scripture": [
+        "./packages/Bible Stack/bibleStack/application/ports/scripture.tsx"
+      ],
       "bibleStack.application.ports.scripturePieceDrag": [
         "./packages/Bible Stack/bibleStack/application/ports/scripturePieceDrag.tsx"
       ],
@@ -140,6 +143,9 @@
       "bibleStack.application.ports.tourGuide": [
         "./packages/Bible Stack/bibleStack/application/ports/tourGuide.tsx"
       ],
+      "bibleStack.application.ports.userPresence": [
+        "./packages/Bible Stack/bibleStack/application/ports/userPresence.tsx"
+      ],
       "bibleStack.application.ports.verses": [
         "./packages/Bible Stack/bibleStack/application/ports/verses.tsx"
       ],
@@ -161,11 +167,14 @@
       "bibleStack.application.services.ChapterInteractionService": [
         "./packages/Bible Stack/bibleStack/application/services/ChapterInteractionService.tsx"
       ],
+      "bibleStack.application.services.ChapterSelectionService": [
+        "./packages/Bible Stack/bibleStack/application/services/ChapterSelectionService.tsx"
+      ],
       "bibleStack.application.services.ExperienceService": [
         "./packages/Bible Stack/bibleStack/application/services/ExperienceService.tsx"
       ],
-      "bibleStack.application.services.ExplodedVIewService": [
-        "./packages/Bible Stack/bibleStack/application/services/ExplodedVIewService.tsx"
+      "bibleStack.application.services.ExplodedViewService": [
+        "./packages/Bible Stack/bibleStack/application/services/ExplodedViewService.tsx"
       ],
       "bibleStack.application.services.PieceHierarchyService": [
         "./packages/Bible Stack/bibleStack/application/services/PieceHierarchyService.tsx"
@@ -200,11 +209,17 @@
       "bibleStack.application.services.StackManagementService": [
         "./packages/Bible Stack/bibleStack/application/services/StackManagementService.tsx"
       ],
+      "bibleStack.application.services.StackPresenceNavigationService": [
+        "./packages/Bible Stack/bibleStack/application/services/StackPresenceNavigationService.tsx"
+      ],
       "bibleStack.application.services.StackStructureService": [
         "./packages/Bible Stack/bibleStack/application/services/StackStructureService.tsx"
       ],
       "bibleStack.application.services.TestamentInteractionService": [
         "./packages/Bible Stack/bibleStack/application/services/TestamentInteractionService.tsx"
+      ],
+      "bibleStack.application.services.TestamentSelectionService": [
+        "./packages/Bible Stack/bibleStack/application/services/TestamentSelectionService.tsx"
       ],
       "bibleStack.application.services.TourGuideService": [
         "./packages/Bible Stack/bibleStack/application/services/TourGuideService.tsx"
@@ -235,6 +250,9 @@
       ],
       "bibleStack.domain.models.spatial": [
         "./packages/Bible Stack/bibleStack/domain/models/spatial.tsx"
+      ],
+      "bibleStack.domain.models.userPresence": [
+        "./packages/Bible Stack/bibleStack/domain/models/userPresence.tsx"
       ],
       "bibleStack.functions.stack": [
         "./packages/Bible Stack/bibleStack/functions/stack.tsx"
@@ -481,9 +499,6 @@
       ],
       "bibleStack.main.DeselectSection": [
         "./packages/Bible Stack/bibleStack/main/DeselectSection.tsx"
-      ],
-      "bibleStack.main.DisplayApp": [
-        "./packages/Bible Stack/bibleStack/main/DisplayApp.tsx"
       ],
       "bibleStack.main.EjectChapter": [
         "./packages/Bible Stack/bibleStack/main/EjectChapter.tsx"
@@ -832,9 +847,6 @@
       ],
       "bibleStack.main.UpdateStacks": [
         "./packages/Bible Stack/bibleStack/main/UpdateStacks.tsx"
-      ],
-      "bibleStack.main.UpdateStackTabsVisualization": [
-        "./packages/Bible Stack/bibleStack/main/UpdateStackTabsVisualization.tsx"
       ],
       "bibleStack.main.UpdateTestamentStack": [
         "./packages/Bible Stack/bibleStack/main/UpdateTestamentStack.tsx"

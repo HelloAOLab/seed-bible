@@ -11,6 +11,7 @@ import type {
 } from "bibleVizUtils.domain.models.canvas";
 import type { SectionBot } from "bibleStack.models.stack";
 import type { StackSectionData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionData";
+import type { StackPresenceNavigationPacing } from "bibleStack.domain.models.userPresence";
 
 export interface SectionInteractionServicePort {
   handleSectionSelection({
@@ -59,6 +60,10 @@ export interface DropEventMapperPort {
 }
 
 export interface SectionSelectionServicePort {
-  selectSection: (data: StackSectionData, source: PieceSelectionSource) => void;
+  selectSection: (params: {
+    data: StackSectionData;
+    source: PieceSelectionSource;
+    pacing?: StackPresenceNavigationPacing;
+  }) => Promise<void>;
   deselectSection: (data: StackSectionData) => void;
 }

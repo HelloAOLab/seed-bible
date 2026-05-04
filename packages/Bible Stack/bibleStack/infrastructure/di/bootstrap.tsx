@@ -4,7 +4,7 @@ import { PieceHierarchyService } from "bibleStack.application.services.PieceHier
 import { TourGuideService } from "bibleStack.application.services.TourGuideService";
 import { BookSelectionService } from "bibleStack.application.services.BookSelectionService";
 import { PieceHighlightService } from "bibleStack.application.services.PieceHighlightService";
-import { ExplodedViewService } from "bibleStack.application.services.ExplodedVIewService";
+import { ExplodedViewService } from "bibleStack.application.services.ExplodedViewService";
 
 // Adapters import
 import { PieceDataRepository } from "bibleStack.infrastructure.adapters.stacks.PieceDataRepository";

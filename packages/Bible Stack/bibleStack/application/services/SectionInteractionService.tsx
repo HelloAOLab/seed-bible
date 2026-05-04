@@ -102,10 +102,10 @@ export class SectionInteractionService implements SectionInteractionServicePort 
         case SelectionModalities.Precise: {
           if (sectionData.isPieceHighlighted()) {
             if (!sectionData.isSplitIntoBooks) {
-              this.#sectionSelectionServicePort.selectSection(
-                sectionData,
-                PieceSelectionSources.UserSelection
-              );
+              this.#sectionSelectionServicePort.selectSection({
+                data: sectionData,
+                source: PieceSelectionSources.UserSelection,
+              });
             }
           } else {
             this.#pieceHighlightServicePort.tryHighlightPiece({
@@ -116,10 +116,10 @@ export class SectionInteractionService implements SectionInteractionServicePort 
           break;
         }
         case SelectionModalities.Coarse: {
-          this.#sectionSelectionServicePort.selectSection(
-            sectionData,
-            PieceSelectionSources.UserSelection
-          );
+          this.#sectionSelectionServicePort.selectSection({
+            data: sectionData,
+            source: PieceSelectionSources.UserSelection,
+          });
           break;
         }
       }

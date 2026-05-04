@@ -5,6 +5,7 @@ import type {
   SelectionModality,
 } from "bibleVizUtils.domain.models.canvas";
 import type { PieceDataRepositoryPort } from "bibleStack.application.ports.pieces";
+import type { StackPresenceNavigationPacing } from "bibleStack.domain.models.userPresence";
 import type { StackBookData } from "bibleVizUtils.domain.entities.StackBookData";
 import type { StackSectionBookData } from "bibleVizUtils.domain.entities.StackSectionBookData";
 import type {
@@ -73,10 +74,11 @@ export type BookDataRepositoryPort = Pick<
 >;
 
 export interface BookSelectionServicePort {
-  selectBook: (
-    data: StackBookData | StackSectionBookData,
-    source: PieceSelectionSource
-  ) => void;
+  selectBook: (params: {
+    data: StackBookData | StackSectionBookData;
+    pacing?: StackPresenceNavigationPacing;
+    source: PieceSelectionSource;
+  }) => void;
   deselectBook: (data: StackBookData | StackSectionBookData) => void;
 }
 

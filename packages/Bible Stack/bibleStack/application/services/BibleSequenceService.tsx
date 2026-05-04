@@ -11,6 +11,7 @@ import type {
 import type { PieceHighlightServicePort } from "bibleStack.application.ports.pieces";
 import { HighlightRequestSources } from "bibleStack.domain.models.pieces";
 import { BibleType } from "bibleVizUtils.domain.models.canvas";
+import type { StackPresenceNavigationPacing } from "bibleStack.domain.models.userPresence";
 
 interface BibleSequenceServiceParams {
   eventPort: BibleSequenceEventPort;
@@ -43,6 +44,13 @@ export class BibleSequenceService {
     this.#awaiterPort = awaiterPort;
     this.#configProviderPort = configProviderPort;
     this.#pieceHighlightServicePort = pieceHighlightServicePort;
+  }
+
+  resetBible(_params: {
+    bibleData: StackBibleData | undefined;
+    pacing: StackPresenceNavigationPacing;
+  }): Promise<void> {
+    return Promise.resolve();
   }
 
   async crackOpenBible(bibleData: StackBibleData) {
