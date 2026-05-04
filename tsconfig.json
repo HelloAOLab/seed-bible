@@ -120,6 +120,9 @@
       "seed-bible.managers.BibleToolsManager": [
         "./packages/seed-bible/seed-bible/managers/BibleToolsManager.tsx"
       ],
+      "seed-bible.managers.BookmarksManager": [
+        "./packages/seed-bible/seed-bible/managers/BookmarksManager.tsx"
+      ],
       "seed-bible.managers.ConfigManager": [
         "./packages/seed-bible/seed-bible/managers/ConfigManager.tsx"
       ],
