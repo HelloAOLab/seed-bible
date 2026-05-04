@@ -1,4 +1,4 @@
-import { signal } from "@preact/signals";
+import { computed, effect, signal } from "@preact/signals";
 
 /**
  * Which settings subpage the SettingsPage should jump to on its next mount.
@@ -7,6 +7,7 @@ import { signal } from "@preact/signals";
  */
 export type RequestedSettingsView =
   | null
+  | "main"
   | "account"
   | "display-and-theme"
   | "all-settings"
@@ -14,24 +15,22 @@ export type RequestedSettingsView =
   | "extensions";
 
 export function createSidebar() {
-  const isSettingsOpen = signal(false);
+  const initialView = configBot.tags.settingsView ?? null;
   const isSidebarCollapsed = signal(false);
   const isMobileOpen = signal(false);
-  const requestedSettingsView = signal<RequestedSettingsView>(null);
+  const requestedSettingsView = signal<RequestedSettingsView>(initialView);
+  const isSettingsOpen = computed(() => requestedSettingsView.value !== null);
 
   const openSettings = () => {
-    requestedSettingsView.value = null;
-    isSettingsOpen.value = true;
+    requestedSettingsView.value = "main";
   };
 
   /** Opens the settings sidebar jumping straight to a specific subpage. */
   const openSettingsToView = (view: RequestedSettingsView) => {
     requestedSettingsView.value = view;
-    isSettingsOpen.value = true;
   };
 
   const closeSettings = () => {
-    isSettingsOpen.value = false;
     requestedSettingsView.value = null;
   };
 
@@ -46,6 +45,34 @@ export function createSidebar() {
   const closeSidebar = () => {
     isMobileOpen.value = false;
   };
+
+  effect(() => {
+    const requestedView = requestedSettingsView.value;
+
+    if (configBot.tags.settingsView !== requestedView) {
+      configBot.tags.settingsView = requestedView;
+    }
+  });
+
+  os.addBotListener(configBot, "onBotChanged", async (that: unknown) => {
+    const changedTagsSource =
+      that && typeof that === "object" && "tags" in that
+        ? (that as { tags?: unknown }).tags
+        : null;
+    const changedTags = Array.isArray(changedTagsSource)
+      ? changedTagsSource
+      : [];
+    const hasSettingsViewChange = changedTags.includes("settingsView");
+
+    if (!hasSettingsViewChange) {
+      return;
+    }
+
+    const newRequestedView = configBot.tags.settingsView ?? null;
+    if (newRequestedView !== requestedSettingsView.value) {
+      requestedSettingsView.value = newRequestedView;
+    }
+  });
 
   return {
     isSettingsOpen,
