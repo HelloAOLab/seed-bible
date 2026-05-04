@@ -199,11 +199,8 @@ function SettingsHero(props: {
   );
 }
 
-function AccountSettingsView(props: {
-  state: SeedBibleState;
-  onBack: () => void;
-}) {
-  const { state, onBack } = props;
+function AccountSettingsView(props: { state: SeedBibleState }) {
+  const { state } = props;
   const { login } = state;
   const { t } = useI18n();
   const isLoggedIn = useComputed(() => login.userId.value !== null);
@@ -269,7 +266,7 @@ function AccountSettingsView(props: {
   return (
     <div className="sb-settings-page">
       <SettingsBreadcrumbs
-        onBack={onBack}
+        onBack={() => (state.sidebar.requestedSettingsView.value = null)}
         trail={[
           t("page-settings", { defaultValue: "Page settings" }),
           t("account-settings", { defaultValue: "Account settings" }),
@@ -486,12 +483,8 @@ function ScriptureLineHeightIcon({ index }: { index: number }) {
   );
 }
 
-function DisplayAndThemeSettingsView(props: {
-  state: SeedBibleState;
-  onBack: () => void;
-  onOpenAllSettings: () => void;
-}) {
-  const { state, onBack, onOpenAllSettings } = props;
+function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
+  const { state } = props;
   const { themes, selectedThemeId, setTheme } = state.theme;
   const { config, setFontSize } = state.config;
   const selectedFontSize = config.value.fontSize;
@@ -508,6 +501,14 @@ function DisplayAndThemeSettingsView(props: {
   })();
 
   const fontSizeIndex = FONT_SIZE_OPTIONS.indexOf(selectedFontSize);
+
+  const onBack = () => {
+    state.sidebar.requestedSettingsView.value = null;
+  };
+
+  const onOpenAllSettings = () => {
+    state.sidebar.requestedSettingsView.value = "all-settings";
+  };
 
   const handleDecreaseFontSize = () => {
     if (fontSizeIndex > 0) {
@@ -856,17 +857,18 @@ function getExtensionInstallState(
   return "none";
 }
 
-function ExtensionsSettingsView(props: {
-  state: SeedBibleState;
-  onBack: () => void;
-}) {
-  const { state, onBack } = props;
+function ExtensionsSettingsView(props: { state: SeedBibleState }) {
+  const { state } = props;
   const { extensions } = state;
   const extensionsList = extensions.getExtensions();
   const installingIds = useSignal<Set<string>>(new Set());
   const openMenuId = useSignal<string | null>(null);
   const isDownloadingSet = useSignal(false);
   const isUploadingSet = useSignal(false);
+
+  const onBack = () => {
+    state.sidebar.requestedSettingsView.value = null;
+  };
 
   const handleInstall = async (extensionId: string) => {
     openMenuId.value = null;
@@ -1077,13 +1079,14 @@ function ExtensionsSettingsView(props: {
   );
 }
 
-function ToolbarSettingsView(props: {
-  state: SeedBibleState;
-  onBack: () => void;
-}) {
-  const { state, onBack } = props;
+function ToolbarSettingsView(props: { state: SeedBibleState }) {
+  const { state } = props;
   const { tools: toolsManager, settings } = state;
   const { t } = useI18n();
+
+  const onBack = () => {
+    state.sidebar.requestedSettingsView.value = null;
+  };
 
   const available = toolsManager.listToolbarTools();
   const toolbarConfig = settings.settings.value.toolbar;
@@ -1645,9 +1648,14 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
   );
 }
 
-function AllSettingsView(props: { state: SeedBibleState; onBack: () => void }) {
-  const { state, onBack } = props;
+function AllSettingsView(props: { state: SeedBibleState }) {
+  const { state } = props;
   const { t } = useI18n();
+
+  const onBack = () => {
+    state.sidebar.requestedSettingsView.value = "display-and-theme";
+  };
+
   return (
     <div className="sb-settings-page">
       <SettingsBreadcrumbs
@@ -1672,16 +1680,17 @@ function AllSettingsView(props: { state: SeedBibleState; onBack: () => void }) {
   );
 }
 
-function SettingsMainView(props: {
-  state: SeedBibleState;
-  onNavigate: (view: SettingsView) => void;
-}) {
-  const { state, onNavigate } = props;
+function SettingsMainView(props: { state: SeedBibleState }) {
+  const { state } = props;
   const { t, language, availableLanguages, setLanguage } = useI18n();
   const isAwake = state.settings.settings.value.keepScreenAwake;
   const isLanguageMenuOpen = useSignal(false);
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
   const languageMenuRef = useRef<HTMLDivElement | null>(null);
+
+  const onNavigate = (view: SettingsView) => {
+    state.sidebar.requestedSettingsView.value = view;
+  };
 
   const handleWakeLockToggle = (checked: boolean) => {
     state.settings.setKeepScreenAwake(checked);
@@ -1901,78 +1910,27 @@ export function SettingsPage(props: { state: SeedBibleState }) {
   // Honor a deep-link requested by the sidebar (e.g. clicking the
   // bottom-right avatar opens Account settings directly). Consumed once and
   // cleared so subsequent opens start at the main list.
-  const requested = state.sidebar.requestedSettingsView.value;
-  const currentView = useSignal<SettingsView>(
-    (requested as SettingsView | null) ?? null
-  );
-  if (requested) {
-    state.sidebar.requestedSettingsView.value = null;
-  }
+  const currentView = state.sidebar.requestedSettingsView;
 
   if (currentView.value === "account") {
-    return (
-      <AccountSettingsView
-        state={state}
-        onBack={() => {
-          currentView.value = null;
-        }}
-      />
-    );
+    return <AccountSettingsView state={state} />;
   }
 
   if (currentView.value === "display-and-theme") {
-    return (
-      <DisplayAndThemeSettingsView
-        state={state}
-        onBack={() => {
-          currentView.value = null;
-        }}
-        onOpenAllSettings={() => {
-          currentView.value = "all-settings";
-        }}
-      />
-    );
+    return <DisplayAndThemeSettingsView state={state} />;
   }
 
   if (currentView.value === "all-settings") {
-    return (
-      <AllSettingsView
-        state={state}
-        onBack={() => {
-          currentView.value = "display-and-theme";
-        }}
-      />
-    );
+    return <AllSettingsView state={state} />;
   }
 
   if (currentView.value === "toolbar") {
-    return (
-      <ToolbarSettingsView
-        state={state}
-        onBack={() => {
-          currentView.value = null;
-        }}
-      />
-    );
+    return <ToolbarSettingsView state={state} />;
   }
 
   if (currentView.value === "extensions") {
-    return (
-      <ExtensionsSettingsView
-        state={state}
-        onBack={() => {
-          currentView.value = null;
-        }}
-      />
-    );
+    return <ExtensionsSettingsView state={state} />;
   }
 
-  return (
-    <SettingsMainView
-      state={state}
-      onNavigate={(view) => {
-        currentView.value = view;
-      }}
-    />
-  );
+  return <SettingsMainView state={state} />;
 }
