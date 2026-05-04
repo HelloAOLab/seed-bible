@@ -82,43 +82,34 @@ const TEXT_COLOR_PALETTE = [
 ];
 
 const HEX_6 = /^#[0-9a-fA-F]{6}$/;
-const languageDisplayNameCache = new Map<string, Intl.DisplayNames | null>();
 
 const LANG_META: Record<string, { cc: string; display: string }> = {
-  am: { cc: "et", display: "Amharic" },
-  ar: { cc: "sa", display: "Arabic" },
-  bn: { cc: "bd", display: "Bengali" },
-  zh: { cc: "cn", display: "Chinese" },
+  am: { cc: "et", display: "አማርኛ" },
+  ar: { cc: "sa", display: "العربية" },
+  bn: { cc: "bd", display: "বাংলা" },
+  zh: { cc: "cn", display: "中文" },
   en: { cc: "us", display: "English" },
-  fr: { cc: "fr", display: "French" },
-  hi: { cc: "in", display: "Hindi" },
-  ind: { cc: "id", display: "Indonesian" },
-  ja: { cc: "jp", display: "Japanese" },
-  ko: { cc: "kr", display: "Korean" },
-  mn: { cc: "mn", display: "Mongolian" },
-  ne: { cc: "np", display: "Nepali" },
-  ps: { cc: "af", display: "Pashto" },
-  fa: { cc: "ir", display: "Persian" },
-  pt: { cc: "br", display: "Portuguese" },
-  ru: { cc: "ru", display: "Russian" },
-  es: { cc: "es", display: "Spanish" },
-  sw: { cc: "tz", display: "Swahili" },
-  ti: { cc: "er", display: "Tigrinya" },
-  tr: { cc: "tr", display: "Turkish" },
-  uk: { cc: "ua", display: "Ukrainian" },
-  ur: { cc: "pk", display: "Urdu" },
-  ug: { cc: "cn", display: "Uyghur" },
-  vi: { cc: "vn", display: "Vietnamese" },
-  de: { cc: "de", display: "German" },
+  fr: { cc: "fr", display: "Français" },
+  hi: { cc: "in", display: "हिन्दी" },
+  ind: { cc: "id", display: "Bahasa Indonesia" },
+  ja: { cc: "jp", display: "日本語" },
+  ko: { cc: "kr", display: "한국어" },
+  mn: { cc: "mn", display: "Монгол хэл" },
+  ne: { cc: "np", display: "नेपाली" },
+  ps: { cc: "af", display: "پښتو" },
+  fa: { cc: "ir", display: "فارسی" },
+  pt: { cc: "br", display: "Português" },
+  ru: { cc: "ru", display: "Русский" },
+  es: { cc: "es", display: "Español" },
+  sw: { cc: "tz", display: "Kiswahili" },
+  ti: { cc: "er", display: "ትግርኛ" },
+  tr: { cc: "tr", display: "Türkçe" },
+  uk: { cc: "ua", display: "Українська" },
+  ur: { cc: "pk", display: "اردو" },
+  ug: { cc: "cn", display: "ئۇيغۇرچە" },
+  vi: { cc: "vn", display: "Tiếng Việt" },
+  de: { cc: "de", display: "Deutsch" },
 };
-
-for (const lang in LANG_META) {
-  const meta = LANG_META[lang];
-  if (!meta) {
-    continue;
-  }
-  meta.display = getNativeLanguageName(lang) ?? meta.display;
-}
 
 function FlagImg({ cc }: { cc: string }) {
   return (
@@ -145,42 +136,6 @@ function toHexInputValue(value: string | null | undefined): string {
   const m = trimmed.match(HEX_3);
   if (m) return `#${m[1]}${m[1]}${m[2]}${m[2]}${m[3]}${m[3]}`.toLowerCase();
   return "#000000";
-}
-
-function getNativeLanguageName(languageCode: string): string {
-  if (languageCode === "ind") {
-    languageCode = "id";
-  }
-
-  const normalizedCode = languageCode.trim();
-  if (!normalizedCode) {
-    return languageCode;
-  }
-
-  if (typeof Intl === "undefined" || typeof Intl.DisplayNames !== "function") {
-    return normalizedCode.toUpperCase();
-  }
-
-  if (!languageDisplayNameCache.has(normalizedCode)) {
-    try {
-      languageDisplayNameCache.set(
-        normalizedCode,
-        new Intl.DisplayNames([normalizedCode], {
-          type: "language",
-        })
-      );
-    } catch {
-      languageDisplayNameCache.set(normalizedCode, null);
-    }
-  }
-
-  const formatter = languageDisplayNameCache.get(normalizedCode);
-  const name = formatter?.of(normalizedCode);
-  if (typeof name === "string" && name.trim().length > 0) {
-    return name;
-  }
-
-  return normalizedCode.toUpperCase();
 }
 
 type ExtensionInstallState = "none" | "pending" | "downloaded" | "installed";
