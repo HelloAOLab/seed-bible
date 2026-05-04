@@ -10,6 +10,10 @@ import type {
   VerseDecoration,
 } from "seed-bible.managers.BibleReadingManager";
 import type { ChapterHighlight } from "seed-bible.managers.HighlightsManager";
+import type {
+  Bookmark,
+  BookmarksManager,
+} from "seed-bible.managers.BookmarksManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { Pane } from "seed-bible.managers.PanesManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
@@ -684,10 +688,11 @@ interface BibleReaderProps {
   currentPane: Pane;
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
+  bookmarksManager?: BookmarksManager;
 }
 
 export function BibleReader(props: BibleReaderProps) {
-  const { currentPane, readingState, selectorState } = props;
+  const { currentPane, readingState, selectorState, bookmarksManager } = props;
   const {
     translationId,
     translation,
@@ -717,29 +722,121 @@ export function BibleReader(props: BibleReaderProps) {
   const translationWebsite = computed(
     () => translation.value?.website.trim() ?? ""
   );
+  const activeBookmark = computed<Bookmark | null>(() => {
+    if (!bookmarksManager) {
+      return null;
+    }
+
+    const activeTranslationId = translationId.value;
+    const activeBookId = bookId.value;
+    const activeChapterNumber = chapterNumber.value;
+
+    if (!activeTranslationId || !activeBookId || !activeChapterNumber) {
+      return null;
+    }
+
+    return (
+      bookmarksManager.bookmarks.value.find(
+        (bookmark) =>
+          bookmark.translationId === activeTranslationId &&
+          bookmark.bookId === activeBookId &&
+          bookmark.chapterNumber === activeChapterNumber
+      ) ?? null
+    );
+  });
+
+  const canToggleBookmark = computed(
+    () =>
+      !!bookmarksManager &&
+      !!translationId.value &&
+      !!bookId.value &&
+      typeof chapterNumber.value === "number" &&
+      chapterNumber.value > 0
+  );
 
   const { t } = useI18n();
+
+  const handleToggleBookmark = async () => {
+    if (!bookmarksManager) {
+      return;
+    }
+
+    const currentTranslationId = translationId.value;
+    const currentBookId = bookId.value;
+    const currentChapterNumber = chapterNumber.value;
+    if (!currentTranslationId || !currentBookId || !currentChapterNumber) {
+      return;
+    }
+
+    if (activeBookmark.value) {
+      await bookmarksManager.deleteBookmark(activeBookmark.value.id);
+      return;
+    }
+
+    await bookmarksManager.saveBookmark(
+      currentTranslationId,
+      currentBookId,
+      currentChapterNumber
+    );
+  };
+
+  const bookmarkLabel = activeBookmark.value
+    ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
+    : t("save-bookmark", { defaultValue: "Save bookmark" });
 
   return (
     <div
       className="sb-bible-reader"
       dir={translation.value?.textDirection ?? "auto"}
     >
-      <h2
-        onClick={() => selectorState.setOpen(true, currentPane)}
-        className="sb-bible-reader-title"
-      >
-        <span className="sb-bible-reader-book">
-          {currentBook.value?.name ?? bookId.value ?? "Select a book"}
-        </span>
-        {String.fromCharCode(160)}
-        <span className="sb-bible-reader-chapter">{chapterNumber.value}</span>
-        {String.fromCharCode(160)}
-        <span className="sb-bible-reader-translation">
-          /{String.fromCharCode(160)}
-          {translationId.value ?? ""}
-        </span>
-      </h2>
+      <div className="sb-bible-reader-header">
+        <h2
+          onClick={() => selectorState.setOpen(true, currentPane)}
+          className="sb-bible-reader-title"
+        >
+          <span className="sb-bible-reader-book">
+            {currentBook.value?.name ?? bookId.value ?? "Select a book"}
+          </span>
+          {String.fromCharCode(160)}
+          <span className="sb-bible-reader-chapter">{chapterNumber.value}</span>
+          {String.fromCharCode(160)}
+          <span className="sb-bible-reader-translation">
+            /{String.fromCharCode(160)}
+            {translationId.value ?? ""}
+          </span>
+        </h2>
+
+        {bookmarksManager && (
+          <button
+            type="button"
+            className={`sb-bookmark-toggle${
+              activeBookmark.value ? " sb-bookmark-toggle-active" : ""
+            }`}
+            aria-label={bookmarkLabel}
+            title={bookmarkLabel}
+            disabled={!canToggleBookmark.value}
+            onClick={(event: MouseEvent) => {
+              event.stopPropagation();
+              void handleToggleBookmark();
+            }}
+          >
+            <svg
+              className="sb-bookmark-toggle-icon"
+              viewBox="0 0 24 24"
+              role="img"
+              aria-hidden="true"
+            >
+              <path
+                d="M6 3.5h12a1 1 0 0 1 1 1V21l-7-4-7 4V4.5a1 1 0 0 1 1-1z"
+                fill={activeBookmark.value?.color ?? "none"}
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        )}
+      </div>
 
       {error.value && !loading.value && (
         <p className="sb-reader-error">{error.value}</p>

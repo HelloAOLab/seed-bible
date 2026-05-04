@@ -566,6 +566,7 @@ export function PaneLayout(props: PaneLayoutProps) {
     tabs: tabsManager,
     sidebar,
     tools: toolsManager,
+    bookmarks,
   } = state;
   const panes = app.effectivePanes.value;
   const layout = app.panelsEnabled.value ? panesManager.layout.value : "single";
@@ -938,6 +939,7 @@ export function PaneLayout(props: PaneLayoutProps) {
                 currentPane={pane}
                 readingState={pane.tab.readingState}
                 selectorState={selectorState}
+                bookmarksManager={bookmarks}
               />
               <BelowReaderToolbar
                 toolsManager={toolsManager}
@@ -1095,6 +1097,7 @@ export function PaneLayout(props: PaneLayoutProps) {
                   currentPane={pane}
                   readingState={pane.tab.readingState}
                   selectorState={selectorState}
+                  bookmarksManager={bookmarks}
                 />
               </PaneReaderScroller>
             ) : (

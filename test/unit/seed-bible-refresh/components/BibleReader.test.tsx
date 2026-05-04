@@ -10,6 +10,10 @@ import {
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
 import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type {
+  Bookmark,
+  BookmarksManager,
+} from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
 
 type ReaderFixture = {
   pane: Pane;
@@ -23,6 +27,10 @@ type ReaderFixture = {
   selectVerse: jest.Mock;
   selectFootnote: jest.Mock;
   setOpen: jest.Mock;
+  bookmarksManager: BookmarksManager;
+  saveBookmark: jest.Mock;
+  deleteBookmark: jest.Mock;
+  bookmarks: Signal<Bookmark[]>;
 };
 
 function createFixture(): ReaderFixture {
@@ -107,6 +115,9 @@ function createFixture(): ReaderFixture {
   const selectVerse = jest.fn();
   const selectFootnote = jest.fn();
   const setOpen = jest.fn(async () => undefined);
+  const saveBookmark = jest.fn(async () => undefined);
+  const deleteBookmark = jest.fn(async () => undefined);
+  const bookmarks = signal<Bookmark[]>([]);
 
   const currentTranslation = computed(
     () => chapterData.value?.translation ?? null
@@ -156,6 +167,12 @@ function createFixture(): ReaderFixture {
     id: "pane-1",
   } as Pane;
 
+  const bookmarksManager: BookmarksManager = {
+    bookmarks,
+    saveBookmark,
+    deleteBookmark,
+  };
+
   return {
     pane,
     selectorState,
@@ -168,6 +185,10 @@ function createFixture(): ReaderFixture {
     selectVerse,
     selectFootnote,
     setOpen,
+    bookmarksManager,
+    saveBookmark,
+    deleteBookmark,
+    bookmarks,
   };
 }
 
@@ -185,7 +206,8 @@ describe("BibleReader", () => {
   });
 
   it("opens the selector when the title is clicked", () => {
-    const { pane, selectorState, readingState, setOpen } = createFixture();
+    const { pane, selectorState, readingState, setOpen, bookmarksManager } =
+      createFixture();
 
     act(() => {
       render(
@@ -193,6 +215,7 @@ describe("BibleReader", () => {
           currentPane={pane}
           selectorState={selectorState}
           readingState={readingState}
+          bookmarksManager={bookmarksManager}
         />,
         container
       );
@@ -206,6 +229,92 @@ describe("BibleReader", () => {
     });
 
     expect(setOpen).toHaveBeenCalledWith(true, pane);
+  });
+
+  it("clicking the bookmark button saves the current chapter", async () => {
+    const {
+      pane,
+      selectorState,
+      readingState,
+      bookmarksManager,
+      saveBookmark,
+    } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          bookmarksManager={bookmarksManager}
+        />,
+        container
+      );
+    });
+
+    const bookmarkButton = container.querySelector(
+      '.sb-bookmark-toggle[aria-label="Save bookmark"]'
+    ) as HTMLButtonElement | null;
+    expect(bookmarkButton).not.toBeNull();
+
+    await act(async () => {
+      bookmarkButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(saveBookmark).toHaveBeenCalledWith("BSB", "GEN", 1);
+  });
+
+  it("shows filled bookmark color and deletes when chapter is already bookmarked", async () => {
+    const {
+      pane,
+      selectorState,
+      readingState,
+      bookmarksManager,
+      deleteBookmark,
+      bookmarks,
+    } = createFixture();
+
+    bookmarks.value = [
+      {
+        id: "bookmark-1",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        createdAtMs: 123,
+        color: "blue",
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          bookmarksManager={bookmarksManager}
+        />,
+        container
+      );
+    });
+
+    const bookmarkButton = container.querySelector(
+      '.sb-bookmark-toggle[aria-label="Remove bookmark"]'
+    ) as HTMLButtonElement | null;
+    expect(bookmarkButton).not.toBeNull();
+
+    const bookmarkPath = container.querySelector(
+      ".sb-bookmark-toggle-icon path"
+    ) as SVGPathElement | null;
+    expect(bookmarkPath).not.toBeNull();
+    expect(bookmarkPath?.getAttribute("fill")).toBe("blue");
+
+    await act(async () => {
+      bookmarkButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(deleteBookmark).toHaveBeenCalledWith("bookmark-1");
   });
 
   it("clicking a verse selects it with event coordinates", () => {
