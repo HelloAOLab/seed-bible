@@ -1,5 +1,6 @@
 import type { Piece } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
-import type { PieceHighlightServicePort } from "bibleStack.application.ports.pieces";
+import type { PieceHighlightServicePort as PiecesHighlightServicePort } from "bibleStack.application.ports.pieces";
+import type { PieceHighlightServicePort as ExperienceHighlightServicePort } from "../ports/experience";
 import type {
   HighlightRequestSource,
   UnhighlightPacing,
@@ -7,10 +8,13 @@ import type {
 } from "../../domain/models/pieces";
 import type { LabelTranslucencyMode } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/label";
 
-export class PieceHighlightService implements PieceHighlightServicePort {
+export class PieceHighlightService
+  implements PiecesHighlightServicePort, ExperienceHighlightServicePort
+{
   tryHighlightPiece: (params: {
     piece: Piece;
     source: HighlightRequestSource;
+    unhighlightDelay?: number;
   }) => Promise<void> = ({ piece, source }) => {
     return Promise.resolve();
   };
@@ -35,4 +39,8 @@ export class PieceHighlightService implements PieceHighlightServicePort {
     piece: Piece;
     intensity: LabelTranslucencyMode;
   }) => void = () => {};
+
+  clearHighlightedPieces(): void {}
+
+  clearScheduledUnhighlights(): void {}
 }

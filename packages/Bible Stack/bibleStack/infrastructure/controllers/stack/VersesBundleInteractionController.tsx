@@ -27,13 +27,11 @@ export class VersesBundleInteractionController {
 
   handleVersesBundlePointerEnter(bundle: VersesBundleBot) {
     const piece = this.#pieceMapperPort.toDomain(bundle);
-    this.#versesBundleInteractionServicePort.handleVersesBundleFocusBegin(
-      piece
-    );
+    this.#versesBundleInteractionServicePort.handleBundleFocusBegin(piece);
   }
 
   handleVersesBundlePointerExit(bundle: VersesBundleBot) {
     const piece = this.#pieceMapperPort.toDomain(bundle);
-    this.#versesBundleInteractionServicePort.handleVersesBundleFocusEnd(piece);
+    this.#versesBundleInteractionServicePort.handleBundleFocusEnd(piece);
   }
 }

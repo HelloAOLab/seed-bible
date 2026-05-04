@@ -1,7 +1,10 @@
-import type { BibleDataRepositoryPort } from "bibleStack.application.ports.stacks";
+import type { BibleDataRepositoryPort as StacksDataRepositoryPort } from "bibleStack.application.ports.stacks";
+import type { BibleDataRepositoryPort as BibleLifecycleDataRepositoryPort } from "bibleStack.application.ports.bibleLifecycle";
 import type { StackBibleData } from "bibleVizUtils.domain.entities.StackBibleData";
 
-export class BibleDataRepository implements BibleDataRepositoryPort {
+export class BibleDataRepository
+  implements StacksDataRepositoryPort, BibleLifecycleDataRepositoryPort
+{
   #biblesData: Set<StackBibleData> = new Set();
 
   addBibleData(data: StackBibleData) {

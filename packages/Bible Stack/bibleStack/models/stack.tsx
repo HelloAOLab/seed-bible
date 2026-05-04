@@ -23,7 +23,15 @@ export interface StackDraggablePieceBotTags<
   draggable: boolean;
 }
 
-export type TestamentTags = StackDraggablePieceBotTags<"StackTestament">;
+export interface TestamentTags extends StackDraggablePieceBotTags<"StackTestament"> {
+  formOpacity: number;
+  scale: number;
+  color: string;
+  scaleX: number;
+  scaleY: number;
+  scaleZ: number;
+  pointable: boolean;
+}
 
 export type TestamentBot = TypedBot<TestamentTags>;
 
@@ -50,7 +58,7 @@ export type VerseBot = TypedBot<PieceBotTags<"Verse">>;
 
 export type StackStaticPiece = keyof Pick<
   TBiblePiece,
-  "StackCover" | "StackCrossLine"
+  "StackCover" | "StackCrossLine" | "StackTransformer" | "StackShadow"
 >;
 
 export interface StackStaticPieceBotTags<
@@ -59,10 +67,38 @@ export interface StackStaticPieceBotTags<
   stackBibleId: string;
 }
 
-export type CoverTags = StackStaticPieceBotTags<"StackCover">;
+export interface CoverTags extends StackStaticPieceBotTags<"StackCover"> {
+  scaleX: number;
+  scaleY: number;
+  scaleZ: number;
+  pointable: boolean;
+}
+
+export interface LowerCoverTags extends CoverTags {
+  scaleX: number;
+  scaleY: number;
+  scaleZ: number;
+  pointable: boolean;
+  onDrag: string;
+  onDragging: string;
+}
 
 export type CoverBot = TypedBot<CoverTags>;
+export type LowerCoverBot = TypedBot<LowerCoverTags>;
 
-export type CrossLineTags = StackStaticPieceBotTags<"StackCrossLine">;
+export interface CrossLineTags extends StackStaticPieceBotTags<"StackCrossLine"> {
+  scaleX: number;
+  scaleY: number;
+  scaleZ: number;
+  pointable: boolean;
+}
 
 export type CrossLineBot = TypedBot<CrossLineTags>;
+
+export type BibleTransformerTags = StackStaticPieceBotTags<"StackTransformer">;
+
+export type BibleTransformerBot = TypedBot<BibleTransformerTags>;
+
+export type BibleShadowTags = StackStaticPieceBotTags<"StackShadow">;
+
+export type BibleShadowBot = TypedBot<BibleShadowTags>;

@@ -98,6 +98,7 @@ export interface PieceHighlightServicePort {
   tryHighlightPiece: (params: {
     piece: Piece;
     source: HighlightRequestSource;
+    unhighlightDelay?: number;
   }) => Promise<void>;
   tryUnhighlightPiece: (params: {
     piece: Piece;

@@ -1,4 +1,5 @@
-import type { StackPieceLifecycleAdapterPort } from "bibleStack.application.ports.pieceLifecycle";
+import type { StackPieceLifecycleAdapterPort as PieceLifecycleAdapterPort } from "bibleStack.application.ports.pieceLifecycle";
+import type { StackPieceLifecycleAdapterPort as BibleLifecycleAdapterPort } from "bibleStack.application.ports.bibleLifecycle";
 import type {
   BookBot,
   ChapterBot,
@@ -10,8 +11,18 @@ import type {
 } from "bibleStack.models.stack";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
 import type { StackPieceLifecycleAdapterParams } from "bibleStack.infrastructure.ports.stackPieceLifecycle";
+import type { StackBibleData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBibleData";
+import type {
+  StackCover,
+  StackCrossLine,
+  StackShadow,
+  StackTransformer,
+} from "bibleStack.domain.models.pieces";
+import { SetStrictTag } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/functions/casualos";
 
-export class StackPieceLifecycleAdapter implements StackPieceLifecycleAdapterPort {
+export class StackPieceLifecycleAdapter
+  implements PieceLifecycleAdapterPort, BibleLifecycleAdapterPort
+{
   #objectPoolerPort: StackPieceLifecycleAdapterParams["objectPoolerPort"];
   #testamentMapperPort: StackPieceLifecycleAdapterParams["testamentMapperPort"];
   #sectionMapperPort: StackPieceLifecycleAdapterParams["sectionMapperPort"];
@@ -21,6 +32,10 @@ export class StackPieceLifecycleAdapter implements StackPieceLifecycleAdapterPor
   #sectionBookMapperPort: StackPieceLifecycleAdapterParams["sectionBookMapperPort"];
   #versesBundleMapperPort: StackPieceLifecycleAdapterParams["versesBundleMapperPort"];
   #verseMapperPort: StackPieceLifecycleAdapterParams["verseMapperPort"];
+  #stackTransformerMapperPort: StackPieceLifecycleAdapterParams["stackTransformerMapperPort"];
+  #coverMapperPort: StackPieceLifecycleAdapterParams["coverMapperPort"];
+  #crossLineMapperPort: StackPieceLifecycleAdapterParams["crossLineMapperPort"];
+  #stackShadowMapperPort: StackPieceLifecycleAdapterParams["stackShadowMapperPort"];
 
   constructor({
     objectPoolerPort,
@@ -32,6 +47,10 @@ export class StackPieceLifecycleAdapter implements StackPieceLifecycleAdapterPor
     sectionBookMapperPort,
     versesBundleMapperPort,
     verseMapperPort,
+    stackTransformerMapperPort,
+    coverMapperPort,
+    crossLineMapperPort,
+    stackShadowMapperPort,
   }: StackPieceLifecycleAdapterParams) {
     this.#objectPoolerPort = objectPoolerPort;
     this.#testamentMapperPort = testamentMapperPort;
@@ -42,6 +61,10 @@ export class StackPieceLifecycleAdapter implements StackPieceLifecycleAdapterPor
     this.#sectionBookMapperPort = sectionBookMapperPort;
     this.#versesBundleMapperPort = versesBundleMapperPort;
     this.#verseMapperPort = verseMapperPort;
+    this.#stackTransformerMapperPort = stackTransformerMapperPort;
+    this.#coverMapperPort = coverMapperPort;
+    this.#crossLineMapperPort = crossLineMapperPort;
+    this.#stackShadowMapperPort = stackShadowMapperPort;
   }
 
   spawnTestament(): TestamentBot {
@@ -110,5 +133,33 @@ export class StackPieceLifecycleAdapter implements StackPieceLifecycleAdapterPor
   despawnVerse(piece: Piece<"Verse">): void {
     const bot = this.#verseMapperPort.toInfrastructure(piece);
     if (bot) this.#objectPoolerPort.releaseObject(bot, "Verse");
+  }
+
+  spawnBibleTransformer(bibleId: StackBibleData["id"]): StackTransformer {
+    const bot = this.#objectPoolerPort.getObject("StackTransformer");
+    SetStrictTag(bot, "stackBibleId", bibleId);
+    const piece = this.#stackTransformerMapperPort.toDomain(bot);
+    return piece;
+  }
+
+  spawnCover(bibleId: StackBibleData["id"]): StackCover {
+    const bot = this.#objectPoolerPort.getObject("Cover");
+    SetStrictTag(bot, "stackBibleId", bibleId);
+    const piece = this.#coverMapperPort.toDomain(bot);
+    return piece;
+  }
+
+  spawnCrossLine(bibleId: StackBibleData["id"]): StackCrossLine {
+    const bot = this.#objectPoolerPort.getObject("CrossLine");
+    SetStrictTag(bot, "stackBibleId", bibleId);
+    const piece = this.#crossLineMapperPort.toDomain(bot);
+    return piece;
+  }
+
+  spawnShadow(bibleId: StackBibleData["id"]): StackShadow {
+    const bot = this.#objectPoolerPort.getObject("StackShadow");
+    SetStrictTag(bot, "stackBibleId", bibleId);
+    const piece = this.#stackShadowMapperPort.toDomain(bot);
+    return piece;
   }
 }

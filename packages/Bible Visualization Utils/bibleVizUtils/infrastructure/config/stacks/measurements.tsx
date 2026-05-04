@@ -12,6 +12,11 @@ export const StackPieceMeasurements = {
   SectionAditionalScaleOnHover: 0.1,
   SectionDesiredScaleZRatio: 0.02,
   AditionalBookScaleOnHover: 0.1,
+  LeftCoverScales: new Vector3(0.15, 3.85, 0.75),
+  CrossLineWidthRatio: 0.07,
+  CrossLineDepth: 0.055,
+  TestamentAdditionalScaleOnHover: 0.1,
+  CrossHorizontalYOffsetRatio: 0.25,
 } as const;
 
 export type StackPieceMeasurementsType = typeof StackPieceMeasurements;

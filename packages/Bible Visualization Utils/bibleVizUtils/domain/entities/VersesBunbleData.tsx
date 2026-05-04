@@ -12,6 +12,7 @@ export class VersesBundleData {
   #verses: Map<VerseData["id"], VerseData>;
   #piece: DataParams["piece"];
   #isSelected: boolean = false;
+  #isBeingDragged: boolean = false;
 
   constructor({ verses = [], piece, id }: DataParams) {
     this.#verses = new Map(verses.map((verse) => [verse.id, verse]));
@@ -61,5 +62,14 @@ export class VersesBundleData {
   }
   get isSelected() {
     return this.#isSelected;
+  }
+  get isBeingDragged() {
+    return this.#isBeingDragged;
+  }
+  beginDrag() {
+    this.#isBeingDragged = true;
+  }
+  endDrag() {
+    this.#isBeingDragged = false;
   }
 }

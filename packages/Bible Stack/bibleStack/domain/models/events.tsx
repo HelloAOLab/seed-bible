@@ -14,6 +14,7 @@ import type {
 } from "bibleStack.models.stack";
 import { CanvasInteractions } from "bibleVizUtils.models.canvas";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
+import type { StackBibleData } from "bibleVizUtils.domain.entities.StackBibleData";
 
 export interface BibleStackEvents {
   OnTestamentClick: {
@@ -139,9 +140,14 @@ export interface BibleStackEvents {
   };
   OnStackSequenceStart: void;
   OnStackSequenceEnd: void;
+  OnBibleDelete: { bibleId: StackBibleData["id"] };
   OnTestamentDelete: { piece: Piece<"StackTestament"> };
   OnStackPiecePulledOut: void;
   OnStackPieceDrop: { piece: Piece };
+  OnBibleCreationBegin: { hasABibleEverBeenCreated: boolean };
+  OnBibleCreated: { bibleData: StackBibleData };
+  OnBibleOpenSequenceBegin: void;
+  OnBibleOpenSequenceEnd: void;
 }
 
 export type BibleStackEvent = keyof BibleStackEvents;

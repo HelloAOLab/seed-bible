@@ -16,6 +16,7 @@ import { BookInteractionController } from "bibleStack.infrastructure.controllers
 import { TestamentInteractionController } from "bibleStack.infrastructure.controllers.stack.TestamentInteractionController";
 import { SectionInteractionController } from "bibleStack.infrastructure.controllers.stack.SectionInteractionController";
 import { ChapterInteractionController } from "bibleStack.infrastructure.controllers.stack.ChapterInteractionController";
+import { ExperienceController } from "bibleStack.infrastructure.controllers.experience.ExperienceController";
 
 // API Import
 import { bibleVizAPI } from "bibleVizUtils.infrastructure.di.bootstrap";
@@ -35,6 +36,7 @@ export let sectionInteractionController:
 export let chapterInteractionController:
   | ChapterInteractionController
   | undefined = undefined;
+export let experienceController: ExperienceController | undefined = undefined;
 
 const disposeFunctions: (() => void)[] = [];
 
@@ -207,6 +209,7 @@ export const bootstrapApp = () => {
   );
   sectionInteractionController = new SectionInteractionController({} as any);
   chapterInteractionController = new ChapterInteractionController({} as any);
+  experienceController = new ExperienceController();
 
   // 4. Event wiring
   // TODO: Wire events on the go

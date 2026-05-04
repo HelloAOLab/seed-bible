@@ -29,6 +29,8 @@ export const BiblePiece = {
   Verse: "Verse",
   StackCover: "StackCover",
   StackCrossLine: "StackCrossLine",
+  StackTransformer: "StackTransformer",
+  StackShadow: "StackShadow",
   LayoutBook: "LayoutBook",
   LayoutChapter: "LayoutChapter",
   LayoutChunkOfVerses: "LayoutChunkOfVerses",

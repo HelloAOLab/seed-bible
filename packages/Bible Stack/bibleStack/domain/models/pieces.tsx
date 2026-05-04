@@ -1,7 +1,10 @@
+import type { Piece } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
+
 export const HighlightRequestSources = {
   UserSelection: "UserSelection",
   UserFocus: "UserFocus",
   UserDrop: "UserDrop",
+  Transition: "Transition",
 } as const;
 
 export type HighlightRequestSource =
@@ -25,3 +28,15 @@ export const UnhighlightPacings = {
 
 export type UnhighlightPacing =
   (typeof UnhighlightPacings)[keyof typeof UnhighlightPacings];
+
+export type StaticBiblePiece = {
+  bibleId: string;
+};
+
+export type StackTransformer = Piece<"StackTransformer"> & StaticBiblePiece;
+
+export type StackCover = Piece<"StackCover"> & StaticBiblePiece;
+
+export type StackCrossLine = Piece<"StackCrossLine"> & StaticBiblePiece;
+
+export type StackShadow = Piece<"StackShadow"> & StaticBiblePiece;

@@ -86,11 +86,17 @@
         "./packages/ao.bot/ao/starter/onInstJoined.tsx"
       ],
       "ao.starter.tools": ["./packages/ao.bot/ao/starter/tools.tsx"],
+      "bibleStack.application.ports.bibleLifecycle": [
+        "./packages/Bible Stack/bibleStack/application/ports/bibleLifecycle.tsx"
+      ],
       "bibleStack.application.ports.books": [
         "./packages/Bible Stack/bibleStack/application/ports/books.tsx"
       ],
       "bibleStack.application.ports.chapters": [
         "./packages/Bible Stack/bibleStack/application/ports/chapters.tsx"
+      ],
+      "bibleStack.application.ports.experience": [
+        "./packages/Bible Stack/bibleStack/application/ports/experience.tsx"
       ],
       "bibleStack.application.ports.explodedView": [
         "./packages/Bible Stack/bibleStack/application/ports/explodedView.tsx"
@@ -119,6 +125,9 @@
       "bibleStack.application.ports.sequence": [
         "./packages/Bible Stack/bibleStack/application/ports/sequence.tsx"
       ],
+      "bibleStack.application.ports.stackManagement": [
+        "./packages/Bible Stack/bibleStack/application/ports/stackManagement.tsx"
+      ],
       "bibleStack.application.ports.stacks": [
         "./packages/Bible Stack/bibleStack/application/ports/stacks.tsx"
       ],
@@ -131,8 +140,17 @@
       "bibleStack.application.ports.tourGuide": [
         "./packages/Bible Stack/bibleStack/application/ports/tourGuide.tsx"
       ],
+      "bibleStack.application.ports.verses": [
+        "./packages/Bible Stack/bibleStack/application/ports/verses.tsx"
+      ],
       "bibleStack.application.ports.versesBundle": [
         "./packages/Bible Stack/bibleStack/application/ports/versesBundle.tsx"
+      ],
+      "bibleStack.application.services.BibleLifecycleService": [
+        "./packages/Bible Stack/bibleStack/application/services/BibleLifecycleService.tsx"
+      ],
+      "bibleStack.application.services.BibleSequenceService": [
+        "./packages/Bible Stack/bibleStack/application/services/BibleSequenceService.tsx"
       ],
       "bibleStack.application.services.BookInteractionService": [
         "./packages/Bible Stack/bibleStack/application/services/BookInteractionService.tsx"
@@ -142,6 +160,9 @@
       ],
       "bibleStack.application.services.ChapterInteractionService": [
         "./packages/Bible Stack/bibleStack/application/services/ChapterInteractionService.tsx"
+      ],
+      "bibleStack.application.services.ExperienceService": [
+        "./packages/Bible Stack/bibleStack/application/services/ExperienceService.tsx"
       ],
       "bibleStack.application.services.ExplodedVIewService": [
         "./packages/Bible Stack/bibleStack/application/services/ExplodedVIewService.tsx"
@@ -167,11 +188,17 @@
       "bibleStack.application.services.ScripturePieceSelectionReleaseService": [
         "./packages/Bible Stack/bibleStack/application/services/ScripturePieceSelectionReleaseService.tsx"
       ],
+      "bibleStack.application.services.ScripturePiecesStateService": [
+        "./packages/Bible Stack/bibleStack/application/services/ScripturePiecesStateService.tsx"
+      ],
       "bibleStack.application.services.SectionInteractionService": [
         "./packages/Bible Stack/bibleStack/application/services/SectionInteractionService.tsx"
       ],
       "bibleStack.application.services.SequenceStateService": [
         "./packages/Bible Stack/bibleStack/application/services/SequenceStateService.tsx"
+      ],
+      "bibleStack.application.services.StackManagementService": [
+        "./packages/Bible Stack/bibleStack/application/services/StackManagementService.tsx"
       ],
       "bibleStack.application.services.StackStructureService": [
         "./packages/Bible Stack/bibleStack/application/services/StackStructureService.tsx"
@@ -185,17 +212,14 @@
       "bibleStack.application.services.VersesBundleInteractionService": [
         "./packages/Bible Stack/bibleStack/application/services/VersesBundleInteractionService.tsx"
       ],
-      "bibleStack.controllers.interaction.chunkOfVersesInteractionController": [
-        "./packages/Bible Stack/bibleStack/controllers/interaction/chunkOfVersesInteractionController.tsx"
+      "bibleStack.application.services.VersesBundleSelectionService": [
+        "./packages/Bible Stack/bibleStack/application/services/VersesBundleSelectionService.tsx"
       ],
-      "bibleStack.controllers.interaction.coverInteractionController": [
-        "./packages/Bible Stack/bibleStack/controllers/interaction/coverInteractionController.tsx"
+      "bibleStack.application.services.VersesInteractionService": [
+        "./packages/Bible Stack/bibleStack/application/services/VersesInteractionService.tsx"
       ],
       "bibleStack.controllers.interaction.crossLineInteractionController": [
         "./packages/Bible Stack/bibleStack/controllers/interaction/crossLineInteractionController.tsx"
-      ],
-      "bibleStack.controllers.interaction.verseInteractionController": [
-        "./packages/Bible Stack/bibleStack/controllers/interaction/verseInteractionController.tsx"
       ],
       "bibleStack.controllers.lifecycle.appLifecycleController": [
         "./packages/Bible Stack/bibleStack/controllers/lifecycle/appLifecycleController.tsx"
@@ -209,17 +233,35 @@
       "bibleStack.domain.models.pieces": [
         "./packages/Bible Stack/bibleStack/domain/models/pieces.tsx"
       ],
+      "bibleStack.domain.models.spatial": [
+        "./packages/Bible Stack/bibleStack/domain/models/spatial.tsx"
+      ],
       "bibleStack.functions.stack": [
         "./packages/Bible Stack/bibleStack/functions/stack.tsx"
       ],
       "bibleStack.infrastructure.adapters.audio.AudioAdapter": [
         "./packages/Bible Stack/bibleStack/infrastructure/adapters/audio/AudioAdapter.tsx"
       ],
-      "bibleStack.infrastructure.adapters.portal.PortalAdapter": [
-        "./packages/Bible Stack/bibleStack/infrastructure/adapters/portal/PortalAdapter.tsx"
+      "bibleStack.infrastructure.adapters.environment.BibleSetupCameraAdapter": [
+        "./packages/Bible Stack/bibleStack/infrastructure/adapters/environment/BibleSetupCameraAdapter.tsx"
+      ],
+      "bibleStack.infrastructure.adapters.environment.CameraAdapter": [
+        "./packages/Bible Stack/bibleStack/infrastructure/adapters/environment/CameraAdapter.tsx"
+      ],
+      "bibleStack.infrastructure.adapters.environment.EnvironmentAdapter": [
+        "./packages/Bible Stack/bibleStack/infrastructure/adapters/environment/EnvironmentAdapter.tsx"
+      ],
+      "bibleStack.infrastructure.adapters.experience.ExperienceAdapter": [
+        "./packages/Bible Stack/bibleStack/infrastructure/adapters/experience/ExperienceAdapter.tsx"
+      ],
+      "bibleStack.infrastructure.adapters.sequences.BibleSequenceAdapter": [
+        "./packages/Bible Stack/bibleStack/infrastructure/adapters/sequences/BibleSequenceAdapter.tsx"
       ],
       "bibleStack.infrastructure.adapters.stacks.BibleDataRepository": [
         "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/BibleDataRepository.tsx"
+      ],
+      "bibleStack.infrastructure.adapters.stacks.BibleSetupAdapter": [
+        "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/BibleSetupAdapter.tsx"
       ],
       "bibleStack.infrastructure.adapters.stacks.PieceAdapter": [
         "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/PieceAdapter.tsx"
@@ -232,6 +274,15 @@
       ],
       "bibleStack.infrastructure.adapters.stacks.TourGuideAdapter": [
         "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/TourGuideAdapter.tsx"
+      ],
+      "bibleStack.infrastructure.adapters.stacks.VersesBundleAdapter": [
+        "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/VersesBundleAdapter.tsx"
+      ],
+      "bibleStack.infrastructure.adapters.stacks.VersesBundleDataRepository": [
+        "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/VersesBundleDataRepository.tsx"
+      ],
+      "bibleStack.infrastructure.adapters.stacks.VisualStateRegistry": [
+        "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/VisualStateRegistry.tsx"
       ],
       "bibleStack.infrastructure.components.App": [
         "./packages/Bible Stack/bibleStack/infrastructure/components/App.tsx"
@@ -248,11 +299,29 @@
       "bibleStack.infrastructure.config.bookInteraction.delays": [
         "./packages/Bible Stack/bibleStack/infrastructure/config/bookInteraction/delays.tsx"
       ],
+      "bibleStack.infrastructure.config.experience.ExperienceConfigProvider": [
+        "./packages/Bible Stack/bibleStack/infrastructure/config/experience/ExperienceConfigProvider.tsx"
+      ],
       "bibleStack.infrastructure.config.sectionInteraction.delays": [
         "./packages/Bible Stack/bibleStack/infrastructure/config/sectionInteraction/delays.tsx"
       ],
       "bibleStack.infrastructure.config.sectionInteraction.SectionInteractionConfigProvider": [
         "./packages/Bible Stack/bibleStack/infrastructure/config/sectionInteraction/SectionInteractionConfigProvider.tsx"
+      ],
+      "bibleStack.infrastructure.config.sequences.bibleSetupAnimation": [
+        "./packages/Bible Stack/bibleStack/infrastructure/config/sequences/bibleSetupAnimation.tsx"
+      ],
+      "bibleStack.infrastructure.config.sequences.crackOpenBibleAnimation": [
+        "./packages/Bible Stack/bibleStack/infrastructure/config/sequences/crackOpenBibleAnimation.tsx"
+      ],
+      "bibleStack.infrastructure.config.sequences.focusOnAnimations": [
+        "./packages/Bible Stack/bibleStack/infrastructure/config/sequences/focusOnAnimations.tsx"
+      ],
+      "bibleStack.infrastructure.config.sequences.SequenceConfigProvider": [
+        "./packages/Bible Stack/bibleStack/infrastructure/config/sequences/SequenceConfigProvider.tsx"
+      ],
+      "bibleStack.infrastructure.controllers.experience.ExperienceController": [
+        "./packages/Bible Stack/bibleStack/infrastructure/controllers/experience/ExperienceController.tsx"
       ],
       "bibleStack.infrastructure.controllers.stack.BookInteractionController": [
         "./packages/Bible Stack/bibleStack/infrastructure/controllers/stack/BookInteractionController.tsx"
@@ -260,17 +329,26 @@
       "bibleStack.infrastructure.controllers.stack.ChapterInteractionController": [
         "./packages/Bible Stack/bibleStack/infrastructure/controllers/stack/ChapterInteractionController.tsx"
       ],
+      "bibleStack.infrastructure.controllers.stack.CoverInteractionController": [
+        "./packages/Bible Stack/bibleStack/infrastructure/controllers/stack/CoverInteractionController.tsx"
+      ],
       "bibleStack.infrastructure.controllers.stack.SectionInteractionController": [
         "./packages/Bible Stack/bibleStack/infrastructure/controllers/stack/SectionInteractionController.tsx"
       ],
       "bibleStack.infrastructure.controllers.stack.TestamentInteractionController": [
         "./packages/Bible Stack/bibleStack/infrastructure/controllers/stack/TestamentInteractionController.tsx"
       ],
+      "bibleStack.infrastructure.controllers.stack.VerseInteractionController": [
+        "./packages/Bible Stack/bibleStack/infrastructure/controllers/stack/VerseInteractionController.tsx"
+      ],
       "bibleStack.infrastructure.controllers.stack.VersesBundleInteractionController": [
         "./packages/Bible Stack/bibleStack/infrastructure/controllers/stack/VersesBundleInteractionController.tsx"
       ],
       "bibleStack.infrastructure.di.bootstrap": [
         "./packages/Bible Stack/bibleStack/infrastructure/di/bootstrap.tsx"
+      ],
+      "bibleStack.infrastructure.entrypoints.onFloatingAppRemoved": [
+        "./packages/Bible Stack/bibleStack/infrastructure/entrypoints/onFloatingAppRemoved.tsx"
       ],
       "bibleStack.infrastructure.hooks.useApp": [
         "./packages/Bible Stack/bibleStack/infrastructure/hooks/useApp.tsx"
@@ -281,6 +359,15 @@
       "bibleStack.infrastructure.mappers.StackChapterMapper": [
         "./packages/Bible Stack/bibleStack/infrastructure/mappers/StackChapterMapper.tsx"
       ],
+      "bibleStack.infrastructure.mappers.StackCoverMapper": [
+        "./packages/Bible Stack/bibleStack/infrastructure/mappers/StackCoverMapper.tsx"
+      ],
+      "bibleStack.infrastructure.mappers.StackCrossLineMapper": [
+        "./packages/Bible Stack/bibleStack/infrastructure/mappers/StackCrossLineMapper.tsx"
+      ],
+      "bibleStack.infrastructure.mappers.StackLowerCoverMapper": [
+        "./packages/Bible Stack/bibleStack/infrastructure/mappers/StackLowerCoverMapper.tsx"
+      ],
       "bibleStack.infrastructure.mappers.StackSectionBookMapper": [
         "./packages/Bible Stack/bibleStack/infrastructure/mappers/StackSectionBookMapper.tsx"
       ],
@@ -290,8 +377,14 @@
       "bibleStack.infrastructure.mappers.StackSectionShadowMapper": [
         "./packages/Bible Stack/bibleStack/infrastructure/mappers/StackSectionShadowMapper.tsx"
       ],
+      "bibleStack.infrastructure.mappers.StackShadowMapper": [
+        "./packages/Bible Stack/bibleStack/infrastructure/mappers/StackShadowMapper.tsx"
+      ],
       "bibleStack.infrastructure.mappers.StackTestamentMapper": [
         "./packages/Bible Stack/bibleStack/infrastructure/mappers/StackTestamentMapper.tsx"
+      ],
+      "bibleStack.infrastructure.mappers.StackTransformerMapper": [
+        "./packages/Bible Stack/bibleStack/infrastructure/mappers/StackTransformerMapper.tsx"
       ],
       "bibleStack.infrastructure.mappers.VerseMapper": [
         "./packages/Bible Stack/bibleStack/infrastructure/mappers/VerseMapper.tsx"
@@ -302,11 +395,29 @@
       "bibleStack.infrastructure.models.objectPooler": [
         "./packages/Bible Stack/bibleStack/infrastructure/models/objectPooler.tsx"
       ],
+      "bibleStack.infrastructure.models.visualState": [
+        "./packages/Bible Stack/bibleStack/infrastructure/models/visualState.tsx"
+      ],
       "bibleStack.infrastructure.ports.audio": [
         "./packages/Bible Stack/bibleStack/infrastructure/ports/audio.tsx"
       ],
+      "bibleStack.infrastructure.ports.bibleSequence": [
+        "./packages/Bible Stack/bibleStack/infrastructure/ports/bibleSequence.tsx"
+      ],
+      "bibleStack.infrastructure.ports.bibleSetup": [
+        "./packages/Bible Stack/bibleStack/infrastructure/ports/bibleSetup.tsx"
+      ],
       "bibleStack.infrastructure.ports.bookInteraction": [
         "./packages/Bible Stack/bibleStack/infrastructure/ports/bookInteraction.tsx"
+      ],
+      "bibleStack.infrastructure.ports.camera": [
+        "./packages/Bible Stack/bibleStack/infrastructure/ports/camera.tsx"
+      ],
+      "bibleStack.infrastructure.ports.coverInteraction": [
+        "./packages/Bible Stack/bibleStack/infrastructure/ports/coverInteraction.tsx"
+      ],
+      "bibleStack.infrastructure.ports.experience": [
+        "./packages/Bible Stack/bibleStack/infrastructure/ports/experience.tsx"
       ],
       "bibleStack.infrastructure.ports.pieceAdapter": [
         "./packages/Bible Stack/bibleStack/infrastructure/ports/pieceAdapter.tsx"
@@ -314,11 +425,17 @@
       "bibleStack.infrastructure.ports.sectionInteraction": [
         "./packages/Bible Stack/bibleStack/infrastructure/ports/sectionInteraction.tsx"
       ],
+      "bibleStack.infrastructure.ports.sequences": [
+        "./packages/Bible Stack/bibleStack/infrastructure/ports/sequences.tsx"
+      ],
       "bibleStack.infrastructure.ports.stackPieceLifecycle": [
         "./packages/Bible Stack/bibleStack/infrastructure/ports/stackPieceLifecycle.tsx"
       ],
       "bibleStack.infrastructure.ports.versesBundleInteraction": [
         "./packages/Bible Stack/bibleStack/infrastructure/ports/versesBundleInteraction.tsx"
+      ],
+      "bibleStack.infrastructure.ports.visualState": [
+        "./packages/Bible Stack/bibleStack/infrastructure/ports/visualState.tsx"
       ],
       "bibleStack.main.ClearExperience": [
         "./packages/Bible Stack/bibleStack/main/ClearExperience.tsx"
@@ -599,9 +716,6 @@
       "bibleStack.main.SetUpBible": [
         "./packages/Bible Stack/bibleStack/main/SetUpBible.tsx"
       ],
-      "bibleStack.main.SetUpInitialBibleOpen": [
-        "./packages/Bible Stack/bibleStack/main/SetUpInitialBibleOpen.tsx"
-      ],
       "bibleStack.main.ShowChaptersInBook": [
         "./packages/Bible Stack/bibleStack/main/ShowChaptersInBook.tsx"
       ],
@@ -728,6 +842,9 @@
       "bibleStack.main.UserPresenceUpdate": [
         "./packages/Bible Stack/bibleStack/main/UserPresenceUpdate.tsx"
       ],
+      "bibleStack.models.portal": [
+        "./packages/Bible Stack/bibleStack/models/portal.tsx"
+      ],
       "bibleStack.models.stack": [
         "./packages/Bible Stack/bibleStack/models/stack.tsx"
       ],
@@ -742,9 +859,6 @@
       ],
       "bibleStack.prefabs.bibleTransformer.DisplayInitialAwaitAnimation": [
         "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/DisplayInitialAwaitAnimation.tsx"
-      ],
-      "bibleStack.prefabs.bibleTransformer.DisplayInitialBibleOpenAnimation": [
-        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/DisplayInitialBibleOpenAnimation.tsx"
       ],
       "bibleStack.prefabs.bibleTransformer.DisplaySpinAnimation": [
         "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/DisplaySpinAnimation.tsx"
@@ -1190,20 +1304,8 @@
       "bibleStack.prefabs.verse.OnReleased": [
         "./packages/Bible Stack/bibleStack/prefabs/verse/OnReleased.tsx"
       ],
-      "bibleStack.services.BibleManagementService": [
-        "./packages/Bible Stack/bibleStack/services/BibleManagementService.tsx"
-      ],
-      "bibleStack.services.ExperienceService": [
-        "./packages/Bible Stack/bibleStack/services/ExperienceService.tsx"
-      ],
       "bibleStack.services.index": [
         "./packages/Bible Stack/bibleStack/services/index.tsx"
-      ],
-      "bibleStack.services.StackInteractionService": [
-        "./packages/Bible Stack/bibleStack/services/StackInteractionService.tsx"
-      ],
-      "bibleStack.services.StackManagementService": [
-        "./packages/Bible Stack/bibleStack/services/StackManagementService.tsx"
       ],
       "bibleVizUtils.application.services.ArrangementService": [
         "./packages/Bible Visualization Utils/bibleVizUtils/application/services/ArrangementService.tsx"

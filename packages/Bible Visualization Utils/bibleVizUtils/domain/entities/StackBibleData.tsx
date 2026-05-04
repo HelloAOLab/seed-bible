@@ -8,16 +8,21 @@ import {
   type ExplodeStackCommand,
   ExplodeStackActions,
 } from "bibleVizUtils.domain.models.canvas";
-import type { Piece } from "bibleVizUtils.domain.models.canvas";
+import type {
+  StackCover,
+  StackCrossLine,
+  StackShadow,
+  StackTransformer,
+} from "bibleStack.domain.models.pieces";
 
 export interface StaticBiblePieces {
-  bibleTransformer: Piece;
-  upperCover: Piece;
-  leftCover: Piece;
-  lowerCover: Piece;
-  crossVerticalLine: Piece;
-  crossHorizontalLine: Piece;
-  bibleShadow: Piece;
+  bibleTransformer: StackTransformer;
+  upperCover: StackCover;
+  leftCover: StackCover;
+  lowerCover: StackCover;
+  crossVerticalLine: StackCrossLine;
+  crossHorizontalLine: StackCrossLine;
+  bibleShadow: StackShadow;
 }
 
 interface DataParams {
