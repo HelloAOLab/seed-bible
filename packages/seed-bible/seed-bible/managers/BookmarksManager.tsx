@@ -3,7 +3,19 @@ import { z } from "zod";
 import type { LoginManager } from "seed-bible.managers.LoginManager";
 
 const BOOKMARKS_ADDRESS = "bookmarks";
-const DEFAULT_BOOKMARK_COLOR = "yellow";
+export const BOOKMARK_COLORS = [
+  "maroon",
+  "blue",
+  "navy",
+  "teal",
+  "green",
+  "olive",
+  "gold",
+  "orange",
+  "crimson",
+  "purple",
+] as const;
+const DEFAULT_BOOKMARK_COLOR = BOOKMARK_COLORS[0];
 
 export const bookmarkSchema = z.object({
   id: z.string().min(1),

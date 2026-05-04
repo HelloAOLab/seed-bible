@@ -1,4 +1,7 @@
-import { createBookmarksManager } from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
+import {
+  BOOKMARK_COLORS,
+  createBookmarksManager,
+} from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { signal } from "@preact/signals";
 
@@ -78,6 +81,12 @@ describe("BookmarksManager", () => {
     ]);
   });
 
+  it("exposes 10 common bookmark ribbon colors", () => {
+    expect(BOOKMARK_COLORS).toHaveLength(10);
+    expect(BOOKMARK_COLORS).toContain("maroon");
+    expect(BOOKMARK_COLORS).toContain("blue");
+  });
+
   it("keeps bookmarks empty and skips load when unauthenticated", async () => {
     login.userId.value = null;
 
@@ -108,7 +117,7 @@ describe("BookmarksManager", () => {
           bookId: "GEN",
           chapterNumber: 1,
           createdAtMs: 12345,
-          color: "yellow",
+          color: "maroon",
         },
       ],
     });
@@ -194,7 +203,7 @@ describe("BookmarksManager", () => {
             bookId: "GEN",
             chapterNumber: 1,
             createdAtMs: 200,
-            color: "yellow",
+            color: "maroon",
           },
           {
             id: "b-2",
@@ -241,7 +250,7 @@ describe("BookmarksManager", () => {
             bookId: "GEN",
             chapterNumber: 1,
             createdAtMs: 100,
-            color: "yellow",
+            color: "maroon",
           },
         ],
       },
