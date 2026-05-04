@@ -65,7 +65,7 @@
     "@typescript-eslint/utils": "^8.58.0",
     "axios": "^1.12.2",
     "babel-jest": "^30.1.2",
-    "casualos": "^4.2.0",
+    "casualos": "4.2.4-alpha.25223847785",
     "commander": "^14.0.1",
     "conf": "^15.0.2",
     "es-toolkit": "1.39.10",

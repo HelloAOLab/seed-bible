@@ -736,7 +736,7 @@ export function BibleReader(props: BibleReaderProps) {
         <span className="sb-bible-reader-chapter">{chapterNumber.value}</span>
         {String.fromCharCode(160)}
         <span className="sb-bible-reader-translation">
-          {String.fromCharCode(160)}/{String.fromCharCode(160)}
+          /{String.fromCharCode(160)}
           {translationId.value ?? ""}
         </span>
       </h2>
