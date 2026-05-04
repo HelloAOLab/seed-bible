@@ -217,11 +217,10 @@ h6 {
 }
 
 .sb-bible-reader {
+  width: calc(100% - (var(--sb-scripture-margin) * 2));
+  min-width: 275px;
   padding-top: 30px;
-  padding-right: var(--sb-scripture-margin);
   padding-bottom: 96px;
-  padding-left: var(--sb-scripture-margin);
-  /* max-width: 500px; */
   margin: 0 auto;
   box-sizing: border-box;
 
@@ -235,6 +234,7 @@ h6 {
    in SeedBibleStateManager (viewportWidth <= 768). */
 @media (max-width: 768px) {
   .sb-bible-reader {
+    width: 100%;
     padding-right: 1%;
     padding-left: 1%;
   }
