@@ -206,13 +206,20 @@ function AccountSettingsView(props: {
   const { state, onBack } = props;
   const { login } = state;
   const { t } = useI18n();
-  const isLoggedIn = login.userId.value !== null;
-  const profile = login.profile.value;
+  const isLoggedIn = useComputed(() => login.userId.value !== null);
+  const profile = useComputed(() => login.profile.value);
 
-  const name = useSignal(profile?.name ?? "");
-  const location = useSignal(profile?.location ?? "");
-  const description = useSignal(profile?.description ?? "");
-  const pictureUrl = useSignal(profile?.pictureUrl ?? "");
+  const newName = useSignal<string>("");
+  const name = useComputed(() => (newName.value || profile.value?.name) ?? "");
+  const newLocation = useSignal<string>("");
+  const location = useComputed(
+    () => (newLocation.value || profile.value?.location) ?? ""
+  );
+  const newDescription = useSignal<string>("");
+  const description = useComputed(
+    () => (newDescription.value || profile.value?.description) ?? ""
+  );
+  const pictureUrl = useComputed(() => profile.value?.pictureUrl ?? "");
   const isUploadingPicture = useSignal(false);
   const uidCopied = useSignal(false);
 
@@ -223,6 +230,9 @@ function AccountSettingsView(props: {
       description: description.value || null,
       pictureUrl: pictureUrl.value || null,
     });
+    newName.value = "";
+    newLocation.value = "";
+    newDescription.value = "";
   };
 
   const handleUploadPicture = async () => {
@@ -232,7 +242,6 @@ function AccountSettingsView(props: {
     isUploadingPicture.value = true;
     try {
       await login.uploadProfilePicture();
-      pictureUrl.value = login.profile.value?.pictureUrl ?? pictureUrl.value;
     } catch (error) {
       console.error("Failed to upload profile picture.", error);
     } finally {
@@ -267,7 +276,7 @@ function AccountSettingsView(props: {
         ]}
       />
       <section className="sb-settings-section">
-        {isLoggedIn ? (
+        {isLoggedIn.value ? (
           <div className="sb-account-settings-layout">
             <p className="sb-account-settings-intro">
               {t("account-settings-intro", {
@@ -316,7 +325,9 @@ function AccountSettingsView(props: {
                 type="text"
                 value={name.value}
                 onInput={(event: Event) => {
-                  name.value = (event.currentTarget as HTMLInputElement).value;
+                  newName.value = (
+                    event.currentTarget as HTMLInputElement
+                  ).value;
                 }}
                 placeholder={t("profile-name-placeholder", {
                   defaultValue: "e.g Craig family",
@@ -344,7 +355,7 @@ function AccountSettingsView(props: {
                 value={description.value ?? ""}
                 maxLength={300}
                 onInput={(event: Event) => {
-                  description.value = (
+                  newDescription.value = (
                     event.currentTarget as HTMLTextAreaElement
                   ).value;
                 }}
@@ -369,7 +380,7 @@ function AccountSettingsView(props: {
                 type="text"
                 value={location.value ?? ""}
                 onInput={(event: Event) => {
-                  location.value = (
+                  newLocation.value = (
                     event.currentTarget as HTMLInputElement
                   ).value;
                 }}
@@ -422,7 +433,7 @@ function AccountSettingsView(props: {
             <div className="sb-account-signout-section">
               <button
                 className="sb-account-signout-button"
-                onClick={() => void os.signOut()}
+                onClick={() => void login.logout()}
               >
                 <span className="material-symbols-outlined">logout</span>
                 {t("sign-out", { defaultValue: "Sign out" })}
