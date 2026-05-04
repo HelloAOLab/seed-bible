@@ -264,28 +264,77 @@ function normalizeDecorationVerses(verses: number | number[]): number[] {
 
 const AVAILABLE_TRANSLATIONS_PATH = "/api/available_translations.json";
 
-function extractEndpointFromAvailableTranslationsUrl(
-  value?: string | null
-): string | null {
+interface ParsedTranslationInput {
+  endpoint: string | null;
+  translationId: string | null;
+  preferFirstAvailableTranslation: boolean;
+  fallbackToFirstAvailableWhenMissing: boolean;
+}
+
+function parseTranslationInput(value?: string | null): ParsedTranslationInput {
   if (!value) {
-    return null;
+    return {
+      endpoint: null,
+      translationId: null,
+      preferFirstAvailableTranslation: false,
+      fallbackToFirstAvailableWhenMissing: false,
+    };
   }
 
   try {
     const url = new URL(value);
     const normalizedPathname = url.pathname.replace(/\/+$/, "");
+
     if (!normalizedPathname.endsWith(AVAILABLE_TRANSLATIONS_PATH)) {
-      return null;
+      const booksPathMatch = normalizedPathname.match(
+        /^(.*)\/api\/([^/]+)\/books\.json$/
+      );
+      if (!booksPathMatch) {
+        return {
+          endpoint: null,
+          translationId: value,
+          preferFirstAvailableTranslation: false,
+          fallbackToFirstAvailableWhenMissing: false,
+        };
+      }
+
+      const endpointPath = booksPathMatch[1] || "";
+      const translationIdSegment = booksPathMatch[2];
+      if (!translationIdSegment) {
+        return {
+          endpoint: null,
+          translationId: value,
+          preferFirstAvailableTranslation: false,
+          fallbackToFirstAvailableWhenMissing: false,
+        };
+      }
+
+      const translationIdFromUrl = decodeURIComponent(translationIdSegment);
+      return {
+        endpoint: `${url.protocol}//${url.host}${endpointPath}/`,
+        translationId: translationIdFromUrl,
+        preferFirstAvailableTranslation: false,
+        fallbackToFirstAvailableWhenMissing: true,
+      };
     }
 
     const endpointPath = normalizedPathname.slice(
       0,
       -AVAILABLE_TRANSLATIONS_PATH.length
     );
-    // const normalizedEndpointPath = endpointPath.replace(/\/+$/, "");
-    return `${url.protocol}//${url.host}${endpointPath}/`;
+    return {
+      endpoint: `${url.protocol}//${url.host}${endpointPath}/`,
+      translationId: null,
+      preferFirstAvailableTranslation: true,
+      fallbackToFirstAvailableWhenMissing: true,
+    };
   } catch {
-    return null;
+    return {
+      endpoint: null,
+      translationId: value,
+      preferFirstAvailableTranslation: false,
+      fallbackToFirstAvailableWhenMissing: false,
+    };
   }
 }
 
@@ -305,10 +354,14 @@ export function createBibleReadingState(
     );
   };
 
-  const initialEndpointOverride = extractEndpointFromAvailableTranslationsUrl(
+  const initialTranslationInput = parseTranslationInput(
     options.initialTranslationId
   );
-  const shouldUseFirstAvailableTranslation = !!initialEndpointOverride;
+  const initialEndpointOverride = initialTranslationInput.endpoint;
+  const shouldUseFirstAvailableTranslation =
+    initialTranslationInput.preferFirstAvailableTranslation;
+  const shouldFallbackToFirstAvailableTranslation =
+    initialTranslationInput.fallbackToFirstAvailableWhenMissing;
 
   const normalizedInitialChapterNumber =
     typeof options.initialChapterNumber === "number" &&
@@ -320,7 +373,7 @@ export function createBibleReadingState(
   const translationId = signal<string | null>(
     shouldUseFirstAvailableTranslation
       ? null
-      : (options.initialTranslationId ?? DEFAULT_TRANSLATION_ID)
+      : (initialTranslationInput.translationId ?? DEFAULT_TRANSLATION_ID)
   );
   const endpointOverride = signal<string | null>(initialEndpointOverride);
   const bookId = signal<string | null>(options.initialBookId ?? null);
@@ -438,6 +491,50 @@ export function createBibleReadingState(
     return {
       translations: translationsList,
     };
+  };
+
+  const resolveTranslationInput = async (input: string): Promise<string> => {
+    const parsedInput = parseTranslationInput(input);
+    if (!parsedInput.endpoint) {
+      return parsedInput.translationId ?? input;
+    }
+
+    endpointOverride.value = parsedInput.endpoint;
+
+    const endpointTranslations = await dataManager.getTranslations(
+      parsedInput.endpoint
+    );
+    availableTranslations.value = toAvailableTranslations(
+      dataManager.availableTranslations.value
+    );
+
+    const firstTranslation = endpointTranslations[0];
+    if (!firstTranslation) {
+      throw new Error("No available translations found for endpoint.");
+    }
+
+    if (parsedInput.preferFirstAvailableTranslation) {
+      return firstTranslation.id;
+    }
+
+    if (!parsedInput.translationId) {
+      return firstTranslation.id;
+    }
+
+    const requestedTranslation = endpointTranslations.find(
+      (translation) => translation.id === parsedInput.translationId
+    );
+    if (requestedTranslation) {
+      return requestedTranslation.id;
+    }
+
+    if (parsedInput.fallbackToFirstAvailableWhenMissing) {
+      return firstTranslation.id;
+    }
+
+    throw new Error(
+      `Translation with ID "${parsedInput.translationId}" not available.`
+    );
   };
 
   const syncStateFromChapter = async (
@@ -660,28 +757,7 @@ export function createBibleReadingState(
     error.value = null;
 
     try {
-      const availableTranslationsEndpoint =
-        extractEndpointFromAvailableTranslationsUrl(translation);
-
-      let nextTranslationId = translation;
-
-      if (availableTranslationsEndpoint) {
-        endpointOverride.value = availableTranslationsEndpoint;
-
-        const endpointTranslations = await dataManager.getTranslations(
-          availableTranslationsEndpoint
-        );
-        availableTranslations.value = toAvailableTranslations(
-          dataManager.availableTranslations.value
-        );
-
-        const firstTranslation = endpointTranslations[0];
-        if (!firstTranslation) {
-          throw new Error("No available translations found for endpoint.");
-        }
-
-        nextTranslationId = firstTranslation.id;
-      }
+      const nextTranslationId = await resolveTranslationInput(translation);
 
       const books = await dataManager.getTranslationBooks(nextTranslationId);
       const firstBook = books.books[0];
@@ -752,28 +828,9 @@ export function createBibleReadingState(
     error.value = null;
 
     try {
-      const availableTranslationsEndpoint =
-        extractEndpointFromAvailableTranslationsUrl(nextTranslationIdOrUrl);
-
-      let nextTranslationId = nextTranslationIdOrUrl;
-
-      if (availableTranslationsEndpoint) {
-        endpointOverride.value = availableTranslationsEndpoint;
-
-        const endpointTranslations = await dataManager.getTranslations(
-          availableTranslationsEndpoint
-        );
-        availableTranslations.value = toAvailableTranslations(
-          dataManager.availableTranslations.value
-        );
-
-        const firstTranslation = endpointTranslations[0];
-        if (!firstTranslation) {
-          throw new Error("No available translations found for endpoint.");
-        }
-
-        nextTranslationId = firstTranslation.id;
-      }
+      const nextTranslationId = await resolveTranslationInput(
+        nextTranslationIdOrUrl
+      );
 
       const books = await dataManager.getTranslationBooks(nextTranslationId);
       const selectedBook = books.books.find((book) => book.id === nextBookId);
@@ -873,11 +930,18 @@ export function createBibleReadingState(
       );
 
       console.log("loaded", availableTranslations.value);
-      const currentTranslation = shouldUseFirstAvailableTranslation
-        ? loadedTranslations[0]
-        : availableTranslations.value.translations.find(
-            (t) => t.id === translationId.value
-          );
+      const firstAvailableTranslation = loadedTranslations[0];
+      const requestedTranslation = translationId.value
+        ? availableTranslations.value.translations.find(
+            (translation) => translation.id === translationId.value
+          )
+        : null;
+      const currentTranslation =
+        requestedTranslation ??
+        (shouldUseFirstAvailableTranslation ||
+        shouldFallbackToFirstAvailableTranslation
+          ? firstAvailableTranslation
+          : null);
       if (!currentTranslation) {
         if (shouldUseFirstAvailableTranslation) {
           throw new Error("No available translations found for endpoint.");

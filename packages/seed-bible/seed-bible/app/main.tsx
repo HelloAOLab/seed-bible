@@ -1,4 +1,5 @@
 import { I18nProvider } from "seed-bible.i18n.I18nManager";
+import { useI18n } from "seed-bible.i18n.I18nManager";
 import { PaneLayout } from "seed-bible.components.PaneLayout";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
 import { BibleReaderToolbar } from "seed-bible.components.BibleReaderToolbar";
@@ -11,6 +12,38 @@ import { closeContextMenus } from "seed-bible.components.ContextMenu";
 import { ModalHost } from "seed-bible.components.ModalHost";
 
 const { useMemo } = os.appHooks;
+
+const RTL_LANGUAGE_CODES = new Set(["ar", "fa", "he", "ur", "ps", "dv", "yi"]);
+
+function isRightToLeftLanguage(languageCode: string): boolean {
+  const normalizedCode = languageCode.trim();
+  if (!normalizedCode) {
+    return false;
+  }
+
+  const primarySubtag = normalizedCode.split("-")[0]?.toLowerCase();
+  if (primarySubtag && RTL_LANGUAGE_CODES.has(primarySubtag)) {
+    return true;
+  }
+
+  if (typeof Intl !== "undefined" && typeof Intl.Locale === "function") {
+    try {
+      const locale = new Intl.Locale(normalizedCode) as Intl.Locale & {
+        textInfo?: { direction: string };
+        getTextInfo?: () => { direction: string };
+      };
+      if (typeof locale.getTextInfo === "function") {
+        const textInfo = locale.getTextInfo();
+        return textInfo.direction === "rtl";
+      }
+      return locale.textInfo?.direction === "rtl";
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+}
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -68,13 +101,30 @@ export function Main() {
     state.extensions.loadDefaultExtensions();
   });
 
-  const { theme, selector, config } = state;
+  const { config } = state;
   const fontSizeClass = `sb-font-size-${config.config.value.fontSize.toLowerCase()}`;
 
   return (
     <I18nProvider>
+      <MainContent state={state} fontSizeClass={fontSizeClass} />
+    </I18nProvider>
+  );
+}
+
+function MainContent(props: {
+  state: ReturnType<typeof createSeedBibleState>;
+  fontSizeClass: string;
+}) {
+  const { state, fontSizeClass } = props;
+  const { language } = useI18n();
+  const appDirection = isRightToLeftLanguage(language) ? "rtl" : "ltr";
+  const { theme, selector } = state;
+
+  return (
+    <>
       <div
         className={`sb-app-root ${fontSizeClass}`}
+        dir={appDirection}
         onClick={(e) => {
           if (!e.defaultPrevented) {
             closeContextMenus();
@@ -107,6 +157,7 @@ export function Main() {
               isOpen={selector.isOpen.value}
               onClose={() => selector.setOpen(false)}
               selectorState={selector}
+              bibleDataManager={state.bibleData}
             />
           </>
         </CasualOSApp>
@@ -117,6 +168,6 @@ export function Main() {
 
         <ModalHost manager={state.modals} />
       </div>
-    </I18nProvider>
+    </>
   );
 }

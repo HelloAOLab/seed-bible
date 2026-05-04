@@ -1,4 +1,4 @@
-import { signal, type Signal } from "@preact/signals";
+import { signal, effect, type Signal } from "@preact/signals";
 import {
   FreeUseBibleAPI,
   type Translation,
@@ -24,6 +24,17 @@ export interface BibleDataManager {
   getPreviousChapter: (
     chapter: TranslationBookChapter
   ) => Promise<TranslationBookChapter | null>;
+
+  /**
+   * Gets the API endpoint associated with a given translation. If the translation is not associated with a specific endpoint, it returns the default endpoint.
+   * @param translationId The ID of the translation for which to retrieve the API endpoint.
+   * @returns
+   */
+  getTranslationEndpointInfo: (translationId: string) => {
+    translationId: string;
+    endpoint: string;
+    isDefault: boolean;
+  };
 }
 
 function normalizeEndpoint(endpoint: string): string {
@@ -46,6 +57,15 @@ export function createBibleDataManager(
   const availableTranslations = signal<Translation[]>([]);
   const translationBooks = signal<Map<string, TranslationBooks>>(new Map());
   const translationEndpoints = signal<Map<string, string>>(new Map());
+
+  const getTranslationEndpointInfo = (translationId: string) => {
+    const endpoint = getEndpointForTranslation(translationId);
+    return {
+      translationId,
+      endpoint,
+      isDefault: endpoint === defaultEndpoint,
+    };
+  };
 
   const getEndpointForTranslation = (translationId: string): string => {
     return translationEndpoints.value.get(translationId) ?? defaultEndpoint;
@@ -131,6 +151,40 @@ export function createBibleDataManager(
     return await api.getPreviousChapter(chapter, endpoint);
   };
 
+  effect(() => {
+    if (availableTranslations.value.length > 0) {
+      window.localStorage.setItem(
+        "availableTranslations",
+        JSON.stringify(availableTranslations.value)
+      );
+    }
+  });
+
+  effect(() => {
+    const stored = window.localStorage.getItem("availableTranslations");
+    if (stored) {
+      const parsed: Translation[] = JSON.parse(stored);
+      availableTranslations.value = parsed;
+    }
+  });
+
+  effect(() => {
+    if (translationEndpoints.value.size > 0) {
+      window.localStorage.setItem(
+        "endpoints",
+        JSON.stringify(Array.from(translationEndpoints.value.entries()))
+      );
+    }
+  });
+
+  effect(() => {
+    const stored = window.localStorage.getItem("endpoints");
+    if (stored) {
+      const parsed: [string, string][] = JSON.parse(stored);
+      translationEndpoints.value = new Map(parsed);
+    }
+  });
+
   return {
     endpoints,
     availableTranslations,
@@ -141,5 +195,6 @@ export function createBibleDataManager(
     getTranslationBookChapter,
     getNextChapter,
     getPreviousChapter,
+    getTranslationEndpointInfo,
   };
 }

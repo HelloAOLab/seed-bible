@@ -23,7 +23,7 @@ const config = {
     ...pathsToModuleNameMapper(compilerOptions.paths, { prefix: "<rootDir>/" }),
   },
   testPathIgnorePatterns: ["/node_modules/", "/obsolete/"],
-  testTimeout: 60000,
+  testTimeout: 10000,
 };
 
 // eslint-disable-next-line no-undef

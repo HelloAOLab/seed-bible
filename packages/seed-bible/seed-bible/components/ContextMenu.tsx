@@ -4,6 +4,7 @@ import {
   type ComponentProps,
   type Signalish,
 } from "preact";
+import type { MutableRef } from "preact/hooks";
 import {
   handleMenuTriggerKeyDown,
   handleVerticalListKeyNav,
@@ -33,11 +34,14 @@ function ContextMenuInner({
   children,
   className,
   onKeyDown,
+  elementRef,
   ...props
 }: {
+  elementRef: MutableRef<HTMLDivElement | null>;
   children: ComponentChildren;
 } & ComponentProps<"div">) {
-  const ref = useRef<HTMLDivElement | null>(null);
+  const ref = elementRef;
+  // const ref = useRef<HTMLDivElement | null>(null);
 
   // Auto-focus the first menu item when the menu mounts. The menu is
   // remounted on each open (since `ContextMenu` returns null when
@@ -71,15 +75,17 @@ function ContextMenuInner({
 
 export function ContextMenu({
   isOpen,
+  menuElementRef,
   ...props
 }: {
   isOpen: boolean;
   children: ComponentChildren;
+  menuElementRef: MutableRef<HTMLDivElement | null>;
 } & ComponentProps<"div">) {
   if (!isOpen) {
     return null;
   }
-  return <ContextMenuInner {...props} />;
+  return <ContextMenuInner elementRef={menuElementRef} {...props} />;
 }
 
 export function ContextMenuItem({
@@ -125,6 +131,9 @@ export function ContextMenuWithButton({
   iconClassName?: string;
 } & ComponentProps<"button">) {
   const menuId = useSignal("");
+  const menuStyle = useSignal<ComponentProps<"div">["style"]>(undefined);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const anchorRef = useRef<HTMLDivElement | null>(null);
   if (!menuId.value) {
@@ -137,6 +146,94 @@ export function ContextMenuWithButton({
   };
 
   const currentIsOpen = activeContextMenuId.value === menuId.value;
+
+  useEffect(() => {
+    if (!currentIsOpen) {
+      menuStyle.value = undefined;
+      return;
+    }
+
+    const positionMenu = () => {
+      const anchor = anchorRef.current;
+      const menu = menuRef.current;
+      if (!anchor || !menu) {
+        return;
+      }
+
+      const anchorRect = anchor.getBoundingClientRect();
+
+      const distanceToRightEdge = window.innerWidth - anchorRect.right;
+      const distanceToLeftEdge = anchorRect.left;
+
+      if (distanceToLeftEdge < distanceToRightEdge) {
+        menuStyle.value = {
+          left: `0px`,
+        };
+      } else {
+        menuStyle.value = {
+          right: `0px`,
+        };
+      }
+    };
+
+    const updateMenuPosition = () => {
+      requestAnimationFrame(positionMenu);
+    };
+
+    updateMenuPosition();
+
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
+    };
+  }, [currentIsOpen]);
+
+  useEffect(() => {
+    if (!currentIsOpen) {
+      menuStyle.value = undefined;
+      return;
+    }
+
+    const positionMenu = () => {
+      const anchor = anchorRef.current;
+      const menu = menuRef.current;
+      if (!anchor || !menu) {
+        return;
+      }
+
+      const anchorRect = anchor.getBoundingClientRect();
+
+      const distanceToRightEdge = window.innerWidth - anchorRect.right;
+      const distanceToLeftEdge = anchorRect.left;
+
+      if (distanceToLeftEdge < distanceToRightEdge) {
+        menuStyle.value = {
+          left: `0px`,
+        };
+      } else {
+        menuStyle.value = {
+          right: `0px`,
+        };
+      }
+    };
+
+    const updateMenuPosition = () => {
+      requestAnimationFrame(positionMenu);
+    };
+
+    updateMenuPosition();
+
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
+    };
+  }, [currentIsOpen]);
 
   const getMenuContainer = () =>
     anchorRef.current?.querySelector<HTMLDivElement>('[role="menu"]') ?? null;
@@ -187,6 +284,8 @@ export function ContextMenuWithButton({
       </button>
       <ContextMenu
         isOpen={currentIsOpen}
+        menuElementRef={menuRef}
+        style={menuStyle.value}
         className={joinClassNames("sb-context-menu", menuClassName)}
         onKeyDown={(event) => {
           if (event.key === "Escape") {

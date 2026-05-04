@@ -48,7 +48,7 @@ function createPreview(value: string): string {
 }
 
 function isTranslatableAttributeName(name: string): boolean {
-  return name === "aria-label" || name === "title";
+  return name === "aria-label" || name === "title" || name === "placeholder";
 }
 
 function hasMaterialSymbolsOutlinedClass(node: TSESTree.JSXElement): boolean {

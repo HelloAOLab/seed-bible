@@ -16,6 +16,12 @@ describe("translation HTML helpers", () => {
         'Fish &amp; &lt;chips&gt; &quot;<span translate="no">{{count}}</span>&quot;'
       );
     });
+
+    it("HTML-encodes quote characters", () => {
+      expect(encodeValueForHtml("Menu d'accompagnement")).toBe(
+        "Menu d&apos;accompagnement"
+      );
+    });
   });
 
   describe("decodeValueFromHtml", () => {
@@ -31,6 +37,12 @@ describe("translation HTML helpers", () => {
           'Pescado &amp; patatas &lt;buenas&gt; &quot;<span translate="no">{{count}}</span>&quot;'
         )
       ).toBe('Pescado & patatas <buenas> "{{count}}"');
+    });
+
+    it("HTML-decodes quote characters", () => {
+      expect(decodeValueFromHtml("Menu d&#39;accompagnement")).toBe(
+        "Menu d'accompagnement"
+      );
     });
   });
 });

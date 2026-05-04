@@ -7,9 +7,9 @@ import { createBibleDataManager } from "@packages/seed-bible/seed-bible/managers
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
-  API_ENDPOINT,
+  EXAMPLE_API_ENDPOINT,
   type WebResponseMap,
-  createDefaultManagerResponseMap,
+  createExampleManagerResponseMap,
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
 
@@ -51,7 +51,7 @@ function setWebResponses(responses: WebResponseMap): void {
 }
 
 function createApi(): FreeUseBibleAPI {
-  return new FreeUseBibleAPI(API_ENDPOINT);
+  return new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT);
 }
 
 function createDataManager() {
@@ -86,7 +86,7 @@ async function waitForTabsToLoad(tabs: ReaderTab[]): Promise<void> {
 }
 
 async function createManagers(options: { extraTabs?: number } = {}) {
-  setWebResponses(createDefaultManagerResponseMap());
+  setWebResponses(createExampleManagerResponseMap());
   const tabsManager = createTabs(
     createDataManager(),
     createHighlightsManagerMock() as any

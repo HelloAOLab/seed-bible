@@ -9,27 +9,10 @@ type TranslationLanguage = {
 };
 
 import { TranslationServiceClient } from "@google-cloud/translate";
+import { encode, decode } from "html-entities";
 
 const BATCH_SIZE = 128;
 const PLACEHOLDER_REGEX = /(\{\{[^{}]+\}\})/g;
-
-function htmlEncode(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function htmlDecode(text: string): string {
-  // Decode in reverse order of encoding so &amp; is always decoded last,
-  // preventing double-decoding of sequences like &amp;lt; → &lt; → <.
-  return text
-    .replace(/&quot;/g, '"')
-    .replace(/&gt;/g, ">")
-    .replace(/&lt;/g, "<")
-    .replace(/&amp;/g, "&");
-}
 
 /**
  * Encodes a translation value for the Google Cloud Translate HTML mode.
@@ -42,7 +25,7 @@ export function encodeValueForHtml(value: string): string {
     .map((part) =>
       part.match(/^\{\{[^{}]+\}\}$/)
         ? `<span translate="no">${part}</span>`
-        : htmlEncode(part)
+        : encode(part)
     )
     .join("");
 }
@@ -52,7 +35,7 @@ export function encodeValueForHtml(value: string): string {
  * HTML-decodes the remaining text.
  */
 export function decodeValueFromHtml(html: string): string {
-  return htmlDecode(html.replace(/<span translate="no">(.*?)<\/span>/gs, "$1"));
+  return decode(html.replace(/<span translate="no">(.*?)<\/span>/gs, "$1"));
 }
 
 const languageMap = new Map([

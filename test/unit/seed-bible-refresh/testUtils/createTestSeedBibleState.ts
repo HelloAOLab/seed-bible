@@ -2,7 +2,7 @@ import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/Se
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import i18n from "https://esm.sh/i18next@23.16.8";
 import {
-  createDefaultManagerResponseMap,
+  createExampleManagerResponseMap,
   type WebResponseMap,
 } from "../managers/testUtils/mockBibleApiData";
 
@@ -135,7 +135,7 @@ async function ensureI18nInitialized(): Promise<void> {
 export async function createTestSeedBibleState(
   options: CreateTestSeedBibleStateOptions = {}
 ): Promise<SeedBibleState> {
-  const { responses = createDefaultManagerResponseMap(), timeoutMs = 1000 } =
+  const { responses = createExampleManagerResponseMap(), timeoutMs = 1000 } =
     options;
 
   const scope = ensureGlobalRuntime();
