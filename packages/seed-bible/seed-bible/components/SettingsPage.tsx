@@ -82,16 +82,17 @@ const TEXT_COLOR_PALETTE = [
 ];
 
 const HEX_6 = /^#[0-9a-fA-F]{6}$/;
+const languageDisplayNameCache = new Map<string, Intl.DisplayNames | null>();
 
 const LANG_META: Record<string, { cc: string; display: string }> = {
   am: { cc: "et", display: "Amharic" },
   ar: { cc: "sa", display: "Arabic" },
   bn: { cc: "bd", display: "Bengali" },
   zh: { cc: "cn", display: "Chinese" },
-  en: { cc: "us", display: "English – US" },
+  en: { cc: "us", display: "English" },
   fr: { cc: "fr", display: "French" },
-  hi: { cc: "in", display: "Hindi – हिन्दी" },
-  iid: { cc: "id", display: "Indonesian" },
+  hi: { cc: "in", display: "Hindi" },
+  ind: { cc: "id", display: "Indonesian" },
   ja: { cc: "jp", display: "Japanese" },
   ko: { cc: "kr", display: "Korean" },
   mn: { cc: "mn", display: "Mongolian" },
@@ -111,6 +112,14 @@ const LANG_META: Record<string, { cc: string; display: string }> = {
   de: { cc: "de", display: "German" },
 };
 
+for (const lang in LANG_META) {
+  const meta = LANG_META[lang];
+  if (!meta) {
+    continue;
+  }
+  meta.display = getNativeLanguageName(lang) ?? meta.display;
+}
+
 function FlagImg({ cc }: { cc: string }) {
   return (
     <img
@@ -127,7 +136,6 @@ function FlagImg({ cc }: { cc: string }) {
   );
 }
 const HEX_3 = /^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/;
-const languageDisplayNameCache = new Map<string, Intl.DisplayNames | null>();
 
 /** Normalize an arbitrary color string to #RRGGBB for `<input type="color">`. */
 function toHexInputValue(value: string | null | undefined): string {
@@ -140,6 +148,10 @@ function toHexInputValue(value: string | null | undefined): string {
 }
 
 function getNativeLanguageName(languageCode: string): string {
+  if (languageCode === "ind") {
+    languageCode = "id";
+  }
+
   const normalizedCode = languageCode.trim();
   if (!normalizedCode) {
     return languageCode;
