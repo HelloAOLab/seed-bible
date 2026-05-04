@@ -12,10 +12,6 @@ import {
   MinusIcon,
   ShareIcon,
 } from "seed-bible.components.icons";
-import {
-  handleGridKeyNav,
-  handleHorizontalListKeyNav,
-} from "seed-bible.components.KeyboardNav";
 import type { Translation } from "seed-bible.managers.FreeUseBibleAPI";
 import { computed, signal } from "@preact/signals";
 import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
