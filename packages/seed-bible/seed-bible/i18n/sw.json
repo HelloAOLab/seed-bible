@@ -2,7 +2,6 @@
   "allBooks": "Vitabu vyote",
   "new-testament": "Agano Jipya",
   "old-testament": "Agano la Kale",
-
   "settings": "Mipangilio",
   "open-books": "Vitabu Vilivyofunguliwa",
   "side-menu": "Menyu ya pembeni",
@@ -60,7 +59,6 @@
   "shared-session-click-to-join": "inashiriki — bofya ili kujiunga",
   "dismiss": "Ondoa",
   "open-chapter": "Fungua sura",
-
   "tanakh": "Tanakh",
   "traditional": "Jadi",
   "no-chapter-content-found": "Hakuna maudhui ya sura yaliyopatikana.",
@@ -69,7 +67,6 @@
   "exit-full-screen": "Toka kwenye Skrini Nzima",
   "themes": "Mandhari",
   "page-settings": "Mipangilio ya ukurasa",
-
   "display-and-theme": "Onyesho na Mandhari",
   "display-and-theme-description": "Chagua mandhari na urekebishe jinsi Maandiko na kiolesura vinavyoonyeshwa.",
   "scripture-settings": "Mipangilio ya Maandiko",
@@ -103,7 +100,6 @@
   "show-selected-items": "Onyesha vipengee vilivyochaguliwa",
   "show-highlight-colors": "Onyesha rangi zinazoangazia",
   "show-icon-text": "Onyesha maandishi ya aikoni",
-
   "toolbar": "Upau wa vidhibiti",
   "extensions": "Viendelezi",
   "display": "Onyesho",
@@ -123,7 +119,6 @@
   "session-options": "Chaguo za kipindi",
   "select-pane-layout": "Chagua mpangilio wa kidirisha",
   "pane-layout": "Mpangilio wa kidirisha",
-
   "back": "Rudi",
   "selected": "Imechaguliwa",
   "decrease-scripture-font-size": "Punguza ukubwa wa fonti ya maandiko",
@@ -174,5 +169,11 @@
   "3-psalms": "Zaburi 3",
   "4-psalms": "Zaburi 4",
   "5-psalms": "Zaburi 5",
-  "enter-shared-session-id": "Ingiza Kitambulisho cha Kipindi Kilichoshirikiwa"
+  "enter-shared-session-id": "Ingiza Kitambulisho cha Kipindi Kilichoshirikiwa",
+  "scripture-elements": "Vipengele vya Maandiko",
+  "show-headings": "Onyesha vichwa vya habari",
+  "show-verse-numbers": "Onyesha nambari za mistari",
+  "show-footnotes": "Onyesha tanbihi",
+  "show-highlights": "Onyesha mambo muhimu",
+  "show-red-lettering": "Onyesha herufi nyekundu"
 }

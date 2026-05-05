@@ -2,7 +2,6 @@
   "allBooks": "सभी पुस्तकें",
   "new-testament": "नया करार",
   "old-testament": "पुराने नियम",
-
   "settings": "सेटिंग्स",
   "open-books": "खुली किताबें",
   "side-menu": "साइड मेनू",
@@ -60,7 +59,6 @@
   "shared-session-click-to-join": "साझा कर रहा है — शामिल होने के लिए क्लिक करें",
   "dismiss": "नकार देना",
   "open-chapter": "खुला अध्याय",
-
   "tanakh": "तनाख",
   "traditional": "परंपरागत",
   "no-chapter-content-found": "कोई अध्याय सामग्री नहीं मिली।",
@@ -69,7 +67,6 @@
   "exit-full-screen": "पूर्ण स्क्रीन से बाहर निकलें",
   "themes": "विषय-वस्तु",
   "page-settings": "पृष्ठ सेटिंग्स",
-
   "display-and-theme": "प्रदर्शन और विषय",
   "display-and-theme-description": "एक विषय चुनें और धर्मग्रंथ तथा यूआई के प्रदर्शन को अपने अनुसार समायोजित करें।",
   "scripture-settings": "धर्मग्रंथीय संदर्भ",
@@ -103,7 +100,6 @@
   "show-selected-items": "चयनित आइटम दिखाएँ",
   "show-highlight-colors": "हाइलाइट रंग दिखाएँ",
   "show-icon-text": "आइकन का टेक्स्ट दिखाएँ",
-
   "toolbar": "उपकरण पट्टी",
   "extensions": "एक्सटेंशन",
   "display": "प्रदर्शन",
@@ -123,7 +119,6 @@
   "session-options": "सत्र विकल्प",
   "select-pane-layout": "फलक लेआउट का चयन करें",
   "pane-layout": "फलक लेआउट",
-
   "back": "पीछे",
   "selected": "चयनित",
   "decrease-scripture-font-size": "शास्त्रों के फ़ॉन्ट का आकार घटाएँ",
@@ -174,5 +169,11 @@
   "3-psalms": "3 भजन संहिता",
   "4-psalms": "4 भजन संहिता",
   "5-psalms": "5 भजन संहिता",
-  "enter-shared-session-id": "साझा सत्र आईडी दर्ज करें"
+  "enter-shared-session-id": "साझा सत्र आईडी दर्ज करें",
+  "scripture-elements": "धर्मग्रंथीय तत्व",
+  "show-headings": "शीर्षक दिखाएँ",
+  "show-verse-numbers": "श्लोक संख्याएँ दिखाएँ",
+  "show-footnotes": "फुटनोट दिखाएँ",
+  "show-highlights": "शो की मुख्य बातें",
+  "show-red-lettering": "लाल अक्षरों को दिखाएँ"
 }

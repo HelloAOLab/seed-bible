@@ -2,7 +2,6 @@
   "allBooks": "Tüm kitaplar",
   "new-testament": "Yeni Ahit",
   "old-testament": "Eski Ahit",
-
   "settings": "Ayarlar",
   "open-books": "Açık Kitaplar",
   "side-menu": "Yan menü",
@@ -60,7 +59,6 @@
   "shared-session-click-to-join": "paylaşım yapıyor — katılmak için tıklayın",
   "dismiss": "Azletmek",
   "open-chapter": "Bölümü aç",
-
   "tanakh": "Tanakh",
   "traditional": "Geleneksel",
   "no-chapter-content-found": "Bölüm içeriği bulunamadı.",
@@ -69,7 +67,6 @@
   "exit-full-screen": "Tam Ekrandan Çık",
   "themes": "Temalar",
   "page-settings": "Sayfa ayarları",
-
   "display-and-theme": "Görüntü ve Tema",
   "display-and-theme-description": "Bir tema seçin ve Kutsal Kitap ile arayüzün nasıl görüntülendiğini ayarlayın.",
   "scripture-settings": "Kutsal metin bağlamları",
@@ -103,7 +100,6 @@
   "show-selected-items": "Seçilen öğeleri göster",
   "show-highlight-colors": "Öne çıkan renkleri göster",
   "show-icon-text": "Simge metnini göster",
-
   "toolbar": "Araç Çubuğu",
   "extensions": "Uzantılar",
   "display": "Görüntülemek",
@@ -123,7 +119,6 @@
   "session-options": "Oturum seçenekleri",
   "select-pane-layout": "Bölme düzenini seçin",
   "pane-layout": "Bölme düzeni",
-
   "back": "Geri",
   "selected": "Seçildi",
   "decrease-scripture-font-size": "Kutsal metin yazı tipi boyutunu küçültün",
@@ -174,5 +169,11 @@
   "3-psalms": "3 Mezmur",
   "4-psalms": "4 Mezmur",
   "5-psalms": "5 Mezmur",
-  "enter-shared-session-id": "Paylaşılan oturum kimliğini girin"
+  "enter-shared-session-id": "Paylaşılan oturum kimliğini girin",
+  "scripture-elements": "Kutsal Kitap unsurları",
+  "show-headings": "Başlıkları göster",
+  "show-verse-numbers": "Ayet numaralarını göster",
+  "show-footnotes": "Dipnotları göster",
+  "show-highlights": "Öne çıkanları göster",
+  "show-red-lettering": "Kırmızı yazıları göster"
 }

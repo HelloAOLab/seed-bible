@@ -2,7 +2,6 @@
   "allBooks": "Semua buku",
   "new-testament": "Perjanjian Baru",
   "old-testament": "Perjanjian Lama",
-
   "settings": "Pengaturan",
   "open-books": "Buku Terbuka",
   "side-menu": "Menu samping",
@@ -60,7 +59,6 @@
   "shared-session-click-to-join": "sedang berbagi — klik untuk bergabung",
   "dismiss": "Membubarkan",
   "open-chapter": "Buka bab",
-
   "tanakh": "Tanakh",
   "traditional": "Tradisional",
   "no-chapter-content-found": "Konten bab tidak ditemukan.",
@@ -69,7 +67,6 @@
   "exit-full-screen": "Keluar dari Layar Penuh",
   "themes": "Tema",
   "page-settings": "Pengaturan halaman",
-
   "display-and-theme": "Tampilan dan Tema",
   "display-and-theme-description": "Pilih tema dan sesuaikan cara Kitab Suci dan antarmuka ditampilkan.",
   "scripture-settings": "Pengaturan Kitab Suci",
@@ -103,7 +100,6 @@
   "show-selected-items": "Tampilkan item yang dipilih",
   "show-highlight-colors": "Tampilkan warna-warna unggulan",
   "show-icon-text": "Tampilkan teks ikon",
-
   "toolbar": "Bilah alat",
   "extensions": "Ekstensi",
   "display": "Menampilkan",
@@ -123,7 +119,6 @@
   "session-options": "Opsi sesi",
   "select-pane-layout": "Pilih tata letak panel",
   "pane-layout": "Tata letak panel",
-
   "back": "Kembali",
   "selected": "Terpilih",
   "decrease-scripture-font-size": "Kurangi ukuran font tulisan suci",
@@ -174,5 +169,11 @@
   "3-psalms": "3 Mazmur",
   "4-psalms": "4 Mazmur",
   "5-psalms": "5 Mazmur",
-  "enter-shared-session-id": "Masukkan ID sesi bersama"
+  "enter-shared-session-id": "Masukkan ID sesi bersama",
+  "scripture-elements": "Unsur-unsur Kitab Suci",
+  "show-headings": "Tampilkan judul",
+  "show-verse-numbers": "Tampilkan nomor ayat",
+  "show-footnotes": "Tampilkan catatan kaki",
+  "show-highlights": "Tampilkan sorotan",
+  "show-red-lettering": "Tampilkan huruf merah"
 }

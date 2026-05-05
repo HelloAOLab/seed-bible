@@ -2,7 +2,6 @@
   "allBooks": "ሁሉም መጽሐፍት",
   "new-testament": "አዲስ ኪዳን",
   "old-testament": "የብሉይ ኪዳን",
-
   "settings": "ቅንብሮች",
   "open-books": "ክፍት መጽሐፍት",
   "side-menu": "የጎን ምናሌ",
@@ -60,7 +59,6 @@
   "shared-session-click-to-join": "እያጋራ ነው — ለመቀላቀል ጠቅ ያድርጉ",
   "dismiss": "አሰናብት",
   "open-chapter": "ምዕራፍ ክፈት",
-
   "tanakh": "ታናክ",
   "traditional": "ባህላዊ",
   "no-chapter-content-found": "የምዕራፍ ይዘት አልተገኘም።",
@@ -69,7 +67,6 @@
   "exit-full-screen": "ከሙሉ ማያ ገጽ ይውጡ",
   "themes": "ገጽታዎች",
   "page-settings": "የገጽ ቅንብሮች",
-
   "display-and-theme": "ማሳያ እና ገጽታ",
   "display-and-theme-description": "አንድ ጭብጥ ይምረጡና የቅዱሳት መጻሕፍትና የተጠቃሚ በይነገጽ እንዴት እንደሚታዩ ያስተካክሉ።",
   "scripture-settings": "የቅዱሳት መጻሕፍት ቅንብሮች",
@@ -103,7 +100,6 @@
   "show-selected-items": "የተመረጡትን ንጥሎች አሳይ",
   "show-highlight-colors": "የድምቀት ቀለሞችን አሳይ",
   "show-icon-text": "የአዶ ጽሑፍ አሳይ",
-
   "toolbar": "የመሳሪያ አሞሌ",
   "extensions": "ቅጥያዎች",
   "display": "ማሳያ",
@@ -123,7 +119,6 @@
   "session-options": "የክፍለ ጊዜ አማራጮች",
   "select-pane-layout": "የፓነል አቀማመጥ ይምረጡ",
   "pane-layout": "የፓነል አቀማመጥ",
-
   "back": "ተመለስ",
   "selected": "ተመርጧል",
   "decrease-scripture-font-size": "የቅዱሳት መጻሕፍት ቅርጸ-ቁምፊ መጠንን ቀንስ",
@@ -174,5 +169,11 @@
   "3-psalms": "3 መዝሙራት",
   "4-psalms": "4 መዝሙራት",
   "5-psalms": "5 መዝሙራት",
-  "enter-shared-session-id": "የተጋራ የክፍለ ጊዜ መታወቂያ ያስገቡ"
+  "enter-shared-session-id": "የተጋራ የክፍለ ጊዜ መታወቂያ ያስገቡ",
+  "scripture-elements": "የቅዱሳት መጻሕፍት ክፍሎች",
+  "show-headings": "ርዕሶችን አሳይ",
+  "show-verse-numbers": "የጥቅስ ቁጥሮችን አሳይ",
+  "show-footnotes": "የግርጌ ማስታወሻዎችን አሳይ",
+  "show-highlights": "ድምቀቶችን አሳይ",
+  "show-red-lettering": "ቀይ ፊደላትን አሳይ"
 }

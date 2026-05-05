@@ -2,7 +2,6 @@
   "allBooks": "ټول کتابونه",
   "new-testament": "نوی عهد نامه",
   "old-testament": "زوړ عهد نامه",
-
   "settings": "امستنې",
   "open-books": "کتابونه خلاص کړئ",
   "side-menu": "د غاړې مینو",
@@ -60,7 +59,6 @@
   "shared-session-click-to-join": "شریکول کیږي — د یوځای کیدو لپاره کلیک وکړئ",
   "dismiss": "رد کړئ",
   "open-chapter": "فصل خلاص کړئ",
-
   "tanakh": "تاناخ",
   "traditional": "دودیز",
   "no-chapter-content-found": "د فصل منځپانګه ونه موندل شوه.",
@@ -69,7 +67,6 @@
   "exit-full-screen": "له بشپړ سکرین څخه ووځئ",
   "themes": "موضوعات",
   "page-settings": "د پاڼې تنظیمات",
-
   "display-and-theme": "ښودنه او موضوع",
   "display-and-theme-description": "یوه موضوع غوره کړئ او د کلام پاک او کارن انټرفیس د ښودلو طریقه تنظیم کړئ.",
   "scripture-settings": "د کلام پاک ترتیبات",
@@ -103,7 +100,6 @@
   "show-selected-items": "غوره شوي توکي وښایاست",
   "show-highlight-colors": "د روښانه کولو رنګونه وښایاست",
   "show-icon-text": "د آیکون متن ښکاره کړئ",
-
   "toolbar": "ټولبار",
   "extensions": "پراخونې",
   "display": "ښودل",
@@ -123,7 +119,6 @@
   "session-options": "د ناستې انتخابونه",
   "select-pane-layout": "د پینل ترتیب غوره کړئ",
   "pane-layout": "د پین ترتیب",
-
   "back": "شاته",
   "selected": "غوره شوی",
   "decrease-scripture-font-size": "د متن د فونټ اندازه کمه کړئ",
@@ -174,5 +169,11 @@
   "3-psalms": "۳ زبورونه",
   "4-psalms": "۴ زبورونه",
   "5-psalms": "۵ زبورونه",
-  "enter-shared-session-id": "د شریکې ناستې ID دننه کړئ"
+  "enter-shared-session-id": "د شریکې ناستې ID دننه کړئ",
+  "scripture-elements": "د کلام عناصر",
+  "show-headings": "سرلیکونه وښایاست",
+  "show-verse-numbers": "د آیتونو شمېرې وښایاست",
+  "show-footnotes": "فوټ نوټونه وښایاست",
+  "show-highlights": "مهم ټکي وښایاست",
+  "show-red-lettering": "سره توري ښکاره کړئ"
 }

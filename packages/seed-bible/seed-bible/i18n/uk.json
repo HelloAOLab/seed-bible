@@ -2,7 +2,6 @@
   "allBooks": "Усі книги",
   "new-testament": "Новий Завіт",
   "old-testament": "Старий Завіт",
-
   "settings": "Налаштування",
   "open-books": "Відкриті книги",
   "side-menu": "Бічне меню",
@@ -60,7 +59,6 @@
   "shared-session-click-to-join": "ділиться — натисніть, щоб приєднатися",
   "dismiss": "Відхилити",
   "open-chapter": "Відкрити розділ",
-
   "tanakh": "Танах",
   "traditional": "Традиційний",
   "no-chapter-content-found": "Вміст розділу не знайдено.",
@@ -69,7 +67,6 @@
   "exit-full-screen": "Вийти з повноекранного режиму",
   "themes": "Теми",
   "page-settings": "Налаштування сторінки",
-
   "display-and-theme": "Відображення та тема",
   "display-and-theme-description": "Оберіть тему та налаштуйте, як відображаються Святе Письмо та інтерфейс.",
   "scripture-settings": "Оздоблення Писання",
@@ -103,7 +100,6 @@
   "show-selected-items": "Показати вибрані елементи",
   "show-highlight-colors": "Показати кольори виділення",
   "show-icon-text": "Показати текст значка",
-
   "toolbar": "Панель інструментів",
   "extensions": "Розширення",
   "display": "Дисплей",
@@ -123,7 +119,6 @@
   "session-options": "Варіанти сеансу",
   "select-pane-layout": "Вибрати макет панелі",
   "pane-layout": "Макет панелі",
-
   "back": "Назад",
   "selected": "Вибрано",
   "decrease-scripture-font-size": "Зменшити розмір шрифту Писання",
@@ -174,5 +169,11 @@
   "3-psalms": "3 Псалми",
   "4-psalms": "4 Псалми",
   "5-psalms": "5 Псалмів",
-  "enter-shared-session-id": "Введіть спільний ідентифікатор сеансу"
+  "enter-shared-session-id": "Введіть спільний ідентифікатор сеансу",
+  "scripture-elements": "Елементи Святого Письма",
+  "show-headings": "Показати заголовки",
+  "show-verse-numbers": "Показати номери віршів",
+  "show-footnotes": "Показати виноски",
+  "show-highlights": "Показати найцікавіше",
+  "show-red-lettering": "Показати червоні літери"
 }

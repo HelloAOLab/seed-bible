@@ -2,7 +2,6 @@
   "allBooks": "모든 책",
   "new-testament": "신약 성서",
   "old-testament": "구약 성서",
-
   "settings": "설정",
   "open-books": "오픈북",
   "side-menu": "사이드 메뉴",
@@ -60,7 +59,6 @@
   "shared-session-click-to-join": "공유 중입니다 — 클릭해서 참여하세요",
   "dismiss": "해고하다",
   "open-chapter": "챕터 열기",
-
   "tanakh": "타나크",
   "traditional": "전통적인",
   "no-chapter-content-found": "챕터 내용을 찾을 수 없습니다.",
@@ -69,7 +67,6 @@
   "exit-full-screen": "전체 화면 종료",
   "themes": "테마",
   "page-settings": "페이지 설정",
-
   "display-and-theme": "디스플레이 및 테마",
   "display-and-theme-description": "테마를 선택하고 성경과 UI가 표시되는 방식을 조정하세요.",
   "scripture-settings": "성경 설정",
@@ -103,7 +100,6 @@
   "show-selected-items": "선택한 항목 표시",
   "show-highlight-colors": "강조 색상 표시",
   "show-icon-text": "아이콘 텍스트 표시",
-
   "toolbar": "툴바",
   "extensions": "확장 기능",
   "display": "표시하다",
@@ -123,7 +119,6 @@
   "session-options": "세션 옵션",
   "select-pane-layout": "창 레이아웃을 선택하세요",
   "pane-layout": "패널 레이아웃",
-
   "back": "뒤쪽에",
   "selected": "선택된",
   "decrease-scripture-font-size": "성경 글자 크기를 줄이세요",
@@ -174,5 +169,11 @@
   "3-psalms": "시편 3편",
   "4-psalms": "시편 4편",
   "5-psalms": "시편 5편",
-  "enter-shared-session-id": "공유 세션 ID를 입력하세요"
+  "enter-shared-session-id": "공유 세션 ID를 입력하세요",
+  "scripture-elements": "성경 요소",
+  "show-headings": "제목 표시",
+  "show-verse-numbers": "절 번호를 표시하세요",
+  "show-footnotes": "각주 표시",
+  "show-highlights": "주요 내용 보기",
+  "show-red-lettering": "빨간색 글씨로 표시"
 }

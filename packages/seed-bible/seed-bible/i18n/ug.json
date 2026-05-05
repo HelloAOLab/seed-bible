@@ -2,7 +2,6 @@
   "allBooks": "بارلىق كىتابلار",
   "new-testament": "يېڭى ئەھدە",
   "old-testament": "كونا ئەھدە",
-
   "settings": "تەڭشەكلەر",
   "open-books": "ئوچۇق كىتابلار",
   "side-menu": "يان تىزىملىك",
@@ -60,7 +59,6 @@
   "shared-session-click-to-join": "ھەمبەھىرلەۋاتىدۇ — قوشۇلۇش ئۈچۈن چېكىڭ",
   "dismiss": "رەت قىلىش",
   "open-chapter": "ئاچقۇچ باب",
-
   "tanakh": "تاناخ",
   "traditional": "ئەنئەنىۋى",
   "no-chapter-content-found": "باب مەزمۇنى تېپىلمىدى.",
@@ -69,7 +67,6 @@
   "exit-full-screen": "تولۇق ئېكراندىن چىقىش",
   "themes": "تېمىلار",
   "page-settings": "بەت تەڭشەكلىرى",
-
   "display-and-theme": "كۆرسىتىش ۋە تېما",
   "display-and-theme-description": "بىر تېما تاللاڭ ۋە مۇقەددەس كىتاب ھەم ئىشلەتكۈچى ئارايۈزىنىڭ كۆرسىتىلىش ئۇسۇلىنى تەڭشەڭ.",
   "scripture-settings": "مۇقەددەس يازمىلارنىڭ تەڭشىكى",
@@ -103,7 +100,6 @@
   "show-selected-items": "تاللانغان تۈرلەرنى كۆرسىتىش",
   "show-highlight-colors": "يورۇتۇلغان رەڭلەرنى كۆرسىتىش",
   "show-icon-text": "سىنبەلگە تېكىستىنى كۆرسىتىش",
-
   "toolbar": "قورالباللىرى",
   "extensions": "كېڭەيتىلمىلەر",
   "display": "كۆرسىتىش",
@@ -123,7 +119,6 @@
   "session-options": "يىغىن تاللانمىلىرى",
   "select-pane-layout": "كۆزنەك لايىھەسىنى تاللاڭ",
   "pane-layout": "كۆزنەك لايىھەسى",
-
   "back": "ئارقىغا",
   "selected": "تاللانغان",
   "decrease-scripture-font-size": "مۇقەددەس كىتابنىڭ خەت نۇسخىسىنى كىچىكلىتىش",
@@ -174,5 +169,11 @@
   "3-psalms": "3 زەبۇر",
   "4-psalms": "4 زەبۇر",
   "5-psalms": "5 زەبۇر",
-  "enter-shared-session-id": "ئورتاقلاشقان سېئانس كىملىكىنى كىرگۈزۈڭ"
+  "enter-shared-session-id": "ئورتاقلاشقان سېئانس كىملىكىنى كىرگۈزۈڭ",
+  "scripture-elements": "مۇقەددەس كىتاب ئېلېمېنتلىرى",
+  "show-headings": "ماۋزۇلارنى كۆرسىتىش",
+  "show-verse-numbers": "ئايەت نومۇرلىرىنى كۆرسىتىش",
+  "show-footnotes": "ئىزاھاتلارنى كۆرسىتىش",
+  "show-highlights": "مۇھىم نۇقتىلارنى كۆرسىتىش",
+  "show-red-lettering": "قىزىل خەتلەرنى كۆرسىتىش"
 }

@@ -2,7 +2,6 @@
   "allBooks": "所有书籍",
   "new-testament": "新约",
   "old-testament": "旧约",
-
   "settings": "设置",
   "open-books": "打开的书",
   "side-menu": "侧边菜单",
@@ -60,7 +59,6 @@
   "shared-session-click-to-join": "正在分享——点击加入",
   "dismiss": "解雇",
   "open-chapter": "打开章节",
-
   "tanakh": "塔纳赫",
   "traditional": "传统的",
   "no-chapter-content-found": "未找到章节内容。",
@@ -69,7 +67,6 @@
   "exit-full-screen": "退出全屏模式",
   "themes": "主题",
   "page-settings": "页面设置",
-
   "display-and-theme": "显示与主题",
   "display-and-theme-description": "选择一个主题，并调整经文与界面的显示方式。",
   "scripture-settings": "经文背景",
@@ -103,7 +100,6 @@
   "show-selected-items": "显示所选项目",
   "show-highlight-colors": "显示高亮颜色",
   "show-icon-text": "显示图标文本",
-
   "toolbar": "工具栏",
   "extensions": "扩展",
   "display": "展示",
@@ -123,7 +119,6 @@
   "session-options": "会话选项",
   "select-pane-layout": "选择窗格布局",
   "pane-layout": "窗格布局",
-
   "back": "后退",
   "selected": "已选",
   "decrease-scripture-font-size": "减小经文字体大小",
@@ -174,5 +169,11 @@
   "3-psalms": "诗篇3篇",
   "4-psalms": "诗篇4篇",
   "5-psalms": "诗篇5篇",
-  "enter-shared-session-id": "输入共享会话 ID"
+  "enter-shared-session-id": "输入共享会话 ID",
+  "scripture-elements": "圣经要素",
+  "show-headings": "显示标题",
+  "show-verse-numbers": "显示诗节编号",
+  "show-footnotes": "显示脚注",
+  "show-highlights": "精彩集锦",
+  "show-red-lettering": "显示红色字体"
 }

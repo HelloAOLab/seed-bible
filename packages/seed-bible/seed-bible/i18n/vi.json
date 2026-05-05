@@ -2,7 +2,6 @@
   "allBooks": "Tất cả các cuốn sách",
   "new-testament": "Tân Ước",
   "old-testament": "Cựu Ước",
-
   "settings": "Cài đặt",
   "open-books": "Sách mở",
   "side-menu": "Thực đơn phụ",
@@ -60,7 +59,6 @@
   "shared-session-click-to-join": "đang chia sẻ — nhấp để tham gia",
   "dismiss": "Miễn nhiệm",
   "open-chapter": "Mở chương",
-
   "tanakh": "Tanakh",
   "traditional": "Truyền thống",
   "no-chapter-content-found": "Không tìm thấy nội dung chương nào.",
@@ -69,7 +67,6 @@
   "exit-full-screen": "Thoát chế độ toàn màn hình",
   "themes": "Chủ đề",
   "page-settings": "Cài đặt trang",
-
   "display-and-theme": "Hiển thị và Chủ đề",
   "display-and-theme-description": "Hãy chọn một chủ đề và điều chỉnh cách hiển thị Kinh Thánh và giao diện.",
   "scripture-settings": "Các bối cảnh Kinh Thánh",
@@ -103,7 +100,6 @@
   "show-selected-items": "Hiển thị các mục đã chọn",
   "show-highlight-colors": "Hiển thị màu sắc nổi bật",
   "show-icon-text": "Hiển thị văn bản biểu tượng",
-
   "toolbar": "Thanh công cụ",
   "extensions": "Phần mở rộng",
   "display": "Trưng bày",
@@ -123,7 +119,6 @@
   "session-options": "Tùy chọn phiên",
   "select-pane-layout": "Chọn bố cục khung",
   "pane-layout": "Bố cục khung",
-
   "back": "Mặt sau",
   "selected": "Đã chọn",
   "decrease-scripture-font-size": "Giảm kích thước phông chữ kinh thánh.",
@@ -174,5 +169,11 @@
   "3-psalms": "3 Thánh vịnh",
   "4-psalms": "4 Thi Thiên",
   "5-psalms": "5 Thánh vịnh",
-  "enter-shared-session-id": "Nhập ID phiên dùng chung"
+  "enter-shared-session-id": "Nhập ID phiên dùng chung",
+  "scripture-elements": "Các yếu tố Kinh thánh",
+  "show-headings": "Hiển thị tiêu đề",
+  "show-verse-numbers": "Hiển thị số câu thơ",
+  "show-footnotes": "Hiển thị chú thích",
+  "show-highlights": "Những điểm nổi bật của chương trình",
+  "show-red-lettering": "Hiển thị chữ màu đỏ"
 }

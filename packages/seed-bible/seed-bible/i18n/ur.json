@@ -2,7 +2,6 @@
   "allBooks": "تمام کتابیں۔",
   "new-testament": "نیا عہد نامہ",
   "old-testament": "عہد نامہ قدیم",
-
   "settings": "ترتیبات",
   "open-books": "کتابیں کھولیں۔",
   "side-menu": "سائیڈ مینو",
@@ -60,7 +59,6 @@
   "shared-session-click-to-join": "اشتراک کر رہا ہے - شامل ہونے کے لیے کلک کریں۔",
   "dismiss": "برطرف کرنا",
   "open-chapter": "کھلا باب",
-
   "tanakh": "تنخ",
   "traditional": "روایتی",
   "no-chapter-content-found": "کوئی باب مواد نہیں ملا۔",
@@ -69,7 +67,6 @@
   "exit-full-screen": "فل سکرین سے باہر نکلیں۔",
   "themes": "تھیمز",
   "page-settings": "صفحہ کی ترتیبات",
-
   "display-and-theme": "ڈسپلے اور تھیم",
   "display-and-theme-description": "ایک تھیم چنیں اور کلام پاک اور یوزر انٹرفیس کے دکھائے جانے کے انداز کو ایڈجسٹ کریں۔",
   "scripture-settings": "کتاب کی ترتیبات",
@@ -103,7 +100,6 @@
   "show-selected-items": "منتخب آئٹمز دکھائیں۔",
   "show-highlight-colors": "نمایاں رنگ دکھائیں۔",
   "show-icon-text": "آئیکن کا متن دکھائیں۔",
-
   "toolbar": "ٹول بار",
   "extensions": "ایکسٹینشنز",
   "display": "ڈسپلے",
@@ -123,7 +119,6 @@
   "session-options": "سیشن کے اختیارات",
   "select-pane-layout": "پین لے آؤٹ کو منتخب کریں۔",
   "pane-layout": "پین لے آؤٹ",
-
   "back": "پیچھے",
   "selected": "منتخب",
   "decrease-scripture-font-size": "اسکرپٹ فونٹ کا سائز کم کریں۔",
@@ -174,5 +169,11 @@
   "3-psalms": "3 زبور",
   "4-psalms": "4 زبور",
   "5-psalms": "5 زبور",
-  "enter-shared-session-id": "مشترکہ سیشن ID درج کریں۔"
+  "enter-shared-session-id": "مشترکہ سیشن ID درج کریں۔",
+  "scripture-elements": "صحیفے کے عناصر",
+  "show-headings": "عنوانات دکھائیں۔",
+  "show-verse-numbers": "آیت نمبر دکھائیں۔",
+  "show-footnotes": "فوٹ نوٹ دکھائیں۔",
+  "show-highlights": "جھلکیاں دکھائیں۔",
+  "show-red-lettering": "سرخ حرف دکھائیں۔"
 }

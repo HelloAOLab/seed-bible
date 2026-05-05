@@ -2,7 +2,6 @@
   "allBooks": "جميع الكتب",
   "new-testament": "العهد الجديد",
   "old-testament": "العهد القديم",
-
   "settings": "إعدادات",
   "open-books": "الكتب المفتوحة",
   "side-menu": "قائمة جانبية",
@@ -60,7 +59,6 @@
   "shared-session-click-to-join": "المشاركة متاحة — انقر للانضمام",
   "dismiss": "رفض",
   "open-chapter": "الفصل المفتوح",
-
   "tanakh": "التناخ",
   "traditional": "تقليدي",
   "no-chapter-content-found": "لم يتم العثور على محتوى الفصل.",
@@ -69,7 +67,6 @@
   "exit-full-screen": "الخروج من وضع ملء الشاشة",
   "themes": "المواضيع",
   "page-settings": "إعدادات الصفحة",
-
   "display-and-theme": "العرض والموضوع",
   "display-and-theme-description": "اختر موضوعًا واضبط طريقة عرض الكتاب المقدس وواجهة المستخدم.",
   "scripture-settings": "إعدادات الكتاب المقدس",
@@ -103,7 +100,6 @@
   "show-selected-items": "عرض العناصر المختارة",
   "show-highlight-colors": "إظهار ألوان التمييز",
   "show-icon-text": "عرض نص الأيقونة",
-
   "toolbar": "شريط الأدوات",
   "extensions": "الإضافات",
   "display": "عرض",
@@ -123,7 +119,6 @@
   "session-options": "خيارات الجلسة",
   "select-pane-layout": "تحديد تخطيط اللوحة",
   "pane-layout": "تخطيط اللوحة",
-
   "back": "خلف",
   "selected": "مختار",
   "decrease-scripture-font-size": "قلل حجم خط النص المقدس",
@@ -174,5 +169,11 @@
   "3-psalms": "المزامير الثلاثة",
   "4-psalms": "المزامير الأربعة",
   "5-psalms": "المزامير الخمسة",
-  "enter-shared-session-id": "أدخل معرف الجلسة المشتركة"
+  "enter-shared-session-id": "أدخل معرف الجلسة المشتركة",
+  "scripture-elements": "عناصر الكتاب المقدس",
+  "show-headings": "عرض العناوين",
+  "show-verse-numbers": "أظهر أرقام الآيات",
+  "show-footnotes": "إظهار الحواشي",
+  "show-highlights": "عرض أبرز اللحظات",
+  "show-red-lettering": "أظهر الحروف الحمراء"
 }
