@@ -2,7 +2,7 @@
   "allBooks": "همه کتاب‌ها",
   "new-testament": "عهد جدید",
   "old-testament": "عهد عتیق",
-  "searchBook": "جستجوی کتاب ...",
+
   "settings": "تنظیمات",
   "open-books": "کتاب‌های باز",
   "side-menu": "منوی کناری",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "اشتراک گذاری — برای عضویت کلیک کنید",
   "dismiss": "رد کردن",
   "open-chapter": "فصل باز",
-  "open-in-pane": "باز کردن در یک پنجره:",
-  "empty": "خالی",
-  "pane_number": "صفحه {{number}}",
+
   "tanakh": "تنخ",
   "traditional": "سنتی",
   "no-chapter-content-found": "هیچ محتوایی از فصل یافت نشد.",
@@ -71,8 +69,7 @@
   "exit-full-screen": "خروج از حالت تمام صفحه",
   "themes": "تم‌ها",
   "page-settings": "تنظیمات صفحه",
-  "theme-and-text": "تم و متن",
-  "theme-and-text-description": "یک تم انتخاب کنید و تجربه خواندن کتاب مقدس را تنظیم کنید.",
+
   "display-and-theme": "نمایش و تم",
   "display-and-theme-description": "یک تم انتخاب کنید و نحوه نمایش کتاب مقدس و رابط کاربری را تنظیم کنید.",
   "scripture-settings": "تنظیمات کتاب مقدس",
@@ -106,7 +103,7 @@
   "show-selected-items": "نمایش موارد انتخاب شده",
   "show-highlight-colors": "نمایش رنگ‌های برجسته",
   "show-icon-text": "نمایش متن آیکون",
-  "general-settings": "تنظیمات عمومی",
+
   "toolbar": "نوار ابزار",
   "extensions": "افزونه‌ها",
   "display": "نمایش",
@@ -126,7 +123,7 @@
   "session-options": "گزینه‌های جلسه",
   "select-pane-layout": "طرح‌بندی صفحه را انتخاب کنید",
   "pane-layout": "طرح‌بندی صفحه",
-  "back-to-settings": "برگشت به تنظیمات",
+
   "back": "برگشت",
   "selected": "انتخاب شده",
   "decrease-scripture-font-size": "اندازه فونت کتاب مقدس را کاهش دهید",
@@ -176,5 +173,6 @@
   "2-psalms": "۲ مزامیر",
   "3-psalms": "۳ مزامیر",
   "4-psalms": "۴ مزامیر",
-  "5-psalms": "۵ مزامیر"
+  "5-psalms": "۵ مزامیر",
+  "enter-shared-session-id": "شناسه جلسه مشترک را وارد کنید"
 }

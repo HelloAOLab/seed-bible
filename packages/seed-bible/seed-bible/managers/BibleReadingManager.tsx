@@ -21,6 +21,7 @@ import type {
   ChapterHighlights,
   HighlightsManager,
 } from "seed-bible.managers.HighlightsManager";
+import { DEFAULT_LANGUAGE } from "seed-bible.i18n.I18nManager";
 
 export interface BibleSelectedVerse {
   /** Book identifier (for example: GEN, MAT). */
@@ -230,8 +231,42 @@ export interface BibleReadingState {
   loadNextChapter: () => Promise<void>;
 }
 
-export const DEFAULT_TRANSLATION_ID = "AAB";
-export const DEFAULT_TRANSLATION_LANGUAGE = "eng";
+export const DEFAULT_TRANSLATIONS_BY_LANGUAGE = new Map([
+  ["am", { id: "amh_amh", language: "amh" }], // Amharic NT | መጽሐፍ ቅዱስ
+  ["ar", { id: "ARBNAV", language: "arb" }], // New Arabic Version (Book of Life) | كتاب الحياة
+  ["bn", { id: "ben_ocv", language: "ben" }], // Open Bengali Contemporary Version Bible | Biblica® মুক্তভাবে বাংলা সমকালীন সংস্করণের
+  ["en", { id: "AAB", language: "eng" }], // AAB | Ancients Accessible Bible
+  ["es", { id: "spa_onbv", language: "spa" }], // Spanish ONBV | Biblica® Open Nueva Biblia Viva 2008
+  ["fa", { id: "pes_opcb", language: "pes" }], // Open Persian Contemporary Bible | Biblica® Open Persian Contemporary Bible 2022
+  ["fr", { id: "fra_ncl", language: "fra" }], // French néo-Crampon Libre | Sainte Bible néo-Crampon Libre
+  ["hi", { id: "hin_cvb", language: "fra" }], // Hindi Contemporary Version Bible | Biblica® हिंदी समकालीन संस्करण-स्वतंत्र उपलब्धि
+  ["ind", { id: "ind_ayt", language: "fra" }], // Indonesian AYT Bible | Alkitab Yang Terbuka
+  ["ja", { id: "jpn_loc", language: "jpn" }], // New Japanese NT | 新改訳新約聖書(1965年版)
+  ["ko", { id: "kor_old", language: "kor" }], // Korean Bible 1910 | 한국어 성경
+  // ['mn', { id: '', language: 'fra' }], // We don't have anything for Mongolian
+  ["ne", { id: "npi_ncb", language: "npi" }], // Nepali Contemporary Bible | Biblica® नेपाली समकालीन सर्वसुलभ संस्करण
+  // ['ps', { id: 'kor_old', language: 'kor' }], // We don't have anything for Pashto
+  ["pt", { id: "por_onbv", language: "por" }], // Portuguese ONBV | Biblica® Open Nova Bíblia Viva 2007
+  ["ru", { id: "rus_syn", language: "rus" }], // Russian Synodal Bible | Синодальный перевод
+  ["sw", { id: "swh_onmm", language: "swh" }], // Swahili ONMM | Biblica® Toleo Wazi Neno: Maandiko Matakatifu
+  // ['ti', { id: '', language: 'ti' }], // We don't have anything for Tigrinya
+  ["tr", { id: "tur_ytc", language: "tur" }], // Turkish TVR Bible | Kutsal Kitap Yeni Çeviri
+  ["ug", { id: "uig_ara", language: "uig" }], // Uyghur Bible (arabic script) | مۇقېددېس كالام (يەنگى يېزىق)
+  ["uk", { id: "ukr_ufb", language: "ukr" }], // Ukrainian Freedom Bible | Біблія свободи
+  ["ur", { id: "urd_oucv", language: "urd" }], // Urdu: Biblica® آزادانہ اردو ہم عصر ترجمہ (Bible) | Biblica® آزادانہ اردو ہم عصر ترجمہ
+  ["vi", { id: "vie_vcb", language: "vie" }], // Vietnamese Contemporary Bible | Biblica® Thiên Ban Kinh Thánh Hiện Đại™
+  ["zh", { id: "cmn_cbt", language: "cmn" }], // Chinese, Mandarin: Biblica® 聖經,當代譯本開放資源 (Bible) | Biblica® 聖經，當代譯本開放資源
+]);
+
+const DEFAULT_TRANSLATION = DEFAULT_TRANSLATIONS_BY_LANGUAGE.get(
+  DEFAULT_LANGUAGE
+) ?? {
+  id: "AAB",
+  language: "eng",
+};
+
+export const DEFAULT_TRANSLATION_ID = DEFAULT_TRANSLATION.id;
+export const DEFAULT_TRANSLATION_LANGUAGE = DEFAULT_TRANSLATION.language;
 export const DEFAULT_BOOK_ID = "GEN";
 export const DEFAULT_CHAPTER_NUMBER = 1;
 

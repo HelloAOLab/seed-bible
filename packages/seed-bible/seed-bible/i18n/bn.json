@@ -2,7 +2,7 @@
   "allBooks": "সমস্ত বই",
   "new-testament": "নতুন নিয়ম",
   "old-testament": "পুরাতন নিয়ম",
-  "searchBook": "বই খুঁজুন...",
+
   "settings": "সেটিংস",
   "open-books": "খোলা বই",
   "side-menu": "সাইড মেনু",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "শেয়ার করা হচ্ছে — যোগ দিতে ক্লিক করুন",
   "dismiss": "খারিজ করুন",
   "open-chapter": "অধ্যায় খুলুন",
-  "open-in-pane": "প্যানে খুলুন:",
-  "empty": "খালি",
-  "pane_number": "প্যান {{number}}",
+
   "tanakh": "তানাখ",
   "traditional": "ঐতিহ্যবাহী",
   "no-chapter-content-found": "কোনো অধ্যায়ের বিষয়বস্তু খুঁজে পাওয়া যায়নি।",
@@ -71,8 +69,7 @@
   "exit-full-screen": "পূর্ণ পর্দা থেকে প্রস্থান করুন",
   "themes": "থিম",
   "page-settings": "পৃষ্ঠা সেটিংস",
-  "theme-and-text": "বিষয়বস্তু এবং পাঠ্য",
-  "theme-and-text-description": "একটি বিষয়বস্তু বেছে নিন এবং শাস্ত্র পাঠের অভিজ্ঞতাকে সেই অনুযায়ী সাজিয়ে তুলুন।",
+
   "display-and-theme": "প্রদর্শন এবং বিষয়বস্তু",
   "display-and-theme-description": "একটি বিষয়বস্তু বেছে নিন এবং শাস্ত্র ও ইউআই কীভাবে প্রদর্শিত হবে তা সামঞ্জস্য করুন।",
   "scripture-settings": "ধর্মগ্রন্থের প্রেক্ষাপট",
@@ -106,7 +103,7 @@
   "show-selected-items": "নির্বাচিত আইটেমগুলি দেখান",
   "show-highlight-colors": "হাইলাইট রঙ দেখান",
   "show-icon-text": "আইকন টেক্সট দেখান",
-  "general-settings": "সাধারণ সেটিংস",
+
   "toolbar": "টুলবার",
   "extensions": "এক্সটেনশন",
   "display": "প্রদর্শন",
@@ -126,7 +123,7 @@
   "session-options": "সেশন বিকল্পগুলি",
   "select-pane-layout": "প্যান লেআউট নির্বাচন করুন",
   "pane-layout": "প্যান লেআউট",
-  "back-to-settings": "সেটিংসে ফিরে যান",
+
   "back": "ফিরে যান",
   "selected": "নির্বাচিত",
   "decrease-scripture-font-size": "ধর্মগ্রন্থের ফন্টের আকার কমান",
@@ -176,5 +173,6 @@
   "2-psalms": "২ গীতসংহিতা",
   "3-psalms": "৩ গীতসংহিতা",
   "4-psalms": "৪ গীতসংহিতা",
-  "5-psalms": "৫ গীতসংহিতা"
+  "5-psalms": "৫ গীতসংহিতা",
+  "enter-shared-session-id": "শেয়ার করা সেশন আইডি লিখুন"
 }

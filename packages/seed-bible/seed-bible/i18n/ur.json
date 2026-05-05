@@ -2,7 +2,7 @@
   "allBooks": "تمام کتابیں۔",
   "new-testament": "نیا عہد نامہ",
   "old-testament": "عہد نامہ قدیم",
-  "searchBook": "کتاب تلاش کریں...",
+
   "settings": "ترتیبات",
   "open-books": "کتابیں کھولیں۔",
   "side-menu": "سائیڈ مینو",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "اشتراک کر رہا ہے - شامل ہونے کے لیے کلک کریں۔",
   "dismiss": "برطرف کرنا",
   "open-chapter": "کھلا باب",
-  "open-in-pane": "پین میں کھولیں:",
-  "empty": "خالی",
-  "pane_number": "پین {{number}}",
+
   "tanakh": "تنخ",
   "traditional": "روایتی",
   "no-chapter-content-found": "کوئی باب مواد نہیں ملا۔",
@@ -71,8 +69,7 @@
   "exit-full-screen": "فل سکرین سے باہر نکلیں۔",
   "themes": "تھیمز",
   "page-settings": "صفحہ کی ترتیبات",
-  "theme-and-text": "تھیم اور متن",
-  "theme-and-text-description": "ایک تھیم چنیں اور کلام پاک پڑھنے کے تجربے کو ٹیون کریں۔",
+
   "display-and-theme": "ڈسپلے اور تھیم",
   "display-and-theme-description": "ایک تھیم چنیں اور کلام پاک اور یوزر انٹرفیس کے دکھائے جانے کے انداز کو ایڈجسٹ کریں۔",
   "scripture-settings": "کتاب کی ترتیبات",
@@ -106,7 +103,7 @@
   "show-selected-items": "منتخب آئٹمز دکھائیں۔",
   "show-highlight-colors": "نمایاں رنگ دکھائیں۔",
   "show-icon-text": "آئیکن کا متن دکھائیں۔",
-  "general-settings": "عمومی ترتیبات",
+
   "toolbar": "ٹول بار",
   "extensions": "ایکسٹینشنز",
   "display": "ڈسپلے",
@@ -126,7 +123,7 @@
   "session-options": "سیشن کے اختیارات",
   "select-pane-layout": "پین لے آؤٹ کو منتخب کریں۔",
   "pane-layout": "پین لے آؤٹ",
-  "back-to-settings": "ترتیبات پر واپس جائیں۔",
+
   "back": "پیچھے",
   "selected": "منتخب",
   "decrease-scripture-font-size": "اسکرپٹ فونٹ کا سائز کم کریں۔",
@@ -176,5 +173,6 @@
   "2-psalms": "2 زبور",
   "3-psalms": "3 زبور",
   "4-psalms": "4 زبور",
-  "5-psalms": "5 زبور"
+  "5-psalms": "5 زبور",
+  "enter-shared-session-id": "مشترکہ سیشن ID درج کریں۔"
 }

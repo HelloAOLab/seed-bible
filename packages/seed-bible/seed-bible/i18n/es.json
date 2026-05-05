@@ -2,7 +2,7 @@
   "allBooks": "Todos los libros",
   "new-testament": "Nuevo Testamento",
   "old-testament": "Antiguo Testamento",
-  "searchBook": "Buscar libro...",
+
   "settings": "Ajustes",
   "open-books": "Libros abiertos",
   "side-menu": "Menú lateral",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "está compartiendo — haz clic para unirte",
   "dismiss": "Despedir",
   "open-chapter": "Capítulo abierto",
-  "open-in-pane": "Abrir en panel:",
-  "empty": "vacío",
-  "pane_number": "Panel {{number}}",
+
   "tanakh": "Tanaj",
   "traditional": "Tradicional",
   "no-chapter-content-found": "No se encontró contenido del capítulo.",
@@ -71,8 +69,7 @@
   "exit-full-screen": "Salir de la pantalla completa",
   "themes": "Temas",
   "page-settings": "Configuración de página",
-  "theme-and-text": "Tema y texto",
-  "theme-and-text-description": "Elige un tema y personaliza la experiencia de lectura de las Escrituras.",
+
   "display-and-theme": "Pantalla y tema",
   "display-and-theme-description": "Elige un tema y ajusta cómo se muestran las Escrituras y la interfaz.",
   "scripture-settings": "Escenarios bíblicos",
@@ -106,7 +103,7 @@
   "show-selected-items": "Mostrar elementos seleccionados",
   "show-highlight-colors": "Mostrar colores destacados",
   "show-icon-text": "Mostrar texto del icono",
-  "general-settings": "Configuración general",
+
   "toolbar": "Barra de herramientas",
   "extensions": "Extensiones",
   "display": "Mostrar",
@@ -126,7 +123,7 @@
   "session-options": "Opciones de sesión",
   "select-pane-layout": "Seleccionar diseño de panel",
   "pane-layout": "Diseño del panel",
-  "back-to-settings": "Volver a la configuración",
+
   "back": "Atrás",
   "selected": "Seleccionado",
   "decrease-scripture-font-size": "Disminuir el tamaño de la fuente de las Escrituras",
@@ -176,5 +173,6 @@
   "2-psalms": "2 Salmos",
   "3-psalms": "3 Salmos",
   "4-psalms": "4 Salmos",
-  "5-psalms": "5 Salmos"
+  "5-psalms": "5 Salmos",
+  "enter-shared-session-id": "Introduzca el ID de sesión compartida."
 }

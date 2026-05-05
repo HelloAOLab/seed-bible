@@ -2,7 +2,7 @@
   "allBooks": "Semua buku",
   "new-testament": "Perjanjian Baru",
   "old-testament": "Perjanjian Lama",
-  "searchBook": "Cari buku...",
+
   "settings": "Pengaturan",
   "open-books": "Buku Terbuka",
   "side-menu": "Menu samping",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "sedang berbagi — klik untuk bergabung",
   "dismiss": "Membubarkan",
   "open-chapter": "Buka bab",
-  "open-in-pane": "Buka di panel:",
-  "empty": "kosong",
-  "pane_number": "Panel {{number}}",
+
   "tanakh": "Tanakh",
   "traditional": "Tradisional",
   "no-chapter-content-found": "Konten bab tidak ditemukan.",
@@ -71,8 +69,7 @@
   "exit-full-screen": "Keluar dari Layar Penuh",
   "themes": "Tema",
   "page-settings": "Pengaturan halaman",
-  "theme-and-text": "Tema dan Teks",
-  "theme-and-text-description": "Pilihlah tema dan sesuaikan pengalaman membaca Kitab Suci.",
+
   "display-and-theme": "Tampilan dan Tema",
   "display-and-theme-description": "Pilih tema dan sesuaikan cara Kitab Suci dan antarmuka ditampilkan.",
   "scripture-settings": "Pengaturan Kitab Suci",
@@ -106,7 +103,7 @@
   "show-selected-items": "Tampilkan item yang dipilih",
   "show-highlight-colors": "Tampilkan warna-warna unggulan",
   "show-icon-text": "Tampilkan teks ikon",
-  "general-settings": "Pengaturan umum",
+
   "toolbar": "Bilah alat",
   "extensions": "Ekstensi",
   "display": "Menampilkan",
@@ -126,7 +123,7 @@
   "session-options": "Opsi sesi",
   "select-pane-layout": "Pilih tata letak panel",
   "pane-layout": "Tata letak panel",
-  "back-to-settings": "Kembali ke pengaturan",
+
   "back": "Kembali",
   "selected": "Terpilih",
   "decrease-scripture-font-size": "Kurangi ukuran font tulisan suci",
@@ -176,5 +173,6 @@
   "2-psalms": "2 Mazmur",
   "3-psalms": "3 Mazmur",
   "4-psalms": "4 Mazmur",
-  "5-psalms": "5 Mazmur"
+  "5-psalms": "5 Mazmur",
+  "enter-shared-session-id": "Masukkan ID sesi bersama"
 }

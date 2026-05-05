@@ -2,7 +2,7 @@
   "allBooks": "Todos os livros",
   "new-testament": "Novo Testamento",
   "old-testament": "Antigo Testamento",
-  "searchBook": "Pesquisar livro...",
+
   "settings": "Configurações",
   "open-books": "Livros abertos",
   "side-menu": "Menu lateral",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "está compartilhando — clique para participar",
   "dismiss": "Liberar",
   "open-chapter": "Capítulo aberto",
-  "open-in-pane": "Abrir em painel:",
-  "empty": "vazio",
-  "pane_number": "Painel {{number}}",
+
   "tanakh": "Tanakh",
   "traditional": "Tradicional",
   "no-chapter-content-found": "Nenhum conteúdo do capítulo encontrado.",
@@ -71,8 +69,7 @@
   "exit-full-screen": "Sair do modo tela cheia",
   "themes": "Temas",
   "page-settings": "Configurações da página",
-  "theme-and-text": "Tema e texto",
-  "theme-and-text-description": "Escolha um tema e personalize a experiência de leitura das Escrituras.",
+
   "display-and-theme": "Tela e tema",
   "display-and-theme-description": "Escolha um tema e ajuste como as Escrituras e a interface são exibidas.",
   "scripture-settings": "Configurações das Escrituras",
@@ -106,7 +103,7 @@
   "show-selected-items": "Mostrar itens selecionados",
   "show-highlight-colors": "Mostrar cores de destaque",
   "show-icon-text": "Mostrar texto do ícone",
-  "general-settings": "Configurações gerais",
+
   "toolbar": "Barra de ferramentas",
   "extensions": "Extensões",
   "display": "Mostrar",
@@ -126,7 +123,7 @@
   "session-options": "Opções de sessão",
   "select-pane-layout": "Selecione o layout do painel",
   "pane-layout": "Layout do painel",
-  "back-to-settings": "Voltar às configurações",
+
   "back": "Voltar",
   "selected": "Selecionado",
   "decrease-scripture-font-size": "Diminuir o tamanho da fonte das escrituras",
@@ -176,5 +173,6 @@
   "2-psalms": "2 Salmos",
   "3-psalms": "3 Salmos",
   "4-psalms": "4 Salmos",
-  "5-psalms": "5 Salmos"
+  "5-psalms": "5 Salmos",
+  "enter-shared-session-id": "Insira o ID da sessão compartilhada"
 }
