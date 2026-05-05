@@ -10,7 +10,7 @@ import {
   ContextMenuWithButton,
 } from "seed-bible.components.ContextMenu";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { MobileSettingsIcon } from "seed-bible.components.icons";
+import { SettingsIcon } from "seed-bible.components.icons";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
 import type { UserProfile } from "seed-bible.managers.LoginManager";
 import type { ConnectedSessionUser } from "seed-bible.managers.SessionsManager";
@@ -1046,7 +1046,7 @@ export function Sidebar(props: SidebarProps) {
           aria-label={t("open-settings", { defaultValue: "Open settings" })}
           title={t("settings", { defaultValue: "Settings" })}
         >
-          <MobileSettingsIcon />
+          <SettingsIcon />
         </button>
         <SelfAvatarButton state={state} />
       </div>
