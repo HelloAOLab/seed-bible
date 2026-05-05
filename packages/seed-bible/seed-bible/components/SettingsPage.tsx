@@ -53,15 +53,10 @@ type SettingsView =
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
 
 const ALIGNMENT_CYCLE: Record<TextAlignment, TextAlignment> = {
+  unset: "left",
   left: "center",
   center: "right",
   right: "left",
-};
-
-const ALIGNMENT_ICON: Record<TextAlignment, string> = {
-  left: "format_align_left",
-  center: "format_align_center",
-  right: "format_align_right",
 };
 
 const TEXT_COLOR_PALETTE = [
@@ -1219,7 +1214,7 @@ function TextFormattingToolbar(props: {
   const paletteOpen = useSignal(false);
   const themeFallback = `var(${TEXT_SECTION_THEME_COLOR_VAR[sectionId]})`;
   const swatchBackground = section.color || themeFallback;
-  const { t } = useI18n();
+  const { t, isRtl } = useI18n();
 
   const toggle = (key: "bold" | "italic" | "underline") => {
     onChange({ [key]: !section[key] } as Partial<TextSectionConfig>);
@@ -1227,6 +1222,13 @@ function TextFormattingToolbar(props: {
 
   const cycleAlignment = () => {
     onChange({ alignment: ALIGNMENT_CYCLE[section.alignment] });
+  };
+
+  const alignmentIcons: Record<TextAlignment, string> = {
+    unset: isRtl ? "format_align_right" : "format_align_left",
+    left: "format_align_left",
+    center: "format_align_center",
+    right: "format_align_right",
   };
 
   return (
@@ -1274,7 +1276,7 @@ function TextFormattingToolbar(props: {
         title={t("change_alignment", { defaultValue: "Change alignment" })}
       >
         <span className="material-symbols-outlined">
-          {ALIGNMENT_ICON[section.alignment]}
+          {alignmentIcons[section.alignment]}
         </span>
       </button>
 

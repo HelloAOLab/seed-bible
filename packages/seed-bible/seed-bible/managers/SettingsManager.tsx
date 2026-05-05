@@ -7,7 +7,7 @@ import {
 
 export type BookOrientation = "traditional" | "tanak";
 export type UITextSize = "S" | "M" | "L" | "XL";
-export type TextAlignment = "left" | "center" | "right";
+export type TextAlignment = "unset" | "left" | "center" | "right";
 export type TextSectionId = "bookTitle" | "heading" | "verse";
 
 export interface SelectionUIBehavior {
@@ -125,7 +125,7 @@ const DEFAULT_TEXT_CONFIG: TextConfig = {
     bold: true,
     italic: false,
     underline: false,
-    alignment: "left",
+    alignment: "unset",
   },
   heading: {
     font: "'Plus Jakarta Sans', sans-serif",
@@ -136,7 +136,7 @@ const DEFAULT_TEXT_CONFIG: TextConfig = {
     bold: false,
     italic: true,
     underline: false,
-    alignment: "left",
+    alignment: "unset",
   },
   verse: {
     font: "'Newsreader', serif",
@@ -147,7 +147,7 @@ const DEFAULT_TEXT_CONFIG: TextConfig = {
     bold: false,
     italic: false,
     underline: false,
-    alignment: "left",
+    alignment: "unset",
     lineHeight: DEFAULT_VERSE_LINE_HEIGHT,
   },
 };
@@ -297,7 +297,10 @@ function parseAlignment(
   value: unknown,
   fallback: TextAlignment
 ): TextAlignment {
-  return value === "left" || value === "center" || value === "right"
+  return value === "unset" ||
+    value === "left" ||
+    value === "center" ||
+    value === "right"
     ? value
     : fallback;
 }
