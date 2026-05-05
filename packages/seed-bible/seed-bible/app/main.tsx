@@ -84,7 +84,7 @@ function MainContent(props: {
   fontSizeClass: string;
 }) {
   const { state, fontSizeClass } = props;
-  const { language, isRtl } = useI18n();
+  const { isRtl } = useI18n();
   const appDirection = isRtl ? "rtl" : "ltr";
   const { theme, selector } = state;
 
