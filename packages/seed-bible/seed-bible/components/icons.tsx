@@ -89,6 +89,7 @@ export const TabsIcon = (props: any) => (
     />
   </svg>
 );
+
 export const MobileSettingsIcon = (props: any) => (
   <MaterialIcon {...props}>settings</MaterialIcon>
 );
@@ -1307,7 +1308,7 @@ const TickIcon = (props: any) => {
   );
 };
 
-const SettingsIcon = (props: any) => {
+const FiltersIcon = (props: any) => {
   return (
     <svg
       width="26"
@@ -1522,7 +1523,7 @@ export {
   LocationIcon,
   Playlist,
   TickIcon,
-  SettingsIcon,
+  FiltersIcon,
   SelectedIcon,
   AddIcon,
   MinusIcon,

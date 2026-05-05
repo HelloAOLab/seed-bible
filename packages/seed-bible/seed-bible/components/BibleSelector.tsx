@@ -6,7 +6,7 @@ import {
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import {
   TickIcon,
-  SettingsIcon,
+  FiltersIcon,
   SelectedIcon,
   AddIcon,
   MinusIcon,
@@ -721,15 +721,15 @@ const TranslationModal = (props: {
                 showTranslationSettings.value = !showTranslationSettings.value;
                 showTranslationInfo.value = null;
               }}
-              className="settingsIcon"
+              className="filters-icon"
             >
-              <SettingsIcon />
+              <FiltersIcon />
             </span>
           </div>
           {LanguageList}
           <div className="footer">
             <div
-              class="custom-translation-header flex-between"
+              className="custom-translation-header flex-between"
               onClick={() => {
                 console.log("clicked", showCustomTranslation.value);
                 showCustomTranslation.value = !showCustomTranslation.value;
