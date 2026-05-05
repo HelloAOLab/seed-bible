@@ -8,7 +8,8 @@ import {
 
 const { useMemo } = os.appHooks;
 
-export const DEFAULT_LANGUAGE = getLanguage(navigator.languages[0]) ?? "en";
+export const DEFAULT_LANGUAGE =
+  configBot.tags.lang ?? getLanguage(navigator.languages[0]) ?? "en";
 
 export { i18n };
 
@@ -75,7 +76,7 @@ if (!seedBibleTranslations[DEFAULT_LANGUAGE]) {
 
 const availableLanguages = Object.keys(seedBibleTranslations).sort();
 
-const initialLanguage = configBot.tags.lang || DEFAULT_LANGUAGE;
+const initialLanguage = DEFAULT_LANGUAGE;
 
 if (!i18n.isInitialized) {
   console.log(
