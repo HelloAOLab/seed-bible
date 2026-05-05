@@ -786,6 +786,26 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           />
         </div>
 
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-red-lettering"
+          >
+            {t("show-red-lettering", { defaultValue: "Show red lettering" })}
+          </label>
+          <input
+            id="sb-show-red-lettering"
+            type="checkbox"
+            checked={current.scriptureElements.showRedLettering}
+            onChange={(event: Event) => {
+              settings.setScriptureElements({
+                showRedLettering: (event.currentTarget as HTMLInputElement)
+                  .checked,
+              });
+            }}
+          />
+        </div>
+
         <h3 className="sb-settings-subheading">
           {t("display", { defaultValue: "Display" })}
         </h3>

@@ -21,6 +21,7 @@ export interface ScriptureElementsBehavior {
   showVerseNumbers: boolean;
   showFootnotes: boolean;
   showHighlights: boolean;
+  showRedLettering: boolean;
 }
 
 export interface TextSectionConfig {
@@ -123,6 +124,7 @@ const DEFAULT_SCRIPTURE_ELEMENTS: ScriptureElementsBehavior = {
   showVerseNumbers: true,
   showFootnotes: true,
   showHighlights: true,
+  showRedLettering: true,
 };
 
 /**
@@ -344,6 +346,10 @@ function parseScriptureElements(
       typeof obj.showHighlights === "boolean"
         ? obj.showHighlights
         : fallback.showHighlights,
+    showRedLettering:
+      typeof obj.showRedLettering === "boolean"
+        ? obj.showRedLettering
+        : fallback.showRedLettering,
   };
 }
 

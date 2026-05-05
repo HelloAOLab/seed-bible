@@ -1039,6 +1039,56 @@ describe("BibleReader", () => {
     expect(firstDecorator?.style.color).toBe("");
   });
 
+  it("omits sb-words-of-jesus class when scriptureElements.showRedLettering is false", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: true,
+            showFootnotes: true,
+            showHighlights: true,
+            showRedLettering: false,
+          }}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-words-of-jesus")).toBeNull();
+  });
+
+  it("applies sb-words-of-jesus class when scriptureElements.showRedLettering is true", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: true,
+            showFootnotes: true,
+            showHighlights: true,
+            showRedLettering: true,
+          }}
+        />,
+        container
+      );
+    });
+
+    const wordsOfJesus = container.querySelector(".sb-words-of-jesus");
+    expect(wordsOfJesus).not.toBeNull();
+    expect(wordsOfJesus?.textContent).toContain("I am the light");
+  });
+
   it("renders an open footnote modal and closes it", () => {
     const {
       pane,

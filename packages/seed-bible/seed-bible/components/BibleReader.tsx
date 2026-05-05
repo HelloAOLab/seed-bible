@@ -238,6 +238,7 @@ function renderInlineContent(
   onOpenFootnote: (noteId: number) => void,
   showHeadings: boolean,
   showFootnotes: boolean,
+  showRedLettering: boolean,
   contentRanges: ContentDecorationRange[] = [],
   partStartIndex = 0
 ) {
@@ -349,7 +350,7 @@ function renderInlineContent(
 
   if ("text" in part && typeof part.text === "string") {
     let className = "";
-    if (part.wordsOfJesus) {
+    if (part.wordsOfJesus && showRedLettering) {
       className += " sb-words-of-jesus";
     }
 
@@ -527,7 +528,8 @@ function renderChapterContent(
               index,
               (noteId) => onOpenFootnote(noteId, null),
               scriptureElements.showHeadings,
-              scriptureElements.showFootnotes
+              scriptureElements.showFootnotes,
+              scriptureElements.showRedLettering
             )
           )}
         </p>
@@ -625,6 +627,7 @@ function renderChapterContent(
                         (noteId) => onOpenFootnote(noteId, value),
                         scriptureElements.showHeadings,
                         scriptureElements.showFootnotes,
+                        scriptureElements.showRedLettering,
                         contentRanges,
                         getPartTextStartIndex(part)
                       )
@@ -659,6 +662,7 @@ function renderChapterContent(
                         (noteId) => onOpenFootnote(noteId, value),
                         scriptureElements.showHeadings,
                         scriptureElements.showFootnotes,
+                        scriptureElements.showRedLettering,
                         contentRanges,
                         getPartTextStartIndex(part)
                       )
@@ -696,6 +700,7 @@ function renderChapterContent(
                 (noteId) => onOpenFootnote(noteId, value),
                 scriptureElements.showHeadings,
                 scriptureElements.showFootnotes,
+                scriptureElements.showRedLettering,
                 contentRanges,
                 getPartTextStartIndex(part)
               )
@@ -755,6 +760,7 @@ export function BibleReader(props: BibleReaderProps) {
       showVerseNumbers: true,
       showFootnotes: true,
       showHighlights: true,
+      showRedLettering: true,
     };
 
   return (
