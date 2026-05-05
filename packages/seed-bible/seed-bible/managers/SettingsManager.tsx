@@ -4,7 +4,6 @@ import {
   getProfileConfigValue,
   saveProfileConfigValue,
 } from "seed-bible.managers.ProfileConfigSync";
-import { DEFAULT_LANGUAGE, i18n } from "seed-bible.i18n.I18nManager";
 
 export type BookOrientation = "traditional" | "tanak";
 export type UITextSize = "S" | "M" | "L" | "XL";
@@ -54,11 +53,6 @@ export interface AppSettings {
   customHighlightColors: string[];
   /** Horizontal padding (px) applied to the bible reader container. */
   scriptureMargin: number;
-
-  /**
-   * The user's preferred language.
-   */
-  language?: string;
 }
 
 export const DEFAULT_SCRIPTURE_MARGIN = 35;
@@ -74,7 +68,6 @@ const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
 const TAG_CUSTOM_HIGHLIGHT_COLORS = "app.customHighlightColors";
 const TAG_SCRIPTURE_MARGIN = "app.scriptureMargin";
-const TAG_LANGUAGE = "app.language";
 
 // Profile.config keys are stored unprefixed (matching the pattern set by
 // ConfigManager for `fontSize`, `lang`, `disablePanels`).
@@ -86,7 +79,6 @@ const PROFILE_TOOLBAR = "toolbarConfig";
 const PROFILE_KEEP_AWAKE = "keepScreenAwake";
 const PROFILE_CUSTOM_HIGHLIGHT_COLORS = "customHighlightColors";
 const PROFILE_SCRIPTURE_MARGIN = "scriptureMargin";
-const PROFILE_LANGUAGE = "language";
 
 export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
   { value: "'Newsreader', serif", label: "Newsreader" },
@@ -447,8 +439,6 @@ export interface SettingsManager {
   addCustomHighlightColor: (color: string) => void;
   removeCustomHighlightColor: (color: string) => void;
   resetToDefaults: () => void;
-
-  setLanguage: (language: string) => void;
 }
 
 export function createSettings(login: LoginManager): SettingsManager {
@@ -498,10 +488,6 @@ export function createSettings(login: LoginManager): SettingsManager {
           configBot.tags[TAG_SCRIPTURE_MARGIN],
         DEFAULT_SETTINGS.scriptureMargin
       ),
-      language:
-        getProfileConfigValue(profile, PROFILE_LANGUAGE) ??
-        configBot.tags[TAG_LANGUAGE] ??
-        DEFAULT_LANGUAGE,
     };
   };
 
@@ -509,10 +495,6 @@ export function createSettings(login: LoginManager): SettingsManager {
 
   const syncFromBot = () => {
     settings.value = readSettings();
-
-    if (settings.value.language && i18n.language !== settings.value.language) {
-      i18n.changeLanguage(settings.value.language);
-    }
   };
 
   // Re-read whenever the user logs in/out so the profile's saved settings
@@ -683,12 +665,6 @@ export function createSettings(login: LoginManager): SettingsManager {
     );
   };
 
-  const setLanguage = (language: string) => {
-    settings.value = { ...settings.value, language };
-    saveProfileConfigValue(login, PROFILE_LANGUAGE, language);
-    i18n.changeLanguage(language);
-  };
-
   const resetToDefaults = () => {
     settings.value = DEFAULT_SETTINGS;
     configBot.tags[TAG_BOOK_ORIENTATION] = DEFAULT_SETTINGS.bookOrientation;
@@ -791,7 +767,6 @@ export function createSettings(login: LoginManager): SettingsManager {
     setKeepScreenAwake,
     addCustomHighlightColor,
     removeCustomHighlightColor,
-    setLanguage,
     resetToDefaults,
   };
 }

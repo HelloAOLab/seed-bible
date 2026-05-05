@@ -1682,7 +1682,7 @@ function AllSettingsView(props: { state: SeedBibleState }) {
 
 function SettingsMainView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { t, language, availableLanguages } = useI18n();
+  const { t, language, availableLanguages, setLanguage } = useI18n();
   const isAwake = state.settings.settings.value.keepScreenAwake;
   const isLanguageMenuOpen = useSignal(false);
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -1867,7 +1867,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
                                 : ""
                             }`}
                             onClick={() => {
-                              state.settings.setLanguage(languageCode);
+                              void setLanguage(languageCode);
                               isLanguageMenuOpen.value = false;
                             }}
                           >
