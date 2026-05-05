@@ -8,11 +8,20 @@ import {
 
 const { useMemo } = os.appHooks;
 
-export const DEFAULT_LANGUAGE = "en";
+export const DEFAULT_LANGUAGE = getLanguage(navigator.languages[0]) ?? "en";
 
 export { i18n };
 
 export type BotTranslations = Record<string, Record<string, string>>;
+
+function getLanguage(locale: string | null | undefined): string | null {
+  if (!locale) {
+    return null;
+  }
+  const normalized = locale.toLowerCase().replace(/_/g, "-");
+  const [language] = normalized.split("-");
+  return language || null;
+}
 
 /**
  * Adds the given translations to the i18n instance under the specified namespace.
