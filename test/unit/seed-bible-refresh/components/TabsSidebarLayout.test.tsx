@@ -145,4 +145,27 @@ describe("Sidebar collapsed layout", () => {
       bottomActions?.classList.contains("sb-sidebar-bottom-actions-collapsed")
     ).toBe(true);
   });
+
+  it("does not use collapsed layout when settings are open", async () => {
+    const state = await createState();
+    state.sidebar.isSidebarCollapsed.value = true;
+    state.sidebar.openSettings();
+    state.sidebar.isMobileOpen.value = false;
+
+    act(() => {
+      render(<Sidebar state={state} />, container);
+    });
+
+    const sidebar = container.querySelector(".sb-tabs-sidebar");
+    expect(sidebar).not.toBeNull();
+    expect(sidebar?.classList.contains("sb-tabs-sidebar-collapsed")).toBe(
+      false
+    );
+
+    const bottomActions = container.querySelector(".sb-sidebar-bottom-actions");
+    expect(
+      bottomActions?.classList.contains("sb-sidebar-bottom-actions-collapsed")
+    ).toBe(false);
+    expect(container.textContent).toContain("Settings Page");
+  });
 });

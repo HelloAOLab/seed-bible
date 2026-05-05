@@ -915,7 +915,7 @@ export function Sidebar(props: SidebarProps) {
   const isSettingsOpen = sidebar.isSettingsOpen.value;
   const isCollapsed = sidebar.isSidebarCollapsed.value;
   const isMobileOpen = sidebar.isMobileOpen.value;
-  const effectivelyCollapsed = isCollapsed && !isMobileOpen;
+  const effectivelyCollapsed = isCollapsed && !isMobileOpen && !isSettingsOpen;
   const isLayoutMenuOpen = useSignal(false);
   const joinSessionId = useSignal("");
 
