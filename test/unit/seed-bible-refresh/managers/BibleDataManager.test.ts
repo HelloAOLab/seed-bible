@@ -231,4 +231,35 @@ describe("createBibleDataManager", () => {
       makeEndpointUrl(ALT_ENDPOINT, "api/NIV/MAT/1.json")
     );
   });
+
+  it("buildTranslationId() returns the raw translation ID for default-endpoint translations", async () => {
+    const responses: WebResponseMap = {
+      [makeEndpointUrl(
+        EXAMPLE_API_ENDPOINT,
+        "api/available_translations.json"
+      )]: createResponse(translations),
+    };
+
+    setWebResponses(responses);
+    const manager = createManager();
+    await manager.getTranslations();
+
+    expect(manager.buildTranslationId("NIV")).toBe("NIV");
+  });
+
+  it("buildTranslationId() returns a books.json URL for non-default-endpoint translations", async () => {
+    const altNiv = createAltNivTranslation();
+    const responses: WebResponseMap = {
+      [makeEndpointUrl(ALT_ENDPOINT, "api/available_translations.json")]:
+        createResponse({ translations: [altNiv] }),
+    };
+
+    setWebResponses(responses);
+    const manager = createManager();
+    await manager.getTranslations(ALT_ENDPOINT);
+
+    expect(manager.buildTranslationId("NIV")).toBe(
+      makeEndpointUrl(ALT_ENDPOINT, "api/NIV/books.json")
+    );
+  });
 });
