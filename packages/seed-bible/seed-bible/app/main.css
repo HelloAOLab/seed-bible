@@ -1651,6 +1651,12 @@ h6 {
   justify-content: space-between;
 }
 
+.sb-sidebar-bottom-actions-collapsed {
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .sb-sidebar-top-row {
   display: flex;
   align-items: center;

@@ -380,7 +380,7 @@ export function TabsHeader(props: TabsHeaderProps) {
       </button>
 
       <div className="sb-sidebar-top-actions">
-        {panelsEnabled && (
+        {panelsEnabled && !effectivelyCollapsed && (
           <div className="sb-pane-layout-anchor">
             <button
               onClick={toggleLayoutMenu}
@@ -981,7 +981,11 @@ export function Sidebar(props: SidebarProps) {
           <Tabs state={state} closeLayoutMenu={closeLayoutMenu} />
         ))}
 
-      <div className="sb-sidebar-bottom-actions">
+      <div
+        className={`sb-sidebar-bottom-actions${
+          effectivelyCollapsed ? " sb-sidebar-bottom-actions-collapsed" : ""
+        }`}
+      >
         <button
           onClick={sidebar.openSettings}
           className={`sb-sidebar-icon-button${
