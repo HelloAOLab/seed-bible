@@ -1642,6 +1642,10 @@ h6 {
 .sb-tabs-sidebar-collapsed {
   width: 56px;
   padding: 10px 8px 16px;
+
+  .sb-sidebar-top-row {
+    justify-content: center;
+  }
 }
 
 .sb-sidebar-bottom-actions {
@@ -1654,7 +1658,7 @@ h6 {
 .sb-sidebar-bottom-actions-collapsed {
   flex-direction: column;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 12px;
 }
 
 .sb-sidebar-top-row {
