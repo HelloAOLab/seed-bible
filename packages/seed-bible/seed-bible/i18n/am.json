@@ -2,7 +2,7 @@
   "allBooks": "ሁሉም መጽሐፍት",
   "new-testament": "አዲስ ኪዳን",
   "old-testament": "የብሉይ ኪዳን",
-  "searchBook": "መጽሐፍ ፈልግ...",
+
   "settings": "ቅንብሮች",
   "open-books": "ክፍት መጽሐፍት",
   "side-menu": "የጎን ምናሌ",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "እያጋራ ነው — ለመቀላቀል ጠቅ ያድርጉ",
   "dismiss": "አሰናብት",
   "open-chapter": "ምዕራፍ ክፈት",
-  "open-in-pane": "በፓነል ውስጥ ክፈት፦",
-  "empty": "ባዶ",
-  "pane_number": "ፓኔ {{number}}",
+
   "tanakh": "ታናክ",
   "traditional": "ባህላዊ",
   "no-chapter-content-found": "የምዕራፍ ይዘት አልተገኘም።",
@@ -71,8 +69,7 @@
   "exit-full-screen": "ከሙሉ ማያ ገጽ ይውጡ",
   "themes": "ገጽታዎች",
   "page-settings": "የገጽ ቅንብሮች",
-  "theme-and-text": "ገጽታ እና ጽሑፍ",
-  "theme-and-text-description": "አንድ ጭብጥ ምረጥና የቅዱሳት መጻሕፍትን ንባብ ተሞክሮ ያስተካክሉ።",
+
   "display-and-theme": "ማሳያ እና ገጽታ",
   "display-and-theme-description": "አንድ ጭብጥ ይምረጡና የቅዱሳት መጻሕፍትና የተጠቃሚ በይነገጽ እንዴት እንደሚታዩ ያስተካክሉ።",
   "scripture-settings": "የቅዱሳት መጻሕፍት ቅንብሮች",
@@ -106,7 +103,7 @@
   "show-selected-items": "የተመረጡትን ንጥሎች አሳይ",
   "show-highlight-colors": "የድምቀት ቀለሞችን አሳይ",
   "show-icon-text": "የአዶ ጽሑፍ አሳይ",
-  "general-settings": "አጠቃላይ ቅንብሮች",
+
   "toolbar": "የመሳሪያ አሞሌ",
   "extensions": "ቅጥያዎች",
   "display": "ማሳያ",
@@ -126,7 +123,7 @@
   "session-options": "የክፍለ ጊዜ አማራጮች",
   "select-pane-layout": "የፓነል አቀማመጥ ይምረጡ",
   "pane-layout": "የፓነል አቀማመጥ",
-  "back-to-settings": "ወደ ቅንብሮች ተመለስ",
+
   "back": "ተመለስ",
   "selected": "ተመርጧል",
   "decrease-scripture-font-size": "የቅዱሳት መጻሕፍት ቅርጸ-ቁምፊ መጠንን ቀንስ",

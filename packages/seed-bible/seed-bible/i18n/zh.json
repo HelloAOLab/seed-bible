@@ -2,7 +2,7 @@
   "allBooks": "所有书籍",
   "new-testament": "新约",
   "old-testament": "旧约",
-  "searchBook": "搜索书籍...",
+
   "settings": "设置",
   "open-books": "打开的书",
   "side-menu": "侧边菜单",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "正在分享——点击加入",
   "dismiss": "解雇",
   "open-chapter": "打开章节",
-  "open-in-pane": "在窗格中打开：",
-  "empty": "空的",
-  "pane_number": "窗格{{number}}",
+
   "tanakh": "塔纳赫",
   "traditional": "传统的",
   "no-chapter-content-found": "未找到章节内容。",
@@ -71,8 +69,7 @@
   "exit-full-screen": "退出全屏模式",
   "themes": "主题",
   "page-settings": "页面设置",
-  "theme-and-text": "主题和文本",
-  "theme-and-text-description": "选择一个主题，并调整你的读经体验。",
+
   "display-and-theme": "显示与主题",
   "display-and-theme-description": "选择一个主题，并调整经文与界面的显示方式。",
   "scripture-settings": "经文背景",
@@ -106,7 +103,7 @@
   "show-selected-items": "显示所选项目",
   "show-highlight-colors": "显示高亮颜色",
   "show-icon-text": "显示图标文本",
-  "general-settings": "常规设置",
+
   "toolbar": "工具栏",
   "extensions": "扩展",
   "display": "展示",
@@ -126,7 +123,7 @@
   "session-options": "会话选项",
   "select-pane-layout": "选择窗格布局",
   "pane-layout": "窗格布局",
-  "back-to-settings": "返回设置",
+
   "back": "后退",
   "selected": "已选",
   "decrease-scripture-font-size": "减小经文字体大小",

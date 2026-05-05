@@ -2,7 +2,7 @@
   "allBooks": "すべての書籍",
   "new-testament": "新約聖書",
   "old-testament": "旧約聖書",
-  "searchBook": "書籍を検索...",
+
   "settings": "設定",
   "open-books": "オープンブック",
   "side-menu": "サイドメニュー",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "共有中 — クリックして参加",
   "dismiss": "却下する",
   "open-chapter": "オープンチャプター",
-  "open-in-pane": "ペインで開く:",
-  "empty": "空の",
-  "pane_number": "ペイン{{number}}",
+
   "tanakh": "タナハ",
   "traditional": "伝統的",
   "no-chapter-content-found": "章の内容が見つかりませんでした。",
@@ -71,8 +69,7 @@
   "exit-full-screen": "全画面表示を終了する",
   "themes": "テーマ",
   "page-settings": "ページ設定",
-  "theme-and-text": "テーマとテキスト",
-  "theme-and-text-description": "テーマを選んで、聖書朗読体験を自分好みにアレンジしましょう。",
+
   "display-and-theme": "表示とテーマ",
   "display-and-theme-description": "テーマを選び、聖書とUIの表示方法を調整しましょう。",
   "scripture-settings": "聖書の場面設定",
@@ -106,7 +103,7 @@
   "show-selected-items": "選択したアイテムを表示する",
   "show-highlight-colors": "ハイライトカラーを表示する",
   "show-icon-text": "アイコンテキストを表示",
-  "general-settings": "一般設定",
+
   "toolbar": "ツールバー",
   "extensions": "拡張機能",
   "display": "画面",
@@ -126,7 +123,7 @@
   "session-options": "セッションオプション",
   "select-pane-layout": "ペインのレイアウトを選択",
   "pane-layout": "ペインレイアウト",
-  "back-to-settings": "設定に戻る",
+
   "back": "戻る",
   "selected": "選ばれた",
   "decrease-scripture-font-size": "聖書のフォントサイズを小さくする",

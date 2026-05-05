@@ -2,7 +2,7 @@
   "allBooks": "Vitabu vyote",
   "new-testament": "Agano Jipya",
   "old-testament": "Agano la Kale",
-  "searchBook": "Tafuta kitabu...",
+
   "settings": "Mipangilio",
   "open-books": "Vitabu Vilivyofunguliwa",
   "side-menu": "Menyu ya pembeni",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "inashiriki — bofya ili kujiunga",
   "dismiss": "Ondoa",
   "open-chapter": "Fungua sura",
-  "open-in-pane": "Fungua kwenye kidirisha:",
-  "empty": "tupu",
-  "pane_number": "Kidirisha {{number}}",
+
   "tanakh": "Tanakh",
   "traditional": "Jadi",
   "no-chapter-content-found": "Hakuna maudhui ya sura yaliyopatikana.",
@@ -71,8 +69,7 @@
   "exit-full-screen": "Toka kwenye Skrini Nzima",
   "themes": "Mandhari",
   "page-settings": "Mipangilio ya ukurasa",
-  "theme-and-text": "Mandhari na Maandishi",
-  "theme-and-text-description": "Chagua mada na urekebishe uzoefu wa usomaji wa Maandiko.",
+
   "display-and-theme": "Onyesho na Mandhari",
   "display-and-theme-description": "Chagua mandhari na urekebishe jinsi Maandiko na kiolesura vinavyoonyeshwa.",
   "scripture-settings": "Mipangilio ya Maandiko",
@@ -106,7 +103,7 @@
   "show-selected-items": "Onyesha vipengee vilivyochaguliwa",
   "show-highlight-colors": "Onyesha rangi zinazoangazia",
   "show-icon-text": "Onyesha maandishi ya aikoni",
-  "general-settings": "Mipangilio ya jumla",
+
   "toolbar": "Upau wa vidhibiti",
   "extensions": "Viendelezi",
   "display": "Onyesho",
@@ -126,7 +123,7 @@
   "session-options": "Chaguo za kipindi",
   "select-pane-layout": "Chagua mpangilio wa kidirisha",
   "pane-layout": "Mpangilio wa kidirisha",
-  "back-to-settings": "Rudi kwenye mipangilio",
+
   "back": "Rudi",
   "selected": "Imechaguliwa",
   "decrease-scripture-font-size": "Punguza ukubwa wa fonti ya maandiko",

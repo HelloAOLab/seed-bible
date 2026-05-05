@@ -2,7 +2,7 @@
   "allBooks": "Tất cả các cuốn sách",
   "new-testament": "Tân Ước",
   "old-testament": "Cựu Ước",
-  "searchBook": "Tìm kiếm sách...",
+
   "settings": "Cài đặt",
   "open-books": "Sách mở",
   "side-menu": "Thực đơn phụ",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "đang chia sẻ — nhấp để tham gia",
   "dismiss": "Miễn nhiệm",
   "open-chapter": "Mở chương",
-  "open-in-pane": "Mở trong cửa sổ:",
-  "empty": "trống",
-  "pane_number": "Ô {{number}}",
+
   "tanakh": "Tanakh",
   "traditional": "Truyền thống",
   "no-chapter-content-found": "Không tìm thấy nội dung chương nào.",
@@ -71,8 +69,7 @@
   "exit-full-screen": "Thoát chế độ toàn màn hình",
   "themes": "Chủ đề",
   "page-settings": "Cài đặt trang",
-  "theme-and-text": "Chủ đề và Văn bản",
-  "theme-and-text-description": "Hãy chọn một chủ đề và điều chỉnh trải nghiệm đọc Kinh Thánh cho phù hợp.",
+
   "display-and-theme": "Hiển thị và Chủ đề",
   "display-and-theme-description": "Hãy chọn một chủ đề và điều chỉnh cách hiển thị Kinh Thánh và giao diện.",
   "scripture-settings": "Các bối cảnh Kinh Thánh",
@@ -106,7 +103,7 @@
   "show-selected-items": "Hiển thị các mục đã chọn",
   "show-highlight-colors": "Hiển thị màu sắc nổi bật",
   "show-icon-text": "Hiển thị văn bản biểu tượng",
-  "general-settings": "Cài đặt chung",
+
   "toolbar": "Thanh công cụ",
   "extensions": "Phần mở rộng",
   "display": "Trưng bày",
@@ -126,7 +123,7 @@
   "session-options": "Tùy chọn phiên",
   "select-pane-layout": "Chọn bố cục khung",
   "pane-layout": "Bố cục khung",
-  "back-to-settings": "Quay lại cài đặt",
+
   "back": "Mặt sau",
   "selected": "Đã chọn",
   "decrease-scripture-font-size": "Giảm kích thước phông chữ kinh thánh.",

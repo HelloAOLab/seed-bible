@@ -2,7 +2,7 @@
   "allBooks": "Tous les livres",
   "new-testament": "le Nouveau Testament",
   "old-testament": "Ancien Testament",
-  "searchBook": "Rechercher dans le livre...",
+
   "settings": "Paramètres",
   "open-books": "Livres ouverts",
   "side-menu": "Menu d'accompagnement",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "partage — cliquez pour rejoindre",
   "dismiss": "Rejeter",
   "open-chapter": "Ouvrir le chapitre",
-  "open-in-pane": "Ouvrir dans un volet :",
-  "empty": "vide",
-  "pane_number": "Volet {{number}}",
+
   "tanakh": "Tanakh",
   "traditional": "Traditionnel",
   "no-chapter-content-found": "Aucun contenu de chapitre trouvé.",
@@ -71,8 +69,7 @@
   "exit-full-screen": "Quitter le mode plein écran",
   "themes": "Thèmes",
   "page-settings": "Paramètres de la page",
-  "theme-and-text": "Thème et texte",
-  "theme-and-text-description": "Choisissez un thème et personnalisez votre expérience de lecture des Écritures.",
+
   "display-and-theme": "Affichage et thème",
   "display-and-theme-description": "Choisissez un thème et ajustez l'affichage des Écritures et de l'interface.",
   "scripture-settings": "Paramètres des Écritures",
@@ -106,7 +103,7 @@
   "show-selected-items": "Afficher les éléments sélectionnés",
   "show-highlight-colors": "Afficher les couleurs de surbrillance",
   "show-icon-text": "Afficher le texte de l'icône",
-  "general-settings": "Paramètres généraux",
+
   "toolbar": "barre d'outils",
   "extensions": "Extensions",
   "display": "Afficher",
@@ -126,7 +123,7 @@
   "session-options": "Options de session",
   "select-pane-layout": "Sélectionner la disposition du volet",
   "pane-layout": "Disposition des volets",
-  "back-to-settings": "Retour aux paramètres",
+
   "back": "Dos",
   "selected": "Choisi",
   "decrease-scripture-font-size": "Réduire la taille de la police des Écritures",

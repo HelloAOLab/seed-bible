@@ -2,7 +2,7 @@
   "allBooks": "جميع الكتب",
   "new-testament": "العهد الجديد",
   "old-testament": "العهد القديم",
-  "searchBook": "ابحث في الكتاب...",
+
   "settings": "إعدادات",
   "open-books": "الكتب المفتوحة",
   "side-menu": "قائمة جانبية",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "المشاركة متاحة — انقر للانضمام",
   "dismiss": "رفض",
   "open-chapter": "الفصل المفتوح",
-  "open-in-pane": "افتح في جزء:",
-  "empty": "فارغ",
-  "pane_number": "اللوحة {{number}}",
+
   "tanakh": "التناخ",
   "traditional": "تقليدي",
   "no-chapter-content-found": "لم يتم العثور على محتوى الفصل.",
@@ -71,8 +69,7 @@
   "exit-full-screen": "الخروج من وضع ملء الشاشة",
   "themes": "المواضيع",
   "page-settings": "إعدادات الصفحة",
-  "theme-and-text": "الموضوع والنص",
-  "theme-and-text-description": "اختر موضوعًا وقم بضبط تجربة قراءة الكتاب المقدس.",
+
   "display-and-theme": "العرض والموضوع",
   "display-and-theme-description": "اختر موضوعًا واضبط طريقة عرض الكتاب المقدس وواجهة المستخدم.",
   "scripture-settings": "إعدادات الكتاب المقدس",
@@ -106,7 +103,7 @@
   "show-selected-items": "عرض العناصر المختارة",
   "show-highlight-colors": "إظهار ألوان التمييز",
   "show-icon-text": "عرض نص الأيقونة",
-  "general-settings": "الإعدادات العامة",
+
   "toolbar": "شريط الأدوات",
   "extensions": "الإضافات",
   "display": "عرض",
@@ -126,7 +123,7 @@
   "session-options": "خيارات الجلسة",
   "select-pane-layout": "تحديد تخطيط اللوحة",
   "pane-layout": "تخطيط اللوحة",
-  "back-to-settings": "العودة إلى الإعدادات",
+
   "back": "خلف",
   "selected": "مختار",
   "decrease-scripture-font-size": "قلل حجم خط النص المقدس",

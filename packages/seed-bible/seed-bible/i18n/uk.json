@@ -2,7 +2,7 @@
   "allBooks": "Усі книги",
   "new-testament": "Новий Завіт",
   "old-testament": "Старий Завіт",
-  "searchBook": "Пошук книги...",
+
   "settings": "Налаштування",
   "open-books": "Відкриті книги",
   "side-menu": "Бічне меню",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "ділиться — натисніть, щоб приєднатися",
   "dismiss": "Відхилити",
   "open-chapter": "Відкрити розділ",
-  "open-in-pane": "Відкрити в панелі:",
-  "empty": "порожній",
-  "pane_number": "Панель {{number}}",
+
   "tanakh": "Танах",
   "traditional": "Традиційний",
   "no-chapter-content-found": "Вміст розділу не знайдено.",
@@ -71,8 +69,7 @@
   "exit-full-screen": "Вийти з повноекранного режиму",
   "themes": "Теми",
   "page-settings": "Налаштування сторінки",
-  "theme-and-text": "Тема та текст",
-  "theme-and-text-description": "Оберіть тему та налаштуйте процес читання Святого Письма.",
+
   "display-and-theme": "Відображення та тема",
   "display-and-theme-description": "Оберіть тему та налаштуйте, як відображаються Святе Письмо та інтерфейс.",
   "scripture-settings": "Оздоблення Писання",
@@ -106,7 +103,7 @@
   "show-selected-items": "Показати вибрані елементи",
   "show-highlight-colors": "Показати кольори виділення",
   "show-icon-text": "Показати текст значка",
-  "general-settings": "Загальні налаштування",
+
   "toolbar": "Панель інструментів",
   "extensions": "Розширення",
   "display": "Дисплей",
@@ -126,7 +123,7 @@
   "session-options": "Варіанти сеансу",
   "select-pane-layout": "Вибрати макет панелі",
   "pane-layout": "Макет панелі",
-  "back-to-settings": "Назад до налаштувань",
+
   "back": "Назад",
   "selected": "Вибрано",
   "decrease-scripture-font-size": "Зменшити розмір шрифту Писання",

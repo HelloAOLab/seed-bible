@@ -2,7 +2,7 @@
   "allBooks": "ኩሎም መጻሕፍቲ",
   "new-testament": "ሓድሽ ኪዳን",
   "old-testament": "ብሉይ ኪዳን",
-  "searchBook": "መጽሓፍ ምድላይ...",
+
   "settings": "ቅጥዕታት",
   "open-books": "ክፉት መጻሕፍቲ",
   "side-menu": "ጎናዊ ዝርዝር መግቢ",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "is sharing — ንምጽንባር ጠውቑ",
   "dismiss": "ምስንባት",
   "open-chapter": "ክፉት ምዕራፍ",
-  "open-in-pane": "ኣብ ፓነል ክፈት፤",
-  "empty": "ባዶ",
-  "pane_number": "ፓነል {{number}}",
+
   "tanakh": "ታናክ",
   "traditional": "ባህላዊ",
   "no-chapter-content-found": "ትሕዝቶ ምዕራፍ ኣይተረኽበን።",
@@ -71,8 +69,7 @@
   "exit-full-screen": "ካብ ምሉእ ስክሪን ውጻእ",
   "themes": "ቴማታት",
   "page-settings": "ቅጥዕታት ገጽ",
-  "theme-and-text": "ቴማን ጽሑፍን",
-  "theme-and-text-description": "ቴማ ምረጽ እሞ ነቲ ናይ ቅዱሳት መጻሕፍቲ ምንባብ ተመክሮ ኣቃንዮ።",
+
   "display-and-theme": "ኣጫውትን ቴማን",
   "display-and-theme-description": "ቴማ ምረጽ እሞ ቅዱሳት መጻሕፍትን ናይ ተጠቃሚ መርበብን ብኸመይ ከም ዝረኣዩ ኣቃንዮ።",
   "scripture-settings": "ቅዱሳት መጻሕፍቲ ቅጥዕታት",
@@ -106,7 +103,7 @@
   "show-selected-items": "ዝተመርጹ ነገራት ኣርእዩ",
   "show-highlight-colors": "ናይ ምድማቕ ሕብርታት ኣርእዩ",
   "show-icon-text": "ናይ ምልክት ጽሑፍ ኣርእዩ",
-  "general-settings": "ሓፈሻዊ ቅጥዕታት",
+
   "toolbar": "ቱልባር",
   "extensions": "መናውሒታት",
   "display": "ኣጫውት",
@@ -126,7 +123,7 @@
   "session-options": "ናይ ክፍለ ግዜ ኣማራጺታት",
   "select-pane-layout": "ኣቀማምጣ መስኮት ምረጽ",
   "pane-layout": "ኣቀማምጣ ፓነል",
-  "back-to-settings": "ናብ ቅጥዕታት ንመለስ",
+
   "back": "ዝባን",
   "selected": "ተመሪጹ",
   "decrease-scripture-font-size": "ስፍሓት ቅርጺ ጽሑፍ ቅዱሳት መጻሕፍቲ ምጉዳል",

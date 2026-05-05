@@ -2,7 +2,7 @@
   "allBooks": "Бүх ном",
   "new-testament": "Шинэ Гэрээ",
   "old-testament": "Хуучин Гэрээ",
-  "searchBook": "Ном хайх...",
+
   "settings": "Тохиргоо",
   "open-books": "Нээлттэй номууд",
   "side-menu": "Хажуугийн цэс",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "хуваалцаж байна — нэгдэхийн тулд дарна уу",
   "dismiss": "Хаах",
   "open-chapter": "Бүлгийг нээх",
-  "open-in-pane": "Цонхонд нээх:",
-  "empty": "хоосон",
-  "pane_number": "{{number}} самбар",
+
   "tanakh": "Танах",
   "traditional": "Уламжлалт",
   "no-chapter-content-found": "Бүлгийн агуулга олдсонгүй.",
@@ -71,8 +69,7 @@
   "exit-full-screen": "Бүтэн дэлгэцээс гарах",
   "themes": "Сэдэвүүд",
   "page-settings": "Хуудасны тохиргоо",
-  "theme-and-text": "Сэдэв ба текст",
-  "theme-and-text-description": "Сэдэв сонгоод, Судрын унших туршлагыг тохируул.",
+
   "display-and-theme": "Дэлгэц ба сэдэв",
   "display-and-theme-description": "Сэдэв сонгоод, Судар болон хэрэглэгчийн интерфэйс хэрхэн харагдахыг тохируул.",
   "scripture-settings": "Судрын тохиргоо",
@@ -106,7 +103,7 @@
   "show-selected-items": "Сонгосон зүйлсийг харуулах",
   "show-highlight-colors": "Тодруулсан өнгийг харуулах",
   "show-icon-text": "Дүрсний текстийг харуулах",
-  "general-settings": "Ерөнхий тохиргоо",
+
   "toolbar": "Хэрэгслийн самбар",
   "extensions": "Өргөтгөлүүд",
   "display": "Дэлгэц",
@@ -126,7 +123,7 @@
   "session-options": "Хуралдааны сонголтууд",
   "select-pane-layout": "Панелийн загварыг сонгох",
   "pane-layout": "Панелын зохион байгуулалт",
-  "back-to-settings": "Тохиргоо руу буцах",
+
   "back": "Буцах",
   "selected": "Сонгогдсон",
   "decrease-scripture-font-size": "Судрын фонтын хэмжээг багасгах",

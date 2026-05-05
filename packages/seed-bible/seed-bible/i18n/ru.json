@@ -2,7 +2,7 @@
   "allBooks": "Все книги",
   "new-testament": "Новый Завет",
   "old-testament": "Ветхий Завет",
-  "searchBook": "Поиск книги...",
+
   "settings": "Настройки",
   "open-books": "Открытые книги",
   "side-menu": "Боковое меню",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "Делитесь информацией — нажмите, чтобы присоединиться",
   "dismiss": "Увольнять",
   "open-chapter": "Открыть главу",
-  "open-in-pane": "Открыть в панели:",
-  "empty": "пустой",
-  "pane_number": "Панель {{number}}",
+
   "tanakh": "Танах",
   "traditional": "Традиционный",
   "no-chapter-content-found": "Содержание главы не найдено.",
@@ -71,8 +69,7 @@
   "exit-full-screen": "Выйти из полноэкранного режима",
   "themes": "Темы",
   "page-settings": "Настройки страницы",
-  "theme-and-text": "Тема и текст",
-  "theme-and-text-description": "Выберите тему и настройте процесс чтения Священного Писания под себя.",
+
   "display-and-theme": "Отображение и тема",
   "display-and-theme-description": "Выберите тему и настройте отображение Священного Писания и интерфейса.",
   "scripture-settings": "Священное Писание на основе текстов",
@@ -106,7 +103,7 @@
   "show-selected-items": "Показать выбранные элементы",
   "show-highlight-colors": "Показать цвета выделения",
   "show-icon-text": "Показать текст значка",
-  "general-settings": "Общие настройки",
+
   "toolbar": "Панель инструментов",
   "extensions": "Расширения",
   "display": "Отображать",
@@ -126,7 +123,7 @@
   "session-options": "Варианты сессии",
   "select-pane-layout": "Выберите расположение панелей",
   "pane-layout": "Расположение панелей",
-  "back-to-settings": "Вернуться к настройкам",
+
   "back": "Назад",
   "selected": "Избранные",
   "decrease-scripture-font-size": "Уменьшите размер шрифта Священного Писания.",

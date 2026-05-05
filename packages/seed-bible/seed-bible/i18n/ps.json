@@ -2,7 +2,7 @@
   "allBooks": "ټول کتابونه",
   "new-testament": "نوی عهد نامه",
   "old-testament": "زوړ عهد نامه",
-  "searchBook": "د کتاب لټون...",
+
   "settings": "امستنې",
   "open-books": "کتابونه خلاص کړئ",
   "side-menu": "د غاړې مینو",
@@ -60,9 +60,7 @@
   "shared-session-click-to-join": "شریکول کیږي — د یوځای کیدو لپاره کلیک وکړئ",
   "dismiss": "رد کړئ",
   "open-chapter": "فصل خلاص کړئ",
-  "open-in-pane": "په پین ​​کې خلاص کړئ:",
-  "empty": "خالي",
-  "pane_number": "پین {{number}}",
+
   "tanakh": "تاناخ",
   "traditional": "دودیز",
   "no-chapter-content-found": "د فصل منځپانګه ونه موندل شوه.",
@@ -71,8 +69,7 @@
   "exit-full-screen": "له بشپړ سکرین څخه ووځئ",
   "themes": "موضوعات",
   "page-settings": "د پاڼې تنظیمات",
-  "theme-and-text": "موضوع او متن",
-  "theme-and-text-description": "یوه موضوع غوره کړئ او د کتاب لوستلو تجربه تنظیم کړئ.",
+
   "display-and-theme": "ښودنه او موضوع",
   "display-and-theme-description": "یوه موضوع غوره کړئ او د کلام پاک او کارن انټرفیس د ښودلو طریقه تنظیم کړئ.",
   "scripture-settings": "د کلام پاک ترتیبات",
@@ -106,7 +103,7 @@
   "show-selected-items": "غوره شوي توکي وښایاست",
   "show-highlight-colors": "د روښانه کولو رنګونه وښایاست",
   "show-icon-text": "د آیکون متن ښکاره کړئ",
-  "general-settings": "عمومي ترتیبات",
+
   "toolbar": "ټولبار",
   "extensions": "پراخونې",
   "display": "ښودل",
@@ -126,7 +123,7 @@
   "session-options": "د ناستې انتخابونه",
   "select-pane-layout": "د پینل ترتیب غوره کړئ",
   "pane-layout": "د پین ترتیب",
-  "back-to-settings": "بیرته ترتیباتو ته",
+
   "back": "شاته",
   "selected": "غوره شوی",
   "decrease-scripture-font-size": "د متن د فونټ اندازه کمه کړئ",
