@@ -533,6 +533,16 @@ export function Tabs(props: TabsProps) {
             </button>
           );
         })}
+        <button
+          onClick={() => {
+            app.addTab();
+          }}
+          className="sb-tab-add-button sb-collapsed-tab-add-button"
+          aria-label={t("create-new-tab", { defaultValue: "Create new tab" })}
+          title={t("new-tab", { defaultValue: "New tab" })}
+        >
+          <span className="material-symbols-outlined">add</span>
+        </button>
       </div>
     );
   }
