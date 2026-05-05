@@ -928,6 +928,7 @@ describe("BibleReader", () => {
             showVerseNumbers: true,
             showFootnotes: true,
             showHighlights: true,
+            showRedLettering: true,
           }}
         />,
         container
@@ -951,6 +952,7 @@ describe("BibleReader", () => {
             showVerseNumbers: false,
             showFootnotes: true,
             showHighlights: true,
+            showRedLettering: true,
           }}
         />,
         container
@@ -985,6 +987,7 @@ describe("BibleReader", () => {
             showVerseNumbers: true,
             showFootnotes: false,
             showHighlights: true,
+            showRedLettering: true,
           }}
         />,
         container
@@ -1020,6 +1023,7 @@ describe("BibleReader", () => {
             showVerseNumbers: true,
             showFootnotes: true,
             showHighlights: false,
+            showRedLettering: true,
           }}
         />,
         container
