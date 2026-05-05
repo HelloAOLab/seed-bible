@@ -87,6 +87,25 @@ describe("Sidebar collapsed layout", () => {
     expect(container.querySelector(".sb-pane-layout-anchor")).toBeNull();
   });
 
+  it("shows compact tab tiles with only book ID and chapter when collapsed", async () => {
+    const state = await createState();
+    state.sidebar.isSidebarCollapsed.value = true;
+    state.sidebar.isMobileOpen.value = false;
+
+    act(() => {
+      render(<Sidebar state={state} />, container);
+    });
+
+    const collapsedTile = container.querySelector(
+      ".sb-collapsed-tab-tile"
+    ) as HTMLButtonElement | null;
+    expect(collapsedTile).not.toBeNull();
+    expect(collapsedTile?.textContent).toContain("GEN");
+    expect(collapsedTile?.textContent).toContain("1");
+    expect(container.textContent).not.toContain("Sidebar Search");
+    expect(container.querySelector(".sb-sidebar-tabs-header")).toBeNull();
+  });
+
   it("hides session options when sidebar is collapsed", async () => {
     const state = await createState();
     state.sidebar.isSidebarCollapsed.value = true;

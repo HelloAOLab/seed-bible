@@ -1849,6 +1849,48 @@ h6 {
   gap: 10px;
 }
 
+.sb-sidebar-collapsed-tab-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-collapsed-tab-tile {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: var(--sb-tab-border);
+  background: var(--sb-tab-background);
+  color: var(--sb-tab-font-color);
+  cursor: pointer;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.sb-collapsed-tab-tile-selected {
+  background: var(--sb-selected-tab-background);
+  color: var(--sb-selected-tab-font-color);
+  border: var(--sb-selected-tab-border);
+}
+
+.sb-collapsed-tab-book {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sb-collapsed-tab-chapter {
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
 .sb-sidebar-settings-view {
   display: flex;
   flex-direction: column;

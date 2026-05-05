@@ -28,6 +28,7 @@ interface SidebarProps {
 interface TabsProps {
   state: SeedBibleState;
   closeLayoutMenu: () => void;
+  effectivelyCollapsed: boolean;
 }
 
 interface TabsHeaderProps {
@@ -496,12 +497,45 @@ export function Settings(props: SettingsProps) {
 }
 
 export function Tabs(props: TabsProps) {
-  const { state, closeLayoutMenu } = props;
+  const { state, closeLayoutMenu, effectivelyCollapsed } = props;
   const { app, tabs: tabsManager } = state;
   const tabs = tabsManager.tabs.value;
   const selectedTabId = tabsManager.selectedTabId.value;
   const panelsEnabled = app.panelsEnabled.value;
   const { t } = useI18n();
+
+  if (effectivelyCollapsed) {
+    return (
+      <div className="sb-sidebar-collapsed-tab-list">
+        {tabs.map((tab) => {
+          const isSelected = tab.id === selectedTabId;
+          const bookId = tab.readingState.bookId.value ?? "-";
+          const bookName =
+            tab.readingState.chapterData.value?.book.name ?? bookId;
+          const chapter = tab.readingState.chapterNumber.value;
+
+          return (
+            <button
+              key={tab.id}
+              onClick={() => {
+                closeContextMenus();
+                closeLayoutMenu();
+                app.selectTab(tab.id);
+              }}
+              className={`sb-collapsed-tab-tile${
+                isSelected ? " sb-collapsed-tab-tile-selected" : ""
+              }`}
+              aria-label={`${bookName} ${chapter}`}
+              title={`${bookName} ${chapter}`}
+            >
+              <span className="sb-collapsed-tab-book">{bookId}</span>
+              <span className="sb-collapsed-tab-chapter">{chapter}</span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -882,7 +916,6 @@ export function Sidebar(props: SidebarProps) {
   const isCollapsed = sidebar.isSidebarCollapsed.value;
   const isMobileOpen = sidebar.isMobileOpen.value;
   const effectivelyCollapsed = isCollapsed && !isMobileOpen;
-  const shouldShowSidebarContent = !effectivelyCollapsed || isSettingsOpen;
   const isLayoutMenuOpen = useSignal(false);
   const joinSessionId = useSignal("");
 
@@ -980,12 +1013,15 @@ export function Sidebar(props: SidebarProps) {
         />
       )}
 
-      {shouldShowSidebarContent &&
-        (isSettingsOpen ? (
-          <Settings state={state} />
-        ) : (
-          <Tabs state={state} closeLayoutMenu={closeLayoutMenu} />
-        ))}
+      {isSettingsOpen ? (
+        <Settings state={state} />
+      ) : (
+        <Tabs
+          state={state}
+          closeLayoutMenu={closeLayoutMenu}
+          effectivelyCollapsed={effectivelyCollapsed}
+        />
+      )}
 
       <div
         className={`sb-sidebar-bottom-actions${
