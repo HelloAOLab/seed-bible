@@ -710,6 +710,45 @@ describe("BibleSelector translation selector", () => {
     expect(labels.some((l) => l?.includes("spanish"))).toBe(true);
   });
 
+  it("defaults to opening the language group that matches the language of the currently selected translation", async () => {
+    const { selectorState, bibleDataManager } = await createSelectorFixture();
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    // Set up two language groups; selected translation (AAB) has language "eng"
+    act(() => {
+      setAvailableTranslations(
+        [makeTranslation("AAB", "English"), makeTranslation("RVR", "Spanish")],
+        bibleDataManager
+      );
+      selectorState.showAllLanguages.value = "all";
+      selectorState.selectingTranslation.value = true;
+    });
+
+    await waitFor(() => Boolean(container.querySelector(".language-list")));
+
+    // The English group (matching selected translation's language) should be auto-expanded
+    const translationOptions = Array.from(
+      container.querySelectorAll(".translation-option")
+    );
+    const optionTexts = translationOptions.map(
+      (el) => el.textContent?.toLowerCase() ?? ""
+    );
+    expect(optionTexts.some((t) => t.includes("aab"))).toBe(true);
+    // The Spanish group should remain collapsed
+    expect(optionTexts.some((t) => t.includes("rvr"))).toBe(false);
+  });
+
   it("allows opening translation selector and searching translations by name", async () => {
     const { selectorState, bibleDataManager } = await createSelectorFixture();
 

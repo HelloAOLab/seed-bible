@@ -832,15 +832,13 @@ const LanguageComponent = (props: {
   }, [translations, selectedTranslation.value, showSig.value]);
 
   useEffect(() => {
-    const selectedLanguageKey =
-      selectedTranslation?.value?.language?.toLowerCase() ||
-      selectedTranslation?.value?.languageEnglishName?.toLowerCase();
+    const selectedLanguageCode = selectedTranslation?.value?.language;
 
     if (languageQuery.value.length > 0) {
       showSig.value = true;
     } else if (filteredApiTranslations.value.length === 1) {
       showSig.value = true;
-    } else if (selectedLanguageKey === language.toLowerCase()) {
+    } else if (selectedLanguageCode === language.toLowerCase()) {
       showSig.value = true;
     } else {
       showSig.value = false;
