@@ -120,7 +120,7 @@ const DEFAULT_TEXT_CONFIG: TextConfig = {
     font: "'Newsreader', serif",
     weight: "700",
     color: "",
-    marginVertical: 0,
+    marginVertical: 12,
     marginHorizontal: 0,
     bold: true,
     italic: false,
