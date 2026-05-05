@@ -18,6 +18,7 @@
     "check:aux": "tsx script/check.ts",
     "check:ts": "tsc-silent --project ./tsconfig.json --suppressConfig ./tsc-silent.config.cjs",
     "i18n": "tsx script/i18n.ts",
+    "list-bible-translations": "tsx script/list-bible-translations.ts",
     "format": "prettier --write \"packages/**/*.{js,jsx,ts,tsx,css}\"",
     "format:changed": "pretty-quick",
     "prepare": "husky",
