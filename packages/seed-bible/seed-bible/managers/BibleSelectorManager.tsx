@@ -513,6 +513,12 @@ export function createBibleSelectorState(
   const apocryphaAvailable = signal<boolean>(false);
 
   const defaultTranslations = signal<string[]>([
+    "eng",
+    "spa",
+    "arb",
+    "hin",
+    "heb",
+    "grc",
     "english",
     "spanish",
     "arabic",
@@ -521,14 +527,9 @@ export function createBibleSelectorState(
     "ancient greek",
   ]);
 
-  const apiTranslations = signal<Record<string, Record<string, Translation>>>({
-    english: {},
-    spanish: {},
-    arabic: {},
-    hindi: {},
-    hebrew: {},
-    "ancient greek": {},
-  });
+  const apiTranslations = signal<Record<string, Record<string, Translation>>>(
+    {}
+  );
 
   const allowedTranslationLimit = signal<number>(50);
 
@@ -689,10 +690,21 @@ export function createBibleSelectorState(
     const tr = selectedTranslation.value;
     const dtr = defaultTranslations.value;
     if (tr) {
+      const langCode = tr.language?.toLowerCase();
       const langName =
         tr.languageEnglishName?.toLowerCase() || tr.englishName.toLowerCase();
-      if (!dtr.includes(langName)) {
-        defaultTranslations.value = [...dtr, langName];
+      const nextDefaults = [...dtr];
+
+      if (langCode && !nextDefaults.includes(langCode)) {
+        nextDefaults.push(langCode);
+      }
+
+      if (!nextDefaults.includes(langName)) {
+        nextDefaults.push(langName);
+      }
+
+      if (nextDefaults.length !== dtr.length) {
+        defaultTranslations.value = nextDefaults;
       }
     }
   });
@@ -707,16 +719,17 @@ export function createBibleSelectorState(
     const translations = {} as Record<string, Record<string, Translation>>;
 
     normalized.forEach((translation: Translation) => {
-      const englishName =
+      const languageCode =
+        translation.language?.toLowerCase() ||
         translation.languageEnglishName?.toLowerCase() ||
         translation.englishName.toLowerCase();
       const shortName = translation.shortName.toLowerCase();
-      if (translations[englishName]) {
-        if (!translations[englishName][shortName]) {
-          translations[englishName][shortName] = translation;
+      if (translations[languageCode]) {
+        if (!translations[languageCode][shortName]) {
+          translations[languageCode][shortName] = translation;
         }
       } else {
-        translations[englishName] = { [shortName]: translation };
+        translations[languageCode] = { [shortName]: translation };
       }
     });
     apiTranslations.value = translations;
@@ -765,6 +778,8 @@ export function createBibleSelectorState(
     const selTr = selectedTranslation.value;
     const sal = showAllLanguages.value;
     const dtr = defaultTranslations.value;
+    const selectedLanguageCode = selTr?.language?.toLowerCase();
+    const selectedLanguageName = selTr?.languageEnglishName?.toLowerCase();
 
     const cloneTranslations = (
       translations: Record<string, Record<string, Translation>>
@@ -780,8 +795,17 @@ export function createBibleSelectorState(
 
       const next: Record<string, Record<string, Translation>> = {};
 
-      Object.entries(translations).forEach(([englishName, group]) => {
-        if (sal === "popular" && !dtr.includes(englishName)) {
+      Object.entries(translations).forEach(([languageCode, group]) => {
+        if (
+          sal === "popular" &&
+          !dtr.includes(languageCode) &&
+          !Object.values(group).some((translation) => {
+            const languageName =
+              translation.languageEnglishName?.toLowerCase() ||
+              translation.englishName.toLowerCase();
+            return dtr.includes(languageName);
+          })
+        ) {
           return;
         }
 
@@ -795,12 +819,12 @@ export function createBibleSelectorState(
             }
           });
           if (Object.keys(filteredGroup).length > 0) {
-            next[englishName] = filteredGroup;
+            next[languageCode] = filteredGroup;
           }
           return;
         }
 
-        next[englishName] = { ...group };
+        next[languageCode] = { ...group };
       });
 
       return next;
@@ -812,9 +836,21 @@ export function createBibleSelectorState(
     ): Record<string, Record<string, Translation>> => {
       const next: Record<string, Record<string, Translation>> = {};
 
-      Object.entries(translations).forEach(([englishName, group]) => {
-        if (englishName.includes(lowercaseQuery)) {
-          next[englishName] = { ...group };
+      Object.entries(translations).forEach(([languageCode, group]) => {
+        const languageMatch = Object.values(group).some((translation) => {
+          const languageEnglishName =
+            translation.languageEnglishName?.toLowerCase() ||
+            translation.englishName.toLowerCase();
+          const languageName = translation.languageName?.toLowerCase();
+
+          return (
+            languageEnglishName.includes(lowercaseQuery) ||
+            Boolean(languageName?.includes(lowercaseQuery))
+          );
+        });
+
+        if (languageCode.includes(lowercaseQuery) || languageMatch) {
+          next[languageCode] = { ...group };
           return;
         }
 
@@ -830,7 +866,7 @@ export function createBibleSelectorState(
         });
 
         if (Object.keys(matchedGroup).length > 0) {
-          next[englishName] = matchedGroup;
+          next[languageCode] = matchedGroup;
         }
       });
 
@@ -841,8 +877,8 @@ export function createBibleSelectorState(
       [a]: [string, Record<string, Translation>],
       [b]: [string, Record<string, Translation>]
     ): number => {
-      if (a === selTr?.languageEnglishName?.toLowerCase()) return -1;
-      if (b === selTr?.languageEnglishName?.toLowerCase()) return 1;
+      if (a === selectedLanguageCode || a === selectedLanguageName) return -1;
+      if (b === selectedLanguageCode || b === selectedLanguageName) return 1;
       return a.localeCompare(b);
     };
 

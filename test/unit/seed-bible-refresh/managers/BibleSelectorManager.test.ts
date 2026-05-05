@@ -1,5 +1,6 @@
 import { createBibleDataManager } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import {
   type BibleSelectorState,
@@ -18,6 +19,8 @@ import {
   makeExampleUrl,
   createResponse,
   translations,
+  bsbBooks,
+  makeChapter,
   nivBooks,
 } from "./testUtils/mockBibleApiData";
 
@@ -94,6 +97,31 @@ function getDisplayedBookIds(selector: BibleSelectorState): string[] {
     (book) => book.id
   );
   return [...oldTestament, ...newTestament];
+}
+
+function makeTranslationWithLanguage(props: {
+  id: string;
+  shortName: string;
+  language: string;
+  languageEnglishName: string;
+}): Translation {
+  const { id, shortName, language, languageEnglishName } = props;
+  return {
+    id,
+    name: `${id} Translation`,
+    englishName: `${id} Translation`,
+    languageEnglishName,
+    website: "https://example.com",
+    licenseUrl: "https://example.com/license",
+    shortName,
+    language,
+    textDirection: "ltr",
+    availableFormats: ["json"],
+    listOfBooksApiLink: `/api/${id}/books.json`,
+    numberOfBooks: 66,
+    totalNumberOfChapters: 1189,
+    totalNumberOfVerses: 31102,
+  };
 }
 
 async function createManagersWithSelectedPane(): Promise<{
@@ -331,6 +359,161 @@ describe("createBibleSelectorState", () => {
     );
     const newTabId = tabsManager.tabs.value.at(-1)!.id;
     expect(updatedOtherPane?.tab?.id).toBe(newTabId);
+  });
+
+  it("groups api translations by language code instead of language english name", async () => {
+    const aab = makeTranslationWithLanguage({
+      id: "AAB",
+      shortName: "AAB",
+      language: "eng",
+      languageEnglishName: "English",
+    });
+    const mid = makeTranslationWithLanguage({
+      id: "MID",
+      shortName: "MID",
+      language: "enm",
+      languageEnglishName: "English",
+    });
+    const rvr = makeTranslationWithLanguage({
+      id: "RVR",
+      shortName: "RVR",
+      language: "spa",
+      languageEnglishName: "Spanish",
+    });
+
+    setWebResponses({
+      [makeExampleUrl("/api/available_translations.json")]: createResponse({
+        translations: [aab, mid, rvr],
+      }),
+      [makeExampleUrl("/api/AAB/books.json")]: createResponse({
+        ...nivBooks,
+        translation: aab,
+      }),
+      [makeExampleUrl("/api/MID/books.json")]: createResponse({
+        ...nivBooks,
+        translation: mid,
+      }),
+      [makeExampleUrl("/api/RVR/books.json")]: createResponse({
+        ...nivBooks,
+        translation: rvr,
+      }),
+      [makeExampleUrl("/api/AAB/GEN/1.json")]: createResponse(
+        makeChapter(
+          {
+            ...bsbBooks,
+            translation: aab,
+          },
+          "GEN",
+          1
+        )
+      ),
+    });
+
+    const dataManager = createDataManager();
+    const tabsManager = createTabs(
+      dataManager,
+      createHighlightsManagerMock() as any
+    );
+    const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
+
+    const initialPane = panesManager.panes.value[0]!;
+    panesManager.openInPane(initialPane.id, { component: null });
+    const tablessPane = panesManager.panes.value[0]!;
+
+    const selector = createBibleSelectorState(
+      dataManager,
+      tabsManager,
+      panesManager
+    );
+    await selector.setOpen(true, tablessPane);
+
+    expect(Object.keys(selector.apiTranslations.value).sort()).toEqual([
+      "eng",
+      "enm",
+      "spa",
+    ]);
+    expect(selector.apiTranslations.value.english).toBeUndefined();
+
+    expect(
+      selector.filteredApiTranslations.value.map(([languageCode]) =>
+        languageCode.toLowerCase()
+      )
+    ).toEqual(["eng", "enm", "spa"]);
+  });
+
+  it("filters code-grouped translations when searching by language english name", async () => {
+    const aab = makeTranslationWithLanguage({
+      id: "AAB",
+      shortName: "AAB",
+      language: "eng",
+      languageEnglishName: "English",
+    });
+    const mid = makeTranslationWithLanguage({
+      id: "MID",
+      shortName: "MID",
+      language: "enm",
+      languageEnglishName: "English",
+    });
+    const rvr = makeTranslationWithLanguage({
+      id: "RVR",
+      shortName: "RVR",
+      language: "spa",
+      languageEnglishName: "Spanish",
+    });
+
+    setWebResponses({
+      [makeExampleUrl("/api/available_translations.json")]: createResponse({
+        translations: [aab, mid, rvr],
+      }),
+      [makeExampleUrl("/api/AAB/books.json")]: createResponse({
+        ...nivBooks,
+        translation: aab,
+      }),
+      [makeExampleUrl("/api/MID/books.json")]: createResponse({
+        ...nivBooks,
+        translation: mid,
+      }),
+      [makeExampleUrl("/api/RVR/books.json")]: createResponse({
+        ...nivBooks,
+        translation: rvr,
+      }),
+      [makeExampleUrl("/api/AAB/GEN/1.json")]: createResponse(
+        makeChapter(
+          {
+            ...bsbBooks,
+            translation: aab,
+          },
+          "GEN",
+          1
+        )
+      ),
+    });
+
+    const dataManager = createDataManager();
+    const tabsManager = createTabs(
+      dataManager,
+      createHighlightsManagerMock() as any
+    );
+    const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
+
+    const initialPane = panesManager.panes.value[0]!;
+    panesManager.openInPane(initialPane.id, { component: null });
+    const tablessPane = panesManager.panes.value[0]!;
+
+    const selector = createBibleSelectorState(
+      dataManager,
+      tabsManager,
+      panesManager
+    );
+    await selector.setOpen(true, tablessPane);
+
+    selector.languageQuery.value = "english";
+
+    expect(
+      selector.filteredApiTranslations.value.map(([languageCode]) =>
+        languageCode.toLowerCase()
+      )
+    ).toEqual(["eng", "enm"]);
   });
 
   describe("default translation ID (BSB) fallback behavior", () => {
