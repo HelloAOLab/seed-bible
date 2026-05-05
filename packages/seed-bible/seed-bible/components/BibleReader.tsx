@@ -363,7 +363,7 @@ function renderInlineContent(
             className={segment.className}
             style={segment.style}
           >
-            {" " + segment.text}
+            {(index > 0 ? " " : "") + segment.text}
           </span>
         ))}
       </span>
