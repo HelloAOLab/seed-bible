@@ -16,6 +16,13 @@ export interface SelectionUIBehavior {
   showIconText: boolean;
 }
 
+export interface ScriptureElementsBehavior {
+  showHeadings: boolean;
+  showVerseNumbers: boolean;
+  showFootnotes: boolean;
+  showHighlights: boolean;
+}
+
 export interface TextSectionConfig {
   font: string;
   weight: string;
@@ -46,6 +53,7 @@ export interface AppSettings {
   bookOrientation: BookOrientation;
   uiTextSize: UITextSize;
   selectionUI: SelectionUIBehavior;
+  scriptureElements: ScriptureElementsBehavior;
   textConfig: TextConfig;
   toolbar: ToolbarCustomization;
   keepScreenAwake: boolean;
@@ -63,6 +71,7 @@ export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
 const TAG_BOOK_ORIENTATION = "app.bookOrientation";
 const TAG_UI_TEXT_SIZE = "app.uiTextSize";
 const TAG_SELECTION_UI = "app.selectionUI";
+const TAG_SCRIPTURE_ELEMENTS = "app.scriptureElements";
 const TAG_TEXT_CONFIG = "app.textConfig";
 const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
@@ -74,6 +83,7 @@ const TAG_SCRIPTURE_MARGIN = "app.scriptureMargin";
 const PROFILE_BOOK_ORIENTATION = "bookOrientation";
 const PROFILE_UI_TEXT_SIZE = "uiTextSize";
 const PROFILE_SELECTION_UI = "selectionUI";
+const PROFILE_SCRIPTURE_ELEMENTS = "scriptureElements";
 const PROFILE_TEXT_CONFIG = "textConfig";
 const PROFILE_TOOLBAR = "toolbarConfig";
 const PROFILE_KEEP_AWAKE = "keepScreenAwake";
@@ -106,6 +116,13 @@ const DEFAULT_SELECTION_UI: SelectionUIBehavior = {
   showSelectedItems: true,
   showHighlightColors: true,
   showIconText: true,
+};
+
+const DEFAULT_SCRIPTURE_ELEMENTS: ScriptureElementsBehavior = {
+  showHeadings: true,
+  showVerseNumbers: true,
+  showFootnotes: true,
+  showHighlights: true,
 };
 
 /**
@@ -172,6 +189,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   bookOrientation: "traditional",
   uiTextSize: "M",
   selectionUI: DEFAULT_SELECTION_UI,
+  scriptureElements: DEFAULT_SCRIPTURE_ELEMENTS,
   textConfig: DEFAULT_TEXT_CONFIG,
   toolbar: DEFAULT_TOOLBAR_CONFIG,
   keepScreenAwake: false,
@@ -290,6 +308,42 @@ function parseSelectionUI(
       typeof obj.showIconText === "boolean"
         ? obj.showIconText
         : fallback.showIconText,
+  };
+}
+
+function parseScriptureElements(
+  value: unknown,
+  fallback: ScriptureElementsBehavior
+): ScriptureElementsBehavior {
+  let parsed: unknown = value;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return fallback;
+    }
+  }
+  if (!parsed || typeof parsed !== "object") {
+    return fallback;
+  }
+  const obj = parsed as Record<string, unknown>;
+  return {
+    showHeadings:
+      typeof obj.showHeadings === "boolean"
+        ? obj.showHeadings
+        : fallback.showHeadings,
+    showVerseNumbers:
+      typeof obj.showVerseNumbers === "boolean"
+        ? obj.showVerseNumbers
+        : fallback.showVerseNumbers,
+    showFootnotes:
+      typeof obj.showFootnotes === "boolean"
+        ? obj.showFootnotes
+        : fallback.showFootnotes,
+    showHighlights:
+      typeof obj.showHighlights === "boolean"
+        ? obj.showHighlights
+        : fallback.showHighlights,
   };
 }
 
@@ -424,6 +478,7 @@ export interface SettingsManager {
   setBookOrientation: (orientation: BookOrientation) => void;
   setUITextSize: (size: UITextSize) => void;
   setSelectionUI: (patch: Partial<SelectionUIBehavior>) => void;
+  setScriptureElements: (patch: Partial<ScriptureElementsBehavior>) => void;
   updateTextSection: (
     section: TextSectionId,
     patch: Partial<TextSectionConfig>
@@ -466,6 +521,11 @@ export function createSettings(login: LoginManager): SettingsManager {
         getProfileConfigValue(profile, PROFILE_SELECTION_UI) ??
           configBot.tags[TAG_SELECTION_UI],
         DEFAULT_SETTINGS.selectionUI
+      ),
+      scriptureElements: parseScriptureElements(
+        getProfileConfigValue(profile, PROFILE_SCRIPTURE_ELEMENTS) ??
+          configBot.tags[TAG_SCRIPTURE_ELEMENTS],
+        DEFAULT_SETTINGS.scriptureElements
       ),
       textConfig: parseTextConfig(
         getProfileConfigValue(profile, PROFILE_TEXT_CONFIG) ??
@@ -521,6 +581,7 @@ export function createSettings(login: LoginManager): SettingsManager {
       changedTags.includes(TAG_BOOK_ORIENTATION) ||
       changedTags.includes(TAG_UI_TEXT_SIZE) ||
       changedTags.includes(TAG_SELECTION_UI) ||
+      changedTags.includes(TAG_SCRIPTURE_ELEMENTS) ||
       changedTags.includes(TAG_TEXT_CONFIG) ||
       changedTags.includes(TAG_TOOLBAR) ||
       changedTags.includes(TAG_KEEP_AWAKE) ||
@@ -548,6 +609,13 @@ export function createSettings(login: LoginManager): SettingsManager {
     settings.value = { ...settings.value, selectionUI: next };
     configBot.tags[TAG_SELECTION_UI] = JSON.stringify(next);
     saveProfileConfigValue(login, PROFILE_SELECTION_UI, next);
+  };
+
+  const setScriptureElements = (patch: Partial<ScriptureElementsBehavior>) => {
+    const next = { ...settings.value.scriptureElements, ...patch };
+    settings.value = { ...settings.value, scriptureElements: next };
+    configBot.tags[TAG_SCRIPTURE_ELEMENTS] = JSON.stringify(next);
+    saveProfileConfigValue(login, PROFILE_SCRIPTURE_ELEMENTS, next);
   };
 
   const writeTextConfig = (next: TextConfig) => {
@@ -675,6 +743,9 @@ export function createSettings(login: LoginManager): SettingsManager {
     configBot.tags[TAG_SELECTION_UI] = JSON.stringify(
       DEFAULT_SETTINGS.selectionUI
     );
+    configBot.tags[TAG_SCRIPTURE_ELEMENTS] = JSON.stringify(
+      DEFAULT_SETTINGS.scriptureElements
+    );
     configBot.tags[TAG_TEXT_CONFIG] = "";
     configBot.tags[TAG_TOOLBAR] = "";
     configBot.tags[TAG_KEEP_AWAKE] = false;
@@ -694,6 +765,11 @@ export function createSettings(login: LoginManager): SettingsManager {
       login,
       PROFILE_SELECTION_UI,
       DEFAULT_SETTINGS.selectionUI
+    );
+    saveProfileConfigValue(
+      login,
+      PROFILE_SCRIPTURE_ELEMENTS,
+      DEFAULT_SETTINGS.scriptureElements
     );
     saveProfileConfigValue(
       login,
@@ -759,6 +835,7 @@ export function createSettings(login: LoginManager): SettingsManager {
     setBookOrientation,
     setUITextSize,
     setSelectionUI,
+    setScriptureElements,
     updateTextSection,
     setScriptureMargin,
     setVerseLineHeight,

@@ -687,7 +687,6 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
                     if (Number.isFinite(parsed)) setMargin(parsed);
                   }}
                 />
-                {/* eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content */}
                 <span className="sb-scripture-margins-unit">%</span>
               </div>
               <button
@@ -703,6 +702,89 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             </div>
           </>
         )}
+
+        <h3 className="sb-settings-subheading">
+          {t("scripture-elements", { defaultValue: "Scripture elements" })}
+        </h3>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-scripture-headings"
+          >
+            {t("show-headings", { defaultValue: "Show headings" })}
+          </label>
+          <input
+            id="sb-show-scripture-headings"
+            type="checkbox"
+            checked={current.scriptureElements.showHeadings}
+            onChange={(event: Event) => {
+              settings.setScriptureElements({
+                showHeadings: (event.currentTarget as HTMLInputElement).checked,
+              });
+            }}
+          />
+        </div>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-scripture-verse-numbers"
+          >
+            {t("show-verse-numbers", { defaultValue: "Show verse numbers" })}
+          </label>
+          <input
+            id="sb-show-scripture-verse-numbers"
+            type="checkbox"
+            checked={current.scriptureElements.showVerseNumbers}
+            onChange={(event: Event) => {
+              settings.setScriptureElements({
+                showVerseNumbers: (event.currentTarget as HTMLInputElement)
+                  .checked,
+              });
+            }}
+          />
+        </div>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-scripture-footnotes"
+          >
+            {t("show-footnotes", { defaultValue: "Show footnotes" })}
+          </label>
+          <input
+            id="sb-show-scripture-footnotes"
+            type="checkbox"
+            checked={current.scriptureElements.showFootnotes}
+            onChange={(event: Event) => {
+              settings.setScriptureElements({
+                showFootnotes: (event.currentTarget as HTMLInputElement)
+                  .checked,
+              });
+            }}
+          />
+        </div>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-scripture-highlights"
+          >
+            {t("show-highlights", { defaultValue: "Show highlights" })}
+          </label>
+          <input
+            id="sb-show-scripture-highlights"
+            type="checkbox"
+            checked={current.scriptureElements.showHighlights}
+            onChange={(event: Event) => {
+              settings.setScriptureElements({
+                showHighlights: (event.currentTarget as HTMLInputElement)
+                  .checked,
+              });
+            }}
+          />
+        </div>
 
         <h3 className="sb-settings-subheading">
           {t("display", { defaultValue: "Display" })}
