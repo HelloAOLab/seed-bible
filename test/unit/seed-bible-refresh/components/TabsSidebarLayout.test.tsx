@@ -87,6 +87,19 @@ describe("Sidebar collapsed layout", () => {
     expect(container.querySelector(".sb-pane-layout-anchor")).toBeNull();
   });
 
+  it("hides session options when sidebar is collapsed", async () => {
+    const state = await createState();
+    state.sidebar.isSidebarCollapsed.value = true;
+    state.sidebar.isMobileOpen.value = false;
+
+    act(() => {
+      render(<Sidebar state={state} />, container);
+    });
+
+    expect(container.textContent).not.toContain("New shared session");
+    expect(container.textContent).not.toContain("Join shared session");
+  });
+
   it("shows pane layout button when sidebar is expanded", async () => {
     const state = await createState();
     state.sidebar.isSidebarCollapsed.value = false;

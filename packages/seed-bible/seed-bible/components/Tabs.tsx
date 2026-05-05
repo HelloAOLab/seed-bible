@@ -426,29 +426,35 @@ export function TabsHeader(props: TabsHeaderProps) {
           </div>
         )}
 
-        <ContextMenuWithButton
-          onClick={() => {
-            closeContextMenus();
-          }}
-          buttonClassName="sb-sidebar-top-icon-button"
-          aria-label={t("session-options", { defaultValue: "Session options" })}
-          title={t("session-options", { defaultValue: "Session options" })}
-        >
-          <ContextMenuItem
+        {!effectivelyCollapsed && (
+          <ContextMenuWithButton
             onClick={() => {
-              createSharedSession();
+              closeContextMenus();
             }}
+            buttonClassName="sb-sidebar-top-icon-button"
+            aria-label={t("session-options", {
+              defaultValue: "Session options",
+            })}
+            title={t("session-options", { defaultValue: "Session options" })}
           >
-            {t("new-shared-session", { defaultValue: "New shared session" })}
-          </ContextMenuItem>
-          <ContextMenuItem
-            onClick={() => {
-              openJoinSessionModal();
-            }}
-          >
-            {t("join-shared-session", { defaultValue: "Join shared session" })}
-          </ContextMenuItem>
-        </ContextMenuWithButton>
+            <ContextMenuItem
+              onClick={() => {
+                createSharedSession();
+              }}
+            >
+              {t("new-shared-session", { defaultValue: "New shared session" })}
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => {
+                openJoinSessionModal();
+              }}
+            >
+              {t("join-shared-session", {
+                defaultValue: "Join shared session",
+              })}
+            </ContextMenuItem>
+          </ContextMenuWithButton>
+        )}
       </div>
 
       <button
