@@ -10,6 +10,8 @@ type WebResponse<T> = {
   data: Promise<T>;
 };
 
+type SortMode = "completeness" | "name";
+
 function parseArgValue(flag: string): string | null {
   const prefix = `${flag}=`;
   const arg = process.argv.find((value) => value.startsWith(prefix));
@@ -18,18 +20,36 @@ function parseArgValue(flag: string): string | null {
 
 function printUsage(): void {
   console.log(
-    "Usage: pnpm list-bible-translations [--language=<iso-639-3>] [--endpoint=<url>]"
+    "Usage: pnpm list-bible-translations [--language=<iso-639-3>] [--endpoint=<url>] [--sort=<completeness|name>]"
   );
   console.log("");
   console.log("Examples:");
   console.log("  pnpm list-bible-translations");
   console.log("  pnpm list-bible-translations --language=eng");
+  console.log("  pnpm list-bible-translations --sort=name");
   console.log(
     "  pnpm list-bible-translations --endpoint=https://bible.helloao.org/"
   );
 }
 
-function compareTranslations(a: Translation, b: Translation): number {
+function calculateCompleteness(translation: Translation): {
+  completenessByBooks: number;
+  completenessByChapters: number;
+} {
+  const totalBooks = 66; // Standard number of books in the Protestant Bible
+  const totalChapters = 1189;
+
+  const completenessByBooks = translation.numberOfBooks / totalBooks;
+  const completenessByChapters =
+    translation.totalNumberOfChapters / totalChapters;
+
+  return {
+    completenessByBooks,
+    completenessByChapters,
+  };
+}
+
+function compareTranslationsByName(a: Translation, b: Translation): number {
   const byEnglishLanguageName = (a.languageEnglishName ?? "").localeCompare(
     b.languageEnglishName ?? ""
   );
@@ -50,6 +70,44 @@ function compareTranslations(a: Translation, b: Translation): number {
   }
 
   return a.id.localeCompare(b.id);
+}
+
+function compareTranslationsByCompleteness(
+  a: Translation,
+  b: Translation
+): number {
+  if (a.numberOfBooks !== b.numberOfBooks) {
+    return b.numberOfBooks - a.numberOfBooks;
+  }
+
+  if (a.totalNumberOfChapters !== b.totalNumberOfChapters) {
+    return b.totalNumberOfChapters - a.totalNumberOfChapters;
+  }
+
+  if (a.totalNumberOfVerses !== b.totalNumberOfVerses) {
+    return b.totalNumberOfVerses - a.totalNumberOfVerses;
+  }
+
+  return compareTranslationsByName(a, b);
+}
+
+function parseSortMode(value: string | null): SortMode {
+  if (!value) {
+    return "completeness";
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "name") {
+    return "name";
+  }
+
+  if (normalized === "completeness") {
+    return "completeness";
+  }
+
+  throw new Error(
+    `Invalid --sort value: ${value}. Expected one of: completeness, name.`
+  );
 }
 
 function getLanguageLabel(translation: Translation): string {
@@ -73,7 +131,8 @@ function getLanguageLabel(translation: Translation): string {
 }
 
 function groupByLanguage(
-  translations: Translation[]
+  translations: Translation[],
+  sortMode: SortMode
 ): Map<string, Translation[]> {
   const groups = new Map<string, Translation[]>();
 
@@ -85,7 +144,14 @@ function groupByLanguage(
   }
 
   for (const [languageCode, entries] of groups.entries()) {
-    groups.set(languageCode, entries.sort(compareTranslations));
+    groups.set(
+      languageCode,
+      entries.sort(
+        sortMode === "name"
+          ? compareTranslationsByName
+          : compareTranslationsByCompleteness
+      )
+    );
   }
 
   return new Map([...groups.entries()].sort(([a], [b]) => a.localeCompare(b)));
@@ -100,6 +166,7 @@ async function main(): Promise<void> {
   const languageFilter =
     parseArgValue("--language")?.trim().toLowerCase() ?? null;
   const endpoint = parseArgValue("--endpoint")?.trim() || DEFAULT_API_ENDPOINT;
+  const sortMode = parseSortMode(parseArgValue("--sort"));
 
   // FreeUseBibleAPI expects a CasualOS-style `web.get()` API. In scripts,
   // provide a compatible shim backed by standard fetch.
@@ -139,12 +206,13 @@ async function main(): Promise<void> {
     return;
   }
 
-  const grouped = groupByLanguage(filtered);
+  const grouped = groupByLanguage(filtered, sortMode);
 
   console.log(`Endpoint: ${endpoint}`);
   if (languageFilter) {
     console.log(`Language filter: ${languageFilter}`);
   }
+  console.log(`Sort: ${sortMode}`);
   console.log(`Total translations: ${filtered.length}`);
   console.log("");
 
@@ -154,8 +222,14 @@ async function main(): Promise<void> {
 
     for (const translation of entries) {
       const direction = translation.textDirection;
+      const { completenessByBooks, completenessByChapters } =
+        calculateCompleteness(translation);
+      const completenessPercent = (
+        ((completenessByBooks + completenessByChapters) / 2) *
+        100
+      ).toFixed(1);
       console.log(
-        `  - ${translation.id} | ${translation.englishName} | ${translation.name} | ${direction}`
+        `  - ${translation.id} | ${translation.englishName} | ${translation.name} | ${direction} | ${completenessPercent}%`
       );
     }
 
