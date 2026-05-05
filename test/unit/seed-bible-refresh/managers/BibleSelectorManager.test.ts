@@ -435,10 +435,15 @@ describe("createBibleSelectorState", () => {
     expect(selector.apiTranslations.value.english).toBeUndefined();
 
     expect(
-      selector.filteredApiTranslations.value.map(([languageCode]) =>
-        languageCode.toLowerCase()
-      )
+      selector.filteredApiTranslations.value.map((group) => group.language)
     ).toEqual(["eng", "enm", "spa"]);
+
+    expect(selector.filteredApiTranslations.value[0]?.languageEnglishName).toBe(
+      "English"
+    );
+    expect(
+      selector.filteredApiTranslations.value[0]?.translations
+    ).toHaveLength(1);
   });
 
   it("filters code-grouped translations when searching by language english name", async () => {
@@ -510,9 +515,7 @@ describe("createBibleSelectorState", () => {
     selector.languageQuery.value = "english";
 
     expect(
-      selector.filteredApiTranslations.value.map(([languageCode]) =>
-        languageCode.toLowerCase()
-      )
+      selector.filteredApiTranslations.value.map((group) => group.language)
     ).toEqual(["eng", "enm"]);
   });
 

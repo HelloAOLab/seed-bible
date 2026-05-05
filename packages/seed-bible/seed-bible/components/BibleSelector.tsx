@@ -2,6 +2,7 @@ import {
   type BibleSelectorBookItem,
   type BibleSelectorPsalmsGroups,
   type BibleSelectorState,
+  type TranslationLanguageGroup,
 } from "seed-bible.managers.BibleSelectorManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import {
@@ -650,10 +651,9 @@ const TranslationModal = (props: {
           showTranslationSettings.value = false;
         }}
       >
-        {filteredTranslations.map(([language, value]) => (
+        {filteredTranslations.map((languageGroup) => (
           <LanguageComponent
-            language={language}
-            translationArray={value}
+            languageGroup={languageGroup}
             bibleSelectorState={bibleSelectorState}
             bibleDataManager={bibleDataManager}
           />
@@ -773,13 +773,12 @@ const TranslationModal = (props: {
 };
 
 const LanguageComponent = (props: {
-  language: string;
-  translationArray: Record<string, Translation>;
+  languageGroup: TranslationLanguageGroup;
   bibleSelectorState: BibleSelectorState;
   bibleDataManager: BibleDataManager;
 }) => {
-  const { language, translationArray, bibleSelectorState, bibleDataManager } =
-    props;
+  const { languageGroup, bibleSelectorState, bibleDataManager } = props;
+  const { language, languageEnglishName, translations } = languageGroup;
   const {
     languageQuery,
     selectedTranslation,
@@ -825,12 +824,12 @@ const LanguageComponent = (props: {
     if (!showSig.value) {
       return [];
     }
-    return Object.values(translationArray).sort((a, b) => {
+    return [...translations].sort((a, b) => {
       if (a.id === selectedTranslation?.value?.id) return -1;
       if (b.id === selectedTranslation?.value?.id) return 1;
       return a.name.localeCompare(b.name);
     });
-  }, [translationArray, selectedTranslation.value, showSig.value]);
+  }, [translations, selectedTranslation.value, showSig.value]);
 
   useEffect(() => {
     const selectedLanguageKey =
@@ -866,7 +865,9 @@ const LanguageComponent = (props: {
           marginBottom: showSig.value ? "0px" : "10px",
         }}
       >
-        <span style={{ textTransform: "capitalize" }}>{language}</span>
+        <span style={{ textTransform: "capitalize" }}>
+          {languageEnglishName}
+        </span>
         <span
           style={{ transition: "transform 0.3s" }}
           class={`material-symbols-outlined ${showSig.value ? "upside-down" : ""}`}
