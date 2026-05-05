@@ -661,7 +661,7 @@ const TranslationModal = (props: {
         {shouldShowLoadMoreButton(
           filteredTranslations.length,
           allowedTranslationLimit.value,
-          Object.entries(apiTranslations.value).length
+          apiTranslations.value.length
         ) && (
           <LoadMoreButton
             onLoadMore={() => {

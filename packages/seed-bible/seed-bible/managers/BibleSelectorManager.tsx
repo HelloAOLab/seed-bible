@@ -172,7 +172,7 @@ export interface BibleSelectorState {
   languageQuery: Signal<string>;
   showCustomTranslation: Signal<boolean>;
   allowedTranslationLimit: Signal<number>;
-  apiTranslations: Signal<Record<string, Record<string, Translation>>>;
+  apiTranslations: ReadonlySignal<TranslationLanguageGroup[]>;
   showAllLanguages: Signal<"complete" | "all" | "popular">;
   showTranslationSettings: Signal<boolean>;
   showTranslationInfo: Signal<{
@@ -180,7 +180,7 @@ export interface BibleSelectorState {
     position: { x: number; y: number };
   } | null>;
   inputValue: Signal<string>;
-  filteredApiTranslations: ReadonlySignal<Array<TranslationLanguageGroup>>;
+  filteredApiTranslations: ReadonlySignal<TranslationLanguageGroup[]>;
   handleTranslationAddition: () => void;
 }
 
@@ -524,17 +524,44 @@ export function createBibleSelectorState(
     "hin",
     "heb",
     "grc",
-    "english",
-    "spanish",
-    "arabic",
-    "hindi",
-    "hebrew",
-    "ancient greek",
   ]);
 
-  const apiTranslations = signal<Record<string, Record<string, Translation>>>(
-    {}
-  );
+  const apiTranslations = computed<Array<TranslationLanguageGroup>>(() => {
+    const normalized = availableTranslations.value.map((item: Translation) => ({
+      ...item,
+      languageEnglishName:
+        item?.languageEnglishName || item.languageName || item.language,
+    }));
+    const grouped = new Map<string, TranslationLanguageGroup>();
+
+    normalized.forEach((translation: Translation) => {
+      const languageCode = translation.language;
+      const existing = grouped.get(languageCode);
+
+      if (existing) {
+        if (
+          !existing.translations.some(
+            (existingTranslation) => existingTranslation.id === translation.id
+          )
+        ) {
+          existing.translations.push(translation);
+        }
+        return;
+      }
+
+      grouped.set(languageCode, {
+        language: languageCode,
+        languageEnglishName: translation.languageEnglishName || languageCode,
+        languageName:
+          translation.languageName ||
+          translation.languageEnglishName ||
+          languageCode,
+        translations: [translation],
+      });
+    });
+
+    return Array.from(grouped.values());
+  });
 
   const allowedTranslationLimit = signal<number>(50);
 
@@ -715,32 +742,6 @@ export function createBibleSelectorState(
   });
 
   effect(() => {
-    const allTranslations = availableTranslations.value;
-
-    const normalized = allTranslations.map((item: Translation) => ({
-      ...item,
-      languageEnglishName: item?.languageEnglishName || item.englishName,
-    }));
-    const translations = {} as Record<string, Record<string, Translation>>;
-
-    normalized.forEach((translation: Translation) => {
-      const languageCode =
-        translation.language?.toLowerCase() ||
-        translation.languageEnglishName?.toLowerCase() ||
-        translation.englishName.toLowerCase();
-      const shortName = translation.shortName.toLowerCase();
-      if (translations[languageCode]) {
-        if (!translations[languageCode][shortName]) {
-          translations[languageCode][shortName] = translation;
-        }
-      } else {
-        translations[languageCode] = { [shortName]: translation };
-      }
-    });
-    apiTranslations.value = translations;
-  });
-
-  effect(() => {
     const bd = selectedTestamentData.value;
     if (bd && bd.length === 1 && bd[0]) {
       lastBookClicked.value = 0;
@@ -785,92 +786,113 @@ export function createBibleSelectorState(
       const selectedLanguageCode = selTr?.language?.toLowerCase();
       const selectedLanguageName = selTr?.languageEnglishName?.toLowerCase();
 
-      const cloneTranslations = (
-        translations: Record<string, Record<string, Translation>>
-      ): Record<string, Record<string, Translation>> =>
-        JSON.parse(JSON.stringify(translations));
-
       const filterByMode = (
-        translations: Record<string, Record<string, Translation>>
-      ): Record<string, Record<string, Translation>> => {
+        groups: TranslationLanguageGroup[]
+      ): TranslationLanguageGroup[] => {
         if (sal === "all") {
-          return cloneTranslations(translations);
+          return groups.map((group) => ({
+            ...group,
+            translations: [...group.translations],
+          }));
         }
 
-        const next: Record<string, Record<string, Translation>> = {};
+        const next: TranslationLanguageGroup[] = [];
 
-        Object.entries(translations).forEach(([languageCode, group]) => {
+        groups.forEach((group) => {
           if (
             sal === "popular" &&
-            !dtr.includes(languageCode) &&
-            !Object.values(group).some((translation) => {
-              const languageName =
-                translation.languageEnglishName?.toLowerCase() ||
-                translation.englishName.toLowerCase();
-              return dtr.includes(languageName);
-            })
+            !dtr.includes(group.language) &&
+            !group.translations.some((translation) =>
+              dtr.includes(translation.language)
+            )
           ) {
             return;
           }
 
           if (sal === "complete") {
-            const filteredGroup: Record<string, Translation> = {};
-            Object.entries(group).forEach(([shortName, translation]) => {
-              const hideForComplete =
-                translation.numberOfBooks < 66 && translation.id !== selTr?.id;
-              if (!hideForComplete) {
-                filteredGroup[shortName] = translation;
-              }
-            });
-            if (Object.keys(filteredGroup).length > 0) {
-              next[languageCode] = filteredGroup;
+            const filteredTranslations = group.translations.filter(
+              (translation) =>
+                !(
+                  translation.numberOfBooks < 66 && translation.id !== selTr?.id
+                )
+            );
+
+            if (filteredTranslations.length > 0) {
+              next.push({
+                ...group,
+                translations: filteredTranslations,
+              });
             }
+
             return;
           }
 
-          next[languageCode] = { ...group };
+          next.push({
+            ...group,
+            translations: [...group.translations],
+          });
         });
 
         return next;
       };
 
       const filterByQuery = (
-        translations: Record<string, Record<string, Translation>>,
+        groups: TranslationLanguageGroup[],
         lowercaseQuery: string
-      ): Record<string, Record<string, Translation>> => {
-        const next: Record<string, Record<string, Translation>> = {};
+      ): TranslationLanguageGroup[] => {
+        const next: TranslationLanguageGroup[] = [];
 
-        Object.entries(translations).forEach(([languageCode, group]) => {
-          const languageMatch = Object.values(group).some((translation) => {
-            const languageEnglishName =
-              translation.languageEnglishName?.toLowerCase() ||
-              translation.englishName.toLowerCase();
-            const languageName = translation.languageName?.toLowerCase();
+        groups.forEach((group) => {
+          const languageMatch =
+            group.language.toLowerCase().includes(lowercaseQuery) ||
+            group.languageEnglishName.toLowerCase().includes(lowercaseQuery) ||
+            group.languageName.toLowerCase().includes(lowercaseQuery) ||
+            group.translations.some((translation) => {
+              const languageEnglishName =
+                translation.languageEnglishName?.toLowerCase() ||
+                translation.englishName.toLowerCase();
+              const languageName = translation.languageName?.toLowerCase();
 
-            return (
-              languageEnglishName.includes(lowercaseQuery) ||
-              Boolean(languageName?.includes(lowercaseQuery))
-            );
-          });
+              return (
+                languageEnglishName.includes(lowercaseQuery) ||
+                Boolean(languageName?.includes(lowercaseQuery))
+              );
+            });
 
-          if (languageCode.includes(lowercaseQuery) || languageMatch) {
-            next[languageCode] = { ...group };
+          if (languageMatch) {
+            next.push({
+              ...group,
+              translations: [...group.translations],
+            });
             return;
           }
 
-          const matchedGroup: Record<string, Translation> = {};
-          Object.entries(group).forEach(([shortName, translation]) => {
-            if (
-              shortName.includes(lowercaseQuery) ||
-              translation?.name?.toLowerCase().includes(lowercaseQuery) ||
-              translation?.languageName?.toLowerCase().includes(lowercaseQuery)
-            ) {
-              matchedGroup[shortName] = translation;
-            }
-          });
+          const matchedTranslations = group.translations.filter(
+            (translation) => {
+              const shortName = translation.shortName.toLowerCase();
 
-          if (Object.keys(matchedGroup).length > 0) {
-            next[languageCode] = matchedGroup;
+              if (
+                shortName.includes(lowercaseQuery) ||
+                translation?.name?.toLowerCase().includes(lowercaseQuery) ||
+                translation?.languageEnglishName
+                  ?.toLowerCase()
+                  .includes(lowercaseQuery) ||
+                translation?.languageName
+                  ?.toLowerCase()
+                  .includes(lowercaseQuery)
+              ) {
+                return true;
+              }
+
+              return false;
+            }
+          );
+
+          if (matchedTranslations.length > 0) {
+            next.push({
+              ...group,
+              translations: matchedTranslations,
+            });
           }
         });
 
@@ -878,45 +900,37 @@ export function createBibleSelectorState(
       };
 
       const sortFn = (
-        [a]: [string, Record<string, Translation>],
-        [b]: [string, Record<string, Translation>]
+        a: TranslationLanguageGroup,
+        b: TranslationLanguageGroup
       ): number => {
-        if (a === selectedLanguageCode || a === selectedLanguageName) return -1;
-        if (b === selectedLanguageCode || b === selectedLanguageName) return 1;
-        return a.localeCompare(b);
+        if (
+          a.language === selectedLanguageCode ||
+          a.language.toLowerCase() === selectedLanguageName
+        ) {
+          return -1;
+        }
+
+        if (
+          b.language === selectedLanguageCode ||
+          b.language.toLowerCase() === selectedLanguageName
+        ) {
+          return 1;
+        }
+
+        return a.language.localeCompare(b.language);
       };
 
-      const toLanguageGroups = (
-        entries: Array<[string, Record<string, Translation>]>
-      ): TranslationLanguageGroup[] =>
-        entries.map(([languageCode, groupedTranslations]) => {
-          const translations = Object.values(groupedTranslations);
-          const firstTranslation = translations[0] ?? null;
-          return {
-            language: languageCode,
-            languageEnglishName:
-              firstTranslation?.languageEnglishName || languageCode,
-            languageName:
-              firstTranslation?.languageName ||
-              firstTranslation?.languageEnglishName ||
-              languageCode,
-            translations,
-          };
-        });
+      const allGroups = apiTr;
 
       if (lq !== "") {
         const lowercaseQuery = lq.toLowerCase();
-        const queryFiltered = filterByQuery(apiTr, lowercaseQuery);
+        const queryFiltered = filterByQuery(allGroups, lowercaseQuery);
         const modeFiltered = filterByMode(queryFiltered);
 
-        return toLanguageGroups(
-          Object.entries(modeFiltered).slice(0, limit).sort(sortFn)
-        );
+        return modeFiltered.slice(0, limit).sort(sortFn);
       } else {
-        const modeFiltered = filterByMode(apiTr);
-        return toLanguageGroups(
-          Object.entries(modeFiltered).sort(sortFn).slice(0, limit)
-        );
+        const modeFiltered = filterByMode(allGroups);
+        return modeFiltered.sort(sortFn).slice(0, limit);
       }
     }
   );

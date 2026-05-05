@@ -427,12 +427,14 @@ describe("createBibleSelectorState", () => {
     );
     await selector.setOpen(true, tablessPane);
 
-    expect(Object.keys(selector.apiTranslations.value).sort()).toEqual([
-      "eng",
-      "enm",
-      "spa",
-    ]);
-    expect(selector.apiTranslations.value.english).toBeUndefined();
+    expect(
+      selector.apiTranslations.value.map((group) => group.language)
+    ).toEqual(["eng", "enm", "spa"]);
+    expect(
+      selector.apiTranslations.value.some(
+        (group) => group.language === "english"
+      )
+    ).toBe(false);
 
     expect(
       selector.filteredApiTranslations.value.map((group) => group.language)

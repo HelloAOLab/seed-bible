@@ -15,9 +15,7 @@ import {
   makeUrl,
   makeExampleUrl,
   EXAMPLE_API_ENDPOINT,
-  translations as mockTranslations,
   bsbBooks,
-  nivBooks,
   makeChapter,
 } from "../managers/testUtils/mockBibleApiData";
 
@@ -36,6 +34,13 @@ type SelectorFixture = {
   selectChapter: jest.SpyInstance;
   setSearch: jest.SpyInstance;
 };
+
+function setAvailableTranslations(
+  translations: Translation[],
+  bibleDataManager: SelectorFixture["bibleDataManager"]
+) {
+  bibleDataManager.availableTranslations.value = translations;
+}
 
 async function createSelectorFixture(
   options: { open?: boolean } = {}
@@ -686,15 +691,14 @@ describe("BibleSelector translation selector", () => {
     });
 
     act(() => {
-      selectorState.apiTranslations.value = {
-        english: {
-          aab: makeTranslation("AAB", "English"),
-          niv: makeTranslation("NIV", "English"),
-        },
-        spanish: {
-          rvr: makeTranslation("RVR", "Spanish"),
-        },
-      };
+      setAvailableTranslations(
+        [
+          makeTranslation("AAB", "English"),
+          makeTranslation("NIV", "English"),
+          makeTranslation("RVR", "Spanish"),
+        ],
+        bibleDataManager
+      );
       selectorState.selectingTranslation.value = true;
     });
 
@@ -722,18 +726,19 @@ describe("BibleSelector translation selector", () => {
     });
 
     act(() => {
-      selectorState.apiTranslations.value = {
-        english: {
-          niv: {
+      setAvailableTranslations(
+        [
+          {
             ...makeTranslation("NIV", "English", 66),
             name: "New International Version",
           },
-          bsb: {
+          {
             ...makeTranslation("BSB", "English", 66),
             name: "Berean Study Bible",
           },
-        },
-      };
+        ],
+        bibleDataManager
+      );
       selectorState.showAllLanguages.value = "all";
     });
 
@@ -790,20 +795,19 @@ describe("BibleSelector translation selector", () => {
     });
 
     act(() => {
-      selectorState.apiTranslations.value = {
-        english: {
-          niv: {
+      setAvailableTranslations(
+        [
+          {
             ...makeTranslation("NIV", "English", 66),
             name: "New International Version",
           },
-        },
-        spanish: {
-          rvr: {
+          {
             ...makeTranslation("RVR", "Spanish", 66),
             name: "Reina Valera",
           },
-        },
-      };
+        ],
+        bibleDataManager
+      );
       selectorState.showAllLanguages.value = "all";
     });
 
@@ -860,20 +864,19 @@ describe("BibleSelector translation selector", () => {
     });
 
     act(() => {
-      selectorState.apiTranslations.value = {
-        english: {
-          niv: {
+      setAvailableTranslations(
+        [
+          {
             ...makeTranslation("NIV", "English", 66),
             name: "New International Version",
           },
-        },
-        spanish: {
-          rvr: {
+          {
             ...makeTranslation("RVR", "Spanish", 66),
             name: "Reina Valera",
           },
-        },
-      };
+        ],
+        bibleDataManager
+      );
       selectorState.showAllLanguages.value = "all";
     });
 
@@ -931,22 +934,21 @@ describe("BibleSelector translation selector", () => {
     });
 
     act(() => {
-      selectorState.apiTranslations.value = {
-        english: {
-          niv: {
+      setAvailableTranslations(
+        [
+          {
             ...makeTranslation("NIV", "English", 66),
             name: "New International Version",
             languageName: "English",
           },
-        },
-        spanish: {
-          rvr: {
+          {
             ...makeTranslation("RVR", "Spanish", 66),
             name: "Reina Valera",
             languageName: "Espanol",
           },
-        },
-      };
+        ],
+        bibleDataManager
+      );
       selectorState.showAllLanguages.value = "all";
     });
 
@@ -1081,17 +1083,14 @@ describe("BibleSelector translation selector", () => {
     });
 
     act(() => {
-      selectorState.apiTranslations.value = {
-        // english has one complete and one incomplete translation
-        english: {
-          aab: makeTranslation("AAB", "English", 66),
-          inc: makeTranslation("INC", "English", 27),
-        },
-        // french has only incomplete translations – the whole group should be hidden
-        french: {
-          fls: makeTranslation("FLS", "French", 27),
-        },
-      };
+      setAvailableTranslations(
+        [
+          makeTranslation("AAB", "English", 66),
+          makeTranslation("INC", "English", 27),
+          makeTranslation("FLS", "French", 27),
+        ],
+        bibleDataManager
+      );
       selectorState.showAllLanguages.value = "complete";
       selectorState.selectingTranslation.value = true;
     });
@@ -1123,19 +1122,14 @@ describe("BibleSelector translation selector", () => {
     });
 
     act(() => {
-      selectorState.apiTranslations.value = {
-        english: {
-          aab: makeTranslation("AAB", "English", 66),
-        },
-        // french is not in the popular list and is incomplete
-        french: {
-          fls: makeTranslation("FLS", "French", 27),
-        },
-        // klingon is not in the popular list
-        klingon: {
-          klg: makeTranslation("KLG", "Klingon", 10),
-        },
-      };
+      setAvailableTranslations(
+        [
+          makeTranslation("AAB", "English", 66),
+          makeTranslation("FLS", "French", 27),
+          makeTranslation("KLG", "Klingon", 10),
+        ],
+        bibleDataManager
+      );
       selectorState.showAllLanguages.value = "all";
       selectorState.selectingTranslation.value = true;
     });
@@ -1166,16 +1160,13 @@ describe("BibleSelector translation selector", () => {
     });
 
     act(() => {
-      selectorState.apiTranslations.value = {
-        // english is in the default popular list
-        english: {
-          aab: makeTranslation("AAB", "English", 66),
-        },
-        // klingon is not a popular language
-        klingon: {
-          klg: makeTranslation("KLG", "Klingon", 10),
-        },
-      };
+      setAvailableTranslations(
+        [
+          makeTranslation("AAB", "English", 66),
+          makeTranslation("KLG", "Klingon", 10),
+        ],
+        bibleDataManager
+      );
       selectorState.showAllLanguages.value = "popular";
       selectorState.selectingTranslation.value = true;
     });
@@ -1208,11 +1199,10 @@ describe("BibleSelector translation selector", () => {
 
     // "all" mode: incomplete non-selected translation shows circle with conic-gradient
     act(() => {
-      selectorState.apiTranslations.value = {
-        english: {
-          inc: makeTranslation("INC", "English", 27),
-        },
-      };
+      setAvailableTranslations(
+        [makeTranslation("INC", "English", 27)],
+        bibleDataManager
+      );
       selectorState.showAllLanguages.value = "all";
       selectorState.selectingTranslation.value = true;
       selectorState.languageQuery.value = "inc";
@@ -1241,11 +1231,10 @@ describe("BibleSelector translation selector", () => {
 
     // "complete" mode: only complete translations shown; their circles have no conic-gradient
     act(() => {
-      selectorState.apiTranslations.value = {
-        english: {
-          bsb: makeTranslation("BSB", "English", 66),
-        },
-      };
+      setAvailableTranslations(
+        [makeTranslation("BSB", "English", 66)],
+        bibleDataManager
+      );
       selectorState.showAllLanguages.value = "complete";
       selectorState.languageQuery.value = "bsb";
     });
@@ -1325,14 +1314,14 @@ describe("BibleSelector translation selector", () => {
 
     // After import the custom translation should appear in apiTranslations
     await waitFor(() =>
-      Object.values(selectorState.apiTranslations.value).some((group) =>
-        Object.values(group).some((t) => t.id === "CST")
+      selectorState.apiTranslations.value.some((group) =>
+        group.translations.some((t) => t.id === "CST")
       )
     );
 
-    const allTranslations = Object.values(
-      selectorState.apiTranslations.value
-    ).flatMap((group) => Object.values(group));
+    const allTranslations = selectorState.apiTranslations.value.flatMap(
+      (group) => group.translations
+    );
     expect(allTranslations.some((t) => t.id === "CST")).toBe(true);
   });
 });
@@ -1419,11 +1408,7 @@ describe("BibleSelector sharing translations", () => {
     });
 
     act(() => {
-      selectorState.apiTranslations.value = {
-        [languageEnglishName.toLowerCase()]: {
-          [translationId.toLowerCase()]: translation,
-        },
-      };
+      setAvailableTranslations([translation], bibleDataManager);
       selectorState.showAllLanguages.value = "all";
       selectorState.selectingTranslation.value = true;
       // Setting a query causes the language group to auto-expand
