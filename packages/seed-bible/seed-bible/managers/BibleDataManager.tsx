@@ -35,6 +35,12 @@ export interface BibleDataManager {
     endpoint: string;
     isDefault: boolean;
   };
+
+  /**
+   * Gets a string that can be used in the translation query parameter to load the specified translation.
+   * @param translationId The ID of the translation.
+   */
+  buildTranslationId: (translationId: string) => string;
 }
 
 function normalizeEndpoint(endpoint: string): string {
@@ -151,6 +157,19 @@ export function createBibleDataManager(
     return await api.getPreviousChapter(chapter, endpoint);
   };
 
+  const buildTranslationId = (translationId: string) => {
+    const endpoint = getTranslationEndpointInfo(translationId);
+    if (endpoint.isDefault) {
+      return translationId;
+    } else {
+      const translationUrl = new URL(
+        `api/${translationId}/books.json`,
+        endpoint.endpoint
+      );
+      return translationUrl.href;
+    }
+  };
+
   effect(() => {
     if (availableTranslations.value.length > 0) {
       window.localStorage.setItem(
@@ -196,5 +215,6 @@ export function createBibleDataManager(
     getNextChapter,
     getPreviousChapter,
     getTranslationEndpointInfo,
+    buildTranslationId,
   };
 }

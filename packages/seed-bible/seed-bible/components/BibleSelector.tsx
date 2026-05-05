@@ -795,23 +795,12 @@ const LanguageComponent = (props: {
 
   const shareTranslatation = async (props: { translation: Translation }) => {
     const { translation } = props;
-    console.log(translation, "translation");
-
-    const endpointInfo = bibleDataManager.getTranslationEndpointInfo(
-      translation.id
-    );
-
     const url = new URL(`https://ao.bot/`);
     url.searchParams.set("pattern", configBot.tags.pattern || "SeedBible");
-    if (endpointInfo.isDefault) {
-      url.searchParams.set("translation", translation.id);
-    } else {
-      const translationUrl = new URL(
-        `api/${translation.id}/books.json`,
-        endpointInfo.endpoint
-      );
-      url.searchParams.set("translation", translationUrl.href);
-    }
+    url.searchParams.set(
+      "translation",
+      bibleDataManager.buildTranslationId(translation.id)
+    );
     os.setClipboard(url.href);
     os.toast(
       t("copied-translation-share-link", {
