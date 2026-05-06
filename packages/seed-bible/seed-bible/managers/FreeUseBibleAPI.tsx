@@ -1004,7 +1004,9 @@ interface DatasetReference {
   score?: number;
 }
 
-export const DEFAULT_API_ENDPOINT = "https://bible.helloao.org/";
+export const DEFAULT_API_ENDPOINT = thisBot.tags.useFreeBibleAPI
+  ? "https://bible.helloao.org/"
+  : "https://vmfnri.helloao.org/";
 
 export class FreeUseBibleAPI {
   endpoint: string;
