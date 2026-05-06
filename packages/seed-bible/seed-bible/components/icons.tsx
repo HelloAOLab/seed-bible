@@ -47,7 +47,7 @@ export const SpaceDefaultIcon = () => {
 export function SeedBibleIcon() {
   return (
     <img
-      src="https://res.cloudinary.com/dacw0qnpr/image/upload/v1759916122/Seed_Bible_-_All_Logos_2025-25_vvawwg.png"
+      src="https://favicon.ao.bot/assets/seed-bible-isolated-minified.png"
       style={{
         width: "25px",
       }}
