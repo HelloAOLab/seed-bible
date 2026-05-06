@@ -175,5 +175,9 @@
   "show-verse-numbers": "শ্লোক নম্বর দেখান",
   "show-footnotes": "পাদটীকা দেখান",
   "show-highlights": "হাইলাইটগুলি দেখান",
-  "show-red-lettering": "লাল অক্ষরে দেখান"
+  "show-red-lettering": "লাল অক্ষরে দেখান",
+  "download-settings": "ডাউনলোড সেটিংস",
+  "downloading-settings": "সেটিংস ডাউনলোড হচ্ছে...",
+  "upload-settings": "আপলোড সেটিংস",
+  "uploading-settings": "সেটিংস আপলোড করা হচ্ছে..."
 }

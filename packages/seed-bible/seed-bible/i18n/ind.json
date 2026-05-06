@@ -175,5 +175,9 @@
   "show-verse-numbers": "Tampilkan nomor ayat",
   "show-footnotes": "Tampilkan catatan kaki",
   "show-highlights": "Tampilkan sorotan",
-  "show-red-lettering": "Tampilkan huruf merah"
+  "show-red-lettering": "Tampilkan huruf merah",
+  "download-settings": "Unduh pengaturan",
+  "downloading-settings": "Mengunduh pengaturan...",
+  "upload-settings": "Pengaturan unggahan",
+  "uploading-settings": "Mengunggah pengaturan..."
 }

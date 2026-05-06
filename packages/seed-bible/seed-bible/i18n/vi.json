@@ -175,5 +175,9 @@
   "show-verse-numbers": "Hiển thị số câu thơ",
   "show-footnotes": "Hiển thị chú thích",
   "show-highlights": "Những điểm nổi bật của chương trình",
-  "show-red-lettering": "Hiển thị chữ màu đỏ"
+  "show-red-lettering": "Hiển thị chữ màu đỏ",
+  "download-settings": "Tải xuống cài đặt",
+  "downloading-settings": "Đang tải cài đặt...",
+  "upload-settings": "Cài đặt tải lên",
+  "uploading-settings": "Đang tải cài đặt..."
 }

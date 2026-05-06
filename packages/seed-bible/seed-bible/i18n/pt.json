@@ -175,5 +175,9 @@
   "show-verse-numbers": "Mostrar números de versos",
   "show-footnotes": "Mostrar notas de rodapé",
   "show-highlights": "Mostrar os melhores momentos",
-  "show-red-lettering": "Exibir letras vermelhas"
+  "show-red-lettering": "Exibir letras vermelhas",
+  "download-settings": "Baixar configurações",
+  "downloading-settings": "Baixando configurações...",
+  "upload-settings": "Carregar configurações",
+  "uploading-settings": "Carregando configurações..."
 }

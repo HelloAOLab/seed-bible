@@ -175,5 +175,9 @@
   "show-verse-numbers": "ቁጽሪ ጥቕስታት ኣርእዩ",
   "show-footnotes": "እግረ ጽሑፍ ኣርእዩ",
   "show-highlights": "ድምቀት ኣርእዩ",
-  "show-red-lettering": "ቀይሕ ፊደላት ኣርእዩ"
+  "show-red-lettering": "ቀይሕ ፊደላት ኣርእዩ",
+  "download-settings": "ናይ ምውራድ ቅጥዕታት",
+  "downloading-settings": "ቅጥዕታት ምውራድ...",
+  "upload-settings": "ናይ ምጽዓን ቅጥዕታት",
+  "uploading-settings": "ቅጥዕታት ምጽዓን..."
 }

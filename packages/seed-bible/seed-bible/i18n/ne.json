@@ -175,5 +175,9 @@
   "show-verse-numbers": "पद संख्याहरू देखाउनुहोस्",
   "show-footnotes": "फुटनोटहरू देखाउनुहोस्",
   "show-highlights": "हाइलाइटहरू देखाउनुहोस्",
-  "show-red-lettering": "रातो अक्षर देखाउनुहोस्"
+  "show-red-lettering": "रातो अक्षर देखाउनुहोस्",
+  "download-settings": "डाउनलोड सेटिङहरू",
+  "downloading-settings": "सेटिङहरू डाउनलोड गर्दै...",
+  "upload-settings": "अपलोड सेटिङहरू",
+  "uploading-settings": "सेटिङहरू अपलोड गर्दै..."
 }

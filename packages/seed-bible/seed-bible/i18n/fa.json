@@ -175,5 +175,9 @@
   "show-verse-numbers": "نمایش شماره آیات",
   "show-footnotes": "نمایش پاورقی‌ها",
   "show-highlights": "نمایش نکات برجسته",
-  "show-red-lettering": "نمایش حروف قرمز"
+  "show-red-lettering": "نمایش حروف قرمز",
+  "download-settings": "تنظیمات دانلود",
+  "downloading-settings": "دانلود تنظیمات...",
+  "upload-settings": "تنظیمات آپلود",
+  "uploading-settings": "تنظیمات در حال بارگذاری..."
 }

@@ -175,5 +175,9 @@
   "show-verse-numbers": "Показати номери віршів",
   "show-footnotes": "Показати виноски",
   "show-highlights": "Показати найцікавіше",
-  "show-red-lettering": "Показати червоні літери"
+  "show-red-lettering": "Показати червоні літери",
+  "download-settings": "Налаштування завантаження",
+  "downloading-settings": "Завантаження налаштувань...",
+  "upload-settings": "Налаштування завантаження",
+  "uploading-settings": "Завантаження налаштувань..."
 }

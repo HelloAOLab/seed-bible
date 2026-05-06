@@ -175,5 +175,9 @@
   "show-verse-numbers": "د آیتونو شمېرې وښایاست",
   "show-footnotes": "فوټ نوټونه وښایاست",
   "show-highlights": "مهم ټکي وښایاست",
-  "show-red-lettering": "سره توري ښکاره کړئ"
+  "show-red-lettering": "سره توري ښکاره کړئ",
+  "download-settings": "د ډاونلوډ ترتیبات",
+  "downloading-settings": "ترتیبات ډاونلوډ کیږي...",
+  "upload-settings": "د پورته کولو ترتیبات",
+  "uploading-settings": "ترتیبات پورته کول..."
 }

@@ -175,5 +175,9 @@
   "show-verse-numbers": "Afficher les numéros de versets",
   "show-footnotes": "Afficher les notes de bas de page",
   "show-highlights": "Les moments forts du spectacle",
-  "show-red-lettering": "Afficher les caractères rouges"
+  "show-red-lettering": "Afficher les caractères rouges",
+  "download-settings": "Paramètres de téléchargement",
+  "downloading-settings": "Téléchargement des paramètres...",
+  "upload-settings": "Paramètres de téléchargement",
+  "uploading-settings": "Paramètres de chargement..."
 }

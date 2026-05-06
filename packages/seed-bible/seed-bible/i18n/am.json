@@ -175,5 +175,9 @@
   "show-verse-numbers": "የጥቅስ ቁጥሮችን አሳይ",
   "show-footnotes": "የግርጌ ማስታወሻዎችን አሳይ",
   "show-highlights": "ድምቀቶችን አሳይ",
-  "show-red-lettering": "ቀይ ፊደላትን አሳይ"
+  "show-red-lettering": "ቀይ ፊደላትን አሳይ",
+  "download-settings": "ቅንብሮችን ያውርዱ",
+  "downloading-settings": "ቅንብሮችን በማውረድ ላይ...",
+  "upload-settings": "ቅንብሮችን ስቀል",
+  "uploading-settings": "ቅንብሮችን በመስቀል ላይ..."
 }

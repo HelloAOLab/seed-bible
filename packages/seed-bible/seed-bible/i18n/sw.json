@@ -175,5 +175,9 @@
   "show-verse-numbers": "Onyesha nambari za mistari",
   "show-footnotes": "Onyesha tanbihi",
   "show-highlights": "Onyesha mambo muhimu",
-  "show-red-lettering": "Onyesha herufi nyekundu"
+  "show-red-lettering": "Onyesha herufi nyekundu",
+  "download-settings": "Mipangilio ya kupakua",
+  "downloading-settings": "Inapakua mipangilio...",
+  "upload-settings": "Mipangilio ya kupakia",
+  "uploading-settings": "Inapakia mipangilio..."
 }

@@ -175,5 +175,9 @@
   "show-verse-numbers": "श्लोक संख्याएँ दिखाएँ",
   "show-footnotes": "फुटनोट दिखाएँ",
   "show-highlights": "शो की मुख्य बातें",
-  "show-red-lettering": "लाल अक्षरों को दिखाएँ"
+  "show-red-lettering": "लाल अक्षरों को दिखाएँ",
+  "download-settings": "डाउनलोड सेटिंग्स",
+  "downloading-settings": "सेटिंग्स डाउनलोड हो रही हैं...",
+  "upload-settings": "अपलोड सेटिंग्स",
+  "uploading-settings": "सेटिंग्स अपलोड हो रही हैं..."
 }

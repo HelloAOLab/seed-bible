@@ -175,5 +175,9 @@
   "show-verse-numbers": "Ayet numaralarını göster",
   "show-footnotes": "Dipnotları göster",
   "show-highlights": "Öne çıkanları göster",
-  "show-red-lettering": "Kırmızı yazıları göster"
+  "show-red-lettering": "Kırmızı yazıları göster",
+  "download-settings": "İndirme ayarları",
+  "downloading-settings": "Ayarlar indiriliyor...",
+  "upload-settings": "Yükleme ayarları",
+  "uploading-settings": "Ayarlar yükleniyor..."
 }

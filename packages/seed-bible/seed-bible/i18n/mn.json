@@ -175,5 +175,9 @@
   "show-verse-numbers": "Шүлгийн дугааруудыг харуулах",
   "show-footnotes": "Зүүлт тайлбарыг харуулах",
   "show-highlights": "Онцлох зүйлсийг харуулах",
-  "show-red-lettering": "Улаан үсгийг харуулах"
+  "show-red-lettering": "Улаан үсгийг харуулах",
+  "download-settings": "Татаж авах тохиргоо",
+  "downloading-settings": "Тохиргоог татаж авч байна...",
+  "upload-settings": "Байршуулах тохиргоо",
+  "uploading-settings": "Тохиргоог байршуулж байна..."
 }

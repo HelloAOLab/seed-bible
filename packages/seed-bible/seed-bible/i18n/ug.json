@@ -175,5 +175,9 @@
   "show-verse-numbers": "ئايەت نومۇرلىرىنى كۆرسىتىش",
   "show-footnotes": "ئىزاھاتلارنى كۆرسىتىش",
   "show-highlights": "مۇھىم نۇقتىلارنى كۆرسىتىش",
-  "show-red-lettering": "قىزىل خەتلەرنى كۆرسىتىش"
+  "show-red-lettering": "قىزىل خەتلەرنى كۆرسىتىش",
+  "download-settings": "چۈشۈرۈش تەڭشەكلىرى",
+  "downloading-settings": "تەڭشەكلەر چۈشۈرۈلۈۋاتىدۇ...",
+  "upload-settings": "يۈكلەش تەڭشەكلىرى",
+  "uploading-settings": "تەڭشەكلەر يۈكلەنمەكتە..."
 }

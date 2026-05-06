@@ -175,5 +175,9 @@
   "show-verse-numbers": "أظهر أرقام الآيات",
   "show-footnotes": "إظهار الحواشي",
   "show-highlights": "عرض أبرز اللحظات",
-  "show-red-lettering": "أظهر الحروف الحمراء"
+  "show-red-lettering": "أظهر الحروف الحمراء",
+  "download-settings": "إعدادات التنزيل",
+  "downloading-settings": "جارٍ تنزيل الإعدادات...",
+  "upload-settings": "إعدادات التحميل",
+  "uploading-settings": "جارٍ تحميل الإعدادات..."
 }

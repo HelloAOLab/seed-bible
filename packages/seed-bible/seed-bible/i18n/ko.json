@@ -175,5 +175,9 @@
   "show-verse-numbers": "절 번호를 표시하세요",
   "show-footnotes": "각주 표시",
   "show-highlights": "주요 내용 보기",
-  "show-red-lettering": "빨간색 글씨로 표시"
+  "show-red-lettering": "빨간색 글씨로 표시",
+  "download-settings": "다운로드 설정",
+  "downloading-settings": "설정 다운로드 중...",
+  "upload-settings": "업로드 설정",
+  "uploading-settings": "설정 업로드 중..."
 }

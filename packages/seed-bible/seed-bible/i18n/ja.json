@@ -175,5 +175,9 @@
   "show-verse-numbers": "節番号を表示する",
   "show-footnotes": "脚注を表示",
   "show-highlights": "番組のハイライト",
-  "show-red-lettering": "赤い文字を表示する"
+  "show-red-lettering": "赤い文字を表示する",
+  "download-settings": "ダウンロード設定",
+  "downloading-settings": "設定をダウンロードしています...",
+  "upload-settings": "アップロード設定",
+  "uploading-settings": "設定をアップロードしています..."
 }
