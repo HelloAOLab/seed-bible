@@ -938,17 +938,20 @@ export function PaneLayout(props: PaneLayoutProps) {
                 currentPane={pane}
                 readingState={pane.tab.readingState}
                 selectorState={selectorState}
+                state={state}
               />
-              <BelowReaderToolbar
-                toolsManager={toolsManager}
-                readingState={pane.tab.readingState}
-                sharedSession={pane.tab.sharedSession}
-                selectorState={selectorState}
-                tabsManager={tabsManager}
-                panesManager={panesManager}
-                openSidebar={sidebar.openSidebar}
-                currentPane={pane}
-              />
+              {!app.isMobile.value && (
+                <BelowReaderToolbar
+                  toolsManager={toolsManager}
+                  readingState={pane.tab.readingState}
+                  sharedSession={pane.tab.sharedSession}
+                  selectorState={selectorState}
+                  tabsManager={tabsManager}
+                  panesManager={panesManager}
+                  openSidebar={sidebar.openSidebar}
+                  currentPane={pane}
+                />
+              )}
             </PaneReaderScroller>
           ) : (
             <EmptyPaneToolbar

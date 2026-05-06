@@ -19,7 +19,7 @@ describe("createSidebar", () => {
     expect(sidebar.isMobileOpen.value).toBe(true);
   });
 
-  it("closeSettings() closes settings without changing mobile state", () => {
+  it("closeSettings() closes settings and dismisses the mobile drawer", () => {
     const sidebar = createSidebar();
     sidebar.openSettings();
     sidebar.openSidebar();
@@ -27,7 +27,7 @@ describe("createSidebar", () => {
     sidebar.closeSettings();
 
     expect(sidebar.isSettingsOpen.value).toBe(false);
-    expect(sidebar.isMobileOpen.value).toBe(true);
+    expect(sidebar.isMobileOpen.value).toBe(false);
   });
 
   it("toggleSidebarCollapsed() toggles collapsed state", () => {

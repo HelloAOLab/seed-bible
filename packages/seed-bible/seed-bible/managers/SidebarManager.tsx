@@ -32,6 +32,11 @@ export function createSidebar() {
 
   const closeSettings = () => {
     requestedSettingsView.value = null;
+    // On mobile the sidebar is a full-screen drawer, so closing settings
+    // should dismiss the drawer entirely instead of falling back to the
+    // tabs view. On desktop `isMobileOpen` is already false, so this is
+    // a no-op.
+    isMobileOpen.value = false;
   };
 
   const toggleSidebarCollapsed = () => {

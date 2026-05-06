@@ -418,47 +418,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     });
   });
 
-  // Human-readable reference for the currently selected verses —
-  // "Genesis 1:5", "Genesis 1:5-7", or "Genesis 1:5, 7, 9" for gaps.
-  const selectedVerseReference = useComputed(() => {
-    const rs = readingState.value;
-    if (!rs) return "";
-    const chapter = rs.chapterData.value;
-    if (!chapter) return "";
-    const selected = rs.selectedVerses.value;
-    if (selected.length === 0) return "";
-
-    const bookName = chapter.book.name;
-    const chapterNumber = chapter.chapter.number;
-    const verseNumbers = Array.from(
-      new Set(selected.map((v) => v.verse.number))
-    ).sort((a, b) => a - b);
-
-    if (verseNumbers.length === 0) return `${bookName} ${chapterNumber}`;
-
-    // Collapse contiguous runs into ranges (e.g. 5,6,7 → "5-7")
-    const segments: string[] = [];
-    let runStart = verseNumbers[0]!;
-    let runEnd = runStart;
-    for (let i = 1; i < verseNumbers.length; i++) {
-      const n = verseNumbers[i]!;
-      if (n === runEnd + 1) {
-        runEnd = n;
-      } else {
-        segments.push(
-          runStart === runEnd ? `${runStart}` : `${runStart}-${runEnd}`
-        );
-        runStart = n;
-        runEnd = n;
-      }
-    }
-    segments.push(
-      runStart === runEnd ? `${runStart}` : `${runStart}-${runEnd}`
-    );
-
-    return `${bookName} ${chapterNumber}:${segments.join(", ")}`;
-  });
-
   // Reset picker when selection is cleared
   useEffect(() => {
     if (!hasVerseSelection.value) {
@@ -494,30 +453,34 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           className="sb-reader-toolbar-wrap"
           dir={readingState.value?.translation.value?.textDirection ?? "auto"}
         >
-          {isSmallScreen.value && previousChapterTool.value && (
-            <button
-              disabled={previousChapterTool.value.disabled.value}
-              onClick={previousChapterTool.value.onSelect}
-              className="sb-reader-toolbar-floating-button sb-reader-toolbar-floating-button-left"
-              aria-label={translateTitle(t, previousChapterTool.value.title)}
-            >
-              <previousChapterTool.value.icon />
-            </button>
-          )}
+          {isSmallScreen.value &&
+            settings.settings.value.showNavArrows &&
+            previousChapterTool.value && (
+              <button
+                disabled={previousChapterTool.value.disabled.value}
+                onClick={previousChapterTool.value.onSelect}
+                className="sb-reader-toolbar-floating-button sb-reader-toolbar-floating-button-left"
+                aria-label={translateTitle(t, previousChapterTool.value.title)}
+              >
+                <previousChapterTool.value.icon />
+              </button>
+            )}
 
-          {isSmallScreen.value && nextChapterTool.value && (
-            <button
-              disabled={nextChapterTool.value.disabled.value}
-              onClick={nextChapterTool.value.onSelect}
-              className="sb-reader-toolbar-floating-button sb-reader-toolbar-floating-button-right"
-              aria-label={translateTitle(t, nextChapterTool.value.title)}
-            >
-              <nextChapterTool.value.icon />
-            </button>
-          )}
+          {isSmallScreen.value &&
+            settings.settings.value.showNavArrows &&
+            nextChapterTool.value && (
+              <button
+                disabled={nextChapterTool.value.disabled.value}
+                onClick={nextChapterTool.value.onSelect}
+                className="sb-reader-toolbar-floating-button sb-reader-toolbar-floating-button-right"
+                aria-label={translateTitle(t, nextChapterTool.value.title)}
+              >
+                <nextChapterTool.value.icon />
+              </button>
+            )}
 
           <div
-            className={`sb-reader-toolbar${isSmallScreen.value ? " sb-reader-toolbar-mobile-layout" : ""}`}
+            className={`sb-reader-toolbar${isSmallScreen.value ? " sb-reader-toolbar-mobile-layout" : " sb-reader-toolbar-labeled"}`}
           >
             {isSmallScreen.value ? (
               <>
@@ -679,13 +642,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 </div>
               </>
             ) : (
-              tools.value.map((tool) => {
+              tools.value.flatMap((tool) => {
                 const ToolIcon = tool.icon;
                 const menuItems =
                   tool.getItems?.().filter((item) => item.visible.value) ?? [];
                 const hasMenuItems = menuItems.length > 0;
-                return tool.visible.value ? (
-                  <div key={tool.id} className="sb-reader-toolbar-item">
+                const isArrow =
+                  tool.id === "previous-chapter" || tool.id === "next-chapter";
+                const label = translateTitle(t, tool.title);
+                if (!tool.visible.value) return [];
+                const itemElement = (
+                  <div
+                    key={tool.id}
+                    className={`sb-reader-toolbar-item${isArrow ? " sb-reader-toolbar-item-arrow" : ""}`}
+                  >
                     <button
                       disabled={tool.disabled.value}
                       onClick={() => {
@@ -701,11 +671,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         tool.onSelect();
                       }}
                       className="sb-reader-toolbar-button"
+                      aria-label={label}
                     >
                       <ToolIcon />
-                      <span className="sr-only">
-                        {translateTitle(t, tool.title)}
-                      </span>
+                      {isArrow ? (
+                        <span className="sr-only">{label}</span>
+                      ) : (
+                        <span className="sb-reader-toolbar-button-label">
+                          {label}
+                        </span>
+                      )}
                     </button>
                     {hasMenuItems &&
                       selectedToolbarToolId.value === tool.id && (
@@ -745,7 +720,28 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         </div>
                       )}
                   </div>
-                ) : null;
+                );
+                if (tool.id === "previous-chapter") {
+                  return [
+                    itemElement,
+                    <div
+                      key="divider-after-prev"
+                      className="sb-reader-toolbar-divider"
+                      aria-hidden="true"
+                    />,
+                  ];
+                }
+                if (tool.id === "next-chapter") {
+                  return [
+                    <div
+                      key="divider-before-next"
+                      className="sb-reader-toolbar-divider"
+                      aria-hidden="true"
+                    />,
+                    itemElement,
+                  ];
+                }
+                return [itemElement];
               })
             )}
           </div>
@@ -776,15 +772,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             isSmallScreen.value ? undefined : handleVerseToolbarPointerUp
           }
         >
-          {selectedVerseReference.value && (
-            <div
-              className="sb-verse-toolbar-ref"
-              aria-live="polite"
-              title={selectedVerseReference.value}
-            >
-              {selectedVerseReference.value}
-            </div>
-          )}
           {isHighlightPickerOpen.value ? (
             <div
               className="sb-verse-toolbar-tools sb-verse-toolbar-picker"
@@ -923,8 +910,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     tool.getItems?.().filter((item) => item.visible.value) ??
                     [];
                   const hasMenuItems = menuItems.length > 0;
+                  const label = translateTitle(t, tool.title);
                   return tool.visible.value ? (
-                    <div key={tool.id} className="sb-reader-toolbar-item">
+                    <div key={tool.id} className="sb-verse-toolbar-action-item">
                       <button
                         disabled={tool.disabled.value}
                         onClick={() => {
@@ -939,11 +927,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           selectedVerseToolId.value = null;
                           tool.onSelect();
                         }}
-                        className="sb-reader-toolbar-button"
+                        className="sb-verse-toolbar-action"
+                        aria-label={label}
+                        title={label}
                       >
-                        <ToolIcon />
-                        <span className="sr-only">
-                          {translateTitle(t, tool.title)}
+                        <span className="sb-verse-toolbar-action-icon">
+                          <ToolIcon />
+                        </span>
+                        <span className="sb-verse-toolbar-action-label">
+                          {label}
                         </span>
                       </button>
                       {hasMenuItems &&
@@ -994,28 +986,36 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   (tool) => tool.id === "clear-selection"
                 );
 
+                const highlightLabel = t("highlight", {
+                  defaultValue: "Highlight",
+                });
                 return (
                   <>
-                    {nonCancel.map(renderTool)}
                     {selectionUI.value.showHighlightColors && (
-                      <div className="sb-reader-toolbar-item">
+                      <div className="sb-verse-toolbar-action-item">
                         <button
                           type="button"
-                          className="sb-reader-toolbar-button sb-verse-toolbar-highlight-trigger"
+                          className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
                           onClick={() => {
                             isHighlightPickerOpen.value = true;
                           }}
                           aria-label={t("highlight-selection", {
                             defaultValue: "Highlight selection",
                           })}
-                          title={t("highlight", { defaultValue: "Highlight" })}
+                          title={highlightLabel}
                         >
-                          <span className="material-symbols-outlined">
-                            format_ink_highlighter
+                          <span className="sb-verse-toolbar-action-icon">
+                            <span className="material-symbols-outlined">
+                              format_ink_highlighter
+                            </span>
+                          </span>
+                          <span className="sb-verse-toolbar-action-label">
+                            {highlightLabel}
                           </span>
                         </button>
                       </div>
                     )}
+                    {nonCancel.map(renderTool)}
                     {cancelTools.map(renderTool)}
                   </>
                 );
