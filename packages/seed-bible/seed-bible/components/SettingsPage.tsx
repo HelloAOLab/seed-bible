@@ -263,7 +263,7 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
   return (
     <div className="sb-settings-page">
       <SettingsBreadcrumbs
-        onBack={() => (state.sidebar.requestedSettingsView.value = null)}
+        onBack={() => (state.sidebar.requestedSettingsView.value = "main")}
         trail={[
           t("page-settings", { defaultValue: "Page settings" }),
           t("account-settings", { defaultValue: "Account settings" }),
@@ -500,7 +500,7 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   const fontSizeIndex = FONT_SIZE_OPTIONS.indexOf(selectedFontSize);
 
   const onBack = () => {
-    state.sidebar.requestedSettingsView.value = null;
+    state.sidebar.requestedSettingsView.value = "main";
   };
 
   const onOpenAllSettings = () => {
@@ -966,7 +966,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const isUploadingSet = useSignal(false);
 
   const onBack = () => {
-    state.sidebar.requestedSettingsView.value = null;
+    state.sidebar.requestedSettingsView.value = "main";
   };
 
   const handleInstall = async (extensionId: string) => {
@@ -1184,7 +1184,7 @@ function ToolbarSettingsView(props: { state: SeedBibleState }) {
   const { t } = useI18n();
 
   const onBack = () => {
-    state.sidebar.requestedSettingsView.value = null;
+    state.sidebar.requestedSettingsView.value = "main";
   };
 
   const available = toolsManager.listToolbarTools();
