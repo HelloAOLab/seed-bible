@@ -4,6 +4,7 @@ import {
   getProfileConfigValue,
   saveProfileConfigValue,
 } from "seed-bible.managers.ProfileConfigSync";
+import { z } from "zod";
 
 export type BookOrientation = "traditional" | "tanak";
 export type UITextSize = "S" | "M" | "L" | "XL";
@@ -199,30 +200,71 @@ const DEFAULT_SETTINGS: AppSettings = {
   scriptureMargin: DEFAULT_SCRIPTURE_MARGIN,
 };
 
-function parseCustomHighlightColors(value: unknown): string[] {
-  let parsed: unknown = value;
-  if (typeof parsed === "string" && parsed.length > 0) {
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      return [];
-    }
-  }
-  if (!Array.isArray(parsed)) return [];
-  return parsed
-    .filter((v): v is string => typeof v === "string" && v.length > 0)
-    .slice(0, MAX_CUSTOM_HIGHLIGHT_COLORS);
-}
+// ---------------------------------------------------------------------------
+// Zod schema
+// ---------------------------------------------------------------------------
 
-function parseBoolean(value: unknown, fallback: boolean): boolean {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "string") {
-    const normalized = value.trim().toLowerCase();
-    if (normalized === "true") return true;
-    if (normalized === "false") return false;
-  }
-  return fallback;
-}
+export const BookOrientationSchema = z.enum(["traditional", "tanak"]);
+export const UITextSizeSchema = z.enum(["S", "M", "L", "XL"]);
+export const TextAlignmentSchema = z.enum(["unset", "left", "center", "right"]);
+
+export const SelectionUIBehaviorSchema = z.object({
+  showSelectedItems: z.boolean(),
+  showHighlightColors: z.boolean(),
+  showIconText: z.boolean(),
+});
+
+export const ScriptureElementsBehaviorSchema = z.object({
+  showHeadings: z.boolean(),
+  showVerseNumbers: z.boolean(),
+  showFootnotes: z.boolean(),
+  showHighlights: z.boolean(),
+  showRedLettering: z.boolean(),
+});
+
+export const TextSectionConfigSchema = z.object({
+  font: z.string(),
+  weight: z.string(),
+  color: z.string(),
+  marginVertical: z.number(),
+  marginHorizontal: z.number(),
+  bold: z.boolean(),
+  italic: z.boolean(),
+  underline: z.boolean(),
+  alignment: TextAlignmentSchema,
+  lineHeight: z.number().optional(),
+});
+
+export const TextConfigSchema = z.object({
+  bookTitle: TextSectionConfigSchema,
+  heading: TextSectionConfigSchema,
+  verse: TextSectionConfigSchema,
+});
+
+export const ToolbarCustomizationSchema = z.object({
+  hidden: z.array(z.string()),
+  order: z.array(z.string()),
+});
+
+export const AppSettingsSchema = z.object({
+  bookOrientation: BookOrientationSchema.catch(
+    DEFAULT_SETTINGS.bookOrientation
+  ),
+  uiTextSize: UITextSizeSchema.catch(DEFAULT_SETTINGS.uiTextSize),
+  selectionUI: SelectionUIBehaviorSchema.catch(DEFAULT_SETTINGS.selectionUI),
+  scriptureElements: ScriptureElementsBehaviorSchema.catch(
+    DEFAULT_SETTINGS.scriptureElements
+  ),
+  textConfig: TextConfigSchema.catch(DEFAULT_SETTINGS.textConfig),
+  toolbar: ToolbarCustomizationSchema.catch(DEFAULT_SETTINGS.toolbar),
+  keepScreenAwake: z.boolean().catch(DEFAULT_SETTINGS.keepScreenAwake),
+  customHighlightColors: z
+    .array(z.string())
+    .catch(DEFAULT_SETTINGS.customHighlightColors),
+  scriptureMargin: z.number().catch(DEFAULT_SETTINGS.scriptureMargin),
+});
+
+// ---------------------------------------------------------------------------
 
 /**
  * Apply the user's toolbar customization (hidden + explicit order) to a list
@@ -263,185 +305,6 @@ export const UI_TEXT_SIZE_ZOOM: Record<UITextSize, number> = {
   L: 1.15,
   XL: 1.3,
 };
-
-function parseBookOrientation(
-  value: unknown,
-  fallback: BookOrientation
-): BookOrientation {
-  return value === "tanak" || value === "traditional" ? value : fallback;
-}
-
-function parseUITextSize(value: unknown, fallback: UITextSize): UITextSize {
-  if (typeof value !== "string") {
-    return fallback;
-  }
-  const normalized = value.trim().toUpperCase();
-  return UI_TEXT_SIZE_OPTIONS.includes(normalized as UITextSize)
-    ? (normalized as UITextSize)
-    : fallback;
-}
-
-function parseSelectionUI(
-  value: unknown,
-  fallback: SelectionUIBehavior
-): SelectionUIBehavior {
-  let parsed: unknown = value;
-  if (typeof parsed === "string") {
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      return fallback;
-    }
-  }
-  if (!parsed || typeof parsed !== "object") {
-    return fallback;
-  }
-  const obj = parsed as Record<string, unknown>;
-  return {
-    showSelectedItems:
-      typeof obj.showSelectedItems === "boolean"
-        ? obj.showSelectedItems
-        : fallback.showSelectedItems,
-    showHighlightColors:
-      typeof obj.showHighlightColors === "boolean"
-        ? obj.showHighlightColors
-        : fallback.showHighlightColors,
-    showIconText:
-      typeof obj.showIconText === "boolean"
-        ? obj.showIconText
-        : fallback.showIconText,
-  };
-}
-
-function parseScriptureElements(
-  value: unknown,
-  fallback: ScriptureElementsBehavior
-): ScriptureElementsBehavior {
-  let parsed: unknown = value;
-  if (typeof parsed === "string") {
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      return fallback;
-    }
-  }
-  if (!parsed || typeof parsed !== "object") {
-    return fallback;
-  }
-  const obj = parsed as Record<string, unknown>;
-  return {
-    showHeadings:
-      typeof obj.showHeadings === "boolean"
-        ? obj.showHeadings
-        : fallback.showHeadings,
-    showVerseNumbers:
-      typeof obj.showVerseNumbers === "boolean"
-        ? obj.showVerseNumbers
-        : fallback.showVerseNumbers,
-    showFootnotes:
-      typeof obj.showFootnotes === "boolean"
-        ? obj.showFootnotes
-        : fallback.showFootnotes,
-    showHighlights:
-      typeof obj.showHighlights === "boolean"
-        ? obj.showHighlights
-        : fallback.showHighlights,
-    showRedLettering:
-      typeof obj.showRedLettering === "boolean"
-        ? obj.showRedLettering
-        : fallback.showRedLettering,
-  };
-}
-
-function parseAlignment(
-  value: unknown,
-  fallback: TextAlignment
-): TextAlignment {
-  return value === "unset" ||
-    value === "left" ||
-    value === "center" ||
-    value === "right"
-    ? value
-    : fallback;
-}
-
-function parseNumber(value: unknown, fallback: number): number {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string") {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return fallback;
-}
-
-function parseTextSection(
-  value: unknown,
-  fallback: TextSectionConfig
-): TextSectionConfig {
-  if (!value || typeof value !== "object") return fallback;
-  const obj = value as Record<string, unknown>;
-  return {
-    font: typeof obj.font === "string" ? obj.font : fallback.font,
-    weight: typeof obj.weight === "string" ? obj.weight : fallback.weight,
-    color: typeof obj.color === "string" ? obj.color : fallback.color,
-    marginVertical: parseNumber(obj.marginVertical, fallback.marginVertical),
-    marginHorizontal: parseNumber(
-      obj.marginHorizontal,
-      fallback.marginHorizontal
-    ),
-    bold: typeof obj.bold === "boolean" ? obj.bold : fallback.bold,
-    italic: typeof obj.italic === "boolean" ? obj.italic : fallback.italic,
-    underline:
-      typeof obj.underline === "boolean" ? obj.underline : fallback.underline,
-    alignment: parseAlignment(obj.alignment, fallback.alignment),
-    ...(fallback.lineHeight !== undefined || obj.lineHeight !== undefined
-      ? { lineHeight: parseNumber(obj.lineHeight, fallback.lineHeight ?? 1.5) }
-      : {}),
-  };
-}
-
-function parseStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter((v): v is string => typeof v === "string");
-}
-
-function parseToolbarConfig(
-  value: unknown,
-  fallback: ToolbarCustomization
-): ToolbarCustomization {
-  let parsed: unknown = value;
-  if (typeof parsed === "string") {
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      return fallback;
-    }
-  }
-  if (!parsed || typeof parsed !== "object") return fallback;
-  const obj = parsed as Record<string, unknown>;
-  return {
-    hidden: parseStringArray(obj.hidden),
-    order: parseStringArray(obj.order),
-  };
-}
-
-function parseTextConfig(value: unknown, fallback: TextConfig): TextConfig {
-  let parsed: unknown = value;
-  if (typeof parsed === "string") {
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      return fallback;
-    }
-  }
-  if (!parsed || typeof parsed !== "object") return fallback;
-  const obj = parsed as Record<string, unknown>;
-  return {
-    bookTitle: parseTextSection(obj.bookTitle, fallback.bookTitle),
-    heading: parseTextSection(obj.heading, fallback.heading),
-    verse: parseTextSection(obj.verse, fallback.verse),
-  };
-}
 
 function applyTextConfigToCSSVars(config: TextConfig) {
   if (typeof document === "undefined") return;
@@ -512,52 +375,44 @@ export function createSettings(login: LoginManager): SettingsManager {
   // bootstrapping before the profile loads.
   const readSettings = (): AppSettings => {
     const profile = login.profile.value;
-    return {
-      bookOrientation: parseBookOrientation(
-        getProfileConfigValue(profile, PROFILE_BOOK_ORIENTATION) ??
-          configBot.tags[TAG_BOOK_ORIENTATION],
-        DEFAULT_SETTINGS.bookOrientation
-      ),
-      uiTextSize: parseUITextSize(
-        getProfileConfigValue(profile, PROFILE_UI_TEXT_SIZE) ??
-          configBot.tags[TAG_UI_TEXT_SIZE],
-        DEFAULT_SETTINGS.uiTextSize
-      ),
-      selectionUI: parseSelectionUI(
-        getProfileConfigValue(profile, PROFILE_SELECTION_UI) ??
-          configBot.tags[TAG_SELECTION_UI],
-        DEFAULT_SETTINGS.selectionUI
-      ),
-      scriptureElements: parseScriptureElements(
-        getProfileConfigValue(profile, PROFILE_SCRIPTURE_ELEMENTS) ??
-          configBot.tags[TAG_SCRIPTURE_ELEMENTS],
-        DEFAULT_SETTINGS.scriptureElements
-      ),
-      textConfig: parseTextConfig(
-        getProfileConfigValue(profile, PROFILE_TEXT_CONFIG) ??
-          configBot.tags[TAG_TEXT_CONFIG],
-        DEFAULT_SETTINGS.textConfig
-      ),
-      toolbar: parseToolbarConfig(
-        getProfileConfigValue(profile, PROFILE_TOOLBAR) ??
-          configBot.tags[TAG_TOOLBAR],
-        DEFAULT_SETTINGS.toolbar
-      ),
-      keepScreenAwake: parseBoolean(
-        getProfileConfigValue(profile, PROFILE_KEEP_AWAKE) ??
-          configBot.tags[TAG_KEEP_AWAKE],
-        DEFAULT_SETTINGS.keepScreenAwake
-      ),
-      customHighlightColors: parseCustomHighlightColors(
-        getProfileConfigValue(profile, PROFILE_CUSTOM_HIGHLIGHT_COLORS) ??
-          configBot.tags[TAG_CUSTOM_HIGHLIGHT_COLORS]
-      ),
-      scriptureMargin: parseNumber(
-        getProfileConfigValue(profile, PROFILE_SCRIPTURE_MARGIN) ??
-          configBot.tags[TAG_SCRIPTURE_MARGIN],
-        DEFAULT_SETTINGS.scriptureMargin
-      ),
-    };
+    return AppSettingsSchema.parse({
+      bookOrientation:
+        profile?.config?.[PROFILE_BOOK_ORIENTATION] ??
+        configBot.tags[TAG_BOOK_ORIENTATION] ??
+        DEFAULT_SETTINGS.bookOrientation,
+      uiTextSize:
+        profile?.config?.[PROFILE_UI_TEXT_SIZE] ??
+        configBot.tags[TAG_UI_TEXT_SIZE] ??
+        DEFAULT_SETTINGS.uiTextSize,
+      selectionUI:
+        profile?.config?.[PROFILE_SELECTION_UI] ??
+        configBot.tags[TAG_SELECTION_UI] ??
+        DEFAULT_SETTINGS.selectionUI,
+      scriptureElements:
+        profile?.config?.[PROFILE_SCRIPTURE_ELEMENTS] ??
+        configBot.tags[TAG_SCRIPTURE_ELEMENTS] ??
+        DEFAULT_SETTINGS.scriptureElements,
+      textConfig:
+        profile?.config?.[PROFILE_TEXT_CONFIG] ??
+        configBot.tags[TAG_TEXT_CONFIG] ??
+        DEFAULT_SETTINGS.textConfig,
+      toolbar:
+        profile?.config?.[PROFILE_TOOLBAR] ??
+        configBot.tags[TAG_TOOLBAR] ??
+        DEFAULT_SETTINGS.toolbar,
+      keepScreenAwake:
+        profile?.config?.[PROFILE_KEEP_AWAKE] ??
+        configBot.tags[TAG_KEEP_AWAKE] ??
+        DEFAULT_SETTINGS.keepScreenAwake,
+      customHighlightColors:
+        profile?.config?.[PROFILE_CUSTOM_HIGHLIGHT_COLORS] ??
+        configBot.tags[TAG_CUSTOM_HIGHLIGHT_COLORS] ??
+        DEFAULT_SETTINGS.customHighlightColors,
+      scriptureMargin:
+        profile?.config?.[PROFILE_SCRIPTURE_MARGIN] ??
+        configBot.tags[TAG_SCRIPTURE_MARGIN] ??
+        DEFAULT_SETTINGS.scriptureMargin,
+    });
   };
 
   const settings = signal<AppSettings>(readSettings());
