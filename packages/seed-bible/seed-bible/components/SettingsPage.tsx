@@ -42,6 +42,7 @@ import {
   handleVerticalListKeyNav,
 } from "seed-bible.components.KeyboardNav";
 import { useRef } from "preact/hooks";
+import { z } from "zod";
 
 type SettingsView =
   | null
@@ -1758,6 +1759,7 @@ function AllSettingsView(props: { state: SeedBibleState }) {
   const { t } = useI18n();
   const isDownloadingSettings = useSignal(false);
   const isUploadingSettings = useSignal(false);
+  const uploadErrorMessage = useSignal<string>("");
 
   const onBack = () => {
     state.sidebar.requestedSettingsView.value = "display-and-theme";
@@ -1786,6 +1788,7 @@ function AllSettingsView(props: { state: SeedBibleState }) {
     }
 
     isUploadingSettings.value = true;
+    uploadErrorMessage.value = "";
     try {
       const files = await os.showUploadFiles();
       const firstFile = files?.[0];
@@ -1797,15 +1800,26 @@ function AllSettingsView(props: { state: SeedBibleState }) {
         typeof firstFile.data === "string"
           ? firstFile.data
           : new TextDecoder().decode(firstFile.data);
-      const parsed = AppSettingsSchema.safeParse(JSON.parse(text));
+
+      let jsonData: unknown;
+      try {
+        jsonData = JSON.parse(text);
+      } catch (parseError) {
+        uploadErrorMessage.value = `Invalid JSON: ${parseError instanceof Error ? parseError.message : "Unknown error"}`;
+        return;
+      }
+
+      const parsed = AppSettingsSchema.safeParse(jsonData);
 
       if (!parsed.success) {
+        uploadErrorMessage.value = `Invalid app settings: ${z.prettifyError(parsed.error)}`;
         console.error("Uploaded file is not valid app settings.", parsed.error);
         return;
       }
 
       state.settings.setAllSettings(parsed.data);
     } catch (error) {
+      uploadErrorMessage.value = `Failed to upload app settings: ${error instanceof Error ? error.message : "Unknown error"}`;
       console.error("Failed to upload app settings.", error);
     } finally {
       isUploadingSettings.value = false;
@@ -1851,6 +1865,19 @@ function AllSettingsView(props: { state: SeedBibleState }) {
             ? "Uploading settings..."
             : "Upload settings"}
         </button>
+        {uploadErrorMessage.value && (
+          <div
+            className="sb-upload-settings-error"
+            style={{
+              color: "var(--sb-error-color, #dc2626)",
+              fontSize: "13px",
+              marginTop: "8px",
+              wordBreak: "break-word",
+            }}
+          >
+            {uploadErrorMessage.value}
+          </div>
+        )}
       </div>
     </div>
   );
