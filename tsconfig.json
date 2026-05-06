@@ -158,6 +158,9 @@
       "bibleStack.application.services.BibleSequenceService": [
         "./packages/Bible Stack/bibleStack/application/services/BibleSequenceService.tsx"
       ],
+      "bibleStack.application.services.BookChaptersManagementService": [
+        "./packages/Bible Stack/bibleStack/application/services/BookChaptersManagementService.tsx"
+      ],
       "bibleStack.application.services.BookInteractionService": [
         "./packages/Bible Stack/bibleStack/application/services/BookInteractionService.tsx"
       ],
@@ -202,6 +205,9 @@
       ],
       "bibleStack.application.services.SectionInteractionService": [
         "./packages/Bible Stack/bibleStack/application/services/SectionInteractionService.tsx"
+      ],
+      "bibleStack.application.services.SectionSelectionService": [
+        "./packages/Bible Stack/bibleStack/application/services/SectionSelectionService.tsx"
       ],
       "bibleStack.application.services.SequenceStateService": [
         "./packages/Bible Stack/bibleStack/application/services/SequenceStateService.tsx"
@@ -329,11 +335,17 @@
       "bibleStack.infrastructure.config.sequences.bibleSetupAnimation": [
         "./packages/Bible Stack/bibleStack/infrastructure/config/sequences/bibleSetupAnimation.tsx"
       ],
+      "bibleStack.infrastructure.config.sequences.closeBibleAnimation": [
+        "./packages/Bible Stack/bibleStack/infrastructure/config/sequences/closeBibleAnimation.tsx"
+      ],
       "bibleStack.infrastructure.config.sequences.crackOpenBibleAnimation": [
         "./packages/Bible Stack/bibleStack/infrastructure/config/sequences/crackOpenBibleAnimation.tsx"
       ],
       "bibleStack.infrastructure.config.sequences.focusOnAnimations": [
         "./packages/Bible Stack/bibleStack/infrastructure/config/sequences/focusOnAnimations.tsx"
+      ],
+      "bibleStack.infrastructure.config.sequences.openBibleAnimation": [
+        "./packages/Bible Stack/bibleStack/infrastructure/config/sequences/openBibleAnimation.tsx"
       ],
       "bibleStack.infrastructure.config.sequences.SequenceConfigProvider": [
         "./packages/Bible Stack/bibleStack/infrastructure/config/sequences/SequenceConfigProvider.tsx"
@@ -476,9 +488,6 @@
       "bibleStack.main.CreateChapter": [
         "./packages/Bible Stack/bibleStack/main/CreateChapter.tsx"
       ],
-      "bibleStack.main.CreateNewBible": [
-        "./packages/Bible Stack/bibleStack/main/CreateNewBible.tsx"
-      ],
       "bibleStack.main.CreateSection": [
         "./packages/Bible Stack/bibleStack/main/CreateSection.tsx"
       ],
@@ -593,14 +602,8 @@
       "bibleStack.main.OnHistoryUpdated": [
         "./packages/Bible Stack/bibleStack/main/OnHistoryUpdated.tsx"
       ],
-      "bibleStack.main.OnInitialBibleOpenAnimationCompleted": [
-        "./packages/Bible Stack/bibleStack/main/OnInitialBibleOpenAnimationCompleted.tsx"
-      ],
       "bibleStack.main.onInstJoined": [
         "./packages/Bible Stack/bibleStack/main/onInstJoined.tsx"
-      ],
-      "bibleStack.main.OnNewBibleStackCreated": [
-        "./packages/Bible Stack/bibleStack/main/OnNewBibleStackCreated.tsx"
       ],
       "bibleStack.main.OnObjectPoolerInitialized": [
         "./packages/Bible Stack/bibleStack/main/OnObjectPoolerInitialized.tsx"
@@ -697,9 +700,6 @@
       ],
       "bibleStack.main.RemovePieceFromHighlightedList": [
         "./packages/Bible Stack/bibleStack/main/RemovePieceFromHighlightedList.tsx"
-      ],
-      "bibleStack.main.ResetBible": [
-        "./packages/Bible Stack/bibleStack/main/ResetBible.tsx"
       ],
       "bibleStack.main.ResetStackData": [
         "./packages/Bible Stack/bibleStack/main/ResetStackData.tsx"
@@ -860,9 +860,6 @@
       "bibleStack.models.stack": [
         "./packages/Bible Stack/bibleStack/models/stack.tsx"
       ],
-      "bibleStack.prefabs.bibleTransformer.CloseBible": [
-        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/CloseBible.tsx"
-      ],
       "bibleStack.prefabs.bibleTransformer.DisplayDonationFillAnimation": [
         "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/DisplayDonationFillAnimation.tsx"
       ],
@@ -887,14 +884,8 @@
       "bibleStack.prefabs.bibleTransformer.OnSpawned": [
         "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/OnSpawned.tsx"
       ],
-      "bibleStack.prefabs.bibleTransformer.OpenBible": [
-        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/OpenBible.tsx"
-      ],
       "bibleStack.prefabs.bibleTransformer.OpenDonationStack": [
         "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/OpenDonationStack.tsx"
-      ],
-      "bibleStack.prefabs.bibleTransformer.Reset": [
-        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/Reset.tsx"
       ],
       "bibleStack.prefabs.bibleTransformer.ShowBibleInteractDialog": [
         "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/ShowBibleInteractDialog.tsx"
@@ -1693,6 +1684,9 @@
       ],
       "bibleVizUtils.infrastructure.mappers.PieceMapper": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/PieceMapper.tsx"
+      ],
+      "bibleVizUtils.infrastructure.mappers.SectionInfoMapper": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/SectionInfoMapper.tsx"
       ],
       "bibleVizUtils.infrastructure.mappers.StackGeometryMapper": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/StackGeometryMapper.tsx"

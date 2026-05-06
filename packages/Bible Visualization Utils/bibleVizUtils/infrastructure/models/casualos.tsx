@@ -99,8 +99,9 @@ export interface PieceBotTags<T extends BiblePieceType = BiblePieceType> {
   isInUse?: boolean;
   system?: string;
   draggable?: boolean;
+  pointable?: boolean;
   toErase?: boolean;
-  [dimension: string]: unknown;
+  // [dimension: string]: unknown;
 }
 
 export type PieceBot<T extends BiblePieceType = BiblePieceType> = TypedBot<

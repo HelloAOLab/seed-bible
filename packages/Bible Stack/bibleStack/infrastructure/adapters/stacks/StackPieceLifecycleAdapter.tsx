@@ -80,12 +80,33 @@ export class StackPieceLifecycleAdapter
     return this.#objectPoolerPort.getObject("StackSection");
   }
 
+  spawnSectionDomain(): Piece<"StackSection"> {
+    return this.#sectionMapperPort.toDomain(this.spawnSection());
+  }
+
   despawnSection(piece: Piece<"StackSection">): void {
     const bot = this.#sectionMapperPort.toInfrastructure(piece);
     if (bot) this.#objectPoolerPort.releaseObject(bot, "StackSection");
   }
 
+  spawnSectionBook(): BookBot {
+    return this.#objectPoolerPort.getObject("StackSectionBook");
+  }
+
+  spawnSectionBookDomain(): Piece<"StackSectionBook"> {
+    return this.#sectionBookMapperPort.toDomain(this.spawnSectionBook());
+  }
+
+  despawnSectionBook(piece: Piece<"StackSectionBook">): void {
+    const bot = this.#sectionBookMapperPort.toInfrastructure(piece);
+    if (bot) this.#objectPoolerPort.releaseObject(bot, "StackSectionBook");
+  }
+
   spawnBook(): BookBot {
+    return this.#objectPoolerPort.getObject("StackBook");
+  }
+
+  spawnBookDomain(): BookBot {
     return this.#objectPoolerPort.getObject("StackBook");
   }
 
@@ -110,11 +131,6 @@ export class StackPieceLifecycleAdapter
   despawnSectionShadow(piece: Piece<"StackSectionShadow">): void {
     const bot = this.#sectionShadowMapperPort.toInfrastructure(piece);
     if (bot) this.#objectPoolerPort.releaseObject(bot, "StackSectionShadow");
-  }
-
-  despawnSectionBook(piece: Piece<"StackSectionBook">): void {
-    const bot = this.#sectionBookMapperPort.toInfrastructure(piece);
-    if (bot) this.#objectPoolerPort.releaseObject(bot, "StackSectionBook");
   }
 
   spawnVersesBundle(): VersesBundleBot {

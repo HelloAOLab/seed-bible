@@ -14,6 +14,7 @@ export const UnhighlightRequestSources = {
   UserDrag: "UserDrag",
   UserFocus: "UserFocus",
   UserUnfocus: "UserUnfocus",
+  Transition: "Transition",
 } as const;
 
 export type UnhighlightRequestSource =

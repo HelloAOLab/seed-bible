@@ -43,6 +43,7 @@ export class StackSectionBookData extends StackPieceData<
   #pieceBookInfo: DataParams["pieceBookInfo"];
   #previousHighlightedChapterData: StackChapterData | undefined;
   #labelTranslucency: LabelTranslucencyMode | undefined = undefined;
+  #isShowingChapters: boolean = false;
 
   constructor({
     childrenData = [],
@@ -77,6 +78,15 @@ export class StackSectionBookData extends StackPieceData<
     this.#isSelected = isSelected;
   }
 
+  get isShowingChapters() {
+    return this.#isShowingChapters;
+  }
+  showChapters() {
+    this.#isShowingChapters = true;
+  }
+  hideChapters() {
+    this.#isShowingChapters = false;
+  }
   get labelTranslucency() {
     return this.#labelTranslucency;
   }

@@ -40,7 +40,7 @@ export interface AwaiterPort {
   sleep(ms: number): Promise<void>;
 }
 
-export interface StackPresenceNavigationPort {
+export interface StackPresenceNavigationServicePort {
   update(): Promise<void>;
 }
 

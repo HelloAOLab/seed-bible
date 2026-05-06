@@ -8,6 +8,14 @@ import {
   CrackOpenBibleHighlightConfig,
   type CrackOpenBibleHighlightConfigType,
 } from "bibleStack.infrastructure.config.sequences.crackOpenBibleAnimation";
+import {
+  CloseBibleAnimationDurations,
+  CloseBibleAnimationEasing,
+} from "bibleStack.infrastructure.config.sequences.closeBibleAnimation";
+import {
+  OpenBibleAnimationDurations,
+  OpenBibleAnimationEasing,
+} from "bibleStack.infrastructure.config.sequences.openBibleAnimation";
 import type { BibleTypeType } from "bibleVizUtils.domain.models.canvas";
 import type { SequenceConfigProviderPort } from "bibleStack.infrastructure.ports.sequences";
 import type { BibleSequenceServiceConfigProviderPort } from "bibleStack.application.ports.bibleLifecycle";
@@ -25,6 +33,26 @@ export class SequenceConfigProvider
 
   getCrackOpenBibleAnimationEasing() {
     return CrackOpenBibleAnimationEasing;
+  }
+
+  getCloseBibleAnimationDuration(
+    pacing: keyof typeof CloseBibleAnimationDurations
+  ) {
+    return CloseBibleAnimationDurations[pacing];
+  }
+
+  getCloseBibleAnimationEasing() {
+    return CloseBibleAnimationEasing;
+  }
+
+  getOpenBibleAnimationDuration(
+    pacing: keyof typeof OpenBibleAnimationDurations
+  ) {
+    return OpenBibleAnimationDurations[pacing];
+  }
+
+  getOpenBibleAnimationEasing() {
+    return OpenBibleAnimationEasing;
   }
 
   getTestamentHighlightSequenceConfig<

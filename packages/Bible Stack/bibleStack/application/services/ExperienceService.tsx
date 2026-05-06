@@ -7,7 +7,7 @@ import type {
   ScripturePiecesStateServicePort,
   ExperienceConfigProviderPort,
   SequenceStateServicePort,
-  StackPresenceNavigationPort,
+  StackPresenceNavigationServicePort,
   AwaiterPort,
 } from "bibleStack.application.ports.experience";
 import type {
@@ -29,7 +29,7 @@ interface ExperienceServiceParams {
   cameraAdapterPort: CameraAdapterPort;
   bibleLifecycleServicePort: BibleLifecycleServicePort;
   bibleSequenceServicePort: BibleSequenceServicePort;
-  stackPresenceNavigationPort: StackPresenceNavigationPort;
+  stackPresenceNavigationServicePort: StackPresenceNavigationServicePort;
   awaiterPort: AwaiterPort;
 }
 
@@ -47,7 +47,7 @@ export class ExperienceService {
   #cameraAdapterPort: ExperienceServiceParams["cameraAdapterPort"];
   #bibleLifecycleServicePort: ExperienceServiceParams["bibleLifecycleServicePort"];
   #bibleSequenceServicePort: ExperienceServiceParams["bibleSequenceServicePort"];
-  #stackPresenceNavigationPort: ExperienceServiceParams["stackPresenceNavigationPort"];
+  #stackPresenceNavigationServicePort: ExperienceServiceParams["stackPresenceNavigationServicePort"];
   #awaiterPort: ExperienceServiceParams["awaiterPort"];
 
   constructor({
@@ -62,7 +62,7 @@ export class ExperienceService {
     cameraAdapterPort,
     bibleLifecycleServicePort,
     bibleSequenceServicePort,
-    stackPresenceNavigationPort,
+    stackPresenceNavigationServicePort,
     awaiterPort,
   }: ExperienceServiceParams) {
     this.#environmentAdapterPort = environmentAdapterPort;
@@ -76,7 +76,8 @@ export class ExperienceService {
     this.#cameraAdapterPort = cameraAdapterPort;
     this.#bibleLifecycleServicePort = bibleLifecycleServicePort;
     this.#bibleSequenceServicePort = bibleSequenceServicePort;
-    this.#stackPresenceNavigationPort = stackPresenceNavigationPort;
+    this.#stackPresenceNavigationServicePort =
+      stackPresenceNavigationServicePort;
     this.#awaiterPort = awaiterPort;
   }
 
@@ -108,7 +109,7 @@ export class ExperienceService {
           });
           this.#cameraAdapterPort.focusOn(position);
           await this.#bibleSequenceServicePort.crackOpenBible(bibleData);
-          await this.#stackPresenceNavigationPort.update();
+          await this.#stackPresenceNavigationServicePort.update();
         });
       }
     }

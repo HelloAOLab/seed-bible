@@ -156,6 +156,9 @@ export class BibleLifecycleService {
       bibleType: type,
     });
 
+    bibleData.changeState("Closed");
+    bibleData.handleSetup();
+
     for (const testamentData of bibleData.childrenData) {
       const piece = testamentPiecesMap.get(testamentData.id);
       if (piece) {

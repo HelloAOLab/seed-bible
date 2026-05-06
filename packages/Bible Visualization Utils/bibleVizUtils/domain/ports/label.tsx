@@ -114,5 +114,5 @@ export interface PieceLabelServicePort<T extends BiblePieceType> {
     translucencyMode: LabelTranslucencyMode;
     pacing?: ShowSequencePacing;
   }) => void;
-  hideLabel: (piece: Piece<T>, pacing?: ShowSequencePacing) => void;
+  hideLabel: (piece: Piece<T>, pacing?: ShowSequencePacing) => Promise<void>;
 }

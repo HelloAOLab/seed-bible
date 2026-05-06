@@ -56,6 +56,11 @@ export interface SectionInfo {
   readonly name: string;
   readonly color: string;
   readonly books: readonly BookInfo[];
+  readonly path: {
+    arrangementName: string;
+    testamentIndex: number;
+    sectionIndex: number;
+  };
 }
 
 export interface TestamentInfo {

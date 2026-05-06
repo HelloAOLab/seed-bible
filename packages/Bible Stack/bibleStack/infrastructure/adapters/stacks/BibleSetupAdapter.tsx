@@ -259,6 +259,7 @@ if(!thisBot.masks.lastPositionUpdateTime || os.localTime > (thisBot.masks.lastPo
             testamentScales.y * (1 + testamentAdditionalScaleOnHover),
           initialScaleZ: testamentScales.z,
           desiredScaleZ: testamentScales.z,
+          desiredPositionZ: 0,
         },
       });
       testamentPiecesMap.set(testamentData.id, testamentPiece);
@@ -303,9 +304,6 @@ if(!thisBot.masks.lastPositionUpdateTime || os.localTime > (thisBot.masks.lastPo
       toBot(bibleData.getStaticPiece("crossHorizontalLine")) as CrossLineBot,
       crossHorizontalLineMod
     );
-
-    bibleData.changeState("Closed");
-    bibleData.handleSetup();
 
     return {
       testamentPiecesMap,

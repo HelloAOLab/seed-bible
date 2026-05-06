@@ -105,4 +105,33 @@ export class PieceAdapter
       }
     }
   }
+
+  isInteractable(piece: Piece): boolean {
+    const pieceBot = this.#pieceMapperPort.toInfrastructure(piece);
+    return !!pieceBot?.tags.pointable;
+  }
+
+  makeInteractable(piece: Piece) {
+    const pieceBot = this.#pieceMapperPort.toInfrastructure(piece);
+    if (pieceBot) {
+      SetStrictTag(pieceBot, "pointable", true);
+    }
+  }
+
+  makeNonInteractable(piece: Piece) {
+    const pieceBot = this.#pieceMapperPort.toInfrastructure(piece);
+    if (pieceBot) {
+      SetStrictTag(pieceBot, "pointable", false);
+    }
+  }
+
+  hide(piece: Piece) {
+    const pieceBot = this.#pieceMapperPort.toInfrastructure(piece);
+    if (pieceBot) {
+      const dimension = this.#dimensionProviderPort.getDimension();
+      clearAnimations(bot);
+      clearTagMasks(bot);
+      setTag(bot, dimension, false);
+    }
+  }
 }

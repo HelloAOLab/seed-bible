@@ -8,6 +8,8 @@ export class VisualStateRegistry {
   } = {
     [BiblePiece.StackTransformer]: new Map(),
     [BiblePiece.StackTestament]: new Map(),
+    [BiblePiece.StackSection]: new Map(),
+    [BiblePiece.StackSectionBook]: new Map(),
   };
 
   registerState<K extends keyof VisualStateMap>({

@@ -253,6 +253,7 @@ export class StackPieceData<
     if (this.piece && clearPiece) {
       piecesToRelease.push(this.piece);
       this.clearPiece();
+      this.deactivate();
     }
 
     piecesToRelease.push(...super.resetHierarchy());

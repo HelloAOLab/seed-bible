@@ -43,6 +43,7 @@ export class StackBookData extends StackPieceData<
   #isInsideSection: DataParams["isInsideSection"];
   #previousHighlightedChapterData: StackChapterData | undefined;
   #labelTranslucency: LabelTranslucencyMode | undefined = undefined;
+  #isShowingChapters: boolean = false;
 
   constructor({
     childrenData = [],
@@ -209,5 +210,14 @@ export class StackBookData extends StackPieceData<
     const chapterData = this.childrenData[chapterNumber - 1];
 
     return !!chapterData && !chapterData.isHidden;
+  }
+  get isShowingChapters() {
+    return this.#isShowingChapters;
+  }
+  showChapters() {
+    this.#isShowingChapters = true;
+  }
+  hideChapters() {
+    this.#isShowingChapters = false;
   }
 }

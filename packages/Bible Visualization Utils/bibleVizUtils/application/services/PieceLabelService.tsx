@@ -98,29 +98,27 @@ export class PieceLabelService<
     });
   }
 
-  hideLabel(piece: Piece<T>, pacing: ShowSequencePacing = "Regular") {
+  async hideLabel(
+    piece: Piece<T>,
+    pacing: ShowSequencePacing = "Regular"
+  ): Promise<void> {
     const labelData = this.#labelDataStorePort.getDataByOwnerId(piece.id);
     if (!labelData) {
       throw new Error(`PieceLabelService: labelData not found at hideLabel`);
     }
 
     labelData.beginHiding();
-    this.#labelAnimationAdapterPort
-      .displayHideFeedback({
-        data: labelData,
-        pacing,
-      })
-      .then(() => {
-        labelData.endHiding();
-        const activityIndicators = labelData.clearActivityIndicators();
-        if (activityIndicators) {
-          this.#activityIndicatorsAdapterPort.hideIndicators(
-            activityIndicators
-          );
-        }
-        this.#labelAnimationAdapterPort.stopAttentionFeedback(labelData);
-        this.#labelAdapterPort.despawnLabel(labelData);
-        this.#labelDataStorePort.removeLabelData(labelData);
-      });
+    await this.#labelAnimationAdapterPort.displayHideFeedback({
+      data: labelData,
+      pacing,
+    });
+    labelData.endHiding();
+    const activityIndicators = labelData.clearActivityIndicators();
+    if (activityIndicators) {
+      this.#activityIndicatorsAdapterPort.hideIndicators(activityIndicators);
+    }
+    this.#labelAnimationAdapterPort.stopAttentionFeedback(labelData);
+    this.#labelAdapterPort.despawnLabel(labelData);
+    this.#labelDataStorePort.removeLabelData(labelData);
   }
 }

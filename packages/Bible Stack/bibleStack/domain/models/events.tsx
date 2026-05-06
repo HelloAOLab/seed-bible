@@ -147,7 +147,14 @@ export interface BibleStackEvents {
   OnBibleCreationBegin: { hasABibleEverBeenCreated: boolean };
   OnBibleCreated: { bibleData: StackBibleData };
   OnBibleOpenSequenceBegin: void;
-  OnBibleOpenSequenceEnd: void;
+  OnBibleOpenSequenceEnd: { bibleData: StackBibleData };
+  OnBibleResetSequenceStart: { bibleData: StackBibleData };
+  OnBibleCloseSequenceStart: { bibleData: StackBibleData };
+  OnBibleCloseSequenceEnd: { bibleData: StackBibleData };
+  OnBibleResetSequenceEnd: { bibleData: StackBibleData };
+  OnBibleOpenSequenceStart: { bibleData: StackBibleData };
+  OnBibleCrackOpenSequenceStart: void;
+  OnBibleCrackOpenSequenceEnd: void;
 }
 
 export type BibleStackEvent = keyof BibleStackEvents;

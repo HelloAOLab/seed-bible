@@ -1,6 +1,11 @@
 import type { StackBibleData } from "bibleVizUtils.domain.entities.StackBibleData";
 import type { BibleSequenceAdapterPort } from "bibleStack.application.ports.bibleLifecycle";
-import type { BibleSequenceAdapterConfigProviderPort } from "bibleStack.infrastructure.ports.bibleSequence";
+import type {
+  BibleSequenceAdapterConfigProviderPort,
+  PieceMapperPort,
+  PieceAdapterPort,
+  SectionInfoMapperPort,
+} from "bibleStack.infrastructure.ports.bibleSequence";
 import type {
   DimensionProviderPort,
   VisualStateRegistryPort,
@@ -10,9 +15,28 @@ import type {
   StackLowerCoverMapperPort,
   StackCrossLineMapperPort,
   StackTestamentMapperPort,
+  StackSectionMapperPort,
+  StackSectionBookMapperPort,
+  StackBookMapperPort,
+  StackSectionShadowMapperPort,
 } from "bibleStack.infrastructure.ports.stackPieceLifecycle";
-import { BibleType } from "bibleVizUtils.domain.models.canvas";
-import { GetBotScales } from "bibleVizUtils.infrastructure.functions.casualos";
+import { BibleType, type Piece } from "bibleVizUtils.domain.models.canvas";
+import {
+  ApplyStrictMod,
+  GetBotScales,
+} from "bibleVizUtils.infrastructure.functions.casualos";
+import type { StackPresenceNavigationPacing } from "bibleStack.domain.models.userPresence";
+import type {
+  StackCover,
+  StackCrossLine,
+} from "bibleStack.domain.models.pieces";
+import type {
+  BookBot,
+  BookTags,
+  SectionBot,
+  SectionTags,
+} from "bibleStack.models.stack";
+import { GetDarkerColor } from "bibleVizUtils.domain.functions.colors";
 
 interface BibleSequenceAdapterParams {
   configProviderPort: BibleSequenceAdapterConfigProviderPort;
@@ -22,6 +46,13 @@ interface BibleSequenceAdapterParams {
   lowerCoverMapperPort: StackLowerCoverMapperPort;
   crossLineMapperPort: StackCrossLineMapperPort;
   testamentMapperPort: StackTestamentMapperPort;
+  sectionMapperPort: StackSectionMapperPort;
+  sectionBookMapperPort: StackSectionBookMapperPort;
+  bookMapperPort: StackBookMapperPort;
+  sectionShadowMapperPort: StackSectionShadowMapperPort;
+  pieceMapperPort: PieceMapperPort;
+  pieceAdapterPort: PieceAdapterPort;
+  sectionInfoMapperPort: SectionInfoMapperPort;
 }
 
 export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
@@ -32,6 +63,13 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
   #lowerCoverMapperPort: BibleSequenceAdapterParams["lowerCoverMapperPort"];
   #crossLineMapperPort: BibleSequenceAdapterParams["crossLineMapperPort"];
   #testamentMapperPort: BibleSequenceAdapterParams["testamentMapperPort"];
+  #sectionMapperPort: BibleSequenceAdapterParams["sectionMapperPort"];
+  #sectionBookMapperPort: BibleSequenceAdapterParams["sectionBookMapperPort"];
+  // #bookMapperPort: BibleSequenceAdapterParams["bookMapperPort"];
+  // #sectionShadowMapperPort: BibleSequenceAdapterParams["sectionShadowMapperPort"];
+  #pieceMapperPort: BibleSequenceAdapterParams["pieceMapperPort"];
+  #pieceAdapterPort: BibleSequenceAdapterParams["pieceAdapterPort"];
+  #sectionInfoMapperPort: BibleSequenceAdapterParams["sectionInfoMapperPort"];
 
   constructor({
     configProviderPort,
@@ -41,6 +79,13 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
     lowerCoverMapperPort,
     crossLineMapperPort,
     testamentMapperPort,
+    sectionMapperPort,
+    sectionBookMapperPort,
+    // bookMapperPort,
+    // sectionShadowMapperPort,
+    pieceMapperPort,
+    pieceAdapterPort,
+    sectionInfoMapperPort,
   }: BibleSequenceAdapterParams) {
     this.#configProviderPort = configProviderPort;
     this.#dimensionProviderPort = dimensionProviderPort;
@@ -49,6 +94,13 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
     this.#lowerCoverMapperPort = lowerCoverMapperPort;
     this.#crossLineMapperPort = crossLineMapperPort;
     this.#testamentMapperPort = testamentMapperPort;
+    this.#sectionMapperPort = sectionMapperPort;
+    this.#sectionBookMapperPort = sectionBookMapperPort;
+    // this.#bookMapperPort = bookMapperPort;
+    // this.#sectionShadowMapperPort = sectionShadowMapperPort;
+    this.#pieceMapperPort = pieceMapperPort;
+    this.#pieceAdapterPort = pieceAdapterPort;
+    this.#sectionInfoMapperPort = sectionInfoMapperPort;
   }
 
   async displayCrackOpenBibleSequence(
@@ -283,5 +335,370 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
       bibleData.bibleType === BibleType.Default
     );
     setTag(leftCoverBot, dimension, false);
+  }
+
+  async displayCloseBibleSequence({
+    lowerCover,
+    upperCover,
+    verticalLine,
+    horizontalLine,
+    pacing = "Regular",
+    piecesToCollapse,
+  }: {
+    lowerCover: StackCover;
+    upperCover: StackCover;
+    verticalLine: StackCrossLine;
+    horizontalLine: StackCrossLine;
+    pacing?: StackPresenceNavigationPacing;
+    piecesToCollapse: (
+      | Piece<"StackTestament">
+      | Piece<"StackSection">
+      | Piece<"StackSectionBook">
+      | Piece<"StackBook">
+      | Piece<"StackSectionShadow">
+    )[];
+  }) {
+    const dimension = this.#dimensionProviderPort.getCurrentDimension();
+
+    const lowerCoverBot =
+      this.#lowerCoverMapperPort.toInfrastructure(lowerCover);
+    if (!lowerCoverBot) {
+      throw new Error(
+        `BibleSequenceAdapter: lowerCoverBot not found at displayCloseBibleSequence`
+      );
+    }
+    const lowerCoverPosition = getBotPosition(lowerCoverBot, dimension);
+    const lowerCoverScales = GetBotScales(lowerCoverBot);
+    const upperCoverClosedPositionZ = lowerCoverPosition.z + lowerCoverScales.z;
+    const crossClosedPositionZ = upperCoverClosedPositionZ;
+    const desiredElementsScaleZ = 0;
+    const botsToCollapse = piecesToCollapse.map((piece) => {
+      const bot = this.#pieceMapperPort.toInfrastructure(piece);
+      if (!bot) {
+        throw new Error(
+          `BIbleSequenceAdapter: bot not found at displayCloseBibleSequence`
+        );
+      }
+      return bot;
+    });
+
+    const duration =
+      this.#configProviderPort.getCloseBibleAnimationDuration(pacing);
+    const easing = this.#configProviderPort.getCloseBibleAnimationEasing();
+    const upperCoverBot = this.#coverMapperPort.toInfrastructure(upperCover);
+    const verticalLineBot =
+      this.#crossLineMapperPort.toInfrastructure(verticalLine);
+    const horizontalLineBot =
+      this.#crossLineMapperPort.toInfrastructure(horizontalLine);
+
+    if (botsToCollapse.length > 0) {
+      await Promise.all([
+        ...botsToCollapse.map((bot) => {
+          const piecePosition = getBotPosition(bot, dimension);
+          const pieceScales = GetBotScales(bot);
+          return animateTag(bot, {
+            fromValue: {
+              [dimension + "Z"]: piecePosition.z,
+              scaleZ: pieceScales.z,
+            },
+            toValue: {
+              [dimension + "Z"]: upperCoverClosedPositionZ,
+              scaleZ: desiredElementsScaleZ,
+            },
+            duration,
+            easing,
+          });
+        }),
+        upperCoverBot
+          ? animateTag(upperCoverBot, dimension + "Z", {
+              toValue: upperCoverClosedPositionZ,
+              duration,
+              easing,
+            })
+          : Promise.resolve(),
+        verticalLineBot && horizontalLineBot
+          ? animateTag([verticalLineBot, horizontalLineBot], dimension + "Z", {
+              toValue: crossClosedPositionZ,
+              duration,
+              easing,
+            })
+          : Promise.resolve(),
+      ]);
+
+      for (const piece of piecesToCollapse) {
+        this.#pieceAdapterPort.hide(piece);
+      }
+    }
+
+    return;
+  }
+
+  async displayOpenBibleSequence({
+    lowerCover,
+    upperCover,
+    verticalLine,
+    horizontalLine,
+    pacing = "Regular",
+    bibleData,
+    arePiecesDraggable,
+  }: {
+    lowerCover: StackCover;
+    upperCover: StackCover;
+    verticalLine: StackCrossLine;
+    horizontalLine: StackCrossLine;
+    pacing?: StackPresenceNavigationPacing;
+    bibleData: StackBibleData;
+    arePiecesDraggable: boolean;
+  }) {
+    const dimension = this.#dimensionProviderPort.getCurrentDimension();
+
+    const lowerCoverBot =
+      this.#lowerCoverMapperPort.toInfrastructure(lowerCover);
+    const upperCoverBot = this.#coverMapperPort.toInfrastructure(upperCover);
+    const verticalLineBot =
+      this.#crossLineMapperPort.toInfrastructure(verticalLine);
+    const horizontalLineBot =
+      this.#crossLineMapperPort.toInfrastructure(horizontalLine);
+
+    if (!lowerCoverBot) {
+      throw new Error(
+        `BibleSequenceAdapter: lowerCoverBot not found at displayCloseBibleSequence`
+      );
+    }
+    if (!upperCoverBot) {
+      throw new Error(
+        `BibleSequenceAdapter: upperCoverBot not found at displayCloseBibleSequence`
+      );
+    }
+    if (!verticalLineBot) {
+      throw new Error(
+        `BibleSequenceAdapter: verticalLineBot not found at displayCloseBibleSequence`
+      );
+    }
+    if (!horizontalLineBot) {
+      throw new Error(
+        `BibleSequenceAdapter: horizontalLineBot not found at displayCloseBibleSequence`
+      );
+    }
+
+    const duration =
+      this.#configProviderPort.getOpenBibleAnimationDuration(pacing);
+    const easing = this.#configProviderPort.getOpenBibleAnimationEasing();
+
+    const lowerCoverPosition = getBotPosition(lowerCoverBot, dimension);
+    const crossVerticalLineScales = GetBotScales(verticalLineBot);
+    const sectionInitialScaleZ = 0;
+
+    const initialPositionZ =
+      lowerCoverPosition.z +
+      this.#configProviderPort.getStackPieceMeasurement("CoverScales").z;
+    let nextPositionZ =
+      initialPositionZ +
+      this.#configProviderPort.getStackSpacing("BetweenArrangements");
+    const resizeAnimations = [];
+
+    for (const testamentData of bibleData.childrenData) {
+      nextPositionZ +=
+        this.#configProviderPort.getStackSpacing("BetweenSections");
+      for (const sectionData of testamentData.childrenData) {
+        if (!sectionData.piece) {
+          throw new Error(
+            `BibleSequenceAdapter: sectionData.piece not defined at displayOpenBibleSequence`
+          );
+        }
+        const desiredScaleZ =
+          sectionData.getCreationParam("amountOfChaptersInSection") *
+          this.#configProviderPort.getStackPieceMeasurement(
+            "SectionDesiredScaleZRatio"
+          );
+        let sectionBot: SectionBot | BookBot | undefined = undefined;
+
+        const baseTags: Partial<SectionTags> & Partial<BookTags> = {
+          [dimension]: true,
+          [dimension + "X"]: 0,
+          [dimension + "Y"]: 0,
+          [dimension + "Z"]: initialPositionZ,
+          [dimension + "RotationZ"]: 0,
+          scaleX:
+            this.#configProviderPort.getStackPieceMeasurement("SectionScales")
+              .x,
+          scaleY:
+            this.#configProviderPort.getStackPieceMeasurement("SectionScales")
+              .y,
+          scaleZ: sectionInitialScaleZ,
+          color:
+            sectionData.highlightColor ??
+            sectionData.getPieceInfoProperty("color"),
+          strokeColor: "clear",
+          labelOpacity: 0,
+          formOpacity: 0.7,
+          transformer: bibleData.getStaticPieceId("bibleTransformer"),
+          draggable: arePiecesDraggable,
+        };
+        const baseVisualState = {
+          initialScaleX:
+            this.#configProviderPort.getStackPieceMeasurement("SectionScales")
+              .x,
+          initialScaleY:
+            this.#configProviderPort.getStackPieceMeasurement("SectionScales")
+              .y,
+          initialScaleZ: desiredScaleZ,
+          hoveredScaleX:
+            this.#configProviderPort.getStackPieceMeasurement("SectionScales")
+              .x +
+            this.#configProviderPort.getStackPieceMeasurement(
+              "SectionAditionalScaleOnHover"
+            ),
+          hoveredScaleY:
+            this.#configProviderPort.getStackPieceMeasurement("SectionScales")
+              .y +
+            this.#configProviderPort.getStackPieceMeasurement(
+              "SectionAditionalScaleOnHover"
+            ),
+          orginalColor: sectionData.getPieceInfoProperty("color"),
+          initialColor: sectionData.getPieceInfoProperty("color"),
+          labelTextColor: GetDarkerColor(
+            sectionData.getPieceInfoProperty("color")
+          ),
+          desiredPositionZ: nextPositionZ,
+          desiredScaleZ,
+        };
+        switch (sectionData.type) {
+          case "StackSection":
+            {
+              sectionBot = this.#sectionMapperPort.toInfrastructure(
+                sectionData.piece
+              );
+              if (!sectionBot) {
+                throw new Error(
+                  `BibleSequenceAdapter: sectionBot not found at displayOpenBibleSequence.`
+                );
+              }
+              const sectionMod: Partial<SectionTags> = {
+                ...baseTags,
+              };
+              const infraSectionInfo =
+                this.#sectionInfoMapperPort.toInfrastructure(
+                  sectionData.pieceInfo
+                );
+              this.#visualStateRegistryPort.registerState({
+                piece: sectionData.piece,
+                state: {
+                  ...baseVisualState,
+                  initialExplodedViewScaleZ:
+                    desiredScaleZ *
+                    (infraSectionInfo.customExplodedViewScaleFactor ?? 2),
+                  desiredExplodedViewScaleZ:
+                    desiredScaleZ *
+                    (infraSectionInfo.customExplodedViewScaleFactor ?? 2),
+                  customColorRange: infraSectionInfo.customColorRange,
+                },
+              });
+              ApplyStrictMod(sectionBot, sectionMod);
+            }
+            break;
+          case "StackSectionBook":
+            {
+              sectionBot = this.#sectionBookMapperPort.toInfrastructure(
+                sectionData.piece
+              );
+              if (!sectionBot) {
+                throw new Error(
+                  `BibleSequenceAdapter: sectionBot not found at displayOpenBibleSequence.`
+                );
+              }
+              const sectionMod: Partial<BookTags> = {
+                ...baseTags,
+              };
+              this.#visualStateRegistryPort.registerState({
+                piece: sectionData.piece,
+                state: {
+                  ...baseVisualState,
+                },
+              });
+              ApplyStrictMod(sectionBot, sectionMod);
+            }
+            break;
+        }
+        if (sectionBot) {
+          setTagMask(sectionBot, "formOpacity", 0.7);
+          resizeAnimations.push(
+            animateTag(sectionBot, {
+              fromValue: {
+                [dimension + "Z"]: initialPositionZ,
+                scaleZ: sectionInitialScaleZ,
+              },
+              toValue: {
+                [dimension + "Z"]: nextPositionZ,
+                scaleZ: desiredScaleZ,
+              },
+              duration,
+              easing,
+            })
+          );
+          if (BibleVizUtils.Data.masks.isInHistoryMode)
+            // TODO: Refactor this logic
+            setTagMask(
+              sectionBot,
+              "color",
+              BibleVizUtils.Functions.GetHistoryColor({ piece: sectionBot })
+            );
+        }
+        nextPositionZ +=
+          desiredScaleZ +
+          this.#configProviderPort.getStackSpacing("BetweenSections");
+      }
+      nextPositionZ += this.#configProviderPort.getStackSpacing(
+        "BetweenArrangements"
+      );
+    }
+
+    const lastTestament =
+      bibleData.childrenData[bibleData.childrenData.length - 1];
+
+    if (!lastTestament) {
+      throw new Error(
+        "BibleSequenceAdapter: lastTestament not found at displayOpenBibleSequence"
+      );
+    }
+
+    const firstSection = lastTestament.childrenData[0];
+
+    if (!firstSection) {
+      throw new Error(
+        "BibleSequenceAdapter: firstSection not found at displayOpenBibleSequence"
+      );
+    }
+
+    const firstSectionPiece = firstSection.piece;
+
+    if (!firstSectionPiece) {
+      throw new Error(
+        "BibleSequenceAdapter: firstSectionPiece not found at displayOpenBibleSequence"
+      );
+    }
+
+    const crossOpenedPositionZ =
+      this.#visualStateRegistryPort.getStateProperty({
+        piece: firstSectionPiece,
+        property: "desiredPositionZ",
+      }) -
+      this.#configProviderPort.getStackSpacing("BetweenArrangements") / 2 -
+      this.#configProviderPort.getStackSpacing("BetweenSections") -
+      crossVerticalLineScales.z / 2;
+    resizeAnimations.push(
+      animateTag(upperCoverBot, dimension + "Z", {
+        toValue: nextPositionZ,
+        duration,
+        easing: easing,
+      }),
+      animateTag([verticalLineBot, horizontalLineBot], dimension + "Z", {
+        toValue: crossOpenedPositionZ,
+        duration,
+        easing: easing,
+      })
+    );
+
+    await Promise.allSettled(resizeAnimations);
   }
 }

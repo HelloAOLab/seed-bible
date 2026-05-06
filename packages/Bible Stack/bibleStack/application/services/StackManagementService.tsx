@@ -40,6 +40,9 @@ export class StackManagementService {
     const sectionsData = this.#pieceDataRepositoryPort.getAllSections();
     this.#pieceLifecycleServicePort.deleteSections(sectionsData);
 
+    const sectionBooksData = this.#pieceDataRepositoryPort.getAllSectionBooks();
+    this.#pieceLifecycleServicePort.deleteSectionBooks(sectionBooksData);
+
     const booksData = this.#pieceDataRepositoryPort.getAllBooks();
     this.#pieceLifecycleServicePort.deleteBooks(booksData);
 

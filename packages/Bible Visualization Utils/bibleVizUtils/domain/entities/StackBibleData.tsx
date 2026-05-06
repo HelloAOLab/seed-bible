@@ -1,4 +1,7 @@
 import { StackTestamentData } from "bibleVizUtils.domain.entities.StackTestamentData";
+import { StackSectionData } from "bibleVizUtils.domain.entities.StackSectionData";
+import { StackSectionBookData } from "bibleVizUtils.domain.entities.StackSectionBookData";
+import { StackBookData } from "bibleVizUtils.domain.entities.StackBookData";
 import { StackData } from "bibleVizUtils.domain.entities.StackData";
 import {
   type CrossPositionType,
@@ -164,4 +167,38 @@ export class StackBibleData extends StackData<StackTestamentData> {
     });
     return result;
   }
+
+  getAllSectionsData(): (StackSectionData | StackSectionBookData)[] {
+    return this.childrenData.flatMap((t) => t.childrenData);
+  }
+
+  getActiveHierarchy(): ActiveBibleHierarchy {
+    const testamentsData: StackTestamentData[] = [];
+    const sectionsData: (StackSectionData | StackSectionBookData)[] = [];
+    const booksData: StackBookData[] = [];
+
+    for (const testamentData of this.childrenData) {
+      if (testamentData.isSplitIntoSections) {
+        for (const child of testamentData.childrenData) {
+          if (!child.isActive) continue;
+          sectionsData.push(child);
+          if (child instanceof StackSectionData && child.isSplitIntoBooks) {
+            for (const bookData of child.childrenData.flat()) {
+              if (bookData.isActive) booksData.push(bookData);
+            }
+          }
+        }
+      } else if (testamentData.isActive) {
+        testamentsData.push(testamentData);
+      }
+    }
+
+    return { testamentsData, sectionsData, booksData };
+  }
+}
+
+export interface ActiveBibleHierarchy {
+  testamentsData: StackTestamentData[];
+  sectionsData: (StackSectionData | StackSectionBookData)[];
+  booksData: StackBookData[];
 }

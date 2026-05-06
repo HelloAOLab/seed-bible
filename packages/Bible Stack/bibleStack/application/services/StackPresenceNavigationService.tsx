@@ -24,7 +24,7 @@ import type {
 import type { ChapterSelectionServicePort } from "bibleStack.application.ports.chapters";
 import type { BookName } from "bibleVizUtils.domain.models.scripture";
 import { StackPresenceNavigationPacings } from "bibleStack.domain.models.userPresence";
-import type { StackPresenceNavigationPort } from "bibleStack.application.ports.experience";
+import type { StackPresenceNavigationServicePort } from "bibleStack.application.ports.experience";
 
 interface StackPresenceNavigationServiceParams {
   bibleDataRepositoryPort: BibleDataRepositoryPort;
@@ -55,7 +55,7 @@ interface NavigationTargets {
   chapterToFocus: StackChapterData | undefined;
 }
 
-export class StackPresenceNavigationService implements StackPresenceNavigationPort {
+export class StackPresenceNavigationService implements StackPresenceNavigationServicePort {
   #bibleDataRepositoryPort: StackPresenceNavigationServiceParams["bibleDataRepositoryPort"];
   #presenceProviderPort: StackPresenceNavigationServiceParams["presenceProviderPort"];
   #pieceAdapterPort: StackPresenceNavigationServiceParams["pieceAdapterPort"];

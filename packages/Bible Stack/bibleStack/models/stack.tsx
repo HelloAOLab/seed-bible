@@ -35,15 +35,31 @@ export interface TestamentTags extends StackDraggablePieceBotTags<"StackTestamen
 
 export type TestamentBot = TypedBot<TestamentTags>;
 
-export type SectionTags = StackDraggablePieceBotTags<"StackSection">;
+export interface SectionTags extends StackDraggablePieceBotTags<"StackSection"> {
+  scaleX: number;
+  scaleY: number;
+  scaleZ: number;
+  color: string;
+  strokeColor: string;
+  labelOpacity: number;
+  formOpacity: number;
+}
 
 export type SectionBot = TypedBot<SectionTags>;
 
 export type SectionShadowBot = TypedBot<PieceBotTags<"StackSectionShadow">>;
 
-export type BookTags = StackDraggablePieceBotTags<
+export interface BookTags extends StackDraggablePieceBotTags<
   "StackBook" | "StackSectionBook"
->;
+> {
+  scaleX: number;
+  scaleY: number;
+  scaleZ: number;
+  color: string;
+  strokeColor: string;
+  labelOpacity: number;
+  formOpacity: number;
+}
 
 export type BookBot = TypedBot<BookTags>;
 
