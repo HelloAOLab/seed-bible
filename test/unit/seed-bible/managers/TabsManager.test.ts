@@ -230,4 +230,61 @@ describe("createTabs", () => {
     expect(selectedTab!.readingState.bookId.value).toBe("MAT");
     expect(selectedTab!.readingState.chapterNumber.value).toBe(1);
   });
+
+  it("reuses configBot.tags.translationId instead of writing configBot.tags.translation", async () => {
+    (globalThis as any).configBot.tags.translationId = "NIV";
+    setWebResponses(createExampleManagerResponseMap());
+
+    const manager = createTabs(
+      createDataManager(),
+      createHighlightsManagerMock() as any
+    );
+    await waitForTabsToLoad(manager.tabs.value);
+
+    expect((globalThis as any).configBot.tags.translationId).toBe("NIV");
+    expect((globalThis as any).configBot.tags.translation).toBeUndefined();
+  });
+
+  it("prioritizes configBot.tags.translationId over configBot.tags.translation for the initial tab", async () => {
+    (globalThis as any).configBot.tags.translationId = "NIV";
+    (globalThis as any).configBot.tags.translation = "AAB";
+    (globalThis as any).configBot.tags.book = "MAT";
+    (globalThis as any).configBot.tags.chapter = 1;
+    setWebResponses(createExampleManagerResponseMap());
+
+    const manager = createTabs(
+      createDataManager(),
+      createHighlightsManagerMock() as any
+    );
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const firstTab = manager.tabs.value[0]!;
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
+  it("saves a full custom-endpoint URL to configBot.tags.translation", async () => {
+    (globalThis as any).configBot.tags.translation = "NIV";
+    (globalThis as any).configBot.tags.book = "MAT";
+    (globalThis as any).configBot.tags.chapter = 1;
+
+    setWebResponses(createExampleManagerResponseMap());
+
+    const dataManager = createDataManager();
+    const customTranslationUrl = "https://alt.example/api/NIV/books.json";
+    const buildTranslationIdSpy = jest
+      .spyOn(dataManager, "buildTranslationId")
+      .mockReturnValue(customTranslationUrl);
+
+    const manager = createTabs(
+      dataManager,
+      createHighlightsManagerMock() as any
+    );
+    await waitForTabsToLoad(manager.tabs.value);
+
+    expect((globalThis as any).configBot.tags.translationId).toBeUndefined();
+    expect((globalThis as any).configBot.tags.translation).toBe(
+      customTranslationUrl
+    );
+    expect(buildTranslationIdSpy).toHaveBeenCalledWith("NIV");
+  });
 });

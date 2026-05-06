@@ -1023,6 +1023,185 @@ describe("BibleReader", () => {
     expect(wordsOfJesus?.textContent).toContain("I am the light");
   });
 
+  it("hides chapter headings when scriptureElements.showHeadings is false", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureElements={{
+            showHeadings: false,
+            showVerseNumbers: true,
+            showFootnotes: true,
+            showHighlights: true,
+            showRedLettering: true,
+          }}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-chapter-heading")).toBeNull();
+  });
+
+  it("hides verse numbers when scriptureElements.showVerseNumbers is false", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: false,
+            showFootnotes: true,
+            showHighlights: true,
+            showRedLettering: true,
+          }}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-verse-number")).toBeNull();
+  });
+
+  it("hides inline footnote buttons and the footnote modal when scriptureElements.showFootnotes is false", () => {
+    const { pane, selectorState, readingState, selectedFootnote, chapterData } =
+      createFixture();
+
+    selectedFootnote.value = {
+      chapter: chapterData.value!,
+      verse: {
+        type: "verse",
+        number: 1,
+        content: ["Text"],
+      },
+      note: { noteId: 7, text: "Footnote text", caller: "+" },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: true,
+            showFootnotes: false,
+            showHighlights: true,
+            showRedLettering: true,
+          }}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-inline-footnote-button")).toBeNull();
+    expect(container.querySelector(".sb-footnote-modal")).toBeNull();
+  });
+
+  it("hides highlight classes/styles when scriptureElements.showHighlights is false", () => {
+    const { pane, selectorState, readingState, highlights } = createFixture();
+
+    highlights.value = {
+      highlights: [
+        {
+          verse: 1,
+          colorId: "custom",
+          customColor: "#123456",
+          customFontColor: "#abcdef",
+        },
+      ],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: true,
+            showFootnotes: true,
+            showHighlights: false,
+            showRedLettering: true,
+          }}
+        />,
+        container
+      );
+    });
+
+    const firstVerse = container.querySelectorAll(".sb-verse")[0] as
+      | HTMLElement
+      | undefined;
+    const firstDecorator = firstVerse?.querySelector(
+      ".sb-verse-decorator"
+    ) as HTMLElement | null;
+
+    expect(firstDecorator).not.toBeNull();
+    expect(firstDecorator?.className).not.toContain("sb-highlight-");
+    expect(firstDecorator?.style.backgroundColor).toBe("");
+    expect(firstDecorator?.style.color).toBe("");
+  });
+
+  it("omits sb-words-of-jesus class when scriptureElements.showRedLettering is false", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: true,
+            showFootnotes: true,
+            showHighlights: true,
+            showRedLettering: false,
+          }}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-words-of-jesus")).toBeNull();
+  });
+
+  it("applies sb-words-of-jesus class when scriptureElements.showRedLettering is true", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: true,
+            showFootnotes: true,
+            showHighlights: true,
+            showRedLettering: true,
+          }}
+        />,
+        container
+      );
+    });
+
+    const wordsOfJesus = container.querySelector(".sb-words-of-jesus");
+    expect(wordsOfJesus).not.toBeNull();
+    expect(wordsOfJesus?.textContent).toContain("I am the light");
+  });
+
   it("renders an open footnote modal and closes it", () => {
     const {
       pane,

@@ -8,11 +8,21 @@ import {
 
 const { useMemo } = os.appHooks;
 
-export const DEFAULT_LANGUAGE = "en";
+export const DEFAULT_LANGUAGE =
+  configBot.tags.lang ?? getLanguage(navigator.languages[0]) ?? "en";
 
 export { i18n };
 
 export type BotTranslations = Record<string, Record<string, string>>;
+
+function getLanguage(locale: string | null | undefined): string | null {
+  if (!locale) {
+    return null;
+  }
+  const normalized = locale.toLowerCase().replace(/_/g, "-");
+  const [language] = normalized.split("-");
+  return language || null;
+}
 
 /**
  * Adds the given translations to the i18n instance under the specified namespace.
@@ -66,7 +76,7 @@ if (!seedBibleTranslations[DEFAULT_LANGUAGE]) {
 
 const availableLanguages = Object.keys(seedBibleTranslations).sort();
 
-const initialLanguage = configBot.tags.lang || DEFAULT_LANGUAGE;
+const initialLanguage = DEFAULT_LANGUAGE;
 
 if (!i18n.isInitialized) {
   console.log(
@@ -93,6 +103,38 @@ export function I18nProvider(props: { children: unknown }) {
 
 export type I18nManager = ReturnType<typeof useI18n>;
 
+const RTL_LANGUAGE_CODES = new Set(["ar", "fa", "he", "ur", "ps", "dv", "yi"]);
+
+function isRightToLeftLanguage(languageCode: string): boolean {
+  const normalizedCode = languageCode.trim();
+  if (!normalizedCode) {
+    return false;
+  }
+
+  const primarySubtag = normalizedCode.split("-")[0]?.toLowerCase();
+  if (primarySubtag && RTL_LANGUAGE_CODES.has(primarySubtag)) {
+    return true;
+  }
+
+  if (typeof Intl !== "undefined" && typeof Intl.Locale === "function") {
+    try {
+      const locale = new Intl.Locale(normalizedCode) as Intl.Locale & {
+        textInfo?: { direction: string };
+        getTextInfo?: () => { direction: string };
+      };
+      if (typeof locale.getTextInfo === "function") {
+        const textInfo = locale.getTextInfo();
+        return textInfo.direction === "rtl";
+      }
+      return locale.textInfo?.direction === "rtl";
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+}
+
 /**
  * Gets the i18n manager, which provides access to the translation function, current language, available languages, and a function to change the language. Also provides a helper function for translating keys within a specific namespace.
  * @param ns The namespace for the translations, typically the extension ID to avoid conflicts with other extensions. This is optional, as the returned manager will still work without it, but it can be used to create a namespaced translation function that automatically applies the namespace to translation keys.
@@ -100,6 +142,8 @@ export type I18nManager = ReturnType<typeof useI18n>;
  */
 export function useI18n(ns?: string) {
   const { t, i18n: i18nInstance } = useTranslation();
+
+  const isRtl = isRightToLeftLanguage(i18nInstance.language);
 
   const setLanguage = async (language: string) => {
     await i18nInstance.changeLanguage(language);
@@ -115,6 +159,7 @@ export function useI18n(ns?: string) {
       t: translate,
       ns,
       language: i18nInstance.language || DEFAULT_LANGUAGE,
+      isRtl,
       availableLanguages,
       setLanguage,
       i18n: i18nInstance,

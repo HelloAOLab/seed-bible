@@ -4,16 +4,25 @@ import {
   getProfileConfigValue,
   saveProfileConfigValue,
 } from "seed-bible.managers.ProfileConfigSync";
+import { z } from "zod";
 
 export type BookOrientation = "traditional" | "tanak";
 export type UITextSize = "S" | "M" | "L" | "XL";
-export type TextAlignment = "left" | "center" | "right";
+export type TextAlignment = "unset" | "left" | "center" | "right";
 export type TextSectionId = "bookTitle" | "heading" | "verse";
 
 export interface SelectionUIBehavior {
   showSelectedItems: boolean;
   showHighlightColors: boolean;
   showIconText: boolean;
+}
+
+export interface ScriptureElementsBehavior {
+  showHeadings: boolean;
+  showVerseNumbers: boolean;
+  showFootnotes: boolean;
+  showHighlights: boolean;
+  showRedLettering: boolean;
 }
 
 export interface TextSectionConfig {
@@ -46,6 +55,7 @@ export interface AppSettings {
   bookOrientation: BookOrientation;
   uiTextSize: UITextSize;
   selectionUI: SelectionUIBehavior;
+  scriptureElements: ScriptureElementsBehavior;
   textConfig: TextConfig;
   toolbar: ToolbarCustomization;
   keepScreenAwake: boolean;
@@ -55,7 +65,69 @@ export interface AppSettings {
   scriptureMargin: number;
 }
 
-export const DEFAULT_SCRIPTURE_MARGIN = 35;
+export const AppSettingsSchema = z.object({
+  bookOrientation: z.enum(["traditional", "tanak"]),
+  uiTextSize: z.enum(["S", "M", "L", "XL"]),
+  selectionUI: z.object({
+    showSelectedItems: z.boolean(),
+    showHighlightColors: z.boolean(),
+    showIconText: z.boolean(),
+  }),
+  scriptureElements: z.object({
+    showHeadings: z.boolean(),
+    showVerseNumbers: z.boolean(),
+    showFootnotes: z.boolean(),
+    showHighlights: z.boolean(),
+    showRedLettering: z.boolean(),
+  }),
+  textConfig: z.object({
+    bookTitle: z.object({
+      font: z.string(),
+      weight: z.string(),
+      color: z.string(),
+      marginVertical: z.number(),
+      marginHorizontal: z.number(),
+      bold: z.boolean(),
+      italic: z.boolean(),
+      underline: z.boolean(),
+      alignment: z.enum(["unset", "left", "center", "right"]),
+      lineHeight: z.number().optional(),
+    }),
+    heading: z.object({
+      font: z.string(),
+      weight: z.string(),
+      color: z.string(),
+      marginVertical: z.number(),
+      marginHorizontal: z.number(),
+      bold: z.boolean(),
+      italic: z.boolean(),
+      underline: z.boolean(),
+      alignment: z.enum(["unset", "left", "center", "right"]),
+      lineHeight: z.number().optional(),
+    }),
+    verse: z.object({
+      font: z.string(),
+      weight: z.string(),
+      color: z.string(),
+      marginVertical: z.number(),
+      marginHorizontal: z.number(),
+      bold: z.boolean(),
+      italic: z.boolean(),
+      underline: z.boolean(),
+      alignment: z.enum(["unset", "left", "center", "right"]),
+      lineHeight: z.number().optional(),
+    }),
+  }),
+  toolbar: z.object({
+    hidden: z.array(z.string()),
+    order: z.array(z.string()),
+  }),
+  keepScreenAwake: z.boolean(),
+  customHighlightColors: z.array(z.string()).max(3),
+  scriptureMargin: z.number().min(0).max(45),
+});
+
+export const DEFAULT_SCRIPTURE_MARGIN = 27;
 export const MOBILE_SCRIPTURE_MARGIN = 5;
 
 export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
@@ -63,6 +135,7 @@ export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
 const TAG_BOOK_ORIENTATION = "app.bookOrientation";
 const TAG_UI_TEXT_SIZE = "app.uiTextSize";
 const TAG_SELECTION_UI = "app.selectionUI";
+const TAG_SCRIPTURE_ELEMENTS = "app.scriptureElements";
 const TAG_TEXT_CONFIG = "app.textConfig";
 const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
@@ -74,6 +147,7 @@ const TAG_SCRIPTURE_MARGIN = "app.scriptureMargin";
 const PROFILE_BOOK_ORIENTATION = "bookOrientation";
 const PROFILE_UI_TEXT_SIZE = "uiTextSize";
 const PROFILE_SELECTION_UI = "selectionUI";
+const PROFILE_SCRIPTURE_ELEMENTS = "scriptureElements";
 const PROFILE_TEXT_CONFIG = "textConfig";
 const PROFILE_TOOLBAR = "toolbarConfig";
 const PROFILE_KEEP_AWAKE = "keepScreenAwake";
@@ -108,6 +182,14 @@ const DEFAULT_SELECTION_UI: SelectionUIBehavior = {
   showIconText: true,
 };
 
+const DEFAULT_SCRIPTURE_ELEMENTS: ScriptureElementsBehavior = {
+  showHeadings: true,
+  showVerseNumbers: true,
+  showFootnotes: true,
+  showHighlights: true,
+  showRedLettering: true,
+};
+
 /**
  * Empty `color` means "follow the active theme". The reader CSS reads
  * `--sb-{section}-font-color` directly; the text editor's color setting
@@ -120,12 +202,12 @@ const DEFAULT_TEXT_CONFIG: TextConfig = {
     font: "'Newsreader', serif",
     weight: "700",
     color: "",
-    marginVertical: 0,
+    marginVertical: 12,
     marginHorizontal: 0,
     bold: true,
     italic: false,
     underline: false,
-    alignment: "left",
+    alignment: "unset",
   },
   heading: {
     font: "'Plus Jakarta Sans', sans-serif",
@@ -136,7 +218,7 @@ const DEFAULT_TEXT_CONFIG: TextConfig = {
     bold: false,
     italic: true,
     underline: false,
-    alignment: "left",
+    alignment: "unset",
   },
   verse: {
     font: "'Newsreader', serif",
@@ -147,7 +229,7 @@ const DEFAULT_TEXT_CONFIG: TextConfig = {
     bold: false,
     italic: false,
     underline: false,
-    alignment: "left",
+    alignment: "unset",
     lineHeight: DEFAULT_VERSE_LINE_HEIGHT,
   },
 };
@@ -172,6 +254,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   bookOrientation: "traditional",
   uiTextSize: "M",
   selectionUI: DEFAULT_SELECTION_UI,
+  scriptureElements: DEFAULT_SCRIPTURE_ELEMENTS,
   textConfig: DEFAULT_TEXT_CONFIG,
   toolbar: DEFAULT_TOOLBAR_CONFIG,
   keepScreenAwake: false,
@@ -293,11 +376,54 @@ function parseSelectionUI(
   };
 }
 
+function parseScriptureElements(
+  value: unknown,
+  fallback: ScriptureElementsBehavior
+): ScriptureElementsBehavior {
+  let parsed: unknown = value;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return fallback;
+    }
+  }
+  if (!parsed || typeof parsed !== "object") {
+    return fallback;
+  }
+  const obj = parsed as Record<string, unknown>;
+  return {
+    showHeadings:
+      typeof obj.showHeadings === "boolean"
+        ? obj.showHeadings
+        : fallback.showHeadings,
+    showVerseNumbers:
+      typeof obj.showVerseNumbers === "boolean"
+        ? obj.showVerseNumbers
+        : fallback.showVerseNumbers,
+    showFootnotes:
+      typeof obj.showFootnotes === "boolean"
+        ? obj.showFootnotes
+        : fallback.showFootnotes,
+    showHighlights:
+      typeof obj.showHighlights === "boolean"
+        ? obj.showHighlights
+        : fallback.showHighlights,
+    showRedLettering:
+      typeof obj.showRedLettering === "boolean"
+        ? obj.showRedLettering
+        : fallback.showRedLettering,
+  };
+}
+
 function parseAlignment(
   value: unknown,
   fallback: TextAlignment
 ): TextAlignment {
-  return value === "left" || value === "center" || value === "right"
+  return value === "unset" ||
+    value === "left" ||
+    value === "center" ||
+    value === "right"
     ? value
     : fallback;
 }
@@ -421,6 +547,7 @@ export interface SettingsManager {
   setBookOrientation: (orientation: BookOrientation) => void;
   setUITextSize: (size: UITextSize) => void;
   setSelectionUI: (patch: Partial<SelectionUIBehavior>) => void;
+  setScriptureElements: (patch: Partial<ScriptureElementsBehavior>) => void;
   updateTextSection: (
     section: TextSectionId,
     patch: Partial<TextSectionConfig>
@@ -438,6 +565,7 @@ export interface SettingsManager {
   setKeepScreenAwake: (enabled: boolean) => void;
   addCustomHighlightColor: (color: string) => void;
   removeCustomHighlightColor: (color: string) => void;
+  setAllSettings: (next: AppSettings) => void;
   resetToDefaults: () => void;
 }
 
@@ -463,6 +591,11 @@ export function createSettings(login: LoginManager): SettingsManager {
         getProfileConfigValue(profile, PROFILE_SELECTION_UI) ??
           configBot.tags[TAG_SELECTION_UI],
         DEFAULT_SETTINGS.selectionUI
+      ),
+      scriptureElements: parseScriptureElements(
+        getProfileConfigValue(profile, PROFILE_SCRIPTURE_ELEMENTS) ??
+          configBot.tags[TAG_SCRIPTURE_ELEMENTS],
+        DEFAULT_SETTINGS.scriptureElements
       ),
       textConfig: parseTextConfig(
         getProfileConfigValue(profile, PROFILE_TEXT_CONFIG) ??
@@ -518,6 +651,7 @@ export function createSettings(login: LoginManager): SettingsManager {
       changedTags.includes(TAG_BOOK_ORIENTATION) ||
       changedTags.includes(TAG_UI_TEXT_SIZE) ||
       changedTags.includes(TAG_SELECTION_UI) ||
+      changedTags.includes(TAG_SCRIPTURE_ELEMENTS) ||
       changedTags.includes(TAG_TEXT_CONFIG) ||
       changedTags.includes(TAG_TOOLBAR) ||
       changedTags.includes(TAG_KEEP_AWAKE) ||
@@ -545,6 +679,13 @@ export function createSettings(login: LoginManager): SettingsManager {
     settings.value = { ...settings.value, selectionUI: next };
     configBot.tags[TAG_SELECTION_UI] = JSON.stringify(next);
     saveProfileConfigValue(login, PROFILE_SELECTION_UI, next);
+  };
+
+  const setScriptureElements = (patch: Partial<ScriptureElementsBehavior>) => {
+    const next = { ...settings.value.scriptureElements, ...patch };
+    settings.value = { ...settings.value, scriptureElements: next };
+    configBot.tags[TAG_SCRIPTURE_ELEMENTS] = JSON.stringify(next);
+    saveProfileConfigValue(login, PROFILE_SCRIPTURE_ELEMENTS, next);
   };
 
   const writeTextConfig = (next: TextConfig) => {
@@ -665,12 +806,29 @@ export function createSettings(login: LoginManager): SettingsManager {
     );
   };
 
+  const setAllSettings = (next: AppSettings) => {
+    next = AppSettingsSchema.parse(next);
+    settings.value = next;
+    if (login.userId.value) {
+      const existingProfile = login.profile.value;
+      login.updateProfile({
+        config: {
+          ...(existingProfile?.config ?? {}),
+          ...next,
+        },
+      });
+    }
+  };
+
   const resetToDefaults = () => {
     settings.value = DEFAULT_SETTINGS;
     configBot.tags[TAG_BOOK_ORIENTATION] = DEFAULT_SETTINGS.bookOrientation;
     configBot.tags[TAG_UI_TEXT_SIZE] = DEFAULT_SETTINGS.uiTextSize;
     configBot.tags[TAG_SELECTION_UI] = JSON.stringify(
       DEFAULT_SETTINGS.selectionUI
+    );
+    configBot.tags[TAG_SCRIPTURE_ELEMENTS] = JSON.stringify(
+      DEFAULT_SETTINGS.scriptureElements
     );
     configBot.tags[TAG_TEXT_CONFIG] = "";
     configBot.tags[TAG_TOOLBAR] = "";
@@ -691,6 +849,11 @@ export function createSettings(login: LoginManager): SettingsManager {
       login,
       PROFILE_SELECTION_UI,
       DEFAULT_SETTINGS.selectionUI
+    );
+    saveProfileConfigValue(
+      login,
+      PROFILE_SCRIPTURE_ELEMENTS,
+      DEFAULT_SETTINGS.scriptureElements
     );
     saveProfileConfigValue(
       login,
@@ -756,6 +919,7 @@ export function createSettings(login: LoginManager): SettingsManager {
     setBookOrientation,
     setUITextSize,
     setSelectionUI,
+    setScriptureElements,
     updateTextSection,
     setScriptureMargin,
     setVerseLineHeight,
@@ -767,6 +931,7 @@ export function createSettings(login: LoginManager): SettingsManager {
     setKeepScreenAwake,
     addCustomHighlightColor,
     removeCustomHighlightColor,
+    setAllSettings,
     resetToDefaults,
   };
 }

@@ -35,10 +35,14 @@ const defaultCollaborative = procHasFlag(KnownFlags.Collaborative);
 const aoBot = procHasFlag(KnownFlags.AoBot);
 const startWithDevtools = procHasFlag(KnownFlags.DevTools);
 
+const lang =
+  process.argv.find((arg) => arg.startsWith("--lang="))?.split("=")[1] ?? "en";
+
 const browser = await puppeteer.launch({
   headless: false,
   defaultViewport: null,
   devtools: startWithDevtools,
+  args: ["--lang=" + lang],
 });
 
 let lastInst: string;

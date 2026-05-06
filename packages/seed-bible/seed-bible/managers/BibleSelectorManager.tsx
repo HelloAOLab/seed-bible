@@ -42,6 +42,13 @@ export interface GhostBook {
   ghost?: boolean;
 }
 
+export interface TranslationLanguageGroup {
+  language: string;
+  languageEnglishName: string;
+  languageName: string;
+  translations: Translation[];
+}
+
 export type BibleSelectorBookItem = TranslationBook | GhostBook;
 
 export type BibleSelectorPsalmsGroups =
@@ -165,7 +172,7 @@ export interface BibleSelectorState {
   languageQuery: Signal<string>;
   showCustomTranslation: Signal<boolean>;
   allowedTranslationLimit: Signal<number>;
-  apiTranslations: Signal<Record<string, Record<string, Translation>>>;
+  apiTranslations: ReadonlySignal<TranslationLanguageGroup[]>;
   showAllLanguages: Signal<"complete" | "all" | "popular">;
   showTranslationSettings: Signal<boolean>;
   showTranslationInfo: Signal<{
@@ -173,9 +180,7 @@ export interface BibleSelectorState {
     position: { x: number; y: number };
   } | null>;
   inputValue: Signal<string>;
-  filteredApiTranslations: ReadonlySignal<
-    [string, Record<string, Translation>][]
-  >;
+  filteredApiTranslations: ReadonlySignal<TranslationLanguageGroup[]>;
   handleTranslationAddition: () => void;
 }
 
@@ -513,21 +518,49 @@ export function createBibleSelectorState(
   const apocryphaAvailable = signal<boolean>(false);
 
   const defaultTranslations = signal<string[]>([
-    "english",
-    "spanish",
-    "arabic",
-    "hindi",
-    "hebrew",
-    "ancient greek",
+    "eng",
+    "spa",
+    "arb",
+    "hin",
+    "heb",
+    "grc",
   ]);
 
-  const apiTranslations = signal<Record<string, Record<string, Translation>>>({
-    english: {},
-    spanish: {},
-    arabic: {},
-    hindi: {},
-    hebrew: {},
-    "ancient greek": {},
+  const apiTranslations = computed<Array<TranslationLanguageGroup>>(() => {
+    const normalized = availableTranslations.value.map((item: Translation) => ({
+      ...item,
+      languageEnglishName:
+        item?.languageEnglishName || item.languageName || item.language,
+    }));
+    const grouped = new Map<string, TranslationLanguageGroup>();
+
+    normalized.forEach((translation: Translation) => {
+      const languageCode = translation.language;
+      const existing = grouped.get(languageCode);
+
+      if (existing) {
+        if (
+          !existing.translations.some(
+            (existingTranslation) => existingTranslation.id === translation.id
+          )
+        ) {
+          existing.translations.push(translation);
+        }
+        return;
+      }
+
+      grouped.set(languageCode, {
+        language: languageCode,
+        languageEnglishName: translation.languageEnglishName || languageCode,
+        languageName:
+          translation.languageName ||
+          translation.languageEnglishName ||
+          languageCode,
+        translations: [translation],
+      });
+    });
+
+    return Array.from(grouped.values());
   });
 
   const allowedTranslationLimit = signal<number>(50);
@@ -689,37 +722,23 @@ export function createBibleSelectorState(
     const tr = selectedTranslation.value;
     const dtr = defaultTranslations.value;
     if (tr) {
+      const langCode = tr.language?.toLowerCase();
       const langName =
         tr.languageEnglishName?.toLowerCase() || tr.englishName.toLowerCase();
-      if (!dtr.includes(langName)) {
-        defaultTranslations.value = [...dtr, langName];
+      const nextDefaults = [...dtr];
+
+      if (langCode && !nextDefaults.includes(langCode)) {
+        nextDefaults.push(langCode);
+      }
+
+      if (!nextDefaults.includes(langName)) {
+        nextDefaults.push(langName);
+      }
+
+      if (nextDefaults.length !== dtr.length) {
+        defaultTranslations.value = nextDefaults;
       }
     }
-  });
-
-  effect(() => {
-    const allTranslations = availableTranslations.value;
-
-    const normalized = allTranslations.map((item: Translation) => ({
-      ...item,
-      languageEnglishName: item?.languageEnglishName || item.englishName,
-    }));
-    const translations = {} as Record<string, Record<string, Translation>>;
-
-    normalized.forEach((translation: Translation) => {
-      const englishName =
-        translation.languageEnglishName?.toLowerCase() ||
-        translation.englishName.toLowerCase();
-      const shortName = translation.shortName.toLowerCase();
-      if (translations[englishName]) {
-        if (!translations[englishName][shortName]) {
-          translations[englishName][shortName] = translation;
-        }
-      } else {
-        translations[englishName] = { [shortName]: translation };
-      }
-    });
-    apiTranslations.value = translations;
   });
 
   effect(() => {
@@ -756,107 +775,165 @@ export function createBibleSelectorState(
     }
   });
 
-  const filteredApiTranslations = computed<
-    Array<[string, Record<string, Translation>]>
-  >(() => {
-    const lq = languageQuery.value;
-    const apiTr = apiTranslations.value;
-    const limit = allowedTranslationLimit.value;
-    const selTr = selectedTranslation.value;
-    const sal = showAllLanguages.value;
-    const dtr = defaultTranslations.value;
+  const filteredApiTranslations = computed<Array<TranslationLanguageGroup>>(
+    () => {
+      const lq = languageQuery.value;
+      const apiTr = apiTranslations.value;
+      const limit = allowedTranslationLimit.value;
+      const selTr = selectedTranslation.value;
+      const sal = showAllLanguages.value;
+      const dtr = defaultTranslations.value;
+      const selectedLanguageCode = selTr?.language?.toLowerCase();
+      const selectedLanguageName = selTr?.languageEnglishName?.toLowerCase();
 
-    const cloneTranslations = (
-      translations: Record<string, Record<string, Translation>>
-    ): Record<string, Record<string, Translation>> =>
-      JSON.parse(JSON.stringify(translations));
-
-    const filterByMode = (
-      translations: Record<string, Record<string, Translation>>
-    ): Record<string, Record<string, Translation>> => {
-      if (sal === "all") {
-        return cloneTranslations(translations);
-      }
-
-      const next: Record<string, Record<string, Translation>> = {};
-
-      Object.entries(translations).forEach(([englishName, group]) => {
-        if (sal === "popular" && !dtr.includes(englishName)) {
-          return;
+      const filterByMode = (
+        groups: TranslationLanguageGroup[]
+      ): TranslationLanguageGroup[] => {
+        if (sal === "all") {
+          return groups.map((group) => ({
+            ...group,
+            translations: [...group.translations],
+          }));
         }
 
-        if (sal === "complete") {
-          const filteredGroup: Record<string, Translation> = {};
-          Object.entries(group).forEach(([shortName, translation]) => {
-            const hideForComplete =
-              translation.numberOfBooks < 66 && translation.id !== selTr?.id;
-            if (!hideForComplete) {
-              filteredGroup[shortName] = translation;
-            }
-          });
-          if (Object.keys(filteredGroup).length > 0) {
-            next[englishName] = filteredGroup;
-          }
-          return;
-        }
+        const next: TranslationLanguageGroup[] = [];
 
-        next[englishName] = { ...group };
-      });
-
-      return next;
-    };
-
-    const filterByQuery = (
-      translations: Record<string, Record<string, Translation>>,
-      lowercaseQuery: string
-    ): Record<string, Record<string, Translation>> => {
-      const next: Record<string, Record<string, Translation>> = {};
-
-      Object.entries(translations).forEach(([englishName, group]) => {
-        if (englishName.includes(lowercaseQuery)) {
-          next[englishName] = { ...group };
-          return;
-        }
-
-        const matchedGroup: Record<string, Translation> = {};
-        Object.entries(group).forEach(([shortName, translation]) => {
+        groups.forEach((group) => {
           if (
-            shortName.includes(lowercaseQuery) ||
-            translation?.name?.toLowerCase().includes(lowercaseQuery) ||
-            translation?.languageName?.toLowerCase().includes(lowercaseQuery)
+            sal === "popular" &&
+            !dtr.includes(group.language) &&
+            !group.translations.some((translation) =>
+              dtr.includes(translation.language)
+            )
           ) {
-            matchedGroup[shortName] = translation;
+            return;
+          }
+
+          if (sal === "complete") {
+            const filteredTranslations = group.translations.filter(
+              (translation) =>
+                !(
+                  translation.numberOfBooks < 66 && translation.id !== selTr?.id
+                )
+            );
+
+            if (filteredTranslations.length > 0) {
+              next.push({
+                ...group,
+                translations: filteredTranslations,
+              });
+            }
+
+            return;
+          }
+
+          next.push({
+            ...group,
+            translations: [...group.translations],
+          });
+        });
+
+        return next;
+      };
+
+      const filterByQuery = (
+        groups: TranslationLanguageGroup[],
+        lowercaseQuery: string
+      ): TranslationLanguageGroup[] => {
+        const next: TranslationLanguageGroup[] = [];
+
+        groups.forEach((group) => {
+          const languageMatch =
+            group.language.toLowerCase().includes(lowercaseQuery) ||
+            group.languageEnglishName.toLowerCase().includes(lowercaseQuery) ||
+            group.languageName.toLowerCase().includes(lowercaseQuery) ||
+            group.translations.some((translation) => {
+              const languageEnglishName =
+                translation.languageEnglishName?.toLowerCase() ||
+                translation.englishName.toLowerCase();
+              const languageName = translation.languageName?.toLowerCase();
+
+              return (
+                languageEnglishName.includes(lowercaseQuery) ||
+                Boolean(languageName?.includes(lowercaseQuery))
+              );
+            });
+
+          if (languageMatch) {
+            next.push({
+              ...group,
+              translations: [...group.translations],
+            });
+            return;
+          }
+
+          const matchedTranslations = group.translations.filter(
+            (translation) => {
+              const shortName = translation.shortName.toLowerCase();
+
+              if (
+                shortName.includes(lowercaseQuery) ||
+                translation?.name?.toLowerCase().includes(lowercaseQuery) ||
+                translation?.languageEnglishName
+                  ?.toLowerCase()
+                  .includes(lowercaseQuery) ||
+                translation?.languageName
+                  ?.toLowerCase()
+                  .includes(lowercaseQuery)
+              ) {
+                return true;
+              }
+
+              return false;
+            }
+          );
+
+          if (matchedTranslations.length > 0) {
+            next.push({
+              ...group,
+              translations: matchedTranslations,
+            });
           }
         });
 
-        if (Object.keys(matchedGroup).length > 0) {
-          next[englishName] = matchedGroup;
+        return next;
+      };
+
+      const sortFn = (
+        a: TranslationLanguageGroup,
+        b: TranslationLanguageGroup
+      ): number => {
+        if (
+          a.language === selectedLanguageCode ||
+          a.language.toLowerCase() === selectedLanguageName
+        ) {
+          return -1;
         }
-      });
 
-      return next;
-    };
+        if (
+          b.language === selectedLanguageCode ||
+          b.language.toLowerCase() === selectedLanguageName
+        ) {
+          return 1;
+        }
 
-    const sortFn = (
-      [a]: [string, Record<string, Translation>],
-      [b]: [string, Record<string, Translation>]
-    ): number => {
-      if (a === selTr?.languageEnglishName?.toLowerCase()) return -1;
-      if (b === selTr?.languageEnglishName?.toLowerCase()) return 1;
-      return a.localeCompare(b);
-    };
+        return a.language.localeCompare(b.language);
+      };
 
-    if (lq !== "") {
-      const lowercaseQuery = lq.toLowerCase();
-      const queryFiltered = filterByQuery(apiTr, lowercaseQuery);
-      const modeFiltered = filterByMode(queryFiltered);
+      const allGroups = apiTr;
 
-      return Object.entries(modeFiltered).slice(0, limit).sort(sortFn);
-    } else {
-      const modeFiltered = filterByMode(apiTr);
-      return Object.entries(modeFiltered).sort(sortFn).slice(0, limit);
+      if (lq !== "") {
+        const lowercaseQuery = lq.toLowerCase();
+        const queryFiltered = filterByQuery(allGroups, lowercaseQuery);
+        const modeFiltered = filterByMode(queryFiltered);
+
+        return modeFiltered.slice(0, limit).sort(sortFn);
+      } else {
+        const modeFiltered = filterByMode(allGroups);
+        return modeFiltered.sort(sortFn).slice(0, limit);
+      }
     }
-  });
+  );
 
   effect(() => {
     window.localStorage.setItem("showAllLanguages", showAllLanguages.value);

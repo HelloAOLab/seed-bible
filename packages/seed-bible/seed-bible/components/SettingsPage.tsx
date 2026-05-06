@@ -2,6 +2,7 @@ import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import type { TextSize } from "seed-bible.managers.ConfigManager";
 import {
+  AppSettingsSchema,
   TEXT_FONT_OPTIONS,
   TEXT_SECTION_THEME_COLOR_VAR,
   TEXT_WEIGHT_OPTIONS,
@@ -41,6 +42,7 @@ import {
   handleVerticalListKeyNav,
 } from "seed-bible.components.KeyboardNav";
 import { useRef } from "preact/hooks";
+import { z } from "zod";
 
 type SettingsView =
   | null
@@ -53,15 +55,10 @@ type SettingsView =
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
 
 const ALIGNMENT_CYCLE: Record<TextAlignment, TextAlignment> = {
+  unset: "left",
   left: "center",
   center: "right",
   right: "left",
-};
-
-const ALIGNMENT_ICON: Record<TextAlignment, string> = {
-  left: "format_align_left",
-  center: "format_align_center",
-  right: "format_align_right",
 };
 
 const TEXT_COLOR_PALETTE = [
@@ -266,7 +263,7 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
   return (
     <div className="sb-settings-page">
       <SettingsBreadcrumbs
-        onBack={() => (state.sidebar.requestedSettingsView.value = null)}
+        onBack={() => (state.sidebar.requestedSettingsView.value = "main")}
         trail={[
           t("page-settings", { defaultValue: "Page settings" }),
           t("account-settings", { defaultValue: "Account settings" }),
@@ -503,7 +500,7 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   const fontSizeIndex = FONT_SIZE_OPTIONS.indexOf(selectedFontSize);
 
   const onBack = () => {
-    state.sidebar.requestedSettingsView.value = null;
+    state.sidebar.requestedSettingsView.value = "main";
   };
 
   const onOpenAllSettings = () => {
@@ -692,7 +689,6 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
                     if (Number.isFinite(parsed)) setMargin(parsed);
                   }}
                 />
-                {/* eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content */}
                 <span className="sb-scripture-margins-unit">%</span>
               </div>
               <button
@@ -708,6 +704,109 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             </div>
           </>
         )}
+
+        <h3 className="sb-settings-subheading">
+          {t("scripture-elements", { defaultValue: "Scripture elements" })}
+        </h3>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-scripture-headings"
+          >
+            {t("show-headings", { defaultValue: "Show headings" })}
+          </label>
+          <input
+            id="sb-show-scripture-headings"
+            type="checkbox"
+            checked={current.scriptureElements.showHeadings}
+            onChange={(event: Event) => {
+              settings.setScriptureElements({
+                showHeadings: (event.currentTarget as HTMLInputElement).checked,
+              });
+            }}
+          />
+        </div>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-scripture-verse-numbers"
+          >
+            {t("show-verse-numbers", { defaultValue: "Show verse numbers" })}
+          </label>
+          <input
+            id="sb-show-scripture-verse-numbers"
+            type="checkbox"
+            checked={current.scriptureElements.showVerseNumbers}
+            onChange={(event: Event) => {
+              settings.setScriptureElements({
+                showVerseNumbers: (event.currentTarget as HTMLInputElement)
+                  .checked,
+              });
+            }}
+          />
+        </div>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-scripture-footnotes"
+          >
+            {t("show-footnotes", { defaultValue: "Show footnotes" })}
+          </label>
+          <input
+            id="sb-show-scripture-footnotes"
+            type="checkbox"
+            checked={current.scriptureElements.showFootnotes}
+            onChange={(event: Event) => {
+              settings.setScriptureElements({
+                showFootnotes: (event.currentTarget as HTMLInputElement)
+                  .checked,
+              });
+            }}
+          />
+        </div>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-scripture-highlights"
+          >
+            {t("show-highlights", { defaultValue: "Show highlights" })}
+          </label>
+          <input
+            id="sb-show-scripture-highlights"
+            type="checkbox"
+            checked={current.scriptureElements.showHighlights}
+            onChange={(event: Event) => {
+              settings.setScriptureElements({
+                showHighlights: (event.currentTarget as HTMLInputElement)
+                  .checked,
+              });
+            }}
+          />
+        </div>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-red-lettering"
+          >
+            {t("show-red-lettering", { defaultValue: "Show red lettering" })}
+          </label>
+          <input
+            id="sb-show-red-lettering"
+            type="checkbox"
+            checked={current.scriptureElements.showRedLettering}
+            onChange={(event: Event) => {
+              settings.setScriptureElements({
+                showRedLettering: (event.currentTarget as HTMLInputElement)
+                  .checked,
+              });
+            }}
+          />
+        </div>
 
         <h3 className="sb-settings-subheading">
           {t("display", { defaultValue: "Display" })}
@@ -867,7 +966,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const isUploadingSet = useSignal(false);
 
   const onBack = () => {
-    state.sidebar.requestedSettingsView.value = null;
+    state.sidebar.requestedSettingsView.value = "main";
   };
 
   const handleInstall = async (extensionId: string) => {
@@ -1085,7 +1184,7 @@ function ToolbarSettingsView(props: { state: SeedBibleState }) {
   const { t } = useI18n();
 
   const onBack = () => {
-    state.sidebar.requestedSettingsView.value = null;
+    state.sidebar.requestedSettingsView.value = "main";
   };
 
   const available = toolsManager.listToolbarTools();
@@ -1219,7 +1318,7 @@ function TextFormattingToolbar(props: {
   const paletteOpen = useSignal(false);
   const themeFallback = `var(${TEXT_SECTION_THEME_COLOR_VAR[sectionId]})`;
   const swatchBackground = section.color || themeFallback;
-  const { t } = useI18n();
+  const { t, isRtl } = useI18n();
 
   const toggle = (key: "bold" | "italic" | "underline") => {
     onChange({ [key]: !section[key] } as Partial<TextSectionConfig>);
@@ -1227,6 +1326,13 @@ function TextFormattingToolbar(props: {
 
   const cycleAlignment = () => {
     onChange({ alignment: ALIGNMENT_CYCLE[section.alignment] });
+  };
+
+  const alignmentIcons: Record<TextAlignment, string> = {
+    unset: isRtl ? "format_align_right" : "format_align_left",
+    left: "format_align_left",
+    center: "format_align_center",
+    right: "format_align_right",
   };
 
   return (
@@ -1274,7 +1380,7 @@ function TextFormattingToolbar(props: {
         title={t("change_alignment", { defaultValue: "Change alignment" })}
       >
         <span className="material-symbols-outlined">
-          {ALIGNMENT_ICON[section.alignment]}
+          {alignmentIcons[section.alignment]}
         </span>
       </button>
 
@@ -1651,9 +1757,73 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
 function AllSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { t } = useI18n();
+  const isDownloadingSettings = useSignal(false);
+  const isUploadingSettings = useSignal(false);
+  const uploadErrorMessage = useSignal<string>("");
 
   const onBack = () => {
     state.sidebar.requestedSettingsView.value = "display-and-theme";
+  };
+
+  const handleDownloadSettings = async () => {
+    if (isDownloadingSettings.value) {
+      return;
+    }
+
+    isDownloadingSettings.value = true;
+    try {
+      os.download(
+        state.settings.settings.value,
+        "seed-bible-app-settings.json",
+        "application/json"
+      );
+    } finally {
+      isDownloadingSettings.value = false;
+    }
+  };
+
+  const handleUploadSettings = async () => {
+    if (isUploadingSettings.value) {
+      return;
+    }
+
+    isUploadingSettings.value = true;
+    uploadErrorMessage.value = "";
+    try {
+      const files = await os.showUploadFiles();
+      const firstFile = files?.[0];
+      if (!firstFile) {
+        return;
+      }
+
+      const text =
+        typeof firstFile.data === "string"
+          ? firstFile.data
+          : new TextDecoder().decode(firstFile.data);
+
+      let jsonData: unknown;
+      try {
+        jsonData = JSON.parse(text);
+      } catch (parseError) {
+        uploadErrorMessage.value = `Invalid JSON: ${parseError instanceof Error ? parseError.message : "Unknown error"}`;
+        return;
+      }
+
+      const parsed = AppSettingsSchema.safeParse(jsonData);
+
+      if (!parsed.success) {
+        uploadErrorMessage.value = `Invalid app settings: ${z.prettifyError(parsed.error)}`;
+        console.error("Uploaded file is not valid app settings.", parsed.error);
+        return;
+      }
+
+      state.settings.setAllSettings(parsed.data);
+    } catch (error) {
+      uploadErrorMessage.value = `Failed to upload app settings: ${error instanceof Error ? error.message : "Unknown error"}`;
+      console.error("Failed to upload app settings.", error);
+    } finally {
+      isUploadingSettings.value = false;
+    }
   };
 
   return (
@@ -1676,6 +1846,39 @@ function AllSettingsView(props: { state: SeedBibleState }) {
       />
       <TextSettingsContent state={state} />
       <ThemeCustomColorsContent state={state} />
+      <div className="sb-extension-footer-actions">
+        <button
+          className="sb-settings-action-button"
+          onClick={() => void handleDownloadSettings()}
+          disabled={isDownloadingSettings.value}
+        >
+          {isDownloadingSettings.value
+            ? "Downloading settings..."
+            : "Download settings"}
+        </button>
+        <button
+          className="sb-settings-action-button"
+          onClick={() => void handleUploadSettings()}
+          disabled={isUploadingSettings.value}
+        >
+          {isUploadingSettings.value
+            ? "Uploading settings..."
+            : "Upload settings"}
+        </button>
+        {uploadErrorMessage.value && (
+          <div
+            className="sb-upload-settings-error"
+            style={{
+              color: "var(--sb-error-color, #dc2626)",
+              fontSize: "13px",
+              marginTop: "8px",
+              wordBreak: "break-word",
+            }}
+          >
+            {uploadErrorMessage.value}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

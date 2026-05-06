@@ -940,6 +940,9 @@ export function PaneLayout(props: PaneLayoutProps) {
                 readingState={pane.tab.readingState}
                 selectorState={selectorState}
                 bookmarksManager={bookmarks}
+                scriptureElements={
+                  state.settings.settings.value.scriptureElements
+                }
               />
               <BelowReaderToolbar
                 toolsManager={toolsManager}
@@ -1098,6 +1101,9 @@ export function PaneLayout(props: PaneLayoutProps) {
                   readingState={pane.tab.readingState}
                   selectorState={selectorState}
                   bookmarksManager={bookmarks}
+                  scriptureElements={
+                    state.settings.settings.value.scriptureElements
+                  }
                 />
               </PaneReaderScroller>
             ) : (

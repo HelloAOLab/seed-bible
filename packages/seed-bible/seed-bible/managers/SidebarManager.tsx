@@ -25,6 +25,14 @@ export function createSidebar() {
     requestedSettingsView.value = "main";
   };
 
+  const toggleSettings = () => {
+    if (isSettingsOpen.value) {
+      requestedSettingsView.value = null;
+    } else {
+      requestedSettingsView.value = "main";
+    }
+  };
+
   /** Opens the settings sidebar jumping straight to a specific subpage. */
   const openSettingsToView = (view: RequestedSettingsView) => {
     requestedSettingsView.value = view;
@@ -79,6 +87,7 @@ export function createSidebar() {
     isSidebarCollapsed,
     isMobileOpen,
     requestedSettingsView,
+    toggleSettings,
     openSettings,
     openSettingsToView,
     closeSettings,

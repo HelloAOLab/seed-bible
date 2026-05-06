@@ -29,8 +29,8 @@ function getInitialFirstTabBookId(): string {
 
 function getInitialTranslationId(): string {
   return (
-    configBot.tags.translation ??
     configBot.tags.translationId ??
+    configBot.tags.translation ??
     DEFAULT_TRANSLATION_ID
   );
 }
@@ -189,11 +189,17 @@ export function createTabs(
     configBot.tags.book = selectedBookId;
     configBot.tags.chapter = selectedChapter;
 
-    if (
-      configBot.tags.translation ||
-      selectedTranslation !== DEFAULT_TRANSLATION_ID
-    ) {
-      configBot.tags.translation = selectedTranslation;
+    if (selectedTranslation) {
+      const translationId = dataManager.buildTranslationId(selectedTranslation);
+
+      if (configBot.tags.translationId) {
+        configBot.tags.translationId = translationId;
+      } else if (
+        configBot.tags.translation ||
+        translationId !== DEFAULT_TRANSLATION_ID
+      ) {
+        configBot.tags.translation = translationId;
+      }
     }
   });
 

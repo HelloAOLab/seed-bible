@@ -16,6 +16,7 @@ import type {
 } from "seed-bible.managers.BookmarksManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { Pane } from "seed-bible.managers.PanesManager";
+import type { ScriptureElementsBehavior } from "seed-bible.managers.SettingsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 
 interface VerseLine {
@@ -239,6 +240,9 @@ function renderInlineContent(
   part: ChapterVerse["content"][0],
   index: number,
   onOpenFootnote: (noteId: number) => void,
+  showHeadings: boolean,
+  showFootnotes: boolean,
+  showRedLettering: boolean,
   contentRanges: ContentDecorationRange[] = [],
   partStartIndex = 0
 ) {
@@ -350,7 +354,7 @@ function renderInlineContent(
 
   if ("text" in part && typeof part.text === "string") {
     let className = "";
-    if (part.wordsOfJesus) {
+    if (part.wordsOfJesus && showRedLettering) {
       className += " sb-words-of-jesus";
     }
 
@@ -363,7 +367,7 @@ function renderInlineContent(
             className={segment.className}
             style={segment.style}
           >
-            {segment.text}
+            {(index > 0 ? " " : "") + segment.text}
           </span>
         ))}
       </span>
@@ -371,6 +375,9 @@ function renderInlineContent(
   }
 
   if ("heading" in part && typeof part.heading === "string") {
+    if (!showHeadings) {
+      return null;
+    }
     return <strong key={index}>{part.heading}</strong>;
   }
 
@@ -379,6 +386,9 @@ function renderInlineContent(
   }
 
   if ("noteId" in part && typeof part.noteId === "number") {
+    if (!showFootnotes) {
+      return <span> </span>;
+    }
     return (
       <button
         key={index}
@@ -404,7 +414,8 @@ function renderChapterContent(
   selectedVerses: BibleSelectedVerse[],
   onOpenFootnote: (noteId: number, verse: ChapterVerse | null) => void,
   highlights: ChapterHighlight[],
-  decorations: VerseDecoration[]
+  decorations: VerseDecoration[],
+  scriptureElements: ScriptureElementsBehavior
 ) {
   if (!chapterData) {
     return null;
@@ -495,6 +506,9 @@ function renderChapterContent(
     const value = entry;
 
     if (value.type === "heading" && Array.isArray(value.content)) {
+      if (!scriptureElements.showHeadings) {
+        return null;
+      }
       const heading = (value.content as unknown[])
         .filter((item) => typeof item === "string")
         .join(" ");
@@ -513,8 +527,13 @@ function renderChapterContent(
       return (
         <p key={`subtitle-${entryIndex}`} className="sb-subtitle">
           {value.content.map((part, index) =>
-            renderInlineContent(part, index, (noteId) =>
-              onOpenFootnote(noteId, null)
+            renderInlineContent(
+              part,
+              index,
+              (noteId) => onOpenFootnote(noteId, null),
+              scriptureElements.showHeadings,
+              scriptureElements.showFootnotes,
+              scriptureElements.showRedLettering
             )
           )}
         </p>
@@ -540,7 +559,9 @@ function renderChapterContent(
       );
       const segments = splitVerseIntoSegments(value.content);
       const hasPoetry = segments.some((s) => s.type === "poetry");
-      const highlight = getVerseHighlight(value.number);
+      const highlight = scriptureElements.showHighlights
+        ? getVerseHighlight(value.number)
+        : null;
       const highlightPresentation = getHighlightPresentation(highlight);
       const verseDecorations = getVerseDecorations(value.number);
       const decorationPresentation =
@@ -600,7 +621,7 @@ function renderChapterContent(
                     className={verseDecoratorClassName}
                     style={verseDecoratorStyle}
                   >
-                    {segIndex === 0 && (
+                    {segIndex === 0 && scriptureElements.showVerseNumbers && (
                       <sup className="sb-verse-number">{value.number}</sup>
                     )}
                     {segment.parts.map((part, partIndex) =>
@@ -608,6 +629,9 @@ function renderChapterContent(
                         part,
                         segIndex * 10000 + partIndex,
                         (noteId) => onOpenFootnote(noteId, value),
+                        scriptureElements.showHeadings,
+                        scriptureElements.showFootnotes,
+                        scriptureElements.showRedLettering,
                         contentRanges,
                         getPartTextStartIndex(part)
                       )
@@ -630,14 +654,19 @@ function renderChapterContent(
                     className={verseDecoratorClassName}
                     style={verseDecoratorStyle}
                   >
-                    {segIndex === 0 && lineIndex === 0 && (
-                      <sup className="sb-verse-number">{value.number}</sup>
-                    )}
+                    {segIndex === 0 &&
+                      lineIndex === 0 &&
+                      scriptureElements.showVerseNumbers && (
+                        <sup className="sb-verse-number">{value.number}</sup>
+                      )}
                     {line.parts.map((part, partIndex) =>
                       renderInlineContent(
                         part,
                         partIndex,
                         (noteId) => onOpenFootnote(noteId, value),
+                        scriptureElements.showHeadings,
+                        scriptureElements.showFootnotes,
+                        scriptureElements.showRedLettering,
                         contentRanges,
                         getPartTextStartIndex(part)
                       )
@@ -665,12 +694,17 @@ function renderChapterContent(
           tabIndex={0}
         >
           <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
-            <sup className="sb-verse-number">{value.number}</sup>
+            {scriptureElements.showVerseNumbers && (
+              <sup className="sb-verse-number">{value.number}</sup>
+            )}
             {value.content.map((part, index) =>
               renderInlineContent(
                 part,
                 index,
                 (noteId) => onOpenFootnote(noteId, value),
+                scriptureElements.showHeadings,
+                scriptureElements.showFootnotes,
+                scriptureElements.showRedLettering,
                 contentRanges,
                 getPartTextStartIndex(part)
               )
@@ -689,6 +723,7 @@ interface BibleReaderProps {
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
   bookmarksManager?: BookmarksManager;
+  scriptureElements?: ScriptureElementsBehavior;
 }
 
 export function BibleReader(props: BibleReaderProps) {
@@ -755,6 +790,14 @@ export function BibleReader(props: BibleReaderProps) {
   );
 
   const { t } = useI18n();
+  const scriptureElements: ScriptureElementsBehavior =
+    props.scriptureElements ?? {
+      showHeadings: true,
+      showVerseNumbers: true,
+      showFootnotes: true,
+      showHighlights: true,
+      showRedLettering: true,
+    };
 
   const handleToggleBookmark = async () => {
     if (!bookmarksManager) {
@@ -854,7 +897,8 @@ export function BibleReader(props: BibleReaderProps) {
               selectFootnote(noteId);
             },
             highlights.value.highlights,
-            decorations.value
+            decorations.value,
+            scriptureElements
           )}
         </div>
       )}
@@ -894,7 +938,7 @@ export function BibleReader(props: BibleReaderProps) {
         </>
       )}
 
-      {selectedFootnote.value !== null && (
+      {scriptureElements.showFootnotes && selectedFootnote.value !== null && (
         <div
           className="sb-footnote-modal-overlay"
           onClick={() => {

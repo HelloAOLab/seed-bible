@@ -2,11 +2,12 @@ import {
   type BibleSelectorBookItem,
   type BibleSelectorPsalmsGroups,
   type BibleSelectorState,
+  type TranslationLanguageGroup,
 } from "seed-bible.managers.BibleSelectorManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import {
   TickIcon,
-  SettingsIcon,
+  FiltersIcon,
   SelectedIcon,
   AddIcon,
   MinusIcon,
@@ -650,10 +651,9 @@ const TranslationModal = (props: {
           showTranslationSettings.value = false;
         }}
       >
-        {filteredTranslations.map(([language, value]) => (
+        {filteredTranslations.map((languageGroup) => (
           <LanguageComponent
-            language={language}
-            translationArray={value}
+            languageGroup={languageGroup}
             bibleSelectorState={bibleSelectorState}
             bibleDataManager={bibleDataManager}
           />
@@ -661,7 +661,7 @@ const TranslationModal = (props: {
         {shouldShowLoadMoreButton(
           filteredTranslations.length,
           allowedTranslationLimit.value,
-          Object.entries(apiTranslations.value).length
+          apiTranslations.value.length
         ) && (
           <LoadMoreButton
             onLoadMore={() => {
@@ -721,15 +721,15 @@ const TranslationModal = (props: {
                 showTranslationSettings.value = !showTranslationSettings.value;
                 showTranslationInfo.value = null;
               }}
-              className="settingsIcon"
+              className="filters-icon"
             >
-              <SettingsIcon />
+              <FiltersIcon />
             </span>
           </div>
           {LanguageList}
           <div className="footer">
             <div
-              class="custom-translation-header flex-between"
+              className="custom-translation-header flex-between"
               onClick={() => {
                 console.log("clicked", showCustomTranslation.value);
                 showCustomTranslation.value = !showCustomTranslation.value;
@@ -773,13 +773,12 @@ const TranslationModal = (props: {
 };
 
 const LanguageComponent = (props: {
-  language: string;
-  translationArray: Record<string, Translation>;
+  languageGroup: TranslationLanguageGroup;
   bibleSelectorState: BibleSelectorState;
   bibleDataManager: BibleDataManager;
 }) => {
-  const { language, translationArray, bibleSelectorState, bibleDataManager } =
-    props;
+  const { languageGroup, bibleSelectorState, bibleDataManager } = props;
+  const { language, languageEnglishName, translations } = languageGroup;
   const {
     languageQuery,
     selectedTranslation,
@@ -796,23 +795,12 @@ const LanguageComponent = (props: {
 
   const shareTranslatation = async (props: { translation: Translation }) => {
     const { translation } = props;
-    console.log(translation, "translation");
-
-    const endpointInfo = bibleDataManager.getTranslationEndpointInfo(
-      translation.id
-    );
-
     const url = new URL(`https://ao.bot/`);
     url.searchParams.set("pattern", configBot.tags.pattern || "SeedBible");
-    if (endpointInfo.isDefault) {
-      url.searchParams.set("translation", translation.id);
-    } else {
-      const translationUrl = new URL(
-        `api/${translation.id}/books.json`,
-        endpointInfo.endpoint
-      );
-      url.searchParams.set("translation", translationUrl.href);
-    }
+    url.searchParams.set(
+      "translation",
+      bibleDataManager.buildTranslationId(translation.id)
+    );
     os.setClipboard(url.href);
     os.toast(
       t("copied-translation-share-link", {
@@ -825,22 +813,21 @@ const LanguageComponent = (props: {
     if (!showSig.value) {
       return [];
     }
-    return Object.values(translationArray).sort((a, b) => {
+    return [...translations].sort((a, b) => {
       if (a.id === selectedTranslation?.value?.id) return -1;
       if (b.id === selectedTranslation?.value?.id) return 1;
       return a.name.localeCompare(b.name);
     });
-  }, [translationArray, selectedTranslation.value, showSig.value]);
+  }, [translations, selectedTranslation.value, showSig.value]);
 
   useEffect(() => {
+    const selectedLanguageCode = selectedTranslation?.value?.language;
+
     if (languageQuery.value.length > 0) {
       showSig.value = true;
     } else if (filteredApiTranslations.value.length === 1) {
       showSig.value = true;
-    } else if (
-      selectedTranslation?.value?.languageEnglishName?.toLowerCase() ===
-      language.toLowerCase()
-    ) {
+    } else if (selectedLanguageCode === language.toLowerCase()) {
       showSig.value = true;
     } else {
       showSig.value = false;
@@ -865,7 +852,9 @@ const LanguageComponent = (props: {
           marginBottom: showSig.value ? "0px" : "10px",
         }}
       >
-        <span style={{ textTransform: "capitalize" }}>{language}</span>
+        <span style={{ textTransform: "capitalize" }}>
+          {languageEnglishName}
+        </span>
         <span
           style={{ transition: "transform 0.3s" }}
           class={`material-symbols-outlined ${showSig.value ? "upside-down" : ""}`}

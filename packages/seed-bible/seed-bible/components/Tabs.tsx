@@ -10,7 +10,7 @@ import {
   ContextMenuWithButton,
 } from "seed-bible.components.ContextMenu";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { MobileSettingsIcon } from "seed-bible.components.icons";
+import { SettingsIcon } from "seed-bible.components.icons";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
 import type { UserProfile } from "seed-bible.managers.LoginManager";
 import type { ConnectedSessionUser } from "seed-bible.managers.SessionsManager";
@@ -28,6 +28,7 @@ interface SidebarProps {
 interface TabsProps {
   state: SeedBibleState;
   closeLayoutMenu: () => void;
+  effectivelyCollapsed: boolean;
 }
 
 interface TabsHeaderProps {
@@ -380,7 +381,7 @@ export function TabsHeader(props: TabsHeaderProps) {
       </button>
 
       <div className="sb-sidebar-top-actions">
-        {panelsEnabled && (
+        {panelsEnabled && !effectivelyCollapsed && (
           <div className="sb-pane-layout-anchor">
             <button
               onClick={toggleLayoutMenu}
@@ -426,29 +427,35 @@ export function TabsHeader(props: TabsHeaderProps) {
           </div>
         )}
 
-        <ContextMenuWithButton
-          onClick={() => {
-            closeContextMenus();
-          }}
-          buttonClassName="sb-sidebar-top-icon-button"
-          aria-label={t("session-options", { defaultValue: "Session options" })}
-          title={t("session-options", { defaultValue: "Session options" })}
-        >
-          <ContextMenuItem
+        {!effectivelyCollapsed && (
+          <ContextMenuWithButton
             onClick={() => {
-              createSharedSession();
+              closeContextMenus();
             }}
+            buttonClassName="sb-sidebar-top-icon-button"
+            aria-label={t("session-options", {
+              defaultValue: "Session options",
+            })}
+            title={t("session-options", { defaultValue: "Session options" })}
           >
-            {t("new-shared-session", { defaultValue: "New shared session" })}
-          </ContextMenuItem>
-          <ContextMenuItem
-            onClick={() => {
-              openJoinSessionModal();
-            }}
-          >
-            {t("join-shared-session", { defaultValue: "Join shared session" })}
-          </ContextMenuItem>
-        </ContextMenuWithButton>
+            <ContextMenuItem
+              onClick={() => {
+                createSharedSession();
+              }}
+            >
+              {t("new-shared-session", { defaultValue: "New shared session" })}
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => {
+                openJoinSessionModal();
+              }}
+            >
+              {t("join-shared-session", {
+                defaultValue: "Join shared session",
+              })}
+            </ContextMenuItem>
+          </ContextMenuWithButton>
+        )}
       </div>
 
       <button
@@ -490,12 +497,55 @@ export function Settings(props: SettingsProps) {
 }
 
 export function Tabs(props: TabsProps) {
-  const { state, closeLayoutMenu } = props;
+  const { state, closeLayoutMenu, effectivelyCollapsed } = props;
   const { app, tabs: tabsManager } = state;
   const tabs = tabsManager.tabs.value;
   const selectedTabId = tabsManager.selectedTabId.value;
   const panelsEnabled = app.panelsEnabled.value;
   const { t } = useI18n();
+
+  if (effectivelyCollapsed) {
+    return (
+      <div className="sb-sidebar-collapsed-tab-list">
+        {tabs.map((tab) => {
+          const isSelected = tab.id === selectedTabId;
+          const bookId = tab.readingState.bookId.value ?? "-";
+          const bookName =
+            tab.readingState.chapterData.value?.book.name ?? bookId;
+          const chapter = tab.readingState.chapterNumber.value;
+
+          return (
+            <button
+              key={tab.id}
+              onClick={() => {
+                closeContextMenus();
+                closeLayoutMenu();
+                app.selectTab(tab.id);
+              }}
+              className={`sb-collapsed-tab-tile${
+                isSelected ? " sb-collapsed-tab-tile-selected" : ""
+              }`}
+              aria-label={`${bookName} ${chapter}`}
+              title={`${bookName} ${chapter}`}
+            >
+              <span className="sb-collapsed-tab-book">{bookId}</span>
+              <span className="sb-collapsed-tab-chapter">{chapter}</span>
+            </button>
+          );
+        })}
+        <button
+          onClick={() => {
+            app.addTab();
+          }}
+          className="sb-tab-add-button sb-collapsed-tab-add-button"
+          aria-label={t("create-new-tab", { defaultValue: "Create new tab" })}
+          title={t("new-tab", { defaultValue: "New tab" })}
+        >
+          <span className="material-symbols-outlined">add</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -875,8 +925,7 @@ export function Sidebar(props: SidebarProps) {
   const isSettingsOpen = sidebar.isSettingsOpen.value;
   const isCollapsed = sidebar.isSidebarCollapsed.value;
   const isMobileOpen = sidebar.isMobileOpen.value;
-  const effectivelyCollapsed = isCollapsed && !isMobileOpen;
-  const shouldShowSidebarContent = !effectivelyCollapsed || isSettingsOpen;
+  const effectivelyCollapsed = isCollapsed && !isMobileOpen && !isSettingsOpen;
   const isLayoutMenuOpen = useSignal(false);
   const joinSessionId = useSignal("");
 
@@ -974,23 +1023,30 @@ export function Sidebar(props: SidebarProps) {
         />
       )}
 
-      {shouldShowSidebarContent &&
-        (isSettingsOpen ? (
-          <Settings state={state} />
-        ) : (
-          <Tabs state={state} closeLayoutMenu={closeLayoutMenu} />
-        ))}
+      {isSettingsOpen ? (
+        <Settings state={state} />
+      ) : (
+        <Tabs
+          state={state}
+          closeLayoutMenu={closeLayoutMenu}
+          effectivelyCollapsed={effectivelyCollapsed}
+        />
+      )}
 
-      <div className="sb-sidebar-bottom-actions">
+      <div
+        className={`sb-sidebar-bottom-actions${
+          effectivelyCollapsed ? " sb-sidebar-bottom-actions-collapsed" : ""
+        }`}
+      >
         <button
-          onClick={sidebar.openSettings}
+          onClick={sidebar.toggleSettings}
           className={`sb-sidebar-icon-button${
             isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
           }`}
           aria-label={t("open-settings", { defaultValue: "Open settings" })}
           title={t("settings", { defaultValue: "Settings" })}
         >
-          <MobileSettingsIcon />
+          <SettingsIcon />
         </button>
         <SelfAvatarButton state={state} />
       </div>

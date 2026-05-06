@@ -13,38 +13,6 @@ import { ModalHost } from "seed-bible.components.ModalHost";
 
 const { useMemo } = os.appHooks;
 
-const RTL_LANGUAGE_CODES = new Set(["ar", "fa", "he", "ur", "ps", "dv", "yi"]);
-
-function isRightToLeftLanguage(languageCode: string): boolean {
-  const normalizedCode = languageCode.trim();
-  if (!normalizedCode) {
-    return false;
-  }
-
-  const primarySubtag = normalizedCode.split("-")[0]?.toLowerCase();
-  if (primarySubtag && RTL_LANGUAGE_CODES.has(primarySubtag)) {
-    return true;
-  }
-
-  if (typeof Intl !== "undefined" && typeof Intl.Locale === "function") {
-    try {
-      const locale = new Intl.Locale(normalizedCode) as Intl.Locale & {
-        textInfo?: { direction: string };
-        getTextInfo?: () => { direction: string };
-      };
-      if (typeof locale.getTextInfo === "function") {
-        const textInfo = locale.getTextInfo();
-        return textInfo.direction === "rtl";
-      }
-      return locale.textInfo?.direction === "rtl";
-    } catch {
-      return false;
-    }
-  }
-
-  return false;
-}
-
 /**
  * A collection of link/script's providing expected resources from external sources.
  * @returns
@@ -116,8 +84,8 @@ function MainContent(props: {
   fontSizeClass: string;
 }) {
   const { state, fontSizeClass } = props;
-  const { language } = useI18n();
-  const appDirection = isRightToLeftLanguage(language) ? "rtl" : "ltr";
+  const { isRtl } = useI18n();
+  const appDirection = isRtl ? "rtl" : "ltr";
   const { theme, selector } = state;
 
   return (
