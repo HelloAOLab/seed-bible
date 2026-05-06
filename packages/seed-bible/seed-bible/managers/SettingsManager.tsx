@@ -64,7 +64,7 @@ export interface AppSettings {
   scriptureMargin: number;
 }
 
-export const DEFAULT_SCRIPTURE_MARGIN = 35;
+export const DEFAULT_SCRIPTURE_MARGIN = 27;
 export const MOBILE_SCRIPTURE_MARGIN = 5;
 
 export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
