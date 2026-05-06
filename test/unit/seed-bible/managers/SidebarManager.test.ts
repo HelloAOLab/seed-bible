@@ -13,9 +13,38 @@ describe("createSidebar", () => {
     const sidebar = createSidebar();
     sidebar.openSidebar();
 
+    expect(sidebar.isSettingsOpen.value).toBe(false);
+
     sidebar.openSettings();
 
     expect(sidebar.isSettingsOpen.value).toBe(true);
+    expect(sidebar.isMobileOpen.value).toBe(true);
+  });
+
+  it("toggleSettings() toggles settings without changing mobile sidebar state", () => {
+    const sidebar = createSidebar();
+    sidebar.openSidebar();
+    sidebar.closeSettings();
+
+    expect(sidebar.isSettingsOpen.value).toBe(false);
+
+    sidebar.toggleSettings();
+
+    expect(sidebar.isSettingsOpen.value).toBe(true);
+    expect(sidebar.isMobileOpen.value).toBe(true);
+  });
+
+  it("toggleSettings() closes settings when already open", () => {
+    const sidebar = createSidebar();
+    sidebar.openSidebar();
+    sidebar.openSettings();
+
+    expect(sidebar.isSettingsOpen.value).toBe(true);
+    expect(sidebar.isMobileOpen.value).toBe(true);
+
+    sidebar.toggleSettings();
+
+    expect(sidebar.isSettingsOpen.value).toBe(false);
     expect(sidebar.isMobileOpen.value).toBe(true);
   });
 

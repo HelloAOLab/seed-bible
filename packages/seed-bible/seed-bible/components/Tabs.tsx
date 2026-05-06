@@ -1039,7 +1039,7 @@ export function Sidebar(props: SidebarProps) {
         }`}
       >
         <button
-          onClick={sidebar.openSettings}
+          onClick={sidebar.toggleSettings}
           className={`sb-sidebar-icon-button${
             isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
           }`}
