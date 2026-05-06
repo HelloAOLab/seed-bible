@@ -4,6 +4,7 @@ import { Sidebar } from "@packages/seed-bible/seed-bible/components/Tabs";
 import {
   createTestSeedBibleState,
   type CreateTestSeedBibleStateOptions,
+  waitFor,
 } from "../testUtils/createTestSeedBibleState";
 
 jest.mock("seed-bible.i18n.I18nManager", () => ({
@@ -167,5 +168,65 @@ describe("Sidebar collapsed layout", () => {
       bottomActions?.classList.contains("sb-sidebar-bottom-actions-collapsed")
     ).toBe(false);
     expect(container.textContent).toContain("Settings Page");
+  });
+
+  it("renders bookmarks below tabs", async () => {
+    const state = await createState();
+    state.sidebar.closeSettings();
+    state.bookmarks.bookmarks.value = [
+      {
+        id: "bookmark-1",
+        translationId: "AAB",
+        bookId: "JHN",
+        chapterNumber: 3,
+        createdAtMs: 1,
+        color: "blue",
+      },
+    ];
+
+    act(() => {
+      render(<Sidebar state={state} />, container);
+    });
+
+    expect(container.textContent).toContain("Bookmarks");
+    const bookmarkButton = container.querySelector(
+      ".sb-sidebar-bookmark-button"
+    ) as HTMLButtonElement | null;
+    expect(bookmarkButton).not.toBeNull();
+    expect(bookmarkButton?.textContent).toContain("JHN 3");
+  });
+
+  it("clicking a bookmark opens it in the current tab", async () => {
+    const state = await createState();
+    state.sidebar.closeSettings();
+    state.bookmarks.bookmarks.value = [
+      {
+        id: "bookmark-1",
+        translationId: "AAB",
+        bookId: "JHN",
+        chapterNumber: 3,
+        createdAtMs: 1,
+        color: "blue",
+      },
+    ];
+
+    const selectedTab = state.app.selectedTab.value;
+    expect(selectedTab).not.toBeNull();
+    const selectChapterSpy = jest
+      .spyOn(selectedTab!.readingState, "selectChapter")
+      .mockResolvedValue(undefined);
+
+    act(() => {
+      render(<Sidebar state={state} />, container);
+    });
+
+    const bookmarkButton = container.querySelector(
+      ".sb-sidebar-bookmark-button"
+    ) as HTMLButtonElement;
+    act(() => {
+      bookmarkButton.click();
+    });
+
+    expect(selectChapterSpy).toHaveBeenCalledWith("JHN", 3);
   });
 });

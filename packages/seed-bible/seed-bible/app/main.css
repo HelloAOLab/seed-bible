@@ -1890,6 +1890,51 @@ h6 {
   gap: 10px;
 }
 
+.sb-sidebar-bookmarks-section {
+  margin-top: 14px;
+}
+
+.sb-sidebar-bookmark-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.sb-sidebar-bookmark-button {
+  width: 100%;
+  border: var(--sb-tab-border);
+  border-radius: 10px;
+  background: var(--sb-tab-background);
+  color: var(--sb-tab-font-color);
+  cursor: pointer;
+  text-align: left;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sb-sidebar-bookmark-button:hover {
+  background: color-mix(in srgb, var(--sb-tab-background), #fff 8%);
+}
+
+.sb-sidebar-bookmark-main {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sb-sidebar-bookmark-meta {
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.sb-sidebar-bookmark-empty {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  padding: 6px 2px;
+}
+
 .sb-sidebar-collapsed-tab-list {
   display: flex;
   flex-direction: column;

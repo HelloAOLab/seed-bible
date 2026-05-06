@@ -501,8 +501,41 @@ export function Tabs(props: TabsProps) {
   const { app, tabs: tabsManager } = state;
   const tabs = tabsManager.tabs.value;
   const selectedTabId = tabsManager.selectedTabId.value;
+  const selectedTab = tabs.find((tab) => tab.id === selectedTabId) ?? null;
+  const bookmarks = state.bookmarks.bookmarks.value;
+  const bookmarksTitle = "Bookmarks";
+  const noBookmarksLabel = "No bookmarks yet.";
   const panelsEnabled = app.panelsEnabled.value;
   const { t } = useI18n();
+
+  const handleSelectBookmark = async (bookmark: {
+    translationId: string;
+    bookId: string;
+    chapterNumber: number;
+  }) => {
+    closeContextMenus();
+    closeLayoutMenu();
+
+    if (!selectedTab) {
+      return;
+    }
+
+    if (
+      selectedTab.readingState.translationId.value !== bookmark.translationId
+    ) {
+      await selectedTab.readingState.selectTranslationAndChapter(
+        bookmark.translationId,
+        bookmark.bookId,
+        bookmark.chapterNumber
+      );
+      return;
+    }
+
+    await selectedTab.readingState.selectChapter(
+      bookmark.bookId,
+      bookmark.chapterNumber
+    );
+  };
 
   if (effectivelyCollapsed) {
     return (
@@ -768,6 +801,33 @@ export function Tabs(props: TabsProps) {
             </div>
           );
         })}
+      </div>
+
+      <div className="sb-sidebar-bookmarks-section">
+        <div className="sb-sidebar-tabs-header">
+          <h3 className="sb-sidebar-tabs-title">{bookmarksTitle}</h3>
+        </div>
+        <div className="sb-sidebar-bookmark-list">
+          {bookmarks.length === 0 ? (
+            <div className="sb-sidebar-bookmark-empty">{noBookmarksLabel}</div>
+          ) : (
+            bookmarks.map((bookmark) => (
+              <button
+                key={bookmark.id}
+                className="sb-sidebar-bookmark-button"
+                onClick={() => {
+                  void handleSelectBookmark(bookmark);
+                }}
+                title={`${bookmark.bookId} ${bookmark.chapterNumber} • ${bookmark.translationId}`}
+              >
+                <span className="sb-sidebar-bookmark-main">{`${bookmark.bookId} ${bookmark.chapterNumber}`}</span>
+                <span className="sb-sidebar-bookmark-meta">
+                  {bookmark.translationId}
+                </span>
+              </button>
+            ))
+          )}
+        </div>
       </div>
     </>
   );
