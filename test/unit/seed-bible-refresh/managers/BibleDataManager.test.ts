@@ -58,10 +58,10 @@ function createAltNivTranslation(): Translation {
 }
 
 describe("createBibleDataManager", () => {
-  it("defaults endpoints to the helloao endpoint", () => {
+  it("defaults endpoints to the private helloao endpoint", () => {
     const manager = createBibleDataManager();
 
-    expect(manager.endpoints.value).toEqual(["https://bible.helloao.org/"]);
+    expect(manager.endpoints.value).toEqual(["https://vmfnri.helloao.org/"]);
     expect(manager.availableTranslations.value).toEqual([]);
     expect(manager.translationBooks.value.size).toBe(0);
   });

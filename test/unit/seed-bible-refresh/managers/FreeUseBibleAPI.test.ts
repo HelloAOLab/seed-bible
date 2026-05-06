@@ -45,7 +45,7 @@ describe("FreeUseBibleAPI", () => {
     expect(result).toEqual(payload);
     expect(webGetMock).toHaveBeenCalledTimes(1);
     expect(webGetMock).toHaveBeenCalledWith(
-      "https://bible.helloao.org/api/available_translations.json"
+      "https://vmfnri.helloao.org/api/available_translations.json"
     );
   });
 
