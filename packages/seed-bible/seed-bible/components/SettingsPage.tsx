@@ -2,6 +2,7 @@ import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import type { TextSize } from "seed-bible.managers.ConfigManager";
 import {
+  AppSettingsSchema,
   TEXT_FONT_OPTIONS,
   TEXT_SECTION_THEME_COLOR_VAR,
   TEXT_WEIGHT_OPTIONS,
@@ -1755,9 +1756,60 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
 function AllSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { t } = useI18n();
+  const isDownloadingSettings = useSignal(false);
+  const isUploadingSettings = useSignal(false);
 
   const onBack = () => {
     state.sidebar.requestedSettingsView.value = "display-and-theme";
+  };
+
+  const handleDownloadSettings = async () => {
+    if (isDownloadingSettings.value) {
+      return;
+    }
+
+    isDownloadingSettings.value = true;
+    try {
+      os.download(
+        state.settings.settings.value,
+        "seed-bible-app-settings.json",
+        "application/json"
+      );
+    } finally {
+      isDownloadingSettings.value = false;
+    }
+  };
+
+  const handleUploadSettings = async () => {
+    if (isUploadingSettings.value) {
+      return;
+    }
+
+    isUploadingSettings.value = true;
+    try {
+      const files = await os.showUploadFiles();
+      const firstFile = files?.[0];
+      if (!firstFile) {
+        return;
+      }
+
+      const text =
+        typeof firstFile.data === "string"
+          ? firstFile.data
+          : new TextDecoder().decode(firstFile.data);
+      const parsed = AppSettingsSchema.safeParse(JSON.parse(text));
+
+      if (!parsed.success) {
+        console.error("Uploaded file is not valid app settings.", parsed.error);
+        return;
+      }
+
+      state.settings.setAllSettings(parsed.data);
+    } catch (error) {
+      console.error("Failed to upload app settings.", error);
+    } finally {
+      isUploadingSettings.value = false;
+    }
   };
 
   return (
@@ -1780,6 +1832,26 @@ function AllSettingsView(props: { state: SeedBibleState }) {
       />
       <TextSettingsContent state={state} />
       <ThemeCustomColorsContent state={state} />
+      <div className="sb-extension-footer-actions">
+        <button
+          className="sb-settings-action-button"
+          onClick={() => void handleDownloadSettings()}
+          disabled={isDownloadingSettings.value}
+        >
+          {isDownloadingSettings.value
+            ? "Downloading settings..."
+            : "Download settings"}
+        </button>
+        <button
+          className="sb-settings-action-button"
+          onClick={() => void handleUploadSettings()}
+          disabled={isUploadingSettings.value}
+        >
+          {isUploadingSettings.value
+            ? "Uploading settings..."
+            : "Upload settings"}
+        </button>
+      </div>
     </div>
   );
 }

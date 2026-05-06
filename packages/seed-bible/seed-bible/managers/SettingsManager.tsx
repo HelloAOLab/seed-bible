@@ -4,6 +4,7 @@ import {
   getProfileConfigValue,
   saveProfileConfigValue,
 } from "seed-bible.managers.ProfileConfigSync";
+import { z } from "zod";
 
 export type BookOrientation = "traditional" | "tanak";
 export type UITextSize = "S" | "M" | "L" | "XL";
@@ -63,6 +64,68 @@ export interface AppSettings {
   /** Horizontal padding (px) applied to the bible reader container. */
   scriptureMargin: number;
 }
+
+export const AppSettingsSchema = z.object({
+  bookOrientation: z.enum(["traditional", "tanak"]),
+  uiTextSize: z.enum(["S", "M", "L", "XL"]),
+  selectionUI: z.object({
+    showSelectedItems: z.boolean(),
+    showHighlightColors: z.boolean(),
+    showIconText: z.boolean(),
+  }),
+  scriptureElements: z.object({
+    showHeadings: z.boolean(),
+    showVerseNumbers: z.boolean(),
+    showFootnotes: z.boolean(),
+    showHighlights: z.boolean(),
+    showRedLettering: z.boolean(),
+  }),
+  textConfig: z.object({
+    bookTitle: z.object({
+      font: z.string(),
+      weight: z.string(),
+      color: z.string(),
+      marginVertical: z.number(),
+      marginHorizontal: z.number(),
+      bold: z.boolean(),
+      italic: z.boolean(),
+      underline: z.boolean(),
+      alignment: z.enum(["unset", "left", "center", "right"]),
+      lineHeight: z.number().optional(),
+    }),
+    heading: z.object({
+      font: z.string(),
+      weight: z.string(),
+      color: z.string(),
+      marginVertical: z.number(),
+      marginHorizontal: z.number(),
+      bold: z.boolean(),
+      italic: z.boolean(),
+      underline: z.boolean(),
+      alignment: z.enum(["unset", "left", "center", "right"]),
+      lineHeight: z.number().optional(),
+    }),
+    verse: z.object({
+      font: z.string(),
+      weight: z.string(),
+      color: z.string(),
+      marginVertical: z.number(),
+      marginHorizontal: z.number(),
+      bold: z.boolean(),
+      italic: z.boolean(),
+      underline: z.boolean(),
+      alignment: z.enum(["unset", "left", "center", "right"]),
+      lineHeight: z.number().optional(),
+    }),
+  }),
+  toolbar: z.object({
+    hidden: z.array(z.string()),
+    order: z.array(z.string()),
+  }),
+  keepScreenAwake: z.boolean(),
+  customHighlightColors: z.array(z.string()).max(3),
+  scriptureMargin: z.number().min(0).max(45),
+});
 
 export const DEFAULT_SCRIPTURE_MARGIN = 27;
 export const MOBILE_SCRIPTURE_MARGIN = 5;
@@ -502,6 +565,7 @@ export interface SettingsManager {
   setKeepScreenAwake: (enabled: boolean) => void;
   addCustomHighlightColor: (color: string) => void;
   removeCustomHighlightColor: (color: string) => void;
+  setAllSettings: (next: AppSettings) => void;
   resetToDefaults: () => void;
 }
 
@@ -742,6 +806,20 @@ export function createSettings(login: LoginManager): SettingsManager {
     );
   };
 
+  const setAllSettings = (next: AppSettings) => {
+    next = AppSettingsSchema.parse(next);
+    settings.value = next;
+    if (login.userId.value) {
+      const existingProfile = login.profile.value;
+      login.updateProfile({
+        config: {
+          ...(existingProfile?.config ?? {}),
+          ...next,
+        },
+      });
+    }
+  };
+
   const resetToDefaults = () => {
     settings.value = DEFAULT_SETTINGS;
     configBot.tags[TAG_BOOK_ORIENTATION] = DEFAULT_SETTINGS.bookOrientation;
@@ -853,6 +931,7 @@ export function createSettings(login: LoginManager): SettingsManager {
     setKeepScreenAwake,
     addCustomHighlightColor,
     removeCustomHighlightColor,
+    setAllSettings,
     resetToDefaults,
   };
 }
