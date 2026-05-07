@@ -62,25 +62,26 @@ export function createDiscoverManager(): DiscoverManager {
       // Each promise carries a reference to itself so we can remove it from
       // the set after it wins the race, without needing index bookkeeping.
       type Tagged = Promise<{
-        promise: Tagged;
+        promise: Promise<DiscoverResult[]>;
         value: DiscoverProviderResults;
       }>;
 
-      const remaining = new Set<Tagged>();
+      const remaining = new Map<Promise<DiscoverResult[]>, Tagged>();
 
       for (const provider of providers) {
+        const promise = Promise.resolve(provider.discover(context));
         const tagged: Tagged = (async () => {
-          const results = await provider.discover(context);
+          const results = await promise;
           return {
-            promise: tagged,
+            promise: promise,
             value: { providerId: provider.id, results },
           };
         })();
-        remaining.add(tagged);
+        remaining.set(promise, tagged);
       }
 
       while (remaining.size > 0) {
-        const { promise, value } = await Promise.race(remaining);
+        const { promise, value } = await Promise.race(remaining.values());
         remaining.delete(promise);
         yield value;
       }
