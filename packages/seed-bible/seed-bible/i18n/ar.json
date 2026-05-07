@@ -179,5 +179,10 @@
   "download-settings": "إعدادات التنزيل",
   "downloading-settings": "جارٍ تنزيل الإعدادات...",
   "upload-settings": "إعدادات التحميل",
-  "uploading-settings": "جارٍ تحميل الإعدادات..."
+  "uploading-settings": "جارٍ تحميل الإعدادات...",
+  "search": "يبحث",
+  "mobile": "متحرك",
+  "show-nav-arrows": "إظهار أسهم التنقل",
+  "theme-and-text": "القالب والنص",
+  "go-to-all-settings": "انتقل إلى جميع الإعدادات"
 }

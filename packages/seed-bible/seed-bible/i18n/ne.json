@@ -179,5 +179,10 @@
   "download-settings": "डाउनलोड सेटिङहरू",
   "downloading-settings": "सेटिङहरू डाउनलोड गर्दै...",
   "upload-settings": "अपलोड सेटिङहरू",
-  "uploading-settings": "सेटिङहरू अपलोड गर्दै..."
+  "uploading-settings": "सेटिङहरू अपलोड गर्दै...",
+  "search": "खोज्नुहोस्",
+  "mobile": "मोबाइल",
+  "show-nav-arrows": "नेभिगेसन तीरहरू देखाउनुहोस्",
+  "theme-and-text": "विषयवस्तु र पाठ",
+  "go-to-all-settings": "सबै सेटिङहरूमा जानुहोस्"
 }

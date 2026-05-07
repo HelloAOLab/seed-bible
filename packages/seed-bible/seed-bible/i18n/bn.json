@@ -179,5 +179,10 @@
   "download-settings": "ডাউনলোড সেটিংস",
   "downloading-settings": "সেটিংস ডাউনলোড হচ্ছে...",
   "upload-settings": "আপলোড সেটিংস",
-  "uploading-settings": "সেটিংস আপলোড করা হচ্ছে..."
+  "uploading-settings": "সেটিংস আপলোড করা হচ্ছে...",
+  "search": "অনুসন্ধান",
+  "mobile": "মোবাইল",
+  "show-nav-arrows": "নেভিগেশন তীরচিহ্ন দেখান",
+  "theme-and-text": "থিম ও লেখা",
+  "go-to-all-settings": "সমস্ত সেটিংসে যান"
 }

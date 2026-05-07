@@ -179,5 +179,10 @@
   "download-settings": "Descargar configuración",
   "downloading-settings": "Descargando configuración...",
   "upload-settings": "Configuración de carga",
-  "uploading-settings": "Cargando configuración..."
+  "uploading-settings": "Cargando configuración...",
+  "search": "Buscar",
+  "mobile": "Móvil",
+  "show-nav-arrows": "Mostrar flechas de navegación",
+  "theme-and-text": "Tema y texto",
+  "go-to-all-settings": "Ir a todas las configuraciones"
 }

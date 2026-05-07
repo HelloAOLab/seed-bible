@@ -179,5 +179,10 @@
   "download-settings": "د ډاونلوډ ترتیبات",
   "downloading-settings": "ترتیبات ډاونلوډ کیږي...",
   "upload-settings": "د پورته کولو ترتیبات",
-  "uploading-settings": "ترتیبات پورته کول..."
+  "uploading-settings": "ترتیبات پورته کول...",
+  "search": "د لټون",
+  "mobile": "موبایل",
+  "show-nav-arrows": "د نیویګیشن غشی ښکاره کړئ",
+  "theme-and-text": "موضوع او متن",
+  "go-to-all-settings": "ټولو ترتیباتو ته لاړ شئ"
 }

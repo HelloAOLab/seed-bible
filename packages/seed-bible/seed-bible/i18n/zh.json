@@ -179,5 +179,10 @@
   "download-settings": "下载设置",
   "downloading-settings": "正在下载设置...",
   "upload-settings": "上传设置",
-  "uploading-settings": "正在上传设置……"
+  "uploading-settings": "正在上传设置……",
+  "search": "搜索",
+  "mobile": "移动的",
+  "show-nav-arrows": "显示导航箭头",
+  "theme-and-text": "主题和文本",
+  "go-to-all-settings": "前往所有设置"
 }

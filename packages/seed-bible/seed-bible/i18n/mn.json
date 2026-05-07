@@ -179,5 +179,10 @@
   "download-settings": "Татаж авах тохиргоо",
   "downloading-settings": "Тохиргоог татаж авч байна...",
   "upload-settings": "Байршуулах тохиргоо",
-  "uploading-settings": "Тохиргоог байршуулж байна..."
+  "uploading-settings": "Тохиргоог байршуулж байна...",
+  "search": "Хайлт",
+  "mobile": "Гар утас",
+  "show-nav-arrows": "Навигацийн сумыг харуулах",
+  "theme-and-text": "Сэдэв ба текст",
+  "go-to-all-settings": "Бүх тохиргоо руу очих"
 }

@@ -179,5 +179,10 @@
   "download-settings": "تنظیمات دانلود",
   "downloading-settings": "دانلود تنظیمات...",
   "upload-settings": "تنظیمات آپلود",
-  "uploading-settings": "تنظیمات در حال بارگذاری..."
+  "uploading-settings": "تنظیمات در حال بارگذاری...",
+  "search": "جستجو",
+  "mobile": "موبایل",
+  "show-nav-arrows": "نمایش فلش‌های ناوبری",
+  "theme-and-text": "موضوع و متن",
+  "go-to-all-settings": "به همه تنظیمات بروید"
 }

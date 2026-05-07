@@ -179,5 +179,10 @@
   "download-settings": "چۈشۈرۈش تەڭشەكلىرى",
   "downloading-settings": "تەڭشەكلەر چۈشۈرۈلۈۋاتىدۇ...",
   "upload-settings": "يۈكلەش تەڭشەكلىرى",
-  "uploading-settings": "تەڭشەكلەر يۈكلەنمەكتە..."
+  "uploading-settings": "تەڭشەكلەر يۈكلەنمەكتە...",
+  "search": "ئىزدەش",
+  "mobile": "يانفون",
+  "show-nav-arrows": "يول باشلاش كۆرسەتكۈچلىرىنى كۆرسىتىش",
+  "theme-and-text": "تېما ۋە تېكىست",
+  "go-to-all-settings": "بارلىق تەڭشەكلەرگە كىرىڭ"
 }

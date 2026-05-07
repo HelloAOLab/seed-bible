@@ -179,5 +179,10 @@
   "download-settings": "ダウンロード設定",
   "downloading-settings": "設定をダウンロードしています...",
   "upload-settings": "アップロード設定",
-  "uploading-settings": "設定をアップロードしています..."
+  "uploading-settings": "設定をアップロードしています...",
+  "search": "検索",
+  "mobile": "携帯",
+  "show-nav-arrows": "ナビゲーション矢印を表示する",
+  "theme-and-text": "テーマとテキスト",
+  "go-to-all-settings": "すべての設定に移動"
 }

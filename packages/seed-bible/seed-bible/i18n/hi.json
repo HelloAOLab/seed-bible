@@ -179,5 +179,10 @@
   "download-settings": "डाउनलोड सेटिंग्स",
   "downloading-settings": "सेटिंग्स डाउनलोड हो रही हैं...",
   "upload-settings": "अपलोड सेटिंग्स",
-  "uploading-settings": "सेटिंग्स अपलोड हो रही हैं..."
+  "uploading-settings": "सेटिंग्स अपलोड हो रही हैं...",
+  "search": "खोज",
+  "mobile": "गतिमान",
+  "show-nav-arrows": "नेविगेशन तीर दिखाएँ",
+  "theme-and-text": "विषय और पाठ",
+  "go-to-all-settings": "सभी सेटिंग्स पर जाएं"
 }

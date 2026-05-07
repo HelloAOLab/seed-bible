@@ -179,5 +179,10 @@
   "download-settings": "Paramètres de téléchargement",
   "downloading-settings": "Téléchargement des paramètres...",
   "upload-settings": "Paramètres de téléchargement",
-  "uploading-settings": "Paramètres de chargement..."
+  "uploading-settings": "Paramètres de chargement...",
+  "search": "Recherche",
+  "mobile": "Mobile",
+  "show-nav-arrows": "Afficher les flèches de navigation",
+  "theme-and-text": "Thème et texte",
+  "go-to-all-settings": "Accéder à tous les paramètres"
 }

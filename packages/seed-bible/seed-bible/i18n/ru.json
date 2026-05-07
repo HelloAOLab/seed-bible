@@ -179,5 +179,10 @@
   "download-settings": "Настройки загрузки",
   "downloading-settings": "Загрузка настроек...",
   "upload-settings": "Настройки загрузки",
-  "uploading-settings": "Загрузка настроек..."
+  "uploading-settings": "Загрузка настроек...",
+  "search": "Поиск",
+  "mobile": "Мобильный",
+  "show-nav-arrows": "Показать стрелки навигации",
+  "theme-and-text": "Тема и текст",
+  "go-to-all-settings": "Перейти ко всем настройкам"
 }
