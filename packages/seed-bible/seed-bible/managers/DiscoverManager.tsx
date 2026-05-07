@@ -31,13 +31,16 @@ export interface DiscoverProvider {
   ) => Promise<DiscoverResult[]> | DiscoverResult[];
 }
 
-export interface DiscoverResults {
-  [providerId: string]: DiscoverResult[];
+export interface DiscoverProviderResults {
+  providerId: string;
+  results: DiscoverResult[];
 }
 
 export interface DiscoverManager {
   registerDiscoverProvider: (provider: DiscoverProvider) => void;
-  discover: (context: DiscoverContext) => Promise<DiscoverResults>;
+  discover: (
+    context: DiscoverContext
+  ) => AsyncIterable<DiscoverProviderResults>;
 }
 
 export function createDiscoverManager(): DiscoverManager {
@@ -53,15 +56,34 @@ export function createDiscoverManager(): DiscoverManager {
       }
     },
 
-    async discover(context: DiscoverContext): Promise<DiscoverResults> {
-      const entries = await Promise.all(
-        providers.map(async (provider) => {
-          const results = await provider.discover(context);
-          return [provider.id, results] as const;
-        })
-      );
+    async *discover(
+      context: DiscoverContext
+    ): AsyncIterable<DiscoverProviderResults> {
+      // Each promise carries a reference to itself so we can remove it from
+      // the set after it wins the race, without needing index bookkeeping.
+      type Tagged = Promise<{
+        promise: Tagged;
+        value: DiscoverProviderResults;
+      }>;
 
-      return Object.fromEntries(entries);
+      const remaining = new Set<Tagged>();
+
+      for (const provider of providers) {
+        const tagged: Tagged = (async () => {
+          const results = await provider.discover(context);
+          return {
+            promise: tagged,
+            value: { providerId: provider.id, results },
+          };
+        })();
+        remaining.add(tagged);
+      }
+
+      while (remaining.size > 0) {
+        const { promise, value } = await Promise.race(remaining);
+        remaining.delete(promise);
+        yield value;
+      }
     },
   };
 }
