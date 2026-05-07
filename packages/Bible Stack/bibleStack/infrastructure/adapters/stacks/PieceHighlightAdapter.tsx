@@ -3,11 +3,16 @@ import type { HighlightPacing } from "bibleStack.domain.models.pieces";
 import type { PieceHighlightAdapterPort } from "bibleStack.application.ports.pieces";
 
 export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
-  interruptSequence(piece: Piece): void {}
-  highlight(piece: Piece, pacing?: HighlightPacing): Promise<void> {
+  interruptSequence(_piece: Piece): void {}
+  highlight(_piece: Piece, _pacing?: HighlightPacing): Promise<void> {
     return Promise.resolve();
   }
-  rehighlight(piece: Piece, pacing?: HighlightPacing): Promise<void> {
+  rehighlight(_piece: Piece, _pacing?: HighlightPacing): Promise<void> {
     return Promise.resolve();
   }
+  unhighlight(_piece: Piece, _pacing?: HighlightPacing): Promise<void> {
+    return Promise.resolve();
+  }
+  increaseIntensity(_piece: Piece, _pacing?: HighlightPacing): void {}
+  decreaseIntensity(_piece: Piece): void {}
 }

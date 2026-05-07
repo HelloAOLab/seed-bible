@@ -14,15 +14,21 @@ import type {
   PieceHighlightEventPort,
   PieceHighlightAdapterPort,
   PieceHighlightActivityNotificationAdapterPort,
+  PieceHighlightActivityServicePort,
+  PieceUnhighlightSchedulerAdapterPort,
   PieceHierarchyServicePort,
   StackParentDataIds,
+  HighlightConfigProviderPort,
+  AnyStackData,
 } from "bibleStack.application.ports.pieces";
+import { HighlightDelays } from "bibleStack.application.ports.pieces";
 import type { PieceHighlightServicePort as ExperienceHighlightServicePort } from "../ports/experience";
 import {
   type HighlightRequestSource,
   type HighlightPacing,
   type UnhighlightRequestSource,
   HighlightRequestSources,
+  UnhighlightRequestSources,
 } from "../../domain/models/pieces";
 import type { LabelTranslucencyMode } from "bibleVizUtils.domain.models.label";
 
@@ -30,6 +36,9 @@ interface PieceHighlightServiceParams {
   eventPort: PieceHighlightEventPort;
   pieceHighlightAdapterPort: PieceHighlightAdapterPort;
   activityNotificationAdapterPort: PieceHighlightActivityNotificationAdapterPort;
+  pieceActivityServicePort: PieceHighlightActivityServicePort;
+  schedulerAdapterPort: PieceUnhighlightSchedulerAdapterPort;
+  configProviderPort: HighlightConfigProviderPort;
   pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   sequenceStateServicePort: PieceHighlightSequenceStateServicePort;
@@ -52,6 +61,9 @@ export class PieceHighlightService
   #eventPort: PieceHighlightEventPort;
   #pieceHighlightAdapterPort: PieceHighlightAdapterPort;
   #activityNotificationAdapterPort: PieceHighlightActivityNotificationAdapterPort;
+  #pieceActivityServicePort: PieceHighlightActivityServicePort;
+  #schedulerAdapterPort: PieceUnhighlightSchedulerAdapterPort;
+  #configProviderPort: HighlightConfigProviderPort;
   #pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;
   #pieceHierarchyServicePort: PieceHierarchyServicePort;
   #sequenceStateServicePort: PieceHighlightSequenceStateServicePort;
@@ -60,6 +72,9 @@ export class PieceHighlightService
     eventPort,
     pieceHighlightAdapterPort,
     activityNotificationAdapterPort,
+    pieceActivityServicePort,
+    schedulerAdapterPort,
+    configProviderPort,
     pieceDataRepositoryPort,
     pieceHierarchyServicePort,
     sequenceStateServicePort,
@@ -67,6 +82,9 @@ export class PieceHighlightService
     this.#eventPort = eventPort;
     this.#pieceHighlightAdapterPort = pieceHighlightAdapterPort;
     this.#activityNotificationAdapterPort = activityNotificationAdapterPort;
+    this.#pieceActivityServicePort = pieceActivityServicePort;
+    this.#schedulerAdapterPort = schedulerAdapterPort;
+    this.#configProviderPort = configProviderPort;
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
     this.#sequenceStateServicePort = sequenceStateServicePort;
@@ -214,7 +232,9 @@ export class PieceHighlightService
             piece,
             source: "UserFocus",
             pacing: scheduledUnhighlightData?.pacing ?? "Regular",
-            delay: 2000, // TODO: Move this to a config provider
+            delay: this.#configProviderPort.getDelay(
+              HighlightDelays.UserFocusUnhighlightDelay
+            ),
           });
         }
         break;
@@ -244,22 +264,107 @@ export class PieceHighlightService
             piece,
             source: "Transition",
             pacing: scheduledUnhighlightData?.pacing ?? "Regular",
-            delay: scheduledUnhighlightData?.delay ?? 4000, // TODO: Move this to a config provider
+            delay:
+              scheduledUnhighlightData?.delay ??
+              this.#configProviderPort.getDelay(
+                HighlightDelays.TransitionUnhighlightDelay
+              ),
           });
         }
         break;
     }
   }
 
-  tryUnhighlightPiece: (params: {
-    piece: Piece;
+  async tryUnhighlightPiece({
+    piece,
+    source,
+    pacing,
+    delay,
+  }: {
+    piece: Piece<
+      | "StackTestament"
+      | "StackSection"
+      | "StackSectionBook"
+      | "StackBook"
+      | "StackChapter"
+    >;
     source: UnhighlightRequestSource;
     pacing: HighlightPacing;
     delay?: number;
-    duration?: number;
-  }) => Promise<void> = ({ piece, source, pacing, delay, duration }) => {
-    return Promise.resolve();
-  };
+  }): Promise<void> {
+    const data = this.#pieceDataRepositoryPort.getPieceData(piece);
+    if (!data) {
+      throw new Error(
+        "PieceHighlightService: data not found at tryUnhighlightPiece."
+      );
+    }
+
+    const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
+      data.parentDataIds as StackParentDataIds
+    );
+
+    if (
+      (this.#sequenceStateServicePort.isThereAnOngoingSequence() &&
+        source !== UnhighlightRequestSources.Transition) ||
+      (bibleData && bibleData.currentState !== BibleState.Open) ||
+      !data.isHighlightable
+    ) {
+      return;
+    }
+
+    const prevState = data.highlightState;
+    const isUnhighlightScheduled = this.isUnhighlightScheduled(piece);
+
+    if (prevState === HighlightStates.Unhighlighting) {
+      if (source !== UnhighlightRequestSources.Transition) {
+        return;
+      }
+      this.#pieceHighlightAdapterPort.interruptSequence(piece);
+      if (isUnhighlightScheduled) {
+        this.clearScheduledUnhighlight(piece);
+      }
+    } else {
+      const transitioned = data.changeHighlightState(
+        HighlightEvents.RequestUnhighlight
+      );
+      if (!transitioned) {
+        return;
+      }
+      if (isUnhighlightScheduled) {
+        this.clearScheduledUnhighlight(piece);
+      }
+    }
+
+    if (delay) {
+      const timerId = this.#schedulerAdapterPort.schedule(delay, async () => {
+        this.#scheduledUnhighlightsMap.delete(piece.id);
+        await this.#executeUnhighlight(piece, data, pacing);
+      });
+      this.#scheduledUnhighlightsMap.set(piece.id, timerId);
+    } else {
+      await this.#executeUnhighlight(piece, data, pacing);
+    }
+  }
+
+  async #executeUnhighlight(
+    piece: Piece<
+      | "StackTestament"
+      | "StackSection"
+      | "StackSectionBook"
+      | "StackBook"
+      | "StackChapter"
+    >,
+    data: AnyStackData,
+    pacing: HighlightPacing
+  ): Promise<void> {
+    this.#pieceHighlightAdapterPort.interruptSequence(piece);
+    await this.#pieceHighlightAdapterPort.unhighlight(piece, pacing);
+    data.changeHighlightState(HighlightEvents.SequenceComplete);
+    this.#highlightedPiecesIds.delete(piece.id);
+    if (data.type === BiblePiece.StackChapter) {
+      this.#pieceActivityServicePort.updateNotification(data);
+    }
+  }
 
   isUnhighlightScheduled(piece: Piece): boolean {
     return this.#scheduledUnhighlightsMap.has(piece.id);
@@ -270,10 +375,25 @@ export class PieceHighlightService
     intensity,
     pacing = "Regular",
   }: {
-    piece: Piece;
+    piece: Piece<
+      | "StackTestament"
+      | "StackSection"
+      | "StackSectionBook"
+      | "StackBook"
+      | "StackChapter"
+    >;
     intensity: LabelTranslucencyMode;
     pacing?: HighlightPacing;
-  }): void {}
+  }): void {
+    const data = this.#pieceDataRepositoryPort.getPieceData(piece);
+    const changed = data?.changeHighlightIntensity(intensity);
+    if (!changed) return;
+    if (intensity === "Solid") {
+      this.#pieceHighlightAdapterPort.increaseIntensity(piece, pacing);
+    } else {
+      this.#pieceHighlightAdapterPort.decreaseIntensity(piece);
+    }
+  }
 
   clearHighlightedPieces(): void {
     for (const piece of this.#highlightedPiecesIds.values()) {
@@ -284,12 +404,17 @@ export class PieceHighlightService
   }
 
   clearScheduledUnhighlight(piece: Piece) {
-    if (this.isUnhighlightScheduled(piece)) {
+    const timerId = this.#scheduledUnhighlightsMap.get(piece.id);
+    if (timerId !== undefined) {
+      this.#schedulerAdapterPort.clear(timerId);
       this.#scheduledUnhighlightsMap.delete(piece.id);
-
-      // TODO: clear the timeout in the infrastructure layer with a proper adapter.
     }
   }
 
-  clearScheduledUnhighlights(): void {}
+  clearScheduledUnhighlights(): void {
+    for (const timerId of this.#scheduledUnhighlightsMap.values()) {
+      this.#schedulerAdapterPort.clear(timerId);
+    }
+    this.#scheduledUnhighlightsMap.clear();
+  }
 }

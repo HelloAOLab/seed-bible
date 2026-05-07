@@ -293,6 +293,9 @@
       "bibleStack.infrastructure.adapters.stacks.PieceDataRepository": [
         "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/PieceDataRepository.tsx"
       ],
+      "bibleStack.infrastructure.adapters.stacks.PieceHighlightAdapter": [
+        "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/PieceHighlightAdapter.tsx"
+      ],
       "bibleStack.infrastructure.adapters.stacks.StackPieceLifecycleAdapter": [
         "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/StackPieceLifecycleAdapter.tsx"
       ],
@@ -325,6 +328,12 @@
       ],
       "bibleStack.infrastructure.config.experience.ExperienceConfigProvider": [
         "./packages/Bible Stack/bibleStack/infrastructure/config/experience/ExperienceConfigProvider.tsx"
+      ],
+      "bibleStack.infrastructure.config.highlight.delays": [
+        "./packages/Bible Stack/bibleStack/infrastructure/config/highlight/delays.tsx"
+      ],
+      "bibleStack.infrastructure.config.highlight.HighlightConfigProvider": [
+        "./packages/Bible Stack/bibleStack/infrastructure/config/highlight/HighlightConfigProvider.tsx"
       ],
       "bibleStack.infrastructure.config.sectionInteraction.delays": [
         "./packages/Bible Stack/bibleStack/infrastructure/config/sectionInteraction/delays.tsx"
@@ -449,6 +458,9 @@
       "bibleStack.infrastructure.ports.experience": [
         "./packages/Bible Stack/bibleStack/infrastructure/ports/experience.tsx"
       ],
+      "bibleStack.infrastructure.ports.highlight": [
+        "./packages/Bible Stack/bibleStack/infrastructure/ports/highlight.tsx"
+      ],
       "bibleStack.infrastructure.ports.pieceAdapter": [
         "./packages/Bible Stack/bibleStack/infrastructure/ports/pieceAdapter.tsx"
       ],
@@ -466,12 +478,6 @@
       ],
       "bibleStack.infrastructure.ports.visualState": [
         "./packages/Bible Stack/bibleStack/infrastructure/ports/visualState.tsx"
-      ],
-      "bibleStack.main.ClearExperience": [
-        "./packages/Bible Stack/bibleStack/main/ClearExperience.tsx"
-      ],
-      "bibleStack.main.ClearStacks": [
-        "./packages/Bible Stack/bibleStack/main/ClearStacks.tsx"
       ],
       "bibleStack.main.ClearUnhighlightDelay": [
         "./packages/Bible Stack/bibleStack/main/ClearUnhighlightDelay.tsx"
@@ -781,9 +787,6 @@
       ],
       "bibleStack.main.TryHighlightChapter": [
         "./packages/Bible Stack/bibleStack/main/TryHighlightChapter.tsx"
-      ],
-      "bibleStack.main.TryHighlightPiece": [
-        "./packages/Bible Stack/bibleStack/main/TryHighlightPiece.tsx"
       ],
       "bibleStack.main.TryIncreasePieceHighlight": [
         "./packages/Bible Stack/bibleStack/main/TryIncreasePieceHighlight.tsx"

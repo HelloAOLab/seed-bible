@@ -6,6 +6,7 @@ import {
   type Piece,
   type ActivityIndicator,
 } from "bibleVizUtils.domain.models.canvas";
+import { HighlightStates } from "bibleVizUtils.domain.models.highlight";
 import type { LabelDataStorePort } from "bibleVizUtils.domain.ports.piece";
 import type {
   DataRegistryPort,
@@ -586,8 +587,9 @@ export class PieceActivityService implements PieceActivityServicePort {
       pieceActivity.length === 0 ||
       isPieceSelected ||
       !container.isActive ||
-      container.isPieceHighlighting() ||
-      (container.isPieceHighlighted() && !container.isSelected);
+      container.highlightState === HighlightStates.Highlighting ||
+      (container.highlightState === HighlightStates.Highlighted &&
+        !container.isSelected);
 
     if (shouldHide && currNotification) {
       this.#activityNotificationAdapterPort.hideNotification(currNotification);

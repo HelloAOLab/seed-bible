@@ -393,10 +393,12 @@ export class BibleSequenceService {
       await this.#pieceHighlightServicePort.tryHighlightPiece({
         piece: testamentData.piece,
         source: HighlightRequestSources.Transition,
-        unhighlightDelay:
-          this.#configProviderPort.getTestamentHighlightSequenceConfig(
-            "unhighlightDelay"
-          ),
+        scheduledUnhighlightData: {
+          delay:
+            this.#configProviderPort.getTestamentHighlightSequenceConfig(
+              "unhighlightDelay"
+            ),
+        },
       });
       await this.#awaiterPort.sleep(
         this.#configProviderPort.getTestamentHighlightSequenceConfig(

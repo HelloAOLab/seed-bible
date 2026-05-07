@@ -11,6 +11,7 @@ import {
   type HighlightEvent,
   HighlightStates,
 } from "../models/highlight";
+import type { LabelTranslucencyMode } from "bibleVizUtils.domain.models.label";
 
 const highlightFSM: Record<
   HighlightState,
@@ -106,6 +107,7 @@ export class StackPieceData<
   #isHighlightable: boolean = false;
   #isFocused: boolean = false;
   #highlightState: HighlightState = HighlightStates.Idle;
+  #highlightIntensity: LabelTranslucencyMode = "Solid";
 
   constructor({
     childrenData = [],
@@ -146,6 +148,17 @@ export class StackPieceData<
   get highlightState() {
     return this.#highlightState;
   }
+  get highlightIntensity() {
+    return this.#highlightIntensity;
+  }
+  changeHighlightIntensity(newIntensity: LabelTranslucencyMode): boolean {
+    if (this.#highlightState === HighlightStates.Idle) return false;
+    if (this.#highlightIntensity !== newIntensity) {
+      this.#highlightIntensity = newIntensity;
+      return true;
+    }
+    return false;
+  }
   get type() {
     return this.#type;
   }
@@ -161,7 +174,7 @@ export class StackPieceData<
     this.#piece = newPiece;
   }
   clearPiece(): Piece<TPiece> | undefined {
-    let piece: Piece | undefined = undefined;
+    let piece: Piece<TPiece> | undefined = undefined;
     if (this.#piece) {
       piece = this.#piece;
       this.#piece = undefined;

@@ -101,11 +101,21 @@ export interface PieceHighlightAdapterPort {
   interruptSequence(piece: Piece): void;
   highlight(piece: Piece, pacing?: HighlightPacing): Promise<void>;
   rehighlight(piece: Piece, pacing?: HighlightPacing): Promise<void>;
+  unhighlight(piece: Piece, pacing?: HighlightPacing): Promise<void>;
+  increaseIntensity(piece: Piece, pacing?: HighlightPacing): void;
+  decreaseIntensity(piece: Piece): void;
+}
+export interface PieceUnhighlightSchedulerAdapterPort {
+  schedule(delay: number, callback: () => Promise<void>): string;
+  clear(id: string): void;
 }
 export type PieceHighlightActivityNotificationAdapterPort = Pick<
   ActivityNotificationAdapterPort,
   "hideNotification"
 >;
+export interface PieceHighlightActivityServicePort {
+  updateNotification(container: StackChapterData): void;
+}
 
 export interface PieceHighlightEventPort {
   emit: <K extends "OnScripturePieceHighlighted">(
@@ -124,6 +134,18 @@ export interface PieceHierarchyServicePort {
   getParentDataChain: (parentDataIds: StackParentDataIds) => ParentDataChain;
 }
 
+export const HighlightDelays = {
+  UserFocusUnhighlightDelay: "UserFocusUnhighlightDelay",
+  TransitionUnhighlightDelay: "TransitionUnhighlightDelay",
+} as const;
+
+export type HighlightDelay =
+  (typeof HighlightDelays)[keyof typeof HighlightDelays];
+
+export interface HighlightConfigProviderPort {
+  getDelay: (delay: HighlightDelay) => number;
+}
+
 export interface PieceHighlightServicePort {
   tryHighlightPiece: (params: {
     piece: Piece<
@@ -134,10 +156,20 @@ export interface PieceHighlightServicePort {
       | "StackChapter"
     >;
     source: HighlightRequestSource;
-    unhighlightDelay?: number;
+    scheduledUnhighlightData?: {
+      delay: number;
+      pacing?: HighlightPacing;
+    };
+    pacing?: HighlightPacing;
   }) => Promise<void>;
   tryUnhighlightPiece: (params: {
-    piece: Piece;
+    piece: Piece<
+      | "StackTestament"
+      | "StackSection"
+      | "StackSectionBook"
+      | "StackBook"
+      | "StackChapter"
+    >;
     source: UnhighlightRequestSource;
     pacing: HighlightPacing;
     delay?: number;
@@ -147,7 +179,13 @@ export interface PieceHighlightServicePort {
     piece,
     intensity,
   }: {
-    piece: Piece;
+    piece: Piece<
+      | "StackTestament"
+      | "StackSection"
+      | "StackSectionBook"
+      | "StackBook"
+      | "StackChapter"
+    >;
     intensity: LabelTranslucencyMode;
   }) => void; // TODO: Change this to use a particular interface for the intensity. Leave LabelTranslucencyMode to the label only.
 }

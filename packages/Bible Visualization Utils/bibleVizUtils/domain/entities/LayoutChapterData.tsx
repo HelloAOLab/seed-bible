@@ -6,11 +6,36 @@ import type {
   ActivityIndicator,
   ActivityNotification,
 } from "bibleVizUtils.domain.models.canvas";
+import {
+  HighlightStates,
+  type HighlightState,
+  type HighlightEvent,
+} from "bibleVizUtils.domain.models.highlight";
 import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
 import type { ChapterInfo } from "bibleVizUtils.domain.models.arrangement";
 import type { LayoutBibleData } from "bibleVizUtils.domain.entities.LayoutBibleData";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
 import type { Point2D } from "bibleVizUtils.domain.models.commonTypes";
+
+const highlightFSM: Record<
+  HighlightState,
+  Partial<Record<HighlightEvent, HighlightState>>
+> = {
+  Idle: {
+    RequestHighlight: HighlightStates.Highlighting,
+  },
+  Highlighting: {
+    SequenceComplete: HighlightStates.Highlighted,
+    RequestUnhighlight: HighlightStates.Unhighlighting,
+  },
+  Unhighlighting: {
+    SequenceComplete: HighlightStates.Idle,
+    RequestHighlight: HighlightStates.Highlighting,
+  },
+  Highlighted: {
+    RequestUnhighlight: HighlightStates.Unhighlighting,
+  },
+};
 
 interface DataParams {
   id: string;
@@ -25,7 +50,6 @@ interface DataParams {
   creationParams: ChapterCreationParams;
   activityIndicators?: Map<ActivityIndicator["id"], ActivityIndicator>;
   activityNotification?: ActivityNotification;
-  isHighlighted?: boolean;
 }
 
 type HighlightInfo = {
@@ -49,8 +73,7 @@ export class LayoutChapterData {
   #creationParams: DataParams["creationParams"];
   #activityIndicators: NonNullable<DataParams["activityIndicators"]>;
   #activityNotification: DataParams["activityNotification"];
-  #isHighlighted: NonNullable<DataParams["isHighlighted"]>;
-  #isHighlighting: boolean = false;
+  #highlightState: HighlightState;
 
   constructor({
     id,
@@ -65,7 +88,6 @@ export class LayoutChapterData {
     creationParams,
     activityIndicators = new Map(),
     activityNotification,
-    isHighlighted = false,
   }: DataParams) {
     this.#playlistEntriesItems = playlistEntriesItems;
     this.#originalLayoutId = originalLayoutId;
@@ -79,7 +101,7 @@ export class LayoutChapterData {
     this.#creationParams = creationParams;
     this.#activityIndicators = activityIndicators;
     this.#activityNotification = activityNotification;
-    this.#isHighlighted = isHighlighted;
+    this.#highlightState = HighlightStates.Idle;
   }
 
   resetData(): Piece[] {
@@ -224,26 +246,16 @@ export class LayoutChapterData {
     }
     return undefined;
   }
-  highlight() {
-    if (!this.#isHighlighted) {
-      this.#isHighlighted = true;
+  changeHighlightState(event: HighlightEvent): boolean {
+    const prevState = this.#highlightState;
+    const newState = highlightFSM[prevState][event];
+    if (!newState) {
+      return false;
     }
+    this.#highlightState = newState;
+    return prevState !== this.#highlightState;
   }
-  isPieceHighlighted(): boolean {
-    return this.#isHighlighted;
-  }
-  isPieceHighlighting() {
-    return this.#isHighlighting;
-  }
-  beginHighlighting() {
-    if (!this.#isHighlighting && !this.#isHighlighted) {
-      this.#isHighlighting = true;
-    }
-  }
-  endHighlighting() {
-    if (this.#isHighlighting) {
-      this.#isHighlighting = false;
-      this.highlight();
-    }
+  get highlightState() {
+    return this.#highlightState;
   }
 }
