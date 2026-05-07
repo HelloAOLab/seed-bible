@@ -17,7 +17,8 @@ export interface DiscoverReference {
 
 export type DiscoverResult =
   | DiscoverContentResult
-  | DiscoverCrossReferenceResult;
+  | DiscoverCrossReferenceResult
+  | DiscoverStudyNoteResult;
 
 export interface DiscoverContentResult {
   type: "content";
@@ -31,6 +32,12 @@ export interface DiscoverCrossReferenceResult {
   type: "cross-reference";
   reference: DiscoverReference;
   crossReference: DiscoverReference;
+}
+
+export interface DiscoverStudyNoteResult {
+  type: "study-note";
+  reference: DiscoverReference;
+  content: JSX.Element | VNode;
 }
 
 export interface DiscoverProvider {
