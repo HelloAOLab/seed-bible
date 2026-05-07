@@ -15,6 +15,8 @@
     "jsxFragmentFactory": "Fragment",
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
     "module": "preserve",
     "noEmit": true,
     "lib": ["es2024", "dom", "dom.iterable"],
