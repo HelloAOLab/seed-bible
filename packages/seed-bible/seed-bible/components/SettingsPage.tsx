@@ -861,6 +861,35 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           </select>
         </div>
 
+        {isMobile && (
+          <>
+            <h3 className="sb-settings-subheading">
+              {t("mobile", { defaultValue: "Mobile" })}
+            </h3>
+
+            <div className="sb-settings-toggle-row">
+              <label
+                className="sb-settings-toggle-label"
+                htmlFor="sb-show-nav-arrows"
+              >
+                {t("show-nav-arrows", {
+                  defaultValue: "Show navigation arrows",
+                })}
+              </label>
+              <input
+                id="sb-show-nav-arrows"
+                type="checkbox"
+                checked={current.showNavArrows}
+                onChange={(event: Event) => {
+                  settings.setShowNavArrows(
+                    (event.currentTarget as HTMLInputElement).checked
+                  );
+                }}
+              />
+            </div>
+          </>
+        )}
+
         <h3 className="sb-settings-subheading">
           {t("selection-ui", { defaultValue: "Selection UI" })}
         </h3>

@@ -86,16 +86,29 @@
   --sb-hebrew-subtitle-font-style: italic;
 
   --sb-reader-toolbar-bottom: 18px;
-  --sb-reader-toolbar-gap: 10px;
-  --sb-reader-toolbar-padding: 8px 20px;
-  --sb-reader-toolbar-border-radius: 10px;
+  --sb-reader-toolbar-gap: 4px;
+  --sb-reader-toolbar-padding: 1px 5px;
+  --sb-reader-toolbar-border-radius: 20px;
   --sb-reader-toolbar-background: #ffffff;
   --sb-reader-toolbar-border: 1px solid #00000024;
-  --sb-reader-toolbar-box-shadow: 0 26px 10px #0000001a;
+  --sb-reader-toolbar-box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
   --sb-reader-toolbar-z-index: 99;
-  --sb-reader-toolbar-height: 50px;
+  --sb-reader-toolbar-height: auto;
   --sb-reader-toolbar-font-family: "Satoshi", system-ui, sans-serif;
   --sb-reader-toolbar-font-color: #333;
+
+  --sb-reader-toolbar-button-height: 52px;
+  --sb-reader-toolbar-button-padding: 6px 10px;
+  --sb-reader-toolbar-button-border-radius: 12px;
+  --sb-reader-toolbar-button-icon-size: 24px;
+  --sb-reader-toolbar-button-label-font-family: "Lato", sans-serif;
+  --sb-reader-toolbar-button-label-font-size: 11px;
+  --sb-reader-toolbar-button-label-line-height: 1;
+  --sb-reader-toolbar-button-label-height: 13px;
+
+  --sb-reader-toolbar-arrow-size: 40px;
+  --sb-reader-toolbar-arrow-padding: 8px;
 
   --sb-reader-toolbar-floating-button-top: -68px;
   --sb-reader-toolbar-floating-button-width: 48px;
@@ -106,13 +119,13 @@
   --sb-reader-toolbar-floating-button-font-color: #333;
   --sb-reader-toolbar-floating-button-box-shadow: 0 10px 24px #0000001a;
 
-  --sb-verse-toolbar-gap: 10px;
-  --sb-verse-toolbar-padding: 8px 16px;
+  --sb-verse-toolbar-gap: 2px;
+  --sb-verse-toolbar-padding: 4px 8px;
   --sb-verse-toolbar-border-radius: 10px;
   --sb-verse-toolbar-border: 1px solid #00000024;
   --sb-verse-toolbar-box-shadow: 0 26px 10px #0000001a;
   --sb-verse-toolbar-z-index: 100;
-  --sb-verse-toolbar-min-height: 50px;
+  --sb-verse-toolbar-min-height: 0;
   --sb-verse-toolbar-background: #fff;
 
   --sb-reader-toolbar-mobile-layout-height: 70px;
@@ -134,7 +147,7 @@
   --sb-detached-pane-body-background: #fff;
   --sb-detached-pane-body-font-color: #333;
 
-  --sb-verse-toolbar-tools-gap: 10px;
+  --sb-verse-toolbar-tools-gap: 2px;
   --sb-verse-toolbar-mobile-bottom: 18px;
 
   --sb-divider-color: rgba(0, 0, 0, 0.12);
@@ -684,40 +697,56 @@ h6 {
 }
 
 .sb-below-reader-toolbar {
+  position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 8px 12px;
-  border-top: 1px solid var(--sb-divider-color);
+  padding: 18px 12px;
   flex-shrink: 0;
   flex-wrap: wrap;
+}
+
+.sb-below-reader-toolbar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--sb-divider-color);
+  z-index: 0;
+  pointer-events: none;
 }
 
 .sb-below-reader-toolbar-item {
   flex: 0 0 auto;
   position: relative;
+  z-index: 1;
+  background: var(--sb-reader-toolbar-background);
+  border: var(--sb-reader-toolbar-border);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .sb-below-reader-toolbar-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* border: 1px solid var(--sb-secondary-color); */
-  border-radius: 6px;
+  border: none;
+  border-radius: 999px;
   background: transparent;
   color: inherit;
   cursor: pointer;
-  padding: 6px 8px;
+  padding: 6px 14px;
   font: inherit;
-  width: 32px;
-  height: 32px;
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
+  height: 36px;
+  min-width: 44px;
+  transition: background-color 0.2s ease;
 }
 
-.sb-below-reader-toolbar-button:hover {
-  background: color-mix(in srgb, #000, transparent 30%);
+.sb-below-reader-toolbar-button:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .sb-below-reader-toolbar-button:disabled {
@@ -774,6 +803,314 @@ h6 {
 
 .sb-inline-footnote-button:hover {
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 65%);
+}
+
+/* ── Mobile reader: header + horizontal swipe carousel ─────────────────────
+   Active only when BibleReader receives state and reports isMobile. The
+   reader becomes a flex column whose body is a horizontal 3-panel track
+   (prev/current/next chapter) for swipe navigation. */
+.sb-bible-reader-mobile {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
+.sb-bible-reader-mobile-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  gap: 8px;
+  background: var(--sb-reader-background);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.sb-bible-reader-mobile-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-bible-reader-mobile-header-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: var(--text-bookTitle-font);
+  color: var(--sb-book-title-font-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-bible-reader-mobile-header-book {
+  cursor: pointer;
+}
+
+.sb-bible-reader-mobile-header-translation {
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+}
+
+.sb-bible-reader-mobile-header-settings {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+  padding: 0;
+}
+
+.sb-bible-reader-mobile-header-settings:active {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-reader-swipe-viewport {
+  flex: 1 1 auto;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  min-height: 0;
+}
+
+.sb-reader-swipe-track {
+  display: flex;
+  width: 300%;
+  height: 100%;
+  transform: translateX(-33.333%);
+  will-change: transform;
+}
+
+.sb-reader-swipe-panel {
+  flex: 0 0 33.333%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.sb-reader-swipe-panel::-webkit-scrollbar {
+  display: none;
+}
+
+.sb-reader-swipe-panel-side {
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+/* Slides the full mobile header up out of view when the user scrolls down,
+   uncovering the compact scroll header. The max-height/padding transitions
+   collapse the header's layout space in sync with the slide so the chapter
+   content rises to fill the gap (no leftover white strip). */
+.sb-bible-reader-mobile-header {
+  max-height: 80px;
+  overflow: hidden;
+  transition:
+    transform 0.25s ease,
+    max-height 0.25s ease,
+    padding-top 0.25s ease,
+    padding-bottom 0.25s ease;
+}
+
+.sb-bible-reader-mobile-header-hidden {
+  transform: translateY(-100%);
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
+}
+
+.sb-bible-reader-mobile-compact {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  font-size: 11px;
+  font-weight: 600;
+  z-index: 9;
+  opacity: 0;
+  transform: translateY(-100%);
+  pointer-events: none;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+  text-align: center;
+}
+
+.sb-bible-reader-mobile-compact-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.sb-bible-reader-mobile-compact-divider {
+  font-weight: 400;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 60%);
+}
+
+.sb-bible-reader-mobile-compact-translation {
+  font-weight: 400;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+}
+
+/* ── Mobile settings bottom sheet ───────────────────────────────────────── */
+.sb-mobile-settings-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 9998;
+}
+
+.sb-mobile-settings-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
+  padding: 16px;
+  font-family: var(--sb-reader-font-family);
+  animation: sb-mobile-settings-slide-up 0.25s ease-out;
+}
+
+@keyframes sb-mobile-settings-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.sb-mobile-settings-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.sb-mobile-settings-sheet-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.sb-mobile-settings-sheet-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sb-mobile-settings-sheet-section-label {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.sb-mobile-settings-sheet-size-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.sb-mobile-settings-sheet-size-button {
+  flex: 1;
+  height: 48px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  background: var(--sb-reader-background);
+  color: inherit;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sb-mobile-settings-sheet-size-button-selected {
+  border-color: var(--sb-secondary-color);
+  background: var(--sb-primary-color);
+  color: #fff;
+}
+
+.sb-mobile-settings-sheet-scripture-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.sb-mobile-settings-sheet-scripture-button {
+  flex: 1;
+  height: 48px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  background: var(--sb-reader-background);
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+
+.sb-mobile-settings-sheet-scripture-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.sb-mobile-settings-sheet-divider {
+  height: 1px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  margin: 8px 0 16px 0;
+}
+
+.sb-mobile-settings-sheet-all-settings {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--sb-primary-color);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 4px 0;
 }
 
 .sb-chapter-content {
@@ -962,6 +1299,7 @@ h6 {
   bottom: var(--sb-reader-toolbar-bottom);
   transform: translateX(-50%);
   display: flex;
+  align-items: center;
   gap: var(--sb-reader-toolbar-gap);
   padding: var(--sb-reader-toolbar-padding);
   border-radius: var(--sb-reader-toolbar-border-radius);
@@ -988,6 +1326,11 @@ h6 {
   transition: transform 0.25s ease;
 }
 
+.sb-reader-toolbar-labeled .sb-reader-toolbar-item {
+  flex: 0 0 auto;
+  height: auto;
+}
+
 .sb-reader-toolbar-button {
   outline: none;
   display: flex;
@@ -999,10 +1342,67 @@ h6 {
   width: 100%;
   height: 100%;
   padding: 0;
+  color: inherit;
 
   transition:
     background-color 0.2s ease,
     transform 0.25s ease;
+}
+
+.sb-reader-toolbar-button:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.sb-reader-toolbar-labeled .sb-reader-toolbar-button {
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 3px;
+  border-radius: var(--sb-reader-toolbar-button-border-radius);
+  height: var(--sb-reader-toolbar-button-height);
+  padding: var(--sb-reader-toolbar-button-padding);
+}
+
+.sb-reader-toolbar-labeled .sb-reader-toolbar-button > svg,
+.sb-reader-toolbar-labeled
+  .sb-reader-toolbar-button
+  > .material-symbols-outlined {
+  width: var(--sb-reader-toolbar-button-icon-size);
+  height: var(--sb-reader-toolbar-button-icon-size);
+  font-size: var(--sb-reader-toolbar-button-icon-size);
+  flex-shrink: 0;
+}
+
+.sb-reader-toolbar-labeled .sb-reader-toolbar-button > img {
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.sb-reader-toolbar-button-label {
+  font-family: var(--sb-reader-toolbar-button-label-font-family);
+  font-size: var(--sb-reader-toolbar-button-label-font-size);
+  font-weight: 400;
+  color: var(--sb-reader-toolbar-font-color);
+  white-space: nowrap;
+  line-height: var(--sb-reader-toolbar-button-label-line-height);
+  height: var(--sb-reader-toolbar-button-label-height);
+}
+
+.sb-reader-toolbar-item-arrow .sb-reader-toolbar-button {
+  flex-direction: row;
+  border-radius: 50%;
+  width: var(--sb-reader-toolbar-arrow-size);
+  height: var(--sb-reader-toolbar-arrow-size);
+  padding: var(--sb-reader-toolbar-arrow-padding);
+  gap: 0;
+}
+
+.sb-reader-toolbar-divider {
+  width: 1px;
+  height: 35px;
+  background: var(--sb-divider-color);
+  flex-shrink: 0;
+  align-self: center;
+  margin: 0 4px;
 }
 
 /* Raster icons supplied by extensions can't inherit `currentColor`, so we
@@ -1312,6 +1712,67 @@ h6 {
 .sb-verse-toolbar-tools {
   display: flex;
   gap: var(--sb-verse-toolbar-tools-gap);
+  align-items: stretch;
+}
+
+/* Vertical icon-above-label button used inside the floating verse toolbar.
+   Mirrors `.mobile-action-btn` from the develop branch's verseToolbar. */
+.sb-verse-toolbar-action-item {
+  display: flex;
+  position: relative;
+}
+
+.sb-verse-toolbar-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 6px;
+  min-width: 44px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 1;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.sb-verse-toolbar-action:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-verse-toolbar-action:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.sb-verse-toolbar-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.sb-verse-toolbar-action-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.sb-verse-toolbar-action-icon .material-symbols-outlined {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.sb-verse-toolbar-action-label {
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .sb-verse-toolbar-mobile {
@@ -2800,6 +3261,29 @@ h6 {
     z-index: 100;
     overflow-y: auto;
     background: var(--sb-background);
+    animation: sb-sidebar-slide-in 0.25s ease-out;
+  }
+
+  @keyframes sb-sidebar-slide-in {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  [dir="rtl"] .sb-tabs-sidebar-mobile-open {
+    animation-name: sb-sidebar-slide-in-rtl;
+  }
+
+  @keyframes sb-sidebar-slide-in-rtl {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
   }
 
   .sb-sidebar-close-button {

@@ -13,7 +13,11 @@ import type { ChapterHighlight } from "seed-bible.managers.HighlightsManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { Pane } from "seed-bible.managers.PanesManager";
 import type { ScriptureElementsBehavior } from "seed-bible.managers.SettingsManager";
+import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
+import { MobileSettingsSheet } from "seed-bible.components.MobileSettingsSheet";
+
+const { useEffect, useRef, useState } = os.appHooks;
 
 interface VerseLine {
   indentLevel: number;
@@ -719,10 +723,27 @@ interface BibleReaderProps {
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
   scriptureElements?: ScriptureElementsBehavior;
+  state?: SeedBibleState;
+}
+
+function renderStaticChapterContent(
+  chapter: TranslationBookChapter | null,
+  scriptureElements: ScriptureElementsBehavior
+) {
+  if (!chapter) return null;
+  return renderChapterContent(
+    chapter,
+    () => {},
+    [],
+    () => {},
+    [],
+    [],
+    scriptureElements
+  );
 }
 
 export function BibleReader(props: BibleReaderProps) {
-  const { currentPane, readingState, selectorState } = props;
+  const { currentPane, readingState, selectorState, state } = props;
   const {
     translationId,
     translation,
@@ -753,6 +774,197 @@ export function BibleReader(props: BibleReaderProps) {
     () => translation.value?.website.trim() ?? ""
   );
 
+  const isMobile = state?.app.isMobile.value ?? false;
+
+  // Carousel state — only loaded/used on mobile.
+  const swipeViewportRef = useRef<HTMLDivElement | null>(null);
+  const swipeTrackRef = useRef<HTMLDivElement | null>(null);
+  const swipeTouchStartX = useRef<number | null>(null);
+  const swipeTouchStartY = useRef<number | null>(null);
+  const swipeDirectionLocked = useRef<"h" | "v" | null>(null);
+  const swipeCurrentDx = useRef(0);
+  const [prevChapterPreview, setPrevChapterPreview] =
+    useState<TranslationBookChapter | null>(null);
+  const [nextChapterPreview, setNextChapterPreview] =
+    useState<TranslationBookChapter | null>(null);
+  const [showMobileSettings, setShowMobileSettings] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const currentPanelRef = useRef<HTMLDivElement | null>(null);
+  const lastScrollTopRef = useRef(0);
+
+  const currentChapterValue = chapterData.value;
+
+  // Preload prev/next chapter previews when the current chapter changes.
+  useEffect(() => {
+    if (!isMobile || !state) {
+      setPrevChapterPreview(null);
+      setNextChapterPreview(null);
+      return;
+    }
+    const cData = currentChapterValue;
+    if (!cData) {
+      setPrevChapterPreview(null);
+      setNextChapterPreview(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    if (cData.previousChapterApiLink) {
+      state.bibleData
+        .getPreviousChapter(cData)
+        .then((res) => {
+          if (!cancelled) setPrevChapterPreview(res ?? null);
+        })
+        .catch(() => {
+          if (!cancelled) setPrevChapterPreview(null);
+        });
+    } else {
+      setPrevChapterPreview(null);
+    }
+
+    if (cData.nextChapterApiLink) {
+      state.bibleData
+        .getNextChapter(cData)
+        .then((res) => {
+          if (!cancelled) setNextChapterPreview(res ?? null);
+        })
+        .catch(() => {
+          if (!cancelled) setNextChapterPreview(null);
+        });
+    } else {
+      setNextChapterPreview(null);
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isMobile,
+    currentChapterValue?.translation.id,
+    currentChapterValue?.book.id,
+    currentChapterValue?.chapter.number,
+  ]);
+
+  // Touch handlers on the swipe viewport drive horizontal pan + chapter
+  // navigation on mobile. Mirrors the carousel from `develop`'s `thePage.tsx`.
+  useEffect(() => {
+    if (!isMobile) return;
+    const viewport = swipeViewportRef.current;
+    if (!viewport) return;
+
+    const PANEL_PCT = 100 / 3;
+
+    const onTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (!touch) return;
+      swipeTouchStartX.current = touch.clientX;
+      swipeTouchStartY.current = touch.clientY;
+      swipeDirectionLocked.current = null;
+      swipeCurrentDx.current = 0;
+      const track = swipeTrackRef.current;
+      if (track) track.style.transition = "none";
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (
+        swipeTouchStartX.current === null ||
+        swipeTouchStartY.current === null
+      )
+        return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      const dx = touch.clientX - swipeTouchStartX.current;
+      const dy = touch.clientY - swipeTouchStartY.current;
+
+      if (!swipeDirectionLocked.current) {
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+          swipeDirectionLocked.current = "h";
+        } else if (Math.abs(dy) > 10) {
+          swipeDirectionLocked.current = "v";
+          return;
+        } else {
+          return;
+        }
+      }
+
+      if (swipeDirectionLocked.current === "v") return;
+      e.preventDefault();
+
+      const hasNext = !!readingState.chapterData.value?.nextChapterApiLink;
+      const hasPrev = !!readingState.chapterData.value?.previousChapterApiLink;
+      let offset = dx;
+
+      if ((dx < 0 && !hasNext) || (dx > 0 && !hasPrev)) {
+        offset = Math.sign(dx) * Math.min(Math.abs(dx) * 0.15, 30);
+      } else {
+        const limit = window.innerWidth * 0.5;
+        if (Math.abs(dx) > limit) {
+          offset = Math.sign(dx) * (limit + (Math.abs(dx) - limit) * 0.2);
+        }
+      }
+
+      swipeCurrentDx.current = offset;
+      const track = swipeTrackRef.current;
+      if (track) {
+        track.style.transform = `translateX(calc(-${PANEL_PCT}% + ${offset}px))`;
+      }
+    };
+
+    const onTouchEnd = () => {
+      if (swipeDirectionLocked.current !== "h") {
+        swipeTouchStartX.current = null;
+        swipeDirectionLocked.current = null;
+        return;
+      }
+
+      const dx = swipeCurrentDx.current;
+      const THRESHOLD = 80;
+      const hasNext = !!readingState.chapterData.value?.nextChapterApiLink;
+      const hasPrev = !!readingState.chapterData.value?.previousChapterApiLink;
+
+      swipeTouchStartX.current = null;
+      swipeDirectionLocked.current = null;
+      swipeCurrentDx.current = 0;
+
+      const track = swipeTrackRef.current;
+      if (!track) return;
+
+      if (dx < -THRESHOLD && hasNext) {
+        track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transform = `translateX(-${PANEL_PCT * 2}%)`;
+        readingState.clearSelectedVerses();
+        window.setTimeout(async () => {
+          track.style.transition = "none";
+          track.style.transform = `translateX(-${PANEL_PCT}%)`;
+          await readingState.loadNextChapter();
+        }, 250);
+      } else if (dx > THRESHOLD && hasPrev) {
+        track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transform = `translateX(0%)`;
+        readingState.clearSelectedVerses();
+        window.setTimeout(async () => {
+          track.style.transition = "none";
+          track.style.transform = `translateX(-${PANEL_PCT}%)`;
+          await readingState.loadPreviousChapter();
+        }, 250);
+      } else {
+        track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transform = `translateX(-${PANEL_PCT}%)`;
+      }
+    };
+
+    viewport.addEventListener("touchstart", onTouchStart, { passive: true });
+    viewport.addEventListener("touchmove", onTouchMove, { passive: false });
+    viewport.addEventListener("touchend", onTouchEnd, { passive: true });
+
+    return () => {
+      viewport.removeEventListener("touchstart", onTouchStart);
+      viewport.removeEventListener("touchmove", onTouchMove);
+      viewport.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [isMobile, readingState]);
+
   const { t } = useI18n();
   const scriptureElements: ScriptureElementsBehavior =
     props.scriptureElements ?? {
@@ -763,27 +975,60 @@ export function BibleReader(props: BibleReaderProps) {
       showRedLettering: true,
     };
 
-  return (
-    <div
-      className="sb-bible-reader"
-      dir={translation.value?.textDirection ?? "auto"}
-    >
-      <h2
-        onClick={() => selectorState.setOpen(true, currentPane)}
-        className="sb-bible-reader-title"
-      >
-        <span className="sb-bible-reader-book">
-          {currentBook.value?.name ?? bookId.value ?? "Select a book"}
-        </span>
-        {String.fromCharCode(160)}
-        <span className="sb-bible-reader-chapter">{chapterNumber.value}</span>
-        {String.fromCharCode(160)}
-        <span className="sb-bible-reader-translation">
-          /{String.fromCharCode(160)}
-          {translationId.value ?? ""}
-        </span>
-      </h2>
+  const openBookSelector = () => {
+    selectorState.selectingTranslation.value = false;
+    void selectorState.setOpen(true, currentPane);
+  };
+  const openTranslationSelector = () => {
+    selectorState.selectingTranslation.value = true;
+    void selectorState.setOpen(true, currentPane);
+  };
+  const openMobileSettings = () => {
+    setShowMobileSettings(true);
+  };
+  const openAllSettings = () => {
+    if (!state) return;
+    setShowMobileSettings(false);
+    // Small delay so the bottom sheet can finish unmounting before the
+    // sidebar drawer animates in — otherwise the sheet's z-index 9999
+    // sits on top of the sidebar's z-index 100 during the same render
+    // tick, and the sidebar appears not to open at all.
+    window.setTimeout(() => {
+      state.sidebar.openSettings();
+      state.sidebar.openSidebar();
+    }, 50);
+  };
 
+  // Scroll listener on the current swipe panel toggles a "scrolled" state
+  // that hides the full mobile header and reveals the compact scroll header.
+  useEffect(() => {
+    if (!isMobile) return;
+    const panel = currentPanelRef.current;
+    if (!panel) return;
+
+    const handleScroll = () => {
+      const currentScrollTop = panel.scrollTop;
+      if (currentScrollTop <= 0) {
+        setIsScrolled(false);
+      } else if (
+        currentScrollTop > lastScrollTopRef.current &&
+        currentScrollTop > 50
+      ) {
+        setIsScrolled(true);
+      } else if (currentScrollTop < lastScrollTopRef.current) {
+        setIsScrolled(false);
+      }
+      lastScrollTopRef.current = currentScrollTop;
+    };
+
+    panel.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      panel.removeEventListener("scroll", handleScroll);
+    };
+  }, [isMobile]);
+
+  const renderMainContent = () => (
+    <>
       {error.value && !loading.value && (
         <p className="sb-reader-error">{error.value}</p>
       )}
@@ -838,6 +1083,128 @@ export function BibleReader(props: BibleReaderProps) {
               </a>
             </p>
           )}
+        </>
+      )}
+    </>
+  );
+
+  return (
+    <div
+      className={`sb-bible-reader${isMobile ? " sb-bible-reader-mobile" : ""}`}
+      dir={translation.value?.textDirection ?? "auto"}
+    >
+      {isMobile && state ? (
+        <>
+          <div
+            className={`sb-bible-reader-mobile-header${
+              isScrolled ? " sb-bible-reader-mobile-header-hidden" : ""
+            }`}
+          >
+            <div className="sb-bible-reader-mobile-header-text">
+              <h1 className="sb-bible-reader-mobile-header-title">
+                <span
+                  className="sb-bible-reader-mobile-header-book"
+                  onClick={openBookSelector}
+                >
+                  {currentBook.value?.name ?? bookId.value ?? ""}{" "}
+                  {chapterNumber.value}
+                </span>
+                <span
+                  className="sb-bible-reader-mobile-header-translation"
+                  onClick={(e: MouseEvent) => {
+                    e.stopPropagation();
+                    openTranslationSelector();
+                  }}
+                >
+                  {" "}
+                  • {translation.value?.shortName ?? translationId.value ?? ""}
+                </span>
+              </h1>
+            </div>
+            <button
+              type="button"
+              className="sb-bible-reader-mobile-header-settings"
+              onClick={openMobileSettings}
+              aria-label={t("settings", { defaultValue: "Settings" })}
+              title={t("settings", { defaultValue: "Settings" })}
+            >
+              <span className="material-symbols-outlined">tune</span>
+            </button>
+          </div>
+
+          <div
+            className={`sb-bible-reader-mobile-compact${
+              isScrolled ? " sb-bible-reader-mobile-compact-visible" : ""
+            }`}
+            aria-hidden={!isScrolled}
+          >
+            <span className="sb-bible-reader-mobile-compact-book">
+              {currentBook.value?.name ?? bookId.value ?? ""}{" "}
+              {chapterNumber.value}
+            </span>
+            <span className="sb-bible-reader-mobile-compact-divider">|</span>
+            <span className="sb-bible-reader-mobile-compact-translation">
+              {translation.value?.shortName ?? translationId.value ?? ""}
+            </span>
+          </div>
+
+          <div ref={swipeViewportRef} className="sb-reader-swipe-viewport">
+            <div ref={swipeTrackRef} className="sb-reader-swipe-track">
+              <div
+                className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
+                aria-hidden="true"
+              >
+                {renderStaticChapterContent(
+                  prevChapterPreview,
+                  scriptureElements
+                )}
+              </div>
+              <div
+                ref={currentPanelRef}
+                className="sb-reader-swipe-panel sb-reader-swipe-panel-current"
+              >
+                {renderMainContent()}
+              </div>
+              <div
+                className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
+                aria-hidden="true"
+              >
+                {renderStaticChapterContent(
+                  nextChapterPreview,
+                  scriptureElements
+                )}
+              </div>
+            </div>
+          </div>
+
+          {showMobileSettings && (
+            <MobileSettingsSheet
+              state={state}
+              onClose={() => setShowMobileSettings(false)}
+              onOpenAllSettings={openAllSettings}
+            />
+          )}
+        </>
+      ) : (
+        <>
+          <h2
+            onClick={() => selectorState.setOpen(true, currentPane)}
+            className="sb-bible-reader-title"
+          >
+            <span className="sb-bible-reader-book">
+              {currentBook.value?.name ?? bookId.value ?? "Select a book"}
+            </span>
+            {String.fromCharCode(160)}
+            <span className="sb-bible-reader-chapter">
+              {chapterNumber.value}
+            </span>
+            {String.fromCharCode(160)}
+            <span className="sb-bible-reader-translation">
+              /{String.fromCharCode(160)}
+              {translationId.value ?? ""}
+            </span>
+          </h2>
+          {renderMainContent()}
         </>
       )}
 

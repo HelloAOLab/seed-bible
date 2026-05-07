@@ -89,6 +89,9 @@
       "seed-bible.components.ModalHost": [
         "./packages/seed-bible/seed-bible/components/ModalHost.tsx"
       ],
+      "seed-bible.components.MobileSettingsSheet": [
+        "./packages/seed-bible/seed-bible/components/MobileSettingsSheet.tsx"
+      ],
       "seed-bible.components.PaneLayout": [
         "./packages/seed-bible/seed-bible/components/PaneLayout.tsx"
       ],
