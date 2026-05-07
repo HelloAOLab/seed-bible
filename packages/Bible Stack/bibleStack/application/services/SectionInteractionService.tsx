@@ -19,7 +19,7 @@ import type { PieceDataRepositoryPort } from "bibleStack.application.ports.piece
 import type { SectionInteractionConfigProviderPort } from "bibleStack.infrastructure.ports.sectionInteraction";
 import {
   HighlightRequestSources,
-  UnhighlightPacings,
+  HighlightPacings,
   UnhighlightRequestSources,
 } from "../../domain/models/pieces";
 import { SectionInteractionDelays } from "bibleStack.infrastructure.config.sectionInteraction.delays";
@@ -100,7 +100,7 @@ export class SectionInteractionService implements SectionInteractionServicePort 
     } else {
       switch (interaction) {
         case SelectionModalities.Precise: {
-          if (sectionData.isPieceHighlighted()) {
+          if (sectionData.highlightState === "Highlighted") {
             if (!sectionData.isSplitIntoBooks) {
               this.#sectionSelectionServicePort.selectSection({
                 data: sectionData,
@@ -167,7 +167,7 @@ export class SectionInteractionService implements SectionInteractionServicePort 
     this.#pieceHighlightServicePort.tryUnhighlightPiece({
       piece: section,
       source: UnhighlightRequestSources.UserUnfocus,
-      pacing: UnhighlightPacings.Regular,
+      pacing: HighlightPacings.Regular,
       delay: this.#sectionInteractionConfigProviderPort.getDelay(
         SectionInteractionDelays.UnhighlightSection
       ),

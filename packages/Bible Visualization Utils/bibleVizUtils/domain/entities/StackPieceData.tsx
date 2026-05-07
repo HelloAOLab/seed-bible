@@ -6,6 +6,31 @@ import type {
   PieceSelectionSource,
 } from "bibleVizUtils.domain.models.canvas";
 import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
+import {
+  type HighlightState,
+  type HighlightEvent,
+  HighlightStates,
+} from "../models/highlight";
+
+const highlightFSM: Record<
+  HighlightState,
+  Partial<Record<HighlightEvent, HighlightState>>
+> = {
+  Idle: {
+    RequestHighlight: HighlightStates.Highlighting,
+  },
+  Highlighting: {
+    SequenceComplete: HighlightStates.Highlighted,
+    RequestUnhighlight: HighlightStates.Unhighlighting,
+  },
+  Unhighlighting: {
+    SequenceComplete: HighlightStates.Idle,
+    RequestHighlight: HighlightStates.Highlighting,
+  },
+  Highlighted: {
+    RequestUnhighlight: HighlightStates.Unhighlighting,
+  },
+};
 
 interface DataParams<
   TChild,
@@ -71,14 +96,16 @@ export class StackPieceData<
   >["creationParams"];
   #highlightColor: HighlightColor;
   #lastInteractionSource: LastInteractionSource;
-  #isHighlighted: NonNullable<
-    DataParams<TChild, TPieceInfo, TCreationParams, TPiece>["isHighlighted"]
-  >;
-  #isHighlighting: boolean = false;
+  // #isHighlighted: NonNullable<
+  //   DataParams<TChild, TPieceInfo, TCreationParams, TPiece>["isHighlighted"]
+  // >;
+  // #isHighlighting: boolean = false;
+  // #isUnhighlighting: boolean = false;
   #isOnTheGround: boolean = false;
   #isBeingDragged: boolean = false;
   #isHighlightable: boolean = false;
   #isFocused: boolean = false;
+  #highlightState: HighlightState = HighlightStates.Idle;
 
   constructor({
     childrenData = [],
@@ -90,7 +117,7 @@ export class StackPieceData<
     isActive = false,
     isHidden = false,
     creationParams,
-    isHighlighted = false,
+    // isHighlighted = false,
     type,
   }: DataParams<TChild, TPieceInfo, TCreationParams, TPiece>) {
     super({ childrenData, id });
@@ -104,9 +131,21 @@ export class StackPieceData<
     this.#creationParams = creationParams;
     this.#highlightColor = undefined;
     this.#lastInteractionSource = undefined;
-    this.#isHighlighted = isHighlighted;
+    // this.#isHighlighted = isHighlighted;
   }
 
+  changeHighlightState(event: HighlightEvent): boolean {
+    const prevState = this.#highlightState;
+    const newState = highlightFSM[prevState][event];
+    if (!newState) {
+      return false;
+    }
+    this.#highlightState = newState;
+    return prevState !== this.#highlightState;
+  }
+  get highlightState() {
+    return this.#highlightState;
+  }
   get type() {
     return this.#type;
   }
@@ -122,7 +161,7 @@ export class StackPieceData<
     this.#piece = newPiece;
   }
   clearPiece(): Piece<TPiece> | undefined {
-    let piece: Piece | undefined;
+    let piece: Piece | undefined = undefined;
     if (this.#piece) {
       piece = this.#piece;
       this.#piece = undefined;
@@ -247,7 +286,7 @@ export class StackPieceData<
   clearLastInteractionSource() {
     this.#lastInteractionSource = undefined;
   }
-  resetHierarchy(clearPiece: boolean = true): Piece[] {
+  override resetHierarchy(clearPiece: boolean = true): Piece[] {
     const piecesToRelease: Piece[] = [];
 
     if (this.piece && clearPiece) {
@@ -263,28 +302,50 @@ export class StackPieceData<
   isPieceAvailable(): boolean {
     return !!this.#piece;
   }
-  highlight() {
-    if (!this.#isHighlighted) {
-      this.#isHighlighted = true;
-    }
-  }
-  isPieceHighlighted(): boolean {
-    return this.#isHighlighted;
-  }
-  isPieceHighlighting() {
-    return this.#isHighlighting;
-  }
-  beginHighlighting() {
-    if (!this.#isHighlighting && !this.#isHighlighted) {
-      this.#isHighlighting = true;
-    }
-  }
-  endHighlighting() {
-    if (this.#isHighlighting) {
-      this.#isHighlighting = false;
-      this.highlight();
-    }
-  }
+  // highlight() {
+  //   if (!this.#isHighlighted) {
+  //     this.#isHighlighted = true;
+  //   }
+  // }
+  // unhighlight() {
+  //   if (this.#isHighlighted) {
+  //     this.#isHighlighted = false;
+  //   }
+  // }
+  // isPieceHighlighted(): boolean {
+  //   return this.#isHighlighted;
+  // }
+  // isPieceHighlighting() {
+  //   return this.#isHighlighting;
+  // }
+  // beginHighlight() {
+  //   if (!this.#isHighlighting) {
+  //     this.#isHighlighting = true;
+  //     this.#isUnhighlighting = false;
+  //   }
+  // }
+  // endHighlight() {
+  //   if (this.#isHighlighting) {
+  //     this.#isHighlighting = false;
+  //     this.highlight();
+  //   }
+  // }
+  // isPieceUnhighlighting() {
+  //   return this.#isUnhighlighting;
+  // }
+  // beginUnhighlight() {
+  //   if (!this.#isUnhighlighting) {
+  //     this.#isUnhighlighting = true;
+  //     this.#isHighlighting = false;
+  //   }
+  // }
+  // endUnhighlight() {
+  //   if (this.#isUnhighlighting) {
+  //     this.#isUnhighlighting = false;
+  //     this.unhighlight();
+  //   }
+  // }
+
   placeOnGround() {
     this.#isOnTheGround = true;
   }

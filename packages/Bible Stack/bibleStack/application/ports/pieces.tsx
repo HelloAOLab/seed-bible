@@ -10,13 +10,15 @@ import type { StackBibleData } from "@packages/Bible Visualization Utils/bibleVi
 import type { BibleDataRepositoryPort } from "./stacks";
 import type {
   HighlightRequestSource,
-  UnhighlightPacing,
+  HighlightPacing,
   UnhighlightRequestSource,
 } from "bibleStack.domain.models.pieces";
 import type {
   LabelTranslucencyMode,
   ShowSequencePacing,
 } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/label";
+import type { BibleStackEvents } from "bibleStack.domain.models.events";
+import type { ActivityNotificationAdapterPort } from "bibleVizUtils.domain.ports.pieceActivity";
 
 export type StackParentDataIds = Pick<
   ParentDataIds,
@@ -88,6 +90,31 @@ export type PieceHierarchyPieceDataRepositoryPort = Pick<
   PieceDataRepositoryPort,
   "getDataById"
 >;
+export type PieceHighlightPieceDataRepositoryPort = Pick<
+  PieceDataRepositoryPort,
+  "getPieceData"
+>;
+export interface PieceHighlightSequenceStateServicePort {
+  isThereAnOngoingSequence(): boolean;
+}
+export interface PieceHighlightAdapterPort {
+  interruptSequence(piece: Piece): void;
+  highlight(piece: Piece, pacing?: HighlightPacing): Promise<void>;
+  rehighlight(piece: Piece, pacing?: HighlightPacing): Promise<void>;
+}
+export type PieceHighlightActivityNotificationAdapterPort = Pick<
+  ActivityNotificationAdapterPort,
+  "hideNotification"
+>;
+
+export interface PieceHighlightEventPort {
+  emit: <K extends "OnScripturePieceHighlighted">(
+    eventName: K,
+    ...args: BibleStackEvents[K] extends undefined | void
+      ? [payload?: BibleStackEvents[K]]
+      : [payload: BibleStackEvents[K]]
+  ) => void;
+}
 export type PieceHierarchyStackDataRepositoryPort = Pick<
   BibleDataRepositoryPort,
   "getBibleDataById"
@@ -99,14 +126,20 @@ export interface PieceHierarchyServicePort {
 
 export interface PieceHighlightServicePort {
   tryHighlightPiece: (params: {
-    piece: Piece;
+    piece: Piece<
+      | "StackTestament"
+      | "StackSection"
+      | "StackSectionBook"
+      | "StackBook"
+      | "StackChapter"
+    >;
     source: HighlightRequestSource;
     unhighlightDelay?: number;
   }) => Promise<void>;
   tryUnhighlightPiece: (params: {
     piece: Piece;
     source: UnhighlightRequestSource;
-    pacing: UnhighlightPacing;
+    pacing: HighlightPacing;
     delay?: number;
   }) => Promise<void>;
   isUnhighlightScheduled: (piece: Piece) => boolean;

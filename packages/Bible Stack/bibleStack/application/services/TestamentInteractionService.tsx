@@ -101,7 +101,7 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
       switch (interaction) {
         case SelectionModalities.Precise:
           {
-            if (testamentData.isPieceHighlighted()) {
+            if (testamentData.highlightState === "Highlighted") {
               this.#testamentSelectionServicePort.selectTestament({
                 data: testamentData,
                 source: PieceSelectionSources.UserSelection,
@@ -116,10 +116,10 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
           break;
         case SelectionModalities.Coarse:
           {
-            this.#testamentSelectionServicePort.selectTestament(
-              testamentData,
-              PieceSelectionSources.UserSelection
-            );
+            this.#testamentSelectionServicePort.selectTestament({
+              data: testamentData,
+              source: PieceSelectionSources.UserSelection,
+            });
           }
           break;
       }

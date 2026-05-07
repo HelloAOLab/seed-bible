@@ -6,7 +6,7 @@
  * thisBot.ClearUnhighlightDelay({unhighlightDelayInfo: someUnhighlightDelayInfo});
  */
 
-import type { UnhighlightDelayInfo } from "bibleVizUtils.models.canvas";
+import type { UnhighlightDelayInfo } from "bibleVizUtils.infrastructure.models.canvas";
 import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
 
 const {

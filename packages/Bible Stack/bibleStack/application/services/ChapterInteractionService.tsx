@@ -13,7 +13,7 @@ import type {
 } from "bibleStack.application.ports.pieces";
 import {
   HighlightRequestSources,
-  UnhighlightPacings,
+  HighlightPacings,
   UnhighlightRequestSources,
 } from "../../domain/models/pieces";
 
@@ -124,7 +124,7 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
     this.#pieceHighlightServicePort.tryUnhighlightPiece({
       piece: chapter,
       source: UnhighlightRequestSources.UserUnfocus,
-      pacing: UnhighlightPacings.Regular,
+      pacing: HighlightPacings.Regular,
     });
   }
 }

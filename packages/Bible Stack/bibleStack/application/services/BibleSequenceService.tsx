@@ -19,7 +19,7 @@ import type {
 import {
   HighlightRequestSources,
   UnhighlightRequestSources,
-  UnhighlightPacings,
+  HighlightPacings,
 } from "bibleStack.domain.models.pieces";
 import {
   BibleType,
@@ -213,7 +213,7 @@ export class BibleSequenceService {
         this.#pieceHighlightServicePort.tryUnhighlightPiece({
           piece,
           source: UnhighlightRequestSources.Transition,
-          pacing: UnhighlightPacings.Instant,
+          pacing: HighlightPacings.Instant,
         })
       ),
       ...selectedBooksLabelsData.map((labelData) =>

@@ -5,6 +5,7 @@ export const HighlightRequestSources = {
   UserFocus: "UserFocus",
   UserDrop: "UserDrop",
   Transition: "Transition",
+  UserBlur: "UserBlur",
 } as const;
 
 export type HighlightRequestSource =
@@ -13,6 +14,8 @@ export type HighlightRequestSource =
 export const UnhighlightRequestSources = {
   UserDrag: "UserDrag",
   UserFocus: "UserFocus",
+  UserSelection: "UserSelection",
+  UserBlur: "UserBlur",
   UserUnfocus: "UserUnfocus",
   Transition: "Transition",
 } as const;
@@ -20,15 +23,15 @@ export const UnhighlightRequestSources = {
 export type UnhighlightRequestSource =
   (typeof UnhighlightRequestSources)[keyof typeof UnhighlightRequestSources];
 
-export const UnhighlightPacings = {
+export const HighlightPacings = {
   Instant: "Instant",
   Slow: "Slow",
   Regular: "Regular",
   Fast: "Fast",
 } as const;
 
-export type UnhighlightPacing =
-  (typeof UnhighlightPacings)[keyof typeof UnhighlightPacings];
+export type HighlightPacing =
+  (typeof HighlightPacings)[keyof typeof HighlightPacings];
 
 export type StaticBiblePiece = {
   bibleId: string;

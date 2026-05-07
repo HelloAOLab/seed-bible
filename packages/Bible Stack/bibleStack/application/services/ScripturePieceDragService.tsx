@@ -16,7 +16,7 @@ import type {
   StackParentDataIds,
 } from "bibleStack.application.ports.pieces";
 import {
-  UnhighlightPacings,
+  HighlightPacings,
   UnhighlightRequestSources,
 } from "bibleStack.domain.models.pieces";
 import type { DragServicePort as BookInteractionControllerDragServicePort } from "bibleStack.application.ports.books";
@@ -119,7 +119,7 @@ export class ScripturePieceDragService
     await this.#pieceHighlightServicePort.tryUnhighlightPiece({
       piece,
       source: UnhighlightRequestSources.UserDrag,
-      pacing: UnhighlightPacings.Instant,
+      pacing: HighlightPacings.Instant,
     });
 
     data.pickFromGround();

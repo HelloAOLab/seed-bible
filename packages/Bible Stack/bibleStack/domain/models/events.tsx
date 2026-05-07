@@ -15,6 +15,8 @@ import type {
 import { CanvasInteractions } from "bibleVizUtils.models.canvas";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
 import type { StackBibleData } from "bibleVizUtils.domain.entities.StackBibleData";
+import type { StackTestamentData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackTestamentData";
+import type { AnyStackData } from "../../application/ports/pieces";
 
 export interface BibleStackEvents {
   OnTestamentClick: {
@@ -155,6 +157,7 @@ export interface BibleStackEvents {
   OnBibleOpenSequenceStart: { bibleData: StackBibleData };
   OnBibleCrackOpenSequenceStart: void;
   OnBibleCrackOpenSequenceEnd: void;
+  OnScripturePieceHighlighted: { pieceData: AnyStackData };
 }
 
 export type BibleStackEvent = keyof BibleStackEvents;

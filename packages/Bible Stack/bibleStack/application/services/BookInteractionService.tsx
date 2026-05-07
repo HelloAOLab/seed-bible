@@ -22,7 +22,7 @@ import type {
 import type { TourGuideServicePort } from "bibleStack.application.ports.tourGuide";
 import {
   HighlightRequestSources,
-  UnhighlightPacings,
+  HighlightPacings,
   UnhighlightRequestSources,
 } from "../../domain/models/pieces";
 import type { ExplodedViewServicePort } from "bibleStack.application.ports.explodedView";
@@ -119,7 +119,7 @@ export class BookInteractionService implements BookInteractionServicePort {
                   this.#tourGuideServicePort.stopTourGuide();
                 }
               } else {
-                if (bookData.isPieceHighlighted()) {
+                if (bookData.highlightState === "Highlighted") {
                   this.#bookSelectionServicePort.selectBook({
                     data: bookData,
                     source: PieceSelectionSources.UserSelection,
@@ -233,7 +233,7 @@ export class BookInteractionService implements BookInteractionServicePort {
                     this.#pieceHighlightServicePort.tryUnhighlightPiece({
                       piece: bookToUnhighlight,
                       source: HighlightRequestSources.UserFocus,
-                      pacing: UnhighlightPacings.Regular,
+                      pacing: HighlightPacings.Regular,
                     });
                   }
                 }
@@ -274,7 +274,7 @@ export class BookInteractionService implements BookInteractionServicePort {
                       currentBookData.isActive &&
                       currentBookData.getParentId("stackBibleId") &&
                       currentBookData.piece &&
-                      currentBookData.isPieceHighlighted() &&
+                      currentBookData.highlightState === "Highlighted" &&
                       currentBookData.labelTranslucency ===
                         LabelTranslucencyModes.Solid
                     );
@@ -296,7 +296,7 @@ export class BookInteractionService implements BookInteractionServicePort {
                       this.#pieceHighlightServicePort.tryUnhighlightPiece({
                         piece: bookToDecreateHighlight,
                         source: HighlightRequestSources.UserFocus,
-                        pacing: UnhighlightPacings.Regular,
+                        pacing: HighlightPacings.Regular,
                         delay: unhighlightDelay,
                       });
                     }
@@ -345,7 +345,7 @@ export class BookInteractionService implements BookInteractionServicePort {
     this.#pieceHighlightServicePort.tryUnhighlightPiece({
       piece: book,
       source: UnhighlightRequestSources.UserUnfocus,
-      pacing: UnhighlightPacings.Regular,
+      pacing: HighlightPacings.Regular,
       delay: this.#bookInteractionConfigProviderPort.getDelay(
         BookInteractionDelays.UnhighlightBook
       ),
