@@ -15,11 +15,22 @@ export interface DiscoverReference {
   endVerse?: number;
 }
 
-export interface DiscoverResult {
+export type DiscoverResult =
+  | DiscoverContentResult
+  | DiscoverCrossReferenceResult;
+
+export interface DiscoverContentResult {
+  type: "content";
   title: string;
   description: string;
   reference: DiscoverReference;
   content: JSX.Element | VNode;
+}
+
+export interface DiscoverCrossReferenceResult {
+  type: "cross-reference";
+  reference: DiscoverReference;
+  crossReference: DiscoverReference;
 }
 
 export interface DiscoverProvider {
