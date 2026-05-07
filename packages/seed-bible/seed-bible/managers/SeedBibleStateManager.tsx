@@ -179,7 +179,8 @@ export function createSeedBibleState(): SeedBibleState {
   const config = createConfig(login);
   const themeManager = createTheme(login);
   const sidebar = createSidebar();
-  const tabs = createTabs(data, highlights);
+  const discover = createDiscoverManager();
+  const tabs = createTabs(data, highlights, discover);
   const panes = createPanes(tabs, tabs.selectedTabId);
   const settings = createSettings(login);
   const selector = createBibleSelectorState(data, tabs, panes, settings);
@@ -190,7 +191,6 @@ export function createSeedBibleState(): SeedBibleState {
   const extensions = createExtensionManager();
   const modals = createModalManager();
   const search = createSearchManager();
-  const discover = createDiscoverManager();
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value);

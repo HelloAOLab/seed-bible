@@ -9,6 +9,7 @@ import {
   type BibleReadingState,
 } from "seed-bible.managers.BibleReadingManager";
 import type { HighlightsManager } from "seed-bible.managers.HighlightsManager";
+import type { DiscoverManager } from "seed-bible.managers.DiscoverManager";
 
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
@@ -44,17 +45,23 @@ function getInitialFirstTabChapter(): number {
 
 function createInitialTabs(
   dataManager: BibleDataManager,
-  highlightsManager: HighlightsManager
+  highlightsManager: HighlightsManager,
+  discoverManager?: DiscoverManager
 ): ReaderTab[] {
   return [
     {
       id: "tab-1",
       title: "Tab 1",
-      readingState: createBibleReadingState(dataManager, highlightsManager, {
-        initialTranslationId: getInitialTranslationId(),
-        initialBookId: getInitialFirstTabBookId(),
-        initialChapterNumber: getInitialFirstTabChapter(),
-      }),
+      readingState: createBibleReadingState(
+        dataManager,
+        highlightsManager,
+        {
+          initialTranslationId: getInitialTranslationId(),
+          initialBookId: getInitialFirstTabBookId(),
+          initialChapterNumber: getInitialFirstTabChapter(),
+        },
+        discoverManager
+      ),
       sharedSession: null,
     },
   ];
@@ -117,10 +124,11 @@ export interface TabsManager {
  */
 export function createTabs(
   dataManager: BibleDataManager,
-  highlightsManager: HighlightsManager
+  highlightsManager: HighlightsManager,
+  discoverManager?: DiscoverManager
 ): TabsManager {
   const tabs = signal<ReaderTab[]>(
-    createInitialTabs(dataManager, highlightsManager)
+    createInitialTabs(dataManager, highlightsManager, discoverManager)
   );
   const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
   const selectedTab = computed(
@@ -234,7 +242,12 @@ export function createTabs(
       readingState:
         sharedSession?.readingState ??
         readingState ??
-        createBibleReadingState(dataManager, highlightsManager),
+        createBibleReadingState(
+          dataManager,
+          highlightsManager,
+          {},
+          discoverManager
+        ),
       sharedSession,
     };
     tabs.value = [...currentTabs, nextTab];

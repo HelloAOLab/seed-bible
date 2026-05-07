@@ -10,6 +10,7 @@ import { type BibleDataManager } from "seed-bible.managers.BibleDataManager";
 import {
   batch,
   computed,
+  effect,
   signal,
   type ReadonlySignal,
   type Signal,
@@ -21,6 +22,10 @@ import type {
   ChapterHighlights,
   HighlightsManager,
 } from "seed-bible.managers.HighlightsManager";
+import type {
+  DiscoverManager,
+  DiscoverProviderResults,
+} from "seed-bible.managers.DiscoverManager";
 import { DEFAULT_LANGUAGE } from "seed-bible.i18n.I18nManager";
 
 export interface BibleSelectedVerse {
@@ -229,6 +234,8 @@ export interface BibleReadingState {
 
   /** Loads the next chapter relative to `chapterData` when available. */
   loadNextChapter: () => Promise<void>;
+  /** Streaming discover results for the current chapter, grouped by provider. */
+  discoverResults: ReadonlySignal<DiscoverProviderResults[]>;
 }
 
 export const DEFAULT_TRANSLATIONS_BY_LANGUAGE = new Map([
@@ -376,7 +383,8 @@ function parseTranslationInput(value?: string | null): ParsedTranslationInput {
 export function createBibleReadingState(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
-  options: InitialBibleReadingOptions = {}
+  options: InitialBibleReadingOptions = {},
+  discoverManager?: DiscoverManager
 ): BibleReadingState {
   const isSameSelectedVerse = (
     left: BibleSelectedVerse,
@@ -1035,6 +1043,36 @@ export function createBibleReadingState(
     selectedFootnoteId.value = noteId;
   };
 
+  const discoverResults = signal<DiscoverProviderResults[]>([]);
+
+  if (discoverManager) {
+    let discoverGeneration = 0;
+    effect(() => {
+      const chapter = chapterData.value;
+      if (!chapter) {
+        discoverResults.value = [];
+        return;
+      }
+
+      const generation = ++discoverGeneration;
+      discoverResults.value = [];
+
+      const context = {
+        translationId: chapter.translation.id,
+        book: chapter.book.id,
+        chapter: chapter.chapter.number,
+        language: chapter.translation.language,
+      };
+
+      void (async () => {
+        for await (const result of discoverManager.discover(context)) {
+          if (generation !== discoverGeneration) return;
+          discoverResults.value = [...discoverResults.value, result];
+        }
+      })();
+    });
+  }
+
   loadInitialData();
 
   return {
@@ -1066,5 +1104,6 @@ export function createBibleReadingState(
     selectChapter,
     loadPreviousChapter,
     loadNextChapter,
+    discoverResults,
   };
 }
