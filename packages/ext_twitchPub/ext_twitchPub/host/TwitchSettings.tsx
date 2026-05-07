@@ -69,7 +69,7 @@ const TwitchSettings = (props: {
         </div>
         <div className="twitchPub-content">
           <div className="twitchPub-settings-item">
-            <span>Translation broadcast event</span>
+            <span>Broadcast translation event</span>
             <ToggleBtn
               toggle={translationEnabled}
               setToggle={setTranslationEnabled}
@@ -77,7 +77,7 @@ const TwitchSettings = (props: {
             />
           </div>
           <div className="twitchPub-settings-item">
-            <span>Highlight broadcast event</span>
+            <span>Broadcast highlight event</span>
             <ToggleBtn
               toggle={highlightEnabled}
               setToggle={setHighlightEnabled}
