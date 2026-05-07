@@ -1882,8 +1882,10 @@ function AllSettingsView(props: { state: SeedBibleState }) {
           disabled={isDownloadingSettings.value}
         >
           {isDownloadingSettings.value
-            ? "Downloading settings..."
-            : "Download settings"}
+            ? t("downloading-settings", {
+                defaultValue: "Downloading settings...",
+              })
+            : t("download-settings", { defaultValue: "Download settings" })}
         </button>
         <button
           className="sb-settings-action-button"
@@ -1891,8 +1893,8 @@ function AllSettingsView(props: { state: SeedBibleState }) {
           disabled={isUploadingSettings.value}
         >
           {isUploadingSettings.value
-            ? "Uploading settings..."
-            : "Upload settings"}
+            ? t("uploading-settings", { defaultValue: "Uploading settings..." })
+            : t("upload-settings", { defaultValue: "Upload settings" })}
         </button>
         {uploadErrorMessage.value && (
           <div
