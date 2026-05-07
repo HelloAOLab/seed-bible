@@ -127,6 +127,7 @@ export const AppSettingsSchema = z.object({
   keepScreenAwake: z.boolean(),
   customHighlightColors: z.array(z.string()).max(3),
   scriptureMargin: z.number().min(0).max(45),
+  showNavArrows: z.boolean(),
 });
 
 export const DEFAULT_SCRIPTURE_MARGIN = 27;
