@@ -21,6 +21,13 @@ export function createSidebar() {
   const requestedSettingsView = signal<RequestedSettingsView>(initialView);
   const isSettingsOpen = computed(() => requestedSettingsView.value !== null);
 
+  const shouldFocusSearch = signal(false);
+
+  const openSearch = () => {
+    openSidebar();
+    shouldFocusSearch.value = true;
+  };
+
   const openSettings = () => {
     requestedSettingsView.value = "main";
   };
@@ -99,5 +106,7 @@ export function createSidebar() {
     toggleSidebarCollapsed,
     openSidebar,
     closeSidebar,
+    openSearch,
+    shouldFocusSearch,
   };
 }

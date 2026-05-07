@@ -224,6 +224,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         innerHeight: viewportHeight,
       },
       openSidebar: sidebar.openSidebar,
+      openSearch: sidebar.openSearch,
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
@@ -240,6 +241,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         innerHeight: viewportHeight,
       },
       openSidebar: sidebar.openSidebar,
+      openSearch: sidebar.openSearch,
     });
 
     const { selectionUI } = settings.settings.value;

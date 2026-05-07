@@ -3,7 +3,7 @@
   "new-testament": "New Testament",
   "old-testament": "Old Testament",
   "open-books": "Open Books",
-
+  "search": "Search",
   "settings": "Settings",
   "side-menu": "Side menu",
   "copy-verse": "Copy",
@@ -59,7 +59,6 @@
   "sign-out": "Sign out",
   "login-required-message": "Please log in to view and edit your profile.",
   "log-in": "Log in",
-
   "tanakh": "Tanakh",
   "traditional": "Traditional",
   "no-chapter-content-found": "No chapter content found.",
@@ -68,7 +67,6 @@
   "exit-full-screen": "Exit Full Screen",
   "themes": "Themes",
   "page-settings": "Page settings",
-
   "display-and-theme": "Display & Theme",
   "display-and-theme-description": "Pick a theme and tune how Scripture and the UI are displayed.",
   "scripture-settings": "Scripture settings",
@@ -112,7 +110,6 @@
   "show-selected-items": "Show selected items",
   "show-highlight-colors": "Show highlight colors",
   "show-icon-text": "Show icon text",
-
   "toolbar": "Toolbar",
   "extensions": "Extensions",
   "display": "Display",

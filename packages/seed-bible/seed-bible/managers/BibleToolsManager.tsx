@@ -115,6 +115,8 @@ export interface BibleToolContext {
   window?: WindowContext | null;
   /** Opens the app sidebar (typically for small-screen actions). */
   openSidebar: () => void;
+  /** Opens the search interface. */
+  openSearch: () => void;
 }
 
 /** Fully resolved reader toolbar tool ready for rendering. */
@@ -434,6 +436,15 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         }
 
         context.selectorState.setOpen(true, currentPane);
+      },
+    },
+    {
+      id: "open-search",
+      priority: 110,
+      title: { key: "search", defaultValue: "Search" },
+      icon: () => <MaterialIcon>search</MaterialIcon>,
+      onSelect: (context) => {
+        context.openSearch();
       },
     },
     {

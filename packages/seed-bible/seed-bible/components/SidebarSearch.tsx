@@ -51,6 +51,7 @@ export function SidebarSearch(props: SidebarSearchProps) {
   const searchResultRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const latestSearchRequestRef = useRef(0);
   const searchDebounceTimeoutRef = useRef<number | null>(null);
+  const searchInput = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
@@ -239,6 +240,16 @@ export function SidebarSearch(props: SidebarSearchProps) {
       highlightedResultIndex.value = -1;
     }
   };
+
+  const setupSearchInput = (element: HTMLInputElement | null) => {
+    searchInput.current = element;
+
+    if (element && state.sidebar.shouldFocusSearch.value) {
+      element.focus();
+      state.sidebar.shouldFocusSearch.value = false;
+    }
+  };
+
   const { t } = useI18n();
 
   return (
@@ -249,6 +260,7 @@ export function SidebarSearch(props: SidebarSearchProps) {
         </span>
         <input
           value={searchQuery.value}
+          ref={setupSearchInput}
           onInput={(event) => {
             runSearch((event.currentTarget as HTMLInputElement).value);
           }}
