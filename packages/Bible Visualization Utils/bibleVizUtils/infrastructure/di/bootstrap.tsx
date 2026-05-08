@@ -58,6 +58,8 @@ import { ArrangementAdapter } from "bibleVizUtils.infrastructure.adapters.arrang
 import { LabelsConfigProvider } from "bibleVizUtils.infrastructure.config.labels.LabelsConfigProvider";
 import { ActivityIndicatorBotsRepository } from "bibleVizUtils.infrastructure.adapters.pieceActivity.ActivityIndicatorBotsRepository";
 import { ActivityIndicatorsConfigProvider } from "bibleVizUtils.infrastructure.config.activityIndicators.ActivityIndicatorsConfigProvider";
+import { LabelFeedbackConfigProvider } from "bibleVizUtils.infrastructure.config.labels.LabelFeedbackConfigProvider";
+import { BookInfoMapper } from "bibleVizUtils.infrastructure.mappers.BookInfoMapper";
 
 export interface BibleVizAPI {
   readingHistoryService: ReadingHistoryService;
@@ -227,6 +229,7 @@ export const bootstrapApp = () => {
     );
   const activityIndicatorsConfigProvider =
     new ActivityIndicatorsConfigProvider();
+  const labelFeedbackConfigProvider = new LabelFeedbackConfigProvider();
   const activityIndicatorBotsRepository = new ActivityIndicatorBotsRepository();
   const bibleVizUtilsEventManager = new BaseEventManager<BibleVizUtilsEvents>();
   const seedBiblePresenceProvider = new SeedBiblePresenceProvider();
@@ -248,17 +251,23 @@ export const bootstrapApp = () => {
     labelConfigProviderPort: labelsConfigProvider,
   });
   const bibleVizDataRepository = new BibleVizDataRepository();
-  const arrangementAdapter = new ArrangementAdapter(bibleVizDataRepository);
+  const arrangementAdapter = new ArrangementAdapter();
   const customArrangementStore = new CustomArrangementStore({
     arrangementAdapterPort: arrangementAdapter,
-  });
-  const labelAnimationAdapter = new LabelFeedbackAdapter({
-    dimensionProvider: () => globalAPI.defaultPortalName,
-    labelConfigProviderPort: labelsConfigProvider,
   });
   const arrangementsConfigProvider = new ArrangementsConfigProvider(
     arrangementAdapter
   );
+  const bookInfoMapper = new BookInfoMapper({
+    arrangementConfigProviderPort: arrangementsConfigProvider,
+    customArrangementStorePort: customArrangementStore,
+    booksStaticInfoRepository: bibleVizDataRepository,
+  });
+  arrangementAdapter.setBookInfoMapperPort(bookInfoMapper);
+  const labelAnimationAdapter = new LabelFeedbackAdapter({
+    dimensionProvider: () => globalAPI.defaultPortalName,
+    labelFeedbackConfigProviderPort: labelFeedbackConfigProvider,
+  });
 
   // 2, Instantiating services
   const pieceDataRegistry = new PieceDataRegistry();
@@ -388,6 +397,7 @@ export const teardownApp = () => {
   sessionController = undefined;
   arrangementController = undefined;
   userPresenceController = undefined;
+  labelInteractionController = undefined;
   bibleVizAPI = undefined;
 
   console.log(`BibleVizUtils successfully uninstalled.`);

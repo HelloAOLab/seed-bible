@@ -2,20 +2,21 @@ import type { ArrangementInfo as InfrastructureArrangementInfo } from "bibleVizU
 import type { ArrangementInfo as DomainArrangementInfo } from "bibleVizUtils.domain.models.arrangement";
 import type { BookInfoMapperPort } from "bibleVizUtils.infrastructure.ports.arrangement";
 
-interface AdapterParams {
-  bookInfoMapperPort: BookInfoMapperPort;
-}
-
 export class ArrangementAdapter {
-  #bookInfoMapperPort: AdapterParams["bookInfoMapperPort"];
+  #bookInfoMapperPort: BookInfoMapperPort | undefined;
 
-  constructor({ bookInfoMapperPort }: AdapterParams) {
-    this.#bookInfoMapperPort = bookInfoMapperPort;
+  setBookInfoMapperPort(port: BookInfoMapperPort) {
+    this.#bookInfoMapperPort = port;
   }
 
   toDomain(
     infrastructureArrangement: InfrastructureArrangementInfo
   ): DomainArrangementInfo {
+    if (!this.#bookInfoMapperPort) {
+      throw new Error(
+        "ArrangementAdapter: bookInfoMapperPort not set. Call setBookInfoMapperPort before toDomain."
+      );
+    }
     return {
       ...infrastructureArrangement,
       testaments: infrastructureArrangement.testaments.map(
@@ -24,9 +25,17 @@ export class ArrangementAdapter {
             ...testament,
             sections: testament.sections.map((section, sectionIndex) => {
               return {
-                ...section,
+                name: section.name,
+                color: section.color,
+                path: {
+                  arrangementName: infrastructureArrangement.name,
+                  testamentIndex,
+                  sectionIndex,
+                },
                 books: section.books.map((book, bookIndex) => {
-                  return this.#bookInfoMapperPort.toDomain(book, {
+                  return (
+                    this.#bookInfoMapperPort as BookInfoMapperPort
+                  ).toDomain(book, {
                     arrangementName: infrastructureArrangement.name,
                     testamentIndex,
                     sectionIndex,
