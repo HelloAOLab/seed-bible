@@ -1,5 +1,8 @@
 import { useSignal } from "@preact/signals";
-import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager";
+import {
+  DEFAULT_TRANSLATION_ID,
+  type DiscoverContentResultWithBookData,
+} from "seed-bible.managers.BibleReadingManager";
 import {
   PANE_LAYOUT_OPTIONS,
   type PaneLayoutId,
@@ -810,10 +813,10 @@ export function Tabs(props: TabsProps) {
                       <span className="sb-sidebar-discover-more-item-title">
                         {result.title}
                       </span>
-                      <span className="sb-sidebar-discover-more-item-provider">
-                        {providerResults.providerId}
-                      </span>
                     </div>
+                    <span>
+                      {formatDiscoveredContentReferenceLabel(result.reference)}
+                    </span>
                     {hasDescription && (
                       <p className="sb-sidebar-discover-more-item-description">
                         {result.description}
@@ -831,6 +834,39 @@ export function Tabs(props: TabsProps) {
       </section>
     </>
   );
+}
+
+function formatDiscoveredContentReferenceLabel(
+  reference: DiscoverContentResultWithBookData["reference"]
+): string {
+  const bookName = reference.bookData.name;
+  const verseStart = reference.verse;
+  const verseEnd = reference.endVerse;
+  const chapterStart = reference.chapter;
+  const chapterEnd = reference.endChapter;
+  const nbsp = "\u00A0";
+
+  if (typeof verseStart !== "number") {
+    if (typeof chapterEnd === "number" && chapterEnd > chapterStart) {
+      return `${bookName}${nbsp}${chapterStart}-${chapterEnd}`;
+    }
+
+    return `${bookName}${nbsp}${chapterStart}`;
+  }
+
+  if (
+    typeof chapterEnd === "number" &&
+    chapterEnd !== chapterStart &&
+    typeof verseEnd === "number"
+  ) {
+    return `${bookName}${nbsp}${chapterStart}:${verseStart}-${chapterEnd}:${verseEnd}`;
+  }
+
+  if (typeof verseEnd === "number" && verseEnd !== verseStart) {
+    return `${bookName}${nbsp}${chapterStart}:${verseStart}-${verseEnd}`;
+  }
+
+  return `${bookName}${nbsp}${chapterStart}:${verseStart}`;
 }
 
 /**
