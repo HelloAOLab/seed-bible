@@ -1125,53 +1125,6 @@ h6 {
   zoom: calc(1 / var(--sb-ui-zoom, 1));
 }
 
-.sb-reader-chapter-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-}
-
-.sb-reader-cross-reference-column,
-.sb-reader-spacer-column {
-  display: none;
-}
-
-.sb-reader-scripture-column {
-  min-width: 0;
-}
-
-@media (min-width: 769px) {
-  .sb-reader-chapter-grid {
-    grid-template-columns: minmax(180px, 24%) minmax(0, 1fr) minmax(100px, 16%);
-    column-gap: 18px;
-    align-items: start;
-  }
-
-  .sb-reader-cross-reference-column,
-  .sb-reader-spacer-column {
-    display: block;
-  }
-}
-
-.sb-cross-reference-column-content {
-  color: var(--sb-verse-font-color);
-  opacity: 0.65;
-  font-size: 0.8em;
-  line-height: 1.5;
-  padding-top: 3px;
-}
-
-.sb-cross-reference-group {
-  margin-bottom: 6px;
-}
-
-.sb-cross-reference-group-label {
-  margin-inline-end: 0.35em;
-}
-
-.sb-cross-reference-group-values {
-  display: inline;
-}
-
 .sb-chapter-heading {
   font-family: var(--text-heading-font);
   /* color: var(--text-heading-color); */
@@ -1239,10 +1192,6 @@ h6 {
 
 .sb-verse-selected {
   text-decoration: underline;
-}
-
-.sb-cross-reference-target {
-  margin-inline-end: 0.4em;
 }
 
 .sb-verse-number {

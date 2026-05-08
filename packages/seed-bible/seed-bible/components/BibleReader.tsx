@@ -9,7 +9,6 @@ import type {
   BibleSelectedVerse,
   VerseDecoration,
 } from "seed-bible.managers.BibleReadingManager";
-import type { DiscoverCrossReferenceResultWithBookData } from "seed-bible.managers.BibleReadingManager";
 import type { ChapterHighlight } from "seed-bible.managers.HighlightsManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { Pane } from "seed-bible.managers.PanesManager";
@@ -235,69 +234,6 @@ function splitVerseIntoSegments(
     flushInline();
   }
   return segments;
-}
-
-function formatCrossReferenceTarget(
-  ref: DiscoverCrossReferenceResultWithBookData["crossReference"]
-): string {
-  const book = ref.bookData.commonName;
-  let result = `${book} ${ref.chapter}`;
-  if (ref.verse !== undefined) {
-    result += `:${ref.verse}`;
-    if (ref.endVerse !== undefined && ref.endVerse !== ref.verse) {
-      result += `\u2013${ref.endVerse}`;
-    }
-  }
-  return result;
-}
-
-function renderCrossReferenceColumn(
-  chapterData: TranslationBookChapter | null,
-  crossReferencesByVerse: Map<
-    number,
-    DiscoverCrossReferenceResultWithBookData[]
-  >
-) {
-  if (!chapterData) {
-    return null;
-  }
-
-  const verseNumbers = Array.from(crossReferencesByVerse.keys()).sort(
-    (left, right) => left - right
-  );
-
-  if (verseNumbers.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="sb-cross-reference-column-content">
-      {verseNumbers.map((verseNumber) => {
-        const refs = crossReferencesByVerse.get(verseNumber) ?? [];
-        if (refs.length === 0) {
-          return null;
-        }
-
-        return (
-          <div key={verseNumber} className="sb-cross-reference-group">
-            <strong className="sb-cross-reference-group-label">
-              v{verseNumber}.
-            </strong>
-            <span className="sb-cross-reference-group-values">
-              {refs.map((cr, index) => (
-                <span
-                  key={`${verseNumber}-${index}`}
-                  className="sb-cross-reference-target"
-                >
-                  {formatCrossReferenceTarget(cr.crossReference)}
-                </span>
-              ))}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
 }
 
 function renderInlineContent(
@@ -826,21 +762,6 @@ export function BibleReader(props: BibleReaderProps) {
     selectFootnote,
   } = readingState;
 
-  const crossReferencesByVerse = computed(() => {
-    const map = new Map<number, DiscoverCrossReferenceResultWithBookData[]>();
-    for (const providerResults of readingState.discoveredCrossReferences
-      .value) {
-      for (const result of providerResults.results) {
-        const verseNum = result.reference.verse;
-        if (verseNum === undefined) continue;
-        const existing = map.get(verseNum) ?? [];
-        existing.push(result);
-        map.set(verseNum, existing);
-      }
-    }
-    return map;
-  });
-
   const currentBook = computed(
     () =>
       translationBooks.value?.books.find((book) => book.id === bookId.value) ??
@@ -1113,29 +1034,20 @@ export function BibleReader(props: BibleReaderProps) {
       )}
 
       {!error.value && chapterData.value && (
-        <div className="sb-reader-chapter-grid">
-          <div className="sb-reader-cross-reference-column">
-            {renderCrossReferenceColumn(
-              chapterData.value,
-              crossReferencesByVerse.value
-            )}
-          </div>
-          <div className="sb-chapter-content sb-reader-scripture-column">
-            {renderChapterContent(
-              chapterData.value,
-              (verse, event) => {
-                selectVerse(verse, event.clientX, event.clientY);
-              },
-              selectedVerses.value,
-              (noteId) => {
-                selectFootnote(noteId);
-              },
-              highlights.value.highlights,
-              decorations.value,
-              scriptureElements
-            )}
-          </div>
-          <div className="sb-reader-spacer-column" aria-hidden="true" />
+        <div className="sb-chapter-content">
+          {renderChapterContent(
+            chapterData.value,
+            (verse, event) => {
+              selectVerse(verse, event.clientX, event.clientY);
+            },
+            selectedVerses.value,
+            (noteId) => {
+              selectFootnote(noteId);
+            },
+            highlights.value.highlights,
+            decorations.value,
+            scriptureElements
+          )}
         </div>
       )}
 
