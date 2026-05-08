@@ -9,6 +9,7 @@ import type {
   BibleSelectedVerse,
   DiscoverCrossReferenceResultWithBookData,
   DiscoverReferenceWithBookData,
+  DiscoverStudyNoteResultWithBookData,
   VerseDecoration,
 } from "seed-bible.managers.BibleReadingManager";
 import type { ChapterHighlight } from "seed-bible.managers.HighlightsManager";
@@ -63,12 +64,18 @@ interface ContentDecorationRange {
 
 type DiscoveredCrossReferences =
   BibleReadingState["discoveredCrossReferences"]["value"];
+type DiscoveredStudyNotes = BibleReadingState["discoveredStudyNotes"]["value"];
 
 interface VerseCrossReferenceItem {
   id: string;
   ref: DiscoverCrossReferenceResultWithBookData;
   label: string;
   link: string;
+}
+
+interface VerseStudyNoteItem {
+  id: string;
+  note: DiscoverStudyNoteResultWithBookData;
 }
 
 function getInlineText(part: ChapterVerse["content"][0]): string {
@@ -149,6 +156,28 @@ function getVerseCrossReferences(
         ref: result,
         label,
         link: link.href,
+      });
+    }
+  }
+
+  return items;
+}
+
+function getVerseStudyNotes(
+  discoveredStudyNotes: DiscoveredStudyNotes,
+  verseNumber: number
+): VerseStudyNoteItem[] {
+  const items: VerseStudyNoteItem[] = [];
+
+  for (const providerResults of discoveredStudyNotes) {
+    for (const result of providerResults.results) {
+      if (result.reference.verse !== verseNumber) {
+        continue;
+      }
+
+      items.push({
+        id: `${providerResults.providerId}-${verseNumber}-${items.length}`,
+        note: result,
       });
     }
   }
@@ -888,6 +917,60 @@ function renderCrossReferenceLayer(
   });
 }
 
+function renderStudyNoteLayer(
+  chapterData: TranslationBookChapter | null,
+  discoveredStudyNotes: DiscoveredStudyNotes,
+  verseOffsets: Record<number, number>
+) {
+  if (!chapterData) {
+    return null;
+  }
+
+  const verseEntries = chapterData.chapter.content.filter(
+    (
+      entry
+    ): entry is Extract<
+      TranslationBookChapter["chapter"]["content"][number],
+      { type: "verse"; number: number; content: ChapterVerse["content"] }
+    > =>
+      !!entry &&
+      typeof entry === "object" &&
+      entry.type === "verse" &&
+      typeof entry.number === "number" &&
+      Array.isArray(entry.content)
+  );
+
+  return verseEntries.map((entry) => {
+    const top = verseOffsets[entry.number];
+    if (typeof top !== "number") {
+      return null;
+    }
+
+    const verseStudyNotes = getVerseStudyNotes(
+      discoveredStudyNotes,
+      entry.number
+    );
+    if (verseStudyNotes.length === 0) {
+      return null;
+    }
+
+    return (
+      <span
+        key={`study-note-${entry.number}`}
+        className="sb-verse-study-notes"
+        style={{ top: `${top}px` }}
+      >
+        <span className="sb-verse-study-note-number">v{entry.number}</span>
+        {verseStudyNotes.map((studyNote) => (
+          <span key={studyNote.id} className="sb-verse-study-note">
+            {studyNote.note.content}
+          </span>
+        ))}
+      </span>
+    );
+  });
+}
+
 export function BibleReader(props: BibleReaderProps) {
   const { currentPane, readingState, selectorState, state } = props;
   const {
@@ -1237,6 +1320,7 @@ export function BibleReader(props: BibleReaderProps) {
   }, [
     chapterData.value,
     readingState.discoveredCrossReferences.value,
+    readingState.discoveredStudyNotes.value,
     scriptureElements.showFootnotes,
     scriptureElements.showHeadings,
     scriptureElements.showHighlights,
@@ -1266,6 +1350,13 @@ export function BibleReader(props: BibleReaderProps) {
                   }
                 );
               }
+            )}
+          </div>
+          <div className="sb-chapter-study-note-layer">
+            {renderStudyNoteLayer(
+              chapterData.value,
+              readingState.discoveredStudyNotes.value,
+              verseOffsets
             )}
           </div>
           {renderChapterContent(

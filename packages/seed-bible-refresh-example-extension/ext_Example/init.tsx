@@ -83,6 +83,15 @@ registerExtension({
                 verse: 3,
               },
             },
+            {
+              type: "study-note",
+              reference: {
+                book: "COL",
+                chapter: 1,
+                verse: 16,
+              },
+              content: <span>This is a study note for COL 1:16</span>,
+            },
           ];
         }
 

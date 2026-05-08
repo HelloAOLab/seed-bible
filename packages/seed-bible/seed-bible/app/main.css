@@ -1,7 +1,7 @@
 /* eslint-disable css/use-baseline */
 :root {
   --sb-ui-zoom: 1;
-  --sb-scripture-margin: 35%;
+  --sb-scripture-margin: 35;
 
   /* Text config variables — overridden at runtime by SettingsManager. */
   --text-bookTitle-font: "Newsreader", serif;
@@ -230,7 +230,7 @@ h6 {
 }
 
 .sb-bible-reader {
-  width: calc(100% - (var(--sb-scripture-margin) * 2));
+  width: calc(100% - (var(--sb-scripture-margin) * 2 * 1%));
   min-width: 275px;
   padding-top: 30px;
   padding-bottom: 96px;
@@ -1178,6 +1178,12 @@ h6 {
   pointer-events: none;
 }
 
+.sb-chapter-study-note-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
 .sb-verse-cross-references {
   position: absolute;
   inset-inline-end: calc(100% + 16px);
@@ -1200,6 +1206,37 @@ h6 {
 .sb-verse-cross-reference {
   font-family: var(--sb-font-family);
   color: color-mix(in srgb, var(--sb-verse-font-color), transparent 20%);
+}
+
+.sb-verse-study-notes {
+  position: absolute;
+  inset-inline-start: calc(100% + 16px);
+
+  /* Calculated by deriving the inverse of the .sb-bible-reader width */
+  width: calc(
+    (100% / (100 - 2 * var(--sb-scripture-margin))) *
+      var(--sb-scripture-margin) - 24px
+  );
+
+  top: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 4px;
+  max-inline-size: min(24vw, 360px);
+  font-size: 0.6em;
+  line-height: 1.35;
+  white-space: normal;
+  pointer-events: auto;
+  font-family: var(--sb-font-family);
+}
+
+.sb-verse-study-note-number {
+  font-weight: 600;
+}
+
+.sb-verse-study-note {
+  color: color-mix(in srgb, var(--sb-verse-font-color), transparent 15%);
 }
 
 .sb-verse-decorator {

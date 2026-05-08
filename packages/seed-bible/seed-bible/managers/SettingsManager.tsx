@@ -925,7 +925,7 @@ export function createSettings(login: LoginManager): SettingsManager {
     if (typeof document === "undefined") return;
     document.documentElement.style.setProperty(
       "--sb-scripture-margin",
-      `${settings.value.scriptureMargin}%`
+      `${settings.value.scriptureMargin}`
     );
   });
 
