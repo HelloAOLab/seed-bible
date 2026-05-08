@@ -67,6 +67,18 @@ registerExtension({
                 verse: 1,
               },
             },
+            {
+              type: "content",
+              reference: {
+                book: "GEN",
+                chapter: 1,
+                verse: 1,
+              },
+              title: "Custom Content",
+              description:
+                "This is some custom content added by the example extension for GEN 1:1",
+              content: <span>This is some custom content for GEN 1:1</span>,
+            },
           ];
         } else if (context.book === "COL" && context.chapter === 1) {
           return [

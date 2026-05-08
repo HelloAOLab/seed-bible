@@ -19,6 +19,8 @@
   "dismiss": "Dismiss",
   "shared-tab_title": "Shared {{book}}",
   "tabs": "Tabs",
+  "discover-more": "Discover more",
+  "discover-more-empty": "No discovered content for this chapter yet.",
   "new-tab": "New tab",
   "create-new-tab": "Create new tab",
   "tab-options": "Tab options",

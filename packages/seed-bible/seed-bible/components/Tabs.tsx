@@ -501,6 +501,14 @@ export function Tabs(props: TabsProps) {
   const { app, tabs: tabsManager } = state;
   const tabs = tabsManager.tabs.value;
   const selectedTabId = tabsManager.selectedTabId.value;
+  const selectedTab =
+    tabs.find((tab) => tab.id === selectedTabId) ?? tabs.at(0) ?? null;
+  const discoveredContent =
+    selectedTab?.readingState.discoveredContent.value ?? [];
+  const discoveredContentCount = discoveredContent.reduce(
+    (count, providerResults) => count + providerResults.results.length,
+    0
+  );
   const panelsEnabled = app.panelsEnabled.value;
   const { t } = useI18n();
 
@@ -769,6 +777,58 @@ export function Tabs(props: TabsProps) {
           );
         })}
       </div>
+
+      <section className="sb-sidebar-discover-more" aria-live="polite">
+        <div className="sb-sidebar-discover-more-header">
+          <h4 className="sb-sidebar-discover-more-title">
+            {t("discover-more", { defaultValue: "Discover more" })}
+          </h4>
+          {discoveredContentCount > 0 && (
+            <span className="sb-sidebar-discover-more-count">
+              {discoveredContentCount}
+            </span>
+          )}
+        </div>
+
+        {discoveredContentCount === 0 ? (
+          <p className="sb-sidebar-discover-more-empty">
+            {t("discover-more-empty", {
+              defaultValue: "No discovered content for this chapter yet.",
+            })}
+          </p>
+        ) : (
+          <div className="sb-sidebar-discover-more-list">
+            {discoveredContent.map((providerResults) =>
+              providerResults.results.map((result, resultIndex) => {
+                const hasDescription = result.description.trim().length > 0;
+                return (
+                  <article
+                    key={`${providerResults.providerId}-${result.reference.book}-${result.reference.chapter}-${result.reference.verse ?? "all"}-${resultIndex}`}
+                    className="sb-sidebar-discover-more-item"
+                  >
+                    <div className="sb-sidebar-discover-more-item-head">
+                      <span className="sb-sidebar-discover-more-item-title">
+                        {result.title}
+                      </span>
+                      <span className="sb-sidebar-discover-more-item-provider">
+                        {providerResults.providerId}
+                      </span>
+                    </div>
+                    {hasDescription && (
+                      <p className="sb-sidebar-discover-more-item-description">
+                        {result.description}
+                      </p>
+                    )}
+                    <div className="sb-sidebar-discover-more-item-content">
+                      {result.content}
+                    </div>
+                  </article>
+                );
+              })
+            )}
+          </div>
+        )}
+      </section>
     </>
   );
 }

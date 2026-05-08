@@ -2378,6 +2378,105 @@ h6 {
   gap: 10px;
 }
 
+.sb-sidebar-discover-more {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.sb-sidebar-discover-more-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sb-sidebar-discover-more-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 10%);
+}
+
+.sb-sidebar-discover-more-count {
+  min-width: 24px;
+  height: 20px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sb-font-color);
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 18%);
+}
+
+.sb-sidebar-discover-more-empty {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 28%);
+}
+
+.sb-sidebar-discover-more-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.sb-sidebar-discover-more-item {
+  border: 1px solid color-mix(in srgb, var(--sb-secondary-color), #000 8%);
+  border-radius: 10px;
+  padding: 10px;
+  background: color-mix(in srgb, var(--sb-reader-background), transparent 5%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-sidebar-discover-more-item-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sb-sidebar-discover-more-item-title {
+  font-weight: 700;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 8%);
+}
+
+.sb-sidebar-discover-more-item-provider {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 34%);
+}
+
+.sb-sidebar-discover-more-item-description {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 18%);
+}
+
+.sb-sidebar-discover-more-item-content {
+  font-size: 12px;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 8%);
+}
+
 .sb-sidebar-collapsed-tab-list {
   display: flex;
   flex-direction: column;
