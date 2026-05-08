@@ -952,6 +952,7 @@ export function PaneLayout(props: PaneLayoutProps) {
                   tabsManager={tabsManager}
                   panesManager={panesManager}
                   openSidebar={sidebar.openSidebar}
+                  openSearch={sidebar.openSearch}
                   currentPane={pane}
                 />
               )}
