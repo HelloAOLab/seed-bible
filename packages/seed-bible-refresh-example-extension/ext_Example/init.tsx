@@ -17,6 +17,50 @@ registerExtension({
   init: function* (context: SeedBibleState) {
     console.log("Example extension initialized with context:", context);
 
+    context.discover.registerDiscoverProvider({
+      id: "example-discover-provider",
+      description: "An example discover provider that returns dummy results.",
+      title: "Example Discover Provider",
+      discover: async (context) => {
+        console.log("Discover called with context:", context);
+        if (context.book === "JHN" && context.chapter === 1) {
+          return [
+            {
+              type: "cross-reference",
+              reference: {
+                book: "JHN",
+                chapter: 1,
+                verse: 1,
+              },
+              crossReference: {
+                book: "GEN",
+                chapter: 1,
+                verse: 1,
+              },
+            },
+          ];
+        } else if (context.book === "GEN" && context.chapter === 1) {
+          return [
+            {
+              type: "cross-reference",
+              reference: {
+                book: "GEN",
+                chapter: 1,
+                verse: 1,
+              },
+              crossReference: {
+                book: "JHN",
+                chapter: 1,
+                verse: 1,
+              },
+            },
+          ];
+        }
+
+        return [];
+      },
+    });
+
     // register a new tool
     yield context.tools.registerToolbarTool({
       id: "my-example-tool",
