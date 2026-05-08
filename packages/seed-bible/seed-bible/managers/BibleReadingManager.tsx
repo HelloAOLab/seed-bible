@@ -23,10 +23,17 @@ import type {
   HighlightsManager,
 } from "seed-bible.managers.HighlightsManager";
 import type {
+  DiscoverContentResult,
+  DiscoverCrossReferenceResult,
   DiscoverManager,
-  DiscoverProviderResults,
+  DiscoverStudyNoteResult,
 } from "seed-bible.managers.DiscoverManager";
 import { DEFAULT_LANGUAGE } from "seed-bible.i18n.I18nManager";
+
+interface DiscoverTypedProviderResults<TResult> {
+  providerId: string;
+  results: TResult[];
+}
 
 export interface BibleSelectedVerse {
   /** Book identifier (for example: GEN, MAT). */
@@ -234,8 +241,18 @@ export interface BibleReadingState {
 
   /** Loads the next chapter relative to `chapterData` when available. */
   loadNextChapter: () => Promise<void>;
-  /** Streaming discover results for the current chapter, grouped by provider. */
-  discoverResults: ReadonlySignal<DiscoverProviderResults[]>;
+  /** Streaming discovered cross references for the current chapter, grouped by provider. */
+  discoveredCrossReferences: ReadonlySignal<
+    DiscoverTypedProviderResults<DiscoverCrossReferenceResult>[]
+  >;
+  /** Streaming discovered content for the current chapter, grouped by provider. */
+  discoveredContent: ReadonlySignal<
+    DiscoverTypedProviderResults<DiscoverContentResult>[]
+  >;
+  /** Streaming discovered study notes for the current chapter, grouped by provider. */
+  discoveredStudyNotes: ReadonlySignal<
+    DiscoverTypedProviderResults<DiscoverStudyNoteResult>[]
+  >;
 }
 
 export const DEFAULT_TRANSLATIONS_BY_LANGUAGE = new Map([
@@ -1043,19 +1060,48 @@ export function createBibleReadingState(
     selectedFootnoteId.value = noteId;
   };
 
-  const discoverResults = signal<DiscoverProviderResults[]>([]);
+  const discoveredCrossReferences = signal<
+    DiscoverTypedProviderResults<DiscoverCrossReferenceResult>[]
+  >([]);
+  const discoveredContent = signal<
+    DiscoverTypedProviderResults<DiscoverContentResult>[]
+  >([]);
+  const discoveredStudyNotes = signal<
+    DiscoverTypedProviderResults<DiscoverStudyNoteResult>[]
+  >([]);
 
   if (discoverManager) {
     let discoverGeneration = 0;
+
+    const hasMatchingReference = (
+      result: {
+        reference: {
+          book: string;
+          chapter: number;
+        };
+      },
+      currentBookId: string,
+      currentChapterNumber: number
+    ) => {
+      return (
+        result.reference.book === currentBookId &&
+        result.reference.chapter === currentChapterNumber
+      );
+    };
+
     effect(() => {
       const chapter = chapterData.value;
       if (!chapter) {
-        discoverResults.value = [];
+        discoveredCrossReferences.value = [];
+        discoveredContent.value = [];
+        discoveredStudyNotes.value = [];
         return;
       }
 
       const generation = ++discoverGeneration;
-      discoverResults.value = [];
+      discoveredCrossReferences.value = [];
+      discoveredContent.value = [];
+      discoveredStudyNotes.value = [];
 
       const context = {
         translationId: chapter.translation.id,
@@ -1067,7 +1113,51 @@ export function createBibleReadingState(
       void (async () => {
         for await (const result of discoverManager.discover(context)) {
           if (generation !== discoverGeneration) return;
-          discoverResults.value = [...discoverResults.value, result];
+
+          const chapterResults = result.results.filter((entry) =>
+            hasMatchingReference(entry, context.book, context.chapter)
+          );
+
+          const crossReferenceResults = chapterResults.filter(
+            (entry): entry is DiscoverCrossReferenceResult =>
+              entry.type === "cross-reference"
+          );
+          if (crossReferenceResults.length > 0) {
+            discoveredCrossReferences.value = [
+              ...discoveredCrossReferences.value,
+              {
+                providerId: result.providerId,
+                results: crossReferenceResults,
+              },
+            ];
+          }
+
+          const contentResults = chapterResults.filter(
+            (entry): entry is DiscoverContentResult => entry.type === "content"
+          );
+          if (contentResults.length > 0) {
+            discoveredContent.value = [
+              ...discoveredContent.value,
+              {
+                providerId: result.providerId,
+                results: contentResults,
+              },
+            ];
+          }
+
+          const studyNoteResults = chapterResults.filter(
+            (entry): entry is DiscoverStudyNoteResult =>
+              entry.type === "study-note"
+          );
+          if (studyNoteResults.length > 0) {
+            discoveredStudyNotes.value = [
+              ...discoveredStudyNotes.value,
+              {
+                providerId: result.providerId,
+                results: studyNoteResults,
+              },
+            ];
+          }
         }
       })();
     });
@@ -1104,6 +1194,8 @@ export function createBibleReadingState(
     selectChapter,
     loadPreviousChapter,
     loadNextChapter,
-    discoverResults,
+    discoveredCrossReferences,
+    discoveredContent,
+    discoveredStudyNotes,
   };
 }
