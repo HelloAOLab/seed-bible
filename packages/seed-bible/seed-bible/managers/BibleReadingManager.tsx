@@ -1106,10 +1106,19 @@ export function createBibleReadingState(
     currentBookId: string,
     currentChapterNumber: number
   ) => {
-    return (
-      result.reference.book === currentBookId &&
-      result.reference.chapter === currentChapterNumber
-    );
+    if (result.reference.book !== currentBookId) {
+      return false;
+    }
+
+    if (result.reference.endChapter) {
+      // If an end chapter is specified, check if the current chapter falls within the range of start and end chapters.
+      return (
+        result.reference.chapter <= currentChapterNumber &&
+        result.reference.endChapter >= currentChapterNumber
+      );
+    }
+
+    return result.reference.chapter === currentChapterNumber;
   };
 
   const withBookData = (
