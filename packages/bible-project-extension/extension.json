@@ -5,5 +5,6 @@
       "title": "Bible Project Extension",
       "description": "An extension for discovering Bible Project content."
     }
-  }
+  },
+  "autoinstall": true
 }
