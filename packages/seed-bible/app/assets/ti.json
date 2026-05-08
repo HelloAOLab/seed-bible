@@ -308,5 +308,8 @@
   "publishSettingsDescPlaylist": "ዝርዝር ሙዚቃኻ ህዝባዊ እንተኾይኑ ንኩሉ ክርከብ እዩ። ምስጢራዊ እንተኾይኑ ግን ንስኻ ጥራይ ክትበጽሖ ትኽእል።",
   "playlistActions": "ቅንብራት ዝርዝር ሙዚቃ",
   "playlistActionsDesc": "ዝርዝር ሙዚቃኻ ክጻወት ከሎ ከመይ ከም ዝሰርሕ ኣስተኻኽል።",
-  "movePlaybarInside": "መስመር ምጻወት ኣብ ውሽጢ መጻወቲ ኣቆይ"
+  "movePlaybarInside": "መስመር ምጻወት ኣብ ውሽጢ መጻወቲ ኣቆይ",
+  "quotedTextModalDisplayOn": "ሞዳል ምርኢት ይሰርሓ ኣሎ።",
+  "quotedTextModalDisplayDescription": "ይሰርሕ ከሎ እዚ ንጥፈት ከም ምልዕ ቃል ኣብ ሞዳል ይርአ።",
+  "headingText": "ኣርእስታዊ ጽሑፍ"
 }

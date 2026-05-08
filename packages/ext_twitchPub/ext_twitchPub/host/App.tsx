@@ -32,7 +32,7 @@ function App() {
   const [loading, setLoading] = useState<boolean>(false);
 
   const [translationEnabled, setTranslationEnabled] = useState(
-    masks?.translationEnabled || true
+    masks?.translationEnabled || false
   );
   const [highlightEnabled, setHighlightEnabled] = useState(
     masks?.highlightEnabled || true

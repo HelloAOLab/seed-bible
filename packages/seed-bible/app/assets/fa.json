@@ -308,5 +308,8 @@
   "publishSettingsDescPlaylist": "اگر فهرست پخش شما عمومی باشد، برای همه در دسترس خواهد بود. اگر خصوصی باشد، فقط شما به آن دسترسی خواهید داشت.",
   "playlistActions": "تنظیمات فهرست پخش",
   "playlistActionsDesc": "رفتار فهرست پخش خود را هنگام پخش تنظیم کنید.",
-  "movePlaybarInside": "نوار پخش را داخل پخش کننده نگه دارید"
+  "movePlaybarInside": "نوار پخش را داخل پخش کننده نگه دارید",
+  "quotedTextModalDisplayOn": "نمایش مودال روشن است.",
+  "quotedTextModalDisplayDescription": "با روشن بودن، این مورد در یک مودال شبیه نقل‌قول نمایش داده می‌شود.",
+  "headingText": "متن عنوان"
 }

@@ -308,5 +308,8 @@
   "publishSettingsDescPlaylist": "ستاسې پلې لېسټ که عام وي، نو ټولو ته به موجود وي. که شخصي وي، نو يوازې تاسو به ورته لاسرسی لرئ.",
   "playlistActions": "د پلې لېسټ امستنې",
   "playlistActionsDesc": "دا تنظيم کړئ چې ستاسې پلې لېسټ د غږېدو پر مهال څنګه چلند وکړي.",
-  "movePlaybarInside": "د غږولو پټه د پلير دننه وساتئ"
+  "movePlaybarInside": "د غږولو پټه د پلير دننه وساتئ",
+  "quotedTextModalDisplayOn": "د موډال ښودنه چاله ده.",
+  "quotedTextModalDisplayDescription": "کله چې چاله وي، دا توکی به د اقتباس په څېر موډال کې ښودل شي.",
+  "headingText": "د سرلیک متن"
 }

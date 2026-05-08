@@ -8,6 +8,7 @@ const EditAttachment = (props: any) => {
     contentId,
     selectedType,
     name,
+    isQuotedText,
     data,
     link,
     mediaType,
@@ -42,6 +43,7 @@ const EditAttachment = (props: any) => {
         sData={data}
         sLink={link}
         sMediaType={mediaType}
+        sIsQuotedText={isQuotedText}
       />
       <ButtonsCover>
         <Button secondaryAlt onClick={onClose}>

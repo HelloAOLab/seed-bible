@@ -50,11 +50,11 @@ switch (config.type) {
     const { highlightedVerses, unhighlightedVerses } = JSON.parse(fullPayload);
     const highlightKeys = Object.keys(highlightedVerses);
     for (const key of highlightKeys) {
-      const [color, book, chapter] = key.split("-");
+      const [color, bookId, chapter] = key.split("-");
       const verses = highlightedVerses[key];
       const currentBook = JSON.parse(masks?.currentBookData || "{}");
       if (
-        currentBook.book === book &&
+        currentBook.bookId === bookId &&
         currentBook.chapter == chapter &&
         globalThis?.HighlightVerse
       ) {
@@ -62,12 +62,12 @@ switch (config.type) {
       }
     }
     for (const key of Object.keys(unhighlightedVerses)) {
-      const [, book, chapter] = key.split("-");
+      const [, bookId, chapter] = key.split("-");
       const verses = unhighlightedVerses[key];
       const currentBook = JSON.parse(masks?.currentBookData || "{}");
-      console.log("Unhighlighting verses for", book, chapter, currentBook);
+      console.log("Unhighlighting verses for", bookId, chapter, currentBook);
       if (
-        currentBook.book === book &&
+        currentBook.bookId === bookId &&
         currentBook.chapter == chapter &&
         globalThis?.UnHighlightVerse
       ) {

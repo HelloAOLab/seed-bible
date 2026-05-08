@@ -1292,6 +1292,7 @@ function ThePage({
               verseNumber: vn,
               group: groupId,
               color: color || wordHighlightsBC,
+              bookId: data?.bookId,
             };
           });
         }
@@ -1385,6 +1386,7 @@ function ThePage({
             verseNumber: vn,
             group: groupId,
             color: color || wordHighlightsBC,
+            bookId: data?.bookId,
           };
         });
 
