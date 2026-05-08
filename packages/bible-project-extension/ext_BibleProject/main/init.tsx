@@ -1,9 +1,7 @@
 /* eslint-disable seed-bible-i18n/i18n-untranslated-content */
 import type { DiscoverResult } from "seed-bible.managers.DiscoverManager";
-import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
 import { MaterialIcon } from "seed-bible.components.icons";
-import { useI18n } from "seed-bible.i18n.I18nManager";
 import { z } from "zod";
 
 const BibleProjectSchema = z.array(
@@ -49,7 +47,6 @@ const BibleProjectSchema = z.array(
 
 type BibleProjectData = z.infer<typeof BibleProjectSchema>;
 type BibleProjectItem = BibleProjectData[number];
-type BibleProjectVideo = BibleProjectItem["video"];
 
 const BOOK_ID_TO_USFM: Map<number, string> = new Map([
   [1, "GEN"],
@@ -124,6 +121,9 @@ registerExtension({
   id: "bible-project-extension",
   init: function* (context: SeedBibleState) {
     const openVideo = (item: BibleProjectItem) => {
+      const startSeconds = item.timecode.start_seconds;
+      const endSeconds = item.timecode.end_seconds;
+
       context.modals.openModal({
         id: `bible-project-video`,
         title: item.video.title,
@@ -132,8 +132,9 @@ registerExtension({
             style={{ display: "flex", flexDirection: "column", gap: "16px" }}
           >
             <video
-              src={item.video.paths.mp4}
+              src={item.video.paths.mp4 + `#t=${startSeconds},${endSeconds}`}
               controls
+              preload="metadata"
               style={{ width: "100%", borderRadius: "8px" }}
             />
             <p>{item.video.description}</p>
