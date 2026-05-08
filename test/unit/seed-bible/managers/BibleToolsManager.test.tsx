@@ -33,6 +33,7 @@ function createContext(): BibleToolContext {
       setOpen: jest.fn(),
     } as any,
     openSidebar: jest.fn(),
+    openSearch: jest.fn(),
     panesManager: {} as any,
     tabs: {} as any,
   };
