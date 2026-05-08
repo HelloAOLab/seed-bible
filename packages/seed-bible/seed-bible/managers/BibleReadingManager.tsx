@@ -63,6 +63,11 @@ type DiscoverStudyNoteResultWithBookData = Omit<
   reference: DiscoverReferenceWithBookData;
 };
 
+type DiscoverResultWithBookData =
+  | DiscoverCrossReferenceResultWithBookData
+  | DiscoverContentResultWithBookData
+  | DiscoverStudyNoteResultWithBookData;
+
 export interface BibleSelectedVerse {
   /** Book identifier (for example: GEN, MAT). */
   bookId: string;
@@ -1088,53 +1093,105 @@ export function createBibleReadingState(
     selectedFootnoteId.value = noteId;
   };
 
-  const discoveredCrossReferences = signal<
+  const hasMatchingReference = (
+    result: { reference: DiscoverReference },
+    currentBookId: string,
+    currentChapterNumber: number
+  ) => {
+    return (
+      result.reference.book === currentBookId &&
+      result.reference.chapter === currentChapterNumber
+    );
+  };
+
+  const withBookData = (
+    reference: DiscoverReference,
+    bookData: TranslationBook
+  ): DiscoverReferenceWithBookData => {
+    return {
+      ...reference,
+      bookData,
+    };
+  };
+
+  const discoveredResults = signal<
+    DiscoverTypedProviderResults<DiscoverResultWithBookData>[]
+  >([]);
+
+  const discoveredResultsFiltered = computed<
+    DiscoverTypedProviderResults<DiscoverResultWithBookData>[]
+  >(() => {
+    const chapter = chapterData.value;
+    if (!chapter) {
+      return [];
+    }
+
+    const currentBookId = chapter.book.id;
+    const currentChapterNumber = chapter.chapter.number;
+    return discoveredResults.value
+      .map((providerResults) => ({
+        providerId: providerResults.providerId,
+        results: providerResults.results.filter((entry) =>
+          hasMatchingReference(entry, currentBookId, currentChapterNumber)
+        ),
+      }))
+      .filter((providerResults) => providerResults.results.length > 0);
+  });
+
+  const discoveredCrossReferences = computed<
     DiscoverTypedProviderResults<DiscoverCrossReferenceResultWithBookData>[]
-  >([]);
-  const discoveredContent = signal<
+  >(() => {
+    return discoveredResultsFiltered.value
+      .map((providerResults) => ({
+        providerId: providerResults.providerId,
+        results: providerResults.results.filter(
+          (entry): entry is DiscoverCrossReferenceResultWithBookData =>
+            entry.type === "cross-reference"
+        ),
+      }))
+      .filter((providerResults) => providerResults.results.length > 0);
+  });
+
+  const discoveredContent = computed<
     DiscoverTypedProviderResults<DiscoverContentResultWithBookData>[]
-  >([]);
-  const discoveredStudyNotes = signal<
+  >(() => {
+    return discoveredResultsFiltered.value
+      .map((providerResults) => ({
+        providerId: providerResults.providerId,
+        results: providerResults.results.filter(
+          (entry): entry is DiscoverContentResultWithBookData =>
+            entry.type === "content"
+        ),
+      }))
+      .filter((providerResults) => providerResults.results.length > 0);
+  });
+
+  const discoveredStudyNotes = computed<
     DiscoverTypedProviderResults<DiscoverStudyNoteResultWithBookData>[]
-  >([]);
+  >(() => {
+    return discoveredResultsFiltered.value
+      .map((providerResults) => ({
+        providerId: providerResults.providerId,
+        results: providerResults.results.filter(
+          (entry): entry is DiscoverStudyNoteResultWithBookData =>
+            entry.type === "study-note"
+        ),
+      }))
+      .filter((providerResults) => providerResults.results.length > 0);
+  });
 
   if (discoverManager) {
     let discoverGeneration = 0;
 
-    const hasMatchingReference = (
-      result: { reference: DiscoverReference },
-      currentBookId: string,
-      currentChapterNumber: number
-    ) => {
-      return (
-        result.reference.book === currentBookId &&
-        result.reference.chapter === currentChapterNumber
-      );
-    };
-
-    const withBookData = (
-      reference: DiscoverReference,
-      bookData: TranslationBook
-    ): DiscoverReferenceWithBookData => {
-      return {
-        ...reference,
-        bookData,
-      };
-    };
-
     effect(() => {
       const chapter = chapterData.value;
       if (!chapter) {
-        discoveredCrossReferences.value = [];
-        discoveredContent.value = [];
-        discoveredStudyNotes.value = [];
+        discoveredResults.value = [];
         return;
       }
 
       const generation = ++discoverGeneration;
-      discoveredCrossReferences.value = [];
-      discoveredContent.value = [];
-      discoveredStudyNotes.value = [];
+      discoveredResults.value = [];
 
       const context = {
         translationId: chapter.translation.id,
@@ -1148,60 +1205,31 @@ export function createBibleReadingState(
         for await (const result of discoverManager.discover(context)) {
           if (generation !== discoverGeneration) return;
 
-          const chapterResults = result.results.filter((entry) =>
-            hasMatchingReference(entry, context.book, context.chapter)
-          );
-
-          const crossReferenceResults = chapterResults.filter(
-            (entry): entry is DiscoverCrossReferenceResult =>
-              entry.type === "cross-reference"
-          );
-          if (crossReferenceResults.length > 0) {
-            discoveredCrossReferences.value = [
-              ...discoveredCrossReferences.value,
-              {
-                providerId: result.providerId,
-                results: crossReferenceResults.map((entry) => ({
+          const enrichedResults: DiscoverResultWithBookData[] =
+            result.results.map((entry) => {
+              if (entry.type === "cross-reference") {
+                return {
                   ...entry,
                   reference: withBookData(entry.reference, currentBookData),
                   crossReference: withBookData(
                     entry.crossReference,
                     currentBookData
                   ),
-                })),
-              },
-            ];
-          }
+                };
+              }
 
-          const contentResults = chapterResults.filter(
-            (entry): entry is DiscoverContentResult => entry.type === "content"
-          );
-          if (contentResults.length > 0) {
-            discoveredContent.value = [
-              ...discoveredContent.value,
+              return {
+                ...entry,
+                reference: withBookData(entry.reference, currentBookData),
+              };
+            });
+
+          if (enrichedResults.length > 0) {
+            discoveredResults.value = [
+              ...discoveredResults.value,
               {
                 providerId: result.providerId,
-                results: contentResults.map((entry) => ({
-                  ...entry,
-                  reference: withBookData(entry.reference, currentBookData),
-                })),
-              },
-            ];
-          }
-
-          const studyNoteResults = chapterResults.filter(
-            (entry): entry is DiscoverStudyNoteResult =>
-              entry.type === "study-note"
-          );
-          if (studyNoteResults.length > 0) {
-            discoveredStudyNotes.value = [
-              ...discoveredStudyNotes.value,
-              {
-                providerId: result.providerId,
-                results: studyNoteResults.map((entry) => ({
-                  ...entry,
-                  reference: withBookData(entry.reference, currentBookData),
-                })),
+                results: enrichedResults,
               },
             ];
           }
