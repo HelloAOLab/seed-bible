@@ -7,6 +7,8 @@ import { computed } from "@preact/signals";
 import type {
   BibleReadingState,
   BibleSelectedVerse,
+  DiscoverCrossReferenceResultWithBookData,
+  DiscoverReferenceWithBookData,
   VerseDecoration,
 } from "seed-bible.managers.BibleReadingManager";
 import type { ChapterHighlight } from "seed-bible.managers.HighlightsManager";
@@ -59,6 +61,16 @@ interface ContentDecorationRange {
   style?: JSX.CSSProperties;
 }
 
+type DiscoveredCrossReferences =
+  BibleReadingState["discoveredCrossReferences"]["value"];
+
+interface VerseCrossReferenceItem {
+  id: string;
+  ref: DiscoverCrossReferenceResultWithBookData;
+  label: string;
+  link: string;
+}
+
 function getInlineText(part: ChapterVerse["content"][0]): string {
   if (typeof part === "string") {
     return part;
@@ -73,6 +85,75 @@ function getInlineText(part: ChapterVerse["content"][0]): string {
 
 function getVersePlainText(content: ChapterVerse["content"]): string {
   return content.map((part) => getInlineText(part)).join("");
+}
+
+function formatCrossReferenceLabel(
+  reference: DiscoverReferenceWithBookData
+): string {
+  const bookName = reference.book;
+  const verseStart = reference.verse;
+  const verseEnd = reference.endVerse;
+  const chapterStart = reference.chapter;
+  const chapterEnd = reference.endChapter;
+  const nbsp = "\u00A0";
+
+  if (typeof verseStart !== "number") {
+    if (typeof chapterEnd === "number" && chapterEnd > chapterStart) {
+      return `${bookName}${nbsp}${chapterStart}-${chapterEnd}`;
+    }
+
+    return `${bookName}${nbsp}${chapterStart}`;
+  }
+
+  if (
+    typeof chapterEnd === "number" &&
+    chapterEnd !== chapterStart &&
+    typeof verseEnd === "number"
+  ) {
+    return `${bookName}${nbsp}${chapterStart}:${verseStart}-${chapterEnd}:${verseEnd}`;
+  }
+
+  if (typeof verseEnd === "number" && verseEnd !== verseStart) {
+    return `${bookName}${nbsp}${chapterStart}:${verseStart}-${verseEnd}`;
+  }
+
+  return `${bookName}${nbsp}${chapterStart}:${verseStart}`;
+}
+
+function getVerseCrossReferences(
+  discoveredCrossReferences: DiscoveredCrossReferences,
+  verseNumber: number
+): VerseCrossReferenceItem[] {
+  const seen = new Set<string>();
+  const items: VerseCrossReferenceItem[] = [];
+
+  for (const providerResults of discoveredCrossReferences) {
+    for (const result of providerResults.results) {
+      if (result.reference.verse !== verseNumber) {
+        continue;
+      }
+
+      const label = formatCrossReferenceLabel(result.crossReference);
+      if (seen.has(label)) {
+        continue;
+      }
+
+      const link = new URL(configBot.tags.url);
+      link.searchParams.set("book", result.crossReference.book);
+      link.searchParams.set("chapter", String(result.crossReference.chapter));
+      link.searchParams.set("verse", String(result.crossReference.verse));
+
+      seen.add(label);
+      items.push({
+        id: `${providerResults.providerId}-${label}`,
+        ref: result,
+        label,
+        link: link.href,
+      });
+    }
+  }
+
+  return items;
 }
 
 function hasContentTargeting(decoration: VerseDecoration): boolean {
@@ -415,7 +496,9 @@ function renderChapterContent(
   onOpenFootnote: (noteId: number, verse: ChapterVerse | null) => void,
   highlights: ChapterHighlight[],
   decorations: VerseDecoration[],
-  scriptureElements: ScriptureElementsBehavior
+  discoveredCrossReferences: DiscoveredCrossReferences,
+  scriptureElements: ScriptureElementsBehavior,
+  onOpenCrossReference: (ref: DiscoverCrossReferenceResultWithBookData) => void
 ) {
   if (!chapterData) {
     return null;
@@ -573,6 +656,10 @@ function renderChapterContent(
         getVersePlainText(value.content),
         contentDecorations
       );
+      const verseCrossReferences = getVerseCrossReferences(
+        discoveredCrossReferences,
+        value.number
+      );
       let currentTextOffset = 0;
       const getPartTextStartIndex = (part: ChapterVerse["content"][0]) => {
         const startIndex = currentTextOffset;
@@ -597,6 +684,26 @@ function renderChapterContent(
         ...(highlightPresentation.style ?? {}),
         ...(decorationPresentation.style ?? {}),
       };
+      const verseCrossReferenceGroup =
+        verseCrossReferences.length > 0 ? (
+          <span className="sb-verse-cross-references" aria-hidden="true">
+            {verseCrossReferences.map((crossReference) => (
+              <a
+                key={crossReference.id}
+                href={crossReference.link}
+                className="sb-verse-cross-reference"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  const { ref } = crossReference;
+                  onOpenCrossReference(ref);
+                }}
+              >
+                {crossReference.label}
+              </a>
+            ))}
+          </span>
+        ) : null;
 
       if (hasPoetry) {
         return (
@@ -613,6 +720,7 @@ function renderChapterContent(
             role="button"
             tabIndex={0}
           >
+            {verseCrossReferenceGroup}
             {segments.map((segment, segIndex) => {
               if (segment.type === "inline") {
                 return (
@@ -693,6 +801,7 @@ function renderChapterContent(
           role="button"
           tabIndex={0}
         >
+          {verseCrossReferenceGroup}
           <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
             {scriptureElements.showVerseNumbers && (
               <sup className="sb-verse-number">{value.number}</sup>
@@ -738,7 +847,9 @@ function renderStaticChapterContent(
     () => {},
     [],
     [],
-    scriptureElements
+    [],
+    scriptureElements,
+    () => {}
   );
 }
 
@@ -1046,7 +1157,17 @@ export function BibleReader(props: BibleReaderProps) {
             },
             highlights.value.highlights,
             decorations.value,
-            scriptureElements
+            readingState.discoveredCrossReferences.value,
+            scriptureElements,
+            (ref) => {
+              readingState.selectChapter(
+                ref.crossReference.book,
+                ref.crossReference.chapter,
+                {
+                  scrollToVerse: ref.crossReference.verse,
+                }
+              );
+            }
           )}
         </div>
       )}

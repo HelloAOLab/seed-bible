@@ -37,18 +37,18 @@ interface DiscoverTypedProviderResults<TResult> {
   results: TResult[];
 }
 
-type DiscoverReferenceWithBookData = DiscoverReference & {
+export type DiscoverReferenceWithBookData = DiscoverReference & {
   bookData: TranslationBook;
 };
 
-type DiscoverContentResultWithBookData = Omit<
+export type DiscoverContentResultWithBookData = Omit<
   DiscoverContentResult,
   "reference"
 > & {
   reference: DiscoverReferenceWithBookData;
 };
 
-type DiscoverCrossReferenceResultWithBookData = Omit<
+export type DiscoverCrossReferenceResultWithBookData = Omit<
   DiscoverCrossReferenceResult,
   "reference" | "crossReference"
 > & {
@@ -56,14 +56,14 @@ type DiscoverCrossReferenceResultWithBookData = Omit<
   crossReference: DiscoverReferenceWithBookData;
 };
 
-type DiscoverStudyNoteResultWithBookData = Omit<
+export type DiscoverStudyNoteResultWithBookData = Omit<
   DiscoverStudyNoteResult,
   "reference"
 > & {
   reference: DiscoverReferenceWithBookData;
 };
 
-type DiscoverResultWithBookData =
+export type DiscoverResultWithBookData =
   | DiscoverCrossReferenceResultWithBookData
   | DiscoverContentResultWithBookData
   | DiscoverStudyNoteResultWithBookData;
@@ -267,7 +267,11 @@ export interface BibleReadingState {
   selectBook: (book: string) => Promise<void>;
 
   /** Selects and loads an explicit chapter in the active translation. */
-  selectChapter: (book: string, chapter: number) => Promise<void>;
+  selectChapter: (
+    book: string,
+    chapter: number,
+    options?: SelectTranslationAndChapterOptions
+  ) => Promise<void>;
 
   /** Loads the previous chapter relative to `chapterData` when available. */
   loadPreviousChapter: () => Promise<void>;
@@ -964,7 +968,11 @@ export function createBibleReadingState(
     }
   };
 
-  const selectChapter = async (book: string, chapter: number) => {
+  const selectChapter = async (
+    book: string,
+    chapter: number,
+    options?: SelectTranslationAndChapterOptions
+  ) => {
     if (!translationId.value) {
       return;
     }
@@ -979,7 +987,7 @@ export function createBibleReadingState(
         chapter
       );
 
-      await syncStateFromChapter(nextChapterData);
+      await syncStateFromChapter(nextChapterData, options);
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to select chapter.";

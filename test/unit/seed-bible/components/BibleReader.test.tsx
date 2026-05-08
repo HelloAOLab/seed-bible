@@ -146,6 +146,9 @@ function createFixture(): ReaderFixture {
     loadNextChapter: jest.fn(async () => undefined),
     selectTranslationAndChapter: jest.fn(async () => undefined),
     highlights,
+    discoveredContent: signal([]),
+    discoveredCrossReferences: signal([]),
+    discoveredStudyNotes: signal([]),
   } as BibleReadingState;
 
   const selectorState = {

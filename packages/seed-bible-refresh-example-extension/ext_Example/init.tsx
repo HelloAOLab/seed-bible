@@ -38,6 +38,19 @@ registerExtension({
                 verse: 1,
               },
             },
+            {
+              type: "cross-reference",
+              reference: {
+                book: "JHN",
+                chapter: 1,
+                verse: 13,
+              },
+              crossReference: {
+                book: "COL",
+                chapter: 1,
+                verse: 16,
+              },
+            },
           ];
         } else if (context.book === "GEN" && context.chapter === 1) {
           return [
@@ -52,6 +65,22 @@ registerExtension({
                 book: "JHN",
                 chapter: 1,
                 verse: 1,
+              },
+            },
+          ];
+        } else if (context.book === "COL" && context.chapter === 1) {
+          return [
+            {
+              type: "cross-reference",
+              reference: {
+                book: "COL",
+                chapter: 1,
+                verse: 16,
+              },
+              crossReference: {
+                book: "JHN",
+                chapter: 1,
+                verse: 3,
               },
             },
           ];
