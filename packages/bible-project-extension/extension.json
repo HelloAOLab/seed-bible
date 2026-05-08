@@ -1,0 +1,9 @@
+{
+  "id": "bible-project-extension",
+  "translations": {
+    "en": {
+      "title": "Bible Project Extension",
+      "description": "An extension for discovering Bible Project content."
+    }
+  }
+}
