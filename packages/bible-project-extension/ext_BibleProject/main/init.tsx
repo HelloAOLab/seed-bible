@@ -23,7 +23,7 @@ const BibleProjectSchema = z.array(
       id: z.number(),
       title: z.string(),
       description: z.string(),
-      duration: z.string(),
+      duration_seconds: z.number(),
       color: z.string(),
       share_url: z.string(),
       images: z.object({
@@ -46,6 +46,10 @@ const BibleProjectSchema = z.array(
     section_title: z.string(),
   })
 );
+
+type BibleProjectData = z.infer<typeof BibleProjectSchema>;
+type BibleProjectItem = BibleProjectData[number];
+type BibleProjectVideo = BibleProjectItem["video"];
 
 const BOOK_ID_TO_USFM: Map<number, string> = new Map([
   [1, "GEN"],
@@ -119,6 +123,25 @@ const BOOK_ID_TO_USFM: Map<number, string> = new Map([
 registerExtension({
   id: "bible-project-extension",
   init: function* (context: SeedBibleState) {
+    const openVideo = (item: BibleProjectItem) => {
+      context.modals.openModal({
+        id: `bible-project-video`,
+        title: item.video.title,
+        content: (
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+          >
+            <video
+              src={item.video.paths.mp4}
+              controls
+              style={{ width: "100%", borderRadius: "8px" }}
+            />
+            <p>{item.video.description}</p>
+          </div>
+        ),
+      });
+    };
+
     yield context.discover.registerDiscoverProvider({
       id: "bible-project-discover-provider",
       description:
@@ -126,7 +149,7 @@ registerExtension({
       title: "Example Discover Provider",
       discover: async (context) => {
         const data = BibleProjectSchema.parse(
-          thisBot.tags["bible-chapter-video-mapping.json"]
+          thisBot.tags["bible-chapter-video-mapping"]
         );
         const content: DiscoverResult[] = [];
 
@@ -144,12 +167,14 @@ registerExtension({
             continue;
           }
 
-          if (
-            item.chapter_start > context.chapter ||
-            item.chapter_end < context.chapter
-          ) {
+          const containsCurrentChapter =
+            context.chapter >= item.chapter_start &&
+            context.chapter <= item.chapter_end;
+          if (!containsCurrentChapter) {
+            console.warn("No match", { context, item });
             continue;
           }
+          console.error("Match", { context, item });
 
           content.push({
             type: "content",
@@ -169,10 +194,33 @@ registerExtension({
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
+                  position: "relative",
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  openVideo(item);
                 }}
               >
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    color: "white",
+                    opacity: 0.8,
+                    backgroundColor: "rgba(0, 0, 0, 0.9)",
+                    borderRadius: "50%",
+                    padding: "8px",
+                  }}
+                >
+                  <MaterialIcon style={{ fontSize: "48px" }}>
+                    play_circle
+                  </MaterialIcon>
+                </div>
                 <img
-                  src={item.video.images.medium}
+                  src={item.video.images.mini}
                   alt={item.video.title}
                   style={{ width: "100%", borderRadius: "8px" }}
                 />
