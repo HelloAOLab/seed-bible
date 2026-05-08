@@ -15,6 +15,7 @@ import type {
   PieceHighlightAdapterPort,
   PieceHighlightActivityNotificationAdapterPort,
   PieceHighlightActivityServicePort,
+  PieceHighlightLabelServicePort,
   PieceUnhighlightSchedulerAdapterPort,
   PieceHierarchyServicePort,
   StackParentDataIds,
@@ -37,6 +38,7 @@ interface PieceHighlightServiceParams {
   pieceHighlightAdapterPort: PieceHighlightAdapterPort;
   activityNotificationAdapterPort: PieceHighlightActivityNotificationAdapterPort;
   pieceActivityServicePort: PieceHighlightActivityServicePort;
+  pieceLabelServicePort: PieceHighlightLabelServicePort;
   schedulerAdapterPort: PieceUnhighlightSchedulerAdapterPort;
   configProviderPort: HighlightConfigProviderPort;
   pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;
@@ -62,6 +64,7 @@ export class PieceHighlightService
   #pieceHighlightAdapterPort: PieceHighlightAdapterPort;
   #activityNotificationAdapterPort: PieceHighlightActivityNotificationAdapterPort;
   #pieceActivityServicePort: PieceHighlightActivityServicePort;
+  #pieceLabelServicePort: PieceHighlightLabelServicePort;
   #schedulerAdapterPort: PieceUnhighlightSchedulerAdapterPort;
   #configProviderPort: HighlightConfigProviderPort;
   #pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;
@@ -73,6 +76,7 @@ export class PieceHighlightService
     pieceHighlightAdapterPort,
     activityNotificationAdapterPort,
     pieceActivityServicePort,
+    pieceLabelServicePort,
     schedulerAdapterPort,
     configProviderPort,
     pieceDataRepositoryPort,
@@ -83,6 +87,7 @@ export class PieceHighlightService
     this.#pieceHighlightAdapterPort = pieceHighlightAdapterPort;
     this.#activityNotificationAdapterPort = activityNotificationAdapterPort;
     this.#pieceActivityServicePort = pieceActivityServicePort;
+    this.#pieceLabelServicePort = pieceLabelServicePort;
     this.#schedulerAdapterPort = schedulerAdapterPort;
     this.#configProviderPort = configProviderPort;
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
@@ -221,7 +226,13 @@ export class PieceHighlightService
       }
     }
 
-    await highlightAction;
+    await Promise.all([
+      highlightAction,
+      this.#pieceLabelServicePort.showLabel({
+        piece,
+        translucencyMode: "Solid",
+      }),
+    ]);
 
     data.changeHighlightState("SequenceComplete");
 
@@ -358,7 +369,10 @@ export class PieceHighlightService
     pacing: HighlightPacing
   ): Promise<void> {
     this.#pieceHighlightAdapterPort.interruptSequence(piece);
-    await this.#pieceHighlightAdapterPort.unhighlight(piece, pacing);
+    await Promise.all([
+      this.#pieceHighlightAdapterPort.unhighlight(piece, pacing),
+      this.#pieceLabelServicePort.hideLabel(piece, pacing),
+    ]);
     data.changeHighlightState(HighlightEvents.SequenceComplete);
     this.#highlightedPiecesIds.delete(piece.id);
     if (data.type === BiblePiece.StackChapter) {
@@ -393,6 +407,7 @@ export class PieceHighlightService
     } else {
       this.#pieceHighlightAdapterPort.decreaseIntensity(piece);
     }
+    void this.#pieceLabelServicePort.changeIntensity(piece, intensity, pacing);
   }
 
   clearHighlightedPieces(): void {

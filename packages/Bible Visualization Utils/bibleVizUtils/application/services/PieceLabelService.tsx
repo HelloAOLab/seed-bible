@@ -39,7 +39,7 @@ export class PieceLabelService<
     this.#labelAnimationAdapterPort = labelAnimationAdapterPort;
   }
 
-  showLabel({
+  async showLabel({
     piece,
     translucencyMode,
     pacing = "Regular",
@@ -47,7 +47,18 @@ export class PieceLabelService<
     piece: Piece<T>;
     translucencyMode: LabelTranslucencyMode;
     pacing?: ShowSequencePacing;
-  }) {
+  }): Promise<void> {
+    const existingLabelData = this.#labelDataStorePort.getDataByOwnerId(
+      piece.id
+    );
+    if (existingLabelData) {
+      await this.#labelAnimationAdapterPort.displayShowFeedback({
+        data: existingLabelData,
+        pacing,
+      });
+      return;
+    }
+
     const strategy = this.#labelPropertiesStrategies[piece.type];
 
     if (!strategy) {
@@ -92,8 +103,28 @@ export class PieceLabelService<
     this.#pieceActivityServicePort.updateIndicators(labelData);
     this.#labelDataStorePort.addLabelData(labelData);
     this.#labelAnimationAdapterPort.displayAttentionFeedback(labelData);
-    this.#labelAnimationAdapterPort.displayShowFeedback({
+    await this.#labelAnimationAdapterPort.displayShowFeedback({
       data: labelData,
+      pacing,
+    });
+  }
+
+  async changeIntensity(
+    piece: Piece<T>,
+    translucencyMode: LabelTranslucencyMode,
+    pacing: ShowSequencePacing = "Regular"
+  ): Promise<void> {
+    const labelData = this.#labelDataStorePort.getDataByOwnerId(piece.id);
+    if (!labelData) return;
+
+    if (translucencyMode === "Solid") {
+      this.#labelAnimationAdapterPort.displayAttentionFeedback(labelData);
+    } else {
+      this.#labelAnimationAdapterPort.stopAttentionFeedback(labelData);
+    }
+    await this.#labelAnimationAdapterPort.displayChangedIntensityFeedback({
+      data: labelData,
+      translucencyMode,
       pacing,
     });
   }

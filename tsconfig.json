@@ -296,6 +296,9 @@
       "bibleStack.infrastructure.adapters.stacks.PieceHighlightAdapter": [
         "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/PieceHighlightAdapter.tsx"
       ],
+      "bibleStack.infrastructure.adapters.stacks.PieceUnhighlightSchedulerAdapter": [
+        "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/PieceUnhighlightSchedulerAdapter.tsx"
+      ],
       "bibleStack.infrastructure.adapters.stacks.StackPieceLifecycleAdapter": [
         "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/StackPieceLifecycleAdapter.tsx"
       ],
@@ -328,9 +331,6 @@
       ],
       "bibleStack.infrastructure.config.experience.ExperienceConfigProvider": [
         "./packages/Bible Stack/bibleStack/infrastructure/config/experience/ExperienceConfigProvider.tsx"
-      ],
-      "bibleStack.infrastructure.config.highlight.delays": [
-        "./packages/Bible Stack/bibleStack/infrastructure/config/highlight/delays.tsx"
       ],
       "bibleStack.infrastructure.config.highlight.HighlightConfigProvider": [
         "./packages/Bible Stack/bibleStack/infrastructure/config/highlight/HighlightConfigProvider.tsx"
@@ -779,17 +779,11 @@
       "bibleStack.main.TryCreateNewBible": [
         "./packages/Bible Stack/bibleStack/main/TryCreateNewBible.tsx"
       ],
-      "bibleStack.main.TryDecreasePieceHighlight": [
-        "./packages/Bible Stack/bibleStack/main/TryDecreasePieceHighlight.tsx"
-      ],
       "bibleStack.main.TryEjectChapter": [
         "./packages/Bible Stack/bibleStack/main/TryEjectChapter.tsx"
       ],
       "bibleStack.main.TryHighlightChapter": [
         "./packages/Bible Stack/bibleStack/main/TryHighlightChapter.tsx"
-      ],
-      "bibleStack.main.TryIncreasePieceHighlight": [
-        "./packages/Bible Stack/bibleStack/main/TryIncreasePieceHighlight.tsx"
       ],
       "bibleStack.main.TryMakeTourGuideOnSection": [
         "./packages/Bible Stack/bibleStack/main/TryMakeTourGuideOnSection.tsx"
@@ -823,9 +817,6 @@
       ],
       "bibleStack.main.TryToggleStackViz": [
         "./packages/Bible Stack/bibleStack/main/TryToggleStackViz.tsx"
-      ],
-      "bibleStack.main.TryUnhighlightPiece": [
-        "./packages/Bible Stack/bibleStack/main/TryUnhighlightPiece.tsx"
       ],
       "bibleStack.main.UnhighlightChapter": [
         "./packages/Bible Stack/bibleStack/main/UnhighlightChapter.tsx"

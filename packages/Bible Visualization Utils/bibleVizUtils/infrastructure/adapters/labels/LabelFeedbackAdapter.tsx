@@ -1,7 +1,8 @@
 import type { InfoLabelData } from "bibleVizUtils.domain.entities.InfoLabelData";
-import {
-  LabelPosition,
-  type LabelPositionType,
+import type {
+  LabelPositionType,
+  LabelTranslucencyMode,
+  ShowSequencePacing,
 } from "bibleVizUtils.domain.models.label";
 import type {
   Easing,
@@ -20,48 +21,47 @@ import type {
   InfoLabelTransformerBot,
   PieceBot,
 } from "../../models/casualos";
-import type { ShowSequencePacing } from "bibleVizUtils.domain.models.label";
 import { InfoLabelTransformerMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTransformerMapper";
 import type {
   ShowAnimationDurationMapType,
   ShowAnimationConfigType,
 } from "bibleVizUtils.infrastructure.config.labels.showAnimation";
 
-interface LabelConfigProviderPort {
+interface LabelFeedbackConfigProviderPort {
   getShowAnimationDuration: <P extends ShowSequencePacing>(
     pacing: P
   ) => ShowAnimationDurationMapType[P];
   getShowAnimationConfig: <K extends keyof ShowAnimationConfigType>(
     key: K
   ) => ShowAnimationConfigType[K];
+  getShakeAnimationDelay: () => number;
+  getShakeDuration: () => number;
+  getShakeEasing: () => Easing;
+  getShakeDirection: (position: LabelPositionType) => TVector2;
+  getIntensityOpacity: (mode: LabelTranslucencyMode) => number;
 }
 
 type DimensionProvider = () => string;
 
 interface AdapterProps {
   dimensionProvider: DimensionProvider;
-  labelConfigProviderPort: LabelConfigProviderPort;
+  labelFeedbackConfigProviderPort: LabelFeedbackConfigProviderPort;
 }
 
-const directionStrategy: Record<LabelPositionType, TVector2> = {
-  [LabelPosition.LeftSided]: new Vector2(0.1, 0),
-  [LabelPosition.RightSided]: new Vector2(-0.1, 0),
-  [LabelPosition.Top]: new Vector2(0, -0.1),
-  [LabelPosition.RightSidedCorner]: new Vector2(-0.1, -0.1),
-};
-const shakeAnimationDelayTimeInMs = 5000;
-const shakeDuration = 0.5;
-const shakeEasing: Easing = { type: "sinusoidal", mode: "inout" };
 const shakeForwardConstructor = ({
   pieceBot,
   dimension,
   initialPosition,
   direction,
+  duration,
+  easing,
 }: {
   pieceBot: PieceBot;
   dimension: string;
   initialPosition: TVector3;
   direction: TVector2;
+  duration: number;
+  easing: Easing;
 }) => {
   return animateTag(pieceBot, {
     fromValue: {
@@ -72,20 +72,25 @@ const shakeForwardConstructor = ({
       [dimension + "X"]: initialPosition.x + direction.x,
       [dimension + "Y"]: initialPosition.y + direction.y,
     },
-    duration: shakeDuration / 4,
-    easing: shakeEasing,
+    duration: duration / 4,
+    easing,
   });
 };
+
 const shakeBackwardConstructor = ({
   pieceBot,
   dimension,
   initialPosition,
   direction,
+  duration,
+  easing,
 }: {
   pieceBot: PieceBot;
   dimension: string;
   initialPosition: TVector3;
   direction: TVector2;
+  duration: number;
+  easing: Easing;
 }) => {
   return animateTag(pieceBot, {
     fromValue: {
@@ -96,19 +101,22 @@ const shakeBackwardConstructor = ({
       [dimension + "X"]: initialPosition.x,
       [dimension + "Y"]: initialPosition.y,
     },
-    duration: shakeDuration / 4,
-    easing: shakeEasing,
+    duration: duration / 4,
+    easing,
   });
 };
 
 export class LabelFeedbackAdapter {
   #shakeAnimationsMap: Map<InfoLabelData["id"], NodeJS.Timeout> = new Map();
   #dimensionProvider: AdapterProps["dimensionProvider"];
-  #labelConfigProviderPort: AdapterProps["labelConfigProviderPort"];
+  #labelFeedbackConfigProviderPort: AdapterProps["labelFeedbackConfigProviderPort"];
 
-  constructor({ dimensionProvider, labelConfigProviderPort }: AdapterProps) {
+  constructor({
+    dimensionProvider,
+    labelFeedbackConfigProviderPort,
+  }: AdapterProps) {
     this.#dimensionProvider = dimensionProvider;
-    this.#labelConfigProviderPort = labelConfigProviderPort;
+    this.#labelFeedbackConfigProviderPort = labelFeedbackConfigProviderPort;
   }
 
   displayAttentionFeedback(data: InfoLabelData) {
@@ -116,17 +124,23 @@ export class LabelFeedbackAdapter {
       this.stopAttentionFeedback(data);
     }
 
-    const direction = directionStrategy[data.positioning];
+    const direction = this.#labelFeedbackConfigProviderPort.getShakeDirection(
+      data.positioning
+    );
+    const delay =
+      this.#labelFeedbackConfigProviderPort.getShakeAnimationDelay();
 
     const animationId = setInterval(() => {
       this.#shakeLabel(data, direction);
-    }, shakeAnimationDelayTimeInMs);
+    }, delay);
 
     this.#shakeAnimationsMap.set(data.id, animationId);
   }
 
   #shakeLabel(data: InfoLabelData, direction: TVector2) {
     const dimension = this.#dimensionProvider();
+    const duration = this.#labelFeedbackConfigProviderPort.getShakeDuration();
+    const easing = this.#labelFeedbackConfigProviderPort.getShakeEasing();
 
     const piecesBot = [
       InfoLabelTextMapper.toInfrastructure(data.label),
@@ -159,24 +173,32 @@ export class LabelFeedbackAdapter {
         dimension,
         initialPosition,
         direction,
+        duration,
+        easing,
       });
       await shakeBackwardConstructor({
         pieceBot,
         dimension,
         initialPosition,
         direction,
+        duration,
+        easing,
       });
       await shakeForwardConstructor({
         pieceBot,
         dimension,
         initialPosition,
         direction,
+        duration,
+        easing,
       });
       await shakeBackwardConstructor({
         pieceBot,
         dimension,
         initialPosition,
         direction,
+        duration,
+        easing,
       });
     });
 
@@ -200,7 +222,7 @@ export class LabelFeedbackAdapter {
     pacing: ShowSequencePacing;
   }) {
     const duration =
-      this.#labelConfigProviderPort.getShowAnimationDuration(pacing);
+      this.#labelFeedbackConfigProviderPort.getShowAnimationDuration(pacing);
     this.#stopOpacityTransition(data);
 
     const { transformer, text, tail, activityIndicators, date } =
@@ -212,14 +234,18 @@ export class LabelFeedbackAdapter {
           toValue: thisBot.tags.targetOpacity,
           duration,
           easing:
-            this.#labelConfigProviderPort.getShowAnimationConfig("easing"),
+            this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
+              "easing"
+            ),
         }),
         ...(activityIndicators?.map((indicator) => {
           return animateTag(indicator, "formOpacity", {
             toValue: indicator.tags.targetOpacity,
             duration,
             easing:
-              this.#labelConfigProviderPort.getShowAnimationConfig("easing"),
+              this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
+                "easing"
+              ),
           });
         }) ?? []),
         animateTag(activityIndicators, {
@@ -227,13 +253,17 @@ export class LabelFeedbackAdapter {
           toValue: { labelOpacity: transformer.tags.targetOpacity },
           duration,
           easing:
-            this.#labelConfigProviderPort.getShowAnimationConfig("easing"),
+            this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
+              "easing"
+            ),
         }),
         animateTag([text, date ?? ""], "labelOpacity", {
           toValue: transformer.tags.targetOpacity,
           duration,
           easing:
-            this.#labelConfigProviderPort.getShowAnimationConfig("easing"),
+            this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
+              "easing"
+            ),
         }),
       ]).then(() => {
         setTagMask(
@@ -255,7 +285,7 @@ export class LabelFeedbackAdapter {
     pacing: ShowSequencePacing;
   }) {
     const duration =
-      this.#labelConfigProviderPort.getShowAnimationDuration(pacing);
+      this.#labelFeedbackConfigProviderPort.getShowAnimationDuration(pacing);
     this.#stopOpacityTransition(data);
     const { text, tail, activityIndicators, date } =
       this.#unpackLabelData(data);
@@ -269,20 +299,81 @@ export class LabelFeedbackAdapter {
             toValue: 0,
             duration,
             easing:
-              this.#labelConfigProviderPort.getShowAnimationConfig("easing"),
+              this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
+                "easing"
+              ),
           }
         ),
         animateTag(activityIndicators, "labelOpacity", {
           toValue: 0,
           duration,
           easing:
-            this.#labelConfigProviderPort.getShowAnimationConfig("easing"),
+            this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
+              "easing"
+            ),
         }),
         animateTag([text, date ?? ""], "labelOpacity", {
           toValue: 0,
           duration,
           easing:
-            this.#labelConfigProviderPort.getShowAnimationConfig("easing"),
+            this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
+              "easing"
+            ),
+        }),
+      ]);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async displayChangedIntensityFeedback({
+    data,
+    translucencyMode,
+    pacing,
+  }: {
+    data: InfoLabelData;
+    translucencyMode: LabelTranslucencyMode;
+    pacing: ShowSequencePacing;
+  }): Promise<void> {
+    const duration =
+      this.#labelFeedbackConfigProviderPort.getShowAnimationDuration(pacing);
+    const opacity =
+      this.#labelFeedbackConfigProviderPort.getIntensityOpacity(
+        translucencyMode
+      );
+    this.#stopOpacityTransition(data);
+    const { text, tail, activityIndicators, date } =
+      this.#unpackLabelData(data);
+
+    try {
+      await Promise.all([
+        animateTag(
+          [...activityIndicators, tail, text, date ?? ""],
+          "formOpacity",
+          {
+            toValue: opacity,
+            duration,
+            easing:
+              this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
+                "easing"
+              ),
+          }
+        ),
+        animateTag(activityIndicators, "labelOpacity", {
+          toValue: opacity,
+          duration,
+          easing:
+            this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
+              "easing"
+            ),
+        }),
+        animateTag([text, date ?? ""], "labelOpacity", {
+          toValue: opacity,
+          duration,
+          easing:
+            this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
+              "easing"
+            ),
         }),
       ]);
     } catch (error) {
@@ -364,8 +455,8 @@ export class LabelFeedbackAdapter {
         bots.push(date);
       }
     }
-    animateTag(bots, "formOpacity", null);
-    animateTag(bots, "labelOpacity", null);
+    clearAnimations(bots, "formOpacity");
+    clearAnimations(bots, "labelOpacity");
   }
 
   disposeAll() {

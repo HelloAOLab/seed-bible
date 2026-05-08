@@ -97,13 +97,21 @@ export type PieceHighlightPieceDataRepositoryPort = Pick<
 export interface PieceHighlightSequenceStateServicePort {
   isThereAnOngoingSequence(): boolean;
 }
+type StackPieceUnion = Piece<
+  | "StackTestament"
+  | "StackSection"
+  | "StackSectionBook"
+  | "StackBook"
+  | "StackChapter"
+>;
+
 export interface PieceHighlightAdapterPort {
-  interruptSequence(piece: Piece): void;
-  highlight(piece: Piece, pacing?: HighlightPacing): Promise<void>;
-  rehighlight(piece: Piece, pacing?: HighlightPacing): Promise<void>;
-  unhighlight(piece: Piece, pacing?: HighlightPacing): Promise<void>;
-  increaseIntensity(piece: Piece, pacing?: HighlightPacing): void;
-  decreaseIntensity(piece: Piece): void;
+  interruptSequence(piece: StackPieceUnion): void;
+  highlight(piece: StackPieceUnion, pacing?: HighlightPacing): Promise<void>;
+  rehighlight(piece: StackPieceUnion, pacing?: HighlightPacing): Promise<void>;
+  unhighlight(piece: StackPieceUnion, pacing?: HighlightPacing): Promise<void>;
+  increaseIntensity(piece: StackPieceUnion, pacing?: HighlightPacing): void;
+  decreaseIntensity(piece: StackPieceUnion): void;
 }
 export interface PieceUnhighlightSchedulerAdapterPort {
   schedule(delay: number, callback: () => Promise<void>): string;
@@ -115,6 +123,39 @@ export type PieceHighlightActivityNotificationAdapterPort = Pick<
 >;
 export interface PieceHighlightActivityServicePort {
   updateNotification(container: StackChapterData): void;
+}
+export interface PieceHighlightLabelServicePort {
+  showLabel(params: {
+    piece: Piece<
+      | "StackTestament"
+      | "StackSection"
+      | "StackSectionBook"
+      | "StackBook"
+      | "StackChapter"
+    >;
+    translucencyMode: LabelTranslucencyMode;
+  }): Promise<void>;
+  hideLabel(
+    piece: Piece<
+      | "StackTestament"
+      | "StackSection"
+      | "StackSectionBook"
+      | "StackBook"
+      | "StackChapter"
+    >,
+    pacing?: HighlightPacing
+  ): Promise<void>;
+  changeIntensity(
+    piece: Piece<
+      | "StackTestament"
+      | "StackSection"
+      | "StackSectionBook"
+      | "StackBook"
+      | "StackChapter"
+    >,
+    translucencyMode: LabelTranslucencyMode,
+    pacing?: HighlightPacing
+  ): Promise<void>;
 }
 
 export interface PieceHighlightEventPort {

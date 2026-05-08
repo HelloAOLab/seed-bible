@@ -81,6 +81,15 @@ export interface LabelFeedbackAdapterPort {
     data: InfoLabelData;
     pacing: ShowSequencePacing;
   }): Promise<void>;
+  displayChangedIntensityFeedback({
+    data,
+    translucencyMode,
+    pacing,
+  }: {
+    data: InfoLabelData;
+    translucencyMode: LabelTranslucencyMode;
+    pacing: ShowSequencePacing;
+  }): Promise<void>;
 }
 
 export interface PieceLabelServiceParams<T extends BiblePieceType> {
@@ -115,4 +124,9 @@ export interface PieceLabelServicePort<T extends BiblePieceType> {
     pacing?: ShowSequencePacing;
   }) => void;
   hideLabel: (piece: Piece<T>, pacing?: ShowSequencePacing) => Promise<void>;
+  changeIntensity: (
+    piece: Piece<T>,
+    translucencyMode: LabelTranslucencyMode,
+    pacing?: ShowSequencePacing
+  ) => Promise<void>;
 }

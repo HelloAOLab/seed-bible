@@ -65,7 +65,11 @@ export type BookBot = TypedBot<BookTags>;
 
 export type ChapterTags = StackDraggablePieceBotTags<"StackChapter">;
 
-export type ChapterBot = TypedBot<ChapterTags>;
+export interface ChapterMasks {
+  color?: string;
+}
+
+export type ChapterBot = TypedBot<ChapterTags, ChapterMasks>;
 
 export type VersesBundleTags = StackDraggablePieceBotTags<"VersesBundle">;
 
