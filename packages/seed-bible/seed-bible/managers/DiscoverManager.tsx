@@ -55,7 +55,7 @@ export interface DiscoverProviderResults {
 }
 
 export interface DiscoverManager {
-  registerDiscoverProvider: (provider: DiscoverProvider) => void;
+  registerDiscoverProvider: (provider: DiscoverProvider) => () => void;
   discover: (
     context: DiscoverContext
   ) => AsyncIterable<DiscoverProviderResults>;
@@ -65,13 +65,20 @@ export function createDiscoverManager(): DiscoverManager {
   const providers: DiscoverProvider[] = [];
 
   return {
-    registerDiscoverProvider(provider: DiscoverProvider): void {
+    registerDiscoverProvider(provider: DiscoverProvider): () => void {
       const existingIndex = providers.findIndex((p) => p.id === provider.id);
       if (existingIndex >= 0) {
         providers[existingIndex] = provider;
       } else {
         providers.push(provider);
       }
+
+      return () => {
+        const index = providers.findIndex((p) => p.id === provider.id);
+        if (index >= 0) {
+          providers.splice(index, 1);
+        }
+      };
     },
 
     async *discover(
