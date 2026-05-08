@@ -496,9 +496,7 @@ function renderChapterContent(
   onOpenFootnote: (noteId: number, verse: ChapterVerse | null) => void,
   highlights: ChapterHighlight[],
   decorations: VerseDecoration[],
-  discoveredCrossReferences: DiscoveredCrossReferences,
-  scriptureElements: ScriptureElementsBehavior,
-  onOpenCrossReference: (ref: DiscoverCrossReferenceResultWithBookData) => void
+  scriptureElements: ScriptureElementsBehavior
 ) {
   if (!chapterData) {
     return null;
@@ -656,10 +654,6 @@ function renderChapterContent(
         getVersePlainText(value.content),
         contentDecorations
       );
-      const verseCrossReferences = getVerseCrossReferences(
-        discoveredCrossReferences,
-        value.number
-      );
       let currentTextOffset = 0;
       const getPartTextStartIndex = (part: ChapterVerse["content"][0]) => {
         const startIndex = currentTextOffset;
@@ -684,26 +678,6 @@ function renderChapterContent(
         ...(highlightPresentation.style ?? {}),
         ...(decorationPresentation.style ?? {}),
       };
-      const verseCrossReferenceGroup =
-        verseCrossReferences.length > 0 ? (
-          <span className="sb-verse-cross-references" aria-hidden="true">
-            {verseCrossReferences.map((crossReference) => (
-              <a
-                key={crossReference.id}
-                href={crossReference.link}
-                className="sb-verse-cross-reference"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  const { ref } = crossReference;
-                  onOpenCrossReference(ref);
-                }}
-              >
-                {crossReference.label}
-              </a>
-            ))}
-          </span>
-        ) : null;
 
       if (hasPoetry) {
         return (
@@ -720,7 +694,6 @@ function renderChapterContent(
             role="button"
             tabIndex={0}
           >
-            {verseCrossReferenceGroup}
             {segments.map((segment, segIndex) => {
               if (segment.type === "inline") {
                 return (
@@ -801,7 +774,6 @@ function renderChapterContent(
           role="button"
           tabIndex={0}
         >
-          {verseCrossReferenceGroup}
           <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
             {scriptureElements.showVerseNumbers && (
               <sup className="sb-verse-number">{value.number}</sup>
@@ -847,10 +819,73 @@ function renderStaticChapterContent(
     () => {},
     [],
     [],
-    [],
-    scriptureElements,
-    () => {}
+    scriptureElements
   );
+}
+
+function renderCrossReferenceLayer(
+  chapterData: TranslationBookChapter | null,
+  discoveredCrossReferences: DiscoveredCrossReferences,
+  verseOffsets: Record<number, number>,
+  onOpenCrossReference: (ref: DiscoverCrossReferenceResultWithBookData) => void
+) {
+  if (!chapterData) {
+    return null;
+  }
+
+  const verseEntries = chapterData.chapter.content.filter(
+    (
+      entry
+    ): entry is Extract<
+      TranslationBookChapter["chapter"]["content"][number],
+      { type: "verse"; number: number; content: ChapterVerse["content"] }
+    > =>
+      !!entry &&
+      typeof entry === "object" &&
+      entry.type === "verse" &&
+      typeof entry.number === "number" &&
+      Array.isArray(entry.content)
+  );
+
+  return verseEntries.map((entry) => {
+    const top = verseOffsets[entry.number];
+    if (typeof top !== "number") {
+      return null;
+    }
+
+    const verseCrossReferences = getVerseCrossReferences(
+      discoveredCrossReferences,
+      entry.number
+    );
+    if (verseCrossReferences.length === 0) {
+      return null;
+    }
+
+    return (
+      <span
+        key={`cross-reference-${entry.number}`}
+        className="sb-verse-cross-references"
+        style={{ top: `${top}px` }}
+        aria-hidden="true"
+      >
+        <span className="sb-verse-cross-reference-number">v{entry.number}</span>
+        {verseCrossReferences.map((crossReference) => (
+          <a
+            key={crossReference.id}
+            href={crossReference.link}
+            className="sb-verse-cross-reference"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onOpenCrossReference(crossReference.ref);
+            }}
+          >
+            {crossReference.label}
+          </a>
+        ))}
+      </span>
+    );
+  });
 }
 
 export function BibleReader(props: BibleReaderProps) {
@@ -901,7 +936,9 @@ export function BibleReader(props: BibleReaderProps) {
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const currentPanelRef = useRef<HTMLDivElement | null>(null);
+  const chapterContentRef = useRef<HTMLDivElement | null>(null);
   const lastScrollTopRef = useRef(0);
+  const [verseOffsets, setVerseOffsets] = useState<Record<number, number>>({});
 
   const currentChapterValue = chapterData.value;
 
@@ -1138,6 +1175,75 @@ export function BibleReader(props: BibleReaderProps) {
     };
   }, [isMobile]);
 
+  useEffect(() => {
+    const chapterContent = chapterContentRef.current;
+    if (!chapterContent || !chapterData.value) {
+      setVerseOffsets({});
+      return;
+    }
+
+    let frameId = 0;
+
+    const measure = () => {
+      const nextOffsets: Record<number, number> = {};
+      const verseElements = chapterContent.querySelectorAll<HTMLElement>(
+        ".sb-verse[data-verse-number]"
+      );
+
+      for (const verseElement of verseElements) {
+        const verseNumber = Number(verseElement.dataset.verseNumber);
+        if (!Number.isFinite(verseNumber)) {
+          continue;
+        }
+
+        nextOffsets[verseNumber] = verseElement.offsetTop;
+      }
+
+      setVerseOffsets((previousOffsets) => {
+        const previousKeys = Object.keys(previousOffsets);
+        const nextKeys = Object.keys(nextOffsets);
+        if (previousKeys.length !== nextKeys.length) {
+          return nextOffsets;
+        }
+
+        for (const key of nextKeys) {
+          if (previousOffsets[Number(key)] !== nextOffsets[Number(key)]) {
+            return nextOffsets;
+          }
+        }
+
+        return previousOffsets;
+      });
+    };
+
+    const scheduleMeasure = () => {
+      window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(measure);
+    };
+
+    scheduleMeasure();
+
+    const resizeObserver = new ResizeObserver(() => {
+      scheduleMeasure();
+    });
+    resizeObserver.observe(chapterContent);
+    window.addEventListener("resize", scheduleMeasure);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", scheduleMeasure);
+    };
+  }, [
+    chapterData.value,
+    readingState.discoveredCrossReferences.value,
+    scriptureElements.showFootnotes,
+    scriptureElements.showHeadings,
+    scriptureElements.showHighlights,
+    scriptureElements.showRedLettering,
+    scriptureElements.showVerseNumbers,
+  ]);
+
   const renderMainContent = () => (
     <>
       {error.value && !loading.value && (
@@ -1145,7 +1251,23 @@ export function BibleReader(props: BibleReaderProps) {
       )}
 
       {!error.value && chapterData.value && (
-        <div className="sb-chapter-content">
+        <div ref={chapterContentRef} className="sb-chapter-content">
+          <div className="sb-chapter-cross-reference-layer">
+            {renderCrossReferenceLayer(
+              chapterData.value,
+              readingState.discoveredCrossReferences.value,
+              verseOffsets,
+              (ref) => {
+                readingState.selectChapter(
+                  ref.crossReference.book,
+                  ref.crossReference.chapter,
+                  {
+                    scrollToVerse: ref.crossReference.verse,
+                  }
+                );
+              }
+            )}
+          </div>
           {renderChapterContent(
             chapterData.value,
             (verse, event) => {
@@ -1157,17 +1279,7 @@ export function BibleReader(props: BibleReaderProps) {
             },
             highlights.value.highlights,
             decorations.value,
-            readingState.discoveredCrossReferences.value,
-            scriptureElements,
-            (ref) => {
-              readingState.selectChapter(
-                ref.crossReference.book,
-                ref.crossReference.chapter,
-                {
-                  scrollToVerse: ref.crossReference.verse,
-                }
-              );
-            }
+            scriptureElements
           )}
         </div>
       )}

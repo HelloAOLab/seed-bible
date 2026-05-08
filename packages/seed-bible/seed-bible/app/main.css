@@ -1114,6 +1114,7 @@ h6 {
 }
 
 .sb-chapter-content {
+  position: relative;
   line-height: var(--text-verse-line-height, 2);
   font-family: var(--sb-verse-font-family);
   font-size: 1.2em;
@@ -1153,7 +1154,6 @@ h6 {
 .sb-verse {
   /* color: var(--text-verse-color); */
   color: var(--sb-verse-font-color);
-  position: relative;
   font-family: var(--text-verse-font);
   font-weight: var(--text-verse-weight);
   font-style: var(--text-verse-font-style);
@@ -1172,21 +1172,32 @@ h6 {
     color 0.2s ease;
 }
 
+.sb-chapter-cross-reference-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
 .sb-verse-cross-references {
   position: absolute;
   inset-inline-end: calc(100% + 16px);
   top: 0;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  font-size: 0.72em;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 0.6em;
   line-height: 1.35;
   white-space: normal;
+  pointer-events: auto;
+  font-family: var(--sb-font-family);
+}
+
+.sb-verse-cross-reference-number {
+  font-weight: 600;
 }
 
 .sb-verse-cross-reference {
-  display: block;
-  text-align: end;
   font-family: var(--sb-font-family);
   color: color-mix(in srgb, var(--sb-verse-font-color), transparent 20%);
 }
