@@ -3,6 +3,7 @@ console.log("updated verse highlights", that);
 
 interface HighlightedVerse {
   book: string;
+  bookId: string;
   chapter: number;
   color: string;
   verseNumber: number;
@@ -11,7 +12,7 @@ interface HighlightedVerse {
 const sortByColorAndBook = (verses: HighlightedVerse[]) => {
   const sortedVerses: { [key: string]: number[] } = {};
   for (const verse of verses) {
-    const key = `${verse.color}-${verse.book}-${verse.chapter}`;
+    const key = `${verse.color}-${verse.bookId}-${verse.chapter}`;
     if (!sortedVerses[key]) {
       sortedVerses[key] = [];
     }

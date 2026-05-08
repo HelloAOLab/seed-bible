@@ -4,15 +4,27 @@ const style = thisBot.tags["App.css"];
 
 const { useState, useEffect } = os.appHooks;
 
+function getBooleanMaskValue(value: unknown, defaultValue: boolean) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return value.toLowerCase() === "true";
+  }
+
+  return defaultValue;
+}
+
 function App() {
   const [translationEnabled, setTranslationEnabled] = useState(
-    masks?.translationEnabled || true
+    getBooleanMaskValue(masks?.translationEnabled, true)
   );
   const [highlightEnabled, setHighlightEnabled] = useState(
-    masks?.highlightEnabled || true
+    getBooleanMaskValue(masks?.highlightEnabled, true)
   );
   const [chapterFollowEnabled, setChapterFollowEnabled] = useState(
-    masks?.chapterFollowEnabled || true
+    getBooleanMaskValue(masks?.chapterFollowEnabled, true)
   );
 
   useEffect(() => {
