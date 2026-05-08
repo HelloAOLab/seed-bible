@@ -32,12 +32,12 @@ import type {
 } from "seed-bible.managers.DiscoverManager";
 import { DEFAULT_LANGUAGE } from "seed-bible.i18n.I18nManager";
 
-interface DiscoverTypedProviderResults<TResult> {
+export interface DiscoverTypedProviderResults<TResult> {
   providerId: string;
   results: TResult[];
 }
 
-type DiscoverReferenceWithBookData = DiscoverReference & {
+export type DiscoverReferenceWithBookData = DiscoverReference & {
   bookData: TranslationBook;
 };
 
@@ -48,7 +48,7 @@ type DiscoverContentResultWithBookData = Omit<
   reference: DiscoverReferenceWithBookData;
 };
 
-type DiscoverCrossReferenceResultWithBookData = Omit<
+export type DiscoverCrossReferenceResultWithBookData = Omit<
   DiscoverCrossReferenceResult,
   "reference" | "crossReference"
 > & {
