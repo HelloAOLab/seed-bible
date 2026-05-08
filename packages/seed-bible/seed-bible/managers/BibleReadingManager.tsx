@@ -3,6 +3,7 @@ import {
   type ChapterFootnote,
   type ChapterVerse,
   type Translation,
+  type TranslationBook,
   type TranslationBookChapter,
   type TranslationBooks,
 } from "seed-bible.managers.FreeUseBibleAPI";
@@ -26,6 +27,7 @@ import type {
   DiscoverContentResult,
   DiscoverCrossReferenceResult,
   DiscoverManager,
+  DiscoverReference,
   DiscoverStudyNoteResult,
 } from "seed-bible.managers.DiscoverManager";
 import { DEFAULT_LANGUAGE } from "seed-bible.i18n.I18nManager";
@@ -34,6 +36,32 @@ interface DiscoverTypedProviderResults<TResult> {
   providerId: string;
   results: TResult[];
 }
+
+type DiscoverReferenceWithBookData = DiscoverReference & {
+  bookData: TranslationBook;
+};
+
+type DiscoverContentResultWithBookData = Omit<
+  DiscoverContentResult,
+  "reference"
+> & {
+  reference: DiscoverReferenceWithBookData;
+};
+
+type DiscoverCrossReferenceResultWithBookData = Omit<
+  DiscoverCrossReferenceResult,
+  "reference" | "crossReference"
+> & {
+  reference: DiscoverReferenceWithBookData;
+  crossReference: DiscoverReferenceWithBookData;
+};
+
+type DiscoverStudyNoteResultWithBookData = Omit<
+  DiscoverStudyNoteResult,
+  "reference"
+> & {
+  reference: DiscoverReferenceWithBookData;
+};
 
 export interface BibleSelectedVerse {
   /** Book identifier (for example: GEN, MAT). */
@@ -243,15 +271,15 @@ export interface BibleReadingState {
   loadNextChapter: () => Promise<void>;
   /** Streaming discovered cross references for the current chapter, grouped by provider. */
   discoveredCrossReferences: ReadonlySignal<
-    DiscoverTypedProviderResults<DiscoverCrossReferenceResult>[]
+    DiscoverTypedProviderResults<DiscoverCrossReferenceResultWithBookData>[]
   >;
   /** Streaming discovered content for the current chapter, grouped by provider. */
   discoveredContent: ReadonlySignal<
-    DiscoverTypedProviderResults<DiscoverContentResult>[]
+    DiscoverTypedProviderResults<DiscoverContentResultWithBookData>[]
   >;
   /** Streaming discovered study notes for the current chapter, grouped by provider. */
   discoveredStudyNotes: ReadonlySignal<
-    DiscoverTypedProviderResults<DiscoverStudyNoteResult>[]
+    DiscoverTypedProviderResults<DiscoverStudyNoteResultWithBookData>[]
   >;
 }
 
@@ -1061,25 +1089,20 @@ export function createBibleReadingState(
   };
 
   const discoveredCrossReferences = signal<
-    DiscoverTypedProviderResults<DiscoverCrossReferenceResult>[]
+    DiscoverTypedProviderResults<DiscoverCrossReferenceResultWithBookData>[]
   >([]);
   const discoveredContent = signal<
-    DiscoverTypedProviderResults<DiscoverContentResult>[]
+    DiscoverTypedProviderResults<DiscoverContentResultWithBookData>[]
   >([]);
   const discoveredStudyNotes = signal<
-    DiscoverTypedProviderResults<DiscoverStudyNoteResult>[]
+    DiscoverTypedProviderResults<DiscoverStudyNoteResultWithBookData>[]
   >([]);
 
   if (discoverManager) {
     let discoverGeneration = 0;
 
     const hasMatchingReference = (
-      result: {
-        reference: {
-          book: string;
-          chapter: number;
-        };
-      },
+      result: { reference: DiscoverReference },
       currentBookId: string,
       currentChapterNumber: number
     ) => {
@@ -1087,6 +1110,16 @@ export function createBibleReadingState(
         result.reference.book === currentBookId &&
         result.reference.chapter === currentChapterNumber
       );
+    };
+
+    const withBookData = (
+      reference: DiscoverReference,
+      bookData: TranslationBook
+    ): DiscoverReferenceWithBookData => {
+      return {
+        ...reference,
+        bookData,
+      };
     };
 
     effect(() => {
@@ -1109,6 +1142,7 @@ export function createBibleReadingState(
         chapter: chapter.chapter.number,
         language: chapter.translation.language,
       };
+      const currentBookData = chapter.book;
 
       void (async () => {
         for await (const result of discoverManager.discover(context)) {
@@ -1127,7 +1161,14 @@ export function createBibleReadingState(
               ...discoveredCrossReferences.value,
               {
                 providerId: result.providerId,
-                results: crossReferenceResults,
+                results: crossReferenceResults.map((entry) => ({
+                  ...entry,
+                  reference: withBookData(entry.reference, currentBookData),
+                  crossReference: withBookData(
+                    entry.crossReference,
+                    currentBookData
+                  ),
+                })),
               },
             ];
           }
@@ -1140,7 +1181,10 @@ export function createBibleReadingState(
               ...discoveredContent.value,
               {
                 providerId: result.providerId,
-                results: contentResults,
+                results: contentResults.map((entry) => ({
+                  ...entry,
+                  reference: withBookData(entry.reference, currentBookData),
+                })),
               },
             ];
           }
@@ -1154,7 +1198,10 @@ export function createBibleReadingState(
               ...discoveredStudyNotes.value,
               {
                 providerId: result.providerId,
-                results: studyNoteResults,
+                results: studyNoteResults.map((entry) => ({
+                  ...entry,
+                  reference: withBookData(entry.reference, currentBookData),
+                })),
               },
             ];
           }
