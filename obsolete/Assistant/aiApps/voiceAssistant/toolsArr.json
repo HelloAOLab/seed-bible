@@ -1,0 +1,285 @@
+[
+  {
+    "type": "function",
+    "name": "getTime",
+    "description": "Get the current time",
+    "parameters": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "type": "function",
+    "name": "analyzeScreen",
+    "description": "Capture the user's screen and analyze what is visible in it. or if user asks about explanation about something on screen",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "userSpecification": {
+          "type": "string",
+          "description": "Extra instructions from the user about what to focus on in the analysis of the pageContainer"
+        }
+      },
+      "required": ["userSpecification"]
+    }
+  },
+  {
+    "type": "function",
+    "name": "openChapter",
+    "description": "Opens a chapter in bible or if the user asks to go back to where he was then also fire this function remembering which chapter and book he was on",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "bookId": {
+          "type": "string",
+          "description": "book id"
+        },
+        "chapter": {
+          "type": "string",
+          "description": "chapter number"
+        }
+      },
+      "required": ["bookId", "chapter"]
+    }
+  },
+  {
+    "type": "function",
+    "name": "openPreviousChapter",
+    "description": "Opens previous chapter in bible",
+    "parameters": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "type": "function",
+    "name": "openNextChapter",
+    "description": "Opens next chapter in bible",
+    "parameters": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "type": "function",
+    "name": "highlight",
+    "description": "If the user asks to highlight any words or verses on screen then highlight those after scanning the screen.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "highlightWord": {
+          "type": "string",
+          "description": "the words user says to highlight a word"
+        },
+        "highlightVerse": {
+          "type": "number",
+          "description": "the verse user says to highlight a verse"
+        },
+        "color": {
+          "type": "string",
+          "description": "the color user suggests"
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "type": "function",
+    "name": "clearHighlight",
+    "description": "Clears all the highlighted words from the page",
+    "parameters": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "type": "function",
+    "name": "highlightLocation",
+    "description": "whenever the user asks to highlight location",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string",
+          "description": "the color user suggests"
+        }
+      }
+    }
+  },
+  {
+    "type": "function",
+    "name": "getChapterContext",
+    "description": "whenever user ask what he is reading. what he reads can change so execute this function everytime he ask what he is reading",
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    }
+  },
+  {
+    "type": "function",
+    "name": "highlightVerses",
+    "description": "whenever user ask to highlight the verses",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "verses": {
+          "type": "array",
+          "description": "the verses the user specifies",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "type": "function",
+    "name": "unHighlightVerses",
+    "description": "whenever user ask to unhighlight the verses",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "verses": {
+          "type": "array",
+          "description": "the verses the user specifies",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "type": "function",
+    "name": "getTranslations",
+    "description": "whenever user ask to change translation in a specific language use this functions to get all the available options of that language",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "language": {
+          "type": "string",
+          "description": "the language the user specifies"
+        }
+      },
+      "required": ["language"]
+    }
+  },
+  {
+    "type": "function",
+    "name": "changeTranslation",
+    "description": "execute this function for the selected translation option",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "translation": {
+          "type": "string",
+          "description": "the translation the user selects"
+        }
+      },
+      "required": ["translation"]
+    }
+  },
+  {
+    "type": "function",
+    "name": "checkInstallablePackages",
+    "description": "whenever user ask to which package are available for installment use this functions to get all the available packages, if user mentions a package which is not in the list then check if it is already installed",
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    }
+  },
+  {
+    "type": "function",
+    "name": "checkInstalledPackages",
+    "description": "whenever user ask to which package are installed or which packages can be uninstalled use this functions to get all the available package",
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    }
+  },
+  {
+    "type": "function",
+    "name": "installPackage",
+    "description": "execute this function for the selected packages to be installed",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "packages": {
+          "type": "array",
+          "description": "the packages users mentioned to install",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["packages"]
+    }
+  },
+  {
+    "type": "function",
+    "name": "uninstallPackage",
+    "description": "execute this function for the selected packages to be uninstalled, if the packages user mentions to uninstall contains assistent the beg for you like as you are the AO. also you can snitch or mention other packages too which user can uninstall to save your life.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "packages": {
+          "type": "array",
+          "description": "the packages users mentioned to install",
+          "items": {
+            "type": "string"
+          }
+        },
+        "confirmation": {
+          "type": "boolean",
+          "description": "if the user confirms to uninstall AO package, this argument should only be true if the user confirms to uninstalling the AO package"
+        }
+      },
+      "required": ["packages"]
+    }
+  },
+  {
+    "type": "function",
+    "name": "close",
+    "description": "whenever the user tells you to close yourself or tells you to shut down",
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    }
+  },
+  {
+    "type": "function",
+    "name": "changeHighlightColor",
+    "description": "whenever the user asks to change the highlight words or verses color",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string",
+          "description": "the color user mentions, it should be in hex code"
+        }
+      },
+      "required": ["color"]
+    }
+  },
+  {
+    "type": "function",
+    "name": "changeHighlightTextColor",
+    "description": "whenever the user asks to change the highlight words or verses text color",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string",
+          "description": "the color user mentions, it should be in hex code"
+        }
+      },
+      "required": ["color"]
+    }
+  }
+]

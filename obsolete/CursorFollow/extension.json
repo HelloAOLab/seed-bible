@@ -1,0 +1,25 @@
+{
+  "author": "Sujan",
+  "configEditor": {
+    "author": "Sujan"
+  },
+  "createdAt": "2025-09-01T11:48:54.297Z",
+  "dependencies": [],
+  "description": "Makes a cursor",
+  "id": 1756727334297,
+  "license": "MIT",
+  "linkedDependencies": [],
+  "mainBotTag": "ext_canvas.cursorFollow",
+  "name": "CursorFollow",
+  "otherBots": [],
+  "recordFile": {
+    "sha256Hash": "19ae7f5121d5be75617c78f84dd725e71e90ee6db8dfc8ae46dc868d7c6e10a8",
+    "success": true,
+    "url": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/19ae7f5121d5be75617c78f84dd725e71e90ee6db8dfc8ae46dc868d7c6e10a8.json"
+  },
+  "source": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/19ae7f5121d5be75617c78f84dd725e71e90ee6db8dfc8ae46dc868d7c6e10a8.json",
+  "status": "active",
+  "type": "package",
+  "userAuth": "ba0d275f-d720-40a8-bbd0-c3c9632fd6e9",
+  "version": "1.0.0"
+}

@@ -1,0 +1,90 @@
+.book-style {
+  height: 560px;
+  width: 300px;
+  display: grid;
+  align-content: end;
+  position: relative;
+  opacity: 1;
+  transform: rotateY(0);
+  padding: 12px 0;
+  border-radius: 16px;
+}
+
+.guess-select {
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  position: relative;
+}
+
+.book-style-container {
+  background-color: white;
+  border-radius: 16px;
+}
+
+.guess-select-controls {
+  width: 100%;
+  padding: 0 12px;
+  justify-content: space-between;
+  display: flex;
+}
+
+.guess-select-controls button {
+  font-size: 18px;
+  background-color: black !important;
+  color: white !important;
+}
+
+.book-style p {
+  font-size: 16px;
+  text-align: center;
+  color: black;
+  margin: 0;
+  opacity: 0;
+  padding-top: 8px;
+  animation: buttonShow 0.2s linear forwards;
+  text-shadow: 1px 2px 2px white;
+}
+
+.book-style p:first-of-type {
+  padding-top: 16px;
+}
+
+.book-style p:last-of-type {
+  padding-bottom: 2px;
+}
+
+.book-style-buttons {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 12px;
+  opacity: 0;
+  border-radius: 16px;
+  animation: buttonShow 0.2s linear forwards;
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+@keyframes bookShow {
+  0% {
+    opacity: 0;
+    transform: rotateY(0);
+  }
+  20% {
+    opacity: 1;
+    transform: rotateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: rotateY(360deg);
+  }
+}
+
+@keyframes buttonShow {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}

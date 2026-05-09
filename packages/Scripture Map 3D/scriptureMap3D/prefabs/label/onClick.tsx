@@ -1,1 +1,0 @@
-shout("OnLayoutBookLabelInteracted", {bookLabel: thisBot});

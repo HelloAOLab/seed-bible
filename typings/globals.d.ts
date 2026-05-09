@@ -4,6 +4,15 @@ declare global {
     [key: string]: any;
   }
 
+  type Bot = import("./AuxLibraryDefinitions").Bot;
+  type SharedDocument = import("./AuxLibraryDefinitions").SharedDocument;
+  type SharedArray<T> = import("./AuxLibraryDefinitions").SharedArray<T>;
+  type SharedMap<T> = import("./AuxLibraryDefinitions").SharedMap<T>;
+  type ConnectionInfo = import("./AuxLibraryDefinitions").ConnectionInfo;
+  type FocusOnOptions = import("./AuxLibraryDefinitions").FocusOnOptions;
+  type BotTags = import("./AuxLibraryDefinitions").BotTags;
+  type StoredAux = import("./AuxLibraryDefinitions").StoredAux;
+
   // Your other specific globals (optional, for better intellisense)
   const that: any;
   const authBot: Bot;
@@ -11,36 +20,8 @@ declare global {
   const gridPortalBot: Bot;
   const mapPortalBot: Bot;
   const miniMapPortalBot: Bot;
-  const t: (key: string, options?: { [key: string]: any }) => string;
-  const ShowNotification: (options: {
-    message: string;
-    severity: "error" | "warning" | "info" | "success";
-    onUndoActions?: () => void;
-  }) => void;
-  const getPosition: () => { x: number; y: number };
-  const FormatRelativeTime: (dateTime: number | null | Date) => string;
-  const setPlaylistLocale: (playLists: any[], id: string) => void;
-  const setPlaylistsLocale: (playLists: any[]) => void;
-  const setCollectionsLocale: (collections: any[]) => void;
-  const PlaylistModeTypes: Record<string, string>;
-  const DataManager: {
-    playSound: (options: { data: string }) => Promise<void>;
-    cancelCurrentPlayingSound: () => void;
-    endVoiceRecord: (options?: { setData?: (data: string) => void }) => void;
-    recordVoice: () => void;
-  };
-  const getPsalmsBookName: (chapter: number) => string;
-  const getSectionRanking: () => Record<string, any>;
-  const getPsalmsBookData: (chapter: number) => Record<string, any>;
-  const findNameRank: (
-    bookName: string,
-    returnRanks?: boolean,
-    isFindByRank?: boolean
-  ) => Record<string, any>;
-  const CheckMultiFuntionHold: () => boolean;
-  const EmitData: (functionName: string, data: any) => void;
-  const DEV_ENV: boolean;
-  const PROD_ENV: boolean;
+
+  const posthog: any;
 }
 
 export const G = globalThis as unknown as Record<string, any>;

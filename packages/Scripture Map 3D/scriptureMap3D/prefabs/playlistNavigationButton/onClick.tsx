@@ -1,1 +1,0 @@
-shout("OnLayoutPlaylistNavigationButtonClicked", {button: thisBot})

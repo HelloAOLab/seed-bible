@@ -1,0 +1,280 @@
+{
+  "id": "example-extension",
+  "translations": {
+    "en": {
+      "title": "Example Extension",
+      "description": "An example extension for the Seed Bible Refresh project.",
+      "my-example-tool": "My Example Tool",
+      "my-verse-tool": "My Verse Tool",
+      "my-below-reader-tool": "My Below Reader Tool",
+      "open-grid-portal": "Open grid portal",
+      "open-map-portal": "Open map portal",
+      "item-1": "Item 1",
+      "item-2": "Item 2"
+    },
+    "es": {
+      "title": "Ejemplo de extensión",
+      "description": "Ejemplo de extensión para el proyecto Seed Bible Refresh.",
+      "my-example-tool": "Mi herramienta de ejemplo",
+      "my-verse-tool": "Mi herramienta de versos",
+      "my-below-reader-tool": "Mi herramienta de lectura inferior",
+      "open-grid-portal": "Portal de cuadrícula abierta",
+      "open-map-portal": "Abrir el portal del mapa",
+      "item-1": "Artículo 1",
+      "item-2": "Artículo 2"
+    },
+    "am": {
+      "title": "የምሳሌ ቅጥያ",
+      "description": "ለ Seed Bible Refresh ፕሮጀክት ምሳሌ ቅጥያ።",
+      "my-example-tool": "የምሳሌ መሳሪያዬ",
+      "my-verse-tool": "የእኔ የቃላት መሳሪያ",
+      "my-below-reader-tool": "የእኔ የታች አንባቢ መሳሪያ",
+      "open-grid-portal": "የፍርግርግ ፖርታልን ክፈት",
+      "open-map-portal": "የካርታ ፖርታልን ይክፈቱ",
+      "item-1": "ንጥል 1",
+      "item-2": "ንጥል 2"
+    },
+    "ar": {
+      "title": "مثال على الامتداد",
+      "description": "مثال على إضافة لمشروع تحديث الكتاب المقدس للبذور.",
+      "my-example-tool": "أداة المثال الخاصة بي",
+      "my-verse-tool": "أداة أبياتي الشعرية",
+      "my-below-reader-tool": "أداة القراءة الخاصة بي أدناه",
+      "open-grid-portal": "بوابة الشبكة المفتوحة",
+      "open-map-portal": "بوابة الخرائط المفتوحة",
+      "item-1": "البند 1",
+      "item-2": "البند 2"
+    },
+    "bn": {
+      "title": "উদাহরণ সম্প্রসারণ",
+      "description": "সীড বাইবেল রিফ্রেশ প্রোজেক্টের জন্য একটি উদাহরণ এক্সটেনশন।",
+      "my-example-tool": "আমার উদাহরণ টুল",
+      "my-verse-tool": "আমার শ্লোক সরঞ্জাম",
+      "my-below-reader-tool": "আমার নিচের রিডার টুল",
+      "open-grid-portal": "ওপেন গ্রিড পোর্টাল",
+      "open-map-portal": "মানচিত্র পোর্টাল খুলুন",
+      "item-1": "আইটেম ১",
+      "item-2": "আইটেম ২"
+    },
+    "fa": {
+      "title": "مثال افزونه",
+      "description": "یک افزونه‌ی نمونه برای پروژه‌ی Seed Bible Refresh.",
+      "my-example-tool": "ابزار نمونه من",
+      "my-verse-tool": "ابزار شعر من",
+      "my-below-reader-tool": "ابزار خواننده من در زیر",
+      "open-grid-portal": "پورتال شبکه باز",
+      "open-map-portal": "پورتال نقشه را باز کنید",
+      "item-1": "مورد ۱",
+      "item-2": "مورد ۲"
+    },
+    "fr": {
+      "title": "Exemple d&#39;extension",
+      "description": "Un exemple d&#39;extension pour le projet Seed Bible Refresh.",
+      "my-example-tool": "Mon outil d&#39;exemple",
+      "my-verse-tool": "Mon outil de poésie",
+      "my-below-reader-tool": "Mon outil de lecture ci-dessous",
+      "open-grid-portal": "Portail Open Grid",
+      "open-map-portal": "Portail de carte ouverte",
+      "item-1": "Article 1",
+      "item-2": "Article 2"
+    },
+    "hi": {
+      "title": "उदाहरण विस्तार",
+      "description": "सीड बाइबल रिफ्रेश प्रोजेक्ट के लिए एक उदाहरण एक्सटेंशन।",
+      "my-example-tool": "मेरा उदाहरण उपकरण",
+      "my-verse-tool": "मेरा छंद उपकरण",
+      "my-below-reader-tool": "मेरा नीचे दिया गया रीडर टूल",
+      "open-grid-portal": "ओपन ग्रिड पोर्टल",
+      "open-map-portal": "मानचित्र पोर्टल खोलें",
+      "item-1": "वस्तु 1",
+      "item-2": "आइटम 2"
+    },
+    "id": {
+      "title": "Contoh Perluasan",
+      "description": "Contoh ekstensi untuk proyek Seed Bible Refresh.",
+      "my-example-tool": "Alat Contoh Saya",
+      "my-verse-tool": "Alat Ayatku",
+      "my-below-reader-tool": "Alat Pembaca Saya di Bawah Ini",
+      "open-grid-portal": "Portal jaringan terbuka",
+      "open-map-portal": "Buka portal peta",
+      "item-1": "Item 1",
+      "item-2": "Item 2"
+    },
+    "ja": {
+      "title": "拡張機能の例",
+      "description": "Seed Bible Refreshプロジェクトの拡張機能の一例。",
+      "my-example-tool": "私のサンプルツール",
+      "my-verse-tool": "私の詩ツール",
+      "my-below-reader-tool": "私の下のリーダーツール",
+      "open-grid-portal": "オープングリッドポータル",
+      "open-map-portal": "マップポータルを開く",
+      "item-1": "項目1",
+      "item-2": "項目2"
+    },
+    "ko": {
+      "title": "예제 확장",
+      "description": "Seed Bible Refresh 프로젝트를 위한 확장 프로그램 예시입니다.",
+      "my-example-tool": "내 예시 도구",
+      "my-verse-tool": "나의 시 도구",
+      "my-below-reader-tool": "아래 리더 도구",
+      "open-grid-portal": "오픈 그리드 포털",
+      "open-map-portal": "지도 포털 열기",
+      "item-1": "항목 1",
+      "item-2": "항목 2"
+    },
+    "mn": {
+      "title": "Жишээ өргөтгөл",
+      "description": "Үрийн Библийн шинэчлэлтийн төслийн жишээ өргөтгөл.",
+      "my-example-tool": "Миний жишээ хэрэгсэл",
+      "my-verse-tool": "Миний шүлгийн хэрэгсэл",
+      "my-below-reader-tool": "Миний Доорх Уншигчийн Хэрэгсэл",
+      "open-grid-portal": "Нээлттэй сүлжээний портал",
+      "open-map-portal": "Нээлттэй газрын зургийн портал",
+      "item-1": "1-р зүйл",
+      "item-2": "Зүйл 2"
+    },
+    "ne": {
+      "title": "उदाहरण विस्तार",
+      "description": "सिड बाइबल रिफ्रेस परियोजनाको लागि एउटा उदाहरण विस्तार।",
+      "my-example-tool": "मेरो उदाहरण उपकरण",
+      "my-verse-tool": "मेरो पद उपकरण",
+      "my-below-reader-tool": "मेरो तलको पाठक उपकरण",
+      "open-grid-portal": "ग्रिड पोर्टल खोल्नुहोस्",
+      "open-map-portal": "नक्सा पोर्टल खोल्नुहोस्",
+      "item-1": "वस्तु १",
+      "item-2": "वस्तु २"
+    },
+    "ps": {
+      "title": "د مثال توسیع",
+      "description": "د سیډ بائبل ریفریش پروژې لپاره د توسیع یوه بیلګه.",
+      "my-example-tool": "زما د نمونې وسیله",
+      "my-verse-tool": "زما د شعر وسیله",
+      "my-below-reader-tool": "زما د لاندې لوستونکي وسیله",
+      "open-grid-portal": "د گرډ پورټل خلاص کړئ",
+      "open-map-portal": "د نقشې پورټل پرانیزئ",
+      "item-1": "توکي ۱",
+      "item-2": "دوهمه برخه"
+    },
+    "pt": {
+      "title": "Exemplo de extensão",
+      "description": "Um exemplo de extensão para o projeto Seed Bible Refresh.",
+      "my-example-tool": "Minha Ferramenta de Exemplo",
+      "my-verse-tool": "Minha Ferramenta de Versos",
+      "my-below-reader-tool": "Minha ferramenta de leitura abaixo",
+      "open-grid-portal": "Portal de grade aberta",
+      "open-map-portal": "Abrir portal do mapa",
+      "item-1": "Item 1",
+      "item-2": "Item 2"
+    },
+    "ru": {
+      "title": "Пример расширения",
+      "description": "Пример расширения для проекта Seed Bible Refresh.",
+      "my-example-tool": "Мой пример инструмента",
+      "my-verse-tool": "Мой инструмент для стихов",
+      "my-below-reader-tool": "Мой инструмент для чтения ниже",
+      "open-grid-portal": "Портал открытой сетки",
+      "open-map-portal": "Открыть картографический портал",
+      "item-1": "Пункт 1",
+      "item-2": "Пункт 2"
+    },
+    "sw": {
+      "title": "Mfano wa Upanuzi",
+      "description": "Mfano wa nyongeza kwa mradi wa Seed Bible Refresh.",
+      "my-example-tool": "Zana Yangu ya Mfano",
+      "my-verse-tool": "Zana Yangu ya Mstari",
+      "my-below-reader-tool": "Zana Yangu ya Kusoma Chini",
+      "open-grid-portal": "Lango la gridi wazi",
+      "open-map-portal": "Fungua lango la ramani",
+      "item-1": "Kipengee 1",
+      "item-2": "Kipengee cha 2"
+    },
+    "ti": {
+      "title": "ኣብነት ኤክስቴንሽን",
+      "description": "ኣብነት መቐጸልታ ናይ ዘርኢ መጽሓፍ ቅዱስ ምሕዳስ ፕሮጀክት።",
+      "my-example-tool": "ናተይ ኣብነት መሳርሒ",
+      "my-verse-tool": "መሳርሒ ጥቕሰይ",
+      "my-below-reader-tool": "ኣብ ታሕቲ ዘሎ ኣንባቢ መሳርሒይ",
+      "open-grid-portal": "ፖርታል ሽቦ ክፈት",
+      "open-map-portal": "ፖርታል ካርታ ክፈት",
+      "item-1": "ነጥቢ 1",
+      "item-2": "ነጥቢ 2"
+    },
+    "tr": {
+      "title": "Örnek Uzantı",
+      "description": "Seed Bible Refresh projesi için örnek bir eklenti.",
+      "my-example-tool": "Örnek Aracım",
+      "my-verse-tool": "Şiir Aracım",
+      "my-below-reader-tool": "Aşağıdaki Okuyucu Aracım",
+      "open-grid-portal": "Açık şebeke portalı",
+      "open-map-portal": "Harita portalını açın",
+      "item-1": "Madde 1",
+      "item-2": "Madde 2"
+    },
+    "ug": {
+      "title": "مىسال كېڭەيتىلمىسى",
+      "description": "ئۇرۇق مۇقەددەس كىتابىنى يېڭىلاش تۈرىنىڭ ئۈلگە كېڭەيتىلمىسى.",
+      "my-example-tool": "مېنىڭ ئۈلگە قورالىم",
+      "my-verse-tool": "مېنىڭ شېئىر قورالىم",
+      "my-below-reader-tool": "مېنىڭ تۆۋەندىكى ئوقۇش قورالىم",
+      "open-grid-portal": "ئوچۇق تور پورتالى",
+      "open-map-portal": "ئېچىق خەرىتە پورتالى",
+      "item-1": "1-تۈر",
+      "item-2": "2-تۈر"
+    },
+    "uk": {
+      "title": "Приклад розширення",
+      "description": "Приклад розширення для проєкту Seed Bible Refresh.",
+      "my-example-tool": "Мій приклад інструменту",
+      "my-verse-tool": "Мій інструмент для віршів",
+      "my-below-reader-tool": "Мій інструмент для читання нижче",
+      "open-grid-portal": "Відкритий мережевий портал",
+      "open-map-portal": "Відкрити портал карти",
+      "item-1": "Пункт 1",
+      "item-2": "Пункт 2"
+    },
+    "ur": {
+      "title": "ایکسٹینشن کی مثال",
+      "description": "سیڈ بائبل ریفریش پروجیکٹ کے لیے ایک مثال کی توسیع۔",
+      "my-example-tool": "میری مثال کا آلہ",
+      "my-verse-tool": "میری آیت کا آلہ",
+      "my-below-reader-tool": "میرا نیچے ریڈر ٹول",
+      "open-grid-portal": "گرڈ پورٹل کھولیں۔",
+      "open-map-portal": "نقشہ کا پورٹل کھولیں۔",
+      "item-1": "آئٹم 1",
+      "item-2": "آئٹم 2"
+    },
+    "vi": {
+      "title": "Ví dụ về phần mở rộng",
+      "description": "Đây là một ví dụ về phần mở rộng cho dự án Seed Bible Refresh.",
+      "my-example-tool": "Công cụ ví dụ của tôi",
+      "my-verse-tool": "Công cụ thơ của tôi",
+      "my-below-reader-tool": "Công cụ đọc bên dưới của tôi",
+      "open-grid-portal": "Cổng lưới mở",
+      "open-map-portal": "Mở cổng bản đồ",
+      "item-1": "Mục 1",
+      "item-2": "Mục 2"
+    },
+    "zh": {
+      "title": "示例扩展",
+      "description": "Seed Bible Refresh 项目的一个扩展示例。",
+      "my-example-tool": "我的示例工具",
+      "my-verse-tool": "我的诗歌工具",
+      "my-below-reader-tool": "我的下方阅读工具",
+      "open-grid-portal": "开放网格门户",
+      "open-map-portal": "打开地图门户",
+      "item-1": "项目 1",
+      "item-2": "项目 2"
+    },
+    "ind": {
+      "title": "Contoh Perluasan",
+      "description": "Contoh ekstensi untuk proyek Seed Bible Refresh.",
+      "my-example-tool": "Alat Contoh Saya",
+      "my-verse-tool": "Alat Ayatku",
+      "my-below-reader-tool": "Alat Pembaca Saya di Bawah Ini",
+      "open-grid-portal": "Portal jaringan terbuka",
+      "open-map-portal": "Buka portal peta",
+      "item-1": "Item 1",
+      "item-2": "Item 2"
+    }
+  }
+}

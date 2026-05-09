@@ -12,10 +12,10 @@ import {
   getPrimarySim,
   execScript,
   getPackageData,
-  loadSeedBible,
   DEFAULT_EXTENSIONS,
   loadAoBot,
   initPage,
+  loadSeedBible,
 } from "./lib/browser.js";
 import { rmdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -35,10 +35,14 @@ const defaultCollaborative = procHasFlag(KnownFlags.Collaborative);
 const aoBot = procHasFlag(KnownFlags.AoBot);
 const startWithDevtools = procHasFlag(KnownFlags.DevTools);
 
+const lang =
+  process.argv.find((arg) => arg.startsWith("--lang="))?.split("=")[1] ?? "en";
+
 const browser = await puppeteer.launch({
   headless: false,
   defaultViewport: null,
   devtools: startWithDevtools,
+  args: ["--lang=" + lang],
 });
 
 let lastInst: string;

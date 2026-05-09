@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createRecordsClient } from "@casual-simulation/aux-records/RecordsClient";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -22,7 +23,7 @@ export async function downloadPattern(
 ): Promise<StoredAux | null> {
   const client = createRecordsClient("https://api.ao.bot");
 
-  const result = await client.getData(
+  const result: any = await client.getData(
     {
       recordName,
       address: name,
@@ -188,7 +189,7 @@ export async function uploadPattern(
     }
   }
 
-  const eggDataResult = await client.getData(
+  const eggDataResult: any = await client.getData(
     {
       recordName: rName,
       address: name,
@@ -227,7 +228,7 @@ export async function uploadPattern(
   eggData.label = `v${eggData.maxVersion}`;
 
   console.log(`Recording pattern (v${eggData.maxVersion})...`);
-  const recordDataResult = await client.recordData(
+  const recordDataResult: any = await client.recordData(
     {
       recordKey: rName,
       address: name,

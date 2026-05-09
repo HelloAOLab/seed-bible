@@ -1,0 +1,59 @@
+{
+  "bots": [
+    {
+      "botTag": "bibleVizUtils.classes",
+      "notes": "bibleVizUtils.classes"
+    },
+    {
+      "botTag": "bibleVizUtils.data",
+      "notes": "bibleVizUtils.data"
+    },
+    {
+      "botTag": "bibleVizUtils.functions",
+      "notes": "bibleVizUtils.functions"
+    },
+    {
+      "botTag": "bibleVizUtils.main",
+      "notes": "bibleVizUtils.main"
+    },
+    {
+      "botTag": "bibleVizUtils.prefabs.activityNotification",
+      "notes": "bibleVizUtils.prefabs.activityNotification"
+    },
+    {
+      "botTag": "bibleVizUtils.prefabs.infoLabel",
+      "notes": "bibleVizUtils.prefabs.infoLabel"
+    },
+    {
+      "botTag": "bibleVizUtils.prefabs.infoLabelDate",
+      "notes": "bibleVizUtils.prefabs.infoLabelDate"
+    },
+    {
+      "botTag": "bibleVizUtils.prefabs.infoLabelTail",
+      "notes": "bibleVizUtils.prefabs.infoLabelTail"
+    },
+    {
+      "botTag": "bibleVizUtils.prefabs.infoLabelTransformer",
+      "notes": "bibleVizUtils.prefabs.infoLabelTransformer"
+    },
+    {
+      "botTag": "bibleVizUtils.prefabs.userColor",
+      "notes": "bibleVizUtils.prefabs.userColor"
+    }
+  ],
+  "createdAt": "2025-08-31T18:34:23.918Z",
+  "description": "Includes common data, functions, prefabs and modules used by systems like the Stack, ScriptureMap2D and scriptureMap3D.",
+  "id": 1756665263918,
+  "name": "Bible Visualization Utils",
+  "recordFile": {
+    "sha256Hash": "1b7d3c49c8e1fed4f614c6a42c25abd89a1f0d66c000379652b12eba779873ea",
+    "success": true,
+    "url": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/1b7d3c49c8e1fed4f614c6a42c25abd89a1f0d66c000379652b12eba779873ea.json"
+  },
+  "source": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/1b7d3c49c8e1fed4f614c6a42c25abd89a1f0d66c000379652b12eba779873ea.json",
+  "status": "active",
+  "type": "dependency",
+  "updatedAt": "2025-09-23T06:24:05.825Z",
+  "userAuth": "2225616f-cc40-4129-89a6-b8448743687b",
+  "version": "1.0.344"
+}

@@ -1,1 +1,0 @@
-thisBot.tags.isSettingsPiece = null;

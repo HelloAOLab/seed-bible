@@ -1,0 +1,132 @@
+{
+  "id": "ext_locations",
+  "translations": {
+    "en": {
+      "title": "Locations",
+      "description": "An extension that adds locations and maps to the Seed Bible.",
+      "show-location-place": "Show {{place}} on map"
+    },
+    "am": {
+      "title": "አካባቢዎች",
+      "description": "በዘይድ መጽሐፍ ቅዱስ ላይ ቦታዎችን እና ካርታዎችን የሚያክል ቅጥያ።",
+      "show-location-place": "በካርታ ላይ {{place}} አሳይ"
+    },
+    "ar": {
+      "title": "المواقع",
+      "description": "إضافة تُضيف مواقع وخرائط إلى كتاب البذور المقدس.",
+      "show-location-place": "عرض {{place}} على الخريطة"
+    },
+    "bn": {
+      "title": "অবস্থান",
+      "description": "একটি এক্সটেনশন যা সীড বাইবেলে অবস্থান ও মানচিত্র যোগ করে।",
+      "show-location-place": "মানচিত্রে {{place}} দেখান"
+    },
+    "es": {
+      "title": "Ubicaciones",
+      "description": "Una extensión que añade ubicaciones y mapas a la Biblia de las Semillas.",
+      "show-location-place": "Mostrar {{place}} en el mapa"
+    },
+    "fa": {
+      "title": "مکان‌ها",
+      "description": "افزونه‌ای که مکان‌ها و نقشه‌ها را به Seed Bible اضافه می‌کند.",
+      "show-location-place": "نمایش {{place}} روی نقشه"
+    },
+    "fr": {
+      "title": "Lieux",
+      "description": "Une extension qui ajoute des lieux et des cartes à la Seed Bible.",
+      "show-location-place": "Afficher {{place}} sur la carte"
+    },
+    "hi": {
+      "title": "स्थानों",
+      "description": "एक एक्सटेंशन जो सीड बाइबल में स्थान और मानचित्र जोड़ता है।",
+      "show-location-place": "मानचित्र पर {{place}} दिखाएँ"
+    },
+    "id": {
+      "title": "Lokasi",
+      "description": "Ekstensi yang menambahkan lokasi dan peta ke dalam Seed Bible.",
+      "show-location-place": "Tampilkan {{place}} di peta"
+    },
+    "ja": {
+      "title": "場所",
+      "description": "シードバイブルに場所と地図を追加する拡張機能。",
+      "show-location-place": "{{place}}地図上に表示"
+    },
+    "ko": {
+      "title": "위치",
+      "description": "씨앗 안내서에 위치 정보와 지도를 추가하는 확장 프로그램입니다.",
+      "show-location-place": "지도에서 {{place}} 보여주세요"
+    },
+    "mn": {
+      "title": "Байршил",
+      "description": "Үрийн Библид байршил болон газрын зургийг нэмдэг өргөтгөл.",
+      "show-location-place": "Газрын зураг дээр {{place}} г харуулах"
+    },
+    "ne": {
+      "title": "स्थानहरू",
+      "description": "सिड बाइबलमा स्थान र नक्सा थप्ने एक्सटेन्सन।",
+      "show-location-place": "नक्सामा {{place}} देखाउनुहोस्"
+    },
+    "ps": {
+      "title": "ځایونه",
+      "description": "یو توسیع چې د سیډ بائبل ته ځایونه او نقشې اضافه کوي.",
+      "show-location-place": "په نقشه کې {{place}} وښایاست"
+    },
+    "pt": {
+      "title": "Locais",
+      "description": "Uma extensão que adiciona locais e mapas à Bíblia Semente.",
+      "show-location-place": "Mostrar {{place}} no mapa"
+    },
+    "ru": {
+      "title": "Места расположения",
+      "description": "Расширение, добавляющее локации и карты в Seed Bible.",
+      "show-location-place": "Показать {{place}} на карте"
+    },
+    "sw": {
+      "title": "Maeneo",
+      "description": "Kiendelezi kinachoongeza maeneo na ramani kwenye Biblia ya Mbegu.",
+      "show-location-place": "Onyesha {{place}} kwenye ramani"
+    },
+    "ti": {
+      "title": "ቦታታት",
+      "description": "ኣብ መጽሓፍ ቅዱስ ዘርኢ ቦታታትን ካርታታትን ዝውስኽ መቐጸልታ።",
+      "show-location-place": "{{place}} ኣብ ካርታ ኣርእዩ"
+    },
+    "tr": {
+      "title": "Konumlar",
+      "description": "Seed Bible&#39;a konumlar ve haritalar ekleyen bir eklenti.",
+      "show-location-place": "{{place}} i haritada göster"
+    },
+    "ug": {
+      "title": "ئورۇنلار",
+      "description": "ئۇرۇق ئىنجىلغا ئورۇن ۋە خەرىتىلەرنى قوشىدىغان كېڭەيتىلمە.",
+      "show-location-place": "خەرىتىدە {{place}} نى كۆرسىتىش"
+    },
+    "uk": {
+      "title": "Місця розташування",
+      "description": "Розширення, яке додає місця та карти до Біблії Насінини.",
+      "show-location-place": "Показати {{place}} на карті"
+    },
+    "ur": {
+      "title": "مقامات",
+      "description": "ایک توسیع جو سیڈ بائبل میں مقامات اور نقشے شامل کرتی ہے۔",
+      "show-location-place": "نقشے پر {{place}} دکھائیں۔"
+    },
+    "vi": {
+      "title": "Địa điểm",
+      "description": "Một tiện ích mở rộng bổ sung địa điểm và bản đồ cho Seed Bible.",
+      "show-location-place": "Hiển thị {{place}} trên bản đồ"
+    },
+    "zh": {
+      "title": "地点",
+      "description": "为 Seed Bible 添加地点和地图的扩展程序。",
+      "show-location-place": "在地图上显示{{place}}"
+    },
+    "ind": {
+      "title": "Lokasi",
+      "description": "Ekstensi yang menambahkan lokasi dan peta ke dalam Seed Bible.",
+      "show-location-place": "Tampilkan {{place}} di peta"
+    }
+  },
+  "dependencies": ["ext_geoImporter"],
+  "autoinstall": true
+}

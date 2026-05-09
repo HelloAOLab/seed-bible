@@ -1,0 +1,1 @@
+// destroy(getBot("system", "tools.Erase"))

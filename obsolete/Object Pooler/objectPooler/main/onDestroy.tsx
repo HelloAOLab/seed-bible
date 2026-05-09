@@ -1,0 +1,1 @@
+globalThis.ObjectPooler = null;
