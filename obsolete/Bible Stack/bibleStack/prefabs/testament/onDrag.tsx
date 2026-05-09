@@ -1,8 +1,5 @@
-import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+import { thisTypedBot } from "bibleStack.prefabs.testament.botAdapter";
+import { testamentInteractionController } from "bibleStack.infrastructure.di.bootstrap";
 
-shout("OnStackTestamentInteracted", {
-  testament: thisBot,
-  typeOfInteraction: CanvasInteractions.Drag,
-  draggingEvent: that,
-});
+testamentInteractionController?.handleTestamentDrag(thisTypedBot);
 os.enableCustomDragging();

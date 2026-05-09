@@ -1,6 +1,6 @@
-import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+import { bibleStackEventManager } from "bibleStack.services.index";
+import { thisTypedBot } from "bibleStack.prefabs.chunkOfVerses.botAdapter";
 
-shout("OnStackChunkOfVersesInteracted", {
-  chunk: thisBot,
-  typeOfInteraction: CanvasInteractions.HoverEnd,
+bibleStackEventManager.emit("OnChunkOfVersesPointerExit", {
+  chunkOfVerses: thisTypedBot,
 });

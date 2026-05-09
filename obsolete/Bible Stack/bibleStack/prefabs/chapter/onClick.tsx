@@ -1,15 +1,13 @@
-import type { StackChapterData } from "@packages/Bible Visualization Utils/bibleVizUtils/models/entities/StackChapterData";
-import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+import { CanvasInteractions } from "bibleVizUtils.infrastructure.models.canvas";
+import { ClickModalities } from "bibleVizUtils.infrastructure.models.casualos";
+import { thisTypedBot } from "bibleStack.prefabs.chapter.botAdapter";
+import { chapterInteractionController } from "bibleStack.infrastructure.di.bootstrap";
 
-const chapterData = await (BibleStackManager.GetPieceData({
-  piece: thisBot,
-}) as Promise<StackChapterData | undefined>);
-
-if (!chapterData) {
-  throw new Error("onClick: chapterData not found.");
-}
-
-shout("OnStackChapterInteracted", {
-  chapterData,
-  typeOfInteraction: CanvasInteractions.Click,
+const { modality } = that;
+chapterInteractionController?.handleChapterClick({
+  chapter: thisTypedBot,
+  interaction:
+    modality === ClickModalities.touch
+      ? CanvasInteractions.Tap
+      : CanvasInteractions.Click,
 });

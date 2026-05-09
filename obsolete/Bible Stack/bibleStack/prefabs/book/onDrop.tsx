@@ -1,7 +1,7 @@
-import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+import { thisTypedBot } from "bibleStack.prefabs.book.botAdapter";
+import { bookInteractionController } from "bibleStack.infrastructure.di.bootstrap";
 
-shout("OnStackBookInteracted", {
-  book: thisBot,
-  typeOfInteraction: CanvasInteractions.Drop,
+bookInteractionController?.handleBookDrop({
+  book: thisTypedBot,
   dropEvent: that,
 });

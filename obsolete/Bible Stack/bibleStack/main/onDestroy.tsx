@@ -13,7 +13,7 @@ ObjectPooler.RemoveObjectPools({
     ObjectPoolTags.StackCover,
     ObjectPoolTags.StackCrossLine,
     ObjectPoolTags.StackBibleShadow,
-    ObjectPoolTags.StackChunkOfVerses,
-    ObjectPoolTags.StackVerse,
+    ObjectPoolTags.VersesBundle,
+    ObjectPoolTags.Verse,
   ],
 });

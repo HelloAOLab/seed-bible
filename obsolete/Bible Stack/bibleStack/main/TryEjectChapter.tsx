@@ -1,26 +1,27 @@
+import type { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
 import { scriptureService } from "bibleVizUtils.services.index";
 
 if (thisBot.masks.isBibleAnimating) return false;
 setTagMask(thisBot, "isBibleAnimating", true);
 const { bookName, chapterNumber } = that;
 const numberOfChapters = scriptureService.getBookChapterCount(bookName);
+const lastInteractedBookData = thisBot.vars.lastInteractedStackBookData as
+  | StackBookData
+  | undefined;
 if (chapterNumber < 1 || chapterNumber > numberOfChapters) return false;
 if (
-  thisBot.vars.lastInteractedStackBookData &&
-  thisBot.vars.lastInteractedStackBookData.pieceInfo.commonName === bookName &&
-  thisBot.vars.lastInteractedStackBookData.isActive &&
-  thisBot.CheckChapterAvailabilityInBook({
-    bookData: thisBot.vars.lastInteractedStackBookData,
-    chapterNumber,
-  })
+  lastInteractedBookData &&
+  lastInteractedBookData.pieceInfo.commonName === bookName &&
+  lastInteractedBookData.isActive &&
+  lastInteractedBookData.isChapterAvailable(chapterNumber)
 ) {
-  if (!thisBot.vars.lastInteractedStackBookData.isSelected)
+  if (!lastInteractedBookData.isSelected)
     await thisBot.SelectBook({
-      book: thisBot.vars.lastInteractedStackBookData.piece,
+      book: lastInteractedBookData.piece,
       setBibleAnimating: false,
     });
   await thisBot.EjectChapter({
-    bookData: thisBot.vars.lastInteractedStackBookData,
+    bookData: lastInteractedBookData,
     chapterNumber,
   });
 } else {
@@ -38,7 +39,7 @@ if (
     (!thisBot.vars.lastInteractedStackSectionData.isSplitIntoBooks ||
       (thisBot.vars.lastInteractedStackSectionData.isInExplodedView &&
         bookData.isActive)) &&
-    thisBot.CheckChapterAvailabilityInBook({ bookData, chapterNumber })
+    bookData.isChapterAvailable(chapterNumber)
   ) {
     if (!thisBot.vars.lastInteractedStackSectionData.isSplitIntoBooks)
       await thisBot.SelectSection({
