@@ -45,11 +45,16 @@ function NowBar() {
 
   // Global function to add apps to NowBar
   useEffect(() => {
-    globalThis.AddNowBarApp = (appComponent, appId = null) => {
+    globalThis.AddNowBarApp = (
+      appComponent,
+      appId = null,
+      transparent = false
+    ) => {
       const id = appId || Date.now() + Math.random();
       const newApp = {
         id,
         component: appComponent,
+        transparent,
       };
 
       setApps((prevApps) => {
@@ -242,6 +247,8 @@ function NowBar() {
     return null;
   }
 
+  const anyAppTransparent = apps.some((app) => app.transparent);
+
   return (
     <div
       style={{
@@ -253,7 +260,9 @@ function NowBar() {
         width: isFullWidth && isMobileSmall ? "96dvw" : `${dimensions.width}px`,
         transition: "all 0.3s linear",
         // Shall be min height not exact height
-        minHeight: `${dimensions.height + extraHeight}px`,
+        minHeight: anyAppTransparent
+          ? "auto"
+          : `${dimensions.height + extraHeight}px`,
         zIndex: "999999",
         // Ensure it doesn't overflow on very small screens
         display: "flex",
@@ -306,7 +315,7 @@ function NowBar() {
               width: "100%",
               height: "100%",
               borderRadius: dimensions.borderRadius,
-              boxShadow: shadowBlur,
+              boxShadow: app.transparent ? "none" : shadowBlur,
               cursor: isTopApp ? (isDragging ? "grabbing" : "grab") : "default",
               transform,
               opacity,
@@ -314,13 +323,15 @@ function NowBar() {
               transition: isDragging
                 ? "none"
                 : "transform 0.3s ease, opacity 0.3s ease",
-              overflow: "hidden",
+              overflow: app.transparent ? "visible" : "hidden",
               userSelect: "none",
               touchAction: "none",
               // Prevent text selection on mobile
               WebkitUserSelect: "none",
               WebkitTouchCallout: "none",
-              backgroundColor: "var(--pageBackground)",
+              backgroundColor: app.transparent
+                ? "transparent"
+                : "var(--pageBackground)",
             }}
           >
             {app.component}

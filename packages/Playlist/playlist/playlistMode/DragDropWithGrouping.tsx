@@ -688,7 +688,7 @@ const DragDrop = (props: any) => {
                     (data.type !== "heading" || allowHeadingCheck)
                   ) {
                     onClick({ dataItem: data, index });
-                    if (checklistEnabled) {
+                    if (checklistEnabled && !checkListData[data.id]) {
                       editDataFromPlaylist(data.id);
                     }
                   } else if (
@@ -725,7 +725,7 @@ const DragDrop = (props: any) => {
                   e.stopPropagation();
                 }}
               >
-                {((isTextType && !!toggleIsQuoteText) ||
+                {((isTextType && !!toggleIsQuoteText && !playingPlaylist) ||
                   (isTextType && isQuotedText && playingPlaylist)) && (
                   <p
                     className={`end-icon without-right-margin ${isQuotedText ? "active" : ""} ${`${
@@ -1072,7 +1072,7 @@ const PlaylistContentRenderer = (props: any) => {
             if (clickPass) {
               G.ADDING_TOPLAYLIST_TIMEOUT = null;
               onClick({ dataItem: itemToBeShared, bulkAdd: true, index });
-              if (checklistEnabled) {
+              if (checklistEnabled && !checkListData[data.id]) {
                 editDataFromPlaylist(allIds);
               }
             }
@@ -1370,7 +1370,7 @@ const PlaylistContentRenderer = (props: any) => {
                   }}
                   className="actions"
                 >
-                  {((isTextType && !!toggleIsQuoteText) ||
+                  {((isTextType && !!toggleIsQuoteText && !playingPlaylist) ||
                     (isTextType && isQuotedText && playingPlaylist)) && (
                     <p
                       className={`end-icon without-right-margin ${isQuotedText ? "active" : ""} ${`${

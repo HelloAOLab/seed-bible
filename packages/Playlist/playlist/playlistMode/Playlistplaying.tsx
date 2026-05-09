@@ -10,6 +10,8 @@ const {
 
 const G = globalThis as any;
 
+const AttachLink = await thisBot.AttachLink();
+
 if (skipAll) {
   os.unregisterApp("playing-playlist");
   os.registerApp("playing-playlist", thisBot);
@@ -317,6 +319,8 @@ if (!skipAll) {
 
 await thisBot.setupNowBarControlApp({ parentId: parentId });
 
+G.SetDontShowMobileBottomNavbar(true);
+
 const PlayingPlaylist = () => {
   const [render, setRender] = useState(0);
   const [renderPlaylist, setRenderPlaylist] = useState(0);
@@ -324,6 +328,8 @@ const PlayingPlaylist = () => {
   const [isPlaybarInherited, setIsPlaybarInherited] = useState(false);
   const [showSettingsOptions, setShowSettingsOptions] = useState(false);
   const showMorePosition = useRef(getPosition());
+
+  const [openAttachLink, setOpenAttachLink] = useState(false);
 
   const DragDropT = useMemo(() => {
     return G.DragDrop;
@@ -768,6 +774,26 @@ const PlayingPlaylist = () => {
     G[`${"default"}mode`] = PlaylistModeTypes.playlist;
   };
 
+  const isMobile =
+    (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
+    G.MOBILE_VIEWPORT_THRESHOLD;
+
+  const massAdd = (items: any) => {
+    G.SetQueue(items);
+  };
+
+  const attachLink = (title: string, link: string, linkState: any) => {
+    G.SetQueue({
+      content: title,
+      additionalInfo: {
+        link,
+        ...linkState,
+      },
+      type: linkState.type === "text" ? "heading" : "attachment-link",
+    });
+    setOpenAttachLink(false);
+  };
+
   return (
     <>
       <style>{thisBot.tags["RecordingVoiceUI.css"]}</style>
@@ -921,8 +947,8 @@ const PlayingPlaylist = () => {
                 <div
                   className="publish-setting"
                   style={{
-                    height: "16px",
-                    minWidth: "16px",
+                    height: "22px",
+                    minWidth: "22px",
                     padding: "0",
                     display: "grid",
                     placeItems: "center",
@@ -940,7 +966,7 @@ const PlayingPlaylist = () => {
                   }}
                 >
                   <img
-                    style={{ height: "14px", width: "14px" }}
+                    style={{ height: "18px", width: "18px" }}
                     className="img-icon"
                     src={G.Settings_Icon}
                     alt="Settings_Icon"
@@ -953,7 +979,7 @@ const PlayingPlaylist = () => {
                   border: "1px solid var(--secondaryColor)",
                   borderRadius: "3px",
                   color: "var(--secondaryColor)",
-                  fontSize: "12px",
+                  fontSize: "14px",
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -1021,6 +1047,67 @@ const PlayingPlaylist = () => {
                 </>
               );
             })}
+            {isMobile ? (
+              openAttachLink ? (
+                <AttachLink
+                  canClose
+                  canRecord={false}
+                  massAdd={massAdd}
+                  sSelectedType="SCRIPTURE"
+                  attachLink={attachLink}
+                  onClose={() => setOpenAttachLink(false)}
+                />
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    padding: "0 0.5rem",
+                    marginTop: "0.5rem",
+                  }}
+                  onClick={() => {
+                    if (G.RemotePlaylistPlayed) {
+                      return ShowNotification({
+                        message: t("onlyHostCanAddItemsToQueue"),
+                        severity: "error",
+                      });
+                    }
+                    setOpenAttachLink(true);
+                  }}
+                >
+                  <p
+                    style={{
+                      margin: "0",
+                      width: "26px",
+                      height: "26px",
+                      padding: "0",
+                      borderRadius: "6px",
+                      border: "0px solid var(--secondaryColor)",
+                      backgroundColor: "var(--sidebarShadow)",
+                    }}
+                    className="playlist-action small"
+                  >
+                    <span
+                      style={{ margin: "0", fontSize: "20px" }}
+                      class="material-symbols-outlined unfollow"
+                    >
+                      add
+                    </span>
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      fontFamily: "DM Sans",
+                      color: "var(--secondaryColor)",
+                    }}
+                  >
+                    {t("addToTheCurrentQueue")}
+                  </p>
+                </div>
+              )
+            ) : null}
             <div className="mobile-pseudogap-element playing-playlist" />
           </div>
         </div>

@@ -3,8 +3,15 @@ const parentId = that.parentID || "default";
 const force = that.force || false;
 const nowBarId = "player-playlist-bar";
 const PlayerControls = await thisBot.PlaylistPlayerControls();
+const isMobileSmall =
+  (window?.innerWidth || G.gridPortalBot.tags.pixelWidth) <
+  G.MOBILE_VIEWPORT_THRESHOLD;
 if (G.AddNowBarApp && (!G.IsQueuePresent || force)) {
-  G.AddNowBarApp(<PlayerControls parentId={parentId} />, nowBarId);
+  G.AddNowBarApp(
+    <PlayerControls parentId={parentId} />,
+    nowBarId,
+    isMobileSmall
+  );
   G.NowBarFullWidth = true;
   setTimeout(() => {
     G.SetIsFullWidth(true);

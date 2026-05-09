@@ -373,17 +373,12 @@ function SubComponent(props: any) {
             className="quoted-text-icon"
             onClick={() => setIsQuotedText(!isQuotedText)}
           >
-            <span
-              style={{
-                cursor: "pointer",
-                color: !isQuotedText
-                  ? "var(--verseTextColor)"
-                  : "var(--secondaryColor)",
-              }}
-              class="material-symbols-outlined"
+            <span>Show in popup</span>
+            <div
+              className={`settings-toggle ${isQuotedText ? "active" : ""} small`}
             >
-              home_max
-            </span>
+              <div className="settings-toggle-knob" />
+            </div>
           </div>
           {isQuotedText && (
             <p className="info-type">{t("quotedTextModalDisplayOn")}</p>

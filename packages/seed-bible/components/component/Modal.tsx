@@ -8,6 +8,7 @@ const Modal = (props: any) => {
     styles = {},
     backDropStyle = {},
     showIcon = true,
+    floatingButton = false,
   } = props;
   return (
     <>
@@ -18,18 +19,30 @@ const Modal = (props: any) => {
       />
       <div onClick={onClose} style={backDropStyle} className="backdrop" />
       <div className="modal-container" style={sxContainer}>
-        <div
-          className="modal-header"
-          style={{
-            border: title ? "1px solid #e1e3ea" : "none",
-            height: title ? "auto" : "50px",
-          }}
-        >
-          <h3>{title}</h3>
-          <span class="material-symbols-outlined close-modal" onClick={onClose}>
+        {floatingButton ? (
+          <span
+            class="material-symbols-outlined close-modal floating"
+            onClick={onClose}
+          >
             close
           </span>
-        </div>
+        ) : (
+          <div
+            className="modal-header"
+            style={{
+              border: title ? "1px solid #e1e3ea" : "none",
+              height: title ? "auto" : "50px",
+            }}
+          >
+            <h3>{title}</h3>
+            <span
+              class="material-symbols-outlined close-modal"
+              onClick={onClose}
+            >
+              close
+            </span>
+          </div>
+        )}
         <div
           className={`modal-inner-cont ${className}`}
           style={{ ...styles, overflow: "scroll" }}

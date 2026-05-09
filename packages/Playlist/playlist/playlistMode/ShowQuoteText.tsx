@@ -17,6 +17,7 @@ const ShowQuoteText = () => {
       <ConfirmationModal
         para={quoteText}
         isParaHTML
+        floatingButton
         noOnConfirm
         noOnClose
         noContPadding

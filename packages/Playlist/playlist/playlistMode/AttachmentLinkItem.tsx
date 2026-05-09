@@ -356,7 +356,7 @@ const AttachLinkItem = (props: any) => {
               G.ADDING_TOPLAYLIST_TIMEOUT = null;
               // thisBot.RenderLinkContent(data);
               onClick({ dataItem: data, index: originalIndex });
-              if (checklistEnabled) {
+              if (checklistEnabled && !checkListData[data.id]) {
                 editDataFromPlaylist(data.id);
               }
               // globalThis.SetCurreIndexPlaylist && globalThis.SetCurreIndexPlaylist(index, playListSubIndex);
@@ -365,7 +365,7 @@ const AttachLinkItem = (props: any) => {
             if (clickPass) {
               // thisBot.RenderLinkContent(data);
               onClick({ dataItem: data, index: originalIndex });
-              if (checklistEnabled) {
+              if (checklistEnabled && !checkListData[data.id]) {
                 editDataFromPlaylist(data.id);
               }
               // globalThis.SetCurreIndexPlaylist && globalThis.SetCurreIndexPlaylist(index, playListSubIndex);
@@ -425,6 +425,7 @@ const AttachLinkItem = (props: any) => {
               G.SetMediaURL(null);
               if (data.additionalInfo.type === "voice-recording") {
                 G.SetMediaURL(data.additionalInfo.link);
+                G.SetFileName && G.SetFileName(data.content);
                 return;
               }
             }
