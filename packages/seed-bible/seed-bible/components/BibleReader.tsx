@@ -15,6 +15,7 @@ import type { Pane } from "seed-bible.managers.PanesManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { MobileSettingsSheet } from "seed-bible.components.MobileSettingsSheet";
+import { InfoSettingsIcon } from "seed-bible.components.icons";
 
 const { useEffect, useRef, useState } = os.appHooks;
 
@@ -1080,7 +1081,7 @@ export function BibleReader(props: BibleReaderProps) {
               aria-label={t("settings", { defaultValue: "Settings" })}
               title={t("settings", { defaultValue: "Settings" })}
             >
-              <span className="material-symbols-outlined">tune</span>
+              <InfoSettingsIcon />
             </button>
           </div>
 
