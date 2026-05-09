@@ -1274,6 +1274,16 @@ try {
   };
 
   G.LINKS_TYPES = LINKS_TYPES;
+
+  G.GetTruncatedPlaylistLabel = (
+    item: { content?: string; prefix?: string } | null | undefined,
+    maxLength = 16
+  ) => {
+    const text = `${item?.content || ""}${item?.prefix || ""}`;
+    if (!text) return "";
+    if (text.length <= maxLength) return text;
+    return `${text.substring(0, maxLength)}...`;
+  };
 } catch (err) {
   console.log("Error in defineGlobal.tsx", err);
 }

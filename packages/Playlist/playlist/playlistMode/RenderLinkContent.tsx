@@ -35,6 +35,7 @@ G.RenderLinkTimer = setTimeout(async () => {
     const data = await web.get(that.additionalInfo.link);
     if (G.SetIncrementalCountPlayingPlaylist) {
       await G.SetIncrementalCountPlayingPlaylist(that.additionalInfo.link);
+      G.SetFileName && G.SetFileName(that.content);
     }
     await DataManager.playSound({ data: data.data });
     return;

@@ -203,6 +203,8 @@ html * {
   line-height: 100%;
   letter-spacing: 0%;
   margin-bottom: 1rem;
+  box-shadow: 0px 0px 4px 3px #0000000d;
+  border-radius: 6px;
 }
 
 .backdrop {
@@ -1573,6 +1575,10 @@ span.material-symbols-outlined.rotate-90 {
   cursor: pointer;
 }
 
+.settings-toggle.small {
+  zoom: 0.5;
+}
+
 .settings-toggle.active {
   background-color: var(--addButtonIcon);
 }
@@ -1616,6 +1622,12 @@ span.material-symbols-outlined.rotate-90 {
   position: absolute;
   right: 25px;
   top: 18px;
+  gap: 0.5rem;
+}
+
+.quoted-text-icon span {
+  font-size: 10px;
+  font-weight: 400;
 }
 
 .quoted-text-icon.alter {
@@ -1631,4 +1643,10 @@ span.material-symbols-outlined.rotate-90 {
 
 .quoted-text-icon.alter .material-symbols-outlined {
   font-size: 2rem;
+}
+
+@media screen and (max-width: 440px) {
+  .backdrop {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
 }

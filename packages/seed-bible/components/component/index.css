@@ -8,6 +8,12 @@
   background-color: rgba(0, 0, 0, 0.6);
 }
 
+@media screen and (max-width: 440px) {
+  .backdrop {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+}
+
 .modal-container {
   width: 400px;
   max-width: 98vw;
@@ -122,4 +128,45 @@ div.modal-inner-cont {
   padding: 28px 20px;
   color: var(--pageTextColor);
   background-color: var(--panelBackground);
+}
+
+.render-html-content *:not(.playlist-wrapper-sre, .playlist-wrapper-sre *),
+.render-html-content *:not(.playlist-wrapper-sre, .playlist-wrapper-sre *) {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Satoshi";
+  color: initial;
+  font-weight: initial;
+  display: initial;
+  justify-content: initial;
+  align-items: initial;
+  font-size: initial;
+  line-height: initial;
+  letter-spacing: initial;
+}
+
+.render-html-content strong {
+  font-weight: 700 !important;
+}
+
+.render-html-content em {
+  font-style: italic !important;
+}
+
+.render-html-content code {
+  font-family: "Monaco", monospace;
+  font-size: 12px;
+  background-color: var(--inputBackground);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.close-modal.floating {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  font-weight: 500;
+  cursor: pointer;
 }

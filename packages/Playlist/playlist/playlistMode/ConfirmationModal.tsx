@@ -3,7 +3,7 @@ const { Input, Modal, Button, ButtonsCover } = G.Components;
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
 
 const noPadding = {
-  padding: "0 1rem",
+  padding: "3.5rem",
 };
 
 const emptyObject = {};
@@ -23,6 +23,7 @@ const ConfirmationModal = (props: any) => {
     isParaHTML,
     closeCTA,
     noContPadding,
+    floatingButton,
   } = props;
 
   return (
@@ -30,9 +31,17 @@ const ConfirmationModal = (props: any) => {
       title={title}
       showIcon={false}
       onClose={() => onClose()}
+      floatingButton
       styles={{ ...(noContPadding ? noPadding : emptyObject) }}
     >
-      <p style={{ textAlign: "center", color: "var(--verseTextColor)" }}>
+      <p
+        style={{
+          textAlign: "center",
+          color: "var(--verseTextColor)",
+          margin: "0",
+          padding: "0",
+        }}
+      >
         {isParaHTML ? <RenderHTMLContent htmlContent={para} /> : para}
       </p>
       {children}

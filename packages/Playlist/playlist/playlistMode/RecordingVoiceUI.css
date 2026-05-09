@@ -9,6 +9,13 @@
   font-size: 24px;
 }
 
+.mic-container.alter {
+  background-color: var(--activeTabFill);
+  border-radius: 50%;
+  min-width: 2rem;
+  min-height: 2.5rem;
+}
+
 .media-recorder {
   display: flex;
   flex-direction: column;

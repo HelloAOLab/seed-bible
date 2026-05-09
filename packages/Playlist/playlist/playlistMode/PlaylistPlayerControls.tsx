@@ -4,8 +4,8 @@ const { Button } = G.Components;
 const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();
 const AttachLink = await thisBot.AttachLink();
-const ConfirmationModal = await thisBot.ConfirmationModal();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
+const MobilePlaylistToggleButton = await thisBot.MobilePlaylistToggleButton();
 
 const isMobileSmall =
   (window?.innerWidth || G.gridPortalBot.tags.pixelWidth) <
@@ -24,10 +24,10 @@ const outerWebsiteItem: Record<string, boolean> = {
   externalLink: true,
 };
 
-const PrevIcon = ({ fill = "#939393" }) => (
+const PrevIcon = ({ fill = "#939393", width = "32", height = "32" }) => (
   <svg
-    width="32"
-    height="32"
+    width={width}
+    height={height}
     viewBox="0 0 32 32"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
@@ -39,10 +39,10 @@ const PrevIcon = ({ fill = "#939393" }) => (
   </svg>
 );
 
-const NextIcon = ({ fill = "#939393" }) => (
+const NextIcon = ({ fill = "#939393", width = "18", height = "16" }) => (
   <svg
-    width="18"
-    height="16"
+    width={width}
+    height={height}
     viewBox="0 0 18 16"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
@@ -128,7 +128,39 @@ const getItemCount = (item: any): number => {
   return 1;
 };
 
-const getPlaylistProgress = (playlists: any, currIndex: any) => {
+/** Counts checklist "units" marked done — mirrors getItemCount structure (ids / readAlready per unit). */
+const getCheckedUnitsInItem = (
+  item: any,
+  checkedItems: Record<string, boolean> | undefined
+): number => {
+  if (!item) return 0;
+
+  if (Array.isArray(item?.list) && item.list.length) {
+    return item.list.reduce(
+      (acc: number, nestedItem: any) =>
+        acc + getCheckedUnitsInItem(nestedItem, checkedItems),
+      0
+    );
+  }
+
+  const layers = item?.additionalInfo?.layers;
+  if (Array.isArray(layers) && layers.length) {
+    return layers.reduce((acc: number, layer: any) => {
+      const done = !!checkedItems?.[layer.id] || !!layer.readAlready;
+      return acc + (done ? 1 : 0);
+    }, 0);
+  }
+
+  const done = !!checkedItems?.[item.id] || !!item.readAlready;
+  return done ? 1 : 0;
+};
+
+const getPlaylistProgress = (
+  playlists: any,
+  currIndex: any,
+  checklistEnabled?: boolean,
+  checkedItems?: Record<string, boolean>
+) => {
   const keys = Object.keys(playlists || {}).sort(
     (a, b) => Number(a) - Number(b)
   );
@@ -143,39 +175,50 @@ const getPlaylistProgress = (playlists: any, currIndex: any) => {
     );
   });
 
-  for (const key of keys) {
-    const list = playlists[key]?.list || [];
-    if (String(key) !== String(currIndex?.key)) {
-      currentPosition += list.reduce(
-        (acc: number, item: any) => acc + getItemCount(item),
-        0
-      );
-      continue;
-    }
-
-    for (let i = 0; i < list.length; i++) {
-      const item = list[i];
-      if (i < currIndex?.index) {
-        currentPosition += getItemCount(item);
+  if (!checklistEnabled) {
+    for (const key of keys) {
+      const list = playlists[key]?.list || [];
+      if (String(key) !== String(currIndex?.key)) {
+        currentPosition += list.reduce(
+          (acc: number, item: any) => acc + getItemCount(item),
+          0
+        );
         continue;
       }
 
-      if (i === currIndex?.index) {
-        if (
-          Array.isArray(item?.additionalInfo?.layers) &&
-          item.additionalInfo.layers.length
-        ) {
-          currentPosition += Math.min(
-            Math.max((currIndex?.subIndex || 0) + 1, 1),
-            item.additionalInfo.layers.length
-          );
-        } else {
-          currentPosition += 1;
+      for (let i = 0; i < list.length; i++) {
+        const item = list[i];
+        if (i < currIndex?.index) {
+          currentPosition += getItemCount(item);
+          continue;
         }
+
+        if (i === currIndex?.index) {
+          if (
+            Array.isArray(item?.additionalInfo?.layers) &&
+            item.additionalInfo.layers.length
+          ) {
+            currentPosition += Math.min(
+              Math.max((currIndex?.subIndex || 0) + 1, 1),
+              item.additionalInfo.layers.length
+            );
+          } else {
+            currentPosition += 1;
+          }
+        }
+        break;
       }
       break;
     }
-    break;
+  } else {
+    keys.forEach((key) => {
+      const list = playlists[key]?.list || [];
+      currentPosition += list.reduce(
+        (acc: number, item: any) =>
+          acc + getCheckedUnitsInItem(item, checkedItems),
+        0
+      );
+    });
   }
 
   const safeTotal = Math.max(totalItems, 0);
@@ -223,7 +266,8 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
   });
 
   // Audio
-  const [mediaURL, setMediaURL] = useState("");
+  const [mediaURL, setMediaURL] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const [videoSrc, setVideoSrc] = useState(false);
   const [textInfo, setTextInfo] = useState("");
 
@@ -528,7 +572,9 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
           playlistID: null,
         };
 
-        if (!G.PPchecklistEnabled) {
+        const isNothingPlayingInChecklist = `${currIndex.index}` !== "-1";
+
+        if (!G.PPchecklistEnabled || isNothingPlayingInChecklist) {
           // Update the current playlist with items before the split
           updatedPlaylists[currentKey] = {
             ...currentPlaylist,
@@ -547,7 +593,7 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
         //     setActiveIndexs(prev => ({ ...prev, [item.id]: true }));
         // }
 
-        if (!G.PPchecklistEnabled) {
+        if (!G.PPchecklistEnabled || isNothingPlayingInChecklist) {
           updatedPlaylists[currentKey].broken = true;
           if (afterCurrentIndex.length > 0) {
             updatedPlaylists[`${currIndex.key}.2`] = {
@@ -576,7 +622,7 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
             delete reorderedPlaylists[index];
           }
         });
-      G.NotPlayThisTimeTheCurrentItem = false;
+      G.NotPlayThisTimeTheCurrentItem = true;
       return reorderedPlaylists;
     });
     setOpenAttachLink(false);
@@ -600,7 +646,15 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
 
     G.SetIncrementalCountPlayingPlaylist = setIncrementalCount;
     G.SetVideoSrc = setVideoSrc;
-    G.SetMediaURL = setMediaURL;
+    G.SetMediaURL = (url: any) => {
+      if (url === null) {
+        setMediaURL(null);
+        setFileName(null);
+      } else {
+        setMediaURL(url);
+      }
+    };
+    G.SetFileName = setFileName;
     G.SetTextInfo = setTextInfo;
 
     G.PlayingPlaylists = playlists;
@@ -634,6 +688,7 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
         G.HandleOnButtonPress = null;
         G.SetIncrementalCountPlayingPlaylist = null;
         G.SetVideoSrc = null;
+        G.SetFileName = null;
         G.SetTextInfo = null;
         G.SetMediaURL = null;
         G.PlayingPlaylists = null;
@@ -677,179 +732,14 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
     prevItemName,
     currentItem,
   ] = useMemo(() => {
-    const { name: currentPlaylistName } = playlists[currIndex.key];
-
-    const targetItem = getCurrentItem(
-      currIndex.key,
-      currIndex.index,
+    const res = thisBot.getCurrentQueueInfo({
+      currIndex,
       playlists,
-      currIndex.subIndex,
-      playlists[currIndex.key]?.isLayers
-    );
-    const currentItemName = targetItem;
-    const currentItemType = targetItem?.type;
-
-    const nextIndexes = handleOnButtonPress(1, true);
-    const prevIndex = handleOnButtonPress(-1, true);
-
-    const nextItem = getCurrentItem(
-      nextIndexes.key,
-      nextIndexes.index,
-      playlists,
-      nextIndexes.subIndex,
-      playlists[nextIndexes.key]?.isLayers
-    );
-    const prevItem = prevIndex.isPreviousQueue
-      ? oldData[oldData.length - 1]
-      : getCurrentItem(
-          prevIndex.key,
-          prevIndex.index,
-          playlists,
-          prevIndex.subIndex,
-          playlists[prevIndex.key]?.isLayers
-        );
-
-    // setOldData(prev => [...prev, targetItem]);
-    G.PlaylingItemVisitiedMap?.((prev: any) => ({
-      ...prev,
-      [targetItem.id]: true,
-    }));
-
-    if (targetItem?.type === "attachment-link") {
-      if (!G.NotPlayThisTimeTheCurrentItem) {
-        thisBot.RenderLinkContent({
-          ...targetItem,
-          isLastItem: !nextItem,
-          isFirstItem: !prevItem,
-        });
-      } else {
-        G.NotPlayThisTimeTheCurrentItem = false;
-      }
-    } else if (currIndex.fromButton !== 0) {
-      const isBulk =
-        !!targetItem?.additionalInfo?.layers?.length ||
-        Array.isArray(targetItem.additionalInfo);
-
-      const toBeMapArray = targetItem?.additionalInfo?.layers?.length
-        ? targetItem?.additionalInfo?.layers
-        : Array.isArray(targetItem.additionalInfo);
-
-      if (
-        targetItem?.type === "heading" ||
-        (!!targetItem?.nextTargetItem?.id &&
-          currIndex.fromButton === 1 &&
-          !G.StayVIAPressOfButton)
-      ) {
-        if (
-          targetItem?.type === "heading"
-          // &&
-          // targetItem?.additionalInfo?.subType === "text"
-        ) {
-          const isMobile =
-            (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
-            G.MOBILE_VIEWPORT_THRESHOLD;
-          if (targetItem.additionalInfo.isQuotedText) {
-            thisBot.ShowQuoteText({ quoteText: targetItem.content });
-          } else if (isMobile) {
-            G.SetTextInfo(targetItem.content);
-          }
-        }
-        if (G.SetMediaURL) {
-          G.SetMediaURL(null);
-        }
-        setTimeout(() => {
-          thisBot.CloseFloatingApp();
-        }, 100);
-
-        if (G.SetVideoSrc) {
-          G.SetVideoSrc(null);
-        }
-        if (targetItem?.type === "heading") {
-          if (!G.NotPlayThisTimeTheCurrentItem) {
-            G.PlayingPlaylistSetHeading(targetItem.content);
-          } else {
-            G.NotPlayThisTimeTheCurrentItem = false;
-          }
-        }
-        const allKeys: any = Object.keys(playlists);
-
-        const isFirstKey = currIndex.key == 0;
-        const isLastKey = currIndex.key == allKeys[allKeys.length - 1];
-
-        const th = playlists[currIndex.key]?.list;
-
-        const isFirstItemAndBackButton =
-          currIndex.fromButton < 0 && currIndex.index == 0 && isFirstKey;
-        const isLastItemAndLastButton =
-          currIndex.fromButton > 0 &&
-          isLastKey &&
-          currIndex.index == th.length - 1;
-        if (targetItem?.nextTargetItem) {
-          if (!G.NotPlayThisTimeTheCurrentItem) {
-            thisBot.navigationWithDataItem({
-              dataItem: isBulk ? toBeMapArray : targetItem,
-              bulkAdd: isBulk,
-            });
-          } else {
-            G.NotPlayThisTimeTheCurrentItem = false;
-          }
-          handleOnButtonPress(currIndex.fromButton);
-          G[`${targetItem.id}OpenToggle`] &&
-            G[`${targetItem.id}OpenToggle`](true);
-        }
-        if (G.StayVIAPressOfButton) {
-          G.StayVIAPressOfButton = false;
-        }
-        if (!isFirstItemAndBackButton && !isLastItemAndLastButton)
-          handleOnButtonPress(currIndex.fromButton);
-      } else {
-        if (G.StayVIAPressOfButton) {
-          G.StayVIAPressOfButton = false;
-        }
-        const skip = thisBot.checkIfNeedToSkip({ dataItem: targetItem });
-        if (skip) {
-          os.toast(`${targetItem.content} is Already Opened.Skipping it!`);
-          handleOnButtonPress(currIndex.fromButton);
-        } else {
-          if (!G.NotPlayThisTimeTheCurrentItem) {
-            thisBot.navigationWithDataItem({
-              dataItem: isBulk ? toBeMapArray : targetItem,
-              bulkAdd: isBulk,
-            });
-          } else {
-            G.NotPlayThisTimeTheCurrentItem = false;
-          }
-        }
-        // SetBlinker({});
-      }
-    }
-
-    if (G.RenderPlaylistTimer) {
-      clearTimeout(G.RenderPlaylistTimer);
-      G.RenderPlaylistTimer = null;
-    }
-    G.RenderPlaylistTimer = setTimeout(() => {
-      thisBot.SetItemsPlayerPlaylist({
-        currentPlaylistName: currentPlaylistName,
-        currentItemID: targetItem.id,
-        typeContent: currentItemType,
-        nextItemName: nextItem,
-        prevItemName: prevItem,
-        currentItemName: currentItemName,
-      });
-      G.RenderPlaylist && G.RenderPlaylist();
-      G.RenderPlaylistTimer = null;
-    }, 50);
-    // nextItemName, nextItemType, prevItemName, prevItemType
-    //  nextItemName, nextItemType, prevItemName, prevItemType
-    return [
-      currentPlaylistName,
-      targetItem.id,
-      currentItemType,
-      nextItem,
-      prevItem,
-      currentItemName,
-    ];
+      oldData,
+      handleOnButtonPress,
+      getCurrentItem,
+    });
+    return res;
   }, [
     currIndex,
     playlists,
@@ -922,8 +812,14 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
 
   const isItemLink = outerWebsiteItem[currentItem?.additionalInfo?.type];
   const { safeCurrent, safeTotal, percent } = useMemo(
-    () => getPlaylistProgress(playlists, currIndex),
-    [playlists, currIndex]
+    () =>
+      getPlaylistProgress(
+        playlists,
+        currIndex,
+        G.PPchecklistEnabled,
+        checkedItems
+      ),
+    [playlists, currIndex, checkedItems]
   );
 
   const isMobile =
@@ -938,7 +834,98 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
       <style>{thisBot.tags["PlaylistContainer.css"]}</style>
       <style>{thisBot.tags["playlist.css"]}</style>
 
-      {openAttachLink ? (
+      {isMobile ? (
+        <div
+          className="mobile-playlist-player-controls"
+          style={{
+            marginBottom: !!mediaURL || !!videoSrc || !!textInfo ? "3rem" : "0",
+          }}
+        >
+          {!!textInfo && (
+            <div className="textinfo-playlist">
+              <RenderHTMLContent htmlContent={textInfo} />
+            </div>
+          )}
+          {!!videoSrc && (
+            <div className="textinfo-playlist">
+              <VideoPlayer videoSrc={videoSrc} playlistItem={currentItem} />
+            </div>
+          )}
+          {!!mediaURL && (
+            <AudioPlayer
+              shadow
+              secondaryClose
+              fileName={fileName}
+              close={true}
+              mediaURL={mediaURL}
+            />
+          )}
+          {/* <div className="mobile-playlist-player-controls-buttons"> */}
+          <Button
+            exClass={`mobile-playlist-player-controls-button prev-button ${!prevItemName?.content ? "disabled" : ""}`}
+            onClick={() => {
+              if (!prevItemName?.content) {
+                return ShowNotification({
+                  message: t("youAreAtTheBeginningOfThePlaylist"),
+                  severity: "info",
+                });
+              }
+              DataManager.cancelCurrentPlayingSound();
+              if (G.HandleOnButtonPress) G.HandleOnButtonPress(-1);
+            }}
+          >
+            <PrevIcon
+              width="26"
+              height="24px"
+              fill={
+                !prevItemName?.content
+                  ? "var(--settingsIcon)"
+                  : "var(--pageTextColor)"
+              }
+            />
+          </Button>
+          <Button
+            exClass={`mobile-playlist-player-controls-button next-button ${!nextItemName?.content ? "disabled" : ""}`}
+            onClick={() => {
+              if (!nextItemName?.content) {
+                return ShowNotification({
+                  message: t("playlistHasBeenEnded"),
+                  severity: "info",
+                });
+              }
+              DataManager.cancelCurrentPlayingSound();
+              if (!!nextItemName?.content && !!G.HandleOnButtonPress) {
+                G.HandleOnButtonPress(1);
+                return;
+              }
+              // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
+              G[`${parentId}ToggleGreyCheckPLayingPlaylist`] &&
+                G[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
+              G.IsQueuePresent = false;
+              G.IS_PLAYLIST_ACTIVE = false;
+              thisBot.CloseFloatingApp();
+              G.SetSplitAppPanel2 && G.SetSplitAppPanel2(null);
+              // os.unregisterApp("playing-playlist");
+              // thisBot.showInfo(`History Mode`);
+              os.unregisterApp("playing-playlist-flaot");
+              if (G.RemoveNowBarApp) {
+                G.RemoveNowBarApp("player-playlist-bar");
+              }
+            }}
+          >
+            <NextIcon
+              width="14"
+              height="16"
+              fill={
+                !nextItemName?.content
+                  ? "var(--settingsIcon)"
+                  : "var(--pageTextColor)"
+              }
+            />
+          </Button>
+          {/* </div> */}
+        </div>
+      ) : openAttachLink ? (
         <div
           style={{
             position: "relative",
@@ -986,7 +973,14 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
           {!!videoSrc && (
             <VideoPlayer videoSrc={videoSrc} playlistItem={currentItem} />
           )}
-          {!!mediaURL && <AudioPlayer mediaURL={mediaURL} />}
+          {!!mediaURL && (
+            <AudioPlayer
+              fileName={fileName}
+              secondaryClose
+              close
+              mediaURL={mediaURL}
+            />
+          )}
 
           {isItemLink && false && (
             <div>
@@ -1087,16 +1081,10 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
                             color: "var(--pageTextColor)",
                           }}
                         >
-                          {nextItemName?.content
-                            ? `${nextItemName?.content}${nextItemName?.prefix}`?.substring(
-                                0,
-                                isMobile ? 9 : 16
-                              )
-                            : ""}
-                          {`${nextItemName?.content}${nextItemName?.prefix}`
-                            .length > (isMobile ? 9 : 16)
-                            ? "..."
-                            : ""}
+                          {G.GetTruncatedPlaylistLabel(
+                            nextItemName,
+                            isMobile ? 9 : 16
+                          )}
                         </p>
                       )
                     ) : (
@@ -1223,43 +1211,7 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
               </div>
             </div>
             <div className="flex align-center" style={{ gap: "0.5rem" }}>
-              <p
-                style={{
-                  margin: "0",
-                  width: "24px",
-                  backgroundColor: "var(--themeSideMenu)",
-                  height: "24px",
-                  border: "1px solid var(--secondaryColor)",
-                }}
-                className="playlist-action small"
-                onClick={async () => {
-                  if (G.IsPlaybarInherited) {
-                    G.IsASwitchBetweenBar = true;
-                    await thisBot.setupNowBarControlApp({
-                      force: true,
-                      parentId: parentId,
-                    });
-                    G.SetIsPlaybarInherited(false);
-                  }
-                  setTimeout(() => {
-                    if (G.makingPlaylist) {
-                      // globalThis.PlaylistPlaytoggleHide();
-                      thisBot.CloseSelf({ force: true });
-                    } else {
-                      thisBot.OpenSelf();
-                    }
-                  }, 100);
-                }}
-              >
-                <img
-                  src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/fe3ea1784fbed6a33fb06bc8885bca18211293462adcb06311db83f1450589b8.svg"
-                  class="material-symbols-outlined unfollow img-icon"
-                  style={{
-                    margin: "0",
-                    minWidth: "10px",
-                  }}
-                />
-              </p>
+              <MobilePlaylistToggleButton parentId={parentId} />
               <p
                 onClick={() => {
                   if (G.RemotePlaylistPlayed) {
@@ -1276,7 +1228,6 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
                   height: "26px",
                   padding: "0",
                   borderRadius: "6px",
-                  border: "0px solid var(--secondaryColor)",
                   backgroundColor: "var(--activeTabFill)",
                 }}
                 className="playlist-action small"
@@ -1375,7 +1326,13 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
                 if (G.HandleOnButtonPress) G.HandleOnButtonPress(-1);
               }}
             >
-              <PrevIcon fill={!prevItemName?.content ? "#939393" : "#000"} />
+              <PrevIcon
+                fill={
+                  !prevItemName?.content
+                    ? "var(--unselectedSpaceColor)"
+                    : "var(--pageTextColor)"
+                }
+              />
             </Button>
             <p
               onClick={() => {
@@ -1449,7 +1406,7 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
                 G.IsQueuePresent = false;
                 G.IS_PLAYLIST_ACTIVE = false;
                 thisBot.CloseFloatingApp();
-                G.SetSplitAppPanel2(null);
+                G.SetSplitAppPanel2 && G.SetSplitAppPanel2(null);
                 // os.unregisterApp("playing-playlist");
                 // thisBot.showInfo(`History Mode`);
                 os.unregisterApp("playing-playlist-flaot");
@@ -1458,7 +1415,13 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
                 }
               }}
             >
-              <NextIcon fill={!nextItemName?.content ? "#939393" : "#000"} />
+              <NextIcon
+                fill={
+                  !nextItemName?.content
+                    ? "var(--unselectedSpaceColor)"
+                    : "var(--pageTextColor)"
+                }
+              />
             </Button>
             {false && (
               <img

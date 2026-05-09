@@ -21,50 +21,51 @@ const EditRichText = (props: any) => {
   };
 
   return (
-    <Modal title={t("editText")} showIcon={false} onClose={onClose}>
-      <div className="input-conainter-type" style={{ position: "relative" }}>
-        <MiniTextEditor
-          id="edit"
-          minHeight={60}
-          showMoreOptions={false}
-          initialHTML={name}
-          headingControls
-          placeholderHTML={name}
-          onChange={(html: string) => {
-            setName(html);
-          }}
-        />
+    <>
+      <style>{thisBot.tags["PlaylistContainer.css"]}</style>
+      <Modal title={t("editText")} showIcon={false} onClose={onClose}>
         <div
-          className="quoted-text-icon alter"
-          onClick={() => setIsQuotedText(!quotedText)}
+          className="input-conainter-type playlist-cont-parent"
+          style={{ position: "relative" }}
         >
-          <span
-            style={{
-              cursor: "pointer",
-              color: !quotedText
-                ? "var(--verseTextColor)"
-                : "var(--secondaryColor)",
+          <MiniTextEditor
+            id="edit"
+            minHeight={60}
+            showMoreOptions={false}
+            initialHTML={name}
+            headingControls
+            placeholderHTML={name}
+            onChange={(html: string) => {
+              setName(html);
             }}
-            class="material-symbols-outlined"
+          />
+          <div
+            className="quoted-text-icon alter align-center"
+            onClick={() => setIsQuotedText(!quotedText)}
           >
-            home_max
-          </span>
+            <span>Show in popup</span>
+            <div
+              className={`settings-toggle ${isQuotedText ? "active" : ""} small`}
+            >
+              <div className="settings-toggle-knob" />
+            </div>
+          </div>
         </div>
-      </div>
-      <ButtonsCover>
-        <Button
-          secondary
-          onClick={() => {
-            onSave();
-          }}
-        >
-          {t("save")}
-        </Button>
-        <Button secondaryAlt onClick={onClose}>
-          {t("close")}
-        </Button>
-      </ButtonsCover>
-    </Modal>
+        <ButtonsCover>
+          <Button
+            secondary
+            onClick={() => {
+              onSave();
+            }}
+          >
+            {t("save")}
+          </Button>
+          <Button secondaryAlt onClick={onClose}>
+            {t("close")}
+          </Button>
+        </ButtonsCover>
+      </Modal>
+    </>
   );
 };
 
