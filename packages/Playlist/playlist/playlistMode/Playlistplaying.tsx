@@ -847,45 +847,47 @@ const PlayingPlaylist = () => {
             <span style={{ fontSize: "12px", marginBottom: "6px" }}>
               {t("playlistActionsDesc")}
             </span>
-            <div
-              className="align-center"
-              style={{
-                cursor: "pointer",
-              }}
-              onClick={async () => {
-                G.IsASwitchBetweenBar = true;
-                if (isPlaybarInherited) {
-                  await thisBot.setupNowBarControlApp({
-                    force: true,
-                    parentId: parentId,
-                  });
-                } else {
-                  if (G.RemoveNowBarApp) {
-                    G.RemoveNowBarApp("player-playlist-bar");
-                  }
-                  os.unregisterApp("playing-playlist-flaot");
-                }
-                setIsPlaybarInherited((p: boolean) => !p);
-              }}
-            >
+            {isMobile ? null : (
               <div
-                style={{ display: "flex", alignItems: "center", gap: "10px" }}
+                className="align-center"
+                style={{
+                  cursor: "pointer",
+                }}
+                onClick={async () => {
+                  G.IsASwitchBetweenBar = true;
+                  if (isPlaybarInherited) {
+                    await thisBot.setupNowBarControlApp({
+                      force: true,
+                      parentId: parentId,
+                    });
+                  } else {
+                    if (G.RemoveNowBarApp) {
+                      G.RemoveNowBarApp("player-playlist-bar");
+                    }
+                    os.unregisterApp("playing-playlist-flaot");
+                  }
+                  setIsPlaybarInherited((p: boolean) => !p);
+                }}
               >
                 <div
-                  className={`settings-toggle ${isPlaybarInherited ? "active" : ""}`}
+                  style={{ display: "flex", alignItems: "center", gap: "10px" }}
                 >
-                  <div className="settings-toggle-knob" />
+                  <div
+                    className={`settings-toggle ${isPlaybarInherited ? "active" : ""}`}
+                  >
+                    <div className="settings-toggle-knob" />
+                  </div>
+                  <div className="item-text"> {t("movePlaybarInside")}</div>
                 </div>
-                <div className="item-text"> {t("movePlaybarInside")}</div>
               </div>
-            </div>
+            )}
             <div
               style={{
                 display: "flex",
                 justifyContent: "center",
                 gap: "0.5rem",
                 paddingTop: "0.5rem",
-                borderTop: "1px solid var(--gray2-color)",
+                borderTop: isMobile ? "none" : "1px solid var(--gray2-color)",
               }}
             >
               <Button
@@ -936,11 +938,42 @@ const PlayingPlaylist = () => {
                 : undefined
             }
           >
-            <h3 title={currentPlaylistName}>
+            <h3
+              title={currentPlaylistName}
+              className="align-center"
+              style={{ gap: "0.5rem" }}
+            >
               {hide
                 ? currentPlaylistName.substring(0, 10)
                 : currentPlaylistName}
               {hide ? (currentPlaylistName.length > 10 ? "..." : "") : ""}
+              {isMobile ? (
+                <span
+                  onClick={() => {
+                    thisBot.StopPlayingPlaylist();
+                  }}
+                  style={{
+                    margin: "0",
+                    width: "2.55rem",
+                    height: "2.55rem",
+                    borderRadius: "50%",
+                    border: "none",
+                    zoom: "0.65",
+                  }}
+                  className="playlist-action small"
+                >
+                  <span
+                    style={{
+                      margin: "0",
+                      fontSize: "14px",
+                      backgroundColor: "var(--secondaryColor)",
+                    }}
+                    class="material-symbols-outlined unfollow"
+                  >
+                    stop
+                  </span>
+                </span>
+              ) : null}
             </h3>
             <div className="align-center" style={{ gap: "0.5rem" }}>
               {!hide && (

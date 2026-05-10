@@ -834,7 +834,7 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
       <style>{thisBot.tags["PlaylistContainer.css"]}</style>
       <style>{thisBot.tags["playlist.css"]}</style>
 
-      {isMobile ? (
+      {isMobile && !inheritedBar ? (
         <div
           className="mobile-playlist-player-controls"
           style={{
