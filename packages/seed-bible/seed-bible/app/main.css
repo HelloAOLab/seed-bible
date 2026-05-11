@@ -848,7 +848,6 @@ h6 {
   font-family: var(--text-bookTitle-font);
   color: var(--sb-book-title-font-color);
   white-space: nowrap;
-  overflow: hidden;
   text-overflow: ellipsis;
 }
 
