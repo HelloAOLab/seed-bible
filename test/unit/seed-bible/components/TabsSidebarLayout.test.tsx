@@ -1,4 +1,5 @@
 import { render, type ComponentChildren } from "preact";
+import { signal } from "@preact/signals";
 import { act } from "preact/test-utils";
 import { Sidebar } from "@packages/seed-bible/seed-bible/components/Tabs";
 import {
@@ -167,5 +168,99 @@ describe("Sidebar collapsed layout", () => {
       bottomActions?.classList.contains("sb-sidebar-bottom-actions-collapsed")
     ).toBe(false);
     expect(container.textContent).toContain("Settings Page");
+  });
+
+  it("shows discovered content entries in the sidebar when available", async () => {
+    const state = await createState();
+    state.sidebar.closeSettings();
+    state.sidebar.isSidebarCollapsed.value = false;
+    state.sidebar.isMobileOpen.value = false;
+
+    const selectedTab = state.tabs.tabs.value[0]!;
+    (selectedTab.readingState as any).discoveredContent = signal([
+      {
+        providerId: "test-provider",
+        results: [
+          {
+            type: "content",
+            title: "Background context",
+            description: "Additional context for this verse.",
+            reference: {
+              book: "GEN",
+              chapter: 1,
+              verse: 1,
+              bookData: { id: "GEN", name: "Genesis" },
+            },
+            content: <span>Context body</span>,
+          },
+          {
+            type: "content",
+            title: "Ancient custom",
+            description: "",
+            reference: {
+              book: "GEN",
+              chapter: 1,
+              verse: 2,
+              bookData: { id: "GEN", name: "Genesis" },
+            },
+            content: <span>Custom details</span>,
+          },
+        ],
+      },
+    ]);
+
+    act(() => {
+      render(<Sidebar state={state} />, container);
+    });
+
+    expect(container.textContent).toContain("Sidebar Search");
+    expect(container.textContent).toContain("Discover more");
+    expect(
+      container.querySelector(".sb-sidebar-discover-more-count")?.textContent
+    ).toBe("2");
+    expect(container.textContent).toContain("Background context");
+    expect(container.textContent).toContain("Context body");
+    expect(container.textContent).toContain("Ancient custom");
+    expect(container.textContent).toContain("Custom details");
+    expect(container.textContent).toContain("Genesis\u00A01:1");
+  });
+
+  it("hides discovered content section when showDiscoveredContent is false", async () => {
+    const state = await createState();
+    state.sidebar.closeSettings();
+    state.sidebar.isSidebarCollapsed.value = false;
+    state.sidebar.isMobileOpen.value = false;
+
+    const selectedTab = state.tabs.tabs.value[0]!;
+    (selectedTab.readingState as any).discoveredContent = signal([
+      {
+        providerId: "test-provider",
+        results: [
+          {
+            type: "content",
+            title: "Background context",
+            description: "Additional context for this verse.",
+            reference: {
+              book: "GEN",
+              chapter: 1,
+              verse: 1,
+              bookData: { id: "GEN", name: "Genesis" },
+            },
+            content: <span>Context body</span>,
+          },
+        ],
+      },
+    ]);
+
+    state.settings.setScriptureElements({
+      showDiscoveredContent: false,
+    });
+
+    act(() => {
+      render(<Sidebar state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-sidebar-discover-more")).toBeNull();
+    expect(container.textContent).not.toContain("Background context");
   });
 });
