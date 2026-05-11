@@ -16,6 +16,7 @@ import {
   type ObjectPoolerConfig,
   type DimensionGetter as ObjectPoolerDimensionGetter,
 } from "bibleVizUtils.infrastructure.adapters.casualos.ObjectPooler";
+import type { BibleVizUtilsEvents } from "bibleVizUtils.domain.models.events";
 
 export interface BibleVizAPI {
   bibleVizDataRepository: BibleVizDataRepository;
@@ -27,6 +28,7 @@ export interface BibleVizAPI {
     labelPropertiesStrategies: PieceLabelServiceParams<T>["labelPropertiesStrategies"]
   ) => PieceLabelService<T>;
   createEventManager: <
+    // @ts-ignore
     TEventMap extends Record<string, any>,
   >() => BaseEventManager<TEventMap>;
   createObjectPooler: <P extends Record<keyof P, TypedBot<PieceBotTags>>>({
@@ -36,4 +38,5 @@ export interface BibleVizAPI {
     poolsData: ObjectPoolerConfig<P>;
     dimensionGetter: ObjectPoolerDimensionGetter;
   }) => ObjectPooler<P>;
+  bibleVizUtilsEventManager: BaseEventManager<BibleVizUtilsEvents>;
 }

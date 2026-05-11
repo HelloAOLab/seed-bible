@@ -10,26 +10,24 @@ import type {
   TimelineRangeMethodType,
 } from "scriptureMap2D.models.readingHistory";
 import { TimelineRangeMethod } from "scriptureMap2D.models.readingHistory";
-import { scriptureService } from "bibleVizUtils.services.index";
-import { GetDayRangeSeconds } from "bibleVizUtils.functions.index";
-import { scriptureMap2DEventManager } from "scriptureMap2D.services.index";
-import { ScriptureMap2DEvents } from "scriptureMap2D.models.events";
-import { BibleVizUtilsEvents } from "bibleVizUtils.models.events";
-import { bibleVizUtilsEventManager } from "bibleVizUtils.services.index";
+import { GetDayRangeSeconds } from "bibleVizUtils.domain.functions.time";
 import { useTimeContext } from "scriptureMap2D.contexts.Time.TimeContext";
 import {
   getReadingHistoryEvents,
   flat,
   calculateReadingHistorySummary,
-  getSubscribedUsers,
 } from "seed-bible.managers.ReadingHistoryManager";
 import type { ReadingHistorySummary } from "seed-bible.managers.ReadingHistoryManager";
-import { useTabsContext } from "app.hooks.tabs";
 import { useScriptureMap2DContext } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
 import type { Range } from "scriptureMap2D.models.commonTypes";
 import type { UserData } from "scriptureMap2D.models.user";
 import type { UsersDataMap } from "scriptureMap2D.models.user";
 import { ScriptureMap2DModes } from "scriptureMap2D.models.scriptureMap";
+import type { SubscribedUser } from "bibleVizUtils.domain.models.subscriptions";
+
+const getSubscribedUsers: () => Promise<SubscribedUser[]> = async () => {
+  return [];
+}; // TODO: Correctly defined this.
 
 const { useState, useMemo, useEffect, useCallback } = os.appHooks;
 
@@ -40,10 +38,18 @@ const timelineMinYear = 2023;
 const initialTimelineRangeKey = new Date().getFullYear();
 
 export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
-  const { mode, isReadingHistoryEnabled, setShowingBooksColors } =
-    useScriptureMap2DContext();
+  const {
+    mode,
+    isReadingHistoryEnabled,
+    setShowingBooksColors,
+    seedBibleState,
+    bibleVizUtilsEventManager,
+    scriptureMap2DEventManager,
+    scriptureService,
+  } = useScriptureMap2DContext();
 
-  const { activeTab } = useTabsContext();
+  const selectedTabId = seedBibleState.tabs.selectedTabId.value;
+
   const { tick } = useTimeContext();
 
   const [timelineRangeMethod, setTimelineRangeMethod] =
@@ -215,12 +221,12 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
 
   useEffect(() => {
     const unsubscribeUserLoggedIn = bibleVizUtilsEventManager.subscribe(
-      BibleVizUtilsEvents.OnUserLoggedIn,
+      "OnUserLoggedIn",
       handleUserLoggedIn
     );
     const unsubscribeSubscriptionsChanged =
       scriptureMap2DEventManager.subscribe(
-        ScriptureMap2DEvents.SubscriptionsChanged,
+        "SubscriptionsChanged",
         refreshUsersDataMap
       );
 
@@ -468,7 +474,7 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
     };
   }, [
     tick,
-    activeTab,
+    selectedTabId,
     readingHistoryUserFilters,
     readingHistoryRangeSeconds,
     timelineRange,

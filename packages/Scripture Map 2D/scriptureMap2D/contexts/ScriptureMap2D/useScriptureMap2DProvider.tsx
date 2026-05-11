@@ -1,6 +1,5 @@
 import type { ScriptureMap2DContextType } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
 import { useIsMobile } from "scriptureMap2D.hooks.useIsMobile";
-import { useTabsContext } from "app.hooks.tabs";
 import { useSideBarContext } from "app.hooks.sideBar";
 import { ProjectChapterState } from "scriptureMap2D.models.project";
 import { type ProjectChapterStateType } from "scriptureMap2D.models.project";
@@ -165,6 +164,7 @@ export const useScriptureMap2DProvider: UseScriptureMap2DProvider = (
     initialShowingAllChapters = false,
     initialShowTestamentLabels = true,
     initialShowSectionLabels = true,
+    seedBibleState,
   } = config;
   const { themeColors } = useSideBarContext();
 
@@ -177,11 +177,12 @@ export const useScriptureMap2DProvider: UseScriptureMap2DProvider = (
   }, [themeColors]);
 
   const isMobile = useIsMobile(768);
-  const { tabs, activeTab: activeTabId } = useTabsContext();
+  const tabs = seedBibleState.tabs.tabs.value;
+  const activeTabId = seedBibleState.tabs.selectedTabId.value;
   const activeTab = useMemo(() => {
     return tabs.find((tab) => {
       return tab.id === activeTabId;
-    });
+    })!;
   }, [tabs, activeTabId]);
 
   const [userPresence, setUserPresence] = useState<UserPresence>(() =>

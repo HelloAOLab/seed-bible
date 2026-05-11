@@ -10,6 +10,7 @@ import {
   type ProjectStateStyle,
   type ProjectFilters,
 } from "scriptureMap2D.models.project";
+import type { ReaderTab } from "seed-bible.managers.TabsManager";
 
 interface ScriptureMap2DProviderProps {
   children: React.ReactNode;
@@ -61,13 +62,8 @@ export interface ScriptureMap2DContextType extends ScriptureMap2DConfig {
   usersColors: UserData[];
   userPresence: UserPresence;
 
-  tabs: unknown;
-  activeTab: {
-    data: {
-      bookId: string;
-      chapter: number;
-    };
-  };
+  tabs: ReaderTab[];
+  activeTab: ReaderTab;
 }
 
 const { createContext, useContext } = os.appHooks;

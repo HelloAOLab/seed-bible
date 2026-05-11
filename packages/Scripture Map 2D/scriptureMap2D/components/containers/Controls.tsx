@@ -1,4 +1,4 @@
-import type {} from "scriptureMap2D.main.types";
+// import type {} from "scriptureMap2D.main.types";
 
 import { useControls } from "scriptureMap2D.hooks.useControls";
 import type {
@@ -15,7 +15,7 @@ export interface ZoomButtonProps {
 }
 
 export interface ZoomLevelSelectorProps {
-  t: (text: string) => string;
+  title: string;
   handleZoomLevelClick: (value: number) => void;
   zoomLevelSelectorRef: MutableRef<HTMLDivElement | null>;
   handleZoomLevelSelectorClick: (
@@ -54,7 +54,7 @@ const ZoomLevelOption = ({
 };
 
 const ZoomLevelSelector = ({
-  t,
+  title,
   handleZoomLevelClick,
   zoomLevelSelectorRef,
   handleZoomLevelSelectorClick,
@@ -68,7 +68,7 @@ const ZoomLevelSelector = ({
       onClick={handleZoomLevelSelectorClick}
       className="zoom-level-selector"
     >
-      <span>{t("zoomLevel")}</span>
+      <span>{title}</span>
       {values.map((value) => {
         return (
           <ZoomLevelOption
@@ -118,7 +118,7 @@ export const Controls = () => {
     toggleButtonClick,
     currZoom,
     showOptions,
-    t,
+    zoomLevelSelectorTitle,
     handleZoomLevelClick,
     zoomLevelSelectorRef,
     handleZoomLevelSelectorClick,
@@ -135,7 +135,7 @@ export const Controls = () => {
           <span>{`${currZoom}%`}</span>
           {showOptions && (
             <ZoomLevelSelector
-              t={t}
+              title={zoomLevelSelectorTitle}
               handleZoomLevelClick={handleZoomLevelClick}
               zoomLevelSelectorRef={zoomLevelSelectorRef}
               handleZoomLevelSelectorClick={handleZoomLevelSelectorClick}

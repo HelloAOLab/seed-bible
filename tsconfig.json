@@ -350,17 +350,17 @@
       "bibleVizUtils.infrastructure.entrypoints.casualos.oncurrentActiveTabDataUpdated": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/oncurrentActiveTabDataUpdated.tsx"
       ],
-      "bibleVizUtils.infrastructure.entrypoints.casualos.onDestroy": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/onDestroy.tsx"
+      "bibleVizUtils.infrastructure.entrypoints.casualos.onEggHatch": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/onEggHatch.tsx"
       ],
       "bibleVizUtils.infrastructure.entrypoints.casualos.onExtensionInstalled": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/onExtensionInstalled.tsx"
       ],
-      "bibleVizUtils.infrastructure.entrypoints.casualos.onExtensionUninstalled": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/onExtensionUninstalled.tsx"
-      ],
       "bibleVizUtils.infrastructure.entrypoints.casualos.onGetOrSetVisualInTagsDefined": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/onGetOrSetVisualInTagsDefined.tsx"
+      ],
+      "bibleVizUtils.infrastructure.entrypoints.casualos.onInstJoined": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/onInstJoined.tsx"
       ],
       "bibleVizUtils.infrastructure.entrypoints.casualos.OnOnlineUsersChanged": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/OnOnlineUsersChanged.tsx"
@@ -569,6 +569,9 @@
       "scriptureMap2D.contexts.Time.useTimeProvider": [
         "./packages/Scripture Map 2D/scriptureMap2D/contexts/Time/useTimeProvider.tsx"
       ],
+      "scriptureMap2D.data.translations": [
+        "./packages/Scripture Map 2D/scriptureMap2D/data/translations.tsx"
+      ],
       "scriptureMap2D.di.bootstrap": [
         "./packages/Scripture Map 2D/scriptureMap2D/di/bootstrap.tsx"
       ],
@@ -577,9 +580,6 @@
       ],
       "scriptureMap2D.entrypoints.onExtensionInstalled": [
         "./packages/Scripture Map 2D/scriptureMap2D/entrypoints/onExtensionInstalled.tsx"
-      ],
-      "scriptureMap2D.entrypoints.onExtensionUninstalled": [
-        "./packages/Scripture Map 2D/scriptureMap2D/entrypoints/onExtensionUninstalled.tsx"
       ],
       "scriptureMap2D.entrypoints.onInstJoined": [
         "./packages/Scripture Map 2D/scriptureMap2D/entrypoints/onInstJoined.tsx"
@@ -673,9 +673,6 @@
       ],
       "scriptureMap2D.models.user": [
         "./packages/Scripture Map 2D/scriptureMap2D/models/user.tsx"
-      ],
-      "scriptureMap2D.services.index": [
-        "./packages/Scripture Map 2D/scriptureMap2D/services/index.tsx"
       ],
       "scriptureMap2D.styles.adapter": [
         "./packages/Scripture Map 2D/scriptureMap2D/styles/adapter.tsx"

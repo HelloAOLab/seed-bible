@@ -1,4 +1,3 @@
-/* eslint-disable seed-bible-i18n/i18n-untranslated-content */
 import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
 import { MaterialIcon } from "seed-bible.components.icons";
 import { ScriptureMap2D } from "scriptureMap2D.components.ScriptureMap2D";
@@ -6,9 +5,11 @@ import { ScriptureMap2DModes } from "scriptureMap2D.models.scriptureMap";
 import { getCustomStyles } from "../styles/adapter";
 import type { BookName } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/scripture";
 import type { BibleVizAPI } from "bibleVizUtils.infrastructure.models.seedBible";
+import { addTranslations, useI18n } from "seed-bible.i18n.I18nManager";
+import { translations } from "../data/translations";
+import type { ScriptureMap2DEvents } from "../models/events";
 
 const Icon = () => {
-  // @ts-ignore
   return <MaterialIcon>full_stacked_bar_chart</MaterialIcon>;
 };
 
@@ -20,23 +21,34 @@ interface DependenciesMap {
   [bibleVizUtilsId]: BibleVizAPI;
 }
 
+const extensionId = "scripture-map-2d";
+
 const dependencies: (keyof DependenciesMap)[] = [bibleVizUtilsId];
 
 export const bootstrapExtension = () => {
   registerExtension({
     dependencies,
-    id: "scripture-map-2d",
+    id: extensionId,
     init: function* (context: SeedBibleState, dependenciesMap) {
-      const { bibleVizDataRepository, scriptureService } = dependenciesMap[
+      addTranslations(extensionId, translations);
+      const {
+        bibleVizDataRepository,
+        scriptureService,
+        bibleVizUtilsEventManager,
+        createEventManager,
+      } = dependenciesMap[
         bibleVizUtilsId
       ] as DependenciesMap[typeof bibleVizUtilsId];
 
+      const scriptureMap2DEventManager =
+        createEventManager<ScriptureMap2DEvents>();
+
       yield context.tools.registerBelowReaderTool({
-        id: "below-reader-tool",
+        id: `${extensionId}-below-reader-tool`,
         title: {
-          key: "below-reader-tool",
+          key: extensionId,
           defaultValue: "Scripture Map 2D",
-          ns: "scripture-map-2d",
+          ns: extensionId,
         },
         icon: Icon,
         onSelect: () => {
@@ -44,6 +56,8 @@ export const bootstrapExtension = () => {
             type: "detached",
             detachedAnchor: "side",
             component: () => {
+              const { t } = useI18n(extensionId);
+
               return (
                 <ScriptureMap2D
                   config={{
@@ -77,7 +91,13 @@ export const bootstrapExtension = () => {
                     initialShowSectionLabels: false,
                     initialScaleFactor: 0.6,
                     initialIsReadingHistoryEnabled: false,
-                    appId: "",
+                    appId: "", // TODO: Define this
+                    extensionId,
+                    translate: t,
+                    seedBibleState: context,
+                    bibleVizUtilsEventManager,
+                    scriptureMap2DEventManager,
+                    scriptureService,
                   }}
                   customCSS={customCSS}
                 />

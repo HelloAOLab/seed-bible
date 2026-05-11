@@ -1,0 +1,28 @@
+import type { BotTranslations } from "seed-bible.i18n.I18nManager";
+
+export const translations: BotTranslations = {
+  am: { "scripture-map-2d": "የቅዱሳት ጽሑፎች ካርታ 2D" },
+  ar: { "scripture-map-2d": "خريطة الكتاب المقدس ثنائية الأبعاد" },
+  bn: { "scripture-map-2d": "শাস্ত্র মানচিত্র 2D" },
+  en: { "scripture-map-2d": "Scripture Map 2D" },
+  es: { "scripture-map-2d": "Mapa de las Escrituras 2D" },
+  fa: { "scripture-map-2d": "نقشه کتاب مقدس دوبعدی" },
+  fr: { "scripture-map-2d": "Carte des Écritures 2D" },
+  hi: { "scripture-map-2d": "शास्त्र मानचित्र 2D" },
+  ind: { "scripture-map-2d": "Peta Kitab Suci 2D" },
+  ja: { "scripture-map-2d": "聖書マップ 2D" },
+  ko: { "scripture-map-2d": "성경 지도 2D" },
+  mn: { "scripture-map-2d": "Судар газрын зураг 2D" },
+  ne: { "scripture-map-2d": "धर्मग्रन्थ नक्शा 2D" },
+  ps: { "scripture-map-2d": "د مقدسو لیکونو نقشه 2D" },
+  pt: { "scripture-map-2d": "Mapa das Escrituras 2D" },
+  ru: { "scripture-map-2d": "Карта Писания 2D" },
+  sw: { "scripture-map-2d": "Ramani ya Maandiko 2D" },
+  ti: { "scripture-map-2d": "ካርታ ቅዱሳት ጽሑፋት 2D" },
+  tr: { "scripture-map-2d": "Kutsal Yazılar Haritası 2D" },
+  ug: { "scripture-map-2d": "مۇقەددەس يازمىلار خەرىتىسى 2D" },
+  uk: { "scripture-map-2d": "Карта Писань 2D" },
+  ur: { "scripture-map-2d": "صحائف کا نقشہ 2D" },
+  vi: { "scripture-map-2d": "Bản đồ Kinh Thánh 2D" },
+  zh: { "scripture-map-2d": "圣经地图 2D" },
+};

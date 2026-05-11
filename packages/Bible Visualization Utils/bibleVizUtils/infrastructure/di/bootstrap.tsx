@@ -355,6 +355,7 @@ export const bootstrapExtension = () => {
             activityIndicatorsAdapterPort: activityIndicatorsAdapter,
           });
         },
+        // @ts-expect-error
         createEventManager: <TEventMap extends Record<string, any>>() => {
           return new BaseEventManager<TEventMap>();
         },
@@ -367,6 +368,7 @@ export const bootstrapExtension = () => {
           poolsData: ObjectPoolerConfig<P>;
           dimensionGetter: ObjectPoolerDimensionGetter;
         }) => new ObjectPooler<P>(poolsData, dimensionGetter),
+        bibleVizUtilsEventManager,
       };
 
       return api;

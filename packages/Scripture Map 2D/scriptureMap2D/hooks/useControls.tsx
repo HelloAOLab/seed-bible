@@ -1,9 +1,5 @@
 import { useScriptureMap2DContext } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
-import type {
-  MutableRef,
-  StateUpdater,
-} from "../../../../typings/AuxLibraryDefinitions";
-import { useSideBarContext } from "app.hooks.sideBar";
+import type { MutableRef } from "../../../../typings/AuxLibraryDefinitions";
 import type { ZoomLevelSelectorProps } from "scriptureMap2D.components.containers.Controls";
 import type { ScriptureMap2DContextType } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
 
@@ -14,7 +10,7 @@ interface UseControlsType {
   toggleButtonClick: () => void;
   currZoom: number;
   showOptions: boolean;
-  t: ZoomLevelSelectorProps["t"];
+  zoomLevelSelectorTitle: string;
   handleZoomLevelClick: ZoomLevelSelectorProps["handleZoomLevelClick"];
   zoomLevelSelectorRef: MutableRef<HTMLDivElement | null>;
   handleZoomLevelSelectorClick: ZoomLevelSelectorProps["handleZoomLevelSelectorClick"];
@@ -26,7 +22,7 @@ type UseControls = () => UseControlsType;
 const { useMemo, useState, useRef, useCallback, useEffect } = os.appHooks;
 
 export const useControls: UseControls = () => {
-  const { scaleFactor, setScaleFactor } = useScriptureMap2DContext();
+  const { scaleFactor, setScaleFactor, translate } = useScriptureMap2DContext();
 
   const currZoom = useMemo(() => {
     return Math.round(scaleFactor * 100);
@@ -42,7 +38,9 @@ export const useControls: UseControls = () => {
     setShowOptions((prev) => !prev);
   }, [setShowOptions]);
 
-  const { t } = useSideBarContext() as { t: ZoomLevelSelectorProps["t"] };
+  const zoomLevelSelectorTitle = useMemo(() => {
+    return translate?.("zoom-level") ?? "Zoom level";
+  }, [translate]);
 
   const handleZoomLevelClick = useCallback<(value: number) => void>(
     (value) => {
@@ -88,7 +86,7 @@ export const useControls: UseControls = () => {
     toggleButtonClick,
     currZoom,
     showOptions,
-    t,
+    zoomLevelSelectorTitle,
     handleZoomLevelClick,
     zoomLevelSelectorRef,
     handleZoomLevelSelectorClick,

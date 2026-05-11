@@ -1,4 +1,4 @@
-import type { SectionInfo } from "bibleVizUtils.data.BibleVizDataRepository";
+import type { SectionInfo } from "bibleVizUtils.domain.models.arrangement";
 
 const { memo } = os.appCompat;
 
