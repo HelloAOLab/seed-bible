@@ -1155,10 +1155,12 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
                 aria-hidden="true"
               >
-                {renderStaticChapterContent(
-                  prevChapterPreview,
-                  scriptureElements
-                )}
+                <div className="sb-chapter-content">
+                  {renderStaticChapterContent(
+                    prevChapterPreview,
+                    scriptureElements
+                  )}
+                </div>
               </div>
               <div
                 ref={currentPanelRef}
@@ -1170,10 +1172,12 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
                 aria-hidden="true"
               >
-                {renderStaticChapterContent(
-                  nextChapterPreview,
-                  scriptureElements
-                )}
+                <div className="sb-chapter-content">
+                  {renderStaticChapterContent(
+                    nextChapterPreview,
+                    scriptureElements
+                  )}
+                </div>
               </div>
             </div>
           </div>
