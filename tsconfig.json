@@ -26,6 +26,447 @@
       "https://esm.helloao.org/painter-vendor-IGDNTFOW.js": [
         "./lib/painter-vendor.ts"
       ],
+      "bibleVizUtils.application.services.ArrangementService": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/application/services/ArrangementService.tsx"
+      ],
+      "bibleVizUtils.application.services.BaseEventManager": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/application/services/BaseEventManager.tsx"
+      ],
+      "bibleVizUtils.application.services.HistoryModeService": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/application/services/HistoryModeService.tsx"
+      ],
+      "bibleVizUtils.application.services.LabelDateService": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/application/services/LabelDateService.tsx"
+      ],
+      "bibleVizUtils.application.services.LabelInteractionService": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/application/services/LabelInteractionService.tsx"
+      ],
+      "bibleVizUtils.application.services.PieceActivityService": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/application/services/PieceActivityService.tsx"
+      ],
+      "bibleVizUtils.application.services.PieceDataRegistry": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/application/services/PieceDataRegistry.tsx"
+      ],
+      "bibleVizUtils.application.services.PieceLabelService": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/application/services/PieceLabelService.tsx"
+      ],
+      "bibleVizUtils.application.services.ReadingHistoryService": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/application/services/ReadingHistoryService.tsx"
+      ],
+      "bibleVizUtils.application.services.ScriptureService": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/application/services/ScriptureService.tsx"
+      ],
+      "bibleVizUtils.application.services.SessionService": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/application/services/SessionService.tsx"
+      ],
+      "bibleVizUtils.application.services.UserColorSyncService": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/application/services/UserColorSyncService.tsx"
+      ],
+      "bibleVizUtils.application.services.UserPresenceService": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/application/services/UserPresenceService.tsx"
+      ],
+      "bibleVizUtils.deprecated_functions.GetHistoryColor": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/deprecated_functions/GetHistoryColor.tsx"
+      ],
+      "bibleVizUtils.deprecated_functions.GetHistoryEntries": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/deprecated_functions/GetHistoryEntries.tsx"
+      ],
+      "bibleVizUtils.deprecated_functions.GetHistoryEntriesForElement": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/deprecated_functions/GetHistoryEntriesForElement.tsx"
+      ],
+      "bibleVizUtils.deprecated_functions.HighlightBiblePiece": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/deprecated_functions/HighlightBiblePiece.tsx"
+      ],
+      "bibleVizUtils.deprecated_functions.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/deprecated_functions/onCreate.tsx"
+      ],
+      "bibleVizUtils.domain.entities.InfoLabelData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/InfoLabelData.tsx"
+      ],
+      "bibleVizUtils.domain.entities.LayoutBibleData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/LayoutBibleData.tsx"
+      ],
+      "bibleVizUtils.domain.entities.LayoutBookData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/LayoutBookData.tsx"
+      ],
+      "bibleVizUtils.domain.entities.LayoutChapterData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/LayoutChapterData.tsx"
+      ],
+      "bibleVizUtils.domain.entities.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/onCreate.tsx"
+      ],
+      "bibleVizUtils.domain.entities.StackBibleData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBibleData.tsx"
+      ],
+      "bibleVizUtils.domain.entities.StackBookData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBookData.tsx"
+      ],
+      "bibleVizUtils.domain.entities.StackChapterData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackChapterData.tsx"
+      ],
+      "bibleVizUtils.domain.entities.StackData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackData.tsx"
+      ],
+      "bibleVizUtils.domain.entities.StackPieceData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackPieceData.tsx"
+      ],
+      "bibleVizUtils.domain.entities.StackSectionBookData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionBookData.tsx"
+      ],
+      "bibleVizUtils.domain.entities.StackSectionData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionData.tsx"
+      ],
+      "bibleVizUtils.domain.entities.StackTestamentData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackTestamentData.tsx"
+      ],
+      "bibleVizUtils.domain.entities.VerseData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/VerseData.tsx"
+      ],
+      "bibleVizUtils.domain.entities.VersesBunbleData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/VersesBunbleData.tsx"
+      ],
+      "bibleVizUtils.domain.functions.array": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/functions/array.tsx"
+      ],
+      "bibleVizUtils.domain.functions.colors": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/functions/colors.tsx"
+      ],
+      "bibleVizUtils.domain.functions.math": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/functions/math.tsx"
+      ],
+      "bibleVizUtils.domain.functions.scripture": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/functions/scripture.tsx"
+      ],
+      "bibleVizUtils.domain.functions.string": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/functions/string.tsx"
+      ],
+      "bibleVizUtils.domain.functions.time": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/functions/time.tsx"
+      ],
+      "bibleVizUtils.domain.models.arrangement": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/arrangement.tsx"
+      ],
+      "bibleVizUtils.domain.models.canvas": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas.tsx"
+      ],
+      "bibleVizUtils.domain.models.commonTypes": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/commonTypes.tsx"
+      ],
+      "bibleVizUtils.domain.models.events": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/events.tsx"
+      ],
+      "bibleVizUtils.domain.models.highlight": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/highlight.tsx"
+      ],
+      "bibleVizUtils.domain.models.label": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/label.tsx"
+      ],
+      "bibleVizUtils.domain.models.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/onCreate.tsx"
+      ],
+      "bibleVizUtils.domain.models.pieceData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/pieceData.tsx"
+      ],
+      "bibleVizUtils.domain.models.scripture": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/scripture.tsx"
+      ],
+      "bibleVizUtils.domain.models.seedBible": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/seedBible.tsx"
+      ],
+      "bibleVizUtils.domain.models.subscriptions": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/subscriptions.tsx"
+      ],
+      "bibleVizUtils.domain.models.userPresence": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/userPresence.tsx"
+      ],
+      "bibleVizUtils.domain.ports.arrangement": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/ports/arrangement.tsx"
+      ],
+      "bibleVizUtils.domain.ports.historyMode": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/ports/historyMode.tsx"
+      ],
+      "bibleVizUtils.domain.ports.label": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/ports/label.tsx"
+      ],
+      "bibleVizUtils.domain.ports.labelDate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/ports/labelDate.tsx"
+      ],
+      "bibleVizUtils.domain.ports.piece": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/ports/piece.tsx"
+      ],
+      "bibleVizUtils.domain.ports.pieceActivity": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/ports/pieceActivity.tsx"
+      ],
+      "bibleVizUtils.domain.ports.session": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/ports/session.tsx"
+      ],
+      "bibleVizUtils.domain.ports.userPresence": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/ports/userPresence.tsx"
+      ],
+      "bibleVizUtils.infrastructure.adapters.arrangement.ArrangementAdapter": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/arrangement/ArrangementAdapter.tsx"
+      ],
+      "bibleVizUtils.infrastructure.adapters.arrangement.CustomArrangementStore": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/arrangement/CustomArrangementStore.tsx"
+      ],
+      "bibleVizUtils.infrastructure.adapters.casualos.ObjectPooler": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/casualos/ObjectPooler.tsx"
+      ],
+      "bibleVizUtils.infrastructure.adapters.casualos.renderOrderAdapter": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/casualos/renderOrderAdapter.tsx"
+      ],
+      "bibleVizUtils.infrastructure.adapters.labels.LabelAdapter": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/labels/LabelAdapter.tsx"
+      ],
+      "bibleVizUtils.infrastructure.adapters.labels.LabelDataStore": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/labels/LabelDataStore.tsx"
+      ],
+      "bibleVizUtils.infrastructure.adapters.labels.LabelFeedbackAdapter": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/labels/LabelFeedbackAdapter.tsx"
+      ],
+      "bibleVizUtils.infrastructure.adapters.labels.LabelsRepository": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/labels/LabelsRepository.tsx"
+      ],
+      "bibleVizUtils.infrastructure.adapters.pieceActivity.ActivityIndicatorBotsRepository": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/pieceActivity/ActivityIndicatorBotsRepository.tsx"
+      ],
+      "bibleVizUtils.infrastructure.adapters.pieceActivity.ActivityIndicatorsAdapter": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/pieceActivity/ActivityIndicatorsAdapter.tsx"
+      ],
+      "bibleVizUtils.infrastructure.adapters.pieceActivity.ActivityNotificationAdapter": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/pieceActivity/ActivityNotificationAdapter.tsx"
+      ],
+      "bibleVizUtils.infrastructure.adapters.session.SessionProvider": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/session/SessionProvider.tsx"
+      ],
+      "bibleVizUtils.infrastructure.adapters.user.UserDatabase": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/user/UserDatabase.tsx"
+      ],
+      "bibleVizUtils.infrastructure.adapters.userPresence.SeedBiblePresenceProvider": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/userPresence/SeedBiblePresenceProvider.tsx"
+      ],
+      "bibleVizUtils.infrastructure.adapters.userPresence.UserColorStore": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/userPresence/UserColorStore.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.activityIndicators.ActivityIndicatorsConfigProvider": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/activityIndicators/ActivityIndicatorsConfigProvider.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.activityIndicators.visuals": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/activityIndicators/visuals.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.arrangements.ArrangementsConfigProvider": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/arrangements/ArrangementsConfigProvider.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.arrangements.psalms": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/arrangements/psalms.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.arrangements.sectionNames": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/arrangements/sectionNames.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.arrangements.staticArrangements": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/arrangements/staticArrangements.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.labels.date": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/labels/date.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.labels.fonts": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/labels/fonts.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.labels.formAddresses": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/labels/formAddresses.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.labels.LabelFeedbackConfigProvider": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/labels/LabelFeedbackConfigProvider.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.labels.LabelsConfigProvider": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/labels/LabelsConfigProvider.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.labels.showAnimation": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/labels/showAnimation.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.meshes.MeshesConfigProvider": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/meshes/MeshesConfigProvider.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.meshes.urls": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/meshes/urls.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.readingHistory.ReadingHistoryConfigProvider": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/readingHistory/ReadingHistoryConfigProvider.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.scriptureMap3D.measurements": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/scriptureMap3D/measurements.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.scriptureMap3D.ScriptureMap3DConfigProvider": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/scriptureMap3D/ScriptureMap3DConfigProvider.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.stacks.animations": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/stacks/animations.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.stacks.measurements": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/stacks/measurements.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.stacks.spacings": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/stacks/spacings.tsx"
+      ],
+      "bibleVizUtils.infrastructure.config.stacks.StackConfigProvider": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/stacks/StackConfigProvider.tsx"
+      ],
+      "bibleVizUtils.infrastructure.controllers.arrangement.ArrangementController": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/controllers/arrangement/ArrangementController.tsx"
+      ],
+      "bibleVizUtils.infrastructure.controllers.label.LabelInteractionController": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/controllers/label/LabelInteractionController.tsx"
+      ],
+      "bibleVizUtils.infrastructure.controllers.session.SessionController": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/controllers/session/SessionController.tsx"
+      ],
+      "bibleVizUtils.infrastructure.controllers.session.UserColorController": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/controllers/session/UserColorController.tsx"
+      ],
+      "bibleVizUtils.infrastructure.controllers.userPresence.UserPresenceController": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/controllers/userPresence/UserPresenceController.tsx"
+      ],
+      "bibleVizUtils.infrastructure.data.BibleVizDataRepository": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/data/BibleVizDataRepository.tsx"
+      ],
+      "bibleVizUtils.infrastructure.data.booksStaticInfo": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/data/booksStaticInfo.tsx"
+      ],
+      "bibleVizUtils.infrastructure.data.testamentNames": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/data/testamentNames.tsx"
+      ],
+      "bibleVizUtils.infrastructure.di.bootstrap": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/di/bootstrap.tsx"
+      ],
+      "bibleVizUtils.infrastructure.entrypoints.casualos.onAnyBotsAdded": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/onAnyBotsAdded.tsx"
+      ],
+      "bibleVizUtils.infrastructure.entrypoints.casualos.onBookOrientationChanged": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/onBookOrientationChanged.tsx"
+      ],
+      "bibleVizUtils.infrastructure.entrypoints.casualos.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/onCreate.tsx"
+      ],
+      "bibleVizUtils.infrastructure.entrypoints.casualos.oncurrentActiveTabDataUpdated": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/oncurrentActiveTabDataUpdated.tsx"
+      ],
+      "bibleVizUtils.infrastructure.entrypoints.casualos.onDestroy": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/onDestroy.tsx"
+      ],
+      "bibleVizUtils.infrastructure.entrypoints.casualos.onExtensionInstalled": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/onExtensionInstalled.tsx"
+      ],
+      "bibleVizUtils.infrastructure.entrypoints.casualos.onExtensionUninstalled": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/onExtensionUninstalled.tsx"
+      ],
+      "bibleVizUtils.infrastructure.entrypoints.casualos.onGetOrSetVisualInTagsDefined": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/onGetOrSetVisualInTagsDefined.tsx"
+      ],
+      "bibleVizUtils.infrastructure.entrypoints.casualos.OnOnlineUsersChanged": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/OnOnlineUsersChanged.tsx"
+      ],
+      "bibleVizUtils.infrastructure.entrypoints.casualos.userLogin": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/userLogin.tsx"
+      ],
+      "bibleVizUtils.infrastructure.entrypoints.casualos.userSubscribed": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/userSubscribed.tsx"
+      ],
+      "bibleVizUtils.infrastructure.entrypoints.casualos.userUnsubscribed": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/userUnsubscribed.tsx"
+      ],
+      "bibleVizUtils.infrastructure.functions.casualos": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/functions/casualos.tsx"
+      ],
+      "bibleVizUtils.infrastructure.functions.layout": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/functions/layout.tsx"
+      ],
+      "bibleVizUtils.infrastructure.mappers.ActivityIndicatorMapper": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/ActivityIndicatorMapper.tsx"
+      ],
+      "bibleVizUtils.infrastructure.mappers.ActivityNotificationMapper": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/ActivityNotificationMapper.tsx"
+      ],
+      "bibleVizUtils.infrastructure.mappers.ArrangementMapper": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/ArrangementMapper.tsx"
+      ],
+      "bibleVizUtils.infrastructure.mappers.BookInfoMapper": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/BookInfoMapper.tsx"
+      ],
+      "bibleVizUtils.infrastructure.mappers.DraggingEventMapper": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/DraggingEventMapper.tsx"
+      ],
+      "bibleVizUtils.infrastructure.mappers.InfoLabelDateMapper": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/InfoLabelDateMapper.tsx"
+      ],
+      "bibleVizUtils.infrastructure.mappers.InfoLabelTailMapper": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/InfoLabelTailMapper.tsx"
+      ],
+      "bibleVizUtils.infrastructure.mappers.InfoLabelTextMapper": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/InfoLabelTextMapper.tsx"
+      ],
+      "bibleVizUtils.infrastructure.mappers.InfoLabelTransformerMapper": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/InfoLabelTransformerMapper.tsx"
+      ],
+      "bibleVizUtils.infrastructure.mappers.PieceMapper": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/PieceMapper.tsx"
+      ],
+      "bibleVizUtils.infrastructure.mappers.SectionInfoMapper": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/SectionInfoMapper.tsx"
+      ],
+      "bibleVizUtils.infrastructure.mappers.StackGeometryMapper": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/StackGeometryMapper.tsx"
+      ],
+      "bibleVizUtils.infrastructure.models.arrangement": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/arrangement.tsx"
+      ],
+      "bibleVizUtils.infrastructure.models.canvas": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/canvas.tsx"
+      ],
+      "bibleVizUtils.infrastructure.models.casualos": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/casualos.tsx"
+      ],
+      "bibleVizUtils.infrastructure.models.label": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/label.tsx"
+      ],
+      "bibleVizUtils.infrastructure.models.seedBible": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/seedBible.tsx"
+      ],
+      "bibleVizUtils.infrastructure.ports.arrangement": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/ports/arrangement.tsx"
+      ],
+      "bibleVizUtils.infrastructure.ports.bookInfo": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/ports/bookInfo.tsx"
+      ],
+      "bibleVizUtils.infrastructure.ports.draggingEventMapper": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/ports/draggingEventMapper.tsx"
+      ],
+      "bibleVizUtils.infrastructure.prefabs.activityIndicator.botAdapter": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/prefabs/activityIndicator/botAdapter.tsx"
+      ],
+      "bibleVizUtils.infrastructure.prefabs.activityNotification.botAdapter": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/prefabs/activityNotification/botAdapter.tsx"
+      ],
+      "bibleVizUtils.infrastructure.prefabs.infoLabelDate.botAdapter": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/prefabs/infoLabelDate/botAdapter.tsx"
+      ],
+      "bibleVizUtils.infrastructure.prefabs.infoLabelTail.botAdapter": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/prefabs/infoLabelTail/botAdapter.tsx"
+      ],
+      "bibleVizUtils.infrastructure.prefabs.infoLabelTail.onClick": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/prefabs/infoLabelTail/onClick.tsx"
+      ],
+      "bibleVizUtils.infrastructure.prefabs.infoLabelText.botAdapter": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/prefabs/infoLabelText/botAdapter.tsx"
+      ],
+      "bibleVizUtils.infrastructure.prefabs.infoLabelText.onClick": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/prefabs/infoLabelText/onClick.tsx"
+      ],
+      "bibleVizUtils.infrastructure.prefabs.infoLabelTransformer.botAdapter": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/prefabs/infoLabelTransformer/botAdapter.tsx"
+      ],
+      "bibleVizUtils.infrastructure.utils.DebouncerService": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/utils/DebouncerService.tsx"
+      ],
       "ext_geoImporter.importer.geometryHandlers": [
         "./packages/geo-importer-extension/ext_geoImporter/importer/geometryHandlers.tsx"
       ],
@@ -49,6 +490,195 @@
       ],
       "ext_locations.onInstJoined": [
         "./packages/locations-extension/ext_locations/onInstJoined.tsx"
+      ],
+      "scriptureMap2D.components.containers.Book": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/Book.tsx"
+      ],
+      "scriptureMap2D.components.containers.Chapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/Chapter.tsx"
+      ],
+      "scriptureMap2D.components.containers.Container": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/Container.tsx"
+      ],
+      "scriptureMap2D.components.containers.Controls": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/Controls.tsx"
+      ],
+      "scriptureMap2D.components.containers.ProjectFiltersSelector": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/ProjectFiltersSelector.tsx"
+      ],
+      "scriptureMap2D.components.containers.ProjectStateSetter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/ProjectStateSetter.tsx"
+      ],
+      "scriptureMap2D.components.containers.ReadingHistoryTimeline": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/ReadingHistoryTimeline.tsx"
+      ],
+      "scriptureMap2D.components.containers.ReadingHistoryUserFiltersSelector": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/ReadingHistoryUserFiltersSelector.tsx"
+      ],
+      "scriptureMap2D.components.containers.ScriptureMap2DWrapper": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/ScriptureMap2DWrapper.tsx"
+      ],
+      "scriptureMap2D.components.containers.SelectionOptions": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/SelectionOptions.tsx"
+      ],
+      "scriptureMap2D.components.containers.Settings": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/Settings.tsx"
+      ],
+      "scriptureMap2D.components.containers.TestamentContainer": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/TestamentContainer.tsx"
+      ],
+      "scriptureMap2D.components.containers.TestamentContent": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/TestamentContent.tsx"
+      ],
+      "scriptureMap2D.components.containers.TestamentToggle": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/TestamentToggle.tsx"
+      ],
+      "scriptureMap2D.components.containers.Tooltip": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/Tooltip.tsx"
+      ],
+      "scriptureMap2D.components.ScriptureMap2D": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/ScriptureMap2D.tsx"
+      ],
+      "scriptureMap2D.components.ui.BooksContainer": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/ui/BooksContainer.tsx"
+      ],
+      "scriptureMap2D.components.ui.SectionToggle": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/ui/SectionToggle.tsx"
+      ],
+      "scriptureMap2D.components.ui.SelectorOption": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/ui/SelectorOption.tsx"
+      ],
+      "scriptureMap2D.contexts.ReadingHistory.ReadingHistoryContext": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/ReadingHistory/ReadingHistoryContext.tsx"
+      ],
+      "scriptureMap2D.contexts.ReadingHistory.useReadingHistoryProvider": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/ReadingHistory/useReadingHistoryProvider.tsx"
+      ],
+      "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/ScriptureMap2D/ScriptureMap2DContext.tsx"
+      ],
+      "scriptureMap2D.contexts.ScriptureMap2D.useScriptureMap2DProvider": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/ScriptureMap2D/useScriptureMap2DProvider.tsx"
+      ],
+      "scriptureMap2D.contexts.Testament.TestamentContext": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/Testament/TestamentContext.tsx"
+      ],
+      "scriptureMap2D.contexts.Time.TimeContext": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/Time/TimeContext.tsx"
+      ],
+      "scriptureMap2D.contexts.Time.useTimeProvider": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/Time/useTimeProvider.tsx"
+      ],
+      "scriptureMap2D.di.bootstrap": [
+        "./packages/Scripture Map 2D/scriptureMap2D/di/bootstrap.tsx"
+      ],
+      "scriptureMap2D.entrypoints.onEggHatch": [
+        "./packages/Scripture Map 2D/scriptureMap2D/entrypoints/onEggHatch.tsx"
+      ],
+      "scriptureMap2D.entrypoints.onExtensionInstalled": [
+        "./packages/Scripture Map 2D/scriptureMap2D/entrypoints/onExtensionInstalled.tsx"
+      ],
+      "scriptureMap2D.entrypoints.onExtensionUninstalled": [
+        "./packages/Scripture Map 2D/scriptureMap2D/entrypoints/onExtensionUninstalled.tsx"
+      ],
+      "scriptureMap2D.entrypoints.onInstJoined": [
+        "./packages/Scripture Map 2D/scriptureMap2D/entrypoints/onInstJoined.tsx"
+      ],
+      "scriptureMap2D.entrypoints.userSubscribed": [
+        "./packages/Scripture Map 2D/scriptureMap2D/entrypoints/userSubscribed.tsx"
+      ],
+      "scriptureMap2D.entrypoints.userUnsubscribed": [
+        "./packages/Scripture Map 2D/scriptureMap2D/entrypoints/userUnsubscribed.tsx"
+      ],
+      "scriptureMap2D.hooks.useBook": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useBook.tsx"
+      ],
+      "scriptureMap2D.hooks.useChapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useChapter.tsx"
+      ],
+      "scriptureMap2D.hooks.useClickAndHold": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useClickAndHold.tsx"
+      ],
+      "scriptureMap2D.hooks.useClickOutside": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useClickOutside.tsx"
+      ],
+      "scriptureMap2D.hooks.useContainer": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useContainer.tsx"
+      ],
+      "scriptureMap2D.hooks.useControls": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useControls.tsx"
+      ],
+      "scriptureMap2D.hooks.useIsMobile": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useIsMobile.tsx"
+      ],
+      "scriptureMap2D.hooks.useProjectFiltersSelector": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useProjectFiltersSelector.tsx"
+      ],
+      "scriptureMap2D.hooks.useProjectStateSetter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useProjectStateSetter.tsx"
+      ],
+      "scriptureMap2D.hooks.useReadingHistoryTimeline": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useReadingHistoryTimeline.tsx"
+      ],
+      "scriptureMap2D.hooks.useReadingHistoryUserFiltersSelector": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useReadingHistoryUserFiltersSelector.tsx"
+      ],
+      "scriptureMap2D.hooks.useResizeObserver": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useResizeObserver.tsx"
+      ],
+      "scriptureMap2D.hooks.useScriptureMap2DWrapper": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useScriptureMap2DWrapper.tsx"
+      ],
+      "scriptureMap2D.hooks.useSelectionOptions": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useSelectionOptions.tsx"
+      ],
+      "scriptureMap2D.hooks.useSettings": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useSettings.tsx"
+      ],
+      "scriptureMap2D.hooks.useTestamentContainer": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useTestamentContainer.tsx"
+      ],
+      "scriptureMap2D.hooks.useTestamentContent": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useTestamentContent.tsx"
+      ],
+      "scriptureMap2D.hooks.useTestamentToggle": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useTestamentToggle.tsx"
+      ],
+      "scriptureMap2D.hooks.useTooltip": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useTooltip.tsx"
+      ],
+      "scriptureMap2D.hooks.useWhyChanged": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useWhyChanged.tsx"
+      ],
+      "scriptureMap2D.models.arrangement": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/arrangement.tsx"
+      ],
+      "scriptureMap2D.models.commonTypes": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/commonTypes.tsx"
+      ],
+      "scriptureMap2D.models.content": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/content.tsx"
+      ],
+      "scriptureMap2D.models.events": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/events.tsx"
+      ],
+      "scriptureMap2D.models.project": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/project.tsx"
+      ],
+      "scriptureMap2D.models.readingHistory": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/readingHistory.tsx"
+      ],
+      "scriptureMap2D.models.scriptureMap": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/scriptureMap.tsx"
+      ],
+      "scriptureMap2D.models.user": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/user.tsx"
+      ],
+      "scriptureMap2D.services.index": [
+        "./packages/Scripture Map 2D/scriptureMap2D/services/index.tsx"
+      ],
+      "scriptureMap2D.styles.adapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/styles/adapter.tsx"
       ],
       "seed-bible.app.api": ["./packages/seed-bible/seed-bible/app/api.tsx"],
       "seed-bible.app.init": ["./packages/seed-bible/seed-bible/app/init.tsx"],
@@ -86,11 +716,11 @@
       "seed-bible.components.KeyboardNav": [
         "./packages/seed-bible/seed-bible/components/KeyboardNav.tsx"
       ],
-      "seed-bible.components.ModalHost": [
-        "./packages/seed-bible/seed-bible/components/ModalHost.tsx"
-      ],
       "seed-bible.components.MobileSettingsSheet": [
         "./packages/seed-bible/seed-bible/components/MobileSettingsSheet.tsx"
+      ],
+      "seed-bible.components.ModalHost": [
+        "./packages/seed-bible/seed-bible/components/ModalHost.tsx"
       ],
       "seed-bible.components.PaneLayout": [
         "./packages/seed-bible/seed-bible/components/PaneLayout.tsx"

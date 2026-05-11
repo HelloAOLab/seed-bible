@@ -1,0 +1,10 @@
+{
+  "id": "bible-visualization-utils",
+  "translations": {
+    "en": {
+      "title": "Bible Visualization Utils",
+      "description": "TODO: Add description",
+      "below-reader-tool": "Bible Visualization Utils"
+    }
+  }
+}

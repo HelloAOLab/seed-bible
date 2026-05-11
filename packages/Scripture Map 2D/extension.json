@@ -1,0 +1,10 @@
+{
+  "id": "scripture-map-2d",
+  "translations": {
+    "en": {
+      "title": "Scripture Map 2D",
+      "description": "TODO: Add description",
+      "below-reader-tool": "Scripture Map 2D"
+    }
+  }
+}
