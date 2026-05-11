@@ -784,25 +784,19 @@ export function Tabs(props: TabsProps) {
         })}
       </div>
 
-      <section className="sb-sidebar-discover-more" aria-live="polite">
-        <div className="sb-sidebar-discover-more-header">
-          <h4 className="sb-sidebar-discover-more-title">
-            {t("discover-more", { defaultValue: "Discover more" })}
-          </h4>
-          {discoveredContentCount > 0 && (
-            <span className="sb-sidebar-discover-more-count">
-              {discoveredContentCount}
-            </span>
-          )}
-        </div>
+      {discoveredContent.length > 0 && (
+        <section className="sb-sidebar-discover-more" aria-live="polite">
+          <div className="sb-sidebar-discover-more-header">
+            <h4 className="sb-sidebar-discover-more-title">
+              {t("discover-more", { defaultValue: "Discover more" })}
+            </h4>
+            {discoveredContentCount > 0 && (
+              <span className="sb-sidebar-discover-more-count">
+                {discoveredContentCount}
+              </span>
+            )}
+          </div>
 
-        {discoveredContentCount === 0 ? (
-          <p className="sb-sidebar-discover-more-empty">
-            {t("discover-more-empty", {
-              defaultValue: "No discovered content for this chapter yet.",
-            })}
-          </p>
-        ) : (
           <div className="sb-sidebar-discover-more-list">
             {discoveredContent.map((providerResults) =>
               providerResults.results.map((result, resultIndex) => {
@@ -833,8 +827,8 @@ export function Tabs(props: TabsProps) {
               })
             )}
           </div>
-        )}
-      </section>
+        </section>
+      )}
     </>
   );
 }
