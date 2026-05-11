@@ -384,71 +384,8 @@ interface PaneReaderScrollerProps {
   children: ComponentChildren;
 }
 
-function PaneReaderScroller({ tab, children }: PaneReaderScrollerProps) {
-  const currentChapter = useRef(tab.readingState.chapterData.value);
-
-  // We use a callback instead of a ref object
-  // because we want to set up and cleaup event listeners immediately when element ownership changes.
-  // If we use a ref object and useEffect(), then there will be a period of time where we might recieve scroll events from the element when it is transitioning between
-  // PaneReaderScroller instances, causing the tab scroll position to be updated as Preact is updating the DOM.
-  const scrollerRefCallback = (el: HTMLDivElement | null) => {
-    if (!el) {
-      return;
-    }
-
-    const cleanup = effect(() => {
-      if (tab.readingState.chapterData.value) {
-        el.scrollTop = tab.readingState.scrollPosition.peek();
-      }
-
-      const verseToScroll = tab.readingState.scrollToVerse.value;
-      if (tab.readingState.chapterData.value && verseToScroll !== null) {
-        requestAnimationFrame(() => {
-          const targetVerse = el.querySelector(
-            `[data-verse-number="${verseToScroll}"]`
-          );
-          if (!(targetVerse instanceof HTMLElement)) {
-            return;
-          }
-
-          targetVerse.scrollIntoView({ block: "center", inline: "nearest" });
-          batch(() => {
-            tab.readingState.scrollToVerse.value = null;
-            tab.readingState.scrollPosition.value = el.scrollTop;
-          });
-        });
-      }
-
-      currentChapter.current = tab.readingState.chapterData.value;
-
-      const handleScroll = () => {
-        if (
-          currentChapter.current?.translation.id !==
-            tab.readingState.translationId.value ||
-          currentChapter.current?.book.id !== tab.readingState.bookId.value ||
-          currentChapter.current?.chapter.number !==
-            tab.readingState.chapterNumber.value
-        ) {
-          return;
-        }
-        tab.readingState.scrollPosition.value = el.scrollTop;
-      };
-
-      el.addEventListener("scroll", handleScroll, { passive: true });
-
-      return () => {
-        el.removeEventListener("scroll", handleScroll);
-      };
-    });
-
-    return cleanup;
-  };
-
-  return (
-    <div className="sb-pane-reader" ref={scrollerRefCallback}>
-      {children}
-    </div>
-  );
+function PaneReaderContainer({ children }: PaneReaderScrollerProps) {
+  return <div className="sb-pane-reader">{children}</div>;
 }
 
 function EmptyPaneToolbar({
@@ -933,7 +870,7 @@ export function PaneLayout(props: PaneLayoutProps) {
               <pane.component />
             </div>
           ) : pane.tab ? (
-            <PaneReaderScroller tab={pane.tab}>
+            <PaneReaderContainer tab={pane.tab}>
               <BibleReader
                 currentPane={pane}
                 readingState={pane.tab.readingState}
@@ -956,7 +893,7 @@ export function PaneLayout(props: PaneLayoutProps) {
                   currentPane={pane}
                 />
               )}
-            </PaneReaderScroller>
+            </PaneReaderContainer>
           ) : (
             <EmptyPaneToolbar
               toolsManager={toolsManager}
@@ -1097,7 +1034,7 @@ export function PaneLayout(props: PaneLayoutProps) {
                 <pane.component />
               </div>
             ) : pane.tab ? (
-              <PaneReaderScroller tab={pane.tab}>
+              <PaneReaderContainer tab={pane.tab}>
                 <BibleReader
                   currentPane={pane}
                   readingState={pane.tab.readingState}
@@ -1106,7 +1043,7 @@ export function PaneLayout(props: PaneLayoutProps) {
                     state.settings.settings.value.scriptureElements
                   }
                 />
-              </PaneReaderScroller>
+              </PaneReaderContainer>
             ) : (
               <EmptyPaneToolbar
                 toolsManager={toolsManager}
