@@ -1077,6 +1077,65 @@ export class FreeUseBibleAPI {
     );
   }
 
+  async getAvailableDatasets(endpoint?: string): Promise<AvailableDatasets> {
+    return this._getJson<AvailableDatasets>(
+      "api/available_datasets.json",
+      endpoint
+    );
+  }
+
+  async getDatasetBooks(
+    dataset: string,
+    endpoint?: string
+  ): Promise<DatasetBooks> {
+    const encodedDataset = encodeURIComponent(dataset);
+    return this._getJson<DatasetBooks>(
+      `api/d/${encodedDataset}/books.json`,
+      endpoint
+    );
+  }
+
+  async getDatasetBookChapter(
+    dataset: string,
+    book: string,
+    chapter: number | string,
+    endpoint?: string
+  ): Promise<DatasetBookChapter> {
+    const encodedDataset = encodeURIComponent(dataset);
+    const encodedBook = encodeURIComponent(book);
+    const encodedChapter = encodeURIComponent(String(chapter));
+    return this._getJson<DatasetBookChapter>(
+      `api/d/${encodedDataset}/${encodedBook}/${encodedChapter}.json`,
+      endpoint
+    );
+  }
+
+  async getNextDatasetChapter(
+    chapter: DatasetBookChapter,
+    endpoint?: string
+  ): Promise<DatasetBookChapter | null> {
+    if (!chapter.nextChapterApiLink) {
+      return null;
+    }
+    return this._getJson<DatasetBookChapter>(
+      chapter.nextChapterApiLink,
+      endpoint
+    );
+  }
+
+  async getPreviousDatasetChapter(
+    chapter: DatasetBookChapter,
+    endpoint?: string
+  ): Promise<DatasetBookChapter | null> {
+    if (!chapter.previousChapterApiLink) {
+      return null;
+    }
+    return this._getJson<DatasetBookChapter>(
+      chapter.previousChapterApiLink,
+      endpoint
+    );
+  }
+
   private _getJson<T>(path: string, endpoint?: string): Promise<T> {
     const url = this._buildUrl(path, endpoint);
     const existing = this._responseCache.get(url) as Promise<T> | undefined;
