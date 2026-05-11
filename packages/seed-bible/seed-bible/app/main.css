@@ -820,8 +820,10 @@ h6 {
 }
 
 .sb-bible-reader-mobile-header {
-  position: sticky;
+  position: absolute;
   top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -896,6 +898,10 @@ h6 {
   will-change: transform;
 }
 
+.sb-bible-reader-mobile .sb-reader-swipe-panel {
+  padding-top: 60px;
+}
+
 .sb-reader-swipe-panel {
   flex: 0 0 33.333%;
   height: 100%;
@@ -919,7 +925,7 @@ h6 {
    collapse the header's layout space in sync with the slide so the chapter
    content rises to fill the gap (no leftover white strip). */
 .sb-bible-reader-mobile-header {
-  max-height: 80px;
+  max-height: 60px;
   overflow: hidden;
   transition:
     transform 0.25s ease,
