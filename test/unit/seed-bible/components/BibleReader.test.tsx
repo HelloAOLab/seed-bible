@@ -204,17 +204,34 @@ function dispatchTouch(
   element.dispatchEvent(event);
 }
 
+const BASE_SCRIPTURE_ELEMENTS = {
+  showHeadings: true,
+  showVerseNumbers: true,
+  showFootnotes: true,
+  showCrossReferences: true,
+  showStudyNotes: true,
+  showDiscoveredContent: true,
+  showHighlights: true,
+  showRedLettering: true,
+};
+
 describe("BibleReader", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
+    (globalThis as any).configBot = {
+      tags: {
+        url: "https://example.test/reader",
+      },
+    };
   });
 
   afterEach(() => {
     render(null, container);
     container.remove();
+    delete (globalThis as any).configBot;
   });
 
   it("opens the selector when the title is clicked", () => {
@@ -947,6 +964,206 @@ describe("BibleReader", () => {
     expect(wordsOfJesus?.textContent).toContain("I am the light");
   });
 
+  it("renders discovered cross references in the chapter layer", async () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    const offsetTopDescriptor = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetTop"
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetTop", {
+      configurable: true,
+      get() {
+        return 0;
+      },
+    });
+
+    try {
+      (readingState.discoveredCrossReferences as any).value = [
+        {
+          providerId: "test-provider",
+          results: [
+            {
+              type: "cross-reference",
+              reference: {
+                book: "GEN",
+                chapter: 1,
+                verse: 1,
+                bookData: { id: "GEN", name: "Genesis" },
+              },
+              crossReference: {
+                book: "EXO",
+                chapter: 2,
+                verse: 3,
+                bookData: { id: "EXO", name: "Exodus" },
+              },
+            },
+          ],
+        },
+      ];
+
+      act(() => {
+        render(
+          <BibleReader
+            currentPane={pane}
+            selectorState={selectorState}
+            readingState={readingState}
+          />,
+          container
+        );
+      });
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      const referenceNumber = container.querySelector(
+        ".sb-verse-cross-reference-number"
+      );
+      const referenceLink = container.querySelector(
+        ".sb-verse-cross-reference"
+      ) as HTMLAnchorElement | null;
+
+      expect(referenceNumber?.textContent).toBe("v1");
+      expect(referenceLink).not.toBeNull();
+      expect(referenceLink?.textContent).toContain("EXO");
+    } finally {
+      if (offsetTopDescriptor) {
+        Object.defineProperty(
+          HTMLElement.prototype,
+          "offsetTop",
+          offsetTopDescriptor
+        );
+      } else {
+        delete (HTMLElement.prototype as any).offsetTop;
+      }
+    }
+  });
+
+  it("opens the referenced chapter when a cross reference is clicked", async () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    const offsetTopDescriptor = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetTop"
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetTop", {
+      configurable: true,
+      get() {
+        return 0;
+      },
+    });
+
+    try {
+      (readingState.discoveredCrossReferences as any).value = [
+        {
+          providerId: "test-provider",
+          results: [
+            {
+              type: "cross-reference",
+              reference: {
+                book: "GEN",
+                chapter: 1,
+                verse: 1,
+                bookData: { id: "GEN", name: "Genesis" },
+              },
+              crossReference: {
+                book: "EXO",
+                chapter: 2,
+                verse: 3,
+                bookData: { id: "EXO", name: "Exodus" },
+              },
+            },
+          ],
+        },
+      ];
+
+      act(() => {
+        render(
+          <BibleReader
+            currentPane={pane}
+            selectorState={selectorState}
+            readingState={readingState}
+          />,
+          container
+        );
+      });
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      const referenceLink = container.querySelector(
+        ".sb-verse-cross-reference"
+      ) as HTMLAnchorElement | null;
+      expect(referenceLink).not.toBeNull();
+
+      act(() => {
+        referenceLink?.dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+
+      expect(readingState.selectChapter).toHaveBeenCalledWith("EXO", 2, {
+        scrollToVerse: 3,
+      });
+    } finally {
+      if (offsetTopDescriptor) {
+        Object.defineProperty(
+          HTMLElement.prototype,
+          "offsetTop",
+          offsetTopDescriptor
+        );
+      } else {
+        delete (HTMLElement.prototype as any).offsetTop;
+      }
+    }
+  });
+
+  it("hides cross-reference layer when scriptureElements.showCrossReferences is false", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    (readingState.discoveredCrossReferences as any).value = [
+      {
+        providerId: "test-provider",
+        results: [
+          {
+            type: "cross-reference",
+            reference: {
+              book: "GEN",
+              chapter: 1,
+              verse: 1,
+              bookData: { id: "GEN", name: "Genesis" },
+            },
+            crossReference: {
+              book: "EXO",
+              chapter: 2,
+              verse: 3,
+              bookData: { id: "EXO", name: "Exodus" },
+            },
+          },
+        ],
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureElements={{
+            ...BASE_SCRIPTURE_ELEMENTS,
+            showCrossReferences: false,
+          }}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-verse-cross-reference")).toBeNull();
+  });
+
   it("hides chapter headings when scriptureElements.showHeadings is false", () => {
     const { pane, selectorState, readingState } = createFixture();
 
@@ -957,11 +1174,8 @@ describe("BibleReader", () => {
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
+            ...BASE_SCRIPTURE_ELEMENTS,
             showHeadings: false,
-            showVerseNumbers: true,
-            showFootnotes: true,
-            showHighlights: true,
-            showRedLettering: true,
           }}
         />,
         container
@@ -981,11 +1195,8 @@ describe("BibleReader", () => {
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
-            showHeadings: true,
+            ...BASE_SCRIPTURE_ELEMENTS,
             showVerseNumbers: false,
-            showFootnotes: true,
-            showHighlights: true,
-            showRedLettering: true,
           }}
         />,
         container
@@ -1016,11 +1227,8 @@ describe("BibleReader", () => {
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
-            showHeadings: true,
-            showVerseNumbers: true,
+            ...BASE_SCRIPTURE_ELEMENTS,
             showFootnotes: false,
-            showHighlights: true,
-            showRedLettering: true,
           }}
         />,
         container
@@ -1052,11 +1260,8 @@ describe("BibleReader", () => {
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
-            showHeadings: true,
-            showVerseNumbers: true,
-            showFootnotes: true,
+            ...BASE_SCRIPTURE_ELEMENTS,
             showHighlights: false,
-            showRedLettering: true,
           }}
         />,
         container
@@ -1086,10 +1291,7 @@ describe("BibleReader", () => {
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
-            showHeadings: true,
-            showVerseNumbers: true,
-            showFootnotes: true,
-            showHighlights: true,
+            ...BASE_SCRIPTURE_ELEMENTS,
             showRedLettering: false,
           }}
         />,
@@ -1110,11 +1312,7 @@ describe("BibleReader", () => {
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
-            showHeadings: true,
-            showVerseNumbers: true,
-            showFootnotes: true,
-            showHighlights: true,
-            showRedLettering: true,
+            ...BASE_SCRIPTURE_ELEMENTS,
           }}
         />,
         container

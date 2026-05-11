@@ -878,10 +878,7 @@ function renderCrossReferenceLayer(
   );
 
   return verseEntries.map((entry) => {
-    const top = verseOffsets[entry.number];
-    if (typeof top !== "number") {
-      return null;
-    }
+    const top = verseOffsets[entry.number] ?? 0;
 
     const verseCrossReferences = getVerseCrossReferences(
       discoveredCrossReferences,
@@ -942,10 +939,7 @@ function renderStudyNoteLayer(
   );
 
   return verseEntries.map((entry) => {
-    const top = verseOffsets[entry.number];
-    if (typeof top !== "number") {
-      return null;
-    }
+    const top = verseOffsets[entry.number] ?? 0;
 
     const verseStudyNotes = getVerseStudyNotes(
       discoveredStudyNotes,
