@@ -840,7 +840,7 @@ h6 {
 
 .sb-bible-reader-mobile-header-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
   font-family: var(--text-bookTitle-font);
   color: var(--sb-book-title-font-color);
@@ -854,7 +854,7 @@ h6 {
 }
 
 .sb-bible-reader-mobile-header-translation {
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 400;
   cursor: pointer;
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
