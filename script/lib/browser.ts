@@ -323,6 +323,7 @@ export const DEFAULT_EXTENSIONS = [
   "seed-bible-refresh-example-extension",
   "geo-importer-extension",
   "locations-extension",
+  "open-cross-references-extension",
   // "BookSelector",
   // "Object Pooler",
   // "GeoImporter",
