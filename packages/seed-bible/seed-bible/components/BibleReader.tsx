@@ -890,7 +890,6 @@ export function BibleReader(props: BibleReaderProps) {
       }
 
       if (swipeDirectionLocked.current === "v") return;
-      e.preventDefault();
 
       const hasNext = !!readingState.chapterData.value?.nextChapterApiLink;
       const hasPrev = !!readingState.chapterData.value?.previousChapterApiLink;
@@ -956,7 +955,7 @@ export function BibleReader(props: BibleReaderProps) {
     };
 
     viewport.addEventListener("touchstart", onTouchStart, { passive: true });
-    viewport.addEventListener("touchmove", onTouchMove, { passive: false });
+    viewport.addEventListener("touchmove", onTouchMove, { passive: true });
     viewport.addEventListener("touchend", onTouchEnd, { passive: true });
 
     return () => {
