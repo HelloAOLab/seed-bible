@@ -1,5 +1,6 @@
 import { effect, signal, type Signal } from "@preact/signals";
 import type { LoginManager } from "seed-bible.managers.LoginManager";
+import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
@@ -54,6 +55,8 @@ export interface ToolbarCustomization {
 export interface AppSettings {
   bookOrientation: BookOrientation;
   uiTextSize: UITextSize;
+  /** Preferred translation ID used for initializing the first reader tab. */
+  translationId: string;
   selectionUI: SelectionUIBehavior;
   scriptureElements: ScriptureElementsBehavior;
   textConfig: TextConfig;
@@ -70,6 +73,7 @@ export interface AppSettings {
 export const AppSettingsSchema = z.object({
   bookOrientation: z.enum(["traditional", "tanak"]),
   uiTextSize: z.enum(["S", "M", "L", "XL"]),
+  translationId: z.string().trim().min(1).default(DEFAULT_TRANSLATION_ID),
   selectionUI: z.object({
     showSelectedItems: z.boolean(),
     showHighlightColors: z.boolean(),
@@ -137,6 +141,7 @@ export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
 
 const TAG_BOOK_ORIENTATION = "app.bookOrientation";
 const TAG_UI_TEXT_SIZE = "app.uiTextSize";
+const TAG_TRANSLATION_ID = "app.translationId";
 const TAG_SELECTION_UI = "app.selectionUI";
 const TAG_SCRIPTURE_ELEMENTS = "app.scriptureElements";
 const TAG_TEXT_CONFIG = "app.textConfig";
@@ -150,6 +155,7 @@ const TAG_SHOW_NAV_ARROWS = "app.showNavArrows";
 // ConfigManager for `fontSize`, `lang`, `disablePanels`).
 const PROFILE_BOOK_ORIENTATION = "bookOrientation";
 const PROFILE_UI_TEXT_SIZE = "uiTextSize";
+const PROFILE_TRANSLATION_ID = "translationId";
 const PROFILE_SELECTION_UI = "selectionUI";
 const PROFILE_SCRIPTURE_ELEMENTS = "scriptureElements";
 const PROFILE_TEXT_CONFIG = "textConfig";
@@ -258,6 +264,7 @@ const DEFAULT_TOOLBAR_CONFIG: ToolbarCustomization = {
 const DEFAULT_SETTINGS: AppSettings = {
   bookOrientation: "traditional",
   uiTextSize: "M",
+  translationId: DEFAULT_TRANSLATION_ID,
   selectionUI: DEFAULT_SELECTION_UI,
   scriptureElements: DEFAULT_SCRIPTURE_ELEMENTS,
   textConfig: DEFAULT_TEXT_CONFIG,
@@ -552,6 +559,7 @@ export interface SettingsManager {
   settings: Signal<AppSettings>;
   setBookOrientation: (orientation: BookOrientation) => void;
   setUITextSize: (size: UITextSize) => void;
+  setTranslationId: (translationId: string) => void;
   setSelectionUI: (patch: Partial<SelectionUIBehavior>) => void;
   setScriptureElements: (patch: Partial<ScriptureElementsBehavior>) => void;
   updateTextSection: (
@@ -583,6 +591,23 @@ export function createSettings(login: LoginManager): SettingsManager {
   // bootstrapping before the profile loads.
   const readSettings = (): AppSettings => {
     const profile = login.profile.value;
+    const isLoggedIn = !!login.userId.value;
+
+    const profileTranslationId = isLoggedIn
+      ? getProfileConfigValue(profile, PROFILE_TRANSLATION_ID)
+      : null;
+    const localTranslationId = isLoggedIn
+      ? configBot.tags[TAG_TRANSLATION_ID]
+      : null;
+    const translationId =
+      typeof profileTranslationId === "string" &&
+      profileTranslationId.trim().length > 0
+        ? profileTranslationId
+        : typeof localTranslationId === "string" &&
+            localTranslationId.trim().length > 0
+          ? localTranslationId
+          : DEFAULT_TRANSLATION_ID;
+
     return {
       bookOrientation: parseBookOrientation(
         getProfileConfigValue(profile, PROFILE_BOOK_ORIENTATION) ??
@@ -594,6 +619,7 @@ export function createSettings(login: LoginManager): SettingsManager {
           configBot.tags[TAG_UI_TEXT_SIZE],
         DEFAULT_SETTINGS.uiTextSize
       ),
+      translationId,
       selectionUI: parseSelectionUI(
         getProfileConfigValue(profile, PROFILE_SELECTION_UI) ??
           configBot.tags[TAG_SELECTION_UI],
@@ -662,6 +688,7 @@ export function createSettings(login: LoginManager): SettingsManager {
     if (
       changedTags.includes(TAG_BOOK_ORIENTATION) ||
       changedTags.includes(TAG_UI_TEXT_SIZE) ||
+      changedTags.includes(TAG_TRANSLATION_ID) ||
       changedTags.includes(TAG_SELECTION_UI) ||
       changedTags.includes(TAG_SCRIPTURE_ELEMENTS) ||
       changedTags.includes(TAG_TEXT_CONFIG) ||
@@ -685,6 +712,21 @@ export function createSettings(login: LoginManager): SettingsManager {
     settings.value = { ...settings.value, uiTextSize: size };
     configBot.tags[TAG_UI_TEXT_SIZE] = size;
     saveProfileConfigValue(login, PROFILE_UI_TEXT_SIZE, size);
+  };
+
+  const setTranslationId = (translationId: string) => {
+    if (!login.userId.value) {
+      return;
+    }
+
+    const normalized = translationId.trim() || DEFAULT_TRANSLATION_ID;
+    if (settings.value.translationId === normalized) {
+      return;
+    }
+
+    settings.value = { ...settings.value, translationId: normalized };
+    configBot.tags[TAG_TRANSLATION_ID] = normalized;
+    saveProfileConfigValue(login, PROFILE_TRANSLATION_ID, normalized);
   };
 
   const setSelectionUI = (patch: Partial<SelectionUIBehavior>) => {
@@ -844,6 +886,7 @@ export function createSettings(login: LoginManager): SettingsManager {
     settings.value = DEFAULT_SETTINGS;
     configBot.tags[TAG_BOOK_ORIENTATION] = DEFAULT_SETTINGS.bookOrientation;
     configBot.tags[TAG_UI_TEXT_SIZE] = DEFAULT_SETTINGS.uiTextSize;
+    configBot.tags[TAG_TRANSLATION_ID] = DEFAULT_SETTINGS.translationId;
     configBot.tags[TAG_SELECTION_UI] = JSON.stringify(
       DEFAULT_SETTINGS.selectionUI
     );
@@ -865,6 +908,11 @@ export function createSettings(login: LoginManager): SettingsManager {
       login,
       PROFILE_UI_TEXT_SIZE,
       DEFAULT_SETTINGS.uiTextSize
+    );
+    saveProfileConfigValue(
+      login,
+      PROFILE_TRANSLATION_ID,
+      DEFAULT_SETTINGS.translationId
     );
     saveProfileConfigValue(
       login,
@@ -944,6 +992,7 @@ export function createSettings(login: LoginManager): SettingsManager {
     settings,
     setBookOrientation,
     setUITextSize,
+    setTranslationId,
     setSelectionUI,
     setScriptureElements,
     updateTextSection,

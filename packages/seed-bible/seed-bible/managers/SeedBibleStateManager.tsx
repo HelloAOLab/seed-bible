@@ -173,9 +173,9 @@ export function createSeedBibleState(): SeedBibleState {
   const config = createConfig(login);
   const themeManager = createTheme(login);
   const sidebar = createSidebar();
-  const tabs = createTabs(data, highlights);
-  const panes = createPanes(tabs, tabs.selectedTabId);
   const settings = createSettings(login);
+  const tabs = createTabs(data, highlights, settings);
+  const panes = createPanes(tabs, tabs.selectedTabId);
   const selector = createBibleSelectorState(data, tabs, panes, settings);
   const tools = createBibleToolsManager();
   const readingHistory = createReadingHistoryManager(login);

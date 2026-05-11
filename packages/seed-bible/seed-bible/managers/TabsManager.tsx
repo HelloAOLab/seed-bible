@@ -9,6 +9,7 @@ import {
   type BibleReadingState,
 } from "seed-bible.managers.BibleReadingManager";
 import type { HighlightsManager } from "seed-bible.managers.HighlightsManager";
+import type { SettingsManager } from "seed-bible.managers.SettingsManager";
 
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
@@ -27,12 +28,18 @@ function getInitialFirstTabBookId(): string {
     : DEFAULT_BOOK_ID;
 }
 
-function getInitialTranslationId(): string {
-  return (
-    configBot.tags.translationId ??
-    configBot.tags.translation ??
-    DEFAULT_TRANSLATION_ID
-  );
+function getInitialTranslationId(settings?: SettingsManager): string {
+  const fromConfig = configBot.tags.translationId ?? configBot.tags.translation;
+  if (typeof fromConfig === "string" && fromConfig.trim()) {
+    return fromConfig;
+  }
+
+  const fromSettings = settings?.settings.value.translationId;
+  if (typeof fromSettings === "string" && fromSettings.trim()) {
+    return fromSettings;
+  }
+
+  return DEFAULT_TRANSLATION_ID;
 }
 
 function getInitialFirstTabChapter(): number {
@@ -44,14 +51,15 @@ function getInitialFirstTabChapter(): number {
 
 function createInitialTabs(
   dataManager: BibleDataManager,
-  highlightsManager: HighlightsManager
+  highlightsManager: HighlightsManager,
+  settings?: SettingsManager
 ): ReaderTab[] {
   return [
     {
       id: "tab-1",
       title: "Tab 1",
       readingState: createBibleReadingState(dataManager, highlightsManager, {
-        initialTranslationId: getInitialTranslationId(),
+        initialTranslationId: getInitialTranslationId(settings),
         initialBookId: getInitialFirstTabBookId(),
         initialChapterNumber: getInitialFirstTabChapter(),
       }),
@@ -117,10 +125,11 @@ export interface TabsManager {
  */
 export function createTabs(
   dataManager: BibleDataManager,
-  highlightsManager: HighlightsManager
+  highlightsManager: HighlightsManager,
+  settings?: SettingsManager
 ): TabsManager {
   const tabs = signal<ReaderTab[]>(
-    createInitialTabs(dataManager, highlightsManager)
+    createInitialTabs(dataManager, highlightsManager, settings)
   );
   const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
   const selectedTab = computed(
@@ -134,7 +143,7 @@ export function createTabs(
       return;
     }
 
-    const requestedTranslation = getInitialTranslationId();
+    const requestedTranslation = getInitialTranslationId(settings);
     const requestedBookId = getInitialFirstTabBookId();
     const requestedChapter = getInitialFirstTabChapter();
     const readingState = selectedTab.readingState;
@@ -201,6 +210,16 @@ export function createTabs(
         configBot.tags.translation = translationId;
       }
     }
+  });
+
+  effect(() => {
+    const firstTab = tabs.value[0];
+    const firstTabTranslationId = firstTab?.readingState.translationId.value;
+    if (!firstTabTranslationId) {
+      return;
+    }
+
+    settings?.setTranslationId(firstTabTranslationId);
   });
 
   os.addBotListener(configBot, "onBotChanged", async (that: unknown) => {
