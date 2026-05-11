@@ -1011,7 +1011,6 @@ export function BibleReader(props: BibleReaderProps) {
 
     const cleanup = effect(() => {
       if (readingState.chapterData.value) {
-        console.log("set scroll top", readingState.scrollPosition.value);
         el.scrollTop = readingState.scrollPosition.peek();
       }
 
@@ -1067,7 +1066,6 @@ export function BibleReader(props: BibleReaderProps) {
       };
 
       const handleScroll = () => {
-        console.log("handle scroll", el.scrollTop);
         updateMobileScrollHeader();
         updateReadingStateScrollPosition();
       };
