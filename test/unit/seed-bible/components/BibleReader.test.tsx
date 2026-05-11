@@ -9,6 +9,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
 import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 type ReaderFixture = {
@@ -172,6 +173,35 @@ function createFixture(): ReaderFixture {
     selectFootnote,
     setOpen,
   };
+}
+
+function createMobileState(): SeedBibleState {
+  return {
+    app: {
+      isMobile: signal(true),
+    },
+    bibleData: {
+      getPreviousChapter: jest.fn(async () => null),
+      getNextChapter: jest.fn(async () => null),
+    },
+    sidebar: {
+      openSettings: jest.fn(),
+      openSidebar: jest.fn(),
+    },
+  } as any as SeedBibleState;
+}
+
+function dispatchTouch(
+  element: Element,
+  type: "touchstart" | "touchmove" | "touchend",
+  touchPoints: Array<{ clientX: number; clientY: number }>
+) {
+  const event = new Event(type, { bubbles: true, cancelable: true });
+  Object.defineProperty(event, "touches", {
+    configurable: true,
+    value: touchPoints,
+  });
+  element.dispatchEvent(event);
 }
 
 describe("BibleReader", () => {
@@ -1183,5 +1213,368 @@ describe("BibleReader", () => {
     expect(websiteLink?.getAttribute("href")).toBe(
       "https://example.org/translation"
     );
+  });
+
+  it("updates readingState.scrollPosition when the chapter scroller scrolls", () => {
+    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: null,
+      previousChapterApiLink: null,
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const scroller = container.querySelector(
+      ".sb-reader-swipe-panel-current"
+    ) as HTMLDivElement | null;
+    expect(scroller).not.toBeNull();
+
+    act(() => {
+      if (!scroller) {
+        return;
+      }
+      scroller.scrollTop = 87;
+      scroller.dispatchEvent(new Event("scroll"));
+    });
+
+    expect(readingState.scrollPosition.value).toBe(87);
+  });
+
+  it("sets the scroller scrollTop from readingState.scrollPosition", () => {
+    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: null,
+      previousChapterApiLink: null,
+    };
+    readingState.scrollPosition.value = 123;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const scroller = container.querySelector(
+      ".sb-reader-swipe-panel-current"
+    ) as HTMLDivElement | null;
+    expect(scroller).not.toBeNull();
+    expect(scroller?.scrollTop).toBe(123);
+  });
+
+  it("scrolls a requested verse into view when readingState.scrollToVerse is set", () => {
+    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: null,
+      previousChapterApiLink: null,
+    };
+    readingState.scrollToVerse.value = 1;
+
+    const rafSpy = jest
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback: FrameRequestCallback) => {
+        callback(0);
+        return 0;
+      });
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    const scrollIntoViewSpy = jest.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoViewSpy,
+    });
+
+    try {
+      act(() => {
+        render(
+          <BibleReader
+            currentPane={pane}
+            selectorState={selectorState}
+            readingState={readingState}
+            state={state}
+          />,
+          container
+        );
+      });
+    } finally {
+      rafSpy.mockRestore();
+      Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+        configurable: true,
+        value: originalScrollIntoView,
+      });
+    }
+
+    expect(scrollIntoViewSpy).toHaveBeenCalledWith({
+      block: "center",
+      inline: "nearest",
+    });
+    expect(readingState.scrollToVerse.value).toBeNull();
+  });
+
+  it("does not update readingState.scrollPosition when reading state points at a different chapter", () => {
+    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: null,
+      previousChapterApiLink: null,
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const scroller = container.querySelector(
+      ".sb-reader-swipe-panel-current"
+    ) as HTMLDivElement | null;
+    expect(scroller).not.toBeNull();
+
+    readingState.chapterNumber.value = 2;
+
+    act(() => {
+      if (!scroller) {
+        return;
+      }
+      scroller.scrollTop = 211;
+      scroller.dispatchEvent(new Event("scroll"));
+    });
+
+    expect(readingState.scrollPosition.value).toBe(0);
+  });
+
+  it("registers the scroll listener as passive", () => {
+    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: null,
+      previousChapterApiLink: null,
+    };
+
+    const originalAddEventListener = HTMLElement.prototype.addEventListener;
+    const addEventListenerSpy = jest.fn(function (
+      this: HTMLElement,
+      ...args: Parameters<HTMLElement["addEventListener"]>
+    ) {
+      return originalAddEventListener.apply(this, args);
+    });
+    Object.defineProperty(HTMLElement.prototype, "addEventListener", {
+      configurable: true,
+      value: addEventListenerSpy,
+    });
+
+    try {
+      act(() => {
+        render(
+          <BibleReader
+            currentPane={pane}
+            selectorState={selectorState}
+            readingState={readingState}
+            state={state}
+          />,
+          container
+        );
+      });
+    } finally {
+      Object.defineProperty(HTMLElement.prototype, "addEventListener", {
+        configurable: true,
+        value: originalAddEventListener,
+      });
+    }
+
+    expect(addEventListenerSpy.mock.calls).toContainEqual([
+      "scroll",
+      expect.any(Function),
+      { passive: true },
+    ]);
+  });
+
+  it("applies and removes the mobile hidden-header class based on scroll direction and threshold", () => {
+    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: null,
+      previousChapterApiLink: null,
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const scroller = container.querySelector(
+      ".sb-reader-swipe-panel-current"
+    ) as HTMLDivElement | null;
+    expect(scroller).not.toBeNull();
+
+    const mobileHeaderSelector = ".sb-bible-reader-mobile-header";
+
+    act(() => {
+      if (!scroller) {
+        return;
+      }
+      scroller.scrollTop = 60;
+      scroller.dispatchEvent(new Event("scroll"));
+    });
+
+    expect(
+      container
+        .querySelector(mobileHeaderSelector)
+        ?.classList.contains("sb-bible-reader-mobile-header-hidden")
+    ).toBe(true);
+
+    act(() => {
+      if (!scroller) {
+        return;
+      }
+      scroller.scrollTop = 40;
+      scroller.dispatchEvent(new Event("scroll"));
+    });
+
+    expect(
+      container
+        .querySelector(mobileHeaderSelector)
+        ?.classList.contains("sb-bible-reader-mobile-header-hidden")
+    ).toBe(false);
+  });
+
+  it("swiping left on mobile loads the next chapter", async () => {
+    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      previousChapterApiLink: null,
+    };
+
+    jest.useFakeTimers();
+    try {
+      act(() => {
+        render(
+          <BibleReader
+            currentPane={pane}
+            selectorState={selectorState}
+            readingState={readingState}
+            state={state}
+          />,
+          container
+        );
+      });
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement | null;
+      expect(viewport).not.toBeNull();
+
+      act(() => {
+        if (!viewport) {
+          return;
+        }
+        dispatchTouch(viewport, "touchstart", [{ clientX: 200, clientY: 30 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 80, clientY: 30 }]);
+        dispatchTouch(viewport, "touchend", []);
+        jest.advanceTimersByTime(251);
+      });
+
+      await Promise.resolve();
+
+      expect(readingState.clearSelectedVerses).toHaveBeenCalledTimes(1);
+      expect(readingState.loadNextChapter).toHaveBeenCalledTimes(1);
+      expect(readingState.loadPreviousChapter).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("swiping right on mobile loads the previous chapter", async () => {
+    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: null,
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
+    };
+
+    jest.useFakeTimers();
+    try {
+      act(() => {
+        render(
+          <BibleReader
+            currentPane={pane}
+            selectorState={selectorState}
+            readingState={readingState}
+            state={state}
+          />,
+          container
+        );
+      });
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement | null;
+      expect(viewport).not.toBeNull();
+
+      act(() => {
+        if (!viewport) {
+          return;
+        }
+        dispatchTouch(viewport, "touchstart", [{ clientX: 80, clientY: 24 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 220, clientY: 24 }]);
+        dispatchTouch(viewport, "touchend", []);
+        jest.advanceTimersByTime(251);
+      });
+
+      await Promise.resolve();
+
+      expect(readingState.clearSelectedVerses).toHaveBeenCalledTimes(1);
+      expect(readingState.loadPreviousChapter).toHaveBeenCalledTimes(1);
+      expect(readingState.loadNextChapter).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

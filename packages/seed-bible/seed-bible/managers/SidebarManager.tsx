@@ -72,6 +72,8 @@ export function createSidebar() {
     if (configBot.tags.settingsView !== requestedView) {
       configBot.tags.settingsView = requestedView;
     }
+
+    configBot.tags.sidebar = isMobileOpen.value ? "open" : null;
   });
 
   os.addBotListener(configBot, "onBotChanged", async (that: unknown) => {
@@ -84,13 +86,19 @@ export function createSidebar() {
       : [];
     const hasSettingsViewChange = changedTags.includes("settingsView");
 
-    if (!hasSettingsViewChange) {
-      return;
+    if (hasSettingsViewChange) {
+      const newRequestedView = configBot.tags.settingsView ?? null;
+      if (newRequestedView !== requestedSettingsView.value) {
+        requestedSettingsView.value = newRequestedView;
+      }
     }
 
-    const newRequestedView = configBot.tags.settingsView ?? null;
-    if (newRequestedView !== requestedSettingsView.value) {
-      requestedSettingsView.value = newRequestedView;
+    const hasSidebarChange = changedTags.includes("sidebar");
+    if (hasSidebarChange) {
+      const newIsMobileOpen = configBot.tags.sidebar === "open";
+      if (newIsMobileOpen !== isMobileOpen.value) {
+        isMobileOpen.value = newIsMobileOpen;
+      }
     }
   });
 

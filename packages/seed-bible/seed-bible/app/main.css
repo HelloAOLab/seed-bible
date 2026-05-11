@@ -705,6 +705,7 @@ h6 {
   padding: 18px 12px;
   flex-shrink: 0;
   flex-wrap: wrap;
+  padding-bottom: 130px;
 }
 
 .sb-below-reader-toolbar::before {
@@ -712,7 +713,7 @@ h6 {
   position: absolute;
   left: 0;
   right: 0;
-  top: 50%;
+  /* top: 50%; */
   height: 1px;
   background: var(--sb-divider-color);
   z-index: 0;
@@ -819,8 +820,10 @@ h6 {
 }
 
 .sb-bible-reader-mobile-header {
-  position: sticky;
+  position: absolute;
   top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -840,12 +843,11 @@ h6 {
 
 .sb-bible-reader-mobile-header-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
   font-family: var(--text-bookTitle-font);
   color: var(--sb-book-title-font-color);
   white-space: nowrap;
-  overflow: hidden;
   text-overflow: ellipsis;
 }
 
@@ -854,7 +856,7 @@ h6 {
 }
 
 .sb-bible-reader-mobile-header-translation {
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 400;
   cursor: pointer;
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
@@ -895,6 +897,10 @@ h6 {
   will-change: transform;
 }
 
+.sb-bible-reader-mobile .sb-reader-swipe-panel {
+  padding-top: 60px;
+}
+
 .sb-reader-swipe-panel {
   flex: 0 0 33.333%;
   height: 100%;
@@ -918,7 +924,7 @@ h6 {
    collapse the header's layout space in sync with the slide so the chapter
    content rises to fill the gap (no leftover white strip). */
 .sb-bible-reader-mobile-header {
-  max-height: 80px;
+  max-height: 60px;
   overflow: hidden;
   transition:
     transform 0.25s ease,
@@ -1119,7 +1125,7 @@ h6 {
   font-family: var(--sb-verse-font-family);
   font-size: 1.2em;
 
-  padding-bottom: 160px;
+  padding-bottom: 130px;
 
   /* Counter-zoom to exclude reader text from the UI text-size scaling. */
   /* stylelint-disable-next-line property-no-unknown */
@@ -5774,6 +5780,7 @@ h6 {
   .sidebar-itm {
     width: 100%;
     font-weight: lighter;
+    font-size: 16px;
   }
 
   .chapter-btn {

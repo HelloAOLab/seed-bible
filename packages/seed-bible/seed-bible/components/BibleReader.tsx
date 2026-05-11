@@ -3,7 +3,7 @@ import {
   type ChapterVerse,
 } from "seed-bible.managers.FreeUseBibleAPI";
 import type { JSX } from "preact";
-import { computed } from "@preact/signals";
+import { batch, computed, effect } from "@preact/signals";
 import type {
   BibleReadingState,
   BibleSelectedVerse,
@@ -19,6 +19,7 @@ import type { ScriptureElementsBehavior } from "seed-bible.managers.SettingsMana
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { MobileSettingsSheet } from "seed-bible.components.MobileSettingsSheet";
+import { InfoSettingsIcon } from "seed-bible.components.icons";
 
 const { useEffect, useRef, useState } = os.appHooks;
 
@@ -1018,12 +1019,12 @@ export function BibleReader(props: BibleReaderProps) {
     useState<TranslationBookChapter | null>(null);
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const currentPanelRef = useRef<HTMLDivElement | null>(null);
   const chapterContentRef = useRef<HTMLDivElement | null>(null);
   const lastScrollTopRef = useRef(0);
   const [verseOffsets, setVerseOffsets] = useState<Record<number, number>>({});
 
   const currentChapterValue = chapterData.value;
+  const currentChapterRef = useRef(chapterData.value);
 
   // Preload prev/next chapter previews when the current chapter changes.
   useEffect(() => {
@@ -1120,7 +1121,6 @@ export function BibleReader(props: BibleReaderProps) {
       }
 
       if (swipeDirectionLocked.current === "v") return;
-      e.preventDefault();
 
       const hasNext = !!readingState.chapterData.value?.nextChapterApiLink;
       const hasPrev = !!readingState.chapterData.value?.previousChapterApiLink;
@@ -1186,7 +1186,7 @@ export function BibleReader(props: BibleReaderProps) {
     };
 
     viewport.addEventListener("touchstart", onTouchStart, { passive: true });
-    viewport.addEventListener("touchmove", onTouchMove, { passive: false });
+    viewport.addEventListener("touchmove", onTouchMove, { passive: true });
     viewport.addEventListener("touchend", onTouchEnd, { passive: true });
 
     return () => {
@@ -1230,33 +1230,85 @@ export function BibleReader(props: BibleReaderProps) {
     }, 50);
   };
 
-  // Scroll listener on the current swipe panel toggles a "scrolled" state
-  // that hides the full mobile header and reveals the compact scroll header.
-  useEffect(() => {
-    if (!isMobile) return;
-    const panel = currentPanelRef.current;
-    if (!panel) return;
+  // We use a callback instead of a ref object
+  // because we want to set up and cleaup event listeners immediately when element ownership changes.
+  // If we use a ref object and useEffect(), then there will be a period of time where we might recieve scroll events from the element when it is transitioning between
+  // PaneReaderScroller instances, causing the tab scroll position to be updated as Preact is updating the DOM.
+  const scrollerRefCallback = (el: HTMLDivElement | null) => {
+    if (!el) {
+      return;
+    }
 
-    const handleScroll = () => {
-      const currentScrollTop = panel.scrollTop;
-      if (currentScrollTop <= 0) {
-        setIsScrolled(false);
-      } else if (
-        currentScrollTop > lastScrollTopRef.current &&
-        currentScrollTop > 50
-      ) {
-        setIsScrolled(true);
-      } else if (currentScrollTop < lastScrollTopRef.current) {
-        setIsScrolled(false);
+    const cleanup = effect(() => {
+      if (readingState.chapterData.value) {
+        el.scrollTop = readingState.scrollPosition.peek();
       }
-      lastScrollTopRef.current = currentScrollTop;
-    };
 
-    panel.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      panel.removeEventListener("scroll", handleScroll);
-    };
-  }, [isMobile]);
+      const verseToScroll = readingState.scrollToVerse.value;
+      if (readingState.chapterData.value && verseToScroll !== null) {
+        requestAnimationFrame(() => {
+          const targetVerse = el.querySelector(
+            `[data-verse-number="${verseToScroll}"]`
+          );
+          if (!(targetVerse instanceof HTMLElement)) {
+            return;
+          }
+
+          targetVerse.scrollIntoView({ block: "center", inline: "nearest" });
+          batch(() => {
+            readingState.scrollToVerse.value = null;
+            readingState.scrollPosition.value = el.scrollTop;
+          });
+        });
+      }
+
+      currentChapterRef.current = readingState.chapterData.value;
+
+      const updateReadingStateScrollPosition = () => {
+        if (
+          currentChapterRef.current?.translation.id !==
+            readingState.translationId.value ||
+          currentChapterRef.current?.book.id !== readingState.bookId.value ||
+          currentChapterRef.current?.chapter.number !==
+            readingState.chapterNumber.value
+        ) {
+          return;
+        }
+        readingState.scrollPosition.value = el.scrollTop;
+      };
+
+      const updateMobileScrollHeader = () => {
+        if (!state?.app.isMobile.value) {
+          return;
+        }
+        const currentScrollTop = el.scrollTop;
+        if (currentScrollTop <= 0) {
+          setIsScrolled(false);
+        } else if (
+          currentScrollTop > lastScrollTopRef.current &&
+          currentScrollTop > 50
+        ) {
+          setIsScrolled(true);
+        } else if (currentScrollTop < lastScrollTopRef.current) {
+          setIsScrolled(false);
+        }
+        lastScrollTopRef.current = currentScrollTop;
+      };
+
+      const handleScroll = () => {
+        updateMobileScrollHeader();
+        updateReadingStateScrollPosition();
+      };
+
+      el.addEventListener("scroll", handleScroll, { passive: true });
+
+      return () => {
+        el.removeEventListener("scroll", handleScroll);
+      };
+    });
+
+    return cleanup;
+  };
 
   useEffect(() => {
     const chapterContent = chapterContentRef.current;
@@ -1452,7 +1504,7 @@ export function BibleReader(props: BibleReaderProps) {
               aria-label={t("settings", { defaultValue: "Settings" })}
               title={t("settings", { defaultValue: "Settings" })}
             >
-              <span className="material-symbols-outlined">tune</span>
+              <InfoSettingsIcon />
             </button>
           </div>
 
@@ -1478,13 +1530,15 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
                 aria-hidden="true"
               >
-                {renderStaticChapterContent(
-                  prevChapterPreview,
-                  scriptureElements
-                )}
+                <div className="sb-chapter-content">
+                  {renderStaticChapterContent(
+                    prevChapterPreview,
+                    scriptureElements
+                  )}
+                </div>
               </div>
               <div
-                ref={currentPanelRef}
+                ref={scrollerRefCallback}
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-current"
               >
                 {renderMainContent()}
@@ -1493,10 +1547,12 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
                 aria-hidden="true"
               >
-                {renderStaticChapterContent(
-                  nextChapterPreview,
-                  scriptureElements
-                )}
+                <div className="sb-chapter-content">
+                  {renderStaticChapterContent(
+                    nextChapterPreview,
+                    scriptureElements
+                  )}
+                </div>
               </div>
             </div>
           </div>

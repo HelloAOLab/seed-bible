@@ -125,6 +125,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
               onClick={() => settings.setUITextSize(size as UITextSize)}
               style={{ fontSize: `${12 + i * 2}px` }}
               aria-label={size}
+              // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
             >
               A
             </button>
@@ -144,6 +145,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
               defaultValue: "Decrease scripture font size",
             })}
             style={{ fontSize: 14 }}
+            // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
           >
             A
           </button>
@@ -156,6 +158,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
               defaultValue: "Increase scripture font size",
             })}
             style={{ fontSize: 20, fontWeight: 500 }}
+            // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
           >
             A
           </button>

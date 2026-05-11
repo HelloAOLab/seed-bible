@@ -25,7 +25,13 @@ const { render } = os.appHooks;
 // });
 // document.head.appendChild(importMap);
 
-os.syncConfigBotTagsToURL(["translation", "book", "chapter", "settingsView"]);
+os.syncConfigBotTagsToURL([
+  "translation",
+  "book",
+  "chapter",
+  "settingsView",
+  "sidebar",
+]);
 
 configBot.tags.gridPortal = null;
 configBot.tags.mapPortal = null;
