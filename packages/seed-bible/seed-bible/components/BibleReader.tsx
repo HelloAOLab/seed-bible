@@ -1202,6 +1202,9 @@ export function BibleReader(props: BibleReaderProps) {
       showHeadings: true,
       showVerseNumbers: true,
       showFootnotes: true,
+      showCrossReferences: true,
+      showStudyNotes: true,
+      showDiscoveredContent: true,
       showHighlights: true,
       showRedLettering: true,
     };
@@ -1389,27 +1392,29 @@ export function BibleReader(props: BibleReaderProps) {
       {!error.value && chapterData.value && (
         <div ref={chapterContentRef} className="sb-chapter-content">
           <div className="sb-chapter-cross-reference-layer">
-            {renderCrossReferenceLayer(
-              chapterData.value,
-              readingState.discoveredCrossReferences.value,
-              verseOffsets,
-              (ref) => {
-                readingState.selectChapter(
-                  ref.crossReference.book,
-                  ref.crossReference.chapter,
-                  {
-                    scrollToVerse: ref.crossReference.verse,
-                  }
-                );
-              }
-            )}
+            {scriptureElements.showCrossReferences &&
+              renderCrossReferenceLayer(
+                chapterData.value,
+                readingState.discoveredCrossReferences.value,
+                verseOffsets,
+                (ref) => {
+                  readingState.selectChapter(
+                    ref.crossReference.book,
+                    ref.crossReference.chapter,
+                    {
+                      scrollToVerse: ref.crossReference.verse,
+                    }
+                  );
+                }
+              )}
           </div>
           <div className="sb-chapter-study-note-layer">
-            {renderStudyNoteLayer(
-              chapterData.value,
-              readingState.discoveredStudyNotes.value,
-              verseOffsets
-            )}
+            {scriptureElements.showStudyNotes &&
+              renderStudyNoteLayer(
+                chapterData.value,
+                readingState.discoveredStudyNotes.value,
+                verseOffsets
+              )}
           </div>
           {renderChapterContent(
             chapterData.value,

@@ -506,8 +506,11 @@ export function Tabs(props: TabsProps) {
   const selectedTabId = tabsManager.selectedTabId.value;
   const selectedTab =
     tabs.find((tab) => tab.id === selectedTabId) ?? tabs.at(0) ?? null;
-  const discoveredContent =
-    selectedTab?.readingState.discoveredContent.value ?? [];
+  const showDiscoveredContent =
+    state.settings.settings.value.scriptureElements.showDiscoveredContent;
+  const discoveredContent = showDiscoveredContent
+    ? (selectedTab?.readingState.discoveredContent.value ?? [])
+    : [];
   const discoveredContentCount = discoveredContent.reduce(
     (count, providerResults) => count + providerResults.results.length,
     0

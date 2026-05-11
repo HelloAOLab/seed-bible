@@ -791,6 +791,70 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
         <div className="sb-settings-toggle-row">
           <label
             className="sb-settings-toggle-label"
+            htmlFor="sb-show-scripture-cross-references"
+          >
+            {t("show-cross-references", {
+              defaultValue: "Show cross references",
+            })}
+          </label>
+          <input
+            id="sb-show-scripture-cross-references"
+            type="checkbox"
+            checked={current.scriptureElements.showCrossReferences}
+            onChange={(event: Event) => {
+              settings.setScriptureElements({
+                showCrossReferences: (event.currentTarget as HTMLInputElement)
+                  .checked,
+              });
+            }}
+          />
+        </div>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-scripture-study-notes"
+          >
+            {t("show-study-notes", { defaultValue: "Show study notes" })}
+          </label>
+          <input
+            id="sb-show-scripture-study-notes"
+            type="checkbox"
+            checked={current.scriptureElements.showStudyNotes}
+            onChange={(event: Event) => {
+              settings.setScriptureElements({
+                showStudyNotes: (event.currentTarget as HTMLInputElement)
+                  .checked,
+              });
+            }}
+          />
+        </div>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-scripture-discovered-content"
+          >
+            {t("show-discovered-content", {
+              defaultValue: "Show discovered content",
+            })}
+          </label>
+          <input
+            id="sb-show-scripture-discovered-content"
+            type="checkbox"
+            checked={current.scriptureElements.showDiscoveredContent}
+            onChange={(event: Event) => {
+              settings.setScriptureElements({
+                showDiscoveredContent: (event.currentTarget as HTMLInputElement)
+                  .checked,
+              });
+            }}
+          />
+        </div>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
             htmlFor="sb-show-red-lettering"
           >
             {t("show-red-lettering", { defaultValue: "Show red lettering" })}

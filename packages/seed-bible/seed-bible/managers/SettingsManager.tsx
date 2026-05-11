@@ -21,6 +21,9 @@ export interface ScriptureElementsBehavior {
   showHeadings: boolean;
   showVerseNumbers: boolean;
   showFootnotes: boolean;
+  showCrossReferences: boolean;
+  showStudyNotes: boolean;
+  showDiscoveredContent: boolean;
   showHighlights: boolean;
   showRedLettering: boolean;
 }
@@ -79,6 +82,9 @@ export const AppSettingsSchema = z.object({
     showHeadings: z.boolean(),
     showVerseNumbers: z.boolean(),
     showFootnotes: z.boolean(),
+    showCrossReferences: z.boolean().default(true),
+    showStudyNotes: z.boolean().default(true),
+    showDiscoveredContent: z.boolean().default(true),
     showHighlights: z.boolean(),
     showRedLettering: z.boolean(),
   }),
@@ -191,6 +197,9 @@ const DEFAULT_SCRIPTURE_ELEMENTS: ScriptureElementsBehavior = {
   showHeadings: true,
   showVerseNumbers: true,
   showFootnotes: true,
+  showCrossReferences: true,
+  showStudyNotes: true,
+  showDiscoveredContent: true,
   showHighlights: true,
   showRedLettering: true,
 };
@@ -411,6 +420,18 @@ function parseScriptureElements(
       typeof obj.showFootnotes === "boolean"
         ? obj.showFootnotes
         : fallback.showFootnotes,
+    showCrossReferences:
+      typeof obj.showCrossReferences === "boolean"
+        ? obj.showCrossReferences
+        : fallback.showCrossReferences,
+    showStudyNotes:
+      typeof obj.showStudyNotes === "boolean"
+        ? obj.showStudyNotes
+        : fallback.showStudyNotes,
+    showDiscoveredContent:
+      typeof obj.showDiscoveredContent === "boolean"
+        ? obj.showDiscoveredContent
+        : fallback.showDiscoveredContent,
     showHighlights:
       typeof obj.showHighlights === "boolean"
         ? obj.showHighlights
