@@ -50,9 +50,6 @@ export function SeedBibleIcon() {
       src="https://favicon.ao.bot/assets/seed-bible-isolated-minified.png"
       style={{
         width: "40px",
-        height: "42px",
-        objectFit: "cover", // crop to fit box
-        objectPosition: "center", // adjust focal point
       }}
     />
   );
