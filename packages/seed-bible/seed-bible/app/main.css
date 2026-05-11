@@ -705,6 +705,7 @@ h6 {
   padding: 18px 12px;
   flex-shrink: 0;
   flex-wrap: wrap;
+  padding-bottom: 130px;
 }
 
 .sb-below-reader-toolbar::before {
@@ -712,7 +713,7 @@ h6 {
   position: absolute;
   left: 0;
   right: 0;
-  top: 50%;
+  /* top: 50%; */
   height: 1px;
   background: var(--sb-divider-color);
   z-index: 0;
@@ -1118,7 +1119,7 @@ h6 {
   font-family: var(--sb-verse-font-family);
   font-size: 1.2em;
 
-  padding-bottom: 160px;
+  padding-bottom: 130px;
 
   /* Counter-zoom to exclude reader text from the UI text-size scaling. */
   /* stylelint-disable-next-line property-no-unknown */
