@@ -4,6 +4,8 @@ import { computed, signal, type Signal } from "@preact/signals";
 import { BibleReader } from "@packages/seed-bible/seed-bible/components/BibleReader";
 import {
   type BibleReadingState,
+  type DiscoverStudyNoteResultWithBookData,
+  type DiscoverTypedProviderResults,
   type SelectedFootnote,
   type VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -1774,5 +1776,127 @@ describe("BibleReader", () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  it("renders discovered study notes in the chapter layer", async () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    const offsetTopDescriptor = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetTop"
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetTop", {
+      configurable: true,
+      get() {
+        return 0;
+      },
+    });
+
+    try {
+      act(() => {
+        (
+          readingState.discoveredStudyNotes as Signal<
+            DiscoverTypedProviderResults<DiscoverStudyNoteResultWithBookData>[]
+          >
+        ).value = [
+          {
+            providerId: "test-provider",
+            results: [
+              {
+                type: "study-note",
+                reference: {
+                  book: "GEN",
+                  chapter: 1,
+                  verse: 1,
+                  bookData: { id: "GEN", name: "Genesis" } as any,
+                },
+                content: <span>"Study note content for verse 1"</span>,
+              },
+            ],
+          },
+        ];
+
+        render(
+          <BibleReader
+            currentPane={pane}
+            selectorState={selectorState}
+            readingState={readingState}
+          />,
+          container
+        );
+      });
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      const noteNumber = container.querySelector(".sb-verse-study-note-number");
+      const noteContainer = container.querySelector(
+        ".sb-verse-study-notes"
+      ) as HTMLElement | null;
+      const noteContent = container.querySelector(
+        ".sb-verse-study-note"
+      ) as HTMLElement | null;
+
+      expect(noteNumber?.textContent).toBe("v1");
+      expect(noteContainer).not.toBeNull();
+      expect(noteContent).not.toBeNull();
+      expect(noteContent?.textContent).toContain(
+        "Study note content for verse 1"
+      );
+    } finally {
+      if (offsetTopDescriptor) {
+        Object.defineProperty(
+          HTMLElement.prototype,
+          "offsetTop",
+          offsetTopDescriptor
+        );
+      } else {
+        delete (HTMLElement.prototype as any).offsetTop;
+      }
+    }
+  });
+
+  it("hides study-note layer when scriptureElements.showStudyNotes is false", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    (
+      readingState.discoveredStudyNotes as Signal<
+        DiscoverTypedProviderResults<DiscoverStudyNoteResultWithBookData>[]
+      >
+    ).value = [
+      {
+        providerId: "test-provider",
+        results: [
+          {
+            type: "study-note",
+            reference: {
+              book: "GEN",
+              chapter: 1,
+              verse: 1,
+              bookData: { id: "GEN", name: "Genesis" } as any,
+            },
+            content: <span>"Study note content"</span>,
+          },
+        ],
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureElements={{
+            ...BASE_SCRIPTURE_ELEMENTS,
+            showStudyNotes: false,
+          }}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-verse-study-note")).toBeNull();
   });
 });
