@@ -1184,15 +1184,18 @@ h6 {
   pointer-events: none;
 }
 
-.sb-cross-reference-grid {
+.sb-cross-reference-group {
   position: absolute;
   inset-inline-end: calc(100% + 16px);
-  top: 0;
-  display: grid;
-  grid-template-columns: auto auto;
-  grid-auto-rows: min-content;
-  column-gap: 4px;
-  row-gap: 2px;
+  /* Calculated by deriving the inverse of the .sb-bible-reader width */
+  width: calc(
+    (100% / (100 - 2 * var(--sb-scripture-margin))) *
+      var(--sb-scripture-margin) - 24px
+  );
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
   max-inline-size: min(24vw, 360px);
   font-size: 0.6em;
   line-height: 1.35;
@@ -1206,36 +1209,39 @@ h6 {
   pointer-events: none;
 }
 
-.sb-verse-cross-references {
-  position: absolute;
-  inset-inline-end: calc(100% + 16px);
-  top: 0;
+.sb-cross-reference-verse {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.sb-verse-cross-reference-number {
+  font-weight: 600;
+  flex: 0 1 auto;
+}
+
+.sb-cross-reference-verse-row {
   display: flex;
   flex-direction: row;
   align-items: baseline;
   gap: 4px;
-  font-size: 0.6em;
-  line-height: 1.35;
-  white-space: normal;
   pointer-events: auto;
-  font-family: var(--sb-font-family);
-}
-
-.sb-verse-cross-reference-number {
-  grid-column: 1;
-  font-weight: 600;
+  white-space: normal;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .sb-verse-cross-reference {
-  grid-column: 2;
   pointer-events: auto;
   font-family: var(--sb-font-family);
   color: color-mix(in srgb, var(--sb-verse-font-color), transparent 20%);
 }
 
 .sb-cross-reference-spacer {
-  grid-column: 1 / -1;
-  display: block;
+  /* display: block; */
+  align-self: stretch;
+  flex: 1 1 auto;
+  /* width: 100%; */
 }
 
 .sb-verse-study-notes {

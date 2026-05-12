@@ -877,15 +877,27 @@ function renderCrossReferenceLayer(
       Array.isArray(entry.content)
   );
 
-  const estimatedRowHeight = 16;
-  const estimatedRowGap = 2;
+  console.log(
+    "Rendering cross reference layer with verse offsets:",
+    verseOffsets
+  );
 
-  const verseGroups = verseEntries
+  const maxCrossReferencesPerVerse = 3;
+  const verseGapThreshold = 20;
+  const estimatedVerseRowHeight = 16;
+
+  type VerseCrossReferenceGroupItem = {
+    verseNumber: number;
+    top: number;
+    references: VerseCrossReferenceItem[];
+  };
+
+  const verseItems = verseEntries
     .map((entry) => {
       const verseCrossReferences = getVerseCrossReferences(
         discoveredCrossReferences,
         entry.number
-      );
+      ).slice(0, maxCrossReferencesPerVerse);
 
       if (verseCrossReferences.length === 0) {
         return null;
@@ -897,79 +909,78 @@ function renderCrossReferenceLayer(
         references: verseCrossReferences,
       };
     })
-    .filter(
-      (
-        group
-      ): group is {
-        verseNumber: number;
-        top: number;
-        references: VerseCrossReferenceItem[];
-      } => !!group
-    )
+    .filter((item): item is VerseCrossReferenceGroupItem => !!item)
     .sort((left, right) => left.top - right.top);
 
-  if (verseGroups.length === 0) {
+  if (verseItems.length === 0) {
     return null;
   }
 
-  // Remove the first row gap to prevent unnessary spacing at the top
-  const firstSpacerHeight = Math.max(0, verseGroups[0]?.top ?? 0) - 2;
+  const groups: Array<{
+    top: number;
+    verses: VerseCrossReferenceGroupItem[];
+  }> = [];
+
+  for (const item of verseItems) {
+    const currentGroup = groups[groups.length - 1];
+    const previousVerse = currentGroup?.verses[currentGroup.verses.length - 1];
+
+    if (
+      !currentGroup ||
+      !previousVerse ||
+      item.top - previousVerse.top > verseGapThreshold
+    ) {
+      groups.push({
+        top: item.top,
+        verses: [item],
+      });
+      continue;
+    }
+
+    currentGroup.verses.push(item);
+  }
 
   return (
-    <div className="sb-cross-reference-grid" aria-hidden="true">
-      {firstSpacerHeight > 0 && (
-        <span
-          key="cross-reference-spacer-leading"
-          className="sb-cross-reference-spacer"
-          style={{ height: `${firstSpacerHeight}px` }}
-        />
-      )}
-      {verseGroups.flatMap((group, groupIndex) => {
-        const nextGroup = verseGroups[groupIndex + 1];
-        const rowCount = group.references.length;
-        const occupiedHeight =
-          rowCount * estimatedRowHeight +
-          Math.max(0, rowCount - 1) * estimatedRowGap;
-        const spacerHeight = nextGroup
-          ? Math.max(0, nextGroup.top - group.top - occupiedHeight)
-          : 0;
-
-        const rowElements = group.references.flatMap(
-          (crossReference, index) => [
-            <span
-              key={`cross-reference-number-${group.verseNumber}-${crossReference.id}`}
-              className="sb-verse-cross-reference-number"
-            >
-              {index === 0 ? `v${group.verseNumber}` : ""}
-            </span>,
-            <a
-              key={crossReference.id}
-              href={crossReference.link}
-              className="sb-verse-cross-reference"
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                onOpenCrossReference(crossReference.ref);
-              }}
-            >
-              {crossReference.label}
-            </a>,
-          ]
-        );
-
-        if (!nextGroup) {
-          return rowElements;
-        }
-
-        return [
-          ...rowElements,
-          <span
-            key={`cross-reference-spacer-${group.verseNumber}`}
-            className="sb-cross-reference-spacer"
-            style={{ height: `${spacerHeight}px` }}
-          />,
-        ];
-      })}
+    <div className="sb-cross-reference-layer" aria-hidden="true">
+      {groups.map((group) => (
+        <div
+          key={`cross-reference-group-${group.verses[0]?.verseNumber}`}
+          className="sb-cross-reference-group"
+          style={{ top: `${group.top}px` }}
+        >
+          {group.verses.map((verse) => {
+            return (
+              <div
+                key={`cross-reference-verse-${verse.verseNumber}`}
+                className="sb-cross-reference-verse"
+              >
+                <div className="sb-cross-reference-verse-row">
+                  <span className="sb-cross-reference-spacer"></span>
+                  <span className="sb-verse-cross-reference-number">
+                    v{verse.verseNumber}
+                  </span>
+                  {verse.references.map((crossReference) => (
+                    <>
+                      <a
+                        key={crossReference.id}
+                        href={crossReference.link}
+                        className="sb-verse-cross-reference"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          onOpenCrossReference(crossReference.ref);
+                        }}
+                      >
+                        {crossReference.label}
+                      </a>{" "}
+                    </>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 }
