@@ -1584,11 +1584,11 @@ h6 {
   }
 
   .sb-reader-toolbar-floating-button-left {
-    left: var(--sb-reader-toolbar-floating-button-side-offset);
+    inset-inline-start: var(--sb-reader-toolbar-floating-button-side-offset);
   }
 
   .sb-reader-toolbar-floating-button-right {
-    right: var(--sb-reader-toolbar-floating-button-side-offset);
+    inset-inline-end: var(--sb-reader-toolbar-floating-button-side-offset);
   }
 }
 
