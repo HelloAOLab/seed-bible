@@ -877,42 +877,101 @@ function renderCrossReferenceLayer(
       Array.isArray(entry.content)
   );
 
-  return verseEntries.map((entry) => {
-    const top = verseOffsets[entry.number] ?? 0;
+  const estimatedRowHeight = 16;
+  const estimatedRowGap = 2;
 
-    const verseCrossReferences = getVerseCrossReferences(
-      discoveredCrossReferences,
-      entry.number
-    );
-    if (verseCrossReferences.length === 0) {
-      return null;
-    }
+  const verseGroups = verseEntries
+    .map((entry) => {
+      const verseCrossReferences = getVerseCrossReferences(
+        discoveredCrossReferences,
+        entry.number
+      );
 
-    return (
-      <span
-        key={`cross-reference-${entry.number}`}
-        className="sb-verse-cross-references"
-        style={{ top: `${top}px` }}
-        aria-hidden="true"
-      >
-        <span className="sb-verse-cross-reference-number">v{entry.number}</span>
-        {verseCrossReferences.map((crossReference) => (
-          <a
-            key={crossReference.id}
-            href={crossReference.link}
-            className="sb-verse-cross-reference"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onOpenCrossReference(crossReference.ref);
-            }}
-          >
-            {crossReference.label}
-          </a>
-        ))}
-      </span>
-    );
-  });
+      if (verseCrossReferences.length === 0) {
+        return null;
+      }
+
+      return {
+        verseNumber: entry.number,
+        top: verseOffsets[entry.number] ?? 0,
+        references: verseCrossReferences,
+      };
+    })
+    .filter(
+      (
+        group
+      ): group is {
+        verseNumber: number;
+        top: number;
+        references: VerseCrossReferenceItem[];
+      } => !!group
+    )
+    .sort((left, right) => left.top - right.top);
+
+  if (verseGroups.length === 0) {
+    return null;
+  }
+
+  // Remove the first row gap to prevent unnessary spacing at the top
+  const firstSpacerHeight = Math.max(0, verseGroups[0]?.top ?? 0) - 2;
+
+  return (
+    <div className="sb-cross-reference-grid" aria-hidden="true">
+      {firstSpacerHeight > 0 && (
+        <span
+          key="cross-reference-spacer-leading"
+          className="sb-cross-reference-spacer"
+          style={{ height: `${firstSpacerHeight}px` }}
+        />
+      )}
+      {verseGroups.flatMap((group, groupIndex) => {
+        const nextGroup = verseGroups[groupIndex + 1];
+        const rowCount = group.references.length;
+        const occupiedHeight =
+          rowCount * estimatedRowHeight +
+          Math.max(0, rowCount - 1) * estimatedRowGap;
+        const spacerHeight = nextGroup
+          ? Math.max(0, nextGroup.top - group.top - occupiedHeight)
+          : 0;
+
+        const rowElements = group.references.flatMap(
+          (crossReference, index) => [
+            <span
+              key={`cross-reference-number-${group.verseNumber}-${crossReference.id}`}
+              className="sb-verse-cross-reference-number"
+            >
+              {index === 0 ? `v${group.verseNumber}` : ""}
+            </span>,
+            <a
+              key={crossReference.id}
+              href={crossReference.link}
+              className="sb-verse-cross-reference"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onOpenCrossReference(crossReference.ref);
+              }}
+            >
+              {crossReference.label}
+            </a>,
+          ]
+        );
+
+        if (!nextGroup) {
+          return rowElements;
+        }
+
+        return [
+          ...rowElements,
+          <span
+            key={`cross-reference-spacer-${group.verseNumber}`}
+            className="sb-cross-reference-spacer"
+            style={{ height: `${spacerHeight}px` }}
+          />,
+        ];
+      })}
+    </div>
+  );
 }
 
 function renderStudyNoteLayer(

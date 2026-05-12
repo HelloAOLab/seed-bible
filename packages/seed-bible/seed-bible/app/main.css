@@ -1184,6 +1184,22 @@ h6 {
   pointer-events: none;
 }
 
+.sb-cross-reference-grid {
+  position: absolute;
+  inset-inline-end: calc(100% + 16px);
+  top: 0;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-auto-rows: min-content;
+  column-gap: 4px;
+  row-gap: 2px;
+  max-inline-size: min(24vw, 360px);
+  font-size: 0.6em;
+  line-height: 1.35;
+  pointer-events: none;
+  font-family: var(--sb-font-family);
+}
+
 .sb-chapter-study-note-layer {
   position: absolute;
   inset: 0;
@@ -1206,12 +1222,20 @@ h6 {
 }
 
 .sb-verse-cross-reference-number {
+  grid-column: 1;
   font-weight: 600;
 }
 
 .sb-verse-cross-reference {
+  grid-column: 2;
+  pointer-events: auto;
   font-family: var(--sb-font-family);
   color: color-mix(in srgb, var(--sb-verse-font-color), transparent 20%);
+}
+
+.sb-cross-reference-spacer {
+  grid-column: 1 / -1;
+  display: block;
 }
 
 .sb-verse-study-notes {
