@@ -638,11 +638,15 @@ export function PaneReader(props: PaneReaderScrollerProps) {
         return;
       }
 
+      const isRtl =
+        readingState.chapterData.value?.translation.textDirection === "rtl";
       const hasNext = !!readingState.chapterData.value?.nextChapterApiLink;
       const hasPrev = !!readingState.chapterData.value?.previousChapterApiLink;
       let offset = dx;
+      const attemptsNext = isRtl ? dx > 0 : dx < 0;
+      const attemptsPrev = isRtl ? dx < 0 : dx > 0;
 
-      if ((dx < 0 && !hasNext) || (dx > 0 && !hasPrev)) {
+      if ((attemptsNext && !hasNext) || (attemptsPrev && !hasPrev)) {
         offset = Math.sign(dx) * Math.min(Math.abs(dx) * 0.15, 30);
       } else {
         const limit = window.innerWidth * 0.5;
@@ -654,7 +658,10 @@ export function PaneReader(props: PaneReaderScrollerProps) {
       swipeCurrentDx.current = offset;
       const track = swipeTrackRef.current;
       if (track) {
-        track.style.transform = `translateX(calc(-${PANEL_PCT}% + ${offset}px))`;
+        const isRtl =
+          readingState.chapterData.value?.translation.textDirection === "rtl";
+        const sign = isRtl ? 1 : -1;
+        track.style.transform = `translateX(calc(${sign * PANEL_PCT}% + ${offset}px))`;
       }
     };
 
@@ -667,8 +674,14 @@ export function PaneReader(props: PaneReaderScrollerProps) {
 
       const dx = swipeCurrentDx.current;
       const threshold = 80;
+      const isRtl =
+        readingState.chapterData.value?.translation.textDirection === "rtl";
       const hasNext = !!readingState.chapterData.value?.nextChapterApiLink;
       const hasPrev = !!readingState.chapterData.value?.previousChapterApiLink;
+      const swipedLeft = dx < -threshold;
+      const swipedRight = dx > threshold;
+      const shouldLoadNext = isRtl ? swipedRight : swipedLeft;
+      const shouldLoadPrev = isRtl ? swipedLeft : swipedRight;
 
       swipeTouchStartX.current = null;
       swipeDirectionLocked.current = null;
@@ -679,27 +692,32 @@ export function PaneReader(props: PaneReaderScrollerProps) {
         return;
       }
 
-      if (dx < -threshold && hasNext) {
+      if (shouldLoadNext && hasNext) {
         track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
-        track.style.transform = `translateX(-${PANEL_PCT * 2}%)`;
+        const sign = isRtl ? 1 : -1;
+        const nextTransform = `translateX(${sign * PANEL_PCT * 2}%)`;
+        track.style.transform = nextTransform;
         readingState.clearSelectedVerses();
         window.setTimeout(async () => {
           track.style.transition = "none";
-          track.style.transform = `translateX(-${PANEL_PCT}%)`;
+          track.style.transform = `translateX(${sign * PANEL_PCT}%)`;
           await readingState.loadNextChapter();
         }, 250);
-      } else if (dx > threshold && hasPrev) {
+      } else if (shouldLoadPrev && hasPrev) {
         track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
-        track.style.transform = "translateX(0%)";
+        const sign = isRtl ? 1 : -1;
+        const prevTransform = "translateX(0%)";
+        track.style.transform = prevTransform;
         readingState.clearSelectedVerses();
         window.setTimeout(async () => {
           track.style.transition = "none";
-          track.style.transform = `translateX(-${PANEL_PCT}%)`;
+          track.style.transform = `translateX(${sign * PANEL_PCT}%)`;
           await readingState.loadPreviousChapter();
         }, 250);
       } else {
         track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
-        track.style.transform = `translateX(-${PANEL_PCT}%)`;
+        const sign = isRtl ? 1 : -1;
+        track.style.transform = `translateX(${sign * PANEL_PCT}%)`;
       }
     };
 
@@ -713,6 +731,16 @@ export function PaneReader(props: PaneReaderScrollerProps) {
       viewport.removeEventListener("touchend", onTouchEnd);
     };
   }, [isMobile, readingState]);
+
+  effect(() => {
+    void readingState.translationId.value;
+    const track = swipeTrackRef.current;
+    if (!track) {
+      return;
+    }
+
+    track.style.removeProperty("transform");
+  });
 
   const openAllSettings = () => {
     if (!state) {

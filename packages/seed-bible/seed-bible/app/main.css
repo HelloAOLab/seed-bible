@@ -901,6 +901,10 @@ h6 {
   will-change: transform;
 }
 
+[dir="rtl"] .sb-reader-swipe-track {
+  transform: translateX(33.333%);
+}
+
 .sb-bible-reader-mobile .sb-reader-swipe-panel {
   padding-top: 60px;
 }

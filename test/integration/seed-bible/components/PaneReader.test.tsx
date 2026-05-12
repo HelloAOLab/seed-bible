@@ -488,4 +488,82 @@ describe("PaneReader integration", () => {
       jest.useRealTimers();
     }
   });
+
+  it("the user can swipe to the right to go to the next chapter in mobile layout for right-to-left text", () => {
+    jest.useFakeTimers();
+    const { pane, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "rtl",
+      },
+    };
+
+    try {
+      renderPaneReader(pane, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement | null;
+      expect(viewport).not.toBeNull();
+
+      act(() => {
+        if (!viewport) {
+          return;
+        }
+        dispatchTouch(viewport, "touchstart", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchend", []);
+        jest.advanceTimersByTime(250);
+      });
+
+      expect(readingState.loadNextChapter).toHaveBeenCalledTimes(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("the user can swipe to the left to go to the previous chapter in mobile layout for right-to-left text", () => {
+    jest.useFakeTimers();
+    const { pane, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "rtl",
+      },
+    };
+
+    try {
+      renderPaneReader(pane, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement | null;
+      expect(viewport).not.toBeNull();
+
+      act(() => {
+        if (!viewport) {
+          return;
+        }
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchend", []);
+        jest.advanceTimersByTime(250);
+      });
+
+      expect(readingState.loadPreviousChapter).toHaveBeenCalledTimes(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
