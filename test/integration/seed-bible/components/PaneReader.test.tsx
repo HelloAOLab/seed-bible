@@ -566,4 +566,164 @@ describe("PaneReader integration", () => {
       jest.useRealTimers();
     }
   });
+
+  it("does not load a previous chapter on right swipe in left-to-right text when no previous chapter exists", () => {
+    jest.useFakeTimers();
+    const { pane, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      previousChapterApiLink: null,
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "ltr",
+      },
+    };
+
+    try {
+      renderPaneReader(pane, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement | null;
+      expect(viewport).not.toBeNull();
+
+      act(() => {
+        if (!viewport) {
+          return;
+        }
+        dispatchTouch(viewport, "touchstart", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchend", []);
+        jest.advanceTimersByTime(250);
+      });
+
+      expect(readingState.loadPreviousChapter).not.toHaveBeenCalled();
+      expect(readingState.clearSelectedVerses).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("does not load a next chapter on left swipe in left-to-right text when no next chapter exists", () => {
+    jest.useFakeTimers();
+    const { pane, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
+      nextChapterApiLink: null,
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "ltr",
+      },
+    };
+
+    try {
+      renderPaneReader(pane, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement | null;
+      expect(viewport).not.toBeNull();
+
+      act(() => {
+        if (!viewport) {
+          return;
+        }
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchend", []);
+        jest.advanceTimersByTime(250);
+      });
+
+      expect(readingState.loadNextChapter).not.toHaveBeenCalled();
+      expect(readingState.clearSelectedVerses).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("does not load a next chapter on right swipe in right-to-left text when no next chapter exists", () => {
+    jest.useFakeTimers();
+    const { pane, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
+      nextChapterApiLink: null,
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "rtl",
+      },
+    };
+
+    try {
+      renderPaneReader(pane, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement | null;
+      expect(viewport).not.toBeNull();
+
+      act(() => {
+        if (!viewport) {
+          return;
+        }
+        dispatchTouch(viewport, "touchstart", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchend", []);
+        jest.advanceTimersByTime(250);
+      });
+
+      expect(readingState.loadNextChapter).not.toHaveBeenCalled();
+      expect(readingState.clearSelectedVerses).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("does not load a previous chapter on left swipe in right-to-left text when no previous chapter exists", () => {
+    jest.useFakeTimers();
+    const { pane, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      previousChapterApiLink: null,
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "rtl",
+      },
+    };
+
+    try {
+      renderPaneReader(pane, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement | null;
+      expect(viewport).not.toBeNull();
+
+      act(() => {
+        if (!viewport) {
+          return;
+        }
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchend", []);
+        jest.advanceTimersByTime(250);
+      });
+
+      expect(readingState.loadPreviousChapter).not.toHaveBeenCalled();
+      expect(readingState.clearSelectedVerses).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
