@@ -2,7 +2,7 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { computed, signal, type Signal } from "@preact/signals";
 import { BibleReader } from "@packages/seed-bible/seed-bible/components/BibleReader";
-import { PaneReaderContainer } from "@packages/seed-bible/seed-bible/components/PaneLayout";
+import { PaneReader } from "@packages/seed-bible/seed-bible/components/PaneLayout";
 import {
   type BibleReadingState,
   type SelectedFootnote,
@@ -209,7 +209,7 @@ function renderMobileReader(
 ) {
   act(() => {
     render(
-      <PaneReaderContainer
+      <PaneReader
         tab={{
           id: "tab-1",
           title: "Tab 1",
@@ -217,17 +217,9 @@ function renderMobileReader(
           sharedSession: null,
         }}
         state={state}
-      >
-        {(mobileChrome) => (
-          <BibleReader
-            currentPane={fixture.pane}
-            selectorState={fixture.selectorState}
-            readingState={fixture.readingState}
-            state={state}
-            mobileChrome={mobileChrome}
-          />
-        )}
-      </PaneReaderContainer>,
+        pane={fixture.pane}
+        displayBelowReaderToolbar={false}
+      />,
       container
     );
   });

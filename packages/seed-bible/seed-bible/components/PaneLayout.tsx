@@ -1,7 +1,4 @@
-import {
-  BibleReader,
-  type BibleReaderMobileChromeProps,
-} from "seed-bible.components.BibleReader";
+import { BibleReader } from "seed-bible.components.BibleReader";
 import { BelowReaderToolbar } from "seed-bible.components.BelowReaderToolbar";
 import { CasualOSApp } from "seed-bible.components.CasualOSApp";
 import type { TranslationBookChapter } from "seed-bible.managers.FreeUseBibleAPI";
@@ -17,7 +14,6 @@ import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { type ToolsManager } from "seed-bible.managers.BibleToolsManager";
 import { batch, effect } from "@preact/signals";
 import { useI18n } from "seed-bible.i18n.I18nManager";
-import type { ComponentChildren } from "preact";
 import { translateTitle } from "seed-bible.components.Utils";
 import { MaterialIcon } from "seed-bible.components.icons";
 
@@ -384,13 +380,14 @@ function generateGridPortalContainerCss(
 }
 
 interface PaneReaderScrollerProps {
+  pane: Pane;
   tab: ReaderTab;
-  state?: SeedBibleState;
-  children: (mobileChrome?: BibleReaderMobileChromeProps) => ComponentChildren;
+  state: SeedBibleState;
+  displayBelowReaderToolbar: boolean;
 }
 
-export function PaneReaderContainer(props: PaneReaderScrollerProps) {
-  const { tab, state, children } = props;
+export function PaneReader(props: PaneReaderScrollerProps) {
+  const { pane, tab, state, displayBelowReaderToolbar } = props;
   const readingState = tab.readingState;
   const isMobile = state?.app.isMobile.value ?? false;
 
@@ -749,7 +746,26 @@ export function PaneReaderContainer(props: PaneReaderScrollerProps) {
       className={`sb-pane-reader${isMobile ? " sb-pane-reader-mobile" : ""}`}
       ref={paneScrollerRefCallback}
     >
-      {children(mobileChrome)}
+      <BibleReader
+        currentPane={pane}
+        readingState={readingState}
+        selectorState={state.selector}
+        state={state}
+        mobileChrome={mobileChrome}
+      />
+      {!isMobile && displayBelowReaderToolbar && (
+        <BelowReaderToolbar
+          toolsManager={state.tools}
+          readingState={readingState}
+          sharedSession={tab.sharedSession}
+          selectorState={state.selector}
+          tabsManager={state.tabs}
+          panesManager={state.panes}
+          openSidebar={state.sidebar.openSidebar}
+          openSearch={state.sidebar.openSearch}
+          currentPane={pane}
+        />
+      )}
     </div>
   );
 }
@@ -867,7 +883,6 @@ export function PaneLayout(props: PaneLayoutProps) {
     panes: panesManager,
     selector: selectorState,
     tabs: tabsManager,
-    sidebar,
     tools: toolsManager,
   } = state;
   const panes = app.effectivePanes.value;
@@ -1236,35 +1251,12 @@ export function PaneLayout(props: PaneLayoutProps) {
               <pane.component />
             </div>
           ) : pane.tab ? (
-            <PaneReaderContainer tab={pane.tab} state={state}>
-              {(mobileChrome) => (
-                <>
-                  <BibleReader
-                    currentPane={pane}
-                    readingState={pane.tab.readingState}
-                    selectorState={selectorState}
-                    state={state}
-                    scriptureElements={
-                      state.settings.settings.value.scriptureElements
-                    }
-                    mobileChrome={mobileChrome}
-                  />
-                  {!app.isMobile.value && (
-                    <BelowReaderToolbar
-                      toolsManager={toolsManager}
-                      readingState={pane.tab.readingState}
-                      sharedSession={pane.tab.sharedSession}
-                      selectorState={selectorState}
-                      tabsManager={tabsManager}
-                      panesManager={panesManager}
-                      openSidebar={sidebar.openSidebar}
-                      openSearch={sidebar.openSearch}
-                      currentPane={pane}
-                    />
-                  )}
-                </>
-              )}
-            </PaneReaderContainer>
+            <PaneReader
+              pane={pane}
+              tab={pane.tab}
+              state={state}
+              displayBelowReaderToolbar={true}
+            />
           ) : (
             <EmptyPaneToolbar
               toolsManager={toolsManager}
@@ -1405,20 +1397,12 @@ export function PaneLayout(props: PaneLayoutProps) {
                 <pane.component />
               </div>
             ) : pane.tab ? (
-              <PaneReaderContainer tab={pane.tab} state={state}>
-                {(mobileChrome) => (
-                  <BibleReader
-                    currentPane={pane}
-                    readingState={pane.tab.readingState}
-                    selectorState={selectorState}
-                    state={state}
-                    scriptureElements={
-                      state.settings.settings.value.scriptureElements
-                    }
-                    mobileChrome={mobileChrome}
-                  />
-                )}
-              </PaneReaderContainer>
+              <PaneReader
+                pane={pane}
+                tab={pane.tab}
+                state={state}
+                displayBelowReaderToolbar={false}
+              />
             ) : (
               <EmptyPaneToolbar
                 toolsManager={toolsManager}
