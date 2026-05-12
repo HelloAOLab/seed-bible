@@ -1,6 +1,10 @@
-import { BibleReader } from "seed-bible.components.BibleReader";
+import {
+  BibleReader,
+  type BibleReaderMobileChromeProps,
+} from "seed-bible.components.BibleReader";
 import { BelowReaderToolbar } from "seed-bible.components.BelowReaderToolbar";
 import { CasualOSApp } from "seed-bible.components.CasualOSApp";
+import type { TranslationBookChapter } from "seed-bible.managers.FreeUseBibleAPI";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
 import type {
@@ -11,6 +15,7 @@ import type {
 } from "seed-bible.managers.PanesManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { type ToolsManager } from "seed-bible.managers.BibleToolsManager";
+import { batch, effect } from "@preact/signals";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import type { ComponentChildren } from "preact";
 import { translateTitle } from "seed-bible.components.Utils";
@@ -380,11 +385,373 @@ function generateGridPortalContainerCss(
 
 interface PaneReaderScrollerProps {
   tab: ReaderTab;
-  children: ComponentChildren;
+  state?: SeedBibleState;
+  children: (mobileChrome?: BibleReaderMobileChromeProps) => ComponentChildren;
 }
 
-function PaneReaderContainer({ children }: PaneReaderScrollerProps) {
-  return <div className="sb-pane-reader">{children}</div>;
+export function PaneReaderContainer(props: PaneReaderScrollerProps) {
+  const { tab, state, children } = props;
+  const readingState = tab.readingState;
+  const isMobile = state?.app.isMobile.value ?? false;
+
+  const paneScrollerRef = useRef<HTMLDivElement | null>(null);
+  const mobileScrollerRef = useRef<HTMLDivElement | null>(null);
+  const swipeViewportRef = useRef<HTMLDivElement | null>(null);
+  const swipeTrackRef = useRef<HTMLDivElement | null>(null);
+  const swipeTouchStartX = useRef<number | null>(null);
+  const swipeTouchStartY = useRef<number | null>(null);
+  const swipeDirectionLocked = useRef<"h" | "v" | null>(null);
+  const swipeCurrentDx = useRef(0);
+  const currentChapterRef = useRef(readingState.chapterData.value);
+  const lastScrollTopRef = useRef(0);
+  const scrollerCleanupRef = useRef<(() => void) | null>(null);
+
+  const [prevChapterPreview, setPrevChapterPreview] =
+    useState<TranslationBookChapter | null>(null);
+  const [nextChapterPreview, setNextChapterPreview] =
+    useState<TranslationBookChapter | null>(null);
+  const [showMobileSettings, setShowMobileSettings] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  const attachScroller = (element: HTMLDivElement | null) => {
+    scrollerCleanupRef.current?.();
+    scrollerCleanupRef.current = null;
+
+    if (!element) {
+      return;
+    }
+
+    const cleanup = effect(() => {
+      if (readingState.chapterData.value) {
+        element.scrollTop = readingState.scrollPosition.peek();
+      }
+
+      const verseToScroll = readingState.scrollToVerse.value;
+      if (readingState.chapterData.value && verseToScroll !== null) {
+        requestAnimationFrame(() => {
+          const targetVerse = element.querySelector(
+            `[data-verse-number="${verseToScroll}"]`
+          );
+          if (!(targetVerse instanceof HTMLElement)) {
+            return;
+          }
+
+          targetVerse.scrollIntoView({ block: "center", inline: "nearest" });
+          batch(() => {
+            readingState.scrollToVerse.value = null;
+            readingState.scrollPosition.value = element.scrollTop;
+          });
+        });
+      }
+
+      currentChapterRef.current = readingState.chapterData.value;
+
+      const handleScroll = () => {
+        if (
+          currentChapterRef.current?.translation.id ===
+            readingState.translationId.value &&
+          currentChapterRef.current?.book.id === readingState.bookId.value &&
+          currentChapterRef.current?.chapter.number ===
+            readingState.chapterNumber.value
+        ) {
+          readingState.scrollPosition.value = element.scrollTop;
+        }
+
+        if (!isMobile) {
+          return;
+        }
+
+        const currentScrollTop = element.scrollTop;
+        if (currentScrollTop <= 0) {
+          setIsScrolled(false);
+        } else if (
+          currentScrollTop > lastScrollTopRef.current &&
+          currentScrollTop > 50
+        ) {
+          setIsScrolled(true);
+        } else if (currentScrollTop < lastScrollTopRef.current) {
+          setIsScrolled(false);
+        }
+        lastScrollTopRef.current = currentScrollTop;
+      };
+
+      element.addEventListener("scroll", handleScroll, { passive: true });
+
+      return () => {
+        element.removeEventListener("scroll", handleScroll);
+      };
+    });
+
+    scrollerCleanupRef.current = cleanup;
+  };
+
+  const paneScrollerRefCallback = (element: HTMLDivElement | null) => {
+    paneScrollerRef.current = element;
+    if (!isMobile) {
+      attachScroller(element);
+    }
+  };
+
+  const currentScrollerRefCallback = (element: HTMLDivElement | null) => {
+    mobileScrollerRef.current = element;
+    if (isMobile) {
+      attachScroller(element);
+    }
+  };
+
+  const swipeViewportRefCallback = (element: HTMLDivElement | null) => {
+    swipeViewportRef.current = element;
+  };
+
+  const swipeTrackRefCallback = (element: HTMLDivElement | null) => {
+    swipeTrackRef.current = element;
+  };
+
+  useEffect(() => {
+    attachScroller(
+      isMobile ? mobileScrollerRef.current : paneScrollerRef.current
+    );
+
+    return () => {
+      scrollerCleanupRef.current?.();
+      scrollerCleanupRef.current = null;
+    };
+  }, [isMobile, readingState]);
+
+  const currentChapterValue = readingState.chapterData.value;
+
+  useEffect(() => {
+    if (!isMobile || !state) {
+      setPrevChapterPreview(null);
+      setNextChapterPreview(null);
+      return;
+    }
+
+    const chapterData = currentChapterValue;
+    if (!chapterData) {
+      setPrevChapterPreview(null);
+      setNextChapterPreview(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    if (chapterData.previousChapterApiLink) {
+      state.bibleData
+        .getPreviousChapter(chapterData)
+        .then((result) => {
+          if (!cancelled) {
+            setPrevChapterPreview(result ?? null);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setPrevChapterPreview(null);
+          }
+        });
+    } else {
+      setPrevChapterPreview(null);
+    }
+
+    if (chapterData.nextChapterApiLink) {
+      state.bibleData
+        .getNextChapter(chapterData)
+        .then((result) => {
+          if (!cancelled) {
+            setNextChapterPreview(result ?? null);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setNextChapterPreview(null);
+          }
+        });
+    } else {
+      setNextChapterPreview(null);
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isMobile,
+    state,
+    currentChapterValue?.translation.id,
+    currentChapterValue?.book.id,
+    currentChapterValue?.chapter.number,
+  ]);
+
+  useEffect(() => {
+    if (!isMobile) {
+      return;
+    }
+
+    const viewport = swipeViewportRef.current;
+    if (!viewport) {
+      return;
+    }
+
+    const PANEL_PCT = 100 / 3;
+
+    const onTouchStart = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      if (!touch) {
+        return;
+      }
+
+      swipeTouchStartX.current = touch.clientX;
+      swipeTouchStartY.current = touch.clientY;
+      swipeDirectionLocked.current = null;
+      swipeCurrentDx.current = 0;
+
+      const track = swipeTrackRef.current;
+      if (track) {
+        track.style.transition = "none";
+      }
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      if (
+        swipeTouchStartX.current === null ||
+        swipeTouchStartY.current === null
+      ) {
+        return;
+      }
+
+      const touch = event.touches[0];
+      if (!touch) {
+        return;
+      }
+
+      const dx = touch.clientX - swipeTouchStartX.current;
+      const dy = touch.clientY - swipeTouchStartY.current;
+
+      if (!swipeDirectionLocked.current) {
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+          swipeDirectionLocked.current = "h";
+        } else if (Math.abs(dy) > 10) {
+          swipeDirectionLocked.current = "v";
+          return;
+        } else {
+          return;
+        }
+      }
+
+      if (swipeDirectionLocked.current === "v") {
+        return;
+      }
+
+      const hasNext = !!readingState.chapterData.value?.nextChapterApiLink;
+      const hasPrev = !!readingState.chapterData.value?.previousChapterApiLink;
+      let offset = dx;
+
+      if ((dx < 0 && !hasNext) || (dx > 0 && !hasPrev)) {
+        offset = Math.sign(dx) * Math.min(Math.abs(dx) * 0.15, 30);
+      } else {
+        const limit = window.innerWidth * 0.5;
+        if (Math.abs(dx) > limit) {
+          offset = Math.sign(dx) * (limit + (Math.abs(dx) - limit) * 0.2);
+        }
+      }
+
+      swipeCurrentDx.current = offset;
+      const track = swipeTrackRef.current;
+      if (track) {
+        track.style.transform = `translateX(calc(-${PANEL_PCT}% + ${offset}px))`;
+      }
+    };
+
+    const onTouchEnd = () => {
+      if (swipeDirectionLocked.current !== "h") {
+        swipeTouchStartX.current = null;
+        swipeDirectionLocked.current = null;
+        return;
+      }
+
+      const dx = swipeCurrentDx.current;
+      const threshold = 80;
+      const hasNext = !!readingState.chapterData.value?.nextChapterApiLink;
+      const hasPrev = !!readingState.chapterData.value?.previousChapterApiLink;
+
+      swipeTouchStartX.current = null;
+      swipeDirectionLocked.current = null;
+      swipeCurrentDx.current = 0;
+
+      const track = swipeTrackRef.current;
+      if (!track) {
+        return;
+      }
+
+      if (dx < -threshold && hasNext) {
+        track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transform = `translateX(-${PANEL_PCT * 2}%)`;
+        readingState.clearSelectedVerses();
+        window.setTimeout(async () => {
+          track.style.transition = "none";
+          track.style.transform = `translateX(-${PANEL_PCT}%)`;
+          await readingState.loadNextChapter();
+        }, 250);
+      } else if (dx > threshold && hasPrev) {
+        track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transform = "translateX(0%)";
+        readingState.clearSelectedVerses();
+        window.setTimeout(async () => {
+          track.style.transition = "none";
+          track.style.transform = `translateX(-${PANEL_PCT}%)`;
+          await readingState.loadPreviousChapter();
+        }, 250);
+      } else {
+        track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transform = `translateX(-${PANEL_PCT}%)`;
+      }
+    };
+
+    viewport.addEventListener("touchstart", onTouchStart, { passive: true });
+    viewport.addEventListener("touchmove", onTouchMove, { passive: true });
+    viewport.addEventListener("touchend", onTouchEnd, { passive: true });
+
+    return () => {
+      viewport.removeEventListener("touchstart", onTouchStart);
+      viewport.removeEventListener("touchmove", onTouchMove);
+      viewport.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [isMobile, readingState]);
+
+  const openAllSettings = () => {
+    if (!state) {
+      return;
+    }
+
+    setShowMobileSettings(false);
+    window.setTimeout(() => {
+      state.sidebar.openSettings();
+      state.sidebar.openSidebar();
+    }, 50);
+  };
+
+  const mobileChrome = isMobile
+    ? {
+        isScrolled,
+        prevChapterPreview,
+        nextChapterPreview,
+        showMobileSettings,
+        onOpenMobileSettings: () => setShowMobileSettings(true),
+        onCloseMobileSettings: () => setShowMobileSettings(false),
+        onOpenAllSettings: openAllSettings,
+        swipeViewportRefCallback,
+        swipeTrackRefCallback,
+        currentScrollerRefCallback,
+      }
+    : undefined;
+
+  return (
+    <div
+      className={`sb-pane-reader${isMobile ? " sb-pane-reader-mobile" : ""}`}
+      ref={paneScrollerRefCallback}
+    >
+      {children(mobileChrome)}
+    </div>
+  );
 }
 
 function EmptyPaneToolbar({
@@ -869,28 +1236,33 @@ export function PaneLayout(props: PaneLayoutProps) {
               <pane.component />
             </div>
           ) : pane.tab ? (
-            <PaneReaderContainer tab={pane.tab}>
-              <BibleReader
-                currentPane={pane}
-                readingState={pane.tab.readingState}
-                selectorState={selectorState}
-                state={state}
-                scriptureElements={
-                  state.settings.settings.value.scriptureElements
-                }
-              />
-              {!app.isMobile.value && (
-                <BelowReaderToolbar
-                  toolsManager={toolsManager}
-                  readingState={pane.tab.readingState}
-                  sharedSession={pane.tab.sharedSession}
-                  selectorState={selectorState}
-                  tabsManager={tabsManager}
-                  panesManager={panesManager}
-                  openSidebar={sidebar.openSidebar}
-                  openSearch={sidebar.openSearch}
-                  currentPane={pane}
-                />
+            <PaneReaderContainer tab={pane.tab} state={state}>
+              {(mobileChrome) => (
+                <>
+                  <BibleReader
+                    currentPane={pane}
+                    readingState={pane.tab.readingState}
+                    selectorState={selectorState}
+                    state={state}
+                    scriptureElements={
+                      state.settings.settings.value.scriptureElements
+                    }
+                    mobileChrome={mobileChrome}
+                  />
+                  {!app.isMobile.value && (
+                    <BelowReaderToolbar
+                      toolsManager={toolsManager}
+                      readingState={pane.tab.readingState}
+                      sharedSession={pane.tab.sharedSession}
+                      selectorState={selectorState}
+                      tabsManager={tabsManager}
+                      panesManager={panesManager}
+                      openSidebar={sidebar.openSidebar}
+                      openSearch={sidebar.openSearch}
+                      currentPane={pane}
+                    />
+                  )}
+                </>
               )}
             </PaneReaderContainer>
           ) : (
@@ -1033,15 +1405,19 @@ export function PaneLayout(props: PaneLayoutProps) {
                 <pane.component />
               </div>
             ) : pane.tab ? (
-              <PaneReaderContainer tab={pane.tab}>
-                <BibleReader
-                  currentPane={pane}
-                  readingState={pane.tab.readingState}
-                  selectorState={selectorState}
-                  scriptureElements={
-                    state.settings.settings.value.scriptureElements
-                  }
-                />
+              <PaneReaderContainer tab={pane.tab} state={state}>
+                {(mobileChrome) => (
+                  <BibleReader
+                    currentPane={pane}
+                    readingState={pane.tab.readingState}
+                    selectorState={selectorState}
+                    state={state}
+                    scriptureElements={
+                      state.settings.settings.value.scriptureElements
+                    }
+                    mobileChrome={mobileChrome}
+                  />
+                )}
               </PaneReaderContainer>
             ) : (
               <EmptyPaneToolbar

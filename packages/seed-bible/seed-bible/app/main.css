@@ -692,6 +692,10 @@ h6 {
   scrollbar-width: none;
 }
 
+.sb-pane-reader-mobile {
+  overflow: hidden;
+}
+
 .sb-bible-reader {
   flex: 1;
 }

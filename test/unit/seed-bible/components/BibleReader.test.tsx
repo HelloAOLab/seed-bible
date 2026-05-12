@@ -2,6 +2,7 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { computed, signal, type Signal } from "@preact/signals";
 import { BibleReader } from "@packages/seed-bible/seed-bible/components/BibleReader";
+import { PaneReaderContainer } from "@packages/seed-bible/seed-bible/components/PaneLayout";
 import {
   type BibleReadingState,
   type SelectedFootnote,
@@ -199,6 +200,37 @@ function dispatchTouch(
     value: touchPoints,
   });
   element.dispatchEvent(event);
+}
+
+function renderMobileReader(
+  fixture: Pick<ReaderFixture, "pane" | "selectorState" | "readingState">,
+  state: SeedBibleState,
+  container: HTMLDivElement
+) {
+  act(() => {
+    render(
+      <PaneReaderContainer
+        tab={{
+          id: "tab-1",
+          title: "Tab 1",
+          readingState: fixture.readingState,
+          sharedSession: null,
+        }}
+        state={state}
+      >
+        {(mobileChrome) => (
+          <BibleReader
+            currentPane={fixture.pane}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            state={state}
+            mobileChrome={mobileChrome}
+          />
+        )}
+      </PaneReaderContainer>,
+      container
+    );
+  });
 }
 
 describe("BibleReader", () => {
@@ -1222,17 +1254,7 @@ describe("BibleReader", () => {
       previousChapterApiLink: null,
     };
 
-    act(() => {
-      render(
-        <BibleReader
-          currentPane={pane}
-          selectorState={selectorState}
-          readingState={readingState}
-          state={state}
-        />,
-        container
-      );
-    });
+    renderMobileReader({ pane, selectorState, readingState }, state, container);
 
     const scroller = container.querySelector(
       ".sb-reader-swipe-panel-current"
@@ -1261,17 +1283,7 @@ describe("BibleReader", () => {
     };
     readingState.scrollPosition.value = 123;
 
-    act(() => {
-      render(
-        <BibleReader
-          currentPane={pane}
-          selectorState={selectorState}
-          readingState={readingState}
-          state={state}
-        />,
-        container
-      );
-    });
+    renderMobileReader({ pane, selectorState, readingState }, state, container);
 
     const scroller = container.querySelector(
       ".sb-reader-swipe-panel-current"
@@ -1305,17 +1317,11 @@ describe("BibleReader", () => {
     });
 
     try {
-      act(() => {
-        render(
-          <BibleReader
-            currentPane={pane}
-            selectorState={selectorState}
-            readingState={readingState}
-            state={state}
-          />,
-          container
-        );
-      });
+      renderMobileReader(
+        { pane, selectorState, readingState },
+        state,
+        container
+      );
     } finally {
       rafSpy.mockRestore();
       Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
@@ -1341,17 +1347,7 @@ describe("BibleReader", () => {
       previousChapterApiLink: null,
     };
 
-    act(() => {
-      render(
-        <BibleReader
-          currentPane={pane}
-          selectorState={selectorState}
-          readingState={readingState}
-          state={state}
-        />,
-        container
-      );
-    });
+    renderMobileReader({ pane, selectorState, readingState }, state, container);
 
     const scroller = container.querySelector(
       ".sb-reader-swipe-panel-current"
@@ -1394,17 +1390,11 @@ describe("BibleReader", () => {
     });
 
     try {
-      act(() => {
-        render(
-          <BibleReader
-            currentPane={pane}
-            selectorState={selectorState}
-            readingState={readingState}
-            state={state}
-          />,
-          container
-        );
-      });
+      renderMobileReader(
+        { pane, selectorState, readingState },
+        state,
+        container
+      );
     } finally {
       Object.defineProperty(HTMLElement.prototype, "addEventListener", {
         configurable: true,
@@ -1429,17 +1419,7 @@ describe("BibleReader", () => {
       previousChapterApiLink: null,
     };
 
-    act(() => {
-      render(
-        <BibleReader
-          currentPane={pane}
-          selectorState={selectorState}
-          readingState={readingState}
-          state={state}
-        />,
-        container
-      );
-    });
+    renderMobileReader({ pane, selectorState, readingState }, state, container);
 
     const scroller = container.querySelector(
       ".sb-reader-swipe-panel-current"
@@ -1489,17 +1469,11 @@ describe("BibleReader", () => {
 
     jest.useFakeTimers();
     try {
-      act(() => {
-        render(
-          <BibleReader
-            currentPane={pane}
-            selectorState={selectorState}
-            readingState={readingState}
-            state={state}
-          />,
-          container
-        );
-      });
+      renderMobileReader(
+        { pane, selectorState, readingState },
+        state,
+        container
+      );
 
       const viewport = container.querySelector(
         ".sb-reader-swipe-viewport"
@@ -1538,17 +1512,11 @@ describe("BibleReader", () => {
 
     jest.useFakeTimers();
     try {
-      act(() => {
-        render(
-          <BibleReader
-            currentPane={pane}
-            selectorState={selectorState}
-            readingState={readingState}
-            state={state}
-          />,
-          container
-        );
-      });
+      renderMobileReader(
+        { pane, selectorState, readingState },
+        state,
+        container
+      );
 
       const viewport = container.querySelector(
         ".sb-reader-swipe-viewport"
