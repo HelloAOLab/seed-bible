@@ -225,6 +225,19 @@ function renderPaneReader(
   });
 }
 
+function dispatchTouch(
+  element: Element,
+  type: "touchstart" | "touchmove" | "touchend",
+  touchPoints: Array<{ clientX: number; clientY: number }>
+) {
+  const event = new Event(type, { bubbles: true, cancelable: true });
+  Object.defineProperty(event, "touches", {
+    configurable: true,
+    value: touchPoints,
+  });
+  element.dispatchEvent(event);
+}
+
 describe("PaneReader integration", () => {
   let container: HTMLDivElement;
 
@@ -320,5 +333,159 @@ describe("PaneReader integration", () => {
     ) as HTMLDivElement | null;
     expect(scroller).not.toBeNull();
     expect(scroller?.scrollTop).toBe(133);
+  });
+
+  it("scroll-to-verse scrolls to the specified verse in non-mobile layout", () => {
+    const { pane, readingState } = createFixture();
+    const state = createDesktopState();
+    readingState.scrollToVerse.value = 1;
+
+    const rafSpy = jest
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback: FrameRequestCallback) => {
+        callback(0);
+        return 0;
+      });
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    const scrollIntoViewSpy = jest.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoViewSpy,
+    });
+
+    try {
+      renderPaneReader(pane, readingState, state, container);
+    } finally {
+      rafSpy.mockRestore();
+      Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+        configurable: true,
+        value: originalScrollIntoView,
+      });
+    }
+
+    expect(scrollIntoViewSpy).toHaveBeenCalledWith({
+      block: "center",
+      inline: "nearest",
+    });
+    expect(readingState.scrollToVerse.value).toBeNull();
+  });
+
+  it("scroll-to-verse scrolls to the specified verse in mobile layout", () => {
+    const { pane, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+    readingState.scrollToVerse.value = 1;
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: null,
+      previousChapterApiLink: null,
+    };
+
+    const rafSpy = jest
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback: FrameRequestCallback) => {
+        callback(0);
+        return 0;
+      });
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    const scrollIntoViewSpy = jest.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoViewSpy,
+    });
+
+    try {
+      renderPaneReader(pane, readingState, state, container);
+    } finally {
+      rafSpy.mockRestore();
+      Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+        configurable: true,
+        value: originalScrollIntoView,
+      });
+    }
+
+    expect(scrollIntoViewSpy).toHaveBeenCalledWith({
+      block: "center",
+      inline: "nearest",
+    });
+    expect(readingState.scrollToVerse.value).toBeNull();
+  });
+
+  it("the user can swipe to the right to go to the previous chapter in mobile layout for left-to-right text", () => {
+    jest.useFakeTimers();
+    const { pane, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "ltr",
+      },
+    };
+
+    try {
+      renderPaneReader(pane, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement | null;
+      expect(viewport).not.toBeNull();
+
+      act(() => {
+        if (!viewport) {
+          return;
+        }
+        dispatchTouch(viewport, "touchstart", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchend", []);
+        jest.advanceTimersByTime(250);
+      });
+
+      expect(readingState.loadPreviousChapter).toHaveBeenCalledTimes(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("the user can swipe to the left to go to the next chapter in mobile layout for left-to-right text", () => {
+    jest.useFakeTimers();
+    const { pane, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "ltr",
+      },
+    };
+
+    try {
+      renderPaneReader(pane, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement | null;
+      expect(viewport).not.toBeNull();
+
+      act(() => {
+        if (!viewport) {
+          return;
+        }
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchend", []);
+        jest.advanceTimersByTime(250);
+      });
+
+      expect(readingState.loadNextChapter).toHaveBeenCalledTimes(1);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
