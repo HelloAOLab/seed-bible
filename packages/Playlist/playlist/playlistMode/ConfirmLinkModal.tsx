@@ -1,7 +1,7 @@
 const ConfirmationModal = await thisBot.ConfirmationModal();
 
 const ConfirmLinkModal = (props: any) => {
-  const { onClose, link } = props;
+  const { onClose, link, controlBalInternal } = props;
 
   return (
     <ConfirmationModal
@@ -10,6 +10,10 @@ const ConfirmLinkModal = (props: any) => {
       onClose={onClose}
       colorSwitch={true}
       ctaText={t("openLinkButton")}
+      controlBalInternal={controlBalInternal}
+      sxContainerModalStyles={{
+        top: controlBalInternal ? "calc(50% - 50dvh + 80px)" : "50%",
+      }}
       onConfirm={() => {
         os.openURL(link);
         onClose();

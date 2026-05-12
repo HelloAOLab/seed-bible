@@ -1284,6 +1284,16 @@ try {
     if (text.length <= maxLength) return text;
     return `${text.substring(0, maxLength)}...`;
   };
+
+  G.SetOpenExternalLink = (link: string) => {
+    if (G.SetOpenExternalLinkHigh) {
+      G.SetOpenExternalLinkHigh(link);
+    } else if (G.SetOpenExternalLinkControl) {
+      G.SetOpenExternalLinkControl(link);
+    } else {
+      os.openURL(link);
+    }
+  };
 } catch (err) {
   console.log("Error in defineGlobal.tsx", err);
 }

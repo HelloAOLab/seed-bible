@@ -445,7 +445,7 @@ const Playlist = () => {
     document.addEventListener("keyup", onKeyUp);
     document.addEventListener("keydown", onKeyDown);
 
-    G.SetOpenExternalLink = (link: string) => {
+    G.SetOpenExternalLinkHigh = (link: string) => {
       if (isMobile) {
         setOpenExternalLink(link);
       } else {
@@ -485,7 +485,7 @@ const Playlist = () => {
       G.SetAnnotationData = null;
       G.SetPlaylistForforcedHeight && G.SetPlaylistForforcedHeight(0);
       G.SetShowAddToPlaylist = null;
-      G.SetOpenExternalLink = null;
+      G.SetOpenExternalLinkHigh = null;
     };
   }, []);
 

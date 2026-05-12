@@ -4,6 +4,7 @@ const { Button } = G.Components;
 const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();
 const AttachLink = await thisBot.AttachLink();
+const ConfirmLinkModal = await thisBot.ConfirmLinkModal();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
 const MobilePlaylistToggleButton = await thisBot.MobilePlaylistToggleButton();
 
@@ -232,6 +233,8 @@ const getPlaylistProgress = (
 const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
   const [showCurrent, setShowCurrent] = useState(false);
   const [queue, setQueue] = useState([]);
+
+  const [openExternalLink, setOpenExternalLink] = useState<string | null>(null);
 
   const [transformedHistory, setTransformedHistory] = useState(G.PPthh);
   const [oldData, setOldData] = useState([]);
@@ -481,6 +484,14 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
       }
     }
 
+    if (
+      targetItem.additionalInfo.isValid &&
+      targetItem.additionalInfo.type === "externalLink"
+    ) {
+      G.SetOpenExternalLink &&
+        G.SetOpenExternalLink(targetItem.additionalInfo.link);
+    }
+
     justAddedQueue.current = false;
     G.LAST_QUEUE_IIEM = {};
     setCurreIndex(newValues);
@@ -708,6 +719,15 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
       }, 200);
     }
 
+    G.SetOpenExternalLinkControl = (link: string) => {
+      console.log("SetOpenExternalLinkControl", link);
+      if (isMobile) {
+        setOpenExternalLink(link);
+      } else {
+        os.openURL(link);
+      }
+    };
+
     return () => {
       if (!G.IsASwitchBetweenBar) {
         G.IsPlaylistPlaying = false;
@@ -716,6 +736,7 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
         G.EmitData("playlistStopped", {});
       }
       G.IsASwitchBetweenBar = false;
+      G.SetOpenExternalLink = null;
     };
   }, []);
 
@@ -833,6 +854,14 @@ const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
       <style>{thisBot.tags["Linking.css"]}</style>
       <style>{thisBot.tags["PlaylistContainer.css"]}</style>
       <style>{thisBot.tags["playlist.css"]}</style>
+
+      {openExternalLink && (
+        <ConfirmLinkModal
+          onClose={() => setOpenExternalLink(null)}
+          link={openExternalLink}
+          controlBalInternal
+        />
+      )}
 
       {isMobile && !inheritedBar ? (
         <div

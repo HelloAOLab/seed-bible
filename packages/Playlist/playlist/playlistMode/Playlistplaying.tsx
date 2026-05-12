@@ -797,7 +797,7 @@ const PlayingPlaylist = () => {
   return (
     <>
       <style>{thisBot.tags["RecordingVoiceUI.css"]}</style>
-
+      <style>{thisBot.tags["PlaylistContainer.css"]}</style>
       {queueDeleteConfirm > -1 && (
         <Modal
           title={t("deleteQueue")}
