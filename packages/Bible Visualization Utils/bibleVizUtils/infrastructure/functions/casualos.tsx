@@ -133,9 +133,9 @@ export const SetStrictTag = <
   setTag(bot, tag as string, value);
 };
 
-export const ApplyStrictMod = <B extends TypedBot<any>>(
+export function ApplyStrictMod<B extends TypedBot<any>>(
   bot: B | undefined,
   mod: Partial<B["tags"]>
-) => {
+) {
   if (bot) applyMod(bot, mod);
-};
+}

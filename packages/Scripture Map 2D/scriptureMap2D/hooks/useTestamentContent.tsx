@@ -5,10 +5,10 @@ import {
   calculateReadingHistorySummary,
   type ReadingEvent,
 } from "seed-bible.managers.ReadingHistoryManager";
-import { type SectionInfo as DomainSectionInfo } from "bibleVizUtils.domain.models.arrangement";
-import {
-  type SectionInfo as InfrastructureSectionInfo,
-  type BookInfo as InfrastructureBookInfo,
+import type { SectionInfo as DomainSectionInfo } from "bibleVizUtils.domain.models.arrangement";
+import type {
+  SectionInfo as InfrastructureSectionInfo,
+  BookInfo as InfrastructureBookInfo,
 } from "bibleVizUtils.infrastructure.models.arrangement";
 import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
 import type {

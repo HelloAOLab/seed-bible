@@ -8,7 +8,6 @@ import type {
 import type { ActivityNotification } from "bibleVizUtils.domain.models.canvas";
 import { ActivityNotificationMapper } from "bibleVizUtils.infrastructure.mappers.ActivityNotificationMapper";
 import { BiblePiece } from "bibleVizUtils.domain.models.canvas";
-import { globalAPI } from "app.controller.controllerBuilder";
 import type {
   ActivityNotificationBot,
   ActivityNotificationTags,
@@ -81,7 +80,7 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
 
     const formOpacity = isOwnUserInPiece ? 1 : 0.5;
     const label = activityCount > 1 ? `${activityCount}` : "";
-    const dimension = globalAPI.defaultPortalName;
+    const dimension = os.getCurrentDimension(); // TODO: Obtain dimension from a dimension provider port
 
     const mod: Partial<ActivityNotificationTags> = {
       [dimension]: true,
@@ -129,7 +128,7 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
         `ActivityNotificationAdapter: container.piece is not defined.`
       );
     }
-    const dimension = globalAPI.defaultPortalName;
+    const dimension = os.getCurrentDimension(); // TODO: Obtain dimension from a dimension provider port
     const ownerBot = PieceMapper.toInfrastructure(container.piece);
 
     if (!ownerBot) {

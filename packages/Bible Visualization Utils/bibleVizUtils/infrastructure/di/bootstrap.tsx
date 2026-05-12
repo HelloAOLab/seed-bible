@@ -89,10 +89,14 @@ export let labelInteractionController: LabelInteractionController | undefined =
   undefined;
 
 export const bootstrapExtension = () => {
+  console.log(`[Debug] BibleVizUtils: bootstrapExtension start`);
+
   registerExtension({
     id: "bible-visualization-utils",
     init: function* () {
-      console.log(`Initializing BibleVizUtils.`);
+      console.log(
+        `[Debug] BibleVizUtils: bootstrapExtension.registerExtension`
+      );
 
       // 1. Instantiating adapters
 
@@ -414,4 +418,6 @@ export const bootstrapExtension = () => {
       return api;
     },
   });
+
+  console.log(`[Debug] BibleVizUtils: bootstrapExtension end`);
 };

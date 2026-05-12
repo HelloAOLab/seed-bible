@@ -11,9 +11,8 @@ import {
   BiblePiece,
   type ActivityIndicator,
   type Piece,
-} from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
-import { globalAPI } from "app.controller.controllerBuilder";
-import { InfoLabelData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/InfoLabelData";
+} from "bibleVizUtils.domain.models.canvas";
+import { InfoLabelData } from "bibleVizUtils.domain.entities.InfoLabelData";
 import type {
   ActivityIndicatorBot,
   BibleVizUtilsObjectPoolerMap,
@@ -22,8 +21,8 @@ import type {
   PieceBot,
   RegularActivityIndicatorTags,
 } from "bibleVizUtils.infrastructure.models.casualos";
-import { ActivityIndicatorMapper } from "../../mappers/ActivityIndicatorMapper";
-import { InfoLabelTextMapper } from "../../mappers/InfoLabelTextMapper";
+import { ActivityIndicatorMapper } from "bibleVizUtils.infrastructure.mappers.ActivityIndicatorMapper"; // TODO: Inyect as port
+import { InfoLabelTextMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTextMapper"; // TODO: Inyect as port
 import type { IndicatorsRepositoryPort } from "bibleVizUtils.domain.ports.pieceActivity";
 import type { ObjectPooler } from "bibleVizUtils.infrastructure.adapters.casualos.ObjectPooler";
 import type { ActivityIndicatorVisualConfigsType } from "bibleVizUtils.infrastructure.config.activityIndicators.visuals";
@@ -244,7 +243,7 @@ export class ActivityIndicatorsAdapter
     const commands = Array.isArray(command) ? command : [command];
 
     const indicatorBotList: ActivityIndicatorBot[] = [];
-    const dimension = globalAPI.defaultPortalName;
+    const dimension = os.getCurrentDimension(); // TODO: Obtain dimension from a dimension provider port
     let piece: Piece | undefined = undefined;
     if (container instanceof InfoLabelData) {
       piece = container.owner;
@@ -422,7 +421,7 @@ export class ActivityIndicatorsAdapter
           `ActivityIndicatorsAdapter: Strategy not found for ${ownerBot.tags.type} at updateIndicatorPosition`
         );
 
-      const dimension = globalAPI.defaultPortalName;
+      const dimension = os.getCurrentDimension(); // TODO: Obtain dimension from a dimension provider port
 
       const position = strategy({
         ownerBot,

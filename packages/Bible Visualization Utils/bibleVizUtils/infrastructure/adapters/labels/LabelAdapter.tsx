@@ -24,7 +24,6 @@ import type {
   InfoLabelTextTags,
   InfoLabelTransformerTags,
 } from "bibleVizUtils.infrastructure.models.casualos";
-import { globalAPI } from "app.controller.controllerBuilder";
 import type { LabelAdapterPort } from "bibleVizUtils.domain.ports.label";
 import type { ObjectPooler } from "bibleVizUtils.infrastructure.adapters.casualos.ObjectPooler";
 import { InfoLabelTransformerMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTransformerMapper";
@@ -76,7 +75,7 @@ export class LabelAdapter implements LabelAdapterPort {
     dateFormat,
     translucencyMode,
   }) => {
-    const dimension = globalAPI.defaultPortalName;
+    const dimension = os.getCurrentDimension(); // TODO: Obtain dimension from a dimension provider port
     const pieceBot = PieceMapper.toInfrastructure(piece);
     if (!pieceBot) {
       throw new Error(`LabelAdapter: pieceBot not found at spawnLabelForPiece`);

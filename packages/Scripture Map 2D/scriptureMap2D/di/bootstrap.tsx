@@ -26,11 +26,16 @@ const extensionId = "scripture-map-2d";
 const dependencies: (keyof DependenciesMap)[] = [bibleVizUtilsId];
 
 export const bootstrapExtension = () => {
+  console.log(`[Debug] ScriptureMap2D: bootstrapExtension start`);
+
   registerExtension({
     dependencies,
     id: extensionId,
     init: function* (context: SeedBibleState, dependenciesMap) {
-      console.log(`[Debug] ScriptureMap2D: bootstrap`, { context });
+      console.log(
+        `[Debug] ScriptureMap2D: bootstrapExtension.registerExtension`,
+        { context }
+      );
       addTranslations(extensionId, translations);
       const {
         bibleVizDataRepository,
@@ -147,4 +152,6 @@ export const bootstrapExtension = () => {
       };
     },
   });
+
+  console.log(`[Debug] ScriptureMap2D: bootstrapExtension end`);
 };
