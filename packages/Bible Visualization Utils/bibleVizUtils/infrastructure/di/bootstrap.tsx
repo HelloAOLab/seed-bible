@@ -59,8 +59,26 @@ import { ActivityIndicatorBotsRepository } from "bibleVizUtils.infrastructure.ad
 import { ActivityIndicatorsConfigProvider } from "bibleVizUtils.infrastructure.config.activityIndicators.ActivityIndicatorsConfigProvider";
 import { LabelFeedbackConfigProvider } from "bibleVizUtils.infrastructure.config.labels.LabelFeedbackConfigProvider";
 import { BookInfoMapper } from "bibleVizUtils.infrastructure.mappers.BookInfoMapper";
+import { SectionInfoMapper } from "bibleVizUtils.infrastructure.mappers.SectionInfoMapper";
+import {
+  GetTextColorBasedOnBackground,
+  ComputeRawGradientColors,
+  ComputeLinearGradient,
+  HexToRgb,
+  GetChildrenLevelColors,
+} from "bibleVizUtils.domain.functions.colors";
+import { IsValueBetween } from "bibleVizUtils.domain.functions.math";
 import type { BibleVizAPI } from "bibleVizUtils.infrastructure.models.seedBible";
-import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
+import {
+  registerExtension /*, type SeedBibleState */,
+} from "seed-bible.app.api";
+import {
+  GetDayRangeSeconds,
+  GetPastDateInfo,
+} from "bibleVizUtils.domain.functions.time";
+import { CapitalizeFirstLetter } from "bibleVizUtils.domain.functions.string";
+import { ScriptureMap3DConfigProvider } from "bibleVizUtils.infrastructure.config.scriptureMap3D.ScriptureMap3DConfigProvider";
+import { ReadingHistoryConfigProvider } from "bibleVizUtils.infrastructure.config.readingHistory.ReadingHistoryConfigProvider";
 
 export let userColorController: UserColorController | undefined = undefined;
 export let sessionController: SessionController | undefined = undefined;
@@ -73,11 +91,13 @@ export let labelInteractionController: LabelInteractionController | undefined =
 export const bootstrapExtension = () => {
   registerExtension({
     id: "bible-visualization-utils",
-    init: function* (context: SeedBibleState) {
+    init: function* () {
       console.log(`Initializing BibleVizUtils.`);
 
       // 1. Instantiating adapters
 
+      const readingHistoryConfigProvider = new ReadingHistoryConfigProvider();
+      const scriptureMap3DConfigProvider = new ScriptureMap3DConfigProvider();
       const infoLabelTextPool: PoolData<
         "InfoLabelText",
         BibleVizUtilsObjectPoolerMap["InfoLabelText"]
@@ -241,6 +261,11 @@ export const bootstrapExtension = () => {
         booksStaticInfoRepository: bibleVizDataRepository,
       });
       arrangementAdapter.setBookInfoMapperPort(bookInfoMapper);
+      const sectionInfoMapper = new SectionInfoMapper({
+        bookInfoMapper,
+        arrangementConfigProviderPort: arrangementsConfigProvider,
+        customArrangementStorePort: customArrangementStore,
+      });
       const labelAnimationAdapter = new LabelFeedbackAdapter({
         dimensionProvider: () => os.getCurrentDimension(),
         labelFeedbackConfigProviderPort: labelFeedbackConfigProvider,
@@ -355,7 +380,7 @@ export const bootstrapExtension = () => {
             activityIndicatorsAdapterPort: activityIndicatorsAdapter,
           });
         },
-        // @ts-expect-error
+        // eslint-disable-next-line
         createEventManager: <TEventMap extends Record<string, any>>() => {
           return new BaseEventManager<TEventMap>();
         },
@@ -369,6 +394,21 @@ export const bootstrapExtension = () => {
           dimensionGetter: ObjectPoolerDimensionGetter;
         }) => new ObjectPooler<P>(poolsData, dimensionGetter),
         bibleVizUtilsEventManager,
+        userColorStore,
+        userPresenceService,
+        arrangementService,
+        getDayRangeSeconds: GetDayRangeSeconds,
+        GetPastDateInfo,
+        CapitalizeFirstLetter,
+        GetTextColorBasedOnBackground,
+        IsValueBetween,
+        ComputeRawGradientColors,
+        ComputeLinearGradient,
+        HexToRgb,
+        GetChildrenLevelColors,
+        sectionInfoMapper,
+        scriptureMap3DConfigProvider,
+        readingHistoryConfigProvider,
       };
 
       return api;

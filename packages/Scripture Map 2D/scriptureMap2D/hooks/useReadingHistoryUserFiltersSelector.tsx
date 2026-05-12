@@ -1,11 +1,10 @@
 import { useReadingHistoryContext } from "scriptureMap2D.contexts.ReadingHistory.ReadingHistoryContext";
-import { useSideBarContext } from "app.hooks.sideBar";
 import {
   SelectorOptionClasses,
   type SelectorOptionProps,
   type SelectorOptionData,
 } from "scriptureMap2D.components.ui.SelectorOption";
-import { userColorStore } from "bibleVizUtils.services.index";
+import { useScriptureMap2DContext } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
 
 const { useMemo, useCallback } = os.appHooks;
 
@@ -21,7 +20,7 @@ type UseReadingHistoryUserFiltersSelector =
 
 export const useReadingHistoryUserFiltersSelector: UseReadingHistoryUserFiltersSelector =
   () => {
-    const { t } = useSideBarContext();
+    const { userColorStore, translate } = useScriptureMap2DContext();
     const {
       handleReadingHistoryUserSelectorClick,
       readingHistoryUserFilters,
@@ -38,8 +37,8 @@ export const useReadingHistoryUserFiltersSelector: UseReadingHistoryUserFiltersS
     const allSelectorOptionContent = useMemo<
       UseReadingHistoryUserFiltersSelectorType["allSelectorOptionContent"]
     >(() => {
-      return { title: t("all") };
-    }, [t]);
+      return { title: translate("all") };
+    }, [translate]);
 
     const allSelectorOptionClick = useCallback<
       UseReadingHistoryUserFiltersSelectorType["allSelectorOptionClick"]
@@ -59,10 +58,10 @@ export const useReadingHistoryUserFiltersSelector: UseReadingHistoryUserFiltersS
           const { profileName } = userData;
           const fixedName: string =
             userId === myAuthBotId
-              ? t("you")
+              ? translate("you")
               : (profileName?.length ?? 0) > 0
-                ? profileName
-                : t("Unknown User");
+                ? profileName!
+                : translate("Unknown User");
           optionsData.push({
             key: userId,
             content: {

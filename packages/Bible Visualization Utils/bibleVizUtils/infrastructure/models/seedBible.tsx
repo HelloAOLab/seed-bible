@@ -17,6 +17,25 @@ import {
   type DimensionGetter as ObjectPoolerDimensionGetter,
 } from "bibleVizUtils.infrastructure.adapters.casualos.ObjectPooler";
 import type { BibleVizUtilsEvents } from "bibleVizUtils.domain.models.events";
+import type { UserColorStore } from "bibleVizUtils.infrastructure.adapters.userPresence.UserColorStore";
+import type { UserPresenceService } from "../../application/services/UserPresenceService";
+import type { ArrangementService } from "../../application/services/ArrangementService";
+import type {
+  GetDayRangeSecondsType,
+  GetPastDateInfoType,
+} from "bibleVizUtils.domain.functions.time";
+import type {
+  ComputeLinearGradientType,
+  ComputeRawGradientColorsType,
+  GetTextColorBasedOnBackgroundType,
+  HexToRgbType,
+  GetChildrenLevelColorsType,
+} from "../../domain/functions/colors";
+import type { IsValueBetweenType } from "../../domain/functions/math";
+import type { CapitalizeFirstLetterType } from "../../domain/functions/string";
+import type { ScriptureMap3DConfigProvider } from "bibleVizUtils.infrastructure.config.scriptureMap3D.ScriptureMap3DConfigProvider";
+import type { ReadingHistoryConfigProvider } from "bibleVizUtils.infrastructure.config.readingHistory.ReadingHistoryConfigProvider";
+import type { SectionInfoMapper } from "../../infrastructure/mappers/SectionInfoMapper";
 
 export interface BibleVizAPI {
   bibleVizDataRepository: BibleVizDataRepository;
@@ -28,7 +47,7 @@ export interface BibleVizAPI {
     labelPropertiesStrategies: PieceLabelServiceParams<T>["labelPropertiesStrategies"]
   ) => PieceLabelService<T>;
   createEventManager: <
-    // @ts-ignore
+    // eslint-disable-next-line
     TEventMap extends Record<string, any>,
   >() => BaseEventManager<TEventMap>;
   createObjectPooler: <P extends Record<keyof P, TypedBot<PieceBotTags>>>({
@@ -39,4 +58,19 @@ export interface BibleVizAPI {
     dimensionGetter: ObjectPoolerDimensionGetter;
   }) => ObjectPooler<P>;
   bibleVizUtilsEventManager: BaseEventManager<BibleVizUtilsEvents>;
+  userColorStore: UserColorStore;
+  userPresenceService: UserPresenceService;
+  arrangementService: ArrangementService;
+  getDayRangeSeconds: GetDayRangeSecondsType;
+  GetTextColorBasedOnBackground: GetTextColorBasedOnBackgroundType;
+  IsValueBetween: IsValueBetweenType;
+  ComputeRawGradientColors: ComputeRawGradientColorsType;
+  ComputeLinearGradient: ComputeLinearGradientType;
+  HexToRgb: HexToRgbType;
+  GetChildrenLevelColors: GetChildrenLevelColorsType;
+  CapitalizeFirstLetter: CapitalizeFirstLetterType;
+  GetPastDateInfo: GetPastDateInfoType;
+  scriptureMap3DConfigProvider: ScriptureMap3DConfigProvider;
+  readingHistoryConfigProvider: ReadingHistoryConfigProvider;
+  sectionInfoMapper: SectionInfoMapper;
 }

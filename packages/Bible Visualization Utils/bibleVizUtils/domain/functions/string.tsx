@@ -1,4 +1,4 @@
-type CapitalizeFirstLetterType = (text: string) => string;
+export type CapitalizeFirstLetterType = (text: string) => string;
 type FormatNumberToUSDCurrencyType = (params: { value: number }) => string;
 
 export const CapitalizeFirstLetter: CapitalizeFirstLetterType = (text) => {

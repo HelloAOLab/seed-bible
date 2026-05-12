@@ -30,12 +30,29 @@ export const bootstrapExtension = () => {
     dependencies,
     id: extensionId,
     init: function* (context: SeedBibleState, dependenciesMap) {
+      console.log(`[Debug] ScriptureMap2D: bootstrap`, { context });
       addTranslations(extensionId, translations);
       const {
         bibleVizDataRepository,
         scriptureService,
         bibleVizUtilsEventManager,
         createEventManager,
+        userColorStore,
+        userPresenceService,
+        arrangementService,
+        getDayRangeSeconds,
+        readingHistoryService,
+        GetTextColorBasedOnBackground,
+        IsValueBetween,
+        ComputeRawGradientColors,
+        ComputeLinearGradient,
+        HexToRgb,
+        GetChildrenLevelColors,
+        CapitalizeFirstLetter,
+        GetPastDateInfo,
+        sectionInfoMapper,
+        scriptureMap3DConfigProvider,
+        readingHistoryConfigProvider,
       } = dependenciesMap[
         bibleVizUtilsId
       ] as DependenciesMap[typeof bibleVizUtilsId];
@@ -98,6 +115,23 @@ export const bootstrapExtension = () => {
                     bibleVizUtilsEventManager,
                     scriptureMap2DEventManager,
                     scriptureService,
+                    userColorStore,
+                    userPresenceService,
+                    arrangementService,
+                    getDayRangeSeconds,
+                    bibleVizDataRepository,
+                    readingHistoryService,
+                    GetTextColorBasedOnBackground,
+                    IsValueBetween,
+                    ComputeRawGradientColors,
+                    ComputeLinearGradient,
+                    HexToRgb,
+                    GetChildrenLevelColors,
+                    CapitalizeFirstLetter,
+                    GetPastDateInfo,
+                    sectionInfoMapper,
+                    scriptureMap3DConfigProvider,
+                    readingHistoryConfigProvider,
                   }}
                   customCSS={customCSS}
                 />

@@ -5,33 +5,36 @@ import type {
   WeightedColor,
 } from "bibleVizUtils.domain.models.commonTypes";
 
-type ClampRGBColorType = (colorToClamp: RGB) => RGB;
-type HexToRgbType = (params: { hexColor: HexString }) => RGB;
-type RgbToHexType = (params: { rgbColor: RGB }) => HexString;
-type GetTextColorBasedOnBackgroundType = (params: {
+export type ClampRGBColorType = (colorToClamp: RGB) => RGB;
+export type HexToRgbType = (params: { hexColor: HexString }) => RGB;
+export type RgbToHexType = (params: { rgbColor: RGB }) => HexString;
+export type GetTextColorBasedOnBackgroundType = (params: {
   backgroundColor: WeightedColor[] | HexString;
 }) => HexString;
-type GetDarkerColorType = (color: HexString, offset?: number) => HexString;
-type GetChildrenLevelColorsType = (params: {
+export type GetDarkerColorType = (
+  color: HexString,
+  offset?: number
+) => HexString;
+export type GetChildrenLevelColorsType = (params: {
   sectionColorRGB: RGB;
   colorRange: number;
   levelsLength: number;
 }) => HexString[];
-type ComputeConicGradientType = (
+export type ComputeConicGradientType = (
   colors: HexString[],
   offset?: number,
   diffuse?: number
 ) => React.CSSProperties["background"];
-type ComputeLinearGradientType = (
+export type ComputeLinearGradientType = (
   colors: WeightedColor[]
 ) => React.CSSProperties["background"];
-type InterpolateHexColorsType = (
+export type InterpolateHexColorsType = (
   baseColor: HexString,
   targetColor: HexString,
   progress: number,
   step?: number
 ) => HexString;
-type ComputeRawGradientColorsType = (params: {
+export type ComputeRawGradientColorsType = (params: {
   colors: HexString[];
   diffuse?: number;
 }) => React.CSSProperties["backgroundImage"];

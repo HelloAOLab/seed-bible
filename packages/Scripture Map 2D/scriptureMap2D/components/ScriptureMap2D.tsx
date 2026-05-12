@@ -13,6 +13,27 @@ import type { BaseEventManager } from "bibleVizUtils.application.services.BaseEv
 import type { BibleVizUtilsEvents } from "bibleVizUtils.domain.models.events";
 import type { ScriptureMap2DEvents } from "scriptureMap2D.models.events";
 import type { ScriptureService } from "bibleVizUtils.application.services.ScriptureService";
+import type { UserColorStore } from "bibleVizUtils.infrastructure.adapters.userPresence.UserColorStore";
+import type { UserPresenceService } from "@packages/Bible Visualization Utils/bibleVizUtils/application/services/UserPresenceService";
+import type { ArrangementService } from "@packages/Bible Visualization Utils/bibleVizUtils/application/services/ArrangementService";
+import type {
+  GetDayRangeSecondsType,
+  GetPastDateInfoType,
+} from "bibleVizUtils.domain.functions.time";
+import type { CapitalizeFirstLetterType } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/string";
+import type { BibleVizDataRepository } from "bibleVizUtils.infrastructure.data.BibleVizDataRepository";
+import type { ReadingHistoryService } from "@packages/Bible Visualization Utils/bibleVizUtils/application/services/ReadingHistoryService";
+import type {
+  ComputeLinearGradientType,
+  ComputeRawGradientColorsType,
+  GetTextColorBasedOnBackgroundType,
+  HexToRgbType,
+  GetChildrenLevelColorsType,
+} from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/colors";
+import type { IsValueBetweenType } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/math";
+import type { ScriptureMap3DConfigProvider } from "bibleVizUtils.infrastructure.config.scriptureMap3D.ScriptureMap3DConfigProvider";
+import type { ReadingHistoryConfigProvider } from "bibleVizUtils.infrastructure.config.readingHistory.ReadingHistoryConfigProvider";
+import type { SectionInfoMapper } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/SectionInfoMapper";
 
 const { memo } = os.appCompat;
 
@@ -43,7 +64,7 @@ export interface ScriptureMap2DConfig {
   initialIsReadingHistoryEnabled?: boolean;
   appId: string;
   extensionId: string;
-  translate?: (
+  translate: (
     key: string,
     options?: Record<string, unknown> | undefined
   ) => string;
@@ -73,6 +94,23 @@ export interface ScriptureMap2DConfig {
   bibleVizUtilsEventManager: BaseEventManager<BibleVizUtilsEvents>;
   scriptureMap2DEventManager: BaseEventManager<ScriptureMap2DEvents>;
   scriptureService: ScriptureService;
+  userColorStore: UserColorStore;
+  userPresenceService: UserPresenceService;
+  arrangementService: ArrangementService;
+  getDayRangeSeconds: GetDayRangeSecondsType;
+  bibleVizDataRepository: BibleVizDataRepository;
+  readingHistoryService: ReadingHistoryService;
+  GetTextColorBasedOnBackground: GetTextColorBasedOnBackgroundType;
+  IsValueBetween: IsValueBetweenType;
+  ComputeRawGradientColors: ComputeRawGradientColorsType;
+  ComputeLinearGradient: ComputeLinearGradientType;
+  HexToRgb: HexToRgbType;
+  GetChildrenLevelColors: GetChildrenLevelColorsType;
+  CapitalizeFirstLetter: CapitalizeFirstLetterType;
+  GetPastDateInfo: GetPastDateInfoType;
+  scriptureMap3DConfigProvider: ScriptureMap3DConfigProvider;
+  readingHistoryConfigProvider: ReadingHistoryConfigProvider;
+  sectionInfoMapper: SectionInfoMapper;
 }
 
 type ScriptureMap2DProps = {

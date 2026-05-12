@@ -1,4 +1,4 @@
-import type { TestamentInfo } from "bibleVizUtils.data.BibleVizDataRepository";
+import type { TestamentInfo } from "bibleVizUtils.domain.models.arrangement";
 
 const { createContext, useContext } = os.appHooks;
 

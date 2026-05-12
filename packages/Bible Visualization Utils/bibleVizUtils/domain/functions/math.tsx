@@ -1,7 +1,7 @@
-import type { Vector3 as Vector3Type } from "../../../../typings/AuxLibraryDefinitions";
+import type { Vector3 as Vector3Type } from "../../../../../typings/AuxLibraryDefinitions";
 
-type RoundToStepType = (value: number, step?: number) => number;
-type IsValueBetweenType = (params: {
+export type RoundToStepType = (value: number, step?: number) => number;
+export type IsValueBetweenType = (params: {
   value: number;
   min: number;
   max: number;

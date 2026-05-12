@@ -323,6 +323,7 @@ export const DEFAULT_EXTENSIONS = [
   "seed-bible-refresh-example-extension",
   "geo-importer-extension",
   "locations-extension",
+  "Scripture Map 2D",
   // "BookSelector",
   // "Object Pooler",
   // "GeoImporter",

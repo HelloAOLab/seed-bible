@@ -3,8 +3,8 @@ type Range = {
   end: number;
 };
 
-type GetDayRangeSecondsType = (timestamp: number) => Range;
-type GetPastDateInfoType = (time: number) => {
+export type GetDayRangeSecondsType = (timestamp: number) => Range;
+export type GetPastDateInfoType = (time: number) => {
   weekday: string | undefined;
   day: number;
   month: number;

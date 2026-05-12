@@ -5,18 +5,12 @@ import {
   calculateReadingHistorySummary,
   type ReadingEvent,
 } from "seed-bible.managers.ReadingHistoryManager";
-import { userColorStore } from "bibleVizUtils.services.index";
+import { type SectionInfo as DomainSectionInfo } from "bibleVizUtils.domain.models.arrangement";
 import {
-  BibleVizDataRepository,
-  type BookInfo,
-  type SectionInfo,
-} from "bibleVizUtils.data.BibleVizDataRepository";
-import {
-  HexToRgb,
-  GetChildrenLevelColors,
-  ComputeRawGradientColors,
-} from "bibleVizUtils.functions.index";
-import type { HexString } from "bibleVizUtils.models.commonTypes";
+  type SectionInfo as InfrastructureSectionInfo,
+  type BookInfo as InfrastructureBookInfo,
+} from "bibleVizUtils.infrastructure.models.arrangement";
+import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
 import type {
   TestamentContentItemData,
   BookData,
@@ -47,6 +41,13 @@ export const useTestamentContent = (): UseTestamentContentType => {
     activeTab,
     usersColors,
     userPresence,
+    ComputeRawGradientColors,
+    userColorStore,
+    bibleVizDataRepository,
+    sectionInfoMapper,
+    arrangementService,
+    HexToRgb,
+    GetChildrenLevelColors,
   } = useScriptureMap2DContext();
   const {
     rangedReadingEventsByBook,
@@ -55,13 +56,22 @@ export const useTestamentContent = (): UseTestamentContentType => {
   } = useReadingHistoryContext();
   const { testament, testamentIndex } = useTestamentContext();
 
-  const reversedSections = useMemo<SectionInfo[]>(() => {
+  const arrangementName = useMemo(() => {
+    const name =
+      arrangementService.getArrangementByIndex(arrangementIndex)?.name;
+    if (!name) {
+      throw new Error(`useTestamentContent: Arrangement name not found`);
+    }
+    return name;
+  }, [arrangementService, arrangementIndex]);
+
+  const reversedSections = useMemo<DomainSectionInfo[]>(() => {
     return testament.sections.toReversed();
   }, [testament]);
 
   const { filteredSections, sectionLevelColorMap } = useMemo(() => {
     const getLevelColorMap: (
-      sections: SectionInfo[]
+      sections: InfrastructureSectionInfo[]
     ) => Map<string, HexString[]> = (sections) => {
       return new Map(
         sections.map((section, sectionIndex) => {
@@ -78,7 +88,7 @@ export const useTestamentContent = (): UseTestamentContentType => {
       );
     };
 
-    let filteredSections: undefined | SectionInfo[];
+    let filteredSections: undefined | InfrastructureSectionInfo[];
 
     if (readingHistoryRangeSeconds) {
       filteredSections = [];
@@ -90,15 +100,16 @@ export const useTestamentContent = (): UseTestamentContentType => {
       ) {
         const section = reversedSections[sectionIndex];
         if (section) {
-          const filteredBooks: BookInfo[] = [];
+          const infraSection = sectionInfoMapper.toInfrastructure(section);
+          const filteredBooks: InfrastructureBookInfo[] = [];
           for (
             let bookIndex = 0;
-            bookIndex < section.books.length;
+            bookIndex < infraSection.books.length;
             bookIndex++
           ) {
-            const book = section.books[bookIndex];
+            const book = infraSection.books[bookIndex];
             if (book) {
-              const bookStaticInfo = BibleVizDataRepository.getBookStaticInfo(
+              const bookStaticInfo = bibleVizDataRepository.getBookStaticInfo(
                 book.commonName
               );
               if (bookStaticInfo) {
@@ -119,7 +130,7 @@ export const useTestamentContent = (): UseTestamentContentType => {
           }
           if (filteredBooks.length > 0) {
             filteredSections.push({
-              ...section,
+              ...infraSection,
               books: filteredBooks,
             });
           }
@@ -184,6 +195,12 @@ export const useTestamentContent = (): UseTestamentContentType => {
     ) {
       const section = filteredSections[sectionIndex];
       if (section) {
+        const path = {
+          arrangementName,
+          testamentIndex,
+          sectionIndex,
+        };
+        const domainSection = sectionInfoMapper.toDomain(section, path);
         const sectionKey = `${testamentIndex}-${testament.name}-${sectionIndex}-${section.name}`;
         const levelColorsKey = `${testamentIndex} ${sectionIndex}`;
         const reversedLevelColorMap = sectionLevelColorMap
@@ -193,7 +210,7 @@ export const useTestamentContent = (): UseTestamentContentType => {
         if (showSectionLabels) {
           items.push({
             key: `${arrangementIndex}-${testament.name}-${section.name}`,
-            section: section,
+            section: domainSection,
             sectionKey: sectionKey,
             toggleShowSection: toggleShowSection,
             showingContent: showingContent,
@@ -213,7 +230,7 @@ export const useTestamentContent = (): UseTestamentContentType => {
               const { commonName: book, customColor: bookCustomColor } =
                 bookInfo;
               const bookStaticInfo =
-                BibleVizDataRepository.getBookStaticInfo(book);
+                bibleVizDataRepository.getBookStaticInfo(book);
               if (!bookStaticInfo) {
                 throw new Error(
                   "useTestamentContent: bookStaticInfo not found."

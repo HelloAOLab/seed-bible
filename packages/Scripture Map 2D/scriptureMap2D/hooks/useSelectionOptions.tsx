@@ -1,4 +1,4 @@
-import { useSideBarContext } from "app.hooks.sideBar";
+import { useScriptureMap2DContext } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
 
 interface UseSelectionOptionsType {
   clearSelectionContent: string;
@@ -8,10 +8,10 @@ interface UseSelectionOptionsType {
 type UseSelectionOptions = () => UseSelectionOptionsType;
 
 export const useSelectionOptions: UseSelectionOptions = () => {
-  const { t } = useSideBarContext();
+  const { translate } = useScriptureMap2DContext();
 
   return {
-    clearSelectionContent: t("clearSelection"),
-    acceptSelectionContent: t("done"),
+    clearSelectionContent: `${translate("clear")} ${translate("selection")}`,
+    acceptSelectionContent: translate("done"),
   };
 };

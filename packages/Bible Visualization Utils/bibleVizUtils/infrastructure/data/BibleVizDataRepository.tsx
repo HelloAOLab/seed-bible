@@ -10,7 +10,7 @@ class BibleVizDataRepository implements BooksStaticInfoRepository {
 
   getBookStaticInfo<K extends keyof typeof BooksStaticInfo>(
     book: K
-  ): (typeof BooksStaticInfo)[K] {
+  ): BookStaticInfo {
     return BooksStaticInfo[book];
   }
 

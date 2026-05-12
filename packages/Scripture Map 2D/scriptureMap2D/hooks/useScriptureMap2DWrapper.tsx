@@ -1,5 +1,4 @@
 import { useScriptureMap2DContext } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
-import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 const { useMemo } = os.appHooks;
 
 interface UseScriptureMap2DWrapperType {
@@ -16,6 +15,7 @@ export const useScriptureMap2DWrapper: UseScriptureMap2DWrapper = () => {
     chapterHeight,
     scaleFactor,
     isMobile,
+    scriptureMap3DConfigProvider,
   } = useScriptureMap2DContext();
 
   const style = useMemo<UseScriptureMap2DWrapperType["style"]>(() => {
@@ -26,7 +26,9 @@ export const useScriptureMap2DWrapper: UseScriptureMap2DWrapper = () => {
       "--chapter-width": `${chapterWidth}px`,
       "--chapter-height": `${chapterHeight}px`,
       "--book-max-columns":
-        BibleVizDataRepository.getBibleLayoutMeasurement("Book2DMaxColumns"),
+        scriptureMap3DConfigProvider.getBibleLayoutMeasurement(
+          "Book2DMaxColumns"
+        ),
       paddingBottom: isMobile ? "40px" : "16px",
     };
   }, [

@@ -8,8 +8,6 @@ import type { SettingsYearselectorOptionData } from "scriptureMap2D.components.c
 import type { SettingsLegendSquareData } from "scriptureMap2D.components.containers.Settings";
 import type { ReadingHistoryContextType } from "scriptureMap2D.contexts.ReadingHistory.ReadingHistoryContext";
 import type { ScriptureMap2DContextType } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
-import { useSideBarContext } from "app.hooks.sideBar";
-import { readingHistoryService } from "bibleVizUtils.services.index";
 import type { SettingsOptionData } from "scriptureMap2D.components.containers.Settings";
 import { TimelineRangeMethod } from "scriptureMap2D.models.readingHistory";
 import {
@@ -44,7 +42,6 @@ export const useSettings: UseSettings = () => {
     mode,
     project,
     isInSelectionMode,
-    appId,
     handleShowAllChaptersToggle,
     showingAllChapters,
     setShowingBooksColors,
@@ -57,6 +54,9 @@ export const useSettings: UseSettings = () => {
     showSectionLabels,
     handleTestamentLabelsToggle,
     showTestamentLabels,
+    readingHistoryService,
+    seedBibleState,
+    translate,
   } = useScriptureMap2DContext();
   const {
     shouldShowReadingHistory,
@@ -67,7 +67,7 @@ export const useSettings: UseSettings = () => {
     timelineRangesMap,
     setSelectedTimelineKey,
   } = useReadingHistoryContext();
-  const { themeColors } = useSideBarContext();
+  const theme = seedBibleState.theme.currentTheme.value;
 
   const settingsButtonRef = useRef<HTMLDivElement | null>(null);
   const [collapsed, setCollapsed] = useState<boolean>(false);
@@ -130,9 +130,9 @@ export const useSettings: UseSettings = () => {
         condition: collapsed,
         enabledIcon: "visibility_off",
         disabledIcon: "visibility",
-        enabledText: t("show"),
-        disabledText: t("hide"),
-        staticText: t("timeline"),
+        enabledText: translate("show"),
+        disabledText: translate("hide"),
+        staticText: translate("timeline"),
         key: "timeline",
       });
     }
@@ -141,25 +141,25 @@ export const useSettings: UseSettings = () => {
       {
         callback: handleToggleTimelineMethodClick,
         condition: !!timelineRangeMethod,
-        enabledText: t("Toggle"),
-        disabledText: t("Toggle"),
-        staticText: t("type of timeline"),
+        enabledText: translate("Toggle"),
+        disabledText: translate("Toggle"),
+        staticText: translate("type of timeline"),
         key: "type of timeline",
       },
       {
         callback: handleShowAllChaptersToggle,
         condition: showingAllChapters,
-        enabledText: t("close"),
-        disabledText: t("open"),
-        staticText: t("books"),
+        enabledText: translate("close"),
+        disabledText: translate("open"),
+        staticText: translate("books"),
         key: "books",
       },
       {
         callback: handleToggleBooksColorClick,
         condition: showingBooksColors,
-        enabledText: t("hide"),
-        disabledText: t("show"),
-        staticText: t("books color"),
+        enabledText: translate("hide"),
+        disabledText: translate("show"),
+        staticText: translate("books color"),
         key: "books color",
       }
     );
@@ -168,9 +168,9 @@ export const useSettings: UseSettings = () => {
       data.push({
         callback: handleToggleReadingHistoryClick,
         condition: isReadingHistoryEnabled,
-        enabledText: t("hide"),
-        disabledText: t("show"),
-        staticText: t("reading history"),
+        enabledText: translate("hide"),
+        disabledText: translate("show"),
+        staticText: translate("reading history"),
         key: "reading history",
       });
     }
@@ -179,25 +179,25 @@ export const useSettings: UseSettings = () => {
       {
         callback: handleToggleUserPresenceClick,
         condition: isUserPresenceEnabled,
-        enabledText: t("hide"),
-        disabledText: t("show"),
-        staticText: t("user presence"),
+        enabledText: translate("hide"),
+        disabledText: translate("show"),
+        staticText: translate("user presence"),
         key: "user presence",
       },
       {
         callback: handleSectionLabelsToggle,
         condition: showSectionLabels,
-        enabledText: t("hide"),
-        disabledText: t("show"),
-        staticText: t("section labels"),
+        enabledText: translate("hide"),
+        disabledText: translate("show"),
+        staticText: translate("section labels"),
         key: "section labels",
       },
       {
         callback: handleTestamentLabelsToggle,
         condition: showTestamentLabels,
-        enabledText: t("hide"),
-        disabledText: t("show"),
-        staticText: t("testament labels"),
+        enabledText: translate("hide"),
+        disabledText: translate("show"),
+        staticText: translate("testament labels"),
         key: "testament labels",
       }
     );
@@ -206,7 +206,7 @@ export const useSettings: UseSettings = () => {
   }, [
     setTimelineRangeMethod,
     timelineRangeMethod,
-    t,
+    translate,
     handleShowAllChaptersToggle,
     showingAllChapters,
     setShowingBooksColors,
@@ -234,11 +234,12 @@ export const useSettings: UseSettings = () => {
     secondaryColor: string;
     baseColor: string;
   }>(() => {
-    const secondaryColor = themeColors?.["1"]?.secondaryColor ?? "#D2691E";
-    const baseColor = themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede";
+    const secondaryColor = theme.variables.secondaryColor ?? "#D2691E";
+    const baseColor =
+      theme.variables.readerToolbarFloatingButtonBackground ?? "#dfdede";
 
     return { secondaryColor, baseColor };
-  }, [themeColors]);
+  }, [theme]);
 
   const legendSquaresData = useMemo<
     UseSettingsType["legendSquaresData"]

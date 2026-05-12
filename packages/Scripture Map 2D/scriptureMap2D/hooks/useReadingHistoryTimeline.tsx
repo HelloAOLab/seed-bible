@@ -1,14 +1,8 @@
 import type { TooltipContentData } from "scriptureMap2D.components.containers.Tooltip";
-import {
-  CapitalizeFirstLetter,
-  GetPastDateInfo,
-} from "bibleVizUtils.functions.index";
-import type { HexString } from "bibleVizUtils.models.commonTypes";
-import { readingHistoryService } from "bibleVizUtils.services.index";
+import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
 import { useTimeContext } from "scriptureMap2D.contexts.Time.TimeContext";
+import { useScriptureMap2DContext } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
 import { useReadingHistoryContext } from "scriptureMap2D.contexts.ReadingHistory.ReadingHistoryContext";
-import { useSideBarContext } from "app.hooks.sideBar";
-import { userColorStore } from "bibleVizUtils.services.index";
 import type { MutableRef } from "../../../../typings/AuxLibraryDefinitions";
 import type { ReadingHistoryContentData } from "scriptureMap2D.components.containers.ReadingHistoryTimeline";
 import type { Range } from "scriptureMap2D.models.commonTypes";
@@ -26,7 +20,16 @@ interface UseReadingHistoryTimelineType {
 type UseReadingHistoryTimeline = () => UseReadingHistoryTimelineType;
 
 export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
-  const { t, themeColors } = useSideBarContext();
+  const {
+    readingHistoryService,
+    userColorStore,
+    translate,
+    seedBibleState,
+    CapitalizeFirstLetter,
+    GetPastDateInfo,
+  } = useScriptureMap2DContext();
+
+  const theme = seedBibleState.theme.currentTheme.value;
 
   const {
     startDateStartOfWeek,
@@ -81,7 +84,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
           const usersKeys = Object.keys(summary.users);
           let userColor: HexString | undefined;
           if (usersKeys.length > 1) {
-            userColor = themeColors?.["1"]?.secondaryColor ?? "#D2691E"; // Hardcoded primary color. Must be accesible in the future
+            userColor = theme.variables.secondaryColor;
           } else {
             const userKey = usersKeys[0] as string;
             userColor = userColorStore.getUserColor({
@@ -90,7 +93,9 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
           }
           if (userColor) {
             const colorData = {
-              baseColor: themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede", // Hardcoded firstToolbarbutton. Must be accesible in the future
+              baseColor:
+                theme.variables.readerToolbarFloatingButtonBackground ??
+                "#dfdede",
               step,
               readingTimeSeconds: summary.totalTimeSpentReading,
               fullColorTimeSeconds,
@@ -117,7 +122,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
     dailyReadingHistorySummaries,
     yearlyReadingHistorySummary,
     myAuthBotId,
-    themeColors,
+    theme,
   ]);
 
   const itemsData = useMemo(() => {
@@ -127,9 +132,9 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
     const dayLabelGridColumn = `1 / 2`;
     const todayDate = new Date();
 
-    const translatedMonday = t("monShort");
-    const translatedWednesday = t("wedShort");
-    const translatedFriday = t("friShort");
+    const translatedMonday = translate("monShort");
+    const translatedWednesday = translate("wedShort");
+    const translatedFriday = translate("friShort");
 
     itemsData.push(
       {
@@ -234,7 +239,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
           for (const userId of topUsers) {
             const userSummary = daySummary.users[userId];
             const isMe = userId === myAuthBotId;
-            const userName = isMe ? t("you") : t("guest");
+            const userName = isMe ? translate("you") : translate("guest");
             const userColor = userColorStore.getUserColor({ authId: userId });
             const dotStyle = { backgroundColor: userColor };
 
@@ -273,8 +278,8 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
               );
               extraActivityContent =
                 hoursCount > 1
-                  ? `+${extraUsers.length} ${t("spentHours", { count: hoursCount })}`
-                  : `+${extraUsers.length} ${t("spentHour", { count: hoursCount })}`;
+                  ? `+${extraUsers.length} ${translate("spentHours", { count: hoursCount })}`
+                  : `+${extraUsers.length} ${translate("spentHour", { count: hoursCount })}`;
             } else {
               const minutesCount = Math.max(
                 1,
@@ -282,8 +287,8 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
               );
               extraActivityContent =
                 minutesCount > 1
-                  ? `+${extraUsers.length} ${t("spentMinutes", { count: minutesCount })}`
-                  : `+${extraUsers.length} ${t("spentMinute", { count: minutesCount })}`;
+                  ? `+${extraUsers.length} ${translate("spentMinutes", { count: minutesCount })}`
+                  : `+${extraUsers.length} ${translate("spentMinute", { count: minutesCount })}`;
             }
             tooltipContentsData.push({
               type: "text",

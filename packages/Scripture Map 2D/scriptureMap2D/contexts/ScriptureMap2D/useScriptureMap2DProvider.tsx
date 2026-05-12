@@ -1,6 +1,5 @@
 import type { ScriptureMap2DContextType } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
 import { useIsMobile } from "scriptureMap2D.hooks.useIsMobile";
-import { useSideBarContext } from "app.hooks.sideBar";
 import { ProjectChapterState } from "scriptureMap2D.models.project";
 import { type ProjectChapterStateType } from "scriptureMap2D.models.project";
 import {
@@ -8,16 +7,10 @@ import {
   type ProjectFilters,
 } from "scriptureMap2D.models.project";
 import type { ScriptureMap2DContentValue } from "scriptureMap2D.models.content";
-import { type ArrangementInfo } from "bibleVizUtils.data.BibleVizDataRepository";
-import { type UserData } from "bibleVizUtils.services.UserColorStore";
-import {
-  bibleVizUtilsEventManager,
-  userColorStore,
-} from "bibleVizUtils.services.index";
-import { userPresenceService } from "bibleVizUtils.services.index";
-import type { UserPresence } from "bibleVizUtils.models.userPresence";
-import { arrangementService } from "bibleVizUtils.services.index";
+import type { ArrangementInfo } from "bibleVizUtils.domain.models.arrangement";
+import type { UserPresence } from "bibleVizUtils.domain.models.userPresence";
 import type { ScriptureMap2DConfig } from "scriptureMap2D.components.ScriptureMap2D";
+import type { UserData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/userPresence";
 const { useState, useCallback, useMemo, useEffect } = os.appHooks;
 
 type UseScriptureMap2DProvider = (
@@ -158,6 +151,7 @@ export const useScriptureMap2DProvider: UseScriptureMap2DProvider = (
   config
 ) => {
   const {
+    arrangementService,
     arrangementIndex = arrangementService.getCurrentArrangementIndex(),
     initialScaleFactor = 1,
     initialIsReadingHistoryEnabled = false,
@@ -165,16 +159,22 @@ export const useScriptureMap2DProvider: UseScriptureMap2DProvider = (
     initialShowTestamentLabels = true,
     initialShowSectionLabels = true,
     seedBibleState,
+    bibleVizUtilsEventManager,
+    userColorStore,
+    userPresenceService,
   } = config;
-  const { themeColors } = useSideBarContext();
+
+  const currentTheme = seedBibleState.theme.currentTheme.value;
 
   const [usersColors, setUsersColors] = useState<UserData[]>(() =>
     userColorStore.listUsers()
   );
 
   const BASE_BACKGROUND_COLOR = useMemo<string>(() => {
-    return themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede";
-  }, [themeColors]);
+    return (
+      currentTheme.variables.readerToolbarFloatingButtonBackground ?? "#dfdede"
+    );
+  }, [currentTheme]);
 
   const isMobile = useIsMobile(768);
   const tabs = seedBibleState.tabs.tabs.value;

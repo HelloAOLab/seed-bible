@@ -8,6 +8,7 @@ import type {
   ReadingHistorySummary,
   ReadingEvent,
 } from "seed-bible.managers.ReadingHistoryManager";
+import type { BookName } from "bibleVizUtils.domain.models.scripture";
 
 const { memo } = os.appCompat;
 
@@ -19,7 +20,7 @@ export type BookUserPresenceItem = {
 export type BookUserPresence = Record<string, BookUserPresenceItem>;
 
 export interface BookProps {
-  book: string;
+  book: BookName;
   bookId: string;
   bookCoverBackgroundColor: string;
   sectionName: string;

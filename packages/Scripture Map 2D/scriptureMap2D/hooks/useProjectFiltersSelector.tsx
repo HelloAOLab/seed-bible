@@ -1,7 +1,6 @@
 import { useScriptureMap2DContext } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
 import { ProjectChapterState } from "scriptureMap2D.models.project";
 import { type ProjectChapterStateType } from "scriptureMap2D.models.project";
-import { useSideBarContext } from "app.hooks.sideBar";
 import {
   SelectorOptionClasses,
   type SelectorOptionProps,
@@ -18,9 +17,12 @@ interface UseProjectFiltersSelectorType {
 type UseProjectFiltersSelector = () => UseProjectFiltersSelectorType;
 
 export const useProjectFiltersSelector: UseProjectFiltersSelector = () => {
-  const { t } = useSideBarContext();
-  const { projectFilters, handleProjectFilterOptionClick, projectStateStyle } =
-    useScriptureMap2DContext();
+  const {
+    projectFilters,
+    handleProjectFilterOptionClick,
+    projectStateStyle,
+    translate,
+  } = useScriptureMap2DContext();
 
   const allSelected = useMemo(() => {
     return Array.from(projectFilters).every(([, value]) => {
@@ -32,24 +34,26 @@ export const useProjectFiltersSelector: UseProjectFiltersSelector = () => {
     (key: ProjectChapterStateType) => SelectorOptionProps["content"]
   >(
     (key) => {
-      let title;
+      let state;
 
       switch (key) {
         case ProjectChapterState.Assigned:
-          title = t("stateAssigned");
+          state = translate("assigned");
           break;
         case ProjectChapterState.InProgress:
-          title = t("stateInProgress");
+          state = translate("in-progress");
           break;
         case ProjectChapterState.NeedsReview:
-          title = t("stateNeedsReview");
+          state = translate("needs-review");
           break;
         case ProjectChapterState.Completed:
-          title = t("stateCompleted");
+          state = translate("completed");
           break;
         default:
           throw new Error("Not found key", { cause: { key } });
       }
+
+      const title = translate("project-state", { state });
 
       const style = projectStateStyle[key];
 
@@ -62,14 +66,14 @@ export const useProjectFiltersSelector: UseProjectFiltersSelector = () => {
         title,
       };
     },
-    [t, projectStateStyle]
+    [translate, projectStateStyle]
   );
 
   const allSelectorOptionContent = useMemo<
     SelectorOptionProps["content"]
   >(() => {
-    return { title: t("all") };
-  }, [t]);
+    return { title: translate("all") };
+  }, [translate]);
 
   const allSelectorOptionClick = useCallback(() => {
     handleProjectFilterOptionClick("all");

@@ -10,7 +10,6 @@ import type {
   TimelineRangeMethodType,
 } from "scriptureMap2D.models.readingHistory";
 import { TimelineRangeMethod } from "scriptureMap2D.models.readingHistory";
-import { GetDayRangeSeconds } from "bibleVizUtils.domain.functions.time";
 import { useTimeContext } from "scriptureMap2D.contexts.Time.TimeContext";
 import {
   getReadingHistoryEvents,
@@ -46,6 +45,7 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
     bibleVizUtilsEventManager,
     scriptureMap2DEventManager,
     scriptureService,
+    getDayRangeSeconds,
   } = useScriptureMap2DContext();
 
   const selectedTabId = seedBibleState.tabs.selectedTabId.value;
@@ -303,7 +303,7 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
           break;
         const dayDate = new Date(startDateStartOfWeek);
         dayDate.setDate(dayDate.getDate() + week * 7 + day);
-        const { start, end } = GetDayRangeSeconds(dayDate.getTime());
+        const { start, end } = getDayRangeSeconds(dayDate.getTime());
         dayRangesMap.set(`${week}-${day}`, { start, end });
       }
     }

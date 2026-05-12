@@ -1,16 +1,16 @@
 import { useScriptureMap2DProvider } from "scriptureMap2D.contexts.ScriptureMap2D.useScriptureMap2DProvider";
 import type { ScriptureMap2DConfig } from "scriptureMap2D.components.ScriptureMap2D";
 import type { StateUpdater } from "../../../../../typings/AuxLibraryDefinitions";
-import type { ArrangementInfo } from "bibleVizUtils.data.BibleVizDataRepository";
 import type { ScriptureMap2DContentValue } from "scriptureMap2D.models.content";
 import { type ProjectChapterStateType } from "scriptureMap2D.models.project";
-import type { UserPresence } from "bibleVizUtils.models.userPresence";
-import { type UserData } from "bibleVizUtils.services.UserColorStore";
 import {
   type ProjectStateStyle,
   type ProjectFilters,
 } from "scriptureMap2D.models.project";
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
+import type { ArrangementInfo } from "bibleVizUtils.domain.models.arrangement";
+import type { UserPresence } from "bibleVizUtils.domain.models.userPresence";
+import type { UserData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/userPresence";
 
 interface ScriptureMap2DProviderProps {
   children: React.ReactNode;

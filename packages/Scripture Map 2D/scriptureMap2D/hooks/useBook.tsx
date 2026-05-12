@@ -1,33 +1,19 @@
 import { useScriptureMap2DContext } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
 import { useTestamentContext } from "scriptureMap2D.contexts.Testament.TestamentContext";
 import { useReadingHistoryContext } from "scriptureMap2D.contexts.ReadingHistory.ReadingHistoryContext";
-import { useSideBarContext } from "app.hooks.sideBar";
-import type { BookStaticInfo } from "bibleVizUtils.data.BibleVizDataRepository";
 import type {
   TooltipContentData,
   TooltipAnchor,
 } from "scriptureMap2D.components.containers.Tooltip";
-import {
-  GetTextColorBasedOnBackground,
-  IsValueBetween,
-  ComputeRawGradientColors,
-} from "bibleVizUtils.functions.index";
-import {
-  scriptureService,
-  readingHistoryService,
-} from "bibleVizUtils.services.index";
-import { ComputeLinearGradient } from "bibleVizUtils.functions.index";
 import type {
   HexString,
   WeightedColor,
-} from "bibleVizUtils.models.commonTypes";
+} from "bibleVizUtils.domain.models.commonTypes";
 import {
   calculateReadingHistorySummary,
   type ReadingEvent,
   type ReadingHistorySummary,
 } from "seed-bible.managers.ReadingHistoryManager";
-import { userColorStore } from "bibleVizUtils.services.index";
-import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { useClickAndHold } from "scriptureMap2D.hooks.useClickAndHold";
 import type {
   BookProps,
@@ -94,7 +80,6 @@ export const useBook: UseBook = (props) => {
     bookUserPresenceColors,
     bookBorderGradientColors,
   } = props;
-  const { t } = useSideBarContext();
   const {
     scaleFactor,
     showingAllChapters,
@@ -111,6 +96,17 @@ export const useBook: UseBook = (props) => {
     BASE_BACKGROUND_COLOR,
     showingBooksColors,
     activeTab,
+    translate,
+    bibleVizDataRepository,
+    userColorStore,
+    scriptureService,
+    readingHistoryService,
+    GetTextColorBasedOnBackground,
+    IsValueBetween,
+    ComputeRawGradientColors,
+    ComputeLinearGradient,
+    scriptureMap3DConfigProvider,
+    readingHistoryConfigProvider,
   } = useScriptureMap2DContext();
   const { testament } = useTestamentContext();
   const {
@@ -148,8 +144,8 @@ export const useBook: UseBook = (props) => {
       : 0;
   }, [isUserPresenceEnabled, bookBorderGradientColors, scaleFactor]);
 
-  const bookStaticInfo = useMemo<BookStaticInfo | undefined>(() => {
-    return BibleVizDataRepository.getBookStaticInfo(book);
+  const bookStaticInfo = useMemo(() => {
+    return bibleVizDataRepository.getBookStaticInfo(book);
   }, []);
 
   if (!bookStaticInfo)
@@ -170,7 +166,9 @@ export const useBook: UseBook = (props) => {
   const bookCoverHeight = useMemo<React.CSSProperties["height"]>(() => {
     const { chaptersInfo } = bookStaticInfo;
     const book2DMaxColumns =
-      BibleVizDataRepository.getBibleLayoutMeasurement("Book2DMaxColumns");
+      scriptureMap3DConfigProvider.getBibleLayoutMeasurement(
+        "Book2DMaxColumns"
+      );
     if (Array.isArray(book2DMaxColumns))
       throw new Error("book2DMaxColumns must be of type number");
     const amountOfRows = Math.ceil(chaptersInfo.length / book2DMaxColumns);
@@ -229,7 +227,7 @@ export const useBook: UseBook = (props) => {
       for (const userId in users) {
         const userSummary = users[userId];
         const isMe = userId === myAuthBotId;
-        const userName = isMe ? t("you") : t("guest");
+        const userName = isMe ? translate("you") : translate("guest");
         let userReadingTimeSeconds: number | undefined;
         let books: (typeof users)[string]["books"] | undefined;
         if (userSummary) {
@@ -259,16 +257,16 @@ export const useBook: UseBook = (props) => {
                   );
                   fixedContent =
                     hoursCount > 1
-                      ? t("spentHours", { count: hoursCount })
-                      : t("spentHour", { count: hoursCount });
+                      ? translate("spentHours", { count: hoursCount })
+                      : translate("spentHour", { count: hoursCount });
                 } else {
                   const minutesCount = Math.floor(
                     userReadingTimeSeconds / SEC_PER_MINUTE
                   );
                   fixedContent =
                     minutesCount > 1
-                      ? t("spentMinutes", { count: minutesCount })
-                      : t("spentMinute", { count: minutesCount });
+                      ? translate("spentMinutes", { count: minutesCount })
+                      : translate("spentMinute", { count: minutesCount });
                 }
 
                 tooltipContentsData.push({
@@ -292,7 +290,7 @@ export const useBook: UseBook = (props) => {
                         const recencySeconds = nowSeconds - end;
                         const isRecentEnough =
                           end >=
-                          BibleVizDataRepository.getReadingHistoryRecencyThresholdTimeSeconds();
+                          readingHistoryConfigProvider.getRecencyThresholdTimeSeconds();
                         const isNotTooRecent = recencySeconds >= SEC_PER_MINUTE;
                         if (
                           isEventTimeSpentNoticeable &&
@@ -319,24 +317,24 @@ export const useBook: UseBook = (props) => {
                     const daysCount = Math.floor(recencySeconds / SEC_PER_DAY);
                     fixedContent =
                       daysCount > 1
-                        ? t("readDaysAgo", { count: daysCount })
-                        : t("readDayAgo", { count: daysCount });
+                        ? translate("readDaysAgo", { count: daysCount })
+                        : translate("readDayAgo", { count: daysCount });
                   } else if (recencySeconds >= SEC_PER_HOUR) {
                     const hoursCount = Math.floor(
                       recencySeconds / SEC_PER_HOUR
                     );
                     fixedContent =
                       hoursCount > 1
-                        ? t("readHoursAgo", { count: hoursCount })
-                        : t("readHourAgo", { count: hoursCount });
+                        ? translate("readHoursAgo", { count: hoursCount })
+                        : translate("readHourAgo", { count: hoursCount });
                   } else {
                     const minutesCount = Math.floor(
                       recencySeconds / SEC_PER_MINUTE
                     );
                     fixedContent =
                       minutesCount > 1
-                        ? t("readMinutesAgo", { count: minutesCount })
-                        : t("readMinuteAgo", { count: minutesCount });
+                        ? translate("readMinutesAgo", { count: minutesCount })
+                        : translate("readMinuteAgo", { count: minutesCount });
                   }
                   tooltipContentsData.push({
                     type: "readingHistory",
@@ -368,7 +366,7 @@ export const useBook: UseBook = (props) => {
         tooltipContentsData.unshift({
           type: "userPresence",
           colors: bookUserPresenceColors,
-          labelText: t("readingNow"),
+          labelText: translate("readingNow"),
         });
       }
     }
@@ -388,7 +386,7 @@ export const useBook: UseBook = (props) => {
     showingBooksColors,
     BASE_BACKGROUND_COLOR,
     myAuthBotId,
-    t,
+    translate,
   ]);
 
   const chapterReadingHistorySummaryMap = useMemo<
@@ -397,8 +395,7 @@ export const useBook: UseBook = (props) => {
     const now = Date.now();
     const nowSeconds = Math.floor(now / 1000);
     const effectiveRange: Range = readingHistoryRangeSeconds ?? {
-      start:
-        BibleVizDataRepository.getReadingHistoryRecencyThresholdTimeSeconds(),
+      start: readingHistoryConfigProvider.getRecencyThresholdTimeSeconds(),
       end: nowSeconds,
     };
     const chapterEntriesMap: Map<number, ReadingEvent[]> = new Map();
@@ -451,7 +448,7 @@ export const useBook: UseBook = (props) => {
             chapterSummary;
           for (const userId in users) {
             const isMe = userId === myAuthBotId;
-            const userName = isMe ? t("you") : t("guest");
+            const userName = isMe ? translate("you") : translate("guest");
             let color: HexString | undefined = undefined;
             const userColor = userColorStore.getUserColor({ authId: userId });
             const dotStyle = { backgroundColor: userColor };
@@ -481,16 +478,16 @@ export const useBook: UseBook = (props) => {
                       );
                       fixedContent =
                         hoursCount > 1
-                          ? t("spentHours", { count: hoursCount })
-                          : t("spentHour", { count: hoursCount });
+                          ? translate("spentHours", { count: hoursCount })
+                          : translate("spentHour", { count: hoursCount });
                     } else {
                       const minutesCount = Math.floor(
                         userReadingTimeSeconds / SEC_PER_MINUTE
                       );
                       fixedContent =
                         minutesCount > 1
-                          ? t("spentMinutes", { count: minutesCount })
-                          : t("spentMinute", { count: minutesCount });
+                          ? translate("spentMinutes", { count: minutesCount })
+                          : translate("spentMinute", { count: minutesCount });
                     }
 
                     tooltipContentsData.push({
@@ -519,7 +516,7 @@ export const useBook: UseBook = (props) => {
                             const currRecencySeconds = nowSeconds - event.end;
                             const isRecentEnough =
                               event.end >=
-                              BibleVizDataRepository.getReadingHistoryRecencyThresholdTimeSeconds();
+                              readingHistoryConfigProvider.getRecencyThresholdTimeSeconds();
                             const isNotTooRecent =
                               currRecencySeconds >= SEC_PER_MINUTE;
 
@@ -549,24 +546,28 @@ export const useBook: UseBook = (props) => {
                         );
                         fixedContent =
                           daysCount > 1
-                            ? t("readDaysAgo", { count: daysCount })
-                            : t("readDayAgo", { count: daysCount });
+                            ? translate("readDaysAgo", { count: daysCount })
+                            : translate("readDayAgo", { count: daysCount });
                       } else if (recencySeconds >= SEC_PER_HOUR) {
                         const hoursCount = Math.floor(
                           recencySeconds / SEC_PER_HOUR
                         );
                         fixedContent =
                           hoursCount > 1
-                            ? t("readHoursAgo", { count: hoursCount })
-                            : t("readHourAgo", { count: hoursCount });
+                            ? translate("readHoursAgo", { count: hoursCount })
+                            : translate("readHourAgo", { count: hoursCount });
                       } else {
                         const minutesCount = Math.floor(
                           recencySeconds / SEC_PER_MINUTE
                         );
                         fixedContent =
                           minutesCount > 1
-                            ? t("readMinutesAgo", { count: minutesCount })
-                            : t("readMinuteAgo", { count: minutesCount });
+                            ? translate("readMinutesAgo", {
+                                count: minutesCount,
+                              })
+                            : translate("readMinuteAgo", {
+                                count: minutesCount,
+                              });
                       }
                       tooltipContentsData.push({
                         type: "readingHistory",
@@ -623,7 +624,7 @@ export const useBook: UseBook = (props) => {
           tooltipContentsData.unshift({
             type: "userPresence",
             colors: userPresenceColors,
-            labelText: t("readingNow"),
+            labelText: translate("readingNow"),
           });
         }
       }
@@ -650,7 +651,7 @@ export const useBook: UseBook = (props) => {
     usersColors,
     showChapters,
     BASE_BACKGROUND_COLOR,
-    t,
+    translate,
   ]);
 
   const bookTitle = useMemo<string>(() => {
