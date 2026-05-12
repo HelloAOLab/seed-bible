@@ -2378,6 +2378,10 @@ h6 {
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 28%);
 }
 
+.sb-verse-decoration-cross-reference-result {
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 28%);
+}
+
 .sb-sidebar-search-result-button:hover {
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 28%);
 }

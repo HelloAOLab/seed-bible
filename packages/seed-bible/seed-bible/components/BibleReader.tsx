@@ -877,14 +877,8 @@ function renderCrossReferenceLayer(
       Array.isArray(entry.content)
   );
 
-  console.log(
-    "Rendering cross reference layer with verse offsets:",
-    verseOffsets
-  );
-
   const maxCrossReferencesPerVerse = 3;
   const verseGapThreshold = 20;
-  const estimatedVerseRowHeight = 16;
 
   type VerseCrossReferenceGroupItem = {
     verseNumber: number;
@@ -1469,6 +1463,17 @@ export function BibleReader(props: BibleReaderProps) {
                       scrollToVerse: ref.crossReference.verse,
                     }
                   );
+                  if (ref.crossReference.verse) {
+                    readingState.decorateVerses(
+                      ref.crossReference.book,
+                      ref.crossReference.chapter,
+                      [ref.crossReference.verse],
+                      {
+                        className: "sb-verse-decoration-cross-reference-result",
+                        removeAfterMs: 3000,
+                      }
+                    );
+                  }
                 }
               )}
           </div>
