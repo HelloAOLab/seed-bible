@@ -5,6 +5,8 @@ const G = globalThis as any;
 const parentId = that?.parentId || "default";
 const { name: currentPlaylistName } = playlists[currIndex.key];
 
+const isMobile = (window?.innerWidth || gridPortalBot.tags.pixelWidth) < 766;
+
 const targetItem = getCurrentItem(
   currIndex.key,
   currIndex.index,
@@ -155,12 +157,14 @@ G.RenderPlaylistTimer = setTimeout(() => {
     currentItemName: currentItemName,
   });
   G.RenderPlaylist && G.RenderPlaylist();
-  thisBot.applyMobileHeaderBar({
-    currentItem: targetItem,
-    currentPlaylistName,
-    nextItem,
-    parentId,
-  });
+  if (isMobile) {
+    thisBot.applyMobileHeaderBar({
+      currentItem: targetItem,
+      currentPlaylistName,
+      nextItem,
+      parentId,
+    });
+  }
   G.RenderPlaylistTimer = null;
 }, 50);
 
