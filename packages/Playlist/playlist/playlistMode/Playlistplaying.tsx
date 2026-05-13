@@ -947,33 +947,6 @@ const PlayingPlaylist = () => {
                 ? currentPlaylistName.substring(0, 10)
                 : currentPlaylistName}
               {hide ? (currentPlaylistName.length > 10 ? "..." : "") : ""}
-              {isMobile ? (
-                <span
-                  onClick={() => {
-                    thisBot.StopPlayingPlaylist();
-                  }}
-                  style={{
-                    margin: "0",
-                    width: "2.55rem",
-                    height: "2.55rem",
-                    borderRadius: "50%",
-                    border: "none",
-                    zoom: "0.65",
-                  }}
-                  className="playlist-action small"
-                >
-                  <span
-                    style={{
-                      margin: "0",
-                      fontSize: "14px",
-                      backgroundColor: "var(--secondaryColor)",
-                    }}
-                    class="material-symbols-outlined unfollow"
-                  >
-                    stop
-                  </span>
-                </span>
-              ) : null}
             </h3>
             <div className="align-center" style={{ gap: "0.5rem" }}>
               {!hide && (
@@ -1022,6 +995,32 @@ const PlayingPlaylist = () => {
               >
                 {hide ? "pip_exit" : "check_indeterminate_small"}
               </span>
+              {isMobile ? (
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    G.StopPlayingPlaylistModal(true);
+                  }}
+                  style={{
+                    margin: "0",
+                    width: "20px",
+                    height: "20px",
+                    borderRadius: "6px",
+                    border: "none",
+                  }}
+                  className="playlist-action small"
+                >
+                  <span
+                    style={{
+                      margin: "0",
+                      fontSize: "15px",
+                    }}
+                    class="material-symbols-outlined unfollow"
+                  >
+                    close
+                  </span>
+                </span>
+              ) : null}
             </div>
           </div>
           <div
