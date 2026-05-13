@@ -41,7 +41,7 @@ const HeaderComponent = () => {
         <MobilePlaylistToggleButton parentId={parentId} />
         <span
           className="material-symbols-outlined"
-          onClick={() => thisBot.StopPlayingPlaylist()}
+          onClick={() => G.StopPlayingPlaylistModal(true)}
         >
           close
         </span>
