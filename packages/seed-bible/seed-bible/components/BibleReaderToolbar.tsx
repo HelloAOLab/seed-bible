@@ -420,6 +420,33 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     });
   });
 
+  const selectedVersesReference = useComputed(() => {
+    const rs = readingState.value;
+    if (!rs) return "";
+    const verses = rs.selectedVerses.value;
+    const firstVerse = verses[0];
+    if (!firstVerse) return "";
+
+    const bookName = rs.chapterData.value?.book.name ?? firstVerse.bookId;
+    const chapter = firstVerse.chapterNumber;
+    const numbers = verses.map((v) => v.verse.number).sort((a, b) => a - b);
+    const ranges: string[] = [];
+    let start = numbers[0]!;
+    let end = start;
+    for (let i = 1; i < numbers.length; i++) {
+      const next = numbers[i]!;
+      if (next === end + 1) {
+        end = next;
+      } else {
+        ranges.push(start === end ? `${start}` : `${start}-${end}`);
+        start = next;
+        end = next;
+      }
+    }
+    ranges.push(start === end ? `${start}` : `${start}-${end}`);
+    return `${bookName} ${chapter}:${ranges.join(",")}`;
+  });
+
   // Reset picker when selection is cleared
   useEffect(() => {
     if (!hasVerseSelection.value) {
@@ -774,6 +801,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             isSmallScreen.value ? undefined : handleVerseToolbarPointerUp
           }
         >
+          {isHighlightPickerOpen.value && (
+            <div
+              className="sb-verse-toolbar-ref"
+              aria-live="polite"
+              title={selectedVersesReference.value}
+            >
+              {selectedVersesReference.value}
+            </div>
+          )}
           {isHighlightPickerOpen.value ? (
             <div
               className="sb-verse-toolbar-tools sb-verse-toolbar-picker"

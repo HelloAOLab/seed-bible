@@ -94,55 +94,55 @@ registerExtension({
     // });
 
     // Empty pane tools are shown in the empty state of a pane and can be used to open portals or other content in the pane
-    yield context.tools.registerEmptyPaneTool({
-      id: "open-grid-portal",
-      priority: 100,
-      title: {
-        key: "open-grid-portal",
-        defaultValue: "Open grid portal",
-        ns: "example-extension",
-      },
-      icon: OpenGridPortalIcon,
-      isDisabled: (context) =>
-        context.panesManager.panes.value.some(
-          (pane) =>
-            (pane.gridPortal !== null || pane.mapPortal !== null) &&
-            pane.id !== context.currentPane.id
-        ),
-      onSelect: (context) => {
-        create({
-          home: true,
-          color: "red",
-        });
-        context.panesManager.openInPane(context.currentPane.id, {
-          gridPortal: "home",
-        });
-      },
-    });
+    // yield context.tools.registerEmptyPaneTool({
+    //   id: "open-grid-portal",
+    //   priority: 100,
+    //   title: {
+    //     key: "open-grid-portal",
+    //     defaultValue: "Open grid portal",
+    //     ns: "example-extension",
+    //   },
+    //   icon: OpenGridPortalIcon,
+    //   isDisabled: (context) =>
+    //     context.panesManager.panes.value.some(
+    //       (pane) =>
+    //         (pane.gridPortal !== null || pane.mapPortal !== null) &&
+    //         pane.id !== context.currentPane.id
+    //     ),
+    //   onSelect: (context) => {
+    //     create({
+    //       home: true,
+    //       color: "red",
+    //     });
+    //     context.panesManager.openInPane(context.currentPane.id, {
+    //       gridPortal: "home",
+    //     });
+    //   },
+    // });
 
-    yield context.tools.registerEmptyPaneTool({
-      id: "open-map-portal",
-      priority: 110,
-      title: {
-        key: "open-map-portal",
-        defaultValue: "Open map portal",
-        ns: "example-extension",
-      },
-      icon: OpenMapPortalIcon,
-      isDisabled: (context) =>
-        context.panesManager.panes.value.some(
-          (pane) =>
-            (pane.gridPortal !== null || pane.mapPortal !== null) &&
-            pane.id !== context.currentPane.id
-        ),
-      onSelect: (context) => {
-        context.panesManager.closePane(context.currentPane.id);
-        context.panesManager.openPane({
-          type: "detached",
-          mapPortal: "map_portal",
-        });
-      },
-    });
+    // yield context.tools.registerEmptyPaneTool({
+    //   id: "open-map-portal",
+    //   priority: 110,
+    //   title: {
+    //     key: "open-map-portal",
+    //     defaultValue: "Open map portal",
+    //     ns: "example-extension",
+    //   },
+    //   icon: OpenMapPortalIcon,
+    //   isDisabled: (context) =>
+    //     context.panesManager.panes.value.some(
+    //       (pane) =>
+    //         (pane.gridPortal !== null || pane.mapPortal !== null) &&
+    //         pane.id !== context.currentPane.id
+    //     ),
+    //   onSelect: (context) => {
+    //     context.panesManager.closePane(context.currentPane.id);
+    //     context.panesManager.openPane({
+    //       type: "detached",
+    //       mapPortal: "map_portal",
+    //     });
+    //   },
+    // });
 
     // You can use effects in your extension to react to changes in the app state. For example, this effect will log the current reading state whenever it changes.
     yield effect(() => {
