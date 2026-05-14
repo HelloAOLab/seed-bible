@@ -18,80 +18,80 @@ registerExtension({
     console.log("Example extension initialized with context:", context);
 
     // register a new tool
-    yield context.tools.registerToolbarTool({
-      id: "my-example-tool",
-      title: {
-        key: "my-example-tool",
-        defaultValue: "My Example Tool",
-        ns: "example-extension",
-      },
-      icon: () => <span>TOOL!</span>,
-      onSelect: () => {
-        console.log("Example tool selected!");
-        context.panes.openPane({
-          type: "detached",
-          detachedAnchor: "side",
-          component: () => {
-            // You can use the useI18n hook in your tool component to get translated strings
-            const { t } = useI18n("example-extension");
-            return <div style={{ padding: 20 }}>{t("my-example-tool")}</div>;
-          },
-        });
-      },
-      priority: 100,
-    });
+    // yield context.tools.registerToolbarTool({
+    //   id: "my-example-tool",
+    //   title: {
+    //     key: "my-example-tool",
+    //     defaultValue: "My Example Tool",
+    //     ns: "example-extension",
+    //   },
+    //   icon: () => <span>TOOL!</span>,
+    //   onSelect: () => {
+    //     console.log("Example tool selected!");
+    //     context.panes.openPane({
+    //       type: "detached",
+    //       detachedAnchor: "side",
+    //       component: () => {
+    //         // You can use the useI18n hook in your tool component to get translated strings
+    //         const { t } = useI18n("example-extension");
+    //         return <div style={{ padding: 20 }}>{t("my-example-tool")}</div>;
+    //       },
+    //     });
+    //   },
+    //   priority: 100,
+    // });
 
-    yield context.tools.registerVerseToolbarTool({
-      id: "my-verse-tool",
-      title: {
-        key: "my-verse-tool",
-        defaultValue: "My Verse Tool",
-        ns: "example-extension",
-      },
-      icon: () => <span>VERSE!</span>,
-      // You can use getItems to return the list of items for the toolbar dynamically based on the context
-      getItems: (context) => [
-        {
-          id: "item-1",
-          icon: () => <span>ITEM 1</span>,
-          title: {
-            key: "item-1",
-            defaultValue: "Item 1",
-            ns: "example-extension",
-          },
-          onSelect: () => {
-            console.log("Item 1 clicked with context:", context);
-            os.toast("Item 1 clicked!");
-          },
-        },
-        {
-          id: "item-2",
-          icon: () => <span>ITEM 2</span>,
-          title: {
-            key: "item-2",
-            defaultValue: "Item 2",
-            ns: "example-extension",
-          },
-          onSelect: () => {
-            console.log("Item 2 clicked with context:", context);
-            os.toast("Item 2 clicked!");
-          },
-        },
-      ],
-      priority: 100,
-    });
+    // yield context.tools.registerVerseToolbarTool({
+    //   id: "my-verse-tool",
+    //   title: {
+    //     key: "my-verse-tool",
+    //     defaultValue: "My Verse Tool",
+    //     ns: "example-extension",
+    //   },
+    //   icon: () => <span>VERSE!</span>,
+    //   // You can use getItems to return the list of items for the toolbar dynamically based on the context
+    //   getItems: (context) => [
+    //     {
+    //       id: "item-1",
+    //       icon: () => <span>ITEM 1</span>,
+    //       title: {
+    //         key: "item-1",
+    //         defaultValue: "Item 1",
+    //         ns: "example-extension",
+    //       },
+    //       onSelect: () => {
+    //         console.log("Item 1 clicked with context:", context);
+    //         os.toast("Item 1 clicked!");
+    //       },
+    //     },
+    //     {
+    //       id: "item-2",
+    //       icon: () => <span>ITEM 2</span>,
+    //       title: {
+    //         key: "item-2",
+    //         defaultValue: "Item 2",
+    //         ns: "example-extension",
+    //       },
+    //       onSelect: () => {
+    //         console.log("Item 2 clicked with context:", context);
+    //         os.toast("Item 2 clicked!");
+    //       },
+    //     },
+    //   ],
+    //   priority: 100,
+    // });
 
     // Below reader tools are displayed in a toolbar below the bible reader
-    yield context.tools.registerBelowReaderTool({
-      id: "my-below-reader-tool",
-      title: {
-        key: "my-below-reader-tool",
-        defaultValue: "My Below Reader Tool",
-        ns: "example-extension",
-      },
-      icon: () => <span>BELOW!</span>,
-      priority: 100,
-    });
+    // yield context.tools.registerBelowReaderTool({
+    //   id: "my-below-reader-tool",
+    //   title: {
+    //     key: "my-below-reader-tool",
+    //     defaultValue: "My Below Reader Tool",
+    //     ns: "example-extension",
+    //   },
+    //   icon: () => <span>BELOW!</span>,
+    //   priority: 100,
+    // });
 
     // Empty pane tools are shown in the empty state of a pane and can be used to open portals or other content in the pane
     yield context.tools.registerEmptyPaneTool({
