@@ -9,24 +9,36 @@ import { ScriptureMap2DModes } from "scriptureMap2D.models.scriptureMap";
 
 const { useState, useRef } = os.appHooks;
 
-export interface SettingsOptionProps {
+export type BaseSettingsOptionProps = {
   callback: () => void;
-  condition: boolean;
-  enabledIcon?: string;
-  disabledIcon?: string;
+  staticText: string;
+};
+
+export type StaticSettingsOptionProps = BaseSettingsOptionProps & {
+  type: "static";
+};
+
+export type ConditionalSettingsOptionProps = BaseSettingsOptionProps & {
+  type: "dynamic";
   enabledText: string;
   disabledText: string;
-  staticText: string;
-}
+  condition: boolean;
+};
 
-export interface SettingsOptionData extends SettingsOptionProps {
+export type SettingsOptionProps =
+  | StaticSettingsOptionProps
+  | ConditionalSettingsOptionProps;
+
+export type SettingsOptionData = {
   key: string;
-}
+} & SettingsOptionProps;
 
 export interface SettingsOptionsProps {
   setShowOptions: StateUpdater<boolean>;
   settingsButtonRef: React.Ref<HTMLDivElement | null>;
   optionsData: SettingsOptionData[];
+  optionsTitle: string;
+  optionsDescription: string;
 }
 
 export interface SettingsLegendSquareProps {
@@ -119,30 +131,50 @@ const YearSelector = ({
   );
 };
 
-const Option = ({
-  callback,
-  condition,
-  enabledText,
-  disabledText,
-  staticText,
-}: SettingsOptionProps) => {
-  return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        callback();
-      }}
-      className="option-button"
-    >
-      {`${condition ? enabledText : disabledText} ${staticText}`}
-    </button>
-  );
+const Option = (props: SettingsOptionProps) => {
+  switch (props.type) {
+    case "static":
+      {
+        const { callback, staticText } = props;
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              callback();
+            }}
+            className="option-button"
+          >
+            {staticText}
+          </button>
+        );
+      }
+      break;
+    case "dynamic":
+      {
+        const { callback, condition, enabledText, disabledText, staticText } =
+          props;
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              callback();
+            }}
+            className="option-button"
+          >
+            {`${condition ? enabledText : disabledText} ${staticText}`}
+          </button>
+        );
+      }
+      break;
+  }
 };
 
 const SettingsOptions = ({
   setShowOptions,
   settingsButtonRef,
   optionsData,
+  optionsTitle,
+  optionsDescription,
 }: SettingsOptionsProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -158,8 +190,8 @@ const SettingsOptions = ({
       }}
       className="settings-options-container"
     >
-      <span>View options</span>
-      <span>Control the view of the content on the map</span>
+      <span>{optionsTitle}</span>
+      <span>{optionsDescription}</span>
       {optionsData.map((data) => (
         <Option {...data} />
       ))}
@@ -175,7 +207,7 @@ export const Settings = () => {
     showOptions,
     setShowOptions,
     collapsed,
-    handleCloseButtonClick,
+    // handleCloseButtonClick,
     mode,
     project,
     isInSelectionMode,
@@ -184,6 +216,9 @@ export const Settings = () => {
     legendSquaresData,
     yearSelectorLabelTextContent,
     yearSelectorOptionsData,
+    title,
+    optionsTitle,
+    optionsDescription,
   } = useSettings();
 
   return (
@@ -241,7 +276,7 @@ export const Settings = () => {
           </defs>
         </svg>
 
-        <span className="scripture-title">Scripture map</span>
+        <span className="scripture-title">{title}</span>
       </div>
 
       <div
@@ -255,16 +290,18 @@ export const Settings = () => {
             setShowOptions={setShowOptions}
             settingsButtonRef={settingsButtonRef}
             optionsData={optionsData}
+            optionsTitle={optionsTitle}
+            optionsDescription={optionsDescription}
           />
         )}
       </div>
 
-      <div
+      {/* <div
         className="header-button close-button"
         onClick={handleCloseButtonClick}
       >
         <span class="material-symbols-outlined">close</span>
-      </div>
+      </div> */}
 
       <span className={"horizontal-divider"}></span>
 

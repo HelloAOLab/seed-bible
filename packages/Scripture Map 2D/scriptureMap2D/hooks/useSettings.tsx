@@ -33,6 +33,9 @@ interface UseSettingsType {
   legendSquaresData: SettingsLegendSquareData[];
   yearSelectorLabelTextContent: string;
   yearSelectorOptionsData: SettingsYearselectorOptionData[];
+  title: string;
+  optionsTitle: string;
+  optionsDescription: string;
 }
 
 type UseSettings = () => UseSettingsType;
@@ -57,6 +60,7 @@ export const useSettings: UseSettings = () => {
     readingHistoryService,
     seedBibleState,
     translate,
+    ColorParser,
   } = useScriptureMap2DContext();
   const {
     shouldShowReadingHistory,
@@ -126,12 +130,13 @@ export const useSettings: UseSettings = () => {
 
     if (shouldShowReadingHistory) {
       data.push({
+        type: "dynamic",
         callback: handleToggleTimelineClick,
         condition: collapsed,
-        enabledIcon: "visibility_off",
-        disabledIcon: "visibility",
-        enabledText: translate("show"),
-        disabledText: translate("hide"),
+        // enabledIcon: "visibility_off",
+        // disabledIcon: "visibility",
+        enabledText: translate("Show"),
+        disabledText: translate("Hide"),
         staticText: translate("timeline"),
         key: "timeline",
       });
@@ -139,65 +144,69 @@ export const useSettings: UseSettings = () => {
 
     data.push(
       {
+        type: "static",
         callback: handleToggleTimelineMethodClick,
-        condition: !!timelineRangeMethod,
-        enabledText: translate("Toggle"),
-        disabledText: translate("Toggle"),
-        staticText: translate("type of timeline"),
+        staticText: translate("toggle-timeline-type"),
         key: "type of timeline",
       },
       {
+        type: "dynamic",
         callback: handleShowAllChaptersToggle,
         condition: showingAllChapters,
-        enabledText: translate("close"),
-        disabledText: translate("open"),
+        enabledText: translate("Close"),
+        disabledText: translate("Open"),
         staticText: translate("books"),
         key: "books",
       },
       {
+        type: "dynamic",
         callback: handleToggleBooksColorClick,
         condition: showingBooksColors,
-        enabledText: translate("hide"),
-        disabledText: translate("show"),
-        staticText: translate("books color"),
+        enabledText: translate("Hide"),
+        disabledText: translate("Show"),
+        staticText: translate("books-color"),
         key: "books color",
       }
     );
 
     if (shouldShowReadingHistoryOption) {
       data.push({
+        type: "dynamic",
         callback: handleToggleReadingHistoryClick,
         condition: isReadingHistoryEnabled,
-        enabledText: translate("hide"),
-        disabledText: translate("show"),
-        staticText: translate("reading history"),
+        enabledText: translate("Hide"),
+        disabledText: translate("Show"),
+        staticText: translate("reading-history"),
         key: "reading history",
       });
     }
 
     data.push(
       {
+        type: "dynamic",
         callback: handleToggleUserPresenceClick,
         condition: isUserPresenceEnabled,
-        enabledText: translate("hide"),
-        disabledText: translate("show"),
-        staticText: translate("user presence"),
+        enabledText: translate("Hide"),
+        disabledText: translate("Show"),
+        staticText: translate("user-presence"),
         key: "user presence",
       },
       {
+        type: "dynamic",
         callback: handleSectionLabelsToggle,
         condition: showSectionLabels,
-        enabledText: translate("hide"),
-        disabledText: translate("show"),
-        staticText: translate("section labels"),
+        enabledText: translate("Hide"),
+        disabledText: translate("Show"),
+        staticText: translate("section-labels"),
         key: "section labels",
       },
       {
+        type: "dynamic",
         callback: handleTestamentLabelsToggle,
         condition: showTestamentLabels,
-        enabledText: translate("hide"),
-        disabledText: translate("show"),
-        staticText: translate("testament labels"),
+        enabledText: translate("Hide"),
+        disabledText: translate("Show"),
+        staticText: translate("testament-labels"),
         key: "testament labels",
       }
     );
@@ -230,16 +239,19 @@ export const useSettings: UseSettings = () => {
     handleToggleUserPresenceClick,
   ]);
 
-  const { secondaryColor, baseColor } = useMemo<{
-    secondaryColor: string;
+  const { primaryColor, baseColor } = useMemo<{
+    primaryColor: string;
     baseColor: string;
   }>(() => {
-    const secondaryColor = theme.variables.secondaryColor ?? "#D2691E";
-    const baseColor =
-      theme.variables.readerToolbarFloatingButtonBackground ?? "#dfdede";
+    const primaryColor = theme.variables.primaryColor
+      ? ColorParser(theme.variables.primaryColor, "longHex")
+      : "#D2691E";
+    const baseColor = theme.variables.primaryFontColor
+      ? ColorParser(theme.variables.primaryFontColor, "longHex")
+      : "#dfdede";
 
-    return { secondaryColor, baseColor };
-  }, [theme]);
+    return { primaryColor, baseColor };
+  }, [theme, ColorParser]);
 
   const legendSquaresData = useMemo<
     UseSettingsType["legendSquaresData"]
@@ -254,7 +266,7 @@ export const useSettings: UseSettings = () => {
       else {
         backgroundColor = readingHistoryService.getColorByReadingTime({
           baseColor,
-          userColor: secondaryColor,
+          userColor: primaryColor,
           step,
           readingTimeSeconds: i * step,
           fullColorTimeSeconds: 1,
@@ -264,7 +276,7 @@ export const useSettings: UseSettings = () => {
     }
 
     return legendSquaresData;
-  }, [secondaryColor, baseColor]);
+  }, [primaryColor, baseColor]);
 
   const yearSelectorLabelTextContent = useMemo<
     UseSettingsType["yearSelectorLabelTextContent"]
@@ -293,6 +305,18 @@ export const useSettings: UseSettings = () => {
     setShowOptions,
   ]);
 
+  const title = useMemo(() => {
+    return translate("scripture-map-2d");
+  }, [translate]);
+
+  const optionsTitle = useMemo(() => {
+    return translate("options-title");
+  }, [translate]);
+
+  const optionsDescription = useMemo(() => {
+    return translate("options-description");
+  }, [translate]);
+
   return {
     settingsClass,
     settingsButtonRef,
@@ -309,5 +333,8 @@ export const useSettings: UseSettings = () => {
     legendSquaresData,
     yearSelectorLabelTextContent,
     yearSelectorOptionsData,
+    title,
+    optionsTitle,
+    optionsDescription,
   };
 };

@@ -136,21 +136,9 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
   const [readingEventsByDay, setReadingEventsByDay] =
     useState<ReadingEventsByDay | null>(null);
 
-  useEffect(() => {
-    console.log(
-      `[Debug] useReadingHistoryProvider useEffect for readingHistoryUserFilters`,
-      {
-        readingHistoryUserFilters: new Map(readingHistoryUserFilters),
-      }
-    );
-  }, [readingHistoryUserFilters]);
-
   const handleUserLoggedIn = useCallback(() => {
     if (!myAuthBotId) {
       setMyAuthBotId(authBot.id);
-      console.log(
-        `[Debug] useReadingHistoryProvider calling setReadingHistoryUserFilters from handleUserLoggedIn`
-      );
       setReadingHistoryUserFilters((prevFilters) => {
         const filtersCopy = new Map(prevFilters);
         filtersCopy.set(authBot.id, true);
@@ -350,9 +338,9 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
       });
 
       if (changed) {
-        console.log(
-          `[Debug] useReadingHistoryProvider calling setReadingHistoryUserFilters from tryUpdateReadingHistoryUsersFilters`
-        );
+        // console.log(
+        //   `[Debug] useReadingHistoryProvider calling setReadingHistoryUserFilters from tryUpdateReadingHistoryUsersFilters`
+        // );
         return next;
       }
 
@@ -407,8 +395,11 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
       end: rangeEnd = endSeconds,
     } = readingHistoryRangeSeconds ?? {};
 
+    const yieldToMain = () =>
+      new Promise<void>((resolve) => setTimeout(resolve, 0));
+
     Promise.all(allEventPromises)
-      .then((allEvents) => {
+      .then(async (allEvents) => {
         if (!isMounted) return;
         const flattenedEvents = Array.from(flat(allEvents));
 
@@ -451,12 +442,21 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
           }
         }
 
+        let iterations = 0;
         for (const [dayKey, events] of eventsByDay) {
           const daySummary = calculateReadingHistorySummary(events);
           dailySummaries.set(dayKey, daySummary);
+          iterations++;
+          if (iterations % 30 === 0) {
+            await yieldToMain();
+          }
         }
 
+        await yieldToMain();
+
         summary = calculateReadingHistorySummary(flattenedEvents);
+
+        if (!isMounted) return;
 
         setYearlyReadingHistorySummary(summary);
         setRangedReadingEventsByBook(rangedEventsByBook);
@@ -465,7 +465,7 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
       })
       .catch((error) => {
         console.warn(
-          `[Debug] ReasdingHistoryContext error fetching reading events`,
+          `[Debug] ReadingHistoryContext error fetching reading events`,
           error
         );
       });
@@ -504,9 +504,9 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
           copy.set(key, !copy.get(key));
         }
       }
-      console.log(
-        `[Debug] useReadingHistoryProvider calling setReadingHistoryUserFilters from handleReadingHistoryUserSelectorClick`
-      );
+      // console.log(
+      //   `[Debug] useReadingHistoryProvider calling setReadingHistoryUserFilters from handleReadingHistoryUserSelectorClick`
+      // );
 
       setReadingHistoryUserFilters(copy);
     },

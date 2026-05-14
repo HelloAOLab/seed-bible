@@ -8,6 +8,21 @@ import type {
 export type ClampRGBColorType = (colorToClamp: RGB) => RGB;
 export type HexToRgbType = (params: { hexColor: HexString }) => RGB;
 export type RgbToHexType = (params: { rgbColor: RGB }) => HexString;
+export type ColorType = "stringRGB" | "arrayRGB" | "longHex" | "shortHex";
+export type GetColorTypeType = (color: string | RGB) => ColorType | false;
+export type RGBStringToArrayType = (color: string) => RGB;
+export type HexLongToShortType = (hex: HexString) => string;
+export type HexShortToLongType = (hex: string) => HexString;
+export interface ColorParserMap {
+  stringRGB: string;
+  arrayRGB: RGB;
+  longHex: string;
+  shortHex: string;
+}
+export type ColorParserType = <T extends ColorType>(
+  value: string | RGB,
+  target: T
+) => ColorParserMap[T];
 export type GetTextColorBasedOnBackgroundType = (params: {
   backgroundColor: WeightedColor[] | HexString;
 }) => HexString;
@@ -50,7 +65,11 @@ export const ClampRGBColor: ClampRGBColorType = (colorToClamp) => {
 
 export const HexToRgb: HexToRgbType = ({ hexColor = "000000" }) => {
   const cleanHex = hexColor.trim();
-  const hex = cleanHex.startsWith("#") ? cleanHex.slice(1) : cleanHex;
+  let hex = cleanHex.startsWith("#") ? cleanHex.slice(1) : cleanHex;
+
+  if (/^[0-9A-Fa-f]{3}$/.test(hex)) {
+    hex = hex[0]! + hex[0]! + hex[1]! + hex[1]! + hex[2]! + hex[2]!;
+  }
 
   if (!/^[0-9A-Fa-f]{6}$/.test(hex)) {
     console.warn(`HexToRgb: Invalid color "${hexColor}". Returning black.`);
@@ -71,6 +90,72 @@ export const RgbToHex: RgbToHexType = ({ rgbColor = [255, 255, 255] }) => {
       .toString(16)
       .slice(1)
   );
+};
+
+export const GetColorType: GetColorTypeType = (color) => {
+  if (Array.isArray(color)) return "arrayRGB";
+  const s = color.trim();
+  if (/^rgba?\s*\(/.test(s)) return "stringRGB";
+  const hex = s.startsWith("#") ? s.slice(1) : s;
+  if (/^[0-9A-Fa-f]{6}$/.test(hex)) return "longHex";
+  if (/^[0-9A-Fa-f]{3}$/.test(hex)) return "shortHex";
+  return false;
+};
+
+export const HexShortToLong: HexShortToLongType = (hex) => {
+  const clean = hex.startsWith("#") ? hex.slice(1) : hex;
+  return `#${clean[0]}${clean[0]}${clean[1]}${clean[1]}${clean[2]}${clean[2]}` as HexString;
+};
+
+export const HexLongToShort: HexLongToShortType = (hex) => {
+  const clean = hex.startsWith("#") ? hex.slice(1) : hex;
+  if (clean[0] === clean[1] && clean[2] === clean[3] && clean[4] === clean[5]) {
+    return `#${clean[0]}${clean[2]}${clean[4]}`;
+  }
+  return hex;
+};
+
+export const RGBStringToArray: RGBStringToArrayType = (color) => {
+  const match = color.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+  if (!match) return [0, 0, 0];
+  return [
+    parseInt(match[1]!, 10),
+    parseInt(match[2]!, 10),
+    parseInt(match[3]!, 10),
+  ];
+};
+
+export const ColorParser: ColorParserType = <T extends ColorType>(
+  value: string | RGB,
+  target: T
+): ColorParserMap[T] => {
+  const sourceType = GetColorType(value);
+
+  if (!sourceType || sourceType === target) return value as ColorParserMap[T];
+
+  let rgb: RGB;
+  if (sourceType === "arrayRGB") {
+    rgb = value as RGB;
+  } else if (sourceType === "stringRGB") {
+    rgb = RGBStringToArray(value as string);
+  } else {
+    const long =
+      sourceType === "shortHex"
+        ? HexShortToLong(value as string)
+        : (value as string);
+    rgb = HexToRgb({ hexColor: long as HexString });
+  }
+
+  switch (target as ColorType) {
+    case "arrayRGB":
+      return rgb as ColorParserMap[T];
+    case "stringRGB":
+      return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 1)` as ColorParserMap[T];
+    case "longHex":
+      return RgbToHex({ rgbColor: rgb }) as ColorParserMap[T];
+    case "shortHex":
+      return HexLongToShort(RgbToHex({ rgbColor: rgb })) as ColorParserMap[T];
+  }
 };
 
 export const GetTextColorBasedOnBackground: GetTextColorBasedOnBackgroundType =

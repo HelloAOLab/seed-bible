@@ -338,8 +338,11 @@
       "bibleVizUtils.infrastructure.di.bootstrap": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/di/bootstrap.tsx"
       ],
-      "bibleVizUtils.infrastructure.entrypoints.casualos.onAnyBotsAdded": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/onAnyBotsAdded.tsx"
+      "bibleVizUtils.infrastructure.di.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/di/onCreate.tsx"
+      ],
+      "bibleVizUtils.infrastructure.entrypoints.casualos.botProvider": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/botProvider.tsx"
       ],
       "bibleVizUtils.infrastructure.entrypoints.casualos.onBookOrientationChanged": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/entrypoints/casualos/onBookOrientationChanged.tsx"
@@ -518,6 +521,9 @@
       "scriptureMap2D.components.containers.ScriptureMap2DWrapper": [
         "./packages/Scripture Map 2D/scriptureMap2D/components/containers/ScriptureMap2DWrapper.tsx"
       ],
+      "scriptureMap2D.components.containers.SectionToggle": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/SectionToggle.tsx"
+      ],
       "scriptureMap2D.components.containers.SelectionOptions": [
         "./packages/Scripture Map 2D/scriptureMap2D/components/containers/SelectionOptions.tsx"
       ],
@@ -628,6 +634,9 @@
       ],
       "scriptureMap2D.hooks.useScriptureMap2DWrapper": [
         "./packages/Scripture Map 2D/scriptureMap2D/hooks/useScriptureMap2DWrapper.tsx"
+      ],
+      "scriptureMap2D.hooks.useSectionToggle": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/useSectionToggle.tsx"
       ],
       "scriptureMap2D.hooks.useSelectionOptions": [
         "./packages/Scripture Map 2D/scriptureMap2D/hooks/useSelectionOptions.tsx"

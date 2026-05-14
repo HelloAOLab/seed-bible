@@ -38,6 +38,7 @@ export class SectionInfoMapper {
       name: info.name,
       color: info.color,
       path,
+      translationKey: info.translationKey,
       books: info.books.map((book, bookIndex) =>
         this.#bookInfoMapper.toDomain(book, { ...path, bookIndex })
       ),

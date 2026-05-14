@@ -1,4 +1,7 @@
-import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
+import type {
+  HexString,
+  Translatable,
+} from "bibleVizUtils.domain.models.commonTypes";
 import type { BookName } from "bibleVizUtils.domain.models.scripture";
 
 export interface ChapterInfo {
@@ -28,13 +31,14 @@ export interface BookInfo {
   readonly explodedViewCustomScale?: {
     readonly x: number;
     readonly y: number;
+    readonly z?: number;
   };
   readonly group?: number;
   readonly customColor?: string;
   readonly customLabelColor?: string;
   readonly isCheckpoint?: boolean;
 }
-export interface SectionInfo {
+export interface SectionInfo extends Translatable {
   readonly name: string;
   readonly color: string;
   readonly books: readonly BookInfo[];
@@ -42,7 +46,7 @@ export interface SectionInfo {
   readonly customColorRange?: number;
 }
 
-export interface TestamentInfo {
+export interface TestamentInfo extends Translatable {
   readonly name: string;
   readonly sections: readonly SectionInfo[];
   readonly color?: HexString;

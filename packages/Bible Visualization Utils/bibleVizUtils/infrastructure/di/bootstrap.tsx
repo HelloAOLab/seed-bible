@@ -65,12 +65,19 @@ import {
   ComputeRawGradientColors,
   ComputeLinearGradient,
   HexToRgb,
+  RgbToHex,
   GetChildrenLevelColors,
+  GetColorType,
+  RGBStringToArray,
+  HexLongToShort,
+  HexShortToLong,
+  ColorParser,
 } from "bibleVizUtils.domain.functions.colors";
 import { IsValueBetween } from "bibleVizUtils.domain.functions.math";
 import type { BibleVizAPI } from "bibleVizUtils.infrastructure.models.seedBible";
 import {
   registerExtension /*, type SeedBibleState */,
+  type SeedBibleState,
 } from "seed-bible.app.api";
 import {
   GetDayRangeSeconds,
@@ -79,6 +86,10 @@ import {
 import { CapitalizeFirstLetter } from "bibleVizUtils.domain.functions.string";
 import { ScriptureMap3DConfigProvider } from "bibleVizUtils.infrastructure.config.scriptureMap3D.ScriptureMap3DConfigProvider";
 import { ReadingHistoryConfigProvider } from "bibleVizUtils.infrastructure.config.readingHistory.ReadingHistoryConfigProvider";
+import { entrypoints } from "bibleVizUtils.infrastructure.entrypoints.casualos.botProvider";
+import type { UserIds } from "bibleVizUtils.domain.models.userPresence";
+import { connectedUserColors } from "seed-bible.managers.SessionsManager";
+import { effect } from "@preact/signals";
 
 export let userColorController: UserColorController | undefined = undefined;
 export let sessionController: SessionController | undefined = undefined;
@@ -89,15 +100,9 @@ export let labelInteractionController: LabelInteractionController | undefined =
   undefined;
 
 export const bootstrapExtension = () => {
-  console.log(`[Debug] BibleVizUtils: bootstrapExtension start`);
-
   registerExtension({
     id: "bible-visualization-utils",
-    init: function* () {
-      console.log(
-        `[Debug] BibleVizUtils: bootstrapExtension.registerExtension`
-      );
-
+    init: function* (context: SeedBibleState) {
       // 1. Instantiating adapters
 
       const readingHistoryConfigProvider = new ReadingHistoryConfigProvider();
@@ -244,7 +249,44 @@ export const bootstrapExtension = () => {
       });
       const labelDataStore = new LabelDataStore({});
       const userColorStore = new UserColorStore(bibleVizUtilsEventManager);
-      const sessionProvider = new SessionProvider();
+      const sessionProvider = new SessionProvider({
+        connectedUsersProviderPort: {
+          getConnectedUsers: () => {
+            const connectedUsers: Map<string, UserIds> = new Map([
+              [
+                configBot.id,
+                {
+                  configId: configBot.id,
+                  authId: context.login.userId.value ?? undefined,
+                },
+              ],
+            ]);
+            for (const tab of context.tabs.tabs.value) {
+              if (tab.sharedSession) {
+                const users = tab.sharedSession.connectedUsers.value;
+                if (users.length > 0) {
+                  for (const user of users) {
+                    if (connectedUsers.has(user.connectionId)) {
+                      connectedUsers.set(user.connectionId, {
+                        configId: user.connectionId,
+                        authId: user.userId ?? undefined,
+                      });
+                    }
+                  }
+                }
+              }
+            }
+            return [...connectedUsers.values()];
+          },
+        },
+        colors: [
+          ...connectedUserColors, // TODO: Get the complete color array from one place and avoid hardcoding the values here.
+          "#06B6D4",
+          "#EC4899",
+          "#8B5CF6",
+          "#14B8A6",
+        ],
+      });
       const userDatabase = new UserDatabase();
       const labelsConfigProvider = new LabelsConfigProvider();
       const labelAdapter = new LabelAdapter({
@@ -264,12 +306,12 @@ export const bootstrapExtension = () => {
         customArrangementStorePort: customArrangementStore,
         booksStaticInfoRepository: bibleVizDataRepository,
       });
-      arrangementAdapter.setBookInfoMapperPort(bookInfoMapper);
       const sectionInfoMapper = new SectionInfoMapper({
         bookInfoMapper,
         arrangementConfigProviderPort: arrangementsConfigProvider,
         customArrangementStorePort: customArrangementStore,
       });
+      arrangementAdapter.setSectionInfoMapperPort(sectionInfoMapper);
       const labelAnimationAdapter = new LabelFeedbackAdapter({
         dimensionProvider: () => os.getCurrentDimension(),
         labelFeedbackConfigProviderPort: labelFeedbackConfigProvider,
@@ -343,14 +385,29 @@ export const bootstrapExtension = () => {
         "OnUserPresenceUpdate",
         pieceActivityService.updateAllNotifications
       );
-
+      const onAnyBotsAddedListener = ({ bots }: { bots: Bot[] }) => {
+        sessionController?.handleAnyBotsAdded(bots);
+      };
+      os.addBotListener(entrypoints, "onAnyBotsAdded", onAnyBotsAddedListener);
       sessionService.tryEmitUserLoggedInEvent(!!authBot);
+      const unsubscribeLogin = context.login.userId.subscribe(() => {
+        userColorController?.handleUserLogin();
+      });
+      const unsubscribeOnlineUsersChanged = effect(() => {
+        // eslint-disable-next-line
+        const connectedUsers = context.tabs.tabs.value.map((tab) => {
+          return tab.sharedSession?.connectedUsers.value;
+        });
+        userColorController?.handleOnlineUsersChanged();
+      });
 
       // 5. Disposers
 
       yield () => bibleVizUtilsEventManager.removeAllListeners();
       yield () => bibleVizUtilsObjectPooler.disposeAllPools();
       yield () => labelAnimationAdapter.disposeAll();
+      yield () => unsubscribeLogin();
+      yield () => unsubscribeOnlineUsersChanged();
       yield () => {
         userColorController = undefined;
         sessionController = undefined;
@@ -359,8 +416,6 @@ export const bootstrapExtension = () => {
         labelInteractionController = undefined;
         // TODO: destroy extension bots
       };
-
-      console.log(`BibleVizUtils successfully initialized.`);
 
       // 6. Expose API to dependent extensions
 
@@ -384,8 +439,10 @@ export const bootstrapExtension = () => {
             activityIndicatorsAdapterPort: activityIndicatorsAdapter,
           });
         },
-        // eslint-disable-next-line
-        createEventManager: <TEventMap extends Record<string, any>>() => {
+        createEventManager: <
+          // eslint-disable-next-line
+          TEventMap extends Record<string, any>,
+        >() => {
           return new BaseEventManager<TEventMap>();
         },
         createObjectPooler: <
@@ -409,7 +466,13 @@ export const bootstrapExtension = () => {
         ComputeRawGradientColors,
         ComputeLinearGradient,
         HexToRgb,
+        RgbToHex,
         GetChildrenLevelColors,
+        GetColorType,
+        RGBStringToArray,
+        HexLongToShort,
+        HexShortToLong,
+        ColorParser,
         sectionInfoMapper,
         scriptureMap3DConfigProvider,
         readingHistoryConfigProvider,
@@ -418,6 +481,4 @@ export const bootstrapExtension = () => {
       return api;
     },
   });
-
-  console.log(`[Debug] BibleVizUtils: bootstrapExtension end`);
 };

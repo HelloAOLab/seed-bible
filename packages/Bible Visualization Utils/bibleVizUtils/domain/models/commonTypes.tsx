@@ -16,3 +16,7 @@ export interface Point2D {
 export interface Point3D extends Point2D {
   z: number;
 }
+
+export interface Translatable {
+  translationKey?: string;
+}

@@ -21,6 +21,17 @@ type UseReadingHistoryUserFiltersSelector =
 export const useReadingHistoryUserFiltersSelector: UseReadingHistoryUserFiltersSelector =
   () => {
     const { userColorStore, translate } = useScriptureMap2DContext();
+    // effect(() => {
+    //   const selectedTab = seedBibleState.app.selectedTab.value?.sharedSession;
+    //   const tabs = seedBibleState.tabs.tabs.value;
+    //   const selectedTabId = seedBibleState.tabs.selectedTabId.value;
+    //   console.log(`[Debug] useReadingHistoryUserFiltersSelector: selectedTab useEffect`, {
+    //     selectedTab,
+    //     tabs,
+    //     selectedTabId,
+    //     seedBibleState
+    //   })
+    // })
     const {
       handleReadingHistoryUserSelectorClick,
       readingHistoryUserFilters,
@@ -58,7 +69,7 @@ export const useReadingHistoryUserFiltersSelector: UseReadingHistoryUserFiltersS
           const { profileName } = userData;
           const fixedName: string =
             userId === myAuthBotId
-              ? translate("you")
+              ? translate("You")
               : (profileName?.length ?? 0) > 0
                 ? profileName!
                 : translate("Unknown User");

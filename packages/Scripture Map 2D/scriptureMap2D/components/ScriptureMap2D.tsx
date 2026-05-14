@@ -28,7 +28,13 @@ import type {
   ComputeRawGradientColorsType,
   GetTextColorBasedOnBackgroundType,
   HexToRgbType,
+  RgbToHexType,
   GetChildrenLevelColorsType,
+  GetColorTypeType,
+  RGBStringToArrayType,
+  HexLongToShortType,
+  HexShortToLongType,
+  ColorParserType,
 } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/colors";
 import type { IsValueBetweenType } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/math";
 import type { ScriptureMap3DConfigProvider } from "bibleVizUtils.infrastructure.config.scriptureMap3D.ScriptureMap3DConfigProvider";
@@ -105,7 +111,13 @@ export interface ScriptureMap2DConfig {
   ComputeRawGradientColors: ComputeRawGradientColorsType;
   ComputeLinearGradient: ComputeLinearGradientType;
   HexToRgb: HexToRgbType;
+  RgbToHex: RgbToHexType;
   GetChildrenLevelColors: GetChildrenLevelColorsType;
+  GetColorType: GetColorTypeType;
+  RGBStringToArray: RGBStringToArrayType;
+  HexLongToShort: HexLongToShortType;
+  HexShortToLong: HexShortToLongType;
+  ColorParser: ColorParserType;
   CapitalizeFirstLetter: CapitalizeFirstLetterType;
   GetPastDateInfo: GetPastDateInfoType;
   scriptureMap3DConfigProvider: ScriptureMap3DConfigProvider;

@@ -1,11 +1,11 @@
-import { SectionToggle } from "scriptureMap2D.components.ui.SectionToggle";
+import { SectionToggle } from "scriptureMap2D.components.containers.SectionToggle";
 import { useTestamentContent } from "scriptureMap2D.hooks.useTestamentContent";
 import { BooksContainer } from "scriptureMap2D.components.ui.BooksContainer";
 import {
   Book,
   type BookProps,
 } from "scriptureMap2D.components.containers.Book";
-import type { SectionToggleProps } from "scriptureMap2D.components.ui.SectionToggle";
+import type { SectionToggleProps } from "scriptureMap2D.components.containers.SectionToggle";
 
 const { memo } = os.appCompat;
 

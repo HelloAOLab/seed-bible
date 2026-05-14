@@ -11,6 +11,9 @@ import type { ArrangementInfo } from "bibleVizUtils.domain.models.arrangement";
 import type { UserPresence } from "bibleVizUtils.domain.models.userPresence";
 import type { ScriptureMap2DConfig } from "scriptureMap2D.components.ScriptureMap2D";
 import type { UserData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/userPresence";
+
+import { computed } from "@preact/signals";
+
 const { useState, useCallback, useMemo, useEffect } = os.appHooks;
 
 type UseScriptureMap2DProvider = (
@@ -179,11 +182,11 @@ export const useScriptureMap2DProvider: UseScriptureMap2DProvider = (
   const isMobile = useIsMobile(768);
   const tabs = seedBibleState.tabs.tabs.value;
   const activeTabId = seedBibleState.tabs.selectedTabId.value;
-  const activeTab = useMemo(() => {
+  const activeTab = computed(() => {
     return tabs.find((tab) => {
       return tab.id === activeTabId;
     })!;
-  }, [tabs, activeTabId]);
+  });
 
   const [userPresence, setUserPresence] = useState<UserPresence>(() =>
     userPresenceService.getUserPresence()
@@ -383,7 +386,7 @@ export const useScriptureMap2DProvider: UseScriptureMap2DProvider = (
       setShowingBooksColors,
       tabs,
       activeTabId,
-      activeTab,
+      activeTab: activeTab.value,
       usersColors,
       userPresence,
     };

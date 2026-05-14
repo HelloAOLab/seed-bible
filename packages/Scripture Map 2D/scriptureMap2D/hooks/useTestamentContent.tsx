@@ -17,7 +17,7 @@ import type {
 } from "scriptureMap2D.components.containers.TestamentContent";
 import type { Range } from "scriptureMap2D.models.commonTypes";
 import type { BookUserPresence } from "scriptureMap2D.components.containers.Book";
-import type { SectionToggleProps } from "scriptureMap2D.components.ui.SectionToggle";
+import type { SectionToggleProps } from "scriptureMap2D.components.containers.SectionToggle";
 
 const { useMemo, useCallback, useState, useEffect } = os.appHooks;
 
@@ -217,7 +217,7 @@ export const useTestamentContent = (): UseTestamentContentType => {
             style: {
               backgroundColor: `${section.color}80`,
               borderColor: showingContent
-                ? "var(--secondaryColor)"
+                ? "var(--sb-primary-color)"
                 : "transparent",
             },
             type: "sectionToggle",

@@ -31,9 +31,9 @@ export interface UserColorStorePort {
 }
 
 export interface SessionProviderPort {
-  getConnectedUsersConfigId: () => Promise<string[]>;
+  getConnectedUsersConfigId: () => string[];
   getConnectedUsersAuthMapList: () => UserIds[] | undefined;
-  getUserColorByConfigId: (id: string) => HexString | undefined;
+  getUserColorById: (id: string) => HexString | undefined;
 }
 
 export interface UserDatabasePort {

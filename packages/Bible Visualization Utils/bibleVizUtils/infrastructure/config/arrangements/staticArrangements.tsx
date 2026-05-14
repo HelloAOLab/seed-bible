@@ -1,17 +1,22 @@
-export const staticArrangements = [
+import type { ArrangementInfo } from "bibleVizUtils.infrastructure.models.arrangement";
+
+export const staticArrangements: ArrangementInfo[] = [
   {
     name: "traditional",
     testaments: [
       {
         name: "New Testament",
+        translationKey: "new-testament",
         sections: [
           {
             name: "Apocalypse",
+            translationKey: "apocalypse",
             color: "#B1B2FF",
             books: [{ commonName: "Revelation" }],
           },
           {
             name: "Letters",
+            translationKey: "letters",
             color: "#AAC4FF",
             customExplodedViewScaleFactor: 8,
             customColorRange: 120,
@@ -126,11 +131,13 @@ export const staticArrangements = [
           },
           {
             name: "History",
+            translationKey: "history",
             color: "#a0aeeb",
             books: [{ commonName: "Acts" }],
           },
           {
             name: "Gospels",
+            translationKey: "gospels",
             color: "#a4accf",
             customExplodedViewScaleFactor: 3,
             books: [
@@ -156,9 +163,11 @@ export const staticArrangements = [
       },
       {
         name: "Old Testament",
+        translationKey: "old-testament",
         sections: [
           {
             name: "Prophets",
+            translationKey: "prophets",
             color: "#EF9595",
             customExplodedViewScaleFactor: 3,
             customColorRange: 80,
@@ -249,6 +258,7 @@ export const staticArrangements = [
           },
           {
             name: "Wisdom",
+            translationKey: "wisdom",
             color: "#EFB495",
             customExplodedViewScaleFactor: 2.5,
             customColorRange: 80,
@@ -301,6 +311,7 @@ export const staticArrangements = [
           },
           {
             name: "History",
+            translationKey: "history",
             color: "#EFD595",
             customExplodedViewScaleFactor: 2.5,
             customColorRange: 80,
@@ -365,6 +376,7 @@ export const staticArrangements = [
           },
           {
             name: "Law",
+            translationKey: "law",
             color: "#E5E67E",
             customExplodedViewScaleFactor: 2.5,
             books: [
@@ -399,9 +411,11 @@ export const staticArrangements = [
     testaments: [
       {
         name: "New Testament",
+        translationKey: "new-testament",
         sections: [
           {
             name: "Apocalypse",
+            translationKey: "apocalypse",
             color: "#B1B2FF",
             books: [
               {
@@ -411,6 +425,7 @@ export const staticArrangements = [
           },
           {
             name: "Letters",
+            translationKey: "letters",
             color: "#AAC4FF",
             customExplodedViewScaleFactor: 8,
             customColorRange: 120,
@@ -513,7 +528,6 @@ export const staticArrangements = [
               },
               {
                 commonName: "1 Corinthians",
-                relatveDateRange: { min: 55, max: 55 },
                 explodedViewCustomScale: { x: 0.7, y: 0.35 },
                 explodedViewPosition: { x: -0.1, y: -0.225, z: 0.91 },
                 group: 5,
@@ -526,6 +540,7 @@ export const staticArrangements = [
           },
           {
             name: "History",
+            translationKey: "history",
             color: "#a0aeeb",
             books: [
               {
@@ -535,6 +550,7 @@ export const staticArrangements = [
           },
           {
             name: "Gospels",
+            translationKey: "gospels",
             color: "#a4accf",
             customExplodedViewScaleFactor: 3,
             books: [
@@ -560,9 +576,11 @@ export const staticArrangements = [
       },
       {
         name: "Old Testament",
+        translationKey: "old-testament",
         sections: [
           {
             name: "Writings",
+            translationKey: "writings",
             color: "#708871",
             customExplodedViewScaleFactor: 3,
             customColorRange: 80,
@@ -656,6 +674,7 @@ export const staticArrangements = [
           },
           {
             name: "Prophets",
+            translationKey: "prophets",
             color: "#bec6a0",
             customExplodedViewScaleFactor: 2.5,
             customColorRange: 80,
@@ -766,6 +785,7 @@ export const staticArrangements = [
           },
           {
             name: "Torah",
+            translationKey: "torah",
             color: "#fef3e2",
             customExplodedViewScaleFactor: 2.5,
             books: [
@@ -800,9 +820,11 @@ export const staticArrangements = [
     testaments: [
       {
         name: "New Testament",
+        translationKey: "new-testament",
         sections: [
           {
             name: "Chronological NT",
+            translationKey: "chronological-nt",
             color: "#d5d5d5",
             customExplodedViewScaleFactor: 4.9,
             customColorRange: 80,
@@ -983,9 +1005,11 @@ export const staticArrangements = [
       },
       {
         name: "Old Testament",
+        translationKey: "old-testament",
         sections: [
           {
             name: "Chronological OT",
+            translationKey: "chronological-ot",
             color: "#d5d5d5",
             customExplodedViewScaleFactor: 2.8,
             customColorRange: 80,
@@ -1256,9 +1280,11 @@ export const staticArrangements = [
     testaments: [
       {
         name: "New Testament",
+        translationKey: "new-testament",
         sections: [
           {
             name: "Chronological NT",
+            translationKey: "chronological-nt",
             color: "#2596be",
             customExplodedViewScaleFactor: 4.9,
             customColorRange: 80,
@@ -1404,9 +1430,11 @@ export const staticArrangements = [
       },
       {
         name: "Old Testament",
+        translationKey: "old-testament",
         sections: [
           {
             name: "Chronological OT",
+            translationKey: "chronological-ot",
             color: "#708871",
             customExplodedViewScaleFactor: 2.8,
             customColorRange: 80,
@@ -1635,9 +1663,11 @@ export const staticArrangements = [
     testaments: [
       {
         name: "New Testament",
+        translationKey: "new-testament",
         sections: [
           {
             name: "Apocalypse",
+            translationKey: "apocalypse",
             color: "#B1B2FF",
             books: [
               {
@@ -1647,6 +1677,7 @@ export const staticArrangements = [
           },
           {
             name: "Letters",
+            translationKey: "letters",
             color: "#AAC4FF",
             customExplodedViewScaleFactor: 8,
             customColorRange: 120,
@@ -1761,6 +1792,7 @@ export const staticArrangements = [
           },
           {
             name: "History",
+            translationKey: "history",
             color: "#a0aeeb",
             books: [
               {
@@ -1770,6 +1802,7 @@ export const staticArrangements = [
           },
           {
             name: "Gospels",
+            translationKey: "gospels",
             color: "#a4accf",
             customExplodedViewScaleFactor: 3,
             books: [
@@ -1796,9 +1829,11 @@ export const staticArrangements = [
       },
       {
         name: "Old Testament",
+        translationKey: "old-testament",
         sections: [
           {
             name: "Prophets",
+            translationKey: "prophets",
             color: "#EF9595",
             customExplodedViewScaleFactor: 3,
             customColorRange: 80,
@@ -1889,6 +1924,7 @@ export const staticArrangements = [
           },
           {
             name: "Wisdom",
+            translationKey: "wisdom",
             color: "#EFB495",
             customExplodedViewScaleFactor: 2.5,
             customColorRange: 80,
@@ -1942,6 +1978,7 @@ export const staticArrangements = [
           },
           {
             name: "History",
+            translationKey: "history",
             color: "#EFD595",
             customExplodedViewScaleFactor: 2.5,
             customColorRange: 80,
@@ -2006,6 +2043,7 @@ export const staticArrangements = [
           },
           {
             name: "Law",
+            translationKey: "law",
             color: "#E5E67E",
             customExplodedViewScaleFactor: 2.5,
             books: [

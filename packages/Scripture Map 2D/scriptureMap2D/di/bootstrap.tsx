@@ -26,16 +26,10 @@ const extensionId = "scripture-map-2d";
 const dependencies: (keyof DependenciesMap)[] = [bibleVizUtilsId];
 
 export const bootstrapExtension = () => {
-  console.log(`[Debug] ScriptureMap2D: bootstrapExtension start`);
-
   registerExtension({
     dependencies,
     id: extensionId,
     init: function* (context: SeedBibleState, dependenciesMap) {
-      console.log(
-        `[Debug] ScriptureMap2D: bootstrapExtension.registerExtension`,
-        { context }
-      );
       addTranslations(extensionId, translations);
       const {
         bibleVizDataRepository,
@@ -52,7 +46,13 @@ export const bootstrapExtension = () => {
         ComputeRawGradientColors,
         ComputeLinearGradient,
         HexToRgb,
+        RgbToHex,
         GetChildrenLevelColors,
+        GetColorType,
+        RGBStringToArray,
+        HexLongToShort,
+        HexShortToLong,
+        ColorParser,
         CapitalizeFirstLetter,
         GetPastDateInfo,
         sectionInfoMapper,
@@ -78,7 +78,7 @@ export const bootstrapExtension = () => {
             type: "detached",
             detachedAnchor: "side",
             component: () => {
-              const { t } = useI18n(extensionId);
+              const { t } = useI18n();
 
               return (
                 <ScriptureMap2D
@@ -115,7 +115,14 @@ export const bootstrapExtension = () => {
                     initialIsReadingHistoryEnabled: false,
                     appId: "", // TODO: Define this
                     extensionId,
-                    translate: t,
+                    translate: (
+                      key: string,
+                      options?: Record<string, unknown> | undefined
+                    ) =>
+                      t(key, {
+                        ns: [extensionId, "seed-bible"],
+                        ...(options ?? {}),
+                      }),
                     seedBibleState: context,
                     bibleVizUtilsEventManager,
                     scriptureMap2DEventManager,
@@ -131,7 +138,13 @@ export const bootstrapExtension = () => {
                     ComputeRawGradientColors,
                     ComputeLinearGradient,
                     HexToRgb,
+                    RgbToHex,
                     GetChildrenLevelColors,
+                    GetColorType,
+                    RGBStringToArray,
+                    HexLongToShort,
+                    HexShortToLong,
+                    ColorParser,
                     CapitalizeFirstLetter,
                     GetPastDateInfo,
                     sectionInfoMapper,
@@ -152,6 +165,4 @@ export const bootstrapExtension = () => {
       };
     },
   });
-
-  console.log(`[Debug] ScriptureMap2D: bootstrapExtension end`);
 };

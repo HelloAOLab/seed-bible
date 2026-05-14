@@ -80,8 +80,9 @@ export class UserColorSyncService {
 
         // CASE 2: User in instance
         if (configId) {
-          const color =
-            this.#sessionProviderPort.getUserColorByConfigId(configId);
+          const color = this.#sessionProviderPort.getUserColorById(
+            authId ?? configId ?? "anonymous"
+          );
 
           if (!color) {
             throw new Error(

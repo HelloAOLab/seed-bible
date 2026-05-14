@@ -1,4 +1,5 @@
 import { useTestamentContext } from "scriptureMap2D.contexts.Testament.TestamentContext";
+import { useScriptureMap2DContext } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
 const { useMemo } = os.appHooks;
 
 type ArrowContent = "keyboard_arrow_up" | "keyboard_arrow_down";
@@ -14,6 +15,7 @@ type UseTestamentToggle = (params: {
 }) => UseTestamentToggleType;
 
 export const useTestamentToggle: UseTestamentToggle = ({ showingContent }) => {
+  const { translate } = useScriptureMap2DContext();
   const { testament } = useTestamentContext();
 
   const booksCount = useMemo(() => {
@@ -24,12 +26,12 @@ export const useTestamentToggle: UseTestamentToggle = ({ showingContent }) => {
   }, [testament]);
 
   const toggleDescriptionContent = useMemo(() => {
-    return `${booksCount} books`;
-  }, [booksCount]);
+    return translate("books-count", { count: booksCount });
+  }, [booksCount, translate]);
 
   const toggleTitleContent = useMemo(() => {
-    return testament.name;
-  }, [testament]);
+    return translate(testament.translationKey ?? testament.name);
+  }, [testament, translate]);
 
   const toggleArrowContent = useMemo<ArrowContent>(() => {
     return showingContent ? "keyboard_arrow_up" : "keyboard_arrow_down";
