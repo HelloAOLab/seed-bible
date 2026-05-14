@@ -49,7 +49,7 @@ export function SeedBibleIcon() {
     <img
       src="https://favicon.ao.bot/assets/seed-bible-isolated-minified.png"
       style={{
-        width: "40px",
+        width: "32px",
       }}
     />
   );
