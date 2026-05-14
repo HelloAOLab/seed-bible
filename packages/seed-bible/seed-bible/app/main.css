@@ -1333,6 +1333,7 @@ h6 {
 
 .sb-reader-toolbar-wrap {
   position: static;
+  transition: transform 0.3s ease;
 }
 
 .sb-reader-toolbar-item {
@@ -1535,7 +1536,7 @@ h6 {
     height: var(--sb-reader-toolbar-mobile-layout-height);
     width: 100%;
     border-radius: 0;
-    padding: var(--sb-reader-toolbar-mobile-layout-padding);
+    padding: 10px 35px;
     justify-content: space-between;
     align-items: flex-end;
     gap: var(--sb-reader-toolbar-mobile-layout-gap);
@@ -1643,6 +1644,15 @@ h6 {
 
   .sb-reader-toolbar-floating-button-right {
     inset-inline-end: var(--sb-reader-toolbar-floating-button-side-offset);
+  }
+
+  /* When the user is scrolling down on a mobile reader, slide the bottom
+   * toolbar (and its floating prev/next arrows) off the bottom of the
+   * viewport. Scrolling back up removes the body class and the toolbar
+   * slides back into view. */
+  body.sb-scroll-hide-bars .sb-reader-toolbar-wrap {
+    transform: translateX(-50%) translateY(100%);
+    pointer-events: none;
   }
 }
 
