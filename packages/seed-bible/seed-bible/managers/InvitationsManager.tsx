@@ -250,7 +250,9 @@ export function createInvitationsManager(
 
   // Kick off the registry connection immediately — discoverability doesn't
   // require the current user to be logged in.
-  void openRegistry();
+
+  // TODO: Support invitations
+  // void openRegistry();
 
   const publishSession = async (
     session: BibleReadingSession

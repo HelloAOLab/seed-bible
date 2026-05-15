@@ -1122,23 +1122,25 @@ export interface ThemeManager {
 export function createTheme(login: LoginManager): ThemeManager {
   const themes = signal<BibleTheme[]>([LIGHT_THEME, DARK_THEME]);
 
+  const url = new URL(window.location.href);
+
   const readThemeId = () =>
     parseThemeId(
       getProfileConfigValue(login.profile.value, PROFILE_THEME_ID) ??
-        configBot.tags[TAG_THEME_ID],
+        url.searchParams.get(TAG_THEME_ID),
       DEFAULT_THEME_ID
     );
 
   const readCustomOverrides = () =>
     parseCustomTheme(
       getProfileConfigValue(login.profile.value, PROFILE_CUSTOM_THEME) ??
-        configBot.tags[TAG_CUSTOM_THEME]
+        url.searchParams.get(TAG_CUSTOM_THEME)
     );
 
   const readHighlightOverrides = () =>
     parseHighlightOverrides(
       getProfileConfigValue(login.profile.value, PROFILE_CUSTOM_HIGHLIGHTS) ??
-        configBot.tags[TAG_CUSTOM_HIGHLIGHTS]
+        url.searchParams.get(TAG_CUSTOM_HIGHLIGHTS)
     );
 
   const selectedThemeId = signal<string>(readThemeId());
@@ -1170,48 +1172,53 @@ export function createTheme(login: LoginManager): ThemeManager {
     )
   );
 
-  os.addBotListener(configBot, "onBotChanged", (that: unknown) => {
-    const changedTagsSource =
-      that && typeof that === "object" && "tags" in that
-        ? (that as { tags?: unknown }).tags
-        : null;
-    const changedTags = Array.isArray(changedTagsSource)
-      ? changedTagsSource
-      : [];
+  // TODO: Listen for changes to the URL
+  // os.addBotListener(configBot, "onBotChanged", (that: unknown) => {
+  //   const changedTagsSource =
+  //     that && typeof that === "object" && "tags" in that
+  //       ? (that as { tags?: unknown }).tags
+  //       : null;
+  //   const changedTags = Array.isArray(changedTagsSource)
+  //     ? changedTagsSource
+  //     : [];
 
-    if (changedTags.includes(TAG_THEME_ID)) {
-      selectedThemeId.value = parseThemeId(
-        configBot.tags[TAG_THEME_ID],
-        DEFAULT_THEME_ID
-      );
-    }
-    if (changedTags.includes(TAG_CUSTOM_THEME)) {
-      customOverrides.value = parseCustomTheme(
-        configBot.tags[TAG_CUSTOM_THEME]
-      );
-    }
-    if (changedTags.includes(TAG_CUSTOM_HIGHLIGHTS)) {
-      customHighlightOverrides.value = parseHighlightOverrides(
-        configBot.tags[TAG_CUSTOM_HIGHLIGHTS]
-      );
-    }
-  });
+  //   if (changedTags.includes(TAG_THEME_ID)) {
+  //     selectedThemeId.value = parseThemeId(
+  //       configBot.tags[TAG_THEME_ID],
+  //       DEFAULT_THEME_ID
+  //     );
+  //   }
+  //   if (changedTags.includes(TAG_CUSTOM_THEME)) {
+  //     customOverrides.value = parseCustomTheme(
+  //       configBot.tags[TAG_CUSTOM_THEME]
+  //     );
+  //   }
+  //   if (changedTags.includes(TAG_CUSTOM_HIGHLIGHTS)) {
+  //     customHighlightOverrides.value = parseHighlightOverrides(
+  //       configBot.tags[TAG_CUSTOM_HIGHLIGHTS]
+  //     );
+  //   }
+  // });
 
   const setTheme = (themeId: string) => {
     if (themes.value.some((theme) => theme.id === themeId)) {
       selectedThemeId.value = themeId;
-      configBot.tags[TAG_THEME_ID] = themeId;
+
+      // TODO: Update the URL here
+      // configBot.tags[TAG_THEME_ID] = themeId;
       saveProfileConfigValue(login, PROFILE_THEME_ID, themeId);
     }
   };
 
   const writeOverrides = (next: ThemeOverrides) => {
     customOverrides.value = next;
-    if (Object.keys(next).length === 0) {
-      configBot.tags[TAG_CUSTOM_THEME] = "";
-    } else {
-      configBot.tags[TAG_CUSTOM_THEME] = JSON.stringify(next);
-    }
+
+    // TODO: Update the URL here
+    // if (Object.keys(next).length === 0) {
+    //   configBot.tags[TAG_CUSTOM_THEME] = "";
+    // } else {
+    //   configBot.tags[TAG_CUSTOM_THEME] = JSON.stringify(next);
+    // }
     saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, next);
   };
 
@@ -1231,11 +1238,12 @@ export function createTheme(login: LoginManager): ThemeManager {
 
   const writeHighlightOverrides = (next: HighlightOverrides) => {
     customHighlightOverrides.value = next;
-    if (Object.keys(next).length === 0) {
-      configBot.tags[TAG_CUSTOM_HIGHLIGHTS] = "";
-    } else {
-      configBot.tags[TAG_CUSTOM_HIGHLIGHTS] = JSON.stringify(next);
-    }
+    // TODO: Update the URL here
+    // if (Object.keys(next).length === 0) {
+    //   configBot.tags[TAG_CUSTOM_HIGHLIGHTS] = "";
+    // } else {
+    //   configBot.tags[TAG_CUSTOM_HIGHLIGHTS] = JSON.stringify(next);
+    // }
     saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, next);
   };
 

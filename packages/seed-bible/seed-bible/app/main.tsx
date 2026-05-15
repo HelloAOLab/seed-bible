@@ -11,6 +11,7 @@ import type { ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "seed-bible.components.ContextMenu";
 import { ModalHost } from "seed-bible.components.ModalHost";
 import { useMemo } from "preact/hooks";
+import "./main.css";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -56,7 +57,7 @@ export function ExternalResourceDependencies({
       />
       <style>{`body {\n${themeCssVariables}\n}`}</style>
       <style>{themeCssClasses}</style>
-      <style>{tags["main.css"]}</style>
+      {/* <style>{tags["main.css"]}</style> */}
     </>
   );
 }

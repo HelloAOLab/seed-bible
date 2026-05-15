@@ -120,6 +120,18 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
         "signOut is not implemented in this version of CasualOSManager"
       );
     },
+
+    requestWakeLock: async () => {
+      console.warn(
+        "requestWakeLock is not implemented in this version of CasualOSManager"
+      );
+    },
+
+    disableWakeLock: async () => {
+      console.warn(
+        "disableWakeLock is not implemented in this version of CasualOSManager"
+      );
+    },
   };
 }
 

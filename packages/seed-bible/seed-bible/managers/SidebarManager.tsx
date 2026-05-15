@@ -1,4 +1,4 @@
-import { computed, effect, signal } from "@preact/signals";
+import { computed, signal } from "@preact/signals";
 
 /**
  * Which settings subpage the SettingsPage should jump to on its next mount.
@@ -15,7 +15,8 @@ export type RequestedSettingsView =
   | "extensions";
 
 export function createSidebar() {
-  const initialView = configBot.tags.settingsView ?? null;
+  // TODO: Set the intitial view based on the URL
+  const initialView = null;
   const isSidebarCollapsed = signal(false);
   const isMobileOpen = signal(false);
   const requestedSettingsView = signal<RequestedSettingsView>(initialView);
@@ -66,41 +67,42 @@ export function createSidebar() {
     isMobileOpen.value = false;
   };
 
-  effect(() => {
-    const requestedView = requestedSettingsView.value;
+  // TODO: Track sidebar open state using a router instead
+  // effect(() => {
+  //   const requestedView = requestedSettingsView.value;
 
-    if (configBot.tags.settingsView !== requestedView) {
-      configBot.tags.settingsView = requestedView;
-    }
+  //   if (configBot.tags.settingsView !== requestedView) {
+  //     configBot.tags.settingsView = requestedView;
+  //   }
 
-    configBot.tags.sidebar = isMobileOpen.value ? "open" : null;
-  });
+  //   configBot.tags.sidebar = isMobileOpen.value ? "open" : null;
+  // });
 
-  os.addBotListener(configBot, "onBotChanged", async (that: unknown) => {
-    const changedTagsSource =
-      that && typeof that === "object" && "tags" in that
-        ? (that as { tags?: unknown }).tags
-        : null;
-    const changedTags = Array.isArray(changedTagsSource)
-      ? changedTagsSource
-      : [];
-    const hasSettingsViewChange = changedTags.includes("settingsView");
+  // os.addBotListener(configBot, "onBotChanged", async (that: unknown) => {
+  //   const changedTagsSource =
+  //     that && typeof that === "object" && "tags" in that
+  //       ? (that as { tags?: unknown }).tags
+  //       : null;
+  //   const changedTags = Array.isArray(changedTagsSource)
+  //     ? changedTagsSource
+  //     : [];
+  //   const hasSettingsViewChange = changedTags.includes("settingsView");
 
-    if (hasSettingsViewChange) {
-      const newRequestedView = configBot.tags.settingsView ?? null;
-      if (newRequestedView !== requestedSettingsView.value) {
-        requestedSettingsView.value = newRequestedView;
-      }
-    }
+  //   if (hasSettingsViewChange) {
+  //     const newRequestedView = configBot.tags.settingsView ?? null;
+  //     if (newRequestedView !== requestedSettingsView.value) {
+  //       requestedSettingsView.value = newRequestedView;
+  //     }
+  //   }
 
-    const hasSidebarChange = changedTags.includes("sidebar");
-    if (hasSidebarChange) {
-      const newIsMobileOpen = configBot.tags.sidebar === "open";
-      if (newIsMobileOpen !== isMobileOpen.value) {
-        isMobileOpen.value = newIsMobileOpen;
-      }
-    }
-  });
+  //   const hasSidebarChange = changedTags.includes("sidebar");
+  //   if (hasSidebarChange) {
+  //     const newIsMobileOpen = configBot.tags.sidebar === "open";
+  //     if (newIsMobileOpen !== isMobileOpen.value) {
+  //       isMobileOpen.value = newIsMobileOpen;
+  //     }
+  //   }
+  // });
 
   return {
     isSettingsOpen,

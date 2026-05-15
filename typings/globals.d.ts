@@ -32,3 +32,8 @@ interface ImportMeta {
     options?: { eager?: boolean }
   ) => Record<string, unknown>;
 }
+
+declare module "*.css" {
+  const url: string;
+  export default url;
+}

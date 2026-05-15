@@ -22,21 +22,22 @@ export interface ReaderTab {
 }
 
 function getInitialFirstTabBookId(): string {
-  return typeof configBot.tags.book === "string" && configBot.tags.book.trim()
-    ? configBot.tags.book
-    : DEFAULT_BOOK_ID;
+  const url = new URL(window.location.href);
+  return url.searchParams.get("book") ?? DEFAULT_BOOK_ID;
 }
 
 function getInitialTranslationId(): string {
+  const url = new URL(window.location.href);
   return (
-    configBot.tags.translationId ??
-    configBot.tags.translation ??
+    url.searchParams.get("translationId") ??
+    url.searchParams.get("translation") ??
     DEFAULT_TRANSLATION_ID
   );
 }
 
 function getInitialFirstTabChapter(): number {
-  const value = Number(configBot.tags.chapter);
+  const url = new URL(window.location.href);
+  const value = Number(url.searchParams.get("chapter"));
   return Number.isFinite(value) && value > 0
     ? Math.floor(value)
     : DEFAULT_CHAPTER_NUMBER;
@@ -127,54 +128,54 @@ export function createTabs(
     () => tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null
   );
 
-  const syncSelectedTabFromConfig = async () => {
-    const selectedTab =
-      tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null;
-    if (!selectedTab) {
-      return;
-    }
+  // const syncSelectedTabFromConfig = async () => {
+  //   const selectedTab =
+  //     tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null;
+  //   if (!selectedTab) {
+  //     return;
+  //   }
 
-    const requestedTranslation = getInitialTranslationId();
-    const requestedBookId = getInitialFirstTabBookId();
-    const requestedChapter = getInitialFirstTabChapter();
-    const readingState = selectedTab.readingState;
+  //   const requestedTranslation = getInitialTranslationId();
+  //   const requestedBookId = getInitialFirstTabBookId();
+  //   const requestedChapter = getInitialFirstTabChapter();
+  //   const readingState = selectedTab.readingState;
 
-    const books = readingState.translationBooks.value?.books ?? [];
-    const selectedBook =
-      books.find((book) => book.id === requestedBookId) ?? null;
-    if (!selectedBook) {
-      return;
-    }
+  //   const books = readingState.translationBooks.value?.books ?? [];
+  //   const selectedBook =
+  //     books.find((book) => book.id === requestedBookId) ?? null;
+  //   if (!selectedBook) {
+  //     return;
+  //   }
 
-    const firstChapterNumber =
-      selectedBook.firstChapterNumber ?? DEFAULT_CHAPTER_NUMBER;
-    const maxChapterNumber =
-      firstChapterNumber + selectedBook.numberOfChapters - 1;
-    const nextChapter =
-      requestedChapter >= firstChapterNumber &&
-      requestedChapter <= maxChapterNumber
-        ? requestedChapter
-        : firstChapterNumber;
+  //   const firstChapterNumber =
+  //     selectedBook.firstChapterNumber ?? DEFAULT_CHAPTER_NUMBER;
+  //   const maxChapterNumber =
+  //     firstChapterNumber + selectedBook.numberOfChapters - 1;
+  //   const nextChapter =
+  //     requestedChapter >= firstChapterNumber &&
+  //     requestedChapter <= maxChapterNumber
+  //       ? requestedChapter
+  //       : firstChapterNumber;
 
-    if (
-      readingState.translationId.value === requestedTranslation &&
-      readingState.bookId.value === requestedBookId &&
-      readingState.chapterNumber.value === nextChapter
-    ) {
-      return;
-    }
+  //   if (
+  //     readingState.translationId.value === requestedTranslation &&
+  //     readingState.bookId.value === requestedBookId &&
+  //     readingState.chapterNumber.value === nextChapter
+  //   ) {
+  //     return;
+  //   }
 
-    console.log("Syncing selected tab reading state to match configBot tags:", {
-      requestedTranslation,
-      requestedBookId,
-      requestedChapter,
-    });
-    await readingState.selectTranslationAndChapter(
-      requestedTranslation,
-      requestedBookId,
-      nextChapter
-    );
-  };
+  //   console.log("Syncing selected tab reading state to match URL parameters:", {
+  //     requestedTranslation,
+  //     requestedBookId,
+  //     requestedChapter,
+  //   });
+  //   await readingState.selectTranslationAndChapter(
+  //     requestedTranslation,
+  //     requestedBookId,
+  //     nextChapter
+  //   );
+  // };
 
   effect(() => {
     const selectedBookId = selectedTab.value?.readingState.bookId.value;
@@ -186,42 +187,44 @@ export function createTabs(
       selectedBookId,
       selectedChapter,
     });
-    configBot.tags.book = selectedBookId;
-    configBot.tags.chapter = selectedChapter;
 
-    if (selectedTranslation) {
-      const translationId = dataManager.buildTranslationId(selectedTranslation);
+    // TODO: Update the URL here
+    // configBot.tags.book = selectedBookId;
+    // configBot.tags.chapter = selectedChapter;
 
-      if (configBot.tags.translationId) {
-        configBot.tags.translationId = translationId;
-      } else if (
-        configBot.tags.translation ||
-        translationId !== DEFAULT_TRANSLATION_ID
-      ) {
-        configBot.tags.translation = translationId;
-      }
-    }
+    // if (selectedTranslation) {
+    //   const translationId = dataManager.buildTranslationId(selectedTranslation);
+
+    //   if (configBot.tags.translationId) {
+    //     configBot.tags.translationId = translationId;
+    //   } else if (
+    //     configBot.tags.translation ||
+    //     translationId !== DEFAULT_TRANSLATION_ID
+    //   ) {
+    //     configBot.tags.translation = translationId;
+    //   }
+    // }
   });
 
-  os.addBotListener(configBot, "onBotChanged", async (that: unknown) => {
-    const changedTagsSource =
-      that && typeof that === "object" && "tags" in that
-        ? (that as { tags?: unknown }).tags
-        : null;
-    const changedTags = Array.isArray(changedTagsSource)
-      ? changedTagsSource
-      : [];
-    const hasReadingStateTagChange =
-      changedTags.includes("translation") ||
-      changedTags.includes("book") ||
-      changedTags.includes("chapter");
+  // os.addBotListener(configBot, "onBotChanged", async (that: unknown) => {
+  //   const changedTagsSource =
+  //     that && typeof that === "object" && "tags" in that
+  //       ? (that as { tags?: unknown }).tags
+  //       : null;
+  //   const changedTags = Array.isArray(changedTagsSource)
+  //     ? changedTagsSource
+  //     : [];
+  //   const hasReadingStateTagChange =
+  //     changedTags.includes("translation") ||
+  //     changedTags.includes("book") ||
+  //     changedTags.includes("chapter");
 
-    if (!hasReadingStateTagChange) {
-      return;
-    }
+  //   if (!hasReadingStateTagChange) {
+  //     return;
+  //   }
 
-    await syncSelectedTabFromConfig();
-  });
+  //   await syncSelectedTabFromConfig();
+  // });
 
   const addTab = (source?: NewTabSource) => {
     const currentTabs = tabs.value;

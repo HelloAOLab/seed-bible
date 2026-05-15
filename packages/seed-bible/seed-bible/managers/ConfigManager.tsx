@@ -90,17 +90,20 @@ export type ConfigManager = ReturnType<typeof createConfig>;
 
 export function createConfig(login: LoginManager) {
   const readConfig = (): AppConfig => {
-    const settingsPreset = parseSettingsPreset(configBot.tags.settingsPreset);
+    const url = new URL(window.location.href);
+    const settingsPreset = parseSettingsPreset(
+      url.searchParams.get("settingsPreset")
+    );
     const presetConfig = getPresetConfig(settingsPreset);
     const profile = login.profile.value;
     const fontSizeFromProfile = parseFontSize(
       getProfileConfigValue(profile, "fontSize"),
-      parseFontSize(configBot.tags["app.fontSize"], presetConfig.fontSize)
+      parseFontSize(url.searchParams.get("app.fontSize"), presetConfig.fontSize)
     );
     const disablePanelsFromProfile = parseBoolean(
       getProfileConfigValue(profile, "disablePanels"),
       parseBoolean(
-        configBot.tags["app.disablePanels"],
+        url.searchParams.get("app.disablePanels"),
         presetConfig.disablePanels
       )
     );
@@ -116,37 +119,39 @@ export function createConfig(login: LoginManager) {
   const syncConfigFromBot = (
     profile: UserProfile | null = login.profile.value
   ) => {
+    const url = new URL(window.location.href);
     config.value = readConfig();
 
     const profileLanguage = getProfileConfigValue(profile, "lang");
     const nextLanguage =
       typeof profileLanguage === "string" && profileLanguage.trim().length > 0
         ? profileLanguage
-        : configBot.tags.lang;
+        : url.searchParams.get("lang");
 
     if (nextLanguage && nextLanguage !== i18n.language) {
       i18n.changeLanguage(nextLanguage);
     }
   };
 
-  os.addBotListener(configBot, "onBotChanged", (that: unknown) => {
-    const changedTagsSource =
-      that && typeof that === "object" && "tags" in that
-        ? (that as { tags?: unknown }).tags
-        : null;
-    const changedTags = Array.isArray(changedTagsSource)
-      ? changedTagsSource
-      : [];
+  // TODO: Listen to URL changes
+  // os.addBotListener(configBot, "onBotChanged", (that: unknown) => {
+  //   const changedTagsSource =
+  //     that && typeof that === "object" && "tags" in that
+  //       ? (that as { tags?: unknown }).tags
+  //       : null;
+  //   const changedTags = Array.isArray(changedTagsSource)
+  //     ? changedTagsSource
+  //     : [];
 
-    if (
-      changedTags.includes("app.disablePanels") ||
-      changedTags.includes("app.fontSize") ||
-      changedTags.includes("settingsPreset") ||
-      changedTags.includes("lang")
-    ) {
-      syncConfigFromBot();
-    }
-  });
+  //   if (
+  //     changedTags.includes("app.disablePanels") ||
+  //     changedTags.includes("app.fontSize") ||
+  //     changedTags.includes("settingsPreset") ||
+  //     changedTags.includes("lang")
+  //   ) {
+  //     syncConfigFromBot();
+  //   }
+  // });
 
   effect(() => {
     syncConfigFromBot(login.profile.value);
@@ -158,7 +163,8 @@ export function createConfig(login: LoginManager) {
       disablePanels,
     };
     config.value = nextConfig;
-    configBot.tags["app.disablePanels"] = disablePanels;
+    // TODO: Update the URL here
+    // configBot.tags["app.disablePanels"] = disablePanels;
     saveProfileConfigValue(login, "disablePanels", disablePanels);
   };
 
@@ -169,16 +175,19 @@ export function createConfig(login: LoginManager) {
       fontSize: nextFontSize,
     };
     config.value = nextConfig;
-    configBot.tags["app.fontSize"] = nextFontSize;
+    // TODO: Update the URL here
+    // configBot.tags["app.fontSize"] = nextFontSize;
     saveProfileConfigValue(login, "fontSize", nextFontSize);
   };
 
-  os.syncConfigBotTagsToURL(["lang"]);
+  // os.syncConfigBotTagsToURL(["lang"]);
   i18n.on("languageChanged", (language: string) => {
     console.log("languageChanged event received from i18n:", language);
-    if (configBot.tags.lang || language !== DEFAULT_LANGUAGE) {
-      configBot.tags.lang = language;
-    }
+
+    // TODO: Update the URL here
+    // if (configBot.tags.lang || language !== DEFAULT_LANGUAGE) {
+    //   configBot.tags.lang = language;
+    // }
     saveProfileConfigValue(login, "lang", language);
   });
 
