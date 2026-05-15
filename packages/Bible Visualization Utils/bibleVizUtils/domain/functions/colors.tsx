@@ -19,10 +19,6 @@ export interface ColorParserMap {
   longHex: string;
   shortHex: string;
 }
-export type ColorParserType = <T extends ColorType>(
-  value: string | RGB,
-  target: T
-) => ColorParserMap[T];
 export type GetTextColorBasedOnBackgroundType = (params: {
   backgroundColor: WeightedColor[] | HexString;
 }) => HexString;
@@ -125,10 +121,10 @@ export const RGBStringToArray: RGBStringToArrayType = (color) => {
   ];
 };
 
-export const ColorParser: ColorParserType = <T extends ColorType>( // TODO: Find a workaround for this. Produces an import error without the comma.
+export function ColorParser<T extends ColorType>(
   value: string | RGB,
   target: T
-): ColorParserMap[T] => {
+): ColorParserMap[T] {
   const sourceType = GetColorType(value);
 
   if (!sourceType || sourceType === target) return value as ColorParserMap[T];
@@ -156,7 +152,9 @@ export const ColorParser: ColorParserType = <T extends ColorType>( // TODO: Find
     case "shortHex":
       return HexLongToShort(RgbToHex({ rgbColor: rgb })) as ColorParserMap[T];
   }
-};
+}
+
+export type ColorParserType = typeof ColorParser;
 
 export const GetTextColorBasedOnBackground: GetTextColorBasedOnBackgroundType =
   ({ backgroundColor }) => {
