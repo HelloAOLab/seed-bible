@@ -1004,7 +1004,8 @@ interface DatasetReference {
   score?: number;
 }
 
-export const DEFAULT_API_ENDPOINT = thisBot.tags.useFreeBibleAPI
+const url = new URL(location.href);
+export const DEFAULT_API_ENDPOINT = url.searchParams.has("useFreeBibleAPI")
   ? "https://bible.helloao.org/"
   : "https://vmfnri.helloao.org/";
 
@@ -1084,15 +1085,14 @@ export class FreeUseBibleAPI {
       return existing;
     }
 
-    const request: Promise<T> = web
-      .get(url)
+    const request: Promise<T> = fetch(url)
       .then(async (response) => {
         if (response.status < 200 || response.status >= 300) {
           throw new Error(
             `Failed request to ${url}. Status: ${response.status} ${response.statusText}`
           );
         }
-        return await response.data;
+        return await response.json();
       })
       .catch((error) => {
         this._responseCache.delete(url);

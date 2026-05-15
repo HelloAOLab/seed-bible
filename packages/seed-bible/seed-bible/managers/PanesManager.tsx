@@ -405,22 +405,23 @@ export function createPanes(
     }
   });
 
-  effect(() => {
-    const activePortalPane =
-      panes.value.find(
-        (pane) => pane.gridPortal !== null || pane.mapPortal !== null
-      ) ?? null;
-    const activeGridPortal = activePortalPane?.gridPortal ?? null;
-    const activeMapPortal = activePortalPane?.mapPortal ?? null;
+  // TODO: Support the grid portal and map portal
+  // effect(() => {
+  //   const activePortalPane =
+  //     panes.value.find(
+  //       (pane) => pane.gridPortal !== null || pane.mapPortal !== null
+  //     ) ?? null;
+  //   const activeGridPortal = activePortalPane?.gridPortal ?? null;
+  //   const activeMapPortal = activePortalPane?.mapPortal ?? null;
 
-    if (configBot.tags.gridPortal !== activeGridPortal) {
-      configBot.tags.gridPortal = activeGridPortal;
-    }
+  //   if (configBot.tags.gridPortal !== activeGridPortal) {
+  //     configBot.tags.gridPortal = activeGridPortal;
+  //   }
 
-    if (configBot.tags.mapPortal !== activeMapPortal) {
-      configBot.tags.mapPortal = activeMapPortal;
-    }
-  });
+  //   if (configBot.tags.mapPortal !== activeMapPortal) {
+  //     configBot.tags.mapPortal = activeMapPortal;
+  //   }
+  // });
 
   const getSelectedPane = () => {
     return (

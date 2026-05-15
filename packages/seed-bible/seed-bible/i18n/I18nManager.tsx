@@ -5,11 +5,14 @@ import {
   initReactI18next,
   useTranslation,
 } from "https://esm.sh/react-i18next@15.1.2?alias=react:preact/compat,react-dom:preact/compat&external=preact";
+import { useMemo } from "preact/hooks";
 
-const { useMemo } = os.appHooks;
+const languages = import.meta.glob("./*.json", { eager: true });
+
+const url = new URL(location.href);
 
 export const DEFAULT_LANGUAGE =
-  configBot.tags.lang ?? getLanguage(navigator.languages[0]) ?? "en";
+  url.searchParams.get("lang") ?? getLanguage(navigator.languages[0]) ?? "en";
 
 export { i18n };
 
@@ -44,32 +47,32 @@ export function addTranslations(
   }
 }
 
-/**
- * Loads translations from the given bot's tags.
- * Each tag with a key of 3 characters or less is considered a language code, and its value is expected to be a JSON string or an object containing the translations for that language.
- * @param bot The bot from which to load translations. Typically this would be the config bot or a dedicated locales bot.
- * @returns A record of translations keyed by language code, where each value is an object containing a "translation" object mapping translation keys to translated strings.
- */
-function getTranslations(bot: Bot): BotTranslations {
-  // os.log("Loading translations from bot tags...", localesBot);
-  const loadedResources: BotTranslations = {};
-  for (const langCode of Object.keys(bot.tags ?? {})) {
-    if (langCode.length > 3) {
-      continue; // Skip non-language tags
-    }
-    const translations = bot.tags[langCode];
-    if (translations) {
-      loadedResources[langCode] =
-        typeof translations === "string"
-          ? JSON.parse(translations)
-          : translations;
-    }
-  }
+// /**
+//  * Loads translations from the given bot's tags.
+//  * Each tag with a key of 3 characters or less is considered a language code, and its value is expected to be a JSON string or an object containing the translations for that language.
+//  * @param bot The bot from which to load translations. Typically this would be the config bot or a dedicated locales bot.
+//  * @returns A record of translations keyed by language code, where each value is an object containing a "translation" object mapping translation keys to translated strings.
+//  */
+// function getTranslations(bot: Bot): BotTranslations {
+//   // os.log("Loading translations from bot tags...", localesBot);
+//   const loadedResources: BotTranslations = {};
+//   for (const langCode of Object.keys(bot.tags ?? {})) {
+//     if (langCode.length > 3) {
+//       continue; // Skip non-language tags
+//     }
+//     const translations = bot.tags[langCode];
+//     if (translations) {
+//       loadedResources[langCode] =
+//         typeof translations === "string"
+//           ? JSON.parse(translations)
+//           : translations;
+//     }
+//   }
 
-  return loadedResources;
-}
+//   return loadedResources;
+// }
 
-const seedBibleTranslations = getTranslations(thisBot);
+const seedBibleTranslations = languages;
 if (!seedBibleTranslations[DEFAULT_LANGUAGE]) {
   seedBibleTranslations[DEFAULT_LANGUAGE] = {};
 }

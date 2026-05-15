@@ -211,7 +211,7 @@
     "resolvePackageJsonImports": true,
     "preserveConstEnums": true,
     "typeRoots": ["./node_modules/@types", "./typings"],
-    "types": ["jest"]
+    "types": ["jest", "vite/client"]
   },
   "include": ["packages", "typings", "script", "test", "standalone"],
   "exclude": ["obsolete"]

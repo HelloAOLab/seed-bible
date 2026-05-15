@@ -58,6 +58,7 @@ import {
   type InvitationsManager,
 } from "seed-bible.managers.InvitationsManager";
 import { createSearchManager } from "seed-bible.managers.SearchManager";
+import { CasualOSManager } from "./OsManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
@@ -115,6 +116,8 @@ export interface AppState {
  * components can consume one consistent source of truth.
  */
 export interface SeedBibleState {
+  os: CasualOSManager;
+
   /** Bible API and translation/chapter data orchestration. */
   bibleData: BibleDataManager;
   /** Persisted app configuration (layout, font size, etc.). */
@@ -168,8 +171,9 @@ export interface SeedBibleState {
 export function createSeedBibleState(): SeedBibleState {
   const api = new FreeUseBibleAPI();
   const data = createBibleDataManager(api);
-  const login = createLoginManager();
-  const highlights = createHighlightsManager(login);
+  const os = CasualOSManager();
+  const login = createLoginManager({ os });
+  const highlights = createHighlightsManager(os, login);
   const config = createConfig(login);
   const themeManager = createTheme(login);
   const sidebar = createSidebar();
@@ -302,8 +306,10 @@ export function createSeedBibleState(): SeedBibleState {
       return;
     }
 
-    const RTLE_CHAR = "\u202B";
-    configBot.tags.pageTitle = `${chapter.translation.textDirection === "rtl" ? RTLE_CHAR : ""}${chapter.book.name} ${chapter.chapter.number} - ${chapter.translation.name} | Seed Bible`;
+    // const RTLE_CHAR = "\u202B";
+
+    // TODO: Set page title
+    // configBot.tags.pageTitle = `${chapter.translation.textDirection === "rtl" ? RTLE_CHAR : ""}${chapter.book.name} ${chapter.chapter.number} - ${chapter.translation.name} | Seed Bible`;
 
     const readingHistoryTimeoutId = setInterval(() => {
       readingHistory.saveReadingHistory(
@@ -417,10 +423,11 @@ export function createSeedBibleState(): SeedBibleState {
     session.dispose = () => {
       const hostUserId = session.options.value.hostUserId;
       const localId = login.userId.value;
-      const localConnectionId =
-        typeof configBot !== "undefined" && configBot?.id
-          ? String(configBot.id)
-          : null;
+      // TODO: Get local connection ID
+      const localConnectionId = null;
+      // typeof configBot !== "undefined" && configBot?.id
+      //   ? String(configBot.id)
+      //   : null;
       const isHost =
         hostUserId !== null &&
         (hostUserId === localId || hostUserId === localConnectionId);
@@ -506,6 +513,7 @@ export function createSeedBibleState(): SeedBibleState {
   });
 
   const state: SeedBibleState = {
+    os,
     bibleData: data,
     config,
     theme: {

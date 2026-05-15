@@ -10,8 +10,7 @@ import { useEffect } from "preact/hooks";
 import type { ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "seed-bible.components.ContextMenu";
 import { ModalHost } from "seed-bible.components.ModalHost";
-
-const { useMemo } = os.appHooks;
+import { useMemo } from "preact/hooks";
 
 /**
  * A collection of link/script's providing expected resources from external sources.

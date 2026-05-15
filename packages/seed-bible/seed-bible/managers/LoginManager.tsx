@@ -1,5 +1,6 @@
 import { computed, effect, signal, type Signal } from "@preact/signals";
 import { z } from "zod";
+import type { CasualOSManager, UserInfo } from "./OsManager";
 
 export interface LoginManager {
   /**
@@ -10,7 +11,7 @@ export interface LoginManager {
   /**
    * The current auth bot. Null if not authenticated or if background auth has not completed yet.
    */
-  authBot: Signal<Bot | null>;
+  authBot: Signal<UserInfo | null>;
 
   /**
    * The user's profile information. Null if the user is not logged in.
@@ -57,8 +58,12 @@ export const userProfileSchema = z.object({
 
 export type UserProfile = z.infer<typeof userProfileSchema>;
 
-export function createLoginManager(): LoginManager {
-  const authBot: Signal<Bot | null> = signal<Bot | null>(null);
+export function createLoginManager({
+  os,
+}: {
+  os: CasualOSManager;
+}): LoginManager {
+  const authBot: Signal<UserInfo | null> = signal<UserInfo | null>(null);
   const userId = computed(() => authBot.value?.id ?? null);
   const profile = signal<UserProfile | null>(null);
 
@@ -143,28 +148,25 @@ export function createLoginManager(): LoginManager {
   };
 
   const uploadProfilePicture = async (): Promise<void> => {
-    if (!userId.value) {
-      console.warn("Cannot upload profile picture: no authenticated user");
-      return;
-    }
-
-    const files = await os.showUploadFiles();
-    const file = files?.[0];
-    if (!file) {
-      throw new Error("No file selected for upload");
-    }
-
-    const result = await os.recordFile(userId.value, file.data, {
-      mimeType: file.mimeType,
-      markers: ["publicRead"],
-    });
-
-    if (result.success === false) {
-      console.error("Profile picture upload failed:", result);
-      throw new Error("Failed to upload profile picture");
-    }
-
-    updateProfile({ pictureUrl: result.url });
+    // TODO: Implement this
+    // if (!userId.value) {
+    //   console.warn("Cannot upload profile picture: no authenticated user");
+    //   return;
+    // }
+    // const files = await os.showUploadFiles();
+    // const file = files?.[0];
+    // if (!file) {
+    //   throw new Error("No file selected for upload");
+    // }
+    // const result = await os.recordFile(userId.value, file.data, {
+    //   mimeType: file.mimeType,
+    //   markers: ["publicRead"],
+    // });
+    // if (result.success === false) {
+    //   console.error("Profile picture upload failed:", result);
+    //   throw new Error("Failed to upload profile picture");
+    // }
+    // updateProfile({ pictureUrl: result.url });
   };
 
   void os

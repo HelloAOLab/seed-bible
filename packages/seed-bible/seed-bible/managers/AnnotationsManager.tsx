@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { LoginManager } from "seed-bible.managers.LoginManager";
+import type { CasualOSManager } from "./OsManager";
 
 export interface AnnotationQuery {
   recordName?: string;
@@ -79,6 +80,7 @@ function sortAnnotations(annotations: Annotation[]): Annotation[] {
 }
 
 export function createAnnotationsManager(
+  os: CasualOSManager,
   login: LoginManager
 ): AnnotationsManager {
   const resolveRecordName = async (recordName?: string): Promise<string> => {

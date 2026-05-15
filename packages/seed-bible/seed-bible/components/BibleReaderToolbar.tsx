@@ -11,6 +11,7 @@ import {
   handleVerticalListKeyNav,
 } from "seed-bible.components.KeyboardNav";
 import { TabsIcon } from "seed-bible.components.icons";
+import { useEffect, useRef } from "preact/hooks";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 
@@ -25,8 +26,6 @@ function getContrastTextColor(hex: string): string {
   const yiq = (r * 299 + g * 587 + b * 114) / 1000;
   return yiq >= 160 ? "#333333" : "#ffffff";
 }
-
-const { useEffect, useRef } = os.appHooks;
 
 /**
  * Deterministic decoration id for a per-verse shared highlight. Using a

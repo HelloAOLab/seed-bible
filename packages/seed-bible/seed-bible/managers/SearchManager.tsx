@@ -1,4 +1,4 @@
-import Typesense from "typesense-fixed";
+import * as Typesense from "typesense";
 import { z } from "zod";
 
 const TYPESENSE_NODE_URL = new URL("https://search.ao.bot");

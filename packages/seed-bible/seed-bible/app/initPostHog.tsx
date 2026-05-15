@@ -61,12 +61,12 @@ console.log("[app] Initializing PostHog for error reporting...");
 })(document, (window as any).posthog || []);
 
 const seedBibleApiKey = "phc_rEUogfrnXkdTitOTrfWK2laEINF1QwNtGNQizzuMW0";
-posthog.init(thisBot.tags.posthogApiKey || seedBibleApiKey, {
+posthog.init(seedBibleApiKey, {
   api_host: "https://i.ao.bot",
   ui_host: "https://us.posthog.com",
   defaults: "2025-05-24",
 });
 
 posthog.register({
-  pattern: configBot.tags.pattern,
+  // pattern: configBot.tags.pattern,
 });

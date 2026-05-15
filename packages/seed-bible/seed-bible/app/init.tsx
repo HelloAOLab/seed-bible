@@ -1,6 +1,6 @@
-configBot.tags.pageTitle = "Seed Bible";
+import "./initPostHog";
 
-thisBot.initPostHog();
+// configBot.tags.pageTitle = "Seed Bible";
 
 const importMap = document.createElement("script");
 importMap.type = "importmap";
@@ -13,7 +13,7 @@ document.head.prepend(importMap);
 
 import { Main } from "seed-bible.app.main";
 
-const { render } = os.appHooks;
+import { render } from "preact";
 
 // const importMap = document.createElement('script');
 // importMap.type = 'importmap';
@@ -25,16 +25,16 @@ const { render } = os.appHooks;
 // });
 // document.head.appendChild(importMap);
 
-os.syncConfigBotTagsToURL([
-  "translation",
-  "book",
-  "chapter",
-  "settingsView",
-  "sidebar",
-]);
+// os.syncConfigBotTagsToURL([
+//   "translation",
+//   "book",
+//   "chapter",
+//   "settingsView",
+//   "sidebar",
+// ]);
 
-configBot.tags.gridPortal = null;
-configBot.tags.mapPortal = null;
+// configBot.tags.gridPortal = null;
+// configBot.tags.mapPortal = null;
 
 console.log("Starting APP");
 render(<Main />, document.body);

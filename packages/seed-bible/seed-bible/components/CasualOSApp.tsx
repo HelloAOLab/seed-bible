@@ -1,5 +1,5 @@
 import type { JSX, VNode } from "preact";
-const { useEffect } = os.appHooks;
+import { useEffect } from "preact/hooks";
 
 async function renderApp(id: string, content: JSX.Element | VNode | string) {
   setTimeout(async () => {

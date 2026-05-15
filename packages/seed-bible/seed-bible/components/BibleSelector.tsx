@@ -16,7 +16,7 @@ import {
 import type { Translation } from "seed-bible.managers.FreeUseBibleAPI";
 import { computed, signal } from "@preact/signals";
 import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
-const { useEffect, useMemo, useRef, useState } = os.appHooks;
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 interface BibleSelectorProps {
   isOpen: boolean;

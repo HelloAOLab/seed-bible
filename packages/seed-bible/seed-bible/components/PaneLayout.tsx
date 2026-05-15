@@ -16,8 +16,7 @@ import { batch, effect } from "@preact/signals";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { translateTitle } from "seed-bible.components.Utils";
 import { MaterialIcon } from "seed-bible.components.icons";
-
-const { useEffect, useRef, useState } = os.appHooks;
+import { useEffect, useRef, useState } from "preact/hooks";
 
 // const ATTACHED_PANE_MIN_SIZE_PX = 180;
 

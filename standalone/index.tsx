@@ -1,14 +1,15 @@
-import { render } from "preact";
+// import { render } from "preact";
 
-const app = document.getElementById("app");
+// const app = document.getElementById("app");
 
-if (!app) {
-  throw new Error("App element not found");
-}
+// if (!app) {
+//   throw new Error("App element not found");
+// }
 
-render(
-  <div>
-    <h1>Aux Library</h1>
-  </div>,
-  app
-);
+// render(
+//   <div>
+//     <h1>Aux Library</h1>
+//   </div>,
+//   app
+// );
+import "seed-bible.app.init";

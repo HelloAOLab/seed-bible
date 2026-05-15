@@ -24,7 +24,17 @@ export interface ConnectedSessionUser extends SessionConnectionInfo {
   color: string;
 }
 
-export interface SessionConnectionInfo extends ConnectionInfo {
+export interface SessionConnectionInfo {
+  /**
+   * The ID of the user in the session connection.
+   */
+  userId: string | null;
+
+  /**
+   * The ID of the connection.
+   */
+  connectionId: string;
+
   /**
    * Whether this event is for the current client.
    * This will be true when `client.connectionId` is the same as the `configBot.id` and false otherwise.

@@ -51,6 +51,6 @@ declare module "https://esm.sh/*" {
   export function render(element: unknown, container: Element): void;
 }
 
-declare module "typesense-fixed" {
-  export * from "typesense";
-}
+// declare module "typesense-fixed" {
+//   export * from "typesense";
+// }
