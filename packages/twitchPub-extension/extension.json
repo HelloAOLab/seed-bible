@@ -1,0 +1,105 @@
+{
+  "id": "ext_twitchPub",
+  "translations": {
+    "en": {
+      "title": "Twitch Pub Extension",
+      "description": "An extension for the Seed Bible to integrate with Twitch Pub."
+    },
+    "es": {
+      "title": "Extensión de Twitch Pub",
+      "description": "Una extensión para el Seed Bible para integrarse con Twitch Pub."
+    },
+    "am": {
+      "title": "የTwitch Pub ኤክስቴንሽን",
+      "description": "ለ Seed Bible ከTwitch Pub ጋር ለመያዝ ኤክስቴንሽን ነው።"
+    },
+    "ar": {
+      "title": "امتداد Twitch Pub",
+      "description": "امتداد لمشروع Seed Bible للتكامل مع Twitch Pub."
+    },
+    "bn": {
+      "title": "Twitch Pub এক্সটেনশন",
+      "description": "Seed Bible প্রকল্পের সাথে Twitch Pub একত্রিত করার জন্য একটি এক্সটেনশন।"
+    },
+    "fa": {
+      "title": "افزونه Twitch Pub",
+      "description": "یک افزونه برای پروژه Seed Bible برای ادغام با Twitch Pub."
+    },
+    "fr": {
+      "title": "Extension Twitch Pub",
+      "description": "Une extension pour le projet Seed Bible pour s'intégrer avec Twitch Pub."
+    },
+    "hi": {
+      "title": "Twitch Pub एक्सटेंशन",
+      "description": "Seed Bible परियोजना के साथ Twitch Pub को एकीकृत करने के लिए एक एक्सटेंशन।"
+    },
+    "id": {
+      "title": "Ekstensi Twitch Pub",
+      "description": "Sebuah ekstensi untuk proyek Seed Bible untuk terintegrasi dengan Twitch Pub."
+    },
+    "ja": {
+      "title": "Twitch Pub 拡張機能",
+      "description": "Seed Bible プロジェクトと Twitch Pub を統合するための拡張機能。"
+    },
+    "ko": {
+      "title": "Twitch Pub 확장 기능",
+      "description": "Seed Bible 프로젝트와 Twitch Pub를 통합하기 위한 확장 기능입니다."
+    },
+    "mn": {
+      "title": "Twitch Pub өргөтгөл",
+      "description": "Seed Bible төслийг Twitch Pub-той нэгтгэхийн тулд өргөтгөл."
+    },
+    "ne": {
+      "title": "Twitch Pub विस्तार",
+      "description": "Seed Bible परियोजनालाई Twitch Pub सँग एकीकृत गर्नको लागि विस्तार।"
+    },
+    "ps": {
+      "title": "د Twitch Pub توسیع",
+      "description": "د Seed Bible پروژې لپاره د Twitch Pub سره د یوځای کولو توسیع."
+    },
+    "pt": {
+      "title": "Extensão Twitch Pub",
+      "description": "Uma extensão para o projeto Seed Bible para se integrar com o Twitch Pub."
+    },
+    "ru": {
+      "title": "Расширение Twitch Pub",
+      "description": "Расширение для проекта Seed Bible для интеграции с Twitch Pub."
+    },
+    "sw": {
+      "title": "Upanuzi wa Twitch Pub",
+      "description": "Upanuzi kwa mradi wa Seed Bible ili kuunganishwa na Twitch Pub."
+    },
+    "ti": {
+      "title": "Twitch Pub ኤክስቴንሽን",
+      "description": "Seed Bible ፕሮጀክትን ከTwitch Pub ጋር ለመያዝ ኤክስቴንሽን ነው።"
+    },
+    "tr": {
+      "title": "Twitch Pub Uzantısı",
+      "description": "Seed Bible projesi ile Twitch Pub'u entegre etmek için bir uzantı."
+    },
+    "ug": {
+      "title": "Twitch Pub كېڭەيتىلمىسى",
+      "description": "Seed Bible پروژىسىنى Twitch Pub بىلەن بىرلەشتۈرۈش ئۈچۈن كېڭەيتىلمە."
+    },
+    "uk": {
+      "title": "Розширення Twitch Pub",
+      "description": "Розширення для проєкту Seed Bible для інтеграції з Twitch Pub."
+    },
+    "ur": {
+      "title": "Twitch Pub ایکسٹینشن",
+      "description": "Seed Bible پروجیکٹ کے لیے Twitch Pub کے ساتھ انضمام کے لیے ایک ایکسٹینشن۔"
+    },
+    "vi": {
+      "title": "Tiện ích mở rộng Twitch Pub",
+      "description": "Một tiện ích mở rộng cho dự án Seed Bible để tích hợp với Twitch Pub."
+    },
+    "zh": {
+      "title": "Twitch Pub 扩展",
+      "description": "Seed Bible 项目与 Twitch Pub 集成的扩展。"
+    },
+    "ind": {
+      "title": "Ekstensi Twitch Pub",
+      "description": "Ekstensi untuk proyek Seed Bible untuk terintegrasi dengan Twitch Pub."
+    }
+  }
+}

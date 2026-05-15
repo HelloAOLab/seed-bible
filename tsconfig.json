@@ -193,6 +193,93 @@
       ],
       "ext_Example.onInstJoined": [
         "./packages/seed-bible-refresh-example-extension/ext_Example/onInstJoined.tsx"
+      ],
+      "ext_twitchPub.host.App": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/App.tsx"
+      ],
+      "ext_twitchPub.host.Authenticate": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/Authenticate.tsx"
+      ],
+      "ext_twitchPub.host.DraggableContainer": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/DraggableContainer.tsx"
+      ],
+      "ext_twitchPub.host.icons": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/icons.tsx"
+      ],
+      "ext_twitchPub.host.init": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/init.tsx"
+      ],
+      "ext_twitchPub.host.initializeTwitchBot": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/initializeTwitchBot.tsx"
+      ],
+      "ext_twitchPub.host.interface": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/interface.tsx"
+      ],
+      "ext_twitchPub.host.Login": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/Login.tsx"
+      ],
+      "ext_twitchPub.host.openInterface": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/openInterface.tsx"
+      ],
+      "ext_twitchPub.host.QRCode": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/QRCode.tsx"
+      ],
+      "ext_twitchPub.host.sendMessage": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/sendMessage.tsx"
+      ],
+      "ext_twitchPub.host.sendWhispers": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/sendWhispers.tsx"
+      ],
+      "ext_twitchPub.host.TwitchInterface": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/TwitchInterface.tsx"
+      ],
+      "ext_twitchPub.host.TwitchSettings": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/TwitchSettings.tsx"
+      ],
+      "ext_twitchPub.host.twitchPubManager": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/twitchPubManager.tsx"
+      ],
+      "ext_twitchPub.host.utils": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/utils.tsx"
+      ],
+      "ext_twitchSub.client.App": [
+        "./packages/twitchSub-extension/ext_twitchSub/client/App.tsx"
+      ],
+      "ext_twitchSub.client.DraggableContainer": [
+        "./packages/twitchSub-extension/ext_twitchSub/client/DraggableContainer.tsx"
+      ],
+      "ext_twitchSub.client.icons": [
+        "./packages/twitchSub-extension/ext_twitchSub/client/icons.tsx"
+      ],
+      "ext_twitchSub.client.init": [
+        "./packages/twitchSub-extension/ext_twitchSub/client/init.tsx"
+      ],
+      "ext_twitchSub.client.initializeTwitchWS": [
+        "./packages/twitchSub-extension/ext_twitchSub/client/initializeTwitchWS.tsx"
+      ],
+      "ext_twitchSub.client.interface": [
+        "./packages/twitchSub-extension/ext_twitchSub/client/interface.tsx"
+      ],
+      "ext_twitchSub.client.onEggHatch": [
+        "./packages/twitchSub-extension/ext_twitchSub/client/onEggHatch.tsx"
+      ],
+      "ext_twitchSub.client.onExtensionInstalled": [
+        "./packages/twitchSub-extension/ext_twitchSub/client/onExtensionInstalled.tsx"
+      ],
+      "ext_twitchSub.client.onExtensionUninstalled": [
+        "./packages/twitchSub-extension/ext_twitchSub/client/onExtensionUninstalled.tsx"
+      ],
+      "ext_twitchSub.client.onInstJoined": [
+        "./packages/twitchSub-extension/ext_twitchSub/client/onInstJoined.tsx"
+      ],
+      "ext_twitchSub.client.toggleInterface": [
+        "./packages/twitchSub-extension/ext_twitchSub/client/toggleInterface.tsx"
+      ],
+      "ext_twitchSub.client.TwitchSettings": [
+        "./packages/twitchSub-extension/ext_twitchSub/client/TwitchSettings.tsx"
+      ],
+      "ext_twitchSub.client.twitchSubManager": [
+        "./packages/twitchSub-extension/ext_twitchSub/client/twitchSubManager.tsx"
       ]
     },
     "noImplicitAny": true,

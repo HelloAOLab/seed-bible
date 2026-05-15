@@ -874,7 +874,6 @@ const LanguageComponent = (props: {
               return (
                 <div
                   onClick={async () => {
-                    selectingTranslation.value = false;
                     selectTranslation(value.id);
                   }}
                   style={{

@@ -493,9 +493,14 @@ export function createBibleSelectorState(
       }
 
       selectedTranslationId.value = nextTranslationId;
+      handleChapterSelect(
+        currentBookId.value ?? firstBook?.id ?? "GEN",
+        currentChapterNumber.value ?? 1
+      );
       search.value = "";
       languageQuery.value = "";
       selectingTranslation.value = false;
+      setOpen(false);
     } catch (err) {
       error.value =
         err instanceof Error

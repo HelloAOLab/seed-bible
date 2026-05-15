@@ -1,0 +1,105 @@
+{
+  "id": "ext_twitchSub.client",
+  "translations": {
+    "en": {
+      "title": "Twitch Sub Extension",
+      "description": "An extension for the Seed Bible to integrate with Twitch Sub."
+    },
+    "es": {
+      "title": "Extensión de Twitch Sub",
+      "description": "Una extensión para el Seed Bible para integrarse con Twitch Sub."
+    },
+    "am": {
+      "title": "የTwitch Sub ኤክስቴንሽን",
+      "description": "ለ Seed Bible ከTwitch Sub ጋር ለመያዝ ኤክስቴንሽን ነው።"
+    },
+    "ar": {
+      "title": "امتداد Twitch Sub",
+      "description": "امتداد لمشروع Seed Bible للتكامل مع Twitch Sub."
+    },
+    "bn": {
+      "title": "Twitch Sub এক্সটেনশন",
+      "description": "Seed Bible প্রকল্পের সাথে Twitch Sub একত্রিত করার জন্য একটি এক্সটেনশন।"
+    },
+    "fa": {
+      "title": "افزونه Twitch Sub",
+      "description": "یک افزونه برای پروژه Seed Bible برای ادغام با Twitch Sub."
+    },
+    "fr": {
+      "title": "Extension Twitch Sub",
+      "description": "Une extension pour le projet Seed Bible pour s'intégrer avec Twitch Sub."
+    },
+    "hi": {
+      "title": "Twitch Sub एक्सटेंशन",
+      "description": "Seed Bible परियोजना के साथ Twitch Sub को एकीकृत करने के लिए एक एक्सटेंशन।"
+    },
+    "id": {
+      "title": "Ekstensi Twitch Sub",
+      "description": "Sebuah ekstensi untuk proyek Seed Bible untuk terintegrasi dengan Twitch Sub."
+    },
+    "ja": {
+      "title": "Twitch Sub 拡張機能",
+      "description": "Seed Bible プロジェクトと Twitch Sub を統合するための拡張機能。"
+    },
+    "ko": {
+      "title": "Twitch Sub 확장 기능",
+      "description": "Seed Bible 프로젝트와 Twitch Sub를 통합하기 위한 확장 기능입니다."
+    },
+    "mn": {
+      "title": "Twitch Sub өргөтгөл",
+      "description": "Seed Bible төслийг Twitch Sub-той нэгтгэхийн тулд өргөтгөл."
+    },
+    "ne": {
+      "title": "Twitch Sub विस्तार",
+      "description": "Seed Bible परियोजनालाई Twitch Sub सँग एकीकृत गर्नको लागि विस्तार।"
+    },
+    "ps": {
+      "title": "د Twitch Sub توسیع",
+      "description": "د Seed Bible پروژې لپاره د Twitch Sub سره د یوځای کولو توسیع."
+    },
+    "pt": {
+      "title": "Extensão Twitch Sub",
+      "description": "Uma extensão para o projeto Seed Bible para se integrar com o Twitch Sub."
+    },
+    "ru": {
+      "title": "Расширение Twitch Sub",
+      "description": "Расширение для проекта Seed Bible для интеграции с Twitch Sub."
+    },
+    "sw": {
+      "title": "Upanuzi wa Twitch Sub",
+      "description": "Upanuzi kwa mradi wa Seed Bible ili kuunganishwa na Twitch Sub."
+    },
+    "ti": {
+      "title": "Twitch Sub ኤክስቴንሽን",
+      "description": "Seed Bible ፕሮጀክትን ከTwitch Sub ጋር ለመያዝ ኤክስቴንሽን ነው።"
+    },
+    "tr": {
+      "title": "Twitch Sub Uzantısı",
+      "description": "Seed Bible projesi ile Twitch Sub'u entegre etmek için bir uzantı."
+    },
+    "ug": {
+      "title": "Twitch Sub كېڭەيتىلمىسى",
+      "description": "Seed Bible پروژىسىنى Twitch Sub بىلەن بىرلەشتۈرۈش ئۈچۈن كېڭەيتىلمە."
+    },
+    "uk": {
+      "title": "Розширення Twitch Sub",
+      "description": "Розширення для проєкту Seed Bible для інтеграції з Twitch Sub."
+    },
+    "ur": {
+      "title": "Twitch Sub ایکسٹینشن",
+      "description": "Seed Bible پروجیکٹ کے لیے Twitch Sub کے ساتھ انضمام کے لیے ایک ایکسٹینشن۔"
+    },
+    "vi": {
+      "title": "Tiện ích mở rộng Twitch Sub",
+      "description": "Một tiện ích mở rộng cho dự án Seed Bible để tích hợp với Twitch Sub."
+    },
+    "zh": {
+      "title": "Twitch Sub 扩展",
+      "description": "Seed Bible 项目与 Twitch Sub 集成的扩展。"
+    },
+    "ind": {
+      "title": "Ekstensi Twitch Sub",
+      "description": "Ekstensi untuk proyek Seed Bible untuk terintegrasi dengan Twitch Sub."
+    }
+  }
+}
