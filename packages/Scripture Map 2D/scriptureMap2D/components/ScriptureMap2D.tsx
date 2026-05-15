@@ -40,6 +40,7 @@ import type { IsValueBetweenType } from "@packages/Bible Visualization Utils/bib
 import type { ScriptureMap3DConfigProvider } from "bibleVizUtils.infrastructure.config.scriptureMap3D.ScriptureMap3DConfigProvider";
 import type { ReadingHistoryConfigProvider } from "bibleVizUtils.infrastructure.config.readingHistory.ReadingHistoryConfigProvider";
 import type { SectionInfoMapper } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/SectionInfoMapper";
+import type { SessionProvider } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/session/SessionProvider";
 
 const { memo } = os.appCompat;
 
@@ -123,6 +124,8 @@ export interface ScriptureMap2DConfig {
   scriptureMap3DConfigProvider: ScriptureMap3DConfigProvider;
   readingHistoryConfigProvider: ReadingHistoryConfigProvider;
   sectionInfoMapper: SectionInfoMapper;
+  language: string;
+  sessionProvider: SessionProvider;
 }
 
 type ScriptureMap2DProps = {

@@ -36,6 +36,8 @@ interface UseSettingsType {
   title: string;
   optionsTitle: string;
   optionsDescription: string;
+  lessText: string;
+  moreText: string;
 }
 
 type UseSettings = () => UseSettingsType;
@@ -61,6 +63,7 @@ export const useSettings: UseSettings = () => {
     seedBibleState,
     translate,
     ColorParser,
+    CapitalizeFirstLetter,
   } = useScriptureMap2DContext();
   const {
     shouldShowReadingHistory,
@@ -281,8 +284,8 @@ export const useSettings: UseSettings = () => {
   const yearSelectorLabelTextContent = useMemo<
     UseSettingsType["yearSelectorLabelTextContent"]
   >(() => {
-    return `Year: ${selectedTimelineKey}`;
-  }, [selectedTimelineKey]);
+    return translate("selected-year", { year: selectedTimelineKey });
+  }, [selectedTimelineKey, translate]);
 
   const yearSelectorOptionsData = useMemo<
     UseSettingsType["yearSelectorOptionsData"]
@@ -317,6 +320,14 @@ export const useSettings: UseSettings = () => {
     return translate("options-description");
   }, [translate]);
 
+  const lessText = useMemo(() => {
+    return CapitalizeFirstLetter(translate("less"));
+  }, [translate]);
+
+  const moreText = useMemo(() => {
+    return CapitalizeFirstLetter(translate("more"));
+  }, [translate]);
+
   return {
     settingsClass,
     settingsButtonRef,
@@ -336,5 +347,7 @@ export const useSettings: UseSettings = () => {
     title,
     optionsTitle,
     optionsDescription,
+    lessText,
+    moreText,
   };
 };

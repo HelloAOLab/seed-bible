@@ -9,7 +9,7 @@ throw new Error("GetHistoryEntries is not implemented, outdated or deprecated");
 // }
 // if(!thisBot.vars.hooksBot) return null;
 
-// const bookId = BibleVizUtils.Data.tags.booksStaticInfo[book].abbreviation
+// const bookId = BibleVizUtils.Data.tags.booksStaticInfo[book].bookId
 // const timestamp = thisBot.vars.hooksBot.vars.tempReadingHistory[userId]?.[bookId]?.[chapter]
 
 // return timestamp

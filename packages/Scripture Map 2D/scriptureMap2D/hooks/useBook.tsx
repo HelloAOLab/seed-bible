@@ -257,16 +257,16 @@ export const useBook: UseBook = (props) => {
                   );
                   fixedContent =
                     hoursCount > 1
-                      ? translate("spentHours", { count: hoursCount })
-                      : translate("spentHour", { count: hoursCount });
+                      ? translate("hours-spent", { count: hoursCount })
+                      : translate("hour-spent", { count: hoursCount });
                 } else {
                   const minutesCount = Math.floor(
                     userReadingTimeSeconds / SEC_PER_MINUTE
                   );
                   fixedContent =
                     minutesCount > 1
-                      ? translate("spentMinutes", { count: minutesCount })
-                      : translate("spentMinute", { count: minutesCount });
+                      ? translate("minutes-spent", { count: minutesCount })
+                      : translate("minute-spent", { count: minutesCount });
                 }
 
                 tooltipContentsData.push({
@@ -317,24 +317,24 @@ export const useBook: UseBook = (props) => {
                     const daysCount = Math.floor(recencySeconds / SEC_PER_DAY);
                     fixedContent =
                       daysCount > 1
-                        ? translate("readDaysAgo", { count: daysCount })
-                        : translate("readDayAgo", { count: daysCount });
+                        ? translate("read-days-ago", { count: daysCount })
+                        : translate("read-day-ago", { count: daysCount });
                   } else if (recencySeconds >= SEC_PER_HOUR) {
                     const hoursCount = Math.floor(
                       recencySeconds / SEC_PER_HOUR
                     );
                     fixedContent =
                       hoursCount > 1
-                        ? translate("readHoursAgo", { count: hoursCount })
-                        : translate("readHourAgo", { count: hoursCount });
+                        ? translate("read-hours-ago", { count: hoursCount })
+                        : translate("read-hour-ago", { count: hoursCount });
                   } else {
                     const minutesCount = Math.floor(
                       recencySeconds / SEC_PER_MINUTE
                     );
                     fixedContent =
                       minutesCount > 1
-                        ? translate("readMinutesAgo", { count: minutesCount })
-                        : translate("readMinuteAgo", { count: minutesCount });
+                        ? translate("read-minutes-ago", { count: minutesCount })
+                        : translate("read-minute-ago", { count: minutesCount });
                   }
                   tooltipContentsData.push({
                     type: "readingHistory",
@@ -366,7 +366,7 @@ export const useBook: UseBook = (props) => {
         tooltipContentsData.unshift({
           type: "userPresence",
           colors: bookUserPresenceColors,
-          labelText: translate("readingNow"),
+          labelText: translate("reading-now"),
         });
       }
     }
@@ -478,16 +478,16 @@ export const useBook: UseBook = (props) => {
                       );
                       fixedContent =
                         hoursCount > 1
-                          ? translate("spentHours", { count: hoursCount })
-                          : translate("spentHour", { count: hoursCount });
+                          ? translate("hours-spent", { count: hoursCount })
+                          : translate("hour-spent", { count: hoursCount });
                     } else {
                       const minutesCount = Math.floor(
                         userReadingTimeSeconds / SEC_PER_MINUTE
                       );
                       fixedContent =
                         minutesCount > 1
-                          ? translate("spentMinutes", { count: minutesCount })
-                          : translate("spentMinute", { count: minutesCount });
+                          ? translate("minutes-spent", { count: minutesCount })
+                          : translate("minute-spent", { count: minutesCount });
                     }
 
                     tooltipContentsData.push({
@@ -546,26 +546,26 @@ export const useBook: UseBook = (props) => {
                         );
                         fixedContent =
                           daysCount > 1
-                            ? translate("readDaysAgo", { count: daysCount })
-                            : translate("readDayAgo", { count: daysCount });
+                            ? translate("read-days-ago", { count: daysCount })
+                            : translate("read-day-ago", { count: daysCount });
                       } else if (recencySeconds >= SEC_PER_HOUR) {
                         const hoursCount = Math.floor(
                           recencySeconds / SEC_PER_HOUR
                         );
                         fixedContent =
                           hoursCount > 1
-                            ? translate("readHoursAgo", { count: hoursCount })
-                            : translate("readHourAgo", { count: hoursCount });
+                            ? translate("read-hours-ago", { count: hoursCount })
+                            : translate("read-hour-ago", { count: hoursCount });
                       } else {
                         const minutesCount = Math.floor(
                           recencySeconds / SEC_PER_MINUTE
                         );
                         fixedContent =
                           minutesCount > 1
-                            ? translate("readMinutesAgo", {
+                            ? translate("read-minutes-ago", {
                                 count: minutesCount,
                               })
-                            : translate("readMinuteAgo", {
+                            : translate("read-minute-ago", {
                                 count: minutesCount,
                               });
                       }
@@ -624,7 +624,7 @@ export const useBook: UseBook = (props) => {
           tooltipContentsData.unshift({
             type: "userPresence",
             colors: userPresenceColors,
-            labelText: translate("readingNow"),
+            labelText: translate("reading-now"),
           });
         }
       }
@@ -665,6 +665,14 @@ export const useBook: UseBook = (props) => {
   const bookCoverClass = useMemo<string>(() => {
     return `book-cover${showChapters ? " invisible" : isUserPresenceEnabled && bookBorderGradientColors ? " show-user-presence" : ""}`;
   }, [showChapters, isUserPresenceEnabled, bookBorderGradientColors]);
+
+  // useEffect(() => {
+  //   console.log(`[Debug] useBook`, {
+  //     isUserPresenceEnabled,
+  //     bookBorderGradientColors,
+  //     book
+  //   })
+  // }, [isUserPresenceEnabled, bookBorderGradientColors, book])
 
   const handleBookClick = useCallback<() => void>(() => {
     if (!showChapters) setShowChapters(true);

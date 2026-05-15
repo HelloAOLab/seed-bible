@@ -42,9 +42,11 @@ export class UserPresenceService implements UserPresenceServicePort {
     }
     const othersPresence: UserPresence =
       this.#userPresenceProviderPort.getRemotesPresence();
-    othersPresence.forEach((presence, userId) => {
-      newPresence.set(userId, presence);
-    });
+    for (const [otherId, otherPresence] of othersPresence) {
+      if (!newPresence.has(otherId)) {
+        newPresence.set(otherId, otherPresence);
+      }
+    }
 
     this.#userPresence = newPresence;
     this.#userPresenceEventPort.emit("OnUserPresenceUpdate");

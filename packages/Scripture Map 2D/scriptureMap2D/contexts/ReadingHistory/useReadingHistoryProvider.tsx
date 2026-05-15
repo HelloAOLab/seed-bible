@@ -19,14 +19,15 @@ import {
 import type { ReadingHistorySummary } from "seed-bible.managers.ReadingHistoryManager";
 import { useScriptureMap2DContext } from "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext";
 import type { Range } from "scriptureMap2D.models.commonTypes";
-import type { UserData } from "scriptureMap2D.models.user";
+// import type { UserData } from "scriptureMap2D.models.user";
 import type { UsersDataMap } from "scriptureMap2D.models.user";
 import { ScriptureMap2DModes } from "scriptureMap2D.models.scriptureMap";
-import type { SubscribedUser } from "bibleVizUtils.domain.models.subscriptions";
+// import type { SubscribedUser } from "bibleVizUtils.domain.models.subscriptions";
+import type { ConnectedUserData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/userPresence";
 
-const getSubscribedUsers: () => Promise<SubscribedUser[]> = async () => {
-  return [];
-}; // TODO: Correctly defined this.
+// const getSubscribedUsers: () => Promise<SubscribedUser[]> = async () => {
+//   return [];
+// }; // TODO: Correctly defined this.
 
 const { useState, useMemo, useEffect, useCallback } = os.appHooks;
 
@@ -43,9 +44,10 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
     setShowingBooksColors,
     seedBibleState,
     bibleVizUtilsEventManager,
-    scriptureMap2DEventManager,
+    // scriptureMap2DEventManager,
     scriptureService,
     getDayRangeSeconds,
+    sessionProvider,
   } = useScriptureMap2DContext();
 
   const selectedTabId = seedBibleState.tabs.selectedTabId.value;
@@ -136,6 +138,12 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
   const [readingEventsByDay, setReadingEventsByDay] =
     useState<ReadingEventsByDay | null>(null);
 
+  useEffect(() => {
+    console.log(`[Debug] useReadingHistoryProvider`, {
+      readingHistoryUserFilters,
+    });
+  }, [readingHistoryUserFilters]);
+
   const handleUserLoggedIn = useCallback(() => {
     if (!myAuthBotId) {
       setMyAuthBotId(authBot.id);
@@ -153,38 +161,44 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
     }
   }, [handleUserLoggedIn]);
 
-  const fetchUsersDataMap = useCallback(async () => {
+  const fetchUsersDataMap = useCallback<() => UsersDataMap | null>(() => {
     if (!myAuthBotId) return null;
 
     try {
-      const componentsBot = getBot(byTag("system", "app.components"));
-      const subscribedUsers = await getSubscribedUsers();
+      // const componentsBot = getBot(byTag("system", "app.components"));
+      const loggedUsers = sessionProvider
+        .getConnectedUsers()
+        ?.filter((userIds) => {
+          return userIds.authId; // && userIds.configId !== myAuthBotId
+        });
+      // const subscribedUsers = await getSubscribedUsers();
 
-      if (!subscribedUsers) return null;
+      // if (!subscribedUsers) return null;
 
-      const allAuthBotIds = [
-        myAuthBotId,
-        ...subscribedUsers.map((user) => user.id),
-      ];
+      // const allAuthBotIds = [
+      //   myAuthBotId,
+      // ...subscribedUsers.map((user) => user.id),
+      // ...loggedUsers
+      // ];
 
-      const dataPromises: Promise<UserData>[] = allAuthBotIds.map(
-        async (id) => {
-          const firstResult = await os.getData(id, id);
-          if (firstResult.success) return { ...firstResult.data, id };
+      // const dataPromises: Promise<UserData>[] = allAuthBotIds.map(
+      //   async (id) => {
+      //     const firstResult = await os.getData(id, id);
+      //     if (firstResult.success) return { ...firstResult.data, id };
 
-          const secondResult = await os.getData(componentsBot.tags.key, id);
-          if (secondResult.success) return { ...secondResult.data, id };
+      //     const secondResult = await os.getData(componentsBot.tags.key, id);
+      //     if (secondResult.success) return { ...secondResult.data, id };
 
-          return undefined;
-        }
-      );
+      //     return undefined;
+      //   }
+      // );
 
-      let rawUsersData = await Promise.all(dataPromises);
-      rawUsersData = rawUsersData.filter(Boolean);
+      // let rawUsersData = await Promise.all(dataPromises);
+      // rawUsersData = rawUsersData.filter(Boolean);
 
-      const newUsersData: Map<string, UserData> = new Map(
-        rawUsersData.map((data) => {
-          return [data.id, data];
+      const newUsersData: Map<string, ConnectedUserData> = new Map(
+        loggedUsers.map((user) => {
+          return [user.authId!, user];
         })
       );
 
@@ -210,17 +224,26 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
   useEffect(() => {
     const unsubscribeUserLoggedIn = bibleVizUtilsEventManager.subscribe(
       "OnUserLoggedIn",
-      handleUserLoggedIn
+      () => {
+        handleUserLoggedIn();
+      }
     );
-    const unsubscribeSubscriptionsChanged =
-      scriptureMap2DEventManager.subscribe(
-        "SubscriptionsChanged",
-        refreshUsersDataMap
-      );
+    const unsubscribeOnlineUsersChanged = bibleVizUtilsEventManager.subscribe(
+      "OnlineUsersChanged",
+      () => {
+        refreshUsersDataMap();
+      }
+    );
+    // const unsubscribeSubscriptionsChanged =
+    //   scriptureMap2DEventManager.subscribe(
+    //     "SubscriptionsChanged",
+    //     refreshUsersDataMap
+    //   );
 
     return () => {
       unsubscribeUserLoggedIn();
-      unsubscribeSubscriptionsChanged();
+      unsubscribeOnlineUsersChanged();
+      // unsubscribeSubscriptionsChanged();
     };
   }, [handleUserLoggedIn, refreshUsersDataMap]);
 

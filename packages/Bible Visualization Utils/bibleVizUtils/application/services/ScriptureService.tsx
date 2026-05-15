@@ -104,7 +104,7 @@ export class ScriptureService {
       const [name, info] = psalmInfo;
       return {
         book: name,
-        bookId: info.abbreviation,
+        bookId: info.bookId,
         chapter: chapter - (info?.startingIndex ?? 0),
       };
     }

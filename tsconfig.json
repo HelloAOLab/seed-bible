@@ -554,6 +554,81 @@
       "scriptureMap2D.components.ui.SelectorOption": [
         "./packages/Scripture Map 2D/scriptureMap2D/components/ui/SelectorOption.tsx"
       ],
+      "scriptureMap2D.config.translations.am": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/am.tsx"
+      ],
+      "scriptureMap2D.config.translations.ar": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/ar.tsx"
+      ],
+      "scriptureMap2D.config.translations.bn": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/bn.tsx"
+      ],
+      "scriptureMap2D.config.translations.en": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/en.tsx"
+      ],
+      "scriptureMap2D.config.translations.es": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/es.tsx"
+      ],
+      "scriptureMap2D.config.translations.fa": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/fa.tsx"
+      ],
+      "scriptureMap2D.config.translations.fr": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/fr.tsx"
+      ],
+      "scriptureMap2D.config.translations.hi": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/hi.tsx"
+      ],
+      "scriptureMap2D.config.translations.ind": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/ind.tsx"
+      ],
+      "scriptureMap2D.config.translations.index": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/index.tsx"
+      ],
+      "scriptureMap2D.config.translations.ja": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/ja.tsx"
+      ],
+      "scriptureMap2D.config.translations.ko": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/ko.tsx"
+      ],
+      "scriptureMap2D.config.translations.mn": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/mn.tsx"
+      ],
+      "scriptureMap2D.config.translations.ne": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/ne.tsx"
+      ],
+      "scriptureMap2D.config.translations.ps": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/ps.tsx"
+      ],
+      "scriptureMap2D.config.translations.pt": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/pt.tsx"
+      ],
+      "scriptureMap2D.config.translations.ru": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/ru.tsx"
+      ],
+      "scriptureMap2D.config.translations.sw": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/sw.tsx"
+      ],
+      "scriptureMap2D.config.translations.ti": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/ti.tsx"
+      ],
+      "scriptureMap2D.config.translations.tr": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/tr.tsx"
+      ],
+      "scriptureMap2D.config.translations.ug": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/ug.tsx"
+      ],
+      "scriptureMap2D.config.translations.uk": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/uk.tsx"
+      ],
+      "scriptureMap2D.config.translations.ur": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/ur.tsx"
+      ],
+      "scriptureMap2D.config.translations.vi": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/vi.tsx"
+      ],
+      "scriptureMap2D.config.translations.zh": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/zh.tsx"
+      ],
       "scriptureMap2D.contexts.ReadingHistory.ReadingHistoryContext": [
         "./packages/Scripture Map 2D/scriptureMap2D/contexts/ReadingHistory/ReadingHistoryContext.tsx"
       ],

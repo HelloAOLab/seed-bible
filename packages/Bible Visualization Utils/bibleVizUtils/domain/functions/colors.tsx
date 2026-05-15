@@ -125,7 +125,7 @@ export const RGBStringToArray: RGBStringToArrayType = (color) => {
   ];
 };
 
-export const ColorParser: ColorParserType = <T extends ColorType>(
+export const ColorParser: ColorParserType = <T extends ColorType>( // TODO: Find a workaround for this. Produces an import error without the comma.
   value: string | RGB,
   target: T
 ): ColorParserMap[T] => {

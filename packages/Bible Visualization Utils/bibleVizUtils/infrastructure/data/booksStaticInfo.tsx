@@ -1,6 +1,6 @@
 export const BooksStaticInfo = {
   Revelation: {
-    abbreviation: "REV",
+    bookId: "REV",
     author: "John",
     chaptersInfo: [
       { amountOfVerses: 20, number: 1 },
@@ -30,28 +30,28 @@ export const BooksStaticInfo = {
     numberOfChapters: 22,
   },
   Jude: {
-    abbreviation: "JUD",
+    bookId: "JUD",
     author: "Jude",
     chaptersInfo: [{ amountOfVerses: 25, number: 1 }],
     relativeDateRange: { min: 60, max: 68 },
     numberOfChapters: 1,
   },
   "3 John": {
-    abbreviation: "3 JN",
+    bookId: "3 JN",
     author: "John",
     chaptersInfo: [{ amountOfVerses: 14, number: 1 }],
     relativeDateRange: { min: 85, max: 95 },
     numberOfChapters: 1,
   },
   "2 John": {
-    abbreviation: "2 JN",
+    bookId: "2 JN",
     author: "John",
     chaptersInfo: [{ amountOfVerses: 13, number: 1 }],
     relativeDateRange: { min: 85, max: 95 },
     numberOfChapters: 1,
   },
   "1 John": {
-    abbreviation: "1 JN",
+    bookId: "1 JN",
     author: "John",
     chaptersInfo: [
       { amountOfVerses: 10, number: 1 },
@@ -64,7 +64,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 5,
   },
   "2 Peter": {
-    abbreviation: "2 PE",
+    bookId: "2 PE",
     author: "Peter",
     chaptersInfo: [
       { amountOfVerses: 21, number: 1 },
@@ -75,7 +75,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 3,
   },
   "1 Peter": {
-    abbreviation: "1 PE",
+    bookId: "1 PE",
     author: "Peter",
     chaptersInfo: [
       { amountOfVerses: 25, number: 1 },
@@ -88,7 +88,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 5,
   },
   James: {
-    abbreviation: "JAS",
+    bookId: "JAS",
     author: "James",
     chaptersInfo: [
       { amountOfVerses: 27, number: 1 },
@@ -101,7 +101,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 5,
   },
   Hebrews: {
-    abbreviation: "HEB",
+    bookId: "HEB",
     author: "Paul (or unknown)",
     chaptersInfo: [
       { amountOfVerses: 14, number: 1 },
@@ -122,14 +122,14 @@ export const BooksStaticInfo = {
     numberOfChapters: 13,
   },
   Philemon: {
-    abbreviation: "PHM",
+    bookId: "PHM",
     author: "Paul",
     chaptersInfo: [{ amountOfVerses: 25, number: 1 }],
     relativeDateRange: { min: 57, max: 62 },
     numberOfChapters: 1,
   },
   Titus: {
-    abbreviation: "TIT",
+    bookId: "TIT",
     author: "Paul",
     chaptersInfo: [
       { amountOfVerses: 16, number: 1 },
@@ -140,7 +140,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 3,
   },
   "2 Timothy": {
-    abbreviation: "2 TI",
+    bookId: "2 TI",
     author: "Paul",
     chaptersInfo: [
       { amountOfVerses: 18, number: 1 },
@@ -152,7 +152,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 4,
   },
   "1 Timothy": {
-    abbreviation: "1 TI",
+    bookId: "1 TI",
     author: "Paul",
     chaptersInfo: [
       { amountOfVerses: 20, number: 1 },
@@ -166,7 +166,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 6,
   },
   "2 Thessalonians": {
-    abbreviation: "2 TH",
+    bookId: "2 TH",
     author: "Paul",
     chaptersInfo: [
       { amountOfVerses: 12, number: 1 },
@@ -177,7 +177,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 3,
   },
   "1 Thessalonians": {
-    abbreviation: "1 TH",
+    bookId: "1 TH",
     author: "Paul",
     chaptersInfo: [
       { amountOfVerses: 10, number: 1 },
@@ -190,7 +190,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 5,
   },
   Colossians: {
-    abbreviation: "COL",
+    bookId: "COL",
     author: "Paul",
     chaptersInfo: [
       { amountOfVerses: 29, number: 1 },
@@ -202,7 +202,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 4,
   },
   Philippians: {
-    abbreviation: "PHP",
+    bookId: "PHP",
     author: "Paul",
     chaptersInfo: [
       { amountOfVerses: 30, number: 1 },
@@ -214,7 +214,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 4,
   },
   Ephesians: {
-    abbreviation: "EPH",
+    bookId: "EPH",
     author: "Paul",
     chaptersInfo: [
       { amountOfVerses: 23, number: 1 },
@@ -228,7 +228,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 6,
   },
   Galatians: {
-    abbreviation: "GAL",
+    bookId: "GAL",
     author: "Paul",
     chaptersInfo: [
       { amountOfVerses: 24, number: 1 },
@@ -242,7 +242,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 6,
   },
   "2 Corinthians": {
-    abbreviation: "2 CO",
+    bookId: "2 CO",
     author: "Paul",
     chaptersInfo: [
       { amountOfVerses: 24, number: 1 },
@@ -263,7 +263,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 13,
   },
   "1 Corinthians": {
-    abbreviation: "1 CO",
+    bookId: "1 CO",
     author: "Paul",
     chaptersInfo: [
       { amountOfVerses: 31, number: 1 },
@@ -287,7 +287,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 16,
   },
   Romans: {
-    abbreviation: "ROM",
+    bookId: "ROM",
     author: "Paul",
     chaptersInfo: [
       { amountOfVerses: 32, number: 1 },
@@ -311,7 +311,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 16,
   },
   Acts: {
-    abbreviation: "ACT",
+    bookId: "ACT",
     author: "Luke",
     chaptersInfo: [
       { amountOfVerses: 26, number: 1 },
@@ -347,7 +347,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 28,
   },
   John: {
-    abbreviation: "JHN",
+    bookId: "JHN",
     author: "John",
     chaptersInfo: [
       { amountOfVerses: 51, number: 1 },
@@ -376,7 +376,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 21,
   },
   Luke: {
-    abbreviation: "LUK",
+    bookId: "LUK",
     author: "Luke",
     chaptersInfo: [
       { amountOfVerses: 80, number: 1 },
@@ -408,7 +408,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 24,
   },
   Mark: {
-    abbreviation: "MRK",
+    bookId: "MRK",
     author: "Mark",
     chaptersInfo: [
       { amountOfVerses: 45, number: 1 },
@@ -432,7 +432,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 16,
   },
   Matthew: {
-    abbreviation: "MAT",
+    bookId: "MAT",
     author: "Matthew",
     chaptersInfo: [
       { amountOfVerses: 25, number: 1 },
@@ -468,7 +468,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 28,
   },
   Malachi: {
-    abbreviation: "MAL",
+    bookId: "MAL",
     author: "Malachi",
     chaptersInfo: [
       { amountOfVerses: 14, number: 1 },
@@ -480,7 +480,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 4,
   },
   Zechariah: {
-    abbreviation: "ZEC",
+    bookId: "ZEC",
     author: "Zechariah",
     chaptersInfo: [
       { amountOfVerses: 21, number: 1 },
@@ -502,7 +502,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 14,
   },
   Haggai: {
-    abbreviation: "HAG",
+    bookId: "HAG",
     author: "Haggai",
     chaptersInfo: [
       { amountOfVerses: 15, number: 1 },
@@ -512,7 +512,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 2,
   },
   Zephaniah: {
-    abbreviation: "ZEP",
+    bookId: "ZEP",
     author: "Zephaniah",
     chaptersInfo: [
       { amountOfVerses: 18, number: 1 },
@@ -523,7 +523,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 3,
   },
   Habakkuk: {
-    abbreviation: "HAB",
+    bookId: "HAB",
     author: "Habakkuk",
     chaptersInfo: [
       { amountOfVerses: 17, number: 1 },
@@ -534,7 +534,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 3,
   },
   Nahum: {
-    abbreviation: "NAM",
+    bookId: "NAM",
     author: "Nahum",
     chaptersInfo: [
       { amountOfVerses: 15, number: 1 },
@@ -545,7 +545,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 3,
   },
   Micah: {
-    abbreviation: "MIC",
+    bookId: "MIC",
     author: "Micah",
     chaptersInfo: [
       { amountOfVerses: 16, number: 1 },
@@ -560,7 +560,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 7,
   },
   Jonah: {
-    abbreviation: "JON",
+    bookId: "JON",
     author: "Jonah",
     chaptersInfo: [
       { amountOfVerses: 17, number: 1 },
@@ -572,14 +572,14 @@ export const BooksStaticInfo = {
     numberOfChapters: 4,
   },
   Obadiah: {
-    abbreviation: "OBA",
+    bookId: "OBA",
     author: "Obadiah",
     chaptersInfo: [{ amountOfVerses: 21, number: 1 }],
     relativeDateRange: { min: -850, max: -840 },
     numberOfChapters: 1,
   },
   Amos: {
-    abbreviation: "AMO",
+    bookId: "AMO",
     author: "Amos",
     chaptersInfo: [
       { amountOfVerses: 15, number: 1 },
@@ -596,7 +596,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 9,
   },
   Joel: {
-    abbreviation: "JOL",
+    bookId: "JOL",
     author: "Joel",
     chaptersInfo: [
       { amountOfVerses: 20, number: 1 },
@@ -607,7 +607,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 3,
   },
   Hosea: {
-    abbreviation: "HOS",
+    bookId: "HOS",
     author: "Hosea",
     chaptersInfo: [
       { amountOfVerses: 11, number: 1 },
@@ -629,7 +629,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 14,
   },
   Daniel: {
-    abbreviation: "DAN",
+    bookId: "DAN",
     author: "Daniel",
     chaptersInfo: [
       { amountOfVerses: 21, number: 1 },
@@ -649,7 +649,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 12,
   },
   Ezekiel: {
-    abbreviation: "EZK",
+    bookId: "EZK",
     author: "Ezekiel",
     chaptersInfo: [
       { amountOfVerses: 28, number: 1 },
@@ -705,7 +705,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 48,
   },
   Lamentations: {
-    abbreviation: "LAM",
+    bookId: "LAM",
     author: "Jeremiah",
     chaptersInfo: [
       { amountOfVerses: 22, number: 1 },
@@ -718,7 +718,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 5,
   },
   Jeremiah: {
-    abbreviation: "JER",
+    bookId: "JER",
     author: "Jeremiah",
     chaptersInfo: [
       { amountOfVerses: 19, number: 1 },
@@ -778,7 +778,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 52,
   },
   Isaiah: {
-    abbreviation: "ISA",
+    bookId: "ISA",
     author: "Isaiah",
     chaptersInfo: [
       { amountOfVerses: 31, number: 1 },
@@ -852,7 +852,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 66,
   },
   "Song of Songs": {
-    abbreviation: "SNG",
+    bookId: "SNG",
     author: "Solomon",
     chaptersInfo: [
       { amountOfVerses: 17, number: 1 },
@@ -868,7 +868,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 8,
   },
   Ecclesiastes: {
-    abbreviation: "ECC",
+    bookId: "ECC",
     author: "Solomon",
     chaptersInfo: [
       { amountOfVerses: 18, number: 1 },
@@ -888,7 +888,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 12,
   },
   Proverbs: {
-    abbreviation: "PRO",
+    bookId: "PRO",
     author: "Solomon",
     chaptersInfo: [
       { amountOfVerses: 33, number: 1 },
@@ -927,7 +927,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 31,
   },
   "5 Psalms": {
-    abbreviation: "5 PS",
+    bookId: "5 PS",
     author: "David",
     chaptersInfo: [
       { amountOfVerses: 42, number: 1 },
@@ -980,7 +980,7 @@ export const BooksStaticInfo = {
     startingIndex: 106,
   },
   "4 Psalms": {
-    abbreviation: "4 PS",
+    bookId: "4 PS",
     author: "David",
     chaptersInfo: [
       { amountOfVerses: 17, number: 1 },
@@ -1006,7 +1006,7 @@ export const BooksStaticInfo = {
     startingIndex: 89,
   },
   "3 Psalms": {
-    abbreviation: "3 PS",
+    bookId: "3 PS",
     author: "David",
     chaptersInfo: [
       { amountOfVerses: 28, number: 1 },
@@ -1032,7 +1032,7 @@ export const BooksStaticInfo = {
     startingIndex: 72,
   },
   "2 Psalms": {
-    abbreviation: "2 PS",
+    bookId: "2 PS",
     author: "David",
     chaptersInfo: [
       { amountOfVerses: 11, number: 1 },
@@ -1072,7 +1072,7 @@ export const BooksStaticInfo = {
     startingIndex: 41,
   },
   "1 Psalms": {
-    abbreviation: "1 PS",
+    bookId: "1 PS",
     author: "David",
     chaptersInfo: [
       { amountOfVerses: 6, number: 1 },
@@ -1122,7 +1122,7 @@ export const BooksStaticInfo = {
     startingIndex: 0,
   },
   Job: {
-    abbreviation: "JOB",
+    bookId: "JOB",
     author: "Moses ",
     chaptersInfo: [
       { amountOfVerses: 22, number: 1 },
@@ -1172,7 +1172,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 42,
   },
   Esther: {
-    abbreviation: "EST",
+    bookId: "EST",
     author: "Mordecai/Esther",
     chaptersInfo: [
       { amountOfVerses: 22, number: 1 },
@@ -1190,7 +1190,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 10,
   },
   Nehemiah: {
-    abbreviation: "NEH",
+    bookId: "NEH",
     author: "Nehemiah",
     chaptersInfo: [
       { amountOfVerses: 11, number: 1 },
@@ -1211,7 +1211,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 13,
   },
   Ezra: {
-    abbreviation: "EZR",
+    bookId: "EZR",
     author: "Ezra",
     chaptersInfo: [
       { amountOfVerses: 11, number: 1 },
@@ -1229,7 +1229,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 10,
   },
   "2 Chronicles": {
-    abbreviation: "2 CH",
+    bookId: "2 CH",
     author: "Ezra",
     chaptersInfo: [
       { amountOfVerses: 17, number: 1 },
@@ -1273,7 +1273,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 36,
   },
   "1 Chronicles": {
-    abbreviation: "1 CH",
+    bookId: "1 CH",
     author: "Ezra",
     chaptersInfo: [
       { amountOfVerses: 54, number: 1 },
@@ -1310,7 +1310,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 29,
   },
   "2 Kings": {
-    abbreviation: "2 KI",
+    bookId: "2 KI",
     author: "Jeremiah",
     chaptersInfo: [
       { amountOfVerses: 18, number: 1 },
@@ -1343,7 +1343,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 25,
   },
   "1 Kings": {
-    abbreviation: "1 KI",
+    bookId: "1 KI",
     author: "Jeremiah",
     chaptersInfo: [
       { amountOfVerses: 53, number: 1 },
@@ -1373,7 +1373,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 22,
   },
   "2 Samuel": {
-    abbreviation: "2 SA",
+    bookId: "2 SA",
     author: "Samuel",
     chaptersInfo: [
       { amountOfVerses: 27, number: 1 },
@@ -1405,7 +1405,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 24,
   },
   "1 Samuel": {
-    abbreviation: "1 SA",
+    bookId: "1 SA",
     author: "Samuel",
     chaptersInfo: [
       { amountOfVerses: 28, number: 1 },
@@ -1444,7 +1444,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 31,
   },
   Ruth: {
-    abbreviation: "RUT",
+    bookId: "RUT",
     author: "Samuel",
     chaptersInfo: [
       { amountOfVerses: 22, number: 1 },
@@ -1456,7 +1456,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 4,
   },
   Judges: {
-    abbreviation: "JDG",
+    bookId: "JDG",
     author: "Samuel",
     chaptersInfo: [
       { amountOfVerses: 36, number: 1 },
@@ -1485,7 +1485,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 21,
   },
   Joshua: {
-    abbreviation: "JOS",
+    bookId: "JOS",
     author: "Joshua",
     chaptersInfo: [
       { amountOfVerses: 18, number: 1 },
@@ -1517,7 +1517,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 24,
   },
   Deuteronomy: {
-    abbreviation: "DEU",
+    bookId: "DEU",
     author: "Moses",
     chaptersInfo: [
       { amountOfVerses: 46, number: 1 },
@@ -1559,7 +1559,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 34,
   },
   Numbers: {
-    abbreviation: "NUM",
+    bookId: "NUM",
     author: "Moses",
     chaptersInfo: [
       { amountOfVerses: 54, number: 1 },
@@ -1603,7 +1603,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 36,
   },
   Leviticus: {
-    abbreviation: "LEV",
+    bookId: "LEV",
     author: "Moses",
     chaptersInfo: [
       { amountOfVerses: 17, number: 1 },
@@ -1638,7 +1638,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 27,
   },
   Exodus: {
-    abbreviation: "EXO",
+    bookId: "EXO",
     author: "Moses",
     chaptersInfo: [
       { amountOfVerses: 22, number: 1 },
@@ -1686,7 +1686,7 @@ export const BooksStaticInfo = {
     numberOfChapters: 40,
   },
   Genesis: {
-    abbreviation: "GEN",
+    bookId: "GEN",
     author: "Moses",
     chaptersInfo: [
       { amountOfVerses: 31, number: 1 },

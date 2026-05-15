@@ -10,7 +10,7 @@ export interface ChapterInfo {
 }
 
 export interface BookStaticInfo {
-  readonly abbreviation: string;
+  readonly bookId: string;
   readonly author: string;
   readonly chaptersInfo: readonly ChapterInfo[];
   readonly relativeDateRange: {

@@ -16,4 +16,8 @@ export class SessionController {
       this.#sessionService.tryEmitUserLoggedInEvent(true);
     }
   }
+
+  handleOnlineUsersChanged() {
+    this.#sessionService.handleOnlineUsersChanged();
+  }
 }

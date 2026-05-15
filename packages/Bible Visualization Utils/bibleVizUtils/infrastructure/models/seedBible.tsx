@@ -42,6 +42,7 @@ import type { CapitalizeFirstLetterType } from "../../domain/functions/string";
 import type { ScriptureMap3DConfigProvider } from "bibleVizUtils.infrastructure.config.scriptureMap3D.ScriptureMap3DConfigProvider";
 import type { ReadingHistoryConfigProvider } from "bibleVizUtils.infrastructure.config.readingHistory.ReadingHistoryConfigProvider";
 import type { SectionInfoMapper } from "../../infrastructure/mappers/SectionInfoMapper";
+import type { SessionProvider } from "../adapters/session/SessionProvider";
 
 export interface BibleVizAPI {
   bibleVizDataRepository: BibleVizDataRepository;
@@ -85,4 +86,5 @@ export interface BibleVizAPI {
   scriptureMap3DConfigProvider: ScriptureMap3DConfigProvider;
   readingHistoryConfigProvider: ReadingHistoryConfigProvider;
   sectionInfoMapper: SectionInfoMapper;
+  sessionProvider: SessionProvider;
 }

@@ -33,10 +33,9 @@ export class UserColorSyncService {
         this.#sessionProviderPort.getConnectedUsersConfigId(),
         this.#userDatabasePort.getSubscribedUsers(),
       ]);
+      const usersAuthIds = this.#sessionProviderPort.getConnectedUsers();
 
       const loggedUsersInInstanceMap = new Map<string, string>();
-      const usersAuthIds =
-        this.#sessionProviderPort.getConnectedUsersAuthMapList();
       if (usersAuthIds) {
         usersAuthIds.forEach(({ configId, authId }) => {
           if (configId && authId)

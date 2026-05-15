@@ -2,12 +2,13 @@ import type { BibleVizUtilsEvents } from "bibleVizUtils.domain.models.events";
 import type {
   UserIds,
   UserData,
+  ConnectedUserData,
 } from "bibleVizUtils.domain.models.userPresence";
 import type { SubscribedUser } from "bibleVizUtils.domain.models.subscriptions";
 import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
 
 export interface SessionEventPort {
-  emit: <K extends "OnUserLoggedIn">(
+  emit: <K extends "OnUserLoggedIn" | "OnlineUsersChanged">(
     eventName: K,
     ...args: BibleVizUtilsEvents[K] extends undefined | void
       ? [payload?: BibleVizUtilsEvents[K]]
@@ -32,7 +33,7 @@ export interface UserColorStorePort {
 
 export interface SessionProviderPort {
   getConnectedUsersConfigId: () => string[];
-  getConnectedUsersAuthMapList: () => UserIds[] | undefined;
+  getConnectedUsers(): ConnectedUserData[];
   getUserColorById: (id: string) => HexString | undefined;
 }
 

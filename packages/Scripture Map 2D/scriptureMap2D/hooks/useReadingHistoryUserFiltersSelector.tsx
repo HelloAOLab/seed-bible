@@ -20,7 +20,8 @@ type UseReadingHistoryUserFiltersSelector =
 
 export const useReadingHistoryUserFiltersSelector: UseReadingHistoryUserFiltersSelector =
   () => {
-    const { userColorStore, translate } = useScriptureMap2DContext();
+    const { userColorStore, translate, CapitalizeFirstLetter } =
+      useScriptureMap2DContext();
     // effect(() => {
     //   const selectedTab = seedBibleState.app.selectedTab.value?.sharedSession;
     //   const tabs = seedBibleState.tabs.tabs.value;
@@ -66,13 +67,13 @@ export const useReadingHistoryUserFiltersSelector: UseReadingHistoryUserFiltersS
       for (const [userId, selected] of Array.from(readingHistoryUserFilters)) {
         const userData = usersDataMap.get(userId);
         if (userData) {
-          const { profileName } = userData;
+          const profileName = userData.profile?.name;
           const fixedName: string =
             userId === myAuthBotId
-              ? translate("You")
+              ? CapitalizeFirstLetter(translate("you"))
               : (profileName?.length ?? 0) > 0
                 ? profileName!
-                : translate("Unknown User");
+                : CapitalizeFirstLetter(translate("guest"));
           optionsData.push({
             key: userId,
             content: {

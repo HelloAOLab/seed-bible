@@ -113,7 +113,7 @@ export const useTestamentContent = (): UseTestamentContentType => {
                 book.commonName
               );
               if (bookStaticInfo) {
-                const bookId = bookStaticInfo.abbreviation;
+                const bookId = bookStaticInfo.bookId;
                 const bookEvents = rangedReadingEventsByBook.get(bookId);
                 if (bookEvents) {
                   const readingTimeSeconds = bookEvents.reduce((acc, event) => {
@@ -237,7 +237,7 @@ export const useTestamentContent = (): UseTestamentContentType => {
                 );
               }
               const {
-                abbreviation: bookId,
+                bookId: bookId,
                 startingIndex = 0,
                 numberOfChapters,
               } = bookStaticInfo;

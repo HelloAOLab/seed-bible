@@ -22,7 +22,8 @@ type UseControls = () => UseControlsType;
 const { useMemo, useState, useRef, useCallback, useEffect } = os.appHooks;
 
 export const useControls: UseControls = () => {
-  const { scaleFactor, setScaleFactor, translate } = useScriptureMap2DContext();
+  const { scaleFactor, setScaleFactor, translate, CapitalizeFirstLetter } =
+    useScriptureMap2DContext();
 
   const currZoom = useMemo(() => {
     return Math.round(scaleFactor * 100);
@@ -39,7 +40,9 @@ export const useControls: UseControls = () => {
   }, [setShowOptions]);
 
   const zoomLevelSelectorTitle = useMemo(() => {
-    return translate?.("zoom-level") ?? "Zoom level";
+    return translate
+      ? CapitalizeFirstLetter(translate("zoom-level"))
+      : "Zoom level";
   }, [translate]);
 
   const handleZoomLevelClick = useCallback<(value: number) => void>(

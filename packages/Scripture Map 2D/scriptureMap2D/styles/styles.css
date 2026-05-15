@@ -494,7 +494,7 @@
   .scripture-map-2d-controls
   .zoom-container
   > button.hovered {
-  background-color: var(--sb-secondary-color);
+  background-color: var(--sb-primary-color);
 }
 
 .scripture-map-2d-wrapper
@@ -543,7 +543,7 @@
   left: 50%;
   transform: translateX(-50%);
   bottom: calc(100% + 12px);
-  background-color: var(--toolbarBackground);
+  background-color: var(--sb-reader-font-color);
   padding: 4px;
   border-radius: 8px;
   display: flex;
@@ -556,7 +556,7 @@
 .zoom-level-selector > * {
   padding: 8px;
   width: 100%;
-  color: var(--iconColor);
+  color: var(--sb-reader-background);
 }
 
 .zoom-level-selector > span {
@@ -849,7 +849,7 @@
 
 .tooltip {
   width: auto;
-  max-width: 140px;
+  /* max-width: 140px; */
   background-color: var(--sb-reader-font-color);
   color: var(--sb-reader-background);
   text-align: center;
@@ -900,6 +900,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  /* overflow: hidden; */
 }
 
 .tooltip .user-presence-tooltip-content > div {
@@ -912,11 +913,13 @@
   width: 24px;
   border-radius: 12px;
   margin-left: -12px;
-  border: solid 3px var(--iconColor);
+  border: solid 3px var(--sb-reader-font-color);
 }
 
 .tooltip .user-presence-tooltip-content > span {
-  padding-bottom: 4px;
+  /* padding-bottom: 4px; */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tooltip .tooltip-reading-history-content > span:nth-of-type(1) {

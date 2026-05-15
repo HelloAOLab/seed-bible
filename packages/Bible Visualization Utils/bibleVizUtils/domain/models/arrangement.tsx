@@ -2,7 +2,7 @@ import type {
   HexString,
   Translatable,
 } from "bibleVizUtils.domain.models.commonTypes";
-import type { BookName } from "bibleVizUtils.domain.models.scripture";
+// import type { BookName } from "bibleVizUtils.domain.models.scripture";
 
 export interface ArrangementTemplate {
   name: string;
@@ -30,7 +30,7 @@ export interface ChapterInfo {
 }
 
 export interface BookStaticInfo {
-  readonly abbreviation: string;
+  readonly bookId: string;
   readonly author: string;
   readonly chaptersInfo: readonly ChapterInfo[];
   readonly relativeDateRange: {
@@ -42,7 +42,7 @@ export interface BookStaticInfo {
 }
 
 export interface BookInfo extends BookStaticInfo {
-  readonly commonName: BookName;
+  readonly commonName: string;
   readonly customColor?: string;
   readonly customLabelColor?: string;
   readonly isCheckpoint?: boolean;

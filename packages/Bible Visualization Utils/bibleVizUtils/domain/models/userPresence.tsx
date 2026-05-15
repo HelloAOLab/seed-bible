@@ -1,3 +1,4 @@
+import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
 
 export interface UserPresenceData {
@@ -16,4 +17,8 @@ export interface UserIds {
 
 export interface UserData extends UserIds {
   color: HexString;
+}
+
+export interface ConnectedUserData extends UserIds {
+  profile: UserProfile | undefined;
 }

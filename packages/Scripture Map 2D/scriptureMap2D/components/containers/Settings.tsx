@@ -51,6 +51,8 @@ export interface SettingsLegendSquareData extends SettingsLegendSquareProps {
 
 export interface SettingsLegendProps {
   legendSquaresData: SettingsLegendSquareData[];
+  lessText: string;
+  moreText: string;
 }
 
 export interface SettingsYearselectorOptionData extends SettingsYearselectorOptionProps {
@@ -75,14 +77,18 @@ const LegendSquare = ({ style }: SettingsLegendSquareProps) => {
   return <span style={style}></span>;
 };
 
-const Legend = ({ legendSquaresData }: SettingsLegendProps) => {
+const Legend = ({
+  legendSquaresData,
+  lessText,
+  moreText,
+}: SettingsLegendProps) => {
   return (
     <div className={"legend"}>
-      <span>Less</span>
+      <span>{lessText}</span>
       {legendSquaresData.map((data) => (
         <LegendSquare {...data} />
       ))}
-      <span>More</span>
+      <span>{moreText}</span>
     </div>
   );
 };
@@ -219,6 +225,8 @@ export const Settings = () => {
     title,
     optionsTitle,
     optionsDescription,
+    lessText,
+    moreText,
   } = useSettings();
 
   return (
@@ -321,7 +329,11 @@ export const Settings = () => {
       {shouldShowReadingHistory && !collapsed && (
         <>
           <div className={"settings-footer"}>
-            <Legend legendSquaresData={legendSquaresData} />
+            <Legend
+              legendSquaresData={legendSquaresData}
+              lessText={lessText}
+              moreText={moreText}
+            />
             <YearSelector
               yearSelectorLabelTextContent={yearSelectorLabelTextContent}
               yearSelectorOptionsData={yearSelectorOptionsData}

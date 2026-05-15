@@ -4,7 +4,10 @@ type Range = {
 };
 
 export type GetDayRangeSecondsType = (timestamp: number) => Range;
-export type GetPastDateInfoType = (time: number) => {
+export type GetPastDateInfoType = (
+  time: number,
+  lang?: string
+) => {
   weekday: string | undefined;
   day: number;
   month: number;
@@ -27,7 +30,7 @@ export const GetDayRangeSeconds: GetDayRangeSecondsType = (timestamp) => {
   };
 };
 
-export const GetPastDateInfo: GetPastDateInfoType = (time) => {
+export const GetPastDateInfo: GetPastDateInfoType = (time, lang = "en-US") => {
   const date = new Date(time);
 
   const weekdays = [
@@ -43,7 +46,7 @@ export const GetPastDateInfo: GetPastDateInfoType = (time) => {
   const day = date.getDate();
   const month = date.getMonth() + 1;
   const year = date.getFullYear();
-  const monthName = date.toLocaleString("en-US", { month: "short" });
+  const monthName = date.toLocaleString(lang, { month: "short" });
 
   return { weekday, day, month, monthName, year };
 };

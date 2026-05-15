@@ -87,7 +87,6 @@ import { CapitalizeFirstLetter } from "bibleVizUtils.domain.functions.string";
 import { ScriptureMap3DConfigProvider } from "bibleVizUtils.infrastructure.config.scriptureMap3D.ScriptureMap3DConfigProvider";
 import { ReadingHistoryConfigProvider } from "bibleVizUtils.infrastructure.config.readingHistory.ReadingHistoryConfigProvider";
 import { entrypoints } from "bibleVizUtils.infrastructure.entrypoints.casualos.botProvider";
-import type { UserIds } from "bibleVizUtils.domain.models.userPresence";
 import { connectedUserColors } from "seed-bible.managers.SessionsManager";
 import { effect } from "@preact/signals";
 
@@ -238,7 +237,9 @@ export const bootstrapExtension = () => {
         new ActivityIndicatorBotsRepository();
       const bibleVizUtilsEventManager =
         new BaseEventManager<BibleVizUtilsEvents>();
-      const seedBiblePresenceProvider = new SeedBiblePresenceProvider();
+      const seedBiblePresenceProvider = new SeedBiblePresenceProvider({
+        state: context,
+      });
       const activityIndicatorsAdapter = new ActivityIndicatorsAdapter({
         objectPooler: bibleVizUtilsObjectPooler,
         botsRepositoryPort: activityIndicatorBotsRepository,
@@ -250,35 +251,7 @@ export const bootstrapExtension = () => {
       const labelDataStore = new LabelDataStore({});
       const userColorStore = new UserColorStore(bibleVizUtilsEventManager);
       const sessionProvider = new SessionProvider({
-        connectedUsersProviderPort: {
-          getConnectedUsers: () => {
-            const connectedUsers: Map<string, UserIds> = new Map([
-              [
-                configBot.id,
-                {
-                  configId: configBot.id,
-                  authId: context.login.userId.value ?? undefined,
-                },
-              ],
-            ]);
-            for (const tab of context.tabs.tabs.value) {
-              if (tab.sharedSession) {
-                const users = tab.sharedSession.connectedUsers.value;
-                if (users.length > 0) {
-                  for (const user of users) {
-                    if (connectedUsers.has(user.connectionId)) {
-                      connectedUsers.set(user.connectionId, {
-                        configId: user.connectionId,
-                        authId: user.userId ?? undefined,
-                      });
-                    }
-                  }
-                }
-              }
-            }
-            return [...connectedUsers.values()];
-          },
-        },
+        state: context,
         colors: [
           ...connectedUserColors, // TODO: Get the complete color array from one place and avoid hardcoding the values here.
           "#06B6D4",
@@ -377,13 +350,12 @@ export const bootstrapExtension = () => {
 
       // 4. Event wiring
 
-      bibleVizUtilsEventManager.subscribe(
+      const unsubscribeUserPresenceUpdate = bibleVizUtilsEventManager.subscribe(
         "OnUserPresenceUpdate",
-        pieceActivityService.updateAllIndicators
-      );
-      bibleVizUtilsEventManager.subscribe(
-        "OnUserPresenceUpdate",
-        pieceActivityService.updateAllNotifications
+        () => {
+          pieceActivityService.updateAllIndicators();
+          pieceActivityService.updateAllNotifications();
+        }
       );
       const onAnyBotsAddedListener = ({ bots }: { bots: Bot[] }) => {
         sessionController?.handleAnyBotsAdded(bots);
@@ -395,10 +367,34 @@ export const bootstrapExtension = () => {
       });
       const unsubscribeOnlineUsersChanged = effect(() => {
         // eslint-disable-next-line
-        const connectedUsers = context.tabs.tabs.value.map((tab) => {
-          return tab.sharedSession?.connectedUsers.value;
+        const connectedUsers = context.tabs.tabs.value.flatMap((tab) => {
+          return tab.sharedSession?.connectedUsers.value ?? [];
         });
         userColorController?.handleOnlineUsersChanged();
+        sessionController?.handleOnlineUsersChanged();
+      });
+      const unsubscribeCurrentReadingStateChanged = effect(() => {
+        // eslint-disable-next-line
+        const id = context.tabs.selectedTabId.value;
+        // eslint-disable-next-line
+        const book =
+          context.app.currentReadingState.value?.tab.readingState.bookId.value;
+        // eslint-disable-next-line
+        const chapter =
+          context.app.currentReadingState.value?.tab.readingState.chapterNumber
+            .value;
+        userPresenceController?.handleActiveTabDataUpdated();
+      });
+      const unsubscribeRemotesReadingStateChanged = effect(() => {
+        // eslint-disable-next-line
+        const sharedSessionsState = context.tabs.tabs.value.map((tab) => {
+          return {
+            bookId: tab.sharedSession?.readingState.bookId.value,
+            chaperNumber: tab.sharedSession?.readingState.chapterNumber.value,
+          };
+        });
+
+        userPresenceController?.handleOnlineUsersChanged();
       });
 
       // 5. Disposers
@@ -408,6 +404,9 @@ export const bootstrapExtension = () => {
       yield () => labelAnimationAdapter.disposeAll();
       yield () => unsubscribeLogin();
       yield () => unsubscribeOnlineUsersChanged();
+      yield () => unsubscribeCurrentReadingStateChanged();
+      yield () => unsubscribeRemotesReadingStateChanged();
+      yield () => unsubscribeUserPresenceUpdate();
       yield () => {
         userColorController = undefined;
         sessionController = undefined;
@@ -419,41 +418,49 @@ export const bootstrapExtension = () => {
 
       // 6. Expose API to dependent extensions
 
+      function createPieceLabelService<T extends BiblePieceType>(
+        labelPropertiesStrategies: PieceLabelServiceParams<T>["labelPropertiesStrategies"]
+      ) {
+        return new PieceLabelService({
+          labelAdapterPort: labelAdapter,
+          labelDataStorePort: labelDataStore,
+          pieceActivityServicePort: pieceActivityService,
+          labelPropertiesStrategies,
+          labelDateFormatServicePort: labelDateService,
+          idGeneratorPort: { getId: uuid },
+          labelAnimationAdapterPort: labelAnimationAdapter,
+          activityIndicatorsAdapterPort: activityIndicatorsAdapter,
+        });
+      }
+
+      function createEventManager<
+        // eslint-disable-next-line
+        TEventMap extends Record<string, any>,
+      >() {
+        return new BaseEventManager<TEventMap>();
+      }
+
+      function createObjectPooler<
+        P extends Record<keyof P, TypedBot<PieceBotTags>>,
+      >({
+        poolsData,
+        dimensionGetter,
+      }: {
+        poolsData: ObjectPoolerConfig<P>;
+        dimensionGetter: ObjectPoolerDimensionGetter;
+      }) {
+        return new ObjectPooler<P>(poolsData, dimensionGetter);
+      }
+
       const api: BibleVizAPI = {
         bibleVizDataRepository,
         scriptureService,
         readingHistoryService,
         pieceActivityService,
         labelDateService,
-        createPieceLabelService: <T extends BiblePieceType>(
-          labelPropertiesStrategies: PieceLabelServiceParams<T>["labelPropertiesStrategies"]
-        ) => {
-          return new PieceLabelService({
-            labelAdapterPort: labelAdapter,
-            labelDataStorePort: labelDataStore,
-            pieceActivityServicePort: pieceActivityService,
-            labelPropertiesStrategies,
-            labelDateFormatServicePort: labelDateService,
-            idGeneratorPort: { getId: uuid },
-            labelAnimationAdapterPort: labelAnimationAdapter,
-            activityIndicatorsAdapterPort: activityIndicatorsAdapter,
-          });
-        },
-        createEventManager: <
-          // eslint-disable-next-line
-          TEventMap extends Record<string, any>,
-        >() => {
-          return new BaseEventManager<TEventMap>();
-        },
-        createObjectPooler: <
-          P extends Record<keyof P, TypedBot<PieceBotTags>>,
-        >({
-          poolsData,
-          dimensionGetter,
-        }: {
-          poolsData: ObjectPoolerConfig<P>;
-          dimensionGetter: ObjectPoolerDimensionGetter;
-        }) => new ObjectPooler<P>(poolsData, dimensionGetter),
+        createPieceLabelService,
+        createEventManager,
+        createObjectPooler,
         bibleVizUtilsEventManager,
         userColorStore,
         userPresenceService,
@@ -476,6 +483,7 @@ export const bootstrapExtension = () => {
         sectionInfoMapper,
         scriptureMap3DConfigProvider,
         readingHistoryConfigProvider,
+        sessionProvider,
       };
 
       return api;

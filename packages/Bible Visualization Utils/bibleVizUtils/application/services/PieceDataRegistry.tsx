@@ -50,9 +50,7 @@ export class PieceDataRegistry {
     const provider = this.#providers.get(type);
 
     if (!provider) {
-      throw new Error(
-        `PieceDataRegistry: No PieceData provider registered for typeOfPiece: ${type}`
-      );
+      return [];
     }
 
     return provider.getAllPiecesDataByType(type);

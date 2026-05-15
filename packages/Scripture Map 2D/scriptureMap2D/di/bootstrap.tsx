@@ -3,10 +3,10 @@ import { MaterialIcon } from "seed-bible.components.icons";
 import { ScriptureMap2D } from "scriptureMap2D.components.ScriptureMap2D";
 import { ScriptureMap2DModes } from "scriptureMap2D.models.scriptureMap";
 import { getCustomStyles } from "../styles/adapter";
-import type { BookName } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/scripture";
 import type { BibleVizAPI } from "bibleVizUtils.infrastructure.models.seedBible";
 import { addTranslations, useI18n } from "seed-bible.i18n.I18nManager";
-import { translations } from "../data/translations";
+// import { translations } from "../config/translations";
+import { translations } from "scriptureMap2D.config.translations.index";
 import type { ScriptureMap2DEvents } from "../models/events";
 
 const Icon = () => {
@@ -58,6 +58,7 @@ export const bootstrapExtension = () => {
         sectionInfoMapper,
         scriptureMap3DConfigProvider,
         readingHistoryConfigProvider,
+        sessionProvider,
       } = dependenciesMap[
         bibleVizUtilsId
       ] as DependenciesMap[typeof bibleVizUtilsId];
@@ -78,22 +79,19 @@ export const bootstrapExtension = () => {
             type: "detached",
             detachedAnchor: "side",
             component: () => {
-              const { t } = useI18n();
+              const { t, language } = useI18n();
 
               return (
                 <ScriptureMap2D
                   config={{
                     mode: ScriptureMap2DModes.Viewer,
                     onChapterClick: (_, key) => {
-                      const { bookName, chapterIndex } = key as {
-                        bookName: BookName;
-                        chapterIndex: number;
-                      }; // TODO: Correctly type bookName with BookName in ChapterKey
+                      const { bookName, chapterIndex } = key;
 
                       const bookInfo =
                         bibleVizDataRepository.getBookStaticInfo(bookName);
                       if (bookInfo) {
-                        let { abbreviation: bookId } = bookInfo;
+                        let { bookId: bookId } = bookInfo;
                         let chapter = chapterIndex + 1;
 
                         if (bookName.includes("Psalms")) {
@@ -104,8 +102,21 @@ export const bootstrapExtension = () => {
                             }));
                           bookId = "PSA" as typeof bookId; // TODO: Fix this
                         }
-                        console.log(`TODO: Open ${bookId} at ${chapter}`);
-                        // globalThis.Open(bookId, chapter);
+                        const translationId =
+                          context.app.currentReadingState.value?.translationId;
+                        if (translationId) {
+                          context.bibleData
+                            .getTranslationBooks(translationId)
+                            .then((translationBooks) => {
+                              console.log(`[Debug] bootstrap`, {
+                                translationBooks,
+                              });
+                            });
+                        }
+                        context.app.selectedTab.value?.readingState.selectChapter(
+                          bookId,
+                          chapter
+                        );
                       }
                     },
                     initialShowingAllChapters: true,
@@ -150,6 +161,8 @@ export const bootstrapExtension = () => {
                     sectionInfoMapper,
                     scriptureMap3DConfigProvider,
                     readingHistoryConfigProvider,
+                    language,
+                    sessionProvider,
                   }}
                   customCSS={customCSS}
                 />

@@ -27,6 +27,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
     seedBibleState,
     CapitalizeFirstLetter,
     GetPastDateInfo,
+    language,
   } = useScriptureMap2DContext();
 
   const theme = seedBibleState.theme.currentTheme.value;
@@ -132,9 +133,9 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
     const dayLabelGridColumn = `1 / 2`;
     const todayDate = new Date();
 
-    const translatedMonday = translate("monShort");
-    const translatedWednesday = translate("wedShort");
-    const translatedFriday = translate("friShort");
+    const translatedMonday = translate("monday-short");
+    const translatedWednesday = translate("wednesday-short");
+    const translatedFriday = translate("friday-short");
 
     itemsData.push(
       {
@@ -168,7 +169,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
         week === weeksCount - 1 ? timelineRange.endDate.getDay() : 6;
       const labelDate = new Date(startDateStartOfWeek.getTime());
       labelDate.setDate(labelDate.getDate() + week * 7 + lastDayIndex);
-      const labelDateInfo = GetPastDateInfo(labelDate.getTime());
+      const labelDateInfo = GetPastDateInfo(labelDate.getTime(), language);
       const uniqueMonthKey = `${labelDateInfo.month}-${labelDateInfo.year}`;
 
       if (!monthsSet.has(uniqueMonthKey)) {
@@ -197,7 +198,11 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
         const time = dayDate.getTime();
         const range = dayRangesMap.get(key);
 
-        const { day: dayOfTheMonth, monthName, year } = GetPastDateInfo(time);
+        const {
+          day: dayOfTheMonth,
+          monthName,
+          year,
+        } = GetPastDateInfo(time, language);
         const daySummary = dailyReadingHistorySummaries?.get?.(key);
 
         const tooltipContentsData: TooltipContentData[] = [];
@@ -239,7 +244,9 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
           for (const userId of topUsers) {
             const userSummary = daySummary.users[userId];
             const isMe = userId === myAuthBotId;
-            const userName = isMe ? translate("you") : translate("guest");
+            const userName = CapitalizeFirstLetter(
+              isMe ? translate("you") : translate("guest")
+            );
             const userColor = userColorStore.getUserColor({ authId: userId });
             const dotStyle = { backgroundColor: userColor };
 
@@ -250,7 +257,9 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
                 1,
                 Math.floor(userTimeSpentSeconds / SEC_PER_MINUTE)
               );
-              const fixedContent = `(${minutesCount} Min)`;
+              const fixedContent = translate("minutes-count", {
+                count: minutesCount,
+              });
               tooltipContentsData.push({
                 type: "readingHistory",
                 userName,
@@ -278,8 +287,14 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
               );
               extraActivityContent =
                 hoursCount > 1
-                  ? `+${extraUsers.length} ${translate("spentHours", { count: hoursCount })}`
-                  : `+${extraUsers.length} ${translate("spentHour", { count: hoursCount })}`;
+                  ? translate("users-extra-hours-spent", {
+                      users: extraUsers.length,
+                      count: hoursCount,
+                    })
+                  : translate("users-extra-hour-spent", {
+                      users: extraUsers.length,
+                      count: hoursCount,
+                    });
             } else {
               const minutesCount = Math.max(
                 1,
@@ -287,8 +302,14 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
               );
               extraActivityContent =
                 minutesCount > 1
-                  ? `+${extraUsers.length} ${translate("spentMinutes", { count: minutesCount })}`
-                  : `+${extraUsers.length} ${translate("spentMinute", { count: minutesCount })}`;
+                  ? translate("users-extra-minutes-spent", {
+                      users: extraUsers.length,
+                      count: minutesCount,
+                    })
+                  : translate("users-extra-minute-spent", {
+                      users: extraUsers.length,
+                      count: minutesCount,
+                    });
             }
             tooltipContentsData.push({
               type: "text",
@@ -328,6 +349,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
     readingHistoryRangeSeconds,
     dailyReadingHistorySummaries,
     myAuthBotId,
+    translate,
   ]);
 
   useEffect(() => {

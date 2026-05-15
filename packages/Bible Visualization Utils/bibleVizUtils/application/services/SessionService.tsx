@@ -14,4 +14,8 @@ export class SessionService {
     this.#hasLoginEventBeenEmitted = true;
     this.#sessionEventPort.emit("OnUserLoggedIn");
   }
+
+  handleOnlineUsersChanged() {
+    this.#sessionEventPort.emit("OnlineUsersChanged");
+  }
 }
