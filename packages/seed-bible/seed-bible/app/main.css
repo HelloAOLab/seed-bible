@@ -2181,6 +2181,7 @@ h6 {
 .sb-tabs-sidebar-collapsed {
   width: 56px;
   padding: 10px 8px 16px;
+  padding-left: 15px;
 
   .sb-sidebar-top-row {
     justify-content: center;
@@ -2404,11 +2405,13 @@ h6 {
   color: var(--sb-tab-font-color);
   cursor: pointer;
   display: inline-flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   padding: 0;
   line-height: 1;
+  gap: 5px;
+  border: 1px solid;
 }
 
 .sb-collapsed-tab-tile-selected {
@@ -3303,8 +3306,8 @@ h6 {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 28px;
-  width: 28px;
+  height: 35px;
+  width: 35px;
 }
 
 .sb-sidebar-icon-button-selected {
