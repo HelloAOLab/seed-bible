@@ -199,6 +199,23 @@ body {
   font-family: var(--sb-font-family);
 }
 
+/* On mobile, lock the document to the visual viewport so iOS/Android
+ * browsers don't show the default white "overscroll" gap when the user
+ * pulls the page up past the bottom toolbar. Scrolling happens inside
+ * the inner panes (which have their own overflow scrollers). */
+@media (max-width: 768px) {
+  html,
+  body {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+}
+
 button,
 input,
 textarea,
