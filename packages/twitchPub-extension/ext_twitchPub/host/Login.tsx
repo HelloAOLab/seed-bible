@@ -3,7 +3,7 @@ import { type TwitchPubState } from "ext_twitchPub.host.interface";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 
 const Login = (props: { state: TwitchPubState }) => {
-  const { clientId, getDeviceAuthUrl, loading } = props.state;
+  const { twitchConfig, getDeviceAuthUrl, loading } = props.state;
   const { t } = useI18n();
   return (
     <div
@@ -45,7 +45,7 @@ const Login = (props: { state: TwitchPubState }) => {
           <button
             className="twitchBtn"
             onClick={() => getDeviceAuthUrl(props.state)}
-            disabled={!clientId.value || loading.value}
+            disabled={!twitchConfig.value.clientId.value || loading.value}
           >
             {loading.value
               ? t("loading", { defaultValue: "Loading..." })

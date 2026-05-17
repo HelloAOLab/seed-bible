@@ -30,16 +30,33 @@ export function CreateTwitchSubState(
       false
     )
   );
-  const settings = signal(
-    window.localStorage.getItem("twitchSubSettings")
-      ? JSON.parse(window.localStorage.getItem("twitchSubSettings") || "{}")
-      : {
-          translationEnabled: true,
-          highlightEnabled: true,
-          chapterFollowEnabled: true,
-        }
-  );
-  const config = signal<TwitchSubInterface["config"]["value"]>(null);
+  const savedSettings = window.localStorage.getItem("twitchSubSettings")
+    ? JSON.parse(window.localStorage.getItem("twitchSubSettings") || "{}")
+    : {
+        translationEnabled: true,
+        highlightEnabled: true,
+        chapterFollowEnabled: true,
+      };
+  const settings = signal({
+    translationEnabled: signal<boolean>(
+      savedSettings.translationEnabled ?? true
+    ),
+    highlightEnabled: signal<boolean>(savedSettings.highlightEnabled ?? true),
+    chapterFollowEnabled: signal<boolean>(
+      savedSettings.chapterFollowEnabled ?? true
+    ),
+  });
+  const config = signal({
+    botUserId: signal<string | null>(null),
+    accessToken: signal<string | null>(null),
+    clientId: signal<string | null>(null),
+    broadcasterId: signal<string | null>(null),
+    eventSubWebsocketUrl: signal<string | null>(null),
+    channelId: signal<string | null>(null),
+    bookId: signal<string | null>(null),
+    chapter: signal<string | null>(null),
+    translation: signal<string | null>(null),
+  });
   const websocketSessionID = signal(null);
   const webSocketClient = signal<WebSocket | null>(null);
 
@@ -48,13 +65,22 @@ export function CreateTwitchSubState(
   effect(() => {
     getConfig({ clientId, eventSubWebsocketUrl }).then((configData) => {
       if (configData) {
-        config.value = configData;
+        config.value.botUserId.value = configData.botUserId;
+        config.value.accessToken.value = configData.accessToken;
+        config.value.clientId.value = configData.clientId;
+        config.value.broadcasterId.value = configData.broadcasterId;
+        config.value.eventSubWebsocketUrl.value =
+          configData.eventSubWebsocketUrl;
+        config.value.channelId.value = configData.channelId;
+        config.value.bookId.value = configData.bookId ?? null;
+        config.value.chapter.value = configData.chapter ?? null;
+        config.value.translation.value = configData.translation ?? null;
       }
     });
   });
 
   effect(() => {
-    if (config.value) {
+    if (config.value.accessToken.value) {
       initializeTwitchWS({
         config,
         websocketSessionID,
@@ -68,26 +94,24 @@ export function CreateTwitchSubState(
   });
 
   effect(() => {
-    if (config.value) {
-      if (
-        config.value.bookId &&
-        config.value.chapter &&
-        config.value.translation
-      ) {
-        openBookAndChapter(
-          seedBibleState,
-          config.value.translation,
-          config.value.bookId,
-          config.value.chapter
-        );
-        delete config.value.bookId;
-        delete config.value.chapter;
-        delete config.value.translation;
-        window.localStorage.setItem(
-          "twitchSubConfig",
-          JSON.stringify(config.value)
-        );
-      }
+    if (
+      config.value.bookId.value &&
+      config.value.chapter.value &&
+      config.value.translation.value
+    ) {
+      openBookAndChapter(
+        seedBibleState,
+        config.value.translation.value,
+        config.value.bookId.value,
+        config.value.chapter.value
+      );
+      config.value.bookId.value = null;
+      config.value.chapter.value = null;
+      config.value.translation.value = null;
+      window.localStorage.setItem(
+        "twitchSubConfig",
+        JSON.stringify(config.value)
+      );
     }
   });
 
@@ -124,14 +148,14 @@ export function CreateTwitchSubState(
 
           await openBookAndChapter(
             seedBibleState,
-            settings.value?.translationEnabled && followTranslation
+            settings.value.translationEnabled.value && followTranslation
               ? translation
               : seedBibleState.app.currentReadingState.value?.translationId ||
                   "ABB",
-            settings.value?.chapterFollowEnabled
+            settings.value.chapterFollowEnabled.value
               ? bookId
               : seedBibleState.app.currentReadingState.value?.bookId || "GEN",
-            settings.value?.chapterFollowEnabled
+            settings.value.chapterFollowEnabled.value
               ? chapter
               : seedBibleState.app.currentReadingState.value?.chapterNumber?.toString() ||
                   "1"
@@ -139,7 +163,7 @@ export function CreateTwitchSubState(
           break;
         }
         case "highlightsChanged": {
-          if (!settings.value.highlightEnabled) {
+          if (!settings.value.highlightEnabled.value) {
             console.log(
               "Highlight follow is disabled, ignoring highlightsChanged event"
             );
@@ -211,31 +235,28 @@ export function CreateTwitchSubState(
   };
 
   effect(() => {
-    const twitchSubContainer = document.getElementById("twitchSub-container");
+    if (settingsOpened.value) {
+      if (document.getElementById("twitchSub-container")) return;
 
-    if (!twitchSubContainer && settingsOpened.value) {
-      const twitchSubDiv = document.createElement("div");
+      const container = document.createElement("div");
+      container.id = "twitchSub-container";
+      container.className = "twitchSub";
+      document.body.appendChild(container);
 
-      twitchSubDiv.id = "twitchSub-container";
-
-      twitchSubDiv.className = "twitchSub";
-
-      document.body.appendChild(twitchSubDiv);
-
+      render(
+        <App
+          wsPaused={wsPaused}
+          settingsOpened={settingsOpened}
+          settings={settings}
+        />,
+        container
+      );
+    } else {
       const container = document.getElementById("twitchSub-container");
       if (container) {
-        render(
-          <App
-            wsPaused={wsPaused}
-            settingsOpened={settingsOpened}
-            settings={settings}
-          />,
-          container
-        );
+        render(null, container);
+        container.remove();
       }
-    } else if (twitchSubContainer && !settingsOpened.value) {
-      render(null, twitchSubContainer);
-      twitchSubContainer.remove();
     }
   });
 
@@ -246,7 +267,11 @@ export function CreateTwitchSubState(
     );
     window.localStorage.setItem(
       "twitchSubSettings",
-      JSON.stringify(settings.value)
+      JSON.stringify({
+        translationEnabled: settings.value.translationEnabled.value,
+        highlightEnabled: settings.value.highlightEnabled.value,
+        chapterFollowEnabled: settings.value.chapterFollowEnabled.value,
+      })
     );
   });
 
@@ -268,15 +293,10 @@ async function getConfig({
   clientId: string;
   eventSubWebsocketUrl: string;
 }) {
-  if (window.localStorage.getItem("twitchSubConfig")) {
+  const stored = window.localStorage.getItem("twitchSubConfig");
+  if (stored) {
     try {
-      const config = JSON.parse(
-        window.localStorage.getItem("twitchSubConfig") || "{}"
-      );
-
-      return {
-        ...config,
-      };
+      return JSON.parse(stored);
     } catch (e) {
       console.error("Failed to parse Twitch Sub config from localStorage:", e);
       return null;
@@ -284,47 +304,52 @@ async function getConfig({
   }
 
   const baseUrl = configBot.tags.url;
-
   const hash = new URLSearchParams(new URL(baseUrl).hash.slice(1));
 
   const accessToken = hash.get("access_token");
+  if (!accessToken) {
+    console.error("No access token found in URL hash.");
+    return null;
+  }
 
-  const stateUnit8Array = bytes.fromBase64String(hash.get("state") || "");
-  const stateString = new TextDecoder().decode(stateUnit8Array);
+  const stateBytes = bytes.fromBase64String(hash.get("state") || "");
+  const stateString = new TextDecoder().decode(stateBytes);
   if (!stateString) {
     console.error("No state found in URL hash. Full hash:", hash.toString());
     return null;
   }
-  const state = JSON.parse(stateString) || {};
-  const broadcasterId = state.broadcaster_id;
-  const channelId = state.channel_id;
-  const bookId = state.book;
-  const chapter = state.chapter;
-  const translation = state.translation;
+
+  const {
+    broadcaster_id: broadcasterId,
+    channel_id: channelId,
+    book: bookId,
+    chapter,
+    translation,
+  } = JSON.parse(stateString);
 
   const res = await web.get("https://id.twitch.tv/oauth2/validate", {
     headers: { Authorization: `OAuth ${accessToken}` },
   });
 
-  if (res.data.user_id) {
-    const config = {
-      botUserId: res.data.user_id,
-      accessToken: accessToken,
-      clientId: clientId,
-      broadcasterId: broadcasterId,
-      eventSubWebsocketUrl: eventSubWebsocketUrl,
-      channelId: channelId,
-      bookId: bookId,
-      chapter: chapter,
-      translation: translation,
-    };
-    window.localStorage.setItem("twitchSubConfig", JSON.stringify(config));
-    os.goToURL(baseUrl.split("#")[0]);
-    return null;
-  } else {
+  if (!res.data.user_id) {
     console.error("Failed to validate access token. Response:", res);
     return null;
   }
+
+  const config = {
+    botUserId: res.data.user_id,
+    accessToken,
+    clientId,
+    broadcasterId,
+    eventSubWebsocketUrl,
+    channelId,
+    bookId,
+    chapter,
+    translation,
+  };
+  window.localStorage.setItem("twitchSubConfig", JSON.stringify(config));
+  os.goToURL(baseUrl.split("#")[0]);
+  return null;
 }
 
 async function openBookAndChapter(
@@ -333,58 +358,53 @@ async function openBookAndChapter(
   bookId: string,
   chapter: string
 ) {
-  const selectedPaneId = seedBibleState.panes.selectedPaneId.value;
   const selectedPane = seedBibleState.panes.panes.value.find(
-    (pane) => pane.id === selectedPaneId
+    (pane) => pane.id === seedBibleState.panes.selectedPaneId.value
   );
-  if (selectedPane) {
-    seedBibleState.panes.selectPane(selectedPane.id);
-
-    if (selectedPane.tab) {
-      await selectedPane.tab.readingState.selectTranslationAndChapter(
-        translation,
-        bookId,
-        Number(chapter)
-      );
-    } else {
-      const newTab = seedBibleState.tabs.addTab();
-      seedBibleState.panes.openInPane(selectedPane.id, {
-        tabId: newTab.id,
-      });
-
-      await newTab.readingState.selectTranslationAndChapter(
-        translation,
-        bookId,
-        Number(chapter)
-      );
-    }
-  } else {
-    console.error("No pane found with id:", selectedPaneId);
+  if (!selectedPane) {
+    console.error(
+      "No pane found with id:",
+      seedBibleState.panes.selectedPaneId.value
+    );
+    return;
   }
+
+  seedBibleState.panes.selectPane(selectedPane.id);
+
+  let readingState = selectedPane.tab?.readingState;
+  if (!readingState) {
+    const newTab = seedBibleState.tabs.addTab();
+    seedBibleState.panes.openInPane(selectedPane.id, { tabId: newTab.id });
+    readingState = newTab.readingState;
+  }
+
+  await readingState.selectTranslationAndChapter(
+    translation,
+    bookId,
+    Number(chapter)
+  );
 }
 
 function addTwitchIcon({
-  wsPaused = signal(false),
-  settingsOpened = signal(false),
+  wsPaused,
+  settingsOpened,
 }: {
   wsPaused: Signal<boolean>;
   settingsOpened: Signal<boolean>;
 }) {
-  const containerToUse =
-    document.getElementsByClassName("sb-bible-reader-title")[0] ||
-    document.getElementsByClassName("sb-bible-reader-mobile-header-title")[0] ||
-    null;
-  if (!containerToUse) {
+  const container =
+    document.getElementsByClassName("sb-bible-reader-title")[0] ??
+    document.getElementsByClassName("sb-bible-reader-mobile-header-title")[0];
+  if (!container) {
     console.error("Could not find container to add Twitch icon to");
     return;
   }
-  const existingIcon = document.getElementById("twitch-extension-icon");
-  if (existingIcon) {
-    existingIcon.remove();
-  }
-  const twitchIconDiv = document.createElement("div");
-  twitchIconDiv.id = "twitch-extension-icon";
-  twitchIconDiv.style = `
+
+  document.getElementById("twitch-extension-icon")?.remove();
+
+  const icon = document.createElement("div");
+  icon.id = "twitch-extension-icon";
+  icon.style.cssText = `
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -399,16 +419,13 @@ function addTwitchIcon({
     };
     cursor: pointer;
   `;
-
-  console.log("Container to use for Twitch Icon:", containerToUse);
-
-  twitchIconDiv.onclick = (e) => {
+  icon.onclick = (e) => {
     e.stopPropagation();
     settingsOpened.value = !settingsOpened.value;
   };
 
-  containerToUse.appendChild(twitchIconDiv);
-  render(<TwitchIcon width={20} height={20} />, twitchIconDiv);
+  container.appendChild(icon);
+  render(<TwitchIcon width={20} height={20} />, icon);
 }
 
 function expandRange(range: [number, number]): number[] {

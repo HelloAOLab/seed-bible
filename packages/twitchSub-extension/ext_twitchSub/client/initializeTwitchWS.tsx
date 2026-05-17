@@ -1,12 +1,23 @@
-import { type TwitchSubInterface } from "ext_twitchSub.client.interface";
+import {
+  type TwitchSubInterface,
+  type WSTwitchMessage,
+  type WSWelcomeMessage,
+  type WSNotificationMessage,
+} from "ext_twitchSub.client.interface";
+
+interface ChannelChatMessageEvent {
+  broadcaster_user_id: string;
+  chatter_user_id: string;
+  message: { text: string };
+}
 
 function startWebSocketClient(twitchSubManager: TwitchSubInterface) {
   const config = twitchSubManager.config.value;
-  if (!config) {
+  if (!config.accessToken.value) {
     console.error("wsss:- Twitch config not available.");
     return;
   }
-  const websocketClient = new WebSocket(config.eventSubWebsocketUrl);
+  const websocketClient = new WebSocket(config.eventSubWebsocketUrl.value!);
 
   websocketClient.onerror = (event) => {
     console.error("wsss:- " + "WebSocket error observed:", event);
@@ -16,7 +27,7 @@ function startWebSocketClient(twitchSubManager: TwitchSubInterface) {
     console.log(
       "wsss:- " +
         "WebSocket connection opened to " +
-        config.eventSubWebsocketUrl
+        config.eventSubWebsocketUrl.value
     );
   };
 
@@ -28,34 +39,36 @@ function startWebSocketClient(twitchSubManager: TwitchSubInterface) {
 }
 
 function handleWebSocketMessage(
-  data: any,
+  data: WSTwitchMessage,
   twitchSubManager: TwitchSubInterface
 ) {
   const config = twitchSubManager.config.value;
-  if (!config) {
+  if (!config.accessToken.value) {
     console.error("wsss:- Twitch config not available.");
     return;
   }
   console.log("wsss:- " + "WebSocket message received:", data);
   switch (data.metadata.message_type) {
-    case "session_welcome":
-      twitchSubManager.websocketSessionID.value = data.payload.session.id;
+    case "session_welcome": {
+      const welcome = data as WSWelcomeMessage;
+      twitchSubManager.websocketSessionID.value = welcome.payload.session.id;
       registerEventSubListeners(twitchSubManager);
       break;
-    case "notification":
-      switch (data.metadata.subscription_type) {
+    }
+    case "notification": {
+      const notification =
+        data as unknown as WSNotificationMessage<ChannelChatMessageEvent>;
+      switch (notification.metadata.subscription_type) {
         case "channel.chat.message":
           if (
-            data.payload.event.broadcaster_user_id === config.channelId &&
-            data.payload.event.chatter_user_id === config.broadcasterId
+            notification.payload.event.broadcaster_user_id ===
+              config.channelId.value &&
+            notification.payload.event.chatter_user_id ===
+              config.broadcasterId.value
           ) {
             try {
-              console.log(
-                "wsss:- " +
-                  "Received chat message from broadcaster. Processing..."
-              );
               const stateUnit8Array = bytes.fromBase64String(
-                data.payload.event.message.text || ""
+                notification.payload.event.message.text || ""
               );
               const configString = new TextDecoder().decode(stateUnit8Array);
               const parsedConfig = JSON.parse(configString);
@@ -67,16 +80,16 @@ function handleWebSocketMessage(
               );
             }
           }
-
           break;
       }
       break;
+    }
   }
 }
 
 async function registerEventSubListeners(twitchSubManager: TwitchSubInterface) {
   const config = twitchSubManager.config.value;
-  if (!config) {
+  if (!config.accessToken.value) {
     console.error("wsss:- Twitch config not available.");
     return;
   }
@@ -87,8 +100,8 @@ async function registerEventSubListeners(twitchSubManager: TwitchSubInterface) {
       type: "channel.chat.message",
       version: "1",
       condition: {
-        broadcaster_user_id: config.channelId,
-        user_id: config.botUserId,
+        broadcaster_user_id: config.channelId.value!,
+        user_id: config.botUserId.value!,
       },
       transport: {
         method: "websocket",
@@ -97,8 +110,8 @@ async function registerEventSubListeners(twitchSubManager: TwitchSubInterface) {
     }),
     {
       headers: {
-        Authorization: "Bearer " + config.accessToken,
-        "Client-Id": config.clientId,
+        Authorization: "Bearer " + config.accessToken.value!,
+        "Client-Id": config.clientId.value!,
         "Content-Type": "application/json",
       },
     }

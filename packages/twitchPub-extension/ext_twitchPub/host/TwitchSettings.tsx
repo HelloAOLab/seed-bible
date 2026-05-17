@@ -61,14 +61,11 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
               })}
             </span>
             <ToggleBtn
-              toggle={settings.value.translation.enabled}
+              toggle={settings.value.translation.value.enabled}
               setToggle={(value) =>
-                (settings.value = {
-                  ...settings.value,
-                  translation: {
-                    ...settings.value.translation,
-                    enabled: value,
-                  },
+                (settings.value.translation.value = {
+                  ...settings.value.translation.value,
+                  enabled: value,
                 })
               }
               id={"translationToggle"}
@@ -81,11 +78,11 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
               })}
             </span>
             <ToggleBtn
-              toggle={settings.value.highlight.enabled}
+              toggle={settings.value.highlight.value.enabled}
               setToggle={(value) =>
-                (settings.value = {
-                  ...settings.value,
-                  highlight: { ...settings.value.highlight, enabled: value },
+                (settings.value.highlight.value = {
+                  ...settings.value.highlight.value,
+                  enabled: value,
                 })
               }
               id={"highlightToggle"}
@@ -102,7 +99,7 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                 value={
                   customTimerFlag === "custom"
                     ? "custom"
-                    : settings.value.announcementTimer?.interval?.toString() ||
+                    : settings.value.announcementTimer.value.interval?.toString() ||
                       "0"
                 }
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -112,21 +109,15 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                     e.currentTarget.value
                   );
                   if (e.currentTarget.value === "custom") {
-                    settings.value = {
-                      ...settings.value,
-                      announcementTimer: {
-                        ...settings.value.announcementTimer,
-                        interval: null,
-                      },
+                    settings.value.announcementTimer.value = {
+                      ...settings.value.announcementTimer.value,
+                      interval: null,
                     };
                     setCustomTimerFlag("custom");
                   } else {
-                    settings.value = {
-                      ...settings.value,
-                      announcementTimer: {
-                        ...settings.value.announcementTimer,
-                        interval: Number(e.currentTarget.value),
-                      },
+                    settings.value.announcementTimer.value = {
+                      ...settings.value.announcementTimer.value,
+                      interval: Number(e.currentTarget.value),
                     };
                     setCustomTimerFlag("");
                   }
@@ -163,23 +154,14 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                         setCustomTimer(value);
                         const minutes = parseFloat(value);
                         if (!isNaN(minutes) && value !== "" && value !== ".") {
-                          settings.value = {
-                            ...settings.value,
-                            announcementTimer: {
-                              ...settings.value.announcementTimer,
-                              interval: minutes * 60000,
-                            },
+                          settings.value.announcementTimer.value = {
+                            ...settings.value.announcementTimer.value,
+                            interval: minutes * 60000,
                           };
-                          console.log(
-                            settings.value.announcementTimer.interval
-                          );
                         } else if (value === "") {
-                          settings.value = {
-                            ...settings.value,
-                            announcementTimer: {
-                              ...settings.value.announcementTimer,
-                              interval: 0,
-                            },
+                          settings.value.announcementTimer.value = {
+                            ...settings.value.announcementTimer.value,
+                            interval: 0,
                           };
                         }
                       }

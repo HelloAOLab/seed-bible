@@ -1,25 +1,29 @@
 import { type Signal } from "@preact/signals";
 import sendMessage from "ext_twitchPub.host.sendMessage";
+import {
+  type WSTwitchMessage,
+  type WSWelcomeMessage,
+  type WSNotificationMessage,
+} from "ext_twitchPub.host.interface";
 
 const TWITCH_VALIDATE_URL = "https://id.twitch.tv/oauth2/validate";
 const TWITCH_EVENTSUB_WS_URL = "wss://eventsub.wss.twitch.tv/ws";
 const TWITCH_EVENTSUB_SUBSCRIPTIONS_URL =
   "https://api.twitch.tv/helix/eventsub/subscriptions";
 
-type TwitchBotConfig = {
-  BOT_USER_ID: string;
-  OAUTH_TOKEN: string;
-  CLIENT_ID: string;
-  CHAT_CHANNEL_USER_ID: string;
-  QR_VALUE: string;
-};
+interface ChannelChatMessageEvent {
+  broadcaster_user_id: string;
+  chatter_user_id: string;
+  chatter_user_name: string;
+  message: { text: string };
+}
 
-type WebSocketMessage = {
-  metadata?: {
-    message_type?: string;
-    subscription_type?: string;
-  };
-  payload?: unknown;
+type BotState = {
+  broadcasterId: string;
+  senderId: string;
+  userAccessToken: string;
+  clientId: string;
+  qrValue: string;
 };
 
 let websocketSessionID: string;
@@ -38,31 +42,10 @@ function getBearerHeaders(token: string, clientId: string) {
   };
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function getSessionIdFromMessage(data: WebSocketMessage): string | null {
-  if (!isRecord(data.payload)) {
-    return null;
-  }
-  const session = data.payload.session;
-  if (!isRecord(session)) {
-    return null;
-  }
-  return typeof session.id === "string" ? session.id : null;
-}
-
 const handleCommands = (props: {
   command: string;
   chatterName: string;
-  state: {
-    broadcasterId: string;
-    senderId: string;
-    userAccessToken: string;
-    clientId: string;
-    qrValue: string;
-  };
+  state: BotState;
 }) => {
   const { command, chatterName, state } = props;
   switch (command) {
@@ -100,79 +83,24 @@ const handleCommands = (props: {
   }
 };
 
-function getChatEventFromMessage(data: WebSocketMessage): {
-  text: string;
-  chatterId: string;
-  chatterName: string;
-} | null {
-  if (!isRecord(data.payload)) {
-    return null;
-  }
-  const event = data.payload.event;
-  if (!isRecord(event)) {
-    return null;
-  }
-  const message = event.message;
-  if (!isRecord(message)) {
-    return null;
-  }
-
-  const text = message.text;
-  const chatterId = event.chatter_user_id;
-  const chatterName = event.chatter_user_name;
-  if (
-    typeof text !== "string" ||
-    typeof chatterId !== "string" ||
-    typeof chatterName !== "string"
-  ) {
-    return null;
-  }
-
-  return {
-    text,
-    chatterId,
-    chatterName,
-  };
-}
-
-async function getAuth({ OAUTH_TOKEN }: Pick<TwitchBotConfig, "OAUTH_TOKEN">) {
+async function getAuth(oauthToken: string) {
   const response = await web.get(TWITCH_VALIDATE_URL, {
-    headers: getOauthHeaders(OAUTH_TOKEN),
+    headers: getOauthHeaders(oauthToken),
   });
-
-  if (response.status !== 200) {
-    return false;
-  }
-  return true;
+  return response.status === 200;
 }
 
 function handleChatMessageNotification(
-  data: WebSocketMessage,
-  state: {
-    broadcasterId: string;
-    senderId: string;
-    userAccessToken: string;
-    clientId: string;
-    qrValue: string;
-  }
+  data: WSNotificationMessage<ChannelChatMessageEvent>,
+  state: BotState
 ) {
-  const chatEvent = getChatEventFromMessage(data);
-  if (chatEvent?.text.startsWith("!")) {
-    handleCommands({
-      chatterName: chatEvent.chatterName,
-      command: chatEvent.text,
-      state,
-    });
+  const { message, chatter_user_name: chatterName } = data.payload.event;
+  if (message.text.startsWith("!")) {
+    handleCommands({ chatterName, command: message.text, state });
   }
 }
 
-function startWebSocketClient(state: {
-  broadcasterId: string;
-  senderId: string;
-  userAccessToken: string;
-  clientId: string;
-  qrValue: string;
-}) {
+function startWebSocketClient(state: BotState) {
   const websocketClient = new WebSocket(TWITCH_EVENTSUB_WS_URL);
 
   websocketClient.onerror = (event) => {
@@ -185,16 +113,7 @@ function startWebSocketClient(state: {
 
   websocketClient.onmessage = (event) => {
     try {
-      handleWebSocketMessage({
-        data: JSON.parse(event.data),
-        state: {
-          broadcasterId: state.broadcasterId,
-          senderId: state.senderId,
-          userAccessToken: state.userAccessToken,
-          clientId: state.clientId,
-          qrValue: state.qrValue,
-        },
-      });
+      handleWebSocketMessage({ data: JSON.parse(event.data), state });
     } catch (error) {
       console.error("Failed to parse WebSocket message payload:", error);
     }
@@ -207,68 +126,44 @@ function handleWebSocketMessage({
   data,
   state,
 }: {
-  data: WebSocketMessage;
-  state: {
-    broadcasterId: string;
-    senderId: string;
-    userAccessToken: string;
-    clientId: string;
-    qrValue: string;
-  };
+  data: WSTwitchMessage;
+  state: BotState;
 }) {
-  const messageType = data.metadata?.message_type;
-
-  if (messageType === "session_welcome") {
-    const sessionId = getSessionIdFromMessage(data);
-    if (!sessionId) {
-      console.error("WebSocket welcome message missing session id.");
-      return;
+  switch (data.metadata.message_type) {
+    case "session_welcome": {
+      const welcome = data as WSWelcomeMessage;
+      websocketSessionID = welcome.payload.session.id;
+      registerEventSubListeners({ state });
+      break;
     }
-    websocketSessionID = sessionId;
-    registerEventSubListeners({
-      state,
-    });
-    return;
-  }
-
-  if (
-    messageType === "notification" &&
-    data.metadata?.subscription_type === "channel.chat.message"
-  ) {
-    handleChatMessageNotification(data, state);
+    case "notification": {
+      const notification =
+        data as unknown as WSNotificationMessage<ChannelChatMessageEvent>;
+      if (notification.metadata.subscription_type === "channel.chat.message") {
+        handleChatMessageNotification(notification, state);
+      }
+      break;
+    }
   }
 }
 
-async function registerEventSubListeners({
-  state,
-}: {
-  state: {
-    broadcasterId: string;
-    senderId: string;
-    userAccessToken: string;
-    clientId: string;
-    qrValue: string;
-  };
-}) {
-  const { senderId, broadcasterId } = state;
-  const payload = {
-    type: "channel.chat.message",
-    version: "1",
-    condition: {
-      broadcaster_user_id: broadcasterId,
-      user_id: senderId,
-    },
-    transport: {
-      method: "websocket",
-      session_id: websocketSessionID,
-    },
-  };
-
+async function registerEventSubListeners({ state }: { state: BotState }) {
   const response = await web.post(
     TWITCH_EVENTSUB_SUBSCRIPTIONS_URL,
-    JSON.stringify(payload),
+    JSON.stringify({
+      type: "channel.chat.message",
+      version: "1",
+      condition: {
+        broadcaster_user_id: state.broadcasterId,
+        user_id: state.senderId,
+      },
+      transport: {
+        method: "websocket",
+        session_id: websocketSessionID,
+      },
+    }),
     {
-      headers: getBearerHeaders(state.userAccessToken!, state.clientId!),
+      headers: getBearerHeaders(state.userAccessToken, state.clientId),
     }
   );
 
@@ -278,15 +173,13 @@ async function registerEventSubListeners({
 }
 
 const initializeTwitchBot = async (state: {
-  broadcasterId: Signal<string | null>;
-  senderId: Signal<string | null>;
-  userAccessToken: Signal<string | null>;
+  broadcasterId: Signal<string>;
+  senderId: Signal<string>;
+  userAccessToken: Signal<string>;
   clientId: Signal<string>;
   qrValue: Signal<string>;
 }) => {
-  const isAuthValid = await getAuth({
-    OAUTH_TOKEN: state.userAccessToken.value!,
-  });
+  const isAuthValid = await getAuth(state.userAccessToken.value!);
   if (!isAuthValid) {
     return;
   }

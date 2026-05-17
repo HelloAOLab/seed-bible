@@ -1,4 +1,4 @@
-import { effect, signal } from "@preact/signals";
+import { effect, signal, type Signal } from "@preact/signals";
 import {
   fetchUserIds,
   checkAuthorizationStatus,
@@ -35,41 +35,36 @@ const sendAnnouncement = (
     });
 };
 
-const getUrl = (props: {
-  clientId: string;
-  broadcasterId: string;
-  channelId: string;
-  book?: string;
-  chapter?: number;
-  translation?: string;
-}) => {
-  const {
-    clientId,
-    broadcasterId,
-    channelId,
+const getUrl = (
+  config: {
+    clientId: Signal<string>;
+    broadcasterId: Signal<string>;
+    channelId: Signal<string>;
+  },
+  {
     book = "GEN",
     chapter = 1,
     translation = "AAB",
-  } = props;
+  }: { book?: string; chapter?: number; translation?: string } = {}
+) => {
   const redirectUri = `https://ao.bot/?pattern=${configBot.tags.pattern || "SeedBible"}&ext_twitchSub=true`;
+  const state = bytes.toBase64String(
+    new TextEncoder().encode(
+      JSON.stringify({
+        broadcaster_id: config.broadcasterId.value,
+        channel_id: config.channelId.value,
+        book,
+        chapter,
+        translation,
+      })
+    )
+  );
   const params = new URLSearchParams({
-    client_id: clientId,
+    client_id: config.clientId.value,
     redirect_uri: redirectUri,
     response_type: "token",
     scope: "user:read:chat user:bot channel:bot",
-    state: bytes.toBase64String(
-      new Uint8Array(
-        [
-          ...JSON.stringify({
-            broadcaster_id: broadcasterId,
-            channel_id: channelId,
-            book,
-            chapter,
-            translation,
-          }),
-        ].map((c) => c.charCodeAt(0))
-      )
-    ),
+    state,
   });
   return `https://id.twitch.tv/oauth2/authorize?${params}`;
 };
@@ -162,54 +157,48 @@ export function CreateTwitchPubState(): TwitchPubState {
   >(window.localStorage?.currentPage || "login");
   const loading = signal<boolean>(false);
   const uiHidden = signal<boolean>(false);
+  const savedSettings = (() => {
+    const raw = window.localStorage.getItem("settings");
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  })();
   const settings = signal({
-    translation: {
-      enabled: false,
-    },
-    highlight: {
-      enabled: true,
-    },
-    announcementTimer: {
-      enabled: false,
-      interval: 0,
-    },
+    translation: signal({
+      enabled: savedSettings?.translation?.enabled ?? false,
+    }),
+    highlight: signal({ enabled: savedSettings?.highlight?.enabled ?? true }),
+    announcementTimer: signal({
+      enabled: savedSettings?.announcementTimer?.enabled ?? false,
+      interval: savedSettings?.announcementTimer?.interval ?? 0,
+    }),
   });
   let announcementTimerInterval: number | null = null;
   let uiHiddenTimeout: number | null = null;
 
-  const clientId = signal<string>("cfjslv2429r70ek579iogr02vecn6d");
-  const channelId = signal<string>("1455265905");
   const deviceCode = signal<string | null>(
     window.localStorage?.deviceCode || null
   );
-  const userAccessToken = signal<string | null>(
-    window.localStorage?.userAccessToken || null
-  );
-  const senderId = signal<string | null>(window.localStorage?.senderId || null);
-  const broadcasterId = signal<string | null>(
-    window.localStorage?.broadcasterId || null
-  );
-  const qrValue = signal<string>(
-    getUrl({
-      clientId: clientId.value,
-      broadcasterId: broadcasterId.value || "",
-      channelId: channelId.value,
-    })
-  );
+  const twitchConfig = signal({
+    clientId: signal<string>("cfjslv2429r70ek579iogr02vecn6d"),
+    channelId: signal<string>("1455265905"),
+    broadcasterId: signal<string>(window.localStorage?.broadcasterId || ""),
+    senderId: signal<string>(window.localStorage?.senderId || ""),
+    userAccessToken: signal<string>(window.localStorage?.userAccessToken || ""),
+  });
+
+  const qrValue = signal<string>(getUrl(twitchConfig.value));
   const rateLimiter = createRateLimiter(
     (type, payload, parts, currentPart, uid) =>
       sendMessage({
-        message: JSON.stringify({
-          type,
-          parts,
-          currentPart,
-          payload,
-          uid,
-        }),
-        broadcasterId: channelId.value,
-        senderId: senderId.value!,
-        userAccessToken: userAccessToken.value!,
-        clientId: clientId.value,
+        message: JSON.stringify({ type, parts, currentPart, payload, uid }),
+        broadcasterId: twitchConfig.value.channelId.value,
+        senderId: twitchConfig.value.senderId.value,
+        userAccessToken: twitchConfig.value.userAccessToken.value,
+        clientId: twitchConfig.value.clientId.value,
       })
   );
 
@@ -235,32 +224,24 @@ export function CreateTwitchPubState(): TwitchPubState {
   };
 
   const handleSeedBibleUpdate = (seedBibleState: SeedBibleState) => {
-    const bId = broadcasterId.value;
-    const cId = clientId.value;
-    const uat = userAccessToken.value;
-    if (!bId || !cId || !uat) {
-      console.warn("Missing Twitch credentials, cannot send announcement");
+    const { broadcasterId, clientId, userAccessToken } = twitchConfig.value;
+    if (!broadcasterId.value || !clientId.value || !userAccessToken.value)
       return;
-    }
-    console.log("Handling Seed Bible bookUpdate");
 
     const current = seedBibleState.app.currentReadingState.value;
     if (!current) return;
 
     const { translationId, bookId, chapterNumber } = current;
-    qrValue.value = getUrl({
-      clientId: clientId.value,
-      broadcasterId: broadcasterId.value || "",
-      channelId: channelId.value,
+    qrValue.value = getUrl(twitchConfig.value, {
       book: bookId || "GEN",
       chapter: chapterNumber || 1,
       translation: translationId || "AAB",
     });
+
     const baseUrl =
       seedBibleState.bibleData.api.endpoint || "https://vmfnri.helloao.org";
-    const prev = window.localStorage?.prevSeedBibleState
-      ? JSON.parse(window.localStorage.prevSeedBibleState)
-      : null;
+    const prevRaw = window.localStorage.getItem("prevSeedBibleState");
+    const prev = prevRaw ? JSON.parse(prevRaw) : null;
     if (
       !prev ||
       translationId !== prev.translationId ||
@@ -274,7 +255,7 @@ export function CreateTwitchPubState(): TwitchPubState {
           baseUrl,
           bookId,
           chapter: chapterNumber,
-          followTranslation: settings.value.translation.enabled,
+          followTranslation: settings.value.translation.value.enabled,
         })
       );
     }
@@ -292,24 +273,24 @@ export function CreateTwitchPubState(): TwitchPubState {
     bookId: string,
     chapterNumber: number
   ) => {
-    const bId = broadcasterId.value;
-    const cId = clientId.value;
-    const uat = userAccessToken.value;
-    if (!bId || !cId || !uat || !settings.value.highlight.enabled) {
-      console.warn("Missing Twitch credentials, cannot send announcement");
+    const { broadcasterId, clientId, userAccessToken } = twitchConfig.value;
+    if (
+      !broadcasterId.value ||
+      !clientId.value ||
+      !userAccessToken.value ||
+      !settings.value.highlight.value.enabled
+    )
       return;
-    }
+
     const currentPayload = JSON.stringify({
       highlights: highlights.map(
         (h) =>
           `${bookId}:${chapterNumber}:${Array.isArray(h.verse) ? h.verse.join("-") : h.verse}:${h.colorId}${h.customColor ? `:${h.customColor}` : ""}${h.customFontColor ? `:${h.customFontColor}` : ""}`
       ),
     });
-    const previous = window.localStorage?.prevHighlights || null;
-    if (currentPayload === previous) {
-      console.log("Highlights unchanged, not sending update");
-      return;
-    }
+    const previous = window.localStorage.getItem("prevHighlights");
+    if (currentPayload === previous) return;
+
     window.localStorage.setItem("prevHighlights", currentPayload);
     rateLimiter("highlightsChanged", currentPayload);
   };
@@ -317,62 +298,58 @@ export function CreateTwitchPubState(): TwitchPubState {
   effect(() => {
     if (!!deviceCode.value && currentPage.value === "authorization") {
       checkAuthorizationStatus(
-        clientId.value,
+        twitchConfig.value.clientId.value,
         deviceCode.value,
-        userAccessToken,
+        twitchConfig.value.userAccessToken,
         currentPage
       );
-    } else if (!!userAccessToken.value && currentPage.value === "interface") {
+    } else if (
+      !!twitchConfig.value.userAccessToken.value &&
+      currentPage.value === "interface"
+    ) {
       fetchUserIds(
-        clientId.value,
-        userAccessToken.value,
-        broadcasterId,
-        senderId
+        twitchConfig.value.clientId.value,
+        twitchConfig.value.userAccessToken.value,
+        twitchConfig.value.broadcasterId,
+        twitchConfig.value.senderId
       );
     }
   });
 
   effect(() => {
-    const bId = broadcasterId.value;
-    const cId = clientId.value;
-    const uat = userAccessToken.value;
-    if (!bId || !cId || !uat) return;
+    const { broadcasterId, clientId, userAccessToken } = twitchConfig.value;
+    if (
+      !broadcasterId.value ||
+      !clientId.value ||
+      !userAccessToken.value ||
+      !settings.value.highlight.value.enabled
+    )
+      return;
     sendAnnouncement(
-      uat,
-      bId,
-      bId,
-      `Join me at ${getUrl({ clientId: clientId.value, broadcasterId: broadcasterId.value || "", channelId: channelId.value, book: "GEN", chapter: 1, translation: "AAB" })}`,
-      cId
+      userAccessToken.value,
+      broadcasterId.value,
+      broadcasterId.value,
+      `Join me at ${getUrl(twitchConfig.value)}`,
+      clientId.value
     );
   });
 
   effect(() => {
-    const bId = broadcasterId.value;
-    const cId = clientId.value;
-    const uat = userAccessToken.value;
-    if (!bId || !cId || !uat) return;
-    console.log(
-      settings.value.announcementTimer,
-      "announcement timer settings"
-    );
-    if (settings.value.announcementTimer.interval > 0) {
+    const { broadcasterId, clientId, userAccessToken } = twitchConfig.value;
+    if (!broadcasterId.value || !clientId.value || !userAccessToken.value)
+      return;
+    if (settings.value.announcementTimer.value.interval > 0) {
       if (announcementTimerInterval) {
         clearInterval(announcementTimerInterval);
       }
-      const interval = settings.value.announcementTimer.interval;
+      const interval = settings.value.announcementTimer.value.interval;
       const st = setInterval(() => {
-        console.log("Sending scheduled announcement with Twitch credentials:", {
-          bId,
-          cId,
-          uat,
-          interval,
-        });
         sendAnnouncement(
-          uat,
-          bId,
-          bId,
-          `Join me at ${getUrl({ clientId: clientId.value, broadcasterId: broadcasterId.value || "", channelId: channelId.value, book: "GEN", chapter: 1, translation: "AAB" })}`,
-          cId
+          userAccessToken.value,
+          broadcasterId.value,
+          broadcasterId.value,
+          `Join me at ${getUrl(twitchConfig.value)}`,
+          clientId.value
         );
       }, interval);
       announcementTimerInterval = st as unknown as number;
@@ -385,13 +362,26 @@ export function CreateTwitchPubState(): TwitchPubState {
   });
 
   effect(() => {
-    window.localStorage.setItem("clientId", clientId.value);
+    window.localStorage.setItem("clientId", twitchConfig.value.clientId.value);
     window.localStorage.setItem("currentPage", currentPage.value);
     window.localStorage.setItem("deviceCode", deviceCode.value || "");
-    window.localStorage.setItem("userAccessToken", userAccessToken.value || "");
-    window.localStorage.setItem("senderId", senderId.value || "");
-    window.localStorage.setItem("broadcasterId", broadcasterId.value || "");
-    window.localStorage.setItem("settings", JSON.stringify(settings.value));
+    window.localStorage.setItem(
+      "userAccessToken",
+      twitchConfig.value.userAccessToken.value
+    );
+    window.localStorage.setItem("senderId", twitchConfig.value.senderId.value);
+    window.localStorage.setItem(
+      "broadcasterId",
+      twitchConfig.value.broadcasterId.value
+    );
+    window.localStorage.setItem(
+      "settings",
+      JSON.stringify({
+        translation: settings.value.translation.value,
+        highlight: settings.value.highlight.value,
+        announcementTimer: settings.value.announcementTimer.value,
+      })
+    );
     window.localStorage.setItem(
       "interfaceEnabled",
       interfaceEnabled.value.toString()
@@ -400,12 +390,9 @@ export function CreateTwitchPubState(): TwitchPubState {
 
   return {
     interfaceEnabled,
-    clientId,
+    twitchConfig,
     currentPage,
     deviceCode,
-    userAccessToken,
-    senderId,
-    broadcasterId,
     loading,
     uiHidden,
     qrValue,

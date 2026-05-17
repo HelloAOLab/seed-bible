@@ -40,9 +40,7 @@ const sendMessage = async ({
         },
       }
     );
-    if (response.data.data[0].is_sent) {
-      console.log(`✅ Message sent: "${message}"`);
-    } else {
+    if (!response.data.data[0].is_sent) {
       console.error("Failed to send message");
     }
     return response.data;

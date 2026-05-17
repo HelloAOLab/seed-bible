@@ -3,12 +3,10 @@ import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
 import { CreateTwitchPubState } from "ext_twitchPub.host.twitchPubManager";
 import initializeTwitchBot from "ext_twitchPub.host.initializeTwitchBot";
 
-const twitchPubState = CreateTwitchPubState();
-
 registerExtension({
-  id: "example-extension",
+  id: "ext_twitchPub",
   init: function* (context: SeedBibleState) {
-    console.log("Example extension initialized with context:", context);
+    const twitchPubState = CreateTwitchPubState();
 
     // register a new tool
     yield context.tools.registerToolbarTool({
@@ -57,27 +55,22 @@ registerExtension({
     });
 
     yield effect(() => {
-      const bId = twitchPubState.broadcasterId;
-      const cId = twitchPubState.clientId;
-      const uat = twitchPubState.userAccessToken;
-      const senderId = twitchPubState.senderId;
-      if (bId && cId && uat && senderId) {
+      const { broadcasterId, clientId, userAccessToken, senderId } =
+        twitchPubState.twitchConfig.value;
+      if (
+        broadcasterId.value &&
+        clientId.value &&
+        userAccessToken.value &&
+        senderId.value
+      ) {
         initializeTwitchBot({
-          broadcasterId: bId,
-          senderId: senderId,
-          userAccessToken: uat,
-          clientId: cId,
+          broadcasterId,
+          senderId,
+          userAccessToken,
+          clientId,
           qrValue: twitchPubState.qrValue,
         });
       }
     });
-
-    // You can return a value to export functions or data from your extension that can be used by other extensions.
-    // For example, this will export a function called "abc" that other extensions can call if they have a reference to this extension.
-    return {
-      abc: () => {
-        console.log("This is an exported function from the example extension!");
-      },
-    };
   },
 });

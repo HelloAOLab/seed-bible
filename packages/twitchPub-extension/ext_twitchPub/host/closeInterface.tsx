@@ -1,8 +1,7 @@
 const { render } = os.appHooks;
 
-const twitchPubContainer = document.getElementById("twitchPub-container");
-
-if (twitchPubContainer) {
-  render(null, twitchPubContainer);
-  twitchPubContainer.remove();
+const container = document.getElementById("twitchPub-container");
+if (container) {
+  render(null, container);
+  container.remove();
 }

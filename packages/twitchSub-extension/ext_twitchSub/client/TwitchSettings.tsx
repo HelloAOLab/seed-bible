@@ -60,12 +60,9 @@ const TwitchSettings = (props: {
               })}
             </span>
             <ToggleBtn
-              toggle={props.settings.value.translationEnabled}
+              toggle={props.settings.value.translationEnabled.value}
               setToggle={(value) =>
-                (props.settings.value = {
-                  ...props.settings.value,
-                  translationEnabled: value,
-                })
+                (props.settings.value.translationEnabled.value = value)
               }
               id={"translationToggle"}
             />
@@ -77,12 +74,9 @@ const TwitchSettings = (props: {
               })}
             </span>
             <ToggleBtn
-              toggle={props.settings.value.highlightEnabled}
+              toggle={props.settings.value.highlightEnabled.value}
               setToggle={(value) =>
-                (props.settings.value = {
-                  ...props.settings.value,
-                  highlightEnabled: value,
-                })
+                (props.settings.value.highlightEnabled.value = value)
               }
               id={"highlightToggle"}
             />
@@ -94,12 +88,9 @@ const TwitchSettings = (props: {
               })}
             </span>
             <ToggleBtn
-              toggle={props.settings.value.chapterFollowEnabled}
+              toggle={props.settings.value.chapterFollowEnabled.value}
               setToggle={(value) =>
-                (props.settings.value = {
-                  ...props.settings.value,
-                  chapterFollowEnabled: value,
-                })
+                (props.settings.value.chapterFollowEnabled.value = value)
               }
               id={"chapterFollowToggle"}
             />

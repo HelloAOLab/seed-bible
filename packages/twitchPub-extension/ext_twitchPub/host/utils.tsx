@@ -8,8 +8,8 @@ const senderScope =
 const fetchUserIds = async (
   clientId: string,
   token: string,
-  broadcasterId: Signal<string | null>,
-  senderId: Signal<string | null>
+  broadcasterId: Signal<string>,
+  senderId: Signal<string>
 ) => {
   const response = await web.get("https://api.twitch.tv/helix/users", {
     headers: {
@@ -28,7 +28,7 @@ const fetchUserIds = async (
 const checkAuthorizationStatus = async (
   clientId: string,
   deviceCode: string,
-  userAccessToken: Signal<string | null>,
+  userAccessToken: Signal<string>,
   currentPage: Signal<"login" | "authorization" | "interface" | "settings">
 ) => {
   const params = new URLSearchParams({
@@ -82,7 +82,7 @@ const checkAuthorizationStatus = async (
 const getDeviceAuthUrl = (state: TwitchPubState) => {
   state.loading.value = true;
   const params = new URLSearchParams({
-    client_id: state.clientId.value,
+    client_id: state.twitchConfig.value.clientId.value,
     scopes: senderScope,
   });
   const url = `https://id.twitch.tv/oauth2/device?${params}`;
