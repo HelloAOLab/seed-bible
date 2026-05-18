@@ -82,6 +82,7 @@ export class InfoLabelData {
       this.#activityIndicators.clear();
       return indicators;
     }
+    return undefined;
   }
   addActivityIndicator(indicator: ActivityIndicator) {
     if (this.#activityIndicators.has(indicator.id)) {
@@ -100,6 +101,7 @@ export class InfoLabelData {
       this.#date = undefined;
       return currDate;
     }
+    return undefined;
   }
   get owner() {
     return this.#owner;

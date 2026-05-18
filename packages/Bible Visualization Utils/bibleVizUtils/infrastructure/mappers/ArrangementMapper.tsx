@@ -40,6 +40,11 @@ export class ArrangementMapper {
               books: section.books.map((book, bookIndex): BookInfo => {
                 const bookStaticInfo =
                   this.#booksStaticInfoRepository.getBookStaticInfo(book.name);
+                if (!bookStaticInfo) {
+                  throw new Error(
+                    `ArrangementMapper: bookStaticInfo not found`
+                  );
+                }
                 return {
                   bookId: book.name,
                   type: "complete",

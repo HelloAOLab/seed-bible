@@ -48,6 +48,7 @@ export const computeAnimateTag: ComputeAnimateTagType = ({
     if (then) {
       return computeAnimateTag(then);
     }
+    return Promise.resolve();
   });
 };
 

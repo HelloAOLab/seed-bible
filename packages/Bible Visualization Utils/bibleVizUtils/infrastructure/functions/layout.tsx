@@ -1,4 +1,4 @@
-import { type FontData } from "bibleVizUtils.infrastructure.data.BibleVizDataRepository";
+import { type FontData } from "bibleVizUtils.infrastructure.config.labels.LabelsConfigProvider";
 import type {
   Vector3 as Vector3Type,
   Vector2 as Vector2Type,
@@ -9,7 +9,7 @@ import {
   type LabelPositionType,
   type LabelDateFormatType,
 } from "bibleVizUtils.domain.models.label";
-import type { DialogBoxFormAddressesType } from "bibleVizUtils.infrastructure.data.DialogBoxFormAddresses";
+import type { DialogBoxFormAddressesType } from "bibleVizUtils.infrastructure.config.labels.formAddresses";
 import { ClosestNumber } from "bibleVizUtils.domain.functions.math";
 
 export type Scales = { x: number; y: number; z: number };
