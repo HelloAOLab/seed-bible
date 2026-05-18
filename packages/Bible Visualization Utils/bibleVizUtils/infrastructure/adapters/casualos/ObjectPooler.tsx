@@ -16,6 +16,7 @@ export interface DimensionGetter {
 }
 
 export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   #poolDictionary: Map<keyof P, any>;
   #dimensionGetter: DimensionGetter;
 
@@ -46,8 +47,10 @@ export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
     const object = create(poolData.prefab, {
       space: "tempLocal",
     }) as P[K];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (object.tags as any).type = poolData.key;
     for (const { tag, value } of poolData.customTags) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (object.tags as any)[tag] = value;
     }
     return object;
@@ -91,9 +94,11 @@ export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
       if (cleanupTagsData) {
         for (const tagCleanupData of cleanupTagsData) {
           const { tag, value } = tagCleanupData;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (inUseObject.tags as any)[tag] = value;
         }
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (inUseObject.tags as any)[dimension] = false;
       inUseObject.tags.isInUse = false;
       const idx = pool.inUseObjects.indexOf(inUseObject);

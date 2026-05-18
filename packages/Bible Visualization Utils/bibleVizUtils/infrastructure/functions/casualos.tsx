@@ -123,6 +123,7 @@ export const MakePortalRestrict = () => {
 };
 
 export const SetStrictTag = <
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   B extends TypedBot<any>,
   K extends keyof B["tags"],
 >(
@@ -133,6 +134,7 @@ export const SetStrictTag = <
   setTag(bot, tag as string, value);
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function ApplyStrictMod<B extends TypedBot<any>>(
   bot: B | undefined,
   mod: Partial<B["tags"]>

@@ -144,6 +144,7 @@ export interface QueuedChapterData {
 
 export interface TourGuideData {
   intervalId: NodeJS.Timeout;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   promiseReject: (reason?: any) => void;
 }
 

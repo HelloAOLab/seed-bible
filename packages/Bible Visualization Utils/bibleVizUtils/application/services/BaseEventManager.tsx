@@ -1,6 +1,8 @@
 export type EventCallback<TPayload> = (payload: TPayload) => void;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class BaseEventManager<TEventMap extends Record<string, any>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   #listeners: Map<keyof TEventMap, Set<EventCallback<any>>>;
 
   constructor() {
