@@ -1,15 +1,15 @@
-import { I18nProvider } from "seed-bible.i18n.I18nManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import { PaneLayout } from "seed-bible.components.PaneLayout";
-import { BibleSelector } from "seed-bible.components.BibleSelector";
-import { BibleReaderToolbar } from "seed-bible.components.BibleReaderToolbar";
-import { Sidebar, SharedSessionsToasts } from "seed-bible.components.Tabs";
-import { createSeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { CasualOSApp } from "seed-bible.components.CasualOSApp";
+import { I18nProvider, useI18n } from "../i18n/I18nManager";
+import {} from "../i18n/I18nManager";
+import { PaneLayout } from "../components/PaneLayout";
+import { BibleSelector } from "../components/BibleSelector";
+import { BibleReaderToolbar } from "../components/BibleReaderToolbar";
+import { Sidebar, SharedSessionsToasts } from "../components/Tabs";
+import { createSeedBibleState } from "../managers/SeedBibleStateManager";
+import { CasualOSApp } from "../components/CasualOSApp";
 import { useEffect } from "preact/hooks";
 import type { ReadonlySignal } from "@preact/signals";
-import { closeContextMenus } from "seed-bible.components.ContextMenu";
-import { ModalHost } from "seed-bible.components.ModalHost";
+import { closeContextMenus } from "../components/ContextMenu";
+import { ModalHost } from "../components/ModalHost";
 import { useMemo } from "preact/hooks";
 import "./main.css";
 

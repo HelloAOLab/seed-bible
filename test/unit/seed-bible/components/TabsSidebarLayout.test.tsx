@@ -6,14 +6,14 @@ import {
   type CreateTestSeedBibleStateOptions,
 } from "../testUtils/createTestSeedBibleState";
 
-jest.mock("seed-bible.i18n.I18nManager", () => ({
+jest.mock("../i18n/I18nManager", () => ({
   useI18n: () => ({
     t: (key: string, options?: { defaultValue?: string }) =>
       options?.defaultValue ?? key,
   }),
 }));
 
-jest.mock("seed-bible.components.ContextMenu", () => ({
+jest.mock("../components/ContextMenu", () => ({
   closeContextMenus: jest.fn(),
   ContextMenuItem: ({
     children,
@@ -46,11 +46,11 @@ jest.mock("seed-bible.components.ContextMenu", () => ({
   ),
 }));
 
-jest.mock("seed-bible.components.SettingsPage", () => ({
+jest.mock("../components/SettingsPage", () => ({
   SettingsPage: () => <div>Settings Page</div>,
 }));
 
-jest.mock("seed-bible.components.SidebarSearch", () => ({
+jest.mock("../components/SidebarSearch", () => ({
   SidebarSearch: () => <div>Sidebar Search</div>,
 }));
 

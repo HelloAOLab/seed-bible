@@ -7,7 +7,7 @@ import {
   waitFor,
 } from "../testUtils/createTestSeedBibleState";
 
-jest.mock("seed-bible.components.ContextMenu", () => ({
+jest.mock("../components/ContextMenu", () => ({
   closeContextMenus: jest.fn(),
   ContextMenuItem: ({
     children,

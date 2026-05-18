@@ -1,6 +1,6 @@
 import { computed, effect, Signal, signal } from "@preact/signals";
 import type { ComponentChild } from "preact";
-import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
+import type { ReaderTab, TabsManager } from "../managers/TabsManager";
 
 /** Supported attached pane layout presets. */
 export type PaneLayoutId =

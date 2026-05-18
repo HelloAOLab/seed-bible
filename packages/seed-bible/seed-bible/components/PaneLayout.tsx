@@ -1,21 +1,21 @@
-import { BibleReader } from "seed-bible.components.BibleReader";
-import { BelowReaderToolbar } from "seed-bible.components.BelowReaderToolbar";
-import { CasualOSApp } from "seed-bible.components.CasualOSApp";
-import type { TranslationBookChapter } from "seed-bible.managers.FreeUseBibleAPI";
-import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
-import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
+import { BibleReader } from "../components/BibleReader";
+import { BelowReaderToolbar } from "../components/BelowReaderToolbar";
+import { CasualOSApp } from "../components/CasualOSApp";
+import type { TranslationBookChapter } from "../managers/FreeUseBibleAPI";
+import type { BibleSelectorState } from "../managers/BibleSelectorManager";
+import type { ReaderTab, TabsManager } from "../managers/TabsManager";
 import type {
   DetachedPaneAnchor,
   Pane,
   PaneLayoutId,
   PanesManager,
-} from "seed-bible.managers.PanesManager";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { type ToolsManager } from "seed-bible.managers.BibleToolsManager";
+} from "../managers/PanesManager";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import { type ToolsManager } from "../managers/BibleToolsManager";
 import { batch, effect } from "@preact/signals";
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import { translateTitle } from "seed-bible.components.Utils";
-import { MaterialIcon } from "seed-bible.components.icons";
+import { useI18n } from "../i18n/I18nManager";
+import { translateTitle } from "../components/Utils";
+import { MaterialIcon } from "../components/icons";
 import { useEffect, useRef, useState } from "preact/hooks";
 
 // const ATTACHED_PANE_MIN_SIZE_PX = 180;

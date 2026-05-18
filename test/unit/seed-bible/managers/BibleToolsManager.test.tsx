@@ -1,7 +1,7 @@
 import { signal } from "@preact/signals";
 
 jest.mock(
-  "seed-bible.components.icons",
+  "../components/icons",
   () => ({
     MaterialIcon: () => null,
     SeedBibleIcon: () => null,

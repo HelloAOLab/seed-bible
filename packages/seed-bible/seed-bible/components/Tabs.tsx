@@ -1,25 +1,25 @@
 import { useSignal } from "@preact/signals";
-import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager";
+import { DEFAULT_TRANSLATION_ID } from "../managers/BibleReadingManager";
 import {
   PANE_LAYOUT_OPTIONS,
   type PaneLayoutId,
-} from "seed-bible.managers.PanesManager";
+} from "../managers/PanesManager";
 import {
   closeContextMenus,
   ContextMenuItem,
   ContextMenuWithButton,
-} from "seed-bible.components.ContextMenu";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { SettingsIcon } from "seed-bible.components.icons";
-import { SettingsPage } from "seed-bible.components.SettingsPage";
-import type { UserProfile } from "seed-bible.managers.LoginManager";
-import type { ConnectedSessionUser } from "seed-bible.managers.SessionsManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import { SidebarSearch } from "seed-bible.components.SidebarSearch";
+} from "../components/ContextMenu";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import { SettingsIcon } from "../components/icons";
+import { SettingsPage } from "../components/SettingsPage";
+import type { UserProfile } from "../managers/LoginManager";
+import type { ConnectedSessionUser } from "../managers/SessionsManager";
+import { useI18n } from "../i18n/I18nManager";
+import { SidebarSearch } from "../components/SidebarSearch";
 import {
   handleGridKeyNav,
   handleHorizontalListKeyNav,
-} from "seed-bible.components.KeyboardNav";
+} from "../components/KeyboardNav";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -125,9 +125,10 @@ function getSelfVisualKey(state: SeedBibleState): string {
   const userId = state.login.userId.value;
   if (userId) return userId;
   try {
-    if (typeof configBot !== "undefined" && configBot?.id) {
-      return String(configBot.id);
-    }
+    return state.os.sessionId;
+    // if (typeof configBot !== "undefined" && configBot?.id) {
+    //   return String(configBot.id);
+    // }
   } catch {
     /* ignore */
   }
@@ -683,7 +684,8 @@ export function Tabs(props: TabsProps) {
                       })}
                       onClick={() => {
                         if (tab.sharedSession) {
-                          os.setClipboard(tab.sharedSession.id);
+                          // TODO: fix this
+                          // os.setClipboard(tab.sharedSession.id);
                         }
                       }}
                     >

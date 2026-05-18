@@ -2,18 +2,18 @@ import type {
   Translation,
   TranslationBook,
   TranslationBooks,
-} from "seed-bible.managers.FreeUseBibleAPI";
-import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
+} from "../managers/FreeUseBibleAPI";
+import type { BibleDataManager } from "../managers/BibleDataManager";
 import {
   type BibleReadingState,
   DEFAULT_TRANSLATION_ID,
-} from "seed-bible.managers.BibleReadingManager";
-import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
-import type { TabsManager } from "seed-bible.managers.TabsManager";
+} from "../managers/BibleReadingManager";
+import type { Pane, PanesManager } from "../managers/PanesManager";
+import type { TabsManager } from "../managers/TabsManager";
 import type {
   BookOrientation,
   SettingsManager,
-} from "seed-bible.managers.SettingsManager";
+} from "../managers/SettingsManager";
 import {
   computed,
   effect,

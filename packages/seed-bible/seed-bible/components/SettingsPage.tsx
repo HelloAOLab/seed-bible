@@ -1,6 +1,6 @@
 import { useComputed, useSignal } from "@preact/signals";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import type { TextSize } from "seed-bible.managers.ConfigManager";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import type { TextSize } from "../managers/ConfigManager";
 import {
   AppSettingsSchema,
   TEXT_FONT_OPTIONS,
@@ -14,33 +14,33 @@ import {
   type TextSectionConfig,
   type TextSectionId,
   type UITextSize,
-} from "seed-bible.managers.SettingsManager";
+} from "../managers/SettingsManager";
 import {
   DEFAULT_HIGHLIGHT_IDS,
   THEME_COLOR_GROUPS,
   type ThemeColorKey,
-} from "seed-bible.managers.ThemeManager";
-import { translateTitle } from "seed-bible.components.Utils";
+} from "../managers/ThemeManager";
+import { translateTitle } from "../components/Utils";
 import {
   ExtensionInitalizer,
   type ExtensionSet,
-} from "seed-bible.managers.ExtensionManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+} from "../managers/ExtensionManager";
+import { useI18n } from "../i18n/I18nManager";
 import {
   ContextMenuItem,
   ContextMenuWithButton,
-} from "seed-bible.components.ContextMenu";
+} from "../components/ContextMenu";
 import {
   ExtensionsIcon,
   MarginIcon,
   MaterialIcon,
   ThemeIcon,
-} from "seed-bible.components.icons";
+} from "../components/icons";
 import {
   handleGridKeyNav,
   handleMenuTriggerKeyDown,
   handleVerticalListKeyNav,
-} from "seed-bible.components.KeyboardNav";
+} from "../components/KeyboardNav";
 import { useRef } from "preact/hooks";
 import { z } from "zod";
 
@@ -250,7 +250,8 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
     }
 
     try {
-      os.setClipboard(id);
+      // TODO: Fix this
+      // os.setClipboard(id);
       uidCopied.value = true;
       setTimeout(() => {
         uidCopied.value = false;
@@ -1028,7 +1029,8 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
       if (!set) {
         return;
       }
-      os.download(set, `${set.id}.json`, "application/json");
+      // TODO: Fix this
+      // os.download(set, `${set.id}.json`, "application/json");
     } finally {
       isDownloadingSet.value = false;
     }
@@ -1041,33 +1043,30 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
     isUploadingSet.value = true;
     try {
-      const files = await os.showUploadFiles();
-      const firstFile = files?.[0];
-      if (!firstFile) {
-        return;
-      }
-
-      const text =
-        typeof firstFile.data === "string"
-          ? firstFile.data
-          : new TextDecoder().decode(firstFile.data);
-
-      const parsed = JSON.parse(text) as Partial<{
-        id: unknown;
-        recordName: unknown;
-        extensions: unknown;
-      }>;
-
-      if (
-        typeof parsed.id !== "string" ||
-        typeof parsed.recordName !== "string" ||
-        !Array.isArray(parsed.extensions)
-      ) {
-        console.error("Uploaded file is not a valid extension set.");
-        return;
-      }
-
-      await extensions.loadExtensionSet(parsed as ExtensionSet, () => false);
+      // TODO: Fix this
+      // const files = await os.showUploadFiles();
+      // const firstFile = files?.[0];
+      // if (!firstFile) {
+      //   return;
+      // }
+      // const text =
+      //   typeof firstFile.data === "string"
+      //     ? firstFile.data
+      //     : new TextDecoder().decode(firstFile.data);
+      // const parsed = JSON.parse(text) as Partial<{
+      //   id: unknown;
+      //   recordName: unknown;
+      //   extensions: unknown;
+      // }>;
+      // if (
+      //   typeof parsed.id !== "string" ||
+      //   typeof parsed.recordName !== "string" ||
+      //   !Array.isArray(parsed.extensions)
+      // ) {
+      //   console.error("Uploaded file is not a valid extension set.");
+      //   return;
+      // }
+      // await extensions.loadExtensionSet(parsed as ExtensionSet, () => false);
     } catch (error) {
       console.error("Failed to upload extension set.", error);
     } finally {
@@ -1801,11 +1800,12 @@ function AllSettingsView(props: { state: SeedBibleState }) {
 
     isDownloadingSettings.value = true;
     try {
-      os.download(
-        state.settings.settings.value,
-        "seed-bible-app-settings.json",
-        "application/json"
-      );
+      // TODO: Fix this
+      // os.download(
+      //   state.settings.settings.value,
+      //   "seed-bible-app-settings.json",
+      //   "application/json"
+      // );
     } finally {
       isDownloadingSettings.value = false;
     }
@@ -1819,34 +1819,30 @@ function AllSettingsView(props: { state: SeedBibleState }) {
     isUploadingSettings.value = true;
     uploadErrorMessage.value = "";
     try {
-      const files = await os.showUploadFiles();
-      const firstFile = files?.[0];
-      if (!firstFile) {
-        return;
-      }
-
-      const text =
-        typeof firstFile.data === "string"
-          ? firstFile.data
-          : new TextDecoder().decode(firstFile.data);
-
-      let jsonData: unknown;
-      try {
-        jsonData = JSON.parse(text);
-      } catch (parseError) {
-        uploadErrorMessage.value = `Invalid JSON: ${parseError instanceof Error ? parseError.message : "Unknown error"}`;
-        return;
-      }
-
-      const parsed = AppSettingsSchema.safeParse(jsonData);
-
-      if (!parsed.success) {
-        uploadErrorMessage.value = `Invalid app settings: ${z.prettifyError(parsed.error)}`;
-        console.error("Uploaded file is not valid app settings.", parsed.error);
-        return;
-      }
-
-      state.settings.setAllSettings(parsed.data);
+      // TODO: Fix this
+      // const files = await os.showUploadFiles();
+      // const firstFile = files?.[0];
+      // if (!firstFile) {
+      //   return;
+      // }
+      // const text =
+      //   typeof firstFile.data === "string"
+      //     ? firstFile.data
+      //     : new TextDecoder().decode(firstFile.data);
+      // let jsonData: unknown;
+      // try {
+      //   jsonData = JSON.parse(text);
+      // } catch (parseError) {
+      //   uploadErrorMessage.value = `Invalid JSON: ${parseError instanceof Error ? parseError.message : "Unknown error"}`;
+      //   return;
+      // }
+      // const parsed = AppSettingsSchema.safeParse(jsonData);
+      // if (!parsed.success) {
+      //   uploadErrorMessage.value = `Invalid app settings: ${z.prettifyError(parsed.error)}`;
+      //   console.error("Uploaded file is not valid app settings.", parsed.error);
+      //   return;
+      // }
+      // state.settings.setAllSettings(parsed.data);
     } catch (error) {
       uploadErrorMessage.value = `Failed to upload app settings: ${error instanceof Error ? error.message : "Unknown error"}`;
       console.error("Failed to upload app settings.", error);

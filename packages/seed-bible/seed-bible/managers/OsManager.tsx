@@ -2,6 +2,7 @@ import { createRecordsClient } from "@casual-simulation/aux-records/RecordsClien
 import stringify from "@casual-simulation/fast-json-stable-stringify";
 import axios from "axios";
 import { isArrayBuffer } from "es-toolkit";
+import { v4 as uuid } from "uuid";
 
 export type CasualOSManager = ReturnType<typeof CasualOSManager>;
 
@@ -30,7 +31,7 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
 
   return {
     client,
-
+    sessionId: uuid(),
     getData: async (recordName: string, address: string) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result: any = await client.getData({

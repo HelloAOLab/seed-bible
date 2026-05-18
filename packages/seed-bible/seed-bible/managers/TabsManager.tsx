@@ -1,14 +1,14 @@
 import { computed, effect, signal, type Signal } from "@preact/signals";
 import type { BibleDataManager } from "./BibleDataManager";
-import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
+import type { BibleReadingSession } from "../managers/SessionsManager";
 import {
   DEFAULT_BOOK_ID,
   DEFAULT_CHAPTER_NUMBER,
   DEFAULT_TRANSLATION_ID,
   createBibleReadingState,
   type BibleReadingState,
-} from "seed-bible.managers.BibleReadingManager";
-import type { HighlightsManager } from "seed-bible.managers.HighlightsManager";
+} from "../managers/BibleReadingManager";
+import type { HighlightsManager } from "../managers/HighlightsManager";
 
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */

@@ -3,14 +3,14 @@ import {
   createSessionsManager,
   type BibleReadingSession,
 } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
-import { createBibleReadingState } from "seed-bible.managers.BibleReadingManager";
+import { createBibleReadingState } from "../managers/BibleReadingManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type {
   VerseDecoration,
   VerseDecorationInput,
-} from "seed-bible.managers.BibleReadingManager";
+} from "../managers/BibleReadingManager";
 
-jest.mock("seed-bible.managers.BibleReadingManager", () => ({
+jest.mock("../managers/BibleReadingManager", () => ({
   createBibleReadingState: jest.fn(),
 }));
 

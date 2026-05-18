@@ -1,9 +1,6 @@
 import { effect, signal, type Signal } from "@preact/signals";
-import type {
-  LoginManager,
-  UserProfile,
-} from "seed-bible.managers.LoginManager";
-import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
+import type { LoginManager, UserProfile } from "../managers/LoginManager";
+import type { BibleReadingSession } from "../managers/SessionsManager";
 
 /**
  * A live shared session published by another user that the current user
@@ -68,10 +65,11 @@ const REGISTRY_MAP_NAME = "sessions";
  */
 function getLocalIdentity(): string | null {
   try {
-    if (typeof configBot !== "undefined") {
-      const id = configBot?.id;
-      if (typeof id === "string" && id.length > 0) return id;
-    }
+    // TODO: Fix this
+    // if (typeof configBot !== "undefined") {
+    //   const id = configBot?.id;
+    //   if (typeof id === "string" && id.length > 0) return id;
+    // }
   } catch {
     /* ignore */
   }

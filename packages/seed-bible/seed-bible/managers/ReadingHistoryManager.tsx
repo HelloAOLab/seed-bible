@@ -1,5 +1,5 @@
 import { debounce } from "es-toolkit";
-import type { LoginManager } from "seed-bible.managers.LoginManager";
+import type { LoginManager } from "../managers/LoginManager";
 
 export interface ReadingEvent {
   /**

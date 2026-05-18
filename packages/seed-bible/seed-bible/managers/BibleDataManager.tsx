@@ -4,7 +4,7 @@ import {
   type Translation,
   type TranslationBookChapter,
   type TranslationBooks,
-} from "seed-bible.managers.FreeUseBibleAPI";
+} from "../managers/FreeUseBibleAPI";
 
 export interface BibleDataManager {
   endpoints: Signal<string[]>;

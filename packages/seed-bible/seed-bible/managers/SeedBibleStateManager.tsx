@@ -1,63 +1,63 @@
-import { createBibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
-import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
+import { createBibleSelectorState } from "../managers/BibleSelectorManager";
+import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import {
   createBibleDataManager,
   type BibleDataManager,
-} from "seed-bible.managers.BibleDataManager";
-import { createBibleToolsManager } from "seed-bible.managers.BibleToolsManager";
-import type { ToolsManager } from "seed-bible.managers.BibleToolsManager";
-import { createConfig } from "seed-bible.managers.ConfigManager";
-import type { ConfigManager } from "seed-bible.managers.ConfigManager";
-import { FreeUseBibleAPI } from "seed-bible.managers.FreeUseBibleAPI";
-import { createPanes } from "seed-bible.managers.PanesManager";
-import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
-import { createLoginManager } from "seed-bible.managers.LoginManager";
-import type { LoginManager } from "seed-bible.managers.LoginManager";
-import { createSidebar } from "seed-bible.managers.SidebarManager";
-import { createTabs } from "seed-bible.managers.TabsManager";
-import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
+} from "../managers/BibleDataManager";
+import { createBibleToolsManager } from "../managers/BibleToolsManager";
+import type { ToolsManager } from "../managers/BibleToolsManager";
+import { createConfig } from "../managers/ConfigManager";
+import type { ConfigManager } from "../managers/ConfigManager";
+import { FreeUseBibleAPI } from "../managers/FreeUseBibleAPI";
+import { createPanes } from "../managers/PanesManager";
+import type { Pane, PanesManager } from "../managers/PanesManager";
+import { createLoginManager } from "../managers/LoginManager";
+import type { LoginManager } from "../managers/LoginManager";
+import { createSidebar } from "../managers/SidebarManager";
+import { createTabs } from "../managers/TabsManager";
+import type { ReaderTab, TabsManager } from "../managers/TabsManager";
 import {
   generateThemeCssVariables,
   createTheme,
   generateThemeCssClasses,
-} from "seed-bible.managers.ThemeManager";
-import type { ThemeManager } from "seed-bible.managers.ThemeManager";
+} from "../managers/ThemeManager";
+import type { ThemeManager } from "../managers/ThemeManager";
 import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
 import {
   createReadingHistoryManager,
   type ReadingHistoryManager,
-} from "seed-bible.managers.ReadingHistoryManager";
+} from "../managers/ReadingHistoryManager";
 import {
   createExtensionManager,
   setupExtensionContext,
   type ExtensionManager,
-} from "seed-bible.managers.ExtensionManager";
+} from "../managers/ExtensionManager";
 import {
   createHighlightsManager,
   type HighlightsManager,
-} from "seed-bible.managers.HighlightsManager";
+} from "../managers/HighlightsManager";
 import {
   createSessionsManager,
   type BibleReadingSession,
   type SessionsManager,
-} from "seed-bible.managers.SessionsManager";
+} from "../managers/SessionsManager";
 import {
   createAnnotationsManager,
   type AnnotationsManager,
-} from "seed-bible.managers.AnnotationsManager";
+} from "../managers/AnnotationsManager";
 import {
   createModalManager,
   type ModalManager,
-} from "seed-bible.managers.ModalManager";
+} from "../managers/ModalManager";
 import {
   createSettings,
   type SettingsManager,
-} from "seed-bible.managers.SettingsManager";
+} from "../managers/SettingsManager";
 import {
   createInvitationsManager,
   type InvitationsManager,
-} from "seed-bible.managers.InvitationsManager";
-import { createSearchManager } from "seed-bible.managers.SearchManager";
+} from "../managers/InvitationsManager";
+import { createSearchManager } from "../managers/SearchManager";
 import { CasualOSManager } from "./OsManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;

@@ -1,4 +1,4 @@
-import type { TranslatableTitle } from "seed-bible.managers.BibleToolsManager";
+import type { TranslatableTitle } from "../managers/BibleToolsManager";
 
 /**
  * Translates a TranslatableTitle using the provided translation function.

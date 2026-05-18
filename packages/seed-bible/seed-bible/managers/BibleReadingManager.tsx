@@ -5,8 +5,8 @@ import {
   type Translation,
   type TranslationBookChapter,
   type TranslationBooks,
-} from "seed-bible.managers.FreeUseBibleAPI";
-import { type BibleDataManager } from "seed-bible.managers.BibleDataManager";
+} from "../managers/FreeUseBibleAPI";
+import { type BibleDataManager } from "../managers/BibleDataManager";
 import {
   batch,
   computed,
@@ -20,8 +20,8 @@ import type {
   ChapterHighlight,
   ChapterHighlights,
   HighlightsManager,
-} from "seed-bible.managers.HighlightsManager";
-import { DEFAULT_LANGUAGE } from "seed-bible.i18n.I18nManager";
+} from "../managers/HighlightsManager";
+import { DEFAULT_LANGUAGE } from "../i18n/I18nManager";
 import { v4 as uuid } from "uuid";
 
 export interface BibleSelectedVerse {

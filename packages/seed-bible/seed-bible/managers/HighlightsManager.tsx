@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { LoginManager } from "seed-bible.managers.LoginManager";
+import type { LoginManager } from "../managers/LoginManager";
 import { signal, type Signal } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 

@@ -3,8 +3,8 @@ import {
   type BibleSelectorPsalmsGroups,
   type BibleSelectorState,
   type TranslationLanguageGroup,
-} from "seed-bible.managers.BibleSelectorManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+} from "../managers/BibleSelectorManager";
+import { useI18n } from "../i18n/I18nManager";
 import {
   TickIcon,
   FiltersIcon,
@@ -12,10 +12,10 @@ import {
   AddIcon,
   MinusIcon,
   ShareIcon,
-} from "seed-bible.components.icons";
-import type { Translation } from "seed-bible.managers.FreeUseBibleAPI";
+} from "../components/icons";
+import type { Translation } from "../managers/FreeUseBibleAPI";
 import { computed, signal } from "@preact/signals";
-import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
+import type { BibleDataManager } from "../managers/BibleDataManager";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 interface BibleSelectorProps {
@@ -794,19 +794,21 @@ const LanguageComponent = (props: {
   const { t } = useI18n();
 
   const shareTranslatation = async (props: { translation: Translation }) => {
-    const { translation } = props;
-    const url = new URL(`https://ao.bot/`);
-    url.searchParams.set("pattern", configBot.tags.pattern || "SeedBible");
-    url.searchParams.set(
-      "translation",
-      bibleDataManager.buildTranslationId(translation.id)
-    );
-    os.setClipboard(url.href);
-    os.toast(
-      t("copied-translation-share-link", {
-        defaultValue: "Copied translation share link",
-      })
-    );
+    // const { translation } = props;
+    // TODO: Fix this
+    // const url = new URL(`https://ao.bot/`);
+    // url.searchParams.set("pattern", configBot.tags.pattern || "SeedBible");
+    // url.searchParams.set(
+    //   "translation",
+    //   bibleDataManager.buildTranslationId(translation.id)
+    // );
+    // navigator.clipboard.writeText(url.href);
+    // os.setClipboard(url.href);
+    // os.toast(
+    //   t("copied-translation-share-link", {
+    //     defaultValue: "Copied translation share link",
+    //   })
+    // );
   };
 
   const sortedTranslations = useMemo(() => {

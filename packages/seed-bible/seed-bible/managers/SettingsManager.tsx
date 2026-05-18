@@ -1,9 +1,9 @@
 import { effect, signal, type Signal } from "@preact/signals";
-import type { LoginManager } from "seed-bible.managers.LoginManager";
+import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
-} from "seed-bible.managers.ProfileConfigSync";
+} from "../managers/ProfileConfigSync";
 import { z } from "zod";
 import type { CasualOSManager } from "./OsManager";
 

@@ -15,26 +15,26 @@ const mockSessionsManager = {
   joinSession: jest.fn(),
 };
 
-jest.mock("seed-bible.managers.ReadingHistoryManager", () => ({
+jest.mock("../managers/ReadingHistoryManager", () => ({
   createReadingHistoryManager: () => ({
     saveReadingHistory: mockSaveReadingHistory,
     getReadingEvents: jest.fn().mockResolvedValue([]),
   }),
 }));
 
-jest.mock("seed-bible.managers.HighlightsManager", () => ({
+jest.mock("../managers/HighlightsManager", () => ({
   createHighlightsManager: () => mockHighlightsManager,
 }));
 
-jest.mock("seed-bible.managers.SessionsManager", () => ({
+jest.mock("../managers/SessionsManager", () => ({
   createSessionsManager: () => mockSessionsManager,
 }));
 
-jest.mock("seed-bible.i18n.I18nManager", () => ({
+jest.mock("../i18n/I18nManager", () => ({
   I18nProvider: ({ children }: { children: unknown }) => children,
 }));
 
-jest.mock("seed-bible.managers.SearchManager", () => ({
+jest.mock("../managers/SearchManager", () => ({
   createSearchManager: jest.fn().mockReturnValue({
     searchVerses: jest.fn(),
   }),

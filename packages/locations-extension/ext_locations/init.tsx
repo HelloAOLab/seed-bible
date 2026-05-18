@@ -2,7 +2,7 @@ import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/Free
 import { computed } from "@preact/signals";
 import { registerExtension } from "seed-bible.app.api";
 import { loadMap } from "ext_geoImporter.importer.loadMap";
-import { LocationIcon } from "seed-bible.components.icons";
+import { LocationIcon } from "../components/icons";
 
 interface PlaceData {
   place: string;

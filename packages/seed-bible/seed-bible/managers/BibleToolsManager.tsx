@@ -1,13 +1,13 @@
-import { MaterialIcon, SeedBibleIcon } from "seed-bible.components.icons";
+import { MaterialIcon, SeedBibleIcon } from "../components/icons";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
-import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
-import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
-import type { TabsManager } from "seed-bible.managers.TabsManager";
-import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
+import type { BibleReadingState } from "../managers/BibleReadingManager";
+import type { Pane, PanesManager } from "../managers/PanesManager";
+import type { TabsManager } from "../managers/TabsManager";
+import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import { sortBy } from "es-toolkit";
-import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
+import type { BibleReadingSession } from "../managers/SessionsManager";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -494,8 +494,9 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
           .join("\n\n");
 
         try {
-          os.setClipboard(verseTexts);
-          os.toast("Copied!");
+          navigator.clipboard.writeText(verseTexts);
+          // TODO: Fix this
+          // os.toast("Copied!");
           console.log("Verse(s) copied to clipboard");
         } catch (err) {
           console.error("Failed to copy verse:", err);
@@ -526,7 +527,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
           })
           .join("\n\n");
 
-        os.share({
+        navigator.share({
           title:
             "Bible Verse" +
             (context.readingState.selectedVerses.value.length > 1 ? "s" : ""),

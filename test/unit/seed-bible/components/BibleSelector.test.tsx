@@ -19,7 +19,7 @@ import {
   makeChapter,
 } from "../managers/testUtils/mockBibleApiData";
 
-jest.mock("seed-bible.i18n.I18nManager", () => ({
+jest.mock("../i18n/I18nManager", () => ({
   useI18n: () => ({
     t: (key: string, options?: { defaultValue?: string }) =>
       options?.defaultValue ?? key,

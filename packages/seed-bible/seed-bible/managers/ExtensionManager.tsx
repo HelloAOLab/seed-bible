@@ -1,7 +1,7 @@
 import { computed } from "@preact/signals";
 import { orderBy, union } from "es-toolkit";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { addTranslations } from "seed-bible.i18n.I18nManager";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import { addTranslations } from "../i18n/I18nManager";
 
 export type CleanupFunction = () => void;
 export type ExtensionDependencies = Record<string, object>;

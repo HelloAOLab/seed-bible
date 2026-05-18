@@ -1,0 +1,24 @@
+{
+  "name": "seed-bible",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./seed-bible/app/api.tsx"
+    },
+    "./managers/FreeUseBibleAPI": {
+      "import": "./seed-bible/managers/FreeUseBibleAPI.tsx"
+    },
+    "./managers/I18nManager": {
+      "import": "./seed-bible/managers/I18nManager.tsx"
+    }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.17.1"
+}

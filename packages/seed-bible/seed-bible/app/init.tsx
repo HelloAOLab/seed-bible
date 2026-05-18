@@ -11,7 +11,7 @@ importMap.textContent = JSON.stringify({
 });
 document.head.prepend(importMap);
 
-import { Main } from "seed-bible.app.main";
+import { Main } from "../app/main";
 
 import { render } from "preact";
 

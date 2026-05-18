@@ -1,13 +1,13 @@
 import { useSignal } from "@preact/signals";
 import { useEffect, useRef } from "preact/hooks";
-import { closeContextMenus } from "seed-bible.components.ContextMenu";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import type { ReaderTab } from "seed-bible.managers.TabsManager";
+import { closeContextMenus } from "../components/ContextMenu";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import type { ReaderTab } from "../managers/TabsManager";
 import {
   DEFAULT_TRANSLATION_ID,
   DEFAULT_TRANSLATION_LANGUAGE,
-} from "seed-bible.managers.BibleReadingManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+} from "../managers/BibleReadingManager";
+import { useI18n } from "../i18n/I18nManager";
 
 export interface SidebarSearchResult {
   id: string;

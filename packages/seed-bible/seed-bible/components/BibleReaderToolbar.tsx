@@ -1,16 +1,16 @@
 import { batch, useComputed, useSignal } from "@preact/signals";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import { translateTitle } from "seed-bible.components.Utils";
-import { applyToolbarCustomization } from "seed-bible.managers.SettingsManager";
-import { highlightContainsVerse } from "seed-bible.managers.HighlightsManager";
-import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
-import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import { useI18n } from "../i18n/I18nManager";
+import { translateTitle } from "../components/Utils";
+import { applyToolbarCustomization } from "../managers/SettingsManager";
+import { highlightContainsVerse } from "../managers/HighlightsManager";
+import type { BibleReadingSession } from "../managers/SessionsManager";
+import type { BibleReadingState } from "../managers/BibleReadingManager";
 import {
   handleHorizontalListKeyNav,
   handleVerticalListKeyNav,
-} from "seed-bible.components.KeyboardNav";
-import { TabsIcon } from "seed-bible.components.icons";
+} from "../components/KeyboardNav";
+import { TabsIcon } from "../components/icons";
 import { useEffect, useRef } from "preact/hooks";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;

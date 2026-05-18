@@ -4,13 +4,10 @@ import {
   type BibleReadingState,
   type VerseDecoration,
   type VerseDecorationInput,
-} from "seed-bible.managers.BibleReadingManager";
-import type { HighlightsManager } from "seed-bible.managers.HighlightsManager";
-import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
-import type {
-  LoginManager,
-  UserProfile,
-} from "seed-bible.managers.LoginManager";
+} from "../managers/BibleReadingManager";
+import type { HighlightsManager } from "../managers/HighlightsManager";
+import type { BibleDataManager } from "../managers/BibleDataManager";
+import type { LoginManager, UserProfile } from "../managers/LoginManager";
 
 export interface ConnectedSessionUser extends SessionConnectionInfo {
   /**

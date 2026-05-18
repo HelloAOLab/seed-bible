@@ -1,14 +1,10 @@
 import { effect, signal } from "@preact/signals";
 import i18n from "https://esm.sh/i18next@23.16.8";
-import { DEFAULT_LANGUAGE } from "seed-bible.i18n.I18nManager";
-import type {
-  LoginManager,
-  UserProfile,
-} from "seed-bible.managers.LoginManager";
+import type { LoginManager, UserProfile } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
-} from "seed-bible.managers.ProfileConfigSync";
+} from "../managers/ProfileConfigSync";
 
 export interface AppConfig {
   disablePanels: boolean;

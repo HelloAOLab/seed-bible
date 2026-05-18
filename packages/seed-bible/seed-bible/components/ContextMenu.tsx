@@ -8,7 +8,7 @@ import type { MutableRef } from "preact/hooks";
 import {
   handleMenuTriggerKeyDown,
   handleVerticalListKeyNav,
-} from "seed-bible.components.KeyboardNav";
+} from "../components/KeyboardNav";
 
 import { useEffect, useRef } from "preact/hooks";
 

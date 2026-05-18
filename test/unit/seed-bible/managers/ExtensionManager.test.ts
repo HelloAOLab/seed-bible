@@ -1,6 +1,6 @@
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 
-jest.mock("seed-bible.i18n.I18nManager", () => ({
+jest.mock("../i18n/I18nManager", () => ({
   addTranslations: jest.fn(),
 }));
 
@@ -9,7 +9,7 @@ import {
   ExtensionInitalizer,
   registerExtension,
   type ExtensionSet,
-} from "seed-bible.managers.ExtensionManager";
+} from "../managers/ExtensionManager";
 
 describe("ExtensionInitalizer", () => {
   let initializer: ExtensionInitalizer;

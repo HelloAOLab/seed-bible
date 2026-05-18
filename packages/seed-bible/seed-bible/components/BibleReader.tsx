@@ -1,22 +1,22 @@
 import {
   type TranslationBookChapter,
   type ChapterVerse,
-} from "seed-bible.managers.FreeUseBibleAPI";
+} from "../managers/FreeUseBibleAPI";
 import type { JSX } from "preact";
 import { computed } from "@preact/signals";
 import type {
   BibleReadingState,
   BibleSelectedVerse,
   VerseDecoration,
-} from "seed-bible.managers.BibleReadingManager";
-import type { ChapterHighlight } from "seed-bible.managers.HighlightsManager";
-import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
-import type { Pane } from "seed-bible.managers.PanesManager";
-import type { ScriptureElementsBehavior } from "seed-bible.managers.SettingsManager";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import { MobileSettingsSheet } from "seed-bible.components.MobileSettingsSheet";
-import { InfoSettingsIcon } from "seed-bible.components.icons";
+} from "../managers/BibleReadingManager";
+import type { ChapterHighlight } from "../managers/HighlightsManager";
+import type { BibleSelectorState } from "../managers/BibleSelectorManager";
+import type { Pane } from "../managers/PanesManager";
+import type { ScriptureElementsBehavior } from "../managers/SettingsManager";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import { useI18n } from "../i18n/I18nManager";
+import { MobileSettingsSheet } from "../components/MobileSettingsSheet";
+import { InfoSettingsIcon } from "../components/icons";
 
 interface VerseLine {
   indentLevel: number;
