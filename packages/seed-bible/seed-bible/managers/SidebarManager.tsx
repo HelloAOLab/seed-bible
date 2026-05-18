@@ -1,4 +1,5 @@
 import { computed, signal } from "@preact/signals";
+import type { NavigationManager } from "./NavigationManager";
 
 /**
  * Which settings subpage the SettingsPage should jump to on its next mount.
@@ -14,7 +15,7 @@ export type RequestedSettingsView =
   | "toolbar"
   | "extensions";
 
-export function createSidebar() {
+export function createSidebar(navigation: NavigationManager) {
   // TODO: Set the intitial view based on the URL
   const initialView = null;
   const isSidebarCollapsed = signal(false);
@@ -67,42 +68,17 @@ export function createSidebar() {
     isMobileOpen.value = false;
   };
 
-  // TODO: Track sidebar open state using a router instead
-  // effect(() => {
-  //   const requestedView = requestedSettingsView.value;
-
-  //   if (configBot.tags.settingsView !== requestedView) {
-  //     configBot.tags.settingsView = requestedView;
-  //   }
-
-  //   configBot.tags.sidebar = isMobileOpen.value ? "open" : null;
-  // });
-
-  // os.addBotListener(configBot, "onBotChanged", async (that: unknown) => {
-  //   const changedTagsSource =
-  //     that && typeof that === "object" && "tags" in that
-  //       ? (that as { tags?: unknown }).tags
-  //       : null;
-  //   const changedTags = Array.isArray(changedTagsSource)
-  //     ? changedTagsSource
-  //     : [];
-  //   const hasSettingsViewChange = changedTags.includes("settingsView");
-
-  //   if (hasSettingsViewChange) {
-  //     const newRequestedView = configBot.tags.settingsView ?? null;
-  //     if (newRequestedView !== requestedSettingsView.value) {
-  //       requestedSettingsView.value = newRequestedView;
-  //     }
-  //   }
-
-  //   const hasSidebarChange = changedTags.includes("sidebar");
-  //   if (hasSidebarChange) {
-  //     const newIsMobileOpen = configBot.tags.sidebar === "open";
-  //     if (newIsMobileOpen !== isMobileOpen.value) {
-  //       isMobileOpen.value = newIsMobileOpen;
-  //     }
-  //   }
-  // });
+  navigation.syncSignalsToUrl({
+    settingsView: requestedSettingsView,
+    sidebar: {
+      get value() {
+        return isMobileOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        isMobileOpen.value = newValue === "open";
+      },
+    },
+  });
 
   return {
     isSettingsOpen,

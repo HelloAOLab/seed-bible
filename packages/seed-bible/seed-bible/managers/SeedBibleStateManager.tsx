@@ -58,6 +58,10 @@ import {
   type InvitationsManager,
 } from "../managers/InvitationsManager";
 import { createSearchManager } from "../managers/SearchManager";
+import {
+  createNavigationManager,
+  type NavigationManager,
+} from "../managers/NavigationManager";
 import { CasualOSManager } from "./OsManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
@@ -155,6 +159,8 @@ export interface SeedBibleState {
   invitations: InvitationsManager;
   /** Search manager for Typesense-backed queries. */
   search: SearchManager;
+  /** In-app URL/state navigation manager for same-document routing. */
+  navigation: NavigationManager;
   /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
   /** Extension loading and runtime manager. */
@@ -170,13 +176,14 @@ export interface SeedBibleState {
  */
 export function createSeedBibleState(): SeedBibleState {
   const api = new FreeUseBibleAPI();
+  const navigation = createNavigationManager();
   const data = createBibleDataManager(api);
   const os = CasualOSManager();
   const login = createLoginManager({ os });
   const highlights = createHighlightsManager(os, login);
   const config = createConfig(login);
   const themeManager = createTheme(login);
-  const sidebar = createSidebar();
+  const sidebar = createSidebar(navigation);
   const tabs = createTabs(data, highlights);
   const panes = createPanes(tabs, tabs.selectedTabId);
   const settings = createSettings(os, login);
@@ -535,6 +542,7 @@ export function createSeedBibleState(): SeedBibleState {
     settings,
     invitations,
     search,
+    navigation,
     extensions,
     app: {
       createSharedSession: handleCreateSharedSession,

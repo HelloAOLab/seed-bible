@@ -1,30 +1,10 @@
 import type { JSX, VNode } from "preact";
-import { useEffect } from "preact/hooks";
-
-// async function renderApp(id: string, content: JSX.Element | VNode | string) {
-//   setTimeout(async () => {
-//     console.log("Render APP", id);
-//     await os.registerApp(id, thisBot);
-//     await os.compileApp(id, content);
-//   }, 0);
-// }
 
 export function CasualOSApp({
-  id,
   children,
 }: {
   id: string;
   children: JSX.Element | VNode | string;
 }) {
-  // useEffect(() => {
-  //   renderApp(id, children);
-  // }, [id, children]);
-
-  // useEffect(() => {
-  //   return () => {
-  //     os.unregisterApp(id);
-  //   };
-  // }, [id]);
-
   return <>{children}</>;
 }
