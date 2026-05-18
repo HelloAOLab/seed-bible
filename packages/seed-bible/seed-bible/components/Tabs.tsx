@@ -684,8 +684,7 @@ export function Tabs(props: TabsProps) {
                       })}
                       onClick={() => {
                         if (tab.sharedSession) {
-                          // TODO: fix this
-                          // os.setClipboard(tab.sharedSession.id);
+                          navigator.clipboard.writeText(tab.sharedSession.id);
                         }
                       }}
                     >

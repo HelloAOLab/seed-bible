@@ -63,24 +63,6 @@ const REGISTRY_DOC_ID = "shared-sessions-registry";
 const REGISTRY_DOC_DATA = "registry";
 const REGISTRY_MAP_NAME = "sessions";
 
-/**
- * Returns a stable local identifier for this client. Prefers the CasualOS
- * connection id (which is what `SessionsManager` uses to identify a
- * connected user anyway), falling back to a sentinel so comparisons work.
- */
-function getLocalIdentity(): string | null {
-  try {
-    // TODO: Fix this
-    // if (typeof configBot !== "undefined") {
-    //   const id = configBot?.id;
-    //   if (typeof id === "string" && id.length > 0) return id;
-    // }
-  } catch {
-    /* ignore */
-  }
-  return null;
-}
-
 function parseStoredEntry(value: unknown): StoredRegistryEntry | null {
   if (!value || typeof value !== "object") return null;
   const obj = value as Record<string, unknown>;
@@ -148,7 +130,7 @@ export function createInvitationsManager(
 
   const applyEntriesWithProfiles = (entries: StoredRegistryEntry[]) => {
     const currentUserId = login.userId.value;
-    const currentConnectionId = getLocalIdentity();
+    const currentConnectionId = os.connectionId;
     const filtered = entries.filter(
       (entry) =>
         // Hide own sessions — hosts don't see themselves in the list.
@@ -213,7 +195,7 @@ export function createInvitationsManager(
       // Seed our own connection id so entries we publish during this run
       // immediately pass the "is host connected" filter on other clients
       // after both clients open the registry.
-      const localId = getLocalIdentity();
+      const localId = os.connectionId;
       if (localId) liveConnectionIds.add(localId);
       changesSubscription = registryMap.changes.subscribe(() => {
         syncFromRegistry();
@@ -265,7 +247,7 @@ export function createInvitationsManager(
     if (!registryDoc || !registryMap) return;
     // Fall back to the connection id when the user isn't logged in so
     // anonymous hosts still publish and other clients can discover them.
-    const hostConnectionId = getLocalIdentity();
+    const hostConnectionId = os.connectionId;
     const hostUserId = login.userId.value ?? hostConnectionId;
     if (!hostUserId) return;
     const entry: StoredRegistryEntry = {

@@ -20,7 +20,7 @@ import {
   THEME_COLOR_GROUPS,
   type ThemeColorKey,
 } from "../managers/ThemeManager";
-import { translateTitle } from "../components/Utils";
+import { download, translateTitle } from "../components/Utils";
 import {
   ExtensionInitalizer,
   type ExtensionSet,
@@ -250,8 +250,7 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
     }
 
     try {
-      // TODO: Fix this
-      // os.setClipboard(id);
+      navigator.clipboard.writeText(id);
       uidCopied.value = true;
       setTimeout(() => {
         uidCopied.value = false;
@@ -1029,8 +1028,12 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
       if (!set) {
         return;
       }
-      // TODO: Fix this
-      // os.download(set, `${set.id}.json`, "application/json");
+
+      const json = JSON.stringify(set, null, 2);
+      download(
+        new Blob([json], { type: "application/json" }),
+        `${set.id}.json`
+      );
     } finally {
       isDownloadingSet.value = false;
     }
@@ -1800,12 +1803,12 @@ function AllSettingsView(props: { state: SeedBibleState }) {
 
     isDownloadingSettings.value = true;
     try {
-      // TODO: Fix this
-      // os.download(
-      //   state.settings.settings.value,
-      //   "seed-bible-app-settings.json",
-      //   "application/json"
-      // );
+      download(
+        new Blob([JSON.stringify(state.settings.settings.value, null, 2)], {
+          type: "application/json",
+        }),
+        "seed-bible-app-settings.json"
+      );
     } finally {
       isDownloadingSettings.value = false;
     }

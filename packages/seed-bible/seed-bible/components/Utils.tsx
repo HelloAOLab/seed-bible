@@ -19,3 +19,18 @@ export const translateTitle = (
     ...title.options,
   });
 };
+
+export const download = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.addEventListener("click", function (e) {
+    e.stopPropagation();
+    this.removeEventListener("click", arguments.callee as EventListener);
+  });
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
