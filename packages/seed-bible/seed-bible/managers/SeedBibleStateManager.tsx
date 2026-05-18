@@ -313,10 +313,8 @@ export function createSeedBibleState(): SeedBibleState {
       return;
     }
 
-    // const RTLE_CHAR = "\u202B";
-
-    // TODO: Set page title
-    // configBot.tags.pageTitle = `${chapter.translation.textDirection === "rtl" ? RTLE_CHAR : ""}${chapter.book.name} ${chapter.chapter.number} - ${chapter.translation.name} | Seed Bible`;
+    const RTLE_CHAR = "\u202B";
+    document.title = `${chapter.translation.textDirection === "rtl" ? RTLE_CHAR : ""}${chapter.book.name} ${chapter.chapter.number} - ${chapter.translation.name} | Seed Bible`;
 
     const readingHistoryTimeoutId = setInterval(() => {
       readingHistory.saveReadingHistory(
@@ -430,11 +428,7 @@ export function createSeedBibleState(): SeedBibleState {
     session.dispose = () => {
       const hostUserId = session.options.value.hostUserId;
       const localId = login.userId.value;
-      // TODO: Get local connection ID
-      const localConnectionId = null;
-      // typeof configBot !== "undefined" && configBot?.id
-      //   ? String(configBot.id)
-      //   : null;
+      const localConnectionId = os.connectionId;
       const isHost =
         hostUserId !== null &&
         (hostUserId === localId || hostUserId === localConnectionId);
