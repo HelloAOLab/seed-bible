@@ -150,7 +150,7 @@ export class StackSectionBookData extends StackPieceData<
   ) => DataParams["pieceBookInfo"][K] = (key) => {
     return this.#pieceBookInfo[key];
   };
-  tryReplaceChild(
+  override tryReplaceChild(
     currChild: StackChapterData,
     newChild: StackChapterData
   ): boolean {
@@ -176,7 +176,7 @@ export class StackSectionBookData extends StackPieceData<
   getSectionIndex(): DataParams["creationParams"]["sectionIndex"] {
     return this.creationParams.sectionIndex;
   }
-  resetHierarchy(clearPiece: boolean = true): Piece[] {
+  override resetHierarchy(clearPiece: boolean = true): Piece[] {
     this.deselect();
     this.clearQueuedChapterData();
     this.clearSelectedChapterData();
@@ -184,7 +184,7 @@ export class StackSectionBookData extends StackPieceData<
 
     return super.resetHierarchy(clearPiece);
   }
-  isPieceAvailable(): boolean {
+  override isPieceAvailable(): boolean {
     return !this.#isSelected && super.isPieceAvailable();
   }
 

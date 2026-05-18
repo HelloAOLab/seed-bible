@@ -143,7 +143,7 @@ export class StackBookData extends StackPieceData<
   detachFromSection() {
     this.#isInsideSection = false;
   }
-  tryReplaceChild(
+  override tryReplaceChild(
     currChild: StackChapterData,
     newChild: StackChapterData
   ): boolean {
@@ -182,7 +182,7 @@ export class StackBookData extends StackPieceData<
   getLevelsLength(): DataParams["creationParams"]["levelsLenght"] {
     return this.creationParams.levelsLenght;
   }
-  resetHierarchy(clearPiece: boolean = true): Piece[] {
+  override resetHierarchy(clearPiece: boolean = true): Piece[] {
     this.deselect();
     this.clearQueuedChapterData();
     this.clearSelectedChapterData();
@@ -191,7 +191,7 @@ export class StackBookData extends StackPieceData<
 
     return super.resetHierarchy(clearPiece);
   }
-  isPieceAvailable(): boolean {
+  override isPieceAvailable(): boolean {
     return !this.#isSelected && super.isPieceAvailable();
   }
   isActivelySelected(): boolean {

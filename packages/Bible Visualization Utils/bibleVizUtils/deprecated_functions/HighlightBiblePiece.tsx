@@ -1,7 +1,7 @@
 console.warn(
   "HighlightBiblePiece needs to be correctly implemented/refactored"
 );
-return;
+// return;
 
 // import type { HighlightData } from "bibleVizUtils.models.highlight";
 

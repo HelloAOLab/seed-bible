@@ -83,7 +83,10 @@ export class StackTestamentData extends StackPieceData<
   getTestamentIndex(): DataParams["creationParams"]["testamentIndex"] {
     return this.creationParams.testamentIndex;
   }
-  resetHierarchy(clearPiece: boolean = true, split: boolean = false): Piece[] {
+  override resetHierarchy(
+    clearPiece: boolean = true,
+    split: boolean = false
+  ): Piece[] {
     if (split) this.split();
     return super.resetHierarchy(clearPiece);
   }
@@ -139,7 +142,7 @@ export class StackTestamentData extends StackPieceData<
     }
     return !this.isActive;
   }
-  isPieceAvailable(): boolean {
+  override isPieceAvailable(): boolean {
     return !this.#isSplitIntoSections && super.isPieceAvailable();
   }
 }

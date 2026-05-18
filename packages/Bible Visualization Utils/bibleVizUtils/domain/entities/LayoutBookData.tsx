@@ -165,6 +165,7 @@ export class LayoutBookData {
       this.#activityIndicators.clear();
       return indicators;
     }
+    return undefined;
   }
   addActivityIndicator(indicator: ActivityIndicator) {
     if (this.#activityIndicators.has(indicator.id)) {

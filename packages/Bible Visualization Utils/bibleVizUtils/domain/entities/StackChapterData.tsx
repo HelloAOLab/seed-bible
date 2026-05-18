@@ -84,7 +84,7 @@ export class StackChapterData extends StackPieceData<
     this.#activityNotification = activityNotification;
   }
 
-  resetData() {
+  override resetData() {
     super.resetData();
     this.#isInsideBook = undefined;
     this.#isSelected = false;
@@ -160,7 +160,7 @@ export class StackChapterData extends StackPieceData<
   detachFromBook() {
     this.#isInsideBook = false;
   }
-  resetHierarchy(): Piece[] {
+  override resetHierarchy(): Piece[] {
     this.show();
     return [];
   }
@@ -174,6 +174,7 @@ export class StackChapterData extends StackPieceData<
       this.#activityIndicators.clear();
       return indicators;
     }
+    return undefined;
   }
   addActivityIndicator(indicator: ActivityIndicator) {
     if (this.#activityIndicators.has(indicator.id)) {

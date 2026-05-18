@@ -167,6 +167,9 @@
       "bibleVizUtils.domain.models.pieceData": [
         "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/pieceData.tsx"
       ],
+      "bibleVizUtils.domain.models.pieces": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/pieces.tsx"
+      ],
       "bibleVizUtils.domain.models.scripture": [
         "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/scripture.tsx"
       ],

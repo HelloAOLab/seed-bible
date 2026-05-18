@@ -1,6 +1,9 @@
 import { DistanceBetweenBotAndCamera } from "bibleVizUtils.infrastructure.functions.casualos";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
-import type { PieceBot } from "bibleVizUtils.infrastructure.models.casualos";
+import type {
+  PieceBot,
+  PieceBotTags,
+} from "bibleVizUtils.infrastructure.models.casualos";
 
 interface DimensionProviderPort {
   getCurrentDimension(): string;
@@ -37,11 +40,15 @@ export class RenderOrderAdapter {
     const newOrder = bots.toSorted((a, b) => {
       const botAPositionZ =
         (a.masks[dimension + "Z"] as number | undefined) ??
-        (a.tags[dimension + "Z"] as number | undefined) ??
+        (a.tags[(dimension + "Z") as keyof PieceBotTags] as
+          | number
+          | undefined) ??
         0;
       const botBPositionZ =
         (b.masks[dimension + "Z"] as number | undefined) ??
-        (b.tags[dimension + "Z"] as number | undefined) ??
+        (b.tags[(dimension + "Z") as keyof PieceBotTags] as
+          | number
+          | undefined) ??
         0;
       if (botAPositionZ > botBPositionZ) {
         return 1;

@@ -16,7 +16,7 @@ import type {
   StackCrossLine,
   StackShadow,
   StackTransformer,
-} from "bibleStack.domain.models.pieces";
+} from "bibleVizUtils.domain.models.pieces";
 
 export interface StaticBiblePieces {
   bibleTransformer: StackTransformer;

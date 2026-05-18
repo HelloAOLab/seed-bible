@@ -125,7 +125,7 @@ export class StackSectionData extends StackPieceData<
   getSectionIndex(): DataParams["creationParams"]["sectionIndex"] {
     return this.creationParams.sectionIndex;
   }
-  resetHierarchy(clearPiece: boolean = true): Piece[] {
+  override resetHierarchy(clearPiece: boolean = true): Piece[] {
     const piecesToRelease: Piece[] = [];
     const shadow = this.detachShadow();
     this.implode();
@@ -150,7 +150,7 @@ export class StackSectionData extends StackPieceData<
   isSplittable(): boolean {
     return !this.isSplitIntoBooks;
   }
-  isPieceAvailable(): boolean {
+  override isPieceAvailable(): boolean {
     return !this.isSplitIntoBooks && super.isPieceAvailable();
   }
   getActivelySelectedBooks(): StackBookData[] {

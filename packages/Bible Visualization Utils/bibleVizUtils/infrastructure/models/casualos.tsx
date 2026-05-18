@@ -240,6 +240,7 @@ export interface BibleVizUtilsObjectPoolerMap {
   [BiblePiece.InfoLabelText]: InfoLabelTextBot;
 }
 
+// eslint-disable-next-line
 export type CustomTag<P extends TypedBot<any, any>> = {
   [K in keyof P["tags"]]: {
     tag: K;
@@ -249,6 +250,7 @@ export type CustomTag<P extends TypedBot<any, any>> = {
 
 export interface PoolData<
   K = string,
+  // eslint-disable-next-line
   P extends TypedBot<any, any> = TypedBot<any, any>,
 > {
   key: K;
@@ -260,6 +262,7 @@ export interface PoolData<
 
 export interface Pool<
   K = string,
+  // eslint-disable-next-line
   P extends TypedBot<any, any> = TypedBot<any, any>,
 > {
   poolData: PoolData<K, P>;
