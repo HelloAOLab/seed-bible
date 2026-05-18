@@ -2,27 +2,19 @@ import type {
   HexString,
   Translatable,
 } from "bibleVizUtils.domain.models.commonTypes";
-import type { BookName } from "bibleVizUtils.domain.models.scripture";
 
-export interface ChapterInfo {
-  readonly amountOfVerses: number;
-  readonly number: number;
-}
-
-export interface BookStaticInfo {
-  readonly bookId: string;
+export interface BookStaticInfoConfig {
   readonly author: string;
-  readonly chaptersInfo: readonly ChapterInfo[];
+  readonly chaptersVerseCount: readonly number[];
   readonly relativeDateRange: {
     readonly min: number;
     readonly max: number;
   };
   readonly numberOfChapters: number;
-  readonly startingIndex?: number;
 }
 
-export interface BookInfo {
-  readonly commonName: BookName;
+export interface BaseBookInfoConfig {
+  readonly bookId: string;
   readonly explodedViewPosition?: {
     readonly x: number;
     readonly y: number;
@@ -38,21 +30,35 @@ export interface BookInfo {
   readonly customLabelColor?: string;
   readonly isCheckpoint?: boolean;
 }
-export interface SectionInfo extends Translatable {
+
+export interface CompleteBookInfoConfig extends BaseBookInfoConfig {
+  readonly type: "complete";
+}
+
+export interface SubsetBookInfoConfig extends BaseBookInfoConfig {
+  readonly type: "subset";
+  readonly completeBookId: string;
+  readonly startIndex?: number;
+  readonly endIndex?: number;
+}
+
+export type BookInfoConfig = CompleteBookInfoConfig | SubsetBookInfoConfig;
+
+export interface SectionInfoConfig extends Translatable {
   readonly name: string;
   readonly color: string;
-  readonly books: readonly BookInfo[];
+  readonly books: readonly BookInfoConfig[];
   readonly customExplodedViewScaleFactor?: number;
   readonly customColorRange?: number;
 }
 
-export interface TestamentInfo extends Translatable {
+export interface TestamentInfoConfig extends Translatable {
   readonly name: string;
-  readonly sections: readonly SectionInfo[];
+  readonly sections: readonly SectionInfoConfig[];
   readonly color?: HexString;
 }
 
-export interface ArrangementInfo {
+export interface ArrangementInfoConfig {
   readonly name: string;
-  readonly testaments: readonly TestamentInfo[];
+  readonly testaments: readonly TestamentInfoConfig[];
 }

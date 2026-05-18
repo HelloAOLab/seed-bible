@@ -1,8 +1,8 @@
 import type {
-  BookInfo as InfrastructureBookInfo,
-  ArrangementInfo,
+  BookInfoConfig,
+  ArrangementInfoConfig,
 } from "bibleVizUtils.infrastructure.models.arrangement";
-import type { BookInfo as DomainBookInfo } from "bibleVizUtils.domain.models.arrangement";
+import type { BookInfo } from "bibleVizUtils.domain.models.arrangement";
 import type { BooksStaticInfoRepository } from "bibleVizUtils.domain.ports.arrangement";
 import type {
   ArrangementConfigProviderPort,
@@ -30,29 +30,65 @@ export class BookInfoMapper {
     this.#booksStaticInfoRepository = booksStaticInfoRepository;
   }
 
-  toDomain(
-    info: InfrastructureBookInfo,
-    path: DomainBookInfo["path"]
-  ): DomainBookInfo {
-    const staticInfo = this.#booksStaticInfoRepository.getBookStaticInfo(
-      info.commonName
+  toDomain(info: BookInfoConfig, path: BookInfo["path"]): BookInfo {
+    if (info.type === "complete") {
+      const staticInfo = this.#booksStaticInfoRepository.getBookStaticInfo(
+        info.bookId
+      );
+      if (!staticInfo)
+        throw new Error(
+          `BookInfoMapper: staticInfo not found for ${info.bookId}`
+        );
+      return {
+        type: "complete",
+        bookId: info.bookId,
+        author: staticInfo.author,
+        chaptersVerseCount: staticInfo.chaptersVerseCount,
+        relativeDateRange: staticInfo.relativeDateRange,
+        numberOfChapters: staticInfo.numberOfChapters,
+        customColor: info.customColor,
+        customLabelColor: info.customLabelColor,
+        isCheckpoint: info.isCheckpoint,
+        group: info.group,
+        path,
+      };
+    }
+
+    const completeStaticInfo =
+      this.#booksStaticInfoRepository.getBookStaticInfo(info.completeBookId);
+    if (!completeStaticInfo)
+      throw new Error(
+        `BookInfoMapper: staticInfo not found for ${info.completeBookId}`
+      );
+    const startIndex = info.startIndex ?? 0;
+    const endIndex = info.endIndex ?? completeStaticInfo.numberOfChapters - 1;
+    const chaptersVerseCount = completeStaticInfo.chaptersVerseCount.slice(
+      startIndex,
+      endIndex + 1
     );
     return {
-      commonName: info.commonName,
+      type: "subset",
+      bookId: info.bookId,
+      completeBookId: info.completeBookId,
+      startIndex: info.startIndex,
+      endIndex: info.endIndex,
+      author: completeStaticInfo.author,
+      chaptersVerseCount,
+      relativeDateRange: completeStaticInfo.relativeDateRange,
+      numberOfChapters: chaptersVerseCount.length,
       customColor: info.customColor,
       customLabelColor: info.customLabelColor,
       isCheckpoint: info.isCheckpoint,
       group: info.group,
-      ...staticInfo,
       path,
     };
   }
 
-  toInfrastructure(info: DomainBookInfo): InfrastructureBookInfo {
+  toInfrastructure(info: BookInfo): BookInfoConfig {
     const { arrangementName, testamentIndex, sectionIndex, bookIndex } =
       info.path;
 
-    const arrangementFinder = (arrangement: ArrangementInfo) => {
+    const arrangementFinder = (arrangement: ArrangementInfoConfig) => {
       return arrangement.name === arrangementName;
     };
 

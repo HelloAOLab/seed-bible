@@ -3,6 +3,7 @@ import type {
   TestamentInfo,
   SectionInfo,
   BookInfo,
+  SubsetBookInfo,
 } from "bibleVizUtils.domain.models.arrangement";
 import type {
   ArrangementEventPort,
@@ -287,16 +288,13 @@ export class ArrangementService {
     return { arrangementIndex, testamentIndex, sectionIndex, found };
   };
 
-  getBookInfoPathByName: (params: {
-    name: string;
-    arrangementIndex?: number;
-  }) => {
+  getBookInfoPathById: (params: { id: string; arrangementIndex?: number }) => {
     found: boolean;
     arrangementIndex: number;
     testamentIndex: number | undefined;
     sectionIndex: number | undefined;
     bookIndex: number | undefined;
-  } = ({ name, arrangementIndex = this.getCurrentArrangementIndex() }) => {
+  } = ({ id, arrangementIndex = this.getCurrentArrangementIndex() }) => {
     const checkPathInArrangement: (arrangement: ArrangementInfo) =>
       | {
           found: true;
@@ -324,7 +322,7 @@ export class ArrangementService {
             const sectionInfo = testamentInfo.sections[currentSectionIndex];
             if (sectionInfo) {
               const bookIndex = sectionInfo.books.findIndex((bookInfo) => {
-                return bookInfo.commonName == name;
+                return bookInfo.bookId === id;
               });
               if (bookIndex >= 0) {
                 return {
@@ -373,6 +371,35 @@ export class ArrangementService {
     return { arrangementIndex, testamentIndex, sectionIndex, bookIndex, found };
   };
 
+  getBookSubsetByCompleteId({
+    id,
+    chapterNumber,
+    arrangementIndex = this.getCurrentArrangementIndex(),
+  }: {
+    id: string;
+    chapterNumber: number;
+    arrangementIndex?: number;
+  }): SubsetBookInfo | undefined {
+    const arrangement = this.getArrangementByIndex(arrangementIndex);
+    if (!arrangement) return undefined;
+
+    for (const testament of arrangement.testaments) {
+      for (const section of testament.sections) {
+        for (const book of section.books) {
+          if (book.type === "subset" && book.completeBookId === id) {
+            const start = (book.startIndex ?? 0) + 1;
+            const end = (book.startIndex ?? 0) + book.numberOfChapters;
+            if (start <= chapterNumber && chapterNumber <= end) {
+              return book;
+            }
+          }
+        }
+      }
+    }
+
+    return undefined;
+  }
+
   getBooksNamesBySectionName: (name: string) => string[] | null = (name) => {
     const { arrangementIndex, testamentIndex, sectionIndex, found } =
       this.getSectionInfoPathByName(name);
@@ -384,7 +411,7 @@ export class ArrangementService {
           const section = testament.sections[sectionIndex as number];
           if (section) {
             return section.books.map((currBook) => {
-              return currBook.commonName;
+              return currBook.bookId;
             });
           }
         }

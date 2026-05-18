@@ -5,10 +5,13 @@ import {
   calculateReadingHistorySummary,
   type ReadingEvent,
 } from "seed-bible.managers.ReadingHistoryManager";
-import type { SectionInfo as DomainSectionInfo } from "bibleVizUtils.domain.models.arrangement";
 import type {
-  SectionInfo as InfrastructureSectionInfo,
-  BookInfo as InfrastructureBookInfo,
+  SectionInfo,
+  BookInfo,
+} from "bibleVizUtils.domain.models.arrangement";
+import type {
+  SectionInfoConfig,
+  BookInfoConfig,
 } from "bibleVizUtils.infrastructure.models.arrangement";
 import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
 import type {
@@ -21,13 +24,10 @@ import type { SectionToggleProps } from "scriptureMap2D.components.containers.Se
 
 const { useMemo, useCallback, useState, useEffect } = os.appHooks;
 
-const psalmsNames = [
-  "1 Psalms",
-  "2 Psalms",
-  "3 Psalms",
-  "4 Psalms",
-  "5 Psalms",
-];
+type FilteredSection = {
+  infra: SectionInfoConfig;
+  domain: SectionInfo;
+};
 
 interface UseTestamentContentType {
   itemsData: TestamentContentItemData[];
@@ -43,11 +43,11 @@ export const useTestamentContent = (): UseTestamentContentType => {
     userPresence,
     ComputeRawGradientColors,
     userColorStore,
-    bibleVizDataRepository,
     sectionInfoMapper,
     arrangementService,
     HexToRgb,
     GetChildrenLevelColors,
+    bookNames,
   } = useScriptureMap2DContext();
   const {
     rangedReadingEventsByBook,
@@ -65,21 +65,19 @@ export const useTestamentContent = (): UseTestamentContentType => {
     return name;
   }, [arrangementService, arrangementIndex]);
 
-  const reversedSections = useMemo<DomainSectionInfo[]>(() => {
+  const reversedSections = useMemo<SectionInfo[]>(() => {
     return testament.sections.toReversed();
   }, [testament]);
 
   const { filteredSections, sectionLevelColorMap } = useMemo(() => {
-    const getLevelColorMap: (
-      sections: InfrastructureSectionInfo[]
-    ) => Map<string, HexString[]> = (sections) => {
+    const getLevelColorMap = (
+      sections: FilteredSection[]
+    ): Map<string, HexString[]> => {
       return new Map(
-        sections.map((section, sectionIndex) => {
+        sections.map(({ infra: section }, sectionIndex) => {
           const levelColorsKey = `${testamentIndex} ${sectionIndex}`;
           const sectionLevelsColors = GetChildrenLevelColors({
-            sectionColorRGB: HexToRgb({
-              hexColor: section.color,
-            }),
+            sectionColorRGB: HexToRgb({ hexColor: section.color }),
             colorRange: section.customColorRange ?? 70,
             levelsLength: section.books.length,
           });
@@ -88,7 +86,7 @@ export const useTestamentContent = (): UseTestamentContentType => {
       );
     };
 
-    let filteredSections: undefined | InfrastructureSectionInfo[];
+    let filteredSections: FilteredSection[];
 
     if (readingHistoryRangeSeconds) {
       filteredSections = [];
@@ -101,42 +99,61 @@ export const useTestamentContent = (): UseTestamentContentType => {
         const section = reversedSections[sectionIndex];
         if (section) {
           const infraSection = sectionInfoMapper.toInfrastructure(section);
-          const filteredBooks: InfrastructureBookInfo[] = [];
+          const filteredInfraBooks: BookInfoConfig[] = [];
+          const filteredDomainBooks: BookInfo[] = [];
+
           for (
             let bookIndex = 0;
             bookIndex < infraSection.books.length;
             bookIndex++
           ) {
-            const book = infraSection.books[bookIndex];
-            if (book) {
-              const bookStaticInfo = bibleVizDataRepository.getBookStaticInfo(
-                book.commonName
-              );
-              if (bookStaticInfo) {
-                const bookId = bookStaticInfo.bookId;
-                const bookEvents = rangedReadingEventsByBook.get(bookId);
-                if (bookEvents) {
-                  const readingTimeSeconds = bookEvents.reduce((acc, event) => {
-                    return acc + event.end - event.start;
-                  }, 0);
-                  const isReadingTimeNoticeable =
-                    readingTimeSeconds >= SEC_PER_MINUTE;
-                  if (isReadingTimeNoticeable) {
-                    filteredBooks.push(book);
-                  }
+            const bookConfig = infraSection.books[bookIndex];
+            const bookDomain = section.books[bookIndex];
+
+            if (bookConfig && bookDomain) {
+              let bookEvents: ReadingEvent[] | undefined;
+              if (bookDomain.type === "complete") {
+                bookEvents = rangedReadingEventsByBook.get(bookDomain.bookId);
+              } else {
+                const rawBookEvents = rangedReadingEventsByBook.get(
+                  bookDomain.completeBookId
+                );
+                if (rawBookEvents) {
+                  bookEvents = rawBookEvents.filter(({ chapter }) => {
+                    const startIndex = bookDomain.startIndex ?? 0;
+                    const startingChapter = startIndex + 1;
+                    const endChapter = startIndex + bookDomain.numberOfChapters;
+                    return chapter >= startingChapter && chapter <= endChapter;
+                  });
+                }
+              }
+              if (bookEvents) {
+                const readingTimeSeconds = bookEvents.reduce(
+                  (acc, event) => acc + event.end - event.start,
+                  0
+                );
+                if (readingTimeSeconds >= SEC_PER_MINUTE) {
+                  filteredInfraBooks.push(bookConfig);
+                  filteredDomainBooks.push(bookDomain);
                 }
               }
             }
           }
-          if (filteredBooks.length > 0) {
+
+          if (filteredInfraBooks.length > 0) {
             filteredSections.push({
-              ...infraSection,
-              books: filteredBooks,
+              infra: { ...infraSection, books: filteredInfraBooks },
+              domain: { ...section, books: filteredDomainBooks },
             });
           }
         }
       }
-    } else filteredSections = reversedSections;
+    } else {
+      filteredSections = reversedSections.map((section) => ({
+        infra: sectionInfoMapper.toInfrastructure(section),
+        domain: section,
+      }));
+    }
 
     return {
       filteredSections,
@@ -146,7 +163,7 @@ export const useTestamentContent = (): UseTestamentContentType => {
 
   const [sectionsShown, setSectionsShown] = useState(
     new Map(
-      filteredSections.map((section, sectionIndex) => {
+      filteredSections.map(({ domain: section }, sectionIndex) => {
         const key = `${testamentIndex}-${testament.name}-${sectionIndex}-${section.name}`;
         return [key, true];
       })
@@ -155,7 +172,7 @@ export const useTestamentContent = (): UseTestamentContentType => {
 
   useEffect(() => {
     const next = new Map(
-      filteredSections.map((section, sectionIndex) => {
+      filteredSections.map(({ domain: section }, sectionIndex) => {
         const key = `${testamentIndex}-${testament.name}-${sectionIndex}-${section.name}`;
         return [key, true];
       })
@@ -193,15 +210,15 @@ export const useTestamentContent = (): UseTestamentContentType => {
       sectionIndex < filteredSections.length;
       sectionIndex++
     ) {
-      const section = filteredSections[sectionIndex];
-      if (section) {
+      const filteredSection = filteredSections[sectionIndex];
+      if (filteredSection) {
+        const { infra: infraSection, domain: domainSection } = filteredSection;
         const path = {
           arrangementName,
           testamentIndex,
           sectionIndex,
         };
-        const domainSection = sectionInfoMapper.toDomain(section, path);
-        const sectionKey = `${testamentIndex}-${testament.name}-${sectionIndex}-${section.name}`;
+        const sectionKey = `${testamentIndex}-${testament.name}-${sectionIndex}-${infraSection.name}`;
         const levelColorsKey = `${testamentIndex} ${sectionIndex}`;
         const reversedLevelColorMap = sectionLevelColorMap
           .get(levelColorsKey)
@@ -209,13 +226,13 @@ export const useTestamentContent = (): UseTestamentContentType => {
         const showingContent = sectionsShown.get(sectionKey);
         if (showSectionLabels) {
           items.push({
-            key: `${arrangementIndex}-${testament.name}-${section.name}`,
-            section: domainSection,
+            key: `${arrangementIndex}-${testament.name}-${infraSection.name}`,
+            section: { ...domainSection, path },
             sectionKey: sectionKey,
             toggleShowSection: toggleShowSection,
             showingContent: showingContent,
             style: {
-              backgroundColor: `${section.color}80`,
+              backgroundColor: `${infraSection.color}80`,
               borderColor: showingContent
                 ? "var(--sb-primary-color)"
                 : "transparent",
@@ -223,46 +240,56 @@ export const useTestamentContent = (): UseTestamentContentType => {
             type: "sectionToggle",
           });
         }
-        const reversedBooks = section.books.toReversed();
+
         if (showingContent) {
-          const booksData: BookData[] = reversedBooks.map(
-            (bookInfo, bookIndex) => {
-              const { commonName: book, customColor: bookCustomColor } =
-                bookInfo;
-              const bookStaticInfo =
-                bibleVizDataRepository.getBookStaticInfo(book);
-              if (!bookStaticInfo) {
-                throw new Error(
-                  "useTestamentContent: bookStaticInfo not found."
-                );
-              }
+          const reversedDomainBooks = domainSection.books.toReversed();
+          const booksData: BookData[] = reversedDomainBooks.map(
+            (bookDomain, bookIndex) => {
               const {
-                bookId: bookId,
-                startingIndex = 0,
+                bookId,
                 numberOfChapters,
-              } = bookStaticInfo;
+                customColor: bookCustomColor,
+              } = bookDomain;
+
               const color =
                 bookCustomColor ??
                 reversedLevelColorMap?.[bookIndex] ??
                 "#000000";
-              const readingEvents: ReadingEvent[] =
-                rangedReadingEventsByBook.get(bookId) ?? [];
-              const summary = calculateReadingHistorySummary(readingEvents);
 
-              let isPsalms = false;
-              let psalmChaptersLimits: Range | undefined;
-              if (psalmsNames.includes(book)) {
-                isPsalms = true;
-                psalmChaptersLimits = {
-                  start: startingIndex + 1,
-                  end: startingIndex + numberOfChapters,
+              let isSubset = false;
+              let subsetChaptersLimits: Range | undefined;
+              if (bookDomain.type === "subset") {
+                isSubset = true;
+                const startIndex = bookDomain.startIndex ?? 0;
+                subsetChaptersLimits = {
+                  start: startIndex + 1,
+                  end: startIndex + numberOfChapters,
                 };
               }
 
+              const readingEvents: ReadingEvent[] = isSubset
+                ? (rangedReadingEventsByBook
+                    .get(
+                      (
+                        bookDomain as typeof bookDomain & {
+                          completeBookId: string;
+                        }
+                      ).completeBookId
+                    )
+                    ?.filter(
+                      ({ chapter }) =>
+                        subsetChaptersLimits &&
+                        chapter >= subsetChaptersLimits.start &&
+                        chapter <= subsetChaptersLimits.end
+                    ) ?? [])
+                : (rangedReadingEventsByBook.get(bookId) ?? []);
+
+              const summary = calculateReadingHistorySummary(readingEvents);
+
               const bookUserPresence: BookUserPresence = {};
               const userPresenceColors: HexString[] = [];
-
               let borderGradientColors: React.CSSProperties["backgroundImage"];
+
               if (isUserPresenceEnabled) {
                 userPresence.forEach((data, userId) => {
                   const {
@@ -271,11 +298,11 @@ export const useTestamentContent = (): UseTestamentContentType => {
                   } = data;
                   if (
                     userPresenceBookId === bookId ||
-                    (userPresenceBookId === "PSA" &&
-                      isPsalms &&
-                      psalmChaptersLimits &&
-                      userPresenceChapter >= psalmChaptersLimits.start &&
-                      userPresenceChapter <= psalmChaptersLimits.end)
+                    (bookDomain.type === "subset" &&
+                      userPresenceBookId === bookDomain.completeBookId &&
+                      subsetChaptersLimits &&
+                      userPresenceChapter >= subsetChaptersLimits.start &&
+                      userPresenceChapter <= subsetChaptersLimits.end)
                   ) {
                     const userPresenceColor =
                       userColorStore.getUserColor({ configId: userId }) ??
@@ -292,21 +319,21 @@ export const useTestamentContent = (): UseTestamentContentType => {
                     colors: userPresenceColors,
                     diffuse: 15,
                   });
-
-                // if (userPresenceColors.length > 0) {
-                //   tooltipContent.unshift(
-                //     <UserPresenceTooltipContent colors={userPresenceColors} />
-                //   );
-                // }
               }
 
               return {
-                isPsalms: isPsalms,
-                key: `book-${arrangementIndex}-${testament.name}-${section.name}-${bookInfo.commonName}`,
-                book: book,
+                isSubset,
+                subsetStartIndex:
+                  bookDomain.type === "subset"
+                    ? (bookDomain.startIndex ?? 0)
+                    : undefined,
+                numberOfChapters: bookDomain.numberOfChapters,
+                chaptersVerseCount: bookDomain.chaptersVerseCount,
+                key: `book-${arrangementIndex}-${testament.name}-${infraSection.name}-${bookId}`,
+                book: bookNames.value.get(bookId) ?? bookId,
                 bookId: bookId,
                 bookCoverBackgroundColor: color,
-                sectionName: section.name,
+                sectionName: infraSection.name,
                 readingEvents: readingEvents,
                 readingSummary: summary,
                 bookBorderGradientColors: borderGradientColors,

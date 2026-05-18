@@ -1,7 +1,6 @@
 import type { BibleVizUtilsEvents } from "bibleVizUtils.domain.models.events";
-import type { BookStaticInfo } from "bibleVizUtils.infrastructure.models.arrangement";
-import type { BookName } from "bibleVizUtils.domain.models.scripture";
-import type { ArrangementInfo as InfrastructureArrangementInfo } from "bibleVizUtils.infrastructure.models.arrangement";
+import type { BookStaticInfoConfig } from "bibleVizUtils.infrastructure.models.arrangement";
+import type { ArrangementInfoConfig as InfrastructureArrangementInfo } from "bibleVizUtils.infrastructure.models.arrangement";
 import type { ArrangementInfo as DomainArrangementInfo } from "bibleVizUtils.domain.models.arrangement";
 
 export interface ArrangementConfigProviderPort {
@@ -24,7 +23,7 @@ export interface CustomArrangementStorePort {
 }
 
 export interface BooksStaticInfoRepository {
-  getBookStaticInfo: (book: BookName) => BookStaticInfo;
+  getBookStaticInfo: (book: string) => BookStaticInfoConfig | undefined;
 }
 
 export interface ArrangementAdapterPort {

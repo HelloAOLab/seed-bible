@@ -4,7 +4,7 @@ import type { StackBookData } from "bibleVizUtils.domain.entities.StackBookData"
 import type { StackBibleData } from "bibleVizUtils.domain.entities.StackBibleData";
 import type { StackChapterData } from "bibleVizUtils.domain.entities.StackChapterData";
 import type { Point2D, Point3D } from "bibleVizUtils.domain.models.commonTypes";
-import type { BookName } from "bibleVizUtils.domain.models.scripture";
+// import type { BookName } from "bibleVizUtils.domain.models.scripture";
 
 export interface Piece<T extends BiblePieceType = BiblePieceType> {
   id: string;
@@ -207,7 +207,7 @@ export interface StackBookCreationParams extends StackSectionBaseCreationParams 
 }
 
 export interface ChapterCreationParams {
-  bookName: BookName;
+  bookId: string;
 }
 
 export const PieceSelectionSources = {

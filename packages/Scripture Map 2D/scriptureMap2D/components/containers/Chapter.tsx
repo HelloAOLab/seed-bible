@@ -6,7 +6,7 @@ const { memo } = os.appCompat;
 
 export interface ChapterProps {
   index: number;
-  bookName: string;
+  bookId: string;
   sectionName: string;
   historyBackground: React.CSSProperties["color"];
   historyColor: React.CSSProperties["color"];
@@ -18,7 +18,7 @@ export interface ChapterProps {
 export const Chapter = memo(
   ({
     index,
-    bookName,
+    bookId,
     sectionName,
     historyBackground,
     historyColor,
@@ -39,7 +39,7 @@ export const Chapter = memo(
       tooltipOffsetY,
     } = useChapter({
       sectionName,
-      bookName,
+      bookId,
       index,
       historyBackground,
       historyColor,

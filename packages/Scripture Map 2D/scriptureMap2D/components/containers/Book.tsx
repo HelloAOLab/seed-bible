@@ -8,7 +8,6 @@ import type {
   ReadingHistorySummary,
   ReadingEvent,
 } from "seed-bible.managers.ReadingHistoryManager";
-import type { BookName } from "bibleVizUtils.domain.models.scripture";
 
 const { memo } = os.appCompat;
 
@@ -20,13 +19,16 @@ export type BookUserPresenceItem = {
 export type BookUserPresence = Record<string, BookUserPresenceItem>;
 
 export interface BookProps {
-  book: BookName;
+  book: string;
   bookId: string;
+  numberOfChapters: number;
+  chaptersVerseCount: readonly number[];
+  isSubset: boolean;
+  subsetStartIndex?: number;
   bookCoverBackgroundColor: string;
   sectionName: string;
   readingEvents: ReadingEvent[];
   readingSummary: ReadingHistorySummary;
-  isPsalms: boolean;
   bookBorderGradientColors: React.CSSProperties["backgroundImage"];
   bookUserPresence: BookUserPresence;
   bookUserPresenceColors: string[];
@@ -40,11 +42,14 @@ export const Book = memo(
   ({
     book,
     bookId,
+    numberOfChapters,
+    chaptersVerseCount,
+    isSubset,
+    subsetStartIndex,
     bookCoverBackgroundColor,
     sectionName,
     readingEvents,
     readingSummary,
-    isPsalms,
     bookBorderGradientColors,
     bookUserPresence,
     bookUserPresenceColors,
@@ -70,11 +75,14 @@ export const Book = memo(
     } = useBook({
       book,
       bookId,
+      numberOfChapters,
+      chaptersVerseCount,
+      isSubset,
+      subsetStartIndex,
       bookCoverBackgroundColor,
       sectionName,
       readingEvents,
       readingSummary,
-      isPsalms,
       bookUserPresence,
       bookUserPresenceColors,
       bookBorderGradientColors,

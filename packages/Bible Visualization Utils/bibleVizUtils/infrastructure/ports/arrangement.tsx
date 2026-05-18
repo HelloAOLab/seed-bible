@@ -1,22 +1,16 @@
 import type {
-  BookInfo as InfrastructureBookInfo,
-  SectionInfo as InfrastructureSectionInfo,
+  BookInfoConfig,
+  SectionInfoConfig,
 } from "bibleVizUtils.infrastructure.models.arrangement";
 import type {
-  BookInfo as DomainBookInfo,
-  SectionInfo as DomainSectionInfo,
+  BookInfo,
+  SectionInfo,
 } from "bibleVizUtils.domain.models.arrangement";
 
 export interface BookInfoMapperPort {
-  toDomain: (
-    info: InfrastructureBookInfo,
-    path: DomainBookInfo["path"]
-  ) => DomainBookInfo;
+  toDomain: (info: BookInfoConfig, path: BookInfo["path"]) => BookInfo;
 }
 
 export interface SectionInfoMapperPort {
-  toDomain: (
-    info: InfrastructureSectionInfo,
-    path: DomainSectionInfo["path"]
-  ) => DomainSectionInfo;
+  toDomain: (info: SectionInfoConfig, path: SectionInfo["path"]) => SectionInfo;
 }

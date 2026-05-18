@@ -1,32 +1,29 @@
 import type {
-  ChapterInfo,
   BookInfo,
   ArrangementInfo,
-  BookStaticInfo,
+  SubsetBookInfo,
 } from "bibleVizUtils.domain.models.arrangement";
-import type { BookName } from "bibleVizUtils.domain.models.scripture";
 
-export type CompletePsalm = {
+export type CompleteBookChapter = {
   chapter: number;
-  book: "Psalms";
-  bookId: "PSA";
-};
-export type DividedPsalm = {
-  chapter: number;
-  book: string;
   bookId: string;
 };
-type ConvertDividedPsalmsToCompleteType = (params: {
-  book: BookName;
+
+export type SubsetBookChapter = {
   chapter: number;
-}) => CompletePsalm;
-type ConvertCompletePsalmsToDividedType = (params: {
-  chapter: number;
-}) => DividedPsalm;
+  bookId: string;
+  completeBookId: string;
+};
+
 type GetBiggerChapterType = (arrangementIndex?: number) => number;
 
 interface DataRepositoryPort {
-  getBookStaticInfo: (book: BookName) => BookStaticInfo;
+  getBookStaticInfo: (bookId: string) =>
+    | {
+        chaptersVerseCount: readonly number[];
+        numberOfChapters: number;
+      }
+    | undefined;
 }
 
 interface ArrangementServicePort {
@@ -51,66 +48,44 @@ export class ScriptureService {
       this.#arrangementServicePort.getCurrentArrangementIndex();
   }
 
-  convertDividedPsalmsToComplete: ConvertDividedPsalmsToCompleteType = ({
+  mapSubsetToCompleteBook({
     book,
     chapter,
-  }) => {
-    const dividedPsalmInfo = this.#dataRepositoryPort.getBookStaticInfo(book);
+  }: {
+    book: SubsetBookInfo;
+    chapter: number;
+  }): CompleteBookChapter {
+    return {
+      chapter: chapter + (book.startIndex ?? 0),
+      bookId: book.completeBookId,
+    };
+  }
 
-    if (dividedPsalmInfo && dividedPsalmInfo.startingIndex !== undefined) {
-      return {
-        chapter: chapter + dividedPsalmInfo.startingIndex,
-        book: "Psalms",
-        bookId: "PSA",
-      };
-    }
-
-    throw new Error(
-      "Divided psalm info not found at convertDividedPsalmsToComplete"
-    );
-  };
-
-  convertCompletePsalmsToDivided: ConvertCompletePsalmsToDividedType = ({
+  mapCompleteToSubsetBook({
     chapter,
-  }) => {
-    const dividedPsalmsNames: BookName[] = [
-      "1 Psalms",
-      "2 Psalms",
-      "3 Psalms",
-      "4 Psalms",
-      "5 Psalms",
-    ];
+    subsets,
+  }: {
+    chapter: number;
+    subsets: readonly SubsetBookInfo[];
+  }): SubsetBookChapter {
+    const subset = subsets.find((s) => {
+      const start = (s.startIndex ?? 0) + 1;
+      const end = (s.startIndex ?? 0) + s.numberOfChapters;
+      return start <= chapter && chapter <= end;
+    });
 
-    const dividedPaslmsInfo: [string, BookStaticInfo | undefined][] =
-      dividedPsalmsNames.map((name) => {
-        return [name, this.#dataRepositoryPort.getBookStaticInfo(name)];
-      });
-
-    const psalmInfo: [string, BookStaticInfo] | undefined =
-      dividedPaslmsInfo.find(([, info]) => {
-        if (info) {
-          const { startingIndex } = info;
-          if (startingIndex !== undefined) {
-            return (
-              startingIndex + 1 <= chapter &&
-              chapter <= startingIndex + info.numberOfChapters
-            );
-          }
-        }
-        return false;
-      }) as [string, BookStaticInfo] | undefined;
-
-    if (psalmInfo) {
-      const [name, info] = psalmInfo;
-      return {
-        book: name,
-        bookId: info.bookId,
-        chapter: chapter - (info?.startingIndex ?? 0),
-      };
+    if (!subset) {
+      throw new Error(
+        `ScriptureService: no subset found for chapter ${chapter} at mapCompleteToSubsetBook`
+      );
     }
 
-    throw new Error("Psalm info not found at convertCompletePsalmsToDivided");
-  };
+    return {
+      chapter: chapter - (subset.startIndex ?? 0),
+      bookId: subset.bookId,
+      completeBookId: subset.completeBookId,
+    };
+  }
 
   getBiggerChapter: GetBiggerChapterType = (
     arrangementIndex = this.#arrangementServicePort.getCurrentArrangementIndex()
@@ -131,29 +106,24 @@ export class ScriptureService {
         );
       }
 
-      let chapterInfo: ChapterInfo | undefined;
+      let currentCount = 0;
 
       for (const testament of arrangement.testaments) {
         for (const sectionInfo of testament.sections) {
           for (const book of sectionInfo.books) {
             const bookInfo = this.#dataRepositoryPort.getBookStaticInfo(
-              book.commonName
+              book.bookId
             );
             if (!bookInfo) {
               throw new Error(
                 "ScriptureService: bookInfo not found at getBiggerChapter"
               );
             }
-            const { chaptersInfo } = bookInfo;
-            for (let i = 0; i < chaptersInfo.length; i++) {
-              chapterInfo = chaptersInfo[i];
-              if (!chapterInfo) {
-                throw new Error(
-                  "ScriptureService: chapterInfo not found at getBiggerChapter"
-                );
-              }
-              if (chapterInfo.amountOfVerses > this.#biggerChapter) {
-                this.#biggerChapter = chapterInfo.amountOfVerses;
+            const { chaptersVerseCount } = bookInfo;
+            for (let i = 0; i < chaptersVerseCount.length; i++) {
+              currentCount = chaptersVerseCount[i]!;
+              if (currentCount > this.#biggerChapter!) {
+                this.#biggerChapter = currentCount;
               }
             }
           }
@@ -175,11 +145,11 @@ export class ScriptureService {
     }, 0);
   };
 
-  getBookChapterCount(book: BookName): number {
-    const bookInfo = this.#dataRepositoryPort.getBookStaticInfo(book);
+  getBookChapterCount(bookId: string): number {
+    const bookInfo = this.#dataRepositoryPort.getBookStaticInfo(bookId);
     if (!bookInfo)
       throw new Error(
-        `ScriptureService: bookStaticInfo not found at getBookChapterCount for ${book}`
+        `ScriptureService: bookStaticInfo not found at getBookChapterCount for ${bookId}`
       );
     return bookInfo.numberOfChapters;
   }

@@ -3,11 +3,10 @@ import {
   HexToRgb,
 } from "bibleVizUtils.domain.functions.colors";
 import type {
-  ArrangementInfo as DomainArrangementInfo,
+  ArrangementInfo,
   BookInfo,
   ArrangementTemplate,
 } from "bibleVizUtils.domain.models.arrangement";
-import type { BookName } from "bibleVizUtils.domain.models.scripture";
 import type { BooksStaticInfoRepository } from "bibleVizUtils.domain.ports.arrangement";
 
 interface MapperParams {
@@ -25,7 +24,7 @@ export class ArrangementMapper {
     template,
   }: {
     template: ArrangementTemplate;
-  }): DomainArrangementInfo {
+  }): ArrangementInfo {
     const { name: arrangementName, testaments } = template;
     return {
       name: arrangementName,
@@ -40,13 +39,15 @@ export class ArrangementMapper {
               path: { arrangementName, testamentIndex, sectionIndex },
               books: section.books.map((book, bookIndex): BookInfo => {
                 const bookStaticInfo =
-                  this.#booksStaticInfoRepository.getBookStaticInfo(
-                    book.name as BookName
-                  );
+                  this.#booksStaticInfoRepository.getBookStaticInfo(book.name);
                 return {
-                  commonName: book.name as BookName,
+                  bookId: book.name,
+                  type: "complete",
+                  author: bookStaticInfo.author,
+                  chaptersVerseCount: bookStaticInfo.chaptersVerseCount,
+                  relativeDateRange: bookStaticInfo.relativeDateRange,
+                  numberOfChapters: bookStaticInfo.numberOfChapters,
                   customColor: book.color,
-                  ...bookStaticInfo,
                   path: {
                     arrangementName,
                     testamentIndex,
@@ -63,7 +64,7 @@ export class ArrangementMapper {
   }
 
   toTemplate(
-    arrangement: DomainArrangementInfo,
+    arrangement: ArrangementInfo,
     generateId: () => string
   ): ArrangementTemplate {
     const { name, testaments } = arrangement;
@@ -86,7 +87,7 @@ export class ArrangementMapper {
                 name: sectionName,
                 color: sectionColor,
                 id: generateId(),
-                books: books.map(({ commonName: bookName }, bookIndex) => {
+                books: books.map(({ bookId: bookName }, bookIndex) => {
                   return {
                     name: bookName,
                     color: bookLevelColors[bookIndex] ?? "#FFFFFF",

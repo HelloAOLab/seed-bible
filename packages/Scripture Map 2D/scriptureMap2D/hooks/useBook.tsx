@@ -20,6 +20,7 @@ import type {
   ChapterData,
 } from "scriptureMap2D.components.containers.Book";
 import type { Range } from "scriptureMap2D.models.commonTypes";
+import { getFirstNonSpaceChars } from "scriptureMap2D.functions.scripture";
 
 const { useState, useMemo, useEffect, useCallback } = os.appHooks;
 
@@ -27,11 +28,14 @@ type UseBookProps = Pick<
   BookProps,
   | "book"
   | "bookId"
+  | "numberOfChapters"
+  | "chaptersVerseCount"
+  | "isSubset"
+  | "subsetStartIndex"
   | "bookCoverBackgroundColor"
   | "sectionName"
   | "readingEvents"
   | "readingSummary"
-  | "isPsalms"
   | "bookUserPresence"
   | "bookUserPresenceColors"
   | "bookBorderGradientColors"
@@ -71,11 +75,14 @@ export const useBook: UseBook = (props) => {
   const {
     book,
     bookId,
+    numberOfChapters,
+    chaptersVerseCount,
+    isSubset,
+    subsetStartIndex,
     bookCoverBackgroundColor,
     sectionName,
     readingEvents,
     readingSummary,
-    isPsalms,
     bookUserPresence,
     bookUserPresenceColors,
     bookBorderGradientColors,
@@ -97,9 +104,7 @@ export const useBook: UseBook = (props) => {
     showingBooksColors,
     activeTab,
     translate,
-    bibleVizDataRepository,
     userColorStore,
-    scriptureService,
     readingHistoryService,
     GetTextColorBasedOnBackground,
     IsValueBetween,
@@ -144,39 +149,31 @@ export const useBook: UseBook = (props) => {
       : 0;
   }, [isUserPresenceEnabled, bookBorderGradientColors, scaleFactor]);
 
-  const bookStaticInfo = useMemo(() => {
-    return bibleVizDataRepository.getBookStaticInfo(book);
-  }, []);
-
-  if (!bookStaticInfo)
-    throw new Error(`Book static info not found at Book.tsx`);
-
   const { chaptersCount, staticChaptersArray } = useMemo<{
     chaptersCount: number;
     staticChaptersArray: undefined[];
   }>(() => {
-    const chaptersCount = bookStaticInfo.numberOfChapters;
-
     return {
-      chaptersCount,
-      staticChaptersArray: [...Array(chaptersCount)],
+      chaptersCount: numberOfChapters,
+      staticChaptersArray: [...Array(numberOfChapters)],
     };
-  }, []);
+  }, [numberOfChapters]);
 
   const bookCoverHeight = useMemo<React.CSSProperties["height"]>(() => {
-    const { chaptersInfo } = bookStaticInfo;
     const book2DMaxColumns =
       scriptureMap3DConfigProvider.getBibleLayoutMeasurement(
         "Book2DMaxColumns"
       );
     if (Array.isArray(book2DMaxColumns))
       throw new Error("book2DMaxColumns must be of type number");
-    const amountOfRows = Math.ceil(chaptersInfo.length / book2DMaxColumns);
+    const amountOfRows = Math.ceil(
+      chaptersVerseCount.length / book2DMaxColumns
+    );
     const height =
       amountOfRows * chapterHeight + chapterGap * (amountOfRows - 1);
 
     return `${height}px`;
-  }, [scaleFactor, chapterGap, chapterHeight]);
+  }, [chaptersVerseCount, scaleFactor, chapterGap, chapterHeight]);
 
   const checked = useMemo(() => {
     return selection?.[testament.name]?.[sectionName]?.[book]?.every(
@@ -192,7 +189,7 @@ export const useBook: UseBook = (props) => {
       const key = {
         testamentName: testament.name,
         sectionName,
-        bookName: book,
+        bookId,
       };
       onBookNameClickAndHold?.(showChapters, key, checked);
     },
@@ -596,11 +593,8 @@ export const useBook: UseBook = (props) => {
         }
       }
 
-      if (isPsalms) {
-        ({ chapter } = scriptureService.convertDividedPsalmsToComplete({
-          book,
-          chapter,
-        }));
+      if (isSubset) {
+        chapter = chapter + (subsetStartIndex ?? 0);
       }
 
       const userPresenceColors: HexString[] = [];
@@ -632,7 +626,7 @@ export const useBook: UseBook = (props) => {
       return {
         key: `${bookId}-${chapter}`,
         sectionName: sectionName,
-        bookName: book,
+        bookId,
         chapter: chapter,
         borderGradientColors: borderGradientColors,
         index: index,
@@ -652,11 +646,12 @@ export const useBook: UseBook = (props) => {
     showChapters,
     BASE_BACKGROUND_COLOR,
     translate,
+    bookId,
   ]);
 
   const bookTitle = useMemo<string>(() => {
-    return scaleFactor > 0.5 ? book : bookId;
-  }, [scaleFactor, book, bookId]);
+    return scaleFactor > 0.5 ? book : getFirstNonSpaceChars(book).toUpperCase();
+  }, [scaleFactor, book]);
 
   const bookClass = useMemo<string>(() => {
     return `book-container${showChapters ? "" : " pointable"}`;

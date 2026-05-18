@@ -41,6 +41,7 @@ import type { ScriptureMap3DConfigProvider } from "bibleVizUtils.infrastructure.
 import type { ReadingHistoryConfigProvider } from "bibleVizUtils.infrastructure.config.readingHistory.ReadingHistoryConfigProvider";
 import type { SectionInfoMapper } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/SectionInfoMapper";
 import type { SessionProvider } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/session/SessionProvider";
+import type { Signal } from "@preact/signals";
 
 const { memo } = os.appCompat;
 
@@ -126,6 +127,7 @@ export interface ScriptureMap2DConfig {
   sectionInfoMapper: SectionInfoMapper;
   language: string;
   sessionProvider: SessionProvider;
+  bookNames: Signal<Map<string, string>>;
 }
 
 type ScriptureMap2DProps = {

@@ -81,7 +81,7 @@ const bookActivityStrategy: ActivityStrategyType<"StackBook" | "LayoutBook"> = (
     pieceId: piece.id,
     pieceType: piece.type,
   });
-  const key = data.getPieceInfoProperty("commonName");
+  const key = data.getPieceInfoProperty("bookId");
   const typeOfPiece = BiblePiece.StackBook;
 
   return { key, typeOfPiece };
@@ -95,7 +95,7 @@ const sectionBookActivityStrategy: ActivityStrategyType<"StackSectionBook"> = (
     pieceId: piece.id,
     pieceType: piece.type,
   });
-  const key = data.getPieceBookInfoProperty("commonName");
+  const key = data.getPieceBookInfoProperty("bookId");
   const typeOfPiece = BiblePiece.StackBook;
 
   return { key, typeOfPiece };
@@ -108,7 +108,7 @@ const chapterActivityStrategy: ActivityStrategyType<
     pieceId: piece.id,
     pieceType: piece.type,
   });
-  const key = `${data.getCreationParam("bookName")} ${data.getPieceInfoProperty("number")}`;
+  const key = `${data.getCreationParam("bookId")} ${data.getPieceInfoProperty("number")}`;
   const typeOfPiece = BiblePiece.StackChapter;
 
   return { key, typeOfPiece };
@@ -174,7 +174,6 @@ const indicatorsStrategiesMap: {
 export class PieceActivityService implements PieceActivityServicePort {
   #dataRegistryPort: DataRegistryPort;
   #arrangementServicePort: ArrangementServicePort;
-  #scriptureServicePort: ScriptureServicePort;
   #labelDataStorePort: LabelDataStorePort;
   #maxIndicators: NonNullable<ServiceParams["maxIndicators"]>;
   #userPresenceServicePort: ServiceParams["userPresenceServicePort"];
@@ -185,7 +184,6 @@ export class PieceActivityService implements PieceActivityServicePort {
   constructor({
     dataRegistryPort,
     arrangementServicePort,
-    scriptureServicePort,
     labelDataStorePort,
     userPresenceServicePort,
     maxIndicators = 4,
@@ -195,7 +193,6 @@ export class PieceActivityService implements PieceActivityServicePort {
   }: ServiceParams) {
     this.#dataRegistryPort = dataRegistryPort;
     this.#arrangementServicePort = arrangementServicePort;
-    this.#scriptureServicePort = scriptureServicePort;
     this.#labelDataStorePort = labelDataStorePort;
     this.#maxIndicators = maxIndicators;
     this.#userPresenceServicePort = userPresenceServicePort;
@@ -218,19 +215,28 @@ export class PieceActivityService implements PieceActivityServicePort {
       new Map();
 
     for (const tab of allTabs) {
-      let { book, chapter } = tab.data;
+      const { bookId, chapter } = tab.data;
 
-      if (book === "Psalms")
-        ({ book, chapter } =
-          this.#scriptureServicePort.convertCompletePsalmsToDivided({
-            chapter,
-          }));
-
-      const { found, arrangementIndex, testamentIndex, sectionIndex } =
-        this.#arrangementServicePort.getBookInfoPathByName({
-          name: book,
+      let { found, arrangementIndex, testamentIndex, sectionIndex } =
+        this.#arrangementServicePort.getBookInfoPathById({
+          id: bookId,
           arrangementIndex: desiredArrangementIndex,
         });
+      if (!found) {
+        const bookSubset =
+          this.#arrangementServicePort.getBookSubsetByCompleteId({
+            id: bookId,
+            chapterNumber: chapter,
+            arrangementIndex: desiredArrangementIndex,
+          });
+        if (bookSubset) {
+          ({ found, arrangementIndex, testamentIndex, sectionIndex } =
+            this.#arrangementServicePort.getBookInfoPathById({
+              id: bookSubset.bookId,
+              arrangementIndex: desiredArrangementIndex,
+            }));
+        }
+      }
       if (found) {
         const arrangement =
           this.#arrangementServicePort.getArrangementByIndex(arrangementIndex);
@@ -273,11 +279,11 @@ export class PieceActivityService implements PieceActivityServicePort {
           },
           {
             typeOfPiece: BiblePiece.StackBook,
-            key: book,
+            key: bookId,
           },
           {
             typeOfPiece: BiblePiece.StackChapter,
-            key: `${book} ${chapter}`,
+            key: `${bookId} ${chapter}`,
           },
         ];
 

@@ -8,7 +8,7 @@ import { ScriptureMap2DModes } from "scriptureMap2D.models.scriptureMap";
 type UseChapterProps = Pick<
   ChapterProps,
   | "sectionName"
-  | "bookName"
+  | "bookId"
   | "index"
   | "historyBackground"
   | "historyColor"
@@ -40,7 +40,7 @@ const { useState, useMemo, useCallback } = os.appHooks;
 
 export const useChapter: UseChapter = ({
   sectionName,
-  bookName,
+  bookId,
   index,
   historyBackground,
   historyColor,
@@ -68,7 +68,7 @@ export const useChapter: UseChapter = ({
 
   const checked = useMemo(() => {
     return (
-      selection?.[testament.name]?.[sectionName]?.[bookName]?.[index] ?? false
+      selection?.[testament.name]?.[sectionName]?.[bookId]?.[index] ?? false
     );
   }, [selection]);
 
@@ -78,7 +78,7 @@ export const useChapter: UseChapter = ({
       const key = {
         testamentName: testament.name,
         sectionName,
-        bookName,
+        bookId,
         chapterIndex: index,
       };
       onChapterClickAndHold?.(e, key, checked);
@@ -87,7 +87,7 @@ export const useChapter: UseChapter = ({
       const key = {
         testamentName: testament.name,
         sectionName,
-        bookName,
+        bookId,
         chapterIndex: index,
       };
       onChapterClick(e, key, checked);
@@ -97,7 +97,7 @@ export const useChapter: UseChapter = ({
 
   const { background, borderStyle, borderColor, color } = useMemo(() => {
     const projectChapterState =
-      project?.structure[testament.name]?.[sectionName]?.[bookName]?.[index];
+      project?.structure[testament.name]?.[sectionName]?.[bookId]?.[index];
     const hasProjectContent =
       project &&
       mode === ScriptureMap2DModes.Project &&

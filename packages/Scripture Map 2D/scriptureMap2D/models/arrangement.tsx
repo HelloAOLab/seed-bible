@@ -1,9 +1,7 @@
-import type { BookName } from "bibleVizUtils.domain.models.scripture";
-
 export interface BookKey {
   testamentName: string;
   sectionName: string;
-  bookName: BookName;
+  bookId: string;
 }
 
 export interface ChapterKey extends BookKey {

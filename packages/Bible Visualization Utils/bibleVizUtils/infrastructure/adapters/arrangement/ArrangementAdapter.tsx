@@ -1,5 +1,5 @@
-import type { ArrangementInfo as InfrastructureArrangementInfo } from "bibleVizUtils.infrastructure.models.arrangement";
-import type { ArrangementInfo as DomainArrangementInfo } from "bibleVizUtils.domain.models.arrangement";
+import type { ArrangementInfoConfig } from "bibleVizUtils.infrastructure.models.arrangement";
+import type { ArrangementInfo } from "bibleVizUtils.domain.models.arrangement";
 import type { SectionInfoMapperPort } from "bibleVizUtils.infrastructure.ports.arrangement";
 
 export class ArrangementAdapter {
@@ -9,9 +9,7 @@ export class ArrangementAdapter {
     this.#sectionInfoMapperPort = port;
   }
 
-  toDomain(
-    infrastructureArrangement: InfrastructureArrangementInfo
-  ): DomainArrangementInfo {
+  toDomain(infrastructureArrangement: ArrangementInfoConfig): ArrangementInfo {
     if (!this.#sectionInfoMapperPort) {
       throw new Error(
         "ArrangementAdapter: sectionInfoMapperPort not set. Call setSectionInfoMapperPort before toDomain."

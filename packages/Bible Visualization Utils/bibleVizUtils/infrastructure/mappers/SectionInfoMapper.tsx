@@ -1,6 +1,6 @@
 import type {
-  SectionInfo as InfrastructureSectionInfo,
-  ArrangementInfo,
+  SectionInfoConfig as InfrastructureSectionInfo,
+  ArrangementInfoConfig,
 } from "bibleVizUtils.infrastructure.models.arrangement";
 import type { SectionInfo as DomainSectionInfo } from "bibleVizUtils.domain.models.arrangement";
 import type {
@@ -48,7 +48,7 @@ export class SectionInfoMapper {
   toInfrastructure(info: DomainSectionInfo): InfrastructureSectionInfo {
     const { arrangementName, testamentIndex, sectionIndex } = info.path;
 
-    const arrangementFinder = (arrangement: ArrangementInfo) =>
+    const arrangementFinder = (arrangement: ArrangementInfoConfig) =>
       arrangement.name === arrangementName;
 
     const staticArrangements =

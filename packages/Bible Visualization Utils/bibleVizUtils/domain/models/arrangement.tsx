@@ -29,20 +29,15 @@ export interface ChapterInfo {
   readonly number: number;
 }
 
-export interface BookStaticInfo {
+export interface BaseBookInfo {
   readonly bookId: string;
   readonly author: string;
-  readonly chaptersInfo: readonly ChapterInfo[];
+  readonly chaptersVerseCount: readonly number[];
   readonly relativeDateRange: {
     readonly min: number;
     readonly max: number;
   };
   readonly numberOfChapters: number;
-  readonly startingIndex?: number;
-}
-
-export interface BookInfo extends BookStaticInfo {
-  readonly commonName: string;
   readonly customColor?: string;
   readonly customLabelColor?: string;
   readonly isCheckpoint?: boolean;
@@ -54,6 +49,19 @@ export interface BookInfo extends BookStaticInfo {
     bookIndex: number;
   };
 }
+
+export interface CompleteBookInfo extends BaseBookInfo {
+  readonly type: "complete";
+}
+
+export interface SubsetBookInfo extends BaseBookInfo {
+  readonly type: "subset";
+  readonly completeBookId: string;
+  readonly startIndex?: number;
+  readonly endIndex?: number;
+}
+
+export type BookInfo = CompleteBookInfo | SubsetBookInfo;
 
 export interface SectionInfo extends Translatable {
   readonly name: string;

@@ -24,7 +24,7 @@ export class InfoLabelData {
   #date: InfoLabelDataProps["date"];
   #owner: InfoLabelDataProps["owner"];
   #positioning: InfoLabelDataProps["positioning"];
-  #isHiding: boolean;
+  #isHiding: boolean = false;
 
   constructor({
     id,

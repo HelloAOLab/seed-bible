@@ -1,9 +1,9 @@
-import type { ArrangementInfo } from "bibleVizUtils.infrastructure.models.arrangement";
+import type { ArrangementInfoConfig } from "bibleVizUtils.infrastructure.models.arrangement";
 
 export interface ArrangementConfigProviderPort {
-  getRawStaticArrangements: () => readonly ArrangementInfo[];
+  getRawStaticArrangements: () => readonly ArrangementInfoConfig[];
 }
 
 export interface CustomArrangementStorePort {
-  getRawArrangements: () => readonly ArrangementInfo[];
+  getRawArrangements: () => readonly ArrangementInfoConfig[];
 }

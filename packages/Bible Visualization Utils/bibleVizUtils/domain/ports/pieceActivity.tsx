@@ -2,8 +2,9 @@ import type {
   ArrangementInfo,
   TestamentInfo,
   SectionInfo,
+  SubsetBookInfo,
 } from "bibleVizUtils.domain.models.arrangement";
-import type { DividedPsalm } from "bibleVizUtils.application.services.ScriptureService";
+// import type { DividedPsalm } from "bibleVizUtils.application.services.ScriptureService";
 import type {
   TestamentPathIndices,
   SectionPathIndices,
@@ -26,6 +27,7 @@ import type { StackChapterData } from "bibleVizUtils.domain.entities.StackChapte
 import type { LayoutBookData } from "bibleVizUtils.domain.entities.LayoutBookData";
 import type { LayoutChapterData } from "bibleVizUtils.domain.entities.LayoutChapterData";
 import type { HexString, Point2D } from "../models/commonTypes";
+import type { SubsetBookChapter } from "../../application/services/ScriptureService";
 
 export interface DataRegistryPort {
   getPieceData: GetPieceData;
@@ -43,8 +45,8 @@ export interface ArrangementServicePort {
     path: TestamentPathIndices
   ) => TestamentInfo | undefined;
   getSectionByIndices: (path: SectionPathIndices) => SectionInfo | undefined;
-  getBookInfoPathByName: (params: {
-    name: string;
+  getBookInfoPathById: (params: {
+    id: string;
     arrangementIndex?: number | undefined;
   }) => {
     found: boolean;
@@ -53,10 +55,25 @@ export interface ArrangementServicePort {
     sectionIndex: number | undefined;
     bookIndex: number | undefined;
   };
+  getBookSubsetByCompleteId({
+    id,
+    chapterNumber,
+    arrangementIndex,
+  }: {
+    id: string;
+    chapterNumber: number;
+    arrangementIndex?: number | undefined;
+  }): SubsetBookInfo | undefined;
 }
 
 export interface ScriptureServicePort {
-  convertCompletePsalmsToDivided: (params: { chapter: number }) => DividedPsalm;
+  mapCompleteToSubsetBook({
+    chapter,
+    subsets,
+  }: {
+    chapter: number;
+    subsets: readonly SubsetBookInfo[];
+  }): SubsetBookChapter;
 }
 
 export interface UserPresenceServicePort {

@@ -257,9 +257,6 @@
       "bibleVizUtils.infrastructure.config.arrangements.ArrangementsConfigProvider": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/arrangements/ArrangementsConfigProvider.tsx"
       ],
-      "bibleVizUtils.infrastructure.config.arrangements.psalms": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/arrangements/psalms.tsx"
-      ],
       "bibleVizUtils.infrastructure.config.arrangements.sectionNames": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/arrangements/sectionNames.tsx"
       ],
@@ -650,9 +647,6 @@
       "scriptureMap2D.contexts.Time.useTimeProvider": [
         "./packages/Scripture Map 2D/scriptureMap2D/contexts/Time/useTimeProvider.tsx"
       ],
-      "scriptureMap2D.data.translations": [
-        "./packages/Scripture Map 2D/scriptureMap2D/data/translations.tsx"
-      ],
       "scriptureMap2D.di.bootstrap": [
         "./packages/Scripture Map 2D/scriptureMap2D/di/bootstrap.tsx"
       ],
@@ -670,6 +664,9 @@
       ],
       "scriptureMap2D.entrypoints.userUnsubscribed": [
         "./packages/Scripture Map 2D/scriptureMap2D/entrypoints/userUnsubscribed.tsx"
+      ],
+      "scriptureMap2D.functions.scripture": [
+        "./packages/Scripture Map 2D/scriptureMap2D/functions/scripture.tsx"
       ],
       "scriptureMap2D.hooks.useBook": [
         "./packages/Scripture Map 2D/scriptureMap2D/hooks/useBook.tsx"

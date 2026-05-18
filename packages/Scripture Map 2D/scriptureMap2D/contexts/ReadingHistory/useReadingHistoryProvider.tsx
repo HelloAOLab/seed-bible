@@ -45,9 +45,10 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
     seedBibleState,
     bibleVizUtilsEventManager,
     // scriptureMap2DEventManager,
-    scriptureService,
+    // scriptureService,
     getDayRangeSeconds,
     sessionProvider,
+    // arrangementService
   } = useScriptureMap2DContext();
 
   const selectedTabId = seedBibleState.tabs.selectedTabId.value;
@@ -426,23 +427,23 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
         if (!isMounted) return;
         const flattenedEvents = Array.from(flat(allEvents));
 
-        for (let event of flattenedEvents) {
-          let { start, end, chapter, bookId } = event;
+        for (const event of flattenedEvents) {
+          const { start, end, /*chapter,*/ bookId } = event;
           const duration = end - start;
           if (duration < SEC_PER_MINUTE) continue;
           if (start >= rangeStart && start <= rangeEnd) {
-            if (bookId === "PSA") {
-              const { bookId: dividedPsalmId, chapter: dividedPsalmChapter } =
-                scriptureService.convertCompletePsalmsToDivided({
-                  chapter,
-                });
-              event = {
-                ...event,
-                bookId: dividedPsalmId,
-                chapter: dividedPsalmChapter,
-              };
-              bookId = dividedPsalmId;
-            }
+            // if (bookId === "PSA") {
+            //   const { bookId: dividedPsalmId, chapter: dividedPsalmChapter } =
+            //     scriptureService.convertCompletePsalmsToDivided({
+            //       chapter,
+            //     });
+            //   event = {
+            //     ...event,
+            //     bookId: dividedPsalmId,
+            //     chapter: dividedPsalmChapter,
+            //   };
+            //   bookId = dividedPsalmId;
+            // }
             if (!rangedEventsByBook.has(bookId)) {
               rangedEventsByBook.set(bookId, []);
             }

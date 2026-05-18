@@ -1,5 +1,6 @@
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
 
+// eslint-disable-next-line
 export type BibleVizUtilsEventCallback = (payload?: any) => void;
 
 export interface BibleVizUtilsEvents {

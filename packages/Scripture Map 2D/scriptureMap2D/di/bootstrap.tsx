@@ -59,6 +59,7 @@ export const bootstrapExtension = () => {
         scriptureMap3DConfigProvider,
         readingHistoryConfigProvider,
         sessionProvider,
+        bookNames,
       } = dependenciesMap[
         bibleVizUtilsId
       ] as DependenciesMap[typeof bibleVizUtilsId];
@@ -86,38 +87,51 @@ export const bootstrapExtension = () => {
                   config={{
                     mode: ScriptureMap2DModes.Viewer,
                     onChapterClick: (_, key) => {
-                      const { bookName, chapterIndex } = key;
+                      const { bookId, chapterIndex } = key;
 
-                      const bookInfo =
-                        bibleVizDataRepository.getBookStaticInfo(bookName);
-                      if (bookInfo) {
-                        let { bookId: bookId } = bookInfo;
-                        let chapter = chapterIndex + 1;
+                      let chapter = chapterIndex + 1;
 
-                        if (bookName.includes("Psalms")) {
-                          ({ chapter } =
-                            scriptureService.convertDividedPsalmsToComplete({
-                              book: bookName,
-                              chapter,
-                            }));
-                          bookId = "PSA" as typeof bookId; // TODO: Fix this
-                        }
-                        const translationId =
-                          context.app.currentReadingState.value?.translationId;
-                        if (translationId) {
-                          context.bibleData
-                            .getTranslationBooks(translationId)
-                            .then((translationBooks) => {
-                              console.log(`[Debug] bootstrap`, {
-                                translationBooks,
-                              });
-                            });
-                        }
-                        context.app.selectedTab.value?.readingState.selectChapter(
-                          bookId,
-                          chapter
+                      const bookPath = arrangementService.getBookInfoPathById({
+                        id: bookId,
+                      });
+                      if (!bookPath.found) {
+                        throw new Error(
+                          `bootstrap: bookPath not found at bootstrapExtension`
                         );
                       }
+
+                      const {
+                        arrangementIndex,
+                        testamentIndex,
+                        sectionIndex,
+                        bookIndex,
+                      } = bookPath;
+                      const bookInfo = arrangementService.getBookByIndices({
+                        arrangementIndex,
+                        testamentIndex: testamentIndex!,
+                        sectionIndex: sectionIndex!,
+                        bookIndex: bookIndex!,
+                      });
+
+                      if (!bookInfo) {
+                        throw new Error(
+                          `bootstrap: bookInfo not found at bootstrapExtension`
+                        );
+                      }
+
+                      if (bookInfo.type === "subset") {
+                        ({ chapter } = scriptureService.mapSubsetToCompleteBook(
+                          {
+                            book: bookInfo,
+                            chapter,
+                          }
+                        ));
+                      }
+
+                      context.app.selectedTab.value?.readingState.selectChapter(
+                        bookId,
+                        chapter
+                      );
                     },
                     initialShowingAllChapters: true,
                     initialShowTestamentLabels: true,
@@ -163,6 +177,7 @@ export const bootstrapExtension = () => {
                     readingHistoryConfigProvider,
                     language,
                     sessionProvider,
+                    bookNames,
                   }}
                   customCSS={customCSS}
                 />

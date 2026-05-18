@@ -88,7 +88,7 @@ import { ScriptureMap3DConfigProvider } from "bibleVizUtils.infrastructure.confi
 import { ReadingHistoryConfigProvider } from "bibleVizUtils.infrastructure.config.readingHistory.ReadingHistoryConfigProvider";
 import { entrypoints } from "bibleVizUtils.infrastructure.entrypoints.casualos.botProvider";
 import { connectedUserColors } from "seed-bible.managers.SessionsManager";
-import { effect } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
 
 export let userColorController: UserColorController | undefined = undefined;
 export let sessionController: SessionController | undefined = undefined;
@@ -396,6 +396,31 @@ export const bootstrapExtension = () => {
 
         userPresenceController?.handleOnlineUsersChanged();
       });
+      const bookNames = signal<Map<string, string>>(new Map());
+      effect(() => {
+        const translationId =
+          context.app.currentReadingState.value?.translationId;
+        if (!translationId) {
+          bookNames.value = new Map();
+          return;
+        }
+        let isCancelled = false;
+        context.bibleData
+          .getTranslationBooks(translationId)
+          .then((translationBooks) => {
+            if (isCancelled) return;
+
+            bookNames.value = new Map(
+              translationBooks.books.map((book) => [book.id, book.name])
+            );
+          })
+          .catch((error) => {
+            console.error("Error fetching books:", error);
+          });
+        return () => {
+          isCancelled = true;
+        };
+      });
 
       // 5. Disposers
 
@@ -484,6 +509,7 @@ export const bootstrapExtension = () => {
         scriptureMap3DConfigProvider,
         readingHistoryConfigProvider,
         sessionProvider,
+        bookNames,
       };
 
       return api;
