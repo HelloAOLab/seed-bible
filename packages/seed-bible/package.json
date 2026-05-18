@@ -23,5 +23,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.17.1"
+  "packageManager": "pnpm@10.17.1",
+  "dependencies": {
+    "@casual-simulation/aux-common": "4.2.3",
+    "@casual-simulation/websocket": "4.0.0",
+    "@casual-simulation/aux-websocket": "4.2.3"
+  }
 }

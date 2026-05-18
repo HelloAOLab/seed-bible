@@ -261,7 +261,17 @@ importers:
         specifier: workspace:*
         version: link:../seed-bible
 
-  packages/seed-bible: {}
+  packages/seed-bible:
+    dependencies:
+      '@casual-simulation/aux-common':
+        specifier: 4.2.3
+        version: 4.2.3
+      '@casual-simulation/aux-websocket':
+        specifier: 4.2.3
+        version: 4.2.3
+      '@casual-simulation/websocket':
+        specifier: 4.0.0
+        version: 4.0.0
 
   packages/seed-bible-refresh-example-extension:
     dependencies:
@@ -938,6 +948,9 @@ packages:
   '@casual-simulation/aux-vm@4.2.4-alpha.25223847785':
     resolution: {integrity: sha512-5SNDVyJ2Cg7HesaF3YTbzE72QO0ar97DQ2Y6f+3pkxDX/gWGH8rjaZL4bh6Uj38LpIfycLe/eW54cP340bpfFQ==}
 
+  '@casual-simulation/aux-websocket@4.2.3':
+    resolution: {integrity: sha512-rVsP2ZdoLdZp2MEBAfNkkX5tDgsH9oE7dPtzHHYg3FCmtCPomi7qR4f71hjxFd3EusRXbN20hhjuslXg4ERduA==}
+
   '@casual-simulation/chalk@3.1.11':
     resolution: {integrity: sha512-cJ2xHpo8N6HWMQ2yAJao+dFmLNMV3vd0uNYFcWa0YxsF26A4LYIpqYxGAM1U2iCTZhJiedP6//3UYvZbcsmHLw==}
 
@@ -1005,6 +1018,9 @@ packages:
 
   '@casual-simulation/undom@4.0.0':
     resolution: {integrity: sha512-pS0caGuFTDj2hPZoOxKL2MgAPDvixUndKgNc6WfrF/srd1GM9LJ+yWR6WFI4U3Nhq/kCzDAgi/fpQWf+jU3DIw==}
+
+  '@casual-simulation/websocket@4.0.0':
+    resolution: {integrity: sha512-ElfJf7MYPJP10G/JgP24tGb5pLz2lK6nbRSDKhPkL4SCiKKxNNK5m0aq0eQrhIMKlwEVOe4Pje+GKaToPrf58Q==}
 
   '@csstools/color-helpers@5.1.0':
     resolution: {integrity: sha512-S11EXWJyy0Mz5SYvRmY8nJYTFFd1LCNV+7cXyAgQtOOuzb4EsgfqDufL+9esx72/eLhsRdGZwaldu/h+E4t4BA==}
@@ -6451,6 +6467,12 @@ snapshots:
       - utf-8-validate
       - ws
 
+  '@casual-simulation/aux-websocket@4.2.3':
+    dependencies:
+      '@casual-simulation/aux-common': 4.2.3
+      '@casual-simulation/websocket': 4.0.0
+      rxjs: 8.0.0-alpha.14
+
   '@casual-simulation/chalk@3.1.11': {}
 
   '@casual-simulation/chalk@4.0.0': {}
@@ -6530,6 +6552,10 @@ snapshots:
   '@casual-simulation/undom@3.10.3': {}
 
   '@casual-simulation/undom@4.0.0': {}
+
+  '@casual-simulation/websocket@4.0.0':
+    dependencies:
+      rxjs: 8.0.0-alpha.14
 
   '@csstools/color-helpers@5.1.0': {}
 
@@ -9004,10 +9030,6 @@ snapshots:
     dependencies:
       pend: 1.2.0
 
-  fdir@6.5.0(picomatch@4.0.3):
-    optionalDependencies:
-      picomatch: 4.0.3
-
   fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
       picomatch: 4.0.4
@@ -9571,7 +9593,7 @@ snapshots:
       '@types/stack-utils': 2.0.3
       chalk: 4.1.2
       graceful-fs: 4.2.11
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       pretty-format: 30.3.0
       slash: 3.0.0
       stack-utils: 2.0.6
@@ -9701,7 +9723,7 @@ snapshots:
       chalk: 4.1.2
       ci-info: 4.3.1
       graceful-fs: 4.2.11
-      picomatch: 4.0.3
+      picomatch: 4.0.4
 
   jest-util@30.3.0:
     dependencies:
@@ -9710,7 +9732,7 @@ snapshots:
       chalk: 4.1.2
       ci-info: 4.3.1
       graceful-fs: 4.2.11
-      picomatch: 4.0.3
+      picomatch: 4.0.4
 
   jest-validate@30.2.0:
     dependencies:
@@ -10800,8 +10822,8 @@ snapshots:
 
   tinyglobby@0.2.15:
     dependencies:
-      fdir: 6.5.0(picomatch@4.0.3)
-      picomatch: 4.0.3
+      fdir: 6.5.0(picomatch@4.0.4)
+      picomatch: 4.0.4
 
   tinyglobby@0.2.16:
     dependencies:

@@ -125,7 +125,7 @@ function getSelfVisualKey(state: SeedBibleState): string {
   const userId = state.login.userId.value;
   if (userId) return userId;
   try {
-    return state.os.sessionId;
+    return state.os.connectionId;
     // if (typeof configBot !== "undefined" && configBot?.id) {
     //   return String(configBot.id);
     // }

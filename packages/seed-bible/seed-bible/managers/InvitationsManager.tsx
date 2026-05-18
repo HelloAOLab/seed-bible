@@ -1,6 +1,11 @@
 import { effect, signal, type Signal } from "@preact/signals";
 import type { LoginManager, UserProfile } from "../managers/LoginManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
+import type {
+  SharedDocument,
+  SharedMap,
+} from "@casual-simulation/aux-common/documents/SharedDocument";
+import type { CasualOSManager } from "./OsManager";
 
 /**
  * A live shared session published by another user that the current user
@@ -112,6 +117,7 @@ function parseStoredEntry(value: unknown): StoredRegistryEntry | null {
  * from the list so hosts don't see their own published sessions.
  */
 export function createInvitationsManager(
+  os: CasualOSManager,
   login: LoginManager,
   onJoin: OnJoinSharedSession
 ): InvitationsManager {

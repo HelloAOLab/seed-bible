@@ -182,9 +182,9 @@ export function createSeedBibleState(): SeedBibleState {
   const settings = createSettings(os, login);
   const selector = createBibleSelectorState(data, tabs, panes, settings);
   const tools = createBibleToolsManager();
-  const readingHistory = createReadingHistoryManager(login);
+  const readingHistory = createReadingHistoryManager(os, login);
   const annotations = createAnnotationsManager(os, login);
-  const sessions = createSessionsManager(data, login, highlights);
+  const sessions = createSessionsManager(os, data, login, highlights);
   const extensions = createExtensionManager();
   const modals = createModalManager();
   const search = createSearchManager();
@@ -508,7 +508,7 @@ export function createSeedBibleState(): SeedBibleState {
     return session;
   };
 
-  const invitations = createInvitationsManager(login, async (sessionId) => {
+  const invitations = createInvitationsManager(os, login, async (sessionId) => {
     await handleJoinSharedSession(sessionId);
   });
 

@@ -1,4 +1,13 @@
+import {
+  AuthenticatedConnectionClient,
+  InstRecordsClient,
+  PartitionAuthSource,
+} from "@casual-simulation/aux-common";
+import { RemoteYjsSharedDocument } from "@casual-simulation/aux-common/documents/RemoteYjsSharedDocument";
+import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import { createRecordsClient } from "@casual-simulation/aux-records/RecordsClient";
+import { SocketManager as WebsocketManager } from "@casual-simulation/websocket";
+import { WebsocketConnectionClient } from "@casual-simulation/aux-websocket";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
 import axios from "axios";
 import { isArrayBuffer } from "es-toolkit";
@@ -28,10 +37,71 @@ const UNSAFE_HEADERS = new Set([
 
 export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
   const client = createRecordsClient(endpoint);
+  const connectionId = uuid();
+
+  let instRecordsClient: InstRecordsClient | null = null;
+  let authSource: PartitionAuthSource | null = null;
+
+  function getInstClient(): InstRecordsClient {
+    if (!instRecordsClient) {
+      const url = new URL("wss://auth.ao.bot");
+      const manager = new WebsocketManager(url);
+      const client = new WebsocketConnectionClient(manager.socket);
+      const authSource = getAuthSource();
+      const connection = new AuthenticatedConnectionClient(client, authSource);
+      instRecordsClient = new InstRecordsClient(connection);
+
+      connection.connect();
+    }
+
+    return instRecordsClient;
+  }
+
+  function getAuthSource(): PartitionAuthSource {
+    if (!authSource) {
+      const source = (authSource = new PartitionAuthSource());
+      source.onAuthMessage.subscribe((message) => {
+        if (message.type === "request") {
+          if (message.kind === "need_indicator") {
+            source.sendAuthResponse({
+              type: "response",
+              success: true,
+              origin: message.origin,
+              indicator: {
+                connectionId: connectionId,
+              },
+            });
+          }
+        }
+      });
+    }
+
+    return authSource;
+  }
+
+  async function getSharedDocument(
+    recordName: string | null,
+    inst: string,
+    docName: string,
+    options?: { markers?: string[] }
+  ): Promise<SharedDocument> {
+    const client = getInstClient();
+    const authSource = getAuthSource();
+    const doc = new RemoteYjsSharedDocument(client, authSource, {
+      recordName,
+      inst,
+      branch: `doc/${docName}`,
+      markers: options?.markers ? options.markers : undefined,
+    });
+
+    await doc.init();
+
+    return doc;
+  }
 
   return {
     client,
-    sessionId: uuid(),
+    connectionId,
     getData: async (recordName: string, address: string) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result: any = await client.getData({
@@ -133,6 +203,8 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
         "disableWakeLock is not implemented in this version of CasualOSManager"
       );
     },
+
+    getSharedDocument,
   };
 }
 

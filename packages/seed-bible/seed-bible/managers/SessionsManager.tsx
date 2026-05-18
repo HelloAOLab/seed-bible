@@ -8,6 +8,12 @@ import {
 import type { HighlightsManager } from "../managers/HighlightsManager";
 import type { BibleDataManager } from "../managers/BibleDataManager";
 import type { LoginManager, UserProfile } from "../managers/LoginManager";
+import type { CasualOSManager } from "./OsManager";
+import type {
+  SharedDocument,
+  SharedMap,
+} from "@casual-simulation/aux-common/documents/SharedDocument";
+import { v4 as uuid } from "uuid";
 
 export interface ConnectedSessionUser extends SessionConnectionInfo {
   /**
@@ -324,6 +330,7 @@ function getRandomColor(key: string): string {
 }
 
 async function createBibleReadingSession(
+  os: CasualOSManager,
   dataManager: BibleDataManager,
   loginManager: LoginManager,
   highlightsManager: HighlightsManager,
@@ -340,9 +347,9 @@ async function createBibleReadingSession(
   const connectedUsers = signal<ConnectedSessionUser[]>([]);
   const connectedClients = new Map<string, SessionConnectionInfo>();
   const profileCache = new Map<string, UserProfile>();
-  const localConnectionId =
-    (typeof configBot !== "undefined" ? toStringOrNull(configBot?.id) : null) ??
-    "local";
+  const localConnectionId = os.connectionId;
+  // (typeof configBot !== "undefined" ? toStringOrNull(configBot?.id) : null) ??
+  // "local";
   const decorationOwners = new Map<string, string>();
 
   if (defaultOptions) {
@@ -470,7 +477,7 @@ async function createBibleReadingSession(
         return {
           isSelf: client.isSelf,
           connectionId: client.connectionId,
-          sessionId: client.sessionId,
+          // sessionId: client.sessionId,
           userId: client.userId,
           profile,
           color: color,
@@ -840,6 +847,7 @@ export interface SessionsManager {
 }
 
 export function createSessionsManager(
+  os: CasualOSManager,
   dataManager: BibleDataManager,
   loginManager: LoginManager,
   highlightsManager: HighlightsManager
@@ -848,10 +856,9 @@ export function createSessionsManager(
     const id = createSessionId();
     // Claim host at create time so the settings UI knows which connected
     // user is allowed to change session-wide toggles.
-    const hostUserId =
-      loginManager.userId.value ??
-      (typeof configBot !== "undefined" ? toStringOrNull(configBot?.id) : null);
+    const hostUserId = loginManager.userId.value ?? os.connectionId;
     return await createBibleReadingSession(
+      os,
       dataManager,
       loginManager,
       highlightsManager,
@@ -862,6 +869,7 @@ export function createSessionsManager(
 
   const joinSession = async (id: string) => {
     return await createBibleReadingSession(
+      os,
       dataManager,
       loginManager,
       highlightsManager,
