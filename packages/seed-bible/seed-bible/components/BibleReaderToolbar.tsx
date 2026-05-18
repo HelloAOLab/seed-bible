@@ -10,6 +10,7 @@ import {
   handleHorizontalListKeyNav,
   handleVerticalListKeyNav,
 } from "seed-bible.components.KeyboardNav";
+import { TabsIcon } from "seed-bible.components.icons";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 
@@ -420,6 +421,33 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     });
   });
 
+  const selectedVersesReference = useComputed(() => {
+    const rs = readingState.value;
+    if (!rs) return "";
+    const verses = rs.selectedVerses.value;
+    const firstVerse = verses[0];
+    if (!firstVerse) return "";
+
+    const bookName = rs.chapterData.value?.book.name ?? firstVerse.bookId;
+    const chapter = firstVerse.chapterNumber;
+    const numbers = verses.map((v) => v.verse.number).sort((a, b) => a - b);
+    const ranges: string[] = [];
+    let start = numbers[0]!;
+    let end = start;
+    for (let i = 1; i < numbers.length; i++) {
+      const next = numbers[i]!;
+      if (next === end + 1) {
+        end = next;
+      } else {
+        ranges.push(start === end ? `${start}` : `${start}-${end}`);
+        start = next;
+        end = next;
+      }
+    }
+    ranges.push(start === end ? `${start}` : `${start}-${end}`);
+    return `${bookName} ${chapter}:${ranges.join(",")}`;
+  });
+
   // Reset picker when selection is cleared
   useEffect(() => {
     if (!hasVerseSelection.value) {
@@ -486,7 +514,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           >
             {isSmallScreen.value ? (
               <>
-                <div className="sb-reader-toolbar-item">
+                <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tabs-item">
                   <button
                     disabled={
                       !openSidebarTool.value ||
@@ -496,20 +524,21 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       selectedToolbarToolId.value = null;
                       openSidebarTool.value?.onSelect();
                     }}
-                    className="sb-reader-toolbar-button"
+                    className="sb-reader-toolbar-button sb-reader-toolbar-mobile-tabs-button"
                     aria-label={translateTitle(
                       t,
                       openSidebarTool.value?.title ?? {
-                        key: "open_sidebar",
-                        defaultValue: "Open sidebar",
+                        key: "tabs",
+                        defaultValue: "Tabs",
                       }
                     )}
                   >
-                    {openSidebarTool.value ? (
-                      <openSidebarTool.value.icon />
-                    ) : (
-                      <span className="material-symbols-outlined">menu</span>
-                    )}
+                    <span className="sb-reader-toolbar-mobile-tabs-icon">
+                      <TabsIcon />
+                    </span>
+                    <span className="sb-reader-toolbar-mobile-tabs-label">
+                      {t("tabs", { defaultValue: "Tabs" })}
+                    </span>
                   </button>
                 </div>
 
@@ -538,6 +567,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   </button>
                 </div>
 
+                {/*
+                  More button intentionally commented out — mobile layout
+                  now only shows Tabs (left) and the book selector (right)
+                  to match the design.
                 <div className="sb-reader-toolbar-item sb-reader-toolbar-more-anchor">
                   {hasOverflowTools.value && (
                     <>
@@ -642,6 +675,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     </>
                   )}
                 </div>
+                */}
               </>
             ) : (
               tools.value.flatMap((tool) => {
@@ -774,6 +808,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             isSmallScreen.value ? undefined : handleVerseToolbarPointerUp
           }
         >
+          {isHighlightPickerOpen.value && (
+            <div
+              className="sb-verse-toolbar-ref"
+              aria-live="polite"
+              title={selectedVersesReference.value}
+            >
+              {selectedVersesReference.value}
+            </div>
+          )}
           {isHighlightPickerOpen.value ? (
             <div
               className="sb-verse-toolbar-tools sb-verse-toolbar-picker"

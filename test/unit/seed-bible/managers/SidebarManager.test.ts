@@ -147,4 +147,36 @@ describe("createSidebar", () => {
     await listener({ tags: ["settingsView"] });
     expect(sidebar.requestedSettingsView.value).toBe(null);
   });
+
+  it("syncs isMobileOpen when configBot.sidebar changes", async () => {
+    const sidebar = createSidebar();
+    const listener = addBotListenerMock.mock.calls[0]?.[2] as
+      | ((that: unknown) => Promise<void>)
+      | undefined;
+
+    expect(listener).toBeDefined();
+    if (!listener) {
+      return;
+    }
+
+    configBot.tags.sidebar = "open";
+    await listener({ tags: ["sidebar"] });
+    expect(sidebar.isMobileOpen.value).toBe(true);
+
+    configBot.tags.sidebar = null;
+    await listener({ tags: ["sidebar"] });
+    expect(sidebar.isMobileOpen.value).toBe(false);
+  });
+
+  it("syncs configBot.tags.sidebar when isMobileOpen changes", () => {
+    const sidebar = createSidebar();
+
+    expect(configBot.tags.sidebar).toBe(null);
+
+    sidebar.openSidebar();
+    expect(configBot.tags.sidebar).toBe("open");
+
+    sidebar.closeSidebar();
+    expect(configBot.tags.sidebar).toBe(null);
+  });
 });

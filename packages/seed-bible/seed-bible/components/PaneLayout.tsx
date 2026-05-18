@@ -1,6 +1,7 @@
 import { BibleReader } from "seed-bible.components.BibleReader";
 import { BelowReaderToolbar } from "seed-bible.components.BelowReaderToolbar";
 import { CasualOSApp } from "seed-bible.components.CasualOSApp";
+import type { TranslationBookChapter } from "seed-bible.managers.FreeUseBibleAPI";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
 import type {
@@ -11,9 +12,8 @@ import type {
 } from "seed-bible.managers.PanesManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { type ToolsManager } from "seed-bible.managers.BibleToolsManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
 import { batch, effect } from "@preact/signals";
-import type { ComponentChildren } from "preact";
+import { useI18n } from "seed-bible.i18n.I18nManager";
 import { translateTitle } from "seed-bible.components.Utils";
 import { MaterialIcon } from "seed-bible.components.icons";
 
@@ -380,31 +380,69 @@ function generateGridPortalContainerCss(
 }
 
 interface PaneReaderScrollerProps {
+  pane: Pane;
   tab: ReaderTab;
-  children: ComponentChildren;
+  state: SeedBibleState;
+  displayBelowReaderToolbar: boolean;
 }
 
-function PaneReaderScroller({ tab, children }: PaneReaderScrollerProps) {
-  const currentChapter = useRef(tab.readingState.chapterData.value);
+export function PaneReader(props: PaneReaderScrollerProps) {
+  const { pane, tab, state, displayBelowReaderToolbar } = props;
+  const readingState = tab.readingState;
+  const isMobile = state?.app.isMobile.value ?? false;
 
-  // We use a callback instead of a ref object
-  // because we want to set up and cleaup event listeners immediately when element ownership changes.
-  // If we use a ref object and useEffect(), then there will be a period of time where we might recieve scroll events from the element when it is transitioning between
-  // PaneReaderScroller instances, causing the tab scroll position to be updated as Preact is updating the DOM.
-  const scrollerRefCallback = (el: HTMLDivElement | null) => {
-    if (!el) {
+  const paneScrollerRef = useRef<HTMLDivElement | null>(null);
+  const mobileScrollerRef = useRef<HTMLDivElement | null>(null);
+  const swipeViewportRef = useRef<HTMLDivElement | null>(null);
+  const swipeTrackRef = useRef<HTMLDivElement | null>(null);
+  const swipeTouchStartX = useRef<number | null>(null);
+  const swipeTouchStartY = useRef<number | null>(null);
+  const swipeDirectionLocked = useRef<"h" | "v" | null>(null);
+  const swipeCurrentDx = useRef(0);
+  const currentChapterRef = useRef(readingState.chapterData.value);
+  const lastScrollTopRef = useRef(0);
+  const scrollerCleanupRef = useRef<(() => void) | null>(null);
+
+  const [prevChapterPreview, setPrevChapterPreview] =
+    useState<TranslationBookChapter | null>(null);
+  const [nextChapterPreview, setNextChapterPreview] =
+    useState<TranslationBookChapter | null>(null);
+  const [showMobileSettings, setShowMobileSettings] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Mirror scroll-direction state to a body class so chrome rendered outside
+  // this component (e.g. the global BibleReaderToolbar in app/main.tsx) can
+  // hide/show in sync with the reader header.
+  useEffect(() => {
+    if (!isMobile) return;
+    const className = "sb-scroll-hide-bars";
+    if (isScrolled) {
+      document.body.classList.add(className);
+    } else {
+      document.body.classList.remove(className);
+    }
+    return () => {
+      document.body.classList.remove(className);
+    };
+  }, [isMobile, isScrolled]);
+
+  const attachScroller = (element: HTMLDivElement | null) => {
+    scrollerCleanupRef.current?.();
+    scrollerCleanupRef.current = null;
+
+    if (!element) {
       return;
     }
 
     const cleanup = effect(() => {
-      if (tab.readingState.chapterData.value) {
-        el.scrollTop = tab.readingState.scrollPosition.peek();
+      if (readingState.chapterData.value) {
+        element.scrollTop = readingState.scrollPosition.peek();
       }
 
-      const verseToScroll = tab.readingState.scrollToVerse.value;
-      if (tab.readingState.chapterData.value && verseToScroll !== null) {
+      const verseToScroll = readingState.scrollToVerse.value;
+      if (readingState.chapterData.value && verseToScroll !== null) {
         requestAnimationFrame(() => {
-          const targetVerse = el.querySelector(
+          const targetVerse = element.querySelector(
             `[data-verse-number="${verseToScroll}"]`
           );
           if (!(targetVerse instanceof HTMLElement)) {
@@ -413,40 +451,365 @@ function PaneReaderScroller({ tab, children }: PaneReaderScrollerProps) {
 
           targetVerse.scrollIntoView({ block: "center", inline: "nearest" });
           batch(() => {
-            tab.readingState.scrollToVerse.value = null;
-            tab.readingState.scrollPosition.value = el.scrollTop;
+            readingState.scrollToVerse.value = null;
+            readingState.scrollPosition.value = element.scrollTop;
           });
         });
       }
 
-      currentChapter.current = tab.readingState.chapterData.value;
+      currentChapterRef.current = readingState.chapterData.value;
 
       const handleScroll = () => {
         if (
-          currentChapter.current?.translation.id !==
-            tab.readingState.translationId.value ||
-          currentChapter.current?.book.id !== tab.readingState.bookId.value ||
-          currentChapter.current?.chapter.number !==
-            tab.readingState.chapterNumber.value
+          currentChapterRef.current?.translation.id ===
+            readingState.translationId.value &&
+          currentChapterRef.current?.book.id === readingState.bookId.value &&
+          currentChapterRef.current?.chapter.number ===
+            readingState.chapterNumber.value
         ) {
+          readingState.scrollPosition.value = element.scrollTop;
+        }
+
+        if (!isMobile) {
           return;
         }
-        tab.readingState.scrollPosition.value = el.scrollTop;
+
+        const currentScrollTop = element.scrollTop;
+        if (currentScrollTop <= 0) {
+          setIsScrolled(false);
+        } else if (
+          currentScrollTop > lastScrollTopRef.current &&
+          currentScrollTop > 50
+        ) {
+          setIsScrolled(true);
+        } else if (currentScrollTop < lastScrollTopRef.current) {
+          setIsScrolled(false);
+        }
+        lastScrollTopRef.current = currentScrollTop;
       };
 
-      el.addEventListener("scroll", handleScroll, { passive: true });
+      element.addEventListener("scroll", handleScroll, { passive: true });
 
       return () => {
-        el.removeEventListener("scroll", handleScroll);
+        element.removeEventListener("scroll", handleScroll);
       };
     });
 
-    return cleanup;
+    scrollerCleanupRef.current = cleanup;
   };
 
+  const paneScrollerRefCallback = (element: HTMLDivElement | null) => {
+    paneScrollerRef.current = element;
+    if (!isMobile) {
+      attachScroller(element);
+    }
+  };
+
+  const currentScrollerRefCallback = (element: HTMLDivElement | null) => {
+    mobileScrollerRef.current = element;
+    if (isMobile) {
+      attachScroller(element);
+    }
+  };
+
+  const swipeViewportRefCallback = (element: HTMLDivElement | null) => {
+    swipeViewportRef.current = element;
+  };
+
+  const swipeTrackRefCallback = (element: HTMLDivElement | null) => {
+    swipeTrackRef.current = element;
+  };
+
+  useEffect(() => {
+    attachScroller(
+      isMobile ? mobileScrollerRef.current : paneScrollerRef.current
+    );
+
+    return () => {
+      scrollerCleanupRef.current?.();
+      scrollerCleanupRef.current = null;
+    };
+  }, [isMobile, readingState]);
+
+  const currentChapterValue = readingState.chapterData.value;
+
+  useEffect(() => {
+    if (!isMobile || !state) {
+      setPrevChapterPreview(null);
+      setNextChapterPreview(null);
+      return;
+    }
+
+    const chapterData = currentChapterValue;
+    if (!chapterData) {
+      setPrevChapterPreview(null);
+      setNextChapterPreview(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    if (chapterData.previousChapterApiLink) {
+      state.bibleData
+        .getPreviousChapter(chapterData)
+        .then((result) => {
+          if (!cancelled) {
+            setPrevChapterPreview(result ?? null);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setPrevChapterPreview(null);
+          }
+        });
+    } else {
+      setPrevChapterPreview(null);
+    }
+
+    if (chapterData.nextChapterApiLink) {
+      state.bibleData
+        .getNextChapter(chapterData)
+        .then((result) => {
+          if (!cancelled) {
+            setNextChapterPreview(result ?? null);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setNextChapterPreview(null);
+          }
+        });
+    } else {
+      setNextChapterPreview(null);
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isMobile,
+    state,
+    currentChapterValue?.translation.id,
+    currentChapterValue?.book.id,
+    currentChapterValue?.chapter.number,
+  ]);
+
+  useEffect(() => {
+    if (!isMobile) {
+      return;
+    }
+
+    const viewport = swipeViewportRef.current;
+    if (!viewport) {
+      return;
+    }
+
+    const PANEL_PCT = 100 / 3;
+
+    const onTouchStart = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      if (!touch) {
+        return;
+      }
+
+      swipeTouchStartX.current = touch.clientX;
+      swipeTouchStartY.current = touch.clientY;
+      swipeDirectionLocked.current = null;
+      swipeCurrentDx.current = 0;
+
+      const track = swipeTrackRef.current;
+      if (track) {
+        track.style.transition = "none";
+      }
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      if (
+        swipeTouchStartX.current === null ||
+        swipeTouchStartY.current === null
+      ) {
+        return;
+      }
+
+      const touch = event.touches[0];
+      if (!touch) {
+        return;
+      }
+
+      const dx = touch.clientX - swipeTouchStartX.current;
+      const dy = touch.clientY - swipeTouchStartY.current;
+
+      if (!swipeDirectionLocked.current) {
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+          swipeDirectionLocked.current = "h";
+        } else if (Math.abs(dy) > 10) {
+          swipeDirectionLocked.current = "v";
+          return;
+        } else {
+          return;
+        }
+      }
+
+      if (swipeDirectionLocked.current === "v") {
+        return;
+      }
+
+      const isRtl =
+        readingState.chapterData.value?.translation.textDirection === "rtl";
+      const hasNext = !!readingState.chapterData.value?.nextChapterApiLink;
+      const hasPrev = !!readingState.chapterData.value?.previousChapterApiLink;
+      let offset = dx;
+      const attemptsNext = isRtl ? dx > 0 : dx < 0;
+      const attemptsPrev = isRtl ? dx < 0 : dx > 0;
+
+      if ((attemptsNext && !hasNext) || (attemptsPrev && !hasPrev)) {
+        offset = Math.sign(dx) * Math.min(Math.abs(dx) * 0.15, 30);
+      } else {
+        const limit = window.innerWidth * 0.5;
+        if (Math.abs(dx) > limit) {
+          offset = Math.sign(dx) * (limit + (Math.abs(dx) - limit) * 0.2);
+        }
+      }
+
+      swipeCurrentDx.current = offset;
+      const track = swipeTrackRef.current;
+      if (track) {
+        const isRtl =
+          readingState.chapterData.value?.translation.textDirection === "rtl";
+        const sign = isRtl ? 1 : -1;
+        track.style.transform = `translateX(calc(${sign * PANEL_PCT}% + ${offset}px))`;
+      }
+    };
+
+    const onTouchEnd = () => {
+      if (swipeDirectionLocked.current !== "h") {
+        swipeTouchStartX.current = null;
+        swipeDirectionLocked.current = null;
+        return;
+      }
+
+      const dx = swipeCurrentDx.current;
+      const threshold = 80;
+      const isRtl =
+        readingState.chapterData.value?.translation.textDirection === "rtl";
+      const hasNext = !!readingState.chapterData.value?.nextChapterApiLink;
+      const hasPrev = !!readingState.chapterData.value?.previousChapterApiLink;
+      const swipedLeft = dx < -threshold;
+      const swipedRight = dx > threshold;
+      const shouldLoadNext = isRtl ? swipedRight : swipedLeft;
+      const shouldLoadPrev = isRtl ? swipedLeft : swipedRight;
+
+      swipeTouchStartX.current = null;
+      swipeDirectionLocked.current = null;
+      swipeCurrentDx.current = 0;
+
+      const track = swipeTrackRef.current;
+      if (!track) {
+        return;
+      }
+
+      if (shouldLoadNext && hasNext) {
+        track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
+        const sign = isRtl ? 1 : -1;
+        const nextTransform = `translateX(${sign * PANEL_PCT * 2}%)`;
+        track.style.transform = nextTransform;
+        readingState.clearSelectedVerses();
+        window.setTimeout(async () => {
+          track.style.transition = "none";
+          track.style.transform = `translateX(${sign * PANEL_PCT}%)`;
+          await readingState.loadNextChapter();
+        }, 250);
+      } else if (shouldLoadPrev && hasPrev) {
+        track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
+        const sign = isRtl ? 1 : -1;
+        const prevTransform = "translateX(0%)";
+        track.style.transform = prevTransform;
+        readingState.clearSelectedVerses();
+        window.setTimeout(async () => {
+          track.style.transition = "none";
+          track.style.transform = `translateX(${sign * PANEL_PCT}%)`;
+          await readingState.loadPreviousChapter();
+        }, 250);
+      } else {
+        track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+        const sign = isRtl ? 1 : -1;
+        track.style.transform = `translateX(${sign * PANEL_PCT}%)`;
+      }
+    };
+
+    viewport.addEventListener("touchstart", onTouchStart, { passive: true });
+    viewport.addEventListener("touchmove", onTouchMove, { passive: true });
+    viewport.addEventListener("touchend", onTouchEnd, { passive: true });
+
+    return () => {
+      viewport.removeEventListener("touchstart", onTouchStart);
+      viewport.removeEventListener("touchmove", onTouchMove);
+      viewport.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [isMobile, readingState]);
+
+  effect(() => {
+    void readingState.translationId.value;
+    const track = swipeTrackRef.current;
+    if (!track) {
+      return;
+    }
+
+    track.style.removeProperty("transform");
+  });
+
+  const openAllSettings = () => {
+    if (!state) {
+      return;
+    }
+
+    setShowMobileSettings(false);
+    window.setTimeout(() => {
+      state.sidebar.openSettings();
+      state.sidebar.openSidebar();
+    }, 50);
+  };
+
+  const mobileChrome = isMobile
+    ? {
+        isScrolled,
+        prevChapterPreview,
+        nextChapterPreview,
+        showMobileSettings,
+        onOpenMobileSettings: () => setShowMobileSettings(true),
+        onCloseMobileSettings: () => setShowMobileSettings(false),
+        onOpenAllSettings: openAllSettings,
+        swipeViewportRefCallback,
+        swipeTrackRefCallback,
+        currentScrollerRefCallback,
+      }
+    : undefined;
+
   return (
-    <div className="sb-pane-reader" ref={scrollerRefCallback}>
-      {children}
+    <div
+      className={`sb-pane-reader${isMobile ? " sb-pane-reader-mobile" : ""}`}
+      ref={paneScrollerRefCallback}
+    >
+      <BibleReader
+        currentPane={pane}
+        readingState={readingState}
+        selectorState={state.selector}
+        state={state}
+        mobileChrome={mobileChrome}
+      />
+      {!isMobile && displayBelowReaderToolbar && (
+        <BelowReaderToolbar
+          toolsManager={state.tools}
+          readingState={readingState}
+          sharedSession={tab.sharedSession}
+          selectorState={state.selector}
+          tabsManager={state.tabs}
+          panesManager={state.panes}
+          openSidebar={state.sidebar.openSidebar}
+          openSearch={state.sidebar.openSearch}
+          currentPane={pane}
+        />
+      )}
     </div>
   );
 }
@@ -564,7 +927,6 @@ export function PaneLayout(props: PaneLayoutProps) {
     panes: panesManager,
     selector: selectorState,
     tabs: tabsManager,
-    sidebar,
     tools: toolsManager,
   } = state;
   const panes = app.effectivePanes.value;
@@ -933,29 +1295,12 @@ export function PaneLayout(props: PaneLayoutProps) {
               <pane.component />
             </div>
           ) : pane.tab ? (
-            <PaneReaderScroller tab={pane.tab}>
-              <BibleReader
-                currentPane={pane}
-                readingState={pane.tab.readingState}
-                selectorState={selectorState}
-                state={state}
-                scriptureElements={
-                  state.settings.settings.value.scriptureElements
-                }
-              />
-              {!app.isMobile.value && (
-                <BelowReaderToolbar
-                  toolsManager={toolsManager}
-                  readingState={pane.tab.readingState}
-                  sharedSession={pane.tab.sharedSession}
-                  selectorState={selectorState}
-                  tabsManager={tabsManager}
-                  panesManager={panesManager}
-                  openSidebar={sidebar.openSidebar}
-                  currentPane={pane}
-                />
-              )}
-            </PaneReaderScroller>
+            <PaneReader
+              pane={pane}
+              tab={pane.tab}
+              state={state}
+              displayBelowReaderToolbar={true}
+            />
           ) : (
             <EmptyPaneToolbar
               toolsManager={toolsManager}
@@ -1096,16 +1441,12 @@ export function PaneLayout(props: PaneLayoutProps) {
                 <pane.component />
               </div>
             ) : pane.tab ? (
-              <PaneReaderScroller tab={pane.tab}>
-                <BibleReader
-                  currentPane={pane}
-                  readingState={pane.tab.readingState}
-                  selectorState={selectorState}
-                  scriptureElements={
-                    state.settings.settings.value.scriptureElements
-                  }
-                />
-              </PaneReaderScroller>
+              <PaneReader
+                pane={pane}
+                tab={pane.tab}
+                state={state}
+                displayBelowReaderToolbar={false}
+              />
             ) : (
               <EmptyPaneToolbar
                 toolsManager={toolsManager}

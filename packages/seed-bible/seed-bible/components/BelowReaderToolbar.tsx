@@ -19,6 +19,7 @@ interface BelowReaderToolbarProps {
   panesManager: PanesManager;
   currentPane: Pane;
   openSidebar: () => void;
+  openSearch: () => void;
 }
 
 export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
@@ -30,6 +31,7 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     tabsManager,
     panesManager,
     openSidebar,
+    openSearch,
     currentPane,
   } = props;
   const tools = toolsManager.getBelowReaderTools({
@@ -40,6 +42,7 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     panesManager,
     openSidebar,
     currentPane,
+    openSearch,
   });
 
   if (tools.length === 0) {
