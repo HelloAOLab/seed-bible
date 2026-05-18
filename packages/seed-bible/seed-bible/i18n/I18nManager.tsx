@@ -1,10 +1,9 @@
-// import { useMemo } from "https://esm.sh/preact@10.28.4/hooks";
-import i18n from "https://esm.sh/i18next@23.16.8";
+import i18n from "i18next";
 import {
   I18nextProvider,
   initReactI18next,
   useTranslation,
-} from "https://esm.sh/react-i18next@15.1.2?alias=react:preact/compat,react-dom:preact/compat&external=preact";
+} from "react-i18next";
 import { useMemo } from "preact/hooks";
 
 const languages = import.meta.glob("./*.json", { eager: true });

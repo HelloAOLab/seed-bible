@@ -27,6 +27,12 @@
   "dependencies": {
     "@casual-simulation/aux-common": "4.2.3",
     "@casual-simulation/websocket": "4.0.0",
-    "@casual-simulation/aux-websocket": "4.2.3"
+    "@casual-simulation/aux-websocket": "4.2.3",
+    "preact": "10.29.2",
+    "preact-iso": "2.12.0",
+    "i18next": "26.2.0",
+    "react-i18next": "17.0.6",
+    "typesense": "^3.0.5",
+    "zod": "^4.1.13"
   }
 }

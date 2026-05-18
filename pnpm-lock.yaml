@@ -272,6 +272,24 @@ importers:
       '@casual-simulation/websocket':
         specifier: 4.0.0
         version: 4.0.0
+      i18next:
+        specifier: 26.2.0
+        version: 26.2.0(typescript@5.9.3)
+      preact:
+        specifier: 10.29.2
+        version: 10.29.2
+      preact-iso:
+        specifier: 2.12.0
+        version: 2.12.0(preact-render-to-string@6.6.5(preact@10.29.2))(preact@10.29.2)
+      react-i18next:
+        specifier: 17.0.6
+        version: 17.0.6(i18next@26.2.0(typescript@5.9.3))(react@19.2.5)(typescript@5.9.3)
+      typesense:
+        specifier: ^3.0.5
+        version: 3.0.5(@babel/runtime@7.29.2)
+      zod:
+        specifier: ^4.1.13
+        version: 4.3.6
 
   packages/seed-bible-refresh-example-extension:
     dependencies:
@@ -3644,6 +3662,14 @@ packages:
       typescript:
         optional: true
 
+  i18next@26.2.0:
+    resolution: {integrity: sha512-zwBHldHdTmwN7r6UNc7lC6GWNN+YYg3DrRSeHR5PRRBf5QnJZcYHrQc0uaU26qZeYxR7iFZD+Y315dPnKP47wA==}
+    peerDependencies:
+      typescript: ^5 || ^6
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
@@ -4463,6 +4489,12 @@ packages:
     resolution: {integrity: sha512-SoSL4+OSEtR99LHFZQiJLkT59C5B1amGO1NzTwj7TT1qCUgUO6hxOvzkOYxD+vMrXBM3XJIKzokoERdqQq/Zmg==}
     engines: {node: ^10 || ^12 || >=14}
 
+  preact-iso@2.12.0:
+    resolution: {integrity: sha512-k0Y44UONBJ1zBXXCBhJRAa5O4ww8a5FHdLD6l21IxcnsTmDBto4n7KPQAH6xqegsKDMX4SuJ02qItiUlciIlZQ==}
+    peerDependencies:
+      preact: '>=10 || >= 11.0.0-0'
+      preact-render-to-string: '>=6.4.0'
+
   preact-render-to-string@6.6.3:
     resolution: {integrity: sha512-7oHG7jzjriqsFPkSPiPnzrQ0GcxFm6wOkYWNdStK5Ks9YlWSQQXKGBRAX4nKDdqX7HAQuRvI4pZNZMycK4WwDw==}
     peerDependencies:
@@ -4481,6 +4513,9 @@ packages:
 
   preact@10.29.0:
     resolution: {integrity: sha512-wSAGyk2bYR1c7t3SZ3jHcM6xy0lcBcDel6lODcs9ME6Th++Dx2KU+6D3HD8wMMKGA8Wpw7OMd3/4RGzYRpzwRg==}
+
+  preact@10.29.2:
+    resolution: {integrity: sha512-7tNmwg/7mzzAoB/8kSg6Hl37JraAZw3Z3A0JSY7VXlZwo82Xn0G7wKbNNs2qoF4ZEEsQGTwDAroNdqKs1ofJxQ==}
 
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
@@ -9289,6 +9324,10 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.3
 
+  i18next@26.2.0(typescript@5.9.3):
+    optionalDependencies:
+      typescript: 5.9.3
+
   iconv-lite@0.6.3:
     dependencies:
       safer-buffer: 2.1.2
@@ -10261,6 +10300,11 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
+  preact-iso@2.12.0(preact-render-to-string@6.6.5(preact@10.29.2))(preact@10.29.2):
+    dependencies:
+      preact: 10.29.2
+      preact-render-to-string: 6.6.5(preact@10.29.2)
+
   preact-render-to-string@6.6.3(preact@10.19.6):
     dependencies:
       preact: 10.19.6
@@ -10273,11 +10317,17 @@ snapshots:
     dependencies:
       preact: 10.29.0
 
+  preact-render-to-string@6.6.5(preact@10.29.2):
+    dependencies:
+      preact: 10.29.2
+
   preact@10.19.6: {}
 
   preact@10.28.4: {}
 
   preact@10.29.0: {}
+
+  preact@10.29.2: {}
 
   prelude-ls@1.2.1: {}
 
@@ -10516,6 +10566,16 @@ snapshots:
       '@babel/runtime': 7.29.2
       html-parse-stringify: 3.0.1
       i18next: 26.0.3(typescript@5.9.3)
+      react: 19.2.5
+      use-sync-external-store: 1.6.0(react@19.2.5)
+    optionalDependencies:
+      typescript: 5.9.3
+
+  react-i18next@17.0.6(i18next@26.2.0(typescript@5.9.3))(react@19.2.5)(typescript@5.9.3):
+    dependencies:
+      '@babel/runtime': 7.29.2
+      html-parse-stringify: 3.0.1
+      i18next: 26.2.0(typescript@5.9.3)
       react: 19.2.5
       use-sync-external-store: 1.6.0(react@19.2.5)
     optionalDependencies:

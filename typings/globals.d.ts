@@ -25,10 +25,3 @@ declare global {
 }
 
 export const G = globalThis as unknown as Record<string, any>;
-
-interface ImportMeta {
-  glob: (
-    pattern: string,
-    options?: { eager?: boolean }
-  ) => Record<string, unknown>;
-}

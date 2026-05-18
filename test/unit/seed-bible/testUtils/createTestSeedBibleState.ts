@@ -1,6 +1,6 @@
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
-import i18n from "https://esm.sh/i18next@23.16.8";
+import i18n from "i18next";
 import {
   createExampleManagerResponseMap,
   type WebResponseMap,

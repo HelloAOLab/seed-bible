@@ -1,5 +1,5 @@
 import { effect, signal } from "@preact/signals";
-import i18n from "https://esm.sh/i18next@23.16.8";
+import i18n from "i18next";
 import type { LoginManager, UserProfile } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
