@@ -1,8 +1,8 @@
 /* eslint-disable seed-bible-i18n/i18n-untranslated-content */
 import { effect } from "@preact/signals";
-import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
-import { MaterialIcon } from "../components/icons";
-import { useI18n } from "../i18n/I18nManager";
+import { registerExtension, type SeedBibleState } from "seed-bible";
+import { MaterialIcon } from "seed-bible/components";
+import { useI18n } from "seed-bible/i18n";
 
 function OpenGridPortalIcon() {
   return <MaterialIcon>view_in_ar</MaterialIcon>;

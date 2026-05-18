@@ -1,8 +1,9 @@
 import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { computed } from "@preact/signals";
-import { registerExtension } from "seed-bible.app.api";
-import { loadMap } from "ext_geoImporter.importer.loadMap";
-import { LocationIcon } from "../components/icons";
+import { registerExtension } from "seed-bible";
+import { loadMap } from "@seed-bible/geo-importer-extension";
+import { LocationIcon } from "seed-bible/components";
+import locations from "./locations.json";
 
 interface PlaceData {
   place: string;
@@ -15,11 +16,13 @@ registerExtension({
     const findLocationsInText = (text: string) => {
       text = text.toLowerCase();
       const foundPlaces = [];
-      const locations: Record<string, PlaceData> = tags.locations;
+      // const locations: Record<string, PlaceData> = tags.locations;
       const words = text.split(/[^\w]+/);
       console.log("words", words);
       for (const word of words) {
-        const place = locations[word.toLowerCase()];
+        const place = (locations as Record<string, PlaceData>)[
+          word.toLowerCase()
+        ];
         if (place) {
           console.log("Found place:", place);
           foundPlaces.push(place);
@@ -76,18 +79,20 @@ registerExtension({
         type: "detached",
         mapPortal: "map",
       });
-      mapPortalBot.tags.mapPortalKind = "plane";
-      mapPortalBot.tags.mapPortalGridKind = "plane";
+      // TODO: Fix
+      // mapPortalBot.tags.mapPortalKind = "plane";
+      // mapPortalBot.tags.mapPortalGridKind = "plane";
 
-      const [url] = getPlaceGeoJsonUrl(place);
-      const data = await web.get(url);
+      // const [url] = getPlaceGeoJsonUrl(place);
+      // const data = await web.get(url);
 
-      if (data.status !== 200) {
-        os.toast("Something went wrong while retrieving the data");
-        return;
-      }
+      // if (data.status !== 200) {
+      //   // TODO: Fix this
+      //   // os.toast("Something went wrong while retrieving the data");
+      //   return;
+      // }
 
-      loadMap(data.data);
+      // loadMap(data.data);
     };
 
     yield context.tools.registerVerseToolbarTool({

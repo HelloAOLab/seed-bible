@@ -7,11 +7,14 @@
     ".": {
       "import": "./seed-bible/app/api.tsx"
     },
-    "./managers/FreeUseBibleAPI": {
-      "import": "./seed-bible/managers/FreeUseBibleAPI.tsx"
+    "./managers": {
+      "import": "./seed-bible/managers/index.tsx"
     },
-    "./managers/I18nManager": {
-      "import": "./seed-bible/managers/I18nManager.tsx"
+    "./components": {
+      "import": "./seed-bible/components/index.tsx"
+    },
+    "./i18n": {
+      "import": "./seed-bible/i18n/index.tsx"
     }
   },
   "scripts": {

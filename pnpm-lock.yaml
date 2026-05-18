@@ -246,6 +246,29 @@ importers:
         specifier: ^8.0.13
         version: 8.0.13(@types/node@24.10.9)(esbuild@0.25.12)(jiti@2.6.1)(tsx@4.21.0)
 
+  packages/geo-importer-extension:
+    dependencies:
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
+  packages/locations-extension:
+    dependencies:
+      '@seed-bible/geo-importer-extension':
+        specifier: workspace:*
+        version: link:../geo-importer-extension
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
+  packages/seed-bible: {}
+
+  packages/seed-bible-refresh-example-extension:
+    dependencies:
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
 packages:
 
   '@anthropic-ai/sdk@0.24.3':
