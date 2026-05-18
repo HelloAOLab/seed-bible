@@ -794,15 +794,16 @@ const LanguageComponent = (props: {
   const { t } = useI18n();
 
   const shareTranslatation = async (props: { translation: Translation }) => {
-    // const { translation } = props;
-    // TODO: Fix this
-    // const url = new URL(`https://ao.bot/`);
+    const { translation } = props;
+    const url = new URL(location.href);
     // url.searchParams.set("pattern", configBot.tags.pattern || "SeedBible");
-    // url.searchParams.set(
-    //   "translation",
-    //   bibleDataManager.buildTranslationId(translation.id)
-    // );
-    // navigator.clipboard.writeText(url.href);
+    url.searchParams.set(
+      "translation",
+      bibleDataManager.buildTranslationId(translation.id)
+    );
+    url.searchParams.delete("book");
+    url.searchParams.delete("chapter");
+    navigator.clipboard.writeText(url.href);
     // os.setClipboard(url.href);
     // os.toast(
     //   t("copied-translation-share-link", {

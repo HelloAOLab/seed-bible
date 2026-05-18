@@ -9,6 +9,7 @@ import {
   type BibleReadingState,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
+import type { NavigationManager } from "./NavigationManager";
 
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
@@ -117,6 +118,7 @@ export interface TabsManager {
  *   reading state accordingly.
  */
 export function createTabs(
+  navigation: NavigationManager,
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager
 ): TabsManager {
@@ -128,54 +130,54 @@ export function createTabs(
     () => tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null
   );
 
-  // const syncSelectedTabFromConfig = async () => {
-  //   const selectedTab =
-  //     tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null;
-  //   if (!selectedTab) {
-  //     return;
-  //   }
+  const syncSelectedTabFromUrl = async () => {
+    const selectedTab =
+      tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null;
+    if (!selectedTab) {
+      return;
+    }
 
-  //   const requestedTranslation = getInitialTranslationId();
-  //   const requestedBookId = getInitialFirstTabBookId();
-  //   const requestedChapter = getInitialFirstTabChapter();
-  //   const readingState = selectedTab.readingState;
+    const requestedTranslation = getInitialTranslationId();
+    const requestedBookId = getInitialFirstTabBookId();
+    const requestedChapter = getInitialFirstTabChapter();
+    const readingState = selectedTab.readingState;
 
-  //   const books = readingState.translationBooks.value?.books ?? [];
-  //   const selectedBook =
-  //     books.find((book) => book.id === requestedBookId) ?? null;
-  //   if (!selectedBook) {
-  //     return;
-  //   }
+    const books = readingState.translationBooks.value?.books ?? [];
+    const selectedBook =
+      books.find((book) => book.id === requestedBookId) ?? null;
+    if (!selectedBook) {
+      return;
+    }
 
-  //   const firstChapterNumber =
-  //     selectedBook.firstChapterNumber ?? DEFAULT_CHAPTER_NUMBER;
-  //   const maxChapterNumber =
-  //     firstChapterNumber + selectedBook.numberOfChapters - 1;
-  //   const nextChapter =
-  //     requestedChapter >= firstChapterNumber &&
-  //     requestedChapter <= maxChapterNumber
-  //       ? requestedChapter
-  //       : firstChapterNumber;
+    const firstChapterNumber =
+      selectedBook.firstChapterNumber ?? DEFAULT_CHAPTER_NUMBER;
+    const maxChapterNumber =
+      firstChapterNumber + selectedBook.numberOfChapters - 1;
+    const nextChapter =
+      requestedChapter >= firstChapterNumber &&
+      requestedChapter <= maxChapterNumber
+        ? requestedChapter
+        : firstChapterNumber;
 
-  //   if (
-  //     readingState.translationId.value === requestedTranslation &&
-  //     readingState.bookId.value === requestedBookId &&
-  //     readingState.chapterNumber.value === nextChapter
-  //   ) {
-  //     return;
-  //   }
+    if (
+      readingState.translationId.value === requestedTranslation &&
+      readingState.bookId.value === requestedBookId &&
+      readingState.chapterNumber.value === nextChapter
+    ) {
+      return;
+    }
 
-  //   console.log("Syncing selected tab reading state to match URL parameters:", {
-  //     requestedTranslation,
-  //     requestedBookId,
-  //     requestedChapter,
-  //   });
-  //   await readingState.selectTranslationAndChapter(
-  //     requestedTranslation,
-  //     requestedBookId,
-  //     nextChapter
-  //   );
-  // };
+    console.log("Syncing selected tab reading state to match URL parameters:", {
+      requestedTranslation,
+      requestedBookId,
+      requestedChapter,
+    });
+    await readingState.selectTranslationAndChapter(
+      requestedTranslation,
+      requestedBookId,
+      nextChapter
+    );
+  };
 
   effect(() => {
     const selectedBookId = selectedTab.value?.readingState.bookId.value;
@@ -189,42 +191,32 @@ export function createTabs(
     });
 
     // TODO: Update the URL here
-    // configBot.tags.book = selectedBookId;
-    // configBot.tags.chapter = selectedChapter;
+    const url = new URL(navigation.currentUrl.peek());
+    navigation.updateQueryParam("book", selectedBookId ?? null);
+    navigation.updateQueryParam(
+      "chapter",
+      selectedChapter ? String(selectedChapter) : null
+    );
 
-    // if (selectedTranslation) {
-    //   const translationId = dataManager.buildTranslationId(selectedTranslation);
+    if (selectedTranslation) {
+      const translationId = dataManager.buildTranslationId(selectedTranslation);
 
-    //   if (configBot.tags.translationId) {
-    //     configBot.tags.translationId = translationId;
-    //   } else if (
-    //     configBot.tags.translation ||
-    //     translationId !== DEFAULT_TRANSLATION_ID
-    //   ) {
-    //     configBot.tags.translation = translationId;
-    //   }
-    // }
+      if (url.searchParams.has("translationId")) {
+        navigation.updateQueryParam("translationId", translationId);
+        // configBot.tags.translationId = translationId;
+      } else if (
+        url.searchParams.has("translation") ||
+        translationId !== DEFAULT_TRANSLATION_ID
+      ) {
+        navigation.updateQueryParam("translation", translationId);
+      }
+    }
   });
 
-  // os.addBotListener(configBot, "onBotChanged", async (that: unknown) => {
-  //   const changedTagsSource =
-  //     that && typeof that === "object" && "tags" in that
-  //       ? (that as { tags?: unknown }).tags
-  //       : null;
-  //   const changedTags = Array.isArray(changedTagsSource)
-  //     ? changedTagsSource
-  //     : [];
-  //   const hasReadingStateTagChange =
-  //     changedTags.includes("translation") ||
-  //     changedTags.includes("book") ||
-  //     changedTags.includes("chapter");
-
-  //   if (!hasReadingStateTagChange) {
-  //     return;
-  //   }
-
-  //   await syncSelectedTabFromConfig();
-  // });
+  effect(() => {
+    void navigation.currentUrl.value;
+    syncSelectedTabFromUrl();
+  });
 
   const addTab = (source?: NewTabSource) => {
     const currentTabs = tabs.value;
