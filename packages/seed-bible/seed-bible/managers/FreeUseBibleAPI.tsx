@@ -1004,10 +1004,11 @@ interface DatasetReference {
   score?: number;
 }
 
-const url = new URL(location.href);
-export const DEFAULT_API_ENDPOINT = url.searchParams.has("useFreeBibleAPI")
-  ? "https://bible.helloao.org/"
-  : "https://vmfnri.helloao.org/";
+// const url = new URL(location.href);
+export const DEFAULT_API_ENDPOINT = "https://bible.helloao.org/";
+//  url.searchParams.has("useFreeBibleAPI")
+//   ? "https://bible.helloao.org/"
+//   : "https://vmfnri.helloao.org/";
 
 export class FreeUseBibleAPI {
   endpoint: string;

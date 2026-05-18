@@ -22,6 +22,7 @@ import type {
   HighlightsManager,
 } from "seed-bible.managers.HighlightsManager";
 import { DEFAULT_LANGUAGE } from "seed-bible.i18n.I18nManager";
+import { v4 as uuid } from "uuid";
 
 export interface BibleSelectedVerse {
   /** Book identifier (for example: GEN, MAT). */

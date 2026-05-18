@@ -39,4 +39,4 @@ import { render } from "preact";
 console.log("Starting APP");
 render(<Main />, document.body);
 
-os.hideLoadingScreen();
+// os.hideLoadingScreen();

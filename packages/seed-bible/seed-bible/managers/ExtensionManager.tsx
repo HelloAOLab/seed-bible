@@ -55,18 +55,13 @@ export interface ExtensionMeta {
   autoinstall?: boolean;
 }
 
-export type Extension = UploadedExtension | InlineExtension;
+export type Extension = UploadedExtension;
 
 export interface UploadedExtension {
   /**
-   * The name of the record that this extension is stored in.
+   * The URL of the extension to load.
    */
-  recordName: string;
-
-  /**
-   * The address of the uploaded extension package.
-   */
-  address: string;
+  url: string;
 
   /**
    * The metadata for this extension.
@@ -74,10 +69,10 @@ export interface UploadedExtension {
   meta: ExtensionMeta;
 }
 
-export interface InlineExtension {
-  aux: StoredAux;
-  meta: ExtensionMeta;
-}
+// export interface InlineExtension {
+//   aux: StoredAux;
+//   meta: ExtensionMeta;
+// }
 
 export interface ExtensionSet {
   /**
@@ -307,9 +302,7 @@ export function setupExtensionContext(context: SeedBibleState) {
 export type ExtensionManager = ReturnType<typeof createExtensionManager>;
 
 export function createExtensionManager() {
-  const defaultExtensions = computed<ExtensionSet | null>(
-    () => thisBot.tags.availableExtensions ?? null
-  );
+  const defaultExtensions = computed<ExtensionSet | null>(() => null);
   const knownExtensionsById = new Map<string, Extension>();
   const knownExtensionsSetsByExtensionId = new Map<string, ExtensionSet>();
   const installedExtensionIds = new Set<string>();
@@ -328,53 +321,52 @@ export function createExtensionManager() {
     );
   };
 
+  // /**
+  //  * Loads the given extension package by installing it from the provided record name and address. If the installation is successful, the extension ID will be added to the set of installed extensions and an "onExtensionInstalled" event will be shouted with the extension ID as a parameter.
+  //  * @param id The ID of the extension to install.
+  //  * @param recordName The name of the record that the extension package is stored in.
+  //  * @param address The address of the extension package to install.
+  //  */
+  // const loadExtensionFromPackage = async (
+  //   id: string,
+  //   recordName: string,
+  //   address: string
+  // ) => {
+  //   if (isSatisfiedDependency(id)) {
+  //     return true;
+  //   }
+
+  //   try {
+  //     const result = await os.installPackage(recordName, address);
+  //     if (result.success) {
+  //       installedExtensionIds.add(id);
+  //       shout("onExtensionInstalled", id);
+  //       console.log(`Successfully installed extension: ${id}`);
+  //       return true;
+  //     } else {
+  //       console.error(`Failed to install extension ${id}:`, result);
+  //       return false;
+  //     }
+  //   } catch (err) {
+  //     console.error("Failed to install extension:", id, err);
+  //     return false;
+  //   }
+  // };
+
   /**
    * Loads the given extension package by installing it from the provided record name and address. If the installation is successful, the extension ID will be added to the set of installed extensions and an "onExtensionInstalled" event will be shouted with the extension ID as a parameter.
    * @param id The ID of the extension to install.
-   * @param recordName The name of the record that the extension package is stored in.
-   * @param address The address of the extension package to install.
+   * @param url The URL of the extension package to install.
    */
-  const loadExtensionFromPackage = async (
-    id: string,
-    recordName: string,
-    address: string
-  ) => {
+  const loadExtensionFromUrl = async (id: string, url: string) => {
     if (isSatisfiedDependency(id)) {
       return true;
     }
 
     try {
-      const result = await os.installPackage(recordName, address);
-      if (result.success) {
-        installedExtensionIds.add(id);
-        shout("onExtensionInstalled", id);
-        console.log(`Successfully installed extension: ${id}`);
-        return true;
-      } else {
-        console.error(`Failed to install extension ${id}:`, result);
-        return false;
-      }
-    } catch (err) {
-      console.error("Failed to install extension:", id, err);
-      return false;
-    }
-  };
-
-  /**
-   * Loads the given extension package by installing it from the provided record name and address. If the installation is successful, the extension ID will be added to the set of installed extensions and an "onExtensionInstalled" event will be shouted with the extension ID as a parameter.
-   * @param id The ID of the extension to install.
-   * @param recordName The name of the record that the extension package is stored in.
-   * @param address The address of the extension package to install.
-   */
-  const loadExtensionFromAux = async (id: string, aux: StoredAux) => {
-    if (isSatisfiedDependency(id)) {
-      return true;
-    }
-
-    try {
-      await os.installAuxFile(aux);
+      await import(/** @vite-ignore */ url);
       installedExtensionIds.add(id);
-      shout("onExtensionInstalled", id);
+      // shout("onExtensionInstalled", id);
       console.log(`Successfully installed extension: ${id}`);
       return true;
     } catch (err) {
@@ -443,26 +435,13 @@ export function createExtensionManager() {
 
       addTranslations(uploaded.meta.id, uploaded.meta.translations);
 
-      if (
-        "recordName" in uploaded &&
-        "address" in uploaded &&
-        uploaded.recordName &&
-        uploaded.address
-      ) {
-        const installed = await loadExtensionFromPackage(
-          extensionId,
-          uploaded.recordName,
-          uploaded.address
-        );
-        installStack.delete(extensionId);
-        return installed;
-      } else if ("aux" in uploaded && uploaded.aux) {
-        const installed = await loadExtensionFromAux(extensionId, uploaded.aux);
+      if ("url" in uploaded && uploaded.url) {
+        const installed = await loadExtensionFromUrl(extensionId, uploaded.url);
         installStack.delete(extensionId);
         return installed;
       } else {
         console.warn(
-          "Extension package is missing installation information (recordName and address for package installation, or aux for aux installation). Marking as installed without actually installing:",
+          "Extension package is missing installation information (url for package installation). Marking as installed without actually installing:",
           uploaded
         );
       }
@@ -504,7 +483,7 @@ export function createExtensionManager() {
     console.log(
       `Finished loading extension set '${set.id}'. Successfully loaded ${successCount} out of ${set.extensions.length} extensions.`
     );
-    shout("onExtensionSetLoaded", set.id);
+    // shout("onExtensionSetLoaded", set.id);
   };
 
   /**
@@ -529,7 +508,7 @@ export function createExtensionManager() {
   const unloadExtension = (id: string) => {
     unregisterExtension(id);
     installedExtensionIds.delete(id);
-    shout("onExtensionUninstalled", id);
+    // shout("onExtensionUninstalled", id);
   };
 
   /**
@@ -590,7 +569,6 @@ export function createExtensionManager() {
     loadDefaultExtensions,
     loadExtensionSet,
     loadExtension,
-    loadExtensionFromPackage,
     unloadExtension,
 
     getExtensions,
