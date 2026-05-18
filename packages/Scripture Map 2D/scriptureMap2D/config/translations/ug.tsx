@@ -58,4 +58,5 @@ export const ug: Record<string, string> = {
   "read-minutes-ago": "{{count}} مىنۇت بۇرۇن ئوقۇلدى",
   "read-minute-ago": "{{count}} مىنۇت بۇرۇن ئوقۇلدى",
   "zoom-level": "چوڭايتىش دەرىجىسى",
+  all: "ھەممە",
 };

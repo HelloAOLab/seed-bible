@@ -58,4 +58,5 @@ export const bn: Record<string, string> = {
   "read-minutes-ago": "{{count}} মিনিট আগে পড়েছে",
   "read-minute-ago": "{{count}} মিনিট আগে পড়েছে",
   "zoom-level": "জুম স্তর",
+  all: "সব",
 };

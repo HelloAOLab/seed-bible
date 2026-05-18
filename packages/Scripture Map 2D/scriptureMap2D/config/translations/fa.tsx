@@ -58,4 +58,5 @@ export const fa: Record<string, string> = {
   "read-minutes-ago": "{{count}} دقیقه پیش خوانده شد",
   "read-minute-ago": "{{count}} دقیقه پیش خوانده شد",
   "zoom-level": "سطح بزرگ‌نمایی",
+  all: "همه",
 };

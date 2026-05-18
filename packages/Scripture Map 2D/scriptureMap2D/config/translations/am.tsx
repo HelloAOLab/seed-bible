@@ -58,4 +58,5 @@ export const am: Record<string, string> = {
   "read-minutes-ago": "{{count}} ደቂቃዎች በፊት ተነብቧል",
   "read-minute-ago": "{{count}} ደቂቃ በፊት ተነብቧል",
   "zoom-level": "የማጉያ ደረጃ",
+  all: "ሁሉም",
 };

@@ -58,4 +58,5 @@ export const mn: Record<string, string> = {
   "read-minutes-ago": "{{count}} минутын өмнө уншсан",
   "read-minute-ago": "{{count}} минутын өмнө уншсан",
   "zoom-level": "томруулах түвшин",
+  all: "бүгд",
 };

@@ -58,4 +58,5 @@ export const zh: Record<string, string> = {
   "read-minutes-ago": "{{count}} 分钟前阅读",
   "read-minute-ago": "{{count}} 分钟前阅读",
   "zoom-level": "缩放级别",
+  all: "全部",
 };

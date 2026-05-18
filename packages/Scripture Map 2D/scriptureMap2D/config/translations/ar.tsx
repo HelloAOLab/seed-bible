@@ -58,4 +58,5 @@ export const ar: Record<string, string> = {
   "read-minutes-ago": "قرأ منذ {{count}} دقائق",
   "read-minute-ago": "قرأ منذ {{count}} دقيقة",
   "zoom-level": "مستوى التكبير",
+  all: "الكل",
 };

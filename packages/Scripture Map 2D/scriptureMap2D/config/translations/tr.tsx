@@ -58,4 +58,5 @@ export const tr: Record<string, string> = {
   "read-minutes-ago": "{{count}} dakika önce okundu",
   "read-minute-ago": "{{count}} dakika önce okundu",
   "zoom-level": "yakınlaştırma düzeyi",
+  all: "tümü",
 };

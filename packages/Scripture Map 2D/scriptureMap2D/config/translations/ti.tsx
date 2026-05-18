@@ -58,4 +58,5 @@ export const ti: Record<string, string> = {
   "read-minutes-ago": "{{count}} ደቒቓት ቅድሚ ሕጂ ተነቢቡ",
   "read-minute-ago": "{{count}} ደቒቕ ቅድሚ ሕጂ ተነቢቡ",
   "zoom-level": "ደረጃ ናይ ምቅርራብ",
+  all: "ኩሉ",
 };

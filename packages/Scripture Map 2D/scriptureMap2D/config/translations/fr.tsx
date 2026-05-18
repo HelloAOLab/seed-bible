@@ -58,4 +58,5 @@ export const fr: Record<string, string> = {
   "read-minutes-ago": "Lu il y a {{count}} minutes",
   "read-minute-ago": "Lu il y a {{count}} minute",
   "zoom-level": "niveau de zoom",
+  all: "tout",
 };

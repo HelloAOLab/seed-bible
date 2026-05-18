@@ -58,4 +58,5 @@ export const vi: Record<string, string> = {
   "read-minutes-ago": "Đã đọc {{count}} phút trước",
   "read-minute-ago": "Đã đọc {{count}} phút trước",
   "zoom-level": "mức phóng to",
+  all: "tất cả",
 };

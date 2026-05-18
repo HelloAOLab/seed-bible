@@ -49,7 +49,7 @@ export const useReadingHistoryUserFiltersSelector: UseReadingHistoryUserFiltersS
     const allSelectorOptionContent = useMemo<
       UseReadingHistoryUserFiltersSelectorType["allSelectorOptionContent"]
     >(() => {
-      return { title: translate("all") };
+      return { title: CapitalizeFirstLetter(translate("all")) };
     }, [translate]);
 
     const allSelectorOptionClick = useCallback<
@@ -97,7 +97,7 @@ export const useReadingHistoryUserFiltersSelector: UseReadingHistoryUserFiltersS
         }
       }
       return optionsData;
-    }, [readingHistoryUserFilters, usersDataMap, myAuthBotId]);
+    }, [readingHistoryUserFilters, usersDataMap, myAuthBotId, translate]);
 
     return {
       allSelectorOptionContent,

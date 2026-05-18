@@ -58,4 +58,5 @@ export const ja: Record<string, string> = {
   "read-minutes-ago": "{{count}} 分前に読みました",
   "read-minute-ago": "{{count}} 分前に読みました",
   "zoom-level": "ズームレベル",
+  all: "すべて",
 };

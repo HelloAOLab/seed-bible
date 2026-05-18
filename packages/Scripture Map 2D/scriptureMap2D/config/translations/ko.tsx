@@ -58,4 +58,5 @@ export const ko: Record<string, string> = {
   "read-minutes-ago": "{{count}}분 전에 읽었습니다",
   "read-minute-ago": "{{count}}분 전에 읽었습니다",
   "zoom-level": "줌 레벨",
+  all: "모두",
 };

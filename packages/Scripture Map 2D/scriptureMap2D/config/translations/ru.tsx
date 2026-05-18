@@ -58,4 +58,5 @@ export const ru: Record<string, string> = {
   "read-minutes-ago": "Прочитано {{count}} минут назад",
   "read-minute-ago": "Прочитано {{count}} минуту назад",
   "zoom-level": "уровень масштаба",
+  all: "все",
 };

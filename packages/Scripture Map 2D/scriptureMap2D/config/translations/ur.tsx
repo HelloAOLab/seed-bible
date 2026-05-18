@@ -58,4 +58,5 @@ export const ur: Record<string, string> = {
   "read-minutes-ago": "{{count}} منٹ پہلے پڑھا",
   "read-minute-ago": "{{count}} منٹ پہلے پڑھا",
   "zoom-level": "زوم کی سطح",
+  all: "سب",
 };

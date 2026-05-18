@@ -58,4 +58,5 @@ export const sw: Record<string, string> = {
   "read-minutes-ago": "Alisoma dakika {{count}} zilizopita",
   "read-minute-ago": "Alisoma dakika {{count}} iliyopita",
   "zoom-level": "kiwango cha kuza",
+  all: "yote",
 };

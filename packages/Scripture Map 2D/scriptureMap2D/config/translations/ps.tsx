@@ -58,4 +58,5 @@ export const ps: Record<string, string> = {
   "read-minutes-ago": "{{count}} دقیقې مخکې ولوستل شو",
   "read-minute-ago": "{{count}} دقیقه مخکې ولوستل شو",
   "zoom-level": "د لوی کولو کچه",
+  all: "ټول",
 };

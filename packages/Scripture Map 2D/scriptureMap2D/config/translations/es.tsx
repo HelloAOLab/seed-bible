@@ -58,4 +58,5 @@ export const es: Record<string, string> = {
   "read-minutes-ago": "Leído hace {{count}} minutos",
   "read-minute-ago": "Leído hace {{count}} minuto",
   "zoom-level": "nivel de zoom",
+  all: "todo",
 };

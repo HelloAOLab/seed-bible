@@ -58,4 +58,5 @@ export const ne: Record<string, string> = {
   "read-minutes-ago": "{{count}} मिनेट पहिले पढे",
   "read-minute-ago": "{{count}} मिनेट पहिले पढ्यो",
   "zoom-level": "जुम स्तर",
+  all: "सबै",
 };

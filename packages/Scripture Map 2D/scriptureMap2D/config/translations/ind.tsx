@@ -58,4 +58,5 @@ export const ind: Record<string, string> = {
   "read-minutes-ago": "Dibaca {{count}} menit lalu",
   "read-minute-ago": "Dibaca {{count}} menit lalu",
   "zoom-level": "level zoom",
+  all: "semua",
 };

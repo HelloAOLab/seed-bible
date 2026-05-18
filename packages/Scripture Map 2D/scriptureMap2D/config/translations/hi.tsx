@@ -58,4 +58,5 @@ export const hi: Record<string, string> = {
   "read-minutes-ago": "{{count}} मिनट पहले पढ़ा",
   "read-minute-ago": "{{count}} मिनट पहले पढ़ा",
   "zoom-level": "ज़ूम स्तर",
+  all: "सभी",
 };

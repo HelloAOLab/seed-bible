@@ -58,4 +58,5 @@ export const en: Record<string, string> = {
   "read-minutes-ago": "Read {{count}} minutes ago",
   "read-minute-ago": "Read {{count}} minute ago",
   "zoom-level": "zoom level",
+  all: "all",
 };
