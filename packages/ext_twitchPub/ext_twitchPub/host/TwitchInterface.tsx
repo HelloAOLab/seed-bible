@@ -13,9 +13,16 @@ const TwitchInterface = (props: {
     s: "login" | "authorization" | "interface" | "settings"
   ) => void;
   annoucementTimer: number;
+  channelId: string;
 }) => {
-  const { broadcasterId, clientId, token, setCurrentPage, annoucementTimer } =
-    props;
+  const {
+    broadcasterId,
+    clientId,
+    token,
+    setCurrentPage,
+    annoucementTimer,
+    channelId,
+  } = props;
   const [uiHidden, setUiHidden] = useState(false);
   const [announcementSend, setAnnouncementSend] = useState(false);
 
@@ -24,7 +31,11 @@ const TwitchInterface = (props: {
   );
 
   const [qrValue, setQrValue] = useState<string>(
-    getUrl({ clientId: clientId || "", broadcasterId: broadcasterId || "" })
+    getUrl({
+      clientId: clientId || "",
+      broadcasterId: broadcasterId || "",
+      channelId: channelId || "",
+    })
   );
 
   useEffect(() => {
@@ -45,7 +56,7 @@ const TwitchInterface = (props: {
         token,
         broadcasterId,
         broadcasterId,
-        `Join me at ${getUrl({ clientId: clientId || "", broadcasterId: broadcasterId || "" })}`,
+        `Join me at ${getUrl({ clientId: clientId || "", broadcasterId: broadcasterId || "", channelId: channelId || "" })}`,
         clientId || ""
       );
       setAnnouncementSend(true);
@@ -56,6 +67,7 @@ const TwitchInterface = (props: {
         getUrl({
           clientId: clientId || "",
           broadcasterId: broadcasterId || "",
+          channelId: channelId || "",
           book: currentBookData.bookId,
           chapter: currentBookData.chapter,
           translation: currentBookData.translation,
@@ -66,6 +78,7 @@ const TwitchInterface = (props: {
         getUrl({
           clientId: clientId || "",
           broadcasterId: broadcasterId || "",
+          channelId: channelId || "",
           book: "GEN",
           chapter: 1,
           translation: "AAB",
@@ -141,7 +154,7 @@ const TwitchInterface = (props: {
             token,
             broadcasterId,
             broadcasterId,
-            `Join me at ${getUrl({ clientId: clientId || "", broadcasterId: broadcasterId || "", book: currentBookData.bookId, chapter: currentBookData.chapter, translation: currentBookData.translation })}`,
+            `Join me at ${getUrl({ clientId: clientId || "", broadcasterId: broadcasterId || "", channelId: channelId || "", book: currentBookData.bookId, chapter: currentBookData.chapter, translation: currentBookData.translation })}`,
             clientId || ""
           );
         }

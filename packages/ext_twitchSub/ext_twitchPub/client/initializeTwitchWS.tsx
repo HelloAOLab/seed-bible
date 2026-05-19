@@ -6,6 +6,7 @@ const {
   CLIENT_ID,
   CHAT_CHANNEL_USER_ID,
   EVENTSUB_WEBSOCKET_URL,
+  CHANNEL_ID,
 } = await getConfig();
 
 if (
@@ -13,10 +14,11 @@ if (
   !OAUTH_TOKEN ||
   !CLIENT_ID ||
   !CHAT_CHANNEL_USER_ID ||
-  !EVENTSUB_WEBSOCKET_URL
+  !EVENTSUB_WEBSOCKET_URL ||
+  !CHANNEL_ID
 ) {
   throw new Error(
-    "Missing required configuration. Please ensure BOT_USER_ID, OAUTH_TOKEN, CLIENT_ID, CHAT_CHANNEL_USER_ID, and EVENTSUB_WEBSOCKET_URL are all set."
+    "Missing required configuration. Please ensure BOT_USER_ID, OAUTH_TOKEN, CLIENT_ID, CHAT_CHANNEL_USER_ID, EVENTSUB_WEBSOCKET_URL, and CHANNEL_ID are all set."
   );
 }
 
@@ -82,7 +84,10 @@ function handleWebSocketMessage(data: any) {
           // First, print the message to the program's console.
           console.log("wsss:- " + data);
 
-          if (data.payload.event.broadcaster_user_id === CHAT_CHANNEL_USER_ID) {
+          if (
+            data.payload.event.broadcaster_user_id === CHANNEL_ID &&
+            data.payload.event.chatter_user_id === CHAT_CHANNEL_USER_ID
+          ) {
             try {
               const stateUnit8Array = bytes.fromBase64String(
                 data.payload.event.message.text || ""
@@ -114,7 +119,8 @@ async function registerEventSubListeners() {
     OAUTH_TOKEN,
     CLIENT_ID,
     CHAT_CHANNEL_USER_ID,
-    EVENTSUB_WEBSOCKET_URL
+    EVENTSUB_WEBSOCKET_URL,
+    CHANNEL_ID
   );
 
   const response = await web.post(
@@ -123,7 +129,7 @@ async function registerEventSubListeners() {
       type: "channel.chat.message",
       version: "1",
       condition: {
-        broadcaster_user_id: CHAT_CHANNEL_USER_ID,
+        broadcaster_user_id: CHANNEL_ID,
         user_id: BOT_USER_ID,
       },
       transport: {

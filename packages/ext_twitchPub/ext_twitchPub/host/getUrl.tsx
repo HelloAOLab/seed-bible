@@ -1,6 +1,7 @@
 const getUrl = (props: {
   clientId: string;
   broadcasterId: string;
+  channelId: string;
   book?: string;
   chapter?: number;
   translation?: string;
@@ -8,6 +9,7 @@ const getUrl = (props: {
   const {
     clientId,
     broadcasterId,
+    channelId,
     book = "GEN",
     chapter = 1,
     translation = "AAB",
@@ -23,6 +25,7 @@ const getUrl = (props: {
         [
           ...JSON.stringify({
             broadcaster_id: broadcasterId,
+            channel_id: channelId,
             book,
             chapter,
             translation,
