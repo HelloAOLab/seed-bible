@@ -1,9 +1,9 @@
-import type { Tab } from "bibleVizUtils.domain.models.seedBible";
+import type { UserReadingInstance } from "bibleVizUtils.domain.models.seedBible";
 import type { UserPresence } from "bibleVizUtils.domain.models.userPresence";
 import type { BibleVizUtilsEvents } from "bibleVizUtils.domain.models.events";
 
 export interface UserPresenceProviderPort {
-  getActiveTab: () => Tab | undefined;
+  getSelectedReadingInstance: () => UserReadingInstance | undefined;
   getRemotesPresence: () => UserPresence;
   getCurrUserId: () => string;
 }

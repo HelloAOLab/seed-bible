@@ -24,7 +24,6 @@ interface UseSettingsType {
   showOptions: boolean;
   setShowOptions: StateUpdater<boolean>;
   collapsed: boolean;
-  handleCloseButtonClick: () => void;
   mode: ScriptureMap2DModesType;
   project: ScriptureMap2DContextType["project"];
   isInSelectionMode: ScriptureMap2DContextType["isInSelectionMode"];
@@ -89,13 +88,6 @@ export const useSettings: UseSettings = () => {
   >(() => {
     setShowOptions((prev) => !prev);
   }, [setShowOptions]);
-
-  const handleCloseButtonClick = useCallback<
-    UseSettingsType["handleCloseButtonClick"]
-  >(() => {
-    console.log(`TODO: Remove application`);
-    // globalThis.RemoveApplicationByID?.(appId);
-  }, []);
 
   const shouldShowReadingHistoryOption = useMemo(() => {
     return mode === ScriptureMap2DModes.Viewer && usersDataMap.size > 0;
@@ -335,7 +327,6 @@ export const useSettings: UseSettings = () => {
     showOptions,
     setShowOptions,
     collapsed,
-    handleCloseButtonClick,
     mode,
     project,
     isInSelectionMode,

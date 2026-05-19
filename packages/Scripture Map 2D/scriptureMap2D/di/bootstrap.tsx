@@ -1,4 +1,21 @@
 import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
+import { thisTypedBot as componentsBot } from "scriptureMap2D.components.botAdapter";
+import { thisTypedBot as componentsContainersBot } from "scriptureMap2D.components.containers.botAdapter";
+import { thisTypedBot as componentsUiBot } from "scriptureMap2D.components.ui.botAdapter";
+import { thisTypedBot as configBot } from "scriptureMap2D.config.botAdapter";
+import { thisTypedBot as configTranslationsBot } from "scriptureMap2D.config.translations.botAdapter";
+import { thisTypedBot as contextsBot } from "scriptureMap2D.contexts.botAdapter";
+import { thisTypedBot as contextsReadingHistoryBot } from "scriptureMap2D.contexts.ReadingHistory.botAdapter";
+import { thisTypedBot as contextsScriptureMap2DBot } from "scriptureMap2D.contexts.ScriptureMap2D.botAdapter";
+import { thisTypedBot as contextsTestamentBot } from "scriptureMap2D.contexts.Testament.botAdapter";
+import { thisTypedBot as contextsTimeBot } from "scriptureMap2D.contexts.Time.botAdapter";
+import { thisTypedBot as diBot } from "scriptureMap2D.di.botAdapter";
+import { thisTypedBot as entrypointsBot } from "scriptureMap2D.entrypoints.botAdapter";
+import { thisTypedBot as functionsBot } from "scriptureMap2D.functions.botAdapter";
+import { thisTypedBot as hooksBot } from "scriptureMap2D.hooks.botAdapter";
+import { thisTypedBot as modelsBot } from "scriptureMap2D.models.botAdapter";
+import { thisTypedBot as servicesBot } from "scriptureMap2D.services.botAdapter";
+import { thisTypedBot as stylesBot } from "scriptureMap2D.styles.botAdapter";
 import { MaterialIcon } from "seed-bible.components.icons";
 import { ScriptureMap2D } from "scriptureMap2D.components.ScriptureMap2D";
 import { ScriptureMap2DModes } from "scriptureMap2D.models.scriptureMap";
@@ -87,7 +104,8 @@ export const bootstrapExtension = () => {
                   config={{
                     mode: ScriptureMap2DModes.Viewer,
                     onChapterClick: (_, key) => {
-                      const { bookId, chapterIndex } = key;
+                      let { bookId } = key;
+                      const { chapterIndex } = key;
 
                       let chapter = chapterIndex + 1;
 
@@ -106,6 +124,7 @@ export const bootstrapExtension = () => {
                         sectionIndex,
                         bookIndex,
                       } = bookPath;
+
                       const bookInfo = arrangementService.getBookByIndices({
                         arrangementIndex,
                         testamentIndex: testamentIndex!,
@@ -126,6 +145,7 @@ export const bootstrapExtension = () => {
                             chapter,
                           }
                         ));
+                        bookId = bookInfo.completeBookId;
                       }
 
                       context.app.selectedTab.value?.readingState.selectChapter(
@@ -138,7 +158,6 @@ export const bootstrapExtension = () => {
                     initialShowSectionLabels: false,
                     initialScaleFactor: 0.6,
                     initialIsReadingHistoryEnabled: false,
-                    appId: "", // TODO: Define this
                     extensionId,
                     translate: (
                       key: string,
@@ -189,7 +208,25 @@ export const bootstrapExtension = () => {
       });
 
       yield () => {
-        // TODO: destroy extension bots
+        destroy([
+          componentsBot,
+          componentsContainersBot,
+          componentsUiBot,
+          configBot,
+          configTranslationsBot,
+          contextsBot,
+          contextsReadingHistoryBot,
+          contextsScriptureMap2DBot,
+          contextsTestamentBot,
+          contextsTimeBot,
+          diBot,
+          entrypointsBot,
+          functionsBot,
+          hooksBot,
+          modelsBot,
+          servicesBot,
+          stylesBot,
+        ]);
       };
     },
   });

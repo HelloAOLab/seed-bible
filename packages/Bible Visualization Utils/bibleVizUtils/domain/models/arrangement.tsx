@@ -59,6 +59,7 @@ export interface SubsetBookInfo extends BaseBookInfo {
   readonly completeBookId: string;
   readonly startIndex?: number;
   readonly endIndex?: number;
+  readonly translationRule?: string;
 }
 
 export type BookInfo = CompleteBookInfo | SubsetBookInfo;

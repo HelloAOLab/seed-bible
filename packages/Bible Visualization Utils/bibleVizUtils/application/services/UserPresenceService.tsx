@@ -30,13 +30,13 @@ export class UserPresenceService implements UserPresenceServicePort {
   updateUserPresence() {
     const newPresence: UserPresence = new Map();
     const currUserId = this.#userPresenceProviderPort.getCurrUserId();
-    const currUserActiveTab = this.#userPresenceProviderPort.getActiveTab();
-    if (currUserActiveTab) {
+    const selectedReadingInstance =
+      this.#userPresenceProviderPort.getSelectedReadingInstance();
+    if (selectedReadingInstance) {
       const currUserPresenceData: UserPresenceData = {
-        book: currUserActiveTab.data.book,
-        bookId: currUserActiveTab.data.bookId,
-        chapter: currUserActiveTab.data.chapter,
-        tabId: currUserActiveTab.id,
+        bookId: selectedReadingInstance.bookId,
+        chapter: selectedReadingInstance.chapter,
+        readingInstanceId: selectedReadingInstance.id,
       };
       newPresence.set(currUserId, currUserPresenceData);
     }

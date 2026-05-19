@@ -72,6 +72,7 @@ export class BookInfoMapper {
       completeBookId: info.completeBookId,
       startIndex: info.startIndex,
       endIndex: info.endIndex,
+      translationRule: info.translationRule,
       author: completeStaticInfo.author,
       chaptersVerseCount,
       relativeDateRange: completeStaticInfo.relativeDateRange,

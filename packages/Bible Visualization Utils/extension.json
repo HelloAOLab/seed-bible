@@ -3,7 +3,7 @@
   "translations": {
     "en": {
       "title": "Bible Visualization Utils",
-      "description": "TODO: Add description",
+      "description": "Shared service layer for Bible visualization extensions, providing arrangement management, scripture reference mapping, and user presence tracking.",
       "below-reader-tool": "Bible Visualization Utils"
     }
   }

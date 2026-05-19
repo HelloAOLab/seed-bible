@@ -1,5 +1,5 @@
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import type { Tab } from "bibleVizUtils.domain.models.seedBible";
+import type { UserReadingInstance } from "bibleVizUtils.domain.models.seedBible";
 import type { UserPresence } from "bibleVizUtils.domain.models.userPresence";
 import type { UserPresenceProviderPort } from "bibleVizUtils.domain.ports.userPresence";
 
@@ -18,12 +18,18 @@ export class SeedBiblePresenceProvider implements UserPresenceProviderPort {
     return configBot.id;
   }
 
-  getActiveTabData(): Tab["data"] | undefined {
-    return {
-      use: "", // TODO: Is this still needed?
-      first: false, // TODO: Is this still needed?
-      type: "", // TODO: Is this still needed?
-      book: this.#state.app.selectedTab.value?.readingState.bookId.value ?? "", // TODO: Get actual book name
+  getSelectedReadingInstanceId(): UserReadingInstance["id"] | undefined {
+    return this.#state.app.selectedTab.value?.id;
+  }
+
+  getSelectedReadingInstance(): UserReadingInstance | undefined {
+    const id = this.getSelectedReadingInstanceId();
+
+    if (!id) {
+      return undefined;
+    }
+
+    const tab: UserReadingInstance = {
       bookId:
         this.#state.app.selectedTab.value?.readingState.bookId.value ?? "",
       chapter:
@@ -31,26 +37,7 @@ export class SeedBiblePresenceProvider implements UserPresenceProviderPort {
         0,
       translation: this.#state.app.selectedTab.value?.readingState.translation
         .value?.shortName as string,
-      shortName: this.#state.app.selectedTab.value?.id ?? "",
-    };
-  }
-
-  getActiveTabId(): Tab["id"] | undefined {
-    return this.#state.app.selectedTab.value?.id;
-  }
-
-  getActiveTab(): Tab | undefined {
-    const data = this.getActiveTabData();
-    const id = this.getActiveTabId();
-
-    if (!data || !id) {
-      return undefined;
-    }
-
-    const tab: Tab = {
       id,
-      data,
-      taken: false, // TODO: Correctly find this
     };
     return tab;
   }
@@ -68,10 +55,9 @@ export class SeedBiblePresenceProvider implements UserPresenceProviderPort {
         const connectedUsers = session.connectedUsers.value;
         for (const user of connectedUsers) {
           userPresence.set(user.connectionId, {
-            book: session.readingState.bookId.value!, // TODO: Get the actual Book name here
             bookId: session.readingState.bookId.value!,
             chapter: session.readingState.chapterNumber.value!,
-            tabId,
+            readingInstanceId: tabId,
           });
         }
       }

@@ -494,8 +494,14 @@
       "ext_locations.onInstJoined": [
         "./packages/locations-extension/ext_locations/onInstJoined.tsx"
       ],
+      "scriptureMap2D.components.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/botAdapter.tsx"
+      ],
       "scriptureMap2D.components.containers.Book": [
         "./packages/Scripture Map 2D/scriptureMap2D/components/containers/Book.tsx"
+      ],
+      "scriptureMap2D.components.containers.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/containers/botAdapter.tsx"
       ],
       "scriptureMap2D.components.containers.Chapter": [
         "./packages/Scripture Map 2D/scriptureMap2D/components/containers/Chapter.tsx"
@@ -548,11 +554,17 @@
       "scriptureMap2D.components.ui.BooksContainer": [
         "./packages/Scripture Map 2D/scriptureMap2D/components/ui/BooksContainer.tsx"
       ],
+      "scriptureMap2D.components.ui.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/components/ui/botAdapter.tsx"
+      ],
       "scriptureMap2D.components.ui.SectionToggle": [
         "./packages/Scripture Map 2D/scriptureMap2D/components/ui/SectionToggle.tsx"
       ],
       "scriptureMap2D.components.ui.SelectorOption": [
         "./packages/Scripture Map 2D/scriptureMap2D/components/ui/SelectorOption.tsx"
+      ],
+      "scriptureMap2D.config.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/botAdapter.tsx"
       ],
       "scriptureMap2D.config.translations.am": [
         "./packages/Scripture Map 2D/scriptureMap2D/config/translations/am.tsx"
@@ -562,6 +574,9 @@
       ],
       "scriptureMap2D.config.translations.bn": [
         "./packages/Scripture Map 2D/scriptureMap2D/config/translations/bn.tsx"
+      ],
+      "scriptureMap2D.config.translations.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/config/translations/botAdapter.tsx"
       ],
       "scriptureMap2D.config.translations.en": [
         "./packages/Scripture Map 2D/scriptureMap2D/config/translations/en.tsx"
@@ -629,11 +644,20 @@
       "scriptureMap2D.config.translations.zh": [
         "./packages/Scripture Map 2D/scriptureMap2D/config/translations/zh.tsx"
       ],
+      "scriptureMap2D.contexts.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/botAdapter.tsx"
+      ],
+      "scriptureMap2D.contexts.ReadingHistory.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/ReadingHistory/botAdapter.tsx"
+      ],
       "scriptureMap2D.contexts.ReadingHistory.ReadingHistoryContext": [
         "./packages/Scripture Map 2D/scriptureMap2D/contexts/ReadingHistory/ReadingHistoryContext.tsx"
       ],
       "scriptureMap2D.contexts.ReadingHistory.useReadingHistoryProvider": [
         "./packages/Scripture Map 2D/scriptureMap2D/contexts/ReadingHistory/useReadingHistoryProvider.tsx"
+      ],
+      "scriptureMap2D.contexts.ScriptureMap2D.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/ScriptureMap2D/botAdapter.tsx"
       ],
       "scriptureMap2D.contexts.ScriptureMap2D.ScriptureMap2DContext": [
         "./packages/Scripture Map 2D/scriptureMap2D/contexts/ScriptureMap2D/ScriptureMap2DContext.tsx"
@@ -641,8 +665,14 @@
       "scriptureMap2D.contexts.ScriptureMap2D.useScriptureMap2DProvider": [
         "./packages/Scripture Map 2D/scriptureMap2D/contexts/ScriptureMap2D/useScriptureMap2DProvider.tsx"
       ],
+      "scriptureMap2D.contexts.Testament.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/Testament/botAdapter.tsx"
+      ],
       "scriptureMap2D.contexts.Testament.TestamentContext": [
         "./packages/Scripture Map 2D/scriptureMap2D/contexts/Testament/TestamentContext.tsx"
+      ],
+      "scriptureMap2D.contexts.Time.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/contexts/Time/botAdapter.tsx"
       ],
       "scriptureMap2D.contexts.Time.TimeContext": [
         "./packages/Scripture Map 2D/scriptureMap2D/contexts/Time/TimeContext.tsx"
@@ -652,6 +682,12 @@
       ],
       "scriptureMap2D.di.bootstrap": [
         "./packages/Scripture Map 2D/scriptureMap2D/di/bootstrap.tsx"
+      ],
+      "scriptureMap2D.di.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/di/botAdapter.tsx"
+      ],
+      "scriptureMap2D.entrypoints.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/entrypoints/botAdapter.tsx"
       ],
       "scriptureMap2D.entrypoints.onEggHatch": [
         "./packages/Scripture Map 2D/scriptureMap2D/entrypoints/onEggHatch.tsx"
@@ -668,8 +704,14 @@
       "scriptureMap2D.entrypoints.userUnsubscribed": [
         "./packages/Scripture Map 2D/scriptureMap2D/entrypoints/userUnsubscribed.tsx"
       ],
+      "scriptureMap2D.functions.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/functions/botAdapter.tsx"
+      ],
       "scriptureMap2D.functions.scripture": [
         "./packages/Scripture Map 2D/scriptureMap2D/functions/scripture.tsx"
+      ],
+      "scriptureMap2D.hooks.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/hooks/botAdapter.tsx"
       ],
       "scriptureMap2D.hooks.useBook": [
         "./packages/Scripture Map 2D/scriptureMap2D/hooks/useBook.tsx"
@@ -737,6 +779,9 @@
       "scriptureMap2D.models.arrangement": [
         "./packages/Scripture Map 2D/scriptureMap2D/models/arrangement.tsx"
       ],
+      "scriptureMap2D.models.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/models/botAdapter.tsx"
+      ],
       "scriptureMap2D.models.commonTypes": [
         "./packages/Scripture Map 2D/scriptureMap2D/models/commonTypes.tsx"
       ],
@@ -758,8 +803,14 @@
       "scriptureMap2D.models.user": [
         "./packages/Scripture Map 2D/scriptureMap2D/models/user.tsx"
       ],
+      "scriptureMap2D.services.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/services/botAdapter.tsx"
+      ],
       "scriptureMap2D.styles.adapter": [
         "./packages/Scripture Map 2D/scriptureMap2D/styles/adapter.tsx"
+      ],
+      "scriptureMap2D.styles.botAdapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/styles/botAdapter.tsx"
       ],
       "seed-bible.app.api": ["./packages/seed-bible/seed-bible/app/api.tsx"],
       "seed-bible.app.init": ["./packages/seed-bible/seed-bible/app/init.tsx"],

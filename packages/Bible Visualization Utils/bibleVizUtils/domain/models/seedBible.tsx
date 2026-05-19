@@ -1,16 +1,6 @@
-export interface TabData {
-  use: string;
-  first: boolean;
-  type: string;
-  book: string;
+export interface UserReadingInstance {
+  id: string;
   bookId: string;
   chapter: number;
   translation: string;
-  shortName: string;
-}
-
-export interface Tab {
-  id: string;
-  taken: boolean;
-  data: TabData;
 }

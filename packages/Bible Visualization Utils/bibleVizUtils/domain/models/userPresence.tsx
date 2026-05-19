@@ -2,10 +2,9 @@ import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/Login
 import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
 
 export interface UserPresenceData {
-  book: string;
   bookId: string;
   chapter: number;
-  tabId: string;
+  readingInstanceId: string;
 }
 
 export type UserPresence = Map<string, UserPresenceData>;

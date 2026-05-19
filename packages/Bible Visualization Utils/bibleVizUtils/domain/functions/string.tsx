@@ -1,4 +1,14 @@
 export type CapitalizeFirstLetterType = (text: string) => string;
+
+export const applyTranslationRule = (
+  rule: string,
+  variables: Record<string, string>
+): string => {
+  return rule.replace(
+    /\{(\w+)\}/g,
+    (_, key: string) => variables[key] ?? `{${key}}`
+  );
+};
 type FormatNumberToUSDCurrencyType = (params: { value: number }) => string;
 
 export const CapitalizeFirstLetter: CapitalizeFirstLetterType = (text) => {

@@ -431,7 +431,8 @@ export const useBook: UseBook = (props) => {
     const baseColor = BASE_BACKGROUND_COLOR;
 
     return staticChaptersArray.map((_, index) => {
-      let chapter = index + 1;
+      const displayedChapter = index + 1;
+      let chapter = displayedChapter;
 
       const chapterSummary = chapterReadingHistorySummaryMap.get(chapter);
       let historyBackground: React.CSSProperties["color"];
@@ -624,10 +625,10 @@ export const useBook: UseBook = (props) => {
       }
 
       return {
-        key: `${bookId}-${chapter}`,
+        key: `${bookId}-${displayedChapter}`,
         sectionName: sectionName,
         bookId,
-        chapter: chapter,
+        chapter: displayedChapter,
         borderGradientColors: borderGradientColors,
         index: index,
         historyBackground: historyBackground,
@@ -647,7 +648,14 @@ export const useBook: UseBook = (props) => {
     BASE_BACKGROUND_COLOR,
     translate,
     bookId,
+    subsetStartIndex,
   ]);
+
+  // useEffect(() => {
+  //   console.log(`[Debug] useBook`, {
+  //     chaptersData, bookId, subsetStartIndex, isSubset
+  //   })
+  // }, [chaptersData, bookId, subsetStartIndex, isSubset])
 
   const bookTitle = useMemo<string>(() => {
     return scaleFactor > 0.5 ? book : getFirstNonSpaceChars(book).toUpperCase();

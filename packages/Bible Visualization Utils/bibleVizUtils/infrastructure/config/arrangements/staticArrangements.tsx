@@ -326,6 +326,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "5PS",
                 type: "subset",
+                translationRule: "5 {name}",
                 completeBookId: "PSA",
                 startIndex: 106,
                 endIndex: 149,
@@ -335,6 +336,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "4PS",
                 type: "subset",
+                translationRule: "4 {name}",
                 completeBookId: "PSA",
                 startIndex: 89,
                 endIndex: 105,
@@ -344,6 +346,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "3PS",
                 type: "subset",
+                translationRule: "3 {name}",
                 completeBookId: "PSA",
                 startIndex: 72,
                 endIndex: 88,
@@ -353,6 +356,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "2PS",
                 type: "subset",
+                translationRule: "2 {name}",
                 completeBookId: "PSA",
                 startIndex: 41,
                 endIndex: 71,
@@ -362,6 +366,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "1PS",
                 type: "subset",
+                translationRule: "1 {name}",
                 completeBookId: "PSA",
                 startIndex: 0,
                 endIndex: 40,
@@ -770,6 +775,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "5PS",
                 type: "subset",
+                translationRule: "5 {name}",
                 completeBookId: "PSA",
                 startIndex: 106,
                 endIndex: 149,
@@ -779,6 +785,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "4PS",
                 type: "subset",
+                translationRule: "4 {name}",
                 completeBookId: "PSA",
                 startIndex: 89,
                 endIndex: 105,
@@ -788,6 +795,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "3PS",
                 type: "subset",
+                translationRule: "3 {name}",
                 completeBookId: "PSA",
                 startIndex: 72,
                 endIndex: 88,
@@ -797,6 +805,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "2PS",
                 type: "subset",
+                translationRule: "2 {name}",
                 completeBookId: "PSA",
                 startIndex: 41,
                 endIndex: 71,
@@ -806,6 +815,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "1PS",
                 type: "subset",
+                translationRule: "1 {name}",
                 completeBookId: "PSA",
                 startIndex: 0,
                 endIndex: 40,
@@ -1395,6 +1405,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "5PS",
                 type: "subset",
+                translationRule: "5 {name}",
                 completeBookId: "PSA",
                 startIndex: 106,
                 endIndex: 149,
@@ -1405,6 +1416,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "4PS",
                 type: "subset",
+                translationRule: "4 {name}",
                 completeBookId: "PSA",
                 startIndex: 89,
                 endIndex: 105,
@@ -1415,6 +1427,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "3PS",
                 type: "subset",
+                translationRule: "3 {name}",
                 completeBookId: "PSA",
                 startIndex: 72,
                 endIndex: 88,
@@ -1425,6 +1438,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "2PS",
                 type: "subset",
+                translationRule: "2 {name}",
                 completeBookId: "PSA",
                 startIndex: 41,
                 endIndex: 71,
@@ -1435,6 +1449,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "1PS",
                 type: "subset",
+                translationRule: "1 {name}",
                 completeBookId: "PSA",
                 startIndex: 0,
                 endIndex: 40,
@@ -1879,6 +1894,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "5PS",
                 type: "subset",
+                translationRule: "5 {name}",
                 completeBookId: "PSA",
                 startIndex: 106,
                 endIndex: 149,
@@ -1888,6 +1904,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "4PS",
                 type: "subset",
+                translationRule: "4 {name}",
                 completeBookId: "PSA",
                 startIndex: 89,
                 endIndex: 105,
@@ -1897,6 +1914,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "3PS",
                 type: "subset",
+                translationRule: "3 {name}",
                 completeBookId: "PSA",
                 startIndex: 72,
                 endIndex: 88,
@@ -1906,6 +1924,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "2PS",
                 type: "subset",
+                translationRule: "2 {name}",
                 completeBookId: "PSA",
                 startIndex: 41,
                 endIndex: 71,
@@ -1915,6 +1934,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "1PS",
                 type: "subset",
+                translationRule: "1 {name}",
                 completeBookId: "PSA",
                 startIndex: 0,
                 endIndex: 40,
@@ -2332,6 +2352,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "5PS",
                 type: "subset",
+                translationRule: "5 {name}",
                 completeBookId: "PSA",
                 startIndex: 106,
                 endIndex: 149,
@@ -2341,6 +2362,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "4PS",
                 type: "subset",
+                translationRule: "4 {name}",
                 completeBookId: "PSA",
                 startIndex: 89,
                 endIndex: 105,
@@ -2350,6 +2372,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "3PS",
                 type: "subset",
+                translationRule: "3 {name}",
                 completeBookId: "PSA",
                 startIndex: 72,
                 endIndex: 88,
@@ -2359,6 +2382,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "2PS",
                 type: "subset",
+                translationRule: "2 {name}",
                 completeBookId: "PSA",
                 startIndex: 41,
                 endIndex: 71,
@@ -2368,6 +2392,7 @@ export const staticArrangements: ArrangementInfoConfig[] = [
               {
                 bookId: "1PS",
                 type: "subset",
+                translationRule: "1 {name}",
                 completeBookId: "PSA",
                 startIndex: 0,
                 endIndex: 40,

@@ -213,7 +213,6 @@ export const Settings = () => {
     showOptions,
     setShowOptions,
     collapsed,
-    // handleCloseButtonClick,
     mode,
     project,
     isInSelectionMode,
@@ -303,13 +302,6 @@ export const Settings = () => {
           />
         )}
       </div>
-
-      {/* <div
-        className="header-button close-button"
-        onClick={handleCloseButtonClick}
-      >
-        <span class="material-symbols-outlined">close</span>
-      </div> */}
 
       <span className={"horizontal-divider"}></span>
 

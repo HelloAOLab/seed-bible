@@ -19,6 +19,7 @@ import type {
   BookData,
 } from "scriptureMap2D.components.containers.TestamentContent";
 import type { Range } from "scriptureMap2D.models.commonTypes";
+import { applyTranslationRule } from "bibleVizUtils.domain.functions.string";
 import type { BookUserPresence } from "scriptureMap2D.components.containers.Book";
 import type { SectionToggleProps } from "scriptureMap2D.components.containers.SectionToggle";
 
@@ -330,7 +331,14 @@ export const useTestamentContent = (): UseTestamentContentType => {
                 numberOfChapters: bookDomain.numberOfChapters,
                 chaptersVerseCount: bookDomain.chaptersVerseCount,
                 key: `book-${arrangementIndex}-${testament.name}-${infraSection.name}-${bookId}`,
-                book: bookNames.value.get(bookId) ?? bookId,
+                book:
+                  bookDomain.type === "subset" && bookDomain.translationRule
+                    ? applyTranslationRule(bookDomain.translationRule, {
+                        name:
+                          bookNames.value.get(bookDomain.completeBookId) ??
+                          bookDomain.completeBookId,
+                      })
+                    : (bookNames.value.get(bookId) ?? bookId),
                 bookId: bookId,
                 bookCoverBackgroundColor: color,
                 sectionName: infraSection.name,
@@ -362,6 +370,7 @@ export const useTestamentContent = (): UseTestamentContentType => {
     usersColors,
     userPresence,
     toggleShowSection,
+    bookNames.value,
   ]);
 
   return {

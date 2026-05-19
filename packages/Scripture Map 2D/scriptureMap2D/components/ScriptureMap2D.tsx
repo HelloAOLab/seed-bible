@@ -70,7 +70,6 @@ export interface ScriptureMap2DConfig {
   initialShowSectionLabels?: boolean;
   initialScaleFactor?: number;
   initialIsReadingHistoryEnabled?: boolean;
-  appId: string;
   extensionId: string;
   translate: (
     key: string,

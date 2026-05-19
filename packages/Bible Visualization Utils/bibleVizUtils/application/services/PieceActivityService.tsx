@@ -1,4 +1,4 @@
-import type { Tab } from "bibleVizUtils.domain.models.seedBible";
+import type { UserReadingInstance } from "bibleVizUtils.domain.models.seedBible";
 import {
   BiblePiece,
   type BiblePieceType,
@@ -208,14 +208,19 @@ export class PieceActivityService implements PieceActivityServicePort {
     piece: Piece;
     desiredArrangementIndex?: number;
   }) {
-    const tabs: Tab[] = []; // TODO: Obtain my tabs
-    const remoteTabs: Tab[] = []; // TODO: Obtain remote users tabs
-    const allTabs: Tab[] = [...tabs, ...remoteTabs];
-    const tabsPathMap: Map<Tab, [PieceInfo, PieceInfo, PieceInfo, PieceInfo]> =
-      new Map();
+    const readingInstances: UserReadingInstance[] = []; // TODO: Obtain my readingInstances
+    const remoteReadingInstances: UserReadingInstance[] = []; // TODO: Obtain remote users readingInstances
+    const allReadingInstances: UserReadingInstance[] = [
+      ...readingInstances,
+      ...remoteReadingInstances,
+    ];
+    const instancePathMap: Map<
+      UserReadingInstance,
+      [PieceInfo, PieceInfo, PieceInfo, PieceInfo]
+    > = new Map();
 
-    for (const tab of allTabs) {
-      const { bookId, chapter } = tab.data;
+    for (const readingInstance of allReadingInstances) {
+      const { bookId, chapter } = readingInstance;
 
       let { found, arrangementIndex, testamentIndex, sectionIndex } =
         this.#arrangementServicePort.getBookInfoPathById({
@@ -287,7 +292,7 @@ export class PieceActivityService implements PieceActivityServicePort {
           },
         ];
 
-        tabsPathMap.set(tab, path);
+        instancePathMap.set(readingInstance, path);
       }
     }
 
@@ -305,10 +310,10 @@ export class PieceActivityService implements PieceActivityServicePort {
 
     const { key, typeOfPiece } = strategy(piece, this.#dataRegistryPort);
 
-    const activity = allTabs.filter((tab) => {
-      const tabPath = tabsPathMap.get(tab);
+    const activity = allReadingInstances.filter((readingInstance) => {
+      const instancePath = instancePathMap.get(readingInstance);
 
-      return tabPath?.some((pieceInfo) => {
+      return instancePath?.some((pieceInfo) => {
         return (
           typeOfPiece &&
           pieceInfo.typeOfPiece === typeOfPiece &&
@@ -502,11 +507,12 @@ export class PieceActivityService implements PieceActivityServicePort {
         break;
       } else {
         const isOwnUserActiveActivity =
-          !!ownUserPresence && ownUserPresence.tabId === activity.id;
+          !!ownUserPresence &&
+          ownUserPresence.readingInstanceId === activity.id;
 
         const matchingPresence = Array.from(userPresence).find(
           ([, presenceData]) => {
-            return activity.id === presenceData.tabId;
+            return activity.id === presenceData.readingInstanceId;
           }
         );
         const activityUserId = matchingPresence?.[0];
@@ -580,7 +586,7 @@ export class PieceActivityService implements PieceActivityServicePort {
         `PieceActivityService: ownUserPresence not found at updateNotification`
       );
 
-    const { tabId: ownUserCurrActivityId } = ownUserPresence;
+    const { readingInstanceId: ownUserCurrActivityId } = ownUserPresence;
 
     const pieceActivity = this.getPieceActivity({
       piece: container.piece,
@@ -611,7 +617,7 @@ export class PieceActivityService implements PieceActivityServicePort {
 
     const matchingPresence = Array.from(userPresence).find(
       ([, presenceData]) => {
-        return pieceActivity[0]?.id === presenceData.tabId;
+        return pieceActivity[0]?.id === presenceData.readingInstanceId;
       }
     );
     const activityUserId = matchingPresence?.[0];
