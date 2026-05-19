@@ -1,6 +1,3 @@
-import sendMessage from "ext_twitchPub.host.sendMessage";
-console.log("updated verse highlights", that);
-
 interface HighlightedVerse {
   book: string;
   bookId: string;
@@ -41,7 +38,11 @@ const getUnhighlightedVerses = (
   return unhighlighted;
 };
 
-if (masks?.uiLoaded && masks?.highlightEnabled) {
+if (
+  masks?.uiLoaded &&
+  masks?.highlightEnabled &&
+  globalThis?.sendMessageWithRateLimit
+) {
   const highlightedVerses: HighlightedVerse[] = Object.values(
     that.highlightedVerses
   );
@@ -60,33 +61,6 @@ if (masks?.uiLoaded && masks?.highlightEnabled) {
     highlightedVerses: sortByColorAndBook(highlightedVerses),
     unhighlightedVerses: sortByColorAndBook(unhighlightedVerses),
   });
-  const uid = uuid().slice(0, 5);
 
-  if (payload.length > 350) {
-    const parts = Math.ceil(payload.length / 350);
-    for (let i = 0; i < parts; i++) {
-      const partPayload = payload.slice(i * 350, (i + 1) * 350);
-      setTimeout(() => {
-        sendMessage({
-          message: JSON.stringify({
-            type: "highlightUpdated",
-            payload: partPayload,
-            parts,
-            currentPart: i + 1,
-            uid,
-          }),
-        });
-      }, i * 200);
-    }
-  } else {
-    sendMessage({
-      message: JSON.stringify({
-        type: "highlightUpdated",
-        payload,
-        parts: 0,
-        currentPart: 0,
-        uid,
-      }),
-    });
-  }
+  globalThis.sendMessageWithRateLimit("highlightUpdated", payload);
 }

@@ -9,6 +9,7 @@ const getConfig = async () => {
       CLIENT_ID,
       CHAT_CHANNEL_USER_ID: masks.CHAT_CHANNEL_USER_ID,
       EVENTSUB_WEBSOCKET_URL,
+      CHANNEL_ID: masks.CHANNEL_ID,
     };
   }
 
@@ -22,6 +23,7 @@ const getConfig = async () => {
   console.log("Decoded state string from configBot.tags.state:", stateString);
   const state = JSON.parse(stateString) || {};
   const broadcasterId = state.broadcaster_id;
+  const channelId = state.channel_id;
 
   const res = await web.get("https://id.twitch.tv/oauth2/validate", {
     headers: { Authorization: `OAuth ${accessToken}` },
@@ -35,6 +37,7 @@ const getConfig = async () => {
     setTagMask(thisBot, "BOT_USER_ID", res.data.user_id, "local");
     setTagMask(thisBot, "OAUTH_TOKEN", accessToken, "local");
     setTagMask(thisBot, "CHAT_CHANNEL_USER_ID", broadcasterId, "local");
+    setTagMask(thisBot, "CHANNEL_ID", channelId, "local");
     os.goToURL(urlString.split("#")[0]);
     return {
       BOT_USER_ID: res.data.user_id,
@@ -42,6 +45,7 @@ const getConfig = async () => {
       CLIENT_ID,
       CHAT_CHANNEL_USER_ID: broadcasterId,
       EVENTSUB_WEBSOCKET_URL,
+      CHANNEL_ID: channelId,
     };
   } else {
     console.error("Failed to validate access token. Response:", res);
