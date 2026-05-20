@@ -164,8 +164,8 @@ export const useBook: UseBook = (props) => {
       scriptureMap3DConfigProvider.getBibleLayoutMeasurement(
         "Book2DMaxColumns"
       );
-    if (Array.isArray(book2DMaxColumns))
-      throw new Error("book2DMaxColumns must be of type number");
+    // if (Array.isArray(book2DMaxColumns))
+    //   throw new Error("book2DMaxColumns must be of type number");
     const amountOfRows = Math.ceil(
       chaptersVerseCount.length / book2DMaxColumns
     );
@@ -176,10 +176,13 @@ export const useBook: UseBook = (props) => {
   }, [chaptersVerseCount, scaleFactor, chapterGap, chapterHeight]);
 
   const checked = useMemo(() => {
-    return selection?.[testament.name]?.[sectionName]?.[book]?.every(
-      (chapter) => {
+    const bookSelection =
+      selection?.[testament.name]?.[sectionName]?.[bookId] ?? [];
+    return (
+      bookSelection?.length > 0 &&
+      bookSelection.every((chapter) => {
         return chapter;
-      }
+      })
     );
   }, [selection]);
 
