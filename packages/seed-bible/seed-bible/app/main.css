@@ -5220,6 +5220,12 @@ h6 {
   opacity: 0.1;
 }
 
+.dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
 .dropdown-select {
   appearance: none;
   -webkit-appearance: none;
@@ -5230,10 +5236,7 @@ h6 {
 
   border: none;
   border-radius: 6px;
-  background: var(--sb-secondary-color)
-    url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
-    no-repeat right 10px center;
-  background-size: 16px;
+  background: var(--sb-secondary-color);
 
   cursor: pointer;
   outline: none;
@@ -5244,6 +5247,13 @@ h6 {
   margin-right: 5px;
   font-family: "Satoshi";
   color: var(--sb-font-color);
+}
+
+.dropdown-select-icon {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  font-size: 24px;
 }
 
 .dropdown-option {
@@ -5704,7 +5714,7 @@ h6 {
 @media only screen and (max-width: 768px) {
   .dropdown {
     /* display: none; */
-    width: 100px;
+    width: 62%;
   }
 
   .searchbar {
@@ -5712,7 +5722,7 @@ h6 {
   }
 
   .sidebar-translation-selector {
-    width: 75px;
+    width: 90px;
   }
 
   .testament-selection {
@@ -5721,6 +5731,7 @@ h6 {
 
   .sidebar-selected-title {
     font-size: 16px;
+    font-weight: bold;
   }
 
   .sidebar {
@@ -5745,11 +5756,12 @@ h6 {
   }
 
   .dropdown-select {
-    width: 100px;
+    width: 100%;
+    font-weight: bold;
   }
 
   .dropdown-option {
-    width: 100px;
+    width: 100%;
   }
 
   .testament-title {
@@ -5812,6 +5824,7 @@ h6 {
 
   .sidebar-select {
     font-size: 18px;
+    padding-left: 0px;
   }
 
   .show-sidebar-chapter {
