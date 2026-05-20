@@ -14,6 +14,11 @@ const notificationColors: any = {
     color: "#D8000C",
     ICON: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/1a434287-4a50-4122-a7e9-f3c02382f7a6/bddcad791459e1f00197446e3a81545ebfb4664e4ff7ccebde4b5dffebb292e8.png",
   },
+  info: {
+    bgColor: "#2196F3",
+    color: "#fff",
+    ICON: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/1a434287-4a50-4122-a7e9-f3c02382f7a6/dbca0a66e3cff3a2f47346598eb8762cf222a2f66a876a080039e3fd204f01ce.webp",
+  },
 };
 
 const message = that?.message;

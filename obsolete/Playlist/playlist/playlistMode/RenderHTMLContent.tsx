@@ -170,7 +170,7 @@ const RenderHTMLContent = (props: any) => {
       }
 
       if (linkDetails.isValid && linkDetails.type === "externalLink") {
-        os.openURL(src);
+        G.SetOpenExternalLink && G.SetOpenExternalLink(src);
         return;
       }
     };

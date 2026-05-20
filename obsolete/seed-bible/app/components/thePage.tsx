@@ -126,6 +126,7 @@ function ThePage({
   } = useTabsContext();
   const { isDragging, setIsDragging, Element, position } = useMouseMove();
   const { navFunctions, setNavFunctions, scrollToVerse } = useBibleContext();
+
   const [inHold, setInHold] = useState();
   const [contextData, setContextData] = useState({
     verse:
@@ -140,6 +141,23 @@ function ThePage({
   const [showCommands, setShowCommands] = useState(false);
   const [lastSelectedVerse, setLastSelectedVerse] = useState(null);
   const [showMobileSettings, setShowMobileSettings] = useState(false);
+  const [MobileHeaderBar, setMobileHeaderBar] = useState<any>(
+    globalThis.MobileHeaderBar || null
+  );
+
+  const closeMobileSheet = useCallback(() => {
+    setMobileHeaderBar(null);
+  }, []);
+
+  useEffect(() => {
+    globalThis.CloseMobileHeaderBar = closeMobileSheet;
+    globalThis.SetMobileHeaderBar = setMobileHeaderBar;
+    globalThis.MobileHeaderBar = MobileHeaderBar;
+    return () => {
+      globalThis.CloseMobileHeaderBar = null;
+    };
+  }, [MobileHeaderBar]);
+
   useEffect(() => {
     if (showMobileSettings) {
       document.body.classList.add("mobile-settings-open");
@@ -155,6 +173,10 @@ function ThePage({
   const [clickedVerses, setClickedVerses] = useState([]);
   const [clickedVersesContext, setClickedVersesContext] = useState({});
   const [showVerseToolbar, setShowVerseToolbar] = useState(false);
+
+  useEffect(() => {
+    globalThis.SetIsVerseToolBarOpen?.(showVerseToolbar);
+  }, [showVerseToolbar]);
 
   const [wordHighlights, setWordHighlights] = useState({});
   const [wordHighlightsTC, setWordHighlightsTC] = useState("black");
@@ -1810,17 +1832,6 @@ function ThePage({
 
   return (
     <>
-      {showMobileSettings && (
-        <>
-          <div
-            className="mobile-settings-overlay"
-            onClick={() => setShowMobileSettings(false)}
-          />
-          <div className="mobile-settings-sheet">
-            <MobileSettingsCard onClose={() => setShowMobileSettings(false)} />
-          </div>
-        </>
-      )}
       <div
         ref={swipeViewportRef}
         style={{
@@ -1874,20 +1885,25 @@ function ThePage({
                     currentScrollTop < lastScrollTopRef.current
                   ) {
                     // User is scrolling up — clear the flag and show bars
+                    globalThis.SetIsBottomBar(false);
                     swipeNavOccurredRef.current = false;
                     document.body.classList.remove("scroll-hide-bars");
                   }
                   // Otherwise keep bars hidden
                 } else if (currentScrollTop <= 0) {
+                  globalThis.SetIsBottomBar(false);
                   document.body.classList.remove("scroll-hide-bars");
                 } else if (
                   currentScrollTop > lastScrollTopRef.current &&
                   currentScrollTop > 50
                 ) {
+                  globalThis.SetIsBottomBar(true);
                   document.body.classList.add("scroll-hide-bars");
                 } else if (currentScrollTop < lastScrollTopRef.current) {
+                  globalThis.SetIsBottomBar(false);
                   document.body.classList.remove("scroll-hide-bars");
                 }
+
                 lastScrollTopRef.current = currentScrollTop;
               }
             }}
@@ -2068,6 +2084,7 @@ function ThePage({
           font-weight: 600;
           color: var(--text1);
           margin: 0;
+          width: max-content;
         }
 
         .mobile-header-translation {
@@ -2106,6 +2123,8 @@ function ThePage({
           display: flex;
           align-items: center;
           gap: 8px;
+          flex-grow: 1;
+          justify-content: flex-end;
         }
 
         .mobile-icon-button {
@@ -2281,16 +2300,34 @@ function ThePage({
                       </div>
 
                       <div className="mobile-header-right">
-                        <button
-                          className="mobile-icon-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowMobileSettings((prev) => !prev);
-                          }}
-                          title={t("settings")}
-                        >
-                          <InfoSettingsIcon />
-                        </button>
+                        {MobileHeaderBar && (
+                          <div
+                            style={{
+                              width: "100%",
+                              display: "flex",
+                              justifyContent: "flex-end",
+                              alignItems: "center",
+                            }}
+                          >
+                            {typeof MobileHeaderBar === "function" ? (
+                              <MobileHeaderBar />
+                            ) : (
+                              MobileHeaderBar
+                            )}
+                          </div>
+                        )}
+                        {!MobileHeaderBar && (
+                          <button
+                            className="mobile-icon-button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowMobileSettings((prev) => !prev);
+                            }}
+                            title={t("settings")}
+                          >
+                            <InfoSettingsIcon />
+                          </button>
+                        )}
                       </div>
                     </div>
                     {!removeBookMark &&

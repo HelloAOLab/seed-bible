@@ -291,7 +291,10 @@ G.NagiationTimeout = setTimeout(async () => {
       const versesNumber = [];
       const multiVerse: any = {};
       let vNumber = -2;
-      if (dataToNavigate.type === "verse-grouped") {
+      if (
+        dataToNavigate.type === "verse-grouped" ||
+        dataToNavigate.type === "verse-range"
+      ) {
         dataToNavigate.additionalInfo.verse.forEach((verseP: number) => {
           if (vNumber === -2) {
             vNumber = verseP;

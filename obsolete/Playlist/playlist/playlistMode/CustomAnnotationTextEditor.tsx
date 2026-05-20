@@ -440,7 +440,7 @@ export const Iframe = Node.create({
         }
 
         if (linkDetails.isValid && linkDetails.type === "externalLink") {
-          os.openURL(node.attrs.src);
+          G.SetOpenExternalLink && G.SetOpenExternalLink(node.attrs.src);
           return;
         }
       });
