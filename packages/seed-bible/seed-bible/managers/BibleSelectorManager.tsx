@@ -499,12 +499,17 @@ export function createBibleSelectorState(
       languageQuery.value = "";
       selectingTranslation.value = false;
       if (previousTranslation && isOpen.value) {
-        await handleChapterSelect(
-          books.books.find((b) => b.id === currentBookId.value)?.id ??
-            firstBook?.id ??
-            "GEN",
-          currentChapterNumber.value ?? 1
+        const currentBook = books.books.find(
+          (b) => b.id === currentBookId.value
         );
+        if (currentBook) {
+          await handleChapterSelect(
+            currentBook.id,
+            currentChapterNumber.value ?? 1
+          );
+        } else {
+          await handleChapterSelect(firstBook?.id ?? "GEN", 1);
+        }
       }
     } catch (err) {
       error.value =

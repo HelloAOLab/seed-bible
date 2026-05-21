@@ -1090,6 +1090,112 @@ describe("BibleSelector translation selector", () => {
     expect(pane.tab?.readingState.chapterNumber.value).toBe(initialChapter);
   });
 
+  it("selecting a translation falls back to the first book and its first available chapter when the current book is unavailable", async () => {
+    const altTranslation: Translation = {
+      ...makeTranslation("ALT", "English", 1),
+      name: "Alternate Translation",
+      englishName: "Alternate Translation",
+      listOfBooksApiLink: "/api/ALT/books.json",
+    };
+
+    const altBooks = {
+      translation: altTranslation,
+      books: [
+        {
+          id: "MAT",
+          name: "Matthew",
+          commonName: "Matthew",
+          title: null,
+          order: 40,
+          numberOfChapters: 28,
+          firstChapterNumber: 3,
+          firstChapterApiLink: "/api/ALT/MAT/3.json",
+          lastChapterNumber: 30,
+          lastChapterApiLink: "/api/ALT/MAT/30.json",
+          totalNumberOfVerses: 1071,
+        },
+      ],
+    };
+
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultSelectorManagerResponseMap(),
+        [makeUrl("/api/available_translations.json")]: createResponse({
+          translations: [
+            {
+              ...makeTranslation("AAB", "English", 66),
+              listOfBooksApiLink: "/api/AAB/books.json",
+            },
+            altTranslation,
+          ],
+        }),
+        [makeUrl("/api/ALT/books.json")]: createResponse(altBooks),
+        [makeUrl("/api/ALT/MAT/3.json")]: createResponse(
+          makeChapter(altBooks, "MAT", 3)
+        ),
+      },
+    });
+
+    const pane = state.panes.panes.value[0] as Pane;
+    if (!pane) {
+      throw new Error("Expected an initial pane.");
+    }
+
+    await pane.tab!.readingState.selectChapter("EXO", 2);
+    await state.selector.setOpen(true, pane);
+
+    const { selectorState, bibleDataManager } = {
+      selectorState: state.selector,
+      bibleDataManager: state.bibleData,
+    };
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      selectorState.selectingTranslation.value = true;
+      selectorState.showAllLanguages.value = "all";
+      selectorState.languageQuery.value = "alt";
+    });
+
+    await waitFor(() =>
+      Boolean(container.querySelector(".translation-option"))
+    );
+
+    const altOption = Array.from(
+      container.querySelectorAll(".translation-option")
+    ).find((option) =>
+      (option.textContent ?? "").toLowerCase().includes("(alt)")
+    ) as HTMLDivElement | undefined;
+
+    expect(altOption).toBeDefined();
+
+    act(() => {
+      altOption?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => selectorState.selectedTranslationId.value === "ALT");
+    await waitFor(() => pane.tab?.readingState.translationId.value === "ALT");
+    await waitFor(() => pane.tab?.readingState.bookId.value === "MAT");
+    await waitFor(() => pane.tab?.readingState.chapterNumber.value === 3);
+    await waitFor(() => selectorState.isOpen.value === false);
+
+    expect(selectorState.selectingTranslation.value).toBe(false);
+    expect(selectorState.isOpen.value).toBe(false);
+    expect(pane.tab?.readingState.translationId.value).toBe("ALT");
+    expect(pane.tab?.readingState.bookId.value).toBe("MAT");
+    expect(pane.tab?.readingState.chapterNumber.value).toBe(3);
+  });
+
   it("displays only complete translations when in complete mode", async () => {
     const { selectorState, bibleDataManager } = await createSelectorFixture();
 
