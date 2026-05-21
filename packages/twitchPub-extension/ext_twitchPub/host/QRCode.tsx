@@ -1,3 +1,4 @@
+import { useI18n } from "seed-bible.i18n.I18nManager";
 import QRCode from "https://esm.run/qrcode";
 
 const { useEffect, useRef, useState, useCallback } = os.appHooks;
@@ -19,6 +20,7 @@ function QRCodeComponent(props: {
     light = "#ffffff",
     uiHidden,
   } = props;
+  const { t } = useI18n();
   const canvasRef = useRef(null);
   const [error, setError] = useState(null);
   const [dim, setDim] = useState(masks?.qrDim || size);
@@ -88,7 +90,12 @@ function QRCodeComponent(props: {
     setTagMask(thisBot, "qrDim", dim, "local");
   }, [dim]);
 
-  if (error) return <p style={{ color: "red" }}>QR Error: {error}</p>;
+  if (error)
+    return (
+      <p style={{ color: "red" }}>
+        {t("qrError", { ns: "ext_twitchPub", error })}
+      </p>
+    );
 
   return (
     <>
@@ -119,7 +126,7 @@ function QRCodeComponent(props: {
         <div
           onMouseDown={onMouseDown}
           onTouchStart={onTouchStart}
-          title={`drag to resize`}
+          title={t("dragToResize", { ns: "ext_twitchPub" })}
           style={{
             position: "absolute",
             bottom: 0,
