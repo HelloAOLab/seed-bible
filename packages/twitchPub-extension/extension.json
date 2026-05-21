@@ -17,6 +17,12 @@
       "twitch": "Twitch",
       "twitchInterface.shareQRCode": "Share this QR code",
       "twitchInterface.qrCodeInstructions": "Your viewers can scan this to follow you on Seed Bible",
+      "twitchSettings.off": "Off",
+      "twitchSettings.fiveMinutes": "5m",
+      "twitchSettings.tenMinutes": "10m",
+      "twitchSettings.fifteenMinutes": "15m",
+      "twitchSettings.twentyMinutes": "20m",
+      "twitchSettings.custom": "Custom",
       "dragToResize": "drag to resize",
       "qrError": "QR Error: {{error}}"
     },
@@ -37,7 +43,13 @@
       "twitchInterface.shareQRCode": "Compartir este código QR",
       "twitchInterface.qrCodeInstructions": "Tus espectadores pueden escanearlo para seguirte en Seed Bible",
       "dragToResize": "arrastrar para cambiar el tamaño",
-      "qrError": "Error de código QR: {{error}}"
+      "qrError": "Error de código QR: {{error}}",
+      "twitchSettings.off": "Apagado",
+      "twitchSettings.fiveMinutes": "5 metros",
+      "twitchSettings.tenMinutes": "10 metros",
+      "twitchSettings.fifteenMinutes": "15 metros",
+      "twitchSettings.twentyMinutes": "20 metros",
+      "twitchSettings.custom": "Costumbre"
     },
     "am": {
       "title": "የTwitch Pub ኤክስቴንሽን",
@@ -56,7 +68,13 @@
       "twitchInterface.shareQRCode": "ይህን QR ኮድ ያጋሩ",
       "twitchInterface.qrCodeInstructions": "ተመልካቾችዎ ይህን በSeed Bible ላይ እርስዎን ለመከተል ሊቃኙ ይችላሉ",
       "dragToResize": "መጠን ለመቀየር ይጎትቱ",
-      "qrError": "የQR ስህተት {{error}}"
+      "qrError": "የQR ስህተት {{error}}",
+      "twitchSettings.off": "ጠፍቷል",
+      "twitchSettings.fiveMinutes": "5ሜ",
+      "twitchSettings.tenMinutes": "10ሜ",
+      "twitchSettings.fifteenMinutes": "15ሜ",
+      "twitchSettings.twentyMinutes": "20ሜ",
+      "twitchSettings.custom": "ብጁ"
     },
     "ar": {
       "title": "امتداد Twitch Pub",
@@ -75,7 +93,13 @@
       "twitchInterface.shareQRCode": "مشاركة رمز QR هذا",
       "twitchInterface.qrCodeInstructions": "يمكن لمشاهديك مسح هذا لمتابعتك على Seed Bible",
       "dragToResize": "اسحب لتغيير الحجم",
-      "qrError": "خطأ في رمز الاستجابة السريعة: {{error}}"
+      "qrError": "خطأ في رمز الاستجابة السريعة: {{error}}",
+      "twitchSettings.off": "عن",
+      "twitchSettings.fiveMinutes": "5 أمتار",
+      "twitchSettings.tenMinutes": "10 أمتار",
+      "twitchSettings.fifteenMinutes": "15 متر",
+      "twitchSettings.twentyMinutes": "20 مترًا",
+      "twitchSettings.custom": "مخصص"
     },
     "bn": {
       "title": "Twitch Pub এক্সটেনশন",
@@ -94,7 +118,13 @@
       "twitchInterface.shareQRCode": "এই QR কোড শেয়ার করুন",
       "twitchInterface.qrCodeInstructions": "আপনার দর্শকরা Seed Bible-এ আপনাকে অনুসরণ করতে এটি স্ক্যান করতে পারে",
       "dragToResize": "আকার পরিবর্তন করতে টেনে আনুন",
-      "qrError": "QR ত্রুটি: {{error}}"
+      "qrError": "QR ত্রুটি: {{error}}",
+      "twitchSettings.off": "বন্ধ",
+      "twitchSettings.fiveMinutes": "৫মি",
+      "twitchSettings.tenMinutes": "১০ মিটার",
+      "twitchSettings.fifteenMinutes": "১৫ মিটার",
+      "twitchSettings.twentyMinutes": "২০ মিটার",
+      "twitchSettings.custom": "কাস্টম"
     },
     "fa": {
       "title": "افزونه Twitch Pub",
@@ -113,7 +143,13 @@
       "twitchInterface.shareQRCode": "این کد QR را به اشتراک بگذارید",
       "twitchInterface.qrCodeInstructions": "بینندگان شما می‌توانند این را اسکن کنند تا شما را در Seed Bible دنبال کنند",
       "dragToResize": "برای تغییر اندازه بکشید",
-      "qrError": "خطای QR: {{error}}"
+      "qrError": "خطای QR: {{error}}",
+      "twitchSettings.off": "خاموش",
+      "twitchSettings.fiveMinutes": "۵ متر",
+      "twitchSettings.tenMinutes": "۱۰ متر",
+      "twitchSettings.fifteenMinutes": "۱۵ متر",
+      "twitchSettings.twentyMinutes": "۲۰ متر",
+      "twitchSettings.custom": "سفارشی"
     },
     "fr": {
       "title": "Extension Twitch Pub",
@@ -132,7 +168,13 @@
       "twitchInterface.shareQRCode": "Partager ce code QR",
       "twitchInterface.qrCodeInstructions": "Vos spectateurs peuvent scanner ceci pour vous suivre sur Seed Bible",
       "dragToResize": "glisser pour redimensionner",
-      "qrError": "Erreur QR : {{error}}"
+      "qrError": "Erreur QR : {{error}}",
+      "twitchSettings.off": "Désactivé",
+      "twitchSettings.fiveMinutes": "5 m",
+      "twitchSettings.tenMinutes": "10 m",
+      "twitchSettings.fifteenMinutes": "15 m",
+      "twitchSettings.twentyMinutes": "20 m",
+      "twitchSettings.custom": "Coutume"
     },
     "hi": {
       "title": "Twitch Pub एक्सटेंशन",
@@ -151,7 +193,13 @@
       "twitchInterface.shareQRCode": "यह QR कोड साझा करें",
       "twitchInterface.qrCodeInstructions": "आपके दर्शक Seed Bible पर आपको फॉलो करने के लिए इसे स्कैन कर सकते हैं",
       "dragToResize": "आकार बदलने के लिए खींचें",
-      "qrError": "क्यूआर त्रुटि: {{error}}"
+      "qrError": "क्यूआर त्रुटि: {{error}}",
+      "twitchSettings.off": "बंद",
+      "twitchSettings.fiveMinutes": "5 मीटर",
+      "twitchSettings.tenMinutes": "10 मीटर",
+      "twitchSettings.fifteenMinutes": "15",
+      "twitchSettings.twentyMinutes": "20 मीटर",
+      "twitchSettings.custom": "रिवाज़"
     },
     "id": {
       "title": "Ekstensi Twitch Pub",
@@ -170,7 +218,13 @@
       "twitchInterface.shareQRCode": "Bagikan kode QR ini",
       "twitchInterface.qrCodeInstructions": "Penonton Anda dapat memindai ini untuk mengikuti Anda di Seed Bible",
       "dragToResize": "seret untuk mengubah ukuran",
-      "qrError": "Kesalahan QR: {{error}}"
+      "qrError": "Kesalahan QR: {{error}}",
+      "twitchSettings.off": "Mati",
+      "twitchSettings.fiveMinutes": "5 meter",
+      "twitchSettings.tenMinutes": "10 meter",
+      "twitchSettings.fifteenMinutes": "15 meter",
+      "twitchSettings.twentyMinutes": "20 meter",
+      "twitchSettings.custom": "Kebiasaan"
     },
     "ja": {
       "title": "Twitch Pub 拡張機能",
@@ -189,7 +243,13 @@
       "twitchInterface.shareQRCode": "このQRコードを共有",
       "twitchInterface.qrCodeInstructions": "視聴者はこれをスキャンしてSeed Bibleであなたをフォローできます",
       "dragToResize": "ドラッグしてサイズを変更",
-      "qrError": "QRエラー: {{error}}"
+      "qrError": "QRエラー: {{error}}",
+      "twitchSettings.off": "オフ",
+      "twitchSettings.fiveMinutes": "5メートル",
+      "twitchSettings.tenMinutes": "10メートル",
+      "twitchSettings.fifteenMinutes": "15メートル",
+      "twitchSettings.twentyMinutes": "20メートル",
+      "twitchSettings.custom": "カスタム"
     },
     "ko": {
       "title": "Twitch Pub 확장 기능",
@@ -208,7 +268,13 @@
       "twitchInterface.shareQRCode": "이 QR 코드 공유",
       "twitchInterface.qrCodeInstructions": "시청자들이 이것을 스캔하여 Seed Bible에서 당신을 팔로우할 수 있습니다",
       "dragToResize": "드래그하여 크기를 조절하세요",
-      "qrError": "QR 코드 오류: {{error}}"
+      "qrError": "QR 코드 오류: {{error}}",
+      "twitchSettings.off": "끄다",
+      "twitchSettings.fiveMinutes": "5m",
+      "twitchSettings.tenMinutes": "10미터",
+      "twitchSettings.fifteenMinutes": "15m",
+      "twitchSettings.twentyMinutes": "20m",
+      "twitchSettings.custom": "관습"
     },
     "mn": {
       "title": "Twitch Pub өргөтгөл",
@@ -227,7 +293,13 @@
       "twitchInterface.shareQRCode": "Энэ QR кодыг хуваалцах",
       "twitchInterface.qrCodeInstructions": "Таны үзэгчид Seed Bible дээр таныг дагахын тулд үүнийг уншуулж болно",
       "dragToResize": "хэмжээг өөрчлөхийн тулд чирнэ үү",
-      "qrError": "QR алдаа: {{error}}"
+      "qrError": "QR алдаа: {{error}}",
+      "twitchSettings.off": "Унтраалттай",
+      "twitchSettings.fiveMinutes": "5м",
+      "twitchSettings.tenMinutes": "10м",
+      "twitchSettings.fifteenMinutes": "15м",
+      "twitchSettings.twentyMinutes": "20м",
+      "twitchSettings.custom": "Захиалгат"
     },
     "ne": {
       "title": "Twitch Pub विस्तार",
@@ -246,7 +318,13 @@
       "twitchInterface.shareQRCode": "यो QR कोड साझा गर्नुहोस्",
       "twitchInterface.qrCodeInstructions": "तपाईंका दर्शकहरूले Seed Bible मा तपाईंलाई फलो गर्न यो स्क्यान गर्न सक्छन्",
       "dragToResize": "आकार परिवर्तन गर्न तान्नुहोस्",
-      "qrError": "QR त्रुटि: {{error}}"
+      "qrError": "QR त्रुटि: {{error}}",
+      "twitchSettings.off": "बन्द",
+      "twitchSettings.fiveMinutes": "५ मिटर",
+      "twitchSettings.tenMinutes": "१० मिटर",
+      "twitchSettings.fifteenMinutes": "१५ मिटर",
+      "twitchSettings.twentyMinutes": "२० मिटर",
+      "twitchSettings.custom": "अनुकूलन"
     },
     "ps": {
       "title": "د Twitch Pub توسیع",
@@ -265,7 +343,13 @@
       "twitchInterface.shareQRCode": "دا QR کوډ شریک کړئ",
       "twitchInterface.qrCodeInstructions": "ستاسو لیدونکي کولی شي دا سکین کړي ترڅو تاسو د Seed Bible کې تعقیب کړي",
       "dragToResize": "د اندازې بدلولو لپاره کش کړئ",
-      "qrError": "د QR تېروتنه: {{error}}"
+      "qrError": "د QR تېروتنه: {{error}}",
+      "twitchSettings.off": "بند",
+      "twitchSettings.fiveMinutes": "۵ متره",
+      "twitchSettings.tenMinutes": "۱۰ متره",
+      "twitchSettings.fifteenMinutes": "۱۵ متره",
+      "twitchSettings.twentyMinutes": "۲۰ متره",
+      "twitchSettings.custom": "دود"
     },
     "pt": {
       "title": "Extensão Twitch Pub",
@@ -284,7 +368,13 @@
       "twitchInterface.shareQRCode": "Compartilhar este código QR",
       "twitchInterface.qrCodeInstructions": "Seus espectadores podem escanear isso para seguir você no Seed Bible",
       "dragToResize": "Arraste para redimensionar.",
-      "qrError": "Erro de QR Code: {{error}}"
+      "qrError": "Erro de QR Code: {{error}}",
+      "twitchSettings.off": "Desligado",
+      "twitchSettings.fiveMinutes": "5m",
+      "twitchSettings.tenMinutes": "10m",
+      "twitchSettings.fifteenMinutes": "15m",
+      "twitchSettings.twentyMinutes": "20m",
+      "twitchSettings.custom": "Personalizado"
     },
     "ru": {
       "title": "Расширение Twitch Pub",
@@ -303,7 +393,13 @@
       "twitchInterface.shareQRCode": "Поделиться этим QR-кодом",
       "twitchInterface.qrCodeInstructions": "Ваши зрители могут отсканировать это, чтобы подписаться на вас в Seed Bible",
       "dragToResize": "перетащите для изменения размера",
-      "qrError": "Ошибка QR-кода: {{error}}"
+      "qrError": "Ошибка QR-кода: {{error}}",
+      "twitchSettings.off": "Выключенный",
+      "twitchSettings.fiveMinutes": "5 м",
+      "twitchSettings.tenMinutes": "10 м",
+      "twitchSettings.fifteenMinutes": "15 м",
+      "twitchSettings.twentyMinutes": "20 м",
+      "twitchSettings.custom": "Обычай"
     },
     "sw": {
       "title": "Upanuzi wa Twitch Pub",
@@ -322,7 +418,13 @@
       "twitchInterface.shareQRCode": "Shiriki msimbo huu wa QR",
       "twitchInterface.qrCodeInstructions": "Watazamaji wako wanaweza kutambua hii kukufuata kwenye Seed Bible",
       "dragToResize": "buruta ili ubadilishe ukubwa",
-      "qrError": "Hitilafu ya QR: {{error}}"
+      "qrError": "Hitilafu ya QR: {{error}}",
+      "twitchSettings.off": "Imezimwa",
+      "twitchSettings.fiveMinutes": "Mita 5",
+      "twitchSettings.tenMinutes": "Mita 10",
+      "twitchSettings.fifteenMinutes": "Mita 15",
+      "twitchSettings.twentyMinutes": "Mita 20",
+      "twitchSettings.custom": "Maalum"
     },
     "ti": {
       "title": "Twitch Pub ኤክስቴንሽን",
@@ -341,7 +443,13 @@
       "twitchInterface.shareQRCode": "እዚ QR ኮድ ኣካፍሎ",
       "twitchInterface.qrCodeInstructions": "ተዓዘብቲ ኣብ Seed Bible ንኽስዕቡኻ ነዚ ኣንቢቦም ክወስዱ ይኽእሉ",
       "dragToResize": "ንዓቐን ንምቕያር ስሓብ",
-      "qrError": "QR ጌጋ: {{error}}"
+      "qrError": "QR ጌጋ: {{error}}",
+      "twitchSettings.off": "ምጥፋእ",
+      "twitchSettings.fiveMinutes": "5ሜ",
+      "twitchSettings.tenMinutes": "10ሜ",
+      "twitchSettings.fifteenMinutes": "15ሜ",
+      "twitchSettings.twentyMinutes": "20ሜ",
+      "twitchSettings.custom": "ቅቡል ልምዲ"
     },
     "tr": {
       "title": "Twitch Pub Uzantısı",
@@ -360,7 +468,13 @@
       "twitchInterface.shareQRCode": "Bu QR kodunu paylaş",
       "twitchInterface.qrCodeInstructions": "İzleyicileriniz sizi Seed Bible'da takip etmek için bunu tarayabilir",
       "dragToResize": "Boyutunu değiştirmek için sürükleyin",
-      "qrError": "QR Hatası: {{error}}"
+      "qrError": "QR Hatası: {{error}}",
+      "twitchSettings.off": "Kapalı",
+      "twitchSettings.fiveMinutes": "5 metre",
+      "twitchSettings.tenMinutes": "10 metre",
+      "twitchSettings.fifteenMinutes": "15 metre",
+      "twitchSettings.twentyMinutes": "20 metre",
+      "twitchSettings.custom": "Gelenek"
     },
     "ug": {
       "title": "Twitch Pub كېڭەيتىلمىسى",
@@ -379,7 +493,13 @@
       "twitchInterface.shareQRCode": "بۇ QR كودنى ئورتاقلىشىڭ",
       "twitchInterface.qrCodeInstructions": "تاماشىبىنلىرىڭىز Seed Bible دىكى سىزنى ئەگەشتۈرۈش ئۈچۈن بۇنى سىكانىرلىيەلەيدۇ",
       "dragToResize": "چوڭلۇقىنى ئۆزگەرتىش ئۈچۈن سۆرەڭ",
-      "qrError": "QR خاتالىقى: {{error}}"
+      "qrError": "QR خاتالىقى: {{error}}",
+      "twitchSettings.off": "تاقىلىپ",
+      "twitchSettings.fiveMinutes": "5 مېتىر",
+      "twitchSettings.tenMinutes": "10 مېتىر",
+      "twitchSettings.fifteenMinutes": "15 مېتىر",
+      "twitchSettings.twentyMinutes": "20 مېتىر",
+      "twitchSettings.custom": "خاسلاشتۇرۇلغان"
     },
     "uk": {
       "title": "Розширення Twitch Pub",
@@ -398,7 +518,13 @@
       "twitchInterface.shareQRCode": "Поділитися цим QR-кодом",
       "twitchInterface.qrCodeInstructions": "Ваші глядачі можуть сканувати це, щоб підписатися на вас у Seed Bible",
       "dragToResize": "перетягніть, щоб змінити розмір",
-      "qrError": "Помилка QR-коду: {{error}}"
+      "qrError": "Помилка QR-коду: {{error}}",
+      "twitchSettings.off": "Вимкнено",
+      "twitchSettings.fiveMinutes": "5 м",
+      "twitchSettings.tenMinutes": "10 м",
+      "twitchSettings.fifteenMinutes": "15 м",
+      "twitchSettings.twentyMinutes": "20 м",
+      "twitchSettings.custom": "Користувацька"
     },
     "ur": {
       "title": "Twitch Pub ایکسٹینشن",
@@ -417,7 +543,13 @@
       "twitchInterface.shareQRCode": "یہ QR کوڈ شیئر کریں",
       "twitchInterface.qrCodeInstructions": "آپ کے ناظرین Seed Bible پر آپ کو فالو کرنے کے لیے اسے اسکین کر سکتے ہیں",
       "dragToResize": "سائز تبدیل کرنے کے لیے گھسیٹیں۔",
-      "qrError": "QR خرابی: {{error}}"
+      "qrError": "QR خرابی: {{error}}",
+      "twitchSettings.off": "آف",
+      "twitchSettings.fiveMinutes": "5m",
+      "twitchSettings.tenMinutes": "10m",
+      "twitchSettings.fifteenMinutes": "15m",
+      "twitchSettings.twentyMinutes": "20m",
+      "twitchSettings.custom": "حسب ضرورت"
     },
     "vi": {
       "title": "Tiện ích mở rộng Twitch Pub",
@@ -436,7 +568,13 @@
       "twitchInterface.shareQRCode": "Chia sẻ mã QR này",
       "twitchInterface.qrCodeInstructions": "Khán giả của bạn có thể quét mã này để theo dõi bạn trên Seed Bible",
       "dragToResize": "kéo để thay đổi kích thước",
-      "qrError": "Lỗi mã QR: {{error}}"
+      "qrError": "Lỗi mã QR: {{error}}",
+      "twitchSettings.off": "Tắt",
+      "twitchSettings.fiveMinutes": "5m",
+      "twitchSettings.tenMinutes": "10 mét",
+      "twitchSettings.fifteenMinutes": "15m",
+      "twitchSettings.twentyMinutes": "20m",
+      "twitchSettings.custom": "Phong tục"
     },
     "zh": {
       "title": "Twitch Pub 扩展",
@@ -455,7 +593,13 @@
       "twitchInterface.shareQRCode": "分享此 QR 码",
       "twitchInterface.qrCodeInstructions": "您的观众可以扫描此码在 Seed Bible 上关注您",
       "dragToResize": "拖动调整大小",
-      "qrError": "二维码错误： {{error}}"
+      "qrError": "二维码错误： {{error}}",
+      "twitchSettings.off": "离开",
+      "twitchSettings.fiveMinutes": "5米",
+      "twitchSettings.tenMinutes": "10米",
+      "twitchSettings.fifteenMinutes": "15米",
+      "twitchSettings.twentyMinutes": "20米",
+      "twitchSettings.custom": "风俗"
     },
     "ind": {
       "title": "Ekstensi Twitch Pub",
@@ -474,7 +618,13 @@
       "twitchInterface.shareQRCode": "Bagikan kode QR ini",
       "twitchInterface.qrCodeInstructions": "Penonton Anda dapat memindai ini untuk mengikuti Anda di Seed Bible",
       "dragToResize": "seret untuk mengubah ukuran",
-      "qrError": "Kesalahan QR: {{error}}"
+      "qrError": "Kesalahan QR: {{error}}",
+      "twitchSettings.off": "Mati",
+      "twitchSettings.fiveMinutes": "5 meter",
+      "twitchSettings.tenMinutes": "10 meter",
+      "twitchSettings.fifteenMinutes": "15 meter",
+      "twitchSettings.twentyMinutes": "20 meter",
+      "twitchSettings.custom": "Kebiasaan"
     }
   }
 }

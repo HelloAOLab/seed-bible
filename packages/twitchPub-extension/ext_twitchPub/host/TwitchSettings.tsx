@@ -52,6 +52,7 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
           <button
             className="icon-btn material-symbols-outlined"
             onClick={() => setCurrentPage("interface")}
+            // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
           >
             arrow_back
           </button>
@@ -132,12 +133,42 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                 onTouchStart={(e: TouchEvent) => e.stopPropagation()}
                 className="twitch-select-box"
               >
-                <option value={0}>Off</option>
-                <option value={300000}>5m</option>
-                <option value={600000}>10m</option>
-                <option value={900000}>15m</option>
-                <option value={1200000}>20m</option>
-                <option value="custom">Custom</option>
+                <option value={0}>
+                  {t("twitchSettings.off", {
+                    ns: "ext_twitchPub",
+                    defaultValue: "Off",
+                  })}
+                </option>
+                <option value={300000}>
+                  {t("twitchSettings.fiveMinutes", {
+                    ns: "ext_twitchPub",
+                    defaultValue: "5m",
+                  })}
+                </option>
+                <option value={600000}>
+                  {t("twitchSettings.tenMinutes", {
+                    ns: "ext_twitchPub",
+                    defaultValue: "10m",
+                  })}
+                </option>
+                <option value={900000}>
+                  {t("twitchSettings.fifteenMinutes", {
+                    ns: "ext_twitchPub",
+                    defaultValue: "15m",
+                  })}
+                </option>
+                <option value={1200000}>
+                  {t("twitchSettings.twentyMinutes", {
+                    ns: "ext_twitchPub",
+                    defaultValue: "20m",
+                  })}
+                </option>
+                <option value="custom">
+                  {t("twitchSettings.custom", {
+                    ns: "ext_twitchPub",
+                    defaultValue: "Custom",
+                  })}
+                </option>
               </select>
               {customTimerFlag === "custom" && (
                 <div
