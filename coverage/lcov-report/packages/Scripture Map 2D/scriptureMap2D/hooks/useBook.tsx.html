@@ -822,7 +822,9 @@
 <a name='L751'></a><a href='#L751'>751</a>
 <a name='L752'></a><a href='#L752'>752</a>
 <a name='L753'></a><a href='#L753'>753</a>
-<a name='L754'></a><a href='#L754'>754</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L754'></a><a href='#L754'>754</a>
+<a name='L755'></a><a href='#L755'>755</a>
+<a name='L756'></a><a href='#L756'>756</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1000,8 +1002,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">62x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">57x</span>
 <span class="cline-any cline-yes">57x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1753,11 +1757,13 @@ export const useBook: UseBook = (props) =&gt; {
   }, [chaptersVerseCount, scaleFactor, chapterGap, chapterHeight]);
 &nbsp;
   const checked = useMemo(() =&gt; {
-    const bookSelection = selection?.[testament.name]?.[sectionName]?.[bookId] ?? []
-    return bookSelection?.length &gt; 0 &amp;&amp; bookSelection.every(
-      (chapter) =&gt; {
+    const bookSelection =
+      selection?.[testament.name]?.[sectionName]?.[bookId] ?? [];
+    return (
+      bookSelection?.length &gt; 0 &amp;&amp;
+      bookSelection.every((chapter) =&gt; {
         return chapter;
-      }
+      })
     );
   }, [selection]);
 &nbsp;
@@ -2342,7 +2348,7 @@ export const useBook: UseBook = (props) =&gt; {
         rel="noopener noreferrer"
         >istanbul</a
       >
-      at 2026-05-20T22:22:32.928Z
+      at 2026-05-21T15:08:40.311Z
     </div>
     <script src="../../../../prettify.js"></script>
     <script>

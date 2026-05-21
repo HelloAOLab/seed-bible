@@ -80,8 +80,8 @@ describe("Container", () => {
       const items = container.querySelectorAll(
         "[data-testid='testament-container']"
       );
-      expect(items[0].getAttribute("data-index")).toBe("0");
-      expect(items[1].getAttribute("data-index")).toBe("1");
+      expect(items[0]!.getAttribute("data-index")).toBe("0");
+      expect(items[1]!.getAttribute("data-index")).toBe("1");
     });
   });
 });

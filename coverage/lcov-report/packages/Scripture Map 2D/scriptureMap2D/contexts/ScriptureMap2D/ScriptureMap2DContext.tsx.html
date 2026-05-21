@@ -33,27 +33,27 @@
         </h1>
         <div class="clearfix">
           <div class="fl pad1y space-right2">
-            <span class="strong">58.33% </span>
+            <span class="strong">100% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">7/12</span>
+            <span class="fraction">12/12</span>
           </div>
 
           <div class="fl pad1y space-right2">
-            <span class="strong">25% </span>
+            <span class="strong">100% </span>
             <span class="quiet">Branches</span>
-            <span class="fraction">1/4</span>
+            <span class="fraction">4/4</span>
           </div>
 
           <div class="fl pad1y space-right2">
-            <span class="strong">50% </span>
+            <span class="strong">100% </span>
             <span class="quiet">Functions</span>
-            <span class="fraction">1/2</span>
+            <span class="fraction">2/2</span>
           </div>
 
           <div class="fl pad1y space-right2">
-            <span class="strong">63.63% </span>
+            <span class="strong">100% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">7/11</span>
+            <span class="fraction">11/11</span>
           </div>
         </div>
         <p class="quiet">
@@ -67,7 +67,7 @@
           </div>
         </template>
       </div>
-      <div class="status-line medium"></div>
+      <div class="status-line high"></div>
       <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -247,11 +247,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -259,15 +259,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useScriptureMap2DProvider } from "scriptureMap2D.contexts.ScriptureMap2D.useScriptureMap2DProvider";
 import type { ScriptureMap2DConfig } from "scriptureMap2D.components.ScriptureMap2D";
@@ -343,15 +343,15 @@ const ScriptureMap2DContext = createContext&lt;
   ScriptureMap2DContextType | undefined
 &gt;(undefined);
 &nbsp;
-export const ScriptureMap2DProvider = <span class="fstat-no" title="function not covered" >({</span>
+export const ScriptureMap2DProvider = ({
   children,
   config,
 }: ScriptureMap2DProviderProps) =&gt; {
-  const value = <span class="cstat-no" title="statement not covered" >useScriptureMap2DProvider(config);</span>
+  const value = useScriptureMap2DProvider(config);
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  if (!value.arrangement) <span class="cstat-no" title="statement not covered" >return &lt;&gt;&lt;/&gt;;</span></span>
+  if (!value.arrangement) return &lt;&gt;&lt;/&gt;;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return (</span>
+  return (
     &lt;ScriptureMap2DContext.Provider value={value}&gt;
       {children}
     &lt;/ScriptureMap2DContext.Provider&gt;
@@ -361,13 +361,13 @@ export const ScriptureMap2DProvider = <span class="fstat-no" title="function not
 export const useScriptureMap2DContext = () =&gt; {
   const context = useContext(ScriptureMap2DContext);
 &nbsp;
-  <span class="missing-if-branch" title="else path not taken" >E</span>if (!context) {
+  if (!context) {
     throw new Error(
       "useScriptureMap2DContext must be used within a ScriptureMap2DContext"
     );
   }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return context;</span>
+  return context;
 };
 &nbsp;</pre></td></tr></table></pre>
 
@@ -383,7 +383,7 @@ export const useScriptureMap2DContext = () =&gt; {
         rel="noopener noreferrer"
         >istanbul</a
       >
-      at 2026-05-20T22:22:32.928Z
+      at 2026-05-21T15:08:40.311Z
     </div>
     <script src="../../../../../prettify.js"></script>
     <script>

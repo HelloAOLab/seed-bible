@@ -16,4 +16,6 @@ globalThis.os.appCompat = {
   memo: (component) => component,
   // forwardRef: expose ref as second argument, matching Preact/compat semantics
   forwardRef: (component) => (props) => component(props, props.ref),
+  // createPortal: render inline in tests — avoids needing preact/compat (side effects)
+  createPortal: (vnode) => vnode,
 };

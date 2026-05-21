@@ -33,27 +33,27 @@
         </h1>
         <div class="clearfix">
           <div class="fl pad1y space-right2">
-            <span class="strong">70% </span>
+            <span class="strong">100% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">7/10</span>
+            <span class="fraction">10/10</span>
           </div>
 
           <div class="fl pad1y space-right2">
-            <span class="strong">50% </span>
+            <span class="strong">100% </span>
             <span class="quiet">Branches</span>
-            <span class="fraction">1/2</span>
+            <span class="fraction">2/2</span>
           </div>
 
           <div class="fl pad1y space-right2">
-            <span class="strong">50% </span>
+            <span class="strong">100% </span>
             <span class="quiet">Functions</span>
-            <span class="fraction">1/2</span>
+            <span class="fraction">2/2</span>
           </div>
 
           <div class="fl pad1y space-right2">
-            <span class="strong">70% </span>
+            <span class="strong">100% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">7/10</span>
+            <span class="fraction">10/10</span>
           </div>
         </div>
         <p class="quiet">
@@ -67,7 +67,7 @@
           </div>
         </template>
       </div>
-      <div class="status-line medium"></div>
+      <div class="status-line high"></div>
       <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -115,21 +115,21 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useTimeProvider } from "scriptureMap2D.contexts.Time.useTimeProvider";
 &nbsp;
@@ -145,10 +145,10 @@ export interface TimeContextType {
 &nbsp;
 const TimeContext = createContext&lt;TimeContextType | undefined&gt;(undefined);
 &nbsp;
-export const TimeProvider = <span class="fstat-no" title="function not covered" >({</span> children }: TimeProviderProps) =&gt; {
-  const contextValue = <span class="cstat-no" title="statement not covered" >useTimeProvider();</span>
+export const TimeProvider = ({ children }: TimeProviderProps) =&gt; {
+  const contextValue = useTimeProvider();
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return (</span>
+  return (
     &lt;TimeContext.Provider value={contextValue}&gt;{children}&lt;/TimeContext.Provider&gt;
   );
 };
@@ -156,11 +156,11 @@ export const TimeProvider = <span class="fstat-no" title="function not covered" 
 export const useTimeContext = () =&gt; {
   const context = useContext(TimeContext);
 &nbsp;
-  <span class="missing-if-branch" title="else path not taken" >E</span>if (!context) {
+  if (!context) {
     throw new Error("useTimeContext must be used within a TimeContext");
   }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return context;</span>
+  return context;
 };
 &nbsp;</pre></td></tr></table></pre>
 
@@ -176,7 +176,7 @@ export const useTimeContext = () =&gt; {
         rel="noopener noreferrer"
         >istanbul</a
       >
-      at 2026-05-20T22:22:32.928Z
+      at 2026-05-21T15:08:40.311Z
     </div>
     <script src="../../../../../prettify.js"></script>
     <script>

@@ -31,15 +31,15 @@
         </h1>
         <div class="clearfix">
           <div class="fl pad1y space-right2">
-            <span class="strong">92.3% </span>
+            <span class="strong">89.74% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">36/39</span>
+            <span class="fraction">35/39</span>
           </div>
 
           <div class="fl pad1y space-right2">
-            <span class="strong">83.33% </span>
+            <span class="strong">79.16% </span>
             <span class="quiet">Branches</span>
-            <span class="fraction">20/24</span>
+            <span class="fraction">19/24</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -49,9 +49,9 @@
           </div>
 
           <div class="fl pad1y space-right2">
-            <span class="strong">91.89% </span>
+            <span class="strong">89.18% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">34/37</span>
+            <span class="fraction">33/37</span>
           </div>
         </div>
         <p class="quiet">
@@ -248,16 +248,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">145x</span>
+<span class="cline-any cline-yes">146x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">145x</span>
-<span class="cline-any cline-yes">1246x</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">146x</span>
+<span class="cline-any cline-yes">146x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1242x</span>
-<span class="cline-any cline-yes">1242x</span>
-<span class="cline-any cline-yes">1242x</span>
+<span class="cline-any cline-yes">146x</span>
+<span class="cline-any cline-yes">146x</span>
+<span class="cline-any cline-yes">146x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -321,12 +321,12 @@
 <span class="cline-any cline-yes">60x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">132x</span>
-<span class="cline-any cline-yes">132x</span>
+<span class="cline-any cline-yes">134x</span>
+<span class="cline-any cline-yes">134x</span>
 <span class="cline-any cline-yes">54x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">78x</span>
+<span class="cline-any cline-yes">80x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -402,8 +402,8 @@ export async function waitFor(
   const start = Date.now();
 &nbsp;
   while (!condition()) {
-    if (Date.now() - start &gt; timeoutMs) {
-      throw new Error("Timed out waiting for condition.");
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (Date.now() - start &gt; timeoutMs) {
+<span class="cstat-no" title="statement not covered" >      throw new Error("Timed out waiting for condition.");</span>
     }
 &nbsp;
     const p = new Promise((resolve) =&gt; setTimeout(resolve, 0));
@@ -534,7 +534,7 @@ export async function createTestSeedBibleState(
         rel="noopener noreferrer"
         >istanbul</a
       >
-      at 2026-05-20T22:22:32.928Z
+      at 2026-05-21T15:08:40.311Z
     </div>
     <script src="../../../../prettify.js"></script>
     <script>
