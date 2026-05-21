@@ -287,6 +287,7 @@ export function createBibleSelectorState(
         )?.id ??
         dataManager.availableTranslations.value[0]?.id ??
         null;
+
       if (!nextTranslationId) {
         throw new Error("No available translations found.");
       }
@@ -492,15 +493,19 @@ export function createBibleSelectorState(
         expandedBookId.value = firstBook.id;
       }
 
+      const previousTranslation = selectedTranslation.value;
       selectedTranslationId.value = nextTranslationId;
-      handleChapterSelect(
-        currentBookId.value ?? firstBook?.id ?? "GEN",
-        currentChapterNumber.value ?? 1
-      );
       search.value = "";
       languageQuery.value = "";
       selectingTranslation.value = false;
-      setOpen(false);
+      if (previousTranslation && isOpen.value) {
+        await handleChapterSelect(
+          books.books.find((b) => b.id === currentBookId.value)?.id ??
+            firstBook?.id ??
+            "GEN",
+          currentChapterNumber.value ?? 1
+        );
+      }
     } catch (err) {
       error.value =
         err instanceof Error
