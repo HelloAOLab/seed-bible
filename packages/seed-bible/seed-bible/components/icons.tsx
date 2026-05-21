@@ -296,6 +296,7 @@ const AiIcon = (props: any) => (
       fontWeight="bold"
       fill="currentColor"
       fontFamily="Arial, sans-serif"
+      // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
     >
       AI
     </text>
@@ -325,6 +326,7 @@ const AiChatIcon = (props: any) => (
       fontWeight="bold"
       fill="currentColor"
       fontFamily="Arial, sans-serif"
+      // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
     >
       AI
     </text>

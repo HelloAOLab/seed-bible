@@ -215,6 +215,7 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                       color: "#888",
                       pointerEvents: "none",
                     }}
+                    // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
                   >
                     m
                   </span>
