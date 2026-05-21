@@ -3941,16 +3941,24 @@ h6 {
   }
 }
 
-/* Desktop hides both mobile add-tab affordances — they only appear when
- * the mobile sidebar overlay is visible. */
+/* Desktop hides both mobile add-tab affordances and the mobile view
+ * switcher — they only appear when the mobile sidebar overlay or the
+ * mobile bible-selector is visible. */
 .sb-tab-mobile-add-fab,
-.sb-tab-mobile-add-inline {
+.sb-tab-mobile-add-inline,
+.sb-mobile-view-switcher {
   display: none;
 }
 
 @media (max-width: 768px) {
   .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-fab {
     display: inline-flex;
+  }
+
+  /* Re-enable the mobile view switcher on mobile — comes after the
+   * desktop `display: none` above so source order makes this rule win. */
+  .sb-mobile-view-switcher {
+    display: flex;
   }
 }
 
