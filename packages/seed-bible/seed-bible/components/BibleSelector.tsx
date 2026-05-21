@@ -113,53 +113,44 @@ const SearchBar = (props: {
                 }}
               />
             </div>
-            {viewportWidth.value > 768 && (
-              <div class="dropdown">
-                <select
-                  value={selectedTestament.value}
-                  onChange={(e) => {
-                    selectedTestament.value = Number(
-                      (e.target as HTMLSelectElement).value
-                    );
-                  }}
-                  class="dropdown-select"
-                >
-                  <option value={2} class="dropdown-option">
-                    {t("allBooks", { defaultValue: "All Books" })}
+            <div class="dropdown">
+              <select
+                value={selectedTestament.value}
+                onChange={(e) => {
+                  selectedTestament.value = Number(
+                    (e.target as HTMLSelectElement).value
+                  );
+                }}
+                class="dropdown-select"
+              >
+                <option value={2} class="dropdown-option">
+                  {t("allBooks", { defaultValue: "All Books" })}
+                </option>
+                <option value={0} class="dropdown-option">
+                  {viewportWidth.value > 750
+                    ? t("old-testament", { defaultValue: "Old Testament" })
+                    : t("old-testament_short", { defaultValue: "OT" })}
+                </option>
+                <option value={1} class="dropdown-option">
+                  {viewportWidth.value > 750
+                    ? t("new-testament", { defaultValue: "New Testament" })
+                    : t("new-testament_short", { defaultValue: "NT" })}
+                </option>
+                {apocryphaAvailable.value && (
+                  <option value={3} class="dropdown-option">
+                    {t("apocrypha", { defaultValue: "Apocrypha" })}
                   </option>
-                  <option value={0} class="dropdown-option">
-                    {viewportWidth.value > 750
-                      ? t("old-testament", { defaultValue: "Old Testament" })
-                      : t("old-testament_short", { defaultValue: "OT" })}
-                  </option>
-                  <option value={1} class="dropdown-option">
-                    {viewportWidth.value > 750
-                      ? t("new-testament", { defaultValue: "New Testament" })
-                      : t("new-testament_short", { defaultValue: "NT" })}
-                  </option>
-                  {apocryphaAvailable.value && (
-                    <option value={3} class="dropdown-option">
-                      {t("apocrypha", { defaultValue: "Apocrypha" })}
-                    </option>
-                  )}
-                </select>
-              </div>
-            )}
+                )}
+              </select>
+            </div>
             {viewportWidth.value <= 768 && (
               <button
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  height: "32px",
-                  width: "32px",
-                  background: "transparent",
-                  border: "transparent",
-                }}
+                class="sb-selector-mobile-close"
                 onClick={() => {
                   setOpen(false);
                   selectingTranslation.value = false;
                 }}
+                aria-label={t("close", { defaultValue: "Close" })}
               >
                 <span class="material-symbols-outlined">close</span>
               </button>

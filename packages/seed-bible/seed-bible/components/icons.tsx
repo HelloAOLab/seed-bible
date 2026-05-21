@@ -44,13 +44,16 @@ export const SpaceDefaultIcon = () => {
     </div>
   );
 };
-export function SeedBibleIcon() {
+export function SeedBibleIcon({ size = 32 }: { size?: number } = {}) {
   return (
     <img
       src="https://favicon.ao.bot/assets/seed-bible-isolated-minified.png"
       style={{
-        width: "32px",
+        width: `${size}px`,
+        height: `${size}px`,
+        objectFit: "contain",
       }}
+      alt=""
     />
   );
 }

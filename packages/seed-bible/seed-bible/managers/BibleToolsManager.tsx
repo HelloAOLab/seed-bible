@@ -117,6 +117,8 @@ export interface BibleToolContext {
   openSidebar: () => void;
   /** Opens the search interface. */
   openSearch: () => void;
+  /** Opens the chat / cross-references floating panel. */
+  openChat?: () => void;
 }
 
 /** Fully resolved reader toolbar tool ready for rendering. */
@@ -445,6 +447,15 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       icon: () => <MaterialIcon>search</MaterialIcon>,
       onSelect: (context) => {
         context.openSearch();
+      },
+    },
+    {
+      id: "open-chat",
+      priority: 120,
+      title: { key: "chat", defaultValue: "Chat" },
+      icon: () => <MaterialIcon>chat_bubble_outline</MaterialIcon>,
+      onSelect: (context) => {
+        context.openChat?.();
       },
     },
     {

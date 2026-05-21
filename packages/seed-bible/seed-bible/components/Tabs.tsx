@@ -553,16 +553,87 @@ export function Tabs(props: TabsProps) {
         <h3 className="sb-sidebar-tabs-title">
           {t("tabs", { defaultValue: "Tabs" })}
         </h3>
-        <button
-          onClick={() => {
-            app.addTab();
-          }}
-          className="sb-tab-add-button"
-          aria-label={t("create-new-tab", { defaultValue: "Create new tab" })}
-          title={t("new-tab", { defaultValue: "New tab" })}
-        >
-          <span className="material-symbols-outlined">add</span>
-        </button>
+        <div className="sb-sidebar-tabs-header-actions">
+          <button
+            type="button"
+            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-tasks-button"
+            aria-label={t("tasks", { defaultValue: "Tasks" })}
+            title={t("tasks", { defaultValue: "Tasks" })}
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M11.5 21H6C5.46957 21 4.96086 20.7893 4.58579 20.4142C4.21071 20.0391 4 19.5304 4 19V5C4 4.46957 4.21071 3.96086 4.58579 3.58579C4.96086 3.21071 5.46957 3 6 3H18C18.5304 3 19.0391 3.21071 19.4142 3.58579C19.7893 3.96086 20 4.46957 20 5V13"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M9 18H11"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M15 19L17 21L21 17"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button"
+            aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
+            title={t("bookmarks", { defaultValue: "Bookmarks" })}
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-close-button"
+            onClick={state.sidebar.closeSidebar}
+            aria-label={t("close", { defaultValue: "Close" })}
+            title={t("close", { defaultValue: "Close" })}
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+          <button
+            onClick={() => {
+              app.addTab();
+            }}
+            className="sb-tab-add-button"
+            aria-label={t("create-new-tab", { defaultValue: "Create new tab" })}
+            title={t("new-tab", { defaultValue: "New tab" })}
+          >
+            <span className="material-symbols-outlined">add</span>
+          </button>
+        </div>
       </div>
 
       <SidebarSearch state={state} closeLayoutMenu={closeLayoutMenu} />
@@ -604,10 +675,13 @@ export function Tabs(props: TabsProps) {
               >
                 <div className="sb-tab-main-content">
                   <span className="sb-tab-main-title">
-                    {`${title} – ${currentChapter}`}
+                    {`${title} - ${currentChapter}`}
+                  </span>
+                  <span className="sb-tab-main-sep" aria-hidden="true">
+                    •
                   </span>
                   <span className="sb-tab-main-translation">
-                    {` · ${currentTranslation}`}
+                    {currentTranslation}
                   </span>
                 </div>
 
@@ -779,11 +853,15 @@ export function Tabs(props: TabsProps) {
         onClick={() => {
           app.addTab();
         }}
-        className="sb-tab-mobile-add-fab"
+        className="sb-tab-mobile-add-inline"
         aria-label={t("create-new-tab", { defaultValue: "Create new tab" })}
-        title={t("new-tab", { defaultValue: "New tab" })}
       >
-        <span className="material-symbols-outlined">add</span>
+        <span className="sb-tab-mobile-add-inline-icon" aria-hidden="true">
+          <span className="material-symbols-outlined">add</span>
+        </span>
+        <span className="sb-tab-mobile-add-inline-label">
+          {t("add-new-tab", { defaultValue: "Add new tab" })}
+        </span>
       </button>
     </>
   );
@@ -885,21 +963,62 @@ export function SharedSessionsToasts(props: { state: SeedBibleState }) {
 }
 
 /**
+ * Just the avatar visual — the image (when the user has a profile picture)
+ * or the deterministic animal icon + color (otherwise). Reused by the
+ * sidebar bottom-right avatar button and by the mobile bottom-bar "You"
+ * tab so the two surfaces always show the same identity.
+ */
+export function SelfAvatarVisual(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { login } = state;
+  const profile = login.profile.value;
+  // Share identity with connected-user rendering so the avatar shows the
+  // same icon/color as the user's row inside a shared session.
+  const visualKey = getSelfVisualKey(state);
+  const visual = getUserAnimalVisual(visualKey);
+  const imageUrl = profile?.pictureUrl ?? null;
+
+  if (imageUrl) {
+    return (
+      <span
+        className="sb-tab-user-icon sb-tab-user-icon-has-image"
+        style={{
+          borderColor: visual.color,
+          backgroundImage: `url(${imageUrl})`,
+        }}
+      />
+    );
+  }
+
+  return (
+    <span
+      className="sb-tab-user-icon sb-tab-user-icon-animal"
+      style={{
+        borderColor: visual.color,
+        backgroundColor: visual.color,
+      }}
+    >
+      <span className="material-symbols-outlined">{visual.icon}</span>
+    </span>
+  );
+}
+
+/** Display name for the current user — used as the avatar tooltip / aria-label. */
+export function getSelfDisplayName(state: SeedBibleState): string {
+  const userId = state.login.userId.value;
+  const profile = state.login.profile.value;
+  return profile?.name ?? (userId ? userId.slice(0, 8) : "Guest");
+}
+
+/**
  * Button at the bottom-right of the sidebar showing the current user's own
  * animal icon + color. Opens account settings when clicked (matches the
  * bottom-of-sidebar avatar slot in develop).
  */
 function SelfAvatarButton(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { login, sidebar } = state;
-  const userId = login.userId.value;
-  const profile = login.profile.value;
-  // Share identity with connected-user rendering so the sidebar avatar
-  // shows the same icon/color as my row inside a shared session.
-  const visualKey = getSelfVisualKey(state);
-  const visual = getUserAnimalVisual(visualKey);
-  const displayName = profile?.name ?? (userId ? userId.slice(0, 8) : "Guest");
-  const imageUrl = profile?.pictureUrl ?? null;
+  const { sidebar } = state;
+  const displayName = getSelfDisplayName(state);
 
   return (
     <button
@@ -910,25 +1029,7 @@ function SelfAvatarButton(props: { state: SeedBibleState }) {
       aria-label={`Open account settings (${displayName})`}
       title={displayName}
     >
-      {imageUrl ? (
-        <span
-          className="sb-tab-user-icon sb-tab-user-icon-has-image"
-          style={{
-            borderColor: visual.color,
-            backgroundImage: `url(${imageUrl})`,
-          }}
-        />
-      ) : (
-        <span
-          className="sb-tab-user-icon sb-tab-user-icon-animal"
-          style={{
-            borderColor: visual.color,
-            backgroundColor: visual.color,
-          }}
-        >
-          <span className="material-symbols-outlined">{visual.icon}</span>
-        </span>
-      )}
+      <SelfAvatarVisual state={state} />
     </button>
   );
 }
