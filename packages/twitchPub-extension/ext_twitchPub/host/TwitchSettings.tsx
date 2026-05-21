@@ -44,7 +44,10 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
             }}
           >
             <TwitchIcon style={{ width: "24px", height: "24px" }} />
-            {t("twitchSettings.title", { defaultValue: "Twitch Settings" })}
+            {t("twitchSettings.title", {
+              ns: "ext_twitchPub",
+              defaultValue: "Twitch Settings",
+            })}
           </span>
           <button
             className="icon-btn material-symbols-outlined"
@@ -57,6 +60,7 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
           <div className="twitchPub-settings-item">
             <span>
               {t("twitchSettings.broadcastTranslationEvents", {
+                ns: "ext_twitchPub",
                 defaultValue: "Broadcast translation events",
               })}
             </span>
@@ -74,6 +78,7 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
           <div className="twitchPub-settings-item">
             <span>
               {t("twitchSettings.broadcastHighlightEvents", {
+                ns: "ext_twitchPub",
                 defaultValue: "Broadcast highlight events",
               })}
             </span>
@@ -91,6 +96,7 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
           <div className="twitchPub-settings-item">
             <span>
               {t("twitchSettings.announcementTimer", {
+                ns: "ext_twitchPub",
                 defaultValue: "Announcement Timer",
               })}
             </span>

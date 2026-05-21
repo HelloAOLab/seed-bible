@@ -33,14 +33,19 @@ const TwitchSettings = (props: {
             }}
           >
             <TwitchIcon style={{ width: "24px", height: "24px" }} />
-            {t("ext_twitchSub.title", { defaultValue: "Twitch Settings" })}
+            {t("settingsTitle", {
+              ns: "ext_twitchSub",
+              defaultValue: "Twitch Settings",
+            })}
             <button
               className="icon-btn material-symbols-outlined"
               style={{ fontSize: "20px", opacity: 0.7 }}
-              title={t("ext_twitchSub.infoTooltip", {
+              title={t("infoTooltip", {
+                ns: "ext_twitchSub",
                 defaultValue:
                   "Choose which updates you receive when a streamer you follow takes action.",
               })}
+              // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
             >
               info
             </button>
@@ -48,6 +53,7 @@ const TwitchSettings = (props: {
           <button
             className="icon-btn material-symbols-outlined"
             onClick={() => (props.settingsOpened.value = false)}
+            // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
           >
             close
           </button>
@@ -55,7 +61,8 @@ const TwitchSettings = (props: {
         <div className="twitchSub-content">
           <div className="twitchSub-settings-item">
             <span>
-              {t("ext_twitchSub.followTranslationEvent", {
+              {t("followTranslationEvent", {
+                ns: "ext_twitchSub",
                 defaultValue: "Follow translation event",
               })}
             </span>
@@ -69,7 +76,8 @@ const TwitchSettings = (props: {
           </div>
           <div className="twitchSub-settings-item">
             <span>
-              {t("ext_twitchSub.followHighlightEvent", {
+              {t("followHighlightEvent", {
+                ns: "ext_twitchSub",
                 defaultValue: "Follow highlight event",
               })}
             </span>
@@ -83,7 +91,8 @@ const TwitchSettings = (props: {
           </div>
           <div className="twitchSub-settings-item">
             <span>
-              {t("ext_twitchSub.followChapterEvent", {
+              {t("followChapterEvent", {
+                ns: "ext_twitchSub",
                 defaultValue: "Follow chapter event",
               })}
             </span>
@@ -112,10 +121,12 @@ const TwitchSettings = (props: {
                 {props.wsPaused.value ? "link" : "link_off"}
               </span>
               {props.wsPaused.value
-                ? t("ext_twitchSub.rejoinSession", {
+                ? t("rejoinSession", {
+                    ns: "ext_twitchSub",
                     defaultValue: "Rejoin session",
                   })
-                : t("ext_twitchSub.leaveSession", {
+                : t("leaveSession", {
+                    ns: "ext_twitchSub",
                     defaultValue: "Leave session",
                   })}
             </button>

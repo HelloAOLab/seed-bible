@@ -26,7 +26,8 @@ const Authorization = () => {
           }}
         >
           <TwitchIcon style={{ width: "24px", height: "24px" }} />
-          {t("ext_twitchPub.authorization", {
+          {t("authorization", {
+            ns: "ext_twitchPub",
             defaultValue: "Authenticating with Twitch",
           })}
         </span>
@@ -47,12 +48,14 @@ const Authorization = () => {
             textAlign: "center",
           }}
         >
-          {t("ext_twitchPub.waitingForAuthorization", {
+          {t("waitingForAuthorization", {
+            ns: "ext_twitchPub",
             defaultValue: "Waiting for Authorization",
           })}
         </span>
         <span style={{ fontSize: "14px", textAlign: "center" }}>
-          {t("ext_twitchPub.authorizationInstructions", {
+          {t("authorizationInstructions", {
+            ns: "ext_twitchPub",
             defaultValue:
               "Please complete the authorization process in the opened Twitch page.",
           })}

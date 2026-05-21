@@ -782,7 +782,6 @@ const LanguageComponent = (props: {
   const {
     languageQuery,
     selectedTranslation,
-    selectingTranslation,
     showAllLanguages,
     showTranslationInfo,
     filteredApiTranslations,

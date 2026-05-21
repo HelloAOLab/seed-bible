@@ -28,7 +28,10 @@ const Login = (props: { state: TwitchPubState }) => {
           }}
         >
           <TwitchIcon style={{ width: "24px", height: "24px" }} />
-          {t("twitchHost", { defaultValue: "Twitch Host" })}
+          {t("twitchHost", {
+            ns: "ext_twitchPub",
+            defaultValue: "Twitch Host",
+          })}
         </span>
         <button
           className="icon-btn"
@@ -48,8 +51,14 @@ const Login = (props: { state: TwitchPubState }) => {
             disabled={!twitchConfig.value.clientId.value || loading.value}
           >
             {loading.value
-              ? t("loading", { defaultValue: "Loading..." })
-              : t("loginWithTwitch", { defaultValue: "Login with Twitch" })}
+              ? t("loading", {
+                  ns: "ext_twitchPub",
+                  defaultValue: "Loading...",
+                })
+              : t("loginWithTwitch", {
+                  ns: "ext_twitchPub",
+                  defaultValue: "Login with Twitch",
+                })}
           </button>
         </div>
       </div>

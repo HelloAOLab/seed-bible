@@ -65,7 +65,7 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
             }}
           >
             <TwitchIcon style={{ width: "24px", height: "24px" }} />
-            {t("twitch", { defaultValue: "Twitch" })}
+            {t("twitch", { ns: "ext_twitchPub", defaultValue: "Twitch" })}
           </span>
           <div
             style={{
@@ -117,6 +117,7 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
             }
           >
             {t("twitchInterface.shareQRCode", {
+              ns: "ext_twitchPub",
               defaultValue: "Share this QR code",
             })}
           </span>
@@ -136,6 +137,7 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
             }
           >
             {t("twitchInterface.qrCodeInstructions", {
+              ns: "ext_twitchPub",
               defaultValue:
                 "Your viewers can scan this to follow you on Seed Bible",
             })}
