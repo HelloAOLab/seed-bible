@@ -139,7 +139,9 @@ describe("CreateTwitchPubState", () => {
       `${window.location.origin}/twitch-pub`
     );
     expect(redirectUri.searchParams.get("pattern")).toBe("SeedBible");
-    expect(redirectUri.searchParams.get("ext_twitchPub")).toBe("true");
+    expect(redirectUri.searchParams.get("autoinstall-ext_twitchSub")).toBe(
+      "true"
+    );
     expect(redirectUri.origin + redirectUri.pathname).not.toBe(
       "https://ao.bot/"
     );
@@ -177,7 +179,9 @@ describe("CreateTwitchPubState", () => {
       `${window.location.origin}/reader`
     );
     expect(redirectUri.searchParams.get("pattern")).toBe("SeedBible");
-    expect(redirectUri.searchParams.get("ext_twitchPub")).toBe("true");
+    expect(redirectUri.searchParams.get("autoinstall-ext_twitchSub")).toBe(
+      "true"
+    );
     expect(options).toEqual({
       headers: {
         Authorization: "Bearer token-1",
@@ -221,7 +225,9 @@ describe("CreateTwitchPubState", () => {
       `${window.location.origin}/reader`
     );
     expect(redirectUri.searchParams.get("pattern")).toBe("SeedBible");
-    expect(redirectUri.searchParams.get("ext_twitchPub")).toBe("true");
+    expect(redirectUri.searchParams.get("autoinstall-ext_twitchSub")).toBe(
+      "true"
+    );
     expect(options).toEqual({
       headers: {
         Authorization: "Bearer token-1",
@@ -243,6 +249,9 @@ describe("CreateTwitchPubState", () => {
     );
     expect(redirectUri.origin + redirectUri.pathname).toBe(
       `${window.location.origin}/reader`
+    );
+    expect(redirectUri.searchParams.get("autoinstall-ext_twitchSub")).toBe(
+      "true"
     );
   });
 

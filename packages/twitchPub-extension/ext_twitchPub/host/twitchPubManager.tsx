@@ -53,7 +53,7 @@ const getUrl = (
     "pattern",
     configBot.tags.pattern || "SeedBible"
   );
-  redirectUri.searchParams.set("ext_twitchPub", "true");
+  redirectUri.searchParams.set("autoinstall-ext_twitchSub", "true");
 
   const state = bytes.toBase64String(
     new TextEncoder().encode(
