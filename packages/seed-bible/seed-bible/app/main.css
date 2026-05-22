@@ -3566,14 +3566,15 @@ h6 {
 .sb-extension-row {
   display: flex;
   align-items: stretch;
+  gap: 8px;
   position: relative;
 }
 
-.sb-extension-row-button {
+.sb-extension-row-body {
   text-align: left;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
   border-radius: 8px;
-  padding: 10px 44px 10px 12px;
+  padding: 10px 12px;
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 75%);
   color: var(--sb-font-color);
   display: flex;
@@ -3582,9 +3583,33 @@ h6 {
   flex: 1;
 }
 
-.sb-extension-row-button:disabled {
-  opacity: 1;
-  cursor: default;
+.sb-extension-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.sb-extension-row-action-button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 70%);
+  color: var(--sb-font-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.sb-extension-row-action-button:hover {
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 56%);
+}
+
+.sb-extension-row-action-button .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .sb-extension-row-content {
@@ -3592,6 +3617,7 @@ h6 {
   flex-direction: column;
   min-width: 0;
   gap: 2px;
+  flex: 1;
 }
 
 .sb-extension-name {
@@ -5240,6 +5266,12 @@ h6 {
   opacity: 0.1;
 }
 
+.dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
 .dropdown-select {
   appearance: none;
   -webkit-appearance: none;
@@ -5250,10 +5282,7 @@ h6 {
 
   border: none;
   border-radius: 6px;
-  background: var(--sb-secondary-color)
-    url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
-    no-repeat right 10px center;
-  background-size: 16px;
+  background: var(--sb-secondary-color);
 
   cursor: pointer;
   outline: none;
@@ -5264,6 +5293,13 @@ h6 {
   margin-right: 5px;
   font-family: "Satoshi";
   color: var(--sb-font-color);
+}
+
+.dropdown-select-icon {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  font-size: 24px;
 }
 
 .dropdown-option {
@@ -5724,7 +5760,7 @@ h6 {
 @media only screen and (max-width: 768px) {
   .dropdown {
     /* display: none; */
-    width: 100px;
+    width: 62%;
   }
 
   .searchbar {
@@ -5732,7 +5768,7 @@ h6 {
   }
 
   .sidebar-translation-selector {
-    width: 75px;
+    width: 90px;
   }
 
   .testament-selection {
@@ -5741,6 +5777,7 @@ h6 {
 
   .sidebar-selected-title {
     font-size: 16px;
+    font-weight: bold;
   }
 
   .sidebar {
@@ -5765,11 +5802,12 @@ h6 {
   }
 
   .dropdown-select {
-    width: 100px;
+    width: 100%;
+    font-weight: bold;
   }
 
   .dropdown-option {
-    width: 100px;
+    width: 100%;
   }
 
   .testament-title {
@@ -5832,6 +5870,7 @@ h6 {
 
   .sidebar-select {
     font-size: 18px;
+    padding-left: 0px;
   }
 
   .show-sidebar-chapter {
