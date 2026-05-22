@@ -907,6 +907,16 @@ export function BibleReader(props: BibleReaderProps) {
             </div>
             <button
               type="button"
+              className="sb-bible-reader-mobile-header-play"
+              aria-label={t("play-audio", { defaultValue: "Play audio" })}
+              title={t("play", { defaultValue: "Play" })}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                play_arrow
+              </span>
+            </button>
+            <button
+              type="button"
               className="sb-bible-reader-mobile-header-settings"
               onClick={() => mobileChrome?.onOpenMobileSettings()}
               aria-label={t("settings", { defaultValue: "Settings" })}
@@ -990,13 +1000,14 @@ export function BibleReader(props: BibleReaderProps) {
             <span className="sb-bible-reader-book">
               {currentBook.value?.name ?? bookId.value ?? "Select a book"}
             </span>
-            {String.fromCharCode(160)}
+            <span className="sb-bible-reader-title-sep" aria-hidden="true">
+              {" – "}
+            </span>
             <span className="sb-bible-reader-chapter">
               {chapterNumber.value}
             </span>
-            {String.fromCharCode(160)}
             <span className="sb-bible-reader-translation">
-              /{String.fromCharCode(160)}
+              {" / "}
               {translationId.value ?? ""}
             </span>
           </h2>
