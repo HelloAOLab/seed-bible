@@ -47,7 +47,14 @@ const getUrl = (
     translation = "AAB",
   }: { book?: string; chapter?: number; translation?: string } = {}
 ) => {
-  const redirectUri = `https://ao.bot/?pattern=${configBot.tags.pattern || "SeedBible"}&ext_twitchSub=true`;
+  const redirectUri = new URL(location.href ?? "https://ao.bot/");
+  redirectUri.search = "";
+  redirectUri.searchParams.set(
+    "pattern",
+    configBot.tags.pattern || "SeedBible"
+  );
+  redirectUri.searchParams.set("ext_twitchPub", "true");
+
   const state = bytes.toBase64String(
     new TextEncoder().encode(
       JSON.stringify({
@@ -61,7 +68,7 @@ const getUrl = (
   );
   const params = new URLSearchParams({
     client_id: config.clientId.value,
-    redirect_uri: redirectUri,
+    redirect_uri: redirectUri.href,
     response_type: "token",
     scope: "user:read:chat user:bot channel:bot",
     state,
