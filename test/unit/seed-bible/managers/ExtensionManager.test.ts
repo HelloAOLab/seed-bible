@@ -529,6 +529,36 @@ describe("createExtensionManager", () => {
     expect(installPackage).toHaveBeenCalledTimes(1);
   });
 
+  it("loadDefaultExtensions() auto-installs extensions when the matching query param is true", async () => {
+    window.history.replaceState({}, "", "/?autoinstall-ext.autoinstall=true");
+
+    const manager = createExtensionManager();
+    (globalThis as any).thisBot.tags.availableExtensions = {
+      id: "set.autoinstall",
+      recordName: "record",
+      extensions: [
+        {
+          recordName: "record",
+          address: "pkg://autoinstall",
+          meta: {
+            id: "ext.autoinstall",
+            translations: {
+              en: {
+                title: "Autoinstall",
+                description: "Autoinstall extension",
+              },
+            },
+          },
+        },
+      ],
+    };
+
+    await manager.loadDefaultExtensions();
+
+    expect(installPackage).toHaveBeenCalledTimes(1);
+    expect(installPackage).toHaveBeenCalledWith("record", "pkg://autoinstall");
+  });
+
   it("getExtensions() lists known extensions from loaded sets even when not installed", async () => {
     const manager = createExtensionManager();
     const set: ExtensionSet = {
