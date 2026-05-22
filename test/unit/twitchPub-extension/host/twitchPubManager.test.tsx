@@ -195,6 +195,44 @@ describe("CreateTwitchPubState", () => {
     );
   });
 
+  it("includes broadcaster, channel, book, chapter, and translation in QR state", () => {
+    const state = CreateTwitchPubState();
+
+    state.twitchConfig.value.broadcasterId.value = "broadcaster-123";
+    state.twitchConfig.value.userAccessToken.value = "token-123";
+    state.handleSeedBibleUpdate({
+      app: {
+        currentReadingState: {
+          value: {
+            translationId: "ESV",
+            bookId: "JHN",
+            chapterNumber: 3,
+          },
+        },
+      },
+      bibleData: {
+        api: {
+          endpoint: "https://example.org",
+        },
+      },
+    } as any);
+
+    const stateParam = getStateParam(state.qrValue.value);
+    expect(stateParam).toBeTruthy();
+
+    const decoded = JSON.parse(
+      Buffer.from(stateParam as string, "base64").toString("utf8")
+    );
+
+    expect(decoded).toMatchObject({
+      broadcaster_id: "broadcaster-123",
+      channel_id: "1455265905",
+      book: "JHN",
+      chapter: 3,
+      translation: "ESV",
+    });
+  });
+
   it("sends an announcement with the join URL once the user is logged in", async () => {
     configBot.tags.url = `https://example.com/reader?chapter=1`;
 
