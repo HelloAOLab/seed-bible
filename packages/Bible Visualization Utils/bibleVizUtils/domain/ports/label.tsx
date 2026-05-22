@@ -25,6 +25,7 @@ export type SpawnLabel = (params: {
   translucencyMode: LabelTranslucencyMode;
   isInteractable?: boolean;
   dateFormat: LabelDateFormatType;
+  makesAttentionFeedback: boolean;
 }) => {
   transformer: Piece<"InfoLabelTransformer">;
   tail: Piece<"InfoLabelTail">;
@@ -58,6 +59,7 @@ export interface LabelStrategy<P extends Piece> {
   getLabelColor: (piece: P) => string;
   labelPositioning: LabelPositionType;
   isInteractable: boolean;
+  makesAttentionFeedback: boolean;
 }
 
 export type LabelPropertiesStrategies<T extends BiblePieceType> = {

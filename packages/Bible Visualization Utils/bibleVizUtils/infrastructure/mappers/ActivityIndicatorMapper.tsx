@@ -2,7 +2,7 @@ import type { ActivityIndicator } from "bibleVizUtils.domain.models.canvas";
 import type { ActivityIndicatorBot } from "bibleVizUtils.infrastructure.models.casualos";
 
 export class ActivityIndicatorMapper {
-  static toDomain(bot: ActivityIndicatorBot): ActivityIndicator {
+  toDomain(bot: ActivityIndicatorBot): ActivityIndicator {
     if (bot.tags.indicatorType === "regular") {
       if (typeof bot.tags.index !== "number") {
         throw new Error(
@@ -34,7 +34,7 @@ export class ActivityIndicatorMapper {
       index: bot.tags.index,
     };
   }
-  static toInfrastructure(
+  toInfrastructure(
     indicator: ActivityIndicator
   ): ActivityIndicatorBot | undefined {
     const indicatorBot = getBot(byID(indicator.id));

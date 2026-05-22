@@ -1,5 +1,9 @@
 import type { InfoLabelData } from "bibleVizUtils.domain.entities.InfoLabelData";
 import type {
+  ActivityIndicator,
+  Piece,
+} from "bibleVizUtils.domain.models.canvas";
+import type {
   LabelPositionType,
   LabelTranslucencyMode,
   ShowSequencePacing,
@@ -9,9 +13,7 @@ import type {
   Vector2 as TVector2,
   Vector3 as TVector3,
 } from "../../../../../../typings/AuxLibraryDefinitions";
-import { InfoLabelTextMapper } from "../../mappers/InfoLabelTextMapper";
 import { InfoLabelTailMapper } from "../../mappers/InfoLabelTailMapper";
-import { ActivityIndicatorMapper } from "../../mappers/ActivityIndicatorMapper";
 import { InfoLabelDateMapper } from "../../mappers/InfoLabelDateMapper";
 import type {
   ActivityIndicatorBot,
@@ -43,9 +45,23 @@ interface LabelFeedbackConfigProviderPort {
 
 type DimensionProvider = () => string;
 
+interface InfoLabelTextMapperPort {
+  toInfrastructure: (
+    piece: Piece<"InfoLabelText">
+  ) => InfoLabelTextBot | undefined;
+}
+
+interface ActivityIndicatorMapperPort {
+  toInfrastructure: (
+    indicator: ActivityIndicator
+  ) => ActivityIndicatorBot | undefined;
+}
+
 interface AdapterProps {
   dimensionProvider: DimensionProvider;
   labelFeedbackConfigProviderPort: LabelFeedbackConfigProviderPort;
+  infoLabelTextMapperPort: InfoLabelTextMapperPort;
+  activityIndicatorMapperPort: ActivityIndicatorMapperPort;
 }
 
 const shakeForwardConstructor = ({
@@ -110,13 +126,19 @@ export class LabelFeedbackAdapter {
   #shakeAnimationsMap: Map<InfoLabelData["id"], NodeJS.Timeout> = new Map();
   #dimensionProvider: AdapterProps["dimensionProvider"];
   #labelFeedbackConfigProviderPort: AdapterProps["labelFeedbackConfigProviderPort"];
+  #infoLabelTextMapperPort: AdapterProps["infoLabelTextMapperPort"];
+  #activityIndicatorMapperPort: AdapterProps["activityIndicatorMapperPort"];
 
   constructor({
     dimensionProvider,
     labelFeedbackConfigProviderPort,
+    infoLabelTextMapperPort,
+    activityIndicatorMapperPort,
   }: AdapterProps) {
     this.#dimensionProvider = dimensionProvider;
     this.#labelFeedbackConfigProviderPort = labelFeedbackConfigProviderPort;
+    this.#infoLabelTextMapperPort = infoLabelTextMapperPort;
+    this.#activityIndicatorMapperPort = activityIndicatorMapperPort;
   }
 
   displayAttentionFeedback(data: InfoLabelData) {
@@ -143,11 +165,11 @@ export class LabelFeedbackAdapter {
     const easing = this.#labelFeedbackConfigProviderPort.getShakeEasing();
 
     const piecesBot = [
-      InfoLabelTextMapper.toInfrastructure(data.label),
+      this.#infoLabelTextMapperPort.toInfrastructure(data.label),
       InfoLabelTailMapper.toInfrastructure(data.tail),
       data.date ? InfoLabelDateMapper.toInfrastructure(data.date) : undefined,
       ...data.activityIndicators.map((indicator) =>
-        ActivityIndicatorMapper.toInfrastructure(indicator)
+        this.#activityIndicatorMapperPort.toInfrastructure(indicator)
       ),
     ];
 
@@ -396,7 +418,7 @@ export class LabelFeedbackAdapter {
         `LabelFeedbackAdapter: transformer not found at displayShowFeedback`
       );
     }
-    const text = InfoLabelTextMapper.toInfrastructure(data.label);
+    const text = this.#infoLabelTextMapperPort.toInfrastructure(data.label);
     if (!text) {
       throw new Error(
         `LabelFeedbackAdapter: text not found at displayShowFeedback`
@@ -409,7 +431,8 @@ export class LabelFeedbackAdapter {
       );
     }
     const activityIndicators = data.activityIndicators.map((indicator) => {
-      const indicatorBot = ActivityIndicatorMapper.toInfrastructure(indicator);
+      const indicatorBot =
+        this.#activityIndicatorMapperPort.toInfrastructure(indicator);
       if (!indicatorBot) {
         throw new Error(
           `LabelFeedbackAdapter: indicatorBot not found at displayShowFeedback`
@@ -433,7 +456,7 @@ export class LabelFeedbackAdapter {
 
   #stopOpacityTransition(data: InfoLabelData) {
     const bots: PieceBot[] = [];
-    const text = InfoLabelTextMapper.toInfrastructure(data.label);
+    const text = this.#infoLabelTextMapperPort.toInfrastructure(data.label);
     if (text) {
       bots.push(text);
     }
@@ -442,7 +465,7 @@ export class LabelFeedbackAdapter {
       bots.push(tail);
     }
     const activityIndicators = data.activityIndicators.map((indicator) =>
-      ActivityIndicatorMapper.toInfrastructure(indicator)
+      this.#activityIndicatorMapperPort.toInfrastructure(indicator)
     );
     for (const indicator of activityIndicators) {
       if (indicator) {

@@ -35,6 +35,7 @@ export interface SessionProviderPort {
   getConnectedUsersConfigId: () => string[];
   getConnectedUsers(): ConnectedUserData[];
   getUserColorById: (id: string) => HexString | undefined;
+  getOwnUserConnectionId(): string;
 }
 
 export interface UserDatabasePort {

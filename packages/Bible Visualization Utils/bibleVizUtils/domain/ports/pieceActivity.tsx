@@ -28,6 +28,8 @@ import type { LayoutBookData } from "bibleVizUtils.domain.entities.LayoutBookDat
 import type { LayoutChapterData } from "bibleVizUtils.domain.entities.LayoutChapterData";
 import type { HexString, Point2D } from "../models/commonTypes";
 import type { SubsetBookChapter } from "../../application/services/ScriptureService";
+import type { UserReadingInstance } from "../models/seedBible";
+import type { Scales } from "bibleVizUtils.infrastructure.functions.layout";
 
 export interface DataRegistryPort {
   getPieceData: GetPieceData;
@@ -80,6 +82,11 @@ export interface UserPresenceServicePort {
   getUserPresence: () => UserPresence;
   getOwnUserPresence: () => UserPresenceData | undefined;
   getOwnUserConfigId: () => string;
+}
+
+export interface ReadingInstanceProviderPort {
+  getOwnReadingInstances(): UserReadingInstance[];
+  getRemotesReadingInstances(): UserReadingInstance[];
 }
 
 export type ActivityContainer =
@@ -136,6 +143,8 @@ export interface ShowNotificationCommand {
   direction: Point2D;
   notification: ActivityNotification | undefined;
   container: NotifiableContainer;
+  offset?: number;
+  scales?: Pick<Scales, "x" | "y">;
 }
 
 export interface ActivityNotificationAdapterPort {

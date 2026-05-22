@@ -68,10 +68,6 @@ beforeEach(() => {
   (globalThis as any).byID = byIDMock;
   (globalThis as any).getBotPosition = getBotPositionMock;
   (globalThis as any).gridPortalBot = { tags: { cameraRotationZ: 0 } };
-  (globalThis as any).os = {
-    ...((globalThis as any).os ?? {}),
-    getCurrentDimension: jest.fn().mockReturnValue("scene3d"),
-  };
 });
 
 afterEach(() => {
@@ -138,8 +134,15 @@ const makePooler = (): any => ({
   releaseObject: jest.fn(),
 });
 
+const makeDimensionProvider = (dimension = "scene3d") => ({
+  getDimension: jest.fn().mockReturnValue(dimension),
+});
+
 const makeAdapter = (pooler = makePooler()) =>
-  new ActivityNotificationAdapter({ objectPooler: pooler });
+  new ActivityNotificationAdapter({
+    objectPooler: pooler,
+    dimensionProviderPort: makeDimensionProvider(),
+  });
 
 const makeShowCommand = (overrides: any = {}): any => ({
   isOwnUserInPiece: false,

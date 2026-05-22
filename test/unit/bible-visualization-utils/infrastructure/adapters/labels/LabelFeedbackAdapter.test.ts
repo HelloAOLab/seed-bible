@@ -1,10 +1,8 @@
 import { LabelFeedbackAdapter } from "bibleVizUtils.infrastructure.adapters.labels.LabelFeedbackAdapter";
 import { InfoLabelData } from "bibleVizUtils.domain.entities.InfoLabelData";
 import { InfoLabelTransformerMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTransformerMapper";
-import { InfoLabelTextMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTextMapper";
 import { InfoLabelTailMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTailMapper";
 import { InfoLabelDateMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelDateMapper";
-import { ActivityIndicatorMapper } from "bibleVizUtils.infrastructure.mappers.ActivityIndicatorMapper";
 import {
   LabelPosition,
   LabelTranslucencyModes,
@@ -20,10 +18,6 @@ jest.mock(
   })
 );
 
-jest.mock("bibleVizUtils.infrastructure.mappers.InfoLabelTextMapper", () => ({
-  InfoLabelTextMapper: { toInfrastructure: jest.fn() },
-}));
-
 jest.mock("bibleVizUtils.infrastructure.mappers.InfoLabelTailMapper", () => ({
   InfoLabelTailMapper: { toInfrastructure: jest.fn() },
 }));
@@ -32,28 +26,20 @@ jest.mock("bibleVizUtils.infrastructure.mappers.InfoLabelDateMapper", () => ({
   InfoLabelDateMapper: { toInfrastructure: jest.fn() },
 }));
 
-jest.mock(
-  "bibleVizUtils.infrastructure.mappers.ActivityIndicatorMapper",
-  () => ({
-    ActivityIndicatorMapper: { toInfrastructure: jest.fn() },
-  })
-);
-
 // ─── mock aliases ─────────────────────────────────────────────────────────────
 
 const transformerMapperToInfra =
   InfoLabelTransformerMapper.toInfrastructure as jest.Mock;
-const textMapperToInfra = InfoLabelTextMapper.toInfrastructure as jest.Mock;
 const tailMapperToInfra = InfoLabelTailMapper.toInfrastructure as jest.Mock;
 const dateMapperToInfra = InfoLabelDateMapper.toInfrastructure as jest.Mock;
-const activityIndicatorMapperToInfra =
-  ActivityIndicatorMapper.toInfrastructure as jest.Mock;
 
 // ─── globals ──────────────────────────────────────────────────────────────────
 
 let animateTagMock: jest.Mock;
 let setTagMaskMock: jest.Mock;
 let clearAnimationsMock: jest.Mock;
+let infoLabelTextMapper: { toInfrastructure: jest.Mock };
+let activityIndicatorMapper: { toInfrastructure: jest.Mock };
 
 beforeEach(() => {
   jest.useFakeTimers();
@@ -61,6 +47,8 @@ beforeEach(() => {
   animateTagMock = jest.fn().mockResolvedValue(undefined);
   setTagMaskMock = jest.fn();
   clearAnimationsMock = jest.fn();
+  infoLabelTextMapper = { toInfrastructure: jest.fn() };
+  activityIndicatorMapper = { toInfrastructure: jest.fn() };
 
   (globalThis as any).animateTag = animateTagMock;
   (globalThis as any).setTagMask = setTagMaskMock;
@@ -117,15 +105,19 @@ const makeAdapter = (configProvider = makeConfigProvider()) =>
   new LabelFeedbackAdapter({
     dimensionProvider: jest.fn().mockReturnValue("scene3d"),
     labelFeedbackConfigProviderPort: configProvider,
+    infoLabelTextMapperPort: infoLabelTextMapper,
+    activityIndicatorMapperPort: activityIndicatorMapper,
   });
 
 const setupValidMappers = () => {
   transformerMapperToInfra.mockReturnValue(
     makeBot("t-bot", "InfoLabelTransformer")
   );
-  textMapperToInfra.mockReturnValue(makeBot("text-bot", "InfoLabelText"));
+  infoLabelTextMapper.toInfrastructure.mockReturnValue(
+    makeBot("text-bot", "InfoLabelText")
+  );
   tailMapperToInfra.mockReturnValue(makeBot("tail-bot", "InfoLabelTail"));
-  activityIndicatorMapperToInfra.mockReturnValue(undefined);
+  activityIndicatorMapper.toInfrastructure.mockReturnValue(undefined);
   dateMapperToInfra.mockReturnValue(undefined);
 };
 
@@ -221,7 +213,7 @@ describe("displayShowFeedback", () => {
   describe("guard — #unpackLabelData throws", () => {
     it("rejects when transformer is not found", async () => {
       transformerMapperToInfra.mockReturnValue(undefined);
-      textMapperToInfra.mockReturnValue(makeBot("text-bot"));
+      infoLabelTextMapper.toInfrastructure.mockReturnValue(makeBot("text-bot"));
       tailMapperToInfra.mockReturnValue(makeBot("tail-bot"));
       await expect(
         makeAdapter().displayShowFeedback({ data: makeInfoLabel(), pacing })
@@ -230,7 +222,7 @@ describe("displayShowFeedback", () => {
 
     it("rejects when text is not found", async () => {
       transformerMapperToInfra.mockReturnValue(makeBot("t-bot"));
-      textMapperToInfra.mockReturnValue(undefined);
+      infoLabelTextMapper.toInfrastructure.mockReturnValue(undefined);
       tailMapperToInfra.mockReturnValue(makeBot("tail-bot"));
       await expect(
         makeAdapter().displayShowFeedback({ data: makeInfoLabel(), pacing })
@@ -239,7 +231,7 @@ describe("displayShowFeedback", () => {
 
     it("rejects when tail is not found", async () => {
       transformerMapperToInfra.mockReturnValue(makeBot("t-bot"));
-      textMapperToInfra.mockReturnValue(makeBot("text-bot"));
+      infoLabelTextMapper.toInfrastructure.mockReturnValue(makeBot("text-bot"));
       tailMapperToInfra.mockReturnValue(undefined);
       await expect(
         makeAdapter().displayShowFeedback({ data: makeInfoLabel(), pacing })
@@ -300,7 +292,7 @@ describe("displayShowFeedback", () => {
     it("sets pointable on text and tail after animation resolves", async () => {
       const textBot = makeBot("text-bot", "InfoLabelText");
       const tailBot = makeBot("tail-bot", "InfoLabelTail");
-      textMapperToInfra.mockReturnValue(textBot);
+      infoLabelTextMapper.toInfrastructure.mockReturnValue(textBot);
       tailMapperToInfra.mockReturnValue(tailBot);
       await makeAdapter().displayShowFeedback({
         data: makeInfoLabel(),
@@ -323,7 +315,7 @@ describe("displayHideFeedback", () => {
   describe("guard — #unpackLabelData throws", () => {
     it("rejects when transformer is not found", async () => {
       transformerMapperToInfra.mockReturnValue(undefined);
-      textMapperToInfra.mockReturnValue(makeBot("text-bot"));
+      infoLabelTextMapper.toInfrastructure.mockReturnValue(makeBot("text-bot"));
       tailMapperToInfra.mockReturnValue(makeBot("tail-bot"));
       await expect(
         makeAdapter().displayHideFeedback({ data: makeInfoLabel(), pacing })
@@ -332,7 +324,7 @@ describe("displayHideFeedback", () => {
 
     it("rejects when text is not found", async () => {
       transformerMapperToInfra.mockReturnValue(makeBot("t-bot"));
-      textMapperToInfra.mockReturnValue(undefined);
+      infoLabelTextMapper.toInfrastructure.mockReturnValue(undefined);
       tailMapperToInfra.mockReturnValue(makeBot("tail-bot"));
       await expect(
         makeAdapter().displayHideFeedback({ data: makeInfoLabel(), pacing })
@@ -341,7 +333,7 @@ describe("displayHideFeedback", () => {
 
     it("rejects when tail is not found", async () => {
       transformerMapperToInfra.mockReturnValue(makeBot("t-bot"));
-      textMapperToInfra.mockReturnValue(makeBot("text-bot"));
+      infoLabelTextMapper.toInfrastructure.mockReturnValue(makeBot("text-bot"));
       tailMapperToInfra.mockReturnValue(undefined);
       await expect(
         makeAdapter().displayHideFeedback({ data: makeInfoLabel(), pacing })
@@ -410,7 +402,7 @@ describe("displayChangedIntensityFeedback", () => {
   describe("guard — #unpackLabelData throws", () => {
     it("rejects when transformer is not found", async () => {
       transformerMapperToInfra.mockReturnValue(undefined);
-      textMapperToInfra.mockReturnValue(makeBot("text-bot"));
+      infoLabelTextMapper.toInfrastructure.mockReturnValue(makeBot("text-bot"));
       tailMapperToInfra.mockReturnValue(makeBot("tail-bot"));
       await expect(
         makeAdapter().displayChangedIntensityFeedback({
@@ -509,13 +501,13 @@ describe("#shakeLabel via interval tick", () => {
   });
 
   beforeEach(() => {
-    textMapperToInfra.mockReturnValue(
+    infoLabelTextMapper.toInfrastructure.mockReturnValue(
       makeBotWithPosition("text-bot", "InfoLabelText")
     );
     tailMapperToInfra.mockReturnValue(
       makeBotWithPosition("tail-bot", "InfoLabelTail")
     );
-    activityIndicatorMapperToInfra.mockReturnValue(undefined);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(undefined);
     dateMapperToInfra.mockReturnValue(undefined);
   });
 
@@ -524,6 +516,8 @@ describe("#shakeLabel via interval tick", () => {
     const adapter = new LabelFeedbackAdapter({
       dimensionProvider: dimProvider,
       labelFeedbackConfigProviderPort: makeConfigProvider(),
+      infoLabelTextMapperPort: infoLabelTextMapper,
+      activityIndicatorMapperPort: activityIndicatorMapper,
     });
     adapter.displayAttentionFeedback(makeInfoLabel());
     jest.advanceTimersByTime(100); // delay = 100
@@ -623,7 +617,9 @@ describe("#shakeLabel via interval tick", () => {
   });
 
   it("catches errors via console.error when bot has no initialPosition", async () => {
-    textMapperToInfra.mockReturnValue(makeBot("text-bot", "InfoLabelText")); // no initialPosition
+    infoLabelTextMapper.toInfrastructure.mockReturnValue(
+      makeBot("text-bot", "InfoLabelText")
+    ); // no initialPosition
     tailMapperToInfra.mockReturnValue(makeBot("tail-bot", "InfoLabelTail")); // no initialPosition
     const consoleSpy = jest
       .spyOn(console, "error")
@@ -655,7 +651,7 @@ describe("#shakeLabel via interval tick", () => {
 
   it("includes activity indicator bots in piecesBot", () => {
     const indBot = makeBotWithPosition("ind-bot", "ActivityIndicator");
-    activityIndicatorMapperToInfra.mockReturnValue(indBot);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(indBot);
     const indicator = {
       id: "ind-1",
       type: "ActivityIndicator" as const,
@@ -683,9 +679,9 @@ describe("#unpackLabelData — activityIndicators and date paths", () => {
 
   it("throws when indicatorBot is not found for an activityIndicator", async () => {
     transformerMapperToInfra.mockReturnValue(makeBot("t-bot"));
-    textMapperToInfra.mockReturnValue(makeBot("text-bot"));
+    infoLabelTextMapper.toInfrastructure.mockReturnValue(makeBot("text-bot"));
     tailMapperToInfra.mockReturnValue(makeBot("tail-bot"));
-    activityIndicatorMapperToInfra.mockReturnValue(undefined);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(undefined);
     const indicator = {
       id: "ind-1",
       type: "ActivityIndicator" as const,
@@ -722,9 +718,9 @@ describe("displayShowFeedback — with activityIndicators", () => {
   it("calls animateTag for each activity indicator formOpacity", async () => {
     const indBot = makeBot("ind-bot", "ActivityIndicator");
     transformerMapperToInfra.mockReturnValue(makeBot("t-bot"));
-    textMapperToInfra.mockReturnValue(makeBot("text-bot"));
+    infoLabelTextMapper.toInfrastructure.mockReturnValue(makeBot("text-bot"));
     tailMapperToInfra.mockReturnValue(makeBot("tail-bot"));
-    activityIndicatorMapperToInfra.mockReturnValue(indBot);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(indBot);
     const indicator = {
       id: "ind-1",
       type: "ActivityIndicator" as const,

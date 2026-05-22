@@ -58,8 +58,11 @@ import { LabelsConfigProvider } from "bibleVizUtils.infrastructure.config.labels
 import { ActivityIndicatorBotsRepository } from "bibleVizUtils.infrastructure.adapters.pieceActivity.ActivityIndicatorBotsRepository";
 import { ActivityIndicatorsConfigProvider } from "bibleVizUtils.infrastructure.config.activityIndicators.ActivityIndicatorsConfigProvider";
 import { LabelFeedbackConfigProvider } from "bibleVizUtils.infrastructure.config.labels.LabelFeedbackConfigProvider";
+import { ConsoleLoggerAdapter } from "bibleVizUtils.infrastructure.adapters.logger.ConsoleLoggerAdapter";
 import { BookInfoMapper } from "bibleVizUtils.infrastructure.mappers.BookInfoMapper";
 import { SectionInfoMapper } from "bibleVizUtils.infrastructure.mappers.SectionInfoMapper";
+import { ActivityIndicatorMapper } from "bibleVizUtils.infrastructure.mappers.ActivityIndicatorMapper";
+import { InfoLabelTextMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTextMapper";
 import {
   GetTextColorBasedOnBackground,
   ComputeRawGradientColors,
@@ -89,6 +92,7 @@ import { ReadingHistoryConfigProvider } from "bibleVizUtils.infrastructure.confi
 import { entrypoints } from "bibleVizUtils.infrastructure.entrypoints.casualos.botProvider";
 import { connectedUserColors } from "seed-bible.managers.SessionsManager";
 import { effect, signal } from "@preact/signals";
+import { RadingInstanceProvider } from "bibleVizUtils.infrastructure.adapters.userPresence.ReadingInstanceProvider";
 
 export let userColorController: UserColorController | undefined = undefined;
 export let sessionController: SessionController | undefined = undefined;
@@ -240,13 +244,22 @@ export const bootstrapExtension = () => {
       const seedBiblePresenceProvider = new SeedBiblePresenceProvider({
         state: context,
       });
+      const activityIndicatorMapper = new ActivityIndicatorMapper();
+      const infoLabelTextMapper = new InfoLabelTextMapper();
+      const dimensionProviderPort = {
+        getDimension: () => os.getCurrentDimension(),
+      };
       const activityIndicatorsAdapter = new ActivityIndicatorsAdapter({
         objectPooler: bibleVizUtilsObjectPooler,
         botsRepositoryPort: activityIndicatorBotsRepository,
         configProviderPort: activityIndicatorsConfigProvider,
+        activityIndicatorMapperPort: activityIndicatorMapper,
+        labelTextMapperPort: infoLabelTextMapper,
+        dimensionProviderPort,
       });
       const activityNotificationAdapter = new ActivityNotificationAdapter({
         objectPooler: bibleVizUtilsObjectPooler,
+        dimensionProviderPort,
       });
       const labelDataStore = new LabelDataStore({});
       const userColorStore = new UserColorStore(bibleVizUtilsEventManager);
@@ -265,6 +278,8 @@ export const bootstrapExtension = () => {
       const labelAdapter = new LabelAdapter({
         objectPooler: bibleVizUtilsObjectPooler,
         labelConfigProviderPort: labelsConfigProvider,
+        dimensionProviderPort,
+        infoLabelTextMapperPort: infoLabelTextMapper,
       });
       const bibleVizDataRepository = new BibleVizDataRepository();
       const arrangementAdapter = new ArrangementAdapter();
@@ -288,6 +303,12 @@ export const bootstrapExtension = () => {
       const labelAnimationAdapter = new LabelFeedbackAdapter({
         dimensionProvider: () => os.getCurrentDimension(),
         labelFeedbackConfigProviderPort: labelFeedbackConfigProvider,
+        infoLabelTextMapperPort: infoLabelTextMapper,
+        activityIndicatorMapperPort: activityIndicatorMapper,
+      });
+      const readingInstanceProvider = new RadingInstanceProvider({
+        state: context,
+        sessionProviderPort: sessionProvider,
       });
 
       // 2. Instantiating services
@@ -324,6 +345,8 @@ export const bootstrapExtension = () => {
         activityIndicatorsAdapterPort: activityIndicatorsAdapter,
         activityNotificationAdapterPort: activityNotificationAdapter,
         userColorStorePort: userColorStore,
+        readingInstanceProviderPort: readingInstanceProvider,
+        loggerPort: new ConsoleLoggerAdapter(),
       });
       const labelDateService = new LabelDateService({
         eventPort: bibleVizUtilsEventManager,
@@ -346,6 +369,7 @@ export const bootstrapExtension = () => {
       userPresenceController = new UserPresenceController(userPresenceService);
       labelInteractionController = new LabelInteractionController({
         labelInteractionServicePort: labelInteractionService,
+        infoLabelTextMapperPort: infoLabelTextMapper,
       });
 
       // 4. Event wiring

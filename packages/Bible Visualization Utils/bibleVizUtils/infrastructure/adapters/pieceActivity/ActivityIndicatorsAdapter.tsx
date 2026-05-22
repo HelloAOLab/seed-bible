@@ -18,14 +18,30 @@ import type {
   BibleVizUtilsObjectPoolerMap,
   ExtraBackgroundActivityIndicatorTags,
   ExtraContentActivityIndicatorTags,
+  InfoLabelTextBot,
   PieceBot,
   RegularActivityIndicatorTags,
 } from "bibleVizUtils.infrastructure.models.casualos";
-import { ActivityIndicatorMapper } from "bibleVizUtils.infrastructure.mappers.ActivityIndicatorMapper"; // TODO: Inyect as port
-import { InfoLabelTextMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTextMapper"; // TODO: Inyect as port
 import type { IndicatorsRepositoryPort } from "bibleVizUtils.domain.ports.pieceActivity";
 import type { ObjectPooler } from "bibleVizUtils.infrastructure.adapters.casualos.ObjectPooler";
 import type { ActivityIndicatorVisualConfigsType } from "bibleVizUtils.infrastructure.config.activityIndicators.visuals";
+
+interface ActivityIndicatorMapperPort {
+  toInfrastructure: (
+    indicator: ActivityIndicator
+  ) => ActivityIndicatorBot | undefined;
+  toDomain: (bot: ActivityIndicatorBot) => ActivityIndicator;
+}
+
+interface InfoLabelTextMapperPort {
+  toInfrastructure: (
+    piece: Piece<"InfoLabelText">
+  ) => InfoLabelTextBot | undefined;
+}
+
+interface DimensionProviderPort {
+  getDimension(): string;
+}
 
 interface PositionStrategyParams {
   ownerBot: PieceBot;
@@ -33,6 +49,7 @@ interface PositionStrategyParams {
   dimension: string;
   container: ActivityContainer;
   configProviderPort: AdapterParams["configProviderPort"];
+  labelTextMapperPort: InfoLabelTextMapperPort;
 }
 
 type PositionStrategyType = (params: PositionStrategyParams) => Vector3Type;
@@ -41,6 +58,7 @@ const labelPositionStrategy: PositionStrategyType = ({
   indicatorBot,
   container,
   configProviderPort,
+  labelTextMapperPort,
 }) => {
   const offset = configProviderPort.getVisualConfig("LabelOffset");
   const step = configProviderPort.getVisualConfig("LabelStep");
@@ -49,7 +67,7 @@ const labelPositionStrategy: PositionStrategyType = ({
       `ActivityIndicatorsAdapter: container must be an instance of InfoLabelData at labelPositionStrategy`
     );
   }
-  const labelTextBot = InfoLabelTextMapper.toInfrastructure(container.label);
+  const labelTextBot = labelTextMapperPort.toInfrastructure(container.label);
   if (!labelTextBot) {
     throw new Error(
       `ActivityIndicatorsAdapter: labelTextBot not found at labelPositionStrategy`
@@ -219,6 +237,9 @@ interface AdapterParams {
   objectPooler: ObjectPooler<BibleVizUtilsObjectPoolerMap>;
   configProviderPort: ActivityIndicatorsConfigProviderPort;
   botsRepositoryPort: ActivityIndicatorBotsRepositoryPort;
+  activityIndicatorMapperPort: ActivityIndicatorMapperPort;
+  labelTextMapperPort: InfoLabelTextMapperPort;
+  dimensionProviderPort: DimensionProviderPort;
 }
 
 export class ActivityIndicatorsAdapter
@@ -227,14 +248,23 @@ export class ActivityIndicatorsAdapter
   #objectPooler: AdapterParams["objectPooler"];
   #configProviderPort: AdapterParams["configProviderPort"];
   #botsRepositoryPort: AdapterParams["botsRepositoryPort"];
+  #activityIndicatorMapperPort: AdapterParams["activityIndicatorMapperPort"];
+  #labelTextMapperPort: AdapterParams["labelTextMapperPort"];
+  #dimensionProviderPort: AdapterParams["dimensionProviderPort"];
   constructor({
     objectPooler,
     configProviderPort,
     botsRepositoryPort,
+    activityIndicatorMapperPort,
+    labelTextMapperPort,
+    dimensionProviderPort,
   }: AdapterParams) {
     this.#objectPooler = objectPooler;
     this.#configProviderPort = configProviderPort;
     this.#botsRepositoryPort = botsRepositoryPort;
+    this.#activityIndicatorMapperPort = activityIndicatorMapperPort;
+    this.#labelTextMapperPort = labelTextMapperPort;
+    this.#dimensionProviderPort = dimensionProviderPort;
   }
   showIndicators: ActivityIndicatorsAdapterPort["showIndicators"] = ({
     container,
@@ -243,7 +273,7 @@ export class ActivityIndicatorsAdapter
     const commands = Array.isArray(command) ? command : [command];
 
     const indicatorBotList: ActivityIndicatorBot[] = [];
-    const dimension = os.getCurrentDimension(); // TODO: Obtain dimension from a dimension provider port
+    const dimension = this.#dimensionProviderPort.getDimension();
     let piece: Piece | undefined = undefined;
     if (container instanceof InfoLabelData) {
       piece = container.owner;
@@ -280,7 +310,8 @@ export class ActivityIndicatorsAdapter
         | undefined;
 
       if (indicator) {
-        indicatorBot = ActivityIndicatorMapper.toInfrastructure(indicator);
+        indicatorBot =
+          this.#activityIndicatorMapperPort.toInfrastructure(indicator);
       } else {
         indicatorBot = this.#objectPooler.getObject(
           BiblePiece.ActivityIndicator
@@ -370,7 +401,7 @@ export class ActivityIndicatorsAdapter
       indicatorBotList.push(indicatorBot);
     }
     return indicatorBotList.map((indicatorBot) =>
-      ActivityIndicatorMapper.toDomain(indicatorBot)
+      this.#activityIndicatorMapperPort.toDomain(indicatorBot)
     );
   };
   hideIndicators: ActivityIndicatorsAdapterPort["hideIndicators"] = (
@@ -383,7 +414,8 @@ export class ActivityIndicatorsAdapter
   hideIndicator: ActivityIndicatorsAdapterPort["hideIndicator"] = (
     indicator
   ) => {
-    const indicatorBot = ActivityIndicatorMapper.toInfrastructure(indicator);
+    const indicatorBot =
+      this.#activityIndicatorMapperPort.toInfrastructure(indicator);
     if (indicatorBot) {
       this.#objectPooler.releaseObject(indicatorBot, "ActivityIndicator");
     }
@@ -399,7 +431,8 @@ export class ActivityIndicatorsAdapter
     indicator: ActivityIndicator,
     container: ActivityContainer
   ): void {
-    const indicatorBot = ActivityIndicatorMapper.toInfrastructure(indicator);
+    const indicatorBot =
+      this.#activityIndicatorMapperPort.toInfrastructure(indicator);
     if (indicatorBot) {
       if (indicatorBot.tags.ownerBotId === undefined) {
         throw new Error(
@@ -421,7 +454,7 @@ export class ActivityIndicatorsAdapter
           `ActivityIndicatorsAdapter: Strategy not found for ${ownerBot.tags.type} at updateIndicatorPosition`
         );
 
-      const dimension = os.getCurrentDimension(); // TODO: Obtain dimension from a dimension provider port
+      const dimension = this.#dimensionProviderPort.getDimension();
 
       const position = strategy({
         ownerBot,
@@ -429,6 +462,7 @@ export class ActivityIndicatorsAdapter
         dimension,
         container,
         configProviderPort: this.#configProviderPort,
+        labelTextMapperPort: this.#labelTextMapperPort,
       });
       setTag(indicatorBot, dimension + "X", position.x);
       setTag(indicatorBot, dimension + "Y", position.y);
@@ -440,7 +474,9 @@ export class ActivityIndicatorsAdapter
     pieceId: ActivityIndicatorBot["tags"]["ownerBotId"]
   ): ActivityIndicator[] {
     const bots = this.#botsRepositoryPort.getIndicatorBotsByPieceId(pieceId);
-    const indicators = bots.map((bot) => ActivityIndicatorMapper.toDomain(bot));
+    const indicators = bots.map((bot) =>
+      this.#activityIndicatorMapperPort.toDomain(bot)
+    );
     return indicators;
   }
   getIndicatorsByPieceDataId(
@@ -448,7 +484,9 @@ export class ActivityIndicatorsAdapter
   ): ActivityIndicator[] {
     const bots =
       this.#botsRepositoryPort.getIndicatorBotsByPieceDataId(pieceDataId);
-    const indicators = bots.map((bot) => ActivityIndicatorMapper.toDomain(bot));
+    const indicators = bots.map((bot) =>
+      this.#activityIndicatorMapperPort.toDomain(bot)
+    );
     return indicators;
   }
 }

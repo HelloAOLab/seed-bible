@@ -17,20 +17,21 @@ import { GetBotScales } from "bibleVizUtils.infrastructure.functions.casualos";
 import { PieceMapper } from "bibleVizUtils.infrastructure.mappers.PieceMapper";
 import type { ObjectPooler } from "bibleVizUtils.infrastructure.adapters.casualos.ObjectPooler";
 
-const baseNotificationOffset = 0; // TODO: Investigate what's the criteria to assign an offset
-const baseNotificationScales = {
-  x: 1,
-  y: 1,
-}; // TODO: Investigate what's the criteria to assign scales
+interface DimensionProviderPort {
+  getDimension(): string;
+}
 
 interface AdapterParams {
   objectPooler: ObjectPooler<BibleVizUtilsObjectPoolerMap>;
+  dimensionProviderPort: DimensionProviderPort;
 }
 
 export class ActivityNotificationAdapter implements ActivityNotificationAdapterPort {
   #objectPooler: AdapterParams["objectPooler"];
-  constructor({ objectPooler }: AdapterParams) {
+  #dimensionProviderPort: DimensionProviderPort;
+  constructor({ objectPooler, dimensionProviderPort }: AdapterParams) {
     this.#objectPooler = objectPooler;
+    this.#dimensionProviderPort = dimensionProviderPort;
   }
 
   hideNotification(notification: ActivityNotification) {
@@ -54,6 +55,8 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
       direction,
       notification,
       container,
+      offset = 0,
+      scales = { x: 1, y: 1 },
     } = command;
 
     let notificationBot: ActivityNotificationBot | undefined;
@@ -80,7 +83,7 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
 
     const formOpacity = isOwnUserInPiece ? 1 : 0.5;
     const label = activityCount > 1 ? `${activityCount}` : "";
-    const dimension = os.getCurrentDimension(); // TODO: Obtain dimension from a dimension provider port
+    const dimension = this.#dimensionProviderPort.getDimension();
 
     const mod: Partial<ActivityNotificationTags> = {
       [dimension]: true,
@@ -90,9 +93,9 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
       formOpacity,
       direction,
       color,
-      offset: baseNotificationOffset,
-      scaleX: baseNotificationScales.x,
-      scaleY: baseNotificationScales.y,
+      offset,
+      scaleX: scales.x,
+      scaleY: scales.y,
       type: "ActivityNotification",
     };
 
@@ -128,7 +131,7 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
         `ActivityNotificationAdapter: container.piece is not defined.`
       );
     }
-    const dimension = os.getCurrentDimension(); // TODO: Obtain dimension from a dimension provider port
+    const dimension = this.#dimensionProviderPort.getDimension();
     const ownerBot = PieceMapper.toInfrastructure(container.piece);
 
     if (!ownerBot) {

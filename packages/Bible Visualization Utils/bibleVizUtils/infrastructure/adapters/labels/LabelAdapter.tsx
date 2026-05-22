@@ -28,7 +28,7 @@ import type { LabelAdapterPort } from "bibleVizUtils.domain.ports.label";
 import type { ObjectPooler } from "bibleVizUtils.infrastructure.adapters.casualos.ObjectPooler";
 import { InfoLabelTransformerMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTransformerMapper";
 import { InfoLabelTailMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTailMapper";
-import { InfoLabelTextMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTextMapper";
+import type { Piece } from "bibleVizUtils.domain.models.canvas";
 import { InfoLabelDateMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelDateMapper";
 import type {
   FontData,
@@ -45,20 +45,40 @@ interface LabelConfigProviderPort {
   ) => LabelDateConfigsType[K];
 }
 
+interface DimensionProviderPort {
+  getDimension(): string;
+}
+
+interface InfoLabelTextMapperPort {
+  toInfrastructure: (
+    piece: Piece<"InfoLabelText">
+  ) => InfoLabelTextBot | undefined;
+}
+
 interface ServiceParams {
   objectPooler: ObjectPooler<BibleVizUtilsObjectPoolerMap>;
   labelConfigProviderPort: LabelConfigProviderPort;
+  dimensionProviderPort: DimensionProviderPort;
+  infoLabelTextMapperPort: InfoLabelTextMapperPort;
 }
 
 export class LabelAdapter implements LabelAdapterPort {
   #objectPooler: ServiceParams["objectPooler"];
   #labelConfigProviderPort: ServiceParams["labelConfigProviderPort"];
-  constructor({ objectPooler, labelConfigProviderPort }: ServiceParams) {
+  #dimensionProviderPort: DimensionProviderPort;
+  #infoLabelTextMapperPort: InfoLabelTextMapperPort;
+  constructor({
+    objectPooler,
+    labelConfigProviderPort,
+    dimensionProviderPort,
+    infoLabelTextMapperPort,
+  }: ServiceParams) {
     this.#objectPooler = objectPooler;
     this.#labelConfigProviderPort = labelConfigProviderPort;
+    this.#dimensionProviderPort = dimensionProviderPort;
+    this.#infoLabelTextMapperPort = infoLabelTextMapperPort;
   }
 
-  #isAnimatable: boolean = true; // TODO: Define how to decide this and move its decision to the aplication layer.
   #opacityMap = {
     [LabelTranslucencyModes.Faded]: 0.5,
     [LabelTranslucencyModes.Solid]: 1,
@@ -74,8 +94,9 @@ export class LabelAdapter implements LabelAdapterPort {
     isInteractable = true,
     dateFormat,
     translucencyMode,
+    makesAttentionFeedback,
   }) => {
-    const dimension = os.getCurrentDimension(); // TODO: Obtain dimension from a dimension provider port
+    const dimension = this.#dimensionProviderPort.getDimension();
     const pieceBot = PieceMapper.toInfrastructure(piece);
     if (!pieceBot) {
       throw new Error(`LabelAdapter: pieceBot not found at spawnLabelForPiece`);
@@ -212,7 +233,7 @@ export class LabelAdapter implements LabelAdapterPort {
       scaleY: infoLabelTransformerDesiredScales.y,
       scaleZ: infoLabelTransformerDesiredScales.z,
       ownerBotId: piece.id,
-      isAnimatable: this.#isAnimatable,
+      isAnimatable: makesAttentionFeedback,
       targetOpacity: this.#opacityMap[translucencyMode],
       pointableDefault: isInteractable,
     };
@@ -278,7 +299,7 @@ export class LabelAdapter implements LabelAdapterPort {
       data.transformer
     );
     const tail = InfoLabelTailMapper.toInfrastructure(data.tail);
-    const text = InfoLabelTextMapper.toInfrastructure(data.label);
+    const text = this.#infoLabelTextMapperPort.toInfrastructure(data.label);
     if (!transformer || !tail || !text) {
       throw new Error(
         `LabelAdapter: required bots not found at despawnLabelForPiece.`

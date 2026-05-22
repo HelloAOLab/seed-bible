@@ -2,7 +2,6 @@ import { LabelAdapter } from "bibleVizUtils.infrastructure.adapters.labels.Label
 import { PieceMapper } from "bibleVizUtils.infrastructure.mappers.PieceMapper";
 import { InfoLabelTransformerMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTransformerMapper";
 import { InfoLabelTailMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTailMapper";
-import { InfoLabelTextMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTextMapper";
 import { InfoLabelDateMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelDateMapper";
 import {
   LabelTranslucencyModes,
@@ -51,10 +50,6 @@ jest.mock("bibleVizUtils.infrastructure.mappers.InfoLabelTailMapper", () => ({
   InfoLabelTailMapper: { toInfrastructure: jest.fn() },
 }));
 
-jest.mock("bibleVizUtils.infrastructure.mappers.InfoLabelTextMapper", () => ({
-  InfoLabelTextMapper: { toInfrastructure: jest.fn() },
-}));
-
 jest.mock("bibleVizUtils.infrastructure.mappers.InfoLabelDateMapper", () => ({
   InfoLabelDateMapper: { toInfrastructure: jest.fn() },
 }));
@@ -66,7 +61,6 @@ const pieceMapperToDomain = PieceMapper.toDomain as jest.Mock;
 const transformerMapperToInfra =
   InfoLabelTransformerMapper.toInfrastructure as jest.Mock;
 const tailMapperToInfra = InfoLabelTailMapper.toInfrastructure as jest.Mock;
-const textMapperToInfra = InfoLabelTextMapper.toInfrastructure as jest.Mock;
 const dateMapperToInfra = InfoLabelDateMapper.toInfrastructure as jest.Mock;
 
 // ─── globals ──────────────────────────────────────────────────────────────────
@@ -91,10 +85,12 @@ class Vec2 {
 
 let applyModMock: jest.Mock;
 let setTagMaskMock: jest.Mock;
+let infoLabelTextMapper: { toInfrastructure: jest.Mock };
 
 beforeEach(() => {
   applyModMock = jest.fn();
   setTagMaskMock = jest.fn();
+  infoLabelTextMapper = { toInfrastructure: jest.fn() };
 
   (globalThis as any).Vector3 = Vec3;
   (globalThis as any).Vector2 = Vec2;
@@ -169,13 +165,20 @@ const makeLabelConfigProvider = (): any => ({
   }),
 });
 
+const makeDimensionProvider = (dimension = "scene3d") => ({
+  getDimension: jest.fn().mockReturnValue(dimension),
+});
+
 const makeAdapter = (
   objectPooler = makeObjectPooler(),
-  labelConfigProvider = makeLabelConfigProvider()
+  labelConfigProvider = makeLabelConfigProvider(),
+  dimensionProvider = makeDimensionProvider()
 ) =>
   new LabelAdapter({
     objectPooler,
     labelConfigProviderPort: labelConfigProvider,
+    dimensionProviderPort: dimensionProvider,
+    infoLabelTextMapperPort: infoLabelTextMapper,
   });
 
 const makeSpawnParams = (overrides: Record<string, unknown> = {}): any => ({
@@ -383,14 +386,18 @@ describe("despawnLabel", () => {
   const makeValidMappers = () => {
     transformerMapperToInfra.mockReturnValue(makeInfraBot("t-bot"));
     tailMapperToInfra.mockReturnValue(makeInfraBot("tail-bot"));
-    textMapperToInfra.mockReturnValue(makeInfraBot("text-bot"));
+    infoLabelTextMapper.toInfrastructure.mockReturnValue(
+      makeInfraBot("text-bot")
+    );
   };
 
   describe("guard throws", () => {
     it("throws when transformer bot is not found", () => {
       transformerMapperToInfra.mockReturnValue(undefined);
       tailMapperToInfra.mockReturnValue(makeInfraBot("tail-bot"));
-      textMapperToInfra.mockReturnValue(makeInfraBot("text-bot"));
+      infoLabelTextMapper.toInfrastructure.mockReturnValue(
+        makeInfraBot("text-bot")
+      );
       expect(() => makeAdapter().despawnLabel(makeDespawnData())).toThrow(
         "LabelAdapter: required bots not found at despawnLabelForPiece."
       );
@@ -399,7 +406,9 @@ describe("despawnLabel", () => {
     it("throws when tail bot is not found", () => {
       transformerMapperToInfra.mockReturnValue(makeInfraBot("t-bot"));
       tailMapperToInfra.mockReturnValue(undefined);
-      textMapperToInfra.mockReturnValue(makeInfraBot("text-bot"));
+      infoLabelTextMapper.toInfrastructure.mockReturnValue(
+        makeInfraBot("text-bot")
+      );
       expect(() => makeAdapter().despawnLabel(makeDespawnData())).toThrow(
         "LabelAdapter: required bots not found at despawnLabelForPiece."
       );
@@ -408,7 +417,7 @@ describe("despawnLabel", () => {
     it("throws when text bot is not found", () => {
       transformerMapperToInfra.mockReturnValue(makeInfraBot("t-bot"));
       tailMapperToInfra.mockReturnValue(makeInfraBot("tail-bot"));
-      textMapperToInfra.mockReturnValue(undefined);
+      infoLabelTextMapper.toInfrastructure.mockReturnValue(undefined);
       expect(() => makeAdapter().despawnLabel(makeDespawnData())).toThrow(
         "LabelAdapter: required bots not found at despawnLabelForPiece."
       );
@@ -454,7 +463,7 @@ describe("despawnLabel", () => {
     it("releases the text with InfoLabelText key", () => {
       makeValidMappers();
       const textBot = makeInfraBot("text-bot");
-      textMapperToInfra.mockReturnValue(textBot);
+      infoLabelTextMapper.toInfrastructure.mockReturnValue(textBot);
       const pooler = makeObjectPooler();
       makeAdapter(pooler).despawnLabel(makeDespawnData());
       expect(pooler.releaseObject).toHaveBeenCalledWith(

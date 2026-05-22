@@ -200,6 +200,9 @@
       "bibleVizUtils.domain.ports.labelDate": [
         "./packages/Bible Visualization Utils/bibleVizUtils/domain/ports/labelDate.tsx"
       ],
+      "bibleVizUtils.domain.ports.logger": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/ports/logger.tsx"
+      ],
       "bibleVizUtils.domain.ports.piece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/domain/ports/piece.tsx"
       ],
@@ -236,6 +239,9 @@
       "bibleVizUtils.infrastructure.adapters.labels.LabelsRepository": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/labels/LabelsRepository.tsx"
       ],
+      "bibleVizUtils.infrastructure.adapters.logger.ConsoleLoggerAdapter": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/logger/ConsoleLoggerAdapter.tsx"
+      ],
       "bibleVizUtils.infrastructure.adapters.pieceActivity.ActivityIndicatorBotsRepository": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/pieceActivity/ActivityIndicatorBotsRepository.tsx"
       ],
@@ -250,6 +256,9 @@
       ],
       "bibleVizUtils.infrastructure.adapters.user.UserDatabase": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/user/UserDatabase.tsx"
+      ],
+      "bibleVizUtils.infrastructure.adapters.userPresence.ReadingInstanceProvider": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/userPresence/ReadingInstanceProvider.tsx"
       ],
       "bibleVizUtils.infrastructure.adapters.userPresence.SeedBiblePresenceProvider": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/userPresence/SeedBiblePresenceProvider.tsx"

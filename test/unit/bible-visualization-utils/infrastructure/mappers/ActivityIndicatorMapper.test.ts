@@ -38,14 +38,14 @@ const makeIndicator = (overrides: any = {}): any => ({
 
 describe("toDomain — regular indicatorType", () => {
   it("returns a domain object with type 'ActivityIndicator'", () => {
-    expect(ActivityIndicatorMapper.toDomain(makeRegularBot()).type).toBe(
+    expect(new ActivityIndicatorMapper().toDomain(makeRegularBot()).type).toBe(
       "ActivityIndicator"
     );
   });
 
   it("maps bot.id to id", () => {
     expect(
-      ActivityIndicatorMapper.toDomain(makeRegularBot({ id: "x-1" }))
+      new ActivityIndicatorMapper().toDomain(makeRegularBot({ id: "x-1" }))
     ).toMatchObject({
       id: "bot-1",
     });
@@ -53,37 +53,39 @@ describe("toDomain — regular indicatorType", () => {
 
   it("sets indicatorType to 'regular'", () => {
     expect(
-      ActivityIndicatorMapper.toDomain(makeRegularBot()).indicatorType
+      new ActivityIndicatorMapper().toDomain(makeRegularBot()).indicatorType
     ).toBe("regular");
   });
 
   it("maps a numeric index of 0", () => {
     expect(
-      ActivityIndicatorMapper.toDomain(makeRegularBot({ index: 0 })).index
+      new ActivityIndicatorMapper().toDomain(makeRegularBot({ index: 0 })).index
     ).toBe(0);
   });
 
   it("maps a positive numeric index", () => {
     expect(
-      ActivityIndicatorMapper.toDomain(makeRegularBot({ index: 5 })).index
+      new ActivityIndicatorMapper().toDomain(makeRegularBot({ index: 5 })).index
     ).toBe(5);
   });
 
   it("throws when index is a string", () => {
     expect(() =>
-      ActivityIndicatorMapper.toDomain(makeRegularBot({ index: "1" }))
+      new ActivityIndicatorMapper().toDomain(makeRegularBot({ index: "1" }))
     ).toThrow("index of a regular indicator must be a number");
   });
 
   it("throws when index is undefined", () => {
     expect(() =>
-      ActivityIndicatorMapper.toDomain(makeRegularBot({ index: undefined }))
+      new ActivityIndicatorMapper().toDomain(
+        makeRegularBot({ index: undefined })
+      )
     ).toThrow("index of a regular indicator must be a number");
   });
 
   it("throws when index is null", () => {
     expect(() =>
-      ActivityIndicatorMapper.toDomain(makeRegularBot({ index: null }))
+      new ActivityIndicatorMapper().toDomain(makeRegularBot({ index: null }))
     ).toThrow("index of a regular indicator must be a number");
   });
 });
@@ -93,7 +95,7 @@ describe("toDomain — regular indicatorType", () => {
 describe("toDomain — missing indicatorType", () => {
   it("throws when indicatorType is undefined", () => {
     expect(() =>
-      ActivityIndicatorMapper.toDomain(
+      new ActivityIndicatorMapper().toDomain(
         makeRegularBot({ indicatorType: undefined })
       )
     ).toThrow("bot.tags.indicatorType not defined at toDomain");
@@ -101,13 +103,17 @@ describe("toDomain — missing indicatorType", () => {
 
   it("throws when indicatorType is null", () => {
     expect(() =>
-      ActivityIndicatorMapper.toDomain(makeRegularBot({ indicatorType: null }))
+      new ActivityIndicatorMapper().toDomain(
+        makeRegularBot({ indicatorType: null })
+      )
     ).toThrow("bot.tags.indicatorType not defined at toDomain");
   });
 
   it("throws when indicatorType is an empty string", () => {
     expect(() =>
-      ActivityIndicatorMapper.toDomain(makeRegularBot({ indicatorType: "" }))
+      new ActivityIndicatorMapper().toDomain(
+        makeRegularBot({ indicatorType: "" })
+      )
     ).toThrow("bot.tags.indicatorType not defined at toDomain");
   });
 });
@@ -117,49 +123,52 @@ describe("toDomain — missing indicatorType", () => {
 describe("toDomain — non-regular indicatorType", () => {
   it("returns a domain object with the given indicatorType", () => {
     expect(
-      ActivityIndicatorMapper.toDomain(makeNonRegularBot()).indicatorType
+      new ActivityIndicatorMapper().toDomain(makeNonRegularBot()).indicatorType
     ).toBe("label");
   });
 
   it("maps bot.id to id", () => {
-    expect(ActivityIndicatorMapper.toDomain(makeNonRegularBot()).id).toBe(
+    expect(new ActivityIndicatorMapper().toDomain(makeNonRegularBot()).id).toBe(
       "bot-2"
     );
   });
 
   it("sets type to 'ActivityIndicator'", () => {
-    expect(ActivityIndicatorMapper.toDomain(makeNonRegularBot()).type).toBe(
-      "ActivityIndicator"
-    );
+    expect(
+      new ActivityIndicatorMapper().toDomain(makeNonRegularBot()).type
+    ).toBe("ActivityIndicator");
   });
 
   it("maps the index", () => {
     expect(
-      ActivityIndicatorMapper.toDomain(makeNonRegularBot({ index: 7 })).index
+      new ActivityIndicatorMapper().toDomain(makeNonRegularBot({ index: 7 }))
+        .index
     ).toBe(7);
   });
 
   it("throws when index is falsy (undefined)", () => {
     expect(() =>
-      ActivityIndicatorMapper.toDomain(makeNonRegularBot({ index: undefined }))
+      new ActivityIndicatorMapper().toDomain(
+        makeNonRegularBot({ index: undefined })
+      )
     ).toThrow("bot.tags.index not defined at toDomain");
   });
 
   it("throws when index is falsy (null)", () => {
     expect(() =>
-      ActivityIndicatorMapper.toDomain(makeNonRegularBot({ index: null }))
+      new ActivityIndicatorMapper().toDomain(makeNonRegularBot({ index: null }))
     ).toThrow("bot.tags.index not defined at toDomain");
   });
 
   it("throws when index is 0 (falsy guard treats 0 as missing)", () => {
     expect(() =>
-      ActivityIndicatorMapper.toDomain(makeNonRegularBot({ index: 0 }))
+      new ActivityIndicatorMapper().toDomain(makeNonRegularBot({ index: 0 }))
     ).toThrow("bot.tags.index not defined at toDomain");
   });
 
   it("preserves the indicatorType string verbatim", () => {
     const bot = makeNonRegularBot({ indicatorType: "grounded" });
-    expect(ActivityIndicatorMapper.toDomain(bot).indicatorType).toBe(
+    expect(new ActivityIndicatorMapper().toDomain(bot).indicatorType).toBe(
       "grounded"
     );
   });
@@ -169,34 +178,36 @@ describe("toDomain — non-regular indicatorType", () => {
 
 describe("toInfrastructure", () => {
   it("calls byID with the indicator's id", () => {
-    ActivityIndicatorMapper.toInfrastructure(makeIndicator());
+    new ActivityIndicatorMapper().toInfrastructure(makeIndicator());
     expect((globalThis as any).byID).toHaveBeenCalledWith("bot-1");
   });
 
   it("calls getBot with the result of byID", () => {
     const filter = { tag: "id", value: "bot-1" };
     (globalThis as any).byID.mockReturnValue(filter);
-    ActivityIndicatorMapper.toInfrastructure(makeIndicator());
+    new ActivityIndicatorMapper().toInfrastructure(makeIndicator());
     expect((globalThis as any).getBot).toHaveBeenCalledWith(filter);
   });
 
   it("returns the bot when getBot finds it", () => {
     const bot = makeRegularBot();
     (globalThis as any).getBot.mockReturnValue(bot);
-    expect(ActivityIndicatorMapper.toInfrastructure(makeIndicator())).toBe(bot);
+    expect(
+      new ActivityIndicatorMapper().toInfrastructure(makeIndicator())
+    ).toBe(bot);
   });
 
   it("returns undefined when getBot returns undefined", () => {
     (globalThis as any).getBot.mockReturnValue(undefined);
     expect(
-      ActivityIndicatorMapper.toInfrastructure(makeIndicator())
+      new ActivityIndicatorMapper().toInfrastructure(makeIndicator())
     ).toBeUndefined();
   });
 
   it("returns undefined when getBot returns null", () => {
     (globalThis as any).getBot.mockReturnValue(null);
     expect(
-      ActivityIndicatorMapper.toInfrastructure(makeIndicator())
+      new ActivityIndicatorMapper().toInfrastructure(makeIndicator())
     ).toBeUndefined();
   });
 });

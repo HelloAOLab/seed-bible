@@ -36,13 +36,13 @@
           <div class="fl pad1y space-right2">
             <span class="strong">100% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">61/61</span>
+            <span class="fraction">60/60</span>
           </div>
 
           <div class="fl pad1y space-right2">
             <span class="strong">100% </span>
             <span class="quiet">Branches</span>
-            <span class="fraction">42/42</span>
+            <span class="fraction">44/44</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -54,7 +54,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">100% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">60/60</span>
+            <span class="fraction">59/59</span>
           </div>
         </div>
         <p class="quiet">
@@ -284,7 +284,10 @@
 <a name='L212'></a><a href='#L212'>212</a>
 <a name='L213'></a><a href='#L213'>213</a>
 <a name='L214'></a><a href='#L214'>214</a>
-<a name='L215'></a><a href='#L215'>215</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -303,8 +306,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -317,6 +320,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -328,6 +332,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -517,20 +523,21 @@ import { GetBotScales } from "bibleVizUtils.infrastructure.functions.casualos";
 import { PieceMapper } from "bibleVizUtils.infrastructure.mappers.PieceMapper";
 import type { ObjectPooler } from "bibleVizUtils.infrastructure.adapters.casualos.ObjectPooler";
 &nbsp;
-const baseNotificationOffset = 0; // TODO: Investigate what's the criteria to assign an offset
-const baseNotificationScales = {
-  x: 1,
-  y: 1,
-}; // TODO: Investigate what's the criteria to assign scales
+interface DimensionProviderPort {
+  getDimension(): string;
+}
 &nbsp;
 interface AdapterParams {
   objectPooler: ObjectPooler&lt;BibleVizUtilsObjectPoolerMap&gt;;
+  dimensionProviderPort: DimensionProviderPort;
 }
 &nbsp;
 export class ActivityNotificationAdapter implements ActivityNotificationAdapterPort {
   #objectPooler: AdapterParams["objectPooler"];
-  constructor({ objectPooler }: AdapterParams) {
+  #dimensionProviderPort: DimensionProviderPort;
+  constructor({ objectPooler, dimensionProviderPort }: AdapterParams) {
     this.#objectPooler = objectPooler;
+    this.#dimensionProviderPort = dimensionProviderPort;
   }
 &nbsp;
   hideNotification(notification: ActivityNotification) {
@@ -554,6 +561,8 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
       direction,
       notification,
       container,
+      offset = 0,
+      scales = {x: 1, y: 1}
     } = command;
 &nbsp;
     let notificationBot: ActivityNotificationBot | undefined;
@@ -580,7 +589,7 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
 &nbsp;
     const formOpacity = isOwnUserInPiece ? 1 : 0.5;
     const label = activityCount &gt; 1 ? `${activityCount}` : "";
-    const dimension = os.getCurrentDimension(); // TODO: Obtain dimension from a dimension provider port
+    const dimension = this.#dimensionProviderPort.getDimension();
 &nbsp;
     const mod: Partial&lt;ActivityNotificationTags&gt; = {
       [dimension]: true,
@@ -590,9 +599,9 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
       formOpacity,
       direction,
       color,
-      offset: baseNotificationOffset,
-      scaleX: baseNotificationScales.x,
-      scaleY: baseNotificationScales.y,
+      offset,
+      scaleX: scales.x,
+      scaleY: scales.y,
       type: "ActivityNotification",
     };
 &nbsp;
@@ -628,7 +637,7 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
         `ActivityNotificationAdapter: container.piece is not defined.`
       );
     }
-    const dimension = os.getCurrentDimension(); // TODO: Obtain dimension from a dimension provider port
+    const dimension = this.#dimensionProviderPort.getDimension();
     const ownerBot = PieceMapper.toInfrastructure(container.piece);
 &nbsp;
     if (!ownerBot) {
@@ -726,7 +735,7 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
         rel="noopener noreferrer"
         >istanbul</a
       >
-      at 2026-05-22T16:23:42.873Z
+      at 2026-05-22T23:47:38.848Z
     </div>
     <script src="../../../../../../prettify.js"></script>
     <script>

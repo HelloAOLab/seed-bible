@@ -1,37 +1,13 @@
 import { ActivityIndicatorsAdapter } from "bibleVizUtils.infrastructure.adapters.pieceActivity.ActivityIndicatorsAdapter";
-import { ActivityIndicatorMapper } from "bibleVizUtils.infrastructure.mappers.ActivityIndicatorMapper";
-import { InfoLabelTextMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTextMapper";
-import { GetBotScales } from "bibleVizUtils.infrastructure.functions.casualos";
 import { InfoLabelData } from "bibleVizUtils.domain.entities.InfoLabelData";
 import { LabelPosition } from "bibleVizUtils.domain.models.label";
 import { BiblePiece } from "bibleVizUtils.domain.models.canvas";
 
 // ─── module mocks ─────────────────────────────────────────────────────────────
 
-jest.mock(
-  "bibleVizUtils.infrastructure.mappers.ActivityIndicatorMapper",
-  () => ({
-    ActivityIndicatorMapper: {
-      toInfrastructure: jest.fn(),
-      toDomain: jest.fn(),
-    },
-  })
-);
-
-jest.mock("bibleVizUtils.infrastructure.mappers.InfoLabelTextMapper", () => ({
-  InfoLabelTextMapper: { toInfrastructure: jest.fn() },
-}));
-
 jest.mock("bibleVizUtils.infrastructure.functions.casualos", () => ({
   GetBotScales: jest.fn().mockReturnValue({ x: 1, y: 1, z: 0.1 }),
 }));
-
-// ─── mock aliases ─────────────────────────────────────────────────────────────
-
-const activityIndicatorToInfra =
-  ActivityIndicatorMapper.toInfrastructure as jest.Mock;
-const activityIndicatorToDomain = ActivityIndicatorMapper.toDomain as jest.Mock;
-const getBotScalesMock = GetBotScales as jest.Mock;
 
 // ─── globals ──────────────────────────────────────────────────────────────────
 
@@ -48,6 +24,12 @@ let setTagMock: jest.Mock;
 let getBotMock: jest.Mock;
 let byIDMock: jest.Mock;
 let getBotPositionMock: jest.Mock;
+let activityIndicatorMapper: {
+  toInfrastructure: jest.Mock;
+  toDomain: jest.Mock;
+};
+let infoLabelTextMapper: { toInfrastructure: jest.Mock };
+let dimensionProvider: { getDimension: jest.Mock };
 
 beforeEach(() => {
   applyModMock = jest.fn();
@@ -55,6 +37,12 @@ beforeEach(() => {
   getBotMock = jest.fn().mockReturnValue(undefined);
   byIDMock = jest.fn().mockImplementation((id: string) => ({ byId: id }));
   getBotPositionMock = jest.fn().mockReturnValue({ x: 0, y: 0, z: 0 });
+  activityIndicatorMapper = {
+    toInfrastructure: jest.fn(),
+    toDomain: jest.fn(),
+  };
+  infoLabelTextMapper = { toInfrastructure: jest.fn() };
+  dimensionProvider = { getDimension: jest.fn().mockReturnValue("scene3d") };
 
   (globalThis as any).Vector3 = Vec3;
   (globalThis as any).applyMod = applyModMock;
@@ -62,10 +50,6 @@ beforeEach(() => {
   (globalThis as any).getBot = getBotMock;
   (globalThis as any).byID = byIDMock;
   (globalThis as any).getBotPosition = getBotPositionMock;
-  (globalThis as any).os = {
-    ...((globalThis as any).os ?? {}),
-    getCurrentDimension: jest.fn().mockReturnValue("scene3d"),
-  };
 });
 
 afterEach(() => {
@@ -184,6 +168,9 @@ const makeAdapter = (
     objectPooler: pooler,
     configProviderPort: configProvider,
     botsRepositoryPort: botsRepository,
+    activityIndicatorMapperPort: activityIndicatorMapper,
+    labelTextMapperPort: infoLabelTextMapper,
+    dimensionProviderPort: dimensionProvider,
   });
 
 const makeRegularCommand = (overrides: any = {}): any => ({
@@ -222,7 +209,7 @@ describe("showIndicators", () => {
     });
 
     it("throws when indicator command has indicator but toInfrastructure returns undefined", () => {
-      activityIndicatorToInfra.mockReturnValue(undefined);
+      activityIndicatorMapper.toInfrastructure.mockReturnValue(undefined);
       const command = makeRegularCommand({
         indicator: makeActivityIndicator(),
       });
@@ -290,16 +277,22 @@ describe("showIndicators", () => {
 
     it("calls ActivityIndicatorMapper.toInfrastructure when command has an indicator", () => {
       const indicator = makeActivityIndicator();
-      activityIndicatorToInfra.mockReturnValue(makeIndicatorBot());
+      activityIndicatorMapper.toInfrastructure.mockReturnValue(
+        makeIndicatorBot()
+      );
       makeAdapter().showIndicators({
         container: makePieceContainer(),
         command: makeRegularCommand({ indicator }),
       });
-      expect(activityIndicatorToInfra).toHaveBeenCalledWith(indicator);
+      expect(activityIndicatorMapper.toInfrastructure).toHaveBeenCalledWith(
+        indicator
+      );
     });
 
     it("does not call objectPooler.getObject when command provides an indicator", () => {
-      activityIndicatorToInfra.mockReturnValue(makeIndicatorBot());
+      activityIndicatorMapper.toInfrastructure.mockReturnValue(
+        makeIndicatorBot()
+      );
       const pooler = makePooler();
       makeAdapter(pooler).showIndicators({
         container: makePieceContainer(),
@@ -496,7 +489,7 @@ describe("showIndicators", () => {
   describe("return value and array commands", () => {
     it("returns mapped domain indicators via ActivityIndicatorMapper.toDomain", () => {
       const domainIndicator = makeDomainIndicator();
-      activityIndicatorToDomain.mockReturnValue(domainIndicator);
+      activityIndicatorMapper.toDomain.mockReturnValue(domainIndicator);
       const result = makeAdapter().showIndicators({
         container: makePieceContainer(),
         command: makeRegularCommand(),
@@ -524,7 +517,7 @@ describe("showIndicators", () => {
       pooler.getObject
         .mockReturnValueOnce(makeIndicatorBot())
         .mockReturnValueOnce(makeIndicatorBot({ id: "indicator-bot-2" }));
-      activityIndicatorToDomain
+      activityIndicatorMapper.toDomain
         .mockReturnValueOnce(makeDomainIndicator("d1"))
         .mockReturnValueOnce(makeDomainIndicator("d2"));
       const result = makeAdapter(pooler).showIndicators({
@@ -544,13 +537,13 @@ describe("showIndicators", () => {
 describe("hideIndicators", () => {
   it("is a no-op when indicators array is empty", () => {
     makeAdapter().hideIndicators([]);
-    expect(activityIndicatorToInfra).not.toHaveBeenCalled();
+    expect(activityIndicatorMapper.toInfrastructure).not.toHaveBeenCalled();
   });
 
   it("calls hideIndicator once per indicator", () => {
     const bot1 = makeIndicatorBot();
     const bot2 = makeIndicatorBot({ id: "bot-2" });
-    activityIndicatorToInfra
+    activityIndicatorMapper.toInfrastructure
       .mockReturnValueOnce(bot1)
       .mockReturnValueOnce(bot2);
     const pooler = makePooler();
@@ -568,14 +561,14 @@ describe("hideIndicators", () => {
 describe("hideIndicator", () => {
   it("calls objectPooler.releaseObject with the bot and 'ActivityIndicator' key", () => {
     const bot = makeIndicatorBot();
-    activityIndicatorToInfra.mockReturnValue(bot);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(bot);
     const pooler = makePooler();
     makeAdapter(pooler).hideIndicator(makeActivityIndicator());
     expect(pooler.releaseObject).toHaveBeenCalledWith(bot, "ActivityIndicator");
   });
 
   it("does not call releaseObject when toInfrastructure returns undefined", () => {
-    activityIndicatorToInfra.mockReturnValue(undefined);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(undefined);
     const pooler = makePooler();
     makeAdapter(pooler).hideIndicator(makeActivityIndicator());
     expect(pooler.releaseObject).not.toHaveBeenCalled();
@@ -589,19 +582,21 @@ describe("updateIndicatorsPosition", () => {
     makeAdapter().updateIndicatorsPosition(
       makePieceContainer({ activityIndicators: [] })
     );
-    expect(activityIndicatorToInfra).not.toHaveBeenCalled();
+    expect(activityIndicatorMapper.toInfrastructure).not.toHaveBeenCalled();
   });
 
   it("calls updateIndicatorPosition for each indicator", () => {
     const indicator = makeActivityIndicator();
-    activityIndicatorToInfra.mockReturnValue(undefined);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(undefined);
     const container = makePieceContainer({ activityIndicators: [indicator] });
     makeAdapter().updateIndicatorsPosition(container);
-    expect(activityIndicatorToInfra).toHaveBeenCalledWith(indicator);
+    expect(activityIndicatorMapper.toInfrastructure).toHaveBeenCalledWith(
+      indicator
+    );
   });
 
   it("calls updateIndicatorPosition for all indicators in the container", () => {
-    activityIndicatorToInfra.mockReturnValue(undefined);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(undefined);
     const container = makePieceContainer({
       activityIndicators: [
         makeActivityIndicator("i1"),
@@ -609,7 +604,7 @@ describe("updateIndicatorsPosition", () => {
       ],
     });
     makeAdapter().updateIndicatorsPosition(container);
-    expect(activityIndicatorToInfra).toHaveBeenCalledTimes(2);
+    expect(activityIndicatorMapper.toInfrastructure).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -617,7 +612,7 @@ describe("updateIndicatorsPosition", () => {
 
 describe("updateIndicatorPosition", () => {
   it("does nothing when toInfrastructure returns undefined", () => {
-    activityIndicatorToInfra.mockReturnValue(undefined);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(undefined);
     makeAdapter().updateIndicatorPosition(
       makeActivityIndicator(),
       makePieceContainer()
@@ -627,7 +622,7 @@ describe("updateIndicatorPosition", () => {
 
   it("throws when indicatorBot.tags.ownerBotId is undefined", () => {
     const bot = makeIndicatorBot({ ownerBotId: undefined });
-    activityIndicatorToInfra.mockReturnValue(bot);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(bot);
     expect(() =>
       makeAdapter().updateIndicatorPosition(
         makeActivityIndicator(),
@@ -640,7 +635,7 @@ describe("updateIndicatorPosition", () => {
 
   it("throws when ownerBot is not found by getBot", () => {
     const bot = makeIndicatorBot({ ownerBotId: "owner-id" });
-    activityIndicatorToInfra.mockReturnValue(bot);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(bot);
     getBotMock.mockReturnValue(undefined);
     expect(() =>
       makeAdapter().updateIndicatorPosition(
@@ -654,7 +649,7 @@ describe("updateIndicatorPosition", () => {
 
   it("throws when no position strategy exists for ownerBot.tags.type", () => {
     const indicatorBot = makeIndicatorBot({ ownerBotId: "owner-id" });
-    activityIndicatorToInfra.mockReturnValue(indicatorBot);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(indicatorBot);
     getBotMock.mockReturnValue(makeOwnerBot("StackBook"));
     expect(() =>
       makeAdapter().updateIndicatorPosition(
@@ -670,7 +665,7 @@ describe("updateIndicatorPosition", () => {
       index: 0,
       scaleZ: 0.1,
     });
-    activityIndicatorToInfra.mockReturnValue(indicatorBot);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(indicatorBot);
     getBotMock.mockReturnValue(makeOwnerBot(BiblePiece.StackChapter));
     makeAdapter().updateIndicatorPosition(
       makeActivityIndicator(),
@@ -685,7 +680,7 @@ describe("updateIndicatorPosition", () => {
       index: 0,
       scaleZ: 0.1,
     });
-    activityIndicatorToInfra.mockReturnValue(indicatorBot);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(indicatorBot);
     getBotMock.mockReturnValue(makeOwnerBot(BiblePiece.StackChapter));
     makeAdapter().updateIndicatorPosition(
       makeActivityIndicator(),
@@ -704,7 +699,7 @@ describe("updateIndicatorPosition", () => {
       index: 0,
       scaleZ: 0.1,
     });
-    activityIndicatorToInfra.mockReturnValue(indicatorBot);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(indicatorBot);
     getBotMock.mockReturnValue(makeOwnerBot(BiblePiece.StackChapter));
     makeAdapter().updateIndicatorPosition(
       makeActivityIndicator(),
@@ -728,7 +723,7 @@ describe("updateIndicatorPosition", () => {
       index: 0,
       scaleZ: 0.1,
     });
-    activityIndicatorToInfra.mockReturnValue(indicatorBot);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(indicatorBot);
     getBotMock.mockReturnValue(makeOwnerBot(BiblePiece.StackChapter));
     makeAdapter().updateIndicatorPosition(
       makeActivityIndicator(),
@@ -743,7 +738,7 @@ describe("updateIndicatorPosition", () => {
 
   it("uses byID to look up the ownerBot by ownerBotId", () => {
     const indicatorBot = makeIndicatorBot({ ownerBotId: "target-owner" });
-    activityIndicatorToInfra.mockReturnValue(indicatorBot);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(indicatorBot);
     getBotMock.mockReturnValue(undefined);
     try {
       makeAdapter().updateIndicatorPosition(
@@ -760,7 +755,7 @@ describe("updateIndicatorPosition", () => {
       index: 1,
       scaleZ: 0.1,
     });
-    activityIndicatorToInfra.mockReturnValue(indicatorBot);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(indicatorBot);
     getBotMock.mockReturnValue(makeOwnerBot(BiblePiece.LayoutBook));
     expect(() =>
       makeAdapter().updateIndicatorPosition(
@@ -790,13 +785,13 @@ describe("getIndicatorsByPieceId", () => {
     const repo = makeBotsRepository();
     repo.getIndicatorBotsByPieceId.mockReturnValue([bot]);
     const domainIndicator = makeDomainIndicator();
-    activityIndicatorToDomain.mockReturnValue(domainIndicator);
+    activityIndicatorMapper.toDomain.mockReturnValue(domainIndicator);
     const result = makeAdapter(
       makePooler(),
       makeConfigProvider(),
       repo
     ).getIndicatorsByPieceId("p");
-    expect(activityIndicatorToDomain).toHaveBeenCalledWith(bot);
+    expect(activityIndicatorMapper.toDomain).toHaveBeenCalledWith(bot);
     expect(result).toContain(domainIndicator);
   });
 
@@ -810,7 +805,7 @@ describe("getIndicatorsByPieceId", () => {
       makeIndicatorBot(),
       makeIndicatorBot({ id: "b2" }),
     ]);
-    activityIndicatorToDomain.mockReturnValue(makeDomainIndicator());
+    activityIndicatorMapper.toDomain.mockReturnValue(makeDomainIndicator());
     const result = makeAdapter(
       makePooler(),
       makeConfigProvider(),
@@ -838,13 +833,13 @@ describe("getIndicatorsByPieceDataId", () => {
     const repo = makeBotsRepository();
     repo.getIndicatorBotsByPieceDataId.mockReturnValue([bot]);
     const domainIndicator = makeDomainIndicator();
-    activityIndicatorToDomain.mockReturnValue(domainIndicator);
+    activityIndicatorMapper.toDomain.mockReturnValue(domainIndicator);
     const result = makeAdapter(
       makePooler(),
       makeConfigProvider(),
       repo
     ).getIndicatorsByPieceDataId("d");
-    expect(activityIndicatorToDomain).toHaveBeenCalledWith(bot);
+    expect(activityIndicatorMapper.toDomain).toHaveBeenCalledWith(bot);
     expect(result).toContain(domainIndicator);
   });
 
@@ -861,7 +856,7 @@ describe("updateIndicatorPosition — grounded strategy — index undefined", ()
       ownerBotId: "owner-id",
       index: undefined,
     });
-    activityIndicatorToInfra.mockReturnValue(indicatorBot);
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(indicatorBot);
     getBotMock.mockReturnValue(makeOwnerBot(BiblePiece.StackChapter));
     expect(() =>
       makeAdapter().updateIndicatorPosition(
@@ -877,8 +872,6 @@ describe("updateIndicatorPosition — grounded strategy — index undefined", ()
 // ─── updateIndicatorPosition — InfoLabelTransformer owner (labelPositionStrategy) ─
 
 describe("updateIndicatorPosition — InfoLabelTransformer owner (labelPositionStrategy)", () => {
-  const infoLabelToInfra = InfoLabelTextMapper.toInfrastructure as jest.Mock;
-
   const makeLabelTextBot = (tagOverrides: any = {}): any => ({
     id: "label-text-bot-1",
     link: "",
@@ -900,7 +893,7 @@ describe("updateIndicatorPosition — InfoLabelTransformer owner (labelPositionS
 
   beforeEach(() => {
     getBotMock.mockReturnValue(makeOwnerBot(BiblePiece.InfoLabelTransformer));
-    activityIndicatorToInfra.mockReturnValue(
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(
       makeIndicatorBot({ ownerBotId: "owner-id", indicatorType: "regular" })
     );
   });
@@ -917,7 +910,7 @@ describe("updateIndicatorPosition — InfoLabelTransformer owner (labelPositionS
   });
 
   it("throws when InfoLabelTextMapper.toInfrastructure returns undefined", () => {
-    infoLabelToInfra.mockReturnValue(undefined);
+    infoLabelTextMapper.toInfrastructure.mockReturnValue(undefined);
     expect(() =>
       makeAdapter().updateIndicatorPosition(
         makeActivityIndicator(),
@@ -929,7 +922,7 @@ describe("updateIndicatorPosition — InfoLabelTransformer owner (labelPositionS
   });
 
   it("throws when labelTextBot has no initialPosition", () => {
-    infoLabelToInfra.mockReturnValue(
+    infoLabelTextMapper.toInfrastructure.mockReturnValue(
       makeLabelTextBot({ initialPosition: undefined })
     );
     expect(() =>
@@ -943,14 +936,14 @@ describe("updateIndicatorPosition — InfoLabelTransformer owner (labelPositionS
   });
 
   it("throws when indicatorBot.tags.index is undefined", () => {
-    activityIndicatorToInfra.mockReturnValue(
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(
       makeIndicatorBot({
         ownerBotId: "owner-id",
         index: undefined,
         indicatorType: "regular",
       })
     );
-    infoLabelToInfra.mockReturnValue(makeLabelTextBot());
+    infoLabelTextMapper.toInfrastructure.mockReturnValue(makeLabelTextBot());
     expect(() =>
       makeAdapter().updateIndicatorPosition(
         makeActivityIndicator(),
@@ -962,7 +955,7 @@ describe("updateIndicatorPosition — InfoLabelTransformer owner (labelPositionS
   });
 
   it("sets position tags successfully when all inputs are valid (indicatorType='regular')", () => {
-    infoLabelToInfra.mockReturnValue(makeLabelTextBot());
+    infoLabelTextMapper.toInfrastructure.mockReturnValue(makeLabelTextBot());
     makeAdapter().updateIndicatorPosition(
       makeActivityIndicator(),
       makeInfoLabelContainer()
@@ -971,14 +964,14 @@ describe("updateIndicatorPosition — InfoLabelTransformer owner (labelPositionS
   });
 
   it("sets position tags successfully when indicatorType='extraContent'", () => {
-    activityIndicatorToInfra.mockReturnValue(
+    activityIndicatorMapper.toInfrastructure.mockReturnValue(
       makeIndicatorBot({
         ownerBotId: "owner-id",
         index: 1,
         indicatorType: "extraContent",
       })
     );
-    infoLabelToInfra.mockReturnValue(makeLabelTextBot());
+    infoLabelTextMapper.toInfrastructure.mockReturnValue(makeLabelTextBot());
     makeAdapter().updateIndicatorPosition(
       makeActivityIndicator(),
       makeInfoLabelContainer()
@@ -987,7 +980,7 @@ describe("updateIndicatorPosition — InfoLabelTransformer owner (labelPositionS
   });
 
   it("sets the initialPosition tag with a Vector3 instance", () => {
-    infoLabelToInfra.mockReturnValue(makeLabelTextBot());
+    infoLabelTextMapper.toInfrastructure.mockReturnValue(makeLabelTextBot());
     makeAdapter().updateIndicatorPosition(
       makeActivityIndicator(),
       makeInfoLabelContainer()

@@ -9,8 +9,10 @@ import type {
   IndicatorsRepositoryPort,
   ScriptureServicePort,
   NotifiableContainer,
+  ReadingInstanceProviderPort,
 } from "bibleVizUtils.domain.ports.pieceActivity";
 import type { LabelDataStorePort } from "bibleVizUtils.domain.ports.piece";
+import type { LoggerPort } from "bibleVizUtils.domain.ports.logger";
 import type {
   Piece,
   ActivityIndicator,
@@ -107,6 +109,16 @@ const makeScripturePort = (): ScriptureServicePort => ({
   mapCompleteToSubsetBook: jest.fn(),
 });
 
+const makeReadingInstanceProvider = (): ReadingInstanceProviderPort => ({
+  getOwnReadingInstances: jest.fn().mockReturnValue([]),
+  getRemotesReadingInstances: jest.fn().mockReturnValue([]),
+});
+
+const makeLoggerPort = (): LoggerPort => ({
+  error: jest.fn(),
+  warn: jest.fn(),
+});
+
 const makeService = (
   overrides: {
     dataRegistryPort?: DataRegistryPort;
@@ -117,6 +129,7 @@ const makeService = (
     activityNotificationAdapterPort?: ActivityNotificationAdapterPort;
     userColorStorePort?: UserColorStorePort;
     arrangementServicePort?: ArrangementServicePort;
+    loggerPort?: LoggerPort;
   } = {}
 ) =>
   new PieceActivityService({
@@ -129,6 +142,8 @@ const makeService = (
     activityIndicatorsAdapterPort: makeIndicatorsAdapter(),
     activityNotificationAdapterPort: makeNotificationAdapter(),
     userColorStorePort: makeUserColorStore(),
+    readingInstanceProviderPort: makeReadingInstanceProvider(),
+    loggerPort: makeLoggerPort(),
     ...overrides,
   });
 
@@ -200,12 +215,12 @@ const makeContainer = (
 describe("getActivityIndicatorsForPiece", () => {
   afterEach(() => jest.restoreAllMocks());
 
-  it("logs console.error and returns [] for a piece type with no strategy", () => {
-    const svc = makeService();
-    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  it("calls loggerPort.error and returns [] for a piece type with no strategy", () => {
+    const loggerPort = makeLoggerPort();
+    const svc = makeService({ loggerPort });
     const result = svc.getActivityIndicatorsForPiece(makePiece("StackCover"));
     expect(result).toEqual([]);
-    expect(errorSpy).toHaveBeenCalledWith(
+    expect(loggerPort.error).toHaveBeenCalledWith(
       expect.stringContaining("strategy not found")
     );
   });
@@ -524,14 +539,14 @@ describe("getDataIndicatorByActivityIndex", () => {
 describe("getPieceActivity", () => {
   afterEach(() => jest.restoreAllMocks());
 
-  it("logs console.error and returns [] for a piece type with no activity strategy", () => {
-    const svc = makeService();
-    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  it("calls loggerPort.error and returns [] for a piece type with no activity strategy", () => {
+    const loggerPort = makeLoggerPort();
+    const svc = makeService({ loggerPort });
     const result = svc.getPieceActivity({
       piece: makePiece("ActivityIndicator"),
     });
     expect(result).toEqual([]);
-    expect(errorSpy).toHaveBeenCalledWith(
+    expect(loggerPort.error).toHaveBeenCalledWith(
       expect.stringContaining("strategy not found")
     );
   });
@@ -556,6 +571,8 @@ describe("getPieceActivity", () => {
       activityIndicatorsAdapterPort: makeIndicatorsAdapter(),
       activityNotificationAdapterPort: makeNotificationAdapter(),
       userColorStorePort: makeUserColorStore(),
+      readingInstanceProviderPort: makeReadingInstanceProvider(),
+      loggerPort: makeLoggerPort(),
     });
     svc.getPieceActivity({ piece: makePiece("StackBook") });
     expect(
@@ -575,6 +592,8 @@ describe("getPieceActivity", () => {
       activityIndicatorsAdapterPort: makeIndicatorsAdapter(),
       activityNotificationAdapterPort: makeNotificationAdapter(),
       userColorStorePort: makeUserColorStore(),
+      readingInstanceProviderPort: makeReadingInstanceProvider(),
+      loggerPort: makeLoggerPort(),
     });
     svc.getPieceActivity({
       piece: makePiece("StackBook"),
@@ -616,6 +635,8 @@ describe("updateIndicators", () => {
       activityIndicatorsAdapterPort: indicatorsAdapter,
       activityNotificationAdapterPort: makeNotificationAdapter(),
       userColorStorePort: makeUserColorStore(),
+      readingInstanceProviderPort: makeReadingInstanceProvider(),
+      loggerPort: makeLoggerPort(),
     });
     const cleared = [makeIndicator()];
     const container = makeContainer(makePiece("StackBook"));
@@ -636,6 +657,8 @@ describe("updateIndicators", () => {
       activityIndicatorsAdapterPort: indicatorsAdapter,
       activityNotificationAdapterPort: makeNotificationAdapter(),
       userColorStorePort: makeUserColorStore(),
+      readingInstanceProviderPort: makeReadingInstanceProvider(),
+      loggerPort: makeLoggerPort(),
     });
     const container = makeContainer(makePiece("StackBook"));
     (container.clearActivityIndicators as jest.Mock).mockReturnValue(undefined);
@@ -666,6 +689,8 @@ describe("updateAllIndicators", () => {
       activityIndicatorsAdapterPort: makeIndicatorsAdapter(),
       activityNotificationAdapterPort: makeNotificationAdapter(),
       userColorStorePort: makeUserColorStore(),
+      readingInstanceProviderPort: makeReadingInstanceProvider(),
+      loggerPort: makeLoggerPort(),
     });
     svc.updateAllIndicators();
     expect(labelDataStorePort.getAllLabelsData).toHaveBeenCalled();
@@ -702,6 +727,8 @@ describe("updateAllIndicators", () => {
       activityIndicatorsAdapterPort: makeIndicatorsAdapter(),
       activityNotificationAdapterPort: makeNotificationAdapter(),
       userColorStorePort: makeUserColorStore(),
+      readingInstanceProviderPort: makeReadingInstanceProvider(),
+      loggerPort: makeLoggerPort(),
     });
     svc.updateAllIndicators();
     // containerA (from labels) + containerB (from StackChapter) = 2 clearActivityIndicators calls
@@ -730,6 +757,8 @@ describe("updateAllIndicators", () => {
       activityIndicatorsAdapterPort: makeIndicatorsAdapter(),
       activityNotificationAdapterPort: makeNotificationAdapter(),
       userColorStorePort: makeUserColorStore(),
+      readingInstanceProviderPort: makeReadingInstanceProvider(),
+      loggerPort: makeLoggerPort(),
     });
     svc.updateAllIndicators();
     expect(hidingContainer.clearActivityIndicators).not.toHaveBeenCalled();

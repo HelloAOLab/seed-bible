@@ -21,9 +21,11 @@ import type {
   ActivityContainerType,
   UserColorStorePort,
   NotifiableContainer,
+  ReadingInstanceProviderPort,
 } from "bibleVizUtils.domain.ports.pieceActivity";
 import { InfoLabelData } from "bibleVizUtils.domain.entities.InfoLabelData";
 import type { PieceActivityServicePort } from "bibleVizUtils.domain.ports.label";
+import type { LoggerPort } from "bibleVizUtils.domain.ports.logger";
 
 interface ServiceParams {
   dataRegistryPort: DataRegistryPort;
@@ -33,9 +35,11 @@ interface ServiceParams {
   labelDataStorePort: LabelDataStorePort;
   maxIndicators?: number;
   userPresenceServicePort: UserPresenceServicePort;
+  readingInstanceProviderPort: ReadingInstanceProviderPort;
   activityIndicatorsAdapterPort: ActivityIndicatorsAdapterPort;
   activityNotificationAdapterPort: ActivityNotificationAdapterPort;
   userColorStorePort: UserColorStorePort;
+  loggerPort: LoggerPort;
 }
 
 type ActivityStrategyType<T extends BiblePieceType = BiblePieceType> = (
@@ -180,6 +184,8 @@ export class PieceActivityService implements PieceActivityServicePort {
   #activityIndicatorsAdapterPort: ServiceParams["activityIndicatorsAdapterPort"];
   #activityNotificationAdapterPort: ServiceParams["activityNotificationAdapterPort"];
   #userColorStorePort: ServiceParams["userColorStorePort"];
+  #readingInstanceProviderPort: ServiceParams["readingInstanceProviderPort"];
+  #loggerPort: LoggerPort;
 
   constructor({
     dataRegistryPort,
@@ -190,6 +196,8 @@ export class PieceActivityService implements PieceActivityServicePort {
     activityIndicatorsAdapterPort,
     activityNotificationAdapterPort,
     userColorStorePort,
+    readingInstanceProviderPort,
+    loggerPort,
   }: ServiceParams) {
     this.#dataRegistryPort = dataRegistryPort;
     this.#arrangementServicePort = arrangementServicePort;
@@ -199,6 +207,8 @@ export class PieceActivityService implements PieceActivityServicePort {
     this.#activityIndicatorsAdapterPort = activityIndicatorsAdapterPort;
     this.#activityNotificationAdapterPort = activityNotificationAdapterPort;
     this.#userColorStorePort = userColorStorePort;
+    this.#readingInstanceProviderPort = readingInstanceProviderPort;
+    this.#loggerPort = loggerPort;
   }
 
   getPieceActivity({
@@ -208,8 +218,10 @@ export class PieceActivityService implements PieceActivityServicePort {
     piece: Piece;
     desiredArrangementIndex?: number;
   }) {
-    const readingInstances: UserReadingInstance[] = []; // TODO: Obtain my readingInstances
-    const remoteReadingInstances: UserReadingInstance[] = []; // TODO: Obtain remote users readingInstances
+    const readingInstances: UserReadingInstance[] =
+      this.#readingInstanceProviderPort.getOwnReadingInstances();
+    const remoteReadingInstances: UserReadingInstance[] =
+      this.#readingInstanceProviderPort.getRemotesReadingInstances();
     const allReadingInstances: UserReadingInstance[] = [
       ...readingInstances,
       ...remoteReadingInstances,
@@ -301,8 +313,7 @@ export class PieceActivityService implements PieceActivityServicePort {
       | undefined;
 
     if (!strategy) {
-      console.error(
-        // TODO: Create and implement a proper Logger port
+      this.#loggerPort.error(
         `PieceActivityService: strategy not found at getPieceActivity`
       );
       return [];
@@ -332,8 +343,7 @@ export class PieceActivityService implements PieceActivityServicePort {
       | undefined;
 
     if (!strategy) {
-      console.error(
-        // TODO: Create and implement a proper Logger port
+      this.#loggerPort.error(
         `PieceActivityService: strategy not found at getActivityIndicatorsForPiece`
       );
       return [];

@@ -1,10 +1,8 @@
 import { LabelInteractionController } from "bibleVizUtils.infrastructure.controllers.label.LabelInteractionController";
 
 jest.mock("bibleVizUtils.infrastructure.mappers.InfoLabelTailMapper");
-jest.mock("bibleVizUtils.infrastructure.mappers.InfoLabelTextMapper");
 
 import { InfoLabelTailMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTailMapper";
-import { InfoLabelTextMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTextMapper";
 
 // ─── factories ────────────────────────────────────────────────────────────────
 
@@ -12,9 +10,6 @@ const makeServicePort = () => ({
   handleLabelTailClick: jest.fn(),
   handleLabelTextClick: jest.fn(),
 });
-
-const makeController = (servicePort = makeServicePort()) =>
-  new LabelInteractionController({ labelInteractionServicePort: servicePort });
 
 const makeTailBot = (): any => ({ id: "tail-bot-1" });
 const makeTextBot = (): any => ({ id: "text-bot-1" });
@@ -27,10 +22,22 @@ const makeTextPiece = (): any => ({
   id: "piece-text-1",
 });
 
+const makeInfoLabelTextMapper = () => ({
+  toDomain: jest.fn().mockReturnValue(makeTextPiece()),
+});
+
+const makeController = (
+  servicePort = makeServicePort(),
+  infoLabelTextMapper = makeInfoLabelTextMapper()
+) =>
+  new LabelInteractionController({
+    labelInteractionServicePort: servicePort,
+    infoLabelTextMapperPort: infoLabelTextMapper,
+  });
+
 beforeEach(() => {
   jest.clearAllMocks();
   (InfoLabelTailMapper.toDomain as jest.Mock).mockReturnValue(makeTailPiece());
-  (InfoLabelTextMapper.toDomain as jest.Mock).mockReturnValue(makeTextPiece());
 });
 
 // ─── handleLabelTailClick ─────────────────────────────────────────────────────
@@ -67,31 +74,35 @@ describe("handleLabelTailClick", () => {
     expect(servicePort.handleLabelTextClick).not.toHaveBeenCalled();
   });
 
-  it("does not call InfoLabelTextMapper.toDomain", () => {
-    makeController().handleLabelTailClick(makeTailBot());
-    expect(InfoLabelTextMapper.toDomain).not.toHaveBeenCalled();
+  it("does not call infoLabelTextMapperPort.toDomain", () => {
+    const mapper = makeInfoLabelTextMapper();
+    makeController(undefined, mapper).handleLabelTailClick(makeTailBot());
+    expect(mapper.toDomain).not.toHaveBeenCalled();
   });
 });
 
 // ─── handleLabelTextClick ─────────────────────────────────────────────────────
 
 describe("handleLabelTextClick", () => {
-  it("calls InfoLabelTextMapper.toDomain with the provided bot", () => {
+  it("calls infoLabelTextMapperPort.toDomain with the provided bot", () => {
     const bot = makeTextBot();
-    makeController().handleLabelTextClick(bot);
-    expect(InfoLabelTextMapper.toDomain).toHaveBeenCalledWith(bot);
+    const mapper = makeInfoLabelTextMapper();
+    makeController(undefined, mapper).handleLabelTextClick(bot);
+    expect(mapper.toDomain).toHaveBeenCalledWith(bot);
   });
 
-  it("calls InfoLabelTextMapper.toDomain exactly once", () => {
-    makeController().handleLabelTextClick(makeTextBot());
-    expect(InfoLabelTextMapper.toDomain).toHaveBeenCalledTimes(1);
+  it("calls infoLabelTextMapperPort.toDomain exactly once", () => {
+    const mapper = makeInfoLabelTextMapper();
+    makeController(undefined, mapper).handleLabelTextClick(makeTextBot());
+    expect(mapper.toDomain).toHaveBeenCalledTimes(1);
   });
 
   it("passes the mapped piece to handleLabelTextClick on the service port", () => {
     const servicePort = makeServicePort();
     const piece = makeTextPiece();
-    (InfoLabelTextMapper.toDomain as jest.Mock).mockReturnValue(piece);
-    makeController(servicePort).handleLabelTextClick(makeTextBot());
+    const mapper = makeInfoLabelTextMapper();
+    mapper.toDomain.mockReturnValue(piece);
+    makeController(servicePort, mapper).handleLabelTextClick(makeTextBot());
     expect(servicePort.handleLabelTextClick).toHaveBeenCalledWith(piece);
   });
 

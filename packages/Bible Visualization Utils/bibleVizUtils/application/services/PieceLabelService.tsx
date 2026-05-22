@@ -69,6 +69,7 @@ export class PieceLabelService<
     const date = strategy.getDate(piece);
     const color = strategy.getColor(piece);
     const labelColor = strategy.getLabelColor(piece);
+    const makesAttentionFeedback = strategy.makesAttentionFeedback;
     const labelPositioning = strategy.labelPositioning;
     const isInteractable = strategy.isInteractable;
     const dateFormat = this.#labelDateFormatServicePort.dateFormat;
@@ -88,6 +89,7 @@ export class PieceLabelService<
       isInteractable,
       dateFormat,
       translucencyMode,
+      makesAttentionFeedback,
     });
 
     const labelData = new InfoLabelData({

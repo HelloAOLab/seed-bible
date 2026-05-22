@@ -51,6 +51,10 @@ export class SessionProvider implements SessionProviderPort {
     return [...connectedUsers.values()];
   }
 
+  getOwnUserConnectionId() {
+    return configBot.id;
+  }
+
   getConnectedUsersConfigId() {
     return this.getConnectedUsers().map((user) => {
       return user.configId!;

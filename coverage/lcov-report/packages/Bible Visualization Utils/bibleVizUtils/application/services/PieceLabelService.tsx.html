@@ -36,7 +36,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">100% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">47/47</span>
+            <span class="fraction">48/48</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -54,7 +54,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">100% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">46/46</span>
+            <span class="fraction">47/47</span>
           </div>
         </div>
         <p class="quiet">
@@ -225,7 +225,9 @@
 <a name='L153'></a><a href='#L153'>153</a>
 <a name='L154'></a><a href='#L154'>154</a>
 <a name='L155'></a><a href='#L155'>155</a>
-<a name='L156'></a><a href='#L156'>156</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -299,6 +301,7 @@
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -306,6 +309,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -451,6 +455,7 @@ export class PieceLabelService&lt;
     const date = strategy.getDate(piece);
     const color = strategy.getColor(piece);
     const labelColor = strategy.getLabelColor(piece);
+    const makesAttentionFeedback = strategy.makesAttentionFeedback;
     const labelPositioning = strategy.labelPositioning;
     const isInteractable = strategy.isInteractable;
     const dateFormat = this.#labelDateFormatServicePort.dateFormat;
@@ -470,6 +475,7 @@ export class PieceLabelService&lt;
       isInteractable,
       dateFormat,
       translucencyMode,
+      makesAttentionFeedback
     });
 &nbsp;
     const labelData = new InfoLabelData({
@@ -549,7 +555,7 @@ export class PieceLabelService&lt;
         rel="noopener noreferrer"
         >istanbul</a
       >
-      at 2026-05-22T16:23:42.873Z
+      at 2026-05-22T23:47:38.848Z
     </div>
     <script src="../../../../../prettify.js"></script>
     <script>
