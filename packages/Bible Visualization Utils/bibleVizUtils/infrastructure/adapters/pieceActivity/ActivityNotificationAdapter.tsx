@@ -118,7 +118,7 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
         `ActivityNotificationAdapter: notificationBot.tags.direction not defined at updateNotificationPosition`
       );
     }
-    if (!notificationBot.tags.offset) {
+    if (notificationBot.tags.offset === undefined) {
       throw new Error(
         `ActivityNotificationAdapter: notificationBot.tags.offset not defined at updateNotificationPosition`
       );

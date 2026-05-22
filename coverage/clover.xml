@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1779455885056" clover="3.2.0">
-  <project timestamp="1779455885056" name="All files">
-    <metrics statements="7382" coveredstatements="5860" conditionals="4151" coveredconditionals="2767" methods="1944" coveredmethods="1466" elements="13477" coveredelements="10093" complexity="0" loc="7382" ncloc="7382" packages="21" files="128" classes="128"/>
+<coverage generated="1779467023136" clover="3.2.0">
+  <project timestamp="1779467023136" name="All files">
+    <metrics statements="8290" coveredstatements="6763" conditionals="4551" coveredconditionals="3152" methods="2175" coveredmethods="1697" elements="15016" coveredelements="11612" complexity="0" loc="8290" ncloc="8290" packages="43" files="186" classes="186"/>
     <package name="packages.Bible Visualization Utils.bibleVizUtils.application.services">
       <metrics statements="589" coveredstatements="565" conditionals="281" coveredconditionals="246" methods="109" coveredmethods="107"/>
       <file name="ArrangementService.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\application\services\ArrangementService.tsx">
@@ -637,23 +637,23 @@
       <metrics statements="704" coveredstatements="698" conditionals="250" coveredconditionals="235" methods="375" coveredmethods="373"/>
       <file name="InfoLabelData.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\domain\entities\InfoLabelData.tsx">
         <metrics statements="38" coveredstatements="38" conditionals="7" coveredconditionals="7" methods="21" coveredmethods="21"/>
-        <line num="27" count="57" type="stmt"/>
-        <line num="39" count="57" type="stmt"/>
-        <line num="40" count="57" type="stmt"/>
-        <line num="41" count="57" type="stmt"/>
-        <line num="42" count="57" type="stmt"/>
-        <line num="43" count="57" type="stmt"/>
-        <line num="44" count="57" type="stmt"/>
-        <line num="45" count="57" type="stmt"/>
-        <line num="46" count="57" type="stmt"/>
-        <line num="50" count="2" type="stmt"/>
-        <line num="53" count="1" type="stmt"/>
-        <line num="58" count="2" type="stmt"/>
-        <line num="63" count="2" type="stmt"/>
-        <line num="68" count="2" type="stmt"/>
-        <line num="71" count="1" type="stmt"/>
-        <line num="74" count="1" type="stmt"/>
-        <line num="77" count="16" type="stmt"/>
+        <line num="27" count="143" type="stmt"/>
+        <line num="39" count="143" type="stmt"/>
+        <line num="40" count="143" type="stmt"/>
+        <line num="41" count="143" type="stmt"/>
+        <line num="42" count="143" type="stmt"/>
+        <line num="43" count="143" type="stmt"/>
+        <line num="44" count="143" type="stmt"/>
+        <line num="45" count="143" type="stmt"/>
+        <line num="46" count="143" type="stmt"/>
+        <line num="50" count="72" type="stmt"/>
+        <line num="53" count="25" type="stmt"/>
+        <line num="58" count="5" type="stmt"/>
+        <line num="63" count="5" type="stmt"/>
+        <line num="68" count="5" type="stmt"/>
+        <line num="71" count="57" type="stmt"/>
+        <line num="74" count="65" type="stmt"/>
+        <line num="77" count="70" type="stmt"/>
         <line num="80" count="12" type="cond" truecount="2" falsecount="0"/>
         <line num="81" count="2" type="stmt"/>
         <line num="82" count="2" type="stmt"/>
@@ -662,15 +662,15 @@
         <line num="88" count="2" type="cond" truecount="2" falsecount="0"/>
         <line num="89" count="1" type="stmt"/>
         <line num="93" count="2" type="stmt"/>
-        <line num="96" count="3" type="stmt"/>
+        <line num="96" count="61" type="stmt"/>
         <line num="99" count="4" type="cond" truecount="2" falsecount="0"/>
         <line num="100" count="2" type="stmt"/>
         <line num="101" count="2" type="stmt"/>
         <line num="102" count="2" type="stmt"/>
         <line num="104" count="2" type="stmt"/>
-        <line num="107" count="5" type="stmt"/>
-        <line num="112" count="2" type="stmt"/>
-        <line num="115" count="3" type="stmt"/>
+        <line num="107" count="8" type="stmt"/>
+        <line num="112" count="5" type="stmt"/>
+        <line num="115" count="29" type="stmt"/>
         <line num="118" count="2" type="stmt"/>
         <line num="121" count="4" type="stmt"/>
         <line num="124" count="9" type="stmt"/>
@@ -991,44 +991,44 @@
       </file>
       <file name="StackBookBaseData.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\domain\entities\StackBookBaseData.tsx">
         <metrics statements="38" coveredstatements="37" conditionals="17" coveredconditionals="16" methods="22" coveredmethods="22"/>
-        <line num="36" count="198" type="stmt"/>
-        <line num="37" count="198" type="stmt"/>
-        <line num="53" count="198" type="stmt"/>
-        <line num="65" count="198" type="cond" truecount="2" falsecount="0"/>
-        <line num="66" count="3" type="stmt"/>
-        <line num="68" count="198" type="stmt"/>
-        <line num="69" count="198" type="stmt"/>
-        <line num="73" count="7" type="stmt"/>
-        <line num="76" count="4" type="stmt"/>
-        <line num="79" count="3" type="stmt"/>
-        <line num="83" count="8" type="stmt"/>
-        <line num="86" count="8" type="stmt"/>
-        <line num="89" count="2" type="stmt"/>
-        <line num="93" count="18" type="stmt"/>
-        <line num="96" count="16" type="stmt"/>
-        <line num="99" count="11" type="stmt"/>
-        <line num="103" count="11" type="stmt"/>
-        <line num="106" count="11" type="stmt"/>
-        <line num="109" count="32" type="stmt"/>
-        <line num="113" count="21" type="stmt"/>
-        <line num="116" count="14" type="stmt"/>
-        <line num="119" count="34" type="stmt"/>
-        <line num="123" count="10" type="stmt"/>
-        <line num="126" count="2" type="stmt"/>
-        <line num="129" count="2" type="stmt"/>
-        <line num="136" count="11" type="stmt"/>
-        <line num="138" count="11" type="cond" truecount="2" falsecount="0"/>
-        <line num="139" count="6" type="cond" truecount="2" falsecount="0"/>
-        <line num="140" count="2" type="stmt"/>
-        <line num="142" count="6" type="cond" truecount="1" falsecount="1"/>
-        <line num="143" count="0" type="stmt"/>
-        <line num="147" count="11" type="stmt"/>
-        <line num="151" count="30" type="stmt"/>
-        <line num="152" count="30" type="stmt"/>
-        <line num="153" count="30" type="stmt"/>
-        <line num="154" count="30" type="stmt"/>
-        <line num="158" count="10" type="stmt"/>
-        <line num="159" count="10" type="cond" truecount="2" falsecount="0"/>
+        <line num="45" count="198" type="stmt"/>
+        <line num="46" count="198" type="stmt"/>
+        <line num="62" count="198" type="stmt"/>
+        <line num="74" count="198" type="cond" truecount="2" falsecount="0"/>
+        <line num="75" count="3" type="stmt"/>
+        <line num="77" count="198" type="stmt"/>
+        <line num="78" count="198" type="stmt"/>
+        <line num="82" count="7" type="stmt"/>
+        <line num="85" count="4" type="stmt"/>
+        <line num="88" count="3" type="stmt"/>
+        <line num="92" count="8" type="stmt"/>
+        <line num="95" count="8" type="stmt"/>
+        <line num="98" count="2" type="stmt"/>
+        <line num="102" count="18" type="stmt"/>
+        <line num="105" count="16" type="stmt"/>
+        <line num="108" count="11" type="stmt"/>
+        <line num="112" count="11" type="stmt"/>
+        <line num="115" count="11" type="stmt"/>
+        <line num="118" count="32" type="stmt"/>
+        <line num="122" count="21" type="stmt"/>
+        <line num="125" count="14" type="stmt"/>
+        <line num="128" count="34" type="stmt"/>
+        <line num="132" count="10" type="stmt"/>
+        <line num="135" count="2" type="stmt"/>
+        <line num="138" count="2" type="stmt"/>
+        <line num="145" count="11" type="stmt"/>
+        <line num="147" count="11" type="cond" truecount="2" falsecount="0"/>
+        <line num="148" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="149" count="2" type="stmt"/>
+        <line num="151" count="6" type="cond" truecount="1" falsecount="1"/>
+        <line num="152" count="0" type="stmt"/>
+        <line num="156" count="11" type="stmt"/>
+        <line num="160" count="30" type="stmt"/>
+        <line num="161" count="30" type="stmt"/>
+        <line num="162" count="30" type="stmt"/>
+        <line num="163" count="30" type="stmt"/>
+        <line num="167" count="10" type="stmt"/>
+        <line num="168" count="10" type="cond" truecount="2" falsecount="0"/>
       </file>
       <file name="StackBookData.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\domain\entities\StackBookData.tsx">
         <metrics statements="18" coveredstatements="18" conditionals="10" coveredconditionals="10" methods="15" coveredmethods="15"/>
@@ -1053,44 +1053,44 @@
       </file>
       <file name="StackChapterData.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\domain\entities\StackChapterData.tsx">
         <metrics statements="38" coveredstatements="37" conditionals="15" coveredconditionals="14" methods="19" coveredmethods="18"/>
-        <line num="45" count="116" type="stmt"/>
-        <line num="66" count="116" type="stmt"/>
-        <line num="78" count="116" type="stmt"/>
-        <line num="79" count="116" type="cond" truecount="2" falsecount="0"/>
-        <line num="80" count="1" type="stmt"/>
-        <line num="82" count="116" type="stmt"/>
-        <line num="83" count="116" type="stmt"/>
-        <line num="84" count="116" type="stmt"/>
-        <line num="88" count="4" type="stmt"/>
-        <line num="89" count="4" type="stmt"/>
-        <line num="93" count="6" type="stmt"/>
-        <line num="97" count="6" type="stmt"/>
-        <line num="98" count="6" type="stmt"/>
-        <line num="103" count="4" type="stmt"/>
-        <line num="107" count="4" type="stmt"/>
-        <line num="111" count="0" type="stmt"/>
-        <line num="115" count="6" type="stmt"/>
-        <line num="118" count="1" type="stmt"/>
+        <line num="48" count="116" type="stmt"/>
+        <line num="69" count="116" type="stmt"/>
+        <line num="81" count="116" type="stmt"/>
+        <line num="82" count="116" type="cond" truecount="2" falsecount="0"/>
+        <line num="83" count="1" type="stmt"/>
+        <line num="85" count="116" type="stmt"/>
+        <line num="86" count="116" type="stmt"/>
+        <line num="87" count="116" type="stmt"/>
+        <line num="91" count="4" type="stmt"/>
+        <line num="92" count="4" type="stmt"/>
+        <line num="96" count="6" type="stmt"/>
+        <line num="100" count="6" type="stmt"/>
+        <line num="101" count="6" type="stmt"/>
+        <line num="106" count="4" type="stmt"/>
+        <line num="110" count="4" type="stmt"/>
+        <line num="114" count="0" type="stmt"/>
+        <line num="118" count="6" type="stmt"/>
         <line num="121" count="1" type="stmt"/>
-        <line num="124" count="5" type="stmt"/>
-        <line num="125" count="5" type="stmt"/>
-        <line num="129" count="12" type="stmt"/>
-        <line num="132" count="4" type="cond" truecount="2" falsecount="0"/>
-        <line num="133" count="2" type="stmt"/>
-        <line num="134" count="2" type="stmt"/>
-        <line num="135" count="2" type="stmt"/>
+        <line num="124" count="1" type="stmt"/>
+        <line num="127" count="5" type="stmt"/>
+        <line num="128" count="5" type="stmt"/>
+        <line num="132" count="12" type="stmt"/>
+        <line num="135" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="136" count="2" type="stmt"/>
         <line num="137" count="2" type="stmt"/>
-        <line num="140" count="3" type="cond" truecount="2" falsecount="0"/>
-        <line num="141" count="1" type="stmt"/>
-        <line num="145" count="2" type="stmt"/>
-        <line num="149" count="7" type="stmt"/>
-        <line num="153" count="2" type="cond" truecount="2" falsecount="0"/>
-        <line num="154" count="1" type="stmt"/>
-        <line num="159" count="4" type="stmt"/>
-        <line num="160" count="4" type="cond" truecount="2" falsecount="0"/>
-        <line num="161" count="2" type="stmt"/>
-        <line num="162" count="2" type="stmt"/>
+        <line num="138" count="2" type="stmt"/>
+        <line num="140" count="2" type="stmt"/>
+        <line num="143" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="144" count="1" type="stmt"/>
+        <line num="148" count="2" type="stmt"/>
+        <line num="152" count="7" type="stmt"/>
+        <line num="156" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="157" count="1" type="stmt"/>
+        <line num="162" count="4" type="stmt"/>
+        <line num="163" count="4" type="cond" truecount="2" falsecount="0"/>
         <line num="164" count="2" type="stmt"/>
+        <line num="165" count="2" type="stmt"/>
+        <line num="167" count="2" type="stmt"/>
       </file>
       <file name="StackData.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\domain\entities\StackData.tsx">
         <metrics statements="21" coveredstatements="21" conditionals="7" coveredconditionals="7" methods="10" coveredmethods="10"/>
@@ -1119,120 +1119,120 @@
       <file name="StackPieceData.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\domain\entities\StackPieceData.tsx">
         <metrics statements="115" coveredstatements="115" conditionals="41" coveredconditionals="37" methods="54" coveredmethods="54"/>
         <line num="26" count="8" type="stmt"/>
-        <line num="113" count="614" type="stmt"/>
-        <line num="114" count="614" type="stmt"/>
-        <line num="115" count="614" type="stmt"/>
-        <line num="116" count="614" type="stmt"/>
-        <line num="117" count="614" type="stmt"/>
-        <line num="118" count="614" type="stmt"/>
-        <line num="119" count="614" type="stmt"/>
-        <line num="136" count="614" type="stmt"/>
-        <line num="137" count="614" type="stmt"/>
-        <line num="138" count="614" type="stmt"/>
-        <line num="139" count="614" type="stmt"/>
-        <line num="140" count="614" type="stmt"/>
-        <line num="141" count="614" type="stmt"/>
-        <line num="142" count="614" type="stmt"/>
-        <line num="143" count="614" type="stmt"/>
-        <line num="144" count="614" type="stmt"/>
-        <line num="145" count="614" type="stmt"/>
-        <line num="146" count="614" type="stmt"/>
-        <line num="147" count="614" type="stmt"/>
-        <line num="152" count="116" type="stmt"/>
-        <line num="153" count="116" type="stmt"/>
-        <line num="154" count="116" type="cond" truecount="2" falsecount="0"/>
-        <line num="155" count="115" type="stmt"/>
-        <line num="156" count="115" type="stmt"/>
-        <line num="159" count="127" type="stmt"/>
-        <line num="162" count="50" type="stmt"/>
-        <line num="166" count="18" type="stmt"/>
-        <line num="167" count="18" type="stmt"/>
-        <line num="168" count="18" type="cond" truecount="2" falsecount="0"/>
-        <line num="169" count="1" type="stmt"/>
-        <line num="171" count="17" type="stmt"/>
-        <line num="172" count="17" type="stmt"/>
-        <line num="175" count="8" type="stmt"/>
-        <line num="178" count="3" type="stmt"/>
-        <line num="181" count="4" type="cond" truecount="2" falsecount="0"/>
-        <line num="182" count="3" type="cond" truecount="2" falsecount="0"/>
-        <line num="183" count="2" type="stmt"/>
-        <line num="184" count="2" type="stmt"/>
-        <line num="186" count="1" type="stmt"/>
-        <line num="189" count="2" type="stmt"/>
-        <line num="192" count="8" type="stmt"/>
-        <line num="193" count="8" type="stmt"/>
-        <line num="194" count="8" type="stmt"/>
-        <line num="195" count="8" type="stmt"/>
-        <line num="198" count="105" type="stmt"/>
-        <line num="201" count="28" type="stmt"/>
-        <line num="204" count="18" type="stmt"/>
-        <line num="205" count="18" type="cond" truecount="2" falsecount="0"/>
-        <line num="206" count="17" type="stmt"/>
-        <line num="207" count="17" type="stmt"/>
-        <line num="209" count="18" type="stmt"/>
-        <line num="212" count="3" type="stmt"/>
-        <line num="215" count="614" type="stmt"/>
-        <line num="216" count="9" type="stmt"/>
-        <line num="219" count="22" type="cond" truecount="2" falsecount="0"/>
-        <line num="220" count="19" type="stmt"/>
-        <line num="222" count="3" type="stmt"/>
-        <line num="226" count="614" type="stmt"/>
-        <line num="228" count="9" type="cond" truecount="2" falsecount="0"/>
-        <line num="229" count="8" type="stmt"/>
+        <line num="128" count="614" type="stmt"/>
+        <line num="129" count="614" type="stmt"/>
+        <line num="130" count="614" type="stmt"/>
+        <line num="131" count="614" type="stmt"/>
+        <line num="132" count="614" type="stmt"/>
+        <line num="133" count="614" type="stmt"/>
+        <line num="134" count="614" type="stmt"/>
+        <line num="151" count="614" type="stmt"/>
+        <line num="152" count="614" type="stmt"/>
+        <line num="153" count="614" type="stmt"/>
+        <line num="154" count="614" type="stmt"/>
+        <line num="155" count="614" type="stmt"/>
+        <line num="156" count="614" type="stmt"/>
+        <line num="157" count="614" type="stmt"/>
+        <line num="158" count="614" type="stmt"/>
+        <line num="159" count="614" type="stmt"/>
+        <line num="160" count="614" type="stmt"/>
+        <line num="161" count="614" type="stmt"/>
+        <line num="162" count="614" type="stmt"/>
+        <line num="167" count="116" type="stmt"/>
+        <line num="168" count="116" type="stmt"/>
+        <line num="169" count="116" type="cond" truecount="2" falsecount="0"/>
+        <line num="170" count="115" type="stmt"/>
+        <line num="171" count="115" type="stmt"/>
+        <line num="174" count="127" type="stmt"/>
+        <line num="177" count="50" type="stmt"/>
+        <line num="181" count="18" type="stmt"/>
+        <line num="182" count="18" type="stmt"/>
+        <line num="183" count="18" type="cond" truecount="2" falsecount="0"/>
+        <line num="184" count="1" type="stmt"/>
+        <line num="186" count="17" type="stmt"/>
+        <line num="187" count="17" type="stmt"/>
+        <line num="190" count="8" type="stmt"/>
+        <line num="193" count="3" type="stmt"/>
+        <line num="196" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="197" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="198" count="2" type="stmt"/>
+        <line num="199" count="2" type="stmt"/>
+        <line num="201" count="1" type="stmt"/>
+        <line num="204" count="2" type="stmt"/>
+        <line num="207" count="8" type="stmt"/>
+        <line num="208" count="8" type="stmt"/>
+        <line num="209" count="8" type="stmt"/>
+        <line num="210" count="8" type="stmt"/>
+        <line num="213" count="105" type="stmt"/>
+        <line num="216" count="28" type="stmt"/>
+        <line num="219" count="18" type="stmt"/>
+        <line num="220" count="18" type="cond" truecount="2" falsecount="0"/>
+        <line num="221" count="17" type="stmt"/>
+        <line num="222" count="17" type="stmt"/>
+        <line num="224" count="18" type="stmt"/>
+        <line num="227" count="3" type="stmt"/>
+        <line num="230" count="614" type="stmt"/>
         <line num="231" count="9" type="stmt"/>
-        <line num="234" count="614" type="stmt"/>
-        <line num="235" count="2" type="cond" truecount="2" falsecount="0"/>
-        <line num="236" count="1" type="stmt"/>
-        <line num="240" count="11" type="cond" truecount="1" falsecount="1"/>
-        <line num="241" count="11" type="stmt"/>
-        <line num="245" count="5" type="cond" truecount="2" falsecount="0"/>
-        <line num="246" count="3" type="stmt"/>
-        <line num="247" count="10" type="stmt"/>
-        <line num="250" count="5" type="cond" truecount="2" falsecount="0"/>
-        <line num="251" count="3" type="stmt"/>
-        <line num="252" count="1" type="cond" truecount="1" falsecount="1"/>
-        <line num="254" count="1" type="stmt"/>
-        <line num="255" count="1" type="cond" truecount="1" falsecount="1"/>
-        <line num="256" count="1" type="stmt"/>
-        <line num="263" count="1" type="stmt"/>
-        <line num="277" count="16" type="stmt"/>
-        <line num="281" count="614" type="stmt"/>
-        <line num="282" count="1" type="stmt"/>
-        <line num="285" count="6" type="stmt"/>
-        <line num="288" count="1" type="stmt"/>
-        <line num="291" count="2" type="stmt"/>
-        <line num="294" count="14" type="stmt"/>
-        <line num="297" count="2" type="stmt"/>
+        <line num="234" count="22" type="cond" truecount="2" falsecount="0"/>
+        <line num="235" count="19" type="stmt"/>
+        <line num="237" count="3" type="stmt"/>
+        <line num="241" count="614" type="stmt"/>
+        <line num="243" count="9" type="cond" truecount="2" falsecount="0"/>
+        <line num="244" count="8" type="stmt"/>
+        <line num="246" count="9" type="stmt"/>
+        <line num="249" count="614" type="stmt"/>
+        <line num="250" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="251" count="1" type="stmt"/>
+        <line num="255" count="11" type="cond" truecount="1" falsecount="1"/>
+        <line num="256" count="11" type="stmt"/>
+        <line num="260" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="261" count="3" type="stmt"/>
+        <line num="262" count="10" type="stmt"/>
+        <line num="265" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="266" count="3" type="stmt"/>
+        <line num="267" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="269" count="1" type="stmt"/>
+        <line num="270" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="271" count="1" type="stmt"/>
+        <line num="278" count="1" type="stmt"/>
+        <line num="292" count="16" type="stmt"/>
+        <line num="296" count="614" type="stmt"/>
+        <line num="297" count="1" type="stmt"/>
         <line num="300" count="6" type="stmt"/>
-        <line num="303" count="70" type="stmt"/>
-        <line num="306" count="12" type="stmt"/>
-        <line num="309" count="21" type="stmt"/>
-        <line num="312" count="4" type="stmt"/>
-        <line num="315" count="2" type="stmt"/>
-        <line num="318" count="1" type="stmt"/>
-        <line num="321" count="4" type="stmt"/>
-        <line num="324" count="2" type="stmt"/>
-        <line num="327" count="1" type="stmt"/>
-        <line num="330" count="48" type="stmt"/>
-        <line num="332" count="48" type="cond" truecount="4" falsecount="0"/>
-        <line num="333" count="11" type="stmt"/>
-        <line num="334" count="11" type="stmt"/>
-        <line num="335" count="11" type="stmt"/>
-        <line num="338" count="48" type="stmt"/>
-        <line num="340" count="48" type="stmt"/>
-        <line num="343" count="11" type="cond" truecount="2" falsecount="0"/>
-        <line num="390" count="2" type="stmt"/>
-        <line num="393" count="1" type="stmt"/>
-        <line num="396" count="3" type="stmt"/>
-        <line num="399" count="2" type="stmt"/>
-        <line num="402" count="1" type="stmt"/>
-        <line num="405" count="3" type="stmt"/>
-        <line num="408" count="2" type="stmt"/>
-        <line num="411" count="1" type="stmt"/>
-        <line num="414" count="3" type="stmt"/>
-        <line num="417" count="3" type="stmt"/>
-        <line num="420" count="2" type="stmt"/>
-        <line num="423" count="1" type="stmt"/>
+        <line num="303" count="1" type="stmt"/>
+        <line num="306" count="2" type="stmt"/>
+        <line num="309" count="14" type="stmt"/>
+        <line num="312" count="2" type="stmt"/>
+        <line num="315" count="6" type="stmt"/>
+        <line num="318" count="70" type="stmt"/>
+        <line num="321" count="12" type="stmt"/>
+        <line num="324" count="21" type="stmt"/>
+        <line num="327" count="4" type="stmt"/>
+        <line num="330" count="2" type="stmt"/>
+        <line num="333" count="1" type="stmt"/>
+        <line num="336" count="4" type="stmt"/>
+        <line num="339" count="2" type="stmt"/>
+        <line num="342" count="1" type="stmt"/>
+        <line num="345" count="48" type="stmt"/>
+        <line num="347" count="48" type="cond" truecount="4" falsecount="0"/>
+        <line num="348" count="11" type="stmt"/>
+        <line num="349" count="11" type="stmt"/>
+        <line num="350" count="11" type="stmt"/>
+        <line num="353" count="48" type="stmt"/>
+        <line num="355" count="48" type="stmt"/>
+        <line num="358" count="11" type="cond" truecount="2" falsecount="0"/>
+        <line num="405" count="2" type="stmt"/>
+        <line num="408" count="1" type="stmt"/>
+        <line num="411" count="3" type="stmt"/>
+        <line num="414" count="2" type="stmt"/>
+        <line num="417" count="1" type="stmt"/>
+        <line num="420" count="3" type="stmt"/>
+        <line num="423" count="2" type="stmt"/>
+        <line num="426" count="1" type="stmt"/>
+        <line num="429" count="3" type="stmt"/>
+        <line num="432" count="3" type="stmt"/>
+        <line num="435" count="2" type="stmt"/>
+        <line num="438" count="1" type="stmt"/>
       </file>
       <file name="StackSectionBookData.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\domain\entities\StackSectionBookData.tsx">
         <metrics statements="10" coveredstatements="10" conditionals="7" coveredconditionals="7" methods="7" coveredmethods="7"/>
@@ -1284,24 +1284,24 @@
         <line num="135" count="1" type="stmt"/>
         <line num="137" count="6" type="stmt"/>
         <line num="138" count="6" type="stmt"/>
-        <line num="141" count="16" type="cond" truecount="4" falsecount="0"/>
-        <line num="142" count="11" type="stmt"/>
-        <line num="143" count="11" type="stmt"/>
-        <line num="145" count="5" type="stmt"/>
-        <line num="148" count="10" type="stmt"/>
-        <line num="153" count="7" type="stmt"/>
-        <line num="156" count="5" type="stmt"/>
-        <line num="157" count="5" type="stmt"/>
-        <line num="161" count="5" type="stmt"/>
-        <line num="164" count="7" type="stmt"/>
-        <line num="167" count="5" type="stmt"/>
-        <line num="169" count="5" type="stmt"/>
-        <line num="175" count="4" type="stmt"/>
-        <line num="176" count="4" type="stmt"/>
-        <line num="180" count="6" type="stmt"/>
-        <line num="183" count="5" type="stmt"/>
-        <line num="186" count="6" type="cond" truecount="2" falsecount="0"/>
-        <line num="188" count="3" type="stmt"/>
+        <line num="141" count="16" type="cond" truecount="2" falsecount="0"/>
+        <line num="145" count="11" type="stmt"/>
+        <line num="146" count="11" type="stmt"/>
+        <line num="148" count="5" type="stmt"/>
+        <line num="151" count="10" type="stmt"/>
+        <line num="156" count="7" type="stmt"/>
+        <line num="159" count="5" type="stmt"/>
+        <line num="160" count="5" type="stmt"/>
+        <line num="164" count="5" type="stmt"/>
+        <line num="167" count="7" type="stmt"/>
+        <line num="170" count="5" type="stmt"/>
+        <line num="172" count="5" type="stmt"/>
+        <line num="178" count="4" type="stmt"/>
+        <line num="179" count="4" type="stmt"/>
+        <line num="183" count="6" type="stmt"/>
+        <line num="186" count="5" type="stmt"/>
+        <line num="189" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="191" count="3" type="stmt"/>
       </file>
       <file name="StackTestamentData.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\domain\entities\StackTestamentData.tsx">
         <metrics statements="38" coveredstatements="38" conditionals="32" coveredconditionals="32" methods="18" coveredmethods="18"/>
@@ -1405,24 +1405,24 @@
       </file>
       <file name="colors.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\domain\functions\colors.tsx">
         <metrics statements="116" coveredstatements="116" conditionals="61" coveredconditionals="57" methods="21" coveredmethods="21"/>
-        <line num="53" count="2" type="stmt"/>
+        <line num="53" count="3" type="stmt"/>
         <line num="54" count="12" type="stmt"/>
         <line num="59" count="12" type="stmt"/>
-        <line num="62" count="2" type="cond" truecount="0" falsecount="1"/>
-        <line num="63" count="40" type="stmt"/>
-        <line num="64" count="40" type="cond" truecount="2" falsecount="0"/>
-        <line num="66" count="40" type="cond" truecount="2" falsecount="0"/>
+        <line num="62" count="3" type="cond" truecount="0" falsecount="1"/>
+        <line num="63" count="55" type="stmt"/>
+        <line num="64" count="55" type="cond" truecount="2" falsecount="0"/>
+        <line num="66" count="55" type="cond" truecount="2" falsecount="0"/>
         <line num="67" count="2" type="stmt"/>
-        <line num="70" count="40" type="cond" truecount="2" falsecount="0"/>
+        <line num="70" count="55" type="cond" truecount="2" falsecount="0"/>
         <line num="71" count="2" type="stmt"/>
         <line num="72" count="2" type="stmt"/>
-        <line num="75" count="38" type="stmt"/>
-        <line num="76" count="38" type="stmt"/>
-        <line num="77" count="38" type="stmt"/>
-        <line num="79" count="38" type="stmt"/>
-        <line num="82" count="2" type="cond" truecount="0" falsecount="1"/>
-        <line num="83" count="36" type="stmt"/>
-        <line num="91" count="2" type="stmt"/>
+        <line num="75" count="53" type="stmt"/>
+        <line num="76" count="53" type="stmt"/>
+        <line num="77" count="53" type="stmt"/>
+        <line num="79" count="53" type="stmt"/>
+        <line num="82" count="3" type="cond" truecount="0" falsecount="1"/>
+        <line num="83" count="53" type="stmt"/>
+        <line num="91" count="3" type="stmt"/>
         <line num="92" count="17" type="cond" truecount="2" falsecount="0"/>
         <line num="93" count="13" type="stmt"/>
         <line num="94" count="13" type="cond" truecount="2" falsecount="0"/>
@@ -1430,15 +1430,15 @@
         <line num="96" count="10" type="cond" truecount="2" falsecount="0"/>
         <line num="97" count="5" type="cond" truecount="2" falsecount="0"/>
         <line num="98" count="2" type="stmt"/>
-        <line num="101" count="2" type="stmt"/>
+        <line num="101" count="3" type="stmt"/>
         <line num="102" count="5" type="cond" truecount="2" falsecount="0"/>
         <line num="103" count="5" type="stmt"/>
-        <line num="106" count="2" type="stmt"/>
+        <line num="106" count="3" type="stmt"/>
         <line num="107" count="6" type="cond" truecount="2" falsecount="0"/>
         <line num="108" count="6" type="cond" truecount="5" falsecount="0"/>
         <line num="109" count="4" type="stmt"/>
         <line num="111" count="2" type="stmt"/>
-        <line num="114" count="2" type="stmt"/>
+        <line num="114" count="3" type="stmt"/>
         <line num="115" count="6" type="stmt"/>
         <line num="116" count="6" type="cond" truecount="2" falsecount="0"/>
         <line num="117" count="5" type="stmt"/>
@@ -1455,7 +1455,7 @@
         <line num="149" count="2" type="stmt"/>
         <line num="151" count="2" type="stmt"/>
         <line num="153" count="1" type="stmt"/>
-        <line num="160" count="2" type="stmt"/>
+        <line num="160" count="3" type="stmt"/>
         <line num="163" count="7" type="cond" truecount="2" falsecount="0"/>
         <line num="167" count="7" type="stmt"/>
         <line num="168" count="7" type="stmt"/>
@@ -1469,36 +1469,36 @@
         <line num="180" count="8" type="stmt"/>
         <line num="183" count="7" type="stmt"/>
         <line num="185" count="7" type="cond" truecount="2" falsecount="0"/>
-        <line num="188" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="188" count="3" type="cond" truecount="1" falsecount="0"/>
         <line num="189" count="4" type="stmt"/>
         <line num="190" count="4" type="stmt"/>
         <line num="195" count="4" type="stmt"/>
         <line num="197" count="4" type="stmt"/>
-        <line num="200" count="2" type="stmt"/>
-        <line num="205" count="5" type="stmt"/>
-        <line num="206" count="5" type="stmt"/>
-        <line num="218" count="5" type="stmt"/>
-        <line num="221" count="5" type="stmt"/>
-        <line num="224" count="5" type="stmt"/>
-        <line num="228" count="5" type="stmt"/>
-        <line num="229" count="13" type="stmt"/>
-        <line num="234" count="13" type="stmt"/>
-        <line num="235" count="13" type="stmt"/>
-        <line num="237" count="5" type="stmt"/>
-        <line num="240" count="2" type="stmt"/>
+        <line num="200" count="3" type="stmt"/>
+        <line num="205" count="20" type="stmt"/>
+        <line num="206" count="20" type="stmt"/>
+        <line num="218" count="20" type="stmt"/>
+        <line num="221" count="20" type="stmt"/>
+        <line num="224" count="20" type="stmt"/>
+        <line num="228" count="20" type="stmt"/>
+        <line num="229" count="30" type="stmt"/>
+        <line num="234" count="30" type="stmt"/>
+        <line num="235" count="30" type="stmt"/>
+        <line num="237" count="20" type="stmt"/>
+        <line num="240" count="3" type="stmt"/>
         <line num="245" count="5" type="stmt"/>
         <line num="246" count="5" type="stmt"/>
         <line num="247" count="5" type="stmt"/>
         <line num="249" count="14" type="cond" truecount="2" falsecount="0"/>
         <line num="252" count="5" type="stmt"/>
-        <line num="255" count="2" type="stmt"/>
+        <line num="255" count="3" type="stmt"/>
         <line num="256" count="4" type="stmt"/>
         <line num="257" count="4" type="stmt"/>
         <line num="259" count="7" type="stmt"/>
         <line num="260" count="7" type="stmt"/>
         <line num="261" count="7" type="stmt"/>
         <line num="265" count="4" type="stmt"/>
-        <line num="268" count="2" type="stmt"/>
+        <line num="268" count="3" type="stmt"/>
         <line num="274" count="6" type="stmt"/>
         <line num="276" count="6" type="cond" truecount="2" falsecount="0"/>
         <line num="277" count="1" type="stmt"/>
@@ -1507,14 +1507,14 @@
         <line num="283" count="6" type="stmt"/>
         <line num="289" count="6" type="stmt"/>
         <line num="295" count="6" type="stmt"/>
-        <line num="298" count="2" type="stmt"/>
+        <line num="298" count="3" type="stmt"/>
         <line num="299" count="4" type="stmt"/>
         <line num="317" count="4" type="stmt"/>
         <line num="318" count="4" type="stmt"/>
         <line num="319" count="24" type="stmt"/>
         <line num="322" count="24" type="stmt"/>
         <line num="324" count="4" type="stmt"/>
-        <line num="327" count="2" type="stmt"/>
+        <line num="327" count="3" type="stmt"/>
         <line num="331" count="3" type="stmt"/>
         <line num="332" count="3" type="stmt"/>
         <line num="333" count="3" type="stmt"/>
@@ -1524,24 +1524,24 @@
       </file>
       <file name="math.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\domain\functions\math.tsx">
         <metrics statements="28" coveredstatements="18" conditionals="9" coveredconditionals="7" methods="4" coveredmethods="3"/>
-        <line num="16" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="16" count="5" type="cond" truecount="1" falsecount="0"/>
         <line num="17" count="14" type="stmt"/>
-        <line num="20" count="3" type="stmt"/>
+        <line num="20" count="5" type="stmt"/>
         <line num="21" count="11" type="cond" truecount="2" falsecount="0"/>
-        <line num="24" count="3" type="stmt"/>
-        <line num="25" count="9" type="cond" truecount="2" falsecount="0"/>
+        <line num="24" count="5" type="stmt"/>
+        <line num="25" count="15" type="cond" truecount="2" falsecount="0"/>
         <line num="26" count="2" type="stmt"/>
         <line num="27" count="2" type="stmt"/>
-        <line num="30" count="7" type="stmt"/>
-        <line num="31" count="7" type="stmt"/>
-        <line num="33" count="7" type="stmt"/>
-        <line num="34" count="13" type="stmt"/>
-        <line num="35" count="13" type="stmt"/>
-        <line num="37" count="13" type="cond" truecount="2" falsecount="0"/>
-        <line num="38" count="6" type="stmt"/>
-        <line num="39" count="6" type="stmt"/>
-        <line num="43" count="7" type="stmt"/>
-        <line num="46" count="3" type="stmt"/>
+        <line num="30" count="13" type="stmt"/>
+        <line num="31" count="13" type="stmt"/>
+        <line num="33" count="13" type="stmt"/>
+        <line num="34" count="25" type="stmt"/>
+        <line num="35" count="25" type="stmt"/>
+        <line num="37" count="25" type="cond" truecount="2" falsecount="0"/>
+        <line num="38" count="10" type="stmt"/>
+        <line num="39" count="10" type="stmt"/>
+        <line num="43" count="13" type="stmt"/>
+        <line num="46" count="5" type="stmt"/>
         <line num="51" count="0" type="stmt"/>
         <line num="52" count="0" type="stmt"/>
         <line num="53" count="0" type="stmt"/>
@@ -1597,18 +1597,18 @@
       <metrics statements="22" coveredstatements="22" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
       <file name="canvas.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\domain\models\canvas.tsx">
         <metrics statements="12" coveredstatements="12" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
-        <line num="21" count="5" type="stmt"/>
-        <line num="47" count="5" type="stmt"/>
-        <line num="100" count="5" type="stmt"/>
-        <line num="148" count="5" type="stmt"/>
-        <line num="163" count="5" type="stmt"/>
-        <line num="170" count="5" type="stmt"/>
-        <line num="177" count="5" type="stmt"/>
-        <line num="183" count="5" type="stmt"/>
-        <line num="213" count="5" type="stmt"/>
-        <line num="222" count="5" type="stmt"/>
-        <line num="228" count="5" type="stmt"/>
-        <line num="241" count="5" type="stmt"/>
+        <line num="21" count="8" type="stmt"/>
+        <line num="47" count="8" type="stmt"/>
+        <line num="100" count="8" type="stmt"/>
+        <line num="148" count="8" type="stmt"/>
+        <line num="163" count="8" type="stmt"/>
+        <line num="170" count="8" type="stmt"/>
+        <line num="177" count="8" type="stmt"/>
+        <line num="183" count="8" type="stmt"/>
+        <line num="213" count="8" type="stmt"/>
+        <line num="222" count="8" type="stmt"/>
+        <line num="228" count="8" type="stmt"/>
+        <line num="241" count="8" type="stmt"/>
       </file>
       <file name="highlight.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\domain\models\highlight.tsx">
         <metrics statements="2" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
@@ -1617,10 +1617,10 @@
       </file>
       <file name="label.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\domain\models\label.tsx">
         <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
-        <line num="1" count="3" type="stmt"/>
-        <line num="9" count="3" type="stmt"/>
-        <line num="16" count="3" type="stmt"/>
-        <line num="25" count="3" type="stmt"/>
+        <line num="1" count="10" type="stmt"/>
+        <line num="9" count="10" type="stmt"/>
+        <line num="16" count="10" type="stmt"/>
+        <line num="25" count="10" type="stmt"/>
       </file>
       <file name="selection.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\domain\models\selection.tsx">
         <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
@@ -1628,6 +1628,1154 @@
         <line num="11" count="11" type="stmt"/>
         <line num="27" count="11" type="stmt"/>
         <line num="41" count="11" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.adapters.arrangement">
+      <metrics statements="25" coveredstatements="25" conditionals="8" coveredconditionals="8" methods="10" coveredmethods="10"/>
+      <file name="ArrangementAdapter.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\adapters\arrangement\ArrangementAdapter.tsx">
+        <metrics statements="6" coveredstatements="6" conditionals="2" coveredconditionals="2" methods="4" coveredmethods="4"/>
+        <line num="9" count="18" type="stmt"/>
+        <line num="13" count="19" type="cond" truecount="2" falsecount="0"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="18" count="18" type="stmt"/>
+        <line num="22" count="21" type="stmt"/>
+        <line num="25" count="26" type="stmt"/>
+      </file>
+      <file name="CustomArrangementStore.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\adapters\arrangement\CustomArrangementStore.tsx">
+        <metrics statements="19" coveredstatements="19" conditionals="6" coveredconditionals="6" methods="6" coveredmethods="6"/>
+        <line num="24" count="32" type="stmt"/>
+        <line num="25" count="32" type="cond" truecount="2" falsecount="0"/>
+        <line num="26" count="23" type="stmt"/>
+        <line num="27" count="31" type="stmt"/>
+        <line num="30" count="32" type="stmt"/>
+        <line num="31" count="32" type="stmt"/>
+        <line num="35" count="10" type="cond" truecount="2" falsecount="0"/>
+        <line num="36" count="8" type="stmt"/>
+        <line num="37" count="8" type="stmt"/>
+        <line num="39" count="2" type="stmt"/>
+        <line num="43" count="10" type="cond" truecount="2" falsecount="0"/>
+        <line num="44" count="8" type="stmt"/>
+        <line num="45" count="8" type="stmt"/>
+        <line num="47" count="2" type="stmt"/>
+        <line num="50" count="32" type="stmt"/>
+        <line num="51" count="9" type="stmt"/>
+        <line num="52" count="10" type="stmt"/>
+        <line num="56" count="32" type="stmt"/>
+        <line num="57" count="19" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.adapters.casualos">
+      <metrics statements="74" coveredstatements="73" conditionals="26" coveredconditionals="25" methods="14" coveredmethods="14"/>
+      <file name="ObjectPooler.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\adapters\casualos\ObjectPooler.tsx">
+        <metrics statements="50" coveredstatements="50" conditionals="10" coveredconditionals="10" methods="10" coveredmethods="10"/>
+        <line num="27" count="36" type="stmt"/>
+        <line num="29" count="36" type="stmt"/>
+        <line num="32" count="36" type="stmt"/>
+        <line num="33" count="36" type="stmt"/>
+        <line num="37" count="36" type="stmt"/>
+        <line num="38" count="47" type="stmt"/>
+        <line num="40" count="36" type="stmt"/>
+        <line num="47" count="49" type="stmt"/>
+        <line num="51" count="49" type="stmt"/>
+        <line num="52" count="49" type="stmt"/>
+        <line num="54" count="3" type="stmt"/>
+        <line num="56" count="49" type="stmt"/>
+        <line num="59" count="35" type="stmt"/>
+        <line num="61" count="35" type="cond" truecount="2" falsecount="0"/>
+        <line num="62" count="2" type="stmt"/>
+        <line num="68" count="33" type="cond" truecount="2" falsecount="0"/>
+        <line num="69" count="31" type="stmt"/>
+        <line num="71" count="2" type="stmt"/>
+        <line num="74" count="33" type="stmt"/>
+        <line num="75" count="33" type="stmt"/>
+        <line num="76" count="33" type="stmt"/>
+        <line num="79" count="11" type="stmt"/>
+        <line num="82" count="17" type="stmt"/>
+        <line num="84" count="17" type="stmt"/>
+        <line num="86" count="17" type="stmt"/>
+        <line num="87" count="15" type="stmt"/>
+        <line num="90" count="17" type="cond" truecount="2" falsecount="0"/>
+        <line num="91" count="15" type="stmt"/>
+        <line num="92" count="15" type="stmt"/>
+        <line num="93" count="15" type="stmt"/>
+        <line num="94" count="15" type="cond" truecount="2" falsecount="0"/>
+        <line num="95" count="1" type="stmt"/>
+        <line num="96" count="1" type="stmt"/>
+        <line num="98" count="1" type="stmt"/>
+        <line num="102" count="15" type="stmt"/>
+        <line num="103" count="15" type="stmt"/>
+        <line num="104" count="15" type="stmt"/>
+        <line num="105" count="15" type="stmt"/>
+        <line num="106" count="15" type="stmt"/>
+        <line num="110" count="4" type="stmt"/>
+        <line num="111" count="5" type="stmt"/>
+        <line num="115" count="6" type="stmt"/>
+        <line num="117" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="118" count="1" type="stmt"/>
+        <line num="121" count="6" type="stmt"/>
+        <line num="122" count="9" type="stmt"/>
+        <line num="125" count="6" type="stmt"/>
+        <line num="128" count="6" type="stmt"/>
+        <line num="129" count="6" type="stmt"/>
+        <line num="130" count="6" type="stmt"/>
+      </file>
+      <file name="renderOrderAdapter.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\adapters\casualos\renderOrderAdapter.tsx">
+        <metrics statements="24" coveredstatements="23" conditionals="16" coveredconditionals="15" methods="4" coveredmethods="4"/>
+        <line num="29" count="14" type="stmt"/>
+        <line num="30" count="14" type="stmt"/>
+        <line num="34" count="14" type="stmt"/>
+        <line num="35" count="14" type="stmt"/>
+        <line num="36" count="24" type="stmt"/>
+        <line num="37" count="24" type="cond" truecount="2" falsecount="0"/>
+        <line num="40" count="14" type="stmt"/>
+        <line num="42" count="10" type="cond" truecount="3" falsecount="0"/>
+        <line num="48" count="10" type="cond" truecount="3" falsecount="0"/>
+        <line num="53" count="10" type="cond" truecount="2" falsecount="0"/>
+        <line num="54" count="5" type="stmt"/>
+        <line num="55" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="56" count="1" type="stmt"/>
+        <line num="58" count="4" type="stmt"/>
+        <line num="59" count="4" type="stmt"/>
+        <line num="60" count="4" type="cond" truecount="1" falsecount="1"/>
+        <line num="61" count="0" type="stmt"/>
+        <line num="62" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="63" count="1" type="stmt"/>
+        <line num="65" count="3" type="stmt"/>
+        <line num="70" count="14" type="stmt"/>
+        <line num="71" count="14" type="stmt"/>
+        <line num="72" count="22" type="stmt"/>
+        <line num="73" count="22" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.adapters.labels">
+      <metrics statements="182" coveredstatements="179" conditionals="81" coveredconditionals="74" methods="29" coveredmethods="29"/>
+      <file name="LabelAdapter.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\adapters\labels\LabelAdapter.tsx">
+        <metrics statements="64" coveredstatements="64" conditionals="28" coveredconditionals="23" methods="3" coveredmethods="3"/>
+        <line num="57" count="27" type="stmt"/>
+        <line num="58" count="27" type="stmt"/>
+        <line num="61" count="27" type="stmt"/>
+        <line num="62" count="27" type="stmt"/>
+        <line num="67" count="27" type="stmt"/>
+        <line num="78" count="16" type="stmt"/>
+        <line num="79" count="16" type="stmt"/>
+        <line num="80" count="16" type="cond" truecount="2" falsecount="0"/>
+        <line num="81" count="1" type="stmt"/>
+        <line num="83" count="15" type="stmt"/>
+        <line num="90" count="15" type="stmt"/>
+        <line num="91" count="15" type="stmt"/>
+        <line num="92" count="15" type="stmt"/>
+        <line num="96" count="15" type="cond" truecount="1" falsecount="1"/>
+        <line num="99" count="15" type="stmt"/>
+        <line num="100" count="15" type="cond" truecount="1" falsecount="1"/>
+        <line num="103" count="15" type="stmt"/>
+        <line num="104" count="15" type="stmt"/>
+        <line num="105" count="15" type="stmt"/>
+        <line num="108" count="15" type="stmt"/>
+        <line num="111" count="15" type="stmt"/>
+        <line num="115" count="15" type="stmt"/>
+        <line num="116" count="15" type="stmt"/>
+        <line num="117" count="15" type="stmt"/>
+        <line num="118" count="15" type="stmt"/>
+        <line num="123" count="15" type="stmt"/>
+        <line num="126" count="15" type="stmt"/>
+        <line num="133" count="15" type="stmt"/>
+        <line num="141" count="15" type="stmt"/>
+        <line num="142" count="15" type="stmt"/>
+        <line num="150" count="15" type="cond" truecount="2" falsecount="0"/>
+        <line num="151" count="2" type="stmt"/>
+        <line num="152" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="153" count="2" type="stmt"/>
+        <line num="154" count="2" type="stmt"/>
+        <line num="166" count="2" type="stmt"/>
+        <line num="178" count="2" type="stmt"/>
+        <line num="202" count="2" type="stmt"/>
+        <line num="206" count="15" type="stmt"/>
+        <line num="219" count="15" type="stmt"/>
+        <line num="238" count="15" type="stmt"/>
+        <line num="253" count="15" type="stmt"/>
+        <line num="254" count="15" type="stmt"/>
+        <line num="255" count="15" type="stmt"/>
+        <line num="257" count="15" type="stmt"/>
+        <line num="262" count="15" type="stmt"/>
+        <line num="263" count="15" type="cond" truecount="2" falsecount="0"/>
+        <line num="264" count="2" type="stmt"/>
+        <line num="266" count="15" type="stmt"/>
+        <line num="268" count="15" type="stmt"/>
+        <line num="276" count="27" type="stmt"/>
+        <line num="277" count="11" type="stmt"/>
+        <line num="280" count="11" type="stmt"/>
+        <line num="281" count="11" type="stmt"/>
+        <line num="282" count="11" type="cond" truecount="5" falsecount="0"/>
+        <line num="283" count="3" type="stmt"/>
+        <line num="287" count="8" type="stmt"/>
+        <line num="291" count="8" type="stmt"/>
+        <line num="292" count="8" type="stmt"/>
+        <line num="293" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="294" count="3" type="stmt"/>
+        <line num="295" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="296" count="1" type="stmt"/>
+        <line num="300" count="2" type="stmt"/>
+      </file>
+      <file name="LabelDataStore.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\adapters\labels\LabelDataStore.tsx">
+        <metrics statements="20" coveredstatements="20" conditionals="9" coveredconditionals="9" methods="8" coveredmethods="8"/>
+        <line num="12" count="30" type="stmt"/>
+        <line num="16" count="6" type="stmt"/>
+        <line num="20" count="4" type="stmt"/>
+        <line num="26" count="4" type="stmt"/>
+        <line num="27" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="28" count="1" type="stmt"/>
+        <line num="32" count="3" type="stmt"/>
+        <line num="36" count="4" type="stmt"/>
+        <line num="37" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="38" count="1" type="stmt"/>
+        <line num="42" count="3" type="stmt"/>
+        <line num="46" count="4" type="stmt"/>
+        <line num="47" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="48" count="1" type="stmt"/>
+        <line num="52" count="3" type="stmt"/>
+        <line num="56" count="4" type="stmt"/>
+        <line num="57" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="58" count="2" type="stmt"/>
+        <line num="62" count="2" type="stmt"/>
+        <line num="66" count="15" type="stmt"/>
+      </file>
+      <file name="LabelFeedbackAdapter.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\adapters\labels\LabelFeedbackAdapter.tsx">
+        <metrics statements="97" coveredstatements="94" conditionals="44" coveredconditionals="42" methods="17" coveredmethods="17"/>
+        <line num="51" count="1" type="stmt"/>
+        <line num="66" count="52" type="stmt"/>
+        <line num="80" count="1" type="stmt"/>
+        <line num="95" count="52" type="stmt"/>
+        <line num="110" count="48" type="stmt"/>
+        <line num="118" count="48" type="stmt"/>
+        <line num="119" count="48" type="stmt"/>
+        <line num="123" count="26" type="cond" truecount="2" falsecount="0"/>
+        <line num="124" count="1" type="stmt"/>
+        <line num="127" count="26" type="stmt"/>
+        <line num="131" count="26" type="stmt"/>
+        <line num="133" count="26" type="stmt"/>
+        <line num="134" count="13" type="stmt"/>
+        <line num="137" count="26" type="stmt"/>
+        <line num="141" count="13" type="stmt"/>
+        <line num="142" count="13" type="stmt"/>
+        <line num="143" count="13" type="stmt"/>
+        <line num="145" count="13" type="stmt"/>
+        <line num="150" count="1" type="stmt"/>
+        <line num="154" count="13" type="stmt"/>
+        <line num="155" count="40" type="cond" truecount="2" falsecount="0"/>
+        <line num="156" count="12" type="stmt"/>
+        <line num="159" count="28" type="stmt"/>
+        <line num="161" count="28" type="cond" truecount="2" falsecount="0"/>
+        <line num="162" count="2" type="stmt"/>
+        <line num="167" count="26" type="stmt"/>
+        <line num="168" count="26" type="stmt"/>
+        <line num="169" count="26" type="stmt"/>
+        <line num="171" count="26" type="stmt"/>
+        <line num="179" count="26" type="stmt"/>
+        <line num="187" count="26" type="stmt"/>
+        <line num="195" count="26" type="stmt"/>
+        <line num="205" count="13" type="stmt"/>
+        <line num="209" count="9" type="stmt"/>
+        <line num="211" count="9" type="cond" truecount="2" falsecount="0"/>
+        <line num="212" count="7" type="stmt"/>
+        <line num="213" count="7" type="stmt"/>
+        <line num="225" count="11" type="stmt"/>
+        <line num="226" count="11" type="stmt"/>
+        <line num="229" count="11" type="stmt"/>
+        <line num="231" count="7" type="stmt"/>
+        <line num="232" count="7" type="stmt"/>
+        <line num="242" count="1" type="stmt"/>
+        <line num="269" count="7" type="stmt"/>
+        <line num="276" count="0" type="stmt"/>
+        <line num="288" count="9" type="stmt"/>
+        <line num="289" count="9" type="stmt"/>
+        <line num="291" count="9" type="stmt"/>
+        <line num="293" count="6" type="stmt"/>
+        <line num="294" count="6" type="stmt"/>
+        <line num="325" count="0" type="stmt"/>
+        <line num="339" count="4" type="stmt"/>
+        <line num="341" count="4" type="stmt"/>
+        <line num="344" count="4" type="stmt"/>
+        <line num="346" count="4" type="stmt"/>
+        <line num="348" count="3" type="stmt"/>
+        <line num="349" count="3" type="stmt"/>
+        <line num="380" count="0" type="stmt"/>
+        <line num="391" count="24" type="stmt"/>
+        <line num="394" count="24" type="cond" truecount="2" falsecount="0"/>
+        <line num="395" count="3" type="stmt"/>
+        <line num="399" count="21" type="stmt"/>
+        <line num="400" count="21" type="cond" truecount="2" falsecount="0"/>
+        <line num="401" count="2" type="stmt"/>
+        <line num="405" count="19" type="stmt"/>
+        <line num="406" count="19" type="cond" truecount="2" falsecount="0"/>
+        <line num="407" count="2" type="stmt"/>
+        <line num="411" count="17" type="stmt"/>
+        <line num="412" count="2" type="stmt"/>
+        <line num="413" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="414" count="1" type="stmt"/>
+        <line num="418" count="1" type="stmt"/>
+        <line num="420" count="16" type="stmt"/>
+        <line num="421" count="16" type="cond" truecount="2" falsecount="0"/>
+        <line num="422" count="2" type="stmt"/>
+        <line num="425" count="16" type="stmt"/>
+        <line num="435" count="24" type="stmt"/>
+        <line num="436" count="24" type="stmt"/>
+        <line num="437" count="24" type="cond" truecount="2" falsecount="0"/>
+        <line num="438" count="22" type="stmt"/>
+        <line num="440" count="24" type="stmt"/>
+        <line num="441" count="24" type="cond" truecount="2" falsecount="0"/>
+        <line num="442" count="22" type="stmt"/>
+        <line num="444" count="24" type="stmt"/>
+        <line num="445" count="2" type="stmt"/>
+        <line num="447" count="24" type="stmt"/>
+        <line num="448" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="449" count="1" type="stmt"/>
+        <line num="452" count="24" type="cond" truecount="2" falsecount="0"/>
+        <line num="453" count="2" type="stmt"/>
+        <line num="454" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="455" count="2" type="stmt"/>
+        <line num="458" count="24" type="stmt"/>
+        <line num="459" count="24" type="stmt"/>
+        <line num="463" count="3" type="stmt"/>
+        <line num="464" count="3" type="stmt"/>
+        <line num="466" count="3" type="stmt"/>
+      </file>
+      <file name="LabelsRepository.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\adapters\labels\LabelsRepository.tsx">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="5" count="9" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.adapters.pieceActivity">
+      <metrics statements="185" coveredstatements="185" conditionals="91" coveredconditionals="90" methods="24" coveredmethods="24"/>
+      <file name="ActivityIndicatorBotsRepository.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\adapters\pieceActivity\ActivityIndicatorBotsRepository.tsx">
+        <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="3" coveredmethods="3"/>
+        <line num="12" count="1" type="stmt"/>
+        <line num="13" count="60" type="stmt"/>
+        <line num="20" count="10" type="stmt"/>
+        <line num="29" count="10" type="stmt"/>
+      </file>
+      <file name="ActivityIndicatorsAdapter.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\adapters\pieceActivity\ActivityIndicatorsAdapter.tsx">
+        <metrics statements="121" coveredstatements="121" conditionals="49" coveredconditionals="48" methods="16" coveredmethods="16"/>
+        <line num="40" count="1" type="stmt"/>
+        <line num="45" count="7" type="stmt"/>
+        <line num="46" count="7" type="stmt"/>
+        <line num="47" count="7" type="cond" truecount="2" falsecount="0"/>
+        <line num="48" count="1" type="stmt"/>
+        <line num="52" count="6" type="stmt"/>
+        <line num="53" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="54" count="1" type="stmt"/>
+        <line num="58" count="5" type="stmt"/>
+        <line num="59" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="60" count="1" type="stmt"/>
+        <line num="64" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="65" count="1" type="stmt"/>
+        <line num="69" count="3" type="stmt"/>
+        <line num="70" count="3" type="stmt"/>
+        <line num="85" count="3" type="stmt"/>
+        <line num="88" count="1" type="stmt"/>
+        <line num="89" count="3" type="stmt"/>
+        <line num="95" count="6" type="stmt"/>
+        <line num="96" count="6" type="stmt"/>
+        <line num="98" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="99" count="1" type="stmt"/>
+        <line num="104" count="5" type="stmt"/>
+        <line num="105" count="5" type="stmt"/>
+        <line num="107" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="110" count="1" type="stmt"/>
+        <line num="111" count="1" type="stmt"/>
+        <line num="113" count="1" type="stmt"/>
+        <line num="115" count="4" type="stmt"/>
+        <line num="116" count="4" type="stmt"/>
+        <line num="120" count="5" type="stmt"/>
+        <line num="133" count="3" type="stmt"/>
+        <line num="136" count="1" type="stmt"/>
+        <line num="160" count="1" type="stmt"/>
+        <line num="161" count="2" type="stmt"/>
+        <line num="162" count="2" type="stmt"/>
+        <line num="165" count="2" type="stmt"/>
+        <line num="168" count="2" type="stmt"/>
+        <line num="170" count="2" type="stmt"/>
+        <line num="178" count="1" type="stmt"/>
+        <line num="179" count="25" type="stmt"/>
+        <line num="180" count="25" type="stmt"/>
+        <line num="183" count="25" type="stmt"/>
+        <line num="186" count="25" type="stmt"/>
+        <line num="188" count="25" type="stmt"/>
+        <line num="196" count="1" type="stmt"/>
+        <line num="235" count="61" type="stmt"/>
+        <line num="236" count="61" type="stmt"/>
+        <line num="237" count="61" type="stmt"/>
+        <line num="239" count="61" type="stmt"/>
+        <line num="243" count="29" type="cond" truecount="2" falsecount="0"/>
+        <line num="245" count="29" type="stmt"/>
+        <line num="246" count="29" type="stmt"/>
+        <line num="247" count="29" type="stmt"/>
+        <line num="248" count="29" type="cond" truecount="2" falsecount="0"/>
+        <line num="249" count="2" type="stmt"/>
+        <line num="251" count="27" type="stmt"/>
+        <line num="254" count="29" type="cond" truecount="2" falsecount="0"/>
+        <line num="255" count="1" type="stmt"/>
+        <line num="260" count="28" type="stmt"/>
+        <line num="262" count="28" type="stmt"/>
+        <line num="264" count="28" type="cond" truecount="2" falsecount="0"/>
+        <line num="265" count="1" type="stmt"/>
+        <line num="271" count="27" type="stmt"/>
+        <line num="273" count="27" type="stmt"/>
+        <line num="274" count="29" type="stmt"/>
+        <line num="282" count="29" type="cond" truecount="2" falsecount="0"/>
+        <line num="283" count="3" type="stmt"/>
+        <line num="285" count="26" type="stmt"/>
+        <line num="290" count="29" type="cond" truecount="2" falsecount="0"/>
+        <line num="291" count="2" type="stmt"/>
+        <line num="296" count="27" type="stmt"/>
+        <line num="307" count="27" type="cond" truecount="3" falsecount="0"/>
+        <line num="310" count="22" type="stmt"/>
+        <line num="311" count="22" type="cond" truecount="2" falsecount="0"/>
+        <line num="312" count="22" type="cond" truecount="2" falsecount="0"/>
+        <line num="316" count="22" type="stmt"/>
+        <line num="330" count="22" type="stmt"/>
+        <line num="333" count="3" type="stmt"/>
+        <line num="334" count="3" type="stmt"/>
+        <line num="336" count="3" type="stmt"/>
+        <line num="350" count="3" type="stmt"/>
+        <line num="353" count="2" type="stmt"/>
+        <line num="366" count="2" type="stmt"/>
+        <line num="369" count="27" type="stmt"/>
+        <line num="370" count="27" type="stmt"/>
+        <line num="372" count="25" type="stmt"/>
+        <line num="373" count="27" type="stmt"/>
+        <line num="376" count="61" type="stmt"/>
+        <line num="379" count="2" type="stmt"/>
+        <line num="380" count="2" type="stmt"/>
+        <line num="383" count="61" type="stmt"/>
+        <line num="386" count="4" type="stmt"/>
+        <line num="387" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="388" count="3" type="stmt"/>
+        <line num="392" count="61" type="stmt"/>
+        <line num="393" count="3" type="stmt"/>
+        <line num="394" count="3" type="stmt"/>
+        <line num="395" count="3" type="stmt"/>
+        <line num="402" count="21" type="stmt"/>
+        <line num="403" count="21" type="cond" truecount="2" falsecount="0"/>
+        <line num="404" count="17" type="cond" truecount="2" falsecount="0"/>
+        <line num="405" count="1" type="stmt"/>
+        <line num="409" count="16" type="stmt"/>
+        <line num="412" count="16" type="cond" truecount="2" falsecount="0"/>
+        <line num="413" count="2" type="stmt"/>
+        <line num="417" count="14" type="stmt"/>
+        <line num="419" count="14" type="cond" truecount="2" falsecount="0"/>
+        <line num="420" count="1" type="stmt"/>
+        <line num="424" count="13" type="stmt"/>
+        <line num="426" count="13" type="stmt"/>
+        <line num="433" count="8" type="stmt"/>
+        <line num="434" count="8" type="stmt"/>
+        <line num="435" count="8" type="stmt"/>
+        <line num="436" count="8" type="stmt"/>
+        <line num="442" count="4" type="stmt"/>
+        <line num="443" count="4" type="stmt"/>
+        <line num="444" count="4" type="stmt"/>
+        <line num="450" count="3" type="stmt"/>
+        <line num="451" count="3" type="stmt"/>
+        <line num="452" count="3" type="stmt"/>
+      </file>
+      <file name="ActivityNotificationAdapter.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\adapters\pieceActivity\ActivityNotificationAdapter.tsx">
+        <metrics statements="60" coveredstatements="60" conditionals="42" coveredconditionals="42" methods="5" coveredmethods="5"/>
+        <line num="20" count="1" type="stmt"/>
+        <line num="21" count="1" type="stmt"/>
+        <line num="33" count="41" type="stmt"/>
+        <line num="38" count="3" type="stmt"/>
+        <line num="39" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="40" count="1" type="stmt"/>
+        <line num="44" count="2" type="stmt"/>
+        <line num="57" count="18" type="stmt"/>
+        <line num="60" count="18" type="cond" truecount="2" falsecount="0"/>
+        <line num="61" count="3" type="stmt"/>
+        <line num="64" count="15" type="stmt"/>
+        <line num="69" count="18" type="cond" truecount="2" falsecount="0"/>
+        <line num="70" count="2" type="stmt"/>
+        <line num="75" count="16" type="cond" truecount="2" falsecount="0"/>
+        <line num="76" count="1" type="stmt"/>
+        <line num="81" count="15" type="cond" truecount="2" falsecount="0"/>
+        <line num="82" count="15" type="cond" truecount="2" falsecount="0"/>
+        <line num="83" count="15" type="stmt"/>
+        <line num="85" count="15" type="stmt"/>
+        <line num="99" count="15" type="stmt"/>
+        <line num="100" count="15" type="stmt"/>
+        <line num="103" count="13" type="cond" truecount="2" falsecount="0"/>
+        <line num="104" count="1" type="stmt"/>
+        <line num="108" count="12" type="stmt"/>
+        <line num="111" count="12" type="cond" truecount="2" falsecount="0"/>
+        <line num="112" count="1" type="stmt"/>
+        <line num="116" count="11" type="cond" truecount="2" falsecount="0"/>
+        <line num="117" count="1" type="stmt"/>
+        <line num="121" count="10" type="cond" truecount="2" falsecount="0"/>
+        <line num="122" count="1" type="stmt"/>
+        <line num="126" count="9" type="cond" truecount="2" falsecount="0"/>
+        <line num="127" count="1" type="stmt"/>
+        <line num="131" count="8" type="stmt"/>
+        <line num="132" count="8" type="stmt"/>
+        <line num="134" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="135" count="1" type="stmt"/>
+        <line num="140" count="7" type="cond" truecount="2" falsecount="0"/>
+        <line num="143" count="7" type="stmt"/>
+        <line num="144" count="7" type="stmt"/>
+        <line num="145" count="7" type="stmt"/>
+        <line num="146" count="7" type="cond" truecount="2" falsecount="0"/>
+        <line num="151" count="7" type="stmt"/>
+        <line num="161" count="7" type="stmt"/>
+        <line num="166" count="7" type="stmt"/>
+        <line num="171" count="7" type="stmt"/>
+        <line num="178" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="179" count="1" type="stmt"/>
+        <line num="183" count="7" type="stmt"/>
+        <line num="184" count="7" type="cond" truecount="2" falsecount="0"/>
+        <line num="186" count="7" type="cond" truecount="2" falsecount="0"/>
+        <line num="187" count="4" type="stmt"/>
+        <line num="191" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="192" count="1" type="stmt"/>
+        <line num="197" count="3" type="stmt"/>
+        <line num="201" count="3" type="stmt"/>
+        <line num="203" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="204" count="1" type="stmt"/>
+        <line num="209" count="2" type="cond" truecount="4" falsecount="0"/>
+        <line num="210" count="1" type="stmt"/>
+        <line num="211" count="1" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.adapters.session">
+      <metrics statements="24" coveredstatements="24" conditionals="18" coveredconditionals="18" methods="7" coveredmethods="7"/>
+      <file name="SessionProvider.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\adapters\session\SessionProvider.tsx">
+        <metrics statements="24" coveredstatements="24" conditionals="18" coveredconditionals="18" methods="7" coveredmethods="7"/>
+        <line num="20" count="30" type="stmt"/>
+        <line num="21" count="30" type="stmt"/>
+        <line num="25" count="24" type="stmt"/>
+        <line num="35" count="24" type="stmt"/>
+        <line num="36" count="15" type="cond" truecount="2" falsecount="0"/>
+        <line num="37" count="14" type="stmt"/>
+        <line num="38" count="14" type="cond" truecount="2" falsecount="0"/>
+        <line num="39" count="13" type="stmt"/>
+        <line num="40" count="14" type="cond" truecount="2" falsecount="0"/>
+        <line num="41" count="12" type="stmt"/>
+        <line num="51" count="24" type="stmt"/>
+        <line num="55" count="4" type="stmt"/>
+        <line num="56" count="7" type="stmt"/>
+        <line num="68" count="17" type="stmt"/>
+        <line num="72" count="5" type="stmt"/>
+        <line num="74" count="7" type="stmt"/>
+        <line num="80" count="17" type="stmt"/>
+        <line num="81" count="80" type="stmt"/>
+        <line num="82" count="17" type="stmt"/>
+        <line num="86" count="17" type="stmt"/>
+        <line num="87" count="17" type="stmt"/>
+        <line num="89" count="17" type="stmt"/>
+        <line num="91" count="17" type="stmt"/>
+        <line num="92" count="17" type="cond" truecount="2" falsecount="0"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.adapters.user">
+      <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+      <file name="UserDatabase.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\adapters\user\UserDatabase.tsx">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="6" count="5" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.adapters.userPresence">
+      <metrics statements="48" coveredstatements="48" conditionals="34" coveredconditionals="33" methods="14" coveredmethods="14"/>
+      <file name="SeedBiblePresenceProvider.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\adapters\userPresence\SeedBiblePresenceProvider.tsx">
+        <metrics statements="17" coveredstatements="17" conditionals="8" coveredconditionals="8" methods="6" coveredmethods="6"/>
+        <line num="14" count="21" type="stmt"/>
+        <line num="18" count="2" type="stmt"/>
+        <line num="22" count="9" type="stmt"/>
+        <line num="26" count="7" type="stmt"/>
+        <line num="28" count="7" type="cond" truecount="2" falsecount="0"/>
+        <line num="29" count="1" type="stmt"/>
+        <line num="32" count="6" type="stmt"/>
+        <line num="42" count="6" type="stmt"/>
+        <line num="46" count="10" type="stmt"/>
+        <line num="47" count="11" type="stmt"/>
+        <line num="52" count="10" type="stmt"/>
+        <line num="53" count="10" type="stmt"/>
+        <line num="54" count="11" type="cond" truecount="2" falsecount="0"/>
+        <line num="55" count="10" type="stmt"/>
+        <line num="56" count="10" type="stmt"/>
+        <line num="57" count="10" type="stmt"/>
+        <line num="65" count="10" type="stmt"/>
+      </file>
+      <file name="UserColorStore.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\adapters\userPresence\UserColorStore.tsx">
+        <metrics statements="31" coveredstatements="31" conditionals="26" coveredconditionals="25" methods="8" coveredmethods="8"/>
+        <line num="16" count="33" type="stmt"/>
+        <line num="17" count="33" type="stmt"/>
+        <line num="21" count="68" type="stmt"/>
+        <line num="23" count="68" type="cond" truecount="4" falsecount="0"/>
+        <line num="25" count="67" type="stmt"/>
+        <line num="26" count="34" type="cond" truecount="2" falsecount="0"/>
+        <line num="27" count="34" type="cond" truecount="2" falsecount="0"/>
+        <line num="29" count="34" type="cond" truecount="2" falsecount="0"/>
+        <line num="31" count="67" type="stmt"/>
+        <line num="35" count="39" type="stmt"/>
+        <line num="36" count="39" type="stmt"/>
+        <line num="37" count="39" type="cond" truecount="2" falsecount="0"/>
+        <line num="38" count="8" type="cond" truecount="4" falsecount="0"/>
+        <line num="39" count="8" type="cond" truecount="4" falsecount="0"/>
+        <line num="40" count="8" type="stmt"/>
+        <line num="41" count="31" type="stmt"/>
+        <line num="43" count="39" type="stmt"/>
+        <line num="47" count="10" type="stmt"/>
+        <line num="48" count="10" type="cond" truecount="2" falsecount="0"/>
+        <line num="49" count="7" type="stmt"/>
+        <line num="50" count="7" type="cond" truecount="1" falsecount="1"/>
+        <line num="51" count="7" type="stmt"/>
+        <line num="52" count="7" type="stmt"/>
+        <line num="53" count="7" type="stmt"/>
+        <line num="56" count="3" type="stmt"/>
+        <line num="60" count="7" type="stmt"/>
+        <line num="61" count="7" type="cond" truecount="2" falsecount="0"/>
+        <line num="62" count="5" type="stmt"/>
+        <line num="64" count="2" type="stmt"/>
+        <line num="68" count="11" type="stmt"/>
+        <line num="69" count="10" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.config.activityIndicators">
+      <metrics statements="2" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+      <file name="ActivityIndicatorsConfigProvider.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\activityIndicators\ActivityIndicatorsConfigProvider.tsx">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="10" count="44" type="stmt"/>
+      </file>
+      <file name="visuals.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\activityIndicators\visuals.tsx">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.config.arrangements">
+      <metrics statements="9" coveredstatements="9" conditionals="0" coveredconditionals="0" methods="5" coveredmethods="5"/>
+      <file name="ArrangementsConfigProvider.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\arrangements\ArrangementsConfigProvider.tsx">
+        <metrics statements="7" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="5" coveredmethods="5"/>
+        <line num="17" count="23" type="stmt"/>
+        <line num="21" count="23" type="stmt"/>
+        <line num="22" count="7" type="stmt"/>
+        <line num="23" count="35" type="stmt"/>
+        <line num="27" count="23" type="stmt"/>
+        <line num="28" count="5" type="stmt"/>
+        <line num="40" count="33" type="stmt"/>
+      </file>
+      <file name="sectionNames.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\arrangements\sectionNames.tsx">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+      </file>
+      <file name="staticArrangements.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\arrangements\staticArrangements.tsx">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="3" count="1" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.config.labels">
+      <metrics statements="24" coveredstatements="24" conditionals="0" coveredconditionals="0" methods="14" coveredmethods="14"/>
+      <file name="LabelFeedbackConfigProvider.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\labels\LabelFeedbackConfigProvider.tsx">
+        <metrics statements="12" coveredstatements="12" conditionals="0" coveredconditionals="0" methods="7" coveredmethods="7"/>
+        <line num="19" count="1" type="stmt"/>
+        <line num="20" count="1" type="stmt"/>
+        <line num="21" count="1" type="stmt"/>
+        <line num="23" count="1" type="stmt"/>
+        <line num="30" count="1" type="stmt"/>
+        <line num="39" count="10" type="stmt"/>
+        <line num="45" count="4" type="stmt"/>
+        <line num="49" count="3" type="stmt"/>
+        <line num="53" count="3" type="stmt"/>
+        <line num="57" count="4" type="stmt"/>
+        <line num="61" count="12" type="stmt"/>
+        <line num="65" count="6" type="stmt"/>
+      </file>
+      <file name="LabelsConfigProvider.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\labels\LabelsConfigProvider.tsx">
+        <metrics statements="7" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="7" coveredmethods="7"/>
+        <line num="28" count="9" type="stmt"/>
+        <line num="31" count="20" type="stmt"/>
+        <line num="37" count="16" type="stmt"/>
+        <line num="41" count="6" type="stmt"/>
+        <line num="49" count="15" type="stmt"/>
+        <line num="55" count="8" type="stmt"/>
+        <line num="61" count="6" type="stmt"/>
+      </file>
+      <file name="date.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\labels\date.tsx">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+      </file>
+      <file name="fonts.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\labels\fonts.tsx">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+      </file>
+      <file name="formAddresses.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\labels\formAddresses.tsx">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+      </file>
+      <file name="showAnimation.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\labels\showAnimation.tsx">
+        <metrics statements="2" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="6" count="2" type="stmt"/>
+        <line num="14" count="2" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.config.meshes">
+      <metrics statements="2" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+      <file name="MeshesConfigProvider.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\meshes\MeshesConfigProvider.tsx">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="8" count="8" type="stmt"/>
+      </file>
+      <file name="urls.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\meshes\urls.tsx">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.config.readingHistory">
+      <metrics statements="2" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+      <file name="ReadingHistoryConfigProvider.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\readingHistory\ReadingHistoryConfigProvider.tsx">
+        <metrics statements="2" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="5" count="6" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.config.scriptureMap3D">
+      <metrics statements="10" coveredstatements="10" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+      <file name="ScriptureMap3DConfigProvider.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\scriptureMap3D\ScriptureMap3DConfigProvider.tsx">
+        <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+        <line num="8" count="71" type="stmt"/>
+        <line num="13" count="29" type="stmt"/>
+        <line num="14" count="67" type="stmt"/>
+        <line num="15" count="67" type="stmt"/>
+      </file>
+      <file name="measurements.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\scriptureMap3D\measurements.tsx">
+        <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="11" count="1" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.config.stacks">
+      <metrics statements="12" coveredstatements="12" conditionals="0" coveredconditionals="0" methods="6" coveredmethods="6"/>
+      <file name="StackConfigProvider.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\stacks\StackConfigProvider.tsx">
+        <metrics statements="9" coveredstatements="9" conditionals="0" coveredconditionals="0" methods="6" coveredmethods="6"/>
+        <line num="13" count="65" type="stmt"/>
+        <line num="18" count="56" type="stmt"/>
+        <line num="19" count="61" type="stmt"/>
+        <line num="23" count="64" type="stmt"/>
+        <line num="28" count="56" type="stmt"/>
+        <line num="29" count="60" type="stmt"/>
+        <line num="33" count="22" type="stmt"/>
+        <line num="38" count="56" type="stmt"/>
+        <line num="39" count="18" type="stmt"/>
+      </file>
+      <file name="animations.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\stacks\animations.tsx">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+      </file>
+      <file name="measurements.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\stacks\measurements.tsx">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+      </file>
+      <file name="spacings.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\config\stacks\spacings.tsx">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.controllers.arrangement">
+      <metrics statements="2" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+      <file name="ArrangementController.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\controllers\arrangement\ArrangementController.tsx">
+        <metrics statements="2" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+        <line num="6" count="5" type="stmt"/>
+        <line num="10" count="6" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.controllers.label">
+      <metrics statements="5" coveredstatements="5" conditionals="0" coveredconditionals="0" methods="3" coveredmethods="3"/>
+      <file name="LabelInteractionController.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\controllers\label\LabelInteractionController.tsx">
+        <metrics statements="5" coveredstatements="5" conditionals="0" coveredconditionals="0" methods="3" coveredmethods="3"/>
+        <line num="17" count="12" type="stmt"/>
+        <line num="21" count="6" type="stmt"/>
+        <line num="22" count="6" type="stmt"/>
+        <line num="26" count="6" type="stmt"/>
+        <line num="27" count="6" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.controllers.session">
+      <metrics statements="14" coveredstatements="14" conditionals="4" coveredconditionals="4" methods="12" coveredmethods="12"/>
+      <file name="SessionController.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\controllers\session\SessionController.tsx">
+        <metrics statements="6" coveredstatements="6" conditionals="4" coveredconditionals="4" methods="4" coveredmethods="4"/>
+        <line num="7" count="13" type="stmt"/>
+        <line num="11" count="9" type="cond" truecount="2" falsecount="0"/>
+        <line num="13" count="10" type="stmt"/>
+        <line num="15" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="16" count="5" type="stmt"/>
+        <line num="21" count="5" type="stmt"/>
+      </file>
+      <file name="UserColorController.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\controllers\session\UserColorController.tsx">
+        <metrics statements="8" coveredstatements="8" conditionals="0" coveredconditionals="0" methods="8" coveredmethods="8"/>
+        <line num="8" count="10" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="15" count="2" type="stmt"/>
+        <line num="19" count="2" type="stmt"/>
+        <line num="23" count="2" type="stmt"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="31" count="2" type="stmt"/>
+        <line num="35" count="14" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.controllers.userPresence">
+      <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="3" coveredmethods="3"/>
+      <file name="UserPresenceController.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\controllers\userPresence\UserPresenceController.tsx">
+        <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="3" coveredmethods="3"/>
+        <line num="6" count="7" type="stmt"/>
+        <line num="10" count="5" type="stmt"/>
+        <line num="13" count="5" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.data">
+      <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="4" coveredmethods="4"/>
+      <file name="BibleVizDataRepository.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\data\BibleVizDataRepository.tsx">
+        <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="4" coveredmethods="4"/>
+        <line num="8" count="6" type="stmt"/>
+        <line num="12" count="9" type="stmt"/>
+        <line num="16" count="4" type="stmt"/>
+        <line num="22" count="8" type="stmt"/>
+      </file>
+      <file name="booksStaticInfo.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\data\booksStaticInfo.tsx">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="3" count="1" type="stmt"/>
+      </file>
+      <file name="testamentNames.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\data\testamentNames.tsx">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.functions">
+      <metrics statements="143" coveredstatements="142" conditionals="77" coveredconditionals="73" methods="39" coveredmethods="39"/>
+      <file name="casualos.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\functions\casualos.tsx">
+        <metrics statements="58" coveredstatements="58" conditionals="44" coveredconditionals="44" methods="11" coveredmethods="11"/>
+        <line num="23" count="1" type="stmt"/>
+        <line num="26" count="6" type="stmt"/>
+        <line num="27" count="6" type="stmt"/>
+        <line num="29" count="6" type="stmt"/>
+        <line num="34" count="6" type="stmt"/>
+        <line num="35" count="6" type="stmt"/>
+        <line num="38" count="1" type="stmt"/>
+        <line num="44" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="47" count="6" type="stmt"/>
+        <line num="48" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="49" count="1" type="stmt"/>
+        <line num="51" count="5" type="stmt"/>
+        <line num="55" count="1" type="stmt"/>
+        <line num="56" count="4" type="stmt"/>
+        <line num="57" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="58" count="1" type="stmt"/>
+        <line num="62" count="1" type="stmt"/>
+        <line num="63" count="17" type="stmt"/>
+        <line num="69" count="17" type="stmt"/>
+        <line num="72" count="1" type="stmt"/>
+        <line num="73" count="8" type="cond" truecount="3" falsecount="0"/>
+        <line num="74" count="8" type="stmt"/>
+        <line num="75" count="8" type="stmt"/>
+        <line num="76" count="8" type="stmt"/>
+        <line num="77" count="8" type="stmt"/>
+        <line num="79" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="80" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="81" count="5" type="stmt"/>
+        <line num="82" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="84" count="3" type="cond" truecount="3" falsecount="0"/>
+        <line num="85" count="3" type="stmt"/>
+        <line num="86" count="3" type="stmt"/>
+        <line num="87" count="3" type="stmt"/>
+        <line num="88" count="3" type="stmt"/>
+        <line num="91" count="8" type="stmt"/>
+        <line num="94" count="1" type="stmt"/>
+        <line num="98" count="5" type="stmt"/>
+        <line num="99" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="100" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="101" count="2" type="stmt"/>
+        <line num="102" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="104" count="1" type="cond" truecount="3" falsecount="0"/>
+        <line num="105" count="1" type="stmt"/>
+        <line num="106" count="1" type="stmt"/>
+        <line num="107" count="1" type="stmt"/>
+        <line num="108" count="1" type="stmt"/>
+        <line num="111" count="5" type="stmt"/>
+        <line num="114" count="1" type="stmt"/>
+        <line num="115" count="4" type="stmt"/>
+        <line num="116" count="4" type="stmt"/>
+        <line num="117" count="4" type="stmt"/>
+        <line num="120" count="1" type="stmt"/>
+        <line num="121" count="4" type="stmt"/>
+        <line num="122" count="4" type="stmt"/>
+        <line num="123" count="4" type="stmt"/>
+        <line num="126" count="1" type="stmt"/>
+        <line num="135" count="3" type="stmt"/>
+        <line num="143" count="4" type="cond" truecount="2" falsecount="0"/>
+      </file>
+      <file name="layout.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\functions\layout.tsx">
+        <metrics statements="85" coveredstatements="84" conditionals="33" coveredconditionals="29" methods="28" coveredmethods="28"/>
+        <line num="72" count="1" type="stmt"/>
+        <line num="79" count="4" type="stmt"/>
+        <line num="93" count="2" type="stmt"/>
+        <line num="107" count="2" type="stmt"/>
+        <line num="121" count="2" type="stmt"/>
+        <line num="144" count="1" type="stmt"/>
+        <line num="151" count="2" type="stmt"/>
+        <line num="168" count="2" type="stmt"/>
+        <line num="178" count="2" type="stmt"/>
+        <line num="181" count="2" type="stmt"/>
+        <line num="182" count="2" type="stmt"/>
+        <line num="188" count="1" type="stmt"/>
+        <line num="189" count="2" type="stmt"/>
+        <line num="190" count="2" type="stmt"/>
+        <line num="191" count="2" type="stmt"/>
+        <line num="192" count="2" type="stmt"/>
+        <line num="207" count="1" type="stmt"/>
+        <line num="214" count="2" type="stmt"/>
+        <line num="228" count="2" type="stmt"/>
+        <line num="242" count="2" type="stmt"/>
+        <line num="256" count="2" type="stmt"/>
+        <line num="277" count="1" type="stmt"/>
+        <line num="285" count="11" type="stmt"/>
+        <line num="286" count="11" type="stmt"/>
+        <line num="287" count="11" type="stmt"/>
+        <line num="288" count="11" type="stmt"/>
+        <line num="289" count="11" type="stmt"/>
+        <line num="290" count="11" type="stmt"/>
+        <line num="292" count="11" type="stmt"/>
+        <line num="293" count="23" type="stmt"/>
+        <line num="295" count="62" type="stmt"/>
+        <line num="297" count="23" type="cond" truecount="2" falsecount="0"/>
+        <line num="298" count="22" type="stmt"/>
+        <line num="300" count="22" type="cond" truecount="2" falsecount="0"/>
+        <line num="303" count="3" type="stmt"/>
+        <line num="304" count="3" type="stmt"/>
+        <line num="305" count="3" type="stmt"/>
+        <line num="306" count="3" type="stmt"/>
+        <line num="308" count="19" type="cond" truecount="2" falsecount="0"/>
+        <line num="311" count="3" type="cond" truecount="2" falsecount="2"/>
+        <line num="312" count="0" type="stmt"/>
+        <line num="315" count="3" type="stmt"/>
+        <line num="316" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="317" count="1" type="stmt"/>
+        <line num="318" count="1" type="stmt"/>
+        <line num="319" count="1" type="stmt"/>
+        <line num="321" count="2" type="stmt"/>
+        <line num="322" count="2" type="stmt"/>
+        <line num="330" count="16" type="stmt"/>
+        <line num="332" count="16" type="cond" truecount="4" falsecount="0"/>
+        <line num="335" count="12" type="cond" truecount="2" falsecount="0"/>
+        <line num="336" count="1" type="stmt"/>
+        <line num="337" count="1" type="stmt"/>
+        <line num="339" count="12" type="stmt"/>
+        <line num="340" count="12" type="stmt"/>
+        <line num="344" count="12" type="stmt"/>
+        <line num="350" count="11" type="stmt"/>
+        <line num="351" count="11" type="stmt"/>
+        <line num="355" count="1" type="stmt"/>
+        <line num="356" count="14" type="stmt"/>
+        <line num="358" count="7" type="stmt"/>
+        <line num="360" count="7" type="cond" truecount="2" falsecount="0"/>
+        <line num="362" count="7" type="stmt"/>
+        <line num="364" count="7" type="stmt"/>
+        <line num="365" count="14" type="stmt"/>
+        <line num="366" count="14" type="stmt"/>
+        <line num="367" count="14" type="stmt"/>
+        <line num="371" count="1" type="stmt"/>
+        <line num="374" count="6" type="stmt"/>
+        <line num="376" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="378" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="382" count="1" type="stmt"/>
+        <line num="389" count="10" type="stmt"/>
+        <line num="397" count="1" type="stmt"/>
+        <line num="404" count="8" type="stmt"/>
+        <line num="413" count="1" type="stmt"/>
+        <line num="414" count="8" type="stmt"/>
+        <line num="417" count="1" type="stmt"/>
+        <line num="424" count="8" type="stmt"/>
+        <line num="432" count="1" type="stmt"/>
+        <line num="442" count="7" type="stmt"/>
+        <line num="461" count="1" type="stmt"/>
+        <line num="465" count="6" type="stmt"/>
+        <line num="469" count="6" type="stmt"/>
+        <line num="473" count="6" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.mappers">
+      <metrics statements="132" coveredstatements="132" conditionals="61" coveredconditionals="60" methods="37" coveredmethods="37"/>
+      <file name="ActivityIndicatorMapper.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\mappers\ActivityIndicatorMapper.tsx">
+        <metrics statements="13" coveredstatements="13" conditionals="10" coveredconditionals="10" methods="2" coveredmethods="2"/>
+        <line num="6" count="19" type="cond" truecount="2" falsecount="0"/>
+        <line num="7" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="8" count="3" type="stmt"/>
+        <line num="12" count="5" type="stmt"/>
+        <line num="19" count="11" type="cond" truecount="2" falsecount="0"/>
+        <line num="20" count="3" type="stmt"/>
+        <line num="24" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="25" count="3" type="stmt"/>
+        <line num="30" count="5" type="stmt"/>
+        <line num="40" count="5" type="stmt"/>
+        <line num="42" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="43" count="1" type="stmt"/>
+        <line num="46" count="4" type="stmt"/>
+      </file>
+      <file name="ActivityNotificationMapper.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\mappers\ActivityNotificationMapper.tsx">
+        <metrics statements="5" coveredstatements="5" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>
+        <line num="6" count="6" type="stmt"/>
+        <line num="14" count="6" type="stmt"/>
+        <line num="16" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="17" count="1" type="stmt"/>
+        <line num="20" count="5" type="stmt"/>
+      </file>
+      <file name="ArrangementMapper.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\mappers\ArrangementMapper.tsx">
+        <metrics statements="15" coveredstatements="15" conditionals="4" coveredconditionals="3" methods="9" coveredmethods="9"/>
+        <line num="20" count="36" type="stmt"/>
+        <line num="28" count="24" type="stmt"/>
+        <line num="29" count="24" type="stmt"/>
+        <line num="32" count="26" type="stmt"/>
+        <line num="36" count="27" type="stmt"/>
+        <line num="42" count="29" type="stmt"/>
+        <line num="43" count="29" type="cond" truecount="2" falsecount="0"/>
+        <line num="44" count="1" type="stmt"/>
+        <line num="48" count="28" type="stmt"/>
+        <line num="75" count="15" type="stmt"/>
+        <line num="76" count="15" type="stmt"/>
+        <line num="80" count="15" type="stmt"/>
+        <line num="86" count="15" type="stmt"/>
+        <line num="91" count="15" type="stmt"/>
+        <line num="96" count="17" type="stmt"/>
+      </file>
+      <file name="BookInfoMapper.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\mappers\BookInfoMapper.tsx">
+        <metrics statements="29" coveredstatements="29" conditionals="16" coveredconditionals="16" methods="4" coveredmethods="4"/>
+        <line num="28" count="38" type="stmt"/>
+        <line num="29" count="38" type="stmt"/>
+        <line num="30" count="38" type="stmt"/>
+        <line num="34" count="29" type="cond" truecount="2" falsecount="0"/>
+        <line num="35" count="13" type="stmt"/>
+        <line num="38" count="13" type="cond" truecount="2" falsecount="0"/>
+        <line num="39" count="1" type="stmt"/>
+        <line num="42" count="12" type="stmt"/>
+        <line num="58" count="16" type="stmt"/>
+        <line num="59" count="16" type="cond" truecount="2" falsecount="0"/>
+        <line num="60" count="1" type="stmt"/>
+        <line num="63" count="15" type="cond" truecount="2" falsecount="0"/>
+        <line num="64" count="15" type="cond" truecount="2" falsecount="0"/>
+        <line num="65" count="15" type="stmt"/>
+        <line num="69" count="15" type="stmt"/>
+        <line num="90" count="9" type="stmt"/>
+        <line num="92" count="9" type="stmt"/>
+        <line num="93" count="8" type="stmt"/>
+        <line num="97" count="9" type="stmt"/>
+        <line num="98" count="9" type="stmt"/>
+        <line num="100" count="9" type="cond" truecount="2" falsecount="0"/>
+        <line num="102" count="2" type="stmt"/>
+        <line num="103" count="2" type="stmt"/>
+        <line num="106" count="9" type="cond" truecount="2" falsecount="0"/>
+        <line num="107" count="1" type="stmt"/>
+        <line num="113" count="8" type="stmt"/>
+        <line num="116" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="117" count="1" type="stmt"/>
+        <line num="122" count="7" type="stmt"/>
+      </file>
+      <file name="DraggingEventMapper.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\mappers\DraggingEventMapper.tsx">
+        <metrics statements="11" coveredstatements="11" conditionals="4" coveredconditionals="4" methods="3" coveredmethods="3"/>
+        <line num="10" count="28" type="stmt"/>
+        <line num="11" count="28" type="stmt"/>
+        <line num="15" count="11" type="stmt"/>
+        <line num="30" count="17" type="stmt"/>
+        <line num="31" count="17" type="stmt"/>
+        <line num="32" count="17" type="stmt"/>
+        <line num="34" count="17" type="cond" truecount="2" falsecount="0"/>
+        <line num="35" count="3" type="stmt"/>
+        <line num="39" count="14" type="cond" truecount="2" falsecount="0"/>
+        <line num="40" count="2" type="stmt"/>
+        <line num="45" count="12" type="stmt"/>
+      </file>
+      <file name="InfoLabelDateMapper.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\mappers\InfoLabelDateMapper.tsx">
+        <metrics statements="5" coveredstatements="5" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>
+        <line num="7" count="7" type="stmt"/>
+        <line num="12" count="6" type="stmt"/>
+        <line num="13" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="16" count="5" type="stmt"/>
+      </file>
+      <file name="InfoLabelTailMapper.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\mappers\InfoLabelTailMapper.tsx">
+        <metrics statements="5" coveredstatements="5" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>
+        <line num="7" count="7" type="stmt"/>
+        <line num="12" count="6" type="stmt"/>
+        <line num="13" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="16" count="5" type="stmt"/>
+      </file>
+      <file name="InfoLabelTextMapper.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\mappers\InfoLabelTextMapper.tsx">
+        <metrics statements="5" coveredstatements="5" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>
+        <line num="7" count="7" type="stmt"/>
+        <line num="12" count="6" type="stmt"/>
+        <line num="13" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="16" count="5" type="stmt"/>
+      </file>
+      <file name="InfoLabelTransformerMapper.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\mappers\InfoLabelTransformerMapper.tsx">
+        <metrics statements="5" coveredstatements="5" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>
+        <line num="7" count="7" type="stmt"/>
+        <line num="12" count="6" type="stmt"/>
+        <line num="13" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="16" count="5" type="stmt"/>
+      </file>
+      <file name="PieceMapper.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\mappers\PieceMapper.tsx">
+        <metrics statements="5" coveredstatements="5" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>
+        <line num="6" count="36" type="stmt"/>
+        <line num="13" count="30" type="stmt"/>
+        <line num="14" count="30" type="cond" truecount="2" falsecount="0"/>
+        <line num="15" count="5" type="stmt"/>
+        <line num="17" count="25" type="stmt"/>
+      </file>
+      <file name="SectionInfoMapper.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\mappers\SectionInfoMapper.tsx">
+        <metrics statements="19" coveredstatements="19" conditionals="6" coveredconditionals="6" methods="5" coveredmethods="5"/>
+        <line num="28" count="18" type="stmt"/>
+        <line num="29" count="18" type="stmt"/>
+        <line num="30" count="18" type="stmt"/>
+        <line num="37" count="9" type="stmt"/>
+        <line num="43" count="11" type="stmt"/>
+        <line num="49" count="9" type="stmt"/>
+        <line num="51" count="9" type="stmt"/>
+        <line num="52" count="8" type="stmt"/>
+        <line num="55" count="9" type="stmt"/>
+        <line num="56" count="9" type="stmt"/>
+        <line num="58" count="9" type="cond" truecount="2" falsecount="0"/>
+        <line num="60" count="2" type="stmt"/>
+        <line num="61" count="2" type="stmt"/>
+        <line num="64" count="9" type="cond" truecount="2" falsecount="0"/>
+        <line num="65" count="1" type="stmt"/>
+        <line num="71" count="8" type="stmt"/>
+        <line num="73" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="74" count="2" type="stmt"/>
+        <line num="79" count="6" type="stmt"/>
+      </file>
+      <file name="StackGeometryMapper.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\mappers\StackGeometryMapper.tsx">
+        <metrics statements="15" coveredstatements="15" conditionals="9" coveredconditionals="9" methods="2" coveredmethods="2"/>
+        <line num="18" count="48" type="stmt"/>
+        <line num="19" count="48" type="stmt"/>
+        <line num="20" count="48" type="stmt"/>
+        <line num="22" count="48" type="cond" truecount="4" falsecount="0"/>
+        <line num="23" count="5" type="stmt"/>
+        <line num="24" count="5" type="stmt"/>
+        <line num="25" count="5" type="stmt"/>
+        <line num="26" count="43" type="cond" truecount="4" falsecount="0"/>
+        <line num="27" count="5" type="stmt"/>
+        <line num="28" count="5" type="stmt"/>
+        <line num="29" count="5" type="stmt"/>
+        <line num="31" count="48" type="stmt"/>
+        <line num="40" count="24" type="stmt"/>
+        <line num="46" count="24" type="stmt"/>
+        <line num="53" count="24" type="stmt"/>
+      </file>
+    </package>
+    <package name="packages.Bible Visualization Utils.bibleVizUtils.infrastructure.utils">
+      <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+      <file name="DebouncerService.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\Bible Visualization Utils\bibleVizUtils\infrastructure\utils\DebouncerService.tsx">
+        <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+        <line num="10" count="17" type="stmt"/>
+        <line num="14" count="17" type="stmt"/>
+        <line num="15" count="21" type="stmt"/>
       </file>
     </package>
     <package name="packages.Scripture Map 2D.scriptureMap2D.components">
@@ -4480,127 +5628,127 @@
       </file>
       <file name="icons.tsx" path="D:\Documents\Work\CasualOS\seed-bible\packages\seed-bible\seed-bible\components\icons.tsx">
         <metrics statements="122" coveredstatements="66" conditionals="19" coveredconditionals="0" methods="59" coveredmethods="8"/>
-        <line num="2" count="7" type="cond" truecount="0" falsecount="1"/>
+        <line num="2" count="8" type="cond" truecount="0" falsecount="1"/>
         <line num="3" count="0" type="stmt"/>
         <line num="5" count="0" type="stmt"/>
         <line num="33" count="0" type="stmt"/>
-        <line num="40" count="7" type="stmt"/>
+        <line num="40" count="8" type="stmt"/>
         <line num="41" count="0" type="stmt"/>
         <line num="48" count="0" type="stmt"/>
-        <line num="58" count="7" type="stmt"/>
+        <line num="58" count="8" type="stmt"/>
         <line num="59" count="0" type="stmt"/>
-        <line num="62" count="7" type="stmt"/>
+        <line num="62" count="8" type="stmt"/>
         <line num="63" count="0" type="stmt"/>
-        <line num="77" count="7" type="stmt"/>
+        <line num="77" count="8" type="stmt"/>
         <line num="78" count="0" type="stmt"/>
-        <line num="93" count="7" type="stmt"/>
+        <line num="93" count="8" type="stmt"/>
         <line num="94" count="6" type="stmt"/>
-        <line num="96" count="7" type="stmt"/>
+        <line num="96" count="8" type="stmt"/>
         <line num="97" count="0" type="stmt"/>
-        <line num="113" count="7" type="stmt"/>
+        <line num="113" count="8" type="stmt"/>
         <line num="114" count="0" type="stmt"/>
-        <line num="138" count="7" type="stmt"/>
+        <line num="138" count="8" type="stmt"/>
         <line num="139" count="24" type="stmt"/>
-        <line num="153" count="7" type="stmt"/>
+        <line num="153" count="8" type="stmt"/>
         <line num="154" count="0" type="stmt"/>
-        <line num="168" count="7" type="stmt"/>
+        <line num="168" count="8" type="stmt"/>
         <line num="169" count="0" type="stmt"/>
-        <line num="183" count="7" type="stmt"/>
+        <line num="183" count="8" type="stmt"/>
         <line num="184" count="0" type="stmt"/>
-        <line num="202" count="7" type="stmt"/>
+        <line num="202" count="8" type="stmt"/>
         <line num="203" count="0" type="stmt"/>
-        <line num="226" count="7" type="stmt"/>
+        <line num="226" count="8" type="stmt"/>
         <line num="227" count="0" type="stmt"/>
-        <line num="259" count="7" type="stmt"/>
+        <line num="259" count="8" type="stmt"/>
         <line num="260" count="0" type="stmt"/>
-        <line num="278" count="7" type="stmt"/>
+        <line num="278" count="8" type="stmt"/>
         <line num="279" count="0" type="stmt"/>
-        <line num="304" count="7" type="stmt"/>
+        <line num="304" count="8" type="stmt"/>
         <line num="305" count="0" type="stmt"/>
-        <line num="333" count="7" type="stmt"/>
+        <line num="333" count="8" type="stmt"/>
         <line num="334" count="0" type="stmt"/>
-        <line num="349" count="7" type="stmt"/>
+        <line num="349" count="8" type="stmt"/>
         <line num="350" count="0" type="stmt"/>
-        <line num="364" count="7" type="stmt"/>
+        <line num="364" count="8" type="stmt"/>
         <line num="365" count="0" type="stmt"/>
-        <line num="380" count="7" type="stmt"/>
+        <line num="380" count="8" type="stmt"/>
         <line num="381" count="0" type="stmt"/>
-        <line num="405" count="7" type="stmt"/>
+        <line num="405" count="8" type="stmt"/>
         <line num="406" count="0" type="stmt"/>
-        <line num="432" count="7" type="stmt"/>
+        <line num="432" count="8" type="stmt"/>
         <line num="433" count="0" type="stmt"/>
-        <line num="447" count="7" type="stmt"/>
+        <line num="447" count="8" type="stmt"/>
         <line num="448" count="0" type="stmt"/>
-        <line num="463" count="7" type="stmt"/>
+        <line num="463" count="8" type="stmt"/>
         <line num="464" count="0" type="stmt"/>
-        <line num="481" count="7" type="stmt"/>
+        <line num="481" count="8" type="stmt"/>
         <line num="482" count="0" type="stmt"/>
-        <line num="499" count="7" type="stmt"/>
+        <line num="499" count="8" type="stmt"/>
         <line num="500" count="0" type="stmt"/>
-        <line num="533" count="7" type="stmt"/>
+        <line num="533" count="8" type="stmt"/>
         <line num="534" count="0" type="stmt"/>
-        <line num="583" count="7" type="stmt"/>
+        <line num="583" count="8" type="stmt"/>
         <line num="584" count="0" type="stmt"/>
-        <line num="650" count="7" type="stmt"/>
+        <line num="650" count="8" type="stmt"/>
         <line num="651" count="0" type="stmt"/>
-        <line num="699" count="7" type="stmt"/>
+        <line num="699" count="8" type="stmt"/>
         <line num="700" count="0" type="stmt"/>
-        <line num="761" count="7" type="stmt"/>
+        <line num="761" count="8" type="stmt"/>
         <line num="762" count="0" type="stmt"/>
-        <line num="779" count="7" type="stmt"/>
+        <line num="779" count="8" type="stmt"/>
         <line num="780" count="0" type="stmt"/>
-        <line num="795" count="7" type="stmt"/>
+        <line num="795" count="8" type="stmt"/>
         <line num="796" count="0" type="stmt"/>
-        <line num="820" count="7" type="stmt"/>
+        <line num="820" count="8" type="stmt"/>
         <line num="829" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="831" count="0" type="stmt"/>
         <line num="838" count="0" type="stmt"/>
         <line num="844" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="852" count="7" type="stmt"/>
+        <line num="852" count="8" type="stmt"/>
         <line num="853" count="0" type="stmt"/>
-        <line num="884" count="7" type="stmt"/>
+        <line num="884" count="8" type="stmt"/>
         <line num="885" count="0" type="stmt"/>
-        <line num="899" count="7" type="stmt"/>
+        <line num="899" count="8" type="stmt"/>
         <line num="900" count="0" type="stmt"/>
-        <line num="929" count="7" type="stmt"/>
+        <line num="929" count="8" type="stmt"/>
         <line num="930" count="0" type="stmt"/>
-        <line num="961" count="7" type="stmt"/>
+        <line num="961" count="8" type="stmt"/>
         <line num="962" count="0" type="stmt"/>
-        <line num="991" count="7" type="stmt"/>
+        <line num="991" count="8" type="stmt"/>
         <line num="992" count="0" type="stmt"/>
-        <line num="1021" count="7" type="stmt"/>
+        <line num="1021" count="8" type="stmt"/>
         <line num="1022" count="0" type="stmt"/>
-        <line num="1036" count="7" type="stmt"/>
+        <line num="1036" count="8" type="stmt"/>
         <line num="1037" count="0" type="stmt"/>
-        <line num="1057" count="7" type="stmt"/>
+        <line num="1057" count="8" type="stmt"/>
         <line num="1058" count="0" type="stmt"/>
-        <line num="1072" count="7" type="stmt"/>
+        <line num="1072" count="8" type="stmt"/>
         <line num="1073" count="0" type="stmt"/>
-        <line num="1094" count="7" type="stmt"/>
+        <line num="1094" count="8" type="stmt"/>
         <line num="1095" count="0" type="stmt"/>
-        <line num="1114" count="7" type="stmt"/>
+        <line num="1114" count="8" type="stmt"/>
         <line num="1115" count="0" type="stmt"/>
-        <line num="1122" count="7" type="stmt"/>
+        <line num="1122" count="8" type="stmt"/>
         <line num="1123" count="0" type="stmt"/>
-        <line num="1130" count="7" type="stmt"/>
+        <line num="1130" count="8" type="stmt"/>
         <line num="1131" count="0" type="stmt"/>
-        <line num="1172" count="7" type="stmt"/>
+        <line num="1172" count="8" type="stmt"/>
         <line num="1173" count="30" type="stmt"/>
-        <line num="1188" count="7" type="stmt"/>
+        <line num="1188" count="8" type="stmt"/>
         <line num="1189" count="0" type="stmt"/>
-        <line num="1203" count="7" type="stmt"/>
+        <line num="1203" count="8" type="stmt"/>
         <line num="1204" count="0" type="stmt"/>
-        <line num="1240" count="7" type="stmt"/>
+        <line num="1240" count="8" type="stmt"/>
         <line num="1241" count="6" type="stmt"/>
-        <line num="1246" count="7" type="stmt"/>
+        <line num="1246" count="8" type="stmt"/>
         <line num="1247" count="6" type="stmt"/>
-        <line num="1264" count="7" type="stmt"/>
+        <line num="1264" count="8" type="stmt"/>
         <line num="1265" count="19" type="stmt"/>
-        <line num="1332" count="7" type="stmt"/>
+        <line num="1332" count="8" type="stmt"/>
         <line num="1333" count="0" type="stmt"/>
-        <line num="1350" count="7" type="stmt"/>
+        <line num="1350" count="8" type="stmt"/>
         <line num="1351" count="18" type="stmt"/>
-        <line num="1396" count="7" type="stmt"/>
+        <line num="1396" count="8" type="stmt"/>
         <line num="1397" count="1" type="stmt"/>
       </file>
     </package>
