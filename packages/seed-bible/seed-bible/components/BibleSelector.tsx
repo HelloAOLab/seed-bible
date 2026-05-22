@@ -92,59 +92,58 @@ const SearchBar = (props: {
               </span>
             </div>
 
-            <div className="searchbar flex-align-center">
-              <span className="search-icon material-symbols-outlined">
-                Search
-              </span>
-              <input
-                type="text"
-                placeholder={t("search-books", {
-                  defaultValue: "Search books...",
-                })}
-                value={search.value}
-                className="flex-1"
-                onInput={(e) => {
-                  setSearch((e.target as HTMLInputElement).value);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.keyCode === 13) {
-                    handleEnter();
-                  }
-                }}
-              />
-            </div>
             {viewportWidth.value > 768 && (
-              <div class="dropdown">
-                <select
-                  value={selectedTestament.value}
-                  onChange={(e) => {
-                    selectedTestament.value = Number(
-                      (e.target as HTMLSelectElement).value
-                    );
+              <div className="searchbar flex-align-center">
+                <span className="search-icon material-symbols-outlined">
+                  Search
+                </span>
+                <input
+                  type="text"
+                  placeholder={t("search-books", {
+                    defaultValue: "Search books...",
+                  })}
+                  value={search.value}
+                  className="flex-1"
+                  onInput={(e) => {
+                    setSearch((e.target as HTMLInputElement).value);
                   }}
-                  class="dropdown-select"
-                >
-                  <option value={2} class="dropdown-option">
-                    {t("allBooks", { defaultValue: "All Books" })}
-                  </option>
-                  <option value={0} class="dropdown-option">
-                    {viewportWidth.value > 750
-                      ? t("old-testament", { defaultValue: "Old Testament" })
-                      : t("old-testament_short", { defaultValue: "OT" })}
-                  </option>
-                  <option value={1} class="dropdown-option">
-                    {viewportWidth.value > 750
-                      ? t("new-testament", { defaultValue: "New Testament" })
-                      : t("new-testament_short", { defaultValue: "NT" })}
-                  </option>
-                  {apocryphaAvailable.value && (
-                    <option value={3} class="dropdown-option">
-                      {t("apocrypha", { defaultValue: "Apocrypha" })}
-                    </option>
-                  )}
-                </select>
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.keyCode === 13) {
+                      handleEnter();
+                    }
+                  }}
+                />
               </div>
             )}
+            <div class="dropdown">
+              <select
+                value={selectedTestament.value}
+                onChange={(e) => {
+                  selectedTestament.value = Number(
+                    (e.target as HTMLSelectElement).value
+                  );
+                }}
+                class="dropdown-select"
+              >
+                <option value={2} class="dropdown-option">
+                  {t("allBooks", { defaultValue: "All Books" })}
+                </option>
+                <option value={0} class="dropdown-option">
+                  {t("old-testament", { defaultValue: "Old Testament" })}
+                </option>
+                <option value={1} class="dropdown-option">
+                  {t("new-testament", { defaultValue: "New Testament" })}
+                </option>
+                {apocryphaAvailable.value && (
+                  <option value={3} class="dropdown-option">
+                    {t("apocrypha", { defaultValue: "Apocrypha" })}
+                  </option>
+                )}
+              </select>
+              <span class="material-symbols-outlined dropdown-select-icon">
+                expand_more
+              </span>
+            </div>
             {viewportWidth.value <= 768 && (
               <button
                 style={{
@@ -782,7 +781,6 @@ const LanguageComponent = (props: {
   const {
     languageQuery,
     selectedTranslation,
-    selectingTranslation,
     showAllLanguages,
     showTranslationInfo,
     filteredApiTranslations,
@@ -874,7 +872,6 @@ const LanguageComponent = (props: {
               return (
                 <div
                   onClick={async () => {
-                    selectingTranslation.value = false;
                     selectTranslation(value.id);
                   }}
                   style={{

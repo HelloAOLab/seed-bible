@@ -63,7 +63,7 @@
   "traditional": "Tradicional",
   "no-chapter-content-found": "No se encontró contenido del capítulo.",
   "no-translations-available": "No hay traducciones disponibles.",
-  "more": "Más",
+
   "exit-full-screen": "Salir de la pantalla completa",
   "themes": "Temas",
   "page-settings": "Configuración de página",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}} color de fondo resaltado",
   "all-settings-description": "Ajusta con precisión cada sección de texto y personaliza el color de cada tema.",
   "close-footnote": "Nota al pie de página",
-  "more-tools": "Más herramientas",
+
   "add-custom-color": "Agregar color personalizado",
   "add-color": "Añade color",
   "clear-highlight": "Resaltado claro",

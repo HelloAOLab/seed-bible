@@ -27,10 +27,6 @@ import {
 } from "seed-bible.managers.ExtensionManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import {
-  ContextMenuItem,
-  ContextMenuWithButton,
-} from "seed-bible.components.ContextMenu";
-import {
   ExtensionsIcon,
   MarginIcon,
   MaterialIcon,
@@ -988,9 +984,8 @@ function getExtensionInstallState(
 function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { extensions } = state;
-  const extensionsList = extensions.getExtensions();
+  const extensionsList = extensions.extensions.value;
   const installingIds = useSignal<Set<string>>(new Set());
-  const openMenuId = useSignal<string | null>(null);
   const isDownloadingSet = useSignal(false);
   const isUploadingSet = useSignal(false);
 
@@ -999,7 +994,6 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleInstall = async (extensionId: string) => {
-    openMenuId.value = null;
     const extensionData = extensionsList.find(
       (e) => e.extension?.meta.id === extensionId
     );
@@ -1013,7 +1007,6 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleUninstall = (extensionId: string) => {
-    openMenuId.value = null;
     extensions.unloadExtension(extensionId);
   };
 
@@ -1127,7 +1120,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
               return (
                 <li key={id} className="sb-extension-row">
-                  <button className="sb-extension-row-button" disabled>
+                  <div className="sb-extension-row-body">
                     <span
                       className={`material-symbols-outlined sb-extension-state-icon sb-extension-state-${installState}`}
                       title={stateLabel}
@@ -1143,39 +1136,38 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                         {t("description", { ns: id, defaultValue: "" })}
                       </span>
                     </div>
-                  </button>
-
-                  <ContextMenuWithButton>
-                    {installState === "none" && (
-                      <ContextMenuItem onClick={() => void handleInstall(id)}>
-                        {t("install", { defaultValue: "Install" })}
-                      </ContextMenuItem>
-                    )}
-                    {(installState === "installed" ||
-                      installState === "downloaded") && (
-                      <ContextMenuItem onClick={() => handleUninstall(id)}>
-                        {t("uninstall", { defaultValue: "Uninstall" })}
-                      </ContextMenuItem>
-                    )}
-                  </ContextMenuWithButton>
-                  {/* <div className="sb-context-menu-anchor">
-                    <button
-                      className="sb-context-menu-button"
-                      aria-label="Extension options"
-                      title="Extension options"
-                      onClick={() => {
-                        openMenuId.value = openMenuId.value === id ? null : id;
-                      }}
-                    >
-                      <span className="material-symbols-outlined sb-context-more-icon">
-                        more_vert
-                      </span>
-                    </button>
-
-                    <ContextMenu isOpen={openMenuId.value === id}>
-                      
-                    </ContextMenu>
-                  </div> */}
+                    <div className="sb-extension-row-actions">
+                      {installState === "none" && (
+                        <button
+                          type="button"
+                          className="sb-extension-row-action-button"
+                          onClick={() => void handleInstall(id)}
+                          aria-label={t("install", { defaultValue: "Install" })}
+                          title={t("install", { defaultValue: "Install" })}
+                        >
+                          <span className="material-symbols-outlined">
+                            download
+                          </span>
+                        </button>
+                      )}
+                      {(installState === "installed" ||
+                        installState === "downloaded") && (
+                        <button
+                          type="button"
+                          className="sb-extension-row-action-button"
+                          onClick={() => handleUninstall(id)}
+                          aria-label={t("uninstall", {
+                            defaultValue: "Uninstall",
+                          })}
+                          title={t("uninstall", { defaultValue: "Uninstall" })}
+                        >
+                          <span className="material-symbols-outlined">
+                            delete
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </li>
               );
             })}

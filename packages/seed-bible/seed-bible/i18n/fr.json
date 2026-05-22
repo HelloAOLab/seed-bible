@@ -63,7 +63,7 @@
   "traditional": "Traditionnel",
   "no-chapter-content-found": "Aucun contenu de chapitre trouvé.",
   "no-translations-available": "Aucune traduction disponible.",
-  "more": "Plus",
+
   "exit-full-screen": "Quitter le mode plein écran",
   "themes": "Thèmes",
   "page-settings": "Paramètres de la page",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}} couleur de fond surlignée",
   "all-settings-description": "Peaufinez chaque section de texte et personnalisez chaque couleur du thème.",
   "close-footnote": "Fermer la note de bas de page",
-  "more-tools": "Plus d'outils",
+
   "add-custom-color": "Ajouter une couleur personnalisée",
   "add-color": "Ajouter de la couleur",
   "clear-highlight": "Surlignage clair",

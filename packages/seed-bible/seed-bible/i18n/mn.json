@@ -63,7 +63,7 @@
   "traditional": "Уламжлалт",
   "no-chapter-content-found": "Бүлгийн агуулга олдсонгүй.",
   "no-translations-available": "Орчуулга байхгүй.",
-  "more": "Илүү их",
+
   "exit-full-screen": "Бүтэн дэлгэцээс гарах",
   "themes": "Сэдэвүүд",
   "page-settings": "Хуудасны тохиргоо",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}} тодруулсан дэвсгэр өнгө",
   "all-settings-description": "Текстийн хэсэг бүрийг нарийн тохируулж, сэдэв бүрийн өнгийг өөрчил.",
   "close-footnote": "Зүүлт тайлбарыг хаах",
-  "more-tools": "Бусад хэрэгслүүд",
+
   "add-custom-color": "Өөрчлөн өнгө нэмэх",
   "add-color": "Өнгө нэмэх",
   "clear-highlight": "Тодруулгыг арилгах",

@@ -63,7 +63,7 @@
   "traditional": "Tradisional",
   "no-chapter-content-found": "Konten bab tidak ditemukan.",
   "no-translations-available": "Tidak ada terjemahan yang tersedia.",
-  "more": "Lagi",
+
   "exit-full-screen": "Keluar dari Layar Penuh",
   "themes": "Tema",
   "page-settings": "Pengaturan halaman",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}} sorot warna latar belakang",
   "all-settings-description": "Sempurnakan setiap bagian teks dan sesuaikan setiap warna tema.",
   "close-footnote": "Tutup catatan kaki",
-  "more-tools": "Lebih banyak alat",
+
   "add-custom-color": "Tambahkan warna khusus",
   "add-color": "Tambahkan warna",
   "clear-highlight": "Sorotan yang jelas",

@@ -63,7 +63,7 @@
   "traditional": "Традиційний",
   "no-chapter-content-found": "Вміст розділу не знайдено.",
   "no-translations-available": "Немає доступних перекладів.",
-  "more": "Більше",
+
   "exit-full-screen": "Вийти з повноекранного режиму",
   "themes": "Теми",
   "page-settings": "Налаштування сторінки",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "Колір фону виділення {{id}}",
   "all-settings-description": "Точно налаштуйте кожен розділ тексту та налаштуйте кожен колір теми.",
   "close-footnote": "Закрити виноску",
-  "more-tools": "Більше інструментів",
+
   "add-custom-color": "Додати власний колір",
   "add-color": "Додати колір",
   "clear-highlight": "Очистити виділення",

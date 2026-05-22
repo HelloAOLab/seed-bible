@@ -173,34 +173,12 @@ function getMissingEnglishResources(
   return missing;
 }
 
-function setNestedValue(
-  resources: TranslationResources,
-  flattenedKey: string,
-  value: string
-): void {
-  const keyParts = flattenedKey.split(".");
-  let cursor: TranslationResources = resources;
-
-  for (let i = 0; i < keyParts.length - 1; i++) {
-    const keyPart = keyParts[i]!;
-    const current = cursor[keyPart];
-
-    if (!current || typeof current !== "object" || Array.isArray(current)) {
-      cursor[keyPart] = {};
-    }
-
-    cursor = cursor[keyPart] as TranslationResources;
-  }
-
-  cursor[keyParts[keyParts.length - 1]!] = value;
-}
-
 function applyFlatResources(
   resources: TranslationResources,
   values: Record<string, string>
 ): void {
   for (const [key, value] of Object.entries(values)) {
-    setNestedValue(resources, key, value);
+    resources[key] = value;
   }
 }
 

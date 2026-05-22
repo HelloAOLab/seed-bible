@@ -63,7 +63,7 @@
   "traditional": "سنتی",
   "no-chapter-content-found": "هیچ محتوایی از فصل یافت نشد.",
   "no-translations-available": "هیچ ترجمه‌ای موجود نیست.",
-  "more": "بیشتر",
+
   "exit-full-screen": "خروج از حالت تمام صفحه",
   "themes": "تم‌ها",
   "page-settings": "تنظیمات صفحه",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}} رنگ پس‌زمینه را برجسته کنید",
   "all-settings-description": "هر بخش متن را به طور دقیق تنظیم کنید و رنگ هر تم را سفارشی کنید.",
   "close-footnote": "پاورقی را ببندید",
-  "more-tools": "ابزارهای بیشتر",
+
   "add-custom-color": "اضافه کردن رنگ دلخواه",
   "add-color": "رنگ اضافه کنید",
   "clear-highlight": "هایلایت را پاک کنید",

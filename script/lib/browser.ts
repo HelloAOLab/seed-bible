@@ -320,11 +320,13 @@ export async function loadInst(
 
 export const DEFAULT_EXTENSIONS = [
   "seed-bible",
-  "seed-bible-refresh-example-extension",
+  // "seed-bible-refresh-example-extension",
   "geo-importer-extension",
   "locations-extension",
   "Bible Visualization Utils",
   "Scripture Map 2D",
+  "twitchSub-extension",
+  "twitchPub-extension",
   // "BookSelector",
   // "Object Pooler",
   // "GeoImporter",

@@ -63,7 +63,7 @@
   "traditional": "Традиционный",
   "no-chapter-content-found": "Содержание главы не найдено.",
   "no-translations-available": "Переводы отсутствуют.",
-  "more": "Более",
+
   "exit-full-screen": "Выйти из полноэкранного режима",
   "themes": "Темы",
   "page-settings": "Настройки страницы",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}} выделить цвет фона",
   "all-settings-description": "Доработайте каждый текстовый раздел и настройте цвет каждой темы.",
   "close-footnote": "Закрыть сноску",
-  "more-tools": "Больше инструментов",
+
   "add-custom-color": "Добавить пользовательский цвет",
   "add-color": "Добавить цвет",
   "clear-highlight": "Четкое выделение",
