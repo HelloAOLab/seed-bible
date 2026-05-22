@@ -128,7 +128,7 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("builds the QR redirect URI from the current location first", () => {
-    window.history.replaceState({}, "", "/twitch-pub?existing=1");
+    configBot.tags.url = `https://example.com/twitch-pub?existing=1`;
 
     const state = CreateTwitchPubState();
 
@@ -136,19 +136,19 @@ describe("CreateTwitchPubState", () => {
     const redirectUri = new URL(url.searchParams.get("redirect_uri") ?? "");
 
     expect(redirectUri.origin + redirectUri.pathname).toBe(
-      `${window.location.origin}/twitch-pub`
+      `https://example.com/twitch-pub`
     );
     expect(redirectUri.searchParams.get("pattern")).toBe("SeedBible");
     expect(redirectUri.searchParams.get("autoinstall-ext_twitchSub")).toBe(
       "true"
     );
     expect(redirectUri.origin + redirectUri.pathname).not.toBe(
-      "https://ao.bot/"
+      "https://example.com/"
     );
   });
 
   it("sends an announcement with the join URL once the user is logged in", async () => {
-    window.history.replaceState({}, "", "/reader?chapter=1");
+    configBot.tags.url = `https://example.com/reader?chapter=1`;
 
     const state = CreateTwitchPubState();
 
@@ -176,7 +176,7 @@ describe("CreateTwitchPubState", () => {
     );
 
     expect(redirectUri.origin + redirectUri.pathname).toBe(
-      `${window.location.origin}/reader`
+      `https://example.com/reader`
     );
     expect(redirectUri.searchParams.get("pattern")).toBe("SeedBible");
     expect(redirectUri.searchParams.get("autoinstall-ext_twitchSub")).toBe(
@@ -193,7 +193,7 @@ describe("CreateTwitchPubState", () => {
 
   it("sends announcements on a timer when announcementTimer is configured", () => {
     jest.useFakeTimers();
-    window.history.replaceState({}, "", "/reader?chapter=1");
+    configBot.tags.url = `https://example.com/reader?chapter=1`;
 
     const state = CreateTwitchPubState();
 
@@ -222,7 +222,7 @@ describe("CreateTwitchPubState", () => {
       "https://api.twitch.tv/helix/chat/announcements?broadcaster_id=broadcaster-1&moderator_id=broadcaster-1"
     );
     expect(redirectUri.origin + redirectUri.pathname).toBe(
-      `${window.location.origin}/reader`
+      `https://example.com/reader`
     );
     expect(redirectUri.searchParams.get("pattern")).toBe("SeedBible");
     expect(redirectUri.searchParams.get("autoinstall-ext_twitchSub")).toBe(
@@ -248,7 +248,7 @@ describe("CreateTwitchPubState", () => {
       "https://api.twitch.tv/helix/chat/announcements?broadcaster_id=broadcaster-1&moderator_id=broadcaster-1"
     );
     expect(redirectUri.origin + redirectUri.pathname).toBe(
-      `${window.location.origin}/reader`
+      `https://example.com/reader`
     );
     expect(redirectUri.searchParams.get("autoinstall-ext_twitchSub")).toBe(
       "true"

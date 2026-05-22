@@ -47,7 +47,7 @@ const getUrl = (
     translation = "AAB",
   }: { book?: string; chapter?: number; translation?: string } = {}
 ) => {
-  const redirectUri = new URL(location.href ?? "https://ao.bot/");
+  const redirectUri = new URL(configBot.tags.url ?? "https://ao.bot/");
   redirectUri.search = "";
   redirectUri.searchParams.set(
     "pattern",

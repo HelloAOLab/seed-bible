@@ -516,12 +516,12 @@ export function createExtensionManager() {
       return;
     }
     console.log("Loading default extension set:", defaultExtensions.value);
-    const url = location ? new URL(location.href) : null;
+    const url = new URL(configBot.tags.url);
     await loadExtensionSet(
       defaultExtensions.value,
       (ext) =>
         (ext.meta.autoinstall ||
-          url?.searchParams.get(`autoinstall-${ext.meta.id}`) === "true") ??
+          url.searchParams.get(`autoinstall-${ext.meta.id}`) === "true") ??
         false
     );
   };

@@ -530,7 +530,7 @@ describe("createExtensionManager", () => {
   });
 
   it("loadDefaultExtensions() auto-installs extensions when the matching query param is true", async () => {
-    window.history.replaceState({}, "", "/?autoinstall-ext.autoinstall=true");
+    configBot.tags.url = `https://example.com/?autoinstall-ext.autoinstall=true`;
 
     const manager = createExtensionManager();
     (globalThis as any).thisBot.tags.availableExtensions = {
