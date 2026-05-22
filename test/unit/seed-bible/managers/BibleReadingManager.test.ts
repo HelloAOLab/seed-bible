@@ -21,6 +21,7 @@ import {
   nivBooks,
   translations,
   type WebResponseMap,
+  aabBooks,
 } from "./testUtils/mockBibleApiData";
 import { effect, signal } from "@preact/signals";
 
@@ -555,7 +556,7 @@ describe("createBibleReadingState", () => {
     expect(webGetMock).toHaveBeenCalledWith(
       makeExampleUrl("/api/AAB/books.json")
     );
-    expect(state.translationBooks.value).toEqual(bsbBooks);
+    expect(state.translationBooks.value).toEqual(aabBooks);
   });
 
   it("selectBook() loads the selected book", async () => {
@@ -764,7 +765,7 @@ describe("createBibleReadingState", () => {
   it("the selected footnote is cleared when the chapter changes", async () => {
     const responses = createReadingManagerResponseMap();
     responses[makeExampleUrl("/api/AAB/GEN/1.json")] = createResponse({
-      ...makeChapter(bsbBooks, "GEN", 1),
+      ...makeChapter(aabBooks, "GEN", 1),
       chapter: {
         number: 1,
         content: [
