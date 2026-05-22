@@ -537,6 +537,7 @@ export function createExtensionManager() {
     for (const ext of set.extensions) {
       knownExtensionsById.set(ext.meta.id, ext);
       knownExtensionsSetsByExtensionId.set(ext.meta.id, set);
+      addTranslations(ext.meta.id, ext.meta.translations);
       refreshExtensionsSignal();
       if (!filter(ext)) {
         continue;
@@ -561,9 +562,13 @@ export function createExtensionManager() {
       return;
     }
     console.log("Loading default extension set:", defaultExtensions.value);
+    const url = new URL(configBot.tags.url);
     await loadExtensionSet(
       defaultExtensions.value,
-      (ext) => ext.meta.autoinstall ?? false
+      (ext) =>
+        (ext.meta.autoinstall ||
+          url.searchParams.get(`autoinstall-${ext.meta.id}`) === "true") ??
+        false
     );
   };
 

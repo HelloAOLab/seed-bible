@@ -62,17 +62,13 @@ export async function waitForTabsToLoad(
 function ensureGlobalRuntime(): TestGlobalScope {
   const scope = globalThis as TestGlobalScope;
 
-  if (!scope.thisBot) {
-    scope.thisBot = {
-      tags: {},
-    };
-  }
-
-  if (!scope.configBot) {
-    scope.configBot = {
-      tags: {},
-    };
-  }
+  // Reset any existing bot-related properties to ensure a clean test environment
+  scope.thisBot = {
+    tags: {},
+  };
+  scope.configBot = {
+    tags: {},
+  };
 
   const existingOs = (scope.os ?? {}) as Record<string, unknown>;
   scope.os = {
