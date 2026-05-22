@@ -4,6 +4,8 @@ jest.mock("seed-bible.i18n.I18nManager", () => ({
   addTranslations: jest.fn(),
 }));
 
+import { addTranslations } from "seed-bible.i18n.I18nManager";
+
 import {
   createExtensionManager,
   ExtensionInitalizer,
@@ -333,11 +335,14 @@ describe("createExtensionManager", () => {
   let installPackage: jest.Mock;
   let shoutSpy: jest.Mock;
   let sha256Spy: jest.Mock;
+  let addTranslationsMock: jest.Mock;
 
   beforeEach(() => {
     installPackage = jest.fn(async () => ({ success: true }));
     shoutSpy = jest.fn();
     sha256Spy = jest.fn(() => "deadbeefcafebabefeedface1234567890abcdef");
+    addTranslationsMock = addTranslations as jest.Mock;
+    addTranslationsMock.mockReset();
 
     (globalThis as any).os = {
       ...(globalThis as any).os,
@@ -529,8 +534,58 @@ describe("createExtensionManager", () => {
     expect(installPackage).toHaveBeenCalledTimes(1);
   });
 
+  it("loadExtensionSet() adds translations for extensions in the set", async () => {
+    const manager = createExtensionManager();
+    const translationsA = {
+      en: {
+        title: "Translation A",
+        description: "Translation A extension",
+      },
+    };
+    const translationsB = {
+      en: {
+        title: "Translation B",
+        description: "Translation B extension",
+      },
+    };
+    const set: ExtensionSet = {
+      id: "set.translations",
+      recordName: "record",
+      extensions: [
+        {
+          recordName: "record",
+          address: "pkg://translation-a",
+          meta: {
+            id: "ext.translation-a",
+            translations: translationsA,
+          },
+        },
+        {
+          recordName: "record",
+          address: "pkg://translation-b",
+          meta: {
+            id: "ext.translation-b",
+            translations: translationsB,
+          },
+        },
+      ],
+    };
+
+    await manager.loadExtensionSet(set, () => false);
+
+    expect(addTranslationsMock).toHaveBeenCalledWith(
+      "ext.translation-a",
+      translationsA
+    );
+    expect(addTranslationsMock).toHaveBeenCalledWith(
+      "ext.translation-b",
+      translationsB
+    );
+  });
+
   it("loadDefaultExtensions() auto-installs extensions when the matching query param is true", async () => {
-    configBot.tags.url = `https://example.com/?autoinstall-ext.autoinstall=true`;
+    configBot.tags.url =
+      "https://example.com/?autoinstall-ext.autoinstall=true";
 
     const manager = createExtensionManager();
     (globalThis as any).thisBot.tags.availableExtensions = {

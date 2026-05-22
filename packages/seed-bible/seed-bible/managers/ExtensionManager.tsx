@@ -493,6 +493,7 @@ export function createExtensionManager() {
     for (const ext of set.extensions) {
       knownExtensionsById.set(ext.meta.id, ext);
       knownExtensionsSetsByExtensionId.set(ext.meta.id, set);
+      addTranslations(ext.meta.id, ext.meta.translations);
       if (!filter(ext)) {
         continue;
       }
