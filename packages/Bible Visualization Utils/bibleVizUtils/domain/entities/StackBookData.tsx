@@ -1,5 +1,6 @@
-import { StackPieceData } from "bibleVizUtils.domain.entities.StackPieceData";
+import { StackBookBaseData } from "bibleVizUtils.domain.entities.StackBookBaseData";
 import { StackChapterData } from "bibleVizUtils.domain.entities.StackChapterData";
+import { SelectionStates } from "bibleVizUtils.domain.models.selection";
 import type {
   ParentDataIds,
   BookShapeType,
@@ -10,7 +11,6 @@ import type {
   ChapterInfo,
 } from "bibleVizUtils.domain.models.arrangement";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
-import type { LabelTranslucencyMode } from "../models/label";
 
 interface DataParams {
   childrenData?: StackChapterData[];
@@ -29,21 +29,12 @@ interface DataParams {
   isActive?: boolean;
 }
 
-export class StackBookData extends StackPieceData<
-  StackChapterData,
+export class StackBookData extends StackBookBaseData<
   BookInfo,
   StackBookCreationParams,
   "StackBook"
 > {
-  #isSelected: DataParams["isSelected"];
-  #currentShape: DataParams["currentShape"];
-  #queuedChapterData: StackChapterData | undefined;
-  #currentSelectedChapterData: StackChapterData | undefined;
-  #isInsideTestament: DataParams["isInsideTestament"];
   #isInsideSection: DataParams["isInsideSection"];
-  #previousHighlightedChapterData: StackChapterData | undefined;
-  #labelTranslucency: LabelTranslucencyMode | undefined = undefined;
-  #isShowingChapters: boolean = false;
 
   constructor({
     childrenData = [],
@@ -65,75 +56,17 @@ export class StackBookData extends StackPieceData<
       piece,
       pieceInfo,
       parentDataIds,
+      isSelected,
+      currentShape,
       isInsideBible,
+      isInsideTestament,
       isActive,
       creationParams,
-      isHidden: false,
       type: "StackBook",
     });
-    this.#isSelected = isSelected;
-    this.#currentShape = currentShape;
-    this.#isInsideTestament = isInsideTestament;
     this.#isInsideSection = isInsideSection;
   }
 
-  get labelTranslucency() {
-    return this.#labelTranslucency;
-  }
-
-  changeLabelTranslucency(translucency: LabelTranslucencyMode) {
-    this.#labelTranslucency = translucency;
-  }
-
-  clearLabelTranslucency() {
-    this.#labelTranslucency = undefined;
-  }
-
-  get isSelected() {
-    return this.#isSelected;
-  }
-  select() {
-    this.#isSelected = true;
-  }
-  deselect() {
-    this.#isSelected = false;
-  }
-  get currentShape() {
-    return this.#currentShape;
-  }
-  changeShape(shape: BookShapeType) {
-    this.#currentShape = shape;
-  }
-  clearShape() {
-    this.#currentShape = undefined;
-  }
-  get queuedChapterData() {
-    return this.#queuedChapterData;
-  }
-  setQueuedChapterData(data: StackChapterData) {
-    this.#queuedChapterData = data;
-  }
-  clearQueuedChapterData() {
-    this.#queuedChapterData = undefined;
-  }
-  get currentSelectedChapterData() {
-    return this.#currentSelectedChapterData;
-  }
-  setSelectedChapterData(data: StackChapterData) {
-    this.#currentSelectedChapterData = data;
-  }
-  clearSelectedChapterData() {
-    this.#currentSelectedChapterData = undefined;
-  }
-  get isInsideTestament() {
-    return this.#isInsideTestament;
-  }
-  attachToTestament() {
-    this.#isInsideTestament = true;
-  }
-  detachFromTestament() {
-    this.#isInsideTestament = false;
-  }
   get isInsideSection() {
     return this.#isInsideSection;
   }
@@ -142,23 +75,6 @@ export class StackBookData extends StackPieceData<
   }
   detachFromSection() {
     this.#isInsideSection = false;
-  }
-  override tryReplaceChild(
-    currChild: StackChapterData,
-    newChild: StackChapterData
-  ): boolean {
-    const wasReplaced = super.tryReplaceChild(currChild, newChild);
-
-    if (wasReplaced) {
-      if (this.currentSelectedChapterData === currChild) {
-        this.clearSelectedChapterData();
-      }
-      if (this.#previousHighlightedChapterData === currChild) {
-        this.#previousHighlightedChapterData = undefined;
-      }
-    }
-
-    return wasReplaced;
   }
 
   getArrangementIndex(): DataParams["creationParams"]["arrangementIndex"] {
@@ -182,21 +98,17 @@ export class StackBookData extends StackPieceData<
   getLevelsLength(): DataParams["creationParams"]["levelsLenght"] {
     return this.creationParams.levelsLenght;
   }
+
   override resetHierarchy(clearPiece: boolean = true): Piece[] {
-    this.deselect();
-    this.clearQueuedChapterData();
-    this.clearSelectedChapterData();
     this.clearShape();
     this.deactivate();
-
     return super.resetHierarchy(clearPiece);
   }
-  override isPieceAvailable(): boolean {
-    return !this.#isSelected && super.isPieceAvailable();
-  }
+
   isActivelySelected(): boolean {
-    return !!this.isActive && !!this.isSelected;
+    return !!this.isActive && this.selectionState === SelectionStates.Selected;
   }
+
   findChapterByPieceInfoProperty<K extends keyof ChapterInfo>(
     property: K,
     value: ChapterInfo[K]
@@ -204,20 +116,5 @@ export class StackBookData extends StackPieceData<
     return this.childrenData.find((chapter) => {
       return chapter.getPieceInfoProperty(property) === value;
     });
-  }
-
-  isChapterAvailable(chapterNumber: number): boolean {
-    const chapterData = this.childrenData[chapterNumber - 1];
-
-    return !!chapterData && !chapterData.isHidden;
-  }
-  get isShowingChapters() {
-    return this.#isShowingChapters;
-  }
-  showChapters() {
-    this.#isShowingChapters = true;
-  }
-  hideChapters() {
-    this.#isShowingChapters = false;
   }
 }

@@ -39,9 +39,9 @@
           </div>
 
           <div class="fl pad1y space-right2">
-            <span class="strong">71.42% </span>
+            <span class="strong">64.28% </span>
             <span class="quiet">Branches</span>
-            <span class="fraction">10/14</span>
+            <span class="fraction">9/14</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -250,7 +250,7 @@ export const useTooltip: UseTooltip = ({ anchor, offsetY }) =&gt; {
 &nbsp;
     if (anchor.y - rect.height - offset &lt; 0) {
       newDirection = "down";
-      newTop += anchor.height ?? 0;
+      newTop += anchor.height ?? <span class="branch-1 cbranch-no" title="branch not covered" >0;</span>
     }
 &nbsp;
     newTop += newDirection === "down" ? offsetY : -offsetY;
@@ -299,7 +299,7 @@ export const useTooltip: UseTooltip = ({ anchor, offsetY }) =&gt; {
         rel="noopener noreferrer"
         >istanbul</a
       >
-      at 2026-05-21T15:08:40.311Z
+      at 2026-05-22T13:18:04.837Z
     </div>
     <script src="../../../../prettify.js"></script>
     <script>

@@ -10,6 +10,11 @@ import {
 } from "bibleVizUtils.domain.models.canvas";
 import type { TestamentInfo } from "bibleVizUtils.domain.models.arrangement";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
+import {
+  SelectionStates,
+  SelectionEvents,
+  simpleSelectionFSM,
+} from "bibleVizUtils.domain.models.selection";
 
 interface DataParams {
   childrenData?: (StackSectionData | StackSectionBookData)[];
@@ -29,8 +34,6 @@ export class StackTestamentData extends StackPieceData<
   StackTestamentCreationParams,
   "StackTestament"
 > {
-  #isSplitIntoSections: DataParams["isSplitIntoSections"];
-
   constructor({
     childrenData = [],
     id,
@@ -55,18 +58,15 @@ export class StackTestamentData extends StackPieceData<
       creationParams,
       isHidden: false,
       type: "StackTestament",
+      selectionFSM: simpleSelectionFSM,
     });
-    this.#isSplitIntoSections = isSplitIntoSections;
+    if (isSplitIntoSections) {
+      this.changeSelectionState(SelectionEvents.RequestSelect);
+    }
   }
 
   get isSplitIntoSections() {
-    return this.#isSplitIntoSections;
-  }
-  split() {
-    this.#isSplitIntoSections = true;
-  }
-  combine() {
-    this.#isSplitIntoSections = false;
+    return this.selectionState !== SelectionStates.Idle;
   }
   findExplodedSection(): StackSectionData | undefined {
     return this.childrenData.find((section) => {
@@ -87,7 +87,10 @@ export class StackTestamentData extends StackPieceData<
     clearPiece: boolean = true,
     split: boolean = false
   ): Piece[] {
-    if (split) this.split();
+    this.resetSelectionState();
+    if (split) {
+      this.changeSelectionState(SelectionEvents.RequestSelect);
+    }
     return super.resetHierarchy(clearPiece);
   }
   tryExplodeSplitSections(): boolean {
@@ -98,8 +101,8 @@ export class StackTestamentData extends StackPieceData<
       return false;
     });
   }
-  isSplittable(): boolean {
-    return !!this.isActive && !this.isSplitIntoSections;
+  isSelectable(): boolean {
+    return !!this.isActive && this.selectionState === SelectionStates.Idle;
   }
   getPureSectionsReversed(): StackSectionData[] {
     return this.getReversedChildren().filter(
@@ -115,7 +118,7 @@ export class StackTestamentData extends StackPieceData<
         let action: ExplodeStackAction | undefined;
         if (section.isExplodable()) {
           action = ExplodeStackActions.ExplodeSection;
-        } else if (section.isSplittable()) {
+        } else if (section.isSelectable()) {
           action = ExplodeStackActions.SelectSection;
         }
         if (action) {
@@ -132,17 +135,14 @@ export class StackTestamentData extends StackPieceData<
     });
   }
   isEmpty(): boolean {
-    if (this.isSplitIntoSections) {
+    if (this.selectionState !== SelectionStates.Idle) {
       return !this.childrenData.some((sectionData) => {
         return sectionData instanceof StackSectionData &&
-          sectionData.isSplitIntoBooks
+          sectionData.selectionState !== SelectionStates.Idle
           ? true
           : sectionData.isActive;
       });
     }
     return !this.isActive;
-  }
-  override isPieceAvailable(): boolean {
-    return !this.#isSplitIntoSections && super.isPieceAvailable();
   }
 }

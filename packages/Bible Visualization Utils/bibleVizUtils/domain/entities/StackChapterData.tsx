@@ -11,9 +11,13 @@ import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
 import type { Point2D } from "bibleVizUtils.domain.models.commonTypes";
 import type { VersesBundleData } from "bibleVizUtils.domain.entities.VersesBunbleData";
+import {
+  SelectionEvents,
+  SelectionStates,
+} from "bibleVizUtils.domain.models.selection";
 
 interface DataParams {
-  isSelected: boolean;
+  isSelected?: boolean;
   id: string;
   piece?: Piece<"StackChapter">;
   pieceInfo: ChapterInfo;
@@ -41,14 +45,11 @@ export class StackChapterData extends StackPieceData<
   ChapterCreationParams,
   "StackChapter"
 > {
-  #isSelected: DataParams["isSelected"];
   #highlightsInfo: HighlightInfo[] = [];
   #isInsideBook: DataParams["isInsideBook"];
   #isExpanded: NonNullable<boolean>;
   #activityIndicators: NonNullable<DataParams["activityIndicators"]>;
   #activityNotification: DataParams["activityNotification"];
-  #isSelecting: boolean = false;
-  #isDeselecting: boolean = false;
 
   constructor({
     isSelected,
@@ -78,7 +79,9 @@ export class StackChapterData extends StackPieceData<
       childrenData,
     });
     this.#isInsideBook = isInsideBook;
-    this.#isSelected = isSelected;
+    if (isSelected) {
+      this.changeSelectionState(SelectionEvents.RequestSelect);
+    }
     this.#isExpanded = isExpanded;
     this.#activityIndicators = activityIndicators;
     this.#activityNotification = activityNotification;
@@ -87,7 +90,6 @@ export class StackChapterData extends StackPieceData<
   override resetData() {
     super.resetData();
     this.#isInsideBook = undefined;
-    this.#isSelected = false;
   }
 
   addHighlightInfo(newHighlightInfo: HighlightInfo) {
@@ -100,6 +102,10 @@ export class StackChapterData extends StackPieceData<
     });
   }
 
+  get isSelected() {
+    return this.selectionState === SelectionStates.Selected;
+  }
+
   getIsSelectedForNotification(): boolean {
     return this.#isExpanded;
   }
@@ -108,49 +114,6 @@ export class StackChapterData extends StackPieceData<
     return new Vector2(1, -1);
   }
 
-  get isSelected() {
-    return this.#isSelected;
-  }
-  select() {
-    this.#isSelected = true;
-    this.#isSelecting = false;
-  }
-  deselect() {
-    this.#isSelected = false;
-    this.#isDeselecting = false;
-  }
-  get isSelecting() {
-    return this.#isSelecting;
-  }
-  get isDeselecting() {
-    return this.#isDeselecting;
-  }
-  beginSelect() {
-    if (this.isSelected || this.isSelecting) {
-      return;
-    }
-
-    this.#isDeselecting = false;
-    this.#isSelecting = true;
-  }
-  endSelect() {
-    if (!this.#isSelecting) return;
-
-    this.select();
-  }
-  beginDeselect() {
-    if (!this.isSelected || this.isDeselecting) {
-      return;
-    }
-
-    this.#isSelecting = false;
-    this.#isDeselecting = true;
-  }
-  endDeselect() {
-    if (!this.isDeselecting) return;
-
-    this.deselect();
-  }
   get isInsideBook() {
     return this.#isInsideBook;
   }
@@ -177,7 +140,7 @@ export class StackChapterData extends StackPieceData<
     return undefined;
   }
   addActivityIndicator(indicator: ActivityIndicator) {
-    if (this.#activityIndicators.has(indicator.id)) {
+    if (!this.#activityIndicators.has(indicator.id)) {
       this.#activityIndicators.set(indicator.id, indicator);
     }
   }

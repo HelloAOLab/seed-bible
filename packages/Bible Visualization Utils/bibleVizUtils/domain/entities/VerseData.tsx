@@ -9,8 +9,9 @@ export class VerseData {
   #id: DataParams["id"];
   #piece: DataParams["piece"];
 
-  constructor({ id }: DataParams) {
+  constructor({ id, piece }: DataParams) {
     this.#id = id;
+    this.#piece = piece;
   }
 
   get id() {

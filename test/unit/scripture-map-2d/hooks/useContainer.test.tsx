@@ -61,8 +61,8 @@ describe("useContainer", () => {
     });
     const result = setup();
     expect(result.current).toHaveLength(2);
-    expect(result.current[0].testament.name).toBe("NT");
-    expect(result.current[1].testament.name).toBe("OT");
+    expect(result.current[0]!.testament.name).toBe("NT");
+    expect(result.current[1]!.testament.name).toBe("OT");
   });
 
   it("maps each testament to { key, testament, testamentIndex }", () => {
@@ -88,9 +88,9 @@ describe("useContainer", () => {
       arrangement: { testaments },
     });
     const result = setup();
-    expect(result.current[0].testament.name).toBe("AP");
-    expect(result.current[0].testamentIndex).toBe(0);
-    expect(result.current[2].testament.name).toBe("OT");
-    expect(result.current[2].testamentIndex).toBe(2);
+    expect(result.current[0]!.testament.name).toBe("AP");
+    expect(result.current[0]!.testamentIndex).toBe(0);
+    expect(result.current[2]!.testament.name).toBe("OT");
+    expect(result.current[2]!.testamentIndex).toBe(2);
   });
 });

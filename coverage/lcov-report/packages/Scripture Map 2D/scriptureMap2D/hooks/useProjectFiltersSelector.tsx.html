@@ -176,7 +176,9 @@
 <a name='L105'></a><a href='#L105'>105</a>
 <a name='L106'></a><a href='#L106'>106</a>
 <a name='L107'></a><a href='#L107'>107</a>
-<a name='L108'></a><a href='#L108'>108</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -288,15 +290,16 @@ import { ProjectChapterState } from "scriptureMap2D.models.project";
 import { type ProjectChapterStateType } from "scriptureMap2D.models.project";
 import {
   SelectorOptionClasses,
+  type SelectorOptionData,
   type SelectorOptionProps,
 } from "scriptureMap2D.components.ui.SelectorOption";
 const { useMemo, useCallback } = os.appHooks;
 &nbsp;
 interface UseProjectFiltersSelectorType {
-  allSelectorOptionContent: SelectorOptionProps["content"];
+  allSelectorOptionContent: SelectorOptionData["content"];
   allSelectorOptionClick: () =&gt; void;
   allSelected: boolean;
-  selectorOptionsData: SelectorOptionProps[];
+  selectorOptionsData: SelectorOptionData[];
 }
 &nbsp;
 type UseProjectFiltersSelector = () =&gt; UseProjectFiltersSelectorType;
@@ -364,7 +367,7 @@ export const useProjectFiltersSelector: UseProjectFiltersSelector = () =&gt; {
 <span class="cstat-no" title="statement not covered" >    handleProjectFilterOptionClick("all");</span>
   }, [handleProjectFilterOptionClick]);
 &nbsp;
-  const selectorOptionsData = useMemo&lt;SelectorOptionProps[]&gt;(() =&gt; {
+  const selectorOptionsData = useMemo&lt;SelectorOptionData[]&gt;(() =&gt; {
     return Array.from(projectFilters).map(([key, value]) =&gt; {
       return {
         content: getOptionContent(key),
@@ -404,7 +407,7 @@ export const useProjectFiltersSelector: UseProjectFiltersSelector = () =&gt; {
         rel="noopener noreferrer"
         >istanbul</a
       >
-      at 2026-05-21T15:08:40.311Z
+      at 2026-05-22T13:18:04.837Z
     </div>
     <script src="../../../../prettify.js"></script>
     <script>

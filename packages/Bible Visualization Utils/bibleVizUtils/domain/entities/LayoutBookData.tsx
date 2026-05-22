@@ -88,6 +88,7 @@ export class LayoutBookData {
     let piece: DataParams["piece"] | undefined;
     if (this.piece) {
       piece = this.piece;
+      this.#piece = undefined;
     }
     return piece;
   }

@@ -286,7 +286,8 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("uses theme.variables.secondaryColor as userColor when multiple users", () => {
-      const getColorByReadingTime = jest.fn(() => "#computed");
+      // eslint-disable-next-line
+      const getColorByReadingTime = jest.fn((args: any) => "#computed");
       (useScriptureMap2DContext as jest.Mock).mockReturnValue({
         ...makeScriptureMap2DContext(),
         readingHistoryService: { getColorByReadingTime },
@@ -337,7 +338,8 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("uses '#dfdede' as baseColor fallback when readerToolbarFloatingButtonBackground is undefined", () => {
-      const getColorByReadingTime = jest.fn(() => "#computed");
+      // eslint-disable-next-line
+      const getColorByReadingTime = jest.fn((args: any) => "#computed");
       (useScriptureMap2DContext as jest.Mock).mockReturnValue({
         ...makeScriptureMap2DContext(),
         readingHistoryService: { getColorByReadingTime },

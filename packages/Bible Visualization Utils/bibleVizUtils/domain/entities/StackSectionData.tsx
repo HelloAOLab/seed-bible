@@ -9,6 +9,11 @@ import type {
   BookInfo,
 } from "bibleVizUtils.domain.models.arrangement";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
+import {
+  SelectionStates,
+  SelectionEvents,
+  simpleSelectionFSM,
+} from "bibleVizUtils.domain.models.selection";
 
 interface DataParams {
   childrenData?: StackBookData[][];
@@ -30,7 +35,6 @@ export class StackSectionData extends StackPieceData<
   StackSectionCreationParams,
   "StackSection"
 > {
-  #isSplitIntoBooks: DataParams["isSplitIntoBooks"];
   #isInExplodedView: DataParams["isInExplodedView"];
   #isInsideTestament: DataParams["isInsideTestament"];
   #shadow: Piece<"StackSectionShadow"> | undefined;
@@ -59,20 +63,17 @@ export class StackSectionData extends StackPieceData<
       creationParams,
       isHidden: false,
       type: "StackSection",
+      selectionFSM: simpleSelectionFSM,
     });
-    this.#isSplitIntoBooks = isSplitIntoBooks;
+    if (isSplitIntoBooks) {
+      this.changeSelectionState(SelectionEvents.RequestSelect);
+    }
     this.#isInExplodedView = isInExplodedView;
     this.#isInsideTestament = isInsideTestament;
   }
 
   get isSplitIntoBooks() {
-    return this.#isSplitIntoBooks;
-  }
-  split() {
-    this.#isSplitIntoBooks = true;
-  }
-  combine() {
-    this.#isSplitIntoBooks = false;
+    return this.selectionState !== SelectionStates.Idle;
   }
   get isInExplodedView() {
     return this.#isInExplodedView;
@@ -129,29 +130,30 @@ export class StackSectionData extends StackPieceData<
     const piecesToRelease: Piece[] = [];
     const shadow = this.detachShadow();
     this.implode();
-    this.combine();
+    this.resetSelectionState();
     if (shadow) {
       piecesToRelease.push(shadow);
     }
     piecesToRelease.push(...super.resetHierarchy(clearPiece));
-
     return piecesToRelease;
   }
   tryExplode(): boolean {
-    if (this.isSplitIntoBooks && !this.isInExplodedView) {
+    if (
+      this.selectionState !== SelectionStates.Idle &&
+      !this.isInExplodedView
+    ) {
       this.explode();
       return true;
     }
     return false;
   }
   isExplodable(): boolean {
-    return !!this.isSplitIntoBooks && !this.isInExplodedView;
+    return (
+      this.selectionState !== SelectionStates.Idle && !this.isInExplodedView
+    );
   }
-  isSplittable(): boolean {
-    return !this.isSplitIntoBooks;
-  }
-  override isPieceAvailable(): boolean {
-    return !this.isSplitIntoBooks && super.isPieceAvailable();
+  isSelectable(): boolean {
+    return this.selectionState === SelectionStates.Idle;
   }
   getActivelySelectedBooks(): StackBookData[] {
     return this.childrenData.flat().filter((bookData) => {

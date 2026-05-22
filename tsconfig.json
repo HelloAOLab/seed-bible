@@ -98,6 +98,9 @@
       "bibleVizUtils.domain.entities.StackBibleData": [
         "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBibleData.tsx"
       ],
+      "bibleVizUtils.domain.entities.StackBookBaseData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBookBaseData.tsx"
+      ],
       "bibleVizUtils.domain.entities.StackBookData": [
         "./packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBookData.tsx"
       ],
@@ -175,6 +178,9 @@
       ],
       "bibleVizUtils.domain.models.seedBible": [
         "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/seedBible.tsx"
+      ],
+      "bibleVizUtils.domain.models.selection": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/selection.tsx"
       ],
       "bibleVizUtils.domain.models.subscriptions": [
         "./packages/Bible Visualization Utils/bibleVizUtils/domain/models/subscriptions.tsx"

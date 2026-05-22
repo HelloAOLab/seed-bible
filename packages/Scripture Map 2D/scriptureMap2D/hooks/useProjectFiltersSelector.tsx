@@ -3,15 +3,16 @@ import { ProjectChapterState } from "scriptureMap2D.models.project";
 import { type ProjectChapterStateType } from "scriptureMap2D.models.project";
 import {
   SelectorOptionClasses,
+  type SelectorOptionData,
   type SelectorOptionProps,
 } from "scriptureMap2D.components.ui.SelectorOption";
 const { useMemo, useCallback } = os.appHooks;
 
 interface UseProjectFiltersSelectorType {
-  allSelectorOptionContent: SelectorOptionProps["content"];
+  allSelectorOptionContent: SelectorOptionData["content"];
   allSelectorOptionClick: () => void;
   allSelected: boolean;
-  selectorOptionsData: SelectorOptionProps[];
+  selectorOptionsData: SelectorOptionData[];
 }
 
 type UseProjectFiltersSelector = () => UseProjectFiltersSelectorType;
@@ -79,7 +80,7 @@ export const useProjectFiltersSelector: UseProjectFiltersSelector = () => {
     handleProjectFilterOptionClick("all");
   }, [handleProjectFilterOptionClick]);
 
-  const selectorOptionsData = useMemo<SelectorOptionProps[]>(() => {
+  const selectorOptionsData = useMemo<SelectorOptionData[]>(() => {
     return Array.from(projectFilters).map(([key, value]) => {
       return {
         content: getOptionContent(key),

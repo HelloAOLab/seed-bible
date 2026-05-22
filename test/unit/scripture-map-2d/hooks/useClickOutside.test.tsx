@@ -17,7 +17,7 @@ describe("useClickOutside", () => {
 
   function setup() {
     const callback = jest.fn();
-    const innerRef = createRef<HTMLElement>();
+    const innerRef = createRef<HTMLDivElement>();
 
     function TestComponent() {
       useClickOutside([innerRef], callback);

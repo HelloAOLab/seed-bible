@@ -139,7 +139,7 @@ export class StackBibleData extends StackData<StackTestamentData> {
     const plan: ExplodeStackCommand[] = [];
 
     for (const testament of this.getReversedChildren()) {
-      if (testament.isSplittable() && testament.piece) {
+      if (testament.isSelectable() && testament.piece) {
         plan.push({
           action: ExplodeStackActions.SelectTestament,
           piece: testament.piece,
@@ -156,7 +156,7 @@ export class StackBibleData extends StackData<StackTestamentData> {
       testament.implodeSections();
     });
   }
-  areAllTestamentsSplit(): boolean {
+  areAllTestamentsSelected(): boolean {
     return this.childrenData.every((testamentData) => {
       return testamentData.isSplitIntoSections;
     });

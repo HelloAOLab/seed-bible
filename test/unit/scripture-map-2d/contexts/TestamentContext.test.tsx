@@ -1,4 +1,5 @@
-import { render, h } from "preact";
+import type { TestamentInfo } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/arrangement";
+import { render } from "preact";
 import { act } from "preact/test-utils";
 import {
   TestamentProvider,
@@ -55,9 +56,20 @@ describe("TestamentContext", () => {
   });
 
   it("passes testament and testamentIndex correctly", () => {
-    const testament = {
+    const testament: TestamentInfo = {
       name: "NT",
-      sections: [{ name: "Gospels", books: [] }],
+      sections: [
+        {
+          name: "Gospels",
+          books: [],
+          color: "#FFFFFF",
+          path: {
+            arrangementName: "Traditional",
+            testamentIndex: 0,
+            sectionIndex: 0,
+          },
+        },
+      ],
     };
     const value: TestamentContextType = { testament, testamentIndex: 1 };
     const result = { current: null as unknown as TestamentContextType };

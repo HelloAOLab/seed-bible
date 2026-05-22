@@ -11,6 +11,14 @@ import {
   type HighlightState,
   type HighlightEvent,
 } from "bibleVizUtils.domain.models.highlight";
+import {
+  SelectionStates,
+  SelectionEvents,
+  simpleSelectionFSM,
+  type SelectionState,
+  type SelectionEvent,
+  type SelectionFSM,
+} from "bibleVizUtils.domain.models.selection";
 import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
 import type { ChapterInfo } from "bibleVizUtils.domain.models.arrangement";
 import type { LayoutBibleData } from "bibleVizUtils.domain.entities.LayoutBibleData";
@@ -66,7 +74,6 @@ export class LayoutChapterData {
   #pieceInfo: DataParams["pieceInfo"];
   #isActive: NonNullable<DataParams["isActive"]>;
   #highlightsInfo: HighlightInfo[] = [];
-  #isSelected: boolean = false;
   #piece: DataParams["piece"] | undefined;
   #id: NonNullable<DataParams["id"]>;
   #isExpanded: NonNullable<DataParams["isExpanded"]>;
@@ -74,6 +81,8 @@ export class LayoutChapterData {
   #activityIndicators: NonNullable<DataParams["activityIndicators"]>;
   #activityNotification: DataParams["activityNotification"];
   #highlightState: HighlightState;
+  #selectionState: SelectionState = SelectionStates.Idle;
+  #selectionFSM: SelectionFSM = simpleSelectionFSM;
 
   constructor({
     id,
@@ -112,7 +121,7 @@ export class LayoutChapterData {
       itemsToRelease.push(piece);
     }
     this.deactivate();
-    this.deselect();
+    this.resetSelectionState();
     this.#highlightsInfo = [];
     this.#playlistEntriesItems = [];
 
@@ -161,14 +170,27 @@ export class LayoutChapterData {
   deactivate() {
     this.#isActive = false;
   }
+  changeSelectionState(event: SelectionEvent): boolean {
+    const prevState = this.#selectionState;
+    const newState = this.#selectionFSM[prevState][event];
+    if (!newState) return false;
+    this.#selectionState = newState;
+    return prevState !== this.#selectionState;
+  }
+  get selectionState() {
+    return this.#selectionState;
+  }
+  resetSelectionState() {
+    this.#selectionState = SelectionStates.Idle;
+  }
   get isSelected() {
-    return this.#isSelected;
+    return this.#selectionState === SelectionStates.Selected;
   }
   select() {
-    this.#isSelected = true;
+    this.changeSelectionState(SelectionEvents.RequestSelect);
   }
   deselect() {
-    this.#isSelected = false;
+    this.changeSelectionState(SelectionEvents.RequestDeselect);
   }
   get id() {
     return this.#id;

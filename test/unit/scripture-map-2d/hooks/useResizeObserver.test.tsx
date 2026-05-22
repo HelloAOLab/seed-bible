@@ -28,7 +28,7 @@ describe("useResizeObserver", () => {
   });
 
   function setup() {
-    const ref = createRef<HTMLElement>();
+    const ref = createRef<HTMLDivElement>();
     const size = { current: { width: 0, height: 0 } as ResizeObserverSize };
 
     function TestComponent() {

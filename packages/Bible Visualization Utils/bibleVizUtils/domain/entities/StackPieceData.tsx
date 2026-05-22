@@ -11,6 +11,13 @@ import {
   type HighlightEvent,
   HighlightStates,
 } from "../models/highlight";
+import {
+  type SelectionState,
+  type SelectionEvent,
+  type SelectionFSM,
+  SelectionStates,
+  standardSelectionFSM,
+} from "../models/selection";
 import type { LabelTranslucencyMode } from "bibleVizUtils.domain.models.label";
 
 const highlightFSM: Record<
@@ -33,7 +40,7 @@ const highlightFSM: Record<
   },
 };
 
-interface DataParams<
+export interface StackPieceDataParams<
   TChild,
   TPieceInfo,
   TCreationParams,
@@ -50,6 +57,7 @@ interface DataParams<
   isHidden?: boolean;
   creationParams: TCreationParams;
   isHighlighted?: boolean;
+  selectionFSM?: SelectionFSM;
 }
 type HighlightColor = undefined | HexString;
 type LastInteractionSource = PieceSelectionSource | undefined;
@@ -60,36 +68,51 @@ export class StackPieceData<
   TCreationParams,
   TPiece extends BiblePieceType = BiblePieceType,
 > extends StackData<TChild> {
-  #piece: DataParams<TChild, TPieceInfo, TCreationParams, TPiece>["piece"];
-  #type: DataParams<TChild, TPieceInfo, TCreationParams, TPiece>["type"];
-  #pieceInfo: DataParams<
+  #piece: StackPieceDataParams<
+    TChild,
+    TPieceInfo,
+    TCreationParams,
+    TPiece
+  >["piece"];
+  #type: StackPieceDataParams<
+    TChild,
+    TPieceInfo,
+    TCreationParams,
+    TPiece
+  >["type"];
+  #pieceInfo: StackPieceDataParams<
     TChild,
     TPieceInfo,
     TCreationParams,
     TPiece
   >["pieceInfo"];
-  #parentDataIds: DataParams<
+  #parentDataIds: StackPieceDataParams<
     TChild,
     TPieceInfo,
     TCreationParams,
     TPiece
   >["parentDataIds"];
-  #isInsideBible: DataParams<
+  #isInsideBible: StackPieceDataParams<
     TChild,
     TPieceInfo,
     TCreationParams,
     TPiece
   >["isInsideBible"];
   #isActive: NonNullable<
-    DataParams<TChild, TPieceInfo, TCreationParams, TPiece>["isActive"]
+    StackPieceDataParams<
+      TChild,
+      TPieceInfo,
+      TCreationParams,
+      TPiece
+    >["isActive"]
   >;
-  #isHidden: DataParams<
+  #isHidden: StackPieceDataParams<
     TChild,
     TPieceInfo,
     TCreationParams,
     TPiece
   >["isHidden"];
-  #creationParams: DataParams<
+  #creationParams: StackPieceDataParams<
     TChild,
     TPieceInfo,
     TCreationParams,
@@ -98,7 +121,7 @@ export class StackPieceData<
   #highlightColor: HighlightColor;
   #lastInteractionSource: LastInteractionSource;
   // #isHighlighted: NonNullable<
-  //   DataParams<TChild, TPieceInfo, TCreationParams, TPiece>["isHighlighted"]
+  //   StackPieceDataParams<TChild, TPieceInfo, TCreationParams, TPiece>["isHighlighted"]
   // >;
   // #isHighlighting: boolean = false;
   // #isUnhighlighting: boolean = false;
@@ -108,6 +131,8 @@ export class StackPieceData<
   #isFocused: boolean = false;
   #highlightState: HighlightState = HighlightStates.Idle;
   #highlightIntensity: LabelTranslucencyMode = "Solid";
+  #selectionState: SelectionState = SelectionStates.Idle;
+  #selectionFSM: SelectionFSM;
 
   constructor({
     childrenData = [],
@@ -121,7 +146,8 @@ export class StackPieceData<
     creationParams,
     // isHighlighted = false,
     type,
-  }: DataParams<TChild, TPieceInfo, TCreationParams, TPiece>) {
+    selectionFSM = standardSelectionFSM,
+  }: StackPieceDataParams<TChild, TPieceInfo, TCreationParams, TPiece>) {
     super({ childrenData, id });
     this.#piece = piece;
     this.#type = type;
@@ -133,7 +159,22 @@ export class StackPieceData<
     this.#creationParams = creationParams;
     this.#highlightColor = undefined;
     this.#lastInteractionSource = undefined;
+    this.#selectionFSM = selectionFSM;
     // this.#isHighlighted = isHighlighted;
+  }
+
+  changeSelectionState(event: SelectionEvent): boolean {
+    const prevState = this.#selectionState;
+    const newState = this.#selectionFSM[prevState][event];
+    if (!newState) return false;
+    this.#selectionState = newState;
+    return prevState !== this.#selectionState;
+  }
+  get selectionState() {
+    return this.#selectionState;
+  }
+  resetSelectionState() {
+    this.#selectionState = SelectionStates.Idle;
   }
 
   changeHighlightState(event: HighlightEvent): boolean {
@@ -166,6 +207,7 @@ export class StackPieceData<
     this.#piece = undefined;
     this.#isInsideBible = undefined;
     this.#isActive = false;
+    this.resetSelectionState();
   }
   get piece() {
     return this.#piece;
@@ -313,7 +355,7 @@ export class StackPieceData<
     return piecesToRelease;
   }
   isPieceAvailable(): boolean {
-    return !!this.#piece;
+    return !!this.#piece && this.#selectionState === SelectionStates.Idle;
   }
   // highlight() {
   //   if (!this.#isHighlighted) {
