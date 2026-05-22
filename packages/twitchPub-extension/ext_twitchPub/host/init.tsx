@@ -12,8 +12,8 @@ registerExtension({
     yield context.tools.registerToolbarTool({
       id: "ext_twitchPub",
       title: {
-        key: "title",
-        defaultValue: "Twitch Pub Extension",
+        key: "toolbarTitle",
+        defaultValue: "Twitch Panel",
         ns: "ext_twitchPub",
       },
       icon: () => (

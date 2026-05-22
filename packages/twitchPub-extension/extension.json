@@ -3,6 +3,7 @@
   "translations": {
     "en": {
       "title": "Twitch Pub Extension",
+      "toolbarTitle": "Twitch Panel",
       "description": "An extension for the Seed Bible to integrate with Twitch Pub.",
       "authorization": "Authenticating with Twitch",
       "waitingForAuthorization": "Waiting for Twitch authorization",
@@ -49,7 +50,8 @@
       "twitchSettings.tenMinutes": "10 metros",
       "twitchSettings.fifteenMinutes": "15 metros",
       "twitchSettings.twentyMinutes": "20 metros",
-      "twitchSettings.custom": "Costumbre"
+      "twitchSettings.custom": "Costumbre",
+      "toolbarTitle": "Panel de Twitch"
     },
     "am": {
       "title": "የTwitch Pub ኤክስቴንሽን",
@@ -74,7 +76,8 @@
       "twitchSettings.tenMinutes": "10ሜ",
       "twitchSettings.fifteenMinutes": "15ሜ",
       "twitchSettings.twentyMinutes": "20ሜ",
-      "twitchSettings.custom": "ብጁ"
+      "twitchSettings.custom": "ብጁ",
+      "toolbarTitle": "የትዊች ፓነል"
     },
     "ar": {
       "title": "امتداد Twitch Pub",
@@ -99,7 +102,8 @@
       "twitchSettings.tenMinutes": "10 أمتار",
       "twitchSettings.fifteenMinutes": "15 متر",
       "twitchSettings.twentyMinutes": "20 مترًا",
-      "twitchSettings.custom": "مخصص"
+      "twitchSettings.custom": "مخصص",
+      "toolbarTitle": "لوحة تحكم تويتش"
     },
     "bn": {
       "title": "Twitch Pub এক্সটেনশন",
@@ -124,7 +128,8 @@
       "twitchSettings.tenMinutes": "১০ মিটার",
       "twitchSettings.fifteenMinutes": "১৫ মিটার",
       "twitchSettings.twentyMinutes": "২০ মিটার",
-      "twitchSettings.custom": "কাস্টম"
+      "twitchSettings.custom": "কাস্টম",
+      "toolbarTitle": "টুইচ প্যানেল"
     },
     "fa": {
       "title": "افزونه Twitch Pub",
@@ -149,7 +154,8 @@
       "twitchSettings.tenMinutes": "۱۰ متر",
       "twitchSettings.fifteenMinutes": "۱۵ متر",
       "twitchSettings.twentyMinutes": "۲۰ متر",
-      "twitchSettings.custom": "سفارشی"
+      "twitchSettings.custom": "سفارشی",
+      "toolbarTitle": "پنل توییچ"
     },
     "fr": {
       "title": "Extension Twitch Pub",
@@ -174,7 +180,8 @@
       "twitchSettings.tenMinutes": "10 m",
       "twitchSettings.fifteenMinutes": "15 m",
       "twitchSettings.twentyMinutes": "20 m",
-      "twitchSettings.custom": "Coutume"
+      "twitchSettings.custom": "Coutume",
+      "toolbarTitle": "Panneau Twitch"
     },
     "hi": {
       "title": "Twitch Pub एक्सटेंशन",
@@ -199,7 +206,8 @@
       "twitchSettings.tenMinutes": "10 मीटर",
       "twitchSettings.fifteenMinutes": "15",
       "twitchSettings.twentyMinutes": "20 मीटर",
-      "twitchSettings.custom": "रिवाज़"
+      "twitchSettings.custom": "रिवाज़",
+      "toolbarTitle": "ट्विच पैनल"
     },
     "id": {
       "title": "Ekstensi Twitch Pub",
@@ -224,7 +232,8 @@
       "twitchSettings.tenMinutes": "10 meter",
       "twitchSettings.fifteenMinutes": "15 meter",
       "twitchSettings.twentyMinutes": "20 meter",
-      "twitchSettings.custom": "Kebiasaan"
+      "twitchSettings.custom": "Kebiasaan",
+      "toolbarTitle": "Panel Twitch"
     },
     "ja": {
       "title": "Twitch Pub 拡張機能",
@@ -249,7 +258,8 @@
       "twitchSettings.tenMinutes": "10メートル",
       "twitchSettings.fifteenMinutes": "15メートル",
       "twitchSettings.twentyMinutes": "20メートル",
-      "twitchSettings.custom": "カスタム"
+      "twitchSettings.custom": "カスタム",
+      "toolbarTitle": "Twitchパネル"
     },
     "ko": {
       "title": "Twitch Pub 확장 기능",
@@ -274,7 +284,8 @@
       "twitchSettings.tenMinutes": "10미터",
       "twitchSettings.fifteenMinutes": "15m",
       "twitchSettings.twentyMinutes": "20m",
-      "twitchSettings.custom": "관습"
+      "twitchSettings.custom": "관습",
+      "toolbarTitle": "트위치 패널"
     },
     "mn": {
       "title": "Twitch Pub өргөтгөл",
@@ -299,7 +310,8 @@
       "twitchSettings.tenMinutes": "10м",
       "twitchSettings.fifteenMinutes": "15м",
       "twitchSettings.twentyMinutes": "20м",
-      "twitchSettings.custom": "Захиалгат"
+      "twitchSettings.custom": "Захиалгат",
+      "toolbarTitle": "Twitch Panel"
     },
     "ne": {
       "title": "Twitch Pub विस्तार",
@@ -324,7 +336,8 @@
       "twitchSettings.tenMinutes": "१० मिटर",
       "twitchSettings.fifteenMinutes": "१५ मिटर",
       "twitchSettings.twentyMinutes": "२० मिटर",
-      "twitchSettings.custom": "अनुकूलन"
+      "twitchSettings.custom": "अनुकूलन",
+      "toolbarTitle": "ट्विच प्यानल"
     },
     "ps": {
       "title": "د Twitch Pub توسیع",
@@ -349,7 +362,8 @@
       "twitchSettings.tenMinutes": "۱۰ متره",
       "twitchSettings.fifteenMinutes": "۱۵ متره",
       "twitchSettings.twentyMinutes": "۲۰ متره",
-      "twitchSettings.custom": "دود"
+      "twitchSettings.custom": "دود",
+      "toolbarTitle": "د ټویچ پینل"
     },
     "pt": {
       "title": "Extensão Twitch Pub",
@@ -374,7 +388,8 @@
       "twitchSettings.tenMinutes": "10m",
       "twitchSettings.fifteenMinutes": "15m",
       "twitchSettings.twentyMinutes": "20m",
-      "twitchSettings.custom": "Personalizado"
+      "twitchSettings.custom": "Personalizado",
+      "toolbarTitle": "Painel do Twitch"
     },
     "ru": {
       "title": "Расширение Twitch Pub",
@@ -399,7 +414,8 @@
       "twitchSettings.tenMinutes": "10 м",
       "twitchSettings.fifteenMinutes": "15 м",
       "twitchSettings.twentyMinutes": "20 м",
-      "twitchSettings.custom": "Обычай"
+      "twitchSettings.custom": "Обычай",
+      "toolbarTitle": "Панель Twitch"
     },
     "sw": {
       "title": "Upanuzi wa Twitch Pub",
@@ -424,7 +440,8 @@
       "twitchSettings.tenMinutes": "Mita 10",
       "twitchSettings.fifteenMinutes": "Mita 15",
       "twitchSettings.twentyMinutes": "Mita 20",
-      "twitchSettings.custom": "Maalum"
+      "twitchSettings.custom": "Maalum",
+      "toolbarTitle": "Paneli ya Twitch"
     },
     "ti": {
       "title": "Twitch Pub ኤክስቴንሽን",
@@ -449,7 +466,8 @@
       "twitchSettings.tenMinutes": "10ሜ",
       "twitchSettings.fifteenMinutes": "15ሜ",
       "twitchSettings.twentyMinutes": "20ሜ",
-      "twitchSettings.custom": "ቅቡል ልምዲ"
+      "twitchSettings.custom": "ቅቡል ልምዲ",
+      "toolbarTitle": "ትዊች ፓነል"
     },
     "tr": {
       "title": "Twitch Pub Uzantısı",
@@ -474,7 +492,8 @@
       "twitchSettings.tenMinutes": "10 metre",
       "twitchSettings.fifteenMinutes": "15 metre",
       "twitchSettings.twentyMinutes": "20 metre",
-      "twitchSettings.custom": "Gelenek"
+      "twitchSettings.custom": "Gelenek",
+      "toolbarTitle": "Twitch Panel"
     },
     "ug": {
       "title": "Twitch Pub كېڭەيتىلمىسى",
@@ -499,7 +518,8 @@
       "twitchSettings.tenMinutes": "10 مېتىر",
       "twitchSettings.fifteenMinutes": "15 مېتىر",
       "twitchSettings.twentyMinutes": "20 مېتىر",
-      "twitchSettings.custom": "خاسلاشتۇرۇلغان"
+      "twitchSettings.custom": "خاسلاشتۇرۇلغان",
+      "toolbarTitle": "Twitch Panel"
     },
     "uk": {
       "title": "Розширення Twitch Pub",
@@ -524,7 +544,8 @@
       "twitchSettings.tenMinutes": "10 м",
       "twitchSettings.fifteenMinutes": "15 м",
       "twitchSettings.twentyMinutes": "20 м",
-      "twitchSettings.custom": "Користувацька"
+      "twitchSettings.custom": "Користувацька",
+      "toolbarTitle": "Панель Twitch"
     },
     "ur": {
       "title": "Twitch Pub ایکسٹینشن",
@@ -549,7 +570,8 @@
       "twitchSettings.tenMinutes": "10m",
       "twitchSettings.fifteenMinutes": "15m",
       "twitchSettings.twentyMinutes": "20m",
-      "twitchSettings.custom": "حسب ضرورت"
+      "twitchSettings.custom": "حسب ضرورت",
+      "toolbarTitle": "ٹویچ پینل"
     },
     "vi": {
       "title": "Tiện ích mở rộng Twitch Pub",
@@ -574,7 +596,8 @@
       "twitchSettings.tenMinutes": "10 mét",
       "twitchSettings.fifteenMinutes": "15m",
       "twitchSettings.twentyMinutes": "20m",
-      "twitchSettings.custom": "Phong tục"
+      "twitchSettings.custom": "Phong tục",
+      "toolbarTitle": "Bảng điều khiển Twitch"
     },
     "zh": {
       "title": "Twitch Pub 扩展",
@@ -599,7 +622,8 @@
       "twitchSettings.tenMinutes": "10米",
       "twitchSettings.fifteenMinutes": "15米",
       "twitchSettings.twentyMinutes": "20米",
-      "twitchSettings.custom": "风俗"
+      "twitchSettings.custom": "风俗",
+      "toolbarTitle": "Twitch 面板"
     },
     "ind": {
       "title": "Ekstensi Twitch Pub",
@@ -624,7 +648,8 @@
       "twitchSettings.tenMinutes": "10 meter",
       "twitchSettings.fifteenMinutes": "15 meter",
       "twitchSettings.twentyMinutes": "20 meter",
-      "twitchSettings.custom": "Kebiasaan"
+      "twitchSettings.custom": "Kebiasaan",
+      "toolbarTitle": "Panel Twitch"
     }
   }
 }
