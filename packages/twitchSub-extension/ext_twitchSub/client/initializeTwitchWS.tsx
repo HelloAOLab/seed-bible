@@ -11,6 +11,8 @@ interface ChannelChatMessageEvent {
   message: { text: string };
 }
 
+const RECONNECT_DELAY_MS = 1000;
+
 function startWebSocketClient(twitchSubManager: TwitchSubInterface) {
   const config = twitchSubManager.config.value;
   if (!config.accessToken.value) {
@@ -33,6 +35,23 @@ function startWebSocketClient(twitchSubManager: TwitchSubInterface) {
 
   websocketClient.onmessage = (event) => {
     handleWebSocketMessage(JSON.parse(event.data), twitchSubManager);
+  };
+
+  websocketClient.onclose = (event) => {
+    console.warn(
+      "wsss:- " +
+        `WebSocket connection closed (code: ${event.code}, reason: ${event.reason || "none"}). Restarting...`
+    );
+
+    twitchSubManager.webSocketClient.value = null;
+    twitchSubManager.websocketSessionID.value = null;
+
+    setTimeout(() => {
+      if (!twitchSubManager.config.value.accessToken.value) {
+        return;
+      }
+      startWebSocketClient(twitchSubManager);
+    }, RECONNECT_DELAY_MS);
   };
 
   twitchSubManager.webSocketClient.value = websocketClient;
