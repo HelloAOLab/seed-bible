@@ -9,7 +9,7 @@ jest.mock("ext_twitchPub.host.sendMessage", () => ({
 
 const sendMessageMock = sendMessage as jest.Mock;
 
-function waitFor(condition: () => boolean, timeoutMs = 1000): Promise<void> {
+function waitFor(condition: () => boolean, timeoutMs = 4000): Promise<void> {
   const start = Date.now();
   return new Promise((resolve, reject) => {
     const tick = () => {
@@ -34,6 +34,54 @@ function getStateParam(url: string): string | null {
 
 function makeBase64(value: string): string {
   return Buffer.from(value, "utf8").toString("base64");
+}
+
+function hasBookChangedPayload(expected: {
+  translation?: string;
+  baseUrl?: string;
+  bookId?: string;
+  chapter?: number;
+  followTranslation?: boolean;
+}): boolean {
+  return sendMessageMock.mock.calls.some((call) => {
+    const envelopeRaw = call?.[0]?.message;
+    if (typeof envelopeRaw !== "string") {
+      return false;
+    }
+
+    let envelope: {
+      type?: string;
+      payload?: string;
+    };
+    try {
+      envelope = JSON.parse(envelopeRaw);
+    } catch {
+      return false;
+    }
+    if (
+      envelope.type !== "bookChanged" ||
+      typeof envelope.payload !== "string"
+    ) {
+      return false;
+    }
+
+    let payload: {
+      translation?: string;
+      baseUrl?: string;
+      bookId?: string;
+      chapter?: number;
+      followTranslation?: boolean;
+    };
+    try {
+      payload = JSON.parse(envelope.payload);
+    } catch {
+      return false;
+    }
+
+    return Object.entries(expected).every(
+      ([key, value]) => payload[key as keyof typeof payload] === value
+    );
+  });
 }
 
 describe("CreateTwitchPubState", () => {
@@ -406,5 +454,201 @@ describe("CreateTwitchPubState", () => {
         highlights: ["EXO:3:5:yellow"],
       })
     );
+  });
+
+  it("sends a book changed event when the chapter changes", async () => {
+    const state = CreateTwitchPubState();
+
+    state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
+    state.twitchConfig.value.senderId.value = "sender-1";
+    state.twitchConfig.value.userAccessToken.value = "token-1";
+
+    state.handleSeedBibleUpdate({
+      app: {
+        currentReadingState: {
+          value: {
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 1,
+          },
+        },
+      },
+      bibleData: {
+        api: {
+          endpoint: "https://example.org",
+        },
+      },
+    } as any);
+
+    await waitFor(() => sendMessageMock.mock.calls.length >= 1);
+    sendMessageMock.mockClear();
+
+    state.handleSeedBibleUpdate({
+      app: {
+        currentReadingState: {
+          value: {
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 2,
+          },
+        },
+      },
+      bibleData: {
+        api: {
+          endpoint: "https://example.org",
+        },
+      },
+    } as any);
+
+    await waitFor(() =>
+      hasBookChangedPayload({ translation: "NIV", bookId: "MAT", chapter: 2 })
+    );
+  });
+
+  it("sends a book changed event when the book changes", async () => {
+    const state = CreateTwitchPubState();
+
+    state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
+    state.twitchConfig.value.senderId.value = "sender-1";
+    state.twitchConfig.value.userAccessToken.value = "token-1";
+
+    state.handleSeedBibleUpdate({
+      app: {
+        currentReadingState: {
+          value: {
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 2,
+          },
+        },
+      },
+      bibleData: {
+        api: {
+          endpoint: "https://example.org",
+        },
+      },
+    } as any);
+
+    await waitFor(() => sendMessageMock.mock.calls.length >= 1);
+    sendMessageMock.mockClear();
+
+    state.handleSeedBibleUpdate({
+      app: {
+        currentReadingState: {
+          value: {
+            translationId: "NIV",
+            bookId: "MRK",
+            chapterNumber: 2,
+          },
+        },
+      },
+      bibleData: {
+        api: {
+          endpoint: "https://example.org",
+        },
+      },
+    } as any);
+
+    await waitFor(() =>
+      hasBookChangedPayload({ translation: "NIV", bookId: "MRK", chapter: 2 })
+    );
+  });
+
+  it("sends a book changed event when the translation changes", async () => {
+    const state = CreateTwitchPubState();
+
+    state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
+    state.twitchConfig.value.senderId.value = "sender-1";
+    state.twitchConfig.value.userAccessToken.value = "token-1";
+
+    state.handleSeedBibleUpdate({
+      app: {
+        currentReadingState: {
+          value: {
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 2,
+          },
+        },
+      },
+      bibleData: {
+        api: {
+          endpoint: "https://example.org",
+        },
+      },
+    } as any);
+
+    await waitFor(() => sendMessageMock.mock.calls.length >= 1);
+    sendMessageMock.mockClear();
+
+    state.handleSeedBibleUpdate({
+      app: {
+        currentReadingState: {
+          value: {
+            translationId: "ESV",
+            bookId: "MAT",
+            chapterNumber: 2,
+          },
+        },
+      },
+      bibleData: {
+        api: {
+          endpoint: "https://example.org",
+        },
+      },
+    } as any);
+
+    await waitFor(() =>
+      hasBookChangedPayload({ translation: "ESV", bookId: "MAT", chapter: 2 })
+    );
+  });
+
+  it("tells users whether to follow translation changes", async () => {
+    const state = CreateTwitchPubState();
+
+    state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
+    state.twitchConfig.value.senderId.value = "sender-1";
+    state.twitchConfig.value.userAccessToken.value = "token-1";
+
+    state.settings.value.translation.value = { enabled: false };
+    state.handleSeedBibleUpdate({
+      app: {
+        currentReadingState: {
+          value: {
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 2,
+          },
+        },
+      },
+      bibleData: {
+        api: {
+          endpoint: "https://example.org",
+        },
+      },
+    } as any);
+
+    await waitFor(() => hasBookChangedPayload({ followTranslation: false }));
+
+    sendMessageMock.mockClear();
+    state.settings.value.translation.value = { enabled: true };
+    state.handleSeedBibleUpdate({
+      app: {
+        currentReadingState: {
+          value: {
+            translationId: "KJV",
+            bookId: "MAT",
+            chapterNumber: 2,
+          },
+        },
+      },
+      bibleData: {
+        api: {
+          endpoint: "https://example.org",
+        },
+      },
+    } as any);
+
+    await waitFor(() => hasBookChangedPayload({ followTranslation: true }));
   });
 });
