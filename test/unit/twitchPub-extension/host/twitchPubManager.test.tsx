@@ -127,6 +127,125 @@ describe("CreateTwitchPubState", () => {
     expect(window.localStorage.getItem("currentPage")).toBe("settings");
   });
 
+  it("builds the QR redirect URI from the current location first", () => {
+    window.history.replaceState({}, "", "/twitch-pub?existing=1");
+
+    const state = CreateTwitchPubState();
+
+    const url = new URL(state.qrValue.value);
+    const redirectUri = new URL(url.searchParams.get("redirect_uri") ?? "");
+
+    expect(redirectUri.origin + redirectUri.pathname).toBe(
+      `${window.location.origin}/twitch-pub`
+    );
+    expect(redirectUri.searchParams.get("pattern")).toBe("SeedBible");
+    expect(redirectUri.searchParams.get("ext_twitchPub")).toBe("true");
+    expect(redirectUri.origin + redirectUri.pathname).not.toBe(
+      "https://ao.bot/"
+    );
+  });
+
+  it("sends an announcement with the join URL once the user is logged in", async () => {
+    window.history.replaceState({}, "", "/reader?chapter=1");
+
+    const state = CreateTwitchPubState();
+
+    expect(webPostMock).not.toHaveBeenCalled();
+
+    state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
+    state.twitchConfig.value.userAccessToken.value = "token-1";
+
+    await waitFor(() => webPostMock.mock.calls.length === 1);
+
+    const [url, body, options] = webPostMock.mock.calls[0];
+    const parsedBody = JSON.parse(body as string);
+
+    expect(url).toBe(
+      "https://api.twitch.tv/helix/chat/announcements?broadcaster_id=broadcaster-1&moderator_id=broadcaster-1"
+    );
+    expect(parsedBody).toEqual({
+      message: expect.stringContaining("Join me at "),
+      color: "purple",
+    });
+    expect(parsedBody.message).toContain("redirect_uri=");
+    const announcedUrl = new URL(parsedBody.message.replace("Join me at ", ""));
+    const redirectUri = new URL(
+      announcedUrl.searchParams.get("redirect_uri") ?? ""
+    );
+
+    expect(redirectUri.origin + redirectUri.pathname).toBe(
+      `${window.location.origin}/reader`
+    );
+    expect(redirectUri.searchParams.get("pattern")).toBe("SeedBible");
+    expect(redirectUri.searchParams.get("ext_twitchPub")).toBe("true");
+    expect(options).toEqual({
+      headers: {
+        Authorization: "Bearer token-1",
+        "Client-Id": "cfjslv2429r70ek579iogr02vecn6d",
+        "Content-Type": "application/json",
+      },
+    });
+  });
+
+  it("sends announcements on a timer when announcementTimer is configured", () => {
+    jest.useFakeTimers();
+    window.history.replaceState({}, "", "/reader?chapter=1");
+
+    const state = CreateTwitchPubState();
+
+    state.settings.value.highlight.value = { enabled: false };
+    state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
+    state.twitchConfig.value.userAccessToken.value = "token-1";
+    state.settings.value.announcementTimer.value = {
+      enabled: true,
+      interval: 5000,
+    };
+
+    expect(webPostMock).not.toHaveBeenCalled();
+
+    jest.advanceTimersByTime(5000);
+    expect(webPostMock).toHaveBeenCalledTimes(1);
+
+    // eslint-disable-next-line prefer-const
+    let [url, body, options] = webPostMock.mock.calls[0];
+    let parsedBody = JSON.parse(body as string);
+    let announcedUrl = new URL(parsedBody.message.replace("Join me at ", ""));
+    let redirectUri = new URL(
+      announcedUrl.searchParams.get("redirect_uri") ?? ""
+    );
+
+    expect(url).toBe(
+      "https://api.twitch.tv/helix/chat/announcements?broadcaster_id=broadcaster-1&moderator_id=broadcaster-1"
+    );
+    expect(redirectUri.origin + redirectUri.pathname).toBe(
+      `${window.location.origin}/reader`
+    );
+    expect(redirectUri.searchParams.get("pattern")).toBe("SeedBible");
+    expect(redirectUri.searchParams.get("ext_twitchPub")).toBe("true");
+    expect(options).toEqual({
+      headers: {
+        Authorization: "Bearer token-1",
+        "Client-Id": "cfjslv2429r70ek579iogr02vecn6d",
+        "Content-Type": "application/json",
+      },
+    });
+
+    jest.advanceTimersByTime(5000);
+    expect(webPostMock).toHaveBeenCalledTimes(2);
+
+    [url, body] = webPostMock.mock.calls[1];
+    parsedBody = JSON.parse(body as string);
+    announcedUrl = new URL(parsedBody.message.replace("Join me at ", ""));
+    redirectUri = new URL(announcedUrl.searchParams.get("redirect_uri") ?? "");
+
+    expect(url).toBe(
+      "https://api.twitch.tv/helix/chat/announcements?broadcaster_id=broadcaster-1&moderator_id=broadcaster-1"
+    );
+    expect(redirectUri.origin + redirectUri.pathname).toBe(
+      `${window.location.origin}/reader`
+    );
+  });
+
   it("restores saved values from localStorage", () => {
     window.localStorage.setItem("currentPage", "interface");
     window.localStorage.setItem("deviceCode", "device-123");
