@@ -3,7 +3,7 @@
   "new-testament": "Agano Jipya",
   "old-testament": "Agano la Kale",
   "settings": "Mipangilio",
-  "open-books": "Vitabu Vilivyofunguliwa",
+  "books": "Vitabu",
   "side-menu": "Menyu ya pembeni",
   "copy-verse": "Nakili",
   "next-chapter": "Sura Inayofuata",
@@ -63,7 +63,7 @@
   "traditional": "Jadi",
   "no-chapter-content-found": "Hakuna maudhui ya sura yaliyopatikana.",
   "no-translations-available": "Hakuna tafsiri zinazopatikana.",
-  "more": "Zaidi",
+
   "exit-full-screen": "Toka kwenye Skrini Nzima",
   "themes": "Mandhari",
   "page-settings": "Mipangilio ya ukurasa",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "Rangi ya mandharinyuma ya {{id}} inayoangazia",
   "all-settings-description": "Rekebisha kila sehemu ya maandishi na ubadilishe kila rangi ya mandhari.",
   "close-footnote": "Funga tanbihi",
-  "more-tools": "Zana zaidi",
+
   "add-custom-color": "Ongeza rangi maalum",
   "add-color": "Ongeza rangi",
   "clear-highlight": "Kivutio wazi",

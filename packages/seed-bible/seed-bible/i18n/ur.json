@@ -3,7 +3,7 @@
   "new-testament": "نیا عہد نامہ",
   "old-testament": "عہد نامہ قدیم",
   "settings": "ترتیبات",
-  "open-books": "کتابیں کھولیں۔",
+  "books": "کتابیں",
   "side-menu": "سائیڈ مینو",
   "copy-verse": "کاپی",
   "next-chapter": "اگلا باب",
@@ -63,7 +63,7 @@
   "traditional": "روایتی",
   "no-chapter-content-found": "کوئی باب مواد نہیں ملا۔",
   "no-translations-available": "کوئی ترجمہ دستیاب نہیں ہے۔",
-  "more": "مزید",
+
   "exit-full-screen": "فل سکرین سے باہر نکلیں۔",
   "themes": "تھیمز",
   "page-settings": "صفحہ کی ترتیبات",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}} پس منظر کا رنگ نمایاں کریں۔",
   "all-settings-description": "ہر ٹیکسٹ سیکشن کو ٹھیک بنائیں اور ہر تھیم کے رنگ کو حسب ضرورت بنائیں۔",
   "close-footnote": "فوٹ نوٹ بند کریں۔",
-  "more-tools": "مزید ٹولز",
+
   "add-custom-color": "حسب ضرورت رنگ شامل کریں۔",
   "add-color": "رنگ شامل کریں۔",
   "clear-highlight": "واضح نمایاں کریں۔",

@@ -410,6 +410,22 @@ export function PaneReader(props: PaneReaderScrollerProps) {
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
+  // Mirror scroll-direction state to a body class so chrome rendered outside
+  // this component (e.g. the global BibleReaderToolbar in app/main.tsx) can
+  // hide/show in sync with the reader header.
+  useEffect(() => {
+    if (!isMobile) return;
+    const className = "sb-scroll-hide-bars";
+    if (isScrolled) {
+      document.body.classList.add(className);
+    } else {
+      document.body.classList.remove(className);
+    }
+    return () => {
+      document.body.classList.remove(className);
+    };
+  }, [isMobile, isScrolled]);
+
   const attachScroller = (element: HTMLDivElement | null) => {
     scrollerCleanupRef.current?.();
     scrollerCleanupRef.current = null;

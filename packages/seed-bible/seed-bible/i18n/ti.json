@@ -3,7 +3,7 @@
   "new-testament": "ሓድሽ ኪዳን",
   "old-testament": "ብሉይ ኪዳን",
   "settings": "ቅጥዕታት",
-  "open-books": "ክፉት መጻሕፍቲ",
+  "books": "መጻሕፍቲ",
   "side-menu": "ጎናዊ ዝርዝር መግቢ",
   "copy-verse": "ቅዳሕ",
   "next-chapter": "ዝቕጽል ምዕራፍ",
@@ -63,7 +63,7 @@
   "traditional": "ባህላዊ",
   "no-chapter-content-found": "ትሕዝቶ ምዕራፍ ኣይተረኽበን።",
   "no-translations-available": "ትርጉማት የለን።",
-  "more": "ቡዙሕ",
+
   "exit-full-screen": "ካብ ምሉእ ስክሪን ውጻእ",
   "themes": "ቴማታት",
   "page-settings": "ቅጥዕታት ገጽ",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}} ሕብሪ ድሕረ ባይታ ኣጉልሕ",
   "all-settings-description": "ነፍሲ ወከፍ ክፍሊ ጽሑፍ ጽቡቕ ጌርካ ኣመዓራርዮን ነፍሲ ወከፍ ሕብሪ ቴማ ኣመዓራርዮን።",
   "close-footnote": "እግረ ጽሑፍ ዕጸዎ።",
-  "more-tools": "ተወሳኺ መሳርሒታት",
+
   "add-custom-color": "ብሕታዊ ሕብሪ ምውሳኽ",
   "add-color": "ሕብሪ ምውሳኽ",
   "clear-highlight": "ንጹር ምድማቕ",

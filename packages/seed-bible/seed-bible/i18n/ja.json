@@ -3,7 +3,7 @@
   "new-testament": "新約聖書",
   "old-testament": "旧約聖書",
   "settings": "設定",
-  "open-books": "オープンブック",
+  "books": "書籍",
   "side-menu": "サイドメニュー",
   "copy-verse": "コピー",
   "next-chapter": "次の章",
@@ -63,7 +63,7 @@
   "traditional": "伝統的",
   "no-chapter-content-found": "章の内容が見つかりませんでした。",
   "no-translations-available": "翻訳はありません。",
-  "more": "もっと",
+
   "exit-full-screen": "全画面表示を終了する",
   "themes": "テーマ",
   "page-settings": "ページ設定",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}}ハイライトの背景色",
   "all-settings-description": "テキストの各セクションを細かく調整し、テーマカラーをそれぞれカスタマイズします。",
   "close-footnote": "脚注を閉じる",
-  "more-tools": "その他のツール",
+
   "add-custom-color": "カスタムカラーを追加する",
   "add-color": "色を加える",
   "clear-highlight": "クリアハイライト",

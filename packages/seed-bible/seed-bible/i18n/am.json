@@ -3,7 +3,7 @@
   "new-testament": "አዲስ ኪዳን",
   "old-testament": "የብሉይ ኪዳን",
   "settings": "ቅንብሮች",
-  "open-books": "ክፍት መጽሐፍት",
+  "books": "መጽሐፍት",
   "side-menu": "የጎን ምናሌ",
   "copy-verse": "ቅጂ",
   "next-chapter": "የሚቀጥለው ምዕራፍ",
@@ -63,7 +63,7 @@
   "traditional": "ባህላዊ",
   "no-chapter-content-found": "የምዕራፍ ይዘት አልተገኘም።",
   "no-translations-available": "ምንም ትርጉሞች የሉም።",
-  "more": "ተጨማሪ",
+
   "exit-full-screen": "ከሙሉ ማያ ገጽ ይውጡ",
   "themes": "ገጽታዎች",
   "page-settings": "የገጽ ቅንብሮች",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}} የዳራ ቀለም ማድመቂያ",
   "all-settings-description": "እያንዳንዱን የጽሑፍ ክፍል በደንብ ያስተካክሉ እና የእያንዳንዱን ገጽታ ቀለም ያብጁ።",
   "close-footnote": "የግርጌ ማስታወሻውን ዝጋ",
-  "more-tools": "ተጨማሪ መሳሪያዎች",
+
   "add-custom-color": "ብጁ ቀለም ያክሉ",
   "add-color": "ቀለም ያክሉ",
   "clear-highlight": "ድምቀትን አጽዳ",

@@ -603,7 +603,12 @@ export function Tabs(props: TabsProps) {
                 className={`sb-tab-button`}
               >
                 <div className="sb-tab-main-content">
-                  <span>{`${title} - ${currentChapter} • ${currentTranslation}`}</span>
+                  <span className="sb-tab-main-title">
+                    {`${title} – ${currentChapter}`}
+                  </span>
+                  <span className="sb-tab-main-translation">
+                    {` · ${currentTranslation}`}
+                  </span>
                 </div>
 
                 {tab.sharedSession && connectedUsers.length > 0 && (
@@ -769,6 +774,17 @@ export function Tabs(props: TabsProps) {
           );
         })}
       </div>
+
+      <button
+        onClick={() => {
+          app.addTab();
+        }}
+        className="sb-tab-mobile-add-fab"
+        aria-label={t("create-new-tab", { defaultValue: "Create new tab" })}
+        title={t("new-tab", { defaultValue: "New tab" })}
+      >
+        <span className="material-symbols-outlined">add</span>
+      </button>
     </>
   );
 }

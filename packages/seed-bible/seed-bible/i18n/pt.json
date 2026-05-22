@@ -3,7 +3,7 @@
   "new-testament": "Novo Testamento",
   "old-testament": "Antigo Testamento",
   "settings": "Configurações",
-  "open-books": "Livros abertos",
+  "books": "Livros",
   "side-menu": "Menu lateral",
   "copy-verse": "Cópia",
   "next-chapter": "Próximo capítulo",
@@ -63,7 +63,7 @@
   "traditional": "Tradicional",
   "no-chapter-content-found": "Nenhum conteúdo do capítulo encontrado.",
   "no-translations-available": "Nenhuma tradução disponível.",
-  "more": "Mais",
+
   "exit-full-screen": "Sair do modo tela cheia",
   "themes": "Temas",
   "page-settings": "Configurações da página",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}} cor de fundo de destaque",
   "all-settings-description": "Ajuste cada seção de texto e personalize cada cor do tema.",
   "close-footnote": "Fechar nota de rodapé",
-  "more-tools": "Mais ferramentas",
+
   "add-custom-color": "Adicionar cor personalizada",
   "add-color": "Adicione cor",
   "clear-highlight": "Destaque nítido",

@@ -3,7 +3,7 @@
   "new-testament": "Tân Ước",
   "old-testament": "Cựu Ước",
   "settings": "Cài đặt",
-  "open-books": "Sách mở",
+  "books": "Sách",
   "side-menu": "Thực đơn phụ",
   "copy-verse": "Sao chép",
   "next-chapter": "Chương tiếp theo",
@@ -63,7 +63,7 @@
   "traditional": "Truyền thống",
   "no-chapter-content-found": "Không tìm thấy nội dung chương nào.",
   "no-translations-available": "Hiện chưa có bản dịch nào.",
-  "more": "Hơn",
+
   "exit-full-screen": "Thoát chế độ toàn màn hình",
   "themes": "Chủ đề",
   "page-settings": "Cài đặt trang",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}} màu nền nổi bật",
   "all-settings-description": "Tinh chỉnh từng phần văn bản và tùy chỉnh màu sắc chủ đề.",
   "close-footnote": "Đóng chú thích cuối trang",
-  "more-tools": "Thêm công cụ",
+
   "add-custom-color": "Thêm màu tùy chỉnh",
   "add-color": "Thêm màu sắc",
   "clear-highlight": "Điểm nổi bật rõ ràng",

@@ -3,7 +3,7 @@
   "new-testament": "新约",
   "old-testament": "旧约",
   "settings": "设置",
-  "open-books": "打开的书",
+  "books": "书籍",
   "side-menu": "侧边菜单",
   "copy-verse": "复制",
   "next-chapter": "下一章",
@@ -63,7 +63,7 @@
   "traditional": "传统的",
   "no-chapter-content-found": "未找到章节内容。",
   "no-translations-available": "暂无译文。",
-  "more": "更多的",
+
   "exit-full-screen": "退出全屏模式",
   "themes": "主题",
   "page-settings": "页面设置",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}}高亮背景颜色",
   "all-settings-description": "对每个文本部分进行微调，并自定义每个主题颜色。",
   "close-footnote": "结束脚注",
-  "more-tools": "更多工具",
+
   "add-custom-color": "添加自定义颜色",
   "add-color": "添加颜色",
   "clear-highlight": "清晰高亮",

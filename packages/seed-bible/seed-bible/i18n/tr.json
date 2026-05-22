@@ -3,7 +3,7 @@
   "new-testament": "Yeni Ahit",
   "old-testament": "Eski Ahit",
   "settings": "Ayarlar",
-  "open-books": "Açık Kitaplar",
+  "books": "Kitaplar",
   "side-menu": "Yan menü",
   "copy-verse": "Kopyala",
   "next-chapter": "Sonraki Bölüm",
@@ -63,7 +63,7 @@
   "traditional": "Geleneksel",
   "no-chapter-content-found": "Bölüm içeriği bulunamadı.",
   "no-translations-available": "Çeviri mevcut değil.",
-  "more": "Daha",
+
   "exit-full-screen": "Tam Ekrandan Çık",
   "themes": "Temalar",
   "page-settings": "Sayfa ayarları",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}} vurgu arka plan rengi",
   "all-settings-description": "Her metin bölümünü ince ayar yapın ve her tema rengini özelleştirin.",
   "close-footnote": "Dipnotu kapat",
-  "more-tools": "Daha fazla araç",
+
   "add-custom-color": "Özel renk ekle",
   "add-color": "Renk ekleyin",
   "clear-highlight": "Vurguyu net bir şekilde ortaya koyan",

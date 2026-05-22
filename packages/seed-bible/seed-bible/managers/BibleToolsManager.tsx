@@ -362,7 +362,7 @@ function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
     {
       id: "open-in-selector",
       priority: 0,
-      title: { key: "open-books", defaultValue: "Open Books" },
+      title: { key: "books", defaultValue: "Books" },
       icon: OpenInSelectorIcon,
       onSelect: (context) => {
         context.selectorState.setOpen(true, context.currentPane);
@@ -423,7 +423,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
     {
       id: "open-selector",
       priority: 100,
-      title: { key: "open-books", defaultValue: "Open Books" },
+      title: { key: "books", defaultValue: "Books" },
       icon: OpenSelectorIcon,
       isDisabled: (context) => context.readingState.loading.value,
       onSelect: (context) => {
