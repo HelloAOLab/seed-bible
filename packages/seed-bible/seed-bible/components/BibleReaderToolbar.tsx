@@ -265,10 +265,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const shouldReplaceDefaultToolbar = useComputed(
     () => isSmallScreen.value && hasVerseSelection.value
   );
-  const isMoreMenuOpen = useSignal(false);
   const selectedToolbarToolId = useSignal<string | null>(null);
   const selectedVerseToolId = useSignal<string | null>(null);
-  const selectedOverflowToolId = useSignal<string | null>(null);
 
   const previousChapterTool = useComputed(
     () => tools.value.find((tool) => tool.id === "previous-chapter") ?? null
@@ -282,17 +280,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const openSidebarTool = useComputed(
     () => tools.value.find((tool) => tool.id === "open-sidebar") ?? null
   );
-  const overflowTools = useComputed(() =>
-    tools.value.filter(
-      (tool) =>
-        tool.visible.value &&
-        tool.id !== "previous-chapter" &&
-        tool.id !== "next-chapter" &&
-        tool.id !== "open-selector" &&
-        tool.id !== "open-sidebar"
-    )
-  );
-  const hasOverflowTools = useComputed(() => overflowTools.value.length > 0);
 
   const floatingAnchor = useComputed(() =>
     readingState.value!.selectedVerses.value.reduce<{
