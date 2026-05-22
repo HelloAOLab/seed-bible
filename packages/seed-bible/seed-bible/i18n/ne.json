@@ -63,7 +63,7 @@
   "traditional": "परम्परागत",
   "no-chapter-content-found": "कुनै अध्याय सामग्री भेटिएन।",
   "no-translations-available": "कुनै अनुवाद उपलब्ध छैन।",
-  "more": "थप",
+
   "exit-full-screen": "पूर्ण स्क्रिनबाट बाहिर निस्कनुहोस्",
   "themes": "विषयवस्तुहरू",
   "page-settings": "पृष्ठ सेटिङहरू",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}} हाइलाइट पृष्ठभूमि रङ",
   "all-settings-description": "प्रत्येक पाठ खण्डलाई फाइन-ट्यून गर्नुहोस् र प्रत्येक विषयवस्तुको रङलाई अनुकूलित गर्नुहोस्।",
   "close-footnote": "फुटनोट बन्द गर्नुहोस्",
-  "more-tools": "थप उपकरणहरू",
+
   "add-custom-color": "आफू अनुकूल रङ थप्नुहोस्",
   "add-color": "रङ थप्नुहोस्",
   "clear-highlight": "हाइलाइट खाली गर्नुहोस्",

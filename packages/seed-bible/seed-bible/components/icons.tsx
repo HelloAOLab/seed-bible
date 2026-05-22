@@ -97,6 +97,7 @@ export const SettingsIcon = (props: any) => (
     viewBox="0 0 24 24"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    {...props}
   >
     <g clip-path="url(#clip0_3691_8368)">
       <path
@@ -324,6 +325,7 @@ const AiIcon = (props: any) => (
       fontWeight="bold"
       fill="currentColor"
       fontFamily="Arial, sans-serif"
+      // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
     >
       AI
     </text>
@@ -353,6 +355,7 @@ const AiChatIcon = (props: any) => (
       fontWeight="bold"
       fill="currentColor"
       fontFamily="Arial, sans-serif"
+      // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
     >
       AI
     </text>

@@ -63,7 +63,7 @@
   "traditional": "ঐতিহ্যবাহী",
   "no-chapter-content-found": "কোনো অধ্যায়ের বিষয়বস্তু খুঁজে পাওয়া যায়নি।",
   "no-translations-available": "কোনো অনুবাদ উপলব্ধ নেই।",
-  "more": "আরও",
+
   "exit-full-screen": "পূর্ণ পর্দা থেকে প্রস্থান করুন",
   "themes": "থিম",
   "page-settings": "পৃষ্ঠা সেটিংস",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}} ব্যাকগ্রাউন্ড রঙ হাইলাইট করে",
   "all-settings-description": "প্রতিটি টেক্সট সেকশন সূক্ষ্মভাবে সমন্বয় করুন এবং প্রতিটি থিমের রঙ কাস্টমাইজ করুন।",
   "close-footnote": "পাদটীকা বন্ধ করুন",
-  "more-tools": "আরও সরঞ্জাম",
+
   "add-custom-color": "কাস্টম রঙ যোগ করুন",
   "add-color": "রঙ যোগ করুন",
   "clear-highlight": "পরিষ্কার হাইলাইট",

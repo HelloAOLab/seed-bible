@@ -63,7 +63,7 @@
   "traditional": "تقليدي",
   "no-chapter-content-found": "لم يتم العثور على محتوى الفصل.",
   "no-translations-available": "لا توجد ترجمات متاحة.",
-  "more": "أكثر",
+
   "exit-full-screen": "الخروج من وضع ملء الشاشة",
   "themes": "المواضيع",
   "page-settings": "إعدادات الصفحة",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}} لون خلفية التمييز",
   "all-settings-description": "قم بضبط كل قسم من أقسام النص بدقة وخصص لون كل سمة.",
   "close-footnote": "إغلاق الحاشية",
-  "more-tools": "أدوات إضافية",
+
   "add-custom-color": "أضف لونًا مخصصًا",
   "add-color": "أضف لونًا",
   "clear-highlight": "تمييز واضح",

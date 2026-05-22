@@ -63,7 +63,7 @@
   "traditional": "전통적인",
   "no-chapter-content-found": "챕터 내용을 찾을 수 없습니다.",
   "no-translations-available": "번역된 내용이 없습니다.",
-  "more": "더",
+
   "exit-full-screen": "전체 화면 종료",
   "themes": "테마",
   "page-settings": "페이지 설정",
@@ -140,7 +140,7 @@
   "id_highlight-background-color": "{{id}} 강조 배경색",
   "all-settings-description": "각 텍스트 섹션을 세밀하게 조정하고 테마 색상을 원하는 대로 설정하세요.",
   "close-footnote": "각주 닫기",
-  "more-tools": "추가 도구",
+
   "add-custom-color": "사용자 지정 색상 추가",
   "add-color": "색상을 추가하세요",
   "clear-highlight": "선명한 강조",
