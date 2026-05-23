@@ -2445,6 +2445,70 @@ h6 {
   display: none;
 }
 
+/* Bookmark filter button in the Tabs header — turns orange when the
+ * bookmarks-only filter is active and stays orange on hover so the
+ * active state reads clearly. */
+.sb-sidebar-tabs-header-bookmarks-button-active,
+.sb-sidebar-tabs-header-bookmarks-button-active:hover {
+  color: #f59e0b;
+  background: color-mix(in srgb, #f59e0b, transparent 88%);
+}
+
+.sb-sidebar-tabs-header-bookmarks-button-active svg {
+  color: #f59e0b;
+}
+
+/* Empty state shown inside the tab list when the bookmark filter is
+ * active and there are no matching tabs. */
+.sb-sidebar-tab-list-empty {
+  padding: 16px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+/* Per-tab bookmark toggle button — sits between the tab body and the
+ * "more" menu. Filled + orange when bookmarked, outlined + dim otherwise. */
+.sb-tab-bookmark-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-inline-start: 2px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  cursor: pointer;
+  align-self: center;
+  flex-shrink: 0;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.sb-tab-bookmark-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+}
+
+.sb-tab-bookmark-button-active,
+.sb-tab-bookmark-button-active:hover {
+  color: #f59e0b;
+}
+
+.sb-tab-row-bookmarked .sb-tab-main-title::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-inline-end: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+  vertical-align: middle;
+}
+
 .sb-sidebar-search-shell {
   position: relative;
   margin-top: 8px;

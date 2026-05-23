@@ -37,6 +37,10 @@ import {
   type HighlightsManager,
 } from "seed-bible.managers.HighlightsManager";
 import {
+  createBookmarksManager,
+  type BookmarksManager,
+} from "seed-bible.managers.BookmarksManager";
+import {
   createSessionsManager,
   type BibleReadingSession,
   type SessionsManager,
@@ -140,6 +144,8 @@ export interface SeedBibleState {
   readingHistory: ReadingHistoryManager;
   /** Verse highlight manager. */
   highlights: HighlightsManager;
+  /** Per-tab/location bookmarks manager. */
+  bookmarks: BookmarksManager;
   /** Annotation manager for notes/metadata. */
   annotations: AnnotationsManager;
   /** Shared reading sessions manager. */
@@ -170,6 +176,7 @@ export function createSeedBibleState(): SeedBibleState {
   const data = createBibleDataManager(api);
   const login = createLoginManager();
   const highlights = createHighlightsManager(login);
+  const bookmarks = createBookmarksManager(login);
   const config = createConfig(login);
   const themeManager = createTheme(login);
   const sidebar = createSidebar();
@@ -600,6 +607,7 @@ export function createSeedBibleState(): SeedBibleState {
     login,
     readingHistory,
     highlights,
+    bookmarks,
     annotations,
     sessions,
     modals,

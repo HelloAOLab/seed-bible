@@ -498,10 +498,20 @@ export function Settings(props: SettingsProps) {
 
 export function Tabs(props: TabsProps) {
   const { state, closeLayoutMenu, effectivelyCollapsed } = props;
-  const { app, tabs: tabsManager } = state;
-  const tabs = tabsManager.tabs.value;
+  const { app, tabs: tabsManager, bookmarks } = state;
+  const allTabs = tabsManager.tabs.value;
   const selectedTabId = tabsManager.selectedTabId.value;
   const panelsEnabled = app.panelsEnabled.value;
+  const isBookmarkFilterActive = bookmarks.isFilterActive.value;
+  const tabs = isBookmarkFilterActive
+    ? allTabs.filter((tab) =>
+        bookmarks.isLocationBookmarked(
+          tab.readingState.translationId.value,
+          tab.readingState.bookId.value,
+          tab.readingState.chapterNumber.value
+        )
+      )
+    : allTabs;
   const { t } = useI18n();
 
   if (effectivelyCollapsed) {
@@ -594,15 +604,29 @@ export function Tabs(props: TabsProps) {
 
           <button
             type="button"
-            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button"
+            className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
+              isBookmarkFilterActive
+                ? " sb-sidebar-tabs-header-bookmarks-button-active"
+                : ""
+            }`}
             aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
-            title={t("bookmarks", { defaultValue: "Bookmarks" })}
+            aria-pressed={isBookmarkFilterActive}
+            title={
+              isBookmarkFilterActive
+                ? t("show-all-tabs", { defaultValue: "Show all tabs" })
+                : t("show-bookmarked-tabs", {
+                    defaultValue: "Show bookmarked tabs",
+                  })
+            }
+            onClick={() => {
+              bookmarks.toggleFilter();
+            }}
           >
             <svg
               width="24"
               height="24"
               viewBox="0 0 24 24"
-              fill="none"
+              fill={isBookmarkFilterActive ? "currentColor" : "none"}
               xmlns="http://www.w3.org/2000/svg"
               aria-hidden="true"
             >
@@ -640,6 +664,16 @@ export function Tabs(props: TabsProps) {
       <SidebarSearch state={state} closeLayoutMenu={closeLayoutMenu} />
 
       <div className="sb-sidebar-tab-list">
+        {isBookmarkFilterActive && tabs.length === 0 && (
+          <div className="sb-sidebar-tab-list-empty">
+            {allTabs.length === 0
+              ? t("no-tabs-open", { defaultValue: "No tabs open." })
+              : t("no-bookmarked-tabs", {
+                  defaultValue:
+                    "No bookmarked tabs. Tap the bookmark icon on a tab to save its location.",
+                })}
+          </div>
+        )}
         {tabs.map((tab) => {
           const isSelected = tab.id === selectedTabId;
           const currentBookId = tab.readingState.bookId.value;
@@ -659,11 +693,18 @@ export function Tabs(props: TabsProps) {
               })
             : currentBookName;
           const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
+          const isTabBookmarked = bookmarks.isLocationBookmarked(
+            tab.readingState.translationId.value,
+            tab.readingState.bookId.value,
+            tab.readingState.chapterNumber.value
+          );
 
           return (
             <div
               key={tab.id}
-              className={`sb-tab-row${isSelected ? " sb-tab-row-selected" : ""}`}
+              className={`sb-tab-row${isSelected ? " sb-tab-row-selected" : ""}${
+                isTabBookmarked ? " sb-tab-row-bookmarked" : ""
+              }`}
               dir={tab.readingState.translation.value?.textDirection ?? "auto"}
             >
               <button
@@ -750,6 +791,47 @@ export function Tabs(props: TabsProps) {
                 )}
               </button>
 
+              <button
+                type="button"
+                className={`sb-tab-bookmark-button${
+                  isTabBookmarked ? " sb-tab-bookmark-button-active" : ""
+                }`}
+                aria-label={
+                  isTabBookmarked
+                    ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
+                    : t("add-bookmark", { defaultValue: "Bookmark tab" })
+                }
+                title={
+                  isTabBookmarked
+                    ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
+                    : t("add-bookmark", { defaultValue: "Bookmark tab" })
+                }
+                aria-pressed={isTabBookmarked}
+                onClick={(event: MouseEvent) => {
+                  event.stopPropagation();
+                  closeContextMenus();
+                  closeLayoutMenu();
+                  void bookmarks.toggleBookmarkForTab(tab);
+                }}
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill={isTabBookmarked ? "currentColor" : "none"}
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+
               <ContextMenuWithButton
                 onClick={() => {
                   closeLayoutMenu();
@@ -827,6 +909,18 @@ export function Tabs(props: TabsProps) {
                     })()}
                   </>
                 )}
+                <ContextMenuItem
+                  className="sb-tab-menu-item"
+                  onClick={() => {
+                    void bookmarks.toggleBookmarkForTab(tab);
+                  }}
+                >
+                  {isTabBookmarked
+                    ? t("remove-bookmark", {
+                        defaultValue: "Remove bookmark",
+                      })
+                    : t("add-bookmark", { defaultValue: "Bookmark tab" })}
+                </ContextMenuItem>
                 <ContextMenuItem
                   className="sb-tab-menu-item"
                   onClick={() => {
