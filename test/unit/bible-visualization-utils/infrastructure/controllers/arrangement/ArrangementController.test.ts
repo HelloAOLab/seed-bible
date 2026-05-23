@@ -7,7 +7,7 @@ const makeService = () => ({
 });
 
 const makeController = (service = makeService()) =>
-  new ArrangementController(service);
+  new ArrangementController(service as any);
 
 // ─── handleBookOrientationChanged ─────────────────────────────────────────────
 

@@ -167,7 +167,7 @@ describe("getConnectedUsers", () => {
     const users = makeProvider(state).getConnectedUsers();
     const dups = users.filter((u) => u.configId === "dup");
     expect(dups).toHaveLength(1);
-    expect(dups[0].authId).toBe("auth-first");
+    expect(dups[0]!.authId).toBe("auth-first");
   });
 
   it("does not include a remote user whose connectionId matches configBot.id", () => {

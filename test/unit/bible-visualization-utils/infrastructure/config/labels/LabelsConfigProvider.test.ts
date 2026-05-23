@@ -84,7 +84,7 @@ describe("getDialogBoxFormAddresses", () => {
 describe("getDialogBoxFormAddress", () => {
   it("returns the exact value for every key in DialogBoxFormAddresses", () => {
     const provider = makeProvider();
-    for (const key of Object.keys(DialogBoxFormAddresses) as Array<
+    for (const key of Object.keys(DialogBoxFormAddresses) as unknown as Array<
       keyof typeof DialogBoxFormAddresses
     >) {
       expect(provider.getDialogBoxFormAddress(key)).toBe(
@@ -97,7 +97,7 @@ describe("getDialogBoxFormAddress", () => {
     const provider = makeProvider();
     const key = Object.keys(
       DialogBoxFormAddresses
-    )[0] as keyof typeof DialogBoxFormAddresses;
+    )[0] as unknown as keyof typeof DialogBoxFormAddresses;
     expect(typeof provider.getDialogBoxFormAddress(key)).toBe("string");
   });
 
@@ -105,7 +105,7 @@ describe("getDialogBoxFormAddress", () => {
     const provider = makeProvider();
     const key = Object.keys(
       DialogBoxFormAddresses
-    )[0] as keyof typeof DialogBoxFormAddresses;
+    )[0] as unknown as keyof typeof DialogBoxFormAddresses;
     expect(provider.getDialogBoxFormAddress(key)).toBe(
       provider.getDialogBoxFormAddress(key)
     );

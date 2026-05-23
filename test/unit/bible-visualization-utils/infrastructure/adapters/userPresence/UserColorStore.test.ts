@@ -214,7 +214,7 @@ describe("removeUserColor", () => {
     );
     store.removeUserColor({ configId: "remove", authId: undefined });
     expect(store.listUsers()).toHaveLength(1);
-    expect(store.listUsers()[0].configId).toBe("keep");
+    expect(store.listUsers()[0]!.configId).toBe("keep");
   });
 
   it("returns false on a second removal attempt after the first succeeds", () => {
@@ -286,7 +286,7 @@ describe("listUsers", () => {
   it("returns shallow copies — mutating the result does not affect the store", () => {
     const store = makeStore();
     store.addUserColor(makeUserData({ color: "#original" }));
-    store.listUsers()[0].color = "#mutated";
+    store.listUsers()[0]!.color = "#mutated";
     expect(store.getUserColor(makeUserIds())).toBe("#original");
   });
 

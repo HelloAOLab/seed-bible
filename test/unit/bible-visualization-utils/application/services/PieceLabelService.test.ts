@@ -253,6 +253,7 @@ describe("showLabel — new label creation", () => {
       labelColor: "#112233",
       labelPositioning: LabelPosition.Top,
       isInteractable: true,
+      makesAttentionFeedback: false,
       dateFormat: "Relative",
       translucencyMode: "Faded",
     });

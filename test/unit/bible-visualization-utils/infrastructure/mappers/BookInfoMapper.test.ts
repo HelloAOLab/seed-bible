@@ -241,9 +241,11 @@ describe("toDomain — subset type", () => {
   it("maps completeBookId from info", () => {
     const { mapper } = makeMapper();
     expect(
-      mapper.toDomain(
-        makeSubsetInfo({ completeBookId: "PSA-full" }),
-        makePath()
+      (
+        mapper.toDomain(
+          makeSubsetInfo({ completeBookId: "PSA-full" }),
+          makePath()
+        ) as any
       ).completeBookId
     ).toBe("PSA-full");
   });
@@ -330,24 +332,31 @@ describe("toDomain — subset type", () => {
   it("maps startIndex from info (including undefined)", () => {
     const { mapper } = makeMapper();
     expect(
-      mapper.toDomain(makeSubsetInfo({ startIndex: undefined }), makePath())
-        .startIndex
+      (
+        mapper.toDomain(
+          makeSubsetInfo({ startIndex: undefined }),
+          makePath()
+        ) as any
+      ).startIndex
     ).toBeUndefined();
   });
 
   it("maps endIndex from info", () => {
     const { mapper } = makeMapper();
     expect(
-      mapper.toDomain(makeSubsetInfo({ endIndex: 4 }), makePath()).endIndex
+      (mapper.toDomain(makeSubsetInfo({ endIndex: 4 }), makePath()) as any)
+        .endIndex
     ).toBe(4);
   });
 
   it("maps translationRule from info", () => {
     const { mapper } = makeMapper();
     expect(
-      mapper.toDomain(
-        makeSubsetInfo({ translationRule: "my-rule" }),
-        makePath()
+      (
+        mapper.toDomain(
+          makeSubsetInfo({ translationRule: "my-rule" }),
+          makePath()
+        ) as any
       ).translationRule
     ).toBe("my-rule");
   });
