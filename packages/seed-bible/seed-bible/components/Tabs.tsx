@@ -591,6 +591,7 @@ export function Tabs(props: TabsProps) {
               />
             </svg>
           </button>
+
           <button
             type="button"
             className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button"
