@@ -80,6 +80,9 @@
       "seed-bible.components.ContextMenu": [
         "./packages/seed-bible/seed-bible/components/ContextMenu.tsx"
       ],
+      "seed-bible.components.FloatingReaderPanels": [
+        "./packages/seed-bible/seed-bible/components/FloatingReaderPanels.tsx"
+      ],
       "seed-bible.components.icons": [
         "./packages/seed-bible/seed-bible/components/icons.tsx"
       ],
