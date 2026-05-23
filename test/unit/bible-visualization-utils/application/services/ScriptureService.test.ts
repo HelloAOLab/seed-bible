@@ -32,7 +32,6 @@ const makeCompleteBook = (
 ): BookInfo => ({
   type: "complete",
   bookId,
-  completeBookId: undefined as any,
   author: "unknown",
   chaptersVerseCount,
   numberOfChapters: chaptersVerseCount.length,

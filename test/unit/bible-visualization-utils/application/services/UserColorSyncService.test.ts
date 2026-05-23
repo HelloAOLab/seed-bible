@@ -32,6 +32,7 @@ const makeSessionProvider = (
   getConnectedUsersConfigId: jest.fn().mockResolvedValue([]),
   getConnectedUsers: jest.fn().mockReturnValue([]),
   getUserColorById: jest.fn().mockReturnValue("#aabbcc"),
+  getOwnUserConnectionId: jest.fn().mockReturnValue(""),
   ...overrides,
 });
 

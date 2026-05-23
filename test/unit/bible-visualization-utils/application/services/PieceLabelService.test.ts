@@ -74,6 +74,7 @@ const makeStrategy = (
   getLabelColor: jest.fn().mockReturnValue("#000000"),
   labelPositioning: LabelPosition.RightSided,
   isInteractable: false,
+  makesAttentionFeedback: false,
   ...overrides,
 });
 

@@ -88,7 +88,7 @@ describe("toDomain — testament-level shape", () => {
     const config = makeArrangementConfig("Standard", [
       makeTestamentConfig("New Testament"),
     ]);
-    expect(makeAdapter().toDomain(config).testaments[0].name).toBe(
+    expect(makeAdapter().toDomain(config).testaments[0]!.name).toBe(
       "New Testament"
     );
   });
@@ -115,14 +115,14 @@ describe("toDomain — testament-level shape", () => {
       .mockReturnValueOnce(makeSectionInfo({ name: "History" }))
       .mockReturnValueOnce(makeSectionInfo({ name: "Poetry" }));
     const adapter = makeAdapter(makeMapperPort(toDomainFn));
-    expect(adapter.toDomain(config).testaments[0].sections).toHaveLength(3);
+    expect(adapter.toDomain(config).testaments[0]!.sections).toHaveLength(3);
   });
 
   it("returns an empty sections array when the testament has none", () => {
     const config = makeArrangementConfig("Standard", [
       makeTestamentConfig("NT", []),
     ]);
-    expect(makeAdapter().toDomain(config).testaments[0].sections).toEqual([]);
+    expect(makeAdapter().toDomain(config).testaments[0]!.sections).toEqual([]);
   });
 });
 
@@ -222,7 +222,7 @@ describe("toDomain — mapper delegation", () => {
     const toDomainFn = jest.fn().mockReturnValue(domainSection);
     const adapter = makeAdapter(makeMapperPort(toDomainFn));
     const result = adapter.toDomain(makeArrangementConfig());
-    expect(result.testaments[0].sections[0]).toBe(domainSection);
+    expect(result.testaments[0]!.sections[0]).toBe(domainSection);
   });
 });
 

@@ -1,7 +1,5 @@
-import {
-  BaseEventManager,
-  EventCallback,
-} from "bibleVizUtils.application.services.BaseEventManager";
+import { BaseEventManager } from "bibleVizUtils.application.services.BaseEventManager";
+import type { EventCallback } from "bibleVizUtils.application.services.BaseEventManager";
 
 // ─── test map ────────────────────────────────────────────────────────────────
 
