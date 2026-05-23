@@ -690,14 +690,29 @@ export function Tabs(props: TabsProps) {
                   <div className="sb-tab-users-section">
                     <div className="sb-tab-users-list">
                       {connectedUsers.map((user) => {
-                        const imageUrl = getUserImageUrl(user.profile);
-                        const displayName = getUserDisplayName(user);
+                        // For the local user, read identity from live login
+                        // state so the avatar (picture + animal/color)
+                        // updates on login/logout mid-session and stays in
+                        // sync with the sidebar self-avatar. The
+                        // connection-level userId/connectionId on `user`
+                        // stay untouched so the host auto-close detection
+                        // (which compares against the original hostUserId)
+                        // keeps working.
+                        const effectiveProfile = user.isSelf
+                          ? state.login.profile.value
+                          : user.profile;
+                        const imageUrl = getUserImageUrl(effectiveProfile);
+                        const displayName = user.isSelf
+                          ? getSelfDisplayName(state)
+                          : getUserDisplayName(user);
                         // Every user has a single, stable visual derived
                         // purely from their identity key. That guarantees
                         // a user's color/icon on the tab row matches the
                         // color/icon on their own sidebar avatar and on
                         // every other client that sees them.
-                        const visualKey = getConnectedUserVisualKey(user);
+                        const visualKey = user.isSelf
+                          ? getSelfVisualKey(state)
+                          : getConnectedUserVisualKey(user);
                         const visual = getUserAnimalVisual(visualKey);
 
                         if (imageUrl) {

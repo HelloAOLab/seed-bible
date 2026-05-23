@@ -122,11 +122,11 @@
   --sb-verse-toolbar-gap: 2px;
   --sb-verse-toolbar-padding: 4px 8px;
   --sb-verse-toolbar-border-radius: 10px;
-  --sb-verse-toolbar-border: 1px solid #00000024;
-  --sb-verse-toolbar-box-shadow: 0 26px 10px #0000001a;
+  --sb-verse-toolbar-border: 1px solid var(--sb-divider-color);
+  --sb-verse-toolbar-box-shadow: 0 26px 10px var(--sb-shadow-color);
   --sb-verse-toolbar-z-index: 100;
   --sb-verse-toolbar-min-height: 0;
-  --sb-verse-toolbar-background: #fff;
+  --sb-verse-toolbar-background: var(--sb-menu-background);
 
   --sb-reader-toolbar-mobile-layout-height: auto;
   --sb-reader-toolbar-mobile-layout-padding: 10px 35px;
@@ -1838,6 +1838,7 @@ h6 {
 .sb-verse-toolbar {
   flex-direction: column;
   align-items: stretch;
+  background-color: var(--sb-reader-background);
 }
 
 .sb-verse-toolbar-ref {
@@ -1876,7 +1877,7 @@ h6 {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--sb-divider-color);
   transition: transform 0.15s ease;
 }
 
