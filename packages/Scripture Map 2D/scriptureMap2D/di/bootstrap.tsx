@@ -27,7 +27,7 @@ import { translations } from "scriptureMap2D.config.translations.index";
 import type { ScriptureMap2DEvents } from "../models/events";
 
 const Icon = () => {
-  return <MaterialIcon>full_stacked_bar_chart</MaterialIcon>;
+  return <MaterialIcon>splitscreen_portrait</MaterialIcon>;
 };
 
 const customCSS = getCustomStyles();
