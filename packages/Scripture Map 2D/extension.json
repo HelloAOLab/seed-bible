@@ -1,5 +1,6 @@
 {
   "id": "scripture-map-2d",
+  "dependencies": ["bible-visualization-utils"],
   "translations": {
     "en": {
       "title": "Scripture Map 2D",

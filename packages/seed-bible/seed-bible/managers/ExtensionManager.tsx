@@ -206,21 +206,12 @@ export class ExtensionInitalizer {
       return false;
     }
 
-    console.log(`[Debug] ExtensionManager: tryInitializeExtension`, {
-      id,
-      extension,
-    }); //TODO: DELETE THIS
-
     initializationStack.add(id);
 
     const dependencyExports: ExtensionDependencies = {};
     const dependencyIds = extension.dependencies ?? [];
 
     for (const dependencyId of dependencyIds) {
-      console.log(`[Debug] ExtensionManager: tryInitializeExtension`, {
-        dependencyId,
-      }); //TODO: DELETE THIS
-
       if (!this.registeredExtensions.has(dependencyId)) {
         initializationStack.delete(id);
         return false;
@@ -240,10 +231,6 @@ export class ExtensionInitalizer {
         initializationStack.delete(id);
         return false;
       }
-
-      console.log(`[Debug] ExtensionManager: tryInitializeExtension`, {
-        dependencyExport,
-      }); //TODO: DELETE THIS
 
       dependencyExports[dependencyId] = dependencyExport;
     }
