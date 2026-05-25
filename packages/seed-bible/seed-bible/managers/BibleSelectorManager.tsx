@@ -454,16 +454,14 @@ export function createBibleSelectorState(
       return;
     }
 
-    const newTab = tabsManager.addTab();
+    const newTab = tabsManager.addTab(undefined, {
+      initialTranslationId: selectedTranslationId.value,
+      initialBookId: selectedBookId,
+      initialChapterNumber: chapter,
+    });
     panesManager.openInPane(pane.value.id, {
       tabId: newTab.id,
     });
-
-    await newTab.readingState.selectTranslationAndChapter(
-      selectedTranslationId.value,
-      selectedBookId,
-      chapter
-    );
     setOpen(false);
   };
 

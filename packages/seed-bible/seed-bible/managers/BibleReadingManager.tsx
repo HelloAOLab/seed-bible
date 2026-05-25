@@ -270,7 +270,7 @@ export const DEFAULT_TRANSLATION_LANGUAGE = DEFAULT_TRANSLATION.language;
 export const DEFAULT_BOOK_ID = "GEN";
 export const DEFAULT_CHAPTER_NUMBER = 1;
 
-interface InitialBibleReadingOptions {
+export interface InitialBibleReadingOptions {
   initialTranslationId?: string | null;
   initialBookId?: string | null;
   initialChapterNumber?: number | null;

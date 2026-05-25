@@ -255,10 +255,46 @@ h6 {
   padding-bottom: 96px;
   margin: 0 auto;
   box-sizing: border-box;
+  position: relative;
 
   background: var(--sb-reader-background);
   color: var(--sb-reader-font-color);
   font-family: var(--sb-reader-font-family);
+}
+
+.sb-bible-reader-bookmark-button {
+  position: absolute;
+  top: 16px;
+  inset-inline-end: 16px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+  z-index: 1;
+}
+
+.sb-bible-reader-bookmark-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+}
+
+.sb-bible-reader-bookmark-button-active,
+.sb-bible-reader-bookmark-button-active:hover {
+  color: #f59e0b;
+}
+
+.sb-bible-reader-bookmark-button:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 /* Force a tight 1% reader margin in mobile view, regardless of the
@@ -2458,17 +2494,9 @@ h6 {
   color: #f59e0b;
 }
 
-/* Empty state shown inside the tab list when the bookmark filter is
- * active and there are no matching tabs. */
-.sb-sidebar-tab-list-empty {
-  padding: 16px 12px;
-  text-align: center;
-  font-size: 13px;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-}
-
-/* Per-tab bookmark toggle button — sits between the tab body and the
- * "more" menu. Filled + orange when bookmarked, outlined + dim otherwise. */
+/* Per-tab bookmark toggle button — rendered between the tab body and the
+ * "more" menu, but only on the currently selected row. Filled + orange when
+ * the chapter is already in a bookmark folder, outlined when not. */
 .sb-tab-bookmark-button {
   display: inline-flex;
   align-items: center;
@@ -2498,15 +2526,190 @@ h6 {
   color: #f59e0b;
 }
 
-.sb-tab-row-bookmarked .sb-tab-main-title::before {
-  content: "";
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  margin-inline-end: 6px;
-  border-radius: 50%;
-  background: #f59e0b;
-  vertical-align: middle;
+/* ---- Bookmarks section (pinned above the tab list when the bookmark
+ *      toggle in the sidebar header is on) -------------------------------- */
+
+.sb-bookmarks-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.sb-sidebar-tabs-divider {
+  height: 1px;
+  background: var(--sb-divider-color);
+  margin: 8px 0 10px;
+}
+
+.sb-bookmark-category {
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-bookmark-category-header {
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.sb-bookmark-category-header:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-bookmark-category-toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 4px;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+  text-align: start;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sb-bookmark-category-icon {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.sb-bookmark-category-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-bookmark-category-chevron {
+  display: inline-flex;
+  align-items: center;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  transition: transform 0.15s ease;
+}
+
+.sb-bookmark-category-chevron .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.sb-bookmark-category-chevron-open {
+  transform: rotate(180deg);
+}
+
+.sb-bookmark-category-rename-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 6px;
+  padding: 2px 6px;
+  outline: none;
+}
+
+.sb-bookmark-category-rename-input:focus {
+  border-color: #f59e0b;
+}
+
+.sb-bookmark-category-menu-anchor {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.sb-bookmark-category-menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  cursor: pointer;
+}
+
+.sb-bookmark-category-menu-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  color: var(--sb-font-color);
+}
+
+.sb-bookmark-category-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-inline-start: 22px;
+}
+
+.sb-bookmark-category-empty {
+  padding: 6px 8px;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+}
+
+.sb-bookmark-item {
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+}
+
+.sb-bookmark-item:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-bookmark-item-button {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 6px 6px;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+  text-align: start;
+  font-size: 13px;
+}
+
+.sb-bookmark-new-category {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 4px;
+}
+
+.sb-bookmark-new-category-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 6px;
+  margin-top: 2px;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  cursor: pointer;
+  font-size: 13px;
+  border-radius: 8px;
+  align-self: flex-start;
+}
+
+.sb-bookmark-new-category-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+  color: var(--sb-font-color);
+}
+
+.sb-bookmark-new-category-button .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .sb-sidebar-search-shell {
@@ -4533,7 +4736,7 @@ h6 {
 
 .sb-settings-action-button {
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 12px 16px;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);

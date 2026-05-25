@@ -1,5 +1,7 @@
 import { useSignal } from "@preact/signals";
+import { DEFAULT_BOOKMARK_CATEGORY } from "seed-bible.managers.BookmarksManager";
 import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager";
+import type { ReaderTab } from "seed-bible.managers.TabsManager";
 import {
   PANE_LAYOUT_OPTIONS,
   type PaneLayoutId,
@@ -496,22 +498,668 @@ export function Settings(props: SettingsProps) {
   );
 }
 
+/**
+ * Compact bookmark icon used by category headers and bookmark rows. Sized to
+ * match the per-row text height so categories sit comfortably inside the tab
+ * list without their own taller hit-targets.
+ */
+function BookmarkIconGlyph() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linejoin="round"
+      />
+    </svg>
+  );
+}
+
+interface TabRowProps {
+  // Allow JSX `key` to pass through without TS extra-property errors when
+  // mapping a list of tabs. Preact strips it before the component sees props.
+  key?: string;
+  state: SeedBibleState;
+  tab: ReaderTab;
+  isSelected: boolean;
+  closeLayoutMenu: () => void;
+  panelsEnabled: boolean;
+}
+
+/**
+ * One row in the sidebar's tab list — also reused by the bookmarks section
+ * so a bookmarked tab keeps its selection state, kebab menu, and shared-
+ * session visuals when it's moved up into a folder. The per-row bookmark
+ * icon only appears on the currently selected row: it's the affordance for
+ * adding the current chapter to (or removing it from) "My Bookmarks", and
+ * showing it on every row would clutter the list.
+ */
+function TabRow(props: TabRowProps) {
+  const { state, tab, isSelected, closeLayoutMenu, panelsEnabled } = props;
+  const { app, bookmarks } = state;
+  const { t } = useI18n();
+
+  const currentBookId = tab.readingState.bookId.value;
+  const currentBookName =
+    tab.readingState.translationBooks.value?.books.find(
+      (book) => book.id === currentBookId
+    )?.name ??
+    currentBookId ??
+    "-";
+  const currentChapter = tab.readingState.chapterNumber.value;
+  const currentTranslation =
+    tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
+  const title = tab.sharedSession
+    ? t("shared-tab_title", {
+        book: currentBookName,
+        defaultValue: "Shared",
+      })
+    : currentBookName;
+  const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
+  const isTabBookmarked = bookmarks.isLocationBookmarked(
+    tab.readingState.translationId.value,
+    tab.readingState.bookId.value,
+    tab.readingState.chapterNumber.value
+  );
+
+  return (
+    <div
+      className={`sb-tab-row${isSelected ? " sb-tab-row-selected" : ""}`}
+      dir={tab.readingState.translation.value?.textDirection ?? "auto"}
+    >
+      <button
+        onClick={() => {
+          closeContextMenus();
+          closeLayoutMenu();
+          app.selectTab(tab.id);
+        }}
+        className={`sb-tab-button`}
+      >
+        <div className="sb-tab-main-content">
+          <span className="sb-tab-main-title">
+            {`${title} - ${currentChapter}`}
+          </span>
+          <span className="sb-tab-main-sep" aria-hidden="true">
+            •
+          </span>
+          <span className="sb-tab-main-translation">{currentTranslation}</span>
+        </div>
+
+        {tab.sharedSession && connectedUsers.length > 0 && (
+          <div className="sb-tab-users-section">
+            <div className="sb-tab-users-list">
+              {connectedUsers.map((user) => {
+                const effectiveProfile = user.isSelf
+                  ? state.login.profile.value
+                  : user.profile;
+                const imageUrl = getUserImageUrl(effectiveProfile);
+                const displayName = user.isSelf
+                  ? getSelfDisplayName(state)
+                  : getUserDisplayName(user);
+                const visualKey = user.isSelf
+                  ? getSelfVisualKey(state)
+                  : getConnectedUserVisualKey(user);
+                const visual = getUserAnimalVisual(visualKey);
+
+                if (imageUrl) {
+                  return (
+                    <span
+                      key={user.connectionId}
+                      className={`sb-tab-user-icon sb-tab-user-icon-has-image${user.isSelf ? " sb-tab-user-icon-self" : ""}`}
+                      title={displayName}
+                      style={{
+                        borderColor: visual.color,
+                        backgroundImage: `url(${imageUrl})`,
+                      }}
+                    />
+                  );
+                }
+
+                return (
+                  <span
+                    key={user.connectionId}
+                    className={`sb-tab-user-icon sb-tab-user-icon-animal${user.isSelf ? " sb-tab-user-icon-self" : ""}`}
+                    title={displayName}
+                    style={{
+                      borderColor: visual.color,
+                      backgroundColor: visual.color,
+                    }}
+                  >
+                    <span className="material-symbols-outlined">
+                      {visual.icon}
+                    </span>
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </button>
+
+      {isSelected && (
+        <button
+          type="button"
+          className={`sb-tab-bookmark-button${
+            isTabBookmarked ? " sb-tab-bookmark-button-active" : ""
+          }`}
+          aria-label={
+            isTabBookmarked
+              ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
+              : t("add-bookmark", { defaultValue: "Bookmark tab" })
+          }
+          title={
+            isTabBookmarked
+              ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
+              : t("add-bookmark", { defaultValue: "Bookmark tab" })
+          }
+          aria-pressed={isTabBookmarked}
+          onClick={(event: MouseEvent) => {
+            event.stopPropagation();
+            closeContextMenus();
+            closeLayoutMenu();
+            void bookmarks.toggleBookmarkForTab(tab);
+          }}
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill={isTabBookmarked ? "currentColor" : "none"}
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path
+              d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+      )}
+
+      <ContextMenuWithButton
+        onClick={() => {
+          closeLayoutMenu();
+        }}
+        anchorClassName="sb-tab-menu-anchor"
+        buttonClassName="sb-tab-menu-button"
+        menuClassName="sb-tab-menu"
+        iconClassName="sb-tab-more-icon"
+        aria-label={t("open-tab-menu", { defaultValue: "Open tab menu" })}
+        title={t("tab-options", { defaultValue: "Tab options" })}
+      >
+        {tab.sharedSession && (
+          <>
+            <ContextMenuItem
+              className="sb-tab-menu-item"
+              title={t("session-id", {
+                sessionId: tab.sharedSession.id,
+                defaultValue: `Session ID: ${tab.sharedSession.id}`,
+              })}
+              onClick={() => {
+                if (tab.sharedSession) {
+                  os.setClipboard(tab.sharedSession.id);
+                }
+              }}
+            >
+              {t("session-id_x", {
+                sessionId: tab.sharedSession.id,
+                defaultValue: `Session ID: ${tab.sharedSession.id}`,
+              })}
+            </ContextMenuItem>
+            {(() => {
+              const hostId = tab.sharedSession.options.value.hostUserId;
+              const selfIdentity = getSelfVisualKey(state);
+              const isHost =
+                hostId !== null &&
+                (state.login.userId.value === hostId ||
+                  selfIdentity === hostId);
+              if (!isHost) return null;
+              return (
+                <ContextMenuItem
+                  className="sb-tab-menu-item"
+                  onClick={() => {
+                    const session = tab.sharedSession;
+                    if (!session) return;
+                    const modalId = `session-settings-${session.id}`;
+                    state.modals.openModal({
+                      id: modalId,
+                      title: {
+                        key: "session-settings",
+                        defaultValue: "Session settings",
+                      },
+                      content: () => (
+                        <SessionSettingsModalContent
+                          state={state}
+                          session={session}
+                          onEndSession={() => {
+                            state.tabs.removeTab(tab.id);
+                          }}
+                          onClose={() => {
+                            state.modals.closeModal(modalId);
+                          }}
+                        />
+                      ),
+                    });
+                  }}
+                >
+                  {t("session-settings", { defaultValue: "Session settings" })}
+                </ContextMenuItem>
+              );
+            })()}
+          </>
+        )}
+        <ContextMenuItem
+          className="sb-tab-menu-item"
+          onClick={() => {
+            void bookmarks.toggleBookmarkForTab(tab);
+          }}
+        >
+          {isTabBookmarked
+            ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
+            : t("add-bookmark", { defaultValue: "Bookmark tab" })}
+        </ContextMenuItem>
+        <ContextMenuItem
+          className="sb-tab-menu-item"
+          onClick={() => {
+            state.tabs.removeTab(tab.id);
+          }}
+        >
+          {t("close", { defaultValue: "Close" })}
+        </ContextMenuItem>
+        {panelsEnabled && (
+          <>
+            <ContextMenuItem
+              onClick={() => {
+                app.openInNewPane(tab.id);
+              }}
+              className="sb-tab-menu-item"
+            >
+              {t("open-in-new-panel", { defaultValue: "Open in new panel" })}
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => {
+                app.openInDetachedPane(tab.id);
+              }}
+              className="sb-tab-menu-item"
+            >
+              {t("open-in-detached-panel", {
+                defaultValue: "Open in detached panel",
+              })}
+            </ContextMenuItem>
+          </>
+        )}
+      </ContextMenuWithButton>
+    </div>
+  );
+}
+
+interface BookmarksSectionProps {
+  state: SeedBibleState;
+  closeLayoutMenu: () => void;
+  panelsEnabled: boolean;
+}
+
+/**
+ * The pinned "bookmarks" view shown above the regular tab list when the
+ * bookmark toggle in the sidebar header is on. Renders each category as a
+ * collapsible folder containing the user's saved Bible locations. Below it,
+ * the normal tab list still renders unchanged — bookmarks and tabs coexist.
+ *
+ * Clicking a bookmark first tries to land on an open tab pointing at the
+ * same location; if none is open it creates a fresh tab and navigates it
+ * there. That keeps the open-tab count from ballooning when a user has the
+ * same chapter already loaded.
+ */
+function BookmarksSection(props: BookmarksSectionProps) {
+  const { state, closeLayoutMenu, panelsEnabled } = props;
+  const { app, bookmarks, tabs: tabsManager, bibleData } = state;
+  const selectedTabId = tabsManager.selectedTabId.value;
+  const openTabs = tabsManager.tabs.value;
+  const { t } = useI18n();
+
+  const categories = bookmarks.categories.value;
+  const allBookmarks = bookmarks.bookmarks.value;
+  const expanded = bookmarks.expandedCategories.value;
+  // Subscribe to the translation books cache so book-name lookups re-render
+  // when a previously unloaded translation finishes loading.
+  const translationBooksMap = bibleData.translationBooks.value;
+
+  const renamingCategory = useSignal<string | null>(null);
+  const renameValue = useSignal<string>("");
+  const creatingCategory = useSignal<boolean>(false);
+  const newCategoryValue = useSignal<string>("");
+
+  const lookupBookName = (
+    translationId: string,
+    bookId: string
+  ): string | null => {
+    const books = translationBooksMap.get(translationId)?.books;
+    return books?.find((b) => b.id === bookId)?.name ?? null;
+  };
+
+  const ensureTranslationBooks = (translationId: string) => {
+    if (translationBooksMap.has(translationId)) return;
+    // Fire and forget — the cache update will trigger re-render and replace
+    // the bookId fallback with the friendly book name.
+    void bibleData.getTranslationBooks(translationId).catch(() => {
+      // Network failures here just mean we keep showing the bookId; no need
+      // to bubble it up to the user from the sidebar.
+    });
+  };
+
+  const openBookmark = (
+    translationId: string,
+    bookId: string,
+    chapterNumber: number
+  ) => {
+    closeContextMenus();
+    closeLayoutMenu();
+    const existing = tabsManager.tabs.value.find(
+      (tab) =>
+        tab.readingState.translationId.value === translationId &&
+        tab.readingState.bookId.value === bookId &&
+        tab.readingState.chapterNumber.value === chapterNumber
+    );
+    if (existing) {
+      app.selectTab(existing.id);
+      return;
+    }
+    // Pass the bookmark location as the new tab's initial reading state so
+    // `loadInitialData()` lands directly on it. Calling `addTab()` and then
+    // `selectTranslationAndChapter()` would race the default GEN 1 load and
+    // sometimes lose, leaving the user on Genesis 1 instead of the bookmark.
+    tabsManager.addTab(undefined, {
+      initialTranslationId: translationId,
+      initialBookId: bookId,
+      initialChapterNumber: chapterNumber,
+    });
+  };
+
+  const commitRename = (oldName: string) => {
+    const next = renameValue.value.trim();
+    renamingCategory.value = null;
+    renameValue.value = "";
+    if (!next || next === oldName) return;
+    void bookmarks.renameCategory(oldName, next);
+  };
+
+  const commitCreate = () => {
+    const next = newCategoryValue.value.trim();
+    creatingCategory.value = false;
+    newCategoryValue.value = "";
+    if (!next) return;
+    void bookmarks.createCategory(next);
+  };
+
+  return (
+    <div className="sb-bookmarks-section">
+      {categories.map((category) => {
+        const items = allBookmarks.filter((b) => b.category === category.name);
+        const isExpanded = expanded.has(category.name);
+        const isRenaming = renamingCategory.value === category.name;
+
+        return (
+          <div key={category.name} className="sb-bookmark-category">
+            <div
+              className={`sb-bookmark-category-header${
+                isExpanded ? " sb-bookmark-category-header-expanded" : ""
+              }`}
+            >
+              <button
+                type="button"
+                className="sb-bookmark-category-toggle"
+                onClick={() => {
+                  if (isRenaming) return;
+                  bookmarks.toggleCategoryExpanded(category.name);
+                }}
+                aria-expanded={isExpanded}
+                aria-label={category.name}
+              >
+                <span className="sb-bookmark-category-icon" aria-hidden="true">
+                  <BookmarkIconGlyph />
+                </span>
+                {isRenaming ? (
+                  <input
+                    className="sb-bookmark-category-rename-input"
+                    autoFocus
+                    value={renameValue.value}
+                    onInput={(event: Event) => {
+                      const target = event.target as HTMLInputElement;
+                      renameValue.value = target.value;
+                    }}
+                    onKeyDown={(event: KeyboardEvent) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        commitRename(category.name);
+                      } else if (event.key === "Escape") {
+                        event.preventDefault();
+                        renamingCategory.value = null;
+                        renameValue.value = "";
+                      }
+                    }}
+                    onBlur={() => commitRename(category.name)}
+                    onClick={(event: MouseEvent) => event.stopPropagation()}
+                  />
+                ) : (
+                  <span className="sb-bookmark-category-name">
+                    {category.name}
+                  </span>
+                )}
+                <span
+                  className={`sb-bookmark-category-chevron${
+                    isExpanded ? " sb-bookmark-category-chevron-open" : ""
+                  }`}
+                  aria-hidden="true"
+                >
+                  <span className="material-symbols-outlined">expand_more</span>
+                </span>
+              </button>
+
+              <ContextMenuWithButton
+                anchorClassName="sb-bookmark-category-menu-anchor"
+                buttonClassName="sb-bookmark-category-menu-button"
+                menuClassName="sb-tab-menu"
+                iconClassName="sb-tab-more-icon"
+                aria-label={t("category-options", {
+                  defaultValue: "Folder options",
+                })}
+                title={t("category-options", {
+                  defaultValue: "Folder options",
+                })}
+              >
+                <ContextMenuItem
+                  className="sb-tab-menu-item"
+                  onClick={() => {
+                    renamingCategory.value = category.name;
+                    renameValue.value = category.name;
+                    closeContextMenus();
+                  }}
+                >
+                  {t("rename", { defaultValue: "Rename" })}
+                </ContextMenuItem>
+                {category.name !== DEFAULT_BOOKMARK_CATEGORY && (
+                  <ContextMenuItem
+                    className="sb-tab-menu-item"
+                    onClick={() => {
+                      void bookmarks.deleteCategory(category.name);
+                    }}
+                  >
+                    {t("delete", { defaultValue: "Delete" })}
+                  </ContextMenuItem>
+                )}
+              </ContextMenuWithButton>
+            </div>
+
+            {isExpanded && (
+              <div className="sb-bookmark-category-items">
+                {items.length === 0 ? (
+                  <div className="sb-bookmark-category-empty">
+                    {t("bookmark-folder-empty", {
+                      defaultValue: "No bookmarks here yet.",
+                    })}
+                  </div>
+                ) : (
+                  items.map((bookmark) => {
+                    // When a bookmarked location is also an open tab, the
+                    // bookmark IS that tab — render the full TabRow here so
+                    // selection state, the bookmark toggle, and the kebab
+                    // menu (Close, Open in new panel, …) all work the same
+                    // way as in the flat list. The corresponding entry is
+                    // filtered out of the flat list below the divider so
+                    // there's no duplication.
+                    const matchingTab = openTabs.find(
+                      (tab) =>
+                        tab.readingState.translationId.value ===
+                          bookmark.translationId &&
+                        tab.readingState.bookId.value === bookmark.bookId &&
+                        tab.readingState.chapterNumber.value ===
+                          bookmark.chapterNumber
+                    );
+                    if (matchingTab) {
+                      return (
+                        <TabRow
+                          key={matchingTab.id}
+                          state={state}
+                          tab={matchingTab}
+                          isSelected={matchingTab.id === selectedTabId}
+                          closeLayoutMenu={closeLayoutMenu}
+                          panelsEnabled={panelsEnabled}
+                        />
+                      );
+                    }
+                    // Persisted bookmark whose tab is no longer open — show
+                    // a compact entry; clicking it materializes a new tab
+                    // at the saved location.
+                    ensureTranslationBooks(bookmark.translationId);
+                    const bookName =
+                      lookupBookName(bookmark.translationId, bookmark.bookId) ??
+                      bookmark.bookId;
+                    return (
+                      <div
+                        key={bookmark.id}
+                        className="sb-bookmark-item"
+                        dir="auto"
+                      >
+                        <button
+                          type="button"
+                          className="sb-bookmark-item-button"
+                          onClick={() => {
+                            openBookmark(
+                              bookmark.translationId,
+                              bookmark.bookId,
+                              bookmark.chapterNumber
+                            );
+                          }}
+                        >
+                          <span className="sb-tab-main-title">
+                            {`${bookName} - ${bookmark.chapterNumber}`}
+                          </span>
+                          <span className="sb-tab-main-sep" aria-hidden="true">
+                            •
+                          </span>
+                          <span className="sb-tab-main-translation">
+                            {bookmark.translationId}
+                          </span>
+                        </button>
+                        <ContextMenuWithButton
+                          anchorClassName="sb-tab-menu-anchor"
+                          buttonClassName="sb-tab-menu-button"
+                          menuClassName="sb-tab-menu"
+                          iconClassName="sb-tab-more-icon"
+                          aria-label={t("bookmark-options", {
+                            defaultValue: "Bookmark options",
+                          })}
+                          title={t("bookmark-options", {
+                            defaultValue: "Bookmark options",
+                          })}
+                        >
+                          <ContextMenuItem
+                            className="sb-tab-menu-item"
+                            onClick={() => {
+                              void bookmarks.removeBookmark(bookmark.id);
+                            }}
+                          >
+                            {t("remove-bookmark", {
+                              defaultValue: "Remove bookmark",
+                            })}
+                          </ContextMenuItem>
+                        </ContextMenuWithButton>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {creatingCategory.value ? (
+        <div className="sb-bookmark-new-category">
+          <span className="sb-bookmark-category-icon" aria-hidden="true">
+            <BookmarkIconGlyph />
+          </span>
+          <input
+            className="sb-bookmark-category-rename-input"
+            autoFocus
+            placeholder={t("new-folder-placeholder", {
+              defaultValue: "Folder name",
+            })}
+            value={newCategoryValue.value}
+            onInput={(event: Event) => {
+              const target = event.target as HTMLInputElement;
+              newCategoryValue.value = target.value;
+            }}
+            onKeyDown={(event: KeyboardEvent) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                commitCreate();
+              } else if (event.key === "Escape") {
+                event.preventDefault();
+                creatingCategory.value = false;
+                newCategoryValue.value = "";
+              }
+            }}
+            onBlur={commitCreate}
+          />
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="sb-bookmark-new-category-button"
+          onClick={() => {
+            creatingCategory.value = true;
+            newCategoryValue.value = "";
+          }}
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            add
+          </span>
+          <span>{t("new-folder", { defaultValue: "New folder" })}</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function Tabs(props: TabsProps) {
   const { state, closeLayoutMenu, effectivelyCollapsed } = props;
   const { app, tabs: tabsManager, bookmarks } = state;
-  const allTabs = tabsManager.tabs.value;
+  const tabs = tabsManager.tabs.value;
   const selectedTabId = tabsManager.selectedTabId.value;
   const panelsEnabled = app.panelsEnabled.value;
   const isBookmarkFilterActive = bookmarks.isFilterActive.value;
-  const tabs = isBookmarkFilterActive
-    ? allTabs.filter((tab) =>
-        bookmarks.isLocationBookmarked(
-          tab.readingState.translationId.value,
-          tab.readingState.bookId.value,
-          tab.readingState.chapterNumber.value
-        )
-      )
-    : allTabs;
   const { t } = useI18n();
 
   if (effectivelyCollapsed) {
@@ -613,10 +1261,8 @@ export function Tabs(props: TabsProps) {
             aria-pressed={isBookmarkFilterActive}
             title={
               isBookmarkFilterActive
-                ? t("show-all-tabs", { defaultValue: "Show all tabs" })
-                : t("show-bookmarked-tabs", {
-                    defaultValue: "Show bookmarked tabs",
-                  })
+                ? t("hide-bookmarks", { defaultValue: "Hide bookmarks" })
+                : t("show-bookmarks", { defaultValue: "Show bookmarks" })
             }
             onClick={() => {
               bookmarks.toggleFilter();
@@ -664,299 +1310,41 @@ export function Tabs(props: TabsProps) {
       <SidebarSearch state={state} closeLayoutMenu={closeLayoutMenu} />
 
       <div className="sb-sidebar-tab-list">
-        {isBookmarkFilterActive && tabs.length === 0 && (
-          <div className="sb-sidebar-tab-list-empty">
-            {allTabs.length === 0
-              ? t("no-tabs-open", { defaultValue: "No tabs open." })
-              : t("no-bookmarked-tabs", {
-                  defaultValue:
-                    "No bookmarked tabs. Tap the bookmark icon on a tab to save its location.",
-                })}
-          </div>
+        {isBookmarkFilterActive && (
+          <>
+            <BookmarksSection
+              state={state}
+              closeLayoutMenu={closeLayoutMenu}
+              panelsEnabled={panelsEnabled}
+            />
+            <div className="sb-sidebar-tabs-divider" role="separator" />
+          </>
         )}
-        {tabs.map((tab) => {
-          const isSelected = tab.id === selectedTabId;
-          const currentBookId = tab.readingState.bookId.value;
-          const currentBookName =
-            tab.readingState.translationBooks.value?.books.find(
-              (book) => book.id === currentBookId
-            )?.name ??
-            currentBookId ??
-            "-";
-          const currentChapter = tab.readingState.chapterNumber.value;
-          const currentTranslation =
-            tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
-          const title = tab.sharedSession
-            ? t("shared-tab_title", {
-                book: currentBookName,
-                defaultValue: "Shared",
-              })
-            : currentBookName;
-          const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
-          const isTabBookmarked = bookmarks.isLocationBookmarked(
-            tab.readingState.translationId.value,
-            tab.readingState.bookId.value,
-            tab.readingState.chapterNumber.value
-          );
-
-          return (
-            <div
-              key={tab.id}
-              className={`sb-tab-row${isSelected ? " sb-tab-row-selected" : ""}${
-                isTabBookmarked ? " sb-tab-row-bookmarked" : ""
-              }`}
-              dir={tab.readingState.translation.value?.textDirection ?? "auto"}
-            >
-              <button
-                onClick={() => {
-                  closeContextMenus();
-                  closeLayoutMenu();
-                  app.selectTab(tab.id);
-                }}
-                className={`sb-tab-button`}
-              >
-                <div className="sb-tab-main-content">
-                  <span className="sb-tab-main-title">
-                    {`${title} - ${currentChapter}`}
-                  </span>
-                  <span className="sb-tab-main-sep" aria-hidden="true">
-                    •
-                  </span>
-                  <span className="sb-tab-main-translation">
-                    {currentTranslation}
-                  </span>
-                </div>
-
-                {tab.sharedSession && connectedUsers.length > 0 && (
-                  <div className="sb-tab-users-section">
-                    <div className="sb-tab-users-list">
-                      {connectedUsers.map((user) => {
-                        // For the local user, read identity from live login
-                        // state so the avatar (picture + animal/color)
-                        // updates on login/logout mid-session and stays in
-                        // sync with the sidebar self-avatar. The
-                        // connection-level userId/connectionId on `user`
-                        // stay untouched so the host auto-close detection
-                        // (which compares against the original hostUserId)
-                        // keeps working.
-                        const effectiveProfile = user.isSelf
-                          ? state.login.profile.value
-                          : user.profile;
-                        const imageUrl = getUserImageUrl(effectiveProfile);
-                        const displayName = user.isSelf
-                          ? getSelfDisplayName(state)
-                          : getUserDisplayName(user);
-                        // Every user has a single, stable visual derived
-                        // purely from their identity key. That guarantees
-                        // a user's color/icon on the tab row matches the
-                        // color/icon on their own sidebar avatar and on
-                        // every other client that sees them.
-                        const visualKey = user.isSelf
-                          ? getSelfVisualKey(state)
-                          : getConnectedUserVisualKey(user);
-                        const visual = getUserAnimalVisual(visualKey);
-
-                        if (imageUrl) {
-                          return (
-                            <span
-                              key={user.connectionId}
-                              className={`sb-tab-user-icon sb-tab-user-icon-has-image${user.isSelf ? " sb-tab-user-icon-self" : ""}`}
-                              title={displayName}
-                              style={{
-                                borderColor: visual.color,
-                                backgroundImage: `url(${imageUrl})`,
-                              }}
-                            />
-                          );
-                        }
-
-                        return (
-                          <span
-                            key={user.connectionId}
-                            className={`sb-tab-user-icon sb-tab-user-icon-animal${user.isSelf ? " sb-tab-user-icon-self" : ""}`}
-                            title={displayName}
-                            style={{
-                              borderColor: visual.color,
-                              backgroundColor: visual.color,
-                            }}
-                          >
-                            <span className="material-symbols-outlined">
-                              {visual.icon}
-                            </span>
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </button>
-
-              <button
-                type="button"
-                className={`sb-tab-bookmark-button${
-                  isTabBookmarked ? " sb-tab-bookmark-button-active" : ""
-                }`}
-                aria-label={
-                  isTabBookmarked
-                    ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
-                    : t("add-bookmark", { defaultValue: "Bookmark tab" })
-                }
-                title={
-                  isTabBookmarked
-                    ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
-                    : t("add-bookmark", { defaultValue: "Bookmark tab" })
-                }
-                aria-pressed={isTabBookmarked}
-                onClick={(event: MouseEvent) => {
-                  event.stopPropagation();
-                  closeContextMenus();
-                  closeLayoutMenu();
-                  void bookmarks.toggleBookmarkForTab(tab);
-                }}
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill={isTabBookmarked ? "currentColor" : "none"}
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </button>
-
-              <ContextMenuWithButton
-                onClick={() => {
-                  closeLayoutMenu();
-                }}
-                anchorClassName="sb-tab-menu-anchor"
-                buttonClassName="sb-tab-menu-button"
-                menuClassName="sb-tab-menu"
-                iconClassName="sb-tab-more-icon"
-                aria-label={t("open-tab-menu", {
-                  defaultValue: "Open tab menu",
-                })}
-                title={t("tab-options", { defaultValue: "Tab options" })}
-              >
-                {tab.sharedSession && (
-                  <>
-                    <ContextMenuItem
-                      className="sb-tab-menu-item"
-                      title={t("session-id", {
-                        sessionId: tab.sharedSession.id,
-                        defaultValue: `Session ID: ${tab.sharedSession.id}`,
-                      })}
-                      onClick={() => {
-                        if (tab.sharedSession) {
-                          os.setClipboard(tab.sharedSession.id);
-                        }
-                      }}
-                    >
-                      {t("session-id_x", {
-                        sessionId: tab.sharedSession.id,
-                        defaultValue: `Session ID: ${tab.sharedSession.id}`,
-                      })}
-                    </ContextMenuItem>
-                    {(() => {
-                      // Only the session host sees the settings entry.
-                      const hostId = tab.sharedSession.options.value.hostUserId;
-                      const selfIdentity = getSelfVisualKey(state);
-                      const isHost =
-                        hostId !== null &&
-                        (state.login.userId.value === hostId ||
-                          selfIdentity === hostId);
-                      if (!isHost) return null;
-                      return (
-                        <ContextMenuItem
-                          className="sb-tab-menu-item"
-                          onClick={() => {
-                            const session = tab.sharedSession;
-                            if (!session) return;
-                            const modalId = `session-settings-${session.id}`;
-                            state.modals.openModal({
-                              id: modalId,
-                              title: {
-                                key: "session-settings",
-                                defaultValue: "Session settings",
-                              },
-                              content: () => (
-                                <SessionSettingsModalContent
-                                  state={state}
-                                  session={session}
-                                  onEndSession={() => {
-                                    state.tabs.removeTab(tab.id);
-                                  }}
-                                  onClose={() => {
-                                    state.modals.closeModal(modalId);
-                                  }}
-                                />
-                              ),
-                            });
-                          }}
-                        >
-                          {t("session-settings", {
-                            defaultValue: "Session settings",
-                          })}
-                        </ContextMenuItem>
-                      );
-                    })()}
-                  </>
-                )}
-                <ContextMenuItem
-                  className="sb-tab-menu-item"
-                  onClick={() => {
-                    void bookmarks.toggleBookmarkForTab(tab);
-                  }}
-                >
-                  {isTabBookmarked
-                    ? t("remove-bookmark", {
-                        defaultValue: "Remove bookmark",
-                      })
-                    : t("add-bookmark", { defaultValue: "Bookmark tab" })}
-                </ContextMenuItem>
-                <ContextMenuItem
-                  className="sb-tab-menu-item"
-                  onClick={() => {
-                    state.tabs.removeTab(tab.id);
-                  }}
-                >
-                  {t("close", { defaultValue: "Close" })}
-                </ContextMenuItem>
-                {panelsEnabled && (
-                  <>
-                    <ContextMenuItem
-                      onClick={() => {
-                        app.openInNewPane(tab.id);
-                      }}
-                      className="sb-tab-menu-item"
-                    >
-                      {t("open-in-new-panel", {
-                        defaultValue: "Open in new panel",
-                      })}
-                    </ContextMenuItem>
-                    <ContextMenuItem
-                      onClick={() => {
-                        app.openInDetachedPane(tab.id);
-                      }}
-                      className="sb-tab-menu-item"
-                    >
-                      {t("open-in-detached-panel", {
-                        defaultValue: "Open in detached panel",
-                      })}
-                    </ContextMenuItem>
-                  </>
-                )}
-              </ContextMenuWithButton>
-            </div>
-          );
-        })}
+        {tabs
+          .filter((tab) => {
+            // When the bookmarks view is on, bookmarked tabs are rendered
+            // inside their folder above the divider. Hide them here so the
+            // same tab doesn't show twice.
+            if (!isBookmarkFilterActive) return true;
+            return !bookmarks.isLocationBookmarked(
+              tab.readingState.translationId.value,
+              tab.readingState.bookId.value,
+              tab.readingState.chapterNumber.value
+            );
+          })
+          .map((tab) => {
+            const isSelected = tab.id === selectedTabId;
+            return (
+              <TabRow
+                key={tab.id}
+                state={state}
+                tab={tab}
+                isSelected={isSelected}
+                closeLayoutMenu={closeLayoutMenu}
+                panelsEnabled={panelsEnabled}
+              />
+            );
+          })}
       </div>
 
       <button
