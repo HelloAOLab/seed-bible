@@ -22,7 +22,6 @@ import { ScriptureMap2DModes } from "scriptureMap2D.models.scriptureMap";
 import { getCustomStyles } from "../styles/adapter";
 import type { BibleVizAPI } from "bibleVizUtils.infrastructure.models.seedBible";
 import { addTranslations, useI18n } from "seed-bible.i18n.I18nManager";
-// import { translations } from "../config/translations";
 import { translations } from "scriptureMap2D.config.translations.index";
 import type { ScriptureMap2DEvents } from "../models/events";
 
