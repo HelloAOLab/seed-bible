@@ -408,9 +408,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const openSelectorTool = useComputed(
     () => tools.value.find((tool) => tool.id === "open-selector") ?? null
   );
-  const openSidebarTool = useComputed(
-    () => tools.value.find((tool) => tool.id === "open-sidebar") ?? null
-  );
 
   const floatingAnchor = useComputed(() =>
     readingState.value!.selectedVerses.value.reduce<{

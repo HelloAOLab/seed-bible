@@ -5681,8 +5681,8 @@ h6 {
 
 .sb-account-picture-preview,
 .sb-account-picture-placeholder {
-  width: 62px !important;
-  height: 62px !important;
+  width: 62px;
+  height: 62px;
   border-radius: 999px;
   flex-shrink: 0;
 }
