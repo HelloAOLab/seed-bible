@@ -259,11 +259,10 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
     }, 180);
   };
 
-  const openSearchResult = async (result: SearchResult) => {
-    closeContextMenus();
-    sidebar.closeSearchPanel();
-
-    const targetTab = getOrCreateSearchTargetTab(state);
+  const navigateTabToResult = async (
+    targetTab: ReaderTab,
+    result: SearchResult
+  ) => {
     await targetTab.readingState.selectTranslationAndChapter(
       result.translationId,
       result.bookId,
@@ -283,6 +282,27 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
         }
       );
     }
+  };
+
+  const openSearchResult = async (result: SearchResult) => {
+    closeContextMenus();
+    sidebar.closeSearchPanel();
+
+    const targetTab = getOrCreateSearchTargetTab(state);
+    await navigateTabToResult(targetTab, result);
+  };
+
+  const openSearchResultInNewTab = async (result: SearchResult) => {
+    closeContextMenus();
+    sidebar.closeSearchPanel();
+
+    const targetTab = state.tabs.addTab(undefined, {
+      initialTranslationId: result.translationId,
+      initialBookId: result.bookId,
+      initialChapterNumber: result.chapterNumber,
+    });
+    state.panes.setSelectedPaneTab(targetTab.id);
+    await navigateTabToResult(targetTab, result);
   };
 
   const moveHighlightedResult = (direction: 1 | -1) => {
@@ -414,28 +434,22 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
                         title={t("add", { defaultValue: "Add" })}
                         onClick={(event: MouseEvent) => {
                           event.stopPropagation();
-                          // Placeholder action — wire up when behavior is defined.
+                          void openSearchResultInNewTab(result);
                         }}
                         onKeyDown={(event: KeyboardEvent) => {
                           if (event.key === "Enter" || event.key === " ") {
                             event.preventDefault();
                             event.stopPropagation();
+                            void openSearchResultInNewTab(result);
                           }
                         }}
                       >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
+                        <span
+                          className="material-symbols-outlined"
                           aria-hidden="true"
                         >
-                          <path
-                            d="M3 14C2.73333 14 2.5 13.9 2.3 13.7C2.1 13.5 2 13.2667 2 13V3C2 2.73333 2.1 2.5 2.3 2.3C2.5 2.1 2.73333 2 3 2H13C13.2667 2 13.5 2.1 13.7 2.3C13.9 2.5 14 2.73333 14 3V8.93333C14 9.07777 13.9518 9.19443 13.8553 9.28333C13.759 9.37223 13.6396 9.41667 13.497 9.41667C13.3546 9.41667 13.2361 9.36873 13.1417 9.27283C13.0472 9.17707 13 9.05833 13 8.91667V3H3V13H8.93333C9.075 13 9.19377 13.0482 9.28967 13.1447C9.38543 13.241 9.43333 13.3604 9.43333 13.503C9.43333 13.6454 9.38543 13.7639 9.28967 13.8583C9.19377 13.9528 9.075 14 8.93333 14H3ZM12.2667 13.55V11.0333C12.2667 10.8917 12.3149 10.7729 12.4113 10.6772C12.5077 10.5813 12.6271 10.5333 12.7697 10.5333C12.9121 10.5333 13.0306 10.5813 13.125 10.6772C13.2194 10.7729 13.2667 10.8917 13.2667 11.0333V13.55L14.15 12.6833C14.25 12.5944 14.3667 12.5472 14.5 12.5417C14.6333 12.5361 14.75 12.5833 14.85 12.6833C14.95 12.7833 15 12.9 15 13.0333C15 13.1667 14.95 13.2833 14.85 13.3833L13.1167 15.1167C13.0167 15.2167 12.9 15.2667 12.7667 15.2667C12.6333 15.2667 12.5167 15.2167 12.4167 15.1167L10.6833 13.3833C10.5833 13.2833 10.5333 13.1667 10.5333 13.0333C10.5333 12.9 10.5833 12.7833 10.6833 12.6833C10.7833 12.5833 10.9 12.5361 11.0333 12.5417C11.1667 12.5472 11.2833 12.5944 11.3833 12.6833L12.2667 13.55ZM7.5 8.5V10.8333C7.5 10.975 7.54823 11.0937 7.64467 11.1895C7.741 11.2854 7.86043 11.3333 8.003 11.3333C8.14543 11.3333 8.2639 11.2854 8.35833 11.1895C8.45277 11.0937 8.5 10.975 8.5 10.8333V8.5H10.8333C10.975 8.5 11.0938 8.45177 11.1897 8.35533C11.2854 8.259 11.3333 8.13957 11.3333 7.997C11.3333 7.85457 11.2854 7.7361 11.1897 7.64167C11.0938 7.54723 10.975 7.5 10.8333 7.5H8.5V5.16667C8.5 5.025 8.45177 4.90623 8.35533 4.81033C8.259 4.71457 8.13957 4.66667 7.997 4.66667C7.85457 4.66667 7.7361 4.71457 7.64167 4.81033C7.54723 4.90623 7.5 5.025 7.5 5.16667V7.5H5.16667C5.025 7.5 4.90627 7.54823 4.8105 7.64467C4.7146 7.741 4.66667 7.86043 4.66667 8.003C4.66667 8.14543 4.7146 8.2639 4.8105 8.35833C4.90627 8.45277 5.025 8.5 5.16667 8.5H7.5Z"
-                            fill="currentColor"
-                          />
-                        </svg>
+                          open_in_new
+                        </span>
                       </span>
                     </header>
                     <p className="sb-floating-search-result-text">

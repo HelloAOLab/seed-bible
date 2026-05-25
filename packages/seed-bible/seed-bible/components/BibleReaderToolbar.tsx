@@ -76,12 +76,12 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
     iconName: string;
     onClick: () => void;
   }> = [
-    {
-      id: "ask",
-      label: t("ask", { defaultValue: "Ask" }),
-      iconName: "auto_awesome",
-      onClick: onClose,
-    },
+    // {
+    //   id: "ask",
+    //   label: t("ask", { defaultValue: "Ask" }),
+    //   iconName: "auto_awesome",
+    //   onClick: onClose,
+    // },
     {
       id: "discovery",
       label: t("discovery", { defaultValue: "Discovery" }),
@@ -115,7 +115,7 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
           <span className="sb-mobile-more-menu-label">{item.label}</span>
         </button>
       ))}
-      <div className="sb-mobile-more-menu-item sb-mobile-more-menu-social">
+      {/* <div className="sb-mobile-more-menu-item sb-mobile-more-menu-social">
         <span
           className="sb-mobile-more-menu-icon sb-mobile-more-menu-social-avatar"
           aria-hidden="true"
@@ -137,7 +137,7 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
         >
           <span className="sb-mobile-more-menu-toggle-thumb" />
         </button>
-      </div>
+      </div> */}
     </div>
   );
 }
@@ -599,6 +599,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           dir={readingState.value?.translation.value?.textDirection ?? "auto"}
         >
           {isSmallScreen.value &&
+            !sidebar.isSearchPanelOpen.value &&
             settings.settings.value.showNavArrows &&
             previousChapterTool.value && (
               <button
@@ -612,6 +613,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             )}
 
           {isSmallScreen.value &&
+            !sidebar.isSearchPanelOpen.value &&
             settings.settings.value.showNavArrows &&
             nextChapterTool.value && (
               <button

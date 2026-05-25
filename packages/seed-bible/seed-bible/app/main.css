@@ -6903,8 +6903,9 @@ h6 {
 }
 
 @media (max-width: 768px) {
-  /* Search becomes a full-screen view on mobile with input at the top and
-     scrollable results below. Leaves room at the bottom for the 5-tab bar. */
+  /* Search becomes a full-screen view on mobile with scrollable results above
+     and the input pinned at the bottom. Leaves room at the bottom for the
+     5-tab bar. */
   .sb-floating-search-panel {
     left: 0;
     right: 0;
@@ -6924,7 +6925,7 @@ h6 {
   }
 
   .sb-floating-search-panel .sb-floating-search-input-wrap {
-    order: -1;
+    margin-top: auto;
   }
 
   /* No hover on touch — keep the action icon visible on each card. */
