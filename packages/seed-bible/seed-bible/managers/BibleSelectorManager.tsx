@@ -316,7 +316,6 @@ export function createBibleSelectorState(
     options?: BibleSelectorSetOpenOptions
   ) => {
     if (open) {
-      console.log("Opening Bible selector with pane:", nextPane, options);
       if (nextPane) {
         pane.value = nextPane;
       }
