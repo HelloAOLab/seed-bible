@@ -299,6 +299,15 @@ function SessionSettingsModalContent(props: {
         />
       </div>
 
+      <div className="sb-session-settings-row">
+        <span className="sb-session-settings-label">
+          {t("session-id_x", {
+            sessionId: session.id,
+            defaultValue: "Session ID: {{sessionId}}",
+          })}
+        </span>
+      </div>
+
       <div className="sb-session-settings-duration">
         <div className="sb-session-settings-duration-title">
           {t("session-settings-highlight-duration", {
@@ -702,19 +711,28 @@ function TabRow(props: TabRowProps) {
           <>
             <ContextMenuItem
               className="sb-tab-menu-item"
-              title={t("session-id", {
-                sessionId: tab.sharedSession.id,
-                defaultValue: `Session ID: ${tab.sharedSession.id}`,
+              title={t("share-session", {
+                defaultValue: `Share session`,
               })}
               onClick={() => {
                 if (tab.sharedSession) {
-                  os.setClipboard(tab.sharedSession.id);
+                  const url = new URL(configBot.tags.url);
+                  const pattern = url.searchParams.get("pattern");
+                  url.search = "";
+                  url.searchParams.set("sessionId", tab.sharedSession.id);
+                  if (pattern) {
+                    url.searchParams.set("pattern", pattern);
+                  }
+
+                  os.share({
+                    title: configBot.tags.title,
+                    url: url.href,
+                  });
                 }
               }}
             >
-              {t("session-id_x", {
-                sessionId: tab.sharedSession.id,
-                defaultValue: `Session ID: ${tab.sharedSession.id}`,
+              {t("share-session", {
+                defaultValue: `Share session`,
               })}
             </ContextMenuItem>
             {(() => {
