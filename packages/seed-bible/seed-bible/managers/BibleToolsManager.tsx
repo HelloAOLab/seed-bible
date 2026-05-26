@@ -29,7 +29,11 @@ export type TranslatableTitle =
 export interface BibleTool<TContext> {
   /** Stable tool identifier used for registration/replacement. */
   id: string;
-  /** Sorting priority. Lower values render first. */
+  /**
+   * Sorting priority. Lower values render first.
+   *
+   * For extensions, this should be between 200 and 999 to appear after default tools, but before the previous chapter button.
+   */
   priority: ToolPriority<TContext>;
   /** Localized or plain-text tool title. */
   title: TranslatableTitle;

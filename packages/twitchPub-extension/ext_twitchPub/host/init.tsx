@@ -35,7 +35,7 @@ registerExtension({
           thisBot.closeInterface();
         }
       },
-      priority: 100,
+      priority: 950,
     });
 
     yield effect(() => {
