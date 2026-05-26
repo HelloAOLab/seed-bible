@@ -227,6 +227,27 @@ describe("createSeedBibleState", () => {
     );
   });
 
+  it("createSharedSession() captures a create_session posthog event", async () => {
+    const mockPosthogCapture = jest.fn();
+    (globalThis as any).posthog = {
+      capture: mockPosthogCapture,
+    };
+
+    try {
+      const state = await createState();
+      const session = createMockSharedSession("session-create-event");
+      mockSessionsManager.createSession.mockResolvedValue(session);
+
+      await state.app.createSharedSession();
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("create_session", {
+        sessionId: "session-create-event",
+      });
+    } finally {
+      delete (globalThis as any).posthog;
+    }
+  });
+
   it("joinSharedSession(id) joins a shared session and adds a tab for its reading state", async () => {
     const state = await createStateWithTwoTabs();
     const previousTabCount = state.tabs.tabs.value.length;
@@ -263,6 +284,27 @@ describe("createSeedBibleState", () => {
     expect(state.tabs.selectedTabId.value).toBe(
       state.tabs.tabs.value[previousTabCount]?.id
     );
+  });
+
+  it("joinSharedSession(id) captures a join_session posthog event", async () => {
+    const mockPosthogCapture = jest.fn();
+    (globalThis as any).posthog = {
+      capture: mockPosthogCapture,
+    };
+
+    try {
+      const state = await createStateWithTwoTabs();
+      const session = createMockSharedSession("session-join-event");
+      mockSessionsManager.joinSession.mockResolvedValue(session);
+
+      await state.app.joinSharedSession("group-abc");
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("join_session", {
+        sessionId: "session-join-event",
+      });
+    } finally {
+      delete (globalThis as any).posthog;
+    }
   });
 
   it("does not auto-join a shared session when sessionId is missing from URL tags", async () => {
