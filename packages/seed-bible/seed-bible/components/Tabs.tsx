@@ -644,7 +644,7 @@ function TabRow(props: TabRowProps) {
         )}
       </button>
 
-      {isSelected && (
+      {isSelected && !tab.sharedSession && (
         <button
           type="button"
           className={`sb-tab-bookmark-button${
@@ -759,16 +759,18 @@ function TabRow(props: TabRowProps) {
             })()}
           </>
         )}
-        <ContextMenuItem
-          className="sb-tab-menu-item"
-          onClick={() => {
-            void bookmarks.toggleBookmarkForTab(tab);
-          }}
-        >
-          {isTabBookmarked
-            ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
-            : t("add-bookmark", { defaultValue: "Bookmark tab" })}
-        </ContextMenuItem>
+        {!tab.sharedSession && (
+          <ContextMenuItem
+            className="sb-tab-menu-item"
+            onClick={() => {
+              void bookmarks.toggleBookmarkForTab(tab);
+            }}
+          >
+            {isTabBookmarked
+              ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
+              : t("add-bookmark", { defaultValue: "Bookmark tab" })}
+          </ContextMenuItem>
+        )}
         <ContextMenuItem
           className="sb-tab-menu-item"
           onClick={() => {
