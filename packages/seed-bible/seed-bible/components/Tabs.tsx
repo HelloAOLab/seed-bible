@@ -555,6 +555,7 @@ function TabRow(props: TabRowProps) {
   const { state, tab, isSelected, closeLayoutMenu, panelsEnabled } = props;
   const { app, bookmarks } = state;
   const { t } = useI18n();
+  const bookmarksEnabled = bookmarks.enabled.value;
 
   const currentBookId = tab.readingState.bookId.value;
   const currentBookName =
@@ -573,11 +574,13 @@ function TabRow(props: TabRowProps) {
       })
     : currentBookName;
   const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
-  const isTabBookmarked = bookmarks.isLocationBookmarked(
-    tab.readingState.translationId.value,
-    tab.readingState.bookId.value,
-    tab.readingState.chapterNumber.value
-  );
+  const isTabBookmarked = bookmarksEnabled
+    ? bookmarks.isLocationBookmarked(
+        tab.readingState.translationId.value,
+        tab.readingState.bookId.value,
+        tab.readingState.chapterNumber.value
+      )
+    : false;
 
   return (
     <div
@@ -653,7 +656,7 @@ function TabRow(props: TabRowProps) {
         )}
       </button>
 
-      {isSelected && !tab.sharedSession && (
+      {bookmarksEnabled && isSelected && !tab.sharedSession && (
         <button
           type="button"
           className={`sb-tab-bookmark-button${
@@ -847,6 +850,10 @@ function BookmarksSection(props: BookmarksSectionProps) {
   const selectedTabId = tabsManager.selectedTabId.value;
   const openTabs = tabsManager.tabs.value;
   const { t } = useI18n();
+
+  if (!bookmarks.enabled.value) {
+    return null;
+  }
 
   const categories = bookmarks.categories.value;
   const allBookmarks = bookmarks.bookmarks.value;
@@ -1179,7 +1186,9 @@ export function Tabs(props: TabsProps) {
   const tabs = tabsManager.tabs.value;
   const selectedTabId = tabsManager.selectedTabId.value;
   const panelsEnabled = app.panelsEnabled.value;
-  const isBookmarkFilterActive = bookmarks.isFilterActive.value;
+  const bookmarksEnabled = bookmarks.enabled.value;
+  const isBookmarkFilterActive =
+    bookmarksEnabled && bookmarks.isFilterActive.value;
   const { t } = useI18n();
 
   if (effectivelyCollapsed) {
@@ -1270,41 +1279,43 @@ export function Tabs(props: TabsProps) {
             </svg>
           </button>
 
-          <button
-            type="button"
-            className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
-              isBookmarkFilterActive
-                ? " sb-sidebar-tabs-header-bookmarks-button-active"
-                : ""
-            }`}
-            aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
-            aria-pressed={isBookmarkFilterActive}
-            title={
-              isBookmarkFilterActive
-                ? t("hide-bookmarks", { defaultValue: "Hide bookmarks" })
-                : t("show-bookmarks", { defaultValue: "Show bookmarks" })
-            }
-            onClick={() => {
-              bookmarks.toggleFilter();
-            }}
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill={isBookmarkFilterActive ? "currentColor" : "none"}
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
+          {bookmarksEnabled && (
+            <button
+              type="button"
+              className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
+                isBookmarkFilterActive
+                  ? " sb-sidebar-tabs-header-bookmarks-button-active"
+                  : ""
+              }`}
+              aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
+              aria-pressed={isBookmarkFilterActive}
+              title={
+                isBookmarkFilterActive
+                  ? t("hide-bookmarks", { defaultValue: "Hide bookmarks" })
+                  : t("show-bookmarks", { defaultValue: "Show bookmarks" })
+              }
+              onClick={() => {
+                bookmarks.toggleFilter();
+              }}
             >
-              <path
-                d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill={isBookmarkFilterActive ? "currentColor" : "none"}
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          )}
           <button
             type="button"
             className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-close-button"
