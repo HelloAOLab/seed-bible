@@ -173,6 +173,16 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
       }, 60);
       return () => window.clearTimeout(id);
     }
+    if (debounceTimeoutRef.current !== null) {
+      window.clearTimeout(debounceTimeoutRef.current);
+      debounceTimeoutRef.current = null;
+    }
+    latestRequestRef.current++;
+    searchQuery.value = "";
+    searchResults.value = [];
+    searchLoading.value = false;
+    searchError.value = null;
+    highlightedResultIndex.value = -1;
     return undefined;
   }, [isOpen]);
 
