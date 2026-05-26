@@ -971,11 +971,275 @@
       "ext_Example.onInstJoined": [
         "./packages/seed-bible-refresh-example-extension/ext_Example/onInstJoined.tsx"
       ],
+      "tabernacle.application.ports.in.experience": [
+        "./packages/Tabernacle/tabernacle/application/ports/in/experience.tsx"
+      ],
+      "tabernacle.application.ports.in.piecesSequence": [
+        "./packages/Tabernacle/tabernacle/application/ports/in/piecesSequence.tsx"
+      ],
+      "tabernacle.application.ports.in.scriptureInteraction": [
+        "./packages/Tabernacle/tabernacle/application/ports/in/scriptureInteraction.tsx"
+      ],
+      "tabernacle.application.ports.out.experience": [
+        "./packages/Tabernacle/tabernacle/application/ports/out/experience.tsx"
+      ],
+      "tabernacle.application.services.botAdapter": [
+        "./packages/Tabernacle/tabernacle/application/services/botAdapter.tsx"
+      ],
+      "tabernacle.application.services.ExperienceService": [
+        "./packages/Tabernacle/tabernacle/application/services/ExperienceService.tsx"
+      ],
+      "tabernacle.application.services.ScriptureInteractionService": [
+        "./packages/Tabernacle/tabernacle/application/services/ScriptureInteractionService.tsx"
+      ],
+      "tabernacle.application.services.TabernacleService": [
+        "./packages/Tabernacle/tabernacle/application/services/TabernacleService.tsx"
+      ],
+      "tabernacle.domain.functions.botAdapter": [
+        "./packages/Tabernacle/tabernacle/domain/functions/botAdapter.tsx"
+      ],
+      "tabernacle.domain.functions.scripture": [
+        "./packages/Tabernacle/tabernacle/domain/functions/scripture.tsx"
+      ],
+      "tabernacle.domain.models.botAdapter": [
+        "./packages/Tabernacle/tabernacle/domain/models/botAdapter.tsx"
+      ],
+      "tabernacle.domain.models.meshState": [
+        "./packages/Tabernacle/tabernacle/domain/models/meshState.tsx"
+      ],
+      "tabernacle.domain.models.piece": [
+        "./packages/Tabernacle/tabernacle/domain/models/piece.tsx"
+      ],
+      "tabernacle.domain.models.scripture": [
+        "./packages/Tabernacle/tabernacle/domain/models/scripture.tsx"
+      ],
+      "tabernacle.domain.ports.botAdapter": [
+        "./packages/Tabernacle/tabernacle/domain/ports/botAdapter.tsx"
+      ],
+      "tabernacle.domain.ports.pieceConfig": [
+        "./packages/Tabernacle/tabernacle/domain/ports/pieceConfig.tsx"
+      ],
+      "tabernacle.domain.ports.readingState": [
+        "./packages/Tabernacle/tabernacle/domain/ports/readingState.tsx"
+      ],
+      "tabernacle.domain.ports.scriptureData": [
+        "./packages/Tabernacle/tabernacle/domain/ports/scriptureData.tsx"
+      ],
+      "tabernacle.domain.ports.visualizer": [
+        "./packages/Tabernacle/tabernacle/domain/ports/visualizer.tsx"
+      ],
+      "tabernacle.infrastructure.adapters.casualos.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/adapters/casualos/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.adapters.casualos.ReadingStateAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/adapters/casualos/ReadingStateAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.adapters.casualos.TabernacleVisualizerAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/adapters/casualos/TabernacleVisualizerAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.config.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/config/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.config.PiecesConfigProvider": [
+        "./packages/Tabernacle/tabernacle/infrastructure/config/PiecesConfigProvider.tsx"
+      ],
+      "tabernacle.infrastructure.config.ScriptureDataConfigProvider": [
+        "./packages/Tabernacle/tabernacle/infrastructure/config/ScriptureDataConfigProvider.tsx"
+      ],
+      "tabernacle.infrastructure.controllers.scripture.ScriptureInteractionController": [
+        "./packages/Tabernacle/tabernacle/infrastructure/controllers/scripture/ScriptureInteractionController.tsx"
+      ],
+      "tabernacle.infrastructure.controllers.tabernacle.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/controllers/tabernacle/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.controllers.tabernacle.TabernacleController": [
+        "./packages/Tabernacle/tabernacle/infrastructure/controllers/tabernacle/TabernacleController.tsx"
+      ],
+      "tabernacle.infrastructure.di.bootstrap": [
+        "./packages/Tabernacle/tabernacle/infrastructure/di/bootstrap.tsx"
+      ],
+      "tabernacle.infrastructure.di.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/di/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.entrypoints.casualos.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/entrypoints/casualos/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.entrypoints.casualos.onExtensionInstalled": [
+        "./packages/Tabernacle/tabernacle/infrastructure/entrypoints/casualos/onExtensionInstalled.tsx"
+      ],
+      "tabernacle.infrastructure.entrypoints.casualos.onGridClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/entrypoints/casualos/onGridClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.environment.cone.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/environment/cone/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.environment.fence.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/environment/fence/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.environment.glow.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/environment/glow/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.environment.ground.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/environment/ground/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.altar-of-sacrifice.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/altar-of-sacrifice/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.altar-of-sacrifice.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/altar-of-sacrifice/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.ark-of-covenant.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/ark-of-covenant/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.ark-of-covenant.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/ark-of-covenant/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.bars.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/bars/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.bars.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/bars/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.bronze-laver.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/bronze-laver/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.bronze-laver.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/bronze-laver/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.brown-curtain.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/brown-curtain/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.brown-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/brown-curtain/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.front-curtain.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/front-curtain/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.front-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/front-curtain/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.front-pillars.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/front-pillars/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.front-pillars.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/front-pillars/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.grey-curtain.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/grey-curtain/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.grey-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/grey-curtain/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.incense-altar.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/incense-altar/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.incense-altar.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/incense-altar/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.inner-curtain.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/inner-curtain/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.inner-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/inner-curtain/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.inner-pillars.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/inner-pillars/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.inner-pillars.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/inner-pillars/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.menorah.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/menorah/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.menorah.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/menorah/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.purple-curtain.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/purple-curtain/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.purple-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/purple-curtain/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.red-curtain.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/red-curtain/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.red-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/red-curtain/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.rings.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/rings/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.rings.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/rings/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.table-of-showbread.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/table-of-showbread/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.table-of-showbread.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/table-of-showbread/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.walls.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/walls/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.walls.onClick": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/walls/onClick.tsx"
+      ],
+      "tabernacle.manager.App": [
+        "./packages/Tabernacle/tabernacle/manager/App.tsx"
+      ],
+      "tabernacle.manager.ClearExperience": [
+        "./packages/Tabernacle/tabernacle/manager/ClearExperience.tsx"
+      ],
+      "tabernacle.manager.FixBotsPosition": [
+        "./packages/Tabernacle/tabernacle/manager/FixBotsPosition.tsx"
+      ],
+      "tabernacle.manager.GetFixedTitle": [
+        "./packages/Tabernacle/tabernacle/manager/GetFixedTitle.tsx"
+      ],
+      "tabernacle.manager.onDestroy": [
+        "./packages/Tabernacle/tabernacle/manager/onDestroy.tsx"
+      ],
+      "tabernacle.manager.onEggHatch": [
+        "./packages/Tabernacle/tabernacle/manager/onEggHatch.tsx"
+      ],
+      "tabernacle.manager.onFloatingAppRemoved": [
+        "./packages/Tabernacle/tabernacle/manager/onFloatingAppRemoved.tsx"
+      ],
+      "tabernacle.manager.onGridUp": [
+        "./packages/Tabernacle/tabernacle/manager/onGridUp.tsx"
+      ],
+      "tabernacle.manager.OnTabernacleSectionClick": [
+        "./packages/Tabernacle/tabernacle/manager/OnTabernacleSectionClick.tsx"
+      ],
+      "tabernacle.manager.OnTabernacleSectionHover": [
+        "./packages/Tabernacle/tabernacle/manager/OnTabernacleSectionHover.tsx"
+      ],
+      "tabernacle.manager.onVerseClick": [
+        "./packages/Tabernacle/tabernacle/manager/onVerseClick.tsx"
+      ],
+      "tabernacle.manager.SetBotsVisibility": [
+        "./packages/Tabernacle/tabernacle/manager/SetBotsVisibility.tsx"
+      ],
+      "tabernacle.manager.TryRecenter": [
+        "./packages/Tabernacle/tabernacle/manager/TryRecenter.tsx"
+      ],
+      "tabernacle.manager.TryUpdatePieceContextMenu": [
+        "./packages/Tabernacle/tabernacle/manager/TryUpdatePieceContextMenu.tsx"
+      ],
+      "tabernacle.manager.UpdateHighlightedWords": [
+        "./packages/Tabernacle/tabernacle/manager/UpdateHighlightedWords.tsx"
+      ],
+      "tabernacle.manager.UpdateVerseOptions": [
+        "./packages/Tabernacle/tabernacle/manager/UpdateVerseOptions.tsx"
+      ],
       "ext_twitchPub.host.App": [
         "./packages/twitchPub-extension/ext_twitchPub/host/App.tsx"
       ],
       "ext_twitchPub.host.Authenticate": [
         "./packages/twitchPub-extension/ext_twitchPub/host/Authenticate.tsx"
+      ],
+      "ext_twitchPub.host.closeInterface": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/closeInterface.tsx"
       ],
       "ext_twitchPub.host.DraggableContainer": [
         "./packages/twitchPub-extension/ext_twitchPub/host/DraggableContainer.tsx"
@@ -995,6 +1259,18 @@
       "ext_twitchPub.host.Login": [
         "./packages/twitchPub-extension/ext_twitchPub/host/Login.tsx"
       ],
+      "ext_twitchPub.host.onEggHatch": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/onEggHatch.tsx"
+      ],
+      "ext_twitchPub.host.onExtensionInstalled": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/onExtensionInstalled.tsx"
+      ],
+      "ext_twitchPub.host.onExtensionUninstalled": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/onExtensionUninstalled.tsx"
+      ],
+      "ext_twitchPub.host.onInstJoined": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/onInstJoined.tsx"
+      ],
       "ext_twitchPub.host.openInterface": [
         "./packages/twitchPub-extension/ext_twitchPub/host/openInterface.tsx"
       ],
@@ -1004,17 +1280,14 @@
       "ext_twitchPub.host.sendMessage": [
         "./packages/twitchPub-extension/ext_twitchPub/host/sendMessage.tsx"
       ],
-      "ext_twitchPub.host.sendWhispers": [
-        "./packages/twitchPub-extension/ext_twitchPub/host/sendWhispers.tsx"
-      ],
       "ext_twitchPub.host.TwitchInterface": [
         "./packages/twitchPub-extension/ext_twitchPub/host/TwitchInterface.tsx"
       ],
-      "ext_twitchPub.host.TwitchSettings": [
-        "./packages/twitchPub-extension/ext_twitchPub/host/TwitchSettings.tsx"
-      ],
       "ext_twitchPub.host.twitchPubManager": [
         "./packages/twitchPub-extension/ext_twitchPub/host/twitchPubManager.tsx"
+      ],
+      "ext_twitchPub.host.TwitchSettings": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/TwitchSettings.tsx"
       ],
       "ext_twitchPub.host.utils": [
         "./packages/twitchPub-extension/ext_twitchPub/host/utils.tsx"
@@ -1048,9 +1321,6 @@
       ],
       "ext_twitchSub.client.onInstJoined": [
         "./packages/twitchSub-extension/ext_twitchSub/client/onInstJoined.tsx"
-      ],
-      "ext_twitchSub.client.toggleInterface": [
-        "./packages/twitchSub-extension/ext_twitchSub/client/toggleInterface.tsx"
       ],
       "ext_twitchSub.client.TwitchSettings": [
         "./packages/twitchSub-extension/ext_twitchSub/client/TwitchSettings.tsx"

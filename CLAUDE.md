@@ -91,6 +91,14 @@ Each package under `packages/` has an `extension.json` describing its name, vers
 
 `@packages/*` resolves to `/packages/*` (configured in both `tsconfig.json` and `jest.config.cjs`).
 
+Module paths for all packages are auto-generated in `tsconfig.json`. After adding new files or packages, run:
+
+```bash
+pnpm update-ts-paths
+```
+
+Never edit `tsconfig.json` paths manually.
+
 ## Testing
 
 - Framework: **Jest** with Babel transpilation

@@ -25,8 +25,6 @@ import { addTranslations, useI18n } from "seed-bible.i18n.I18nManager";
 import { translations } from "scriptureMap2D.config.translations.index";
 import type { ScriptureMap2DEvents } from "../models/events";
 
-// TODO: Delete this
-
 const Icon = () => {
   return <MaterialIcon>splitscreen_portrait</MaterialIcon>;
 };
