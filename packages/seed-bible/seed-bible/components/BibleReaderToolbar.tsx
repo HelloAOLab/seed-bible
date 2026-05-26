@@ -68,7 +68,6 @@ interface MobileMoreMenuProps {
 function MobileMoreMenu(props: MobileMoreMenuProps) {
   const { onClose } = props;
   const { t } = useI18n();
-  const isSocialOn = useSignal(true);
 
   const items: Array<{
     id: string;
