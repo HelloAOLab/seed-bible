@@ -336,7 +336,7 @@ function ChevronLeftIcon() {
 }
 
 function OpenSelectorIcon() {
-  return <SeedBibleIcon />;
+  return <SeedBibleIcon size={28} className="sb-open-selector-icon" />;
 }
 
 function ChevronRightIcon() {

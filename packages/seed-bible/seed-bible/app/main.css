@@ -2047,6 +2047,10 @@ h6 {
   transform: translateX(-50%);
 }
 
+.sb-open-selector-icon {
+  flex: 1;
+}
+
 .sb-selector-overlay {
   pointer-events: none;
   position: fixed;

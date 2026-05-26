@@ -44,7 +44,10 @@ export const SpaceDefaultIcon = () => {
     </div>
   );
 };
-export function SeedBibleIcon({ size = 32 }: { size?: number } = {}) {
+export function SeedBibleIcon({
+  size = 32,
+  ...props
+}: { size?: number; [key: string]: any } = {}) {
   return (
     <img
       src="https://favicon.ao.bot/assets/seed-bible-isolated-minified.png"
@@ -53,7 +56,8 @@ export function SeedBibleIcon({ size = 32 }: { size?: number } = {}) {
         height: `${size}px`,
         objectFit: "contain",
       }}
-      alt=""
+      alt="Seed Bible Icon"
+      {...props}
     />
   );
 }
