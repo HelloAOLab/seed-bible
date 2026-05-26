@@ -11,6 +11,21 @@ import {
 } from "seed-bible.managers.BibleReadingManager";
 import type { HighlightsManager } from "seed-bible.managers.HighlightsManager";
 
+function formatVerseSelection(verseNumbers: number[]): string | null {
+  const sorted = Array.from(new Set(verseNumbers))
+    .filter((n) => Number.isFinite(n) && n > 0)
+    .sort((a, b) => a - b);
+  if (sorted.length === 0) return null;
+  if (sorted.length === 1) return String(sorted[0]);
+  const isConsecutive = sorted.every(
+    (n, i) => i === 0 || n === sorted[i - 1]! + 1
+  );
+  if (isConsecutive) {
+    return `${sorted[0]}-${sorted[sorted.length - 1]}`;
+  }
+  return sorted.join(",");
+}
+
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
   id: string;
@@ -210,6 +225,31 @@ export function createTabs(
         configBot.tags.translation = translationId;
       }
     }
+  });
+
+  // selectedVerses → configBot.tags.verse (→ URL). Only emit verses that
+  // belong to the currently displayed book + chapter; stale selections from
+  // a previous chapter shouldn't bleed into the URL. One-way: we never
+  // re-derive `selectedVerses` from the URL — doing that would strip the
+  // click coordinates the verse toolbar needs to position itself.
+  effect(() => {
+    const tab = selectedTab.value;
+    if (!tab) return;
+    const rs = tab.readingState;
+    const currentBookId = rs.bookId.value;
+    const currentChapter = rs.chapterNumber.value;
+    const verseNumbers = rs.selectedVerses.value
+      .filter(
+        (verse) =>
+          verse.bookId === currentBookId &&
+          verse.chapterNumber === currentChapter
+      )
+      .map((verse) => verse.verse.number);
+    const formatted = formatVerseSelection(verseNumbers);
+    const currentTag =
+      typeof configBot.tags.verse === "string" ? configBot.tags.verse : null;
+    if (currentTag === formatted) return;
+    configBot.tags.verse = formatted ?? null;
   });
 
   os.addBotListener(configBot, "onBotChanged", async (that: unknown) => {
