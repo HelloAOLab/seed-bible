@@ -39,14 +39,7 @@ import {
 } from "seed-bible.components.KeyboardNav";
 import { useRef } from "preact/hooks";
 import { z } from "zod";
-
-type SettingsView =
-  | null
-  | "account"
-  | "display-and-theme"
-  | "all-settings"
-  | "toolbar"
-  | "extensions";
+import type { RequestedSettingsView } from "seed-bible.managers.SidebarManager";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
 
@@ -500,7 +493,8 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   };
 
   const onOpenAllSettings = () => {
-    state.sidebar.requestedSettingsView.value = "all-settings";
+    state.sidebar.requestedSettingsView.value =
+      "display-and-theme-all-settings";
   };
 
   const handleDecreaseFontSize = () => {
@@ -1914,7 +1908,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
   const languageMenuRef = useRef<HTMLDivElement | null>(null);
 
-  const onNavigate = (view: SettingsView) => {
+  const onNavigate = (view: RequestedSettingsView) => {
     state.sidebar.requestedSettingsView.value = view;
   };
 
@@ -2146,7 +2140,7 @@ export function SettingsPage(props: { state: SeedBibleState }) {
     return <DisplayAndThemeSettingsView state={state} />;
   }
 
-  if (currentView.value === "all-settings") {
+  if (currentView.value === "display-and-theme-all-settings") {
     return <AllSettingsView state={state} />;
   }
 

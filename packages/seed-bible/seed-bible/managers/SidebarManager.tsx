@@ -10,7 +10,7 @@ export type RequestedSettingsView =
   | "main"
   | "account"
   | "display-and-theme"
-  | "all-settings"
+  | "display-and-theme-all-settings"
   | "toolbar"
   | "extensions";
 
