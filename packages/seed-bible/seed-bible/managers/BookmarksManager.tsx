@@ -10,20 +10,36 @@ import type { LoginManager } from "seed-bible.managers.LoginManager";
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
 
 /**
+ * Verse target for a bookmark: a single verse number or an inclusive `[start, end]`
+ * range. Absent when the bookmark refers to a whole chapter.
+ */
+export const bookmarkVerseSchema = z.union([
+  z.number().int().positive(),
+  z
+    .tuple([z.number().int().positive(), z.number().int().positive()])
+    .refine(([start, end]) => start <= end, {
+      message: "Verse range start must be less than or equal to end.",
+    }),
+]);
+
+/**
  * Schema for one bookmark entry.
  *
- * A bookmark is a saved Bible location (translation + book + chapter) that a
- * user has flagged from a tab. It is persisted per user under the
- * `"bookmarks"` storage key so it survives across sessions / devices and is
- * restored when the user logs back in. Each bookmark belongs to exactly one
- * category (folder) — newly added bookmarks land in the default category and
- * can be moved or grouped from there.
+ * A bookmark is a saved Bible location (translation + book + chapter, optionally
+ * narrowed to a single verse or `[start, end]` range) that a user has flagged
+ * from a tab or from the verse toolbar. Bookmarks are *links* to a location —
+ * clicking one navigates the active tab there. They are persisted per user
+ * under the `"bookmarks"` storage key so they survive across sessions /
+ * devices and are restored when the user logs back in. Each bookmark belongs
+ * to exactly one category (folder) — newly added bookmarks land in the
+ * default category and can be moved or grouped from there.
  */
 export const bookmarkSchema = z.object({
   id: z.string().min(1),
   translationId: z.string().min(1),
   bookId: z.string().min(1),
   chapterNumber: z.number().int().positive(),
+  verse: bookmarkVerseSchema.optional(),
   createdAt: z.number().int().nonnegative(),
   category: z.string().min(1),
 });
@@ -32,11 +48,12 @@ export const bookmarkCategorySchema = z.object({
   name: z.string().min(1),
 });
 
-// Persisted shape accepts legacy payloads that predate the `category` field
-// and the `categories` list. We normalize them on load before they ever
-// surface to the rest of the app.
+// Persisted shape accepts legacy payloads that predate the `category` field,
+// the `verse` field, and the `categories` list. We normalize them on load
+// before they ever surface to the rest of the app.
 const persistedBookmarkSchema = bookmarkSchema.extend({
   category: z.string().min(1).optional(),
+  verse: bookmarkVerseSchema.optional(),
 });
 
 export const bookmarksPayloadSchema = z.object({
@@ -45,6 +62,7 @@ export const bookmarksPayloadSchema = z.object({
 });
 
 export type Bookmark = z.infer<typeof bookmarkSchema>;
+export type BookmarkVerse = z.infer<typeof bookmarkVerseSchema>;
 export type BookmarkCategory = z.infer<typeof bookmarkCategorySchema>;
 export type BookmarksPayload = z.infer<typeof bookmarksPayloadSchema>;
 
@@ -63,7 +81,7 @@ function makeBookmarkId(): string {
   return `bm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function bookmarkMatchesLocation(
+function bookmarkMatchesChapter(
   bookmark: Bookmark,
   translationId: string | null | undefined,
   bookId: string | null | undefined,
@@ -77,6 +95,56 @@ function bookmarkMatchesLocation(
     bookmark.bookId === bookId &&
     bookmark.chapterNumber === chapterNumber
   );
+}
+
+/**
+ * True when `bookmark` targets the exact same chapter + verse(s) as the given
+ * location. A bookmark with no `verse` field only matches a chapter-level
+ * location query (verse=undefined).
+ */
+function bookmarkMatchesLocation(
+  bookmark: Bookmark,
+  translationId: string | null | undefined,
+  bookId: string | null | undefined,
+  chapterNumber: number | null | undefined,
+  verse?: BookmarkVerse
+): boolean {
+  if (!bookmarkMatchesChapter(bookmark, translationId, bookId, chapterNumber)) {
+    return false;
+  }
+  return versesEqual(bookmark.verse, verse);
+}
+
+function versesEqual(
+  a: BookmarkVerse | undefined,
+  b: BookmarkVerse | undefined
+): boolean {
+  if (a === undefined && b === undefined) return true;
+  if (a === undefined || b === undefined) return false;
+  if (typeof a === "number" && typeof b === "number") return a === b;
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return a[0] === b[0] && a[1] === b[1];
+  }
+  return false;
+}
+
+/**
+ * Derives the bookmark `verse` field from a list of selected verses. Returns:
+ *   - `undefined` when nothing is selected,
+ *   - a single number when one verse is selected or the range collapses to one,
+ *   - `[start, end]` when the selection spans multiple distinct verse numbers.
+ */
+export function bookmarkVerseFromSelection(
+  verseNumbers: readonly number[]
+): BookmarkVerse | undefined {
+  if (verseNumbers.length === 0) return undefined;
+  let min = verseNumbers[0]!;
+  let max = verseNumbers[0]!;
+  for (const n of verseNumbers) {
+    if (n < min) min = n;
+    if (n > max) max = n;
+  }
+  return min === max ? min : [min, max];
 }
 
 /**
@@ -131,20 +199,40 @@ export interface BookmarksManager {
    */
   expandedCategories: ReadonlySignal<ReadonlySet<string>>;
 
-  /** Whether the bookmarks view is currently active in the sidebar. */
+  /**
+   * Whether the bookmarks list is currently open in the sidebar — when true,
+   * the sidebar shows the saved bookmarks list instead of the open tabs list.
+   * The name is kept for backwards compatibility with the header toggle.
+   */
   isFilterActive: Signal<boolean>;
 
   /** Toggles the bookmarks view on/off. */
   toggleFilter: () => void;
 
+  /** Closes the bookmarks view. Used after navigating from a bookmark. */
+  closeView: () => void;
+
   /** Toggles whether a category is expanded in the sidebar. */
   toggleCategoryExpanded: (name: string) => void;
 
   /**
-   * Returns true if the given location currently has a saved bookmark.
+   * Returns true if a bookmark exists for the given location. When `verse` is
+   * omitted, only chapter-level bookmarks (no verse field) count as a match.
    * Reactive — re-evaluates when `bookmarks` or login state changes.
    */
   isLocationBookmarked: (
+    translationId: string | null | undefined,
+    bookId: string | null | undefined,
+    chapterNumber: number | null | undefined,
+    verse?: BookmarkVerse
+  ) => boolean;
+
+  /**
+   * Returns true if any bookmark (chapter- or verse-level) exists for the
+   * given chapter. Used by the tab row dot indicator to flag any saved
+   * reference into that chapter.
+   */
+  isChapterBookmarked: (
     translationId: string | null | undefined,
     bookId: string | null | undefined,
     chapterNumber: number | null | undefined
@@ -153,41 +241,59 @@ export interface BookmarksManager {
   /**
    * Adds the given location as a bookmark if not already saved.
    * Requires the user to be logged in; will trigger login otherwise.
-   * Defaults to the default category when none is provided.
+   * Defaults to the default category when none is provided. Pass `verse` to
+   * scope the bookmark to a single verse or `[start, end]` range.
    */
   addBookmark: (
     translationId: string,
     bookId: string,
     chapterNumber: number,
-    category?: string
+    options?: { verse?: BookmarkVerse; category?: string }
   ) => Promise<void>;
 
-  /** Removes the bookmark matching the given location (if any). */
+  /**
+   * Removes the bookmark matching the given location (and optional verse).
+   * When `verse` is omitted, only the chapter-level bookmark is removed —
+   * verse-scoped bookmarks for the same chapter are left in place.
+   */
   removeBookmarkForLocation: (
     translationId: string,
     bookId: string,
-    chapterNumber: number
+    chapterNumber: number,
+    verse?: BookmarkVerse
   ) => Promise<void>;
 
   /** Removes a specific bookmark by id. */
   removeBookmark: (id: string) => Promise<void>;
 
   /**
-   * Toggles the bookmark for a tab's current location. If the user is not
-   * logged in this triggers a login first. Newly added bookmarks land in
-   * the default category.
+   * Toggles a chapter-level bookmark for a tab's current location. If the
+   * user is not logged in this triggers a login first. Newly added
+   * bookmarks land in the default category.
    */
   toggleBookmarkForTab: (tab: ReaderTab) => Promise<void>;
 
   /**
    * Toggles the bookmark at the given location. Same login-on-add behavior
-   * as `toggleBookmarkForTab` but takes a raw location instead of a tab —
-   * used by the reader header.
+   * as `toggleBookmarkForTab` but takes a raw location instead of a tab.
+   * Pass `verse` to toggle a verse-scoped bookmark instead of the
+   * chapter-level one.
    */
   toggleBookmarkAtLocation: (
     translationId: string | null | undefined,
     bookId: string | null | undefined,
-    chapterNumber: number | null | undefined
+    chapterNumber: number | null | undefined,
+    verse?: BookmarkVerse
+  ) => Promise<void>;
+
+  /**
+   * Toggles a verse-scoped bookmark for the currently selected verses in the
+   * given reading state. Collapses a single-verse selection to a number and a
+   * multi-verse selection to an inclusive range based on min/max verse number.
+   * No-op when there is no selection.
+   */
+  toggleBookmarkForSelectedVerses: (
+    readingState: import("seed-bible.managers.BibleReadingManager").BibleReadingState
   ) => Promise<void>;
 
   /** Creates a new (empty) category. No-op if one with that name exists. */
@@ -261,7 +367,7 @@ export function createBookmarksManager(login: LoginManager): BookmarksManager {
     nextBookmarks: Bookmark[],
     nextCategories: BookmarkCategory[]
   ): Promise<void> => {
-    const userId = authBot?.id;
+    const userId = login.userId.value;
     if (!userId) {
       console.warn("Cannot persist bookmarks: user is not authenticated.");
       return;
@@ -294,10 +400,27 @@ export function createBookmarksManager(login: LoginManager): BookmarksManager {
   const isLocationBookmarked: BookmarksManager["isLocationBookmarked"] = (
     translationId,
     bookId,
+    chapterNumber,
+    verse
+  ) => {
+    return bookmarks.value.some((bookmark) =>
+      bookmarkMatchesLocation(
+        bookmark,
+        translationId,
+        bookId,
+        chapterNumber,
+        verse
+      )
+    );
+  };
+
+  const isChapterBookmarked: BookmarksManager["isChapterBookmarked"] = (
+    translationId,
+    bookId,
     chapterNumber
   ) => {
     return bookmarks.value.some((bookmark) =>
-      bookmarkMatchesLocation(bookmark, translationId, bookId, chapterNumber)
+      bookmarkMatchesChapter(bookmark, translationId, bookId, chapterNumber)
     );
   };
 
@@ -315,7 +438,7 @@ export function createBookmarksManager(login: LoginManager): BookmarksManager {
     translationId,
     bookId,
     chapterNumber,
-    category
+    options
   ) => {
     if (!login.userId.value) {
       await login.login();
@@ -323,21 +446,21 @@ export function createBookmarksManager(login: LoginManager): BookmarksManager {
     if (!login.userId.value) {
       return;
     }
-    if (isLocationBookmarked(translationId, bookId, chapterNumber)) {
+    const verse = options?.verse;
+    if (isLocationBookmarked(translationId, bookId, chapterNumber, verse)) {
       return;
     }
-    const targetCategory = category ?? DEFAULT_BOOKMARK_CATEGORY;
-    const nextBookmarks: Bookmark[] = [
-      ...bookmarks.value,
-      {
-        id: makeBookmarkId(),
-        translationId,
-        bookId,
-        chapterNumber,
-        createdAt: Date.now(),
-        category: targetCategory,
-      },
-    ];
+    const targetCategory = options?.category ?? DEFAULT_BOOKMARK_CATEGORY;
+    const newBookmark: Bookmark = {
+      id: makeBookmarkId(),
+      translationId,
+      bookId,
+      chapterNumber,
+      createdAt: Date.now(),
+      category: targetCategory,
+      ...(verse !== undefined ? { verse } : {}),
+    };
+    const nextBookmarks: Bookmark[] = [...bookmarks.value, newBookmark];
     const nextCategories = ensureCategory(categories.value, targetCategory);
     bookmarks.value = nextBookmarks;
     categories.value = nextCategories;
@@ -359,14 +482,15 @@ export function createBookmarksManager(login: LoginManager): BookmarksManager {
   };
 
   const removeBookmarkForLocation: BookmarksManager["removeBookmarkForLocation"] =
-    async (translationId, bookId, chapterNumber) => {
+    async (translationId, bookId, chapterNumber, verse) => {
       const next = bookmarks.value.filter(
         (bookmark) =>
           !bookmarkMatchesLocation(
             bookmark,
             translationId,
             bookId,
-            chapterNumber
+            chapterNumber,
+            verse
           )
       );
       if (next.length === bookmarks.value.length) {
@@ -386,19 +510,48 @@ export function createBookmarksManager(login: LoginManager): BookmarksManager {
   };
 
   const toggleBookmarkAtLocation: BookmarksManager["toggleBookmarkAtLocation"] =
-    async (translationId, bookId, chapterNumber) => {
+    async (translationId, bookId, chapterNumber, verse) => {
       if (!translationId || !bookId || !chapterNumber) {
         return;
       }
-      if (isLocationBookmarked(translationId, bookId, chapterNumber)) {
-        await removeBookmarkForLocation(translationId, bookId, chapterNumber);
+      if (isLocationBookmarked(translationId, bookId, chapterNumber, verse)) {
+        await removeBookmarkForLocation(
+          translationId,
+          bookId,
+          chapterNumber,
+          verse
+        );
         return;
       }
-      await addBookmark(translationId, bookId, chapterNumber);
+      await addBookmark(translationId, bookId, chapterNumber, { verse });
+    };
+
+  const toggleBookmarkForSelectedVerses: BookmarksManager["toggleBookmarkForSelectedVerses"] =
+    async (readingState) => {
+      const selected = readingState.selectedVerses.value;
+      if (selected.length === 0) return;
+
+      const translationId = selected[0]!.translationId;
+      const bookId = selected[0]!.bookId;
+      const chapterNumber = selected[0]!.chapterNumber;
+      const verse = bookmarkVerseFromSelection(
+        selected.map((v) => v.verse.number)
+      );
+
+      await toggleBookmarkAtLocation(
+        translationId,
+        bookId,
+        chapterNumber,
+        verse
+      );
     };
 
   const toggleFilter = () => {
     isFilterActive.value = !isFilterActive.value;
+  };
+
+  const closeView = () => {
+    isFilterActive.value = false;
   };
 
   const toggleCategoryExpanded: BookmarksManager["toggleCategoryExpanded"] = (
@@ -479,13 +632,16 @@ export function createBookmarksManager(login: LoginManager): BookmarksManager {
     expandedCategories: readExpanded,
     isFilterActive,
     toggleFilter,
+    closeView,
     toggleCategoryExpanded,
     isLocationBookmarked,
+    isChapterBookmarked,
     addBookmark,
     removeBookmark,
     removeBookmarkForLocation,
     toggleBookmarkForTab,
     toggleBookmarkAtLocation,
+    toggleBookmarkForSelectedVerses,
     createCategory,
     renameCategory,
     deleteCategory,

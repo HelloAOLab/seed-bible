@@ -1,5 +1,8 @@
 import { useSignal } from "@preact/signals";
-import { DEFAULT_BOOKMARK_CATEGORY } from "seed-bible.managers.BookmarksManager";
+import {
+  DEFAULT_BOOKMARK_CATEGORY,
+  type BookmarkVerse,
+} from "seed-bible.managers.BookmarksManager";
 import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager";
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
 import {
@@ -579,6 +582,26 @@ function TabRow(props: TabRowProps) {
     tab.readingState.chapterNumber.value
   );
 
+  const handleBookmarkAction = () => {
+    const translationId = tab.readingState.translationId.value;
+    const bookId = tab.readingState.bookId.value;
+    const chapterNumber = tab.readingState.chapterNumber.value;
+    if (!translationId || !bookId || !chapterNumber) return;
+    if (isTabBookmarked) {
+      void bookmarks.removeBookmarkForLocation(
+        translationId,
+        bookId,
+        chapterNumber
+      );
+      return;
+    }
+    openBookmarkCategoryModal(state, {
+      translationId,
+      bookId,
+      chapterNumber,
+    });
+  };
+
   return (
     <div
       className={`sb-tab-row${isSelected ? " sb-tab-row-selected" : ""}`}
@@ -674,7 +697,7 @@ function TabRow(props: TabRowProps) {
             event.stopPropagation();
             closeContextMenus();
             closeLayoutMenu();
-            void bookmarks.toggleBookmarkForTab(tab);
+            handleBookmarkAction();
           }}
         >
           <svg
@@ -781,7 +804,7 @@ function TabRow(props: TabRowProps) {
           <ContextMenuItem
             className="sb-tab-menu-item"
             onClick={() => {
-              void bookmarks.toggleBookmarkForTab(tab);
+              handleBookmarkAction();
             }}
           >
             {isTabBookmarked
@@ -824,10 +847,206 @@ function TabRow(props: TabRowProps) {
   );
 }
 
+/**
+ * Location targeted by the "Add to bookmark category" modal. Either a whole
+ * chapter (no `verse`) or a verse / verse range pinned within a chapter.
+ */
+export interface BookmarkLocation {
+  translationId: string;
+  bookId: string;
+  chapterNumber: number;
+  verse?: BookmarkVerse;
+}
+
+/**
+ * Modal body shown when the user triggers "Bookmark" from a tab menu, the
+ * sidebar tab row, or the verse toolbar. Lets the user pick which folder the
+ * new bookmark lands in. Folder creation only happens here — there is no
+ * inline "+ New folder" button in the sidebar list anymore.
+ */
+function BookmarkCategoryPickerContent(props: {
+  state: SeedBibleState;
+  location: BookmarkLocation;
+  onClose: () => void;
+}) {
+  const { state, location, onClose } = props;
+  const { bookmarks } = state;
+  const { t } = useI18n();
+  const categories = bookmarks.categories.value;
+
+  const selectedCategory = useSignal<string>(DEFAULT_BOOKMARK_CATEGORY);
+  const isAddingNew = useSignal<boolean>(false);
+  const newCategoryName = useSignal<string>("");
+
+  const trimmedNew = newCategoryName.value.trim();
+  const newCategoryCollides =
+    trimmedNew.length > 0 &&
+    categories.some((category) => category.name === trimmedNew);
+  const canSave = isAddingNew.value
+    ? trimmedNew.length > 0 && !newCategoryCollides
+    : selectedCategory.value.length > 0;
+
+  const handleSave = async () => {
+    let category = selectedCategory.value;
+    if (isAddingNew.value) {
+      if (!trimmedNew || newCategoryCollides) return;
+      await bookmarks.createCategory(trimmedNew);
+      category = trimmedNew;
+    }
+    await bookmarks.addBookmark(
+      location.translationId,
+      location.bookId,
+      location.chapterNumber,
+      {
+        category,
+        ...(location.verse !== undefined ? { verse: location.verse } : {}),
+      }
+    );
+    onClose();
+  };
+
+  return (
+    <div className="sb-bookmark-picker">
+      <div className="sb-bookmark-picker-categories" role="radiogroup">
+        {categories.map((category) => {
+          const isSelected =
+            !isAddingNew.value && selectedCategory.value === category.name;
+          return (
+            <button
+              key={category.name}
+              type="button"
+              role="radio"
+              aria-checked={isSelected}
+              className={`sb-bookmark-picker-category${
+                isSelected ? " sb-bookmark-picker-category-selected" : ""
+              }`}
+              onClick={() => {
+                isAddingNew.value = false;
+                selectedCategory.value = category.name;
+              }}
+            >
+              <span className="sb-bookmark-picker-category-name">
+                {category.name}
+              </span>
+              <span
+                className={`sb-bookmark-picker-radio${
+                  isSelected ? " sb-bookmark-picker-radio-checked" : ""
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="sb-bookmark-picker-divider" role="separator" />
+
+      {isAddingNew.value ? (
+        <div className="sb-bookmark-picker-new-row">
+          <input
+            autoFocus
+            className="sb-bookmark-picker-new-input"
+            placeholder={t("new-folder-placeholder", {
+              defaultValue: "New folder name",
+            })}
+            value={newCategoryName.value}
+            onInput={(event: Event) => {
+              const target = event.target as HTMLInputElement;
+              newCategoryName.value = target.value;
+            }}
+            onKeyDown={(event: KeyboardEvent) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                void handleSave();
+              } else if (event.key === "Escape") {
+                event.preventDefault();
+                isAddingNew.value = false;
+                newCategoryName.value = "";
+              }
+            }}
+          />
+          {newCategoryCollides && (
+            <div className="sb-bookmark-picker-new-error">
+              {t("folder-name-taken", {
+                defaultValue: "A folder with that name already exists.",
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="sb-bookmark-picker-add-new"
+          onClick={() => {
+            isAddingNew.value = true;
+            newCategoryName.value = "";
+          }}
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            add
+          </span>
+          <span>{t("add-to-new", { defaultValue: "Add to new" })}</span>
+        </button>
+      )}
+
+      <div className="sb-bookmark-picker-actions">
+        <button
+          type="button"
+          className="sb-bookmark-picker-cancel"
+          onClick={onClose}
+        >
+          {t("cancel", { defaultValue: "Cancel" })}
+        </button>
+        <button
+          type="button"
+          className="sb-bookmark-picker-save"
+          disabled={!canSave}
+          onClick={() => {
+            void handleSave();
+          }}
+        >
+          {t("save", { defaultValue: "Save" })}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Opens the bookmark category picker modal for the given location. Exported
+ * so the verse toolbar (in BibleReaderToolbar) can open it for verse-scoped
+ * bookmarks with the same UX as the sidebar tab-row bookmark button.
+ */
+export function openBookmarkCategoryModal(
+  state: SeedBibleState,
+  location: BookmarkLocation
+) {
+  const verseKey =
+    location.verse === undefined
+      ? "chapter"
+      : Array.isArray(location.verse)
+        ? `${location.verse[0]}-${location.verse[1]}`
+        : String(location.verse);
+  const modalId = `bookmark-category-${location.translationId}-${location.bookId}-${location.chapterNumber}-${verseKey}`;
+  state.modals.openModal({
+    id: modalId,
+    title: {
+      key: "add-to-bookmark-category",
+      defaultValue: "Add to bookmark category",
+    },
+    content: () => (
+      <BookmarkCategoryPickerContent
+        state={state}
+        location={location}
+        onClose={() => state.modals.closeModal(modalId)}
+      />
+    ),
+  });
+}
+
 interface BookmarksSectionProps {
   state: SeedBibleState;
   closeLayoutMenu: () => void;
-  panelsEnabled: boolean;
 }
 
 /**
@@ -836,16 +1055,15 @@ interface BookmarksSectionProps {
  * collapsible folder containing the user's saved Bible locations. Below it,
  * the normal tab list still renders unchanged — bookmarks and tabs coexist.
  *
- * Clicking a bookmark first tries to land on an open tab pointing at the
- * same location; if none is open it creates a fresh tab and navigates it
- * there. That keeps the open-tab count from ballooning when a user has the
- * same chapter already loaded.
+ * Bookmarks are pure links. Clicking one selects the open tab pointing at
+ * the same location (and scrolls to the saved verse, if any); if no tab is
+ * open at that location, a fresh tab is created and navigated there. The
+ * bookmark itself is never rendered as a tab — that keeps the bookmarks
+ * section a clean list of references rather than a duplicated tab list.
  */
 function BookmarksSection(props: BookmarksSectionProps) {
-  const { state, closeLayoutMenu, panelsEnabled } = props;
+  const { state, closeLayoutMenu } = props;
   const { app, bookmarks, tabs: tabsManager, bibleData } = state;
-  const selectedTabId = tabsManager.selectedTabId.value;
-  const openTabs = tabsManager.tabs.value;
   const { t } = useI18n();
 
   const categories = bookmarks.categories.value;
@@ -857,8 +1075,6 @@ function BookmarksSection(props: BookmarksSectionProps) {
 
   const renamingCategory = useSignal<string | null>(null);
   const renameValue = useSignal<string>("");
-  const creatingCategory = useSignal<boolean>(false);
-  const newCategoryValue = useSignal<string>("");
 
   const lookupBookName = (
     translationId: string,
@@ -881,10 +1097,12 @@ function BookmarksSection(props: BookmarksSectionProps) {
   const openBookmark = (
     translationId: string,
     bookId: string,
-    chapterNumber: number
+    chapterNumber: number,
+    verse?: number | [number, number]
   ) => {
     closeContextMenus();
     closeLayoutMenu();
+    const scrollVerse = Array.isArray(verse) ? verse[0] : verse;
     const existing = tabsManager.tabs.value.find(
       (tab) =>
         tab.readingState.translationId.value === translationId &&
@@ -893,17 +1111,38 @@ function BookmarksSection(props: BookmarksSectionProps) {
     );
     if (existing) {
       app.selectTab(existing.id);
+      if (scrollVerse !== undefined) {
+        void existing.readingState.selectTranslationAndChapter(
+          translationId,
+          bookId,
+          chapterNumber,
+          { scrollToVerse: scrollVerse }
+        );
+      }
       return;
     }
     // Pass the bookmark location as the new tab's initial reading state so
     // `loadInitialData()` lands directly on it. Calling `addTab()` and then
     // `selectTranslationAndChapter()` would race the default GEN 1 load and
     // sometimes lose, leaving the user on Genesis 1 instead of the bookmark.
-    tabsManager.addTab(undefined, {
+    const newTab = tabsManager.addTab(undefined, {
       initialTranslationId: translationId,
       initialBookId: bookId,
       initialChapterNumber: chapterNumber,
     });
+    if (scrollVerse !== undefined) {
+      // Queue the scroll-to-verse against the freshly created tab so when
+      // initial chapter data lands the reader scrolls to the bookmarked verse.
+      newTab.readingState.scrollToVerse.value = scrollVerse;
+    }
+  };
+
+  const formatVerseRef = (
+    verse: number | [number, number] | undefined
+  ): string => {
+    if (verse === undefined) return "";
+    if (typeof verse === "number") return `:${verse}`;
+    return verse[0] === verse[1] ? `:${verse[0]}` : `:${verse[0]}-${verse[1]}`;
   };
 
   const commitRename = (oldName: string) => {
@@ -912,14 +1151,6 @@ function BookmarksSection(props: BookmarksSectionProps) {
     renameValue.value = "";
     if (!next || next === oldName) return;
     void bookmarks.renameCategory(oldName, next);
-  };
-
-  const commitCreate = () => {
-    const next = newCategoryValue.value.trim();
-    creatingCategory.value = false;
-    newCategoryValue.value = "";
-    if (!next) return;
-    void bookmarks.createCategory(next);
   };
 
   return (
@@ -1031,44 +1262,24 @@ function BookmarksSection(props: BookmarksSectionProps) {
                   </div>
                 ) : (
                   items.map((bookmark) => {
-                    // When a bookmarked location is also an open tab, the
-                    // bookmark IS that tab — render the full TabRow here so
-                    // selection state, the bookmark toggle, and the kebab
-                    // menu (Close, Open in new panel, …) all work the same
-                    // way as in the flat list. The corresponding entry is
-                    // filtered out of the flat list below the divider so
-                    // there's no duplication.
-                    const matchingTab = openTabs.find(
-                      (tab) =>
-                        tab.readingState.translationId.value ===
-                          bookmark.translationId &&
-                        tab.readingState.bookId.value === bookmark.bookId &&
-                        tab.readingState.chapterNumber.value ===
-                          bookmark.chapterNumber
-                    );
-                    if (matchingTab) {
-                      return (
-                        <TabRow
-                          key={matchingTab.id}
-                          state={state}
-                          tab={matchingTab}
-                          isSelected={matchingTab.id === selectedTabId}
-                          closeLayoutMenu={closeLayoutMenu}
-                          panelsEnabled={panelsEnabled}
-                        />
-                      );
-                    }
-                    // Persisted bookmark whose tab is no longer open — show
-                    // a compact entry; clicking it materializes a new tab
-                    // at the saved location.
+                    // Bookmarks are pure links — they always render as a
+                    // compact entry, never as the tab itself. Clicking one
+                    // selects an open tab on the same chapter (and scrolls to
+                    // the saved verse if any), or creates a new tab at the
+                    // saved location when none is open.
                     ensureTranslationBooks(bookmark.translationId);
                     const bookName =
                       lookupBookName(bookmark.translationId, bookmark.bookId) ??
                       bookmark.bookId;
+                    const verseSuffix = formatVerseRef(bookmark.verse);
                     return (
                       <div
                         key={bookmark.id}
-                        className="sb-bookmark-item"
+                        className={`sb-bookmark-item${
+                          bookmark.verse !== undefined
+                            ? " sb-bookmark-item-verse"
+                            : ""
+                        }`}
                         dir="auto"
                       >
                         <button
@@ -1078,12 +1289,13 @@ function BookmarksSection(props: BookmarksSectionProps) {
                             openBookmark(
                               bookmark.translationId,
                               bookmark.bookId,
-                              bookmark.chapterNumber
+                              bookmark.chapterNumber,
+                              bookmark.verse
                             );
                           }}
                         >
                           <span className="sb-tab-main-title">
-                            {`${bookName} - ${bookmark.chapterNumber}`}
+                            {`${bookName} ${bookmark.chapterNumber}${verseSuffix}`}
                           </span>
                           <span className="sb-tab-main-sep" aria-hidden="true">
                             •
@@ -1124,51 +1336,6 @@ function BookmarksSection(props: BookmarksSectionProps) {
           </div>
         );
       })}
-
-      {creatingCategory.value ? (
-        <div className="sb-bookmark-new-category">
-          <span className="sb-bookmark-category-icon" aria-hidden="true">
-            <BookmarkIconGlyph />
-          </span>
-          <input
-            className="sb-bookmark-category-rename-input"
-            autoFocus
-            placeholder={t("new-folder-placeholder", {
-              defaultValue: "Folder name",
-            })}
-            value={newCategoryValue.value}
-            onInput={(event: Event) => {
-              const target = event.target as HTMLInputElement;
-              newCategoryValue.value = target.value;
-            }}
-            onKeyDown={(event: KeyboardEvent) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                commitCreate();
-              } else if (event.key === "Escape") {
-                event.preventDefault();
-                creatingCategory.value = false;
-                newCategoryValue.value = "";
-              }
-            }}
-            onBlur={commitCreate}
-          />
-        </div>
-      ) : (
-        <button
-          type="button"
-          className="sb-bookmark-new-category-button"
-          onClick={() => {
-            creatingCategory.value = true;
-            newCategoryValue.value = "";
-          }}
-        >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            add
-          </span>
-          <span>{t("new-folder", { defaultValue: "New folder" })}</span>
-        </button>
-      )}
     </div>
   );
 }
@@ -1332,39 +1499,23 @@ export function Tabs(props: TabsProps) {
       <div className="sb-sidebar-tab-list">
         {isBookmarkFilterActive && (
           <>
-            <BookmarksSection
-              state={state}
-              closeLayoutMenu={closeLayoutMenu}
-              panelsEnabled={panelsEnabled}
-            />
+            <BookmarksSection state={state} closeLayoutMenu={closeLayoutMenu} />
             <div className="sb-sidebar-tabs-divider" role="separator" />
           </>
         )}
-        {tabs
-          .filter((tab) => {
-            // When the bookmarks view is on, bookmarked tabs are rendered
-            // inside their folder above the divider. Hide them here so the
-            // same tab doesn't show twice.
-            if (!isBookmarkFilterActive) return true;
-            return !bookmarks.isLocationBookmarked(
-              tab.readingState.translationId.value,
-              tab.readingState.bookId.value,
-              tab.readingState.chapterNumber.value
-            );
-          })
-          .map((tab) => {
-            const isSelected = tab.id === selectedTabId;
-            return (
-              <TabRow
-                key={tab.id}
-                state={state}
-                tab={tab}
-                isSelected={isSelected}
-                closeLayoutMenu={closeLayoutMenu}
-                panelsEnabled={panelsEnabled}
-              />
-            );
-          })}
+        {tabs.map((tab) => {
+          const isSelected = tab.id === selectedTabId;
+          return (
+            <TabRow
+              key={tab.id}
+              state={state}
+              tab={tab}
+              isSelected={isSelected}
+              closeLayoutMenu={closeLayoutMenu}
+              panelsEnabled={panelsEnabled}
+            />
+          );
+        })}
       </div>
 
       <button
