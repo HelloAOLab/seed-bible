@@ -1,0 +1,500 @@
+import { signal } from "@preact/signals";
+import { CreateTwitchSubState } from "ext_twitchSub.client.twitchSubManager";
+import { TextDecoder } from "node:util";
+
+jest.mock("ext_twitchSub.client.App", () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
+jest.mock("ext_twitchSub.client.icons", () => ({
+  __esModule: true,
+  TwitchIcon: () => null,
+}));
+
+function makeBase64(value: string): string {
+  return Buffer.from(value, "utf8").toString("base64");
+}
+
+function waitFor(condition: () => boolean, timeoutMs = 3000): Promise<void> {
+  const start = Date.now();
+  return new Promise((resolve, reject) => {
+    const tick = () => {
+      if (condition()) {
+        resolve();
+        return;
+      }
+      if (Date.now() - start > timeoutMs) {
+        reject(new Error("Timed out waiting for condition."));
+        return;
+      }
+      setTimeout(tick, 0);
+    };
+
+    tick();
+  });
+}
+
+function createSeedBibleStateMock() {
+  const selectTranslationAndChapter = jest.fn().mockResolvedValue(undefined);
+  const decorateVerses = jest.fn();
+  const readingState = {
+    selectTranslationAndChapter,
+  };
+  const selectedPane = {
+    id: "pane-1",
+    tab: {
+      readingState,
+    },
+  };
+
+  const selectedTabId = signal("tab-1");
+  const tabs = signal([
+    {
+      id: "tab-1",
+      readingState: {
+        decorateVerses,
+      },
+    },
+  ]);
+
+  const seedBibleState = {
+    app: {
+      currentReadingState: signal({
+        translationId: "AAB",
+        bookId: "GEN",
+        chapterNumber: 1,
+      }),
+    },
+    bibleData: {
+      api: {
+        endpoint: "https://initial.example.org",
+        getAvailableTranslations: jest.fn().mockResolvedValue(undefined),
+      },
+    },
+    panes: {
+      panes: signal([selectedPane]),
+      selectedPaneId: signal("pane-1"),
+      selectPane: jest.fn(),
+      openInPane: jest.fn(),
+    },
+    tabs: {
+      selectedTabId,
+      tabs,
+      addTab: jest.fn().mockReturnValue({
+        id: "tab-2",
+        readingState,
+      }),
+    },
+  };
+
+  return {
+    seedBibleState,
+    selectTranslationAndChapter,
+    decorateVerses,
+  };
+}
+
+describe("CreateTwitchSubState", () => {
+  let webGetMock: jest.Mock;
+  let goToURLMock: jest.Mock;
+  let websocketCtorMock: jest.Mock;
+  let errorSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    window.localStorage.clear();
+
+    webGetMock = jest.fn().mockResolvedValue({
+      data: {
+        user_id: "bot-user-1",
+      },
+    });
+    goToURLMock = jest.fn();
+
+    (globalThis as any).web = {
+      get: webGetMock,
+      post: jest.fn(),
+    };
+    (globalThis as any).configBot = {
+      tags: {
+        url: "https://example.com/",
+      },
+    };
+    (globalThis as any).bytes = {
+      fromBase64String: jest.fn((value: string) => {
+        return Uint8Array.from(Buffer.from(value, "base64"));
+      }),
+    };
+    (globalThis as any).TextDecoder = TextDecoder;
+    (globalThis as any).os = {
+      ...(globalThis as any).os,
+      goToURL: goToURLMock,
+    };
+
+    websocketCtorMock = jest.fn().mockImplementation(() => ({
+      onerror: null,
+      onopen: null,
+      onmessage: null,
+    }));
+    (globalThis as any).WebSocket = websocketCtorMock;
+    errorSpy = jest.spyOn(console, "error").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    delete (globalThis as any).web;
+    delete (globalThis as any).configBot;
+    delete (globalThis as any).bytes;
+    delete (globalThis as any).TextDecoder;
+    errorSpy.mockRestore();
+    jest.restoreAllMocks();
+  });
+
+  it("loads config from URL state into localStorage", async () => {
+    const statePayload = makeBase64(
+      JSON.stringify({
+        broadcaster_id: "broadcaster-1",
+        channel_id: "channel-1",
+        book: "JHN",
+        chapter: "3",
+        translation: "ESV",
+      })
+    );
+    configBot.tags.url = `https://example.com/#access_token=token-1&state=${encodeURIComponent(statePayload)}`;
+
+    const { seedBibleState } = createSeedBibleStateMock();
+    CreateTwitchSubState(seedBibleState as any);
+
+    await waitFor(() => !!window.localStorage.getItem("twitchSubConfig"));
+
+    const stored = JSON.parse(
+      window.localStorage.getItem("twitchSubConfig") as string
+    );
+    expect(stored).toMatchObject({
+      botUserId: "bot-user-1",
+      accessToken: "token-1",
+      clientId: "cfjslv2429r70ek579iogr02vecn6d",
+      broadcasterId: "broadcaster-1",
+      eventSubWebsocketUrl: "wss://eventsub.wss.twitch.tv/ws",
+      channelId: "channel-1",
+      bookId: "JHN",
+      chapter: "3",
+      translation: "ESV",
+    });
+    expect(goToURLMock).toHaveBeenCalledWith("https://example.com/");
+  });
+
+  it("opens a websocket connection to the eventsub websocket URL", async () => {
+    window.localStorage.setItem(
+      "twitchSubConfig",
+      JSON.stringify({
+        botUserId: "bot-user-1",
+        accessToken: "token-1",
+        clientId: "cfjslv2429r70ek579iogr02vecn6d",
+        broadcasterId: "broadcaster-1",
+        eventSubWebsocketUrl: "wss://eventsub.wss.twitch.tv/ws",
+        channelId: "channel-1",
+        bookId: null,
+        chapter: null,
+        translation: null,
+      })
+    );
+
+    const { seedBibleState } = createSeedBibleStateMock();
+    CreateTwitchSubState(seedBibleState as any);
+
+    await waitFor(() => websocketCtorMock.mock.calls.length >= 1);
+    expect(websocketCtorMock).toHaveBeenCalledWith(
+      "wss://eventsub.wss.twitch.tv/ws"
+    );
+  });
+
+  it("updates the selected pane to config translation, book, and chapter", async () => {
+    window.localStorage.setItem(
+      "twitchSubConfig",
+      JSON.stringify({
+        botUserId: "bot-user-1",
+        accessToken: "token-1",
+        clientId: "cfjslv2429r70ek579iogr02vecn6d",
+        broadcasterId: "broadcaster-1",
+        eventSubWebsocketUrl: "wss://eventsub.wss.twitch.tv/ws",
+        channelId: "channel-1",
+        bookId: "LUK",
+        chapter: "4",
+        translation: "KJV",
+      })
+    );
+
+    const { seedBibleState, selectTranslationAndChapter } =
+      createSeedBibleStateMock();
+    CreateTwitchSubState(seedBibleState as any);
+
+    await waitFor(() => selectTranslationAndChapter.mock.calls.length >= 1);
+
+    expect(seedBibleState.panes.selectPane).toHaveBeenCalledWith("pane-1");
+    expect(selectTranslationAndChapter).toHaveBeenCalledWith("KJV", "LUK", 4);
+  });
+
+  it("responds to bookChanged websocket events", async () => {
+    window.localStorage.setItem(
+      "twitchSubConfig",
+      JSON.stringify({
+        botUserId: "bot-user-1",
+        accessToken: "token-1",
+        clientId: "cfjslv2429r70ek579iogr02vecn6d",
+        broadcasterId: "broadcaster-1",
+        eventSubWebsocketUrl: "wss://eventsub.wss.twitch.tv/ws",
+        channelId: "channel-1",
+        bookId: null,
+        chapter: null,
+        translation: null,
+      })
+    );
+
+    const { seedBibleState, selectTranslationAndChapter } =
+      createSeedBibleStateMock();
+    const state = CreateTwitchSubState(seedBibleState as any);
+
+    state.websocketSessionID.value = "session-1" as any;
+    state.webSocketClient.value = {} as any;
+
+    await state.handleWSEvents({
+      type: "bookChanged",
+      payload: JSON.stringify({
+        translation: "NIV",
+        baseUrl: "https://new.example.org",
+        bookId: "ROM",
+        chapter: "8",
+        followTranslation: true,
+      }),
+    });
+
+    expect(
+      seedBibleState.bibleData.api.getAvailableTranslations
+    ).toHaveBeenCalledWith("https://new.example.org");
+    expect(selectTranslationAndChapter).toHaveBeenCalledWith("NIV", "ROM", 8);
+  });
+
+  it("does not change translation when followTranslation or translationEnabled are false", async () => {
+    window.localStorage.setItem(
+      "twitchSubConfig",
+      JSON.stringify({
+        botUserId: "bot-user-1",
+        accessToken: "token-1",
+        clientId: "cfjslv2429r70ek579iogr02vecn6d",
+        broadcasterId: "broadcaster-1",
+        eventSubWebsocketUrl: "wss://eventsub.wss.twitch.tv/ws",
+        channelId: "channel-1",
+        bookId: null,
+        chapter: null,
+        translation: null,
+      })
+    );
+
+    const { seedBibleState, selectTranslationAndChapter } =
+      createSeedBibleStateMock();
+    const state = CreateTwitchSubState(seedBibleState as any);
+
+    state.websocketSessionID.value = "session-1" as any;
+    state.webSocketClient.value = {} as any;
+
+    await state.handleWSEvents({
+      type: "bookChanged",
+      payload: JSON.stringify({
+        translation: "NIV",
+        baseUrl: "https://initial.example.org",
+        bookId: "ROM",
+        chapter: "8",
+        followTranslation: false,
+      }),
+    });
+
+    expect(selectTranslationAndChapter).toHaveBeenLastCalledWith(
+      "AAB",
+      "ROM",
+      8
+    );
+
+    state.settings.value.translationEnabled.value = false;
+    await state.handleWSEvents({
+      type: "bookChanged",
+      payload: JSON.stringify({
+        translation: "NIV",
+        baseUrl: "https://initial.example.org",
+        bookId: "MRK",
+        chapter: "2",
+        followTranslation: true,
+      }),
+    });
+
+    expect(selectTranslationAndChapter).toHaveBeenLastCalledWith(
+      "AAB",
+      "MRK",
+      2
+    );
+  });
+
+  it("uses incoming book and chapter when chapterFollowEnabled is true", async () => {
+    window.localStorage.setItem(
+      "twitchSubConfig",
+      JSON.stringify({
+        botUserId: "bot-user-1",
+        accessToken: "token-1",
+        clientId: "cfjslv2429r70ek579iogr02vecn6d",
+        broadcasterId: "broadcaster-1",
+        eventSubWebsocketUrl: "wss://eventsub.wss.twitch.tv/ws",
+        channelId: "channel-1",
+        bookId: null,
+        chapter: null,
+        translation: null,
+      })
+    );
+
+    const { seedBibleState, selectTranslationAndChapter } =
+      createSeedBibleStateMock();
+    const state = CreateTwitchSubState(seedBibleState as any);
+
+    state.websocketSessionID.value = "session-1" as any;
+    state.webSocketClient.value = {} as any;
+    state.settings.value.chapterFollowEnabled.value = true;
+
+    await state.handleWSEvents({
+      type: "bookChanged",
+      payload: JSON.stringify({
+        translation: "NIV",
+        baseUrl: "https://initial.example.org",
+        bookId: "ACT",
+        chapter: "9",
+        followTranslation: true,
+      }),
+    });
+
+    expect(selectTranslationAndChapter).toHaveBeenLastCalledWith(
+      "NIV",
+      "ACT",
+      9
+    );
+  });
+
+  it("keeps current book and chapter when chapterFollowEnabled is false", async () => {
+    window.localStorage.setItem(
+      "twitchSubConfig",
+      JSON.stringify({
+        botUserId: "bot-user-1",
+        accessToken: "token-1",
+        clientId: "cfjslv2429r70ek579iogr02vecn6d",
+        broadcasterId: "broadcaster-1",
+        eventSubWebsocketUrl: "wss://eventsub.wss.twitch.tv/ws",
+        channelId: "channel-1",
+        bookId: null,
+        chapter: null,
+        translation: null,
+      })
+    );
+
+    const { seedBibleState, selectTranslationAndChapter } =
+      createSeedBibleStateMock();
+    const state = CreateTwitchSubState(seedBibleState as any);
+
+    state.websocketSessionID.value = "session-1" as any;
+    state.webSocketClient.value = {} as any;
+    state.settings.value.chapterFollowEnabled.value = false;
+
+    await state.handleWSEvents({
+      type: "bookChanged",
+      payload: JSON.stringify({
+        translation: "NIV",
+        baseUrl: "https://initial.example.org",
+        bookId: "ACT",
+        chapter: "9",
+        followTranslation: true,
+      }),
+    });
+
+    expect(selectTranslationAndChapter).toHaveBeenLastCalledWith(
+      "NIV",
+      "GEN",
+      1
+    );
+  });
+
+  it("responds to highlightsChanged websocket events", async () => {
+    window.localStorage.setItem(
+      "twitchSubConfig",
+      JSON.stringify({
+        botUserId: "bot-user-1",
+        accessToken: "token-1",
+        clientId: "cfjslv2429r70ek579iogr02vecn6d",
+        broadcasterId: "broadcaster-1",
+        eventSubWebsocketUrl: "wss://eventsub.wss.twitch.tv/ws",
+        channelId: "channel-1",
+        bookId: null,
+        chapter: null,
+        translation: null,
+      })
+    );
+
+    const { seedBibleState, decorateVerses } = createSeedBibleStateMock();
+    const state = CreateTwitchSubState(seedBibleState as any);
+
+    state.websocketSessionID.value = "session-1" as any;
+    state.webSocketClient.value = {} as any;
+
+    await state.handleWSEvents({
+      type: "highlightsChanged",
+      payload: JSON.stringify({
+        highlights: ["ROM:8:5:yellow", "ROM:8:10-12:red:#ffeeaa:#111111"],
+      }),
+    });
+
+    expect(decorateVerses).toHaveBeenCalledTimes(2);
+    expect(decorateVerses).toHaveBeenNthCalledWith(1, "ROM", 8, 5, {
+      style: {
+        color: "inherit",
+        backgroundColor: null,
+      },
+      className: "sb-highlight-yellow",
+      preserveOnChapterChange: true,
+    });
+    expect(decorateVerses).toHaveBeenNthCalledWith(2, "ROM", 8, [10, 11, 12], {
+      style: {
+        color: "#111111",
+        backgroundColor: "#ffeeaa",
+      },
+      className: "sb-highlight-red",
+      preserveOnChapterChange: true,
+    });
+  });
+
+  it("ignores highlightsChanged events when highlight follow is disabled", async () => {
+    window.localStorage.setItem(
+      "twitchSubConfig",
+      JSON.stringify({
+        botUserId: "bot-user-1",
+        accessToken: "token-1",
+        clientId: "cfjslv2429r70ek579iogr02vecn6d",
+        broadcasterId: "broadcaster-1",
+        eventSubWebsocketUrl: "wss://eventsub.wss.twitch.tv/ws",
+        channelId: "channel-1",
+        bookId: null,
+        chapter: null,
+        translation: null,
+      })
+    );
+
+    const { seedBibleState, decorateVerses } = createSeedBibleStateMock();
+    const state = CreateTwitchSubState(seedBibleState as any);
+
+    state.websocketSessionID.value = "session-1" as any;
+    state.webSocketClient.value = {} as any;
+    state.settings.value.highlightEnabled.value = false;
+
+    await state.handleWSEvents({
+      type: "highlightsChanged",
+      payload: JSON.stringify({
+        highlights: ["ROM:8:5:yellow"],
+      }),
+    });
+
+    expect(decorateVerses).not.toHaveBeenCalled();
+  });
+});

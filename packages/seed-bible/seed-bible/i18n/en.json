@@ -64,6 +64,7 @@
   "no-chapter-content-found": "No chapter content found.",
   "no-translations-available": "No translations available.",
   "more": "More",
+
   "exit-full-screen": "Exit Full Screen",
   "themes": "Themes",
   "page-settings": "Page settings",
@@ -155,7 +156,7 @@
   "id_highlight-background-color": "{{id}} highlight background color",
   "all-settings-description": "Fine-tune every text section and customize each theme color.",
   "close-footnote": "Close footnote",
-  "more-tools": "More tools",
+
   "add-custom-color": "Add custom color",
   "add-color": "Add color",
   "clear-highlight": "Clear highlight",

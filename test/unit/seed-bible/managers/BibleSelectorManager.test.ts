@@ -247,7 +247,7 @@ describe("createBibleSelectorState", () => {
     expect(selector.expandedBookId.value).toBe("EXO");
   });
 
-  it("selectTranslation() changes selector state but not reading state", async () => {
+  it("selectTranslation() selects the translation and updates the selector state", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const { dataManager, readingState, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
@@ -268,11 +268,11 @@ describe("createBibleSelectorState", () => {
     // Should expand the first book of the selected translation
     expect(selector.expandedBookId.value).toBe("MAT");
 
-    expect(selector.currentTranslationId.value).toBe("AAB");
-    expect(selector.currentBookId.value).toBe("GEN");
+    expect(selector.currentTranslationId.value).toBe("NIV");
+    expect(selector.currentBookId.value).toBe("MAT");
     expect(selector.currentChapterNumber.value).toBe(1);
-    expect(readingState.translationId.value).toBe("AAB");
-    expect(readingState.bookId.value).toBe("GEN");
+    expect(readingState.translationId.value).toBe("NIV");
+    expect(readingState.bookId.value).toBe("MAT");
     expect(readingState.chapterNumber.value).toBe(1);
   });
 

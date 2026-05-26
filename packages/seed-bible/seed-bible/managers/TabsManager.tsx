@@ -188,11 +188,6 @@ export function createTabs(
       return;
     }
 
-    console.log("Syncing selected tab reading state to match configBot tags:", {
-      requestedTranslation,
-      requestedBookId,
-      requestedChapter,
-    });
     await readingState.selectTranslationAndChapter(
       requestedTranslation,
       requestedBookId,
@@ -205,11 +200,6 @@ export function createTabs(
     const selectedChapter = selectedTab.value?.readingState.chapterNumber.value;
     const selectedTranslation =
       selectedTab.value?.readingState.translationId.value;
-    console.log("selected tab changed:", {
-      selectedTranslation,
-      selectedBookId,
-      selectedChapter,
-    });
     configBot.tags.book = selectedBookId;
     configBot.tags.chapter = selectedChapter;
 

@@ -44,7 +44,10 @@ export const SpaceDefaultIcon = () => {
     </div>
   );
 };
-export function SeedBibleIcon({ size = 32 }: { size?: number } = {}) {
+export function SeedBibleIcon({
+  size = 32,
+  ...props
+}: { size?: number; [key: string]: any } = {}) {
   return (
     <img
       src="https://favicon.ao.bot/assets/seed-bible-isolated-minified.png"
@@ -53,7 +56,8 @@ export function SeedBibleIcon({ size = 32 }: { size?: number } = {}) {
         height: `${size}px`,
         objectFit: "contain",
       }}
-      alt=""
+      alt="Seed Bible Icon"
+      {...props}
     />
   );
 }
@@ -328,6 +332,7 @@ const AiIcon = (props: any) => (
       fontWeight="bold"
       fill="currentColor"
       fontFamily="Arial, sans-serif"
+      // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
     >
       AI
     </text>
@@ -357,6 +362,7 @@ const AiChatIcon = (props: any) => (
       fontWeight="bold"
       fill="currentColor"
       fontFamily="Arial, sans-serif"
+      // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
     >
       AI
     </text>
