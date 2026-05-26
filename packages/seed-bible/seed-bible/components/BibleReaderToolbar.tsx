@@ -6,6 +6,7 @@ import { applyToolbarCustomization } from "seed-bible.managers.SettingsManager";
 import { highlightContainsVerse } from "seed-bible.managers.HighlightsManager";
 import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
 import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
+import type { BibleReaderToolbarTool } from "seed-bible.managers.BibleToolsManager";
 import {
   handleHorizontalListKeyNav,
   handleVerticalListKeyNav,
@@ -63,16 +64,46 @@ function MobileBottomTab(props: MobileBottomTabProps) {
 
 interface MobileMoreMenuProps {
   onClose: () => void;
+  tools: BibleReaderToolbarTool[];
 }
 
 function MobileMoreMenu(props: MobileMoreMenuProps) {
-  const { onClose } = props;
+  const { onClose, tools } = props;
   const { t } = useI18n();
+
+  const hiddenToolIds = new Set([
+    "previous-chapter",
+    "next-chapter",
+    "open-selector",
+    "open-sidebar",
+    "open-search",
+    "open-chat",
+  ]);
+
+  const extraItems = tools
+    .filter((tool) => tool.visible.value && !hiddenToolIds.has(tool.id))
+    .sort((a, b) => a.priority - b.priority)
+    .map((tool) => {
+      const ToolIcon = tool.icon;
+      return {
+        id: tool.id,
+        label: translateTitle(t, tool.title),
+        iconNode: <ToolIcon />,
+        disabled: tool.disabled.value,
+        onClick: () => {
+          if (tool.disabled.value) return;
+          onClose();
+          tool.onSelect();
+        },
+      };
+    });
 
   const items: Array<{
     id: string;
     label: string;
-    iconName: string;
+    iconName?: string;
+    iconNode?: preact.ComponentChildren;
+    disabled?: boolean;
     onClick: () => void;
   }> = [
     // {
@@ -93,6 +124,7 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
       iconName: "chat_bubble_outline",
       onClick: onClose,
     },
+    ...extraItems,
   ];
 
   return (
@@ -103,14 +135,21 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
           type="button"
           className="sb-mobile-more-menu-item"
           onClick={item.onClick}
+          disabled={item.disabled}
           role="menuitem"
         >
-          <span
-            className="material-symbols-outlined sb-mobile-more-menu-icon"
-            aria-hidden="true"
-          >
-            {item.iconName}
-          </span>
+          {item.iconNode ? (
+            <span className="sb-mobile-more-menu-icon" aria-hidden="true">
+              {item.iconNode}
+            </span>
+          ) : (
+            <span
+              className="material-symbols-outlined sb-mobile-more-menu-icon"
+              aria-hidden="true"
+            >
+              {item.iconName}
+            </span>
+          )}
           <span className="sb-mobile-more-menu-label">{item.label}</span>
         </button>
       ))}
@@ -741,6 +780,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
                   {isMoreMenuOpen.value && (
                     <MobileMoreMenu
+                      tools={tools.value}
                       onClose={() => {
                         isMoreMenuOpen.value = false;
                       }}
