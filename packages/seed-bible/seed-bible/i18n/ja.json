@@ -211,5 +211,6 @@
   "bookmarks": "ブックマーク",
   "hide-bookmarks": "ブックマークを非表示にする",
   "show-bookmarks": "ブックマークを表示",
-  "add-new-tab": "新しいタブを追加"
+  "add-new-tab": "新しいタブを追加",
+  "share-session": "セッションを共有する"
 }

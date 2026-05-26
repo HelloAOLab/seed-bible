@@ -211,5 +211,6 @@
   "bookmarks": "Signets",
   "hide-bookmarks": "Masquer les favoris",
   "show-bookmarks": "Afficher les favoris",
-  "add-new-tab": "Ajouter un nouvel onglet"
+  "add-new-tab": "Ajouter un nouvel onglet",
+  "share-session": "Session de partage"
 }

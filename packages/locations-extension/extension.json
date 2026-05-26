@@ -125,6 +125,271 @@
       "title": "Lokasi",
       "description": "Ekstensi yang menambahkan lokasi dan peta ke dalam Seed Bible.",
       "show-location-place": "Tampilkan {{place}} di peta"
+    },
+    "af": {
+      "title": "Liggings",
+      "description": "'n Uitbreiding wat liggings en kaarte by die Saadbybel voeg.",
+      "show-location-place": "Wys {{place}} op kaart"
+    },
+    "az": {
+      "title": "Yerlər",
+      "description": "Toxum Müqəddəs Kitabına yerlər və xəritələr əlavə edən bir uzantı.",
+      "show-location-place": "Xəritədə {{place}} göstərin"
+    },
+    "be": {
+      "title": "Месцазнаходжанні",
+      "description": "Пашырэнне, якое дадае месцы і карты ў Біблію насення.",
+      "show-location-place": "Паказаць {{place}} на карце"
+    },
+    "bg": {
+      "title": "Местоположения",
+      "description": "Разширение, което добавя местоположения и карти към Библията на семената.",
+      "show-location-place": "Покажи {{place}} на картата"
+    },
+    "bs": {
+      "title": "Lokacije",
+      "description": "Proširenje koje dodaje lokacije i mape u Seed Bible.",
+      "show-location-place": "Prikaži {{place}} na mapi"
+    },
+    "ca": {
+      "title": "Ubicacions",
+      "description": "Una extensió que afegeix ubicacions i mapes a la Bíblia de les Llavors.",
+      "show-location-place": "Mostra {{place}} al mapa"
+    },
+    "cs": {
+      "title": "Lokality",
+      "description": "Rozšíření, které přidává lokace a mapy do Seed Bible.",
+      "show-location-place": "Zobrazit {{place}} na mapě"
+    },
+    "cy": {
+      "title": "Lleoliadau",
+      "description": "Estyniad sy'n ychwanegu lleoliadau a mapiau at y Beibl Hadau.",
+      "show-location-place": "Dangos {{place}} ar y map"
+    },
+    "da": {
+      "title": "Lokationer",
+      "description": "En udvidelse, der tilføjer lokationer og kort til Seed Bible.",
+      "show-location-place": "Vis {{place}} på kortet"
+    },
+    "de": {
+      "title": "Standorte",
+      "description": "Eine Erweiterung, die der Seed Bible Standorte und Karten hinzufügt.",
+      "show-location-place": "{{place}} auf der Karte anzeigen"
+    },
+    "el": {
+      "title": "Τοποθεσίες",
+      "description": "Μια επέκταση που προσθέτει τοποθεσίες και χάρτες στη Βίβλο των Σπόρων.",
+      "show-location-place": "Εμφάνιση {{place}} στον χάρτη"
+    },
+    "et": {
+      "title": "Asukohad",
+      "description": "Laiendus, mis lisab Seemne Piiblile asukohti ja kaarte.",
+      "show-location-place": "Näita {{place}} kaardil"
+    },
+    "fi": {
+      "title": "Sijainnit",
+      "description": "Laajennus, joka lisää sijainteja ja karttoja Seed Bibleen.",
+      "show-location-place": "Näytä {{place}} kartalla"
+    },
+    "fil": {
+      "title": "Mga Lokasyon",
+      "description": "Isang extension na nagdaragdag ng mga lokasyon at mapa sa Seed Bible.",
+      "show-location-place": "Ipakita ang {{place}} sa mapa"
+    },
+    "fy": {
+      "title": "Lokaasjes",
+      "description": "In útwreiding dy't lokaasjes en kaarten tafoeget oan 'e Seed Bible.",
+      "show-location-place": "Lit {{place}} op kaart sjen"
+    },
+    "gl": {
+      "title": "Localizacións",
+      "description": "Unha extensión que engade localizacións e mapas á Biblia das Sementes.",
+      "show-location-place": "Mostrar {{place}} no mapa"
+    },
+    "gn": {
+      "title": "Umi lugár ojejapohápe",
+      "description": "Peteĩ extensión omoĩva umi lugár ha mápa pe Biblia de Semillas-pe.",
+      "show-location-place": "Ehechauka {{place}} mapa-pe"
+    },
+    "gu": {
+      "title": "સ્થાનો",
+      "description": "એક એક્સટેન્શન જે સીડ બાઇબલમાં સ્થાનો અને નકશા ઉમેરે છે.",
+      "show-location-place": "નકશા પર {{place}} બતાવો"
+    },
+    "he": {
+      "title": "מיקומים",
+      "description": "הרחבה שמוסיפה מיקומים ומפות לתנ\"ך הזרעים.",
+      "show-location-place": "הצג את {{place}} על המפה"
+    },
+    "hr": {
+      "title": "Lokacije",
+      "description": "Proširenje koje dodaje lokacije i karte u Seed Bible.",
+      "show-location-place": "Prikaži {{place}} na karti"
+    },
+    "hu": {
+      "title": "Helyszínek",
+      "description": "Egy kiterjesztés, amely helyszíneket és térképeket ad a Seed Bible-hez.",
+      "show-location-place": "Mutassa a {{place}} helyet a térképen"
+    },
+    "is": {
+      "title": "Staðsetningar",
+      "description": "Viðbót sem bætir staðsetningum og kortum við Seed Bible.",
+      "show-location-place": "Sýna {{place}} á korti"
+    },
+    "it": {
+      "title": "Posizioni",
+      "description": "Un'estensione che aggiunge luoghi e mappe alla Seed Bible.",
+      "show-location-place": "Mostra {{place}} sulla mappa"
+    },
+    "iw": {
+      "title": "מיקומים",
+      "description": "הרחבה שמוסיפה מיקומים ומפות לתנ\"ך הזרעים.",
+      "show-location-place": "הצג את {{place}} על המפה"
+    },
+    "ka": {
+      "title": "მდებარეობები",
+      "description": "გაფართოება, რომელიც Seed Bible-ს ადგილმდებარეობებსა და რუკებს ამატებს.",
+      "show-location-place": "რუკაზე {{place}} ის ჩვენება"
+    },
+    "km": {
+      "title": "ទីតាំង",
+      "description": "ផ្នែកបន្ថែមដែលបន្ថែមទីតាំង និងផែនទីទៅក្នុង Seed Bible។",
+      "show-location-place": "បង្ហាញ {{place}} នៅលើផែនទី"
+    },
+    "kn": {
+      "title": "ಸ್ಥಳಗಳು",
+      "description": "ಸೀಡ್ ಬೈಬಲ್‌ಗೆ ಸ್ಥಳಗಳು ಮತ್ತು ನಕ್ಷೆಗಳನ್ನು ಸೇರಿಸುವ ವಿಸ್ತರಣೆ.",
+      "show-location-place": "ನಕ್ಷೆಯಲ್ಲಿ {{place}} ತೋರಿಸಿ"
+    },
+    "ky": {
+      "title": "Жайгашкан жерлер",
+      "description": "Үрөн Ыйык Китебине жайгашкан жерлерди жана карталарды кошкон кеңейтүү.",
+      "show-location-place": "Картада {{place}} көрсөтүү"
+    },
+    "ln": {
+      "title": "Bisika ya kosala",
+      "description": "Bobakisi oyo ebakisi bisika mpe bakarte na Biblia ya Mboto.",
+      "show-location-place": "Lakisa {{place}} na karte"
+    },
+    "lo": {
+      "title": "ສະຖານທີ່",
+      "description": "ສ່ວນຂະຫຍາຍທີ່ເພີ່ມສະຖານທີ່ ແລະ ແຜນທີ່ໃສ່ Seed Bible.",
+      "show-location-place": "ສະແດງ {{place}} ໃນແຜນທີ່"
+    },
+    "lt": {
+      "title": "Vietos",
+      "description": "Plėtinys, kuris prideda vietas ir žemėlapius prie „Seed Bible“.",
+      "show-location-place": "Rodyti {{place}} žemėlapyje"
+    },
+    "lv": {
+      "title": "Atrašanās vietas",
+      "description": "Paplašinājums, kas Seed Bible pievieno atrašanās vietas un kartes.",
+      "show-location-place": "Rādīt {{place}} kartē"
+    },
+    "mk": {
+      "title": "Локации",
+      "description": "Додаток што додава локации и мапи во Seed Bible.",
+      "show-location-place": "Прикажи {{place}} на мапата"
+    },
+    "ml": {
+      "title": "സ്ഥലങ്ങൾ",
+      "description": "സീഡ് ബൈബിളിലേക്ക് സ്ഥലങ്ങളും ഭൂപടങ്ങളും ചേർക്കുന്ന ഒരു വിപുലീകരണം.",
+      "show-location-place": "മാപ്പിൽ {{place}} കാണിക്കുക"
+    },
+    "mr": {
+      "title": "ठिकाणे",
+      "description": "सीड बायबलमध्ये स्थाने आणि नकाशे जोडणारे एक एक्सटेंशन.",
+      "show-location-place": "नकाशावर {{place}} दाखवा"
+    },
+    "ms": {
+      "title": "Lokasi",
+      "description": "Sambungan yang menambah lokasi dan peta pada Seed Bible.",
+      "show-location-place": "Tunjukkan {{place}} pada peta"
+    },
+    "my": {
+      "title": "နေရာများ",
+      "description": "Seed Bible တွင် တည်နေရာများနှင့် မြေပုံများကို ထည့်သွင်းပေးသည့် extension တစ်ခု။",
+      "show-location-place": "မြေပုံပေါ်တွင် {{place}} ကိုပြပါ"
+    },
+    "nb": {
+      "title": "Steder",
+      "description": "En utvidelse som legger til steder og kart i Seed Bible.",
+      "show-location-place": "Vis {{place}} på kartet"
+    },
+    "nl": {
+      "title": "Locaties",
+      "description": "Een uitbreiding die locaties en kaarten toevoegt aan de Seed Bible.",
+      "show-location-place": "Toon {{place}} op de kaart"
+    },
+    "no": {
+      "title": "Steder",
+      "description": "En utvidelse som legger til steder og kart i Seed Bible.",
+      "show-location-place": "Vis {{place}} på kartet"
+    },
+    "pa": {
+      "title": "ਸਥਾਨ",
+      "description": "ਇੱਕ ਐਕਸਟੈਂਸ਼ਨ ਜੋ ਸੀਡ ਬਾਈਬਲ ਵਿੱਚ ਸਥਾਨਾਂ ਅਤੇ ਨਕਸ਼ਿਆਂ ਨੂੰ ਜੋੜਦਾ ਹੈ।",
+      "show-location-place": "ਨਕਸ਼ੇ 'ਤੇ {{place}} ਦਿਖਾਓ"
+    },
+    "pl": {
+      "title": "Lokalizacje",
+      "description": "Rozszerzenie dodające lokacje i mapy do Seed Bible.",
+      "show-location-place": "Pokaż {{place}} na mapie"
+    },
+    "ro": {
+      "title": "Locații",
+      "description": "O extensie care adaugă locații și hărți la Biblia Semințelor.",
+      "show-location-place": "Afișează {{place}} pe hartă"
+    },
+    "sk": {
+      "title": "Lokality",
+      "description": "Rozšírenie, ktoré pridáva lokality a mapy do Seed Bible.",
+      "show-location-place": "Zobraziť {{place}} na mape"
+    },
+    "sl": {
+      "title": "Lokacije",
+      "description": "Razširitev, ki dodaja lokacije in zemljevide v Seed Bible.",
+      "show-location-place": "Prikaži {{place}} na zemljevidu"
+    },
+    "sq": {
+      "title": "Vendndodhjet",
+      "description": "Një zgjerim që shton vendndodhje dhe harta në Biblën e Farave.",
+      "show-location-place": "Shfaq {{place}} në hartë"
+    },
+    "sv": {
+      "title": "Platser",
+      "description": "Ett tillägg som lägger till platser och kartor till Seed Bible.",
+      "show-location-place": "Visa {{place}} på kartan"
+    },
+    "ta": {
+      "title": "இடங்கள்",
+      "description": "சீட் பைபிளில் இடங்களையும் வரைபடங்களையும் சேர்க்கும் ஒரு நீட்டிப்பு.",
+      "show-location-place": "வரைபடத்தில் {{place}} ஐக் காட்டு"
+    },
+    "te": {
+      "title": "స్థానాలు",
+      "description": "సీడ్ బైబిల్‌కు స్థానాలను మరియు పటాలను జోడించే ఒక పొడిగింపు.",
+      "show-location-place": "పటంలో {{place}} ను చూపించు"
+    },
+    "th": {
+      "title": "สถานที่ตั้ง",
+      "description": "ส่วนเสริมที่เพิ่มสถานที่และแผนที่ลงในคัมภีร์เมล็ดพันธุ์",
+      "show-location-place": "แสดง {{place}} บนแผนที่"
+    },
+    "tl": {
+      "title": "Mga Lokasyon",
+      "description": "Isang extension na nagdaragdag ng mga lokasyon at mapa sa Seed Bible.",
+      "show-location-place": "Ipakita ang {{place}} sa mapa"
+    },
+    "uz": {
+      "title": "Joylashuvlar",
+      "description": "Urug'lar Injiliga joylashuvlar va xaritalarni qo'shadigan kengaytma.",
+      "show-location-place": "Xaritada {{place}} ni ko'rsatish"
+    },
+    "zu": {
+      "title": "Izindawo",
+      "description": "Isandiso esengeza izindawo namamephu ku-Seed Bible.",
+      "show-location-place": "Bonisa i- {{place}} kumephu"
     }
   },
   "dependencies": ["ext_geoImporter"],

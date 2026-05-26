@@ -211,5 +211,6 @@
   "bookmarks": "书签",
   "hide-bookmarks": "隐藏书签",
   "show-bookmarks": "显示书签",
-  "add-new-tab": "添加新标签页"
+  "add-new-tab": "添加新标签页",
+  "share-session": "分享会话"
 }
