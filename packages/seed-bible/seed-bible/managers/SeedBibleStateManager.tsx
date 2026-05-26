@@ -591,6 +591,17 @@ export function createSeedBibleState(): SeedBibleState {
     await handleJoinSharedSession(sessionId);
   });
 
+  const setupInitialSession = async () => {
+    const initialSessionId = configBot.tags.sessionId;
+    if (!initialSessionId) {
+      return;
+    }
+
+    await handleJoinSharedSession(initialSessionId);
+  };
+
+  void setupInitialSession();
+
   const state: SeedBibleState = {
     bibleData: data,
     config,
