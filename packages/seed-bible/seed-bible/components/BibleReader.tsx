@@ -33,6 +33,11 @@ interface ReaderBookmarkButtonProps {
  */
 function ReaderBookmarkButton(props: ReaderBookmarkButtonProps) {
   const { state, translationId, bookId, chapterNumber } = props;
+
+  if (!state.bookmarks.enabled.value) {
+    return <></>;
+  }
+
   const { t } = useI18n();
   const canBookmark = !!(translationId && bookId && chapterNumber);
   const isBookmarked =

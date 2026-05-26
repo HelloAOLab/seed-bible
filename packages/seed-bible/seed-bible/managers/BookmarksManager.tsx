@@ -119,6 +119,11 @@ function normalizePayload(payload: BookmarksPayload): {
 }
 
 export interface BookmarksManager {
+  /**
+   * Whether the bookmarks feature is enabled.
+   */
+  enabled: ReadonlySignal<boolean>;
+
   /** All bookmarks for the current user. Empty array when logged out. */
   bookmarks: ReadonlySignal<Bookmark[]>;
 
@@ -207,6 +212,7 @@ export interface BookmarksManager {
 }
 
 export function createBookmarksManager(login: LoginManager): BookmarksManager {
+  const enabled = signal<boolean>(false);
   const bookmarks = signal<Bookmark[]>([]);
   const categories = signal<BookmarkCategory[]>([
     { name: DEFAULT_BOOKMARK_CATEGORY },
@@ -473,7 +479,16 @@ export function createBookmarksManager(login: LoginManager): BookmarksManager {
     await persist(nextBookmarks, nextCategories);
   };
 
+  const checkEnabled = () => {
+    posthog.onFeatureFlags(() => {
+      enabled.value = posthog?.isFeatureEnabled("bookmarks");
+    });
+  };
+
+  void checkEnabled();
+
   return {
+    enabled,
     bookmarks: readBookmarks,
     categories: readCategories,
     expandedCategories: readExpanded,
