@@ -23,9 +23,52 @@ export function createSidebar() {
 
   const shouldFocusSearch = signal(false);
 
-  const openSearch = () => {
-    openSidebar();
+  // Floating reader panels (anchored above the reader toolbar) — separate
+  // from the sidebar drawer. Only one can be open at a time so clicking
+  // one closes the other.
+  const isSearchPanelOpen = signal(false);
+  const isChatPanelOpen = signal(false);
+
+  const openSearchPanel = () => {
+    isChatPanelOpen.value = false;
+    isSearchPanelOpen.value = true;
     shouldFocusSearch.value = true;
+  };
+
+  const closeSearchPanel = () => {
+    isSearchPanelOpen.value = false;
+  };
+
+  const toggleSearchPanel = () => {
+    if (isSearchPanelOpen.value) {
+      closeSearchPanel();
+    } else {
+      openSearchPanel();
+    }
+  };
+
+  const openChatPanel = () => {
+    isSearchPanelOpen.value = false;
+    isChatPanelOpen.value = true;
+  };
+
+  const closeChatPanel = () => {
+    isChatPanelOpen.value = false;
+  };
+
+  const toggleChatPanel = () => {
+    if (isChatPanelOpen.value) {
+      closeChatPanel();
+    } else {
+      openChatPanel();
+    }
+  };
+
+  // Existing tools call `openSearch()` expecting the search UI to surface.
+  // We redirect to the new floating panel so the toolbar's Search button
+  // opens it instead of the sidebar drawer.
+  const openSearch = () => {
+    openSearchPanel();
   };
 
   const openSettings = () => {
@@ -116,5 +159,13 @@ export function createSidebar() {
     closeSidebar,
     openSearch,
     shouldFocusSearch,
+    isSearchPanelOpen,
+    openSearchPanel,
+    closeSearchPanel,
+    toggleSearchPanel,
+    isChatPanelOpen,
+    openChatPanel,
+    closeChatPanel,
+    toggleChatPanel,
   };
 }

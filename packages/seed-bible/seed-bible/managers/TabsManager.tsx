@@ -7,6 +7,7 @@ import {
   DEFAULT_TRANSLATION_ID,
   createBibleReadingState,
   type BibleReadingState,
+  type InitialBibleReadingOptions,
 } from "seed-bible.managers.BibleReadingManager";
 import type { HighlightsManager } from "seed-bible.managers.HighlightsManager";
 
@@ -89,9 +90,17 @@ export interface TabsManager {
    * - `BibleReadingState`: uses an existing reading state instance.
    * - `BibleReadingSession`: uses the session reading state and stores session metadata.
    * - `undefined`: creates a brand new reading state.
+   * @param initialReadingOptions Initial translation/book/chapter for the new
+   * reading state. Only used when `source` is undefined; ignored when the tab
+   * adopts an existing state. Passing this avoids a race where the new tab's
+   * `loadInitialData()` defaults to GEN 1 while the caller's follow-up
+   * `selectTranslationAndChapter()` is still in flight.
    * @returns The newly created tab.
    */
-  addTab: (source?: NewTabSource) => ReaderTab;
+  addTab: (
+    source?: NewTabSource,
+    initialReadingOptions?: InitialBibleReadingOptions
+  ) => ReaderTab;
 
   /**
    * Removes a tab by ID.
@@ -223,7 +232,10 @@ export function createTabs(
     await syncSelectedTabFromConfig();
   });
 
-  const addTab = (source?: NewTabSource) => {
+  const addTab = (
+    source?: NewTabSource,
+    initialReadingOptions?: InitialBibleReadingOptions
+  ) => {
     const currentTabs = tabs.value;
     const nextNumber = currentTabs.length + 1;
     const sharedSession = isBibleReadingSession(source) ? source : null;
@@ -234,7 +246,11 @@ export function createTabs(
       readingState:
         sharedSession?.readingState ??
         readingState ??
-        createBibleReadingState(dataManager, highlightsManager),
+        createBibleReadingState(
+          dataManager,
+          highlightsManager,
+          initialReadingOptions
+        ),
       sharedSession,
     };
     tabs.value = [...currentTabs, nextTab];

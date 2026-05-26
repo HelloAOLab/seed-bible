@@ -92,29 +92,27 @@ const SearchBar = (props: {
               </span>
             </div>
 
-            {viewportWidth.value > 768 && (
-              <div className="searchbar flex-align-center">
-                <span className="search-icon material-symbols-outlined">
-                  Search
-                </span>
-                <input
-                  type="text"
-                  placeholder={t("search-books", {
-                    defaultValue: "Search books...",
-                  })}
-                  value={search.value}
-                  className="flex-1"
-                  onInput={(e) => {
-                    setSearch((e.target as HTMLInputElement).value);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.keyCode === 13) {
-                      handleEnter();
-                    }
-                  }}
-                />
-              </div>
-            )}
+            <div className="searchbar flex-align-center">
+              <span className="search-icon material-symbols-outlined">
+                Search
+              </span>
+              <input
+                type="text"
+                placeholder={t("search-books", {
+                  defaultValue: "Search books...",
+                })}
+                value={search.value}
+                className="flex-1"
+                onInput={(e) => {
+                  setSearch((e.target as HTMLInputElement).value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.keyCode === 13) {
+                    handleEnter();
+                  }
+                }}
+              />
+            </div>
             <div class="dropdown">
               <select
                 value={selectedTestament.value}
@@ -129,10 +127,14 @@ const SearchBar = (props: {
                   {t("allBooks", { defaultValue: "All Books" })}
                 </option>
                 <option value={0} class="dropdown-option">
-                  {t("old-testament", { defaultValue: "Old Testament" })}
+                  {viewportWidth.value > 750
+                    ? t("old-testament", { defaultValue: "Old Testament" })
+                    : t("old-testament_short", { defaultValue: "OT" })}
                 </option>
                 <option value={1} class="dropdown-option">
-                  {t("new-testament", { defaultValue: "New Testament" })}
+                  {viewportWidth.value > 750
+                    ? t("new-testament", { defaultValue: "New Testament" })
+                    : t("new-testament_short", { defaultValue: "NT" })}
                 </option>
                 {apocryphaAvailable.value && (
                   <option value={3} class="dropdown-option">
@@ -140,25 +142,15 @@ const SearchBar = (props: {
                   </option>
                 )}
               </select>
-              <span class="material-symbols-outlined dropdown-select-icon">
-                expand_more
-              </span>
             </div>
             {viewportWidth.value <= 768 && (
               <button
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  height: "32px",
-                  width: "32px",
-                  background: "transparent",
-                  border: "transparent",
-                }}
+                class="sb-selector-mobile-close"
                 onClick={() => {
                   setOpen(false);
                   selectingTranslation.value = false;
                 }}
+                aria-label={t("close", { defaultValue: "Close" })}
               >
                 <span class="material-symbols-outlined">close</span>
               </button>

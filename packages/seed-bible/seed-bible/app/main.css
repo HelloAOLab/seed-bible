@@ -38,7 +38,7 @@
   --text-verse-margin-right: 0;
   --text-verse-line-height: 2;
 
-  --sb-background: #f8fafc;
+  --sb-background: #f1f1f2;
   --sb-font-family: "Satoshi", system-ui, sans-serif;
   --sb-font-color: #333;
 
@@ -122,11 +122,11 @@
   --sb-verse-toolbar-gap: 2px;
   --sb-verse-toolbar-padding: 4px 8px;
   --sb-verse-toolbar-border-radius: 10px;
-  --sb-verse-toolbar-border: 1px solid #00000024;
-  --sb-verse-toolbar-box-shadow: 0 26px 10px #0000001a;
+  --sb-verse-toolbar-border: 1px solid var(--sb-divider-color);
+  --sb-verse-toolbar-box-shadow: 0 26px 10px var(--sb-shadow-color);
   --sb-verse-toolbar-z-index: 100;
   --sb-verse-toolbar-min-height: 0;
-  --sb-verse-toolbar-background: #fff;
+  --sb-verse-toolbar-background: var(--sb-menu-background);
 
   --sb-reader-toolbar-mobile-layout-height: auto;
   --sb-reader-toolbar-mobile-layout-padding: 10px 35px;
@@ -255,10 +255,46 @@ h6 {
   padding-bottom: 96px;
   margin: 0 auto;
   box-sizing: border-box;
+  position: relative;
 
   background: var(--sb-reader-background);
   color: var(--sb-reader-font-color);
   font-family: var(--sb-reader-font-family);
+}
+
+.sb-bible-reader-bookmark-button {
+  position: absolute;
+  top: 16px;
+  inset-inline-end: 16px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+  z-index: 1;
+}
+
+.sb-bible-reader-bookmark-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+}
+
+.sb-bible-reader-bookmark-button-active,
+.sb-bible-reader-bookmark-button-active:hover {
+  color: #f59e0b;
+}
+
+.sb-bible-reader-bookmark-button:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 /* Force a tight 1% reader margin in mobile view, regardless of the
@@ -420,8 +456,8 @@ h6 {
 }
 
 .sb-pane-shell:not(.sb-pane-shell-detached) {
-  border-radius: 8px;
-  margin: 8px;
+  border-radius: 12px;
+  margin: 12px;
   /* box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.2); */
 }
 
@@ -786,16 +822,28 @@ h6 {
   font-style: var(--text-bookTitle-font-style);
   text-decoration: var(--text-bookTitle-text-decoration);
   text-align: var(--text-bookTitle-alignment);
-  margin-top: var(--text-bookTitle-margin-top);
-  margin-bottom: var(--text-bookTitle-margin-bottom);
-  margin-left: var(--text-bookTitle-margin-left);
-  margin-right: var(--text-bookTitle-margin-right);
+  margin: 0 0 28px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--sb-divider-color);
   font-size: 32px;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+}
+
+.sb-bible-reader-title-sep {
+  display: inline-block;
+  margin: 0 0.18em;
+  font-weight: inherit;
+  color: inherit;
 }
 
 .sb-bible-reader-translation {
-  font-size: 0.8em;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  font-size: 0.62em;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  margin-inline-start: 0.4em;
+  vertical-align: 0.15em;
 }
 
 .sb-bible-reader-meta {
@@ -885,6 +933,34 @@ h6 {
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
 }
 
+.sb-bible-reader-mobile-header-play {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  cursor: pointer;
+  padding: 0;
+  margin-inline-start: 8px;
+  transition: filter 0.15s ease;
+  display: none;
+}
+
+.sb-bible-reader-mobile-header-play:hover {
+  filter: brightness(0.95);
+}
+
+.sb-bible-reader-mobile-header-play .material-symbols-outlined {
+  font-size: 22px;
+  font-variation-settings: "FILL" 1;
+  margin-inline-start: 2px;
+}
+
 .sb-bible-reader-mobile-header-settings {
   flex-shrink: 0;
   display: inline-flex;
@@ -898,6 +974,7 @@ h6 {
   color: var(--sb-font-color);
   cursor: pointer;
   padding: 0;
+  margin-inline-start: auto;
 }
 
 .sb-bible-reader-mobile-header-settings:active {
@@ -1550,93 +1627,185 @@ h6 {
     transform: none;
     left: auto;
     bottom: auto;
-    height: var(--sb-reader-toolbar-mobile-layout-height);
+    height: auto;
     width: 100%;
     border-radius: 0;
-    padding: 10px 35px;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: var(--sb-reader-toolbar-mobile-layout-gap);
+    padding: 8px 8px 10px;
+    justify-content: space-around;
+    align-items: stretch;
+    gap: 0;
     background: var(--sb-reader-toolbar-background);
     border-top: 1px solid var(--sb-divider-color);
     box-shadow: none;
   }
 
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout .sb-reader-toolbar-item {
-    flex: 0 0 auto;
+    flex: 1 1 0;
     height: auto;
+    min-width: 0;
   }
 
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-mobile-tabs-item {
+    .sb-reader-toolbar-mobile-tab {
     display: flex;
-    align-items: flex-end;
+    align-items: stretch;
+    position: relative;
   }
 
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-mobile-tabs-button {
+    .sb-reader-toolbar-mobile-tab-button {
+    flex: 1;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: center;
     gap: 4px;
-    padding: 0;
-    width: auto;
+    padding: 6px 4px;
+    min-height: 52px;
+    width: 100%;
     height: auto;
+    background: transparent;
+    color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+    border-radius: 8px;
+    transition: color 0.15s ease;
+  }
+
+  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
+    .sb-reader-toolbar-mobile-tab-button:hover:not(:disabled) {
     background: transparent;
     color: var(--sb-font-color);
   }
 
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-mobile-tabs-button:hover:not(:disabled) {
-    background: transparent;
+    .sb-reader-toolbar-mobile-tab-button-active {
+    color: var(--sb-primary-color);
   }
 
-  .sb-reader-toolbar-mobile-tabs-icon {
+  .sb-reader-toolbar-mobile-tab-icon {
+    font-size: 24px;
+    line-height: 1;
+    flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: var(--sb-reader-toolbar-button-icon-size);
-    height: var(--sb-reader-toolbar-button-icon-size);
-    color: var(--sb-font-color);
+    height: 24px;
   }
 
-  .sb-reader-toolbar-mobile-tabs-icon > svg {
-    width: var(--sb-reader-toolbar-button-icon-size);
-    height: var(--sb-reader-toolbar-button-icon-size);
+  .sb-reader-toolbar-mobile-tab-icon-custom > img,
+  .sb-reader-toolbar-mobile-tab-icon-custom > svg {
+    display: block;
+    max-width: 24px;
+    max-height: 24px;
   }
 
-  .sb-reader-toolbar-mobile-tabs-label {
+  .sb-reader-toolbar-mobile-tab-label {
     font-size: var(--sb-reader-toolbar-mobile-tabs-label-font-size);
     font-weight: 500;
-    color: var(--sb-font-color);
     text-align: center;
     line-height: 1;
+    color: inherit;
   }
 
-  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-center-item {
-    flex: 1;
+  /* More popover anchored above the More tab */
+  .sb-mobile-more-menu {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    min-width: 200px;
+    padding: 10px;
+    background: var(--sb-reader-toolbar-background);
+    border: 1px solid var(--sb-divider-color);
+    border-radius: 14px;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
     display: flex;
-    justify-content: flex-end;
-    align-items: flex-end;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 100;
   }
 
-  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-center-item
-    .sb-reader-toolbar-button {
-    width: var(--sb-reader-toolbar-mobile-layout-center-button-width);
-    height: var(--sb-reader-toolbar-mobile-layout-center-button-height);
-    border-radius: var(--sb-reader-toolbar-mobile-layout-button-border-radius);
+  .sb-mobile-more-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    color: var(--sb-font-color);
+    font: inherit;
+    font-size: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.15s ease;
+  }
+
+  .sb-mobile-more-menu-item:hover {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+  }
+
+  .sb-mobile-more-menu-icon {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+    flex-shrink: 0;
+  }
+
+  .sb-mobile-more-menu-label {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .sb-mobile-more-menu-social {
+    cursor: default;
+  }
+
+  .sb-mobile-more-menu-social:hover {
+    background: transparent;
+  }
+
+  .sb-mobile-more-menu-social-avatar {
+    background: radial-gradient(
+      circle at 30% 30%,
+      var(--sb-primary-color),
+      color-mix(in srgb, var(--sb-primary-color), #000 40%)
+    );
+    border-radius: 999px;
+  }
+
+  .sb-mobile-more-menu-toggle {
+    flex-shrink: 0;
+    width: 38px;
+    height: 22px;
+    border-radius: 999px;
+    border: none;
+    background: color-mix(in srgb, var(--sb-font-color), transparent 80%);
+    position: relative;
+    cursor: pointer;
     padding: 0;
-    background: color-mix(in srgb, var(--sb-primary-color) 50%, transparent);
-    border: 1px solid var(--sb-primary-color);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.2s ease;
   }
 
-  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-center-item
-    .sb-reader-toolbar-button:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--sb-primary-color) 60%, transparent);
+  .sb-mobile-more-menu-toggle-on {
+    background: var(--sb-primary-color);
+  }
+
+  .sb-mobile-more-menu-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: left 0.2s ease;
+  }
+
+  .sb-mobile-more-menu-toggle-on .sb-mobile-more-menu-toggle-thumb {
+    left: 18px;
   }
 
   .sb-reader-toolbar-floating-button {
@@ -1705,6 +1874,7 @@ h6 {
 .sb-verse-toolbar {
   flex-direction: column;
   align-items: stretch;
+  background-color: var(--sb-reader-background);
 }
 
 .sb-verse-toolbar-ref {
@@ -1743,7 +1913,7 @@ h6 {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--sb-divider-color);
   transition: transform 0.15s ease;
 }
 
@@ -1899,16 +2069,17 @@ h6 {
 .sb-selector-panel {
   position: absolute;
   overflow: auto;
-  padding: 12px;
+  padding: 18px 20px 20px;
   background: var(--sb-book-selector-background);
   color: var(--sb-book-selector-font-color);
-  border-radius: 10px;
+  border-radius: 16px;
+  border: 1px solid var(--sb-divider-color);
 
   width: 100%;
   height: 100dvh;
   bottom: 0;
 
-  box-shadow: 0 3px 8px var(--sb-shadow-color);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
   opacity: 0;
   transform: translateY(50%);
   transition: all 0.5s;
@@ -2184,11 +2355,11 @@ h6 {
 }
 
 .sb-tabs-sidebar {
-  width: 300px;
-  padding: 10px 12px 16px;
+  width: 320px;
+  padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   background: var(--sb-sidebar-background);
   color: var(--sb-font-color);
   flex-shrink: 0;
@@ -2224,7 +2395,6 @@ h6 {
   justify-content: space-between;
   min-height: 28px;
   padding-bottom: 6px;
-  border-bottom: 1px solid var(--sb-secondary-color);
 }
 
 .sb-sidebar-top-actions {
@@ -2268,14 +2438,285 @@ h6 {
 
 .sb-sidebar-tabs-title {
   margin: 0;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 18px;
   color: var(--sb-font-color);
+}
+
+.sb-sidebar-tabs-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-sidebar-tabs-header-icon-button {
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-sidebar-tabs-header-icon-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+  color: var(--sb-font-color);
+}
+
+.sb-sidebar-tabs-header-icon-button .material-symbols-outlined {
+  font-size: 22px;
+}
+
+/* The X close button inside the Tabs header-actions is mobile-only.
+ * On desktop the drawer doesn't need it (it lives next to the sidebar). */
+.sb-sidebar-tabs-header-close-button {
+  display: none;
+}
+
+/* Bookmark filter button in the Tabs header — turns orange when the
+ * bookmarks-only filter is active and stays orange on hover so the
+ * active state reads clearly. */
+.sb-sidebar-tabs-header-bookmarks-button-active,
+.sb-sidebar-tabs-header-bookmarks-button-active:hover {
+  color: #f59e0b;
+  background: color-mix(in srgb, #f59e0b, transparent 88%);
+}
+
+.sb-sidebar-tabs-header-bookmarks-button-active svg {
+  color: #f59e0b;
+}
+
+/* Per-tab bookmark toggle button — rendered between the tab body and the
+ * "more" menu, but only on the currently selected row. Filled + orange when
+ * the chapter is already in a bookmark folder, outlined when not. */
+.sb-tab-bookmark-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-inline-start: 2px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  cursor: pointer;
+  align-self: center;
+  flex-shrink: 0;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.sb-tab-bookmark-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+}
+
+.sb-tab-bookmark-button-active,
+.sb-tab-bookmark-button-active:hover {
+  color: #f59e0b;
+}
+
+/* ---- Bookmarks section (pinned above the tab list when the bookmark
+ *      toggle in the sidebar header is on) -------------------------------- */
+
+.sb-bookmarks-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.sb-sidebar-tabs-divider {
+  height: 1px;
+  background: var(--sb-divider-color);
+  margin: 8px 0 10px;
+}
+
+.sb-bookmark-category {
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-bookmark-category-header {
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.sb-bookmark-category-header:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-bookmark-category-toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 4px;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+  text-align: start;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sb-bookmark-category-icon {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.sb-bookmark-category-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-bookmark-category-chevron {
+  display: inline-flex;
+  align-items: center;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  transition: transform 0.15s ease;
+}
+
+.sb-bookmark-category-chevron .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.sb-bookmark-category-chevron-open {
+  transform: rotate(180deg);
+}
+
+.sb-bookmark-category-rename-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 6px;
+  padding: 2px 6px;
+  outline: none;
+}
+
+.sb-bookmark-category-rename-input:focus {
+  border-color: #f59e0b;
+}
+
+.sb-bookmark-category-menu-anchor {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.sb-bookmark-category-menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  cursor: pointer;
+}
+
+.sb-bookmark-category-menu-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  color: var(--sb-font-color);
+}
+
+.sb-bookmark-category-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-inline-start: 22px;
+}
+
+.sb-bookmark-category-empty {
+  padding: 6px 8px;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+}
+
+.sb-bookmark-item {
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+}
+
+.sb-bookmark-item:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-bookmark-item-button {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 6px 6px;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+  text-align: start;
+  font-size: 13px;
+}
+
+.sb-bookmark-new-category {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 4px;
+}
+
+.sb-bookmark-new-category-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 6px;
+  margin-top: 2px;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  cursor: pointer;
+  font-size: 13px;
+  border-radius: 8px;
+  align-self: flex-start;
+}
+
+.sb-bookmark-new-category-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+  color: var(--sb-font-color);
+}
+
+.sb-bookmark-new-category-button .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .sb-sidebar-search-shell {
   position: relative;
   margin-top: 8px;
   margin-bottom: 10px;
+  display: none;
 }
 
 .sb-sidebar-search-bar {
@@ -2492,18 +2933,24 @@ h6 {
   align-items: stretch;
   position: relative;
 
-  padding: 4px;
-  padding-inline-start: 10px;
-  border-radius: 6px;
-  border: var(--sb-tab-border);
+  padding: 8px 6px 8px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
   background: var(--sb-tab-background);
   color: var(--sb-tab-font-color);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-tab-row:hover:not(.sb-tab-row-selected) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
 }
 
 .sb-tab-row-selected {
   background: var(--sb-selected-tab-background);
   color: var(--sb-selected-tab-font-color);
-  border: var(--sb-selected-tab-border);
+  border-color: transparent;
 }
 
 .sb-tab-button {
@@ -2522,8 +2969,36 @@ h6 {
   display: flex;
   align-items: center;
   justify-content: start;
-  gap: 10px;
-  min-height: 20px;
+  gap: 6px;
+  min-height: 22px;
+  font-size: 14px;
+}
+
+.sb-tab-main-title {
+  font-weight: 600;
+}
+
+.sb-tab-row-selected .sb-tab-main-title {
+  font-weight: 700;
+}
+
+.sb-tab-main-sep {
+  color: #545454;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.sb-tab-main-translation {
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #545454;
+}
+
+.sb-tab-row-selected .sb-tab-main-translation {
+  color: currentColor;
+  opacity: 0.85;
 }
 
 .sb-tab-users-section {
@@ -2892,9 +3367,9 @@ h6 {
 
 .sb-tab-add-button {
   border: none;
-  border-radius: 7px;
-  width: 30px;
-  height: 30px;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
   cursor: pointer;
@@ -2902,11 +3377,21 @@ h6 {
   align-items: center;
   justify-content: center;
   padding: 0;
+  transition: filter 0.15s ease;
 
   &.sb-collapsed-tab-add-button {
     width: 40px;
     height: 40px;
   }
+}
+
+.sb-tab-add-button:hover {
+  filter: brightness(0.95);
+}
+
+.sb-tab-add-button .material-symbols-outlined {
+  font-size: 22px;
+  font-weight: 500;
 }
 
 .sb-pane-layout-anchor,
@@ -3359,7 +3844,7 @@ h6 {
     z-index: 100;
     overflow-y: auto;
     background: var(--sb-background);
-    animation: sb-sidebar-slide-in 0.25s ease-out;
+    padding-bottom: 68px;
   }
 
   @keyframes sb-sidebar-slide-in {
@@ -3423,15 +3908,29 @@ h6 {
    * Mobile tabs sidebar — tab card + floating "+" FAB
    * ------------------------------------------------------------------ */
 
-  /* Hide the small "+" in the header — on mobile the user reaches for the
-   * big floating action button at the bottom instead. */
-  .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header .sb-tab-add-button {
+  /* Hide the small "+" and the checklist/tasks icon from the header on
+   * mobile — the design shows only the bookmark + X icons up top. The "+"
+   * is surfaced as a full-width inline button at the bottom of the tab
+   * list. */
+  .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header .sb-tab-add-button,
+  .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header-tasks-button {
     display: none;
   }
 
-  /* The desktop bottom-actions row (settings cog + self avatar) would
-   * collide with the floating "+" FAB on mobile — hide it inside the
-   * mobile sidebar overlay so only the FAB shows, matching the design. */
+  /* Hide the desktop "top row" (collapse/dashboard/kebab/X) on mobile —
+   * the design has only one header row. The X close is rendered separately
+   * inside the Tabs header-actions for mobile. */
+  .sb-tabs-sidebar-mobile-open .sb-sidebar-top-row {
+    display: none;
+  }
+
+  /* Show the mobile X close inside the header-actions. */
+  .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header-close-button {
+    display: inline-flex;
+  }
+
+  /* The desktop bottom-actions row (settings cog + self avatar) is hidden
+   * on mobile — the bottom is now the Bible/Tabs switcher. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-bottom-actions {
     display: none;
   }
@@ -3454,52 +3953,250 @@ h6 {
     gap: 12px;
   }
 
-  /* Tab card → orange-tinted pill matching the design screenshot. */
+  /* Tab card on mobile — plain by default, peach pill when selected. */
   .sb-tabs-sidebar-mobile-open .sb-tab-row {
     padding: 12px 14px;
     border-radius: 12px;
-    background: color-mix(in srgb, var(--sb-primary-color) 15%, transparent);
-    border: 1px solid
-      color-mix(in srgb, var(--sb-primary-color) 60%, transparent);
+    background: transparent;
+    border: 1px solid transparent;
     min-height: 52px;
     align-items: center;
   }
 
   .sb-tabs-sidebar-mobile-open .sb-tab-row-selected {
-    background: color-mix(in srgb, var(--sb-primary-color) 20%, transparent);
-    border: 1px solid var(--sb-primary-color);
+    background: var(--sb-secondary-color);
+    border-color: transparent;
   }
 
-  /* Book + chapter in primary color; translation stays muted/dark. */
-  .sb-tabs-sidebar-mobile-open .sb-tab-main-title {
-    color: var(--sb-primary-color);
-    font-weight: 600;
+  .sb-tabs-sidebar-mobile-open .sb-tab-main-content {
     font-size: 16px;
   }
 
-  .sb-tabs-sidebar-mobile-open .sb-tab-main-translation {
-    color: var(--sb-font-color);
-    font-weight: 500;
-    font-size: 14px;
+  .sb-tabs-sidebar-mobile-open .sb-tab-main-title {
+    font-weight: 600;
   }
 
-  /* Floating "+" Action Button — large, orange, bottom-right. */
+  /* Floating "+" FAB is no longer used on mobile — replaced by the inline
+   * "Add new tab" row at the bottom of the tab list. */
   .sb-tab-mobile-add-fab {
-    position: fixed;
-    bottom: 24px;
-    inset-inline-end: 24px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
+    display: none;
+  }
+
+  /* Inline "Add new tab" button — orange icon tile + label, full-width,
+   * sits right below the tab list. Scoped under the mobile-open sidebar
+   * so it beats the default `display: none` further down in this file. */
+  .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-inline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 16px 0;
+    padding: 8px 0;
     border: none;
-    background: var(--sb-primary-color);
-    color: #ffffff;
+    background: transparent;
+    color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+    font: inherit;
+    font-size: 15px;
     cursor: pointer;
+    text-align: start;
+  }
+
+  .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-inline-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
-    z-index: 101;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--sb-primary-color);
+    color: var(--sb-primary-font-color);
+    flex-shrink: 0;
+  }
+
+  .sb-tabs-sidebar-mobile-open
+    .sb-tab-mobile-add-inline-icon
+    .material-symbols-outlined {
+    font-size: 22px;
+    font-weight: 500;
+  }
+
+  /* Add a thin divider above the inline button so it visually separates
+   * from the tab list, matching the design. */
+  .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
+    border-bottom: 1px solid var(--sb-divider-color);
+    margin-inline: 16px;
+    padding: 12px 0;
+  }
+
+  /* Reset the desktop tab list padding now that we apply our own. */
+  .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
+    padding-bottom: 12px;
+  }
+
+  /* Bottom Bible / Tabs view switcher — a single floating element rendered
+   * once in main.tsx and pinned to the bottom of the viewport. It stays
+   * in place while the Tabs drawer and BibleSelector swap above it so the
+   * switcher itself never appears to move when the user toggles views. */
+  .sb-mobile-view-switcher {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    gap: 6px;
+    padding: 6px 8px 8px;
+    background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+    border-top: 1px solid var(--sb-divider-color);
+    z-index: 1100;
+  }
+
+  .sb-mobile-view-switcher-button {
+    flex: 1;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 8px;
+    border: none;
+    background: transparent;
+    color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 10px;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .sb-mobile-view-switcher-button-active {
+    background: var(--sb-reader-background);
+    color: var(--sb-primary-color);
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  .sb-mobile-view-switcher-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    font-size: 22px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .sb-mobile-view-switcher-icon > img,
+  .sb-mobile-view-switcher-icon > svg {
+    display: block;
+    max-width: 22px;
+    max-height: 22px;
+  }
+
+  /* ------------------------------------------------------------------
+   * Mobile BibleSelector — single-column layout with two dropdowns at
+   * the top and the Bible/Tabs switcher pinned at the bottom.
+   * ------------------------------------------------------------------ */
+
+  .sb-selector-panel {
+    width: 100%;
+    height: 100dvh;
+    bottom: 0;
+    padding: 16px 0 68px;
+    border-radius: 0;
+    border: none;
+    transition: none;
+    transform: none;
+  }
+
+  /* Override the desktop translateY animation — on mobile the selector
+   * behaves like a tab swap (instant), not a sheet that slides up. */
+  .sb-selector-overlay.open .sb-selector-panel {
+    transform: none;
+  }
+
+  /* Hide the searchbar on mobile — the design shows only the two dropdowns
+   * + close button in the header row. */
+  .sb-selector-panel .searchbar {
+    display: none;
+  }
+
+  /* Tighten the header row to fit version-dropdown + testament-dropdown + X. */
+  .sb-selector-panel .sidebar-book-selector {
+    padding: 0 16px;
+    gap: 8px;
+  }
+
+  .sb-selector-panel .sidebar-translation-selector {
+    min-width: 0;
+    flex: 0 1 110px;
+  }
+
+  .sb-selector-panel .dropdown {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .sb-selector-panel .dropdown-select {
+    width: 100%;
+  }
+
+  .sb-selector-mobile-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    color: var(--sb-font-color);
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+  }
+
+  /* Books area: leave room at the bottom for the switcher (~52px). */
+  .sb-selector-panel .sidebar-results {
+    height: auto;
+    flex: 1;
+    min-height: 0;
+    padding: 8px 16px 60px;
+  }
+
+  /* Single-column books — full-width rows with chevrons + dividers. */
+  .sb-selector-panel .books-container {
+    position: static;
+    height: auto;
+    padding: 0;
+    flex-direction: column;
+  }
+
+  .sb-selector-panel .books-item {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .sb-selector-panel .sidebar-itm,
+  .sb-selector-panel .sidebar-ghost-itm {
+    width: 100%;
+  }
+
+  .sb-selector-panel .sidebar-ghost-itm {
+    display: none;
+  }
+
+  /* OT/NT title bigger on mobile to match the design. */
+  .sb-selector-panel .testament-title {
+    font-size: 22px;
+    padding-left: 4px;
+    padding-bottom: 12px;
+    padding-top: 8px;
+  }
+
+  .sb-selector-panel .separator {
+    display: none;
   }
 
   .sb-tab-mobile-add-fab:hover {
@@ -3512,15 +4209,24 @@ h6 {
   }
 }
 
-/* Desktop hides the mobile FAB — it only appears when the mobile sidebar
- * overlay is visible. */
-.sb-tab-mobile-add-fab {
+/* Desktop hides both mobile add-tab affordances and the mobile view
+ * switcher — they only appear when the mobile sidebar overlay or the
+ * mobile bible-selector is visible. */
+.sb-tab-mobile-add-fab,
+.sb-tab-mobile-add-inline,
+.sb-mobile-view-switcher {
   display: none;
 }
 
 @media (max-width: 768px) {
   .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-fab {
     display: inline-flex;
+  }
+
+  /* Re-enable the mobile view switcher on mobile — comes after the
+   * desktop `display: none` above so source order makes this rule win. */
+  .sb-mobile-view-switcher {
+    display: flex;
   }
 }
 
@@ -4056,7 +4762,7 @@ h6 {
 
 .sb-settings-action-button {
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 12px 16px;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
@@ -5001,8 +5707,8 @@ h6 {
 
 .sb-account-picture-preview,
 .sb-account-picture-placeholder {
-  width: 62px !important;
-  height: 62px !important;
+  width: 62px;
+  height: 62px;
   border-radius: 999px;
   flex-shrink: 0;
 }
@@ -5246,9 +5952,11 @@ h6 {
   font-family: "Satoshi", system-ui, sans-serif;
   font-weight: 700;
   font-size: 18px;
-  line-height: 100%;
-  letter-spacing: 0%;
-  padding-left: 10px;
+  line-height: 1.1;
+  padding-left: 12px;
+  padding-bottom: 8px;
+  display: block;
+  color: var(--sb-font-color);
 }
 
 .books-item {
@@ -5277,12 +5985,16 @@ h6 {
   -webkit-appearance: none;
   -moz-appearance: none;
 
-  padding: 8px 26px 8px 12px;
+  padding: 8px 32px 8px 14px;
   font-size: 14px;
+  height: 40px;
 
-  border: none;
-  border-radius: 6px;
-  background: var(--sb-secondary-color);
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%)
+    url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
+    no-repeat right 10px center;
+  background-size: 16px;
 
   cursor: pointer;
   outline: none;
@@ -5290,8 +6002,8 @@ h6 {
   transition:
     border-color 0.2s,
     box-shadow 0.2s;
-  margin-right: 5px;
-  font-family: "Satoshi";
+  margin-right: 0;
+  font-family: "Satoshi", system-ui, sans-serif;
   color: var(--sb-font-color);
 }
 
@@ -5303,35 +6015,40 @@ h6 {
 }
 
 .dropdown-option {
-  background: var(--sb-secondary-color);
+  background: var(--sb-book-selector-background);
   color: var(--sb-font-color);
   padding: 8px 12px;
   cursor: pointer;
 }
 
 .searchbar {
-  border-radius: 6px;
-  background: var(--sb-secondary-color);
-  padding: 6px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  border: 1px solid var(--sb-divider-color);
+  padding: 6px 12px;
   width: 80%;
-  height: 34px;
+  height: 40px;
   overflow: hidden;
   color: var(--sb-font-color);
 }
 
 .search-icon {
   margin-right: 8px;
-  color: #555;
-  font-size: 18px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  font-size: 20px;
 }
 
 .searchbar input {
   border: none;
   outline: none;
   font-size: 14px;
-  font-family: "DM Sans", sans-serif;
+  font-family: "Satoshi", system-ui, sans-serif;
   background: transparent;
   color: var(--sb-font-color);
+}
+
+.searchbar input::placeholder {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
 }
 
 .share-btn {
@@ -5403,16 +6120,26 @@ h6 {
 
 .sidebar-book-selector {
   width: 100%;
-  height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .sidebar-translation-selector {
-  background: var(--sb-secondary-color);
-  padding: 0px 5px;
-  height: 32px;
-  width: 105px;
-  border-radius: 5px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  border: 1px solid var(--sb-divider-color);
+  padding: 0 8px 0 14px;
+  height: 40px;
+  min-width: 200px;
+  width: auto;
+  border-radius: 10px;
   color: var(--sb-font-color);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .translation-option {
@@ -5432,15 +6159,13 @@ h6 {
 }
 
 .sidebar-selected-title {
-  height: 24px;
-  /* overflow: hidden; */
-  font-size: 18px;
+  font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: "Satoshi";
-  width: 75px;
+  font-family: "Satoshi", system-ui, sans-serif;
+  flex: 1;
   overflow: hidden;
-  font-weight: normal;
+  font-weight: 500;
 }
 
 .translation-description {
@@ -5534,9 +6259,8 @@ h6 {
 }
 
 .testament-selection {
-  margin-bottom: 10px;
-  /* background: var(--pageBackground); */
-  padding: 10px 0px;
+  margin-bottom: 16px;
+  padding: 4px 0;
   border-radius: 5px;
 }
 
@@ -5564,32 +6288,55 @@ h6 {
 }
 
 .sidebar-itm {
-  height: 40px;
+  height: 44px;
   width: 200px;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s;
-  font-size: 14px;
-  padding: 10px;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--sb-divider-color);
+  border-radius: 0;
   font-family: "Satoshi", system-ui, sans-serif;
   color: var(--sb-font-color);
+  text-transform: capitalize;
+}
+
+.sidebar-itm > span:last-child,
+.sidebar-itm .material-symbols-outlined {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  font-size: 22px;
+  transition: transform 0.2s ease;
 }
 
 .sidebar-ghost-itm {
-  height: 40px;
+  height: 44px;
   width: 200px;
   user-select: none;
   opacity: 0;
 }
 
 .sidebar-itm:hover {
-  background-color: var(--sb-background);
+  background-color: color-mix(in srgb, var(--sb-font-color), transparent 95%);
   color: var(--sb-font-color);
 }
 
 .sidebar-selected-itm {
-  background-color: var(--sb-background);
-  color: var(--sb-font-color);
+  background-color: color-mix(
+    in srgb,
+    var(--sb-primary-color),
+    transparent 88%
+  );
+  color: var(--sb-primary-color);
+  border-radius: 8px;
+  border-bottom-color: transparent;
+}
+
+.sidebar-selected-itm .material-symbols-outlined {
+  color: var(--sb-primary-color);
 }
 
 .open-sideBar {
@@ -5944,4 +6691,294 @@ h6 {
 .sb-translation-website {
   text-align: center;
   opacity: 0.75;
+}
+
+/* ------------------------------------------------------------------ */
+/* Floating reader panels (search + chat). Anchored above the reader  */
+/* toolbar; the toolbar sits at ~18px from the bottom and is ~68px    */
+/* tall, so we anchor the panels at ~100px to leave a small gap.      */
+/* ------------------------------------------------------------------ */
+
+.sb-floating-search-panel,
+.sb-floating-chat-panel {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 98;
+  background: var(--sb-reader-toolbar-background);
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
+  animation: sb-floating-panel-rise 0.18s ease-out;
+}
+
+@keyframes sb-floating-panel-rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.sb-floating-search-panel {
+  bottom: 100px;
+  width: min(620px, calc(100vw - 32px));
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: min(560px, calc(100vh - 200px));
+}
+
+.sb-floating-search-panel-expanded {
+  padding-bottom: 12px;
+}
+
+.sb-floating-search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--sb-reader-background);
+  flex-shrink: 0;
+}
+
+.sb-floating-search-icon {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  font-size: 22px;
+}
+
+.sb-floating-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  outline: none;
+  font-size: 15px;
+  padding: 6px 0;
+}
+
+.sb-floating-search-input::placeholder {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+}
+
+.sb-floating-search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-floating-search-clear:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  color: var(--sb-font-color);
+}
+
+.sb-floating-search-clear .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.sb-floating-search-results {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.sb-floating-search-status {
+  padding: 14px 12px;
+  font-size: 14px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-floating-search-status-error {
+  color: #b42318;
+}
+
+.sb-floating-search-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sb-floating-search-result {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 12px;
+  background: var(--sb-reader-background);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.sb-floating-search-result:hover,
+.sb-floating-search-result-highlighted {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
+  border-color: color-mix(in srgb, var(--sb-font-color), transparent 80%);
+}
+
+.sb-floating-search-result-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.sb-floating-search-result-ref {
+  font-weight: 700;
+  color: var(--sb-font-color);
+}
+
+.sb-floating-search-result-sep {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.sb-floating-search-result-translation {
+  font-weight: 500;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sb-floating-search-result-action {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.sb-floating-search-result:hover .sb-floating-search-result-action,
+.sb-floating-search-result-highlighted .sb-floating-search-result-action,
+.sb-floating-search-result-action:focus-visible {
+  opacity: 1;
+}
+
+.sb-floating-search-result-action:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+}
+
+.sb-floating-search-result-action svg {
+  display: block;
+}
+
+.sb-floating-search-result-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
+}
+
+/* --- Chat panel: empty placeholder for now --- */
+
+.sb-floating-chat-panel {
+  bottom: 100px;
+  width: min(420px, calc(100vw - 32px));
+  padding: 22px 24px;
+}
+
+.sb-floating-chat-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.sb-floating-chat-empty-icon {
+  font-size: 36px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  margin-bottom: 4px;
+}
+
+.sb-floating-chat-empty-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--sb-font-color);
+}
+
+.sb-floating-chat-empty-body {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+@media (max-width: 768px) {
+  /* Search becomes a full-screen view on mobile with scrollable results above
+     and the input pinned at the bottom. Leaves room at the bottom for the
+     5-tab bar. */
+  .sb-floating-search-panel {
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 72px;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    max-height: none;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    padding: 14px 16px;
+    background: transparent;
+    gap: 14px;
+    animation: none;
+    backdrop-filter: blur(4px);
+  }
+
+  .sb-floating-search-panel .sb-floating-search-input-wrap {
+    margin-top: auto;
+  }
+
+  /* No hover on touch — keep the action icon visible on each card. */
+  .sb-floating-search-result-action {
+    opacity: 1;
+  }
+
+  /* Chat keeps the floating-card look on mobile, anchored above the bar. */
+  .sb-floating-chat-panel {
+    bottom: 110px;
+    width: calc(100vw - 16px);
+  }
 }
