@@ -997,7 +997,7 @@ h6 {
   will-change: transform;
 }
 
-[dir="rtl"] .sb-reader-swipe-track {
+.sb-bible-reader[dir="rtl"] .sb-reader-swipe-track {
   transform: translateX(33.333%);
 }
 
