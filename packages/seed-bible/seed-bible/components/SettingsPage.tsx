@@ -851,7 +851,7 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             <option value="traditional">
               {t("traditional", { defaultValue: "Traditional" })}
             </option>
-            <option value="tanak">
+            <option value="tanakh">
               {t("tanakh", { defaultValue: "Tanakh" })}
             </option>
           </select>
