@@ -1,6 +1,9 @@
 import type { ExperienceDisplayerPort } from "tabernacle.application.ports.in.experience";
-import type { PiecesSequencePort } from "tabernacle.application.ports.in.piecesSequence";
-import type { LoggerPort, PanelDisplayerPort } from "../ports/out/experience";
+import type {
+  LoggerPort,
+  PanelDisplayerPort,
+  PiecesSequencePort,
+} from "../ports/out/experience";
 
 interface ServiceParams {
   piecesSequencePort: PiecesSequencePort;

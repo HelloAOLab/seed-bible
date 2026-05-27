@@ -1037,6 +1037,12 @@
       "tabernacle.infrastructure.adapters.casualos.TabernacleVisualizerAdapter": [
         "./packages/Tabernacle/tabernacle/infrastructure/adapters/casualos/TabernacleVisualizerAdapter.tsx"
       ],
+      "tabernacle.infrastructure.adapters.LoggerAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/adapters/LoggerAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.adapters.PiecesSequenceAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/adapters/PiecesSequenceAdapter.tsx"
+      ],
       "tabernacle.infrastructure.config.botAdapter": [
         "./packages/Tabernacle/tabernacle/infrastructure/config/botAdapter.tsx"
       ],

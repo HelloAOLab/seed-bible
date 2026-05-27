@@ -1,3 +1,5 @@
+import type { PieceKey } from "tabernacle.domain.models.piece";
+
 export interface VerseMenuClickHandlerPort {
-  handleVerseMenuClick(): Promise<void>;
+  handleVerseMenuItemClick(key: PieceKey): Promise<void>;
 }

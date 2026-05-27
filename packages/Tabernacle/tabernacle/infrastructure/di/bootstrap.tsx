@@ -18,6 +18,11 @@ import { PiecesConfigProvider } from "tabernacle.infrastructure.config.PiecesCon
 import { ReadingStateAdapter } from "tabernacle.infrastructure.adapters.casualos.ReadingStateAdapter";
 import { TabernacleVisualizerAdapter } from "tabernacle.infrastructure.adapters.casualos.TabernacleVisualizerAdapter";
 import { TabernacleController } from "tabernacle.infrastructure.controllers.tabernacle.TabernacleController";
+import { ScriptureInteractionService } from "tabernacle.application.services.ScriptureInteractionService";
+import { ScriptureInteractionController } from "tabernacle.infrastructure.controllers.scripture.ScriptureInteractionController";
+import { ExperienceService } from "tabernacle.application.services.ExperienceService";
+import { PiecesSequenceAdapter } from "tabernacle.infrastructure.adapters.PiecesSequenceAdapter";
+import { LoggerAdapter } from "tabernacle.infrastructure.adapters.LoggerAdapter";
 
 const extensionId = "tabernacle";
 const bibleVizUtilsId = "bible-visualization-utils";
@@ -36,6 +41,8 @@ export const bootstrapExtension = () => {
       const scriptureDataProvider = new ScriptureDataConfigProvider();
       const piecesConfigProvider = new PiecesConfigProvider();
       const visualizerAdapter = new TabernacleVisualizerAdapter();
+      const piecesSequenceAdapter = new PiecesSequenceAdapter();
+      const loggerAdapter = new LoggerAdapter();
 
       // 2. Application service
       const tabernacleService = new TabernacleService({
@@ -43,6 +50,22 @@ export const bootstrapExtension = () => {
         scriptureData: scriptureDataProvider,
         pieceConfig: piecesConfigProvider,
         readingState: readingStateAdapter,
+      });
+      const experienceService = new ExperienceService({
+        piecesSequencePort: piecesSequenceAdapter,
+        panelDisplayerPort: {
+          displayPanel: () => {
+            context.panes.openPane({
+              type: "detached",
+              id: extensionId,
+              gridPortal: extensionId,
+            });
+          },
+        },
+        logger: loggerAdapter,
+      });
+      const scriptureInteractionService = new ScriptureInteractionService({
+        experienceDisplayerPort: experienceService,
       });
 
       // 3. Controller
@@ -55,6 +78,11 @@ export const bootstrapExtension = () => {
           );
         },
       });
+      const scriptureInteractionController = new ScriptureInteractionController(
+        {
+          verseMenuClickHandlerPort: scriptureInteractionService,
+        }
+      );
 
       // 4. React to reading state changes
       const unsubscribeReadingState = effect(() => {
@@ -107,7 +135,8 @@ export const bootstrapExtension = () => {
             },
             icon: TabernacleIcon,
             onSelect: () => {
-              tabernacleController?.handlePieceClick(key);
+              scriptureInteractionController.handleVerseMenuItemClick(key);
+              // tabernacleController?.handlePieceClick(key);
             },
           })),
       });

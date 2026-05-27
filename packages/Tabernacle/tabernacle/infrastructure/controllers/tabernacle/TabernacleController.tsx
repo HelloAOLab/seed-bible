@@ -15,20 +15,11 @@ export class TabernacleController {
     this.#navigate = navigate;
   }
 
-  handleInstJoined(): void {
-    this.#tabernacleService.initialize();
-  }
-
   handlePieceClick(key: PieceKey): void {
     this.#tabernacleService.handlePieceClick(key);
   }
 
   handleGridClick(): void {
     this.#tabernacleService.handleGridClick();
-  }
-
-  handleVerseMenuClick(bookId: string, chapter: number, _verse: number): void {
-    this.#tabernacleService.handleGridClick();
-    this.#navigate(bookId, chapter);
   }
 }
