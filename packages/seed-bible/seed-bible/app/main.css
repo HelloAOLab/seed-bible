@@ -4016,6 +4016,10 @@ h6 {
   width: 35px;
 }
 
+.sb-sidebar-icon-button path {
+  stroke: currentColor;
+}
+
 .sb-sidebar-icon-button-selected {
   box-shadow: inset 0 0 0 2px var(--sb-primary-color);
 }
