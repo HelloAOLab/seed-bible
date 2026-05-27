@@ -1,6 +1,7 @@
 import {
   createTabs,
   formatVerseSelection,
+  parseVerseSelection,
   type ReaderTab,
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import { createBibleDataManager } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
@@ -118,6 +119,36 @@ describe("formatVerseSelection", () => {
     expect(formatVerseSelection([1, 2, Number.POSITIVE_INFINITY, -5, 0])).toBe(
       "1-2"
     );
+  });
+});
+
+describe("parseVerseSelection", () => {
+  it("parses a single verse", () => {
+    expect(parseVerseSelection("3")).toEqual([3]);
+  });
+
+  it("parses a simple range", () => {
+    expect(parseVerseSelection("2-5")).toEqual([2, 3, 4, 5]);
+  });
+
+  it("parses mixed single verses and ranges", () => {
+    expect(parseVerseSelection("1,3-4,7")).toEqual([1, 3, 4, 7]);
+  });
+
+  it("ignores invalid ranges", () => {
+    expect(parseVerseSelection("5-3,2-2,4-a")).toEqual([2]);
+  });
+
+  it("keeps duplicates and preserves order", () => {
+    expect(parseVerseSelection("1,1,2-3,2")).toEqual([1, 1, 2, 3, 2]);
+  });
+
+  it("supports whitespace around comma and range separators", () => {
+    expect(parseVerseSelection(" 1 , 2 - 3 , 4 ")).toEqual([1, 2, 3, 4]);
+  });
+
+  it("returns empty array for completely invalid input", () => {
+    expect(parseVerseSelection("abc")).toEqual([]);
   });
 });
 

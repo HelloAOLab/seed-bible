@@ -26,6 +26,35 @@ export function formatVerseSelection(verseNumbers: number[]): string | null {
   return sorted.join(",");
 }
 
+export function parseVerseSelection(verse: string): number[] {
+  const parts = verse.split(",");
+  const verseNumbers: number[] = [];
+  for (const part of parts) {
+    const rangeParts = part.split("-");
+    if (rangeParts.length === 1) {
+      const n = Number(rangeParts[0]);
+      if (Number.isFinite(n) && n > 0) {
+        verseNumbers.push(n);
+      }
+    } else if (rangeParts.length === 2) {
+      const start = Number(rangeParts[0]);
+      const end = Number(rangeParts[1]);
+      if (
+        Number.isFinite(start) &&
+        Number.isFinite(end) &&
+        start > 0 &&
+        end >= start
+      ) {
+        for (let i = start; i <= end; i++) {
+          verseNumbers.push(i);
+        }
+      }
+    }
+  }
+
+  return verseNumbers;
+}
+
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
   id: string;
