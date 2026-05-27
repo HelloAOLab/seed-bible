@@ -141,6 +141,11 @@ export interface BibleThemeVariables {
   selectedVerseTextDecoration?: string | null;
 
   /**
+   * The border-bottom property for selected verses.
+   */
+  selectedVerseBorderBottom?: string | null;
+
+  /**
    * The decoration color for selected verses.
    */
   selectedVerseTextDecorationColor?: string | null;
@@ -518,7 +523,8 @@ const LIGHT_THEME: BibleTheme = {
     selectedVerseFontFamily: "inherit",
     selectedVerseFontColor: "inherit",
     selectedVerseBackgroundColor: "inherit",
-    selectedVerseTextDecoration: "underline",
+    selectedVerseBorderBottom: "2px dashed currentColor",
+    selectedVerseTextDecoration: "none",
     selectedVerseTextDecorationColor: "currentColor",
 
     hebrewSubtitleFontFamily: "Newsreader, serif",
@@ -660,7 +666,8 @@ const DARK_THEME: BibleTheme = {
     selectedVerseFontFamily: "inherit",
     selectedVerseFontColor: "inherit",
     selectedVerseBackgroundColor: "inherit",
-    selectedVerseTextDecoration: "underline",
+    selectedVerseBorderBottom: "2px dashed currentColor",
+    selectedVerseTextDecoration: "none",
     selectedVerseTextDecorationColor: "currentColor",
 
     hebrewSubtitleFontFamily: "Newsreader, serif",

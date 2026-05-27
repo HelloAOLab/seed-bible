@@ -78,7 +78,8 @@
   --sb-selected-verse-font-family: inherit;
   --sb-selected-verse-font-color: inherit;
   --sb-selected-verse-background-color: inherit;
-  --sb-selected-verse-text-decoration: underline;
+  --sb-selected-verse-border-bottom: 2px dashed currentColor;
+  --sb-selected-verse-text-decoration: none;
   --sb-selected-verse-text-decoration-color: currentColor;
 
   --sb-hebrew-subtitle-font-family: "Newsreader", serif;
@@ -1301,7 +1302,12 @@ h6 {
 }
 
 .sb-verse-selected {
-  text-decoration: underline;
+  font-family: var(--sb-selected-verse-font-family);
+  color: var(--sb-selected-verse-font-color);
+  background-color: var(--sb-selected-verse-background-color);
+  border-bottom: var(--sb-selected-verse-border-bottom);
+  text-decoration: var(--sb-selected-verse-text-decoration);
+  text-decoration-color: var(--sb-selected-verse-text-decoration-color);
 }
 
 .sb-verse-number {
