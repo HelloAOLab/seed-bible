@@ -5,6 +5,7 @@ const G = globalThis as any;
 const ShowPlayingContentAnnotation = () => {
   // Audio
   const [mediaURL, setMediaURL] = useState("");
+  const [fileName, setFileName] = useState<string | null>(null);
   const [videoSrc, setVideoSrc] = useState(false);
   const [currentItem, setCurrentItem] = useState({});
 
@@ -32,7 +33,12 @@ const ShowPlayingContentAnnotation = () => {
       {videoSrc ? (
         <VideoPlayer videoSrc={videoSrc} playlistItem={{ ...currentItem }} />
       ) : mediaURL ? (
-        <AudioPlayer close secondaryClose mediaURL={mediaURL} />
+        <AudioPlayer
+          close
+          secondaryClose
+          mediaURL={mediaURL}
+          fileName={fileName}
+        />
       ) : null}
     </div>
   );

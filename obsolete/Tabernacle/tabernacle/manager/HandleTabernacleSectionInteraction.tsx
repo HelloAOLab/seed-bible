@@ -28,10 +28,21 @@ if (bots.length > 0 && type !== "textHover") {
         cameraFocus: bots.length === 1 && type === "textClick",
       });
     })
-  ).finally(() => {
-    if (thisBot.masks.lastInteractionId === interactionId) {
-      setTagMask(thisBot, "focusing", false);
-      thisBot.vars.focusedBots = null;
-    }
-  });
+  )
+    .then((results) => {
+      for (const result of results) {
+        if (result.status === "rejected") {
+          console.log(
+            `[Debug] HandleTabernacleSectionInteraction: promise rejected`,
+            { reason: result.reason }
+          );
+        }
+      }
+    })
+    .finally(() => {
+      if (thisBot.masks.lastInteractionId === interactionId) {
+        setTagMask(thisBot, "focusing", false);
+        thisBot.vars.focusedBots = null;
+      }
+    });
 }

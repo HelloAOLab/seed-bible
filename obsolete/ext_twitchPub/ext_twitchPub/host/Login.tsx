@@ -32,10 +32,10 @@ const Login = (props: {
           Twitch Host
         </span>
         <button
-          className="icon-btn"
+          className="icon-btn material-symbols-outlined"
           onClick={() => whisper(thisBot, "closeInterface")}
         >
-          <span className="material-symbols-outlined">close</span>
+          close
         </button>
       </div>
       <div className="twitchPub-content">

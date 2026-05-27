@@ -1,7 +1,7 @@
 .custom-button {
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid var(--pageTextColor);
+  border: 1px solid var(--pageTextColor, #333333);
   font-weight: 700;
   text-align: center;
   display: flex;
@@ -27,10 +27,10 @@
 }
 
 .custom-button.secondaryAlt {
-  color: var(--primaryColor);
+  color: var(--primaryColor, #ffffff);
   border-radius: 4px !important;
   /* max-width: fit-content !important; */
-  background-color: var(--addButtonIcon);
+  background-color: var(--addButtonIcon, #e07b4c);
   font-family: "Satoshi", system-ui, sans-serif;
   text-align: center;
   font-size: 14px !important;
@@ -44,19 +44,19 @@
 
 .custom-button.secondaryAlt.outline {
   background-color: transparent !important;
-  color: var(--primaryButtonFill) !important;
+  color: var(--primaryButtonFill, #e07b4c) !important;
 }
 
 .custom-button.secondaryAlt.secondaryAltAlt.outline {
-  border: 1px solid var(--tertiaryButtonColor) !important;
+  border: 1px solid var(--tertiaryButtonColor, #333333) !important;
   background-color: transparent !important;
-  color: var(--tertiaryButtonColor) !important;
+  color: var(--tertiaryButtonColor, #333333) !important;
 }
 
 .custom-button.secondaryAlt.secondaryAltAlt {
   background-color: transparent;
-  color: var(--pageTextColor);
-  border: 1px solid var(--secondaryButtonBorder) !important;
+  color: var(--pageTextColor, #333333);
+  border: 1px solid var(--secondaryButtonBorder, #d2691e) !important;
 }
 
 .custom-button .loader {
@@ -64,8 +64,8 @@
 }
 
 .custom-button.secondary {
-  background-color: var(--primaryButton);
-  color: var(--primaryButtonColor);
+  background-color: var(--primaryButton, #e07b4c);
+  color: var(--primaryButtonColor, #ffffff);
   width: max-content;
   padding: 10px 24px;
 }

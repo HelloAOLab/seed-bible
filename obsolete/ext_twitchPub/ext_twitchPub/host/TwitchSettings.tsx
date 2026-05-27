@@ -9,8 +9,8 @@ const TwitchSettings = (props: {
   highlightEnabled: boolean;
   setTranslationEnabled: (value: boolean) => void;
   setHighlightEnabled: (value: boolean) => void;
-  annoucementTimer: number;
-  setAnnouncementTimer: (value: number) => void;
+  annoucementTimer: number | null;
+  setAnnouncementTimer: (value: number | null) => void;
 }) => {
   const {
     setCurrentPage,
@@ -22,8 +22,17 @@ const TwitchSettings = (props: {
     setAnnouncementTimer,
   } = props;
 
-  const [customTimerFlag, setCustomTimerFlag] = useState<string>("");
-  const [customTimer, setCustomTimer] = useState<number>(0);
+  const [customTimerFlag, setCustomTimerFlag] = useState<string>(
+    masks?.customTimerFlag || ""
+  );
+  const [customTimer, setCustomTimer] = useState<number | null>(
+    masks?.customTimer || null
+  );
+
+  useEffect(() => {
+    setTagMask(thisBot, "customTimerFlag", customTimerFlag, "local");
+    setTagMask(thisBot, "customTimer", customTimer, "local");
+  }, [customTimerFlag, customTimer]);
 
   return (
     <>
@@ -52,15 +61,15 @@ const TwitchSettings = (props: {
             Twitch Settings
           </span>
           <button
-            className="icon-btn"
+            className="icon-btn material-symbols-outlined"
             onClick={() => setCurrentPage("interface")}
           >
-            <span className="material-symbols-outlined">arrow_back</span>
+            arrow_back
           </button>
         </div>
         <div className="twitchPub-content">
           <div className="twitchPub-settings-item">
-            <span>Translation broadcast event</span>
+            <span>Broadcast translation event</span>
             <ToggleBtn
               toggle={translationEnabled}
               setToggle={setTranslationEnabled}
@@ -68,7 +77,7 @@ const TwitchSettings = (props: {
             />
           </div>
           <div className="twitchPub-settings-item">
-            <span>Highlight broadcast event</span>
+            <span>Broadcast highlight event</span>
             <ToggleBtn
               toggle={highlightEnabled}
               setToggle={setHighlightEnabled}
@@ -79,16 +88,24 @@ const TwitchSettings = (props: {
             <span>Announcement Timer</span>
             <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
               <select
-                value={annoucementTimer}
+                value={
+                  customTimerFlag === "custom"
+                    ? "custom"
+                    : annoucementTimer?.toString() || "0"
+                }
                 onChange={(e) => {
                   e.stopPropagation();
+                  console.log("Selected announcement timer:", e.target.value);
                   if (e.target.value === "custom") {
+                    setAnnouncementTimer(null);
                     setCustomTimerFlag("custom");
                   } else {
                     setAnnouncementTimer(Number(e.target.value));
+                    setCustomTimerFlag("");
                   }
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
                 className="twitch-select-box"
               >
                 <option value={0}>Off</option>
@@ -109,15 +126,19 @@ const TwitchSettings = (props: {
                   <input
                     type="number"
                     placeholder="0"
-                    value={customTimer ? customTimer : ""}
+                    value={customTimer !== null ? customTimer : ""}
                     onChange={(e) => {
                       const minutes = Number(e.target.value);
                       if (!isNaN(minutes) && minutes >= 0) {
                         setCustomTimer(minutes);
                         setAnnouncementTimer(minutes * 60000);
+                      } else {
+                        setCustomTimer(null);
+                        setAnnouncementTimer(0);
                       }
                     }}
                     onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
                     className="twitch-custom-timer-input"
                   />
                   <span
@@ -164,7 +185,11 @@ const ToggleBtn = ({
         `
           : ``}
       </style>
-      <div className="toggle-wrapper">
+      <div
+        className="toggle-wrapper"
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
         <label className="toggle">
           <input
             type="checkbox"

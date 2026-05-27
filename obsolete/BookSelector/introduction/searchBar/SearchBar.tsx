@@ -878,55 +878,52 @@ const SearchBar = (props: { openSidebar: boolean }) => {
               </span>
             </div>
 
-            <div className="searchbar">
-              <span className="search-icon material-symbols-outlined">
-                Search
-              </span>
-              <input
-                type="text"
-                placeholder={
-                  systemTranslation["searchBook"] || "Search Book..."
-                }
-                value={query}
-                ref={inputRef}
-                onInput={(e) => {
-                  setQuery(e.target.value);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.keyCode === 13) {
-                    handleEnter();
-                  }
-                }}
-              />
-            </div>
             {windowSize > 768 && (
-              <div class="dropdown">
-                <select
-                  value={selectedTestament}
-                  onChange={(e) => setSelectedTestament(Number(e.target.value))}
-                  class="dropdown-select"
-                >
-                  <option value={2} class="dropdown-option">
-                    {systemTranslation["allBooks"] || "All Books"}
-                  </option>
-                  <option value={0} class="dropdown-option">
-                    {windowSize > 750
-                      ? systemTranslation["oldTestament"] || "Old Testament"
-                      : systemTranslation["oldTestamentShort"] || "OT"}
-                  </option>
-                  <option value={1} class="dropdown-option">
-                    {windowSize > 750
-                      ? systemTranslation["newTestament"] || "New Testament"
-                      : systemTranslation["newTestamentShort"] || "NT"}
-                  </option>
-                  {apocryphaAvailable && (
-                    <option value={3} class="dropdown-option">
-                      {systemTranslation["apocrypha"] || "Apocrypha"}
-                    </option>
-                  )}
-                </select>
+              <div className="searchbar">
+                <span className="search-icon material-symbols-outlined">
+                  Search
+                </span>
+                <input
+                  type="text"
+                  placeholder={
+                    systemTranslation["searchBook"] || "Search Book..."
+                  }
+                  value={query}
+                  ref={inputRef}
+                  onInput={(e) => {
+                    setQuery(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.keyCode === 13) {
+                      handleEnter();
+                    }
+                  }}
+                />
               </div>
             )}
+
+            <div class="dropdown">
+              <select
+                value={selectedTestament}
+                onChange={(e) => setSelectedTestament(Number(e.target.value))}
+                class="dropdown-select"
+              >
+                <option value={2} class="dropdown-option">
+                  {systemTranslation["allBooks"] || "All Books"}
+                </option>
+                <option value={0} class="dropdown-option">
+                  {systemTranslation["oldTestament"] || "Old Testament"}
+                </option>
+                <option value={1} class="dropdown-option">
+                  {systemTranslation["newTestament"] || "New Testament"}
+                </option>
+                {apocryphaAvailable && (
+                  <option value={3} class="dropdown-option">
+                    {systemTranslation["apocrypha"] || "Apocrypha"}
+                  </option>
+                )}
+              </select>
+            </div>
             {windowSize <= 768 && (
               <button
                 style={{
@@ -1794,7 +1791,6 @@ const SideBarChapters = (props: {
       }
 
       globalThis.LAST_CLICKED_BOOK_CHAPTER = { ...dataItem };
-
       if (!dontOpen) {
         shout("playSound", { soundName: "UI_Numpad_Click" });
 
@@ -1859,13 +1855,38 @@ const SideBarChapters = (props: {
         }
       }
     } else {
-      const chapterUrl = bookData.firstChapterApiLink.replace(
-        "1.json",
-        `${chapterNo}.json`
-      );
-      globalThis.Open(data.id, chapterNo, selectedTranslation.id, chapterUrl);
-      setOpenSidebar((prev) => !prev);
-      setCurrentExperience(0);
+      if (globalThis.MakingNewTab) {
+        const tab = {
+          id: uuid(),
+          taken: false,
+          data: {
+            use: "thePage",
+            type: "book",
+            book: bookName,
+            bookId: data.id,
+            chapter: chapterNo,
+            translation: data.translationId,
+            shortName: data?.shortName || "",
+          },
+        };
+        globalThis.AddTab(tab);
+        // globalThis.MakingNewTab(tab);
+        globalThis.UpdateTab(tab);
+        globalThis.MakingNewTab = false;
+        setOpenSidebar(false);
+        setTimeout(() => {
+          globalThis?.RemoveApplicationByLabel(globalThis.ActiveMoreApp);
+          globalThis?.setActiveMoreApp(null);
+        }, 100);
+      } else {
+        const chapterUrl = bookData.firstChapterApiLink.replace(
+          "1.json",
+          `${chapterNo}.json`
+        );
+        globalThis.Open(data.id, chapterNo, selectedTranslation.id, chapterUrl);
+        setOpenSidebar((prev) => !prev);
+        setCurrentExperience(0);
+      }
     }
   };
   const psalmsPartName = (props: { index: number }) => {

@@ -5,8 +5,8 @@ const DraggableContainer = (props: { children: HTMLElement }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState(
     masks?.position || {
-      x: 180,
-      y: window.innerHeight / 2,
+      x: window.innerWidth / 2 - 175,
+      y: window.innerHeight / 2 + 100,
     }
   );
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -21,7 +21,9 @@ const DraggableContainer = (props: { children: HTMLElement }) => {
       tag === "option" ||
       tag === "input" ||
       tag === "textarea" ||
-      tag === "button"
+      tag === "button" ||
+      tag === "path" ||
+      tag === "svg"
     )
       return;
     setIsDragging(true);
@@ -33,12 +35,47 @@ const DraggableContainer = (props: { children: HTMLElement }) => {
     e.preventDefault();
   };
 
+  const handleTouchStart = (e: TouchEvent) => {
+    if (!dragRef.current) return;
+    const target = e.target as HTMLElement;
+    const tag = target.tagName.toLowerCase();
+    if (
+      tag === "select" ||
+      tag === "option" ||
+      tag === "input" ||
+      tag === "textarea" ||
+      tag === "button" ||
+      tag === "path" ||
+      tag === "svg"
+    )
+      return;
+    setIsDragging(true);
+    const rect = dragRef.current.getBoundingClientRect();
+    setOffset({
+      x: e.touches[0].clientX - rect.left,
+      y: e.touches[0].clientY - rect.top,
+    });
+    e.preventDefault();
+  };
+
   const handleMouseMove = (e: MouseEvent) => {
     if (!isDragging) return;
     setPosition({
       x: e.clientX - offset.x,
       y: e.clientY - offset.y,
     });
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (!isDragging) return;
+    if (e.touches.length > 1) return;
+    if (!dragRef.current) return;
+    if (e.touches[0]) {
+      setPosition({
+        x: e.touches[0].clientX - offset.x,
+        y: e.touches[0].clientY - offset.y,
+      });
+    }
   };
 
   const handleMouseUp = (e: MouseEvent) => {
@@ -52,6 +89,21 @@ const DraggableContainer = (props: { children: HTMLElement }) => {
       },
       "local"
     );
+  };
+
+  const handleTouchEnd = (e: TouchEvent) => {
+    setIsDragging(false);
+    if (e.changedTouches[0]) {
+      setTagMask(
+        thisBot,
+        "position",
+        {
+          x: e.changedTouches[0].clientX - offset.x,
+          y: e.changedTouches[0].clientY - offset.y,
+        },
+        "local"
+      );
+    }
   };
 
   const onESC = (evt: Event) => {
@@ -70,9 +122,13 @@ const DraggableContainer = (props: { children: HTMLElement }) => {
     if (isDragging) {
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
+      document.addEventListener("touchmove", handleTouchMove);
+      document.addEventListener("touchend", handleTouchEnd);
       return () => {
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
+        document.removeEventListener("touchmove", handleTouchMove);
+        document.removeEventListener("touchend", handleTouchEnd);
       };
     }
   }, [isDragging]);
@@ -96,6 +152,7 @@ const DraggableContainer = (props: { children: HTMLElement }) => {
         zIndex: 10,
       }}
       onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
       onContextMenu={(e) => {
         e.stopPropagation();
       }}

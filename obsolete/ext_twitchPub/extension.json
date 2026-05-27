@@ -9,9 +9,9 @@
       "hasToggle": "true",
       "run": "toggleInterface",
       "iconUrl": "https://res.cloudinary.com/dacw0qnpr/image/upload/v1774035767/Vector_6_if8usw.svg",
-      "showInPageToolbar": true,
-      "showInStarterToolbar": true,
-      "active": false
+      "showInPageToolbar": "true",
+      "showInStarterToolbar": "true",
+      "active": "true"
     }
   },
   "createdAt": "2026-03-12T18:58:19.554Z",

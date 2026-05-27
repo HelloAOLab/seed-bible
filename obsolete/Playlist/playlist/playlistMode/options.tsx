@@ -22,10 +22,11 @@ const items = [
         return;
       }
       const dataTempItems: any[] = [];
-      selectedItem.verseNumber?.forEach((vNumber: any) => {
+      const booksDetails = G.findNameRank(selectedItem.book);
+
+      const makeVerseItem = (vNumber: number) => {
         const id = G.createUUID();
-        const booksDetails = G.findNameRank(selectedItem.book);
-        const dataItemTemp = {
+        return {
           type: "verse",
           content: `${selectedItem.book} ${selectedItem.chapter}:${vNumber}`,
           additionalInfo: {
@@ -39,8 +40,58 @@ const items = [
           },
           id,
         };
-        dataTempItems.push(dataItemTemp);
-      });
+      };
+
+      if (G.IsPlaylistPlaying) {
+        const verseNums = (selectedItem.verseNumber || [])
+          .map((v: any) => Number(v))
+          .filter((v: number) => Number.isFinite(v))
+          .sort((a: number, b: number) => a - b);
+        const uniqueSorted: number[] = Array.from(new Set(verseNums));
+
+        const runs: { start: number; end: number }[] = [];
+        for (const v of uniqueSorted) {
+          const last = runs[runs.length - 1];
+          if (last && v === last.end + 1) {
+            last.end = v;
+          } else {
+            runs.push({ start: v, end: v });
+          }
+        }
+
+        for (const run of runs) {
+          if (run.start === run.end) {
+            dataTempItems.push(makeVerseItem(run.start));
+          } else {
+            const verses = Array.from(
+              { length: run.end - run.start + 1 },
+              (_, i) => run.start + i
+            );
+            const id = G.createUUID();
+            dataTempItems.push({
+              type: "verse-grouped",
+              content: `${selectedItem.book} ${selectedItem.chapter}:${run.start}-${run.end}`,
+              additionalInfo: {
+                verse: verses,
+                chapter: selectedItem.chapter,
+                book: selectedItem.book,
+                bookRank: booksDetails.item,
+                data: {
+                  ...selectedItem,
+                  verseNumber: verses,
+                },
+                chapterData: { ...G.CHAPTER_DATA },
+                groupID: G.ADD_VERSE_ITEM_PLAYLIST_GROUP_ID,
+              },
+              id,
+            });
+          }
+        }
+      } else {
+        selectedItem.verseNumber?.forEach((vNumber: any) => {
+          dataTempItems.push(makeVerseItem(Number(vNumber)));
+        });
+      }
       if (!G.IsPlaylistPlaying) {
         if (!authBot?.id) {
           ShowNotification({
