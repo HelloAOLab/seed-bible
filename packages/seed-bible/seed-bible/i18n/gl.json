@@ -212,5 +212,10 @@
   "bookmarks": "Marcadores",
   "hide-bookmarks": "Ocultar marcadores",
   "show-bookmarks": "Mostrar marcadores",
-  "add-new-tab": "Engadir nova lapela"
+  "add-new-tab": "Engadir nova lapela",
+  "add-to-bookmark-category": "Engadir á categoría de marcadores",
+  "folder-name-taken": "Xa existe unha carpeta con ese nome.",
+  "add-to-new": "Engadir a novo",
+  "save": "Gardar",
+  "bookmark-verses": "Versos de marcadores"
 }

@@ -212,5 +212,10 @@
   "bookmarks": "Záložky",
   "hide-bookmarks": "Skrýt záložky",
   "show-bookmarks": "Zobrazit záložky",
-  "add-new-tab": "Přidat novou kartu"
+  "add-new-tab": "Přidat novou kartu",
+  "add-to-bookmark-category": "Přidat do kategorie záložek",
+  "folder-name-taken": "Složka s tímto názvem již existuje.",
+  "add-to-new": "Přidat k novému",
+  "save": "Uložit",
+  "bookmark-verses": "Záložka veršů"
 }

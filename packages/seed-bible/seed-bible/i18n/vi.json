@@ -212,5 +212,10 @@
   "hide-bookmarks": "Ẩn dấu trang",
   "show-bookmarks": "Hiển thị dấu trang",
   "add-new-tab": "Thêm tab mới",
-  "share-session": "Chia sẻ phiên họp"
+  "share-session": "Chia sẻ phiên họp",
+  "add-to-bookmark-category": "Thêm vào danh mục yêu thích",
+  "folder-name-taken": "Thư mục có tên đó đã tồn tại.",
+  "add-to-new": "Thêm vào mục mới",
+  "save": "Cứu",
+  "bookmark-verses": "Đánh dấu các câu thơ"
 }

@@ -212,5 +212,10 @@
   "hide-bookmarks": "ブックマークを非表示にする",
   "show-bookmarks": "ブックマークを表示",
   "add-new-tab": "新しいタブを追加",
-  "share-session": "セッションを共有する"
+  "share-session": "セッションを共有する",
+  "add-to-bookmark-category": "ブックマークに追加",
+  "folder-name-taken": "その名前のフォルダは既に存在します。",
+  "add-to-new": "新規に追加",
+  "save": "保存",
+  "bookmark-verses": "ブックマークした聖句"
 }

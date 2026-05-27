@@ -212,5 +212,10 @@
   "bookmarks": "Faqeshënuesit",
   "hide-bookmarks": "Fshih faqeshënuesit",
   "show-bookmarks": "Shfaq faqeshënuesit",
-  "add-new-tab": "Shto skedë të re"
+  "add-new-tab": "Shto skedë të re",
+  "add-to-bookmark-category": "Shto në kategorinë e faqeshënuesve",
+  "folder-name-taken": "Një dosje me atë emër ekziston tashmë.",
+  "add-to-new": "Shto te e reja",
+  "save": "Ruaj",
+  "bookmark-verses": "Vendos vargjet në faqeshënues"
 }

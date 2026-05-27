@@ -212,5 +212,10 @@
   "bookmarks": "Kirjanmerkit",
   "hide-bookmarks": "Piilota kirjanmerkit",
   "show-bookmarks": "Näytä kirjanmerkit",
-  "add-new-tab": "Lisää uusi välilehti"
+  "add-new-tab": "Lisää uusi välilehti",
+  "add-to-bookmark-category": "Lisää kirjanmerkkiluokkaan",
+  "folder-name-taken": "Samanniminen kansio on jo olemassa.",
+  "add-to-new": "Lisää uuteen",
+  "save": "Tallentaa",
+  "bookmark-verses": "Kirjanmerkkien säkeet"
 }

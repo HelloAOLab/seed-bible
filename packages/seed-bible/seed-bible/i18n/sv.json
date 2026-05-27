@@ -212,5 +212,10 @@
   "bookmarks": "Bokmärken",
   "hide-bookmarks": "Dölj bokmärken",
   "show-bookmarks": "Visa bokmärken",
-  "add-new-tab": "Lägg till ny flik"
+  "add-new-tab": "Lägg till ny flik",
+  "add-to-bookmark-category": "Lägg till i bokmärkeskategori",
+  "folder-name-taken": "En mapp med det namnet finns redan.",
+  "add-to-new": "Lägg till i nytt",
+  "save": "Spara",
+  "bookmark-verses": "Bokmärk verser"
 }

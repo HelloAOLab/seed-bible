@@ -212,5 +212,10 @@
   "bookmarks": "סימניות",
   "hide-bookmarks": "הסתר סימניות",
   "show-bookmarks": "הצג סימניות",
-  "add-new-tab": "הוסף כרטיסייה חדשה"
+  "add-new-tab": "הוסף כרטיסייה חדשה",
+  "add-to-bookmark-category": "הוסף לקטגוריית סימניות",
+  "folder-name-taken": "תיקייה בשם זה כבר קיימת.",
+  "add-to-new": "הוסף לחדש",
+  "save": "לְהַצִיל",
+  "bookmark-verses": "פסוקים בסימניות"
 }

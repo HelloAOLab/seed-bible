@@ -212,5 +212,10 @@
   "hide-bookmarks": "বুকমার্ক লুকান",
   "show-bookmarks": "বুকমার্কগুলি দেখান",
   "add-new-tab": "নতুন ট্যাব যোগ করুন",
-  "share-session": "সেশন শেয়ার করুন"
+  "share-session": "সেশন শেয়ার করুন",
+  "add-to-bookmark-category": "বুকমার্ক বিভাগে যোগ করুন",
+  "folder-name-taken": "ঐ নামে একটি ফোল্ডার ইতিমধ্যেই বিদ্যমান।",
+  "add-to-new": "নতুনতে যোগ করুন",
+  "save": "সংরক্ষণ করুন",
+  "bookmark-verses": "শ্লোকগুলি বুকমার্ক করুন"
 }

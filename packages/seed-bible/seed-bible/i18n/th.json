@@ -212,5 +212,10 @@
   "bookmarks": "ที่คั่นหนังสือ",
   "hide-bookmarks": "ซ่อนบุ๊กมาร์ก",
   "show-bookmarks": "แสดงบุ๊กมาร์ก",
-  "add-new-tab": "เพิ่มแท็บใหม่"
+  "add-new-tab": "เพิ่มแท็บใหม่",
+  "add-to-bookmark-category": "เพิ่มไปยังหมวดหมู่บุ๊กมาร์ก",
+  "folder-name-taken": "มีโฟลเดอร์ชื่อนั้นอยู่แล้ว",
+  "add-to-new": "เพิ่มไปยังรายการใหม่",
+  "save": "บันทึก",
+  "bookmark-verses": "คั่นหน้าข้อความ"
 }

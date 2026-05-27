@@ -212,5 +212,10 @@
   "bookmarks": "Amabhukhimakhi",
   "hide-bookmarks": "Fihla amabhukumaka",
   "show-bookmarks": "Bonisa amabhukumaka",
-  "add-new-tab": "Engeza ithebhu entsha"
+  "add-new-tab": "Engeza ithebhu entsha",
+  "add-to-bookmark-category": "Engeza esigabeni sebhukhimakhi",
+  "folder-name-taken": "Ifolda enalelo gama isivele ikhona.",
+  "add-to-new": "Engeza kokusha",
+  "save": "Londoloza",
+  "bookmark-verses": "Beka uphawu lokumaka amavesi"
 }

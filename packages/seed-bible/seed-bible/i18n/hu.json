@@ -212,5 +212,10 @@
   "bookmarks": "Könyvjelzők",
   "hide-bookmarks": "Könyvjelzők elrejtése",
   "show-bookmarks": "Könyvjelzők megjelenítése",
-  "add-new-tab": "Új lap hozzáadása"
+  "add-new-tab": "Új lap hozzáadása",
+  "add-to-bookmark-category": "Hozzáadás a könyvjelző kategóriához",
+  "folder-name-taken": "Már létezik egy ilyen nevű mappa.",
+  "add-to-new": "Hozzáadás az újhoz",
+  "save": "Megtakarítás",
+  "bookmark-verses": "Könyvjelző versek"
 }

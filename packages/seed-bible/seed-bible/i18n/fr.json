@@ -212,5 +212,10 @@
   "hide-bookmarks": "Masquer les favoris",
   "show-bookmarks": "Afficher les favoris",
   "add-new-tab": "Ajouter un nouvel onglet",
-  "share-session": "Session de partage"
+  "share-session": "Session de partage",
+  "add-to-bookmark-category": "Ajouter aux favoris",
+  "folder-name-taken": "Un dossier portant ce nom existe déjà.",
+  "add-to-new": "Ajouter aux nouveaux",
+  "save": "Sauvegarder",
+  "bookmark-verses": "Versets à marquer"
 }

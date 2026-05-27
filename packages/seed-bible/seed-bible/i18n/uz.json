@@ -212,5 +212,10 @@
   "bookmarks": "Xatcho'plar",
   "hide-bookmarks": "Xatcho'plarni yashirish",
   "show-bookmarks": "Xatcho'plarni ko'rsatish",
-  "add-new-tab": "Yangi yorliq qo'shish"
+  "add-new-tab": "Yangi yorliq qo'shish",
+  "add-to-bookmark-category": "Xatcho'plar toifasiga qo'shish",
+  "folder-name-taken": "Bu nomli papka allaqachon mavjud.",
+  "add-to-new": "Yangisiga qo'shish",
+  "save": "Saqlash",
+  "bookmark-verses": "Oyatlarni xatcho'pga qo'ying"
 }

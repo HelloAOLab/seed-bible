@@ -212,5 +212,10 @@
   "bookmarks": "Zaznamki",
   "hide-bookmarks": "Skrij zaznamke",
   "show-bookmarks": "Prikaži zaznamke",
-  "add-new-tab": "Dodaj nov zavihek"
+  "add-new-tab": "Dodaj nov zavihek",
+  "add-to-bookmark-category": "Dodaj v kategorijo zaznamkov",
+  "folder-name-taken": "Mapa s tem imenom že obstaja.",
+  "add-to-new": "Dodaj k novemu",
+  "save": "Shrani",
+  "bookmark-verses": "Zaznamek verzov"
 }

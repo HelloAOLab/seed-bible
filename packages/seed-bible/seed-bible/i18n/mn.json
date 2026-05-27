@@ -211,5 +211,11 @@
   "bookmarks": "Хавчуурга",
   "hide-bookmarks": "Хавчуургыг нуух",
   "show-bookmarks": "Хавчуургыг харуулах",
-  "add-new-tab": "Шинэ таб нэмэх"
+  "add-new-tab": "Шинэ таб нэмэх",
+  "share-session": "Хуваалцах сесс",
+  "add-to-bookmark-category": "Хавчуургын ангилалд нэмэх",
+  "folder-name-taken": "Ийм нэртэй фолдер аль хэдийн байна.",
+  "add-to-new": "Шинэ зүйлд нэмэх",
+  "save": "Хадгалах",
+  "bookmark-verses": "Шүлгүүдийг хавчуурга болгон хадгалах"
 }

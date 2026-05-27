@@ -212,5 +212,10 @@
   "bookmarks": "Əlfəcinlər",
   "hide-bookmarks": "Əlfəcinləri gizlət",
   "show-bookmarks": "Əlfəcinləri göstər",
-  "add-new-tab": "Yeni sekme əlavə edin"
+  "add-new-tab": "Yeni sekme əlavə edin",
+  "add-to-bookmark-category": "Əlfəcin kateqoriyasına əlavə edin",
+  "folder-name-taken": "Bu adda qovluq artıq mövcuddur.",
+  "add-to-new": "Yenisinə əlavə edin",
+  "save": "Yadda saxla",
+  "bookmark-verses": "Ayələri əlfəcininizə əlavə edin"
 }

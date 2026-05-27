@@ -212,5 +212,10 @@
   "bookmarks": "Segnalibri",
   "hide-bookmarks": "Nascondi i segnalibri",
   "show-bookmarks": "Mostra i segnalibri",
-  "add-new-tab": "Aggiungi una nuova scheda"
+  "add-new-tab": "Aggiungi una nuova scheda",
+  "add-to-bookmark-category": "Aggiungi alla categoria segnalibro",
+  "folder-name-taken": "Esiste già una cartella con quel nome.",
+  "add-to-new": "Aggiungi a nuovo",
+  "save": "Salva",
+  "bookmark-verses": "Segnalibro versi"
 }

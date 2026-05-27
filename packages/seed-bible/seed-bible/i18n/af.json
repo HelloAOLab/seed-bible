@@ -212,5 +212,10 @@
   "bookmarks": "Boekmerke",
   "hide-bookmarks": "Versteek boekmerke",
   "show-bookmarks": "Wys boekmerke",
-  "add-new-tab": "Voeg nuwe oortjie by"
+  "add-new-tab": "Voeg nuwe oortjie by",
+  "add-to-bookmark-category": "Voeg by boekmerkkategorie",
+  "folder-name-taken": "'n Vouer met daardie naam bestaan ​​reeds.",
+  "add-to-new": "Voeg by nuut",
+  "save": "Stoor",
+  "bookmark-verses": "Boekmerk verse"
 }

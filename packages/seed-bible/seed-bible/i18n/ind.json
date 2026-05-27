@@ -211,5 +211,11 @@
   "bookmarks": "Penanda buku",
   "hide-bookmarks": "Sembunyikan bookmark",
   "show-bookmarks": "Tampilkan bookmark",
-  "add-new-tab": "Tambahkan tab baru"
+  "add-new-tab": "Tambahkan tab baru",
+  "share-session": "Sesi berbagi",
+  "add-to-bookmark-category": "Tambahkan ke kategori bookmark",
+  "folder-name-taken": "Folder dengan nama tersebut sudah ada.",
+  "add-to-new": "Tambahkan ke yang baru",
+  "save": "Menyimpan",
+  "bookmark-verses": "Ayat-ayat penanda"
 }

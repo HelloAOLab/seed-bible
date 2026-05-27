@@ -212,5 +212,10 @@
   "bookmarks": "Žymės",
   "hide-bookmarks": "Slėpti žymes",
   "show-bookmarks": "Rodyti žymes",
-  "add-new-tab": "Pridėti naują skirtuką"
+  "add-new-tab": "Pridėti naują skirtuką",
+  "add-to-bookmark-category": "Pridėti prie žymių kategorijos",
+  "folder-name-taken": "Aplankas tokiu pavadinimu jau yra.",
+  "add-to-new": "Pridėti prie naujo",
+  "save": "Išsaugoti",
+  "bookmark-verses": "Žymių eilutės"
 }

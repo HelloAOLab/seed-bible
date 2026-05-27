@@ -212,5 +212,10 @@
   "bookmarks": "Bókamerki",
   "hide-bookmarks": "Fela bókamerki",
   "show-bookmarks": "Sýna bókamerki",
-  "add-new-tab": "Bæta við nýjum flipa"
+  "add-new-tab": "Bæta við nýjum flipa",
+  "add-to-bookmark-category": "Bæta við bókamerkjaflokk",
+  "folder-name-taken": "Mappa með þessu nafni er þegar til.",
+  "add-to-new": "Bæta við nýtt",
+  "save": "Vista",
+  "bookmark-verses": "Bókamerkjaðu vers"
 }

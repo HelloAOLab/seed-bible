@@ -212,5 +212,10 @@
   "bookmarks": "Закладкі",
   "hide-bookmarks": "Схаваць закладкі",
   "show-bookmarks": "Паказаць закладкі",
-  "add-new-tab": "Дадаць новую ўкладку"
+  "add-new-tab": "Дадаць новую ўкладку",
+  "add-to-bookmark-category": "Дадаць у катэгорыю закладак",
+  "folder-name-taken": "Папка з такой назвай ужо існуе.",
+  "add-to-new": "Дадаць да новага",
+  "save": "Захаваць",
+  "bookmark-verses": "Закладка вершаў"
 }

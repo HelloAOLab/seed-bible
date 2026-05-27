@@ -212,5 +212,10 @@
   "bookmarks": "Bogmærker",
   "hide-bookmarks": "Skjul bogmærker",
   "show-bookmarks": "Vis bogmærker",
-  "add-new-tab": "Tilføj ny fane"
+  "add-new-tab": "Tilføj ny fane",
+  "add-to-bookmark-category": "Føj til bogmærkekategori",
+  "folder-name-taken": "Der findes allerede en mappe med det navn.",
+  "add-to-new": "Tilføj til ny",
+  "save": "Spare",
+  "bookmark-verses": "Bogmærk vers"
 }

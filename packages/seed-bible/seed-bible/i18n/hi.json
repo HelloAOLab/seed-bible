@@ -212,5 +212,10 @@
   "hide-bookmarks": "बुकमार्क छुपाएँ",
   "show-bookmarks": "बुकमार्क दिखाएँ",
   "add-new-tab": "नया टैब जोड़ें",
-  "share-session": "सत्र साझा करें"
+  "share-session": "सत्र साझा करें",
+  "add-to-bookmark-category": "बुकमार्क श्रेणी में जोड़ें",
+  "folder-name-taken": "उस नाम का एक फोल्डर पहले से मौजूद है।",
+  "add-to-new": "नए में जोड़ें",
+  "save": "बचाना",
+  "bookmark-verses": "श्लोकों को बुकमार्क करें"
 }

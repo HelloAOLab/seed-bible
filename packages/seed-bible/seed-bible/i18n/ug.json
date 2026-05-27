@@ -211,5 +211,11 @@
   "bookmarks": "خەتكۈچلەر",
   "hide-bookmarks": "خەتكۈچلەرنى يوشۇرۇش",
   "show-bookmarks": "خەتكۈچلەرنى كۆرسىتىش",
-  "add-new-tab": "يېڭى بەتكۈچ قوشۇش"
+  "add-new-tab": "يېڭى بەتكۈچ قوشۇش",
+  "share-session": "ئورتاقلىشىش جەريانى",
+  "add-to-bookmark-category": "خەتكۈچ تۈرىگە قوشۇش",
+  "folder-name-taken": "بۇنداق ئىسىمدىكى بىر قىسقۇچ مەۋجۇت.",
+  "add-to-new": "يېڭىسىغا قوشۇش",
+  "save": "ساقلاش",
+  "bookmark-verses": "ئايەتلەرنى خاتىرىلەڭ"
 }

@@ -212,5 +212,10 @@
   "bookmarks": "Lesezeichen",
   "hide-bookmarks": "Lesezeichen ausblenden",
   "show-bookmarks": "Lesezeichen anzeigen",
-  "add-new-tab": "Neuen Tab hinzufügen"
+  "add-new-tab": "Neuen Tab hinzufügen",
+  "add-to-bookmark-category": "Zur Lesezeichenkategorie hinzufügen",
+  "folder-name-taken": "Ein Ordner mit diesem Namen existiert bereits.",
+  "add-to-new": "Zu neu hinzufügen",
+  "save": "Speichern",
+  "bookmark-verses": "Verse als Lesezeichen speichern"
 }

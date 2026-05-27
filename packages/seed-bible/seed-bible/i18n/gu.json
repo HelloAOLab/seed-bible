@@ -212,5 +212,10 @@
   "bookmarks": "બુકમાર્ક્સ",
   "hide-bookmarks": "બુકમાર્ક્સ છુપાવો",
   "show-bookmarks": "બુકમાર્ક્સ બતાવો",
-  "add-new-tab": "નવું ટેબ ઉમેરો"
+  "add-new-tab": "નવું ટેબ ઉમેરો",
+  "add-to-bookmark-category": "બુકમાર્ક શ્રેણીમાં ઉમેરો",
+  "folder-name-taken": "આ નામનું ફોલ્ડર પહેલેથી જ અસ્તિત્વમાં છે.",
+  "add-to-new": "નવામાં ઉમેરો",
+  "save": "સાચવો",
+  "bookmark-verses": "શ્લોકો બુકમાર્ક કરો"
 }

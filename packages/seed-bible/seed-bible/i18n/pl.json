@@ -212,5 +212,10 @@
   "bookmarks": "Zakładki",
   "hide-bookmarks": "Ukryj zakładki",
   "show-bookmarks": "Pokaż zakładki",
-  "add-new-tab": "Dodaj nową kartę"
+  "add-new-tab": "Dodaj nową kartę",
+  "add-to-bookmark-category": "Dodaj do kategorii zakładek",
+  "folder-name-taken": "Folder o takiej nazwie już istnieje.",
+  "add-to-new": "Dodaj do nowego",
+  "save": "Ratować",
+  "bookmark-verses": "Dodaj wersety do zakładek"
 }

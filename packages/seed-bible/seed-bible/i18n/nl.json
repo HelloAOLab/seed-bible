@@ -212,5 +212,10 @@
   "bookmarks": "Bladwijzers",
   "hide-bookmarks": "Bladwijzers verbergen",
   "show-bookmarks": "Toon bladwijzers",
-  "add-new-tab": "Nieuw tabblad toevoegen"
+  "add-new-tab": "Nieuw tabblad toevoegen",
+  "add-to-bookmark-category": "Voeg toe aan bladwijzercategorie",
+  "folder-name-taken": "Er bestaat al een map met die naam.",
+  "add-to-new": "Toevoegen aan nieuw",
+  "save": "Redden",
+  "bookmark-verses": "Verzen markeren"
 }

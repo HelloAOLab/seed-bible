@@ -212,5 +212,10 @@
   "bookmarks": "ບຸກມາກ",
   "hide-bookmarks": "ເຊື່ອງບຸກມາກ",
   "show-bookmarks": "ສະແດງບຸກມາກ",
-  "add-new-tab": "ເພີ່ມແຖບໃໝ່"
+  "add-new-tab": "ເພີ່ມແຖບໃໝ່",
+  "add-to-bookmark-category": "ເພີ່ມໃສ່ໝວດໝູ່ບຸກມາກ",
+  "folder-name-taken": "ມີໂຟນເດີທີ່ມີຊື່ນັ້ນຢູ່ແລ້ວ.",
+  "add-to-new": "ເພີ່ມໃສ່ອັນໃໝ່",
+  "save": "ບັນທຶກ",
+  "bookmark-verses": "ບຸກມາກຂໍ້ພຣະຄຳພີ"
 }

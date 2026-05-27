@@ -212,5 +212,10 @@
   "hide-bookmarks": "북마크 숨기기",
   "show-bookmarks": "즐겨찾기 표시",
   "add-new-tab": "새 탭 추가",
-  "share-session": "공유 세션"
+  "share-session": "공유 세션",
+  "add-to-bookmark-category": "즐겨찾기에 추가",
+  "folder-name-taken": "해당 이름의 폴더가 이미 존재합니다.",
+  "add-to-new": "새 항목에 추가",
+  "save": "구하다",
+  "bookmark-verses": "성경 구절을 북마크하세요"
 }

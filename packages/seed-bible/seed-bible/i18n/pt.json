@@ -212,5 +212,10 @@
   "hide-bookmarks": "Ocultar favoritos",
   "show-bookmarks": "Mostrar favoritos",
   "add-new-tab": "Adicionar nova aba",
-  "share-session": "Sessão de compartilhamento"
+  "share-session": "Sessão de compartilhamento",
+  "add-to-bookmark-category": "Adicionar à categoria de favoritos",
+  "folder-name-taken": "Já existe uma pasta com esse nome.",
+  "add-to-new": "Adicionar aos novos",
+  "save": "Salvar",
+  "bookmark-verses": "Versículos dos favoritos"
 }

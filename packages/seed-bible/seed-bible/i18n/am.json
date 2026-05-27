@@ -211,5 +211,11 @@
   "bookmarks": "ዕልባቶች",
   "hide-bookmarks": "ዕልባቶችን ደብቅ",
   "show-bookmarks": "ዕልባቶችን አሳይ",
-  "add-new-tab": "አዲስ ትር ያክሉ"
+  "add-new-tab": "አዲስ ትር ያክሉ",
+  "share-session": "ክፍለ ጊዜን አጋራ",
+  "add-to-bookmark-category": "ወደ ዕልባት ምድብ ያክሉ",
+  "folder-name-taken": "በዚያ ስም አንድ አቃፊ አስቀድሞ አለ።",
+  "add-to-new": "ወደ አዲስ ያክሉ",
+  "save": "አስቀምጥ",
+  "bookmark-verses": "ጥቅሶችን ዕልባት ያድርጉ"
 }

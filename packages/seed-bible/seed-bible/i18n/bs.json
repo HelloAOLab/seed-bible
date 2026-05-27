@@ -212,5 +212,10 @@
   "bookmarks": "Oznake",
   "hide-bookmarks": "Sakrij oznake",
   "show-bookmarks": "Prikaži oznake",
-  "add-new-tab": "Dodaj novi tab"
+  "add-new-tab": "Dodaj novi tab",
+  "add-to-bookmark-category": "Dodaj u kategoriju oznaka",
+  "folder-name-taken": "Fascikla sa tim imenom već postoji.",
+  "add-to-new": "Dodaj u novo",
+  "save": "Sačuvaj",
+  "bookmark-verses": "Označi stihove"
 }

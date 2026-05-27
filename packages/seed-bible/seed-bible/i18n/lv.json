@@ -212,5 +212,10 @@
   "bookmarks": "Grāmatzīmes",
   "hide-bookmarks": "Slēpt grāmatzīmes",
   "show-bookmarks": "Rādīt grāmatzīmes",
-  "add-new-tab": "Pievienot jaunu cilni"
+  "add-new-tab": "Pievienot jaunu cilni",
+  "add-to-bookmark-category": "Pievienot grāmatzīmju kategorijai",
+  "folder-name-taken": "Mape ar šādu nosaukumu jau pastāv.",
+  "add-to-new": "Pievienot jaunam",
+  "save": "Saglabāt",
+  "bookmark-verses": "Grāmatzīmju panti"
 }

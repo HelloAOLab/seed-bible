@@ -212,5 +212,10 @@
   "bookmarks": "Обележувачи",
   "hide-bookmarks": "Сокриј обележувачи",
   "show-bookmarks": "Прикажи обележувачи",
-  "add-new-tab": "Додај нов таб"
+  "add-new-tab": "Додај нов таб",
+  "add-to-bookmark-category": "Додај во категоријата обележувачи",
+  "folder-name-taken": "Веќе постои папка со тоа име.",
+  "add-to-new": "Додај во ново",
+  "save": "Зачувај",
+  "bookmark-verses": "Обележи ги стиховите"
 }

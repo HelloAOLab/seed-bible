@@ -211,5 +211,11 @@
   "bookmarks": "یادنښې",
   "hide-bookmarks": "بک مارکونه پټ کړئ",
   "show-bookmarks": "بک مارکونه وښایاست",
-  "add-new-tab": "نوی ټب اضافه کړئ"
+  "add-new-tab": "نوی ټب اضافه کړئ",
+  "share-session": "غونډه شریکه کړئ",
+  "add-to-bookmark-category": "د بک مارک کټګورۍ کې اضافه کړئ",
+  "folder-name-taken": "د دې نوم سره یو فولډر دمخه شتون لري.",
+  "add-to-new": "نوي ته اضافه کړئ",
+  "save": "خوندي کړئ",
+  "bookmark-verses": "آیتونه په نښه کړئ"
 }

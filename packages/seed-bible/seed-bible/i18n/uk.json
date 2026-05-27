@@ -212,5 +212,10 @@
   "hide-bookmarks": "Приховати закладки",
   "show-bookmarks": "Показати закладки",
   "add-new-tab": "Додати нову вкладку",
-  "share-session": "Поділитися сеансом"
+  "share-session": "Поділитися сеансом",
+  "add-to-bookmark-category": "Додати до категорії закладок",
+  "folder-name-taken": "Папка з такою назвою вже існує.",
+  "add-to-new": "Додати до нового",
+  "save": "Зберегти",
+  "bookmark-verses": "Закладка віршів"
 }

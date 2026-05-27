@@ -212,5 +212,10 @@
   "bookmarks": "Záložky",
   "hide-bookmarks": "Skryť záložky",
   "show-bookmarks": "Zobraziť záložky",
-  "add-new-tab": "Pridať novú kartu"
+  "add-new-tab": "Pridať novú kartu",
+  "add-to-bookmark-category": "Pridať do kategórie záložiek",
+  "folder-name-taken": "Priečinok s týmto názvom už existuje.",
+  "add-to-new": "Pridať k novému",
+  "save": "Uložiť",
+  "bookmark-verses": "Záložka veršov"
 }

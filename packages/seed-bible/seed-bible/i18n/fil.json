@@ -212,5 +212,10 @@
   "bookmarks": "Mga Bookmark",
   "hide-bookmarks": "Itago ang mga bookmark",
   "show-bookmarks": "Ipakita ang mga bookmark",
-  "add-new-tab": "Magdagdag ng bagong tab"
+  "add-new-tab": "Magdagdag ng bagong tab",
+  "add-to-bookmark-category": "Idagdag sa kategorya ng bookmark",
+  "folder-name-taken": "Mayroon nang folder na may ganoong pangalan.",
+  "add-to-new": "Idagdag sa bago",
+  "save": "I-save",
+  "bookmark-verses": "I-bookmark ang mga bersikulo"
 }

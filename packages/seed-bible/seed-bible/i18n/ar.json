@@ -212,5 +212,10 @@
   "hide-bookmarks": "إخفاء الإشارات المرجعية",
   "show-bookmarks": "إظهار الإشارات المرجعية",
   "add-new-tab": "أضف علامة تبويب جديدة",
-  "share-session": "جلسة مشاركة"
+  "share-session": "جلسة مشاركة",
+  "add-to-bookmark-category": "أضف إلى فئة الإشارات المرجعية",
+  "folder-name-taken": "يوجد مجلد بهذا الاسم بالفعل.",
+  "add-to-new": "أضف إلى جديد",
+  "save": "يحفظ",
+  "bookmark-verses": "آيات مرجعية"
 }

@@ -212,5 +212,10 @@
   "hide-bookmarks": "Yer işaretlerini gizle",
   "show-bookmarks": "Yer işaretlerini göster",
   "add-new-tab": "Yeni sekme ekle",
-  "share-session": "Oturumu paylaş"
+  "share-session": "Oturumu paylaş",
+  "add-to-bookmark-category": "Yer imi kategorisine ekle",
+  "folder-name-taken": "O isimde bir klasör zaten mevcut.",
+  "add-to-new": "Yeniye ekle",
+  "save": "Kaydetmek",
+  "bookmark-verses": "Ayeti yer imlerine ekle"
 }

@@ -212,5 +212,10 @@
   "bookmarks": "Semne de carte",
   "hide-bookmarks": "Ascunde marcajele",
   "show-bookmarks": "Afișați marcajele",
-  "add-new-tab": "Adăugați o filă nouă"
+  "add-new-tab": "Adăugați o filă nouă",
+  "add-to-bookmark-category": "Adaugă la categoria de favorite",
+  "folder-name-taken": "Există deja un folder cu acest nume.",
+  "add-to-new": "Adăugați la nou",
+  "save": "Salva",
+  "bookmark-verses": "Versuri în semnături"
 }

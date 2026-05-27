@@ -212,5 +212,10 @@
   "bookmarks": "ចំណាំ",
   "hide-bookmarks": "លាក់ចំណាំ",
   "show-bookmarks": "បង្ហាញ​ចំណាំ",
-  "add-new-tab": "បន្ថែមផ្ទាំងថ្មី"
+  "add-new-tab": "បន្ថែមផ្ទាំងថ្មី",
+  "add-to-bookmark-category": "បន្ថែមទៅប្រភេទចំណាំ",
+  "folder-name-taken": "ថតឯកសារដែលមានឈ្មោះនោះមានរួចហើយ។",
+  "add-to-new": "បន្ថែមទៅថ្មី",
+  "save": "រក្សាទុក",
+  "bookmark-verses": "ចំណាំខគម្ពីរ"
 }
