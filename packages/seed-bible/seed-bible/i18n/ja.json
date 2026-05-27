@@ -188,10 +188,10 @@
   "add-bookmark": "ブックマーク",
   "play-audio": "音声を再生",
   "play": "遊ぶ",
-  "ask": "聞く",
+
   "discovery": "発見",
   "chat": "チャット",
-  "social": "社交",
+
   "today": "今日",
   "you": "あなた",
   "bible": "聖書",
@@ -206,10 +206,16 @@
   "bookmark-folder-empty": "まだブックマークはありません。",
   "bookmark-options": "ブックマークオプション",
   "new-folder-placeholder": "フォルダ名",
-  "new-folder": "新しいフォルダー",
+
   "tasks": "タスク",
   "bookmarks": "ブックマーク",
   "hide-bookmarks": "ブックマークを非表示にする",
   "show-bookmarks": "ブックマークを表示",
-  "add-new-tab": "新しいタブを追加"
+  "add-new-tab": "新しいタブを追加",
+  "share-session": "セッションを共有する",
+  "add-to-bookmark-category": "ブックマークに追加",
+  "folder-name-taken": "その名前のフォルダは既に存在します。",
+  "add-to-new": "新規に追加",
+  "save": "保存",
+  "bookmark-verses": "ブックマークした聖句"
 }

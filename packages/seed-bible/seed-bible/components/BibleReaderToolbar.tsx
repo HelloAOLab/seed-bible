@@ -15,6 +15,7 @@ import { SeedBibleIcon } from "seed-bible.components.icons";
 import {
   SelfAvatarVisual,
   getSelfDisplayName,
+  openBookmarkCategoryModal,
 } from "seed-bible.components.Tabs";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
@@ -342,6 +343,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     sidebar,
     tools: toolsManager,
     settings,
+    bookmarks,
   } = props.state;
   const selectedTab = useComputed(
     () =>
@@ -1145,6 +1147,30 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 const highlightLabel = t("highlight", {
                   defaultValue: "Highlight",
                 });
+                const rs = readingState.value;
+                const selectedVerseNumbers =
+                  rs?.selectedVerses.value.map((v) => v.verse.number) ?? [];
+                const verseTarget =
+                  selectedVerseNumbers.length === 0
+                    ? undefined
+                    : selectedVerseNumbers.length === 1
+                      ? selectedVerseNumbers[0]
+                      : ([
+                          Math.min(...selectedVerseNumbers),
+                          Math.max(...selectedVerseNumbers),
+                        ] as [number, number]);
+                const isSelectionBookmarked =
+                  rs && verseTarget !== undefined
+                    ? bookmarks.isLocationBookmarked(
+                        rs.translationId.value,
+                        rs.bookId.value,
+                        rs.chapterNumber.value,
+                        verseTarget
+                      )
+                    : false;
+                const bookmarkLabel = isSelectionBookmarked
+                  ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
+                  : t("bookmark-verses", { defaultValue: "Bookmark" });
                 return (
                   <>
                     {selectionUI.value.showHighlightColors && (
@@ -1171,6 +1197,64 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         </button>
                       </div>
                     )}
+                    <div className="sb-verse-toolbar-action-item">
+                      <button
+                        type="button"
+                        className={`sb-verse-toolbar-action sb-verse-toolbar-bookmark-trigger${
+                          isSelectionBookmarked
+                            ? " sb-verse-toolbar-bookmark-trigger-active"
+                            : ""
+                        }`}
+                        onClick={() => {
+                          if (!rs) return;
+                          const translationId = rs.translationId.value;
+                          const bookId = rs.bookId.value;
+                          const chapterNumber = rs.chapterNumber.value;
+                          if (
+                            !translationId ||
+                            !bookId ||
+                            !chapterNumber ||
+                            verseTarget === undefined
+                          ) {
+                            return;
+                          }
+                          if (isSelectionBookmarked) {
+                            void bookmarks.removeBookmarkForLocation(
+                              translationId,
+                              bookId,
+                              chapterNumber,
+                              verseTarget
+                            );
+                            return;
+                          }
+                          openBookmarkCategoryModal(props.state, {
+                            translationId,
+                            bookId,
+                            chapterNumber,
+                            verse: verseTarget,
+                          });
+                        }}
+                        aria-label={bookmarkLabel}
+                        aria-pressed={isSelectionBookmarked}
+                        title={bookmarkLabel}
+                      >
+                        <span className="sb-verse-toolbar-action-icon">
+                          <span
+                            className="material-symbols-outlined"
+                            style={{
+                              fontVariationSettings: isSelectionBookmarked
+                                ? '"FILL" 1'
+                                : '"FILL" 0',
+                            }}
+                          >
+                            bookmark
+                          </span>
+                        </span>
+                        <span className="sb-verse-toolbar-action-label">
+                          {bookmarkLabel}
+                        </span>
+                      </button>
+                    </div>
                     {nonCancel.map(renderTool)}
                     {cancelTools.map(renderTool)}
                   </>

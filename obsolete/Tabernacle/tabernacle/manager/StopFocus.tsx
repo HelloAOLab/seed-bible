@@ -1,9 +1,11 @@
+import { ColorLerpTags } from "bibleVizUtils.models.canvas";
+
 for (const bot of thisBot.vars.focusedBots) {
   const cone = getBot(byTag("isCone", true), byTag("parentId", bot.id));
   await animateTag([cone], "formOpacity", null);
   ColorLerper.StopLerp({
     bot,
-    tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color,
+    tag: ColorLerpTags.color,
   });
   setTagMask(bot, "color", "#ffffff");
   destroy([cone]);

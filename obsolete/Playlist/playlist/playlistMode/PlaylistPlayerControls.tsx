@@ -4,7 +4,13 @@ const { Button } = G.Components;
 const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();
 const AttachLink = await thisBot.AttachLink();
+const ConfirmLinkModal = await thisBot.ConfirmLinkModal();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
+const MobilePlaylistToggleButton = await thisBot.MobilePlaylistToggleButton();
+
+const isMobileSmall =
+  (window?.innerWidth || G.gridPortalBot.tags.pixelWidth) <
+  G.MOBILE_VIEWPORT_THRESHOLD;
 
 const EditPlaylist =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/a48b4bb0182ac0b5f8c8437e3d985f9af99c8b64c61249496ef797b9b8ac88df.svg";
@@ -19,10 +25,10 @@ const outerWebsiteItem: Record<string, boolean> = {
   externalLink: true,
 };
 
-const PrevIcon = ({ fill = "#939393" }) => (
+const PrevIcon = ({ fill = "#939393", width = "32", height = "32" }) => (
   <svg
-    width="32"
-    height="32"
+    width={width}
+    height={height}
     viewBox="0 0 32 32"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
@@ -34,10 +40,10 @@ const PrevIcon = ({ fill = "#939393" }) => (
   </svg>
 );
 
-const NextIcon = ({ fill = "#939393" }) => (
+const NextIcon = ({ fill = "#939393", width = "18", height = "16" }) => (
   <svg
-    width="18"
-    height="16"
+    width={width}
+    height={height}
     viewBox="0 0 18 16"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
@@ -105,9 +111,130 @@ const getCurrentItem = (
   // return targetItem;
 };
 
-const PlayerControls = ({ parentId = "default" }) => {
+const getItemCount = (item: any): number => {
+  if (!item) return 0;
+
+  if (Array.isArray(item?.list) && item.list.length) {
+    return item.list.reduce(
+      (acc: number, nestedItem: any) => acc + getItemCount(nestedItem),
+      0
+    );
+  }
+
+  const layers = item?.additionalInfo?.layers;
+  if (Array.isArray(layers) && layers.length) {
+    return layers.length;
+  }
+
+  return 1;
+};
+
+/** Counts checklist "units" marked done — mirrors getItemCount structure (ids / readAlready per unit). */
+const getCheckedUnitsInItem = (
+  item: any,
+  checkedItems: Record<string, boolean> | undefined
+): number => {
+  if (!item) return 0;
+
+  if (Array.isArray(item?.list) && item.list.length) {
+    return item.list.reduce(
+      (acc: number, nestedItem: any) =>
+        acc + getCheckedUnitsInItem(nestedItem, checkedItems),
+      0
+    );
+  }
+
+  const layers = item?.additionalInfo?.layers;
+  if (Array.isArray(layers) && layers.length) {
+    return layers.reduce((acc: number, layer: any) => {
+      const done = !!checkedItems?.[layer.id] || !!layer.readAlready;
+      return acc + (done ? 1 : 0);
+    }, 0);
+  }
+
+  const done = !!checkedItems?.[item.id] || !!item.readAlready;
+  return done ? 1 : 0;
+};
+
+const getPlaylistProgress = (
+  playlists: any,
+  currIndex: any,
+  checklistEnabled?: boolean,
+  checkedItems?: Record<string, boolean>
+) => {
+  const keys = Object.keys(playlists || {}).sort(
+    (a, b) => Number(a) - Number(b)
+  );
+  let totalItems = 0;
+  let currentPosition = 0;
+
+  keys.forEach((key) => {
+    const list = playlists[key]?.list || [];
+    totalItems += list.reduce(
+      (acc: number, item: any) => acc + getItemCount(item),
+      0
+    );
+  });
+
+  if (!checklistEnabled) {
+    for (const key of keys) {
+      const list = playlists[key]?.list || [];
+      if (String(key) !== String(currIndex?.key)) {
+        currentPosition += list.reduce(
+          (acc: number, item: any) => acc + getItemCount(item),
+          0
+        );
+        continue;
+      }
+
+      for (let i = 0; i < list.length; i++) {
+        const item = list[i];
+        if (i < currIndex?.index) {
+          currentPosition += getItemCount(item);
+          continue;
+        }
+
+        if (i === currIndex?.index) {
+          if (
+            Array.isArray(item?.additionalInfo?.layers) &&
+            item.additionalInfo.layers.length
+          ) {
+            currentPosition += Math.min(
+              Math.max((currIndex?.subIndex || 0) + 1, 1),
+              item.additionalInfo.layers.length
+            );
+          } else {
+            currentPosition += 1;
+          }
+        }
+        break;
+      }
+      break;
+    }
+  } else {
+    keys.forEach((key) => {
+      const list = playlists[key]?.list || [];
+      currentPosition += list.reduce(
+        (acc: number, item: any) =>
+          acc + getCheckedUnitsInItem(item, checkedItems),
+        0
+      );
+    });
+  }
+
+  const safeTotal = Math.max(totalItems, 0);
+  const safeCurrent =
+    safeTotal > 0 ? Math.min(Math.max(currentPosition, 0), safeTotal) : 0;
+  const percent = safeTotal > 0 ? (safeCurrent / safeTotal) * 100 : 0;
+
+  return { safeCurrent, safeTotal, percent };
+};
+
+const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
   const [showCurrent, setShowCurrent] = useState(false);
   const [queue, setQueue] = useState([]);
+
+  const [openExternalLink, setOpenExternalLink] = useState<string | null>(null);
 
   const [transformedHistory, setTransformedHistory] = useState(G.PPthh);
   const [oldData, setOldData] = useState([]);
@@ -142,7 +269,8 @@ const PlayerControls = ({ parentId = "default" }) => {
   });
 
   // Audio
-  const [mediaURL, setMediaURL] = useState("");
+  const [mediaURL, setMediaURL] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const [videoSrc, setVideoSrc] = useState(false);
   const [textInfo, setTextInfo] = useState("");
 
@@ -301,7 +429,13 @@ const PlayerControls = ({ parentId = "default" }) => {
         const isMobile =
           (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
           G.MOBILE_VIEWPORT_THRESHOLD;
-        if (isMobile) {
+        if (targetItem.additionalInfo.isQuotedText) {
+          if (!G.NotPlayThisTimeTheCurrentItem) {
+            thisBot.ShowQuoteText({ quoteText: targetItem.content });
+          } else {
+            G.NotPlayThisTimeTheCurrentItem = false;
+          }
+        } else if (isMobile) {
           if (!G.NotPlayThisTimeTheCurrentItem) {
             G.SetTextInfo(targetItem.content);
           } else {
@@ -348,6 +482,14 @@ const PlayerControls = ({ parentId = "default" }) => {
           G.FocusOnVerse(targetItem.additionalInfo.verse);
         }
       }
+    }
+
+    if (
+      targetItem.additionalInfo.isValid &&
+      targetItem.additionalInfo.type === "externalLink"
+    ) {
+      G.SetOpenExternalLink &&
+        G.SetOpenExternalLink(targetItem.additionalInfo.link);
     }
 
     justAddedQueue.current = false;
@@ -411,6 +553,8 @@ const PlayerControls = ({ parentId = "default" }) => {
 
       const updatedPlaylists = { ...prevPlaylists };
 
+      let keyUsed: any = currentKey;
+
       if (SQ || justAddedQueue.current) {
         if (justAddedQueue.current) {
           currentKey = Number(currIndex.key) + 1;
@@ -423,6 +567,8 @@ const PlayerControls = ({ parentId = "default" }) => {
           ...(updatedPlaylists[currentKey]?.list || []),
           ...toAddItems,
         ];
+
+        keyUsed = currentKey;
       } else {
         // Case: Splitting a playlist
         const beforeCurrentIndex = currentList.slice(0, splitIndex + 1);
@@ -437,7 +583,9 @@ const PlayerControls = ({ parentId = "default" }) => {
           playlistID: null,
         };
 
-        if (!G.PPchecklistEnabled) {
+        const isNothingPlayingInChecklist = `${currIndex.index}` !== "-1";
+
+        if (!G.PPchecklistEnabled || isNothingPlayingInChecklist) {
           // Update the current playlist with items before the split
           updatedPlaylists[currentKey] = {
             ...currentPlaylist,
@@ -448,6 +596,7 @@ const PlayerControls = ({ parentId = "default" }) => {
         // if (!readingPlanEnabled) {
         // Add the new queue
         updatedPlaylists[newQueueKey] = newQueue;
+        keyUsed = newQueueKey;
         // } else if (findLastActiveIndex > -1) {
         //     findLastActiveIndex++;
         //     currentList.splice(findLastActiveIndex, 0, item);
@@ -455,7 +604,7 @@ const PlayerControls = ({ parentId = "default" }) => {
         //     setActiveIndexs(prev => ({ ...prev, [item.id]: true }));
         // }
 
-        if (!G.PPchecklistEnabled) {
+        if (!G.PPchecklistEnabled || isNothingPlayingInChecklist) {
           updatedPlaylists[currentKey].broken = true;
           if (afterCurrentIndex.length > 0) {
             updatedPlaylists[`${currIndex.key}.2`] = {
@@ -475,17 +624,26 @@ const PlayerControls = ({ parentId = "default" }) => {
       Object.keys(updatedPlaylists)
         .sort((a, b) => Number(a) - Number(b)) // Sort numerically
         .forEach((key, index) => {
+          if (key == keyUsed) {
+            G.LAST_SQ_KEY_USED = index;
+            G.BlinkAfterPlaylistAddRef = index;
+          }
           reorderedPlaylists[index] = { ...updatedPlaylists[key] };
           if (!reorderedPlaylists[index]?.list?.length) {
             delete reorderedPlaylists[index];
           }
         });
-
-      G.NotPlayThisTimeTheCurrentItem = false;
+      G.NotPlayThisTimeTheCurrentItem = true;
       return reorderedPlaylists;
     });
     setOpenAttachLink(false);
   };
+
+  const setJustAddedQueue = (val: boolean) => {
+    justAddedQueue.current = val;
+  };
+
+  G.SET_JUST_ADDED_QUEUE = setJustAddedQueue;
 
   useLayoutEffect(() => {
     G.SetCurreIndexPlaylist = handlesetIndex;
@@ -499,7 +657,15 @@ const PlayerControls = ({ parentId = "default" }) => {
 
     G.SetIncrementalCountPlayingPlaylist = setIncrementalCount;
     G.SetVideoSrc = setVideoSrc;
-    G.SetMediaURL = setMediaURL;
+    G.SetMediaURL = (url: any) => {
+      if (url === null) {
+        setMediaURL(null);
+        setFileName(null);
+      } else {
+        setMediaURL(url);
+      }
+    };
+    G.SetFileName = setFileName;
     G.SetTextInfo = setTextInfo;
 
     G.PlayingPlaylists = playlists;
@@ -521,25 +687,28 @@ const PlayerControls = ({ parentId = "default" }) => {
       // G.IS_PLAYLIST_ACTIVE = 0;
     }
     return () => {
-      G.SetCurreIndexPlaylist = null;
-      G.HandleOnButtonPress = null;
-      G.ModifyTransformedHistory = null;
-      G.SetQueue = false;
-      G.SetCurreIndexDirect = null;
-      G.SetPlayingList = () => {};
-      G.SetSelected && G.SetSelected({});
-      G.READING_PLAN_WORK = false;
-      G.HandleOnButtonPress = null;
-      G.SetIncrementalCountPlayingPlaylist = null;
-      G.SetVideoSrc = null;
-      G.SetTextInfo = null;
-      G.SetMediaURL = null;
-      G.PlayingPlaylists = null;
-      G.SetPlayingPlaylists = null;
-      G.CurrentIndexItem = null;
-      G.SetCheckedItemsPlayingPlaylist = null;
-      G.UpdateJustAddedToQueue = null;
-      // globalThis.IS_PLAYLIST_ACTIVE = true;
+      if (!G.IsASwitchBetweenBar) {
+        G.SetCurreIndexPlaylist = null;
+        G.HandleOnButtonPress = null;
+        G.ModifyTransformedHistory = null;
+        G.SetQueue = false;
+        G.SetCurreIndexDirect = null;
+        G.SetPlayingList = () => {};
+        G.SetSelected && G.SetSelected({});
+        G.READING_PLAN_WORK = false;
+        G.HandleOnButtonPress = null;
+        G.SetIncrementalCountPlayingPlaylist = null;
+        G.SetVideoSrc = null;
+        G.SetFileName = null;
+        G.SetTextInfo = null;
+        G.SetMediaURL = null;
+        G.PlayingPlaylists = null;
+        G.SetPlayingPlaylists = null;
+        G.CurrentIndexItem = null;
+        G.SetCheckedItemsPlayingPlaylist = null;
+        G.UpdateJustAddedToQueue = null;
+        // globalThis.IS_PLAYLIST_ACTIVE = true;
+      }
     };
   }, [handleOnButtonPress, transformedHistory]);
 
@@ -550,11 +719,24 @@ const PlayerControls = ({ parentId = "default" }) => {
       }, 200);
     }
 
+    G.SetOpenExternalLinkControl = (link: string) => {
+      console.log("SetOpenExternalLinkControl", link);
+      if (isMobile) {
+        setOpenExternalLink(link);
+      } else {
+        os.openURL(link);
+      }
+    };
+
     return () => {
-      G.IsPlaylistPlaying = false;
-      G.IsQueuePresent = false;
-      G.RemotePlaylistPlayed = false;
-      G.EmitData("playlistStopped", {});
+      if (!G.IsASwitchBetweenBar) {
+        G.IsPlaylistPlaying = false;
+        G.IsQueuePresent = false;
+        G.RemotePlaylistPlayed = false;
+        G.EmitData("playlistStopped", {});
+      }
+      G.IsASwitchBetweenBar = false;
+      G.SetOpenExternalLink = null;
     };
   }, []);
 
@@ -562,8 +744,6 @@ const PlayerControls = ({ parentId = "default" }) => {
     G.UpdateCheckedItemsPlayingPlaylist &&
       G.UpdateCheckedItemsPlayingPlaylist(checkedItems, G.PlayingPlaylistID);
   }, [checkedItems]);
-
-  console.log(playlists, currIndex);
 
   const [
     currentPlaylistName,
@@ -573,177 +753,14 @@ const PlayerControls = ({ parentId = "default" }) => {
     prevItemName,
     currentItem,
   ] = useMemo(() => {
-    const { name: currentPlaylistName } = playlists[currIndex.key];
-
-    const targetItem = getCurrentItem(
-      currIndex.key,
-      currIndex.index,
+    const res = thisBot.getCurrentQueueInfo({
+      currIndex,
       playlists,
-      currIndex.subIndex,
-      playlists[currIndex.key]?.isLayers
-    );
-    const currentItemName = targetItem;
-    const currentItemType = targetItem?.type;
-
-    const nextIndexes = handleOnButtonPress(1, true);
-    const prevIndex = handleOnButtonPress(-1, true);
-
-    const nextItem = getCurrentItem(
-      nextIndexes.key,
-      nextIndexes.index,
-      playlists,
-      nextIndexes.subIndex,
-      playlists[nextIndexes.key]?.isLayers
-    );
-    const prevItem = prevIndex.isPreviousQueue
-      ? oldData[oldData.length - 1]
-      : getCurrentItem(
-          prevIndex.key,
-          prevIndex.index,
-          playlists,
-          prevIndex.subIndex,
-          playlists[prevIndex.key]?.isLayers
-        );
-
-    // setOldData(prev => [...prev, targetItem]);
-    G.PlaylingItemVisitiedMap?.((prev: any) => ({
-      ...prev,
-      [targetItem.id]: true,
-    }));
-
-    if (targetItem?.type === "attachment-link") {
-      if (!G.NotPlayThisTimeTheCurrentItem) {
-        thisBot.RenderLinkContent({
-          ...targetItem,
-          isLastItem: !nextItem,
-          isFirstItem: !prevItem,
-        });
-      } else {
-        G.NotPlayThisTimeTheCurrentItem = false;
-      }
-    } else if (currIndex.fromButton !== 0) {
-      const isBulk =
-        !!targetItem?.additionalInfo?.layers?.length ||
-        Array.isArray(targetItem.additionalInfo);
-
-      const toBeMapArray = targetItem?.additionalInfo?.layers?.length
-        ? targetItem?.additionalInfo?.layers
-        : Array.isArray(targetItem.additionalInfo);
-
-      if (
-        targetItem?.type === "heading" ||
-        (!!targetItem?.nextTargetItem?.id &&
-          currIndex.fromButton === 1 &&
-          !G.StayVIAPressOfButton)
-      ) {
-        if (
-          targetItem?.type === "heading"
-          // &&
-          // targetItem?.additionalInfo?.subType === "text"
-        ) {
-          const isMobile =
-            (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
-            G.MOBILE_VIEWPORT_THRESHOLD;
-          if (isMobile) {
-            G.SetTextInfo(targetItem.content);
-          }
-        }
-        if (G.SetMediaURL) {
-          G.SetMediaURL(null);
-        }
-        setTimeout(() => {
-          thisBot.CloseFloatingApp();
-        }, 100);
-
-        if (G.SetVideoSrc) {
-          G.SetVideoSrc(null);
-        }
-        if (targetItem?.type === "heading") {
-          if (!G.NotPlayThisTimeTheCurrentItem) {
-            G.PlayingPlaylistSetHeading(targetItem.content);
-          } else {
-            G.NotPlayThisTimeTheCurrentItem = false;
-          }
-        }
-        const allKeys: any = Object.keys(playlists);
-
-        const isFirstKey = currIndex.key == 0;
-        const isLastKey = currIndex.key == allKeys[allKeys.length - 1];
-
-        const th = playlists[currIndex.key]?.list;
-
-        const isFirstItemAndBackButton =
-          currIndex.fromButton < 0 && currIndex.index == 0 && isFirstKey;
-        const isLastItemAndLastButton =
-          currIndex.fromButton > 0 &&
-          isLastKey &&
-          currIndex.index == th.length - 1;
-        if (targetItem?.nextTargetItem) {
-          if (!G.NotPlayThisTimeTheCurrentItem) {
-            thisBot.navigationWithDataItem({
-              dataItem: isBulk ? toBeMapArray : targetItem,
-              bulkAdd: isBulk,
-            });
-          } else {
-            G.NotPlayThisTimeTheCurrentItem = false;
-          }
-          handleOnButtonPress(currIndex.fromButton);
-          G[`${targetItem.id}OpenToggle`] &&
-            G[`${targetItem.id}OpenToggle`](true);
-        }
-        if (G.StayVIAPressOfButton) {
-          G.StayVIAPressOfButton = false;
-        }
-        if (!isFirstItemAndBackButton && !isLastItemAndLastButton)
-          handleOnButtonPress(currIndex.fromButton);
-      } else {
-        if (G.StayVIAPressOfButton) {
-          G.StayVIAPressOfButton = false;
-        }
-        const skip = thisBot.checkIfNeedToSkip({ dataItem: targetItem });
-        if (skip) {
-          os.toast(`${targetItem.content} is Already Opened.Skipping it!`);
-          handleOnButtonPress(currIndex.fromButton);
-        } else {
-          if (!G.NotPlayThisTimeTheCurrentItem) {
-            thisBot.navigationWithDataItem({
-              dataItem: isBulk ? toBeMapArray : targetItem,
-              bulkAdd: isBulk,
-            });
-          } else {
-            G.NotPlayThisTimeTheCurrentItem = false;
-          }
-        }
-        // SetBlinker({});
-      }
-    }
-
-    if (G.RenderPlaylistTimer) {
-      clearTimeout(G.RenderPlaylistTimer);
-      G.RenderPlaylistTimer = null;
-    }
-    G.RenderPlaylistTimer = setTimeout(() => {
-      thisBot.SetItemsPlayerPlaylist({
-        currentPlaylistName: currentPlaylistName,
-        currentItemID: targetItem.id,
-        typeContent: currentItemType,
-        nextItemName: nextItem,
-        prevItemName: prevItem,
-        currentItemName: currentItemName,
-      });
-      G.RenderPlaylist && G.RenderPlaylist();
-      G.RenderPlaylistTimer = null;
-    }, 50);
-    // nextItemName, nextItemType, prevItemName, prevItemType
-    //  nextItemName, nextItemType, prevItemName, prevItemType
-    return [
-      currentPlaylistName,
-      targetItem.id,
-      currentItemType,
-      nextItem,
-      prevItem,
-      currentItemName,
-    ];
+      oldData,
+      handleOnButtonPress,
+      getCurrentItem,
+    });
+    return res;
   }, [
     currIndex,
     playlists,
@@ -815,6 +832,16 @@ const PlayerControls = ({ parentId = "default" }) => {
   }, [currIndex, playlists]);
 
   const isItemLink = outerWebsiteItem[currentItem?.additionalInfo?.type];
+  const { safeCurrent, safeTotal, percent } = useMemo(
+    () =>
+      getPlaylistProgress(
+        playlists,
+        currIndex,
+        G.PPchecklistEnabled,
+        checkedItems
+      ),
+    [playlists, currIndex, checkedItems]
+  );
 
   const isMobile =
     (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
@@ -828,7 +855,106 @@ const PlayerControls = ({ parentId = "default" }) => {
       <style>{thisBot.tags["PlaylistContainer.css"]}</style>
       <style>{thisBot.tags["playlist.css"]}</style>
 
-      {openAttachLink ? (
+      {openExternalLink && (
+        <ConfirmLinkModal
+          onClose={() => setOpenExternalLink(null)}
+          link={openExternalLink}
+          controlBalInternal
+        />
+      )}
+
+      {isMobile && !inheritedBar ? (
+        <div
+          className="mobile-playlist-player-controls"
+          style={{
+            marginBottom: !!mediaURL || !!videoSrc || !!textInfo ? "3rem" : "0",
+          }}
+        >
+          {!!textInfo && (
+            <div className="textinfo-playlist">
+              <RenderHTMLContent htmlContent={textInfo} />
+            </div>
+          )}
+          {!!videoSrc && (
+            <div className="textinfo-playlist">
+              <VideoPlayer videoSrc={videoSrc} playlistItem={currentItem} />
+            </div>
+          )}
+          {!!mediaURL && (
+            <AudioPlayer
+              shadow
+              secondaryClose
+              fileName={fileName}
+              close={true}
+              mediaURL={mediaURL}
+            />
+          )}
+          {/* <div className="mobile-playlist-player-controls-buttons"> */}
+          <Button
+            exClass={`mobile-playlist-player-controls-button prev-button ${!prevItemName?.content ? "disabled" : ""}`}
+            onClick={() => {
+              if (!prevItemName?.content) {
+                return ShowNotification({
+                  message: t("youAreAtTheBeginningOfThePlaylist"),
+                  severity: "info",
+                });
+              }
+              DataManager.cancelCurrentPlayingSound();
+              if (G.HandleOnButtonPress) G.HandleOnButtonPress(-1);
+            }}
+          >
+            <PrevIcon
+              width="26"
+              height="24px"
+              fill={
+                !prevItemName?.content
+                  ? "var(--settingsIcon)"
+                  : "var(--pageTextColor)"
+              }
+            />
+          </Button>
+          <Button
+            exClass={`mobile-playlist-player-controls-button next-button ${!nextItemName?.content ? "disabled" : ""}`}
+            onClick={() => {
+              if (!nextItemName?.content) {
+                return ShowNotification({
+                  message: t("playlistHasBeenEnded"),
+                  severity: "info",
+                });
+              }
+              DataManager.cancelCurrentPlayingSound();
+              if (!!nextItemName?.content && !!G.HandleOnButtonPress) {
+                G.HandleOnButtonPress(1);
+                return;
+              }
+              // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
+              G[`${parentId}ToggleGreyCheckPLayingPlaylist`] &&
+                G[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
+              G.IsQueuePresent = false;
+              G.IS_PLAYLIST_ACTIVE = false;
+              thisBot.CloseFloatingApp();
+              G.SetSplitAppPanel2 && G.SetSplitAppPanel2(null);
+              // os.unregisterApp("playing-playlist");
+              // thisBot.showInfo(`History Mode`);
+              os.unregisterApp("playing-playlist-flaot");
+              if (G.RemoveNowBarApp) {
+                G.RemoveNowBarApp("player-playlist-bar");
+              }
+            }}
+          >
+            <NextIcon
+              width="14"
+              height="16"
+              fill={
+                !nextItemName?.content
+                  ? "var(--settingsIcon)"
+                  : "var(--pageTextColor)"
+              }
+            />
+          </Button>
+          {/* </div> */}
+        </div>
+      ) : openAttachLink ? (
         <div
           style={{
             position: "relative",
@@ -876,7 +1002,14 @@ const PlayerControls = ({ parentId = "default" }) => {
           {!!videoSrc && (
             <VideoPlayer videoSrc={videoSrc} playlistItem={currentItem} />
           )}
-          {!!mediaURL && <AudioPlayer mediaURL={mediaURL} />}
+          {!!mediaURL && (
+            <AudioPlayer
+              fileName={fileName}
+              secondaryClose
+              close
+              mediaURL={mediaURL}
+            />
+          )}
 
           {isItemLink && false && (
             <div>
@@ -894,43 +1027,41 @@ const PlayerControls = ({ parentId = "default" }) => {
           <div
             style={{
               display: "flex",
+              // flexDirection: isMobileSmall ? "column" : "row",
               flexDirection: "row",
               justifyContent: "space-between",
               gap: "0.5rem",
               width: "calc(100%)",
             }}
           >
-            <div
-              style={{
-                width: "auto",
-                flexDirection: "row",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: "12px",
-                  fontWeight: "500",
-                  display: "flex",
-                  alignItems: "center",
-                  margin: "0",
-                  // marginBottom: "0.5rem",
-                  fontFamily: "DM Sans",
-                  height: "12px",
-                  color: "var(--pageTextColor)",
-                  minWidth: "max-content",
-                }}
-              >
-                {G.PPchecklistEnabled && showCurrent && currIndex.index === -1
-                  ? null
-                  : showCurrent
-                    ? `${t("playingNow")}:`
-                    : nextItemName?.content
-                      ? `${t("playingNext")}:`
-                      : null}
-              </p>
+            <div className="playlist-player-controls-info">
+              {(!isMobileSmall ||
+                (showCurrent
+                  ? !!currentItem?.content
+                  : !!nextItemName?.content)) && (
+                <p
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: "500",
+                    display: "flex",
+                    alignItems: "center",
+                    margin: "0",
+                    // marginBottom: "0.5rem",
+                    fontFamily: "DM Sans",
+                    height: "12px",
+                    color: "var(--pageTextColor)",
+                    minWidth: "max-content",
+                  }}
+                >
+                  {G.PPchecklistEnabled && showCurrent && currIndex.index === -1
+                    ? null
+                    : showCurrent
+                      ? `${t("playingNow")}:`
+                      : nextItemName?.content
+                        ? `${t("playingNext")}:`
+                        : null}
+                </p>
+              )}
               <div style={{ gap: "0.5rem" }} className="align-center">
                 <div
                   style={{
@@ -979,16 +1110,10 @@ const PlayerControls = ({ parentId = "default" }) => {
                             color: "var(--pageTextColor)",
                           }}
                         >
-                          {nextItemName?.content
-                            ? `${nextItemName?.content}${nextItemName?.prefix}`?.substring(
-                                0,
-                                isMobile ? 9 : 16
-                              )
-                            : ""}
-                          {`${nextItemName?.content}${nextItemName?.prefix}`
-                            .length > (isMobile ? 9 : 16)
-                            ? "..."
-                            : ""}
+                          {G.GetTruncatedPlaylistLabel(
+                            nextItemName,
+                            isMobile ? 9 : 16
+                          )}
                         </p>
                       )
                     ) : (
@@ -1115,33 +1240,7 @@ const PlayerControls = ({ parentId = "default" }) => {
               </div>
             </div>
             <div className="flex align-center" style={{ gap: "0.5rem" }}>
-              <p
-                style={{
-                  margin: "0",
-                  width: "24px",
-                  backgroundColor: "var(--themeSideMenu)",
-                  height: "24px",
-                  border: "1px solid var(--secondaryColor)",
-                }}
-                className="playlist-action small"
-                onClick={() => {
-                  if (G.makingPlaylist) {
-                    // globalThis.PlaylistPlaytoggleHide();
-                    thisBot.CloseSelf({ force: true });
-                  } else {
-                    thisBot.OpenSelf();
-                  }
-                }}
-              >
-                <img
-                  src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/fe3ea1784fbed6a33fb06bc8885bca18211293462adcb06311db83f1450589b8.svg"
-                  class="material-symbols-outlined unfollow img-icon"
-                  style={{
-                    margin: "0",
-                    minWidth: "10px",
-                  }}
-                />
-              </p>
+              <MobilePlaylistToggleButton parentId={parentId} />
               <p
                 onClick={() => {
                   if (G.RemotePlaylistPlayed) {
@@ -1158,7 +1257,6 @@ const PlayerControls = ({ parentId = "default" }) => {
                   height: "26px",
                   padding: "0",
                   borderRadius: "6px",
-                  border: "0px solid var(--secondaryColor)",
                   backgroundColor: "var(--activeTabFill)",
                 }}
                 className="playlist-action small"
@@ -1173,15 +1271,45 @@ const PlayerControls = ({ parentId = "default" }) => {
             </div>
           </div>
 
-          <p
+          <div
             style={{
-              height: "1px",
-              backgroundColor: "#000000",
-              opacity: "0.1",
               width: "100%",
               margin: "0.5rem 0",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
             }}
-          />
+          >
+            <div
+              style={{
+                height: "4px",
+                width: "100%",
+                backgroundColor: "var(--gray2-color)",
+                borderRadius: "999px",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${percent}%`,
+                  backgroundColor: "var(--secondaryColor)",
+                  transition: "width 0.2s ease",
+                }}
+              />
+            </div>
+            <p
+              style={{
+                margin: "0",
+                minWidth: "fit-content",
+                color: "var(--gray1-color)",
+                fontSize: "0.85rem",
+                fontWeight: "500",
+              }}
+            >
+              {safeCurrent}/{safeTotal}
+            </p>
+          </div>
 
           <div
             style={{
@@ -1220,14 +1348,20 @@ const PlayerControls = ({ parentId = "default" }) => {
                 if (!prevItemName?.content) {
                   return ShowNotification({
                     message: t("youAreAtTheBeginningOfThePlaylist"),
-                    severity: "error",
+                    severity: "info",
                   });
                 }
                 DataManager.cancelCurrentPlayingSound();
                 if (G.HandleOnButtonPress) G.HandleOnButtonPress(-1);
               }}
             >
-              <PrevIcon fill={!prevItemName?.content ? "#939393" : "#000"} />
+              <PrevIcon
+                fill={
+                  !prevItemName?.content
+                    ? "var(--unselectedSpaceColor)"
+                    : "var(--pageTextColor)"
+                }
+              />
             </Button>
             <p
               onClick={() => {
@@ -1287,7 +1421,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                 if (!nextItemName?.content) {
                   return ShowNotification({
                     message: t("playlistHasBeenEnded"),
-                    severity: "error",
+                    severity: "info",
                   });
                 }
                 DataManager.cancelCurrentPlayingSound();
@@ -1301,7 +1435,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                 G.IsQueuePresent = false;
                 G.IS_PLAYLIST_ACTIVE = false;
                 thisBot.CloseFloatingApp();
-                G.SetSplitAppPanel2(null);
+                G.SetSplitAppPanel2 && G.SetSplitAppPanel2(null);
                 // os.unregisterApp("playing-playlist");
                 // thisBot.showInfo(`History Mode`);
                 os.unregisterApp("playing-playlist-flaot");
@@ -1310,7 +1444,13 @@ const PlayerControls = ({ parentId = "default" }) => {
                 }
               }}
             >
-              <NextIcon fill={!nextItemName?.content ? "#939393" : "#000"} />
+              <NextIcon
+                fill={
+                  !nextItemName?.content
+                    ? "var(--unselectedSpaceColor)"
+                    : "var(--pageTextColor)"
+                }
+              />
             </Button>
             {false && (
               <img

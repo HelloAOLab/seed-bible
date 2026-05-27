@@ -188,10 +188,10 @@
   "add-bookmark": "بک مارک",
   "play-audio": "آڈیو چلائیں۔",
   "play": "کھیلیں",
-  "ask": "پوچھو",
+
   "discovery": "دریافت",
   "chat": "گپ شپ",
-  "social": "سماجی",
+
   "today": "آج",
   "you": "آپ",
   "bible": "بائبل",
@@ -206,10 +206,16 @@
   "bookmark-folder-empty": "یہاں ابھی تک کوئی بک مارکس نہیں ہیں۔",
   "bookmark-options": "بک مارک کے اختیارات",
   "new-folder-placeholder": "فولڈر کا نام",
-  "new-folder": "نیا فولڈر",
+
   "tasks": "کام",
   "bookmarks": "بک مارکس",
   "hide-bookmarks": "بک مارکس چھپائیں۔",
   "show-bookmarks": "بُک مارکس دکھائیں۔",
-  "add-new-tab": "نیا ٹیب شامل کریں۔"
+  "add-new-tab": "نیا ٹیب شامل کریں۔",
+  "share-session": "سیشن شیئر کریں۔",
+  "add-to-bookmark-category": "بک مارک کے زمرے میں شامل کریں۔",
+  "folder-name-taken": "اس نام کا فولڈر پہلے سے موجود ہے۔",
+  "add-to-new": "نئے میں شامل کریں۔",
+  "save": "محفوظ کریں۔",
+  "bookmark-verses": "آیات کو بک مارک کریں۔"
 }

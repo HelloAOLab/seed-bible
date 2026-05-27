@@ -2,9 +2,16 @@ import { MaterialIcon, SeedBibleIcon } from "seed-bible.components.icons";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
-import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
+import {
+  DEFAULT_BOOK_ID,
+  DEFAULT_TRANSLATION_ID,
+  type BibleReadingState,
+} from "seed-bible.managers.BibleReadingManager";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
-import type { TabsManager } from "seed-bible.managers.TabsManager";
+import {
+  formatVerseSelection,
+  type TabsManager,
+} from "seed-bible.managers.TabsManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
@@ -494,19 +501,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       onSelect: async (context) => {
         if (context.readingState.selectedVerses.value.length === 0) return;
 
-        const verseTexts = context.readingState.selectedVerses.value
-          .map((verse) => {
-            const verseReference = `${verse.bookId} ${verse.chapterNumber}:${verse.verse.number}`;
-            return `${verse.verse.content
-              .map((part) => {
-                if (typeof part === "string") return part;
-                if (part && typeof part === "object" && "text" in part)
-                  return (part as { text: string }).text;
-                return "";
-              })
-              .join("")} (${verseReference})`;
-          })
-          .join("\n\n");
+        const verseTexts = formatSelectedVerses(context.readingState);
 
         try {
           os.setClipboard(verseTexts);
@@ -527,19 +522,11 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       onSelect: (context) => {
         if (context.readingState.selectedVerses.value.length === 0) return;
 
-        const verseTexts = context.readingState.selectedVerses.value
-          .map((verse) => {
-            const verseReference = `${verse.bookId} ${verse.chapterNumber}:${verse.verse.number}`;
-            return `${verse.verse.content
-              .map((part) => {
-                if (typeof part === "string") return part;
-                if (part && typeof part === "object" && "text" in part)
-                  return (part as { text: string }).text;
-                return "";
-              })
-              .join("")} (${verseReference} - ${verse.translationId})`;
-          })
-          .join("\n\n");
+        let verseTexts = formatSelectedVerses(context.readingState);
+
+        const url = getShareUrl(context.readingState);
+
+        verseTexts += `\n\n${url.toString()}`;
 
         os.share({
           title:
@@ -623,6 +610,58 @@ export interface ToolsManager {
   getBelowReaderTools: (
     context: BibleBelowReaderToolContext
   ) => BibleBelowReaderToolbarTool[];
+}
+
+/**
+ * Generates a sharable URL for the given reading state.
+ * @param readingState The Bible reading state to generate the URL from.
+ * @returns A URL object representing the sharable link for the current reading state.
+ */
+export function getShareUrl(readingState: BibleReadingState) {
+  const url = new URL(configBot.tags.url);
+  url.search = "";
+  if (configBot.tags.pattern) {
+    url.searchParams.set("pattern", configBot.tags.pattern);
+  }
+  const translation =
+    readingState.translation.value?.id ?? DEFAULT_TRANSLATION_ID;
+  const bookId = readingState.bookId.value ?? DEFAULT_BOOK_ID;
+  url.searchParams.set("translation", translation);
+  url.searchParams.set("book", bookId);
+
+  if (readingState.selectedVerses.value.length > 0) {
+    const verses = readingState.selectedVerses.value
+      .filter((v) => v.bookId === bookId && v.translationId === translation)
+      .map((v) => v.verse.number);
+    if (verses.length > 0) {
+      const formatted = formatVerseSelection(verses);
+      if (formatted) {
+        url.search += `&verse=${formatted}`;
+      }
+    }
+  }
+  return url;
+}
+
+/**
+ * Formats the selected verses from the reading state into a human-readable string.
+ * @param readingState The reading state containing the selected verses to format.
+ * @returns A string representing the formatted selected verses.
+ */
+function formatSelectedVerses(readingState: BibleReadingState) {
+  return readingState.selectedVerses.value
+    .map((verse) => {
+      const verseReference = `${verse.bookId} ${verse.chapterNumber}:${verse.verse.number}`;
+      return `${verse.verse.content
+        .map((part) => {
+          if (typeof part === "string") return part;
+          if (part && typeof part === "object" && "text" in part)
+            return (part as { text: string }).text;
+          return "";
+        })
+        .join("")} (${verseReference})`;
+    })
+    .join("\n\n");
 }
 
 /**

@@ -98,8 +98,11 @@ function SubComponent(props: any) {
     textType,
     setTextType,
     showChangeOptions = true,
+    isQuotedText,
+    setIsQuotedText,
   } = props;
   const [isWarningModalShow, setIsWarningModalShow] = useState(false);
+
   const playlists = useMemo(() => G[`${"default"}playlists`] || [], []);
   const playlistListOptions = useMemo(
     () => [
@@ -366,6 +369,25 @@ function SubComponent(props: any) {
               setName(html);
             }}
           />
+          <div
+            className="quoted-text-icon"
+            onClick={() => setIsQuotedText(!isQuotedText)}
+          >
+            <span>Show in popup</span>
+            <div
+              className={`settings-toggle ${isQuotedText ? "active" : ""} small`}
+            >
+              <div className="settings-toggle-knob" />
+            </div>
+          </div>
+          {isQuotedText && (
+            <p className="info-type">{t("quotedTextModalDisplayOn")}</p>
+          )}
+          {isQuotedText && (
+            <p className="info-type">
+              {t("quotedTextModalDisplayDescription")}
+            </p>
+          )}
         </div>
       );
     case "LINK":
@@ -580,6 +602,7 @@ const AttachLink = (props: any) => {
     isTags = false,
     isPlaylist = false,
     showSaveButton = true,
+    sIsQuotedText = false,
   } = props;
   const isloggedIN = authBot?.id;
   const datePickerRef = useRef<any>(null);
@@ -606,6 +629,10 @@ const AttachLink = (props: any) => {
     sName ? sName : selectedType === "TEXT" ? G.RawName || "" : ""
   );
   const [link, setLink] = useState(sLink ? sLink : "");
+
+  const [isQuotedText, setIsQuotedText] = useState(
+    sIsQuotedText ? sIsQuotedText : G.RetainDataIsQuoteText || false
+  );
 
   // Audio or Video
   const [recordingType, setRecordingType] = useState(
@@ -656,6 +683,7 @@ const AttachLink = (props: any) => {
       G.RetainDataMediaType = null;
       G.RetainDataTextType = null;
       G.RetainDataRecordingType = null;
+      G.RetainDataIsQuoteText = null;
     }, 100);
   };
 
@@ -675,6 +703,7 @@ const AttachLink = (props: any) => {
       setRecordingType(G.RetainDataRecordingType);
       setSelectedType(G.RetainDataSelectedType);
       setLinkState(G.RetainDataLinkState);
+      setIsQuotedText(G.RetainDataIsQuoteText);
       onReleaseData();
     }
     G.StopAttachLinkRetainData = false;
@@ -682,6 +711,19 @@ const AttachLink = (props: any) => {
 
   useLayoutEffect(() => {
     onRestoreData();
+    return () => {
+      let dontAllowSwitch = false;
+      if (
+        data ||
+        (name && selectedType.toUpperCase() === "TEXT") ||
+        (link && G.LINKS_TYPES[selectedType.toUpperCase()])
+      ) {
+        dontAllowSwitch = true;
+      }
+      if (dontAllowSwitch) {
+        G.AllowSwitchBetweenTypes = false;
+      }
+    };
   }, []);
 
   useLayoutEffect(() => {
@@ -826,9 +868,9 @@ const AttachLink = (props: any) => {
           tempName += "-heading";
           break;
         case "iframe":
-        case "externalLink":
+        case "externallink":
         case "youtube":
-        case "Video":
+        case "video":
           tempName = link;
           break;
         case RECORDING_VALUE:
@@ -883,7 +925,7 @@ const AttachLink = (props: any) => {
   const onClickSend = async (isForce = true) => {
     let finalName = name;
 
-    if (isForce) {
+    if (isForce && !name.trim()) {
       finalName = getCurrentTime();
       switch (selectedType) {
         case "RECORDING":
@@ -953,6 +995,7 @@ const AttachLink = (props: any) => {
         });
       }
       onReleaseData();
+      G.RetainDataName = "";
       G.isRecording = false;
       G.hasRecording = false;
       return attachLink(finalName, url, {
@@ -1062,6 +1105,7 @@ const AttachLink = (props: any) => {
         isValid: true,
         subType: textType,
         type: "text",
+        isQuotedText: isQuotedText,
       });
     }
   };
@@ -1127,6 +1171,8 @@ const AttachLink = (props: any) => {
             mediaType={mediaType}
             setType={setType}
             type={selectedType}
+            isQuotedText={isQuotedText}
+            setIsQuotedText={setIsQuotedText}
           />
         </div>
         {Array.isArray(data) &&
@@ -1170,7 +1216,15 @@ const AttachLink = (props: any) => {
               <div
                 key={ele.id}
                 onClick={() => {
-                  if (data) {
+                  let dontAllowSwitch = false;
+                  if (
+                    data ||
+                    (name && selectedType.toUpperCase() === "TEXT") ||
+                    (link && G.LINKS_TYPES[selectedType.toUpperCase()])
+                  ) {
+                    dontAllowSwitch = true;
+                  }
+                  if (dontAllowSwitch) {
                     if (!G.AllowSwitchBetweenTypes) {
                       G.AllowSwitchBetweenTypes = true;
                       ShowNotification({
@@ -1182,6 +1236,7 @@ const AttachLink = (props: any) => {
                       return;
                     }
                   }
+                  G.AllowSwitchBetweenTypes = false;
                   if (editMode)
                     return ShowNotification({
                       message: t("cannotChangeWhileBeingInEditMode"),
@@ -1195,6 +1250,7 @@ const AttachLink = (props: any) => {
                   setName("");
                   setSelectedType(ele);
                   setData(null);
+                  G.hasRecording = false;
                 }}
                 style={{ position: "relative" }}
                 className={`${

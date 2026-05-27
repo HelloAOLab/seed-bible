@@ -188,10 +188,10 @@
   "add-bookmark": "Marcador",
   "play-audio": "Reproducir audio",
   "play": "Jugar",
-  "ask": "Preguntar",
+
   "discovery": "Descubrimiento",
   "chat": "Charlar",
-  "social": "Social",
+
   "today": "Hoy",
   "you": "Tú",
   "bible": "Biblia",
@@ -206,10 +206,16 @@
   "bookmark-folder-empty": "Aún no hay marcadores aquí.",
   "bookmark-options": "Opciones de marcadores",
   "new-folder-placeholder": "Nombre de la carpeta",
-  "new-folder": "Nueva carpeta",
+
   "tasks": "Tareas",
   "bookmarks": "Marcadores",
   "hide-bookmarks": "Ocultar marcadores",
   "show-bookmarks": "Mostrar marcadores",
-  "add-new-tab": "Agregar nueva pestaña"
+  "add-new-tab": "Agregar nueva pestaña",
+  "share-session": "Compartir sesión",
+  "add-to-bookmark-category": "Agregar a la categoría de marcadores",
+  "folder-name-taken": "Ya existe una carpeta con ese nombre.",
+  "add-to-new": "Agregar a nuevo",
+  "save": "Ahorrar",
+  "bookmark-verses": "Versos para marcar"
 }

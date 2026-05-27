@@ -95,6 +95,7 @@ function createMockSharedSession(id: string) {
       bookId: signal<string | null>(null),
       chapterNumber: signal<number | null>(null),
       chapterData: signal(null),
+      selectedVerses: signal([]),
     },
     document: {} as SharedDocument,
     options: signal({

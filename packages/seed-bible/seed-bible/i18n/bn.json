@@ -188,10 +188,10 @@
   "add-bookmark": "বুকমার্ক",
   "play-audio": "অডিও চালান",
   "play": "খেলা",
-  "ask": "জিজ্ঞাসা করুন",
+
   "discovery": "আবিষ্কার",
   "chat": "চ্যাট",
-  "social": "সামাজিক",
+
   "today": "আজ",
   "you": "তুমি",
   "bible": "বাইবেল",
@@ -206,10 +206,16 @@
   "bookmark-folder-empty": "এখানে এখনো কোনো বুকমার্ক নেই।",
   "bookmark-options": "বুকমার্ক বিকল্পগুলি",
   "new-folder-placeholder": "ফোল্ডারের নাম",
-  "new-folder": "নতুন ফোল্ডার",
+
   "tasks": "কাজ",
   "bookmarks": "বুকমার্ক",
   "hide-bookmarks": "বুকমার্ক লুকান",
   "show-bookmarks": "বুকমার্কগুলি দেখান",
-  "add-new-tab": "নতুন ট্যাব যোগ করুন"
+  "add-new-tab": "নতুন ট্যাব যোগ করুন",
+  "share-session": "সেশন শেয়ার করুন",
+  "add-to-bookmark-category": "বুকমার্ক বিভাগে যোগ করুন",
+  "folder-name-taken": "ঐ নামে একটি ফোল্ডার ইতিমধ্যেই বিদ্যমান।",
+  "add-to-new": "নতুনতে যোগ করুন",
+  "save": "সংরক্ষণ করুন",
+  "bookmark-verses": "শ্লোকগুলি বুকমার্ক করুন"
 }

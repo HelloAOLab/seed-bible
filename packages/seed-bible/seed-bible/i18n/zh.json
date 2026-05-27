@@ -188,10 +188,10 @@
   "add-bookmark": "收藏",
   "play-audio": "播放音频",
   "play": "玩",
-  "ask": "问",
+
   "discovery": "发现",
   "chat": "聊天",
-  "social": "社会的",
+
   "today": "今天",
   "you": "你",
   "bible": "圣经",
@@ -206,10 +206,16 @@
   "bookmark-folder-empty": "这里还没有书签。",
   "bookmark-options": "书签选项",
   "new-folder-placeholder": "文件夹名称",
-  "new-folder": "新建文件夹",
+
   "tasks": "任务",
   "bookmarks": "书签",
   "hide-bookmarks": "隐藏书签",
   "show-bookmarks": "显示书签",
-  "add-new-tab": "添加新标签页"
+  "add-new-tab": "添加新标签页",
+  "share-session": "分享会话",
+  "add-to-bookmark-category": "添加到书签分类",
+  "folder-name-taken": "已存在同名文件夹。",
+  "add-to-new": "添加到新",
+  "save": "节省",
+  "bookmark-verses": "收藏诗句"
 }

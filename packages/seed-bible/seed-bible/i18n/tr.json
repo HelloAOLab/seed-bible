@@ -188,10 +188,10 @@
   "add-bookmark": "Yer imi",
   "play-audio": "Ses dosyasını oynat",
   "play": "Oynamak",
-  "ask": "Sormak",
+
   "discovery": "Keşif",
   "chat": "Sohbet",
-  "social": "Sosyal",
+
   "today": "Bugün",
   "you": "Sen",
   "bible": "İncil",
@@ -206,10 +206,16 @@
   "bookmark-folder-empty": "Henüz burada yer imi yok.",
   "bookmark-options": "Yer imi seçenekleri",
   "new-folder-placeholder": "Klasör adı",
-  "new-folder": "Yeni klasör",
+
   "tasks": "Görevler",
   "bookmarks": "Yer işaretleri",
   "hide-bookmarks": "Yer işaretlerini gizle",
   "show-bookmarks": "Yer işaretlerini göster",
-  "add-new-tab": "Yeni sekme ekle"
+  "add-new-tab": "Yeni sekme ekle",
+  "share-session": "Oturumu paylaş",
+  "add-to-bookmark-category": "Yer imi kategorisine ekle",
+  "folder-name-taken": "O isimde bir klasör zaten mevcut.",
+  "add-to-new": "Yeniye ekle",
+  "save": "Kaydetmek",
+  "bookmark-verses": "Ayeti yer imlerine ekle"
 }

@@ -188,10 +188,10 @@
   "add-bookmark": "ዕልባት ምልክት ምግባር",
   "play-audio": "ድምጺ ምጽዋት",
   "play": "ተፃወት",
-  "ask": "ሕተት",
+
   "discovery": "ርኽበት",
   "chat": "ፀወታ",
-  "social": "ማሕበራዊ",
+
   "today": "ሎምዓንቲ",
   "you": "ንስኻ",
   "bible": "መጽሓፍ ቅዱስ",
@@ -206,10 +206,16 @@
   "bookmark-folder-empty": "ኣብዚ ክሳብ ሕጂ ዕልባት የለን።",
   "bookmark-options": "ናይ ዕልባት ኣማራጺታት",
   "new-folder-placeholder": "ስም ኣቃፊራ",
-  "new-folder": "ሓድሽ ማህደር",
+
   "tasks": "ዕማማት",
   "bookmarks": "ዕልባታት",
   "hide-bookmarks": "ዕልባታት ምሕባእ",
   "show-bookmarks": "ዕልባታት ኣርእዩ",
-  "add-new-tab": "ሓድሽ ትብ ምውሳኽ"
+  "add-new-tab": "ሓድሽ ትብ ምውሳኽ",
+  "share-session": "ሼር ክፍለ ግዜ",
+  "add-to-bookmark-category": "ናብ ዕልባት ምድብ ወስኹ",
+  "folder-name-taken": "ድሮ እቲ ስም ዘለዎ ማህደር ኣሎ።",
+  "add-to-new": "ኣብ ሓድሽ ወስኽ",
+  "save": "ምቑጣብ",
+  "bookmark-verses": "ዕልባት ጥቕስታት"
 }

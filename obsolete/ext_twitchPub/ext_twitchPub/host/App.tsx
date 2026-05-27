@@ -3,6 +3,7 @@ import Login from "ext_twitchPub.host.Login";
 import Authorization from "ext_twitchPub.host.Authenticate";
 import TwitchInterface from "ext_twitchPub.host.TwitchInterface";
 import TwitchSettings from "ext_twitchPub.host.TwitchSettings";
+import sendMessage from "ext_twitchPub.host.sendMessage";
 const style = thisBot.tags["App.css"];
 
 const { useState, useEffect, useCallback } = os.appHooks;
@@ -10,9 +11,8 @@ const senderScope =
   "user:read:email user:write:chat user:read:chat chat:read user:bot moderator:manage:announcements user:manage:whispers moderator:manage:chat_messages";
 
 function App() {
-  const [clientId, setClientId] = useState<string>(
-    "cfjslv2429r70ek579iogr02vecn6d"
-  );
+  const clientId = "cfjslv2429r70ek579iogr02vecn6d";
+  const channelId = "1455265905";
   const [currentPage, setCurrentPage] = useState<
     "login" | "authorization" | "interface" | "settings"
   >(masks?.currentPage || "login");
@@ -32,13 +32,13 @@ function App() {
   const [loading, setLoading] = useState<boolean>(false);
 
   const [translationEnabled, setTranslationEnabled] = useState(
-    masks?.translationEnabled || true
+    masks?.translationEnabled || false
   );
   const [highlightEnabled, setHighlightEnabled] = useState(
     masks?.highlightEnabled || true
   );
-  const [annoucementTimer, setAnnouncementTimer] = useState<number | null>(
-    masks?.annoucementTimer || null
+  const [annoucementTimer, setAnnouncementTimer] = useState<number>(
+    masks?.annoucementTimer || 0
   );
 
   const fetchBroadcasterId = async (token: string) => {
@@ -138,6 +138,21 @@ function App() {
       });
   };
 
+  const rateLimiter = createRateLimiter(
+    (type, payload, parts, currentPart, uid) =>
+      sendMessage({
+        message: JSON.stringify({ type, parts, currentPart, payload, uid }),
+        toChannel: true,
+      })
+  );
+
+  useEffect(() => {
+    globalThis.sendMessageWithRateLimit = rateLimiter;
+    return () => {
+      globalThis.sendMessageWithRateLimit = null;
+    };
+  }, [rateLimiter]);
+
   useEffect(() => {
     if (deviceCode && currentPage === "authorization") {
       checkAuthorizationStatus();
@@ -157,6 +172,7 @@ function App() {
     setTagMask(thisBot, "translationEnabled", translationEnabled, "local");
     setTagMask(thisBot, "highlightEnabled", highlightEnabled, "local");
     setTagMask(thisBot, "annoucementTimer", annoucementTimer, "local");
+    setTagMask(thisBot, "channelId", channelId, "local");
   }, [
     clientId,
     currentPage,
@@ -167,6 +183,7 @@ function App() {
     translationEnabled,
     highlightEnabled,
     annoucementTimer,
+    channelId,
   ]);
 
   const renderPage = useCallback(() => {
@@ -189,6 +206,7 @@ function App() {
             token={userAccessToken}
             setCurrentPage={setCurrentPage}
             annoucementTimer={annoucementTimer}
+            channelId={channelId}
           />
         );
       case "settings":
@@ -215,6 +233,8 @@ function App() {
     clientId,
     translationEnabled,
     highlightEnabled,
+    annoucementTimer,
+    channelId,
   ]);
   return (
     <>
@@ -227,3 +247,81 @@ function App() {
 }
 
 export default App;
+
+function createRateLimiter(
+  send: (
+    type: string,
+    payload: string,
+    parts: number,
+    currentPart: number,
+    uid: string
+  ) => void
+) {
+  const CHUNK_SIZE = 350;
+  const limit = 18,
+    windowDuration = 30000,
+    interval = 2000;
+  const pending = new Map<string, string>();
+  let messageCount = 0;
+  let processing = false;
+  let windowStart = Date.now();
+  let lastSentTime = 0;
+
+  function wait(ms: number) {
+    return new Promise<void>((res) => setTimeout(res, ms));
+  }
+
+  async function checkRateLimit() {
+    // Enforce minimum interval between any two sends
+    const timeSinceLast = Date.now() - lastSentTime;
+    if (lastSentTime > 0 && timeSinceLast < interval) {
+      await wait(interval - timeSinceLast);
+    }
+
+    // Enforce window rate limit
+    const elapsed = Date.now() - windowStart;
+    if (elapsed >= windowDuration) {
+      messageCount = 0;
+      windowStart = Date.now();
+    }
+    if (messageCount >= limit) {
+      await wait(windowDuration - (Date.now() - windowStart));
+      messageCount = 0;
+      windowStart = Date.now();
+    }
+  }
+
+  async function processQueue() {
+    if (processing) return;
+    processing = true;
+
+    while (pending.size > 0) {
+      const [type, payload] = pending.entries().next().value as [
+        string,
+        string,
+      ];
+      pending.delete(type);
+
+      const chunks: string[] = [];
+      for (let i = 0; i < payload.length; i += CHUNK_SIZE) {
+        chunks.push(payload.slice(i, i + CHUNK_SIZE));
+      }
+      const parts = chunks.length;
+      const uid = uuid().slice(0, 5);
+
+      for (let i = 0; i < parts; i++) {
+        await checkRateLimit();
+        send(type, chunks[i]!, parts, i, uid);
+        lastSentTime = Date.now();
+        messageCount++;
+      }
+    }
+
+    processing = false;
+  }
+
+  return function enqueue(type: string, payload: string) {
+    pending.set(type, payload);
+    processQueue();
+  };
+}

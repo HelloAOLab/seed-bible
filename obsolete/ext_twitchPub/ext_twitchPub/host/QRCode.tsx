@@ -60,6 +60,7 @@ function QRCodeComponent(props: {
   // Touch support
   const onTouchStart = useCallback(
     (e) => {
+      e.stopPropagation();
       const t = e.touches[0];
       dragRef.current = { startX: t.clientX, startY: t.clientY, startDim: dim };
 
@@ -101,6 +102,7 @@ function QRCodeComponent(props: {
           display: "inline-block",
           userSelect: "none",
         }}
+        title="Click QR to copy link."
       >
         <canvas
           ref={canvasRef}

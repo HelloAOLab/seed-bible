@@ -11,6 +11,50 @@ import {
 } from "seed-bible.managers.BibleReadingManager";
 import type { HighlightsManager } from "seed-bible.managers.HighlightsManager";
 
+export function formatVerseSelection(verseNumbers: number[]): string | null {
+  const sorted = Array.from(new Set(verseNumbers))
+    .filter((n) => Number.isFinite(n) && n > 0)
+    .sort((a, b) => a - b);
+  if (sorted.length === 0) return null;
+  if (sorted.length === 1) return String(sorted[0]);
+  const isConsecutive = sorted.every(
+    (n, i) => i === 0 || n === sorted[i - 1]! + 1
+  );
+  if (isConsecutive) {
+    return `${sorted[0]}-${sorted[sorted.length - 1]}`;
+  }
+  return sorted.join(",");
+}
+
+export function parseVerseSelection(verse: string): number[] {
+  const parts = verse.split(",");
+  const verseNumbers: number[] = [];
+  for (const part of parts) {
+    const rangeParts = part.split("-");
+    if (rangeParts.length === 1) {
+      const n = Number(rangeParts[0]);
+      if (Number.isFinite(n) && n > 0) {
+        verseNumbers.push(n);
+      }
+    } else if (rangeParts.length === 2) {
+      const start = Number(rangeParts[0]);
+      const end = Number(rangeParts[1]);
+      if (
+        Number.isFinite(start) &&
+        Number.isFinite(end) &&
+        start > 0 &&
+        end >= start
+      ) {
+        for (let i = start; i <= end; i++) {
+          verseNumbers.push(i);
+        }
+      }
+    }
+  }
+
+  return verseNumbers;
+}
+
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
   id: string;
@@ -43,22 +87,43 @@ function getInitialFirstTabChapter(): number {
     : DEFAULT_CHAPTER_NUMBER;
 }
 
+function getInitialHighlightedVerses(): number[] {
+  const value = configBot.tags.verse;
+  return typeof value === "string"
+    ? parseVerseSelection(value)
+    : typeof value === "number"
+      ? [value]
+      : [];
+}
+
 function createInitialTabs(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager
 ): ReaderTab[] {
-  return [
-    {
-      id: "tab-1",
-      title: "Tab 1",
-      readingState: createBibleReadingState(dataManager, highlightsManager, {
-        initialTranslationId: getInitialTranslationId(),
-        initialBookId: getInitialFirstTabBookId(),
-        initialChapterNumber: getInitialFirstTabChapter(),
-      }),
-      sharedSession: null,
-    },
-  ];
+  const bookId = getInitialFirstTabBookId();
+  const chapter = getInitialFirstTabChapter();
+  const highlightedVerses = getInitialHighlightedVerses();
+
+  const tab: ReaderTab = {
+    id: "tab-1",
+    title: "Tab 1",
+    readingState: createBibleReadingState(dataManager, highlightsManager, {
+      initialTranslationId: getInitialTranslationId(),
+      initialBookId: bookId,
+      initialChapterNumber: chapter,
+      scrollToVerse: highlightedVerses[0] ?? undefined,
+    }),
+    sharedSession: null,
+  };
+
+  if (highlightedVerses.length > 0) {
+    tab.readingState.decorateVerses(bookId, chapter, highlightedVerses, {
+      className: "sb-verse-decoration-initial-verse-highlight",
+      removeAfterMs: 5000,
+    });
+  }
+
+  return [tab];
 }
 
 type NewTabSource = BibleReadingState | BibleReadingSession;
@@ -200,6 +265,31 @@ export function createTabs(
         configBot.tags.translation = translationId;
       }
     }
+  });
+
+  // selectedVerses → configBot.tags.verse (→ URL). Only emit verses that
+  // belong to the currently displayed book + chapter; stale selections from
+  // a previous chapter shouldn't bleed into the URL. One-way: we never
+  // re-derive `selectedVerses` from the URL — doing that would strip the
+  // click coordinates the verse toolbar needs to position itself.
+  effect(() => {
+    const tab = selectedTab.value;
+    if (!tab) return;
+    const rs = tab.readingState;
+    const currentBookId = rs.bookId.value;
+    const currentChapter = rs.chapterNumber.value;
+    const verseNumbers = rs.selectedVerses.value
+      .filter(
+        (verse) =>
+          verse.bookId === currentBookId &&
+          verse.chapterNumber === currentChapter
+      )
+      .map((verse) => verse.verse.number);
+    const formatted = formatVerseSelection(verseNumbers);
+    const currentTag =
+      typeof configBot.tags.verse === "string" ? configBot.tags.verse : null;
+    if (currentTag === formatted) return;
+    configBot.tags.verse = formatted ?? null;
   });
 
   os.addBotListener(configBot, "onBotChanged", async (that: unknown) => {
