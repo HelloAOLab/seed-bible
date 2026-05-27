@@ -189,10 +189,10 @@
   "add-bookmark": "ที่คั่นหนังสือ",
   "play-audio": "เล่นเสียง",
   "play": "เล่น",
-  "ask": "ถาม",
+
   "discovery": "การค้นพบ",
   "chat": "แชท",
-  "social": "ทางสังคม",
+
   "today": "วันนี้",
   "you": "คุณ",
   "bible": "พระคัมภีร์",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "ยังไม่มีบุ๊กมาร์กในหน้านี้",
   "bookmark-options": "ตัวเลือกบุ๊กมาร์ก",
   "new-folder-placeholder": "ชื่อโฟลเดอร์",
-  "new-folder": "โฟลเดอร์ใหม่",
+
   "tasks": "งานต่างๆ",
   "bookmarks": "ที่คั่นหนังสือ",
   "hide-bookmarks": "ซ่อนบุ๊กมาร์ก",

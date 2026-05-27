@@ -188,10 +188,10 @@
   "add-bookmark": "Yer imi",
   "play-audio": "Ses dosyasını oynat",
   "play": "Oynamak",
-  "ask": "Sormak",
+
   "discovery": "Keşif",
   "chat": "Sohbet",
-  "social": "Sosyal",
+
   "today": "Bugün",
   "you": "Sen",
   "bible": "İncil",
@@ -206,7 +206,7 @@
   "bookmark-folder-empty": "Henüz burada yer imi yok.",
   "bookmark-options": "Yer imi seçenekleri",
   "new-folder-placeholder": "Klasör adı",
-  "new-folder": "Yeni klasör",
+
   "tasks": "Görevler",
   "bookmarks": "Yer işaretleri",
   "hide-bookmarks": "Yer işaretlerini gizle",

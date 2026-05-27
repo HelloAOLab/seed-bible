@@ -189,10 +189,10 @@
   "add-bookmark": "Boekmerk",
   "play-audio": "Speel oudio",
   "play": "Speel",
-  "ask": "Vra",
+
   "discovery": "Ontdekking",
   "chat": "Klets",
-  "social": "Sosiaal",
+
   "today": "Vandag",
   "you": "Jy",
   "bible": "Bybel",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Geen boekmerke hier nog nie.",
   "bookmark-options": "Boekmerkopsies",
   "new-folder-placeholder": "Lêernaam",
-  "new-folder": "Nuwe vouer",
+
   "tasks": "Take",
   "bookmarks": "Boekmerke",
   "hide-bookmarks": "Versteek boekmerke",

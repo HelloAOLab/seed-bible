@@ -189,10 +189,10 @@
   "add-bookmark": "Xatcho'p",
   "play-audio": "Audio ijro etish",
   "play": "O'yin",
-  "ask": "So'rang",
+
   "discovery": "Kashfiyot",
   "chat": "Chat",
-  "social": "Ijtimoiy",
+
   "today": "Bugun",
   "you": "Siz",
   "bible": "Muqaddas Kitob",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Bu yerda hali xatcho'plar yo'q.",
   "bookmark-options": "Xatcho'p parametrlari",
   "new-folder-placeholder": "Papka nomi",
-  "new-folder": "Yangi papka",
+
   "tasks": "Vazifalar",
   "bookmarks": "Xatcho'plar",
   "hide-bookmarks": "Xatcho'plarni yashirish",

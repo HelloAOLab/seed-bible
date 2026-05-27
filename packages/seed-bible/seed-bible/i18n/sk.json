@@ -189,10 +189,10 @@
   "add-bookmark": "Záložka",
   "play-audio": "Prehrať zvuk",
   "play": "Hrať",
-  "ask": "Opýtajte sa",
+
   "discovery": "Objav",
   "chat": "Čet",
-  "social": "Sociálne siete",
+
   "today": "Dnes",
   "you": "Ty",
   "bible": "Biblia",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Zatiaľ tu nie sú žiadne záložky.",
   "bookmark-options": "Možnosti záložiek",
   "new-folder-placeholder": "Názov priečinka",
-  "new-folder": "Nový priečinok",
+
   "tasks": "Úlohy",
   "bookmarks": "Záložky",
   "hide-bookmarks": "Skryť záložky",

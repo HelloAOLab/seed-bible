@@ -188,10 +188,10 @@
   "add-bookmark": "Хавчуурга",
   "play-audio": "Аудио тоглуулах",
   "play": "Тоглох",
-  "ask": "Асуух",
+
   "discovery": "Нээлт",
   "chat": "Чат",
-  "social": "Нийгмийн",
+
   "today": "Өнөөдөр",
   "you": "Чи",
   "bible": "Библи",
@@ -206,7 +206,7 @@
   "bookmark-folder-empty": "Энд одоогоор хавчуурга алга байна.",
   "bookmark-options": "Хавчуургын сонголтууд",
   "new-folder-placeholder": "Фолдерын нэр",
-  "new-folder": "Шинэ хавтас",
+
   "tasks": "Даалгаварууд",
   "bookmarks": "Хавчуурга",
   "hide-bookmarks": "Хавчуургыг нуух",

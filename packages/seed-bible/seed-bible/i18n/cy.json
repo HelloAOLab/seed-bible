@@ -189,10 +189,10 @@
   "add-bookmark": "Nod tudalen",
   "play-audio": "Chwarae sain",
   "play": "Chwarae",
-  "ask": "Gofynnwch",
+
   "discovery": "Darganfyddiad",
   "chat": "Sgwrs",
-  "social": "Cymdeithasol",
+
   "today": "Heddiw",
   "you": "Chi",
   "bible": "Beibl",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Dim nodau tudalen yma eto.",
   "bookmark-options": "Dewisiadau nod tudalen",
   "new-folder-placeholder": "Enw'r ffolder",
-  "new-folder": "Ffolder newydd",
+
   "tasks": "Tasgau",
   "bookmarks": "Nodau Tudalen",
   "hide-bookmarks": "Cuddio nodau tudalen",

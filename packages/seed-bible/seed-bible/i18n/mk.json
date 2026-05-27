@@ -189,10 +189,10 @@
   "add-bookmark": "Обележувач",
   "play-audio": "Пушти аудио",
   "play": "Играј",
-  "ask": "Прашај",
+
   "discovery": "Откритие",
   "chat": "Разговор",
-  "social": "Социјални",
+
   "today": "Денес",
   "you": "Ти",
   "bible": "Библија",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Сè уште нема обележувачи тука.",
   "bookmark-options": "Опции за обележувачи",
   "new-folder-placeholder": "Име на папка",
-  "new-folder": "Нова папка",
+
   "tasks": "Задачи",
   "bookmarks": "Обележувачи",
   "hide-bookmarks": "Сокриј обележувачи",

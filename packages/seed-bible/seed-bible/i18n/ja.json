@@ -188,10 +188,10 @@
   "add-bookmark": "ブックマーク",
   "play-audio": "音声を再生",
   "play": "遊ぶ",
-  "ask": "聞く",
+
   "discovery": "発見",
   "chat": "チャット",
-  "social": "社交",
+
   "today": "今日",
   "you": "あなた",
   "bible": "聖書",
@@ -206,7 +206,7 @@
   "bookmark-folder-empty": "まだブックマークはありません。",
   "bookmark-options": "ブックマークオプション",
   "new-folder-placeholder": "フォルダ名",
-  "new-folder": "新しいフォルダー",
+
   "tasks": "タスク",
   "bookmarks": "ブックマーク",
   "hide-bookmarks": "ブックマークを非表示にする",

@@ -189,10 +189,10 @@
   "add-bookmark": "Penanda buku",
   "play-audio": "Mainkan audio",
   "play": "Main",
-  "ask": "Tanya",
+
   "discovery": "Penemuan",
   "chat": "Sembang",
-  "social": "Sosial",
+
   "today": "Hari ini",
   "you": "Awak",
   "bible": "Bible",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Tiada penanda buku di sini lagi.",
   "bookmark-options": "Pilihan penanda buku",
   "new-folder-placeholder": "Nama folder",
-  "new-folder": "Folder baharu",
+
   "tasks": "Tugasan",
   "bookmarks": "Penanda Halaman",
   "hide-bookmarks": "Sembunyikan penanda buku",

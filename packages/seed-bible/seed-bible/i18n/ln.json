@@ -189,10 +189,10 @@
   "add-bookmark": "Marque-page",
   "play-audio": "Beta audio",
   "play": "Kobeta",
-  "ask": "Kotuna",
+
   "discovery": "Bokutani",
   "chat": "Kosolola",
-  "social": "Makambo ya bomoi",
+
   "today": "Lelo",
   "you": "Yo",
   "bible": "Biblia",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Ba marque-pages awa nanu te.",
   "bookmark-options": "Ba options ya marque-page",
   "new-folder-placeholder": "Nkombo ya dossier",
-  "new-folder": "Dossier ya sika",
+
   "tasks": "Misala",
   "bookmarks": "Ba marque-pages",
   "hide-bookmarks": "Bomba ba marque-pages",

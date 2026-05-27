@@ -191,10 +191,10 @@
   "add-bookmark": "Bookmark",
   "play-audio": "Play audio",
   "play": "Play",
-  "ask": "Ask",
+
   "discovery": "Discovery",
   "chat": "Chat",
-  "social": "Social",
+
   "today": "Today",
   "you": "You",
   "bible": "Bible",
@@ -209,7 +209,7 @@
   "bookmark-folder-empty": "No bookmarks here yet.",
   "bookmark-options": "Bookmark options",
   "new-folder-placeholder": "Folder name",
-  "new-folder": "New folder",
+
   "tasks": "Tasks",
   "bookmarks": "Bookmarks",
   "hide-bookmarks": "Hide bookmarks",

@@ -189,10 +189,10 @@
   "add-bookmark": "బుక్‌మార్క్",
   "play-audio": "ఆడియో ప్లే చేయండి",
   "play": "ఆట",
-  "ask": "అడగండి",
+
   "discovery": "ఆవిష్కరణ",
   "chat": "చాట్",
-  "social": "సామాజిక",
+
   "today": "ఈరోజు",
   "you": "మీరు",
   "bible": "బైబిల్",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "ఇక్కడ ఇంకా బుక్‌మార్క్‌లు లేవు.",
   "bookmark-options": "బుక్‌మార్క్ ఎంపికలు",
   "new-folder-placeholder": "ఫోల్డర్ పేరు",
-  "new-folder": "కొత్త ఫోల్డర్",
+
   "tasks": "పనులు",
   "bookmarks": "బుక్‌మార్క్‌లు",
   "hide-bookmarks": "బుక్‌మార్క్‌లను దాచండి",

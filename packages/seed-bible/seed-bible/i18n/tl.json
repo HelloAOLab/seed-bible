@@ -189,10 +189,10 @@
   "add-bookmark": "I-bookmark",
   "play-audio": "Magpatugtog ng audio",
   "play": "Maglaro",
-  "ask": "Magtanong",
+
   "discovery": "Pagtuklas",
   "chat": "Makipag-chat",
-  "social": "Panlipunan",
+
   "today": "Ngayon",
   "you": "Ikaw",
   "bible": "Bibliya",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Wala pang mga bookmark dito.",
   "bookmark-options": "Mga opsyon sa pag-bookmark",
   "new-folder-placeholder": "Pangalan ng folder",
-  "new-folder": "Bagong folder",
+
   "tasks": "Mga Gawain",
   "bookmarks": "Mga Bookmark",
   "hide-bookmarks": "Itago ang mga bookmark",

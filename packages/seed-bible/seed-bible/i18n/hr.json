@@ -189,10 +189,10 @@
   "add-bookmark": "Označi",
   "play-audio": "Reproduciraj zvuk",
   "play": "Igrati",
-  "ask": "Pitajte",
+
   "discovery": "Otkriće",
   "chat": "Razgovor",
-  "social": "Društvene mreže",
+
   "today": "Danas",
   "you": "Vas",
   "bible": "Biblija",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Ovdje još nema oznaka.",
   "bookmark-options": "Opcije oznaka",
   "new-folder-placeholder": "Naziv mape",
-  "new-folder": "Nova mapa",
+
   "tasks": "Zadaci",
   "bookmarks": "Oznake",
   "hide-bookmarks": "Sakrij oznake",

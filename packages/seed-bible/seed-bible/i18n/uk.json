@@ -188,10 +188,10 @@
   "add-bookmark": "Закладка",
   "play-audio": "Відтворити аудіо",
   "play": "Грати",
-  "ask": "Запитайте",
+
   "discovery": "Відкриття",
   "chat": "Чат",
-  "social": "Соціальні мережі",
+
   "today": "Сьогодні",
   "you": "Ви",
   "bible": "Біблія",
@@ -206,7 +206,7 @@
   "bookmark-folder-empty": "Тут ще немає закладок.",
   "bookmark-options": "Параметри закладок",
   "new-folder-placeholder": "Назва папки",
-  "new-folder": "Нова папка",
+
   "tasks": "Завдання",
   "bookmarks": "Закладки",
   "hide-bookmarks": "Приховати закладки",

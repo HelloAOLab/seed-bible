@@ -189,10 +189,10 @@
   "add-bookmark": "Marcador",
   "play-audio": "Reproducir audio",
   "play": "Reproducir",
-  "ask": "Preguntar",
+
   "discovery": "Descubrimento",
   "chat": "Chat",
-  "social": "Social",
+
   "today": "Hoxe",
   "you": "Ti",
   "bible": "Biblia",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Aínda non hai marcadores aquí.",
   "bookmark-options": "Opcións de marcadores",
   "new-folder-placeholder": "Nome do cartafol",
-  "new-folder": "Nova carpeta",
+
   "tasks": "Tarefas",
   "bookmarks": "Marcadores",
   "hide-bookmarks": "Ocultar marcadores",

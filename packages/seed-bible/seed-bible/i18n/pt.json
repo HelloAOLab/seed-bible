@@ -188,10 +188,10 @@
   "add-bookmark": "Adicionar aos favoritos",
   "play-audio": "Reproduzir áudio",
   "play": "Jogar",
-  "ask": "Perguntar",
+
   "discovery": "Descoberta",
   "chat": "Bater papo",
-  "social": "Social",
+
   "today": "Hoje",
   "you": "Você",
   "bible": "Bíblia",
@@ -206,7 +206,7 @@
   "bookmark-folder-empty": "Ainda não há favoritos aqui.",
   "bookmark-options": "Opções de favoritos",
   "new-folder-placeholder": "Nome da pasta",
-  "new-folder": "Nova pasta",
+
   "tasks": "Tarefas",
   "bookmarks": "Favoritos",
   "hide-bookmarks": "Ocultar favoritos",

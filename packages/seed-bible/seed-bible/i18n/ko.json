@@ -188,10 +188,10 @@
   "add-bookmark": "서표",
   "play-audio": "오디오 재생",
   "play": "놀다",
-  "ask": "묻다",
+
   "discovery": "발견",
   "chat": "채팅",
-  "social": "사회의",
+
   "today": "오늘",
   "you": "너",
   "bible": "성경",
@@ -206,7 +206,7 @@
   "bookmark-folder-empty": "아직 여기에 북마크가 없습니다.",
   "bookmark-options": "북마크 옵션",
   "new-folder-placeholder": "폴더 이름",
-  "new-folder": "새 폴더",
+
   "tasks": "과제",
   "bookmarks": "책갈피",
   "hide-bookmarks": "북마크 숨기기",

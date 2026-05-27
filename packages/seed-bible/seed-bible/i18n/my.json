@@ -189,10 +189,10 @@
   "add-bookmark": "စာညှပ်",
   "play-audio": "အသံဖွင့်ပါ",
   "play": "ကစားပါ",
-  "ask": "မေးပါ",
+
   "discovery": "ရှာဖွေတွေ့ရှိမှု",
   "chat": "ချတ်",
-  "social": "လူမှုရေး",
+
   "today": "ယနေ့",
   "you": "မင်း",
   "bible": "သမ္မာကျမ်းစာ",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "ဤနေရာတွင် bookmark များ မရှိသေးပါ။",
   "bookmark-options": "Bookmark ရွေးချယ်စရာများ",
   "new-folder-placeholder": "ဖိုလ်ဒါအမည်",
-  "new-folder": "ဖိုင်တွဲအသစ်",
+
   "tasks": "လုပ်ဆောင်စရာများ",
   "bookmarks": "စာညှပ်များ",
   "hide-bookmarks": "စာညှပ်များကို ဝှက်ပါ",

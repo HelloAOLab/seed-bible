@@ -189,10 +189,10 @@
   "add-bookmark": "Запомнете",
   "play-audio": "Пускане на аудио",
   "play": "Играй",
-  "ask": "Попитай",
+
   "discovery": "Откритие",
   "chat": "Чат",
-  "social": "Социални мрежи",
+
   "today": "Днес",
   "you": "Ти",
   "bible": "Библия",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Все още няма отметки тук.",
   "bookmark-options": "Опции за отметки",
   "new-folder-placeholder": "Име на папката",
-  "new-folder": "Нова папка",
+
   "tasks": "Задачи",
   "bookmarks": "Отметки",
   "hide-bookmarks": "Скриване на отметки",

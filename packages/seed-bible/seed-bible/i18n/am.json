@@ -188,10 +188,10 @@
   "add-bookmark": "ዕልባት ያድርጉ",
   "play-audio": "ኦዲዮ አጫውት",
   "play": "ይጫወቱ",
-  "ask": "ጠይቅ",
+
   "discovery": "ግኝት",
   "chat": "ቻት",
-  "social": "ማህበራዊ",
+
   "today": "ዛሬ",
   "you": "አንተ",
   "bible": "መጽሐፍ ቅዱስ",
@@ -206,7 +206,7 @@
   "bookmark-folder-empty": "እዚህ እስካሁን ምንም ዕልባቶች የሉም።",
   "bookmark-options": "የዕልባት አማራጮች",
   "new-folder-placeholder": "የአቃፊ ስም",
-  "new-folder": "አዲስ አቃፊ",
+
   "tasks": "ተግባራት",
   "bookmarks": "ዕልባቶች",
   "hide-bookmarks": "ዕልባቶችን ደብቅ",

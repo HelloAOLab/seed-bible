@@ -189,10 +189,10 @@
   "add-bookmark": "სანიშნე",
   "play-audio": "აუდიოს დაკვრა",
   "play": "თამაში",
-  "ask": "იკითხეთ",
+
   "discovery": "აღმოჩენა",
   "chat": "ჩატი",
-  "social": "სოციალური",
+
   "today": "დღეს",
   "you": "შენ",
   "bible": "ბიბლია",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "აქ ჯერ სანიშნეები არ არის.",
   "bookmark-options": "სანიშნეების პარამეტრები",
   "new-folder-placeholder": "საქაღალდის სახელი",
-  "new-folder": "ახალი საქაღალდე",
+
   "tasks": "დავალებები",
   "bookmarks": "სანიშნეები",
   "hide-bookmarks": "სანიშნეების დამალვა",

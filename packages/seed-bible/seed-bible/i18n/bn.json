@@ -188,10 +188,10 @@
   "add-bookmark": "বুকমার্ক",
   "play-audio": "অডিও চালান",
   "play": "খেলা",
-  "ask": "জিজ্ঞাসা করুন",
+
   "discovery": "আবিষ্কার",
   "chat": "চ্যাট",
-  "social": "সামাজিক",
+
   "today": "আজ",
   "you": "তুমি",
   "bible": "বাইবেল",
@@ -206,7 +206,7 @@
   "bookmark-folder-empty": "এখানে এখনো কোনো বুকমার্ক নেই।",
   "bookmark-options": "বুকমার্ক বিকল্পগুলি",
   "new-folder-placeholder": "ফোল্ডারের নাম",
-  "new-folder": "নতুন ফোল্ডার",
+
   "tasks": "কাজ",
   "bookmarks": "বুকমার্ক",
   "hide-bookmarks": "বুকমার্ক লুকান",

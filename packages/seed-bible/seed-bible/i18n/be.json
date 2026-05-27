@@ -189,10 +189,10 @@
   "add-bookmark": "Закладка",
   "play-audio": "Прайграць аўдыё",
   "play": "Гуляць",
-  "ask": "Спытайце",
+
   "discovery": "Адкрыццё",
   "chat": "Чат",
-  "social": "Сацыяльныя сеткі",
+
   "today": "Сёння",
   "you": "Ты",
   "bible": "Біблія",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Тут пакуль няма закладак.",
   "bookmark-options": "Параметры закладак",
   "new-folder-placeholder": "Назва папкі",
-  "new-folder": "Новая папка",
+
   "tasks": "Задачы",
   "bookmarks": "Закладкі",
   "hide-bookmarks": "Схаваць закладкі",

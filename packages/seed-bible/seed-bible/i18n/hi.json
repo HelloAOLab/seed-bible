@@ -188,10 +188,10 @@
   "add-bookmark": "बुकमार्क",
   "play-audio": "ऑडियो चलाएं",
   "play": "खेल",
-  "ask": "पूछना",
+
   "discovery": "खोज",
   "chat": "बात करना",
-  "social": "सामाजिक",
+
   "today": "आज",
   "you": "आप",
   "bible": "बाइबिल",
@@ -206,7 +206,7 @@
   "bookmark-folder-empty": "अभी यहां कोई बुकमार्क नहीं है।",
   "bookmark-options": "बुकमार्क विकल्प",
   "new-folder-placeholder": "फ़ोल्डर का नाम",
-  "new-folder": "नया फ़ोल्डर",
+
   "tasks": "कार्य",
   "bookmarks": "बुकमार्क",
   "hide-bookmarks": "बुकमार्क छुपाएँ",

@@ -188,10 +188,10 @@
   "add-bookmark": "Tandai",
   "play-audio": "Putar audio",
   "play": "Bermain",
-  "ask": "Bertanya",
+
   "discovery": "Penemuan",
   "chat": "Mengobrol",
-  "social": "Sosial",
+
   "today": "Hari ini",
   "you": "Anda",
   "bible": "Alkitab",
@@ -206,7 +206,7 @@
   "bookmark-folder-empty": "Belum ada bookmark di sini.",
   "bookmark-options": "Opsi bookmark",
   "new-folder-placeholder": "Nama folder",
-  "new-folder": "Folder baru",
+
   "tasks": "Tugas",
   "bookmarks": "Penanda buku",
   "hide-bookmarks": "Sembunyikan bookmark",

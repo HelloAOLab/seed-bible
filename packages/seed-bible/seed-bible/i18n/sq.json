@@ -189,10 +189,10 @@
   "add-bookmark": "Shënues",
   "play-audio": "Luaj audion",
   "play": "Luaj",
-  "ask": "Pyet",
+
   "discovery": "Zbulim",
   "chat": "Bisedë",
-  "social": "Sociale",
+
   "today": "Sot",
   "you": "Ti",
   "bible": "Bibla",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Nuk ka ende faqeshënues këtu.",
   "bookmark-options": "Opsionet e faqeshënuesit",
   "new-folder-placeholder": "Emri i dosjes",
-  "new-folder": "Dosje e re",
+
   "tasks": "Detyrat",
   "bookmarks": "Faqeshënuesit",
   "hide-bookmarks": "Fshih faqeshënuesit",

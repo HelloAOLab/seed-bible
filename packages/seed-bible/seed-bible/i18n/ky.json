@@ -189,10 +189,10 @@
   "add-bookmark": "Кыстарма",
   "play-audio": "Аудиону ойнотуу",
   "play": "Ойнотуу",
-  "ask": "Сураңыз",
+
   "discovery": "Ачылыш",
   "chat": "Чат",
-  "social": "Социалдык",
+
   "today": "Бүгүн",
   "you": "Сен",
   "bible": "Ыйык Китеп",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Бул жерде азырынча кыстармалар жок.",
   "bookmark-options": "Кыстарма параметрлери",
   "new-folder-placeholder": "Папканын аталышы",
-  "new-folder": "Жаңы папка",
+
   "tasks": "Тапшырмалар",
   "bookmarks": "Кыстармалар",
   "hide-bookmarks": "Кыстармаларды жашыруу",

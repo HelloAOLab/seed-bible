@@ -189,10 +189,10 @@
   "add-bookmark": "Kirjanmerkki",
   "play-audio": "Toista ääntä",
   "play": "Pelata",
-  "ask": "Kysyä",
+
   "discovery": "Löytö",
   "chat": "Chat",
-  "social": "Sosiaalinen",
+
   "today": "Tänään",
   "you": "Sinä",
   "bible": "raamattu",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Ei vielä kirjanmerkkejä.",
   "bookmark-options": "Kirjanmerkkiasetukset",
   "new-folder-placeholder": "Kansion nimi",
-  "new-folder": "Uusi kansio",
+
   "tasks": "Tehtävät",
   "bookmarks": "Kirjanmerkit",
   "hide-bookmarks": "Piilota kirjanmerkit",

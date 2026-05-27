@@ -189,10 +189,10 @@
   "add-bookmark": "Zakładka w książce",
   "play-audio": "Odtwórz dźwięk",
   "play": "Grać",
-  "ask": "Zapytać",
+
   "discovery": "Odkrycie",
   "chat": "Pogawędzić",
-  "social": "Społeczny",
+
   "today": "Dzisiaj",
   "you": "Ty",
   "bible": "Biblia",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Nie ma tu jeszcze żadnych zakładek.",
   "bookmark-options": "Opcje zakładek",
   "new-folder-placeholder": "Nazwa folderu",
-  "new-folder": "Nowy folder",
+
   "tasks": "Zadania",
   "bookmarks": "Zakładki",
   "hide-bookmarks": "Ukryj zakładki",

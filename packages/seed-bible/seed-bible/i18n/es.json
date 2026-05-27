@@ -188,10 +188,10 @@
   "add-bookmark": "Marcador",
   "play-audio": "Reproducir audio",
   "play": "Jugar",
-  "ask": "Preguntar",
+
   "discovery": "Descubrimiento",
   "chat": "Charlar",
-  "social": "Social",
+
   "today": "Hoy",
   "you": "Tú",
   "bible": "Biblia",
@@ -206,7 +206,7 @@
   "bookmark-folder-empty": "Aún no hay marcadores aquí.",
   "bookmark-options": "Opciones de marcadores",
   "new-folder-placeholder": "Nombre de la carpeta",
-  "new-folder": "Nueva carpeta",
+
   "tasks": "Tareas",
   "bookmarks": "Marcadores",
   "hide-bookmarks": "Ocultar marcadores",

@@ -188,10 +188,10 @@
   "add-bookmark": "Signet",
   "play-audio": "Lire l'audio",
   "play": "Jouer",
-  "ask": "Demander",
+
   "discovery": "Découverte",
   "chat": "Chat",
-  "social": "Sociale",
+
   "today": "Aujourd'hui",
   "you": "Toi",
   "bible": "Bible",
@@ -206,7 +206,7 @@
   "bookmark-folder-empty": "Aucun signet ici pour le moment.",
   "bookmark-options": "Options de signet",
   "new-folder-placeholder": "Nom du dossier",
-  "new-folder": "Nouveau dossier",
+
   "tasks": "Tâches",
   "bookmarks": "Signets",
   "hide-bookmarks": "Masquer les favoris",

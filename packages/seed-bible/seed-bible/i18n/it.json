@@ -189,10 +189,10 @@
   "add-bookmark": "Segnalibro",
   "play-audio": "Riproduci audio",
   "play": "Giocare",
-  "ask": "Chiedere",
+
   "discovery": "Scoperta",
   "chat": "Chiacchierata",
-  "social": "Sociale",
+
   "today": "Oggi",
   "you": "Voi",
   "bible": "Bibbia",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Nessun segnalibro ancora presente.",
   "bookmark-options": "Opzioni segnalibro",
   "new-folder-placeholder": "Nome della cartella",
-  "new-folder": "Nuova cartella",
+
   "tasks": "Compiti",
   "bookmarks": "Segnalibri",
   "hide-bookmarks": "Nascondi i segnalibri",

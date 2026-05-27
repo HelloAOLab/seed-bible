@@ -189,10 +189,10 @@
   "add-bookmark": "Könyvjelző",
   "play-audio": "Hang lejátszása",
   "play": "Játék",
-  "ask": "Kérdez",
+
   "discovery": "Felfedezés",
   "chat": "Csevegés",
-  "social": "Szociális",
+
   "today": "Ma",
   "you": "Te",
   "bible": "Biblia",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Még nincsenek könyvjelzők.",
   "bookmark-options": "Könyvjelző beállítások",
   "new-folder-placeholder": "Mappa neve",
-  "new-folder": "Új mappa",
+
   "tasks": "Feladatok",
   "bookmarks": "Könyvjelzők",
   "hide-bookmarks": "Könyvjelzők elrejtése",

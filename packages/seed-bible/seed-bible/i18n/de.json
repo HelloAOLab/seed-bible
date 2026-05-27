@@ -189,10 +189,10 @@
   "add-bookmark": "Lesezeichen",
   "play-audio": "Audio abspielen",
   "play": "Spielen",
-  "ask": "Fragen",
+
   "discovery": "Entdeckung",
   "chat": "Chat",
-  "social": "Soziale Medien",
+
   "today": "Heute",
   "you": "Du",
   "bible": "Bibel",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Hier sind noch keine Lesezeichen vorhanden.",
   "bookmark-options": "Lesezeichenoptionen",
   "new-folder-placeholder": "Ordnername",
-  "new-folder": "Neuer Ordner",
+
   "tasks": "Aufgaben",
   "bookmarks": "Lesezeichen",
   "hide-bookmarks": "Lesezeichen ausblenden",

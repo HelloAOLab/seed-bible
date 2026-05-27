@@ -188,10 +188,10 @@
   "add-bookmark": "إضافة إلى المفضلة",
   "play-audio": "تشغيل الصوت",
   "play": "يلعب",
-  "ask": "بسأل",
+
   "discovery": "اكتشاف",
   "chat": "محادثة",
-  "social": "اجتماعي",
+
   "today": "اليوم",
   "you": "أنت",
   "bible": "الكتاب المقدس",
@@ -206,7 +206,7 @@
   "bookmark-folder-empty": "لا توجد إشارات مرجعية هنا حتى الآن.",
   "bookmark-options": "خيارات الإشارة المرجعية",
   "new-folder-placeholder": "اسم المجلد",
-  "new-folder": "مجلد جديد",
+
   "tasks": "المهام",
   "bookmarks": "الإشارات المرجعية",
   "hide-bookmarks": "إخفاء الإشارات المرجعية",

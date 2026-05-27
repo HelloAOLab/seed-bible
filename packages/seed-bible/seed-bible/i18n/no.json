@@ -189,10 +189,10 @@
   "add-bookmark": "Bokmerke",
   "play-audio": "Spill av lyd",
   "play": "Spille",
-  "ask": "Spørre",
+
   "discovery": "Oppdagelse",
   "chat": "Chat",
-  "social": "Sosial",
+
   "today": "I dag",
   "you": "Du",
   "bible": "bibel",
@@ -207,7 +207,7 @@
   "bookmark-folder-empty": "Ingen bokmerker her ennå.",
   "bookmark-options": "Bokmerkealternativer",
   "new-folder-placeholder": "Mappenavn",
-  "new-folder": "Ny mappe",
+
   "tasks": "Oppgaver",
   "bookmarks": "Bokmerker",
   "hide-bookmarks": "Skjul bokmerker",

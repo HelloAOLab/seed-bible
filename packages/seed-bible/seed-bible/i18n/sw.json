@@ -188,10 +188,10 @@
   "add-bookmark": "Alamisho",
   "play-audio": "Cheza sauti",
   "play": "Cheza",
-  "ask": "Uliza",
+
   "discovery": "Ugunduzi",
   "chat": "Gumzo",
-  "social": "Kijamii",
+
   "today": "Leo",
   "you": "Wewe",
   "bible": "Biblia",
@@ -206,7 +206,7 @@
   "bookmark-folder-empty": "Hakuna alamisho hapa bado.",
   "bookmark-options": "Chaguo za alamisho",
   "new-folder-placeholder": "Jina la folda",
-  "new-folder": "Folda mpya",
+
   "tasks": "Kazi",
   "bookmarks": "Alamisho",
   "hide-bookmarks": "Ficha alamisho",

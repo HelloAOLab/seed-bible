@@ -188,10 +188,10 @@
   "add-bookmark": "نښه کول",
   "play-audio": "غږ غږول",
   "play": "لوبه وکړئ",
-  "ask": "پوښتنه وکړئ",
+
   "discovery": "کشف",
   "chat": "چیٹ",
-  "social": "ټولنیز",
+
   "today": "نن",
   "you": "ته",
   "bible": "بائبل",
@@ -206,7 +206,7 @@
   "bookmark-folder-empty": "دلته لا تر اوسه کوم بک مارک نشته.",
   "bookmark-options": "د بک مارک اختیارونه",
   "new-folder-placeholder": "د فولډر نوم",
-  "new-folder": "نوی فولډر",
+
   "tasks": "دندې",
   "bookmarks": "یادنښې",
   "hide-bookmarks": "بک مارکونه پټ کړئ",
