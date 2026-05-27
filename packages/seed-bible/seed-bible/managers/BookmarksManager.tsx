@@ -8,7 +8,7 @@ import {
 import { z } from "zod";
 import type { LoginManager } from "seed-bible.managers.LoginManager";
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
-import { getFeatureFlagSignal } from "./FeatureFlags";
+import { getFeatureFlagSignal } from "seed-bible.managers.FeatureFlags";
 
 /**
  * Verse target for a bookmark: a single verse number or an inclusive `[start, end]`
