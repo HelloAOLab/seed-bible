@@ -501,7 +501,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       onSelect: async (context) => {
         if (context.readingState.selectedVerses.value.length === 0) return;
 
-        const verseTexts = formatSelectedVerses(context);
+        const verseTexts = formatSelectedVerses(context.readingState);
 
         try {
           os.setClipboard(verseTexts);
@@ -522,9 +522,9 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       onSelect: (context) => {
         if (context.readingState.selectedVerses.value.length === 0) return;
 
-        let verseTexts = formatSelectedVerses(context);
+        let verseTexts = formatSelectedVerses(context.readingState);
 
-        const url = getShareUrl(context);
+        const url = getShareUrl(context.readingState);
 
         verseTexts += `\n\n${url.toString()}`;
 
