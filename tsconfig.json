@@ -857,6 +857,9 @@
       "seed-bible.components.ContextMenu": [
         "./packages/seed-bible/seed-bible/components/ContextMenu.tsx"
       ],
+      "seed-bible.components.FloatingReaderPanels": [
+        "./packages/seed-bible/seed-bible/components/FloatingReaderPanels.tsx"
+      ],
       "seed-bible.components.icons": [
         "./packages/seed-bible/seed-bible/components/icons.tsx"
       ],
@@ -901,6 +904,9 @@
       ],
       "seed-bible.managers.BibleToolsManager": [
         "./packages/seed-bible/seed-bible/managers/BibleToolsManager.tsx"
+      ],
+      "seed-bible.managers.BookmarksManager": [
+        "./packages/seed-bible/seed-bible/managers/BookmarksManager.tsx"
       ],
       "seed-bible.managers.ConfigManager": [
         "./packages/seed-bible/seed-bible/managers/ConfigManager.tsx"

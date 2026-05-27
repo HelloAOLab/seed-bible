@@ -21,6 +21,7 @@ type TestGlobalScope = typeof globalThis & {
 
 export interface CreateTestSeedBibleStateOptions {
   responses?: WebResponseMap;
+  configTags?: Record<string, unknown>;
   timeoutMs?: number;
 }
 
@@ -59,7 +60,9 @@ export async function waitForTabsToLoad(
   );
 }
 
-function ensureGlobalRuntime(): TestGlobalScope {
+function ensureGlobalRuntime(
+  configTags: Record<string, unknown> | undefined
+): TestGlobalScope {
   const scope = globalThis as TestGlobalScope;
 
   // Reset any existing bot-related properties to ensure a clean test environment
@@ -67,7 +70,9 @@ function ensureGlobalRuntime(): TestGlobalScope {
     tags: {},
   };
   scope.configBot = {
-    tags: {},
+    tags: {
+      ...(configTags ?? {}),
+    },
   };
 
   const existingOs = (scope.os ?? {}) as Record<string, unknown>;
@@ -131,10 +136,13 @@ async function ensureI18nInitialized(): Promise<void> {
 export async function createTestSeedBibleState(
   options: CreateTestSeedBibleStateOptions = {}
 ): Promise<SeedBibleState> {
-  const { responses = createExampleManagerResponseMap(), timeoutMs = 1000 } =
-    options;
+  const {
+    responses = createExampleManagerResponseMap(),
+    configTags,
+    timeoutMs = 1000,
+  } = options;
 
-  const scope = ensureGlobalRuntime();
+  const scope = ensureGlobalRuntime(configTags);
   installFreeUseBibleApiMock(scope, responses);
   await ensureI18nInitialized();
 

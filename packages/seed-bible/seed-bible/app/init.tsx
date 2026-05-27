@@ -29,6 +29,7 @@ os.syncConfigBotTagsToURL([
   "translation",
   "book",
   "chapter",
+  "verse",
   "settingsView",
   "sidebar",
 ]);

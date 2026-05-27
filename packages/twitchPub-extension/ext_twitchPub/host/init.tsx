@@ -20,7 +20,9 @@ registerExtension({
         <img
           src="https://res.cloudinary.com/dacw0qnpr/image/upload/v1774035767/Vector_6_if8usw.svg"
           style={{
-            width: "25px",
+            width: "24px",
+            height: "24px",
+            objectFit: "contain",
           }}
         />
       ),
@@ -33,7 +35,7 @@ registerExtension({
           thisBot.closeInterface();
         }
       },
-      priority: 100,
+      priority: 950,
     });
 
     yield effect(() => {

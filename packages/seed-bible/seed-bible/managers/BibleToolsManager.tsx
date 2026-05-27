@@ -29,7 +29,11 @@ export type TranslatableTitle =
 export interface BibleTool<TContext> {
   /** Stable tool identifier used for registration/replacement. */
   id: string;
-  /** Sorting priority. Lower values render first. */
+  /**
+   * Sorting priority. Lower values render first.
+   *
+   * For extensions, this should be between 200 and 999 to appear after default tools, but before the previous chapter button.
+   */
   priority: ToolPriority<TContext>;
   /** Localized or plain-text tool title. */
   title: TranslatableTitle;
@@ -117,6 +121,8 @@ export interface BibleToolContext {
   openSidebar: () => void;
   /** Opens the search interface. */
   openSearch: () => void;
+  /** Opens the chat / cross-references floating panel. */
+  openChat?: () => void;
 }
 
 /** Fully resolved reader toolbar tool ready for rendering. */
@@ -334,7 +340,7 @@ function ChevronLeftIcon() {
 }
 
 function OpenSelectorIcon() {
-  return <SeedBibleIcon />;
+  return <SeedBibleIcon size={28} className="sb-open-selector-icon" />;
 }
 
 function ChevronRightIcon() {
@@ -445,6 +451,15 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       icon: () => <MaterialIcon>search</MaterialIcon>,
       onSelect: (context) => {
         context.openSearch();
+      },
+    },
+    {
+      id: "open-chat",
+      priority: 120,
+      title: { key: "chat", defaultValue: "Chat" },
+      icon: () => <MaterialIcon>chat_bubble_outline</MaterialIcon>,
+      onSelect: (context) => {
+        context.openChat?.();
       },
     },
     {

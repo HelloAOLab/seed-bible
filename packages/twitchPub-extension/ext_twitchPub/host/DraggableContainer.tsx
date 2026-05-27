@@ -46,7 +46,8 @@ const DraggableContainer = (props: { children: HTMLElement }) => {
       tag === "textarea" ||
       tag === "button" ||
       tag === "path" ||
-      tag === "svg"
+      tag === "svg" ||
+      (tag === "span" && target.classList.contains("material-symbols-outlined"))
     )
       return;
     setIsDragging(true);

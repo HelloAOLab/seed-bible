@@ -316,7 +316,6 @@ export function createBibleSelectorState(
     options?: BibleSelectorSetOpenOptions
   ) => {
     if (open) {
-      console.log("Opening Bible selector with pane:", nextPane, options);
       if (nextPane) {
         pane.value = nextPane;
       }
@@ -455,16 +454,14 @@ export function createBibleSelectorState(
       return;
     }
 
-    const newTab = tabsManager.addTab();
+    const newTab = tabsManager.addTab(undefined, {
+      initialTranslationId: selectedTranslationId.value,
+      initialBookId: selectedBookId,
+      initialChapterNumber: chapter,
+    });
     panesManager.openInPane(pane.value.id, {
       tabId: newTab.id,
     });
-
-    await newTab.readingState.selectTranslationAndChapter(
-      selectedTranslationId.value,
-      selectedBookId,
-      chapter
-    );
     setOpen(false);
   };
 

@@ -392,6 +392,9 @@ export async function loadSeedBible(
     `
         const managers = getBot('system', 'seed-bible.managers');
         setTag(managers, 'availableExtensions', ${JSON.stringify(availablePackages)});
+
+        const app = getBot('system', 'seed-bible.app');
+        setTag(app, 'disablePostHog', true);
     `
   );
 

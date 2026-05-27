@@ -6,7 +6,7 @@ import {
 } from "seed-bible.managers.ProfileConfigSync";
 import { z } from "zod";
 
-export type BookOrientation = "traditional" | "tanak";
+export type BookOrientation = "traditional" | "tanakh";
 export type UITextSize = "S" | "M" | "L" | "XL";
 export type TextAlignment = "unset" | "left" | "center" | "right";
 export type TextSectionId = "bookTitle" | "heading" | "verse";
@@ -68,7 +68,7 @@ export interface AppSettings {
 }
 
 export const AppSettingsSchema = z.object({
-  bookOrientation: z.enum(["traditional", "tanak"]),
+  bookOrientation: z.enum(["traditional", "tanakh"]),
   uiTextSize: z.enum(["S", "M", "L", "XL"]),
   selectionUI: z.object({
     showSelectedItems: z.boolean(),
@@ -337,7 +337,7 @@ function parseBookOrientation(
   value: unknown,
   fallback: BookOrientation
 ): BookOrientation {
-  return value === "tanak" || value === "traditional" ? value : fallback;
+  return value === "tanakh" || value === "traditional" ? value : fallback;
 }
 
 function parseUITextSize(value: unknown, fallback: UITextSize): UITextSize {
