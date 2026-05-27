@@ -2,9 +2,16 @@ import { MaterialIcon, SeedBibleIcon } from "seed-bible.components.icons";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
-import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
+import {
+  DEFAULT_BOOK_ID,
+  DEFAULT_TRANSLATION_ID,
+  type BibleReadingState,
+} from "seed-bible.managers.BibleReadingManager";
 import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
-import type { TabsManager } from "seed-bible.managers.TabsManager";
+import {
+  formatVerseSelection,
+  type TabsManager,
+} from "seed-bible.managers.TabsManager";
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
@@ -527,7 +534,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       onSelect: (context) => {
         if (context.readingState.selectedVerses.value.length === 0) return;
 
-        const verseTexts = context.readingState.selectedVerses.value
+        let verseTexts = context.readingState.selectedVerses.value
           .map((verse) => {
             const verseReference = `${verse.bookId} ${verse.chapterNumber}:${verse.verse.number}`;
             return `${verse.verse.content
@@ -540,6 +547,33 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
               .join("")} (${verseReference} - ${verse.translationId})`;
           })
           .join("\n\n");
+
+        const url = new URL(configBot.tags.url);
+        url.search = "";
+        if (configBot.tags.pattern) {
+          url.searchParams.set("pattern", configBot.tags.pattern);
+        }
+        const translation =
+          context.readingState.translation.value?.id ?? DEFAULT_TRANSLATION_ID;
+        const bookId = context.readingState.bookId.value ?? DEFAULT_BOOK_ID;
+        url.searchParams.set("translation", translation);
+        url.searchParams.set("book", bookId);
+
+        if (context.readingState.selectedVerses.value.length > 0) {
+          const verses = context.readingState.selectedVerses.value
+            .filter(
+              (v) => v.bookId === bookId && v.translationId === translation
+            )
+            .map((v) => v.verse.number);
+          if (verses.length > 0) {
+            const formatted = formatVerseSelection(verses);
+            if (formatted) {
+              url.searchParams.set("verse", formatted);
+            }
+          }
+        }
+
+        verseTexts += `\n\n${url.toString()}`;
 
         os.share({
           title:
