@@ -21,7 +21,14 @@ declare global {
   const mapPortalBot: Bot;
   const miniMapPortalBot: Bot;
 
-  const posthog: any;
+  const posthog: {
+    init: (apiKey: string, options?: Record<string, any>) => void;
+    register: (properties: Record<string, any>) => void;
+    capture: (eventName: string, properties?: Record<string, any>) => void;
+    identify: (id: string, properties?: Record<string, any>) => void;
+    onFeatureFlags: (callback: () => void) => void;
+    isFeatureEnabled: (flagName: string) => boolean;
+  };
 }
 
 export const G = globalThis as unknown as Record<string, any>;

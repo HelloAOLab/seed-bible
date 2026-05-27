@@ -8,6 +8,7 @@ import {
 import { z } from "zod";
 import type { LoginManager } from "seed-bible.managers.LoginManager";
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
+import { getFeatureFlagSignal } from "./FeatureFlags";
 
 /**
  * Verse target for a bookmark: a single verse number or an inclusive `[start, end]`
@@ -318,7 +319,7 @@ export interface BookmarksManager {
 }
 
 export function createBookmarksManager(login: LoginManager): BookmarksManager {
-  const enabled = signal<boolean>(false);
+  const enabled = getFeatureFlagSignal("bookmarks", false);
   const bookmarks = signal<Bookmark[]>([]);
   const categories = signal<BookmarkCategory[]>([
     { name: DEFAULT_BOOKMARK_CATEGORY },
@@ -631,14 +632,6 @@ export function createBookmarksManager(login: LoginManager): BookmarksManager {
     expandedCategories.value = nextExpanded;
     await persist(nextBookmarks, nextCategories);
   };
-
-  const checkEnabled = () => {
-    posthog.onFeatureFlags(() => {
-      enabled.value = posthog?.isFeatureEnabled("bookmarks");
-    });
-  };
-
-  void checkEnabled();
 
   return {
     enabled,
