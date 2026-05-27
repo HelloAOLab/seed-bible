@@ -1319,6 +1319,7 @@ h6 {
   vertical-align: middle;
   margin-inline-start: 6px;
   margin-inline-end: 3px;
+  color: color-mix(in srgb, var(--sb-verse-font-color), transparent 30%);
 }
 
 .sb-poem-line-1 {
