@@ -11,7 +11,7 @@ import {
 } from "seed-bible.managers.BibleReadingManager";
 import type { HighlightsManager } from "seed-bible.managers.HighlightsManager";
 
-function formatVerseSelection(verseNumbers: number[]): string | null {
+export function formatVerseSelection(verseNumbers: number[]): string | null {
   const sorted = Array.from(new Set(verseNumbers))
     .filter((n) => Number.isFinite(n) && n > 0)
     .sort((a, b) => a - b);

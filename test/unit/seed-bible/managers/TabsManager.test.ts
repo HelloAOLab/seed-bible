@@ -1,5 +1,6 @@
 import {
   createTabs,
+  formatVerseSelection,
   type ReaderTab,
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import { createBibleDataManager } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
@@ -95,6 +96,30 @@ async function waitForInitialLoad(state: BibleReadingState): Promise<void> {
 async function waitForTabsToLoad(tabs: ReaderTab[]): Promise<void> {
   await Promise.all(tabs.map((tab) => waitForInitialLoad(tab.readingState)));
 }
+
+describe("formatVerseSelection", () => {
+  it("returns null for empty input", () => {
+    expect(formatVerseSelection([])).toBeNull();
+  });
+
+  it("returns a single verse number when only one valid verse remains", () => {
+    expect(formatVerseSelection([3, 3, -1, 0, Number.NaN])).toBe("3");
+  });
+
+  it("returns a range for consecutive verses regardless of input order", () => {
+    expect(formatVerseSelection([5, 3, 4, 2])).toBe("2-5");
+  });
+
+  it("returns a comma-separated list for non-consecutive verses", () => {
+    expect(formatVerseSelection([3, 1, 7, 3])).toBe("1,3,7");
+  });
+
+  it("filters invalid values and still formats the remaining verses", () => {
+    expect(formatVerseSelection([1, 2, Number.POSITIVE_INFINITY, -5, 0])).toBe(
+      "1-2"
+    );
+  });
+});
 
 describe("createTabs", () => {
   it("addTab() creates a new tab with new reading state", async () => {
