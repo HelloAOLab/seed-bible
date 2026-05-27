@@ -1,3 +1,9 @@
+import type {
+  YjsSharedArray,
+  YjsSharedMap,
+} from "@casual-simulation/aux-common/documents/YjsSharedDocument";
+import type { Observable } from "rxjs";
+
 // Preact Hooks Types
 type Inputs = ReadonlyArray<unknown>;
 
@@ -10879,6 +10885,11 @@ interface RecordFileOptions {
    * See https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types for more information.
    */
   mimeType?: string;
+
+  /**
+   * The markers for the file.
+   */
+  markers?: string[];
 }
 
 /**
@@ -12388,6 +12399,11 @@ export interface SendNotificationOptions extends RecordActionOptions {
   topic?: string;
 }
 
+export interface SubscriptionLike {
+  get closed(): boolean;
+  unsubscribe(): void;
+}
+
 /**
  * Defines an interface for objects that are able to synchronize data between multiple clients.
  */
@@ -12447,6 +12463,22 @@ export interface SharedDocument extends SubscriptionLike {
   onClientError: Observable<ClientError>;
 
   /**
+   * The events that are emitted when remote clients connect or disconnect from the document.
+   *
+   * When subscribed to, this observable will emit an event whenever a remote client connects or disconnects from the document.
+   * Additionally, the current remote clients will be emitted when the subscription is first made.
+   */
+  readonly remoteClients: Observable<RemoteClientEvent>;
+
+  /**
+   * The events that are emitted when remote clients connect or disconnect from the document.
+   *
+   * When subscribed to, this observable will emit an event whenever a remote client connects or disconnects from the document.
+   * Notably, the current remote clients will NOT be emitted when the subscription is first made, so this can be used to only listen for future client connections and disconnections.
+   */
+  readonly remoteClientsRaw: Observable<RemoteClientEvent>;
+
+  /**
    * Tells the document to connect to its backing store.
    */
   connect(): void;
@@ -12504,6 +12536,58 @@ export interface SharedDocument extends SubscriptionLike {
   applyUpdates(updates: string[]): void;
 }
 
+/**
+ * Information about a connection.
+ *
+ * @dochash types/documents
+ * @docid ConnectionInfo
+ * @docname ConnectionInfo
+ */
+export interface ConnectionInfo {
+  /**
+   * The ID of the connection.
+   */
+  connectionId: string;
+
+  /**
+   * The ID of the session.
+   */
+  sessionId: string | null;
+
+  /**
+   * The ID of the user that is associated with the connection.
+   */
+  userId: string | null;
+}
+
+/**
+ * Defines an event that is emitted when a remote client connects or disconnects from a shared document.
+ *
+ * @dochash types/documents
+ * @docid RemoteClientEvent
+ * @docname RemoteClientEvent
+ */
+export interface RemoteClientEvent {
+  /**
+   * The type of the event.
+   *
+   * "client_connected" is emitted when a new client connects to the document.
+   * "client_disconnected" is emitted when a client disconnects from the document.
+   */
+  type: "client_connected" | "client_disconnected";
+
+  /**
+   * The connection info of the client that connected or disconnected.
+   */
+  client: ConnectionInfo;
+
+  /**
+   * Whether this event is for the current client.
+   * This will be true when `client.connectionId` is the same as the `configBot.id` and false otherwise.
+   */
+  isSelf: boolean;
+}
+
 export type SharedType = SharedMap | SharedArray | SharedText;
 
 export type SharedTypeChanges =
@@ -12527,6 +12611,8 @@ export interface SharedTypeBase {
  * Defines a map that can be shared between multiple clients.
  */
 export interface SharedMap<T = any> extends SharedTypeBase {
+  readonly type: YjsSharedMap<T>;
+
   /**
    * Gets the number of keys that are in the map.
    */
@@ -12613,6 +12699,8 @@ export interface SharedMap<T = any> extends SharedTypeBase {
  * Defines an array that can be shared between multiple clients.
  */
 export interface SharedArray<T = any> extends SharedTypeBase {
+  readonly type: YjsSharedArray<T>;
+
   /**
    * Gets the number of elements in the array.
    */
@@ -17630,10 +17718,61 @@ interface Os {
     inst: string,
     name: string
   ): Promise<SharedDocument>;
+
+  /**
+   * Gets a shared document from the current inst with the given options.
+   *
+   * Shared documents are a way to share data across insts in a easy and secure manner.
+   *
+   * Returns a promise that resolves with the shared document.
+   * @param name The name of the document.
+   * @param options The options for the shared document.
+   *
+   * @example Get a shared document with custom markers.
+   * const sharedDocument = await os.getSharedDocument('myDocument', {
+   *     markers: ['secret', 'team']
+   * });
+   *
+   * @dochash actions/os/documents
+   * @docname os.getSharedDocument
+   * @docid os.getSharedDocument-name-options
+   */
+  getSharedDocument(
+    name: string,
+    options: { markers?: string[] }
+  ): Promise<SharedDocument>;
+
+  /**
+   * Gets a shared document record from the given inst by its name with options.
+   *
+   * Shared documents are a way to share data across insts in a easy and secure manner.
+   *
+   * Returns a promise that resolves with the shared document.
+   * @param recordName The name of the record. If null, then a public inst will be used.
+   * @param inst The name of the inst that the shared document is in.
+   * @param branch The name of the branch that the shared document is in.
+   * @param options The options for the shared document.
+   *
+   * @example Get a shared document from the given inst with custom markers.
+   * const sharedDocument = await os.getSharedDocument('recordName', 'myInst', 'myDocument', {
+   *     markers: ['secret', 'team']
+   * });
+   *
+   * @dochash actions/os/documents
+   * @docname os.getSharedDocument
+   * @docid os.getSharedDocument-recordName-inst-name-options
+   */
+  getSharedDocument(
+    recordName: string | null,
+    inst: string,
+    name: string,
+    options: { markers?: string[] }
+  ): Promise<SharedDocument>;
   getSharedDocument(
     recordOrName: string,
-    inst?: string,
-    name?: string
+    inst?: string | { markers?: string[] },
+    name?: string,
+    options?: { markers?: string[] }
   ): Promise<SharedDocument>;
 
   /**

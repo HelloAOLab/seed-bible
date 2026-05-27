@@ -5,9 +5,6 @@ name: Continous Deployment
 
 on:
   push:
-    branches:
-      - "releases/**"
-      - "develop"
 
 jobs:
   build:
@@ -28,6 +25,12 @@ jobs:
         run: |
           corepack enable
           pnpm install
+      - name: Check TypeScript
+        run: |
+          pnpm check:ts
+      - name: Test
+        run: |
+          pnpm test
       - name: Package
         run: |
           pnpm package
@@ -47,9 +50,13 @@ jobs:
           elif [[ "$BRANCH_NAME" =~ ^"releases/ao.bot" ]]; then
             PATTERN_NAME=${BRANCH_NAME:9};
             pnpm pattern publish "ao.bot" -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
-          else
+          elif [[ "$BRANCH_NAME" =~ ^"releases/" ]]; then
             PATTERN_NAME=${BRANCH_NAME:9};
             pnpm pattern publish-seed-bible -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
+          else
+            PATTERN_NAME="SeedBibleDev-branch-${BRANCH_NAME}"
+            PATTERN_NAME=$(echo "$PATTERN_NAME" | sed "s/\//_/g")
+            pnpm pattern publish-seed-bible -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --no-save-meta --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
           fi
         env:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}

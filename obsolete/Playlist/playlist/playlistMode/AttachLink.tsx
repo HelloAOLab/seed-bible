@@ -1,0 +1,1369 @@
+const { useState, useLayoutEffect, useMemo, useRef } = os.appHooks;
+import { MiniTextEditor } from "app.components.smallEditor";
+const G = globalThis as any;
+const { Input, Modal, Button, ButtonsCover, Select, LoaderSecondary } =
+  G.Components;
+
+const RecordingUI = await thisBot.RecordVoice();
+const VideoRecordUI = await thisBot.VideoRecordUI();
+
+const SEARCH_ADD_VALUE = "search&Add";
+const RECORDING_VALUE = "voice-recording";
+
+const EditorId = "attachfile";
+
+const OPTIONS = (t: any) => [
+  // { value: "text", label: "Heading Text" },
+  // { value: SEARCH_ADD_VALUE, label: "Search & Add Verse,Chapter" },
+  { value: "youtube", label: t("youtube") },
+  { value: "externalLink", label: t("externalLink") },
+  { value: "Video", label: t("video") },
+  { value: "iframe", label: t("iframe") },
+  // { value: RECORDING_VALUE, label: "Recording" },
+  // { value: "aux", label: "AUX", disabled: true }
+];
+
+const OPTIONS_TEXTTYPE = (t: any) => [
+  { value: "heading", label: t("heading") },
+  { value: "text", label: t("text") },
+];
+
+const BIBLE_ICON =
+  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/f48f63986bd37713cb7d24d0634e87c63f7f82aa078237e827b70d1e7f65b12e.svg";
+
+const getCurrentTime = () => new Date().toLocaleString();
+
+const imageAssets: any = {
+  RECORDING_1:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/df7ee00a951b3e90b4900ef34614ef81955e8d78546e27ce96866568a84a8397.svg",
+  RECORDING_2:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/fdf358dbd1dd29dc066aed83eabc2ee236f614b6262805aec1bd8c52f4c1ff86.svg",
+  TEXT_1:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/9d32289fc2d6d8bc52f33bb04e8e3e490368d3ad652b3f1800d1c55a1601fd66.svg",
+  TEXT_2:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5153d4da64769288dd467f8bc5da93629430e4a513e5cf2751bf2d69995c2146.svg",
+  FILE_UPLOAD_1:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/1a467bb85673e5e1d40cb75b0d192dcf5659c6e4b320d0a81da4b4f7be931e63.svg",
+  FILE_UPLOAD_2:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/9a45b936f440321f7d6003ed13af2b3444201256363adf03098a37afe1145872.svg",
+  LINK_1:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/95176265a3a33a0077c8b11b493470df3393acfc3ff5411c8fe45976d96be46d.svg",
+  LINK_2:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/45eef6b9ac4c1d5026e0f1504a35781346b51ca1b4714f6d903f719d5e28538c.svg",
+  TAG_2:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/e8f7765934892b13fbf42c5631352493e640a1d4f5be976f573924de88170114.svg",
+  TAG_1:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/f00d6b72f127d893e0d6748d516adb7288544f15b8941665e3acd34763a462fd.svg",
+  SCRIPTURE_1:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/da2d9dba674f36900266afe3f65edceaaa42ed00402d711e39ff645648f3ff5d.svg",
+  SCRIPTURE_2:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/1c1df4b1eccd9fc0933bdcf757b2ba6a6e0827b4b733244430a06fc0802f666b.svg",
+  DATE_1:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/730b18f252a5238b41697d1c2e486007d8d6dff322bded391897460612a35cd0.svg",
+  DATE_2:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/4a02da6a0faf99824fc61a09ec304f14d5bf496355f787bcba0868c1ca586353.png",
+  PLAYLIST_1:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/b586fcc2e12129ca68bfd52781d63458c6500561c3d3272b2531361b06f3d069.svg",
+  PLAYLIST_2:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/71d9a2c0f5a7f6492b804fc30114dceed063ab39cd78cd1f2ff91aebbadb6364.svg",
+};
+
+// <input
+//     type="file"
+//     value={files}
+//     multiple={true}
+//     onChange={(e) => {
+//         console.log("DATA", e);
+//     }}
+// />
+
+function SubComponent(props: any) {
+  const {
+    editMode,
+    onAddFiles,
+    dragState,
+    recordingType,
+    setRecordingType,
+    name,
+    link,
+    setLinkState,
+    setLink,
+    setName,
+    mediaType,
+    setLoading,
+    setType,
+    data,
+    setData,
+    type,
+    textType,
+    setTextType,
+    showChangeOptions = true,
+    isQuotedText,
+    setIsQuotedText,
+  } = props;
+  const [isWarningModalShow, setIsWarningModalShow] = useState(false);
+
+  const playlists = useMemo(() => G[`${"default"}playlists`] || [], []);
+  const playlistListOptions = useMemo(
+    () => [
+      { label: "Select Playlist", value: "" },
+      ...playlists.map((ele: any) => ({ label: ele.name, value: ele.id })),
+    ],
+    []
+  );
+
+  const recordingSwtichCallback = (callback: () => void) => {
+    if (G.isRecording) {
+      return ShowNotification({
+        message: "Cannot Switch while recording!",
+        severity: "error",
+      });
+    }
+    if (G.hasRecording) {
+      setIsWarningModalShow(true);
+      G.AfterConfirmCallBackRecording = callback;
+      return;
+    }
+    callback();
+  };
+
+  if (isWarningModalShow) {
+    return (
+      <div>
+        <h2 style={{ fontSize: "1rem" }}>{t("thisWillLoseYourRecording")}</h2>
+        <p>{t("switchWillLoseYourRecording")}</p>
+        <ButtonsCover>
+          <Button secondary onClick={() => setIsWarningModalShow(false)}>
+            {t("no")}
+          </Button>
+          <Button
+            secondaryAlt
+            onClick={() => {
+              setIsWarningModalShow(false);
+              G.AfterConfirmCallBackRecording &&
+                G.AfterConfirmCallBackRecording();
+              G.AfterConfirmCallBackRecording = null;
+            }}
+            variant="black"
+          >
+            {t("confirm")}
+          </Button>
+        </ButtonsCover>
+      </div>
+    );
+  }
+
+  switch (type) {
+    case "TAG":
+      return (
+        <div className="input-conainter-type">
+          <Input
+            value={name}
+            onChangeListener={setName}
+            placeholder={t("tagName")}
+          />
+        </div>
+      );
+    case "SCRIPTURE":
+      return (
+        <div className="input-conainter-type" style={{ poistion: "relative" }}>
+          {dragState.isDragOver && (
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                zIndex: 10000,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backdropFilter: "blur(2px)",
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: "white",
+                  padding: "4px",
+                  borderRadius: "12px",
+                  border: "3px dashed var(--spaceSelection)",
+                  textAlign: "center",
+                  minWidth: "280px",
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "1rem",
+                    color: "var(--spaceSelection)",
+                  }}
+                >
+                  📁
+                </div>
+                <h3
+                  style={{
+                    margin: "0 0 8px 0",
+                    color: "#333",
+                    fontSize: "14px",
+                  }}
+                >
+                  {t("dropFilesHere")}
+                </h3>
+                <p
+                  style={{
+                    margin: "0",
+                    color: "#666",
+                    fontSize: "12px",
+                  }}
+                >
+                  {t("releaseToUploadFiles")}
+                </p>
+              </div>
+            </div>
+          )}
+          <div className="align-center" style={{ gap: "0.5rem" }}>
+            <div
+              onClick={() => {
+                G.SET_SHOW_CHECK?.(true);
+                G.setOpenSidebar && G.setOpenSidebar(true);
+                setTimeout(() => {
+                  G.SetDontOpenPlaylist && G.SetDontOpenPlaylist(true);
+                }, 200);
+              }}
+              style={{
+                backgroundColor: "#E9E9E9",
+                display: "grid",
+                cursor: "pointer",
+                padding: "13px 8px",
+                borderRadius: "4px",
+              }}
+            >
+              <img
+                style={{ width: "24px", height: "14px" }}
+                alt="bible"
+                src={BIBLE_ICON}
+              />
+            </div>
+            <div style={{ flexGrow: "1" }}>
+              <Input
+                style={{ marginBottom: "0" }}
+                value={name}
+                onChangeListener={setName}
+                placeholder={t("typeToAddScripture")}
+              />
+            </div>
+          </div>
+          {false && (
+            <>
+              <p className="or" style={{ textAlign: "center" }} />
+              <Button
+                secondary
+                style={{
+                  width: "100%",
+                }}
+                onClick={async () => {
+                  const files = await os.showUploadFiles();
+                  await onAddFiles(files);
+                }}
+              >
+                {t("importJSON")}
+              </Button>
+            </>
+          )}
+        </div>
+      );
+    case "RECORDING":
+      return (
+        <div className="input-conainter-type">
+          <div className="switch-tabs">
+            <div
+              onClick={() => {
+                recordingSwtichCallback(() => {
+                  setRecordingType("audio");
+                  setName("");
+                });
+              }}
+              className={`${recordingType === "audio" ? "active" : ""}`}
+            >
+              <span
+                class={`material-symbols-outlined ${recordingType !== "audio" && "img-icon"}`}
+              >
+                mic
+              </span>
+              <p>Audio</p>
+            </div>
+            <div
+              onClick={() => {
+                recordingSwtichCallback(() => {
+                  setRecordingType("video");
+                  setName("");
+                });
+              }}
+              className={`${recordingType === "video" ? "active" : ""}`}
+            >
+              <span
+                class={`material-symbols-outlined ${recordingType !== "video" && "img-icon"}`}
+              >
+                videocam
+              </span>
+              <p>{t("video")}</p>
+            </div>
+          </div>
+          {recordingType === "audio" ? (
+            <RecordingUI
+              name={name}
+              setName={setName}
+              data={data}
+              setData={setData}
+            />
+          ) : recordingType === "video" ? (
+            <VideoRecordUI
+              key="audio"
+              name={name}
+              setName={setName}
+              data={data}
+              setData={setData}
+            />
+          ) : (
+            <VideoRecordUI
+              key="screen"
+              data={data}
+              isScreen={true}
+              name={name}
+              setName={setName}
+              setData={setData}
+            />
+          )}
+          <Input
+            value={name}
+            onChangeListener={setName}
+            placeholder={t("typeToAddCustomTitle")}
+          />
+        </div>
+      );
+    case "TEXT":
+      return (
+        <div className="input-conainter-type">
+          {false && (
+            <Select
+              sxSelect={{ width: "7rem", marginBottom: "1rem" }}
+              secondary
+              value={textType}
+              onChangeListener={(val: string) => {
+                setTextType(val);
+              }}
+              name={`${t("role")}:`}
+              options={OPTIONS_TEXTTYPE(t)}
+            />
+          )}
+          <MiniTextEditor
+            id={EditorId}
+            minHeight={60}
+            headingControls
+            showMoreOptions={false}
+            placeholderHTML={name}
+            initialHTML={name}
+            onChange={(html: string) => {
+              setName(html);
+            }}
+          />
+          <div
+            className="quoted-text-icon"
+            onClick={() => setIsQuotedText(!isQuotedText)}
+          >
+            <span>Show in popup</span>
+            <div
+              className={`settings-toggle ${isQuotedText ? "active" : ""} small`}
+            >
+              <div className="settings-toggle-knob" />
+            </div>
+          </div>
+          {isQuotedText && (
+            <p className="info-type">{t("quotedTextModalDisplayOn")}</p>
+          )}
+          {isQuotedText && (
+            <p className="info-type">
+              {t("quotedTextModalDisplayDescription")}
+            </p>
+          )}
+        </div>
+      );
+    case "LINK":
+      return (
+        <div
+          className="input-conainter-type"
+          style={{
+            padding: "1px 0",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <Input
+            style={{ width: "100%" }}
+            value={name}
+            onChangeListener={setName}
+            placeholder={t("typeToAddCustomTitle")}
+          />
+          <div style={{ width: "100%", display: "flex", gap: "1rem" }}>
+            <Select
+              sxSelect={{ width: "7rem" }}
+              secondary
+              value={mediaType}
+              onChangeListener={(val: string) => {
+                setLinkState({ isValid: false, type: val });
+                setType(val);
+              }}
+              name={`${t("type")}:`}
+              options={OPTIONS(t)}
+            />
+            <Input
+              style={{ marginBottom: "0", flexGrow: "1" }}
+              value={link}
+              onChangeListener={setLink}
+              placeholder={`${t("exampleeg")} https://www.youtube.com/watch?v=ALsluAKBZ-czs3`}
+            />
+          </div>
+        </div>
+      );
+    case "PLAYLIST":
+      return (
+        <div className="input-conainter-type" style={{ padding: "1px 0" }}>
+          <Select
+            sxSelect={{ width: "100%" }}
+            secondary
+            value={data}
+            onChangeListener={(val: string) => {
+              setData(val);
+            }}
+            name={`${t("playlist")}:`}
+            options={playlistListOptions}
+          />
+        </div>
+      );
+    case "FILE_UPLOAD":
+      return (
+        <div className="FILE_UPLOAD">
+          <div
+            onClick={async () => {
+              setLoading(true);
+              const files: any = await os.showUploadFiles();
+              const file = files?.[0];
+
+              if (!file) {
+                setLoading(false);
+                return ShowNotification({
+                  message: t("noFileUploaded"),
+                  severity: "error",
+                });
+              }
+
+              const filesPromises: any = [];
+
+              files.forEach((file: any) => {
+                filesPromises.push(
+                  os.recordFile(G.RECORD_STOREKEY, file.data, {
+                    name: file.name,
+                    mimeType: file.mimeType,
+                  })
+                );
+              });
+
+              try {
+                let failCount = 0;
+                const fileSave = await Promise.all(filesPromises);
+                const filesResult: any = [];
+
+                fileSave.forEach(
+                  (
+                    { success, url, existingFileUrl, errorCode },
+                    index: number
+                  ) => {
+                    if (!success && errorCode !== "file_already_exists") {
+                      failCount++;
+                      return;
+                    }
+                    filesResult.push({
+                      content: files[index].name,
+                      id: G.createUUID(),
+                      additionalInfo: {
+                        link: url || existingFileUrl,
+                        mimeType: files[index].mimeType,
+                        type: "file",
+                        isValid: true,
+                      },
+                      type: "attachment-link",
+                    });
+                  }
+                );
+
+                if (filesResult.length > 0) setData(filesResult);
+
+                // Example for using one of the uploaded file URLs
+                // const url = fileSave[0]?.url || fileSave[0]?.existingFileUrl;
+                setLoading(false);
+
+                if (failCount > 0) {
+                  return ShowNotification({
+                    message: t("failedToUploadSomeFiles"),
+                    severity: "error",
+                  });
+                }
+                // setCustomIcon(url);
+              } catch (error) {
+                console.log(error);
+                setLoading(false);
+                ShowNotification({
+                  message: t("fileUploadFailed"),
+                  severity: "error",
+                });
+              }
+
+              // const url = fileSave.url || fileSave?.existingFileUrl;
+
+              // if (!url) {
+              //     return ShowNotification({ message: "Failed to upload File!", severity: "error" });
+              // }
+
+              // console.log(fileSave, "fileSave");
+              // console.log(url, "url");
+              // setCustomIcon(url);
+            }}
+          >
+            <img
+              src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/6c8e5fa8be9c6bd0786104e4819b401b4b345a7734a7ebffb5d5e606ee182b45.png"
+              style={{ height: "46px" }}
+            />
+            <p className="link">{t("dragDropOrClickToBrowse")}</p>
+            <p className="info-type">{t("infoType")}</p>
+          </div>
+        </div>
+      );
+    default:
+      return <p>{t("unknownDataType")}</p>;
+  }
+}
+
+const tags = ["SCRIPTURE", "TEXT", "LINK"];
+
+if (DEV_ENV) {
+  tags.push("RECORDING");
+  tags.push("FILE_UPLOAD");
+  tags.push("PLAYLIST");
+  tags.push("DATE");
+  tags.push("TAG");
+}
+
+const WITHOUTLOGIN_TAGS: any = {
+  RECORDING: true,
+  FILE_UPLOAD: true,
+};
+
+const SEND =
+  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/4ea21449283157dc402a9c58a247398287055da69fa10899c96ae97dcf1198fc.png";
+
+const CLOSE =
+  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/eee3f1736645b937d137719cbaeecf14e983237f4bf1594e765d75c0e887fa1a.png";
+
+const readFileAsText = (file: any) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event: any) => resolve(event.target.result);
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+};
+
+const toPlainFile = (file: any) => ({
+  name: file.name,
+  size: file.size,
+  mimeType: file.type,
+  lastModified: file.lastModified,
+});
+
+const AttachLink = (props: any) => {
+  const {
+    sSelectedType,
+    sName,
+    sData,
+    sLink,
+    sMediaType,
+    editMode,
+    canRecord = true,
+    onClose,
+    canClose,
+    onAddTags,
+    massAdd,
+    attachLink,
+    isDate = false,
+    onDateClick,
+    isTags = false,
+    isPlaylist = false,
+    showSaveButton = true,
+    sIsQuotedText = false,
+  } = props;
+  const isloggedIN = authBot?.id;
+  const datePickerRef = useRef<any>(null);
+
+  useLayoutEffect(() => {
+    if (datePickerRef.current) {
+      (window as any).flatpickr(datePickerRef.current, {
+        dateFormat: "m/d/Y",
+        allowInput: false,
+      });
+    }
+  }, [isDate]);
+
+  const playlists = useMemo(() => G[`${"default"}playlists`] || [], []);
+  const [loading, setLoading] = useState(false);
+  const [selectedType, setSelectedType] = useState(
+    sSelectedType ? sSelectedType : G.isScreenRecording ? "RECORDING" : tags[0]
+  );
+  const [textType, setTextType] = useState("heading");
+  const [mediaType, setType] = useState(sMediaType ? sMediaType : "youtube");
+  const [data, setData] = useState(sData ? sData : null);
+  const [linkState, setLinkState] = useState<any>(false);
+  const [name, setName] = useState(
+    sName ? sName : selectedType === "TEXT" ? G.RawName || "" : ""
+  );
+  const [link, setLink] = useState(sLink ? sLink : "");
+
+  const [isQuotedText, setIsQuotedText] = useState(
+    sIsQuotedText ? sIsQuotedText : G.RetainDataIsQuoteText || false
+  );
+
+  // Audio or Video
+  const [recordingType, setRecordingType] = useState(
+    G.isScreenRecording ? "video" : "audio"
+  );
+
+  const dragRef = useRef<any>(null);
+  const dragCounter = useRef(0);
+
+  const [dragState, setDragState] = useState({
+    isDragOver: false,
+  });
+
+  const filteredTags = useMemo(() => {
+    return tags.filter(
+      (ele) =>
+        (isloggedIN || !WITHOUTLOGIN_TAGS[ele]) &&
+        (ele === "PLAYLIST"
+          ? isPlaylist
+          : ele === "TAG"
+            ? isTags
+            : ele === "DATE"
+              ? isDate
+              : ele === "RECORDING"
+                ? canRecord
+                : true)
+    );
+  }, [isloggedIN, isPlaylist, isTags, isDate, canRecord]);
+
+  const onRetainData = () => {
+    G.RetainData = true;
+    G.RetainDataName = name;
+    G.RetainDataData = data;
+    G.RetainDataLink = link;
+    G.RetainDataMediaType = mediaType;
+    G.RetainDataTextType = textType;
+    G.RetainDataRecordingType = recordingType;
+    G.RetainDataSelectedType = selectedType;
+    G.RetainDataLinkState = linkState;
+  };
+
+  const onReleaseData = () => {
+    setTimeout(() => {
+      G.RetainData = false;
+      G.RetainDataName = null;
+      G.RetainDataData = null;
+      G.RetainDataLink = null;
+      G.RetainDataMediaType = null;
+      G.RetainDataTextType = null;
+      G.RetainDataRecordingType = null;
+      G.RetainDataIsQuoteText = null;
+    }, 100);
+  };
+
+  const onRestoreData = () => {
+    if (G.RetainData && !data && !name && !G.StopAttachLinkRetainData) {
+      const isSelectedTypePresent = filteredTags.find(
+        (ele: any) => ele === G.RetainDataSelectedType
+      );
+      if (!isSelectedTypePresent) {
+        return;
+      }
+      setName(G.RetainDataName);
+      setData(G.RetainDataData);
+      setLink(G.RetainDataLink);
+      setType(G.RetainDataMediaType);
+      setTextType(G.RetainDataTextType);
+      setRecordingType(G.RetainDataRecordingType);
+      setSelectedType(G.RetainDataSelectedType);
+      setLinkState(G.RetainDataLinkState);
+      setIsQuotedText(G.RetainDataIsQuoteText);
+      onReleaseData();
+    }
+    G.StopAttachLinkRetainData = false;
+  };
+
+  useLayoutEffect(() => {
+    onRestoreData();
+    return () => {
+      let dontAllowSwitch = false;
+      if (
+        data ||
+        (name && selectedType.toUpperCase() === "TEXT") ||
+        (link && G.LINKS_TYPES[selectedType.toUpperCase()])
+      ) {
+        dontAllowSwitch = true;
+      }
+      if (dontAllowSwitch) {
+        G.AllowSwitchBetweenTypes = false;
+      }
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    G.OnRetainData = onRetainData;
+    G.OnReleaseData = onReleaseData;
+    G.OnRestoreData = onRestoreData;
+    return () => {
+      onRetainData();
+      G.OnRetainData = null;
+      G.OnReleaseData = null;
+      G.OnRestoreData = null;
+    };
+  }, [onRetainData, onReleaseData, onRestoreData]);
+
+  const onAddFiles = async (files: any) => {
+    setLoading(true);
+    let failCount = 0;
+    const tempData: any = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      try {
+        if (file?.mimeType === "application/json") {
+          const playlistImportedData = await JSON.parse(file.data);
+          const filterdArray =
+            thisBot.filterOutValidItemFromJSON(playlistImportedData);
+          if (filterdArray.length) {
+            tempData.push({
+              id: G.createUUID(),
+              ...file,
+              content: file.name,
+              additionalInfo: {
+                mimeType: file.mimeType,
+              },
+              data: [...filterdArray],
+            });
+          } else {
+            failCount++;
+          }
+        } else {
+          failCount++;
+        }
+      } catch (err) {
+        failCount++;
+        console.log(t("UPLOAEDJSONERROR"), err);
+      }
+    }
+    setLoading(false);
+    if (failCount > 0) {
+      ShowNotification({
+        message: `${t("fileRejectedForNotBeingValidJSON", { count: failCount })}`,
+        severity: "error",
+      });
+    }
+
+    setData((prev: any) => [...(Array.isArray(prev) ? prev : []), ...tempData]);
+  };
+
+  useLayoutEffect(() => {
+    const handleDragEnter = (e: any) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounter.current += 1;
+      if (dragCounter.current === 1) {
+        setDragState({ isDragOver: true });
+      }
+    };
+
+    const handleDragLeave = (e: any) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounter.current -= 1;
+      if (dragCounter.current === 0) {
+        setDragState({ isDragOver: false });
+      }
+    };
+
+    const handleDragOver = (e: any) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleDrop = async (e: any) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const files = Array.from(e.dataTransfer.files);
+      const finalFiles: any = [];
+      const filesPromises: any = [];
+
+      for (const file of files) {
+        filesPromises.push(readFileAsText(file));
+      }
+
+      const filesRes = await Promise.all(filesPromises);
+
+      filesRes.forEach((data, index) => {
+        finalFiles.push({
+          ...toPlainFile(files[index]),
+          data,
+        });
+      });
+
+      onAddFiles(finalFiles);
+
+      setDragState({
+        isDragOver: false,
+      });
+    };
+
+    if (dragRef.current && selectedType === "SCRIPTURE") {
+      dragRef.current.addEventListener("dragenter", handleDragEnter);
+      dragRef.current.addEventListener("dragleave", handleDragLeave);
+      dragRef.current.addEventListener("dragover", handleDragOver);
+      dragRef.current.addEventListener("drop", handleDrop);
+    }
+
+    return () => {
+      if (dragRef.current && selectedType === "SCRIPTURE") {
+        dragCounter.current = 0;
+        dragRef.current.removeEventListener("dragenter", handleDragEnter);
+        dragRef.current.removeEventListener("dragleave", handleDragLeave);
+        dragRef.current.removeEventListener("dragover", handleDragOver);
+        dragRef.current.removeEventListener("drop", handleDrop);
+      }
+    };
+  }, [selectedType]);
+
+  useLayoutEffect(() => {
+    const results: any = G.validateUrl(link);
+    if (!results.isValid) {
+      return;
+    }
+    setType(results.type || "text");
+    setLinkState(results);
+  }, [link]);
+
+  useLayoutEffect(() => {
+    if (!name && (!!link || !!data)) {
+      let tempName = `${getCurrentTime()}`;
+      switch (mediaType?.toLocaleLowerCase()) {
+        case "text":
+          tempName += "-heading";
+          break;
+        case "iframe":
+        case "externallink":
+        case "youtube":
+        case "video":
+          tempName = link;
+          break;
+        case RECORDING_VALUE:
+          tempName += "-voice-Note";
+          break;
+        case "aux":
+          tempName += "-aux-file";
+          break;
+        default:
+          break;
+      }
+      if (!tempName) {
+        tempName = `${getCurrentTime()}`;
+        switch (selectedType) {
+          case "RECORDING":
+            if (recordingType === "video") {
+              tempName += "-video-recording";
+            } else {
+              tempName += "-audio-recording";
+            }
+            break;
+        }
+      }
+      if (selectedType !== "SCRIPTURE" && !name && !!tempName) {
+        setName(tempName);
+      }
+    }
+  }, [mediaType, link, data]);
+
+  const deleteFromList = (id: string) => {
+    if (Array.isArray(data)) {
+      setData((prev: any) => prev.filter((ele: any) => ele.id !== id));
+    }
+  };
+
+  const isDisabled = useMemo(() => {
+    if (!name.trim()) {
+      if (
+        !(
+          selectedType === "SCRIPTURE" &&
+          Array.isArray(data) &&
+          data?.length > 0
+        ) &&
+        selectedType !== "LINK"
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }, [name, selectedType, data]);
+
+  const onClickSend = async (isForce = true) => {
+    let finalName = name;
+
+    if (isForce && !name.trim()) {
+      finalName = getCurrentTime();
+      switch (selectedType) {
+        case "RECORDING":
+          if (recordingType === "video") {
+            finalName += "-video-recording";
+          } else {
+            finalName += "-audio-recording";
+          }
+          break;
+        default:
+          finalName = name;
+          break;
+      }
+    }
+
+    if (!finalName.trim()) {
+      if (
+        !(
+          selectedType === "SCRIPTURE" &&
+          Array.isArray(data) &&
+          data?.length > 0
+        ) &&
+        selectedType !== "LINK"
+      ) {
+        return ShowNotification({
+          message: t("attachmentNameMissing"),
+          severity: "error",
+        });
+      }
+    }
+
+    if (selectedType === "TAG") {
+      if (onAddTags) {
+        onAddTags([finalName]);
+        setName("");
+      }
+      return;
+    }
+
+    if (selectedType === "RECORDING") {
+      if (!data)
+        return ShowNotification({
+          message: t("recordSomethingToSaveRecording"),
+          severity: "error",
+        });
+      setData(null);
+      setName("");
+      setSelectedType("TEXT");
+      setLink("");
+      setLoading(true);
+
+      let finalData = data;
+
+      const fileSave: any = await os.recordFile(G.RECORD_STOREKEY, finalData, {
+        name: finalName,
+        mimeType: finalData?.type || "audio/webm",
+      });
+
+      const url = fileSave.url || fileSave?.existingFileUrl;
+
+      setLoading(false);
+
+      if (!url) {
+        return ShowNotification({
+          message: t("failedToUpload"),
+          severity: "error",
+        });
+      }
+      onReleaseData();
+      G.RetainDataName = "";
+      G.isRecording = false;
+      G.hasRecording = false;
+      return attachLink(finalName, url, {
+        isValid: true,
+        type: recordingType === "audio" ? RECORDING_VALUE : "video-recording",
+      });
+    }
+
+    // if (!linkState.isValid && mediaType !== SEARCH_ADD_VALUE && mediaType !== RECORDING_VALUE && mediaType !== 'text') {
+    //     return ShowNotification({ message: "Your link is not valid!", severity: "error" });
+    // }
+
+    if (selectedType === "FILE_UPLOAD") {
+      if (!Array.isArray(data) || data?.length < 1) {
+        return ShowNotification({
+          message: t("noFilesUploaded"),
+          severity: "error",
+        });
+      } else {
+        setData(null);
+        setName("");
+        setSelectedType("TEXT");
+        setLink("");
+        massAdd(data);
+        onReleaseData();
+        G.isRecording = false;
+        G.hasRecording = false;
+        onClose();
+        return;
+      }
+    }
+
+    if (selectedType === "PLAYLIST") {
+      if (!data)
+        return ShowNotification({
+          message: t("selectAPlaylistToAnnotate"),
+          severity: "error",
+        });
+      const playlistList: any = playlists.find((ele: any) => ele.id === data);
+      onReleaseData();
+      G.isRecording = false;
+      G.hasRecording = false;
+      attachLink(playlistList.name, playlistList.list, {
+        isValid: true,
+        type: "playlist",
+      });
+      return;
+    }
+
+    if (selectedType === "LINK") {
+      const results: any = G.validateUrl(link);
+      if (!results.isValid) {
+        return ShowNotification({
+          message: t("invalidLinkFormat"),
+          severity: "error",
+        });
+      } else {
+        setData(null);
+        setName("");
+        setSelectedType("TEXT");
+        setLink("");
+        onReleaseData();
+        G.isRecording = false;
+        G.hasRecording = false;
+        attachLink(
+          finalName || link,
+          link,
+          linkState.type ? linkState : { isValid: true, type: mediaType }
+        );
+      }
+    }
+
+    if (selectedType === "SCRIPTURE") {
+      const allItems = [];
+      if (Array.isArray(data)) {
+        data.forEach((file) => {
+          allItems.push(...file.data);
+        });
+      }
+      if (finalName.trim()) {
+        allItems.push(
+          ...thisBot.getSuggestedListItems({ searchText: finalName })
+        );
+      }
+      setName("");
+      massAdd(allItems);
+      setData(null);
+      onReleaseData();
+      G.isRecording = false;
+      G.hasRecording = false;
+      return;
+    }
+
+    if (selectedType === "TEXT") {
+      setData(null);
+      setName("");
+      setSelectedType("TEXT");
+      setLink("");
+      const isTempID = EditorId;
+      if (G[`${isTempID}ClearEditorContent`])
+        G[`${isTempID}ClearEditorContent`]();
+      G.RawName = "";
+      onReleaseData();
+      G.isRecording = false;
+      G.hasRecording = false;
+      return attachLink(finalName, link, {
+        isValid: true,
+        subType: textType,
+        type: "text",
+        isQuotedText: isQuotedText,
+      });
+    }
+  };
+
+  useLayoutEffect(() => {
+    if (selectedType === "TEXT") {
+      G.RawName = name;
+    } else {
+      G.RawName = "";
+    }
+  }, [name, selectedType]);
+
+  useLayoutEffect(() => {
+    if (editMode) {
+      G.FireEditContent = onClickSend;
+    }
+  }, [onClickSend]);
+
+  G.OnClickSend = onClickSend;
+
+  return (
+    <>
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+      />
+      <form
+        className="add-new-playlist"
+        ref={dragRef}
+        onSubmit={(e) => {
+          e.preventDefault(); // prevent full page reload
+          onClickSend();
+        }}
+      >
+        <div
+          className="container-render"
+          onKeyDown={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          {loading && (
+            <div className="loader-container">
+              <LoaderSecondary />
+            </div>
+          )}
+
+          <SubComponent
+            link={link}
+            setLink={setLink}
+            setRecordingType={setRecordingType}
+            recordingType={recordingType}
+            data={data}
+            setData={setData}
+            editMode={editMode}
+            textType={textType}
+            setTextType={setTextType}
+            onAddFiles={onAddFiles}
+            setLinkState={setLinkState}
+            dragState={dragState}
+            name={name}
+            setLoading={setLoading}
+            setName={setName}
+            mediaType={mediaType}
+            setType={setType}
+            type={selectedType}
+            isQuotedText={isQuotedText}
+            setIsQuotedText={setIsQuotedText}
+          />
+        </div>
+        {Array.isArray(data) &&
+          data.map((ele) => (
+            <div
+              style={{
+                padding: "1rem",
+                border: "1px solid gray",
+                margin: "0.5rem",
+                borderRadius: "6px",
+                display: "flex",
+                alignItems: "center",
+                justifyItems: "space-between",
+              }}
+            >
+              <div className="align-center" style={{ gap: "1rem" }}>
+                <img
+                  src={G.getFileIconByMimeType(ele?.additionalInfo?.mimeType)}
+                  style={{ width: "18px" }}
+                />
+                <div className="align-center">
+                  <p class="truncate-text">{ele.content}</p>
+                  <p>
+                    .{G.getExtensionFromMimeType(ele?.additionalInfo?.mimeType)}
+                  </p>
+                </div>
+              </div>
+              <p
+                style={{ marginLeft: "auto", cursor: "pointer" }}
+                onClick={() => deleteFromList(ele.id)}
+              >
+                <span class="material-symbols-outlined unfollow delete-icon">
+                  delete
+                </span>
+              </p>
+            </div>
+          ))}
+        {!editMode && (
+          <div className="select_item_container">
+            {filteredTags.map((ele: any) => (
+              <div
+                key={ele.id}
+                onClick={() => {
+                  let dontAllowSwitch = false;
+                  if (
+                    data ||
+                    (name && selectedType.toUpperCase() === "TEXT") ||
+                    (link && G.LINKS_TYPES[selectedType.toUpperCase()])
+                  ) {
+                    dontAllowSwitch = true;
+                  }
+                  if (dontAllowSwitch) {
+                    if (!G.AllowSwitchBetweenTypes) {
+                      G.AllowSwitchBetweenTypes = true;
+                      ShowNotification({
+                        message: t(
+                          "youHaveAttachDataToTheAttachmentItWillbeLostClickAgainToSwtich"
+                        ),
+                        severity: "error",
+                      });
+                      return;
+                    }
+                  }
+                  G.AllowSwitchBetweenTypes = false;
+                  if (editMode)
+                    return ShowNotification({
+                      message: t("cannotChangeWhileBeingInEditMode"),
+                      severity: "error",
+                    });
+                  if (ele === "DATE" && !!onDateClick) {
+                    datePickerRef.current.click();
+                    // return onDateClick();
+                    return;
+                  }
+                  setName("");
+                  setSelectedType(ele);
+                  setData(null);
+                  G.hasRecording = false;
+                }}
+                style={{ position: "relative" }}
+                className={`${
+                  ele === selectedType ? "active" : ""
+                } select_item_type`}
+              >
+                {ele === "DATE" && (
+                  <input
+                    ref={datePickerRef}
+                    type="date"
+                    onChange={(e: any) => {
+                      onDateClick(e?.target?.value || "");
+                    }}
+                    className="hidden-date"
+                    placeholder="MM/DD/YYYY"
+                  />
+                )}
+                <img
+                  style={{ height: "16px", width: "16px" }}
+                  src={
+                    imageAssets[`${ele}${ele === selectedType ? "_2" : "_1"}`]
+                  }
+                />
+              </div>
+            ))}
+            <div
+              className="align-center"
+              style={{ gap: "0.25rem", marginLeft: "auto" }}
+            >
+              {canClose && (
+                <div
+                  onClick={() => {
+                    onReleaseData();
+                    setName("");
+                    G.RetainDataData = null;
+                    G.RetainDataName = null;
+                    G.isRecording = false;
+                    G.hasRecording = false;
+                    onClose();
+                  }}
+                  style={{ marginLeft: "auto" }}
+                  className={`active  select_item_type`}
+                >
+                  <img src={CLOSE} style={{ width: "20px" }} />
+                </div>
+              )}
+              <button
+                type="submit"
+                style={{
+                  marginLeft: "auto",
+                  cursor: isDisabled ? "not-allowed" : "",
+                }}
+                className={`${
+                  !isDisabled ? "active" : "disabled"
+                } select_item_type`}
+                disabled={isDisabled}
+              >
+                <img src={SEND} style={{ width: "20px" }} />
+              </button>
+            </div>
+          </div>
+        )}
+      </form>
+    </>
+  );
+};
+
+return AttachLink;
+
+// <div className="add-new-playlist alter" >
+//         <p style={{ fontSize: '12px' }} ><b>Title:</b></p>
+// <Input value={name} onChangeListener={setName} placeholder="(Optional) type to add a custom title" />
+
+//         <div style={{ padding: '1px 0', display: 'flex', alignItems: 'center' }}>
+//             <Select sxSelect={{ width: '7rem' }} secondary value={mediaType} onChangeListener={(val) => { setLinkState({ isValid: false, type: val }); setType(val); }} name="Type:" options={OPTIONS} />
+//             {mediaType !== SEARCH_ADD_VALUE && mediaType !== RECORDING_VALUE &&
+//                 <Input style={{ marginBottom: '0', flexGrow: '1' }} value={link} onChangeListener={setLink} placeholder="e.g. https://www.youtube.com/watch?v=ALsluAKBZ-c" />
+//             }
+//         </div>
+// {mediaType === RECORDING_VALUE && <RecordingUI data={data} setData={setData} />}
+//         <div className="attach-link-actions">
+//             <Button onClick={onClose} secondaryAlt >
+//                 Cancel
+//             </Button>
+
+//             <Button
+//                 onClick={() => {
+
+//                     if (!name.trim()) {
+//                         return ShowNotification({ message: "Attachment Name missing!", severity: "error" });
+//                     }
+
+//                     if ((mediaType === RECORDING_VALUE && !data)) {
+//                         return ShowNotification({ message: "Record Someting to Save Recording!", severity: "error" });
+//                     }
+
+//                     if (!linkState.isValid && mediaType !== SEARCH_ADD_VALUE && mediaType !== RECORDING_VALUE && mediaType !== 'text') {
+//                         return ShowNotification({ message: "Your link is not valid!", severity: "error" });
+//                     }
+
+//                     if (mediaType === SEARCH_ADD_VALUE) {
+//                         const allItems = thisBot.getSuggestedListItems({ searchText: name });
+
+//                         massAdd(allItems);
+//                         onClose();
+//                         return;
+//                     }
+
+//                     attachLink(name, mediaType === RECORDING_VALUE ? data : link, linkState.type ? linkState : { isValid: true, type: mediaType });
+//                 }}
+//                 secondary
+//             >
+//                 Save To Playlist
+//             </Button>
+//         </div>
+//     </div >

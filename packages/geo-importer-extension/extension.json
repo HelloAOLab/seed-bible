@@ -1,0 +1,317 @@
+{
+  "id": "ext_geoImporter",
+  "translations": {
+    "en": {
+      "title": "GeoImporter",
+      "description": "Util that help loads geojson maps"
+    },
+    "am": {
+      "title": "ጂኦኢምፖርተር",
+      "description": "ያ የጂኦጅሰን ካርታዎችን እስኪጭን ድረስ ይረዳል"
+    },
+    "ar": {
+      "title": "مستورد البيانات الجغرافية",
+      "description": "أداة مساعدة لتحميل خرائط GeoJSON"
+    },
+    "bn": {
+      "title": "জিওইম্পোর্টার",
+      "description": "যে ইউটিলিটি জিওজেসন ম্যাপ লোড করতে সাহায্য করে"
+    },
+    "es": {
+      "title": "GeoImportador",
+      "description": "Utilidad que ayuda a cargar mapas GeoJSON"
+    },
+    "fa": {
+      "title": "ژئوایمپورت",
+      "description": "تا زمانی که این راهنما نقشه‌های geojson را بارگیری کند، مفید خواهد بود."
+    },
+    "fr": {
+      "title": "GeoImporter",
+      "description": "Utilitaire permettant de charger des cartes GeoJSON"
+    },
+    "hi": {
+      "title": "जियोइम्पोर्टर",
+      "description": "उस यूटिल का उपयोग करें जो जियोजेसन मैप लोड करने में मदद करता है"
+    },
+    "id": {
+      "title": "Pengimpor Geografis",
+      "description": "Manfaatkan fitur yang membantu memuat peta geojson."
+    },
+    "ja": {
+      "title": "ジオインポーター",
+      "description": "geojsonマップの読み込みを支援するユーティリティ"
+    },
+    "ko": {
+      "title": "지오임포터",
+      "description": "GeoJSON 맵을 로드하는 데 도움이 되는 유틸리티"
+    },
+    "mn": {
+      "title": "ГеоИмпортлогч",
+      "description": "ГеоЖсон газрын зургийг ачаалахад туслах хэрэгсэл"
+    },
+    "ne": {
+      "title": "जियोइम्पोर्टर",
+      "description": "जियोजसन नक्सा लोड गर्न मद्दत गर्ने उपयोगिता"
+    },
+    "ps": {
+      "title": "جیو واردونکی",
+      "description": "د جیوسن نقشې بارولو کې مرسته کوي"
+    },
+    "pt": {
+      "title": "GeoImportador",
+      "description": "Utilitário que ajuda a carregar mapas geojson"
+    },
+    "ru": {
+      "title": "GeoImporter",
+      "description": "С помощью этой справки загружаются карты GeoJSON."
+    },
+    "sw": {
+      "title": "Mingizaji wa Geo",
+      "description": "Matumizi ambayo husaidia kupakia ramani za geojson"
+    },
+    "ti": {
+      "title": "ጂኦኢምፖርተር",
+      "description": "Util that help loads geojson ካርታታት"
+    },
+    "tr": {
+      "title": "GeoImporter",
+      "description": "GeoJSON haritalarını yüklemeye yardımcı olan araç"
+    },
+    "ug": {
+      "title": "گېئوئىمپورتچى",
+      "description": "گېئوجسون خەرىتىلىرىنى يۈكلەشكە ياردەم بېرىدىغان قوراللار"
+    },
+    "uk": {
+      "title": "ГеоІмпортер",
+      "description": "Утиліта, яка допомагає завантажувати карти geojson"
+    },
+    "ur": {
+      "title": "جیو امپورٹر",
+      "description": "جب تک کہ جیوسن نقشوں کو لوڈ کرنے میں مدد ملتی ہے۔"
+    },
+    "vi": {
+      "title": "GeoImporter",
+      "description": "Tiện ích hỗ trợ tải bản đồ geojson"
+    },
+    "zh": {
+      "title": "地理导入器",
+      "description": "帮助加载 GeoJSON 地图的工具"
+    },
+    "ind": {
+      "title": "Pengimpor Geografis",
+      "description": "Manfaatkan fitur yang membantu memuat peta geojson."
+    },
+    "af": {
+      "title": "Geo-invoerder",
+      "description": "Gebruiker wat help om geojson-kaarte te laai"
+    },
+    "az": {
+      "title": "Geoİmporter",
+      "description": "Geojson xəritələrini yükləməyə kömək edən Util"
+    },
+    "be": {
+      "title": "Геаімпартэр",
+      "description": "Утыліта, якая дапамагае загружаць карты geojson"
+    },
+    "bg": {
+      "title": "ГеоИмпортьор",
+      "description": "Помощна програма, която помага за зареждането на geojson карти"
+    },
+    "bs": {
+      "title": "GeoImporter",
+      "description": "Alat koji pomaže u učitavanju geojson mapa"
+    },
+    "ca": {
+      "title": "GeoImporter",
+      "description": "Utilitats que ajuden a carregar mapes GeoJSON"
+    },
+    "cs": {
+      "title": "GeoImporter",
+      "description": "Nástroj, který pomáhá načítat mapy geojson"
+    },
+    "cy": {
+      "title": "Mewnforiwr Geo",
+      "description": "Defnyddiwr sy'n helpu i lwytho mapiau geojson"
+    },
+    "da": {
+      "title": "GeoImportør",
+      "description": "Hjælp der hjælper med at indlæse geojson-kort"
+    },
+    "de": {
+      "title": "GeoImporter",
+      "description": "Hilfsprogramm zum Laden von GeoJSON-Karten"
+    },
+    "el": {
+      "title": "Γεωεισαγωγέας",
+      "description": "Βοηθητικό πρόγραμμα που βοηθά στη φόρτωση χαρτών geojson"
+    },
+    "et": {
+      "title": "GeoImporter",
+      "description": "Utiliit, mis aitab laadida geojson-kaarte"
+    },
+    "fi": {
+      "title": "GeoImporter",
+      "description": "GeoJSON-karttojen lataamiseen tarkoitettu työkalu"
+    },
+    "fil": {
+      "title": "GeoImporter",
+      "description": "Hanggang sa makatulong iyon sa paglo-load ng mga mapa ng geojson"
+    },
+    "fy": {
+      "title": "GeoImporter",
+      "description": "Util dat helpt by it laden fan geojson-kaarten"
+    },
+    "gl": {
+      "title": "GeoImporter",
+      "description": "Utilidades que axudan a cargar mapas GeoJSON"
+    },
+    "gn": {
+      "title": "GeoImportador rehegua",
+      "description": "Util upéva pytyvõ okargávo geojson mapa"
+    },
+    "gu": {
+      "title": "જીઓઇમ્પોર્ટર",
+      "description": "જીઓજેસન નકશા લોડ કરવામાં મદદ કરે છે તેનો ઉપયોગ"
+    },
+    "he": {
+      "title": "יבואן גיאוגרפי",
+      "description": "כלי שעוזר לטעון מפות geojson"
+    },
+    "hr": {
+      "title": "GeoImporter",
+      "description": "Alat koji pomaže u učitavanju geojson mapa"
+    },
+    "hu": {
+      "title": "GeoImporter",
+      "description": "GeoJSON térképek betöltését segítő segédprogram"
+    },
+    "is": {
+      "title": "Landfræðilegur innflytjandi",
+      "description": "Hjálparforrit sem hjálpar til við að hlaða inn geojson kortum"
+    },
+    "it": {
+      "title": "GeoImportatore",
+      "description": "Utilità che aiuta a caricare mappe geojson"
+    },
+    "iw": {
+      "title": "יבואן גיאוגרפי",
+      "description": "כלי שעוזר לטעון מפות geojson"
+    },
+    "ka": {
+      "title": "გეოიმპორტერი",
+      "description": "პროგრამა, რომელიც გეოჯონის რუკების ჩატვირთვაში დაგეხმარებათ"
+    },
+    "km": {
+      "title": "GeoImporter",
+      "description": "ឧបករណ៍ប្រើប្រាស់ដែលជួយផ្ទុកផែនទី geojson"
+    },
+    "kn": {
+      "title": "ಜಿಯೋಇಂಪೋರ್ಟರ್",
+      "description": "ಜಿಯೋಜ್ಸನ್ ನಕ್ಷೆಗಳನ್ನು ಲೋಡ್ ಮಾಡಲು ಸಹಾಯ ಮಾಡುವ ಬಳಕೆ"
+    },
+    "ky": {
+      "title": "Геоимпорттоочу",
+      "description": "Геожсон карталарын жүктөөгө жардам берүүчү куралдар"
+    },
+    "ln": {
+      "title": "GeoImporteur ya mokili",
+      "description": "Util yango esalisaka charges geojson cartes"
+    },
+    "lo": {
+      "title": "GeoImporter",
+      "description": "ການໃຊ້ປະໂຫຍດນັ້ນຊ່ວຍໂຫຼດແຜນທີ່ geojson"
+    },
+    "lt": {
+      "title": "GeoImporter",
+      "description": "Įrankis, padedantis įkelti geojson žemėlapius"
+    },
+    "lv": {
+      "title": "GeoImporter",
+      "description": "Utilīta, kas palīdz ielādēt geojson kartes"
+    },
+    "mk": {
+      "title": "Геоимпортер",
+      "description": "Услуга што помага во вчитувањето на Geojson мапите"
+    },
+    "ml": {
+      "title": "ജിയോഇംപോർട്ടർ",
+      "description": "ജിയോജ്സൺ മാപ്പുകൾ ലോഡ് ചെയ്യാൻ സഹായിക്കുന്ന ഉപയോഗം"
+    },
+    "mr": {
+      "title": "जिओइम्पोर्टर",
+      "description": "जिओजेसन नकाशे लोड करण्यासाठी मदत घ्या"
+    },
+    "ms": {
+      "title": "GeoImporter",
+      "description": "Sehingga itu membantu memuatkan peta geojson"
+    },
+    "my": {
+      "title": "ပထဝီတင်သွင်းသူ",
+      "description": "geojson မြေပုံများကို တင်ရာတွင် အထောက်အကူဖြစ်စေသော utility"
+    },
+    "nb": {
+      "title": "GeoImportør",
+      "description": "Bruksanvisning som hjelper med å laste inn geojson-kart"
+    },
+    "nl": {
+      "title": "GeoImporter",
+      "description": "Hulpprogramma dat helpt bij het laden van GeoJSON-kaarten."
+    },
+    "no": {
+      "title": "GeoImportør",
+      "description": "Bruksanvisning som hjelper med å laste inn geojson-kart"
+    },
+    "pa": {
+      "title": "ਜੀਓਇੰਪੋਰਟਰ",
+      "description": "ਇਹ ਜੀਓਜਸਨ ਨਕਸ਼ਿਆਂ ਨੂੰ ਲੋਡ ਕਰਨ ਵਿੱਚ ਮਦਦ ਕਰਦਾ ਹੈ"
+    },
+    "pl": {
+      "title": "GeoImporter",
+      "description": "Narzędzie, które pomaga w ładowaniu map geojson"
+    },
+    "ro": {
+      "title": "GeoImporter",
+      "description": "Utilitar care ajută la încărcarea hărților GeoJSON"
+    },
+    "sk": {
+      "title": "GeoImporter",
+      "description": "Nástroj, ktorý pomáha načítať mapy geojson"
+    },
+    "sl": {
+      "title": "GeoImporter",
+      "description": "Orodje, ki pomaga naložiti zemljevide geojson"
+    },
+    "sq": {
+      "title": "GeoImporter",
+      "description": "Shërbim që ndihmon në ngarkimin e hartave të Geojson"
+    },
+    "sv": {
+      "title": "GeoImportör",
+      "description": "Hjälpprogram som laddar geojson-kartor"
+    },
+    "ta": {
+      "title": "ஜியோஇம்போர்ட்டர்",
+      "description": "geojson வரைபடங்களை ஏற்ற உதவும் பயன்பாடு"
+    },
+    "te": {
+      "title": "జియోఇంపోర్టర్",
+      "description": "జియోజెసన్ మ్యాప్‌లను లోడ్ చేయడంలో సహాయపడే యుటిలిటీ"
+    },
+    "th": {
+      "title": "จีโออิมพอร์ตเตอร์",
+      "description": "เครื่องมือที่ช่วยโหลดแผนที่ geojson"
+    },
+    "tl": {
+      "title": "GeoImporter",
+      "description": "Hanggang sa makatulong iyon sa paglo-load ng mga mapa ng geojson"
+    },
+    "uz": {
+      "title": "GeoImporter",
+      "description": "Geojson xaritalarini yuklashga yordam beradigan yordamchi dastur"
+    },
+    "zu": {
+      "title": "I-GeoImporter",
+      "description": "Ukusetshenziswa okusiza ukulayisha amamephu e-geojson"
+    }
+  }
+}

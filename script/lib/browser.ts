@@ -11,6 +11,8 @@ import type {
   StoredAux,
 } from "@casual-simulation/aux-common";
 import { existsSync } from "node:fs";
+import { ExtensionMetaSchema } from "./extension";
+import type { ExtensionSet } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 
 declare global {
   interface Window {
@@ -20,10 +22,6 @@ declare global {
     __name: (any: any) => any;
   }
 }
-
-// declare const aux: any;
-
-// declare let __name: (any: any) => any;
 
 /**
  * Runs required initialization code on the page.
@@ -46,6 +44,7 @@ export async function getPrimarySim(page: Page) {
     const app = window.aux.getApp();
     const sim = app.simulationManager.primary;
     return sim;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   })) as JSHandle<any>;
 }
 
@@ -321,9 +320,12 @@ export async function loadInst(
 
 export const DEFAULT_EXTENSIONS = [
   "seed-bible",
-  "ext_twitchPub",
-  // "ext_twitchSub",
-  "BookSelector",
+  // "seed-bible-refresh-example-extension",
+  "geo-importer-extension",
+  "locations-extension",
+  "twitchSub-extension",
+  "twitchPub-extension",
+  // "BookSelector",
   // "Object Pooler",
   // "GeoImporter",
   // "Color Lerper",
@@ -334,7 +336,7 @@ export const DEFAULT_EXTENSIONS = [
   // "Scripture Map 3D",
   // "Bible Stack",
   // "Playlist",
-  "Calendar",
+  // "Calendar",
   // "Tabernacle",
 ];
 
@@ -348,28 +350,51 @@ export async function loadSeedBible(
   await initPage(page);
   await loadInst(page, inst, collaborative, query);
 
-  console.log("Uploading Seed Bible...");
+  console.log("Uploading Seed Bible Refresh...");
 
   const allPackages = new Set([...DEFAULT_EXTENSIONS, ...extraExtensions]);
-  const installedPackages = [...allPackages].filter((p) => p !== "seed-bible");
+  // const installedPackages = [...allPackages].filter(
+  //   (p) => p !== "seed-bible-refresh"
+  // );
+
+  const availablePackages: ExtensionSet = {
+    id: "dev-extensions",
+    extensions: [],
+    recordName: "",
+  };
 
   for (const pkg of allPackages) {
-    await addAux(page, await readPackage(pkg));
-  }
-  for (const pkg of installedPackages) {
-    await registerPackage(page, pkg);
-  }
-
-  const lastPackage = installedPackages[installedPackages.length - 1];
-  if (lastPackage) {
-    await waitForPackage(page, lastPackage);
+    const extensionPath = path.resolve("packages", pkg, "extension.json");
+    if (existsSync(extensionPath)) {
+      const extensionData = JSON.parse(await readFile(extensionPath, "utf-8"));
+      const parseResult = ExtensionMetaSchema.safeParse(extensionData);
+      if (!parseResult.success) {
+        console.error(
+          `Invalid extension.json for package ${pkg}:`,
+          parseResult.error
+        );
+      } else {
+        availablePackages.extensions.push({
+          aux: await readPackage(pkg),
+          meta: {
+            ...parseResult.data,
+            autoinstall: true,
+          },
+        });
+      }
+    } else {
+      await addAux(page, await readPackage(pkg));
+    }
   }
 
   await execScript(
     page,
     `
-        const packager = getBot('system', 'app.packager');
-        setTagMask(packager, 'installedPackages', ${JSON.stringify(installedPackages)}, 'shared');
+        const managers = getBot('system', 'seed-bible.managers');
+        setTag(managers, 'availableExtensions', ${JSON.stringify(availablePackages)});
+
+        const app = getBot('system', 'seed-bible.app');
+        setTag(app, 'disablePostHog', true);
     `
   );
 
