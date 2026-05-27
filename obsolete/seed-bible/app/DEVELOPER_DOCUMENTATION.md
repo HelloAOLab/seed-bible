@@ -1577,7 +1577,7 @@ Extensions are developed as source packages (with `extension.json` metadata and 
 
 **Note:** Land development is ongoing. Documentation will be expanded as the service matures. Land is distinct from Canvas—it uses geographic coordinates for terrain-aware biblical geography rather than abstract 3D spatial environments.
 
-#### 5. Scripture Map 2D
+#### 5. Scripture Map
 
 <<<<<<< HEAD
 
@@ -2689,7 +2689,7 @@ console.log("My tool active:", isToolActive("My Tool Label"));
 
 - **Bible Stack:** [packages/BibleStack/](packages/BibleStack/)
 - **Canvas:** [packages/Canvas/](packages/Canvas/)
-- **Scripture Map 2D:** [packages/ScriptureMap2D/](packages/ScriptureMap2D/)
+- **Scripture Map:** [packages/ScriptureMap2D/](packages/ScriptureMap2D/)
 
 ---
 

@@ -2,19 +2,11 @@ import type { TabernacleVisualizerPort } from "../../../domain/ports/visualizer"
 import type { PieceVisibilityState } from "../../../domain/models/piece";
 import type { PieceKey, VerseReference } from "../../../domain/models/piece";
 import { PIECE_KEYS } from "../../../domain/models/piece";
-import type { HitboxProviderPort } from "../../../domain/ports/hitboxConfig";
+import type { HitboxProviderPort } from "../../../application/ports/out/hitboxLifecycle";
 import type { Easing } from "../../../../../../typings/AuxLibraryDefinitions";
 
 const DIMENSION = "tabernacle";
 const BLINK_DURATION = 1;
-
-const HITBOX_BASE = {
-  isTabernaclePieceHitbox: true,
-  anchorPoint: "center",
-  draggable: false,
-  color: "clear",
-  pointable: true,
-};
 
 export class TabernacleVisualizerAdapter implements TabernacleVisualizerPort {
   #focusedBots: Bot[] = [];
@@ -34,7 +26,11 @@ export class TabernacleVisualizerAdapter implements TabernacleVisualizerPort {
       if (!bot) continue;
       const { position, ...rest } = data;
       create({
-        ...HITBOX_BASE,
+        isTabernaclePieceHitbox: true,
+        anchorPoint: this.#hitboxProvider.getAnchorPoint(),
+        draggable: this.#hitboxProvider.isDraggable(),
+        color: this.#hitboxProvider.getColor(),
+        pointable: this.#hitboxProvider.isPointable(),
         ...rest,
         [DIMENSION]: true,
         [`${DIMENSION}X`]: position.x,

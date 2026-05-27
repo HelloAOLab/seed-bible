@@ -65,16 +65,16 @@ Data flows unidirectionally: **User Action → Hook → Manager → Service → 
 
 ### Key Packages
 
-| Package                                 | Role                                                                       |
-| --------------------------------------- | -------------------------------------------------------------------------- |
-| `seed-bible`                            | Core app — hooks, components, managers, DB layer, AI features              |
-| `Tabernacle`                            | Tabernacle 3D visualization (uses `MeshState` enum for visibility control) |
-| `Scripture Map 2D` / `Scripture Map 3D` | Geospatial Bible mapping                                                   |
-| `Bible Visualization Utils`             | Shared config providers and pooling utilities                              |
-| `Bible Stack`                           | Layered stacking view                                                      |
-| `Assistant`                             | AI voice assistant extension                                               |
-| `Playlist`                              | Media playlist tied to Scripture passages                                  |
-| `Object Pooler`                         | Reusable object pool utility                                               |
+| Package                              | Role                                                                       |
+| ------------------------------------ | -------------------------------------------------------------------------- |
+| `seed-bible`                         | Core app — hooks, components, managers, DB layer, AI features              |
+| `Tabernacle`                         | Tabernacle 3D visualization (uses `MeshState` enum for visibility control) |
+| `Scripture Map` / `Scripture Map 3D` | Geospatial Bible mapping                                                   |
+| `Bible Visualization Utils`          | Shared config providers and pooling utilities                              |
+| `Bible Stack`                        | Layered stacking view                                                      |
+| `Assistant`                          | AI voice assistant extension                                               |
+| `Playlist`                           | Media playlist tied to Scripture passages                                  |
+| `Object Pooler`                      | Reusable object pool utility                                               |
 
 Architecture docs live in `packages/seed-bible/app/`:
 

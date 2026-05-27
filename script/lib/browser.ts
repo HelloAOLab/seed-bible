@@ -324,7 +324,7 @@ export const DEFAULT_EXTENSIONS = [
   "geo-importer-extension",
   "locations-extension",
   "Bible Visualization Utils",
-  "Scripture Map 2D",
+  "Scripture Map",
   "twitchSub-extension",
   "twitchPub-extension",
   // "BookSelector",
