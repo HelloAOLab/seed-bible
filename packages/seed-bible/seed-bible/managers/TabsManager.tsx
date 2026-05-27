@@ -87,22 +87,43 @@ function getInitialFirstTabChapter(): number {
     : DEFAULT_CHAPTER_NUMBER;
 }
 
+function getInitialHighlightedVerses(): number[] {
+  const value = configBot.tags.verse;
+  return typeof value === "string"
+    ? parseVerseSelection(value)
+    : typeof value === "number"
+      ? [value]
+      : [];
+}
+
 function createInitialTabs(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager
 ): ReaderTab[] {
-  return [
-    {
-      id: "tab-1",
-      title: "Tab 1",
-      readingState: createBibleReadingState(dataManager, highlightsManager, {
-        initialTranslationId: getInitialTranslationId(),
-        initialBookId: getInitialFirstTabBookId(),
-        initialChapterNumber: getInitialFirstTabChapter(),
-      }),
-      sharedSession: null,
-    },
-  ];
+  const bookId = getInitialFirstTabBookId();
+  const chapter = getInitialFirstTabChapter();
+  const highlightedVerses = getInitialHighlightedVerses();
+
+  const tab: ReaderTab = {
+    id: "tab-1",
+    title: "Tab 1",
+    readingState: createBibleReadingState(dataManager, highlightsManager, {
+      initialTranslationId: getInitialTranslationId(),
+      initialBookId: bookId,
+      initialChapterNumber: chapter,
+      scrollToVerse: highlightedVerses[0] ?? undefined,
+    }),
+    sharedSession: null,
+  };
+
+  if (highlightedVerses.length > 0) {
+    tab.readingState.decorateVerses(bookId, chapter, highlightedVerses, {
+      className: "sb-verse-decoration-initial-verse-highlight",
+      removeAfterMs: 5000,
+    });
+  }
+
+  return [tab];
 }
 
 type NewTabSource = BibleReadingState | BibleReadingSession;

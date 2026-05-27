@@ -3004,7 +3004,8 @@ h6 {
   gap: 6px;
 }
 
-.sb-verse-decoration-search-result {
+.sb-verse-decoration-search-result,
+.sb-verse-decoration-initial-verse-highlight {
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 28%);
 }
 

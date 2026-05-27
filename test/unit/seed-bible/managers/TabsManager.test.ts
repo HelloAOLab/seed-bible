@@ -9,6 +9,7 @@ import {
   createBibleReadingState,
   type BibleReadingState,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import * as BibleReadingManagerModule from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { BibleReadingSession } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
@@ -439,5 +440,64 @@ describe("createTabs", () => {
 
     await waitFor(() => (globalThis as any).configBot.tags.verse === "6");
     expect((globalThis as any).configBot.tags.verse).toBe("6");
+  });
+
+  it("decorates initial verses from configBot.tags.verse on the initial tab", async () => {
+    (globalThis as any).configBot.tags.book = "GEN";
+    (globalThis as any).configBot.tags.chapter = 1;
+    (globalThis as any).configBot.tags.verse = "3,5-6";
+    setWebResponses(createExampleManagerResponseMap());
+
+    let decorateVersesSpy: jest.SpyInstance | null = null;
+    const originalCreateBibleReadingState =
+      BibleReadingManagerModule.createBibleReadingState;
+    const createBibleReadingStateSpy = jest
+      .spyOn(BibleReadingManagerModule, "createBibleReadingState")
+      .mockImplementation((...args) => {
+        const state = originalCreateBibleReadingState(...args);
+        decorateVersesSpy = jest.spyOn(state, "decorateVerses");
+        return state;
+      });
+
+    try {
+      const manager = createTabs(
+        createDataManager(),
+        createHighlightsManagerMock() as any
+      );
+      await waitForTabsToLoad(manager.tabs.value);
+
+      expect(decorateVersesSpy).not.toBeNull();
+      expect(decorateVersesSpy).toHaveBeenCalledWith("GEN", 1, [3, 5, 6], {
+        className: "sb-verse-decoration-initial-verse-highlight",
+        removeAfterMs: 5000,
+      });
+    } finally {
+      createBibleReadingStateSpy.mockRestore();
+    }
+  });
+
+  it("passes the first initial verse to scrollToVerse for the initial tab", async () => {
+    (globalThis as any).configBot.tags.book = "GEN";
+    (globalThis as any).configBot.tags.chapter = 1;
+    (globalThis as any).configBot.tags.verse = "7,9-10";
+    setWebResponses(createExampleManagerResponseMap());
+
+    const createBibleReadingStateSpy = jest.spyOn(
+      BibleReadingManagerModule,
+      "createBibleReadingState"
+    );
+
+    try {
+      const manager = createTabs(
+        createDataManager(),
+        createHighlightsManagerMock() as any
+      );
+      await waitForTabsToLoad(manager.tabs.value);
+
+      const initialOptions = createBibleReadingStateSpy.mock.calls[0]?.[2];
+      expect(initialOptions?.scrollToVerse).toBe(7);
+    } finally {
+      createBibleReadingStateSpy.mockRestore();
+    }
   });
 });
