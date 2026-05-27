@@ -509,14 +509,14 @@ const LIGHT_THEME: BibleTheme = {
     fontFamily: "Satoshi, system-ui, sans-serif",
     fontColor: "#333",
 
-    bookTitleFontFamily: "Newsreader, serif",
+    bookTitleFontFamily: "Plus Jakarta Sans, sans-serif",
     bookTitleFontColor: "#333",
 
     chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
     chapterHeadingFontColor: "#333",
     chapterHeadingFontStyle: "italic",
 
-    verseFontFamily: "Newsreader, serif",
+    verseFontFamily: "Plus Jakarta Sans, sans-serif",
     verseFontColor: "#333",
     verseCursor: "pointer",
 
@@ -527,7 +527,7 @@ const LIGHT_THEME: BibleTheme = {
     selectedVerseTextDecoration: "none",
     selectedVerseTextDecorationColor: "currentColor",
 
-    hebrewSubtitleFontFamily: "Newsreader, serif",
+    hebrewSubtitleFontFamily: "Plus Jakarta Sans, sans-serif",
     hebrewSubtitleFontColor: "#333",
     hebrewSubtitleFontStyle: "italic",
 
@@ -659,7 +659,7 @@ const DARK_THEME: BibleTheme = {
     chapterHeadingFontColor: "#d7deef",
     chapterHeadingFontStyle: "italic",
 
-    verseFontFamily: "Newsreader, serif",
+    verseFontFamily: "Plus Jakarta Sans, sans-serif",
     verseFontColor: "#d7deef",
     verseCursor: "pointer",
 
@@ -670,7 +670,7 @@ const DARK_THEME: BibleTheme = {
     selectedVerseTextDecoration: "none",
     selectedVerseTextDecorationColor: "currentColor",
 
-    hebrewSubtitleFontFamily: "Newsreader, serif",
+    hebrewSubtitleFontFamily: "Plus Jakarta Sans, sans-serif",
     hebrewSubtitleFontColor: "#d7deef",
     hebrewSubtitleFontStyle: "italic",
 

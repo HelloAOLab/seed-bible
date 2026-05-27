@@ -226,7 +226,7 @@ const DEFAULT_TEXT_CONFIG: TextConfig = {
     alignment: "unset",
   },
   verse: {
-    font: "'Newsreader', serif",
+    font: "'Plus Jakarta Sans', sans-serif",
     weight: "400",
     color: "",
     marginVertical: 0,
