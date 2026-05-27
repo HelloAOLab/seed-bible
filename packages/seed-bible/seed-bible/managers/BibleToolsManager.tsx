@@ -636,7 +636,7 @@ export function getShareUrl(readingState: BibleReadingState) {
     if (verses.length > 0) {
       const formatted = formatVerseSelection(verses);
       if (formatted) {
-        url.searchParams.set("verse", formatted);
+        url.search += `&verse=${formatted}`;
       }
     }
   }
