@@ -3,28 +3,38 @@ import type {
   LoggerPort,
   PanelDisplayerPort,
   PiecesSequencePort,
+  UpdatePiecesPositionPort,
 } from "../ports/out/experience";
+import type { HitboxSpawnerPort } from "tabernacle.application.ports.in.hitboxLifecycle";
 
 interface ServiceParams {
   piecesSequencePort: PiecesSequencePort;
   panelDisplayerPort: PanelDisplayerPort;
   logger: LoggerPort;
+  hitboxSpawnerPort: HitboxSpawnerPort;
+  updatePiecesPositionPort: UpdatePiecesPositionPort;
 }
 
 export class ExperienceService implements ExperienceDisplayerPort {
   #piecesSequencePort: ServiceParams["piecesSequencePort"];
   #panelDisplayerPort: ServiceParams["panelDisplayerPort"];
+  #updatePiecesPositionPort: ServiceParams["updatePiecesPositionPort"];
+  #hitboxSpawnerPort: ServiceParams["hitboxSpawnerPort"];
   #logger: ServiceParams["logger"];
   #isExperienceDisplayed = false;
 
   constructor({
     piecesSequencePort,
     panelDisplayerPort,
+    updatePiecesPositionPort,
     logger,
+    hitboxSpawnerPort,
   }: ServiceParams) {
     this.#piecesSequencePort = piecesSequencePort;
     this.#panelDisplayerPort = panelDisplayerPort;
+    this.#updatePiecesPositionPort = updatePiecesPositionPort;
     this.#logger = logger;
+    this.#hitboxSpawnerPort = hitboxSpawnerPort;
   }
 
   async tryDisplayExperience(): Promise<boolean> {
@@ -37,6 +47,8 @@ export class ExperienceService implements ExperienceDisplayerPort {
 
   async #displayExperience(): Promise<boolean> {
     try {
+      this.#updatePiecesPositionPort.updatePositions();
+      this.#hitboxSpawnerPort.spawnPiecesHitbox();
       this.#panelDisplayerPort.displayPanel();
       await this.#piecesSequencePort.displayDropSequence();
       this.#isExperienceDisplayed = true;

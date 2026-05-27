@@ -1,5 +1,5 @@
-import type { MeshState } from "tabernacle.domain.models.meshState";
-import { MeshStates } from "tabernacle.domain.models.meshState";
+import type { PieceVisibilityState } from "tabernacle.domain.models.piece";
+import { PieceVisibilityStates } from "tabernacle.domain.models.piece";
 import type {
   PieceChapterConfig,
   ScriptureVersesMap,
@@ -16,18 +16,19 @@ export function getPieceStatesForChapter(
   pieceConfigs: PieceChapterConfig[],
   bookId: string,
   chapter: number
-): Map<PieceKey, MeshState> {
-  const result = new Map<PieceKey, MeshState>();
+): Map<PieceKey, PieceVisibilityState> {
+  const result = new Map<PieceKey, PieceVisibilityState>();
   const isTabernacleChapter =
     bookId === TABERNACLE_BOOK_ID && TABERNACLE_CHAPTERS.has(chapter);
 
   for (const config of pieceConfigs) {
     if (!isTabernacleChapter) {
-      result.set(config.key, MeshStates.Hidden);
+      result.set(config.key, PieceVisibilityStates.Hidden);
       continue;
     }
     const chapterStr = String(chapter);
-    const state = config.chaptersInfo[chapterStr] ?? MeshStates.Hidden;
+    const state =
+      config.chaptersInfo[chapterStr] ?? PieceVisibilityStates.Hidden;
     result.set(config.key, state);
   }
 

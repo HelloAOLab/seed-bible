@@ -1,12 +1,13 @@
 import type { TabernacleVisualizerPort } from "../../../domain/ports/visualizer";
-import type { MeshState } from "../../../domain/models/meshState";
+import type { PieceVisibilityState } from "../../../domain/models/piece";
 import type { PieceKey, VerseReference } from "../../../domain/models/piece";
+import { PIECE_KEYS } from "../../../domain/models/piece";
+import type { HitboxProviderPort } from "../../../domain/ports/hitboxConfig";
 import type { Easing } from "../../../../../../typings/AuxLibraryDefinitions";
 
 const DIMENSION = "tabernacle";
 const BLINK_DURATION = 1;
 
-// Hitbox base properties for all piece hitboxes
 const HITBOX_BASE = {
   isTabernaclePieceHitbox: true,
   anchorPoint: "center",
@@ -19,35 +20,35 @@ export class TabernacleVisualizerAdapter implements TabernacleVisualizerPort {
   #focusedBots: Bot[] = [];
   #lastInteractionId: string | null = null;
   #currentContextMenuBot: Bot | null = null;
+  #hitboxProvider: HitboxProviderPort;
+
+  constructor({ hitboxProvider }: { hitboxProvider: HitboxProviderPort }) {
+    this.#hitboxProvider = hitboxProvider;
+  }
 
   initialize(): void {
-    const pieces = getBots("hitboxData");
-    for (const piece of pieces) {
-      const hitboxTags: Record<string, unknown> = {
+    for (const key of PIECE_KEYS) {
+      const data = this.#hitboxProvider.getHitboxData(key);
+      if (!data) continue;
+      const bot = getBot("system", `tabernacle.${key}`);
+      if (!bot) continue;
+      const { position, ...rest } = data;
+      create({
         ...HITBOX_BASE,
+        ...rest,
         [DIMENSION]: true,
-        transformer: piece.id,
-        piece: `🔗${piece.id}`,
+        [`${DIMENSION}X`]: position.x,
+        [`${DIMENSION}Y`]: position.y,
+        [`${DIMENSION}Z`]: position.z,
+        transformer: bot.id,
+        piece: `🔗${bot.id}`,
         onClick: `@import { tabernacleController } from "tabernacle.infrastructure.di.bootstrap";
 tabernacleController?.handlePieceClick(links.piece.tags.key);`,
-      };
-      const data = piece.tags.hitboxData;
-      for (const key in data) {
-        const value = data[key];
-        if (key === "position") {
-          const { x = 0, y = 0, z = 0 } = value ?? {};
-          hitboxTags[`${DIMENSION}X`] = x;
-          hitboxTags[`${DIMENSION}Y`] = y;
-          hitboxTags[`${DIMENSION}Z`] = z;
-        } else {
-          hitboxTags[key] = value;
-        }
-      }
-      create({ ...hitboxTags });
+      });
     }
   }
 
-  applyMeshState(key: PieceKey, state: MeshState): void {
+  applyMeshState(key: PieceKey, state: PieceVisibilityState): void {
     const bot = getBot("system", `tabernacle.${key}`);
     if (!bot) return;
 

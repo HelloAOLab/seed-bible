@@ -337,7 +337,7 @@ export const DEFAULT_EXTENSIONS = [
   // "Bible Stack",
   // "Playlist",
   // "Calendar",
-  "Tabernacle",
+  // "Tabernacle",
 ];
 
 export async function loadSeedBible(

@@ -7,3 +7,11 @@ export interface LoggerPort {
   warn(message: string): void;
   error(message: string, error?: unknown): void;
 }
+
+export interface PiecesSequencePort {
+  displayDropSequence(): Promise<void>;
+}
+
+export interface UpdatePiecesPositionPort {
+  updatePositions(): void;
+}

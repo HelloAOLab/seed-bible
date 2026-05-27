@@ -1,8 +1,8 @@
-import type { MeshState } from "./meshState";
+import type { PieceVisibilityState } from "./piece";
 import type { PieceKey } from "./piece";
 
 export interface ChapterVisibilityMap {
-  [chapter: string]: MeshState;
+  [chapter: string]: PieceVisibilityState;
 }
 
 export interface PieceChapterConfig {

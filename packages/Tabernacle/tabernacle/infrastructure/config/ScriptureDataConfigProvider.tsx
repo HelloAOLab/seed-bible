@@ -1,5 +1,5 @@
 import type { TabernacleScriptureDataPort } from "../../domain/ports/scriptureData";
-import type { MeshState } from "../../domain/models/meshState";
+import type { PieceVisibilityState } from "../../domain/models/piece";
 import type {
   PieceChapterConfig,
   ScriptureVersesMap,
@@ -525,7 +525,7 @@ export class ScriptureDataConfigProvider implements TabernacleScriptureDataPort 
   getPieceStatesForChapter(
     bookId: string,
     chapter: number
-  ): Map<PieceKey, MeshState> {
+  ): Map<PieceKey, PieceVisibilityState> {
     return getPieceStatesForChapter(pieceChapterConfigs, bookId, chapter);
   }
 

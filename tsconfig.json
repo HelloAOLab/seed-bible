@@ -980,8 +980,11 @@
       "tabernacle.application.ports.in.experience": [
         "./packages/Tabernacle/tabernacle/application/ports/in/experience.tsx"
       ],
-      "tabernacle.application.ports.in.piecesSequence": [
-        "./packages/Tabernacle/tabernacle/application/ports/in/piecesSequence.tsx"
+      "tabernacle.application.ports.in.hitboxLifecycle": [
+        "./packages/Tabernacle/tabernacle/application/ports/in/hitboxLifecycle.tsx"
+      ],
+      "tabernacle.application.ports.in.piecePosition": [
+        "./packages/Tabernacle/tabernacle/application/ports/in/piecePosition.tsx"
       ],
       "tabernacle.application.ports.in.scriptureInteraction": [
         "./packages/Tabernacle/tabernacle/application/ports/in/scriptureInteraction.tsx"
@@ -989,11 +992,23 @@
       "tabernacle.application.ports.out.experience": [
         "./packages/Tabernacle/tabernacle/application/ports/out/experience.tsx"
       ],
+      "tabernacle.application.ports.out.hitboxLifecycle": [
+        "./packages/Tabernacle/tabernacle/application/ports/out/hitboxLifecycle.tsx"
+      ],
+      "tabernacle.application.ports.out.piecePosition": [
+        "./packages/Tabernacle/tabernacle/application/ports/out/piecePosition.tsx"
+      ],
       "tabernacle.application.services.botAdapter": [
         "./packages/Tabernacle/tabernacle/application/services/botAdapter.tsx"
       ],
       "tabernacle.application.services.ExperienceService": [
         "./packages/Tabernacle/tabernacle/application/services/ExperienceService.tsx"
+      ],
+      "tabernacle.application.services.HitboxLifecycleService": [
+        "./packages/Tabernacle/tabernacle/application/services/HitboxLifecycleService.tsx"
+      ],
+      "tabernacle.application.services.PiecePositionService": [
+        "./packages/Tabernacle/tabernacle/application/services/PiecePositionService.tsx"
       ],
       "tabernacle.application.services.ScriptureInteractionService": [
         "./packages/Tabernacle/tabernacle/application/services/ScriptureInteractionService.tsx"
@@ -1010,8 +1025,8 @@
       "tabernacle.domain.models.botAdapter": [
         "./packages/Tabernacle/tabernacle/domain/models/botAdapter.tsx"
       ],
-      "tabernacle.domain.models.meshState": [
-        "./packages/Tabernacle/tabernacle/domain/models/meshState.tsx"
+      "tabernacle.domain.models.hitbox": [
+        "./packages/Tabernacle/tabernacle/domain/models/hitbox.tsx"
       ],
       "tabernacle.domain.models.piece": [
         "./packages/Tabernacle/tabernacle/domain/models/piece.tsx"
@@ -1021,6 +1036,9 @@
       ],
       "tabernacle.domain.ports.botAdapter": [
         "./packages/Tabernacle/tabernacle/domain/ports/botAdapter.tsx"
+      ],
+      "tabernacle.domain.ports.hitboxConfig": [
+        "./packages/Tabernacle/tabernacle/domain/ports/hitboxConfig.tsx"
       ],
       "tabernacle.domain.ports.pieceConfig": [
         "./packages/Tabernacle/tabernacle/domain/ports/pieceConfig.tsx"
@@ -1043,14 +1061,29 @@
       "tabernacle.infrastructure.adapters.casualos.TabernacleVisualizerAdapter": [
         "./packages/Tabernacle/tabernacle/infrastructure/adapters/casualos/TabernacleVisualizerAdapter.tsx"
       ],
+      "tabernacle.infrastructure.adapters.HitboxLifecycleAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/adapters/HitboxLifecycleAdapter.tsx"
+      ],
       "tabernacle.infrastructure.adapters.LoggerAdapter": [
         "./packages/Tabernacle/tabernacle/infrastructure/adapters/LoggerAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.adapters.PiecePositionAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/adapters/PiecePositionAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.adapters.PiecesProvider": [
+        "./packages/Tabernacle/tabernacle/infrastructure/adapters/PiecesProvider.tsx"
       ],
       "tabernacle.infrastructure.adapters.PiecesSequenceAdapter": [
         "./packages/Tabernacle/tabernacle/infrastructure/adapters/PiecesSequenceAdapter.tsx"
       ],
       "tabernacle.infrastructure.config.botAdapter": [
         "./packages/Tabernacle/tabernacle/infrastructure/config/botAdapter.tsx"
+      ],
+      "tabernacle.infrastructure.config.HitboxConfigProvider": [
+        "./packages/Tabernacle/tabernacle/infrastructure/config/HitboxConfigProvider.tsx"
+      ],
+      "tabernacle.infrastructure.config.PiecePositionConfigProvider": [
+        "./packages/Tabernacle/tabernacle/infrastructure/config/PiecePositionConfigProvider.tsx"
       ],
       "tabernacle.infrastructure.config.PiecesConfigProvider": [
         "./packages/Tabernacle/tabernacle/infrastructure/config/PiecesConfigProvider.tsx"
@@ -1082,17 +1115,23 @@
       "tabernacle.infrastructure.entrypoints.casualos.onGridClick": [
         "./packages/Tabernacle/tabernacle/infrastructure/entrypoints/casualos/onGridClick.tsx"
       ],
+      "tabernacle.infrastructure.mappers.HitboxMapper": [
+        "./packages/Tabernacle/tabernacle/infrastructure/mappers/HitboxMapper.tsx"
+      ],
+      "tabernacle.infrastructure.mappers.PieceMapper": [
+        "./packages/Tabernacle/tabernacle/infrastructure/mappers/PieceMapper.tsx"
+      ],
+      "tabernacle.infrastructure.models.casualos": [
+        "./packages/Tabernacle/tabernacle/infrastructure/models/casualos.tsx"
+      ],
+      "tabernacle.infrastructure.ports.in.hitboxMapper": [
+        "./packages/Tabernacle/tabernacle/infrastructure/ports/in/hitboxMapper.tsx"
+      ],
       "tabernacle.infrastructure.prefabs.pieces.environment.cone.botAdapter": [
         "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/environment/cone/botAdapter.tsx"
       ],
-      "tabernacle.infrastructure.prefabs.pieces.environment.fence.botAdapter": [
-        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/environment/fence/botAdapter.tsx"
-      ],
       "tabernacle.infrastructure.prefabs.pieces.environment.glow.botAdapter": [
         "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/environment/glow/botAdapter.tsx"
-      ],
-      "tabernacle.infrastructure.prefabs.pieces.environment.ground.botAdapter": [
-        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/environment/ground/botAdapter.tsx"
       ],
       "tabernacle.infrastructure.prefabs.pieces.main.altar-of-sacrifice.botAdapter": [
         "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/altar-of-sacrifice/botAdapter.tsx"
@@ -1124,6 +1163,9 @@
       "tabernacle.infrastructure.prefabs.pieces.main.brown-curtain.onClick": [
         "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/brown-curtain/onClick.tsx"
       ],
+      "tabernacle.infrastructure.prefabs.pieces.main.fence.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/fence/botAdapter.tsx"
+      ],
       "tabernacle.infrastructure.prefabs.pieces.main.front-curtain.botAdapter": [
         "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/front-curtain/botAdapter.tsx"
       ],
@@ -1141,6 +1183,9 @@
       ],
       "tabernacle.infrastructure.prefabs.pieces.main.grey-curtain.onClick": [
         "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/grey-curtain/onClick.tsx"
+      ],
+      "tabernacle.infrastructure.prefabs.pieces.main.ground.botAdapter": [
+        "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/ground/botAdapter.tsx"
       ],
       "tabernacle.infrastructure.prefabs.pieces.main.incense-altar.botAdapter": [
         "./packages/Tabernacle/tabernacle/infrastructure/prefabs/pieces/main/incense-altar/botAdapter.tsx"
