@@ -10,6 +10,9 @@ type ModulePaths = {
 const defaultPaths = {
   "@packages/*": ["./packages/*"],
   "https://esm.helloao.org/vendor-3PZUL55I.js": ["./lib/vendor.ts"],
+  "https://esm.helloao.org/painter-vendor-IGDNTFOW.js": [
+    "./lib/painter-vendor.ts",
+  ],
 };
 
 const moduleFileTypes = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".tsm"];

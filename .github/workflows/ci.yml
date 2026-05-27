@@ -28,11 +28,9 @@ jobs:
           pnpm install
 
       - name: Lint
-        continue-on-error: true
         run: |
           pnpm lint
       - name: Check TypeScript
-        continue-on-error: true
         run: |
           pnpm check:ts
       - name: Test

@@ -1,0 +1,2 @@
+thisBot.UpdateMapElementsUsersColor();
+thisBot.UpdateMapElementsUsersNotification();

@@ -187,7 +187,6 @@ program
       ...options,
       recordKey: options.extRecordKey ?? options.recordKey,
     });
-    const availablePackages = extensions.map((e) => e.meta);
 
     const name = "seed-bible";
     const packagePath = path.resolve("packages", name);
@@ -201,13 +200,14 @@ program
     const auxJson: StoredAuxVersion1 = JSON.parse(aux);
 
     const bots = Object.values(auxJson.state);
-    const packager = bots.find((b) => b.tags.system === "app.packager");
-    if (!packager) {
-      throw new Error("No app.packager bot found in the Seed Bible AUX.");
+    const managers = bots.find((b) => b.tags.system === "seed-bible.managers");
+    if (!managers) {
+      throw new Error(
+        "No seed-bible.managers bot found in the Seed Bible AUX."
+      );
     }
 
-    packager.tags.availablePackages = availablePackages;
-    packager.tags.alwaysUseAvailablePackages = true;
+    managers.tags.availableExtensions = extensions;
 
     await uploadPattern(
       options.pattern,
