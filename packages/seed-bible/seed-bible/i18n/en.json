@@ -214,5 +214,10 @@
   "bookmarks": "Bookmarks",
   "hide-bookmarks": "Hide bookmarks",
   "show-bookmarks": "Show bookmarks",
-  "add-new-tab": "Add new tab"
+  "add-new-tab": "Add new tab",
+  "add-to-bookmark-category": "Add to bookmark category",
+  "folder-name-taken": "A folder with that name already exists.",
+  "add-to-new": "Add to new",
+  "save": "Save",
+  "bookmark-verses": "Bookmark verses"
 }
