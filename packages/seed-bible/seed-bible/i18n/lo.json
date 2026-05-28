@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "ປຶ້ມທັງໝົດ",
   "new-testament": "ພຣະສັນຍາໃໝ່",
   "old-testament": "ພຣະສັນຍາເດີມ",
@@ -167,6 +167,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "ອະໂພຄຣີຟາ",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "ການແປພາສາແບບກຳນົດເອງ",
   "no-translation-results-found": "ບໍ່ພົບຜົນໄດ້ຮັບ. ທ່ານຕ້ອງການຂະຫຍາຍການຄົ້ນຫາຂອງທ່ານໃຫ້ລວມເອົາການແປພາສາທີ່ສົມບູນບາງສ່ວນນຳບໍ?",
   "show-all-translations": "ສະແດງການແປທັງໝົດ",

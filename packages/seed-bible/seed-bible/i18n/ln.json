@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Mikanda nyonso",
   "new-testament": "Kondimana ya Sika",
   "old-testament": "Kondimana ya Kala",
@@ -167,6 +167,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokrifa, oyo ezali",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Mabongoli oyo esalemi na kolanda bamposa ya bato",
   "no-translation-results-found": "Ba résultats ezwami te. Olingi kokómisa bolukiluki na yo monene mpo na kokɔtisa mpe mabongoli oyo ezali ndambo mobimba?",
   "show-all-translations": "Lakisa mabongoli nyonso",

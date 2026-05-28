@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "ټول کتابونه",
   "new-testament": "نوی عهد نامه",
   "old-testament": "زوړ عهد نامه",
@@ -150,6 +150,7 @@
   "old-testament_short": "د OT",
   "new-testament_short": "NT د",
   "apocrypha": "اپوکریفا",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "دودیزې ژباړې",
   "no-translation-results-found": "هیڅ پایله ونه موندل شوه. ایا تاسو غواړئ خپل لټون پراخ کړئ ترڅو جزوي بشپړ ژباړې هم پکې شاملې کړئ؟",
   "show-all-translations": "ټولې ژباړې وښایاست",

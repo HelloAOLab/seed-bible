@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Alle boeke",
   "new-testament": "Nuwe Testament",
   "old-testament": "Ou Testament",
@@ -167,6 +167,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokriewe",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Pasgemaakte vertalings",
   "no-translation-results-found": "Geen resultate gevind nie. Wil jy jou soektog uitbrei om ook gedeeltelik volledige vertalings in te sluit?",
   "show-all-translations": "Wys alle vertalings",

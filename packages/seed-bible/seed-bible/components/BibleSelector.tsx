@@ -371,10 +371,7 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
           </div>
           {ws <= 768 && apocryphaAvailable.value && (
             <>
-              <div
-                className="separator"
-                style={{ display: "flex", opacity: 1 }}
-              />
+              <div className="separator" style={{ display: "flex" }} />
               <div
                 class="testament-container flex-col-gap-sm"
                 style={{
@@ -384,7 +381,9 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
                 }}
               >
                 <span class="testament-title">
-                  {t("apocrypha", { defaultValue: "Apocrypha" })}
+                  {t("extrabiblical-writings", {
+                    defaultValue: "Extrabiblical writings",
+                  })}
                   <span
                     class="material-symbols-outlined"
                     onClick={() => {
@@ -774,8 +773,21 @@ const TranslationModal = (props: {
         >
           <div
             class="sidebar-book-selector flex-between-center-gap-md"
-            style={{ marginBottom: "5px", height: "30px", padding: "0 0px" }}
+            style={{ padding: "15px 5px" }}
           >
+            {viewportWidth.value <= 768 && (
+              <span
+                class="material-symbols-outlined"
+                onClick={() => {
+                  selectingTranslation.value = false;
+                  showTranslationSettings.value = false;
+                  showTranslationInfo.value = null;
+                  setOpen(false);
+                }}
+              >
+                close
+              </span>
+            )}
             <div
               className="searchbar flex-align-center"
               style={{ width: "100%", height: "30px" }}
@@ -806,17 +818,19 @@ const TranslationModal = (props: {
             >
               <FiltersIcon />
             </span>
-            <span
-              class="material-symbols-outlined"
-              onClick={() => {
-                selectingTranslation.value = false;
-                showTranslationSettings.value = false;
-                showTranslationInfo.value = null;
-                setOpen(false);
-              }}
-            >
-              close
-            </span>
+            {viewportWidth.value > 768 && (
+              <span
+                class="material-symbols-outlined"
+                onClick={() => {
+                  selectingTranslation.value = false;
+                  showTranslationSettings.value = false;
+                  showTranslationInfo.value = null;
+                  setOpen(false);
+                }}
+              >
+                close
+              </span>
+            )}
           </div>
           {LanguageList}
           <div className="footer">

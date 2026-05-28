@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Бардык китептер",
   "new-testament": "Жаңы Келишим",
   "old-testament": "Байыркы Келишим",
@@ -167,6 +167,7 @@
   "old-testament_short": "ОТ",
   "new-testament_short": "NT",
   "apocrypha": "Апокриф",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Ыңгайлаштырылган котормолор",
   "no-translation-results-found": "Эч кандай жыйынтык табылган жок. Жарым-жартылай толук котормолорду да камтуу үчүн издөөңүздү кеңейткиңиз келеби?",
   "show-all-translations": "Бардык котормолорду көрсөтүү",

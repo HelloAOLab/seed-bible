@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Усе кнігі",
   "new-testament": "Новы Запавет",
   "old-testament": "Стары Запавет",
@@ -167,6 +167,7 @@
   "old-testament_short": "АД",
   "new-testament_short": "НТ",
   "apocrypha": "Апокрыфы",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Карыстальніцкія пераклады",
   "no-translation-results-found": "Нічога не знойдзена. Хочаце пашырыць пошук, уключыўшы таксама і часткова поўныя пераклады?",
   "show-all-translations": "Паказаць усе пераклады",

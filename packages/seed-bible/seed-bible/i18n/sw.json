@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Vitabu vyote",
   "new-testament": "Agano Jipya",
   "old-testament": "Agano la Kale",
@@ -150,6 +150,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokrifa",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Tafsiri maalum",
   "no-translation-results-found": "Hakuna matokeo yaliyopatikana. Ungependa kupanua utafutaji wako ili kujumuisha tafsiri zilizokamilika kwa sehemu pia?",
   "show-all-translations": "Onyesha tafsiri zote",

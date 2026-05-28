@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "تمام کتابیں۔",
   "new-testament": "نیا عہد نامہ",
   "old-testament": "عہد نامہ قدیم",
@@ -150,6 +150,7 @@
   "old-testament_short": "او ٹی",
   "new-testament_short": "این ٹی",
   "apocrypha": "Apocrypha",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "حسب ضرورت ترجمہ",
   "no-translation-results-found": "کوئی نتیجہ نہیں ملا۔ کیا آپ جزوی طور پر مکمل ترجمے کو بھی شامل کرنے کے لیے اپنی تلاش کو بڑھانا چاہیں گے؟",
   "show-all-translations": "تمام ترجمے دکھائیں۔",

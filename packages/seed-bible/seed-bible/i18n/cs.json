@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Všechny knihy",
   "new-testament": "Nový zákon",
   "old-testament": "Starý zákon",
@@ -167,6 +167,7 @@
   "old-testament_short": "Prodloužení",
   "new-testament_short": "NT",
   "apocrypha": "Apokryfy",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Překlady na zakázku",
   "no-translation-results-found": "Nenalezeny žádné výsledky. Chcete rozšířit vyhledávání i o částečně kompletní překlady?",
   "show-all-translations": "Zobrazit všechny překlady",

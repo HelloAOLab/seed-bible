@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Lahat ng libro",
   "new-testament": "Bagong Tipan",
   "old-testament": "Lumang Tipan",
@@ -167,6 +167,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokripa",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Mga pasadyang pagsasalin",
   "no-translation-results-found": "Walang nakitang resulta. Gusto mo bang palawakin ang iyong paghahanap para maisama rin ang mga bahagyang kumpletong pagsasalin?",
   "show-all-translations": "Ipakita ang lahat ng pagsasalin",

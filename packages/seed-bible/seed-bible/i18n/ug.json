@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "بارلىق كىتابلار",
   "new-testament": "يېڭى ئەھدە",
   "old-testament": "كونا ئەھدە",
@@ -150,6 +150,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "ئاپوكرىپا",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "خاسلاشتۇرۇلغان تەرجىمە",
   "no-translation-results-found": "ھېچقانداق نەتىجە تېپىلمىدى. ئىزدەش دائىرىسىنى كېڭەيتىپ، قىسمەن تولۇق تەرجىمە قىلىشلارنىمۇ ئۆز ئىچىگە ئالماقچىمۇ؟",
   "show-all-translations": "بارلىق تەرجىمىلەرنى كۆرسىتىش",

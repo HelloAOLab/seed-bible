@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Alla böcker",
   "new-testament": "Nya testamentet",
   "old-testament": "Gamla testamentet",
@@ -167,6 +167,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "De apokryfiska böckerna",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Anpassade översättningar",
   "no-translation-results-found": "Inga resultat hittades. Vill du utöka din sökning till att även inkludera delvis fullständiga översättningar?",
   "show-all-translations": "Visa alla översättningar",

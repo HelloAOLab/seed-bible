@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Tutti i libri",
   "new-testament": "Nuovo Testamento",
   "old-testament": "Vecchia Birmania",
@@ -167,6 +167,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apocrifi",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Traduzioni personalizzate",
   "no-translation-results-found": "Nessun risultato trovato. Desideri ampliare la ricerca includendo anche le traduzioni parzialmente complete?",
   "show-all-translations": "Mostra tutte le traduzioni",

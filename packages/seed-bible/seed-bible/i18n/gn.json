@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Opaite aranduka",
   "new-testament": "Nuevo Testamento rehegua",
   "old-testament": "Antiguo Testamento rehegua",
@@ -167,6 +167,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apocrifa rehegua",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Traducciones personalizadas",
   "no-translation-results-found": "Ndojejuhúi resultado. ¿Rembotuichavesépa nde jeheka reike hag̃ua avei umi traduksión parcialmente kompletoite?",
   "show-all-translations": "Ehechauka opaite traduksión",

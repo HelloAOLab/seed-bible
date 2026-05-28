@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "सबै पुस्तकहरू",
   "new-testament": "नयाँ नियम",
   "old-testament": "पुरानो नियम",
@@ -150,6 +150,7 @@
   "old-testament_short": "ओटी",
   "new-testament_short": "NT नामक यन्त्र",
   "apocrypha": "एपोक्रिफा",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "अनुकूलन अनुवादहरू",
   "no-translation-results-found": "कुनै परिणाम भेटिएन। के तपाईं आंशिक रूपमा पूर्ण अनुवादहरू पनि समावेश गर्न आफ्नो खोज विस्तार गर्न चाहनुहुन्छ?",
   "show-all-translations": "सबै अनुवादहरू देखाउनुहोस्",

@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Kaikki kirjat",
   "new-testament": "Uusi testamentti",
   "old-testament": "vanha testamentti",
@@ -167,6 +167,7 @@
   "old-testament_short": "Jatkoaika",
   "new-testament_short": "NT",
   "apocrypha": "Apokryfikirjat",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Mukautetut käännökset",
   "no-translation-results-found": "Ei tuloksia. Haluatko laajentaa hakuasi kattamaan myös osittain valmiit käännökset?",
   "show-all-translations": "Näytä kaikki käännökset",

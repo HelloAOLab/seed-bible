@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Pob llyfr",
   "new-testament": "Testament Newydd",
   "old-testament": "Hen Destament",
@@ -167,6 +167,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apocryffa",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Cyfieithiadau personol",
   "no-translation-results-found": "Ni chanfuwyd unrhyw ganlyniadau. A hoffech chi ehangu eich chwiliad i gynnwys cyfieithiadau rhannol gyflawn hefyd?",
   "show-all-translations": "Dangos pob cyfieithiad",

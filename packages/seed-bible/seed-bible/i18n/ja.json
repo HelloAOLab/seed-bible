@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "すべての書籍",
   "new-testament": "新約聖書",
   "old-testament": "旧約聖書",
@@ -150,6 +150,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "外典",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "カスタム翻訳",
   "no-translation-results-found": "検索結果が見つかりませんでした。部分的に翻訳されたものも検索対象に含めますか？",
   "show-all-translations": "すべての翻訳を表示",

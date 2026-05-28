@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Bütün kitablar",
   "new-testament": "Yeni Əhdi",
   "old-testament": "Əhdi-Ətiq",
@@ -167,6 +167,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokrif",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Xüsusi tərcümələr",
   "no-translation-results-found": "Nəticə tapılmadı. Axtarışınızı qismən tam tərcümələri də daxil etmək üçün genişləndirmək istərdinizmi?",
   "show-all-translations": "Bütün tərcümələri göstər",

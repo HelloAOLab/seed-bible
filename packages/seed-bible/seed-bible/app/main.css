@@ -4414,6 +4414,7 @@ h6 {
     display: flex;
     align-items: center;
     gap: 5px;
+    color: color-mix(in srgb, var(--sb-font-color), transparent 60%);
   }
 
   .sb-selector-panel .separator {
@@ -6854,7 +6855,6 @@ h6 {
 
   .sidebar-itm {
     width: 100%;
-    font-weight: lighter;
     font-size: 16px;
   }
 
@@ -6949,7 +6949,7 @@ h6 {
   }
 
   .language-list {
-    height: 100%;
+    height: calc(100% - 20px);
   }
 
   .footer {

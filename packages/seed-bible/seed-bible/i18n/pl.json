@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Wszystkie książki",
   "new-testament": "Nowy Testament",
   "old-testament": "Stary Testament",
@@ -167,6 +167,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokryfy",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Tłumaczenia niestandardowe",
   "no-translation-results-found": "Nie znaleziono wyników. Czy chcesz rozszerzyć wyszukiwanie o tłumaczenia częściowo kompletne?",
   "show-all-translations": "Pokaż wszystkie tłumaczenia",

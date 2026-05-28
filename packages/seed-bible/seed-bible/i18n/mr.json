@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "सर्व पुस्तके",
   "new-testament": "नवीन करार",
   "old-testament": "जुना करार",
@@ -167,6 +167,7 @@
   "old-testament_short": "ओटी",
   "new-testament_short": "एनटी",
   "apocrypha": "अपोक्रिफा",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "सानुकूल भाषांतरे",
   "no-translation-results-found": "कोणतेही परिणाम आढळले नाहीत. तुम्हाला तुमच्या शोधात अर्धवट भाषांतरांचाही समावेश करायचा आहे का?",
   "show-all-translations": "सर्व भाषांतरे दाखवा",

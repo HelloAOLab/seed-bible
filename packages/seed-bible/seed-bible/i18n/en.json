@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "All books",
   "new-testament": "New Testament",
   "old-testament": "Old Testament",
@@ -169,6 +169,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apocrypha",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Custom translations",
   "no-translation-results-found": "No results found. Would you like to expand your search to include partially complete translations as well?",
   "show-all-translations": "Show all translations",

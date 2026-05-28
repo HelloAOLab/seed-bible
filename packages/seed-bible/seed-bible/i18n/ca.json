@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Tots els llibres",
   "new-testament": "Nou Testament",
   "old-testament": "Antic Testament",
@@ -167,6 +167,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apòcrifs",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Traduccions personalitzades",
   "no-translation-results-found": "No s'han trobat resultats. Voleu ampliar la cerca per incloure també traduccions parcialment completes?",
   "show-all-translations": "Mostra totes les traduccions",

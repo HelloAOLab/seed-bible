@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Όλα τα βιβλία",
   "new-testament": "Καινή Διαθήκη",
   "old-testament": "Παλαια Διαθήκη",
@@ -167,6 +167,7 @@
   "old-testament_short": "Π.Μ.",
   "new-testament_short": "NT",
   "apocrypha": "Απόκρυφα",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Προσαρμοσμένες μεταφράσεις",
   "no-translation-results-found": "Δεν βρέθηκαν αποτελέσματα. Θα θέλατε να επεκτείνετε την αναζήτησή σας ώστε να συμπεριλάβει και μερικώς ολοκληρωμένες μεταφράσεις;",
   "show-all-translations": "Εμφάνιση όλων των μεταφράσεων",

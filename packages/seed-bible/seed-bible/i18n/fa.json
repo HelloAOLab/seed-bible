@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "همه کتاب‌ها",
   "new-testament": "عهد جدید",
   "old-testament": "عهد عتیق",
@@ -150,6 +150,7 @@
   "old-testament_short": "کاردرمانی",
   "new-testament_short": "ان‌تی",
   "apocrypha": "آخرالزمان",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "ترجمه‌های سفارشی",
   "no-translation-results-found": "نتیجه‌ای یافت نشد. آیا مایلید جستجوی خود را گسترش دهید تا ترجمه‌های نیمه‌کامل را نیز شامل شود؟",
   "show-all-translations": "نمایش همه ترجمه‌ها",

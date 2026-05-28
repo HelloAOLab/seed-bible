@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Все книги",
   "new-testament": "Новый Завет",
   "old-testament": "Ветхий Завет",
@@ -150,6 +150,7 @@
   "old-testament_short": "ОТ",
   "new-testament_short": "НТ",
   "apocrypha": "Апокрифы",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Переводы на заказ",
   "no-translation-results-found": "Результаты не найдены. Хотите расширить поиск, включив в него также частично выполненные переводы?",
   "show-all-translations": "Показать все переводы",

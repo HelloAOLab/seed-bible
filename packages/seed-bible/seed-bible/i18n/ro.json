@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Toate cărțile",
   "new-testament": "Noul Testament",
   "old-testament": "Vechiul Testament",
@@ -167,6 +167,7 @@
   "old-testament_short": "VT",
   "new-testament_short": "NT",
   "apocrypha": "Apocrife",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Traduceri personalizate",
   "no-translation-results-found": "Nu s-au găsit rezultate. Doriți să extindeți căutarea pentru a include și traduceri parțial complete?",
   "show-all-translations": "Afișați toate traducerile",

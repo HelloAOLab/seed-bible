@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Allar bækur",
   "new-testament": "Nýja testamentið",
   "old-testament": "Gamla testamentið",
@@ -167,6 +167,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apókrýfur texti",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Sérsniðnar þýðingar",
   "no-translation-results-found": "Engar niðurstöður fundust. Viltu víkka leitina þína til að innihalda einnig þýðingar sem eru að hluta til ófullkomnar?",
   "show-all-translations": "Sýna allar þýðingar",

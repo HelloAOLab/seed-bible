@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Semua buku",
   "new-testament": "Perjanjian Baru",
   "old-testament": "Perjanjian Lama",
@@ -150,6 +150,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "Perjanjian Baru",
   "apocrypha": "Tulisan yg diragukan pengarangnya",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Terjemahan khusus",
   "no-translation-results-found": "Tidak ada hasil yang ditemukan. Apakah Anda ingin memperluas pencarian Anda untuk menyertakan terjemahan yang sebagian lengkap juga?",
   "show-all-translations": "Tampilkan semua terjemahan",

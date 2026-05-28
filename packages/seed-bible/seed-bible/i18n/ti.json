@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "ኩሎም መጻሕፍቲ",
   "new-testament": "ሓድሽ ኪዳን",
   "old-testament": "ብሉይ ኪዳን",
@@ -150,6 +150,7 @@
   "old-testament_short": "ኦ.ቲ",
   "new-testament_short": "NT",
   "apocrypha": "ኣፖክሪፋ",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "ብሕታዊ ትርጉማት",
   "no-translation-results-found": "ውጽኢት ኣይተረኽበን። ምድላይካ ኣስፊሕካ ብኸፊል ምሉእ ትርጉማት እውን ከተካትት ትደሊ ዲኻ?",
   "show-all-translations": "ኩሉ ትርጉማት ኣርእዩ",

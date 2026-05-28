@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "جميع الكتب",
   "new-testament": "العهد الجديد",
   "old-testament": "العهد القديم",
@@ -150,6 +150,7 @@
   "old-testament_short": "العلاج الوظيفي",
   "new-testament_short": "العهد الجديد",
   "apocrypha": "الأبوكريفا",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "ترجمات مخصصة",
   "no-translation-results-found": "لم يتم العثور على نتائج. هل ترغب في توسيع نطاق بحثك ليشمل الترجمات غير المكتملة أيضاً؟",
   "show-all-translations": "عرض جميع الترجمات",

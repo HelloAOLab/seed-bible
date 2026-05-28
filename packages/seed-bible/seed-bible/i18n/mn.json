@@ -1,4 +1,4 @@
-{
+﻿{
   "allBooks": "Бүх ном",
   "new-testament": "Шинэ Гэрээ",
   "old-testament": "Хуучин Гэрээ",
@@ -150,6 +150,7 @@
   "old-testament_short": "ОТ",
   "new-testament_short": "NT",
   "apocrypha": "Апокриф",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Захиалгат орчуулга",
   "no-translation-results-found": "Илэрц олдсонгүй. Та хайлтаа хэсэгчлэн бүрэн орчуулгыг оруулахын тулд өргөжүүлэхийг хүсэж байна уу?",
   "show-all-translations": "Бүх орчуулгыг харуулах",
