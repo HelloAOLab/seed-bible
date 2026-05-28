@@ -970,6 +970,7 @@ describe("useTestamentContent", () => {
       );
       (useScriptureMapContext as jest.Mock).mockReturnValue(
         makeCtx({
+          showSectionLabels: true,
           bookNames: {
             value: new Map([
               ["GEN", "Genesis"],
@@ -995,6 +996,7 @@ describe("useTestamentContent", () => {
       );
       (useScriptureMapContext as jest.Mock).mockReturnValue(
         makeCtx({
+          showSectionLabels: true,
           bookNames: {
             value: new Map([
               ["GEN", "Genesis"],

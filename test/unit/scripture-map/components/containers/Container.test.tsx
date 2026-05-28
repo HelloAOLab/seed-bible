@@ -7,6 +7,13 @@ jest.mock("scriptureMap.hooks.useContainer", () => ({
   useContainer: jest.fn(),
 }));
 
+jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
+  useScriptureMapContext: jest.fn(() => ({
+    showTestamentLabels: true,
+    showSectionLabels: true,
+  })),
+}));
+
 jest.mock("scriptureMap.components.containers.TestamentContainer", () => ({
   TestamentContainer: ({ testamentIndex }: { testamentIndex: number }) => (
     <div data-testid="testament-container" data-index={testamentIndex} />

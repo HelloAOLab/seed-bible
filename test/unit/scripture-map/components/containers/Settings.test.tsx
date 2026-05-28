@@ -13,6 +13,14 @@ jest.mock("scriptureMap.hooks.useSettings", () => ({
   useSettings: jest.fn(),
 }));
 
+jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
+  useScriptureMapContext: jest.fn(() => ({
+    MaterialIcon: ({ children }: { children: string }) => (
+      <span>{children}</span>
+    ),
+  })),
+}));
+
 jest.mock("scriptureMap.hooks.useClickOutside", () => ({
   useClickOutside: jest.fn(),
 }));
