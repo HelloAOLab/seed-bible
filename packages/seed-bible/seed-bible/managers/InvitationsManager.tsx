@@ -190,53 +190,54 @@ export function createInvitationsManager(
     applyEntriesWithProfiles(entries);
   };
 
-  const syncFromRegistry = () => {
-    const entries = readStoredEntries();
-    applyEntriesWithProfiles(entries);
-    void refreshProfiles(entries);
-  };
+  // TODO: Re-enable this when we can only listen for entries from users the current one follows (subscribes to).
+  // const syncFromRegistry = () => {
+  //   const entries = readStoredEntries();
+  //   applyEntriesWithProfiles(entries);
+  //   void refreshProfiles(entries);
+  // };
 
-  const openRegistry = async () => {
-    if (registryDoc) return;
-    try {
-      const document = await os.getSharedDocument(
-        null,
-        REGISTRY_DOC_ID,
-        REGISTRY_DOC_DATA
-      );
-      registryDoc = document;
-      registryMap = document.getMap<StoredRegistryEntry>(REGISTRY_MAP_NAME);
-      // Seed our own connection id so entries we publish during this run
-      // immediately pass the "is host connected" filter on other clients
-      // after both clients open the registry.
-      const localId = getLocalIdentity();
-      if (localId) liveConnectionIds.add(localId);
-      changesSubscription = registryMap.changes.subscribe(() => {
-        syncFromRegistry();
-      });
-      // Track connect/disconnect events on the registry document so the
-      // filter in `applyEntriesWithProfiles` can drop entries belonging to
-      // hosts who aren't here anymore.
-      remoteClientsSubscription = document.remoteClients.subscribe(
-        (event: { type: string; client: { connectionId: string } }) => {
-          if (event.type === "client_connected") {
-            liveConnectionIds.add(event.client.connectionId);
-          } else {
-            liveConnectionIds.delete(event.client.connectionId);
-          }
-          if (registryMap) {
-            applyEntriesWithProfiles(readStoredEntries());
-          }
-        }
-      );
-      syncFromRegistry();
-    } catch (error) {
-      console.error(
-        "[InvitationsManager] Failed to open shared-sessions registry:",
-        error
-      );
-    }
-  };
+  // const openRegistry = async () => {
+  //   if (registryDoc) return;
+  //   try {
+  //     const document = await os.getSharedDocument(
+  //       null,
+  //       REGISTRY_DOC_ID,
+  //       REGISTRY_DOC_DATA
+  //     );
+  //     registryDoc = document;
+  //     registryMap = document.getMap<StoredRegistryEntry>(REGISTRY_MAP_NAME);
+  //     // Seed our own connection id so entries we publish during this run
+  //     // immediately pass the "is host connected" filter on other clients
+  //     // after both clients open the registry.
+  //     const localId = getLocalIdentity();
+  //     if (localId) liveConnectionIds.add(localId);
+  //     changesSubscription = registryMap.changes.subscribe(() => {
+  //       syncFromRegistry();
+  //     });
+  //     // Track connect/disconnect events on the registry document so the
+  //     // filter in `applyEntriesWithProfiles` can drop entries belonging to
+  //     // hosts who aren't here anymore.
+  //     remoteClientsSubscription = document.remoteClients.subscribe(
+  //       (event: { type: string; client: { connectionId: string } }) => {
+  //         if (event.type === "client_connected") {
+  //           liveConnectionIds.add(event.client.connectionId);
+  //         } else {
+  //           liveConnectionIds.delete(event.client.connectionId);
+  //         }
+  //         if (registryMap) {
+  //           applyEntriesWithProfiles(readStoredEntries());
+  //         }
+  //       }
+  //     );
+  //     syncFromRegistry();
+  //   } catch (error) {
+  //     console.error(
+  //       "[InvitationsManager] Failed to open shared-sessions registry:",
+  //       error
+  //     );
+  //   }
+  // };
 
   // Refresh the visible list when the current user id changes (so own
   // sessions get hidden appropriately and cached profiles re-apply).
@@ -250,14 +251,12 @@ export function createInvitationsManager(
 
   // Kick off the registry connection immediately — discoverability doesn't
   // require the current user to be logged in.
-
-  // TODO: Re-enable this when we can only listen for entries from users the current one follows (subscribes to).
   // void openRegistry();
 
   const publishSession = async (
     session: BibleReadingSession
   ): Promise<void> => {
-    await openRegistry();
+    // await openRegistry();
     if (!registryDoc || !registryMap) return;
     // Fall back to the connection id when the user isn't logged in so
     // anonymous hosts still publish and other clients can discover them.
