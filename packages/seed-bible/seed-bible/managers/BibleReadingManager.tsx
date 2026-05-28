@@ -274,9 +274,17 @@ export interface InitialBibleReadingOptions {
   initialTranslationId?: string | null;
   initialBookId?: string | null;
   initialChapterNumber?: number | null;
+
+  /**
+   * The verse to scroll to after the initial chapter loads. Should be a valid verse number within the initial chapter, otherwise it will be ignored.
+   */
+  scrollToVerse?: number;
 }
 
 export interface SelectTranslationAndChapterOptions {
+  /**
+   * The verse to scroll to after the chapter loads. Should be a valid verse number within the chapter, otherwise it will be ignored.
+   */
   scrollToVerse?: number;
 }
 
@@ -1019,7 +1027,9 @@ export function createBibleReadingState(
         nextChapterNumber
       );
 
-      await syncStateFromChapter(chapter);
+      await syncStateFromChapter(chapter, {
+        scrollToVerse: options.scrollToVerse,
+      });
     } catch (err) {
       console.error("Error loading initial Bible data:", err);
       error.value =

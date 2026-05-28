@@ -44,8 +44,6 @@ interface TabsHeaderProps {
   isLayoutMenuOpen: boolean;
   toggleLayoutMenu: () => void;
   setLayout: (layout: PaneLayoutId) => void;
-  createSharedSession: () => void;
-  openJoinSessionModal: () => void;
 }
 
 /**
@@ -373,10 +371,9 @@ export function TabsHeader(props: TabsHeaderProps) {
     isLayoutMenuOpen,
     toggleLayoutMenu,
     setLayout,
-    createSharedSession,
-    openJoinSessionModal,
   } = props;
-  const { sidebar } = state;
+  const { sidebar, settings } = state;
+  const isAwake = settings.settings.value.keepScreenAwake;
   const { t } = useI18n();
 
   return (
@@ -447,27 +444,46 @@ export function TabsHeader(props: TabsHeaderProps) {
               closeContextMenus();
             }}
             buttonClassName="sb-sidebar-top-icon-button"
-            aria-label={t("session-options", {
-              defaultValue: "Session options",
-            })}
-            title={t("session-options", { defaultValue: "Session options" })}
+            aria-label={t("more", { defaultValue: "More" })}
+            title={t("more", { defaultValue: "More" })}
           >
             <ContextMenuItem
               onClick={() => {
-                createSharedSession();
+                window.open(
+                  "https://docs.google.com/forms/d/e/1FAIpQLSejiuVM8xguEHKZ2Kv5DX-jE98zYwxFiPwpYrFSmvVgMejZzQ/viewform",
+                  "_blank"
+                );
               }}
             >
-              {t("new-shared-session", { defaultValue: "New shared session" })}
+              {t("report-a-bug", { defaultValue: "Report a bug" })}
             </ContextMenuItem>
             <ContextMenuItem
+              className="sb-context-menu-toggle-item"
+              role="menuitemcheckbox"
+              aria-checked={isAwake}
+              onClick={(event: Event) => {
+                event.preventDefault();
+                settings.setKeepScreenAwake(!isAwake);
+              }}
+              style={{ width: "230px" }}
+            >
+              <span>
+                {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
+              </span>
+              <span
+                className={`sb-pill-toggle${isAwake ? " is-on" : ""}`}
+                aria-hidden="true"
+              />
+            </ContextMenuItem>
+            {/* <ContextMenuItem
               onClick={() => {
-                openJoinSessionModal();
+                sidebar.openSettings();
               }}
             >
-              {t("join-shared-session", {
-                defaultValue: "Join shared session",
+              {t("go-to-all-settings", {
+                defaultValue: "Go to all settings",
               })}
-            </ContextMenuItem>
+            </ContextMenuItem> */}
           </ContextMenuWithButton>
         )}
       </div>
@@ -1404,6 +1420,13 @@ export function Tabs(props: TabsProps) {
             className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-tasks-button"
             aria-label={t("tasks", { defaultValue: "Tasks" })}
             title={t("tasks", { defaultValue: "Tasks" })}
+            onClick={() => {
+              os.toast(
+                t("today-coming-soon", {
+                  defaultValue: "Today screen is coming soon",
+                })
+              );
+            }}
           >
             <svg
               width="24"
@@ -1713,69 +1736,6 @@ export function Sidebar(props: SidebarProps) {
   const isMobileOpen = sidebar.isMobileOpen.value;
   const effectivelyCollapsed = isCollapsed && !isMobileOpen && !isSettingsOpen;
   const isLayoutMenuOpen = useSignal(false);
-  const joinSessionId = useSignal("");
-
-  const openJoinSessionModal = () => {
-    closeContextMenus();
-    isLayoutMenuOpen.value = false;
-    state.modals.openModal({
-      id: "join-shared-session",
-      title: {
-        key: "join-shared-session",
-        defaultValue: "Join Shared Session",
-      },
-      content: ({ t }) => (
-        <>
-          <label>
-            <span>{t("session-id", { defaultValue: "Session ID" })}</span>
-            <input
-              value={joinSessionId.value}
-              onInput={(event) => {
-                joinSessionId.value = (
-                  event.currentTarget as HTMLInputElement
-                ).value;
-              }}
-              placeholder={t("enter-shared-session-id", {
-                defaultValue: "Enter shared session ID",
-              })}
-            />
-          </label>
-          <div>
-            <button
-              onClick={() => {
-                state.modals.closeModal("join-shared-session");
-              }}
-            >
-              {t("cancel", { defaultValue: "Cancel" })}
-            </button>
-            <button
-              onClick={() => {
-                void handleJoinSharedSession();
-              }}
-              disabled={!joinSessionId.value.trim()}
-            >
-              {t("join-session", { defaultValue: "Join Session" })}
-            </button>
-          </div>
-        </>
-      ),
-    });
-  };
-
-  const closeJoinSessionModal = () => {
-    state.modals.closeModal("join-shared-session");
-    joinSessionId.value = "";
-  };
-
-  const handleJoinSharedSession = async () => {
-    const sessionId = joinSessionId.value.trim();
-    if (!sessionId) {
-      return;
-    }
-
-    await state.app.joinSharedSession(sessionId);
-    closeJoinSessionModal();
-  };
 
   const closeLayoutMenu = () => {
     isLayoutMenuOpen.value = false;
@@ -1802,10 +1762,6 @@ export function Sidebar(props: SidebarProps) {
             panes.setLayout(layout);
             closeLayoutMenu();
           }}
-          createSharedSession={() => {
-            void state.app.createSharedSession();
-          }}
-          openJoinSessionModal={openJoinSessionModal}
         />
       )}
 

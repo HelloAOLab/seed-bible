@@ -198,6 +198,7 @@ export function CreateTwitchPubState(): TwitchPubState {
   });
 
   const qrValue = signal<string>(getUrl(twitchConfig.value));
+
   const rateLimiter = createRateLimiter(
     (type, payload, parts, currentPart, uid) =>
       sendMessage({

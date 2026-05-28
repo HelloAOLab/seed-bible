@@ -3,10 +3,7 @@ import { useI18n } from "seed-bible.i18n.I18nManager";
 import { PaneLayout } from "seed-bible.components.PaneLayout";
 import { BibleSelector } from "seed-bible.components.BibleSelector";
 import { BibleReaderToolbar } from "seed-bible.components.BibleReaderToolbar";
-import {
-  FloatingReaderPanels,
-  MobileViewSwitcher,
-} from "seed-bible.components.FloatingReaderPanels";
+import { FloatingReaderPanels } from "seed-bible.components.FloatingReaderPanels";
 import { Sidebar, SharedSessionsToasts } from "seed-bible.components.Tabs";
 import { createSeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { CasualOSApp } from "seed-bible.components.CasualOSApp";
@@ -131,7 +128,6 @@ function MainContent(props: {
               selectorState={selector}
               bibleDataManager={state.bibleData}
             />
-            <MobileViewSwitcher state={state} />
           </>
         </CasualOSApp>
 

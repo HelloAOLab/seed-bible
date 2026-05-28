@@ -11,7 +11,7 @@ import {
 } from "seed-bible.managers.BibleReadingManager";
 import type { HighlightsManager } from "seed-bible.managers.HighlightsManager";
 
-function formatVerseSelection(verseNumbers: number[]): string | null {
+export function formatVerseSelection(verseNumbers: number[]): string | null {
   const sorted = Array.from(new Set(verseNumbers))
     .filter((n) => Number.isFinite(n) && n > 0)
     .sort((a, b) => a - b);
@@ -24,6 +24,35 @@ function formatVerseSelection(verseNumbers: number[]): string | null {
     return `${sorted[0]}-${sorted[sorted.length - 1]}`;
   }
   return sorted.join(",");
+}
+
+export function parseVerseSelection(verse: string): number[] {
+  const parts = verse.split(",");
+  const verseNumbers: number[] = [];
+  for (const part of parts) {
+    const rangeParts = part.split("-");
+    if (rangeParts.length === 1) {
+      const n = Number(rangeParts[0]);
+      if (Number.isFinite(n) && n > 0) {
+        verseNumbers.push(n);
+      }
+    } else if (rangeParts.length === 2) {
+      const start = Number(rangeParts[0]);
+      const end = Number(rangeParts[1]);
+      if (
+        Number.isFinite(start) &&
+        Number.isFinite(end) &&
+        start > 0 &&
+        end >= start
+      ) {
+        for (let i = start; i <= end; i++) {
+          verseNumbers.push(i);
+        }
+      }
+    }
+  }
+
+  return verseNumbers;
 }
 
 export interface ReaderTab {
@@ -58,22 +87,43 @@ function getInitialFirstTabChapter(): number {
     : DEFAULT_CHAPTER_NUMBER;
 }
 
+function getInitialHighlightedVerses(): number[] {
+  const value = configBot.tags.verse;
+  return typeof value === "string"
+    ? parseVerseSelection(value)
+    : typeof value === "number"
+      ? [value]
+      : [];
+}
+
 function createInitialTabs(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager
 ): ReaderTab[] {
-  return [
-    {
-      id: "tab-1",
-      title: "Tab 1",
-      readingState: createBibleReadingState(dataManager, highlightsManager, {
-        initialTranslationId: getInitialTranslationId(),
-        initialBookId: getInitialFirstTabBookId(),
-        initialChapterNumber: getInitialFirstTabChapter(),
-      }),
-      sharedSession: null,
-    },
-  ];
+  const bookId = getInitialFirstTabBookId();
+  const chapter = getInitialFirstTabChapter();
+  const highlightedVerses = getInitialHighlightedVerses();
+
+  const tab: ReaderTab = {
+    id: "tab-1",
+    title: "Tab 1",
+    readingState: createBibleReadingState(dataManager, highlightsManager, {
+      initialTranslationId: getInitialTranslationId(),
+      initialBookId: bookId,
+      initialChapterNumber: chapter,
+      scrollToVerse: highlightedVerses[0] ?? undefined,
+    }),
+    sharedSession: null,
+  };
+
+  if (highlightedVerses.length > 0) {
+    tab.readingState.decorateVerses(bookId, chapter, highlightedVerses, {
+      className: "sb-verse-decoration-initial-verse-highlight",
+      removeAfterMs: 5000,
+    });
+  }
+
+  return [tab];
 }
 
 type NewTabSource = BibleReadingState | BibleReadingSession;

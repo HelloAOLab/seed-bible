@@ -219,5 +219,10 @@
   "folder-name-taken": "A folder with that name already exists.",
   "add-to-new": "Add to new",
   "save": "Save",
-  "bookmark-verses": "Bookmark verses"
+  "bookmark-verses": "Bookmark",
+  "today-coming-soon": "Today screen is coming soon",
+  "chat-coming-soon": "Chat is coming soon",
+  "more-coming-soon": "More options coming soon",
+  "discovery-coming-soon": "Discovery is coming soon",
+  "login-to-use-feature": "You have to log in to use this feature."
 }

@@ -44,6 +44,11 @@ const checkAuthorizationStatus = async (
       const data = await response.data;
       userAccessToken.value = data.access_token;
       currentPage.value = "interface";
+
+      // Successful login
+      if (posthog) {
+        posthog.capture("twitch_host_login_success", {});
+      }
     } else {
       const errorData = await response.data;
       if (errorData.error === "authorization_pending") {

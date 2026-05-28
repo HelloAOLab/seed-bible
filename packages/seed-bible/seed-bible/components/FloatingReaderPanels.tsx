@@ -5,7 +5,6 @@ import {
   DEFAULT_TRANSLATION_ID,
   DEFAULT_TRANSLATION_LANGUAGE,
 } from "seed-bible.managers.BibleReadingManager";
-import { SeedBibleIcon } from "seed-bible.components.icons";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
 
@@ -50,94 +49,7 @@ export function FloatingReaderPanels(props: FloatingReaderPanelsProps) {
     <>
       <FloatingSearchPanel state={state} />
       <FloatingChatPanel state={state} />
-      <MobileViewSwitcher state={state} />
     </>
-  );
-}
-
-/**
- * Bottom Bible / Tabs switcher for mobile. Rendered as a floating element
- * that stays pinned at the bottom of the viewport — the Tabs drawer and
- * BibleSelector views swap above it so the switcher itself never moves
- * when the user toggles between the two views.
- *
- * Exported so main.tsx can also render it inside the bible-selector
- * `CasualOSApp` container (which renders in a separate context). With
- * one copy in each context, the switcher is visible whichever view is
- * currently up.
- */
-export function MobileViewSwitcher(props: FloatingReaderPanelsProps) {
-  const { state } = props;
-  const { sidebar, selector, panes } = state;
-  const { t } = useI18n();
-
-  const isDrawerOpen = sidebar.isMobileOpen.value;
-  const isSelectorOpen = selector.isOpen.value;
-  const isSettingsOpen = sidebar.isSettingsOpen.value;
-  // The switcher only makes sense when the user is on the Bible selector
-  // or the Tabs list — not on Settings, which lives inside the drawer but
-  // is a distinct view.
-  const isVisible = (isDrawerOpen || isSelectorOpen) && !isSettingsOpen;
-
-  if (!isVisible) return null;
-
-  const openBible = () => {
-    if (isSelectorOpen) return;
-    const currentPane = panes.panes.value.find(
-      (pane) => pane.id === panes.selectedPaneId.value
-    );
-    sidebar.closeSidebar();
-    void selector.setOpen(true, currentPane);
-  };
-
-  const openTabs = () => {
-    if (isDrawerOpen) return;
-    void selector.setOpen(false);
-    sidebar.openSidebar();
-  };
-
-  return (
-    <div
-      className="sb-mobile-view-switcher"
-      role="tablist"
-      aria-label={t("view-switcher", { defaultValue: "View switcher" })}
-    >
-      <button
-        type="button"
-        role="tab"
-        className={`sb-mobile-view-switcher-button${
-          isSelectorOpen ? " sb-mobile-view-switcher-button-active" : ""
-        }`}
-        aria-selected={isSelectorOpen}
-        onClick={openBible}
-      >
-        <span className="sb-mobile-view-switcher-icon" aria-hidden="true">
-          <SeedBibleIcon size={22} />
-        </span>
-        <span className="sb-mobile-view-switcher-label">
-          {t("bible", { defaultValue: "Bible" })}
-        </span>
-      </button>
-      <button
-        type="button"
-        role="tab"
-        className={`sb-mobile-view-switcher-button${
-          isDrawerOpen ? " sb-mobile-view-switcher-button-active" : ""
-        }`}
-        aria-selected={isDrawerOpen}
-        onClick={openTabs}
-      >
-        <span
-          className="material-symbols-outlined sb-mobile-view-switcher-icon"
-          aria-hidden="true"
-        >
-          view_agenda
-        </span>
-        <span className="sb-mobile-view-switcher-label">
-          {t("tabs", { defaultValue: "Tabs" })}
-        </span>
-      </button>
-    </div>
   );
 }
 
@@ -561,12 +473,12 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
         <p className="sb-floating-chat-empty-title">
           {t("chat-empty-title", { defaultValue: "Chat is coming soon" })}
         </p>
-        <p className="sb-floating-chat-empty-body">
+        {/* <p className="sb-floating-chat-empty-body">
           {t("chat-empty-body", {
             defaultValue:
               "This is where you'll be able to ask questions and explore cross-references.",
           })}
-        </p>
+        </p> */}
       </div>
     </div>
   );
