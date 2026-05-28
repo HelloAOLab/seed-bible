@@ -872,9 +872,9 @@ export function BibleReader(props: BibleReaderProps) {
     selectorState.selectingTranslation.value = false;
     void selectorState.setOpen(true, currentPane);
   };
-  const openTranslationSelector = () => {
+  const openTranslationSelector = async () => {
+    await selectorState.setOpen(true, currentPane);
     selectorState.selectingTranslation.value = true;
-    void selectorState.setOpen(true, currentPane);
   };
 
   const renderMainContent = () => (
@@ -968,8 +968,7 @@ export function BibleReader(props: BibleReaderProps) {
                     openTranslationSelector();
                   }}
                 >
-                  {" "}
-                  • {translation.value?.shortName ?? translationId.value ?? ""}
+                  {translation.value?.shortName ?? translationId.value ?? ""}
                 </span>
               </h1>
             </div>

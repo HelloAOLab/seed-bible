@@ -921,6 +921,9 @@ h6 {
   color: var(--sb-book-title-font-color);
   white-space: nowrap;
   text-overflow: ellipsis;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .sb-bible-reader-mobile-header-book {
@@ -932,6 +935,11 @@ h6 {
   font-weight: 400;
   cursor: pointer;
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  display: inline-flex;
+  padding: 5px 10px;
+  border-radius: 15px;
+  margin-left: 5px;
 }
 
 .sb-bible-reader-mobile-header-play {
@@ -1004,6 +1012,14 @@ h6 {
 
 .sb-bible-reader-mobile .sb-reader-swipe-panel {
   padding-top: 60px;
+}
+
+.sb-language-english-name {
+  color: color-mix(
+    in srgb,
+    var(--sb-book-selector-font-color),
+    transparent 50%
+  );
 }
 
 .sb-reader-swipe-panel {
@@ -1637,6 +1653,12 @@ h6 {
     z-index: 99;
     width: 100vw;
     /* max-width: 420px; */
+  }
+
+  .sb-action-btns {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout {
@@ -4186,12 +4208,18 @@ h6 {
   /* Header gets a little more breathing room and a bottom divider so it
    * reads as a real top-bar over the tab list. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header {
-    padding: 16px 16px 12px;
-    border-bottom: 1px solid var(--sb-divider-color);
+    padding: 7px 0px;
   }
 
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-title {
-    font-size: 18px;
+    font-size: 24px;
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    font-family: var(--text-bookTitle-font);
+    color: var(--sb-book-title-font-color);
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   /* Tab list takes the body of the sidebar; leave room at the bottom for
@@ -4205,7 +4233,7 @@ h6 {
   .sb-tabs-sidebar-mobile-open .sb-tab-row {
     padding: 12px 14px;
     border-radius: 12px;
-    background: transparent;
+    background: var(--sb-tertiary-color);
     border: 1px solid transparent;
     min-height: 52px;
     align-items: center;
@@ -4237,15 +4265,16 @@ h6 {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin: 4px 16px 0;
-    padding: 8px 0;
+    margin: 0px 16px 0;
+    padding: 8px 15px;
     border: none;
-    background: transparent;
+    background: var(--sb-tertiary-color);
     color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
     font: inherit;
     font-size: 15px;
     cursor: pointer;
     text-align: start;
+    justify-content: space-between;
   }
 
   .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-inline-icon {
@@ -4270,7 +4299,6 @@ h6 {
   /* Add a thin divider above the inline button so it visually separates
    * from the tab list, matching the design. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
-    border-bottom: 1px solid var(--sb-divider-color);
     margin-inline: 16px;
     padding: 12px 0;
   }
@@ -4278,6 +4306,7 @@ h6 {
   /* Reset the desktop tab list padding now that we apply our own. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
     padding-bottom: 12px;
+    border-bottom: 1px solid var(--sb-divider-color);
   }
 
   /* ------------------------------------------------------------------
@@ -4289,7 +4318,7 @@ h6 {
     width: 100%;
     height: 100dvh;
     bottom: 0;
-    padding: 16px 0 68px;
+    padding: 16px 0 10px;
     border-radius: 0;
     border: none;
     transition: none;
@@ -4300,12 +4329,6 @@ h6 {
    * behaves like a tab swap (instant), not a sheet that slides up. */
   .sb-selector-overlay.open .sb-selector-panel {
     transform: none;
-  }
-
-  /* Hide the searchbar on mobile — the design shows only the two dropdowns
-   * + close button in the header row. */
-  .sb-selector-panel .searchbar {
-    display: none;
   }
 
   /* Tighten the header row to fit version-dropdown + testament-dropdown + X. */
@@ -4336,7 +4359,7 @@ h6 {
     height: 36px;
     border: none;
     background: transparent;
-    color: var(--sb-font-color);
+    color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
     cursor: pointer;
     flex-shrink: 0;
     padding: 0;
@@ -4347,7 +4370,7 @@ h6 {
     height: auto;
     flex: 1;
     min-height: 0;
-    padding: 8px 16px 60px;
+    padding: 8px 10px 0px;
   }
 
   /* Single-column books — full-width rows with chevrons + dividers. */
@@ -4360,12 +4383,21 @@ h6 {
 
   .sb-selector-panel .books-item {
     flex-direction: column;
-    gap: 0;
+    gap: 5px;
   }
 
   .sb-selector-panel .sidebar-itm,
   .sb-selector-panel .sidebar-ghost-itm {
     width: 100%;
+  }
+
+  .sb-selector-panel .sidebar-itm {
+    background-color: transparent;
+    color: inherit;
+  }
+
+  .sb-selector-panel .sidebar-itm:hover {
+    background-color: transparent;
   }
 
   .sb-selector-panel .sidebar-ghost-itm {
@@ -4374,10 +4406,14 @@ h6 {
 
   /* OT/NT title bigger on mobile to match the design. */
   .sb-selector-panel .testament-title {
-    font-size: 22px;
-    padding-left: 4px;
-    padding-bottom: 12px;
+    font-size: 18px;
+    padding-left: 8px;
+    padding-bottom: 5px;
     padding-top: 8px;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    gap: 5px;
   }
 
   .sb-selector-panel .separator {
@@ -6350,7 +6386,7 @@ h6 {
   border: 1px solid var(--sb-divider-color);
   padding: 0 8px 0 14px;
   height: 40px;
-  min-width: 200px;
+  min-width: 130px;
   width: auto;
   border-radius: 10px;
   color: var(--sb-font-color);
@@ -6479,9 +6515,12 @@ h6 {
 }
 
 .testament-selection {
-  margin-bottom: 16px;
-  padding: 4px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0px 0px 15px 0px;
   border-radius: 5px;
+  gap: 10px;
 }
 
 .sidebar-select {
@@ -6494,7 +6533,6 @@ h6 {
   animation: fadeInAnimation2 ease 1s;
   animation-iteration-count: 1;
   animation-fill-mode: forwards;
-  padding-left: 5px;
   cursor: pointer;
 }
 
@@ -6518,8 +6556,6 @@ h6 {
   font-size: 15px;
   font-weight: 500;
   padding: 10px 12px;
-  border-bottom: 1px solid var(--sb-divider-color);
-  border-radius: 0;
   font-family: "Satoshi", system-ui, sans-serif;
   color: var(--sb-font-color);
   text-transform: capitalize;
@@ -6544,12 +6580,16 @@ h6 {
   color: var(--sb-font-color);
 }
 
-.sidebar-selected-itm {
+.sidebar-selected-itm:hover {
   background-color: color-mix(
     in srgb,
     var(--sb-primary-color),
-    transparent 88%
+    transparent 80%
   );
+  color: var(--sb-primary-color);
+}
+
+.sidebar-selected-itm {
   color: var(--sb-primary-color);
   border-radius: 8px;
   border-bottom-color: transparent;
@@ -6589,12 +6629,12 @@ h6 {
   width: 375px;
   background: var(--sb-book-selector-background);
   border-radius: 8px;
-  box-shadow: 0 10px 30px var(--sb-detached-pane-toolbar-background);
+  box-shadow: 0 10px 20px var(--sb-detached-pane-toolbar-background);
   padding: 10px 10px 45px 10px;
   z-index: 2;
   position: absolute;
-  top: 55px;
-  left: 15px;
+  top: 70px;
+  left: 20px;
 }
 
 .translationSettingsModal {
@@ -6739,7 +6779,7 @@ h6 {
   }
 
   .testament-selection {
-    padding: 10px 0px;
+    padding: 5px 15px;
   }
 
   .sidebar-selected-title {
@@ -6766,6 +6806,7 @@ h6 {
 
   .testament-container {
     width: 100%;
+    color: var(--sb-font-color);
   }
 
   .dropdown-select {
@@ -6829,6 +6870,12 @@ h6 {
     row-gap: 13px;
     height: fit-content;
     justify-content: flex-start;
+    background: transparent;
+  }
+
+  .sb-selector-panel .sidebar-selected-itm:hover {
+    background: transparent;
+    color: var(--sb-primary-color);
   }
 
   .psalms-btn {
@@ -6850,6 +6897,8 @@ h6 {
   .sidebar-selected-itm {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
+    color: var(--sb-primary-color);
+    font-weight: 600;
   }
 
   .separator {
@@ -6865,19 +6914,19 @@ h6 {
   .modal {
     width: 100%;
     left: 0;
-    top: 50px;
-    height: calc(100% - 60px);
+    top: 5px;
+    height: calc(100% - 50px);
     border-radius: 0;
     box-shadow: none;
   }
 
   .translationSettingsModal {
-    top: 100px;
+    top: 55px;
     padding: 0px 10px;
     height: fit-content;
     width: 200px;
     left: auto;
-    right: 10px;
+    right: 40px;
     box-shadow: 0 5px 10px
       color-mix(
         in srgb,
@@ -6900,11 +6949,85 @@ h6 {
   }
 
   .language-list {
-    height: calc(100% - 30px);
+    height: 100%;
   }
 
   .footer {
-    bottom: -5px;
+    bottom: -45px;
+  }
+
+  .sb-select-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  .sb-select-modal {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: fit-content;
+    background: var(--sb-book-selector-background);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    box-shadow: 0 -5px 10px
+      color-mix(
+        in srgb,
+        var(--sb-detached-pane-toolbar-background) 15%,
+        transparent
+      );
+    padding: 20px 10px;
+  }
+
+  .sb-select-modal-content {
+    padding: 10px 24px 30px 24px;
+    /* height: 100%; */
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sb-select-modal-title-icon {
+    display: flex;
+    font-size: 22px;
+    color: var(--sb-primary-color);
+    /* padding: 10px; */
+    border-radius: 5px;
+    background: var(--sb-tertiary-color);
+    width: 45px;
+    height: 45px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sb-select-modal-title {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--sb-font-color);
+    margin-left: 10px;
+    text-align: center;
+  }
+
+  .sb-select-modal-actions {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .sb-select-modal-action-btn {
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    width: 40%;
+    justify-content: center;
+    gap: 10px;
+    font-weight: 500;
   }
 }
 .sb-translation-license-notice,
