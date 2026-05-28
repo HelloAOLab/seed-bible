@@ -1014,6 +1014,14 @@ h6 {
   padding-top: 60px;
 }
 
+.sb-language-english-name {
+  color: color-mix(
+    in srgb,
+    var(--sb-book-selector-font-color),
+    transparent 50%
+  );
+}
+
 .sb-reader-swipe-panel {
   flex: 0 0 33.333%;
   height: 100%;

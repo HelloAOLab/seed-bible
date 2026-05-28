@@ -31,6 +31,7 @@ interface BibleSelectorProps {
 
 export function BibleSelector(props: BibleSelectorProps) {
   const { isOpen, onClose, selectorState, bibleDataManager, className } = props;
+  const { isRtl } = useI18n();
 
   return (
     <div
@@ -38,6 +39,7 @@ export function BibleSelector(props: BibleSelectorProps) {
       className={`sb-selector-overlay ${isOpen ? "open" : ""}${
         className ? ` ${className}` : ""
       }`}
+      dir={isRtl ? "rtl" : "ltr"}
     >
       <div
         onClick={(event: Event) => {
@@ -868,7 +870,12 @@ const LanguageComponent = (props: {
   bibleDataManager: BibleDataManager;
 }) => {
   const { languageGroup, bibleSelectorState, bibleDataManager } = props;
-  const { language, languageEnglishName, translations } = languageGroup;
+  const {
+    language,
+    languageName: nativeLanguageName,
+    languageEnglishName,
+    translations,
+  } = languageGroup;
   const {
     languageQuery,
     selectedTranslation,
@@ -880,7 +887,7 @@ const LanguageComponent = (props: {
   const showRef = useRef<ReturnType<typeof signal<boolean>> | null>(null);
   if (!showRef.current) showRef.current = signal(false);
   const showSig = showRef.current;
-  const { t } = useI18n();
+  const { t, language: currentLanguage } = useI18n();
 
   const shareTranslatation = async (props: { translation: Translation }) => {
     const { translation } = props;
@@ -939,11 +946,19 @@ const LanguageComponent = (props: {
         style={{
           backgroundColor: showSig.value ? "" : "var(--sb-background)",
           marginBottom: showSig.value ? "0px" : "10px",
+          gap: "8px",
         }}
       >
-        <span style={{ textTransform: "capitalize" }}>
-          {languageEnglishName}
+        <span style={{ textTransform: "capitalize", flex: "1 1 auto" }}>
+          {nativeLanguageName}
         </span>
+        {language !== "eng" &&
+          nativeLanguageName !== languageEnglishName &&
+          languageEnglishName && (
+            <span className="sb-language-english-name">
+              ({languageEnglishName})
+            </span>
+          )}
         <span
           style={{
             transition: "transform 0.3s",
