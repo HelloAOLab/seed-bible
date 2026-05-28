@@ -1,4 +1,8 @@
-import { effect, signal, type Signal } from "@preact/signals";
+import {
+  // effect,
+  signal,
+  type Signal,
+} from "@preact/signals";
 import type {
   LoginManager,
   UserProfile,
@@ -17,19 +21,19 @@ export interface AvailableSharedSession {
 }
 
 /** Raw registry entry stored in the global CRDT document. */
-interface StoredRegistryEntry {
-  sessionId: string;
-  hostUserId: string;
-  /**
-   * CasualOS connection id of the client that published the entry. When the
-   * host's browser disconnects, that connection id drops from the registry
-   * doc's `remoteClients` list — we use that signal to hide stale entries
-   * left behind by hosts who closed without an explicit unpublish (or whose
-   * entry survived from a previous run of the app).
-   */
-  hostConnectionId: string | null;
-  publishedAt: number;
-}
+// interface StoredRegistryEntry {
+//   sessionId: string;
+//   hostUserId: string;
+//   /**
+//    * CasualOS connection id of the client that published the entry. When the
+//    * host's browser disconnects, that connection id drops from the registry
+//    * doc's `remoteClients` list — we use that signal to hide stale entries
+//    * left behind by hosts who closed without an explicit unpublish (or whose
+//    * entry survived from a previous run of the app).
+//    */
+//   hostConnectionId: string | null;
+//   publishedAt: number;
+// }
 
 export interface InvitationsManager {
   /**
@@ -57,45 +61,45 @@ export type OnJoinSharedSession = (
   sessionId: string
 ) => Promise<unknown> | unknown;
 
-const REGISTRY_DOC_ID = "shared-sessions-registry";
-const REGISTRY_DOC_DATA = "registry";
-const REGISTRY_MAP_NAME = "sessions";
+// const REGISTRY_DOC_ID = "shared-sessions-registry";
+// const REGISTRY_DOC_DATA = "registry";
+// const REGISTRY_MAP_NAME = "sessions";
 
 /**
  * Returns a stable local identifier for this client. Prefers the CasualOS
  * connection id (which is what `SessionsManager` uses to identify a
  * connected user anyway), falling back to a sentinel so comparisons work.
  */
-function getLocalIdentity(): string | null {
-  try {
-    if (typeof configBot !== "undefined") {
-      const id = configBot?.id;
-      if (typeof id === "string" && id.length > 0) return id;
-    }
-  } catch {
-    /* ignore */
-  }
-  return null;
-}
+// function getLocalIdentity(): string | null {
+//   try {
+//     if (typeof configBot !== "undefined") {
+//       const id = configBot?.id;
+//       if (typeof id === "string" && id.length > 0) return id;
+//     }
+//   } catch {
+//     /* ignore */
+//   }
+//   return null;
+// }
 
-function parseStoredEntry(value: unknown): StoredRegistryEntry | null {
-  if (!value || typeof value !== "object") return null;
-  const obj = value as Record<string, unknown>;
-  if (
-    typeof obj.sessionId !== "string" ||
-    typeof obj.hostUserId !== "string" ||
-    typeof obj.publishedAt !== "number"
-  ) {
-    return null;
-  }
-  return {
-    sessionId: obj.sessionId,
-    hostUserId: obj.hostUserId,
-    hostConnectionId:
-      typeof obj.hostConnectionId === "string" ? obj.hostConnectionId : null,
-    publishedAt: obj.publishedAt,
-  };
-}
+// function parseStoredEntry(value: unknown): StoredRegistryEntry | null {
+//   if (!value || typeof value !== "object") return null;
+//   const obj = value as Record<string, unknown>;
+//   if (
+//     typeof obj.sessionId !== "string" ||
+//     typeof obj.hostUserId !== "string" ||
+//     typeof obj.publishedAt !== "number"
+//   ) {
+//     return null;
+//   }
+//   return {
+//     sessionId: obj.sessionId,
+//     hostUserId: obj.hostUserId,
+//     hostConnectionId:
+//       typeof obj.hostConnectionId === "string" ? obj.hostConnectionId : null,
+//     publishedAt: obj.publishedAt,
+//   };
+// }
 
 /**
  * Creates the shared-sessions registry manager.
@@ -114,81 +118,83 @@ function parseStoredEntry(value: unknown): StoredRegistryEntry | null {
  * from the list so hosts don't see their own published sessions.
  */
 export function createInvitationsManager(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   login: LoginManager,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onJoin: OnJoinSharedSession
 ): InvitationsManager {
   const availableSessions = signal<AvailableSharedSession[]>([]);
-  const profileCache = new Map<string, UserProfile | null>();
-  const locallyDismissed = new Set<string>();
+  // const profileCache = new Map<string, UserProfile | null>();
+  // const locallyDismissed = new Set<string>();
 
-  let registryDoc: SharedDocument | null = null;
-  let registryMap: SharedMap<StoredRegistryEntry> | null = null;
-  let changesSubscription: { unsubscribe: () => void } | null = null;
-  let remoteClientsSubscription: { unsubscribe: () => void } | null = null;
-  let profileRefreshVersion = 0;
+  // let registryDoc: SharedDocument | null = null;
+  // let registryMap: SharedMap<StoredRegistryEntry> | null = null;
+  // let changesSubscription: { unsubscribe: () => void } | null = null;
+  // let remoteClientsSubscription: { unsubscribe: () => void } | null = null;
+  // let profileRefreshVersion = 0;
   // Connection ids that are currently connected to the registry document.
   // An entry whose `hostConnectionId` is not in this set is considered
   // stale (the host's browser closed without a clean unpublish) and is
   // hidden from the UI.
-  const liveConnectionIds = new Set<string>();
+  // const liveConnectionIds = new Set<string>();
 
-  const readStoredEntries = (): StoredRegistryEntry[] => {
-    if (!registryMap) return [];
-    const list: StoredRegistryEntry[] = [];
-    registryMap.forEach((value) => {
-      const parsed = parseStoredEntry(value);
-      if (parsed) list.push(parsed);
-    });
-    return list;
-  };
+  // const readStoredEntries = (): StoredRegistryEntry[] => {
+  //   if (!registryMap) return [];
+  //   const list: StoredRegistryEntry[] = [];
+  //   registryMap.forEach((value) => {
+  //     const parsed = parseStoredEntry(value);
+  //     if (parsed) list.push(parsed);
+  //   });
+  //   return list;
+  // };
 
-  const applyEntriesWithProfiles = (entries: StoredRegistryEntry[]) => {
-    const currentUserId = login.userId.value;
-    const currentConnectionId = getLocalIdentity();
-    const filtered = entries.filter(
-      (entry) =>
-        // Hide own sessions — hosts don't see themselves in the list.
-        // For logged-out users the host identity is the connection id,
-        // which is what we compare against.
-        entry.hostUserId !== currentUserId &&
-        entry.hostUserId !== currentConnectionId &&
-        !locallyDismissed.has(entry.sessionId) &&
-        // Only show entries whose host is currently connected. This means
-        // notifications only fire when a user is actually live in their
-        // shared session — no stale rows left over from previous runs.
-        entry.hostConnectionId !== null &&
-        liveConnectionIds.has(entry.hostConnectionId)
-    );
-    filtered.sort((a, b) => b.publishedAt - a.publishedAt);
-    availableSessions.value = filtered.map((entry) => ({
-      sessionId: entry.sessionId,
-      hostUserId: entry.hostUserId,
-      hostProfile: profileCache.get(entry.hostUserId) ?? null,
-      publishedAt: entry.publishedAt,
-    }));
-  };
+  // const applyEntriesWithProfiles = (entries: StoredRegistryEntry[]) => {
+  //   const currentUserId = login.userId.value;
+  //   const currentConnectionId = getLocalIdentity();
+  //   const filtered = entries.filter(
+  //     (entry) =>
+  //       // Hide own sessions — hosts don't see themselves in the list.
+  //       // For logged-out users the host identity is the connection id,
+  //       // which is what we compare against.
+  //       entry.hostUserId !== currentUserId &&
+  //       entry.hostUserId !== currentConnectionId &&
+  //       !locallyDismissed.has(entry.sessionId) &&
+  //       // Only show entries whose host is currently connected. This means
+  //       // notifications only fire when a user is actually live in their
+  //       // shared session — no stale rows left over from previous runs.
+  //       entry.hostConnectionId !== null &&
+  //       liveConnectionIds.has(entry.hostConnectionId)
+  //   );
+  //   filtered.sort((a, b) => b.publishedAt - a.publishedAt);
+  //   availableSessions.value = filtered.map((entry) => ({
+  //     sessionId: entry.sessionId,
+  //     hostUserId: entry.hostUserId,
+  //     hostProfile: profileCache.get(entry.hostUserId) ?? null,
+  //     publishedAt: entry.publishedAt,
+  //   }));
+  // };
 
-  const refreshProfiles = async (entries: StoredRegistryEntry[]) => {
-    const version = ++profileRefreshVersion;
-    const uniqueIds = Array.from(
-      new Set(entries.map((entry) => entry.hostUserId))
-    );
+  // const refreshProfiles = async (entries: StoredRegistryEntry[]) => {
+  //   const version = ++profileRefreshVersion;
+  //   const uniqueIds = Array.from(
+  //     new Set(entries.map((entry) => entry.hostUserId))
+  //   );
 
-    await Promise.all(
-      uniqueIds.map(async (userId) => {
-        if (profileCache.has(userId)) return;
-        try {
-          const profile = await login.getUserProfile(userId);
-          profileCache.set(userId, profile ?? null);
-        } catch {
-          profileCache.set(userId, null);
-        }
-      })
-    );
+  //   await Promise.all(
+  //     uniqueIds.map(async (userId) => {
+  //       if (profileCache.has(userId)) return;
+  //       try {
+  //         const profile = await login.getUserProfile(userId);
+  //         profileCache.set(userId, profile ?? null);
+  //       } catch {
+  //         profileCache.set(userId, null);
+  //       }
+  //     })
+  //   );
 
-    if (version !== profileRefreshVersion) return;
-    applyEntriesWithProfiles(entries);
-  };
+  //   if (version !== profileRefreshVersion) return;
+  //   applyEntriesWithProfiles(entries);
+  // };
 
   // TODO: Re-enable this when we can only listen for entries from users the current one follows (subscribes to).
   // const syncFromRegistry = () => {
@@ -241,73 +247,77 @@ export function createInvitationsManager(
 
   // Refresh the visible list when the current user id changes (so own
   // sessions get hidden appropriately and cached profiles re-apply).
-  const stopAuthEffect = effect(() => {
-    // Access userId so this effect re-runs on login/logout
-    void login.userId.value;
-    if (registryMap) {
-      applyEntriesWithProfiles(readStoredEntries());
-    }
-  });
+  // const stopAuthEffect = effect(() => {
+  //   // Access userId so this effect re-runs on login/logout
+  //   void login.userId.value;
+  //   if (registryMap) {
+  //     applyEntriesWithProfiles(readStoredEntries());
+  //   }
+  // });
 
   // Kick off the registry connection immediately — discoverability doesn't
   // require the current user to be logged in.
   // void openRegistry();
 
   const publishSession = async (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     session: BibleReadingSession
   ): Promise<void> => {
     // await openRegistry();
-    if (!registryDoc || !registryMap) return;
-    // Fall back to the connection id when the user isn't logged in so
-    // anonymous hosts still publish and other clients can discover them.
-    const hostConnectionId = getLocalIdentity();
-    const hostUserId = login.userId.value ?? hostConnectionId;
-    if (!hostUserId) return;
-    const entry: StoredRegistryEntry = {
-      sessionId: session.id,
-      hostUserId,
-      hostConnectionId,
-      publishedAt: Date.now(),
-    };
-    const docRef = registryDoc;
-    const mapRef = registryMap;
-    docRef.transact(() => {
-      mapRef.set(entry.sessionId, entry);
-    });
+    // if (!registryDoc || !registryMap) return;
+    // // Fall back to the connection id when the user isn't logged in so
+    // // anonymous hosts still publish and other clients can discover them.
+    // const hostConnectionId = getLocalIdentity();
+    // const hostUserId = login.userId.value ?? hostConnectionId;
+    // if (!hostUserId) return;
+    // const entry: StoredRegistryEntry = {
+    //   sessionId: session.id,
+    //   hostUserId,
+    //   hostConnectionId,
+    //   publishedAt: Date.now(),
+    // };
+    // const docRef = registryDoc;
+    // const mapRef = registryMap;
+    // docRef.transact(() => {
+    //   mapRef.set(entry.sessionId, entry);
+    // });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const unpublishSession = async (sessionId: string): Promise<void> => {
-    if (!registryDoc || !registryMap) return;
-    const docRef = registryDoc;
-    const mapRef = registryMap;
-    docRef.transact(() => {
-      mapRef.delete(sessionId);
-    });
+    // if (!registryDoc || !registryMap) return;
+    // const docRef = registryDoc;
+    // const mapRef = registryMap;
+    // docRef.transact(() => {
+    //   mapRef.delete(sessionId);
+    // });
   };
 
   const joinAvailableSession = async (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     entry: AvailableSharedSession
   ): Promise<void> => {
-    await Promise.resolve(onJoin(entry.sessionId));
+    // await Promise.resolve(onJoin(entry.sessionId));
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const dismissAvailableSession = (entry: AvailableSharedSession) => {
-    locallyDismissed.add(entry.sessionId);
-    if (registryMap) {
-      applyEntriesWithProfiles(readStoredEntries());
-    }
+    // locallyDismissed.add(entry.sessionId);
+    // if (registryMap) {
+    //   applyEntriesWithProfiles(readStoredEntries());
+    // }
   };
 
   const dispose = () => {
-    stopAuthEffect();
-    changesSubscription?.unsubscribe();
-    changesSubscription = null;
-    remoteClientsSubscription?.unsubscribe();
-    remoteClientsSubscription = null;
-    liveConnectionIds.clear();
-    registryDoc?.unsubscribe?.();
-    registryDoc = null;
-    registryMap = null;
+    // stopAuthEffect();
+    // changesSubscription?.unsubscribe();
+    // changesSubscription = null;
+    // remoteClientsSubscription?.unsubscribe();
+    // remoteClientsSubscription = null;
+    // liveConnectionIds.clear();
+    // registryDoc?.unsubscribe?.();
+    // registryDoc = null;
+    // registryMap = null;
   };
 
   return {
