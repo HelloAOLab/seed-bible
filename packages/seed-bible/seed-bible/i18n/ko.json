@@ -162,6 +162,10 @@
   "all-translations": "모든 번역",
   "popular-translations": "인기 번역",
   "copied-translation-share-link": "복사된 번역 공유 링크",
+  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
+  "current-tab": "Current Tab",
+  "about-extrabiblical-writings": "About Extrabiblical writings",
+  "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 시편",
   "2-psalms": "시편 2편",
   "3-psalms": "시편 3편",
@@ -188,14 +192,12 @@
   "add-bookmark": "서표",
   "play-audio": "오디오 재생",
   "play": "놀다",
-
   "discovery": "발견",
   "chat": "채팅",
-
   "today": "오늘",
   "you": "너",
   "bible": "성경",
-  "view-switcher": "뷰 전환기",
+
   "add-verse": "구절을 추가하세요",
   "add": "추가하다",
   "chat-empty-title": "채팅 기능이 곧 출시될 예정입니다.",
@@ -206,7 +208,6 @@
   "bookmark-folder-empty": "아직 여기에 북마크가 없습니다.",
   "bookmark-options": "북마크 옵션",
   "new-folder-placeholder": "폴더 이름",
-
   "tasks": "과제",
   "bookmarks": "책갈피",
   "hide-bookmarks": "북마크 숨기기",
@@ -217,5 +218,11 @@
   "folder-name-taken": "해당 이름의 폴더가 이미 존재합니다.",
   "add-to-new": "새 항목에 추가",
   "save": "구하다",
-  "bookmark-verses": "성경 구절을 북마크하세요"
+  "bookmark-verses": "성경 구절을 북마크하세요",
+  "today-coming-soon": "오늘 화면이 곧 나옵니다.",
+  "chat-coming-soon": "채팅 기능이 곧 출시될 예정입니다.",
+  "more-coming-soon": "더 많은 옵션이 곧 제공될 예정입니다.",
+  "discovery-coming-soon": "곧 디스커버리가 출시됩니다.",
+  "login-to-use-feature": "이 기능을 사용하려면 로그인해야 합니다.",
+  "link-to-join-shared-session-copied": "공유 세션에 참여할 수 있는 링크가 클립보드에 복사되었습니다."
 }

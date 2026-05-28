@@ -189,14 +189,11 @@
   "add-bookmark": "Marque-page",
   "play-audio": "Beta audio",
   "play": "Kobeta",
-
   "discovery": "Bokutani",
   "chat": "Kosolola",
-
   "today": "Lelo",
   "you": "Yo",
   "bible": "Biblia",
-  "view-switcher": "Tala commutateur",
   "add-verse": "Bakisa vɛrsɛ",
   "add": "Kobakisa",
   "chat-empty-title": "Chat ekoya kala mingi te",
@@ -207,7 +204,6 @@
   "bookmark-folder-empty": "Ba marque-pages awa nanu te.",
   "bookmark-options": "Ba options ya marque-page",
   "new-folder-placeholder": "Nkombo ya dossier",
-
   "tasks": "Misala",
   "bookmarks": "Ba marque-pages",
   "hide-bookmarks": "Bomba ba marque-pages",
@@ -217,5 +213,15 @@
   "folder-name-taken": "Dossier moko oyo ezali na kombo wana ezali déjà.",
   "add-to-new": "Bakisa na ya sika",
   "save": "Kobikisa",
-  "bookmark-verses": "Bavɛrsɛ ya kotya bilembo"
+  "bookmark-verses": "Bavɛrsɛ ya kotya bilembo",
+  "open-new-chapter-in-new-or-current-tab": "Fungola mokapo ya sika na tab ya sika to ya lelo",
+  "current-tab": "Tab ya lelo",
+  "about-extrabiblical-writings": "Na ntina na makomi ya Extrabiblique",
+  "apocrypha-info-text": "Moko te kati na makomi oyo ezali na eteni oyo etalelamaki ata mokolo moko te lokola Makomami na masanga ya Bayuda to ya boklisto ya liboso. Biblia ezali liboke ya mikanda ya sikisiki. Bayuda mpe baklisto bayokanaki ntango nyonso na Kondimana ya Kala, oyo euti na ensemble fixe ya makomi mosantu oyo bato ya Bayuda bazalaki kobenga Tanakh mpe bakristu babengaka Kondimana ya Kala. Makambo oyo ezali na kati ya Tanakh mpe Kondimana ya Kala ezali mpenza ndenge moko, kasi mbala mingi ebongisami ndenge mosusu. Baklisto bayebi lisusu Kondimana ya Sika, oyo elobeli lisolo ya Yesu, mateya na ye, mpe makomi ya balandi na ye. Mikanda oyo ezali awa na nse eyebanaki mpe etángamaki mingi na ntango oyo Biblia ekomamaki, kasi bazalaki kotalela yango ata mokolo moko te lokola Makomami. Atako bakomi ya kala bazalaki ntango mosusu kozongela makomi ndenge na ndenge bakisa mpe bapowɛti, bato ya filozofi, mpe mikanda mosusu, kozongela likambo moko ezali ndenge moko te na kotalela yango lokola Makomami. Mikanda yango ekotisami awa mpo na kolobela makambo ya kala mpe ya mikanda.",
+  "today-coming-soon": "Lelo écran ekoya kala mingi te",
+  "chat-coming-soon": "Chat ekoya kala mingi te",
+  "more-coming-soon": "Ba options mosusu ekoya kala mingi te",
+  "discovery-coming-soon": "Bokutani ezali koya kala mingi te",
+  "login-to-use-feature": "Esengeli okɔta mpo na kosalela fonctionnalité oyo.",
+  "link-to-join-shared-session-copied": "Lien moko mpo na kosangana na session oyo bakabolaki esalemaki kopi na tableau de bord na yo"
 }

@@ -189,14 +189,11 @@
   "add-bookmark": "Boekmerk",
   "play-audio": "Speel oudio",
   "play": "Speel",
-
   "discovery": "Ontdekking",
   "chat": "Klets",
-
   "today": "Vandag",
   "you": "Jy",
   "bible": "Bybel",
-  "view-switcher": "Kykskakelaar",
   "add-verse": "Voeg vers by",
   "add": "Voeg by",
   "chat-empty-title": "Klets kom binnekort",
@@ -207,7 +204,6 @@
   "bookmark-folder-empty": "Geen boekmerke hier nog nie.",
   "bookmark-options": "Boekmerkopsies",
   "new-folder-placeholder": "Lêernaam",
-
   "tasks": "Take",
   "bookmarks": "Boekmerke",
   "hide-bookmarks": "Versteek boekmerke",
@@ -217,5 +213,15 @@
   "folder-name-taken": "'n Vouer met daardie naam bestaan ​​reeds.",
   "add-to-new": "Voeg by nuut",
   "save": "Stoor",
-  "bookmark-verses": "Boekmerk verse"
+  "bookmark-verses": "Boekmerk verse",
+  "today-coming-soon": "Vandag se skerm kom binnekort",
+  "chat-coming-soon": "Klets kom binnekort",
+  "more-coming-soon": "Meer opsies kom binnekort",
+  "discovery-coming-soon": "Ontdekking kom binnekort",
+  "login-to-use-feature": "Jy moet aanmeld om hierdie funksie te gebruik.",
+  "link-to-join-shared-session-copied": "'n Skakel om by die gedeelde sessie aan te sluit, is na jou knipbord gekopieer",
+  "open-new-chapter-in-new-or-current-tab": "Maak die nuwe hoofstuk oop in die nuwe of huidige oortjie",
+  "current-tab": "Huidige oortjie",
+  "about-extrabiblical-writings": "Oor buite-Bybelse geskrifte",
+  "apocrypha-info-text": "Geen van die geskrifte in hierdie afdeling is ooit deur vroeë Joodse of Christelike gemeenskappe as die Skrif beskou nie. Die Bybel is 'n spesifieke versameling boeke. Jode en Christene het nog altyd saamgestem oor die Ou Testament, wat afkomstig is van 'n vaste stel heilige geskrifte wat die Joodse volk die Tanakh genoem het en Christene die Ou Testament. Die inhoud van die Tanakh en die Ou Testament is presies dieselfde, maar word gewoonlik anders gerangskik. Christene erken ook die Nuwe Testament, wat die verhaal van Jesus, sy leringe en die geskrifte van sy volgelinge vertel. Die geskrifte hieronder was bekend en wyd gelees ten tye van die Bybel se skryf, maar hulle is nooit as die Skrif behandel nie. Terwyl antieke outeurs soms 'n wye reeks tekste aangehaal het, insluitend digters, filosowe en ander geskrifte, is die aanhaling van iets nie dieselfde as om dit as die Skrif te behandel nie. Hierdie geskrifte word hier slegs vir historiese en literêre verwysing ingesluit."
 }

@@ -162,6 +162,10 @@
   "all-translations": "सभी अनुवाद",
   "popular-translations": "लोकप्रिय अनुवाद",
   "copied-translation-share-link": "अनुवादित प्रतिलिपि का साझा लिंक",
+  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
+  "current-tab": "Current Tab",
+  "about-extrabiblical-writings": "About Extrabiblical writings",
+  "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 भजन संहिता",
   "2-psalms": "2 भजन संहिता",
   "3-psalms": "3 भजन संहिता",
@@ -188,14 +192,12 @@
   "add-bookmark": "बुकमार्क",
   "play-audio": "ऑडियो चलाएं",
   "play": "खेल",
-
   "discovery": "खोज",
   "chat": "बात करना",
-
   "today": "आज",
   "you": "आप",
   "bible": "बाइबिल",
-  "view-switcher": "दृश्य स्विचर",
+
   "add-verse": "श्लोक जोड़ें",
   "add": "जोड़ना",
   "chat-empty-title": "चैट जल्द ही आ रही है",
@@ -206,7 +208,6 @@
   "bookmark-folder-empty": "अभी यहां कोई बुकमार्क नहीं है।",
   "bookmark-options": "बुकमार्क विकल्प",
   "new-folder-placeholder": "फ़ोल्डर का नाम",
-
   "tasks": "कार्य",
   "bookmarks": "बुकमार्क",
   "hide-bookmarks": "बुकमार्क छुपाएँ",
@@ -217,5 +218,11 @@
   "folder-name-taken": "उस नाम का एक फोल्डर पहले से मौजूद है।",
   "add-to-new": "नए में जोड़ें",
   "save": "बचाना",
-  "bookmark-verses": "श्लोकों को बुकमार्क करें"
+  "bookmark-verses": "श्लोकों को बुकमार्क करें",
+  "today-coming-soon": "टुडे स्क्रीन जल्द आ रहा है",
+  "chat-coming-soon": "चैट जल्द ही आ रही है",
+  "more-coming-soon": "जल्द ही और विकल्प उपलब्ध होंगे",
+  "discovery-coming-soon": "डिस्कवरी जल्द आ रही है",
+  "login-to-use-feature": "इस सुविधा का उपयोग करने के लिए आपको लॉग इन करना होगा।",
+  "link-to-join-shared-session-copied": "साझा सत्र में शामिल होने का लिंक आपके क्लिपबोर्ड पर कॉपी कर दिया गया है।"
 }

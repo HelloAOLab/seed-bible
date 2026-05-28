@@ -162,6 +162,10 @@
   "all-translations": "ሁሉም ትርጉሞች",
   "popular-translations": "ታዋቂ ትርጉሞች",
   "copied-translation-share-link": "የተቀዳ የትርጉም ማጋሪያ አገናኝ",
+  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
+  "current-tab": "Current Tab",
+  "about-extrabiblical-writings": "About Extrabiblical writings",
+  "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1ኛ መዝሙራት",
   "2-psalms": "2 መዝሙራት",
   "3-psalms": "3 መዝሙራት",
@@ -188,14 +192,12 @@
   "add-bookmark": "ዕልባት ያድርጉ",
   "play-audio": "ኦዲዮ አጫውት",
   "play": "ይጫወቱ",
-
   "discovery": "ግኝት",
   "chat": "ቻት",
-
   "today": "ዛሬ",
   "you": "አንተ",
   "bible": "መጽሐፍ ቅዱስ",
-  "view-switcher": "መቀየሪያውን ይመልከቱ",
+
   "add-verse": "ጥቅስ ጨምር",
   "add": "ያክሉ",
   "chat-empty-title": "ቻት በቅርቡ ይመጣል",
@@ -206,7 +208,6 @@
   "bookmark-folder-empty": "እዚህ እስካሁን ምንም ዕልባቶች የሉም።",
   "bookmark-options": "የዕልባት አማራጮች",
   "new-folder-placeholder": "የአቃፊ ስም",
-
   "tasks": "ተግባራት",
   "bookmarks": "ዕልባቶች",
   "hide-bookmarks": "ዕልባቶችን ደብቅ",
@@ -217,5 +218,11 @@
   "folder-name-taken": "በዚያ ስም አንድ አቃፊ አስቀድሞ አለ።",
   "add-to-new": "ወደ አዲስ ያክሉ",
   "save": "አስቀምጥ",
-  "bookmark-verses": "ጥቅሶችን ዕልባት ያድርጉ"
+  "bookmark-verses": "ጥቅሶችን ዕልባት ያድርጉ",
+  "today-coming-soon": "የዛሬው ስክሪን በቅርቡ ይመጣል",
+  "chat-coming-soon": "ቻት በቅርቡ ይመጣል",
+  "more-coming-soon": "ተጨማሪ አማራጮች በቅርቡ ይመጣሉ",
+  "discovery-coming-soon": "ግኝት በቅርቡ ይመጣል",
+  "login-to-use-feature": "ይህንን ባህሪ ለመጠቀም መግባት አለብዎት።",
+  "link-to-join-shared-session-copied": "የተጋራውን ክፍለ ጊዜ የሚቀላቀሉበት አገናኝ ወደ ቅንጥብ ሰሌዳዎ ተገልብጧል"
 }

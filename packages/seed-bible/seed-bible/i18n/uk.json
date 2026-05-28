@@ -162,6 +162,10 @@
   "all-translations": "Усі переклади",
   "popular-translations": "Популярні переклади",
   "copied-translation-share-link": "Скопійоване посилання для обміну перекладом",
+  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
+  "current-tab": "Current Tab",
+  "about-extrabiblical-writings": "About Extrabiblical writings",
+  "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 Псалом",
   "2-psalms": "2 Псалми",
   "3-psalms": "3 Псалми",
@@ -188,14 +192,12 @@
   "add-bookmark": "Закладка",
   "play-audio": "Відтворити аудіо",
   "play": "Грати",
-
   "discovery": "Відкриття",
   "chat": "Чат",
-
   "today": "Сьогодні",
   "you": "Ви",
   "bible": "Біблія",
-  "view-switcher": "Перемикач переглядів",
+
   "add-verse": "Додати вірш",
   "add": "Додати",
   "chat-empty-title": "Чат буде доступний незабаром",
@@ -206,7 +208,6 @@
   "bookmark-folder-empty": "Тут ще немає закладок.",
   "bookmark-options": "Параметри закладок",
   "new-folder-placeholder": "Назва папки",
-
   "tasks": "Завдання",
   "bookmarks": "Закладки",
   "hide-bookmarks": "Приховати закладки",
@@ -217,5 +218,11 @@
   "folder-name-taken": "Папка з такою назвою вже існує.",
   "add-to-new": "Додати до нового",
   "save": "Зберегти",
-  "bookmark-verses": "Закладка віршів"
+  "bookmark-verses": "Закладка віршів",
+  "today-coming-soon": "Сьогоднішній екран з'явиться незабаром",
+  "chat-coming-soon": "Чат буде доступний незабаром",
+  "more-coming-soon": "Більше опцій з'явиться незабаром",
+  "discovery-coming-soon": "Відкриття скоро відбудеться",
+  "login-to-use-feature": "Щоб скористатися цією функцією, вам потрібно увійти.",
+  "link-to-join-shared-session-copied": "Посилання для приєднання до спільного сеансу скопійовано до буфера обміну"
 }

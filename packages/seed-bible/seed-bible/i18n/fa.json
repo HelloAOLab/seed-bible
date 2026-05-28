@@ -162,6 +162,10 @@
   "all-translations": "همه ترجمه‌ها",
   "popular-translations": "ترجمه‌های محبوب",
   "copied-translation-share-link": "لینک اشتراک‌گذاری ترجمه کپی شد",
+  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
+  "current-tab": "Current Tab",
+  "about-extrabiblical-writings": "About Extrabiblical writings",
+  "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "مزامیر اول",
   "2-psalms": "۲ مزامیر",
   "3-psalms": "۳ مزامیر",
@@ -188,14 +192,12 @@
   "add-bookmark": "نشانه‌گذاری",
   "play-audio": "پخش صدا",
   "play": "بازی",
-
   "discovery": "کشف",
   "chat": "چت",
-
   "today": "امروز",
   "you": "شما",
   "bible": "کتاب مقدس",
-  "view-switcher": "مشاهده سوئیچر",
+
   "add-verse": "اضافه کردن آیه",
   "add": "اضافه کردن",
   "chat-empty-title": "چت به زودی فعال می‌شود",
@@ -206,7 +208,6 @@
   "bookmark-folder-empty": "هنوز اینجا هیچ نشانکی وجود ندارد.",
   "bookmark-options": "گزینه‌های نشانک‌گذاری",
   "new-folder-placeholder": "نام پوشه",
-
   "tasks": "وظایف",
   "bookmarks": "نشانک‌ها",
   "hide-bookmarks": "پنهان کردن نشانک‌ها",
@@ -217,5 +218,11 @@
   "folder-name-taken": "پوشه‌ای با این نام از قبل وجود دارد.",
   "add-to-new": "اضافه کردن به جدید",
   "save": "ذخیره",
-  "bookmark-verses": "آیات را نشانه‌گذاری کنید"
+  "bookmark-verses": "آیات را نشانه‌گذاری کنید",
+  "today-coming-soon": "صفحه نمایش امروز به زودی منتشر می‌شود",
+  "chat-coming-soon": "چت به زودی فعال می‌شود",
+  "more-coming-soon": "گزینه‌های بیشتر به زودی",
+  "discovery-coming-soon": "دیسکاوری به زودی از راه می‌رسد",
+  "login-to-use-feature": "برای استفاده از این قابلیت باید وارد سیستم شوید.",
+  "link-to-join-shared-session-copied": "پیوندی برای پیوستن به جلسه مشترک در کلیپ‌بورد شما کپی شد"
 }

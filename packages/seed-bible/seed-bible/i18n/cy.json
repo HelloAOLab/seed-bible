@@ -189,14 +189,11 @@
   "add-bookmark": "Nod tudalen",
   "play-audio": "Chwarae sain",
   "play": "Chwarae",
-
   "discovery": "Darganfyddiad",
   "chat": "Sgwrs",
-
   "today": "Heddiw",
   "you": "Chi",
   "bible": "Beibl",
-  "view-switcher": "Newidiwr golygfeydd",
   "add-verse": "Ychwanegu pennill",
   "add": "Ychwanegu",
   "chat-empty-title": "Mae sgwrs yn dod yn fuan",
@@ -207,7 +204,6 @@
   "bookmark-folder-empty": "Dim nodau tudalen yma eto.",
   "bookmark-options": "Dewisiadau nod tudalen",
   "new-folder-placeholder": "Enw'r ffolder",
-
   "tasks": "Tasgau",
   "bookmarks": "Nodau Tudalen",
   "hide-bookmarks": "Cuddio nodau tudalen",
@@ -217,5 +213,15 @@
   "folder-name-taken": "Mae ffolder gyda'r enw hwnnw eisoes yn bodoli.",
   "add-to-new": "Ychwanegu at newydd",
   "save": "Cadw",
-  "bookmark-verses": "Nodwch benillion"
+  "bookmark-verses": "Nodwch benillion",
+  "open-new-chapter-in-new-or-current-tab": "Agorwch y bennod newydd mewn tab newydd neu gyfredol",
+  "current-tab": "Tab Cyfredol",
+  "about-extrabiblical-writings": "Ynglŷn ag ysgrifau allfeiblaidd",
+  "apocrypha-info-text": "Ni chafodd yr un o'r ysgrifau yn yr adran hon eu hystyried yn Ysgrythur gan gymunedau Iddewig na Christnogol cynnar. Mae'r Beibl yn gasgliad penodol o lyfrau. Mae Iddewon a Christnogion bob amser wedi cytuno ar yr Hen Destament, sy'n dod o set sefydlog o ysgrifau cysegredig y mae'r bobl Iddewig yn eu galw'n Tanakh a Christnogion yn ei alw'n Hen Destament. Mae cynnwys y Tanakh a'r Hen Destament yn union yr un fath, ond maent fel arfer wedi'u trefnu'n wahanol. Mae Cristnogion hefyd yn cydnabod y Testament Newydd, sy'n adrodd hanes Iesu, ei ddysgeidiaeth, ac ysgrifau ei ddilynwyr. Roedd yr ysgrifau isod yn hysbys ac yn cael eu darllen yn eang ar yr adeg ysgrifennwyd y Beibl, ond ni chawsant eu trin erioed fel Ysgrythur. Er bod awduron hynafol weithiau'n dyfynnu ystod eang o destunau gan gynnwys beirdd, athronwyr, ac ysgrifau eraill, nid yw dyfynnu rhywbeth yr un peth â'i drin fel Ysgrythur. Mae'r ysgrifau hyn wedi'u cynnwys yma at ddibenion hanesyddol a llenyddol yn unig.",
+  "today-coming-soon": "Mae sgrin heddiw yn dod yn fuan",
+  "chat-coming-soon": "Mae sgwrs yn dod yn fuan",
+  "more-coming-soon": "Mwy o opsiynau yn dod yn fuan",
+  "discovery-coming-soon": "Mae darganfyddiad yn dod yn fuan",
+  "login-to-use-feature": "Rhaid i chi fewngofnodi i ddefnyddio'r nodwedd hon.",
+  "link-to-join-shared-session-copied": "Copïwyd dolen i ymuno â'r sesiwn a rennir i'ch clipfwrdd"
 }

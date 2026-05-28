@@ -189,14 +189,11 @@
   "add-bookmark": "Bogmærke",
   "play-audio": "Afspil lyd",
   "play": "Spil",
-
   "discovery": "Opdagelse",
   "chat": "Snak",
-
   "today": "I dag",
   "you": "Du",
   "bible": "Bibel",
-  "view-switcher": "Visningsskifter",
   "add-verse": "Tilføj vers",
   "add": "Tilføje",
   "chat-empty-title": "Chatten kommer snart",
@@ -207,7 +204,6 @@
   "bookmark-folder-empty": "Ingen bogmærker her endnu.",
   "bookmark-options": "Bogmærkeindstillinger",
   "new-folder-placeholder": "Mappenavn",
-
   "tasks": "Opgaver",
   "bookmarks": "Bogmærker",
   "hide-bookmarks": "Skjul bogmærker",
@@ -217,5 +213,15 @@
   "folder-name-taken": "Der findes allerede en mappe med det navn.",
   "add-to-new": "Tilføj til ny",
   "save": "Spare",
-  "bookmark-verses": "Bogmærk vers"
+  "bookmark-verses": "Bogmærk vers",
+  "open-new-chapter-in-new-or-current-tab": "Åbn det nye kapitel i en ny eller nuværende fane",
+  "current-tab": "Aktuel fane",
+  "about-extrabiblical-writings": "Om udenbibelske skrifter",
+  "apocrypha-info-text": "Ingen af ​​skrifterne i dette afsnit blev nogensinde betragtet som Skriften af ​​tidlige jødiske eller kristne samfund. Bibelen er en specifik samling af bøger. Jøder og kristne har altid været enige om Det Gamle Testamente, som stammer fra et fast sæt hellige skrifter, som det jødiske folk kalder Tanakh, og kristne kalder Det Gamle Testamente. Indholdet af Tanakh og Det Gamle Testamente er nøjagtig det samme, men er ofte arrangeret forskelligt. Kristne anerkender desuden Det Nye Testamente, som fortæller historien om Jesus, hans lære og hans tilhængeres skrifter. Skrifterne nedenfor var kendte og bredt læste på det tidspunkt, hvor Bibelen blev skrevet, men de blev aldrig behandlet som Skriften. Mens gamle forfattere nogle gange citerede en bred vifte af tekster, herunder digtere, filosoffer og andre skrifter, er det ikke det samme at citere noget som at behandle det som Skriften. Disse skrifter er kun inkluderet her til historisk og litterær reference.",
+  "today-coming-soon": "Dagens skærm kommer snart",
+  "chat-coming-soon": "Chatten kommer snart",
+  "more-coming-soon": "Flere muligheder kommer snart",
+  "discovery-coming-soon": "Opdagelsen kommer snart",
+  "login-to-use-feature": "Du skal logge ind for at bruge denne funktion.",
+  "link-to-join-shared-session-copied": "Et link til at deltage i den delte session blev kopieret til din udklipsholder"
 }

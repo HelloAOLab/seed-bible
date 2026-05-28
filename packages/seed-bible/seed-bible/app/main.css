@@ -78,7 +78,8 @@
   --sb-selected-verse-font-family: inherit;
   --sb-selected-verse-font-color: inherit;
   --sb-selected-verse-background-color: inherit;
-  --sb-selected-verse-text-decoration: underline;
+  --sb-selected-verse-border-bottom: 2px dashed currentColor;
+  --sb-selected-verse-text-decoration: none;
   --sb-selected-verse-text-decoration-color: currentColor;
 
   --sb-hebrew-subtitle-font-family: "Newsreader", serif;
@@ -920,6 +921,9 @@ h6 {
   color: var(--sb-book-title-font-color);
   white-space: nowrap;
   text-overflow: ellipsis;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .sb-bible-reader-mobile-header-book {
@@ -931,6 +935,11 @@ h6 {
   font-weight: 400;
   cursor: pointer;
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  display: inline-flex;
+  padding: 5px 10px;
+  border-radius: 15px;
+  margin-left: 5px;
 }
 
 .sb-bible-reader-mobile-header-play {
@@ -1005,12 +1014,21 @@ h6 {
   padding-top: 60px;
 }
 
+.sb-language-english-name {
+  color: color-mix(
+    in srgb,
+    var(--sb-book-selector-font-color),
+    transparent 50%
+  );
+}
+
 .sb-reader-swipe-panel {
   flex: 0 0 33.333%;
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
   scrollbar-width: none;
 }
 
@@ -1221,6 +1239,15 @@ h6 {
   font-weight: 500;
   font-family: inherit;
   padding: 4px 0;
+  width: 100%;
+}
+.sb-mobile-settings-icon svg path {
+  stroke: var(--sb-primary-color);
+}
+
+.sb-mobile-settings-sheet-all-settings-chevron {
+  margin-inline-start: auto;
+  opacity: 0.7;
 }
 
 .sb-chapter-content {
@@ -1301,7 +1328,12 @@ h6 {
 }
 
 .sb-verse-selected {
-  text-decoration: underline;
+  font-family: var(--sb-selected-verse-font-family);
+  color: var(--sb-selected-verse-font-color);
+  background-color: var(--sb-selected-verse-background-color);
+  border-bottom: var(--sb-selected-verse-border-bottom);
+  text-decoration: var(--sb-selected-verse-text-decoration);
+  text-decoration-color: var(--sb-selected-verse-text-decoration-color);
 }
 
 .sb-verse-number {
@@ -1313,6 +1345,7 @@ h6 {
   vertical-align: middle;
   margin-inline-start: 6px;
   margin-inline-end: 3px;
+  color: color-mix(in srgb, var(--sb-verse-font-color), transparent 30%);
 }
 
 .sb-poem-line-1 {
@@ -1622,6 +1655,12 @@ h6 {
     /* max-width: 420px; */
   }
 
+  .sb-action-btns {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout {
     position: static;
     transform: none;
@@ -1822,6 +1861,8 @@ h6 {
     color: var(--sb-reader-toolbar-floating-button-font-color);
     box-shadow: var(--sb-reader-toolbar-floating-button-box-shadow);
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .sb-reader-toolbar-floating-button-left {
@@ -1838,7 +1879,7 @@ h6 {
    * slides back into view. */
   body.sb-scroll-hide-bars .sb-reader-toolbar-wrap {
     transform: translateX(-50%) translateY(100%);
-    pointer-events: none;
+    /* pointer-events: none; */
   }
 }
 
@@ -2077,6 +2118,33 @@ h6 {
 .sb-selector-overlay.open {
   pointer-events: all;
   /* background: rgba(0, 0, 0, 0.3); */
+}
+
+/* Fix for iOS devices */
+/* For some reason, pointer-events doesn't get set properly on iOS sometimes */
+/* On mobile, we can just hide and show the selector anyways because we disable transitions for mobile devices */
+.is-webkit {
+  & .sb-selector-overlay,
+  &.sb-selector-overlay {
+    display: none;
+    pointer-events: all;
+  }
+
+  & .sb-selector-overlay.open,
+  &.sb-selector-overlay.open {
+    display: flex;
+  }
+}
+
+@media (max-width: 768px) {
+  .sb-selector-overlay {
+    display: none;
+    pointer-events: all;
+  }
+
+  .sb-selector-overlay.open {
+    display: flex;
+  }
 }
 
 .sb-selector-panel {
@@ -3053,7 +3121,7 @@ h6 {
 }
 
 .sb-collapsed-tab-tile {
-  width: 40px;
+  width: 53px;
   height: 40px;
   border-radius: 10px;
   border: var(--sb-tab-border);
@@ -3578,7 +3646,7 @@ h6 {
   transition: filter 0.15s ease;
 
   &.sb-collapsed-tab-add-button {
-    width: 40px;
+    width: 53px;
     height: 40px;
   }
 }
@@ -4010,8 +4078,12 @@ h6 {
   width: 35px;
 }
 
+.sb-sidebar-icon-button path {
+  stroke: currentColor;
+}
+
 .sb-sidebar-icon-button-selected {
-  box-shadow: inset 0 0 0 2px var(--sb-primary-color);
+  color: var(--sb-primary-color);
 }
 
 .sb-sidebar-close-button {
@@ -4136,12 +4208,18 @@ h6 {
   /* Header gets a little more breathing room and a bottom divider so it
    * reads as a real top-bar over the tab list. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header {
-    padding: 16px 16px 12px;
-    border-bottom: 1px solid var(--sb-divider-color);
+    padding: 7px 0px;
   }
 
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-title {
-    font-size: 18px;
+    font-size: 24px;
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    font-family: var(--text-bookTitle-font);
+    color: var(--sb-book-title-font-color);
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   /* Tab list takes the body of the sidebar; leave room at the bottom for
@@ -4155,7 +4233,7 @@ h6 {
   .sb-tabs-sidebar-mobile-open .sb-tab-row {
     padding: 12px 14px;
     border-radius: 12px;
-    background: transparent;
+    background: var(--sb-tertiary-color);
     border: 1px solid transparent;
     min-height: 52px;
     align-items: center;
@@ -4187,15 +4265,16 @@ h6 {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin: 4px 16px 0;
-    padding: 8px 0;
+    margin: 0px 16px 0;
+    padding: 8px 15px;
     border: none;
-    background: transparent;
+    background: var(--sb-tertiary-color);
     color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
     font: inherit;
     font-size: 15px;
     cursor: pointer;
     text-align: start;
+    justify-content: space-between;
   }
 
   .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-inline-icon {
@@ -4220,7 +4299,6 @@ h6 {
   /* Add a thin divider above the inline button so it visually separates
    * from the tab list, matching the design. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
-    border-bottom: 1px solid var(--sb-divider-color);
     margin-inline: 16px;
     padding: 12px 0;
   }
@@ -4228,69 +4306,7 @@ h6 {
   /* Reset the desktop tab list padding now that we apply our own. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
     padding-bottom: 12px;
-  }
-
-  /* Bottom Bible / Tabs view switcher — a single floating element rendered
-   * once in main.tsx and pinned to the bottom of the viewport. It stays
-   * in place while the Tabs drawer and BibleSelector swap above it so the
-   * switcher itself never appears to move when the user toggles views. */
-  .sb-mobile-view-switcher {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    gap: 6px;
-    padding: 6px 8px 8px;
-    background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-    border-top: 1px solid var(--sb-divider-color);
-    z-index: 1100;
-  }
-
-  .sb-mobile-view-switcher-button {
-    flex: 1;
-    display: inline-flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 10px 8px;
-    border: none;
-    background: transparent;
-    color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
-    font: inherit;
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: 10px;
-    transition:
-      background-color 0.15s ease,
-      color 0.15s ease;
-  }
-
-  .sb-mobile-view-switcher-button-active {
-    background: var(--sb-reader-background);
-    color: var(--sb-primary-color);
-    font-weight: 600;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  }
-
-  .sb-mobile-view-switcher-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    font-size: 22px;
-    line-height: 1;
-    flex-shrink: 0;
-  }
-
-  .sb-mobile-view-switcher-icon > img,
-  .sb-mobile-view-switcher-icon > svg {
-    display: block;
-    max-width: 22px;
-    max-height: 22px;
+    border-bottom: 1px solid var(--sb-divider-color);
   }
 
   /* ------------------------------------------------------------------
@@ -4302,7 +4318,7 @@ h6 {
     width: 100%;
     height: 100dvh;
     bottom: 0;
-    padding: 16px 0 68px;
+    padding: 16px 0 10px;
     border-radius: 0;
     border: none;
     transition: none;
@@ -4313,12 +4329,6 @@ h6 {
    * behaves like a tab swap (instant), not a sheet that slides up. */
   .sb-selector-overlay.open .sb-selector-panel {
     transform: none;
-  }
-
-  /* Hide the searchbar on mobile — the design shows only the two dropdowns
-   * + close button in the header row. */
-  .sb-selector-panel .searchbar {
-    display: none;
   }
 
   /* Tighten the header row to fit version-dropdown + testament-dropdown + X. */
@@ -4349,7 +4359,7 @@ h6 {
     height: 36px;
     border: none;
     background: transparent;
-    color: var(--sb-font-color);
+    color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
     cursor: pointer;
     flex-shrink: 0;
     padding: 0;
@@ -4360,7 +4370,7 @@ h6 {
     height: auto;
     flex: 1;
     min-height: 0;
-    padding: 8px 16px 60px;
+    padding: 8px 10px 0px;
   }
 
   /* Single-column books — full-width rows with chevrons + dividers. */
@@ -4373,12 +4383,21 @@ h6 {
 
   .sb-selector-panel .books-item {
     flex-direction: column;
-    gap: 0;
+    gap: 5px;
   }
 
   .sb-selector-panel .sidebar-itm,
   .sb-selector-panel .sidebar-ghost-itm {
     width: 100%;
+  }
+
+  .sb-selector-panel .sidebar-itm {
+    background-color: transparent;
+    color: inherit;
+  }
+
+  .sb-selector-panel .sidebar-itm:hover {
+    background-color: transparent;
   }
 
   .sb-selector-panel .sidebar-ghost-itm {
@@ -4387,10 +4406,14 @@ h6 {
 
   /* OT/NT title bigger on mobile to match the design. */
   .sb-selector-panel .testament-title {
-    font-size: 22px;
-    padding-left: 4px;
-    padding-bottom: 12px;
+    font-size: 18px;
+    padding-left: 8px;
+    padding-bottom: 5px;
     padding-top: 8px;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    gap: 5px;
   }
 
   .sb-selector-panel .separator {
@@ -4407,24 +4430,16 @@ h6 {
   }
 }
 
-/* Desktop hides both mobile add-tab affordances and the mobile view
- * switcher — they only appear when the mobile sidebar overlay or the
- * mobile bible-selector is visible. */
+/* Desktop hides the mobile add-tab affordances — they only appear when
+ * the mobile sidebar overlay is visible. */
 .sb-tab-mobile-add-fab,
-.sb-tab-mobile-add-inline,
-.sb-mobile-view-switcher {
+.sb-tab-mobile-add-inline {
   display: none;
 }
 
 @media (max-width: 768px) {
   .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-fab {
     display: inline-flex;
-  }
-
-  /* Re-enable the mobile view switcher on mobile — comes after the
-   * desktop `display: none` above so source order makes this rule win. */
-  .sb-mobile-view-switcher {
-    display: flex;
   }
 }
 
@@ -4465,6 +4480,10 @@ h6 {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.sb-extensions-list-disabled {
+  opacity: 0.5;
 }
 
 .sb-extension-row {
@@ -4611,6 +4630,45 @@ h6 {
 
 .sb-context-menu-item:hover {
   background: var(--sb-secondary-color);
+}
+
+.sb-context-menu-toggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sb-pill-toggle {
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background-color: color-mix(in srgb, var(--sb-font-color), transparent 78%);
+  position: relative;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
+
+.sb-pill-toggle::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: left 0.2s ease;
+}
+
+.sb-pill-toggle.is-on {
+  background-color: var(--sb-primary-color);
+}
+
+.sb-pill-toggle.is-on::before {
+  left: 22px;
 }
 
 .sb-extension-footer-actions {
@@ -6328,7 +6386,7 @@ h6 {
   border: 1px solid var(--sb-divider-color);
   padding: 0 8px 0 14px;
   height: 40px;
-  min-width: 200px;
+  min-width: 130px;
   width: auto;
   border-radius: 10px;
   color: var(--sb-font-color);
@@ -6457,9 +6515,12 @@ h6 {
 }
 
 .testament-selection {
-  margin-bottom: 16px;
-  padding: 4px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0px 0px 15px 0px;
   border-radius: 5px;
+  gap: 10px;
 }
 
 .sidebar-select {
@@ -6472,7 +6533,6 @@ h6 {
   animation: fadeInAnimation2 ease 1s;
   animation-iteration-count: 1;
   animation-fill-mode: forwards;
-  padding-left: 5px;
   cursor: pointer;
 }
 
@@ -6496,8 +6556,6 @@ h6 {
   font-size: 15px;
   font-weight: 500;
   padding: 10px 12px;
-  border-bottom: 1px solid var(--sb-divider-color);
-  border-radius: 0;
   font-family: "Satoshi", system-ui, sans-serif;
   color: var(--sb-font-color);
   text-transform: capitalize;
@@ -6522,12 +6580,16 @@ h6 {
   color: var(--sb-font-color);
 }
 
-.sidebar-selected-itm {
+.sidebar-selected-itm:hover {
   background-color: color-mix(
     in srgb,
     var(--sb-primary-color),
-    transparent 88%
+    transparent 80%
   );
+  color: var(--sb-primary-color);
+}
+
+.sidebar-selected-itm {
   color: var(--sb-primary-color);
   border-radius: 8px;
   border-bottom-color: transparent;
@@ -6567,12 +6629,12 @@ h6 {
   width: 375px;
   background: var(--sb-book-selector-background);
   border-radius: 8px;
-  box-shadow: 0 10px 30px var(--sb-detached-pane-toolbar-background);
+  box-shadow: 0 10px 20px var(--sb-detached-pane-toolbar-background);
   padding: 10px 10px 45px 10px;
   z-index: 2;
   position: absolute;
-  top: 55px;
-  left: 15px;
+  top: 70px;
+  left: 20px;
 }
 
 .translationSettingsModal {
@@ -6717,7 +6779,7 @@ h6 {
   }
 
   .testament-selection {
-    padding: 10px 0px;
+    padding: 5px 15px;
   }
 
   .sidebar-selected-title {
@@ -6744,6 +6806,7 @@ h6 {
 
   .testament-container {
     width: 100%;
+    color: var(--sb-font-color);
   }
 
   .dropdown-select {
@@ -6807,6 +6870,12 @@ h6 {
     row-gap: 13px;
     height: fit-content;
     justify-content: flex-start;
+    background: transparent;
+  }
+
+  .sb-selector-panel .sidebar-selected-itm:hover {
+    background: transparent;
+    color: var(--sb-primary-color);
   }
 
   .psalms-btn {
@@ -6828,6 +6897,8 @@ h6 {
   .sidebar-selected-itm {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
+    color: var(--sb-primary-color);
+    font-weight: 600;
   }
 
   .separator {
@@ -6843,19 +6914,19 @@ h6 {
   .modal {
     width: 100%;
     left: 0;
-    top: 50px;
-    height: calc(100% - 60px);
+    top: 5px;
+    height: calc(100% - 50px);
     border-radius: 0;
     box-shadow: none;
   }
 
   .translationSettingsModal {
-    top: 100px;
+    top: 55px;
     padding: 0px 10px;
     height: fit-content;
     width: 200px;
     left: auto;
-    right: 10px;
+    right: 40px;
     box-shadow: 0 5px 10px
       color-mix(
         in srgb,
@@ -6878,11 +6949,85 @@ h6 {
   }
 
   .language-list {
-    height: calc(100% - 30px);
+    height: 100%;
   }
 
   .footer {
-    bottom: -5px;
+    bottom: -45px;
+  }
+
+  .sb-select-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  .sb-select-modal {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: fit-content;
+    background: var(--sb-book-selector-background);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    box-shadow: 0 -5px 10px
+      color-mix(
+        in srgb,
+        var(--sb-detached-pane-toolbar-background) 15%,
+        transparent
+      );
+    padding: 20px 10px;
+  }
+
+  .sb-select-modal-content {
+    padding: 10px 24px 30px 24px;
+    /* height: 100%; */
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sb-select-modal-title-icon {
+    display: flex;
+    font-size: 22px;
+    color: var(--sb-primary-color);
+    /* padding: 10px; */
+    border-radius: 5px;
+    background: var(--sb-tertiary-color);
+    width: 45px;
+    height: 45px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sb-select-modal-title {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--sb-font-color);
+    margin-left: 10px;
+    text-align: center;
+  }
+
+  .sb-select-modal-actions {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .sb-select-modal-action-btn {
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    width: 40%;
+    justify-content: center;
+    gap: 10px;
+    font-weight: 500;
   }
 }
 .sb-translation-license-notice,
@@ -7159,10 +7304,9 @@ h6 {
     border: none;
     box-shadow: none;
     padding: 14px 16px;
-    background: transparent;
+    /* background: transparent; */
     gap: 14px;
     animation: none;
-    backdrop-filter: blur(4px);
   }
 
   .sb-floating-search-panel .sb-floating-search-input-wrap {

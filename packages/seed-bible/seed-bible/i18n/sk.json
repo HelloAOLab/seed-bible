@@ -189,14 +189,11 @@
   "add-bookmark": "Záložka",
   "play-audio": "Prehrať zvuk",
   "play": "Hrať",
-
   "discovery": "Objav",
   "chat": "Čet",
-
   "today": "Dnes",
   "you": "Ty",
   "bible": "Biblia",
-  "view-switcher": "Prepínač zobrazení",
   "add-verse": "Pridať verš",
   "add": "Pridať",
   "chat-empty-title": "Chat bude čoskoro k dispozícii",
@@ -207,7 +204,6 @@
   "bookmark-folder-empty": "Zatiaľ tu nie sú žiadne záložky.",
   "bookmark-options": "Možnosti záložiek",
   "new-folder-placeholder": "Názov priečinka",
-
   "tasks": "Úlohy",
   "bookmarks": "Záložky",
   "hide-bookmarks": "Skryť záložky",
@@ -217,5 +213,15 @@
   "folder-name-taken": "Priečinok s týmto názvom už existuje.",
   "add-to-new": "Pridať k novému",
   "save": "Uložiť",
-  "bookmark-verses": "Záložka veršov"
+  "bookmark-verses": "Záložka veršov",
+  "open-new-chapter-in-new-or-current-tab": "Otvoriť novú kapitolu na novej alebo aktuálnej karte",
+  "current-tab": "Aktuálna karta",
+  "about-extrabiblical-writings": "O mimobiblických spisoch",
+  "apocrypha-info-text": "Žiadny zo spisov v tejto časti nebol ranými židovskými ani kresťanskými komunitami nikdy považovaný za Písmo. Biblia je špecifická zbierka kníh. Židia a kresťania sa vždy zhodovali na Starom zákone, ktorý pochádza z pevne stanoveného súboru posvätných spisov, ktoré Židia nazývajú Tanach a kresťania Starý zákon. Obsah Tanachu a Starého zákona je úplne rovnaký, ale bežne sú usporiadané odlišne. Kresťania navyše uznávajú Nový zákon, ktorý rozpráva príbeh Ježiša, jeho učenia a spisy jeho nasledovníkov. Nižšie uvedené spisy boli v čase písania Biblie známe a široko čítané, ale nikdy neboli považované za Písmo. Zatiaľ čo starovekí autori niekedy citovali širokú škálu textov vrátane básnikov, filozofov a iných spisov, citovať niečo nie je to isté ako považovať to za Písmo. Tieto spisy sú tu zahrnuté len na historické a literárne účely.",
+  "today-coming-soon": "Dnešná obrazovka bude čoskoro k dispozícii",
+  "chat-coming-soon": "Chat bude čoskoro k dispozícii",
+  "more-coming-soon": "Ďalšie možnosti čoskoro",
+  "discovery-coming-soon": "Objav čoskoro",
+  "login-to-use-feature": "Pre použitie tejto funkcie sa musíte prihlásiť.",
+  "link-to-join-shared-session-copied": "Odkaz na pripojenie k zdieľanej relácii bol skopírovaný do schránky"
 }

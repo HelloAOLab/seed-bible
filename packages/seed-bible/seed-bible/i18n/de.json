@@ -189,14 +189,11 @@
   "add-bookmark": "Lesezeichen",
   "play-audio": "Audio abspielen",
   "play": "Spielen",
-
   "discovery": "Entdeckung",
   "chat": "Chat",
-
   "today": "Heute",
   "you": "Du",
   "bible": "Bibel",
-  "view-switcher": "Ansichtsumschalter",
   "add-verse": "Vers hinzufügen",
   "add": "Hinzufügen",
   "chat-empty-title": "Der Chat ist bald verfügbar.",
@@ -207,7 +204,6 @@
   "bookmark-folder-empty": "Hier sind noch keine Lesezeichen vorhanden.",
   "bookmark-options": "Lesezeichenoptionen",
   "new-folder-placeholder": "Ordnername",
-
   "tasks": "Aufgaben",
   "bookmarks": "Lesezeichen",
   "hide-bookmarks": "Lesezeichen ausblenden",
@@ -217,5 +213,15 @@
   "folder-name-taken": "Ein Ordner mit diesem Namen existiert bereits.",
   "add-to-new": "Zu neu hinzufügen",
   "save": "Speichern",
-  "bookmark-verses": "Verse als Lesezeichen speichern"
+  "bookmark-verses": "Verse als Lesezeichen speichern",
+  "open-new-chapter-in-new-or-current-tab": "Öffnen Sie das neue Kapitel in einem neuen oder aktuellen Tab",
+  "current-tab": "Aktueller Tab",
+  "about-extrabiblical-writings": "Über außerbiblische Schriften",
+  "apocrypha-info-text": "Keine der Schriften in diesem Abschnitt wurde von frühen jüdischen oder christlichen Gemeinden jemals als Heilige Schrift anerkannt. Die Bibel ist eine spezifische Sammlung von Büchern. Juden und Christen waren sich stets über das Alte Testament einig, das auf einer festen Sammlung heiliger Schriften basiert, die das jüdische Volk Tanach und die Christen Altes Testament nennen. Der Inhalt des Tanach und des Alten Testaments ist identisch, jedoch üblicherweise unterschiedlich angeordnet. Christen anerkennen darüber hinaus das Neue Testament, das die Geschichte Jesu, seine Lehren und die Schriften seiner Anhänger erzählt. Die folgenden Schriften waren zur Entstehungszeit der Bibel bekannt und weit verbreitet, wurden aber nie als Heilige Schrift behandelt. Zwar zitierten antike Autoren mitunter eine Vielzahl von Texten, darunter Werke von Dichtern, Philosophen und anderen Autoren, doch ist ein Zitat nicht gleichbedeutend mit der Anerkennung eines Textes als Heilige Schrift. Diese Schriften sind hier lediglich als historische und literarische Referenz aufgeführt.",
+  "today-coming-soon": "Der heutige Bildschirm kommt bald.",
+  "chat-coming-soon": "Der Chat ist bald verfügbar.",
+  "more-coming-soon": "Weitere Optionen folgen in Kürze.",
+  "discovery-coming-soon": "Discovery kommt bald",
+  "login-to-use-feature": "Sie müssen sich anmelden, um diese Funktion nutzen zu können.",
+  "link-to-join-shared-session-copied": "Ein Link zum Beitreten der gemeinsamen Sitzung wurde in Ihre Zwischenablage kopiert."
 }

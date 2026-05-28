@@ -189,14 +189,11 @@
   "add-bookmark": "Blêdwizer",
   "play-audio": "Audio ôfspylje",
   "play": "Toanielstik",
-
   "discovery": "Ûntdekking",
   "chat": "Chat",
-
   "today": "Hjoed",
   "you": "Jo",
   "bible": "bibel",
-  "view-switcher": "Viewwikseler",
   "add-verse": "Fers tafoegje",
   "add": "Tafoegje",
   "chat-empty-title": "De petearen komme gau",
@@ -207,7 +204,6 @@
   "bookmark-folder-empty": "Gjin blêdwizers hjir noch.",
   "bookmark-options": "Opsjes foar blêdwizers",
   "new-folder-placeholder": "Mapnamme",
-
   "tasks": "Taken",
   "bookmarks": "Blêdwizers",
   "hide-bookmarks": "Blêdwizers ferbergje",
@@ -217,5 +213,15 @@
   "folder-name-taken": "In map mei dy namme bestiet al.",
   "add-to-new": "Tafoegje oan nij",
   "save": "Rêde",
-  "bookmark-verses": "Blêdwizerferzen"
+  "bookmark-verses": "Blêdwizerferzen",
+  "open-new-chapter-in-new-or-current-tab": "Iepenje it nije haadstik yn in nij of aktueel ljepblêd",
+  "current-tab": "Hjoeddeistige ljepper",
+  "about-extrabiblical-writings": "Oer bûtenbibelske geskriften",
+  "apocrypha-info-text": "Gjin fan 'e geskriften yn dizze seksje waarden ea as Skrift beskôge troch iere Joadske of kristlike mienskippen. De Bibel is in spesifike samling boeken. Joaden en kristenen hawwe it altyd iens west oer it Alde Testamint, dat komt fan in fêste set hillige geskriften dy't it Joadske folk de Tenach neamt en kristenen it Alde Testamint. De ynhâld fan 'e Tenach en it Alde Testamint is presys itselde, mar binne meastentiids oars ynrjochte. Kristenen erkenne ek it Nije Testamint, dat it ferhaal fan Jezus, syn lear en de geskriften fan syn folgelingen fertelt. De geskriften hjirûnder wiene bekend en breed lêzen yn 'e tiid dat de Bibel skreaun waard, mar se waarden nea as Skrift behannele. Wylst âlde auteurs soms in breed skala oan teksten sitearren, ynklusyf dichters, filosofen en oare geskriften, is it sitearjen fan wat net itselde as it as Skrift behannelje. Dizze geskriften binne hjir allinich opnommen foar histoaryske en literêre referinsje.",
+  "today-coming-soon": "It skerm fan hjoed komt gau",
+  "chat-coming-soon": "De petearen komme gau",
+  "more-coming-soon": "Mear opsjes komme gau",
+  "discovery-coming-soon": "De ûntdekking komt gau",
+  "login-to-use-feature": "Jo moatte ynlogge om dizze funksje te brûken.",
+  "link-to-join-shared-session-copied": "In keppeling om mei te dwaan oan de dielde sesje is nei jo klamboerd kopiearre"
 }

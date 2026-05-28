@@ -181,8 +181,11 @@
   "all-translations": "All translations",
   "popular-translations": "Popular translations",
   "copied-translation-share-link": "Copied translation share link",
+  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
+  "current-tab": "Current Tab",
+  "about-extrabiblical-writings": "About Extrabiblical writings",
+  "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 Psalms",
-  "2-psalms": "2 Psalms",
   "3-psalms": "3 Psalms",
   "4-psalms": "4 Psalms",
   "5-psalms": "5 Psalms",
@@ -198,7 +201,7 @@
   "today": "Today",
   "you": "You",
   "bible": "Bible",
-  "view-switcher": "View switcher",
+
   "add-verse": "Add verse",
   "add": "Add",
   "chat-empty-title": "Chat is coming soon",
@@ -219,5 +222,11 @@
   "folder-name-taken": "A folder with that name already exists.",
   "add-to-new": "Add to new",
   "save": "Save",
-  "bookmark-verses": "Bookmark verses"
+  "bookmark-verses": "Bookmark",
+  "today-coming-soon": "Today screen is coming soon",
+  "chat-coming-soon": "Chat is coming soon",
+  "more-coming-soon": "More options coming soon",
+  "discovery-coming-soon": "Discovery is coming soon",
+  "login-to-use-feature": "You have to log in to use this feature.",
+  "link-to-join-shared-session-copied": "A link to join the shared session was copied to your clipboard"
 }

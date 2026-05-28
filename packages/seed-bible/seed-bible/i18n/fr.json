@@ -162,6 +162,10 @@
   "all-translations": "Toutes les traductions",
   "popular-translations": "Traductions populaires",
   "copied-translation-share-link": "Lien de partage de la traduction copiée",
+  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
+  "current-tab": "Current Tab",
+  "about-extrabiblical-writings": "About Extrabiblical writings",
+  "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 Psaume",
   "2-psalms": "2 Psaumes",
   "3-psalms": "3 Psaumes",
@@ -188,14 +192,12 @@
   "add-bookmark": "Signet",
   "play-audio": "Lire l'audio",
   "play": "Jouer",
-
   "discovery": "Découverte",
   "chat": "Chat",
-
   "today": "Aujourd'hui",
   "you": "Toi",
   "bible": "Bible",
-  "view-switcher": "Sélecteur de vue",
+
   "add-verse": "Ajouter un verset",
   "add": "Ajouter",
   "chat-empty-title": "Le chat arrive bientôt",
@@ -206,7 +208,6 @@
   "bookmark-folder-empty": "Aucun signet ici pour le moment.",
   "bookmark-options": "Options de signet",
   "new-folder-placeholder": "Nom du dossier",
-
   "tasks": "Tâches",
   "bookmarks": "Signets",
   "hide-bookmarks": "Masquer les favoris",
@@ -217,5 +218,11 @@
   "folder-name-taken": "Un dossier portant ce nom existe déjà.",
   "add-to-new": "Ajouter aux nouveaux",
   "save": "Sauvegarder",
-  "bookmark-verses": "Versets à marquer"
+  "bookmark-verses": "Versets à marquer",
+  "today-coming-soon": "L'écran d'aujourd'hui arrive bientôt",
+  "chat-coming-soon": "Le chat arrive bientôt",
+  "more-coming-soon": "D'autres options seront bientôt disponibles.",
+  "discovery-coming-soon": "La découverte arrive bientôt",
+  "login-to-use-feature": "Vous devez vous connecter pour utiliser cette fonctionnalité.",
+  "link-to-join-shared-session-copied": "Un lien pour rejoindre la session partagée a été copié dans votre presse-papiers."
 }

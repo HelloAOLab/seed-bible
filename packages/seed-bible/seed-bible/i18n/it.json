@@ -189,14 +189,11 @@
   "add-bookmark": "Segnalibro",
   "play-audio": "Riproduci audio",
   "play": "Giocare",
-
   "discovery": "Scoperta",
   "chat": "Chiacchierata",
-
   "today": "Oggi",
   "you": "Voi",
   "bible": "Bibbia",
-  "view-switcher": "Selettore di visualizzazione",
   "add-verse": "Aggiungi un verso",
   "add": "Aggiungere",
   "chat-empty-title": "La chat arriverà presto",
@@ -207,7 +204,6 @@
   "bookmark-folder-empty": "Nessun segnalibro ancora presente.",
   "bookmark-options": "Opzioni segnalibro",
   "new-folder-placeholder": "Nome della cartella",
-
   "tasks": "Compiti",
   "bookmarks": "Segnalibri",
   "hide-bookmarks": "Nascondi i segnalibri",
@@ -217,5 +213,15 @@
   "folder-name-taken": "Esiste già una cartella con quel nome.",
   "add-to-new": "Aggiungi a nuovo",
   "save": "Salva",
-  "bookmark-verses": "Segnalibro versi"
+  "bookmark-verses": "Segnalibro versi",
+  "open-new-chapter-in-new-or-current-tab": "Apri il nuovo capitolo in una nuova scheda o in quella corrente.",
+  "current-tab": "Scheda corrente",
+  "about-extrabiblical-writings": "A proposito degli scritti extrabiblici",
+  "apocrypha-info-text": "Nessuno degli scritti presenti in questa sezione è mai stato considerato Scrittura dalle prime comunità ebraiche o cristiane. La Bibbia è una specifica raccolta di libri. Ebrei e cristiani hanno sempre concordato sull'Antico Testamento, che deriva da un insieme fisso di testi sacri che gli ebrei chiamano Tanakh e i cristiani Antico Testamento. Il contenuto del Tanakh e dell'Antico Testamento è esattamente lo stesso, ma sono comunemente disposti in modo diverso. I cristiani riconoscono inoltre il Nuovo Testamento, che narra la storia di Gesù, i suoi insegnamenti e gli scritti dei suoi seguaci. Gli scritti qui riportati erano noti e ampiamente letti all'epoca in cui fu scritta la Bibbia, ma non furono mai considerati Scrittura. Sebbene gli autori antichi citassero talvolta una vasta gamma di testi, inclusi poeti, filosofi e altri scritti, citare qualcosa non equivale a considerarla Scrittura. Questi scritti sono inclusi qui solo a scopo di riferimento storico e letterario.",
+  "today-coming-soon": "Oggi lo schermo arriverà presto",
+  "chat-coming-soon": "La chat arriverà presto",
+  "more-coming-soon": "Presto saranno disponibili altre opzioni.",
+  "discovery-coming-soon": "La scoperta arriverà presto",
+  "login-to-use-feature": "Per utilizzare questa funzione è necessario effettuare l'accesso.",
+  "link-to-join-shared-session-copied": "Il link per partecipare alla sessione condivisa è stato copiato negli appunti."
 }

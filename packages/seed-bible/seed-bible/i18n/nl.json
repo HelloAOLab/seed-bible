@@ -189,14 +189,11 @@
   "add-bookmark": "Bladwijzer",
   "play-audio": "Audio afspelen",
   "play": "Toneelstuk",
-
   "discovery": "Ontdekking",
   "chat": "Chat",
-
   "today": "Vandaag",
   "you": "Jij",
   "bible": "Bijbel",
-  "view-switcher": "Weergavewisselaar",
   "add-verse": "Voeg een vers toe",
   "add": "Toevoegen",
   "chat-empty-title": "De chatfunctie is binnenkort beschikbaar.",
@@ -207,7 +204,6 @@
   "bookmark-folder-empty": "Nog geen bladwijzers.",
   "bookmark-options": "Bladwijzeropties",
   "new-folder-placeholder": "Mapnaam",
-
   "tasks": "Taken",
   "bookmarks": "Bladwijzers",
   "hide-bookmarks": "Bladwijzers verbergen",
@@ -217,5 +213,15 @@
   "folder-name-taken": "Er bestaat al een map met die naam.",
   "add-to-new": "Toevoegen aan nieuw",
   "save": "Redden",
-  "bookmark-verses": "Verzen markeren"
+  "bookmark-verses": "Verzen markeren",
+  "open-new-chapter-in-new-or-current-tab": "Open het nieuwe hoofdstuk in een nieuw of huidig ​​tabblad.",
+  "current-tab": "Huidig ​​tabblad",
+  "about-extrabiblical-writings": "Over buitenbijbelse geschriften",
+  "apocrypha-info-text": "Geen van de geschriften in dit gedeelte werd ooit als Heilige Schrift beschouwd door vroege Joodse of christelijke gemeenschappen. De Bijbel is een specifieke verzameling boeken. Joden en christenen zijn het altijd eens geweest over het Oude Testament, dat afkomstig is van een vaste verzameling heilige geschriften die de Joden de Tanakh noemen en christenen het Oude Testament. De inhoud van de Tanakh en het Oude Testament is exact hetzelfde, maar ze zijn doorgaans anders geordend. Christenen erkennen daarnaast het Nieuwe Testament, dat het verhaal van Jezus, zijn leer en de geschriften van zijn volgelingen vertelt. De onderstaande geschriften waren bekend en werden veel gelezen in de tijd dat de Bijbel werd geschreven, maar ze werden nooit als Heilige Schrift beschouwd. Hoewel oude auteurs soms een breed scala aan teksten citeerden, waaronder dichters, filosofen en andere geschriften, is citeren niet hetzelfde als het als Heilige Schrift beschouwen. Deze geschriften zijn hier alleen opgenomen ter historische en literaire referentie.",
+  "today-coming-soon": "Vandaag verschijnt het scherm binnenkort.",
+  "chat-coming-soon": "De chatfunctie is binnenkort beschikbaar.",
+  "more-coming-soon": "Binnenkort meer opties beschikbaar",
+  "discovery-coming-soon": "Discovery komt er binnenkort aan.",
+  "login-to-use-feature": "Je moet inloggen om deze functie te kunnen gebruiken.",
+  "link-to-join-shared-session-copied": "Een link om deel te nemen aan de gedeelde sessie is naar uw klembord gekopieerd."
 }
