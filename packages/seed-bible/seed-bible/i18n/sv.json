@@ -222,5 +222,6 @@
   "chat-coming-soon": "Chatten kommer snart",
   "more-coming-soon": "Fler alternativ kommer snart",
   "discovery-coming-soon": "Upptäckten kommer snart",
-  "login-to-use-feature": "Du måste logga in för att använda den här funktionen."
+  "login-to-use-feature": "Du måste logga in för att använda den här funktionen.",
+  "link-to-join-shared-session-copied": "En länk för att ansluta till den delade sessionen kopierades till ditt urklipp"
 }

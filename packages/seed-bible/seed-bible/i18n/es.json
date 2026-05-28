@@ -223,5 +223,6 @@
   "chat-coming-soon": "El chat estará disponible próximamente.",
   "more-coming-soon": "Próximamente habrá más opciones.",
   "discovery-coming-soon": "El descubrimiento llegará pronto",
-  "login-to-use-feature": "Debes iniciar sesión para usar esta función."
+  "login-to-use-feature": "Debes iniciar sesión para usar esta función.",
+  "link-to-join-shared-session-copied": "Se ha copiado en el portapapeles un enlace para unirse a la sesión compartida."
 }

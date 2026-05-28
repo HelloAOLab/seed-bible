@@ -223,5 +223,6 @@
   "chat-coming-soon": "チャット機能は近日公開予定です",
   "more-coming-soon": "近日中にさらに多くのオプションが登場予定",
   "discovery-coming-soon": "ディスカバリーがまもなく登場します",
-  "login-to-use-feature": "この機能を使用するにはログインが必要です。"
+  "login-to-use-feature": "この機能を使用するにはログインが必要です。",
+  "link-to-join-shared-session-copied": "共有セッションに参加するためのリンクがクリップボードにコピーされました。"
 }
