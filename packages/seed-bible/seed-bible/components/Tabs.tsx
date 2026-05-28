@@ -594,12 +594,7 @@ function TabRow(props: TabRowProps) {
   const currentChapter = tab.readingState.chapterNumber.value;
   const currentTranslation =
     tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
-  const title = tab.sharedSession
-    ? t("shared-tab_title", {
-        book: currentBookName,
-        defaultValue: "Shared",
-      })
-    : currentBookName;
+  const title = currentBookName;
   const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
   const isTabBookmarked = bookmarks.isLocationBookmarked(
     tab.readingState.translationId.value,
