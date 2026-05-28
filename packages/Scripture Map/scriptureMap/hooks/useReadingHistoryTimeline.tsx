@@ -175,17 +175,35 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
       if (!monthsSet.has(uniqueMonthKey)) {
         monthsSet.add(uniqueMonthKey);
 
-        const monthLabelGridColumn = `${week + 2} / ${week + 4}`;
-        const fixedName = CapitalizeFirstLetter(labelDateInfo.monthName);
+        const nextWeek = week + 1;
+        let nextWeekMonthKey: string | null = null;
+        if (nextWeek < weeksCount) {
+          const nextLastDayIndex =
+            nextWeek === weeksCount - 1 ? timelineRange.endDate.getDay() : 6;
+          const nextLabelDate = new Date(startDateStartOfWeek.getTime());
+          nextLabelDate.setDate(
+            nextLabelDate.getDate() + nextWeek * 7 + nextLastDayIndex
+          );
+          const nextLabelDateInfo = GetPastDateInfo(
+            nextLabelDate.getTime(),
+            language
+          );
+          nextWeekMonthKey = `${nextLabelDateInfo.month}-${nextLabelDateInfo.year}`;
+        }
 
-        itemsData.push({
-          type: "label",
-          gridRow: monthLabelGridRow,
-          gridColumn: monthLabelGridColumn,
-          isDay: false,
-          key: `label-${uniqueMonthKey}`,
-          children: fixedName,
-        });
+        if (!nextWeekMonthKey || nextWeekMonthKey === uniqueMonthKey) {
+          const monthLabelGridColumn = `${week + 2} / ${week + 4}`;
+          const fixedName = CapitalizeFirstLetter(labelDateInfo.monthName);
+
+          itemsData.push({
+            type: "label",
+            gridRow: monthLabelGridRow,
+            gridColumn: monthLabelGridColumn,
+            isDay: false,
+            key: `label-${uniqueMonthKey}`,
+            children: fixedName,
+          });
+        }
       }
 
       for (let day = 0; day < 7; day++) {

@@ -81,9 +81,15 @@
 .settings-button {
   grid-column: 4 / 5;
   font-size: 28px !important;
-  border: 1px solid var(--sb-divider-color);
+  /* border: 1px solid var(--sb-divider-color); */
   border-radius: 4px;
   padding: 6px;
+}
+
+.header-button.settings-button:hover:not(
+    :has(.settings-options-container:hover)
+  ) {
+  background-color: var(--sb-secondary-color);
 }
 
 /* .close-button {
@@ -94,12 +100,12 @@
   position: absolute;
   right: 0;
   top: calc(100% + 4px);
-  background-color: var(--sb-reader-font-color);
-  color: var(--sb-reader-background);
+  background-color: var(--sb-reader-background);
+  color: var(--sb-reader-font-color);
   padding: 12px;
   border-radius: 8px;
   gap: 4px;
-  border: 1px solid var(--sb-divider-color);
+  border: 1px solid var(--sb-secondary-color);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -107,6 +113,7 @@
   min-width: 208px;
   min-height: 20px;
   z-index: 1;
+  box-shadow: 0 0 5px 0px var(--sb-divider-color);
 }
 .scripture-title {
   color: var(--sb-reader-font-color);
@@ -130,7 +137,7 @@
 .settings-options-container > button {
   min-width: 100%;
   background-color: transparent;
-  color: var(--sb-reader-background);
+  color: var(--sb-reader-font-color);
   appearance: none;
   border: none;
   cursor: pointer;
@@ -151,7 +158,21 @@
 }
 
 .settings-options-container > button:hover {
-  background-color: #777777;
+  background-color: var(--sb-secondary-color);
+}
+
+.option-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 100%;
+  margin: 4px 0;
+}
+
+.option-divider::before {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--sb-divider-color);
 }
 
 .scripture-map-settings > .settings-footer {
@@ -189,6 +210,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
 }
 
 .settings-footer > .year-selector > .year-selector-label > span {
@@ -208,12 +230,13 @@
   width: 100%;
   justify-content: flex-start;
   align-items: center;
-  background-color: var(--sb-reader-font-color);
-  color: var(--sb-background);
+  background-color: var(--sb-background);
+  color: var(--sb-reader-font-color);
   border-radius: 4px;
+  border: solid 1px var(--sb-secondary-color);
   padding: 4px;
   gap: 4px;
-  box-shadow: 0 0 4px 0px #0000007d;
+  box-shadow: 0 0 4px 0px var(--sb-divider-color);
 }
 
 .settings-footer
@@ -224,17 +247,23 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  border-radius: 2px;
+  cursor: pointer;
 }
 
 .settings-footer
   > .year-selector
   > .year-selector-options
-  > .year-selector-option:hover,
+  > .year-selector-option:hover {
+  background-color: var(--sb-secondary-color);
+}
+
 .settings-footer
   > .year-selector
   > .year-selector-options
   > .year-selector-option.selected {
-  background-color: var(--gray-color);
+  background-color: var(--sb-primary-color);
+  color: var(--sb-background);
 }
 
 .project-state-setter {
@@ -458,6 +487,7 @@
 .scripture-map-wrapper * {
   box-sizing: border-box;
   scrollbar-width: none;
+  user-select: none;
 }
 
 .scripture-map-wrapper .scripture-map-controls {
@@ -488,13 +518,14 @@
   padding: 0 8px;
   position: relative;
   background-color: transparent;
+  color: var(--sb-reader-font-color);
 }
 
 .scripture-map-wrapper
   .scripture-map-controls
   .zoom-container
-  > button.hovered {
-  background-color: var(--sb-primary-color);
+  > button.hovered:not(:has(.zoom-level-selector:hover)) {
+  background-color: var(--sb-secondary-color);
 }
 
 .scripture-map-wrapper
@@ -543,7 +574,7 @@
   left: 50%;
   transform: translateX(-50%);
   bottom: calc(100% + 12px);
-  background-color: var(--sb-reader-font-color);
+  background-color: var(--sb-reader-background);
   padding: 4px;
   border-radius: 8px;
   display: flex;
@@ -551,12 +582,14 @@
   justify-content: flex-start;
   align-items: flex-start;
   min-width: 148px;
+  border: solid 1px var(--sb-secondary-color);
+  box-shadow: 0 0 5px 0px var(--sb-divider-color);
 }
 
 .zoom-level-selector > * {
   padding: 8px;
   width: 100%;
-  color: var(--sb-reader-background);
+  color: var(--sb-reader-font-color);
 }
 
 .zoom-level-selector > span {

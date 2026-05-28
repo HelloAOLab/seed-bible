@@ -24,36 +24,49 @@ export type TestamentContentItemData = SectionToggleData | BooksContainerData;
 
 export interface TestamentContentProps {
   hidden: boolean;
+  flat?: boolean;
 }
 
-export const TestamentContent = memo(({ hidden }: TestamentContentProps) => {
-  const { itemsData } = useTestamentContent();
+export const TestamentContent = memo(
+  ({ hidden, flat }: TestamentContentProps) => {
+    const { itemsData, flatBooksData } = useTestamentContent();
 
-  return (
-    <div className={`testament-content${hidden ? " hidden" : ""}`}>
-      {itemsData.map((data) => {
-        switch (data.type) {
-          case "sectionToggle":
-            return (
-              <SectionToggle
-                key={data.key}
-                section={data.section}
-                sectionKey={data.sectionKey}
-                toggleShowSection={data.toggleShowSection}
-                showingContent={data.showingContent}
-                style={data.style}
-              />
-            );
-          case "booksContainer":
-            return (
-              <BooksContainer>
-                {data.content.map(({ key, ...restOfBookData }) => (
-                  <Book key={key} {...restOfBookData} />
-                ))}
-              </BooksContainer>
-            );
-        }
-      })}
-    </div>
-  );
-});
+    if (flat) {
+      return (
+        <>
+          {flatBooksData.map(({ key, ...rest }) => (
+            <Book key={key} {...rest} />
+          ))}
+        </>
+      );
+    }
+
+    return (
+      <div className={`testament-content${hidden ? " hidden" : ""}`}>
+        {itemsData.map((data) => {
+          switch (data.type) {
+            case "sectionToggle":
+              return (
+                <SectionToggle
+                  key={data.key}
+                  section={data.section}
+                  sectionKey={data.sectionKey}
+                  toggleShowSection={data.toggleShowSection}
+                  showingContent={data.showingContent}
+                  style={data.style}
+                />
+              );
+            case "booksContainer":
+              return (
+                <BooksContainer key={data.content[0]?.key}>
+                  {data.content.map(({ key, ...restOfBookData }) => (
+                    <Book key={key} {...restOfBookData} />
+                  ))}
+                </BooksContainer>
+              );
+          }
+        })}
+      </div>
+    );
+  }
+);

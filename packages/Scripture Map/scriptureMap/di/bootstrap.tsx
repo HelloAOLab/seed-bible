@@ -195,6 +195,7 @@ export const bootstrapExtension = () => {
                     language,
                     sessionProvider,
                     bookNames,
+                    MaterialIcon,
                   }}
                   customCSS={customCSS}
                 />

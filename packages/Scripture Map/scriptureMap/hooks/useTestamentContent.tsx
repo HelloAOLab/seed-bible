@@ -16,6 +16,7 @@ import type {
 import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
 import type {
   TestamentContentItemData,
+  BooksContainerData,
   BookData,
 } from "scriptureMap.components.containers.TestamentContent";
 import type { Range } from "scriptureMap.models.commonTypes";
@@ -32,6 +33,7 @@ type FilteredSection = {
 
 interface UseTestamentContentType {
   itemsData: TestamentContentItemData[];
+  flatBooksData: BookData[];
 }
 
 export const useTestamentContent = (): UseTestamentContentType => {
@@ -205,6 +207,7 @@ export const useTestamentContent = (): UseTestamentContentType => {
 
   const itemsData = useMemo<UseTestamentContentType["itemsData"]>(() => {
     const items: UseTestamentContentType["itemsData"] = [];
+    const mergedBooks: BookData[] = [];
 
     for (
       let sectionIndex = 0;
@@ -242,7 +245,8 @@ export const useTestamentContent = (): UseTestamentContentType => {
           });
         }
 
-        if (showingContent) {
+        const isContentVisible = !showSectionLabels || showingContent;
+        if (isContentVisible) {
           const reversedDomainBooks = domainSection.books.toReversed();
           const booksData: BookData[] = reversedDomainBooks.map(
             (bookDomain, bookIndex) => {
@@ -350,12 +354,17 @@ export const useTestamentContent = (): UseTestamentContentType => {
               };
             }
           );
-          items.push({
-            type: "booksContainer",
-            content: booksData,
-          });
+          if (showSectionLabels) {
+            items.push({ type: "booksContainer", content: booksData });
+          } else {
+            mergedBooks.push(...booksData);
+          }
         }
       }
+    }
+
+    if (!showSectionLabels && mergedBooks.length > 0) {
+      items.push({ type: "booksContainer", content: mergedBooks });
     }
 
     return items;
@@ -373,7 +382,18 @@ export const useTestamentContent = (): UseTestamentContentType => {
     bookNames.value,
   ]);
 
+  const flatBooksData = useMemo<BookData[]>(
+    () =>
+      itemsData
+        .filter(
+          (item): item is BooksContainerData => item.type === "booksContainer"
+        )
+        .flatMap((item) => item.content),
+    [itemsData]
+  );
+
   return {
     itemsData,
+    flatBooksData,
   };
 };

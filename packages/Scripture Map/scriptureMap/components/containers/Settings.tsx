@@ -6,6 +6,7 @@ import { useSettings } from "scriptureMap.hooks.useSettings";
 import { useClickOutside } from "scriptureMap.hooks.useClickOutside";
 import type { StateUpdater } from "../../../../../typings/AuxLibraryDefinitions";
 import { ScriptureMapModes } from "scriptureMap.models.scriptureMap";
+import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
 
 const { useState, useRef } = os.appHooks;
 
@@ -16,6 +17,7 @@ export type BaseSettingsOptionProps = {
 
 export type StaticSettingsOptionProps = BaseSettingsOptionProps & {
   type: "static";
+  icon?: string;
 };
 
 export type ConditionalSettingsOptionProps = BaseSettingsOptionProps & {
@@ -23,11 +25,18 @@ export type ConditionalSettingsOptionProps = BaseSettingsOptionProps & {
   enabledText: string;
   disabledText: string;
   condition: boolean;
+  enabledIcon?: string;
+  disabledIcon?: string;
+};
+
+export type DividerSettingsOptionProps = {
+  type: "divider";
 };
 
 export type SettingsOptionProps =
   | StaticSettingsOptionProps
-  | ConditionalSettingsOptionProps;
+  | ConditionalSettingsOptionProps
+  | DividerSettingsOptionProps;
 
 export type SettingsOptionData = {
   key: string;
@@ -138,40 +147,51 @@ const YearSelector = ({
 };
 
 const Option = (props: SettingsOptionProps) => {
+  const { MaterialIcon } = useScriptureMapContext();
+
   switch (props.type) {
-    case "static":
-      {
-        const { callback, staticText } = props;
-        return (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              callback();
-            }}
-            className="option-button"
-          >
-            {staticText}
-          </button>
-        );
-      }
-      break;
-    case "dynamic":
-      {
-        const { callback, condition, enabledText, disabledText, staticText } =
-          props;
-        return (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              callback();
-            }}
-            className="option-button"
-          >
-            {`${condition ? enabledText : disabledText} ${staticText}`}
-          </button>
-        );
-      }
-      break;
+    case "static": {
+      const { callback, staticText, icon } = props;
+      return (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            callback();
+          }}
+          className="option-button"
+        >
+          {icon && <MaterialIcon>{icon}</MaterialIcon>}
+          {staticText}
+        </button>
+      );
+    }
+    case "dynamic": {
+      const {
+        callback,
+        condition,
+        enabledText,
+        disabledText,
+        staticText,
+        enabledIcon,
+        disabledIcon,
+      } = props;
+      const icon = condition ? enabledIcon : disabledIcon;
+      return (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            callback();
+          }}
+          className="option-button"
+        >
+          {icon && <MaterialIcon>{icon}</MaterialIcon>}
+          {`${condition ? enabledText : disabledText} ${staticText}`}
+        </button>
+      );
+    }
+    case "divider": {
+      return <div className="option-divider"></div>;
+    }
   }
 };
 

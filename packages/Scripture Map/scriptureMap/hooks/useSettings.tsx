@@ -9,7 +9,10 @@ import type { SettingsLegendSquareData } from "scriptureMap.components.container
 import type { ReadingHistoryContextType } from "scriptureMap.contexts.ReadingHistory.ReadingHistoryContext";
 import type { ScriptureMapContextType } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
 import type { SettingsOptionData } from "scriptureMap.components.containers.Settings";
-import { TimelineRangeMethod } from "scriptureMap.models.readingHistory";
+import {
+  TimelineRangeMethod,
+  type TimelineRangeMethodType,
+} from "scriptureMap.models.readingHistory";
 import {
   ScriptureMapModes,
   type ScriptureMapModesType,
@@ -38,6 +41,16 @@ interface UseSettingsType {
   lessText: string;
   moreText: string;
 }
+
+const timelineTypeIconMap: Record<TimelineRangeMethodType, string> = {
+  Calendar: "calendar_month",
+  Rolling: "date_range",
+};
+
+const timelineTypeTextMap: Record<TimelineRangeMethodType, string> = {
+  Calendar: "show-rolling-timeline",
+  Rolling: "show-calendar-timeline",
+};
 
 type UseSettings = () => UseSettingsType;
 
@@ -123,47 +136,6 @@ export const useSettings: UseSettings = () => {
   const optionsData = useMemo<UseSettingsType["optionsData"]>(() => {
     const data: UseSettingsType["optionsData"] = [];
 
-    if (shouldShowReadingHistory) {
-      data.push({
-        type: "dynamic",
-        callback: handleToggleTimelineClick,
-        condition: collapsed,
-        // enabledIcon: "visibility_off",
-        // disabledIcon: "visibility",
-        enabledText: translate("Show"),
-        disabledText: translate("Hide"),
-        staticText: translate("timeline"),
-        key: "timeline",
-      });
-    }
-
-    data.push(
-      {
-        type: "static",
-        callback: handleToggleTimelineMethodClick,
-        staticText: translate("toggle-timeline-type"),
-        key: "type of timeline",
-      },
-      {
-        type: "dynamic",
-        callback: handleShowAllChaptersToggle,
-        condition: showingAllChapters,
-        enabledText: translate("Close"),
-        disabledText: translate("Open"),
-        staticText: translate("books"),
-        key: "books",
-      },
-      {
-        type: "dynamic",
-        callback: handleToggleBooksColorClick,
-        condition: showingBooksColors,
-        enabledText: translate("Hide"),
-        disabledText: translate("Show"),
-        staticText: translate("books-color"),
-        key: "books color",
-      }
-    );
-
     if (shouldShowReadingHistoryOption) {
       data.push({
         type: "dynamic",
@@ -173,10 +145,64 @@ export const useSettings: UseSettings = () => {
         disabledText: translate("Show"),
         staticText: translate("reading-history"),
         key: "reading history",
+        enabledIcon: "history",
+        disabledIcon: "history",
+      });
+      if (shouldShowReadingHistory) {
+        data.push(
+          {
+            type: "dynamic",
+            callback: handleToggleTimelineClick,
+            condition: collapsed,
+            enabledIcon: "timeline",
+            disabledIcon: "timeline",
+            enabledText: translate("Show"),
+            disabledText: translate("Hide"),
+            staticText: translate("timeline"),
+            key: "timeline",
+          },
+          {
+            type: "static",
+            callback: handleToggleTimelineMethodClick,
+            staticText: translate(timelineTypeTextMap[timelineRangeMethod]), // translate("toggle-timeline-type"),
+            key: "type of timeline",
+            icon: timelineTypeIconMap[timelineRangeMethod],
+          }
+        );
+      }
+      data.push({
+        type: "divider",
+        key: "books",
       });
     }
 
     data.push(
+      {
+        type: "dynamic",
+        callback: handleShowAllChaptersToggle,
+        condition: showingAllChapters,
+        enabledText: translate("Close"),
+        disabledText: translate("Open"),
+        staticText: translate("books"),
+        enabledIcon: "book_2",
+        disabledIcon: "book_5",
+        key: "books",
+      },
+      {
+        type: "dynamic",
+        callback: handleToggleBooksColorClick,
+        condition: showingBooksColors,
+        enabledText: translate("Hide"),
+        disabledText: translate("Show"),
+        staticText: translate("books-color"),
+        enabledIcon: "palette",
+        disabledIcon: "palette",
+        key: "books color",
+      },
+      {
+        type: "divider",
+        key: "user-presence",
+      },
       {
         type: "dynamic",
         callback: handleToggleUserPresenceClick,
@@ -185,6 +211,12 @@ export const useSettings: UseSettings = () => {
         disabledText: translate("Show"),
         staticText: translate("user-presence"),
         key: "user presence",
+        enabledIcon: "group_off",
+        disabledIcon: "group",
+      },
+      {
+        type: "divider",
+        key: "labels",
       },
       {
         type: "dynamic",
@@ -194,6 +226,8 @@ export const useSettings: UseSettings = () => {
         disabledText: translate("Show"),
         staticText: translate("section-labels"),
         key: "section labels",
+        enabledIcon: "label_off",
+        disabledIcon: "label",
       },
       {
         type: "dynamic",
@@ -203,6 +237,8 @@ export const useSettings: UseSettings = () => {
         disabledText: translate("Show"),
         staticText: translate("testament-labels"),
         key: "testament labels",
+        enabledIcon: "label_off",
+        disabledIcon: "label",
       }
     );
 

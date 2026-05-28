@@ -127,6 +127,10 @@ export interface ScriptureMapConfig {
   language: string;
   sessionProvider: SessionProvider;
   bookNames: Signal<Map<string, string>>;
+  MaterialIcon: (props: {
+    children: string;
+    className?: string;
+  }) => JSX.Element;
 }
 
 type ScriptureMapProps = {
