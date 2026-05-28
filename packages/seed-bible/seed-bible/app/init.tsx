@@ -37,21 +37,6 @@ os.syncConfigBotTagsToURL([
 configBot.tags.gridPortal = null;
 configBot.tags.mapPortal = null;
 
-// From https://rnwest.engineer/detect-webkit/
-function isWebKit() {
-  const ua = navigator.userAgent;
-  // As far as I can tell, Chromium-based desktop browsers are the only browsers
-  // that pretend to be WebKit-based but aren't.
-  return (
-    (/AppleWebKit/.test(ua) && !/Chrome/.test(ua)) ||
-    /\b(iPad|iPhone|iPod)\b/.test(ua)
-  );
-}
-
-if (isWebKit()) {
-  document.body.classList.add("is-webkit");
-}
-
 console.log("Starting APP");
 render(<Main />, document.body);
 

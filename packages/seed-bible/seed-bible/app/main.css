@@ -2090,12 +2090,14 @@ h6 {
 /* For some reason, pointer-events doesn't get set properly on iOS sometimes */
 /* On mobile, we can just hide and show the selector anyways because we disable transitions for mobile devices */
 .is-webkit {
-  & .sb-selector-overlay {
+  & .sb-selector-overlay,
+  &.sb-selector-overlay {
     display: none;
     pointer-events: all;
   }
 
-  & .sb-selector-overlay.open {
+  & .sb-selector-overlay.open,
+  &.sb-selector-overlay.open {
     display: flex;
   }
 }
