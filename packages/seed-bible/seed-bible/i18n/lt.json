@@ -189,14 +189,11 @@
   "add-bookmark": "Žymė",
   "play-audio": "Leisti garso įrašą",
   "play": "Žaisti",
-
   "discovery": "Atradimas",
   "chat": "Pokalbis",
-
   "today": "Šiandien",
   "you": "Tu",
   "bible": "Biblija",
-
   "add-verse": "Pridėti eilutę",
   "add": "Pridėti",
   "chat-empty-title": "Pokalbis bus netrukus",
@@ -207,7 +204,6 @@
   "bookmark-folder-empty": "Čia dar nėra žymeklių.",
   "bookmark-options": "Žymių parinktys",
   "new-folder-placeholder": "Aplanko pavadinimas",
-
   "tasks": "Užduotys",
   "bookmarks": "Žymės",
   "hide-bookmarks": "Slėpti žymes",
@@ -217,5 +213,9 @@
   "folder-name-taken": "Aplankas tokiu pavadinimu jau yra.",
   "add-to-new": "Pridėti prie naujo",
   "save": "Išsaugoti",
-  "bookmark-verses": "Žymių eilutės"
+  "bookmark-verses": "Žymių eilutės",
+  "open-new-chapter-in-new-or-current-tab": "Atidaryti naują skyrių naujame arba dabartiniame skirtuke",
+  "current-tab": "Dabartinis skirtukas",
+  "about-extrabiblical-writings": "Apie ekstrabiblinius raštus",
+  "apocrypha-info-text": "Ankstyvosios žydų ar krikščionių bendruomenės niekada nelaikė nė vieno iš šio skyriaus raštų Šventuoju Raštu. Biblija yra specifinis knygų rinkinys. Žydai ir krikščionys visada sutarė dėl Senojo Testamento, kuris yra sudarytas iš fiksuoto šventųjų raštų rinkinio, kurį žydų tauta vadino Tanachu, o krikščionys – Senuoju Testamentu. Tanachų ir Senojo Testamentų turinys yra visiškai tas pats, tačiau dažnai išdėstytas skirtingai. Krikščionys taip pat pripažįsta Naująjį Testamentą, kuriame pasakojama apie Jėzų, jo mokymus ir jo pasekėjų raštus. Žemiau pateikti raštai buvo žinomi ir plačiai skaitomi tuo metu, kai buvo rašoma Biblija, tačiau jie niekada nebuvo laikomi Šventuoju Raštu. Nors senovės autoriai kartais citavo įvairius tekstus, įskaitant poetų, filosofų ir kitų raštus, cituoti kažką nereiškia laikyti tai Šventuoju Raštu. Šie raštai čia įtraukti tik istoriniais ir literatūriniais tikslais."
 }

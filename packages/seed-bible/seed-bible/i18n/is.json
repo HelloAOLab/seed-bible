@@ -189,14 +189,11 @@
   "add-bookmark": "Bókamerki",
   "play-audio": "Spila hljóð",
   "play": "Spila",
-
   "discovery": "Uppgötvun",
   "chat": "Spjall",
-
   "today": "Í dag",
   "you": "Þú",
   "bible": "Biblían",
-
   "add-verse": "Bæta við versi",
   "add": "Bæta við",
   "chat-empty-title": "Spjall kemur bráðlega",
@@ -207,7 +204,6 @@
   "bookmark-folder-empty": "Engar bókamerki hér ennþá.",
   "bookmark-options": "Bókamerkjavalkostir",
   "new-folder-placeholder": "Möppunafn",
-
   "tasks": "Verkefni",
   "bookmarks": "Bókamerki",
   "hide-bookmarks": "Fela bókamerki",
@@ -217,5 +213,9 @@
   "folder-name-taken": "Mappa með þessu nafni er þegar til.",
   "add-to-new": "Bæta við nýtt",
   "save": "Vista",
-  "bookmark-verses": "Bókamerkjaðu vers"
+  "bookmark-verses": "Bókamerkjaðu vers",
+  "open-new-chapter-in-new-or-current-tab": "Opna nýjan kafla í nýjum eða núverandi flipa",
+  "current-tab": "Núverandi flipi",
+  "about-extrabiblical-writings": "Um utanbiblíulegar rit",
+  "apocrypha-info-text": "Engin ritin í þessum hluta voru nokkurn tíma talin vera Ritning af fyrstu gyðinga- eða kristnum samfélögum. Biblían er sérstakt safn bóka. Gyðingar og kristnir menn hafa alltaf verið sammála um Gamla testamentið, sem kemur úr föstu safni helgra rita sem gyðingar kölluðu Tanakh og kristnir menn kalla Gamla testamentið. Efni Tanakh og Gamla testamentisins er nákvæmlega það sama en er almennt raðað öðruvísi. Kristnir menn viðurkenna einnig Nýja testamentið, sem segir sögu Jesú, kenninga hans og rita fylgjenda hans. Ritin hér að neðan voru þekkt og víða lesin þegar Biblían var skrifuð, en þau voru aldrei meðhöndluð sem Ritning. Þó að fornir höfundar hafi stundum vitnað í fjölbreytt úrval texta, þar á meðal skáld, heimspekinga og annarra rita, er það ekki það sama að vitna í eitthvað og meðhöndla það sem Ritning. Þessi rit eru hér eingöngu tekin með til sögulegrar og bókmenntalegrar tilvísunar."
 }

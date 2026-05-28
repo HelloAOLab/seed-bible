@@ -189,14 +189,11 @@
   "add-bookmark": "Kirjanmerkki",
   "play-audio": "Toista ääntä",
   "play": "Pelata",
-
   "discovery": "Löytö",
   "chat": "Chat",
-
   "today": "Tänään",
   "you": "Sinä",
   "bible": "raamattu",
-
   "add-verse": "Lisää säkeistö",
   "add": "Lisätä",
   "chat-empty-title": "Chat on tulossa pian",
@@ -207,7 +204,6 @@
   "bookmark-folder-empty": "Ei vielä kirjanmerkkejä.",
   "bookmark-options": "Kirjanmerkkiasetukset",
   "new-folder-placeholder": "Kansion nimi",
-
   "tasks": "Tehtävät",
   "bookmarks": "Kirjanmerkit",
   "hide-bookmarks": "Piilota kirjanmerkit",
@@ -217,5 +213,9 @@
   "folder-name-taken": "Samanniminen kansio on jo olemassa.",
   "add-to-new": "Lisää uuteen",
   "save": "Tallentaa",
-  "bookmark-verses": "Kirjanmerkkien säkeet"
+  "bookmark-verses": "Kirjanmerkkien säkeet",
+  "open-new-chapter-in-new-or-current-tab": "Avaa uusi luku uudessa tai nykyisessä välilehdessä",
+  "current-tab": "Nykyinen välilehti",
+  "about-extrabiblical-writings": "Tietoja Raamatun ulkopuolisista kirjoituksista",
+  "apocrypha-info-text": "Varhaiset juutalaiset tai kristilliset yhteisöt eivät koskaan pitäneet mitään tässä osiossa olevista kirjoituksista pyhänä kirjoituksena. Raamattu on erityinen kokoelma kirjoja. Juutalaiset ja kristityt ovat aina olleet yhtä mieltä Vanhasta testamentista, joka on peräisin kiinteästä kokoelmasta pyhiä kirjoituksia, joita juutalaiset kutsuivat Tanakhiksi ja kristityt Vanhaksi testamentiksi. Tanakhin ja Vanhan testamentin sisältö on täsmälleen sama, mutta ne on yleensä järjestetty eri tavalla. Kristityt tunnustavat lisäksi Uuden testamentin, joka kertoo Jeesuksesta, hänen opetuksistaan ​​ja hänen seuraajiensa kirjoituksista. Alla olevat kirjoitukset olivat tunnettuja ja laajalti luettuja Raamatun kirjoitushetkellä, mutta niitä ei koskaan pidetty pyhänä kirjoituksena. Vaikka muinaiset kirjoittajat joskus lainasivat monenlaisia ​​tekstejä, kuten runoilijoita, filosofeja ja muita kirjoituksia, jonkin lainaaminen ei ole sama asia kuin sen pitäminen pyhänä kirjoituksena. Nämä kirjoitukset on sisällytetty tähän vain historialliseen ja kirjalliseen viitteeseen."
 }

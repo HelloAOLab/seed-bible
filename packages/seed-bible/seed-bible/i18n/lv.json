@@ -189,14 +189,11 @@
   "add-bookmark": "Grāmatzīme",
   "play-audio": "Atskaņot audio",
   "play": "Spēlēt",
-
   "discovery": "Atklājums",
   "chat": "Tērzēšana",
-
   "today": "Šodien",
   "you": "Tu",
   "bible": "Bībele",
-
   "add-verse": "Pievienot pantu",
   "add": "Pievienot",
   "chat-empty-title": "Tērzēšana drīzumā būs pieejama",
@@ -207,7 +204,6 @@
   "bookmark-folder-empty": "Šeit vēl nav grāmatzīmju.",
   "bookmark-options": "Grāmatzīmju opcijas",
   "new-folder-placeholder": "Mapes nosaukums",
-
   "tasks": "Uzdevumi",
   "bookmarks": "Grāmatzīmes",
   "hide-bookmarks": "Slēpt grāmatzīmes",
@@ -217,5 +213,9 @@
   "folder-name-taken": "Mape ar šādu nosaukumu jau pastāv.",
   "add-to-new": "Pievienot jaunam",
   "save": "Saglabāt",
-  "bookmark-verses": "Grāmatzīmju panti"
+  "bookmark-verses": "Grāmatzīmju panti",
+  "open-new-chapter-in-new-or-current-tab": "Atvērt jaunu nodaļu jaunā vai pašreizējā cilnē",
+  "current-tab": "Pašreizējā cilne",
+  "about-extrabiblical-writings": "Par ekstrabībeliskajiem rakstiem",
+  "apocrypha-info-text": "Neviens no šajā sadaļā iekļautajiem rakstiem agrīnajās ebreju vai kristiešu kopienās nekad nav uzskatīts par Svētajiem Rakstiem. Bībele ir īpaša grāmatu kolekcija. Ebreji un kristieši vienmēr ir bijuši vienisprātis par Veco Derību, kas ir veidota no fiksēta svēto rakstu kopuma, ko ebreju tauta sauca par Tanah, bet kristieši - par Veco Derību. Tanah un Vecās Derības saturs ir pilnīgi vienāds, taču tie parasti ir sakārtoti atšķirīgi. Kristieši atzīst arī Jauno Derību, kas stāsta par Jēzu, viņa mācībām un viņa sekotāju rakstiem. Zemāk minētie raksti bija zināmi un plaši lasīti Bībeles rakstīšanas laikā, taču tie nekad netika uzskatīti par Svētajiem Rakstiem. Lai gan senie autori dažreiz citēja plašu tekstu klāstu, tostarp dzejnieku, filozofu un citu rakstu darbus, kaut kā citēšana nav tas pats, kas tā uzskatīšana par Svētajiem Rakstiem. Šie raksti šeit ir iekļauti tikai vēsturiskai un literārai uzziņai."
 }

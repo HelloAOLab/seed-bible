@@ -189,14 +189,11 @@
   "add-bookmark": "Marcaj",
   "play-audio": "Redare audio",
   "play": "Juca",
-
   "discovery": "Descoperire",
   "chat": "Chat",
-
   "today": "Astăzi",
   "you": "Tu",
   "bible": "Biblie",
-
   "add-verse": "Adăugați verset",
   "add": "Adăuga",
   "chat-empty-title": "Chatul va fi disponibil în curând",
@@ -207,7 +204,6 @@
   "bookmark-folder-empty": "Nu există marcaje aici încă.",
   "bookmark-options": "Opțiuni pentru marcaje",
   "new-folder-placeholder": "Numele folderului",
-
   "tasks": "Sarcini",
   "bookmarks": "Semne de carte",
   "hide-bookmarks": "Ascunde marcajele",
@@ -217,5 +213,9 @@
   "folder-name-taken": "Există deja un folder cu acest nume.",
   "add-to-new": "Adăugați la nou",
   "save": "Salva",
-  "bookmark-verses": "Versuri în semnături"
+  "bookmark-verses": "Versuri în semnături",
+  "open-new-chapter-in-new-or-current-tab": "Deschideți noul capitol în fila nouă sau curentă",
+  "current-tab": "Fila curentă",
+  "about-extrabiblical-writings": "Despre scrierile extrabiblice",
+  "apocrypha-info-text": "Niciuna dintre scrierile din această secțiune nu a fost considerată vreodată Scriptură de către comunitățile evreiești sau creștine timpurii. Biblia este o colecție specifică de cărți. Evreii și creștinii au fost întotdeauna de acord asupra Vechiului Testament, care provine dintr-un set fix de scrieri sacre pe care evreii le numeau Tanakh, iar creștinii le numesc Vechiul Testament. Conținutul Tanakh-ului și al Vechiului Testament este exact același, dar sunt de obicei aranjate diferit. Creștinii recunosc, de asemenea, Noul Testament, care spune povestea lui Isus, învățăturile sale și scrierile urmașilor săi. Scrierile de mai jos erau cunoscute și citite pe scară largă în perioada în care a fost scrisă Biblia, dar nu au fost niciodată tratate ca Scriptură. Deși autorii antici citau uneori o gamă largă de texte, inclusiv poeți, filozofi și alte scrieri, a cita ceva nu este același lucru cu a-l trata ca Scriptură. Aceste scrieri sunt incluse aici doar pentru referințe istorice și literare."
 }

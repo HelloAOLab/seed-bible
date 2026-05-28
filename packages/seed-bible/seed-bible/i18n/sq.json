@@ -189,14 +189,11 @@
   "add-bookmark": "Shënues",
   "play-audio": "Luaj audion",
   "play": "Luaj",
-
   "discovery": "Zbulim",
   "chat": "Bisedë",
-
   "today": "Sot",
   "you": "Ti",
   "bible": "Bibla",
-
   "add-verse": "Shto varg",
   "add": "Shto",
   "chat-empty-title": "Chat do të vijë së shpejti",
@@ -207,7 +204,6 @@
   "bookmark-folder-empty": "Nuk ka ende faqeshënues këtu.",
   "bookmark-options": "Opsionet e faqeshënuesit",
   "new-folder-placeholder": "Emri i dosjes",
-
   "tasks": "Detyrat",
   "bookmarks": "Faqeshënuesit",
   "hide-bookmarks": "Fshih faqeshënuesit",
@@ -217,5 +213,9 @@
   "folder-name-taken": "Një dosje me atë emër ekziston tashmë.",
   "add-to-new": "Shto te e reja",
   "save": "Ruaj",
-  "bookmark-verses": "Vendos vargjet në faqeshënues"
+  "bookmark-verses": "Vendos vargjet në faqeshënues",
+  "open-new-chapter-in-new-or-current-tab": "Hap kapitullin e ri në skedën e re ose aktuale",
+  "current-tab": "Skeda Aktuale",
+  "about-extrabiblical-writings": "Rreth shkrimeve jashtëbiblike",
+  "apocrypha-info-text": "Asnjë nga shkrimet në këtë seksion nuk është konsideruar ndonjëherë si Shkrim i Shenjtë nga komunitetet e hershme hebraike ose të krishtera. Bibla është një koleksion specifik librash. Hebrenjtë dhe të krishterët gjithmonë kanë rënë dakord për Dhiatën e Vjetër, e cila vjen nga një grup i caktuar shkrimesh të shenjta që populli hebre e quan Tanakh dhe të krishterët e quajnë Dhiata e Vjetër. Përmbajtja e Tanakh dhe Dhiata e Vjetër janë saktësisht të njëjta, por zakonisht janë të rregulluara ndryshe. Të krishterët gjithashtu njohin Dhiatën e Re, e cila tregon historinë e Jezusit, mësimet e tij dhe shkrimet e ithtarëve të tij. Shkrimet më poshtë ishin të njohura dhe të lexuara gjerësisht në kohën kur u shkrua Bibla, por ato nuk u trajtuan kurrë si Shkrim i Shenjtë. Ndërsa autorët e lashtë ndonjëherë cituan një gamë të gjerë tekstesh, duke përfshirë poetë, filozofë dhe shkrime të tjera, citimi i diçkaje nuk është i njëjtë me trajtimin e saj si Shkrim i Shenjtë. Këto shkrime përfshihen këtu vetëm për referencë historike dhe letrare."
 }

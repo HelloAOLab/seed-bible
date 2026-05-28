@@ -189,14 +189,11 @@
   "add-bookmark": "Järjehoidja",
   "play-audio": "Esita heli",
   "play": "Mängi",
-
   "discovery": "Avastus",
   "chat": "Vestlus",
-
   "today": "Täna",
   "you": "Sina",
   "bible": "Piibel",
-
   "add-verse": "Lisa salm",
   "add": "Lisa",
   "chat-empty-title": "Vestlus on peagi tulemas",
@@ -207,7 +204,6 @@
   "bookmark-folder-empty": "Siin pole veel järjehoidjaid.",
   "bookmark-options": "Järjehoidjate valikud",
   "new-folder-placeholder": "Kausta nimi",
-
   "tasks": "Ülesanded",
   "bookmarks": "Järjehoidjad",
   "hide-bookmarks": "Peida järjehoidjad",
@@ -217,5 +213,9 @@
   "folder-name-taken": "Selle nimega kaust on juba olemas.",
   "add-to-new": "Lisa uude",
   "save": "Salvesta",
-  "bookmark-verses": "Lisa salmid järjehoidjatesse"
+  "bookmark-verses": "Lisa salmid järjehoidjatesse",
+  "open-new-chapter-in-new-or-current-tab": "Ava uus peatükk uuel või praegusel vahelehel",
+  "current-tab": "Praegune vahekaart",
+  "about-extrabiblical-writings": "Piibliväliste kirjutiste kohta",
+  "apocrypha-info-text": "Ühtegi selles osas olevat kirjutist ei pidanud varased juudi ega kristlikud kogukonnad kunagi pühakirjaks. Piibel on kindel raamatute kogu. Juudid ja kristlased on alati olnud ühel meelel Vanas Testamendis, mis pärineb kindlast pühakirjade kogumist, mida juudi rahvas nimetas Tanahhiks ja kristlased Vanaks Testamendiks. Tanahhi ja Vana Testamendi sisu on täpselt sama, kuid need on tavaliselt erinevalt paigutatud. Kristlased tunnustavad lisaks Uut Testamenti, mis jutustab Jeesuse loo, tema õpetustest ja tema järgijate kirjutistest. Allpool loetletud kirjutised olid Piibli kirjutamise ajal tuntud ja laialdaselt loetud, kuid neid ei käsitletud kunagi pühakirjana. Kuigi iidsed autorid tsiteerisid mõnikord laia valikut tekste, sealhulgas luuletajaid, filosoofe ja teisi kirjutisi, ei ole millegi tsiteerimine sama, mis selle käsitlemine pühakirjana. Need kirjutised on siia lisatud ainult ajaloolise ja kirjandusliku viitena."
 }
