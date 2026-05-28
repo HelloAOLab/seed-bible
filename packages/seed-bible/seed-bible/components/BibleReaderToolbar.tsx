@@ -107,30 +107,30 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
     disabled?: boolean;
     onClick: () => void;
   }> = [
-    {
-      id: "discovery",
-      label: t("discovery", { defaultValue: "Discovery" }),
-      iconName: "explore",
-      onClick: () => {
-        onClose();
-        os.toast(
-          t("discovery-coming-soon", {
-            defaultValue: "Discovery is coming soon",
-          })
-        );
-      },
-    },
-    {
-      id: "chat",
-      label: t("chat", { defaultValue: "Chat" }),
-      iconName: "chat_bubble_outline",
-      onClick: () => {
-        onClose();
-        os.toast(
-          t("chat-coming-soon", { defaultValue: "Chat is coming soon" })
-        );
-      },
-    },
+    // {
+    //   id: "discovery",
+    //   label: t("discovery", { defaultValue: "Discovery" }),
+    //   iconName: "explore",
+    //   onClick: () => {
+    //     onClose();
+    //     os.toast(
+    //       t("discovery-coming-soon", {
+    //         defaultValue: "Discovery is coming soon",
+    //       })
+    //     );
+    //   },
+    // },
+    // {
+    //   id: "chat",
+    //   label: t("chat", { defaultValue: "Chat" }),
+    //   iconName: "chat_bubble_outline",
+    //   onClick: () => {
+    //     onClose();
+    //     os.toast(
+    //       t("chat-coming-soon", { defaultValue: "Chat is coming soon" })
+    //     );
+    //   },
+    // },
     ...extraItems,
   ];
 
@@ -451,9 +451,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const nextChapterTool = useComputed(
     () => tools.value.find((tool) => tool.id === "next-chapter") ?? null
   );
-  const openSelectorTool = useComputed(
-    () => tools.value.find((tool) => tool.id === "open-selector") ?? null
-  );
 
   const floatingAnchor = useComputed(() =>
     readingState.value!.selectedVerses.value.reduce<{
@@ -746,8 +743,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     isMoreMenuOpen.value = false;
                     sidebar.closeSearchPanel();
                     sidebar.closeChatPanel();
+                    sidebar.closeSettings();
+                    sidebar.closeSidebar();
+                    void selector.setOpen(false);
                     selectedToolbarToolId.value = null;
-                    openSelectorTool.value?.onSelect();
                   }}
                 />
 

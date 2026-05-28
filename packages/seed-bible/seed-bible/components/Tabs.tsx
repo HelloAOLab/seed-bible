@@ -458,19 +458,24 @@ export function TabsHeader(props: TabsHeaderProps) {
               {t("report-a-bug", { defaultValue: "Report a bug" })}
             </ContextMenuItem>
             <ContextMenuItem
+              className="sb-context-menu-toggle-item"
+              role="menuitemcheckbox"
+              aria-checked={isAwake}
               onClick={(event: Event) => {
                 event.preventDefault();
                 settings.setKeepScreenAwake(!isAwake);
               }}
+              style={{ width: "230px" }}
             >
-              <span className="material-symbols-outlined sb-quick-menu-check">
-                {isAwake ? "check_box" : "check_box_outline_blank"}
-              </span>
               <span>
                 {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
               </span>
+              <span
+                className={`sb-pill-toggle${isAwake ? " is-on" : ""}`}
+                aria-hidden="true"
+              />
             </ContextMenuItem>
-            <ContextMenuItem
+            {/* <ContextMenuItem
               onClick={() => {
                 sidebar.openSettings();
               }}
@@ -478,7 +483,7 @@ export function TabsHeader(props: TabsHeaderProps) {
               {t("go-to-all-settings", {
                 defaultValue: "Go to all settings",
               })}
-            </ContextMenuItem>
+            </ContextMenuItem> */}
           </ContextMenuWithButton>
         )}
       </div>

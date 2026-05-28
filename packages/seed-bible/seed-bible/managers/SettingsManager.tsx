@@ -783,11 +783,21 @@ export function createSettings(login: LoginManager): SettingsManager {
     writeToolbarConfig(DEFAULT_TOOLBAR_CONFIG);
   };
 
-  const setKeepScreenAwake = (enabled: boolean) => {
+  const setKeepScreenAwake = async (enabled: boolean) => {
     if (settings.value.keepScreenAwake === enabled) return;
-    settings.value = { ...settings.value, keepScreenAwake: enabled };
-    configBot.tags[TAG_KEEP_AWAKE] = enabled;
-    saveProfileConfigValue(login, PROFILE_KEEP_AWAKE, enabled);
+    let nextValue = enabled;
+    if (enabled) {
+      try {
+        await os.requestWakeLock();
+      } catch {
+        nextValue = false;
+      }
+    } else {
+      os.disableWakeLock();
+    }
+    settings.value = { ...settings.value, keepScreenAwake: nextValue };
+    configBot.tags[TAG_KEEP_AWAKE] = nextValue;
+    saveProfileConfigValue(login, PROFILE_KEEP_AWAKE, nextValue);
   };
 
   const setShowNavArrows = (enabled: boolean) => {

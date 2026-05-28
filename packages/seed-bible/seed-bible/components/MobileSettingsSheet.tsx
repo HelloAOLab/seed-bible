@@ -6,6 +6,7 @@ import {
   type UITextSize,
 } from "seed-bible.managers.SettingsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
+import { SettingsIcon } from "./icons";
 
 const FONT_SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
@@ -181,7 +182,9 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
           className="sb-mobile-settings-sheet-all-settings"
           onClick={onOpenAllSettings}
         >
-          <span className="material-symbols-outlined">tune</span>
+          <span className="material-symbols-outlined sb-mobile-settings-icon">
+            <SettingsIcon />
+          </span>
           <span>
             {t("go-to-all-settings", { defaultValue: "Go to all settings" })}
           </span>
