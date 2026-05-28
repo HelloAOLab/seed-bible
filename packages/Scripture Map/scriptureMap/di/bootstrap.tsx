@@ -1,3 +1,4 @@
+// import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
 import { thisTypedBot as componentsBot } from "scriptureMap.components.botAdapter";
 import { thisTypedBot as componentsContainersBot } from "scriptureMap.components.containers.botAdapter";
@@ -206,7 +207,39 @@ export const bootstrapExtension = () => {
         priority: 100,
       });
 
+      const todayComponent = () => <div>Today test</div>;
+
+      yield context.tools.registerToolbarTool({
+        id: "today",
+        priority: 0,
+        title: "Today",
+        icon: () => <MaterialIcon>home</MaterialIcon>,
+        onSelect: () => {
+          const paneId = context.panes.selectedPaneId.value;
+          if (paneId) {
+            context.tabs.selectTab("");
+            context.panes.openInPane(paneId, { component: todayComponent });
+          }
+        },
+      });
+
+      // const cleanupTodayEffect = effect(() => {
+      //   const tabId = context.tabs.selectedTabId.value;
+      //   if (!tabId) return;
+
+      //   const paneId = context.panes.selectedPaneId.value;
+      //   if (!paneId) return;
+
+      //   const selectedPane = context.panes.panes.value.find(
+      //     (p) => p.id === paneId
+      //   );
+      //   if (selectedPane?.component !== todayComponent) return;
+
+      //   context.panes.openInPane(paneId, { tabId });
+      // });
+
       yield () => {
+        // cleanupTodayEffect();
         destroy([
           componentsBot,
           componentsContainersBot,

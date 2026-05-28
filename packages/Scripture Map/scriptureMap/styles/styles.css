@@ -237,6 +237,7 @@
   padding: 4px;
   gap: 4px;
   box-shadow: 0 0 4px 0px var(--sb-divider-color);
+  z-index: 1;
 }
 
 .settings-footer
