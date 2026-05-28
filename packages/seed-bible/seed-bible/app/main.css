@@ -6116,6 +6116,7 @@ h6 {
     var(--sb-primary-color),
     transparent 80%
   );
+  color: var(--sb-primary-color);
 }
 
 .sidebar-selected-itm {

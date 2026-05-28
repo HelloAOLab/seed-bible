@@ -560,7 +560,7 @@ export function Tabs(props: TabsProps) {
   return (
     <>
       <div className="sb-sidebar-tabs-header">
-        {!app.isMobile && (
+        {!app.isMobile.value && (
           <>
             <h3 className="sb-sidebar-tabs-title">
               {t("tabs", { defaultValue: "Tabs" })}
@@ -665,7 +665,7 @@ export function Tabs(props: TabsProps) {
             </div>
           </>
         )}
-        {app.isMobile && (
+        {app.isMobile.value && (
           <>
             <button
               type="button"

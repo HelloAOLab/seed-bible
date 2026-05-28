@@ -80,7 +80,7 @@ const SearchBar = (props: {
 
   return (
     <>
-      {!selectingTranslation.value && (
+      {(!selectingTranslation.value || viewportWidth.value > 768) && (
         <div class="testament-selection starterAnimation">
           {viewportWidth.value > 768 && (
             <>
@@ -97,9 +97,6 @@ const SearchBar = (props: {
                 <span
                   style={{
                     transition: "transform 0.3s",
-                    color: selectingTranslation.value
-                      ? "var(--sb-primary-color)"
-                      : "",
                   }}
                   class={`material-symbols-outlined ${selectingTranslation.value ? "upside-down" : ""}`}
                   // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
@@ -187,7 +184,7 @@ const SearchBar = (props: {
         </div>
       )}
       <div class="sidebar-results starterAnimation flex-wrap-start">
-        {!selectingTranslation.value &&
+        {(!selectingTranslation.value || viewportWidth.value > 768) &&
           selectedTranslationBooks.value?.books &&
           selectedTestamentData.value &&
           selectedTranslation.value && (
@@ -951,7 +948,6 @@ const LanguageComponent = (props: {
         <span
           style={{
             transition: "transform 0.3s",
-            color: showSig.value ? "var(--sb-primary-color)" : "",
           }}
           class={`material-symbols-outlined ${showSig.value ? "upside-down" : ""}`}
           // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
