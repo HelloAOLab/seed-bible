@@ -924,6 +924,7 @@ h6 {
   display: flex;
   justify-content: flex-start;
   align-items: center;
+  gap: 8px;
 }
 
 .sb-bible-reader-mobile-header-book {
@@ -939,7 +940,6 @@ h6 {
   display: inline-flex;
   padding: 5px 10px;
   border-radius: 15px;
-  margin-left: 5px;
 }
 
 .sb-bible-reader-mobile-header-play {
