@@ -2102,6 +2102,17 @@ h6 {
   }
 }
 
+@media (max-width: 768px) {
+  .sb-selector-overlay {
+    display: none;
+    pointer-events: all;
+  }
+
+  .sb-selector-overlay.open {
+    display: flex;
+  }
+}
+
 .sb-selector-panel {
   position: absolute;
   overflow: auto;
