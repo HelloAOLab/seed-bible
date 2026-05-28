@@ -1838,6 +1838,8 @@ h6 {
     color: var(--sb-reader-toolbar-floating-button-font-color);
     box-shadow: var(--sb-reader-toolbar-floating-button-box-shadow);
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .sb-reader-toolbar-floating-button-left {
