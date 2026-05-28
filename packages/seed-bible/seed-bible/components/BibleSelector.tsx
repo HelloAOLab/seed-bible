@@ -887,7 +887,7 @@ const LanguageComponent = (props: {
   const showRef = useRef<ReturnType<typeof signal<boolean>> | null>(null);
   if (!showRef.current) showRef.current = signal(false);
   const showSig = showRef.current;
-  const { t, language: currentLanguage } = useI18n();
+  const { t } = useI18n();
 
   const shareTranslatation = async (props: { translation: Translation }) => {
     const { translation } = props;
