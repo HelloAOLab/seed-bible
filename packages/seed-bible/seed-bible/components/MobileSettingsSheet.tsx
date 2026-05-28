@@ -181,9 +181,12 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
           className="sb-mobile-settings-sheet-all-settings"
           onClick={onOpenAllSettings}
         >
-          <span className="material-symbols-outlined">settings</span>
+          <span className="material-symbols-outlined">tune</span>
           <span>
             {t("go-to-all-settings", { defaultValue: "Go to all settings" })}
+          </span>
+          <span className="material-symbols-outlined sb-mobile-settings-sheet-all-settings-chevron">
+            chevron_right
           </span>
         </button>
       </div>

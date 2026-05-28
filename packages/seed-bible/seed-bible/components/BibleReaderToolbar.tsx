@@ -107,23 +107,29 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
     disabled?: boolean;
     onClick: () => void;
   }> = [
-    // {
-    //   id: "ask",
-    //   label: t("ask", { defaultValue: "Ask" }),
-    //   iconName: "auto_awesome",
-    //   onClick: onClose,
-    // },
     {
       id: "discovery",
       label: t("discovery", { defaultValue: "Discovery" }),
       iconName: "explore",
-      onClick: onClose,
+      onClick: () => {
+        onClose();
+        os.toast(
+          t("discovery-coming-soon", {
+            defaultValue: "Discovery is coming soon",
+          })
+        );
+      },
     },
     {
       id: "chat",
       label: t("chat", { defaultValue: "Chat" }),
       iconName: "chat_bubble_outline",
-      onClick: onClose,
+      onClick: () => {
+        onClose();
+        os.toast(
+          t("chat-coming-soon", { defaultValue: "Chat is coming soon" })
+        );
+      },
     },
     ...extraItems,
   ];
@@ -706,8 +712,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   }
                   label={t("today", { defaultValue: "Today" })}
                   onClick={() => {
-                    // Placeholder — not wired up yet.
                     isMoreMenuOpen.value = false;
+                    os.toast(
+                      t("today-coming-soon", {
+                        defaultValue: "Today screen is coming soon",
+                      })
+                    );
                   }}
                 />
 

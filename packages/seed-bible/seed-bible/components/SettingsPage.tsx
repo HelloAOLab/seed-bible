@@ -1029,14 +1029,19 @@ function getExtensionInstallState(
 
 function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { extensions } = state;
+  const { extensions, login } = state;
   const extensionsList = extensions.extensions.value;
+  const isLoggedIn = login.userId.value !== null;
   const installingIds = useSignal<Set<string>>(new Set());
   const isDownloadingSet = useSignal(false);
   const isUploadingSet = useSignal(false);
 
   const onBack = () => {
     state.sidebar.requestedSettingsView.value = "main";
+  };
+
+  const promptLogin = () => {
+    void login.login();
   };
 
   const handleInstall = async (extensionId: string) => {
@@ -1126,6 +1131,18 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
         ]}
       />
       <section className="sb-settings-section">
+        {!isLoggedIn && (
+          <div className="sb-settings-login-prompt">
+            <p>
+              {t("login-to-use-feature", {
+                defaultValue: "You have to log in to use this feature.",
+              })}
+            </p>
+            <button className="sb-settings-action-button" onClick={promptLogin}>
+              {t("log-in", { defaultValue: "Log in" })}
+            </button>
+          </div>
+        )}
         {extensionsList.length === 0 ? (
           <div className="sb-settings-empty-state">
             <p>
@@ -1135,7 +1152,12 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
             </p>
           </div>
         ) : (
-          <ul className="sb-extensions-list">
+          <ul
+            className={`sb-extensions-list${
+              !isLoggedIn ? " sb-extensions-list-disabled" : ""
+            }`}
+            aria-disabled={!isLoggedIn}
+          >
             {extensionsList.map((extensionEntry) => {
               const { id, installed, pendingInstallation } = extensionEntry;
               const isRegistered =
@@ -1187,9 +1209,22 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                         <button
                           type="button"
                           className="sb-extension-row-action-button"
-                          onClick={() => void handleInstall(id)}
+                          onClick={() => {
+                            if (!isLoggedIn) {
+                              promptLogin();
+                              return;
+                            }
+                            void handleInstall(id);
+                          }}
                           aria-label={t("install", { defaultValue: "Install" })}
-                          title={t("install", { defaultValue: "Install" })}
+                          title={
+                            isLoggedIn
+                              ? t("install", { defaultValue: "Install" })
+                              : t("login-to-use-feature", {
+                                  defaultValue:
+                                    "You have to log in to use this feature.",
+                                })
+                          }
                         >
                           <span className="material-symbols-outlined">
                             download
@@ -1201,11 +1236,24 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                         <button
                           type="button"
                           className="sb-extension-row-action-button"
-                          onClick={() => handleUninstall(id)}
+                          onClick={() => {
+                            if (!isLoggedIn) {
+                              promptLogin();
+                              return;
+                            }
+                            handleUninstall(id);
+                          }}
                           aria-label={t("uninstall", {
                             defaultValue: "Uninstall",
                           })}
-                          title={t("uninstall", { defaultValue: "Uninstall" })}
+                          title={
+                            isLoggedIn
+                              ? t("uninstall", { defaultValue: "Uninstall" })
+                              : t("login-to-use-feature", {
+                                  defaultValue:
+                                    "You have to log in to use this feature.",
+                                })
+                          }
                         >
                           <span className="material-symbols-outlined">
                             delete
@@ -1223,7 +1271,13 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
         <div className="sb-extension-footer-actions">
           <button
             className="sb-settings-action-button"
-            onClick={() => void handleDownloadExtensions()}
+            onClick={() => {
+              if (!isLoggedIn) {
+                promptLogin();
+                return;
+              }
+              void handleDownloadExtensions();
+            }}
             disabled={isDownloadingSet.value}
           >
             {isDownloadingSet.value
@@ -1232,7 +1286,13 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           </button>
           <button
             className="sb-settings-action-button"
-            onClick={() => void handleUploadExtensions()}
+            onClick={() => {
+              if (!isLoggedIn) {
+                promptLogin();
+                return;
+              }
+              void handleUploadExtensions();
+            }}
             disabled={isUploadingSet.value}
           >
             {isUploadingSet.value
