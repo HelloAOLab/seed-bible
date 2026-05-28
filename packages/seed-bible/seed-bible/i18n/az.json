@@ -189,10 +189,10 @@
   "add-bookmark": "Əlfəcin",
   "play-audio": "Səsi oxudun",
   "play": "Oyna",
-  "ask": "Soruş",
+
   "discovery": "Kəşf",
   "chat": "Söhbət",
-  "social": "Sosial",
+
   "today": "Bu gün",
   "you": "Sən",
   "bible": "Müqəddəs Kitab",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Hələlik burada əlfəcin yoxdur.",
   "bookmark-options": "Əlfəcin seçimləri",
   "new-folder-placeholder": "Qovluq adı",
-  "new-folder": "Yeni qovluq",
+
   "tasks": "Tapşırıqlar",
   "bookmarks": "Əlfəcinlər",
   "hide-bookmarks": "Əlfəcinləri gizlət",
   "show-bookmarks": "Əlfəcinləri göstər",
-  "add-new-tab": "Yeni sekme əlavə edin"
+  "add-new-tab": "Yeni sekme əlavə edin",
+  "add-to-bookmark-category": "Əlfəcin kateqoriyasına əlavə edin",
+  "folder-name-taken": "Bu adda qovluq artıq mövcuddur.",
+  "add-to-new": "Yenisinə əlavə edin",
+  "save": "Yadda saxla",
+  "bookmark-verses": "Ayələri əlfəcininizə əlavə edin"
 }

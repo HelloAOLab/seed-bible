@@ -189,10 +189,10 @@
   "add-bookmark": "Označi",
   "play-audio": "Reprodukuj audio",
   "play": "Igraj",
-  "ask": "Pitajte",
+
   "discovery": "Otkriće",
   "chat": "Čet",
-  "social": "Društvene mreže",
+
   "today": "Danas",
   "you": "Ti",
   "bible": "Biblija",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Ovdje još nema oznaka.",
   "bookmark-options": "Opcije oznaka",
   "new-folder-placeholder": "Naziv mape",
-  "new-folder": "Nova mapa",
+
   "tasks": "Zadaci",
   "bookmarks": "Oznake",
   "hide-bookmarks": "Sakrij oznake",
   "show-bookmarks": "Prikaži oznake",
-  "add-new-tab": "Dodaj novi tab"
+  "add-new-tab": "Dodaj novi tab",
+  "add-to-bookmark-category": "Dodaj u kategoriju oznaka",
+  "folder-name-taken": "Fascikla sa tim imenom već postoji.",
+  "add-to-new": "Dodaj u novo",
+  "save": "Sačuvaj",
+  "bookmark-verses": "Označi stihove"
 }

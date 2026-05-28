@@ -188,10 +188,10 @@
   "add-bookmark": "Хавчуурга",
   "play-audio": "Аудио тоглуулах",
   "play": "Тоглох",
-  "ask": "Асуух",
+
   "discovery": "Нээлт",
   "chat": "Чат",
-  "social": "Нийгмийн",
+
   "today": "Өнөөдөр",
   "you": "Чи",
   "bible": "Библи",
@@ -206,10 +206,16 @@
   "bookmark-folder-empty": "Энд одоогоор хавчуурга алга байна.",
   "bookmark-options": "Хавчуургын сонголтууд",
   "new-folder-placeholder": "Фолдерын нэр",
-  "new-folder": "Шинэ хавтас",
+
   "tasks": "Даалгаварууд",
   "bookmarks": "Хавчуурга",
   "hide-bookmarks": "Хавчуургыг нуух",
   "show-bookmarks": "Хавчуургыг харуулах",
-  "add-new-tab": "Шинэ таб нэмэх"
+  "add-new-tab": "Шинэ таб нэмэх",
+  "share-session": "Хуваалцах сесс",
+  "add-to-bookmark-category": "Хавчуургын ангилалд нэмэх",
+  "folder-name-taken": "Ийм нэртэй фолдер аль хэдийн байна.",
+  "add-to-new": "Шинэ зүйлд нэмэх",
+  "save": "Хадгалах",
+  "bookmark-verses": "Шүлгүүдийг хавчуурга болгон хадгалах"
 }

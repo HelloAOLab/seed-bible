@@ -120,10 +120,13 @@ export function Toolbar() {
 
   const [oldList, setOldList] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dontShowMobileBottomNavbar, setDontShowMobileBottomNavbar] =
+    useState(false);
   const holdTimeoutRef = useRef<any>(null);
   const hasHeldRef = useRef(false);
 
   useEffect(() => {
+    globalThis.SetDontShowMobileBottomNavbar = setDontShowMobileBottomNavbar;
     G.SetScreens = setScreens;
   }, [setScreens]);
 
@@ -229,24 +232,26 @@ export function Toolbar() {
         <SurroundingDivs action={handleMouseLeaveContainer}>
           {/* Mobile Bottom Navbar */}
           <div className="mobile-bottom-navbar">
-            <button
-              style={{
-                display:
-                  showNavArrows && !activeApp && !sidebarPanelOpen
-                    ? ""
-                    : "none",
-              }}
-              className="mobile-navbar-arrow left-arrow"
-              onClick={() =>
-                isRTL
-                  ? navFunctions?.openNextChapter()
-                  : navFunctions?.openPrevChapter()
-              }
-              title={t("previous")}
-              aria-label={t("previousChapter")}
-            >
-              <span className="material-symbols-outlined">chevron_left</span>
-            </button>
+            {dontShowMobileBottomNavbar ? null : (
+              <button
+                style={{
+                  display:
+                    showNavArrows && !activeApp && !sidebarPanelOpen
+                      ? ""
+                      : "none",
+                }}
+                className="mobile-navbar-arrow left-arrow"
+                onClick={() =>
+                  isRTL
+                    ? navFunctions?.openNextChapter()
+                    : navFunctions?.openPrevChapter()
+                }
+                title={t("previous")}
+                aria-label={t("previousChapter")}
+              >
+                <span className="material-symbols-outlined">chevron_left</span>
+              </button>
+            )}
 
             <button
               className="mobile-navbar-btn today-btn"
@@ -420,24 +425,26 @@ export function Toolbar() {
               </div>
             )}
 
-            <button
-              style={{
-                display:
-                  showNavArrows && !activeApp && !sidebarPanelOpen
-                    ? ""
-                    : "none",
-              }}
-              className="mobile-navbar-arrow right-arrow"
-              onClick={() =>
-                isRTL
-                  ? navFunctions?.openPrevChapter()
-                  : navFunctions?.openNextChapter()
-              }
-              title={t("next")}
-              aria-label={t("nextChapter")}
-            >
-              <span className="material-symbols-outlined">chevron_right</span>
-            </button>
+            {dontShowMobileBottomNavbar ? null : (
+              <button
+                style={{
+                  display:
+                    showNavArrows && !activeApp && !sidebarPanelOpen
+                      ? ""
+                      : "none",
+                }}
+                className="mobile-navbar-arrow right-arrow"
+                onClick={() =>
+                  isRTL
+                    ? navFunctions?.openPrevChapter()
+                    : navFunctions?.openNextChapter()
+                }
+                title={t("next")}
+                aria-label={t("nextChapter")}
+              >
+                <span className="material-symbols-outlined">chevron_right</span>
+              </button>
+            )}
           </div>
 
           {/* Desktop Toolbar */}

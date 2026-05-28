@@ -189,10 +189,10 @@
   "add-bookmark": "Könyvjelző",
   "play-audio": "Hang lejátszása",
   "play": "Játék",
-  "ask": "Kérdez",
+
   "discovery": "Felfedezés",
   "chat": "Csevegés",
-  "social": "Szociális",
+
   "today": "Ma",
   "you": "Te",
   "bible": "Biblia",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Még nincsenek könyvjelzők.",
   "bookmark-options": "Könyvjelző beállítások",
   "new-folder-placeholder": "Mappa neve",
-  "new-folder": "Új mappa",
+
   "tasks": "Feladatok",
   "bookmarks": "Könyvjelzők",
   "hide-bookmarks": "Könyvjelzők elrejtése",
   "show-bookmarks": "Könyvjelzők megjelenítése",
-  "add-new-tab": "Új lap hozzáadása"
+  "add-new-tab": "Új lap hozzáadása",
+  "add-to-bookmark-category": "Hozzáadás a könyvjelző kategóriához",
+  "folder-name-taken": "Már létezik egy ilyen nevű mappa.",
+  "add-to-new": "Hozzáadás az újhoz",
+  "save": "Megtakarítás",
+  "bookmark-verses": "Könyvjelző versek"
 }

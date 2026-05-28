@@ -188,10 +188,10 @@
   "add-bookmark": "Добавить в закладки",
   "play-audio": "Воспроизвести аудио",
   "play": "Играть",
-  "ask": "Просить",
+
   "discovery": "Открытие",
   "chat": "Чат",
-  "social": "Социальный",
+
   "today": "Сегодня",
   "you": "Ты",
   "bible": "Библия",
@@ -206,11 +206,16 @@
   "bookmark-folder-empty": "Здесь пока нет закладок.",
   "bookmark-options": "Параметры закладок",
   "new-folder-placeholder": "Название папки",
-  "new-folder": "Новая папка",
+
   "tasks": "Задачи",
   "bookmarks": "Закладки",
   "hide-bookmarks": "Скрыть закладки",
   "show-bookmarks": "Показать закладки",
   "add-new-tab": "Добавить новую вкладку",
-  "share-session": "Совместное использование сессии"
+  "share-session": "Совместное использование сессии",
+  "add-to-bookmark-category": "Добавить в категорию закладок",
+  "folder-name-taken": "Папка с таким именем уже существует.",
+  "add-to-new": "Добавить в новые",
+  "save": "Сохранять",
+  "bookmark-verses": "Добавить стихи в закладки"
 }

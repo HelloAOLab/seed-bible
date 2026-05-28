@@ -189,10 +189,10 @@
   "add-bookmark": "Обележувач",
   "play-audio": "Пушти аудио",
   "play": "Играј",
-  "ask": "Прашај",
+
   "discovery": "Откритие",
   "chat": "Разговор",
-  "social": "Социјални",
+
   "today": "Денес",
   "you": "Ти",
   "bible": "Библија",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Сè уште нема обележувачи тука.",
   "bookmark-options": "Опции за обележувачи",
   "new-folder-placeholder": "Име на папка",
-  "new-folder": "Нова папка",
+
   "tasks": "Задачи",
   "bookmarks": "Обележувачи",
   "hide-bookmarks": "Сокриј обележувачи",
   "show-bookmarks": "Прикажи обележувачи",
-  "add-new-tab": "Додај нов таб"
+  "add-new-tab": "Додај нов таб",
+  "add-to-bookmark-category": "Додај во категоријата обележувачи",
+  "folder-name-taken": "Веќе постои папка со тоа име.",
+  "add-to-new": "Додај во ново",
+  "save": "Зачувај",
+  "bookmark-verses": "Обележи ги стиховите"
 }

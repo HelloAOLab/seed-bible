@@ -188,10 +188,10 @@
   "add-bookmark": "Закладка",
   "play-audio": "Відтворити аудіо",
   "play": "Грати",
-  "ask": "Запитайте",
+
   "discovery": "Відкриття",
   "chat": "Чат",
-  "social": "Соціальні мережі",
+
   "today": "Сьогодні",
   "you": "Ви",
   "bible": "Біблія",
@@ -206,11 +206,16 @@
   "bookmark-folder-empty": "Тут ще немає закладок.",
   "bookmark-options": "Параметри закладок",
   "new-folder-placeholder": "Назва папки",
-  "new-folder": "Нова папка",
+
   "tasks": "Завдання",
   "bookmarks": "Закладки",
   "hide-bookmarks": "Приховати закладки",
   "show-bookmarks": "Показати закладки",
   "add-new-tab": "Додати нову вкладку",
-  "share-session": "Поділитися сеансом"
+  "share-session": "Поділитися сеансом",
+  "add-to-bookmark-category": "Додати до категорії закладок",
+  "folder-name-taken": "Папка з такою назвою вже існує.",
+  "add-to-new": "Додати до нового",
+  "save": "Зберегти",
+  "bookmark-verses": "Закладка віршів"
 }

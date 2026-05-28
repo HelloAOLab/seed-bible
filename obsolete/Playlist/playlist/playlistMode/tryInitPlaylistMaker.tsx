@@ -3,13 +3,14 @@ const G = globalThis as any;
 G.LocaleStorage.historySaver();
 os.unregisterApp("quitGame");
 os.registerApp("quitGame", thisBot);
-
-if (G.makingPlaylist) {
-  G.makingPlaylist = false;
-  return;
+const makeBooleansTrue = that?.makeBooleansTrue;
+if (makeBooleansTrue) {
+  if (G.makingPlaylist) {
+    G.makingPlaylist = false;
+    return;
+  }
+  G.makingPlaylist = true;
 }
-
-G.makingPlaylist = true;
 G.setOpenSidebar && G.setOpenSidebar(false);
 const Playlist = await thisBot.PlaylistUI();
 return Playlist;

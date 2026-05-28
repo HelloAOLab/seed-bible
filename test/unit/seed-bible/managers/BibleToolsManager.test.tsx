@@ -11,6 +11,7 @@ jest.mock(
 
 import {
   createBibleToolsManager,
+  getShareUrl,
   type BibleToolContext,
 } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 
@@ -38,6 +39,124 @@ function createContext(): BibleToolContext {
     tabs: {} as any,
   };
 }
+
+function createShareUrlReadingState(overrides?: Partial<any>) {
+  return {
+    translation: signal({ id: "NIV" }),
+    bookId: signal("GEN"),
+    selectedVerses: signal([]),
+    ...overrides,
+  };
+}
+
+describe("getShareUrl", () => {
+  beforeEach(() => {
+    (globalThis as any).configBot.tags.url =
+      "https://example.test/reader?existing=1";
+    (globalThis as any).configBot.tags.pattern = "pattern-123";
+  });
+
+  it("builds a share URL with the current translation, book, pattern, and selected verses", () => {
+    const readingState = createShareUrlReadingState({
+      selectedVerses: signal([
+        {
+          bookId: "GEN",
+          chapterNumber: 1,
+          translationId: "NIV",
+          verse: { number: 3 },
+        },
+        {
+          bookId: "GEN",
+          chapterNumber: 1,
+          translationId: "NIV",
+          verse: { number: 1 },
+        },
+        {
+          bookId: "EXO",
+          chapterNumber: 1,
+          translationId: "NIV",
+          verse: { number: 9 },
+        },
+        {
+          bookId: "GEN",
+          chapterNumber: 1,
+          translationId: "AAB",
+          verse: { number: 8 },
+        },
+      ]),
+    });
+
+    const url = getShareUrl(readingState as any);
+
+    expect(url.toString()).toBe(
+      "https://example.test/reader?pattern=pattern-123&translation=NIV&book=GEN&verse=1,3"
+    );
+  });
+
+  it("builds supports consecutive verses", () => {
+    const readingState = createShareUrlReadingState({
+      selectedVerses: signal([
+        {
+          bookId: "GEN",
+          chapterNumber: 1,
+          translationId: "NIV",
+          verse: { number: 3 },
+        },
+        {
+          bookId: "GEN",
+          chapterNumber: 1,
+          translationId: "NIV",
+          verse: { number: 2 },
+        },
+        {
+          bookId: "GEN",
+          chapterNumber: 1,
+          translationId: "NIV",
+          verse: { number: 1 },
+        },
+        {
+          bookId: "EXO",
+          chapterNumber: 1,
+          translationId: "NIV",
+          verse: { number: 9 },
+        },
+        {
+          bookId: "GEN",
+          chapterNumber: 1,
+          translationId: "AAB",
+          verse: { number: 8 },
+        },
+      ]),
+    });
+
+    const url = getShareUrl(readingState as any);
+
+    expect(url.toString()).toBe(
+      "https://example.test/reader?pattern=pattern-123&translation=NIV&book=GEN&verse=1-3"
+    );
+  });
+
+  it("omits the verse query when no selected verses match the current translation and book", () => {
+    const readingState = createShareUrlReadingState({
+      translation: signal(null),
+      bookId: signal(null),
+      selectedVerses: signal([
+        {
+          bookId: "EXO",
+          chapterNumber: 1,
+          translationId: "NIV",
+          verse: { number: 4 },
+        },
+      ]),
+    });
+
+    const url = getShareUrl(readingState as any);
+
+    expect(url.toString()).toBe(
+      "https://example.test/reader?pattern=pattern-123&translation=AAB&book=GEN"
+    );
+  });
+});
 
 describe("createBibleToolsManager", () => {
   afterEach(() => {

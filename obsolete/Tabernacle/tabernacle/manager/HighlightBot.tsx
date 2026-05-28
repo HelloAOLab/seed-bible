@@ -1,5 +1,6 @@
 import { HexToRgb } from "bibleVizUtils.functions.index";
 import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+import { ColorLerpTags } from "bibleVizUtils.models.canvas";
 
 const {
   bot,
@@ -80,13 +81,13 @@ return Promise.all([
     endingColor: HexToRgb({ hexColor: "#8df5f3" }),
     durationInSeconds: blinkDuration / 2,
     bot,
-    tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color,
+    tag: ColorLerpTags.color,
   }).then(() => {
     return ColorLerper.LerpTag({
       endingColor: HexToRgb({ hexColor: "#ffffff" }),
       durationInSeconds: blinkDuration / 2,
       bot,
-      tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color,
+      tag: ColorLerpTags.color,
     });
   }),
   bot.tags.showHighlightCone &&

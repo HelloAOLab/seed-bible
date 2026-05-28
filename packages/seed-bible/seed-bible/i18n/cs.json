@@ -189,10 +189,10 @@
   "add-bookmark": "Záložka",
   "play-audio": "Přehrát zvuk",
   "play": "Hrát",
-  "ask": "Požádat",
+
   "discovery": "Objev",
   "chat": "Povídání",
-  "social": "Sociální",
+
   "today": "Dnes",
   "you": "Vy",
   "bible": "bible",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Zatím zde nejsou žádné záložky.",
   "bookmark-options": "Možnosti záložek",
   "new-folder-placeholder": "Název složky",
-  "new-folder": "Nová složka",
+
   "tasks": "Úkoly",
   "bookmarks": "Záložky",
   "hide-bookmarks": "Skrýt záložky",
   "show-bookmarks": "Zobrazit záložky",
-  "add-new-tab": "Přidat novou kartu"
+  "add-new-tab": "Přidat novou kartu",
+  "add-to-bookmark-category": "Přidat do kategorie záložek",
+  "folder-name-taken": "Složka s tímto názvem již existuje.",
+  "add-to-new": "Přidat k novému",
+  "save": "Uložit",
+  "bookmark-verses": "Záložka veršů"
 }

@@ -189,10 +189,10 @@
   "add-bookmark": "Marcador rehegua",
   "play-audio": "Embopu audio",
   "play": "Ñembosarái",
-  "ask": "Jerure",
+
   "discovery": "Ojejuhúva",
   "chat": "Mongeta",
-  "social": "Ava'aty",
+
   "today": "Ko árape",
   "you": "Nde",
   "bible": "Biblia",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Ndaipóri gueteri marcador ko’ápe.",
   "bookmark-options": "Umi opción marcador rehegua",
   "new-folder-placeholder": "Carpeta réra",
-  "new-folder": "Carpeta pyahu",
+
   "tasks": "Tembiaporã",
   "bookmarks": "Marcadores rehegua",
   "hide-bookmarks": "Oñomi umi marcador",
   "show-bookmarks": "Ehechauka umi marcador",
-  "add-new-tab": "Oñemoĩve ficha pyahu"
+  "add-new-tab": "Oñemoĩve ficha pyahu",
+  "add-to-bookmark-category": "Oñemoĩve categoría marcador-pe",
+  "folder-name-taken": "Oĩma peteĩ kundaha orekóva upe téra.",
+  "add-to-new": "Oñemoĩ pyahúpe",
+  "save": "Pysyrõ",
+  "bookmark-verses": "Umi versíkulo oñemoĩ marcador-pe"
 }

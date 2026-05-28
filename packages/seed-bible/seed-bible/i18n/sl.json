@@ -189,10 +189,10 @@
   "add-bookmark": "Zaznamek",
   "play-audio": "Predvajaj zvok",
   "play": "Predvajaj",
-  "ask": "Vprašajte",
+
   "discovery": "Odkritje",
   "chat": "Klepet",
-  "social": "Družbeno",
+
   "today": "Danes",
   "you": "Ti",
   "bible": "Biblija",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Tukaj še ni zaznamkov.",
   "bookmark-options": "Možnosti zaznamkov",
   "new-folder-placeholder": "Ime mape",
-  "new-folder": "Nova mapa",
+
   "tasks": "Naloge",
   "bookmarks": "Zaznamki",
   "hide-bookmarks": "Skrij zaznamke",
   "show-bookmarks": "Prikaži zaznamke",
-  "add-new-tab": "Dodaj nov zavihek"
+  "add-new-tab": "Dodaj nov zavihek",
+  "add-to-bookmark-category": "Dodaj v kategorijo zaznamkov",
+  "folder-name-taken": "Mapa s tem imenom že obstaja.",
+  "add-to-new": "Dodaj k novemu",
+  "save": "Shrani",
+  "bookmark-verses": "Zaznamek verzov"
 }

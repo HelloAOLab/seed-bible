@@ -189,10 +189,10 @@
   "add-bookmark": "Järjehoidja",
   "play-audio": "Esita heli",
   "play": "Mängi",
-  "ask": "Küsi",
+
   "discovery": "Avastus",
   "chat": "Vestlus",
-  "social": "Sotsiaalne",
+
   "today": "Täna",
   "you": "Sina",
   "bible": "Piibel",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Siin pole veel järjehoidjaid.",
   "bookmark-options": "Järjehoidjate valikud",
   "new-folder-placeholder": "Kausta nimi",
-  "new-folder": "Uus kaust",
+
   "tasks": "Ülesanded",
   "bookmarks": "Järjehoidjad",
   "hide-bookmarks": "Peida järjehoidjad",
   "show-bookmarks": "Näita järjehoidjaid",
-  "add-new-tab": "Lisa uus vahekaart"
+  "add-new-tab": "Lisa uus vahekaart",
+  "add-to-bookmark-category": "Lisa järjehoidjate kategooriasse",
+  "folder-name-taken": "Selle nimega kaust on juba olemas.",
+  "add-to-new": "Lisa uude",
+  "save": "Salvesta",
+  "bookmark-verses": "Lisa salmid järjehoidjatesse"
 }

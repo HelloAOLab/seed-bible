@@ -348,6 +348,11 @@ async function getConfig({
     translation,
   };
   window.localStorage.setItem("twitchSubConfig", JSON.stringify(config));
+
+  if (posthog) {
+    posthog.capture("twitch_sub_client_joined", {});
+  }
+
   os.goToURL(baseUrl.split("#")[0]);
   return null;
 }

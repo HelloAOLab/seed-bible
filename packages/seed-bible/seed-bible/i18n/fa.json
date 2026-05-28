@@ -188,10 +188,10 @@
   "add-bookmark": "نشانه‌گذاری",
   "play-audio": "پخش صدا",
   "play": "بازی",
-  "ask": "بپرسید",
+
   "discovery": "کشف",
   "chat": "چت",
-  "social": "اجتماعی",
+
   "today": "امروز",
   "you": "شما",
   "bible": "کتاب مقدس",
@@ -206,11 +206,16 @@
   "bookmark-folder-empty": "هنوز اینجا هیچ نشانکی وجود ندارد.",
   "bookmark-options": "گزینه‌های نشانک‌گذاری",
   "new-folder-placeholder": "نام پوشه",
-  "new-folder": "پوشه جدید",
+
   "tasks": "وظایف",
   "bookmarks": "نشانک‌ها",
   "hide-bookmarks": "پنهان کردن نشانک‌ها",
   "show-bookmarks": "نمایش نشانک‌ها",
   "add-new-tab": "اضافه کردن برگه جدید",
-  "share-session": "جلسه را به اشتراک بگذارید"
+  "share-session": "جلسه را به اشتراک بگذارید",
+  "add-to-bookmark-category": "افزودن به دسته‌بندی نشانک‌ها",
+  "folder-name-taken": "پوشه‌ای با این نام از قبل وجود دارد.",
+  "add-to-new": "اضافه کردن به جدید",
+  "save": "ذخیره",
+  "bookmark-verses": "آیات را نشانه‌گذاری کنید"
 }

@@ -78,7 +78,8 @@
   --sb-selected-verse-font-family: inherit;
   --sb-selected-verse-font-color: inherit;
   --sb-selected-verse-background-color: inherit;
-  --sb-selected-verse-text-decoration: underline;
+  --sb-selected-verse-border-bottom: 2px dashed currentColor;
+  --sb-selected-verse-text-decoration: none;
   --sb-selected-verse-text-decoration-color: currentColor;
 
   --sb-hebrew-subtitle-font-family: "Newsreader", serif;
@@ -1301,7 +1302,12 @@ h6 {
 }
 
 .sb-verse-selected {
-  text-decoration: underline;
+  font-family: var(--sb-selected-verse-font-family);
+  color: var(--sb-selected-verse-font-color);
+  background-color: var(--sb-selected-verse-background-color);
+  border-bottom: var(--sb-selected-verse-border-bottom);
+  text-decoration: var(--sb-selected-verse-text-decoration);
+  text-decoration-color: var(--sb-selected-verse-text-decoration-color);
 }
 
 .sb-verse-number {
@@ -1313,6 +1319,7 @@ h6 {
   vertical-align: middle;
   margin-inline-start: 6px;
   margin-inline-end: 3px;
+  color: color-mix(in srgb, var(--sb-verse-font-color), transparent 30%);
 }
 
 .sb-poem-line-1 {
@@ -3004,7 +3011,8 @@ h6 {
   gap: 6px;
 }
 
-.sb-verse-decoration-search-result {
+.sb-verse-decoration-search-result,
+.sb-verse-decoration-initial-verse-highlight {
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 28%);
 }
 
@@ -4007,6 +4015,10 @@ h6 {
   justify-content: center;
   height: 35px;
   width: 35px;
+}
+
+.sb-sidebar-icon-button path {
+  stroke: currentColor;
 }
 
 .sb-sidebar-icon-button-selected {

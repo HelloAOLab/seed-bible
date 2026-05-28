@@ -189,10 +189,10 @@
   "add-bookmark": "Marcador",
   "play-audio": "Reprodueix àudio",
   "play": "Reprodueix",
-  "ask": "Pregunta",
+
   "discovery": "Descobriment",
   "chat": "Xat",
-  "social": "Social",
+
   "today": "Avui",
   "you": "Tu",
   "bible": "Bíblia",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Encara no hi ha marcadors aquí.",
   "bookmark-options": "Opcions de marcadors",
   "new-folder-placeholder": "Nom de la carpeta",
-  "new-folder": "Nova carpeta",
+
   "tasks": "Tasques",
   "bookmarks": "Adreces d'interès",
   "hide-bookmarks": "Amaga els marcadors",
   "show-bookmarks": "Mostra els marcadors",
-  "add-new-tab": "Afegeix una pestanya nova"
+  "add-new-tab": "Afegeix una pestanya nova",
+  "add-to-bookmark-category": "Afegeix a la categoria de marcadors",
+  "folder-name-taken": "Ja existeix una carpeta amb aquest nom.",
+  "add-to-new": "Afegeix a nou",
+  "save": "Desa",
+  "bookmark-verses": "Versos de marcador"
 }

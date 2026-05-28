@@ -189,10 +189,10 @@
   "add-bookmark": "Bladwijzer",
   "play-audio": "Audio afspelen",
   "play": "Toneelstuk",
-  "ask": "Vragen",
+
   "discovery": "Ontdekking",
   "chat": "Chat",
-  "social": "Sociaal",
+
   "today": "Vandaag",
   "you": "Jij",
   "bible": "Bijbel",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Nog geen bladwijzers.",
   "bookmark-options": "Bladwijzeropties",
   "new-folder-placeholder": "Mapnaam",
-  "new-folder": "Nieuwe map",
+
   "tasks": "Taken",
   "bookmarks": "Bladwijzers",
   "hide-bookmarks": "Bladwijzers verbergen",
   "show-bookmarks": "Toon bladwijzers",
-  "add-new-tab": "Nieuw tabblad toevoegen"
+  "add-new-tab": "Nieuw tabblad toevoegen",
+  "add-to-bookmark-category": "Voeg toe aan bladwijzercategorie",
+  "folder-name-taken": "Er bestaat al een map met die naam.",
+  "add-to-new": "Toevoegen aan nieuw",
+  "save": "Redden",
+  "bookmark-verses": "Verzen markeren"
 }

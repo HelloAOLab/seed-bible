@@ -306,3 +306,112 @@ div.flaoting-attach-link .add-new-playlist {
   padding: 0 12px !important;
   font-weight: 500;
 }
+
+.mobile-playlist-player-controls {
+  background: transparent;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  display: flex;
+  gap: 10px;
+  flex-direction: column;
+}
+
+.mobile-playlist-player-controls-buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.custom-button.mobile-playlist-player-controls-button {
+  width: 42px;
+  height: 42px;
+  border-radius: 50px;
+  opacity: 1;
+  background-color: var(--sidebarShadow);
+  color: var(--pageTextColor);
+  padding: 0;
+  place-items: center;
+  display: grid;
+  border: none;
+}
+
+.mobile-playlist-player-controls-button.prev-button {
+  position: absolute;
+  left: 0;
+  bottom: 1rem;
+}
+
+.mobile-playlist-player-controls-button.next-button {
+  position: absolute;
+  right: 0;
+  bottom: 1rem;
+}
+
+.playlist-header * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.playlist-header {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  gap: 14px;
+  font-family: DM Mono;
+  font-weight: 500;
+  align-items: center;
+  font-size: 10px;
+  line-height: 0%;
+}
+
+.playlist-header-left {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.playlist-header-right {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+}
+
+.playlist-header-next-item {
+  font-weight: 600;
+}
+
+.playlist-header-next-current {
+  position: relative;
+}
+
+.playlist-header-next {
+  transition: all 0.2s linear;
+  opacity: 1;
+  visibility: visible;
+}
+
+.playlist-header-current {
+  transition: all 0.2s linear;
+  position: absolute;
+  opacity: 1;
+  visibility: visible;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.playlist-header-current.hide {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.playlist-header-next.hide {
+  opacity: 0;
+  visibility: hidden;
+}

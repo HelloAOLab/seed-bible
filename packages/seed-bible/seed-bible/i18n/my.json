@@ -189,10 +189,10 @@
   "add-bookmark": "စာညှပ်",
   "play-audio": "အသံဖွင့်ပါ",
   "play": "ကစားပါ",
-  "ask": "မေးပါ",
+
   "discovery": "ရှာဖွေတွေ့ရှိမှု",
   "chat": "ချတ်",
-  "social": "လူမှုရေး",
+
   "today": "ယနေ့",
   "you": "မင်း",
   "bible": "သမ္မာကျမ်းစာ",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "ဤနေရာတွင် bookmark များ မရှိသေးပါ။",
   "bookmark-options": "Bookmark ရွေးချယ်စရာများ",
   "new-folder-placeholder": "ဖိုလ်ဒါအမည်",
-  "new-folder": "ဖိုင်တွဲအသစ်",
+
   "tasks": "လုပ်ဆောင်စရာများ",
   "bookmarks": "စာညှပ်များ",
   "hide-bookmarks": "စာညှပ်များကို ဝှက်ပါ",
   "show-bookmarks": "စာညှပ်များပြပါ",
-  "add-new-tab": "တဘ်အသစ်ထည့်ရန်"
+  "add-new-tab": "တဘ်အသစ်ထည့်ရန်",
+  "add-to-bookmark-category": "bookmark အမျိုးအစားသို့ ထည့်ပါ",
+  "folder-name-taken": "ထိုအမည်ဖြင့် ဖိုင်တွဲတစ်ခု ရှိနှင့်ပြီးဖြစ်သည်။",
+  "add-to-new": "အသစ်ထဲသို့ထည့်ရန်",
+  "save": "သိမ်းဆည်းပါ",
+  "bookmark-verses": "ကျမ်းပိုဒ်များကို မှတ်သားထားပါ"
 }

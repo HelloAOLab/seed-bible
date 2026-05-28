@@ -189,10 +189,10 @@
   "add-bookmark": "Bokmärke",
   "play-audio": "Spela upp ljud",
   "play": "Spela",
-  "ask": "Be",
+
   "discovery": "Upptäckt",
   "chat": "Chatt",
-  "social": "Social",
+
   "today": "I dag",
   "you": "Du",
   "bible": "Bibeln",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Inga bokmärken här ännu.",
   "bookmark-options": "Bokmärkesalternativ",
   "new-folder-placeholder": "Mappnamn",
-  "new-folder": "Ny mapp",
+
   "tasks": "Uppgifter",
   "bookmarks": "Bokmärken",
   "hide-bookmarks": "Dölj bokmärken",
   "show-bookmarks": "Visa bokmärken",
-  "add-new-tab": "Lägg till ny flik"
+  "add-new-tab": "Lägg till ny flik",
+  "add-to-bookmark-category": "Lägg till i bokmärkeskategori",
+  "folder-name-taken": "En mapp med det namnet finns redan.",
+  "add-to-new": "Lägg till i nytt",
+  "save": "Spara",
+  "bookmark-verses": "Bokmärk verser"
 }

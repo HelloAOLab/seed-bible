@@ -189,10 +189,10 @@
   "add-bookmark": "ចំណាំ",
   "play-audio": "ចាក់សំឡេង",
   "play": "លេង",
-  "ask": "សួរ",
+
   "discovery": "ការរកឃើញ",
   "chat": "ជជែក",
-  "social": "សង្គម",
+
   "today": "ថ្ងៃនេះ",
   "you": "អ្នក",
   "bible": "ព្រះគម្ពីរ",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "មិនទាន់មានចំណាំនៅទីនេះនៅឡើយទេ។",
   "bookmark-options": "ជម្រើសចំណាំ",
   "new-folder-placeholder": "ឈ្មោះ​ថតឯកសារ",
-  "new-folder": "ថតឯកសារថ្មី",
+
   "tasks": "ភារកិច្ច",
   "bookmarks": "ចំណាំ",
   "hide-bookmarks": "លាក់ចំណាំ",
   "show-bookmarks": "បង្ហាញ​ចំណាំ",
-  "add-new-tab": "បន្ថែមផ្ទាំងថ្មី"
+  "add-new-tab": "បន្ថែមផ្ទាំងថ្មី",
+  "add-to-bookmark-category": "បន្ថែមទៅប្រភេទចំណាំ",
+  "folder-name-taken": "ថតឯកសារដែលមានឈ្មោះនោះមានរួចហើយ។",
+  "add-to-new": "បន្ថែមទៅថ្មី",
+  "save": "រក្សាទុក",
+  "bookmark-verses": "ចំណាំខគម្ពីរ"
 }

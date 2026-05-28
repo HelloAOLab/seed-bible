@@ -188,10 +188,10 @@
   "add-bookmark": "نښه کول",
   "play-audio": "غږ غږول",
   "play": "لوبه وکړئ",
-  "ask": "پوښتنه وکړئ",
+
   "discovery": "کشف",
   "chat": "چیٹ",
-  "social": "ټولنیز",
+
   "today": "نن",
   "you": "ته",
   "bible": "بائبل",
@@ -206,10 +206,16 @@
   "bookmark-folder-empty": "دلته لا تر اوسه کوم بک مارک نشته.",
   "bookmark-options": "د بک مارک اختیارونه",
   "new-folder-placeholder": "د فولډر نوم",
-  "new-folder": "نوی فولډر",
+
   "tasks": "دندې",
   "bookmarks": "یادنښې",
   "hide-bookmarks": "بک مارکونه پټ کړئ",
   "show-bookmarks": "بک مارکونه وښایاست",
-  "add-new-tab": "نوی ټب اضافه کړئ"
+  "add-new-tab": "نوی ټب اضافه کړئ",
+  "share-session": "غونډه شریکه کړئ",
+  "add-to-bookmark-category": "د بک مارک کټګورۍ کې اضافه کړئ",
+  "folder-name-taken": "د دې نوم سره یو فولډر دمخه شتون لري.",
+  "add-to-new": "نوي ته اضافه کړئ",
+  "save": "خوندي کړئ",
+  "bookmark-verses": "آیتونه په نښه کړئ"
 }

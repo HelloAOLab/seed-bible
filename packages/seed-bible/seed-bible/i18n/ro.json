@@ -189,10 +189,10 @@
   "add-bookmark": "Marcaj",
   "play-audio": "Redare audio",
   "play": "Juca",
-  "ask": "Întreabă",
+
   "discovery": "Descoperire",
   "chat": "Chat",
-  "social": "Social",
+
   "today": "Astăzi",
   "you": "Tu",
   "bible": "Biblie",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Nu există marcaje aici încă.",
   "bookmark-options": "Opțiuni pentru marcaje",
   "new-folder-placeholder": "Numele folderului",
-  "new-folder": "Dosar nou",
+
   "tasks": "Sarcini",
   "bookmarks": "Semne de carte",
   "hide-bookmarks": "Ascunde marcajele",
   "show-bookmarks": "Afișați marcajele",
-  "add-new-tab": "Adăugați o filă nouă"
+  "add-new-tab": "Adăugați o filă nouă",
+  "add-to-bookmark-category": "Adaugă la categoria de favorite",
+  "folder-name-taken": "Există deja un folder cu acest nume.",
+  "add-to-new": "Adăugați la nou",
+  "save": "Salva",
+  "bookmark-verses": "Versuri în semnături"
 }

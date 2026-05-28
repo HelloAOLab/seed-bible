@@ -189,10 +189,10 @@
   "add-bookmark": "Nod tudalen",
   "play-audio": "Chwarae sain",
   "play": "Chwarae",
-  "ask": "Gofynnwch",
+
   "discovery": "Darganfyddiad",
   "chat": "Sgwrs",
-  "social": "Cymdeithasol",
+
   "today": "Heddiw",
   "you": "Chi",
   "bible": "Beibl",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Dim nodau tudalen yma eto.",
   "bookmark-options": "Dewisiadau nod tudalen",
   "new-folder-placeholder": "Enw'r ffolder",
-  "new-folder": "Ffolder newydd",
+
   "tasks": "Tasgau",
   "bookmarks": "Nodau Tudalen",
   "hide-bookmarks": "Cuddio nodau tudalen",
   "show-bookmarks": "Dangos nodau tudalen",
-  "add-new-tab": "Ychwanegu tab newydd"
+  "add-new-tab": "Ychwanegu tab newydd",
+  "add-to-bookmark-category": "Ychwanegu at y categori nod tudalen",
+  "folder-name-taken": "Mae ffolder gyda'r enw hwnnw eisoes yn bodoli.",
+  "add-to-new": "Ychwanegu at newydd",
+  "save": "Cadw",
+  "bookmark-verses": "Nodwch benillion"
 }

@@ -189,10 +189,10 @@
   "add-bookmark": "Bogmærke",
   "play-audio": "Afspil lyd",
   "play": "Spil",
-  "ask": "Spørge",
+
   "discovery": "Opdagelse",
   "chat": "Snak",
-  "social": "Social",
+
   "today": "I dag",
   "you": "Du",
   "bible": "Bibel",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Ingen bogmærker her endnu.",
   "bookmark-options": "Bogmærkeindstillinger",
   "new-folder-placeholder": "Mappenavn",
-  "new-folder": "Ny mappe",
+
   "tasks": "Opgaver",
   "bookmarks": "Bogmærker",
   "hide-bookmarks": "Skjul bogmærker",
   "show-bookmarks": "Vis bogmærker",
-  "add-new-tab": "Tilføj ny fane"
+  "add-new-tab": "Tilføj ny fane",
+  "add-to-bookmark-category": "Føj til bogmærkekategori",
+  "folder-name-taken": "Der findes allerede en mappe med det navn.",
+  "add-to-new": "Tilføj til ny",
+  "save": "Spare",
+  "bookmark-verses": "Bogmærk vers"
 }

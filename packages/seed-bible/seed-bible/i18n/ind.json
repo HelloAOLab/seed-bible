@@ -188,10 +188,10 @@
   "add-bookmark": "Tandai",
   "play-audio": "Putar audio",
   "play": "Bermain",
-  "ask": "Bertanya",
+
   "discovery": "Penemuan",
   "chat": "Mengobrol",
-  "social": "Sosial",
+
   "today": "Hari ini",
   "you": "Anda",
   "bible": "Alkitab",
@@ -206,10 +206,16 @@
   "bookmark-folder-empty": "Belum ada bookmark di sini.",
   "bookmark-options": "Opsi bookmark",
   "new-folder-placeholder": "Nama folder",
-  "new-folder": "Folder baru",
+
   "tasks": "Tugas",
   "bookmarks": "Penanda buku",
   "hide-bookmarks": "Sembunyikan bookmark",
   "show-bookmarks": "Tampilkan bookmark",
-  "add-new-tab": "Tambahkan tab baru"
+  "add-new-tab": "Tambahkan tab baru",
+  "share-session": "Sesi berbagi",
+  "add-to-bookmark-category": "Tambahkan ke kategori bookmark",
+  "folder-name-taken": "Folder dengan nama tersebut sudah ada.",
+  "add-to-new": "Tambahkan ke yang baru",
+  "save": "Menyimpan",
+  "bookmark-verses": "Ayat-ayat penanda"
 }

@@ -189,10 +189,10 @@
   "add-bookmark": "Žymė",
   "play-audio": "Leisti garso įrašą",
   "play": "Žaisti",
-  "ask": "Klauskite",
+
   "discovery": "Atradimas",
   "chat": "Pokalbis",
-  "social": "Socialinis",
+
   "today": "Šiandien",
   "you": "Tu",
   "bible": "Biblija",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Čia dar nėra žymeklių.",
   "bookmark-options": "Žymių parinktys",
   "new-folder-placeholder": "Aplanko pavadinimas",
-  "new-folder": "Naujas aplankas",
+
   "tasks": "Užduotys",
   "bookmarks": "Žymės",
   "hide-bookmarks": "Slėpti žymes",
   "show-bookmarks": "Rodyti žymes",
-  "add-new-tab": "Pridėti naują skirtuką"
+  "add-new-tab": "Pridėti naują skirtuką",
+  "add-to-bookmark-category": "Pridėti prie žymių kategorijos",
+  "folder-name-taken": "Aplankas tokiu pavadinimu jau yra.",
+  "add-to-new": "Pridėti prie naujo",
+  "save": "Išsaugoti",
+  "bookmark-verses": "Žymių eilutės"
 }

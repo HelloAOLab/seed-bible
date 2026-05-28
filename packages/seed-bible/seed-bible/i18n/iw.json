@@ -189,10 +189,10 @@
   "add-bookmark": "סימניה",
   "play-audio": "הפעלת אודיו",
   "play": "לְשַׂחֵק",
-  "ask": "לִשְׁאוֹל",
+
   "discovery": "תַגלִית",
   "chat": "לְשׂוֹחֵחַ",
-  "social": "חֶברָתִי",
+
   "today": "הַיוֹם",
   "you": "אַתָה",
   "bible": "כִּתבֵי הַקוֹדֶשׁ",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "אין כאן עדיין סימניות.",
   "bookmark-options": "אפשרויות סימניות",
   "new-folder-placeholder": "שם התיקייה",
-  "new-folder": "תיקייה חדשה",
+
   "tasks": "משימות",
   "bookmarks": "סימניות",
   "hide-bookmarks": "הסתר סימניות",
   "show-bookmarks": "הצג סימניות",
-  "add-new-tab": "הוסף כרטיסייה חדשה"
+  "add-new-tab": "הוסף כרטיסייה חדשה",
+  "add-to-bookmark-category": "הוסף לקטגוריית סימניות",
+  "folder-name-taken": "תיקייה בשם זה כבר קיימת.",
+  "add-to-new": "הוסף לחדש",
+  "save": "לְהַצִיל",
+  "bookmark-verses": "פסוקים בסימניות"
 }

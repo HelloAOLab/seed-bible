@@ -188,10 +188,10 @@
   "add-bookmark": "बुकमार्क गर्नुहोस्",
   "play-audio": "अडियो बजाउनुहोस्",
   "play": "खेल्नुहोस्",
-  "ask": "सोध्नुहोस्",
+
   "discovery": "खोज",
   "chat": "कुराकानी",
-  "social": "सामाजिक",
+
   "today": "आज",
   "you": "तपाईं",
   "bible": "बाइबल",
@@ -206,11 +206,16 @@
   "bookmark-folder-empty": "यहाँ अहिलेसम्म कुनै बुकमार्कहरू छैनन्।",
   "bookmark-options": "बुकमार्क विकल्पहरू",
   "new-folder-placeholder": "फोल्डरको नाम",
-  "new-folder": "नयाँ फोल्डर",
+
   "tasks": "कार्यहरू",
   "bookmarks": "बुकमार्कहरू",
   "hide-bookmarks": "बुकमार्कहरू लुकाउनुहोस्",
   "show-bookmarks": "बुकमार्कहरू देखाउनुहोस्",
   "add-new-tab": "नयाँ ट्याब थप्नुहोस्",
-  "share-session": "सत्र साझा गर्नुहोस्"
+  "share-session": "सत्र साझा गर्नुहोस्",
+  "add-to-bookmark-category": "बुकमार्क कोटीमा थप्नुहोस्",
+  "folder-name-taken": "त्यो नामको फोल्डर पहिले नै अवस्थित छ।",
+  "add-to-new": "नयाँमा थप्नुहोस्",
+  "save": "बचत गर्नुहोस्",
+  "bookmark-verses": "पदहरू बुकमार्क गर्नुहोस्"
 }

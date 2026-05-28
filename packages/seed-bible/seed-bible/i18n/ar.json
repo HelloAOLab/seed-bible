@@ -188,10 +188,10 @@
   "add-bookmark": "إضافة إلى المفضلة",
   "play-audio": "تشغيل الصوت",
   "play": "يلعب",
-  "ask": "بسأل",
+
   "discovery": "اكتشاف",
   "chat": "محادثة",
-  "social": "اجتماعي",
+
   "today": "اليوم",
   "you": "أنت",
   "bible": "الكتاب المقدس",
@@ -206,11 +206,16 @@
   "bookmark-folder-empty": "لا توجد إشارات مرجعية هنا حتى الآن.",
   "bookmark-options": "خيارات الإشارة المرجعية",
   "new-folder-placeholder": "اسم المجلد",
-  "new-folder": "مجلد جديد",
+
   "tasks": "المهام",
   "bookmarks": "الإشارات المرجعية",
   "hide-bookmarks": "إخفاء الإشارات المرجعية",
   "show-bookmarks": "إظهار الإشارات المرجعية",
   "add-new-tab": "أضف علامة تبويب جديدة",
-  "share-session": "جلسة مشاركة"
+  "share-session": "جلسة مشاركة",
+  "add-to-bookmark-category": "أضف إلى فئة الإشارات المرجعية",
+  "folder-name-taken": "يوجد مجلد بهذا الاسم بالفعل.",
+  "add-to-new": "أضف إلى جديد",
+  "save": "يحفظ",
+  "bookmark-verses": "آيات مرجعية"
 }

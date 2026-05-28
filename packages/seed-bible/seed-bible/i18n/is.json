@@ -189,10 +189,10 @@
   "add-bookmark": "Bókamerki",
   "play-audio": "Spila hljóð",
   "play": "Spila",
-  "ask": "Spyrja",
+
   "discovery": "Uppgötvun",
   "chat": "Spjall",
-  "social": "Félagslegt",
+
   "today": "Í dag",
   "you": "Þú",
   "bible": "Biblían",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Engar bókamerki hér ennþá.",
   "bookmark-options": "Bókamerkjavalkostir",
   "new-folder-placeholder": "Möppunafn",
-  "new-folder": "Ný mappa",
+
   "tasks": "Verkefni",
   "bookmarks": "Bókamerki",
   "hide-bookmarks": "Fela bókamerki",
   "show-bookmarks": "Sýna bókamerki",
-  "add-new-tab": "Bæta við nýjum flipa"
+  "add-new-tab": "Bæta við nýjum flipa",
+  "add-to-bookmark-category": "Bæta við bókamerkjaflokk",
+  "folder-name-taken": "Mappa með þessu nafni er þegar til.",
+  "add-to-new": "Bæta við nýtt",
+  "save": "Vista",
+  "bookmark-verses": "Bókamerkjaðu vers"
 }

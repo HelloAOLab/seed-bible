@@ -189,10 +189,10 @@
   "add-bookmark": "Blêdwizer",
   "play-audio": "Audio ôfspylje",
   "play": "Toanielstik",
-  "ask": "Freegje",
+
   "discovery": "Ûntdekking",
   "chat": "Chat",
-  "social": "Sosjaal",
+
   "today": "Hjoed",
   "you": "Jo",
   "bible": "bibel",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Gjin blêdwizers hjir noch.",
   "bookmark-options": "Opsjes foar blêdwizers",
   "new-folder-placeholder": "Mapnamme",
-  "new-folder": "Nije map",
+
   "tasks": "Taken",
   "bookmarks": "Blêdwizers",
   "hide-bookmarks": "Blêdwizers ferbergje",
   "show-bookmarks": "Blêdwizers sjen litte",
-  "add-new-tab": "Nije ljepper tafoegje"
+  "add-new-tab": "Nije ljepper tafoegje",
+  "add-to-bookmark-category": "Tafoegje oan blêdwizerkategory",
+  "folder-name-taken": "In map mei dy namme bestiet al.",
+  "add-to-new": "Tafoegje oan nij",
+  "save": "Rêde",
+  "bookmark-verses": "Blêdwizerferzen"
 }

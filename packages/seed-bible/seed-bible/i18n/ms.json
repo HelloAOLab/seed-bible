@@ -189,10 +189,10 @@
   "add-bookmark": "Penanda buku",
   "play-audio": "Mainkan audio",
   "play": "Main",
-  "ask": "Tanya",
+
   "discovery": "Penemuan",
   "chat": "Sembang",
-  "social": "Sosial",
+
   "today": "Hari ini",
   "you": "Awak",
   "bible": "Bible",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Tiada penanda buku di sini lagi.",
   "bookmark-options": "Pilihan penanda buku",
   "new-folder-placeholder": "Nama folder",
-  "new-folder": "Folder baharu",
+
   "tasks": "Tugasan",
   "bookmarks": "Penanda Halaman",
   "hide-bookmarks": "Sembunyikan penanda buku",
   "show-bookmarks": "Tunjukkan penanda buku",
-  "add-new-tab": "Tambah tab baharu"
+  "add-new-tab": "Tambah tab baharu",
+  "add-to-bookmark-category": "Tambah ke kategori penanda buku",
+  "folder-name-taken": "Folder dengan nama itu sudah wujud.",
+  "add-to-new": "Tambah kepada yang baharu",
+  "save": "Simpan",
+  "bookmark-verses": "Tandakan ayat"
 }

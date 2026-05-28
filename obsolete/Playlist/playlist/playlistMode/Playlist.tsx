@@ -326,7 +326,8 @@ const Playlist = (props: any) => {
     idRec: string,
     newValueContent: Record<string, any>,
     parentId = null,
-    fullData = false
+    fullData = false,
+    isQuotedText = undefined
   ) => {
     setPlaylist((prev: any[]) => {
       const old = [...prev];
@@ -346,6 +347,11 @@ const Playlist = (props: any) => {
                 ...old[parentIdx].additionalInfo.layers[idx],
                 content: newValueContent,
               };
+              if (isQuotedText !== undefined) {
+                old[parentIdx].additionalInfo.layers[
+                  idx
+                ].additionalInfo.isQuotedText = isQuotedText;
+              }
             }
           }
         }
@@ -356,6 +362,9 @@ const Playlist = (props: any) => {
             old[idx] = { ...newValueContent };
           } else {
             old[idx] = { ...old[idx], content: newValueContent };
+            if (isQuotedText !== undefined) {
+              old[idx].additionalInfo.isQuotedText = isQuotedText;
+            }
           }
         }
       }
@@ -1015,17 +1024,17 @@ const Playlist = (props: any) => {
                 setLoading(false);
               }}
             >
-              {dataWarning ? t("addAndSave") : t("confirm")}
+              {dataWarning ? t("saveWithAttachment") : t("discardChanges")}
             </Button>
             {dataWarning && (
               <Button
                 disabled={loading}
-                secondary
+                secondaryAlt
                 onClick={() => {
                   onClickSave();
                 }}
               >
-                {t("ignoreAndSave")}
+                {t("saveWithoutAttachments")}
               </Button>
             )}
             <Button
@@ -1103,7 +1112,9 @@ const Playlist = (props: any) => {
             <p>
               <b>{t("publishSettings")}</b>
             </p>
-            <span style={{ fontSize: "10px" }}>{t("publishSettingsDesc")}</span>
+            <span style={{ fontSize: "12px" }}>
+              {t("publishSettingsDescPlaylist")}
+            </span>
             <div
               className="more-menu-items"
               onClick={() => {
@@ -1658,7 +1669,9 @@ const Playlist = (props: any) => {
                 onClick={() => {
                   if (
                     G.RetainDataData ||
-                    (G.RetainDataName && G.RetainDataSelectedType === "TEXT")
+                    (G.RetainDataName && G.RetainDataSelectedType === "TEXT") ||
+                    (G.RetainDataLink &&
+                      G.LINKS_TYPES[G.RetainDataSelectedType.toUpperCase()])
                   ) {
                     setDataWarning(true);
                   } else {

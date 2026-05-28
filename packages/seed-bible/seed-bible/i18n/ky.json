@@ -189,10 +189,10 @@
   "add-bookmark": "Кыстарма",
   "play-audio": "Аудиону ойнотуу",
   "play": "Ойнотуу",
-  "ask": "Сураңыз",
+
   "discovery": "Ачылыш",
   "chat": "Чат",
-  "social": "Социалдык",
+
   "today": "Бүгүн",
   "you": "Сен",
   "bible": "Ыйык Китеп",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Бул жерде азырынча кыстармалар жок.",
   "bookmark-options": "Кыстарма параметрлери",
   "new-folder-placeholder": "Папканын аталышы",
-  "new-folder": "Жаңы папка",
+
   "tasks": "Тапшырмалар",
   "bookmarks": "Кыстармалар",
   "hide-bookmarks": "Кыстармаларды жашыруу",
   "show-bookmarks": "Кыстармаларды көрсөтүү",
-  "add-new-tab": "Жаңы өтмөк кошуу"
+  "add-new-tab": "Жаңы өтмөк кошуу",
+  "add-to-bookmark-category": "Кыстарма категориясына кошуу",
+  "folder-name-taken": "Мындай аталыштагы папка мурунтан эле бар.",
+  "add-to-new": "Жаңысына кошуу",
+  "save": "Сактоо",
+  "bookmark-verses": "Аяттарды кыстарып коюңуз"
 }

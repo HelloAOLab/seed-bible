@@ -188,10 +188,10 @@
   "add-bookmark": "Adicionar aos favoritos",
   "play-audio": "Reproduzir áudio",
   "play": "Jogar",
-  "ask": "Perguntar",
+
   "discovery": "Descoberta",
   "chat": "Bater papo",
-  "social": "Social",
+
   "today": "Hoje",
   "you": "Você",
   "bible": "Bíblia",
@@ -206,11 +206,16 @@
   "bookmark-folder-empty": "Ainda não há favoritos aqui.",
   "bookmark-options": "Opções de favoritos",
   "new-folder-placeholder": "Nome da pasta",
-  "new-folder": "Nova pasta",
+
   "tasks": "Tarefas",
   "bookmarks": "Favoritos",
   "hide-bookmarks": "Ocultar favoritos",
   "show-bookmarks": "Mostrar favoritos",
   "add-new-tab": "Adicionar nova aba",
-  "share-session": "Sessão de compartilhamento"
+  "share-session": "Sessão de compartilhamento",
+  "add-to-bookmark-category": "Adicionar à categoria de favoritos",
+  "folder-name-taken": "Já existe uma pasta com esse nome.",
+  "add-to-new": "Adicionar aos novos",
+  "save": "Salvar",
+  "bookmark-verses": "Versículos dos favoritos"
 }

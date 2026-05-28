@@ -189,10 +189,10 @@
   "add-bookmark": "Grāmatzīme",
   "play-audio": "Atskaņot audio",
   "play": "Spēlēt",
-  "ask": "Jautāt",
+
   "discovery": "Atklājums",
   "chat": "Tērzēšana",
-  "social": "Sociālie",
+
   "today": "Šodien",
   "you": "Tu",
   "bible": "Bībele",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Šeit vēl nav grāmatzīmju.",
   "bookmark-options": "Grāmatzīmju opcijas",
   "new-folder-placeholder": "Mapes nosaukums",
-  "new-folder": "Jauna mape",
+
   "tasks": "Uzdevumi",
   "bookmarks": "Grāmatzīmes",
   "hide-bookmarks": "Slēpt grāmatzīmes",
   "show-bookmarks": "Rādīt grāmatzīmes",
-  "add-new-tab": "Pievienot jaunu cilni"
+  "add-new-tab": "Pievienot jaunu cilni",
+  "add-to-bookmark-category": "Pievienot grāmatzīmju kategorijai",
+  "folder-name-taken": "Mape ar šādu nosaukumu jau pastāv.",
+  "add-to-new": "Pievienot jaunam",
+  "save": "Saglabāt",
+  "bookmark-verses": "Grāmatzīmju panti"
 }

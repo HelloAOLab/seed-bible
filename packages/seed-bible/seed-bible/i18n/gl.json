@@ -189,10 +189,10 @@
   "add-bookmark": "Marcador",
   "play-audio": "Reproducir audio",
   "play": "Reproducir",
-  "ask": "Preguntar",
+
   "discovery": "Descubrimento",
   "chat": "Chat",
-  "social": "Social",
+
   "today": "Hoxe",
   "you": "Ti",
   "bible": "Biblia",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "Aínda non hai marcadores aquí.",
   "bookmark-options": "Opcións de marcadores",
   "new-folder-placeholder": "Nome do cartafol",
-  "new-folder": "Nova carpeta",
+
   "tasks": "Tarefas",
   "bookmarks": "Marcadores",
   "hide-bookmarks": "Ocultar marcadores",
   "show-bookmarks": "Mostrar marcadores",
-  "add-new-tab": "Engadir nova lapela"
+  "add-new-tab": "Engadir nova lapela",
+  "add-to-bookmark-category": "Engadir á categoría de marcadores",
+  "folder-name-taken": "Xa existe unha carpeta con ese nome.",
+  "add-to-new": "Engadir a novo",
+  "save": "Gardar",
+  "bookmark-verses": "Versos de marcadores"
 }

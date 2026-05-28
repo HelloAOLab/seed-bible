@@ -189,10 +189,10 @@
   "add-bookmark": "ບຸກມາກ",
   "play-audio": "ຫຼິ້ນສຽງ",
   "play": "ຫຼິ້ນ",
-  "ask": "ຖາມ",
+
   "discovery": "ການຄົ້ນພົບ",
   "chat": "ສົນທະນາ",
-  "social": "ສັງຄົມ",
+
   "today": "ມື້ນີ້",
   "you": "ເຈົ້າ",
   "bible": "ຄຳພີໄບເບິນ",
@@ -207,10 +207,15 @@
   "bookmark-folder-empty": "ຍັງບໍ່ມີບຸກມາກຢູ່ບ່ອນນີ້ເທື່ອ.",
   "bookmark-options": "ຕົວເລືອກບຸກມາກ",
   "new-folder-placeholder": "ຊື່ໂຟນເດີ",
-  "new-folder": "ໂຟນເດີໃໝ່",
+
   "tasks": "ໜ້າວຽກ",
   "bookmarks": "ບຸກມາກ",
   "hide-bookmarks": "ເຊື່ອງບຸກມາກ",
   "show-bookmarks": "ສະແດງບຸກມາກ",
-  "add-new-tab": "ເພີ່ມແຖບໃໝ່"
+  "add-new-tab": "ເພີ່ມແຖບໃໝ່",
+  "add-to-bookmark-category": "ເພີ່ມໃສ່ໝວດໝູ່ບຸກມາກ",
+  "folder-name-taken": "ມີໂຟນເດີທີ່ມີຊື່ນັ້ນຢູ່ແລ້ວ.",
+  "add-to-new": "ເພີ່ມໃສ່ອັນໃໝ່",
+  "save": "ບັນທຶກ",
+  "bookmark-verses": "ບຸກມາກຂໍ້ພຣະຄຳພີ"
 }
