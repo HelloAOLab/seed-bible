@@ -1,1 +1,1 @@
-thisBot.Initialize();
+// thisBot.Initialize();

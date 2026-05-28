@@ -130,7 +130,7 @@ export interface ScriptureMapConfig {
   MaterialIcon: (props: {
     children: string;
     className?: string;
-  }) => JSX.Element;
+  }) => preact.JSX.Element;
 }
 
 type ScriptureMapProps = {

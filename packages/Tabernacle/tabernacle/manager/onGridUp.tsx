@@ -1,1 +1,1 @@
-thisBot.TryRecenter();
+// thisBot.TryRecenter();

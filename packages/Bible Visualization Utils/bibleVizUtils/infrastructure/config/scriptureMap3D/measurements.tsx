@@ -30,7 +30,7 @@ export const ScriptureMap3DMeasurements = {
   PlaylistNavigationButtonVerticalGap: 1,
   PlaylistStackedEntryItemGap: 0.0375,
   PlaylistEntryItemPadding: 0.01,
-  Book2DMaxColumns: 5, // TODO: Move this to a Scripture Map 2D config provider
+  Book2DMaxColumns: 5, // TODO: Move this to a Scripture Map config provider
   Book3DScaleX,
 } as const;
 

@@ -1,4 +1,4 @@
-const currContextMenuTransformer = getBot(
-  "isTabernaclePieceContextMenuTransformer",
-  true
-);
+// const currContextMenuTransformer = getBot(
+//   "isTabernaclePieceContextMenuTransformer",
+//   true
+// );

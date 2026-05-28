@@ -147,15 +147,15 @@ export const bootstrapExtension = () => {
       });
 
       // 3. Controller
-      tabernacleController = new TabernacleController({
-        tabernacleService,
-        navigate: (bookId, chapter) => {
-          context.app.selectedTab.value?.readingState.selectChapter(
-            bookId,
-            chapter
-          );
-        },
-      });
+      // tabernacleController = new TabernacleController({
+      //   tabernacleService,
+      //   navigate: (bookId, chapter) => {
+      //     context.app.selectedTab.value?.readingState.selectChapter(
+      //       bookId,
+      //       chapter
+      //     );
+      //   },
+      // });
       const scriptureInteractionController = new ScriptureInteractionController(
         {
           verseMenuClickHandlerPort: scriptureInteractionService,

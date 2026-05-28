@@ -3,16 +3,19 @@ import type { PieceKey } from "../../../domain/models/piece";
 
 interface TabernacleControllerParams {
   tabernacleService: TabernacleService;
-  navigate: (bookId: string, chapter: number) => void;
+  // navigate: (bookId: string, chapter: number) => void;
 }
 
 export class TabernacleController {
   #tabernacleService: TabernacleService;
-  #navigate: (bookId: string, chapter: number) => void;
+  // #navigate: (bookId: string, chapter: number) => void;
 
-  constructor({ tabernacleService, navigate }: TabernacleControllerParams) {
+  constructor({
+    tabernacleService,
+    // navigate
+  }: TabernacleControllerParams) {
     this.#tabernacleService = tabernacleService;
-    this.#navigate = navigate;
+    // this.#navigate = navigate;
   }
 
   handlePieceClick(key: PieceKey): void {
