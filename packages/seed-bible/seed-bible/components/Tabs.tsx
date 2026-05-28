@@ -18,7 +18,10 @@ import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { SettingsIcon } from "seed-bible.components.icons";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
 import type { UserProfile } from "seed-bible.managers.LoginManager";
-import type { ConnectedSessionUser } from "seed-bible.managers.SessionsManager";
+import type {
+  BibleReadingSession,
+  ConnectedSessionUser,
+} from "seed-bible.managers.SessionsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { SidebarSearch } from "seed-bible.components.SidebarSearch";
 import {
@@ -759,13 +762,7 @@ function TabRow(props: TabRowProps) {
               })}
               onClick={() => {
                 if (tab.sharedSession) {
-                  const url = new URL(configBot.tags.url);
-                  const pattern = url.searchParams.get("pattern");
-                  url.search = "";
-                  url.searchParams.set("sessionId", tab.sharedSession.id);
-                  if (pattern) {
-                    url.searchParams.set("pattern", pattern);
-                  }
+                  const url = getSessionUrl(tab.sharedSession);
 
                   os.share({
                     title: configBot.tags.title,
@@ -876,6 +873,17 @@ export interface BookmarkLocation {
   bookId: string;
   chapterNumber: number;
   verse?: BookmarkVerse;
+}
+
+function getSessionUrl(session: BibleReadingSession) {
+  const url = new URL(configBot.tags.url);
+  const pattern = url.searchParams.get("pattern");
+  url.search = "";
+  url.searchParams.set("sessionId", session.id);
+  if (pattern) {
+    url.searchParams.set("pattern", pattern);
+  }
+  return url;
 }
 
 /**
@@ -1766,8 +1774,16 @@ export function Sidebar(props: SidebarProps) {
             panes.setLayout(layout);
             closeLayoutMenu();
           }}
-          createSharedSession={() => {
-            void state.app.createSharedSession();
+          createSharedSession={async () => {
+            const session = await state.app.createSharedSession();
+            const url = getSessionUrl(session);
+            os.setClipboard(url.href);
+            os.toast(
+              t("link-to-join-shared-session-copied", {
+                defaultValue:
+                  "A link to join the shared session was copied to your clipboard",
+              })
+            );
           }}
         />
       )}

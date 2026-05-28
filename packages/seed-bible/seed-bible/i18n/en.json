@@ -224,5 +224,6 @@
   "chat-coming-soon": "Chat is coming soon",
   "more-coming-soon": "More options coming soon",
   "discovery-coming-soon": "Discovery is coming soon",
-  "login-to-use-feature": "You have to log in to use this feature."
+  "login-to-use-feature": "You have to log in to use this feature.",
+  "link-to-join-shared-session-copied": "A link to join the shared session was copied to your clipboard"
 }
