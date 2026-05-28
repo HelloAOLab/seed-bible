@@ -1020,6 +1020,7 @@ h6 {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
   scrollbar-width: none;
 }
 
@@ -1230,6 +1231,15 @@ h6 {
   font-weight: 500;
   font-family: inherit;
   padding: 4px 0;
+  width: 100%;
+}
+.sb-mobile-settings-icon svg path {
+  stroke: var(--sb-primary-color);
+}
+
+.sb-mobile-settings-sheet-all-settings-chevron {
+  margin-inline-start: auto;
+  opacity: 0.7;
 }
 
 .sb-chapter-content {
@@ -1843,6 +1853,8 @@ h6 {
     color: var(--sb-reader-toolbar-floating-button-font-color);
     box-shadow: var(--sb-reader-toolbar-floating-button-box-shadow);
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .sb-reader-toolbar-floating-button-left {
@@ -1859,7 +1871,7 @@ h6 {
    * slides back into view. */
   body.sb-scroll-hide-bars .sb-reader-toolbar-wrap {
     transform: translateX(-50%) translateY(100%);
-    pointer-events: none;
+    /* pointer-events: none; */
   }
 }
 
@@ -3101,7 +3113,7 @@ h6 {
 }
 
 .sb-collapsed-tab-tile {
-  width: 40px;
+  width: 53px;
   height: 40px;
   border-radius: 10px;
   border: var(--sb-tab-border);
@@ -3626,7 +3638,7 @@ h6 {
   transition: filter 0.15s ease;
 
   &.sb-collapsed-tab-add-button {
-    width: 40px;
+    width: 53px;
     height: 40px;
   }
 }
@@ -4063,7 +4075,7 @@ h6 {
 }
 
 .sb-sidebar-icon-button-selected {
-  box-shadow: inset 0 0 0 2px var(--sb-primary-color);
+  color: var(--sb-primary-color);
 }
 
 .sb-sidebar-close-button {
@@ -4289,69 +4301,6 @@ h6 {
     border-bottom: 1px solid var(--sb-divider-color);
   }
 
-  /* Bottom Bible / Tabs view switcher — a single floating element rendered
-   * once in main.tsx and pinned to the bottom of the viewport. It stays
-   * in place while the Tabs drawer and BibleSelector swap above it so the
-   * switcher itself never appears to move when the user toggles views. */
-  .sb-mobile-view-switcher {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    gap: 6px;
-    padding: 6px 8px 8px;
-    background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-    border-top: 1px solid var(--sb-divider-color);
-    z-index: 1100;
-  }
-
-  .sb-mobile-view-switcher-button {
-    flex: 1;
-    display: inline-flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 10px 8px;
-    border: none;
-    background: transparent;
-    color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
-    font: inherit;
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: 10px;
-    transition:
-      background-color 0.15s ease,
-      color 0.15s ease;
-  }
-
-  .sb-mobile-view-switcher-button-active {
-    background: var(--sb-reader-background);
-    color: var(--sb-primary-color);
-    font-weight: 600;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  }
-
-  .sb-mobile-view-switcher-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    font-size: 22px;
-    line-height: 1;
-    flex-shrink: 0;
-  }
-
-  .sb-mobile-view-switcher-icon > img,
-  .sb-mobile-view-switcher-icon > svg {
-    display: block;
-    max-width: 22px;
-    max-height: 22px;
-  }
-
   /* ------------------------------------------------------------------
    * Mobile BibleSelector — single-column layout with two dropdowns at
    * the top and the Bible/Tabs switcher pinned at the bottom.
@@ -4473,24 +4422,16 @@ h6 {
   }
 }
 
-/* Desktop hides both mobile add-tab affordances and the mobile view
- * switcher — they only appear when the mobile sidebar overlay or the
- * mobile bible-selector is visible. */
+/* Desktop hides the mobile add-tab affordances — they only appear when
+ * the mobile sidebar overlay is visible. */
 .sb-tab-mobile-add-fab,
-.sb-tab-mobile-add-inline,
-.sb-mobile-view-switcher {
+.sb-tab-mobile-add-inline {
   display: none;
 }
 
 @media (max-width: 768px) {
   .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-fab {
     display: inline-flex;
-  }
-
-  /* Re-enable the mobile view switcher on mobile — comes after the
-   * desktop `display: none` above so source order makes this rule win. */
-  .sb-mobile-view-switcher {
-    display: flex;
   }
 }
 
@@ -4531,6 +4472,10 @@ h6 {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.sb-extensions-list-disabled {
+  opacity: 0.5;
 }
 
 .sb-extension-row {
@@ -4677,6 +4622,45 @@ h6 {
 
 .sb-context-menu-item:hover {
   background: var(--sb-secondary-color);
+}
+
+.sb-context-menu-toggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sb-pill-toggle {
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background-color: color-mix(in srgb, var(--sb-font-color), transparent 78%);
+  position: relative;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
+
+.sb-pill-toggle::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: left 0.2s ease;
+}
+
+.sb-pill-toggle.is-on {
+  background-color: var(--sb-primary-color);
+}
+
+.sb-pill-toggle.is-on::before {
+  left: 22px;
 }
 
 .sb-extension-footer-actions {
@@ -7312,10 +7296,9 @@ h6 {
     border: none;
     box-shadow: none;
     padding: 14px 16px;
-    background: transparent;
+    /* background: transparent; */
     gap: 14px;
     animation: none;
-    backdrop-filter: blur(4px);
   }
 
   .sb-floating-search-panel .sb-floating-search-input-wrap {

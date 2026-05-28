@@ -192,10 +192,8 @@
   "add-bookmark": "بک مارک",
   "play-audio": "آڈیو چلائیں۔",
   "play": "کھیلیں",
-
   "discovery": "دریافت",
   "chat": "گپ شپ",
-
   "today": "آج",
   "you": "آپ",
   "bible": "بائبل",
@@ -210,7 +208,6 @@
   "bookmark-folder-empty": "یہاں ابھی تک کوئی بک مارکس نہیں ہیں۔",
   "bookmark-options": "بک مارک کے اختیارات",
   "new-folder-placeholder": "فولڈر کا نام",
-
   "tasks": "کام",
   "bookmarks": "بک مارکس",
   "hide-bookmarks": "بک مارکس چھپائیں۔",
@@ -221,5 +218,10 @@
   "folder-name-taken": "اس نام کا فولڈر پہلے سے موجود ہے۔",
   "add-to-new": "نئے میں شامل کریں۔",
   "save": "محفوظ کریں۔",
-  "bookmark-verses": "آیات کو بک مارک کریں۔"
+  "bookmark-verses": "آیات کو بک مارک کریں۔",
+  "today-coming-soon": "آج اسکرین جلد آرہی ہے۔",
+  "chat-coming-soon": "چیٹ جلد آرہی ہے۔",
+  "more-coming-soon": "مزید اختیارات جلد آرہے ہیں۔",
+  "discovery-coming-soon": "دریافت جلد آرہی ہے۔",
+  "login-to-use-feature": "اس فیچر کو استعمال کرنے کے لیے آپ کو لاگ ان کرنا ہوگا۔"
 }

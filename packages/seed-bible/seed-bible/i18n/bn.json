@@ -192,10 +192,8 @@
   "add-bookmark": "বুকমার্ক",
   "play-audio": "অডিও চালান",
   "play": "খেলা",
-
   "discovery": "আবিষ্কার",
   "chat": "চ্যাট",
-
   "today": "আজ",
   "you": "তুমি",
   "bible": "বাইবেল",
@@ -210,7 +208,6 @@
   "bookmark-folder-empty": "এখানে এখনো কোনো বুকমার্ক নেই।",
   "bookmark-options": "বুকমার্ক বিকল্পগুলি",
   "new-folder-placeholder": "ফোল্ডারের নাম",
-
   "tasks": "কাজ",
   "bookmarks": "বুকমার্ক",
   "hide-bookmarks": "বুকমার্ক লুকান",
@@ -221,5 +218,10 @@
   "folder-name-taken": "ঐ নামে একটি ফোল্ডার ইতিমধ্যেই বিদ্যমান।",
   "add-to-new": "নতুনতে যোগ করুন",
   "save": "সংরক্ষণ করুন",
-  "bookmark-verses": "শ্লোকগুলি বুকমার্ক করুন"
+  "bookmark-verses": "শ্লোকগুলি বুকমার্ক করুন",
+  "today-coming-soon": "আজকের স্ক্রিন শীঘ্রই আসছে",
+  "chat-coming-soon": "চ্যাট শীঘ্রই আসছে",
+  "more-coming-soon": "শীঘ্রই আরও বিকল্প আসছে",
+  "discovery-coming-soon": "আবিষ্কার শীঘ্রই আসছে",
+  "login-to-use-feature": "এই বৈশিষ্ট্যটি ব্যবহার করতে আপনাকে লগ ইন করতে হবে।"
 }

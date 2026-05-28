@@ -192,10 +192,8 @@
   "add-bookmark": "Signet",
   "play-audio": "Lire l'audio",
   "play": "Jouer",
-
   "discovery": "Découverte",
   "chat": "Chat",
-
   "today": "Aujourd'hui",
   "you": "Toi",
   "bible": "Bible",
@@ -210,7 +208,6 @@
   "bookmark-folder-empty": "Aucun signet ici pour le moment.",
   "bookmark-options": "Options de signet",
   "new-folder-placeholder": "Nom du dossier",
-
   "tasks": "Tâches",
   "bookmarks": "Signets",
   "hide-bookmarks": "Masquer les favoris",
@@ -221,5 +218,10 @@
   "folder-name-taken": "Un dossier portant ce nom existe déjà.",
   "add-to-new": "Ajouter aux nouveaux",
   "save": "Sauvegarder",
-  "bookmark-verses": "Versets à marquer"
+  "bookmark-verses": "Versets à marquer",
+  "today-coming-soon": "L'écran d'aujourd'hui arrive bientôt",
+  "chat-coming-soon": "Le chat arrive bientôt",
+  "more-coming-soon": "D'autres options seront bientôt disponibles.",
+  "discovery-coming-soon": "La découverte arrive bientôt",
+  "login-to-use-feature": "Vous devez vous connecter pour utiliser cette fonctionnalité."
 }

@@ -192,10 +192,8 @@
   "add-bookmark": "ዕልባት ያድርጉ",
   "play-audio": "ኦዲዮ አጫውት",
   "play": "ይጫወቱ",
-
   "discovery": "ግኝት",
   "chat": "ቻት",
-
   "today": "ዛሬ",
   "you": "አንተ",
   "bible": "መጽሐፍ ቅዱስ",
@@ -210,7 +208,6 @@
   "bookmark-folder-empty": "እዚህ እስካሁን ምንም ዕልባቶች የሉም።",
   "bookmark-options": "የዕልባት አማራጮች",
   "new-folder-placeholder": "የአቃፊ ስም",
-
   "tasks": "ተግባራት",
   "bookmarks": "ዕልባቶች",
   "hide-bookmarks": "ዕልባቶችን ደብቅ",
@@ -221,5 +218,10 @@
   "folder-name-taken": "በዚያ ስም አንድ አቃፊ አስቀድሞ አለ።",
   "add-to-new": "ወደ አዲስ ያክሉ",
   "save": "አስቀምጥ",
-  "bookmark-verses": "ጥቅሶችን ዕልባት ያድርጉ"
+  "bookmark-verses": "ጥቅሶችን ዕልባት ያድርጉ",
+  "today-coming-soon": "የዛሬው ስክሪን በቅርቡ ይመጣል",
+  "chat-coming-soon": "ቻት በቅርቡ ይመጣል",
+  "more-coming-soon": "ተጨማሪ አማራጮች በቅርቡ ይመጣሉ",
+  "discovery-coming-soon": "ግኝት በቅርቡ ይመጣል",
+  "login-to-use-feature": "ይህንን ባህሪ ለመጠቀም መግባት አለብዎት።"
 }

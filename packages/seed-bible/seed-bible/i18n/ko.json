@@ -192,10 +192,8 @@
   "add-bookmark": "서표",
   "play-audio": "오디오 재생",
   "play": "놀다",
-
   "discovery": "발견",
   "chat": "채팅",
-
   "today": "오늘",
   "you": "너",
   "bible": "성경",
@@ -210,7 +208,6 @@
   "bookmark-folder-empty": "아직 여기에 북마크가 없습니다.",
   "bookmark-options": "북마크 옵션",
   "new-folder-placeholder": "폴더 이름",
-
   "tasks": "과제",
   "bookmarks": "책갈피",
   "hide-bookmarks": "북마크 숨기기",
@@ -221,5 +218,10 @@
   "folder-name-taken": "해당 이름의 폴더가 이미 존재합니다.",
   "add-to-new": "새 항목에 추가",
   "save": "구하다",
-  "bookmark-verses": "성경 구절을 북마크하세요"
+  "bookmark-verses": "성경 구절을 북마크하세요",
+  "today-coming-soon": "오늘 화면이 곧 나옵니다.",
+  "chat-coming-soon": "채팅 기능이 곧 출시될 예정입니다.",
+  "more-coming-soon": "더 많은 옵션이 곧 제공될 예정입니다.",
+  "discovery-coming-soon": "곧 디스커버리가 출시됩니다.",
+  "login-to-use-feature": "이 기능을 사용하려면 로그인해야 합니다."
 }

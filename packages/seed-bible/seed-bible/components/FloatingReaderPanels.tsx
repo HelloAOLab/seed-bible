@@ -473,12 +473,12 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
         <p className="sb-floating-chat-empty-title">
           {t("chat-empty-title", { defaultValue: "Chat is coming soon" })}
         </p>
-        <p className="sb-floating-chat-empty-body">
+        {/* <p className="sb-floating-chat-empty-body">
           {t("chat-empty-body", {
             defaultValue:
               "This is where you'll be able to ask questions and explore cross-references.",
           })}
-        </p>
+        </p> */}
       </div>
     </div>
   );

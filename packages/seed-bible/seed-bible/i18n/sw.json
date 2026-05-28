@@ -192,10 +192,8 @@
   "add-bookmark": "Alamisho",
   "play-audio": "Cheza sauti",
   "play": "Cheza",
-
   "discovery": "Ugunduzi",
   "chat": "Gumzo",
-
   "today": "Leo",
   "you": "Wewe",
   "bible": "Biblia",
@@ -210,7 +208,6 @@
   "bookmark-folder-empty": "Hakuna alamisho hapa bado.",
   "bookmark-options": "Chaguo za alamisho",
   "new-folder-placeholder": "Jina la folda",
-
   "tasks": "Kazi",
   "bookmarks": "Alamisho",
   "hide-bookmarks": "Ficha alamisho",
@@ -221,5 +218,10 @@
   "folder-name-taken": "Folda yenye jina hilo tayari ipo.",
   "add-to-new": "Ongeza kwenye mpya",
   "save": "Hifadhi",
-  "bookmark-verses": "Weka alama kwenye mistari"
+  "bookmark-verses": "Weka alama kwenye mistari",
+  "today-coming-soon": "Skrini ya leo inakuja hivi karibuni",
+  "chat-coming-soon": "Gumzo linakuja hivi karibuni",
+  "more-coming-soon": "Chaguzi zaidi zinakuja hivi karibuni",
+  "discovery-coming-soon": "Ugunduzi unakuja hivi karibuni",
+  "login-to-use-feature": "Lazima uingie ili kutumia kipengele hiki."
 }

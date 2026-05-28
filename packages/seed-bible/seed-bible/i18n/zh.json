@@ -192,10 +192,8 @@
   "add-bookmark": "收藏",
   "play-audio": "播放音频",
   "play": "玩",
-
   "discovery": "发现",
   "chat": "聊天",
-
   "today": "今天",
   "you": "你",
   "bible": "圣经",
@@ -210,7 +208,6 @@
   "bookmark-folder-empty": "这里还没有书签。",
   "bookmark-options": "书签选项",
   "new-folder-placeholder": "文件夹名称",
-
   "tasks": "任务",
   "bookmarks": "书签",
   "hide-bookmarks": "隐藏书签",
@@ -221,5 +218,10 @@
   "folder-name-taken": "已存在同名文件夹。",
   "add-to-new": "添加到新",
   "save": "节省",
-  "bookmark-verses": "收藏诗句"
+  "bookmark-verses": "收藏诗句",
+  "today-coming-soon": "今天屏幕即将上线",
+  "chat-coming-soon": "聊天功能即将上线",
+  "more-coming-soon": "更多选项即将推出",
+  "discovery-coming-soon": "探索即将到来",
+  "login-to-use-feature": "您必须登录才能使用此功能。"
 }

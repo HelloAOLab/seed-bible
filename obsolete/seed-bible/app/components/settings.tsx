@@ -1013,8 +1013,8 @@ export const KeepScreenAwakeSetting = ({
       }
     } else {
       try {
-        await os.requestWakeLock();
-        setIsActive(true);
+        const check = await os.requestWakeLock();
+        setIsActive(check);
         (globalThis as any).keepAwakeActive = true;
         (globalThis as any).setKeepAwake?.(true);
       } catch (err) {

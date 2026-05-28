@@ -192,10 +192,8 @@
   "add-bookmark": "إضافة إلى المفضلة",
   "play-audio": "تشغيل الصوت",
   "play": "يلعب",
-
   "discovery": "اكتشاف",
   "chat": "محادثة",
-
   "today": "اليوم",
   "you": "أنت",
   "bible": "الكتاب المقدس",
@@ -210,7 +208,6 @@
   "bookmark-folder-empty": "لا توجد إشارات مرجعية هنا حتى الآن.",
   "bookmark-options": "خيارات الإشارة المرجعية",
   "new-folder-placeholder": "اسم المجلد",
-
   "tasks": "المهام",
   "bookmarks": "الإشارات المرجعية",
   "hide-bookmarks": "إخفاء الإشارات المرجعية",
@@ -221,5 +218,10 @@
   "folder-name-taken": "يوجد مجلد بهذا الاسم بالفعل.",
   "add-to-new": "أضف إلى جديد",
   "save": "يحفظ",
-  "bookmark-verses": "آيات مرجعية"
+  "bookmark-verses": "آيات مرجعية",
+  "today-coming-soon": "شاشة اليوم قادمة قريباً",
+  "chat-coming-soon": "الدردشة متاحة قريباً",
+  "more-coming-soon": "خيارات إضافية قادمة قريباً",
+  "discovery-coming-soon": "سيصدر برنامج ديسكفري قريباً",
+  "login-to-use-feature": "يجب عليك تسجيل الدخول لاستخدام هذه الميزة."
 }
