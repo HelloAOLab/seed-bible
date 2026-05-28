@@ -189,10 +189,8 @@
   "add-bookmark": "Bogmærke",
   "play-audio": "Afspil lyd",
   "play": "Spil",
-
   "discovery": "Opdagelse",
   "chat": "Snak",
-
   "today": "I dag",
   "you": "Du",
   "bible": "Bibel",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Ingen bogmærker her endnu.",
   "bookmark-options": "Bogmærkeindstillinger",
   "new-folder-placeholder": "Mappenavn",
-
   "tasks": "Opgaver",
   "bookmarks": "Bogmærker",
   "hide-bookmarks": "Skjul bogmærker",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Der findes allerede en mappe med det navn.",
   "add-to-new": "Tilføj til ny",
   "save": "Spare",
-  "bookmark-verses": "Bogmærk vers"
+  "bookmark-verses": "Bogmærk vers",
+  "today-coming-soon": "Dagens skærm kommer snart",
+  "chat-coming-soon": "Chatten kommer snart",
+  "more-coming-soon": "Flere muligheder kommer snart",
+  "discovery-coming-soon": "Opdagelsen kommer snart",
+  "login-to-use-feature": "Du skal logge ind for at bruge denne funktion."
 }

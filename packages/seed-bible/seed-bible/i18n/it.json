@@ -189,10 +189,8 @@
   "add-bookmark": "Segnalibro",
   "play-audio": "Riproduci audio",
   "play": "Giocare",
-
   "discovery": "Scoperta",
   "chat": "Chiacchierata",
-
   "today": "Oggi",
   "you": "Voi",
   "bible": "Bibbia",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Nessun segnalibro ancora presente.",
   "bookmark-options": "Opzioni segnalibro",
   "new-folder-placeholder": "Nome della cartella",
-
   "tasks": "Compiti",
   "bookmarks": "Segnalibri",
   "hide-bookmarks": "Nascondi i segnalibri",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Esiste già una cartella con quel nome.",
   "add-to-new": "Aggiungi a nuovo",
   "save": "Salva",
-  "bookmark-verses": "Segnalibro versi"
+  "bookmark-verses": "Segnalibro versi",
+  "today-coming-soon": "Oggi lo schermo arriverà presto",
+  "chat-coming-soon": "La chat arriverà presto",
+  "more-coming-soon": "Presto saranno disponibili altre opzioni.",
+  "discovery-coming-soon": "La scoperta arriverà presto",
+  "login-to-use-feature": "Per utilizzare questa funzione è necessario effettuare l'accesso."
 }

@@ -188,10 +188,8 @@
   "add-bookmark": "Adicionar aos favoritos",
   "play-audio": "Reproduzir áudio",
   "play": "Jogar",
-
   "discovery": "Descoberta",
   "chat": "Bater papo",
-
   "today": "Hoje",
   "you": "Você",
   "bible": "Bíblia",
@@ -206,7 +204,6 @@
   "bookmark-folder-empty": "Ainda não há favoritos aqui.",
   "bookmark-options": "Opções de favoritos",
   "new-folder-placeholder": "Nome da pasta",
-
   "tasks": "Tarefas",
   "bookmarks": "Favoritos",
   "hide-bookmarks": "Ocultar favoritos",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Já existe uma pasta com esse nome.",
   "add-to-new": "Adicionar aos novos",
   "save": "Salvar",
-  "bookmark-verses": "Versículos dos favoritos"
+  "bookmark-verses": "Versículos dos favoritos",
+  "today-coming-soon": "A tela de hoje estará disponível em breve.",
+  "chat-coming-soon": "O bate-papo estará disponível em breve.",
+  "more-coming-soon": "Mais opções em breve",
+  "discovery-coming-soon": "A descoberta está chegando em breve.",
+  "login-to-use-feature": "Você precisa fazer login para usar este recurso."
 }

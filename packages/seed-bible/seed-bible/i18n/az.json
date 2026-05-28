@@ -189,10 +189,8 @@
   "add-bookmark": "Əlfəcin",
   "play-audio": "Səsi oxudun",
   "play": "Oyna",
-
   "discovery": "Kəşf",
   "chat": "Söhbət",
-
   "today": "Bu gün",
   "you": "Sən",
   "bible": "Müqəddəs Kitab",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Hələlik burada əlfəcin yoxdur.",
   "bookmark-options": "Əlfəcin seçimləri",
   "new-folder-placeholder": "Qovluq adı",
-
   "tasks": "Tapşırıqlar",
   "bookmarks": "Əlfəcinlər",
   "hide-bookmarks": "Əlfəcinləri gizlət",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Bu adda qovluq artıq mövcuddur.",
   "add-to-new": "Yenisinə əlavə edin",
   "save": "Yadda saxla",
-  "bookmark-verses": "Ayələri əlfəcininizə əlavə edin"
+  "bookmark-verses": "Ayələri əlfəcininizə əlavə edin",
+  "today-coming-soon": "Bugünkü ekran tezliklə gəlir",
+  "chat-coming-soon": "Söhbət tezliklə gəlir",
+  "more-coming-soon": "Tezliklə daha çox seçim olacaq",
+  "discovery-coming-soon": "Kəşf tezliklə gəlir",
+  "login-to-use-feature": "Bu funksiyadan istifadə etmək üçün daxil olmalısınız."
 }

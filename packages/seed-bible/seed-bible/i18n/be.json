@@ -189,10 +189,8 @@
   "add-bookmark": "Закладка",
   "play-audio": "Прайграць аўдыё",
   "play": "Гуляць",
-
   "discovery": "Адкрыццё",
   "chat": "Чат",
-
   "today": "Сёння",
   "you": "Ты",
   "bible": "Біблія",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Тут пакуль няма закладак.",
   "bookmark-options": "Параметры закладак",
   "new-folder-placeholder": "Назва папкі",
-
   "tasks": "Задачы",
   "bookmarks": "Закладкі",
   "hide-bookmarks": "Схаваць закладкі",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Папка з такой назвай ужо існуе.",
   "add-to-new": "Дадаць да новага",
   "save": "Захаваць",
-  "bookmark-verses": "Закладка вершаў"
+  "bookmark-verses": "Закладка вершаў",
+  "today-coming-soon": "Сённяшні экран хутка з'явіцца",
+  "chat-coming-soon": "Чат хутка з'явіцца",
+  "more-coming-soon": "Больш варыянтаў хутка з'явіцца",
+  "discovery-coming-soon": "Адкрыццё хутка адбудзецца",
+  "login-to-use-feature": "Каб скарыстацца гэтай функцыяй, вам трэба ўвайсці ў сістэму."
 }

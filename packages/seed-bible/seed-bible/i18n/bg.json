@@ -189,10 +189,8 @@
   "add-bookmark": "Запомнете",
   "play-audio": "Пускане на аудио",
   "play": "Играй",
-
   "discovery": "Откритие",
   "chat": "Чат",
-
   "today": "Днес",
   "you": "Ти",
   "bible": "Библия",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Все още няма отметки тук.",
   "bookmark-options": "Опции за отметки",
   "new-folder-placeholder": "Име на папката",
-
   "tasks": "Задачи",
   "bookmarks": "Отметки",
   "hide-bookmarks": "Скриване на отметки",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Папка с това име вече съществува.",
   "add-to-new": "Добави към ново",
   "save": "Запазване",
-  "bookmark-verses": "Запазете стихове в отметките си"
+  "bookmark-verses": "Запазете стихове в отметките си",
+  "today-coming-soon": "Днешният екран ще се появи скоро",
+  "chat-coming-soon": "Чатът идва скоро",
+  "more-coming-soon": "Очаквайте още опции скоро",
+  "discovery-coming-soon": "Откритието идва скоро",
+  "login-to-use-feature": "Трябва да влезете, за да използвате тази функция."
 }

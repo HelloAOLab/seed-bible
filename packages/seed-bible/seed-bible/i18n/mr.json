@@ -189,10 +189,8 @@
   "add-bookmark": "बुकमार्क",
   "play-audio": "ऑडिओ प्ले करा",
   "play": "खेळा",
-
   "discovery": "शोध",
   "chat": "चॅट",
-
   "today": "आज",
   "you": "तुम्ही",
   "bible": "बायबल",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "येथे अद्याप कोणतेही बुकमार्क नाहीत.",
   "bookmark-options": "बुकमार्क पर्याय",
   "new-folder-placeholder": "फोल्डरचे नाव",
-
   "tasks": "कार्ये",
   "bookmarks": "बुकमार्क",
   "hide-bookmarks": "बुकमार्क लपवा",
@@ -217,5 +214,10 @@
   "folder-name-taken": "त्या नावाने एक फोल्डर आधीच अस्तित्वात आहे.",
   "add-to-new": "नवीन जोडा",
   "save": "जतन करा",
-  "bookmark-verses": "श्लोक बुकमार्क करा"
+  "bookmark-verses": "श्लोक बुकमार्क करा",
+  "today-coming-soon": "आज स्क्रीन लवकरच येत आहे",
+  "chat-coming-soon": "चॅट लवकरच येत आहे",
+  "more-coming-soon": "अधिक पर्याय लवकरच उपलब्ध होतील.",
+  "discovery-coming-soon": "डिस्कव्हरी लवकरच येत आहे",
+  "login-to-use-feature": "या सुविधेचा वापर करण्यासाठी तुम्हाला लॉग इन करावे लागेल."
 }

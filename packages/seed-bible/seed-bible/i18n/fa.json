@@ -188,10 +188,8 @@
   "add-bookmark": "نشانه‌گذاری",
   "play-audio": "پخش صدا",
   "play": "بازی",
-
   "discovery": "کشف",
   "chat": "چت",
-
   "today": "امروز",
   "you": "شما",
   "bible": "کتاب مقدس",
@@ -206,7 +204,6 @@
   "bookmark-folder-empty": "هنوز اینجا هیچ نشانکی وجود ندارد.",
   "bookmark-options": "گزینه‌های نشانک‌گذاری",
   "new-folder-placeholder": "نام پوشه",
-
   "tasks": "وظایف",
   "bookmarks": "نشانک‌ها",
   "hide-bookmarks": "پنهان کردن نشانک‌ها",
@@ -217,5 +214,10 @@
   "folder-name-taken": "پوشه‌ای با این نام از قبل وجود دارد.",
   "add-to-new": "اضافه کردن به جدید",
   "save": "ذخیره",
-  "bookmark-verses": "آیات را نشانه‌گذاری کنید"
+  "bookmark-verses": "آیات را نشانه‌گذاری کنید",
+  "today-coming-soon": "صفحه نمایش امروز به زودی منتشر می‌شود",
+  "chat-coming-soon": "چت به زودی فعال می‌شود",
+  "more-coming-soon": "گزینه‌های بیشتر به زودی",
+  "discovery-coming-soon": "دیسکاوری به زودی از راه می‌رسد",
+  "login-to-use-feature": "برای استفاده از این قابلیت باید وارد سیستم شوید."
 }

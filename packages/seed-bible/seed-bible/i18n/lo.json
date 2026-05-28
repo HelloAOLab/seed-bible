@@ -189,10 +189,8 @@
   "add-bookmark": "ບຸກມາກ",
   "play-audio": "ຫຼິ້ນສຽງ",
   "play": "ຫຼິ້ນ",
-
   "discovery": "ການຄົ້ນພົບ",
   "chat": "ສົນທະນາ",
-
   "today": "ມື້ນີ້",
   "you": "ເຈົ້າ",
   "bible": "ຄຳພີໄບເບິນ",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "ຍັງບໍ່ມີບຸກມາກຢູ່ບ່ອນນີ້ເທື່ອ.",
   "bookmark-options": "ຕົວເລືອກບຸກມາກ",
   "new-folder-placeholder": "ຊື່ໂຟນເດີ",
-
   "tasks": "ໜ້າວຽກ",
   "bookmarks": "ບຸກມາກ",
   "hide-bookmarks": "ເຊື່ອງບຸກມາກ",
@@ -217,5 +214,10 @@
   "folder-name-taken": "ມີໂຟນເດີທີ່ມີຊື່ນັ້ນຢູ່ແລ້ວ.",
   "add-to-new": "ເພີ່ມໃສ່ອັນໃໝ່",
   "save": "ບັນທຶກ",
-  "bookmark-verses": "ບຸກມາກຂໍ້ພຣະຄຳພີ"
+  "bookmark-verses": "ບຸກມາກຂໍ້ພຣະຄຳພີ",
+  "today-coming-soon": "ມື້ນີ້ໜ້າຈໍຈະມາໄວໆນີ້",
+  "chat-coming-soon": "ການສົນທະນາກຳລັງຈະມາຮອດໃນໄວໆນີ້",
+  "more-coming-soon": "ຕົວເລືອກເພີ່ມເຕີມກຳລັງຈະມາໃນໄວໆນີ້",
+  "discovery-coming-soon": "ການຄົ້ນພົບກຳລັງຈະມາເຖິງໃນໄວໆນີ້",
+  "login-to-use-feature": "ທ່ານຕ້ອງເຂົ້າສູ່ລະບົບເພື່ອໃຊ້ຄຸນສົມບັດນີ້."
 }

@@ -188,10 +188,8 @@
   "add-bookmark": "Tandai",
   "play-audio": "Putar audio",
   "play": "Bermain",
-
   "discovery": "Penemuan",
   "chat": "Mengobrol",
-
   "today": "Hari ini",
   "you": "Anda",
   "bible": "Alkitab",
@@ -206,7 +204,6 @@
   "bookmark-folder-empty": "Belum ada bookmark di sini.",
   "bookmark-options": "Opsi bookmark",
   "new-folder-placeholder": "Nama folder",
-
   "tasks": "Tugas",
   "bookmarks": "Penanda buku",
   "hide-bookmarks": "Sembunyikan bookmark",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Folder dengan nama tersebut sudah ada.",
   "add-to-new": "Tambahkan ke yang baru",
   "save": "Menyimpan",
-  "bookmark-verses": "Ayat-ayat penanda"
+  "bookmark-verses": "Ayat-ayat penanda",
+  "today-coming-soon": "Layar hari ini akan segera hadir",
+  "chat-coming-soon": "Fitur obrolan akan segera hadir.",
+  "more-coming-soon": "Opsi lainnya akan segera tersedia.",
+  "discovery-coming-soon": "Discovery akan segera hadir",
+  "login-to-use-feature": "Anda harus masuk untuk menggunakan fitur ini."
 }

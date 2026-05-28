@@ -188,10 +188,8 @@
   "add-bookmark": "ዕልባት ምልክት ምግባር",
   "play-audio": "ድምጺ ምጽዋት",
   "play": "ተፃወት",
-
   "discovery": "ርኽበት",
   "chat": "ፀወታ",
-
   "today": "ሎምዓንቲ",
   "you": "ንስኻ",
   "bible": "መጽሓፍ ቅዱስ",
@@ -206,7 +204,6 @@
   "bookmark-folder-empty": "ኣብዚ ክሳብ ሕጂ ዕልባት የለን።",
   "bookmark-options": "ናይ ዕልባት ኣማራጺታት",
   "new-folder-placeholder": "ስም ኣቃፊራ",
-
   "tasks": "ዕማማት",
   "bookmarks": "ዕልባታት",
   "hide-bookmarks": "ዕልባታት ምሕባእ",
@@ -217,5 +214,10 @@
   "folder-name-taken": "ድሮ እቲ ስም ዘለዎ ማህደር ኣሎ።",
   "add-to-new": "ኣብ ሓድሽ ወስኽ",
   "save": "ምቑጣብ",
-  "bookmark-verses": "ዕልባት ጥቕስታት"
+  "bookmark-verses": "ዕልባት ጥቕስታት",
+  "today-coming-soon": "ናይ ሎሚ ስክሪን ኣብ ቀረባ እዋን",
+  "chat-coming-soon": "ቻት ኣብ ቀረባ እዋን ይመጽእ ኣሎ።",
+  "more-coming-soon": "ተወሳኺ ኣማራጺታት ኣብ ቀረባ እዋን",
+  "discovery-coming-soon": "ርኽበት ኣብ ቀረባ እዋን ይመጽእ ኣሎ።",
+  "login-to-use-feature": "ነዚ ባህሪ ንምጥቃም ክትኣቱ ኣለካ።"
 }

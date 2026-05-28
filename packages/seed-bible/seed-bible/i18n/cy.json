@@ -189,10 +189,8 @@
   "add-bookmark": "Nod tudalen",
   "play-audio": "Chwarae sain",
   "play": "Chwarae",
-
   "discovery": "Darganfyddiad",
   "chat": "Sgwrs",
-
   "today": "Heddiw",
   "you": "Chi",
   "bible": "Beibl",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Dim nodau tudalen yma eto.",
   "bookmark-options": "Dewisiadau nod tudalen",
   "new-folder-placeholder": "Enw'r ffolder",
-
   "tasks": "Tasgau",
   "bookmarks": "Nodau Tudalen",
   "hide-bookmarks": "Cuddio nodau tudalen",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Mae ffolder gyda'r enw hwnnw eisoes yn bodoli.",
   "add-to-new": "Ychwanegu at newydd",
   "save": "Cadw",
-  "bookmark-verses": "Nodwch benillion"
+  "bookmark-verses": "Nodwch benillion",
+  "today-coming-soon": "Mae sgrin heddiw yn dod yn fuan",
+  "chat-coming-soon": "Mae sgwrs yn dod yn fuan",
+  "more-coming-soon": "Mwy o opsiynau yn dod yn fuan",
+  "discovery-coming-soon": "Mae darganfyddiad yn dod yn fuan",
+  "login-to-use-feature": "Rhaid i chi fewngofnodi i ddefnyddio'r nodwedd hon."
 }

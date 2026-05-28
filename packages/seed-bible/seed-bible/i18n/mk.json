@@ -189,10 +189,8 @@
   "add-bookmark": "Обележувач",
   "play-audio": "Пушти аудио",
   "play": "Играј",
-
   "discovery": "Откритие",
   "chat": "Разговор",
-
   "today": "Денес",
   "you": "Ти",
   "bible": "Библија",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Сè уште нема обележувачи тука.",
   "bookmark-options": "Опции за обележувачи",
   "new-folder-placeholder": "Име на папка",
-
   "tasks": "Задачи",
   "bookmarks": "Обележувачи",
   "hide-bookmarks": "Сокриј обележувачи",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Веќе постои папка со тоа име.",
   "add-to-new": "Додај во ново",
   "save": "Зачувај",
-  "bookmark-verses": "Обележи ги стиховите"
+  "bookmark-verses": "Обележи ги стиховите",
+  "today-coming-soon": "Денешниот екран доаѓа наскоро",
+  "chat-coming-soon": "Разговорот доаѓа наскоро",
+  "more-coming-soon": "Повеќе опции наскоро",
+  "discovery-coming-soon": "Откритието доаѓа наскоро",
+  "login-to-use-feature": "Мора да се најавите за да ја користите оваа функција."
 }

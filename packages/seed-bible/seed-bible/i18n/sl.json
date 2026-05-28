@@ -189,10 +189,8 @@
   "add-bookmark": "Zaznamek",
   "play-audio": "Predvajaj zvok",
   "play": "Predvajaj",
-
   "discovery": "Odkritje",
   "chat": "Klepet",
-
   "today": "Danes",
   "you": "Ti",
   "bible": "Biblija",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Tukaj še ni zaznamkov.",
   "bookmark-options": "Možnosti zaznamkov",
   "new-folder-placeholder": "Ime mape",
-
   "tasks": "Naloge",
   "bookmarks": "Zaznamki",
   "hide-bookmarks": "Skrij zaznamke",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Mapa s tem imenom že obstaja.",
   "add-to-new": "Dodaj k novemu",
   "save": "Shrani",
-  "bookmark-verses": "Zaznamek verzov"
+  "bookmark-verses": "Zaznamek verzov",
+  "today-coming-soon": "Današnji zaslon bo kmalu na voljo",
+  "chat-coming-soon": "Klepet kmalu na voljo",
+  "more-coming-soon": "Kmalu več možnosti",
+  "discovery-coming-soon": "Odkritje kmalu prihaja",
+  "login-to-use-feature": "Za uporabo te funkcije se morate prijaviti."
 }

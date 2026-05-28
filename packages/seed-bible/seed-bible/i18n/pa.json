@@ -189,10 +189,8 @@
   "add-bookmark": "ਬੁੱਕਮਾਰਕ",
   "play-audio": "ਆਡੀਓ ਚਲਾਓ",
   "play": "ਖੇਡੋ",
-
   "discovery": "ਖੋਜ",
   "chat": "ਚੈਟ",
-
   "today": "ਅੱਜ",
   "you": "ਤੁਸੀਂ",
   "bible": "ਬਾਈਬਲ",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "ਇੱਥੇ ਅਜੇ ਕੋਈ ਬੁੱਕਮਾਰਕ ਨਹੀਂ ਹਨ।",
   "bookmark-options": "ਬੁੱਕਮਾਰਕ ਵਿਕਲਪ",
   "new-folder-placeholder": "ਫੋਲਡਰ ਦਾ ਨਾਮ",
-
   "tasks": "ਕੰਮ",
   "bookmarks": "ਬੁੱਕਮਾਰਕ",
   "hide-bookmarks": "ਬੁੱਕਮਾਰਕ ਲੁਕਾਓ",
@@ -217,5 +214,10 @@
   "folder-name-taken": "ਇਸ ਨਾਮ ਦਾ ਇੱਕ ਫੋਲਡਰ ਪਹਿਲਾਂ ਹੀ ਮੌਜੂਦ ਹੈ।",
   "add-to-new": "ਨਵੇਂ ਵਿੱਚ ਸ਼ਾਮਲ ਕਰੋ",
   "save": "ਸੇਵ ਕਰੋ",
-  "bookmark-verses": "ਆਇਤਾਂ ਨੂੰ ਬੁੱਕਮਾਰਕ ਕਰੋ"
+  "bookmark-verses": "ਆਇਤਾਂ ਨੂੰ ਬੁੱਕਮਾਰਕ ਕਰੋ",
+  "today-coming-soon": "ਅੱਜ ਸਕ੍ਰੀਨ ਜਲਦੀ ਆ ਰਹੀ ਹੈ।",
+  "chat-coming-soon": "ਚੈਟ ਜਲਦੀ ਆ ਰਹੀ ਹੈ।",
+  "more-coming-soon": "ਹੋਰ ਵਿਕਲਪ ਜਲਦੀ ਆ ਰਹੇ ਹਨ",
+  "discovery-coming-soon": "ਡਿਸਕਵਰੀ ਜਲਦੀ ਆ ਰਹੀ ਹੈ",
+  "login-to-use-feature": "ਇਸ ਵਿਸ਼ੇਸ਼ਤਾ ਦੀ ਵਰਤੋਂ ਕਰਨ ਲਈ ਤੁਹਾਨੂੰ ਲੌਗਇਨ ਕਰਨਾ ਪਵੇਗਾ।"
 }

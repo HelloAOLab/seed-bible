@@ -189,10 +189,8 @@
   "add-bookmark": "Xatcho'p",
   "play-audio": "Audio ijro etish",
   "play": "O'yin",
-
   "discovery": "Kashfiyot",
   "chat": "Chat",
-
   "today": "Bugun",
   "you": "Siz",
   "bible": "Muqaddas Kitob",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Bu yerda hali xatcho'plar yo'q.",
   "bookmark-options": "Xatcho'p parametrlari",
   "new-folder-placeholder": "Papka nomi",
-
   "tasks": "Vazifalar",
   "bookmarks": "Xatcho'plar",
   "hide-bookmarks": "Xatcho'plarni yashirish",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Bu nomli papka allaqachon mavjud.",
   "add-to-new": "Yangisiga qo'shish",
   "save": "Saqlash",
-  "bookmark-verses": "Oyatlarni xatcho'pga qo'ying"
+  "bookmark-verses": "Oyatlarni xatcho'pga qo'ying",
+  "today-coming-soon": "Bugungi ekran tez orada chiqadi",
+  "chat-coming-soon": "Chat tez orada chiqadi",
+  "more-coming-soon": "Tez orada boshqa variantlar ham qo'shiladi",
+  "discovery-coming-soon": "Tez orada kashfiyot bo'ladi",
+  "login-to-use-feature": "Ushbu funksiyadan foydalanish uchun tizimga kirishingiz kerak."
 }

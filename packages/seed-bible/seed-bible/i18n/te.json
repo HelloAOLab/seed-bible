@@ -189,10 +189,8 @@
   "add-bookmark": "బుక్‌మార్క్",
   "play-audio": "ఆడియో ప్లే చేయండి",
   "play": "ఆట",
-
   "discovery": "ఆవిష్కరణ",
   "chat": "చాట్",
-
   "today": "ఈరోజు",
   "you": "మీరు",
   "bible": "బైబిల్",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "ఇక్కడ ఇంకా బుక్‌మార్క్‌లు లేవు.",
   "bookmark-options": "బుక్‌మార్క్ ఎంపికలు",
   "new-folder-placeholder": "ఫోల్డర్ పేరు",
-
   "tasks": "పనులు",
   "bookmarks": "బుక్‌మార్క్‌లు",
   "hide-bookmarks": "బుక్‌మార్క్‌లను దాచండి",
@@ -217,5 +214,10 @@
   "folder-name-taken": "ఆ పేరుతో ఒక ఫోల్డర్ ఇప్పటికే ఉంది.",
   "add-to-new": "కొత్త వాటికి జోడించండి",
   "save": "సేవ్ చేయండి",
-  "bookmark-verses": "బుక్‌మార్క్ పద్యాలు"
+  "bookmark-verses": "బుక్‌మార్క్ పద్యాలు",
+  "today-coming-soon": "ఈరోజు స్క్రీన్ త్వరలో వస్తుంది",
+  "chat-coming-soon": "చాట్ త్వరలో వస్తుంది",
+  "more-coming-soon": "మరిన్ని ఎంపికలు త్వరలో రానున్నాయి",
+  "discovery-coming-soon": "డిస్కవరీ త్వరలో రాబోతోంది",
+  "login-to-use-feature": "ఈ ఫీచర్‌ను ఉపయోగించడానికి మీరు లాగిన్ అవ్వాలి."
 }

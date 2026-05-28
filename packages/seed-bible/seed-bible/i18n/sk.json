@@ -189,10 +189,8 @@
   "add-bookmark": "Záložka",
   "play-audio": "Prehrať zvuk",
   "play": "Hrať",
-
   "discovery": "Objav",
   "chat": "Čet",
-
   "today": "Dnes",
   "you": "Ty",
   "bible": "Biblia",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Zatiaľ tu nie sú žiadne záložky.",
   "bookmark-options": "Možnosti záložiek",
   "new-folder-placeholder": "Názov priečinka",
-
   "tasks": "Úlohy",
   "bookmarks": "Záložky",
   "hide-bookmarks": "Skryť záložky",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Priečinok s týmto názvom už existuje.",
   "add-to-new": "Pridať k novému",
   "save": "Uložiť",
-  "bookmark-verses": "Záložka veršov"
+  "bookmark-verses": "Záložka veršov",
+  "today-coming-soon": "Dnešná obrazovka bude čoskoro k dispozícii",
+  "chat-coming-soon": "Chat bude čoskoro k dispozícii",
+  "more-coming-soon": "Ďalšie možnosti čoskoro",
+  "discovery-coming-soon": "Objav čoskoro",
+  "login-to-use-feature": "Pre použitie tejto funkcie sa musíte prihlásiť."
 }

@@ -189,10 +189,8 @@
   "add-bookmark": "Könyvjelző",
   "play-audio": "Hang lejátszása",
   "play": "Játék",
-
   "discovery": "Felfedezés",
   "chat": "Csevegés",
-
   "today": "Ma",
   "you": "Te",
   "bible": "Biblia",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Még nincsenek könyvjelzők.",
   "bookmark-options": "Könyvjelző beállítások",
   "new-folder-placeholder": "Mappa neve",
-
   "tasks": "Feladatok",
   "bookmarks": "Könyvjelzők",
   "hide-bookmarks": "Könyvjelzők elrejtése",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Már létezik egy ilyen nevű mappa.",
   "add-to-new": "Hozzáadás az újhoz",
   "save": "Megtakarítás",
-  "bookmark-verses": "Könyvjelző versek"
+  "bookmark-verses": "Könyvjelző versek",
+  "today-coming-soon": "Hamarosan érkezik a mai képernyő",
+  "chat-coming-soon": "Hamarosan csevegés",
+  "more-coming-soon": "Hamarosan további lehetőségek érkeznek",
+  "discovery-coming-soon": "A felfedezés hamarosan érkezik",
+  "login-to-use-feature": "Be kell jelentkezned a funkció használatához."
 }

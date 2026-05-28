@@ -188,10 +188,8 @@
   "add-bookmark": "Đánh dấu trang",
   "play-audio": "Phát âm thanh",
   "play": "Chơi",
-
   "discovery": "Khám phá",
   "chat": "Trò chuyện",
-
   "today": "Hôm nay",
   "you": "Bạn",
   "bible": "Kinh Thánh",
@@ -206,7 +204,6 @@
   "bookmark-folder-empty": "Chưa có dấu trang nào ở đây.",
   "bookmark-options": "Tùy chọn đánh dấu trang",
   "new-folder-placeholder": "Tên thư mục",
-
   "tasks": "Nhiệm vụ",
   "bookmarks": "Dấu trang",
   "hide-bookmarks": "Ẩn dấu trang",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Thư mục có tên đó đã tồn tại.",
   "add-to-new": "Thêm vào mục mới",
   "save": "Cứu",
-  "bookmark-verses": "Đánh dấu các câu thơ"
+  "bookmark-verses": "Đánh dấu các câu thơ",
+  "today-coming-soon": "Màn hình hôm nay sẽ sớm ra mắt.",
+  "chat-coming-soon": "Tính năng trò chuyện sẽ sớm ra mắt.",
+  "more-coming-soon": "Sẽ có thêm nhiều lựa chọn trong thời gian tới.",
+  "discovery-coming-soon": "Khám phá sắp ra mắt",
+  "login-to-use-feature": "Bạn cần đăng nhập để sử dụng tính năng này."
 }

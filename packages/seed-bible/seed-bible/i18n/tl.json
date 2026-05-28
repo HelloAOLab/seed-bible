@@ -189,10 +189,8 @@
   "add-bookmark": "I-bookmark",
   "play-audio": "Magpatugtog ng audio",
   "play": "Maglaro",
-
   "discovery": "Pagtuklas",
   "chat": "Makipag-chat",
-
   "today": "Ngayon",
   "you": "Ikaw",
   "bible": "Bibliya",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Wala pang mga bookmark dito.",
   "bookmark-options": "Mga opsyon sa pag-bookmark",
   "new-folder-placeholder": "Pangalan ng folder",
-
   "tasks": "Mga Gawain",
   "bookmarks": "Mga Bookmark",
   "hide-bookmarks": "Itago ang mga bookmark",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Mayroon nang folder na may ganoong pangalan.",
   "add-to-new": "Idagdag sa bago",
   "save": "I-save",
-  "bookmark-verses": "I-bookmark ang mga bersikulo"
+  "bookmark-verses": "I-bookmark ang mga bersikulo",
+  "today-coming-soon": "Malapit nang lumabas ang screen ngayon",
+  "chat-coming-soon": "Malapit na ang chat",
+  "more-coming-soon": "Mas maraming opsyon ang paparating",
+  "discovery-coming-soon": "Malapit nang matuklasan",
+  "login-to-use-feature": "Kailangan mong mag-log in para magamit ang feature na ito."
 }
